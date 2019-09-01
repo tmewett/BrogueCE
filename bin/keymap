@@ -1,0 +1,38 @@
+# The following keys are valid, although modifier keys (like SHIFT) are
+# not supported.  Keys that produce characters but are not listed below
+# are mapped by the character they produce.
+#
+# Key remapping is also supported in curses mode, although some key names
+# are different and others are the same.
+
+
+# libtcod-mode keys:
+#
+# NONE
+# ESCAPE BACKSPACE TAB ENTER
+# SHIFT CONTROL ALT CAPSLOCK LWIN RWIN APPS NUMLOCK SCROLLLOCK 
+# PAGEUP PAGEDOWN END HOME
+# UP LEFT RIGHT DOWN
+# PRINTSCREEN PAUSE INSERT DELETE
+# 0 1 2 3 4 5 6 7 8 9
+# KP0 KP1 KP2 KP3 KP4 KP5 KP6 KP7 KP8 KP9 KPADD KPSUB KPDIV KPMUL KPDEC KPENTER
+# F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12
+# SPACE
+
+# EXAMPLE: numberpad play
+# if you remove the # from each of the following lines, it will be
+# possible to perform many actions with only the numberpad (in tcod mode)
+#KPDIV a
+#KPMUL i
+#KPADD t
+#KPSUB d
+#KPDEC s
+#KP0 ESCAPE
+
+#F5 S
+#F7 O
+#F2 A
+#A NONE
+#O NONE
+#S NONE
+

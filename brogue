@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+cd `dirname $0`/bin
+
+./brogue $*
+
+# if [ -t 0 ]; then
+#	 ./brogue -t $*
+#else
+#	./brogue $*
+#fi
+
