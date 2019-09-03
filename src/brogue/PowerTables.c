@@ -42,11 +42,11 @@ short wandDominate(creature *monst)                 {return (((monst)->currentHP
                                                      max(0, 100 * ((monst)->info.maxHP - (monst)->currentHP) / (monst)->info.maxHP));}
 
 // All "enchant" parameters must already be multiplied by FP_FACTOR:
-short fp_staffDamageLow(int64_t enchant)            {return ((int) (3 * (2 + (enchant)) / 4 >> FP_BASE));}
-short fp_staffDamageHigh(int64_t enchant)           {return ((int) (4 + (5 * (enchant) / 2) >> FP_BASE));}
+short fp_staffDamageLow(int64_t enchant)            {return ((int) (3 * (2 + (enchant >> FP_BASE)) / 4));}
+short fp_staffDamageHigh(int64_t enchant)           {return ((int) (4 + (5 * (enchant >> FP_BASE) / 2)));}
 short fp_staffDamage(int64_t enchant)               {return ((int) randClumpedRange(fp_staffDamageLow(enchant), fp_staffDamageHigh(enchant), 1 + (enchant) / 3));}
 short fp_staffBlinkDistance(int64_t enchant)        {return ((int) (((enchant) * 2 >> FP_BASE) + 2));}
-short fp_staffHasteDuration(int64_t enchant)        {return ((int) (2 + (enchant) * 4 >> FP_BASE));}
+short fp_staffHasteDuration(int64_t enchant)        {return ((int) (2 + (enchant >> FP_BASE) * 4));}
 short fp_staffBladeCount(int64_t enchant)           {return ((int) ((enchant) * 3 / 2 >> FP_BASE));}
 short fp_staffDiscordDuration(int64_t enchant)      {return ((int) ((enchant) * 4 >> FP_BASE));}
 short fp_staffEntrancementDuration(int64_t enchant) {return ((int) ((enchant) * 3 >> FP_BASE));}
@@ -82,9 +82,9 @@ short fp_ringWisdomMultiplier(int64_t enchant) {
 }
 
 short fp_charmHealing(int64_t enchant)              {return ((int) clamp(20 * (enchant) >> FP_BASE, 0, 100));}
-short fp_charmShattering(int64_t enchant)           {return ((int) (4 + (enchant) >> FP_BASE));}
-short fp_charmGuardianLifespan(int64_t enchant)     {return ((int) (4 + 2 * (enchant) >> FP_BASE));}
-short fp_charmNegationRadius(int64_t enchant)       {return ((int) (1 + 3 * (enchant) >> FP_BASE));}
+short fp_charmShattering(int64_t enchant)           {return ((int) (4 + (enchant >> FP_BASE)));}
+short fp_charmGuardianLifespan(int64_t enchant)     {return ((int) (4 + 2 * (enchant >> FP_BASE)));}
+short fp_charmNegationRadius(int64_t enchant)       {return ((int) (1 + 3 * (enchant >> FP_BASE)));}
 short fp_charmProtection(int64_t enchant) {
     const int64_t POW_CHARM_PROTECTION[] = {
         // 1.35^x << FP_BASE, with x from 0 to 50 in increments of 1:

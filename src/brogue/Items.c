@@ -2351,7 +2351,7 @@ void itemDetails(char *buf, item *theItem) {
                                 fp_staffEntrancementDuration(enchant + FP_FACTOR));
                         break;
                     case STAFF_HEALING:
-                        if (enchant < 10) {
+                        if ((enchant >> FP_BASE) < 10) {
                             sprintf(buf2, "This staff will heal its target by %i%% of its maximum health. (If the staff is enchanted, this will increase to %i%%.)",
                                     theItem->enchant1 * 10,
                                     (theItem->enchant1 + 1) * 10);
@@ -2462,8 +2462,8 @@ void itemDetails(char *buf, item *theItem) {
                             break;
                         case RING_WISDOM:
                             sprintf(buf2, "\n\nWhen worn, your staffs will recharge at %i%% of their normal rate. (If the ring is enchanted, the rate will increase to %i%% of the normal rate.)",
-                                    (int) (100 * fp_ringWisdomMultiplier(enchant) >> FP_BASE),
-                                    (int) (100 * fp_ringWisdomMultiplier(enchant + FP_FACTOR) >> FP_BASE));
+                                    (int) (100 * fp_ringWisdomMultiplier(enchant)),
+                                    (int) (100 * fp_ringWisdomMultiplier(enchant + FP_FACTOR)));
                             strcat(buf, buf2);
                             break;
                         case RING_REAPING:

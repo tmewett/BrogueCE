@@ -504,7 +504,7 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
     zap(oldLoc, newLoc, &theBolt, false);
     if (!(defender->bookkeepingFlags & MB_IS_DYING)
         && distanceBetween(oldLoc[0], oldLoc[1], defender->xLoc, defender->yLoc) > 0
-        && distanceBetween(oldLoc[0], oldLoc[1], defender->xLoc, defender->yLoc) << FP_BASE < fp_weaponForceDistance(fp_netEnchant(theItem))) {
+        && distanceBetween(oldLoc[0], oldLoc[1], defender->xLoc, defender->yLoc) < fp_weaponForceDistance(fp_netEnchant(theItem))) {
 
         if (pmap[defender->xLoc + newLoc[0] - oldLoc[0]][defender->yLoc + newLoc[1] - oldLoc[1]].flags & (HAS_MONSTER | HAS_PLAYER)) {
             otherMonster = monsterAtLoc(defender->xLoc + newLoc[0] - oldLoc[0], defender->yLoc + newLoc[1] - oldLoc[1]);
