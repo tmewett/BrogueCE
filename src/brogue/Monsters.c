@@ -1580,7 +1580,7 @@ boolean awareOfTarget(creature *observer, creature *target) {
     } else if (observer->creatureState == MONSTER_TRACKING_SCENT) {
         // already aware of the target, lose track 3% of the time if outside of stealth range.
          if (perceivedDistance > awareness) {
-             retval = rand_percent(3);
+             retval = rand_percent(97);
          } else {
             retval = true;
          }
