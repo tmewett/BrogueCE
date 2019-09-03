@@ -281,7 +281,7 @@ short alliedCloneCount(creature *monst) {
             count++;
         }
     }
-    if (rogue.depthLevel > 0) {
+    if (rogue.depthLevel > 1) {
         for (temp = levels[rogue.depthLevel - 2].monsters; temp != NULL; temp = temp->nextCreature) {
             if (temp != monst
                 && temp->info.monsterID == monst->info.monsterID
