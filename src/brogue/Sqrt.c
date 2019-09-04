@@ -80,7 +80,7 @@ unsigned fp_sqrt(unsigned val)
         We use the identity 2^a * 2^a = 2^(2*a) or:
          sqrt(2^a) = 2^(a/2)
     */
-    if(bitpos > 0u) /* val > 1 */
+    if(bitpos > 0) /* val > 1 */
         x = (1u<<FP_BASE)<<(bitpos >> 1u);
     else if(bitpos < 0) /* 0 < val < 1 */
         x = (1u<<FP_BASE)<<((unsigned)(-bitpos) << 1u);
