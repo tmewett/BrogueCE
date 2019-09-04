@@ -675,12 +675,11 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
                 || (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS))
             && (attacker != &player || defender->creatureState != MONSTER_ALLY)
             && (!monsterHiddenBySubmersion(defender, attacker) || i == 0)) {
-            // Monster will get hit if we choose to attack.
-            hitList[h++] = defender;
             if ((!monsterIsHidden(defender, attacker) || i == 0)
                 && monsterWillAttackTarget(attacker, defender)
                 && (attacker != &player || canSeeMonster(defender) || i == 0)) {
                 // We'll attack.
+                hitList[h++] = defender;
                 proceed = true;
             }
         }
