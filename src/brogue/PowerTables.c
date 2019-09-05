@@ -21,6 +21,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <math.h>
 #include "Rogue.h"
 
 // As of v1.7.5, Brogue does not use floating-point math in any calculations
@@ -415,7 +416,7 @@ short runicWeaponChance(item *theItem, boolean customEnchantLevel, int64_t encha
     }
     // Fast weapons get an adjusted chance of 1 - sqrt(1-p) to reflect one bite at the apple instead of two.
     if (theItem->flags & ITEM_ATTACKS_QUICKLY) {
-        chance = 100 * (FP_FACTOR - fp_sqrt(FP_FACTOR - (chance << FP_BASE)/100)) >> FP_BASE;
+        chance = 100 * (1.0 - sqrt(1.0 - (double) chance / 100.0));
     }
 
     // The lowest percent change that a weapon will ever have is its enchantment level (if greater than 0).

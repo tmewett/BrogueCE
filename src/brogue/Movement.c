@@ -2373,7 +2373,7 @@ void betweenOctant1andN(short *x, short *y, short x0, short y0, short n) {
 // If cautiousOnWalls is set, we will not illuminate blocking tiles unless the tile one space closer to the origin
 // is visible to the player; this is to prevent lights from illuminating a wall when the player is on the other
 // side of the wall.
-void getFOVMask(char grid[DCOLS][DROWS], short xLoc, short yLoc, int64_t maxRadius,
+void getFOVMask(char grid[DCOLS][DROWS], short xLoc, short yLoc, double maxRadius,
                 unsigned long forbiddenTerrain, unsigned long forbiddenFlags, boolean cautiousOnWalls) {
     short i;
 
@@ -2384,11 +2384,11 @@ void getFOVMask(char grid[DCOLS][DROWS], short xLoc, short yLoc, int64_t maxRadi
 }
 
 // This is a custom implementation of recursive shadowcasting.
-void scanOctantFOV(char grid[DCOLS][DROWS], short xLoc, short yLoc, short octant, int64_t maxRadius,
+void scanOctantFOV(char grid[DCOLS][DROWS], short xLoc, short yLoc, short octant, double maxRadius,
                    short columnsRightFromOrigin, long startSlope, long endSlope, unsigned long forbiddenTerrain,
                    unsigned long forbiddenFlags, boolean cautiousOnWalls) {
 
-    if (columnsRightFromOrigin << FP_BASE >= maxRadius) return;
+    if (columnsRightFromOrigin  >= maxRadius) return;
 
     short i, a, b, iStart, iEnd, x, y, x2, y2; // x and y are temporary variables on which we do the octant transform
     long newStartSlope, newEndSlope;
@@ -2403,11 +2403,11 @@ void scanOctantFOV(char grid[DCOLS][DROWS], short xLoc, short yLoc, short octant
     iEnd = max(a, b);
 
     // restrict vision to a circle of radius maxRadius
-    if ((columnsRightFromOrigin*columnsRightFromOrigin + iEnd*iEnd) >= maxRadius*maxRadius >> (FP_BASE*2)) {
+    if ((columnsRightFromOrigin*columnsRightFromOrigin + iEnd*iEnd) >= maxRadius*maxRadius) {
         return;
     }
-    if ((columnsRightFromOrigin*columnsRightFromOrigin + iStart*iStart) >= maxRadius*maxRadius >> (FP_BASE*2)) {
-        iStart = (int) (-1 * fp_sqrt((maxRadius*maxRadius >> FP_BASE) - (columnsRightFromOrigin*columnsRightFromOrigin << FP_BASE)) >> FP_BASE);
+    if ((columnsRightFromOrigin*columnsRightFromOrigin + iStart*iStart) >= maxRadius*maxRadius) {
+        iStart = (int) (-1 * sqrt(maxRadius*maxRadius - columnsRightFromOrigin*columnsRightFromOrigin) + FLOAT_FUDGE);
     }
 
     x = xLoc + columnsRightFromOrigin;
@@ -2445,11 +2445,11 @@ void scanOctantFOV(char grid[DCOLS][DROWS], short xLoc, short yLoc, short octant
             grid[x][y] = 1;
         }
         if (!cellObstructed && !currentlyLit) { // next column slope starts here
-            newStartSlope = (long int) ((LOS_SLOPE_GRANULARITY * (i) - LOS_SLOPE_GRANULARITY / 2) / (columnsRightFromOrigin * 2 + 1) * 2);
+            newStartSlope = (long int) ((LOS_SLOPE_GRANULARITY * (i) - LOS_SLOPE_GRANULARITY / 2) / (columnsRightFromOrigin + 0.5));
             currentlyLit = true;
         } else if (cellObstructed && currentlyLit) { // next column slope ends here
             newEndSlope = (long int) ((LOS_SLOPE_GRANULARITY * (i) - LOS_SLOPE_GRANULARITY / 2)
-                            / (columnsRightFromOrigin * 2 - 1) * 2);
+                            / (columnsRightFromOrigin - 0.5));
             if (newStartSlope <= newEndSlope) {
                 // run next column
                 scanOctantFOV(grid, xLoc, yLoc, octant, maxRadius, columnsRightFromOrigin + 1, newStartSlope, newEndSlope,

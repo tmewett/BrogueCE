@@ -55,15 +55,14 @@ void logLights() {
 boolean paintLight(lightSource *theLight, short x, short y, boolean isMinersLight, boolean maintainShadows) {
     short i, j, k;
     short colorComponents[3], randComponent, lightMultiplier;
-    short fadeToPercent, radiusRounded;
-    int64_t radius;
+    short fadeToPercent;
+    double radius;
     char grid[DCOLS][DROWS];
     boolean dispelShadows, overlappedFieldOfView;
 
     brogueAssert(rogue.RNG == RNG_SUBSTANTIVE);
 
-    radius = (randClump(theLight->lightRadius) << FP_BASE) / 100;
-    radiusRounded = (radius >> FP_BASE);
+    radius = (double) randClump(theLight->lightRadius) / 100;
 
     randComponent = rand_range(0, theLight->lightColor->rand);
     colorComponents[0] = randComponent + theLight->lightColor->red + rand_range(0, theLight->lightColor->redRand);
@@ -77,8 +76,8 @@ boolean paintLight(lightSource *theLight, short x, short y, boolean isMinersLigh
     fadeToPercent = theLight->radialFadeToPercent;
 
     // zero out only the relevant rectangle of the grid
-    for (i = max(0, x - radiusRounded); i < DCOLS && i < x + radiusRounded; i++) {
-        for (j = max(0, y - radiusRounded); j < DROWS && j < y + radiusRounded; j++) {
+    for (i = max(0, x - (radius + FLOAT_FUDGE)); i < DCOLS && i < x + radius + FLOAT_FUDGE; i++) {
+        for (j = max(0, y - (radius + FLOAT_FUDGE)); j < DROWS && j < y + radius + FLOAT_FUDGE; j++) {
             grid[i][j] = 0;
         }
     }
@@ -88,10 +87,10 @@ boolean paintLight(lightSource *theLight, short x, short y, boolean isMinersLigh
 
     overlappedFieldOfView = false;
 
-    for (i = max(0, x - radiusRounded); i < DCOLS && i < x + radiusRounded; i++) {
-        for (j = max(0, y - radiusRounded); j < DROWS && j < y + radiusRounded; j++) {
+    for (i = max(0, x - (radius + FLOAT_FUDGE)); i < DCOLS && i < x + radius; i++) {
+        for (j = max(0, y - (radius + FLOAT_FUDGE)); j < DROWS && j < y + radius; j++) {
             if (grid[i][j]) {
-                lightMultiplier =   100 - (100 - fadeToPercent) * fp_sqrt(((i-x) * (i-x) + (j-y) * (j-y)) << FP_BASE) / radius;
+                lightMultiplier = 100 - (100 - fadeToPercent) * (sqrt((i-x) * (i-x) + (j-y) * (j-y)) / radius + FLOAT_FUDGE);
                 for (k=0; k<3; k++) {
                     tmap[i][j].light[k] += colorComponents[k] * lightMultiplier / 100;;
                 }
