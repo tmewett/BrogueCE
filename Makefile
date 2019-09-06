@@ -1,22 +1,23 @@
 include config.mk
 
-CFLAGS := -Isrc/brogue -Isrc/platform -Wall -Wno-parentheses
-LDLIBS := -lm
+cflags := -Isrc/brogue -Isrc/platform -Wall -Wno-parentheses
+libs := -lm
 
 sources := $(wildcard src/brogue/*.c) $(wildcard src/platform/*.c)
 objects := $(sources:.c=.o)
 
 ifeq ($(TERMINAL),yes)
-	CPPFLAGS += -DBROGUE_CURSES
-	LDLIBS += -lncurses
+	cppflags += -DBROGUE_CURSES
+	libs += -lncurses
 endif
 
 .PHONY: clean
 
 %.o: %.c src/brogue/Rogue.h src/brogue/IncludeGlobals.h
+	$(CC) $(cppflags) $(CPPFLAGS) $(cflags) $(CFLAGS) -c $< -o $@
 
 bin/brogue: $(objects)
-	$(CC) $(LDFLAGS) $(LDLIBS) $(CFLAGS) $^ -o bin/brogue
+	$(CC) $(LDFLAGS) $(libs) $(LDLIBS) $(cflags) $(CFLAGS) $^ -o bin/brogue
 
 clean:
 	$(RM) $(objects) bin/brogue
