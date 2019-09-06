@@ -94,7 +94,7 @@ int fp_charmProtection(int64_t enchant) {
         1310672812, 1769408297, 2388701201, 3224746621, 4353407939, 5877100717, 7934085969, 10711016058, 14459871678, 19520826766, 26353116134, 35576706781,
         48028554155, 64838548109, 87532039948, 118168253930, 159527142806, 215361642788};
 
-    enchant = (enchant >> FP_BASE);
+    enchant = (enchant >> FP_BASE) - 1;
     return 150 * POW_CHARM_PROTECTION[enchant] >> FP_BASE;
 }
 
@@ -297,7 +297,7 @@ short charmRechargeDelay(short charmKind, short enchant) {
         POW_40_CHARM_DECREMENT, // Negation
     };
     enchant = clamp(enchant, 1, 50) - 1;
-    short delay = charmEffectDuration(charmKind, enchant)
+    short delay = charmEffectDuration(charmKind, enchant + 1)
     + (duration[charmKind] * increment[charmKind][enchant] >> FP_BASE);
     return max(1, delay);
 }
