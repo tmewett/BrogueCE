@@ -11,6 +11,11 @@ ifeq ($(TERMINAL),yes)
 	libs += -lncurses
 endif
 
+ifeq ($(GRAPHICS),yes)
+	cppflags += -DBROGUE_TCOD -I$(TCOD_DIR)/include
+	libs += -L$(TCOD_DIR) -ltcod -lSDL
+endif
+
 .PHONY: clean
 
 %.o: %.c src/brogue/Rogue.h src/brogue/IncludeGlobals.h
