@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 cd `dirname $0`/bin
 
-./brogue $*
+LD_LIBRARY_PATH="$LD_LIBRARY_PATH:." ./brogue $*
 
 # if [ -t 0 ]; then
 #	 ./brogue -t $*
