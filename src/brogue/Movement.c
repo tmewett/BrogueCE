@@ -2063,7 +2063,7 @@ boolean startFighting(enum directions dir, boolean tillDeath) {
     if (monst->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE)) {
         return false;
     }
-    expectedDamage = monst->info.damage.upperBound * fp_monsterDamageAdjustmentAmount(monst) >> FP_BASE;
+    expectedDamage = monst->info.damage.upperBound * monsterDamageAdjustmentAmount(monst) >> FP_BASE;
     if (rogue.easyMode) {
         expectedDamage /= 5;
     }

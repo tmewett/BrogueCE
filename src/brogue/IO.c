@@ -4098,7 +4098,7 @@ short estimatedArmorValue() {
     short retVal;
 
     retVal = ((armorTable[rogue.armor->kind].range.upperBound + armorTable[rogue.armor->kind].range.lowerBound) / 2) / 10;
-    retVal += fp_strengthModifier(rogue.armor) >> FP_BASE;
+    retVal += strengthModifier(rogue.armor) >> FP_BASE;
     retVal -= player.status[STATUS_DONNING];
 
     return max(0, retVal);

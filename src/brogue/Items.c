@@ -1700,7 +1700,7 @@ boolean isVowelish(char *theChar) {
     }
 }
 
-long long fp_enchantIncrement(item *theItem) {
+long long enchantIncrement(item *theItem) {
     if (theItem->category & (WEAPON | ARMOR)) {
         if (theItem->strengthRequired == 0) {
             return (1 + 0) << FP_BASE;
@@ -1793,7 +1793,7 @@ void itemDetails(char *buf, item *theItem) {
     encodeMessageColor(buf, strlen(buf), &white);
     strcat(buf, "\n\n");
 
-    enchant = fp_netEnchant(theItem);
+    enchant = netEnchant(theItem);
 
     itemName(theItem, theName, false, false, NULL);
 
@@ -1907,16 +1907,16 @@ void itemDetails(char *buf, item *theItem) {
                             (singular ? "s" : ""));
                 }
                 strcat(buf, buf2);
-                if (fp_strengthModifier(theItem)) {
+                if (strengthModifier(theItem)) {
                     sprintf(buf2, ", %s %s %s %s%s%+.2f%s because of your %s strength. ",
                             (theItem->enchant1 ? "and" : "but"),
                             (singular ? "carries" : "carry"),
-                            (theItem->enchant1 && (theItem->enchant1 > 0) == (fp_strengthModifier(theItem) > 0) ? "an additional" : "a"),
-                            (fp_strengthModifier(theItem) > 0 ? "bonus of " : "penalty of "),
-                            (fp_strengthModifier(theItem) > 0 ? goodColorEscape : badColorEscape),
-                            fp_strengthModifier(theItem) / (double) FP_FACTOR,
+                            (theItem->enchant1 && (theItem->enchant1 > 0) == (strengthModifier(theItem) > 0) ? "an additional" : "a"),
+                            (strengthModifier(theItem) > 0 ? "bonus of " : "penalty of "),
+                            (strengthModifier(theItem) > 0 ? goodColorEscape : badColorEscape),
+                            strengthModifier(theItem) / (double) FP_FACTOR,
                             whiteColorEscape,
-                            (fp_strengthModifier(theItem) > 0 ? "excess" : "inadequate"));
+                            (strengthModifier(theItem) > 0 ? "excess" : "inadequate"));
                     strcat(buf, buf2);
                 } else {
                     strcat(buf, ". ");
@@ -1929,16 +1929,16 @@ void itemDetails(char *buf, item *theItem) {
                             theName);
                     strcat(buf, buf2);
                 }
-                if (fp_strengthModifier(theItem)) {
+                if (strengthModifier(theItem)) {
                     sprintf(buf2, "\n\nThe %s %s%s a %s%s%+.2f%s because of your %s strength. ",
                             theName,
                             ((theItem->enchant1 > 0) && (theItem->flags & ITEM_MAGIC_DETECTED) ? "also " : ""),
                             (singular ? "carries" : "carry"),
-                            (fp_strengthModifier(theItem) > 0 ? "bonus of " : "penalty of "),
-                            (fp_strengthModifier(theItem) > 0 ? goodColorEscape : badColorEscape),
-                            fp_strengthModifier(theItem) / (double) FP_FACTOR,
+                            (strengthModifier(theItem) > 0 ? "bonus of " : "penalty of "),
+                            (strengthModifier(theItem) > 0 ? goodColorEscape : badColorEscape),
+                            strengthModifier(theItem) / (double) FP_FACTOR,
                             whiteColorEscape,
-                            (fp_strengthModifier(theItem) > 0 ? "excess" : "inadequate"));
+                            (strengthModifier(theItem) > 0 ? "excess" : "inadequate"));
                     strcat(buf, buf2);
                 }
 
@@ -1963,11 +1963,11 @@ void itemDetails(char *buf, item *theItem) {
                     if (rogue.weapon) {
                         currentDamage = (rogue.weapon->damage.lowerBound + rogue.weapon->damage.upperBound << FP_BASE) / 2;
                         if ((rogue.weapon->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                            current = current * fp_accuracyFraction(fp_netEnchant(rogue.weapon)) >> FP_BASE;
-                            currentDamage = currentDamage * fp_damageFraction(fp_netEnchant(rogue.weapon)) >> FP_BASE;
+                            current = current * accuracyFraction(netEnchant(rogue.weapon)) >> FP_BASE;
+                            currentDamage = currentDamage * damageFraction(netEnchant(rogue.weapon)) >> FP_BASE;
                         } else {
-                            current = current * fp_accuracyFraction(fp_strengthModifier(rogue.weapon)) >> FP_BASE;
-                            currentDamage = currentDamage * fp_damageFraction(fp_strengthModifier(rogue.weapon)) >> FP_BASE;
+                            current = current * accuracyFraction(strengthModifier(rogue.weapon)) >> FP_BASE;
+                            currentDamage = currentDamage * damageFraction(strengthModifier(rogue.weapon)) >> FP_BASE;
                         }
                     } else {
                         currentDamage = (player.info.damage.lowerBound + player.info.damage.upperBound << FP_BASE) / 2;
@@ -1976,11 +1976,11 @@ void itemDetails(char *buf, item *theItem) {
                     new = player.info.accuracy;
                     newDamage = (theItem->damage.lowerBound + theItem->damage.upperBound << FP_BASE) / 2;
                     if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                        new = new * fp_accuracyFraction(fp_netEnchant(theItem)) >> FP_BASE;
-                        newDamage = newDamage * fp_damageFraction(fp_netEnchant(theItem)) >> FP_BASE;
+                        new = new * accuracyFraction(netEnchant(theItem)) >> FP_BASE;
+                        newDamage = newDamage * damageFraction(netEnchant(theItem)) >> FP_BASE;
                     } else {
-                        new = new * fp_accuracyFraction(fp_strengthModifier(theItem)) >> FP_BASE;
-                        newDamage = newDamage * fp_damageFraction(fp_strengthModifier(theItem)) >> FP_BASE;
+                        new = new * accuracyFraction(strengthModifier(theItem)) >> FP_BASE;
+                        newDamage = newDamage * damageFraction(strengthModifier(theItem)) >> FP_BASE;
                     }
                     accuracyChange  = (new * 100 / current) - 100;
                     damageChange    = (newDamage * 100 / currentDamage) - 100;
@@ -1998,9 +1998,9 @@ void itemDetails(char *buf, item *theItem) {
                 } else {
                     new = theItem->armor;
                     if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                        new += 10 * fp_netEnchant(theItem) >> FP_BASE;
+                        new += 10 * netEnchant(theItem) >> FP_BASE;
                     } else {
-                        new += 10 * fp_strengthModifier(theItem) >> FP_BASE;
+                        new += 10 * strengthModifier(theItem) >> FP_BASE;
                     }
                     new = max(0, new);
                     new /= 10;
@@ -2060,15 +2060,15 @@ void itemDetails(char *buf, item *theItem) {
                             if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
                                 sprintf(buf2, "%i%% of the time that it hits an enemy, %i spectral %s%s will spring into being with accuracy and attack power equal to your own, and will dissipate %i turns later. (If the %s is enchanted, %i image%s will appear %i%% of the time, and will last %i turns.)",
                                         runicWeaponChance(theItem, false, 0),
-                                        fp_weaponImageCount(enchant),
+                                        weaponImageCount(enchant),
                                         theName,
-                                        (fp_weaponImageCount(enchant) > 1 ? "s" : ""),
-                                        fp_weaponImageDuration(enchant),
+                                        (weaponImageCount(enchant) > 1 ? "s" : ""),
+                                        weaponImageDuration(enchant),
                                         theName,
-                                        fp_weaponImageCount(enchant + fp_enchantIncrement(theItem)),
-                                        (fp_weaponImageCount(enchant + fp_enchantIncrement(theItem)) > 1 ? "s" : ""),
-                                        runicWeaponChance(theItem, true, enchant + fp_enchantIncrement(theItem)),
-                                        fp_weaponImageDuration(enchant + fp_enchantIncrement(theItem)));
+                                        weaponImageCount(enchant + enchantIncrement(theItem)),
+                                        (weaponImageCount(enchant + enchantIncrement(theItem)) > 1 ? "s" : ""),
+                                        runicWeaponChance(theItem, true, enchant + enchantIncrement(theItem)),
+                                        weaponImageDuration(enchant + enchantIncrement(theItem)));
                             } else {
                                 sprintf(buf2, "Sometimes, when it hits an enemy, spectral %ss will spring into being with accuracy and attack power equal to your own, and will dissipate shortly thereafter.",
                                         theName);
@@ -2099,27 +2099,27 @@ void itemDetails(char *buf, item *theItem) {
                                         break;
                                     case W_PARALYSIS:
                                         sprintf(buf2, " for %i turns. ",
-                                                (int) (fp_weaponParalysisDuration(enchant)));
+                                                (int) (weaponParalysisDuration(enchant)));
                                         strcat(buf, buf2);
-                                        nextLevelState = (int) (fp_weaponParalysisDuration(enchant + fp_enchantIncrement(theItem)));
+                                        nextLevelState = (int) (weaponParalysisDuration(enchant + enchantIncrement(theItem)));
                                         break;
                                     case W_SLOWING:
                                         sprintf(buf2, " for %i turns. ",
-                                                fp_weaponSlowDuration(enchant));
+                                                weaponSlowDuration(enchant));
                                         strcat(buf, buf2);
-                                        nextLevelState = fp_weaponSlowDuration(enchant + fp_enchantIncrement(theItem));
+                                        nextLevelState = weaponSlowDuration(enchant + enchantIncrement(theItem));
                                         break;
                                     case W_CONFUSION:
                                         sprintf(buf2, " for %i turns. ",
-                                                fp_weaponConfusionDuration(enchant));
+                                                weaponConfusionDuration(enchant));
                                         strcat(buf, buf2);
-                                        nextLevelState = fp_weaponConfusionDuration(enchant + fp_enchantIncrement(theItem));
+                                        nextLevelState = weaponConfusionDuration(enchant + enchantIncrement(theItem));
                                         break;
                                     case W_FORCE:
                                         sprintf(buf2, " up to %i spaces backward. If the enemy hits an obstruction, it (and any monster it hits) will take damage in proportion to the distance it flew. ",
-                                                fp_weaponForceDistance(enchant));
+                                                weaponForceDistance(enchant));
                                         strcat(buf, buf2);
-                                        nextLevelState = fp_weaponForceDistance(enchant + fp_enchantIncrement(theItem));
+                                        nextLevelState = weaponForceDistance(enchant + enchantIncrement(theItem));
                                         break;
                                     case W_MERCY:
                                         strcpy(buf2, " by 50% of its maximum health. ");
@@ -2132,10 +2132,10 @@ void itemDetails(char *buf, item *theItem) {
                                 }
 
                                 if (((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience)
-                                    && runicWeaponChance(theItem, false, 0) < runicWeaponChance(theItem, true, enchant + fp_enchantIncrement(theItem))){
+                                    && runicWeaponChance(theItem, false, 0) < runicWeaponChance(theItem, true, enchant + enchantIncrement(theItem))){
                                     sprintf(buf2, "(If the %s is enchanted, the chance will increase to %i%%",
                                             theName,
-                                            runicWeaponChance(theItem, true, (float) (enchant + fp_enchantIncrement(theItem))));
+                                            runicWeaponChance(theItem, true, (float) (enchant + enchantIncrement(theItem))));
                                     strcat(buf, buf2);
                                     if (nextLevelState) {
                                         if (theItem->enchant2 == W_FORCE) {
@@ -2191,12 +2191,12 @@ void itemDetails(char *buf, item *theItem) {
                         switch (theItem->enchant2) {
                             case A_MULTIPLICITY:
                                 sprintf(buf2, "When worn, 33%% of the time that an enemy's attack connects, %i allied spectral duplicate%s of your attacker will appear for 3 turns. ",
-                                        fp_armorImageCount(enchant),
-                                        (fp_armorImageCount(enchant) == 1 ? "" : "s"));
-                                if (fp_armorImageCount(enchant + fp_enchantIncrement(theItem)) > fp_armorImageCount(enchant)) {
+                                        armorImageCount(enchant),
+                                        (armorImageCount(enchant) == 1 ? "" : "s"));
+                                if (armorImageCount(enchant + enchantIncrement(theItem)) > armorImageCount(enchant)) {
                                     sprintf(buf3, "(If the %s is enchanted, the number of duplicates will increase to %i.) ",
                                             theName,
-                                            (fp_armorImageCount(enchant + fp_enchantIncrement(theItem))));
+                                            (armorImageCount(enchant + enchantIncrement(theItem))));
                                     strcat(buf2, buf3);
                                 }
                                 break;
@@ -2206,11 +2206,11 @@ void itemDetails(char *buf, item *theItem) {
                             case A_ABSORPTION:
                                 if (theItem->flags & ITEM_IDENTIFIED) {
                                     sprintf(buf2, "It will reduce the damage of inbound attacks by a random amount between 0 and %i, which is %i%% of your current maximum health. (If the %s is enchanted, this maximum amount will %s %i.) ",
-                                            (int) fp_armorAbsorptionMax(enchant),
-                                            (int) (100 * fp_armorAbsorptionMax(enchant) / player.info.maxHP),
+                                            (int) armorAbsorptionMax(enchant),
+                                            (int) (100 * armorAbsorptionMax(enchant) / player.info.maxHP),
                                             theName,
-                                            (fp_armorAbsorptionMax(enchant) == fp_armorAbsorptionMax(enchant + fp_enchantIncrement(theItem)) ? "remain at" : "increase to"),
-                                            (int) fp_armorAbsorptionMax(enchant + fp_enchantIncrement(theItem)));
+                                            (armorAbsorptionMax(enchant) == armorAbsorptionMax(enchant + enchantIncrement(theItem)) ? "remain at" : "increase to"),
+                                            (int) armorAbsorptionMax(enchant + enchantIncrement(theItem)));
                                 } else {
                                     strcpy(buf2, "It will reduce the damage of inbound attacks by a random amount determined by its enchantment level. ");
                                 }
@@ -2218,9 +2218,9 @@ void itemDetails(char *buf, item *theItem) {
                             case A_REPRISAL:
                                 if (theItem->flags & ITEM_IDENTIFIED) {
                                     sprintf(buf2, "Any enemy that attacks you will itself be wounded by %i%% of the damage that it inflicts. (If the %s is enchanted, this percentage will increase to %i%%.) ",
-                                            fp_armorReprisalPercent(enchant),
+                                            armorReprisalPercent(enchant),
                                             theName,
-                                            fp_armorReprisalPercent(enchant + fp_enchantIncrement(theItem)));
+                                            armorReprisalPercent(enchant + enchantIncrement(theItem)));
                                 } else {
                                     strcpy(buf2, "Any enemy that attacks you will itself be wounded by a percentage (determined by enchantment level) of the damage that it inflicts. ");
                                 }
@@ -2233,16 +2233,16 @@ void itemDetails(char *buf, item *theItem) {
                             case A_REFLECTION:
                                 if (theItem->flags & ITEM_IDENTIFIED) {
                                     if (theItem->enchant1 > 0) {
-                                        short reflectChance = fp_reflectionChance(enchant);
-                                        short reflectChance2 = fp_reflectionChance(enchant + fp_enchantIncrement(theItem));
+                                        short reflectChance = reflectionChance(enchant);
+                                        short reflectChance2 = reflectionChance(enchant + enchantIncrement(theItem));
                                         sprintf(buf2, "When worn, you will deflect %i%% of incoming spells -- including directly back at their source %i%% of the time. (If the armor is enchanted, these will increase to %i%% and %i%%.) ",
                                                 reflectChance,
                                                 reflectChance * reflectChance / 100,
                                                 reflectChance2,
                                                 reflectChance2 * reflectChance2 / 100);
                                     } else if (theItem->enchant1 < 0) {
-                                        short reflectChance = fp_reflectionChance(enchant);
-                                        short reflectChance2 = fp_reflectionChance(enchant + fp_enchantIncrement(theItem));
+                                        short reflectChance = reflectionChance(enchant);
+                                        short reflectChance2 = reflectionChance(enchant + enchantIncrement(theItem));
                                         sprintf(buf2, "When worn, %i%% of your own spells will deflect from their target -- including directly back at you %i%% of the time. (If the armor is enchanted, these will decrease to %i%% and %i%%.) ",
                                                 reflectChance,
                                                 reflectChance * reflectChance / 100,
@@ -2307,14 +2307,14 @@ void itemDetails(char *buf, item *theItem) {
                         theItem->charges,
                         theItem->enchant1,
                         new == 0 ? "" : ", with your current rings,",
-                        staffChargeDuration(theItem) / fp_ringWisdomMultiplier(new << FP_BASE));
+                        staffChargeDuration(theItem) / ringWisdomMultiplier(new << FP_BASE));
                 strcat(buf, buf2);
             } else if (theItem->flags & ITEM_MAX_CHARGES_KNOWN) {
                 sprintf(buf2, "\n\nThe %s has a maximum of %i charges, and%s recovers a charge in approximately %i turns. ",
                         theName,
                         theItem->enchant1,
                         new == 0 ? "" : ", with your current rings,",
-                        staffChargeDuration(theItem) / fp_ringWisdomMultiplier(new << FP_BASE));
+                        staffChargeDuration(theItem) / ringWisdomMultiplier(new << FP_BASE));
                 strcat(buf, buf2);
             }
 
@@ -2324,16 +2324,16 @@ void itemDetails(char *buf, item *theItem) {
                 switch (theItem->kind) {
                     case STAFF_LIGHTNING:
                         sprintf(buf2, "This staff deals damage to every creature in its line of fire; nothing is immune. (If the staff is enchanted, its average damage will increase by %i%%.)",
-                                (int) (100 * (fp_staffDamageLow(enchant + FP_FACTOR) + fp_staffDamageHigh(enchant + FP_FACTOR)) / (fp_staffDamageLow(enchant) + fp_staffDamageHigh(enchant)) - 100));
+                                (int) (100 * (staffDamageLow(enchant + FP_FACTOR) + staffDamageHigh(enchant + FP_FACTOR)) / (staffDamageLow(enchant) + staffDamageHigh(enchant)) - 100));
                         break;
                     case STAFF_FIRE:
                         sprintf(buf2, "This staff deals damage to any creature that it hits, unless the creature is immune to fire. (If the staff is enchanted, its average damage will increase by %i%%.) It also sets creatures and flammable terrain on fire.",
-                                (int) (100 * (fp_staffDamageLow(enchant + FP_FACTOR) + fp_staffDamageHigh(enchant + FP_FACTOR)) / (fp_staffDamageLow(enchant) + fp_staffDamageHigh(enchant)) - 100));
+                                (int) (100 * (staffDamageLow(enchant + FP_FACTOR) + staffDamageHigh(enchant + FP_FACTOR)) / (staffDamageLow(enchant) + staffDamageHigh(enchant)) - 100));
                         break;
                     case STAFF_POISON:
                         sprintf(buf2, "The bolt from this staff will poison any creature that it hits for %i turns. (If the staff is enchanted, this will increase to %i turns.)",
-                                fp_staffPoison(enchant),
-                                fp_staffPoison(enchant + FP_FACTOR));
+                                staffPoison(enchant),
+                                staffPoison(enchant + FP_FACTOR));
                         break;
                     case STAFF_TUNNELING:
                         sprintf(buf2, "The bolt from this staff will dissolve %i layers of obstruction. (If the staff is enchanted, this will increase to %i layers.)",
@@ -2342,13 +2342,13 @@ void itemDetails(char *buf, item *theItem) {
                         break;
                     case STAFF_BLINKING:
                         sprintf(buf2, "This staff enables you to teleport up to %i spaces. (If the staff is enchanted, this will increase to %i spaces.)",
-                                fp_staffBlinkDistance(enchant),
-                                fp_staffBlinkDistance(enchant + FP_FACTOR));
+                                staffBlinkDistance(enchant),
+                                staffBlinkDistance(enchant + FP_FACTOR));
                         break;
                     case STAFF_ENTRANCEMENT:
                         sprintf(buf2, "This staff will compel its target to mirror your movements for %i turns. (If the staff is enchanted, this will increase to %i turns.)",
-                                fp_staffEntrancementDuration(enchant),
-                                fp_staffEntrancementDuration(enchant + FP_FACTOR));
+                                staffEntrancementDuration(enchant),
+                                staffEntrancementDuration(enchant + FP_FACTOR));
                         break;
                     case STAFF_HEALING:
                         if ((enchant >> FP_BASE) < 10) {
@@ -2361,26 +2361,26 @@ void itemDetails(char *buf, item *theItem) {
                         break;
                     case STAFF_HASTE:
                         sprintf(buf2, "This staff will cause its target to move twice as fast for %i turns. (If the staff is enchanted, this will increase to %i turns.)",
-                                fp_staffHasteDuration(enchant),
-                                fp_staffHasteDuration(enchant + FP_FACTOR));
+                                staffHasteDuration(enchant),
+                                staffHasteDuration(enchant + FP_FACTOR));
                         break;
                     case STAFF_OBSTRUCTION:
                         strcpy(buf2, "");
                         break;
                     case STAFF_DISCORD:
                         sprintf(buf2, "This staff will cause discord for %i turns. (If the staff is enchanted, this will increase to %i turns.)",
-                                fp_staffDiscordDuration(enchant),
-                                fp_staffDiscordDuration(enchant + FP_FACTOR));
+                                staffDiscordDuration(enchant),
+                                staffDiscordDuration(enchant + FP_FACTOR));
                         break;
                     case STAFF_CONJURATION:
                         sprintf(buf2, "%i phantom blades will be called into service. (If the staff is enchanted, this will increase to %i blades.)",
-                                fp_staffBladeCount(enchant),
-                                fp_staffBladeCount(enchant + FP_FACTOR));
+                                staffBladeCount(enchant),
+                                staffBladeCount(enchant + FP_FACTOR));
                         break;
                     case STAFF_PROTECTION:
                         sprintf(buf2, "This staff will shield a creature for up to 20 turns against up to %i damage. (If the staff is enchanted, this will increase to %i damage.)",
-                                fp_staffProtection(enchant) / 10,
-                                fp_staffProtection(enchant + FP_FACTOR) / 10);
+                                staffProtection(enchant) / 10,
+                                staffProtection(enchant + FP_FACTOR) / 10);
                         break;
                     default:
                         strcpy(buf2, "No one knows what this staff does.");
@@ -2447,9 +2447,9 @@ void itemDetails(char *buf, item *theItem) {
                             break;
                         case RING_REGENERATION:
                             sprintf(buf2, "\n\nWith this ring equipped, you will regenerate all of your health in %li turns (instead of %li). (If the ring is enchanted, this will decrease to %li turns.)",
-                                    (long) (fp_turnsForFullRegenInThousandths(enchant) / 1000),
+                                    (long) (turnsForFullRegenInThousandths(enchant) / 1000),
                                     (long) TURNS_FOR_FULL_REGEN,
-                                    (long) (fp_turnsForFullRegenInThousandths(enchant + FP_FACTOR) / 1000));
+                                    (long) (turnsForFullRegenInThousandths(enchant + FP_FACTOR) / 1000));
                             strcat(buf, buf2);
                             break;
                         case RING_TRANSFERENCE:
@@ -2462,8 +2462,8 @@ void itemDetails(char *buf, item *theItem) {
                             break;
                         case RING_WISDOM:
                             sprintf(buf2, "\n\nWhen worn, your staffs will recharge at %i%% of their normal rate. (If the ring is enchanted, the rate will increase to %i%% of the normal rate.)",
-                                    (int) (100 * fp_ringWisdomMultiplier(enchant)),
-                                    (int) (100 * fp_ringWisdomMultiplier(enchant + FP_FACTOR)));
+                                    (int) (100 * ringWisdomMultiplier(enchant)),
+                                    (int) (100 * ringWisdomMultiplier(enchant + FP_FACTOR)));
                             strcat(buf, buf2);
                             break;
                         case RING_REAPING:
@@ -2514,16 +2514,16 @@ void itemDetails(char *buf, item *theItem) {
             switch (theItem->kind) {
                 case CHARM_HEALTH:
                     sprintf(buf2, "\n\nWhen used, the charm will heal %i%% of your health and recharge in %i turns. (If the charm is enchanted, it will heal %i%% of your health and recharge in %i turns.)",
-                            fp_charmHealing(enchant),
+                            charmHealing(enchant),
                             charmRechargeDelay(theItem->kind, theItem->enchant1),
-                            fp_charmHealing(enchant + FP_FACTOR),
+                            charmHealing(enchant + FP_FACTOR),
                             charmRechargeDelay(theItem->kind, theItem->enchant1 + 1));
                     break;
                 case CHARM_PROTECTION:
                     sprintf(buf2, "\n\nWhen used, the charm will shield you for up to 20 turns for up to %i%% of your total health and recharge in %i turns. (If the charm is enchanted, it will shield up to %i%% of your total health and recharge in %i turns.)",
-                            100 * fp_charmProtection(enchant) / 10 / player.info.maxHP,
+                            100 * charmProtection(enchant) / 10 / player.info.maxHP,
                             charmRechargeDelay(theItem->kind, theItem->enchant1),
-                            100 * fp_charmProtection(enchant + FP_FACTOR) / 10 / player.info.maxHP,
+                            100 * charmProtection(enchant + FP_FACTOR) / 10 / player.info.maxHP,
                             charmRechargeDelay(theItem->kind, theItem->enchant1 + 1));
                     break;
                 case CHARM_HASTE:
@@ -2563,16 +2563,16 @@ void itemDetails(char *buf, item *theItem) {
                     break;
                 case CHARM_SHATTERING:
                     sprintf(buf2, "\n\nWhen used, the charm will dissolve the nearby walls up to %i spaces away, and recharge in %i turns. (If the charm is enchanted, it will reach up to %i spaces and recharge in %i turns.)",
-                            fp_charmShattering(enchant),
+                            charmShattering(enchant),
                             charmRechargeDelay(theItem->kind, theItem->enchant1),
-                            fp_charmShattering(enchant + FP_FACTOR),
+                            charmShattering(enchant + FP_FACTOR),
                             charmRechargeDelay(theItem->kind, theItem->enchant1 + 1));
                     break;
                 case CHARM_GUARDIAN:
                     sprintf(buf2, "\n\nWhen used, a guardian will materialize for %i turns, and the charm will recharge in %i turns. (If the charm is enchanted, the guardian will last for %i turns and the charm will recharge in %i turns.)",
-                            fp_charmGuardianLifespan(enchant),
+                            charmGuardianLifespan(enchant),
                             charmRechargeDelay(theItem->kind, theItem->enchant1),
-                            fp_charmGuardianLifespan(enchant + FP_FACTOR),
+                            charmGuardianLifespan(enchant + FP_FACTOR),
                             charmRechargeDelay(theItem->kind, theItem->enchant1 + 1));
                     break;
                 case CHARM_TELEPORTATION:
@@ -2587,9 +2587,9 @@ void itemDetails(char *buf, item *theItem) {
                     break;
                 case CHARM_NEGATION:
                     sprintf(buf2, "\n\nWhen used, the charm will negate all magical effects on the creatures in your field of view and the items on the ground up to %i spaces away, and recharge in %i turns. (If the charm is enchanted, it will reach up to %i spaces and recharge in %i turns.)",
-                            fp_charmNegationRadius(enchant),
+                            charmNegationRadius(enchant),
                             charmRechargeDelay(theItem->kind, theItem->enchant1),
-                            fp_charmNegationRadius(enchant + FP_FACTOR),
+                            charmNegationRadius(enchant + FP_FACTOR),
                             charmRechargeDelay(theItem->kind, theItem->enchant1 + 1));
                     break;
                 default:
@@ -3028,7 +3028,7 @@ short displayedArmorValue() {
         return player.info.defense / 10;
     } else {
         return (short) (((armorTable[rogue.armor->kind].range.upperBound + armorTable[rogue.armor->kind].range.lowerBound << FP_BASE) / 2 / 10
-                         + fp_strengthModifier(rogue.armor)) >> FP_BASE);
+                         + strengthModifier(rogue.armor)) >> FP_BASE);
     }
 }
 
@@ -3951,7 +3951,7 @@ boolean projectileReflects(creature *attacker, creature *defender) {
     }
 
     if (defender == &player && rogue.armor && (rogue.armor->flags & ITEM_RUNIC) && rogue.armor->enchant2 == A_REFLECTION) {
-        netReflectionLevel = fp_netEnchant(rogue.armor);
+        netReflectionLevel = netEnchant(rogue.armor);
     } else {
         netReflectionLevel = 0;
     }
@@ -3967,7 +3967,7 @@ boolean projectileReflects(creature *attacker, creature *defender) {
         return false;
     }
 
-    prob = fp_reflectionChance(netReflectionLevel);
+    prob = reflectionChance(netReflectionLevel);
 
     return rand_percent(prob);
 }
@@ -4139,7 +4139,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                                 theBolt->name);
                         combatMessage(buf, 0);
                     }
-                } else if (inflictDamage(caster, monst, fp_staffDamage(theBolt->magnitude << FP_BASE), theBolt->backColor, false)) {
+                } else if (inflictDamage(caster, monst, staffDamage(theBolt->magnitude << FP_BASE), theBolt->backColor, false)) {
                     // killed monster
                     if (player.currentHP <= 0) {
                         if (caster == &player) {
@@ -4220,7 +4220,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 }
                 break;
             case BE_HASTE:
-                haste(monst, fp_staffHasteDuration(theBolt->magnitude << FP_BASE));
+                haste(monst, staffHasteDuration(theBolt->magnitude << FP_BASE));
                 if (boltCatalog[BOLT_HASTE].backColor) {
                     flashMonster(monst, boltCatalog[BOLT_HASTE].backColor, 100);
                 }
@@ -4288,7 +4288,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 break;
             case BE_POISON:
                 if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
-                    addPoison(monst, fp_staffPoison(theBolt->magnitude << FP_BASE), 1);
+                    addPoison(monst, staffPoison(theBolt->magnitude << FP_BASE), 1);
                     if (canSeeMonster(monst)) {
                         if (boltCatalog[BOLT_POISON].backColor) {
                             flashMonster(monst, boltCatalog[BOLT_POISON].backColor, 100);
@@ -4309,14 +4309,14 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
             case BE_ENTRANCEMENT:
                 if (monst == &player) {
                     flashMonster(monst, &confusionGasColor, 100);
-                    monst->status[STATUS_CONFUSED] = fp_staffEntrancementDuration(theBolt->magnitude << FP_BASE);
+                    monst->status[STATUS_CONFUSED] = staffEntrancementDuration(theBolt->magnitude << FP_BASE);
                     monst->maxStatus[STATUS_CONFUSED] = max(monst->status[STATUS_CONFUSED], monst->maxStatus[STATUS_CONFUSED]);
                     message("the bolt hits you and you suddently feel disoriented.", true);
                     if (autoID) {
                         *autoID = true;
                     }
                 } else if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
-                    monst->status[STATUS_ENTRANCED] = monst->maxStatus[STATUS_ENTRANCED] = fp_staffEntrancementDuration(theBolt->magnitude << FP_BASE);
+                    monst->status[STATUS_ENTRANCED] = monst->maxStatus[STATUS_ENTRANCED] = staffEntrancementDuration(theBolt->magnitude << FP_BASE);
                     wakeUp(monst);
                     if (canSeeMonster(monst)) {
                         if (boltCatalog[BOLT_ENTRANCEMENT].backColor) {
@@ -4356,7 +4356,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 break;
             case BE_DISCORD:
                 if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
-                    monst->status[STATUS_DISCORDANT] = monst->maxStatus[STATUS_DISCORDANT] = max(fp_staffDiscordDuration(theBolt->magnitude << FP_BASE),
+                    monst->status[STATUS_DISCORDANT] = monst->maxStatus[STATUS_DISCORDANT] = max(staffDiscordDuration(theBolt->magnitude << FP_BASE),
                                                                                                  monst->status[STATUS_DISCORDANT]);
                     if (canSeeMonster(monst)) {
                         if (boltCatalog[BOLT_DISCORD].backColor) {
@@ -4369,8 +4369,8 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 }
                 break;
             case BE_SHIELDING:
-                if (fp_staffProtection(theBolt->magnitude << FP_BASE) > monst->status[STATUS_SHIELDED]) {
-                    monst->status[STATUS_SHIELDED] = fp_staffProtection(theBolt->magnitude << FP_BASE);
+                if (staffProtection(theBolt->magnitude << FP_BASE) > monst->status[STATUS_SHIELDED]) {
+                    monst->status[STATUS_SHIELDED] = staffProtection(theBolt->magnitude << FP_BASE);
                 }
                 monst->maxStatus[STATUS_SHIELDED] = monst->status[STATUS_SHIELDED];
                 if (boltCatalog[BOLT_SHIELDING].backColor) {
@@ -4459,7 +4459,7 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
             }
             break;
         case BE_CONJURATION:
-            for (i = 0; i < (fp_staffBladeCount(theBolt->magnitude << FP_BASE)); i++) {
+            for (i = 0; i < (staffBladeCount(theBolt->magnitude << FP_BASE)); i++) {
                 monst = generateMonster(MK_SPECTRAL_BLADE, true, false);
                 getQualifyingPathLocNear(&(monst->xLoc), &(monst->yLoc), x, y, true,
                                          T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)) & ~T_SPONTANEOUSLY_IGNITES, HAS_PLAYER,
@@ -5494,7 +5494,7 @@ boolean hitMonsterWithProjectileWeapon(creature *thrower, creature *monst, item 
 
     if (thrownWeaponHit) {
         damage = monst->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE) ? 0 :
-                  (randClump(theItem->damage) * fp_damageFraction(fp_netEnchant(theItem)) >> FP_BASE);
+                  (randClump(theItem->damage) * damageFraction(netEnchant(theItem)) >> FP_BASE);
 
         if (monst == &player) {
             applyArmorRunicEffect(armorRunicString, thrower, &damage, false);
@@ -5893,7 +5893,7 @@ boolean playerCancelsBlinking(const short originLoc[2], const short targetLoc[2]
                     && !(tmFlags & TM_EXTINGUISHES_FIRE)) {
 
                     possibleDeath = true;
-                } else if (i >= fp_staffBlinkDistance(2 << FP_BASE) - 1) {
+                } else if (i >= staffBlinkDistance(2 << FP_BASE) - 1) {
                     // Found at least one possible safe landing spot.
                     certainDeath = false;
                 }
@@ -5947,7 +5947,7 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
     if ((theItem->category & STAFF) && theItem->kind == STAFF_BLINKING
         && theItem->flags & (ITEM_IDENTIFIED | ITEM_MAX_CHARGES_KNOWN)) {
 
-        maxDistance = fp_staffBlinkDistance(fp_netEnchant(theItem));
+        maxDistance = staffBlinkDistance(netEnchant(theItem));
     } else {
         maxDistance = -1;
     }
@@ -6047,24 +6047,24 @@ void summonGuardian(item *theItem) {
     monst->leader = &player;
     monst->creatureState = MONSTER_ALLY;
     monst->ticksUntilTurn = monst->info.attackSpeed + 1; // So they don't move before the player's next turn.
-    monst->status[STATUS_LIFESPAN_REMAINING] = monst->maxStatus[STATUS_LIFESPAN_REMAINING] = fp_charmGuardianLifespan(fp_netEnchant(theItem));
+    monst->status[STATUS_LIFESPAN_REMAINING] = monst->maxStatus[STATUS_LIFESPAN_REMAINING] = charmGuardianLifespan(netEnchant(theItem));
     pmap[monst->xLoc][monst->yLoc].flags |= HAS_MONSTER;
     fadeInMonster(monst);
 }
 
 void useCharm(item *theItem) {
-    long long enchant = fp_netEnchant(theItem);
+    long long enchant = netEnchant(theItem);
 
     rogue.featRecord[FEAT_PURE_WARRIOR] = false;
 
     switch (theItem->kind) {
         case CHARM_HEALTH:
-            heal(&player, fp_charmHealing(enchant), false);
+            heal(&player, charmHealing(enchant), false);
             message("You feel much healthier.", false);
             break;
         case CHARM_PROTECTION:
-            if (fp_charmProtection(enchant) > player.status[STATUS_SHIELDED]) {
-                player.status[STATUS_SHIELDED] = fp_charmProtection(enchant);
+            if (charmProtection(enchant) > player.status[STATUS_SHIELDED]) {
+                player.status[STATUS_SHIELDED] = charmProtection(enchant);
             }
             player.maxStatus[STATUS_SHIELDED] = player.status[STATUS_SHIELDED];
             if (boltCatalog[BOLT_SHIELDING].backColor) {
@@ -6096,7 +6096,7 @@ void useCharm(item *theItem) {
             break;
         case CHARM_SHATTERING:
             messageWithColor("your charm emits a wave of turquoise light that pierces the nearby walls!", &itemMessageColor, false);
-            crystalize(fp_charmShattering(enchant));
+            crystalize(charmShattering(enchant));
             break;
         case CHARM_GUARDIAN:
             messageWithColor("your charm flashes and the form of a mythical guardian coalesces!", &itemMessageColor, false);
@@ -6109,7 +6109,7 @@ void useCharm(item *theItem) {
             rechargeItems(STAFF);
             break;
         case CHARM_NEGATION:
-            negationBlast("your charm", fp_charmNegationRadius(enchant) + 1); // Add 1 because otherwise radius 1 would affect only the player.
+            negationBlast("your charm", charmNegationRadius(enchant) + 1); // Add 1 because otherwise radius 1 would affect only the player.
             break;
         default:
             break;
@@ -7109,10 +7109,10 @@ void recalculateEquipmentBonuses() {
     item *theItem;
     if (rogue.weapon) {
         theItem = rogue.weapon;
-        enchant = fp_netEnchant(theItem);
+        enchant = netEnchant(theItem);
         player.info.damage = theItem->damage;
-        player.info.damage.lowerBound = player.info.damage.lowerBound * fp_damageFraction(enchant) >> FP_BASE;
-        player.info.damage.upperBound = player.info.damage.upperBound * fp_damageFraction(enchant) >> FP_BASE;
+        player.info.damage.lowerBound = player.info.damage.lowerBound * damageFraction(enchant) >> FP_BASE;
+        player.info.damage.upperBound = player.info.damage.upperBound * damageFraction(enchant) >> FP_BASE;
         if (player.info.damage.lowerBound < 1) {
             player.info.damage.lowerBound = 1;
         }
@@ -7123,7 +7123,7 @@ void recalculateEquipmentBonuses() {
 
     if (rogue.armor) {
         theItem = rogue.armor;
-        enchant = fp_netEnchant(theItem);
+        enchant = netEnchant(theItem);
         enchant -= player.status[STATUS_DONNING] << FP_BASE;
         player.info.defense = (theItem->armor << FP_BASE) + enchant * 10 >> FP_BASE;
         if (player.info.defense < 0) {
@@ -7276,7 +7276,7 @@ void updatePlayerRegenerationDelay() {
     short maxHP;
     long turnsForFull; // In thousandths of a turn.
     maxHP = player.info.maxHP;
-    turnsForFull = fp_turnsForFullRegenInThousandths(rogue.regenerationBonus << FP_BASE);
+    turnsForFull = turnsForFullRegenInThousandths(rogue.regenerationBonus << FP_BASE);
 
     player.regenPerTurn = 0;
     while (maxHP > turnsForFull / 1000) {

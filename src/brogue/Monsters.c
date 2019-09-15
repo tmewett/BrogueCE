@@ -2188,7 +2188,7 @@ boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, bool
         return false;
     }
 
-    maxDistance = fp_staffBlinkDistance(5 << FP_BASE);
+    maxDistance = staffBlinkDistance(5 << FP_BASE);
     gotOne = false;
 
     origin[0] = monst->xLoc;
@@ -2483,7 +2483,7 @@ boolean specificallyValidBoltTarget(creature *caster, creature *target, enum bol
                 }
             } else if (monstersAreTeammates(caster, target)) {
                 if (target == &player && rogue.armor && (rogue.armor->flags & ITEM_RUNIC) && (rogue.armor->flags & ITEM_RUNIC_IDENTIFIED)
-                    && rogue.armor->enchant2 == A_REFLECTION && fp_netEnchant(rogue.armor) > 0) {
+                    && rogue.armor->enchant2 == A_REFLECTION && netEnchant(rogue.armor) > 0) {
                     // Allies shouldn't cast negation on the player if she's knowingly wearing armor of reflection.
                     // Too much risk of negating themselves in the process.
                     return false;
@@ -3312,7 +3312,7 @@ void monstersTurn(creature *monst) {
         // and we're not poisonous, then approach or attack him.
         if ((monst->bookkeepingFlags & MB_FOLLOWER)
             && (monst->leader->bookkeepingFlags & MB_CAPTIVE)
-            && monst->leader->currentHP > (int) (monst->info.damage.upperBound * fp_monsterDamageAdjustmentAmount(monst) >> FP_BASE)
+            && monst->leader->currentHP > (int) (monst->info.damage.upperBound * monsterDamageAdjustmentAmount(monst) >> FP_BASE)
             && monst->leader->info.turnsBetweenRegen > 0
             && !(monst->info.abilityFlags & MA_POISONS)
             && !diagonalBlocked(monst->xLoc, monst->yLoc, monst->leader->xLoc, monst->leader->yLoc, false)) {
@@ -3945,7 +3945,7 @@ void toggleMonsterDormancy(creature *monst) {
 boolean staffOrWandEffectOnMonsterDescription(char *newText, item *theItem, creature *monst) {
     char theItemName[COLS], monstName[COLS];
     boolean successfulDescription = false;
-    long long enchant = fp_netEnchant(theItem);
+    long long enchant = netEnchant(theItem);
 
     if ((theItem->category & (STAFF | WAND))
         && tableForItemCategory(theItem->category, NULL)[theItem->kind].identified) {
@@ -3964,7 +3964,7 @@ boolean staffOrWandEffectOnMonsterDescription(char *newText, item *theItem, crea
                             monstName);
                     successfulDescription = true;
                 } else if (theItem->flags & (ITEM_MAX_CHARGES_KNOWN | ITEM_IDENTIFIED)) {
-                    if (fp_staffDamageLow(enchant) >= monst->currentHP) {
+                    if (staffDamageLow(enchant) >= monst->currentHP) {
                         sprintf(newText, "\n     Your %s (%c) will %s the %s in one hit.",
                                 theItemName,
                                 theItem->inventoryLetter,
@@ -3975,8 +3975,8 @@ boolean staffOrWandEffectOnMonsterDescription(char *newText, item *theItem, crea
                                 theItemName,
                                 theItem->inventoryLetter,
                                 monstName,
-                                100 * fp_staffDamageLow(enchant) / monst->currentHP,
-                                100 * fp_staffDamageHigh(enchant) / monst->currentHP);
+                                100 * staffDamageLow(enchant) / monst->currentHP,
+                                100 * staffDamageHigh(enchant) / monst->currentHP);
                     }
                     successfulDescription = true;
                 }
@@ -3992,7 +3992,7 @@ boolean staffOrWandEffectOnMonsterDescription(char *newText, item *theItem, crea
                             theItemName,
                             theItem->inventoryLetter,
                             monstName,
-                            100 * fp_staffPoison(enchant) / monst->currentHP);
+                            100 * staffPoison(enchant) / monst->currentHP);
                 }
                 successfulDescription = true;
                 break;
@@ -4073,7 +4073,7 @@ void monsterDetails(char buf[], creature *monst) {
     } else {
         realArmorValue = player.info.defense;
         player.info.defense = (armorTable[rogue.armor->kind].range.upperBound + armorTable[rogue.armor->kind].range.lowerBound) / 2;
-        player.info.defense += 10 * fp_strengthModifier(rogue.armor) >> FP_BASE;
+        player.info.defense += 10 * strengthModifier(rogue.armor) >> FP_BASE;
         combatMath2 = hitProbability(monst, &player);
         player.info.defense = realArmorValue;
     }
@@ -4088,7 +4088,7 @@ void monsterDetails(char buf[], creature *monst) {
 
         itemName(rogue.armor, theItemName, false, false, NULL);
         sprintf(newText, "Your %s renders you immune to %s.\n     ", theItemName, monstName);
-    } else if (monst->info.damage.upperBound * fp_monsterDamageAdjustmentAmount(monst) >> FP_BASE == 0) {
+    } else if (monst->info.damage.upperBound * monsterDamageAdjustmentAmount(monst) >> FP_BASE == 0) {
         sprintf(newText, "%s deals no direct damage.\n     ", capMonstName);
     } else {
         i = strlen(buf);
@@ -4096,32 +4096,32 @@ void monsterDetails(char buf[], creature *monst) {
         if (monst->info.abilityFlags & MA_POISONS) {
             combatMath = player.status[STATUS_POISONED]; // combatMath is poison duration
             for (i = 0; combatMath * (player.poisonAmount + i) < player.currentHP; i++) {
-                combatMath += monst->info.damage.upperBound * fp_monsterDamageAdjustmentAmount(monst) >> FP_BASE;
+                combatMath += monst->info.damage.upperBound * monsterDamageAdjustmentAmount(monst) >> FP_BASE;
             }
             if (i == 0) {
                 // Already fatally poisoned.
                 sprintf(newText, "%s has a %i%% chance to poison you and typically poisons for %i turns.\n     ",
                         capMonstName,
                         combatMath2,
-                        (int) ((monst->info.damage.lowerBound + monst->info.damage.upperBound) * fp_monsterDamageAdjustmentAmount(monst) / 2 >> FP_BASE));
+                        (int) ((monst->info.damage.lowerBound + monst->info.damage.upperBound) * monsterDamageAdjustmentAmount(monst) / 2 >> FP_BASE));
             } else {
             sprintf(newText, "%s has a %i%% chance to poison you, typically poisons for %i turns, and at worst, could fatally poison you in %i hit%s.\n     ",
                     capMonstName,
                     combatMath2,
-                    (int) ((monst->info.damage.lowerBound + monst->info.damage.upperBound) * fp_monsterDamageAdjustmentAmount(monst) / 2 >> FP_BASE),
+                    (int) ((monst->info.damage.lowerBound + monst->info.damage.upperBound) * monsterDamageAdjustmentAmount(monst) / 2 >> FP_BASE),
                     i,
                     (i > 1 ? "s" : ""));
             }
         } else {
-            combatMath = (((player.currentHP + (monst->info.damage.upperBound * fp_monsterDamageAdjustmentAmount(monst) >> FP_BASE)) - 1) << FP_BASE)
-                    / (monst->info.damage.upperBound * fp_monsterDamageAdjustmentAmount(monst));
+            combatMath = (((player.currentHP + (monst->info.damage.upperBound * monsterDamageAdjustmentAmount(monst) >> FP_BASE)) - 1) << FP_BASE)
+                    / (monst->info.damage.upperBound * monsterDamageAdjustmentAmount(monst));
             if (combatMath < 1) {
                 combatMath = 1;
             }
             sprintf(newText, "%s has a %i%% chance to hit you, typically hits for %i%% of your current health, and at worst, could defeat you in %i hit%s.\n     ",
                     capMonstName,
                     combatMath2,
-                    (int) (100 * (monst->info.damage.lowerBound + monst->info.damage.upperBound) * fp_monsterDamageAdjustmentAmount(monst) / 2 / player.currentHP >> FP_BASE),
+                    (int) (100 * (monst->info.damage.lowerBound + monst->info.damage.upperBound) * monsterDamageAdjustmentAmount(monst) / 2 / player.currentHP >> FP_BASE),
                     combatMath,
                     (combatMath > 1 ? "s" : ""));
         }

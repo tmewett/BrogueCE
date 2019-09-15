@@ -42,15 +42,15 @@ short wandDominate(creature *monst)                 {return (((monst)->currentHP
                                                      max(0, 100 * ((monst)->info.maxHP - (monst)->currentHP) / (monst)->info.maxHP));}
 
 // All "enchant" parameters must already be multiplied by FP_FACTOR:
-short fp_staffDamageLow(long long enchant)            {return ((int) (3 * (2 + (enchant >> FP_BASE)) / 4));}
-short fp_staffDamageHigh(long long enchant)           {return ((int) (4 + (5 * (enchant >> FP_BASE) / 2)));}
-short fp_staffDamage(long long enchant)               {return ((int) randClumpedRange(fp_staffDamageLow(enchant), fp_staffDamageHigh(enchant), 1 + (enchant) / 3));}
-short fp_staffBlinkDistance(long long enchant)        {return ((int) (((enchant) * 2 >> FP_BASE) + 2));}
-short fp_staffHasteDuration(long long enchant)        {return ((int) (2 + (enchant >> FP_BASE) * 4));}
-short fp_staffBladeCount(long long enchant)           {return ((int) ((enchant) * 3 / 2 >> FP_BASE));}
-short fp_staffDiscordDuration(long long enchant)      {return ((int) ((enchant) * 4 >> FP_BASE));}
-short fp_staffEntrancementDuration(long long enchant) {return ((int) ((enchant) * 3 >> FP_BASE));}
-int fp_staffProtection(long long enchant) {
+short staffDamageLow(long long enchant)            {return ((int) (3 * (2 + (enchant >> FP_BASE)) / 4));}
+short staffDamageHigh(long long enchant)           {return ((int) (4 + (5 * (enchant >> FP_BASE) / 2)));}
+short staffDamage(long long enchant)               {return ((int) randClumpedRange(staffDamageLow(enchant), staffDamageHigh(enchant), 1 + (enchant) / 3));}
+short staffBlinkDistance(long long enchant)        {return ((int) (((enchant) * 2 >> FP_BASE) + 2));}
+short staffHasteDuration(long long enchant)        {return ((int) (2 + (enchant >> FP_BASE) * 4));}
+short staffBladeCount(long long enchant)           {return ((int) ((enchant) * 3 / 2 >> FP_BASE));}
+short staffDiscordDuration(long long enchant)      {return ((int) ((enchant) * 4 >> FP_BASE));}
+short staffEntrancementDuration(long long enchant) {return ((int) ((enchant) * 3 >> FP_BASE));}
+int staffProtection(long long enchant) {
     const long long POW_STAFF_PROTECTION[] = {
         // 1.53^x << FP_BASE, with x from 0 to 50 in increments of 1:
         65536, 100270, 153413, 234722, 359125, 549461, 840675, 1286233, 1967937, 3010944, 4606745, 7048320, 10783931, 16499414, 25244104, 38623479, 59093923,
@@ -59,7 +59,7 @@ int fp_staffProtection(long long enchant) {
         2448096844694, 3745588172382, 5730749903744, 8768047352729, 13415112449676, 20525122048004, 31403436733446, 48047258202173, 73512305049325, 112473826725468};
     return 50 * POW_STAFF_PROTECTION[(enchant >> FP_BASE) - 2] >> FP_BASE;
 }
-int fp_staffPoison(long long enchant) {
+int staffPoison(long long enchant) {
     const long long POW_POISON[] = {
         // 1.3^x << FP_BASE, with x from 0 to 50 in increments of 1:
         65536, 85196, 110755, 143982, 187177, 243330, 316329, 411228, 534597, 694976, 903469, 1174510, 1526863, 1984922, 2580398, 3354518, 4360874, 5669136, 7369877,
@@ -70,7 +70,7 @@ int fp_staffPoison(long long enchant) {
     return 5 * POW_POISON[enchant] >> FP_BASE;
 }
 
-short fp_ringWisdomMultiplier(long long enchant) {
+short ringWisdomMultiplier(long long enchant) {
     const long long POW_WISDOM[] = {
         // 1.3^x << FP_BASE, with x from -10 to 30 in increments of 1:
         4753, 6180, 8034, 10444, 13577, 17650, 22945, 29829, 38778, 50412, 65536, 85196, 110755, 143982, 187177, 243330, 316329, 411228, 534597, 694976, 903469,
@@ -81,11 +81,11 @@ short fp_ringWisdomMultiplier(long long enchant) {
     return 10 * POW_WISDOM[enchant] >> FP_BASE;
 }
 
-short fp_charmHealing(long long enchant)              {return ((int) clamp(20 * (enchant) >> FP_BASE, 0, 100));}
-short fp_charmShattering(long long enchant)           {return ((int) (4 + (enchant >> FP_BASE)));}
-short fp_charmGuardianLifespan(long long enchant)     {return ((int) (4 + 2 * (enchant >> FP_BASE)));}
-short fp_charmNegationRadius(long long enchant)       {return ((int) (1 + 3 * (enchant >> FP_BASE)));}
-int fp_charmProtection(long long enchant) {
+short charmHealing(long long enchant)              {return ((int) clamp(20 * (enchant) >> FP_BASE, 0, 100));}
+short charmShattering(long long enchant)           {return ((int) (4 + (enchant >> FP_BASE)));}
+short charmGuardianLifespan(long long enchant)     {return ((int) (4 + 2 * (enchant >> FP_BASE)));}
+short charmNegationRadius(long long enchant)       {return ((int) (1 + 3 * (enchant >> FP_BASE)));}
+int charmProtection(long long enchant) {
     const long long POW_CHARM_PROTECTION[] = {
         // 1.35^x << FP_BASE, with x from 0 to 50 in increments of 1:
         65536, 88473, 119439, 161243, 217678, 293865, 396718, 535570, 723019, 976076, 1317703, 1778899, 2401514, 3242044, 4376759, 5908625, 7976644, 10768469,
@@ -97,17 +97,17 @@ int fp_charmProtection(long long enchant) {
     return 150 * POW_CHARM_PROTECTION[enchant] >> FP_BASE;
 }
 
-short fp_weaponParalysisDuration(long long enchant)   {return (max(2, (int) (2 + ((enchant) / 2 >> FP_BASE))));}
-short fp_weaponConfusionDuration(long long enchant)   {return (max(3, (int) ((enchant) * 3/2 >> FP_BASE)));}
-short fp_weaponForceDistance(long long enchant)       {return (max(4, (int) (((enchant) * 2 >> FP_BASE) + 2)));} // Depends on definition of staffBlinkDistance() above.
-short fp_weaponSlowDuration(long long enchant)        {return (max(3, (int) ((((enchant) >> FP_BASE) + 2) * ((enchant) + (2 << FP_BASE))) / 3 >> FP_BASE));}
-short fp_weaponImageCount(long long enchant)          {return (clamp((int) ((enchant) / 3 >> FP_BASE), 1, 7));}
-short fp_weaponImageDuration(long long enchant)       {return 3;}
+short weaponParalysisDuration(long long enchant)   {return (max(2, (int) (2 + ((enchant) / 2 >> FP_BASE))));}
+short weaponConfusionDuration(long long enchant)   {return (max(3, (int) ((enchant) * 3/2 >> FP_BASE)));}
+short weaponForceDistance(long long enchant)       {return (max(4, (int) (((enchant) * 2 >> FP_BASE) + 2)));} // Depends on definition of staffBlinkDistance() above.
+short weaponSlowDuration(long long enchant)        {return (max(3, (int) ((((enchant) >> FP_BASE) + 2) * ((enchant) + (2 << FP_BASE))) / 3 >> FP_BASE));}
+short weaponImageCount(long long enchant)          {return (clamp((int) ((enchant) / 3 >> FP_BASE), 1, 7));}
+short weaponImageDuration(long long enchant)       {return 3;}
 
-short fp_armorReprisalPercent(long long enchant)      {return (max(5, (int) ((enchant) * 5 >> FP_BASE)));}
-short fp_armorAbsorptionMax(long long enchant)        {return (max(1, (int) ((enchant) >> FP_BASE)));}
-short fp_armorImageCount(long long enchant)           {return (clamp((int) ((enchant) / 3 >> FP_BASE), 1, 5));}
-short fp_reflectionChance(long long enchant) {
+short armorReprisalPercent(long long enchant)      {return (max(5, (int) ((enchant) * 5 >> FP_BASE)));}
+short armorAbsorptionMax(long long enchant)        {return (max(1, (int) ((enchant) >> FP_BASE)));}
+short armorImageCount(long long enchant)           {return (clamp((int) ((enchant) / 3 >> FP_BASE), 1, 5));}
+short reflectionChance(long long enchant) {
     const long long POW_REFLECT[] = {
         // 0.85^x << FP_BASE, with x from 1 to 50 in increments of 0.25:
         62926, 60421, 58015, 55705, 53487, 51358, 49313, 47349, 45464, 43654, 41916, 40247, 38644, 37106, 35628, 34210, 32848, 31540, 30284, 29078, 27920,
@@ -123,7 +123,7 @@ short fp_reflectionChance(long long enchant) {
     return clamp(100 - (100 * POW_REFLECT[enchant - 1] >> FP_BASE), 1, 100);
 }
 
-long fp_turnsForFullRegenInThousandths(long long bonus) {
+long turnsForFullRegenInThousandths(long long bonus) {
     const long long POW_REGEN[] = {
         // 0.75^x << FP_BASE, with x from -10 to 50 in increments of 1:
         1163770, 872827, 654620, 490965, 368224, 276168, 207126, 155344, 116508, 87381, 65536, 49152, 36864, 27648, 20736, 15552, 11664, 8748, 6561, 4920, 3690,
@@ -136,7 +136,7 @@ long fp_turnsForFullRegenInThousandths(long long bonus) {
 }
 
 
-long long fp_damageFraction(long long netEnchant) {
+long long damageFraction(long long netEnchant) {
     const long long POW_DAMAGE_FRACTION[] = {
         // 1.065^x << FP_BASE, with x representing a change in 0.25 weapon enchantment points, ranging from -20 to 50.
         18598, 18894, 19193, 19498, 19807, 20122, 20441, 20765, 21095, 21430, 21770, 22115, 22466, 22823, 23185, 23553, 23926, 24306, 24692, 25084, 25482, 25886,
@@ -159,7 +159,7 @@ long long fp_damageFraction(long long netEnchant) {
     return POW_DAMAGE_FRACTION[((netEnchant + (20 << FP_BASE)) * 4) >> FP_BASE];
 }
 
-long long fp_accuracyFraction(long long netEnchant) {
+long long accuracyFraction(long long netEnchant) {
     const long long POW_ACCURACY_FRACTION[] = {
         // 1.065^x << FP_BASE, with x representing a change in 0.25 weapon enchantment points (as displayed), ranging from -20 to 50.
         18598, 18894, 19193, 19498, 19807, 20122, 20441, 20765, 21095, 21430, 21770, 22115, 22466, 22823, 23185, 23553, 23926, 24306, 24692, 25084, 25482, 25886,
@@ -182,7 +182,7 @@ long long fp_accuracyFraction(long long netEnchant) {
     return POW_ACCURACY_FRACTION[((netEnchant + (20 << FP_BASE)) * 4) >> FP_BASE];
 }
 
-long long fp_defenseFraction(long long netDefense) {
+long long defenseFraction(long long netDefense) {
     short tableIndex;
     const long long POW_DEFENSE_FRACTION[] = {
         // 0.9678^x << FP_BASE, with x representing a change in 0.25 armor points (as displayed), ranging from -20 to 50.
@@ -387,7 +387,7 @@ short runicWeaponChance(item *theItem, boolean customEnchantLevel, long long enc
         return 15;
     }
     if (!customEnchantLevel) {
-        enchantLevel = fp_netEnchant(theItem);
+        enchantLevel = netEnchant(theItem);
     }
 
     // Innately high-damage weapon types are less likely to trigger runic effects.
