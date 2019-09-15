@@ -80,7 +80,7 @@
 #define false                   0
 #define true                    1
 
-#define Fl(N)                   (1 << (N))
+#define Fl(N)                   ((unsigned long) 1 << (N))
 #define FP_BASE 16 // Don't change this without recalculating all of the power tables throughout the code!
 #define FP_FACTOR (1LL << FP_BASE)
 
