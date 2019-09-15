@@ -2233,7 +2233,7 @@ typedef struct playerCharacter {
     creature *yendorWarden;
 
     lightSource minersLight;
-    int64_t minersLightRadius;
+    long long minersLightRadius;
     short ticksTillUpdateEnvironment;   // so that some periodic things happen in objective time
     unsigned short scentTurnNumber;     // helps make scent-casting work
     unsigned long playerTurnNumber;     // number of input turns in recording. Does not increment during paralysis.
@@ -2274,7 +2274,7 @@ typedef struct playerCharacter {
     unsigned long locationInAnnotationFile; // how far we've read in the annotations file
 
     // metered items
-    int64_t foodSpawned;                    // amount of nutrition units spawned so far this game
+    long long foodSpawned;                    // amount of nutrition units spawned so far this game
     short lifePotionFrequency;
     short lifePotionsSpawned;
     short strengthPotionFrequency;
@@ -2837,9 +2837,9 @@ extern "C" {
                            boolean passThroughCreatures, boolean setFieldOfView, short theColor[3], short fadeToPercent);
     void betweenOctant1andN(short *x, short *y, short x0, short y0, short n);
 
-    void getFOVMask(char grid[DCOLS][DROWS], short xLoc, short yLoc, int64_t maxRadius,
+    void getFOVMask(char grid[DCOLS][DROWS], short xLoc, short yLoc, long long maxRadius,
                     unsigned long forbiddenTerrain, unsigned long forbiddenFlags, boolean cautiousOnWalls);
-    void scanOctantFOV(char grid[DCOLS][DROWS], short xLoc, short yLoc, short octant, int64_t maxRadius,
+    void scanOctantFOV(char grid[DCOLS][DROWS], short xLoc, short yLoc, short octant, long long maxRadius,
                        short columnsRightFromOrigin, long startSlope, long endSlope, unsigned long forbiddenTerrain,
                        unsigned long forbiddenFlags, boolean cautiousOnWalls);
 
@@ -2880,7 +2880,7 @@ extern "C" {
     void spawnPeriodicHorde();
     void clearStatus(creature *monst);
     void moralAttack(creature *attacker, creature *defender);
-    short runicWeaponChance(item *theItem, boolean customEnchantLevel, int64_t enchantLevel);
+    short runicWeaponChance(item *theItem, boolean customEnchantLevel, long long enchantLevel);
     void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed);
     void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidancePreferences);
     void chooseNewWanderDestination(creature *monst);
@@ -2902,8 +2902,8 @@ extern "C" {
     boolean canDirectlySeeMonster(creature *monst);
     void monsterName(char *buf, creature *monst, boolean includeArticle);
     boolean monsterIsInClass(const creature *monst, const short monsterClass);
-    int64_t fp_strengthModifier(item *theItem);
-    int64_t fp_netEnchant(item *theItem);
+    long long fp_strengthModifier(item *theItem);
+    long long fp_netEnchant(item *theItem);
     short hitProbability(creature *attacker, creature *defender);
     boolean attackHit(creature *attacker, creature *defender);
     void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *damage, boolean melee);
@@ -2927,7 +2927,7 @@ extern "C" {
                       const short maxDistance, const boolean returnLastEmptySpace);
     void negate(creature *monst);
     short monsterAccuracyAdjusted(const creature *monst);
-    int64_t fp_monsterDamageAdjustmentAmount(const creature *monst);
+    long long fp_monsterDamageAdjustmentAmount(const creature *monst);
     short monsterDefenseAdjusted(const creature *monst);
     void weaken(creature *monst, short maxDuration);
     void slow(creature *monst, short turns);
@@ -3121,36 +3121,36 @@ extern "C" {
     void RNGLog(char *message);
 
     short wandDominate(creature *monst);
-    short fp_staffDamageLow(int64_t enchant);
-    short fp_staffDamageHigh(int64_t enchant);
-    short fp_staffDamage(int64_t enchant);
-    int fp_staffPoison(int64_t enchant);
-    short fp_staffBlinkDistance(int64_t enchant);
-    short fp_staffHasteDuration(int64_t enchant);
-    short fp_staffBladeCount(int64_t enchant);
-    short fp_staffDiscordDuration(int64_t enchant);
-    int fp_staffProtection(int64_t enchant);
-    short fp_staffEntrancementDuration(int64_t enchant);
-    short fp_ringWisdomMultiplier(int64_t enchant);
-    short fp_charmHealing(int64_t enchant);
-    int fp_charmProtection(int64_t enchant);
-    short fp_charmShattering(int64_t enchant);
-    short fp_charmGuardianLifespan(int64_t enchant);
-    short fp_charmNegationRadius(int64_t enchant);
-    short fp_weaponParalysisDuration(int64_t enchant);
-    short fp_weaponConfusionDuration(int64_t enchant);
-    short fp_weaponForceDistance(int64_t enchant);
-    short fp_weaponSlowDuration(int64_t enchant);
-    short fp_weaponImageCount(int64_t enchant);
-    short fp_weaponImageDuration(int64_t enchant);
-    short fp_armorReprisalPercent(int64_t enchant);
-    short fp_armorAbsorptionMax(int64_t enchant);
-    short fp_armorImageCount(int64_t enchant);
-    short fp_reflectionChance(int64_t enchant);
-    long fp_turnsForFullRegenInThousandths(int64_t bonus);
-    int64_t fp_damageFraction(int64_t netEnchant);
-    int64_t fp_accuracyFraction(int64_t netEnchant);
-    int64_t fp_defenseFraction(int64_t netDefense);
+    short fp_staffDamageLow(long long enchant);
+    short fp_staffDamageHigh(long long enchant);
+    short fp_staffDamage(long long enchant);
+    int fp_staffPoison(long long enchant);
+    short fp_staffBlinkDistance(long long enchant);
+    short fp_staffHasteDuration(long long enchant);
+    short fp_staffBladeCount(long long enchant);
+    short fp_staffDiscordDuration(long long enchant);
+    int fp_staffProtection(long long enchant);
+    short fp_staffEntrancementDuration(long long enchant);
+    short fp_ringWisdomMultiplier(long long enchant);
+    short fp_charmHealing(long long enchant);
+    int fp_charmProtection(long long enchant);
+    short fp_charmShattering(long long enchant);
+    short fp_charmGuardianLifespan(long long enchant);
+    short fp_charmNegationRadius(long long enchant);
+    short fp_weaponParalysisDuration(long long enchant);
+    short fp_weaponConfusionDuration(long long enchant);
+    short fp_weaponForceDistance(long long enchant);
+    short fp_weaponSlowDuration(long long enchant);
+    short fp_weaponImageCount(long long enchant);
+    short fp_weaponImageDuration(long long enchant);
+    short fp_armorReprisalPercent(long long enchant);
+    short fp_armorAbsorptionMax(long long enchant);
+    short fp_armorImageCount(long long enchant);
+    short fp_reflectionChance(long long enchant);
+    long fp_turnsForFullRegenInThousandths(long long bonus);
+    long long fp_damageFraction(long long netEnchant);
+    long long fp_accuracyFraction(long long netEnchant);
+    long long fp_defenseFraction(long long netDefense);
 
     void checkForDungeonErrors();
 

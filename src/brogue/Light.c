@@ -56,7 +56,7 @@ boolean paintLight(lightSource *theLight, short x, short y, boolean isMinersLigh
     short i, j, k;
     short colorComponents[3], randComponent, lightMultiplier;
     short fadeToPercent, radiusRounded;
-    int64_t radius;
+    long long radius;
     char grid[DCOLS][DROWS];
     boolean dispelShadows, overlappedFieldOfView;
 
@@ -119,7 +119,7 @@ boolean paintLight(lightSource *theLight, short x, short y, boolean isMinersLigh
 
 // sets miner's light strength and characteristics based on rings of illumination, scrolls of darkness and water submersion
 void updateMinersLightRadius() {
-    int64_t base_fraction, fraction, lightRadius;
+    long long base_fraction, fraction, lightRadius;
 
     lightRadius = 100 * rogue.minersLightRadius;
 

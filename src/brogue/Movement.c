@@ -2381,7 +2381,7 @@ void betweenOctant1andN(short *x, short *y, short x0, short y0, short n) {
 // If cautiousOnWalls is set, we will not illuminate blocking tiles unless the tile one space closer to the origin
 // is visible to the player; this is to prevent lights from illuminating a wall when the player is on the other
 // side of the wall.
-void getFOVMask(char grid[DCOLS][DROWS], short xLoc, short yLoc, int64_t maxRadius,
+void getFOVMask(char grid[DCOLS][DROWS], short xLoc, short yLoc, long long maxRadius,
                 unsigned long forbiddenTerrain, unsigned long forbiddenFlags, boolean cautiousOnWalls) {
     short i;
 
@@ -2392,7 +2392,7 @@ void getFOVMask(char grid[DCOLS][DROWS], short xLoc, short yLoc, int64_t maxRadi
 }
 
 // This is a custom implementation of recursive shadowcasting.
-void scanOctantFOV(char grid[DCOLS][DROWS], short xLoc, short yLoc, short octant, int64_t maxRadius,
+void scanOctantFOV(char grid[DCOLS][DROWS], short xLoc, short yLoc, short octant, long long maxRadius,
                    short columnsRightFromOrigin, long startSlope, long endSlope, unsigned long forbiddenTerrain,
                    unsigned long forbiddenFlags, boolean cautiousOnWalls) {
 

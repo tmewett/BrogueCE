@@ -57,8 +57,8 @@
  * strength penalty/benefit) increases
  */
 
-int64_t fp_strengthModifier(item *theItem) {
-    int64_t difference = (rogue.strength - player.weaknessAmount) - theItem->strengthRequired;
+long long fp_strengthModifier(item *theItem) {
+    long long difference = (rogue.strength - player.weaknessAmount) - theItem->strengthRequired;
     if (difference > 0) {
         return (difference << FP_BASE) / 4; // 0.25x
     } else {
@@ -66,18 +66,18 @@ int64_t fp_strengthModifier(item *theItem) {
     }
 }
 
-int64_t fp_netEnchant(item *theItem) {
-    int64_t retval;
+long long fp_netEnchant(item *theItem) {
+    long long retval;
     if (theItem->category & (WEAPON | ARMOR)) {
-        retval = (((int64_t) theItem->enchant1) << FP_BASE) + fp_strengthModifier(theItem);
+        retval = (((long long) theItem->enchant1) << FP_BASE) + fp_strengthModifier(theItem);
     } else {
-        retval = (((int64_t) theItem->enchant1) << FP_BASE);
+        retval = (((long long) theItem->enchant1) << FP_BASE);
     }
     // Clamp all net enchantment values to [-20, 50].
     return clamp(retval, -20 << FP_BASE, 50 << FP_BASE);
 }
 
-int64_t fp_monsterDamageAdjustmentAmount(const creature *monst) {
+long long fp_monsterDamageAdjustmentAmount(const creature *monst) {
     if (monst == &player) {
         // Handled through player strength routines elsewhere.
         return FP_FACTOR;
@@ -573,7 +573,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
         &yellow, &pink, &green, &confusionGasColor, NULL, NULL, &darkRed, &rainbow};
     //  W_SPEED, W_QUIETUS, W_PARALYSIS, W_MULTIPLICITY, W_SLOWING, W_CONFUSION, W_FORCE, W_SLAYING, W_MERCY, W_PLENTY
     short chance, i;
-    int64_t enchant;
+    long long enchant;
     enum weaponEnchants enchantType = theItem->enchant2;
     creature *newMonst;
     boolean autoID = false;
@@ -787,7 +787,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
     boolean runicKnown;
     boolean runicDiscovered;
     short newDamage, dir, newX, newY, count, i;
-    int64_t enchant;
+    long long enchant;
     creature *monst, *hitList[8];
 
     returnString[0] = '\0';

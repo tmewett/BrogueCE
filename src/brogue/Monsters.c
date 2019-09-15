@@ -58,7 +58,7 @@ creature *generateMonster(short monsterID, boolean itemPossible, boolean mutatio
     creature *monst;
 
     // 1.17^x * 10, with x from 1 to 13:
-    const int64_t POW_DEEP_MUTATION[] = {11, 13, 16, 18, 21, 25, 30, 35, 41, 48, 56, 65, 76};
+    const long long POW_DEEP_MUTATION[] = {11, 13, 16, 18, 21, 25, 30, 35, 41, 48, 56, 65, 76};
 
     monst = (creature *) malloc(sizeof(creature));
     memset(monst, '\0', sizeof(creature));
@@ -3945,7 +3945,7 @@ void toggleMonsterDormancy(creature *monst) {
 boolean staffOrWandEffectOnMonsterDescription(char *newText, item *theItem, creature *monst) {
     char theItemName[COLS], monstName[COLS];
     boolean successfulDescription = false;
-    int64_t enchant = fp_netEnchant(theItem);
+    long long enchant = fp_netEnchant(theItem);
 
     if ((theItem->category & (STAFF | WAND))
         && tableForItemCategory(theItem->category, NULL)[theItem->kind].identified) {
