@@ -1064,7 +1064,7 @@ void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidance
 
     if (!coordinatesAreInMap(x, y)) {
         zeroOutGrid(monstFOV);
-        getFOVMask(monstFOV, monst->xLoc, monst->yLoc, DCOLS, T_OBSTRUCTS_VISION, 0, false);
+        getFOVMask(monstFOV, monst->xLoc, monst->yLoc, DCOLS << FP_BASE, T_OBSTRUCTS_VISION, 0, false);
         grid = allocGrid();
         fillGrid(grid, 0);
         calculateDistances(grid, monst->xLoc, monst->yLoc, forbiddenFlagsForMonster(&(monst->info)) & T_DIVIDES_LEVEL, NULL, true, false);
