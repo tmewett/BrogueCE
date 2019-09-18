@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include "PlatformDefines.h"
 
 // unicode: comment this line to revert to ASCII

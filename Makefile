@@ -1,6 +1,6 @@
 include config.mk
 
-cflags := -Isrc/brogue -Isrc/platform -Wall -Wno-parentheses
+cflags := -Isrc/brogue -Isrc/platform -std=c99 -Wall -Wpedantic -Wno-parentheses -Wno-format-overflow
 libs := -lm
 
 sources := $(wildcard src/brogue/*.c) $(wildcard src/platform/*.c)
