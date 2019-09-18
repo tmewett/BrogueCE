@@ -1,6 +1,10 @@
 unreleased
 ==========
 
+-
+  Goblin conjurers no longer have the spear attack pattern in contradiction
+  with their attack message
+
 
 1.7.5-flend1
 ============
