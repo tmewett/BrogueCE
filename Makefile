@@ -16,6 +16,10 @@ ifeq ($(GRAPHICS),YES)
 	libs += -L$(TCOD_DIR) -ltcod -lSDL
 endif
 
+ifeq ($(DEBUG),YES)
+	cppflags += -DDEBUGGING=1
+endif
+
 .PHONY: clean
 
 %.o: %.c src/brogue/Rogue.h src/brogue/IncludeGlobals.h

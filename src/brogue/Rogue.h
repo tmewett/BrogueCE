@@ -36,7 +36,9 @@
 
 // debug macros -- define DEBUGGING as 1 to enable wizard mode.
 
+#ifndef DEBUGGING
 #define DEBUGGING                       0
+#endif
 
 #define DEBUG                           if (DEBUGGING)
 #define MONSTERS_ENABLED                (!DEBUGGING || 1) // Quest room monsters can be generated regardless.
