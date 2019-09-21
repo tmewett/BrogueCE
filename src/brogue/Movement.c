@@ -185,7 +185,7 @@ void describeLocation(char *buf, short x, short y) {
                && itemMagicChar(monst->carriedItem)) {
         magicItem = monst->carriedItem;
     }
-    if (magicItem) {
+    if (magicItem && !(pmap[x][y].flags & DISCOVERED)) {
         switch (itemMagicChar(magicItem)) {
             case GOOD_MAGIC_CHAR:
                 strcpy(object, "benevolent magic");
