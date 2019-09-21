@@ -4,6 +4,9 @@ unreleased
 -
   Goblin conjurers no longer have the spear attack pattern in contradiction
   with their attack message
+-
+  Magic-detected cells are now described with "you remember seeing ITEM here"
+  when the item has been seen
 
 
 1.7.5-flend1
