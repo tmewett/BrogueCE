@@ -1212,6 +1212,21 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
             applyColorAverage(&cellBackColor, &gasAugmentColor, gasAugmentWeight);
         }
 
+        if (!playerCanSeeOrSense(x, y)) {
+            pmap[x][y].rememberedAppearance.character = cellChar;
+            pmap[x][y].flags |= STABLE_MEMORY;
+            if (pmap[x][y].flags & HAS_ITEM) {
+                theItem = itemAtLoc(x, y);
+                pmap[x][y].rememberedItemCategory = theItem->category;
+                pmap[x][y].rememberedItemKind = theItem->kind;
+                pmap[x][y].rememberedItemQuantity = theItem->quantity;
+            } else {
+                pmap[x][y].rememberedItemCategory = 0;
+                pmap[x][y].rememberedItemKind = 0;
+                pmap[x][y].rememberedItemQuantity = 0;
+            }
+        }
+
         if (!(pmap[x][y].flags & (ANY_KIND_OF_VISIBLE | ITEM_DETECTED | HAS_PLAYER))
             && !playerCanSeeOrSense(x, y)
             && (!monst || !monsterRevealed(monst)) && !monsterWithDetectedItem) {
@@ -1230,19 +1245,6 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
             }
             applyColorMultiplier(&cellBackColor, &lightMultiplierColor);
             bakeTerrainColors(&cellForeColor, &cellBackColor, x, y);
-
-            pmap[x][y].rememberedAppearance.character = cellChar;
-            pmap[x][y].flags |= STABLE_MEMORY;
-            if (pmap[x][y].flags & HAS_ITEM) {
-                theItem = itemAtLoc(x, y);
-                pmap[x][y].rememberedItemCategory = theItem->category;
-                pmap[x][y].rememberedItemKind = theItem->kind;
-                pmap[x][y].rememberedItemQuantity = theItem->quantity;
-            } else {
-                pmap[x][y].rememberedItemCategory = 0;
-                pmap[x][y].rememberedItemKind = 0;
-                pmap[x][y].rememberedItemQuantity = 0;
-            }
 
             // Then restore, so that it looks the same on this pass as it will when later refreshed.
             cellForeColor = colorFromComponents(pmap[x][y].rememberedAppearance.foreColorComponents);
