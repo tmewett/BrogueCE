@@ -6,12 +6,12 @@ libs := -lm
 sources := $(wildcard src/brogue/*.c) $(wildcard src/platform/*.c)
 objects := $(sources:.c=.o)
 
-ifeq ($(TERMINAL),yes)
+ifeq ($(TERMINAL),YES)
 	cppflags += -DBROGUE_CURSES
 	libs += -lncurses
 endif
 
-ifeq ($(GRAPHICS),yes)
+ifeq ($(GRAPHICS),YES)
 	cppflags += -DBROGUE_TCOD -I$(TCOD_DIR)/include
 	libs += -L$(TCOD_DIR) -ltcod -lSDL
 endif

@@ -20,5 +20,5 @@ shouldn't be too hard to get it to build with mingw-w64 on Windows.
 1. Run `make`
 
 The game can then be run via the `./brogue` script. If you've built with
-`GRAPHICS=yes` you'll need to also copy (or symlink) your built `libtcod.so`
+`GRAPHICS=YES` you'll need to also copy (or symlink) your built `libtcod.so`
 to `bin/libtcod.so.1`.
