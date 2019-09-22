@@ -29,6 +29,9 @@
 #include "Rogue.h"
 #include "IncludeGlobals.h"
 
+
+    // Random number generation
+
 short randClump(randomRange theRange) {
     return randClumpedRange(theRange.lowerBound, theRange.upperBound, theRange.clumpFactor);
 }
@@ -173,3 +176,16 @@ unsigned long seedRandomGenerator(unsigned long seed) {
     return seed;
 }
 
+
+    // Fixed-point arithmetic
+
+long long fp_round(long long x) {
+    long long div = x / FP_FACTOR, rem = x % FP_FACTOR;
+    int sign = (x >= 0) - (x < 0);
+
+    if (rem >= FP_FACTOR / 2 || rem <= -FP_FACTOR / 2) {
+        return div + sign;
+    } else {
+        return div;
+    }
+}

@@ -2600,6 +2600,7 @@ extern "C" {
     boolean rand_percent(short percent);
     void shuffleList(short *list, short listLength);
     void fillSequentialList(short *list, short listLength);
+    long long fp_round(long long x);
     short unflag(unsigned long flag);
     void considerCautiousMode();
     void refreshScreen();
