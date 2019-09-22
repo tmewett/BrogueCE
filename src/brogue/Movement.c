@@ -669,20 +669,28 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
         if (!coordinatesAreInMap(targetLoc[0], targetLoc[1])) {
             break;
         }
+
+        /* Add creatures that we are willing to attack to the potential
+        hitlist. Any of those that are either right by us or visible will
+        trigger the attack. */
         defender = monsterAtLoc(targetLoc[0], targetLoc[1]);
         if (defender
             && (!cellHasTerrainFlag(targetLoc[0], targetLoc[1], T_OBSTRUCTS_PASSABILITY)
                 || (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS))
-            && (attacker != &player || defender->creatureState != MONSTER_ALLY)
-            && (!monsterHiddenBySubmersion(defender, attacker) || i == 0)) {
-            if ((!monsterIsHidden(defender, attacker) || i == 0)
-                && monsterWillAttackTarget(attacker, defender)
-                && (attacker != &player || canSeeMonster(defender) || i == 0)) {
+            && monsterWillAttackTarget(attacker, defender)) {
+
+            hitList[h++] = defender;
+
+            /* We check if i=0, i.e. the defender is right next to us, because
+            we have to do "normal" attacking here. We can't just return
+            false and leave to playerMoves/moveMonster due to the collateral hitlist. */
+            if (i == 0 || !monsterIsHidden(defender, attacker)
+                && (attacker != &player || canSeeMonster(defender))) {
                 // We'll attack.
-                hitList[h++] = defender;
                 proceed = true;
             }
         }
+
         if (cellHasTerrainFlag(targetLoc[0], targetLoc[1], (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION))) {
             break;
         }

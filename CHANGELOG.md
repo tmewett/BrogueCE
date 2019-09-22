@@ -7,6 +7,10 @@ unreleased
 -
   Magic-detected cells are now described with "you remember seeing ITEM here"
   when the item has been seen
+-
+  Changed the creatures hit as collateral from a spear attack to be the same
+  as those hit by the sweep of an axe attack. (This reincludes hitting hidden
+  monsters)
 
 
 1.7.5-flend1
