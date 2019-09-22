@@ -63,7 +63,7 @@ boolean paintLight(lightSource *theLight, short x, short y, boolean isMinersLigh
     brogueAssert(rogue.RNG == RNG_SUBSTANTIVE);
 
     radius = (randClump(theLight->lightRadius) << FP_BASE) / 100;
-    radiusRounded = (radius >> FP_BASE);
+    radiusRounded = fp_round(radius);
 
     randComponent = rand_range(0, theLight->lightColor->rand);
     colorComponents[0] = randComponent + theLight->lightColor->red + rand_range(0, theLight->lightColor->redRand);
