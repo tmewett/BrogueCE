@@ -2,6 +2,9 @@ unreleased
 ==========
 
 -
+  Fixed a bug which in some cases caused staffs to appear in treasure vaults
+  without their max charges being shown
+-
   Goblin conjurers no longer have the spear attack pattern in contradiction
   with their attack message
 -
