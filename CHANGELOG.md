@@ -2,6 +2,9 @@ unreleased
 ==========
 
 -
+  Fixed a bug which in some cases caused traps to be generated on cells with
+  foliage, leading to odd behaviour
+-
   Fixed a bug which in some cases caused staffs to appear in treasure vaults
   without their max charges being shown
 -
