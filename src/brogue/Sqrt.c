@@ -63,11 +63,10 @@ static int32_t clz(uint32_t x)
     return n;
 }
 
-unsigned fp_sqrt(unsigned val)
+unsigned long long fp_sqrt(unsigned long long val)
 {
-    unsigned x;
+    unsigned long long x, v;
     int bitpos;
-    unsigned long long v;
 
     if(!val)
         return val;
@@ -89,7 +88,7 @@ unsigned fp_sqrt(unsigned val)
 
     /* We need to scale val with FP_BASE due to the division.
        Also val /= 2, hence the subtraction of one*/
-    v = (unsigned long long)val <<  (FP_BASE - 1u);
+    v = val << (FP_BASE - 1u);
 
     /* The actual iteration */
     x = (x >> 1u) + v/x;

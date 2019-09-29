@@ -2582,7 +2582,7 @@ typedef struct buttonState {
 extern "C" {
 #endif
 
-    unsigned fp_sqrt(unsigned val);
+    unsigned long long fp_sqrt(unsigned long long val);
 
     void rogueMain();
     void executeEvent(rogueEvent *theEvent);
