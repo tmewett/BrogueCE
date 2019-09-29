@@ -80,11 +80,11 @@ unsigned long long fp_sqrt(unsigned long long val)
          sqrt(2^a) = 2^(a/2)
     */
     if(bitpos > 0) /* val > 1 */
-        x = (1u<<FP_BASE)<<(bitpos >> 1u);
+        x = (FP_FACTOR)<<(bitpos >> 1u);
     else if(bitpos < 0) /* 0 < val < 1 */
-        x = (1u<<FP_BASE)<<((unsigned)(-bitpos) << 1u);
+        x = (FP_FACTOR)<<((unsigned)(-bitpos) << 1u);
     else /* val == 1 */
-        x = (1u<<FP_BASE);
+        x = (FP_FACTOR);
 
     /* We need to scale val with FP_BASE due to the division.
        Also val /= 2, hence the subtraction of one*/

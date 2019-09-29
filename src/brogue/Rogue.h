@@ -127,7 +127,7 @@
 #define AMULET_LEVEL            26          // how deep before the amulet appears
 #define DEEPEST_LEVEL           40          // how deep the universe goes
 
-#define MACHINES_FACTOR         (1 << FP_BASE)         // use this to adjust machine frequency
+#define MACHINES_FACTOR         FP_FACTOR   // use this to adjust machine frequency
 
 #define MACHINES_BUFFER_LENGTH  200
 

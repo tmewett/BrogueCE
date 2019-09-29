@@ -1628,7 +1628,7 @@ short adjustedLightValue(short x) {
     if (x <= LIGHT_SMOOTHING_THRESHOLD) {
         return x;
     } else {
-        return fp_sqrt((x << FP_BASE)/LIGHT_SMOOTHING_THRESHOLD)*LIGHT_SMOOTHING_THRESHOLD >> FP_BASE;
+        return fp_sqrt(x * FP_FACTOR / LIGHT_SMOOTHING_THRESHOLD) * LIGHT_SMOOTHING_THRESHOLD / FP_FACTOR;
     }
 }
 
@@ -2001,7 +2001,7 @@ void colorFlash(const color *theColor, unsigned long reqTerrainFlags,
                 && (i-x) * (i-x) + (j-y) * (j-y) <= maxRadius * maxRadius) {
 
                 tileQualifies[i][j] = true;
-                localRadius[i][j] = fp_sqrt(((i-x) * (i-x) + (j-y) * (j-y)) << FP_BASE) >> FP_BASE;
+                localRadius[i][j] = fp_sqrt(((i-x) * (i-x) + (j-y) * (j-y)) * FP_FACTOR) / FP_FACTOR;
                 aTileQualified = true;
             } else {
                 tileQualifies[i][j] = false;
@@ -4098,7 +4098,7 @@ short estimatedArmorValue() {
     short retVal;
 
     retVal = ((armorTable[rogue.armor->kind].range.upperBound + armorTable[rogue.armor->kind].range.lowerBound) / 2) / 10;
-    retVal += strengthModifier(rogue.armor) >> FP_BASE;
+    retVal += strengthModifier(rogue.armor) / FP_FACTOR;
     retVal -= player.status[STATUS_DONNING];
 
     return max(0, retVal);

@@ -495,7 +495,7 @@ void populateItems(short upstairsX, short upstairsY) {
 #define aggregateGoldLowerBound(d)  (POW_GOLD[d] + 320 * (d))
 #define aggregateGoldUpperBound(d)  (POW_GOLD[d] + 420 * (d))
     const long long POW_FOOD[] = {
-        // b^1.35 << FP_BASE, with b from 1 to 50 (for future-proofing):
+        // b^1.35, with b from 1 to 50 (for future-proofing):
         65536, 167059, 288797, 425854, 575558, 736180, 906488, 1085553, 1272645,
         1467168, 1668630, 1876612, 2090756, 2310749, 2536314, 2767208, 3003211,
         3244126, 3489773, 3739989, 3994624, 4253540, 4516609, 4783712, 5054741,
@@ -618,8 +618,8 @@ void populateItems(short upstairsX, short upstairsY) {
         potionTable[POTION_LIFE].frequency = rogue.lifePotionFrequency;
 
         // Adjust the desired item category if necessary.
-        if ((rogue.foodSpawned + foodTable[RATION].strengthRequired / 3) * 4 << FP_BASE
-            <= (POW_FOOD[rogue.depthLevel-1] + (randomDepthOffset << FP_BASE)) * foodTable[RATION].strengthRequired * 45/100) {
+        if ((rogue.foodSpawned + foodTable[RATION].strengthRequired / 3) * 4 * FP_FACTOR
+            <= (POW_FOOD[rogue.depthLevel-1] + (randomDepthOffset * FP_FACTOR)) * foodTable[RATION].strengthRequired * 45/100) {
             // Guarantee a certain nutrition minimum of the approximate equivalent of one ration every four levels,
             // with more food on deeper levels since they generally take more turns to complete.
             theCategory = FOOD;
@@ -1703,14 +1703,14 @@ boolean isVowelish(char *theChar) {
 long long enchantIncrement(item *theItem) {
     if (theItem->category & (WEAPON | ARMOR)) {
         if (theItem->strengthRequired == 0) {
-            return (1 + 0) << FP_BASE;
+            return FP_FACTOR;
         } else if (rogue.strength - player.weaknessAmount < theItem->strengthRequired) {
-            return (35 << FP_BASE) / 10;
+            return FP_FACTOR * 35 / 10;
         } else {
-            return (125 << FP_BASE) / 100;
+            return FP_FACTOR * 125 / 100;
         }
     } else {
-        return (1 + 0) << FP_BASE;
+        return FP_FACTOR;
     }
 }
 
@@ -1961,26 +1961,26 @@ void itemDetails(char *buf, item *theItem) {
                 if (theItem->category & WEAPON) {
                     current = player.info.accuracy;
                     if (rogue.weapon) {
-                        currentDamage = (rogue.weapon->damage.lowerBound + rogue.weapon->damage.upperBound << FP_BASE) / 2;
+                        currentDamage = (rogue.weapon->damage.lowerBound + rogue.weapon->damage.upperBound) * FP_FACTOR / 2;
                         if ((rogue.weapon->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                            current = current * accuracyFraction(netEnchant(rogue.weapon)) >> FP_BASE;
-                            currentDamage = currentDamage * damageFraction(netEnchant(rogue.weapon)) >> FP_BASE;
+                            current = current * accuracyFraction(netEnchant(rogue.weapon)) / FP_FACTOR;
+                            currentDamage = currentDamage * damageFraction(netEnchant(rogue.weapon)) / FP_FACTOR;
                         } else {
-                            current = current * accuracyFraction(strengthModifier(rogue.weapon)) >> FP_BASE;
-                            currentDamage = currentDamage * damageFraction(strengthModifier(rogue.weapon)) >> FP_BASE;
+                            current = current * accuracyFraction(strengthModifier(rogue.weapon)) / FP_FACTOR;
+                            currentDamage = currentDamage * damageFraction(strengthModifier(rogue.weapon)) / FP_FACTOR;
                         }
                     } else {
-                        currentDamage = (player.info.damage.lowerBound + player.info.damage.upperBound << FP_BASE) / 2;
+                        currentDamage = (player.info.damage.lowerBound + player.info.damage.upperBound) * FP_FACTOR / 2;
                     }
 
                     new = player.info.accuracy;
-                    newDamage = (theItem->damage.lowerBound + theItem->damage.upperBound << FP_BASE) / 2;
+                    newDamage = (theItem->damage.lowerBound + theItem->damage.upperBound) * FP_FACTOR / 2;
                     if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                        new = new * accuracyFraction(netEnchant(theItem)) >> FP_BASE;
-                        newDamage = newDamage * damageFraction(netEnchant(theItem)) >> FP_BASE;
+                        new = new * accuracyFraction(netEnchant(theItem)) / FP_FACTOR;
+                        newDamage = newDamage * damageFraction(netEnchant(theItem)) / FP_FACTOR;
                     } else {
-                        new = new * accuracyFraction(strengthModifier(theItem)) >> FP_BASE;
-                        newDamage = newDamage * damageFraction(strengthModifier(theItem)) >> FP_BASE;
+                        new = new * accuracyFraction(strengthModifier(theItem)) / FP_FACTOR;
+                        newDamage = newDamage * damageFraction(strengthModifier(theItem)) / FP_FACTOR;
                     }
                     accuracyChange  = (new * 100 / current) - 100;
                     damageChange    = (newDamage * 100 / currentDamage) - 100;
@@ -1998,9 +1998,9 @@ void itemDetails(char *buf, item *theItem) {
                 } else {
                     new = theItem->armor;
                     if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                        new += 10 * netEnchant(theItem) >> FP_BASE;
+                        new += 10 * netEnchant(theItem) / FP_FACTOR;
                     } else {
-                        new += 10 * strengthModifier(theItem) >> FP_BASE;
+                        new += 10 * strengthModifier(theItem) / FP_FACTOR;
                     }
                     new = max(0, new);
                     new /= 10;
@@ -2307,14 +2307,14 @@ void itemDetails(char *buf, item *theItem) {
                         theItem->charges,
                         theItem->enchant1,
                         new == 0 ? "" : ", with your current rings,",
-                        staffChargeDuration(theItem) / ringWisdomMultiplier(new << FP_BASE));
+                        staffChargeDuration(theItem) / ringWisdomMultiplier(new * FP_FACTOR));
                 strcat(buf, buf2);
             } else if (theItem->flags & ITEM_MAX_CHARGES_KNOWN) {
                 sprintf(buf2, "\n\nThe %s has a maximum of %i charges, and%s recovers a charge in approximately %i turns. ",
                         theName,
                         theItem->enchant1,
                         new == 0 ? "" : ", with your current rings,",
-                        staffChargeDuration(theItem) / ringWisdomMultiplier(new << FP_BASE));
+                        staffChargeDuration(theItem) / ringWisdomMultiplier(new * FP_FACTOR));
                 strcat(buf, buf2);
             }
 
@@ -2351,7 +2351,7 @@ void itemDetails(char *buf, item *theItem) {
                                 staffEntrancementDuration(enchant + FP_FACTOR));
                         break;
                     case STAFF_HEALING:
-                        if ((enchant >> FP_BASE) < 10) {
+                        if (enchant / FP_FACTOR < 10) {
                             sprintf(buf2, "This staff will heal its target by %i%% of its maximum health. (If the staff is enchanted, this will increase to %i%%.)",
                                     theItem->enchant1 * 10,
                                     (theItem->enchant1 + 1) * 10);
@@ -3027,8 +3027,8 @@ short displayedArmorValue() {
     if (!rogue.armor || (rogue.armor->flags & ITEM_IDENTIFIED)) {
         return player.info.defense / 10;
     } else {
-        return (short) (((armorTable[rogue.armor->kind].range.upperBound + armorTable[rogue.armor->kind].range.lowerBound << FP_BASE) / 2 / 10
-                         + strengthModifier(rogue.armor)) >> FP_BASE);
+        return ((armorTable[rogue.armor->kind].range.upperBound + armorTable[rogue.armor->kind].range.lowerBound) * FP_FACTOR / 2 / 10
+                + strengthModifier(rogue.armor)) / FP_FACTOR;
     }
 }
 
@@ -3314,7 +3314,7 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
 
     // Neither vector is negative. We keep track of negatives with quadrantTransform.
     for (i=0; i<= 1; i++) {
-        targetVector[i] = targetLoc[i] - originLoc[i] << FP_BASE;
+        targetVector[i] = (targetLoc[i] - originLoc[i]) * FP_FACTOR;
         if (targetVector[i] < 0) {
             targetVector[i] *= -1;
             quadrantTransform[i] = -1;
@@ -3327,15 +3327,15 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
 
     // normalize target vector such that one dimension equals 1 and the other is in [0, 1].
     largerTargetComponent = max(targetVector[0], targetVector[1]);
-    targetVector[0] = (targetVector[0] << FP_BASE) / largerTargetComponent;
-    targetVector[1] = (targetVector[1] << FP_BASE) / largerTargetComponent;
+    targetVector[0] = (targetVector[0] * FP_FACTOR) / largerTargetComponent;
+    targetVector[1] = (targetVector[1] * FP_FACTOR) / largerTargetComponent;
 
     do {
         for (i=0; i<= 1; i++) {
 
             previousLoc[i] = currentLoc[i];
 
-            currentVector[i] += targetVector[i] >> FP_BASE;
+            currentVector[i] += targetVector[i] / FP_FACTOR;
             error[i] += (targetVector[i] == FP_FACTOR ? 0 : targetVector[i]);
 
             if (error[i] >= FP_FACTOR / 2) {
@@ -3960,7 +3960,7 @@ boolean projectileReflects(creature *attacker, creature *defender) {
         if (defender->info.flags & MONST_ALWAYS_USE_ABILITY) {
             return true;
         }
-        netReflectionLevel += 4 << FP_BASE;
+        netReflectionLevel += 4 * FP_FACTOR;
     }
 
     if (netReflectionLevel <= 0) {
@@ -4139,7 +4139,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                                 theBolt->name);
                         combatMessage(buf, 0);
                     }
-                } else if (inflictDamage(caster, monst, staffDamage(theBolt->magnitude << FP_BASE), theBolt->backColor, false)) {
+                } else if (inflictDamage(caster, monst, staffDamage(theBolt->magnitude * FP_FACTOR), theBolt->backColor, false)) {
                     // killed monster
                     if (player.currentHP <= 0) {
                         if (caster == &player) {
@@ -4220,7 +4220,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 }
                 break;
             case BE_HASTE:
-                haste(monst, staffHasteDuration(theBolt->magnitude << FP_BASE));
+                haste(monst, staffHasteDuration(theBolt->magnitude * FP_FACTOR));
                 if (boltCatalog[BOLT_HASTE].backColor) {
                     flashMonster(monst, boltCatalog[BOLT_HASTE].backColor, 100);
                 }
@@ -4288,7 +4288,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 break;
             case BE_POISON:
                 if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
-                    addPoison(monst, staffPoison(theBolt->magnitude << FP_BASE), 1);
+                    addPoison(monst, staffPoison(theBolt->magnitude * FP_FACTOR), 1);
                     if (canSeeMonster(monst)) {
                         if (boltCatalog[BOLT_POISON].backColor) {
                             flashMonster(monst, boltCatalog[BOLT_POISON].backColor, 100);
@@ -4309,14 +4309,14 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
             case BE_ENTRANCEMENT:
                 if (monst == &player) {
                     flashMonster(monst, &confusionGasColor, 100);
-                    monst->status[STATUS_CONFUSED] = staffEntrancementDuration(theBolt->magnitude << FP_BASE);
+                    monst->status[STATUS_CONFUSED] = staffEntrancementDuration(theBolt->magnitude * FP_FACTOR);
                     monst->maxStatus[STATUS_CONFUSED] = max(monst->status[STATUS_CONFUSED], monst->maxStatus[STATUS_CONFUSED]);
                     message("the bolt hits you and you suddently feel disoriented.", true);
                     if (autoID) {
                         *autoID = true;
                     }
                 } else if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
-                    monst->status[STATUS_ENTRANCED] = monst->maxStatus[STATUS_ENTRANCED] = staffEntrancementDuration(theBolt->magnitude << FP_BASE);
+                    monst->status[STATUS_ENTRANCED] = monst->maxStatus[STATUS_ENTRANCED] = staffEntrancementDuration(theBolt->magnitude * FP_FACTOR);
                     wakeUp(monst);
                     if (canSeeMonster(monst)) {
                         if (boltCatalog[BOLT_ENTRANCEMENT].backColor) {
@@ -4356,7 +4356,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 break;
             case BE_DISCORD:
                 if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
-                    monst->status[STATUS_DISCORDANT] = monst->maxStatus[STATUS_DISCORDANT] = max(staffDiscordDuration(theBolt->magnitude << FP_BASE),
+                    monst->status[STATUS_DISCORDANT] = monst->maxStatus[STATUS_DISCORDANT] = max(staffDiscordDuration(theBolt->magnitude * FP_FACTOR),
                                                                                                  monst->status[STATUS_DISCORDANT]);
                     if (canSeeMonster(monst)) {
                         if (boltCatalog[BOLT_DISCORD].backColor) {
@@ -4369,8 +4369,8 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 }
                 break;
             case BE_SHIELDING:
-                if (staffProtection(theBolt->magnitude << FP_BASE) > monst->status[STATUS_SHIELDED]) {
-                    monst->status[STATUS_SHIELDED] = staffProtection(theBolt->magnitude << FP_BASE);
+                if (staffProtection(theBolt->magnitude * FP_FACTOR) > monst->status[STATUS_SHIELDED]) {
+                    monst->status[STATUS_SHIELDED] = staffProtection(theBolt->magnitude * FP_FACTOR);
                 }
                 monst->maxStatus[STATUS_SHIELDED] = monst->status[STATUS_SHIELDED];
                 if (boltCatalog[BOLT_SHIELDING].backColor) {
@@ -4444,7 +4444,7 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
     creature *monst;
 
     const unsigned long long POW_OBSTRUCTION[] = {
-        // 0.8^x << FP_BASE, with x from 2 to 40:
+        // 0.8^x, with x from 2 to 40:
         41943, 33554, 26843, 21474, 17179, 13743, 10995, 8796, 7036, 5629, 4503, 3602,
         2882, 2305, 1844, 1475, 1180, 944, 755, 604, 483, 386, 309, 247, 198, 158, 126,
         101, 81, 64, 51, 41, 33, 26, 21, 17, 13, 10, 8, 6, 5};
@@ -4452,14 +4452,14 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
     switch(theBolt->boltEffect) {
         case BE_OBSTRUCTION:
             feat = dungeonFeatureCatalog[DF_FORCEFIELD];
-            feat.probabilityDecrement = max(1, 75 * POW_OBSTRUCTION[min(40, theBolt->magnitude) - 2] >> FP_BASE);
+            feat.probabilityDecrement = max(1, 75 * POW_OBSTRUCTION[min(40, theBolt->magnitude) - 2] / FP_FACTOR);
             spawnDungeonFeature(x, y, &feat, true, false);
             if (autoID) {
                 *autoID = true;
             }
             break;
         case BE_CONJURATION:
-            for (i = 0; i < (staffBladeCount(theBolt->magnitude << FP_BASE)); i++) {
+            for (i = 0; i < (staffBladeCount(theBolt->magnitude * FP_FACTOR)); i++) {
                 monst = generateMonster(MK_SPECTRAL_BLADE, true, false);
                 getQualifyingPathLocNear(&(monst->xLoc), &(monst->yLoc), x, y, true,
                                          T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)) & ~T_SPONTANEOUSLY_IGNITES, HAS_PLAYER,
@@ -4589,7 +4589,7 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
             boltLightColors[i] = *boltColor;
             boltLights[i] = lightCatalog[BOLT_LIGHT_SOURCE];
             boltLights[i].lightColor = &boltLightColors[i];
-            boltLightRadius = 50LL * ((3 << FP_BASE) + (theBolt->magnitude << FP_BASE) * 4/3) * (initialBoltLength - i) / initialBoltLength >> FP_BASE;
+            boltLightRadius = 50LL * ((3 * FP_FACTOR) + (theBolt->magnitude * FP_FACTOR) * 4/3) * (initialBoltLength - i) / initialBoltLength / FP_FACTOR;
             boltLights[i].lightRadius.lowerBound = boltLights[i].lightRadius.upperBound = boltLightRadius;
             //boltLights[i].lightRadius.lowerBound = boltLights[i].lightRadius.upperBound = 50 * (3 + theBolt->magnitude * 1.33) * (initialBoltLength - i) / initialBoltLength;
             //printf("\nStandard: %i, attempted new: %lli", boltLights[i].lightRadius.lowerBound, boltLightRadius);
@@ -5494,7 +5494,7 @@ boolean hitMonsterWithProjectileWeapon(creature *thrower, creature *monst, item 
 
     if (thrownWeaponHit) {
         damage = monst->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE) ? 0 :
-                  (randClump(theItem->damage) * damageFraction(netEnchant(theItem)) >> FP_BASE);
+                  (randClump(theItem->damage) * damageFraction(netEnchant(theItem)) / FP_FACTOR);
 
         if (monst == &player) {
             applyArmorRunicEffect(armorRunicString, thrower, &damage, false);
@@ -5893,7 +5893,7 @@ boolean playerCancelsBlinking(const short originLoc[2], const short targetLoc[2]
                     && !(tmFlags & TM_EXTINGUISHES_FIRE)) {
 
                     possibleDeath = true;
-                } else if (i >= staffBlinkDistance(2 << FP_BASE) - 1) {
+                } else if (i >= staffBlinkDistance(2 * FP_FACTOR) - 1) {
                     // Found at least one possible safe landing spot.
                     certainDeath = false;
                 }
@@ -7111,8 +7111,8 @@ void recalculateEquipmentBonuses() {
         theItem = rogue.weapon;
         enchant = netEnchant(theItem);
         player.info.damage = theItem->damage;
-        player.info.damage.lowerBound = player.info.damage.lowerBound * damageFraction(enchant) >> FP_BASE;
-        player.info.damage.upperBound = player.info.damage.upperBound * damageFraction(enchant) >> FP_BASE;
+        player.info.damage.lowerBound = player.info.damage.lowerBound * damageFraction(enchant) / FP_FACTOR;
+        player.info.damage.upperBound = player.info.damage.upperBound * damageFraction(enchant) / FP_FACTOR;
         if (player.info.damage.lowerBound < 1) {
             player.info.damage.lowerBound = 1;
         }
@@ -7124,8 +7124,8 @@ void recalculateEquipmentBonuses() {
     if (rogue.armor) {
         theItem = rogue.armor;
         enchant = netEnchant(theItem);
-        enchant -= player.status[STATUS_DONNING] << FP_BASE;
-        player.info.defense = (theItem->armor << FP_BASE) + enchant * 10 >> FP_BASE;
+        enchant -= player.status[STATUS_DONNING] * FP_FACTOR;
+        player.info.defense = (theItem->armor * FP_FACTOR + enchant * 10) / FP_FACTOR;
         if (player.info.defense < 0) {
             player.info.defense = 0;
         }
@@ -7276,7 +7276,7 @@ void updatePlayerRegenerationDelay() {
     short maxHP;
     long turnsForFull; // In thousandths of a turn.
     maxHP = player.info.maxHP;
-    turnsForFull = turnsForFullRegenInThousandths(rogue.regenerationBonus << FP_BASE);
+    turnsForFull = turnsForFullRegenInThousandths(rogue.regenerationBonus * FP_FACTOR);
 
     player.regenPerTurn = 0;
     while (maxHP > turnsForFull / 1000) {
