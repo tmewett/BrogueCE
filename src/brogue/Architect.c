@@ -558,7 +558,7 @@ boolean cellIsFeatureCandidate(short x, short y,
             && (cellHasTerrainFlag(x, y, T_OBSTRUCTS_ITEMS | T_PATHING_BLOCKER) || (pmap[x][y].flags & (IS_CHOKEPOINT | IN_LOOP | IS_IN_MACHINE)))) {
             return false;
         } else {
-            return !(pmap[x][y].flags & IS_IN_MACHINE);
+            return true;
         }
     } else if (interior[x][y]) {
         return true;
@@ -1288,9 +1288,9 @@ boolean buildAMachine(enum machineTypes bp,
         if (feature->flags & (MF_IN_VIEW_OF_ORIGIN | MF_IN_PASSABLE_VIEW_OF_ORIGIN)) {
             zeroOutGrid(viewMap);
             if (feature->flags & MF_IN_PASSABLE_VIEW_OF_ORIGIN) {
-                getFOVMask(viewMap, originX, originY, max(DCOLS, DROWS) << FP_BASE, T_PATHING_BLOCKER, 0, false);
+                getFOVMask(viewMap, originX, originY, max(DCOLS, DROWS), T_PATHING_BLOCKER, 0, false);
             } else {
-                getFOVMask(viewMap, originX, originY, max(DCOLS, DROWS) << FP_BASE, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION), 0, false);
+                getFOVMask(viewMap, originX, originY, max(DCOLS, DROWS), (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION), 0, false);
             }
             viewMap[originX][originY] = true;
 
@@ -1425,8 +1425,10 @@ boolean buildAMachine(enum machineTypes bp,
                     theItem = NULL;
 
                     // Mark the feature location as part of the machine, in case it is not already inside of it.
+                    //if (!(blueprintCatalog[bp].flags & BP_NO_INTERIOR_FLAG)) {
                     pmap[featX][featY].flags |= ((blueprintCatalog[bp].flags & BP_ROOM) ? IS_IN_ROOM_MACHINE : IS_IN_AREA_MACHINE);
                     pmap[featX][featY].machineNumber = machineNumber;
+                    //}
 
                     // Mark the feature location as impregnable if requested.
                     if (feature->flags & MF_IMPREGNABLE) {
@@ -1685,12 +1687,12 @@ void addMachines() {
     // Add reward rooms, if any:
     machineCount = 0;
     while (rogue.depthLevel <= AMULET_LEVEL
-        && (rogue.rewardRoomsGenerated + machineCount) * 4 + 2 < rogue.depthLevel * MACHINES_FACTOR >> FP_BASE) {
+        && (rogue.rewardRoomsGenerated + machineCount) * 4 + 2 < rogue.depthLevel * MACHINES_FACTOR) {
         // try to build at least one every four levels on average
         machineCount++;
     }
     randomMachineFactor = (rogue.depthLevel < 3 && (rogue.rewardRoomsGenerated + machineCount) == 0 ? 40 : 15);
-    while (rand_percent(max(randomMachineFactor, 15 * MACHINES_FACTOR >> FP_BASE)) && machineCount < 100) {
+    while (rand_percent(max(randomMachineFactor, 15 * MACHINES_FACTOR)) && machineCount < 100) {
         randomMachineFactor = 15;
         machineCount++;
     }
@@ -2980,7 +2982,7 @@ void setUpWaypoints() {
         x = sCoord[i]/DROWS;
         y = sCoord[i] % DROWS;
         if (!grid[x][y]) {
-            getFOVMask(grid, x, y, WAYPOINT_SIGHT_RADIUS << FP_BASE, T_OBSTRUCTS_SCENT, 0, false);
+            getFOVMask(grid, x, y, WAYPOINT_SIGHT_RADIUS, T_OBSTRUCTS_SCENT, 0, false);
             grid[x][y] = true;
             rogue.wpCoordinates[rogue.wpCount][0] = x;
             rogue.wpCoordinates[rogue.wpCount][1] = y;
@@ -3255,9 +3257,6 @@ void spawnMapDF(short x, short y,
             t = 2;
         }
     }
-    if (requirePropTerrain && !cellHasTerrainType(x, y, propagationTerrain)) {
-        spawnMap[x][y] = 0;
-    }
 }
 
 void evacuateCreatures(char blockingMap[DCOLS][DROWS]) {
@@ -3456,7 +3455,7 @@ void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
         monst->bookkeepingFlags |= MB_PREPLACED;
     }
 
-    if ((pmap[*x][*y].flags & (HAS_PLAYER | HAS_STAIRS))
+    if ((pmap[*x][*y].flags & (HAS_PLAYER | HAS_UP_STAIRS | HAS_DOWN_STAIRS))
         || (monst->bookkeepingFlags & MB_PREPLACED)) {
 
         if (!(monst->bookkeepingFlags & MB_PREPLACED)) {
@@ -3465,7 +3464,7 @@ void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
             pmap[*x][*y].flags &= ~HAS_MONSTER;
         }
         getQualifyingPathLocNear(x, y, *x, *y, true, T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)), 0,
-                                 avoidedFlagsForMonster(&(monst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_STAIRS), true);
+                                 avoidedFlagsForMonster(&(monst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_UP_STAIRS | HAS_DOWN_STAIRS), true);
     }
     pmap[*x][*y].flags |= HAS_MONSTER;
     monst->bookkeepingFlags &= ~(MB_PREPLACED | MB_APPROACHING_DOWNSTAIRS | MB_APPROACHING_UPSTAIRS | MB_APPROACHING_PIT | MB_ABSORBING);
@@ -3500,7 +3499,7 @@ void restoreItem(item *theItem) {
     if (theItem->flags & ITEM_PREPLACED) {
         theItem->flags &= ~ITEM_PREPLACED;
         getQualifyingLocNear(loc, *x, *y, true, 0, (T_OBSTRUCTS_ITEMS | T_AUTO_DESCENT | T_IS_DEEP_WATER | T_LAVA_INSTA_DEATH),
-                             (HAS_MONSTER | HAS_ITEM | HAS_STAIRS), true, false);
+                             (HAS_MONSTER | HAS_ITEM | HAS_UP_STAIRS | HAS_DOWN_STAIRS), true, false);
         *x = loc[0];
         *y = loc[1];
     }
@@ -3626,7 +3625,7 @@ void initializeLevel() {
     } else {
         getQualifyingLocNear(downLoc, levels[n].downStairsLoc[0], levels[n].downStairsLoc[1], false, 0,
                              (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_ITEMS | T_AUTO_DESCENT | T_IS_DEEP_WATER | T_LAVA_INSTA_DEATH | T_IS_DF_TRAP),
-                             (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), true, false);
+                             (HAS_MONSTER | HAS_ITEM | HAS_UP_STAIRS | HAS_DOWN_STAIRS | IS_IN_MACHINE), true, false);
     }
 
     if (rogue.depthLevel == DEEPEST_LEVEL) {
@@ -3649,7 +3648,7 @@ void initializeLevel() {
     } else { // Hopefully this never happens.
         getQualifyingLocNear(upLoc, levels[n].upStairsLoc[0], levels[n].upStairsLoc[1], false, 0,
                              (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_ITEMS | T_AUTO_DESCENT | T_IS_DEEP_WATER | T_LAVA_INSTA_DEATH | T_IS_DF_TRAP),
-                             (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), true, false);
+                             (HAS_MONSTER | HAS_ITEM | HAS_UP_STAIRS | HAS_DOWN_STAIRS | IS_IN_MACHINE), true, false);
     }
 
     levels[n].upStairsLoc[0] = upLoc[0];
@@ -3665,10 +3664,10 @@ void initializeLevel() {
 
     rogue.downLoc[0] = downLoc[0];
     rogue.downLoc[1] = downLoc[1];
-    pmap[downLoc[0]][downLoc[1]].flags |= HAS_STAIRS;
+    pmap[downLoc[0]][downLoc[1]].flags |= HAS_DOWN_STAIRS;
     rogue.upLoc[0] = upLoc[0];
     rogue.upLoc[1] = upLoc[1];
-    pmap[upLoc[0]][upLoc[1]].flags |= HAS_STAIRS;
+    pmap[upLoc[0]][upLoc[1]].flags |= HAS_UP_STAIRS;
 
     if (!levels[rogue.depthLevel-1].visited) {
 
@@ -3683,7 +3682,7 @@ void initializeLevel() {
             }
         }
         zeroOutGrid(grid);
-        getFOVMask(grid, upLoc[0], upLoc[1], max(DCOLS, DROWS) << FP_BASE, (T_OBSTRUCTS_VISION), 0, false);
+        getFOVMask(grid, upLoc[0], upLoc[1], max(DCOLS, DROWS), (T_OBSTRUCTS_VISION), 0, false);
         for (i=0; i<DCOLS; i++) {
             for (j=0; j<DROWS; j++) {
                 if (grid[i][j]) {
@@ -3732,7 +3731,7 @@ boolean randomMatchingLocation(short *x, short *y, short dungeonType, short liqu
         *y = rand_range(0, DROWS - 1);
     } while (failsafeCount < 500 && ((terrainType >= 0 && !cellHasTerrainType(*x, *y, terrainType))
                                      || (((dungeonType >= 0 && pmap[*x][*y].layers[DUNGEON] != dungeonType) || (liquidType >= 0 && pmap[*x][*y].layers[LIQUID] != liquidType)) && terrainType < 0)
-                                     || (pmap[*x][*y].flags & (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | HAS_ITEM | IS_IN_MACHINE))
+                                     || (pmap[*x][*y].flags & (HAS_PLAYER | HAS_MONSTER | HAS_DOWN_STAIRS | HAS_UP_STAIRS | HAS_ITEM | IS_IN_MACHINE))
                                      || (terrainType < 0 && !(tileCatalog[dungeonType].flags & T_OBSTRUCTS_ITEMS)
                                          && cellHasTerrainFlag(*x, *y, T_OBSTRUCTS_ITEMS))));
     if (failsafeCount >= 500) {

@@ -29,7 +29,7 @@
 // Draws the smooth gradient that appears on a button when you hover over or depress it.
 // Returns the percentage by which the current tile should be averaged toward a hilite color.
 short smoothHiliteGradient(const short currentXValue, const short maxXValue) {
-    return (short) (100 * sin(3.14159265 * currentXValue / maxXValue));
+    return (short) (100 * sin(PI * currentXValue / (maxXValue)));
 }
 
 // Draws the button to the screen, or to a display buffer if one is given.
@@ -126,6 +126,7 @@ void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDispl
 }
 
 void initializeButton(brogueButton *button) {
+
     memset((void *) button, 0, sizeof( brogueButton ));
     button->text[0] = '\0';
     button->flags |= (B_ENABLED | B_GRADIENT | B_HOVER_ENABLED | B_DRAW | B_KEYPRESS_HIGHLIGHT);
@@ -331,8 +332,20 @@ short buttonInputLoop(brogueButton *buttons,
     assureCosmeticRNG;
 
     canceled = false;
+
     x = y = -1;
+
     initializeButtonState(&state, buttons, buttonCount, winX, winY, winWidth, winHeight);
+
+//  short i, j;
+//  for (i=0; i<COLS; i++) {
+//      for (j=0; j<COLS; j++) {
+//          if (i >= winX       && i < winX + winWidth
+//              && j >= winY    && j < winY + winHeight) {
+//              plotCharWithColor(' ', i, j, &white, &gray);
+//          }
+//      }
+//  }
 
     do {
         // Update the display.

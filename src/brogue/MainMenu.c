@@ -345,40 +345,36 @@ void titleMenu() {
     rogue.creaturesWillFlashThisTurn = false; // total unconscionable hack
 
     do {
-        if (isApplicationActive()) {
-            // Revert the display.
-            overlayDisplayBuffer(state.rbuf, NULL);
-
-            if (!controlKeyWasDown && controlKeyIsDown()) {
-                strcpy(state.buttons[0].text, customNewGameText);
-                drawButtonsInState(&state);
-                buttonCommands[0] = NG_NEW_GAME_WITH_SEED;
-                controlKeyWasDown = true;
-            } else if (controlKeyWasDown && !controlKeyIsDown()) {
-                strcpy(state.buttons[0].text, newGameText);
-                drawButtonsInState(&state);
-                buttonCommands[0] = NG_NEW_GAME;
-                controlKeyWasDown = false;
-            }
-
-            // Update the display.
-            updateMenuFlames(colors, colorSources, flames);
-            drawMenuFlames(flames, mask);
-            overlayDisplayBuffer(shadowBuf, NULL);
-            overlayDisplayBuffer(state.dbuf, NULL);
-
-            // Pause briefly.
-            if (pauseBrogue(MENU_FLAME_UPDATE_DELAY)) {
-                // There was input during the pause! Get the input.
-                nextBrogueEvent(&theEvent, true, false, true);
-
-                // Process the input.
-                button = processButtonInput(&state, NULL, &theEvent);
-            }
-
-        } else {
-            pauseBrogue(64);
+        if (!controlKeyWasDown && controlKeyIsDown()) {
+            strcpy(state.buttons[0].text, customNewGameText);
+            drawButtonsInState(&state);
+            buttonCommands[0] = NG_NEW_GAME_WITH_SEED;
+            controlKeyWasDown = true;
+        } else if (controlKeyWasDown && !controlKeyIsDown()) {
+            strcpy(state.buttons[0].text, newGameText);
+            drawButtonsInState(&state);
+            buttonCommands[0] = NG_NEW_GAME;
+            controlKeyWasDown = false;
         }
+
+        // Update the display.
+        updateMenuFlames(colors, colorSources, flames);
+        drawMenuFlames(flames, mask);
+        overlayDisplayBuffer(shadowBuf, NULL);
+        overlayDisplayBuffer(state.dbuf, NULL);
+
+        // Pause briefly.
+        if (pauseBrogue(MENU_FLAME_UPDATE_DELAY)) {
+            // There was input during the pause! Get the input.
+            nextBrogueEvent(&theEvent, true, false, true);
+
+            // Process the input.
+            button = processButtonInput(&state, NULL, &theEvent);
+        }
+
+        // Revert the display.
+        overlayDisplayBuffer(state.rbuf, NULL);
+
     } while (button == -1 && rogue.nextGame == NG_NOTHING);
     drawMenuFlames(flames, mask);
     if (button != -1) {
@@ -671,7 +667,7 @@ the first %i depths will, of course, make the game significantly easier.",
 void mainBrogueJunction() {
     rogueEvent theEvent;
     char path[BROGUE_FILENAME_MAX], buf[100], seedDefault[100];
-    char maxSeed[40];
+    char maxSeed[20];
     short i, j, k;
     boolean seedTooBig;
 

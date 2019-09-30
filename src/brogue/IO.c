@@ -302,17 +302,17 @@ short actionMenu(short x, boolean playingBack) {
         buttonCount++;
 
         if (KEYBOARD_LABELS) {
-            sprintf(buttons[buttonCount].text, "  %s\\: %s[%s] Hide color effects  ",   yellowColorEscape, whiteColorEscape, rogue.trueColorMode ? "X" : " ");
+            sprintf(buttons[buttonCount].text, "  %s\\: %s%s color effects  ",  yellowColorEscape, whiteColorEscape, rogue.trueColorMode ? "Show" : "Hide");
         } else {
-            sprintf(buttons[buttonCount].text, "  [%s] Hide color effects  ",   rogue.trueColorMode ? " " : "X");
+            sprintf(buttons[buttonCount].text, "  %s color effects  ",  rogue.trueColorMode ? "Show" : "Hide");
         }
         buttons[buttonCount].hotkey[0] = TRUE_COLORS_KEY;
         takeActionOurselves[buttonCount] = true;
         buttonCount++;
         if (KEYBOARD_LABELS) {
-            sprintf(buttons[buttonCount].text, "  %s]: %s[%s] Display stealth range  ", yellowColorEscape, whiteColorEscape, rogue.displayAggroRangeMode ? "X" : " ");
+            sprintf(buttons[buttonCount].text, "  %s]: %s%s stealth range  ",   yellowColorEscape, whiteColorEscape, rogue.displayAggroRangeMode ? "Hide" : "Display");
         } else {
-            sprintf(buttons[buttonCount].text, "  [%s] Show stealth range  ",   rogue.displayAggroRangeMode ? "X" : " ");
+            sprintf(buttons[buttonCount].text, "  %s stealth range  ",  rogue.displayAggroRangeMode ? "Hide" : "Display");
         }
         buttons[buttonCount].hotkey[0] = AGGRO_DISPLAY_KEY;
         takeActionOurselves[buttonCount] = true;
@@ -358,9 +358,6 @@ short actionMenu(short x, boolean playingBack) {
 
         for (i=0; i<buttonCount; i++) {
             longestName = max(longestName, strLenWithoutEscapes(buttons[i].text));
-        }
-        if (x + longestName >= COLS) {
-            x = COLS - longestName - 1;
         }
         y = ROWS - buttonCount;
         for (i=0; i<buttonCount; i++) {
@@ -499,13 +496,6 @@ void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
         desaturate(&tempColor, 60);
         applyColorAverage(&tempColor, &black, 50);
         storeColorComponents(state->rbuf[i][ROWS - 1].foreColorComponents, &tempColor);
-    }
-}
-
-void recordCurrentCreatureHealths() {
-    creature *monst;
-    CYCLE_MONSTERS_AND_PLAYERS(monst) {
-        monst->previousHealthPoints = monst->currentHP;
     }
 }
 
@@ -747,7 +737,6 @@ void mainInputLoop() {
         }
 
         restoreRNG;
-        recordCurrentCreatureHealths();
 
         if (canceled && !playingBack) {
             hideCursor();
@@ -1328,9 +1317,9 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
             applyColorMultiplier(&cellBackColor, &deepWaterLightColor);
         }
     }
-//   DEBUG cellBackColor.red = max(0,((scentMap[x][y] - rogue.scentTurnNumber) * 2) + 100);
-//   DEBUG if (pmap[x][y].flags & KNOWN_TO_BE_TRAP_FREE) cellBackColor.red += 20;
-//   DEBUG if (cellHasTerrainFlag(x, y, T_IS_FLAMMABLE)) cellBackColor.red += 50;
+    // DEBUG cellBackColor.red = max(0,((scentMap[x][y] - rogue.scentTurnNumber) * 2) + 100);
+    // DEBUG if (pmap[x][y].flags & KNOWN_TO_BE_TRAP_FREE) cellBackColor.red += 20;
+    // DEBUG if (cellHasTerrainFlag(x, y, T_IS_FLAMMABLE)) cellBackColor.red += 50;
 
     if (pmap[x][y].flags & IS_IN_PATH) {
         if (cellHasTMFlag(x, y, TM_INVERT_WHEN_HIGHLIGHTED)) {
@@ -1587,7 +1576,7 @@ void irisFadeBetweenBuffers(cellDisplayBuffer fromBuf[COLS][ROWS],
             }
         }
 
-        fastForward = pauseBrogue(16);
+        fastForward = pauseBrogue(10);
         frame++;
     } while (frame <= frameCount && !fastForward);
     overlayDisplayBuffer(toBuf, NULL);
@@ -1626,7 +1615,7 @@ short adjustedLightValue(short x) {
     if (x <= LIGHT_SMOOTHING_THRESHOLD) {
         return x;
     } else {
-        return fp_sqrt((x << FP_BASE)/LIGHT_SMOOTHING_THRESHOLD)*LIGHT_SMOOTHING_THRESHOLD >> FP_BASE;
+        return (short) (sqrt(((float) x)/LIGHT_SMOOTHING_THRESHOLD)*LIGHT_SMOOTHING_THRESHOLD + FLOAT_FUDGE);
     }
 }
 
@@ -1733,26 +1722,13 @@ void plotCharToBuffer(uchar inputChar, short x, short y, color *foreColor, color
     restoreRNG;
 }
 
-void plotForegroundChar(uchar inputChar, short x, short y, color *foreColor, boolean affectedByLighting) {
-    color multColor, myColor, backColor, ignoredColor;
-    uchar ignoredChar;
-
-    myColor = *foreColor;
-    getCellAppearance(x, y, &ignoredChar, &ignoredColor, &backColor);
-    if (affectedByLighting) {
-        colorMultiplierFromDungeonLight(x, y, &multColor);
-        applyColorMultiplier(&myColor, &multColor);
-    }
-    plotCharWithColor(inputChar, mapToWindowX(x), mapToWindowY(y), &myColor, &backColor);
-}
-
 // Set to false and draws don't take effect, they simply queue up. Set to true and all of the
 // queued up draws take effect.
 void commitDraws() {
     short i, j;
 
-    for (j=0; j<ROWS; j++) {
-        for (i=0; i<COLS; i++) {
+    for (i=0; i<COLS; i++) {
+        for (j=0; j<ROWS; j++) {
             if (displayBuffer[i][j].needsUpdate) {
                 plotChar(displayBuffer[i][j].character, i, j,
                          displayBuffer[i][j].foreColorComponents[0],
@@ -1779,7 +1755,7 @@ void dumpLevelToScreen() {
                 || (pmap[i][j].flags & DISCOVERED)) {
 
                 backup = pmap[i][j];
-                pmap[i][j].flags |= (VISIBLE | DISCOVERED);
+                pmap[i][j].flags |= VISIBLE;
                 tmap[i][j].light[0] = 100;
                 tmap[i][j].light[1] = 100;
                 tmap[i][j].light[2] = 100;
@@ -1957,7 +1933,7 @@ void flashForeground(short *x, short *y, color **flashColor, short *flashStrengt
             plotCharWithColor(displayChar[i], mapToWindowX(x[i]), mapToWindowY(y[i]), &newColor, &(bColor[i]));
         }
         if (j) {
-            if (pauseBrogue(16)) {
+            if (pauseBrogue(1)) {
                 j = 1;
             }
         }
@@ -1970,7 +1946,7 @@ void flashForeground(short *x, short *y, color **flashColor, short *flashStrengt
     restoreRNG;
 }
 
-void flashCell(color *theColor, short frames, short x, short y) {
+void flash(color *theColor, short frames, short x, short y) {
     short i;
     boolean interrupted = false;
 
@@ -1999,7 +1975,7 @@ void colorFlash(const color *theColor, unsigned long reqTerrainFlags,
                 && (i-x) * (i-x) + (j-y) * (j-y) <= maxRadius * maxRadius) {
 
                 tileQualifies[i][j] = true;
-                localRadius[i][j] = fp_sqrt(((i-x) * (i-x) + (j-y) * (j-y)) << FP_BASE) >> FP_BASE;
+                localRadius[i][j] = sqrt((i-x) * (i-x) + (j-y) * (j-y));
                 aTileQualified = true;
             } else {
                 tileQualifies[i][j] = false;
@@ -2045,6 +2021,10 @@ void funkyFade(cellDisplayBuffer displayBuf[COLS][ROWS], const color *colorStart
     boolean fastForward;
 
     assureCosmeticRNG;
+
+#ifdef BROGUE_LIBTCOD
+    stepCount *= 15; // libtcod displays much faster
+#endif
 
     fastForward = false;
     distanceMap = allocGrid();
@@ -2117,7 +2097,7 @@ void funkyFade(cellDisplayBuffer displayBuf[COLS][ROWS], const color *colorStart
                 plotCharWithColor(tempChar, i, j, &foreColor, &backColor);
             }
         }
-        if (!fastForward && pauseBrogue(16)) {
+        if (!fastForward && pauseBrogue(1)) {
             fastForward = true;
             n = (invert ? 1 : stepCount - 2);
         }
@@ -2292,10 +2272,12 @@ boolean pauseBrogue(short milliseconds) {
 
     commitDraws();
     if (rogue.playbackMode && rogue.playbackFastForward) {
+        pauseForMilliseconds(1);
         interrupted = true;
     } else {
         interrupted = pauseForMilliseconds(milliseconds);
     }
+    pausingTimerStartsNow();
     return interrupted;
 }
 
@@ -2333,6 +2315,8 @@ void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsD
         } while (returnEvent->eventType == MOUSE_UP && !coordinatesAreInWindow(returnEvent->param1, returnEvent->param2));
         // recording done elsewhere
     }
+
+    pausingTimerStartsNow();
 
     if (returnEvent->eventType == EVENT_ERROR) {
         rogue.playbackPaused = rogue.playbackMode; // pause if replaying
@@ -2442,7 +2426,10 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             autoRest();
             break;
         case SEARCH_KEY:
-            manualSearch();
+            recordKeystroke(SEARCH_KEY, false, false);
+            considerCautiousMode();
+            search(rogue.awarenessBonus < 0 ? 40 : 80);
+            playerTurnEnded();
             break;
         case INVENTORY_KEY:
             displayInventory(ALL_ITEMS, 0, 0, true, true);
@@ -2678,27 +2665,6 @@ boolean getInputTextString(char *inputText,
                 charNum++;
             }
         }
-#ifdef USE_CLIPBOARD
-        else if (keystroke == TAB_KEY) {
-            char* clipboard = getClipboard();
-            for (int i=0; i<(int) min(strlen(clipboard), (unsigned long) (maxLength - charNum)); ++i) {
-
-                char character = clipboard[i];
-
-                if (character >= textEntryBounds[textEntryType][0]
-                    && character <= textEntryBounds[textEntryType][1]) { // allow only permitted input
-                    if (textEntryType == TEXT_INPUT_FILENAME
-                        && characterForbiddenInFilename(character)) {
-                        character = '-';
-                    }
-                    plotCharWithColor(character, x + charNum, y, &white, &black);
-                    if (charNum < maxLength) {
-                        charNum++;
-                    }
-                }
-            }
-        }
-#endif
     } while (keystroke != RETURN_KEY && keystroke != ESCAPE_KEY && keystroke != ENTER_KEY);
 
     if (useDialogBox) {
@@ -2719,7 +2685,7 @@ void displayCenteredAlert(char *message) {
     printString(message, (COLS - strLenWithoutEscapes(message)) / 2, ROWS / 2, &teal, &black, 0);
 }
 
-// Flashes a message on the screen starting at (x, y) lasting for the given time (in ms) and with the given colors.
+// Flashes a message on the screen starting at (x, y) lasting for the given time and with the given colors.
 void flashMessage(char *message, short x, short y, int time, color *fColor, color *bColor) {
     boolean fastForward;
     int     i, j, messageLength, percentComplete, previousPercentComplete;
@@ -2727,7 +2693,6 @@ void flashMessage(char *message, short x, short y, int time, color *fColor, colo
     cellDisplayBuffer dbufs[COLS];
     uchar dchar;
     short oldRNG;
-    const int stepInMs = 16;
 
     if (rogue.playbackFastForward) {
         return;
@@ -2746,7 +2711,7 @@ void flashMessage(char *message, short x, short y, int time, color *fColor, colo
     }
 
     previousPercentComplete = -1;
-    for (i=0; i < time && fastForward == false; i += stepInMs) {
+    for (i=0; i < time && fastForward == false; i++) {
         percentComplete = 100 * i / time;
         percentComplete = percentComplete * percentComplete / 100; // transition is front-loaded
         if (previousPercentComplete != percentComplete) {
@@ -2770,7 +2735,7 @@ void flashMessage(char *message, short x, short y, int time, color *fColor, colo
             }
         }
         previousPercentComplete = percentComplete;
-        fastForward = pauseBrogue(stepInMs);
+        fastForward = pauseBrogue(1);
     }
     for (j=0; j<messageLength; j++) {
         foreColor = colorFromComponents(dbufs[j].foreColorComponents);
@@ -2882,7 +2847,7 @@ void displayMonsterFlashes(boolean flashingEnabled) {
             }
         }
     }
-    flashForeground(x, y, flashColor, strength, count, 20);
+    flashForeground(x, y, flashColor, strength, count, 250);
     restoreRNG;
 }
 
@@ -2937,7 +2902,7 @@ void displayMessageArchive() {
                 overlayDisplayBuffer(rbuf, 0);
                 overlayDisplayBuffer(dbuf, 0);
 
-                if (!fastForward && pauseBrogue(reverse ? 1 : 2)) {
+                if (pauseBrogue(reverse ? 3 : 10) && !fastForward) {
                     fastForward = true;
                     dequeueEvent();
                     currentMessageCount = (reverse ? MESSAGE_LINES + 1 : totalMessageCount - 1); // skip to the end
@@ -3785,8 +3750,8 @@ void printDiscoveriesScreen() {
     printString("-- RINGS --", mapToWindowX(2), y += NUMBER_SCROLL_KINDS + 1, &flavorTextColor, &black, dbuf);
     printDiscoveries(RING, NUMBER_RING_KINDS, RING_CHAR, mapToWindowX(3), ++y, dbuf);
 
-    printString("-- POTIONS --", mapToWindowX(29), y = mapToWindowY(1), &flavorTextColor, &black, dbuf);
-    printDiscoveries(POTION, NUMBER_POTION_KINDS, POTION_CHAR, mapToWindowX(30), ++y, dbuf);
+    printString("-- POTIONS --", mapToWindowX(30), y = mapToWindowY(1), &flavorTextColor, &black, dbuf);
+    printDiscoveries(POTION, NUMBER_POTION_KINDS, POTION_CHAR, mapToWindowX(31), ++y, dbuf);
 
     printString("-- STAFFS --", mapToWindowX(53), y = mapToWindowY(1), &flavorTextColor, &black, dbuf);
     printDiscoveries(STAFF, NUMBER_STAFF_KINDS, STAFF_CHAR, mapToWindowX(54), ++y, dbuf);
@@ -3811,59 +3776,49 @@ void printDiscoveriesScreen() {
 
 // Creates buttons for the discoveries screen in the buttons pointer; returns the number of buttons created.
 //short createDiscoveriesButtons(short category, short count, unsigned short itemCharacter, short x, short y, brogueButton *buttons) {
-//  color goodColor, badColor;
+//  color *theColor, goodColor, badColor;
 //  char whiteColorEscape[20] = "", darkGrayColorEscape[20] = "", yellowColorEscape[20] = "", goodColorEscape[20] = "", badColorEscape[20] = "";
-//  short i, magic, symbolCount;
+//  short i, x2, magic, symbolCount;
 //  itemTable *theTable = tableForItemCategory(category, NULL);
-//    char buf[COLS] = "";
 //
 //  goodColor = goodMessageColor;
 //  applyColorAverage(&goodColor, &black, 50);
 //  encodeMessageColor(goodColorEscape, 0, &goodColor);
 //  badColor = badMessageColor;
 //  applyColorAverage(&badColor, &black, 50);
-//  encodeMessageColor(badColorEscape, 0, &badColor);
+//  encodeMessageColor(badColorEscape, 0, &goodColor);
 //  encodeMessageColor(whiteColorEscape, 0, &white);
-//    encodeMessageColor(darkGrayColorEscape, 0, &darkGray);
-//    encodeMessageColor(yellowColorEscape, 0, &itemColor);
+//  encodeMessageColor(darkGrayColorEscape, 0, &darkGray);
 //
 //  for (i = 0; i < count; i++) {
-//        initializeButton(&(buttons[i]));
-//        buttons[i].flags = (B_DRAW | B_HOVER_ENABLED | B_ENABLED); // Clear other flags.
-//        buttons[i].buttonColor = black;
-//        buttons[i].opacity = 100;
 //      buttons[i].x = x;
 //      buttons[i].y = y + i;
+//      buttons[i].opacity = 100;
 //      symbolCount = 0;
 //      if (theTable[i].identified) {
 //          strcat(buttons[i].text, yellowColorEscape);
 //          buttons[i].symbol[symbolCount++] = itemCharacter;
 //          strcat(buttons[i].text, "*");
-//            strcat(buttons[i].text, whiteColorEscape);
-//            strcat(buttons[i].text, " ");
-//        } else {
-//            strcat(buttons[i].text, "  ");
+//          strcat(buttons[i].text, whiteColorEscape);
+//          //plotCharToBuffer(itemCharacter, x, y + i, &itemColor, &black, dbuf);
+//      } else {
 //          strcat(buttons[i].text, darkGrayColorEscape);
 //      }
 //      strcpy(buf, theTable[i].name);
 //      upperCase(buf);
-//        strcat(buttons[i].text, buf);
-//        strcat(buttons[i].text, "  ");
-//        strcat(buttons[i].text, darkGrayColorEscape);
-//        magic = magicCharDiscoverySuffix(category, i);
-//        strcat(buttons[i].text, "(");
-//        if (magic != -1) {
-//            strcat(buttons[i].text, goodColorEscape);
-//            strcat(buttons[i].text, "*");
-//            buttons[i].symbol[symbolCount++] = GOOD_MAGIC_CHAR;
+//      strcat(buf, " ");
+//      printString(buf, x + 2, y + i, theColor, &black, dbuf);
+//
+//      x2 = x + 2 + strLenWithoutEscapes(buf);
+//      magic = magicCharDiscoverySuffix(category, i);
+//      plotCharToBuffer('(', x2++, y + i, &darkGray, &black, dbuf);
+//      if (magic != -1) {
+//          plotCharToBuffer(GOOD_MAGIC_CHAR, x2++, y + i, &goodColor, &black, dbuf);
 //      }
-//        if (magic != 1) {
-//            strcat(buttons[i].text, badColorEscape);
-//            strcat(buttons[i].text, "*");
-//            buttons[i].symbol[symbolCount++] = BAD_MAGIC_CHAR;
-//        }
-//        strcat(buttons[i].text, darkGrayColorEscape);
-//        strcat(buttons[i].text, ")");
+//      if (magic != 1) {
+//          plotCharToBuffer(BAD_MAGIC_CHAR, x2++, y + i, &badColor, &black, dbuf);
+//      }
+//      plotCharToBuffer(')', x2++, y + i, &darkGray, &black, dbuf);
 //  }
 //  return i;
 //}
@@ -3872,7 +3827,6 @@ void printDiscoveriesScreen() {
 //  short i, j, y, buttonCount;
 //  cellDisplayBuffer dbuf[COLS][ROWS], rbuf[COLS][ROWS];
 //  brogueButton buttons[NUMBER_SCROLL_KINDS + NUMBER_WAND_KINDS + NUMBER_POTION_KINDS + NUMBER_STAFF_KINDS + NUMBER_RING_KINDS] = {{{0}}};
-//    rogueEvent theEvent;
 //
 //  clearDisplayBuffer(dbuf);
 //  buttonCount = 0;
@@ -3897,15 +3851,11 @@ void printDiscoveriesScreen() {
 //          dbuf[i][j].opacity = (i < STAT_BAR_WIDTH ? 0 : INTERFACE_OPACITY);
 //      }
 //  }
-//    overlayDisplayBuffer(dbuf, rbuf);
-//    y = buttonInputLoop(buttons,
-//                        buttonCount,
-//                        mapToWindowX(3),
-//                        mapToWindowY(1),
-//                        DCOLS - 6,
-//                        DROWS - 2,
-//                        &theEvent);
-//    overlayDisplayBuffer(rbuf, NULL);
+//  overlayDisplayBuffer(dbuf, rbuf);
+//
+//  displayMoreSign();
+//
+//  overlayDisplayBuffer(rbuf, NULL);
 //}
 
 void printHighScores(boolean hiliteMostRecent) {
@@ -4059,7 +4009,7 @@ void printProgressBar(short x, short y, const char barLabel[COLS], long amtFille
         barText[i + labelOffset] = barLabel[i];
     }
 
-    amtFilled = clamp(amtFilled, 0, amtMax);
+    amtFilled = max(0, min(amtFilled, amtMax));
 
     if (amtMax < 10000000) {
         amtFilled *= 100;
@@ -4096,20 +4046,10 @@ short estimatedArmorValue() {
     short retVal;
 
     retVal = ((armorTable[rogue.armor->kind].range.upperBound + armorTable[rogue.armor->kind].range.lowerBound) / 2) / 10;
-    retVal += fp_strengthModifier(rogue.armor) >> FP_BASE;
+    retVal += strengthModifier(rogue.armor);
     retVal -= player.status[STATUS_DONNING];
 
     return max(0, retVal);
-}
-
-short creatureHealthChangePercent(creature *monst) {
-    short currentPercent, previousPercent;
-    if (monst->previousHealthPoints <= 0) {
-        return 0;
-    }
-    currentPercent = monst->currentHP * 100 / monst->info.maxHP;
-    previousPercent = monst->previousHealthPoints * 100 / monst->info.maxHP;
-    return monst->currentHP * 100 / monst->previousHealthPoints - 100;
 }
 
 // returns the y-coordinate after the last line printed
@@ -4121,7 +4061,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
     boolean inPath;
     short oldRNG;
 
-    const char hallucinationStrings[16][COLS] = {
+    const char hallucinationStrings[14][COLS] = {
         "     (Dancing)      ",
         "     (Singing)      ",
         "  (Pontificating)   ",
@@ -4134,13 +4074,10 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
         "    (Quivering)     ",
         "    (Muttering)     ",
         "    (Gibbering)     ",
-        "     (Giggling)     ",
-        "     (Moaning)      ",
         "    (Shrieking)     ",
         "   (Caterwauling)   ",
     };
     const char statusStrings[NUMBER_OF_STATUS_EFFECTS][COLS] = {
-        "Searching",
         "Donning Armor",
         "Weakened: -",
         "Telepathic",
@@ -4211,7 +4148,9 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                 //encodeMessageColor(monstName, strlen(monstName) - 4, &playerInDarknessColor);
                 encodeMessageColor(monstName, strlen(monstName) - 4, &monstForeColor);
                 strcat(monstName, "(dark)");
-            } else if (!(pmap[player.xLoc][player.yLoc].flags & IS_IN_SHADOW)) {
+            } else if (pmap[player.xLoc][player.yLoc].flags & IS_IN_SHADOW) {
+
+            } else {
                 strcat(monstName, " xxxx");
                 //encodeMessageColor(monstName, strlen(monstName) - 4, &playerInLightColor);
                 encodeMessageColor(monstName, strlen(monstName) - 4, &monstForeColor);
@@ -4255,17 +4194,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
         } else {
             healthBarColor = blueBar;
         }
-        percent = creatureHealthChangePercent(monst);
-        if (monst->currentHP <= 0) {
-            strcpy(buf, "Dead");
-        } else if (percent != 0) {
-            strcpy(buf, "       Health       ");
-            sprintf(buf2, "(%s%i%%)", percent > 0 ? "+" : "", percent);
-            strcpy(&(buf[20 - strlen(buf2)]), buf2);
-        } else {
-            strcpy(buf, "Health");
-        }
-        printProgressBar(0, y++, buf, monst->currentHP, monst->info.maxHP, &healthBarColor, dim);
+        printProgressBar(0, y++, "Health", monst->currentHP, monst->info.maxHP, &healthBarColor, dim);
     }
 
     if (monst == &player) {

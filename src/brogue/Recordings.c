@@ -666,7 +666,7 @@ void advanceToLocation(unsigned long destinationFrame) {
                              rogue.playerTurnNumber - initialFrameNumber,
                              destinationFrame - initialFrameNumber, &darkPurple, false);
             rogue.playbackFastForward = true;
-            commitDraws();
+            pauseBrogue(1);
         }
 
         rogue.RNG = RNG_COSMETIC; // dancing terrain colors can't influence recordings
@@ -761,7 +761,6 @@ void executePlaybackInput(rogueEvent *recordingInput) {
                     flashTemporaryAlert(" Faster ", 300);
                 }
                 rogue.playbackDelayPerTurn = newDelay;
-                rogue.playbackDelayThisTurn = rogue.playbackDelayPerTurn;
                 break;
             case DOWN_ARROW:
             case DOWN_KEY:
@@ -770,7 +769,6 @@ void executePlaybackInput(rogueEvent *recordingInput) {
                     flashTemporaryAlert(" Slower ", 300);
                 }
                 rogue.playbackDelayPerTurn = newDelay;
-                rogue.playbackDelayThisTurn = rogue.playbackDelayPerTurn;
                 break;
             case ACKNOWLEDGE_KEY:
                 if (rogue.playbackOOS && rogue.playbackPaused) {
@@ -795,7 +793,7 @@ void executePlaybackInput(rogueEvent *recordingInput) {
                 if (!rogue.playbackPaused || unpause()) {
                     if ((unsigned long) rogue.deepestLevel < maxLevelChanges) {
                         displayCenteredAlert(" Loading... ");
-                        commitDraws();
+                        pauseBrogue(5);
                         rogue.playbackFastForward = true;
                         while ((rogue.deepestLevel <= previousDeepestLevel || !rogue.playbackBetweenTurns)
                                && !rogue.gameHasEnded) {
@@ -1160,7 +1158,7 @@ void loadSavedGame() {
             if (!(recordingLocation % progressBarInterval) && !rogue.playbackOOS) {
                 rogue.playbackFastForward = false; // so the progress bar redraws make it to the screen
                 printProgressBar((COLS - 20) / 2, ROWS / 2, "[     Loading...   ]", recordingLocation, lengthOfPlaybackFile, &darkPurple, false);
-                commitDraws();
+                pauseBrogue(1);
                 rogue.playbackFastForward = true;
             }
         }

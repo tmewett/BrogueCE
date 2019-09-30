@@ -404,8 +404,3 @@ void initializeLaunchArguments(enum NGCommands *command, char *path, unsigned lo
     // we've actually already done this at this point, except for the seed.
 }
 
-boolean isApplicationActive(void) {
-    // FIXME: finish
-    return true;
-}
-

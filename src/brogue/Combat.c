@@ -57,49 +57,21 @@
  * strength penalty/benefit) increases
  */
 
-int64_t fp_strengthModifier(item *theItem) {
-    int64_t difference = (rogue.strength - player.weaknessAmount) - theItem->strengthRequired;
+float strengthModifier(item *theItem) {
+    short difference = (rogue.strength - player.weaknessAmount) - theItem->strengthRequired;
     if (difference > 0) {
-        return (difference << FP_BASE) / 4; // 0.25x
+        return (float) 0.25 * difference;
     } else {
-        return (difference << FP_BASE) * 5/2; // 2.5x
+        return (float) 2.5 * difference;
     }
 }
 
-int64_t fp_netEnchant(item *theItem) {
-    int64_t retval;
+float netEnchant(item *theItem) {
     if (theItem->category & (WEAPON | ARMOR)) {
-        retval = (((int64_t) theItem->enchant1) << FP_BASE) + fp_strengthModifier(theItem);
+        return ((float) theItem->enchant1) + strengthModifier(theItem);
     } else {
-        retval = (((int64_t) theItem->enchant1) << FP_BASE);
+        return ((float) theItem->enchant1);
     }
-    // Clamp all net enchantment values to [-20, 50].
-    return clamp(retval, -20 << FP_BASE, 50 << FP_BASE);
-}
-
-int64_t fp_monsterDamageAdjustmentAmount(const creature *monst) {
-    if (monst == &player) {
-        // Handled through player strength routines elsewhere.
-        return FP_FACTOR;
-    } else {
-        return fp_damageFraction((monst->weaknessAmount << FP_BASE) * -3/2);
-    }
-}
-
-short monsterDefenseAdjusted(const creature *monst) {
-    short retval;
-    if (monst == &player) {
-        // Weakness is already taken into account in recalculateEquipmentBonuses() for the player.
-        retval = monst->info.defense;
-    } else {
-        retval = monst->info.defense - 25 * monst->weaknessAmount;
-    }
-    return max(retval, 0);
-}
-
-short monsterAccuracyAdjusted(const creature *monst) {
-    short retval = monst->info.accuracy * fp_accuracyFraction((monst->weaknessAmount << FP_BASE) * -3/2) >> FP_BASE;
-    return max(retval, 0);
 }
 
 // does NOT account for auto-hit from sleeping or unaware defenders; does account for auto-hit from
@@ -112,11 +84,13 @@ short hitProbability(creature *attacker, creature *defender) {
     if (defender->status[STATUS_STUCK] || (defender->bookkeepingFlags & MB_CAPTIVE)) {
         return 100;
     }
+
     if ((defender->bookkeepingFlags & MB_SEIZED)
         && (attacker->bookkeepingFlags & MB_SEIZING)) {
 
         return 100;
     }
+
     if (attacker == &player && rogue.weapon) {
         if ((rogue.weapon->flags & ITEM_RUNIC)
             && rogue.weapon->enchant2 == W_SLAYING
@@ -124,18 +98,22 @@ short hitProbability(creature *attacker, creature *defender) {
 
             return 100;
         }
-        accuracy = player.info.accuracy * fp_accuracyFraction(fp_netEnchant(rogue.weapon)) >> FP_BASE;
+        accuracy = (double) player.info.accuracy * pow(WEAPON_ENCHANT_ACCURACY_FACTOR, netEnchant(rogue.weapon) + FLOAT_FUDGE);
     }
-    hitProbability = accuracy * fp_defenseFraction(defense) >> FP_BASE;
+
+    hitProbability = accuracy * pow(DEFENSE_FACTOR, defense);
+
     if (hitProbability > 100) {
         hitProbability = 100;
     } else if (hitProbability < 0) {
         hitProbability = 0;
     }
+
     return hitProbability;
 }
 
 boolean attackHit(creature *attacker, creature *defender) {
+
     // automatically hit if the monster is sleeping or captive or stuck in a web
     if (defender->status[STATUS_STUCK]
         || defender->status[STATUS_PARALYZED]
@@ -308,7 +286,7 @@ short alliedCloneCount(creature *monst) {
 // This can be things like melee attacks, fire/lightning attacks or throwing a weapon.
 void moralAttack(creature *attacker, creature *defender) {
 
-    if (attacker == &player && canSeeMonster(defender)) {
+    if (attacker == &player) {
         rogue.featRecord[FEAT_PACIFIST] = false;
         if (defender->creatureState != MONSTER_TRACKING_SCENT) {
             rogue.featRecord[FEAT_PALADIN] = false;
@@ -385,8 +363,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
         if (attacker->info.abilityFlags & MA_HIT_DEGRADE_ARMOR
             && defender == &player
             && rogue.armor
-            && !(rogue.armor->flags & ITEM_PROTECTED)
-            && (rogue.armor->enchant1 + rogue.armor->armor/10 > -10)) {
+            && !(rogue.armor->flags & ITEM_PROTECTED)) {
 
             rogue.armor->enchant1--;
             equipItem(rogue.armor, true);
@@ -404,11 +381,6 @@ void specialHit(creature *attacker, creature *defender, short damage) {
             }
             player.status[STATUS_HALLUCINATING] += 20;
             player.maxStatus[STATUS_HALLUCINATING] = max(player.maxStatus[STATUS_HALLUCINATING], player.status[STATUS_HALLUCINATING]);
-        }
-        if (attacker->info.abilityFlags & MA_HIT_BURN
-             && !defender->status[STATUS_IMMUNE_TO_FIRE]) {
-
-            exposeCreatureToFire(defender);
         }
 
         if (attacker->info.abilityFlags & MA_HIT_STEAL_FLEE
@@ -473,9 +445,65 @@ void specialHit(creature *attacker, creature *defender, short damage) {
 
         weaken(defender, 300);
     }
-    if (attacker->info.abilityFlags & MA_ATTACKS_STAGGER) {
-        processStaggerHit(attacker, defender);
+}
+
+short runicWeaponChance(item *theItem, boolean customEnchantLevel, float enchantLevel) {
+    const float effectChances[NUMBER_WEAPON_RUNIC_KINDS] = {
+        0.16,   // W_SPEED
+        0.06,   // W_QUIETUS
+        0.07,   // W_PARALYSIS
+        0.15,   // W_MULTIPLICITY
+        0.14,   // W_SLOWING
+        0.11,   // W_CONFUSION
+        0.15,   // W_FORCE
+        0,      // W_SLAYING
+        0,      // W_MERCY
+        0};     // W_PLENTY
+    float rootChance, modifier;
+    short runicType = theItem->enchant2;
+    short chance, adjustedBaseDamage;
+
+    if (runicType == W_SLAYING) {
+        return 0;
     }
+    if (runicType >= NUMBER_GOOD_WEAPON_ENCHANT_KINDS) { // bad runic
+        return 15;
+    }
+    if (!customEnchantLevel) {
+        enchantLevel = (float) netEnchant(theItem);
+    }
+
+    rootChance = effectChances[runicType];
+
+    // Innately high-damage weapon types are less likely to trigger runic effects.
+    adjustedBaseDamage = (theItem->damage.lowerBound + theItem->damage.upperBound) / 2;
+
+    if (theItem->flags & ITEM_ATTACKS_HIT_SLOWLY) {
+        adjustedBaseDamage /= 2; // Normalize as though they attacked once per turn instead of every other turn.
+    }
+//    if (theItem->flags & ITEM_ATTACKS_QUICKLY) {
+//      adjustedBaseDamage *= 2; // Normalize as though they attacked once per turn instead of twice per turn.
+//  } // Testing disabling this for balance reasons...
+
+    modifier = 1.0 - min(0.99, ((float) adjustedBaseDamage) / 18.0);
+    rootChance *= modifier;
+
+    chance = 100 - (short) (100 * pow(1.0 - rootChance, enchantLevel) + FLOAT_FUDGE); // good runic
+
+    // Slow weapons get an adjusted chance of 1 - (1-p)^2 to reflect two bites at the apple instead of one.
+    if (theItem->flags & ITEM_ATTACKS_HIT_SLOWLY) {
+        chance = 100 - (100 - chance) * (100 - chance) / 100;
+    }
+    // Fast weapons get an adjusted chance of 1 - sqrt(1-p) to reflect one bite at the apple instead of two.
+    if (theItem->flags & ITEM_ATTACKS_QUICKLY) {
+        chance = 100 * (1.0 - sqrt(1 - ((double)(chance)/100.0)));
+    }
+
+    // The lowest percent change that a weapon will ever have is its enchantment level (if greater than 0).
+    // That is so that even really heavy weapons will improve at least 1% per enchantment.
+    chance = clamp(chance, max(1, (short) enchantLevel), 100);
+
+    return chance;
 }
 
 boolean forceWeaponHit(creature *defender, item *theItem) {
@@ -500,11 +528,11 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
         autoID = true;
     }
     theBolt = boltCatalog[BOLT_BLINKING];
-    theBolt.magnitude = max(1, fp_netEnchant(theItem) >> FP_BASE);
+    theBolt.magnitude = max(1, netEnchant(theItem) + FLOAT_FUDGE);
     zap(oldLoc, newLoc, &theBolt, false);
     if (!(defender->bookkeepingFlags & MB_IS_DYING)
         && distanceBetween(oldLoc[0], oldLoc[1], defender->xLoc, defender->yLoc) > 0
-        && distanceBetween(oldLoc[0], oldLoc[1], defender->xLoc, defender->yLoc) << FP_BASE < fp_weaponForceDistance(fp_netEnchant(theItem))) {
+        && distanceBetween(oldLoc[0], oldLoc[1], defender->xLoc, defender->yLoc) < weaponForceDistance(netEnchant(theItem))) {
 
         if (pmap[defender->xLoc + newLoc[0] - oldLoc[0]][defender->yLoc + newLoc[1] - oldLoc[1]].flags & (HAS_MONSTER | HAS_PLAYER)) {
             otherMonster = monsterAtLoc(defender->xLoc + newLoc[0] - oldLoc[0], defender->yLoc + newLoc[1] - oldLoc[1]);
@@ -573,7 +601,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
         &yellow, &pink, &green, &confusionGasColor, NULL, NULL, &darkRed, &rainbow};
     //  W_SPEED, W_QUIETUS, W_PARALYSIS, W_MULTIPLICITY, W_SLOWING, W_CONFUSION, W_FORCE, W_SLAYING, W_MERCY, W_PLENTY
     short chance, i;
-    int64_t enchant;
+    float enchant;
     enum weaponEnchants enchantType = theItem->enchant2;
     creature *newMonst;
     boolean autoID = false;
@@ -586,7 +614,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
         return;
     }
 
-    enchant = fp_netEnchant(theItem);
+    enchant = netEnchant(theItem);
 
     if (theItem->enchant2 == W_SLAYING) {
         chance = (monsterIsInClass(defender, theItem->vorpalEnemy) ? 100 : 0);
@@ -641,7 +669,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
                 autoID = true;
                 break;
             case W_PARALYSIS:
-                defender->status[STATUS_PARALYZED] = max(defender->status[STATUS_PARALYZED], fp_weaponParalysisDuration(enchant));
+                defender->status[STATUS_PARALYZED] = max(defender->status[STATUS_PARALYZED], weaponParalysisDuration(enchant));
                 defender->maxStatus[STATUS_PARALYZED] = defender->status[STATUS_PARALYZED];
                 if (canDirectlySeeMonster(defender)) {
                     sprintf(buf, "%s is frozen in place", monstName);
@@ -653,23 +681,22 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
             case W_MULTIPLICITY:
                 sprintf(buf, "Your %s emits a flash of light, and %sspectral duplicate%s appear%s!",
                         theItemName,
-                        (fp_weaponImageCount(enchant) == 1 ? "a " : ""),
-                        (fp_weaponImageCount(enchant) == 1 ? "" : "s"),
-                        (fp_weaponImageCount(enchant) == 1 ? "s" : ""));
+                        (weaponImageCount(enchant) == 1 ? "a " : ""),
+                        (weaponImageCount(enchant) == 1 ? "" : "s"),
+                        (weaponImageCount(enchant) == 1 ? "s" : ""));
                 buf[DCOLS] = '\0';
 
-                for (i = 0; i < (fp_weaponImageCount(enchant)); i++) {
+                for (i = 0; i < (weaponImageCount(enchant)); i++) {
                     newMonst = generateMonster(MK_SPECTRAL_IMAGE, true, false);
                     getQualifyingPathLocNear(&(newMonst->xLoc), &(newMonst->yLoc), defender->xLoc, defender->yLoc, true,
                                              T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(newMonst->info)), HAS_PLAYER,
-                                             avoidedFlagsForMonster(&(newMonst->info)), (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
+                                             avoidedFlagsForMonster(&(newMonst->info)), (HAS_PLAYER | HAS_MONSTER | HAS_UP_STAIRS | HAS_DOWN_STAIRS), false);
                     newMonst->bookkeepingFlags |= (MB_FOLLOWER | MB_BOUND_TO_LEADER | MB_DOES_NOT_TRACK_LEADER | MB_TELEPATHICALLY_REVEALED);
                     newMonst->bookkeepingFlags &= ~MB_JUST_SUMMONED;
                     newMonst->leader = &player;
                     newMonst->creatureState = MONSTER_ALLY;
-                    if (theItem->flags & ITEM_ATTACKS_STAGGER) {
+                    if (theItem->flags & ITEM_ATTACKS_HIT_SLOWLY) {
                         newMonst->info.attackSpeed *= 2;
-                        newMonst->info.abilityFlags |= MA_ATTACKS_STAGGER;
                     }
                     if (theItem->flags & ITEM_ATTACKS_QUICKLY) {
                         newMonst->info.attackSpeed /= 2;
@@ -684,9 +711,9 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
                         newMonst->info.abilityFlags |= MA_ATTACKS_EXTEND;
                     }
                     newMonst->ticksUntilTurn = 100;
-                    newMonst->info.accuracy = player.info.accuracy + (5 * fp_netEnchant(theItem) >> FP_BASE);
+                    newMonst->info.accuracy = player.info.accuracy + 5 * netEnchant(theItem);
                     newMonst->info.damage = player.info.damage;
-                    newMonst->status[STATUS_LIFESPAN_REMAINING] = newMonst->maxStatus[STATUS_LIFESPAN_REMAINING] = fp_weaponImageDuration(enchant);
+                    newMonst->status[STATUS_LIFESPAN_REMAINING] = newMonst->maxStatus[STATUS_LIFESPAN_REMAINING] = weaponImageDuration(enchant);
                     if (strLenWithoutEscapes(theItemName) <= 8) {
                         sprintf(newMonst->info.monsterName, "spectral %s", theItemName);
                     } else {
@@ -717,7 +744,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
                 autoID = true;
                 break;
             case W_SLOWING:
-                slow(defender, fp_weaponSlowDuration(enchant));
+                slow(defender, weaponSlowDuration(enchant));
                 if (canDirectlySeeMonster(defender)) {
                     sprintf(buf, "%s slows down", monstName);
                     buf[DCOLS] = '\0';
@@ -726,7 +753,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
                 }
                 break;
             case W_CONFUSION:
-                defender->status[STATUS_CONFUSED] = max(defender->status[STATUS_CONFUSED], fp_weaponConfusionDuration(enchant));
+                defender->status[STATUS_CONFUSED] = max(defender->status[STATUS_CONFUSED], weaponConfusionDuration(enchant));
                 defender->maxStatus[STATUS_CONFUSED] = defender->status[STATUS_CONFUSED];
                 if (canDirectlySeeMonster(defender)) {
                     sprintf(buf, "%s looks very confused", monstName);
@@ -787,7 +814,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
     boolean runicKnown;
     boolean runicDiscovered;
     short newDamage, dir, newX, newY, count, i;
-    int64_t enchant;
+    float enchant;
     creature *monst, *hitList[8];
 
     returnString[0] = '\0';
@@ -796,7 +823,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
         return; // just in case
     }
 
-    enchant = fp_netEnchant(rogue.armor);
+    enchant = netEnchant(rogue.armor);
 
     runicKnown = rogue.armor->flags & ITEM_RUNIC_IDENTIFIED;
     runicDiscovered = false;
@@ -808,7 +835,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
     switch (rogue.armor->enchant2) {
         case A_MULTIPLICITY:
             if (melee && !(attacker->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE)) && rand_percent(33)) {
-                for (i = 0; i < fp_armorImageCount(enchant); i++) {
+                for (i = 0; i < armorImageCount(enchant); i++) {
                     monst = cloneMonster(attacker, false, true);
                     monst->bookkeepingFlags |= (MB_FOLLOWER | MB_BOUND_TO_LEADER | MB_DOES_NOT_TRACK_LEADER | MB_TELEPATHICALLY_REVEALED);
                     monst->info.flags |= MONST_DIES_IF_NEGATED;
@@ -891,7 +918,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
             }
             break;
         case A_ABSORPTION:
-            *damage -= rand_range(0, fp_armorAbsorptionMax(enchant));
+            *damage -= rand_range(0, armorAbsorptionMax(enchant));
             if (*damage <= 0) {
                 *damage = 0;
                 runicDiscovered = true;
@@ -902,7 +929,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
             break;
         case A_REPRISAL:
             if (melee && !(attacker->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
-                newDamage = max(1, fp_armorReprisalPercent(enchant) * (*damage) / 100); // 5% reprisal per armor level
+                newDamage = max(1, armorReprisalPercent(enchant) * (*damage) / 100); // 5% reprisal per armor level
                 if (inflictDamage(&player, attacker, newDamage, &blue, true)) {
                     if (canSeeMonster(attacker)) {
                         sprintf(returnString, "your %s pulses and %s drops dead!", armorName, attackerName);
@@ -970,30 +997,13 @@ void decrementWeaponAutoIDTimer() {
     }
 }
 
-void processStaggerHit(creature *attacker, creature *defender) {
-    if ((defender->info.flags & (MONST_INVULNERABLE | MONST_IMMOBILE | MONST_INANIMATE))
-        || (defender->bookkeepingFlags & MB_CAPTIVE)
-        || cellHasTerrainFlag(defender->xLoc, defender->yLoc, T_OBSTRUCTS_PASSABILITY)) {
-
-        return;
-    }
-    short newX = clamp(defender->xLoc - attacker->xLoc, -1, 1) + defender->xLoc;
-    short newY = clamp(defender->yLoc - attacker->yLoc, -1, 1) + defender->yLoc;
-    if (coordinatesAreInMap(newX, newY)
-        && !cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)
-        && !(pmap[newX][newY].flags & (HAS_MONSTER | HAS_PLAYER))) {
-
-        setMonsterLocation(defender, newX, newY);
-    }
-}
-
 // returns whether the attack hit
 boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
     short damage, specialDamage, poisonDamage;
     char buf[COLS*2], buf2[COLS*2], attackerName[COLS], defenderName[COLS], verb[DCOLS], explicationClause[DCOLS] = "", armorRunicString[DCOLS*3];
     boolean sneakAttack, defenderWasAsleep, defenderWasParalyzed, degradesAttackerWeapon, sightUnseen;
 
-    if (attacker == &player && canSeeMonster(defender)) {
+    if (attacker == &player) {
         rogue.featRecord[FEAT_PURE_MAGE] = false;
     }
 
@@ -1061,7 +1071,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
     if (sneakAttack || defenderWasAsleep || defenderWasParalyzed || lungeAttack || attackHit(attacker, defender)) {
         // If the attack hit:
         damage = (defender->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE)
-                  ? 0 : randClump(attacker->info.damage) * fp_monsterDamageAdjustmentAmount(attacker) >> FP_BASE);
+                  ? 0 : randClump(attacker->info.damage) * monsterDamageAdjustmentAmount(attacker));
 
         if (sneakAttack || defenderWasAsleep || defenderWasParalyzed) {
             if (defender != &player) {
@@ -1077,7 +1087,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
                 && rogue.weapon
                 && (rogue.weapon->flags & ITEM_SNEAK_ATTACK_BONUS)) {
 
-                damage *= 5; // 5x damage for dagger sneak attacks.
+                damage *= 5; // Treble damage for general sneak attacks.
             } else {
                 damage *= 3; // Treble damage for general sneak attacks.
             }
@@ -1159,8 +1169,8 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
             }
         } else { // if the defender survived
             if (!rogue.blockCombatText && (canSeeMonster(attacker) || canSeeMonster(defender))) {
-                attackVerb(verb, attacker, max(damage - (attacker->info.damage.lowerBound * fp_monsterDamageAdjustmentAmount(attacker) >> FP_BASE), 0) * 100
-                           / max(1, (attacker->info.damage.upperBound - attacker->info.damage.lowerBound) * fp_monsterDamageAdjustmentAmount(attacker) >> FP_BASE));
+                attackVerb(verb, attacker, max(damage - attacker->info.damage.lowerBound * monsterDamageAdjustmentAmount(attacker), 0) * 100
+                           / max(1, (attacker->info.damage.upperBound - attacker->info.damage.lowerBound) * monsterDamageAdjustmentAmount(attacker)));
                 sprintf(buf, "%s %s %s%s", attackerName, verb, defenderName, explicationClause);
                 if (sightUnseen) {
                     if (!rogue.heardCombatThisTurn) {
@@ -1170,9 +1180,6 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
                 } else {
                     combatMessage(buf, messageColorFromVictim(defender));
                 }
-            }
-            if (attacker == &player && rogue.weapon && (rogue.weapon->flags & ITEM_ATTACKS_STAGGER)) {
-                processStaggerHit(attacker, defender);
             }
             if (attacker->info.abilityFlags & SPECIAL_HIT) {
                 specialHit(attacker, defender, (attacker->info.abilityFlags & MA_POISONS) ? poisonDamage : damage);
@@ -1203,8 +1210,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
             && rogue.weapon
             && !(rogue.weapon->flags & ITEM_PROTECTED)
                 // Can't damage a Weapon of Acid Mound Slaying by attacking an acid mound... just ain't right!
-            && !((rogue.weapon->flags & ITEM_RUNIC) && rogue.weapon->enchant2 == W_SLAYING && monsterIsInClass(defender, rogue.weapon->vorpalEnemy))
-            && rogue.weapon->enchant1 >= -10) {
+            && !((rogue.weapon->flags & ITEM_RUNIC) && rogue.weapon->enchant2 == W_SLAYING && monsterIsInClass(defender, rogue.weapon->vorpalEnemy))) {
 
             rogue.weapon->enchant1--;
             if (rogue.weapon->quiverNumber) {
@@ -1336,7 +1342,7 @@ boolean anyoneWantABite(creature *decedent) {
     short **grid;
     creature *ally;
     boolean success = false;
-    boolean ourBolts[NUMBER_BOLT_KINDS] = {false};
+    boolean ourBolts[NUMBER_BOLT_KINDS];
 
     candidates = 0;
     if ((!(decedent->info.abilityFlags & LEARNABLE_ABILITIES)
@@ -1352,14 +1358,13 @@ boolean anyoneWantABite(creature *decedent) {
     fillGrid(grid, 0);
     calculateDistances(grid, decedent->xLoc, decedent->yLoc, T_PATHING_BLOCKER, NULL, true, true);
     for (ally = monsters->nextCreature; ally != NULL; ally = ally->nextCreature) {
-        if (canAbsorb(ally, ourBolts, decedent, grid)) {
+        if (canAbsorb(ally, ourBolts, decedent, grid)) { // This populates ourBolts if it returns true.
             candidates++;
         }
     }
     if (candidates > 0) {
         randIndex = rand_range(1, candidates);
         for (ally = monsters->nextCreature; ally != NULL; ally = ally->nextCreature) {
-            // CanAbsorb() populates ourBolts if it returns true and there are no learnable behaviors or flags:
             if (canAbsorb(ally, ourBolts, decedent, grid) && !--randIndex) {
                 break;
             }
@@ -1406,7 +1411,7 @@ boolean anyoneWantABite(creature *decedent) {
                     }
                 }
             } else if (decedent->info.bolts[0] != BOLT_NONE) {
-                // If there are no learnable ability or behavior flags, pick a learnable bolt.
+                // If there are no learnable ability or behavior flags, try to find a learnable bolt.
                 candidates = 0;
                 for (i=0; decedent->info.bolts[i] != BOLT_NONE; i++) {
                     if (!(boltCatalog[decedent->info.bolts[i]].flags & BF_NOT_LEARNABLE)
@@ -1515,8 +1520,8 @@ boolean inflictDamage(creature *attacker, creature *defender,
     }
 
     if (defender->currentHP <= damage) { // killed
-        killCreature(defender, false);
         anyoneWantABite(defender);
+        killCreature(defender, false);
         killed = true;
     } else { // survived
         if (damage < 0 && defender->currentHP - damage > defender->info.maxHP) {
@@ -1675,7 +1680,9 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
     }
 }
 
-void buildHitList(creature **hitList, const creature *attacker, creature *defender, const boolean sweep) {
+void buildHitList(creature **hitList,
+                  const creature *attacker, creature *defender,
+                  const boolean penetrate, const boolean sweep) {
     short i, x, y, newX, newY, newestX, newestY;
     enum directions dir, newDir;
 
@@ -1694,7 +1701,22 @@ void buildHitList(creature **hitList, const creature *attacker, creature *defend
         }
     }
 
-    if (sweep) {
+    if (penetrate && dir != NO_DIRECTION) {
+        hitList[0] = defender;
+        newestX = newX + nbDirs[dir][0];
+        newestY = newY + nbDirs[dir][1];
+        if (coordinatesAreInMap(newestX, newestY) && (pmap[newestX][newestY].flags & HAS_MONSTER)) {
+            defender = monsterAtLoc(newestX, newestY);
+            if (defender
+                && monsterWillAttackTarget(attacker, defender)
+                && (!cellHasTerrainFlag(defender->xLoc, defender->yLoc, T_OBSTRUCTS_PASSABILITY) || (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS))) {
+
+                // Attack the outermost monster first, so that spears of force can potentially send both of them flying.
+                hitList[1] = hitList[0];
+                hitList[0] = defender;
+            }
+        }
+    } else if (sweep) {
         if (dir == NO_DIRECTION) {
             dir = UP; // Just pick one.
         }
@@ -1715,4 +1737,62 @@ void buildHitList(creature **hitList, const creature *attacker, creature *defend
     } else {
         hitList[0] = defender;
     }
+}
+
+// Basically runs a simplified deterministic melee combat simulation against a hypothetical
+// monster with infinite HP (the dummy) and returns the amount of damage the tested
+// monster deals before succumbing. Takes into account various environmental factors
+// (e.g. current status effects).
+short monsterPower(const creature *theMonst) {
+    short damageDealt[2] = {0, 0};
+    short statuses[NUMBER_OF_STATUS_EFFECTS];
+    short ticksTillTurn[2] = {0, 0}, speed;
+    short i, k;
+    double damagePerHit[2];
+    double hitChance[2];
+
+    // [0] is the tested monster and [1] is the dummy.
+    // damageDealt measures how much damage each contestant has inflicted.
+
+    for (i=0; i<NUMBER_OF_STATUS_EFFECTS; i++) {
+        statuses[i] = theMonst->status[i];
+    }
+
+    damagePerHit[0] = (theMonst->info.damage.lowerBound + theMonst->info.damage.upperBound) * monsterDamageAdjustmentAmount(theMonst) / 2;
+    damagePerHit[1] = 10;
+    hitChance[0] = monsterAccuracyAdjusted(theMonst) * pow(DEFENSE_FACTOR, 100); // Assumes the dummy has 100 armor.
+    hitChance[1] = monsterAccuracyAdjusted(theMonst) * pow(DEFENSE_FACTOR, theMonst->info.defense);
+
+    while (damageDealt[1] < theMonst->currentHP) { // Loop until the dummy kills the monster in the simulation.
+        for (k=0; k<=1; k++) { // k is whose turn it is
+
+            if (k==0) { // monster
+                speed = theMonst->info.attackSpeed;
+                if (statuses[STATUS_POISONED]) {
+                    damageDealt[1] += theMonst->poisonAmount; // dummy gets credit for poison
+                }
+                if (statuses[STATUS_HASTED]) {
+                    speed /= 2;
+                }
+                if (statuses[STATUS_SLOWED]) {
+                    speed *= 2;
+                }
+                for (i=0; i<NUMBER_OF_STATUS_EFFECTS; i++) {
+                    if (statuses[i] > 0) {
+                        statuses[i]--;
+                    }
+                }
+            }
+
+            while (ticksTillTurn[k] <= 0) {
+                if (k == 1 || !statuses[STATUS_PARALYZED]) {
+                    damageDealt[k] += damagePerHit[k] * hitChance[k];
+                }
+                ticksTillTurn[k] += k ? 100 : speed;
+            }
+            ticksTillTurn[k] -= 100;
+        }
+    }
+
+    return damageDealt[0];
 }
