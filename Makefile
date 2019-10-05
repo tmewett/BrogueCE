@@ -31,8 +31,8 @@ endif
 %.o: %.c src/brogue/Rogue.h src/brogue/IncludeGlobals.h
 	$(CC) $(cppflags) $(CPPFLAGS) $(cflags) $(CFLAGS) -c $< -o $@
 
-bin/brogue: $(objects)
-	$(CC) $(LDFLAGS) $(libs) $(LDLIBS) $(cflags) $(CFLAGS) $^ -o bin/brogue
+bin/brogue bin/brogue.exe: $(objects)
+	$(CC) $(cflags) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(libs) $(LDLIBS)
 
 clean:
-	$(RM) $(objects) bin/brogue
+	$(RM) $(objects) bin/brogue{,.exe}
