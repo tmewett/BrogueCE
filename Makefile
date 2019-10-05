@@ -1,5 +1,7 @@
 include config.mk
 
+TCOD_DIR := libtcod
+
 cflags := -Isrc/brogue -Isrc/platform -std=c99 -Wall -Wpedantic -Wno-parentheses -Wno-format-overflow
 libs := -lm
 
