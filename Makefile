@@ -12,8 +12,9 @@ ifeq ($(TERMINAL),YES)
 endif
 
 ifeq ($(GRAPHICS),YES)
+	cflags += $(shell $(SDL_CONFIG) --cflags)
 	cppflags += -DBROGUE_TCOD -I$(TCOD_DIR)/include
-	libs += -L$(TCOD_DIR) -ltcod -lSDL
+	libs += -L$(TCOD_DIR) -ltcod $(shell $(SDL_CONFIG) --libs)
 endif
 
 ifeq ($(DEBUG),YES)
