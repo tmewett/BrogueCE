@@ -190,60 +190,51 @@ long long fp_round(long long x) {
     }
 }
 
-// As of v1.7.5, Brogue uses this open-source fixed-point square root function
-// by Mads A. Elvheim.
-// Original file is available here:
-// https://gist.github.com/Madsy/1088393/ee0e6c2ca940c25149a08d525d6e713b68636773
-// clz() function is taken from a comment by "ruslan-cray" on the same page.
-
-/* Computing the number of leading zeros in a word. */
-static int32_t clz(uint32_t x)
-{
-    int n;
-
-    /* See "Hacker's Delight" book for more details */
-    if (x == 0) return 32;
-    n = 0;
-    if (x <= 0x0000FFFF) {n = n +16; x = x <<16;}
-    if (x <= 0x00FFFFFF) {n = n + 8; x = x << 8;}
-    if (x <= 0x0FFFFFFF) {n = n + 4; x = x << 4;}
-    if (x <= 0x3FFFFFFF) {n = n + 2; x = x << 2;}
-    if (x <= 0x7FFFFFFF) {n = n + 1;}
-
+// Returns the bit position of the most significant bit of x, where the unit
+// bit has position 1. Returns 0 if x=0.
+static int msbpos(unsigned long long x) {
+    if (x == 0) return 0;
+    int n = 0;
+    do {
+        n += 1;
+    } while (x >>= 1);
     return n;
 }
 
-unsigned long long fp_sqrt(unsigned long long val)
-{
-    unsigned long long x, v;
-    int bitpos;
+static unsigned long long fp_exp2(int n) {
+    return (n >= 0 ? FP_FACTOR << n : FP_FACTOR >> -n);
+}
 
-    if(!val)
-        return val;
+// Calculates sqrt(u) using the bisection method to find the root of
+// f(x) = x^2 - u.
+unsigned long long fp_sqrt(unsigned long long u) {
 
-    /* clz = count-leading-zeros. bitpos is the position of the most significant bit,
-        relative to "1" or 1 << FP_BASE */
-    bitpos = FP_BASE - clz(val);
+    if (u == 0 || u == FP_FACTOR) return u;
 
-    /* Calculate our first estimate.
-        We use the identity 2^a * 2^a = 2^(2*a) or:
-         sqrt(2^a) = 2^(a/2)
-    */
-    if(bitpos > 0) /* val > 1 */
-        x = (FP_FACTOR)<<(bitpos >> 1u);
-    else if(bitpos < 0) /* 0 < val < 1 */
-        x = (FP_FACTOR)<<((unsigned)(-bitpos) << 1u);
-    else /* val == 1 */
-        x = (FP_FACTOR);
+    // Find the unique k such that 2^(k-1) <= u < 2^k
+    // FP_BASE is the msbpos-1 of FP_FACTOR ("one")
+    int k = msbpos(u) - FP_BASE;
 
-    /* We need to scale val with FP_BASE due to the division.
-       Also val /= 2, hence the subtraction of one*/
-    v = val << (FP_BASE - 1u);
+    unsigned long long x, upper, lower;
+    // Since 2^(k-1) <= u < 2^k, we have 2^(ceil(k/2)-1) <= sqrt(u) < 2^ceil(k/2).
+    // First ineq. from sqrt(u) >= 2^[(k-1)/2] = 2^[k/2 + 1/2 - 1] >= 2^(ceil(k/2) - 1)
+    // To calculate ceil(k/2), do k/2 but add 1 to k if positive.
+    upper = fp_exp2((k + (k > 0))/2);
+    lower = upper / 2;
 
-    /* The actual iteration */
-    x = (x >> 1u) + v/x;
-    x = (x >> 1u) + v/x;
-    x = (x >> 1u) + v/x;
-    x = (x >> 1u) + v/x;
+    long long fx;
+    while (upper != lower + 1) {
+        x = (upper + lower) / 2;
+        fx = (long long) FP_MUL(x, x) - u;
+
+        if (fx == 0) {
+            break;
+        } else if (fx > 0) {
+            upper = x;
+        } else {
+            lower = x;
+        }
+    }
+
     return x;
 }
