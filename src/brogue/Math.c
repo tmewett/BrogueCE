@@ -179,7 +179,7 @@ unsigned long seedRandomGenerator(unsigned long seed) {
 
     // Fixed-point arithmetic
 
-long long fp_round(long long x) {
+fixpt fp_round(fixpt x) {
     long long div = x / FP_FACTOR, rem = x % FP_FACTOR;
     int sign = (x >= 0) - (x < 0);
 
@@ -201,31 +201,31 @@ static int msbpos(unsigned long long x) {
     return n;
 }
 
-static unsigned long long fp_exp2(int n) {
+static fixpt fp_exp2(int n) {
     return (n >= 0 ? FP_FACTOR << n : FP_FACTOR >> -n);
 }
 
 // Calculates sqrt(u) using the bisection method to find the root of
 // f(x) = x^2 - u.
-unsigned long long fp_sqrt(unsigned long long u) {
+fixpt fp_sqrt(fixpt u) {
 
+    if (u < 0) return -fp_sqrt(-u);
     if (u == 0 || u == FP_FACTOR) return u;
 
     // Find the unique k such that 2^(k-1) <= u < 2^k
     // FP_BASE is the msbpos-1 of FP_FACTOR ("one")
     int k = msbpos(u) - FP_BASE;
 
-    unsigned long long x, upper, lower;
+    fixpt x, fx, upper, lower;
     // Since 2^(k-1) <= u < 2^k, we have 2^(ceil(k/2)-1) <= sqrt(u) < 2^ceil(k/2).
     // First ineq. from sqrt(u) >= 2^[(k-1)/2] = 2^[k/2 + 1/2 - 1] >= 2^(ceil(k/2) - 1)
     // To calculate ceil(k/2), do k/2 but add 1 to k if positive.
     upper = fp_exp2((k + (k > 0))/2);
     lower = upper / 2;
 
-    long long fx;
     while (upper != lower + 1) {
         x = (upper + lower) / 2;
-        fx = (long long) FP_MUL(x, x) - u;
+        fx = FP_MUL(x, x) - u;
 
         if (fx == 0) {
             break;

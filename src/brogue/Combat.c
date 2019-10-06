@@ -57,8 +57,8 @@
  * strength penalty/benefit) increases
  */
 
-long long strengthModifier(item *theItem) {
-    long long difference = (rogue.strength - player.weaknessAmount) - theItem->strengthRequired;
+fixpt strengthModifier(item *theItem) {
+    int difference = (rogue.strength - player.weaknessAmount) - theItem->strengthRequired;
     if (difference > 0) {
         return difference * FP_FACTOR / 4; // 0.25x
     } else {
@@ -66,8 +66,8 @@ long long strengthModifier(item *theItem) {
     }
 }
 
-long long netEnchant(item *theItem) {
-    long long retval = theItem->enchant1 * FP_FACTOR;
+fixpt netEnchant(item *theItem) {
+    fixpt retval = theItem->enchant1 * FP_FACTOR;
     if (theItem->category & (WEAPON | ARMOR)) {
         retval += strengthModifier(theItem);
     }
@@ -75,7 +75,7 @@ long long netEnchant(item *theItem) {
     return clamp(retval, -20 * FP_FACTOR, 50 * FP_FACTOR);
 }
 
-long long monsterDamageAdjustmentAmount(const creature *monst) {
+fixpt monsterDamageAdjustmentAmount(const creature *monst) {
     if (monst == &player) {
         // Handled through player strength routines elsewhere.
         return FP_FACTOR;
@@ -571,7 +571,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
         &yellow, &pink, &green, &confusionGasColor, NULL, NULL, &darkRed, &rainbow};
     //  W_SPEED, W_QUIETUS, W_PARALYSIS, W_MULTIPLICITY, W_SLOWING, W_CONFUSION, W_FORCE, W_SLAYING, W_MERCY, W_PLENTY
     short chance, i;
-    long long enchant;
+    fixpt enchant;
     enum weaponEnchants enchantType = theItem->enchant2;
     creature *newMonst;
     boolean autoID = false;
@@ -785,7 +785,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
     boolean runicKnown;
     boolean runicDiscovered;
     short newDamage, dir, newX, newY, count, i;
-    long long enchant;
+    fixpt enchant;
     creature *monst, *hitList[8];
 
     returnString[0] = '\0';

@@ -488,14 +488,14 @@ void populateItems(short upstairsX, short upstairsY) {
     unsigned long totalHeat;
     short theCategory, theKind, randomDepthOffset = 0;
 
-    const long long POW_GOLD[] = {
+    const int POW_GOLD[] = {
         // b^3.05, with b from 0 to 25:
         0, 1, 8, 28, 68, 135, 236, 378, 568, 813, 1122, 1500, 1956, 2497, 3131,
         3864, 4705, 5660, 6738, 7946, 9292, 10783, 12427, 14232, 16204, 18353};
 #define aggregateGoldLowerBound(d)  (POW_GOLD[d] + 320 * (d))
 #define aggregateGoldUpperBound(d)  (POW_GOLD[d] + 420 * (d))
-    const long long POW_FOOD[] = {
-        // b^1.35, with b from 1 to 50 (for future-proofing):
+    const fixpt POW_FOOD[] = {
+        // b^1.35 fixed point, with b from 1 to 50 (for future-proofing):
         65536, 167059, 288797, 425854, 575558, 736180, 906488, 1085553, 1272645,
         1467168, 1668630, 1876612, 2090756, 2310749, 2536314, 2767208, 3003211,
         3244126, 3489773, 3739989, 3994624, 4253540, 4516609, 4783712, 5054741,
@@ -1700,7 +1700,7 @@ boolean isVowelish(char *theChar) {
     }
 }
 
-long long enchantIncrement(item *theItem) {
+fixpt enchantIncrement(item *theItem) {
     if (theItem->category & (WEAPON | ARMOR)) {
         if (theItem->strengthRequired == 0) {
             return FP_FACTOR;
@@ -1756,8 +1756,8 @@ short apparentRingBonus(const enum ringKind kind) {
 void itemDetails(char *buf, item *theItem) {
     char buf2[1000], buf3[1000], theName[500], goodColorEscape[20], badColorEscape[20], whiteColorEscape[20];
     boolean singular, carried;
-    long long enchant;
-    long long currentDamage, newDamage;
+    fixpt enchant;
+    fixpt currentDamage, newDamage;
     short nextLevelState = 0, new, current, accuracyChange, damageChange;
     const char weaponRunicEffectDescriptions[NUMBER_WEAPON_RUNIC_KINDS][DCOLS] = {
         "time will stop while you take an extra turn",
@@ -3303,7 +3303,7 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
 // Returns the number of entries in the list, and includes (-1, -1) as an additional
 // terminus indicator after the end of the list.
 short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2], const short targetLoc[2]) {
-    long long targetVector[2], error[2], largerTargetComponent;
+    fixpt targetVector[2], error[2], largerTargetComponent;
     short currentVector[2], previousVector[2], quadrantTransform[2], i;
     short currentLoc[2], previousLoc[2];
     short cellNumber = 0;
@@ -3940,7 +3940,7 @@ boolean imbueInvisibility(creature *monst, short duration) {
 
 boolean projectileReflects(creature *attacker, creature *defender) {
     short prob;
-    long long netReflectionLevel;
+    fixpt netReflectionLevel;
 
     // immunity armor always reflects its vorpal enemy's projectiles
     if (defender == &player && rogue.armor && (rogue.armor->flags & ITEM_RUNIC) && rogue.armor->enchant2 == A_IMMUNITY
@@ -4443,7 +4443,7 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
     short i, x2, y2;
     creature *monst;
 
-    const unsigned long long POW_OBSTRUCTION[] = {
+    const fixpt POW_OBSTRUCTION[] = {
         // 0.8^x, with x from 2 to 40:
         41943, 33554, 26843, 21474, 17179, 13743, 10995, 8796, 7036, 5629, 4503, 3602,
         2882, 2305, 1844, 1475, 1180, 944, 755, 604, 483, 386, 309, 247, 198, 158, 126,
@@ -4540,7 +4540,7 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
     boolean alreadyReflected = false;
     boolean boltInView;
     const color *boltColor;
-    long long boltLightRadius;
+    fixpt boltLightRadius;
 
     uchar theChar;
     color foreColor, backColor, multColor;
@@ -6053,7 +6053,7 @@ void summonGuardian(item *theItem) {
 }
 
 void useCharm(item *theItem) {
-    long long enchant = netEnchant(theItem);
+    fixpt enchant = netEnchant(theItem);
 
     rogue.featRecord[FEAT_PURE_WARRIOR] = false;
 
@@ -7105,7 +7105,7 @@ item *dropItem(item *theItem) {
 }
 
 void recalculateEquipmentBonuses() {
-    long long enchant;
+    fixpt enchant;
     item *theItem;
     if (rogue.weapon) {
         theItem = rogue.weapon;
