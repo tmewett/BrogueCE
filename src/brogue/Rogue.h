@@ -83,6 +83,8 @@
 #define Fl(N)                   ((unsigned long) 1 << (N))
 #define FP_BASE 16 // Don't change this without recalculating all of the power tables throughout the code!
 #define FP_FACTOR (1LL << FP_BASE)
+#define FP_MUL(x, y)  ((x) * (y) / FP_FACTOR)
+#define FP_DIV(x, y)  ((x) * FP_FACTOR / (y))
 
 // recording and save filenames
 #define LAST_GAME_PATH          "LastGame.broguesave"
