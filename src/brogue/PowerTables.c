@@ -44,7 +44,7 @@ short wandDominate(creature *monst)                 {return (((monst)->currentHP
 // All "enchant" parameters must already be multiplied by FP_FACTOR:
 short staffDamageLow(fixpt enchant)            {return ((int) ((2 + enchant / FP_FACTOR) * 3 / 4));}
 short staffDamageHigh(fixpt enchant)           {return ((int) (4 + (5 * enchant / FP_FACTOR / 2)));}
-short staffDamage(fixpt enchant)               {return ((int) randClumpedRange(staffDamageLow(enchant), staffDamageHigh(enchant), 1 + (enchant) / 3));}
+short staffDamage(fixpt enchant)               {return ((int) randClumpedRange(staffDamageLow(enchant), staffDamageHigh(enchant), 1 + (enchant) / 3 / FP_FACTOR));}
 short staffBlinkDistance(fixpt enchant)        {return ((int) (2 + enchant * 2 / FP_FACTOR));}
 short staffHasteDuration(fixpt enchant)        {return ((int) (2 + enchant * 4 / FP_FACTOR));}
 short staffBladeCount(fixpt enchant)           {return ((int) (enchant * 3 / 2 / FP_FACTOR));}
