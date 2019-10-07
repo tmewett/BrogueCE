@@ -9,7 +9,7 @@ several goals:
 - provide a cross-platform build system
 - be a convenient base for forks and ports to new platforms
 
-## Installation
+## Building brogue
 
 ### Linux
 
@@ -28,16 +28,46 @@ to `bin/libtcod.so.1`
 Building on Windows requires a Linux-like build environment: you'll need
 GNU Make and a C compiler such as MinGW.
 
-1. Edit `config.mk` to configure the build, and install any necessary
-dependencies it lists for your configuration
+The rest of this guide assumes you have installed MinGW and the MinGW
+binaries for make and gcc are in your PATH. It also assumes the
+Windows command line or PowerShell are used to input commands.
 
-2. If you've set `GRAPHICS=YES`, copy your built `tcod.dll` to `bin/tcod.dll`
+Edit `config.mk` to configure the build, and install and build any
+necessary dependencies it lists for your configuration.
 
-3. If everything is installed in the places expected (PATH, etc.), you can
-just run `make bin/brogue.exe`. However there are various variables you
-can set, like `CC` and `LDFLAGS`, which you can use to inform the build
-process about your environment. For example, when cross-compiling Brogue
-from Linux, you might run something like `make CC=x86_64-w64-mingw32-gcc
-LDFLAGS="-L/windows/lib" bin/brogue.exe`
+#### libtcod (GRAPHICS=YES)
 
-4. Open the compiled exe
+1. Build tcod.dll - see the README.md within the libtcod subdirectory
+for how to build libtcod on Windows. This includes extracting SDL and
+it is assumed in this guide that SDL has been extracted in the
+location specified by libtcod\README.md.
+
+2. Build brogue as follows:
+
+```
+mingw32-make.exe CC=gcc C_INCLUDE_PATH="libtcod\SDL-1.2.15\include\SDL" LIBRARY_PATH="libtcod\SDL-1.2.15\lib" SDL_CONFIG="libtcod\SDL-1.2.15\bin\sdl-config"
+```
+
+(if SDL is extracted elsewhere, alter the paths above)
+
+3. Copy tcod.dll to the bin directory:
+
+```
+cp .\libtcod\tcod.dll bin
+```
+
+4. Copy SDL.dll from the SDL extract to bin:
+
+```
+cp .\libtcod\SDL-1.2.15\bin\SDL.dll bin
+```
+
+5. Launch brogue.exe!
+
+```
+cd .\bin
+brogue.exe
+```
+
+(note brogue.exe requires the DLLs in the same directory, so you must
+launch from the bin directory)
