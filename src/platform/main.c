@@ -71,6 +71,27 @@ static void badArgument(const char *arg) {
 
 int main(int argc, char *argv[])
 {
+
+#if 0
+#define TOD(x)  ((double) (x) / FP_FACTOR)
+    fixpt n = FP_FACTOR * 1/10, nint = FP_FACTOR * 1/50;
+    for (int i=0; i < 10; i++) {
+        printf("sqrt(%.5f) = %.5f\n", TOD(n), TOD(fp_sqrt(n)));
+        n += nint;
+    }
+    exit(0);
+#endif
+
+#if 0
+#define TOD(x)  ((double) (x) / FP_FACTOR)
+    fixpt base = FP_FACTOR * 2, expn = FP_FACTOR * -5, eint = FP_FACTOR * 1;
+    for (int i=0; i < 10; i++) {
+        printf("%.5f ^ %.5f = %.5f\n", TOD(base), TOD(expn), TOD(fp_pow(base, expn)));
+        expn += eint;
+    }
+    exit(0);
+#endif
+
 #ifdef BROGUE_TCOD
         currentConsole = tcodConsole;
 #else
