@@ -20,7 +20,6 @@
  *
  */
 
-#include <math.h>
 #include <time.h>
 #include <limits.h>
 #include "Rogue.h"

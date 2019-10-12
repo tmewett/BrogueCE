@@ -21,13 +21,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <math.h>
 #include <time.h>
 #include <limits.h>
 #include <stdint.h> // C99
 
 #include "Rogue.h"
 #include "IncludeGlobals.h"
+
+
+    // Random number generation
 
 short randClump(randomRange theRange) {
     return randClumpedRange(theRange.lowerBound, theRange.upperBound, theRange.clumpFactor);
@@ -173,3 +175,92 @@ unsigned long seedRandomGenerator(unsigned long seed) {
     return seed;
 }
 
+
+    // Fixed-point arithmetic
+
+fixpt fp_round(fixpt x) {
+    long long div = x / FP_FACTOR, rem = x % FP_FACTOR;
+    int sign = (x >= 0) - (x < 0);
+
+    if (rem >= FP_FACTOR / 2 || rem <= -FP_FACTOR / 2) {
+        return div + sign;
+    } else {
+        return div;
+    }
+}
+
+// Returns the bit position of the most significant bit of x, where the unit
+// bit has position 1. Returns 0 if x=0.
+static int msbpos(unsigned long long x) {
+    if (x == 0) return 0;
+    int n = 0;
+    do {
+        n += 1;
+    } while (x >>= 1);
+    return n;
+}
+
+static fixpt fp_exp2(int n) {
+    return (n >= 0 ? FP_FACTOR << n : FP_FACTOR >> -n);
+}
+
+// Calculates sqrt(u) using the bisection method to find the root of
+// f(x) = x^2 - u.
+fixpt fp_sqrt(fixpt u) {
+
+    if (u < 0) return -fp_sqrt(-u);
+    if (u == 0 || u == FP_FACTOR) return u;
+
+    // Find the unique k such that 2^(k-1) <= u < 2^k
+    // FP_BASE is the msbpos-1 of FP_FACTOR ("one")
+    int k = msbpos(u) - FP_BASE;
+
+    fixpt x, fx, upper, lower;
+    // Since 2^(k-1) <= u < 2^k, we have 2^(ceil(k/2)-1) <= sqrt(u) < 2^ceil(k/2).
+    // First ineq. from sqrt(u) >= 2^[(k-1)/2] = 2^[k/2 + 1/2 - 1] >= 2^(ceil(k/2) - 1)
+    // To calculate ceil(k/2), do k/2 but add 1 to k if positive.
+    upper = fp_exp2((k + (k > 0))/2);
+    lower = upper / 2;
+
+    while (upper != lower + 1) {
+        x = (upper + lower) / 2;
+        fx = FP_MUL(x, x) - u;
+
+        if (fx == 0) {
+            break;
+        } else if (fx > 0) {
+            upper = x;
+        } else {
+            lower = x;
+        }
+    }
+
+    return x;
+}
+
+// Returns base to the power of expn. base must be positive.
+fixpt fp_pow(fixpt base, fixpt expn) {
+    if (base < 0) base = -base; // negative bases are invalid, but just in case...
+    if (expn < 0) return FP_DIV(FP_FACTOR, fp_pow(base, -expn));
+    // expn is now positive
+
+    // We calculate base^expn = base^floor(expn) * base^frac(expn)
+    fixpt res = FP_FACTOR;
+    long long intp = expn / FP_FACTOR, fracp = expn % FP_FACTOR;
+
+    while (intp--) res = FP_MUL(res, base); // base^floor(expn)
+
+    // For base^frac(expn), we expand frac(expn) as a sum of negative powers of two (2^-k)
+    // and multiply successive square roots of base into the result
+    fixpt x = FP_FACTOR, broot = base;
+    for (int i=1; i <= FP_BASE && fracp != 0 && broot != FP_FACTOR; i++) {
+        broot = fp_sqrt(broot); // broot = base^[(1/2)^i]
+        x /= 2;
+        if (x <= fracp) {
+            res = FP_MUL(res, broot);
+            fracp -= x;
+        }
+    }
+
+    return res;
+}

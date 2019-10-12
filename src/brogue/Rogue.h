@@ -80,10 +80,13 @@
 #define false                   0
 #define true                    1
 
-#define Fl(N)                   (1 << (N))
+#define Fl(N)                   ((unsigned long) 1 << (N))
+
+typedef long long fixpt;
 #define FP_BASE 16 // Don't change this without recalculating all of the power tables throughout the code!
 #define FP_FACTOR (1LL << FP_BASE)
-#define FLOAT_FUDGE 0.00001
+#define FP_MUL(x, y)  ((x) * (y) / FP_FACTOR)
+#define FP_DIV(x, y)  ((x) * FP_FACTOR / (y))
 
 // recording and save filenames
 #define LAST_GAME_PATH          "LastGame.broguesave"
@@ -128,7 +131,7 @@
 #define AMULET_LEVEL            26          // how deep before the amulet appears
 #define DEEPEST_LEVEL           40          // how deep the universe goes
 
-#define MACHINES_FACTOR         (1 << FP_BASE)         // use this to adjust machine frequency
+#define MACHINES_FACTOR         FP_FACTOR   // use this to adjust machine frequency
 
 #define MACHINES_BUFFER_LENGTH  200
 
@@ -2234,7 +2237,7 @@ typedef struct playerCharacter {
     creature *yendorWarden;
 
     lightSource minersLight;
-    int64_t minersLightRadius;
+    fixpt minersLightRadius;
     short ticksTillUpdateEnvironment;   // so that some periodic things happen in objective time
     unsigned short scentTurnNumber;     // helps make scent-casting work
     unsigned long playerTurnNumber;     // number of input turns in recording. Does not increment during paralysis.
@@ -2275,7 +2278,7 @@ typedef struct playerCharacter {
     unsigned long locationInAnnotationFile; // how far we've read in the annotations file
 
     // metered items
-    int64_t foodSpawned;                    // amount of nutrition units spawned so far this game
+    long long foodSpawned;                    // amount of nutrition units spawned so far this game
     short lifePotionFrequency;
     short lifePotionsSpawned;
     short strengthPotionFrequency;
@@ -2583,7 +2586,7 @@ typedef struct buttonState {
 extern "C" {
 #endif
 
-    unsigned fp_sqrt(unsigned val);
+    fixpt fp_sqrt(fixpt val);
 
     void rogueMain();
     void executeEvent(rogueEvent *theEvent);
@@ -2601,6 +2604,8 @@ extern "C" {
     boolean rand_percent(short percent);
     void shuffleList(short *list, short listLength);
     void fillSequentialList(short *list, short listLength);
+    fixpt fp_round(fixpt x);
+    fixpt fp_pow(fixpt base, fixpt expn);
     short unflag(unsigned long flag);
     void considerCautiousMode();
     void refreshScreen();
@@ -2838,9 +2843,9 @@ extern "C" {
                            boolean passThroughCreatures, boolean setFieldOfView, short theColor[3], short fadeToPercent);
     void betweenOctant1andN(short *x, short *y, short x0, short y0, short n);
 
-    void getFOVMask(char grid[DCOLS][DROWS], short xLoc, short yLoc, double maxRadius,
+    void getFOVMask(char grid[DCOLS][DROWS], short xLoc, short yLoc, fixpt maxRadius,
                     unsigned long forbiddenTerrain, unsigned long forbiddenFlags, boolean cautiousOnWalls);
-    void scanOctantFOV(char grid[DCOLS][DROWS], short xLoc, short yLoc, short octant, double maxRadius,
+    void scanOctantFOV(char grid[DCOLS][DROWS], short xLoc, short yLoc, short octant, fixpt maxRadius,
                        short columnsRightFromOrigin, long startSlope, long endSlope, unsigned long forbiddenTerrain,
                        unsigned long forbiddenFlags, boolean cautiousOnWalls);
 
@@ -2881,7 +2886,7 @@ extern "C" {
     void spawnPeriodicHorde();
     void clearStatus(creature *monst);
     void moralAttack(creature *attacker, creature *defender);
-    short runicWeaponChance(item *theItem, boolean customEnchantLevel, int64_t enchantLevel);
+    short runicWeaponChance(item *theItem, boolean customEnchantLevel, fixpt enchantLevel);
     void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed);
     void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidancePreferences);
     void chooseNewWanderDestination(creature *monst);
@@ -2903,8 +2908,8 @@ extern "C" {
     boolean canDirectlySeeMonster(creature *monst);
     void monsterName(char *buf, creature *monst, boolean includeArticle);
     boolean monsterIsInClass(const creature *monst, const short monsterClass);
-    int64_t fp_strengthModifier(item *theItem);
-    int64_t fp_netEnchant(item *theItem);
+    fixpt strengthModifier(item *theItem);
+    fixpt netEnchant(item *theItem);
     short hitProbability(creature *attacker, creature *defender);
     boolean attackHit(creature *attacker, creature *defender);
     void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *damage, boolean melee);
@@ -2928,7 +2933,7 @@ extern "C" {
                       const short maxDistance, const boolean returnLastEmptySpace);
     void negate(creature *monst);
     short monsterAccuracyAdjusted(const creature *monst);
-    int64_t fp_monsterDamageAdjustmentAmount(const creature *monst);
+    fixpt monsterDamageAdjustmentAmount(const creature *monst);
     short monsterDefenseAdjusted(const creature *monst);
     void weaken(creature *monst, short maxDuration);
     void slow(creature *monst, short turns);
@@ -3122,36 +3127,36 @@ extern "C" {
     void RNGLog(char *message);
 
     short wandDominate(creature *monst);
-    short fp_staffDamageLow(int64_t enchant);
-    short fp_staffDamageHigh(int64_t enchant);
-    short fp_staffDamage(int64_t enchant);
-    int fp_staffPoison(int64_t enchant);
-    short fp_staffBlinkDistance(int64_t enchant);
-    short fp_staffHasteDuration(int64_t enchant);
-    short fp_staffBladeCount(int64_t enchant);
-    short fp_staffDiscordDuration(int64_t enchant);
-    int fp_staffProtection(int64_t enchant);
-    short fp_staffEntrancementDuration(int64_t enchant);
-    short fp_ringWisdomMultiplier(int64_t enchant);
-    short fp_charmHealing(int64_t enchant);
-    int fp_charmProtection(int64_t enchant);
-    short fp_charmShattering(int64_t enchant);
-    short fp_charmGuardianLifespan(int64_t enchant);
-    short fp_charmNegationRadius(int64_t enchant);
-    short fp_weaponParalysisDuration(int64_t enchant);
-    short fp_weaponConfusionDuration(int64_t enchant);
-    short fp_weaponForceDistance(int64_t enchant);
-    short fp_weaponSlowDuration(int64_t enchant);
-    short fp_weaponImageCount(int64_t enchant);
-    short fp_weaponImageDuration(int64_t enchant);
-    short fp_armorReprisalPercent(int64_t enchant);
-    short fp_armorAbsorptionMax(int64_t enchant);
-    short fp_armorImageCount(int64_t enchant);
-    short fp_reflectionChance(int64_t enchant);
-    long fp_turnsForFullRegenInThousandths(int64_t bonus);
-    int64_t fp_damageFraction(int64_t netEnchant);
-    int64_t fp_accuracyFraction(int64_t netEnchant);
-    int64_t fp_defenseFraction(int64_t netDefense);
+    short staffDamageLow(fixpt enchant);
+    short staffDamageHigh(fixpt enchant);
+    short staffDamage(fixpt enchant);
+    int staffPoison(fixpt enchant);
+    short staffBlinkDistance(fixpt enchant);
+    short staffHasteDuration(fixpt enchant);
+    short staffBladeCount(fixpt enchant);
+    short staffDiscordDuration(fixpt enchant);
+    int staffProtection(fixpt enchant);
+    short staffEntrancementDuration(fixpt enchant);
+    short ringWisdomMultiplier(fixpt enchant);
+    short charmHealing(fixpt enchant);
+    int charmProtection(fixpt enchant);
+    short charmShattering(fixpt enchant);
+    short charmGuardianLifespan(fixpt enchant);
+    short charmNegationRadius(fixpt enchant);
+    short weaponParalysisDuration(fixpt enchant);
+    short weaponConfusionDuration(fixpt enchant);
+    short weaponForceDistance(fixpt enchant);
+    short weaponSlowDuration(fixpt enchant);
+    short weaponImageCount(fixpt enchant);
+    short weaponImageDuration(fixpt enchant);
+    short armorReprisalPercent(fixpt enchant);
+    short armorAbsorptionMax(fixpt enchant);
+    short armorImageCount(fixpt enchant);
+    short reflectionChance(fixpt enchant);
+    long turnsForFullRegenInThousandths(fixpt bonus);
+    fixpt damageFraction(fixpt netEnchant);
+    fixpt accuracyFraction(fixpt netEnchant);
+    fixpt defenseFraction(fixpt netDefense);
 
     void checkForDungeonErrors();
 

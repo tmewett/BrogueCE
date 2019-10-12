@@ -23,7 +23,6 @@
 
 #include "Rogue.h"
 #include "IncludeGlobals.h"
-#include <math.h>
 #include <time.h>
 #include <limits.h>
 
@@ -671,7 +670,7 @@ the first %i depths will, of course, make the game significantly easier.",
 void mainBrogueJunction() {
     rogueEvent theEvent;
     char path[BROGUE_FILENAME_MAX], buf[100], seedDefault[100];
-    char maxSeed[40];
+    char *maxSeed = "4294967295"; // 2^32 - 1
     short i, j, k;
     boolean seedTooBig;
 
@@ -715,23 +714,20 @@ void mainBrogueJunction() {
 
                 if (rogue.nextGame == NG_NEW_GAME_WITH_SEED) {
                     if (rogue.nextGameSeed == 0) { // Prompt for seed; default is the previous game's seed.
-                        sprintf(maxSeed, "%lu", ULONG_MAX);
                         if (previousGameSeed == 0) {
                             seedDefault[0] = '\0';
                         } else {
                             sprintf(seedDefault, "%lu", previousGameSeed);
                         }
                         if (getInputTextString(buf, "Generate dungeon with seed number:",
-                                               log10(ULONG_MAX) + 1,
+                                               strlen(maxSeed),
                                                seedDefault,
                                                "",
                                                TEXT_INPUT_NUMBERS,
                                                true)
                             && buf[0] != '\0') {
                             seedTooBig = false;
-                            if (strlen(buf) > strlen(maxSeed)) {
-                                seedTooBig = true;
-                            } else if (strlen(buf) == strlen(maxSeed)) {
+                            if (strlen(buf) == strlen(maxSeed)) {
                                 for (i=0; maxSeed[i]; i++) {
                                     if (maxSeed[i] > buf[i]) {
                                         break; // we're good
@@ -741,11 +737,7 @@ void mainBrogueJunction() {
                                     }
                                 }
                             }
-                            if (seedTooBig) {
-                                rogue.nextGameSeed = ULONG_MAX;
-                            } else {
-                                sscanf(buf, "%lu", &rogue.nextGameSeed);
-                            }
+                            sscanf(seedTooBig ? maxSeed : buf, "%lu", &rogue.nextGameSeed);
                         } else {
                             rogue.nextGame = NG_NOTHING;
                             break; // Don't start a new game after all.
