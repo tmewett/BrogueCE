@@ -24,8 +24,6 @@
 
 #include "Rogue.h"
 #include "IncludeGlobals.h"
-#include <math.h>
-#include <stdint.h>
 
 item *initializeItem() {
     short i;

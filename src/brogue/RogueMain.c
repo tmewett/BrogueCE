@@ -23,7 +23,6 @@
 
 #include "Rogue.h"
 #include "IncludeGlobals.h"
-#include <math.h>
 #include <time.h>
 
 void rogueMain() {

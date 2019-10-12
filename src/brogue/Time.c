@@ -23,7 +23,6 @@
 
 #include "Rogue.h"
 #include "IncludeGlobals.h"
-#include <math.h>
 
 void exposeCreatureToFire(creature *monst) {
     char buf[COLS], buf2[COLS];

@@ -23,7 +23,6 @@
 
 #include "Rogue.h"
 #include "IncludeGlobals.h"
-#include <math.h>
 
 void playerRuns(short direction) {
     short newX, newY, dir;
