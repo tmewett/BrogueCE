@@ -2,6 +2,14 @@ unreleased
 ==========
 
 -
+  Fixed an issue causing the damage of staffs of firebolt and lightning to
+  always be the average/expected value and have no variation
+-
+  Fixed many more causes of out-of-sync errors
+-
+  The maximum seed able to be input in the main menu is now the same on
+  all platforms (2^32 - 1 = 4294967295)
+-
   Fixed a bug which in some cases caused traps to be generated on cells with
   foliage, leading to odd behaviour
 -
