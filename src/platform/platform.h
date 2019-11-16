@@ -40,10 +40,6 @@ struct brogueConsole {
 
 void loadKeymap();
 
-#ifdef BROGUE_TCOD
-extern struct brogueConsole tcodConsole;
-#endif
-
 #ifdef BROGUE_SDL
 extern struct brogueConsole sdlConsole;
 #endif
