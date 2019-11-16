@@ -15,8 +15,8 @@ endif
 
 ifeq ($(GRAPHICS),YES)
 	cflags += $(shell $(SDL_CONFIG) --cflags)
-	cppflags += -DBROGUE_TCOD -I$(TCOD_DIR)/include
-	libs += -L$(TCOD_DIR) -ltcod $(shell $(SDL_CONFIG) --libs)
+	cppflags += -DBROGUE_SDL
+	libs += $(shell $(SDL_CONFIG) --libs) -lSDL2_image
 endif
 
 ifeq ($(DEBUG),YES)

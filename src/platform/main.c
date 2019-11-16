@@ -92,8 +92,8 @@ int main(int argc, char *argv[])
     exit(0);
 #endif
 
-#ifdef BROGUE_TCOD
-        currentConsole = tcodConsole;
+#ifdef BROGUE_SDL
+        currentConsole = sdlConsole;
 #else
         currentConsole = cursesConsole;
 #endif

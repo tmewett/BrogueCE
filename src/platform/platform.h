@@ -15,6 +15,10 @@ void loadKeymap();
 extern struct brogueConsole tcodConsole;
 #endif
 
+#ifdef BROGUE_SDL
+extern struct brogueConsole sdlConsole;
+#endif
+
 #ifdef BROGUE_CURSES
 extern struct brogueConsole cursesConsole;
 #endif
