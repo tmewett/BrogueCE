@@ -2,6 +2,9 @@ unreleased
 ==========
 
 -
+  The graphics backend has been rewritten be the same on all platforms. (The
+  game window may behave slightly differently)
+-
   Fixed an issue causing the damage of staffs of firebolt and lightning to
   always be the average/expected value and have no variation
 -

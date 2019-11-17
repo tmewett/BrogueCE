@@ -16,12 +16,9 @@ several goals:
 1. Edit `config.mk` to configure the build, and install any necessary
 dependencies it lists for your configuration
 
-2. If you've set `GRAPHICS=YES`, copy (or symlink) your built `libtcod.so`
-to `bin/libtcod.so.1`
+2. Run `make bin/brogue`
 
-3. Run `make bin/brogue`
-
-4. Run the game with the `./brogue` script
+3. Run the game with the `./brogue` script
 
 ### Windows
 
@@ -31,7 +28,7 @@ GNU Make and a C compiler such as MinGW.
 1. Edit `config.mk` to configure the build, and install any necessary
 dependencies it lists for your configuration
 
-2. If you've set `GRAPHICS=YES`, copy your built `tcod.dll` to `bin/tcod.dll`
+2. If you've set `GRAPHICS=YES`, copy `SDL2.dll` and `SDL2_image.dll` to `bin`
 
 3. If everything is installed in the places expected (PATH, etc.), you can
 just run `make bin/brogue.exe`. However there are various variables you
