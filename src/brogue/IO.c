@@ -862,10 +862,8 @@ void storeColorComponents(char components[3], const color *theColor) {
 
 void bakeTerrainColors(color *foreColor, color *backColor, short x, short y) {
     const short *vals;
+    const short neutralColors[8] = {1000, 1000, 1000, 1000, 0, 0, 0, 0};
     if (rogue.trueColorMode) {
-        const short nf = 1000;
-        const short nb = 0;
-        const short neutralColors[8] = {nf, nf, nf, nf, nb, nb, nb, nb};
         vals = neutralColors;
     } else {
         vals = &(terrainRandomValues[x][y][0]);
