@@ -1681,7 +1681,7 @@ void addMachines() {
     // Add the amulet holder if it's depth 26:
     if (rogue.depthLevel == AMULET_LEVEL) {
         for (failsafe = 50; failsafe; failsafe--) {
-            if (buildAMachine(MT_AMULET_AREA, -1, -1, NULL, NULL, NULL, NULL)) {
+            if (buildAMachine(MT_AMULET_AREA, -1, -1, 0, NULL, NULL, NULL)) {
                 break;
             }
         }
