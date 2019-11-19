@@ -21,6 +21,7 @@
  */
 
 #include <time.h>
+#include <math.h>
 #include <limits.h>
 #include "Rogue.h"
 #include "IncludeGlobals.h"
