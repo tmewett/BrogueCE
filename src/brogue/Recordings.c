@@ -170,8 +170,8 @@ void writeHeaderInfo(char *path) {
     }
 
     // Note the version string to gracefully deny compatibility when necessary.
-    for (i = 0; BROGUE_VERSION_STRING[i] != '\0'; i++) {
-        c[i] = BROGUE_VERSION_STRING[i];
+    for (i = 0; BROGUE_RECORDING_VERSION_STRING[i] != '\0'; i++) {
+        c[i] = BROGUE_RECORDING_VERSION_STRING[i];
     }
     i = 16;
     numberToString(rogue.seed, 4, &c[i]);
@@ -478,10 +478,10 @@ void initRecording() {
             versionString[i] = recallChar();
         }
 
-        if (strcmp(versionString, BROGUE_VERSION_STRING)) {
+        if (strcmp(versionString, BROGUE_RECORDING_VERSION_STRING)) {
             rogue.playbackMode = false;
             rogue.playbackFastForward = false;
-            sprintf(buf, "This file is from version %s and cannot be opened in version %s.", versionString, BROGUE_VERSION_STRING);
+            sprintf(buf, "This file is from version %s and cannot be opened in version %s.", versionString, BROGUE_RECORDING_VERSION_STRING);
             dialogAlert(buf);
             rogue.playbackMode = true;
             rogue.playbackPaused = true;

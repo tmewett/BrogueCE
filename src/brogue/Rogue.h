@@ -31,8 +31,11 @@
 
 #define USE_UNICODE
 
-// version string -- no more than 16 bytes:
-#define BROGUE_VERSION_STRING "1.7.5"
+// Brogue version: what the user sees in the menu and title
+#define BROGUE_VERSION_STRING "CE 1.7.5"
+// Recording version: replay/saves from a different version won't load
+// Cannot be longer than 16 chars
+#define BROGUE_RECORDING_VERSION_STRING "1.7.5"
 
 // debug macros -- define DEBUGGING as 1 to enable wizard mode.
 
