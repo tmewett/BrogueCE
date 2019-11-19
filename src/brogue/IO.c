@@ -502,12 +502,6 @@ void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
     }
 }
 
-void recordCurrentCreatureHealths() {
-    creature *monst;
-    CYCLE_MONSTERS_AND_PLAYERS(monst) {
-        monst->previousHealthPoints = monst->currentHP;
-    }
-}
 
 // This is basically the main loop for the game.
 void mainInputLoop() {
@@ -747,7 +741,6 @@ void mainInputLoop() {
         }
 
         restoreRNG;
-        recordCurrentCreatureHealths();
 
         if (canceled && !playingBack) {
             hideCursor();

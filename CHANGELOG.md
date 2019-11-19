@@ -2,6 +2,9 @@ unreleased
 ==========
 
 -
+  Low health alerts no longer show on every turn when using autopilot or
+  watching replays
+-
   The graphics backend has been rewritten be the same on all platforms. (The
   game window may behave slightly differently)
 -

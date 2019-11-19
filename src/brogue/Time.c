@@ -2167,6 +2167,14 @@ void playerRecoversFromAttacking(boolean anAttackHit) {
     }
 }
 
+
+static void recordCurrentCreatureHealths() {
+    creature *monst;
+    CYCLE_MONSTERS_AND_PLAYERS(monst) {
+        monst->previousHealthPoints = monst->currentHP;
+    }
+}
+
 // This is the dungeon schedule manager, called every time the player's turn comes to an end.
 // It hands control over to monsters until they've all expended their accumulated ticks,
 // updating the environment (gas spreading, flames spreading and burning out, etc.) every
@@ -2552,6 +2560,7 @@ void playerTurnEnded() {
     rogue.playbackBetweenTurns = true;
     RNGCheck();
     handleHealthAlerts();
+    recordCurrentCreatureHealths();
 
     if (rogue.flareCount > 0) {
         animateFlares(rogue.flares, rogue.flareCount);
