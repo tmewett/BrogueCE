@@ -40,9 +40,13 @@ static void ensureWindow(int fontsize) {
     char fontname[] = "fonts/font-000.png";
     sprintf(fontname, "fonts/font-%i.png", fontsize);
 
-    if (Font != NULL) SDL_FreeSurface(Font);
-    Font = IMG_Load(fontname);
-    if (Font == NULL) imgfatal();
+    static int lastsize = 0;
+    if (lastsize != fontsize) {
+        if (Font != NULL) SDL_FreeSurface(Font);
+        Font = IMG_Load(fontname);
+        if (Font == NULL) imgfatal();
+    }
+    lastsize = fontsize;
 
     int cellw = Font->w / 16, cellh = Font->h / 16;
 
