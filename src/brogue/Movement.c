@@ -1180,7 +1180,15 @@ boolean playerMoves(short direction) {
                 discoverCell(newX, newY);
                 refreshDungeonCell(newX, newY);
             }
-            messageWithColor(tileCatalog[i].flavorText, &backgroundMessageColor, false);
+
+            // Discover hidden doors and levers by walking into them
+            if (cellHasTMFlag(newX, newY, TM_IS_SECRET)) {
+                discover(newX, newY);
+                // End the turn, else we have free searching (also triggers light flare)
+                playerTurnEnded();
+            } else {
+                messageWithColor(tileCatalog[i].flavorText, &backgroundMessageColor, false);
+            }
         }
     }
     return playerMoved;

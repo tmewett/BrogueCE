@@ -2,6 +2,8 @@ unreleased
 ==========
 
 -
+  Hidden doors and levers are now revealed when attempting to move into them
+-
   Low health alerts no longer show on every turn when using autopilot or
   watching replays
 -
