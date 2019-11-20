@@ -33,6 +33,13 @@ static void imgfatal() {
 }
 
 
+static void refreshWindow() {
+    WinSurf = SDL_GetWindowSurface(Win);
+    if (WinSurf == NULL) sdlfatal();
+    refreshScreen();
+}
+
+
 /*
 Creates or resizes the game window with the specified font size.
 */
@@ -57,9 +64,8 @@ static void ensureWindow(int fontsize) {
             SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, cellw*COLS, cellh*ROWS, 0);
         if (Win == NULL) sdlfatal();
     }
-    WinSurf = SDL_GetWindowSurface(Win);
-    if (WinSurf == NULL) sdlfatal();
-    refreshScreen();
+
+    refreshWindow();
 }
 
 
