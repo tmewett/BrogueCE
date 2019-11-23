@@ -11,7 +11,8 @@ Once you have those, the game is built by running `make`. You can configure
 the build by editing `config.mk` or appending options to the Make command,
 e.g. `make GRAPHICS=YES`.
 
-More specific instructions follow.
+More specific instructions follow on how to acquire the dependencies and
+build the game.
 
 
 Windows
@@ -23,29 +24,33 @@ version.
 
 ### Setting up
 
-1. Install [MSYS2](https://www.msys2.org/) for x86_64
+1. Install [MSYS2](https://www.msys2.org/) for x86_64. Refer to the
+[introduction](https://github.com/msys2/msys2/wiki/MSYS2-introduction)
+for essential info on how to use it.
 
-2. Install the dependencies in MSYS2; open the MSYS2 shell and run the following
-
-    ```
-    pacman -S make mingw64-w64-x86_64-{gcc,SDL2,SDL2_image}
-    ```
-
-3. Copy required libraries to `bin`; navigate to where this file is (your
-Windows drives can be accessed at `/c`, `/d` etc.) and run
+2. (Installing the dependencies) Open the MSYS2 shell and run the following:
 
     ```
-    cp -t bin /mingw64/bin/{libjpeg-8.dll,liblzma-5.dll,libpng16-16.dll,libtiff-5.dll,libwebp-7.dll,libzstd.dll,SDL2.dll,SDL2_image.dll,zlib1.dll}
+    pacman -S make mingw-w64-x86_64-{gcc,SDL2,SDL2_image}
     ```
 
 ### Building
 
-1. Open the Mingw64 shell, navigate to where this file is (your Windows
-drives can be accessed at `/c`, `/d` etc.) and run
+1. (Compiling the game) Open the Mingw64 shell. Navigate to the Brogue CE
+directory (the one containing this file; your Windows drives can be accessed
+at `/c`, `/d` etc.) and run
 
     ```
     make TERMINAL=NO GRAPHICS=YES bin/brogue.exe
     ```
+
+2. Optional: You can now run the game by running `cd bin;
+./brogue.exe`. However if you want to be able to run it from
+outside the Mingw64 shell, you'll need to add the `/mingw64/bin`
+directory of MSYS2 to your system PATH. By default this is at
+`C:\msys2\mingw64\bin`. Some info is here: [How do I set or change the PATH
+system variable?](https://www.java.com/en/download/help/path.xml) You only
+need to perform this step once.
 
 Linux
 -----
