@@ -1,8 +1,8 @@
 # Include terminal support. Requires ncurses
-TERMINAL := YES
+TERMINAL := NO
 
 # Include graphical support. Requires SDL2 and SDL2_image
-GRAPHICS := NO
+GRAPHICS := YES
 # Path to sdl2-config script
 SDL_CONFIG := sdl2-config
 
