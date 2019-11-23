@@ -33,6 +33,13 @@ static void imgfatal() {
 }
 
 
+static void refreshWindow() {
+    WinSurf = SDL_GetWindowSurface(Win);
+    if (WinSurf == NULL) sdlfatal();
+    refreshScreen();
+}
+
+
 /*
 Creates or resizes the game window with the specified font size.
 */
@@ -40,9 +47,13 @@ static void ensureWindow(int fontsize) {
     char fontname[] = "fonts/font-000.png";
     sprintf(fontname, "fonts/font-%i.png", fontsize);
 
-    if (Font != NULL) SDL_FreeSurface(Font);
-    Font = IMG_Load(fontname);
-    if (Font == NULL) imgfatal();
+    static int lastsize = 0;
+    if (lastsize != fontsize) {
+        if (Font != NULL) SDL_FreeSurface(Font);
+        Font = IMG_Load(fontname);
+        if (Font == NULL) imgfatal();
+    }
+    lastsize = fontsize;
 
     int cellw = Font->w / 16, cellh = Font->h / 16;
 
@@ -50,12 +61,11 @@ static void ensureWindow(int fontsize) {
         SDL_SetWindowSize(Win, cellw*COLS, cellh*ROWS);
     } else {
         Win = SDL_CreateWindow("Brogue " BROGUE_VERSION_STRING,
-            SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, cellw*COLS, cellh*ROWS, 0);
+            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, cellw*COLS, cellh*ROWS, 0);
         if (Win == NULL) sdlfatal();
     }
-    WinSurf = SDL_GetWindowSurface(Win);
-    if (WinSurf == NULL) sdlfatal();
-    refreshScreen();
+
+    refreshWindow();
 }
 
 
@@ -184,6 +194,11 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
                 ensureWindow(++FontSize);
             } else if (key == SDLK_PAGEDOWN && FontSize > 1) {
                 ensureWindow(--FontSize);
+            } else if (key == SDLK_F11) {
+                // Toggle fullscreen
+                SDL_SetWindowFullscreen(Win,
+                    (SDL_GetWindowFlags(Win) & SDL_WINDOW_FULLSCREEN) ? 0 : SDL_WINDOW_FULLSCREEN);
+                ensureWindow(FontSize);
             }
 
             if (eventFromKey(returnEvent, key)) {
