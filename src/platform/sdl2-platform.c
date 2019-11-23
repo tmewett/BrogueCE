@@ -94,10 +94,8 @@ static boolean eventFromKey(rogueEvent *event, SDL_Keycode key) {
             event->param1 = LEFT_ARROW;
             return true;
         case SDLK_RETURN:
-            event->param1 = RETURN_KEY;
-            return true;
         case SDLK_KP_ENTER:
-            event->param1 = ENTER_KEY;
+            event->param1 = RETURN_KEY;
             return true;
         case SDLK_BACKSPACE:
             event->param1 = DELETE_KEY;
