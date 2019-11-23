@@ -2,6 +2,16 @@ unreleased
 ==========
 
 -
+  Wands of plenty now reduce the the maximum health of the target by 50%
+  before cloning
+-
+  Wands of empowerment have been strengthened to a middle-ground between
+  their 1.7.4 and 1.7.5 versions
+-
+  Wands of empowerment are now guaranteed to spawn in early vaults
+-
+  Captive allies have been made more common
+-
   Hidden doors and levers are now revealed when attempting to move into them
 -
   Low health alerts no longer show on every turn when using autopilot or
