@@ -9,7 +9,7 @@ You need these things to compile the game:
 
 Once you have those, the game is built by running `make`. You can configure
 the build by editing `config.mk` or appending options to the Make command,
-e.g. `make GRAPHICS=YES`.
+e.g. `make TERMINAL=YES`.
 
 More specific instructions follow on how to acquire the dependencies and
 build the game.
@@ -19,8 +19,7 @@ Windows
 -------
 
 There are many ways to compile software on Windows. The method here was
-tested by the author and is relatively simple. It only compiles the graphical
-version.
+tested by the author and is relatively simple.
 
 ### Setting up
 
@@ -41,7 +40,7 @@ directory (the one containing this file; your Windows drives can be accessed
 at `/c`, `/d` etc.) and run
 
     ```
-    make TERMINAL=NO GRAPHICS=YES bin/brogue.exe
+    make bin/brogue.exe
     ```
 
 2. Optional: You can now run the game by running `cd bin;
@@ -70,5 +69,5 @@ These instructions are for the graphical version only.
 1. Navigate to where this file is and run
 
     ```
-    make TERMINAL=NO GRAPHICS=YES bin/brogue
+    make bin/brogue
     ```
