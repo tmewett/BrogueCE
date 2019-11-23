@@ -33,6 +33,9 @@ If you downloaded a release, you can play the game as follows:
 - On Mac & Linux, run/double-click the `brogue` script in the same the folder
   as this file
 
+If you're running the graphical version (default), the game window can be
+resized using the PageDown/PageUp or -/+ keys.
+
 If you downloaded the source code, you will need to build the game first. For
 instructions, see `BUILD.md`.
 
