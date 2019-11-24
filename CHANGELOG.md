@@ -2,6 +2,10 @@ unreleased
 ==========
 
 -
+  Burning creatures are now extinguished when encased in a solid tile,
+  such as crystal from a staff of obstruction. (Does not apply to those
+  which burn unceasingly)
+-
   Wands of plenty now reduce the the maximum health of the target by 50%
   before cloning
 -
