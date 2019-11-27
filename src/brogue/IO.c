@@ -1168,9 +1168,17 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
                 theItem = itemAtLoc(x, y);
                 cellChar = theItem->displayChar;
                 cellForeColor = *(theItem->foreColor);
+                // Remember the item was here
+                pmap[x][y].rememberedItemCategory = theItem->category;
+                pmap[x][y].rememberedItemKind = theItem->kind;
+                pmap[x][y].rememberedItemQuantity = theItem->quantity;
             }
         } else if (playerCanSeeOrSense(x, y) || (pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED))) {
             // just don't want these to be plotted as black
+            // Also, ensure we remember there are no items here
+            pmap[x][y].rememberedItemCategory = 0;
+            pmap[x][y].rememberedItemKind = 0;
+            pmap[x][y].rememberedItemQuantity = 0;
         } else {
             *returnChar = ' ';
             *returnForeColor = black;
@@ -1203,24 +1211,12 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
             applyColorAverage(&cellBackColor, &gasAugmentColor, gasAugmentWeight);
         }
 
-        if (!playerCanSeeOrSense(x, y)) {
-            pmap[x][y].rememberedAppearance.character = cellChar;
-            pmap[x][y].flags |= STABLE_MEMORY;
-            if (pmap[x][y].flags & HAS_ITEM) {
-                theItem = itemAtLoc(x, y);
-                pmap[x][y].rememberedItemCategory = theItem->category;
-                pmap[x][y].rememberedItemKind = theItem->kind;
-                pmap[x][y].rememberedItemQuantity = theItem->quantity;
-            } else {
-                pmap[x][y].rememberedItemCategory = 0;
-                pmap[x][y].rememberedItemKind = 0;
-                pmap[x][y].rememberedItemQuantity = 0;
-            }
-        }
-
         if (!(pmap[x][y].flags & (ANY_KIND_OF_VISIBLE | ITEM_DETECTED | HAS_PLAYER))
             && !playerCanSeeOrSense(x, y)
             && (!monst || !monsterRevealed(monst)) && !monsterWithDetectedItem) {
+
+            pmap[x][y].flags |= STABLE_MEMORY;
+            pmap[x][y].rememberedAppearance.character = cellChar;
 
             if (rogue.trueColorMode) {
                 bakeTerrainColors(&cellForeColor, &cellBackColor, x, y);
