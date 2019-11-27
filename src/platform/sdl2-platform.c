@@ -292,7 +292,8 @@ static void _gameLoop() {
 static boolean _pauseForMilliseconds(short ms) {
     SDL_UpdateWindowSurface(Win);
     SDL_Delay(ms);
-    return lastEvent.eventType != EVENT_ERROR || pollBrogueEvent(&lastEvent, false);
+    return (pollBrogueEvent(&lastEvent, false) || lastEvent.eventType != EVENT_ERROR)
+        && lastEvent.eventType != MOUSE_ENTERED_CELL;
 }
 
 
