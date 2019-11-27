@@ -2,6 +2,8 @@ unreleased
 ==========
 
 -
+  Fixed incorrect percentage health change info in sidebar
+-
   The frequencies of various special ally-related rooms have been reverted
   to their 1.7.4 values
 -

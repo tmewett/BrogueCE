@@ -4096,13 +4096,10 @@ short estimatedArmorValue() {
 }
 
 short creatureHealthChangePercent(creature *monst) {
-    short currentPercent, previousPercent;
     if (monst->previousHealthPoints <= 0) {
         return 0;
     }
-    currentPercent = monst->currentHP * 100 / monst->info.maxHP;
-    previousPercent = monst->previousHealthPoints * 100 / monst->info.maxHP;
-    return monst->currentHP * 100 / monst->previousHealthPoints - 100;
+    return 100 * (monst->currentHP - monst->previousHealthPoints) / monst->info.maxHP;
 }
 
 // returns the y-coordinate after the last line printed
