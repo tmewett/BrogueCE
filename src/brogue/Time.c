@@ -188,8 +188,8 @@ void applyInstantTileEffectsToCreature(creature *monst) {
         }
     }
 
-    // Water and "solid" tiles (ones which gas cannot occupy) put out fire.
-    if ((cellHasTMFlag(*x, *y, TM_EXTINGUISHES_FIRE) || cellHasTerrainFlag(*x, *y, T_OBSTRUCTS_GAS))
+    // Water puts out fire.
+    if (cellHasTMFlag(*x, *y, TM_EXTINGUISHES_FIRE)
         && monst->status[STATUS_BURNING]
         && !monst->status[STATUS_LEVITATING]
         && !(monst->info.flags & MONST_ATTACKABLE_THRU_WALLS)
