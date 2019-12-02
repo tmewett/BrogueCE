@@ -2,6 +2,8 @@ unreleased
 ==========
 
 -
+  Turning on autopilot now requires confirmation
+-
   The sidebar now displays whether a monster is carrying an item
 -
   Fixed incorrect percentage health change info in sidebar
