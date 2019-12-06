@@ -3,7 +3,6 @@
 #include <string.h>
 #include <time.h>
 #include "term.h"
-#include <sys/timeb.h>
 #include <stdint.h>
 #include <signal.h>
 #include "platform.h"
@@ -109,9 +108,9 @@ static int rewriteKey(int key, boolean text) {
 #define PAUSE_BETWEEN_EVENT_POLLING     34//17
 
 static uint32_t getTime() {
-    struct timeb time;
-    ftime(&time);
-    return 1000 * time.time + time.millitm;
+    struct timespec tp;
+    clock_gettime(CLOCK_REALTIME, &tp);
+    return 1000 * tp.tv_sec + tp.tv_nsec / 1000000;
 }
 
 static boolean curses_pauseForMilliseconds(short milliseconds) {
