@@ -4,11 +4,12 @@ Building Brogue CE
 You need these things to compile the game:
 
 - a C compiler (Clang or GCC)
-- Make
+- GNU Make
 - anything extra listed in `config.mk` that you require
 
-Once you have those, the game is built by running `make`. You can configure
-the build by editing `config.mk` or appending options to the Make command,
+Once you have those, the game is built by running `make` (or `gmake` on
+BSD systems). You can configure the build by editing `config.mk` or
+appending options to the Make command,
 e.g. `make TERMINAL=YES`.
 
 More specific instructions follow on how to acquire the dependencies and
