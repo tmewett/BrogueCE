@@ -230,6 +230,7 @@ void initializeRogue(unsigned long seed) {
     rogue.highScoreSaved = false;
     rogue.cautiousMode = false;
     rogue.milliseconds = 0;
+    rogue.warningPauseMode = true;
 
     rogue.RNG = RNG_SUBSTANTIVE;
     if (!rogue.playbackMode) {
