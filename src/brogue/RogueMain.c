@@ -1075,7 +1075,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         }
         strcpy(buf, "You die...");
         if (KEYBOARD_LABELS) {
-            encodeMessageColor(buf, strlen(buf), &veryDarkGray);
+            encodeMessageColor(buf, strlen(buf), &gray);
             strcat(buf, " (press 'i' to view your inventory)");
         }
         player.currentHP = 0; // So it shows up empty in the side bar.

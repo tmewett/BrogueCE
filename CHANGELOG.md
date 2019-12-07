@@ -1,6 +1,7 @@
 unreleased
 ==========
-
+-
+  The message to see your inventory on death is now printed in a brighter colour
 -
   Turning on autopilot now requires confirmation
 -
