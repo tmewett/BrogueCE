@@ -2,6 +2,8 @@ unreleased
 ==========
 
 -
+  Turning on autopilot now requires confirmation
+-
   The "blue" player-to-monster combat information is now displayed in ally
   tooltips
 -
