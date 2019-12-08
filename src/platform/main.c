@@ -6,16 +6,6 @@ TCOD_renderer_t renderer = TCOD_RENDERER_SDL; // the sdl renderer is more reliab
 short brogueFontSize = -1;
 #endif
 
-#ifdef BROGUE_TCOD
-# ifdef BROGUE_CURSES
-#  define BROGUE_TARGET_STRING "both"
-# else
-#  define BROGUE_TARGET_STRING "tcod"
-# endif
-#else
-# define BROGUE_TARGET_STRING "curses"
-#endif
-
 extern playerCharacter rogue;
 struct brogueConsole currentConsole;
 
@@ -42,7 +32,6 @@ static void printCommandlineHelp() {
     printf("%s",
     "--help         -h          print this help message\n"
     "--version      -V          print the version (i.e., " BROGUE_VERSION_STRING ")\n"
-    "--target                   print the makefile target (i.e., " BROGUE_TARGET_STRING ")\n"
     "--scores                   dump scores to output and exit immediately\n"
     "-n                         start a new game, skipping the menu\n"
     "-s seed                    start a new game with the specified numerical seed\n"
@@ -175,11 +164,6 @@ int main(int argc, char *argv[])
 
         if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) {
             printf("%s\n", BROGUE_VERSION_STRING);
-            return 0;
-        }
-
-        if (strcmp(argv[i], "--target") == 0) {
-            printf("%s\n", BROGUE_TARGET_STRING);
             return 0;
         }
 
