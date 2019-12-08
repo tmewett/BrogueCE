@@ -2190,6 +2190,7 @@ void playerTurnEnded() {
 
     handleXPXP();
     resetDFMessageEligibility();
+    recordCurrentCreatureHealths();
 
     if (player.bookkeepingFlags & MB_IS_FALLING) {
         playerFalls();
@@ -2559,7 +2560,6 @@ void playerTurnEnded() {
     rogue.playbackBetweenTurns = true;
     RNGCheck();
     handleHealthAlerts();
-    recordCurrentCreatureHealths();
 
     if (rogue.flareCount > 0) {
         animateFlares(rogue.flares, rogue.flareCount);
