@@ -501,7 +501,7 @@ short pickHordeType(short depth, enum monsterTypes summonerType, unsigned long f
 
 void empowerMonster(creature *monst) {
     char theMonsterName[100], buf[200];
-    monst->info.maxHP += 10;
+    monst->info.maxHP += 12;
     monst->info.defense += 10;
     monst->info.accuracy += 10;
     monst->info.damage.lowerBound += max(1, monst->info.damage.lowerBound / 10);
@@ -509,9 +509,6 @@ void empowerMonster(creature *monst) {
     monst->newPowerCount++;
     monst->totalPowerCount++;
     heal(monst, 100, true);
-    if (monst->info.turnsBetweenRegen > 0) {
-        monst->info.turnsBetweenRegen = (monst->info.turnsBetweenRegen * 2 + 2) / 3;
-    }
 
     if (canSeeMonster(monst)) {
         monsterName(theMonsterName, monst, true);
