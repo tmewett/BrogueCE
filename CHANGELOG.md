@@ -8,6 +8,9 @@ unreleased
   The "blue" player-to-monster combat information is now displayed in ally
   tooltips
 -
+  The game pauses and requires a keystroke on health and poison warnings.
+  Can be disabled
+-
   The sidebar now displays whether a monster is carrying an item
 -
   Fixed incorrect percentage health change info in sidebar
