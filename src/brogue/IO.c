@@ -2290,7 +2290,7 @@ boolean pauseBrogue(short milliseconds) {
 
 void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance, boolean realInputEvenInPlayback) {
     rogueEvent recordingInput;
-    boolean repeatAgain;
+    boolean repeatAgain, interaction;
     short pauseDuration;
 
     returnEvent->eventType = EVENT_ERROR;
@@ -2305,8 +2305,8 @@ void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsD
                 if (pauseDuration && pauseBrogue(pauseDuration)) {
                     // if the player did something during playback
                     nextBrogueEvent(&recordingInput, false, false, true);
-                    executePlaybackInput(&recordingInput);
-                    repeatAgain = !rogue.playbackPaused;
+                    interaction = executePlaybackInput(&recordingInput);
+                    repeatAgain = !rogue.playbackPaused && interaction;
                 }
             }
         } while ((repeatAgain || rogue.playbackOOS) && !rogue.gameHasEnded);
