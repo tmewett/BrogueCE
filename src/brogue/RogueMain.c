@@ -212,7 +212,7 @@ void initializeRogue(unsigned long seed) {
     boolean playingback, playbackFF, playbackPaused;
     short oldRNG;
 
-    // generate libtcod font bitmap
+    // generate font bitmap
     // add any new unicode characters here to include them
 #ifdef GENERATE_FONT_FILES
     generateFontFiles();

@@ -261,7 +261,6 @@ boolean saveHighScore(rogueHighScoresEntry theEntry) {
     return true;
 }
 
-// not needed in libtcod
 void initializeBrogueSaveLocation() {
 
 }

@@ -1,15 +1,8 @@
 #include "platform.h"
 
-#ifdef BROGUE_TCOD
-#include "libtcod.h"
-TCOD_renderer_t renderer = TCOD_RENDERER_SDL; // the sdl renderer is more reliable than the opengl renderer
-short brogueFontSize = -1;
-#endif
-
 extern playerCharacter rogue;
 struct brogueConsole currentConsole;
 
-boolean serverMode = false;
 boolean noMenu = false;
 unsigned long int firstSeed = 0;
 
@@ -37,17 +30,9 @@ static void printCommandlineHelp() {
     "-s seed                    start a new game with the specified numerical seed\n"
     "-o filename[.broguesave]   open a save file (extension optional)\n"
     "-v recording[.broguerec]   view a recording (extension optional)\n"
-#ifdef BROGUE_TCOD
-    "--size N                   starts the game at font size N (1 to 13)\n"
-    "--noteye-hack              ignore SDL-specific application state checks\n"
-#endif
     "--no-menu      -M          never display the menu (automatically pick new game)\n"
 #ifdef BROGUE_CURSES
     "--term         -t          run in ncurses-based terminal mode\n"
-#endif
-#ifdef BROGUE_TCOD
-    "--SDL                      force libtcod mode with an SDL renderer (default)\n"
-    "--opengl       -gl         force libtcod mode with an OpenGL renderer\n"
 #endif
     );
     return;
@@ -127,11 +112,6 @@ int main(int argc, char *argv[])
             continue;
         }
 
-        if(strcmp(argv[i], "--noteye-hack") == 0) {
-            serverMode = true;
-            continue;
-        }
-
         if(strcmp(argv[i], "-o") == 0 || strcmp(argv[i], "--open") == 0) {
             if (i + 1 < argc) {
                 strncpy(rogue.nextGamePath, argv[i + 1], BROGUE_FILENAME_MAX);
@@ -172,27 +152,6 @@ int main(int argc, char *argv[])
             return 0;
         }
 
-#ifdef BROGUE_TCOD
-        if (strcmp(argv[i], "--SDL") == 0) {
-            renderer = TCOD_RENDERER_SDL;
-            currentConsole = tcodConsole;
-            continue;
-        }
-        if (strcmp(argv[i], "--opengl") == 0 || strcmp(argv[i], "-gl") == 0) {
-            renderer = TCOD_RENDERER_OPENGL;
-            currentConsole = tcodConsole;
-            continue;
-        }
-        if (strcmp(argv[i], "--size") == 0) {
-            // pick a font size
-            int size = atoi(argv[i + 1]);
-            if (size != 0) {
-                i++;
-                brogueFontSize = size;
-                continue;
-            }
-        }
-#endif
 #ifdef BROGUE_CURSES
         if (strcmp(argv[i], "--term") == 0 || strcmp(argv[i], "-t") == 0) {
             currentConsole = cursesConsole;
