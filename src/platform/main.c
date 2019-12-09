@@ -5,6 +5,7 @@ struct brogueConsole currentConsole;
 
 boolean noMenu = false;
 unsigned long int firstSeed = 0;
+int brogueFontSize = 0;
 
 void dumpScores();
 

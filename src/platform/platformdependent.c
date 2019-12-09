@@ -32,7 +32,6 @@
 #include "platform.h"
 
 extern playerCharacter rogue;
-extern short brogueFontSize;
 extern short mouseX, mouseY;
 extern unsigned long int firstSeed;
 
