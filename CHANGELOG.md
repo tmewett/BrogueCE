@@ -2,6 +2,9 @@ unreleased
 ==========
 
 -
+  Added a `--print-seed-catalog` command line option to recreate the seed
+  catalog
+-
   Wands of empowerment no longer increase the target's health regeneration rate
 -
   The message to see your inventory on death is now printed in a brighter colour

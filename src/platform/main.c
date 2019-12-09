@@ -34,6 +34,7 @@ static void printCommandlineHelp() {
 #ifdef BROGUE_CURSES
     "--term         -t          run in ncurses-based terminal mode\n"
 #endif
+    "--print-seed-catalog       prints a catalog of the first five levels of seeds 1-1000\n"
     );
     return;
 }
@@ -140,6 +141,11 @@ int main(int argc, char *argv[])
                 i++;
                 continue;
             }
+        }
+
+        if (strcmp(argv[i], "--print-seed-catalog") == 0) {
+            rogue.nextGame = NG_SCUM;
+            continue;
         }
 
         if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) {

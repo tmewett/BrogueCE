@@ -823,8 +823,8 @@ void mainBrogueJunction() {
                 printHighScores(false);
                 break;
             case NG_SCUM:
-                rogue.nextGame = NG_NOTHING;
                 scum(1, 1000, 5);
+                rogue.nextGame = NG_QUIT;
                 break;
             case NG_QUIT:
                 // No need to do anything.
