@@ -582,21 +582,21 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
     }
 }
 
-void scumMonster(creature *monst, FILE *logFile) {
+void scumMonster(creature *monst) {
     char buf[500];
     if (monst->bookkeepingFlags & MB_CAPTIVE) {
         monsterName(buf, monst, false);
         upperCase(buf);
-        fprintf(logFile, "\n        %s (captive)", buf);
+        printf("\n        %s (captive)", buf);
         if (monst->machineHome > 0) {
-            fprintf(logFile, " (vault %i)", monst->machineHome);
+            printf(" (vault %i)", monst->machineHome);
         }
     } else if (monst->creatureState == MONSTER_ALLY) {
         monsterName(buf, monst, false);
         upperCase(buf);
-        fprintf(logFile, "\n        %s (allied)", buf);
+        printf("\n        %s (allied)", buf);
         if (monst->machineHome) {
-            fprintf(logFile, " (vault %i)", monst->machineHome);
+            printf(" (vault %i)", monst->machineHome);
         }
     }
 }
@@ -607,23 +607,21 @@ void scum(unsigned long startingSeed, short numberOfSeedsToScan, short scanThrou
     item *theItem;
     creature *monst;
     char buf[500];
-    FILE *logFile;
 
-    logFile = fopen("Brogue seed catalog.txt", "w");
     rogue.nextGame = NG_NOTHING;
 
     getAvailableFilePath(path, LAST_GAME_NAME, GAME_SUFFIX);
     strcat(path, GAME_SUFFIX);
 
-    fprintf(logFile, "Brogue seed catalog, seeds %li to %li, through depth %i.\n\n\
+    printf("Brogue seed catalog, seeds %li to %li, through depth %i.\n\n\
 To play one of these seeds, press control-N from the title screen \
 and enter the seed number. Knowing which items will appear on \
 the first %i depths will, of course, make the game significantly easier.",
             startingSeed, startingSeed + numberOfSeedsToScan - 1, scanThroughDepth, scanThroughDepth);
 
     for (theSeed = startingSeed; theSeed < startingSeed + numberOfSeedsToScan; theSeed++) {
-        fprintf(logFile, "\n\nSeed %li:", theSeed);
-        printf("\nScanned seed %li.", theSeed);
+        printf("\n\nSeed %li:", theSeed);
+        fprintf(stderr, "Scanning seed %li...\n", theSeed);
         rogue.nextGamePath[0] = '\0';
         randomNumbersGenerated = 0;
 
@@ -636,26 +634,26 @@ the first %i depths will, of course, make the game significantly easier.",
         rogue.playbackOmniscience = true;
         for (rogue.depthLevel = 1; rogue.depthLevel <= scanThroughDepth; rogue.depthLevel++) {
             startLevel(rogue.depthLevel == 1 ? 1 : rogue.depthLevel - 1, 1); // descending into level n
-            fprintf(logFile, "\n    Depth %i:", rogue.depthLevel);
+            printf("\n    Depth %i:", rogue.depthLevel);
             for (theItem = floorItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
                 itemName(theItem, buf, true, true, NULL);
                 upperCase(buf);
-                fprintf(logFile, "\n        %s", buf);
+                printf("\n        %s", buf);
                 if (pmap[theItem->xLoc][theItem->yLoc].machineNumber > 0) {
-                    fprintf(logFile, " (vault %i)", pmap[theItem->xLoc][theItem->yLoc].machineNumber);
+                    printf(" (vault %i)", pmap[theItem->xLoc][theItem->yLoc].machineNumber);
                 }
             }
             for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
-                scumMonster(monst, logFile);
+                scumMonster(monst);
             }
             for (monst = dormantMonsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
-                scumMonster(monst, logFile);
+                scumMonster(monst);
             }
         }
         freeEverything();
         remove(currentFilePath); // Don't add a spurious LastGame file to the brogue folder.
     }
-    fclose(logFile);
+    printf("\n");
 }
 
 // This is the basic program loop.
