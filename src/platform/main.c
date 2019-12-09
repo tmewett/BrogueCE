@@ -32,6 +32,9 @@ static void printCommandlineHelp() {
     "-o filename[.broguesave]   open a save file (extension optional)\n"
     "-v recording[.broguerec]   view a recording (extension optional)\n"
     "--no-menu      -M          never display the menu (automatically pick new game)\n"
+#ifdef BROGUE_SDL
+    "--size N                   starts the game at font size N (1 to 13)\n"
+#endif
 #ifdef BROGUE_CURSES
     "--term         -t          run in ncurses-based terminal mode\n"
 #endif
@@ -158,6 +161,18 @@ int main(int argc, char *argv[])
             printCommandlineHelp();
             return 0;
         }
+
+#ifdef BROGUE_SDL
+        if (strcmp(argv[i], "--size") == 0) {
+            // pick a font size
+            int size = atoi(argv[i + 1]);
+            if (size != 0) {
+                i++;
+                brogueFontSize = size;
+                continue;
+            };
+        }
+#endif
 
 #ifdef BROGUE_CURSES
         if (strcmp(argv[i], "--term") == 0 || strcmp(argv[i], "-t") == 0) {
