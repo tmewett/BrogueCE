@@ -4013,7 +4013,7 @@ void displayGrid(short **map) {
 
 void printSeed() {
     char buf[COLS];
-    sprintf(buf, "Dungeon seed #%lu; turn #%lu", rogue.seed, rogue.playerTurnNumber);
+    sprintf(buf, "Dungeon seed #%lu; turn #%lu; version %s", rogue.seed, rogue.playerTurnNumber, BROGUE_VERSION_STRING);
     message(buf, false);
 }
 
