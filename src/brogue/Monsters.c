@@ -501,7 +501,7 @@ short pickHordeType(short depth, enum monsterTypes summonerType, unsigned long f
 
 void empowerMonster(creature *monst) {
     char theMonsterName[100], buf[200];
-    monst->info.maxHP += 10;
+    monst->info.maxHP += 12;
     monst->info.defense += 10;
     monst->info.accuracy += 10;
     monst->info.damage.lowerBound += max(1, monst->info.damage.lowerBound / 10);
@@ -509,9 +509,6 @@ void empowerMonster(creature *monst) {
     monst->newPowerCount++;
     monst->totalPowerCount++;
     heal(monst, 100, true);
-    if (monst->info.turnsBetweenRegen > 0) {
-        monst->info.turnsBetweenRegen = (monst->info.turnsBetweenRegen * 2 + 2) / 3;
-    }
 
     if (canSeeMonster(monst)) {
         monsterName(theMonsterName, monst, true);
@@ -4066,6 +4063,29 @@ void monsterDetails(char buf[], creature *monst) {
         strcat(buf, newText);
     }
 
+    // Allegiance and ability slots
+    newText[0] = '\0';
+    if (monst->creatureState == MONSTER_ALLY) {
+        i = strlen(buf);
+        i = encodeMessageColor(buf, i, &goodMessageColor);
+
+        sprintf(newText, "%s is your ally.\n     ", capMonstName);
+        strcat(buf, newText);
+        if (monst->newPowerCount > 0) {
+            i = strlen(buf);
+            i = encodeMessageColor(buf, i, &advancementMessageColor);
+
+            if (monst->newPowerCount == 1) {
+                sprintf(newText, "$HESHE seems ready to learn something new.\n     ");
+            } else {
+                sprintf(newText, "$HESHE seems ready to learn %i new talents.\n     ", monst->newPowerCount);
+            }
+            resolvePronounEscapes(newText, monst); // So that it gets capitalized appropriately.
+            upperCase(newText);
+            strcat(buf, newText);
+        }
+    }
+
     if (!rogue.armor || (rogue.armor->flags & ITEM_IDENTIFIED)) {
         combatMath2 = hitProbability(monst, &player);
     } else {
@@ -4076,6 +4096,7 @@ void monsterDetails(char buf[], creature *monst) {
         player.info.defense = realArmorValue;
     }
 
+    // Combat info for the monster attacking the player
     if ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID) && !cellHasTMFlag(monst->xLoc, monst->yLoc, TM_ALLOWS_SUBMERGING)) {
         sprintf(newText, "     %s writhes helplessly on dry land.\n     ", capMonstName);
     } else if (rogue.armor
@@ -4127,82 +4148,61 @@ void monsterDetails(char buf[], creature *monst) {
     upperCase(newText);
     strcat(buf, newText);
 
-    if (monst->creatureState == MONSTER_ALLY) {
+    if (!rogue.weapon || (rogue.weapon->flags & ITEM_IDENTIFIED)) {
+        playerKnownAverageDamage = (player.info.damage.upperBound + player.info.damage.lowerBound) / 2;
+        playerKnownMaxDamage = player.info.damage.upperBound;
+    } else {
+        playerKnownAverageDamage = (rogue.weapon->damage.upperBound + rogue.weapon->damage.lowerBound) / 2;
+        playerKnownMaxDamage = rogue.weapon->damage.upperBound;
+    }
+
+    // Combat info for the player attacking the monster (or whether it's captive)
+    if (playerKnownMaxDamage == 0) {
+        i = strlen(buf);
+        i = encodeMessageColor(buf, i, &white);
+
+        sprintf(newText, "You deal no direct damage.");
+    } else if (rogue.weapon
+               && (rogue.weapon->flags & ITEM_RUNIC)
+               && (rogue.weapon->flags & ITEM_RUNIC_IDENTIFIED)
+               && rogue.weapon->enchant2 == W_SLAYING
+               && monsterIsInClass(monst, rogue.weapon->vorpalEnemy)) {
+
         i = strlen(buf);
         i = encodeMessageColor(buf, i, &goodMessageColor);
-
-        sprintf(newText, "%s is your ally.", capMonstName);
-        if (monst->newPowerCount > 0) {
-            upperCase(newText);
-            strcat(buf, newText);
-            strcat(buf, "\n     ");
-            i = strlen(buf);
-            i = encodeMessageColor(buf, i, &advancementMessageColor);
-
-            if (monst->newPowerCount == 1) {
-                strcpy(newText, "$HESHE seems ready to learn something new.");
-            } else {
-                sprintf(newText, "$HESHE seems ready to learn %i new talents.", monst->newPowerCount);
-            }
-            resolvePronounEscapes(newText, monst); // So that it gets capitalized appropriately.
-        }
+        itemName(rogue.weapon, theItemName, false, false, NULL);
+        sprintf(newText, "Your %s will slay %s in one stroke.", theItemName, monstName);
+    } else if (monst->info.flags & (MONST_INVULNERABLE | MONST_IMMUNE_TO_WEAPONS)) {
+        i = strlen(buf);
+        i = encodeMessageColor(buf, i, &white);
+        sprintf(newText, "%s is immune to your attacks.", monstName);
     } else if (monst->bookkeepingFlags & MB_CAPTIVE) {
         i = strlen(buf);
         i = encodeMessageColor(buf, i, &goodMessageColor);
 
         sprintf(newText, "%s is being held captive.", capMonstName);
     } else {
+        i = strlen(buf);
+        i = encodeMessageColor(buf, i, &goodMessageColor);
 
-        if (!rogue.weapon || (rogue.weapon->flags & ITEM_IDENTIFIED)) {
-            playerKnownAverageDamage = (player.info.damage.upperBound + player.info.damage.lowerBound) / 2;
-            playerKnownMaxDamage = player.info.damage.upperBound;
-        } else {
-            playerKnownAverageDamage = (rogue.weapon->damage.upperBound + rogue.weapon->damage.lowerBound) / 2;
-            playerKnownMaxDamage = rogue.weapon->damage.upperBound;
+        combatMath = (monst->currentHP + playerKnownMaxDamage - 1) / playerKnownMaxDamage;
+        if (combatMath < 1) {
+            combatMath = 1;
         }
-
-        if (playerKnownMaxDamage == 0) {
-            i = strlen(buf);
-            i = encodeMessageColor(buf, i, &white);
-
-            sprintf(newText, "You deal no direct damage.");
-        } else if (rogue.weapon
-                   && (rogue.weapon->flags & ITEM_RUNIC)
-                   && (rogue.weapon->flags & ITEM_RUNIC_IDENTIFIED)
-                   && rogue.weapon->enchant2 == W_SLAYING
-                   && monsterIsInClass(monst, rogue.weapon->vorpalEnemy)) {
-
-            i = strlen(buf);
-            i = encodeMessageColor(buf, i, &goodMessageColor);
-            itemName(rogue.weapon, theItemName, false, false, NULL);
-            sprintf(newText, "Your %s will slay %s in one stroke.", theItemName, monstName);
-        } else if (monst->info.flags & (MONST_INVULNERABLE | MONST_IMMUNE_TO_WEAPONS)) {
-            i = strlen(buf);
-            i = encodeMessageColor(buf, i, &white);
-            sprintf(newText, "%s is immune to your attacks.", monstName);
+        if (rogue.weapon && !(rogue.weapon->flags & ITEM_IDENTIFIED)) {
+            realArmorValue = rogue.weapon->enchant1;
+            rogue.weapon->enchant1 = 0;
+            combatMath2 = hitProbability(&player, monst);
+            rogue.weapon->enchant1 = realArmorValue;
         } else {
-            i = strlen(buf);
-            i = encodeMessageColor(buf, i, &goodMessageColor);
-
-            combatMath = (monst->currentHP + playerKnownMaxDamage - 1) / playerKnownMaxDamage;
-            if (combatMath < 1) {
-                combatMath = 1;
-            }
-            if (rogue.weapon && !(rogue.weapon->flags & ITEM_IDENTIFIED)) {
-                realArmorValue = rogue.weapon->enchant1;
-                rogue.weapon->enchant1 = 0;
-                combatMath2 = hitProbability(&player, monst);
-                rogue.weapon->enchant1 = realArmorValue;
-            } else {
-                combatMath2 = hitProbability(&player, monst);
-            }
-            sprintf(newText, "You have a %i%% chance to hit %s, typically hit for %i%% of $HISHER current health, and at best, could defeat $HIMHER in %i hit%s.",
-                    combatMath2,
-                    monstName,
-                    100 * playerKnownAverageDamage / monst->currentHP,
-                    combatMath,
-                    (combatMath > 1 ? "s" : ""));
+            combatMath2 = hitProbability(&player, monst);
         }
+        sprintf(newText, "You have a %i%% chance to hit %s, typically hit for %i%% of $HISHER current health, and at best, could defeat $HIMHER in %i hit%s.",
+                combatMath2,
+                monstName,
+                100 * playerKnownAverageDamage / monst->currentHP,
+                combatMath,
+                (combatMath > 1 ? "s" : ""));
     }
     upperCase(newText);
     strcat(buf, newText);

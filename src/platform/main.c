@@ -1,27 +1,11 @@
 #include "platform.h"
 
-#ifdef BROGUE_TCOD
-#include "libtcod.h"
-TCOD_renderer_t renderer = TCOD_RENDERER_SDL; // the sdl renderer is more reliable than the opengl renderer
-short brogueFontSize = -1;
-#endif
-
-#ifdef BROGUE_TCOD
-# ifdef BROGUE_CURSES
-#  define BROGUE_TARGET_STRING "both"
-# else
-#  define BROGUE_TARGET_STRING "tcod"
-# endif
-#else
-# define BROGUE_TARGET_STRING "curses"
-#endif
-
 extern playerCharacter rogue;
 struct brogueConsole currentConsole;
 
-boolean serverMode = false;
 boolean noMenu = false;
 unsigned long int firstSeed = 0;
+int brogueFontSize = 0;
 
 void dumpScores();
 
@@ -42,24 +26,19 @@ static void printCommandlineHelp() {
     printf("%s",
     "--help         -h          print this help message\n"
     "--version      -V          print the version (i.e., " BROGUE_VERSION_STRING ")\n"
-    "--target                   print the makefile target (i.e., " BROGUE_TARGET_STRING ")\n"
     "--scores                   dump scores to output and exit immediately\n"
     "-n                         start a new game, skipping the menu\n"
     "-s seed                    start a new game with the specified numerical seed\n"
     "-o filename[.broguesave]   open a save file (extension optional)\n"
     "-v recording[.broguerec]   view a recording (extension optional)\n"
-#ifdef BROGUE_TCOD
-    "--size N                   starts the game at font size N (1 to 13)\n"
-    "--noteye-hack              ignore SDL-specific application state checks\n"
-#endif
     "--no-menu      -M          never display the menu (automatically pick new game)\n"
+#ifdef BROGUE_SDL
+    "--size N                   starts the game at font size N (1 to 13)\n"
+#endif
 #ifdef BROGUE_CURSES
     "--term         -t          run in ncurses-based terminal mode\n"
 #endif
-#ifdef BROGUE_TCOD
-    "--SDL                      force libtcod mode with an SDL renderer (default)\n"
-    "--opengl       -gl         force libtcod mode with an OpenGL renderer\n"
-#endif
+    "--print-seed-catalog       prints a catalog of the first five levels of seeds 1-1000\n"
     );
     return;
 }
@@ -138,19 +117,14 @@ int main(int argc, char *argv[])
             continue;
         }
 
-        if(strcmp(argv[i], "--noteye-hack") == 0) {
-            serverMode = true;
-            continue;
-        }
-
         if(strcmp(argv[i], "-o") == 0 || strcmp(argv[i], "--open") == 0) {
             if (i + 1 < argc) {
-                strncpy(rogue.nextGamePath, argv[i + 1], 4096);
-                rogue.nextGamePath[4095] = '\0';
+                strncpy(rogue.nextGamePath, argv[i + 1], BROGUE_FILENAME_MAX);
+                rogue.nextGamePath[BROGUE_FILENAME_MAX - 1] = '\0';
                 rogue.nextGame = NG_OPEN_GAME;
 
                 if (!endswith(rogue.nextGamePath, GAME_SUFFIX)) {
-                    append(rogue.nextGamePath, GAME_SUFFIX, 4096);
+                    append(rogue.nextGamePath, GAME_SUFFIX, BROGUE_FILENAME_MAX);
                 }
 
                 i++;
@@ -160,12 +134,12 @@ int main(int argc, char *argv[])
 
         if(strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--view") == 0) {
             if (i + 1 < argc) {
-                strncpy(rogue.nextGamePath, argv[i + 1], 4096);
-                rogue.nextGamePath[4095] = '\0';
+                strncpy(rogue.nextGamePath, argv[i + 1], BROGUE_FILENAME_MAX);
+                rogue.nextGamePath[BROGUE_FILENAME_MAX - 1] = '\0';
                 rogue.nextGame = NG_VIEW_RECORDING;
 
                 if (!endswith(rogue.nextGamePath, RECORDING_SUFFIX)) {
-                    append(rogue.nextGamePath, RECORDING_SUFFIX, 4096);
+                    append(rogue.nextGamePath, RECORDING_SUFFIX, BROGUE_FILENAME_MAX);
                 }
 
                 i++;
@@ -173,13 +147,13 @@ int main(int argc, char *argv[])
             }
         }
 
-        if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) {
-            printf("%s\n", BROGUE_VERSION_STRING);
-            return 0;
+        if (strcmp(argv[i], "--print-seed-catalog") == 0) {
+            rogue.nextGame = NG_SCUM;
+            continue;
         }
 
-        if (strcmp(argv[i], "--target") == 0) {
-            printf("%s\n", BROGUE_TARGET_STRING);
+        if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) {
+            printf("%s\n", BROGUE_VERSION_STRING);
             return 0;
         }
 
@@ -188,17 +162,7 @@ int main(int argc, char *argv[])
             return 0;
         }
 
-#ifdef BROGUE_TCOD
-        if (strcmp(argv[i], "--SDL") == 0) {
-            renderer = TCOD_RENDERER_SDL;
-            currentConsole = tcodConsole;
-            continue;
-        }
-        if (strcmp(argv[i], "--opengl") == 0 || strcmp(argv[i], "-gl") == 0) {
-            renderer = TCOD_RENDERER_OPENGL;
-            currentConsole = tcodConsole;
-            continue;
-        }
+#ifdef BROGUE_SDL
         if (strcmp(argv[i], "--size") == 0) {
             // pick a font size
             int size = atoi(argv[i + 1]);
@@ -206,9 +170,10 @@ int main(int argc, char *argv[])
                 i++;
                 brogueFontSize = size;
                 continue;
-            }
+            };
         }
 #endif
+
 #ifdef BROGUE_CURSES
         if (strcmp(argv[i], "--term") == 0 || strcmp(argv[i], "-t") == 0) {
             currentConsole = cursesConsole;
@@ -218,15 +183,15 @@ int main(int argc, char *argv[])
 
         // maybe it ends with .broguesave or .broguerec, then?
         if (endswith(argv[i], GAME_SUFFIX)) {
-            strncpy(rogue.nextGamePath, argv[i], 4096);
-            rogue.nextGamePath[4095] = '\0';
+            strncpy(rogue.nextGamePath, argv[i], BROGUE_FILENAME_MAX);
+            rogue.nextGamePath[BROGUE_FILENAME_MAX - 1] = '\0';
             rogue.nextGame = NG_OPEN_GAME;
             continue;
         }
 
         if (endswith(argv[i], RECORDING_SUFFIX)) {
-            strncpy(rogue.nextGamePath, argv[i], 4096);
-            rogue.nextGamePath[4095] = '\0';
+            strncpy(rogue.nextGamePath, argv[i], BROGUE_FILENAME_MAX);
+            rogue.nextGamePath[BROGUE_FILENAME_MAX - 1] = '\0';
             rogue.nextGame = NG_VIEW_RECORDING;
             continue;
         }

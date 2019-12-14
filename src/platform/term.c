@@ -678,9 +678,6 @@ static void ensure_size( ) {
 
             attrset(COLOR_ATTR(7));
             mvprintw(3,0,"Press ctrl-c at any time to quit.\n");
-#ifdef BROGUE_TCOD
-            mvprintw(5,0,"To use libtcod, start the game with the -gl or --SDL.\n\n");
-#endif
 
             printw("Width:  %d/%d\n", Term.width, w);
             printw("Height: %d/%d\n", Term.height, h);

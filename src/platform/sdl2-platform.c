@@ -12,11 +12,11 @@
 #define PAUSE_BETWEEN_EVENT_POLLING     36L//17
 
 extern playerCharacter rogue;
+extern int brogueFontSize;
 
 static SDL_Window *Win = NULL;
 static SDL_Surface *WinSurf = NULL;
 static SDL_Surface *Font = NULL;
-static int FontSize = 8;
 
 static rogueEvent lastEvent;
 
@@ -188,15 +188,15 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
         } else if (event.type == SDL_KEYDOWN) {
             SDL_Keycode key = event.key.keysym.sym;
 
-            if (key == SDLK_PAGEUP && FontSize < 13) {
-                ensureWindow(++FontSize);
-            } else if (key == SDLK_PAGEDOWN && FontSize > 1) {
-                ensureWindow(--FontSize);
+            if (key == SDLK_PAGEUP && brogueFontSize < 13) {
+                ensureWindow(++brogueFontSize);
+            } else if (key == SDLK_PAGEDOWN && brogueFontSize > 1) {
+                ensureWindow(--brogueFontSize);
             } else if (key == SDLK_F11) {
                 // Toggle fullscreen
                 SDL_SetWindowFullscreen(Win,
                     (SDL_GetWindowFlags(Win) & SDL_WINDOW_FULLSCREEN) ? 0 : SDL_WINDOW_FULLSCREEN);
-                ensureWindow(FontSize);
+                ensureWindow(brogueFontSize);
             }
 
             if (eventFromKey(returnEvent, key)) {
@@ -216,10 +216,10 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
             returnEvent->param1 = c;
 
             if (!textInput) {
-                if ((c == '=' || c == '+') && FontSize < 13) {
-                    ensureWindow(++FontSize);
-                } else if (c == '-' && FontSize > 1) {
-                    ensureWindow(--FontSize);
+                if ((c == '=' || c == '+') && brogueFontSize < 13) {
+                    ensureWindow(++brogueFontSize);
+                } else if (c == '-' && brogueFontSize > 1) {
+                    ensureWindow(--brogueFontSize);
                 }
             }
 
@@ -269,18 +269,20 @@ static void _gameLoop() {
     int fontWidths[13] = {112, 128, 144, 160, 176, 192, 208, 224, 240, 256, 272, 288, 304};
     int fontHeights[13] = {176, 208, 240, 272, 304, 336, 368, 400, 432, 464, 496, 528, 528};
 
-    int size;
-    for (
-        size = 12;
-        size >= 0
-            && (fontWidths[size] / 16 * COLS > mode.w - 20
-                || fontHeights[size] / 16 * ROWS > mode.h - 50);
-        size--
-    );
-    // If no sizes are small enough, choose smallest
-    FontSize = size >= 0 ? size + 1 : 1;
+    if (brogueFontSize == 0) {
+        int size;
+        for (
+            size = 12;
+            size >= 0
+                && (fontWidths[size] / 16 * COLS > mode.w - 20
+                    || fontHeights[size] / 16 * ROWS > mode.h - 50);
+            size--
+        );
+        // If no sizes are small enough, choose smallest
+        brogueFontSize = size >= 0 ? size + 1 : 1;
+    }
 
-    ensureWindow(FontSize);
+    ensureWindow(brogueFontSize);
 
     rogueMain();
 

@@ -212,7 +212,7 @@ void initializeRogue(unsigned long seed) {
     boolean playingback, playbackFF, playbackPaused;
     short oldRNG;
 
-    // generate libtcod font bitmap
+    // generate font bitmap
     // add any new unicode characters here to include them
 #ifdef GENERATE_FONT_FILES
     generateFontFiles();
@@ -1075,7 +1075,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         }
         strcpy(buf, "You die...");
         if (KEYBOARD_LABELS) {
-            encodeMessageColor(buf, strlen(buf), &veryDarkGray);
+            encodeMessageColor(buf, strlen(buf), &gray);
             strcat(buf, " (press 'i' to view your inventory)");
         }
         player.currentHP = 0; // So it shows up empty in the side bar.

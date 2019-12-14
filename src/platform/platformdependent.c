@@ -32,7 +32,6 @@
 #include "platform.h"
 
 extern playerCharacter rogue;
-extern short brogueFontSize;
 extern short mouseX, mouseY;
 extern unsigned long int firstSeed;
 
@@ -261,7 +260,6 @@ boolean saveHighScore(rogueHighScoresEntry theEntry) {
     return true;
 }
 
-// not needed in libtcod
 void initializeBrogueSaveLocation() {
 
 }

@@ -2,6 +2,18 @@ unreleased
 ==========
 
 -
+  Added a `--print-seed-catalog` command line option to recreate the seed
+  catalog
+-
+  Wands of empowerment no longer increase the target's health regeneration rate
+-
+  The message to see your inventory on death is now printed in a brighter colour
+-
+  Turning on autopilot now requires confirmation
+-
+  The "blue" player-to-monster combat information is now displayed in ally
+  tooltips
+-
   The sidebar now displays whether a monster is carrying an item
 -
   Fixed incorrect percentage health change info in sidebar

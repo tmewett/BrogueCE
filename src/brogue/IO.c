@@ -2486,7 +2486,9 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             exploreKey(controlKey);
             break;
         case AUTOPLAY_KEY:
-            autoPlayLevel(controlKey);
+            if (confirm("Turn on autopilot?", false)) {
+                autoPlayLevel(controlKey);
+            }
             break;
         case MESSAGE_ARCHIVE_KEY:
             displayMessageArchive();
@@ -4011,7 +4013,7 @@ void displayGrid(short **map) {
 
 void printSeed() {
     char buf[COLS];
-    sprintf(buf, "Dungeon seed #%lu; turn #%lu", rogue.seed, rogue.playerTurnNumber);
+    sprintf(buf, "Dungeon seed #%lu; turn #%lu; version %s", rogue.seed, rogue.playerTurnNumber, BROGUE_VERSION_STRING);
     message(buf, false);
 }
 
