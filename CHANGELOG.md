@@ -9,6 +9,8 @@ unreleased
 -
   The message to see your inventory on death is now printed in a brighter colour
 -
+  Excessive input during playback no longer causes pauses in playback
+-
   Turning on autopilot now requires confirmation
 -
   The "blue" player-to-monster combat information is now displayed in ally
