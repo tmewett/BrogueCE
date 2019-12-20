@@ -213,7 +213,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
                 // Toggle fullscreen
                 SDL_SetWindowFullscreen(Win,
                     (SDL_GetWindowFlags(Win) & SDL_WINDOW_FULLSCREEN) ? 0 : SDL_WINDOW_FULLSCREEN);
-                ensureWindow(brogueFontSize);
+                refreshWindow();
             }
 
             if (eventFromKey(returnEvent, key)) {
