@@ -5139,7 +5139,6 @@ boolean moveCursor(boolean *targetConfirmed,
                     *tabKey = true;
                     break;
                 case RETURN_KEY:
-                case ENTER_KEY:
                     *targetConfirmed = true;
                     break;
                 case ESCAPE_KEY:

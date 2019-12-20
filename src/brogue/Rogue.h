@@ -1127,8 +1127,7 @@ enum tileFlags {
 #define SEED_KEY            '~'
 #define EASY_MODE_KEY       '&'
 #define ESCAPE_KEY          '\033'
-#define RETURN_KEY          '\015'
-#define ENTER_KEY           '\012'
+#define RETURN_KEY          '\012'
 #define DELETE_KEY          '\177'
 #define TAB_KEY             '\t'
 #define SHIFT_TAB_KEY       25 // Cocoa reports shift-tab this way for some reason.

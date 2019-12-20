@@ -44,11 +44,11 @@ void considerFlushingBufferToFile() {
 // compresses a uchar into a char, discarding stuff we don't need
 unsigned char compressKeystroke(uchar c) {
     const uchar ucharTable[] = {UP_ARROW, LEFT_ARROW, DOWN_ARROW, RIGHT_ARROW,
-        ESCAPE_KEY, RETURN_KEY, ENTER_KEY, DELETE_KEY, TAB_KEY, NUMPAD_0, NUMPAD_1,
+        ESCAPE_KEY, RETURN_KEY, DELETE_KEY, TAB_KEY, NUMPAD_0, NUMPAD_1,
         NUMPAD_2, NUMPAD_3, NUMPAD_4, NUMPAD_5, NUMPAD_6, NUMPAD_7, NUMPAD_8, NUMPAD_9};
     short i;
 
-    for (i=0; i<19; i++) {
+    for (i=0; i<18; i++) {
         if (ucharTable[i] == c) {
             return (unsigned char) (128 + i);
         }
@@ -264,7 +264,7 @@ unsigned char recallChar() {
 
 uchar uncompressKeystroke(uchar c) {
     const uchar ucharTable[] = {UP_ARROW, LEFT_ARROW, DOWN_ARROW, RIGHT_ARROW,
-        ESCAPE_KEY, RETURN_KEY, ENTER_KEY, DELETE_KEY, TAB_KEY, NUMPAD_0, NUMPAD_1,
+        ESCAPE_KEY, RETURN_KEY, DELETE_KEY, TAB_KEY, NUMPAD_0, NUMPAD_1,
         NUMPAD_2, NUMPAD_3, NUMPAD_4, NUMPAD_5, NUMPAD_6, NUMPAD_7, NUMPAD_8, NUMPAD_9};
 
     if (c >= 128 && c <= UNKNOWN_KEY) {
@@ -1183,23 +1183,23 @@ void loadSavedGame() {
 void describeKeystroke(unsigned char key, char *description) {
     short i;
     uchar c;
-    const uchar ucharList[52] = {UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, UP_ARROW, LEFT_ARROW,
+    const uchar ucharList[51] = {UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, UP_ARROW, LEFT_ARROW,
         DOWN_ARROW, RIGHT_ARROW, UPLEFT_KEY, UPRIGHT_KEY, DOWNLEFT_KEY, DOWNRIGHT_KEY,
         DESCEND_KEY, ASCEND_KEY, REST_KEY, AUTO_REST_KEY, SEARCH_KEY, INVENTORY_KEY,
         ACKNOWLEDGE_KEY, EQUIP_KEY, UNEQUIP_KEY, APPLY_KEY, THROW_KEY, RELABEL_KEY, DROP_KEY, CALL_KEY,
         //FIGHT_KEY, FIGHT_TO_DEATH_KEY,
         HELP_KEY, DISCOVERIES_KEY, RETURN_KEY,
         EXPLORE_KEY, AUTOPLAY_KEY, SEED_KEY, EASY_MODE_KEY, ESCAPE_KEY,
-        RETURN_KEY, ENTER_KEY, DELETE_KEY, TAB_KEY, PERIOD_KEY, VIEW_RECORDING_KEY, NUMPAD_0,
+        RETURN_KEY, DELETE_KEY, TAB_KEY, PERIOD_KEY, VIEW_RECORDING_KEY, NUMPAD_0,
         NUMPAD_1, NUMPAD_2, NUMPAD_3, NUMPAD_4, NUMPAD_5, NUMPAD_6, NUMPAD_7, NUMPAD_8,
         NUMPAD_9, UNKNOWN_KEY};
-    const char descList[53][30] = {"up", "down", "left", "right", "up arrow", "left arrow",
+    const char descList[52][30] = {"up", "down", "left", "right", "up arrow", "left arrow",
         "down arrow", "right arrow", "upleft", "upright", "downleft", "downright",
         "descend", "ascend", "rest", "auto rest", "search", "inventory", "acknowledge",
         "equip", "unequip", "apply", "throw", "relabel", "drop", "call",
         //"fight", "fight to death",
         "help", "discoveries", "repeat travel", "explore", "autoplay", "seed",
-        "easy mode", "escape", "return", "enter", "delete", "tab", "period", "open file",
+        "easy mode", "escape", "return", "delete", "tab", "period", "open file",
         "numpad 0", "numpad 1", "numpad 2", "numpad 3", "numpad 4", "numpad 5", "numpad 6",
         "numpad 7", "numpad 8", "numpad 9", "unknown", "ERROR"};
 

@@ -1662,7 +1662,6 @@ void travel(short x, short y, boolean autoConfirm) {
             if ((theEvent.eventType == MOUSE_UP && windowToMapX(theEvent.param1) == x && windowToMapY(theEvent.param2) == y)
                 || (theEvent.eventType == KEYSTROKE && (theEvent.param1 == 'Y' || theEvent.param1 == 'y'
                                                         || theEvent.param1 == RETURN_KEY
-                                                        || theEvent.param1 == ENTER_KEY
                                                         || (theEvent.param1 == staircaseConfirmKey
                                                             && theEvent.param1 != 0)))) {
                 travelMap(distanceMap);

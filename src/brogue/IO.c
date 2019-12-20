@@ -2690,7 +2690,7 @@ boolean getInputTextString(char *inputText,
             }
         }
 #endif
-    } while (keystroke != RETURN_KEY && keystroke != ESCAPE_KEY && keystroke != ENTER_KEY);
+    } while (keystroke != RETURN_KEY && keystroke != ESCAPE_KEY);
 
     if (useDialogBox) {
         overlayDisplayBuffer(rbuf, NULL);
@@ -2817,7 +2817,6 @@ boolean confirm(char *prompt, boolean alsoDuringPlayback) {
     buttons[0].hotkey[0] = 'y';
     buttons[0].hotkey[1] = 'Y';
     buttons[0].hotkey[2] = RETURN_KEY;
-    buttons[0].hotkey[2] = ENTER_KEY;
     buttons[0].flags |= (B_WIDE_CLICK_AREA | B_KEYPRESS_HIGHLIGHT);
 
     initializeButton(&(buttons[1]));
