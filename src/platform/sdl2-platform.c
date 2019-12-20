@@ -115,10 +115,10 @@ static boolean eventFromKey(rogueEvent *event, SDL_Keycode key) {
     }
 
     /*
-    Only process keypad events when we're holding shift, as there is no
+    Only process keypad events when we're holding a modifier, as there is no
     TextInputEvent then.
     */
-    if (event->shiftKey) {
+    if (event->shiftKey || event->controlKey) {
         switch (key) {
             case SDLK_KP_0:
                 event->param1 = NUMPAD_0;
