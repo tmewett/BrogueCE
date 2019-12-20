@@ -10,6 +10,12 @@
 #include "platform.h"
 
 #define PAUSE_BETWEEN_EVENT_POLLING     36L//17
+#define MAX_REMAPS  128
+
+struct keypair {
+    char from;
+    char to;
+};
 
 extern playerCharacter rogue;
 extern int brogueFontSize;
@@ -17,6 +23,9 @@ extern int brogueFontSize;
 static SDL_Window *Win = NULL;
 static SDL_Surface *WinSurf = NULL;
 static SDL_Surface *Font = NULL;
+
+static struct keypair remapping[MAX_REMAPS];
+static size_t nremaps = 0;
 
 static rogueEvent lastEvent;
 
@@ -161,6 +170,14 @@ static boolean _modifierHeld(int mod) {
 }
 
 
+static char applyRemaps(char c) {
+    for (size_t i=0; i < nremaps; i++) {
+        if (remapping[i].from == c) return remapping[i].to;
+    }
+    return c;
+}
+
+
 /*
 If an event is available, returns true and updates returnEvent. Otherwise
 it returns false and an error event. This function also processes
@@ -212,10 +229,9 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
             different SDL events.
             */
             char c = event.text.text[0];
-            returnEvent->eventType = KEYSTROKE;
-            returnEvent->param1 = c;
 
             if (!textInput) {
+                c = applyRemaps(c);
                 if ((c == '=' || c == '+') && brogueFontSize < 13) {
                     ensureWindow(++brogueFontSize);
                 } else if (c == '-' && brogueFontSize > 1) {
@@ -223,6 +239,8 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
                 }
             }
 
+            returnEvent->eventType = KEYSTROKE;
+            returnEvent->param1 = c;
             // ~ printf("textinput %s\n", event.text.text);
             return true;
         } else if (event.type == SDL_MOUSEBUTTONDOWN) {
@@ -392,7 +410,13 @@ static void _plotChar(
 }
 
 
-static void _remap(const char *a, const char *b) {}
+static void _remap(const char *from, const char *to) {
+    if (nremaps < MAX_REMAPS) {
+        remapping[nremaps].from = from[0];
+        remapping[nremaps].to = to[0];
+        nremaps++;
+    }
+}
 
 
 struct brogueConsole sdlConsole = {
