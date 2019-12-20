@@ -1,69 +1,90 @@
 unreleased
 ==========
 
+This is the first release of *Brogue: Community Edition*! This update focuses on
+addressing the most common community complaints with 1.7.5 -- most notably,
+the balancing of allies. However, there are many other changes which we hope
+will improve the game.
+
+
+Gameplay changes
+----------------
+
 -
-  Added a `--print-seed-catalog` command line option to recreate the seed
-  catalog
--
-  Wands of empowerment no longer increase the target's health regeneration rate
--
-  The message to see your inventory on death is now printed in a brighter colour
--
-  Excessive input during playback no longer causes pauses in playback
--
-  Turning on autopilot now requires confirmation
--
-  The "blue" player-to-monster combat information is now displayed in ally
-  tooltips
--
-  The sidebar now displays whether a monster is carrying an item
--
-  Fixed incorrect percentage health change info in sidebar
--
-  The frequencies of various special ally-related rooms have been reverted
-  to their 1.7.4 values
--
-  Wands of plenty now reduce the the maximum health of the target by 50%
-  before cloning
+  Wands of empowerment are now guaranteed to spawn in early vaults
 -
   Wands of empowerment have been strengthened to a middle-ground between
   their 1.7.4 and 1.7.5 versions
 -
-  Wands of empowerment are now guaranteed to spawn in early vaults
+  Wands of empowerment no longer increase the target's health regeneration rate
+-
+  The frequencies of various special ally-related rooms have been reverted
+  to their 1.7.4 values
 -
   Captive allies have been made more common
 -
-  Hidden doors and levers are now revealed when attempting to move into them
+  Wands of plenty now reduce the the maximum health of the target and its
+  clone by 50%
+-
+  Hidden doors and levers are now revealed when attempting to move into
+  them. (This addresses an issue where players had to waste turns taking
+  damage when trapped up against an obvious secret door by a monster)
+-
+  Goblin conjurers no longer have the spear attack pattern in contradiction
+  with their attack message
+-
+  Magic-detected cells are now described with "you remember seeing <item> here"
+  when the item has been seen
+-
+  Changed the creatures hit as collateral from a spear attack to be the same
+  as those hit by the sweep of an axe attack. (This reincludes hitting hidden
+  monsters)
+
+
+Bug fixes
+---------
+
+-
+  Excessive input during playback no longer causes long pauses
+-
+  Fixed incorrect percentage health change info in sidebar
 -
   Low health alerts no longer show on every turn when using autopilot or
   watching replays
--
-  The graphics backend has been rewritten be the same on all platforms. (The
-  game window may behave slightly differently)
 -
   Fixed an issue causing the damage of staffs of firebolt and lightning to
   always be the average/expected value and have no variation
 -
   Fixed many more causes of out-of-sync errors
 -
-  The maximum seed able to be input in the main menu is now the same on
-  all platforms (2^32 - 1 = 4294967295)
--
   Fixed a bug which in some cases caused traps to be generated on cells with
   foliage, leading to odd behaviour
 -
   Fixed a bug which in some cases caused staffs to appear in treasure vaults
   without their max charges being shown
+
+
+Other changes
+-------------
+
 -
-  Goblin conjurers no longer have the spear attack pattern in contradiction
-  with their attack message
+  Turning on autopilot now requires confirmation
 -
-  Magic-detected cells are now described with "you remember seeing ITEM here"
-  when the item has been seen
+  The graphics backend has been rewritten be the same on all platforms. (The
+  game window may behave slightly differently)
 -
-  Changed the creatures hit as collateral from a spear attack to be the same
-  as those hit by the sweep of an axe attack. (This reincludes hitting hidden
-  monsters)
+  The "blue" player-to-monster combat information is now displayed in ally
+  tooltips (so you can more easily assess how much health they have)
+-
+  The sidebar now displays whether a monster is carrying an item
+-
+  The maximum seed able to be input in the main menu is now the same on
+  all platforms (2^32 - 1 = 4294967295)
+-
+  Added a `--print-seed-catalog` command line option to recreate the seed
+  catalog
+-
+  Various minor UI tweaks and bug fixes
 
 
 1.7.5-flend1
