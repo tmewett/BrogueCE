@@ -1,5 +1,5 @@
-unreleased
-==========
+1.8
+===
 
 This is the first release of *Brogue: Community Edition*! This update focuses on
 addressing the most common community complaints with 1.7.5 -- most notably,
