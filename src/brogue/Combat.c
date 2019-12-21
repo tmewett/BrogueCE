@@ -1340,6 +1340,7 @@ boolean anyoneWantABite(creature *decedent) {
          && !(decedent->info.flags & LEARNABLE_BEHAVIORS)
          && decedent->info.bolts[0] == BOLT_NONE)
         || (cellHasTerrainFlag(decedent->xLoc, decedent->yLoc, T_PATHING_BLOCKER))
+        || decedent->info.monsterID == MK_SPECTRAL_IMAGE
         || (decedent->info.flags & (MONST_INANIMATE | MONST_IMMOBILE))) {
 
         return false;
