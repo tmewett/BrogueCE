@@ -69,7 +69,7 @@ static void ensureWindow(int fontsize) {
     if (Win != NULL) {
         SDL_SetWindowSize(Win, cellw*COLS, cellh*ROWS);
     } else {
-        Win = SDL_CreateWindow("Brogue " BROGUE_VERSION_STRING,
+        Win = SDL_CreateWindow("Brogue",
             SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, cellw*COLS, cellh*ROWS, 0);
         if (Win == NULL) sdlfatal();
     }
