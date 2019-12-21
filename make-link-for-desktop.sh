@@ -9,7 +9,7 @@ sed s?PATH?`pwd`?g > brogue.desktop <<-end
 	Comment=Brave the Dungeons of Doom!
 	Exec=PATH/brogue
 	Path=PATH
-	Icon=PATH/bin/brogue-icon.png
+	Icon=PATH/icon.png
 	Terminal=false
 end
 
