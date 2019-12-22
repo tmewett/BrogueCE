@@ -70,7 +70,7 @@ int staffPoison(fixpt enchant) {
     return 5 * POW_POISON[enchant] / FP_FACTOR;
 }
 
-short ringWisdomMultiplier(fixpt enchant) {
+fixpt ringWisdomMultiplier(fixpt enchant) {
     const fixpt POW_WISDOM[] = {
         // 1.3^x fixed point, with x from -10 to 30 in increments of 1:
         4753, 6180, 8034, 10444, 13577, 17650, 22945, 29829, 38778, 50412, 65536, 85196, 110755, 143982, 187177, 243330, 316329, 411228, 534597, 694976, 903469,
@@ -78,7 +78,7 @@ short ringWisdomMultiplier(fixpt enchant) {
         78153861, 101600020, 132080026, 171704034};
 
     enchant = min(27, enchant / FP_FACTOR) + 10;
-    return 10 * POW_WISDOM[enchant] / FP_FACTOR;
+    return POW_WISDOM[enchant];
 }
 
 short charmHealing(fixpt enchant)              {return ((int) clamp(20 * (enchant) / FP_FACTOR, 0, 100));}

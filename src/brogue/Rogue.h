@@ -3139,7 +3139,7 @@ extern "C" {
     short staffDiscordDuration(fixpt enchant);
     int staffProtection(fixpt enchant);
     short staffEntrancementDuration(fixpt enchant);
-    short ringWisdomMultiplier(fixpt enchant);
+    fixpt ringWisdomMultiplier(fixpt enchant);
     short charmHealing(fixpt enchant);
     int charmProtection(fixpt enchant);
     short charmShattering(fixpt enchant);

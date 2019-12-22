@@ -2305,14 +2305,14 @@ void itemDetails(char *buf, item *theItem) {
                         theItem->charges,
                         theItem->enchant1,
                         new == 0 ? "" : ", with your current rings,",
-                        staffChargeDuration(theItem) / ringWisdomMultiplier(new * FP_FACTOR));
+                        FP_DIV(staffChargeDuration(theItem), ringWisdomMultiplier(new * FP_FACTOR)));
                 strcat(buf, buf2);
             } else if (theItem->flags & ITEM_MAX_CHARGES_KNOWN) {
                 sprintf(buf2, "\n\nThe %s has a maximum of %i charges, and%s recovers a charge in approximately %i turns. ",
                         theName,
                         theItem->enchant1,
                         new == 0 ? "" : ", with your current rings,",
-                        staffChargeDuration(theItem) / ringWisdomMultiplier(new * FP_FACTOR));
+                        FP_DIV(staffChargeDuration(theItem), ringWisdomMultiplier(new * FP_FACTOR)));
                 strcat(buf, buf2);
             }
 
@@ -2460,8 +2460,8 @@ void itemDetails(char *buf, item *theItem) {
                             break;
                         case RING_WISDOM:
                             sprintf(buf2, "\n\nWhen worn, your staffs will recharge at %i%% of their normal rate. (If the ring is enchanted, the rate will increase to %i%% of the normal rate.)",
-                                    (int) (100 * ringWisdomMultiplier(enchant)),
-                                    (int) (100 * ringWisdomMultiplier(enchant + FP_FACTOR)));
+                                    (int) (100 * ringWisdomMultiplier(enchant) / FP_FACTOR),
+                                    (int) (100 * ringWisdomMultiplier(enchant + FP_FACTOR) / FP_FACTOR));
                             strcat(buf, buf2);
                             break;
                         case RING_REAPING:

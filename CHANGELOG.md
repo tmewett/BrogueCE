@@ -48,6 +48,8 @@ Bug fixes
   Allies can no longer learn abilities from the spectral clones created by
   armor of multiplicity
 -
+  Fixed incorrect percentages in the ring of wisdom tooltip
+-
   Excessive input during playback no longer causes long pauses
 -
   Fixed incorrect percentage health change info in sidebar

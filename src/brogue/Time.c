@@ -1775,7 +1775,8 @@ void rechargeItemsIncrementally(short multiplier) {
     short rechargeIncrement, staffRechargeDuration;
 
     if (rogue.wisdomBonus) {
-        rechargeIncrement = ringWisdomMultiplier(rogue.wisdomBonus * FP_FACTOR); // at level 27, you recharge anything to full in one turn
+        // at level 27, you recharge anything to full in one turn
+        rechargeIncrement = 10 * ringWisdomMultiplier(rogue.wisdomBonus * FP_FACTOR) / FP_FACTOR;
     } else {
         rechargeIncrement = 10;
     }
