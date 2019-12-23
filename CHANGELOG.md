@@ -108,13 +108,13 @@ Gameplay changes
   on the attacked cells would be hit, including allies. Now the monsters hit are
   only those that would trigger a spear attack if they were there alone. (This
   excludes hidden monsters)
--
-  Tweaked some charm stats to match 1.7.4 behaviour
 
 
 Bug fixes
 ---------
 
+-
+  Fixed charm durations which were affected by bugs
 -
   Monsters now have a 3% chance per turn to forget you, instead of 97%
 -
