@@ -4,6 +4,7 @@ extern playerCharacter rogue;
 struct brogueConsole currentConsole;
 
 boolean noMenu = false;
+boolean noRestart = false;
 unsigned long int firstSeed = 0;
 int brogueFontSize = 0;
 
@@ -32,6 +33,7 @@ static void printCommandlineHelp() {
     "-o filename[.broguesave]   open a save file (extension optional)\n"
     "-v recording[.broguerec]   view a recording (extension optional)\n"
     "--no-menu      -M          never display the menu (automatically pick new game)\n"
+    "--no-restart               exit brogue when game ends"
 #ifdef BROGUE_SDL
     "--size N                   starts the game at font size N (1 to 13)\n"
 #endif
@@ -114,6 +116,11 @@ int main(int argc, char *argv[])
         if(strcmp(argv[i], "--no-menu") == 0 || strcmp(argv[i], "-M") == 0) {
             rogue.nextGame = NG_NEW_GAME;
             noMenu = true;
+            continue;
+        }
+
+        if(strcmp(argv[i], "--no-restart") == 0) {
+            noRestart = true;
             continue;
         }
 
