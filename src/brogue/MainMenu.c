@@ -40,6 +40,8 @@
 
 #define MENU_FLAME_DENOMINATOR          (100 + MENU_FLAME_RISE_SPEED + MENU_FLAME_SPREAD_SPEED)
 
+extern boolean serverMode;
+
 void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3], unsigned char mask[COLS][ROWS]) {
     short i, j, versionStringLength;
     color tempColor = {0};
@@ -784,6 +786,9 @@ void mainBrogueJunction() {
                 startLevel(rogue.depthLevel, 1); // descending into level 1
 
                 mainInputLoop();
+                if(serverMode) {
+                    rogue.nextGame = NG_QUIT;
+                }
                 freeEverything();
                 break;
             case NG_OPEN_GAME:
@@ -807,6 +812,9 @@ void mainBrogueJunction() {
                 rogue.playbackMode = false;
                 rogue.playbackOOS = false;
 
+                if(serverMode) {
+                    rogue.nextGame = NG_QUIT;
+                }
                 break;
             case NG_VIEW_RECORDING:
                 rogue.nextGame = NG_NOTHING;
@@ -851,6 +859,9 @@ void mainBrogueJunction() {
                 rogue.playbackMode = false;
                 rogue.playbackOOS = false;
 
+                if(serverMode) {
+                    rogue.nextGame = NG_QUIT;
+                }
                 break;
             case NG_HIGH_SCORES:
                 rogue.nextGame = NG_NOTHING;
