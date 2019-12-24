@@ -26,6 +26,7 @@
 #include <time.h>
 
 extern boolean noScores;
+extern boolean noRecordingPrompt;
 
 void rogueMain() {
     previousGameSeed = 0;
@@ -1178,7 +1179,12 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
             printHighScores(true);
         }
         blackOutScreen();
-        saveRecording();
+        if(noRecordingPrompt) {
+            saveRecordingNoPrompt();
+        }
+        else {
+            saveRecording();
+        }
     }
 
     rogue.gameHasEnded = true;
@@ -1288,7 +1294,12 @@ void victory(boolean superVictory) {
     displayMoreSign();
     rogue.playbackMode = isPlayback;
 
-    saveRecording();
+    if (noRecordingPrompt) {
+        saveRecordingNoPrompt();
+    }
+    else {
+        saveRecording();
+    }
 
     if(!noScores) {
         printHighScores(qualified);

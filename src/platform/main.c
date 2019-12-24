@@ -4,6 +4,7 @@ extern playerCharacter rogue;
 struct brogueConsole currentConsole;
 
 boolean noMenu = false;
+boolean noRecordingPrompt = false;
 boolean noRestart = false;
 boolean noScores = false;
 unsigned long int firstSeed = 0;
@@ -34,6 +35,7 @@ static void printCommandlineHelp() {
     "-o filename[.broguesave]   open a save file (extension optional)\n"
     "-v recording[.broguerec]   view a recording (extension optional)\n"
     "--no-menu      -M          never display the menu (automatically pick new game)\n"
+    "--no-recording-prompt      saves recordings automatically without prompt"
     "--no-restart               exit brogue when game ends"
     "--no-scores                do not print highscores when game ends"
 #ifdef BROGUE_SDL
@@ -118,6 +120,11 @@ int main(int argc, char *argv[])
         if(strcmp(argv[i], "--no-menu") == 0 || strcmp(argv[i], "-M") == 0) {
             rogue.nextGame = NG_NEW_GAME;
             noMenu = true;
+            continue;
+        }
+
+        if (strcmp(argv[i], "--no-recording-prompt") == 0) {
+            noRecordingPrompt = true;
             continue;
         }
 

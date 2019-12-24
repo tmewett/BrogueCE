@@ -3125,6 +3125,7 @@ extern "C" {
     boolean characterForbiddenInFilename(const char theChar);
     void saveGame();
     void saveRecording();
+    void saveRecordingNoPrompt();
     void parseFile();
     void RNGLog(char *message);
 
