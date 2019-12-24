@@ -25,6 +25,8 @@
 #include "IncludeGlobals.h"
 #include <time.h>
 
+extern boolean noScores;
+
 void rogueMain() {
     previousGameSeed = 0;
     initializeBrogueSaveLocation();
@@ -1172,7 +1174,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     }
 
     if (!rogue.playbackMode) {
-        if (saveHighScore(theEntry)) {
+        if (saveHighScore(theEntry) && !noScores) {
             printHighScores(true);
         }
         blackOutScreen();
@@ -1288,8 +1290,9 @@ void victory(boolean superVictory) {
 
     saveRecording();
 
-    printHighScores(qualified);
-
+    if(!noScores) {
+        printHighScores(qualified);
+    }
     rogue.gameHasEnded = true;
 }
 

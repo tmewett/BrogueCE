@@ -5,6 +5,7 @@ struct brogueConsole currentConsole;
 
 boolean noMenu = false;
 boolean noRestart = false;
+boolean noScores = false;
 unsigned long int firstSeed = 0;
 int brogueFontSize = 0;
 
@@ -34,6 +35,7 @@ static void printCommandlineHelp() {
     "-v recording[.broguerec]   view a recording (extension optional)\n"
     "--no-menu      -M          never display the menu (automatically pick new game)\n"
     "--no-restart               exit brogue when game ends"
+    "--no-scores                do not print highscores when game ends"
 #ifdef BROGUE_SDL
     "--size N                   starts the game at font size N (1 to 13)\n"
 #endif
@@ -121,6 +123,11 @@ int main(int argc, char *argv[])
 
         if(strcmp(argv[i], "--no-restart") == 0) {
             noRestart = true;
+            continue;
+        }
+
+        if(strcmp(argv[i], "--no-scores") == 0) {
+            noScores = true;
             continue;
         }
 
