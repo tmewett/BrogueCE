@@ -73,6 +73,9 @@ Other changes
 -------------
 
 -
+  Adding the `--no-recording-prompt`, `--no-restart` and `no-scores`
+  command line parameters
+-
   Turning on autopilot now requires confirmation
 -
   The graphics backend has been rewritten be the same on all platforms. (The
