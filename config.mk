@@ -9,5 +9,8 @@ GRAPHICS := YES
 # Path to sdl2-config script
 SDL_CONFIG := sdl2-config
 
+# Select web brogue mode. Requires POSIX system.
+WEBBROGUE := NO
+
 # Enable debugging mode. See top of Rogue.h for features
 DEBUG := NO

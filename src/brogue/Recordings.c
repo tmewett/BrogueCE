@@ -923,6 +923,7 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                 rogue.gameHasEnded = true;
                 rogue.playbackOOS = false;
                 rogue.creaturesWillFlashThisTurn = false;
+                notifyEvent(GAMEOVER_RECORDING, 0, 0, "recording ended", "none");
                 return true;
             case TRUE_COLORS_KEY:
                 rogue.trueColorMode = !rogue.trueColorMode;
@@ -1037,8 +1038,19 @@ void saveGame() {
     deleteMessages();
 }
 
-void saveRecording() {
-    char filePath[BROGUE_FILENAME_MAX], defaultPath[BROGUE_FILENAME_MAX];
+void saveRecordingNoPrompt(char *filePath)
+{
+    if (rogue.playbackMode) {
+        return;
+    }
+    getAvailableFilePath(filePath, "Recording", RECORDING_SUFFIX);
+    strcat(filePath, RECORDING_SUFFIX);
+    remove(filePath);
+    rename(currentFilePath, filePath);
+}
+
+void saveRecording(char *filePath) {
+    char defaultPath[BROGUE_FILENAME_MAX];
     boolean askAgain;
 
     if (rogue.playbackMode) {

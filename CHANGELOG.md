@@ -1,6 +1,7 @@
 Unreleased
 ==========
-
+-
+  Adding the `--server-mode` command line parameter used to run the game from an external launcher
 -
   Restored inventory on right click functionality
 -

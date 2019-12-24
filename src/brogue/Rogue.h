@@ -326,6 +326,14 @@ enum eventTypes {
     NUMBER_OF_EVENT_TYPES, // unused
 };
 
+enum notificationEventTypes {
+	GAMEOVER_QUIT,
+	GAMEOVER_DEATH,
+	GAMEOVER_VICTORY,
+	GAMEOVER_SUPERVICTORY,
+	GAMEOVER_RECORDING
+};
+
 typedef struct rogueEvent {
     enum eventTypes eventType;
     signed long param1;
@@ -2603,6 +2611,7 @@ extern "C" {
     void initializeRogue(unsigned long seed);
     void gameOver(char *killedBy, boolean useCustomPhrasing);
     void victory(boolean superVictory);
+    void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2);
     void enableEasyMode();
     int rand_range(int lowerBound, int upperBound);
     unsigned long seedRandomGenerator(unsigned long seed);
@@ -3128,7 +3137,8 @@ extern "C" {
     void getAvailableFilePath(char *filePath, const char *defaultPath, const char *suffix);
     boolean characterForbiddenInFilename(const char theChar);
     void saveGame();
-    void saveRecording();
+    void saveRecording(char *filePath);
+    void saveRecordingNoPrompt(char *filePath);
     void parseFile();
     void RNGLog(char *message);
 
