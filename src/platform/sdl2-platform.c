@@ -53,8 +53,8 @@ static void refreshWindow() {
 Creates or resizes the game window with the specified font size.
 */
 static void ensureWindow(int fontsize) {
-    char fontname[] = "fonts/font-000.png";
-    sprintf(fontname, "fonts/font-%i.png", fontsize);
+    char fontname[] = "assets/font-000.png";
+    sprintf(fontname, "assets/font-%i.png", fontsize);
 
     static int lastsize = 0;
     if (lastsize != fontsize) {
