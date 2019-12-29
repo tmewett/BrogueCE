@@ -73,7 +73,7 @@ static void ensureWindow(int fontsize) {
             SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, cellw*COLS, cellh*ROWS, 0);
         if (Win == NULL) sdlfatal();
 
-        SDL_Surface *icon = IMG_Load("../icon.png");
+        SDL_Surface *icon = IMG_Load("assets/icon.png");
         if (icon == NULL) imgfatal();
         SDL_SetWindowIcon(Win, icon);
         SDL_FreeSurface(icon);
