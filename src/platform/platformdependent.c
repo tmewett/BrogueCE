@@ -159,7 +159,7 @@ void loadKeymap() {
 
     char buffer[512];
 
-    f = fopen("keymap", "r");
+    f = fopen("keymap.txt", "r");
 
     if (f != NULL) {
         while (fgets(buffer, 512, f) != NULL) {
