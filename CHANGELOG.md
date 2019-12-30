@@ -73,10 +73,12 @@ Other changes
 -------------
 
 -
-  Turning on autopilot now requires confirmation
+  The Mac version has been remade to be the same as the Windows and Linux
+  versions. (Unfortunately, as the Mac release was special, this means a
+  reduction in functionality and quality - it is no longer an App and the game
+  window cannot be freely resized. This will be improved in future releases)
 -
-  The graphics backend has been rewritten be the same on all platforms. (The
-  game window may behave slightly differently)
+  Turning on autopilot now requires confirmation
 -
   The "blue" player-to-monster combat information is now displayed in ally
   tooltips (so you can more easily assess how much health they have)
