@@ -1,0 +1,61 @@
+name: "Build"
+on:
+  push:
+    tags:
+    - v*.*
+
+jobs:
+
+  linux:
+    runs-on: ubuntu-16.04
+    steps:
+    - name: "Install dependencies"
+      run: |
+        sudo apt install -y libsdl2-dev libsdl2-image-dev
+
+    - name: "Checkout sources"
+      uses: actions/checkout@v2
+
+    - name: "Compile"
+      run: |
+        make bin/brogue
+
+    - name: "Bundle dependencies"
+      # Copy some required libraries to bin/lib. We need the .so.0 files, as those are the "sonames"
+      # (what the linker expects to find). They are symlinks, but cp will follow them.
+      run: |
+        mkdir -p bin/lib
+        cp --preserve=mode -t bin/lib /usr/lib/x86_64-linux-gnu/libSDL2{,_image}-2.0.so.0
+
+    - name: "Upload artifact"
+      uses: actions/upload-artifact@v1
+      with:
+        name: linux-bin
+        path: bin
+
+  macos:
+    runs-on: macos-latest
+    steps:
+    - name: "Checkout sources"
+      uses: actions/checkout@v2
+
+    - name: "Compile and install dependencies"
+      run: |
+        brew install macos/sdl2.rb sdl2_image dylibbundler
+
+    - name: "Compile"
+      run: |
+        make bin/brogue
+      env:
+        # 10.6 is the version targeted by the SDL build scripts
+        MACOSX_DEPLOYMENT_TARGET: "10.6"
+
+    - name: "Fix and bundle dylib references"
+      run: |
+        dylibbundler -cd -b -d bin/lib -p @executable_path/lib -x bin/brogue
+
+    - name: "Upload artifact"
+      uses: actions/upload-artifact@v1
+      with:
+        name: macos-bin
+        path: bin
