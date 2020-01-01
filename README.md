@@ -27,14 +27,26 @@ lucky few to return alive?
 Playing
 -------
 
-If you downloaded a release, you can play the game as follows:
+If you downloaded a release, you can open the game as follows:
 
-- On Windows, go to the `bin` folder and run `brogue.exe`
-- On Mac & Linux, run/double-click the `brogue` script in the same the folder
-  as this file
+- On Windows, go to the `bin` folder and run `brogue.exe`.
+
+- On Mac, run/double-click the `brogue` script in the same the folder as this
+  file. As it's an unsigned program, with unsigned libraries, you will have
+  to press OK on many prompts asking if you want to run it. I recommend you
+  first run `sudo spctl --master-enable` in Terminal to disable the prompts.
+  (You can revert this setting in "Security & Privacy" in System Preferences.)
+
+- On Linux, run the `./brogue` script in the same the folder as this file. You
+  can also run `./make-link-for-desktop.sh` to generate a .desktop file to
+  place on your desktop or applications folder.
 
 If you're running the graphical version (default), the game window can be
 resized using the PageDown/PageUp or -/+ keys.
+
+For some tips on playing the game, see the original website, linked above. Also
+check out the wiki -- although this version contains some modifications from
+what the wiki reports!
 
 If you downloaded the source code, you will need to build the game first. For
 instructions, see `BUILD.md`.
