@@ -34,7 +34,7 @@ If you downloaded a release, you can open the game as follows:
 - On Mac, run/double-click the `brogue` script in the same the folder as this
   file. As it's an unsigned program, with unsigned libraries, you will have
   to press OK on many prompts asking if you want to run it. I recommend you
-  first run `sudo spctl --master-enable` in Terminal to disable the prompts.
+  first run `sudo spctl --master-disable` in Terminal to disable the prompts.
   (You can revert this setting in "Security & Privacy" in System Preferences.)
 
 - On Linux, run the `./brogue` script in the same the folder as this file. You
