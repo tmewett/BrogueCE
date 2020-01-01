@@ -33,7 +33,7 @@ endif
 	$(CC) $(cppflags) $(CPPFLAGS) $(cflags) $(CFLAGS) -c $< -o $@
 
 bin/brogue bin/brogue.exe: $(objects)
-	$(CC) $(cflags) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(libs) $(LDLIBS)
+	$(CC) $(cflags) $(CFLAGS) -Wl,-rpath,lib $(LDFLAGS) -o $@ $^ $(libs) $(LDLIBS)
 
 clean:
 	$(RM) $(objects) bin/brogue{,.exe}
