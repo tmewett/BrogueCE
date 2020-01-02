@@ -1,22 +1,37 @@
 Contributing
 ============
 
-Making changes to a game is quite different to other software projects because
-the standard for a "good contribution" is rather subjective and goes beyond
-just "is it functional and useful?" Non-trivial gameplay changes should be
-framed as solving a problem with the game: they should be filed as an issue
-with a description the change in as much detail as possible, together with
-a rationale. Obviously, plenty of experience playing the game helps here.
+For general help on using GitHub to contribute to a project, check out the
+[GitHub.com Help][1].
 
 We have a Discord server for discussion -- you can join it with invite code
 `8pxE4j8`.
 
-When submitting patches:
+When submitting patches or opening pull requests to Brogue CE, please
+attempt to meet the follow guidelines. To avoid wasted work, I recommend
+first discussing with us the proposed changes on the Discord or by opening
+an issue report.
 
-- Keep your commit history clean of errors and fixups
-- Write commit summaries in imperative tense, keep them short (<= 70 chars)
-and wrap the rest of the message at 80 chars. (See the current history
-for examples)
+## Code
+
+I am mostly subjective here but not particularly fussy. There is no official
+code style (besides 4 spaces indentation), but:
+
+- Be consistent with formatting
+- Try to follow the style of existing code
+
+## Commits
+
+I am quite picky about commits, as I find a good history to be very beneficial.
+
+- Try to make each commit represent a single, easily-describable change
+- Keep your commit history clean of errors and fixups (e.g. by [rewriting
+history][2])
+- Follow [the seven rules of a great commit message][3]
 - Add changes users would care about to the CHANGELOG, in non-technical
-language
-- Respect the style of the existing code, including indentation (4 spaces)
+language. (If the change is from one commit, include this edit in it. For a
+branch or multiple commits, make it separate)
+
+[1]: https://help.github.com/en/github
+[2]: https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History
+[3]: https://chris.beams.io/posts/git-commit/#seven-rules
