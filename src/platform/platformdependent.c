@@ -152,10 +152,11 @@ short loadScoreBuffer() {
 void loadKeymap() {
     int i;
     FILE *f;
-
     char buffer[512];
 
-    f = fopen("keymap.txt", "r");
+    char filename[BROGUE_FILENAME_MAX];
+    sprintf(filename, "%s/keymap.txt", dataDirectory);
+    f = fopen(filename, "r");
 
     if (f != NULL) {
         while (fgets(buffer, 512, f) != NULL) {

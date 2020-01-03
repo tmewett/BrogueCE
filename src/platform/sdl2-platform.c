@@ -50,13 +50,13 @@ static void refreshWindow() {
 Creates or resizes the game window with the specified font size.
 */
 static void ensureWindow(int fontsize) {
-    char fontname[] = "assets/font-000.png";
-    sprintf(fontname, "assets/font-%i.png", fontsize);
+    char filename[BROGUE_FILENAME_MAX];
+    sprintf(filename, "%s/assets/font-%i.png", dataDirectory, fontsize);
 
     static int lastsize = 0;
     if (lastsize != fontsize) {
         if (Font != NULL) SDL_FreeSurface(Font);
-        Font = IMG_Load(fontname);
+        Font = IMG_Load(filename);
         if (Font == NULL) imgfatal();
     }
     lastsize = fontsize;
@@ -70,7 +70,8 @@ static void ensureWindow(int fontsize) {
             SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, cellw*COLS, cellh*ROWS, 0);
         if (Win == NULL) sdlfatal();
 
-        SDL_Surface *icon = IMG_Load("assets/icon.png");
+        sprintf(filename, "%s/assets/icon.png", dataDirectory);
+        SDL_Surface *icon = IMG_Load(filename);
         if (icon == NULL) imgfatal();
         SDL_SetWindowIcon(Win, icon);
         SDL_FreeSurface(icon);

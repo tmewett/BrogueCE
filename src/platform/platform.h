@@ -53,6 +53,7 @@ extern struct brogueConsole cursesConsole;
 extern struct brogueConsole currentConsole;
 extern boolean noMenu;
 extern int brogueFontSize;
+extern char dataDirectory[];
 
 // defined in brogue
 extern playerCharacter rogue;

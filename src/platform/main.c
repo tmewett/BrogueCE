@@ -1,9 +1,14 @@
 #include "platform.h"
 
+// Expanding a macro as a string constant requires two levels of macros
+#define _str(x)  #x
+#define STRINGIFY(x)  _str(x)
+
 struct brogueConsole currentConsole;
 
 boolean noMenu = false;
 int brogueFontSize = 0;
+char dataDirectory[BROGUE_FILENAME_MAX] = STRINGIFY(DATADIR);
 
 static boolean endswith(const char *str, const char *ending)
 {
