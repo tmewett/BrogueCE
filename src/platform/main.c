@@ -1,13 +1,9 @@
 #include "platform.h"
 
-extern playerCharacter rogue;
 struct brogueConsole currentConsole;
 
 boolean noMenu = false;
-unsigned long int firstSeed = 0;
 int brogueFontSize = 0;
-
-void dumpScores();
 
 static boolean endswith(const char *str, const char *ending)
 {

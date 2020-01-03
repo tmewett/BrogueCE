@@ -8,8 +8,6 @@
 #include <signal.h>
 #include "platform.h"
 
-extern playerCharacter rogue;
-
 static void gameLoop() {
     signal(SIGINT, SIG_DFL); // keep SDL from overriding the default ^C handler when it's linked
 

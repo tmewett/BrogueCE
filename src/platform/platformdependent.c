@@ -31,10 +31,6 @@
 
 #include "platform.h"
 
-extern playerCharacter rogue;
-extern short mouseX, mouseY;
-extern unsigned long int firstSeed;
-
 typedef struct brogueScoreEntry {
     long int score;
     long int dateNumber; // in seconds

@@ -38,7 +38,9 @@ struct brogueConsole {
     boolean (*modifierHeld)(int modifier);
 };
 
+// defined in platform
 void loadKeymap();
+void dumpScores();
 
 #ifdef BROGUE_SDL
 extern struct brogueConsole sdlConsole;
@@ -50,4 +52,8 @@ extern struct brogueConsole cursesConsole;
 
 extern struct brogueConsole currentConsole;
 extern boolean noMenu;
+extern int brogueFontSize;
+
+// defined in brogue
+extern playerCharacter rogue;
 

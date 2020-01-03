@@ -17,9 +17,6 @@ struct keypair {
     char to;
 };
 
-extern playerCharacter rogue;
-extern int brogueFontSize;
-
 static SDL_Window *Win = NULL;
 static SDL_Surface *WinSurf = NULL;
 static SDL_Surface *Font = NULL;
