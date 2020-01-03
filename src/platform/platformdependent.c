@@ -260,10 +260,6 @@ boolean saveHighScore(rogueHighScoresEntry theEntry) {
     return true;
 }
 
-void initializeBrogueSaveLocation() {
-
-}
-
 // start of file listing
 
 struct filelist {

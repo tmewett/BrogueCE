@@ -27,7 +27,6 @@
 
 void rogueMain() {
     previousGameSeed = 0;
-    initializeBrogueSaveLocation();
     mainBrogueJunction();
 }
 

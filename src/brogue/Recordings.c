@@ -448,8 +448,6 @@ void initRecording() {
     char versionString[16], buf[100];
     FILE *recordFile;
 
-    //initializeBrogueSaveLocation();
-
 #ifdef AUDIT_RNG
     if (fileExists(RNG_LOG)) {
         remove(RNG_LOG);
