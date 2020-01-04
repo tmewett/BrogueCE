@@ -1184,6 +1184,10 @@ boolean playerMoves(short direction) {
             // Discover hidden doors and levers by walking into them
             if (cellHasTMFlag(newX, newY, TM_IS_SECRET)) {
                 discover(newX, newY);
+                if (!alreadyRecorded) {
+                    recordKeystroke(directionKeys[initialDirection], false, false);
+                    alreadyRecorded = true;
+                }
                 // End the turn, else we have free searching (also triggers light flare)
                 playerTurnEnded();
             } else {
