@@ -50,6 +50,31 @@ PATH. By default this is at `C:\msys2\mingw64\bin`. Some info is here:
 perform this step once.
 
 
+Mac
+---
+
+These instructions are intended for developers and testers, as this will
+not create an App. You will have to run the game with the `./brogue` script,
+just like for the Linux version.
+
+### Setting up
+
+1. Install the [Homebrew package manager][4].
+
+2. Install the dependencies:
+
+    ```
+    brew install sdl2 sdl2_image
+    ```
+
+### Building
+
+1. Navigate to the Brogue CE directory (the one containing this file) and run:
+
+    ```
+    make bin/brogue
+    ```
+
 Linux
 -----
 
@@ -75,3 +100,4 @@ These instructions are for the graphical version only.
 [1]: https://www.msys2.org/
 [2]: https://github.com/msys2/msys2/wiki
 [3]: https://www.java.com/en/download/help/path.xml
+[4]: https://brew.sh/
