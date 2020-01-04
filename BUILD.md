@@ -23,9 +23,8 @@ tested by the author and is relatively simple.
 
 ### Setting up
 
-1. Install [MSYS2](https://www.msys2.org/) for x86_64. Refer to the
-[introduction](https://github.com/msys2/msys2/wiki/MSYS2-introduction)
-for essential info on how to use it.
+1. Install [MSYS2][1] for x86_64. Refer to [its wiki][2] for essential info
+on how to use it.
 
 2. (Installing the dependencies) Open the MSYS2 shell and run the following:
 
@@ -43,13 +42,13 @@ at `/c`, `/d` etc.) and run
     make bin/brogue.exe
     ```
 
-2. Optional: You can now run the game by running `cd bin;
-./brogue.exe`. However if you want to be able to run it from
-outside the Mingw64 shell, you'll need to add the `/mingw64/bin`
-directory of MSYS2 to your system PATH. By default this is at
-`C:\msys2\mingw64\bin`. Some info is here: [How do I set or change the PATH
-system variable?](https://www.java.com/en/download/help/path.xml) You only
-need to perform this step once.
+2. Optional: You can now run the game by running `cd bin; ./brogue.exe`.
+However if you want to be able to run it from outside the Mingw64 shell,
+you'll need to add the `/mingw64/bin` directory of MSYS2 to your system
+PATH. By default this is at `C:\msys2\mingw64\bin`. Some info is here:
+[How do I set or change the PATH system variable?][3] You only need to
+perform this step once.
+
 
 Linux
 -----
@@ -71,3 +70,8 @@ These instructions are for the graphical version only.
     ```
     make bin/brogue
     ```
+
+
+[1]: https://www.msys2.org/
+[2]: https://github.com/msys2/msys2/wiki
+[3]: https://www.java.com/en/download/help/path.xml
