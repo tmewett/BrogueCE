@@ -1172,6 +1172,7 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
                 pmap[x][y].rememberedItemCategory = theItem->category;
                 pmap[x][y].rememberedItemKind = theItem->kind;
                 pmap[x][y].rememberedItemQuantity = theItem->quantity;
+                pmap[x][y].rememberedItemOriginDepth = theItem->originDepth;
             }
         } else if (playerCanSeeOrSense(x, y) || (pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED))) {
             // just don't want these to be plotted as black
@@ -1179,6 +1180,7 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
             pmap[x][y].rememberedItemCategory = 0;
             pmap[x][y].rememberedItemKind = 0;
             pmap[x][y].rememberedItemQuantity = 0;
+            pmap[x][y].rememberedItemOriginDepth = 0;
         } else {
             *returnChar = ' ';
             *returnForeColor = black;
@@ -4423,7 +4425,7 @@ void describeHallucinatedItem(char *buf) {
     cat = itemCats[rand_range(0, 9)];
     tableForItemCategory(cat, &maxKinds);
     kind = rand_range(0, maxKinds - 1);
-    describedItemBasedOnParameters(cat, kind, 1, buf);
+    describedItemBasedOnParameters(cat, kind, 1, 1, buf);
     restoreRNG;
 }
 

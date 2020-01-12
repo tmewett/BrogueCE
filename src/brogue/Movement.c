@@ -115,11 +115,12 @@ char *tileText(short x, short y) {
     return tileCatalog[pmap[x][y].layers[highestPriorityLayer(x, y, false)]].description;
 }
 
-void describedItemBasedOnParameters(short theCategory, short theKind, short theQuantity, char *buf) {
+void describedItemBasedOnParameters(short theCategory, short theKind, short theQuantity, short theOriginDepth, char *buf) {
     item *tempItem = initializeItem();
     tempItem->category = theCategory;
     tempItem->kind = theKind;
     tempItem->quantity = theQuantity;
+    tempItem->originDepth = theOriginDepth;
     itemName(tempItem, buf, false, true, NULL);
     free(tempItem);
     return;
@@ -243,7 +244,8 @@ void describeLocation(char *buf, short x, short y) {
                 if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience) {
                     describeHallucinatedItem(object);
                 } else {
-                    describedItemBasedOnParameters(pmap[x][y].rememberedItemCategory, pmap[x][y].rememberedItemKind, pmap[x][y].rememberedItemQuantity, object);
+                    describedItemBasedOnParameters(pmap[x][y].rememberedItemCategory, pmap[x][y].rememberedItemKind,
+                                                   pmap[x][y].rememberedItemQuantity, pmap[x][y].rememberedItemOriginDepth, object);
                 }
             } else {
                 strcpy(object, tileCatalog[pmap[x][y].rememberedTerrain].description);
