@@ -2,6 +2,9 @@ unreleased
 ==========
 
 -
+  Item quantities (and machine flags) are now remembered correctly on leaving
+  and revisiting a level
+-
   Fixed a playback out-of-sync error when walking into a secret door to
   discover it
 
