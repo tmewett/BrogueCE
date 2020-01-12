@@ -241,7 +241,7 @@ void describeLocation(char *buf, short x, short y) {
         if (pmap[x][y].flags & DISCOVERED) { // memory
             if (pmap[x][y].rememberedItemCategory) {
                 if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience) {
-                    describeHallucinatedItem(buf);
+                    describeHallucinatedItem(object);
                 } else {
                     describedItemBasedOnParameters(pmap[x][y].rememberedItemCategory, pmap[x][y].rememberedItemKind, pmap[x][y].rememberedItemQuantity, object);
                 }

@@ -1,6 +1,8 @@
 unreleased
 ==========
 
+- 
+  Fixed terrain string for remembered items strings when hallucinating
 -
   Fixed a playback out-of-sync error when walking into a secret door to
   discover it
