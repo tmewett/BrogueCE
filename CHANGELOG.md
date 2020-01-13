@@ -1,6 +1,8 @@
 unreleased
 ==========
 
+- 
+  Fixed terrain string for remembered items strings when hallucinating
 -
   Item quantities (and machine flags) are now remembered correctly on leaving
   and revisiting a level
