@@ -2710,6 +2710,7 @@ void clearLevel() {
             pmap[i][j].rememberedItemCategory = 0;
             pmap[i][j].rememberedItemKind = 0;
             pmap[i][j].rememberedItemQuantity = 0;
+            pmap[i][j].rememberedItemOriginDepth = 0;
             pmap[i][j].flags = 0;
             pmap[i][j].volume = 0;
         }

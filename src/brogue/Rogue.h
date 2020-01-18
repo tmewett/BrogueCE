@@ -1236,6 +1236,7 @@ typedef struct pcell {                              // permanent cell; have to r
     enum itemCategory rememberedItemCategory;       // what category of item the player remembers lying there
     short rememberedItemKind;                       // what kind of item the player remembers lying there
     short rememberedItemQuantity;                   // how many of the item the player remembers lying there
+    short rememberedItemOriginDepth;                // the origin depth of the item the player remembers lying there
     enum tileType rememberedTerrain;                // what the player remembers as the terrain (i.e. highest priority terrain upon last seeing)
     unsigned long rememberedCellFlags;              // map cell flags the player remembers from that spot
     unsigned long rememberedTerrainFlags;           // terrain flags the player remembers from that spot
@@ -2757,7 +2758,7 @@ extern "C" {
     enum dungeonLayers layerWithFlag(short x, short y, unsigned long flag);
     char *tileFlavor(short x, short y);
     char *tileText(short x, short y);
-    void describedItemBasedOnParameters(short theCategory, short theKind, short theQuantity, char *buf);
+    void describedItemBasedOnParameters(short theCategory, short theKind, short theQuantity, short theItemOriginDepth, char *buf);
     void describeLocation(char buf[DCOLS], short x, short y);
     void printLocationDescription(short x, short y);
     void useKeyAt(item *theItem, short x, short y);

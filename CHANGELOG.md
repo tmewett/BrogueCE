@@ -9,6 +9,8 @@ unreleased
 -
   Fixed a playback out-of-sync error when walking into a secret door to
   discover it
+-
+  Fixed the display of lumenstone depths in mouseover description
 
 
 1.8
