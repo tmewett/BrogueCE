@@ -25,6 +25,10 @@ ifeq ($(WEBBROGUE),YES)
 	cppflags += -DBROGUE_WEB
 endif
 
+ifeq ($(MAC_APP),YES)
+	cppflags += -DSDL_PATHS
+endif
+
 ifeq ($(DEBUG),YES)
 	cflags += -g
 	cppflags += -DWIZARD

@@ -1,6 +1,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+#ifdef SDL_PATHS
+#include <unistd.h>
+#endif
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -324,6 +327,23 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
 
 
 static void _gameLoop() {
+#ifdef SDL_PATHS
+    char *path = SDL_GetBasePath();
+    if (path) {
+        strcpy(dataDirectory, path);
+    } else {
+        fprintf(stderr, "Failed to find the path to the application\n");
+        exit(1);
+    }
+    free(path);
+
+    path = SDL_GetPrefPath("Brogue", "Brogue");
+    if (!path || chdir(path) != 0) {
+        fprintf(stderr, "Failed to find or change to the save directory\n");
+        exit(1);
+    }
+    free(path);
+#endif
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0) sdlfatal();
 
