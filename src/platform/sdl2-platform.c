@@ -20,6 +20,7 @@ struct keypair {
 static SDL_Window *Win = NULL;
 static SDL_Surface *WinSurf = NULL;
 static SDL_Surface *Font = NULL;
+static SDL_Surface *TileFont = NULL;
 
 static struct keypair remapping[MAX_REMAPS];
 static size_t nremaps = 0;
@@ -50,14 +51,20 @@ static void refreshWindow() {
 Creates or resizes the game window with the specified font size.
 */
 static void ensureWindow(int fontsize) {
+
     char filename[BROGUE_FILENAME_MAX];
     sprintf(filename, "%s/assets/font-%i.png", dataDirectory, fontsize);
+    char tilefilename[BROGUE_FILENAME_MAX];
+    sprintf(tilefilename, "%s/assets/font-%i-tiles.png", dataDirectory, fontsize);
 
     static int lastsize = 0;
     if (lastsize != fontsize) {
         if (Font != NULL) SDL_FreeSurface(Font);
         Font = IMG_Load(filename);
         if (Font == NULL) imgfatal();
+        if (TileFont != NULL) SDL_FreeSurface(TileFont);
+        TileFont = IMG_Load(tilefilename);
+        if (TileFont == NULL) imgfatal();
     }
     lastsize = fontsize;
 
@@ -359,6 +366,9 @@ static void _plotChar(
     short backRed, short backGreen, short backBlue,
     boolean isPlayCell
 ) {
+
+    SDL_Surface *UseFont = NULL;
+
     if (inputChar == STATUE_CHAR) {
         inputChar = 223;
     } else if (inputChar > 255) {
@@ -395,8 +405,14 @@ static void _plotChar(
         }
     }
 
+    if (isPlayCell) {
+        UseFont = TileFont;
+    } else {
+        UseFont = Font;
+    }
+
     SDL_Rect src, dest;
-    int cellw = Font->w / 16, cellh = Font->h / 16;
+    int cellw = UseFont->w / 16, cellh = UseFont->h / 16;
     src.x = (inputChar % 16) * cellw;
     src.y = (inputChar / 16) * cellh;
     src.w = cellw;
@@ -410,8 +426,8 @@ static void _plotChar(
     SDL_FillRect(WinSurf, &dest, SDL_MapRGB(
         WinSurf->format, backRed * 255 / 100, backGreen * 255 / 100, backBlue * 255 / 100
     ));
-    SDL_SetSurfaceColorMod(Font, foreRed * 255 / 100, foreGreen * 255 / 100, foreBlue * 255 / 100);
-    SDL_BlitSurface(Font, &src, WinSurf, &dest);
+    SDL_SetSurfaceColorMod(UseFont, foreRed * 255 / 100, foreGreen * 255 / 100, foreBlue * 255 / 100);
+    SDL_BlitSurface(UseFont, &src, WinSurf, &dest);
 }
 
 
