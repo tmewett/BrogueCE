@@ -27,7 +27,8 @@ struct brogueConsole {
         uchar inputChar,
         short x, short y,
         short foreRed, short foreGreen, short foreBlue,
-        short backRed, short backGreen, short backBlue
+        short backRed, short backGreen, short backBlue,
+        boolean isPlayCell
     );
 
     void (*remap)(const char *, const char *);

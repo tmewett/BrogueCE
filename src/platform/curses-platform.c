@@ -25,7 +25,8 @@ static void gameLoop() {
 static void curses_plotChar(uchar ch,
               short xLoc, short yLoc,
               short foreRed, short foreGreen, short foreBlue,
-              short backRed, short backGreen, short backBlue) {
+              short backRed, short backGreen, short backBlue,
+              boolean isPlayCell) {
 
     fcolor fore;
     fcolor back;

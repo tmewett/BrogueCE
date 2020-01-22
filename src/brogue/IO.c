@@ -1762,7 +1762,8 @@ void commitDraws() {
                          displayBuffer[i][j].foreColorComponents[2],
                          displayBuffer[i][j].backColorComponents[0],
                          displayBuffer[i][j].backColorComponents[1],
-                         displayBuffer[i][j].backColorComponents[2]);
+                         displayBuffer[i][j].backColorComponents[2],
+                         displayBuffer[i][j].isPlayCell);
                 displayBuffer[i][j].needsUpdate = false;
             }
         }

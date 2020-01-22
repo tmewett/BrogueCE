@@ -43,8 +43,9 @@ brogueScoreEntry scoreBuffer[HIGH_SCORES_COUNT];
 void plotChar(uchar inputChar,
               short xLoc, short yLoc,
               short foreRed, short foreGreen, short foreBlue,
-              short backRed, short backGreen, short backBlue) {
-    currentConsole.plotChar(inputChar, xLoc, yLoc, foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue);
+              short backRed, short backGreen, short backBlue,
+              boolean isPlayCell) {
+    currentConsole.plotChar(inputChar, xLoc, yLoc, foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue, isPlayCell);
 }
 
 void pausingTimerStartsNow() {
