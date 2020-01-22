@@ -413,6 +413,32 @@ boolean stringsExactlyMatch(const char *string1, const char *string2) {
     return string1[i] == string2[i];
 }
 
+// Used to compare the dates of two fileEntry variables
+// Returns (int): 
+//      < 0 if 'b' date is lesser than 'a' date
+//      = 0 if 'b' date is equal to 'a' date, 
+//      > 0 if 'b' date is greater than 'a' date
+int fileEntryCompareDates(const void *a, const void *b) { 
+    fileEntry *f1 = (fileEntry *)a;
+    fileEntry *f2 = (fileEntry *)b;
+    time_t t1, t2;
+    double diff;
+
+    t1 = mktime(&f1->date);
+    t2 = mktime(&f2->date);
+	diff = difftime(t2, t1);
+
+/*     char date_f1[11];
+    char date_f2[11];
+    strftime(date_f1, sizeof(date_f1), DATE_FORMAT, &f1->date);
+    strftime(date_f2, sizeof(date_f2), DATE_FORMAT, &f2->date);
+    printf("\nf1: %s\t%s",date_f1,f1->path);
+    printf("\nf2: %s\t%s",date_f2,f2->path); 
+	printf("\ndiff: %f\n", diff); */
+    
+    return (int)diff;
+}
+
 #define FILES_ON_PAGE_MAX               (min(26, ROWS - 7)) // Two rows (top and bottom) for flames, two rows for border, one for prompt, one for heading.
 #define MAX_FILENAME_DISPLAY_LENGTH     53
 boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
@@ -423,6 +449,7 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
     cellDisplayBuffer dbuf[COLS][ROWS], rbuf[COLS][ROWS];
     color *dialogColor = &interfaceBoxColor;
     char *membuf;
+    char fileDate [11];
 
     suffixLength = strlen(suffix);
     files = listFiles(&count, &membuf);
@@ -439,7 +466,8 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
             // This file counts!
             if (i > j) {
                 files[j] = files[i];
-                //printf("\nMatching file: %s\twith date: %s", files[j].path, files[j].date);
+                //strftime(fileDate, sizeof(fileDate), DATE_FORMAT, &files[j].date);
+                //printf("\nMatching file: %s\twith date: %s", files[j].path, fileDate);
             }
             j++;
 
@@ -450,6 +478,9 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
         }
     }
     count = j;
+    
+    // Once we have all relevant files, we sort them by date descending
+    qsort(files, count, sizeof(fileEntry), &fileEntryCompareDates);
 
     currentPageStart = 0;
 
@@ -477,7 +508,8 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
                 strcpy(&(buttons[i].text[MAX_FILENAME_DISPLAY_LENGTH - 3]), "...");
             }
 
-            //printf("\nFound file: %s, with date: %s", files[currentPageStart+i].path, files[currentPageStart+i].date);
+            //strftime(fileDate, sizeof(fileDate), DATE_FORMAT, &files[currentPageStart+i].date);
+            //printf("\nFound file: %s, with date: %s", files[currentPageStart+i].path, fileDate);
         }
 
         x = (COLS - maxPathLength) / 2;
@@ -487,11 +519,12 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
 
         for (i=0; i<min(count - currentPageStart, FILES_ON_PAGE_MAX); i++) {
             pathLength = strlen(buttons[i].text);
-            for (j=pathLength; j<(width - 8); j++) {
+            for (j=pathLength; j<(width - 10); j++) {
                 buttons[i].text[j] = ' ';
             }
             buttons[i].text[j] = '\0';
-            strcpy(&(buttons[i].text[j]), files[currentPageStart+i].date);
+            strftime(fileDate, sizeof(fileDate), DATE_FORMAT, &files[currentPageStart+i].date);
+            strcpy(&(buttons[i].text[j]), fileDate);
             buttons[i].x = x;
             buttons[i].y = y + 1 + i;
         }
@@ -533,7 +566,8 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
             overlayDisplayBuffer(dbuf, NULL);
 
 //          for (j=0; j<min(count - currentPageStart, FILES_ON_PAGE_MAX); j++) {
-//              printf("\nSanity check BEFORE: %s, with date: %s", files[currentPageStart+j].path, files[currentPageStart+j].date);
+//              strftime(fileDate, sizeof(fileDate), DATE_FORMAT, &files[currentPageStart+j].date);
+//              printf("\nSanity check BEFORE: %s, with date: %s", files[currentPageStart+j].path, fileDate);
 //              printf("\n   (button name)Sanity check BEFORE: %s", buttons[j].text);
 //          }
 
@@ -546,7 +580,8 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
                                 NULL);
 
 //          for (j=0; j<min(count - currentPageStart, FILES_ON_PAGE_MAX); j++) {
-//              printf("\nSanity check AFTER: %s, with date: %s", files[currentPageStart+j].path, files[currentPageStart+j].date);
+//              strftime(fileDate, sizeof(fileDate), DATE_FORMAT, &files[currentPageStart+j].date);
+//              printf("\nSanity check AFTER: %s, with date: %s", files[currentPageStart+j].path, fileDate);
 //              printf("\n   (button name)Sanity check AFTER: %s", buttons[j].text);
 //          }
 

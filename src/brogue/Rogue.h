@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <time.h>
 #include "PlatformDefines.h"
 
 // unicode: comment this line to revert to ASCII
@@ -101,6 +102,9 @@ typedef long long fixpt;
 #define RNG_LOG                 "RNGLog.txt"
 
 #define BROGUE_FILENAME_MAX     (min(1024*4, FILENAME_MAX))
+
+// Date format used when listing recordings (TODO: and high scores)
+#define DATE_FORMAT             "%Y-%m-%d" // see strftime() documentation
 
 // Allows unicode characters:
 #define uchar                   unsigned short
@@ -338,7 +342,7 @@ typedef struct rogueHighScoresEntry {
 
 typedef struct fileEntry {
     char *path;
-    char date[100];
+    struct tm date;
 } fileEntry;
 
 enum RNGs {
