@@ -112,7 +112,7 @@ void benchmark() {
         for (i=0; i<COLS; i++) {
             for (j=0; j<ROWS; j++) {
                 theChar = rand_range('!', '~');
-                plotCharWithColor(theChar, i, j, &sparklesauce, &sparklesauce);
+                plotCharWithColor(theChar, i, j, &sparklesauce, &sparklesauce, false);
             }
         }
         pauseBrogue(1);
@@ -179,7 +179,7 @@ void generateFontFiles() {
 
     for (i=0; i<COLS; i++) {
         for(j=0; j<ROWS; j++ ) {
-            plotCharWithColor(' ', i, j, &white, &white);
+            plotCharWithColor(' ', i, j, &white, &white, false);
         }
     }
     i = j = 0;
@@ -190,11 +190,11 @@ void generateFontFiles() {
             break;
         }
         if (j == 8) {
-            plotCharWithColor(c8[i], i, j+5, &white, &black);
+            plotCharWithColor(c8[i], i, j+5, &white, &black, false);
         } else if (j == 9) {
-            plotCharWithColor(c9[i], i, j+5, &white, &black);
+            plotCharWithColor(c9[i], i, j+5, &white, &black, false);
         } else {
-            plotCharWithColor(k, i, j+5, &white, &black);
+            plotCharWithColor(k, i, j+5, &white, &black, false);
         }
     }
     for (;;) {

@@ -1229,6 +1229,7 @@ typedef struct cellDisplayBuffer {
     char backColorComponents[3];
     char opacity;
     boolean needsUpdate;
+    boolean isPlayCell;
 } cellDisplayBuffer;
 
 typedef struct pcell {                              // permanent cell; have to remember this stuff to save levels
@@ -2717,8 +2718,8 @@ extern "C" {
     void colorBlendCell(short x, short y, color *hiliteColor, short hiliteStrength);
     void hiliteCell(short x, short y, const color *hiliteColor, short hiliteStrength, boolean distinctColors);
     void colorMultiplierFromDungeonLight(short x, short y, color *editColor);
-    void plotCharWithColor(uchar inputChar, short xLoc, short yLoc, const color *cellForeColor, const color *cellBackColor);
-    void plotCharToBuffer(uchar inputChar, short x, short y, color *foreColor, color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
+    void plotCharWithColor(uchar inputChar, short xLoc, short yLoc, const color *cellForeColor, const color *cellBackColor, boolean isPlayCell);
+    void plotCharToBuffer(uchar inputChar, short x, short y, color *foreColor, color *backColor, cellDisplayBuffer dbuf[COLS][ROWS], boolean isPlayCell);
     void plotForegroundChar(uchar inputChar, short x, short y, color *foreColor, boolean affectedByLighting);
     void commitDraws();
     void dumpLevelToScreen();

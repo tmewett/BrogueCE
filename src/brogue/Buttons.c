@@ -41,6 +41,7 @@ void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDispl
     short i, textLoc, width, midPercent, symbolNumber, opacity, oldRNG;
     color fColor, bColor, fColorBase, bColorBase, bColorEdge, bColorMid;
     uchar displayCharacter;
+    boolean isPlayCell;
 
     if (!(button->flags & B_DRAW)) {
         return;
@@ -106,19 +107,21 @@ void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDispl
         separateColors(&fColor, &bColor);
 
         displayCharacter = button->text[textLoc];
+        isPlayCell = false;
         if (button->text[textLoc] == '*') {
             if (button->symbol[symbolNumber]) {
                 displayCharacter = button->symbol[symbolNumber];
+                isPlayCell = true;
             }
             symbolNumber++;
         }
 
         if (coordinatesAreInWindow(button->x + i, button->y)) {
             if (dbuf) {
-                plotCharToBuffer(displayCharacter, button->x + i, button->y, &fColor, &bColor, dbuf);
+                plotCharToBuffer(displayCharacter, button->x + i, button->y, &fColor, &bColor, dbuf, isPlayCell);
                 dbuf[button->x + i][button->y].opacity = opacity;
             } else {
-                plotCharWithColor(displayCharacter, button->x + i, button->y, &fColor, &bColor);
+                plotCharWithColor(displayCharacter, button->x + i, button->y, &fColor, &bColor, isPlayCell);
             }
         }
     }
