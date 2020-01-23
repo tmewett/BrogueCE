@@ -103,7 +103,7 @@ typedef long long fixpt;
 
 #define BROGUE_FILENAME_MAX     (min(1024*4, FILENAME_MAX))
 
-// Date format used when listing recordings (TODO: and high scores)
+// Date format used when listing recordings and high scores
 #define DATE_FORMAT             "%Y-%m-%d" // see strftime() documentation
 
 // Allows unicode characters:

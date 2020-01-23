@@ -3920,7 +3920,7 @@ void printHighScores(boolean hiliteMostRecent) {
         }
     }
 
-    leftOffset = min(COLS - maxLength - 21 - 1, COLS/5);
+    leftOffset = min(COLS - maxLength - 23 - 1, COLS/5);
 
     scoreColor = black;
     applyColorAverage(&scoreColor, &itemMessageColor, 100);
@@ -3947,7 +3947,7 @@ void printHighScores(boolean hiliteMostRecent) {
         printString(list[i].date, leftOffset + 12, i + 2, &scoreColor, &black, 0);
 
         // description
-        printString(list[i].description, leftOffset + 21, i + 2, &scoreColor, &black, 0);
+        printString(list[i].description, leftOffset + 23, i + 2, &scoreColor, &black, 0);
     }
 
     scoreColor = black;

@@ -144,10 +144,10 @@ short loadScoreBuffer() {
         // strip the newline off the end
         scoreBuffer[i].description[strlen(scoreBuffer[i].description) - 1] = '\0';
 
-        // convert date to mm/dd/yy format
+        // convert date to DATE_FORMAT
         rawtime = (time_t) scoreBuffer[i].dateNumber;
         timeinfo = localtime(&rawtime);
-        strftime(scoreBuffer[i].dateText, DCOLS, "%m/%d/%y", timeinfo);
+        strftime(scoreBuffer[i].dateText, DCOLS, DATE_FORMAT, timeinfo);
     }
     fclose(scoresFile);
     return sortScoreBuffer();
