@@ -426,15 +426,15 @@ int fileEntryCompareDates(const void *a, const void *b) {
 
     t1 = mktime(&f1->date);
     t2 = mktime(&f2->date);
-	diff = difftime(t2, t1);
+    diff = difftime(t2, t1);
 
-/*     char date_f1[11];
-    char date_f2[11];
-    strftime(date_f1, sizeof(date_f1), DATE_FORMAT, &f1->date);
-    strftime(date_f2, sizeof(date_f2), DATE_FORMAT, &f2->date);
-    printf("\nf1: %s\t%s",date_f1,f1->path);
-    printf("\nf2: %s\t%s",date_f2,f2->path); 
-	printf("\ndiff: %f\n", diff); */
+    //char date_f1[11];
+    //char date_f2[11];
+    //strftime(date_f1, sizeof(date_f1), DATE_FORMAT, &f1->date);
+    //strftime(date_f2, sizeof(date_f2), DATE_FORMAT, &f2->date);
+    //printf("\nf1: %s\t%s",date_f1,f1->path);
+    //printf("\nf2: %s\t%s",date_f2,f2->path); 
+    //printf("\ndiff: %f\n", diff);
     
     return (int)diff;
 }

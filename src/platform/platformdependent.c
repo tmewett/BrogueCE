@@ -316,8 +316,8 @@ fileEntry *addfile(struct filelist *list, const char *name) {
 
     // add the new file and copy the name into the buffer
     list->files[list->nfiles].path = ((char *) NULL) + list->nextname; // don't look at them until they are transferred out
-    // NOTE TO SELF (animal_waves, 20200122): The syntax of the following line is now incorrect since the fileEntry->date is now a tm variable, but I'm not sure this line is still useful...
-    // list->files[list->nfiles].date[0] = '\0'; // for now
+    list->files[list->nfiles].date = (struct tm) {0}; // associate a dummy date (1899-12-31) to avoid random data, it will be correctly populated when using listFiles()
+
     strncpy(list->names + list->nextname, name, len + 1);
 
     list->nextname += len + 1;
