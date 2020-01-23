@@ -27,6 +27,8 @@ static size_t nremaps = 0;
 
 static rogueEvent lastEvent;
 
+static boolean renderTiles = false;
+
 
 static void sdlfatal() {
     fprintf(stderr, "Fatal SDL error: %s\n", SDL_GetError());
@@ -247,7 +249,11 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
                     ensureWindow(++brogueFontSize);
                 } else if (c == '-' && brogueFontSize > 1) {
                     ensureWindow(--brogueFontSize);
+                } else if (c == 'G') {
+                    renderTiles = !renderTiles;
+                    refreshScreen();
                 }
+                
             }
 
             returnEvent->eventType = KEYSTROKE;
@@ -405,7 +411,7 @@ static void _plotChar(
         }
     }
 
-    if (isPlayCell) {
+    if (isPlayCell && renderTiles) {
         UseFont = TileFont;
     } else {
         UseFont = Font;
