@@ -415,8 +415,18 @@ static void _plotChar(
         UseFont = TileFont;
     } else {
         UseFont = Font;
-        if (inputChar == WALL_TOP_CHAR){
-            inputChar = WALL_CHAR;
+        switch (inputChar) {
+        case WALL_TOP_CHAR: inputChar = WALL_CHAR; break;
+        case WAND_CHAR: inputChar = LIQUID_CHAR; break;
+        case DEWAR_CHAR: inputChar = '&'; break;
+        case CHAIN_TOP_LEFT: inputChar = '\\'; break;
+        case CHAIN_BOTTOM_RIGHT: inputChar = '\\'; break;
+        case CHAIN_TOP_RIGHT: inputChar = '/'; break;
+        case CHAIN_BOTTOM_LEFT: inputChar = '/'; break;
+        case CHAIN_TOP: inputChar = '|'; break;
+        case CHAIN_BOTTOM: inputChar = '|'; break;
+        case CHAIN_LEFT: inputChar = '-'; break;
+        case CHAIN_RIGHT: inputChar = '-'; break;
         }
     }
 

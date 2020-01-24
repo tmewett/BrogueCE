@@ -187,7 +187,7 @@ typedef long long fixpt;
 #define LEVER_PULLED_CHAR '\\'
 #define STATUE_CHAR     0x00df
 #define VENT_CHAR       '='
-#define DEWAR_CHAR      '&'
+#define DEWAR_CHAR      0x00CB
 
 #define TRAMPLED_FOLIAGE_CHAR   '"'     // 0x2034 // 0x2037
 
@@ -203,7 +203,7 @@ typedef long long fixpt;
 #define ARMOR_CHAR      '['
 #define WEAPON_CHAR     0x2191
 #define STAFF_CHAR      '\\'
-#define WAND_CHAR       '~'
+#define WAND_CHAR       0x00e0
 #define GOLD_CHAR       '*'
 #define GEM_CHAR        0x25cf
 #define TOTEM_CHAR      0x26b2
@@ -225,14 +225,14 @@ typedef long long fixpt;
 #define LOZENGE_CHAR        0x29EB
 #define CROSS_PRODUCT_CHAR  0x2A2F
 
-#define CHAIN_TOP_LEFT      '\\'
-#define CHAIN_BOTTOM_RIGHT  '\\'
-#define CHAIN_TOP_RIGHT     '/'
-#define CHAIN_BOTTOM_LEFT   '/'
-#define CHAIN_TOP           '|'
-#define CHAIN_BOTTOM        '|'
-#define CHAIN_LEFT          '-'
-#define CHAIN_RIGHT         '-'
+#define CHAIN_TOP_LEFT      '1'
+#define CHAIN_BOTTOM_RIGHT  '2'
+#define CHAIN_TOP_RIGHT     '3'
+#define CHAIN_BOTTOM_LEFT   '4'
+#define CHAIN_TOP           '5'
+#define CHAIN_BOTTOM        '6'
+#define CHAIN_LEFT          '7'
+#define CHAIN_RIGHT         '8'
 
 #define BAD_MAGIC_CHAR      0x29F2
 #define GOOD_MAGIC_CHAR     0x29F3
@@ -249,7 +249,6 @@ typedef long long fixpt;
 #define DESCEND_CHAR    '>'
 #define ASCEND_CHAR     '<'
 #define WALL_CHAR       '#'
-#define WALL_TOP_CHAR   0xB1
 #define DOOR_CHAR       '+'
 #define OPEN_DOOR_CHAR  '\''
 #define ASH_CHAR        '\''

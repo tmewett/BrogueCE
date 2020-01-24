@@ -1753,6 +1753,7 @@ void plotForegroundChar(uchar inputChar, short x, short y, color *foreColor, boo
 void commitDraws() {
     short i, j;
 
+#if defined(USE_UNICODE) && defined(BROGUE_SDL)
     // draw wall tops - we do this here as this is where we have the full render state
     for (j=0; j<ROWS; j++) {
         for (i=0; i<COLS; i++) {
@@ -1764,6 +1765,7 @@ void commitDraws() {
             }
         }
     }
+#endif
 
     for (j=0; j<ROWS; j++) {
         for (i=0; i<COLS; i++) {

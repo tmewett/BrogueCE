@@ -77,9 +77,21 @@ static void curses_plotChar(uchar ch,
     case UNICORN_CHAR: ch = 'U'; break;
     }
     #endif
-    if (ch == WALL_TOP_CHAR) {
-        ch = WALL_CHAR;
+#ifdef USE_UNICODE
+    switch (ch) {
+    case WALL_TOP_CHAR: ch = WALL_CHAR; break;
+    case WAND_CHAR: ch = LIQUID_CHAR; break;
+    case DEWAR_CHAR: ch = EASY_MODE_KEY; break;
+    case CHAIN_TOP_LEFT: ch = '\\'; break;
+    case CHAIN_BOTTOM_RIGHT: ch = '\\'; break;
+    case CHAIN_TOP_RIGHT: ch = '/'; break;
+    case CHAIN_BOTTOM_LEFT: ch = '/'; break;
+    case CHAIN_TOP: ch = '|'; break;
+    case CHAIN_BOTTOM: ch = '|'; break;
+    case CHAIN_LEFT: ch = '-'; break;
+    case CHAIN_RIGHT: ch = '-'; break;
     }
+#endif
 
     if (ch < ' ' || ch > 127) ch = ' ';
     Term.put(xLoc, yLoc, ch, &fore, &back);
