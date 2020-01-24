@@ -154,9 +154,7 @@ void loadKeymap() {
     FILE *f;
     char buffer[512];
 
-    char filename[BROGUE_FILENAME_MAX];
-    sprintf(filename, "%s/keymap.txt", dataDirectory);
-    f = fopen(filename, "r");
+    f = fopen("keymap.txt", "r");
 
     if (f != NULL) {
         while (fgets(buffer, 512, f) != NULL) {
