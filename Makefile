@@ -83,4 +83,4 @@ Brogue.app: bin/brogue
 	mkdir -p $@/Contents/{MacOS,Resources}
 	cp macos/Info.plist $@
 	cp bin/brogue $@/Contents/MacOS
-	cp macos/Brogue.icns bin/assets/* $@/Contents/Resources
+	cp -r macos/Brogue.icns bin/assets $@/Contents/Resources
