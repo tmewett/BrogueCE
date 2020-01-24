@@ -75,7 +75,12 @@ linux.tar.gz: $(common-files) brogue
 icon_%.png: bin/assets/icon.png
 	convert $< -resize $* $@
 
-# Dependencies after | are not considered when deciding to update target
-macos/Brogue.icns: | icon_32.png icon_128.png icon_256.png icon_512.png
+macos/Brogue.icns: icon_32.png icon_128.png icon_256.png icon_512.png
 	png2icns $@ $^
 	$(RM) $^
+
+Brogue.app: bin/brogue
+	mkdir -p $@/Contents/{MacOS,Resources}
+	cp macos/Info.plist $@
+	cp bin/brogue $@/Contents/MacOS
+	cp macos/Brogue.icns bin/assets/* $@/Contents/Resources
