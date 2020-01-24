@@ -11,7 +11,11 @@ unreleased
   discover it
 -
   Fixed the display of lumenstone depths in mouseover description
-
+-
+  Recordings are now sorted by date descending (newest on top) and 
+  all dates (high scores, saved games, recordings) are now displayed as
+  "YYYY-MM-DD"
+  
 
 1.8
 ===

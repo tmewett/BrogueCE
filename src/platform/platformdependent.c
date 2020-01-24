@@ -144,10 +144,10 @@ short loadScoreBuffer() {
         // strip the newline off the end
         scoreBuffer[i].description[strlen(scoreBuffer[i].description) - 1] = '\0';
 
-        // convert date to mm/dd/yy format
+        // convert date to DATE_FORMAT
         rawtime = (time_t) scoreBuffer[i].dateNumber;
         timeinfo = localtime(&rawtime);
-        strftime(scoreBuffer[i].dateText, DCOLS, "%m/%d/%y", timeinfo);
+        strftime(scoreBuffer[i].dateText, DCOLS, DATE_FORMAT, timeinfo);
     }
     fclose(scoresFile);
     return sortScoreBuffer();
@@ -316,7 +316,8 @@ fileEntry *addfile(struct filelist *list, const char *name) {
 
     // add the new file and copy the name into the buffer
     list->files[list->nfiles].path = ((char *) NULL) + list->nextname; // don't look at them until they are transferred out
-    list->files[list->nfiles].date[0] = '\0'; // for now
+    list->files[list->nfiles].date = (struct tm) {0}; // associate a dummy date (1899-12-31) to avoid random data, it will be correctly populated when using listFiles()
+
     strncpy(list->names + list->nextname, name, len + 1);
 
     list->nextname += len + 1;
@@ -370,9 +371,9 @@ fileEntry *listFiles(short *fileCount, char **namebuffer) {
             if (!stat(ep->d_name, &statbuf)) {
                 fileEntry *file = addfile(list, ep->d_name);
                 if (file != NULL) {
-                    // add the modification date to the file entry, the same way we do it for scores
+                    // add the modification date to the file entry
                     timeinfo = localtime(&statbuf.st_mtime);
-                    strftime(file->date, sizeof(file->date), "%m/%d/%y", timeinfo);
+                    file->date = *timeinfo;
                 }
             }
         }
