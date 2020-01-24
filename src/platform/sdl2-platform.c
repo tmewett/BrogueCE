@@ -214,7 +214,8 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
                 ensureWindow(++brogueFontSize);
             } else if (key == SDLK_PAGEDOWN && brogueFontSize > 1) {
                 ensureWindow(--brogueFontSize);
-            } else if (key == SDLK_F11) {
+            } else if (key == SDLK_F11 || key == SDLK_F12
+                    || key == SDLK_RETURN && (SDL_GetModState() & KMOD_ALT)) {
                 // Toggle fullscreen
                 SDL_SetWindowFullscreen(Win,
                     (SDL_GetWindowFlags(Win) & SDL_WINDOW_FULLSCREEN) ? 0 : SDL_WINDOW_FULLSCREEN);

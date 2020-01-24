@@ -1,7 +1,9 @@
 unreleased
 ==========
 
-- 
+-
+  Added F12 and Alt+Enter back as full-screen toggles
+-
   Fixed terrain string for remembered items strings when hallucinating
 -
   Item quantities (and machine flags) are now remembered correctly on leaving
@@ -12,10 +14,10 @@ unreleased
 -
   Fixed the display of lumenstone depths in mouseover description
 -
-  Recordings are now sorted by date descending (newest on top) and 
+  Recordings are now sorted by date descending (newest on top) and
   all dates (high scores, saved games, recordings) are now displayed as
   "YYYY-MM-DD"
-  
+
 
 1.8
 ===
