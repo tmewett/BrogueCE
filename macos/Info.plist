@@ -12,5 +12,7 @@
     <string>APPL</string>
     <key>CFBundleExecutable</key>
     <string>brogue</string>
+    <key>CFBundleIconFile</key>
+    <string>Brogue.icns</string>
 </dict>
 </plist>
