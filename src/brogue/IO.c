@@ -1710,7 +1710,7 @@ void plotCharWithColor(uchar inputChar, short xLoc, short yLoc, const color *cel
     restoreRNG;
 }
 
-void plotCharToBuffer(uchar inputChar, short x, short y, color *foreColor, color *backColor, cellDisplayBuffer dbuf[COLS][ROWS], boolean isPlayCell) {
+void plotCharToBuffer(uchar inputChar, short x, short y, color *foreColor, color *backColor, boolean isPlayCell, cellDisplayBuffer dbuf[COLS][ROWS]) {
     short oldRNG;
 
     if (!dbuf) {
@@ -3532,7 +3532,7 @@ void printString(const char *theString, short x, short y, color *foreColor, colo
         }
 
         if (dbuf) {
-            plotCharToBuffer(theString[i], x, y, &fColor, backColor, dbuf, false);
+            plotCharToBuffer(theString[i], x, y, &fColor, backColor, false, dbuf);
         } else {
             plotCharWithColor(theString[i], x, y, &fColor, backColor, false);
         }
@@ -3657,7 +3657,7 @@ short printStringWithWrapping(char *theString, short x, short y, short width, co
 
         if (dbuf) {
             if (coordinatesAreInWindow(px, py)) {
-                plotCharToBuffer(printString[i], px, py, &fColor, backColor, dbuf, false);
+                plotCharToBuffer(printString[i], px, py, &fColor, backColor, false, dbuf);
             }
         } else {
             if (coordinatesAreInWindow(px, py)) {
@@ -3774,14 +3774,14 @@ void printDiscoveries(short category, short count, unsigned short itemCharacter,
             theColor = &white;
             // these are part of a text display, but we want it to match what's in the dungeon
             // so isPlayCell = true
-            plotCharToBuffer(itemCharacter, x, y + i, &itemColor, &black, dbuf, true); 
+            plotCharToBuffer(itemCharacter, x, y + i, &itemColor, &black, true, dbuf); 
         } else {
             theColor = &darkGray;
             magic = magicCharDiscoverySuffix(category, i);
             if (magic == 1) {
-                plotCharToBuffer(GOOD_MAGIC_CHAR, x, y + i, &goodColor, &black, dbuf, true);
+                plotCharToBuffer(GOOD_MAGIC_CHAR, x, y + i, &goodColor, &black, true, dbuf);
             } else if (magic == -1) {
-                plotCharToBuffer(BAD_MAGIC_CHAR, x, y + i, &badColor, &black, dbuf, true);
+                plotCharToBuffer(BAD_MAGIC_CHAR, x, y + i, &badColor, &black, true, dbuf);
             }
         }
         strcpy(buf, theTable[i].name);

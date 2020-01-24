@@ -118,7 +118,7 @@ void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDispl
 
         if (coordinatesAreInWindow(button->x + i, button->y)) {
             if (dbuf) {
-                plotCharToBuffer(displayCharacter, button->x + i, button->y, &fColor, &bColor, dbuf, isPlayCell);
+                plotCharToBuffer(displayCharacter, button->x + i, button->y, &fColor, &bColor, isPlayCell, dbuf);
                 dbuf[button->x + i][button->y].opacity = opacity;
             } else {
                 plotCharWithColor(displayCharacter, button->x + i, button->y, &fColor, &bColor, isPlayCell);

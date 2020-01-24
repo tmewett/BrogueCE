@@ -2722,7 +2722,7 @@ extern "C" {
     void hiliteCell(short x, short y, const color *hiliteColor, short hiliteStrength, boolean distinctColors);
     void colorMultiplierFromDungeonLight(short x, short y, color *editColor);
     void plotCharWithColor(uchar inputChar, short xLoc, short yLoc, const color *cellForeColor, const color *cellBackColor, boolean isPlayCell);
-    void plotCharToBuffer(uchar inputChar, short x, short y, color *foreColor, color *backColor, cellDisplayBuffer dbuf[COLS][ROWS], boolean isPlayCell);
+    void plotCharToBuffer(uchar inputChar, short x, short y, color *foreColor, color *backColor, boolean isPlayCell, cellDisplayBuffer dbuf[COLS][ROWS]);
     void plotForegroundChar(uchar inputChar, short x, short y, color *foreColor, boolean affectedByLighting);
     void commitDraws();
     void dumpLevelToScreen();
