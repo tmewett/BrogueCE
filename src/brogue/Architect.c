@@ -754,7 +754,7 @@ void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY,
                 copyGrid(pathingGrid, grid);
                 findReplaceGrid(pathingGrid, -1, -1, 0);
                 hiliteGrid(pathingGrid, &green, 50);
-                plotCharWithColor('X', mapToWindowX(orphanList[n][0]), mapToWindowY(orphanList[n][1]), &black, &orange, false); //TODO: not sure if this needs to be true
+                plotCharWithColor('X', mapToWindowX(orphanList[n][0]), mapToWindowY(orphanList[n][1]), &black, &orange, false);
                 temporaryMessage("Orphan detected:", true);
             }
 
@@ -796,7 +796,7 @@ void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY,
                 if (D_INSPECT_MACHINES) {
                     dumpLevelToScreen();
                     displayGrid(pathingGrid);
-                    plotCharWithColor('X', mapToWindowX(i), mapToWindowY(j), &black, &orange, false); //TODO: not sure if this needs to be true
+                    plotCharWithColor('X', mapToWindowX(i), mapToWindowY(j), &black, &orange, false);
                     temporaryMessage("Orphan connecting:", true);
                 }
             }
@@ -2321,10 +2321,10 @@ void attachRooms(short **grid, const dungeonProfile *theDP, short attempts, shor
         if (D_INSPECT_LEVELGEN) {
             colorOverDungeon(&darkGray);
             hiliteGrid(roomMap, &blue, 100);
-            if (doorSites[0][0] != -1) plotCharWithColor('^', mapToWindowX(doorSites[0][0]), mapToWindowY(doorSites[0][1]), &black, &green, true);
-            if (doorSites[1][0] != -1) plotCharWithColor('v', mapToWindowX(doorSites[1][0]), mapToWindowY(doorSites[1][1]), &black, &green, true);
-            if (doorSites[2][0] != -1) plotCharWithColor('<', mapToWindowX(doorSites[2][0]), mapToWindowY(doorSites[2][1]), &black, &green, true);
-            if (doorSites[3][0] != -1) plotCharWithColor('>', mapToWindowX(doorSites[3][0]), mapToWindowY(doorSites[3][1]), &black, &green, true);
+            if (doorSites[0][0] != -1) plotCharWithColor('^', mapToWindowX(doorSites[0][0]), mapToWindowY(doorSites[0][1]), &black, &green, false);
+            if (doorSites[1][0] != -1) plotCharWithColor('v', mapToWindowX(doorSites[1][0]), mapToWindowY(doorSites[1][1]), &black, &green, false);
+            if (doorSites[2][0] != -1) plotCharWithColor('<', mapToWindowX(doorSites[2][0]), mapToWindowY(doorSites[2][1]), &black, &green, false);
+            if (doorSites[3][0] != -1) plotCharWithColor('>', mapToWindowX(doorSites[3][0]), mapToWindowY(doorSites[3][1]), &black, &green, false);
             temporaryMessage("Generating this room:", true);
         }
 

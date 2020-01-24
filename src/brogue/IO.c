@@ -1928,7 +1928,7 @@ void overlayDisplayBuffer(cellDisplayBuffer overBuf[COLS][ROWS], cellDisplayBuff
                 } else {
                     character = overBuf[i][j].character;
                     foreColor = colorFromComponents(overBuf[i][j].foreColorComponents);
-                    isPlayCell = overBuf[i][j].isPlayCell; //TODO: check where this function is called, this may always be false
+                    isPlayCell = overBuf[i][j].isPlayCell;
                 }
 
                 // back color:
