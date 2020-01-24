@@ -415,6 +415,9 @@ static void _plotChar(
         UseFont = TileFont;
     } else {
         UseFont = Font;
+        if (inputChar == WALL_TOP_CHAR){
+            inputChar = WALL_CHAR;
+        }
     }
 
     SDL_Rect src, dest;

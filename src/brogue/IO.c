@@ -1753,9 +1753,21 @@ void plotForegroundChar(uchar inputChar, short x, short y, color *foreColor, boo
 void commitDraws() {
     short i, j;
 
+    // draw wall tops - we do this here as this is where we have the full render state
     for (j=0; j<ROWS; j++) {
         for (i=0; i<COLS; i++) {
-            if (displayBuffer[i][j].needsUpdate) {
+            if (displayBuffer[i][j].character == WALL_CHAR && displayBuffer[i][j].isPlayCell) {
+                if(j != ROWS-1 && 
+                   ((displayBuffer[i][j + 1].character == WALL_CHAR && displayBuffer[i][j + 1].isPlayCell) ||
+                   (displayBuffer[i][j + 1].character == WALL_TOP_CHAR && displayBuffer[i][j + 1].isPlayCell)))
+                   displayBuffer[i][j].character = WALL_TOP_CHAR;
+            }
+        }
+    }
+
+    for (j=0; j<ROWS; j++) {
+        for (i=0; i<COLS; i++) {
+            if (displayBuffer[i][j].needsUpdate) {  
                 plotChar(displayBuffer[i][j].character, i, j,
                          displayBuffer[i][j].foreColorComponents[0],
                          displayBuffer[i][j].foreColorComponents[1],
@@ -1763,7 +1775,7 @@ void commitDraws() {
                          displayBuffer[i][j].backColorComponents[0],
                          displayBuffer[i][j].backColorComponents[1],
                          displayBuffer[i][j].backColorComponents[2],
-                         displayBuffer[i][j].isPlayCell);
+                         displayBuffer[i][j].isPlayCell);                
                 displayBuffer[i][j].needsUpdate = false;
             }
         }

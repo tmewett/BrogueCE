@@ -77,6 +77,9 @@ static void curses_plotChar(uchar ch,
     case UNICORN_CHAR: ch = 'U'; break;
     }
     #endif
+    if (ch == WALL_TOP_CHAR) {
+        ch = WALL_CHAR;
+    }
 
     if (ch < ' ' || ch > 127) ch = ' ';
     Term.put(xLoc, yLoc, ch, &fore, &back);

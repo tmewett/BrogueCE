@@ -172,6 +172,7 @@ typedef long long fixpt;
 #define DESCEND_CHAR    '>'
 #define ASCEND_CHAR     '<'
 #define WALL_CHAR       '#'
+#define WALL_TOP_CHAR   0x00B1
 #define DOOR_CHAR       '+'
 #define OPEN_DOOR_CHAR  '\''
 #define ASH_CHAR        '\''
@@ -248,6 +249,7 @@ typedef long long fixpt;
 #define DESCEND_CHAR    '>'
 #define ASCEND_CHAR     '<'
 #define WALL_CHAR       '#'
+#define WALL_TOP_CHAR   0xB1
 #define DOOR_CHAR       '+'
 #define OPEN_DOOR_CHAR  '\''
 #define ASH_CHAR        '\''
