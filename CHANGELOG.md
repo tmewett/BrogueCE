@@ -1,6 +1,10 @@
 unreleased
 ==========
 
+-
+  Fixed a bug where negatively enchanted, uncursed rings could be
+  distinguished after reading remove curse and, if enchanted before
+  identification, would have an erroneously high bonus
 - 
   Fixed terrain string for remembered items strings when hallucinating
 -

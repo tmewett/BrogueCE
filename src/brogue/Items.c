@@ -1727,10 +1727,11 @@ short effectiveRingEnchant(item *theItem) {
     if (theItem->category != RING) {
         return 0;
     }
+
+    // Positive unidentified rings act as +1 until identified.
     if (!(theItem->flags & ITEM_IDENTIFIED)
         && theItem->enchant1 > 0) {
-
-        return theItem->timesEnchanted + 1; // Unidentified positive rings act as +1 until identified.
+        return 1; 
     }
     return theItem->enchant1;
 }
@@ -2483,10 +2484,8 @@ void itemDetails(char *buf, item *theItem) {
                         (theItem->charges == 1 ? "" : "s"));
                 strcat(buf, buf2);
 
-                if ((theItem->charges < RING_DELAY_TO_AUTO_ID || (theItem->flags & (ITEM_MAGIC_DETECTED | ITEM_IDENTIFIED)))
-                    && theItem->enchant1 > 0) { // Mention the unknown-positive-ring footnote only if it's good magic and you know it.
-
-                    sprintf(buf2, ", and until you understand its secrets, it will function as a +%i ring.", theItem->timesEnchanted + 1);
+                if ((theItem->charges < RING_DELAY_TO_AUTO_ID || (theItem->flags & (ITEM_MAGIC_DETECTED | ITEM_IDENTIFIED)))) {
+                    sprintf(buf2, ", and until you understand its secrets, it will function, at best, as a +1 ring.");
                     strcat(buf, buf2);
                 } else {
                     strcat(buf, ".");
