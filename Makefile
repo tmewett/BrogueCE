@@ -33,10 +33,10 @@ endif
 bin/brogue: $(objects)
 	$(CC) $(cflags) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(libs) $(LDLIBS)
 
-icon.o: icon.rc
+windows/icon.o: windows/icon.rc
 	windres $< $@
 
-bin/brogue.exe: $(objects) icon.o
+bin/brogue.exe: $(objects) windows/icon.o
 	$(CC) $(cflags) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(libs) $(LDLIBS)
 
 clean:
