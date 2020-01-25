@@ -20,13 +20,6 @@ jobs:
       run: |
         make bin/brogue
 
-    - name: "Bundle dependencies"
-      # Copy some required libraries to bin/lib. We need the .so.0 files, as those are the "sonames"
-      # (what the linker expects to find). They are symlinks, but cp will follow them.
-      run: |
-        mkdir -p bin/lib
-        cp --preserve=mode -t bin/lib /usr/lib/x86_64-linux-gnu/libSDL2{,_image}-2.0.so.0
-
     - name: "Upload artifact"
       uses: actions/upload-artifact@v1
       with:

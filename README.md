@@ -37,7 +37,8 @@ If you downloaded a release, you can open the game as follows:
   first run `sudo spctl --master-disable` in Terminal to disable the prompts.
   (You can revert this setting in "Security & Privacy" in System Preferences.)
 
-- On Linux, run the `./brogue` script in the same the folder as this file. You
+- On Linux, run the `./brogue` script in the same the folder as this file. (Make
+  sure you have SDL2 and SDL2_image installed via your package manager.) You
   can also run `./make-link-for-desktop.sh` to generate a .desktop file to
   place on your desktop or applications folder.
 

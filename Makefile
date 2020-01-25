@@ -31,7 +31,7 @@ endif
 	$(CC) $(cppflags) $(CPPFLAGS) $(cflags) $(CFLAGS) -c $< -o $@
 
 bin/brogue: $(objects)
-	$(CC) $(cflags) $(CFLAGS) -Wl,-rpath,lib $(LDFLAGS) -o $@ $^ $(libs) $(LDLIBS)
+	$(CC) $(cflags) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(libs) $(LDLIBS)
 
 icon.o: icon.rc
 	windres $< $@
