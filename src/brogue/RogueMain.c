@@ -454,6 +454,12 @@ void initializeRogue(unsigned long seed) {
         identify(theItem);
         theItem = addItemToPack(theItem);
 
+        theItem = generateItem(RING, RING_AWARENESS);
+        theItem->enchant1 = 30;
+        theItem->flags &= ~ITEM_CURSED;
+        identify(theItem);
+        theItem = addItemToPack(theItem);
+
         theItem = generateItem(WEAPON, DAGGER);
         theItem->enchant1 = 50;
         theItem->enchant2 = W_QUIETUS;
@@ -474,96 +480,50 @@ void initializeRogue(unsigned long seed) {
         theItem = generateItem(STAFF, STAFF_FIRE);
         theItem->enchant1 = 10;
         theItem->charges = 300;
-        theItem->flags &= ~ITEM_CURSED;
         identify(theItem);
         theItem = addItemToPack(theItem);
 
         theItem = generateItem(STAFF, STAFF_LIGHTNING);
         theItem->enchant1 = 10;
         theItem->charges = 300;
-        theItem->flags &= ~ITEM_CURSED;
-        identify(theItem);
-        theItem = addItemToPack(theItem);
-
-        theItem = generateItem(STAFF, STAFF_BLINKING);
-        theItem->enchant1 = theItem->charges = 10;
-        theItem->flags &= ~ITEM_CURSED;
         identify(theItem);
         theItem = addItemToPack(theItem);
 
         theItem = generateItem(STAFF, STAFF_TUNNELING);
         theItem->enchant1 = 10;
         theItem->charges = 3000;
-        theItem->flags &= ~ITEM_CURSED;
         identify(theItem);
         theItem = addItemToPack(theItem);
 
         theItem = generateItem(STAFF, STAFF_OBSTRUCTION);
         theItem->enchant1 = 10;
         theItem->charges = 300;
-        theItem->flags &= ~ITEM_CURSED;
-        identify(theItem);
-        theItem = addItemToPack(theItem);
-
-        theItem = generateItem(WAND, WAND_BECKONING);
-        theItem->charges = 3000;
-        theItem->flags &= ~ITEM_CURSED;
         identify(theItem);
         theItem = addItemToPack(theItem);
 
         theItem = generateItem(STAFF, STAFF_ENTRANCEMENT);
         theItem->enchant1 = 10;
         theItem->charges = 300;
-        theItem->flags &= ~ITEM_CURSED;
         identify(theItem);
         theItem = addItemToPack(theItem);
 
-        theItem = generateItem(STAFF, STAFF_HEALING);
-        theItem->enchant1 = 10;
-        theItem->charges = 300;
-        theItem->flags &= ~ITEM_CURSED;
-        identify(theItem);
-        theItem = addItemToPack(theItem);
-
-        theItem = generateItem(STAFF, STAFF_CONJURATION);
-        theItem->enchant1 = 10;
-        theItem->charges = 300;
-        identify(theItem);
-        theItem = addItemToPack(theItem);
-
-        theItem = generateItem(STAFF, STAFF_POISON);
-        theItem->enchant1 = 10;
-        theItem->charges = 300;
+        theItem = generateItem(WAND, WAND_BECKONING);
+        theItem->charges = 3000;
         identify(theItem);
         theItem = addItemToPack(theItem);
 
         theItem = generateItem(WAND, WAND_DOMINATION);
         theItem->charges = 300;
-        theItem->flags &= ~ITEM_CURSED;
-        identify(theItem);
-        theItem = addItemToPack(theItem);
-
-        theItem = generateItem(WAND, WAND_POLYMORPH);
-        theItem->charges = 300;
-        theItem->flags &= ~ITEM_CURSED;
         identify(theItem);
         theItem = addItemToPack(theItem);
 
         theItem = generateItem(WAND, WAND_PLENTY);
         theItem->charges = 300;
-        theItem->flags &= ~ITEM_CURSED;
         identify(theItem);
         theItem = addItemToPack(theItem);
 
         theItem = generateItem(WAND, WAND_NEGATION);
         theItem->charges = 300;
-        theItem->flags &= ~ITEM_CURSED;
-        identify(theItem);
-        theItem = addItemToPack(theItem);
-
-        theItem = generateItem(RING, RING_AWARENESS);
-        theItem->enchant1 = 30;
-        theItem->flags &= ~ITEM_CURSED;
         identify(theItem);
         theItem = addItemToPack(theItem);
 
