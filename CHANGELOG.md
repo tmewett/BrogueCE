@@ -1,25 +1,37 @@
-unreleased
-==========
+1.8.1
+=====
 
--
-  Fixed an issue with ring descriptions where an unidentified ring could be
-  revealed as negative after reading a scroll of remove curse
--
-  Added F12 and Alt+Enter back as full-screen toggles
--
-  Fixed terrain string for remembered items strings when hallucinating
--
-  Item quantities (and machine flags) are now remembered correctly on leaving
-  and revisiting a level
+This release contains some bug fixes and UI improvements. Replays and saves are
+fully compatible with 1.8.
+
+Thanks to contributors animal_waves and flend.
+
+
+Bug fixes
+---------
 -
   Fixed a playback out-of-sync error when walking into a secret door to
   discover it
 -
-  Fixed the display of lumenstone depths in mouseover description
+  Fixed a bug where inspecting an out-of-sight lumenstone would say "you
+  remember seeing a lumenstone from depth 0" instead of the depth it was found
+  at
 -
-  Recordings are now sorted by date descending (newest on top) and
-  all dates (high scores, saved games, recordings) are now displayed as
-  "YYYY-MM-DD"
+  Item quantities are now remembered correctly on leaving and revisiting a level
+-
+  Fixed description of remembered items when hallucinating
+
+
+Other changes
+-------------
+-
+  Recordings are now sorted by date descending (newest on top) and all dates
+  (high scores, saved games, recordings) are now displayed as "YYYY-MM-DD"
+-
+  Fixed an issue with ring descriptions where an unidentified ring could be
+  revealed as negative after reading a scroll of remove curse
+-
+  Added F12 and Alt+Enter as shortcuts for full-screen mode
 
 
 1.8
