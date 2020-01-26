@@ -44,7 +44,7 @@ clean:
 	$(RM) $(objects) bin/brogue{,.exe}
 
 
-common-files := bin/assets bin/keymap.txt README.txt CHANGELOG.txt agpl.txt
+common-files := bin/assets bin/keymap.txt README.txt CHANGELOG.txt agpl.txt seed-catalog.txt
 
 %.txt: %.md
 	cp $< $@
