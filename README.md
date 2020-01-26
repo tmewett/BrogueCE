@@ -29,18 +29,34 @@ Playing
 
 If you downloaded a release, you can open the game as follows:
 
-- On Windows, go to the `bin` folder and run `brogue.exe`.
+### Windows
 
-- On Mac, run/double-click the `brogue` script in the same the folder as this
-  file. As it's an unsigned program, with unsigned libraries, you will have
-  to press OK on many prompts asking if you want to run it. I recommend you
-  first run `sudo spctl --master-disable` in Terminal to disable the prompts.
-  (You can revert this setting in "Security & Privacy" in System Preferences.)
+Go to the `bin` folder and run `brogue.exe`.
 
-- On Linux, run the `./brogue` script in the same the folder as this file. (Make
-  sure you have SDL2 and SDL2_image installed via your package manager.) You
-  can also run `./make-link-for-desktop.sh` to generate a .desktop file to
-  place on your desktop or applications folder.
+### Mac
+
+Run/double-click the `brogue` script in the same the folder as this file.
+
+As it's an unsigned program, you will have to convince macOS to let you run it.
+One option is to run `sudo spctl --master-disable` in Terminal to disable the
+safeguard. (You can revert this setting in "Security & Privacy" in System
+Preferences.)
+
+### Linux
+
+Run the `./brogue` script in the same the folder as this file.
+
+Make sure you have SDL2 and SDL2_image installed via your package manager. The
+required packages are:
+
+- Debian/Ubuntu: `libsdl2-2.0-0 libsdl2-image-2.0-0`
+- Fedora: `SDL2 SDL2_image`
+- Arch: `sdl2 sdl2_image`
+
+You can also run `./make-link-for-desktop.sh` to generate a .desktop file to
+place on your desktop or applications folder.
+
+### More information
 
 If you're running the graphical version (default), the game window can be
 resized using the PageDown/PageUp or -/+ keys.
