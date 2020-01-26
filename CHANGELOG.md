@@ -110,9 +110,8 @@ Other changes
 
 -
   The Mac version has been remade to be the same as the Windows and Linux
-  versions. (Unfortunately, as the Mac release was special, this means a
-  reduction in functionality and quality - it is no longer an App and the game
-  window cannot be freely resized. This will be improved in future releases)
+  versions. (Unfortunately, this means it has lost some Mac-specific polish,
+  e.g. it is no longer an App. This will be improved in future releases)
 -
   Turning on autopilot now requires confirmation
 -
