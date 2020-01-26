@@ -2,6 +2,9 @@ unreleased
 ==========
 
 -
+  Fixed an issue with ring descriptions where an unidentified ring could be
+  revealed as negative after reading a scroll of remove curse
+-
   Added F12 and Alt+Enter back as full-screen toggles
 -
   Fixed terrain string for remembered items strings when hallucinating
