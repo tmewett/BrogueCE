@@ -1,3 +1,6 @@
+# Where to look for game data files (found in 'bin'). Must be without trailing slashes!
+DATADIR := .
+
 # Include terminal support. Requires ncurses
 TERMINAL := NO
 
