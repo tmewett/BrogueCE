@@ -1,13 +1,14 @@
 #include "platform.h"
 
-extern playerCharacter rogue;
+// Expanding a macro as a string constant requires two levels of macros
+#define _str(x)  #x
+#define STRINGIFY(x)  _str(x)
+
 struct brogueConsole currentConsole;
 
 boolean noMenu = false;
-unsigned long int firstSeed = 0;
 int brogueFontSize = 0;
-
-void dumpScores();
+char dataDirectory[BROGUE_FILENAME_MAX] = STRINGIFY(DATADIR);
 
 static boolean endswith(const char *str, const char *ending)
 {

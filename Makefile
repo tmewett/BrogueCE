@@ -3,6 +3,7 @@ include config.mk
 cflags := -Isrc/brogue -Isrc/platform -std=c99 \
 	-Wall -Wpedantic -Werror=implicit -Wno-parentheses -Wno-format-overflow
 libs := -lm
+cppflags := -DDATADIR=$(DATADIR)
 
 sources := $(wildcard src/brogue/*.c) $(wildcard src/platform/*.c)
 objects := $(sources:.c=.o)

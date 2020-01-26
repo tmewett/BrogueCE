@@ -2666,7 +2666,6 @@ extern "C" {
     boolean shiftKeyIsDown();
     short getHighScoresList(rogueHighScoresEntry returnList[HIGH_SCORES_COUNT]);
     boolean saveHighScore(rogueHighScoresEntry theEntry);
-    void initializeBrogueSaveLocation();
     fileEntry *listFiles(short *fileCount, char **dynamicMemoryBuffer);
     void initializeLaunchArguments(enum NGCommands *command, char *path, unsigned long *seed);
 
