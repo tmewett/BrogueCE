@@ -41,3 +41,19 @@ bin/brogue.exe: $(objects) windows/icon.o
 
 clean:
 	$(RM) $(objects) bin/brogue{,.exe}
+
+
+common-files := bin README.txt CHANGELOG.txt agpl.txt
+
+%.txt: %.md
+	cp $< $@
+
+%.zip:
+	zip -rvl $@ $^
+
+%.tar.gz:
+	tar -cavf $@ $^
+
+windows.zip: $(common-files)
+macos.tar.gz: $(common-files) brogue
+linux.tar.gz: $(common-files) brogue make-link-for-desktop.sh
