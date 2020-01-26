@@ -44,17 +44,16 @@ clean:
 	$(RM) $(objects) bin/brogue{,.exe}
 
 
-common-files := bin README.txt CHANGELOG.txt agpl.txt
+common-files := bin/assets bin/keymap.txt README.txt CHANGELOG.txt agpl.txt
 
 %.txt: %.md
 	cp $< $@
 
-%.zip:
+windows.zip: $(common-files) bin/brogue.exe
 	zip -rvl $@ $^
 
-%.tar.gz:
+macos.tar.gz: $(common-files) brogue bin/brogue
 	tar -cavf $@ $^
 
-windows.zip: $(common-files)
-macos.tar.gz: $(common-files) brogue
-linux.tar.gz: $(common-files) brogue make-link-for-desktop.sh
+linux.tar.gz: $(common-files) brogue bin/brogue
+	tar -cavf $@ $^ -C linux make-link-for-desktop.sh
