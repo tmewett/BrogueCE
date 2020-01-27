@@ -69,7 +69,6 @@ unsigned long maxLevelChanges;
 char annotationPathname[BROGUE_FILENAME_MAX];   // pathname of annotation file
 unsigned long previousGameSeed;
 
-#pragma mark Colors
 //                                  Red     Green   Blue    RedRand GreenRand   BlueRand    Rand    Dances?
 // basic colors
 const color white =                 {100,   100,    100,    0,      0,          0,          0,      false};
@@ -357,8 +356,6 @@ const color flameTitleColor = {0, 0, 0, 9, 9, 15, 0, true}; // *pale blue**
 //const color flameTitleColor = {0, 0, 0, 15, 15, 9, 0, true}; // pale yellow
 //const color flameTitleColor = {0, 0, 0, 15, 9, 15, 0, true}; // pale purple
 
-#pragma mark Dynamic color references
-
 const color *dynamicColors[NUMBER_DYNAMIC_COLORS][3] = {
     // used color           shallow color               deep color
     {&minersLightColor,     &minersLightStartColor,     &minersLightEndColor},
@@ -368,8 +365,6 @@ const color *dynamicColors[NUMBER_DYNAMIC_COLORS][3] = {
     {&floorBackColor,       &floorBackColorStart,       &floorBackColorEnd},
     {&chasmEdgeBackColor,   &chasmEdgeBackColorStart,   &chasmEdgeBackColorEnd},
 };
-
-#pragma mark Autogenerator definitions
 
 const autoGenerator autoGeneratorCatalog[NUMBER_AUTOGENERATORS] = {
 //   terrain                    layer   DF                          Machine                     reqDungeon  reqLiquid   >Depth  <Depth          freq    minIncp minSlope    maxNumber
@@ -432,8 +427,6 @@ const autoGenerator autoGeneratorCatalog[NUMBER_AUTOGENERATORS] = {
     {0,                         0,      0,                          MT_SENTINEL_AREA,           FLOOR,      NOTHING,    12,     DEEPEST_LEVEL-1,10,     0,      0,          2},
     {0,                         0,      0,                          MT_WORM_AREA,               FLOOR,      NOTHING,    12,     DEEPEST_LEVEL-1,12,     0,      0,          3},
 };
-
-#pragma mark Terrain definitions
 
 const floorTileType tileCatalog[NUMBER_TILETYPES] = {
 
@@ -698,8 +691,6 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
     {WALL_CHAR,     &mudWallForeColor,      &mudWallBackColor,      0,  0,  DF_PLAIN_FIRE,  0,          0,              0,              NO_LIGHT,       (T_OBSTRUCTS_EVERYTHING), (TM_STAND_IN_TILE),                                                       "a mud-covered wall",   "A malodorous layer of clay and fecal matter coats the wall."},
     {OMEGA_CHAR,    &mudWallForeColor,      &refuseBackColor,       25, 50, DF_EMBERS,      0,          0,              0,              NO_LIGHT,       (T_OBSTRUCTS_VISION | T_OBSTRUCTS_GAS | T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VISUALLY_DISTINCT), "hanging animal skins", "you push through the animal skins that hang across the threshold."},
 };
-
-#pragma mark Dungeon Feature definitions
 
 // Features in the gas layer use the startprob as volume, ignore probdecr, and spawn in only a single point.
 // Intercepts and slopes are in units of 0.01.
@@ -1034,8 +1025,6 @@ dungeonFeature dungeonFeatureCatalog[NUMBER_DUNGEON_FEATURES] = {
     {STENCH_SMOKE_GAS,          GAS,        50,     0,      0, "", 0, 0, 0, 0, DF_EMBERS},
 };
 
-#pragma mark Dungeon Profiles
-
 dungeonProfile dungeonProfileCatalog[NUMBER_DUNGEON_PROFILES] = {
     // Room frequencies:
     //      0. Cross room
@@ -1055,8 +1044,6 @@ dungeonProfile dungeonProfileCatalog[NUMBER_DUNGEON_PROFILES] = {
     {{0,    0,  1,  0,  0,  0,  0,  0}, 0},     // Goblin warrens
     {{0,    5,  0,  1,  0,  0,  0,  0}, 0},     // Sentinel sanctuaries
 };
-
-#pragma mark Lights
 
 // radius is in units of 0.01
 const lightSource lightCatalog[NUMBER_LIGHT_KINDS] = {
@@ -1126,8 +1113,6 @@ const lightSource lightCatalog[NUMBER_LIGHT_KINDS] = {
     {&descentLightColor,    {600, 600, 1},          0,      false},     // magical pit light
     {&sacrificeTargetColor, {800, 1200, 1},          0,      true},      // demonic statue light
 };
-
-#pragma mark Blueprints
 
 const blueprint blueprintCatalog[NUMBER_BLUEPRINTS] = {
     {{0}}, // nothing
@@ -1579,8 +1564,6 @@ const blueprint blueprintCatalog[NUMBER_BLUEPRINTS] = {
 };
 
 
-#pragma mark Monster definitions
-
 // Defines all creatures, which include monsters and the player:
 creatureType monsterCatalog[NUMBER_MONSTER_KINDS] = {
     //  name            ch      color           HP      def     acc     damage          reg move    attack  blood           light   DFChance DFType         bolts       behaviorF, abilityF
@@ -1723,8 +1706,6 @@ creatureType monsterCatalog[NUMBER_MONSTER_KINDS] = {
     {0, "mangrove dryad",'M',   &tanColor,      70,     60,     175,    {2, 8, 2},      6,  100,    100,    DF_ASH_BLOOD,   0,      0,      0,              {BOLT_ANCIENT_SPIRIT_VINES},
         (MONST_IMMUNE_TO_WEBS | MONST_ALWAYS_USE_ABILITY | MONST_MAINTAINS_DISTANCE | MONST_NO_POLYMORPH | MONST_MALE | MONST_FEMALE), (0)},
 };
-
-#pragma mark Monster words
 
 const monsterWords monsterText[NUMBER_MONSTER_KINDS] = {
     {"A naked adventurer in an unforgiving place, bereft of equipment and confused about the circumstances.",
@@ -1955,8 +1936,6 @@ const monsterWords monsterText[NUMBER_MONSTER_KINDS] = {
         {"whips", "lashes", "thrashes", "lacerates", {0}}},
 };
 
-#pragma mark Mutation definitions
-
 const mutation mutationCatalog[NUMBER_MUTATORS] = {
     //Title         textColor       healthFactor    moveSpdMult attackSpdMult   defMult damMult DF% DFtype  light   monstFlags  abilityFlags    forbiddenFlags      forbiddenAbilities
     {"explosive",   &orange,        50,             100,        100,            50,     100,    0,  DF_MUTATION_EXPLOSION, EXPLOSIVE_BLOAT_LIGHT, 0, MA_DF_ON_DEATH, MONST_SUBMERGES, 0,
@@ -1976,8 +1955,6 @@ const mutation mutationCatalog[NUMBER_MUTATORS] = {
     {"reflective",  &darkTurquoise, 100,            100,        100,            100,    100,    -1, 0,      0,      MONST_REFLECT_4, 0,         (MONST_REFLECT_4 | MONST_ALWAYS_USE_ABILITY), 0,
         "A rare mutation has coated $HISHER flesh with reflective scales."},
 };
-
-#pragma mark Horde definitions
 
 const hordeType hordeCatalog[NUMBER_HORDES] = {
     // leader       #members    member list                             member numbers                  minL    maxL    freq    spawnsIn        machine         flags
@@ -2186,8 +2163,6 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_GOBLIN,         1,      {MK_GOBLIN},                            {{1, 2, 1}},                    3,      7,      10,     0,              0,              HORDE_MACHINE_GOBLIN_WARREN | HORDE_LEADER_CAPTIVE},
 };
 
-#pragma mark Monster class definitions
-
 const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT] = {
     // name             frequency   maxDepth    member list
     {"abomination",     10,         -1,         {MK_BOG_MONSTER, MK_UNDERWORM, MK_KRAKEN, MK_TENTACLE_HORROR}},
@@ -2208,8 +2183,6 @@ const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT] = {
 };
 
 // ITEMS
-
-#pragma mark Item flavors
 
 char itemTitles[NUMBER_SCROLL_KINDS][30];
 
@@ -2328,8 +2301,6 @@ const char itemGemsRef[NUMBER_ITEM_GEMS][30] = {
     "bloodstone",
     "jasper"
 };
-
-#pragma mark Item definitions
 
 //typedef struct itemTable {
 //  char *name;
@@ -2500,8 +2471,6 @@ itemTable charmTable[NUMBER_CHARM_KINDS] = {
     {"negation",        "", "", 5,  700,    0,{1,2,1}, true, false, "A featureless gray disc hangs from a lanyard. When you touch it, your hand and arm go numb."},
 };
 
-#pragma mark Bolt definitions
-
 const bolt boltCatalog[NUMBER_BOLT_KINDS] = {
     {{0}},
     //name                      bolt description                ability description                         char    foreColor       backColor           boltEffect      magnitude       pathDF      targetDF    forbiddenMonsterFlags       flags
@@ -2536,8 +2505,6 @@ const bolt boltCatalog[NUMBER_BOLT_KINDS] = {
     {"whip",                    "whips",                        "wields a whip",                            '*',    &tanColor,      NULL,               BE_ATTACK,      1,              0,          0,          MONST_IMMUNE_TO_WEAPONS,    (BF_TARGET_ENEMIES | BF_NEVER_REFLECTS | BF_NOT_LEARNABLE | BF_DISPLAY_CHAR_ALONG_LENGTH)},
 };
 
-#pragma mark Feat definitions
-
 const feat featTable[FEAT_COUNT] = {
     {"Pure Mage",       "Ascend without using fists or a weapon.", true},
     {"Pure Warrior",    "Ascend without using a staff, wand or charm.", true},
@@ -2551,8 +2518,6 @@ const feat featTable[FEAT_COUNT] = {
     {"Dragonslayer",    "Kill a dragon with a melee attack.", false},
     {"Paladin",         "Ascend without attacking an unaware or fleeing creature.", true},
 };
-
-#pragma mark Miscellaneous definitions
 
 const char monsterBehaviorFlagDescriptions[32][COLS] = {
     "is invisible",                             // MONST_INVISIBLE
