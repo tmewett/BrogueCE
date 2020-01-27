@@ -16,6 +16,7 @@ endif
 ifeq ($(GRAPHICS),YES)
 	cflags += $(shell $(SDL_CONFIG) --cflags)
 	cppflags += -DBROGUE_SDL
+	cppflags += -DUSE_UNICODE
 	libs += $(shell $(SDL_CONFIG) --libs) -lSDL2_image
 endif
 
