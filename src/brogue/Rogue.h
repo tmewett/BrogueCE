@@ -172,19 +172,18 @@ typedef long long fixpt;
 #define DESCEND_CHAR    '>'
 #define ASCEND_CHAR     '<'
 #define WALL_CHAR       '#'
-#define WALL_TOP_CHAR   0x00B1
 #define DOOR_CHAR       '+'
 #define OPEN_DOOR_CHAR  '\''
-#define ASH_CHAR        '\''
-#define BONES_CHAR      ','
+#define ASH_CHAR        '0'//'\''
+#define BONES_CHAR      0x00FE//','
 #define MUD_CHAR        ','
-#define WEB_CHAR        ':'
+#define WEB_CHAR        ']'//':'
 //#define FOLIAGE_CHAR  0x03A8 // lower-case psi
 #define FOLIAGE_CHAR    0x2648 // Aries symbol
 #define VINE_CHAR       ':'
 #define ALTAR_CHAR      '|'
-#define LEVER_CHAR      '/'
-#define LEVER_PULLED_CHAR '\\'
+#define LEVER_CHAR      0x00D0 //'/'
+#define LEVER_PULLED_CHAR 0x00D1 //'\\'
 #define STATUE_CHAR     0x00df
 #define VENT_CHAR       '='
 #define DEWAR_CHAR      0x00CB
@@ -234,8 +233,65 @@ typedef long long fixpt;
 #define CHAIN_LEFT          '7'
 #define CHAIN_RIGHT         '8'
 
-#define BAD_MAGIC_CHAR      0x29F2
-#define GOOD_MAGIC_CHAR     0x29F3
+#define BAD_MAGIC_CHAR      0x00F7//0x29F2
+#define GOOD_MAGIC_CHAR     0x00F6//0x29F3
+
+
+
+
+#define WAND_CHAR_NOTILE            '~'
+#define DEWAR_CHAR_NOTILE           '&'
+#define LEVER_CHAR_NOTILE           '/'
+#define LEVER_PULLED_CHAR_NOTILE    '\\'
+#define BONES_CHAR_NOTILE           ','
+#define ASH_CHAR_NOTILE             '\''
+#define WEB_CHAR_NOTILE             ':'
+#define BAD_MAGIC_CHAR_NO_TILE      0x29F2
+#define GOOD_MAGIC_CHAR_NO_TILE     0x29F3
+
+#define CHAIN_TOP_LEFT_NOTILE       '\\'
+#define CHAIN_BOTTOM_RIGHT_NOTILE   '\\'
+#define CHAIN_TOP_RIGHT_NOTILE      '/'
+#define CHAIN_BOTTOM_LEFT_NOTILE    '/'
+#define CHAIN_TOP_NOTILE            '|'
+#define CHAIN_BOTTOM_NOTILE         '|'
+#define CHAIN_LEFT_NOTILE           '-'
+#define CHAIN_RIGHT_NOTILE          '-'
+
+#define WALL_TOP_CHAR               0x00B1
+#define WALL_TOP_CHAR_NOTILE        '#'
+#define SEALED_COFFIN_CHAR          0x00F4
+#define SEALED_COFFIN_CHAR_NOTILE   ALTAR_CHAR
+#define OPEN_COFFIN_CHAR            0x00F5
+#define OPEN_COFFIN_CHAR_NOTILE     ALTAR_CHAR
+#define PORTCULLIS_CHAR             0x00E7
+#define PORTCULLIS_CHAR_NOTILE      WALL_CHAR
+#define BLOODFLOWER_CHAR            0x00D2
+#define BLOODFLOWER_CHAR_NOTILE     FOLIAGE_CHAR
+#define BLOODFLOWERPOD_CHAR         0x00D3
+#define BLOODFLOWERPOD_CHAR_NOTILE  GOLD_CHAR
+
+#define DAR_CHAR                    'd'
+#define DAR_MAGE_CHAR               0x00C0
+#define DAR_MAGE_CHAR_NOTILE        'd'
+#define DAR_PRIESTESS_CHAR          0x00C1
+#define DAR_PRIESTESS_CHAR_NOTILE   'd'
+#define GOBLIN_CHAR                 'g'
+#define GOBLIN_MYSTIC_CHAR          0x00C2
+#define GOBLIN_MYSTIC_CHAR_NOTILE   'g'
+#define GOBLIN_WARLORD_CHAR         0x00C3
+#define GOBLIN_WARLORD_CHAR_NOTILE  'g'
+#define OGRE_CHAR                   'O'
+#define OGRE_SHAMAN_CHAR            0x00C4
+#define OGRE_SHAMAN_CHAR_NOTILE     'O'
+#define GUARDIAN_CHAR               0x00C6
+#define GUARDIAN_CHAR_NOTILE        '&'
+#define WINGED_GUARDIAN_CHAR        0x00C7
+#define WINGED_GUARDIAN_CHAR_NOTILE '&'
+#define PHOENIX_EGG_CHAR            0x00C8
+#define PHOENIX_EGG_CHAR_NOTILE     0x25CF
+#define DRYAD_CHAR                  0x00CC
+#define DRYAD_CHAR_NOTILE           'M'
 
 #else
 
@@ -310,6 +366,27 @@ typedef long long fixpt;
 
 #define BAD_MAGIC_CHAR      '+'
 #define GOOD_MAGIC_CHAR     '$'
+
+
+#define WALL_TOP_CHAR       '#'
+#define SEALED_COFFIN_CHAR  ALTAR_CHAR
+#define OPEN_COFFIN_CHAR    ALTAR_CHAR
+#define PORTCULLIS_CHAR     WALL_CHAR
+#define BLOODFLOWER_CHAR    FOLIAGE_CHAR
+#define BLOODFLOWERPOD_CHAR GOLD_CHAR
+
+#define DAR_CHAR                'd'
+#define DAR_MAGE_CHAR           'd'
+#define DAR_PRIESTESS           'd'
+#define GOBLIN_CHAR             'g'
+#define GOBLIN_MYSTIC_CHAR      'g'
+#define GOBLIN_WARLORD_CHAR     'g'
+#define OGRE_CHAR               'O'
+#define OGRE_SHAMAN_CHAR        'O'
+#define GUARDIAN_CHAR           '&'
+#define WINGED_GUARDIAN_CHAR    '&'
+#define PHOENIX_EGG_CHAR        GEM_CHAR
+#define DRYAD_CHAR              'M'
 
 #endif
 

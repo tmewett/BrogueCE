@@ -39,6 +39,44 @@ static void curses_plotChar(uchar ch,
     back.b = (float) backBlue / 100;
 
     #ifdef USE_UNICODE
+    if (isPlayCell)
+    {
+        switch (inputChar) {
+        case WAND_CHAR: inputChar = WAND_CHAR_NOTILE; break;
+        case DEWAR_CHAR: inputChar = DEWAR_CHAR_NOTILE; break;
+        case LEVER_CHAR: inputChar = LEVER_CHAR_NOTILE; break;
+        case LEVER_PULLED_CHAR: inputChar  = LEVER_PULLED_CHAR_NOTILE; break;
+        case BONES_CHAR: inputChar = BONES_CHAR_NOTILE; break;
+        case ASH_CHAR: inputChar = ASH_CHAR_NOTILE; break;
+        case WEB_CHAR: inputChar = WEB_CHAR_NOTILE; break;
+        case BAD_MAGIC_CHAR: inputChar = BAD_MAGIC_CHAR_NO_TILE; break;
+        case GOOD_MAGIC_CHAR: inputChar = GOOD_MAGIC_CHAR_NO_TILE; break;
+        case CHAIN_TOP_LEFT: inputChar = CHAIN_TOP_LEFT_NOTILE; break;
+        case CHAIN_BOTTOM_RIGHT: inputChar = CHAIN_BOTTOM_RIGHT_NOTILE; break;
+        case CHAIN_TOP_RIGHT: inputChar = CHAIN_TOP_RIGHT_NOTILE; break;
+        case CHAIN_BOTTOM_LEFT: inputChar = CHAIN_BOTTOM_LEFT_NOTILE; break;
+        case CHAIN_TOP: inputChar = CHAIN_TOP_NOTILE; break;
+        case CHAIN_BOTTOM: inputChar = CHAIN_BOTTOM_NOTILE; break;
+        case CHAIN_LEFT: inputChar = CHAIN_LEFT_NOTILE; break;
+        case CHAIN_RIGHT: inputChar = CHAIN_RIGHT_NOTILE; break;
+        case WALL_TOP_CHAR: inputChar = WALL_TOP_CHAR_NOTILE; break;
+        case SEALED_COFFIN_CHAR: inputChar = SEALED_COFFIN_CHAR_NOTILE; break;
+        case OPEN_COFFIN_CHAR: inputChar = OPEN_COFFIN_CHAR_NOTILE; break;
+        case PORTCULLIS_CHAR: inputChar = PORTCULLIS_CHAR_NOTILE; break;
+        case BLOODFLOWER_CHAR: inputChar = BLOODFLOWER_CHAR_NOTILE; break;
+        case BLOODFLOWERPOD_CHAR: inputChar = BLOODFLOWERPOD_CHAR_NOTILE; break;
+        case DAR_MAGE_CHAR: inputChar = DAR_MAGE_CHAR_NOTILE; break;
+        case DAR_PRIESTESS_CHAR: inputChar = DAR_PRIESTESS_CHAR_NOTILE; break;
+        case GOBLIN_MYSTIC_CHAR: inputChar = GOBLIN_MYSTIC_CHAR_NOTILE ; break;
+        case GOBLIN_WARLORD_CHAR: inputChar = GOBLIN_WARLORD_CHAR_NOTILE; break;  
+        case OGRE_SHAMAN_CHAR: inputChar = OGRE_SHAMAN_CHAR_NOTILE; break; 
+        case GUARDIAN_CHAR: inputChar = GUARDIAN_CHAR_NOTILE; break;
+        case WINGED_GUARDIAN_CHAR: inputChar = WINGED_GUARDIAN_CHAR_NOTILE; break;
+        case PHOENIX_EGG_CHAR: inputChar = PHOENIX_EGG_CHAR_NOTILE; break;
+        case DRYAD_CHAR: inputChar = DRYAD_CHAR_NOTILE; break;        
+        }
+    }
+
     // because we can't look at unicode and ascii without messing with Rogue.h, reinterpret until some later version comes along:
     switch (ch) {
     case FLOOR_CHAR: ch = '.'; break;
@@ -76,21 +114,7 @@ static void curses_plotChar(uchar ch,
     case STATUE_CHAR: ch = '5'; break;
     case UNICORN_CHAR: ch = 'U'; break;
     }
-    #endif
-#ifdef USE_UNICODE
-    switch (ch) {
-    case WALL_TOP_CHAR: ch = WALL_CHAR; break;
-    case WAND_CHAR: ch = LIQUID_CHAR; break;
-    case DEWAR_CHAR: ch = EASY_MODE_KEY; break;
-    case CHAIN_TOP_LEFT: ch = '\\'; break;
-    case CHAIN_BOTTOM_RIGHT: ch = '\\'; break;
-    case CHAIN_TOP_RIGHT: ch = '/'; break;
-    case CHAIN_BOTTOM_LEFT: ch = '/'; break;
-    case CHAIN_TOP: ch = '|'; break;
-    case CHAIN_BOTTOM: ch = '|'; break;
-    case CHAIN_LEFT: ch = '-'; break;
-    case CHAIN_RIGHT: ch = '-'; break;
-    }
+    
 #endif
 
     if (ch < ' ' || ch > 127) ch = ' ';

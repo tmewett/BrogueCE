@@ -12,6 +12,10 @@
 #define PAUSE_BETWEEN_EVENT_POLLING     36L//17
 #define MAX_REMAPS  128
 
+#ifndef USE_UNICODE
+#warning "Tiles in SDL mode will display incorrectly with unicode disabled"
+#endif
+
 struct keypair {
     char from;
     char to;
@@ -374,7 +378,44 @@ static void _plotChar(
 ) {
 
     SDL_Surface *UseFont = NULL;
-
+#ifdef USE_UNICODE
+    if (isPlayCell && !renderTiles) {
+        switch (inputChar) {
+        case WAND_CHAR: inputChar = WAND_CHAR_NOTILE; break;
+        case DEWAR_CHAR: inputChar = DEWAR_CHAR_NOTILE; break;
+        case LEVER_CHAR: inputChar = LEVER_CHAR_NOTILE; break;
+        case LEVER_PULLED_CHAR: inputChar  = LEVER_PULLED_CHAR_NOTILE; break;
+        case BONES_CHAR: inputChar = BONES_CHAR_NOTILE; break;
+        case ASH_CHAR: inputChar = ASH_CHAR_NOTILE; break;
+        case WEB_CHAR: inputChar = WEB_CHAR_NOTILE; break;
+        case BAD_MAGIC_CHAR: inputChar = BAD_MAGIC_CHAR_NO_TILE; break;
+        case GOOD_MAGIC_CHAR: inputChar = GOOD_MAGIC_CHAR_NO_TILE; break;
+        case CHAIN_TOP_LEFT: inputChar = CHAIN_TOP_LEFT_NOTILE; break;
+        case CHAIN_BOTTOM_RIGHT: inputChar = CHAIN_BOTTOM_RIGHT_NOTILE; break;
+        case CHAIN_TOP_RIGHT: inputChar = CHAIN_TOP_RIGHT_NOTILE; break;
+        case CHAIN_BOTTOM_LEFT: inputChar = CHAIN_BOTTOM_LEFT_NOTILE; break;
+        case CHAIN_TOP: inputChar = CHAIN_TOP_NOTILE; break;
+        case CHAIN_BOTTOM: inputChar = CHAIN_BOTTOM_NOTILE; break;
+        case CHAIN_LEFT: inputChar = CHAIN_LEFT_NOTILE; break;
+        case CHAIN_RIGHT: inputChar = CHAIN_RIGHT_NOTILE; break;
+        case WALL_TOP_CHAR: inputChar = WALL_TOP_CHAR_NOTILE; break;
+        case SEALED_COFFIN_CHAR: inputChar = SEALED_COFFIN_CHAR_NOTILE; break;
+        case OPEN_COFFIN_CHAR: inputChar = OPEN_COFFIN_CHAR_NOTILE; break;
+        case PORTCULLIS_CHAR: inputChar = PORTCULLIS_CHAR_NOTILE; break;
+        case BLOODFLOWER_CHAR: inputChar = BLOODFLOWER_CHAR_NOTILE; break;
+        case BLOODFLOWERPOD_CHAR: inputChar = BLOODFLOWERPOD_CHAR_NOTILE; break;
+        case DAR_MAGE_CHAR: inputChar = DAR_MAGE_CHAR_NOTILE; break;
+        case DAR_PRIESTESS_CHAR: inputChar = DAR_PRIESTESS_CHAR_NOTILE; break;
+        case GOBLIN_MYSTIC_CHAR: inputChar = GOBLIN_MYSTIC_CHAR_NOTILE ; break;
+        case GOBLIN_WARLORD_CHAR: inputChar = GOBLIN_WARLORD_CHAR_NOTILE; break;  
+        case OGRE_SHAMAN_CHAR: inputChar = OGRE_SHAMAN_CHAR_NOTILE; break; 
+        case GUARDIAN_CHAR: inputChar = GUARDIAN_CHAR_NOTILE; break;
+        case WINGED_GUARDIAN_CHAR: inputChar = WINGED_GUARDIAN_CHAR_NOTILE; break;
+        case PHOENIX_EGG_CHAR: inputChar = PHOENIX_EGG_CHAR_NOTILE; break;
+        case DRYAD_CHAR: inputChar = DRYAD_CHAR_NOTILE; break;        
+        }
+    }
+#endif
     if (inputChar == STATUE_CHAR) {
         inputChar = 223;
     } else if (inputChar > 255) {
@@ -391,8 +432,8 @@ static void _plotChar(
             case WEAPON_CHAR: inputChar = 128 + 8; break;
             case GEM_CHAR: inputChar = 128 + 9; break;
             case TOTEM_CHAR: inputChar = 128 + 10; break;
-            case BAD_MAGIC_CHAR: inputChar = 128 + 12; break;
-            case GOOD_MAGIC_CHAR: inputChar = 128 + 13; break;
+            //case BAD_MAGIC_CHAR: inputChar = 128 + 12; break;
+            //case GOOD_MAGIC_CHAR: inputChar = 128 + 13; break;
 
             case DOWN_ARROW_CHAR: inputChar = 144 + 1; break;
             case LEFT_ARROW_CHAR: inputChar = 144 + 2; break;
@@ -415,19 +456,6 @@ static void _plotChar(
         UseFont = TileFont;
     } else {
         UseFont = Font;
-        switch (inputChar) {
-        case WALL_TOP_CHAR: inputChar = WALL_CHAR; break;
-        case WAND_CHAR: inputChar = LIQUID_CHAR; break;
-        case DEWAR_CHAR: inputChar = '&'; break;
-        case CHAIN_TOP_LEFT: inputChar = '\\'; break;
-        case CHAIN_BOTTOM_RIGHT: inputChar = '\\'; break;
-        case CHAIN_TOP_RIGHT: inputChar = '/'; break;
-        case CHAIN_BOTTOM_LEFT: inputChar = '/'; break;
-        case CHAIN_TOP: inputChar = '|'; break;
-        case CHAIN_BOTTOM: inputChar = '|'; break;
-        case CHAIN_LEFT: inputChar = '-'; break;
-        case CHAIN_RIGHT: inputChar = '-'; break;
-        }
     }
 
     SDL_Rect src, dest;
