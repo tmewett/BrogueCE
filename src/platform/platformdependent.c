@@ -81,7 +81,7 @@ void initScores() {
 // sorts the entries of the scoreBuffer global variable by score in descending order;
 // returns the sorted line number of the most recent entry
 short sortScoreBuffer() {
-    short i, j, highestUnsortedLine, mostRecentSortedLine;
+    short i, j, highestUnsortedLine, mostRecentSortedLine = 0;
     long highestUnsortedScore, mostRecentDate;
     brogueScoreEntry sortedScoreBuffer[HIGH_SCORES_COUNT];
     boolean lineSorted[HIGH_SCORES_COUNT];

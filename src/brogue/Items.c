@@ -2624,7 +2624,7 @@ char displayInventory(unsigned short categoryMask,
     cellDisplayBuffer dbuf[COLS][ROWS];
     cellDisplayBuffer rbuf[COLS][ROWS];
     brogueButton buttons[50] = {{{0}}};
-    short actionKey;
+    short actionKey = -1;
     color darkItemColor;
 
     char whiteColorEscapeSequence[20],
@@ -4527,7 +4527,7 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
 // returns whether the bolt effect should autoID any staff or wand it came from, if it came from a staff or wand
 boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideDetails) {
     short listOfCoordinates[MAX_BOLT_LENGTH][2];
-    short i, j, k, x, y, x2, y2, numCells, blinkDistance, boltLength, initialBoltLength, lights[DCOLS][DROWS][3];
+    short i, j, k, x, y, x2, y2, numCells, blinkDistance = 0, boltLength, initialBoltLength, lights[DCOLS][DROWS][3];
     creature *monst = NULL, *shootingMonst;
     char buf[COLS], monstName[COLS];
     boolean autoID = false;

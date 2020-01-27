@@ -69,7 +69,7 @@ void playerRuns(short direction) {
 
 enum dungeonLayers highestPriorityLayer(short x, short y, boolean skipGas) {
     short bestPriority = 10000;
-    enum dungeonLayers tt, best;
+    enum dungeonLayers tt, best = 0;
 
     for (tt = 0; tt < NUMBER_TERRAIN_LAYERS; tt++) {
         if (tt == GAS && skipGas) {

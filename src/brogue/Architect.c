@@ -939,14 +939,14 @@ boolean buildAMachine(enum machineTypes bp,
                       item *parentSpawnedItems[MACHINES_BUFFER_LENGTH],
                       creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]) {
 
-    short i, j, k, feat, randIndex, totalFreq, gateCandidates[50][2], instance, instanceCount, qualifyingTileCount,
+    short i, j, k, feat, randIndex, totalFreq, gateCandidates[50][2], instance, instanceCount = 0, qualifyingTileCount,
     featX, featY, itemCount, monsterCount,
     sRows[DROWS], sCols[DCOLS],
     **distanceMap, distance25, distance75, distances[100], distanceBound[2],
     personalSpace, failsafe, locationFailsafe,
     machineNumber;
     const unsigned long alternativeFlags[2] = {MF_ALTERNATIVE, MF_ALTERNATIVE_2};
-    boolean success;
+    boolean success = false;
 
     // Our boolean grids:
     //  Interior:       This is the master grid for the machine. All area inside the machine are set to true.
@@ -1351,6 +1351,7 @@ boolean buildAMachine(enum machineTypes bp,
                     // Pick our candidate location randomly, and also strike it from
                     // the candidates map so that subsequent instances of this same feature can't choose it.
                     featX = -1;
+                    featY = -1;
                     randIndex = rand_range(1, qualifyingTileCount);
                     for(i=0; i<DCOLS && featX < 0; i++) {
                         for(j=0; j<DROWS && featX < 0; j++) {
