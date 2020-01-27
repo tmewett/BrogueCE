@@ -3301,7 +3301,7 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
 short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2], const short targetLoc[2]) {
     fixpt targetVector[2], error[2], largerTargetComponent;
     short currentVector[2], previousVector[2], quadrantTransform[2], i;
-    short currentLoc[2], previousLoc[2];
+    short currentLoc[2];
     short cellNumber = 0;
 
     if (originLoc[0] == targetLoc[0] && originLoc[1] == targetLoc[1]) {
@@ -3328,8 +3328,6 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
 
     do {
         for (i=0; i<= 1; i++) {
-
-            previousLoc[i] = currentLoc[i];
 
             currentVector[i] += targetVector[i] / FP_FACTOR;
             error[i] += (targetVector[i] == FP_FACTOR ? 0 : targetVector[i]);
@@ -5718,7 +5716,7 @@ void throwCommand(item *theItem) {
     item *thrownItem;
     char buf[COLS], theName[COLS];
     unsigned char command[10];
-    short maxDistance, zapTarget[2], originLoc[2], quantity;
+    short maxDistance, zapTarget[2], quantity;
     boolean autoTarget;
 
     command[0] = THROW_KEY;
@@ -5774,8 +5772,6 @@ void throwCommand(item *theItem) {
         thrownItem->quantity = 1;
 
         itemName(thrownItem, theName, false, false, NULL);
-        originLoc[0] = player.xLoc;
-        originLoc[1] = player.yLoc;
 
         throwItem(thrownItem, &player, zapTarget, maxDistance);
     } else {

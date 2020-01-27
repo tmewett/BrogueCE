@@ -323,7 +323,7 @@ short buttonInputLoop(brogueButton *buttons,
                       short winWidth,
                       short winHeight,
                       rogueEvent *returnEvent) {
-    short x, y, button; // (x, y) keeps track of the mouse location
+    short button;
     boolean canceled;
     rogueEvent theEvent;
     buttonState state = {0};
@@ -331,7 +331,6 @@ short buttonInputLoop(brogueButton *buttons,
     assureCosmeticRNG;
 
     canceled = false;
-    x = y = -1;
     initializeButtonState(&state, buttons, buttonCount, winX, winY, winWidth, winHeight);
 
     do {

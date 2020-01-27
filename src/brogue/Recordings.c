@@ -717,13 +717,13 @@ void promptToAdvanceToLocation(short keystroke) {
 }
 
 void pausePlayback() {
-    short oldRNG;
+    //short oldRNG;
     if (!rogue.playbackPaused) {
         rogue.playbackPaused = true;
         messageWithColor(KEYBOARD_LABELS ? "recording paused. Press space to play." : "recording paused.",
                          &teal, false);
         refreshSideBar(-1, -1, false);
-        oldRNG = rogue.RNG;
+        //oldRNG = rogue.RNG;
         //rogue.RNG = RNG_SUBSTANTIVE;
         mainInputLoop();
         //rogue.RNG = oldRNG;

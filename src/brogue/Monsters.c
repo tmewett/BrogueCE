@@ -4024,7 +4024,7 @@ boolean staffOrWandEffectOnMonsterDescription(char *newText, item *theItem, crea
 void monsterDetails(char buf[], creature *monst) {
     char monstName[COLS], capMonstName[COLS], theItemName[COLS * 3], newText[20*COLS];
     short i, j, combatMath, combatMath2, playerKnownAverageDamage, playerKnownMaxDamage, commaCount, realArmorValue;
-    boolean anyFlags, displayedItemText = false, alreadyDisplayedDominationText = false;
+    boolean anyFlags, alreadyDisplayedDominationText = false;
     item *theItem;
 
     buf[0] = '\0';
@@ -4219,7 +4219,6 @@ void monsterDetails(char buf[], creature *monst) {
             i = strlen(buf);
             i = encodeMessageColor(buf, i, &itemMessageColor);
             strcat(buf, newText);
-            displayedItemText = true;
         }
     }
 

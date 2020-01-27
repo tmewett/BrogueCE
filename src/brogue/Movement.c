@@ -647,7 +647,7 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
 // (in which case the player/monster should move instead).
 boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *aborted) {
     creature *defender, *hitList[8] = {0};
-    short originLoc[2], targetLoc[2], range = 2, i = 0, h = 0;
+    short targetLoc[2], range = 2, i = 0, h = 0;
     boolean proceed = false, visualEffect = false;
 
     const char boltChar[DIRECTION_COUNT] = "||--\\//\\";
@@ -661,8 +661,6 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
     } else if (!(attacker->info.abilityFlags & MA_ATTACKS_PENETRATE)) {
         return false;
     }
-    originLoc[0] = attacker->xLoc;
-    originLoc[1] = attacker->yLoc;
 
     for (i = 0; i < range; i++) {
         targetLoc[0] = attacker->xLoc + (1 + i) * nbDirs[dir][0];
