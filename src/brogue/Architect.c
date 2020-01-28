@@ -960,7 +960,7 @@ boolean buildAMachine(enum machineTypes bp,
 
     pcell levelBackup[DCOLS][DROWS];
 
-    creature *monst, *nextMonst, *torchBearer = NULL, *leader = NULL;
+    creature *monst = NULL, *nextMonst, *torchBearer = NULL, *leader = NULL;
 
     item *theItem = NULL, *torch = NULL, *spawnedItems[MACHINES_BUFFER_LENGTH] = {0}, *spawnedItemsSub[MACHINES_BUFFER_LENGTH] = {0};
     creature *spawnedMonsters[MACHINES_BUFFER_LENGTH] = {0}, *spawnedMonstersSub[MACHINES_BUFFER_LENGTH] = {0};

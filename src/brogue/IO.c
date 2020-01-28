@@ -3275,8 +3275,8 @@ enum entityDisplayTypes {
 // So if we try and fail, this function will call itself again, but with this set to true.
 void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst) {
     short printY, oldPrintY, shortestDistance, i, j, k, px, py, x = 0, y = 0, displayEntityCount, indirectVision;
-    creature *monst, *closestMonst;
-    item *theItem, *closestItem;
+    creature *monst = NULL, *closestMonst = NULL;
+    item *theItem, *closestItem = NULL;
     char buf[COLS];
     void *entityList[ROWS] = {0}, *focusEntity = NULL;
     enum entityDisplayTypes entityType[ROWS] = {0}, focusEntityType = EDT_NOTHING;
