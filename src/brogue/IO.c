@@ -390,6 +390,7 @@ short actionMenu(short x, boolean playingBack) {
         }
     } while (takeActionOurselves[buttonChosen]);
     brogueAssert(false);
+    return -1;
 }
 
 #define MAX_MENU_BUTTON_COUNT 5
@@ -505,7 +506,7 @@ void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
 
 // This is basically the main loop for the game.
 void mainInputLoop() {
-    short originLoc[2], pathDestination[2], oldTargetLoc[2],
+    short originLoc[2], pathDestination[2], oldTargetLoc[2] = { 0, 0 },
     path[1000][2], steps, oldRNG, dir, newX, newY;
     creature *monst;
     item *theItem;
@@ -3273,7 +3274,7 @@ enum entityDisplayTypes {
 // we won't know if it will fit on the screen in normal order until we try.
 // So if we try and fail, this function will call itself again, but with this set to true.
 void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst) {
-    short printY, oldPrintY, shortestDistance, i, j, k, px, py, x, y, displayEntityCount, indirectVision;
+    short printY, oldPrintY, shortestDistance, i, j, k, px, py, x = 0, y = 0, displayEntityCount, indirectVision;
     creature *monst, *closestMonst;
     item *theItem, *closestItem;
     char buf[COLS];

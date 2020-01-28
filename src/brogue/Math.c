@@ -215,7 +215,7 @@ fixpt fp_sqrt(fixpt u) {
     // FP_BASE is the msbpos-1 of FP_FACTOR ("one")
     int k = msbpos(u) - FP_BASE;
 
-    fixpt x, fx, upper, lower;
+    fixpt x = 0, fx, upper, lower;
     // Since 2^(k-1) <= u < 2^k, we have 2^(ceil(k/2)-1) <= sqrt(u) < 2^ceil(k/2).
     // First ineq. from sqrt(u) >= 2^[(k-1)/2] = 2^[k/2 + 1/2 - 1] >= 2^(ceil(k/2) - 1)
     // To calculate ceil(k/2), do k/2 but add 1 to k if positive.

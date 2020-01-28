@@ -28,8 +28,6 @@
 
 #define RECORDING_HEADER_LENGTH     32  // bytes at the start of the recording file to store global data
 
-#pragma mark Recording functions
-
 void recordChar(unsigned char c) {
     inputRecordBuffer[locationInRecordingBuffer++] = c;
     recordingLocation++;
@@ -231,8 +229,6 @@ void flushBufferToFile() {
         locationInRecordingBuffer = 0;
     }
 }
-
-#pragma mark Playback functions
 
 void fillBufferFromFile() {
 //  short i;
@@ -438,8 +434,6 @@ void displayAnnotation() {
         loadNextAnnotation();
     }
 }
-
-#pragma mark Hybrid and miscellaneous
 
 // creates a game recording file, or if in playback mode,
 // initializes based on and starts reading from the recording file
@@ -717,13 +711,13 @@ void promptToAdvanceToLocation(short keystroke) {
 }
 
 void pausePlayback() {
-    short oldRNG;
+    //short oldRNG;
     if (!rogue.playbackPaused) {
         rogue.playbackPaused = true;
         messageWithColor(KEYBOARD_LABELS ? "recording paused. Press space to play." : "recording paused.",
                          &teal, false);
         refreshSideBar(-1, -1, false);
-        oldRNG = rogue.RNG;
+        //oldRNG = rogue.RNG;
         //rogue.RNG = RNG_SUBSTANTIVE;
         mainInputLoop();
         //rogue.RNG = oldRNG;
@@ -1173,8 +1167,6 @@ void loadSavedGame() {
         recordChar(SAVED_GAME_LOADED);
     }
 }
-
-#pragma mark Debug functions
 
 // the following functions are used to create human-readable descriptions of playback files for debugging purposes
 
