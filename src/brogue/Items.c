@@ -1375,15 +1375,17 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
                 if (theItem->flags & ITEM_RUNIC) {
                     if ((theItem->flags & ITEM_RUNIC_IDENTIFIED) || rogue.playbackOmniscience) {
                         if (theItem->enchant2 == W_SLAYING) {
-                            sprintf(root, "%s of %s slaying%s",
+                            sprintf(buf, "%s of %s slaying%s",
                                     root,
                                     monsterClassCatalog[theItem->vorpalEnemy].name,
                                     grayEscapeSequence);
+                            strcpy(root, buf);
                         } else {
-                            sprintf(root, "%s of %s%s",
+                            sprintf(buf, "%s of %s%s",
                                     root,
                                     weaponRunicNames[theItem->enchant2],
                                     grayEscapeSequence);
+                            strcpy(root, buf);
                         }
                     } else if (theItem->flags & (ITEM_IDENTIFIED | ITEM_RUNIC_HINTED)) {
                         if (grayEscapeSequence[0]) {
@@ -1392,7 +1394,8 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
                         strcat(root, " (unknown runic)");
                     }
                 }
-                sprintf(root, "%s%s <%i>", root, grayEscapeSequence, theItem->strengthRequired);
+                sprintf(buf, "%s%s <%i>", root, grayEscapeSequence, theItem->strengthRequired);
+                strcpy(root, buf);
             }
             break;
         case ARMOR:
@@ -1403,9 +1406,11 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
                     && ((theItem->flags & ITEM_RUNIC_IDENTIFIED)
                         || rogue.playbackOmniscience)) {
                         if (theItem->enchant2 == A_IMMUNITY) {
-                            sprintf(root, "%s of %s immunity", root, monsterClassCatalog[theItem->vorpalEnemy].name);
+                            sprintf(buf, "%s of %s immunity", root, monsterClassCatalog[theItem->vorpalEnemy].name);
+                            strcpy(root, buf);
                         } else {
-                            sprintf(root, "%s of %s", root, armorRunicNames[theItem->enchant2]);
+                            sprintf(buf, "%s of %s", root, armorRunicNames[theItem->enchant2]);
+                            strcpy(root, buf);
                         }
                     }
 
@@ -1423,7 +1428,8 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
                     }
                     strcpy(root, buf);
                 } else {
-                    sprintf(root, "%s%s <%i>", root, grayEscapeSequence, theItem->strengthRequired);
+                    sprintf(buf, "%s%s <%i>", root, grayEscapeSequence, theItem->strengthRequired);
+                    strcpy(root, buf);
                 }
 
                 if ((theItem->flags & ITEM_RUNIC)
@@ -1488,20 +1494,23 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
             }
             if (includeDetails) {
                 if (theItem->flags & (ITEM_IDENTIFIED | ITEM_MAX_CHARGES_KNOWN) || rogue.playbackOmniscience) {
-                    sprintf(root, "%s%s [%i]",
+                    sprintf(buf, "%s%s [%i]",
                             root,
                             grayEscapeSequence,
                             theItem->charges);
+                    strcpy(root, buf);
                 } else if (theItem->enchant2 > 2) {
-                    sprintf(root, "%s%s (used %i times)",
+                    sprintf(buf, "%s%s (used %i times)",
                             root,
                             grayEscapeSequence,
                             theItem->enchant2);
+                    strcpy(root, buf);
                 } else if (theItem->enchant2) {
-                    sprintf(root, "%s%s (used %s)",
+                    sprintf(buf, "%s%s (used %s)",
                             root,
                             grayEscapeSequence,
                             (theItem->enchant2 == 2 ? "twice" : "once"));
+                    strcpy(root, buf);
                 }
             }
             break;
@@ -1523,9 +1532,11 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
             }
             if (includeDetails) {
                 if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                    sprintf(root, "%s%s [%i/%i]", root, grayEscapeSequence, theItem->charges, theItem->enchant1);
+                    sprintf(buf, "%s%s [%i/%i]", root, grayEscapeSequence, theItem->charges, theItem->enchant1);
+                    strcpy(root, buf);
                 } else if (theItem->flags & ITEM_MAX_CHARGES_KNOWN) {
-                    sprintf(root, "%s%s [?/%i]", root, grayEscapeSequence, theItem->enchant1);
+                    sprintf(buf, "%s%s [?/%i]", root, grayEscapeSequence, theItem->enchant1);
+                    strcpy(root, buf);
                 }
             }
             break;
