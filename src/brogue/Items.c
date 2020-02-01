@@ -841,10 +841,6 @@ void conflateItemCharacteristics(item *newItem, item *oldItem) {
     if (oldItem->strengthRequired < newItem->strengthRequired) {
         newItem->strengthRequired = oldItem->strengthRequired;
     }
-    // Copy the inscription.
-    if (oldItem->inscription && !newItem->inscription) {
-        strcpy(newItem->inscription, oldItem->inscription);
-    }
     // Keep track of origin depth only if every item in the stack has the same origin depth.
     if (oldItem->originDepth <= 0 || newItem->originDepth != oldItem->originDepth) {
         newItem->originDepth = 0;

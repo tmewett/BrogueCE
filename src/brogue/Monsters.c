@@ -954,7 +954,7 @@ boolean summonMinions(creature *summoner) {
 
     if (canSeeMonster(summoner)) {
         monsterName(monstName, summoner, true);
-        if (monsterText[summoner->info.monsterID].summonMessage) {
+        if (monsterText[summoner->info.monsterID].summonMessage[0]) {
             sprintf(buf, "%s %s", monstName, monsterText[summoner->info.monsterID].summonMessage);
         } else {
             sprintf(buf, "%s incants darkly!", monstName);
