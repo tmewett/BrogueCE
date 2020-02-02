@@ -247,16 +247,21 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
             returnEvent->param1 = c;
             // ~ printf("textinput %s\n", event.text.text);
             return true;
-        } else if (event.type == SDL_MOUSEBUTTONDOWN) {
-            returnEvent->eventType = MOUSE_DOWN;
-            returnEvent->param1 = event.button.x / cellw;
-            returnEvent->param2 = event.button.y / cellh;
-            return true;
-        } else if (event.type == SDL_MOUSEBUTTONUP) {
-            returnEvent->eventType = MOUSE_UP;
-            returnEvent->param1 = event.button.x / cellw;
-            returnEvent->param2 = event.button.y / cellh;
-            return true;
+        } else if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP) {
+            if (event.button.button == SDL_BUTTON_LEFT || event.button.button == SDL_BUTTON_RIGHT) {
+                if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
+                    returnEvent->eventType = MOUSE_DOWN;
+                } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT) {
+                    returnEvent->eventType = MOUSE_UP;
+                } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_RIGHT) {
+                    returnEvent->eventType = RIGHT_MOUSE_DOWN;
+                } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_RIGHT) {
+                    returnEvent->eventType = RIGHT_MOUSE_UP;
+                }
+                returnEvent->param1 = event.button.x / cellw;
+                returnEvent->param2 = event.button.y / cellh;
+                return true;
+            }
         } else if (event.type == SDL_MOUSEMOTION) {
             // We don't want to return on a mouse motion event, because only the last
             // in the queue is important. That's why we just set ret=true
