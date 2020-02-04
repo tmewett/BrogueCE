@@ -1,3 +1,9 @@
+Unreleased
+==========
+
+-
+  Restored inventory on right click functionality
+
 1.8.1
 =====
 
