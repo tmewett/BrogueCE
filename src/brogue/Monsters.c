@@ -3511,8 +3511,9 @@ boolean moveMonster(creature *monst, short dx, short dy) {
     newX = x + dx;
     newY = y + dy;
 
-    // Liquid-based monsters should never move or attack outside of liquid.
-    if ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID) && !cellHasTMFlag(newX, newY, TM_ALLOWS_SUBMERGING)) {
+    // Liquid-based monsters should only move or attack between liquid tiles
+    if ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID)
+        && (!cellHasTMFlag(x, y, TM_ALLOWS_SUBMERGING) || !cellHasTMFlag(newX, newY, TM_ALLOWS_SUBMERGING))) {
         return false;
     }
 
