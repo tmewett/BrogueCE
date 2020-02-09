@@ -1,8 +1,6 @@
 name: "Build"
 on:
   push:
-    tags:
-    - v*.*
 
 jobs:
 
@@ -11,7 +9,8 @@ jobs:
     steps:
     - name: "Install dependencies"
       run: |
-        sudo apt install -y libsdl2-dev libsdl2-image-dev
+        sudo apt-get update
+        sudo apt-get install -y libsdl2-dev libsdl2-image-dev
 
     - name: "Checkout sources"
       uses: actions/checkout@v2
