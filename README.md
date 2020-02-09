@@ -58,6 +58,8 @@ place on your desktop or applications folder.
 
 ### More information
 
+This version has tile sprites. Press 'G' to switch back to text mode.
+
 If you're running the graphical version (default), the game window can be
 resized using the PageDown/PageUp or -/+ keys.
 
