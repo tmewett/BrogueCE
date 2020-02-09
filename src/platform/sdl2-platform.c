@@ -31,7 +31,7 @@ static size_t nremaps = 0;
 
 static rogueEvent lastEvent;
 
-static boolean renderTiles = false;
+static boolean renderTiles = true;
 
 
 static void sdlfatal() {
@@ -257,7 +257,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
                     renderTiles = !renderTiles;
                     refreshScreen();
                 }
-                
+
             }
 
             returnEvent->eventType = KEYSTROKE;
@@ -407,12 +407,12 @@ static void _plotChar(
         case DAR_MAGE_CHAR: inputChar = DAR_MAGE_CHAR_NOTILE; break;
         case DAR_PRIESTESS_CHAR: inputChar = DAR_PRIESTESS_CHAR_NOTILE; break;
         case GOBLIN_MYSTIC_CHAR: inputChar = GOBLIN_MYSTIC_CHAR_NOTILE ; break;
-        case GOBLIN_WARLORD_CHAR: inputChar = GOBLIN_WARLORD_CHAR_NOTILE; break;  
-        case OGRE_SHAMAN_CHAR: inputChar = OGRE_SHAMAN_CHAR_NOTILE; break; 
+        case GOBLIN_WARLORD_CHAR: inputChar = GOBLIN_WARLORD_CHAR_NOTILE; break;
+        case OGRE_SHAMAN_CHAR: inputChar = OGRE_SHAMAN_CHAR_NOTILE; break;
         case GUARDIAN_CHAR: inputChar = GUARDIAN_CHAR_NOTILE; break;
         case WINGED_GUARDIAN_CHAR: inputChar = WINGED_GUARDIAN_CHAR_NOTILE; break;
         case PHOENIX_EGG_CHAR: inputChar = PHOENIX_EGG_CHAR_NOTILE; break;
-        case DRYAD_CHAR: inputChar = DRYAD_CHAR_NOTILE; break;        
+        case DRYAD_CHAR: inputChar = DRYAD_CHAR_NOTILE; break;
         }
     }
 #endif
