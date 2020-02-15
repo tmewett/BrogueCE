@@ -11,7 +11,7 @@
 set -e
 
 broguedir="/opt/brogue"  # where you set DATADIR to (copy the contents of 'bin' to here)
-userdir="${XDG_DATA_HOME:-$HOME/.local/share/Brogue}"  # where you want user files to go
+userdir="${XDG_DATA_HOME:-$HOME/.local/share}/Brogue"  # where you want user files to go
 
 mkdir -p "$userdir"
 cd "$userdir"
