@@ -5,15 +5,16 @@ cflags := -Isrc/brogue -Isrc/platform -std=c99 \
 libs := -lm
 cppflags := -DDATADIR=$(DATADIR)
 
-sources := $(wildcard src/brogue/*.c) $(wildcard src/platform/*.c)
-objects := $(sources:.c=.o)
+sources := $(wildcard src/brogue/*.c) $(addprefix src/platform/,main.c platformdependent.c)
 
 ifeq ($(TERMINAL),YES)
+	sources += $(addprefix src/platform/,curses-platform.c term.c)
 	cppflags += -DBROGUE_CURSES
 	libs += -lncurses
 endif
 
 ifeq ($(GRAPHICS),YES)
+	sources += $(addprefix src/platform/,sdl2-platform.c)
 	cflags += $(shell $(SDL_CONFIG) --cflags)
 	cppflags += -DBROGUE_SDL
 	libs += $(shell $(SDL_CONFIG) --libs) -lSDL2_image
@@ -25,6 +26,8 @@ ifeq ($(DEBUG),YES)
 else
 	cflags += -O2
 endif
+
+objects := $(sources:.c=.o)
 
 .PHONY: clean
 
@@ -41,7 +44,7 @@ bin/brogue.exe: $(objects) windows/icon.o
 	$(CC) $(cflags) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(libs) $(LDLIBS)
 
 clean:
-	$(RM) $(objects) bin/brogue{,.exe}
+	$(RM) src/brogue/*.o src/platform/*.o bin/brogue{,.exe}
 
 
 common-files := bin/assets bin/keymap.txt README.txt CHANGELOG.txt agpl.txt seed-catalog.txt

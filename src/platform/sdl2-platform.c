@@ -1,5 +1,3 @@
-#ifdef BROGUE_SDL
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -436,5 +434,3 @@ struct brogueConsole sdlConsole = {
     _remap,
     _modifierHeld
 };
-
-#endif

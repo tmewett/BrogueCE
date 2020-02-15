@@ -1,4 +1,3 @@
-#ifdef BROGUE_CURSES
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -221,5 +220,3 @@ struct brogueConsole cursesConsole = {
     curses_remap,
     modifier_held
 };
-#endif
-
