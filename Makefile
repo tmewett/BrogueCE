@@ -49,10 +49,10 @@ common-files := bin/assets bin/keymap.txt README.txt CHANGELOG.txt agpl.txt seed
 %.txt: %.md
 	cp $< $@
 
-windows.zip: $(common-files) bin/brogue.exe
-	zip -rvl $@ $^
+windows.zip: $(common-files)
+	zip -rvl $@ $^ bin/brogue.exe bin/*.dll
 
-macos.tar.gz: $(common-files) brogue bin/brogue
+macos.tar.gz: $(common-files) brogue bin/brogue bin/lib
 	tar -cavf $@ $^
 
 linux.tar.gz: $(common-files) brogue bin/brogue
