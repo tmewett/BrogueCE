@@ -47,7 +47,7 @@ clean:
 	$(RM) src/brogue/*.o src/platform/*.o bin/brogue{,.exe}
 
 
-common-files := bin/assets bin/keymap.txt README.txt CHANGELOG.txt agpl.txt seed-catalog.txt
+common-files := bin/assets bin/keymap.txt README.txt CHANGELOG.txt LICENSE.txt seed-catalog.txt
 
 %.txt: %.md
 	cp $< $@
@@ -55,8 +55,8 @@ common-files := bin/assets bin/keymap.txt README.txt CHANGELOG.txt agpl.txt seed
 windows.zip: $(common-files)
 	zip -rvl $@ $^ bin/brogue.exe bin/*.dll
 
-macos.tar.gz: $(common-files) brogue bin/brogue bin/lib
-	tar -cavf $@ $^
+macos.tar.gz: $(common-files) brogue bin/lib
+	tar -cavf $@ $^ bin/brogue
 
-linux.tar.gz: $(common-files) brogue bin/brogue
-	tar -cavf $@ $^ -C linux make-link-for-desktop.sh
+linux.tar.gz: $(common-files) brogue
+	tar -cavf $@ $^ bin/brogue -C linux make-link-for-desktop.sh
