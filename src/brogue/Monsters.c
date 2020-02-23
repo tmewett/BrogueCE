@@ -462,7 +462,12 @@ void resolvePronounEscapes(char *text, creature *monst) {
     *insert = '\0';
 }
 
-// Pass 0 for summonerType for an ordinary selection.
+/*
+Returns a random horde, weighted by spawn frequency, which has all requiredFlags
+and does not have any forbiddenFlags. If summonerType is 0, all hordes valid on
+the given depth are considered. (Depth 0 means current depth.) Otherwise, all
+hordes with summonerType as a leader are considered.
+*/
 short pickHordeType(short depth, enum monsterTypes summonerType, unsigned long forbiddenFlags, unsigned long requiredFlags) {
     short i, index, possCount = 0;
 
