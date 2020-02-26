@@ -676,10 +676,6 @@ short currentAggroValue() {
         if (rogue.justRested) {
             stealthVal = (stealthVal + 1) / 2;
         }
-        // Double while manually searching.
-        if (player.status[STATUS_SEARCHING] > 0) {
-            stealthVal *= 2;
-        }
 
         if (player.status[STATUS_AGGRAVATING] > 0) {
             stealthVal += player.status[STATUS_AGGRAVATING];
@@ -2112,43 +2108,6 @@ void autoRest() {
     rogue.automationActive = false;
 }
 
-void searchTurn() {
-    boolean foundSomething = false;
-    recordKeystroke(SEARCH_KEY, false, false);
-    if (player.status[STATUS_SEARCHING] <= 0) {
-        player.status[STATUS_SEARCHING] = player.maxStatus[STATUS_SEARCHING] = 5;
-    } else {
-        player.status[STATUS_SEARCHING]--;
-        if (player.status[STATUS_SEARCHING] <= 0) {
-            // Manual search complete!
-            foundSomething = search(200);
-            if (foundSomething) {
-                message("you finish searching the area.", false);
-            } else {
-                message("you finish searching the area, but find nothing.", false);
-            }
-        }
-    }
-    rogue.justSearched = true;
-    playerTurnEnded();
-}
-
-void manualSearch() {
-    if (rogue.playbackMode) {
-        searchTurn();
-    } else {
-        rogue.disturbed = false;
-        rogue.automationActive = true;
-        do {
-            searchTurn();
-            if (pauseBrogue(80)) {
-                rogue.disturbed = true;
-            }
-        } while (player.status[STATUS_SEARCHING] > 0 && !rogue.disturbed);
-        rogue.automationActive = false;
-    }
-}
-
 // Call this periodically (when haste/slow wears off and when moving between depths)
 // to keep environmental updates in sync with player turns.
 void synchronizePlayerTimeState() {
@@ -2250,11 +2209,6 @@ void playerTurnEnded() {
             // Low-grade auto-search wherever you step, but only once per tile.
             search(rogue.awarenessBonus + 30);
             pmap[player.xLoc][player.yLoc].flags |= SEARCHED_FROM_HERE;
-        }
-        if (!rogue.justSearched && player.status[STATUS_SEARCHING] > 0) {
-            // If you don't resume manually searching when interrupted, abort the search and post a message.
-            player.status[STATUS_SEARCHING] = 0;
-            message("you abandon your search.", false);
         }
         if (rogue.staleLoopMap) {
             analyzeMap(false); // Don't need to update the chokemap.

@@ -4130,7 +4130,6 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
         "   (Caterwauling)   ",
     };
     const char statusStrings[NUMBER_OF_STATUS_EFFECTS][COLS] = {
-        "Searching",
         "Donning Armor",
         "Weakened: -",
         "Telepathic",

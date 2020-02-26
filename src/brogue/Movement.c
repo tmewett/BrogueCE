@@ -2166,6 +2166,25 @@ boolean search(short searchStrength) {
     return foundSomething;
 }
 
+void manualSearch() {
+    short i, j, x, y;
+
+    // Guaranteed discovery of all adjacent locations
+    for (i = -1; i < 2; i++) {
+        x = player.xLoc + i;
+        for (j = -1; j < 2; j++) {
+            y = player.yLoc + j;
+            if (coordinatesAreInMap(x, y)) {
+              discover(x, y);
+            }
+        }
+    }
+
+    search(rogue.awarenessBonus + 30);
+    rogue.justSearched = true;
+    playerTurnEnded();
+}
+
 boolean proposeOrConfirmLocation(short x, short y, char *failureMessage) {
     boolean retval = false;
     if (player.xLoc == x && player.yLoc == y) {
