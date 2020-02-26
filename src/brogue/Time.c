@@ -2205,10 +2205,8 @@ void playerTurnEnded() {
             }
         }
 
-        if (rogue.awarenessBonus > -30 && !(pmap[player.xLoc][player.yLoc].flags & SEARCHED_FROM_HERE)) {
-            // Low-grade auto-search wherever you step, but only once per tile.
+        if (rogue.awarenessBonus > -30) {
             search(rogue.awarenessBonus + 30);
-            pmap[player.xLoc][player.yLoc].flags |= SEARCHED_FROM_HERE;
         }
         if (rogue.staleLoopMap) {
             analyzeMap(false); // Don't need to update the chokemap.

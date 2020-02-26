@@ -1023,7 +1023,7 @@ enum tileFlags {
     IN_FIELD_OF_VIEW            = Fl(6),    // player has unobstructed line of sight whether or not there is enough light
     WAS_VISIBLE                 = Fl(7),
     HAS_STAIRS                  = Fl(8),
-    SEARCHED_FROM_HERE          = Fl(9),    // player already auto-searched here; can't auto-search here again
+    // unused                   = Fl(9),
     IS_IN_SHADOW                = Fl(10),   // so that a player gains an automatic stealth bonus
     MAGIC_MAPPED                = Fl(11),
     ITEM_DETECTED               = Fl(12),
@@ -1048,10 +1048,9 @@ enum tileFlags {
 
     IS_IN_MACHINE               = (IS_IN_ROOM_MACHINE | IS_IN_AREA_MACHINE),    // sacred ground; don't generate items here, or teleport randomly to it
 
-    PERMANENT_TILE_FLAGS = (DISCOVERED | MAGIC_MAPPED | ITEM_DETECTED | HAS_ITEM | HAS_DORMANT_MONSTER
-                            | HAS_STAIRS | SEARCHED_FROM_HERE | PRESSURE_PLATE_DEPRESSED
-                            | STABLE_MEMORY | KNOWN_TO_BE_TRAP_FREE | IN_LOOP
-                            | IS_CHOKEPOINT | IS_GATE_SITE | IS_IN_MACHINE | IMPREGNABLE),
+    PERMANENT_TILE_FLAGS = (DISCOVERED | MAGIC_MAPPED | ITEM_DETECTED | HAS_ITEM | HAS_DORMANT_MONSTER | HAS_STAIRS
+                            | PRESSURE_PLATE_DEPRESSED | STABLE_MEMORY | KNOWN_TO_BE_TRAP_FREE | IN_LOOP | IS_CHOKEPOINT
+                            | IS_GATE_SITE | IS_IN_MACHINE | IMPREGNABLE),
 
     ANY_KIND_OF_VISIBLE         = (VISIBLE | CLAIRVOYANT_VISIBLE | TELEPATHIC_VISIBLE),
 };
