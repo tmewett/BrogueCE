@@ -2180,7 +2180,7 @@ void manualSearch() {
         }
     }
 
-    search(rogue.awarenessBonus + 30);
+    search(rogue.awarenessBonus < 0 ? 40 : 80);
     rogue.justSearched = true;
     playerTurnEnded();
 }
