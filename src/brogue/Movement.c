@@ -1181,18 +1181,7 @@ boolean playerMoves(short direction) {
                 refreshDungeonCell(newX, newY);
             }
 
-            // Discover hidden doors and levers by walking into them
-            if (cellHasTMFlag(newX, newY, TM_IS_SECRET)) {
-                discover(newX, newY);
-                if (!alreadyRecorded) {
-                    recordKeystroke(directionKeys[initialDirection], false, false);
-                    alreadyRecorded = true;
-                }
-                // End the turn, else we have free searching (also triggers light flare)
-                playerTurnEnded();
-            } else {
-                messageWithColor(tileCatalog[i].flavorText, &backgroundMessageColor, false);
-            }
+            messageWithColor(tileCatalog[i].flavorText, &backgroundMessageColor, false);
         }
     }
     return playerMoved;
@@ -2174,7 +2163,7 @@ void manualSearch() {
         x = player.xLoc + i;
         for (j = -1; j < 2; j++) {
             y = player.yLoc + j;
-            if (coordinatesAreInMap(x, y)) {
+            if (coordinatesAreInMap(x, y) && playerCanSee(x, y)) {
               discover(x, y);
             }
         }
