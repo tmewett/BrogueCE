@@ -47,8 +47,8 @@ extern short numberOfWaypoints;
 extern char displayedMessage[MESSAGE_LINES][COLS];
 extern boolean messageConfirmed[3];
 extern char combatText[COLS];
-short messageArchivePosition;
-char messageArchive[MESSAGE_ARCHIVE_LINES][COLS*2];
+extern short messageArchivePosition;
+extern char messageArchive[MESSAGE_ARCHIVE_LINES][COLS*2];
 
 extern char currentFilePath[BROGUE_FILENAME_MAX];
 extern unsigned long randomNumbersGenerated;
