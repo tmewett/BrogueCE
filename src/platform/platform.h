@@ -36,6 +36,11 @@ struct brogueConsole {
     Returns whether a keyboard modifier is active -- 0 for Shift, 1 for Ctrl.
     */
     boolean (*modifierHeld)(int modifier);
+
+    /*
+    Notifies the platform code of an event during the game - e.g. victory
+    */
+    void (*notifyEvent)(short eventId, int data1, int data2, const char *str1, const char *str2);
 };
 
 // defined in platform
@@ -48,6 +53,10 @@ extern struct brogueConsole sdlConsole;
 
 #ifdef BROGUE_CURSES
 extern struct brogueConsole cursesConsole;
+#endif
+
+#ifdef BROGUE_WEB
+extern struct brogueConsole webConsole;
 #endif
 
 extern struct brogueConsole currentConsole;
