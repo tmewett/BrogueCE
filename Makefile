@@ -27,7 +27,7 @@ endif
 
 ifeq ($(DEBUG),YES)
 	cflags += -g
-	cppflags += -DDEBUGGING=1
+	cppflags += -DWIZARD=1
 else
 	cflags += -O2
 endif
