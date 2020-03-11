@@ -189,6 +189,7 @@ int main(int argc, char *argv[])
             rogue.wizard = true;
             continue;
         }
+#endif
 
 #ifdef BROGUE_WEB
         if(strcmp(argv[i], "--server-mode") == 0) {
