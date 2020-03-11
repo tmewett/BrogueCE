@@ -20,6 +20,11 @@ ifeq ($(GRAPHICS),YES)
 	libs += $(shell $(SDL_CONFIG) --libs) -lSDL2_image
 endif
 
+ifeq ($(WEBBROGUE),YES)
+	sources += $(addprefix src/platform/,web-platform.c)
+	cppflags += -DBROGUE_WEB
+endif
+
 ifeq ($(DEBUG),YES)
 	cflags += -g
 	cppflags += -DWIZARD=1
