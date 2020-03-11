@@ -184,18 +184,18 @@ int main(int argc, char *argv[])
         }
 #endif
 
+#ifdef WIZARD
+        if (strcmp(argv[i], "--wizard") == 0 || strcmp(argv[i], "-W") == 0) {
+            rogue.wizard = true;
+            continue;
+        }
+#endif
+
 #ifdef BROGUE_WEB
         if(strcmp(argv[i], "--server-mode") == 0) {
             currentConsole = webConsole;
             rogue.nextGame = NG_NEW_GAME;
             serverMode = true;
-            continue;
-        }
-#endif
-
-#ifdef WIZARD
-        if (strcmp(argv[i], "--wizard") == 0 || strcmp(argv[i], "-W") == 0) {
-            rogue.wizard = true;
             continue;
         }
 #endif
