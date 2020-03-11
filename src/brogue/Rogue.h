@@ -38,29 +38,26 @@
 // Cannot be longer than 16 chars
 #define BROGUE_RECORDING_VERSION_STRING "CE 1.8"
 
-// debug macros -- define DEBUGGING as 1 to enable wizard mode.
+// debug macros -- #define WIZARD here or set DEBUG := YES in config.mk to enable
+// #define WIZARD
 
-#ifndef DEBUGGING
-#define DEBUGGING                       0
-#endif
+#define DEBUG                           if (rogue.wizard)
+#define MONSTERS_ENABLED                (!rogue.wizard || 1) // Quest room monsters can be generated regardless.
+#define ITEMS_ENABLED                   (!rogue.wizard || 1)
 
-#define DEBUG                           if (DEBUGGING)
-#define MONSTERS_ENABLED                (!DEBUGGING || 1) // Quest room monsters can be generated regardless.
-#define ITEMS_ENABLED                   (!DEBUGGING || 1)
+#define D_BULLET_TIME                   (rogue.wizard && 0)
+#define D_WORMHOLING                    (rogue.wizard && 1)
+#define D_IMMORTAL                      (rogue.wizard && 1)
 
-#define D_BULLET_TIME                   (DEBUGGING && 0)
-#define D_WORMHOLING                    (DEBUGGING && 1)
-#define D_IMMORTAL                      (DEBUGGING && 1)
+#define D_SAFETY_VISION                 (rogue.wizard && 0)
+#define D_SCENT_VISION                  (rogue.wizard && 0)
+#define D_DISABLE_BACKGROUND_COLORS     (rogue.wizard && 0)
 
-#define D_SAFETY_VISION                 (DEBUGGING && 0)
-#define D_SCENT_VISION                  (DEBUGGING && 0)
-#define D_DISABLE_BACKGROUND_COLORS     (DEBUGGING && 0)
+#define D_INSPECT_LEVELGEN              (rogue.wizard && 0)
+#define D_INSPECT_MACHINES              (rogue.wizard && 0)
 
-#define D_INSPECT_LEVELGEN              (DEBUGGING && 0)
-#define D_INSPECT_MACHINES              (DEBUGGING && 0)
-
-#define D_MESSAGE_ITEM_GENERATION       (DEBUGGING && 0)
-#define D_MESSAGE_MACHINE_GENERATION    (DEBUGGING && 0)
+#define D_MESSAGE_ITEM_GENERATION       (rogue.wizard && 0)
+#define D_MESSAGE_MACHINE_GENERATION    (rogue.wizard && 0)
 
 // set to false to allow multiple loads from the same saved file:
 #define DELETE_SAVE_FILE_AFTER_LOADING  true
@@ -2199,6 +2196,8 @@ enum featTypes {
 
 // these are basically global variables pertaining to the game state and player's unique variables:
 typedef struct playerCharacter {
+    boolean wizard;                     // wizard (debug) mode toggle
+
     short depthLevel;                   // which dungeon level are we on
     short deepestLevel;
     boolean disturbed;                  // player should stop auto-acting

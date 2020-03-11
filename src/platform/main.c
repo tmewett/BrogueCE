@@ -39,6 +39,9 @@ static void printCommandlineHelp() {
 #ifdef BROGUE_CURSES
     "--term         -t          run in ncurses-based terminal mode\n"
 #endif
+#ifdef WIZARD
+    "--wizard       -W          run in wizard (debug) mode\n"
+#endif
     "--print-seed-catalog       prints a catalog of the first five levels of seeds 1-1000\n"
     );
     return;
@@ -81,6 +84,7 @@ int main(int argc, char *argv[])
     rogue.nextGame = NG_NOTHING;
     rogue.nextGamePath[0] = '\0';
     rogue.nextGameSeed = 0;
+    rogue.wizard = false;
 
     int i;
     for (i = 1; i < argc; i++) {
@@ -178,6 +182,13 @@ int main(int argc, char *argv[])
 #ifdef BROGUE_CURSES
         if (strcmp(argv[i], "--term") == 0 || strcmp(argv[i], "-t") == 0) {
             currentConsole = cursesConsole;
+            continue;
+        }
+#endif
+
+#ifdef WIZARD
+        if (strcmp(argv[i], "--wizard") == 0 || strcmp(argv[i], "-W") == 0) {
+            rogue.wizard = true;
             continue;
         }
 #endif
