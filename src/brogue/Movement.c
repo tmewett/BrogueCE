@@ -2164,7 +2164,8 @@ void manualSearch() {
         for (j = -1; j < 2; j++) {
             y = player.yLoc + j;
             if (coordinatesAreInMap(x, y) && playerCanSee(x, y)) {
-              discover(x, y);
+                pmap[i][j].flags |= KNOWN_TO_BE_TRAP_FREE;
+                discover(x, y);
             }
         }
     }
