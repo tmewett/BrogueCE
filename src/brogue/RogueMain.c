@@ -210,7 +210,7 @@ void generateFontFiles() {
 void initializeRogue(unsigned long seed) {
     short i, j, k;
     item *theItem;
-    boolean playingback, playbackFF, playbackPaused;
+    boolean playingback, playbackFF, playbackPaused, wizard;
     short oldRNG;
 
     // generate font bitmap
@@ -219,13 +219,15 @@ void initializeRogue(unsigned long seed) {
     generateFontFiles();
 #endif
 
-    playingback = rogue.playbackMode; // the only three animals that need to go on the ark
+    playingback = rogue.playbackMode; // the only four animals that need to go on the ark
     playbackPaused = rogue.playbackPaused;
     playbackFF = rogue.playbackFastForward;
+    wizard = rogue.wizard;
     memset((void *) &rogue, 0, sizeof( playerCharacter )); // the flood
     rogue.playbackMode = playingback;
     rogue.playbackPaused = playbackPaused;
     rogue.playbackFastForward = playbackFF;
+    rogue.wizard = wizard;
 
     rogue.gameHasEnded = false;
     rogue.highScoreSaved = false;
@@ -1257,7 +1259,7 @@ void victory(boolean superVictory) {
         theEntry.score /= 10;
     }
 
-    if (!DEBUGGING && !rogue.playbackMode) {
+    if (!rogue.wizard && !rogue.playbackMode) {
         qualified = saveHighScore(theEntry);
     } else {
         qualified = false;
