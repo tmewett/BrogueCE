@@ -203,6 +203,8 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
             returnEvent->eventType = KEYSTROKE;
             returnEvent->param1 = ESCAPE_KEY;
             return true;
+        } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+            refreshWindow();
         } else if (event.type == SDL_KEYDOWN) {
             SDL_Keycode key = event.key.keysym.sym;
 
