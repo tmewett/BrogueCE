@@ -222,7 +222,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
                 returnEvent->eventType = KEYSTROKE;
                 return true;
             }
-        } else if (event.type == SDL_TEXTINPUT && strlen(event.text.text) == 1) {
+        } else if (event.type == SDL_TEXTINPUT && event.text.text[0] < 0x80) {
             /*
             It's difficult/impossible to check what characters are on the
             shifts of keys. So to detect '&', '>' etc. reliably we need to
