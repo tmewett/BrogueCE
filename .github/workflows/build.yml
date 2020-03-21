@@ -4,26 +4,6 @@ on:
 
 jobs:
 
-  linux:
-    runs-on: ubuntu-16.04
-    steps:
-    - name: "Install dependencies"
-      run: |
-        sudo apt install -y libsdl2-dev libsdl2-image-dev
-
-    - name: "Checkout sources"
-      uses: actions/checkout@v2
-
-    - name: "Compile"
-      run: |
-        make bin/brogue
-
-    - name: "Upload artifact"
-      uses: actions/upload-artifact@v1
-      with:
-        name: linux-bin
-        path: bin
-
   macos:
     runs-on: macos-latest
     steps:
@@ -50,28 +30,3 @@ jobs:
       with:
         name: macos-app
         path: Brogue.app
-
-  windows:
-    runs-on: windows-latest
-    steps:
-    - name: "Checkout sources"
-      uses: actions/checkout@v2
-    - name: "Install dependencies"
-      run: |
-        .\.github\get-deps-mingw.ps1
-    - name: "Compile"
-      shell: powershell
-      run: |
-        $env:path = $env:path + ";" + (Join-Path $pwd.Drive.Root "opt/local/x86_64-w64-mingw32/bin")
-        mingw32-make CC=gcc bin/brogue.exe
-    - name: "Package"
-      run: |
-        cp .\SDL2\x86_64-w64-mingw32\bin\SDL2.dll .\bin\
-        cp .\SDL2_image\x86_64-w64-mingw32\bin\zlib1.dll .\bin\
-        cp .\SDL2_image\x86_64-w64-mingw32\bin\SDL2_image.dll .\bin\
-        cp .\SDL2_image\x86_64-w64-mingw32\bin\libpng16-16.dll .\bin\
-    - name: "Upload artifact"
-      uses: actions/upload-artifact@v1
-      with:
-        name: windows-mingw-bin
-        path: bin
