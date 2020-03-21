@@ -330,6 +330,7 @@ static void _gameLoop() {
 #ifdef SDL_PATHS
     char *path = SDL_GetBasePath();
     if (path) {
+        path[strlen(path) - 1] = '\0';  // remove trailing separator
         strcpy(dataDirectory, path);
     } else {
         fprintf(stderr, "Failed to find the path to the application\n");
@@ -337,7 +338,7 @@ static void _gameLoop() {
     }
     free(path);
 
-    path = SDL_GetPrefPath("Brogue", "Brogue");
+    path = SDL_GetPrefPath("Brogue", "Brogue CE");
     if (!path || chdir(path) != 0) {
         fprintf(stderr, "Failed to find or change to the save directory\n");
         exit(1);
