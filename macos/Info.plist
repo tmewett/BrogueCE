@@ -7,9 +7,11 @@
     <key>CFBundleDisplayName</key>
     <string>Brogue</string>
     <key>CFBundleVersion</key>
-    <string>1.8</string>
+    <string>1.8.2</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+    <key>CFBundleSignature</key>
+    <string>brce</string>
     <key>CFBundleExecutable</key>
     <string>brogue</string>
     <key>CFBundleIconFile</key>
