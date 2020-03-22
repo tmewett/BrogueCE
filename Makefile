@@ -81,6 +81,6 @@ macos/Brogue.icns: icon_32.png icon_128.png icon_256.png icon_512.png
 
 Brogue.app: bin/brogue
 	mkdir -p $@/Contents/{MacOS,Resources}
-	cp macos/Info.plist $@
+	cp macos/Info.plist $@/Contents
 	cp bin/brogue $@/Contents/MacOS
 	cp -r macos/Brogue.icns bin/assets $@/Contents/Resources
