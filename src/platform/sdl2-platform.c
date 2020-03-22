@@ -47,6 +47,7 @@ static void imgfatal() {
 static void refreshWindow() {
     WinSurf = SDL_GetWindowSurface(Win);
     if (WinSurf == NULL) sdlfatal();
+    SDL_FillRect(WinSurf, NULL, SDL_MapRGB(WinSurf->format, 0, 0, 0));
     refreshScreen();
 }
 
