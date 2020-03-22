@@ -28,5 +28,5 @@ jobs:
     - name: "Upload artifact"
       uses: actions/upload-artifact@v1
       with:
-        name: macos-app
+        name: Brogue CE.app
         path: Brogue.app
