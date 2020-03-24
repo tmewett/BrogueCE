@@ -2,6 +2,8 @@ Unreleased
 ==========
 
 -
+  The Mac release is now an app
+-
   Added `--wizard` command line option to enable debug features
 -
   Adding the `--server-mode` command line parameter used to run the game from an external launcher

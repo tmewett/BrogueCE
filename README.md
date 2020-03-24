@@ -35,12 +35,11 @@ Go to the `bin` folder and run `brogue.exe`.
 
 ### Mac
 
-Run/double-click the `brogue` script in the same the folder as this file.
+Run the included app.
 
-As it's an unsigned program, you will have to convince macOS to let you run it.
-One option is to run `sudo spctl --master-disable` in Terminal to disable the
-safeguard. (You can revert this setting in "Security & Privacy" in System
-Preferences.)
+As it's an unsigned program, you may have to convince macOS to let you run it.
+You can do this by right-clicking the app and choosing *Open* the first time you
+run it.
 
 ### Linux
 

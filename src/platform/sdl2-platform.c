@@ -1,6 +1,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+#ifdef SDL_PATHS
+#include <unistd.h>
+#endif
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -44,6 +47,7 @@ static void imgfatal() {
 static void refreshWindow() {
     WinSurf = SDL_GetWindowSurface(Win);
     if (WinSurf == NULL) sdlfatal();
+    SDL_FillRect(WinSurf, NULL, SDL_MapRGB(WinSurf->format, 0, 0, 0));
     refreshScreen();
 }
 
@@ -324,6 +328,24 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
 
 
 static void _gameLoop() {
+#ifdef SDL_PATHS
+    char *path = SDL_GetBasePath();
+    if (path) {
+        path[strlen(path) - 1] = '\0';  // remove trailing separator
+        strcpy(dataDirectory, path);
+    } else {
+        fprintf(stderr, "Failed to find the path to the application\n");
+        exit(1);
+    }
+    free(path);
+
+    path = SDL_GetPrefPath("Brogue", "Brogue CE");
+    if (!path || chdir(path) != 0) {
+        fprintf(stderr, "Failed to find or change to the save directory\n");
+        exit(1);
+    }
+    free(path);
+#endif
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0) sdlfatal();
 

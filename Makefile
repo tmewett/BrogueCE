@@ -25,6 +25,10 @@ ifeq ($(WEBBROGUE),YES)
 	cppflags += -DBROGUE_WEB
 endif
 
+ifeq ($(MAC_APP),YES)
+	cppflags += -DSDL_PATHS
+endif
+
 ifeq ($(DEBUG),YES)
 	cflags += -g
 	cppflags += -DWIZARD
@@ -52,16 +56,32 @@ clean:
 	$(RM) src/brogue/*.o src/platform/*.o bin/brogue{,.exe}
 
 
-common-files := bin/assets bin/keymap.txt README.txt CHANGELOG.txt LICENSE.txt seed-catalog.txt
+common-files := README.txt CHANGELOG.txt LICENSE.txt seed-catalog.txt
+common-bin := bin/assets bin/keymap.txt
 
 %.txt: %.md
 	cp $< $@
 
-windows.zip: $(common-files)
+windows.zip: $(common-files) $(common-bin)
 	zip -rvl $@ $^ bin/brogue.exe bin/*.dll
 
-macos.tar.gz: $(common-files) brogue bin/lib
-	tar -cavf $@ $^ bin/brogue
+macos.zip: $(common-files)
+	zip -rv -ll $@ $^ "Brogue CE.app"
 
-linux.tar.gz: $(common-files) brogue
+linux.tar.gz: $(common-files) $(common-bin) brogue
 	tar -cavf $@ $^ bin/brogue -C linux make-link-for-desktop.sh
+
+
+# $* is the matched %
+icon_%.png: bin/assets/icon.png
+	convert $< -resize $* $@
+
+macos/Brogue.icns: icon_32.png icon_128.png icon_256.png icon_512.png
+	png2icns $@ $^
+	$(RM) $^
+
+Brogue.app: bin/brogue
+	mkdir -p $@/Contents/{MacOS,Resources}
+	cp macos/Info.plist $@/Contents
+	cp bin/brogue $@/Contents/MacOS
+	cp -r macos/Brogue.icns bin/assets $@/Contents/Resources
