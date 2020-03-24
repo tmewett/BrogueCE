@@ -282,9 +282,11 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
             if (!textInput) {
                 c = applyRemaps(c);
                 if ((c == '=' || c == '+') && brogueFontSize < 13) {
-                    ensureWindow(++brogueFontSize);
+                    loadFont(++brogueFontSize);
+                    ensureWindow();
                 } else if (c == '-' && brogueFontSize > 1) {
-                    ensureWindow(--brogueFontSize);
+                    loadFont(--brogueFontSize);
+                    ensureWindow();
                 }
             }
 
