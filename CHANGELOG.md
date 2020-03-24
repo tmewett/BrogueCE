@@ -15,10 +15,6 @@ Unreleased
   Adding the `--server-mode` command line parameter used to run the game from an external launcher
 -
   Restored inventory on right click functionality
--
-  Water-restricted creatures can no longer jump back into water when on adjacent
-  dry land
-
 
 1.8.1
 =====
