@@ -2,6 +2,12 @@ Unreleased
 ==========
 
 -
+  The game window is now freely resizable, and the best-fitting font size is
+  automatically chosen. This also fixes the weird scaling when going fullscreen
+-
+  Fixed the game screen going black after alt-tabbing while fullscreen on some
+  platforms
+-
   The Mac release is now an app
 -
   Added `--wizard` command line option to enable debug features
