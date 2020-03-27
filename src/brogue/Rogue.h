@@ -1124,6 +1124,7 @@ enum tileFlags {
 #define UNEQUIP_KEY         'r'
 #define APPLY_KEY           'a'
 #define THROW_KEY           't'
+#define RETHROW_KEY         'T'
 #define RELABEL_KEY         'R'
 #define TRUE_COLORS_KEY     '\\'
 #define AGGRO_DISPLAY_KEY   ']'
@@ -2241,6 +2242,8 @@ typedef struct playerCharacter {
     short strength;
     unsigned short monsterSpawnFuse;    // how much longer till a random monster spawns
 
+    item* lastItemThrow;
+
     item *weapon;
     item *armor;
     item *ringLeft;
@@ -3059,6 +3062,7 @@ extern "C" {
     void monsterDetails(char buf[], creature *monst);
     void makeMonsterDropItem(creature *monst);
     void throwCommand(item *theItem);
+    void reThrowCommand(item *theItem);
     void relabel(item *theItem);
     void apply(item *theItem, boolean recordCommands);
     boolean itemCanBeCalled(item *theItem);

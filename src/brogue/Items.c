@@ -5727,6 +5727,11 @@ void throwCommand(item *theItem) {
     boolean autoTarget;
 
     command[0] = THROW_KEY;
+
+    //
+    // From inventory, we know item
+    // Else ask ITEM
+    //
     if (theItem == NULL) {
         theItem = promptForItemOfType((ALL_ITEMS), 0, 0,
                                       KEYBOARD_LABELS ? "Throw what? (a-z, shift for more info; or <esc> to cancel)" : "Throw what?", true);
@@ -5735,6 +5740,9 @@ void throwCommand(item *theItem) {
         return;
     }
 
+    //
+    // Change quantity to 1 to generate name of item ("a" and not "some, the, etc")
+    //
     quantity = theItem->quantity;
     theItem->quantity = 1;
     itemName(theItem, theName, false, false, NULL);
@@ -5743,6 +5751,9 @@ void throwCommand(item *theItem) {
     command[1] = theItem->inventoryLetter;
     confirmMessages();
 
+    //
+    // If special item (not throw item)
+    // -> Confirm before throw
     if (((theItem->flags & ITEM_EQUIPPED) || theItem->timesEnchanted > 0)
         && theItem->quantity <= 1) {
 
@@ -5757,6 +5768,9 @@ void throwCommand(item *theItem) {
         }
     }
 
+    //
+    // Ask location to throw
+    //
     sprintf(buf, "Throw %s %s where? (<hjklyubn>, mouse, or <tab>)",
             (theItem->quantity > 1 ? "a" : "your"),
             theName);
@@ -5764,6 +5778,7 @@ void throwCommand(item *theItem) {
     maxDistance = (12 + 2 * max(rogue.strength - player.weaknessAmount - 12, 2));
     autoTarget = (theItem->category & (WEAPON | POTION)) ? true : false;
     if (chooseTarget(zapTarget, maxDistance, true, autoTarget, false, false, &red)) {
+
         if ((theItem->flags & ITEM_EQUIPPED) && theItem->quantity <= 1) {
             unequipItem(theItem, false);
         }
@@ -5773,25 +5788,83 @@ void throwCommand(item *theItem) {
 
         confirmMessages();
 
-        thrownItem = generateItem(ALL_ITEMS, -1);
-        *thrownItem = *theItem; // clone the item
-        thrownItem->flags &= ~ITEM_EQUIPPED;
-        thrownItem->quantity = 1;
+        thrownItem = generateItem(ALL_ITEMS, -1);   // generate item object in memory
+        *thrownItem = *theItem;                     // clone the item
+        thrownItem->flags &= ~ITEM_EQUIPPED;        // item not equiped
+        thrownItem->quantity = 1;                   // item thrown, so quantity == 1
 
-        itemName(thrownItem, theName, false, false, NULL);
+        itemName(thrownItem, theName, false, false, NULL); // update name of the thrown item
 
         throwItem(thrownItem, &player, zapTarget, maxDistance);
     } else {
         return;
     }
 
-    // Now decrement or delete the thrown item out of the inventory.
+    // Update inventory
+    // -> Now decrement or delete the thrown item out of the inventory.
+    // -> Save last item thrown
     if (theItem->quantity > 1) {
         theItem->quantity--;
+        rogue.lastItemThrow = theItem;
     } else {
+        rogue.lastItemThrow = NULL;
         removeItemFromChain(theItem, packItems);
         deleteItem(theItem);
     }
+    playerTurnEnded();
+}
+
+void reThrowCommand(item *theItem) {
+    item *thrownItem;
+    unsigned char command[10];
+    char theName[COLS];
+    short maxDistance, zapTarget[2];
+
+    // Check the last item thrown
+    if (theItem == NULL || !itemIsCarried(theItem))
+        return;
+
+    // Check if the last target is always Ok to target
+    if (rogue.lastTarget
+        && canSeeMonster(rogue.lastTarget)
+        && !(rogue.lastTarget->creatureState == MONSTER_ALLY)
+        && rogue.lastTarget->depth == rogue.depthLevel
+        && !(rogue.lastTarget->bookkeepingFlags & MB_IS_DYING)
+        && openPathBetween(player.xLoc, player.yLoc, rogue.lastTarget->xLoc, rogue.lastTarget->yLoc)) {
+
+        zapTarget[0] = rogue.lastTarget->xLoc;
+        zapTarget[1] = rogue.lastTarget->yLoc;
+    } else {
+        return;
+    }
+
+    command[0] = THROW_KEY;
+
+    command[1] = theItem->inventoryLetter;
+
+    thrownItem = generateItem(ALL_ITEMS, -1);   // generate item object in memory
+    *thrownItem = *theItem;                     // clone the item
+    thrownItem->flags &= ~ITEM_EQUIPPED;        // item not equiped
+    thrownItem->quantity = 1;                   // item thrown, so quantity == 1
+
+    itemName(thrownItem, theName, false, false, NULL); // update name of the thrown item
+
+    command[2] = '\0';
+    recordKeystrokeSequence(command);
+    recordMouseClick(mapToWindowX(zapTarget[0]), mapToWindowY(zapTarget[1]), true, false);
+
+    maxDistance = (12 + 2 * max(rogue.strength - player.weaknessAmount - 12, 2));
+
+    throwItem(thrownItem, &player, zapTarget, maxDistance);
+
+    if (theItem->quantity > 1) {
+        theItem->quantity--;
+    } else {
+        rogue.lastItemThrow = NULL;
+        removeItemFromChain(theItem, packItems);
+        deleteItem(theItem);
+    }
+
     playerTurnEnded();
 }
 
