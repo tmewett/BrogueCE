@@ -1,5 +1,35 @@
 #include "Rogue.h"
 
+#define MIDDLE_DOT  0x00b7
+#define FOUR_DOTS  0x2237
+#define DIAMOND  0x25c7
+#define FLIPPED_V  0x22CF
+#define ARIES  0x2648
+#define ESZETT  0x00df
+#define ANKH  0x2640
+#define MUSIC_NOTE  0x266A
+#define CIRCLE  0x26AA
+#define LIGHTNING_BOLT  0x03DF
+#define UP_ARROW  0x2191
+#define FILLED_CIRCLE  0x25cf
+#define NEUTER  0x26b2
+#define U_ACUTE  0x00da
+#define CURRENCY 0x00A4
+#define UP_ARROW  0x2191
+#define DOWN_ARROW  0x2193
+#define LEFT_ARROW  0x2190
+#define RIGHT_ARROW  0x2192
+#define UP_TRIANGLE  0x2206
+#define DOWN_TRIANGLE  0x2207
+#define OMEGA  0x03A9
+#define THETA  0x03B8
+#define LAMDA  0x03BB
+#define KOPPA  0x03DE
+#define LOZENGE  0x29EB
+#define CROSS_PRODUCT  0x2A2F
+#define CIRCLE_BARS  0x29F2
+#define FILLED_CIRCLE_BARS  0x29F3
+
 struct brogueConsole {
     /*
     The platform entrypoint, called by the main function. Should initialize
