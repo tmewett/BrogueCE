@@ -410,7 +410,7 @@ enum displayGlyph {
     G_BLOODWORT_STALK,
     G_FLOOR_ALT,
     G_UNICORN,
-    G_ALTAR,
+    G_TURRET,
     G_GRANITE,
     G_CARPET,
     G_CLOSED_IRON_DOOR,
@@ -430,9 +430,8 @@ enum displayGlyph {
     G_MAGIC_GLYPH,
     G_CROSS,
     G_BONES,
-    G_ELECTRIC_CRYSTAL,
-    G_TURRET
-}
+    G_ELECTRIC_CRYSTAL
+};
 
 enum eventTypes {
     KEYSTROKE,
