@@ -259,6 +259,7 @@ enum displayGlyph {
     G_FLOOR_ALT,
     G_UNICORN,
     G_TURRET,
+    G_WAND,
     G_GRANITE,
     G_CARPET,
     G_CLOSED_IRON_DOOR,
