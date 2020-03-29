@@ -430,7 +430,8 @@ enum displayGlyph {
     G_MAGIC_GLYPH,
     G_BRIDGE,
     G_BONES,
-    G_ELECTRIC_CRYSTAL
+    G_ELECTRIC_CRYSTAL,
+    G_TURRET
 }
 
 enum eventTypes {
