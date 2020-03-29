@@ -3054,7 +3054,7 @@ extern "C" {
     item *itemOfPackLetter(char letter);
     void unequipItem(item *theItem, boolean force);
     short magicCharDiscoverySuffix(short category, short kind);
-    uchar itemMagicChar(item *theItem);
+    int itemMagicPolarity(item *theItem);
     item *itemAtLoc(short x, short y);
     item *dropItem(item *theItem);
     itemTable *tableForItemCategory(enum itemCategory theCat, short *kindCount);

@@ -177,24 +177,21 @@ void describeLocation(char *buf, short x, short y) {
     magicItem = NULL;
     if (theItem && !playerCanSeeOrSense(x, y)
         && (theItem->flags & ITEM_MAGIC_DETECTED)
-        && itemMagicChar(theItem)) {
+        && itemMagicPolarity(theItem)) {
         magicItem = theItem;
     } else if (monst && !canSeeMonster(monst)
                && monst->carriedItem
                && (monst->carriedItem->flags & ITEM_MAGIC_DETECTED)
-               && itemMagicChar(monst->carriedItem)) {
+               && itemMagicPolarity(monst->carriedItem)) {
         magicItem = monst->carriedItem;
     }
     if (magicItem && !(pmap[x][y].flags & DISCOVERED)) {
-        switch (itemMagicChar(magicItem)) {
-            case GOOD_MAGIC_CHAR:
-                strcpy(object, "benevolent magic");
+        switch (itemMagicPolarity(magicItem)) {
+            case 1:
+                strcpy(object, magicItem->category == AMULET ? "the Amulet of Yendor" : "benevolent magic");
                 break;
-            case BAD_MAGIC_CHAR:
+            case -1:
                 strcpy(object, "malevolent magic");
-                break;
-            case AMULET_CHAR:
-                strcpy(object, "the Amulet of Yendor");
                 break;
             default:
                 strcpy(object, "mysterious magic");

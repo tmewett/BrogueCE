@@ -3512,7 +3512,7 @@ void restoreItem(item *theItem) {
         *y = loc[1];
     }
     pmap[*x][*y].flags |= HAS_ITEM;
-    if (theItem->flags & ITEM_MAGIC_DETECTED && itemMagicChar(theItem)) {
+    if (theItem->flags & ITEM_MAGIC_DETECTED && itemMagicPolarity(theItem)) {
         pmap[*x][*y].flags |= ITEM_DETECTED;
     }
 }

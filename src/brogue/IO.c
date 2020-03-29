@@ -1016,7 +1016,7 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
     }
     if (monst) {
         monsterWithDetectedItem = (monst->carriedItem && (monst->carriedItem->flags & ITEM_MAGIC_DETECTED)
-                                   && itemMagicChar(monst->carriedItem) && !canSeeMonster(monst));
+                                   && itemMagicPolarity(monst->carriedItem) && !canSeeMonster(monst));
     }
 
     if (monsterWithDetectedItem) {
@@ -1115,19 +1115,26 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
             cellForeColor = *(player.info.foreColor);
             needDistinctness = true;
         } else if (((pmap[x][y].flags & HAS_ITEM) && (pmap[x][y].flags & ITEM_DETECTED)
-                    && itemMagicChar(theItem)
+                    && itemMagicPolarity(theItem)
                     && !playerCanSeeOrSense(x, y))
                    || monsterWithDetectedItem){
-            cellChar = itemMagicChar(theItem);
-            needDistinctness = true;
-            if (cellChar == GOOD_MAGIC_CHAR) {
-                cellForeColor = goodMessageColor;
-            } else if (cellChar == BAD_MAGIC_CHAR) {
+
+            int polarity = itemMagicPolarity(theItem);
+            if (theItem->category == AMULET) {
+                cellChar = G_AMULET;
+                cellForeColor = white;
+            } else if (polarity == -1) {
+                cellChar = G_BAD_MAGIC;
                 cellForeColor = badMessageColor;
+            } else if (polarity == 1) {
+                cellChar = G_GOOD_MAGIC;
+                cellForeColor = goodMessageColor;
             } else {
+                cellChar = 0;
                 cellForeColor = white;
             }
-            //cellBackColor = black;
+
+            needDistinctness = true;
         } else if ((pmap[x][y].flags & HAS_MONSTER)
                    && (playerCanSeeOrSense(x, y) || ((monst->info.flags & MONST_IMMOBILE) && (pmap[x][y].flags & DISCOVERED)))
                    && (!monsterIsHidden(monst, &player) || rogue.playbackOmniscience)) {
