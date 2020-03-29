@@ -1001,8 +1001,8 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
     creature *monst = NULL;
     item *theItem = NULL;
     enum tileType tile = NOTHING;
-    const uchar itemChars[] = {POTION_CHAR, SCROLL_CHAR, FOOD_CHAR, WAND_CHAR,
-                        STAFF_CHAR, GOLD_CHAR, ARMOR_CHAR, WEAPON_CHAR, RING_CHAR, CHARM_CHAR};
+    const uchar itemChars[] = {G_POTION, G_SCROLL, G_FOOD, G_WAND,
+                        G_STAFF, G_GOLD, G_ARMOR, G_WEAPON, G_RING, G_CHARM};
     enum dungeonLayers layer, maxLayer;
 
     assureCosmeticRNG;
@@ -3772,9 +3772,9 @@ void printDiscoveries(short category, short count, unsigned short itemCharacter,
             theColor = &darkGray;
             magic = magicCharDiscoverySuffix(category, i);
             if (magic == 1) {
-                plotCharToBuffer(GOOD_MAGIC_CHAR, x, y + i, &goodColor, &black, dbuf);
+                plotCharToBuffer(G_GOOD_MAGIC, x, y + i, &goodColor, &black, dbuf);
             } else if (magic == -1) {
-                plotCharToBuffer(BAD_MAGIC_CHAR, x, y + i, &badColor, &black, dbuf);
+                plotCharToBuffer(G_BAD_MAGIC, x, y + i, &badColor, &black, dbuf);
             }
         }
         strcpy(buf, theTable[i].name);
@@ -3800,19 +3800,19 @@ void printDiscoveriesScreen() {
     clearDisplayBuffer(dbuf);
 
     printString("-- SCROLLS --", mapToWindowX(2), y = mapToWindowY(1), &flavorTextColor, &black, dbuf);
-    printDiscoveries(SCROLL, NUMBER_SCROLL_KINDS, SCROLL_CHAR, mapToWindowX(3), ++y, dbuf);
+    printDiscoveries(SCROLL, NUMBER_SCROLL_KINDS, G_SCROLL, mapToWindowX(3), ++y, dbuf);
 
     printString("-- RINGS --", mapToWindowX(2), y += NUMBER_SCROLL_KINDS + 1, &flavorTextColor, &black, dbuf);
-    printDiscoveries(RING, NUMBER_RING_KINDS, RING_CHAR, mapToWindowX(3), ++y, dbuf);
+    printDiscoveries(RING, NUMBER_RING_KINDS, G_RING, mapToWindowX(3), ++y, dbuf);
 
     printString("-- POTIONS --", mapToWindowX(29), y = mapToWindowY(1), &flavorTextColor, &black, dbuf);
-    printDiscoveries(POTION, NUMBER_POTION_KINDS, POTION_CHAR, mapToWindowX(30), ++y, dbuf);
+    printDiscoveries(POTION, NUMBER_POTION_KINDS, G_POTION, mapToWindowX(30), ++y, dbuf);
 
     printString("-- STAFFS --", mapToWindowX(53), y = mapToWindowY(1), &flavorTextColor, &black, dbuf);
-    printDiscoveries(STAFF, NUMBER_STAFF_KINDS, STAFF_CHAR, mapToWindowX(54), ++y, dbuf);
+    printDiscoveries(STAFF, NUMBER_STAFF_KINDS, G_STAFF, mapToWindowX(54), ++y, dbuf);
 
     printString("-- WANDS --", mapToWindowX(53), y += NUMBER_STAFF_KINDS + 1, &flavorTextColor, &black, dbuf);
-    printDiscoveries(WAND, NUMBER_WAND_KINDS, WAND_CHAR, mapToWindowX(54), ++y, dbuf);
+    printDiscoveries(WAND, NUMBER_WAND_KINDS, G_WAND, mapToWindowX(54), ++y, dbuf);
 
     printString(KEYBOARD_LABELS ? "-- press any key to continue --" : "-- touch anywhere to continue --",
                 mapToWindowX(20), mapToWindowY(DROWS-2), &itemMessageColor, &black, dbuf);
@@ -3875,7 +3875,7 @@ void printDiscoveriesScreen() {
 //        if (magic != -1) {
 //            strcat(buttons[i].text, goodColorEscape);
 //            strcat(buttons[i].text, "*");
-//            buttons[i].symbol[symbolCount++] = GOOD_MAGIC_CHAR;
+//            buttons[i].symbol[symbolCount++] = G_GOOD_MAGIC;
 //      }
 //        if (magic != 1) {
 //            strcat(buttons[i].text, badColorEscape);
