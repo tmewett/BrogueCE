@@ -2460,7 +2460,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             throwCommand(NULL);
             break;
         case RETHROW_KEY:
-            reThrowCommand(rogue.lastItemThrow);
+            reThrowCommand(rogue.lastItemThrown);
             break;
         case RELABEL_KEY:
             relabel(NULL);

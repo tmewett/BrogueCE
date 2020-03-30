@@ -2242,8 +2242,6 @@ typedef struct playerCharacter {
     short strength;
     unsigned short monsterSpawnFuse;    // how much longer till a random monster spawns
 
-    item* lastItemThrow;
-
     item *weapon;
     item *armor;
     item *ringLeft;
@@ -2272,6 +2270,7 @@ typedef struct playerCharacter {
 
     short cursorLoc[2];                 // used for the return key functionality
     creature *lastTarget;               // to keep track of the last monster the player has thrown at or zapped
+    item *lastItemThrown;
     short rewardRoomsGenerated;         // to meter the number of reward machines
     short machineNumber;                // so each machine on a level gets a unique number
     short sidebarLocationList[ROWS*2][2];   // to keep track of which location each line of the sidebar references

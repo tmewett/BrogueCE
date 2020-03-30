@@ -5805,9 +5805,9 @@ void throwCommand(item *theItem) {
     // -> Save last item thrown
     if (theItem->quantity > 1) {
         theItem->quantity--;
-        rogue.lastItemThrow = theItem;
+        rogue.lastItemThrown = theItem;
     } else {
-        rogue.lastItemThrow = NULL;
+        rogue.lastItemThrown = NULL;
         removeItemFromChain(theItem, packItems);
         deleteItem(theItem);
     }
@@ -5860,7 +5860,7 @@ void reThrowCommand(item *theItem) {
     if (theItem->quantity > 1) {
         theItem->quantity--;
     } else {
-        rogue.lastItemThrow = NULL;
+        rogue.lastItemThrown = NULL;
         removeItemFromChain(theItem, packItems);
         deleteItem(theItem);
     }
