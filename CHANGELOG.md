@@ -2,6 +2,9 @@ Unreleased
 ==========
 
 -
+  Added a re-throw command (T), which throws the last item at the last-chosen
+  monster
+-
   The game window is now freely resizable, and the best-fitting font size is
   automatically chosen. This also fixes the weird scaling when going fullscreen
 -
