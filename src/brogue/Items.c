@@ -5203,6 +5203,16 @@ void pullMouseClickDuringPlayback(short loc[2]) {
     loc[1] = windowToMapY(theEvent.param2);
 }
 
+// Returns whether monst is targetable with thrown items, staves, wands, etc.
+// i.e. would the player ever select it?
+static boolean isCreatureTargetable(creature *monst) {
+    return monst != NULL
+        && canSeeMonster(monst)
+        && monst->depth == rogue.depthLevel
+        && !(monst->bookkeepingFlags & MB_IS_DYING)
+        && openPathBetween(player.xLoc, player.yLoc, monst->xLoc, monst->yLoc);
+}
+
 // Return true if a target is chosen, or false if canceled.
 boolean chooseTarget(short returnLoc[2],
                      short maxDistance,
@@ -5238,13 +5248,7 @@ boolean chooseTarget(short returnLoc[2],
     targetLoc[1] = oldTargetLoc[1] = player.yLoc;
 
     if (autoTarget) {
-        if (rogue.lastTarget
-            && canSeeMonster(rogue.lastTarget)
-            && (targetAllies == (rogue.lastTarget->creatureState == MONSTER_ALLY))
-            && rogue.lastTarget->depth == rogue.depthLevel
-            && !(rogue.lastTarget->bookkeepingFlags & MB_IS_DYING)
-            && openPathBetween(player.xLoc, player.yLoc, rogue.lastTarget->xLoc, rogue.lastTarget->yLoc)) {
-
+        if (isCreatureTargetable(rogue.lastTarget) && (targetAllies == (rogue.lastTarget->creatureState == MONSTER_ALLY))) {
             monst = rogue.lastTarget;
         } else {
             //rogue.lastTarget = NULL;
@@ -5825,13 +5829,7 @@ void reThrowCommand(item *theItem) {
         return;
 
     // Check if the last target is always Ok to target
-    if (rogue.lastTarget
-        && canSeeMonster(rogue.lastTarget)
-        && !(rogue.lastTarget->creatureState == MONSTER_ALLY)
-        && rogue.lastTarget->depth == rogue.depthLevel
-        && !(rogue.lastTarget->bookkeepingFlags & MB_IS_DYING)
-        && openPathBetween(player.xLoc, player.yLoc, rogue.lastTarget->xLoc, rogue.lastTarget->yLoc)) {
-
+    if (isCreatureTargetable(rogue.lastTarget)) {
         zapTarget[0] = rogue.lastTarget->xLoc;
         zapTarget[1] = rogue.lastTarget->yLoc;
     } else {
