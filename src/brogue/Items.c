@@ -5205,7 +5205,7 @@ void pullMouseClickDuringPlayback(short loc[2]) {
 
 // Returns whether monst is targetable with thrown items, staves, wands, etc.
 // i.e. would the player ever select it?
-static boolean isCreatureTargetable(creature *monst) {
+static boolean creatureIsTargetable(creature *monst) {
     return monst != NULL
         && canSeeMonster(monst)
         && monst->depth == rogue.depthLevel
@@ -5248,7 +5248,7 @@ boolean chooseTarget(short returnLoc[2],
     targetLoc[1] = oldTargetLoc[1] = player.yLoc;
 
     if (autoTarget) {
-        if (isCreatureTargetable(rogue.lastTarget) && (targetAllies == (rogue.lastTarget->creatureState == MONSTER_ALLY))) {
+        if (creatureIsTargetable(rogue.lastTarget) && (targetAllies == (rogue.lastTarget->creatureState == MONSTER_ALLY))) {
             monst = rogue.lastTarget;
         } else {
             //rogue.lastTarget = NULL;
@@ -5787,7 +5787,7 @@ void throwCommand(item *theItem, boolean autoThrow) {
     maxDistance = (12 + 2 * max(rogue.strength - player.weaknessAmount - 12, 2));
     autoTarget = (theItem->category & (WEAPON | POTION)) ? true : false;
 
-    if (autoThrow && isCreatureTargetable(rogue.lastTarget)) {
+    if (autoThrow && creatureIsTargetable(rogue.lastTarget)) {
         zapTarget[0] = rogue.lastTarget->xLoc;
         zapTarget[1] = rogue.lastTarget->yLoc;
     } else if (!chooseTarget(zapTarget, maxDistance, true, autoTarget, false, false, &red)) {
