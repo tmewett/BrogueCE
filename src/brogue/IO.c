@@ -2457,7 +2457,12 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             apply(NULL, true);
             break;
         case THROW_KEY:
-            throwCommand(NULL);
+            throwCommand(NULL, false);
+            break;
+        case RETHROW_KEY:
+            if (rogue.lastItemThrown != NULL && itemIsCarried(rogue.lastItemThrown)) {
+                throwCommand(rogue.lastItemThrown, true);
+            }
             break;
         case RELABEL_KEY:
             relabel(NULL);
@@ -3669,6 +3674,7 @@ void printHelpScreen() {
         "hjklyubn, arrow keys, or numpad  ****move or attack (control or shift to run)",
         "",
         " a/e/r/t/d/c/R  ****apply/equip/remove/throw/drop/call/relabel an item",
+        "             T  ****re-throw last item at last monster",
         "i, right-click  ****view inventory",
         "             D  ****list discovered items",
         "",
@@ -3681,8 +3687,6 @@ void printHelpScreen() {
         "             M  ****display old messages",
         "",
         "             S  ****suspend game and quit",
-        "             O  ****open saved game",
-        "             V  ****view saved recording",
         "             Q  ****quit to title screen",
         "",
         "             \\  ****disable/enable color effects",

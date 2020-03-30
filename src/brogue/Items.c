@@ -2928,7 +2928,7 @@ char displayInventory(unsigned short categoryMask,
                             drop(theItem);
                             break;
                         case THROW_KEY:
-                            throwCommand(theItem);
+                            throwCommand(theItem, false);
                             break;
                         case RELABEL_KEY:
                             relabel(theItem);
@@ -5203,6 +5203,16 @@ void pullMouseClickDuringPlayback(short loc[2]) {
     loc[1] = windowToMapY(theEvent.param2);
 }
 
+// Returns whether monst is targetable with thrown items, staves, wands, etc.
+// i.e. would the player ever select it?
+static boolean creatureIsTargetable(creature *monst) {
+    return monst != NULL
+        && canSeeMonster(monst)
+        && monst->depth == rogue.depthLevel
+        && !(monst->bookkeepingFlags & MB_IS_DYING)
+        && openPathBetween(player.xLoc, player.yLoc, monst->xLoc, monst->yLoc);
+}
+
 // Return true if a target is chosen, or false if canceled.
 boolean chooseTarget(short returnLoc[2],
                      short maxDistance,
@@ -5238,13 +5248,7 @@ boolean chooseTarget(short returnLoc[2],
     targetLoc[1] = oldTargetLoc[1] = player.yLoc;
 
     if (autoTarget) {
-        if (rogue.lastTarget
-            && canSeeMonster(rogue.lastTarget)
-            && (targetAllies == (rogue.lastTarget->creatureState == MONSTER_ALLY))
-            && rogue.lastTarget->depth == rogue.depthLevel
-            && !(rogue.lastTarget->bookkeepingFlags & MB_IS_DYING)
-            && openPathBetween(player.xLoc, player.yLoc, rogue.lastTarget->xLoc, rogue.lastTarget->yLoc)) {
-
+        if (creatureIsTargetable(rogue.lastTarget) && (targetAllies == (rogue.lastTarget->creatureState == MONSTER_ALLY))) {
             monst = rogue.lastTarget;
         } else {
             //rogue.lastTarget = NULL;
@@ -5719,7 +5723,12 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
     refreshDungeonCell(dropLoc[0], dropLoc[1]);
 }
 
-void throwCommand(item *theItem) {
+/*
+Called when the player chooses to throw an item. theItem is optional; if it is
+NULL, the player is prompted to choose one. If autoThrow is true and the last
+targeted creature is still targetable, the item is thrown at it without prompting.
+*/
+void throwCommand(item *theItem, boolean autoThrow) {
     item *thrownItem;
     char buf[COLS], theName[COLS];
     unsigned char command[10];
@@ -5727,6 +5736,11 @@ void throwCommand(item *theItem) {
     boolean autoTarget;
 
     command[0] = THROW_KEY;
+
+    //
+    // From inventory, we know item
+    // Else ask ITEM
+    //
     if (theItem == NULL) {
         theItem = promptForItemOfType((ALL_ITEMS), 0, 0,
                                       KEYBOARD_LABELS ? "Throw what? (a-z, shift for more info; or <esc> to cancel)" : "Throw what?", true);
@@ -5735,6 +5749,9 @@ void throwCommand(item *theItem) {
         return;
     }
 
+    //
+    // Change quantity to 1 to generate name of item ("a" and not "some, the, etc")
+    //
     quantity = theItem->quantity;
     theItem->quantity = 1;
     itemName(theItem, theName, false, false, NULL);
@@ -5743,6 +5760,9 @@ void throwCommand(item *theItem) {
     command[1] = theItem->inventoryLetter;
     confirmMessages();
 
+    //
+    // If special item (not throw item)
+    // -> Confirm before throw
     if (((theItem->flags & ITEM_EQUIPPED) || theItem->timesEnchanted > 0)
         && theItem->quantity <= 1) {
 
@@ -5757,38 +5777,50 @@ void throwCommand(item *theItem) {
         }
     }
 
+    //
+    // Ask location to throw
+    //
     sprintf(buf, "Throw %s %s where? (<hjklyubn>, mouse, or <tab>)",
             (theItem->quantity > 1 ? "a" : "your"),
             theName);
     temporaryMessage(buf, false);
     maxDistance = (12 + 2 * max(rogue.strength - player.weaknessAmount - 12, 2));
     autoTarget = (theItem->category & (WEAPON | POTION)) ? true : false;
-    if (chooseTarget(zapTarget, maxDistance, true, autoTarget, false, false, &red)) {
-        if ((theItem->flags & ITEM_EQUIPPED) && theItem->quantity <= 1) {
-            unequipItem(theItem, false);
-        }
-        command[2] = '\0';
-        recordKeystrokeSequence(command);
-        recordMouseClick(mapToWindowX(zapTarget[0]), mapToWindowY(zapTarget[1]), true, false);
 
-        confirmMessages();
-
-        thrownItem = generateItem(ALL_ITEMS, -1);
-        *thrownItem = *theItem; // clone the item
-        thrownItem->flags &= ~ITEM_EQUIPPED;
-        thrownItem->quantity = 1;
-
-        itemName(thrownItem, theName, false, false, NULL);
-
-        throwItem(thrownItem, &player, zapTarget, maxDistance);
-    } else {
+    if (autoThrow && creatureIsTargetable(rogue.lastTarget)) {
+        zapTarget[0] = rogue.lastTarget->xLoc;
+        zapTarget[1] = rogue.lastTarget->yLoc;
+    } else if (!chooseTarget(zapTarget, maxDistance, true, autoTarget, false, false, &red)) {
+        // player doesn't choose a target? return
         return;
     }
 
-    // Now decrement or delete the thrown item out of the inventory.
+    if ((theItem->flags & ITEM_EQUIPPED) && theItem->quantity <= 1) {
+        unequipItem(theItem, false);
+    }
+    command[2] = '\0';
+    recordKeystrokeSequence(command);
+    recordMouseClick(mapToWindowX(zapTarget[0]), mapToWindowY(zapTarget[1]), true, false);
+
+    confirmMessages();
+
+    thrownItem = generateItem(ALL_ITEMS, -1);   // generate item object in memory
+    *thrownItem = *theItem;                     // clone the item
+    thrownItem->flags &= ~ITEM_EQUIPPED;        // item not equiped
+    thrownItem->quantity = 1;                   // item thrown, so quantity == 1
+
+    itemName(thrownItem, theName, false, false, NULL); // update name of the thrown item
+
+    throwItem(thrownItem, &player, zapTarget, maxDistance);
+
+    // Update inventory
+    // -> Now decrement or delete the thrown item out of the inventory.
+    // -> Save last item thrown
     if (theItem->quantity > 1) {
         theItem->quantity--;
+        rogue.lastItemThrown = theItem;
     } else {
+        rogue.lastItemThrown = NULL;
         removeItemFromChain(theItem, packItems);
         deleteItem(theItem);
     }

@@ -1124,6 +1124,7 @@ enum tileFlags {
 #define UNEQUIP_KEY         'r'
 #define APPLY_KEY           'a'
 #define THROW_KEY           't'
+#define RETHROW_KEY         'T'
 #define RELABEL_KEY         'R'
 #define TRUE_COLORS_KEY     '\\'
 #define AGGRO_DISPLAY_KEY   ']'
@@ -2269,6 +2270,7 @@ typedef struct playerCharacter {
 
     short cursorLoc[2];                 // used for the return key functionality
     creature *lastTarget;               // to keep track of the last monster the player has thrown at or zapped
+    item *lastItemThrown;
     short rewardRoomsGenerated;         // to meter the number of reward machines
     short machineNumber;                // so each machine on a level gets a unique number
     short sidebarLocationList[ROWS*2][2];   // to keep track of which location each line of the sidebar references
@@ -3058,7 +3060,7 @@ extern "C" {
     void toggleMonsterDormancy(creature *monst);
     void monsterDetails(char buf[], creature *monst);
     void makeMonsterDropItem(creature *monst);
-    void throwCommand(item *theItem);
+    void throwCommand(item *theItem, boolean autoThrow);
     void relabel(item *theItem);
     void apply(item *theItem, boolean recordCommands);
     boolean itemCanBeCalled(item *theItem);
