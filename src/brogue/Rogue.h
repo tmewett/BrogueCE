@@ -3060,8 +3060,7 @@ extern "C" {
     void toggleMonsterDormancy(creature *monst);
     void monsterDetails(char buf[], creature *monst);
     void makeMonsterDropItem(creature *monst);
-    void throwCommand(item *theItem);
-    void reThrowCommand(item *theItem);
+    void throwCommand(item *theItem, boolean autoThrow);
     void relabel(item *theItem);
     void apply(item *theItem, boolean recordCommands);
     boolean itemCanBeCalled(item *theItem);

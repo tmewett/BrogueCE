@@ -2457,10 +2457,12 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             apply(NULL, true);
             break;
         case THROW_KEY:
-            throwCommand(NULL);
+            throwCommand(NULL, false);
             break;
         case RETHROW_KEY:
-            reThrowCommand(rogue.lastItemThrown);
+            if (rogue.lastItemThrown != NULL && itemIsCarried(rogue.lastItemThrown)) {
+                throwCommand(rogue.lastItemThrown, true);
+            }
             break;
         case RELABEL_KEY:
             relabel(NULL);
