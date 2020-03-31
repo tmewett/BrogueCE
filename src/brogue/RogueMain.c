@@ -138,72 +138,6 @@ void welcome() {
     flavorMessage("The doors to the dungeon slam shut behind you.");
 }
 
-void generateFontFiles() {
-    short i, j;
-    uchar k;
-
-    uchar c8[16] = {
-        FLOOR_CHAR,
-        CHASM_CHAR,
-        TRAP_CHAR,
-        FIRE_CHAR,
-        FOLIAGE_CHAR,
-        AMULET_CHAR,
-        SCROLL_CHAR,
-        RING_CHAR,
-        WEAPON_CHAR,
-        GEM_CHAR,
-        TOTEM_CHAR,
-        TURRET_CHAR,
-        BAD_MAGIC_CHAR,
-        GOOD_MAGIC_CHAR,
-        ' ',
-        ' ',
-    };
-    uchar c9[16] = {
-        UP_ARROW_CHAR,
-        DOWN_ARROW_CHAR,
-        LEFT_ARROW_CHAR,
-        RIGHT_ARROW_CHAR,
-        UP_TRIANGLE_CHAR,
-        DOWN_TRIANGLE_CHAR,
-        OMEGA_CHAR,
-        THETA_CHAR,
-        LAMDA_CHAR,
-        KOPPA_CHAR,
-        LOZENGE_CHAR,
-        CROSS_PRODUCT_CHAR,
-        ' ',
-        ' ',
-        ' ',
-        ' ',
-    };
-
-    for (i=0; i<COLS; i++) {
-        for(j=0; j<ROWS; j++ ) {
-            plotCharWithColor(' ', i, j, &white, &white);
-        }
-    }
-    i = j = 0;
-    for (k=0; k<256; k++) {
-        i = k % 16;
-        j = k / 16;
-        if (j >= ROWS) {
-            break;
-        }
-        if (j == 8) {
-            plotCharWithColor(c8[i], i, j+5, &white, &black);
-        } else if (j == 9) {
-            plotCharWithColor(c9[i], i, j+5, &white, &black);
-        } else {
-            plotCharWithColor(k, i, j+5, &white, &black);
-        }
-    }
-    for (;;) {
-        waitForAcknowledgment();
-    }
-}
-
 // Seed is used as the dungeon seed unless it's zero, in which case generate a new one.
 // Either way, previousGameSeed is set to the seed we use.
 // None of this seed stuff is applicable if we're playing a recording.
@@ -212,12 +146,6 @@ void initializeRogue(unsigned long seed) {
     item *theItem;
     boolean playingback, playbackFF, playbackPaused, wizard;
     short oldRNG;
-
-    // generate font bitmap
-    // add any new unicode characters here to include them
-#ifdef GENERATE_FONT_FILES
-    generateFontFiles();
-#endif
 
     playingback = rogue.playbackMode; // the only four animals that need to go on the ark
     playbackPaused = rogue.playbackPaused;
