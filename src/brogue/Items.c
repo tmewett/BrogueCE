@@ -118,7 +118,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                 itemKind = chooseKind(foodTable, NUMBER_FOOD_KINDS);
             }
             theEntry = &foodTable[itemKind];
-            theItem->displayChar = FOOD_CHAR;
+            theItem->displayChar = G_FOOD;
             theItem->flags |= ITEM_IDENTIFIED;
             break;
 
@@ -129,7 +129,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             theEntry = &weaponTable[itemKind];
             theItem->damage = weaponTable[itemKind].range;
             theItem->strengthRequired = weaponTable[itemKind].strengthRequired;
-            theItem->displayChar = WEAPON_CHAR;
+            theItem->displayChar = G_WEAPON;
 
             switch (itemKind) {
                 case DAGGER:
@@ -207,7 +207,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             theEntry = &armorTable[itemKind];
             theItem->armor = randClump(armorTable[itemKind].range);
             theItem->strengthRequired = armorTable[itemKind].strengthRequired;
-            theItem->displayChar = ARMOR_CHAR;
+            theItem->displayChar = G_ARMOR;
             theItem->charges = ARMOR_DELAY_TO_AUTO_ID; // this many turns until it reveals its enchants and whether runic
             if (rand_percent(40)) {
                 theItem->enchant1 += rand_range(1, 3);
@@ -237,7 +237,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                 itemKind = chooseKind(scrollTable, NUMBER_SCROLL_KINDS);
             }
             theEntry = &scrollTable[itemKind];
-            theItem->displayChar = SCROLL_CHAR;
+            theItem->displayChar = G_SCROLL;
             theItem->flags |= ITEM_FLAMMABLE;
             break;
         case POTION:
@@ -245,14 +245,14 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                 itemKind = chooseKind(potionTable, NUMBER_POTION_KINDS);
             }
             theEntry = &potionTable[itemKind];
-            theItem->displayChar = POTION_CHAR;
+            theItem->displayChar = G_POTION;
             break;
         case STAFF:
             if (itemKind < 0) {
                 itemKind = chooseKind(staffTable, NUMBER_STAFF_KINDS);
             }
             theEntry = &staffTable[itemKind];
-            theItem->displayChar = STAFF_CHAR;
+            theItem->displayChar = G_STAFF;
             theItem->charges = 2;
             if (rand_percent(50)) {
                 theItem->charges++;
@@ -271,7 +271,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                 itemKind = chooseKind(wandTable, NUMBER_WAND_KINDS);
             }
             theEntry = &wandTable[itemKind];
-            theItem->displayChar = WAND_CHAR;
+            theItem->displayChar = G_WAND;
             theItem->charges = randClump(wandTable[itemKind].range);
             break;
         case RING:
@@ -279,7 +279,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                 itemKind = chooseKind(ringTable, NUMBER_RING_KINDS);
             }
             theEntry = &ringTable[itemKind];
-            theItem->displayChar = RING_CHAR;
+            theItem->displayChar = G_RING;
             theItem->enchant1 = randClump(ringTable[itemKind].range);
             theItem->charges = RING_DELAY_TO_AUTO_ID; // how many turns of being worn until it auto-identifies
             if (rand_percent(16)) {
@@ -296,7 +296,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             if (itemKind < 0) {
                 itemKind = chooseKind(charmTable, NUMBER_CHARM_KINDS);
             }
-            theItem->displayChar = CHARM_CHAR;
+            theItem->displayChar = G_CHARM;
             theItem->charges = 0; // Charms are initially ready for use.
             theItem->enchant1 = randClump(charmTable[itemKind].range);
             while (rand_percent(7)) {
@@ -306,24 +306,24 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             break;
         case GOLD:
             theEntry = NULL;
-            theItem->displayChar = GOLD_CHAR;
+            theItem->displayChar = G_GOLD;
             theItem->quantity = rand_range(50 + rogue.depthLevel * 10, 100 + rogue.depthLevel * 15);
             break;
         case AMULET:
             theEntry = NULL;
-            theItem->displayChar = AMULET_CHAR;
+            theItem->displayChar = G_AMULET;
             itemKind = 0;
             theItem->flags |= ITEM_IDENTIFIED;
             break;
         case GEM:
             theEntry = NULL;
-            theItem->displayChar = GEM_CHAR;
+            theItem->displayChar = G_GEM;
             itemKind = 0;
             theItem->flags |= ITEM_IDENTIFIED;
             break;
         case KEY:
             theEntry = NULL;
-            theItem->displayChar = KEY_CHAR;
+            theItem->displayChar = G_KEY;
             theItem->flags |= ITEM_IDENTIFIED;
             break;
         default:

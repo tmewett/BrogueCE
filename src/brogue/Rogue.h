@@ -160,7 +160,10 @@ typedef long long fixpt;
 // display characters:
 
 enum displayGlyph {
-    G_POTION,
+    G_UP_ARROW = 128,
+    G_DOWN_ARROW,
+
+    G_POTION = 256,
     G_GRASS,
     G_WALL,
     G_DEMON,
