@@ -172,7 +172,7 @@ enum displayGlyph {
     G_CLOSED_DOOR,
     G_RUBBLE,
     G_KEY,
-    G_DIRTY_FLOOR,
+    G_BOG,
     G_CHAIN_TOP_LEFT,
     G_CHAIN_BOTTOM_RIGHT,
     G_CHAIN_TOP_RIGHT,
@@ -280,9 +280,11 @@ enum displayGlyph {
     G_OPEN_COFFIN,
     G_HOLE,
     G_MAGIC_GLYPH,
-    G_CROSS,
+    G_BRIDGE,
     G_BONES,
-    G_ELECTRIC_CRYSTAL
+    G_ELECTRIC_CRYSTAL,
+    G_ASHES,
+    G_BEDROLL
 };
 
 enum eventTypes {
