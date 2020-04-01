@@ -410,47 +410,43 @@ static void _nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boo
 }
 
 
+static int fontIndex(unsigned int code) {
+    if (code < 128) return code;
+    switch (code) {
+        case U_MIDDLE_DOT: return 0x80;
+        case U_FOUR_DOTS: return 0x81;
+        case U_DIAMOND: return 0x82;
+        case U_FLIPPED_V: return 0x83;
+        case U_ARIES: return 0x84;
+        case U_ESZETT: return 0xdf;
+        case U_ANKH: return 0x85;
+        case U_MUSIC_NOTE: return 0x86;
+        case U_CIRCLE: return 0x87;
+        case U_LIGHTNING_BOLT: return 0x99;
+        case U_FILLED_CIRCLE: return 0x89;
+        case U_NEUTER: return 0x8a;
+        case U_U_ACUTE: return 0xda;
+        case U_CURRENCY: return 0xa4;
+        case U_UP_ARROW: return 0x90;
+        case U_DOWN_ARROW: return 0x91;
+        case U_LEFT_ARROW: return 0x92;
+        case U_RIGHT_ARROW: return 0x93;
+        case U_OMEGA: return 0x96;
+        case U_CIRCLE_BARS: return 0x8c;
+        case U_FILLED_CIRCLE_BARS: return 0x8d;
+
+        default: return '?';
+    }
+}
+
+
 static void _plotChar(
     uchar inputChar,
     short x, short y,
     short foreRed, short foreGreen, short foreBlue,
     short backRed, short backGreen, short backBlue
 ) {
-    if (inputChar == STATUE_CHAR) {
-        inputChar = 223;
-    } else if (inputChar > 255) {
-        switch (inputChar) {
-#ifdef USE_UNICODE
-            case FLOOR_CHAR: inputChar = 128 + 0; break;
-            case CHASM_CHAR: inputChar = 128 + 1; break;
-            case TRAP_CHAR: inputChar = 128 + 2; break;
-            case FIRE_CHAR: inputChar = 128 + 3; break;
-            case FOLIAGE_CHAR: inputChar = 128 + 4; break;
-            case AMULET_CHAR: inputChar = 128 + 5; break;
-            case SCROLL_CHAR: inputChar = 128 + 6; break;
-            case RING_CHAR: inputChar = 128 + 7; break;
-            case WEAPON_CHAR: inputChar = 128 + 8; break;
-            case GEM_CHAR: inputChar = 128 + 9; break;
-            case TOTEM_CHAR: inputChar = 128 + 10; break;
-            case BAD_MAGIC_CHAR: inputChar = 128 + 12; break;
-            case GOOD_MAGIC_CHAR: inputChar = 128 + 13; break;
-
-            case DOWN_ARROW_CHAR: inputChar = 144 + 1; break;
-            case LEFT_ARROW_CHAR: inputChar = 144 + 2; break;
-            case RIGHT_ARROW_CHAR: inputChar = 144 + 3; break;
-            case UP_TRIANGLE_CHAR: inputChar = 144 + 4; break;
-            case DOWN_TRIANGLE_CHAR: inputChar = 144 + 5; break;
-            case OMEGA_CHAR: inputChar = 144 + 6; break;
-            case THETA_CHAR: inputChar = 144 + 7; break;
-            case LAMDA_CHAR: inputChar = 144 + 8; break;
-            case KOPPA_CHAR: inputChar = 144 + 9; break; // is this right?
-            case CHARM_CHAR: inputChar = 144 + 9; break;
-            case LOZENGE_CHAR: inputChar = 144 + 10; break;
-            case CROSS_PRODUCT_CHAR: inputChar = 144 + 11; break;
-#endif
-            default: inputChar = '?'; break;
-        }
-    }
+    inputChar = fontIndex(glyphToUnicode(inputChar));
 
     int padx, pady;
     getWindowPadding(&padx, &pady);

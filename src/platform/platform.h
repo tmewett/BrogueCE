@@ -76,6 +76,7 @@ struct brogueConsole {
 // defined in platform
 void loadKeymap();
 void dumpScores();
+unsigned int glyphToUnicode(enum displayGlyph glyph);
 
 #ifdef BROGUE_SDL
 extern struct brogueConsole sdlConsole;
