@@ -10,7 +10,6 @@
 #define U_MUSIC_NOTE  0x266A
 #define U_CIRCLE  0x26AA
 #define U_LIGHTNING_BOLT  0x03DF
-#define U_UP_ARROW  0x2191
 #define U_FILLED_CIRCLE  0x25cf
 #define U_NEUTER  0x26b2
 #define U_U_ACUTE  0x00da
@@ -19,16 +18,17 @@
 #define U_DOWN_ARROW  0x2193
 #define U_LEFT_ARROW  0x2190
 #define U_RIGHT_ARROW  0x2192
-#define U_UP_TRIANGLE  0x2206
-#define U_DOWN_TRIANGLE  0x2207
 #define U_OMEGA  0x03A9
-#define U_THETA  0x03B8
-#define U_LAMDA  0x03BB
-#define U_KOPPA  0x03DE
-#define U_LOZENGE  0x29EB
-#define U_CROSS_PRODUCT  0x2A2F
 #define U_CIRCLE_BARS  0x29F2
 #define U_FILLED_CIRCLE_BARS  0x29F3
+
+// #define U_UP_TRIANGLE  0x2206
+// #define U_DOWN_TRIANGLE  0x2207
+// #define U_THETA  0x03B8
+// #define U_LAMDA  0x03BB
+// #define U_KOPPA  0x03DE
+// #define U_LOZENGE  0x29EB
+// #define U_CROSS_PRODUCT  0x2A2F
 
 struct brogueConsole {
     /*
