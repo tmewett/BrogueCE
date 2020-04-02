@@ -13,9 +13,9 @@
 #define PAUSE_BETWEEN_EVENT_POLLING     36L//17
 #define MAX_REMAPS  128
 
-// Dimensions of the font graphics. Divide by 16 to get individual character dimensions.
-static const int fontWidths[13] = {112, 128, 144, 160, 176, 192, 208, 224, 240, 256, 272, 288, 304};
-static const int fontHeights[13] = {176, 208, 240, 272, 304, 336, 368, 400, 432, 464, 496, 528, 528};
+// Dimensions of the font characters
+static const int fontWidths[13] = {7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
+static const int fontHeights[13] = {11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 33};
 
 struct keypair {
     char from;
@@ -71,8 +71,8 @@ static int fitFontSize(int width, int height) {
     for (
         size = 12;
         size > 0
-            && (fontWidths[size] / 16 * COLS > width
-                || fontHeights[size] / 16 * ROWS > height);
+            && (fontWidths[size] * COLS > width
+                || fontHeights[size] * ROWS > height);
         size--
     );
     return size + 1;
@@ -84,7 +84,7 @@ Creates or resizes the game window with the currently loaded font.
 */
 static void ensureWindow() {
     if (Font == NULL) return;
-    int cellw = Font->w / 16, cellh = Font->h / 16;
+    int cellw = fontWidths[brogueFontSize - 1], cellh = fontHeights[brogueFontSize - 1];
 
     if (Win != NULL) {
         SDL_SetWindowSize(Win, cellw*COLS, cellh*ROWS);
@@ -107,7 +107,7 @@ static void ensureWindow() {
 
 static void getWindowPadding(int *x, int *y) {
     if (Font == NULL) return;
-    int cellw = Font->w / 16, cellh = Font->h / 16;
+    int cellw = fontWidths[brogueFontSize - 1], cellh = fontHeights[brogueFontSize - 1];
 
     int winw, winh;
     SDL_GetWindowSize(Win, &winw, &winh);
@@ -224,7 +224,7 @@ platform-specific inputs/behaviours.
 */
 static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
     static int mx = 0, my = 0;
-    int cellw = Font->w / 16, cellh = Font->h / 16;
+    int cellw = fontWidths[brogueFontSize - 1], cellh = fontHeights[brogueFontSize - 1];
 
     int padx, pady;
     getWindowPadding(&padx, &pady);
@@ -452,7 +452,7 @@ static void _plotChar(
     getWindowPadding(&padx, &pady);
 
     SDL_Rect src, dest;
-    int cellw = Font->w / 16, cellh = Font->h / 16;
+    int cellw = fontWidths[brogueFontSize - 1], cellh = fontHeights[brogueFontSize - 1];
     src.x = (inputChar % 16) * cellw;
     src.y = (inputChar / 16) * cellh;
     src.w = cellw;
