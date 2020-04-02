@@ -172,6 +172,7 @@ unsigned int glyphToUnicode(enum displayGlyph glyph) {
         case G_ELECTRIC_CRYSTAL: return U_CURRENCY;
         case G_ASHES: return '\'';
         case G_BEDROLL: return '=';
+        case G_BLOODWORT_POD: return '*';
 
         default:
             brogueAssert(false);

@@ -283,7 +283,8 @@ enum displayGlyph {
     G_BONES,
     G_ELECTRIC_CRYSTAL,
     G_ASHES,
-    G_BEDROLL
+    G_BEDROLL,
+    G_BLOODWORT_POD
 };
 
 enum eventTypes {
