@@ -25,9 +25,11 @@ struct keypair {
 static SDL_Window *Win = NULL;
 static SDL_Surface *WinSurf = NULL;
 static SDL_Surface *Font = NULL;
+static SDL_Surface *Tiles = NULL;
 
 static struct keypair remapping[MAX_REMAPS];
 static size_t nremaps = 0;
+static boolean showTiles = true;
 
 static rogueEvent lastEvent;
 
@@ -54,13 +56,18 @@ static void refreshWindow() {
 
 static void loadFont(int fontsize) {
     char filename[BROGUE_FILENAME_MAX];
-    sprintf(filename, "%s/assets/font-%i.png", dataDirectory, fontsize);
 
     static int lastsize = 0;
     if (lastsize != fontsize) {
+        sprintf(filename, "%s/assets/font-%i.png", dataDirectory, fontsize);
         if (Font != NULL) SDL_FreeSurface(Font);
         Font = IMG_Load(filename);
         if (Font == NULL) imgfatal();
+
+        sprintf(filename, "%s/assets/tiles-%i.png", dataDirectory, fontsize);
+        if (Tiles != NULL) SDL_FreeSurface(Tiles);
+        Tiles = IMG_Load(filename);
+        if (Tiles == NULL) imgfatal();
     }
     lastsize = fontsize;
 }
@@ -410,32 +417,51 @@ static void _nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boo
 }
 
 
-static int fontIndex(unsigned int code) {
-    if (code < 128) return code;
-    switch (code) {
-        case U_MIDDLE_DOT: return 0x80;
-        case U_FOUR_DOTS: return 0x81;
-        case U_DIAMOND: return 0x82;
-        case U_FLIPPED_V: return 0x83;
-        case U_ARIES: return 0x84;
-        case U_ESZETT: return 0xdf;
-        case U_ANKH: return 0x85;
-        case U_MUSIC_NOTE: return 0x86;
-        case U_CIRCLE: return 0x87;
-        case U_LIGHTNING_BOLT: return 0x99;
-        case U_FILLED_CIRCLE: return 0x89;
-        case U_NEUTER: return 0x8a;
-        case U_U_ACUTE: return 0xda;
-        case U_CURRENCY: return 0xa4;
-        case U_UP_ARROW: return 0x90;
-        case U_DOWN_ARROW: return 0x91;
-        case U_LEFT_ARROW: return 0x92;
-        case U_RIGHT_ARROW: return 0x93;
-        case U_OMEGA: return 0x96;
-        case U_CIRCLE_BARS: return 0x8c;
-        case U_FILLED_CIRCLE_BARS: return 0x8d;
+/*
+Returns the index of the sprite representing the given glyph. Sprites <256 are
+from the text font sheet, 256+ are from the tiles sheet.
+*/
+static int fontIndex(enum displayGlyph glyph) {
+    // These are the only non-ASCII glyphs which always come from the font sheet
+    if (glyph == G_UP_ARROW) return 0x90;
+    if (glyph == G_DOWN_ARROW) return 0x91;
 
-        default: return '?';
+    if (glyph < 128) {
+        // ASCII characters map directly
+        return glyph;
+    } else if (showTiles && glyph >= 128) {
+        // Tile glyphs have sprite indices starting at 256
+        // -2 to disregard the up and down arrow glyphs
+        return glyph + 128 - 2;
+    } else {
+        unsigned int code = glyphToUnicode(glyph);
+        switch (code) {
+            case U_MIDDLE_DOT: return 0x80;
+            case U_FOUR_DOTS: return 0x81;
+            case U_DIAMOND: return 0x82;
+            case U_FLIPPED_V: return 0x83;
+            case U_ARIES: return 0x84;
+            case U_ESZETT: return 0xdf;
+            case U_ANKH: return 0x85;
+            case U_MUSIC_NOTE: return 0x86;
+            case U_CIRCLE: return 0x87;
+            case U_LIGHTNING_BOLT: return 0x99;
+            case U_FILLED_CIRCLE: return 0x89;
+            case U_NEUTER: return 0x8a;
+            case U_U_ACUTE: return 0xda;
+            case U_CURRENCY: return 0xa4;
+            case U_UP_ARROW: return 0x90;
+            case U_DOWN_ARROW: return 0x91;
+            case U_LEFT_ARROW: return 0x92;
+            case U_RIGHT_ARROW: return 0x93;
+            case U_OMEGA: return 0x96;
+            case U_CIRCLE_BARS: return 0x8c;
+            case U_FILLED_CIRCLE_BARS: return 0x8d;
+
+            default:
+                brogueAssert(code < 256);
+                return code;
+        }
     }
 }
 
@@ -446,10 +472,17 @@ static void _plotChar(
     short foreRed, short foreGreen, short foreBlue,
     short backRed, short backGreen, short backBlue
 ) {
-    inputChar = fontIndex(glyphToUnicode(inputChar));
-
     int padx, pady;
     getWindowPadding(&padx, &pady);
+
+    SDL_Surface *sheet;
+    inputChar = fontIndex(inputChar);
+    if (inputChar > 256) {
+        sheet = Tiles;
+        inputChar -= 256;
+    } else {
+        sheet = Font;
+    }
 
     SDL_Rect src, dest;
     int cellw = fontWidths[brogueFontSize - 1], cellh = fontHeights[brogueFontSize - 1];
@@ -466,8 +499,8 @@ static void _plotChar(
     SDL_FillRect(WinSurf, &dest, SDL_MapRGB(
         WinSurf->format, backRed * 255 / 100, backGreen * 255 / 100, backBlue * 255 / 100
     ));
-    SDL_SetSurfaceColorMod(Font, foreRed * 255 / 100, foreGreen * 255 / 100, foreBlue * 255 / 100);
-    SDL_BlitSurface(Font, &src, WinSurf, &dest);
+    SDL_SetSurfaceColorMod(sheet, foreRed * 255 / 100, foreGreen * 255 / 100, foreBlue * 255 / 100);
+    SDL_BlitSurface(sheet, &src, WinSurf, &dest);
 }
 
 
