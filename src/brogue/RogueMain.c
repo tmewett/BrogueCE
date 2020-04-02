@@ -1174,6 +1174,7 @@ void victory(boolean superVictory) {
     boolean qualified, isPlayback;
     cellDisplayBuffer dbuf[COLS][ROWS];
     char recordingFilename[BROGUE_FILENAME_MAX] = {0};
+    rogueEvent theEvent;
 
     flushBufferToFile();
 
@@ -1202,12 +1203,20 @@ void victory(boolean superVictory) {
 
     printString(displayedMessage[0], mapToWindowX(0), mapToWindowY(-1), &white, &black, dbuf);
 
+    if (KEYBOARD_LABELS) {
+        sprintf(buf, "(press 'i' to view your inventory)");
+        printString(buf, (COLS - strlen(buf)) / 2, mapToWindowY(0), &gray, &black, dbuf);
+    }
+
     printString("Gold", mapToWindowX(2), mapToWindowY(1), &white, &black, dbuf);
     sprintf(buf, "%li", rogue.gold);
     printString(buf, mapToWindowX(60), mapToWindowY(1), &itemMessageColor, &black, dbuf);
     totalValue += rogue.gold;
 
     for (i = 4, theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
+        // identify items whatever the kind of victory
+        identify(theItem);
+
         if (theItem->category & GEM) {
             gemCount += theItem->quantity;
         }
@@ -1218,7 +1227,6 @@ void victory(boolean superVictory) {
             totalValue += max(0, itemValue(theItem) * 2);
             i++;
         } else if (itemValue(theItem) > 0) {
-            identify(theItem);
             itemName(theItem, buf, true, true, &white);
             upperCase(buf);
             printString(buf, mapToWindowX(2), min(ROWS-1, i + 1), &white, &black, dbuf);
@@ -1265,9 +1273,18 @@ void victory(boolean superVictory) {
         qualified = false;
     }
 
+    // Show inventory with all items identify (shortcup "i")
+    displayMoreSignWithoutWaitingForAcknowledgment();
+    do {
+        nextBrogueEvent(&theEvent, false, false, false);
+        if (theEvent.eventType == KEYSTROKE && theEvent.param1 == INVENTORY_KEY) {
+            displayInventory(ALL_ITEMS, 0, 0, true, false);
+        }
+    } while (!(theEvent.eventType == KEYSTROKE && (theEvent.param1 == ACKNOWLEDGE_KEY || theEvent.param1 == ESCAPE_KEY)
+                   || theEvent.eventType == MOUSE_UP));
+
     isPlayback = rogue.playbackMode;
     rogue.playbackMode = false;
-    displayMoreSign();
     rogue.playbackMode = isPlayback;
 
     if (serverMode) {

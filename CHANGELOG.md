@@ -2,6 +2,8 @@ Unreleased
 ==========
 
 -
+  Possibility to view inventory when victory
+-
   Added a re-throw command (T), which throws the last item at the last-chosen
   monster
 -
