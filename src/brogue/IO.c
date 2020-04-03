@@ -263,6 +263,14 @@ short actionMenu(short x, boolean playingBack) {
             buttons[buttonCount].hotkey[0] = AUTOPLAY_KEY;
             buttonCount++;
 
+            if (KEYBOARD_LABELS) {
+                sprintf(buttons[buttonCount].text, "  %sT: %sRe-throw at last monster  ",              yellowColorEscape, whiteColorEscape);
+            } else {
+                strcpy(buttons[buttonCount].text, "  Re-throw at last monster  ");
+            }
+            buttons[buttonCount].hotkey[0] = RETHROW_KEY;
+            buttonCount++;
+
             if (!rogue.easyMode) {
                 if (KEYBOARD_LABELS) {
                     sprintf(buttons[buttonCount].text, "  %s&: %sEasy mode  ",              yellowColorEscape, whiteColorEscape);
@@ -291,7 +299,7 @@ short actionMenu(short x, boolean playingBack) {
                     strcpy(buttons[buttonCount].text, "  Open suspended game  ");
                 }
                 buttons[buttonCount].hotkey[0] = LOAD_SAVED_GAME_KEY;
-                buttonCount++;            
+                buttonCount++;
                 if (KEYBOARD_LABELS) {
                     sprintf(buttons[buttonCount].text, "  %sV: %sView saved recording  ",       yellowColorEscape, whiteColorEscape);
                 } else {
@@ -299,13 +307,13 @@ short actionMenu(short x, boolean playingBack) {
                 }
                 buttons[buttonCount].hotkey[0] = VIEW_RECORDING_KEY;
                 buttonCount++;
-                        
+
                 sprintf(buttons[buttonCount].text, "    %s---", darkGrayColorEscape);
                 buttons[buttonCount].flags &= ~B_ENABLED;
                 buttonCount++;
             }
         }
-        
+
         if (KEYBOARD_LABELS) {
             sprintf(buttons[buttonCount].text, "  %s\\: %s[%s] Hide color effects  ",   yellowColorEscape, whiteColorEscape, rogue.trueColorMode ? "X" : " ");
         } else {
