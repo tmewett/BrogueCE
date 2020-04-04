@@ -2,27 +2,46 @@ Unreleased
 ==========
 
 -
+  Water-restricted creatures can no longer jump back into water when on adjacent
+  dry land
+
+
+1.8.2
+=====
+
+This release contains general improvements and some fixes to regressions caused
+by CE. Gameplay is identical to all 1.8 versions.
+
+Thanks to contributors kzved, flend, Vivit-R and zespri.
+
+
+Bug fixes
+---------
+-
+  Fixed the game screen going black after alt-tabbing while fullscreen on some
+  platforms
+-
+  Fixed the weird scaling when going fullscreen on some platforms
+-
   Fixed a rare bug on Linux where some item names would not show
+
+Other changes
+-------------
+-
+  The Mac release is now an app!
 -
   Added a re-throw command (T), which throws the last item at the last-chosen
   monster
 -
   The game window is now freely resizable, and the best-fitting font size is
-  automatically chosen. This also fixes the weird scaling when going fullscreen
+  automatically chosen
 -
-  Fixed the game screen going black after alt-tabbing while fullscreen on some
-  platforms
+  Restored right-click shortcut to show inventory
 -
-  The Mac release is now an app
+  (For developers) When building in debug mode, the cheats are now toggled by a
+  `--wizard` command line option
 -
-  Added `--wizard` command line option to enable debug features
--
-  Adding the `--server-mode` command line parameter used to run the game from an external launcher
--
-  Restored inventory on right click functionality
--
-  Water-restricted creatures can no longer jump back into water when on adjacent
-  dry land
+  The WebBrogue back-end is now built-in, and can be enabled with a build option
 
 
 1.8.1
