@@ -2,19 +2,47 @@ Unreleased
 ==========
 
 -
-  The game window is now freely resizable, and the best-fitting font size is
-  automatically chosen. This also fixes the weird scaling when going fullscreen
+  Water-restricted creatures can no longer jump back into water when on adjacent
+  dry land
+
+
+1.8.2
+=====
+
+This release contains general improvements and some fixes to regressions caused
+by CE. Gameplay is identical to all 1.8 versions.
+
+Thanks to contributors kzved, flend, Vivit-R and zespri.
+
+
+Bug fixes
+---------
 -
   Fixed the game screen going black after alt-tabbing while fullscreen on some
   platforms
 -
-  The Mac release is now an app
+  Fixed the weird scaling when going fullscreen on some platforms
 -
-  Added `--wizard` command line option to enable debug features
+  Fixed a rare bug on Linux where some item names would not show
+
+Other changes
+-------------
 -
-  Adding the `--server-mode` command line parameter used to run the game from an external launcher
+  The Mac release is now an app!
 -
-  Restored inventory on right click functionality
+  Added a re-throw command (T), which throws the last item at the last-chosen
+  monster
+-
+  The game window is now freely resizable, and the best-fitting font size is
+  automatically chosen
+-
+  Restored right-click shortcut to show inventory
+-
+  (For developers) When building in debug mode, the cheats are now toggled by a
+  `--wizard` command line option
+-
+  The WebBrogue back-end is now built-in, and can be enabled with a build option
+
 
 1.8.1
 =====

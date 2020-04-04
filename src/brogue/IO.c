@@ -263,6 +263,14 @@ short actionMenu(short x, boolean playingBack) {
             buttons[buttonCount].hotkey[0] = AUTOPLAY_KEY;
             buttonCount++;
 
+            if (KEYBOARD_LABELS) {
+                sprintf(buttons[buttonCount].text, "  %sT: %sRe-throw at last monster  ",              yellowColorEscape, whiteColorEscape);
+            } else {
+                strcpy(buttons[buttonCount].text, "  Re-throw at last monster  ");
+            }
+            buttons[buttonCount].hotkey[0] = RETHROW_KEY;
+            buttonCount++;
+
             if (!rogue.easyMode) {
                 if (KEYBOARD_LABELS) {
                     sprintf(buttons[buttonCount].text, "  %s&: %sEasy mode  ",              yellowColorEscape, whiteColorEscape);
@@ -291,7 +299,7 @@ short actionMenu(short x, boolean playingBack) {
                     strcpy(buttons[buttonCount].text, "  Open suspended game  ");
                 }
                 buttons[buttonCount].hotkey[0] = LOAD_SAVED_GAME_KEY;
-                buttonCount++;            
+                buttonCount++;
                 if (KEYBOARD_LABELS) {
                     sprintf(buttons[buttonCount].text, "  %sV: %sView saved recording  ",       yellowColorEscape, whiteColorEscape);
                 } else {
@@ -299,13 +307,13 @@ short actionMenu(short x, boolean playingBack) {
                 }
                 buttons[buttonCount].hotkey[0] = VIEW_RECORDING_KEY;
                 buttonCount++;
-                        
+
                 sprintf(buttons[buttonCount].text, "    %s---", darkGrayColorEscape);
                 buttons[buttonCount].flags &= ~B_ENABLED;
                 buttonCount++;
             }
         }
-        
+
         if (KEYBOARD_LABELS) {
             sprintf(buttons[buttonCount].text, "  %s\\: %s[%s] Hide color effects  ",   yellowColorEscape, whiteColorEscape, rogue.trueColorMode ? "X" : " ");
         } else {
@@ -2457,7 +2465,12 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             apply(NULL, true);
             break;
         case THROW_KEY:
-            throwCommand(NULL);
+            throwCommand(NULL, false);
+            break;
+        case RETHROW_KEY:
+            if (rogue.lastItemThrown != NULL && itemIsCarried(rogue.lastItemThrown)) {
+                throwCommand(rogue.lastItemThrown, true);
+            }
             break;
         case RELABEL_KEY:
             relabel(NULL);
@@ -3669,6 +3682,7 @@ void printHelpScreen() {
         "hjklyubn, arrow keys, or numpad  ****move or attack (control or shift to run)",
         "",
         " a/e/r/t/d/c/R  ****apply/equip/remove/throw/drop/call/relabel an item",
+        "             T  ****re-throw last item at last monster",
         "i, right-click  ****view inventory",
         "             D  ****list discovered items",
         "",
@@ -3681,8 +3695,6 @@ void printHelpScreen() {
         "             M  ****display old messages",
         "",
         "             S  ****suspend game and quit",
-        "             O  ****open saved game",
-        "             V  ****view saved recording",
         "             Q  ****quit to title screen",
         "",
         "             \\  ****disable/enable color effects",
