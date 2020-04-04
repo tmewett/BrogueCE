@@ -2,6 +2,8 @@ Unreleased
 ==========
 
 -
+  Fixed a rare bug on Linux where some item names would not show
+-
   Added a re-throw command (T), which throws the last item at the last-chosen
   monster
 -
