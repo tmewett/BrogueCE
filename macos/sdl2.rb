@@ -1,11 +1,9 @@
 class Sdl2 < Formula
   desc "Low-level access to audio, keyboard, mouse, joystick, and graphics"
   homepage "https://www.libsdl.org/"
-
-  stable do
-    url "https://www.libsdl.org/release/SDL2-2.0.12.tar.gz"
-    sha256 "349268f695c02efbc9b9148a70b85e58cefbbf704abd3e91be654db7f1e2c863"
-  end
+  url "https://www.libsdl.org/release/SDL2-2.0.12.tar.gz"
+  sha256 "349268f695c02efbc9b9148a70b85e58cefbbf704abd3e91be654db7f1e2c863"
+  revision 1
 
   head do
     url "https://hg.libsdl.org/SDL", :using => :hg
