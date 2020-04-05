@@ -1166,7 +1166,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
 }
 
 void victory(boolean superVictory) {
-    char buf[COLS*3], victoryVerb[20];
+    char buf[COLS*3], buf2[COLS*3], victoryVerb[20];
     item *theItem;
     short i, j, gemCount = 0;
     unsigned long totalValue = 0;
@@ -1177,6 +1177,9 @@ void victory(boolean superVictory) {
 
     flushBufferToFile();
 
+    //
+    // First screen - Congratulations...
+    //
     deleteMessages();
     if (superVictory) {
         message(    "Light streams through the portal, and you are teleported out of the dungeon.", false);
@@ -1200,6 +1203,9 @@ void victory(boolean superVictory) {
         strcpy(displayedMessage[0], "You sell your treasures and live out your days in fame and glory.");
     }
 
+    //
+    // Second screen - Show inventory and item's value
+    //
     printString(displayedMessage[0], mapToWindowX(0), mapToWindowY(-1), &white, &black, dbuf);
 
     printString("Gold", mapToWindowX(2), mapToWindowY(1), &white, &black, dbuf);
@@ -1217,13 +1223,19 @@ void victory(boolean superVictory) {
             printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
             totalValue += max(0, itemValue(theItem) * 2);
             i++;
-        } else if (itemValue(theItem) > 0) {
+        } else {
             identify(theItem);
-            itemName(theItem, buf, true, true, &white);
+            itemName(theItem, buf, false, true, &white);
             upperCase(buf);
-            printString(buf, mapToWindowX(2), min(ROWS-1, i + 1), &white, &black, dbuf);
-            sprintf(buf, "%li", max(0, itemValue(theItem)));
-            printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
+
+            sprintf(buf2, "%c - %s", theItem->displayChar, buf);
+            printString(buf2, mapToWindowX(2), min(ROWS-1, i + 1), &white, &black, dbuf);
+
+            if (itemValue(theItem) > 0) {
+                sprintf(buf, "%li", max(0, itemValue(theItem)));
+                printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
+            }
+
             totalValue += max(0, itemValue(theItem));
             i++;
         }
@@ -1233,7 +1245,17 @@ void victory(boolean superVictory) {
     sprintf(buf, "%li", totalValue);
     printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &lightBlue, &black, dbuf);
 
-    i += 4;
+    funkyFade(dbuf, &white, 0, 120, COLS/2, ROWS/2, true);
+    displayMoreSign();
+    clearDisplayBuffer(dbuf);
+    deleteMessages();
+
+    //
+    // Third screen - List of achievements
+    //
+    printString("Achievements", mapToWindowX(0), mapToWindowY(-1), &white, &black, dbuf);
+
+    i = 4;
     for (j = 0; i < ROWS && j < FEAT_COUNT; j++) {
         if (rogue.featRecord[j]) {
             sprintf(buf, "%s: %s", featTable[j].name, featTable[j].description);
@@ -1244,6 +1266,9 @@ void victory(boolean superVictory) {
 
     funkyFade(dbuf, &white, 0, 120, COLS/2, ROWS/2, true);
 
+    //
+    // Fourth screen - Save recording
+    //
     strcpy(victoryVerb, superVictory ? "Mastered" : "Escaped");
     if (gemCount == 0) {
         sprintf(theEntry.description, "%s the Dungeons of Doom!", victoryVerb);
@@ -1269,6 +1294,7 @@ void victory(boolean superVictory) {
     rogue.playbackMode = false;
     displayMoreSign();
     rogue.playbackMode = isPlayback;
+
 
     if (serverMode) {
         saveRecordingNoPrompt(recordingFilename);

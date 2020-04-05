@@ -2,6 +2,8 @@ Unreleased
 ==========
 
 -
+  Display inventory when victory and add separate screen to display achievements.
+-
   Water-restricted creatures can no longer jump back into water when on adjacent
   dry land
 
