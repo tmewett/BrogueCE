@@ -28,9 +28,11 @@ I am quite picky about commits, as I find a good history to be very beneficial.
 - Keep your commit history clean of errors and fixups (e.g. by [rewriting
 history][2])
 - Follow [the seven rules of a great commit message][3]
-- Add changes users would care about to the CHANGELOG, in non-technical
-language. (If the change is from one commit, include this edit in it. For a
-branch or multiple commits, make it separate)
+
+When making user-facing changes, please add a non-technical description of each
+change to a Markdown (.md) file in `changes/`. These files are collated to
+create the release notes. If the change is from one commit, include this file in
+it. For a branch of multiple commits, add it in a separate commit.
 
 [1]: https://help.github.com/en/github
 [2]: https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History
