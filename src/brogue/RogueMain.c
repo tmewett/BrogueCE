@@ -1177,6 +1177,9 @@ void victory(boolean superVictory) {
 
     flushBufferToFile();
 
+    //
+    // First screen - Congratulations...
+    //
     deleteMessages();
     if (superVictory) {
         message(    "Light streams through the portal, and you are teleported out of the dungeon.", false);
@@ -1200,9 +1203,13 @@ void victory(boolean superVictory) {
         strcpy(displayedMessage[0], "You sell your treasures and live out your days in fame and glory.");
     }
 
+    //
+    // Second screen - Show inventory and item's value
+    //
     printString(displayedMessage[0], mapToWindowX(0), mapToWindowY(-1), &white, &black, dbuf);
 
-    printString("Gold", mapToWindowX(2), mapToWindowY(1), &white, &black, dbuf);
+    plotCharToBuffer(GOLD_CHAR, mapToWindowX(2), mapToWindowY(1), &yellow, &black, dbuf);
+    printString("Gold", mapToWindowX(4), mapToWindowY(1), &white, &black, dbuf);
     sprintf(buf, "%li", rogue.gold);
     printString(buf, mapToWindowX(60), mapToWindowY(1), &itemMessageColor, &black, dbuf);
     totalValue += rogue.gold;
@@ -1212,18 +1219,25 @@ void victory(boolean superVictory) {
             gemCount += theItem->quantity;
         }
         if (theItem->category == AMULET && superVictory) {
-            printString("The Birthright of Yendor", mapToWindowX(2), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
+            plotCharToBuffer(AMULET_CHAR, mapToWindowX(2), min(ROWS-1, i + 1), &yellow, &black, dbuf);
+            printString("The Birthright of Yendor", mapToWindowX(4), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
             sprintf(buf, "%li", max(0, itemValue(theItem) * 2));
             printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
             totalValue += max(0, itemValue(theItem) * 2);
             i++;
-        } else if (itemValue(theItem) > 0) {
+        } else {
             identify(theItem);
-            itemName(theItem, buf, true, true, &white);
+            itemName(theItem, buf, false, true, &white);
             upperCase(buf);
-            printString(buf, mapToWindowX(2), min(ROWS-1, i + 1), &white, &black, dbuf);
-            sprintf(buf, "%li", max(0, itemValue(theItem)));
-            printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
+
+            plotCharToBuffer(theItem->displayChar, mapToWindowX(2), min(ROWS-1, i + 1), &yellow, &black, dbuf);
+            printString(buf, mapToWindowX(4), min(ROWS-1, i + 1), &white, &black, dbuf);
+
+            if (itemValue(theItem) > 0) {
+                sprintf(buf, "%li", max(0, itemValue(theItem)));
+                printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
+            }
+
             totalValue += max(0, itemValue(theItem));
             i++;
         }
@@ -1233,17 +1247,27 @@ void victory(boolean superVictory) {
     sprintf(buf, "%li", totalValue);
     printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &lightBlue, &black, dbuf);
 
-    i += 4;
+    funkyFade(dbuf, &white, 0, 120, COLS/2, ROWS/2, true);
+    displayMoreSign();
+
+    //
+    // Third screen - List of achievements
+    //
+    blackOutScreen();
+    printString("Achievements", mapToWindowX(0), mapToWindowY(-1), &lightBlue, &black, NULL);
+
+    i = 4;
     for (j = 0; i < ROWS && j < FEAT_COUNT; j++) {
         if (rogue.featRecord[j]) {
             sprintf(buf, "%s: %s", featTable[j].name, featTable[j].description);
-            printString(buf, mapToWindowX(2), i, &advancementMessageColor, &black, dbuf);
+            printString(buf, mapToWindowX(2), i, &advancementMessageColor, &black, NULL);
             i++;
         }
     }
 
-    funkyFade(dbuf, &white, 0, 120, COLS/2, ROWS/2, true);
-
+    //
+    // Fourth screen - Save recording
+    //
     strcpy(victoryVerb, superVictory ? "Mastered" : "Escaped");
     if (gemCount == 0) {
         sprintf(theEntry.description, "%s the Dungeons of Doom!", victoryVerb);
@@ -1268,7 +1292,9 @@ void victory(boolean superVictory) {
     isPlayback = rogue.playbackMode;
     rogue.playbackMode = false;
     displayMoreSign();
+    blackOutScreen();
     rogue.playbackMode = isPlayback;
+
 
     if (serverMode) {
         saveRecordingNoPrompt(recordingFilename);
