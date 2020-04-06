@@ -1,0 +1,142 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index d84221e..0f9f90f 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -2,6 +2,9 @@ unreleased
+ ==========
+ 
+ -
++  The game pauses and requires a keystroke on health and poison warnings.
++  Can be disabled
++-
+   The sidebar now displays whether a monster is carrying an item
+ -
+   Fixed incorrect percentage health change info in sidebar
+diff --git a/src/brogue/IO.c b/src/brogue/IO.c
+index 72178cf..fee7fa1 100644
+--- a/src/brogue/IO.c
++++ b/src/brogue/IO.c
+@@ -317,6 +317,14 @@ short actionMenu(short x, boolean playingBack) {
+         buttons[buttonCount].hotkey[0] = AGGRO_DISPLAY_KEY;
+         takeActionOurselves[buttonCount] = true;
+         buttonCount++;
++        if (KEYBOARD_LABELS) {
++            sprintf(buttons[buttonCount].text, "  %s[: %s%s low health warnings  ", yellowColorEscape, whiteColorEscape, rogue.warningPauseMode ? "Disable" : "Enable");
++        } else {
++            sprintf(buttons[buttonCount].text, "  %s low health warnings  ", rogue.warningPauseMode ? "Disable" : "Enable");
++        }
++        buttons[buttonCount].hotkey[0] = WARNING_PAUSE_KEY;
++        takeActionOurselves[buttonCount] = true;
++        buttonCount++;
+         sprintf(buttons[buttonCount].text, "    %s---", darkGrayColorEscape);
+         buttons[buttonCount].flags &= ~B_ENABLED;
+         buttonCount++;
+@@ -2478,6 +2486,16 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
+                                  &teal, false);
+             }
+             break;
++        case WARNING_PAUSE_KEY:
++            rogue.warningPauseMode = !rogue.warningPauseMode;
++            if (rogue.warningPauseMode) {
++                messageWithColor(KEYBOARD_LABELS ? "Low health warning pauses enabled. Press '[' again to disable." : "Pause on warnings activated.",
++                                 &teal, false);
++            } else {
++                messageWithColor(KEYBOARD_LABELS ? "Low health warning pauses disabled. Press '[' again to enable." : "Pause on warnings deactivated.",
++                                 &teal, false);
++            }
++            break;
+         case CALL_KEY:
+             call(NULL);
+             break;
+@@ -3642,7 +3660,7 @@ char nextKeyPress(boolean textInput) {
+     return theEvent.param1;
+ }
+ 
+-#define BROGUE_HELP_LINE_COUNT  33
++#define BROGUE_HELP_LINE_COUNT  34
+ 
+ void printHelpScreen() {
+     short i, j;
+@@ -3678,6 +3696,7 @@ void printHelpScreen() {
+         "",
+         "             \\  ****disable/enable color effects",
+         "             ]  ****display/hide stealth range",
++        "             [  ****disable/enable low health warning",
+         "   <space/esc>  ****clear message or cancel command",
+         "",
+         "        -- press space or click to continue --"
+diff --git a/src/brogue/Rogue.h b/src/brogue/Rogue.h
+index d43ec10..59c0796 100644
+--- a/src/brogue/Rogue.h
++++ b/src/brogue/Rogue.h
+@@ -1116,6 +1116,7 @@ enum tileFlags {
+ #define RELABEL_KEY         'R'
+ #define TRUE_COLORS_KEY     '\\'
+ #define AGGRO_DISPLAY_KEY   ']'
++#define WARNING_PAUSE_KEY   '['
+ #define DROP_KEY            'd'
+ #define CALL_KEY            'c'
+ #define QUIT_KEY            'Q'
+@@ -2220,6 +2221,7 @@ typedef struct playerCharacter {
+     boolean eligibleToUseStairs;        // so the player uses stairs only when he steps onto them
+     boolean trueColorMode;              // whether lighting effects are disabled
+     boolean displayAggroRangeMode;      // whether your stealth range is displayed
++    boolean warningPauseMode;           // whether the game requires a keypress to continue in low health / high poison situations
+     boolean quit;                       // to skip the typical end-game theatrics when the player quits
+     unsigned long seed;                 // the master seed for generating the entire dungeon
+     short RNG;                          // which RNG are we currently using?
+diff --git a/src/brogue/RogueMain.c b/src/brogue/RogueMain.c
+index b82adcf..94047f5 100644
+--- a/src/brogue/RogueMain.c
++++ b/src/brogue/RogueMain.c
+@@ -230,6 +230,7 @@ void initializeRogue(unsigned long seed) {
+     rogue.highScoreSaved = false;
+     rogue.cautiousMode = false;
+     rogue.milliseconds = 0;
++    rogue.warningPauseMode = true;
+ 
+     rogue.RNG = RNG_SUBSTANTIVE;
+     if (!rogue.playbackMode) {
+diff --git a/src/brogue/Time.c b/src/brogue/Time.c
+index ed207d4..29e7824 100644
+--- a/src/brogue/Time.c
++++ b/src/brogue/Time.c
+@@ -861,10 +861,11 @@ void flashCreatureAlert(creature *monst, char msg[200], color *foreColor, color
+ }
+ 
+ void handleHealthAlerts() {
+-    short i, currentPercent, previousPercent,
++    short i, offset, currentPercent, previousPercent,
+     thresholds[] = {5, 10, 25, 40},
+     pThresholds[] = {100, 90, 50};
+     char buf[DCOLS];
++    char colorbuf[DCOLS + 4];
+ 
+     const short healthThresholdsCount = 4,
+     poisonThresholdsCount = 3;
+@@ -879,6 +880,12 @@ void handleHealthAlerts() {
+             if (currentPercent < thresholds[i] && previousPercent >= thresholds[i]) {
+                 sprintf(buf, " <%i%% health ", thresholds[i]);
+                 flashCreatureAlert(&player, buf, &badMessageColor, &darkRed);
++                if(rogue.warningPauseMode) {
++                    offset = encodeMessageColor(colorbuf, 0, &badMessageColor);
++                    strcpy(colorbuf + offset, "LOW HEALTH WARNING:");
++                    strncat(colorbuf, buf, DCOLS + offset - 19);
++                    message(colorbuf, true);
++                }
+                 break;
+             }
+         }
+@@ -896,6 +903,12 @@ void handleHealthAlerts() {
+                         strcpy(buf, " Fatally poisoned ");
+                     }
+                     flashCreatureAlert(&player, buf, &yellow, &darkGreen);
++                    if(rogue.warningPauseMode) {
++                        offset = encodeMessageColor(colorbuf, 0, &badMessageColor);
++                        strcpy(colorbuf + offset, "POISON WARNING:");
++                        strncat(colorbuf, buf, DCOLS + offset - 15);
++                        message(colorbuf, true);
++                    }
+                     break;
+                 }
+             }
