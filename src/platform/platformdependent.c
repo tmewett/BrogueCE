@@ -114,7 +114,7 @@ unsigned int glyphToUnicode(enum displayGlyph glyph) {
         case G_BAT: return 'v';
         case G_WISP: return 'w';
         case G_PHOENIX: return 'P';
-        case G_ALTAR: return '-';
+        case G_ALTAR: return '|';
         case G_LIQUID: return '~';
         case G_FLOOR: return U_MIDDLE_DOT;
         case G_CHASM: return U_FOUR_DOTS;
@@ -161,8 +161,8 @@ unsigned int glyphToUnicode(enum displayGlyph glyph) {
         case G_STATUE: return U_ESZETT;
         case G_CRACKED_STATUE: return U_ESZETT;
         case G_CLOSED_CAGE: return '#';
-        case G_OPEN_CAGE: return '-';
-        case G_PEDESTAL: return '-';
+        case G_OPEN_CAGE: return '|';
+        case G_PEDESTAL: return '|';
         case G_CLOSED_COFFIN: return '-';
         case G_OPEN_COFFIN: return '-';
         case G_HOLE: return U_FOUR_DOTS;
