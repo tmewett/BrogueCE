@@ -1166,7 +1166,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
 }
 
 void victory(boolean superVictory) {
-    char buf[COLS*3], buf2[COLS*3], victoryVerb[20];
+    char buf[COLS*3], victoryVerb[20];
     item *theItem;
     short i, j, gemCount = 0;
     unsigned long totalValue = 0;
@@ -1208,7 +1208,8 @@ void victory(boolean superVictory) {
     //
     printString(displayedMessage[0], mapToWindowX(0), mapToWindowY(-1), &white, &black, dbuf);
 
-    printString("Gold", mapToWindowX(2), mapToWindowY(1), &white, &black, dbuf);
+    plotCharToBuffer(GOLD_CHAR, mapToWindowX(2), mapToWindowY(1), &yellow, &black, dbuf);
+    printString("Gold", mapToWindowX(4), mapToWindowY(1), &white, &black, dbuf);
     sprintf(buf, "%li", rogue.gold);
     printString(buf, mapToWindowX(60), mapToWindowY(1), &itemMessageColor, &black, dbuf);
     totalValue += rogue.gold;
@@ -1218,7 +1219,8 @@ void victory(boolean superVictory) {
             gemCount += theItem->quantity;
         }
         if (theItem->category == AMULET && superVictory) {
-            printString("The Birthright of Yendor", mapToWindowX(2), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
+            plotCharToBuffer(AMULET_CHAR, mapToWindowX(2), min(ROWS-1, i + 1), &yellow, &black, dbuf);
+            printString("The Birthright of Yendor", mapToWindowX(4), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
             sprintf(buf, "%li", max(0, itemValue(theItem) * 2));
             printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
             totalValue += max(0, itemValue(theItem) * 2);
@@ -1228,8 +1230,8 @@ void victory(boolean superVictory) {
             itemName(theItem, buf, false, true, &white);
             upperCase(buf);
 
-            sprintf(buf2, "%c - %s", theItem->displayChar, buf);
-            printString(buf2, mapToWindowX(2), min(ROWS-1, i + 1), &white, &black, dbuf);
+            plotCharToBuffer(theItem->displayChar, mapToWindowX(2), min(ROWS-1, i + 1), &yellow, &black, dbuf);
+            printString(buf, mapToWindowX(4), min(ROWS-1, i + 1), &white, &black, dbuf);
 
             if (itemValue(theItem) > 0) {
                 sprintf(buf, "%li", max(0, itemValue(theItem)));
@@ -1247,24 +1249,21 @@ void victory(boolean superVictory) {
 
     funkyFade(dbuf, &white, 0, 120, COLS/2, ROWS/2, true);
     displayMoreSign();
-    clearDisplayBuffer(dbuf);
-    deleteMessages();
 
     //
     // Third screen - List of achievements
     //
-    printString("Achievements", mapToWindowX(0), mapToWindowY(-1), &white, &black, dbuf);
+    blackOutScreen();
+    printString("Achievements", mapToWindowX(0), mapToWindowY(-1), &lightBlue, &black, NULL);
 
     i = 4;
     for (j = 0; i < ROWS && j < FEAT_COUNT; j++) {
         if (rogue.featRecord[j]) {
             sprintf(buf, "%s: %s", featTable[j].name, featTable[j].description);
-            printString(buf, mapToWindowX(2), i, &advancementMessageColor, &black, dbuf);
+            printString(buf, mapToWindowX(2), i, &advancementMessageColor, &black, NULL);
             i++;
         }
     }
-
-    funkyFade(dbuf, &white, 0, 120, COLS/2, ROWS/2, true);
 
     //
     // Fourth screen - Save recording
@@ -1293,6 +1292,7 @@ void victory(boolean superVictory) {
     isPlayback = rogue.playbackMode;
     rogue.playbackMode = false;
     displayMoreSign();
+    blackOutScreen();
     rogue.playbackMode = isPlayback;
 
 
