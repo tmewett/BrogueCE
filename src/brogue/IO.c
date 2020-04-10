@@ -1171,7 +1171,7 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
             if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience) {
                 cellChar = (rand_range(0, 1) ? 'X' : 'x');
             } else {
-                cellChar = (monst->info.displayChar >= 'a' && monst->info.displayChar <= 'z' ? 'x' : 'X');
+                cellChar = (monst->info.isLarge ? 'X' : 'x');
             }
             cellForeColor = white;
             lightMultiplierColor = white;

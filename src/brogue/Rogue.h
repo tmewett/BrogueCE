@@ -2028,6 +2028,7 @@ typedef struct creatureType {
     short attackSpeed;
     enum dungeonFeatureTypes bloodType;
     enum lightType intrinsicLightType;
+    boolean isLarge;    // used for size of psychic emanation
     short DFChance;                     // percent chance to spawn the dungeon feature per awake turn
     enum dungeonFeatureTypes DFType;    // kind of dungeon feature
     enum boltType bolts[20];
