@@ -54,7 +54,7 @@ struct brogueConsole {
     Draw a character at a location with a specific color.
     */
     void (*plotChar)(
-        uchar inputChar,
+        enum displayGlyph inputChar,
         short x, short y,
         short foreRed, short foreGreen, short foreBlue,
         short backRed, short backGreen, short backBlue

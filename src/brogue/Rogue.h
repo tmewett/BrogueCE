@@ -105,9 +105,6 @@ typedef long long fixpt;
 // Date format used when listing recordings and high scores
 #define DATE_FORMAT             "%Y-%m-%d" // see strftime() documentation
 
-// Allows unicode characters:
-#define uchar                   unsigned short
-
 #define MESSAGE_LINES           3
 #define MESSAGE_ARCHIVE_LINES   ROWS
 
@@ -1208,7 +1205,7 @@ enum dungeonLayers {
 
 // keeps track of graphics so we only redraw if the cell has changed:
 typedef struct cellDisplayBuffer {
-    uchar character;
+    enum displayGlyph character;
     char foreColorComponents[3];
     char backColorComponents[3];
     char opacity;
@@ -1311,7 +1308,7 @@ typedef struct item {
     enum monsterTypes vorpalEnemy;
     short strengthRequired;
     unsigned short quiverNumber;
-    uchar displayChar;
+    enum displayGlyph displayChar;
     color *foreColor;
     color *inventoryColor;
     short quantity;
@@ -1733,7 +1730,7 @@ typedef struct bolt {
     char name[DCOLS];
     char description[COLS];
     char abilityDescription[COLS*2];
-    uchar theChar;
+    enum displayGlyph theChar;
     const color *foreColor;
     const color *backColor;
     short boltEffect;
@@ -1774,7 +1771,7 @@ typedef struct dungeonFeature {
 // Terrain types:
 typedef struct floorTileType {
     // appearance:
-    uchar displayChar;
+    enum displayGlyph displayChar;
     const color *foreColor;
     const color *backColor;
     short drawPriority;                     // priority (lower number means higher priority); governs drawing as well as tile replacement comparisons.
@@ -2017,7 +2014,7 @@ enum monsterBookkeepingFlags {
 typedef struct creatureType {
     enum monsterTypes monsterID; // index number for the monsterCatalog
     char monsterName[COLS];
-    uchar displayChar;
+    enum displayGlyph displayChar;
     const color *foreColor;
     short maxHP;
     short defense;
@@ -2533,7 +2530,7 @@ typedef struct brogueButton {
     signed long hotkey[10];     // up to 10 hotkeys to trigger the button
     color buttonColor;          // background of the button; further gradient-ized when displayed
     short opacity;              // further reduced by 50% if not enabled
-    uchar symbol[COLS];         // Automatically replace the nth asterisk in the button label text with
+    enum displayGlyph symbol[COLS];         // Automatically replace the nth asterisk in the button label text with
                                 // the nth character supplied here, if one is given.
                                 // (Primarily to display magic character and item symbols in the inventory display.)
     unsigned long flags;
@@ -2611,7 +2608,7 @@ extern "C" {
     void bakeColor(color *theColor);
     void shuffleTerrainColors(short percentOfCells, boolean refreshCells);
     void normColor(color *baseColor, const short aggregateMultiplier, const short colorTranslation);
-    void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeColor, color *returnBackColor);
+    void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *returnForeColor, color *returnBackColor);
     void logBuffer(char array[DCOLS][DROWS]);
     //void logBuffer(short **array);
     boolean search(short searchStrength);
@@ -2644,7 +2641,7 @@ extern "C" {
     void zeroOutGrid(char grid[DCOLS][DROWS]);
     short oppositeDirection(short theDir);
 
-    void plotChar(uchar inputChar,
+    void plotChar(enum displayGlyph inputChar,
                   short xLoc, short yLoc,
                   short backRed, short backGreen, short backBlue,
                   short foreRed, short foreGreen, short foreBlue);
@@ -2706,9 +2703,9 @@ extern "C" {
     void colorBlendCell(short x, short y, color *hiliteColor, short hiliteStrength);
     void hiliteCell(short x, short y, const color *hiliteColor, short hiliteStrength, boolean distinctColors);
     void colorMultiplierFromDungeonLight(short x, short y, color *editColor);
-    void plotCharWithColor(uchar inputChar, short xLoc, short yLoc, const color *cellForeColor, const color *cellBackColor);
-    void plotCharToBuffer(uchar inputChar, short x, short y, color *foreColor, color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
-    void plotForegroundChar(uchar inputChar, short x, short y, color *foreColor, boolean affectedByLighting);
+    void plotCharWithColor(enum displayGlyph inputChar, short xLoc, short yLoc, const color *cellForeColor, const color *cellBackColor);
+    void plotCharToBuffer(enum displayGlyph inputChar, short x, short y, color *foreColor, color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
+    void plotForegroundChar(enum displayGlyph inputChar, short x, short y, color *foreColor, boolean affectedByLighting);
     void commitDraws();
     void dumpLevelToScreen();
     void hiliteCharGrid(char hiliteCharGrid[DCOLS][DROWS], color *hiliteColor, short hiliteStrength);
@@ -3108,7 +3105,7 @@ extern "C" {
     void pausePlayback();
     void displayAnnotation();
     void loadSavedGame();
-    void recordKeystroke(uchar keystroke, boolean controlKey, boolean shiftKey);
+    void recordKeystroke(int keystroke, boolean controlKey, boolean shiftKey);
     void recordKeystrokeSequence(unsigned char *commandSequence);
     void recordMouseClick(short x, short y, boolean controlKey, boolean shiftKey);
     void OOSCheck(unsigned long x, short numberOfBytes);

@@ -784,7 +784,7 @@ boolean playerMoves(short direction) {
     creature *defender = NULL, *tempMonst = NULL, *hitList[16] = {NULL};
     char monstName[COLS];
     char buf[COLS*3];
-    const uchar directionKeys[8] = {UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, UPLEFT_KEY, DOWNLEFT_KEY, UPRIGHT_KEY, DOWNRIGHT_KEY};
+    const int directionKeys[8] = {UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, UPLEFT_KEY, DOWNLEFT_KEY, UPRIGHT_KEY, DOWNRIGHT_KEY};
 
     brogueAssert(direction >= 0 && direction < DIRECTION_COUNT);
 

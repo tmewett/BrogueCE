@@ -181,7 +181,7 @@ unsigned int glyphToUnicode(enum displayGlyph glyph) {
 }
 
 
-void plotChar(uchar inputChar,
+void plotChar(enum displayGlyph inputChar,
               short xLoc, short yLoc,
               short foreRed, short foreGreen, short foreBlue,
               short backRed, short backGreen, short backBlue) {

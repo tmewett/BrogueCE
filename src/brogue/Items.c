@@ -4554,7 +4554,7 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
     const color *boltColor;
     fixpt boltLightRadius;
 
-    uchar theChar;
+    enum displayGlyph theChar;
     color foreColor, backColor, multColor;
 
     lightSource boltLights[500];
@@ -5546,7 +5546,7 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
     short i, x, y, numCells;
     creature *monst = NULL;
     char buf[COLS*3], buf2[COLS*3], buf3[COLS*3];
-    uchar displayChar;
+    enum displayGlyph displayChar;
     color foreColor, backColor, multColor;
     short dropLoc[2];
     boolean hitSomethingSolid = false, fastForward = false;

@@ -107,7 +107,7 @@ boolean openFile(const char *path) {
 void benchmark() {
     short i, j, k;
     const color sparklesauce = {10, 0, 20,  60, 40, 100, 30, true};
-    uchar theChar;
+    enum displayGlyph theChar;
 
     unsigned long initialTime = (unsigned long) time(NULL);
     for (k=0; k<500; k++) {

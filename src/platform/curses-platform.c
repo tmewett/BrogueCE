@@ -21,7 +21,7 @@ static void gameLoop() {
     Term.end();
 }
 
-static void curses_plotChar(uchar ch,
+static void curses_plotChar(enum displayGlyph ch,
               short xLoc, short yLoc,
               short foreRed, short foreGreen, short foreBlue,
               short backRed, short backGreen, short backBlue) {

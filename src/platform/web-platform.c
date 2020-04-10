@@ -134,13 +134,13 @@ static void writeToSocket(unsigned char *buf, int size)
     outputBufferPos += size;
 }
 
-static void web_plotChar(uchar inputChar,
+static void web_plotChar(enum displayGlyph inputChar,
                          short xLoc, short yLoc,
                          short foreRed, short foreGreen, short foreBlue,
                          short backRed, short backGreen, short backBlue) {
     unsigned char outputBuffer[OUTPUT_SIZE];
     unsigned char firstCharByte, secondCharByte;
-    uchar translatedChar = inputChar;
+    enum displayGlyph translatedChar = inputChar;
 
     //Map characters which are missing or rendered as emoji on some platforms
     switch(inputChar) {
