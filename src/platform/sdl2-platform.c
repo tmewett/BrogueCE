@@ -477,7 +477,7 @@ static void _plotChar(
 
     SDL_Surface *sheet;
     inputChar = fontIndex(inputChar);
-    if (inputChar > 256) {
+    if (inputChar >= 256) {
         sheet = Tiles;
         inputChar -= 256;
     } else {
