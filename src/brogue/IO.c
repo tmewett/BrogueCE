@@ -2123,6 +2123,9 @@ void funkyFade(cellDisplayBuffer displayBuf[COLS][ROWS], const color *colorStart
             }
         }
         if (!fastForward && pauseBrogue(16)) {
+            // drop the event - skipping the transition should only skip the transition
+            rogueEvent event;
+            nextKeyOrMouseEvent(&event, false, false);
             fastForward = true;
             n = (invert ? 1 : stepCount - 2);
         }
