@@ -1145,7 +1145,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         blackOutScreen();
         saveRecordingNoPrompt(recordingFilename);
     } else {
-        if (saveHighScore(theEntry)) {
+        if (!rogue.playbackMode && saveHighScore(theEntry)) {
             printHighScores(true);
         }
         blackOutScreen();
