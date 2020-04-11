@@ -1227,7 +1227,7 @@ void victory(boolean superVictory) {
             i++;
         } else {
             identify(theItem);
-            itemName(theItem, buf, false, true, &white);
+            itemName(theItem, buf, true, true, &white);
             upperCase(buf);
 
             plotCharToBuffer(theItem->displayChar, mapToWindowX(2), min(ROWS-1, i + 1), &yellow, &black, dbuf);
@@ -1251,12 +1251,14 @@ void victory(boolean superVictory) {
     displayMoreSign();
 
     //
-    // Third screen - List of achievements
+    // Third screen - List of achievements with recording save prompt
     //
     blackOutScreen();
-    printString("Achievements", mapToWindowX(0), mapToWindowY(-1), &lightBlue, &black, NULL);
 
     i = 4;
+    printString("Achievements", mapToWindowX(2), i++, &lightBlue, &black, NULL);
+
+    i++;
     for (j = 0; i < ROWS && j < FEAT_COUNT; j++) {
         if (rogue.featRecord[j]) {
             sprintf(buf, "%s: %s", featTable[j].name, featTable[j].description);
@@ -1265,9 +1267,6 @@ void victory(boolean superVictory) {
         }
     }
 
-    //
-    // Fourth screen - Save recording
-    //
     strcpy(victoryVerb, superVictory ? "Mastered" : "Escaped");
     if (gemCount == 0) {
         sprintf(theEntry.description, "%s the Dungeons of Doom!", victoryVerb);
@@ -1291,10 +1290,7 @@ void victory(boolean superVictory) {
 
     isPlayback = rogue.playbackMode;
     rogue.playbackMode = false;
-    displayMoreSign();
-    blackOutScreen();
     rogue.playbackMode = isPlayback;
-
 
     if (serverMode) {
         saveRecordingNoPrompt(recordingFilename);
