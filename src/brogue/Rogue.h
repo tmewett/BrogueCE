@@ -99,6 +99,7 @@ typedef long long fixpt;
 #define GAME_SUFFIX             ".broguesave"
 #define ANNOTATION_SUFFIX       ".txt"
 #define RNG_LOG                 "RNGLog.txt"
+#define SCREENSHOT_SUFFIX       ".png"
 
 #define BROGUE_FILENAME_MAX     (min(1024*4, FILENAME_MAX))
 
