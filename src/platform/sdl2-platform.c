@@ -236,6 +236,8 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
     SDL_Event event;
     boolean ret = false;
 
+    char screenshotFilepath[BROGUE_FILENAME_MAX];
+
     // ~ for (int i=0; i < 100 && SDL_PollEvent(&event); i++) {
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT) {
@@ -263,7 +265,15 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
                 SDL_SetWindowFullscreen(Win,
                     (SDL_GetWindowFlags(Win) & SDL_WINDOW_FULLSCREEN_DESKTOP) ? 0 : SDL_WINDOW_FULLSCREEN_DESKTOP);
                 refreshWindow();
+            } else if (key == SDLK_PRINTSCREEN) {
+                // Take screenshot in current working directory (ScreenshotN.png)
+                getAvailableFilePath(screenshotFilepath, "Screenshot", SCREENSHOT_SUFFIX);
+                strcat(screenshotFilepath, SCREENSHOT_SUFFIX);
+                if (WinSurf) {
+                    IMG_SavePNG(WinSurf, screenshotFilepath);
+                }
             }
+
 
             if (eventFromKey(returnEvent, key)) {
                 returnEvent->eventType = KEYSTROKE;
