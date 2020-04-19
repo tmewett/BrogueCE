@@ -21,6 +21,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// from Brogue core
 extern tcell tmap[DCOLS][DROWS];                        // grids with info about the map
 extern pcell pmap[DCOLS][DROWS];                        // grids with info about the map
 extern short **scentMap;
@@ -232,3 +233,6 @@ extern const char armorRunicNames[NUMBER_ARMOR_ENCHANT_KINDS][30];
 extern const char monsterBehaviorFlagDescriptions[32][COLS];
 extern const char monsterAbilityFlagDescriptions[32][COLS];
 extern const char monsterBookkeepingFlagDescriptions[32][COLS];
+
+// from the platform code
+extern boolean serverMode;

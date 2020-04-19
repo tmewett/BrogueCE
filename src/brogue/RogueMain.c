@@ -25,7 +25,6 @@
 #include "IncludeGlobals.h"
 #include <time.h>
 
-extern boolean serverMode;
 
 void rogueMain() {
     previousGameSeed = 0;
