@@ -990,6 +990,30 @@ void normColor(color *baseColor, const short aggregateMultiplier, const short co
     baseColor->rand = 0;
 }
 
+// Used to determine whether to draw a wall top glyph above
+static boolean glyphIsWallish(enum displayGlyph glyph) {
+    switch (glyph) {
+        case G_WALL:
+        case G_OPEN_DOOR:
+        case G_CLOSED_DOOR:
+        case G_UP_STAIRS:
+        case G_DOORWAY:
+        case G_WALL_TOP:
+        case G_LEVER:
+        case G_LEVER_PULLED:
+        case G_CLOSED_IRON_DOOR:
+        case G_OPEN_IRON_DOOR:
+        case G_TURRET:
+        case G_GRANITE:
+        case G_TORCH:
+        case G_PORTCULLIS:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
 // okay, this is kind of a beast...
 void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *returnForeColor, color *returnBackColor) {
     short bestBCPriority, bestFCPriority, bestCharPriority;
@@ -1213,6 +1237,12 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
             return;
         }
 
+        // Smooth out walls: if there's a "wall-ish" tile drawn below us, just draw the wall top
+        if ((cellChar == G_WALL || cellChar == G_GRANITE) && coordinatesAreInMap(x, y+1)
+            && glyphIsWallish(displayBuffer[mapToWindowX(x)][mapToWindowY(y+1)].character)) {
+            cellChar = G_WALL_TOP;
+        }
+
         if (gasAugmentWeight && ((pmap[x][y].flags & DISCOVERED) || rogue.playbackOmniscience)) {
             if (!rogue.trueColorMode || !needDistinctness) {
                 applyColorAverage(&cellForeColor, &gasAugmentColor, gasAugmentWeight);
@@ -1413,10 +1443,18 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
 
 void refreshDungeonCell(short x, short y) {
     enum displayGlyph cellChar;
-    brogueAssert(coordinatesAreInMap(x, y));
     color foreColor, backColor;
+    brogueAssert(coordinatesAreInMap(x, y));
+
     getCellAppearance(x, y, &cellChar, &foreColor, &backColor);
     plotCharWithColor(cellChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor);
+
+    // We use different wall sprites depending on what tile is below, so we need
+    // to refresh the cell above too
+    if (--y >= 0) {
+        getCellAppearance(x, y, &cellChar, &foreColor, &backColor);
+        plotCharWithColor(cellChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor);
+    }
 }
 
 void applyColorMultiplier(color *baseColor, const color *multiplierColor) {
