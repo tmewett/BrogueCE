@@ -13,6 +13,9 @@
 #define PAUSE_BETWEEN_EVENT_POLLING     36L//17
 #define MAX_REMAPS  128
 
+boolean hasGraphics = false;  // global, and set to true by this platform only
+boolean showGraphics = false;
+
 // Dimensions of the font characters
 static const int fontWidths[13] = {7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
 static const int fontHeights[13] = {11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 33};
@@ -29,7 +32,6 @@ static SDL_Surface *Tiles = NULL;
 
 static struct keypair remapping[MAX_REMAPS];
 static size_t nremaps = 0;
-static boolean showTiles = true;
 
 static rogueEvent lastEvent;
 
@@ -371,6 +373,8 @@ static void _gameLoop() {
     loadFont(brogueFontSize);
     ensureWindow();
 
+    hasGraphics = true;
+
     rogueMain();
 
     SDL_DestroyWindow(Win);
@@ -429,7 +433,7 @@ static int fontIndex(enum displayGlyph glyph) {
     if (glyph < 128) {
         // ASCII characters map directly
         return glyph;
-    } else if (showTiles && glyph >= 128) {
+    } else if (showGraphics && glyph >= 128) {
         // Tile glyphs have sprite indices starting at 256
         // -2 to disregard the up and down arrow glyphs
         return glyph + 128 - 2;

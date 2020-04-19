@@ -1121,6 +1121,7 @@ enum tileFlags {
 #define LOAD_SAVED_GAME_KEY 'O'
 #define SAVE_GAME_KEY       'S'
 #define NEW_GAME_KEY        'N'
+#define GRAPHICS_KEY        'G'
 #define NUMPAD_0            48
 #define NUMPAD_1            49
 #define NUMPAD_2            50

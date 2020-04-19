@@ -236,3 +236,5 @@ extern const char monsterBookkeepingFlagDescriptions[32][COLS];
 
 // from the platform code
 extern boolean serverMode;
+extern boolean hasGraphics;
+extern boolean showGraphics;
