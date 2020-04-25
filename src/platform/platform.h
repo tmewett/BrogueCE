@@ -41,6 +41,11 @@ struct brogueConsole {
     Notifies the platform code of an event during the game - e.g. victory
     */
     void (*notifyEvent)(short eventId, int data1, int data2, const char *str1, const char *str2);
+
+    /*
+    Take a screenshot in current working directory
+    */
+    boolean (*takeScreeshot)();
 };
 
 // defined in platform
