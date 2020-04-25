@@ -165,7 +165,6 @@ unsigned int glyphToUnicode(enum displayGlyph glyph) {
         case G_PEDESTAL: return '|';
         case G_CLOSED_COFFIN: return '-';
         case G_OPEN_COFFIN: return '-';
-        case G_HOLE: return U_FOUR_DOTS;
         case G_MAGIC_GLYPH: return U_FOUR_DOTS;
         case G_BRIDGE: return '=';
         case G_BONES: return ',';

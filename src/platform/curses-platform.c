@@ -52,7 +52,6 @@ static char glyphToAscii(enum displayGlyph glyph) {
         case G_CARPET: return '.';
         case G_STATUE: return '5';
         case G_CRACKED_STATUE: return '5';
-        case G_HOLE: return ':';
         case G_MAGIC_GLYPH: return ':';
         case G_ELECTRIC_CRYSTAL: return '$';
 

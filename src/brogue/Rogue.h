@@ -274,7 +274,6 @@ enum displayGlyph {
     G_PEDESTAL,
     G_CLOSED_COFFIN,
     G_OPEN_COFFIN,
-    G_HOLE,
     G_MAGIC_GLYPH,
     G_BRIDGE,
     G_BONES,
