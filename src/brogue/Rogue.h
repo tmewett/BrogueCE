@@ -1161,6 +1161,7 @@ enum tileFlags {
 #define NUMPAD_9            57
 #define PAGE_UP_KEY         63276
 #define PAGE_DOWN_KEY       63277
+#define PRINTSCREEN_KEY     '\054'
 
 #define UNKNOWN_KEY         (128+19)
 
@@ -2616,6 +2617,7 @@ extern "C" {
     void gameOver(char *killedBy, boolean useCustomPhrasing);
     void victory(boolean superVictory);
     void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2);
+    boolean takeScreenshot();
     void enableEasyMode();
     int rand_range(int lowerBound, int upperBound);
     unsigned long seedRandomGenerator(unsigned long seed);
