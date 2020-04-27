@@ -7,6 +7,9 @@
 #include <signal.h>
 #include "platform.h"
 
+boolean hasGraphics = false;
+boolean showGraphics = false;
+
 static void gameLoop() {
     signal(SIGINT, SIG_DFL); // keep SDL from overriding the default ^C handler when it's linked
 

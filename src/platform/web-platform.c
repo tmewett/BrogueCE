@@ -39,6 +39,9 @@ enum StatusTypes
     STATUS_TYPES_NUMBER
 };
 
+boolean hasGraphics = false;
+boolean showGraphics = false;
+
 extern playerCharacter rogue;
 static struct sockaddr_un addr_write;
 static int wfd, rfd;
@@ -151,9 +154,10 @@ static void web_plotChar(enum displayGlyph inputChar,
                          short backRed, short backGreen, short backBlue) {
     unsigned char outputBuffer[OUTPUT_SIZE];
     unsigned char firstCharByte, secondCharByte;
-    enum displayGlyph translatedChar = inputChar;
+    enum displayGlyph translatedChar;
 
-    inputChar = fixUnicode(inputChar);
+    translatedChar = glyphToUnicode(inputChar);
+    translatedChar = fixUnicode(translatedChar);
 
     firstCharByte = translatedChar >> 8 & 0xff;
     secondCharByte = translatedChar;
