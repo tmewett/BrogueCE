@@ -71,7 +71,11 @@ void notifyEvent(short eventId, int data1, int data2, const char *str1, const ch
 }
 
 boolean takeScreenshot() {
-    return currentConsole.takeScreeshot();
+    if (currentConsole.takeScreenshot) {
+        return currentConsole.takeScreenshot();
+    } else {
+        return false;
+    }
 }
 
 // creates an empty high scores file

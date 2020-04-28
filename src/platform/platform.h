@@ -45,7 +45,7 @@ struct brogueConsole {
     /*
     Take a screenshot in current working directory
     */
-    boolean (*takeScreeshot)();
+    boolean (*takeScreenshot)();
 };
 
 // defined in platform
