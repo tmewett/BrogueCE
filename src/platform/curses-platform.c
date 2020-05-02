@@ -214,7 +214,7 @@ static void curses_notifyEvent(short eventId, int data1, int data2, const char *
     //Unused
 }
 
-static boolean _takeScreenshot() {
+static boolean curses_takeScreenshot() {
     return false;
 }
 
@@ -226,5 +226,5 @@ struct brogueConsole cursesConsole = {
     curses_remap,
     modifier_held,
     curses_notifyEvent,
-    _takeScreenshot
+    curses_takeScreenshot
 };
