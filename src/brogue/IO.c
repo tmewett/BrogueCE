@@ -2598,7 +2598,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             break;
         case PRINTSCREEN_KEY:
             if (takeScreenshot()) {
-                flashTemporaryAlert("You take a new screenshot", 2000);
+                flashTemporaryAlert(" Screenshot saved in save directory ", 2000);
             }
             break;
         default:

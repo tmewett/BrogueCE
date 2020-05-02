@@ -320,7 +320,7 @@ static void web_notifyEvent(short eventId, int data1, int data2, const char *str
     flushOutputBuffer();
 }
 
-static boolean _takeScreenshot() {
+static boolean web_takeScreenshot() {
     return false;
 }
 
@@ -332,5 +332,5 @@ struct brogueConsole webConsole = {
     web_remap,
     web_modifierHeld,
     web_notifyEvent,
-    _takeScreenshot
+    web_takeScreenshot
 };
