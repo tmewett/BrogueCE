@@ -1462,9 +1462,9 @@ void refreshDungeonCell(short x, short y) {
 
     // We use different wall sprites depending on what tile is below, so we need
     // to refresh the cell above too
-    if (--y >= 0) {
-        getCellAppearance(x, y, &cellChar, &foreColor, &backColor);
-        plotCharWithColor(cellChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor);
+    if (y > 0) {
+        getCellAppearance(x, y - 1, &cellChar, &foreColor, &backColor);
+        plotCharWithColor(cellChar, mapToWindowX(x), mapToWindowY(y - 1), &foreColor, &backColor);
     }
 }
 
