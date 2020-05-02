@@ -9,6 +9,8 @@ struct brogueConsole currentConsole;
 int brogueFontSize = 0;
 char dataDirectory[BROGUE_FILENAME_MAX] = STRINGIFY(DATADIR);
 boolean serverMode = false;
+boolean hasGraphics = false;
+boolean showGraphics = false;
 
 static boolean endswith(const char *str, const char *ending)
 {

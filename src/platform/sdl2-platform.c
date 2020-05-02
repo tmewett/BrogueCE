@@ -13,9 +13,6 @@
 #define PAUSE_BETWEEN_EVENT_POLLING     36L//17
 #define MAX_REMAPS  128
 
-boolean hasGraphics = false;  // global, and set to true by this platform only
-boolean showGraphics = false;
-
 // Dimensions of the font characters
 static const int fontWidths[13] = {7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
 static const int fontHeights[13] = {11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 33};

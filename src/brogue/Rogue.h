@@ -2574,6 +2574,10 @@ typedef struct buttonState {
     cellDisplayBuffer rbuf[COLS][ROWS]; // Reversion screen state.
 } buttonState;
 
+extern boolean serverMode;
+extern boolean hasGraphics;
+extern boolean showGraphics;
+
 #if defined __cplusplus
 extern "C" {
 #endif
