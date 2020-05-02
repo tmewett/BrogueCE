@@ -320,6 +320,10 @@ static void web_notifyEvent(short eventId, int data1, int data2, const char *str
     flushOutputBuffer();
 }
 
+static boolean web_takeScreenshot() {
+    return false;
+}
+
 struct brogueConsole webConsole = {
     gameLoop,
     web_pauseForMilliseconds,
@@ -327,5 +331,6 @@ struct brogueConsole webConsole = {
     web_plotChar,
     web_remap,
     web_modifierHeld,
-    web_notifyEvent
+    web_notifyEvent,
+    web_takeScreenshot
 };

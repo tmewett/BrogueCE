@@ -151,6 +151,9 @@ static boolean eventFromKey(rogueEvent *event, SDL_Keycode key) {
         case SDLK_TAB:
             event->param1 = TAB_KEY;
             return true;
+        case SDLK_PRINTSCREEN:
+            event->param1 = PRINTSCREEN_KEY;
+            return true;
     }
 
     /*
@@ -236,6 +239,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
     SDL_Event event;
     boolean ret = false;
 
+
     // ~ for (int i=0; i < 100 && SDL_PollEvent(&event); i++) {
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT) {
@@ -263,7 +267,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
                 SDL_SetWindowFullscreen(Win,
                     (SDL_GetWindowFlags(Win) & SDL_WINDOW_FULLSCREEN_DESKTOP) ? 0 : SDL_WINDOW_FULLSCREEN_DESKTOP);
                 refreshWindow();
-            }
+            } 
 
             if (eventFromKey(returnEvent, key)) {
                 returnEvent->eventType = KEYSTROKE;
@@ -487,6 +491,22 @@ static void _notifyEvent(short eventId, int data1, int data2, const char *str1, 
     //Unused
 }
 
+/*
+ * Take screenshot in current working directory (ScreenshotN.png)
+ */
+static boolean _takeScreenshot() {
+    char screenshotFilepath[BROGUE_FILENAME_MAX];
+
+    getAvailableFilePath(screenshotFilepath, "Screenshot", SCREENSHOT_SUFFIX);
+    strcat(screenshotFilepath, SCREENSHOT_SUFFIX);
+
+    if (WinSurf) {
+        IMG_SavePNG(WinSurf, screenshotFilepath);
+        return true;
+    }
+    return false;
+}
+
 struct brogueConsole sdlConsole = {
     _gameLoop,
     _pauseForMilliseconds,
@@ -494,5 +514,6 @@ struct brogueConsole sdlConsole = {
     _plotChar,
     _remap,
     _modifierHeld,
-    _notifyEvent
+    _notifyEvent,
+    _takeScreenshot
 };

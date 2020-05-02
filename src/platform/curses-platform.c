@@ -214,6 +214,10 @@ static void curses_notifyEvent(short eventId, int data1, int data2, const char *
     //Unused
 }
 
+static boolean curses_takeScreenshot() {
+    return false;
+}
+
 struct brogueConsole cursesConsole = {
     gameLoop,
     curses_pauseForMilliseconds,
@@ -221,5 +225,6 @@ struct brogueConsole cursesConsole = {
     curses_plotChar,
     curses_remap,
     modifier_held,
-    curses_notifyEvent
+    curses_notifyEvent,
+    curses_takeScreenshot
 };

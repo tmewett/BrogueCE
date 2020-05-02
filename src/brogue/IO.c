@@ -2596,6 +2596,11 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                 enableEasyMode();
             //}
             break;
+        case PRINTSCREEN_KEY:
+            if (takeScreenshot()) {
+                flashTemporaryAlert(" Screenshot saved in save directory ", 2000);
+            }
+            break;
         default:
             break;
     }

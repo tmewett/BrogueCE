@@ -70,6 +70,10 @@ void notifyEvent(short eventId, int data1, int data2, const char *str1, const ch
     currentConsole.notifyEvent(eventId, data1, data2, str1, str2);
 }
 
+boolean takeScreenshot() {
+    return currentConsole.takeScreenshot();
+}
+
 // creates an empty high scores file
 void initScores() {
     short i;
