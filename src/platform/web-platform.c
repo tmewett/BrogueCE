@@ -151,9 +151,10 @@ static void web_plotChar(enum displayGlyph inputChar,
                          short backRed, short backGreen, short backBlue) {
     unsigned char outputBuffer[OUTPUT_SIZE];
     unsigned char firstCharByte, secondCharByte;
-    enum displayGlyph translatedChar = inputChar;
+    enum displayGlyph translatedChar;
 
-    inputChar = fixUnicode(inputChar);
+    translatedChar = glyphToUnicode(inputChar);
+    translatedChar = fixUnicode(inputChar);
 
     firstCharByte = translatedChar >> 8 & 0xff;
     secondCharByte = translatedChar;
