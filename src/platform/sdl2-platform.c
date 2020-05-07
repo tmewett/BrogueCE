@@ -273,7 +273,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
                 SDL_SetWindowFullscreen(Win,
                     (SDL_GetWindowFlags(Win) & SDL_WINDOW_FULLSCREEN_DESKTOP) ? 0 : SDL_WINDOW_FULLSCREEN_DESKTOP);
                 refreshWindow();
-            } 
+            }
 
             if (eventFromKey(returnEvent, key)) {
                 returnEvent->eventType = KEYSTROKE;
@@ -517,10 +517,6 @@ static void _remap(const char *from, const char *to) {
     }
 }
 
-static void _notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2) {
-    //Unused
-}
-
 /*
  * Take screenshot in current working directory (ScreenshotN.png)
  */
@@ -544,6 +540,6 @@ struct brogueConsole sdlConsole = {
     _plotChar,
     _remap,
     _modifierHeld,
-    _notifyEvent,
+    NULL,
     _takeScreenshot
 };

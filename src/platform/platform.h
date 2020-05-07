@@ -68,12 +68,12 @@ struct brogueConsole {
     boolean (*modifierHeld)(int modifier);
 
     /*
-    Notifies the platform code of an event during the game - e.g. victory
+    Optional. Notifies the platform code of an event during the game - e.g. victory
     */
     void (*notifyEvent)(short eventId, int data1, int data2, const char *str1, const char *str2);
 
     /*
-    Take a screenshot in current working directory
+    Optional. Take a screenshot in current working directory
     */
     boolean (*takeScreenshot)();
 };
