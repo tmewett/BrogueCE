@@ -28,6 +28,11 @@
 
 #define RECORDING_HEADER_LENGTH     32  // bytes at the start of the recording file to store global data
 
+static const int keystrokeTable[] = {UP_ARROW, LEFT_ARROW, DOWN_ARROW, RIGHT_ARROW,
+    ESCAPE_KEY, RETURN_KEY, DELETE_KEY, TAB_KEY, NUMPAD_0, NUMPAD_1,
+    NUMPAD_2, NUMPAD_3, NUMPAD_4, NUMPAD_5, NUMPAD_6, NUMPAD_7, NUMPAD_8, NUMPAD_9};
+
+
 void recordChar(unsigned char c) {
     inputRecordBuffer[locationInRecordingBuffer++] = c;
     recordingLocation++;
@@ -39,15 +44,12 @@ void considerFlushingBufferToFile() {
     }
 }
 
-// compresses a uchar into a char, discarding stuff we don't need
-unsigned char compressKeystroke(uchar c) {
-    const uchar ucharTable[] = {UP_ARROW, LEFT_ARROW, DOWN_ARROW, RIGHT_ARROW,
-        ESCAPE_KEY, RETURN_KEY, DELETE_KEY, TAB_KEY, NUMPAD_0, NUMPAD_1,
-        NUMPAD_2, NUMPAD_3, NUMPAD_4, NUMPAD_5, NUMPAD_6, NUMPAD_7, NUMPAD_8, NUMPAD_9};
+// compresses a int into a char, discarding stuff we don't need
+unsigned char compressKeystroke(int c) {
     short i;
 
     for (i=0; i<18; i++) {
-        if (ucharTable[i] == c) {
+        if (keystrokeTable[i] == c) {
             return (unsigned char) (128 + i);
         }
     }
@@ -120,7 +122,7 @@ void recordEvent(rogueEvent *event) {
 }
 
 // For convenience.
-void recordKeystroke(uchar keystroke, boolean controlKey, boolean shiftKey) {
+void recordKeystroke(int keystroke, boolean controlKey, boolean shiftKey) {
     rogueEvent theEvent;
 
     if (rogue.playbackMode) {
@@ -258,15 +260,11 @@ unsigned char recallChar() {
     return c;
 }
 
-uchar uncompressKeystroke(uchar c) {
-    const uchar ucharTable[] = {UP_ARROW, LEFT_ARROW, DOWN_ARROW, RIGHT_ARROW,
-        ESCAPE_KEY, RETURN_KEY, DELETE_KEY, TAB_KEY, NUMPAD_0, NUMPAD_1,
-        NUMPAD_2, NUMPAD_3, NUMPAD_4, NUMPAD_5, NUMPAD_6, NUMPAD_7, NUMPAD_8, NUMPAD_9};
-
+int uncompressKeystroke(int c) {
     if (c >= 128 && c <= UNKNOWN_KEY) {
-        return ucharTable[c - 128];
+        return keystrokeTable[c - 128];
     }
-    return (uchar) c;
+    return (int) c;
 }
 
 unsigned long recallNumber(short numberOfBytes) {
@@ -1184,8 +1182,8 @@ void loadSavedGame() {
 
 void describeKeystroke(unsigned char key, char *description) {
     short i;
-    uchar c;
-    const uchar ucharList[51] = {UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, UP_ARROW, LEFT_ARROW,
+    int c;
+    const int keyList[51] = {UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, UP_ARROW, LEFT_ARROW,
         DOWN_ARROW, RIGHT_ARROW, UPLEFT_KEY, UPRIGHT_KEY, DOWNLEFT_KEY, DOWNRIGHT_KEY,
         DESCEND_KEY, ASCEND_KEY, REST_KEY, AUTO_REST_KEY, SEARCH_KEY, INVENTORY_KEY,
         ACKNOWLEDGE_KEY, EQUIP_KEY, UNEQUIP_KEY, APPLY_KEY, THROW_KEY, RELABEL_KEY, DROP_KEY, CALL_KEY,
@@ -1206,7 +1204,7 @@ void describeKeystroke(unsigned char key, char *description) {
         "numpad 7", "numpad 8", "numpad 9", "unknown", "ERROR"};
 
     c = uncompressKeystroke(key);
-    for (i=0; ucharList[i] != c && i < 53; i++);
+    for (i=0; keyList[i] != c && i < 53; i++);
     if (key >= 32 && key <= 126) {
         sprintf(description, "Key: %c\t(%s)", key, descList[i]);
     } else {

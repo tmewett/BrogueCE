@@ -118,7 +118,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                 itemKind = chooseKind(foodTable, NUMBER_FOOD_KINDS);
             }
             theEntry = &foodTable[itemKind];
-            theItem->displayChar = FOOD_CHAR;
+            theItem->displayChar = G_FOOD;
             theItem->flags |= ITEM_IDENTIFIED;
             break;
 
@@ -129,7 +129,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             theEntry = &weaponTable[itemKind];
             theItem->damage = weaponTable[itemKind].range;
             theItem->strengthRequired = weaponTable[itemKind].strengthRequired;
-            theItem->displayChar = WEAPON_CHAR;
+            theItem->displayChar = G_WEAPON;
 
             switch (itemKind) {
                 case DAGGER:
@@ -207,7 +207,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             theEntry = &armorTable[itemKind];
             theItem->armor = randClump(armorTable[itemKind].range);
             theItem->strengthRequired = armorTable[itemKind].strengthRequired;
-            theItem->displayChar = ARMOR_CHAR;
+            theItem->displayChar = G_ARMOR;
             theItem->charges = ARMOR_DELAY_TO_AUTO_ID; // this many turns until it reveals its enchants and whether runic
             if (rand_percent(40)) {
                 theItem->enchant1 += rand_range(1, 3);
@@ -237,7 +237,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                 itemKind = chooseKind(scrollTable, NUMBER_SCROLL_KINDS);
             }
             theEntry = &scrollTable[itemKind];
-            theItem->displayChar = SCROLL_CHAR;
+            theItem->displayChar = G_SCROLL;
             theItem->flags |= ITEM_FLAMMABLE;
             break;
         case POTION:
@@ -245,14 +245,14 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                 itemKind = chooseKind(potionTable, NUMBER_POTION_KINDS);
             }
             theEntry = &potionTable[itemKind];
-            theItem->displayChar = POTION_CHAR;
+            theItem->displayChar = G_POTION;
             break;
         case STAFF:
             if (itemKind < 0) {
                 itemKind = chooseKind(staffTable, NUMBER_STAFF_KINDS);
             }
             theEntry = &staffTable[itemKind];
-            theItem->displayChar = STAFF_CHAR;
+            theItem->displayChar = G_STAFF;
             theItem->charges = 2;
             if (rand_percent(50)) {
                 theItem->charges++;
@@ -271,7 +271,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                 itemKind = chooseKind(wandTable, NUMBER_WAND_KINDS);
             }
             theEntry = &wandTable[itemKind];
-            theItem->displayChar = WAND_CHAR;
+            theItem->displayChar = G_WAND;
             theItem->charges = randClump(wandTable[itemKind].range);
             break;
         case RING:
@@ -279,7 +279,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                 itemKind = chooseKind(ringTable, NUMBER_RING_KINDS);
             }
             theEntry = &ringTable[itemKind];
-            theItem->displayChar = RING_CHAR;
+            theItem->displayChar = G_RING;
             theItem->enchant1 = randClump(ringTable[itemKind].range);
             theItem->charges = RING_DELAY_TO_AUTO_ID; // how many turns of being worn until it auto-identifies
             if (rand_percent(16)) {
@@ -296,7 +296,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             if (itemKind < 0) {
                 itemKind = chooseKind(charmTable, NUMBER_CHARM_KINDS);
             }
-            theItem->displayChar = CHARM_CHAR;
+            theItem->displayChar = G_CHARM;
             theItem->charges = 0; // Charms are initially ready for use.
             theItem->enchant1 = randClump(charmTable[itemKind].range);
             while (rand_percent(7)) {
@@ -306,24 +306,24 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             break;
         case GOLD:
             theEntry = NULL;
-            theItem->displayChar = GOLD_CHAR;
+            theItem->displayChar = G_GOLD;
             theItem->quantity = rand_range(50 + rogue.depthLevel * 10, 100 + rogue.depthLevel * 15);
             break;
         case AMULET:
             theEntry = NULL;
-            theItem->displayChar = AMULET_CHAR;
+            theItem->displayChar = G_AMULET;
             itemKind = 0;
             theItem->flags |= ITEM_IDENTIFIED;
             break;
         case GEM:
             theEntry = NULL;
-            theItem->displayChar = GEM_CHAR;
+            theItem->displayChar = G_GEM;
             itemKind = 0;
             theItem->flags |= ITEM_IDENTIFIED;
             break;
         case KEY:
             theEntry = NULL;
-            theItem->displayChar = KEY_CHAR;
+            theItem->displayChar = G_KEY;
             theItem->flags |= ITEM_IDENTIFIED;
             break;
         default:
@@ -371,7 +371,7 @@ item *placeItem(item *theItem, short x, short y) {
     removeItemFromChain(theItem, floorItems); // just in case; double-placing an item will result in game-crashing loops in the item list
     addItemToChain(theItem, floorItems);
     pmap[theItem->xLoc][theItem->yLoc].flags |= HAS_ITEM;
-    if ((theItem->flags & ITEM_MAGIC_DETECTED) && itemMagicChar(theItem)) {
+    if ((theItem->flags & ITEM_MAGIC_DETECTED) && itemMagicPolarity(theItem)) {
         pmap[theItem->xLoc][theItem->yLoc].flags |= ITEM_DETECTED;
     }
     if (cellHasTerrainFlag(x, y, T_IS_DF_TRAP)
@@ -2743,12 +2743,15 @@ char displayInventory(unsigned short categoryMask,
         if ((theItem->flags & ITEM_MAGIC_DETECTED)
             && !(theItem->category & AMULET)) { // Won't include food, keys, lumenstones or amulet.
 
-            buttons[i].symbol[0] = (itemMagicChar(theItem) ? itemMagicChar(theItem) : '-');
-            if (buttons[i].symbol[0] == '-') {
+            int polarity = itemMagicPolarity(theItem);
+            if (polarity == 0) {
+                buttons[i].symbol[0] = '-';
                 magicEscapePtr = yellowColorEscapeSequence;
-            } else if (buttons[i].symbol[0] == GOOD_MAGIC_CHAR) {
+            } else if (polarity == 1) {
+                buttons[i].symbol[0] = G_GOOD_MAGIC;
                 magicEscapePtr = goodColorEscapeSequence;
             } else {
+                buttons[i].symbol[0] = G_BAD_MAGIC;
                 magicEscapePtr = badColorEscapeSequence;
             }
 
@@ -4551,7 +4554,7 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
     const color *boltColor;
     fixpt boltLightRadius;
 
-    uchar theChar;
+    enum displayGlyph theChar;
     color foreColor, backColor, multColor;
 
     lightSource boltLights[500];
@@ -5544,7 +5547,7 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
     short i, x, y, numCells;
     creature *monst = NULL;
     char buf[COLS*3], buf2[COLS*3], buf3[COLS*3];
-    uchar displayChar;
+    enum displayGlyph displayChar;
     color foreColor, backColor, multColor;
     short dropLoc[2];
     boolean hitSomethingSolid = false, fastForward = false;
@@ -6782,7 +6785,7 @@ void drinkPotion(item *theItem) {
             for (tempItem = floorItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
                 if (tempItem->category & CAN_BE_DETECTED) {
                     detectMagicOnItem(tempItem);
-                    if (itemMagicChar(tempItem)) {
+                    if (itemMagicPolarity(tempItem)) {
                         pmap[tempItem->xLoc][tempItem->yLoc].flags |= ITEM_DETECTED;
                         hadEffect = true;
                         refreshDungeonCell(tempItem->xLoc, tempItem->yLoc);
@@ -6792,7 +6795,7 @@ void drinkPotion(item *theItem) {
             for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
                 if (monst->carriedItem && (monst->carriedItem->category & CAN_BE_DETECTED)) {
                     detectMagicOnItem(monst->carriedItem);
-                    if (itemMagicChar(monst->carriedItem)) {
+                    if (itemMagicPolarity(monst->carriedItem)) {
                         hadEffect = true;
                         refreshDungeonCell(monst->xLoc, monst->yLoc);
                     }
@@ -6801,7 +6804,7 @@ void drinkPotion(item *theItem) {
             for (tempItem = packItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
                 if (tempItem->category & CAN_BE_DETECTED) {
                     detectMagicOnItem(tempItem);
-                    if (itemMagicChar(tempItem)) {
+                    if (itemMagicPolarity(tempItem)) {
                         if (tempItem->flags & ITEM_MAGIC_DETECTED) {
                             hadEffect2 = true;
                         }
@@ -6890,14 +6893,18 @@ short magicCharDiscoverySuffix(short category, short kind) {
     return result;
 }
 
-uchar itemMagicChar(item *theItem) {
+/* Returns
+-1 if the item is of bad magic
+ 0 if it is neutral
+ 1 if it is of good magic */
+int itemMagicPolarity(item *theItem) {
     switch (theItem->category) {
         case WEAPON:
         case ARMOR:
             if ((theItem->flags & ITEM_CURSED) || theItem->enchant1 < 0) {
-                return BAD_MAGIC_CHAR;
+                return -1;
             } else if (theItem->enchant1 > 0) {
-                return GOOD_MAGIC_CHAR;
+                return 1;
             }
             return 0;
             break;
@@ -6905,9 +6912,9 @@ uchar itemMagicChar(item *theItem) {
             switch (theItem->kind) {
                 case SCROLL_AGGRAVATE_MONSTER:
                 case SCROLL_SUMMON_MONSTER:
-                    return BAD_MAGIC_CHAR;
+                    return -1;
                 default:
-                    return GOOD_MAGIC_CHAR;
+                    return 1;
             }
         case POTION:
             switch (theItem->kind) {
@@ -6919,9 +6926,9 @@ uchar itemMagicChar(item *theItem) {
                 case POTION_CONFUSION:
                 case POTION_LICHEN:
                 case POTION_DARKNESS:
-                    return BAD_MAGIC_CHAR;
+                    return -1;
                 default:
-                    return GOOD_MAGIC_CHAR;
+                    return 1;
             }
         case WAND:
             if (theItem->charges == 0) {
@@ -6929,23 +6936,22 @@ uchar itemMagicChar(item *theItem) {
             }
         case STAFF:
             if (boltCatalog[tableForItemCategory(theItem->category, NULL)[theItem->kind].strengthRequired].flags & (BF_TARGET_ALLIES)) {
-                return BAD_MAGIC_CHAR;
+                return -1;
             } else {
-                return GOOD_MAGIC_CHAR;
+                return 1;
             }
         case RING:
             if (theItem->flags & ITEM_CURSED || theItem->enchant1 < 0) {
-                return BAD_MAGIC_CHAR;
+                return -1;
             } else if (theItem->enchant1 > 0) {
-                return GOOD_MAGIC_CHAR;
+                return 1;
             } else {
                 return 0;
             }
         case CHARM:
-            return GOOD_MAGIC_CHAR;
-            break;
+            return 1;
         case AMULET:
-            return AMULET_CHAR;
+            return 1;
     }
     return 0;
 }

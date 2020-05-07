@@ -358,7 +358,7 @@ void addLoops(short **grid, short minimumPathingDistance) {
                         grid[x][y] = 2;             // then turn the tile into a doorway.
                         costMap[x][y] = 1;          // (Cost map also needs updating.)
                         if (D_INSPECT_LEVELGEN) {
-                            plotCharWithColor(DOOR_CHAR, mapToWindowX(x), mapToWindowY(y), &black, &green);
+                            plotCharWithColor(G_CLOSED_DOOR, mapToWindowX(x), mapToWindowY(y), &black, &green);
                         }
                         break;
                     }
@@ -3512,7 +3512,7 @@ void restoreItem(item *theItem) {
         *y = loc[1];
     }
     pmap[*x][*y].flags |= HAS_ITEM;
-    if (theItem->flags & ITEM_MAGIC_DETECTED && itemMagicChar(theItem)) {
+    if (theItem->flags & ITEM_MAGIC_DETECTED && itemMagicPolarity(theItem)) {
         pmap[*x][*y].flags |= ITEM_DETECTED;
     }
 }

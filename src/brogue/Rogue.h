@@ -106,9 +106,6 @@ typedef long long fixpt;
 // Date format used when listing recordings and high scores
 #define DATE_FORMAT             "%Y-%m-%d" // see strftime() documentation
 
-// Allows unicode characters:
-#define uchar                   unsigned short
-
 #define MESSAGE_LINES           3
 #define MESSAGE_ARCHIVE_LINES   ROWS
 
@@ -160,157 +157,132 @@ typedef long long fixpt;
 
 // display characters:
 
-#ifdef USE_UNICODE
-
-#define FLOOR_CHAR      0x00b7
-#define LIQUID_CHAR     '~'
-#define CHASM_CHAR      0x2237
-#define TRAP_CHAR       0x25c7
-#define FIRE_CHAR       0x22CF
-#define GRASS_CHAR      '"'
-#define BRIDGE_CHAR     '='
-#define DESCEND_CHAR    '>'
-#define ASCEND_CHAR     '<'
-#define WALL_CHAR       '#'
-#define DOOR_CHAR       '+'
-#define OPEN_DOOR_CHAR  '\''
-#define ASH_CHAR        '\''
-#define BONES_CHAR      ','
-#define MUD_CHAR        ','
-#define WEB_CHAR        ':'
-//#define FOLIAGE_CHAR  0x03A8 // lower-case psi
-#define FOLIAGE_CHAR    0x2648 // Aries symbol
-#define VINE_CHAR       ':'
-#define ALTAR_CHAR      '|'
-#define LEVER_CHAR      '/'
-#define LEVER_PULLED_CHAR '\\'
-#define STATUE_CHAR     0x00df
-#define VENT_CHAR       '='
-#define DEWAR_CHAR      '&'
-
-#define TRAMPLED_FOLIAGE_CHAR   '"'     // 0x2034 // 0x2037
-
-#define PLAYER_CHAR     '@'
-
-#define AMULET_CHAR     0x2640
-#define FOOD_CHAR       ';'
-#define SCROLL_CHAR     0x266A//'?'     // 0x039E
-#define RING_CHAR       0x26AA
-//#define RING_CHAR     0xffee
-#define CHARM_CHAR      0x03DF
-#define POTION_CHAR     '!'
-#define ARMOR_CHAR      '['
-#define WEAPON_CHAR     0x2191
-#define STAFF_CHAR      '\\'
-#define WAND_CHAR       '~'
-#define GOLD_CHAR       '*'
-#define GEM_CHAR        0x25cf
-#define TOTEM_CHAR      0x26b2
-#define TURRET_CHAR     0x25cf
-#define UNICORN_CHAR    0x00da
-#define KEY_CHAR        '-'
-#define ELECTRIC_CRYSTAL_CHAR 0x00A4
-
-#define UP_ARROW_CHAR       0x2191
-#define DOWN_ARROW_CHAR     0x2193
-#define LEFT_ARROW_CHAR     0x2190
-#define RIGHT_ARROW_CHAR    0x2192
-#define UP_TRIANGLE_CHAR    0x2206
-#define DOWN_TRIANGLE_CHAR  0x2207
-#define OMEGA_CHAR          0x03A9
-#define THETA_CHAR          0x03B8
-#define LAMDA_CHAR          0x03BB
-#define KOPPA_CHAR          0x03DE
-#define LOZENGE_CHAR        0x29EB
-#define CROSS_PRODUCT_CHAR  0x2A2F
-
-#define CHAIN_TOP_LEFT      '\\'
-#define CHAIN_BOTTOM_RIGHT  '\\'
-#define CHAIN_TOP_RIGHT     '/'
-#define CHAIN_BOTTOM_LEFT   '/'
-#define CHAIN_TOP           '|'
-#define CHAIN_BOTTOM        '|'
-#define CHAIN_LEFT          '-'
-#define CHAIN_RIGHT         '-'
-
-#define BAD_MAGIC_CHAR      0x29F2
-#define GOOD_MAGIC_CHAR     0x29F3
-
-#else
-
-#define FLOOR_CHAR      '.'
-#define LIQUID_CHAR     '~'
-#define CHASM_CHAR      ':'
-#define TRAP_CHAR       '%'
-#define FIRE_CHAR       '^'
-#define GRASS_CHAR      '"'
-#define BRIDGE_CHAR     '='
-#define DESCEND_CHAR    '>'
-#define ASCEND_CHAR     '<'
-#define WALL_CHAR       '#'
-#define DOOR_CHAR       '+'
-#define OPEN_DOOR_CHAR  '\''
-#define ASH_CHAR        '\''
-#define BONES_CHAR      ','
-#define MUD_CHAR        ','
-#define WEB_CHAR        ':'
-#define FOLIAGE_CHAR    '&'
-#define VINE_CHAR       ':'
-#define ALTAR_CHAR      '|'
-#define LEVER_CHAR      '/'
-#define LEVER_PULLED_CHAR '\\'
-#define STATUE_CHAR     '&'
-#define VENT_CHAR       '='
-#define DEWAR_CHAR      '&'
-
-#define TRAMPLED_FOLIAGE_CHAR   '"'
-
-#define PLAYER_CHAR     '@'
-
-#define AMULET_CHAR     ','
-#define FOOD_CHAR       ';'
-#define SCROLL_CHAR     '?'
-#define RING_CHAR       '='
-#define CHARM_CHAR      '+'
-#define POTION_CHAR     '!'
-#define ARMOR_CHAR      '['
-#define WEAPON_CHAR     '('
-#define STAFF_CHAR      '\\'
-#define WAND_CHAR       '~'
-#define GOLD_CHAR       '*'
-#define GEM_CHAR        '+'
-#define TOTEM_CHAR      '0'
-#define TURRET_CHAR     '*'
-#define UNICORN_CHAR    'U'
-#define KEY_CHAR        '-'
-#define ELECTRIC_CRYSTAL_CHAR '$'
-
-#define UP_ARROW_CHAR       '^'
-#define DOWN_ARROW_CHAR     'v'
-#define LEFT_ARROW_CHAR     '<'
-#define RIGHT_ARROW_CHAR    '>'
-#define UP_TRIANGLE_CHAR    '^'
-#define DOWN_TRIANGLE_CHAR  'v'
-#define OMEGA_CHAR          '^'
-#define THETA_CHAR          '0'
-#define LAMDA_CHAR          '\\'
-#define KOPPA_CHAR          'k'
-#define LOZENGE_CHAR        '+'
-#define CROSS_PRODUCT_CHAR  'x'
-
-#define CHAIN_TOP_LEFT      '\\'
-#define CHAIN_BOTTOM_RIGHT  '\\'
-#define CHAIN_TOP_RIGHT     '/'
-#define CHAIN_BOTTOM_LEFT   '/'
-#define CHAIN_TOP           '|'
-#define CHAIN_BOTTOM        '|'
-#define CHAIN_LEFT          '-'
-#define CHAIN_RIGHT         '-'
-
-#define BAD_MAGIC_CHAR      '+'
-#define GOOD_MAGIC_CHAR     '$'
-
-#endif
+enum displayGlyph {
+    G_UP_ARROW = 128,
+    G_DOWN_ARROW,
+    G_POTION,
+    G_GRASS,
+    G_WALL,
+    G_DEMON,
+    G_OPEN_DOOR,
+    G_GOLD,
+    G_CLOSED_DOOR,
+    G_RUBBLE,
+    G_KEY,
+    G_BOG,
+    G_CHAIN_TOP_LEFT,
+    G_CHAIN_BOTTOM_RIGHT,
+    G_CHAIN_TOP_RIGHT,
+    G_CHAIN_BOTTOM_LEFT,
+    G_CHAIN_TOP,
+    G_CHAIN_BOTTOM,
+    G_CHAIN_LEFT,
+    G_CHAIN_RIGHT,
+    G_FOOD,
+    G_UP_STAIRS,
+    G_VENT,
+    G_DOWN_STAIRS,
+    G_PLAYER,
+    G_BOG_MONSTER,
+    G_CENTAUR,
+    G_DRAGON,
+    G_FLAMEDANCER,
+    G_GOLEM,
+    G_TENTACLE_HORROR,
+    G_IFRIT,
+    G_JELLY,
+    G_KRAKEN,
+    G_LICH,
+    G_NAGA,
+    G_OGRE,
+    G_PHANTOM,
+    G_REVENANT,
+    G_SALAMANDER,
+    G_TROLL,
+    G_UNDERWORM,
+    G_VAMPIRE,
+    G_WRAITH,
+    G_ZOMBIE,
+    G_ARMOR,
+    G_STAFF,
+    G_WEB,
+    G_MOUND,
+    G_BLOAT,
+    G_CENTIPEDE,
+    G_DAR_BLADEMASTER,
+    G_EEL,
+    G_FURY,
+    G_GOBLIN,
+    G_IMP,
+    G_JACKAL,
+    G_KOBOLD,
+    G_MONKEY,
+    G_PIXIE,
+    G_RAT,
+    G_SPIDER,
+    G_TOAD,
+    G_BAT,
+    G_WISP,
+    G_PHOENIX,
+    G_ALTAR,
+    G_LIQUID,
+    G_FLOOR,
+    G_CHASM,
+    G_TRAP,
+    G_FIRE,
+    G_FOLIAGE,
+    G_AMULET,
+    G_SCROLL,
+    G_RING,
+    G_WEAPON,
+    G_GEM,
+    G_TOTEM,
+    G_GOOD_MAGIC,
+    G_BAD_MAGIC,
+    G_DOORWAY,
+    G_CHARM,
+    G_WALL_TOP,
+    G_DAR_PRIESTESS,
+    G_DAR_BATTLEMAGE,
+    G_GOBLIN_MAGIC,
+    G_GOBLIN_CHIEFTAN,
+    G_OGRE_MAGIC,
+    G_GUARDIAN,
+    G_WINGED_GUARDIAN,
+    G_EGG,
+    G_WARDEN,
+    G_DEWAR,
+    G_ANCIENT_SPIRIT,
+    G_LEVER,
+    G_LEVER_PULLED,
+    G_BLOODWORT_STALK,
+    G_FLOOR_ALT,
+    G_UNICORN,
+    G_TURRET,
+    G_WAND,
+    G_GRANITE,
+    G_CARPET,
+    G_CLOSED_IRON_DOOR,
+    G_OPEN_IRON_DOOR,
+    G_TORCH,
+    G_CRYSTAL,
+    G_PORTCULLIS,
+    G_BARRICADE,
+    G_STATUE,
+    G_CRACKED_STATUE,
+    G_CLOSED_CAGE,
+    G_OPEN_CAGE,
+    G_PEDESTAL,
+    G_CLOSED_COFFIN,
+    G_OPEN_COFFIN,
+    G_MAGIC_GLYPH,
+    G_BRIDGE,
+    G_BONES,
+    G_ELECTRIC_CRYSTAL,
+    G_ASHES,
+    G_BEDROLL,
+    G_BLOODWORT_POD
+};
 
 enum eventTypes {
     KEYSTROKE,
@@ -1149,6 +1121,7 @@ enum tileFlags {
 #define LOAD_SAVED_GAME_KEY 'O'
 #define SAVE_GAME_KEY       'S'
 #define NEW_GAME_KEY        'N'
+#define GRAPHICS_KEY        'G'
 #define NUMPAD_0            48
 #define NUMPAD_1            49
 #define NUMPAD_2            50
@@ -1234,7 +1207,7 @@ enum dungeonLayers {
 
 // keeps track of graphics so we only redraw if the cell has changed:
 typedef struct cellDisplayBuffer {
-    uchar character;
+    enum displayGlyph character;
     char foreColorComponents[3];
     char backColorComponents[3];
     char opacity;
@@ -1337,7 +1310,7 @@ typedef struct item {
     enum monsterTypes vorpalEnemy;
     short strengthRequired;
     unsigned short quiverNumber;
-    uchar displayChar;
+    enum displayGlyph displayChar;
     color *foreColor;
     color *inventoryColor;
     short quantity;
@@ -1759,7 +1732,7 @@ typedef struct bolt {
     char name[DCOLS];
     char description[COLS];
     char abilityDescription[COLS*2];
-    uchar theChar;
+    enum displayGlyph theChar;
     const color *foreColor;
     const color *backColor;
     short boltEffect;
@@ -1800,7 +1773,7 @@ typedef struct dungeonFeature {
 // Terrain types:
 typedef struct floorTileType {
     // appearance:
-    uchar displayChar;
+    enum displayGlyph displayChar;
     const color *foreColor;
     const color *backColor;
     short drawPriority;                     // priority (lower number means higher priority); governs drawing as well as tile replacement comparisons.
@@ -2043,7 +2016,7 @@ enum monsterBookkeepingFlags {
 typedef struct creatureType {
     enum monsterTypes monsterID; // index number for the monsterCatalog
     char monsterName[COLS];
-    uchar displayChar;
+    enum displayGlyph displayChar;
     const color *foreColor;
     short maxHP;
     short defense;
@@ -2054,6 +2027,7 @@ typedef struct creatureType {
     short attackSpeed;
     enum dungeonFeatureTypes bloodType;
     enum lightType intrinsicLightType;
+    boolean isLarge;    // used for size of psychic emanation
     short DFChance;                     // percent chance to spawn the dungeon feature per awake turn
     enum dungeonFeatureTypes DFType;    // kind of dungeon feature
     enum boltType bolts[20];
@@ -2558,7 +2532,7 @@ typedef struct brogueButton {
     signed long hotkey[10];     // up to 10 hotkeys to trigger the button
     color buttonColor;          // background of the button; further gradient-ized when displayed
     short opacity;              // further reduced by 50% if not enabled
-    uchar symbol[COLS];         // Automatically replace the nth asterisk in the button label text with
+    enum displayGlyph symbol[COLS];         // Automatically replace the nth asterisk in the button label text with
                                 // the nth character supplied here, if one is given.
                                 // (Primarily to display magic character and item symbols in the inventory display.)
     unsigned long flags;
@@ -2602,6 +2576,10 @@ typedef struct buttonState {
     cellDisplayBuffer rbuf[COLS][ROWS]; // Reversion screen state.
 } buttonState;
 
+extern boolean serverMode;
+extern boolean hasGraphics;
+extern boolean showGraphics;
+
 #if defined __cplusplus
 extern "C" {
 #endif
@@ -2637,7 +2615,7 @@ extern "C" {
     void bakeColor(color *theColor);
     void shuffleTerrainColors(short percentOfCells, boolean refreshCells);
     void normColor(color *baseColor, const short aggregateMultiplier, const short colorTranslation);
-    void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeColor, color *returnBackColor);
+    void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *returnForeColor, color *returnBackColor);
     void logBuffer(char array[DCOLS][DROWS]);
     //void logBuffer(short **array);
     boolean search(short searchStrength);
@@ -2670,7 +2648,7 @@ extern "C" {
     void zeroOutGrid(char grid[DCOLS][DROWS]);
     short oppositeDirection(short theDir);
 
-    void plotChar(uchar inputChar,
+    void plotChar(enum displayGlyph inputChar,
                   short xLoc, short yLoc,
                   short backRed, short backGreen, short backBlue,
                   short foreRed, short foreGreen, short foreBlue);
@@ -2732,9 +2710,9 @@ extern "C" {
     void colorBlendCell(short x, short y, color *hiliteColor, short hiliteStrength);
     void hiliteCell(short x, short y, const color *hiliteColor, short hiliteStrength, boolean distinctColors);
     void colorMultiplierFromDungeonLight(short x, short y, color *editColor);
-    void plotCharWithColor(uchar inputChar, short xLoc, short yLoc, const color *cellForeColor, const color *cellBackColor);
-    void plotCharToBuffer(uchar inputChar, short x, short y, color *foreColor, color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
-    void plotForegroundChar(uchar inputChar, short x, short y, color *foreColor, boolean affectedByLighting);
+    void plotCharWithColor(enum displayGlyph inputChar, short xLoc, short yLoc, const color *cellForeColor, const color *cellBackColor);
+    void plotCharToBuffer(enum displayGlyph inputChar, short x, short y, color *foreColor, color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
+    void plotForegroundChar(enum displayGlyph inputChar, short x, short y, color *foreColor, boolean affectedByLighting);
     void commitDraws();
     void dumpLevelToScreen();
     void hiliteCharGrid(char hiliteCharGrid[DCOLS][DROWS], color *hiliteColor, short hiliteStrength);
@@ -3087,7 +3065,7 @@ extern "C" {
     item *itemOfPackLetter(char letter);
     void unequipItem(item *theItem, boolean force);
     short magicCharDiscoverySuffix(short category, short kind);
-    uchar itemMagicChar(item *theItem);
+    int itemMagicPolarity(item *theItem);
     item *itemAtLoc(short x, short y);
     item *dropItem(item *theItem);
     itemTable *tableForItemCategory(enum itemCategory theCat, short *kindCount);
@@ -3134,7 +3112,7 @@ extern "C" {
     void pausePlayback();
     void displayAnnotation();
     void loadSavedGame();
-    void recordKeystroke(uchar keystroke, boolean controlKey, boolean shiftKey);
+    void recordKeystroke(int keystroke, boolean controlKey, boolean shiftKey);
     void recordKeystrokeSequence(unsigned char *commandSequence);
     void recordMouseClick(short x, short y, boolean controlKey, boolean shiftKey);
     void OOSCheck(unsigned long x, short numberOfBytes);

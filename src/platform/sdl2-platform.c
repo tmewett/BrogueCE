@@ -13,9 +13,9 @@
 #define PAUSE_BETWEEN_EVENT_POLLING     36L//17
 #define MAX_REMAPS  128
 
-// Dimensions of the font graphics. Divide by 16 to get individual character dimensions.
-static const int fontWidths[13] = {112, 128, 144, 160, 176, 192, 208, 224, 240, 256, 272, 288, 304};
-static const int fontHeights[13] = {176, 208, 240, 272, 304, 336, 368, 400, 432, 464, 496, 528, 528};
+// Dimensions of the font characters
+static const int fontWidths[13] = {7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
+static const int fontHeights[13] = {11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 33};
 
 struct keypair {
     char from;
@@ -25,6 +25,7 @@ struct keypair {
 static SDL_Window *Win = NULL;
 static SDL_Surface *WinSurf = NULL;
 static SDL_Surface *Font = NULL;
+static SDL_Surface *Tiles = NULL;
 
 static struct keypair remapping[MAX_REMAPS];
 static size_t nremaps = 0;
@@ -54,13 +55,18 @@ static void refreshWindow() {
 
 static void loadFont(int fontsize) {
     char filename[BROGUE_FILENAME_MAX];
-    sprintf(filename, "%s/assets/font-%i.png", dataDirectory, fontsize);
 
     static int lastsize = 0;
     if (lastsize != fontsize) {
+        sprintf(filename, "%s/assets/font-%i.png", dataDirectory, fontsize);
         if (Font != NULL) SDL_FreeSurface(Font);
         Font = IMG_Load(filename);
         if (Font == NULL) imgfatal();
+
+        sprintf(filename, "%s/assets/tiles-%i.png", dataDirectory, fontsize);
+        if (Tiles != NULL) SDL_FreeSurface(Tiles);
+        Tiles = IMG_Load(filename);
+        if (Tiles == NULL) imgfatal();
     }
     lastsize = fontsize;
 }
@@ -71,8 +77,8 @@ static int fitFontSize(int width, int height) {
     for (
         size = 12;
         size > 0
-            && (fontWidths[size] / 16 * COLS > width
-                || fontHeights[size] / 16 * ROWS > height);
+            && (fontWidths[size] * COLS > width
+                || fontHeights[size] * ROWS > height);
         size--
     );
     return size + 1;
@@ -84,7 +90,7 @@ Creates or resizes the game window with the currently loaded font.
 */
 static void ensureWindow() {
     if (Font == NULL) return;
-    int cellw = Font->w / 16, cellh = Font->h / 16;
+    int cellw = fontWidths[brogueFontSize - 1], cellh = fontHeights[brogueFontSize - 1];
 
     if (Win != NULL) {
         SDL_SetWindowSize(Win, cellw*COLS, cellh*ROWS);
@@ -107,7 +113,7 @@ static void ensureWindow() {
 
 static void getWindowPadding(int *x, int *y) {
     if (Font == NULL) return;
-    int cellw = Font->w / 16, cellh = Font->h / 16;
+    int cellw = fontWidths[brogueFontSize - 1], cellh = fontHeights[brogueFontSize - 1];
 
     int winw, winh;
     SDL_GetWindowSize(Win, &winw, &winh);
@@ -227,7 +233,7 @@ platform-specific inputs/behaviours.
 */
 static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
     static int mx = 0, my = 0;
-    int cellw = Font->w / 16, cellh = Font->h / 16;
+    int cellw = fontWidths[brogueFontSize - 1], cellh = fontHeights[brogueFontSize - 1];
 
     int padx, pady;
     getWindowPadding(&padx, &pady);
@@ -368,6 +374,8 @@ static void _gameLoop() {
     loadFont(brogueFontSize);
     ensureWindow();
 
+    hasGraphics = true;
+
     rogueMain();
 
     SDL_DestroyWindow(Win);
@@ -414,53 +422,75 @@ static void _nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boo
 }
 
 
+/*
+Returns the index of the sprite representing the given glyph. Sprites <256 are
+from the text font sheet, 256+ are from the tiles sheet.
+*/
+static int fontIndex(enum displayGlyph glyph) {
+    // These are the only non-ASCII glyphs which always come from the font sheet
+    if (glyph == G_UP_ARROW) return 0x90;
+    if (glyph == G_DOWN_ARROW) return 0x91;
+
+    if (glyph < 128) {
+        // ASCII characters map directly
+        return glyph;
+    } else if (showGraphics && glyph >= 128) {
+        // Tile glyphs have sprite indices starting at 256
+        // -2 to disregard the up and down arrow glyphs
+        return glyph + 128 - 2;
+    } else {
+        unsigned int code = glyphToUnicode(glyph);
+        switch (code) {
+            case U_MIDDLE_DOT: return 0x80;
+            case U_FOUR_DOTS: return 0x81;
+            case U_DIAMOND: return 0x82;
+            case U_FLIPPED_V: return 0x83;
+            case U_ARIES: return 0x84;
+            case U_ESZETT: return 0xdf;
+            case U_ANKH: return 0x85;
+            case U_MUSIC_NOTE: return 0x86;
+            case U_CIRCLE: return 0x87;
+            case U_LIGHTNING_BOLT: return 0x99;
+            case U_FILLED_CIRCLE: return 0x89;
+            case U_NEUTER: return 0x8a;
+            case U_U_ACUTE: return 0xda;
+            case U_CURRENCY: return 0xa4;
+            case U_UP_ARROW: return 0x90;
+            case U_DOWN_ARROW: return 0x91;
+            case U_LEFT_ARROW: return 0x92;
+            case U_RIGHT_ARROW: return 0x93;
+            case U_OMEGA: return 0x96;
+            case U_CIRCLE_BARS: return 0x8c;
+            case U_FILLED_CIRCLE_BARS: return 0x8d;
+
+            default:
+                brogueAssert(code < 256);
+                return code;
+        }
+    }
+}
+
+
 static void _plotChar(
-    uchar inputChar,
+    enum displayGlyph inputChar,
     short x, short y,
     short foreRed, short foreGreen, short foreBlue,
     short backRed, short backGreen, short backBlue
 ) {
-    if (inputChar == STATUE_CHAR) {
-        inputChar = 223;
-    } else if (inputChar > 255) {
-        switch (inputChar) {
-#ifdef USE_UNICODE
-            case FLOOR_CHAR: inputChar = 128 + 0; break;
-            case CHASM_CHAR: inputChar = 128 + 1; break;
-            case TRAP_CHAR: inputChar = 128 + 2; break;
-            case FIRE_CHAR: inputChar = 128 + 3; break;
-            case FOLIAGE_CHAR: inputChar = 128 + 4; break;
-            case AMULET_CHAR: inputChar = 128 + 5; break;
-            case SCROLL_CHAR: inputChar = 128 + 6; break;
-            case RING_CHAR: inputChar = 128 + 7; break;
-            case WEAPON_CHAR: inputChar = 128 + 8; break;
-            case GEM_CHAR: inputChar = 128 + 9; break;
-            case TOTEM_CHAR: inputChar = 128 + 10; break;
-            case BAD_MAGIC_CHAR: inputChar = 128 + 12; break;
-            case GOOD_MAGIC_CHAR: inputChar = 128 + 13; break;
-
-            case DOWN_ARROW_CHAR: inputChar = 144 + 1; break;
-            case LEFT_ARROW_CHAR: inputChar = 144 + 2; break;
-            case RIGHT_ARROW_CHAR: inputChar = 144 + 3; break;
-            case UP_TRIANGLE_CHAR: inputChar = 144 + 4; break;
-            case DOWN_TRIANGLE_CHAR: inputChar = 144 + 5; break;
-            case OMEGA_CHAR: inputChar = 144 + 6; break;
-            case THETA_CHAR: inputChar = 144 + 7; break;
-            case LAMDA_CHAR: inputChar = 144 + 8; break;
-            case KOPPA_CHAR: inputChar = 144 + 9; break; // is this right?
-            case CHARM_CHAR: inputChar = 144 + 9; break;
-            case LOZENGE_CHAR: inputChar = 144 + 10; break;
-            case CROSS_PRODUCT_CHAR: inputChar = 144 + 11; break;
-#endif
-            default: inputChar = '?'; break;
-        }
-    }
-
     int padx, pady;
     getWindowPadding(&padx, &pady);
 
+    SDL_Surface *sheet;
+    inputChar = fontIndex(inputChar);
+    if (inputChar >= 256) {
+        sheet = Tiles;
+        inputChar -= 256;
+    } else {
+        sheet = Font;
+    }
+
     SDL_Rect src, dest;
-    int cellw = Font->w / 16, cellh = Font->h / 16;
+    int cellw = fontWidths[brogueFontSize - 1], cellh = fontHeights[brogueFontSize - 1];
     src.x = (inputChar % 16) * cellw;
     src.y = (inputChar / 16) * cellh;
     src.w = cellw;
@@ -474,8 +504,8 @@ static void _plotChar(
     SDL_FillRect(WinSurf, &dest, SDL_MapRGB(
         WinSurf->format, backRed * 255 / 100, backGreen * 255 / 100, backBlue * 255 / 100
     ));
-    SDL_SetSurfaceColorMod(Font, foreRed * 255 / 100, foreGreen * 255 / 100, foreBlue * 255 / 100);
-    SDL_BlitSurface(Font, &src, WinSurf, &dest);
+    SDL_SetSurfaceColorMod(sheet, foreRed * 255 / 100, foreGreen * 255 / 100, foreBlue * 255 / 100);
+    SDL_BlitSurface(sheet, &src, WinSurf, &dest);
 }
 
 
