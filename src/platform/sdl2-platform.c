@@ -29,6 +29,7 @@ static SDL_Surface *Tiles = NULL;
 
 static struct keypair remapping[MAX_REMAPS];
 static size_t nremaps = 0;
+static boolean showGraphics = false;
 
 static rogueEvent lastEvent;
 
@@ -374,8 +375,6 @@ static void _gameLoop() {
     loadFont(brogueFontSize);
     ensureWindow();
 
-    hasGraphics = true;
-
     rogueMain();
 
     SDL_DestroyWindow(Win);
@@ -517,6 +516,7 @@ static void _remap(const char *from, const char *to) {
     }
 }
 
+
 /*
  * Take screenshot in current working directory (ScreenshotN.png)
  */
@@ -533,6 +533,14 @@ static boolean _takeScreenshot() {
     return false;
 }
 
+
+static boolean _setGraphicsEnabled(boolean state) {
+    showGraphics = state;
+    refreshScreen();
+    return state;
+}
+
+
 struct brogueConsole sdlConsole = {
     _gameLoop,
     _pauseForMilliseconds,
@@ -541,5 +549,6 @@ struct brogueConsole sdlConsole = {
     _remap,
     _modifierHeld,
     NULL,
-    _takeScreenshot
+    _takeScreenshot,
+    _setGraphicsEnabled
 };

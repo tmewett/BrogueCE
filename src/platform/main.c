@@ -10,7 +10,7 @@ int brogueFontSize = 0;
 char dataDirectory[BROGUE_FILENAME_MAX] = STRINGIFY(DATADIR);
 boolean serverMode = false;
 boolean hasGraphics = false;
-boolean showGraphics = false;
+boolean graphicsEnabled = false;
 
 static boolean endswith(const char *str, const char *ending)
 {
@@ -220,6 +220,8 @@ int main(int argc, char *argv[])
         badArgument(argv[i]);
         return 1;
     }
+
+    hasGraphics = (currentConsole.setGraphicsEnabled != NULL);
 
     loadKeymap();
     currentConsole.gameLoop();

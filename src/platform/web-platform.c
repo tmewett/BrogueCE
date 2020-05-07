@@ -326,5 +326,6 @@ struct brogueConsole webConsole = {
     web_remap,
     web_modifierHeld,
     web_notifyEvent,
+    NULL,
     NULL
 };

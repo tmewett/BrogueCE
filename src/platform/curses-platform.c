@@ -221,5 +221,6 @@ struct brogueConsole cursesConsole = {
     curses_remap,
     modifier_held,
     NULL,
+    NULL,
     NULL
 };

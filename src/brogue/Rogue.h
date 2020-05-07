@@ -2578,7 +2578,7 @@ typedef struct buttonState {
 
 extern boolean serverMode;
 extern boolean hasGraphics;
-extern boolean showGraphics;
+extern boolean graphicsEnabled;
 
 #if defined __cplusplus
 extern "C" {
@@ -2654,6 +2654,7 @@ extern "C" {
     void nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance);
     void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2);
     boolean takeScreenshot();
+    boolean setGraphicsEnabled(boolean);
     boolean controlKeyIsDown();
     boolean shiftKeyIsDown();
     short getHighScoresList(rogueHighScoresEntry returnList[HIGH_SCORES_COUNT]);

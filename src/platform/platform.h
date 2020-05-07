@@ -76,6 +76,11 @@ struct brogueConsole {
     Optional. Take a screenshot in current working directory
     */
     boolean (*takeScreenshot)();
+
+    /*
+    Optional. Enables or disables graphical tiles, returning the new state
+    */
+    boolean (*setGraphicsEnabled)(boolean);
 };
 
 // defined in platform

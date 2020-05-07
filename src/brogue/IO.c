@@ -27,7 +27,6 @@
 #include "Rogue.h"
 #include "IncludeGlobals.h"
 
-
 // Populates path[][] with a list of coordinates starting at origin and traversing down the map. Returns the number of steps in the path.
 short getPlayerPathOnMap(short path[1000][2], short **map, short originX, short originY) {
     short dir, x, y, steps;
@@ -332,9 +331,9 @@ short actionMenu(short x, boolean playingBack) {
 
         if (hasGraphics) {
             if (KEYBOARD_LABELS) {
-                sprintf(buttons[buttonCount].text, "  %sG: %s[%s] Enable graphics  ", yellowColorEscape, whiteColorEscape, showGraphics ? "X" : " ");
+                sprintf(buttons[buttonCount].text, "  %sG: %s[%s] Enable graphics  ", yellowColorEscape, whiteColorEscape, graphicsEnabled ? "X" : " ");
             } else {
-                sprintf(buttons[buttonCount].text, "  [%s] Enable graphics  ",   showGraphics ? "X" : " ");
+                sprintf(buttons[buttonCount].text, "  [%s] Enable graphics  ",   graphicsEnabled ? "X" : " ");
             }
             buttons[buttonCount].hotkey[0] = GRAPHICS_KEY;
             takeActionOurselves[buttonCount] = true;
@@ -2634,9 +2633,8 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             break;
         case GRAPHICS_KEY:
             if (hasGraphics) {
-                showGraphics = !showGraphics;
-                refreshScreen();
-                if (showGraphics) {
+                graphicsEnabled = setGraphicsEnabled(!graphicsEnabled);
+                if (graphicsEnabled) {
                     messageWithColor(KEYBOARD_LABELS ? "Enabled graphical tiles. Press 'G' again to disable." : "Enable graphical tiles.",
                                     &teal, false);
                 } else {

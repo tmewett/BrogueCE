@@ -220,6 +220,14 @@ boolean takeScreenshot() {
     }
 }
 
+boolean setGraphicsEnabled(boolean state) {
+    if (currentConsole.setGraphicsEnabled) {
+        return currentConsole.setGraphicsEnabled(state);
+    } else {
+        return false;
+    }
+}
+
 // creates an empty high scores file
 void initScores() {
     short i;
