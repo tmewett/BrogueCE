@@ -98,7 +98,7 @@ static void ensureWindow() {
         SDL_SetWindowSize(Win, cellw*COLS, cellh*ROWS);
     } else {
         Win = SDL_CreateWindow("Brogue",
-            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, cellw*COLS, cellh*ROWS, SDL_WINDOW_RESIZABLE);
+            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, cellw*COLS, cellh*ROWS, SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
         if (Win == NULL) sdlfatal();
 
         char filename[BROGUE_FILENAME_MAX];
