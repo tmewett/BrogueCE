@@ -207,11 +207,25 @@ boolean pauseForMilliseconds(short milliseconds) {
 }
 
 void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2) {
-    currentConsole.notifyEvent(eventId, data1, data2, str1, str2);
+    if (currentConsole.notifyEvent) {
+        currentConsole.notifyEvent(eventId, data1, data2, str1, str2);
+    }
 }
 
 boolean takeScreenshot() {
-    return currentConsole.takeScreenshot();
+    if (currentConsole.takeScreenshot) {
+        return currentConsole.takeScreenshot();
+    } else {
+        return false;
+    }
+}
+
+boolean setGraphicsEnabled(boolean state) {
+    if (currentConsole.setGraphicsEnabled) {
+        return currentConsole.setGraphicsEnabled(state);
+    } else {
+        return false;
+    }
 }
 
 // creates an empty high scores file

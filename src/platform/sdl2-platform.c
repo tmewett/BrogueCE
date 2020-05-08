@@ -29,6 +29,7 @@ static SDL_Surface *Tiles = NULL;
 
 static struct keypair remapping[MAX_REMAPS];
 static size_t nremaps = 0;
+static boolean showGraphics = false;
 
 static rogueEvent lastEvent;
 
@@ -273,7 +274,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
                 SDL_SetWindowFullscreen(Win,
                     (SDL_GetWindowFlags(Win) & SDL_WINDOW_FULLSCREEN_DESKTOP) ? 0 : SDL_WINDOW_FULLSCREEN_DESKTOP);
                 refreshWindow();
-            } 
+            }
 
             if (eventFromKey(returnEvent, key)) {
                 returnEvent->eventType = KEYSTROKE;
@@ -373,8 +374,6 @@ static void _gameLoop() {
 
     loadFont(brogueFontSize);
     ensureWindow();
-
-    hasGraphics = true;
 
     rogueMain();
 
@@ -517,9 +516,6 @@ static void _remap(const char *from, const char *to) {
     }
 }
 
-static void _notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2) {
-    //Unused
-}
 
 /*
  * Take screenshot in current working directory (ScreenshotN.png)
@@ -537,6 +533,14 @@ static boolean _takeScreenshot() {
     return false;
 }
 
+
+static boolean _setGraphicsEnabled(boolean state) {
+    showGraphics = state;
+    refreshScreen();
+    return state;
+}
+
+
 struct brogueConsole sdlConsole = {
     _gameLoop,
     _pauseForMilliseconds,
@@ -544,6 +548,7 @@ struct brogueConsole sdlConsole = {
     _plotChar,
     _remap,
     _modifierHeld,
-    _notifyEvent,
-    _takeScreenshot
+    NULL,
+    _takeScreenshot,
+    _setGraphicsEnabled
 };

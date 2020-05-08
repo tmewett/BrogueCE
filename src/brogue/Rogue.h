@@ -2578,13 +2578,11 @@ typedef struct buttonState {
 
 extern boolean serverMode;
 extern boolean hasGraphics;
-extern boolean showGraphics;
+extern boolean graphicsEnabled;
 
 #if defined __cplusplus
 extern "C" {
 #endif
-
-    fixpt fp_sqrt(fixpt val);
 
     void rogueMain();
     void executeEvent(rogueEvent *theEvent);
@@ -2594,8 +2592,6 @@ extern "C" {
     void initializeRogue(unsigned long seed);
     void gameOver(char *killedBy, boolean useCustomPhrasing);
     void victory(boolean superVictory);
-    void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2);
-    boolean takeScreenshot();
     void enableEasyMode();
     int rand_range(int lowerBound, int upperBound);
     unsigned long seedRandomGenerator(unsigned long seed);
@@ -2606,6 +2602,7 @@ extern "C" {
     void fillSequentialList(short *list, short listLength);
     fixpt fp_round(fixpt x);
     fixpt fp_pow(fixpt base, fixpt expn);
+    fixpt fp_sqrt(fixpt val);
     short unflag(unsigned long flag);
     void considerCautiousMode();
     void refreshScreen();
@@ -2655,6 +2652,9 @@ extern "C" {
     boolean pauseForMilliseconds(short milliseconds);
     boolean isApplicationActive();
     void nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance);
+    void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2);
+    boolean takeScreenshot();
+    boolean setGraphicsEnabled(boolean);
     boolean controlKeyIsDown();
     boolean shiftKeyIsDown();
     short getHighScoresList(rogueHighScoresEntry returnList[HIGH_SCORES_COUNT]);
