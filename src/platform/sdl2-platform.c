@@ -14,8 +14,9 @@
 #define MAX_REMAPS  128
 
 // Dimensions of the font characters
-static const int fontWidths[13] = {7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
-static const int fontHeights[13] = {11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 33};
+#define N_FONTS  15
+static const int fontWidths[] = {7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21, 24, 27};
+static const int fontHeights[] = {11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 38, 44, 49};
 
 struct keypair {
     char from;
@@ -76,7 +77,7 @@ static void loadFont(int fontsize) {
 static int fitFontSize(int width, int height) {
     int size;
     for (
-        size = 12;
+        size = N_FONTS - 1;
         size > 0
             && (fontWidths[size] * COLS > width
                 || fontHeights[size] * ROWS > height);
@@ -97,7 +98,7 @@ static void ensureWindow() {
         SDL_SetWindowSize(Win, cellw*COLS, cellh*ROWS);
     } else {
         Win = SDL_CreateWindow("Brogue",
-            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, cellw*COLS, cellh*ROWS, SDL_WINDOW_RESIZABLE);
+            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, cellw*COLS, cellh*ROWS, SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
         if (Win == NULL) sdlfatal();
 
         char filename[BROGUE_FILENAME_MAX];
@@ -262,7 +263,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
         } else if (event.type == SDL_KEYDOWN) {
             SDL_Keycode key = event.key.keysym.sym;
 
-            if (key == SDLK_PAGEUP && brogueFontSize < 13) {
+            if (key == SDLK_PAGEUP && brogueFontSize < N_FONTS) {
                 loadFont(++brogueFontSize);
                 ensureWindow();
             } else if (key == SDLK_PAGEDOWN && brogueFontSize > 1) {
@@ -292,7 +293,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
 
             if (!textInput) {
                 c = applyRemaps(c);
-                if ((c == '=' || c == '+') && brogueFontSize < 13) {
+                if ((c == '=' || c == '+') && brogueFontSize < N_FONTS) {
                     loadFont(++brogueFontSize);
                     ensureWindow();
                 } else if (c == '-' && brogueFontSize > 1) {
