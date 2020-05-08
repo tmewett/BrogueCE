@@ -66,9 +66,11 @@ windows.zip: $(common-files) $(common-bin)
 	zip -rvl $@ $^ bin/brogue.exe bin/*.dll
 
 macos.zip: $(common-files)
+	chmod +x "Brogue CE.app"/Contents/MacOS/brogue
 	zip -rv -ll $@ $^ "Brogue CE.app"
 
 linux.tar.gz: $(common-files) $(common-bin) brogue
+	chmod +x bin/brogue
 	tar -cavf $@ $^ bin/brogue -C linux make-link-for-desktop.sh
 
 
