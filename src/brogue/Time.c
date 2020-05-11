@@ -2201,12 +2201,6 @@ void playerTurnEnded() {
         return;
     }
 
-    // This happens in updateEnvironment, but some monsters move faster than the
-    // environment updates in the loop below. This means they need to fall at
-    // the start of the turn to avoid them being able to act while suspended
-    // over a chasm
-    monstersFall();
-
     do {
         if (rogue.gameHasEnded) {
             return;
