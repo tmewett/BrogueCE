@@ -25,7 +25,6 @@
 #include "IncludeGlobals.h"
 #include <time.h>
 
-extern boolean serverMode;
 
 void rogueMain() {
     previousGameSeed = 0;
@@ -107,7 +106,7 @@ boolean openFile(const char *path) {
 void benchmark() {
     short i, j, k;
     const color sparklesauce = {10, 0, 20,  60, 40, 100, 30, true};
-    uchar theChar;
+    enum displayGlyph theChar;
 
     unsigned long initialTime = (unsigned long) time(NULL);
     for (k=0; k<500; k++) {
@@ -138,72 +137,6 @@ void welcome() {
     flavorMessage("The doors to the dungeon slam shut behind you.");
 }
 
-void generateFontFiles() {
-    short i, j;
-    uchar k;
-
-    uchar c8[16] = {
-        FLOOR_CHAR,
-        CHASM_CHAR,
-        TRAP_CHAR,
-        FIRE_CHAR,
-        FOLIAGE_CHAR,
-        AMULET_CHAR,
-        SCROLL_CHAR,
-        RING_CHAR,
-        WEAPON_CHAR,
-        GEM_CHAR,
-        TOTEM_CHAR,
-        TURRET_CHAR,
-        BAD_MAGIC_CHAR,
-        GOOD_MAGIC_CHAR,
-        ' ',
-        ' ',
-    };
-    uchar c9[16] = {
-        UP_ARROW_CHAR,
-        DOWN_ARROW_CHAR,
-        LEFT_ARROW_CHAR,
-        RIGHT_ARROW_CHAR,
-        UP_TRIANGLE_CHAR,
-        DOWN_TRIANGLE_CHAR,
-        OMEGA_CHAR,
-        THETA_CHAR,
-        LAMDA_CHAR,
-        KOPPA_CHAR,
-        LOZENGE_CHAR,
-        CROSS_PRODUCT_CHAR,
-        ' ',
-        ' ',
-        ' ',
-        ' ',
-    };
-
-    for (i=0; i<COLS; i++) {
-        for(j=0; j<ROWS; j++ ) {
-            plotCharWithColor(' ', i, j, &white, &white);
-        }
-    }
-    i = j = 0;
-    for (k=0; k<256; k++) {
-        i = k % 16;
-        j = k / 16;
-        if (j >= ROWS) {
-            break;
-        }
-        if (j == 8) {
-            plotCharWithColor(c8[i], i, j+5, &white, &black);
-        } else if (j == 9) {
-            plotCharWithColor(c9[i], i, j+5, &white, &black);
-        } else {
-            plotCharWithColor(k, i, j+5, &white, &black);
-        }
-    }
-    for (;;) {
-        waitForAcknowledgment();
-    }
-}
-
 // Seed is used as the dungeon seed unless it's zero, in which case generate a new one.
 // Either way, previousGameSeed is set to the seed we use.
 // None of this seed stuff is applicable if we're playing a recording.
@@ -212,12 +145,6 @@ void initializeRogue(unsigned long seed) {
     item *theItem;
     boolean playingback, playbackFF, playbackPaused, wizard;
     short oldRNG;
-
-    // generate font bitmap
-    // add any new unicode characters here to include them
-#ifdef GENERATE_FONT_FILES
-    generateFontFiles();
-#endif
 
     playingback = rogue.playbackMode; // the only four animals that need to go on the ark
     playbackPaused = rogue.playbackPaused;
@@ -1145,7 +1072,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         blackOutScreen();
         saveRecordingNoPrompt(recordingFilename);
     } else {
-        if (saveHighScore(theEntry)) {
+        if (!rogue.playbackMode && saveHighScore(theEntry)) {
             printHighScores(true);
         }
         blackOutScreen();
@@ -1177,6 +1104,9 @@ void victory(boolean superVictory) {
 
     flushBufferToFile();
 
+    //
+    // First screen - Congratulations...
+    //
     deleteMessages();
     if (superVictory) {
         message(    "Light streams through the portal, and you are teleported out of the dungeon.", false);
@@ -1200,9 +1130,13 @@ void victory(boolean superVictory) {
         strcpy(displayedMessage[0], "You sell your treasures and live out your days in fame and glory.");
     }
 
+    //
+    // Second screen - Show inventory and item's value
+    //
     printString(displayedMessage[0], mapToWindowX(0), mapToWindowY(-1), &white, &black, dbuf);
 
-    printString("Gold", mapToWindowX(2), mapToWindowY(1), &white, &black, dbuf);
+    plotCharToBuffer(G_GOLD, mapToWindowX(2), mapToWindowY(1), &yellow, &black, dbuf);
+    printString("Gold", mapToWindowX(4), mapToWindowY(1), &white, &black, dbuf);
     sprintf(buf, "%li", rogue.gold);
     printString(buf, mapToWindowX(60), mapToWindowY(1), &itemMessageColor, &black, dbuf);
     totalValue += rogue.gold;
@@ -1212,18 +1146,25 @@ void victory(boolean superVictory) {
             gemCount += theItem->quantity;
         }
         if (theItem->category == AMULET && superVictory) {
-            printString("The Birthright of Yendor", mapToWindowX(2), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
+            plotCharToBuffer(G_AMULET, mapToWindowX(2), min(ROWS-1, i + 1), &yellow, &black, dbuf);
+            printString("The Birthright of Yendor", mapToWindowX(4), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
             sprintf(buf, "%li", max(0, itemValue(theItem) * 2));
             printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
             totalValue += max(0, itemValue(theItem) * 2);
             i++;
-        } else if (itemValue(theItem) > 0) {
+        } else {
             identify(theItem);
             itemName(theItem, buf, true, true, &white);
             upperCase(buf);
-            printString(buf, mapToWindowX(2), min(ROWS-1, i + 1), &white, &black, dbuf);
-            sprintf(buf, "%li", max(0, itemValue(theItem)));
-            printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
+
+            plotCharToBuffer(theItem->displayChar, mapToWindowX(2), min(ROWS-1, i + 1), &yellow, &black, dbuf);
+            printString(buf, mapToWindowX(4), min(ROWS-1, i + 1), &white, &black, dbuf);
+
+            if (itemValue(theItem) > 0) {
+                sprintf(buf, "%li", max(0, itemValue(theItem)));
+                printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
+            }
+
             totalValue += max(0, itemValue(theItem));
             i++;
         }
@@ -1233,16 +1174,25 @@ void victory(boolean superVictory) {
     sprintf(buf, "%li", totalValue);
     printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &lightBlue, &black, dbuf);
 
-    i += 4;
+    funkyFade(dbuf, &white, 0, 120, COLS/2, ROWS/2, true);
+    displayMoreSign();
+
+    //
+    // Third screen - List of achievements with recording save prompt
+    //
+    blackOutScreen();
+
+    i = 4;
+    printString("Achievements", mapToWindowX(2), i++, &lightBlue, &black, NULL);
+
+    i++;
     for (j = 0; i < ROWS && j < FEAT_COUNT; j++) {
         if (rogue.featRecord[j]) {
             sprintf(buf, "%s: %s", featTable[j].name, featTable[j].description);
-            printString(buf, mapToWindowX(2), i, &advancementMessageColor, &black, dbuf);
+            printString(buf, mapToWindowX(2), i, &advancementMessageColor, &black, NULL);
             i++;
         }
     }
-
-    funkyFade(dbuf, &white, 0, 120, COLS/2, ROWS/2, true);
 
     strcpy(victoryVerb, superVictory ? "Mastered" : "Escaped");
     if (gemCount == 0) {
@@ -1267,7 +1217,6 @@ void victory(boolean superVictory) {
 
     isPlayback = rogue.playbackMode;
     rogue.playbackMode = false;
-    displayMoreSign();
     rogue.playbackMode = isPlayback;
 
     if (serverMode) {

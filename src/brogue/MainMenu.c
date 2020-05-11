@@ -40,7 +40,6 @@
 
 #define MENU_FLAME_DENOMINATOR          (100 + MENU_FLAME_RISE_SPEED + MENU_FLAME_SPREAD_SPEED)
 
-extern boolean serverMode;
 
 void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3], unsigned char mask[COLS][ROWS]) {
     short i, j, versionStringLength;
@@ -416,11 +415,11 @@ boolean stringsExactlyMatch(const char *string1, const char *string2) {
 }
 
 // Used to compare the dates of two fileEntry variables
-// Returns (int): 
+// Returns (int):
 //      < 0 if 'b' date is lesser than 'a' date
-//      = 0 if 'b' date is equal to 'a' date, 
+//      = 0 if 'b' date is equal to 'a' date,
 //      > 0 if 'b' date is greater than 'a' date
-int fileEntryCompareDates(const void *a, const void *b) { 
+int fileEntryCompareDates(const void *a, const void *b) {
     fileEntry *f1 = (fileEntry *)a;
     fileEntry *f2 = (fileEntry *)b;
     time_t t1, t2;
@@ -435,9 +434,9 @@ int fileEntryCompareDates(const void *a, const void *b) {
     //strftime(date_f1, sizeof(date_f1), DATE_FORMAT, &f1->date);
     //strftime(date_f2, sizeof(date_f2), DATE_FORMAT, &f2->date);
     //printf("\nf1: %s\t%s",date_f1,f1->path);
-    //printf("\nf2: %s\t%s",date_f2,f2->path); 
+    //printf("\nf2: %s\t%s",date_f2,f2->path);
     //printf("\ndiff: %f\n", diff);
-    
+
     return (int)diff;
 }
 
@@ -480,7 +479,7 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
         }
     }
     count = j;
-    
+
     // Once we have all relevant files, we sort them by date descending
     qsort(files, count, sizeof(fileEntry), &fileEntryCompareDates);
 
@@ -535,7 +534,7 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
             // Create up and down arrows.
             initializeButton(&(buttons[i]));
             strcpy(buttons[i].text, "     *     ");
-            buttons[i].symbol[0] = UP_ARROW_CHAR;
+            buttons[i].symbol[0] = G_UP_ARROW;
             if (currentPageStart <= 0) {
                 buttons[i].flags &= ~(B_ENABLED | B_DRAW);
             } else {
@@ -549,7 +548,7 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
             i++;
             initializeButton(&(buttons[i]));
             strcpy(buttons[i].text, "     *     ");
-            buttons[i].symbol[0] = DOWN_ARROW_CHAR;
+            buttons[i].symbol[0] = G_DOWN_ARROW;
             if (currentPageStart + FILES_ON_PAGE_MAX >= count) {
                 buttons[i].flags &= ~(B_ENABLED | B_DRAW);
             } else {

@@ -40,7 +40,7 @@ short smoothHiliteGradient(const short currentXValue, const short maxXValue) {
 void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDisplayBuffer dbuf[COLS][ROWS]) {
     short i, textLoc, width, midPercent, symbolNumber, opacity, oldRNG;
     color fColor, bColor, fColorBase, bColorBase, bColorEdge, bColorMid;
-    uchar displayCharacter;
+    enum displayGlyph displayCharacter;
 
     if (!(button->flags & B_DRAW)) {
         return;

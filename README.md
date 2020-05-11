@@ -58,7 +58,8 @@ place on your desktop or applications folder.
 ### More information
 
 If you're running the graphical version (default), the game window can be
-resized using the PageDown/PageUp or -/+ keys.
+resized using the PageDown/PageUp or -/+ keys. Graphical tiles are included;
+press 'G' to toggle them.
 
 For some tips on playing the game, see the original website, linked above. Also
 check out the wiki -- although this version contains some modifications from

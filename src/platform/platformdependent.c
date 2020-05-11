@@ -40,7 +40,147 @@ typedef struct brogueScoreEntry {
 
 brogueScoreEntry scoreBuffer[HIGH_SCORES_COUNT];
 
-void plotChar(uchar inputChar,
+unsigned int glyphToUnicode(enum displayGlyph glyph) {
+    if (glyph < 128) return glyph;
+
+    switch (glyph) {
+        case G_UP_ARROW: return U_UP_ARROW;
+        case G_DOWN_ARROW: return U_DOWN_ARROW;
+        case G_POTION: return '!';
+        case G_GRASS: return '"';
+        case G_WALL: return '#';
+        case G_DEMON: return '&';
+        case G_OPEN_DOOR: return '\'';
+        case G_GOLD: return '*';
+        case G_CLOSED_DOOR: return '+';
+        case G_RUBBLE: return ',';
+        case G_KEY: return '-';
+        case G_BOG: return '~';
+        case G_CHAIN_TOP_LEFT:
+        case G_CHAIN_BOTTOM_RIGHT:
+            return '\\';
+        case G_CHAIN_TOP_RIGHT:
+        case G_CHAIN_BOTTOM_LEFT:
+            return '/';
+        case G_CHAIN_TOP:
+        case G_CHAIN_BOTTOM:
+            return '|';
+        case G_CHAIN_LEFT:
+        case G_CHAIN_RIGHT:
+            return '-';
+        case G_FOOD: return ';';
+        case G_UP_STAIRS: return '<';
+        case G_VENT: return '=';
+        case G_DOWN_STAIRS: return '>';
+        case G_PLAYER: return '@';
+        case G_BOG_MONSTER: return 'B';
+        case G_CENTAUR: return 'C';
+        case G_DRAGON: return 'D';
+        case G_FLAMEDANCER: return 'F';
+        case G_GOLEM: return 'G';
+        case G_TENTACLE_HORROR: return 'H';
+        case G_IFRIT: return 'I';
+        case G_JELLY: return 'J';
+        case G_KRAKEN: return 'K';
+        case G_LICH: return 'L';
+        case G_NAGA: return 'N';
+        case G_OGRE: return 'O';
+        case G_PHANTOM: return 'P';
+        case G_REVENANT: return 'R';
+        case G_SALAMANDER: return 'S';
+        case G_TROLL: return 'T';
+        case G_UNDERWORM: return 'U';
+        case G_VAMPIRE: return 'V';
+        case G_WRAITH: return 'W';
+        case G_ZOMBIE: return 'Z';
+        case G_ARMOR: return '[';
+        case G_STAFF: return '/';
+        case G_WEB: return ':';
+        case G_MOUND: return 'a';
+        case G_BLOAT: return 'b';
+        case G_CENTIPEDE: return 'c';
+        case G_DAR_BLADEMASTER: return 'd';
+        case G_EEL: return 'e';
+        case G_FURY: return 'f';
+        case G_GOBLIN: return 'g';
+        case G_IMP: return 'i';
+        case G_JACKAL: return 'j';
+        case G_KOBOLD: return 'k';
+        case G_MONKEY: return 'm';
+        case G_PIXIE: return 'p';
+        case G_RAT: return 'r';
+        case G_SPIDER: return 's';
+        case G_TOAD: return 't';
+        case G_BAT: return 'v';
+        case G_WISP: return 'w';
+        case G_PHOENIX: return 'P';
+        case G_ALTAR: return '|';
+        case G_LIQUID: return '~';
+        case G_FLOOR: return U_MIDDLE_DOT;
+        case G_CHASM: return U_FOUR_DOTS;
+        case G_TRAP: return U_DIAMOND;
+        case G_FIRE: return U_FLIPPED_V;
+        case G_FOLIAGE: return U_ARIES;
+        case G_AMULET: return U_ANKH;
+        case G_SCROLL: return U_MUSIC_NOTE;
+        case G_RING: return U_CIRCLE;
+        case G_WEAPON: return U_UP_ARROW;
+        case G_GEM: return U_FILLED_CIRCLE;
+        case G_TOTEM: return U_NEUTER;
+        case G_GOOD_MAGIC: return U_FILLED_CIRCLE_BARS;
+        case G_BAD_MAGIC: return U_CIRCLE_BARS;
+        case G_DOORWAY: return U_OMEGA;
+        case G_CHARM: return U_LIGHTNING_BOLT;
+        case G_WALL_TOP: return '#';
+        case G_DAR_PRIESTESS: return 'd';
+        case G_DAR_BATTLEMAGE: return 'd';
+        case G_GOBLIN_MAGIC: return 'g';
+        case G_GOBLIN_CHIEFTAN: return 'g';
+        case G_OGRE_MAGIC: return 'O';
+        case G_GUARDIAN: return U_ESZETT;
+        case G_WINGED_GUARDIAN: return U_ESZETT;
+        case G_EGG: return U_FILLED_CIRCLE;
+        case G_WARDEN: return 'Y';
+        case G_DEWAR: return '&';
+        case G_ANCIENT_SPIRIT: return 'M';
+        case G_LEVER: return '/';
+        case G_LEVER_PULLED: return '\\';
+        case G_BLOODWORT_STALK: return U_ARIES;
+        case G_FLOOR_ALT: return U_MIDDLE_DOT;
+        case G_UNICORN: return U_U_ACUTE;
+        case G_TURRET: return U_FILLED_CIRCLE;
+        case G_WAND: return '~';
+        case G_GRANITE: return '#';
+        case G_CARPET: return U_MIDDLE_DOT;
+        case G_CLOSED_IRON_DOOR: return '+';
+        case G_OPEN_IRON_DOOR: return '\'';
+        case G_TORCH: return '#';
+        case G_CRYSTAL: return '#';
+        case G_PORTCULLIS: return '#';
+        case G_BARRICADE: return '#';
+        case G_STATUE: return U_ESZETT;
+        case G_CRACKED_STATUE: return U_ESZETT;
+        case G_CLOSED_CAGE: return '#';
+        case G_OPEN_CAGE: return '|';
+        case G_PEDESTAL: return '|';
+        case G_CLOSED_COFFIN: return '-';
+        case G_OPEN_COFFIN: return '-';
+        case G_MAGIC_GLYPH: return U_FOUR_DOTS;
+        case G_BRIDGE: return '=';
+        case G_BONES: return ',';
+        case G_ELECTRIC_CRYSTAL: return U_CURRENCY;
+        case G_ASHES: return '\'';
+        case G_BEDROLL: return '=';
+        case G_BLOODWORT_POD: return '*';
+
+        default:
+            brogueAssert(false);
+            return '?';
+    }
+}
+
+
+void plotChar(enum displayGlyph inputChar,
               short xLoc, short yLoc,
               short foreRed, short foreGreen, short foreBlue,
               short backRed, short backGreen, short backBlue) {
@@ -67,7 +207,25 @@ boolean pauseForMilliseconds(short milliseconds) {
 }
 
 void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2) {
-    currentConsole.notifyEvent(eventId, data1, data2, str1, str2);
+    if (currentConsole.notifyEvent) {
+        currentConsole.notifyEvent(eventId, data1, data2, str1, str2);
+    }
+}
+
+boolean takeScreenshot() {
+    if (currentConsole.takeScreenshot) {
+        return currentConsole.takeScreenshot();
+    } else {
+        return false;
+    }
+}
+
+boolean setGraphicsEnabled(boolean state) {
+    if (currentConsole.setGraphicsEnabled) {
+        return currentConsole.setGraphicsEnabled(state);
+    } else {
+        return false;
+    }
 }
 
 // creates an empty high scores file

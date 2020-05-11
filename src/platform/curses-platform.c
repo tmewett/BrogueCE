@@ -21,7 +21,48 @@ static void gameLoop() {
     Term.end();
 }
 
-static void curses_plotChar(uchar ch,
+static char glyphToAscii(enum displayGlyph glyph) {
+    unsigned int ch;
+
+    switch (glyph) {
+        case G_UP_ARROW: return '^';
+        case G_DOWN_ARROW: return 'v';
+        case G_FLOOR: return '.';
+        case G_CHASM: return ':';
+        case G_TRAP: return '%';
+        case G_FIRE: return '^';
+        case G_FOLIAGE: return '&';
+        case G_AMULET: return ',';
+        case G_SCROLL: return '?';
+        case G_RING: return '=';
+        case G_WEAPON: return '(';
+        case G_GEM: return '+';
+        case G_TOTEM: return '0'; // zero
+        case G_GOOD_MAGIC: return '$';
+        case G_BAD_MAGIC: return '+';
+        case G_DOORWAY: return '<';
+        case G_CHARM: return '7';
+        case G_GUARDIAN: return '5';
+        case G_WINGED_GUARDIAN: return '5';
+        case G_EGG: return 'o';
+        case G_BLOODWORT_STALK: return '&';
+        case G_FLOOR_ALT: return '.';
+        case G_UNICORN: return 'U';
+        case G_TURRET: return '*';
+        case G_CARPET: return '.';
+        case G_STATUE: return '5';
+        case G_CRACKED_STATUE: return '5';
+        case G_MAGIC_GLYPH: return ':';
+        case G_ELECTRIC_CRYSTAL: return '$';
+
+        default:
+            ch = glyphToUnicode(glyph);
+            brogueAssert(ch < 0x80); // assert ascii
+            return ch;
+    }
+}
+
+static void curses_plotChar(enum displayGlyph ch,
               short xLoc, short yLoc,
               short foreRed, short foreGreen, short foreBlue,
               short backRed, short backGreen, short backBlue) {
@@ -36,45 +77,7 @@ static void curses_plotChar(uchar ch,
     back.g = (float) backGreen / 100;
     back.b = (float) backBlue / 100;
 
-    #ifdef USE_UNICODE
-    // because we can't look at unicode and ascii without messing with Rogue.h, reinterpret until some later version comes along:
-    switch (ch) {
-    case FLOOR_CHAR: ch = '.'; break;
-    case CHASM_CHAR: ch = ':'; break;
-    case TRAP_CHAR: ch = '%'; break;
-    case FIRE_CHAR: ch = '^'; break;
-    case FOLIAGE_CHAR: ch = '&'; break;
-    case AMULET_CHAR: ch = ','; break;
-    case SCROLL_CHAR: ch = '?'; break;
-    case RING_CHAR: ch = '='; break;
-    case WEAPON_CHAR: ch = '('; break;
-    case GEM_CHAR: ch = '+'; break;
-    case TOTEM_CHAR: ch = '0'; break;
-    case BAD_MAGIC_CHAR: ch = '+'; break;
-    case GOOD_MAGIC_CHAR: ch = '$'; break;
-
-    // case UP_ARROW_CHAR: ch = '^'; break; // same as WEAPON_CHAR
-    case DOWN_ARROW_CHAR: ch = 'v'; break;
-    case LEFT_ARROW_CHAR: ch = '<'; break;
-    case RIGHT_ARROW_CHAR: ch = '>'; break;
-
-    case UP_TRIANGLE_CHAR: ch = '^'; break;
-    case DOWN_TRIANGLE_CHAR: ch = 'v'; break;
-
-    case CHARM_CHAR: ch = '7'; break;
-
-    case OMEGA_CHAR: ch = '<'; break;
-    case THETA_CHAR: ch = '0'; break;
-    case LAMDA_CHAR: ch = '^'; break;
-    case KOPPA_CHAR: ch = '0'; break;
-
-    case LOZENGE_CHAR: ch = 'o'; break;
-    case CROSS_PRODUCT_CHAR: ch = 'x'; break;
-
-    case STATUE_CHAR: ch = '5'; break;
-    case UNICORN_CHAR: ch = 'U'; break;
-    }
-    #endif
+    ch = glyphToAscii(ch);
 
     if (ch < ' ' || ch > 127) ch = ' ';
     Term.put(xLoc, yLoc, ch, &fore, &back);
@@ -210,10 +213,6 @@ static boolean modifier_held(int modifier) {
     return 0;
 }
 
-static void curses_notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2) { 
-    //Unused
-}
-
 struct brogueConsole cursesConsole = {
     gameLoop,
     curses_pauseForMilliseconds,
@@ -221,5 +220,7 @@ struct brogueConsole cursesConsole = {
     curses_plotChar,
     curses_remap,
     modifier_held,
-    curses_notifyEvent
+    NULL,
+    NULL,
+    NULL
 };

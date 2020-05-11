@@ -1,9 +1,35 @@
-Unreleased
-==========
+1.8.3
+=====
 
+This release contains integration of Oryx's tiles, along with other UI and
+quality of life improvements. Gameplay is identical to all 1.8 versions.
+
+Thanks to contributors kzved and flend.
+
+
+Bug fixes
+---------
 -
-  Water-restricted creatures can no longer jump back into water when on adjacent
-  dry land
+  Fixed a bug where watching a replay to completion would cause a duplicate high
+  score to appear
+
+Other changes
+-------------
+-
+  Oryx's graphical tiles are now fully integrated. They can be enabled by
+  pressing 'G' or by using the in-game menu. Compared to v1.8.1 tiles
+  pre-release, this fixes some incorrect tiles being used for various game
+  elements. (Note: unlike original Brogue Tiles, tiles are available at all
+  window/font sizes, but due to scaling they only look crisp at a certain size.)
+-
+  Improved the game's appearance on high-PPI/DPI displays. Also added some
+  larger font sizes for better viewing on higher resolution displays in general
+-
+  The full identified inventory is now shown on the post-victory screen
+-
+  Pressing the PrintScreen key now saves a screenshot to the save directory
+-
+  Numpad 5 (center) can be used to confirm targetting
 
 
 1.8.2

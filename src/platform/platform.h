@@ -1,5 +1,35 @@
 #include "Rogue.h"
 
+#define U_MIDDLE_DOT  0x00b7
+#define U_FOUR_DOTS  0x2237
+#define U_DIAMOND  0x25c7
+#define U_FLIPPED_V  0x22CF
+#define U_ARIES  0x2648
+#define U_ESZETT  0x00df
+#define U_ANKH  0x2640
+#define U_MUSIC_NOTE  0x266A
+#define U_CIRCLE  0x26AA
+#define U_LIGHTNING_BOLT  0x03DF
+#define U_FILLED_CIRCLE  0x25cf
+#define U_NEUTER  0x26b2
+#define U_U_ACUTE  0x00da
+#define U_CURRENCY 0x00A4
+#define U_UP_ARROW  0x2191
+#define U_DOWN_ARROW  0x2193
+#define U_LEFT_ARROW  0x2190
+#define U_RIGHT_ARROW  0x2192
+#define U_OMEGA  0x03A9
+#define U_CIRCLE_BARS  0x29F2
+#define U_FILLED_CIRCLE_BARS  0x29F3
+
+// #define U_UP_TRIANGLE  0x2206
+// #define U_DOWN_TRIANGLE  0x2207
+// #define U_THETA  0x03B8
+// #define U_LAMDA  0x03BB
+// #define U_KOPPA  0x03DE
+// #define U_LOZENGE  0x29EB
+// #define U_CROSS_PRODUCT  0x2A2F
+
 struct brogueConsole {
     /*
     The platform entrypoint, called by the main function. Should initialize
@@ -24,7 +54,7 @@ struct brogueConsole {
     Draw a character at a location with a specific color.
     */
     void (*plotChar)(
-        uchar inputChar,
+        enum displayGlyph inputChar,
         short x, short y,
         short foreRed, short foreGreen, short foreBlue,
         short backRed, short backGreen, short backBlue
@@ -38,14 +68,27 @@ struct brogueConsole {
     boolean (*modifierHeld)(int modifier);
 
     /*
-    Notifies the platform code of an event during the game - e.g. victory
+    Optional. Notifies the platform code of an event during the game - e.g. victory
     */
     void (*notifyEvent)(short eventId, int data1, int data2, const char *str1, const char *str2);
+
+    /*
+    Optional. Take a screenshot in current working directory
+    */
+    boolean (*takeScreenshot)();
+
+    /*
+    Optional. Enables or disables graphical tiles, returning the new state. This
+    is called when the user changes the option in-game. It is also called at the
+    very start of the program, even before .gameLoop, to set the initial value.
+    */
+    boolean (*setGraphicsEnabled)(boolean);
 };
 
 // defined in platform
 void loadKeymap();
 void dumpScores();
+unsigned int glyphToUnicode(enum displayGlyph glyph);
 
 #ifdef BROGUE_SDL
 extern struct brogueConsole sdlConsole;

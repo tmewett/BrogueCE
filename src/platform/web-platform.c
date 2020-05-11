@@ -134,29 +134,27 @@ static void writeToSocket(unsigned char *buf, int size)
     outputBufferPos += size;
 }
 
-static void web_plotChar(uchar inputChar,
+// Map characters which are missing or rendered as emoji on some platforms
+static unsigned int fixUnicode(unsigned int code) {
+    switch (code) {
+        case U_ARIES: return 0x03C8;
+        case U_CIRCLE: return 'o';
+        case U_CIRCLE_BARS: return 0x25C6;
+        case U_FILLED_CIRCLE_BARS: return 0x25C7;
+        default: return code;
+    }
+}
+
+static void web_plotChar(enum displayGlyph inputChar,
                          short xLoc, short yLoc,
                          short foreRed, short foreGreen, short foreBlue,
                          short backRed, short backGreen, short backBlue) {
     unsigned char outputBuffer[OUTPUT_SIZE];
     unsigned char firstCharByte, secondCharByte;
-    uchar translatedChar = inputChar;
+    enum displayGlyph translatedChar;
 
-    //Map characters which are missing or rendered as emoji on some platforms
-    switch(inputChar) {
-        case FOLIAGE_CHAR:
-            translatedChar = 0x03C8;
-            break;
-        case RING_CHAR:
-            translatedChar = 'o';
-            break;
-        case BAD_MAGIC_CHAR:
-            translatedChar = 0x25C6;
-            break;
-        case GOOD_MAGIC_CHAR:
-            translatedChar = 0x25C7;
-            break;
-    }
+    translatedChar = glyphToUnicode(inputChar);
+    translatedChar = fixUnicode(inputChar);
 
     firstCharByte = translatedChar >> 8 & 0xff;
     secondCharByte = translatedChar;
@@ -327,5 +325,7 @@ struct brogueConsole webConsole = {
     web_plotChar,
     web_remap,
     web_modifierHeld,
-    web_notifyEvent
+    web_notifyEvent,
+    NULL,
+    NULL
 };
