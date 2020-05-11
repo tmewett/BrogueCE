@@ -537,7 +537,7 @@ static boolean _takeScreenshot() {
 
 static boolean _setGraphicsEnabled(boolean state) {
     showGraphics = state;
-    refreshScreen();
+    if (WinSurf) refreshScreen();
     return state;
 }
 

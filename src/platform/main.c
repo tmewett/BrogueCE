@@ -39,6 +39,7 @@ static void printCommandlineHelp() {
 #endif
 #ifdef BROGUE_SDL
     "--size N                   starts the game at font size N (1 to 13)\n"
+    "--graphics     -G          enable graphical tiles\n"
 #endif
 #ifdef BROGUE_CURSES
     "--term         -t          run in ncurses-based terminal mode\n"
@@ -91,6 +92,8 @@ int main(int argc, char *argv[])
     rogue.nextGamePath[0] = '\0';
     rogue.nextGameSeed = 0;
     rogue.wizard = false;
+
+    boolean initialGraphics = false;
 
     int i;
     for (i = 1; i < argc; i++) {
@@ -167,6 +170,11 @@ int main(int argc, char *argv[])
             return 0;
         }
 
+        if (strcmp(argv[i], "-G") == 0 || strcmp(argv[i], "--graphics") == 0) {
+            initialGraphics = true;  // we call setGraphicsEnabled later
+            continue;
+        }
+
 #ifdef BROGUE_SDL
         if (strcmp(argv[i], "--size") == 0) {
             // pick a font size
@@ -222,6 +230,9 @@ int main(int argc, char *argv[])
     }
 
     hasGraphics = (currentConsole.setGraphicsEnabled != NULL);
+    // Now actually set graphics. We do this to ensure there is exactly one
+    // call, whether true or false
+    graphicsEnabled = setGraphicsEnabled(initialGraphics);
 
     loadKeymap();
     currentConsole.gameLoop();

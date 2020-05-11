@@ -78,7 +78,9 @@ struct brogueConsole {
     boolean (*takeScreenshot)();
 
     /*
-    Optional. Enables or disables graphical tiles, returning the new state
+    Optional. Enables or disables graphical tiles, returning the new state. This
+    is called when the user changes the option in-game. It is also called at the
+    very start of the program, even before .gameLoop, to set the initial value.
     */
     boolean (*setGraphicsEnabled)(boolean);
 };
