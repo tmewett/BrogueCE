@@ -38,7 +38,7 @@ endif
 
 objects := $(sources:.c=.o)
 
-.PHONY: clean
+.PHONY: clean install
 
 %.o: %.c src/brogue/Rogue.h src/brogue/IncludeGlobals.h
 	$(CC) $(cppflags) $(CPPFLAGS) $(cflags) $(CFLAGS) -c $< -o $@
@@ -55,6 +55,10 @@ bin/brogue.exe: $(objects) windows/icon.o
 clean:
 	$(RM) src/brogue/*.o src/platform/*.o bin/brogue{,.exe}
 
+install:
+	install -m 557 bin/brogue $(DESTDIR)/usr/bin
+	install -d $(DESTDIR)/usr/share/assets
+	install bin/assets/* -t $(DESTDIR)/usr/share/assets
 
 common-files := README.txt CHANGELOG.txt LICENSE.txt seed-catalog.txt
 common-bin := bin/assets bin/keymap.txt
