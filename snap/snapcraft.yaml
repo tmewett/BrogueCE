@@ -8,9 +8,8 @@ base: core18
 
 parts:
   brogue-ce:
+    source: .
     plugin: make
-    source: https://github.com/tmewett/BrogueCE.git
-    source-type: git
 
     override-pull: |
       snapcraftctl pull
