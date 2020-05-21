@@ -1,7 +1,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+
+#ifndef __MINGW32__
 #include <wordexp.h>
+#endif
+
 #ifdef SDL_PATHS
 #include <unistd.h>
 #endif
@@ -343,6 +347,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
 
 static void _gameLoop() {
 
+#ifndef __MINGW32__
   // shell expand data directory
   wordexp_t p;
   wordexp(dataDirectory, &p, 0);
@@ -358,6 +363,7 @@ static void _gameLoop() {
   wordfree(&p);
 
   sprintf(dataDirectory, buffer);
+#endif
 
 #ifdef SDL_PATHS
     char *path = SDL_GetBasePath();
