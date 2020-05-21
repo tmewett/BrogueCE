@@ -1,6 +1,7 @@
 name: brogue-ce
 summary: Welcome to the Dungeons of Doom!
 description: Brogue is a single-player strategy game set in the halls of a mysterious and randomly-generated dungeon.
+license: AGPL-3.0
 
 adopt-info: brogue-ce
 confinement: strict
