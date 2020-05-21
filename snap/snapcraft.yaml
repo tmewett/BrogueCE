@@ -10,6 +10,7 @@ base: core18
 parts:
   brogue-ce:
     source: .
+    source-type: git
     plugin: make
 
     override-pull: |
