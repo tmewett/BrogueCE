@@ -1,8 +1,6 @@
 name: "Build"
 on:
   push:
-    tags:
-    - v*.*
 
 jobs:
 
@@ -77,3 +75,26 @@ jobs:
       with:
         name: windows-mingw-bin
         path: bin
+
+  snap:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out Git repository
+      uses: actions/checkout@v2
+
+    - name: Install Snapcraft
+      uses: samuelmeuli/action-snapcraft@v1
+      with:
+        snapcraft_token: ${{ secrets.snapcraft_token }}
+
+    - name: Build snap
+      run: snapcraft --destructive-mode
+
+    - name: "Upload artifact"
+      uses: actions/upload-artifact@v2
+      with:
+        path: "*.snap"
+
+    - name: Publish snap
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: snapcraft push --release edge *.snap

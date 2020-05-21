@@ -1,0 +1,44 @@
+name: brogue-ce
+summary: Welcome to the Dungeons of Doom!
+description: Brogue is a single-player strategy game set in the halls of a mysterious and randomly-generated dungeon.
+
+adopt-info: brogue-ce
+confinement: strict
+base: core18
+
+parts:
+  brogue-ce:
+    plugin: make
+    source: https://github.com/tmewett/BrogueCE.git
+    source-type: git
+
+    override-pull: |
+      snapcraftctl pull
+      version="$(git describe --always | sed -e 's/-/+git/;y/-/./')"
+      [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
+      snapcraftctl set-version "$version"
+      snapcraftctl set-grade "$grade"
+
+    override-build: |
+      # Build and install brogue - no install target provided
+      make && cp bin/brogue $SNAPCRAFT_PART_INSTALL/usr/bin/ &&
+      cp -r bin/assets $SNAPCRAFT_PART_INSTALL/usr/share/ && chmod -R +rX $SNAPCRAFT_PART_INSTALL/usr/share/assets
+
+      # Configure wrapper - brogue doesn't expand `DATADIR=$SNAP/usr/share/assets` at runtime.
+      echo 'cd $SNAP/usr/share && brogue "$@"' >> $SNAPCRAFT_PART_INSTALL/usr/bin/brogue-wrapper &&
+      chmod +x $SNAPCRAFT_PART_INSTALL/usr/bin/brogue-wrapper
+
+    build-packages:
+      - build-essential
+      - libsdl2-dev
+      - libsdl2-image-dev
+
+    stage-packages:
+      - libsdl2-2.0-0
+      - libsdl2-image-2.0-0
+
+apps:
+  brogue-ce:
+    command: brogue-wrapper
+    plugs:
+      - x11
