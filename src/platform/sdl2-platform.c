@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <wordexp.h>
 #ifdef SDL_PATHS
 #include <unistd.h>
 #endif
@@ -340,8 +341,24 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
     return ret;
 }
 
-
 static void _gameLoop() {
+
+  // shell expand data directory
+  wordexp_t p;
+  wordexp(dataDirectory, &p, 0);
+
+  char **w;
+  w = p.we_wordv;
+
+  char buffer[BROGUE_FILENAME_MAX];
+  int pos = 0;
+
+  for (int i = 0; i < p.we_wordc; i++)
+      pos += sprintf(&buffer[pos], "%s", w[i]);
+  wordfree(&p);
+
+  sprintf(dataDirectory, buffer);
+
 #ifdef SDL_PATHS
     char *path = SDL_GetBasePath();
     if (path) {
