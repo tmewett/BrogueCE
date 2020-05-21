@@ -101,5 +101,5 @@ jobs:
       run: snapcraft push --release edge *.snap
 
     - name: Publish release snap
-      if: startsWith(github.ref, 'refs/tags/g')
+      if: startsWith(github.ref, 'refs/tags/v')
       run: snapcraft push --release beta *.snap
