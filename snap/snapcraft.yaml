@@ -41,4 +41,7 @@ apps:
   brogue-ce:
     command: brogue-wrapper
     plugs:
+      - desktop
+      - desktop-legacy
+      - wayland
       - x11
