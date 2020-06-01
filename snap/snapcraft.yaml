@@ -20,8 +20,10 @@ parts:
       snapcraftctl set-grade "$grade"
 
     override-build: |
-      # Build and install brogue
-      make clean && make DATADIR='\$$SNAP/usr/share' && make install DESTDIR=$SNAPCRAFT_PART_INSTALL &&
+      # Build and install brogue - no install target provided
+      make clean && make DATADIR='\$$SNAP/usr/share' &&
+      cp bin/brogue $SNAPCRAFT_PART_INSTALL/usr/bin/ &&
+      cp -r bin/assets $SNAPCRAFT_PART_INSTALL/usr/share/ && chmod -R +rX $SNAPCRAFT_PART_INSTALL/usr/share/assets
 
       # Configure wrapper to run brogue from user data directory
       echo 'cd $SNAP_USER_DATA && brogue "$@"' >> $SNAPCRAFT_PART_INSTALL/usr/bin/brogue-wrapper &&
