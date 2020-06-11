@@ -23,14 +23,18 @@ an issue report.
 
 ### Branches and versions
 
-*master* should be the target of all PRs by default. Any other public branches
-may be rebased and force-pushed at any time, so please be careful when branching
-from them.
+The are two long-term branches:
 
-Brogue CE version numbers follow MAJOR.MINOR.PATCH. Essentially, patch-level
-releases don't change the gameplay experience in any way. Minor-point releases
-do, and may do so in a way which breaks replay and save compatibility.
-Major-point releases are not being considered right now!
+* *master* is for gameplay changes
+* *release* is for bugfixes and other non-gameplay changes, for patches to the
+  current release. It is merged into *master* periodically.
+
+Any other public branches may be rebased and force-pushed at any time, so please
+be careful when branching from them.
+
+Brogue CE version numbers follow 1.MINOR.PATCH. Essentially, patch-level
+releases don't change the gameplay experience in any way--this is to avoid
+breaking saves and replays. Minor-point releases may do so.
 
 ### Style
 
