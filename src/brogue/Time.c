@@ -2248,9 +2248,8 @@ void playerTurnEnded() {
             pmap[player.xLoc][player.yLoc].flags |= SEARCHED_FROM_HERE;
         }
         if (!rogue.justSearched && player.status[STATUS_SEARCHING] > 0) {
-            // If you don't resume manually searching when interrupted, abort the search and post a message.
+            // Searching only "charges up" when done on consecutive turns
             player.status[STATUS_SEARCHING] = 0;
-            message("you abandon your search.", false);
         }
         if (rogue.staleLoopMap) {
             analyzeMap(false); // Don't need to update the chokemap.
