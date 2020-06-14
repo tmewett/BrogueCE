@@ -1174,10 +1174,7 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
                    && (!monsterIsHidden(monst, &player) || rogue.playbackOmniscience)) {
             needDistinctness = true;
             if (player.status[STATUS_HALLUCINATING] > 0 && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE)) && !rogue.playbackOmniscience) {
-                cellChar = rand_range('a', 'z');
-                if (rand_range(0, 1)) {
-                    cellChar += 'A' - 'a';
-                }
+                cellChar = monsterCatalog[rand_range(1, NUMBER_MONSTER_KINDS - 1)].displayChar;
                 cellForeColor = *(monsterCatalog[rand_range(1, NUMBER_MONSTER_KINDS - 1)].foreColor);
             } else {
                 cellChar = monst->info.displayChar;
