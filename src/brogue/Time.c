@@ -2112,41 +2112,31 @@ void autoRest() {
     rogue.automationActive = false;
 }
 
-void searchTurn() {
-    boolean foundSomething = false;
+void manualSearch() {
     recordKeystroke(SEARCH_KEY, false, false);
+
     if (player.status[STATUS_SEARCHING] <= 0) {
-        player.status[STATUS_SEARCHING] = player.maxStatus[STATUS_SEARCHING] = 5;
-    } else {
-        player.status[STATUS_SEARCHING]--;
-        if (player.status[STATUS_SEARCHING] <= 0) {
-            // Manual search complete!
-            foundSomething = search(200);
-            if (foundSomething) {
-                message("you finish searching the area.", false);
-            } else {
-                message("you finish searching the area, but find nothing.", false);
-            }
-        }
+        player.status[STATUS_SEARCHING] = 0;
+        player.maxStatus[STATUS_SEARCHING] = 5;
     }
+
+    player.status[STATUS_SEARCHING] += 1;
+
+    // do a final, larger-radius search on the fifth search in a row
+    short searchStrength = 0;
+    if (player.status[STATUS_SEARCHING] < 5) {
+        searchStrength = (rogue.awarenessBonus >= 0 ? 60 : 30);
+    } else {
+        searchStrength = 170;
+        message("you finish your detailed search of the area.", false);
+        player.status[STATUS_SEARCHING] = 0;
+    }
+
+    // ensure our search is no weaker than the current passive search
+    search(max(searchStrength, rogue.awarenessBonus + 30));
+
     rogue.justSearched = true;
     playerTurnEnded();
-}
-
-void manualSearch() {
-    if (rogue.playbackMode) {
-        searchTurn();
-    } else {
-        rogue.disturbed = false;
-        rogue.automationActive = true;
-        do {
-            searchTurn();
-            if (pauseBrogue(80)) {
-                rogue.disturbed = true;
-            }
-        } while (player.status[STATUS_SEARCHING] > 0 && !rogue.disturbed);
-        rogue.automationActive = false;
-    }
 }
 
 // Call this periodically (when haste/slow wears off and when moving between depths)
