@@ -676,10 +676,6 @@ short currentAggroValue() {
         if (rogue.justRested) {
             stealthVal = (stealthVal + 1) / 2;
         }
-        // Double while manually searching.
-        if (player.status[STATUS_SEARCHING] > 0) {
-            stealthVal *= 2;
-        }
 
         if (player.status[STATUS_AGGRAVATING] > 0) {
             stealthVal += player.status[STATUS_AGGRAVATING];
