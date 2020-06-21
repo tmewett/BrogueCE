@@ -2121,7 +2121,7 @@ void manualSearch() {
     // do a final, larger-radius search on the fifth search in a row
     short searchStrength = 0;
     if (player.status[STATUS_SEARCHING] < 5) {
-        searchStrength = (rogue.awarenessBonus >= 0 ? 60 : 30);
+        searchStrength = (rogue.awarenessBonus >= 0 ? 55 : 30);
     } else {
         searchStrength = 170;
         message("you finish your detailed search of the area.", false);
