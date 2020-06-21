@@ -676,10 +676,6 @@ short currentAggroValue() {
         if (rogue.justRested) {
             stealthVal = (stealthVal + 1) / 2;
         }
-        // Double while manually searching.
-        if (player.status[STATUS_SEARCHING] > 0) {
-            stealthVal *= 2;
-        }
 
         if (player.status[STATUS_AGGRAVATING] > 0) {
             stealthVal += player.status[STATUS_AGGRAVATING];
@@ -2112,41 +2108,31 @@ void autoRest() {
     rogue.automationActive = false;
 }
 
-void searchTurn() {
-    boolean foundSomething = false;
+void manualSearch() {
     recordKeystroke(SEARCH_KEY, false, false);
+
     if (player.status[STATUS_SEARCHING] <= 0) {
-        player.status[STATUS_SEARCHING] = player.maxStatus[STATUS_SEARCHING] = 5;
-    } else {
-        player.status[STATUS_SEARCHING]--;
-        if (player.status[STATUS_SEARCHING] <= 0) {
-            // Manual search complete!
-            foundSomething = search(200);
-            if (foundSomething) {
-                message("you finish searching the area.", false);
-            } else {
-                message("you finish searching the area, but find nothing.", false);
-            }
-        }
+        player.status[STATUS_SEARCHING] = 0;
+        player.maxStatus[STATUS_SEARCHING] = 5;
     }
+
+    player.status[STATUS_SEARCHING] += 1;
+
+    // do a final, larger-radius search on the fifth search in a row
+    short searchStrength = 0;
+    if (player.status[STATUS_SEARCHING] < 5) {
+        searchStrength = (rogue.awarenessBonus >= 0 ? 55 : 30);
+    } else {
+        searchStrength = 170;
+        message("you finish your detailed search of the area.", false);
+        player.status[STATUS_SEARCHING] = 0;
+    }
+
+    // ensure our search is no weaker than the current passive search
+    search(max(searchStrength, rogue.awarenessBonus + 30));
+
     rogue.justSearched = true;
     playerTurnEnded();
-}
-
-void manualSearch() {
-    if (rogue.playbackMode) {
-        searchTurn();
-    } else {
-        rogue.disturbed = false;
-        rogue.automationActive = true;
-        do {
-            searchTurn();
-            if (pauseBrogue(80)) {
-                rogue.disturbed = true;
-            }
-        } while (player.status[STATUS_SEARCHING] > 0 && !rogue.disturbed);
-        rogue.automationActive = false;
-    }
 }
 
 // Call this periodically (when haste/slow wears off and when moving between depths)
@@ -2258,9 +2244,8 @@ void playerTurnEnded() {
             pmap[player.xLoc][player.yLoc].flags |= SEARCHED_FROM_HERE;
         }
         if (!rogue.justSearched && player.status[STATUS_SEARCHING] > 0) {
-            // If you don't resume manually searching when interrupted, abort the search and post a message.
+            // Searching only "charges up" when done on consecutive turns
             player.status[STATUS_SEARCHING] = 0;
-            message("you abandon your search.", false);
         }
         if (rogue.staleLoopMap) {
             analyzeMap(false); // Don't need to update the chokemap.
