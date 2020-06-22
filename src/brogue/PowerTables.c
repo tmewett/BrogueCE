@@ -255,18 +255,6 @@ short charmEffectDuration(short charmKind, short enchant) {
 }
 
 short charmRechargeDelay(short charmKind, short enchant) {
-    const fixpt POW_30_CHARM_DECREMENT[] = { // 0.7^x fixed point, with x from 1 to 50 in increments of 1:
-        45875, 32112, 22478, 15735, 11014, 7710, 5397, 3778, 2644, 1851, 1295, 907, 634, 444, 311, 217, 152, 106, 74, 52, 36, 25,
-        17, 12, 8, 6, 4, 3, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    const fixpt POW_35_CHARM_DECREMENT[] = { // 0.65^x fixed point, with x from 1 to 50 in increments of 1:
-        42598, 27688, 17997, 11698, 7604, 4942, 3212, 2088, 1357, 882, 573, 372, 242, 157, 102, 66, 43, 28, 18, 11, 7, 5, 3, 2, 1,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    const fixpt POW_40_CHARM_DECREMENT[] = { // 0.60^x fixed point, with x from 1 to 50 in increments of 1:
-        39321, 23592, 14155, 8493, 5096, 3057, 1834, 1100, 660, 396, 237, 142, 85, 51, 30, 18, 11, 6, 3, 2, 1, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    const fixpt POW_45_CHARM_DECREMENT[] = { // 0.55^x fixed point, with x from 1 to 50 in increments of 1:
-        36044, 19824, 10903, 5996, 3298, 1814, 997, 548, 301, 165, 91, 50, 27, 15, 8, 4, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     const short duration[NUMBER_CHARM_KINDS] = {
         2500,   // Health
         1000,   // Protection
@@ -281,23 +269,23 @@ short charmRechargeDelay(short charmKind, short enchant) {
         10000,  // Recharging
         2500,   // Negation
     };
-    const fixpt *increment[NUMBER_CHARM_KINDS] = {
-        POW_45_CHARM_DECREMENT, // Health
-        POW_40_CHARM_DECREMENT, // Protection
-        POW_35_CHARM_DECREMENT, // Haste
-        POW_40_CHARM_DECREMENT, // Fire immunity
-        POW_35_CHARM_DECREMENT, // Invisibility
-        POW_35_CHARM_DECREMENT, // Telepathy
-        POW_35_CHARM_DECREMENT, // Levitation
-        POW_40_CHARM_DECREMENT, // Shattering
-        POW_30_CHARM_DECREMENT, // Guardian
-        POW_45_CHARM_DECREMENT, // Teleportation
-        POW_45_CHARM_DECREMENT, // Recharging
-        POW_40_CHARM_DECREMENT, // Negation
+    const fixpt base[NUMBER_CHARM_KINDS] = {
+        FP_FACTOR * 55 / 100, // Health
+        FP_FACTOR * 60 / 100, // Protection
+        FP_FACTOR * 65 / 100, // Haste
+        FP_FACTOR * 60 / 100, // Fire immunity
+        FP_FACTOR * 65 / 100, // Invisibility
+        FP_FACTOR * 65 / 100, // Telepathy
+        FP_FACTOR * 65 / 100, // Levitation
+        FP_FACTOR * 60 / 100, // Shattering
+        FP_FACTOR * 70 / 100, // Guardian
+        FP_FACTOR * 55 / 100, // Teleportation
+        FP_FACTOR * 55 / 100, // Recharging
+        FP_FACTOR * 60 / 100, // Negation
     };
-    enchant = clamp(enchant, 1, 50) - 1;
-    short delay = charmEffectDuration(charmKind, enchant + 1)
-    + (duration[charmKind] * increment[charmKind][enchant] / FP_FACTOR);
+    enchant = clamp(enchant, 1, 50);
+    short delay = charmEffectDuration(charmKind, enchant)
+    + (duration[charmKind] * fp_pow(base[charmKind], enchant) / FP_FACTOR);
     return max(1, delay);
 }
 
