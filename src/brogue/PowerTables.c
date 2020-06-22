@@ -265,7 +265,7 @@ short charmRechargeDelay(short charmKind, short enchant) {
         800,    // Levitation
         2500,   // Shattering
         700,    // Guardian
-        1000,   // Teleportation
+        920,    // Teleportation
         10000,  // Recharging
         2500,   // Negation
     };
@@ -279,7 +279,7 @@ short charmRechargeDelay(short charmKind, short enchant) {
         FP_FACTOR * 65 / 100, // Levitation
         FP_FACTOR * 60 / 100, // Shattering
         FP_FACTOR * 70 / 100, // Guardian
-        FP_FACTOR * 55 / 100, // Teleportation
+        FP_FACTOR * 60 / 100, // Teleportation
         FP_FACTOR * 55 / 100, // Recharging
         FP_FACTOR * 60 / 100, // Negation
     };
