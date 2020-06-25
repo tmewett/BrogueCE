@@ -512,7 +512,7 @@ void OOSCheck(unsigned long x, short numberOfBytes) {
         recordedNumber = recallNumber(numberOfBytes);
         if (eventType != RNG_CHECK || recordedNumber != x) {
             if (eventType != RNG_CHECK) {
-                message("Event type mismatch in RNG check.", false);
+                printf("\nEvent type mismatch in RNG check.");
                 playbackPanic();
             } else if (recordedNumber != x) {
                 printf("\nExpected RNG output of %li; got %i.", recordedNumber, (int) x);
