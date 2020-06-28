@@ -254,5 +254,5 @@ fixpt fp_pow(fixpt base, int expn) {
         res /= FP_FACTOR;
     }
 
-    return res;
+    return res + fp_round(err);
 }
