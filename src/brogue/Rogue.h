@@ -2601,7 +2601,7 @@ extern "C" {
     void shuffleList(short *list, short listLength);
     void fillSequentialList(short *list, short listLength);
     fixpt fp_round(fixpt x);
-    fixpt fp_pow(fixpt base, fixpt expn);
+    fixpt fp_pow(fixpt base, int expn);
     fixpt fp_sqrt(fixpt val);
     short unflag(unsigned long flag);
     void considerCautiousMode();
