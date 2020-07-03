@@ -51,7 +51,7 @@ short staffBladeCount(fixpt enchant)           {return ((int) (enchant * 3 / 2 /
 short staffDiscordDuration(fixpt enchant)      {return ((int) (enchant * 4 / FP_FACTOR));}
 short staffEntrancementDuration(fixpt enchant) {return ((int) (enchant * 3 / FP_FACTOR));}
 int staffProtection(fixpt enchant) {
-    return 50 * fp_pow(FP_FACTOR * 153 / 100, enchant / FP_FACTOR - 2) / FP_FACTOR;
+    return 130 * fp_pow(FP_FACTOR * 140 / 100, enchant / FP_FACTOR - 2) / FP_FACTOR;
 }
 int staffPoison(fixpt enchant) {
     const fixpt POW_POISON[] = {
