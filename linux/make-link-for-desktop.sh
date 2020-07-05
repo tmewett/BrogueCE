@@ -7,10 +7,13 @@ sed s?PATH?`pwd`?g > brogue.desktop <<-end
 	Name=Brogue
 	GenericName=Roguelike
 	Comment=Brave the Dungeons of Doom!
+	Comment[de]=Meistere die Dungeons der Verdammnis!
+	Comment[ru]=Бросьте вызов Подземельям Погибели!
 	Exec=PATH/brogue
 	Path=PATH
 	Icon=PATH/bin/assets/icon.png
 	Terminal=false
+	Categories=Game;
 end
 
 chmod +x brogue.desktop
