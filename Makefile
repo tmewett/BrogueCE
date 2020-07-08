@@ -31,7 +31,6 @@ endif
 
 ifeq ($(DEBUG),YES)
 	cflags += -g
-	cppflags += -DWIZARD
 else
 	cflags += -O2
 endif

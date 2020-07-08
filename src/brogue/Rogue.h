@@ -38,11 +38,6 @@
 // Cannot be longer than 16 chars
 #define BROGUE_RECORDING_VERSION_STRING "CE 1.8"
 
-// debug macros -- uncomment the #define WIZARD here or set DEBUG := YES in
-// config.mk to enable
-
-//#define WIZARD
-
 #define DEBUG                           if (rogue.wizard)
 #define MONSTERS_ENABLED                (!rogue.wizard || 1) // Quest room monsters can be generated regardless.
 #define ITEMS_ENABLED                   (!rogue.wizard || 1)

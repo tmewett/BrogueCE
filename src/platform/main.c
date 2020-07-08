@@ -203,12 +203,10 @@ int main(int argc, char *argv[])
         }
 #endif
 
-#ifdef WIZARD
         if (strcmp(argv[i], "--wizard") == 0 || strcmp(argv[i], "-W") == 0) {
             rogue.wizard = true;
             continue;
         }
-#endif
 
         // maybe it ends with .broguesave or .broguerec, then?
         if (endswith(argv[i], GAME_SUFFIX)) {
