@@ -23,18 +23,18 @@ an issue report.
 
 ### Branches and versions
 
-The are two long-term branches:
-
-* *master* is for gameplay changes
-* *release* is for bugfixes and other non-gameplay changes, for patches to the
-  current release. It is merged into *master* periodically.
-
-Any other public branches may be rebased and force-pushed at any time, so please
-be careful when branching from them.
-
 Brogue CE version numbers follow 1.MINOR.PATCH. Essentially, patch-level
 releases don't change the gameplay experience in any way--this is to avoid
 breaking saves and replays. Minor-point releases may do so.
+
+The are two long-term branches:
+
+* *master* is for gameplay changes for the next minor-point release
+* *release* is for bugfixes and other non-gameplay changes, for the next patch
+  release. It is merged into *master* periodically.
+
+Any other public branches may be rebased and force-pushed at any time, so please
+be careful when branching from them.
 
 ### Style
 
