@@ -1682,14 +1682,16 @@ itemTable *tableForItemCategory(enum itemCategory theCat, short *kindCount) {
 }
 
 boolean isVowelish(char *theChar) {
-    short i;
+    short i, len;
 
     while (*theChar == COLOR_ESCAPE) {
         theChar += 4;
     }
-    char str[30];
-    strncpy(str, theChar, 29);
-    for (i = 0; i < 30; i++) {
+    char str[100];
+    strncpy(str, theChar, 99);
+    str[99] = '\0';
+    len = strlen(str);
+    for (i = 0; i < len; i++) {
         upperCase(&(str[i]));
     }
     if (stringsMatch(str, "UNI")        // Words that start with "uni" aren't treated like vowels; e.g., "a" unicorn.
