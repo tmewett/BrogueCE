@@ -203,9 +203,10 @@ static boolean eventFromKey(rogueEvent *event, SDL_Keycode key) {
         }
     }
 
-    // Ctrl+N (custom new game) doesn't give a TextInputEvent
-    if (event->controlKey && key == SDLK_n) {
-        event->param1 = 'n';
+    // Ctrl+letter doesn't give a TextInputEvent
+    if (event->controlKey && key >= SDLK_a && key <= SDLK_z) {
+        event->param1 = 'a' + (key - SDLK_a);
+        if (event->shiftKey) event->param1 -= 'a' - 'A';
         return true;
     }
 
