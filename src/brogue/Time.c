@@ -2118,12 +2118,24 @@ void manualSearch() {
 
     player.status[STATUS_SEARCHING] += 1;
 
-    // do a final, larger-radius search on the fifth search in a row
+    /* The search strength values were chosen based on equating the expected
+    number of cells discovered by 5x 80 searches (1.7.4) and 1x 200 search
+    (1.7.5). 1x200 discovers an average of 932 cells; 5.65 times more cells than
+    the 165 of 5x80. This factor is intepreted as the advantage of undelayed
+    searching. Hence, we chose a short radius r and a long radius s such that
+
+        4 * 5.65 * E_r + E_s ~= 932
+
+    where E_x is the expected no. of cells discovered with radius x. We choose
+    r=60, s=160, giving 852 < 932 (under to account for removal of 1.7.5 stealth
+    range doubling).
+    */
     short searchStrength = 0;
     if (player.status[STATUS_SEARCHING] < 5) {
-        searchStrength = (rogue.awarenessBonus >= 0 ? 55 : 30);
+        searchStrength = (rogue.awarenessBonus >= 0 ? 60 : 30);
     } else {
-        searchStrength = 170;
+        // Do a final, larger-radius search on the fifth search in a row
+        searchStrength = 160;
         message("you finish your detailed search of the area.", false);
         player.status[STATUS_SEARCHING] = 0;
     }
