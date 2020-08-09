@@ -1201,12 +1201,10 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
                     //cellForeColor = cellBackColor;
                     applyColorAverage(&cellForeColor, &cellBackColor, 75);
                 } else {
-                    if (monst->creatureState == MONSTER_ALLY
-                        && (monst->info.displayChar >= 'a' && monst->info.displayChar <= 'z' || monst->info.displayChar >= 'A' && monst->info.displayChar <= 'Z')) {
+                    if (monst->creatureState == MONSTER_ALLY && !(monst->info.flags & MONST_INANIMATE)) {
                         if (rogue.trueColorMode) {
                             cellForeColor = white;
                         } else {
-                            //applyColorAverage(&cellForeColor, &blue, 50);
                             applyColorAverage(&cellForeColor, &pink, 50);
                         }
                     }
