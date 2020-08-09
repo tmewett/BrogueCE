@@ -1024,6 +1024,23 @@ static boolean glyphIsWallish(enum displayGlyph glyph) {
     }
 }
 
+static enum monsterTypes randomAnimateMonster() {
+    /* Randomly pick an animate and vulnerable monster type. Used by
+    getCellAppearance for hallucination effects. */
+    static int listLength = 0;
+    static enum monsterTypes animate[NUMBER_MONSTER_KINDS];
+
+    if (listLength == 0) {
+        for (int i=0; i < NUMBER_MONSTER_KINDS; i++) {
+            if (!(monsterCatalog[i].flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
+                animate[listLength++] = i;
+            }
+        }
+    }
+
+    return animate[rand_range(0, listLength - 1)];
+}
+
 // okay, this is kind of a beast...
 void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *returnForeColor, color *returnBackColor) {
     short bestBCPriority, bestFCPriority, bestCharPriority;
@@ -1174,8 +1191,8 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
                    && (!monsterIsHidden(monst, &player) || rogue.playbackOmniscience)) {
             needDistinctness = true;
             if (player.status[STATUS_HALLUCINATING] > 0 && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE)) && !rogue.playbackOmniscience) {
-                cellChar = monsterCatalog[rand_range(1, NUMBER_MONSTER_KINDS - 1)].displayChar;
-                cellForeColor = *(monsterCatalog[rand_range(1, NUMBER_MONSTER_KINDS - 1)].foreColor);
+                cellChar = monsterCatalog[randomAnimateMonster()].displayChar;
+                cellForeColor = *(monsterCatalog[randomAnimateMonster()].foreColor);
             } else {
                 cellChar = monst->info.displayChar;
                 cellForeColor = *(monst->info.foreColor);
@@ -1262,7 +1279,7 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
                 && !monsterHiddenBySubmersion(monst, &player)) {
 
                 if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience) {
-                    cellChar = monsterCatalog[rand_range(1, NUMBER_MONSTER_KINDS - 1)].displayChar;
+                    cellChar = monsterCatalog[randomAnimateMonster()].displayChar;
                 } else {
                     cellChar = monst->info.displayChar;
                 }
