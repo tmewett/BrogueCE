@@ -1394,11 +1394,6 @@ boolean buildAMachine(enum machineTypes bp,
                     }
                     if (terrainSucceeded) {
                         pmap[featX][featY].layers[feature->layer] = feature->terrain;
-                        // Clear the surface layer when spawning dungeon-layer tiles.
-                        // This is a very special-case fix for traps being generated on tiles with foliage.
-                        // A better fix is hard because tile generation is duplicated in many, many places...
-                        if (feature->layer == DUNGEON) pmap[featX][featY].layers[SURFACE] = NOTHING;
-
                     }
                 }
 

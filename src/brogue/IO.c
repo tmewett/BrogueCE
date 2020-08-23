@@ -2517,7 +2517,19 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             autoRest();
             break;
         case SEARCH_KEY:
-            manualSearch();
+            if (controlKey) {
+                rogue.disturbed = false;
+                rogue.automationActive = true;
+                do {
+                    manualSearch();
+                    if (pauseBrogue(80)) {
+                        rogue.disturbed = true;
+                    }
+                } while (player.status[STATUS_SEARCHING] < 5 && !rogue.disturbed);
+                rogue.automationActive = false;
+            } else {
+                manualSearch();
+            }
             break;
         case INVENTORY_KEY:
             displayInventory(ALL_ITEMS, 0, 0, true, true);
@@ -3775,7 +3787,7 @@ void printHelpScreen() {
         "",
         "             z  ****rest once",
         "             Z  ****rest for 100 turns or until something happens",
-        "             s  ****search for secret doors and traps",
+        "             s  ****search for secrets (control-s: long search)",
         "          <, >  ****travel to stairs",
         "             x  ****auto-explore (control-x: fast forward)",
         "             A  ****autopilot (control-A: fast forward)",

@@ -676,10 +676,6 @@ short currentAggroValue() {
         if (rogue.justRested) {
             stealthVal = (stealthVal + 1) / 2;
         }
-        // Double while manually searching.
-        if (player.status[STATUS_SEARCHING] > 0) {
-            stealthVal *= 2;
-        }
 
         if (player.status[STATUS_AGGRAVATING] > 0) {
             stealthVal += player.status[STATUS_AGGRAVATING];
@@ -2112,41 +2108,43 @@ void autoRest() {
     rogue.automationActive = false;
 }
 
-void searchTurn() {
-    boolean foundSomething = false;
+void manualSearch() {
     recordKeystroke(SEARCH_KEY, false, false);
+
     if (player.status[STATUS_SEARCHING] <= 0) {
-        player.status[STATUS_SEARCHING] = player.maxStatus[STATUS_SEARCHING] = 5;
-    } else {
-        player.status[STATUS_SEARCHING]--;
-        if (player.status[STATUS_SEARCHING] <= 0) {
-            // Manual search complete!
-            foundSomething = search(200);
-            if (foundSomething) {
-                message("you finish searching the area.", false);
-            } else {
-                message("you finish searching the area, but find nothing.", false);
-            }
-        }
+        player.status[STATUS_SEARCHING] = 0;
+        player.maxStatus[STATUS_SEARCHING] = 5;
     }
+
+    player.status[STATUS_SEARCHING] += 1;
+
+    /* The search strength values were chosen based on equating the expected
+    number of cells discovered by 5x 80 searches (1.7.4) and 1x 200 search
+    (1.7.5). 1x200 discovers an average of 932 cells; 5.65 times more cells than
+    the 165 of 5x80. This factor is intepreted as the advantage of undelayed
+    searching. Hence, we chose a short radius r and a long radius s such that
+
+        4 * 5.65 * E_r + E_s ~= 932
+
+    where E_x is the expected no. of cells discovered with radius x. We choose
+    r=60, s=160, giving 852 < 932 (under to account for removal of 1.7.5 stealth
+    range doubling).
+    */
+    short searchStrength = 0;
+    if (player.status[STATUS_SEARCHING] < 5) {
+        searchStrength = (rogue.awarenessBonus >= 0 ? 60 : 30);
+    } else {
+        // Do a final, larger-radius search on the fifth search in a row
+        searchStrength = 160;
+        message("you finish your detailed search of the area.", false);
+        player.status[STATUS_SEARCHING] = 0;
+    }
+
+    // ensure our search is no weaker than the current passive search
+    search(max(searchStrength, rogue.awarenessBonus + 30));
+
     rogue.justSearched = true;
     playerTurnEnded();
-}
-
-void manualSearch() {
-    if (rogue.playbackMode) {
-        searchTurn();
-    } else {
-        rogue.disturbed = false;
-        rogue.automationActive = true;
-        do {
-            searchTurn();
-            if (pauseBrogue(80)) {
-                rogue.disturbed = true;
-            }
-        } while (player.status[STATUS_SEARCHING] > 0 && !rogue.disturbed);
-        rogue.automationActive = false;
-    }
 }
 
 // Call this periodically (when haste/slow wears off and when moving between depths)
@@ -2201,6 +2199,12 @@ void playerTurnEnded() {
         return;
     }
 
+    // This happens in updateEnvironment, but some monsters move faster than the
+    // environment updates in the loop below. This means they need to fall at
+    // the start of the turn to avoid them being able to act while suspended
+    // over a chasm
+    monstersFall();
+
     do {
         if (rogue.gameHasEnded) {
             return;
@@ -2252,9 +2256,8 @@ void playerTurnEnded() {
             pmap[player.xLoc][player.yLoc].flags |= SEARCHED_FROM_HERE;
         }
         if (!rogue.justSearched && player.status[STATUS_SEARCHING] > 0) {
-            // If you don't resume manually searching when interrupted, abort the search and post a message.
+            // Searching only "charges up" when done on consecutive turns
             player.status[STATUS_SEARCHING] = 0;
-            message("you abandon your search.", false);
         }
         if (rogue.staleLoopMap) {
             analyzeMap(false); // Don't need to update the chokemap.

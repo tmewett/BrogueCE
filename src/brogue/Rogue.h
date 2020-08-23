@@ -33,10 +33,10 @@
 #define USE_UNICODE
 
 // Brogue version: what the user sees in the menu and title
-#define BROGUE_VERSION_STRING "CE 1.8.3"
+#define BROGUE_VERSION_STRING "CE 1.9"
 // Recording version: replay/saves from a different version won't load
 // Cannot be longer than 16 chars
-#define BROGUE_RECORDING_VERSION_STRING "CE 1.8"
+#define BROGUE_RECORDING_VERSION_STRING "CE 1.9"
 
 #define DEBUG                           if (rogue.wizard)
 #define MONSTERS_ENABLED                (!rogue.wizard || 1) // Quest room monsters can be generated regardless.
@@ -2596,7 +2596,7 @@ extern "C" {
     void shuffleList(short *list, short listLength);
     void fillSequentialList(short *list, short listLength);
     fixpt fp_round(fixpt x);
-    fixpt fp_pow(fixpt base, fixpt expn);
+    fixpt fp_pow(fixpt base, int expn);
     fixpt fp_sqrt(fixpt val);
     short unflag(unsigned long flag);
     void considerCautiousMode();

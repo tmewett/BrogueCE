@@ -2018,17 +2018,14 @@ void pathTowardCreature(creature *monst, creature *target) {
 
     // follow the map.
     dir = nextStep(target->mapToMe, monst->xLoc, monst->yLoc, monst, true);
+    if (dir == NO_DIRECTION) {
+        dir = randValidDirectionFrom(monst, monst->xLoc, monst->yLoc, true);
+    }
+
     targetLoc[0] = monst->xLoc + nbDirs[dir][0];
     targetLoc[1] = monst->yLoc + nbDirs[dir][1];
-    if (!moveMonsterPassivelyTowards(monst, targetLoc, (monst->creatureState != MONSTER_ALLY))) {
-        // monster is blocking the way
-        dir = randValidDirectionFrom(monst, monst->xLoc, monst->yLoc, true);
-        if (dir != -1) {
-            targetLoc[0] = monst->xLoc + nbDirs[dir][0];
-            targetLoc[1] = monst->yLoc + nbDirs[dir][1];
-            moveMonsterPassivelyTowards(monst, targetLoc, (monst->creatureState != MONSTER_ALLY));
-        }
-    }
+
+    moveMonsterPassivelyTowards(monst, targetLoc, (monst->creatureState != MONSTER_ALLY));
 }
 
 boolean creatureEligibleForSwarming(creature *monst) {
@@ -3167,7 +3164,7 @@ void monstersTurn(creature *monst) {
         if (closestMonster && !(monst->info.flags & MONST_MAINTAINS_DISTANCE)) {
             targetLoc[0] = closestMonster->xLoc;
             targetLoc[1] = closestMonster->yLoc;
-            if (moveMonsterPassivelyTowards(monst, targetLoc, false)) {
+            if (moveMonsterPassivelyTowards(monst, targetLoc, monst->creatureState == MONSTER_ALLY)) {
                 return;
             }
         }

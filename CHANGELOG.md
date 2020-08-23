@@ -1,3 +1,77 @@
+1.9
+===
+
+A new gameplay version! Not compatible with replays and saves from v1.8.x.
+
+In this release, we tweaked or retried some of the changes made in v1.8 around
+allies and searching. We believe they are closer in spirit to the original game
+and represent a better compromise. There are also some new balance changes, and
+a lot of bug fixes.
+
+Thanks to everyone who has contributed code, bug reports, or feedback since
+v1.8. Enjoy!
+
+Gameplay changes
+----------------
+-
+  The wand of empowerment is no longer guaranteed in vaults; a random wand is
+  spawned instead
+-
+  Revamped the searching system. Instead of performing a strong search only
+  after five consecutive turns of pressing 's', you now perform a weaker,
+  single-turn search every time you press 's', with a stronger one on the fifth.
+  (Control+s will perform five searches, stopping if interrupted, just like old
+  'S'.)
+-
+  Walking into secret doors and levers no longer reveals them
+-
+  Buffed staff of protection duration. At /N max charges, the duration is now 13
+  x 1.4^(N-2) instead of 5 x 1.53^(N-2)
+-
+  Nerfed charm of teleportation recharge time. At +1 it starts at the same
+  value, but becomes 1 turn at +13 instead of +11
+-
+  Dar priestesses are now included in the 'Mage' monster class. A weapon of mage
+  slaying will instantly kill them, and armor of mage immunity will provide
+  invulnerability to their feeble attacks.
+
+Bug fixes
+---------
+-
+  Liches/phoenixes polymorphed into other creatures no longer spawn
+  phylacteries/eggs on death
+-
+  Fixed allies not having a lighter colour tint (this was broken by the addition
+  of tiles in 1.8.3)
+-
+  Fixed a bug where discordant allies did not attack the player diagonally
+-
+  Fixed a dungeon generation issue which caused the key pedestal in
+  falling-torch key rooms to be non-flammable
+-
+  Fix Ctrl+x (fast explore), Ctrl+A (fast autopilot), and Ctrl+{vi keys}
+  movement not working
+-
+  Fixed an issue where fast-attacking monsters could attack the player before
+  falling down a chasm or hole
+-
+  Fixed more causes of out-of-sync errors. (We think these are now very rare, so
+  please let us know if you get one)
+-
+  Fixed the tile graphics for lumenstones and turrets being swapped
+-
+  Fixed monsters being shown as letters when hallucinating with graphics enabled
+
+Other changes
+-------------
+-
+  Numpad 5 (center button) no longer confirms when selecting a target
+-
+  Debug mode, or "wizard mode," is now available by default. Start the game with
+  the `-W`/`--wizard` command-line option to play with teleportation,
+  immortality and overpowered items
+
+
 1.8.3
 =====
 

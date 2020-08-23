@@ -3588,6 +3588,14 @@ boolean polymorph(creature *monst) {
 
     unAlly(monst); // Sorry, no cheap dragon allies.
     monst->mutationIndex = -1; // Polymorph cures mutation -- basic science.
+
+    // After polymorphing, don't "drop" any creature on death (e.g. phylactery, phoenix egg)
+    if (monst->carriedMonster) {
+        killCreature(monst->carriedMonster, true);
+        freeCreature(monst->carriedMonster);
+        monst->carriedMonster = NULL;
+    }
+
     healthFraction = monst->currentHP * 1000 / monst->info.maxHP;
     previousDamageTaken = monst->info.maxHP - monst->currentHP;
 
