@@ -205,6 +205,19 @@ short actionMenu(short x, boolean playingBack) {
         buttonCount = 0;
 
         if (playingBack) {
+#ifdef ENABLE_PLAYBACK_SWITCH
+            if (KEYBOARD_LABELS) {
+                sprintf(buttons[buttonCount].text,  "  %sP: %sPlay from here  ", yellowColorEscape, whiteColorEscape);
+            } else {
+                strcpy(buttons[buttonCount].text, "  Play from here  ");
+            }
+            buttons[buttonCount].hotkey[0] = SWITCH_TO_PLAYING_KEY;
+            buttonCount++;
+
+            sprintf(buttons[buttonCount].text, "    %s---", darkGrayColorEscape);
+            buttons[buttonCount].flags &= ~B_ENABLED;
+            buttonCount++;
+#endif
             if (KEYBOARD_LABELS) {
                 sprintf(buttons[buttonCount].text,  "  %sk: %sFaster playback  ", yellowColorEscape, whiteColorEscape);
             } else {
@@ -808,6 +821,13 @@ void mainInputLoop() {
             if (playingBack) {
                 rogue.playbackMode = true;
                 executePlaybackInput(&theEvent);
+#ifdef ENABLE_PLAYBACK_SWITCH
+                if (!rogue.playbackMode) {
+                    // Playback mode is off, user must have taken control
+                    // Redraw buttons to reflect that
+                    initializeMenuButtons(&state, buttons);
+                }
+#endif
                 playingBack = rogue.playbackMode;
                 rogue.playbackMode = false;
             } else {

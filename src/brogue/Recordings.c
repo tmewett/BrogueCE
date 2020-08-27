@@ -953,6 +953,15 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                 //rogue.playbackMode = true;
                 printSeed();
                 return true;
+            case SWITCH_TO_PLAYING_KEY:
+#ifdef ENABLE_PLAYBACK_SWITCH
+                    if (!rogue.gameHasEnded && !rogue.playbackOOS) {
+                        switchToPlaying();
+                        lengthOfPlaybackFile = recordingLocation;
+                    }
+                    return true;
+#endif
+                return false;
             default:
                 if (key >= '0' && key <= '9'
                     || key >= NUMPAD_0 && key <= NUMPAD_9) {
@@ -1114,9 +1123,10 @@ void switchToPlaying() {
     rogue.playbackOmniscience   = false;
     locationInRecordingBuffer   = 0;
     copyFile(currentFilePath, lastGamePath, recordingLocation);
-
-#ifdef DELETE_SAVE_FILE_AFTER_LOADING
-    remove(currentFilePath);
+#ifndef ENABLE_PLAYBACK_SWITCH
+    if (DELETE_SAVE_FILE_AFTER_LOADING) {
+        remove(currentFilePath);
+    }
 #endif
 
     strcpy(currentFilePath, lastGamePath);
