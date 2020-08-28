@@ -1,0 +1,1 @@
+Removing define guarding on wizard mode help
