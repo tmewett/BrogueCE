@@ -2301,6 +2301,9 @@ typedef struct playerCharacter {
     enum NGCommands nextGame;
     char nextGamePath[BROGUE_FILENAME_MAX];
     unsigned long nextGameSeed;
+    unsigned int scumStartSeed;
+    unsigned int scumNumberOfSeeds;
+    unsigned int scumNumberOfLevels;
 } playerCharacter;
 
 // Stores the necessary info about a level so it can be regenerated:

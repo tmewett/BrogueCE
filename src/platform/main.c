@@ -45,7 +45,7 @@ static void printCommandlineHelp() {
     "--term         -t          run in ncurses-based terminal mode\n"
 #endif
     "--wizard       -W          run in wizard mode, invincible with powerful items\n"
-    "--print-seed-catalog       prints a catalog of the first five levels of seeds 1-1000\n"
+    "--print-seed-catalog S N L prints a catalog of the first L levels of N seeds from seed S\n"
     );
     return;
 }
@@ -145,6 +145,24 @@ int main(int argc, char *argv[])
         }
 
         if (strcmp(argv[i], "--print-seed-catalog") == 0) {
+            
+            if (i + 3 < argc) {
+                unsigned int scumStartSeed = atof(argv[i + 1]);
+                unsigned int scumNumberOfSeeds = atoi(argv[i + 2]);
+                unsigned int scumNumberOfLevels = atoi(argv[i + 3]);
+
+                if (scumStartSeed > 0 && scumNumberOfLevels < 41) {
+                    rogue.scumStartSeed = scumStartSeed;
+                    rogue.scumNumberOfSeeds = scumNumberOfSeeds;
+                    rogue.scumNumberOfLevels = scumNumberOfLevels;
+                    i += 3;
+                }
+            } else {
+                rogue.scumStartSeed = 1;
+                rogue.scumNumberOfSeeds = 1000;
+                rogue.scumNumberOfLevels = 5;
+            }
+
             rogue.nextGame = NG_SCUM;
             continue;
         }

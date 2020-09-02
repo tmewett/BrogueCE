@@ -636,8 +636,9 @@ void scumMonster(creature *monst) {
     }
 }
 
-void scum(unsigned long startingSeed, short numberOfSeedsToScan, short scanThroughDepth) {
+void scum(unsigned long startingSeed, unsigned int numberOfSeedsToScan, unsigned int scanThroughDepth) {
     unsigned long theSeed;
+    unsigned int maxAllowedDepth;
     char path[BROGUE_FILENAME_MAX];
     item *theItem;
     creature *monst;
@@ -648,11 +649,15 @@ void scum(unsigned long startingSeed, short numberOfSeedsToScan, short scanThrou
     getAvailableFilePath(path, LAST_GAME_NAME, GAME_SUFFIX);
     strcat(path, GAME_SUFFIX);
 
+    maxAllowedDepth = min(scanThroughDepth, DEEPEST_LEVEL);
+
+    fprintf(stderr, "Scanning %u seed(s), %u level(s) per seed, from seed %lu.\n", numberOfSeedsToScan, maxAllowedDepth, startingSeed);
+
     printf("Brogue seed catalog, seeds %li to %li, through depth %i.\n\n\
 To play one of these seeds, press control-N from the title screen \
 and enter the seed number. Knowing which items will appear on \
 the first %i depths will, of course, make the game significantly easier.",
-            startingSeed, startingSeed + numberOfSeedsToScan - 1, scanThroughDepth, scanThroughDepth);
+            startingSeed, startingSeed + numberOfSeedsToScan - 1, maxAllowedDepth, maxAllowedDepth);
 
     for (theSeed = startingSeed; theSeed < startingSeed + numberOfSeedsToScan; theSeed++) {
         printf("\n\nSeed %li:", theSeed);
@@ -667,7 +672,7 @@ the first %i depths will, of course, make the game significantly easier.",
         strcpy(currentFilePath, path);
         initializeRogue(theSeed);
         rogue.playbackOmniscience = true;
-        for (rogue.depthLevel = 1; rogue.depthLevel <= scanThroughDepth; rogue.depthLevel++) {
+        for (rogue.depthLevel = 1; rogue.depthLevel <= maxAllowedDepth; rogue.depthLevel++) {
             startLevel(rogue.depthLevel == 1 ? 1 : rogue.depthLevel - 1, 1); // descending into level n
             printf("\n    Depth %i:", rogue.depthLevel);
             for (theItem = floorItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
@@ -873,7 +878,7 @@ void mainBrogueJunction() {
                 printHighScores(false);
                 break;
             case NG_SCUM:
-                scum(1, 1000, 5);
+                scum(rogue.scumStartSeed, rogue.scumNumberOfSeeds, rogue.scumNumberOfLevels);
                 rogue.nextGame = NG_QUIT;
                 break;
             case NG_QUIT:
