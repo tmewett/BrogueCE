@@ -34,9 +34,22 @@
 
 // Brogue version: what the user sees in the menu and title
 #define BROGUE_VERSION_STRING "CE 1.9"
-// Recording version: replay/saves from a different version won't load
+
+// Recording version. Saved into recordings and save files made by this version.
 // Cannot be longer than 16 chars
 #define BROGUE_RECORDING_VERSION_STRING "CE 1.9"
+
+/* Patch pattern. A scanf format string which matches an unsigned short. If this
+matches against a recording version string, it defines a "patch version." During
+normal play, rogue.patchVersion is set to the match of the game's recording
+version above, or 0 if it doesn't match.
+
+The game will only load a recording/save if either a) it has a patch version
+which is equal or less than the patch version of the current game
+(rogue.patchLevel is set to the recording's); or b) it doesn't match the version
+strings, but they are equal (rogue.patchLevel is set to 0).
+*/
+#define BROGUE_PATCH_VERSION_PATTERN "CE 1.9.%hu"
 
 #define DEBUG                           if (rogue.wizard)
 #define MONSTERS_ENABLED                (!rogue.wizard || 1) // Quest room monsters can be generated regardless.
@@ -2253,6 +2266,7 @@ typedef struct playerCharacter {
 
     // recording info
     boolean playbackMode;               // whether we're viewing a recording instead of playing
+    unsigned short patchVersion;        // what patch version of the game this was recorded on
     unsigned long currentTurnNumber;    // how many turns have elapsed
     unsigned long howManyTurns;         // how many turns are in this recording
     short howManyDepthChanges;          // how many times the player changes depths
