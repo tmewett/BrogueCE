@@ -492,7 +492,7 @@ void initRecording() {
             // If we have neither a patch pattern match nor an exact match, we can't load.
             rogue.playbackMode = false;
             rogue.playbackFastForward = false;
-            sprintf(buf, "This file is from version %s and cannot be opened in version %s.", versionString, BROGUE_RECORDING_VERSION_STRING);
+            sprintf(buf, "This file is from version %s and cannot be opened in version %s.", versionString, BROGUE_VERSION_STRING);
             dialogAlert(buf);
             rogue.playbackMode = true;
             rogue.playbackPaused = true;
