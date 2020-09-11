@@ -1457,9 +1457,6 @@ boolean buildAMachine(enum machineTypes bp,
                                 failsafe--;
                             }
                             spawnedItems[itemCount] = theItem; // Keep a list of generated items so that we can delete them all if construction fails.
-                            if (parentSpawnedItems) {
-                                parentSpawnedItems[itemCount] = theItem;
-                            }
                             itemCount++;
                         }
                         theItem->flags |= feature->itemFlags;
@@ -1503,17 +1500,11 @@ boolean buildAMachine(enum machineTypes bp,
                                 // all get deleted if this machine or its parent fails.
                                 for (j=0; j<MACHINES_BUFFER_LENGTH && spawnedItemsSub[j]; j++) {
                                     spawnedItems[itemCount] = spawnedItemsSub[j];
-                                    if (parentSpawnedItems) {
-                                        parentSpawnedItems[itemCount] = spawnedItemsSub[j];
-                                    }
                                     itemCount++;
                                     spawnedItemsSub[j] = NULL;
                                 }
                                 for (j=0; j<MACHINES_BUFFER_LENGTH && spawnedMonstersSub[j]; j++) {
                                     spawnedMonsters[monsterCount] = spawnedMonstersSub[j];
-                                    if (parentSpawnedMonsters) {
-                                        parentSpawnedMonsters[monsterCount] = spawnedMonstersSub[j];
-                                    }
                                     monsterCount++;
                                     spawnedMonstersSub[j] = NULL;
                                 }
@@ -1595,9 +1586,6 @@ boolean buildAMachine(enum machineTypes bp,
 
                                 monst->bookkeepingFlags &= ~MB_JUST_SUMMONED;
                                 spawnedMonsters[monsterCount] = monst;
-                                if (parentSpawnedMonsters) {
-                                    parentSpawnedMonsters[monsterCount] = monst;
-                                }
                                 monsterCount++;
                                 if (feature->flags & MF_MONSTER_SLEEPING) {
                                     monst->creatureState = MONSTER_SLEEPING;
@@ -1664,6 +1652,19 @@ boolean buildAMachine(enum machineTypes bp,
 
     freeGrid(distanceMap);
     if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Built a machine from blueprint %i with an origin at (%i, %i).", rogue.depthLevel, bp, originX, originY);
+
+    //Pass created items and monsters to parent where they will be deleted on failure to place parent machine
+    if (parentSpawnedItems) {
+        for (i=0; i<itemCount; i++) {
+            parentSpawnedItems[i] = spawnedItems[i];
+        }
+    }
+    if (parentSpawnedMonsters) {
+        for (i=0; i<monsterCount; i++) {
+            parentSpawnedMonsters[i] = spawnedMonsters[i];
+        }
+    }
+
     return true;
 }
 
