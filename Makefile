@@ -31,6 +31,7 @@ endif
 
 ifeq ($(DEBUG),YES)
 	cflags += -g
+	cppflags += -DENABLE_PLAYBACK_SWITCH
 else
 	cflags += -O2
 endif

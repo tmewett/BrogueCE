@@ -1117,6 +1117,7 @@ enum tileFlags {
 #define SAVE_GAME_KEY       'S'
 #define NEW_GAME_KEY        'N'
 #define GRAPHICS_KEY        'G'
+#define SWITCH_TO_PLAYING_KEY 'P'
 #define NUMPAD_0            48
 #define NUMPAD_1            49
 #define NUMPAD_2            50
@@ -3107,6 +3108,7 @@ extern "C" {
     void pausePlayback();
     void displayAnnotation();
     void loadSavedGame();
+    void switchToPlaying();
     void recordKeystroke(int keystroke, boolean controlKey, boolean shiftKey);
     void recordKeystrokeSequence(unsigned char *commandSequence);
     void recordMouseClick(short x, short y, boolean controlKey, boolean shiftKey);

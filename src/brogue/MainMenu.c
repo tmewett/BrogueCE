@@ -842,7 +842,13 @@ void mainBrogueJunction() {
                             rogue.playbackPaused = false;
                             pausePlayback();
                         }
-
+#ifdef ENABLE_PLAYBACK_SWITCH
+                        // We are coming from the end of a recording the user has taken over.
+                        // No more event checks, that has already been handled
+                        if (rogue.gameHasEnded) {
+                            break;
+                        }
+#endif
                         rogue.RNG = RNG_COSMETIC; // dancing terrain colors can't influence recordings
                         rogue.playbackBetweenTurns = true;
                         nextBrogueEvent(&theEvent, false, true, false);
@@ -878,4 +884,3 @@ void mainBrogueJunction() {
         }
     } while (rogue.nextGame != NG_QUIT);
 }
-
