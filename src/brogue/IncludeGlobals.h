@@ -67,7 +67,7 @@ extern unsigned long lengthOfPlaybackFile;
 extern unsigned long recordingLocation;
 extern unsigned long maxLevelChanges;
 extern char annotationPathname[BROGUE_FILENAME_MAX];    // pathname of annotation file
-extern unsigned long previousGameSeed;
+extern uint64_t previousGameSeed;
 
 // basic colors
 extern color white;

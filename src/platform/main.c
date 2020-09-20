@@ -57,6 +57,20 @@ static void badArgument(const char *arg) {
     printCommandlineHelp();
 }
 
+boolean tryParseUint64(char *str, uint64_t *num) {
+    unsigned long long n;
+    char buf[100];
+    if (strlen(str)                 // we need some input
+        && sscanf(str, "%llu", &n)  // try to convert to number
+        && sprintf(buf, "%llu", n)  // convert back to string
+        && !strcmp(buf, str)) {     // compare (we need them equal)
+        *num = (uint64_t)n;
+        return true; // success
+    } else {
+        return false; // input was too large or not a decimal number
+    }
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -96,15 +110,17 @@ int main(int argc, char *argv[])
 
         if (strcmp(argv[i], "--seed") == 0 || strcmp(argv[i], "-s") == 0) {
             // pick a seed!
-            if (i + 1 < argc) {
-                unsigned int seed = atof(argv[i + 1]); // plenty of precision in a double, and simpler than any other option
-                if (seed != 0) {
-                    i++;
-                    rogue.nextGameSeed = seed;
-                    rogue.nextGame = NG_NEW_GAME_WITH_SEED;
-                    continue;
-                }
+            uint64_t seed;
+            if (i + 1 == argc || !tryParseUint64(argv[i + 1], &seed)) {
+                printf("Invalid seed, please specify a number between 1 and 18446744073709551615\n");
+                return 1;
             }
+            if (seed != 0) {
+                rogue.nextGameSeed = seed;
+                rogue.nextGame = NG_NEW_GAME_WITH_SEED;
+            }
+            i++;
+            continue;
         }
 
         if (strcmp(argv[i], "-n") == 0) {
