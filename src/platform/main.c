@@ -57,6 +57,18 @@ static void badArgument(const char *arg) {
     printCommandlineHelp();
 }
 
+uint64_t decimalToU64(char *s) {
+    uint64_t n = 0;
+    while (*s) {
+        char c = *s;
+        if (c >= '0' && c <= '9') {
+            n = n * 10 + (c - '0');
+        }
+        s++;
+    }
+    return n;
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -75,7 +87,7 @@ int main(int argc, char *argv[])
     currentConsole = sdlConsole;
 #elif BROGUE_WEB
     currentConsole = webConsole;
-#else
+#elif BROGUE_CURSES
     currentConsole = cursesConsole;
 #endif
 
@@ -97,13 +109,15 @@ int main(int argc, char *argv[])
         if (strcmp(argv[i], "--seed") == 0 || strcmp(argv[i], "-s") == 0) {
             // pick a seed!
             if (i + 1 < argc) {
-                unsigned int seed = atof(argv[i + 1]); // plenty of precision in a double, and simpler than any other option
+                uint64_t seed = decimalToU64(argv[i + 1]);
+
                 if (seed != 0) {
-                    i++;
                     rogue.nextGameSeed = seed;
                     rogue.nextGame = NG_NEW_GAME_WITH_SEED;
-                    continue;
                 }
+
+                i++;
+                continue;
             }
         }
 

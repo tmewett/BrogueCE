@@ -26,7 +26,7 @@
 #include "Rogue.h"
 #include "IncludeGlobals.h"
 
-#define RECORDING_HEADER_LENGTH     32  // bytes at the start of the recording file to store global data
+#define RECORDING_HEADER_LENGTH     36  // bytes at the start of the recording file to store global data
 
 static const int keystrokeTable[] = {UP_ARROW, LEFT_ARROW, DOWN_ARROW, RIGHT_ARROW,
     ESCAPE_KEY, RETURN_KEY, DELETE_KEY, TAB_KEY, NUMPAD_0, NUMPAD_1,
@@ -175,8 +175,8 @@ void writeHeaderInfo(char *path) {
         c[i] = BROGUE_RECORDING_VERSION_STRING[i];
     }
     i = 16;
-    numberToString(rogue.seed, 4, &c[i]);
-    i += 4;
+    numberToString(rogue.seed, 8, &c[i]);
+    i += 8;
     numberToString(rogue.playerTurnNumber, 4, &c[i]);
     i += 4;
     numberToString(rogue.deepestLevel, 4, &c[i]);
@@ -480,7 +480,7 @@ void initRecording() {
             rogue.playbackOOS = false;
             rogue.gameHasEnded = true;
         }
-        rogue.seed              = recallNumber(4);          // master random seed
+        rogue.seed              = recallNumber(8);          // master random seed
         rogue.howManyTurns      = recallNumber(4);          // how many turns are in this recording
         maxLevelChanges         = recallNumber(4);          // how many times the player changes depths
         lengthOfPlaybackFile    = recallNumber(4);
@@ -1244,7 +1244,8 @@ boolean selectFile(char *prompt, char *defaultName, char *suffix) {
 
 void parseFile() {
     FILE *descriptionFile;
-    unsigned long oldFileLoc, oldRecLoc, oldLength, oldBufLoc, i, seed, numTurns, numDepths, fileLength, startLoc;
+    unsigned long oldFileLoc, oldRecLoc, oldLength, oldBufLoc, i, numTurns, numDepths, fileLength, startLoc;
+    uint64_t seed;
     unsigned char c;
     char description[1000], versionString[500];
     short x, y;
@@ -1268,7 +1269,7 @@ void parseFile() {
             versionString[i] = recallChar();
         }
 
-        seed        = recallNumber(4);
+        seed        = recallNumber(8);
         numTurns    = recallNumber(4);
         numDepths   = recallNumber(4);
         fileLength  = recallNumber(4);

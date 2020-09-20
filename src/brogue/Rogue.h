@@ -2206,7 +2206,7 @@ typedef struct playerCharacter {
     boolean trueColorMode;              // whether lighting effects are disabled
     boolean displayAggroRangeMode;      // whether your stealth range is displayed
     boolean quit;                       // to skip the typical end-game theatrics when the player quits
-    unsigned long seed;                 // the master seed for generating the entire dungeon
+    uint64_t seed;                      // the master seed for generating the entire dungeon
     short RNG;                          // which RNG are we currently using?
     unsigned long gold;                 // how much gold we have
     unsigned long goldGenerated;        // how much gold has been generated on the levels, not counting gold held by monsters
@@ -2299,7 +2299,7 @@ typedef struct playerCharacter {
     // What do you want to do, player -- play, play with seed, resume, recording, high scores or quit?
     enum NGCommands nextGame;
     char nextGamePath[BROGUE_FILENAME_MAX];
-    unsigned long nextGameSeed;
+    uint64_t nextGameSeed;
 } playerCharacter;
 
 // Stores the necessary info about a level so it can be regenerated:
@@ -2310,7 +2310,7 @@ typedef struct levelData {
     struct creature *monsters;
     struct creature *dormantMonsters;
     short **scentMap;
-    unsigned long levelSeed;
+    uint64_t levelSeed;
     short upStairsLoc[2];
     short downStairsLoc[2];
     short playerExitedVia[2];
@@ -2584,12 +2584,13 @@ extern "C" {
     boolean fileExists(const char *pathname);
     boolean chooseFile(char *path, char *prompt, char *defaultName, char *suffix);
     boolean openFile(const char *path);
-    void initializeRogue(unsigned long seed);
+    void initializeRogue(uint64_t seed);
     void gameOver(char *killedBy, boolean useCustomPhrasing);
     void victory(boolean superVictory);
     void enableEasyMode();
+    uint64_t decimalToU64(char *s);
     int rand_range(int lowerBound, int upperBound);
-    unsigned long seedRandomGenerator(unsigned long seed);
+    uint64_t seedRandomGenerator(uint64_t seed);
     short randClumpedRange(short lowerBound, short upperBound, short clumpFactor);
     short randClump(randomRange theRange);
     boolean rand_percent(short percent);
@@ -2655,7 +2656,7 @@ extern "C" {
     short getHighScoresList(rogueHighScoresEntry returnList[HIGH_SCORES_COUNT]);
     boolean saveHighScore(rogueHighScoresEntry theEntry);
     fileEntry *listFiles(short *fileCount, char **dynamicMemoryBuffer);
-    void initializeLaunchArguments(enum NGCommands *command, char *path, unsigned long *seed);
+    void initializeLaunchArguments(enum NGCommands *command, char *path, uint64_t *seed);
 
     char nextKeyPress(boolean textInput);
     void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst);

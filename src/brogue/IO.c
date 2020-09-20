@@ -4132,7 +4132,7 @@ void displayGrid(short **map) {
 
 void printSeed() {
     char buf[COLS];
-    sprintf(buf, "Dungeon seed #%lu; turn #%lu; version %s", rogue.seed, rogue.playerTurnNumber, BROGUE_VERSION_STRING);
+    sprintf(buf, "Dungeon seed #%llu; turn #%lu; version %s", (long long unsigned)rogue.seed, rogue.playerTurnNumber, BROGUE_VERSION_STRING);
     message(buf, false);
 }
 

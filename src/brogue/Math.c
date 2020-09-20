@@ -98,9 +98,10 @@ u4 ranval( ranctx *x ) {
     return x->d;
 }
 
-void raninit( ranctx *x, u4 seed ) {
+void raninit( ranctx *x, uint64_t seed ) {
     u4 i;
-    x->a = 0xf1ea5eed, x->b = x->c = x->d = seed;
+    x->a = 0xf1ea5eed, x->b = x->c = x->d = (u4)seed;
+    x->c ^= (u4)(seed >> 32);
     for (i=0; i<20; ++i) {
         (void)ranval(x);
     }
@@ -166,9 +167,15 @@ int rand_range(int lowerBound, int upperBound) {
 
 // seeds with the time if called with a parameter of 0; returns the seed regardless.
 // All RNGs are seeded simultaneously and identically.
-unsigned long seedRandomGenerator(unsigned long seed) {
+uint64_t seedRandomGenerator(uint64_t seed) {
     if (seed == 0) {
-        seed = (unsigned long) time(NULL) - 1352700000;
+        seed = (uint64_t) time(NULL) - 1352700000;
+        // bit mixing (from MurmurHash3)
+        seed ^= seed >> 33;
+        seed *= 0xff51afd7ed558ccd;
+        seed ^= seed >> 33;
+        seed *= 0xc4ceb9fe1a85ec53;
+        seed ^= seed >> 33;
     }
     raninit(&(RNGState[RNG_SUBSTANTIVE]), seed);
     raninit(&(RNGState[RNG_COSMETIC]), seed);

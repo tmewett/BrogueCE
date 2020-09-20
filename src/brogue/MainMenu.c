@@ -636,8 +636,8 @@ void scumMonster(creature *monst) {
     }
 }
 
-void scum(unsigned long startingSeed, short numberOfSeedsToScan, short scanThroughDepth) {
-    unsigned long theSeed;
+void scum(uint64_t startingSeed, short numberOfSeedsToScan, short scanThroughDepth) {
+    uint64_t theSeed;
     char path[BROGUE_FILENAME_MAX];
     item *theItem;
     creature *monst;
@@ -648,11 +648,13 @@ void scum(unsigned long startingSeed, short numberOfSeedsToScan, short scanThrou
     getAvailableFilePath(path, LAST_GAME_NAME, GAME_SUFFIX);
     strcat(path, GAME_SUFFIX);
 
-    printf("Brogue seed catalog, seeds %li to %li, through depth %i.\n\n\
+    printf("Brogue seed catalog, seeds %llu to %llu, through depth %i.\n\n\
 To play one of these seeds, press control-N from the title screen \
 and enter the seed number. Knowing which items will appear on \
 the first %i depths will, of course, make the game significantly easier.",
-            startingSeed, startingSeed + numberOfSeedsToScan - 1, scanThroughDepth, scanThroughDepth);
+            (long long unsigned)startingSeed,
+            (long long unsigned)(startingSeed + numberOfSeedsToScan - 1),
+            scanThroughDepth, scanThroughDepth);
 
     for (theSeed = startingSeed; theSeed < startingSeed + numberOfSeedsToScan; theSeed++) {
         printf("\n\nSeed %li:", theSeed);
@@ -703,7 +705,7 @@ the first %i depths will, of course, make the game significantly easier.",
 void mainBrogueJunction() {
     rogueEvent theEvent;
     char path[BROGUE_FILENAME_MAX], buf[100], seedDefault[100];
-    char *maxSeed = "4294967295"; // 2^32 - 1
+    char *maxSeed = "18446744073709551615"; // 2^64 - 1
     short i, j, k;
     boolean seedTooBig;
 
@@ -750,7 +752,7 @@ void mainBrogueJunction() {
                         if (previousGameSeed == 0) {
                             seedDefault[0] = '\0';
                         } else {
-                            sprintf(seedDefault, "%lu", previousGameSeed);
+                            sprintf(seedDefault, "%llu", (long long unsigned)previousGameSeed);
                         }
                         if (getInputTextString(buf, "Generate dungeon with seed number:",
                                                strlen(maxSeed),
@@ -770,7 +772,7 @@ void mainBrogueJunction() {
                                     }
                                 }
                             }
-                            sscanf(seedTooBig ? maxSeed : buf, "%lu", &rogue.nextGameSeed);
+                            rogue.nextGameSeed = decimalToU64(seedTooBig ? maxSeed : buf);
                         } else {
                             rogue.nextGame = NG_NOTHING;
                             break; // Don't start a new game after all.

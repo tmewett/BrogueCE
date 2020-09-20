@@ -67,7 +67,7 @@ unsigned long lengthOfPlaybackFile;
 unsigned long recordingLocation;
 unsigned long maxLevelChanges;
 char annotationPathname[BROGUE_FILENAME_MAX];   // pathname of annotation file
-unsigned long previousGameSeed;
+uint64_t previousGameSeed;
 
 //                                  Red     Green   Blue    RedRand GreenRand   BlueRand    Rand    Dances?
 // basic colors
