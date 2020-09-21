@@ -57,16 +57,18 @@ static void badArgument(const char *arg) {
     printCommandlineHelp();
 }
 
-uint64_t decimalToU64(char *s) {
-    uint64_t n = 0;
-    while (*s) {
-        char c = *s;
-        if (c >= '0' && c <= '9') {
-            n = n * 10 + (c - '0');
-        }
-        s++;
+int tryParseUint64(char *str, uint64_t *num) {
+    unsigned long long n;
+    char buf[100];
+    if (strlen(str)                 // we need some input
+        && sscanf(str, "%llu", &n)  // try to convert to number
+        && sprintf(buf, "%llu", n)  // convert back to string
+        && !strcmp(buf, str)) {     // compare (we need them equal)
+        *num = (uint64_t)n;
+        return 1; // success
+    } else {
+        return 0; // input was too large or not a decimal number
     }
-    return n;
 }
 
 int main(int argc, char *argv[])
@@ -87,7 +89,7 @@ int main(int argc, char *argv[])
     currentConsole = sdlConsole;
 #elif BROGUE_WEB
     currentConsole = webConsole;
-#elif BROGUE_CURSES
+#else
     currentConsole = cursesConsole;
 #endif
 
@@ -108,17 +110,17 @@ int main(int argc, char *argv[])
 
         if (strcmp(argv[i], "--seed") == 0 || strcmp(argv[i], "-s") == 0) {
             // pick a seed!
-            if (i + 1 < argc) {
-                uint64_t seed = decimalToU64(argv[i + 1]);
-
-                if (seed != 0) {
-                    rogue.nextGameSeed = seed;
-                    rogue.nextGame = NG_NEW_GAME_WITH_SEED;
-                }
-
-                i++;
-                continue;
+            uint64_t seed;
+            if (i + 1 == argc || !tryParseUint64(argv[i + 1], &seed)) {
+                printf("Invalid seed, please specify a number between 1 and 18446744073709551615\n");
+                return 1;
             }
+            if (seed != 0) {
+                rogue.nextGameSeed = seed;
+                rogue.nextGame = NG_NEW_GAME_WITH_SEED;
+            }
+            i++;
+            continue;
         }
 
         if (strcmp(argv[i], "-n") == 0) {

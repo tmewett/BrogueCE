@@ -652,8 +652,8 @@ void scum(uint64_t startingSeed, short numberOfSeedsToScan, short scanThroughDep
 To play one of these seeds, press control-N from the title screen \
 and enter the seed number. Knowing which items will appear on \
 the first %i depths will, of course, make the game significantly easier.",
-            (long long unsigned)startingSeed,
-            (long long unsigned)(startingSeed + numberOfSeedsToScan - 1),
+            (unsigned long long)startingSeed,
+            (unsigned long long)(startingSeed + numberOfSeedsToScan - 1),
             scanThroughDepth, scanThroughDepth);
 
     for (theSeed = startingSeed; theSeed < startingSeed + numberOfSeedsToScan; theSeed++) {
@@ -705,9 +705,7 @@ the first %i depths will, of course, make the game significantly easier.",
 void mainBrogueJunction() {
     rogueEvent theEvent;
     char path[BROGUE_FILENAME_MAX], buf[100], seedDefault[100];
-    char *maxSeed = "18446744073709551615"; // 2^64 - 1
     short i, j, k;
-    boolean seedTooBig;
 
     // clear screen and display buffer
     for (i=0; i<COLS; i++) {
@@ -752,27 +750,19 @@ void mainBrogueJunction() {
                         if (previousGameSeed == 0) {
                             seedDefault[0] = '\0';
                         } else {
-                            sprintf(seedDefault, "%llu", (long long unsigned)previousGameSeed);
+                            sprintf(seedDefault, "%llu", (unsigned long long)previousGameSeed);
                         }
                         if (getInputTextString(buf, "Generate dungeon with seed number:",
-                                               strlen(maxSeed),
+                                               20, // length of "18446744073709551615" (2^64 - 1)
                                                seedDefault,
                                                "",
                                                TEXT_INPUT_NUMBERS,
                                                true)
                             && buf[0] != '\0') {
-                            seedTooBig = false;
-                            if (strlen(buf) == strlen(maxSeed)) {
-                                for (i=0; maxSeed[i]; i++) {
-                                    if (maxSeed[i] > buf[i]) {
-                                        break; // we're good
-                                    } else if (maxSeed[i] < buf[i]) {
-                                        seedTooBig = true;
-                                        break;
-                                    }
-                                }
+                            if (!tryParseUint64(buf, &rogue.nextGameSeed)) {
+                                // seed is too large, default to the largest possible seed
+                                rogue.nextGameSeed = 18446744073709551615ULL;
                             }
-                            rogue.nextGameSeed = decimalToU64(seedTooBig ? maxSeed : buf);
                         } else {
                             rogue.nextGame = NG_NOTHING;
                             break; // Don't start a new game after all.
