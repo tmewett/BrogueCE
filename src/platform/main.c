@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
     currentConsole = sdlConsole;
 #elif BROGUE_WEB
     currentConsole = webConsole;
-#else
+#elif BROGUE_CURSES
     currentConsole = cursesConsole;
 #endif
 
