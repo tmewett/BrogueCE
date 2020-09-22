@@ -170,12 +170,6 @@ int rand_range(int lowerBound, int upperBound) {
 uint64_t seedRandomGenerator(uint64_t seed) {
     if (seed == 0) {
         seed = (uint64_t) time(NULL) - 1352700000;
-        // bit mixing (from MurmurHash3)
-        seed ^= seed >> 33;
-        seed *= 0xff51afd7ed558ccd;
-        seed ^= seed >> 33;
-        seed *= 0xc4ceb9fe1a85ec53;
-        seed ^= seed >> 33;
     }
     raninit(&(RNGState[RNG_SUBSTANTIVE]), seed);
     raninit(&(RNGState[RNG_COSMETIC]), seed);

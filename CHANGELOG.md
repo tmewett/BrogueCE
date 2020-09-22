@@ -267,7 +267,7 @@ Other changes
   The sidebar now displays whether a monster is carrying an item
 -
   The maximum seed able to be input in the main menu is now the same on
-  all platforms (2^64 - 1 = 18446744073709551615)
+  all platforms (2^32 - 1 = 4294967295)
 -
   Added a `--print-seed-catalog` command line option to recreate the seed
   catalog
