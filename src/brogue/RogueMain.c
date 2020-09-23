@@ -185,12 +185,17 @@ void initializeRogue(uint64_t seed) {
 
     // initialize the levels list
     for (i=0; i<DEEPEST_LEVEL+1; i++) {
-        do {
-            levels[i].levelSeed
-                =  (uint64_t)rand_range(0, 4194303)         // 22 bits +
-                ^ ((uint64_t)rand_range(0, 4194303) << 22)  // 22 bits +
-                ^ ((uint64_t)rand_range(0, 1048575) << 44); // 20 bits = 64 bits
-        } while (levels[i].levelSeed == 0);
+        if (rogue.seed >> 32) {
+            // generate a 64-bit seed
+            levels[i].levelSeed = rand_64bits();
+        } else {
+            // backward-compatible seed
+            levels[i].levelSeed = (unsigned long) rand_range(0, 9999);
+            levels[i].levelSeed += (unsigned long) 10000 * rand_range(0, 9999);
+        }
+        if (levels[i].levelSeed == 0) { // seed 0 is not acceptable
+            levels[i].levelSeed = i + 1;
+        }
         levels[i].monsters = NULL;
         levels[i].dormantMonsters = NULL;
         levels[i].items = NULL;
@@ -623,10 +628,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
 
         // generate a seed from the current RNG state
         do {
-            oldSeed
-                =  (uint64_t)rand_range(0, 4194303)         // 22 bits +
-                ^ ((uint64_t)rand_range(0, 4194303) << 22)  // 22 bits +
-                ^ ((uint64_t)rand_range(0, 1048575) << 44); // 20 bits = 64 bits
+            oldSeed = rand_64bits();
         } while (oldSeed == 0);
 
         // generate new level

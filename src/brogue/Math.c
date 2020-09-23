@@ -165,6 +165,15 @@ int rand_range(int lowerBound, int upperBound) {
 }
 #endif
 
+uint64_t rand_64bits() {
+    if (rogue.RNG == RNG_SUBSTANTIVE) {
+        randomNumbersGenerated++;
+    }
+    uint64_t hi = ranval(&(RNGState[rogue.RNG]));
+    uint64_t lo = ranval(&(RNGState[rogue.RNG]));
+    return (hi << 32) | lo;
+}
+
 // seeds with the time if called with a parameter of 0; returns the seed regardless.
 // All RNGs are seeded simultaneously and identically.
 uint64_t seedRandomGenerator(uint64_t seed) {
