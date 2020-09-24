@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
         }
 
         if (strcmp(argv[i], "--print-seed-catalog") == 0) {
-            rogue.nextGame = NG_SCUM;
+            rogue.nextGame = NG_PRINT_SEED_CATALOG;
             continue;
         }
 
