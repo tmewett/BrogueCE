@@ -588,7 +588,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (pmap[i][j].flags & VISIBLE) {
+            if (pmap[i][j].flags & ANY_KIND_OF_VISIBLE) {
                 // Remember visible cells upon exiting.
                 storeMemories(i, j);
             }
@@ -727,18 +727,6 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             restoreItem(theItem);
         }
 
-        mapToStairs = allocGrid();
-        mapToPit = allocGrid();
-        fillGrid(mapToStairs, 0);
-        fillGrid(mapToPit, 0);
-        calculateDistances(mapToStairs, player.xLoc, player.yLoc, T_PATHING_BLOCKER, NULL, true, true);
-        calculateDistances(mapToPit, levels[rogue.depthLevel-1].playerExitedVia[0],
-                           levels[rogue.depthLevel-1].playerExitedVia[0], T_PATHING_BLOCKER, NULL, true, true);
-        for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
-            restoreMonster(monst, mapToStairs, mapToPit);
-        }
-        freeGrid(mapToStairs);
-        freeGrid(mapToPit);
     }
 
     // Simulate the environment!
@@ -812,6 +800,21 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     if (cellHasTerrainFlag(player.xLoc, player.yLoc, T_IS_DEEP_WATER) && !player.status[STATUS_LEVITATING]
         && !cellHasTerrainFlag(player.xLoc, player.yLoc, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))) {
         rogue.inWater = true;
+    }
+
+    if (levels[rogue.depthLevel - 1].visited) {
+        mapToStairs = allocGrid();
+        mapToPit = allocGrid();
+        fillGrid(mapToStairs, 0);
+        fillGrid(mapToPit, 0);
+        calculateDistances(mapToStairs, player.xLoc, player.yLoc, T_PATHING_BLOCKER, NULL, true, true);
+        calculateDistances(mapToPit, levels[rogue.depthLevel-1].playerExitedVia[0],
+                           levels[rogue.depthLevel-1].playerExitedVia[1], T_PATHING_BLOCKER, NULL, true, true);
+        for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
+            restoreMonster(monst, mapToStairs, mapToPit);
+        }
+        freeGrid(mapToStairs);
+        freeGrid(mapToPit);
     }
 
     updateMapToShore();
