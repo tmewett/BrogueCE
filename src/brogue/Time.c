@@ -1830,6 +1830,8 @@ void monsterEntersLevel(creature *monst, short n) {
     char monstName[COLS], buf[COLS];
     boolean pit = false;
 
+    levels[n].mapStorage[monst->xLoc][monst->yLoc].flags &= ~HAS_MONSTER;
+
     // place traversing monster near the stairs on this level
     if (monst->bookkeepingFlags & MB_APPROACHING_DOWNSTAIRS) {
         monst->xLoc = rogue.upLoc[0];
