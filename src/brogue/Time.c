@@ -298,6 +298,8 @@ void applyInstantTileEffectsToCreature(creature *monst) {
         if (monst == &player) {
             rogue.disturbed = true;
             for (layer = 0; layer < NUMBER_TERRAIN_LAYERS && !(tileCatalog[pmap[*x][*y].layers[layer]].flags & T_CAUSES_EXPLOSIVE_DAMAGE); layer++);
+            brogueAssert(layer < NUMBER_TERRAIN_LAYERS);
+            if (layer == NUMBER_TERRAIN_LAYERS) return;
             message(tileCatalog[pmap[*x][*y].layers[layer]].flavorText, false);
             if (rogue.armor && (rogue.armor->flags & ITEM_RUNIC) && rogue.armor->enchant2 == A_DAMPENING) {
                 itemName(rogue.armor, buf2, false, false, NULL);
@@ -484,6 +486,8 @@ void applyGradualTileEffectsToCreature(creature *monst, short ticks) {
         damage = (monst->info.maxHP / 15) * ticks / 100;
         damage = max(1, damage);
         for (layer = 0; layer < NUMBER_TERRAIN_LAYERS && !(tileCatalog[pmap[x][y].layers[layer]].flags & T_CAUSES_DAMAGE); layer++);
+        brogueAssert(layer < NUMBER_TERRAIN_LAYERS);
+        if (layer == NUMBER_TERRAIN_LAYERS) return;
         if (monst == &player) {
             if (rogue.armor && (rogue.armor->flags & ITEM_RUNIC) && rogue.armor->enchant2 == A_RESPIRATION) {
                 if (!(rogue.armor->flags & ITEM_RUNIC_IDENTIFIED)) {

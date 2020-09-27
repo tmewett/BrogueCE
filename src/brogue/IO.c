@@ -2336,6 +2336,8 @@ void exploreKey(const boolean controlKey) {
 
     // fight any adjacent enemies first
     dir = adjacentFightingDir();
+    brogueAssert(dir != DIRECTION_COUNT);
+    if (dir == DIRECTION_COUNT) return;
     if (dir == NO_DIRECTION) {
         for (dir = 0; dir < DIRECTION_COUNT; dir++) {
             x = player.xLoc + nbDirs[dir][0];

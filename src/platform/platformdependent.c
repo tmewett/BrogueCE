@@ -468,7 +468,7 @@ fileEntry *addfile(struct filelist *list, const char *name) {
     }
 
     // add the new file and copy the name into the buffer
-    list->files[list->nfiles].path = ((char *) NULL) + list->nextname; // don't look at them until they are transferred out
+    list->files[list->nfiles].path = list->names + list->nextname;
     list->files[list->nfiles].date = (struct tm) {0}; // associate a dummy date (1899-12-31) to avoid random data, it will be correctly populated when using listFiles()
 
     strncpy(list->names + list->nextname, name, len + 1);
@@ -486,25 +486,7 @@ void freeFilelist(struct filelist *list) {
 }
 
 fileEntry *commitFilelist(struct filelist *list, char **namebuffer) {
-    int i;
-    /*fileEntry *files = malloc(list->nfiles * sizeof(fileEntry) + list->nextname); // enough space for all the names and all the files
-
-    if (files != NULL) {
-        char *names = (char *) (files + list->nfiles);
-
-        for (i=0; i < list->nfiles; i++) {
-            files[i] = list->files[i];
-            files[i].path = names + (files[i].path - (char *) NULL);
-        }
-
-        memcpy(names, list->names, list->nextname);
-    }
-    */
-    for (i=0; i < list->nfiles; i++) {
-        list->files[i].path = list->names + (list->files[i].path - (char *) NULL);
-    }
     *namebuffer = list->names;
-
     return list->files;
 }
 

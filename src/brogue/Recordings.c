@@ -1214,7 +1214,7 @@ void describeKeystroke(unsigned char key, char *description) {
         "numpad 7", "numpad 8", "numpad 9", "unknown", "ERROR"};
 
     c = uncompressKeystroke(key);
-    for (i=0; keyList[i] != c && i < 53; i++);
+    for (i=0; i < 51 && keyList[i] != c; i++);
     if (key >= 32 && key <= 126) {
         sprintf(description, "Key: %c\t(%s)", key, descList[i]);
     } else {
