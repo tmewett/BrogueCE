@@ -57,7 +57,7 @@ static void badArgument(const char *arg) {
     printCommandlineHelp();
 }
 
-int tryParseUint64(char *str, uint64_t *num) {
+boolean tryParseUint64(char *str, uint64_t *num) {
     unsigned long long n;
     char buf[100];
     if (strlen(str)                 // we need some input
@@ -65,9 +65,9 @@ int tryParseUint64(char *str, uint64_t *num) {
         && sprintf(buf, "%llu", n)  // convert back to string
         && !strcmp(buf, str)) {     // compare (we need them equal)
         *num = (uint64_t)n;
-        return 1; // success
+        return true; // success
     } else {
-        return 0; // input was too large or not a decimal number
+        return false; // input was too large or not a decimal number
     }
 }
 

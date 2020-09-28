@@ -2588,7 +2588,7 @@ extern "C" {
     void gameOver(char *killedBy, boolean useCustomPhrasing);
     void victory(boolean superVictory);
     void enableEasyMode();
-    int tryParseUint64(char *str, uint64_t *num);
+    boolean tryParseUint64(char *str, uint64_t *num);
     uint64_t rand_64bits();
     int rand_range(int lowerBound, int upperBound);
     uint64_t seedRandomGenerator(uint64_t seed);
