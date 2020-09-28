@@ -28,9 +28,11 @@
 
 #define RECORDING_HEADER_LENGTH     32  // bytes at the start of the recording file to store global data
 
-static const int keystrokeTable[] = {UP_ARROW, LEFT_ARROW, DOWN_ARROW, RIGHT_ARROW,
+static const long keystrokeTable[] = {UP_ARROW, LEFT_ARROW, DOWN_ARROW, RIGHT_ARROW,
     ESCAPE_KEY, RETURN_KEY, DELETE_KEY, TAB_KEY, NUMPAD_0, NUMPAD_1,
     NUMPAD_2, NUMPAD_3, NUMPAD_4, NUMPAD_5, NUMPAD_6, NUMPAD_7, NUMPAD_8, NUMPAD_9};
+
+static const int keystrokeCount = sizeof(keystrokeTable) / sizeof(*keystrokeTable);
 
 
 void recordChar(unsigned char c) {
@@ -45,10 +47,10 @@ void considerFlushingBufferToFile() {
 }
 
 // compresses a int into a char, discarding stuff we don't need
-unsigned char compressKeystroke(int c) {
+unsigned char compressKeystroke(long c) {
     short i;
 
-    for (i=0; i<18; i++) {
+    for (i = 0; i < keystrokeCount; i++) {
         if (keystrokeTable[i] == c) {
             return (unsigned char) (128 + i);
         }
@@ -260,11 +262,11 @@ unsigned char recallChar() {
     return c;
 }
 
-int uncompressKeystroke(int c) {
-    if (c >= 128 && c <= UNKNOWN_KEY) {
+long uncompressKeystroke(unsigned char c) {
+    if (c >= 128 && (c - 128) < keystrokeCount) {
         return keystrokeTable[c - 128];
     }
-    return (int) c;
+    return (long)c;
 }
 
 unsigned long recallNumber(short numberOfBytes) {
@@ -1192,8 +1194,8 @@ void loadSavedGame() {
 
 void describeKeystroke(unsigned char key, char *description) {
     short i;
-    int c;
-    const int keyList[51] = {UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, UP_ARROW, LEFT_ARROW,
+    long c;
+    const long keyList[51] = {UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, UP_ARROW, LEFT_ARROW,
         DOWN_ARROW, RIGHT_ARROW, UPLEFT_KEY, UPRIGHT_KEY, DOWNLEFT_KEY, DOWNRIGHT_KEY,
         DESCEND_KEY, ASCEND_KEY, REST_KEY, AUTO_REST_KEY, SEARCH_KEY, INVENTORY_KEY,
         ACKNOWLEDGE_KEY, EQUIP_KEY, UNEQUIP_KEY, APPLY_KEY, THROW_KEY, RELABEL_KEY, DROP_KEY, CALL_KEY,

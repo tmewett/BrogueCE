@@ -2589,7 +2589,7 @@ extern "C" {
     void gameOver(char *killedBy, boolean useCustomPhrasing);
     void victory(boolean superVictory);
     void enableEasyMode();
-    int rand_range(int lowerBound, int upperBound);
+    long rand_range(long lowerBound, long upperBound);
     unsigned long seedRandomGenerator(unsigned long seed);
     short randClumpedRange(short lowerBound, short upperBound, short clumpFactor);
     short randClump(randomRange theRange);
