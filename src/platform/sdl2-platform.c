@@ -388,7 +388,14 @@ static void _gameLoop() {
 static boolean _pauseForMilliseconds(short ms) {
     SDL_UpdateWindowSurface(Win);
     SDL_Delay(ms);
-    return (pollBrogueEvent(&lastEvent, false) || lastEvent.eventType != EVENT_ERROR)
+
+    if (lastEvent.eventType != EVENT_ERROR
+        && lastEvent.eventType != MOUSE_ENTERED_CELL) {
+        return true; // SDL already gave us an interrupting event to process
+    }
+
+    return pollBrogueEvent(&lastEvent, false) // ask SDL for a new event if one is available
+        && lastEvent.eventType != EVENT_ERROR // and check if it is interrupting
         && lastEvent.eventType != MOUSE_ENTERED_CELL;
 }
 
