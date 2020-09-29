@@ -123,7 +123,7 @@ short hitProbability(creature *attacker, creature *defender) {
         }
         accuracy = player.info.accuracy * accuracyFraction(netEnchant(rogue.weapon)) / FP_FACTOR;
     }
-    hitProbability = accuracy * defenseFraction(defense) / FP_FACTOR;
+    hitProbability = accuracy * defenseFraction(defense * FP_FACTOR) / FP_FACTOR;
     if (hitProbability > 100) {
         hitProbability = 100;
     } else if (hitProbability < 0) {
