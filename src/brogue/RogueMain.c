@@ -140,7 +140,7 @@ void welcome() {
 // Seed is used as the dungeon seed unless it's zero, in which case generate a new one.
 // Either way, previousGameSeed is set to the seed we use.
 // None of this seed stuff is applicable if we're playing a recording.
-void initializeRogue(unsigned long seed) {
+void initializeRogue(uint64_t seed) {
     short i, j, k;
     item *theItem;
     boolean playingback, playbackFF, playbackPaused, wizard;
@@ -185,8 +185,17 @@ void initializeRogue(unsigned long seed) {
 
     // initialize the levels list
     for (i=0; i<DEEPEST_LEVEL+1; i++) {
-        levels[i].levelSeed = (unsigned long) rand_range(0, 9999);
-        levels[i].levelSeed += (unsigned long) 10000 * rand_range(0, 9999);
+        if (rogue.seed >> 32) {
+            // generate a 64-bit seed
+            levels[i].levelSeed = rand_64bits();
+        } else {
+            // backward-compatible seed
+            levels[i].levelSeed = (unsigned long) rand_range(0, 9999);
+            levels[i].levelSeed += (unsigned long) 10000 * rand_range(0, 9999);
+        }
+        if (levels[i].levelSeed == 0) { // seed 0 is not acceptable
+            levels[i].levelSeed = i + 1;
+        }
         levels[i].monsters = NULL;
         levels[i].dormantMonsters = NULL;
         levels[i].items = NULL;
@@ -479,7 +488,7 @@ void updateColors() {
 }
 
 void startLevel(short oldLevelNumber, short stairDirection) {
-    unsigned long oldSeed;
+    uint64_t oldSeed;
     item *theItem;
     short loc[2], i, j, x, y, px, py, flying, dir;
     boolean placedPlayer;
@@ -616,9 +625,13 @@ void startLevel(short oldLevelNumber, short stairDirection) {
         levels[rogue.depthLevel - 1].scentMap = allocGrid();
         scentMap = levels[rogue.depthLevel - 1].scentMap;
         fillGrid(levels[rogue.depthLevel - 1].scentMap, 0);
+
+        // generate a seed from the current RNG state
+        do {
+            oldSeed = rand_64bits();
+        } while (oldSeed == 0);
+
         // generate new level
-        oldSeed = (unsigned long) rand_range(0, 9999);
-        oldSeed += (unsigned long) 10000 * rand_range(0, 9999);
         seedRandomGenerator(levels[rogue.depthLevel - 1].levelSeed);
 
         // Load up next level's monsters and items, since one might have fallen from above.
@@ -660,6 +673,8 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                 placeItem(generateItem(AMULET, 0), 0, 0);
             }
         }
+
+        // re-seed the RNG
         seedRandomGenerator(oldSeed);
 
         //logLevel();
