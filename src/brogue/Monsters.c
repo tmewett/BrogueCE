@@ -2037,7 +2037,9 @@ void pathTowardCreature(creature *monst, creature *target) {
     if (dir == NO_DIRECTION) {
         dir = randValidDirectionFrom(monst, monst->xLoc, monst->yLoc, true);
     }
-
+    if (dir == NO_DIRECTION) {
+        return; // monster is blocked
+    }
     targetLoc[0] = monst->xLoc + nbDirs[dir][0];
     targetLoc[1] = monst->yLoc + nbDirs[dir][1];
 
