@@ -108,10 +108,10 @@ static int rewriteKey(int key, boolean text) {
 
 #define PAUSE_BETWEEN_EVENT_POLLING     34//17
 
-static uint32_t getTime() {
+static uint64_t getTime() {
     struct timeb time;
     ftime(&time);
-    return 1000 * time.time + time.millitm;
+    return (uint64_t)time.time * 1000 + time.millitm;
 }
 
 static boolean curses_pauseForMilliseconds(short milliseconds) {
@@ -125,7 +125,7 @@ static boolean curses_pauseForMilliseconds(short milliseconds) {
 static void curses_nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance) {
     int key;
     // TCOD_mouse_t mouse;
-    uint32_t theTime, waitTime;
+    uint64_t theTime, waitTime;
     // short x, y;
 
     Term.refresh();
