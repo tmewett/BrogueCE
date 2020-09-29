@@ -949,6 +949,18 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                                      &teal, false);
                 }
                 return true;
+            case GRAPHICS_KEY:
+                if (hasGraphics) {
+                    graphicsEnabled = setGraphicsEnabled(!graphicsEnabled);
+                    if (graphicsEnabled) {
+                        messageWithColor(KEYBOARD_LABELS ? "Enabled graphical tiles. Press 'G' again to disable." : "Enable graphical tiles.",
+                                        &teal, false);
+                    } else {
+                        messageWithColor(KEYBOARD_LABELS ? "Disabled graphical tiles. Press 'G' again to enable." : "Disabled graphical tiles.",
+                                        &teal, false);
+                    }
+                }
+                return true;
             case SEED_KEY:
                 //rogue.playbackMode = false;
                 //DEBUG {displayGrid(safetyMap); displayMoreSign(); displayLevel();}
