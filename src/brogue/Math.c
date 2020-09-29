@@ -116,9 +116,9 @@ void raninit( ranctx *x, u4 seed ) {
 
 #define RAND_MAX_COMBO ((unsigned long) UINT32_MAX)
 
-int range(int n, short RNG) {
+long range(long n, short RNG) {
     unsigned long div;
-    int r;
+    long r;
 
     div = RAND_MAX_COMBO/n;
 
@@ -132,35 +132,35 @@ int range(int n, short RNG) {
 // Get a random int between lowerBound and upperBound, inclusive, with uniform probability distribution
 
 #ifdef AUDIT_RNG // debug version
-int rand_range(int lowerBound, int upperBound) {
+long rand_range(long lowerBound, long upperBound) {
     int retval;
     char RNGMessage[100];
-
-    brogueAssert(lowerBound <= INT_MAX && upperBound <= INT_MAX);
-
     if (upperBound <= lowerBound) {
         return lowerBound;
     }
-    retval = lowerBound + range(upperBound-lowerBound+1, rogue.RNG);
+    long interval = upperBound - lowerBound + 1;
+    brogueAssert(interval > 1); // to verify that we didn't wrap around
+    retval = lowerBound + range(interval, rogue.RNG);
     if (rogue.RNG == RNG_SUBSTANTIVE) {
         randomNumbersGenerated++;
         if (1) { //randomNumbersGenerated >= 1128397) {
-            sprintf(RNGMessage, "\n#%lu, %i to %i: %i", randomNumbersGenerated, lowerBound, upperBound, retval);
+            sprintf(RNGMessage, "\n#%lu, %ld to %ld: %ld", randomNumbersGenerated, lowerBound, upperBound, retval);
             RNGLog(RNGMessage);
         }
     }
     return retval;
 }
 #else // normal version
-int rand_range(int lowerBound, int upperBound) {
-    brogueAssert(lowerBound <= INT_MAX && upperBound <= INT_MAX);
+long rand_range(long lowerBound, long upperBound) {
     if (upperBound <= lowerBound) {
         return lowerBound;
     }
     if (rogue.RNG == RNG_SUBSTANTIVE) {
         randomNumbersGenerated++;
     }
-    return lowerBound + range(upperBound-lowerBound+1, rogue.RNG);
+    long interval = upperBound - lowerBound + 1;
+    brogueAssert(interval > 1); // to verify that we didn't wrap around
+    return lowerBound + range(interval, rogue.RNG);
 }
 #endif
 
