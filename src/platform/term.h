@@ -12,7 +12,7 @@ struct term_t {
     void (*put)(int x, int y, int ch, fcolor *fg, fcolor *bg);
     void (*refresh)();
     int (*getkey)();
-    void (*wait)();
+    void (*wait)(int ms);
     int (*hasKey)();
     void (*title)(const char *);
     void (*resize)(int w, int h);
