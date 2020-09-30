@@ -78,10 +78,14 @@ guidelines for managing the commits in your branch:
     one using a soft reset or an interactive rebase
   - If you want multiple commits, then look into fixups and auto-squashing
 
+### Change files
+
 When making user-facing changes, please add a non-technical description of each
 change to a Markdown (.md) file in `changes/`. These files are collated to
-create the release notes. If the change is from one commit, include this file in
-it. For a branch of multiple commits, add it in a separate commit.
+create the release notes.
+
+If the change is from one commit, include this file in it. For a branch of
+multiple commits, add it in a separate commit.
 
 [1]: https://help.github.com/en/github
 [3]: https://chris.beams.io/posts/git-commit/#seven-rules
