@@ -4,8 +4,8 @@ Contributing
 For general help on using GitHub to contribute to a project, check out the
 [GitHub.com Help][1].
 
-We have a Discord server for discussion -- you can join it with invite code
-`8pxE4j8`.
+We have a Discord server for discussion; feel free to join it here:
+https://discord.gg/8pxE4j8.
 
 ## Testing
 
