@@ -4,15 +4,15 @@ Contributing
 For general help on using GitHub to contribute to a project, check out the
 [GitHub.com Help][1].
 
-We have a Discord server for discussion -- you can join it with invite code
-`8pxE4j8`.
+We have a Discord server for discussion; feel free to join it here:
+https://discord.gg/8pxE4j8.
 
 ## Testing
 
 The *master* branch represents the latest development snapshot, and should be
 considered ready for play-testing at all times. If you're a Brogue player, you
 can help out by playing the latest *master* and letting us know of any bugs you
-run into!
+run into! Just follow the build instructions (BUILD.md).
 
 ## Code
 
@@ -27,7 +27,7 @@ Brogue CE version numbers follow 1.MINOR.PATCH. Essentially, patch-level
 releases don't change the gameplay experience in any way--this is to avoid
 breaking saves and replays. Minor-point releases may do so.
 
-The are two long-term branches:
+The are two long-term branches which you should base PRs on:
 
 * *master* is for gameplay changes for the next minor-point release
 * *release* is for bugfixes and other non-gameplay changes, for the next patch
@@ -38,26 +38,54 @@ be careful when branching from them.
 
 ### Style
 
-I am mostly subjective here but not particularly fussy. There is no official
-code style (besides 4 spaces indentation), but:
-
-- Be consistent with formatting
+- Use 4 space of indentation
+- Be consistent with formatting (pay attention to whitespace between brackets,
+  commas, etc.)
 - Try to follow the style of existing code
+- Use braces for control structures on multiple lines. I.e. instead of
+
+  ```c
+  if (cond)
+      action();
+  ```
+
+  do
+
+  ```c
+  if (cond) {
+      action();
+  }
+  ```
+
+  or if you really want,
+
+  ```c
+  if (cond) action();
+  ```
 
 ### Commits
 
-I am quite picky about commits, as I find a good history to be very beneficial.
+I find a clear history to be very beneficial to work with, so I have some
+guidelines for managing the commits in your branch:
 
 - Try to make each commit represent a single, easily-describable change
-- Keep your commit history clean of errors and fixups (e.g. by [rewriting
-history][2])
 - Follow [the seven rules of a great commit message][3]
+- Keep your commit history clean of errors, revertions and fixes to your own
+  changes
+  - If your change works as a single commit, one way to do this is to
+    continually amend your commit as you work on it
+  - Alternatively, you can make separate commits and then squash them down to
+    one using a soft reset or an interactive rebase
+  - If you want multiple commits, then look into fixups and auto-squashing
+
+### Change files
 
 When making user-facing changes, please add a non-technical description of each
 change to a Markdown (.md) file in `changes/`. These files are collated to
-create the release notes. If the change is from one commit, include this file in
-it. For a branch of multiple commits, add it in a separate commit.
+create the release notes.
+
+If the change is from one commit, include this file in it. For a branch of
+multiple commits, add it in a separate commit.
 
 [1]: https://help.github.com/en/github
-[2]: https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History
 [3]: https://chris.beams.io/posts/git-commit/#seven-rules

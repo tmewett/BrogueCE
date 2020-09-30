@@ -1117,6 +1117,7 @@ enum tileFlags {
 #define SAVE_GAME_KEY       'S'
 #define NEW_GAME_KEY        'N'
 #define GRAPHICS_KEY        'G'
+#define SWITCH_TO_PLAYING_KEY 'P'
 #define NUMPAD_0            48
 #define NUMPAD_1            49
 #define NUMPAD_2            50
@@ -2590,7 +2591,7 @@ extern "C" {
     void enableEasyMode();
     boolean tryParseUint64(char *str, uint64_t *num);
     uint64_t rand_64bits();
-    int rand_range(int lowerBound, int upperBound);
+    long rand_range(long lowerBound, long upperBound);
     uint64_t seedRandomGenerator(uint64_t seed);
     short randClumpedRange(short lowerBound, short upperBound, short clumpFactor);
     short randClump(randomRange theRange);
@@ -3109,6 +3110,7 @@ extern "C" {
     void pausePlayback();
     void displayAnnotation();
     void loadSavedGame();
+    void switchToPlaying();
     void recordKeystroke(int keystroke, boolean controlKey, boolean shiftKey);
     void recordKeystrokeSequence(unsigned char *commandSequence);
     void recordMouseClick(short x, short y, boolean controlKey, boolean shiftKey);

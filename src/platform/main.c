@@ -44,9 +44,7 @@ static void printCommandlineHelp() {
 #ifdef BROGUE_CURSES
     "--term         -t          run in ncurses-based terminal mode\n"
 #endif
-#ifdef WIZARD
-    "--wizard       -W          run in debug mode\n"
-#endif
+    "--wizard       -W          run in wizard mode, invincible with powerful items\n"
     "--print-seed-catalog       prints a catalog of the first five levels of seeds 1-1000\n"
     );
     return;
@@ -89,7 +87,7 @@ int main(int argc, char *argv[])
     currentConsole = sdlConsole;
 #elif BROGUE_WEB
     currentConsole = webConsole;
-#else
+#elif BROGUE_CURSES
     currentConsole = cursesConsole;
 #endif
 

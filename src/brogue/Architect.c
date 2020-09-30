@@ -930,6 +930,27 @@ void prepareInteriorWithMachineFlags(char interior[DCOLS][DROWS], short originX,
     }
 }
 
+typedef struct machineData {
+    // Our boolean grids:
+    char interior[DCOLS][DROWS];    // This is the master grid for the machine. All area inside the machine are set to true.
+    char occupied[DCOLS][DROWS];    // This keeps track of what is within the personal space of a previously built feature in the same machine.
+    char candidates[DCOLS][DROWS];  // This is calculated at the start of each feature, and is true where that feature is eligible for building.
+    char blockingMap[DCOLS][DROWS]; // Used during terrain/DF placement in features that are flagged not to tolerate blocking, to see if they block.
+    char viewMap[DCOLS][DROWS];     // Used for features with MF_IN_VIEW_OF_ORIGIN, to calculate which cells are in view of the origin.
+
+    pcell levelBackup[DCOLS][DROWS];
+
+    item *spawnedItems[MACHINES_BUFFER_LENGTH];
+    item *spawnedItemsSub[MACHINES_BUFFER_LENGTH];
+    creature *spawnedMonsters[MACHINES_BUFFER_LENGTH];
+    creature *spawnedMonstersSub[MACHINES_BUFFER_LENGTH];
+
+    short gateCandidates[50][2];
+    short distances[100];
+    short sRows[DROWS];
+    short sCols[DCOLS];
+} machineData;
+
 // Returns true if the machine got built; false if it was aborted.
 // If empty array parentSpawnedItems or parentSpawnedMonsters is given, will pass those back for deletion if necessary.
 boolean buildAMachine(enum machineTypes bp,
@@ -939,35 +960,26 @@ boolean buildAMachine(enum machineTypes bp,
                       item *parentSpawnedItems[MACHINES_BUFFER_LENGTH],
                       creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]) {
 
-    short i, j, k, feat, randIndex, totalFreq, gateCandidates[50][2], instance, instanceCount = 0, qualifyingTileCount,
-    featX, featY, itemCount, monsterCount,
-    sRows[DROWS], sCols[DCOLS],
-    **distanceMap, distance25, distance75, distances[100], distanceBound[2],
-    personalSpace, failsafe, locationFailsafe,
-    machineNumber;
+    short i, j, k, feat, randIndex, totalFreq, instance, instanceCount = 0,
+        featX, featY, itemCount, monsterCount, qualifyingTileCount,
+        **distanceMap = NULL, distance25, distance75, distanceBound[2],
+        personalSpace, failsafe, locationFailsafe,
+        machineNumber;
+
     const unsigned long alternativeFlags[2] = {MF_ALTERNATIVE, MF_ALTERNATIVE_2};
-    boolean success = false;
 
-    // Our boolean grids:
-    //  Interior:       This is the master grid for the machine. All area inside the machine are set to true.
-    //  Occupied:       This keeps track of what is within the personal space of a previously built feature in the same machine.
-    //  Candidates:     This is calculated at the start of each feature, and is true where that feature is eligible for building.
-    //  BlockingMap:    Used during terrain/DF placement in features that are flagged not to tolerate blocking, to see if they block.
-    //  ViewMap:        Used for features with MF_IN_VIEW_OF_ORIGIN, to calculate which cells are in view of the origin.
-    char interior[DCOLS][DROWS], occupied[DCOLS][DROWS], candidates[DCOLS][DROWS], blockingMap[DCOLS][DROWS], viewMap[DCOLS][DROWS];
-
-    boolean DFSucceeded, terrainSucceeded, generateEverywhere, skipFeature[20], chooseBP, chooseLocation, tryAgain;
-
-    pcell levelBackup[DCOLS][DROWS];
+    boolean DFSucceeded, terrainSucceeded, generateEverywhere, chooseBP,
+        chooseLocation, tryAgain, success = false, skipFeature[20];
 
     creature *monst = NULL, *nextMonst, *torchBearer = NULL, *leader = NULL;
 
-    item *theItem = NULL, *torch = NULL, *spawnedItems[MACHINES_BUFFER_LENGTH] = {0}, *spawnedItemsSub[MACHINES_BUFFER_LENGTH] = {0};
-    creature *spawnedMonsters[MACHINES_BUFFER_LENGTH] = {0}, *spawnedMonstersSub[MACHINES_BUFFER_LENGTH] = {0};
+    item *theItem = NULL, *torch = NULL;
 
     const machineFeature *feature;
 
-    distanceMap = NULL;
+    machineData *p = malloc(sizeof(machineData));
+
+    memset(p, 0, sizeof(machineData));
 
     chooseBP = (((signed short) bp) <= 0 ? true : false);
 
@@ -989,6 +1001,7 @@ boolean buildAMachine(enum machineTypes bp,
                            rogue.depthLevel);
                 }
             }
+            free(p);
             return false;
         }
 
@@ -1009,6 +1022,7 @@ boolean buildAMachine(enum machineTypes bp,
                 }
                 if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to build a machine because no suitable blueprints were available.",
                              rogue.depthLevel);
+                free(p);
                 return false;
             }
 
@@ -1033,7 +1047,7 @@ boolean buildAMachine(enum machineTypes bp,
         if (blueprintCatalog[bp].flags & BP_ROOM) {
             // If it's a room machine, count up the gates of appropriate
             // choke size and remember where they are. The origin of the room will be the gate location.
-            zeroOutGrid(interior);
+            zeroOutGrid(p->interior);
 
             if (chooseLocation) {
                 analyzeMap(true); // Make sure the chokeMap is up to date.
@@ -1046,8 +1060,8 @@ boolean buildAMachine(enum machineTypes bp,
                             && chokeMap[i][j] <= blueprintCatalog[bp].roomSize[1]) {
 
                             //DEBUG printf("\nDepth %i: Gate site qualified with interior size of %i.", rogue.depthLevel, chokeMap[i][j]);
-                            gateCandidates[totalFreq][0] = i;
-                            gateCandidates[totalFreq][1] = j;
+                            p->gateCandidates[totalFreq][0] = i;
+                            p->gateCandidates[totalFreq][1] = j;
                             totalFreq++;
                         }
                     }
@@ -1056,8 +1070,8 @@ boolean buildAMachine(enum machineTypes bp,
                 if (totalFreq) {
                     // Choose the gate.
                     randIndex = rand_range(0, totalFreq - 1);
-                    originX = gateCandidates[randIndex][0];
-                    originY = gateCandidates[randIndex][1];
+                    originX = p->gateCandidates[randIndex][0];
+                    originY = p->gateCandidates[randIndex][1];
                 } else {
                     // If no suitable sites, abort.
                     if (distanceMap) {
@@ -1066,6 +1080,7 @@ boolean buildAMachine(enum machineTypes bp,
                     if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to build a machine; there was no eligible door candidate for the chosen room machine from blueprint %i.",
                                  rogue.depthLevel,
                                  bp);
+                    free(p);
                     return false;
                 }
             }
@@ -1074,7 +1089,7 @@ boolean buildAMachine(enum machineTypes bp,
             // Start at the gate location and do a depth-first floodfill to grab all adjoining tiles with the
             // same or lower choke value, ignoring any tiles that are already part of a machine.
             // If we get false from this, try again. If we've tried too many times already, abort.
-            tryAgain = !addTileToMachineInteriorAndIterate(interior, originX, originY);
+            tryAgain = !addTileToMachineInteriorAndIterate(p->interior, originX, originY);
         } else if (blueprintCatalog[bp].flags & BP_VESTIBULE) {
             if (chooseLocation) {
                 // Door machines must have locations passed in. We can't pick one ourselves.
@@ -1084,15 +1099,17 @@ boolean buildAMachine(enum machineTypes bp,
                 if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: ERROR: Attempted to build a door machine from blueprint %i without a location being provided.",
                              rogue.depthLevel,
                              bp);
+                free(p);
                 return false;
             }
-            if (!fillInteriorForVestibuleMachine(interior, bp, originX, originY)) {
+            if (!fillInteriorForVestibuleMachine(p->interior, bp, originX, originY)) {
                 if (distanceMap) {
                     freeGrid(distanceMap);
                 }
                 if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to build a door machine from blueprint %i; not enough room.",
                              rogue.depthLevel,
                              bp);
+                free(p);
                 return false;
             }
         } else {
@@ -1104,7 +1121,7 @@ boolean buildAMachine(enum machineTypes bp,
 
             locationFailsafe = 10;
             do {
-                zeroOutGrid(interior);
+                zeroOutGrid(p->interior);
                 tryAgain = false;
 
                 if (chooseLocation) {
@@ -1120,19 +1137,19 @@ boolean buildAMachine(enum machineTypes bp,
                 qualifyingTileCount = 0; // Keeps track of how many interior cells we've added.
                 totalFreq = rand_range(blueprintCatalog[bp].roomSize[0], blueprintCatalog[bp].roomSize[1]); // Keeps track of the goal size.
 
-                fillSequentialList(sCols, DCOLS);
-                shuffleList(sCols, DCOLS);
-                fillSequentialList(sRows, DROWS);
-                shuffleList(sRows, DROWS);
+                fillSequentialList(p->sCols, DCOLS);
+                shuffleList(p->sCols, DCOLS);
+                fillSequentialList(p->sRows, DROWS);
+                shuffleList(p->sRows, DROWS);
 
                 for (k=0; k<1000 && qualifyingTileCount < totalFreq; k++) {
                     for(i=0; i<DCOLS && qualifyingTileCount < totalFreq; i++) {
                         for(j=0; j<DROWS && qualifyingTileCount < totalFreq; j++) {
-                            if (distanceMap[sCols[i]][sRows[j]] == k) {
-                                interior[sCols[i]][sRows[j]] = true;
+                            if (distanceMap[p->sCols[i]][p->sRows[j]] == k) {
+                                p->interior[p->sCols[i]][p->sRows[j]] = true;
                                 qualifyingTileCount++;
 
-                                if (pmap[sCols[i]][sRows[j]].flags & (HAS_ITEM | HAS_MONSTER | IS_IN_MACHINE)) {
+                                if (pmap[p->sCols[i]][p->sRows[j]].flags & (HAS_ITEM | HAS_MONSTER | IS_IN_MACHINE)) {
                                     // Abort if we've entered another machine or engulfed another machine's item or monster.
                                     tryAgain = true;
                                     qualifyingTileCount = totalFreq; // This is a hack to drop out of these three for-loops.
@@ -1144,10 +1161,10 @@ boolean buildAMachine(enum machineTypes bp,
 
                 // Now make sure the interior map satisfies the machine's qualifications.
                 if ((blueprintCatalog[bp].flags & BP_TREAT_AS_BLOCKING)
-                    && levelIsDisconnectedWithBlockingMap(interior, false)) {
+                    && levelIsDisconnectedWithBlockingMap(p->interior, false)) {
                     tryAgain = true;
                 } else if ((blueprintCatalog[bp].flags & BP_REQUIRE_BLOCKING)
-                           && levelIsDisconnectedWithBlockingMap(interior, true) < 100) {
+                           && levelIsDisconnectedWithBlockingMap(p->interior, true) < 100) {
                     tryAgain = true; // BP_REQUIRE_BLOCKING needs some work to make sure the disconnect is interesting.
                 }
                 // If locationFailsafe runs out, tryAgain will still be true, and we'll try a different machine.
@@ -1161,6 +1178,7 @@ boolean buildAMachine(enum machineTypes bp,
             if (distanceMap) {
                 freeGrid(distanceMap);
             }
+            free(p);
             return false;
         }
 
@@ -1168,16 +1186,16 @@ boolean buildAMachine(enum machineTypes bp,
     } while (tryAgain);
 
     // This is the point of no return. Back up the level so it can be restored if we have to abort this machine after this point.
-    copyMap(pmap, levelBackup);
+    copyMap(pmap, p->levelBackup);
 
     // Perform any transformations to the interior indicated by the blueprint flags, including expanding the interior if requested.
-    prepareInteriorWithMachineFlags(interior, originX, originY, blueprintCatalog[bp].flags, blueprintCatalog[bp].dungeonProfileType);
+    prepareInteriorWithMachineFlags(p->interior, originX, originY, blueprintCatalog[bp].flags, blueprintCatalog[bp].dungeonProfileType);
 
     // If necessary, label the interior as IS_IN_AREA_MACHINE or IS_IN_ROOM_MACHINE and mark down the number.
     machineNumber = ++rogue.machineNumber; // Reserve this machine number, starting with 1.
     for(i=0; i<DCOLS; i++) {
         for(j=0; j<DROWS; j++) {
-            if (interior[i][j]) {
+            if (p->interior[i][j]) {
                 pmap[i][j].flags |= ((blueprintCatalog[bp].flags & BP_ROOM) ? IS_IN_ROOM_MACHINE : IS_IN_AREA_MACHINE);
                 pmap[i][j].machineNumber = machineNumber;
                 // also clear any secret doors, since they screw up distance mapping and aren't fun inside machines
@@ -1200,13 +1218,13 @@ boolean buildAMachine(enum machineTypes bp,
     calculateDistances(distanceMap, originX, originY, T_PATHING_BLOCKER, NULL, true, true);
     qualifyingTileCount = 0;
     for (i=0; i<100; i++) {
-        distances[i] = 0;
+        p->distances[i] = 0;
     }
     for(i=0; i<DCOLS; i++) {
         for(j=0; j<DROWS; j++) {
-            if (interior[i][j]
+            if (p->interior[i][j]
                 && distanceMap[i][j] < 100) {
-                distances[distanceMap[i][j]]++; // create a histogram of distances -- poor man's sort function
+                p->distances[distanceMap[i][j]]++; // create a histogram of distances -- poor man's sort function
                 qualifyingTileCount++;
             }
         }
@@ -1214,19 +1232,19 @@ boolean buildAMachine(enum machineTypes bp,
     distance25 = (int) (qualifyingTileCount / 4);
     distance75 = (int) (3 * qualifyingTileCount / 4);
     for (i=0; i<100; i++) {
-        if (distance25 <= distances[i]) {
+        if (distance25 <= p->distances[i]) {
             distance25 = i;
             break;
         } else {
-            distance25 -= distances[i];
+            distance25 -= p->distances[i];
         }
     }
     for (i=0; i<100; i++) {
-        if (distance75 <= distances[i]) {
+        if (distance75 <= p->distances[i]) {
             distance75 = i;
             break;
         } else {
-            distance75 -= distances[i];
+            distance75 -= p->distances[i];
         }
     }
     //DEBUG printf("\nDistances calculated: 33rd percentile of distance is %i, and 67th is %i.", distance25, distance75);
@@ -1264,7 +1282,7 @@ boolean buildAMachine(enum machineTypes bp,
     itemCount = monsterCount = 0;
 
     // Zero out occupied[][], and use it to keep track of the personal space around each feature that gets placed.
-    zeroOutGrid(occupied);
+    zeroOutGrid(p->occupied);
 
     // Now tick through the features and build them.
     for (feat = 0; feat < blueprintCatalog[bp].featureCount; feat++) {
@@ -1286,17 +1304,17 @@ boolean buildAMachine(enum machineTypes bp,
         }
 
         if (feature->flags & (MF_IN_VIEW_OF_ORIGIN | MF_IN_PASSABLE_VIEW_OF_ORIGIN)) {
-            zeroOutGrid(viewMap);
+            zeroOutGrid(p->viewMap);
             if (feature->flags & MF_IN_PASSABLE_VIEW_OF_ORIGIN) {
-                getFOVMask(viewMap, originX, originY, max(DCOLS, DROWS) * FP_FACTOR, T_PATHING_BLOCKER, 0, false);
+                getFOVMask(p->viewMap, originX, originY, max(DCOLS, DROWS) * FP_FACTOR, T_PATHING_BLOCKER, 0, false);
             } else {
-                getFOVMask(viewMap, originX, originY, max(DCOLS, DROWS) * FP_FACTOR, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION), 0, false);
+                getFOVMask(p->viewMap, originX, originY, max(DCOLS, DROWS) * FP_FACTOR, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION), 0, false);
             }
-            viewMap[originX][originY] = true;
+            p->viewMap[originX][originY] = true;
 
             if (D_INSPECT_MACHINES) {
                 dumpLevelToScreen();
-                hiliteCharGrid(viewMap, &omniscienceColor, 75);
+                hiliteCharGrid(p->viewMap, &omniscienceColor, 75);
                 temporaryMessage("Showing visibility.", true);
             }
         }
@@ -1310,21 +1328,21 @@ boolean buildAMachine(enum machineTypes bp,
                     if (cellIsFeatureCandidate(i, j,
                                                originX, originY,
                                                distanceBound,
-                                               interior, occupied, viewMap, distanceMap,
+                                               p->interior, p->occupied, p->viewMap, distanceMap,
                                                machineNumber, feature->flags, blueprintCatalog[bp].flags)) {
                         qualifyingTileCount++;
-                        candidates[i][j] = true;
+                        p->candidates[i][j] = true;
                     } else {
-                        candidates[i][j] = false;
+                        p->candidates[i][j] = false;
                     }
                 }
             }
 
             if (D_INSPECT_MACHINES) {
                 dumpLevelToScreen();
-                hiliteCharGrid(occupied, &red, 75);
-                hiliteCharGrid(candidates, &green, 75);
-                hiliteCharGrid(interior, &blue, 75);
+                hiliteCharGrid(p->occupied, &red, 75);
+                hiliteCharGrid(p->candidates, &green, 75);
+                hiliteCharGrid(p->interior, &blue, 75);
                 temporaryMessage("Indicating: Occupied (red); Candidates (green); Interior (blue).", true);
             }
 
@@ -1355,7 +1373,7 @@ boolean buildAMachine(enum machineTypes bp,
                     randIndex = rand_range(1, qualifyingTileCount);
                     for(i=0; i<DCOLS && featX < 0; i++) {
                         for(j=0; j<DROWS && featX < 0; j++) {
-                            if (candidates[i][j]) {
+                            if (p->candidates[i][j]) {
                                 if (randIndex == 1) {
                                     // This is the place!
                                     featX = i;
@@ -1370,7 +1388,7 @@ boolean buildAMachine(enum machineTypes bp,
                     }
                 }
                 // Don't waste time trying the same place again whether or not this attempt succeeds.
-                candidates[featX][featY] = false;
+                p->candidates[featX][featY] = false;
                 qualifyingTileCount--;
 
                 DFSucceeded = terrainSucceeded = true;
@@ -1388,9 +1406,9 @@ boolean buildAMachine(enum machineTypes bp,
                         && ((tileCatalog[feature->terrain].flags & T_PATHING_BLOCKER) || (feature->flags & MF_TREAT_AS_BLOCKING))) {
                         // Yes, check for blocking.
 
-                        zeroOutGrid(blockingMap);
-                        blockingMap[featX][featY] = true;
-                        terrainSucceeded = !levelIsDisconnectedWithBlockingMap(blockingMap, false);
+                        zeroOutGrid(p->blockingMap);
+                        p->blockingMap[featX][featY] = true;
+                        terrainSucceeded = !levelIsDisconnectedWithBlockingMap(p->blockingMap, false);
                     }
                     if (terrainSucceeded) {
                         pmap[featX][featY].layers[feature->layer] = feature->terrain;
@@ -1408,12 +1426,12 @@ boolean buildAMachine(enum machineTypes bp,
                              j <= featY + personalSpace - 1;
                              j++) {
                             if (coordinatesAreInMap(i, j)) {
-                                if (candidates[i][j]) {
+                                if (p->candidates[i][j]) {
                                     brogueAssert(!occupied[i][j] || (i == originX && j == originY)); // Candidates[][] should never be true where occupied[][] is true.
-                                    candidates[i][j] = false;
+                                    p->candidates[i][j] = false;
                                     qualifyingTileCount--;
                                 }
-                                occupied[i][j] = true;
+                                p->occupied[i][j] = true;
                             }
                         }
                     }
@@ -1448,7 +1466,7 @@ boolean buildAMachine(enum machineTypes bp,
                             while ((theItem->flags & ITEM_CURSED)
                                    || ((feature->flags & MF_REQUIRE_GOOD_RUNIC) && (!(theItem->flags & ITEM_RUNIC))) // runic if requested
                                    || ((feature->flags & MF_NO_THROWING_WEAPONS) && theItem->category == WEAPON && theItem->quantity > 1) // no throwing weapons if prohibited
-                                   || itemIsADuplicate(theItem, spawnedItems, itemCount)) { // don't want to duplicates of rings, staffs, etc.
+                                   || itemIsADuplicate(theItem, p->spawnedItems, itemCount)) { // don't want to duplicates of rings, staffs, etc.
                                 deleteItem(theItem);
                                 theItem = generateItem(feature->itemCategory, feature->itemKind);
                                 if (failsafe <= 0) {
@@ -1456,10 +1474,7 @@ boolean buildAMachine(enum machineTypes bp,
                                 }
                                 failsafe--;
                             }
-                            spawnedItems[itemCount] = theItem; // Keep a list of generated items so that we can delete them all if construction fails.
-                            if (parentSpawnedItems) {
-                                parentSpawnedItems[itemCount] = theItem;
-                            }
+                            p->spawnedItems[itemCount] = theItem; // Keep a list of generated items so that we can delete them all if construction fails.
                             itemCount++;
                         }
                         theItem->flags |= feature->itemFlags;
@@ -1492,30 +1507,24 @@ boolean buildAMachine(enum machineTypes bp,
                                 removeItemFromChain(theItem, floorItems);
                                 removeItemFromChain(theItem, packItems);
                                 theItem->nextItem = NULL;
-                                success = buildAMachine(-1, -1, -1, BP_ADOPT_ITEM, theItem, spawnedItemsSub, spawnedMonstersSub);
+                                success = buildAMachine(-1, -1, -1, BP_ADOPT_ITEM, theItem, p->spawnedItemsSub, p->spawnedMonstersSub);
                             } else if (feature->flags & MF_BUILD_VESTIBULE) {
-                                success = buildAMachine(-1, featX, featY, BP_VESTIBULE, NULL, spawnedItemsSub, spawnedMonstersSub);
+                                success = buildAMachine(-1, featX, featY, BP_VESTIBULE, NULL, p->spawnedItemsSub, p->spawnedMonstersSub);
                             }
 
                             // Now put the item up for adoption.
                             if (success) {
                                 // Success! Now we have to add that machine's items and monsters to our own list, so they
                                 // all get deleted if this machine or its parent fails.
-                                for (j=0; j<MACHINES_BUFFER_LENGTH && spawnedItemsSub[j]; j++) {
-                                    spawnedItems[itemCount] = spawnedItemsSub[j];
-                                    if (parentSpawnedItems) {
-                                        parentSpawnedItems[itemCount] = spawnedItemsSub[j];
-                                    }
+                                for (j=0; j<MACHINES_BUFFER_LENGTH && p->spawnedItemsSub[j]; j++) {
+                                    p->spawnedItems[itemCount] = p->spawnedItemsSub[j];
                                     itemCount++;
-                                    spawnedItemsSub[j] = NULL;
+                                    p->spawnedItemsSub[j] = NULL;
                                 }
-                                for (j=0; j<MACHINES_BUFFER_LENGTH && spawnedMonstersSub[j]; j++) {
-                                    spawnedMonsters[monsterCount] = spawnedMonstersSub[j];
-                                    if (parentSpawnedMonsters) {
-                                        parentSpawnedMonsters[monsterCount] = spawnedMonstersSub[j];
-                                    }
+                                for (j=0; j<MACHINES_BUFFER_LENGTH && p->spawnedMonstersSub[j]; j++) {
+                                    p->spawnedMonsters[monsterCount] = p->spawnedMonstersSub[j];
                                     monsterCount++;
-                                    spawnedMonstersSub[j] = NULL;
+                                    p->spawnedMonstersSub[j] = NULL;
                                 }
                                 break;
                             }
@@ -1524,9 +1533,10 @@ boolean buildAMachine(enum machineTypes bp,
                         if (!i) {
                             if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to place blueprint %i because it requires an adoptive machine and we couldn't place one.", rogue.depthLevel, bp);
                             // failure! abort!
-                            copyMap(levelBackup, pmap);
-                            abortItemsAndMonsters(spawnedItems, spawnedMonsters);
+                            copyMap(p->levelBackup, pmap);
+                            abortItemsAndMonsters(p->spawnedItems, p->spawnedMonsters);
                             freeGrid(distanceMap);
+                            free(p);
                             return false;
                         }
                         theItem = NULL;
@@ -1594,10 +1604,7 @@ boolean buildAMachine(enum machineTypes bp,
                                 }
 
                                 monst->bookkeepingFlags &= ~MB_JUST_SUMMONED;
-                                spawnedMonsters[monsterCount] = monst;
-                                if (parentSpawnedMonsters) {
-                                    parentSpawnedMonsters[monsterCount] = monst;
-                                }
+                                p->spawnedMonsters[monsterCount] = monst;
                                 monsterCount++;
                                 if (feature->flags & MF_MONSTER_SLEEPING) {
                                     monst->creatureState = MONSTER_SLEEPING;
@@ -1633,9 +1640,10 @@ boolean buildAMachine(enum machineTypes bp,
                          rogue.depthLevel, bp, feat, feature->minimumInstanceCount, instance);
 
             // Restore the map to how it was before we touched it.
-            copyMap(levelBackup, pmap);
-            abortItemsAndMonsters(spawnedItems, spawnedMonsters);
+            copyMap(p->levelBackup, pmap);
+            abortItemsAndMonsters(p->spawnedItems, p->spawnedMonsters);
             freeGrid(distanceMap);
+            free(p);
             return false;
         }
     }
@@ -1664,6 +1672,20 @@ boolean buildAMachine(enum machineTypes bp,
 
     freeGrid(distanceMap);
     if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Built a machine from blueprint %i with an origin at (%i, %i).", rogue.depthLevel, bp, originX, originY);
+
+    //Pass created items and monsters to parent where they will be deleted on failure to place parent machine
+    if (parentSpawnedItems) {
+        for (i=0; i<itemCount; i++) {
+            parentSpawnedItems[i] = p->spawnedItems[i];
+        }
+    }
+    if (parentSpawnedMonsters) {
+        for (i=0; i<monsterCount; i++) {
+            parentSpawnedMonsters[i] = p->spawnedMonsters[i];
+        }
+    }
+
+    free(p);
     return true;
 }
 

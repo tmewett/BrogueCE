@@ -69,12 +69,47 @@ If you downloaded the source code, you will need to build the game first. For
 instructions, see `BUILD.md`.
 
 
-About Community Edition
------------------------
+About
+-----
+
+### What is Community Edition?
 
 Brogue was created by Brian Walker. This version, *Brogue: Community Edition*,
 is a continuation of its development. It has several main goals:
 
-- add community-accepted bugfixes and game changes
-- provide a cross-platform build system
+- fix bugs and crashes
+- add useful quality of life and non-gameplay features
+- make conservative game changes, where there is wide agreement
+- be an uncontroversial drop-in for the original game
+- ease development and maintenance
 - be a convenient base for forks and ports to new platforms
+
+### How is CE different from the original Brogue?
+
+All the changes we've made are consistent with our goals above, so overall it is
+quite similar. We don't maintain a complete list, so please refer to the
+changelog or release history.
+
+### How is the project run, and how are changes decided?
+
+The project is run with a "benevolent dictator" model, with myself (tmewett) in
+charge. There are many other testers and regular contributors; see the
+contribution guide (CONTRIBUTING.md) to get involved!
+
+Most changes are bug fixes or not gameplay related, so are not subject to much
+critique. On the rarer occasions where we consider game changes, I try and use
+the existing design and feature-set as a reference, as well as testing from both
+new and experienced players. I also compile stats/probabilities about what we
+want to change and try and tweak them to be slightly weaker, stronger, or the
+same, depending on the desired result. The results are subject to testing.
+
+### What will you do if Brogue is updated?
+
+We're not sure! Most likely CE will be "rebased" to include the new changes
+while keeping any of the new features and fixes that were not included. It may
+decrease the popularity of CE and perhaps the project will no longer be
+necessary.
+
+We don't know for sure whether Brian is still working on Brogue, or plans to
+release another version. However, he has implied that he considers the game
+complete, so we are working on the assumption that 1.7.5 is the final version.

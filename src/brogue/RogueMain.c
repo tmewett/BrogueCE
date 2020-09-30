@@ -1235,6 +1235,8 @@ void victory(boolean superVictory) {
     rogue.playbackMode = isPlayback;
 
     if (serverMode) {
+        // There's no save recording prompt, so let the player see achievements.
+        displayMoreSign();
         saveRecordingNoPrompt(recordingFilename);
     } else {
         saveRecording(recordingFilename);
