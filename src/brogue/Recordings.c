@@ -435,10 +435,18 @@ void displayAnnotation() {
     }
 }
 
+// Attempts to extract the patch version of versionString into patchVersion,
+// according to the global pattern. Returns 0 if successful.
+static boolean getPatchVersion(char *versionString, unsigned short *patchVersion) {
+    int n = sscanf(versionString, BROGUE_PATCH_VERSION_PATTERN, patchVersion);
+    return n == 1;
+}
+
 // creates a game recording file, or if in playback mode,
 // initializes based on and starts reading from the recording file
 void initRecording() {
     short i;
+    unsigned short gamePatch, recPatch;
     char versionString[16], buf[100];
     FILE *recordFile;
 
@@ -458,6 +466,7 @@ void initRecording() {
     rogue.nextAnnotationTurn    = 0;
     rogue.nextAnnotation[0]     = '\0';
     rogue.locationInAnnotationFile  = 0;
+    rogue.patchVersion          = 0;
 
     if (rogue.playbackMode) {
         lengthOfPlaybackFile        = 100000; // so recall functions don't freak out
@@ -471,10 +480,19 @@ void initRecording() {
             versionString[i] = recallChar();
         }
 
-        if (strcmp(versionString, BROGUE_RECORDING_VERSION_STRING)) {
+        if (getPatchVersion(versionString, &recPatch)
+                && getPatchVersion(BROGUE_RECORDING_VERSION_STRING, &gamePatch)
+                && recPatch <= gamePatch) {
+            rogue.patchVersion = recPatch;
+        } else if (strcmp(versionString, "CE 1.9") == 0) {
+            // Temporary measure until next release, as "CE 1.9" recording string
+            // doesn't have a patch version (".0"), but we can load it.
+            rogue.patchVersion = 0;
+        } else if (strcmp(versionString, BROGUE_RECORDING_VERSION_STRING) != 0) {
+            // If we have neither a patch pattern match nor an exact match, we can't load.
             rogue.playbackMode = false;
             rogue.playbackFastForward = false;
-            sprintf(buf, "This file is from version %s and cannot be opened in version %s.", versionString, BROGUE_RECORDING_VERSION_STRING);
+            sprintf(buf, "This file is from version %s and cannot be opened in version %s.", versionString, BROGUE_VERSION_STRING);
             dialogAlert(buf);
             rogue.playbackMode = true;
             rogue.playbackPaused = true;
@@ -495,6 +513,9 @@ void initRecording() {
             rogue.nextAnnotationTurn = -1;
         }
     } else {
+        // If present, set the patch version for playing the game.
+        getPatchVersion(BROGUE_RECORDING_VERSION_STRING, &rogue.patchVersion);
+
         lengthOfPlaybackFile = 1;
         remove(currentFilePath);
         recordFile = fopen(currentFilePath, "wb"); // create the file
