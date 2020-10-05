@@ -3174,7 +3174,7 @@ extern "C" {
     boolean dialogChooseFile(char *path, const char *suffix, const char *prompt);
     void dialogAlert(char *message);
     void mainBrogueJunction();
-    void printSeedCatalog(unsigned long startingSeed, short numberOfSeedsToScan, short scanThroughDepth);
+    void printSeedCatalog(unsigned long startingSeed, unsigned long numberOfSeedsToScan, unsigned int scanThroughDepth);
 
     void initializeButton(brogueButton *button);
     void drawButtonsInState(buttonState *state);

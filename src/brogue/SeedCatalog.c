@@ -137,7 +137,7 @@ static void printSeedCatalogAltars() {
     }
 }
 
-void printSeedCatalog(unsigned long startingSeed, short numberOfSeedsToScan, short scanThroughDepth) {
+void printSeedCatalog(unsigned long startingSeed, unsigned long numberOfSeedsToScan, unsigned int scanThroughDepth) {
     unsigned long theSeed;
     char path[BROGUE_FILENAME_MAX];
 
@@ -146,15 +146,15 @@ void printSeedCatalog(unsigned long startingSeed, short numberOfSeedsToScan, sho
     getAvailableFilePath(path, LAST_GAME_NAME, GAME_SUFFIX);
     strcat(path, GAME_SUFFIX);
 
-    printf("Brogue seed catalog, seeds %li to %li, through depth %i.\n\n\
+    printf("Brogue seed catalog, seeds %lu to %lu, through depth %u.\n\n\
 To play one of these seeds, press control-N from the title screen \
 and enter the seed number. Knowing which items will appear on \
-the first %i depths will, of course, make the game significantly easier.\n\n",
+the first %u depths will, of course, make the game significantly easier.\n\n",
             startingSeed, startingSeed + numberOfSeedsToScan - 1, scanThroughDepth, scanThroughDepth);
 
     for (theSeed = startingSeed; theSeed < startingSeed + numberOfSeedsToScan; theSeed++) {
-        printf("Seed %li:\n", theSeed);
-        fprintf(stderr, "Scanning seed %li...\n", theSeed);
+        printf("Seed %lu:\n", theSeed);
+        fprintf(stderr, "Scanning seed %lu...\n", theSeed);
         rogue.nextGamePath[0] = '\0';
         randomNumbersGenerated = 0;
 
