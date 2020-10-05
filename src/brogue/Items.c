@@ -1629,40 +1629,6 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
     return;
 }
 
-void seedCatalogItemName(item *theItem, char *name, creature *theMonster) {
-    char buf[500] = "", monster[128] = "", location[36] = "", usageLocation[36] = "";
-
-    itemName(theItem, buf, true, true, NULL);
-
-    //monster
-    if (theMonster != NULL) {
-        sprintf(monster, " (%s)", theMonster->info.monsterName);
-    }
-
-    //location
-    if (pmap[theItem->xLoc][theItem->yLoc].machineNumber > 0) {
-        //not all machines are "vaults" so we need to exclude some.
-        if (pmap[theItem->xLoc][theItem->yLoc].layers[0] != ALTAR_SWITCH
-            && pmap[theItem->xLoc][theItem->yLoc].layers[0] != ALTAR_SWITCH_RETRACTING
-            && pmap[theItem->xLoc][theItem->yLoc].layers[0] != ALTAR_CAGE_RETRACTABLE
-            && pmap[theItem->xLoc][theItem->yLoc].layers[0] != ALTAR_INERT
-            && pmap[theItem->xLoc][theItem->yLoc].layers[0] != AMULET_SWITCH
-            && pmap[theItem->xLoc][theItem->yLoc].layers[0] != FLOOR) {
-
-            sprintf(location, " (vault %i)", pmap[theItem->xLoc][theItem->yLoc].machineNumber);
-        }
-    }
-
-    //usage location
-    if (theItem->category == KEY && theItem->kind == KEY_DOOR) {
-        sprintf(usageLocation, " (opens vault %i)", pmap[theItem->keyLoc[0].x][theItem->keyLoc[0].y].machineNumber - 1);
-    }
-
-    upperCase(buf);
-    sprintf(name, "%s%s%s%s", buf, monster, location, usageLocation);
-    return;
-}
-
 // kindCount is optional
 itemTable *tableForItemCategory(enum itemCategory theCat, short *kindCount) {
     itemTable *returnedTable;

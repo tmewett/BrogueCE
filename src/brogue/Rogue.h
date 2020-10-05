@@ -2916,7 +2916,6 @@ extern "C" {
     boolean canSeeMonster(creature *monst);
     boolean canDirectlySeeMonster(creature *monst);
     void monsterName(char *buf, creature *monst, boolean includeArticle);
-    void seedCatalogMonsterName(char *name, creature *theMonster);
     boolean monsterIsInClass(const creature *monst, const short monsterClass);
     fixpt strengthModifier(item *theItem);
     fixpt netEnchant(item *theItem);
@@ -2981,7 +2980,6 @@ extern "C" {
     void checkForDisenchantment(item *theItem);
     void updateFloorItems();
     void itemName(item *theItem, char *root, boolean includeDetails, boolean includeArticle, color *baseColor);
-    void seedCatalogItemName(item *theItem, char *name, creature *theMonster);
     char displayInventory(unsigned short categoryMask,
                           unsigned long requiredFlags,
                           unsigned long forbiddenFlags,
@@ -3176,6 +3174,7 @@ extern "C" {
     boolean dialogChooseFile(char *path, const char *suffix, const char *prompt);
     void dialogAlert(char *message);
     void mainBrogueJunction();
+    void printSeedCatalog(unsigned long startingSeed, short numberOfSeedsToScan, short scanThroughDepth);
 
     void initializeButton(brogueButton *button);
     void drawButtonsInState(buttonState *state);

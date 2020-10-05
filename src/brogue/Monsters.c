@@ -261,22 +261,6 @@ void monsterName(char *buf, creature *monst, boolean includeArticle) {
     }
 }
 
-void seedCatalogMonsterName(char *name, creature *theMonster) {
-    char descriptor[16] = "";
-    char location[16] = "";
-
-    if (theMonster->bookkeepingFlags & MB_CAPTIVE) {
-        if (cellHasTMFlag(theMonster->xLoc, theMonster->yLoc, TM_PROMOTES_WITH_KEY)) {
-            strcpy(descriptor,"A caged ");
-        } else {
-            strcpy(descriptor,"A shackled ");
-        }
-    } else if (theMonster->creatureState == MONSTER_ALLY) {
-        strcpy(descriptor, "An allied ");
-    }
-    sprintf(name,"%s%s%s", descriptor, theMonster->info.monsterName, location);
-}
-
 boolean monsterIsInClass(const creature *monst, const short monsterClass) {
     short i;
     for (i = 0; monsterClassCatalog[monsterClass].memberList[i] != 0; i++) {
