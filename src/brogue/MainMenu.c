@@ -798,10 +798,6 @@ void mainBrogueJunction() {
                 rogue.nextGame = NG_NOTHING;
                 printHighScores(false);
                 break;
-            case NG_PRINT_SEED_CATALOG:
-                printSeedCatalog(1, 1000, 5);
-                rogue.nextGame = NG_QUIT;
-                break;
             case NG_QUIT:
                 // No need to do anything.
                 break;

@@ -45,7 +45,9 @@ static void printCommandlineHelp() {
     "--term         -t          run in ncurses-based terminal mode\n"
 #endif
     "--wizard       -W          run in wizard mode, invincible with powerful items\n"
-    "--print-seed-catalog       prints a catalog of the first five levels of seeds 1-1000\n"
+    "--print-seed-catalog [START NUM LEVELS]\n"
+    "                           prints a catalog of the first LEVELS levels of NUM\n"
+    "                           seeds from seed START (defaults: 1 1000 5)\n"
     );
     return;
 }
@@ -145,8 +147,20 @@ int main(int argc, char *argv[])
         }
 
         if (strcmp(argv[i], "--print-seed-catalog") == 0) {
-            rogue.nextGame = NG_PRINT_SEED_CATALOG;
-            continue;
+            if (i + 3 < argc) {
+                // Use convertions from types the next size up, because they're signed
+                unsigned long startingSeed = atof(argv[i + 1]);
+                unsigned long numberOfSeeds = atoll(argv[i + 2]);
+                unsigned int numberOfLevels = atol(argv[i + 3]);
+
+                if (startingSeed > 0 && numberOfLevels <= 40) {
+                    printSeedCatalog(startingSeed, numberOfSeeds, numberOfLevels);
+                    return 0;
+                }
+            } else {
+                printSeedCatalog(1, 1000, 5);
+                return 0;
+            }
         }
 
         if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) {
