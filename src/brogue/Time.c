@@ -25,6 +25,14 @@
 #include "IncludeGlobals.h"
 #include <math.h>
 
+
+//CAT
+extern int audioAlert;
+extern int alertCount;
+extern int fadeIn;
+extern boolean cat_loading;
+
+boolean oldRested= false;
 void exposeCreatureToFire(creature *monst) {
     char buf[COLS], buf2[COLS];
     if (monst->status[STATUS_IMMUNE_TO_FIRE]
@@ -34,6 +42,9 @@ void exposeCreatureToFire(creature *monst) {
         return;
     }
     if (monst->status[STATUS_BURNING] == 0) {
+
+        playSound(21);
+
         if (monst == &player) {
             rogue.minersLight.lightColor = &fireForeColor;
             player.info.foreColor = &torchLightColor;
@@ -147,6 +158,8 @@ void applyInstantTileEffectsToCreature(creature *monst) {
         && !cellHasTerrainFlag(*x, *y, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))
         && cellHasTerrainFlag(*x, *y, T_LAVA_INSTA_DEATH)) {
 
+        playSound(21);
+
         if (monst == &player) {
             sprintf(buf, "you plunge into %s!",
                     tileCatalog[pmap[*x][*y].layers[layerWithFlag(*x, *y, T_LAVA_INSTA_DEATH)]].description);
@@ -218,6 +231,9 @@ void applyInstantTileEffectsToCreature(creature *monst) {
             // usually means an invisible monster
             message("a pressure plate clicks!", false);
         }
+
+        playSound(7);
+
         for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
             if (tileCatalog[pmap[*x][*y].layers[layer]].flags & T_IS_DF_TRAP) {
                 spawnDungeonFeature(*x, *y, &(dungeonFeatureCatalog[tileCatalog[pmap[*x][*y].layers[layer]].fireType]), true, false);
@@ -447,6 +463,10 @@ void applyGradualTileEffectsToCreature(creature *monst, short ticks) {
                     }
                     theItem = dropItem(theItem);
                     if (theItem) {
+
+
+                        playSound(48);
+
                         itemName(theItem, buf2, false, true, NULL);
                         sprintf(buf, "%s float%s away in the current!",
                                 buf2,
@@ -474,6 +494,9 @@ void applyGradualTileEffectsToCreature(creature *monst, short ticks) {
                     autoIdentify(rogue.armor);
                 }
             } else {
+
+//                playSound(5);
+
                 rogue.disturbed = true;
                 messageWithColor(tileCatalog[pmap[x][y].layers[layer]].flavorText, &badMessageColor, false);
                 if (inflictDamage(NULL, &player, damage, tileCatalog[pmap[x][y].layers[layer]].backColor, true)) {
@@ -636,6 +659,47 @@ short armorAggroAdjustment(item *theArmor) {
     return max(0, armorTable[theArmor->kind].strengthRequired - 12);
 }
 
+
+//CAT-SNEAKING
+/*
+short currentAggroValue() {
+
+    short stealthVal = 7;
+
+    if (player.status[STATUS_INVISIBLE]) {
+        stealthVal = 1; // Invisibility means stealth range of 1, no matter what.
+    } else {
+        if (playerInDarkness()) {
+            // In darkness, halve.
+            stealthVal = (stealthVal + 1) / 2;
+        } else if (!(pmap[player.xLoc][player.yLoc].flags & IS_IN_SHADOW)) {
+            // In light, double.
+            stealthVal *= 2;
+        }
+
+        stealthVal += armorAggroAdjustment(rogue.armor);
+        stealthVal -= rogue.stealthBonus;
+
+        if (player.status[STATUS_AGGRAVATING] > 0)
+            stealthVal += player.status[STATUS_AGGRAVATING];
+
+        if (rogue.justRested || oldRested)
+            stealthVal = (stealthVal + 1) / 2;
+
+        if(!rogue.justRested)
+            stealthVal++;
+
+        if (stealthVal < 1) // Can't go below 1, ever.
+            stealthVal = 1;
+    }
+
+    oldRested= rogue.justRested;
+
+    return stealthVal;
+}
+*/
+
+//ORIGINAL
 short currentAggroValue() {
     // Default value of 7.
     short stealthVal = 7;
@@ -676,6 +740,7 @@ short currentAggroValue() {
     }
     return stealthVal;
 }
+
 
 void demoteVisibility() {
     short i, j;
@@ -738,16 +803,217 @@ void updateVision(boolean refreshDisplay) {
     updateLighting();
     updateFieldOfViewDisplay(true, refreshDisplay);
 
-    //  for (i=0; i<DCOLS; i++) {
-    //      for (j=0; j<DROWS; j++) {
-    //          if (pmap[i][j].flags & VISIBLE) {
-    //              plotCharWithColor(' ', mapToWindowX(i), mapToWindowY(j), &yellow, &yellow);
-    //          } else if (pmap[i][j].flags & IN_FIELD_OF_VIEW) {
-    //              plotCharWithColor(' ', mapToWindowX(i), mapToWindowY(j), &blue, &blue);
-    //          }
-    //      }
-    //  }
-    //  displayMoreSign();
+
+//CAT
+    audioAlert= 0;
+    for(monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature)
+    {
+
+        if(monst->creatureState != MONSTER_ALLY && canSeeMonster(monst)
+            && (monst->creatureState == MONSTER_TRACKING_SCENT || monst->creatureState == MONSTER_FLEEING))
+        {
+            if(monst->wasUnaware)
+            {
+                playSound(8);
+                createFlare(monst->xLoc, monst->yLoc, GENERIC_FLASH_LIGHT);
+            }
+
+            if(monst->creatureState == MONSTER_TRACKING_SCENT)
+                audioAlert= 1;
+        }
+
+        monst->wasUnaware = (monst->creatureState == MONSTER_WANDERING || monst->creatureState == MONSTER_SLEEPING);
+    }
+
+
+
+    if(!cat_loading && player.status[STATUS_HALLUCINATING] > 0)
+    {
+        playMusic(9);
+        playBattle(false);
+
+        fadeIn= 23;
+        if(player.status[STATUS_HALLUCINATING] < 23)
+            Mix_VolumeMusic( 120 - (5*(23-player.status[STATUS_HALLUCINATING])) );
+        else
+            Mix_VolumeMusic(120);
+    }
+    else
+    if(!cat_loading && rogue.yendorWarden)
+    {
+        if(rogue.depthLevel > 29)
+            playMusic(0);
+        else
+            playMusic(5);
+
+        playBattle(false);
+
+        if(rogue.depthLevel > 26)
+            Mix_VolumeMusic(70);
+        else
+        if(rogue.depthLevel*4 > 100)
+            Mix_VolumeMusic(100);
+        else
+            Mix_VolumeMusic(10+rogue.depthLevel*4);
+
+    }
+    else
+    {
+
+        if(rogue.depthLevel%2 == 0)
+            playMusic(2);
+        else
+            playMusic(3);
+
+        if(audioAlert == 1)
+        {
+            alertCount= 1;
+            fadeBattle(120);
+        }
+        else
+        if(alertCount > 0)
+        {
+
+            alertCount++;
+            fadeBattle(-5);
+            if(alertCount == 19)
+            {
+                alertCount= 0;
+                playBattle(false);
+            }
+        }
+
+        if(!cat_loading && fadeIn > 1)
+        {
+            fadeIn--;
+            Mix_VolumeMusic(120 - fadeIn*5);
+        }
+    }
+
+
+
+
+    if(player.currentHP < player.info.maxHP/3)
+    {
+
+        playLoop(28, 120);
+        goto Label_1;
+    }
+
+
+    int ch_i, ch_j;
+    int env_type, dst;
+    int ch_distance= 125;
+    creature *cat_m = NULL;
+
+    for(ch_i= -5; ch_i <= 5; ch_i++)
+    {
+        for(ch_j= -5; ch_j <= 5; ch_j++)
+        {
+            int xa= player.xLoc+ch_i;
+            int ya= player.yLoc+ch_j;
+
+            if(coordinatesAreInMap(xa, ya))
+            {
+                dst= 18 * sqrt(ch_i*ch_i + ch_j*ch_j);
+
+                if(dst < ch_distance && cellHasTerrainFlag(xa, ya, T_AUTO_DESCENT))
+                {
+                        ch_distance= dst;
+                        env_type= 1;
+                }
+
+                if(dst < ch_distance && cellHasTerrainFlag(xa, ya, T_LAVA_INSTA_DEATH))
+                {
+                        ch_distance= dst;
+                        env_type= 2;
+                }
+
+                if(dst < ch_distance && cellHasTerrainFlag(xa, ya, T_IS_FIRE))
+//                    || tileCatalog[pmap[xa][ya].layers[0]].glowLight == TORCH_LIGHT)
+                {
+                        ch_distance= dst;
+                        env_type= 3;
+                }
+
+                if((pmap[xa][ya].flags & HAS_MONSTER))
+                {
+                    cat_m= monsterAtLoc(xa, ya);
+
+                    if(dst < ch_distance && cat_m->status[STATUS_BURNING] > 0)
+                    {
+                        ch_distance= dst;
+                        env_type= 3;
+                    }
+                }
+
+                if(dst < ch_distance && cellHasTerrainFlag(xa, ya, T_SPONTANEOUSLY_IGNITES))
+                {
+                        ch_distance= dst;
+                        env_type= 7;
+                }
+
+                if(dst < ch_distance && cellHasTerrainFlag(xa, ya, T_IS_DEEP_WATER))
+                {
+                        ch_distance= dst;
+                        env_type= 4;
+                }
+
+                if(dst < ch_distance && tileCatalog[pmap[xa][ya].layers[1]].promoteType == DF_METHANE_GAS_PUFF)
+                {
+                    ch_distance= dst;
+                    env_type= 5;
+                }
+
+            }
+
+        }
+    }
+
+    if(env_type == 1)
+        playLoop(86, 127 - ch_distance);
+    else
+    if(env_type == 2)
+        playLoop(87, 127 - ch_distance);
+    else
+    if(env_type == 3)
+        playLoop(88, 127 - ch_distance);
+    else
+    if(env_type == 4)
+        playLoop(89, 127 - ch_distance);
+    else
+    if(env_type == 5)
+        playLoop(99, 127 - ch_distance);
+    else
+    if(env_type == 7)
+        playLoop(80, 127 - ch_distance);
+    else
+        stopLoop();
+
+//        playLoop(97, 50);
+
+
+
+    Label_1:
+    ;
+
+
+    static envRandomGrowlCounter= 0;
+    envRandomGrowlCounter++;
+    if(envRandomGrowlCounter > 1200 || envRandomGrowlCounter < 0)
+        envRandomGrowlCounter= 0;
+
+    if(envRandomGrowlCounter == 300)
+        playSoundNoOverlap(81);
+    if(envRandomGrowlCounter == 500)
+        playSoundNoOverlap(82);
+    if(envRandomGrowlCounter == 800)
+        playSoundNoOverlap(83);
+    if(envRandomGrowlCounter == 900)
+        playSoundNoOverlap(84);
+    if(envRandomGrowlCounter == 1200)
+        playSoundNoOverlap(85);
+
 
     if (player.status[STATUS_HALLUCINATING] > 0) {
         for (theItem = floorItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
@@ -812,6 +1078,9 @@ void burnItem(item *theItem) {
             theItem->quantity == 1 ? "s" : "");
     x = theItem->xLoc;
     y = theItem->yLoc;
+
+    playSound(21);
+
     removeItemFromChain(theItem, floorItems);
     pmap[x][y].flags &= ~(HAS_ITEM | ITEM_DETECTED);
     if (pmap[x][y].flags & (ANY_KIND_OF_VISIBLE | DISCOVERED | ITEM_DETECTED)) {
@@ -939,6 +1208,8 @@ void playerFalls() {
         discover(player.xLoc, player.yLoc);
     }
 
+    playSound(39);
+
     monstersFall(); // Monsters must fall with the player rather than getting suspended on the previous level.
     updateFloorItems(); // Likewise, items should fall with the player rather than getting suspended above.
 
@@ -1042,6 +1313,12 @@ boolean circuitBreakersPreventActivation(short machineNumber) {
     return false;
 }
 
+
+//CAT
+int doorX= -1;
+int doorY= -1;
+boolean playDoor= true;
+unsigned long playMe0;
 void promoteTile(short x, short y, enum dungeonLayers layer, boolean useFireDF) {
     short i, j;
     enum dungeonFeatureTypes DFType;
@@ -1050,6 +1327,96 @@ void promoteTile(short x, short y, enum dungeonLayers layer, boolean useFireDF) 
     tile = &(tileCatalog[pmap[x][y].layers[layer]]);
 
     DFType = (useFireDF ? tile->fireType : tile->promoteType);
+
+
+//CAT
+    if(rogue.absoluteTurnNumber > playMe0
+            && doorX == player.xLoc && doorY == player.yLoc)
+        playDoor= false;
+    else
+    {
+        playDoor= true;
+
+        doorX= player.xLoc;
+        doorY= player.yLoc;
+        playMe0= rogue.absoluteTurnNumber;
+    }
+
+
+    if(playerCanSee(x, y))
+    {
+        if(tile->fireType == DF_BLOODFLOWER_POD_BURST)
+            playSoundNoOverlap(22);
+        else
+        if(tile->promoteType == DF_PULL_LEVER)
+            playSound(46);
+        else
+        if(tile->promoteType == DF_ITEM_CAGE_OPEN
+            || tile->promoteType == DF_MONSTER_CAGE_OPENS || tile->promoteType == DF_COFFIN_BURNS)
+                playSound(46);
+        else
+        if(tile->promoteType == DF_ITEM_CAGE_CLOSE
+            || tile->promoteType == DF_ACTIVATE_PORTCULLIS || tile->promoteType == DF_OPEN_PORTCULLIS)
+            playSound(7);
+        else
+        if(tile->promoteType == DF_TRAMPLED_FOLIAGE || tile->promoteType == DF_SMALL_DEAD_GRASS
+            || tile->promoteType == DF_TRAMPLED_FUNGUS_FOREST)
+        {
+                playSound(29);
+
+/*
+//spawn strange seed
+                if(rand_percent(3)
+                    && player.xLoc == x && player.yLoc == y)
+                {
+                    item *itm = generateItem(FOOD, SEED);
+                    itm->flags |= ITEM_PLAYER_AVOIDS;
+                    placeItem(itm, x, y);
+                    playSound(48);
+                    playSound(18);
+                }
+*/
+
+        }
+        else
+        if(tile->promoteType == DF_PARALYSIS_VENT_SPEW || tile->promoteType == DF_VENT_SPEW_POISON_GAS
+            || tile->promoteType == DF_VENT_SPEW_METHANE || tile->promoteType == DF_METHANE_VENT_OPEN
+            || tile->promoteType == DF_RETRACTING_LAVA || tile->promoteType == DF_OBSIDIAN_WITH_STEAM
+            || tile->promoteType == DF_POISON_GAS_VENT_OPEN || ((tile->flags & T_IS_DF_TRAP) && tile->fireType > 0))
+                playSoundNoOverlap(35);
+        else
+        if(tile->promoteType == DF_COLLAPSE_SPREADS || tile->promoteType == DF_SPREADABLE_COLLAPSE
+            || tile->promoteType == DF_GRANITE_CRUMBLES || tile->promoteType == DF_STATUE_SHATTER
+            || tile->promoteType == DF_WALL_SHATTER || tile->promoteType == DF_BRIDGE_ACTIVATE
+            || tile->promoteType == DF_HOLE_DRAIN)
+                playSoundNoOverlap(36);
+        else
+        if(tile->promoteType == DF_STEAM_PUFF)
+            playSoundNoOverlap(37);
+        else
+        if(tile->promoteType == DF_TURRET_EMERGE)
+            playSoundNoOverlap(8);
+        else
+        if(playDoor
+            && abs(player.xLoc - x) < 2 && abs(player.yLoc - y) < 2)
+        {
+            if(!(pmap[x][y].flags & HAS_MONSTER))
+            {
+                    if(tile->promoteType == DF_OPEN_DOOR)
+                        playSound(43);
+                    else
+                    if(tile->promoteType == DF_CLOSED_DOOR)
+                        playSound(53);
+
+            }
+        }
+
+/*
+        if(tile->promoteType == DF_STEAM_PUFF || tile->promoteType == DF_METHANE_GAS_PUFF)
+                playSoundNoOverlap(37);
+*/
+    }
+
 
     if ((tile->mechFlags & TM_VANISHES_UPON_PROMOTION)) {
         if (tileCatalog[pmap[x][y].layers[layer]].flags & T_PATHING_BLOCKER) {
@@ -1071,6 +1438,9 @@ void promoteTile(short x, short y, enum dungeonLayers layer, boolean useFireDF) 
         // Send power through all cells in the same machine that are not IS_POWERED,
         // and on any such cell, promote each terrain layer that is T_IS_WIRED.
         // Note that machines need not be contiguous.
+
+        playSoundNoOverlap(27);
+
         pmap[x][y].flags |= IS_POWERED;
         activateMachine(pmap[x][y].machineNumber); // It lives!!!
 
@@ -1099,6 +1469,8 @@ boolean exposeTileToElectricity(short x, short y) {
     return promotedSomething;
 }
 
+unsigned long playMe1= 0;
+unsigned long playMe2= 0;
 boolean exposeTileToFire(short x, short y, boolean alwaysIgnite) {
     enum dungeonLayers layer;
     short ignitionChance = 0, bestExtinguishingPriority = 1000, explosiveNeighborCount = 0;
@@ -1141,10 +1513,20 @@ boolean exposeTileToFire(short x, short y, boolean alwaysIgnite) {
                     explosiveNeighborCount++;
                 }
             }
+
             if (explosiveNeighborCount >= 8) {
                 explosivePromotion = true;
+
+//CAT
+                if(rogue.absoluteTurnNumber > playMe2)
+                {
+                    playSound(25);
+                    playMe2= rogue.absoluteTurnNumber;
+                }
+
             }
         }
+
 
         // Flammable layers are consumed.
         for (layer=0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
@@ -1152,6 +1534,17 @@ boolean exposeTileToFire(short x, short y, boolean alwaysIgnite) {
                 if (layer == GAS) {
                     pmap[x][y].volume = 0; // Flammable gas burns its volume away.
                 }
+
+//CAT
+                if(rogue.absoluteTurnNumber > playMe1)
+                {
+                    if(!cellHasTerrainFlag(x, y, T_SPONTANEOUSLY_IGNITES) && playerCanSee(x, y))
+                    {
+                        playSound(21);
+                        playMe1= rogue.absoluteTurnNumber;
+                    }
+                }
+
                 promoteTile(x, y, layer, !explosivePromotion);
             }
         }
@@ -1318,6 +1711,9 @@ void monstersFall() {
             y = monst->yLoc;
 
             if (canSeeMonster(monst)) {
+
+                playSound(10);
+
                 monsterName(buf, monst, true);
                 sprintf(buf2, "%s plunges out of sight!", buf);
                 messageWithColor(buf2, messageColorFromVictim(monst), false);
@@ -2332,7 +2728,9 @@ void playerTurnEnded() {
                 monst->bookkeepingFlags |= MB_WAS_VISIBLE;
                 if (monst->creatureState != MONSTER_ALLY) {
                     rogue.disturbed = true;
-                    if (rogue.cautiousMode || rogue.automationActive) {
+//CAT
+//                  if (rogue.cautiousMode || rogue.automationActive) {
+                    if (true) {
                         oldRNG = rogue.RNG;
                         rogue.RNG = RNG_COSMETIC;
                         //assureCosmeticRNG;

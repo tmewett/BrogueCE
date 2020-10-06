@@ -371,7 +371,7 @@ void animateFlares(flare **flares, short count) {
     brogueAssert(rogue.RNG == RNG_SUBSTANTIVE);
 
     backUpLighting(lights);
-    fastForward = rogue.trueColorMode || rogue.playbackFastForward;
+    fastForward = false || rogue.playbackFastForward;
 
     do {
         inView = false;

@@ -26,6 +26,7 @@
 
 #include "Rogue.h"
 #include "IncludeGlobals.h"
+extern int cat_lt[DCOLS][DROWS];
 
 // Populates path[][] with a list of coordinates starting at origin and traversing down the map. Returns the number of steps in the path.
 short getPlayerPathOnMap(short path[1000][2], short **map, short originX, short originY) {
@@ -499,6 +500,10 @@ void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
     }
 }
 
+
+//CAT
+boolean CATtab= false;
+
 // This is basically the main loop for the game.
 void mainInputLoop() {
     short originLoc[2], pathDestination[2], oldTargetLoc[2],
@@ -664,7 +669,10 @@ void mainInputLoop() {
                     focusedOnTerrain = true;
                 }
 
+//CAT
+                CATtab= tabKey;
                 printLocationDescription(cursor[0], cursor[1]);
+
             }
 
             // Get the input!
@@ -851,7 +859,7 @@ void storeColorComponents(char components[3], const color *theColor) {
 
 void bakeTerrainColors(color *foreColor, color *backColor, short x, short y) {
     const short *vals;
-    if (rogue.trueColorMode) {
+    if (false) {
         const short nf = 1000;
         const short nb = 0;
         const short neutralColors[8] = {nf, nf, nf, nf, nb, nb, nb, nb};
@@ -1069,7 +1077,7 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
             }
         }
 
-        if (rogue.trueColorMode) {
+        if (false) {
             lightMultiplierColor = colorMultiplier100;
         } else {
             colorMultiplierFromDungeonLight(x, y, &lightMultiplierColor);
@@ -1079,7 +1087,7 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
             && tileCatalog[pmap[x][y].layers[GAS]].backColor) {
 
             gasAugmentColor = *(tileCatalog[pmap[x][y].layers[GAS]].backColor);
-            if (rogue.trueColorMode) {
+            if (false) {
                 gasAugmentWeight = 30;
             } else {
                 gasAugmentWeight = min(90, 30 + pmap[x][y].volume);
@@ -1132,7 +1140,7 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
                 } else {
                     if (monst->creatureState == MONSTER_ALLY
                         && (monst->info.displayChar >= 'a' && monst->info.displayChar <= 'z' || monst->info.displayChar >= 'A' && monst->info.displayChar <= 'Z')) {
-                        if (rogue.trueColorMode) {
+                        if (false) {
                             cellForeColor = white;
                         } else {
                             //applyColorAverage(&cellForeColor, &blue, 50);
@@ -1181,7 +1189,7 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
         }
 
         if (gasAugmentWeight && ((pmap[x][y].flags & DISCOVERED) || rogue.playbackOmniscience)) {
-            if (!rogue.trueColorMode || !needDistinctness) {
+            if (!false || !needDistinctness) {
                 applyColorAverage(&cellForeColor, &gasAugmentColor, gasAugmentWeight);
             }
             // phantoms create sillhouettes in gas clouds
@@ -1205,7 +1213,7 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
             && !playerCanSeeOrSense(x, y)
             && (!monst || !monsterRevealed(monst)) && !monsterWithDetectedItem) {
 
-            if (rogue.trueColorMode) {
+            if (false) {
                 bakeTerrainColors(&cellForeColor, &cellBackColor, x, y);
             }
 
@@ -1214,7 +1222,7 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
             storeColorComponents(pmap[x][y].rememberedAppearance.backColorComponents, &cellBackColor);
 
             applyColorAugment(&lightMultiplierColor, &basicLightColor, 100);
-            if (!rogue.trueColorMode || !needDistinctness) {
+            if (!false || !needDistinctness) {
                 applyColorMultiplier(&cellForeColor, &lightMultiplierColor);
             }
             applyColorMultiplier(&cellBackColor, &lightMultiplierColor);
@@ -1245,12 +1253,12 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
         // do nothing
     } else if (!(pmap[x][y].flags & VISIBLE) && (pmap[x][y].flags & CLAIRVOYANT_VISIBLE)) {
         // can clairvoyantly see it
-        if (rogue.trueColorMode) {
+        if (false) {
             lightMultiplierColor = basicLightColor;
         } else {
             applyColorAugment(&lightMultiplierColor, &basicLightColor, 100);
         }
-        if (!rogue.trueColorMode || !needDistinctness) {
+        if (!false || !needDistinctness) {
             applyColorMultiplier(&cellForeColor, &lightMultiplierColor);
             applyColorMultiplier(&cellForeColor, &clairvoyanceColor);
         }
@@ -1261,7 +1269,7 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
 
         applyColorAugment(&lightMultiplierColor, &basicLightColor, 100);
 
-        if (!rogue.trueColorMode || !needDistinctness) {
+        if (!false || !needDistinctness) {
             applyColorMultiplier(&cellForeColor, &lightMultiplierColor);
             applyColorMultiplier(&cellForeColor, &telepathyMultiplier);
         }
@@ -1271,7 +1279,7 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
         // magic mapped only
         if (!rogue.playbackOmniscience) {
             needDistinctness = false;
-            if (!rogue.trueColorMode || !needDistinctness) {
+            if (!false || !needDistinctness) {
                 applyColorMultiplier(&cellForeColor, &magicMapColor);
             }
             applyColorMultiplier(&cellBackColor, &magicMapColor);
@@ -1279,36 +1287,72 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
     } else if (!(pmap[x][y].flags & VISIBLE) && !rogue.playbackOmniscience) {
         // if it's not visible
 
-        needDistinctness = false;
-        if (rogue.inWater) {
-            applyColorAverage(&cellForeColor, &black, 80);
-            applyColorAverage(&cellBackColor, &black, 80);
-        } else {
-            if (!cellHasTMFlag(x, y, TM_BRIGHT_MEMORY)
-                && (!rogue.trueColorMode || !needDistinctness)) {
 
-                applyColorMultiplier(&cellForeColor, &memoryColor);
-                applyColorAverage(&cellForeColor, &memoryOverlay, 25);
-            }
-            applyColorMultiplier(&cellBackColor, &memoryColor);
-            applyColorAverage(&cellBackColor, &memoryOverlay, 25);
+//CAT
+        if (rogue.trueColorMode)
+        {
+                needDistinctness = false;
+                if (rogue.inWater) {
+                    applyColorAverage(&cellForeColor, &black, 80);
+                    applyColorAverage(&cellBackColor, &black, 80);
+                } else {
+                    if (!cellHasTMFlag(x, y, TM_BRIGHT_MEMORY)
+                        && (!false || !needDistinctness)) {
+
+                        applyColorMultiplier(&cellForeColor, &memoryColor);
+                        applyColorAverage(&cellForeColor, &memoryOverlay, 90);
+
+                        applyColorAverage(&cellForeColor, &white, 20);
+                    }
+
+                    if(cellChar != '+' && cellChar != '|' && cellChar != '-')
+                    {
+                        applyColorMultiplier(&cellBackColor, &memoryColor);
+                        applyColorAverage(&cellBackColor, &black, 70);
+                    }
+                    else
+                    {
+                        applyColorAverage(&cellBackColor, &black, 10);
+                        if(cellChar == '+')
+                            applyColorAverage(&cellBackColor, &blue, 10);
+                    }
+                }
         }
+        else
+        {
+//ORIGINAL
+                needDistinctness = false;
+                if (rogue.inWater) {
+                    applyColorAverage(&cellForeColor, &black, 80);
+                    applyColorAverage(&cellBackColor, &black, 80);
+                } else {
+                    if (!cellHasTMFlag(x, y, TM_BRIGHT_MEMORY)
+                        && (!false || !needDistinctness)) {
+
+                        applyColorMultiplier(&cellForeColor, &memoryColor);
+                        applyColorAverage(&cellForeColor, &memoryOverlay, 25);
+                    }
+                    applyColorMultiplier(&cellBackColor, &memoryColor);
+                    applyColorAverage(&cellBackColor, &memoryOverlay, 25);
+                }
+        }
+
     } else if (playerCanSeeOrSense(x, y) && rogue.playbackOmniscience && !(pmap[x][y].flags & ANY_KIND_OF_VISIBLE)) {
         // omniscience
         applyColorAugment(&lightMultiplierColor, &basicLightColor, 100);
-        if (!rogue.trueColorMode || !needDistinctness) {
+        if (!false || !needDistinctness) {
             applyColorMultiplier(&cellForeColor, &lightMultiplierColor);
             applyColorMultiplier(&cellForeColor, &omniscienceColor);
         }
         applyColorMultiplier(&cellBackColor, &lightMultiplierColor);
         applyColorMultiplier(&cellBackColor, &omniscienceColor);
     } else {
-        if (!rogue.trueColorMode || !needDistinctness) {
+        if (!false || !needDistinctness) {
             applyColorMultiplier(&cellForeColor, &lightMultiplierColor);
         }
         applyColorMultiplier(&cellBackColor, &lightMultiplierColor);
 
-        if (player.status[STATUS_HALLUCINATING] && !rogue.trueColorMode) {
+        if (player.status[STATUS_HALLUCINATING] && !false) {
             randomizeColor(&cellForeColor, 40 * player.status[STATUS_HALLUCINATING] / 300 + 20);
             randomizeColor(&cellBackColor, 40 * player.status[STATUS_HALLUCINATING] / 300 + 20);
         }
@@ -1321,11 +1365,43 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
     // DEBUG if (pmap[x][y].flags & KNOWN_TO_BE_TRAP_FREE) cellBackColor.red += 20;
     // DEBUG if (cellHasTerrainFlag(x, y, T_IS_FLAMMABLE)) cellBackColor.red += 50;
 
+
+//CAT
+    if(!cellHasTerrainFlag(x, y, T_AUTO_DESCENT) && (pmap[x][y].flags & IN_FIELD_OF_VIEW))
+    {
+        if(displayDetail[x][y] == DV_LIT)
+        {
+            if(cellChar != '#')
+            {
+                applyColorAverage(&cellForeColor, &white, 20);
+                applyColorAverage(&cellBackColor, &yellow, 5);
+            }
+        }
+        else
+        if(displayDetail[x][y] == DV_DARK)
+        {
+            applyColorAverage(&cellForeColor, &black, 30);
+            applyColorAverage(&cellBackColor, &black, 70);
+
+            applyColorAverage(&cellForeColor, &blue, 10);
+            applyColorAverage(&cellBackColor, &purple, 5);
+
+        }
+        else
+        if(displayDetail[x][y] == DV_UNLIT)
+        {
+                applyColorAverage(&cellForeColor, &black, 20);
+                applyColorAverage(&cellBackColor, &black, 40);
+        }
+    }
+
+
+
     if (pmap[x][y].flags & IS_IN_PATH) {
         if (cellHasTMFlag(x, y, TM_INVERT_WHEN_HIGHLIGHTED)) {
             swapColors(&cellForeColor, &cellBackColor);
         } else {
-            if (!rogue.trueColorMode || !needDistinctness) {
+            if (!false || !needDistinctness) {
                 applyColorAverage(&cellForeColor, &yellow, rogue.cursorPathIntensity);
             }
             applyColorAverage(&cellBackColor, &yellow, rogue.cursorPathIntensity);
@@ -1345,7 +1421,7 @@ void getCellAppearance(short x, short y, uchar *returnChar, color *returnForeCol
         }
     }
 
-    if (rogue.trueColorMode
+    if (false
         && playerCanSeeOrSense(x, y)) {
 
         if (displayDetail[x][y] == DV_DARK) {
@@ -2427,6 +2503,10 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             break;
         case SEARCH_KEY:
             recordKeystroke(SEARCH_KEY, false, false);
+
+//            playSoundNoOverlap(59);
+            createFlare(player.xLoc, player.yLoc, GENERIC_FLASH_LIGHT);
+
             considerCautiousMode();
             search(rogue.awarenessBonus < 0 ? 40 : 80);
             playerTurnEnded();
@@ -2585,7 +2665,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
     if (D_SAFETY_VISION) {
         displayGrid(safetyMap);
     }
-    if (rogue.trueColorMode || D_SCENT_VISION) {
+    if (false || D_SCENT_VISION) {
         displayLevel();
     }
 
@@ -2783,6 +2863,11 @@ boolean confirm(char *prompt, boolean alsoDuringPlayback) {
         return true; // oh yes he did
     }
 
+//CAT
+
+    sayIt(prompt, true);
+    sayIt("Yes... No", true);
+
     encodeMessageColor(whiteColorEscape, 0, &white);
     encodeMessageColor(yellowColorEscape, 0, KEYBOARD_LABELS ? &yellow : &white);
 
@@ -2857,6 +2942,9 @@ void dequeueEvent() {
 }
 
 void displayMessageArchive() {
+
+     playSound(60);
+
     short i, j, k, reverse, fadePercent, totalMessageCount, currentMessageCount;
     boolean fastForward;
     cellDisplayBuffer dbuf[COLS][ROWS], rbuf[COLS][ROWS];
@@ -2947,17 +3035,19 @@ void temporaryMessage(char *msg, boolean requireAcknowledgment) {
         updateMessageDisplay();
     }
     restoreRNG;
+
+    sayIt(msg, true);
 }
 
 void messageWithColor(char *msg, color *theColor, boolean requireAcknowledgment) {
     char buf[COLS*2] = "";
-    short i;
+    short i= 0;
 
-    i=0;
     i = encodeMessageColor(buf, i, theColor);
     strcpy(&(buf[i]), msg);
     message(buf, requireAcknowledgment);
 }
+
 
 void flavorMessage(char *msg) {
     short i;
@@ -3046,7 +3136,7 @@ void message(const char *msg, boolean requireAcknowledgment) {
     }
 
     for(i=0; text[i] == COLOR_ESCAPE; i+=4);
-    upperCase(&(text[i]));
+        upperCase(&(text[i]));
 
     if (lines > 1) {
         for (i=0; text[i] != '\0'; i++) {
@@ -3061,6 +3151,26 @@ void message(const char *msg, boolean requireAcknowledgment) {
 
     messageWithoutCaps(msgPtr, requireAcknowledgment);
     restoreRNG;
+
+
+//CAT
+    char nowMSG[COLS*20] = "";
+    for(lines= 0, i= 0; i < strlen(text); i++)
+    {
+        AGAIN:
+        if(text[i] == COLOR_ESCAPE)
+        {
+            i+= 4;
+            goto AGAIN;
+        }
+
+        if(i >= strlen(text))
+            break;
+
+        nowMSG[lines++]= text[i];
+    }
+
+    sayIt(nowMSG, false);
 }
 
 // Only used for the "you die..." message, to enable posthumous inventory viewing.
@@ -3078,6 +3188,8 @@ void displayMoreSign() {
     if (rogue.autoPlayingLevel) {
         return;
     }
+
+    playSound(61);
 
     if (strLenWithoutEscapes(displayedMessage[0]) < DCOLS - 8 || messageConfirmed[0]) {
         printString("--MORE--", COLS - 8, MESSAGE_LINES-1, &black, &white, 0);
@@ -3870,6 +3982,9 @@ void printHighScores(boolean hiliteMostRecent) {
         hiliteLineNum = -1;
     }
 
+    playSound(61);
+
+
     blackOutScreen();
 
     for (i = 0; i < HIGH_SCORES_COUNT && list[i].score > 0; i++) {
@@ -4331,10 +4446,12 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                 }
                 encodeMessageColor(tempColorEscape, 0, &tempColor);
                 encodeMessageColor(grayColorEscape, 0, (dim ? &darkGray : &gray));
+
                 sprintf(buf, "%sStealth range: %i%s",
                         tempColorEscape,
                         rogue.aggroRange,
                         grayColorEscape);
+
                 printString("                    ", 0, y, &white, &black, 0);
                 printString(buf, 1, y++, (dim ? &darkGray : &gray), &black, 0);
             }

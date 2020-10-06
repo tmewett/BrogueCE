@@ -381,10 +381,59 @@ void describeLocation(char *buf, short x, short y) {
     restoreRNG;
 }
 
+
+//CAT
+extern boolean CATtab;
 void printLocationDescription(short x, short y) {
     char buf[DCOLS*3];
     describeLocation(buf, x, y);
     flavorMessage(buf);
+
+//CAT
+    static char lastMSG[DCOLS*3];
+    char nowMSG[DCOLS*3];
+
+    if(strlen(buf) < 2)
+        strcpy(nowMSG, "Blank.");
+    else
+        strcpy(nowMSG, buf);
+
+    int Ty= player.yLoc;
+    if(CATtab)
+    {
+        char posX[20]= "";
+        char posY[20]= "";
+
+        if(player.yLoc < y)
+            sprintf(posY, " %d down.", abs(y-player.yLoc));
+        else
+        if(player.yLoc > y)
+            sprintf(posY, " %d up.", abs(y-player.yLoc));
+
+        if(player.xLoc < x)
+            sprintf(posX, " %d right.", abs(x-player.xLoc));
+        else
+        if(player.xLoc > x)
+            sprintf(posX, " %d left.", abs(x-player.xLoc));
+
+        strcat(nowMSG, posY);
+        strcat(nowMSG, posX);
+
+        sayIt(nowMSG, false);
+    }
+    else
+    {
+        if(x == player.xLoc && y == player.yLoc)
+        {
+            strcpy(nowMSG, "It is you... ");
+            strcat(nowMSG, buf);
+        }
+
+        if(strcmp(lastMSG, nowMSG))
+            sayIt(nowMSG, false);
+    }
+
+    strcpy(lastMSG, nowMSG);
 }
 
 void useKeyAt(item *theItem, short x, short y) {
@@ -419,6 +468,8 @@ void useKeyAt(item *theItem, short x, short y) {
             disposable = true;
         }
     }
+
+    playSound(52);
 
     if (disposable) {
         if (removeItemFromChain(theItem, packItems)) {
@@ -486,6 +537,9 @@ void vomit(creature *monst) {
     char buf[COLS], monstName[COLS];
     spawnDungeonFeature(monst->xLoc, monst->yLoc, &dungeonFeatureCatalog[DF_VOMIT], true, false);
 
+    if(monst == &player)
+        playSound(56);
+
     if (canDirectlySeeMonster(monst)
         && !rogue.automationActive) {
 
@@ -531,6 +585,10 @@ void becomeAllyWith(creature *monst) {
 
 void freeCaptive(creature *monst) {
     char buf[COLS * 3], monstName[COLS];
+
+//    playSound(46); //liberate
+    playSound(52); //unlock
+    playSound(9);
 
     becomeAllyWith(monst);
     monsterName(monstName, monst, false);
@@ -767,6 +825,9 @@ boolean playerMoves(short direction) {
 
         if (player.status[STATUS_STUCK] && cellHasTerrainFlag(x, y, T_ENTANGLES)) {
             if (--player.status[STATUS_STUCK]) {
+
+                playSoundNoOverlap_steps(26);
+
                 if (!rogue.automationActive) {
                     // Don't interrupt exploration with this message.
                     message("you struggle but cannot free yourself.", false);
@@ -1010,6 +1071,87 @@ boolean playerMoves(short direction) {
 
             player.xLoc += nbDirs[direction][0];
             player.yLoc += nbDirs[direction][1];
+
+
+
+//CAT
+if(player.status[STATUS_LEVITATING])
+    playSoundNoOverlap_steps(33);
+else
+{
+    enum tileType tl1 = pmap[player.xLoc][player.yLoc].layers[DUNGEON];
+    enum tileType tl2 = pmap[player.xLoc][player.yLoc].layers[SURFACE];
+    enum tileType tl3 = pmap[player.xLoc][player.yLoc].layers[LIQUID];
+
+/*
+    if(pmap[player.xLoc][player.yLoc].layers[DUNGEON] == PEDESTAL)
+        playSoundNoOverlap(59);
+    else
+*/
+    if(tileCatalog[tl3].displayChar == BRIDGE_CHAR)
+        playSoundNoOverlap_steps(15);
+    else
+    if(tileCatalog[tl3].displayChar == MUD_CHAR)
+        playSoundNoOverlap_steps(16);
+    else
+    if(cellHasTerrainFlag(player.xLoc, player.yLoc, T_IS_DEEP_WATER)) //deep water
+        playSoundNoOverlap_steps(13);
+    else
+    if(tileCatalog[tl3].displayChar == 0) //shallow water
+        playSoundNoOverlap_steps(12);
+    else
+    if(tileCatalog[tl2].displayChar == GRASS_CHAR)
+    {
+        playSoundNoOverlap_steps(14);
+
+/*
+//multi-sound step
+        static int cat_cA= 0;
+        if(cat_cA == 0)
+        {
+            cat_cA= 1;
+            playSoundNoOverlap_steps(74);
+        }
+        else
+        if(cat_cA == 1)
+        {
+            cat_cA= 0;
+            playSoundNoOverlap_steps(75);
+        }
+*/
+
+    }
+    else
+    if(tileCatalog[tl1].displayChar == FLOOR_CHAR
+        && tileCatalog[tl2].displayChar != FOLIAGE_CHAR)
+    {
+        playSoundNoOverlap_steps(11);
+
+/*
+//multi-sound step
+        static int cat_cB= 0;
+        if(cat_cB == 0)
+        {
+            cat_cB= 1;
+            playSoundNoOverlap_steps(71);
+        }
+        else
+        if(cat_cB == 1)
+        {
+            cat_cB= 2;
+            playSoundNoOverlap_steps(72);
+        }
+        else
+        if(cat_cB == 2)
+        {
+            cat_cB= 0;
+            playSoundNoOverlap_steps(73);
+        }
+*/
+
+    }
+}
+
             pmap[x][y].flags &= ~HAS_PLAYER;
             pmap[player.xLoc][player.yLoc].flags |= HAS_PLAYER;
             pmap[player.xLoc][player.yLoc].flags &= ~IS_IN_PATH;
@@ -1055,6 +1197,9 @@ boolean playerMoves(short direction) {
             playerTurnEnded();
         }
     } else if (cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)) {
+
+         playSoundNoOverlap_steps(26);
+
         i = pmap[newX][newY].layers[layerWithFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)];
         if ((tileCatalog[i].flags & T_OBSTRUCTS_PASSABILITY)
             && (!diagonalBlocked(x, y, newX, newY, false) || !cellHasTMFlag(newX, newY, TM_PROMOTES_WITH_KEY))) {
@@ -1995,6 +2140,8 @@ void discover(short x, short y) {
         }
         refreshDungeonCell(x, y);
 
+        playSoundNoOverlap(19);
+
         if (playerCanSee(x, y)) {
             rogue.disturbed = true;
         }
@@ -2127,7 +2274,10 @@ void updateFieldOfViewDisplay(boolean updateDancingTerrain, boolean refreshDispl
             }
 
             if ((pmap[i][j].flags & VISIBLE) && !(pmap[i][j].flags & WAS_VISIBLE)) { // if the cell became visible this move
-                if (!(pmap[i][j].flags & DISCOVERED) && rogue.automationActive) {
+
+
+                if (!(pmap[i][j].flags & DISCOVERED) && rogue.automationActive)
+                {
                     if (pmap[i][j].flags & HAS_ITEM) {
                         theItem = itemAtLoc(i, j);
                         if (theItem && (theItem->category & KEY)) {
@@ -2144,6 +2294,7 @@ void updateFieldOfViewDisplay(boolean updateDancingTerrain, boolean refreshDispl
                         messageWithColor(buf, &backgroundMessageColor, false);
                     }
                 }
+
                 discoverCell(i, j);
                 if (refreshDisplay) {
                     refreshDungeonCell(i, j);

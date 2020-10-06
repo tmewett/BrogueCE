@@ -2135,6 +2135,9 @@ typedef struct creature {
 
     short mutationIndex;                // what mutation the monster has (or -1 for none)
 
+//CAT
+    boolean wasUnaware;
+
     // Waypoints:
     short targetWaypointIndex;          // the index number of the waypoint we're pathing toward
     boolean waypointAlreadyVisited[MAX_WAYPOINT_COUNT]; // checklist of waypoints

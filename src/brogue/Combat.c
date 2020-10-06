@@ -25,6 +25,10 @@
 #include "Rogue.h"
 #include "IncludeGlobals.h"
 
+//CAT
+extern int audioAlert;
+extern int alertCount;
+
 
 /* Combat rules:
  * Each combatant has an accuracy rating. This is the percentage of their attacks that will ordinarily hit;
@@ -427,6 +431,8 @@ void specialHit(creature *attacker, creature *defender, short damage) {
                     attacker->creatureState = MONSTER_FLEEING;
                     monsterName(buf2, attacker, true);
                     itemName(theItem, buf3, false, true, NULL);
+
+                    playSound(59);
                     sprintf(buf, "%s stole %s!", buf2, buf3);
                     messageWithColor(buf, &badMessageColor, false);
                 }
@@ -1082,6 +1088,8 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
                 }
             }
         }
+
+//CAT
         if (sneakAttack || defenderWasAsleep || defenderWasParalyzed || lungeAttack) {
             if (attacker == &player
                 && rogue.weapon
@@ -1091,7 +1099,16 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
             } else {
                 damage *= 3; // Treble damage for general sneak attacks.
             }
+
+            playSound(40);
         }
+        else
+        if(attacker == &player)
+            playSoundNoOverlap_steps(44);
+        else
+        if(canSeeMonster(attacker))
+                playSoundNoOverlap(54);
+
 
         if (defender == &player && rogue.armor && (rogue.armor->flags & ITEM_RUNIC)) {
             applyArmorRunicEffect(armorRunicString, attacker, &damage, true);
@@ -1168,6 +1185,21 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
                 rogue.featRecord[FEAT_DRAGONSLAYER] = true;
             }
         } else { // if the defender survived
+
+//CAT
+            if(defender == &player)
+            {
+//                playSound(5);
+                alertCount= 1;
+
+                if(player.status[STATUS_HALLUCINATING] < 1 && !rogue.yendorWarden)
+                    playBattle(true);
+            }
+            else
+            if(canSeeMonster(defender))
+                    playSound(6);
+
+
             if (!rogue.blockCombatText && (canSeeMonster(attacker) || canSeeMonster(defender))) {
                 attackVerb(verb, attacker, max(damage - attacker->info.damage.lowerBound * monsterDamageAdjustmentAmount(attacker), 0) * 100
                            / max(1, (attacker->info.damage.upperBound - attacker->info.damage.lowerBound) * monsterDamageAdjustmentAmount(attacker)));
@@ -1176,6 +1208,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
                     if (!rogue.heardCombatThisTurn) {
                         rogue.heardCombatThisTurn = true;
                         combatMessage("you hear combat in the distance", 0);
+                        playSound(6);
                     }
                 } else {
                     combatMessage(buf, messageColorFromVictim(defender));
@@ -1225,11 +1258,23 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
 
         return true;
     } else { // if the attack missed
+
+
+//CAT
+        if (attacker == &player)
+            playSound(45);
+        else
+        if(canSeeMonster(attacker))
+            playSound(55);
+
+
         if (!rogue.blockCombatText) {
             if (sightUnseen) {
                 if (!rogue.heardCombatThisTurn) {
                     rogue.heardCombatThisTurn = true;
                     combatMessage("you hear combat in the distance", 0);
+
+                    playSound(55);
                 }
             } else {
                 sprintf(buf, "%s missed %s", attackerName, defenderName);
@@ -1461,6 +1506,10 @@ boolean inflictDamage(creature *attacker, creature *defender,
         return false;
     }
 
+//CAT
+    if (defender == &player)
+        playSound(5);
+
     if (!ignoresProtectionShield
         && defender->status[STATUS_SHIELDED]) {
 
@@ -1578,6 +1627,8 @@ void addPoison(creature *monst, short durationIncrement, short concentrationIncr
 void killCreature(creature *decedent, boolean administrativeDeath) {
     short x, y;
     char monstName[DCOLS], buf[DCOLS];
+
+    playSound(96);
 
     if (decedent->bookkeepingFlags & MB_IS_DYING) {
         // monster has already been killed; let's avoid overkill

@@ -24,6 +24,7 @@
 #include <math.h>
 #include "Rogue.h"
 #include "IncludeGlobals.h"
+extern boolean oldRested;
 
 void mutateMonster(creature *monst, short mutationIndex) {
     monst->mutationIndex = mutationIndex;
@@ -1567,6 +1568,12 @@ boolean awareOfTarget(creature *observer, creature *target) {
     short awareness = rogue.aggroRange * 2;
     boolean retval;
 
+//CAT-SNEAKING
+/*
+    if(player.status[STATUS_INVISIBLE])
+        awareness= 1;
+*/
+
     brogueAssert(perceivedDistance >= 0 && awareness >= 0);
 
     if (observer->info.flags & MONST_ALWAYS_HUNTING) {
@@ -1587,10 +1594,28 @@ boolean awareOfTarget(creature *observer, creature *target) {
         retval = false;
     } else if (perceivedDistance <= awareness) {
         // within range but currently unaware
+
         retval = rand_percent(25);
+
+//CAT-SNEAKING
+/*
+        int cat_stealth= 0;
+        if(target == &player)
+        {
+            if(rogue.justRested || oldRested)
+                cat_stealth= 20;
+        }
+
+        if(observer->creatureState == MONSTER_SLEEPING)
+            retval = rand_percent(30 - cat_stealth);
+        else
+            retval = rand_percent(45 - cat_stealth);
+*/
+
     } else {
         retval = false;
     }
+
     return retval;
 }
 
@@ -2563,6 +2588,10 @@ void monsterCastSpell(creature *caster, creature *target, enum boltType boltInde
     originLoc[1] = caster->yLoc;
     targetLoc[0] = target->xLoc;
     targetLoc[1] = target->yLoc;
+
+    if(playerCanSee(caster->xLoc, caster->yLoc))
+        playSound(90);
+
     zap(originLoc, targetLoc, &theBolt, false);
 
     if (player.currentHP <= 0) {
@@ -2589,6 +2618,8 @@ boolean monstUseBolt(creature *monst) {
                     if ((monst->info.flags & MONST_ALWAYS_USE_ABILITY)
                         || rand_percent(30)) {
 
+//    if(playerCanSee(caster->xLoc, caster->yLoc))
+//        playSound(90);
                         monsterCastSpell(monst, target, monst->info.bolts[i]);
                         return true;
                     }
@@ -3782,6 +3813,9 @@ void makeMonsterDropItem(creature *monst) {
                              T_DIVIDES_LEVEL | T_OBSTRUCTS_ITEMS, 0,
                              0, (HAS_PLAYER | HAS_UP_STAIRS | HAS_DOWN_STAIRS | HAS_ITEM), false);
     //getQualifyingLocNear(loc, monst->xLoc, monst->yLoc, true, 0, (T_OBSTRUCTS_ITEMS), (HAS_ITEM), false, false);
+
+    playSound(48);
+
     placeItem(monst->carriedItem, x, y);
     monst->carriedItem = NULL;
     refreshDungeonCell(x, y);

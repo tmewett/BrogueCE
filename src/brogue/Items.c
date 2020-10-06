@@ -383,6 +383,9 @@ item *placeItem(item *theItem, short x, short y) {
                 discover(x, y);
                 refreshDungeonCell(x, y);
             }
+
+            playSound(7);
+
             itemName(theItem, theItemName, false, false, NULL);
             sprintf(buf, "a pressure plate clicks underneath the %s!", theItemName);
             message(buf, true);
@@ -751,6 +754,13 @@ void pickUpItemAt(short x, short y) {
         // remove from floor chain
         pmap[x][y].flags &= ~ITEM_DETECTED;
 
+//CAT
+        if(theItem->category & GOLD)
+            playSound(23);
+        else
+            playSound(4);
+
+
         if (!removeItemFromChain(theItem, floorItems)) {
             brogueAssert(false);
         }
@@ -781,6 +791,10 @@ void pickUpItemAt(short x, short y) {
 
         if ((theItem->category & AMULET)
             && !(rogue.yendorWarden)) {
+
+            playSound(1);
+            playMusic(5);
+            Mix_VolumeMusic(120);
             // Identify the amulet guardian, or generate one if there isn't one.
             for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
                 if (monst->info.monsterID == MK_WARDEN_OF_YENDOR) {
@@ -797,7 +811,11 @@ void pickUpItemAt(short x, short y) {
                 rogue.yendorWarden = monst;
             }
         }
+
     } else {
+
+        playSound(3);
+
         theItem->flags |= ITEM_PLAYER_AVOIDS; // explore shouldn't try to pick it up more than once.
         itemName(theItem, buf2, false, true, NULL); // include article
         sprintf(buf, "Your pack is too full to pick up %s.", buf2);
@@ -2629,7 +2647,11 @@ char displayInventory(unsigned short categoryMask,
                       unsigned long forbiddenFlags,
                       boolean waitForAcknowledge,
                       boolean includeButtons) {
+
+    playSound(61);
+
     item *theItem;
+
     short i, j, m, maxLength = 0, itemNumber, itemCount, equippedItemCount;
     short extraLineCount = 0;
     item *itemList[DROWS];
@@ -2906,6 +2928,27 @@ char displayInventory(unsigned short categoryMask,
 
                 overlayDisplayBuffer(dbuf, NULL);
 
+//CAT
+                int Ci, Cj;
+                char nowMSG[99]= "";
+                strcpy(buf, buttons[highlightItemLine].text);
+                for(Cj= 0, Ci= 0; Ci < strlen(buf); Ci++)
+                {
+                    AGAIN:
+                    if(buf[Ci] == COLOR_ESCAPE)
+                    {
+                        Ci+= 4;
+                        goto AGAIN;
+                    }
+
+                    if(Ci >= strlen(buf))
+                        break;
+
+                    nowMSG[Cj++]= buf[Ci];
+                }
+                sayIt(&nowMSG[5], false);
+
+
                 //buttons[highlightItemLine].buttonColor = interfaceBoxColor;
                 drawButton(&(buttons[highlightItemLine]), BUTTON_PRESSED, NULL);
                 //buttons[highlightItemLine].buttonColor = black;
@@ -2977,6 +3020,8 @@ char displayInventory(unsigned short categoryMask,
     } while (repeatDisplay); // so you can get info on multiple items sequentially
 
     overlayDisplayBuffer(rbuf, NULL); // restore the original screen
+
+    playSound(62);
 
     restoreRNG;
     return theKey;
@@ -3146,6 +3191,7 @@ void equip(item *theItem) {
         }
 
         if (!canEquip(theItem)) {
+            playSound(3);
             // equip failed because current item is cursed
             if (theItem->category & WEAPON) {
                 itemName(rogue.weapon, buf1, false, false, NULL);
@@ -3162,7 +3208,7 @@ void equip(item *theItem) {
         command[c] = '\0';
         recordKeystrokeSequence(command);
 
-
+        playSound(57);
         equipItem(theItem, false);
 
         itemName(theItem, buf2, true, true, NULL);
@@ -3173,6 +3219,9 @@ void equip(item *theItem) {
         strengthCheck(theItem);
 
         if (theItem->flags & ITEM_CURSED) {
+
+            playSound(38);
+
             itemName(theItem, buf2, false, false, NULL);
             switch(theItem->category) {
                 case WEAPON:
@@ -3301,6 +3350,9 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
         discover(x, y);
         discoverCell(x, y);
         colorFlash(flashColor, 0, (DISCOVERED | MAGIC_MAPPED), 10, distance, x, y);
+
+        playSound(17);
+
         if (!playerCanSee(x, y)) {
             message("You hear a piercing shriek; something must have triggered a nearby alarm.", false);
         }
@@ -3459,6 +3511,8 @@ boolean tunnelize(short x, short y) {
             if (tileCatalog[pmap[x][y].layers[layer]].flags & (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION)) {
                 pmap[x][y].layers[layer] = (layer == DUNGEON ? FLOOR : NOTHING);
                 didSomething = true;
+                playSound(36);
+
             }
         }
     }
@@ -4219,9 +4273,15 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                         moralAttack(caster, monst);
                     }
                 }
+
+
                 if (theBolt->flags & BF_FIERY) {
+                    playSound(21);
                     exposeTileToFire(x, y, true); // burninate
                 }
+                else
+                    playSound(79);
+
                 break;
             case BE_TELEPORT:
                 if (!(monst->info.flags & MONST_IMMOBILE)) {
@@ -5526,6 +5586,14 @@ boolean hitMonsterWithProjectileWeapon(creature *thrower, creature *monst, item 
             applyArmorRunicEffect(armorRunicString, thrower, &damage, false);
         }
 
+
+        if (monst != &player)
+            playSound(6);
+
+//        else
+//            playSound(5);
+
+
         if (inflictDamage(thrower, monst, damage, &red, false)) { // monster killed
             sprintf(buf, "the %s %s %s.",
                     theItemName,
@@ -5571,6 +5639,8 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
     numCells = getLineCoordinates(listOfCoordinates, originLoc, targetLoc);
 
     thrower->ticksUntilTurn = thrower->attackSpeed;
+
+    playSound(47);
 
     if (thrower != &player
         && (pmap[originLoc[0]][originLoc[1]].flags & IN_FIELD_OF_VIEW)) {
@@ -5663,10 +5733,14 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
     }
 
     if ((theItem->category & POTION) && (hitSomethingSolid || !cellHasTerrainFlag(x, y, T_AUTO_DESCENT))) {
+
+        playSound(20);
+
         if (theItem->kind == POTION_CONFUSION || theItem->kind == POTION_POISON
             || theItem->kind == POTION_PARALYSIS || theItem->kind == POTION_INCINERATION
             || theItem->kind == POTION_DARKNESS || theItem->kind == POTION_LICHEN
             || theItem->kind == POTION_DESCENT) {
+
             switch (theItem->kind) {
                 case POTION_POISON:
                     strcpy(buf, "the flask shatters and a deadly purple cloud billows out!");
@@ -5684,6 +5758,9 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
                     message(buf, false);
                     break;
                 case POTION_INCINERATION:
+
+                    playSound(21);
+
                     strcpy(buf, "the flask shatters and its contents burst violently into flame!");
                     message(buf, false);
                     spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_INCINERATION_POTION], true, false);
@@ -5780,9 +5857,11 @@ void throwCommand(item *theItem) {
         }
     }
 
-    sprintf(buf, "Throw %s %s where? (<hjklyubn>, mouse, or <tab>)",
+
+    sprintf(buf, "Throw %s %s where? ",
             (theItem->quantity > 1 ? "a" : "your"),
             theName);
+
     temporaryMessage(buf, false);
     maxDistance = (12 + 2 * max(rogue.strength - player.weaknessAmount - 12, 2));
     autoTarget = (theItem->category & (WEAPON | POTION)) ? true : false;
@@ -5953,9 +6032,12 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
         itemName(theItem, buf2, false, false, NULL);
         sprintf(buf, "Your %s has no charges.", buf2);
         messageWithColor(buf, &itemMessageColor, false);
+
+        playSound(3);
+
         return false;
     }
-    temporaryMessage("Direction? (<hjklyubn>, mouse, or <tab>; <return> to confirm)", false);
+    temporaryMessage("Direction? ", false);
     itemName(theItem, buf2, false, false, NULL);
     sprintf(buf, "Zapping your %s:", buf2);
     printString(buf, mapToWindowX(0), 1, &itemMessageColor, &black, NULL);
@@ -6023,6 +6105,9 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
         rogue.featRecord[FEAT_PURE_WARRIOR] = false;
 
         if (theItem->charges > 0) {
+
+            playSound(90);
+
             autoID = zap(originLoc, zapTarget,
                          &theBolt,
                          !boltKnown);   // hide bolt details
@@ -6038,6 +6123,8 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
                 }
             }
         } else {
+            playSound(3);
+
             itemName(theItem, buf2, false, false, NULL);
             if (theItem->category == STAFF) {
                 sprintf(buf, "Your %s fizzles; it must be out of charges for now.", buf2);
@@ -6190,6 +6277,9 @@ void apply(item *theItem, boolean recordCommands) {
                     return;
                 }
             }
+
+            playSound(50);
+
             player.status[STATUS_NUTRITION] = min(foodTable[theItem->kind].strengthRequired + player.status[STATUS_NUTRITION], STOMACH_SIZE);
             if (theItem->kind == RATION) {
                 messageWithColor("That food tasted delicious!", &itemMessageColor, false);
@@ -6207,6 +6297,9 @@ void apply(item *theItem, boolean recordCommands) {
             if (!potionTable[theItem->kind].identified) {
                 revealItemType = true;
             }
+
+            playSound(49);
+
             drinkPotion(theItem);
             break;
         case SCROLL:
@@ -6221,6 +6314,24 @@ void apply(item *theItem, boolean recordCommands) {
 
                 revealItemType = true;
             }
+
+
+            static audioScrollCounter= 0;
+            audioScrollCounter++;
+            if(audioScrollCounter > 5)
+                audioScrollCounter= 1;
+
+            if(audioScrollCounter == 1)
+                playSound(91);
+            if(audioScrollCounter == 2)
+                playSound(92);
+            if(audioScrollCounter == 3)
+                playSound(93);
+            if(audioScrollCounter == 4)
+                playSound(94);
+            if(audioScrollCounter == 5)
+                playSound(95);
+
             readScroll(theItem);
             break;
         case STAFF:
@@ -6241,6 +6352,9 @@ void apply(item *theItem, boolean recordCommands) {
                 recordKeystrokeSequence(command);
                 commandsRecorded = true;
             }
+
+            playSound(51);
+
             useCharm(theItem);
             break;
         default:
@@ -6557,6 +6671,8 @@ void readScroll(item *theItem) {
                 theItem->flags &= ~ITEM_CURSED;
             }
             createFlare(player.xLoc, player.yLoc, SCROLL_ENCHANTMENT_LIGHT);
+
+            playSound(51);
             break;
         case SCROLL_RECHARGING:
             rechargeItems(STAFF | CHARM);
@@ -6690,6 +6806,9 @@ void drinkPotion(item *theItem) {
 
     switch (theItem->kind) {
         case POTION_LIFE:
+
+            playSound(70);
+
             sprintf(buf, "%syour maximum health increases by %i%%.",
                     ((player.currentHP < player.info.maxHP) ? "you heal completely and " : ""),
                     (player.info.maxHP + 10) * 100 / player.info.maxHP - 100);
@@ -6963,8 +7082,14 @@ void unequip(item *theItem) {
                 theItem->quantity == 1 ? "s" : "");
         confirmMessages();
         messageWithColor(buf, &itemMessageColor, false);
+
+         playSound(3);
+
         return;
     } else {
+
+        playSound(58);
+
         recordKeystrokeSequence(command);
         unequipItem(theItem, false);
         if (theItem->category & RING) {
@@ -7015,6 +7140,10 @@ void drop(item *theItem) {
         if (theItem->flags & ITEM_EQUIPPED) {
             unequipItem(theItem, false);
         }
+
+//CAT
+        playSound(48);
+
         theItem = dropItem(theItem); // This is where it gets dropped.
         theItem->flags |= ITEM_PLAYER_AVOIDS; // Try not to pick up stuff you've already dropped.
         itemName(theItem, buf2, true, true, NULL);

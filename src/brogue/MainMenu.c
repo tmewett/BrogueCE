@@ -41,6 +41,14 @@
 
 #define MENU_FLAME_DENOMINATOR          (100 + MENU_FLAME_RISE_SPEED + MENU_FLAME_SPREAD_SPEED)
 
+
+
+//CAT
+int audioAlert;
+int alertCount;
+boolean cat_loading;
+int cat_lt[DCOLS][DROWS];
+extern int fadeIn;
 void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3], unsigned char mask[COLS][ROWS]) {
     short i, j, versionStringLength;
     color tempColor = {0};
@@ -67,7 +75,7 @@ void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3
                 if (mask[i][j] > 0) {
                     applyColorAverage(&tempColor, maskColor, mask[i][j]);
                 }
-                plotCharWithColor(dchar, i, j, &darkGray, &tempColor);
+                plotCharWithColor(dchar, i, j, &white, &tempColor);
             }
         }
     }
@@ -687,6 +695,11 @@ void mainBrogueJunction() {
 
     initializeLaunchArguments(&rogue.nextGame, rogue.nextGamePath, &rogue.nextGameSeed);
 
+//CAT
+    audioAlert= 0;
+    alertCount= 0;
+    cat_loading= false;
+
     do {
         rogue.gameHasEnded = false;
         rogue.playbackFastForward = false;
@@ -755,6 +768,8 @@ void mainBrogueJunction() {
                 initializeRogue(rogue.nextGameSeed);
                 startLevel(rogue.depthLevel, 1); // descending into level 1
 
+                playSound(2);
+
                 mainInputLoop();
                 freeEverything();
                 break;
@@ -770,7 +785,47 @@ void mainBrogueJunction() {
                 }
 
                 if (openFile(path)) {
+
+    cat_loading= true;
+    blackOutScreen();
+//    commitDraws();
+    TCOD_console_flush();
+
                     loadSavedGame();
+    cat_loading= false;
+//CAT
+    stopLoop();
+    playBattle(false);
+
+    if(rogue.depthLevel == 26 && !numberOfMatchingPackItems(AMULET, 0, 0, false))
+        playSound(51);
+    else
+        playSound(30);
+
+    alertCount= 0;
+
+
+    if(!cat_loading && player.status[STATUS_HALLUCINATING] > 0)
+        playMusic(9);
+    else
+    if(rogue.yendorWarden)
+    {
+        if(rogue.depthLevel > 29)
+            playMusic(0);
+        else
+            playMusic(5);
+    }
+    else
+    {
+        stopMusic();
+        if(rogue.depthLevel%2 == 0)
+            playMusic(2);
+        else
+            playMusic(3);
+    }
+
+    fadeIn= 0;
+
                     mainInputLoop();
                     freeEverything();
                 } else {
@@ -801,6 +856,8 @@ void mainBrogueJunction() {
                         rogue.playbackPaused = true;
                         displayAnnotation(); // in case there's an annotation for turn 0
                     }
+
+                    playSound(2);
 
                     while(!rogue.gameHasEnded && rogue.playbackMode) {
                         if (rogue.playbackPaused) {

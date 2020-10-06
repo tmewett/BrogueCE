@@ -626,7 +626,7 @@ void advanceToLocation(unsigned long destinationFrame) {
 
     omniscient = rogue.playbackOmniscience;
     stealth = rogue.displayAggroRangeMode;
-    trueColors = rogue.trueColorMode;
+    trueColors = false;
     rogue.playbackOmniscience = false;
     rogue.displayAggroRangeMode = false;
     rogue.trueColorMode = false;
@@ -1046,6 +1046,8 @@ void saveRecording() {
     if (rogue.playbackMode) {
         return;
     }
+
+    playSound(60);
 
     getAvailableFilePath(defaultPath, "Recording", RECORDING_SUFFIX);
 

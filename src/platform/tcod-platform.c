@@ -3,8 +3,14 @@
 #include <string.h>
 #include <time.h>
 #include <SDL/SDL.h>
+
+//CAT
+#include <SDL/SDL_mixer.h>
+#include "speak_lib.h"
+
 #include "libtcod.h"
 #include "platform.h"
+
 
 #if TCOD_TECHVERSION >= 0x01050103
 #define USE_NEW_TCOD_API
@@ -24,6 +30,317 @@ static struct mouseState brogueMouse = {0, 0, 0, 0};
 static struct mouseState missedMouse = {-1, -1, 0, 0};
 
 static int desktop_width, desktop_height;
+
+
+//CAT ******************* SPEECH
+void sayIt(char *voc, boolean syncme)
+{
+
+  espeak_Cancel();
+  espeak_Synth(voc, 100, 0, POS_CHARACTER, 0, 0, 0, 0);
+
+  if(syncme)
+    espeak_Synchronize();
+
+//CAT - put this in "close program" function
+  //espeak_Terminate();
+}
+
+
+//CAT
+//*********** music loops, sound effect and background music
+extern boolean cat_loading;
+
+Mix_Music *music[10];
+Mix_Chunk *sound[100];
+
+int currentLoop= -1;
+int currentMusic= -1;
+
+int loopVolume= 0;
+int battleVolume= 0;
+int resumeFadeInCounter= -1;
+boolean battleOn= false;
+int fadeIn= 0;
+void initAudio()
+{
+//CAT
+//AUDIO_OUTPUT_SYNCH_PLAYBACK
+  espeak_Initialize(AUDIO_OUTPUT_PLAYBACK, 1000, "./", 0);
+  espeak_SetParameter(espeakRATE, 170, 0);
+  espeak_SetParameter(espeakVOLUME, 500, 0);
+
+
+
+   SDL_Init(SDL_INIT_AUDIO);
+   Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096);
+
+//*** background music
+    music[0] = Mix_LoadMUS("./audio/bkg_intro.wav");
+    music[2] = Mix_LoadMUS("./audio/bkg_level1.wav");
+    music[3] = Mix_LoadMUS("./audio/bkg_level2.wav");
+    music[4] = Mix_LoadMUS("./audio/bkg_ending.wav");
+    music[5] = Mix_LoadMUS("./audio/bkg_finale.wav");
+
+    music[9] = Mix_LoadMUS("./audio/bkg_hallucinate.wav");
+
+//*** sound effects
+    sound[0] = Mix_LoadWAV("./audio/bkg_battle.wav");
+    sound[1] = Mix_LoadWAV("./audio/act_notOverYet.wav");
+    sound[2] = Mix_LoadWAV("./audio/int_laughter.wav");
+
+    sound[17] = Mix_LoadWAV("./audio/rea_shriek.wav");
+
+    sound[11] = Mix_LoadWAV("./audio/step_ground.wav");
+    sound[12] = Mix_LoadWAV("./audio/step_water.wav");
+    sound[13] = Mix_LoadWAV("./audio/step_swim.wav");
+    sound[14] = Mix_LoadWAV("./audio/step_grass.wav");
+    sound[15] = Mix_LoadWAV("./audio/step_bridge.wav");
+    sound[16] = Mix_LoadWAV("./audio/step_mud.wav");
+    sound[33] = Mix_LoadWAV("./audio/step_air.wav");
+
+
+/*
+    sound[71] = Mix_LoadWAV("./audio/step_ground1.wav");
+    sound[72] = Mix_LoadWAV("./audio/step_ground2.wav");
+    sound[73] = Mix_LoadWAV("./audio/step_ground3.wav");
+    sound[74] = Mix_LoadWAV("./audio/step_grass1.wav");
+    sound[75] = Mix_LoadWAV("./audio/step_grass2.wav");
+*/
+
+    sound[18] = Mix_LoadWAV("./audio/rea_find.wav");
+    sound[19] = Mix_LoadWAV("./audio/rea_discover.wav");
+
+    sound[4] = Mix_LoadWAV("./audio/act_pickup.wav");
+    sound[40] = Mix_LoadWAV("./audio/act_lunge.wav");
+    sound[43] = Mix_LoadWAV("./audio/act_open.wav");
+    sound[44] = Mix_LoadWAV("./audio/act_attack.wav");
+    sound[46] = Mix_LoadWAV("./audio/act_liberate.wav");
+    sound[47] = Mix_LoadWAV("./audio/act_throw.wav");
+    sound[48] = Mix_LoadWAV("./audio/act_drop.wav");
+    sound[49] = Mix_LoadWAV("./audio/act_drink.wav");
+    sound[50] = Mix_LoadWAV("./audio/act_eat.wav");
+    sound[51] = Mix_LoadWAV("./audio/act_charm.wav");
+    sound[52] = Mix_LoadWAV("./audio/act_unlock.wav");
+    sound[53] = Mix_LoadWAV("./audio/act_close.wav");
+    sound[56] = Mix_LoadWAV("./audio/act_vomit.wav");
+    sound[57] = Mix_LoadWAV("./audio/act_equip.wav");
+    sound[58] = Mix_LoadWAV("./audio/act_unequip.wav");
+    sound[59] = Mix_LoadWAV("./audio/act_search.wav");
+
+    sound[54] = Mix_LoadWAV("./audio/mon_attack.wav");
+    sound[55] = Mix_LoadWAV("./audio/mon_miss.wav");
+    sound[96] = Mix_LoadWAV("./audio/mon_die.wav");
+    sound[6] = Mix_LoadWAV("./audio/mon_pain.wav");
+    sound[8] = Mix_LoadWAV("./audio/mon_alert.wav");
+    sound[9] = Mix_LoadWAV("./audio/mon_purr.wav");
+    sound[10] = Mix_LoadWAV("./audio/mon_plunge.wav");
+    sound[68] = Mix_LoadWAV("./audio/mon_wait.wav");
+    sound[69] = Mix_LoadWAV("./audio/mon_go.wav");
+
+    sound[3] = Mix_LoadWAV("./audio/rea_error.wav");
+    sound[5] = Mix_LoadWAV("./audio/rea_pain.wav");
+    sound[7] = Mix_LoadWAV("./audio/rea_click.wav");
+    sound[45] = Mix_LoadWAV("./audio/rea_miss.wav");
+
+    sound[79] = Mix_LoadWAV("./audio/rea_spark.wav");
+
+    sound[20] = Mix_LoadWAV("./audio/rea_shatter.wav");
+    sound[21] = Mix_LoadWAV("./audio/rea_ignite.wav");
+    sound[22] = Mix_LoadWAV("./audio/rea_burst.wav");
+    sound[23] = Mix_LoadWAV("./audio/rea_gold.wav");
+    sound[24] = Mix_LoadWAV("./audio/rea_die.wav");
+    sound[25] = Mix_LoadWAV("./audio/rea_explode.wav");
+    sound[26] = Mix_LoadWAV("./audio/rea_stuck.wav");
+    sound[27] = Mix_LoadWAV("./audio/rea_machine.wav");
+    sound[28] = Mix_LoadWAV("./audio/rea_heart.wav");
+    sound[29] = Mix_LoadWAV("./audio/rea_foliage.wav");
+    sound[35] = Mix_LoadWAV("./audio/rea_vent.wav");
+    sound[36] = Mix_LoadWAV("./audio/rea_crumble.wav");
+    sound[37] = Mix_LoadWAV("./audio/rea_puff.wav");
+    sound[38] = Mix_LoadWAV("./audio/rea_cursed.wav");
+    sound[39] = Mix_LoadWAV("./audio/rea_fall.wav");
+
+    sound[30] = Mix_LoadWAV("./audio/int_stairs.wav");
+    sound[31] = Mix_LoadWAV("./audio/int_over.wav");
+    sound[32] = Mix_LoadWAV("./audio/int_over2.wav");
+
+    sound[60] = Mix_LoadWAV("./audio/usr_click.wav");
+    sound[61] = Mix_LoadWAV("./audio/usr_open.wav");
+    sound[62] = Mix_LoadWAV("./audio/usr_close.wav");
+    sound[63] = Mix_LoadWAV("./audio/usr_button.wav");
+    sound[64] = Mix_LoadWAV("./audio/usr_button2.wav");
+
+    sound[70] = Mix_LoadWAV("./audio/pot_life.wav");
+
+    sound[81] = Mix_LoadWAV("./audio/env_growl1.wav");
+    sound[82] = Mix_LoadWAV("./audio/env_growl2.wav");
+    sound[83] = Mix_LoadWAV("./audio/env_growl3.wav");
+    sound[84] = Mix_LoadWAV("./audio/env_growl4.wav");
+    sound[85] = Mix_LoadWAV("./audio/env_growl5.wav");
+
+
+    sound[80] = Mix_LoadWAV("./audio/env_brimstone.wav");
+    sound[86] = Mix_LoadWAV("./audio/env_chasm.wav");
+    sound[87] = Mix_LoadWAV("./audio/env_lava.wav");
+    sound[88] = Mix_LoadWAV("./audio/env_fire.wav");
+    sound[89] = Mix_LoadWAV("./audio/env_water.wav");
+    sound[99] = Mix_LoadWAV("./audio/env_mud.wav");
+    sound[97] = Mix_LoadWAV("./audio/env_ambient.wav");
+
+
+    sound[90] = Mix_LoadWAV("./audio/act_wand.wav");
+    sound[91] = Mix_LoadWAV("./audio/act_read1.wav");
+    sound[92] = Mix_LoadWAV("./audio/act_read2.wav");
+    sound[93] = Mix_LoadWAV("./audio/act_read3.wav");
+    sound[94] = Mix_LoadWAV("./audio/act_read4.wav");
+    sound[95] = Mix_LoadWAV("./audio/act_read5.wav");
+
+//CAT - put this in "close program" function
+//Mix_FreeMusic(music);
+//Mix_PlayingMusic() == 0
+}
+
+
+void playMusic(int ID)
+{
+    if(cat_loading)
+        return;
+
+    if(currentMusic != ID)
+    {
+        currentMusic= ID;
+        Mix_VolumeMusic(120);
+        Mix_PlayMusic(music[ID], -1);
+    }
+}
+
+void stopMusic()
+{
+    if(cat_loading)
+        return;
+
+    Mix_HaltMusic();
+    currentMusic= -1;
+}
+
+
+static int soundLoop= 0;
+void playSound(int ID)
+{
+    if(cat_loading)
+        return;
+
+    Mix_Volume(7, loopVolume);
+    Mix_Volume(6, battleVolume);
+
+
+    Mix_Volume(soundLoop, 120);
+    Mix_PlayChannel(soundLoop, sound[ID], 0);
+
+    soundLoop++;
+    if(soundLoop > 3)
+        soundLoop= 0;
+}
+
+void playSoundNoOverlap(int ID)
+{
+    if(cat_loading)
+        return;
+
+    Mix_Volume(4, 120);
+    Mix_Volume(7, loopVolume);
+    Mix_Volume(6, battleVolume);
+    Mix_PlayChannel(4, sound[ID], 0);
+}
+
+
+void playSoundNoOverlap_steps(int ID)
+{
+    if(cat_loading)
+        return;
+
+    Mix_Volume(5, 120);
+    Mix_Volume(7, loopVolume);
+    Mix_Volume(6, battleVolume);
+    Mix_PlayChannel(5, sound[ID], 0);
+}
+
+void playLoop(int ID, int loopVol)
+{
+    if(cat_loading)
+        return;
+
+    loopVolume= loopVol;
+    Mix_Volume(7, loopVolume);
+
+    if(currentLoop != ID)
+    {
+        currentLoop= ID;
+        Mix_FadeInChannel(7, sound[ID], -1, 1500);
+//        Mix_PlayChannel(7, sound[ID], -1);
+    }
+
+}
+
+void stopLoop()
+{
+    loopVolume= 0;
+    currentLoop= -1;
+    Mix_FadeOutChannel(7, 2000);
+
+//  Mix_HaltChannel(7);
+}
+
+
+void playBattle(boolean start)
+{
+    if(cat_loading)
+        return;
+
+    fadeIn= 0;
+
+    if(start)
+    {
+        battleVolume= 120;
+        Mix_Volume(6, battleVolume);
+
+        if(!battleOn)
+        {
+            Mix_PlayChannel(6, sound[0], -1);
+            Mix_PauseMusic();
+        }
+
+        battleOn= true;
+    }
+    else
+    if(battleOn && !start)
+    {
+        fadeIn= 23;
+        battleOn= false;
+
+        Mix_VolumeMusic(10);
+        Mix_ResumeMusic();
+
+        Mix_FadeOutChannel(6, 3000);
+
+//        Mix_HaltChannel(6);
+    }
+}
+
+
+void fadeBattle(int dVolume)
+{
+    battleVolume+= dVolume;
+    if(battleVolume > 120)
+        battleVolume= 120;
+    else
+    if(battleVolume < 0)
+        battleVolume= 0;
+
+    Mix_Volume(6, battleVolume);
+}
+
 
 static void loadFont(int detectSize)
 {
@@ -54,13 +371,15 @@ static void loadFont(int detectSize)
     sprintf(font, "fonts/font-%i.png", brogueFontSize);
 
     TCOD_console_set_custom_font(font, (TCOD_FONT_TYPE_GREYSCALE | TCOD_FONT_LAYOUT_ASCII_INROW), 0, 0);
-    TCOD_console_init_root(COLS, ROWS, "Brogue", false, renderer);
+    TCOD_console_init_root(COLS, ROWS, "Brogue-AUDIO (174Afinal)", false, renderer);
 
     TCOD_console_map_ascii_codes_to_font(0, 255, 0, 0);
     TCOD_console_set_keyboard_repeat(175, 30);
     TCOD_mouse_show_cursor(1);
 
     SDL_WM_SetIcon(SDL_LoadBMP("icon.bmp"), NULL);
+
+
 }
 
 static void gameLoop()
@@ -69,6 +388,9 @@ static void gameLoop()
         printf ("Could not start SDL.\n");
         return;
     }
+
+    initAudio();
+    playMusic(0);
 
     loadFont(true);
     rogueMain();
@@ -136,6 +458,8 @@ static void initWithFont(int fontSize)
 }
 
 static boolean processSpecialKeystrokes(TCOD_key_t k, boolean text) {
+
+
     if (k.vk == TCODK_PRINTSCREEN) {
         // screenshot
         TCOD_sys_save_screenshot(NULL);
@@ -184,6 +508,7 @@ static boolean processSpecialKeystrokes(TCOD_key_t k, boolean text) {
 
         initWithFont(brogueFontSize);
         TCOD_console_flush();
+
         return true;
     }
     return false;
@@ -354,7 +679,6 @@ static boolean tcod_pauseForMilliseconds(short milliseconds)
 
 
 #define PAUSE_BETWEEN_EVENT_POLLING     36//17
-
 static void tcod_nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance)
 {
     boolean tryAgain;
@@ -427,11 +751,15 @@ static void tcod_nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput,
         if (!(serverMode || (SDL_GetAppState() & SDL_APPACTIVE))) {
             TCOD_sys_sleep_milli(100);
         } else {
+//CAT - disable animations
+/*
             if (colorsDance) {
+
                 shuffleTerrainColors(3, true);
                 commitDraws();
             }
             TCOD_console_flush();
+*/
         }
 
         #ifdef USE_NEW_TCOD_API

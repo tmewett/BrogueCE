@@ -26,6 +26,12 @@
 #include <math.h>
 #include <time.h>
 
+
+//CAT
+int audioAlert;
+extern int alertCount;
+extern int fadeIn;
+
 void rogueMain() {
     previousGameSeed = 0;
     initializeBrogueSaveLocation();
@@ -589,6 +595,39 @@ void updateColors() {
 }
 
 void startLevel(short oldLevelNumber, short stairDirection) {
+
+//CAT
+    stopLoop();
+    playBattle(false);
+
+    if(rogue.depthLevel == 26 && !numberOfMatchingPackItems(AMULET, 0, 0, false))
+        playSound(51);
+    else
+        playSound(30);
+
+    alertCount= 0;
+
+    if(player.status[STATUS_HALLUCINATING] > 0)
+        playMusic(9);
+    else
+    if(rogue.yendorWarden)
+    {
+        if(rogue.depthLevel > 29)
+            playMusic(0);
+        else
+            playMusic(5);
+    }
+    else
+    {
+        stopMusic();
+        if(rogue.depthLevel%2 == 0)
+            playMusic(2);
+        else
+            playMusic(3);
+    }
+
+    fadeIn= 0;
+
     unsigned long oldSeed;
     item *theItem;
     short loc[2], i, j, x, y, px, py, flying, dir;
@@ -954,6 +993,13 @@ void emptyGraveyard() {
 }
 
 void freeEverything() {
+
+    playBattle(false);
+    stopMusic();
+    stopLoop();
+    playMusic(0);
+
+
     short i;
     creature *monst, *monst2;
     item *theItem, *theItem2;
@@ -1071,6 +1117,13 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         if (!D_IMMORTAL) {
             rogue.playbackMode = false;
         }
+
+        stopLoop();
+        stopMusic();
+        playBattle(false);
+
+        playSoundNoOverlap(24);
+
         strcpy(buf, "You die...");
         if (KEYBOARD_LABELS) {
             encodeMessageColor(buf, strlen(buf), &veryDarkGray);
@@ -1101,6 +1154,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
 
         confirmMessages();
 
+        playSound(31);
         rogue.playbackMode = playback;
     }
 
@@ -1181,6 +1235,15 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
 }
 
 void victory(boolean superVictory) {
+
+    stopLoop();
+    stopMusic();
+    playBattle(false);
+
+    playSound(31);
+    playMusic(4);
+
+
     char buf[COLS*3], victoryVerb[20];
     item *theItem;
     short i, j, gemCount = 0;
@@ -1256,6 +1319,7 @@ void victory(boolean superVictory) {
         }
     }
 
+    playSound(32);
     funkyFade(dbuf, &white, 0, 15, COLS/2, ROWS/2, true);
 
     strcpy(victoryVerb, superVictory ? "Mastered" : "Escaped");
