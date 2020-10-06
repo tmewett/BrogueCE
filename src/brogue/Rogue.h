@@ -51,6 +51,9 @@ strings, but they are equal (rogue.patchLevel is set to 0).
 */
 #define BROGUE_PATCH_VERSION_PATTERN "CE 1.9.%hu"
 
+// Dungeon version. Used in seed catalog output.
+#define BROGUE_DUNGEON_VERSION_STRING "CE 1.9"
+
 #define DEBUG                           if (rogue.wizard)
 #define MONSTERS_ENABLED                (!rogue.wizard || 1) // Quest room monsters can be generated regardless.
 #define ITEMS_ENABLED                   (!rogue.wizard || 1)

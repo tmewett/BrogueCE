@@ -146,11 +146,12 @@ void printSeedCatalog(unsigned long startingSeed, unsigned long numberOfSeedsToS
     getAvailableFilePath(path, LAST_GAME_NAME, GAME_SUFFIX);
     strcat(path, GAME_SUFFIX);
 
-    printf("Brogue seed catalog, seeds %lu to %lu, through depth %u.\n\n\
-To play one of these seeds, press control-N from the title screen \
-and enter the seed number. Knowing which items will appear on \
-the first %u depths will, of course, make the game significantly easier.\n\n",
-            startingSeed, startingSeed + numberOfSeedsToScan - 1, scanThroughDepth, scanThroughDepth);
+    printf("Brogue seed catalog, seeds %lu to %lu, through depth %u.\n"
+                     "Generated with %s. Dungeons unchanged since %s.\n\n"
+                     "To play one of these seeds, press control-N from the title screen"
+                     "and enter the seed number. Knowing which items will appear on"
+                     "the first %u depths will, of course, make the game significantly easier.\n",
+            startingSeed, startingSeed + numberOfSeedsToScan - 1, scanThroughDepth, BROGUE_VERSION_STRING, BROGUE_DUNGEON_VERSION_STRING, scanThroughDepth);
 
     for (theSeed = startingSeed; theSeed < startingSeed + numberOfSeedsToScan; theSeed++) {
         printf("Seed %lu:\n", theSeed);
