@@ -674,12 +674,18 @@ void advanceToLocation(unsigned long destinationFrame) {
 
     while (rogue.playerTurnNumber < destinationFrame && !rogue.gameHasEnded && !rogue.playbackOOS) {
         if (useProgressBar && !(rogue.playerTurnNumber % progressBarInterval)) {
-            rogue.playbackFastForward = false;
+            rogue.playbackFastForward = false; // so that pauseBrogue looks for inputs
             printProgressBar((COLS - 20) / 2, ROWS / 2, "[     Loading...   ]",
                              rogue.playerTurnNumber - initialFrameNumber,
                              destinationFrame - initialFrameNumber, &darkPurple, false);
+            while (pauseBrogue(0)) { // pauseBrogue(0) is necessary to flush the display to the window in SDL
+                if (rogue.gameHasEnded) {
+                    return;
+                }
+                rogue.creaturesWillFlashThisTurn = false; // prevent monster flashes from showing up on screen
+                nextBrogueEvent(&theEvent, true, false, true); // eat the input if it isn't clicking x
+            }
             rogue.playbackFastForward = true;
-            commitDraws();
         }
 
         rogue.RNG = RNG_COSMETIC; // dancing terrain colors can't influence recordings
@@ -1172,8 +1178,10 @@ void switchToPlaying() {
     displayLevel();
 }
 
-void loadSavedGame() {
+// Return whether the load was cancelled by an event
+boolean loadSavedGame() {
     unsigned long progressBarInterval;
+    unsigned long previousRecordingLocation;
     rogueEvent theEvent;
 
     cellDisplayBuffer dbuf[COLS][ROWS];
@@ -1190,7 +1198,7 @@ void loadSavedGame() {
     if (rogue.howManyTurns > 0) {
 
         progressBarInterval = max(1, lengthOfPlaybackFile / 100);
-
+        previousRecordingLocation = -1; // unsigned
         clearDisplayBuffer(dbuf);
         rectangularShading((COLS - 20) / 2, ROWS / 2, 20, 1, &black, INTERFACE_OPACITY, dbuf);
         rogue.playbackFastForward = false;
@@ -1208,11 +1216,18 @@ void loadSavedGame() {
 
             executeEvent(&theEvent);
 
-            if (!(recordingLocation % progressBarInterval) && !rogue.playbackOOS) {
-                rogue.playbackFastForward = false; // so the progress bar redraws make it to the screen
+            if (recordingLocation / progressBarInterval != previousRecordingLocation / progressBarInterval && !rogue.playbackOOS) {
+                rogue.playbackFastForward = false; // so that pauseBrogue looks for inputs
                 printProgressBar((COLS - 20) / 2, ROWS / 2, "[     Loading...   ]", recordingLocation, lengthOfPlaybackFile, &darkPurple, false);
-                commitDraws();
+                while (pauseBrogue(0)) { // pauseBrogue(0) is necessary to flush the display to the window in SDL, as well as look for inputs
+                    rogue.creaturesWillFlashThisTurn = false; // prevent monster flashes from showing up on screen
+                    nextBrogueEvent(&theEvent, true, false, true);
+                    if (rogue.gameHasEnded || theEvent.eventType == KEYSTROKE && theEvent.param1 == ESCAPE_KEY) {
+                        return false;
+                    }
+                }
                 rogue.playbackFastForward = true;
+                previousRecordingLocation = recordingLocation;
             }
         }
     }
@@ -1221,6 +1236,7 @@ void loadSavedGame() {
         switchToPlaying();
         recordChar(SAVED_GAME_LOADED);
     }
+    return true;
 }
 
 // the following functions are used to create human-readable descriptions of playback files for debugging purposes
