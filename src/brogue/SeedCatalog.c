@@ -1,7 +1,29 @@
+/*
+ *  SeedCatalog.c
+ *  Brogue
+ *
+ *  Copyright 2012. All rights reserved.
+ *
+ *  This file is part of Brogue.
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "Rogue.h"
 #include "IncludeGlobals.h"
 
-static void seedCatalogItemName(item *theItem, char *name, creature *theMonster) {
+static void printSeedCatalogItem(item *theItem, creature *theMonster) {
     char buf[500] = "", monster[128] = "", location[36] = "", usageLocation[36] = "";
 
     itemName(theItem, buf, true, true, NULL);
@@ -31,13 +53,12 @@ static void seedCatalogItemName(item *theItem, char *name, creature *theMonster)
     }
 
     upperCase(buf);
-    sprintf(name, "%s%s%s%s", buf, monster, location, usageLocation);
+    printf("        %s%s%s%s\n", buf, monster, location, usageLocation);
     return;
 }
 
-static void seedCatalogMonsterName(char *name, creature *theMonster) {
+static void printSeedCatalogMonster(creature *theMonster) {
     char descriptor[16] = "";
-    char location[16] = "";
 
     if (theMonster->bookkeepingFlags & MB_CAPTIVE) {
         if (cellHasTMFlag(theMonster->xLoc, theMonster->yLoc, TM_PROMOTES_WITH_KEY)) {
@@ -48,46 +69,47 @@ static void seedCatalogMonsterName(char *name, creature *theMonster) {
     } else if (theMonster->creatureState == MONSTER_ALLY) {
         strcpy(descriptor, "An allied ");
     }
-    sprintf(name,"%s%s%s", descriptor, theMonster->info.monsterName, location);
+    printf("        %s%s\n", descriptor, theMonster->info.monsterName);
 }
 
 static void printSeedCatalogMonsters(boolean includeAll) {
     creature *theMonster;
-    char name[500];
 
     for (theMonster = monsters->nextCreature; theMonster != NULL; theMonster = theMonster->nextCreature) {
-        seedCatalogMonsterName(name, theMonster);
-        upperCase(name);
         if (theMonster->bookkeepingFlags & MB_CAPTIVE || theMonster->creatureState == MONSTER_ALLY || includeAll) {
-            printf("        %s\n", name);
+            printSeedCatalogMonster(theMonster);
         }
     }
 
     for (theMonster = dormantMonsters->nextCreature; theMonster != NULL; theMonster = theMonster->nextCreature) {
-        seedCatalogMonsterName(name, theMonster);
-        upperCase(name);
         if (theMonster->bookkeepingFlags & MB_CAPTIVE || theMonster->creatureState == MONSTER_ALLY || includeAll) {
-            printf("        %s\n", name);
+            printSeedCatalogMonster(theMonster);
         }
     }
 }
 
 static void printSeedCatalogMonsterItems() {
     creature *theMonster;
-    char name[500];
 
     for (theMonster = monsters->nextCreature; theMonster != NULL; theMonster = theMonster->nextCreature) {
         if (theMonster->carriedItem != NULL && theMonster->carriedItem->category != GOLD) {
-                seedCatalogItemName(theMonster->carriedItem, name, theMonster);
-                printf("        %s\n", name);
+            printSeedCatalogItem(theMonster->carriedItem, theMonster);
         }
     }
 
     for (theMonster = dormantMonsters->nextCreature; theMonster != NULL; theMonster = theMonster->nextCreature) {
         if (theMonster->carriedItem != NULL && theMonster->carriedItem->category != GOLD) {
-            seedCatalogItemName(theMonster->carriedItem, name, theMonster);
-            printf("        %s\n", name);
+            printSeedCatalogItem(theMonster->carriedItem, theMonster);
         }
+    }
+}
+
+static void printSeedCatalogFloorGold(int gold, short piles) {
+
+    if (piles == 1) {
+        printf("        %i gold pieces\n", gold);
+    } else if (piles > 1) {
+        printf("        %i gold pieces (%i piles)\n", gold, piles);
     }
 }
 
@@ -95,7 +117,6 @@ static void printSeedCatalogFloorItems() {
     item *theItem;
     int gold = 0;
     short piles = 0;
-    char buf[500];
 
     for (theItem = floorItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
         if (theItem->category == GOLD) {
@@ -103,15 +124,12 @@ static void printSeedCatalogFloorItems() {
             gold += theItem->quantity;
         } else if (theItem->category == AMULET) {
         } else {
-            seedCatalogItemName(theItem, buf, NULL);
-            printf("        %s\n", buf);
+            printSeedCatalogItem(theItem, NULL);
         }
     }
-    if (piles == 1) {
-        printf("        %i gold pieces\n", gold);
-    }
-    if (piles > 1) {
-        printf("        %i gold pieces (%i piles)\n", gold, piles);
+
+    if (gold > 0) {
+        printSeedCatalogFloorGold(gold, piles);
     }
 }
 
