@@ -712,7 +712,7 @@ void promptToAdvanceToLocation(short keystroke) {
     unsigned long destinationFrame;
     boolean enteredText;
 
-    if (!rogue.playbackPaused || unpause()) {
+    if (rogue.playbackOOS || !rogue.playbackPaused || unpause()) {
         buf[0] = (keystroke == '0' ? '\0' : keystroke);
         buf[1] = '\0';
 
@@ -726,6 +726,8 @@ void promptToAdvanceToLocation(short keystroke) {
 
             if (destinationFrame >= rogue.howManyTurns) {
                 flashTemporaryAlert(" Past end of recording ", 3000);
+            } else if (rogue.playbackOOS && destinationFrame > rogue.playerTurnNumber) {
+                flashTemporaryAlert(" Out of sync ", 3000);
             } else if (destinationFrame == rogue.playerTurnNumber) {
                 sprintf(buf, " Already at turn %li ", destinationFrame);
                 flashTemporaryAlert(buf, 1000);
