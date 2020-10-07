@@ -679,6 +679,8 @@ enum lightType {
     NUMBER_LIGHT_KINDS
 };
 
+#define NUMBER_ITEM_CATEGORIES  13
+
 // Item categories
 enum itemCategory {
     FOOD                = Fl(0),
@@ -2981,6 +2983,8 @@ extern "C" {
     char nextAvailableInventoryCharacter();
     void checkForDisenchantment(item *theItem);
     void updateFloorItems();
+    void itemKindName(item *theItem, char *kindName);
+    void itemRunicName(item *theItem, char *runicName);
     void itemName(item *theItem, char *root, boolean includeDetails, boolean includeArticle, color *baseColor);
     char displayInventory(unsigned short categoryMask,
                           unsigned long requiredFlags,
