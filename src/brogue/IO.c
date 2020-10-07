@@ -475,7 +475,6 @@ void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
         }
         buttons[buttonCount].hotkey[0] = RIGHT_KEY;
         buttons[buttonCount].hotkey[1] = RIGHT_ARROW;
-        buttons[buttonCount].hotkey[2] = NUMPAD_6;
         buttonCount++;
 
         strcpy(buttons[buttonCount].text,       "  Menu  ");
