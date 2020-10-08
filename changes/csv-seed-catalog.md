@@ -1,0 +1,1 @@
+Add a command line option to generate the seed catalog in csv format
