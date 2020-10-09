@@ -3843,8 +3843,12 @@ void demoteMonsterFromLeadership(creature *monst) {
         freeGrid(monst->mapToMe);
         monst->mapToMe = NULL;
     }
-    for (follower = monsters->nextCreature; follower != NULL; follower = follower->nextCreature) {
-        if (follower->leader == monst && monst != follower) {
+
+    for (int level = 0; level <= DEEPEST_LEVEL; level++) {
+        // we'll work on this level's monsters first, so that the new leader is preferably on the same level
+        creature *firstMonster = (level == 0 ? monsters->nextCreature : levels[level-1].monsters);
+        for (follower = firstMonster; follower != NULL; follower = follower->nextCreature) {
+            if (follower == monst || follower->leader != monst) continue;
             if (follower->bookkeepingFlags & MB_BOUND_TO_LEADER) {
                 // gonna die in playerTurnEnded().
                 follower->leader = NULL;
@@ -3864,12 +3868,16 @@ void demoteMonsterFromLeadership(creature *monst) {
             }
         }
     }
+
     if (newLeader
         && !atLeastOneNewFollower) {
         newLeader->bookkeepingFlags &= ~MB_LEADER;
     }
-    for (follower = dormantMonsters->nextCreature; follower != NULL; follower = follower->nextCreature) {
-        if (follower->leader == monst && monst != follower) {
+
+    for (int level = 0; level <= DEEPEST_LEVEL; level++) {
+        creature *firstMonster = (level == 0 ? dormantMonsters->nextCreature : levels[level-1].dormantMonsters);
+        for (follower = firstMonster; follower != NULL; follower = follower->nextCreature) {
+            if (follower == monst || follower->leader != monst) continue;
             follower->leader = NULL;
             follower->bookkeepingFlags &= ~MB_FOLLOWER;
         }
