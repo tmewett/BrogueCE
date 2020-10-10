@@ -1570,7 +1570,7 @@ void addPoison(creature *monst, short durationIncrement, short concentrationIncr
 // AdministrativeDeath means the monster simply disappears, with no messages, dropped item, DFs or other effect.
 void killCreature(creature *decedent, boolean administrativeDeath) {
     short x, y;
-    char monstName[DCOLS], buf[DCOLS];
+    char monstName[DCOLS], buf[DCOLS * 3];
 
     if (decedent->bookkeepingFlags & MB_IS_DYING) {
         // monster has already been killed; let's avoid overkill
@@ -1602,7 +1602,7 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
 
         if (monsterText[decedent->info.monsterID].DFMessage[0] && canSeeMonster(decedent)) {
             monsterName(monstName, decedent, true);
-            sprintf(buf, "%s %s", monstName, monsterText[decedent->info.monsterID].DFMessage);
+            snprintf(buf, DCOLS * 3, "%s %s", monstName, monsterText[decedent->info.monsterID].DFMessage);
             resolvePronounEscapes(buf, decedent);
             message(buf, false);
         }
