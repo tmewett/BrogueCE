@@ -11,6 +11,7 @@ char dataDirectory[BROGUE_FILENAME_MAX] = STRINGIFY(DATADIR);
 boolean serverMode = false;
 boolean hasGraphics = false;
 boolean graphicsEnabled = false;
+boolean isCsvFormat = false;
 
 static boolean endswith(const char *str, const char *ending)
 {
@@ -45,7 +46,8 @@ static void printCommandlineHelp() {
     "--term         -t          run in ncurses-based terminal mode\n"
 #endif
     "--wizard       -W          run in wizard mode, invincible with powerful items\n"
-    "--print-seed-catalog [START NUM LEVELS]\n"
+    "[--csv] --print-seed-catalog [START NUM LEVELS]\n"
+    "                           (optional csv format)\n"
     "                           prints a catalog of the first LEVELS levels of NUM\n"
     "                           seeds from seed START (defaults: 1 1000 5)\n"
     );
@@ -154,11 +156,11 @@ int main(int argc, char *argv[])
                 unsigned int numberOfLevels = atol(argv[i + 3]);
 
                 if (startingSeed > 0 && numberOfLevels <= 40) {
-                    printSeedCatalog(startingSeed, numberOfSeeds, numberOfLevels);
+                    printSeedCatalog(startingSeed, numberOfSeeds, numberOfLevels, isCsvFormat);
                     return 0;
                 }
             } else {
-                printSeedCatalog(1, 1000, 5);
+                printSeedCatalog(1, 1000, 5, isCsvFormat);
                 return 0;
             }
         }
@@ -175,6 +177,11 @@ int main(int argc, char *argv[])
 
         if (strcmp(argv[i], "-G") == 0 || strcmp(argv[i], "--graphics") == 0) {
             initialGraphics = true;  // we call setGraphicsEnabled later
+            continue;
+        }
+
+        if (strcmp(argv[i], "--csv") == 0 ) {
+            isCsvFormat = true;  // we call printSeedCatalog later
             continue;
         }
 

@@ -51,6 +51,9 @@ strings, but they are equal (rogue.patchLevel is set to 0).
 */
 #define BROGUE_PATCH_VERSION_PATTERN "CE 1.9.%hu"
 
+// Dungeon version. Used in seed catalog output.
+#define BROGUE_DUNGEON_VERSION_STRING "CE 1.9"
+
 #define DEBUG                           if (rogue.wizard)
 #define MONSTERS_ENABLED                (!rogue.wizard || 1) // Quest room monsters can be generated regardless.
 #define ITEMS_ENABLED                   (!rogue.wizard || 1)
@@ -675,6 +678,8 @@ enum lightType {
     DEMONIC_STATUE_LIGHT,
     NUMBER_LIGHT_KINDS
 };
+
+#define NUMBER_ITEM_CATEGORIES  13
 
 // Item categories
 enum itemCategory {
@@ -2978,6 +2983,8 @@ extern "C" {
     char nextAvailableInventoryCharacter();
     void checkForDisenchantment(item *theItem);
     void updateFloorItems();
+    void itemKindName(item *theItem, char *kindName);
+    void itemRunicName(item *theItem, char *runicName);
     void itemName(item *theItem, char *root, boolean includeDetails, boolean includeArticle, color *baseColor);
     char displayInventory(unsigned short categoryMask,
                           unsigned long requiredFlags,
@@ -3173,7 +3180,7 @@ extern "C" {
     boolean dialogChooseFile(char *path, const char *suffix, const char *prompt);
     void dialogAlert(char *message);
     void mainBrogueJunction();
-    void printSeedCatalog(unsigned long startingSeed, unsigned long numberOfSeedsToScan, unsigned int scanThroughDepth);
+    void printSeedCatalog(unsigned long startingSeed, unsigned long numberOfSeedsToScan, unsigned int scanThroughDepth, boolean isCsvFormat);
 
     void initializeButton(brogueButton *button);
     void drawButtonsInState(buttonState *state);

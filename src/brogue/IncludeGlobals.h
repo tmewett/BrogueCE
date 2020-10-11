@@ -200,6 +200,7 @@ extern const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT];
 extern const feat featTable[FEAT_COUNT];
 
 // ITEMS
+extern char itemCategoryNames[NUMBER_ITEM_CATEGORIES][7];
 extern char itemTitles[NUMBER_SCROLL_KINDS][30];
 extern char titlePhonemes[NUMBER_TITLE_PHONEMES][30];
 extern char itemColors[NUMBER_ITEM_COLORS][30];
