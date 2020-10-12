@@ -1306,9 +1306,9 @@ boolean buildAMachine(enum machineTypes bp,
         if (feature->flags & (MF_IN_VIEW_OF_ORIGIN | MF_IN_PASSABLE_VIEW_OF_ORIGIN)) {
             zeroOutGrid(p->viewMap);
             if (feature->flags & MF_IN_PASSABLE_VIEW_OF_ORIGIN) {
-                getFOVMask(p->viewMap, originX, originY, max(DCOLS, DROWS) * FP_FACTOR, T_PATHING_BLOCKER, 0, false);
+                getFOVMask(p->viewMap, originX, originY, fp(max(DCOLS, DROWS)), T_PATHING_BLOCKER, 0, false);
             } else {
-                getFOVMask(p->viewMap, originX, originY, max(DCOLS, DROWS) * FP_FACTOR, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION), 0, false);
+                getFOVMask(p->viewMap, originX, originY, fp(max(DCOLS, DROWS)), (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION), 0, false);
             }
             p->viewMap[originX][originY] = true;
 
@@ -1708,12 +1708,12 @@ void addMachines() {
     // Add reward rooms, if any:
     machineCount = 0;
     while (rogue.depthLevel <= AMULET_LEVEL
-        && (rogue.rewardRoomsGenerated + machineCount) * 4 + 2 < rogue.depthLevel * MACHINES_FACTOR / FP_FACTOR) {
+        && fp((rogue.rewardRoomsGenerated + machineCount) * 4 + 2) < rogue.depthLevel * MACHINES_FACTOR) {
         // try to build at least one every four levels on average
         machineCount++;
     }
     randomMachineFactor = (rogue.depthLevel < 3 && (rogue.rewardRoomsGenerated + machineCount) == 0 ? 40 : 15);
-    while (rand_percent(max(randomMachineFactor, 15 * MACHINES_FACTOR / FP_FACTOR)) && machineCount < 100) {
+    while (machineCount < 100 && rand_percent(max(randomMachineFactor, fp_round(15 * MACHINES_FACTOR)))) {
         randomMachineFactor = 15;
         machineCount++;
     }
@@ -3004,7 +3004,7 @@ void setUpWaypoints() {
         x = sCoord[i]/DROWS;
         y = sCoord[i] % DROWS;
         if (!grid[x][y]) {
-            getFOVMask(grid, x, y, WAYPOINT_SIGHT_RADIUS * FP_FACTOR, T_OBSTRUCTS_SCENT, 0, false);
+            getFOVMask(grid, x, y, fp(WAYPOINT_SIGHT_RADIUS), T_OBSTRUCTS_SCENT, 0, false);
             grid[x][y] = true;
             rogue.wpCoordinates[rogue.wpCount][0] = x;
             rogue.wpCoordinates[rogue.wpCount][1] = y;
@@ -3710,7 +3710,7 @@ void initializeLevel() {
             }
         }
         zeroOutGrid(grid);
-        getFOVMask(grid, upLoc[0], upLoc[1], max(DCOLS, DROWS) * FP_FACTOR, (T_OBSTRUCTS_VISION), 0, false);
+        getFOVMask(grid, upLoc[0], upLoc[1], fp(max(DCOLS, DROWS)), (T_OBSTRUCTS_VISION), 0, false);
         for (i=0; i<DCOLS; i++) {
             for (j=0; j<DROWS; j++) {
                 if (grid[i][j]) {

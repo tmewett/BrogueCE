@@ -596,14 +596,14 @@ void updateTelepathy() {
     zeroOutGrid(grid);
     for (monst = monsters->nextCreature; monst; monst = monst->nextCreature) {
         if (monsterRevealed(monst)) {
-            getFOVMask(grid, monst->xLoc, monst->yLoc, 2 * FP_FACTOR, T_OBSTRUCTS_VISION, 0, false);
+            getFOVMask(grid, monst->xLoc, monst->yLoc, fp(2), T_OBSTRUCTS_VISION, 0, false);
             pmap[monst->xLoc][monst->yLoc].flags |= TELEPATHIC_VISIBLE;
             discoverCell(monst->xLoc, monst->yLoc);
         }
     }
     for (monst = dormantMonsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
         if (monsterRevealed(monst)) {
-            getFOVMask(grid, monst->xLoc, monst->yLoc, 2 * FP_FACTOR, T_OBSTRUCTS_VISION, 0, false);
+            getFOVMask(grid, monst->xLoc, monst->yLoc, fp(2), T_OBSTRUCTS_VISION, 0, false);
             pmap[monst->xLoc][monst->yLoc].flags |= TELEPATHIC_VISIBLE;
             discoverCell(monst->xLoc, monst->yLoc);
         }
@@ -632,7 +632,7 @@ void updateScent() {
 
     zeroOutGrid(grid);
 
-    getFOVMask(grid, player.xLoc, player.yLoc, DCOLS * FP_FACTOR, T_OBSTRUCTS_SCENT, 0, false);
+    getFOVMask(grid, player.xLoc, player.yLoc, fp(DCOLS), T_OBSTRUCTS_SCENT, 0, false);
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
@@ -734,7 +734,7 @@ void updateVision(boolean refreshDisplay) {
 
     // Calculate player's field of view (distinct from what is visible, as lighting hasn't been done yet).
     zeroOutGrid(grid);
-    getFOVMask(grid, player.xLoc, player.yLoc, (DCOLS + DROWS) * FP_FACTOR, (T_OBSTRUCTS_VISION), 0, false);
+    getFOVMask(grid, player.xLoc, player.yLoc, fp(DCOLS + DROWS), (T_OBSTRUCTS_VISION), 0, false);
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
             if (grid[i][j]) {
@@ -1772,7 +1772,7 @@ void rechargeItemsIncrementally(short multiplier) {
 
     if (rogue.wisdomBonus) {
         // at level 27, you recharge anything to full in one turn
-        rechargeIncrement = 10 * ringWisdomMultiplier(rogue.wisdomBonus * FP_FACTOR) / FP_FACTOR;
+        rechargeIncrement = fp_round(10 * ringWisdomMultiplier(fp(rogue.wisdomBonus)));
     } else {
         rechargeIncrement = 10;
     }

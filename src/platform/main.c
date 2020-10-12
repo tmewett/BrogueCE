@@ -76,17 +76,6 @@ boolean tryParseUint64(char *str, uint64_t *num) {
 int main(int argc, char *argv[])
 {
 
-#if 0
-#define TOD(x)  ((double) (x) / FP_FACTOR)
-    fixpt y, x1 = 1, x2 = FP_FACTOR * 70 / 100;
-    for (int i=0; i < 10; i++) {
-        y = fp_pow(x2, x1); printf("%.5f ^ %i = %.5f  (%lli)\n", TOD(x2), x1, TOD(y), y);
-        // y = fp_sqrt(x1); printf("sqrt(%.5f) = %.5f  (%lli)\n", TOD(x1), TOD(y), y);
-        x1 += 1;
-    }
-    exit(0);
-#endif
-
 #ifdef BROGUE_SDL
     currentConsole = sdlConsole;
 #elif BROGUE_WEB

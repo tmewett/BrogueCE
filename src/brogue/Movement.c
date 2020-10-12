@@ -2082,7 +2082,7 @@ boolean startFighting(enum directions dir, boolean tillDeath) {
     if (monst->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE)) {
         return false;
     }
-    expectedDamage = monst->info.damage.upperBound * monsterDamageAdjustmentAmount(monst) / FP_FACTOR;
+    expectedDamage = fp_round(monst->info.damage.upperBound * monsterDamageAdjustmentAmount(monst));
     if (rogue.easyMode) {
         expectedDamage /= 5;
     }
@@ -2415,7 +2415,7 @@ void scanOctantFOV(char grid[DCOLS][DROWS], short xLoc, short yLoc, short octant
                    short columnsRightFromOrigin, long startSlope, long endSlope, unsigned long forbiddenTerrain,
                    unsigned long forbiddenFlags, boolean cautiousOnWalls) {
 
-    if (columnsRightFromOrigin * FP_FACTOR >= maxRadius) return;
+    if (fp(columnsRightFromOrigin) >= maxRadius) return;
 
     short i, a, b, iStart, iEnd, x, y, x2, y2; // x and y are temporary variables on which we do the octant transform
     long newStartSlope, newEndSlope;
@@ -2430,11 +2430,11 @@ void scanOctantFOV(char grid[DCOLS][DROWS], short xLoc, short yLoc, short octant
     iEnd = max(a, b);
 
     // restrict vision to a circle of radius maxRadius
-    if ((columnsRightFromOrigin*columnsRightFromOrigin + iEnd*iEnd) >= maxRadius*maxRadius / FP_FACTOR / FP_FACTOR) {
+    if (fp(columnsRightFromOrigin*columnsRightFromOrigin + iEnd*iEnd) >= fp_mul(maxRadius, maxRadius)) {
         return;
     }
-    if ((columnsRightFromOrigin*columnsRightFromOrigin + iStart*iStart) >= maxRadius*maxRadius / FP_FACTOR / FP_FACTOR) {
-        iStart = (int) (-1 * fp_sqrt((maxRadius*maxRadius / FP_FACTOR) - (columnsRightFromOrigin*columnsRightFromOrigin * FP_FACTOR)) / FP_FACTOR);
+    if (fp(columnsRightFromOrigin*columnsRightFromOrigin + iStart*iStart) >= fp_mul(maxRadius, maxRadius)) {
+        iStart = -fp_trunc(fp_sqrt(fp_mul(maxRadius, maxRadius) - fp(columnsRightFromOrigin*columnsRightFromOrigin)));
     }
 
     x = xLoc + columnsRightFromOrigin;

@@ -96,11 +96,12 @@ strings, but they are equal (rogue.patchLevel is set to 0).
 
 #define Fl(N)                   ((unsigned long) 1 << (N))
 
+// Fixed-point representation of real numbers.
 typedef long long fixpt;
-#define FP_BASE 16 // Don't change this without recalculating all of the power tables throughout the code!
-#define FP_FACTOR (1LL << FP_BASE)
-#define FP_MUL(x, y)  ((x) * (y) / FP_FACTOR)
-#define FP_DIV(x, y)  ((x) * FP_FACTOR / (y))
+
+// Fixed-point representation of 1.0
+#define FP_ONE 65536LL
+// (it doesn't need to be a power of 2, but it lets the compiler optimize * and / with shifts)
 
 // recording and save filenames
 #define LAST_GAME_PATH          "LastGame.broguesave"
@@ -146,7 +147,7 @@ typedef long long fixpt;
 #define AMULET_LEVEL            26          // how deep before the amulet appears
 #define DEEPEST_LEVEL           40          // how deep the universe goes
 
-#define MACHINES_FACTOR         FP_FACTOR   // use this to adjust machine frequency
+#define MACHINES_FACTOR         FP_ONE      // use this to adjust machine frequency
 
 #define MACHINES_BUFFER_LENGTH  200
 
@@ -2616,9 +2617,17 @@ extern "C" {
     boolean rand_percent(short percent);
     void shuffleList(short *list, short listLength);
     void fillSequentialList(short *list, short listLength);
-    fixpt fp_round(fixpt x);
-    fixpt fp_pow(fixpt base, int expn);
-    fixpt fp_sqrt(fixpt val);
+    fixpt fp(long n);
+    fixpt fp_ratio(long n1, long n2);
+    long fp_trunc(fixpt x);
+    long fp_round(fixpt x);
+    fixpt fp_abs(fixpt x);
+    fixpt fp_quantize(fixpt x, int n);
+    fixpt fp_mul(fixpt x, fixpt y);
+    fixpt fp_div(fixpt x, fixpt y);
+    fixpt fp_ipow(fixpt x, int n);
+    fixpt fp_pow(fixpt x, fixpt y);
+    fixpt fp_sqrt(fixpt x);
     short unflag(unsigned long flag);
     void considerCautiousMode();
     void refreshScreen();

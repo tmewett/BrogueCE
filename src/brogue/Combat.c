@@ -59,27 +59,27 @@
 fixpt strengthModifier(item *theItem) {
     int difference = (rogue.strength - player.weaknessAmount) - theItem->strengthRequired;
     if (difference > 0) {
-        return difference * FP_FACTOR / 4; // 0.25x
+        return fp_ratio(difference, 4); // 0.25x
     } else {
-        return difference * FP_FACTOR * 5/2; // 2.5x
+        return fp_ratio(difference * 5, 2); // 2.5x
     }
 }
 
 fixpt netEnchant(item *theItem) {
-    fixpt retval = theItem->enchant1 * FP_FACTOR;
+    fixpt retval = fp(theItem->enchant1);
     if (theItem->category & (WEAPON | ARMOR)) {
         retval += strengthModifier(theItem);
     }
     // Clamp all net enchantment values to [-20, 50].
-    return clamp(retval, -20 * FP_FACTOR, 50 * FP_FACTOR);
+    return clamp(retval, fp(-20), fp(50));
 }
 
 fixpt monsterDamageAdjustmentAmount(const creature *monst) {
     if (monst == &player) {
         // Handled through player strength routines elsewhere.
-        return FP_FACTOR;
+        return FP_ONE;
     } else {
-        return damageFraction(monst->weaknessAmount * FP_FACTOR * -3/2);
+        return damageFraction(fp_ratio(monst->weaknessAmount * -3, 2));
     }
 }
 
@@ -95,7 +95,7 @@ short monsterDefenseAdjusted(const creature *monst) {
 }
 
 short monsterAccuracyAdjusted(const creature *monst) {
-    short retval = monst->info.accuracy * accuracyFraction(monst->weaknessAmount * FP_FACTOR * -3/2) / FP_FACTOR;
+    short retval = fp_round(monst->info.accuracy * accuracyFraction(fp_ratio(monst->weaknessAmount * -3, 2)));
     return max(retval, 0);
 }
 
@@ -121,9 +121,9 @@ short hitProbability(creature *attacker, creature *defender) {
 
             return 100;
         }
-        accuracy = player.info.accuracy * accuracyFraction(netEnchant(rogue.weapon)) / FP_FACTOR;
+        accuracy = fp_round(player.info.accuracy * accuracyFraction(netEnchant(rogue.weapon)));
     }
-    hitProbability = accuracy * defenseFraction(defense * FP_FACTOR) / FP_FACTOR;
+    hitProbability = fp_round(accuracy * defenseFraction(fp(defense)));
     if (hitProbability > 100) {
         hitProbability = 100;
     } else if (hitProbability < 0) {
@@ -497,7 +497,7 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
         autoID = true;
     }
     theBolt = boltCatalog[BOLT_BLINKING];
-    theBolt.magnitude = max(1, netEnchant(theItem) / FP_FACTOR);
+    theBolt.magnitude = max(1, fp_round(netEnchant(theItem)));
     zap(oldLoc, newLoc, &theBolt, false);
     if (!(defender->bookkeepingFlags & MB_IS_DYING)
         && distanceBetween(oldLoc[0], oldLoc[1], defender->xLoc, defender->yLoc) > 0
@@ -681,7 +681,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
                         newMonst->info.abilityFlags |= MA_ATTACKS_EXTEND;
                     }
                     newMonst->ticksUntilTurn = 100;
-                    newMonst->info.accuracy = player.info.accuracy + (5 * netEnchant(theItem) / FP_FACTOR);
+                    newMonst->info.accuracy = player.info.accuracy + fp_round(5 * netEnchant(theItem));
                     newMonst->info.damage = player.info.damage;
                     newMonst->status[STATUS_LIFESPAN_REMAINING] = newMonst->maxStatus[STATUS_LIFESPAN_REMAINING] = weaponImageDuration(enchant);
                     if (strLenWithoutEscapes(theItemName) <= 8) {
@@ -1058,7 +1058,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
     if (sneakAttack || defenderWasAsleep || defenderWasParalyzed || lungeAttack || attackHit(attacker, defender)) {
         // If the attack hit:
         damage = (defender->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE)
-                  ? 0 : randClump(attacker->info.damage) * monsterDamageAdjustmentAmount(attacker) / FP_FACTOR);
+                  ? 0 : fp_round(randClump(attacker->info.damage) * monsterDamageAdjustmentAmount(attacker)));
 
         if (sneakAttack || defenderWasAsleep || defenderWasParalyzed) {
             if (defender != &player) {
@@ -1156,8 +1156,12 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
             }
         } else { // if the defender survived
             if (!rogue.blockCombatText && (canSeeMonster(attacker) || canSeeMonster(defender))) {
-                attackVerb(verb, attacker, max(damage - (attacker->info.damage.lowerBound * monsterDamageAdjustmentAmount(attacker) / FP_FACTOR), 0) * 100
-                           / max(1, (attacker->info.damage.upperBound - attacker->info.damage.lowerBound) * monsterDamageAdjustmentAmount(attacker) / FP_FACTOR));
+                fixpt dmg = fp(damage);
+                fixpt adj = monsterDamageAdjustmentAmount(attacker);
+                fixpt lo = attacker->info.damage.lowerBound * adj;
+                fixpt hi = attacker->info.damage.upperBound * adj;
+                short pct = (dmg <= lo ? 0 : dmg >= hi ? 100 : fp_round(100 * fp_div(dmg - lo, hi - lo)));
+                attackVerb(verb, attacker, pct);
                 sprintf(buf, "%s %s %s%s", attackerName, verb, defenderName, explicationClause);
                 if (sightUnseen) {
                     if (!rogue.heardCombatThisTurn) {

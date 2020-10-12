@@ -61,7 +61,7 @@ boolean paintLight(lightSource *theLight, short x, short y, boolean isMinersLigh
 
     brogueAssert(rogue.RNG == RNG_SUBSTANTIVE);
 
-    radius = randClump(theLight->lightRadius) * FP_FACTOR / 100;
+    radius = fp_ratio(randClump(theLight->lightRadius), 100);
     radiusRounded = fp_round(radius);
 
     randComponent = rand_range(0, theLight->lightColor->rand);
@@ -90,7 +90,7 @@ boolean paintLight(lightSource *theLight, short x, short y, boolean isMinersLigh
     for (i = max(0, x - radiusRounded); i < DCOLS && i < x + radiusRounded; i++) {
         for (j = max(0, y - radiusRounded); j < DROWS && j < y + radiusRounded; j++) {
             if (grid[i][j]) {
-                lightMultiplier =   100 - (100 - fadeToPercent) * fp_sqrt(((i-x) * (i-x) + (j-y) * (j-y)) * FP_FACTOR) / radius;
+                lightMultiplier = 100 - fp_round(fp_div((100 - fadeToPercent) * fp_sqrt(fp((i-x) * (i-x) + (j-y) * (j-y))), radius));
                 for (k=0; k<3; k++) {
                     tmap[i][j].light[k] += colorComponents[k] * lightMultiplier / 100;;
                 }
@@ -118,7 +118,7 @@ boolean paintLight(lightSource *theLight, short x, short y, boolean isMinersLigh
 
 // sets miner's light strength and characteristics based on rings of illumination, scrolls of darkness and water submersion
 void updateMinersLightRadius() {
-    fixpt base_fraction, fraction, lightRadius;
+    fixpt baseFraction, fraction, lightRadius;
 
     lightRadius = 100 * rogue.minersLightRadius;
 
@@ -126,31 +126,30 @@ void updateMinersLightRadius() {
         lightRadius = lightRadius / (-1 * rogue.lightMultiplier + 1);
     } else {
         lightRadius *= rogue.lightMultiplier;
-        lightRadius = max(lightRadius, (rogue.lightMultiplier * 2 + 2) * FP_FACTOR);
+        lightRadius = max(lightRadius, fp(rogue.lightMultiplier * 2 + 2));
     }
 
     if (player.status[STATUS_DARKNESS]) {
-        base_fraction = FP_FACTOR - player.status[STATUS_DARKNESS] * FP_FACTOR / player.maxStatus[STATUS_DARKNESS];
-        fraction = (base_fraction * base_fraction / FP_FACTOR) * base_fraction / FP_FACTOR;
-        //fraction = (double) pow(1.0 - (((double) player.status[STATUS_DARKNESS]) / player.maxStatus[STATUS_DARKNESS]), 3);
-        if (fraction < FP_FACTOR / 20) {
-            fraction = FP_FACTOR / 20;
+        baseFraction = FP_ONE - fp_ratio(player.status[STATUS_DARKNESS], player.maxStatus[STATUS_DARKNESS]);
+        fraction = fp_ipow(baseFraction, 3);
+        if (fraction < fp_ratio(1, 20)) {
+            fraction = fp_ratio(1, 20);
         }
-        lightRadius = lightRadius * fraction / FP_FACTOR;
+        lightRadius = fp_mul(lightRadius, fraction);
     } else {
-        fraction = FP_FACTOR;
+        fraction = FP_ONE;
     }
 
-    if (lightRadius < 2 * FP_FACTOR) {
-        lightRadius = 2 * FP_FACTOR;
+    if (lightRadius < fp(2)) {
+        lightRadius = fp(2);
     }
 
-    if (rogue.inWater && lightRadius > 3 * FP_FACTOR) {
-        lightRadius = max(lightRadius / 2, 3 * FP_FACTOR);
+    if (rogue.inWater && lightRadius > fp(3)) {
+        lightRadius = max(lightRadius / 2, fp(3));
     }
 
-    rogue.minersLight.radialFadeToPercent = (35 + max(0, min(65, rogue.lightMultiplier * 5)) * fraction) / FP_FACTOR;
-    rogue.minersLight.lightRadius.upperBound = rogue.minersLight.lightRadius.lowerBound = clamp(lightRadius / FP_FACTOR, -30000, 30000);
+    rogue.minersLight.radialFadeToPercent = fp_round((clamp(5 * rogue.lightMultiplier, 0, 65) + 35) * fraction);
+    rogue.minersLight.lightRadius.upperBound = rogue.minersLight.lightRadius.lowerBound = clamp(fp_round(lightRadius), -30000, 30000);
 }
 
 void updateDisplayDetail() {

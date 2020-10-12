@@ -186,98 +186,174 @@ uint64_t seedRandomGenerator(uint64_t seed) {
 }
 
 
-    // Fixed-point arithmetic
+/* ----------------------------------------------------------------------
+    Fixed-point arithmetic
 
-fixpt fp_round(fixpt x) {
-    long long div = x / FP_FACTOR, rem = x % FP_FACTOR;
-    int sign = (x >= 0) - (x < 0);
+For clarity, we'll use `fixpt` for numbers to be interpreted as
+real numbers (a multiple of 1/FP_ONE) and `long` for numbers
+to be interpreted as integers (a multiple of 1).
+*/
 
-    if (rem >= FP_FACTOR / 2 || rem <= -FP_FACTOR / 2) {
-        return div + sign;
-    } else {
-        return div;
-    }
+// Converts an integer to fixed-point number.
+fixpt fp(long n) {
+    return n * FP_ONE;
 }
 
-// Returns the bit position of the most significant bit of x, where the unit
-// bit has position 1. Returns 0 if x=0.
-static int msbpos(unsigned long long x) {
+// Converts a fixed-point number to integer, truncating toward 0.
+long fp_trunc(fixpt x) {
+    return x / FP_ONE;
+}
+
+// Rounds a fixed-point number to the nearest integer.
+long fp_round(fixpt x) {
+    return x >= 0 ? (x + FP_ONE/2) / FP_ONE : (x - FP_ONE/2) / FP_ONE;
+}
+
+// Returns the magnitude of x.
+fixpt fp_abs(fixpt x) {
+    return x >= 0 ? x : -x;
+}
+
+// Multiplies two fixed-point numbers. Last bit is rounded.
+fixpt fp_mul(fixpt x, fixpt y) {
+    //return (x * y) / FP_ONE; // truncated
+    return (x<0)==(y<0) ? (x * y + FP_ONE/2) / FP_ONE : (x * y - FP_ONE/2) / FP_ONE; // rounded
+}
+
+// Divides x by y. Last bit is rounded.
+fixpt fp_div(fixpt x, fixpt y) {
     if (x == 0) return 0;
-    int n = 0;
-    do {
-        n += 1;
-    } while (x >>= 1);
-    return n;
+    if (y == 0) return x > 0 ? LLONG_MAX : LLONG_MIN;
+    //return (x * FP_ONE) / y; // truncated
+    return (x<0)==(y<0) ? (x * FP_ONE + y/2) / y : (x * FP_ONE - y/2) / y; // rounded
 }
 
-static fixpt fp_exp2(int n) {
-    return (n >= 0 ? FP_FACTOR << n : FP_FACTOR >> -n);
+// Divides n1 by n2, returning a fixpt.
+fixpt fp_ratio(long n1, long n2) {
+    // They are the same function, but with different signatures
+    // to make it clear that input values don't represent fixed-point reals.
+    return fp_div(n1, n2);
 }
 
-// Calculates sqrt(u) using the bisection method to find the root of
-// f(x) = x^2 - u.
-fixpt fp_sqrt(fixpt u) {
+// Returns x rounded to the nearest multiple of 1/n
+fixpt fp_quantize(fixpt x, int n) {
+    return (((x * n + FP_ONE/2) / FP_ONE) * FP_ONE + n/2) / n;
+}
 
-    static const fixpt SQUARE_ROOTS[] = { // values were computed by the code that follows
-        0,      65536,  92682,  113511, 131073, 146543, 160529, 173392, 185363, 196608, 207243, 217359, 227023, 236293, 245213, 253819,
-        262145, 270211, 278045, 285665, 293086, 300323, 307391, 314299, 321059, 327680, 334169, 340535, 346784, 352923, 358955, 364889,
-        370727, 376475, 382137, 387717, 393216, 398640, 403991, 409273, 414487, 419635, 424721, 429749, 434717, 439629, 444487, 449293,
-        454047, 458752, 463409, 468021, 472587, 477109, 481589, 486028, 490427, 494786, 499107, 503391, 507639, 511853, 516031, 520175,
-        524289, 528369, 532417, 536435, 540423, 544383, 548313, 552217, 556091, 559939, 563762, 567559, 571329, 575077, 578799, 582497,
-        586171, 589824, 593453, 597061, 600647, 604213, 607755, 611279, 614783, 618265, 621729, 625173, 628599, 632007, 635395, 638765,
-        642119, 645455, 648773, 652075, 655360, 658629, 661881, 665117, 668339, 671545, 674735, 677909, 681071, 684215, 687347, 690465,
-        693567, 696657, 699733, 702795, 705845, 708881, 711903, 714913, 717911, 720896, 723869, 726829, 729779, 732715, 735639, 738553
-    };
+// Returns the square root of x.
+// Output is precise within 1 bit of the real value.
+fixpt fp_sqrt(fixpt x) {
+    // // Floating-point math is faster, but rounding error may differ between CPU generations.
+    // return round(sqrt((double)x / FP_ONE) * FP_ONE);
 
-    if (u < 0) return -fp_sqrt(-u);
+    if (x == 0 || x == FP_ONE) return x;
+    if (x < 0) return -fp_sqrt(-x);
 
-    if ((u & (127LL << FP_BASE)) == u) {
-        // u is an integer between 0 and 127
-        return SQUARE_ROOTS[u >> FP_BASE];
+    // Compute the square root with the Babylonian method.
+
+    brogueAssert(x < INT64_MAX / (FP_ONE+1)); // above this we risk overflowing
+    // initial estimate (the closer we can get, the fewer iterations)
+    fixpt z = (x > FP_ONE*100 ? FP_ONE*20 : x < FP_ONE/100 ? FP_ONE/20 : FP_ONE);
+    // converges in ~6 iterations (3 times faster than the bisection method)
+    for (int i = 0; i < 32; i++) {
+        fixpt t = z + (fp_div(x, z) - z) / 2;
+        if (t == z) break;
+        z = t;
+    }
+    return z;
+}
+
+// Fixed-point number with error
+// x = val + err/FP_ONE
+typedef struct fpe {
+    fixpt val, err;
+} fpe;
+
+// Compares two numbers.
+static int fp_cmp2(fpe x, fpe y) {
+    fixpt t = (x.val * FP_ONE + x.err) - (y.val * FP_ONE + y.err);
+    return t > 0 ? 1 : t < 0 ? -1 : 0;
+}
+
+// Averages two numbers.
+static fpe fp_avg2(fpe x, fpe y) {
+    fixpt t = ((x.val + y.val) * FP_ONE + (x.err + y.err))/2;
+    return (fpe) { t / FP_ONE, t % FP_ONE };
+}
+
+// Multiplies two numbers.
+static fpe fp_mul2(fpe x, fpe y) {
+    fixpt t = x.val * y.val
+            + (x.val * y.err + y.val * x.err + FP_ONE / 2) / FP_ONE
+            + (x.err * y.err + FP_ONE * FP_ONE / 2) / (FP_ONE * FP_ONE);
+    return (fpe) { t / FP_ONE, t % FP_ONE };
+}
+
+// Computes 1/x (ignoring the error term).
+static fpe fp_inv2(fpe x) {
+    fixpt t = (FP_ONE * FP_ONE * FP_ONE) / x.val;
+    return (fpe) { t / FP_ONE, t % FP_ONE};
+}
+
+// Computes the precise square root.
+static fpe fp_sqrt2(fpe x) {
+    // start with the Babylonian method to get the square root with some rounding error
+    fixpt root = fp_sqrt(x.val);
+    // use the bisection method to get the full precision
+    fpe mid, lo = (fpe) {root-2, 0}, hi = (fpe) {root+2, 0};
+    for (int i = 0; i < 64; i++) {
+        mid = fp_avg2(lo, hi);
+        int cmp = fp_cmp2(fp_mul2(mid, mid), x);
+        if (cmp == 0) return mid; // spot on!
+        if (cmp > 0) hi = mid; else lo = mid;
+        if (lo.val * FP_ONE + lo.err + 1 >= hi.val * FP_ONE + hi.err) break;
+    }
+    return lo;
+}
+
+// Returns x to the power of y (fixed-point).
+fixpt fp_pow(fixpt x, fixpt y) {
+    // // Floating-point math is faster, but rounding error may differ between CPU generations.
+    // return round(pow((double)x / FP_ONE, (double)y / FP_ONE) * FP_ONE);
+
+    if (y == 0 || x == FP_ONE) return FP_ONE;
+    if (x == 0 || y == FP_ONE) return x;
+
+    // let's work with positive numbers, we'll set the sign at the end
+    fpe f = (fpe) {fp_abs(x), 0};
+    if (y < 0) y = -y, f = fp_inv2(f);
+
+    // Exponentiation by squaring
+
+    fixpt n = y / FP_ONE;
+    fpe z = (fpe) {FP_ONE, 0}, t = f;
+    for (int i = 0; i < 64; i++) {
+        if (n & 1) z = fp_mul2(z, t);
+        n /= 2;
+        if (!n) break;
+        t = fp_mul2(t, t);
     }
 
-    // Find the unique k such that 2^(k-1) <= u < 2^k
-    // FP_BASE is the msbpos-1 of FP_FACTOR ("one")
-    int k = msbpos(u) - FP_BASE;
+    // Fractional part
 
-    fixpt x = 0, fx, upper, lower;
-    // Since 2^(k-1) <= u < 2^k, we have 2^(ceil(k/2)-1) <= sqrt(u) < 2^ceil(k/2).
-    // First ineq. from sqrt(u) >= 2^[(k-1)/2] = 2^[k/2 + 1/2 - 1] >= 2^(ceil(k/2) - 1)
-    // To calculate ceil(k/2), do k/2 but add 1 to k if positive.
-    upper = fp_exp2((k + (k > 0))/2);
-    lower = upper / 2;
-
-    while (upper != lower + 1) {
-        x = (upper + lower) / 2;
-        fx = FP_MUL(x, x) - u;
-
-        if (fx == 0) {
-            break;
-        } else if (fx > 0) {
-            upper = x;
-        } else {
-            lower = x;
+    n = y % FP_ONE;
+    t = f;
+    for (int i = 0; n && i < 64; i++) {
+        t = fp_sqrt2(t);
+        if (t.val == FP_ONE && t.err == 0) break;
+        n *= 2;
+        if (n >= FP_ONE) {
+            n -= FP_ONE;
+            z = fp_mul2(z, t);
         }
     }
 
-    return x;
+    fixpt out = z.val + fp_round(z.err);
+    return (x < 0) && ((y / FP_ONE) & 1) ? -out : out;
 }
 
-// Returns base to the power of expn
-fixpt fp_pow(fixpt base, int expn) {
-    if (base == 0) return 0;
-
-    if (expn < 0) {
-        base = FP_DIV(FP_FACTOR, base);
-        expn = -expn;
-    }
-
-    fixpt res = FP_FACTOR, err = 0;
-    while (expn--) {
-        res = res * base + (err * base) / FP_FACTOR;
-        err = res % FP_FACTOR;
-        res /= FP_FACTOR;
-    }
-
-    return res + fp_round(err);
+// Returns x to the power of n (integer).
+fixpt fp_ipow(fixpt x, int n) {
+    if (n == 2) return fp_mul(x, x); // shortcut
+    return fp_pow(x, n*FP_ONE);
 }
