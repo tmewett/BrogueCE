@@ -2598,6 +2598,10 @@ extern boolean graphicsEnabled;
 extern "C" {
 #endif
 
+    // Utilities.c - String functions
+    boolean endswith(const char *str, const char *ending);
+    void append(char *str, char *ending, int bufsize);
+
     void rogueMain();
     void executeEvent(rogueEvent *theEvent);
     boolean fileExists(const char *pathname);
