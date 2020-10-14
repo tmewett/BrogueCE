@@ -3127,7 +3127,7 @@ extern "C" {
     void recallEvent(rogueEvent *event);
     void pausePlayback();
     void displayAnnotation();
-    void loadSavedGame();
+    boolean loadSavedGame();
     void switchToPlaying();
     void recordKeystroke(int keystroke, boolean controlKey, boolean shiftKey);
     void recordKeystrokeSequence(unsigned char *commandSequence);

@@ -728,8 +728,9 @@ void mainBrogueJunction() {
                 }
 
                 if (openFile(path)) {
-                    loadSavedGame();
-                    mainInputLoop();
+                    if (loadSavedGame()) {
+                        mainInputLoop();
+                    }
                     freeEverything();
                 } else {
                     //dialogAlert("File not found.");
