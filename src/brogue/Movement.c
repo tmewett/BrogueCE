@@ -860,7 +860,7 @@ boolean playerMoves(short direction) {
             }
         }
 
-        if (player.status[STATUS_STUCK] && cellHasTerrainFlag(x, y, T_ENTANGLES)) {
+        if (rogue.patchVersion < 1 && player.status[STATUS_STUCK] && cellHasTerrainFlag(x, y, T_ENTANGLES)) {
                 // Don't interrupt exploration with this message.
             if (--player.status[STATUS_STUCK]) {
                 if (!rogue.automationActive) {
@@ -1093,6 +1093,31 @@ boolean playerMoves(short direction) {
             }
             if (rand_percent(25)) {
                 vomit(&player);
+                playerTurnEnded();
+                return true;
+            }
+        }
+
+        if (rogue.patchVersion >= 1 && player.status[STATUS_STUCK] && cellHasTerrainFlag(x, y, T_ENTANGLES)) {
+                // Don't interrupt exploration with this message.
+            if (--player.status[STATUS_STUCK]) {
+                if (!rogue.automationActive) {
+                    message("you struggle but cannot free yourself.", false);
+                }
+            } else {
+                if (!rogue.automationActive) {
+                    message("you break free!", false);
+                }
+                if (tileCatalog[pmap[x][y].layers[SURFACE]].flags & T_ENTANGLES) {
+                    pmap[x][y].layers[SURFACE] = NOTHING;
+                }
+            }
+            moveEntrancedMonsters(direction);
+            if (!alreadyRecorded) {
+                recordKeystroke(directionKeys[initialDirection], false, false);
+                alreadyRecorded = true;
+            }
+            if (player.status[STATUS_STUCK]) {
                 playerTurnEnded();
                 return true;
             }
