@@ -717,7 +717,7 @@ void promptToAdvanceToLocation(short keystroke) {
         buf[1] = '\0';
 
         rogue.playbackMode = false;
-        enteredText = getInputTextString(entryText, "Go to turn number: ", log10(ULONG_MAX) - 1, buf, "", TEXT_INPUT_NUMBERS, false);
+        enteredText = getInputTextString(entryText, "Go to turn number: ", 9, buf, "", TEXT_INPUT_NUMBERS, false);
         confirmMessages();
         rogue.playbackMode = true;
 
