@@ -1,1 +1,0 @@
-Allowed seed catalog to take parameters at the command line

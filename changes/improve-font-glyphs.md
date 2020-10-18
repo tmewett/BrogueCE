@@ -1,1 +1,0 @@
-Regenerate font files to improve legibility and contrast

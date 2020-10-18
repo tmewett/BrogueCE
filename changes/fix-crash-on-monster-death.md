@@ -1,1 +1,0 @@
-Fix a crash where monster death messages could overflow a buffer.
