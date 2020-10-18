@@ -2030,6 +2030,7 @@ enum monsterBookkeepingFlags {
     MB_IS_DORMANT               = Fl(21),   // lurking, waiting to burst out
     MB_HAS_SOUL                 = Fl(22),   // slaying the monster will count toward weapon auto-ID
     MB_ALREADY_SEEN             = Fl(23),   // seeing this monster won't interrupt exploration
+    MB_HAS_ENTRANCED_MOVED      = Fl(24)    // has already moved while entranced and should not move again
 };
 
 // Defines all creatures, which include monsters and the player:
