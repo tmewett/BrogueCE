@@ -435,10 +435,18 @@ void displayAnnotation() {
     }
 }
 
+// Attempts to extract the patch version of versionString into patchVersion,
+// according to the global pattern. Returns 0 if successful.
+static boolean getPatchVersion(char *versionString, unsigned short *patchVersion) {
+    int n = sscanf(versionString, BROGUE_PATCH_VERSION_PATTERN, patchVersion);
+    return n == 1;
+}
+
 // creates a game recording file, or if in playback mode,
 // initializes based on and starts reading from the recording file
 void initRecording() {
     short i;
+    unsigned short gamePatch, recPatch;
     char versionString[16], buf[100];
     FILE *recordFile;
 
@@ -458,6 +466,7 @@ void initRecording() {
     rogue.nextAnnotationTurn    = 0;
     rogue.nextAnnotation[0]     = '\0';
     rogue.locationInAnnotationFile  = 0;
+    rogue.patchVersion          = 0;
 
     if (rogue.playbackMode) {
         lengthOfPlaybackFile        = 100000; // so recall functions don't freak out
@@ -471,10 +480,19 @@ void initRecording() {
             versionString[i] = recallChar();
         }
 
-        if (strcmp(versionString, BROGUE_RECORDING_VERSION_STRING)) {
+        if (getPatchVersion(versionString, &recPatch)
+                && getPatchVersion(BROGUE_RECORDING_VERSION_STRING, &gamePatch)
+                && recPatch <= gamePatch) {
+            rogue.patchVersion = recPatch;
+        } else if (strcmp(versionString, "CE 1.9") == 0) {
+            // Temporary measure until next release, as "CE 1.9" recording string
+            // doesn't have a patch version (".0"), but we can load it.
+            rogue.patchVersion = 0;
+        } else if (strcmp(versionString, BROGUE_RECORDING_VERSION_STRING) != 0) {
+            // If we have neither a patch pattern match nor an exact match, we can't load.
             rogue.playbackMode = false;
             rogue.playbackFastForward = false;
-            sprintf(buf, "This file is from version %s and cannot be opened in version %s.", versionString, BROGUE_RECORDING_VERSION_STRING);
+            sprintf(buf, "This file is from version %s and cannot be opened in version %s.", versionString, BROGUE_VERSION_STRING);
             dialogAlert(buf);
             rogue.playbackMode = true;
             rogue.playbackPaused = true;
@@ -495,6 +513,9 @@ void initRecording() {
             rogue.nextAnnotationTurn = -1;
         }
     } else {
+        // If present, set the patch version for playing the game.
+        getPatchVersion(BROGUE_RECORDING_VERSION_STRING, &rogue.patchVersion);
+
         lengthOfPlaybackFile = 1;
         remove(currentFilePath);
         recordFile = fopen(currentFilePath, "wb"); // create the file
@@ -653,12 +674,18 @@ void advanceToLocation(unsigned long destinationFrame) {
 
     while (rogue.playerTurnNumber < destinationFrame && !rogue.gameHasEnded && !rogue.playbackOOS) {
         if (useProgressBar && !(rogue.playerTurnNumber % progressBarInterval)) {
-            rogue.playbackFastForward = false;
+            rogue.playbackFastForward = false; // so that pauseBrogue looks for inputs
             printProgressBar((COLS - 20) / 2, ROWS / 2, "[     Loading...   ]",
                              rogue.playerTurnNumber - initialFrameNumber,
                              destinationFrame - initialFrameNumber, &darkPurple, false);
+            while (pauseBrogue(0)) { // pauseBrogue(0) is necessary to flush the display to the window in SDL
+                if (rogue.gameHasEnded) {
+                    return;
+                }
+                rogue.creaturesWillFlashThisTurn = false; // prevent monster flashes from showing up on screen
+                nextBrogueEvent(&theEvent, true, false, true); // eat the input if it isn't clicking x
+            }
             rogue.playbackFastForward = true;
-            commitDraws();
         }
 
         rogue.RNG = RNG_COSMETIC; // dancing terrain colors can't influence recordings
@@ -685,7 +712,7 @@ void promptToAdvanceToLocation(short keystroke) {
     unsigned long destinationFrame;
     boolean enteredText;
 
-    if (!rogue.playbackPaused || unpause()) {
+    if (rogue.playbackOOS || !rogue.playbackPaused || unpause()) {
         buf[0] = (keystroke == '0' ? '\0' : keystroke);
         buf[1] = '\0';
 
@@ -699,6 +726,8 @@ void promptToAdvanceToLocation(short keystroke) {
 
             if (destinationFrame >= rogue.howManyTurns) {
                 flashTemporaryAlert(" Past end of recording ", 3000);
+            } else if (rogue.playbackOOS && destinationFrame > rogue.playerTurnNumber) {
+                flashTemporaryAlert(" Out of sync ", 3000);
             } else if (destinationFrame == rogue.playerTurnNumber) {
                 sprintf(buf, " Already at turn %li ", destinationFrame);
                 flashTemporaryAlert(buf, 1000);
@@ -949,6 +978,18 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                                      &teal, false);
                 }
                 return true;
+            case GRAPHICS_KEY:
+                if (hasGraphics) {
+                    graphicsEnabled = setGraphicsEnabled(!graphicsEnabled);
+                    if (graphicsEnabled) {
+                        messageWithColor(KEYBOARD_LABELS ? "Enabled graphical tiles. Press 'G' again to disable." : "Enable graphical tiles.",
+                                        &teal, false);
+                    } else {
+                        messageWithColor(KEYBOARD_LABELS ? "Disabled graphical tiles. Press 'G' again to enable." : "Disabled graphical tiles.",
+                                        &teal, false);
+                    }
+                }
+                return true;
             case SEED_KEY:
                 //rogue.playbackMode = false;
                 //DEBUG {displayGrid(safetyMap); displayMoreSign(); displayLevel();}
@@ -1139,8 +1180,10 @@ void switchToPlaying() {
     displayLevel();
 }
 
-void loadSavedGame() {
+// Return whether the load was cancelled by an event
+boolean loadSavedGame() {
     unsigned long progressBarInterval;
+    unsigned long previousRecordingLocation;
     rogueEvent theEvent;
 
     cellDisplayBuffer dbuf[COLS][ROWS];
@@ -1157,7 +1200,7 @@ void loadSavedGame() {
     if (rogue.howManyTurns > 0) {
 
         progressBarInterval = max(1, lengthOfPlaybackFile / 100);
-
+        previousRecordingLocation = -1; // unsigned
         clearDisplayBuffer(dbuf);
         rectangularShading((COLS - 20) / 2, ROWS / 2, 20, 1, &black, INTERFACE_OPACITY, dbuf);
         rogue.playbackFastForward = false;
@@ -1175,11 +1218,18 @@ void loadSavedGame() {
 
             executeEvent(&theEvent);
 
-            if (!(recordingLocation % progressBarInterval) && !rogue.playbackOOS) {
-                rogue.playbackFastForward = false; // so the progress bar redraws make it to the screen
+            if (recordingLocation / progressBarInterval != previousRecordingLocation / progressBarInterval && !rogue.playbackOOS) {
+                rogue.playbackFastForward = false; // so that pauseBrogue looks for inputs
                 printProgressBar((COLS - 20) / 2, ROWS / 2, "[     Loading...   ]", recordingLocation, lengthOfPlaybackFile, &darkPurple, false);
-                commitDraws();
+                while (pauseBrogue(0)) { // pauseBrogue(0) is necessary to flush the display to the window in SDL, as well as look for inputs
+                    rogue.creaturesWillFlashThisTurn = false; // prevent monster flashes from showing up on screen
+                    nextBrogueEvent(&theEvent, true, false, true);
+                    if (rogue.gameHasEnded || theEvent.eventType == KEYSTROKE && theEvent.param1 == ESCAPE_KEY) {
+                        return false;
+                    }
+                }
                 rogue.playbackFastForward = true;
+                previousRecordingLocation = recordingLocation;
             }
         }
     }
@@ -1188,6 +1238,7 @@ void loadSavedGame() {
         switchToPlaying();
         recordChar(SAVED_GAME_LOADED);
     }
+    return true;
 }
 
 // the following functions are used to create human-readable descriptions of playback files for debugging purposes

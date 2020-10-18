@@ -1,3 +1,79 @@
+1.9.1
+=====
+
+This patch release contains quite a number of bug fixes and improvements, most
+noticably a re-rendering of the font files.
+
+Since we fixed the wand of plenty, replays made in 1.9.1 will not play on 1.9.
+However, 1.9.1 will play recordings and load saves from 1.9, preserving the old
+behaviour. (We intend to maintain this backwards-compatibility within each 1.X
+series.)
+
+This means that 1.9.1 and 1.9 are not completely interchangable, and you should
+upgrade if you wish to compare games with players on this newer version.
+
+Thanks to contributors Antony, flend, SanatMishra, and zenzombie.
+
+Bug fixes
+---------
+-
+  Fixed wand of plenty behaviour. Since CE 1.8, it incorrectly set the cloned
+  monsters' max health to half the target's _current_ health, instead of half
+  its max health. Now the max health is halved properly and the current health
+  is unchanged, but capped to the new max.
+-
+  Fixed the loading bars not showing on screen when loading a save or advancing
+  a recording
+-
+  Fixed some input events being ignored during recording playback (and possibly
+  in-game too)
+-
+  Prevented Alt+Enter fullscreen shortcut from causing an Enter input in-game
+-
+  The graphical tiles toggle 'G' now works during recording playback
+-
+  The '6' key now works like the other number keys in playback, instead of
+  moving forward a turn
+-
+  Fixed even more causes of out-of-sync errors
+-
+  Fixed a rare crash caused by extremely long monster death messages
+-
+  Fixed some rare crashes during machine generation
+
+Other changes
+-------------
+-
+  Regenerated font files to improve legibility and contrast. This should
+  hopefully be more of a return to form for Mac players, and a new improvement
+  for Windows and Linux.
+
+  If you want to change back to the old fonts, replace files font-4.png to
+  font-15.png in `bin/assets` (or `Resources/assets` in the app contents on
+  macOS) with copies from 1.9 or an earlier version.
+-
+  The seed catalog now contains more information, including items carried by
+  monsters, legendary allies, resurrection altars, and commutation altars. Also,
+  gold is aggregated per level, shackled vs. caged status is displayed for
+  captive allies, and keys show which vault they will open.
+-
+  Improved perfomance and decreased CPU usage
+-
+  You can now quit the program while loading a save, and cancel with the escape
+  key
+-
+  You can now enter a turn number to continue looking back through a recording
+  when you reach an out-of-sync error
+-
+  (For developers) You can now take control of recordings in debug mode by
+  pressing 'P'
+-
+  Seed catalog generation now takes seed and depth range parameters at the
+  command line (see `brogue --help` for details)
+-
+  Add a command line option to generate the seed catalog in CSV format
+
+
 1.9
 ===
 

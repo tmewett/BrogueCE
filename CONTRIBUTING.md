@@ -2,7 +2,7 @@ Contributing
 ============
 
 For general help on using GitHub to contribute to a project, check out the
-[GitHub.com Help][1].
+[GitHub.com help].
 
 We have a Discord server for discussion; feel free to join it here:
 https://discord.gg/8pxE4j8.
@@ -30,7 +30,7 @@ breaking saves and replays. Minor-point releases may do so.
 The are two long-term branches which you should base PRs on:
 
 * *master* is for gameplay changes for the next minor-point release
-* *release* is for bugfixes and other non-gameplay changes, for the next patch
+* *release* is for bug fixes and other non-gameplay changes, for the next patch
   release. It is merged into *master* periodically.
 
 Any other public branches may be rebased and force-pushed at any time, so please
@@ -42,6 +42,9 @@ be careful when branching from them.
 - Be consistent with formatting (pay attention to whitespace between brackets,
   commas, etc.)
 - Try to follow the style of existing code
+- Declare functions and variables local to a file as `static`
+- Prefer `int` in new integer declarations; use `short` only when working with
+  existing `short` variables
 - Use braces for control structures on multiple lines. I.e. instead of
 
   ```c
@@ -65,18 +68,11 @@ be careful when branching from them.
 
 ### Commits
 
-I find a clear history to be very beneficial to work with, so I have some
-guidelines for managing the commits in your branch:
+I find a clear Git history very beneficial to work with, so I care quite a bit
+about how commits are presented in PRs.
 
-- Try to make each commit represent a single, easily-describable change
-- Follow [the seven rules of a great commit message][3]
-- Keep your commit history clean of errors, revertions and fixes to your own
-  changes
-  - If your change works as a single commit, one way to do this is to
-    continually amend your commit as you work on it
-  - Alternatively, you can make separate commits and then squash them down to
-    one using a soft reset or an interactive rebase
-  - If you want multiple commits, then look into fixups and auto-squashing
+Please read my [tips for using Git effectively][Git guidance], which can be
+considered guidelines for contributing to this project.
 
 ### Change files
 
@@ -87,5 +83,5 @@ create the release notes.
 If the change is from one commit, include this file in it. For a branch of
 multiple commits, add it in a separate commit.
 
-[1]: https://help.github.com/en/github
-[3]: https://chris.beams.io/posts/git-commit/#seven-rules
+[GitHub.com help]: https://docs.github.com/en/free-pro-team@latest/github
+[Git guidance]: http://www.collider.in/tom/git-guidance.html

@@ -617,82 +617,6 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
     }
 }
 
-void scumMonster(creature *monst) {
-    char buf[500];
-    if (monst->bookkeepingFlags & MB_CAPTIVE) {
-        monsterName(buf, monst, false);
-        upperCase(buf);
-        printf("\n        %s (captive)", buf);
-        if (monst->machineHome > 0) {
-            printf(" (vault %i)", monst->machineHome);
-        }
-    } else if (monst->creatureState == MONSTER_ALLY) {
-        monsterName(buf, monst, false);
-        upperCase(buf);
-        printf("\n        %s (allied)", buf);
-        if (monst->machineHome) {
-            printf(" (vault %i)", monst->machineHome);
-        }
-    }
-}
-
-void scum(uint64_t startingSeed, short numberOfSeedsToScan, short scanThroughDepth) {
-    uint64_t theSeed;
-    char path[BROGUE_FILENAME_MAX];
-    item *theItem;
-    creature *monst;
-    char buf[500];
-
-    rogue.nextGame = NG_NOTHING;
-
-    getAvailableFilePath(path, LAST_GAME_NAME, GAME_SUFFIX);
-    strcat(path, GAME_SUFFIX);
-
-    printf("Brogue seed catalog, seeds %llu to %llu, through depth %i.\n\n\
-To play one of these seeds, press control-N from the title screen \
-and enter the seed number. Knowing which items will appear on \
-the first %i depths will, of course, make the game significantly easier.",
-            (unsigned long long)startingSeed,
-            (unsigned long long)(startingSeed + numberOfSeedsToScan - 1),
-            scanThroughDepth, scanThroughDepth);
-
-    for (theSeed = startingSeed; theSeed < startingSeed + numberOfSeedsToScan; theSeed++) {
-        printf("\n\nSeed %li:", theSeed);
-        fprintf(stderr, "Scanning seed %li...\n", theSeed);
-        rogue.nextGamePath[0] = '\0';
-        randomNumbersGenerated = 0;
-
-        rogue.playbackMode = false;
-        rogue.playbackFastForward = false;
-        rogue.playbackBetweenTurns = false;
-
-        strcpy(currentFilePath, path);
-        initializeRogue(theSeed);
-        rogue.playbackOmniscience = true;
-        for (rogue.depthLevel = 1; rogue.depthLevel <= scanThroughDepth; rogue.depthLevel++) {
-            startLevel(rogue.depthLevel == 1 ? 1 : rogue.depthLevel - 1, 1); // descending into level n
-            printf("\n    Depth %i:", rogue.depthLevel);
-            for (theItem = floorItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
-                itemName(theItem, buf, true, true, NULL);
-                upperCase(buf);
-                printf("\n        %s", buf);
-                if (pmap[theItem->xLoc][theItem->yLoc].machineNumber > 0) {
-                    printf(" (vault %i)", pmap[theItem->xLoc][theItem->yLoc].machineNumber);
-                }
-            }
-            for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
-                scumMonster(monst);
-            }
-            for (monst = dormantMonsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
-                scumMonster(monst);
-            }
-        }
-        freeEverything();
-        remove(currentFilePath); // Don't add a spurious LastGame file to the brogue folder.
-    }
-    printf("\n");
-}
-
 // This is the basic program loop.
 // When the program launches, or when a game ends, you end up here.
 // If the player has already said what he wants to do next
@@ -794,8 +718,9 @@ void mainBrogueJunction() {
                 }
 
                 if (openFile(path)) {
-                    loadSavedGame();
-                    mainInputLoop();
+                    if (loadSavedGame()) {
+                        mainInputLoop();
+                    }
                     freeEverything();
                 } else {
                     //dialogAlert("File not found.");
@@ -863,10 +788,6 @@ void mainBrogueJunction() {
             case NG_HIGH_SCORES:
                 rogue.nextGame = NG_NOTHING;
                 printHighScores(false);
-                break;
-            case NG_SCUM:
-                scum(1, 1000, 5);
-                rogue.nextGame = NG_QUIT;
                 break;
             case NG_QUIT:
                 // No need to do anything.

@@ -2186,6 +2186,22 @@ const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT] = {
 
 char itemTitles[NUMBER_SCROLL_KINDS][30];
 
+const char itemCategoryNames[NUMBER_ITEM_CATEGORIES][7] = {
+        "food",
+        "weapon",
+        "armor",
+        "potion",
+        "scroll",
+        "staff",
+        "wand",
+        "ring",
+        "charm",
+        "gold",
+        "amulet",
+        "gem",
+        "key"
+};
+
 const char titlePhonemes[NUMBER_TITLE_PHONEMES][30] = {
     "glorp",
     "snarg",

@@ -475,7 +475,6 @@ void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
         }
         buttons[buttonCount].hotkey[0] = RIGHT_KEY;
         buttons[buttonCount].hotkey[1] = RIGHT_ARROW;
-        buttons[buttonCount].hotkey[2] = NUMPAD_6;
         buttonCount++;
 
         strcpy(buttons[buttonCount].text,       "  Menu  ");
@@ -3550,13 +3549,15 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
         // count up the number of candidate locations
         for (k=0; k<max(DROWS, DCOLS); k++) {
             for (i = px-k; i <= px+k; i++) {
-                for (j = py-k; j <= py+k; j++) {
+                // we are scanning concentric squares. The first and last columns
+                // need to be stepped through, but others can be jumped over.
+                short step = (i == px-k || i == px+k) ? 1 : 2*k;
+                for (j = py-k; j <= py+k; j += step) {
+                    if (displayEntityCount >= ROWS - 1) goto no_space_for_more_entities;
                     if (coordinatesAreInMap(i, j)
-                        && (i == px-k || i == px+k || j == py-k || j == py+k)
                         && !addedEntity[i][j]
-                        && (playerCanDirectlySee(i, j) || (indirectVision && (playerCanSeeOrSense(i, j) || rogue.playbackOmniscience)))
                         && cellHasTMFlag(i, j, TM_LIST_IN_SIDEBAR)
-                        && displayEntityCount < ROWS - 1) {
+                        && (playerCanDirectlySee(i, j) || (indirectVision && (playerCanSeeOrSense(i, j) || rogue.playbackOmniscience)))) {
 
                         addedEntity[i][j] = true;
                         entityList[displayEntityCount] = tileCatalog[pmap[i][j].layers[layerWithTMFlag(i, j, TM_LIST_IN_SIDEBAR)]].description;
@@ -3568,6 +3569,7 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
                 }
             }
         }
+        no_space_for_more_entities:;
     }
 
     // Entities are now listed. Start printing.

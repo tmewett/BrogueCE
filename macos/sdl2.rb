@@ -23,7 +23,7 @@ class Sdl2 < Formula
     # 10.6 is chosen by SDL build scripts
     ENV["MACOSX_DEPLOYMENT_TARGET"] = "10.6"
 
-    system "./autogen.sh" if build.head? || build.devel?
+    system "./autogen.sh" if build.head?
 
     args = %W[--prefix=#{prefix} --without-x]
     system "./configure", *args

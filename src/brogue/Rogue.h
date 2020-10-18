@@ -33,10 +33,26 @@
 #define USE_UNICODE
 
 // Brogue version: what the user sees in the menu and title
-#define BROGUE_VERSION_STRING "CE 1.9"
-// Recording version: replay/saves from a different version won't load
+#define BROGUE_VERSION_STRING "CE 1.9.1"
+
+// Recording version. Saved into recordings and save files made by this version.
 // Cannot be longer than 16 chars
-#define BROGUE_RECORDING_VERSION_STRING "CE 1.9"
+#define BROGUE_RECORDING_VERSION_STRING "CE 1.9.1"
+
+/* Patch pattern. A scanf format string which matches an unsigned short. If this
+matches against a recording version string, it defines a "patch version." During
+normal play, rogue.patchVersion is set to the match of the game's recording
+version above, or 0 if it doesn't match.
+
+The game will only load a recording/save if either a) it has a patch version
+which is equal or less than the patch version of the current game
+(rogue.patchLevel is set to the recording's); or b) it doesn't match the version
+strings, but they are equal (rogue.patchLevel is set to 0).
+*/
+#define BROGUE_PATCH_VERSION_PATTERN "CE 1.9.%hu"
+
+// Dungeon version. Used in seed catalog output.
+#define BROGUE_DUNGEON_VERSION_STRING "CE 1.9"
 
 #define DEBUG                           if (rogue.wizard)
 #define MONSTERS_ENABLED                (!rogue.wizard || 1) // Quest room monsters can be generated regardless.
@@ -662,6 +678,8 @@ enum lightType {
     DEMONIC_STATUE_LIGHT,
     NUMBER_LIGHT_KINDS
 };
+
+#define NUMBER_ITEM_CATEGORIES  13
 
 // Item categories
 enum itemCategory {
@@ -2157,7 +2175,6 @@ enum NGCommands {
     NG_OPEN_GAME,
     NG_VIEW_RECORDING,
     NG_HIGH_SCORES,
-    NG_SCUM,
     NG_QUIT,
 };
 
@@ -2253,6 +2270,7 @@ typedef struct playerCharacter {
 
     // recording info
     boolean playbackMode;               // whether we're viewing a recording instead of playing
+    unsigned short patchVersion;        // what patch version of the game this was recorded on
     unsigned long currentTurnNumber;    // how many turns have elapsed
     unsigned long howManyTurns;         // how many turns are in this recording
     short howManyDepthChanges;          // how many times the player changes depths
@@ -2967,6 +2985,8 @@ extern "C" {
     char nextAvailableInventoryCharacter();
     void checkForDisenchantment(item *theItem);
     void updateFloorItems();
+    void itemKindName(item *theItem, char *kindName);
+    void itemRunicName(item *theItem, char *runicName);
     void itemName(item *theItem, char *root, boolean includeDetails, boolean includeArticle, color *baseColor);
     char displayInventory(unsigned short categoryMask,
                           unsigned long requiredFlags,
@@ -3109,7 +3129,7 @@ extern "C" {
     void recallEvent(rogueEvent *event);
     void pausePlayback();
     void displayAnnotation();
-    void loadSavedGame();
+    boolean loadSavedGame();
     void switchToPlaying();
     void recordKeystroke(int keystroke, boolean controlKey, boolean shiftKey);
     void recordKeystrokeSequence(unsigned char *commandSequence);
@@ -3162,6 +3182,7 @@ extern "C" {
     boolean dialogChooseFile(char *path, const char *suffix, const char *prompt);
     void dialogAlert(char *message);
     void mainBrogueJunction();
+    void printSeedCatalog(unsigned long startingSeed, unsigned long numberOfSeedsToScan, unsigned int scanThroughDepth, boolean isCsvFormat);
 
     void initializeButton(brogueButton *button);
     void drawButtonsInState(buttonState *state);

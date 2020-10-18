@@ -2021,7 +2021,9 @@ void pathTowardCreature(creature *monst, creature *target) {
     if (dir == NO_DIRECTION) {
         dir = randValidDirectionFrom(monst, monst->xLoc, monst->yLoc, true);
     }
-
+    if (dir == NO_DIRECTION) {
+        return; // monster is blocked
+    }
     targetLoc[0] = monst->xLoc + nbDirs[dir][0];
     targetLoc[1] = monst->yLoc + nbDirs[dir][1];
 
@@ -3845,6 +3847,7 @@ void demoteMonsterFromLeadership(creature *monst) {
     }
 
     for (int level = 0; level <= DEEPEST_LEVEL; level++) {
+        if (rogue.patchVersion < 1 && level > 0) break; // to play back 1.9.0 recordings, skip other levels
         // we'll work on this level's monsters first, so that the new leader is preferably on the same level
         creature *firstMonster = (level == 0 ? monsters->nextCreature : levels[level-1].monsters);
         for (follower = firstMonster; follower != NULL; follower = follower->nextCreature) {
@@ -3875,6 +3878,7 @@ void demoteMonsterFromLeadership(creature *monst) {
     }
 
     for (int level = 0; level <= DEEPEST_LEVEL; level++) {
+        if (rogue.patchVersion < 1 && level > 0) break;
         creature *firstMonster = (level == 0 ? dormantMonsters->nextCreature : levels[level-1].dormantMonsters);
         for (follower = firstMonster; follower != NULL; follower = follower->nextCreature) {
             if (follower == monst || follower->leader != monst) continue;
