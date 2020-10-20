@@ -166,12 +166,12 @@ int main(int argc, char *argv[])
 
         if (strcmp(argv[i], "--print-seed-catalog") == 0) {
             if (i + 3 < argc) {
-                // Use convertions from types the next size up, because they're signed
-                unsigned long startingSeed = atof(argv[i + 1]);
-                unsigned long numberOfSeeds = atoll(argv[i + 2]);
+                uint64_t startingSeed, numberOfSeeds;
+                // Use converter for the type the next size up, because it returns signed
                 unsigned int numberOfLevels = atol(argv[i + 3]);
 
-                if (startingSeed > 0 && numberOfLevels <= 40) {
+                if (tryParseUint64(argv[i+1], &startingSeed) && tryParseUint64(argv[i+2], &numberOfSeeds)
+                        && startingSeed > 0 && numberOfLevels <= 40) {
                     printSeedCatalog(startingSeed, numberOfSeeds, numberOfLevels, isCsvFormat);
                     return 0;
                 }
