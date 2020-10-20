@@ -23,11 +23,11 @@
 #include "Rogue.h"
 #include "IncludeGlobals.h"
 
-static void printSeedCatalogCsvLine(unsigned long seed, short depth, short quantity, char categoryName[50], char kindName[50],
+static void printSeedCatalogCsvLine(uint64_t seed, short depth, short quantity, char categoryName[50], char kindName[50],
                                     char enchantment[50], char runicName[50], char vaultNumber[10], char opensVaultNumber[10],
                                     char carriedByMonsterName[50], char allyStatusName[20]){
 
-    printf("%s,%lu,%i,%i,%s,%s,%s,%s,%s,%s,%s,%s\n", BROGUE_DUNGEON_VERSION_STRING, seed, depth, quantity, categoryName,
+    printf("%s,%llu,%i,%i,%s,%s,%s,%s,%s,%s,%s,%s\n", BROGUE_DUNGEON_VERSION_STRING, seed, depth, quantity, categoryName,
            kindName, enchantment, runicName, vaultNumber, opensVaultNumber, carriedByMonsterName, allyStatusName);
 }
 
@@ -214,9 +214,9 @@ static void printSeedCatalogAltars(boolean isCsvFormat) {
     }
 }
 
-void printSeedCatalog(unsigned long startingSeed, unsigned long numberOfSeedsToScan, unsigned int scanThroughDepth,
+void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsigned int scanThroughDepth,
                       boolean isCsvFormat) {
-    unsigned long theSeed;
+    uint64_t theSeed;
     char path[BROGUE_FILENAME_MAX];
     char message[1000] = "";
     rogue.nextGame = NG_NOTHING;
@@ -224,7 +224,7 @@ void printSeedCatalog(unsigned long startingSeed, unsigned long numberOfSeedsToS
     getAvailableFilePath(path, LAST_GAME_NAME, GAME_SUFFIX);
     strcat(path, GAME_SUFFIX);
 
-    sprintf(message, "Brogue seed catalog, seeds %lu to %lu, through depth %u.\n"
+    sprintf(message, "Brogue seed catalog, seeds %llu to %llu, through depth %u.\n"
                      "Generated with %s. Dungeons unchanged since %s.\n\n"
                      "To play one of these seeds, press control-N from the title screen"
                      " and enter the seed number.\n",
@@ -242,9 +242,9 @@ void printSeedCatalog(unsigned long startingSeed, unsigned long numberOfSeedsToS
 
     for (theSeed = startingSeed; theSeed < startingSeed + numberOfSeedsToScan; theSeed++) {
         if (!isCsvFormat) {
-            printf("Seed %li:\n", theSeed);
+            printf("Seed %llu:\n", theSeed);
         }
-        fprintf(stderr, "Scanning seed %li...\n", theSeed);
+        fprintf(stderr, "Scanning seed %llu...\n", theSeed);
         rogue.nextGamePath[0] = '\0';
         randomNumbersGenerated = 0;
 
