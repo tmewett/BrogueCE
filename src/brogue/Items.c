@@ -1646,7 +1646,8 @@ void itemRunicName(item *theItem, char *runicName) {
     char vorpalEnemyMonsterClass[15] ="";
 
     if (theItem->flags & ITEM_RUNIC) {
-        if (theItem->enchant2 == A_IMMUNITY || theItem->enchant2 == W_SLAYING) {
+        if ((theItem->category == ARMOR && theItem->enchant2 == A_IMMUNITY)
+        || (theItem->category == WEAPON && theItem->enchant2 == W_SLAYING)) {
             sprintf(vorpalEnemyMonsterClass, "%s ", monsterClassCatalog[theItem->vorpalEnemy].name);
         }
         if (theItem->category == WEAPON) {
