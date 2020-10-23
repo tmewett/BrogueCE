@@ -441,7 +441,7 @@ void useKeyAt(item *theItem, short x, short y) {
 }
 
 short randValidDirectionFrom(creature *monst, short x, short y, boolean respectAvoidancePreferences) {
-    short i, newX, newY, validDirectionCount = 0, randIndex;
+    short i, newX, newY, validDirections[8], count = 0;
 
     brogueAssert(rogue.RNG == RNG_SUBSTANTIVE);
     for (i=0; i<8; i++) {
@@ -453,31 +453,14 @@ short randValidDirectionFrom(creature *monst, short x, short y, boolean respectA
             && (!respectAvoidancePreferences
                 || (!monsterAvoids(monst, newX, newY))
                 || ((pmap[newX][newY].flags & HAS_PLAYER) && monst->creatureState != MONSTER_ALLY))) {
-            validDirectionCount++;
+            validDirections[count++] = i;
         }
     }
-    if (validDirectionCount == 0) {
+    if (count == 0) {
         // Rare, and important in this case that the function returns BEFORE a random roll is made to avoid OOS.
         return NO_DIRECTION;
     }
-    randIndex = rand_range(1, validDirectionCount);
-    validDirectionCount = 0;
-    for (i=0; i<8; i++) {
-        newX = x + nbDirs[i][0];
-        newY = y + nbDirs[i][1];
-        if (coordinatesAreInMap(newX, newY)
-            && !cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)
-            && !diagonalBlocked(x, y, newX, newY, false)
-            && (!respectAvoidancePreferences
-                || (!monsterAvoids(monst, newX, newY))
-                || ((pmap[newX][newY].flags & HAS_PLAYER) && monst->creatureState != MONSTER_ALLY))) {
-            validDirectionCount++;
-            if (validDirectionCount == randIndex) {
-                return i;
-            }
-        }
-    }
-    return NO_DIRECTION; // should rarely get here
+    return validDirections[rand_range(0, count - 1)];
 }
 
 void vomit(creature *monst) {
