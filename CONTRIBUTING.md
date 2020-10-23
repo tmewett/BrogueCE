@@ -36,36 +36,6 @@ The are two long-term branches which you should base PRs on:
 Any other public branches may be rebased and force-pushed at any time, so please
 be careful when branching from them.
 
-### Style
-
-- Use 4 space of indentation
-- Be consistent with formatting (pay attention to whitespace between brackets,
-  commas, etc.)
-- Try to follow the style of existing code
-- Declare functions and variables local to a file as `static`
-- Prefer `int` in new integer declarations; use `short` only when working with
-  existing `short` variables
-- Use braces for control structures on multiple lines. I.e. instead of
-
-  ```c
-  if (cond)
-      action();
-  ```
-
-  do
-
-  ```c
-  if (cond) {
-      action();
-  }
-  ```
-
-  or if you really want,
-
-  ```c
-  if (cond) action();
-  ```
-
 ### Commits
 
 I find a clear Git history very beneficial to work with, so I care quite a bit
@@ -82,6 +52,72 @@ create the release notes.
 
 If the change is from one commit, include this file in it. For a branch of
 multiple commits, add it in a separate commit.
+
+### Style
+
+- Use 4 space of indentation
+- Be consistent with formatting (pay attention to whitespace between brackets,
+  commas, etc.)
+- Try to follow the style of existing code
+- Declare functions and variables local to a file as `static`
+- Prefer `int` in new integer declarations; use `short` only when working with
+  existing `short` variables
+- Use braces for control structures on multiple lines
+
+  ```c
+  // no
+  if (cond)
+      action();
+
+  // yes
+  if (cond) {
+      action();
+  }
+
+  // acceptable
+  if (cond) action();
+  ```
+
+- When writing bracketed lists over multiple lines, wrap it naturally and don't
+  align to the open bracket (this includes declarations)
+
+  ```c
+  // yes
+  some_function(
+      a, b,
+      c,
+      d
+  );
+
+  // no
+  some_function(a, b,
+                c,
+                d);
+  ```
+
+- When writing multi-line if/while conditions, use at least the same indentation
+  as the body. It can be clearer to over-indent to separate it
+
+  ```c
+  // same indent is ok
+  while ((A && B)
+      || C) {
+      ...
+  }
+
+  // over-indent can be clearer
+  while ((A && B)
+          || C) {
+      ...
+  }
+
+  // a gap works too
+  while ((A && B)
+      || C) {
+
+      ...
+  }
+  ```
 
 [GitHub.com help]: https://docs.github.com/en/free-pro-team@latest/github
 [Git guidance]: http://www.collider.in/tom/git-guidance.html
