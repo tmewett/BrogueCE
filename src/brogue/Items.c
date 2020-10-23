@@ -4675,7 +4675,7 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
                 sprintf(buf, "%s deflect%s the %s",
                         monstName,
                         (monst == &player ? "" : "s"),
-                        theBolt->name);
+                        hideDetails ? "bolt" : theBolt->name);
                 combatMessage(buf, 0);
             }
             if (monst == &player
