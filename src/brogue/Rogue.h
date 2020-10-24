@@ -292,7 +292,13 @@ enum displayGlyph {
     G_ELECTRIC_CRYSTAL,
     G_ASHES,
     G_BEDROLL,
-    G_BLOODWORT_POD
+    G_BLOODWORT_POD,
+    G_VINE,
+    G_NET,
+    G_LICHEN,
+    G_PIPES,
+    G_SAC_ALTAR,
+    G_ORB_ALTAR
 };
 
 enum eventTypes {
