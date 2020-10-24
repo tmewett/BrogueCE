@@ -717,7 +717,7 @@ void promptToAdvanceToLocation(short keystroke) {
         buf[1] = '\0';
 
         rogue.playbackMode = false;
-        enteredText = getInputTextString(entryText, "Go to turn number: ", log10(ULONG_MAX) - 1, buf, "", TEXT_INPUT_NUMBERS, false);
+        enteredText = getInputTextString(entryText, "Go to turn number: ", 9, buf, "", TEXT_INPUT_NUMBERS, false);
         confirmMessages();
         rogue.playbackMode = true;
 
@@ -1246,7 +1246,7 @@ boolean loadSavedGame() {
 void describeKeystroke(unsigned char key, char *description) {
     short i;
     long c;
-    const long keyList[51] = {UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, UP_ARROW, LEFT_ARROW,
+    const long keyList[50] = {UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, UP_ARROW, LEFT_ARROW,
         DOWN_ARROW, RIGHT_ARROW, UPLEFT_KEY, UPRIGHT_KEY, DOWNLEFT_KEY, DOWNRIGHT_KEY,
         DESCEND_KEY, ASCEND_KEY, REST_KEY, AUTO_REST_KEY, SEARCH_KEY, INVENTORY_KEY,
         ACKNOWLEDGE_KEY, EQUIP_KEY, UNEQUIP_KEY, APPLY_KEY, THROW_KEY, RELABEL_KEY, DROP_KEY, CALL_KEY,
@@ -1256,7 +1256,7 @@ void describeKeystroke(unsigned char key, char *description) {
         RETURN_KEY, DELETE_KEY, TAB_KEY, PERIOD_KEY, VIEW_RECORDING_KEY, NUMPAD_0,
         NUMPAD_1, NUMPAD_2, NUMPAD_3, NUMPAD_4, NUMPAD_5, NUMPAD_6, NUMPAD_7, NUMPAD_8,
         NUMPAD_9, UNKNOWN_KEY};
-    const char descList[52][30] = {"up", "down", "left", "right", "up arrow", "left arrow",
+    const char descList[51][30] = {"up", "down", "left", "right", "up arrow", "left arrow",
         "down arrow", "right arrow", "upleft", "upright", "downleft", "downright",
         "descend", "ascend", "rest", "auto rest", "search", "inventory", "acknowledge",
         "equip", "unequip", "apply", "throw", "relabel", "drop", "call",
@@ -1267,7 +1267,7 @@ void describeKeystroke(unsigned char key, char *description) {
         "numpad 7", "numpad 8", "numpad 9", "unknown", "ERROR"};
 
     c = uncompressKeystroke(key);
-    for (i=0; keyList[i] != c && i < 53; i++);
+    for (i=0; i < 50 && keyList[i] != c; i++);
     if (key >= 32 && key <= 126) {
         sprintf(description, "Key: %c\t(%s)", key, descList[i]);
     } else {
