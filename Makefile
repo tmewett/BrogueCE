@@ -63,7 +63,7 @@ common-bin := bin/assets bin/keymap.txt
 	cp $< $@
 
 windows.zip: $(common-files) $(common-bin)
-	zip -rvl $@ $^ bin/brogue.exe bin/*.dll
+	zip -rvl $@ $^ bin/brogue.exe bin/*.dll bin/brogue-cmd.bat
 
 macos.zip: $(common-files)
 	chmod +x "Brogue CE.app"/Contents/MacOS/brogue

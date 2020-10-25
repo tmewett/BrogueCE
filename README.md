@@ -33,6 +33,8 @@ If you downloaded a release, you can open the game as follows:
 
 Go to the `bin` folder and run `brogue.exe`.
 
+(Note: If you want to run from the command prompt, e.g. for printing a seed catalog, use brogue-cmd.bat instead.)
+
 ### Mac
 
 Run the included app.
