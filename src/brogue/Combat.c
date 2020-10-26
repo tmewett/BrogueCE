@@ -1504,7 +1504,11 @@ boolean inflictDamage(creature *attacker, creature *defender,
             transferenceAmount = transferenceAmount * 9 / 10; // enemies get 90% recovery rate, deal with it
         }
 
-        attacker->currentHP += transferenceAmount;
+        if (rogue.patchVersion < 1) {
+            attacker->currentHP += transferenceAmount;
+        } else if (rogue.patchVersion >= 1) {
+            attacker->currentHP = min(attacker->currentHP + transferenceAmount, attacker->info.maxHP); // can't overheal
+        }
 
         if (attacker == &player && player.currentHP <= 0) {
             gameOver("Drained by a cursed ring", true);

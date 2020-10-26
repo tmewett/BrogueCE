@@ -1,0 +1,1 @@
+Fixed a bug where transference allowed over-healing and the health bar displayed the amount as a negative percentage.
