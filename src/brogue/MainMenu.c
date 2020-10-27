@@ -656,7 +656,9 @@ void mainBrogueJunction() {
         switch (rogue.nextGame) {
             case NG_NOTHING:
                 // Run the main menu to get a decision out of the player.
+                inTitleMenu = true;
                 titleMenu();
+                inTitleMenu = false;
                 break;
             case NG_NEW_GAME:
             case NG_NEW_GAME_WITH_SEED:

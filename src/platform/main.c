@@ -9,6 +9,7 @@ struct brogueConsole currentConsole;
 int brogueFontSize = 0;
 char dataDirectory[BROGUE_FILENAME_MAX] = STRINGIFY(DATADIR);
 boolean serverMode = false;
+boolean inTitleMenu = false;
 boolean hasGraphics = false;
 boolean graphicsEnabled = false;
 boolean isCsvFormat = false;
