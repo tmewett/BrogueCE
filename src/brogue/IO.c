@@ -4238,7 +4238,8 @@ short creatureHealthChangePercent(creature *monst) {
     if (monst->previousHealthPoints <= 0) {
         return 0;
     }
-    return 100 * (monst->currentHP - monst->previousHealthPoints) / monst->info.maxHP;
+    // ignore overhealing from tranference
+    return 100 * (monst->currentHP - min(monst->previousHealthPoints, monst->info.maxHP)) / monst->info.maxHP;
 }
 
 // returns the y-coordinate after the last line printed
