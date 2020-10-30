@@ -295,6 +295,7 @@ void playbackPanic() {
         rogue.playbackFastForward = false;
         rogue.playbackPaused = true;
         rogue.playbackOOS = true;
+        rogue.creaturesWillFlashThisTurn = false;
         blackOutScreen();
         displayLevel();
         refreshSideBar(-1, -1, false);
