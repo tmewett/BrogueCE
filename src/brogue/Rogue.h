@@ -1118,7 +1118,7 @@ enum tileFlags {
 #define CALL_KEY            'c'
 #define QUIT_KEY            'Q'
 #define MESSAGE_ARCHIVE_KEY 'M'
-#define HELP_KEY            '?'
+#define BROGUE_HELP_KEY     '?'
 #define DISCOVERIES_KEY     'D'
 #define EXPLORE_KEY         'x'
 #define AUTOPLAY_KEY        'A'

@@ -2170,7 +2170,7 @@ void itemDetails(char *buf, item *theItem) {
                                     && runicWeaponChance(theItem, false, 0) < runicWeaponChance(theItem, true, enchant + enchantIncrement(theItem))){
                                     sprintf(buf2, "(If the %s is enchanted, the chance will increase to %i%%",
                                             theName,
-                                            runicWeaponChance(theItem, true, (float) (enchant + enchantIncrement(theItem))));
+                                            runicWeaponChance(theItem, true, enchant + enchantIncrement(theItem)));
                                     strcat(buf, buf2);
                                     if (nextLevelState) {
                                         if (theItem->enchant2 == W_FORCE) {
@@ -2337,7 +2337,7 @@ void itemDetails(char *buf, item *theItem) {
             // charges
             new = apparentRingBonus(RING_WISDOM);
             if ((theItem->flags & ITEM_IDENTIFIED)  || rogue.playbackOmniscience) {
-                sprintf(buf2, "\n\nThe %s has %i charges remaining out of a maximum of %i charges, and%s recovers a charge in approximately %i turns. ",
+                sprintf(buf2, "\n\nThe %s has %i charges remaining out of a maximum of %i charges, and%s recovers a charge in approximately %lli turns. ",
                         theName,
                         theItem->charges,
                         theItem->enchant1,
@@ -2345,7 +2345,7 @@ void itemDetails(char *buf, item *theItem) {
                         FP_DIV(staffChargeDuration(theItem), 10 * ringWisdomMultiplier(new * FP_FACTOR)));
                 strcat(buf, buf2);
             } else if (theItem->flags & ITEM_MAX_CHARGES_KNOWN) {
-                sprintf(buf2, "\n\nThe %s has a maximum of %i charges, and%s recovers a charge in approximately %i turns. ",
+                sprintf(buf2, "\n\nThe %s has a maximum of %i charges, and%s recovers a charge in approximately %lli turns. ",
                         theName,
                         theItem->enchant1,
                         new == 0 ? "" : ", with your current rings,",

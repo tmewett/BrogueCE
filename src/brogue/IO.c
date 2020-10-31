@@ -373,7 +373,7 @@ short actionMenu(short x, boolean playingBack) {
         buttonCount++;
         if (KEYBOARD_LABELS) { // No help button if we're not in keyboard mode.
             sprintf(buttons[buttonCount].text, "  %s?: %sHelp  ", yellowColorEscape, whiteColorEscape);
-            buttons[buttonCount].hotkey[0] = HELP_KEY;
+            buttons[buttonCount].hotkey[0] = BROGUE_HELP_KEY;
             buttonCount++;
         }
         sprintf(buttons[buttonCount].text, "    %s---", darkGrayColorEscape);
@@ -2170,17 +2170,17 @@ void funkyFade(cellDisplayBuffer displayBuf[COLS][ROWS], const color *colorStart
                     percentComplete *= 1.0 + (100.0 - min(100, distanceMap[windowToMapX(i)][windowToMapY(j)])) / 100.;
                 }
 
-                weight = (short) percentComplete + weightGrid[i][j][2] * percentComplete * 10;
+                weight = (short)(percentComplete + weightGrid[i][j][2] * percentComplete * 10);
                 weight = min(100, weight);
                 tempColor = black;
 
-                tempColor.red = ((short) percentComplete + weightGrid[i][j][0] * percentComplete * 10) * colorMid.red / 100;
+                tempColor.red = (short)(percentComplete + weightGrid[i][j][0] * percentComplete * 10) * colorMid.red / 100;
                 tempColor.red = min(colorMid.red, tempColor.red);
 
-                tempColor.green = ((short) percentComplete + weightGrid[i][j][1] * percentComplete * 10) * colorMid.green / 100;
+                tempColor.green = (short)(percentComplete + weightGrid[i][j][1] * percentComplete * 10) * colorMid.green / 100;
                 tempColor.green = min(colorMid.green, tempColor.green);
 
-                tempColor.blue = ((short) percentComplete + weightGrid[i][j][2] * percentComplete * 10) * colorMid.blue / 100;
+                tempColor.blue = (short)(percentComplete + weightGrid[i][j][2] * percentComplete * 10) * colorMid.blue / 100;
                 tempColor.blue = min(colorMid.blue, tempColor.blue);
 
                 backColor = black;
@@ -2615,7 +2615,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
         case MESSAGE_ARCHIVE_KEY:
             displayMessageArchive();
             break;
-        case HELP_KEY:
+        case BROGUE_HELP_KEY:
             printHelpScreen();
             break;
         case DISCOVERIES_KEY:
