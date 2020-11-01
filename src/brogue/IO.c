@@ -2328,7 +2328,7 @@ void displayLoops() {
 }
 
 void exploreKey(const boolean controlKey) {
-    short x, y, finalX, finalY;
+    short x, y, finalX = 0, finalY = 0;
     short **exploreMap;
     enum directions dir;
     boolean tooDark = false;
