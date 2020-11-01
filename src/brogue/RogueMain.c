@@ -981,6 +981,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         displayMoreSignWithoutWaitingForAcknowledgment();
 
         do {
+            if (rogue.playbackMode) break;
             nextBrogueEvent(&theEvent, false, false, false);
             if (theEvent.eventType == KEYSTROKE
                 && theEvent.param1 != ACKNOWLEDGE_KEY
