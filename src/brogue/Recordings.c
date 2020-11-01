@@ -176,6 +176,7 @@ void writeHeaderInfo(char *path) {
     for (i = 0; BROGUE_RECORDING_VERSION_STRING[i] != '\0'; i++) {
         c[i] = BROGUE_RECORDING_VERSION_STRING[i];
     }
+    c[15] = rogue.wizard;
     i = 16;
     numberToString(rogue.seed, 4, &c[i]);
     i += 4;
@@ -447,8 +448,9 @@ static boolean getPatchVersion(char *versionString, unsigned short *patchVersion
 // initializes based on and starts reading from the recording file
 void initRecording() {
     short i;
+    boolean wizardMode;
     unsigned short gamePatch, recPatch;
-    char versionString[16], buf[100];
+    char versionString[16] = {0}, buf[100];
     FILE *recordFile;
 
 #ifdef AUDIT_RNG
@@ -477,9 +479,10 @@ void initRecording() {
 
         fillBufferFromFile();
 
-        for (i=0; i<16; i++) {
+        for (i=0; i<15; i++) {
             versionString[i] = recallChar();
         }
+        wizardMode = recallChar();
 
         if (getPatchVersion(versionString, &recPatch)
                 && getPatchVersion(BROGUE_RECORDING_VERSION_STRING, &gamePatch)
@@ -501,6 +504,24 @@ void initRecording() {
             rogue.playbackOOS = false;
             rogue.gameHasEnded = true;
         }
+
+        if (wizardMode != rogue.wizard && rogue.patchVersion > 1) { // (don't perform the check for version 1.9.1 or earlier)
+            // wizard game cannot be played in normal mode and vice versa
+            rogue.playbackMode = false;
+            rogue.playbackFastForward = false;
+            if (wizardMode) {
+                sprintf(buf, "This game was played in wizard mode. You must start Brogue CE in wizard mode to replay it.");
+            } else {
+                sprintf(buf, "To play this regular recording, please restart Brogue CE without the wizard mode option.");
+            }
+            dialogAlert(buf);
+            rogue.playbackMode = true;
+            rogue.playbackPaused = true;
+            rogue.playbackFastForward = false;
+            rogue.playbackOOS = false;
+            rogue.gameHasEnded = true;
+        }
+
         rogue.seed              = recallNumber(4);          // master random seed
         rogue.howManyTurns      = recallNumber(4);          // how many turns are in this recording
         maxLevelChanges         = recallNumber(4);          // how many times the player changes depths
