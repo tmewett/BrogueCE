@@ -831,6 +831,7 @@ void burnItem(item *theItem) {
     x = theItem->xLoc;
     y = theItem->yLoc;
     removeItemFromChain(theItem, floorItems);
+    deleteItem(theItem);
     pmap[x][y].flags &= ~(HAS_ITEM | ITEM_DETECTED);
     if (pmap[x][y].flags & (ANY_KIND_OF_VISIBLE | DISCOVERED | ITEM_DETECTED)) {
         refreshDungeonCell(x, y);
