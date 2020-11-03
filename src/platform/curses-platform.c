@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
-#include "term.h"
-#include <sys/timeb.h>
 #include <stdint.h>
 #include <signal.h>
+#include <sys/time.h>
 #include "platform.h"
+#include "term.h"
 
 static void gameLoop() {
     signal(SIGINT, SIG_DFL); // keep SDL from overriding the default ^C handler when it's linked
@@ -109,9 +108,9 @@ static int rewriteKey(int key, boolean text) {
 #define PAUSE_BETWEEN_EVENT_POLLING     34//17
 
 static uint64_t getTime() {
-    struct timeb time;
-    ftime(&time);
-    return (uint64_t)time.time * 1000 + time.millitm;
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (uint64_t)tv.tv_sec * 1000 + tv.tv_usec / 1000;
 }
 
 static boolean curses_pauseForMilliseconds(short milliseconds) {
