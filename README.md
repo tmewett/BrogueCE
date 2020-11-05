@@ -68,6 +68,9 @@ what the wiki reports!
 If you downloaded the source code, you will need to build the game first. For
 instructions, see `BUILD.md`.
 
+On Windows, if you want to run from the command prompt, use `brogue-cmd.bat`
+instead of `brogue.exe`.
+
 
 About
 -----
