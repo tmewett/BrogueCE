@@ -882,7 +882,7 @@ void displayLevel() {
     short i, j;
 
     for( i=0; i<DCOLS; i++ ) {
-        for( j=0; j<DROWS; j++ ) {
+        for (j = DROWS-1; j >= 0; j--) {
             refreshDungeonCell(i, j);
         }
     }
@@ -1489,13 +1489,6 @@ void refreshDungeonCell(short x, short y) {
 
     getCellAppearance(x, y, &cellChar, &foreColor, &backColor);
     plotCharWithColor(cellChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor);
-
-    // We use different wall sprites depending on what tile is below, so we need
-    // to refresh the cell above too
-    if (y > 0) {
-        getCellAppearance(x, y - 1, &cellChar, &foreColor, &backColor);
-        plotCharWithColor(cellChar, mapToWindowX(x), mapToWindowY(y - 1), &foreColor, &backColor);
-    }
 }
 
 void applyColorMultiplier(color *baseColor, const color *multiplierColor) {
