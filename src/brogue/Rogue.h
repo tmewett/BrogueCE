@@ -2281,6 +2281,7 @@ typedef struct playerCharacter {
     boolean recording;                  // whether we are recording the game
     boolean playbackMode;               // whether we're viewing a recording instead of playing
     unsigned short patchVersion;        // what patch version of the game this was recorded on
+    char versionString[16];             // the version string saved into the recording file
     unsigned long currentTurnNumber;    // how many turns have elapsed
     unsigned long howManyTurns;         // how many turns are in this recording
     short howManyDepthChanges;          // how many times the player changes depths

@@ -177,8 +177,8 @@ void writeHeaderInfo(char *path) {
     }
 
     // Note the version string to gracefully deny compatibility when necessary.
-    for (i = 0; BROGUE_RECORDING_VERSION_STRING[i] != '\0'; i++) {
-        c[i] = BROGUE_RECORDING_VERSION_STRING[i];
+    for (i = 0; rogue.versionString[i] != '\0'; i++) {
+        c[i] = rogue.versionString[i];
     }
     c[15] = rogue.wizard;
     i = 16;
@@ -453,7 +453,7 @@ void initRecording() {
     short i;
     boolean wizardMode;
     unsigned short gamePatch, recPatch;
-    char versionString[16] = {0}, buf[100];
+    char buf[100], *versionString = rogue.versionString;
     FILE *recordFile;
 
 #ifdef AUDIT_RNG
@@ -540,6 +540,7 @@ void initRecording() {
     } else {
         // If present, set the patch version for playing the game.
         getPatchVersion(BROGUE_RECORDING_VERSION_STRING, &rogue.patchVersion);
+        strcpy(versionString, BROGUE_RECORDING_VERSION_STRING);
 
         lengthOfPlaybackFile = 1;
         remove(currentFilePath);
