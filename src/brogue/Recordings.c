@@ -311,8 +311,7 @@ void playbackPanic() {
 
         overlayDisplayBuffer(rbuf, 0);
 
-        printf("\n\nPlayback panic at location %li!", recordingLocation - 1);
-
+        printf("Playback panic at location %li! Turn number %li.\n", recordingLocation - 1, rogue.playerTurnNumber);
         overlayDisplayBuffer(rbuf, 0);
 
         mainInputLoop();
@@ -536,10 +535,10 @@ void OOSCheck(unsigned long x, short numberOfBytes) {
         recordedNumber = recallNumber(numberOfBytes);
         if (eventType != RNG_CHECK || recordedNumber != x) {
             if (eventType != RNG_CHECK) {
-                printf("\nEvent type mismatch in RNG check.");
+                printf("Event type mismatch in RNG check.\n");
                 playbackPanic();
             } else if (recordedNumber != x) {
-                printf("\nExpected RNG output of %li; got %i.", recordedNumber, (int) x);
+                printf("Expected RNG output of %li; got %i.\n", recordedNumber, (int) x);
                 playbackPanic();
             }
         }
