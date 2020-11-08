@@ -3182,7 +3182,7 @@ extern "C" {
     boolean dialogChooseFile(char *path, const char *suffix, const char *prompt);
     void dialogAlert(char *message);
     void mainBrogueJunction();
-    void printSeedCatalog(unsigned long startingSeed, unsigned long numberOfSeedsToScan, unsigned int scanThroughDepth, boolean isCsvFormat);
+    void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsigned int scanThroughDepth, boolean isCsvFormat);
 
     void initializeButton(brogueButton *button);
     void drawButtonsInState(buttonState *state);
