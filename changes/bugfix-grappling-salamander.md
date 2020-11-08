@@ -1,0 +1,1 @@
+Fixed a bug where the message "<monster> seizes your legs!" was displayed in error.

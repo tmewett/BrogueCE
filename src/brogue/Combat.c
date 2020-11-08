@@ -1044,7 +1044,10 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
     monsterName(defenderName, defender, true);
 
     if ((attacker->info.abilityFlags & MA_SEIZES)
-        && (!(attacker->bookkeepingFlags & MB_SEIZING) || !(defender->bookkeepingFlags & MB_SEIZED))) {
+        && (!(attacker->bookkeepingFlags & MB_SEIZING) || !(defender->bookkeepingFlags & MB_SEIZED))
+        && (rogue.patchVersion < 2 ||
+            (distanceBetween(attacker->xLoc, attacker->yLoc, defender->xLoc, defender->yLoc) == 1
+            && !diagonalBlocked(attacker->xLoc, attacker->yLoc, defender->xLoc, defender->yLoc, false)))) {
 
         attacker->bookkeepingFlags |= MB_SEIZING;
         defender->bookkeepingFlags |= MB_SEIZED;

@@ -33,11 +33,11 @@
 #define USE_UNICODE
 
 // Brogue version: what the user sees in the menu and title
-#define BROGUE_VERSION_STRING "CE 1.9.1"
+#define BROGUE_VERSION_STRING "CE 1.9.2"
 
 // Recording version. Saved into recordings and save files made by this version.
 // Cannot be longer than 16 chars
-#define BROGUE_RECORDING_VERSION_STRING "CE 1.9.1"
+#define BROGUE_RECORDING_VERSION_STRING "CE 1.9.2"
 
 /* Patch pattern. A scanf format string which matches an unsigned short. If this
 matches against a recording version string, it defines a "patch version." During
