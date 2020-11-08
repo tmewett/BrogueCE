@@ -2242,7 +2242,7 @@ void updateFieldOfViewDisplay(boolean updateDancingTerrain, boolean refreshDispl
     assureCosmeticRNG;
 
     for (i=0; i<DCOLS; i++) {
-        for (j=0; j<DROWS; j++) {
+        for (j = DROWS-1; j >= 0; j--) {
             if (pmap[i][j].flags & IN_FIELD_OF_VIEW
                 && (max(0, tmap[i][j].light[0])
                     + max(0, tmap[i][j].light[1])

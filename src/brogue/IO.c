@@ -882,7 +882,7 @@ void displayLevel() {
     short i, j;
 
     for( i=0; i<DCOLS; i++ ) {
-        for( j=0; j<DROWS; j++ ) {
+        for (j = DROWS-1; j >= 0; j--) {
             refreshDungeonCell(i, j);
         }
     }
@@ -1278,12 +1278,6 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
             return;
         }
 
-        // Smooth out walls: if there's a "wall-ish" tile drawn below us, just draw the wall top
-        if ((cellChar == G_WALL || cellChar == G_GRANITE) && coordinatesAreInMap(x, y+1)
-            && glyphIsWallish(displayBuffer[mapToWindowX(x)][mapToWindowY(y+1)].character)) {
-            cellChar = G_WALL_TOP;
-        }
-
         if (gasAugmentWeight && ((pmap[x][y].flags & DISCOVERED) || rogue.playbackOmniscience)) {
             if (!rogue.trueColorMode || !needDistinctness) {
                 applyColorAverage(&cellForeColor, &gasAugmentColor, gasAugmentWeight);
@@ -1331,6 +1325,12 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
             cellForeColor = colorFromComponents(pmap[x][y].rememberedAppearance.foreColorComponents);
             cellBackColor = colorFromComponents(pmap[x][y].rememberedAppearance.backColorComponents);
         }
+    }
+
+    // Smooth out walls: if there's a "wall-ish" tile drawn below us, just draw the wall top
+    if ((cellChar == G_WALL || cellChar == G_GRANITE) && coordinatesAreInMap(x, y+1)
+        && glyphIsWallish(displayBuffer[mapToWindowX(x)][mapToWindowY(y+1)].character)) {
+        cellChar = G_WALL_TOP;
     }
 
     if (((pmap[x][y].flags & ITEM_DETECTED) || monsterWithDetectedItem
@@ -1489,13 +1489,6 @@ void refreshDungeonCell(short x, short y) {
 
     getCellAppearance(x, y, &cellChar, &foreColor, &backColor);
     plotCharWithColor(cellChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor);
-
-    // We use different wall sprites depending on what tile is below, so we need
-    // to refresh the cell above too
-    if (y > 0) {
-        getCellAppearance(x, y - 1, &cellChar, &foreColor, &backColor);
-        plotCharWithColor(cellChar, mapToWindowX(x), mapToWindowY(y - 1), &foreColor, &backColor);
-    }
 }
 
 void applyColorMultiplier(color *baseColor, const color *multiplierColor) {
