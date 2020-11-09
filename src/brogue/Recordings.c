@@ -1058,6 +1058,19 @@ boolean characterForbiddenInFilename(const char theChar) {
     }
 }
 
+void saveGameNoPrompt() {
+    char filePath[BROGUE_FILENAME_MAX];
+    if (rogue.playbackMode) {
+        return;
+    }
+    getAvailableFilePath(filePath, "Saved game", GAME_SUFFIX);
+    flushBufferToFile();
+    strcat(filePath, GAME_SUFFIX);
+    rename(currentFilePath, filePath);
+    strcpy(currentFilePath, filePath);
+    rogue.gameHasEnded = true;
+}
+
 void saveGame() {
     char filePath[BROGUE_FILENAME_MAX], defaultPath[BROGUE_FILENAME_MAX];
     boolean askAgain;

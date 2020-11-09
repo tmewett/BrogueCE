@@ -3142,6 +3142,7 @@ extern "C" {
     void getAvailableFilePath(char *filePath, const char *defaultPath, const char *suffix);
     boolean characterForbiddenInFilename(const char theChar);
     void saveGame();
+    void saveGameNoPrompt();
     void saveRecording(char *filePath);
     void saveRecordingNoPrompt(char *filePath);
     void parseFile();
