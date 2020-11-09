@@ -157,6 +157,7 @@ void initializeRogue(unsigned long seed) {
     rogue.wizard = wizard;
 
     rogue.gameHasEnded = false;
+    rogue.gameInProgress = true;
     rogue.highScoreSaved = false;
     rogue.cautiousMode = false;
     rogue.milliseconds = 0;
@@ -950,12 +951,11 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     if (player.bookkeepingFlags & MB_IS_DYING) {
         // we've already been through this once; let's avoid overkill.
         return;
-    } else {
-        player.bookkeepingFlags |= MB_IS_DYING;
     }
 
+    player.bookkeepingFlags |= MB_IS_DYING;
     rogue.autoPlayingLevel = false;
-
+    rogue.gameInProgress = false;
     flushBufferToFile();
 
     if (rogue.quit) {
@@ -1012,6 +1012,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
             player.status[STATUS_NUTRITION] = STOMACH_SIZE;
         }
         player.bookkeepingFlags &= ~MB_IS_DYING;
+        rogue.gameInProgress = true;
         return;
     }
 
@@ -1102,6 +1103,7 @@ void victory(boolean superVictory) {
     cellDisplayBuffer dbuf[COLS][ROWS];
     char recordingFilename[BROGUE_FILENAME_MAX] = {0};
 
+    rogue.gameInProgress = false;
     flushBufferToFile();
 
     //

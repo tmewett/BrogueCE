@@ -523,6 +523,7 @@ void initRecording() {
         fclose(recordFile);
 
         flushBufferToFile(); // header info never makes it into inputRecordBuffer when recording
+        rogue.recording = true;
     }
     rogue.currentTurnNumber = 0;
 }
@@ -1069,6 +1070,7 @@ void saveGameNoPrompt() {
     rename(currentFilePath, filePath);
     strcpy(currentFilePath, filePath);
     rogue.gameHasEnded = true;
+    rogue.recording = false;
 }
 
 void saveGame() {
@@ -1092,6 +1094,7 @@ void saveGame() {
                 flushBufferToFile();
                 rename(currentFilePath, filePath);
                 strcpy(currentFilePath, filePath);
+                rogue.recording = false;
                 message("Saved.", true);
                 rogue.gameHasEnded = true;
             } else {
@@ -1111,6 +1114,7 @@ void saveRecordingNoPrompt(char *filePath)
     strcat(filePath, RECORDING_SUFFIX);
     remove(filePath);
     rename(currentFilePath, filePath);
+    rogue.recording = false;
 }
 
 void saveRecording(char *filePath) {
@@ -1133,6 +1137,7 @@ void saveRecording(char *filePath) {
             if (!fileExists(filePath) || confirm("File of that name already exists. Overwrite?", true)) {
                 remove(filePath);
                 rename(currentFilePath, filePath);
+                rogue.recording = false;
             } else {
                 askAgain = true;
             }
@@ -1143,6 +1148,7 @@ void saveRecording(char *filePath) {
                 remove(filePath);
             }
             rename(currentFilePath, filePath);
+            rogue.recording = false;
         }
     } while (askAgain);
     deleteMessages();
@@ -1178,6 +1184,7 @@ void switchToPlaying() {
     rogue.playbackMode          = false;
     rogue.playbackFastForward   = false;
     rogue.playbackOmniscience   = false;
+    rogue.recording             = true;
     locationInRecordingBuffer   = 0;
     copyFile(currentFilePath, lastGamePath, recordingLocation);
 #ifndef ENABLE_PLAYBACK_SWITCH
