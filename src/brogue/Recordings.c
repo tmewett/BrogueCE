@@ -1026,6 +1026,12 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                     return true;
 #endif
                 return false;
+            case ESCAPE_KEY:
+                if (!rogue.playbackPaused) {
+                    rogue.playbackPaused = true;
+                    return true;
+                }
+                return false;
             default:
                 if (key >= '0' && key <= '9'
                     || key >= NUMPAD_0 && key <= NUMPAD_9) {
@@ -1043,6 +1049,10 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
             rogue.playbackMode = false;
             displayMessageArchive();
             rogue.playbackMode = true;
+            return true;
+        } else if (!rogue.playbackPaused) {
+            // clicking anywhere else pauses the playback
+            rogue.playbackPaused = true;
             return true;
         }
     } else if (recordingInput->eventType == RIGHT_MOUSE_UP) {
