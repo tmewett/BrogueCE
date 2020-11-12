@@ -851,6 +851,11 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
         leader->info.intrinsicLightType = SACRIFICE_MARK_LIGHT;
     }
 
+    if (rogue.patchVersion >= 3 && (theHorde->flags & HORDE_MACHINE_THIEF)) {
+        leader->safetyMap = allocGrid(); // Keep thieves from fleeing before they see the player
+        fillGrid(leader->safetyMap, 0);
+    }
+
     preexistingMonst = monsterAtLoc(x, y);
     if (preexistingMonst) {
         killCreature(preexistingMonst, true); // If there's already a monster here, quietly bury the body.
@@ -3260,6 +3265,9 @@ void monstersTurn(creature *monst) {
             dir = nextStep(safetyMap, monst->xLoc, monst->yLoc, NULL, true);
         } else {
             if (!monst->safetyMap) {
+                if (rogue.patchVersion >= 3 && !rogue.updatedSafetyMapThisTurn) {
+                    updateSafetyMap();
+                }
                 monst->safetyMap = allocGrid();
                 copyGrid(monst->safetyMap, safetyMap);
             }
