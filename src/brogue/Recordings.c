@@ -176,6 +176,7 @@ void writeHeaderInfo(char *path) {
     for (i = 0; BROGUE_RECORDING_VERSION_STRING[i] != '\0'; i++) {
         c[i] = BROGUE_RECORDING_VERSION_STRING[i];
     }
+    c[15] = rogue.wizard;
     i = 16;
     numberToString(rogue.seed, 8, &c[i]);
     i += 8;
@@ -295,6 +296,7 @@ void playbackPanic() {
         rogue.playbackFastForward = false;
         rogue.playbackPaused = true;
         rogue.playbackOOS = true;
+        rogue.creaturesWillFlashThisTurn = false;
         blackOutScreen();
         displayLevel();
         refreshSideBar(-1, -1, false);
@@ -310,8 +312,7 @@ void playbackPanic() {
 
         overlayDisplayBuffer(rbuf, 0);
 
-        printf("\n\nPlayback panic at location %li!", recordingLocation - 1);
-
+        printf("Playback panic at location %li! Turn number %li.\n", recordingLocation - 1, rogue.playerTurnNumber);
         overlayDisplayBuffer(rbuf, 0);
 
         mainInputLoop();
@@ -446,8 +447,9 @@ static boolean getPatchVersion(char *versionString, unsigned short *patchVersion
 // initializes based on and starts reading from the recording file
 void initRecording() {
     short i;
+    boolean wizardMode;
     unsigned short gamePatch, recPatch;
-    char versionString[16], buf[100];
+    char versionString[16] = {0}, buf[100];
     FILE *recordFile;
 
 #ifdef AUDIT_RNG
@@ -476,9 +478,10 @@ void initRecording() {
 
         fillBufferFromFile();
 
-        for (i=0; i<16; i++) {
+        for (i=0; i<15; i++) {
             versionString[i] = recallChar();
         }
+        wizardMode = recallChar();
 
         if (getPatchVersion(versionString, &recPatch)
                 && getPatchVersion(BROGUE_RECORDING_VERSION_STRING, &gamePatch)
@@ -500,6 +503,24 @@ void initRecording() {
             rogue.playbackOOS = false;
             rogue.gameHasEnded = true;
         }
+
+        if (wizardMode != rogue.wizard && rogue.patchVersion > 1) { // (don't perform the check for version 1.9.1 or earlier)
+            // wizard game cannot be played in normal mode and vice versa
+            rogue.playbackMode = false;
+            rogue.playbackFastForward = false;
+            if (wizardMode) {
+                sprintf(buf, "This game was played in wizard mode. You must start Brogue in wizard mode to replay it.");
+            } else {
+                sprintf(buf, "To play this regular recording, please restart Brogue without the wizard mode option.");
+            }
+            dialogAlert(buf);
+            rogue.playbackMode = true;
+            rogue.playbackPaused = true;
+            rogue.playbackFastForward = false;
+            rogue.playbackOOS = false;
+            rogue.gameHasEnded = true;
+        }
+
         rogue.seed              = recallNumber(8);          // master random seed
         rogue.howManyTurns      = recallNumber(4);          // how many turns are in this recording
         maxLevelChanges         = recallNumber(4);          // how many times the player changes depths
@@ -535,10 +556,10 @@ void OOSCheck(unsigned long x, short numberOfBytes) {
         recordedNumber = recallNumber(numberOfBytes);
         if (eventType != RNG_CHECK || recordedNumber != x) {
             if (eventType != RNG_CHECK) {
-                printf("\nEvent type mismatch in RNG check.");
+                printf("Event type mismatch in RNG check.\n");
                 playbackPanic();
             } else if (recordedNumber != x) {
-                printf("\nExpected RNG output of %li; got %i.", recordedNumber, (int) x);
+                printf("Expected RNG output of %li; got %i.\n", recordedNumber, (int) x);
                 playbackPanic();
             }
         }
@@ -717,7 +738,7 @@ void promptToAdvanceToLocation(short keystroke) {
         buf[1] = '\0';
 
         rogue.playbackMode = false;
-        enteredText = getInputTextString(entryText, "Go to turn number: ", log10(ULONG_MAX) - 1, buf, "", TEXT_INPUT_NUMBERS, false);
+        enteredText = getInputTextString(entryText, "Go to turn number: ", 9, buf, "", TEXT_INPUT_NUMBERS, false);
         confirmMessages();
         rogue.playbackMode = true;
 
@@ -777,7 +798,7 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
         switch (key) {
             case UP_ARROW:
             case UP_KEY:
-                newDelay = max(1, min(rogue.playbackDelayPerTurn / 1.5, rogue.playbackDelayPerTurn - 1));
+                newDelay = max(1, min(rogue.playbackDelayPerTurn * 2/3, rogue.playbackDelayPerTurn - 1));
                 if (newDelay != rogue.playbackDelayPerTurn) {
                     flashTemporaryAlert(" Faster ", 300);
                 }
@@ -786,7 +807,7 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                 return true;
             case DOWN_ARROW:
             case DOWN_KEY:
-                newDelay = min(3000, max(rogue.playbackDelayPerTurn * 1.5, rogue.playbackDelayPerTurn + 1));
+                newDelay = min(3000, max(rogue.playbackDelayPerTurn * 3/2, rogue.playbackDelayPerTurn + 1));
                 if (newDelay != rogue.playbackDelayPerTurn) {
                     flashTemporaryAlert(" Slower ", 300);
                 }
@@ -898,7 +919,7 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                     }
                 }
                 return true;
-            case HELP_KEY:
+            case BROGUE_HELP_KEY:
                 printPlaybackHelpScreen();
                 return true;
             case DISCOVERIES_KEY:
@@ -1005,6 +1026,12 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                     return true;
 #endif
                 return false;
+            case ESCAPE_KEY:
+                if (!rogue.playbackPaused) {
+                    rogue.playbackPaused = true;
+                    return true;
+                }
+                return false;
             default:
                 if (key >= '0' && key <= '9'
                     || key >= NUMPAD_0 && key <= NUMPAD_9) {
@@ -1022,6 +1049,10 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
             rogue.playbackMode = false;
             displayMessageArchive();
             rogue.playbackMode = true;
+            return true;
+        } else if (!rogue.playbackPaused) {
+            // clicking anywhere else pauses the playback
+            rogue.playbackPaused = true;
             return true;
         }
     } else if (recordingInput->eventType == RIGHT_MOUSE_UP) {
@@ -1246,17 +1277,17 @@ boolean loadSavedGame() {
 void describeKeystroke(unsigned char key, char *description) {
     short i;
     long c;
-    const long keyList[51] = {UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, UP_ARROW, LEFT_ARROW,
+    const long keyList[50] = {UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, UP_ARROW, LEFT_ARROW,
         DOWN_ARROW, RIGHT_ARROW, UPLEFT_KEY, UPRIGHT_KEY, DOWNLEFT_KEY, DOWNRIGHT_KEY,
         DESCEND_KEY, ASCEND_KEY, REST_KEY, AUTO_REST_KEY, SEARCH_KEY, INVENTORY_KEY,
         ACKNOWLEDGE_KEY, EQUIP_KEY, UNEQUIP_KEY, APPLY_KEY, THROW_KEY, RELABEL_KEY, DROP_KEY, CALL_KEY,
         //FIGHT_KEY, FIGHT_TO_DEATH_KEY,
-        HELP_KEY, DISCOVERIES_KEY, RETURN_KEY,
+        BROGUE_HELP_KEY, DISCOVERIES_KEY, RETURN_KEY,
         EXPLORE_KEY, AUTOPLAY_KEY, SEED_KEY, EASY_MODE_KEY, ESCAPE_KEY,
         RETURN_KEY, DELETE_KEY, TAB_KEY, PERIOD_KEY, VIEW_RECORDING_KEY, NUMPAD_0,
         NUMPAD_1, NUMPAD_2, NUMPAD_3, NUMPAD_4, NUMPAD_5, NUMPAD_6, NUMPAD_7, NUMPAD_8,
         NUMPAD_9, UNKNOWN_KEY};
-    const char descList[52][30] = {"up", "down", "left", "right", "up arrow", "left arrow",
+    const char descList[51][30] = {"up", "down", "left", "right", "up arrow", "left arrow",
         "down arrow", "right arrow", "upleft", "upright", "downleft", "downright",
         "descend", "ascend", "rest", "auto rest", "search", "inventory", "acknowledge",
         "equip", "unequip", "apply", "throw", "relabel", "drop", "call",
@@ -1267,7 +1298,7 @@ void describeKeystroke(unsigned char key, char *description) {
         "numpad 7", "numpad 8", "numpad 9", "unknown", "ERROR"};
 
     c = uncompressKeystroke(key);
-    for (i=0; keyList[i] != c && i < 53; i++);
+    for (i=0; i < 50 && keyList[i] != c; i++);
     if (key >= 32 && key <= 126) {
         sprintf(description, "Key: %c\t(%s)", key, descList[i]);
     } else {

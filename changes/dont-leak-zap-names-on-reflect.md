@@ -1,0 +1,1 @@
+Fixes an issue where a bolt from an unidentified staff or wand would be referred to by name if it was reflected.

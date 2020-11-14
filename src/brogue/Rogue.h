@@ -33,11 +33,11 @@
 #define USE_UNICODE
 
 // Brogue version: what the user sees in the menu and title
-#define BROGUE_VERSION_STRING "CE 1.9.1"
+#define BROGUE_VERSION_STRING "CE 1.9.2"
 
 // Recording version. Saved into recordings and save files made by this version.
 // Cannot be longer than 16 chars
-#define BROGUE_RECORDING_VERSION_STRING "CE 1.9.1"
+#define BROGUE_RECORDING_VERSION_STRING "CE 1.9.2"
 
 /* Patch pattern. A scanf format string which matches an unsigned short. If this
 matches against a recording version string, it defines a "patch version." During
@@ -1118,7 +1118,7 @@ enum tileFlags {
 #define CALL_KEY            'c'
 #define QUIT_KEY            'Q'
 #define MESSAGE_ARCHIVE_KEY 'M'
-#define HELP_KEY            '?'
+#define BROGUE_HELP_KEY     '?'
 #define DISCOVERIES_KEY     'D'
 #define EXPLORE_KEY         'x'
 #define AUTOPLAY_KEY        'A'
@@ -2597,6 +2597,10 @@ extern boolean graphicsEnabled;
 #if defined __cplusplus
 extern "C" {
 #endif
+
+    // Utilities.c - String functions
+    boolean endswith(const char *str, const char *ending);
+    void append(char *str, char *ending, int bufsize);
 
     void rogueMain();
     void executeEvent(rogueEvent *theEvent);

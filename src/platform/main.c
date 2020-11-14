@@ -13,19 +13,6 @@ boolean hasGraphics = false;
 boolean graphicsEnabled = false;
 boolean isCsvFormat = false;
 
-static boolean endswith(const char *str, const char *ending)
-{
-    int str_len = strlen(str), ending_len = strlen(ending);
-    if (str_len < ending_len) return false;
-    return strcmp(str + str_len - ending_len, ending) == 0 ? true : false;
-}
-
-static void append(char *str, char *ending, int bufsize) {
-    int str_len = strlen(str), ending_len = strlen(ending);
-    if (str_len + ending_len + 1 > bufsize) return;
-    strcpy(str + str_len, ending);
-}
-
 static void printCommandlineHelp() {
     printf("%s",
     "--help         -h          print this help message\n"
