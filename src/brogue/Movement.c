@@ -207,7 +207,7 @@ void describeLocation(char *buf, short x, short y) {
         && !canSeeMonster(monst)
         && monsterRevealed(monst)) {
 
-        strcpy(adjective, (((!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience) && monst->info.displayChar >= 'a' && monst->info.displayChar <= 'z')
+        strcpy(adjective, (((!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience) && !monst->info.isLarge)
                            || (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience && rand_range(0, 1)) ? "small" : "large"));
         if (pmap[x][y].flags & DISCOVERED) {
             strcpy(object, tileText(x, y));
