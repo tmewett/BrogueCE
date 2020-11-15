@@ -1937,23 +1937,23 @@ const monsterWords monsterText[NUMBER_MONSTER_KINDS] = {
 };
 
 const mutation mutationCatalog[NUMBER_MUTATORS] = {
-    //Title         textColor       healthFactor    moveSpdMult attackSpdMult   defMult damMult DF% DFtype  light   monstFlags  abilityFlags    forbiddenFlags      forbiddenAbilities
+    //Title         textColor       healthFactor    moveSpdMult attackSpdMult   defMult damMult DF% DFtype  light   monstFlags  abilityFlags    forbiddenFlags      forbiddenAbilities      canBeNegated
     {"explosive",   &orange,        50,             100,        100,            50,     100,    0,  DF_MUTATION_EXPLOSION, EXPLOSIVE_BLOAT_LIGHT, 0, MA_DF_ON_DEATH, MONST_SUBMERGES, 0,
-        "A rare mutation will cause $HIMHER to explode violently when $HESHE dies."},
+        "A rare mutation will cause $HIMHER to explode violently when $HESHE dies.",    true},
     {"infested",    &lichenColor,   50,             100,        100,            50,     100,    0,  DF_MUTATION_LICHEN, 0, 0,   MA_DF_ON_DEATH, 0,               0,
-        "$HESHE has been infested by deadly lichen spores; poisonous fungus will spread from $HISHER corpse when $HESHE dies."},
+        "$HESHE has been infested by deadly lichen spores; poisonous fungus will spread from $HISHER corpse when $HESHE dies.", true},
     {"agile",       &lightBlue,     100,            50,         100,            150,    100,    -1, 0,      0,      MONST_FLEES_NEAR_DEATH, 0, MONST_FLEES_NEAR_DEATH, 0,
-        "A rare mutation greatly enhances $HISHER mobility."},
+        "A rare mutation greatly enhances $HISHER mobility.",   false},
     {"juggernaut",  &brown,         300,            200,        200,            75,     200,    -1, 0,      0,      0,          MA_ATTACKS_STAGGER, MONST_MAINTAINS_DISTANCE, 0,
-        "A rare mutation has hardened $HISHER flesh, increasing $HISHER health and power but compromising $HISHER speed."},
+        "A rare mutation has hardened $HISHER flesh, increasing $HISHER health and power but compromising $HISHER speed.",  false},
     {"grappling",   &tanColor,      150,            100,        100,            50,     100,    -1, 0,      0,      0,          MA_SEIZES,      MONST_MAINTAINS_DISTANCE, MA_SEIZES,
-        "A rare mutation has caused suckered tentacles to sprout from $HISHER frame, increasing $HISHER health and allowing $HIMHER to grapple with $HISHER prey."},
+        "A rare mutation has caused suckered tentacles to sprout from $HISHER frame, increasing $HISHER health and allowing $HIMHER to grapple with $HISHER prey.", true},
     {"vampiric",    &red,           100,            100,        100,            100,    100,    -1, 0,      0,      0,          MA_TRANSFERENCE, MONST_MAINTAINS_DISTANCE, MA_TRANSFERENCE,
-        "A rare mutation allows $HIMHER to heal $HIMSELFHERSELF with every attack."},
+        "A rare mutation allows $HIMHER to heal $HIMSELFHERSELF with every attack.",    true},
     {"toxic",       &green,         100,            100,        200,            100,    20,     -1, 0,      0,      0,          (MA_CAUSES_WEAKNESS | MA_POISONS), MONST_MAINTAINS_DISTANCE, (MA_CAUSES_WEAKNESS | MA_POISONS),
-        "A rare mutation causes $HIMHER to poison $HISHER victims and sap their strength with every attack."},
+        "A rare mutation causes $HIMHER to poison $HISHER victims and sap their strength with every attack.",   true},
     {"reflective",  &darkTurquoise, 100,            100,        100,            100,    100,    -1, 0,      0,      MONST_REFLECT_4, 0,         (MONST_REFLECT_4 | MONST_ALWAYS_USE_ABILITY), 0,
-        "A rare mutation has coated $HISHER flesh with reflective scales."},
+        "A rare mutation has coated $HISHER flesh with reflective scales.",     true},
 };
 
 const hordeType hordeCatalog[NUMBER_HORDES] = {
