@@ -510,30 +510,35 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
             otherMonster = NULL;
             strcpy(buf2, tileCatalog[pmap[defender->xLoc + newLoc[0] - oldLoc[0]][defender->yLoc + newLoc[1] - oldLoc[1]].layers[highestPriorityLayer(defender->xLoc + newLoc[0] - oldLoc[0], defender->yLoc + newLoc[1] - oldLoc[1], true)]].description);
         }
+        
+        // Only deal force damage if target collides with solid object
+        forceDamage = 0;
+        if (otherMonster || !(tileCatalog[pmap[defender->xLoc + newLoc[0] - oldLoc[0]][defender->yLoc + newLoc[1] - oldLoc[1]].layers[DUNGEON]].flags & (T_LAVA_INSTA_DEATH | T_AUTO_DESCENT | T_IS_DEEP_WATER))) {
 
-        forceDamage = distanceBetween(oldLoc[0], oldLoc[1], defender->xLoc, defender->yLoc);
+            forceDamage = distanceBetween(oldLoc[0], oldLoc[1], defender->xLoc, defender->yLoc);
 
-        if (!(defender->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE))
-            && inflictDamage(NULL, defender, forceDamage, &white, false)) {
+            if (!(defender->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE))
+                && inflictDamage(NULL, defender, forceDamage, &white, false)) {
 
-            if (canDirectlySeeMonster(defender)) {
-                knowFirstMonsterDied = true;
-                sprintf(buf, "%s %s on impact with %s",
-                        monstName,
-                        (defender->info.flags & MONST_INANIMATE) ? "is destroyed" : "dies",
-                        buf2);
-                buf[DCOLS] = '\0';
-                combatMessage(buf, messageColorFromVictim(defender));
-                autoID = true;
-            }
-        } else {
-            if (canDirectlySeeMonster(defender)) {
-                sprintf(buf, "%s slams against %s",
-                        monstName,
-                        buf2);
-                buf[DCOLS] = '\0';
-                combatMessage(buf, messageColorFromVictim(defender));
-                autoID = true;
+                if (canDirectlySeeMonster(defender)) {
+                    knowFirstMonsterDied = true;
+                    sprintf(buf, "%s %s on impact with %s",
+                            monstName,
+                            (defender->info.flags & MONST_INANIMATE) ? "is destroyed" : "dies",
+                            buf2);
+                    buf[DCOLS] = '\0';
+                    combatMessage(buf, messageColorFromVictim(defender));
+                    autoID = true;
+                }
+            } else {
+                if (canDirectlySeeMonster(defender)) {
+                    sprintf(buf, "%s slams against %s",
+                            monstName,
+                            buf2);
+                    buf[DCOLS] = '\0';
+                    combatMessage(buf, messageColorFromVictim(defender));
+                    autoID = true;
+                }
             }
         }
         moralAttack(&player, defender);
