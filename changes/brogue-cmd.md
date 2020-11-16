@@ -1,2 +1,0 @@
-Added brogue-cmd.bat file for launching brogue on Windows. When run from a command prompt window, brogue.exe does not 
-print output. Use this script instead if you want to see it. For example, try brogue-cmd.bat --help

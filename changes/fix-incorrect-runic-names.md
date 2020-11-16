@@ -1,1 +1,0 @@
-fix incorrect runic name for dampening armor and slowing weapons
