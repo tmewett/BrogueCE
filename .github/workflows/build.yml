@@ -1,8 +1,8 @@
 name: "Build"
 on:
   push:
-    tags:
-    - v*.*
+    branches:
+    - gha-build
 
 jobs:
 
