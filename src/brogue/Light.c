@@ -149,7 +149,7 @@ void updateMinersLightRadius() {
         lightRadius = max(lightRadius / 2, 3 * FP_FACTOR);
     }
 
-    rogue.minersLight.radialFadeToPercent = (35 + max(0, min(65, rogue.lightMultiplier * 5)) * fraction) / FP_FACTOR;
+    rogue.minersLight.radialFadeToPercent = 35 + (max(0, min(65, rogue.lightMultiplier * 5)) * fraction) / FP_FACTOR;
     rogue.minersLight.lightRadius.upperBound = rogue.minersLight.lightRadius.lowerBound = clamp(lightRadius / FP_FACTOR, -30000, 30000);
 }
 
