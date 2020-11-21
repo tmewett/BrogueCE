@@ -172,6 +172,12 @@ unsigned int glyphToUnicode(enum displayGlyph glyph) {
         case G_ASHES: return '\'';
         case G_BEDROLL: return '=';
         case G_BLOODWORT_POD: return '*';
+        case G_VINE: return ':';
+        case G_NET: return ':';
+        case G_LICHEN: return '"';
+        case G_PIPES: return '+';
+        case G_SAC_ALTAR: return '|';
+        case G_ORB_ALTAR: return '|';
 
         default:
             brogueAssert(false);
