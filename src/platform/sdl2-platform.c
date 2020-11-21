@@ -14,10 +14,9 @@
 #define MAX_REMAPS  128
 
 // Dimensions of the font characters
-#define MAX_FONTS 64
-static int numFonts;
-static int fontWidths[MAX_FONTS];
-static int fontHeights[MAX_FONTS];
+#define N_FONTS  15
+static const int fontWidths[] = {7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21, 24, 27};
+static const int fontHeights[] = {11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 38, 44, 49};
 
 struct keypair {
     char from;
@@ -56,22 +55,6 @@ static void refreshWindow() {
 }
 
 
-static void listFonts() {
-    char filename[BROGUE_FILENAME_MAX];
-    SDL_Surface *font;
-    numFonts = 0;
-    for (int size = 1; size <= MAX_FONTS; size++) {
-        sprintf(filename, "%s/assets/font-%i.png", dataDirectory, size);
-        font = IMG_Load(filename);
-        if (font == NULL) break;
-        fontWidths[size-1] = font->w / 16;
-        fontHeights[size-1] = font->h / 16;
-        numFonts = size;
-        SDL_FreeSurface(font);
-    }
-}
-
-
 static void loadFont(int fontsize) {
     char filename[BROGUE_FILENAME_MAX];
 
@@ -94,7 +77,7 @@ static void loadFont(int fontsize) {
 static int fitFontSize(int width, int height) {
     int size;
     for (
-        size = numFonts - 1;
+        size = N_FONTS - 1;
         size > 0
             && (fontWidths[size] * COLS > width
                 || fontHeights[size] * ROWS > height);
@@ -281,7 +264,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
         } else if (event.type == SDL_KEYDOWN) {
             SDL_Keycode key = event.key.keysym.sym;
 
-            if (key == SDLK_PAGEUP && brogueFontSize < numFonts) {
+            if (key == SDLK_PAGEUP && brogueFontSize < N_FONTS) {
                 loadFont(++brogueFontSize);
                 ensureWindow();
             } else if (key == SDLK_PAGEDOWN && brogueFontSize > 1) {
@@ -312,7 +295,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
 
             if (!textInput) {
                 c = applyRemaps(c);
-                if ((c == '=' || c == '+') && brogueFontSize < numFonts) {
+                if ((c == '=' || c == '+') && brogueFontSize < N_FONTS) {
                     loadFont(++brogueFontSize);
                     ensureWindow();
                 } else if (c == '-' && brogueFontSize > 1) {
@@ -385,8 +368,6 @@ static void _gameLoop() {
     if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) imgfatal();
 
     lastEvent.eventType = EVENT_ERROR;
-
-    listFonts();
 
     if (brogueFontSize == 0) {
         SDL_DisplayMode mode;
