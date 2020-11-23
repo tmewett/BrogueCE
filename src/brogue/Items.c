@@ -1848,18 +1848,20 @@ void itemDetails(char *buf, item *theItem) {
     } else {
         switch (theItem->category) {
             case POTION:
-                sprintf(buf2, "%s flask%s contain%s a swirling %s liquid. Who knows what %s will do when drunk or thrown?",
+                sprintf(buf2, "%s flask%s contain%s a %s %s liquid. Who knows what %s will do when drunk or thrown?",
                         (singular ? "This" : "These"),
                         (singular ? "" : "s"),
                         (singular ? "s" : ""),
+                        (theItem->kind >= POTION_POISON ? "murky" : "clear"),
                         tableForItemCategory(theItem->category, NULL)[theItem->kind].flavor,
                         (singular ? "it" : "they"));
                 break;
             case SCROLL:
-                sprintf(buf2, "%s parchment%s %s covered with indecipherable writing, and bear%s a title of \"%s.\" Who knows what %s will do when read aloud?",
+                sprintf(buf2, "%s parchment%s %s covered with %s writing, and bear%s a title of \"%s.\" Who knows what %s will do when read aloud?",
                         (singular ? "This" : "These"),
                         (singular ? "" : "s"),
                         (singular ? "is" : "are"),
+                        (theItem->kind >= SCROLL_NEGATION ? "shaky, indecipherable" : "elegant but inscrutable"),
                         (singular ? "s" : ""),
                         tableForItemCategory(theItem->category, NULL)[theItem->kind].flavor,
                         (singular ? "it" : "they"));
