@@ -325,13 +325,6 @@ void moralAttack(creature *attacker, creature *defender) {
         }
         defender->status[STATUS_ENTRANCED] = 0;
 
-        boolean adjacent;
-        adjacent = distanceBetween(attacker->xLoc, attacker->yLoc, defender->xLoc, defender->yLoc) <= 1 && ((attacker->xLoc == defender->xLoc) || (attacker->yLoc == defender->yLoc));
-
-         if ((defender->info.abilityFlags & MA_AVOID_CORRIDORS) && !adjacent) {
-            defender->status[STATUS_ENRAGED] = defender->maxStatus[STATUS_ENRAGED] = 8;
-        }
-
         if (attacker == &player
             && defender->creatureState == MONSTER_ALLY
             && !defender->status[STATUS_DISCORDANT]
