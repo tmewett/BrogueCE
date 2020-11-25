@@ -1923,7 +1923,7 @@ void insertRoomAt(short **dungeonMap, short **roomMap, const short roomToDungeon
 void designCavern(short **grid, short minWidth, short maxWidth, short minHeight, short maxHeight) {
     short destX, destY;
     short caveX, caveY, caveWidth, caveHeight;
-    short fillX, fillY;
+    short fillX = 0, fillY = 0;
     boolean foundFillPoint = false;
     short **blobGrid;
     blobGrid = allocGrid();

@@ -1,3 +1,50 @@
+1.9.2
+=====
+
+A small bug fix release, with a few UI improvements!
+
+Thanks to contributors Andy, Antony, and zenzombie.
+
+Bug fixes
+---------
+-
+  Re-rendered the fonts again to fix blur and boldness issues
+-
+  Fixed a bug from 1.9.1 where dampening armor and slowing weapons had
+  "abomination" in their name
+-
+  Fixed salamanders and other ranged-melee creatures with the grappling mutation
+  attempting to seize their target from a distance. Now ranged attacks do damage
+  as normal, while adjacent attacks seize
+-
+  Fixed walls discovered with the scroll of magic mapping not being smoothed out
+  in tiles mode
+-
+  Fixed bolts from unidentified staffs or wands from being referred to by name
+  when reflected
+-
+  Fixed the player's health bar showing a negative percentage when landing a hit
+  with a transference ring equipped
+-
+  Fixed psychic emanations sometimes being described as the wrong size
+-
+  Wizard-mode replays and saves now work past the first immortal "death"
+
+Other changes
+-------------
+-
+  Added monster mutations to the seed catalog
+-
+  Recording playback can now be paused with the mouse or the Escape key
+-
+  Added brogue-cmd.bat file for Windows. brogue.exe does not print output when
+  run from a command prompt window, so use this script instead if you want to
+  see it, e.g. when printing a seed catalog
+-
+  A dialog is now shown when trying to play back a wizard game in regular mode
+  or vice versa
+
+
 1.9.1
 =====
 

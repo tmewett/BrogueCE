@@ -1,1 +1,0 @@
-Rasterized the font tiles again to fix blur and boldness issues.

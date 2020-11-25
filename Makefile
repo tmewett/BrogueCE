@@ -30,7 +30,7 @@ ifeq ($(MAC_APP),YES)
 endif
 
 ifeq ($(DEBUG),YES)
-	cflags += -g
+	cflags += -g -Og
 	cppflags += -DENABLE_PLAYBACK_SWITCH
 else
 	cflags += -O2

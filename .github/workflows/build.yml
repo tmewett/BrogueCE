@@ -1,8 +1,8 @@
 name: "Build"
 on:
   push:
-    tags:
-    - v*.*
+    branches:
+    - gha-build
 
 jobs:
 
@@ -34,7 +34,8 @@ jobs:
 
     - name: "Compile and install dependencies"
       run: |
-        brew install macos/sdl2.rb sdl2_image dylibbundler
+        brew install --build-from-source ./macos/sdl2.rb
+        brew install sdl2_image dylibbundler
 
     - name: "Compile"
       run: |
