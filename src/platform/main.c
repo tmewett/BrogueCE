@@ -35,6 +35,7 @@ static void printCommandlineHelp() {
     "--term         -t          run in ncurses-based terminal mode\n"
 #endif
     "--stealth      -S          display stealth range\n"
+    "--no-effects   -E          disable color effects\n"
     "--wizard       -W          run in wizard mode, invincible with powerful items\n"
     "[--csv] --print-seed-catalog [START NUM LEVELS]\n"
     "                           (optional csv format)\n"
@@ -76,6 +77,7 @@ int main(int argc, char *argv[])
     rogue.nextGameSeed = 0;
     rogue.wizard = false;
     rogue.displayAggroRangeMode = false;
+    rogue.trueColorMode = false;
 
     boolean initialGraphics = false;
 
@@ -211,6 +213,11 @@ int main(int argc, char *argv[])
 
         if (strcmp(argv[i], "--stealth") == 0 || strcmp(argv[i], "-S") == 0) {
             rogue.displayAggroRangeMode = true;
+            continue;
+        }
+
+        if (strcmp(argv[i], "--no-effects") == 0 || strcmp(argv[i], "-E") == 0) {
+            rogue.trueColorMode = true;
             continue;
         }
 

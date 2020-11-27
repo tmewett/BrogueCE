@@ -144,6 +144,7 @@ void initializeRogue(unsigned long seed) {
     short i, j, k;
     item *theItem;
     boolean playingback, playbackFF, playbackPaused, wizard, displayAggroRangeMode;
+    boolean trueColorMode;
     short oldRNG;
 
     playingback = rogue.playbackMode; // the only animals that need to go on the ark
@@ -151,12 +152,14 @@ void initializeRogue(unsigned long seed) {
     playbackFF = rogue.playbackFastForward;
     wizard = rogue.wizard;
     displayAggroRangeMode = rogue.displayAggroRangeMode;
+    trueColorMode = rogue.trueColorMode;
     memset((void *) &rogue, 0, sizeof( playerCharacter )); // the flood
     rogue.playbackMode = playingback;
     rogue.playbackPaused = playbackPaused;
     rogue.playbackFastForward = playbackFF;
     rogue.wizard = wizard;
     rogue.displayAggroRangeMode = displayAggroRangeMode;
+    rogue.trueColorMode = trueColorMode;
 
     rogue.gameHasEnded = false;
     rogue.highScoreSaved = false;
