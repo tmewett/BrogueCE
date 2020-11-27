@@ -12,6 +12,7 @@ boolean serverMode = false;
 boolean hasGraphics = false;
 boolean graphicsEnabled = false;
 boolean isCsvFormat = false;
+boolean initialFullScreen = false;
 
 static void printCommandlineHelp() {
     printf("%s",
@@ -28,6 +29,7 @@ static void printCommandlineHelp() {
 #ifdef BROGUE_SDL
     "--size N                   starts the game at font size N (1 to 13)\n"
     "--graphics     -G          enable graphical tiles\n"
+    "--full-screen  -F          enable full screen\n"
 #endif
 #ifdef BROGUE_CURSES
     "--term         -t          run in ncurses-based terminal mode\n"
@@ -181,6 +183,11 @@ int main(int argc, char *argv[])
                 brogueFontSize = size;
                 continue;
             };
+        }
+
+        if (strcmp(argv[i], "-F") == 0 || strcmp(argv[i], "--full-screen") == 0) {
+            initialFullScreen = true;
+            continue;
         }
 #endif
 
