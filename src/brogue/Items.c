@@ -3969,6 +3969,8 @@ boolean imbueInvisibility(creature *monst, short duration) {
     if (monst && !(monst->info.flags & (MONST_INANIMATE | MONST_INVISIBLE | MONST_INVULNERABLE))) {
         if (monst == &player || monst->creatureState == MONSTER_ALLY) {
             autoID = true;
+        } else if (canSeeMonster(monst) && monsterRevealed(monst)) {
+            autoID = true;
         }
         monst->status[STATUS_INVISIBLE] = monst->maxStatus[STATUS_INVISIBLE] = duration;
         refreshDungeonCell(monst->xLoc, monst->yLoc);
