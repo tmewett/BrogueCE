@@ -34,6 +34,7 @@ static void printCommandlineHelp() {
 #ifdef BROGUE_CURSES
     "--term         -t          run in ncurses-based terminal mode\n"
 #endif
+    "--stealth      -S          display stealth range\n"
     "--wizard       -W          run in wizard mode, invincible with powerful items\n"
     "[--csv] --print-seed-catalog [START NUM LEVELS]\n"
     "                           (optional csv format)\n"
@@ -74,6 +75,7 @@ int main(int argc, char *argv[])
     rogue.nextGamePath[0] = '\0';
     rogue.nextGameSeed = 0;
     rogue.wizard = false;
+    rogue.displayAggroRangeMode = false;
 
     boolean initialGraphics = false;
 
@@ -206,6 +208,11 @@ int main(int argc, char *argv[])
             continue;
         }
 #endif
+
+        if (strcmp(argv[i], "--stealth") == 0 || strcmp(argv[i], "-S") == 0) {
+            rogue.displayAggroRangeMode = true;
+            continue;
+        }
 
         if (strcmp(argv[i], "--wizard") == 0 || strcmp(argv[i], "-W") == 0) {
             rogue.wizard = true;
