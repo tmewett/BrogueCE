@@ -11,6 +11,7 @@ jobs:
     steps:
     - name: "Install dependencies"
       run: |
+        sudo apt update -y
         sudo apt install -y libsdl2-dev libsdl2-image-dev
 
     - name: "Checkout sources"
