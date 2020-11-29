@@ -69,7 +69,7 @@ bin/brogue.exe: $(objects)
 clean:
 	$(RM) src/brogue/*.o src/platform/*.o $(binary) \
 	  seed-catalog.txt README.txt CHANGELOG.txt \
-	  macos.zip linux.tar.gz
+	  windows.zip macos.zip linux.tar.gz
 	$(RM) -r Brogue\ CE.app
 
 common-files := README.txt CHANGELOG.txt LICENSE.txt seed-catalog.txt
@@ -82,7 +82,11 @@ seed-catalog.txt: $(binary)
 	$(binary) --print-seed-catalog > $@
 
 windows.zip: $(common-files) $(common-bin)
-	zip -rvl $@ $^ $(binary) bin/*.dll bin/brogue-cmd.bat
+	cp ./SDL2/x86_64-w64-mingw32/bin/SDL2.dll ./bin/
+	cp ./SDL2_image/x86_64-w64-mingw32/bin/zlib1.dll ./bin/
+	cp ./SDL2_image/x86_64-w64-mingw32/bin/SDL2_image.dll ./bin/
+	cp ./SDL2_image/x86_64-w64-mingw32/bin/libpng16-16.dll ./bin/
+	7z a $@ $^ $(binary) bin/*.dll bin/brogue-cmd.bat
 
 # Filter-out problematic names so we can quote them manually
 macos.zip: $(common-files) Brogue\ CE.app
