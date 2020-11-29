@@ -67,13 +67,17 @@ bin/brogue.exe: $(objects)
 	mt -manifest windows/brogue.exe.manifest '-outputresource:bin/brogue.exe;1'
 
 clean:
-	$(RM) src/brogue/*.o src/platform/*.o $(binary)
+	$(RM) src/brogue/*.o src/platform/*.o $(binary) \
+	  seed-catalog.txt README.txt CHANGELOG.txt
 
 common-files := README.txt CHANGELOG.txt LICENSE.txt seed-catalog.txt
 common-bin := bin/assets bin/keymap.txt
 
 %.txt: %.md
 	cp $< $@
+
+seed-catalog.txt: $(binary)
+	$(binary) --print-seed-catalog > $@
 
 windows.zip: $(common-files) $(common-bin)
 	zip -rvl $@ $^ $(binary) bin/*.dll bin/brogue-cmd.bat
