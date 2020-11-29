@@ -19,7 +19,7 @@ jobs:
 
     - name: "Compile"
       run: |
-        make bin/brogue
+        make LINUX_APP=YES bin/brogue
 
     - name: "Upload artifact"
       uses: actions/upload-artifact@v1
@@ -68,7 +68,7 @@ jobs:
       run: |
         $env:path = $env:path + ";" + (Join-Path $pwd.Drive.Root "opt/local/x86_64-w64-mingw32/bin")
         $env:path = $env:path + ';C:\Program Files (x86)\Windows Kits\10\bin\x64'
-        mingw32-make CC=gcc bin/brogue.exe
+        mingw32-make CC=gcc WINDOWS_APP=YES bin/brogue.exe
     - name: "Package"
       run: |
         cp .\SDL2\x86_64-w64-mingw32\bin\SDL2.dll .\bin\

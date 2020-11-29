@@ -20,3 +20,9 @@ RELEASE := NO
 
 # Configure the executable to run from a macOS .app bundle (only works in graphical mode)
 MAC_APP := NO
+
+# Build for linux
+LINUX_APP := NO
+
+# Build for windows
+WINDOWS_APP := NO

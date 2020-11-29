@@ -32,8 +32,16 @@ ifeq ($(WEBBROGUE),YES)
 	cppflags += -DBROGUE_WEB
 endif
 
+binary := bin/brogue
+objects := $(sources:.c=.o)
+
 ifeq ($(MAC_APP),YES)
 	cppflags += -DSDL_PATHS
+endif
+
+ifeq ($(WINDOWS_APP),YES)
+	binary := bin/brogue.exe
+	objects += windows/icon.o
 endif
 
 ifeq ($(DEBUG),YES)
@@ -42,8 +50,6 @@ ifeq ($(DEBUG),YES)
 else
 	cflags += -O2
 endif
-
-objects := $(sources:.c=.o)
 
 .PHONY: clean
 
@@ -56,13 +62,12 @@ bin/brogue: $(objects)
 windows/icon.o: windows/icon.rc
 	windres $< $@
 
-bin/brogue.exe: $(objects) windows/icon.o
+bin/brogue.exe: $(objects)
 	$(CC) $(cflags) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(libs) $(LDLIBS)
 	mt -manifest windows/brogue.exe.manifest '-outputresource:bin/brogue.exe;1'
 
 clean:
-	$(RM) src/brogue/*.o src/platform/*.o bin/brogue{,.exe}
-
+	$(RM) src/brogue/*.o src/platform/*.o $(binary)
 
 common-files := README.txt CHANGELOG.txt LICENSE.txt seed-catalog.txt
 common-bin := bin/assets bin/keymap.txt
@@ -71,7 +76,7 @@ common-bin := bin/assets bin/keymap.txt
 	cp $< $@
 
 windows.zip: $(common-files) $(common-bin)
-	zip -rvl $@ $^ bin/brogue.exe bin/*.dll bin/brogue-cmd.bat
+	zip -rvl $@ $^ $(binary) bin/*.dll bin/brogue-cmd.bat
 
 macos.zip: $(common-files)
 	chmod +x "Brogue CE.app"/Contents/MacOS/brogue
@@ -80,7 +85,6 @@ macos.zip: $(common-files)
 linux.tar.gz: $(common-files) $(common-bin) brogue
 	chmod +x bin/brogue
 	tar -cavf $@ $^ bin/brogue -C linux make-link-for-desktop.sh
-
 
 # $* is the matched %
 icon_%.png: bin/assets/icon.png
