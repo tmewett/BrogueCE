@@ -686,16 +686,7 @@ static void seek(unsigned long seekTarget, enum recordingSeekModes seekMode) {
     boolean pauseState, useProgressBar, arrivedAtDestination = false;
     cellDisplayBuffer dbuf[COLS][ROWS];
 
-    if (seekMode == RECORDING_SEEK_MODE_DEPTH && seekTarget > maxLevelChanges) {
-        flashTemporaryAlert(" Already reached deepest depth explored ", 2000);
-        return;
-    }
-
     pauseState = rogue.playbackPaused;
-
-    if (seekMode == RECORDING_SEEK_MODE_DEPTH && seekTarget < 1) {
-        seekTarget = 1;
-    }
 
     // configure progress bar
     switch (seekMode) {
@@ -885,9 +876,13 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                 }
                 return true;
             case ASCEND_KEY:
-                seek(rogue.depthLevel - 1, RECORDING_SEEK_MODE_DEPTH);
+                seek(max(rogue.depthLevel - 1, 1), RECORDING_SEEK_MODE_DEPTH);
                 return true;
             case DESCEND_KEY:
+                if (rogue.depthLevel == maxLevelChanges) {
+                    flashTemporaryAlert(" Already reached deepest depth explored ", 2000);
+                    return false;
+                }
                 seek(rogue.depthLevel + 1, RECORDING_SEEK_MODE_DEPTH);
                 return true;
             case INVENTORY_KEY:
