@@ -3563,6 +3563,11 @@ void negate(creature *monst) {
         monst->info.flags &= ~MONST_IMMUNE_TO_FIRE;
         monst->movementSpeed = monst->info.movementSpeed;
         monst->attackSpeed = monst->info.attackSpeed;
+        if (monst != &player && monst->mutationIndex > -1 && mutationCatalog[monst->mutationIndex].canBeNegated
+            && rogue.patchVersion >= 3) {
+
+            monst->mutationIndex = -1;
+        }
         if (monst != &player && (monst->info.flags & NEGATABLE_TRAITS)) {
             if ((monst->info.flags & MONST_FIERY) && monst->status[STATUS_BURNING]) {
                 extinguishFireOnCreature(monst);
