@@ -1,0 +1,33 @@
+#!/bin/bash
+set -euo pipefail
+
+# Emit extra version string (if any) to append to BROGUE_VERSION_STRING
+
+# Release builds should write nothing to stdout.  Development builds
+# (everything else) should write something, but what depends on the information
+# available.
+
+# If we're in CI and the ref is the gha-build branch, assume we are a release
+if [[ ${GITHUB_ACTIONS:-false} == true ]] && [[ $GITHUB_REF =~ ^refs/heads/gha-build ]]
+then
+    exit 0
+fi
+
+# Otherwise we must be a development build
+
+if [[ ${GITHUB_ACTIONS:-false} == true ]]
+then
+    # If we're in CI, use what they hand us
+    # If it's a branch, strip refs/heads.  Highlight tags by keeping the prefix
+    EXTRA_VERSION="-dev.${GITHUB_SHA:0:7}.${GITHUB_REF##refs/heads/}"
+elif { which git && git rev-parse --show-toplevel; } >/dev/null 2>&1
+then
+    # Otherwise inspect git if it and a repo are available
+    EXTRA_VERSION="-dev.$(git log -1 --format='%h').$(git rev-parse --abbrev-ref HEAD)"
+else
+    # Finally, if nothing else just call it "development"
+    EXTRA_VERSION=-dev
+fi
+
+# No matter what, limit the extra version to 64 characters
+echo "${EXTRA_VERSION:0:64}"
