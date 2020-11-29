@@ -3566,7 +3566,7 @@ void negate(creature *monst) {
         if (monst != &player && monst->mutationIndex > -1 && mutationCatalog[monst->mutationIndex].canBeNegated
             && rogue.patchVersion >= 3) {
 
-                    monst->mutationIndex = -1;
+            monst->mutationIndex = -1;
         }
         if (monst != &player && (monst->info.flags & NEGATABLE_TRAITS)) {
             if ((monst->info.flags & MONST_FIERY) && monst->status[STATUS_BURNING]) {
