@@ -481,16 +481,37 @@ void moveEntrancedMonsters(enum directions dir) {
 
     dir = oppositeDirection(dir);
 
-    for (monst = monsters->nextCreature; monst != NULL; monst = nextMonst) {
-        nextMonst = monst->nextCreature;
-        if (monst->status[STATUS_ENTRANCED]
-            && !monst->status[STATUS_STUCK]
-            && !monst->status[STATUS_PARALYZED]
-            && !(monst->bookkeepingFlags & MB_CAPTIVE)) {
+    if (rogue.patchVersion >= 3) {
+        for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
+            monst->bookkeepingFlags &= ~MB_HAS_ENTRANCED_MOVED;
+        }
 
-            moveMonster(monst, nbDirs[dir][0], nbDirs[dir][1]);
+        for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
+            if (!(monst->bookkeepingFlags & MB_HAS_ENTRANCED_MOVED)
+                && monst->status[STATUS_ENTRANCED]
+                && !monst->status[STATUS_STUCK]
+                && !monst->status[STATUS_PARALYZED]
+                && !(monst->bookkeepingFlags & MB_CAPTIVE)) {
+
+                moveMonster(monst, nbDirs[dir][0], nbDirs[dir][1]);
+                monst->bookkeepingFlags |= MB_HAS_ENTRANCED_MOVED;
+                monst = monsters; // loop through from the beginning to be safe
+            }
+        }
+
+    } else {
+        for (monst = monsters->nextCreature; monst != NULL; monst = nextMonst) {
+            nextMonst = monst->nextCreature;
+            if (monst->status[STATUS_ENTRANCED]
+                && !monst->status[STATUS_STUCK]
+                && !monst->status[STATUS_PARALYZED]
+                && !(monst->bookkeepingFlags & MB_CAPTIVE)) {
+
+                moveMonster(monst, nbDirs[dir][0], nbDirs[dir][1]);
+            }
         }
     }
+
 }
 
 void becomeAllyWith(creature *monst) {
