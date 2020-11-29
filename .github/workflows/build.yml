@@ -19,13 +19,13 @@ jobs:
 
     - name: "Compile"
       run: |
-        make LINUX_APP=YES bin/brogue
+        make LINUX_APP=YES linux.tar.gz
 
     - name: "Upload artifact"
       uses: actions/upload-artifact@v1
       with:
-        name: linux-bin
-        path: bin
+        name: linux-artifacts
+        path: linux.tar.gz
 
   macos:
     runs-on: macos-latest

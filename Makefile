@@ -68,7 +68,8 @@ bin/brogue.exe: $(objects)
 
 clean:
 	$(RM) src/brogue/*.o src/platform/*.o $(binary) \
-	  seed-catalog.txt README.txt CHANGELOG.txt
+	  seed-catalog.txt README.txt CHANGELOG.txt \
+	  linux.tar.gz
 
 common-files := README.txt CHANGELOG.txt LICENSE.txt seed-catalog.txt
 common-bin := bin/assets bin/keymap.txt
