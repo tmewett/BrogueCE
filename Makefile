@@ -69,7 +69,8 @@ bin/brogue.exe: $(objects)
 clean:
 	$(RM) src/brogue/*.o src/platform/*.o $(binary) \
 	  seed-catalog.txt README.txt CHANGELOG.txt \
-	  linux.tar.gz
+	  macos.zip linux.tar.gz
+	$(RM) -r Brogue\ CE.app
 
 common-files := README.txt CHANGELOG.txt LICENSE.txt seed-catalog.txt
 common-bin := bin/assets bin/keymap.txt
@@ -83,9 +84,11 @@ seed-catalog.txt: $(binary)
 windows.zip: $(common-files) $(common-bin)
 	zip -rvl $@ $^ $(binary) bin/*.dll bin/brogue-cmd.bat
 
-macos.zip: $(common-files)
+# Filter-out problematic names so we can quote them manually
+macos.zip: $(common-files) Brogue\ CE.app
 	chmod +x "Brogue CE.app"/Contents/MacOS/brogue
-	zip -rv -ll $@ $^ "Brogue CE.app"
+	cd "Brogue CE.app"/Contents && dylibbundler -cd -b -x MacOS/brogue
+	zip -rv -ll $@ $(filter-out Brogue CE.app,$^) "Brogue CE.app"
 
 linux.tar.gz: $(common-files) $(common-bin) brogue
 	chmod +x bin/brogue
@@ -99,8 +102,9 @@ macos/Brogue.icns: icon_32.png icon_128.png icon_256.png icon_512.png
 	png2icns $@ $^
 	$(RM) $^
 
-Brogue.app: bin/brogue
-	mkdir -p $@/Contents/{MacOS,Resources}
-	cp macos/Info.plist $@/Contents
-	cp bin/brogue $@/Contents/MacOS
-	cp -r macos/Brogue.icns bin/assets $@/Contents/Resources
+Brogue\ CE.app: bin/brogue
+	mkdir -p "$@"/Contents/MacOS
+	mkdir -p "$@"/Contents/Resources
+	cp macos/Info.plist "$@"/Contents
+	cp bin/brogue "$@"/Contents/MacOS
+	cp -r macos/Brogue.icns bin/assets "$@"/Contents/Resources

@@ -40,20 +40,16 @@ jobs:
 
     - name: "Compile"
       run: |
-        make MAC_APP=YES Brogue.app
+        make MAC_APP=YES macos.zip
       env:
         # 10.6 is the version targeted by the SDL build scripts
         MACOSX_DEPLOYMENT_TARGET: "10.6"
 
-    - name: "Fix and bundle dylib references"
-      run: |
-        cd Brogue.app/Contents && dylibbundler -cd -b -x MacOS/brogue
-
     - name: "Upload artifact"
       uses: actions/upload-artifact@v1
       with:
-        name: Brogue.app
-        path: Brogue.app
+        name: macos-artifacts
+        path: macos.zip
 
   windows:
     runs-on: windows-latest
