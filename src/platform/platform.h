@@ -92,6 +92,8 @@ unsigned int glyphToUnicode(enum displayGlyph glyph);
 
 #ifdef BROGUE_SDL
 extern struct brogueConsole sdlConsole;
+extern int windowWidth;
+extern int windowHeight;
 #endif
 
 #ifdef BROGUE_CURSES
@@ -104,9 +106,7 @@ extern struct brogueConsole webConsole;
 
 extern struct brogueConsole currentConsole;
 extern boolean noMenu;
-extern int brogueFontSize;
 extern char dataDirectory[];
-extern boolean initialFullScreen;
 
 // defined in brogue
 extern playerCharacter rogue;

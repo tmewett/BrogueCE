@@ -1,32 +1,20 @@
-#include <string.h>
-#include <stdlib.h>
-#include <stdint.h>
 #ifdef SDL_PATHS
 #include <unistd.h>
 #endif
 
-#include <SDL.h>
-#include <SDL_image.h>
-
-#include "platform.h"
+#include <limits.h>
+#include "tiles.h"
 
 #define PAUSE_BETWEEN_EVENT_POLLING     36L//17
 #define MAX_REMAPS  128
-
-// Dimensions of the font characters
-#define N_FONTS  15
-static const int fontWidths[] = {7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21, 24, 27};
-static const int fontHeights[] = {11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 38, 44, 49};
 
 struct keypair {
     char from;
     char to;
 };
 
-static SDL_Window *Win = NULL;
-static SDL_Surface *WinSurf = NULL;
-static SDL_Surface *Font = NULL;
-static SDL_Surface *Tiles = NULL;
+extern SDL_Window *Win;
+extern SDL_Surface *WinSurf;
 
 static struct keypair remapping[MAX_REMAPS];
 static size_t nremaps = 0;
@@ -44,85 +32,6 @@ static void sdlfatal() {
 static void imgfatal() {
     fprintf(stderr, "Fatal SDL_image error: %s\n", IMG_GetError());
     exit(1);
-}
-
-
-static void refreshWindow() {
-    WinSurf = SDL_GetWindowSurface(Win);
-    if (WinSurf == NULL) sdlfatal();
-    SDL_FillRect(WinSurf, NULL, SDL_MapRGB(WinSurf->format, 0, 0, 0));
-    refreshScreen();
-}
-
-
-static void loadFont(int fontsize) {
-    char filename[BROGUE_FILENAME_MAX];
-
-    static int lastsize = 0;
-    if (lastsize != fontsize) {
-        sprintf(filename, "%s/assets/font-%i.png", dataDirectory, fontsize);
-        if (Font != NULL) SDL_FreeSurface(Font);
-        Font = IMG_Load(filename);
-        if (Font == NULL) imgfatal();
-
-        sprintf(filename, "%s/assets/tiles-%i.png", dataDirectory, fontsize);
-        if (Tiles != NULL) SDL_FreeSurface(Tiles);
-        Tiles = IMG_Load(filename);
-        if (Tiles == NULL) imgfatal();
-    }
-    lastsize = fontsize;
-}
-
-
-static int fitFontSize(int width, int height) {
-    int size;
-    for (
-        size = N_FONTS - 1;
-        size > 0
-            && (fontWidths[size] * COLS > width
-                || fontHeights[size] * ROWS > height);
-        size--
-    );
-    return size + 1;
-}
-
-
-/*
-Creates or resizes the game window with the currently loaded font.
-*/
-static void ensureWindow() {
-    if (Font == NULL) return;
-    int cellw = fontWidths[brogueFontSize - 1], cellh = fontHeights[brogueFontSize - 1];
-
-    if (Win != NULL) {
-        SDL_SetWindowSize(Win, cellw*COLS, cellh*ROWS);
-    } else {
-        Win = SDL_CreateWindow("Brogue",
-            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, cellw*COLS, cellh*ROWS, SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI |
-            (initialFullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
-        if (Win == NULL) sdlfatal();
-
-        char filename[BROGUE_FILENAME_MAX];
-        sprintf(filename, "%s/assets/icon.png", dataDirectory);
-        SDL_Surface *icon = IMG_Load(filename);
-        if (icon == NULL) imgfatal();
-        SDL_SetWindowIcon(Win, icon);
-        SDL_FreeSurface(icon);
-    }
-
-    refreshWindow();
-}
-
-
-static void getWindowPadding(int *x, int *y) {
-    if (Font == NULL) return;
-    int cellw = fontWidths[brogueFontSize - 1], cellh = fontHeights[brogueFontSize - 1];
-
-    int winw, winh;
-    SDL_GetWindowSize(Win, &winw, &winh);
-
-    *x = (winw - cellw*COLS) / 2;
-    *y = (winh - cellh*ROWS) / 2;
 }
 
 
@@ -237,10 +146,6 @@ platform-specific inputs/behaviours.
 */
 static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
     static int mx = 0, my = 0;
-    int cellw = fontWidths[brogueFontSize - 1], cellh = fontHeights[brogueFontSize - 1];
-
-    int padx, pady;
-    getWindowPadding(&padx, &pady);
 
     returnEvent->eventType = EVENT_ERROR;
     returnEvent->shiftKey = _modifierHeld(0);
@@ -259,24 +164,22 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
             returnEvent->param1 = ESCAPE_KEY;
             return true;
         } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-            brogueFontSize = fitFontSize(event.window.data1, event.window.data2);
-            loadFont(brogueFontSize);
-            refreshWindow();
+            resizeWindow(event.window.data1, event.window.data2);
         } else if (event.type == SDL_KEYDOWN) {
             SDL_Keycode key = event.key.keysym.sym;
 
-            if (key == SDLK_PAGEUP && brogueFontSize < N_FONTS) {
-                loadFont(++brogueFontSize);
-                ensureWindow();
-            } else if (key == SDLK_PAGEDOWN && brogueFontSize > 1) {
-                loadFont(--brogueFontSize);
-                ensureWindow();
+            if (key == SDLK_PAGEUP) {
+                resizeWindow(windowWidth * 11/10, windowHeight * 11/10);
+                continue;
+            } else if (key == SDLK_PAGEDOWN) {
+                resizeWindow(windowWidth * 10/11, windowHeight * 10/11);
+                continue;
             } else if (key == SDLK_F11 || key == SDLK_F12
                     || key == SDLK_RETURN && (SDL_GetModState() & KMOD_ALT)) {
-                // Toggle fullscreen
-                SDL_SetWindowFullscreen(Win,
-                    (SDL_GetWindowFlags(Win) & SDL_WINDOW_FULLSCREEN_DESKTOP) ? 0 : SDL_WINDOW_FULLSCREEN_DESKTOP);
-                refreshWindow();
+                SDL_DisplayMode mode;
+                SDL_GetCurrentDisplayMode(0, &mode);
+                int targetSize = (windowWidth == mode.w && windowHeight == mode.h ? 0 : INT_MAX);
+                resizeWindow(targetSize, targetSize);
                 continue;
             }
 
@@ -296,12 +199,10 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
 
             if (!textInput) {
                 c = applyRemaps(c);
-                if ((c == '=' || c == '+') && brogueFontSize < N_FONTS) {
-                    loadFont(++brogueFontSize);
-                    ensureWindow();
-                } else if (c == '-' && brogueFontSize > 1) {
-                    loadFont(--brogueFontSize);
-                    ensureWindow();
+                if (c == '=' || c == '+') {
+                    resizeWindow(windowWidth * 11/10, windowHeight * 11/10);
+                } else if (c == '-') {
+                    resizeWindow(windowWidth * 10/11, windowHeight * 10/11);
                 }
             }
 
@@ -320,15 +221,15 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
                 } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_RIGHT) {
                     returnEvent->eventType = RIGHT_MOUSE_UP;
                 }
-                returnEvent->param1 = (event.button.x - padx) / cellw;
-                returnEvent->param2 = (event.button.y - pady) / cellh;
+                returnEvent->param1 = event.button.x * COLS / windowWidth;
+                returnEvent->param2 = event.button.y * ROWS / windowHeight;
                 return true;
             }
         } else if (event.type == SDL_MOUSEMOTION) {
             // We don't want to return on a mouse motion event, because only the last
             // in the queue is important. That's why we just set ret=true
-            int xcell = (event.motion.x - padx) / cellw,
-                ycell = (event.motion.y - pady) / cellh;
+            int xcell = event.motion.x * COLS / windowWidth,
+                ycell = event.motion.y * ROWS / windowHeight;
             if (xcell != mx || ycell != my) {
                 returnEvent->eventType = MOUSE_ENTERED_CELL;
                 returnEvent->param1 = xcell;
@@ -370,14 +271,7 @@ static void _gameLoop() {
 
     lastEvent.eventType = EVENT_ERROR;
 
-    if (brogueFontSize == 0) {
-        SDL_DisplayMode mode;
-        SDL_GetCurrentDisplayMode(0, &mode);
-        brogueFontSize = fitFontSize(mode.w - 20, mode.h - 100);
-    }
-
-    loadFont(brogueFontSize);
-    ensureWindow();
+    resizeWindow(windowWidth, windowHeight);
 
     rogueMain();
 
@@ -487,35 +381,30 @@ static void _plotChar(
     short foreRed, short foreGreen, short foreBlue,
     short backRed, short backGreen, short backBlue
 ) {
-    int padx, pady;
-    getWindowPadding(&padx, &pady);
-
-    SDL_Surface *sheet;
-    inputChar = fontIndex(inputChar);
-    if (inputChar >= 256) {
-        sheet = Tiles;
-        inputChar -= 256;
-    } else {
-        sheet = Font;
-    }
-
+    SDL_Surface *tiles;
     SDL_Rect src, dest;
-    int cellw = fontWidths[brogueFontSize - 1], cellh = fontHeights[brogueFontSize - 1];
-    src.x = (inputChar % 16) * cellw;
-    src.y = (inputChar / 16) * cellh;
-    src.w = cellw;
-    src.h = cellh;
 
-    dest.x = cellw * x + padx;
-    dest.y = cellh * y + pady;
-    dest.w = cellw;
-    dest.h = cellh;
+    inputChar = fontIndex(inputChar);
 
+    dest.x = x * windowWidth / COLS;
+    dest.y = y * windowHeight / ROWS;
+    dest.w = (x+1) * windowWidth / COLS - dest.x;
+    dest.h = (y+1) * windowHeight / ROWS - dest.y;
+
+    tiles = getTiles(dest.w, dest.h);
+    if (!tiles) return;
+
+    src.x = (inputChar % 16) * dest.w;
+    src.y = (inputChar / 16) * dest.h;
+    src.w = dest.w;
+    src.h = dest.h;
+
+    prepareTile(tiles, inputChar / 16, inputChar % 16, false);
     SDL_FillRect(WinSurf, &dest, SDL_MapRGB(
         WinSurf->format, backRed * 255 / 100, backGreen * 255 / 100, backBlue * 255 / 100
     ));
-    SDL_SetSurfaceColorMod(sheet, foreRed * 255 / 100, foreGreen * 255 / 100, foreBlue * 255 / 100);
-    SDL_BlitSurface(sheet, &src, WinSurf, &dest);
+    SDL_SetSurfaceColorMod(tiles, foreRed * 255 / 100, foreGreen * 255 / 100, foreBlue * 255 / 100);
+    SDL_BlitSurface(tiles, &src, WinSurf, &dest);
 }
 
 

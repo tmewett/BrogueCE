@@ -1,3 +1,5 @@
+#include <math.h>
+#include <limits.h>
 #include "platform.h"
 
 // Expanding a macro as a string constant requires two levels of macros
@@ -6,13 +8,11 @@
 
 struct brogueConsole currentConsole;
 
-int brogueFontSize = 0;
 char dataDirectory[BROGUE_FILENAME_MAX] = STRINGIFY(DATADIR);
 boolean serverMode = false;
 boolean hasGraphics = false;
 boolean graphicsEnabled = false;
 boolean isCsvFormat = false;
-boolean initialFullScreen = false;
 
 static void printCommandlineHelp() {
     printf("%s",
@@ -27,7 +27,7 @@ static void printCommandlineHelp() {
     "--server-mode              run the game in web-brogue server mode\n"
 #endif
 #ifdef BROGUE_SDL
-    "--size N                   starts the game at font size N (1 to 13)\n"
+    "--size N                   starts the game at font size N (1 to 20)\n"
     "--graphics     -G          enable graphical tiles\n"
     "--full-screen  -F          enable full screen\n"
 #endif
@@ -180,17 +180,20 @@ int main(int argc, char *argv[])
 
 #ifdef BROGUE_SDL
         if (strcmp(argv[i], "--size") == 0) {
-            // pick a font size
-            int size = atoi(argv[i + 1]);
-            if (size != 0) {
+            if (i + 1 < argc) {
+                int size = atoi(argv[i + 1]);
+                if (size > 0 && size <= 20 && windowWidth != INT_MAX) {
+                    windowWidth = round(pow(1.1, size) * 620.);
+                    windowHeight = windowWidth * 9/16;
+                };
+
                 i++;
-                brogueFontSize = size;
                 continue;
-            };
+            }
         }
 
         if (strcmp(argv[i], "-F") == 0 || strcmp(argv[i], "--full-screen") == 0) {
-            initialFullScreen = true;
+            windowWidth = windowHeight = INT_MAX;
             continue;
         }
 #endif
