@@ -252,20 +252,9 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
     // ~ for (int i=0; i < 100 && SDL_PollEvent(&event); i++) {
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT) {
-            // the player wants to close the window...
-            if (rogue.recording) {
-                // auto-save
-                flushBufferToFile();
-                if (rogue.gameInProgress && !rogue.quit && !rogue.gameHasEnded) {
-                    saveGameNoPrompt();
-                } else {
-                    char path[BROGUE_FILENAME_MAX];
-                    saveRecordingNoPrompt(path);
-                }
-            }
-            // exit immediately without further ado
+            // the player clicked the X button!
             SDL_Quit();
-            exit(0);
+            quitImmediately();
         } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
             brogueFontSize = fitFontSize(event.window.data1, event.window.data2);
             loadFont(brogueFontSize);

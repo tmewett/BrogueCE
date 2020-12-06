@@ -392,6 +392,23 @@ void titleMenu() {
     }
 }
 
+// Closes Brogue without any further prompts, animations, or user interaction.
+void quitImmediately() {
+    // If we are recording a game, save it.
+    if (rogue.recording) {
+        flushBufferToFile();
+        if (rogue.gameInProgress && !rogue.quit && !rogue.gameHasEnded) {
+            // Game isn't over yet, create a savegame.
+            saveGameNoPrompt();
+        } else {
+            // Save it as a recording.
+            char path[BROGUE_FILENAME_MAX];
+            saveRecordingNoPrompt(path);
+        }
+    }
+    exit(0);
+}
+
 void dialogAlert(char *message) {
     cellDisplayBuffer rbuf[COLS][ROWS];
 

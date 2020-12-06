@@ -3185,6 +3185,7 @@ extern "C" {
     void checkForDungeonErrors();
 
     boolean dialogChooseFile(char *path, const char *suffix, const char *prompt);
+    void quitImmediately();
     void dialogAlert(char *message);
     void mainBrogueJunction();
     void printSeedCatalog(unsigned long startingSeed, unsigned long numberOfSeedsToScan, unsigned int scanThroughDepth, boolean isCsvFormat);
