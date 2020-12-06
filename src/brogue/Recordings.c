@@ -1130,17 +1130,6 @@ void saveGame() {
     deleteMessages();
 }
 
-void saveRecordingNoPrompt(char *filePath)
-{
-    if (rogue.playbackMode) {
-        return;
-    }
-    getAvailableFilePath(filePath, "Recording", RECORDING_SUFFIX);
-    strcat(filePath, RECORDING_SUFFIX);
-    remove(filePath);
-    rename(currentFilePath, filePath);
-}
-
 void saveRecording(char *filePath) {
     char defaultPath[BROGUE_FILENAME_MAX];
     boolean askAgain;
@@ -1153,6 +1142,7 @@ void saveRecording(char *filePath) {
 
     deleteMessages();
     do {
+        if (serverMode) break;  // Just save as the suggested name.
         askAgain = false;
         if (getInputTextString(filePath, "Save recording as (<esc> to cancel): ",
                                BROGUE_FILENAME_MAX - strlen(RECORDING_SUFFIX), defaultPath, RECORDING_SUFFIX, TEXT_INPUT_FILENAME, false)) {
@@ -1160,7 +1150,6 @@ void saveRecording(char *filePath) {
             strcat(filePath, RECORDING_SUFFIX);
             if (!fileExists(filePath) || confirm("File of that name already exists. Overwrite?", true)) {
                 remove(filePath);
-                rename(currentFilePath, filePath);
             } else {
                 askAgain = true;
             }
@@ -1170,10 +1159,11 @@ void saveRecording(char *filePath) {
             if (fileExists(filePath)) {
                 remove(filePath);
             }
-            rename(currentFilePath, filePath);
         }
     } while (askAgain);
     deleteMessages();
+
+    rename(currentFilePath, filePath);
 }
 
 void copyFile(char *fromFilePath, char *toFilePath, unsigned long fromFileLength) {

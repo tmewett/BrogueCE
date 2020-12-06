@@ -2400,7 +2400,12 @@ void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsD
 
     returnEvent->eventType = EVENT_ERROR;
 
-    if (rogue.playbackMode && !realInputEvenInPlayback) {
+    if (rogue.gameHasEnded && !(rogue.playbackMode && !realInputEvenInPlayback)) {
+        // If game has ended and we're asked for user input, return Escape to
+        // cancel out of any prompts or input loops
+        returnEvent->eventType = KEYSTROKE;
+        returnEvent->param1 = ESCAPE_KEY;
+    } else if (rogue.playbackMode && !realInputEvenInPlayback) {
         do {
             repeatAgain = false;
             if ((!rogue.playbackFastForward && rogue.playbackBetweenTurns)
