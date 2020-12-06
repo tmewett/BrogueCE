@@ -1069,16 +1069,11 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         displayMoreSign();
     }
 
-    if (serverMode) {
-        blackOutScreen();
-        saveRecordingNoPrompt(recordingFilename);
-    } else {
-        if (!rogue.playbackMode && saveHighScore(theEntry)) {
-            printHighScores(true);
-        }
-        blackOutScreen();
-        saveRecording(recordingFilename);
+    if (!serverMode && !rogue.playbackMode && saveHighScore(theEntry)) {
+        printHighScores(true);
     }
+    blackOutScreen();
+    saveRecording(recordingFilename);
 
     if (!rogue.playbackMode) {
         if (!rogue.quit) {
@@ -1099,7 +1094,7 @@ void victory(boolean superVictory) {
     short i, j, gemCount = 0;
     unsigned long totalValue = 0;
     rogueHighScoresEntry theEntry;
-    boolean qualified, isPlayback;
+    boolean isPlayback;
     cellDisplayBuffer dbuf[COLS][ROWS];
     char recordingFilename[BROGUE_FILENAME_MAX] = {0};
 
@@ -1210,12 +1205,6 @@ void victory(boolean superVictory) {
         theEntry.score /= 10;
     }
 
-    if (!rogue.wizard && !rogue.playbackMode) {
-        qualified = saveHighScore(theEntry);
-    } else {
-        qualified = false;
-    }
-
     isPlayback = rogue.playbackMode;
     rogue.playbackMode = false;
     rogue.playbackMode = isPlayback;
@@ -1223,10 +1212,11 @@ void victory(boolean superVictory) {
     if (serverMode) {
         // There's no save recording prompt, so let the player see achievements.
         displayMoreSign();
-        saveRecordingNoPrompt(recordingFilename);
-    } else {
-        saveRecording(recordingFilename);
-        printHighScores(qualified);
+    }
+    saveRecording(recordingFilename);
+
+    if (!serverMode && !rogue.playbackMode && saveHighScore(theEntry)) {
+        printHighScores(true);
     }
 
     if (!rogue.playbackMode) {
