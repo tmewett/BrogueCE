@@ -51,6 +51,7 @@ windows/icon.o: windows/icon.rc
 
 bin/brogue.exe: $(objects) windows/icon.o
 	$(CC) $(cflags) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(libs) $(LDLIBS)
+	mt -manifest windows/brogue.exe.manifest -outputresource:bin/brogue.exe;1
 
 clean:
 	$(RM) src/brogue/*.o src/platform/*.o bin/brogue{,.exe}
