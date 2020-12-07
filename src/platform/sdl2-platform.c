@@ -377,11 +377,13 @@ static void _plotChar(
     enum displayGlyph inputChar,
     short x, short y,
     short foreRed, short foreGreen, short foreBlue,
-    short backRed, short backGreen, short backBlue
+    short backRed, short backGreen, short backBlue,
+    short outlineFlags, short outlineRed, short outlineGreen, short outlineBlue
 ) {
     updateTile(y, x, fontIndex(inputChar),
         foreRed, foreGreen, foreBlue,
-        backRed, backGreen, backBlue);
+        backRed, backGreen, backBlue,
+        outlineFlags, outlineRed, outlineGreen, outlineBlue);
 }
 
 

@@ -57,7 +57,8 @@ struct brogueConsole {
         enum displayGlyph inputChar,
         short x, short y,
         short foreRed, short foreGreen, short foreBlue,
-        short backRed, short backGreen, short backBlue
+        short backRed, short backGreen, short backBlue,
+        short outlineFlags, short outlineRed, short outlineGreen, short outlineBlue
     );
 
     void (*remap)(const char *, const char *);
@@ -112,4 +113,3 @@ extern char dataDirectory[];
 
 // defined in brogue
 extern playerCharacter rogue;
-

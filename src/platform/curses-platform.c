@@ -64,7 +64,8 @@ static char glyphToAscii(enum displayGlyph glyph) {
 static void curses_plotChar(enum displayGlyph ch,
               short xLoc, short yLoc,
               short foreRed, short foreGreen, short foreBlue,
-              short backRed, short backGreen, short backBlue) {
+              short backRed, short backGreen, short backBlue,
+              short outlineFlags, short outlineRed, short outlineGreen, short outlineBlue) {
 
     fcolor fore;
     fcolor back;

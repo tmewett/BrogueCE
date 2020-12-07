@@ -1120,6 +1120,7 @@ enum tileFlags {
 #define RELABEL_KEY         'R'
 #define TRUE_COLORS_KEY     '\\'
 #define AGGRO_DISPLAY_KEY   ']'
+#define LIGHTING_OUTLINE_KEY '\''
 #define DROP_KEY            'd'
 #define CALL_KEY            'c'
 #define QUIT_KEY            'Q'
@@ -2232,6 +2233,7 @@ typedef struct playerCharacter {
     boolean eligibleToUseStairs;        // so the player uses stairs only when he steps onto them
     boolean trueColorMode;              // whether lighting effects are disabled
     boolean displayAggroRangeMode;      // whether your stealth range is displayed
+    boolean lightingOutlineMode;        // whether light/dark cells are outlined
     boolean quit;                       // to skip the typical end-game theatrics when the player quits
     unsigned long seed;                 // the master seed for generating the entire dungeon
     short RNG;                          // which RNG are we currently using?
@@ -2677,7 +2679,8 @@ extern "C" {
     void plotChar(enum displayGlyph inputChar,
                   short xLoc, short yLoc,
                   short backRed, short backGreen, short backBlue,
-                  short foreRed, short foreGreen, short foreBlue);
+                  short foreRed, short foreGreen, short foreBlue,
+                  short outlineFlags, short outlineRed, short outlineGreen, short outlineBlue);
     boolean pauseForMilliseconds(short milliseconds);
     boolean isApplicationActive();
     void nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance);
@@ -2708,9 +2711,10 @@ extern "C" {
     short printTextBox(char *textBuf, short x, short y, short width,
                        color *foreColor, color *backColor,
                        cellDisplayBuffer rbuf[COLS][ROWS],
+                       short rout[COLS][ROWS],
                        brogueButton *buttons, short buttonCount);
-    void printMonsterDetails(creature *monst, cellDisplayBuffer rbuf[COLS][ROWS]);
-    void printFloorItemDetails(item *theItem, cellDisplayBuffer rbuf[COLS][ROWS]);
+    void printMonsterDetails(creature *monst, cellDisplayBuffer rbuf[COLS][ROWS], short rout[COLS][ROWS]);
+    void printFloorItemDetails(item *theItem, cellDisplayBuffer rbuf[COLS][ROWS], short rout[COLS][ROWS]);
     unsigned long printCarriedItemDetails(item *theItem,
                                           short x, short y, short width,
                                           boolean includeButtons,
@@ -2723,6 +2727,11 @@ extern "C" {
     void waitForKeystrokeOrMouseClick();
     boolean confirm(char *prompt, boolean alsoDuringPlayback);
     void refreshDungeonCell(short x, short y);
+    void refreshLightingOutlines();
+    void multiplyOutlineOpacity(short* outline, short multiplier);
+    void overlayLightingOutlines(cellDisplayBuffer dbuf[COLS][ROWS], short rout[COLS][ROWS]);
+    void restoreLightingOutlines(short rout[COLS][ROWS]);
+    void clearLightingOutlines();
     void applyColorMultiplier(color *baseColor, const color *multiplierColor);
     void applyColorAverage(color *baseColor, const color *newColor, short averageWeight);
     void applyColorAugment(color *baseColor, const color *augmentingColor, short augmentWeight);

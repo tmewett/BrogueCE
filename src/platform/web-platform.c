@@ -150,7 +150,8 @@ static unsigned int fixUnicode(unsigned int code) {
 static void web_plotChar(enum displayGlyph inputChar,
                          short xLoc, short yLoc,
                          short foreRed, short foreGreen, short foreBlue,
-                         short backRed, short backGreen, short backBlue) {
+                         short backRed, short backGreen, short backBlue,
+                         short outlineFlags, short outlineRed, short outlineGreen, short outlineBlue) {
     unsigned char outputBuffer[OUTPUT_SIZE];
     unsigned char firstCharByte, secondCharByte;
     enum displayGlyph translatedChar;

@@ -295,6 +295,7 @@ might succeed on the original computer."
 
 void playbackPanic() {
     cellDisplayBuffer rbuf[COLS][ROWS];
+    short rout[COLS][ROWS];
 
     if (!rogue.playbackOOS) {
         rogue.playbackFastForward = false;
@@ -308,13 +309,14 @@ void playbackPanic() {
         confirmMessages();
         message("Playback is out of sync.", false);
 
-        printTextBox(OOS_APOLOGY, 0, 0, 0, &white, &black, rbuf, NULL, 0);
+        printTextBox(OOS_APOLOGY, 0, 0, 0, &white, &black, rbuf, rout, NULL, 0);
 
         rogue.playbackMode = false;
         displayMoreSign();
         rogue.playbackMode = true;
 
         overlayDisplayBuffer(rbuf, 0);
+        restoreLightingOutlines(rout);
 
         printf("Playback panic at location %li! Turn number %li.\n", recordingLocation - 1, rogue.playerTurnNumber);
         overlayDisplayBuffer(rbuf, 0);
@@ -420,6 +422,7 @@ void loadNextAnnotation() {
 
 void displayAnnotation() {
     cellDisplayBuffer rbuf[COLS][ROWS];
+    short rout[COLS][ROWS];
 
     if (rogue.playbackMode
         && rogue.playerTurnNumber == rogue.nextAnnotationTurn) {
@@ -427,13 +430,14 @@ void displayAnnotation() {
         if (!rogue.playbackFastForward) {
             refreshSideBar(-1, -1, false);
 
-            printTextBox(rogue.nextAnnotation, player.xLoc, 0, 0, &black, &white, rbuf, NULL, 0);
+            printTextBox(rogue.nextAnnotation, player.xLoc, 0, 0, &black, &white, rbuf, rout, NULL, 0);
 
             rogue.playbackMode = false;
             displayMoreSign();
             rogue.playbackMode = true;
 
             overlayDisplayBuffer(rbuf, 0);
+            restoreLightingOutlines(rout);
         }
 
         loadNextAnnotation();
@@ -1025,6 +1029,17 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                     }
                 }
                 return true;
+            case LIGHTING_OUTLINE_KEY:
+                rogue.lightingOutlineMode = !rogue.lightingOutlineMode;
+                refreshLightingOutlines();
+                commitDraws();
+                if (rogue.lightingOutlineMode) {
+                    messageWithColor(KEYBOARD_LABELS ? "Lighting outlines displayed. Press \' again to hide." : "Lighting outlines displayed.",
+                                     &teal, false);
+                } else {
+                    messageWithColor(KEYBOARD_LABELS ? "Lighting outlines hidden. Press \' again to display." : "Lighting outlines hidden.",
+                                     &teal, false);
+                }
             case SEED_KEY:
                 //rogue.playbackMode = false;
                 //DEBUG {displayGrid(safetyMap); displayMoreSign(); displayLevel();}

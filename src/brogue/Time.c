@@ -762,6 +762,9 @@ void updateVision(boolean refreshDisplay) {
     updateTelepathy();
     updateLighting();
     updateFieldOfViewDisplay(true, refreshDisplay);
+    if (rogue.lightingOutlineMode) {
+        refreshLightingOutlines();
+    }
 
     //  for (i=0; i<DCOLS; i++) {
     //      for (j=0; j<DROWS; j++) {
@@ -2540,6 +2543,7 @@ void playerTurnEnded() {
         refreshSideBar(-1, -1, false);
 
         applyInstantTileEffectsToCreature(&player);
+
         if (rogue.gameHasEnded) { // caustic gas, lava, trapdoor, etc.
             return;
         }

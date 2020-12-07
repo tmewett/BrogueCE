@@ -1044,6 +1044,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     }
     rogue.highScoreSaved = true;
 
+    clearLightingOutlines();
     if (rogue.quit) {
         blackOutScreen();
     } else {
@@ -1128,6 +1129,7 @@ void victory(boolean superVictory) {
 
     rogue.gameInProgress = false;
     flushBufferToFile();
+    clearLightingOutlines();
 
     //
     // First screen - Congratulations...

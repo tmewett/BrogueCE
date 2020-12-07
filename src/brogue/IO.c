@@ -191,6 +191,8 @@ short actionMenu(short x, boolean playingBack) {
     short i, j, longestName = 0, buttonChosen;
     cellDisplayBuffer dbuf[COLS][ROWS], rbuf[COLS][ROWS];
 
+    short rout[COLS][ROWS];
+
     encodeMessageColor(yellowColorEscape, 0, &itemMessageColor);
     encodeMessageColor(whiteColorEscape, 0, &white);
     encodeMessageColor(darkGrayColorEscape, 0, &black);
@@ -416,9 +418,12 @@ short actionMenu(short x, boolean playingBack) {
 
         clearDisplayBuffer(dbuf);
         rectangularShading(x - 1, y, longestName + 2, buttonCount, &black, INTERFACE_OPACITY / 2, dbuf);
+
         overlayDisplayBuffer(dbuf, rbuf);
+        overlayLightingOutlines(dbuf, rout);
         buttonChosen = buttonInputLoop(buttons, buttonCount, x - 1, y, longestName + 2, buttonCount, NULL);
         overlayDisplayBuffer(rbuf, NULL);
+        restoreLightingOutlines(rout);
         if (buttonChosen == -1) {
             return -1;
         } else if (takeActionOurselves[buttonChosen]) {
@@ -553,6 +558,7 @@ void mainInputLoop() {
     creature *monst;
     item *theItem;
     cellDisplayBuffer rbuf[COLS][ROWS];
+    short rout[COLS][ROWS];
 
     boolean canceled, targetConfirmed, tabKey, focusedOnMonster, focusedOnItem, focusedOnTerrain,
     playingBack, doEvent, textDisplayed;
@@ -691,7 +697,7 @@ void mainInputLoop() {
 
                     focusedOnMonster = true;
                     if (monst != &player && (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience)) {
-                        printMonsterDetails(monst, rbuf);
+                        printMonsterDetails(monst, rbuf, rout);
                         textDisplayed = true;
                     }
                 } else if (theItem != NULL && playerCanSeeOrSense(cursor[0], cursor[1])) {
@@ -701,7 +707,7 @@ void mainInputLoop() {
 
                     focusedOnItem = true;
                     if (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience) {
-                        printFloorItemDetails(theItem, rbuf);
+                        printFloorItemDetails(theItem, rbuf, rout);
                         textDisplayed = true;
                     }
                 } else if (cellHasTMFlag(cursor[0], cursor[1], TM_LIST_IN_SIDEBAR) && playerCanSeeOrSense(cursor[0], cursor[1])) {
@@ -757,6 +763,7 @@ void mainInputLoop() {
                 focusedOnTerrain = false;
                 if (textDisplayed) {
                     overlayDisplayBuffer(rbuf, 0); // Erase the monster info window.
+                    restoreLightingOutlines(rout);
                 }
                 rogue.playbackMode = playingBack;
                 refreshSideBar(-1, -1, false);
@@ -850,6 +857,7 @@ void mainInputLoop() {
 
     rogue.playbackMode = playingBack;
     refreshSideBar(-1, -1, false);
+    clearLightingOutlines();
     freeGrid(costMap);
     freeGrid(playerPathingMap);
     freeGrid(cursorSnapMap);
@@ -1498,6 +1506,129 @@ void refreshDungeonCell(short x, short y) {
     plotCharWithColor(cellChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor);
 }
 
+void getOutlineColors(short i, short j, short outlineColor[3]) {
+    short outlineFlags = lightingOutlineGrid[i][j];
+    short outlineOpacity = outlineFlags >> 5;
+    short backRed = displayBuffer[i][j].backColorComponents[0],
+          backGreen = displayBuffer[i][j].backColorComponents[1],
+          backBlue = displayBuffer[i][j].backColorComponents[2];
+    short totalBackColor = backRed + backGreen + backBlue;
+
+    // to be added to back colors
+    float retVal[3];
+
+    if (!outlineFlags) { // should never reach here
+        outlineColor[0] = backRed; outlineColor[1] = backGreen; outlineColor[2] = backBlue;
+        return;
+    }
+
+    // If the totalBackColor is < 120, multiply background color by 1.5.
+    // If the totalBackColor is >= 120 (quite bright), add 60 total units of color to the background,
+    // keeping red/green/blue ratio the same. Add 5 to each component to make darker shades more visible.
+    retVal[0] = ((totalBackColor < 120 ? backRed*0.5
+    : backRed*60.0/totalBackColor) + 5)*outlineOpacity/100;
+    retVal[1] = ((totalBackColor < 120 ? backGreen*0.5
+    : backGreen*60.0/totalBackColor) + 5)*outlineOpacity/100;
+    retVal[2] = ((totalBackColor < 120 ? backBlue*0.5
+    : backBlue*60.0/totalBackColor) + 5)*outlineOpacity/100;
+
+    if (outlineFlags % 2 == 1) {
+        // Dark outlines: move green into red/blue components, equalize red and blue.
+        retVal[0] = retVal[2] = (retVal[0] + retVal[2])/2;
+        retVal[1] *= -0.4;
+    }
+
+    outlineColor[0] = (short) clamp(0, backRed + retVal[0], 100);
+    outlineColor[1] = (short) clamp(0, backGreen + retVal[1], 100);
+    outlineColor[2] = (short) clamp(0, backBlue + retVal[2], 100);
+}
+
+void multiplyOutlineOpacity(short* outline, short multiplier) {
+    *outline = *outline % 64 + (((*outline >> 5) * multiplier / 100) << 5);
+}
+
+boolean eligibleCellForOutline(short x, short y) {
+    return pmap[x][y].flags & ANY_KIND_OF_VISIBLE
+               && (!cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY) // wall outlines are ugly
+               || !cellHasTerrainFlag(x, y, T_OBSTRUCTS_VISION)); // keep outlines on statues/cages etc.
+}
+
+void refreshLightingOutlines() {
+    short i, j, k, mapI, mapJ, oldLightingOutlineFlags;
+
+    if (!rogue.lightingOutlineMode) {
+        clearLightingOutlines();
+        return;
+    }
+
+    for (i = 0; i < COLS; i++) {
+        for (j = 0; j < ROWS; j++) {
+            mapI = i - STAT_BAR_WIDTH - 1;
+            mapJ = j - MESSAGE_LINES;
+            oldLightingOutlineFlags = lightingOutlineGrid[i][j];
+            if (i >= STAT_BAR_WIDTH + 1 && j >= MESSAGE_LINES && j < ROWS - 2
+                && displayDetail[mapI][mapJ] != DV_UNLIT && eligibleCellForOutline(mapI, mapJ)) {
+
+                lightingOutlineGrid[i][j] = displayDetail[mapI][mapJ] == DV_LIT ? 0 : 1;
+                for (k = 0; k < 4; k++) {
+                    if (coordinatesAreInMap(mapI + nbDirs[k][0], mapJ + nbDirs[k][1])
+                        && (!eligibleCellForOutline(mapI + nbDirs[k][0], mapJ + nbDirs[k][1])
+                            || displayDetail[mapI][mapJ] != displayDetail[mapI + nbDirs[k][0]][mapJ + nbDirs[k][1]])) {
+                        lightingOutlineGrid[i][j] |= (short) Fl(k + 1);
+                    }
+                }
+                lightingOutlineGrid[i][j] |= (100 << 5);
+            }
+            else {
+                lightingOutlineGrid[i][j] = 0;
+            }
+            if (lightingOutlineGrid[i][j] != oldLightingOutlineFlags) {
+                displayBuffer[i][j].needsUpdate = true;
+            }
+        }
+    }
+}
+
+// Darken lightingOutlineGrid based on dbuf, store outlines in rout for later use
+void overlayLightingOutlines(cellDisplayBuffer dbuf[COLS][ROWS], short rout[COLS][ROWS]) {
+    short i, j;
+
+    if (!rout) return;
+    for (i = 0; i < COLS; i++) {
+        for (j = 0; j < ROWS; j++) {
+            rout[i][j] = lightingOutlineGrid[i][j];
+            if (dbuf[i][j].opacity > 0) {
+                multiplyOutlineOpacity(&lightingOutlineGrid[i][j], 100 - dbuf[i][j].opacity);
+                displayBuffer[i][j].needsUpdate = true;
+            }
+        }
+    }
+}
+
+void restoreLightingOutlines(short rout[COLS][ROWS]) {
+    short i, j;
+
+    if (!rout) return;
+    for (i = 0; i < COLS; i++) {
+        for (j = 0; j < ROWS; j++) {
+            lightingOutlineGrid[i][j] = rout[i][j];
+        }
+    }
+}
+
+void clearLightingOutlines() {
+    short i, j;
+
+    for (i = 0; i < COLS; i++) {
+        for (j = 0; j < ROWS; j++) {
+            if (lightingOutlineGrid[i][j] > 0) {
+                displayBuffer[i][j].needsUpdate = true;
+            }
+            lightingOutlineGrid[i][j] = 0;
+        }
+    }
+}
+
 void applyColorMultiplier(color *baseColor, const color *multiplierColor) {
     baseColor->red = baseColor->red * multiplierColor->red / 100;
     baseColor->redRand = baseColor->redRand * multiplierColor->redRand / 100;
@@ -1841,17 +1972,25 @@ void plotForegroundChar(enum displayGlyph inputChar, short x, short y, color *fo
 // queued up draws take effect.
 void commitDraws() {
     short i, j;
+    short outlineColor[3] = {0};
 
     for (j=0; j<ROWS; j++) {
         for (i=0; i<COLS; i++) {
             if (displayBuffer[i][j].needsUpdate) {
+                if (lightingOutlineGrid[i][j]) {
+                    getOutlineColors(i, j, outlineColor);
+                }
                 plotChar(displayBuffer[i][j].character, i, j,
                          displayBuffer[i][j].foreColorComponents[0],
                          displayBuffer[i][j].foreColorComponents[1],
                          displayBuffer[i][j].foreColorComponents[2],
                          displayBuffer[i][j].backColorComponents[0],
                          displayBuffer[i][j].backColorComponents[1],
-                         displayBuffer[i][j].backColorComponents[2]);
+                         displayBuffer[i][j].backColorComponents[2],
+                         lightingOutlineGrid[i][j],
+                         outlineColor[0],
+                         outlineColor[1],
+                         outlineColor[2]);
                 displayBuffer[i][j].needsUpdate = false;
             }
         }
@@ -2600,6 +2739,18 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                                  &teal, false);
             }
             break;
+        case LIGHTING_OUTLINE_KEY:
+            rogue.lightingOutlineMode = !rogue.lightingOutlineMode;
+            refreshLightingOutlines();
+            commitDraws();
+            if (rogue.lightingOutlineMode) {
+                messageWithColor(KEYBOARD_LABELS ? "Lighting outlines displayed. Press \' again to hide." : "Lighting outlines displayed.",
+                                 &teal, false);
+            } else {
+                messageWithColor(KEYBOARD_LABELS ? "Lighting outlines hidden. Press \' again to display." : "Lighting outlines hidden.",
+                                 &teal, false);
+            }
+            break;
         case CALL_KEY:
             call(NULL);
             break;
@@ -2855,6 +3006,7 @@ void flashMessage(char *message, short x, short y, int time, color *fColor, colo
     int     i, j, messageLength, percentComplete, previousPercentComplete;
     color backColors[COLS], backColor, foreColor;
     cellDisplayBuffer dbufs[COLS];
+    short outlineFlags[COLS];
     enum displayGlyph dchar;
     short oldRNG;
     const int stepInMs = 16;
@@ -2873,6 +3025,7 @@ void flashMessage(char *message, short x, short y, int time, color *fColor, colo
     for (j=0; j<messageLength; j++) {
         backColors[j] = colorFromComponents(displayBuffer[j + x][y].backColorComponents);
         dbufs[j] = displayBuffer[j + x][y];
+        outlineFlags[j] = lightingOutlineGrid[j + x][y];
     }
 
     previousPercentComplete = -1;
@@ -2884,9 +3037,12 @@ void flashMessage(char *message, short x, short y, int time, color *fColor, colo
                 if (i==0) {
                     backColors[j] = colorFromComponents(displayBuffer[j + x][y].backColorComponents);
                     dbufs[j] = displayBuffer[j + x][y];
+                    outlineFlags[j] = lightingOutlineGrid[j + x][y];
                 }
                 backColor = backColors[j];
+                lightingOutlineGrid[j + x][y] = outlineFlags[j];
                 applyColorAverage(&backColor, bColor, 100 - percentComplete);
+                multiplyOutlineOpacity(&lightingOutlineGrid[j + x][y], percentComplete);
                 if (percentComplete < 50) {
                     dchar = message[j];
                     foreColor = *fColor;
@@ -2905,6 +3061,7 @@ void flashMessage(char *message, short x, short y, int time, color *fColor, colo
     for (j=0; j<messageLength; j++) {
         foreColor = colorFromComponents(dbufs[j].foreColorComponents);
         plotCharWithColor(dbufs[j].character, j+x, y, &foreColor, &(backColors[j]));
+        lightingOutlineGrid[j + x][y] = outlineFlags[j];
     }
 
     restoreRNG;
@@ -2941,6 +3098,7 @@ boolean confirm(char *prompt, boolean alsoDuringPlayback) {
     short retVal;
     brogueButton buttons[2] = {{{0}}};
     cellDisplayBuffer rbuf[COLS][ROWS];
+    short rout[COLS][ROWS];
     char whiteColorEscape[20] = "";
     char yellowColorEscape[20] = "";
 
@@ -2966,7 +3124,7 @@ boolean confirm(char *prompt, boolean alsoDuringPlayback) {
     buttons[1].hotkey[3] = ESCAPE_KEY;
     buttons[1].flags |= (B_WIDE_CLICK_AREA | B_KEYPRESS_HIGHLIGHT);
 
-    retVal = printTextBox(prompt, COLS/3, ROWS/3, COLS/3, &white, &interfaceBoxColor, rbuf, buttons, 2);
+    retVal = printTextBox(prompt, COLS/3, ROWS/3, COLS/3, &white, &interfaceBoxColor, rbuf, rout, buttons, 2);
     overlayDisplayBuffer(rbuf, NULL);
 
     if (retVal == -1 || retVal == 1) { // If they canceled or pressed no.
@@ -3024,6 +3182,7 @@ void displayMessageArchive() {
     short i, j, k, reverse, fadePercent, totalMessageCount, currentMessageCount;
     boolean fastForward;
     cellDisplayBuffer dbuf[COLS][ROWS], rbuf[COLS][ROWS];
+    short rout[COLS][ROWS];
 
     // Count the number of lines in the archive.
     for (totalMessageCount=0;
@@ -3033,6 +3192,7 @@ void displayMessageArchive() {
     if (totalMessageCount > MESSAGE_LINES) {
 
         copyDisplayBuffer(rbuf, displayBuffer);
+        overlayLightingOutlines(rbuf, rout);
 
         // Pull-down/pull-up animation:
         for (reverse = 0; reverse <= 1; reverse++) {
@@ -3064,7 +3224,9 @@ void displayMessageArchive() {
 
                 // Display.
                 overlayDisplayBuffer(rbuf, 0);
+                restoreLightingOutlines(rout);
                 overlayDisplayBuffer(dbuf, 0);
+                overlayLightingOutlines(dbuf, rout);
 
                 if (!fastForward && pauseBrogue(reverse ? 1 : 2)) {
                     fastForward = true;
@@ -3078,6 +3240,8 @@ void displayMessageArchive() {
             }
         }
         overlayDisplayBuffer(rbuf, 0);
+        restoreLightingOutlines(rout);
+
         updateFlavorText();
         confirmMessages();
         updateMessageDisplay();
@@ -3790,8 +3954,8 @@ char nextKeyPress(boolean textInput) {
 void printHelpScreen() {
     short i, j;
     cellDisplayBuffer dbuf[COLS][ROWS], rbuf[COLS][ROWS];
+    short rout[COLS][ROWS];
     char helpText[BROGUE_HELP_LINE_COUNT][DCOLS*3] = {
-        "",
         "",
         "          -- Commands --",
         "",
@@ -3821,6 +3985,7 @@ void printHelpScreen() {
         "",
         "             \\  ****disable/enable color effects",
         "             ]  ****display/hide stealth range",
+        "             \'  ****Toggle outlining of light/dark tiles",
         "   <space/esc>  ****clear message or cancel command",
         "",
         "        -- press space or click to continue --"
@@ -3852,8 +4017,10 @@ void printHelpScreen() {
 
     // Display.
     overlayDisplayBuffer(dbuf, rbuf);
+    overlayLightingOutlines(dbuf, rout);
     waitForAcknowledgment();
     overlayDisplayBuffer(rbuf, 0);
+    restoreLightingOutlines(rout);
     updateFlavorText();
     updateMessageDisplay();
 }
@@ -3908,6 +4075,7 @@ void printDiscoveries(short category, short count, unsigned short itemCharacter,
 void printDiscoveriesScreen() {
     short i, j, y;
     cellDisplayBuffer dbuf[COLS][ROWS], rbuf[COLS][ROWS];
+    short rout[COLS][ROWS];
 
     clearDisplayBuffer(dbuf);
 
@@ -3935,10 +4103,12 @@ void printDiscoveriesScreen() {
         }
     }
     overlayDisplayBuffer(dbuf, rbuf);
+    overlayLightingOutlines(dbuf, rout);
 
     waitForKeystrokeOrMouseClick();
 
     overlayDisplayBuffer(rbuf, NULL);
+    restoreLightingOutlines(rout);
 }
 
 // Creates buttons for the discoveries screen in the buttons pointer; returns the number of buttons created.
@@ -4743,10 +4913,11 @@ void rectangularShading(short x, short y, short width, short height,
 short printTextBox(char *textBuf, short x, short y, short width,
                    color *foreColor, color *backColor,
                    cellDisplayBuffer rbuf[COLS][ROWS],
+                   short rout[COLS][ROWS],
                    brogueButton *buttons, short buttonCount) {
     cellDisplayBuffer dbuf[COLS][ROWS];
 
-    short x2, y2, lineCount, i, bx, by, padLines;
+    short x2, y2, lineCount, i, bx, by, padLines, retVal;
 
     if (width <= 0) {
         // autocalculate y and width
@@ -4805,19 +4976,22 @@ short printTextBox(char *textBuf, short x, short y, short width,
     printStringWithWrapping(textBuf, x2, y2, width, foreColor, backColor, dbuf);
     rectangularShading(x2, y2, width, lineCount + padLines, backColor, INTERFACE_OPACITY, dbuf);
     overlayDisplayBuffer(dbuf, rbuf);
+    overlayLightingOutlines(dbuf, rout);
 
     if (buttonCount > 0) {
-        return buttonInputLoop(buttons, buttonCount, x2, y2, width, by - y2 + 1 + padLines, NULL);
+        retVal = buttonInputLoop(buttons, buttonCount, x2, y2, width, by - y2 + 1 + padLines, NULL);
+        restoreLightingOutlines(rout);
+        return retVal;
     } else {
         return -1;
     }
 }
 
-void printMonsterDetails(creature *monst, cellDisplayBuffer rbuf[COLS][ROWS]) {
+void printMonsterDetails(creature *monst, cellDisplayBuffer rbuf[COLS][ROWS], short rout[COLS][ROWS]) {
     char textBuf[COLS * 100];
 
     monsterDetails(textBuf, monst);
-    printTextBox(textBuf, monst->xLoc, 0, 0, &white, &black, rbuf, NULL, 0);
+    printTextBox(textBuf, monst->xLoc, 0, 0, &white, &black, rbuf, rout, NULL, 0);
 }
 
 // Displays the item info box with the dark blue background.
@@ -4830,6 +5004,7 @@ unsigned long printCarriedItemDetails(item *theItem,
     char textBuf[COLS * 100], goldColorEscape[5] = "", whiteColorEscape[5] = "";
     brogueButton buttons[20] = {{{0}}};
     short b;
+    short rout[COLS][ROWS];
 
     itemDetails(textBuf, theItem);
 
@@ -4893,10 +5068,12 @@ unsigned long printCarriedItemDetails(item *theItem,
         buttons[b].hotkey[2] = DOWN_ARROW;
         b++;
     }
-    b = printTextBox(textBuf, x, y, width, &white, &interfaceBoxColor, rbuf, buttons, b);
+    b = printTextBox(textBuf, x, y, width, &white, &interfaceBoxColor, rbuf, rout, buttons, b);
 
+    // if !includeButtons there better be something in rout
     if (!includeButtons) {
         waitForKeystrokeOrMouseClick();
+        restoreLightingOutlines(rout);
         return -1;
     }
 
@@ -4908,9 +5085,9 @@ unsigned long printCarriedItemDetails(item *theItem,
 }
 
 // Returns true if an action was taken.
-void printFloorItemDetails(item *theItem, cellDisplayBuffer rbuf[COLS][ROWS]) {
+void printFloorItemDetails(item *theItem, cellDisplayBuffer rbuf[COLS][ROWS], short rout[COLS][ROWS]) {
     char textBuf[COLS * 100];
 
     itemDetails(textBuf, theItem);
-    printTextBox(textBuf, theItem->xLoc, 0, 0, &white, &black, rbuf, NULL, 0);
+    printTextBox(textBuf, theItem->xLoc, 0, 0, &white, &black, rbuf, rout, NULL, 0);
 }

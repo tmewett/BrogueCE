@@ -189,8 +189,10 @@ unsigned int glyphToUnicode(enum displayGlyph glyph) {
 void plotChar(enum displayGlyph inputChar,
               short xLoc, short yLoc,
               short foreRed, short foreGreen, short foreBlue,
-              short backRed, short backGreen, short backBlue) {
-    currentConsole.plotChar(inputChar, xLoc, yLoc, foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue);
+              short backRed, short backGreen, short backBlue,
+              short outlineFlags, short outlineRed, short outlineGreen, short outlineBlue) {
+    currentConsole.plotChar(inputChar, xLoc, yLoc, foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue,
+        outlineFlags, outlineRed, outlineGreen, outlineBlue);
 }
 
 void pausingTimerStartsNow() {
@@ -567,4 +569,3 @@ boolean isApplicationActive(void) {
     // FIXME: finish
     return true;
 }
-

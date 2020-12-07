@@ -35,6 +35,7 @@ typedef struct ScreenTile {
     short foreRed, foreGreen, foreBlue; // foreground color (0..100)
     short backRed, backGreen, backBlue; // background color (0..100)
     short charIndex;    // index of the glyph to draw
+    short outlineFlags, outlineRed, outlineGreen, outlineBlue; // outline details
     short needsRefresh; // true if the tile has changed since the last screen refresh, else false
 } ScreenTile;
 
@@ -568,7 +569,8 @@ static void createTextures(SDL_Renderer *renderer, int outputWidth, int outputHe
 ///
 void updateTile(int row, int column, short charIndex,
     short foreRed, short foreGreen, short foreBlue,
-    short backRed, short backGreen, short backBlue)
+    short backRed, short backGreen, short backBlue,
+    short outlineFlags, short outlineRed, short outlineGreen, short outlineBlue)
 {
     screenTiles[row][column] = (ScreenTile){
         .foreRed   = foreRed,
@@ -578,7 +580,11 @@ void updateTile(int row, int column, short charIndex,
         .backGreen = backGreen,
         .backBlue  = backBlue,
         .charIndex = charIndex,
-        .needsRefresh = 1
+        .outlineFlags   = outlineFlags,
+        .outlineRed     = outlineRed,
+        .outlineGreen   = outlineGreen,
+        .outlineBlue    = outlineBlue,
+        .needsRefresh   = 1
     };
 }
 
@@ -665,6 +671,25 @@ void updateScreen() {
                         round(2.55 * tile->backBlue), 255) < 0) sdlfatal(__FILE__, __LINE__);
                     if (SDL_RenderFillRect(renderer, &dest) < 0) sdlfatal(__FILE__, __LINE__);
 
+                    if (tile->outlineFlags) {
+                        if (SDL_SetRenderDrawColor(renderer,
+                            round(2.55 * tile->outlineRed),
+                            round(2.55 * tile->outlineGreen),
+                            round(2.55 * tile->outlineBlue), 255) < 0) sdlfatal(__FILE__, __LINE__);
+
+                        if (tile->outlineFlags & Fl(1)) {
+                            if (SDL_RenderDrawLine(renderer, dest.x, dest.y, dest.x + dest.w - 1, dest.y) < 0) sdlfatal(__FILE__, __LINE__);
+                        }
+                        if (tile->outlineFlags & Fl(2)) {
+                            if (SDL_RenderDrawLine(renderer, dest.x, dest.y + dest.h - 1, dest.x + dest.w - 1, dest.y + dest.h - 1) < 0) sdlfatal(__FILE__, __LINE__);
+                        }
+                        if (tile->outlineFlags & Fl(3)) {
+                            if (SDL_RenderDrawLine(renderer, dest.x, dest.y, dest.x, dest.y + dest.h - 1) < 0) sdlfatal(__FILE__, __LINE__);
+                        }
+                        if (tile->outlineFlags & Fl(4)) {
+                            if (SDL_RenderDrawLine(renderer, dest.x + dest.w - 1, dest.y, dest.x + dest.w - 1, dest.y + dest.h - 1) < 0) sdlfatal(__FILE__, __LINE__);
+                        }
+                    }
                 } else {
                     int textureIndex = (numTextures < 4 ? 0 : (tileWidth > baseTileWidth ? 1 : 0) + (tileHeight > baseTileHeight ? 2 : 0));
                     if (step != textureIndex) {

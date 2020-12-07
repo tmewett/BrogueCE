@@ -27,6 +27,9 @@ tcell tmap[DCOLS][DROWS];                       // grids with info about the map
 pcell pmap[DCOLS][DROWS];
 short **scentMap;
 cellDisplayBuffer displayBuffer[COLS][ROWS];    // used to optimize plotCharWithColor
+short lightingOutlineGrid[COLS][ROWS] = {{0}};  // Outline flags: bit 1 represents light level, 0: light, 1: dark
+                                                // bits 2-5 store which sides have outlines, in order of nbDirs
+                                                // bits 6-12 represent the opacity of the outline from 1-100
 short terrainRandomValues[DCOLS][DROWS][8];
 short **safetyMap;                              // used to help monsters flee
 short **allySafetyMap;                          // used to help allies flee

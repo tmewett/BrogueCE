@@ -2660,6 +2660,7 @@ char displayInventory(unsigned short categoryMask,
     short highlightItemLine, itemSpaceRemaining;
     cellDisplayBuffer dbuf[COLS][ROWS];
     cellDisplayBuffer rbuf[COLS][ROWS];
+    short rout[COLS][ROWS];
     brogueButton buttons[50] = {{{0}}};
     short actionKey = -1;
     color darkItemColor;
@@ -2887,6 +2888,7 @@ char displayInventory(unsigned short categoryMask,
     buttons[itemNumber + extraLineCount + 1].hotkey[1] = DOWN_ARROW;
 
     overlayDisplayBuffer(dbuf, rbuf);
+    overlayLightingOutlines(dbuf, rout);
 
     do {
         repeatDisplay = false;
@@ -2944,7 +2946,7 @@ char displayInventory(unsigned short categoryMask,
                     } else {
                         restoreRNG;
                         repeatDisplay = false;
-                        overlayDisplayBuffer(rbuf, NULL); // restore the original screen
+                        restoreLightingOutlines(rout); // screen ready, now prepare outlines
                     }
 
                     switch (actionKey) {
@@ -2999,6 +3001,7 @@ char displayInventory(unsigned short categoryMask,
     } while (repeatDisplay); // so you can get info on multiple items sequentially
 
     overlayDisplayBuffer(rbuf, NULL); // restore the original screen
+    restoreLightingOutlines(rout);
 
     restoreRNG;
     return theKey;

@@ -327,6 +327,7 @@ short buttonInputLoop(brogueButton *buttons,
     boolean canceled;
     rogueEvent theEvent;
     buttonState state = {0};
+    short rout[COLS][ROWS];
 
     assureCosmeticRNG;
 
@@ -336,6 +337,7 @@ short buttonInputLoop(brogueButton *buttons,
     do {
         // Update the display.
         overlayDisplayBuffer(state.dbuf, NULL);
+        overlayLightingOutlines(state.dbuf, rout);
 
         // Get input.
         nextBrogueEvent(&theEvent, true, false, false);
@@ -345,6 +347,7 @@ short buttonInputLoop(brogueButton *buttons,
 
         // Revert the display.
         overlayDisplayBuffer(state.rbuf, NULL);
+        restoreLightingOutlines(rout);
 
     } while (button == -1 && !canceled);
 

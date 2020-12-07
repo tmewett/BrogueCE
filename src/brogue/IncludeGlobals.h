@@ -25,6 +25,7 @@ extern tcell tmap[DCOLS][DROWS];                        // grids with info about
 extern pcell pmap[DCOLS][DROWS];                        // grids with info about the map
 extern short **scentMap;
 extern cellDisplayBuffer displayBuffer[COLS][ROWS];
+extern short lightingOutlineGrid[COLS][ROWS];
 extern short terrainRandomValues[DCOLS][DROWS][8];
 extern short **safetyMap;                                       // used to help monsters flee
 extern short **allySafetyMap;
