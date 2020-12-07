@@ -2384,6 +2384,12 @@ void exploreKey(const boolean controlKey) {
 boolean pauseBrogue(short milliseconds) {
     boolean interrupted;
 
+    if (rogue.gameHasEnded) {
+        // If we're dropping out of the game, we create Escape keypresses - see
+        // nextBrogueEvent.
+        return true;
+    }
+
     commitDraws();
     if (rogue.playbackMode && rogue.playbackFastForward) {
         interrupted = true;
