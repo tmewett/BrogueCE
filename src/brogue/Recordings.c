@@ -221,9 +221,9 @@ void flushBufferToFile() {
     }
 
     lengthOfPlaybackFile += locationInRecordingBuffer;
-    writeHeaderInfo(currentFilePath);
 
     if (locationInRecordingBuffer != 0) {
+        writeHeaderInfo(currentFilePath);
 
         recordFile = fopen(currentFilePath, "ab");
 
