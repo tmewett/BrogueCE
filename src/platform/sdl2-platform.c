@@ -253,11 +253,9 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
     // ~ for (int i=0; i < 100 && SDL_PollEvent(&event); i++) {
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT) {
-            rogue.gameHasEnded = true; // causes the game loop to terminate quickly
-            rogue.nextGame = NG_QUIT; // causes the menu to drop out immediately
-            returnEvent->eventType = KEYSTROKE;
-            returnEvent->param1 = ESCAPE_KEY;
-            return true;
+            // the player clicked the X button!
+            SDL_Quit();
+            quitImmediately();
         } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
             brogueFontSize = fitFontSize(event.window.data1, event.window.data2);
             loadFont(brogueFontSize);

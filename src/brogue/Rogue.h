@@ -2209,6 +2209,7 @@ typedef struct playerCharacter {
     short depthLevel;                   // which dungeon level are we on
     short deepestLevel;
     boolean disturbed;                  // player should stop auto-acting
+    boolean gameInProgress;             // the game is in progress (the player has not died, won or quit yet)
     boolean gameHasEnded;               // stop everything and go to death screen
     boolean highScoreSaved;             // so that it saves the high score only once
     boolean blockCombatText;            // busy auto-fighting
@@ -2277,6 +2278,7 @@ typedef struct playerCharacter {
     short **mapToSafeTerrain;           // so monsters can get to safety
 
     // recording info
+    boolean recording;                  // whether we are recording the game
     boolean playbackMode;               // whether we're viewing a recording instead of playing
     unsigned short patchVersion;        // what patch version of the game this was recorded on
     unsigned long currentTurnNumber;    // how many turns have elapsed
@@ -3150,6 +3152,7 @@ extern "C" {
     void getAvailableFilePath(char *filePath, const char *defaultPath, const char *suffix);
     boolean characterForbiddenInFilename(const char theChar);
     void saveGame();
+    void saveGameNoPrompt();
     void saveRecording(char *filePath);
     void saveRecordingNoPrompt(char *filePath);
     void parseFile();
@@ -3190,6 +3193,7 @@ extern "C" {
     void checkForDungeonErrors();
 
     boolean dialogChooseFile(char *path, const char *suffix, const char *prompt);
+    void quitImmediately();
     void dialogAlert(char *message);
     void mainBrogueJunction();
     void printSeedCatalog(unsigned long startingSeed, unsigned long numberOfSeedsToScan, unsigned int scanThroughDepth, boolean isCsvFormat);
