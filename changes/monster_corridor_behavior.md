@@ -1,1 +1,1 @@
-Cautious monsters now enter corridors when reduced below 50% health.
+Cautious monsters now enter corridors if they have been attacked recently and are below 50% health.
