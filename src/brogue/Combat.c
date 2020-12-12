@@ -325,6 +325,10 @@ void moralAttack(creature *attacker, creature *defender) {
         }
         defender->status[STATUS_ENTRANCED] = 0;
 
+        if ((defender->info.abilityFlags & MA_AVOID_CORRIDORS)) {
+            defender->status[STATUS_ENRAGED] = defender->maxStatus[STATUS_ENRAGED] = 4;
+        }
+
         if (attacker == &player
             && defender->creatureState == MONSTER_ALLY
             && !defender->status[STATUS_DISCORDANT]
