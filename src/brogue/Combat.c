@@ -476,7 +476,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
 }
 
 boolean forceWeaponHit(creature *defender, item *theItem) {
-    short oldLoc[2], newLoc[2], forceDamage;
+    short oldLoc[2], newLoc[2], forceDamage = 0;
     char buf[DCOLS*3], buf2[COLS], monstName[DCOLS];
     creature *otherMonster = NULL;
     boolean knowFirstMonsterDied = false, autoID = false;
@@ -512,7 +512,6 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
         }
         
         // Only deal force damage if target collides with solid object
-        forceDamage = 0;
         if (otherMonster || !(tileCatalog[pmap[defender->xLoc + newLoc[0] - oldLoc[0]][defender->yLoc + newLoc[1] - oldLoc[1]].layers[DUNGEON]].flags & (T_LAVA_INSTA_DEATH | T_AUTO_DESCENT | T_IS_DEEP_WATER))) {
 
             forceDamage = distanceBetween(oldLoc[0], oldLoc[1], defender->xLoc, defender->yLoc);
