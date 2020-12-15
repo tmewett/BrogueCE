@@ -1404,6 +1404,7 @@ boolean monsterAvoids(creature *monst, short x, short y) {
 
     // Smart monsters don't attack in corridors if they belong to a group and they can help it.
     if ((monst->info.abilityFlags & MA_AVOID_CORRIDORS)
+        && !(monst->status[STATUS_ENRAGED] && monst->currentHP <= monst->info.maxHP / 2)
         && monst->creatureState == MONSTER_TRACKING_SCENT
         && (monst->bookkeepingFlags & (MB_FOLLOWER | MB_LEADER))
         && passableArcCount(x, y) >= 2

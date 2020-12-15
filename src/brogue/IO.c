@@ -4282,6 +4282,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
         "", // STATUS_EXPLOSION_IMMUNITY,
         "", // STATUS_NUTRITION,
         "", // STATUS_ENTERS_LEVEL_IN,
+        "", // STATUS_ENRAGED,
         "Frightened",
         "Entranced",
         "Darkened",
