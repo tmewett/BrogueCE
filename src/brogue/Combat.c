@@ -1600,7 +1600,8 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
         }
     }
 
-    if (!administrativeDeath && (decedent->info.abilityFlags & MA_DF_ON_DEATH)) {
+    if (!administrativeDeath && (decedent->info.abilityFlags & MA_DF_ON_DEATH)
+        && ((rogue.patchVersion < 3) || !(decedent->bookkeepingFlags & MB_IS_FALLING))) {
         spawnDungeonFeature(decedent->xLoc, decedent->yLoc, &dungeonFeatureCatalog[decedent->info.DFType], true, false);
 
         if (monsterText[decedent->info.monsterID].DFMessage[0] && canSeeMonster(decedent)) {
