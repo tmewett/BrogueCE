@@ -17,7 +17,7 @@ ifeq ($(GRAPHICS),YES)
 	sources += $(addprefix src/platform/,sdl2-platform.c)
 	cflags += $(shell $(SDL_CONFIG) --cflags)
 	cppflags += -DBROGUE_SDL
-	libs += $(shell $(SDL_CONFIG) --libs) -lSDL2_image
+	libs += $(shell $(SDL_CONFIG) --libs) -lSDL2_image -lespeak-ng
 endif
 
 ifeq ($(WEBBROGUE),YES)

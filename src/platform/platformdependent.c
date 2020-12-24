@@ -234,6 +234,12 @@ boolean setGraphicsEnabled(boolean state) {
     }
 }
 
+void playSpeech(char *text) {
+    if (currentConsole.playSpeech) {
+        currentConsole.playSpeech(text);
+    }
+}
+
 // creates an empty high scores file
 void initScores() {
     short i;

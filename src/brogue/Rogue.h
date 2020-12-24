@@ -2683,6 +2683,7 @@ extern "C" {
     void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2);
     boolean takeScreenshot();
     boolean setGraphicsEnabled(boolean);
+    void playSpeech(char *text);
     boolean controlKeyIsDown();
     boolean shiftKeyIsDown();
     short getHighScoresList(rogueHighScoresEntry returnList[HIGH_SCORES_COUNT]);

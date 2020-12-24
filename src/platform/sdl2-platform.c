@@ -7,6 +7,7 @@
 
 #include <SDL.h>
 #include <SDL_image.h>
+#include <espeak-ng/speak_lib.h>
 
 #include "platform.h"
 
@@ -230,6 +231,16 @@ static char applyRemaps(char c) {
 }
 
 
+static boolean audioInit() {
+    return espeak_Initialize(AUDIO_OUTPUT_PLAYBACK, 0, NULL, 0) != -1;
+}
+
+
+static void _playSpeech(char *text) {
+    espeak_Synth(text, strlen(text), 0, 0, 0, espeakCHARS_UTF8, NULL, NULL);
+}
+
+
 /*
 If an event is available, returns true and updates returnEvent. Otherwise
 it returns false and an error event. This function also processes
@@ -365,6 +376,8 @@ static void _gameLoop() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) sdlfatal();
 
     if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) imgfatal();
+
+    audioInit();
 
     lastEvent.eventType = EVENT_ERROR;
 
@@ -559,5 +572,6 @@ struct brogueConsole sdlConsole = {
     _modifierHeld,
     NULL,
     _takeScreenshot,
-    _setGraphicsEnabled
+    _setGraphicsEnabled,
+    .playSpeech = _playSpeech
 };
