@@ -344,6 +344,8 @@ void titleMenu() {
     initializeMenuFlames(true, colors, colorStorage, colorSources, flames, mask);
     rogue.creaturesWillFlashThisTurn = false; // total unconscionable hack
 
+    playSpeech("Welcome to Brogue!");
+
     do {
         if (isApplicationActive()) {
             // Revert the display.

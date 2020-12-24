@@ -267,6 +267,12 @@ enum graphicsModes setGraphicsMode(enum graphicsModes mode) {
     }
 }
 
+void playSpeech(char *text) {
+    if (currentConsole.playSpeech) {
+        currentConsole.playSpeech(text);
+    }
+}
+
 // creates an empty high scores file
 void initScores() {
     short i;
