@@ -2262,6 +2262,28 @@ boolean fleeingMonsterAwareOfPlayer(creature *monst) {
     }
 }
 
+static short **getSafetyMap(creature *monst) {
+    if (fleeingMonsterAwareOfPlayer(monst)) {
+        if (monst->safetyMap) {
+            freeGrid(monst->safetyMap);
+            monst->safetyMap = NULL;
+        }
+        if (!rogue.updatedSafetyMapThisTurn) {
+            updateSafetyMap();
+        }
+        return safetyMap;
+    } else {
+        if (!monst->safetyMap) {
+            if (!rogue.updatedSafetyMapThisTurn) {
+                updateSafetyMap();
+            }
+            monst->safetyMap = allocGrid();
+            copyGrid(monst->safetyMap, safetyMap);
+        }
+        return monst->safetyMap;
+    }
+}
+
 // returns whether the monster did something (and therefore ended its turn)
 boolean monsterBlinkToSafety(creature *monst) {
     short **blinkSafetyMap;
@@ -2271,24 +2293,8 @@ boolean monsterBlinkToSafety(creature *monst) {
             updateAllySafetyMap();
         }
         blinkSafetyMap = allySafetyMap;
-    } else if (fleeingMonsterAwareOfPlayer(monst)) {
-        if (monst->safetyMap) {
-            freeGrid(monst->safetyMap);
-            monst->safetyMap = NULL;
-        }
-        if (!rogue.updatedSafetyMapThisTurn) {
-            updateSafetyMap();
-        }
-        blinkSafetyMap = safetyMap;
     } else {
-        if (!monst->safetyMap) {
-            if (!rogue.updatedSafetyMapThisTurn) {
-                updateSafetyMap();
-            }
-            monst->safetyMap = allocGrid();
-            copyGrid(monst->safetyMap, safetyMap);
-        }
-        blinkSafetyMap = monst->safetyMap;
+        blinkSafetyMap = getSafetyMap(monst);
     }
 
     return monsterBlinkToPreferenceMap(monst, blinkSafetyMap, false);
@@ -3255,25 +3261,7 @@ void monstersTurn(creature *monst) {
             return;
         }
 
-        if (fleeingMonsterAwareOfPlayer(monst)) {
-            if (monst->safetyMap) {
-                freeGrid(monst->safetyMap);
-                monst->safetyMap = NULL;
-            }
-            if (!rogue.updatedSafetyMapThisTurn) {
-                updateSafetyMap();
-            }
-            dir = nextStep(safetyMap, monst->xLoc, monst->yLoc, NULL, true);
-        } else {
-            if (!monst->safetyMap) {
-                if (rogue.patchVersion >= 3 && !rogue.updatedSafetyMapThisTurn) {
-                    updateSafetyMap();
-                }
-                monst->safetyMap = allocGrid();
-                copyGrid(monst->safetyMap, safetyMap);
-            }
-            dir = nextStep(monst->safetyMap, monst->xLoc, monst->yLoc, NULL, true);
-        }
+        dir = nextStep(getSafetyMap(monst), monst->xLoc, monst->yLoc, NULL, true);
         if (dir != -1) {
             targetLoc[0] = x + nbDirs[dir][0];
             targetLoc[1] = y + nbDirs[dir][1];
