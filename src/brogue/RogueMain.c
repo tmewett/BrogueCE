@@ -574,7 +574,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             freeGrid(monst->mapToMe);
             monst->mapToMe = NULL;
         }
-        if (monst->safetyMap) {
+        if (rogue.patchVersion < 3 && monst->safetyMap) {
             freeGrid(monst->safetyMap);
             monst->safetyMap = NULL;
         }
