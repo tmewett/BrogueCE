@@ -33,11 +33,11 @@
 #define USE_UNICODE
 
 // Brogue version: what the user sees in the menu and title
-#define BROGUE_VERSION_STRING "CE 1.9.2"
+#define BROGUE_VERSION_STRING "CE 1.9.3"
 
 // Recording version. Saved into recordings and save files made by this version.
 // Cannot be longer than 16 chars
-#define BROGUE_RECORDING_VERSION_STRING "CE 1.9.2"
+#define BROGUE_RECORDING_VERSION_STRING "CE 1.9.3"
 
 /* Patch pattern. A scanf format string which matches an unsigned short. If this
 matches against a recording version string, it defines a "patch version." During
@@ -2031,6 +2031,7 @@ enum monsterBookkeepingFlags {
     MB_IS_DORMANT               = Fl(21),   // lurking, waiting to burst out
     MB_HAS_SOUL                 = Fl(22),   // slaying the monster will count toward weapon auto-ID
     MB_ALREADY_SEEN             = Fl(23),   // seeing this monster won't interrupt exploration
+    MB_HAS_ENTRANCED_MOVED      = Fl(24)    // has already moved while entranced and should not move again
 };
 
 // Defines all creatures, which include monsters and the player:
@@ -2094,6 +2095,7 @@ typedef struct mutation {
     unsigned long forbiddenFlags;
     unsigned long forbiddenAbilityFlags;
     char description[1000];
+    boolean canBeNegated;
 } mutation;
 
 typedef struct hordeType {
@@ -2208,6 +2210,7 @@ typedef struct playerCharacter {
     short depthLevel;                   // which dungeon level are we on
     short deepestLevel;
     boolean disturbed;                  // player should stop auto-acting
+    boolean gameInProgress;             // the game is in progress (the player has not died, won or quit yet)
     boolean gameHasEnded;               // stop everything and go to death screen
     boolean highScoreSaved;             // so that it saves the high score only once
     boolean blockCombatText;            // busy auto-fighting
@@ -2276,6 +2279,7 @@ typedef struct playerCharacter {
     short **mapToSafeTerrain;           // so monsters can get to safety
 
     // recording info
+    boolean recording;                  // whether we are recording the game
     boolean playbackMode;               // whether we're viewing a recording instead of playing
     unsigned short patchVersion;        // what patch version of the game this was recorded on
     unsigned long currentTurnNumber;    // how many turns have elapsed
@@ -3151,6 +3155,7 @@ extern "C" {
     void getAvailableFilePath(char *filePath, const char *defaultPath, const char *suffix);
     boolean characterForbiddenInFilename(const char theChar);
     void saveGame();
+    void saveGameNoPrompt();
     void saveRecording(char *filePath);
     void saveRecordingNoPrompt(char *filePath);
     void parseFile();
@@ -3191,6 +3196,7 @@ extern "C" {
     void checkForDungeonErrors();
 
     boolean dialogChooseFile(char *path, const char *suffix, const char *prompt);
+    void quitImmediately();
     void dialogAlert(char *message);
     void mainBrogueJunction();
     void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsigned int scanThroughDepth, boolean isCsvFormat);

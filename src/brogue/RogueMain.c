@@ -143,20 +143,26 @@ void welcome() {
 void initializeRogue(uint64_t seed) {
     short i, j, k;
     item *theItem;
-    boolean playingback, playbackFF, playbackPaused, wizard;
+    boolean playingback, playbackFF, playbackPaused, wizard, displayAggroRangeMode;
+    boolean trueColorMode;
     short oldRNG;
 
-    playingback = rogue.playbackMode; // the only four animals that need to go on the ark
+    playingback = rogue.playbackMode; // the only animals that need to go on the ark
     playbackPaused = rogue.playbackPaused;
     playbackFF = rogue.playbackFastForward;
     wizard = rogue.wizard;
+    displayAggroRangeMode = rogue.displayAggroRangeMode;
+    trueColorMode = rogue.trueColorMode;
     memset((void *) &rogue, 0, sizeof( playerCharacter )); // the flood
     rogue.playbackMode = playingback;
     rogue.playbackPaused = playbackPaused;
     rogue.playbackFastForward = playbackFF;
     rogue.wizard = wizard;
+    rogue.displayAggroRangeMode = displayAggroRangeMode;
+    rogue.trueColorMode = trueColorMode;
 
     rogue.gameHasEnded = false;
+    rogue.gameInProgress = true;
     rogue.highScoreSaved = false;
     rogue.cautiousMode = false;
     rogue.milliseconds = 0;
@@ -577,7 +583,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             freeGrid(monst->mapToMe);
             monst->mapToMe = NULL;
         }
-        if (monst->safetyMap) {
+        if (rogue.patchVersion < 3 && monst->safetyMap) {
             freeGrid(monst->safetyMap);
             monst->safetyMap = NULL;
         }
@@ -968,12 +974,11 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     if (player.bookkeepingFlags & MB_IS_DYING) {
         // we've already been through this once; let's avoid overkill.
         return;
-    } else {
-        player.bookkeepingFlags |= MB_IS_DYING;
     }
 
+    player.bookkeepingFlags |= MB_IS_DYING;
     rogue.autoPlayingLevel = false;
-
+    rogue.gameInProgress = false;
     flushBufferToFile();
 
     if (rogue.quit) {
@@ -1031,6 +1036,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
             player.status[STATUS_NUTRITION] = STOMACH_SIZE;
         }
         player.bookkeepingFlags &= ~MB_IS_DYING;
+        rogue.gameInProgress = true;
         return;
     }
 
@@ -1121,6 +1127,7 @@ void victory(boolean superVictory) {
     cellDisplayBuffer dbuf[COLS][ROWS];
     char recordingFilename[BROGUE_FILENAME_MAX] = {0};
 
+    rogue.gameInProgress = false;
     flushBufferToFile();
 
     //

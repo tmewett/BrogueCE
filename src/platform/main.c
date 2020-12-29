@@ -12,6 +12,7 @@ boolean serverMode = false;
 boolean hasGraphics = false;
 boolean graphicsEnabled = false;
 boolean isCsvFormat = false;
+boolean initialFullScreen = false;
 
 static void printCommandlineHelp() {
     printf("%s",
@@ -28,10 +29,13 @@ static void printCommandlineHelp() {
 #ifdef BROGUE_SDL
     "--size N                   starts the game at font size N (1 to 13)\n"
     "--graphics     -G          enable graphical tiles\n"
+    "--full-screen  -F          enable full screen\n"
 #endif
 #ifdef BROGUE_CURSES
     "--term         -t          run in ncurses-based terminal mode\n"
 #endif
+    "--stealth      -S          display stealth range\n"
+    "--no-effects   -E          disable color effects\n"
     "--wizard       -W          run in wizard mode, invincible with powerful items\n"
     "[--csv] --print-seed-catalog [START NUM LEVELS]\n"
     "                           (optional csv format)\n"
@@ -86,6 +90,8 @@ int main(int argc, char *argv[])
     rogue.nextGamePath[0] = '\0';
     rogue.nextGameSeed = 0;
     rogue.wizard = false;
+    rogue.displayAggroRangeMode = false;
+    rogue.trueColorMode = false;
 
     boolean initialGraphics = false;
 
@@ -198,6 +204,11 @@ int main(int argc, char *argv[])
                 continue;
             };
         }
+
+        if (strcmp(argv[i], "-F") == 0 || strcmp(argv[i], "--full-screen") == 0) {
+            initialFullScreen = true;
+            continue;
+        }
 #endif
 
 #ifdef BROGUE_CURSES
@@ -215,6 +226,16 @@ int main(int argc, char *argv[])
             continue;
         }
 #endif
+
+        if (strcmp(argv[i], "--stealth") == 0 || strcmp(argv[i], "-S") == 0) {
+            rogue.displayAggroRangeMode = true;
+            continue;
+        }
+
+        if (strcmp(argv[i], "--no-effects") == 0 || strcmp(argv[i], "-E") == 0) {
+            rogue.trueColorMode = true;
+            continue;
+        }
 
         if (strcmp(argv[i], "--wizard") == 0 || strcmp(argv[i], "-W") == 0) {
             rogue.wizard = true;

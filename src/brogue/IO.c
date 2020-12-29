@@ -248,6 +248,13 @@ short actionMenu(short x, boolean playingBack) {
             buttons[buttonCount].hotkey[0] = '0';
             buttonCount++;
             if (KEYBOARD_LABELS) {
+                sprintf(buttons[buttonCount].text,  "  %s<:%s Previous Level  ", yellowColorEscape, whiteColorEscape);
+            } else {
+                strcpy(buttons[buttonCount].text, "  Previous Level  ");
+            }
+            buttons[buttonCount].hotkey[0] = ASCEND_KEY;
+            buttonCount++;
+            if (KEYBOARD_LABELS) {
                 sprintf(buttons[buttonCount].text,  "  %s>:%s Next Level  ", yellowColorEscape, whiteColorEscape);
             } else {
                 strcpy(buttons[buttonCount].text, "  Next Level  ");

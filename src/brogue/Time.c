@@ -1333,6 +1333,8 @@ void monstersFall() {
     for (monst = monsters->nextCreature; monst != NULL; monst = nextCreature) {
         nextCreature = monst->nextCreature;
         if ((monst->bookkeepingFlags & MB_IS_FALLING) || monsterShouldFall(monst)) {
+            if (rogue.patchVersion >= 3) monst->bookkeepingFlags |= MB_IS_FALLING;
+
             x = monst->xLoc;
             y = monst->yLoc;
 
@@ -1341,15 +1343,26 @@ void monstersFall() {
                 sprintf(buf2, "%s plunges out of sight!", buf);
                 messageWithColor(buf2, messageColorFromVictim(monst), false);
             }
-            monst->status[STATUS_ENTRANCED] = 0;
-            monst->bookkeepingFlags |= MB_PREPLACED;
-            monst->bookkeepingFlags &= ~(MB_IS_FALLING | MB_SEIZED | MB_SEIZING);
-            monst->targetCorpseLoc[0] = monst->targetCorpseLoc[1] = 0;
+
+            if (rogue.patchVersion < 3) {
+                monst->status[STATUS_ENTRANCED] = 0;
+                monst->bookkeepingFlags |= MB_PREPLACED;
+                monst->bookkeepingFlags &= ~(MB_IS_FALLING | MB_SEIZED | MB_SEIZING);
+                monst->targetCorpseLoc[0] = monst->targetCorpseLoc[1] = 0;
+            }
+
             if (monst->info.flags & MONST_GETS_TURN_ON_ACTIVATION) {
                 // Guardians and mirrored totems never survive the fall. If they did, they might block the level below.
                 killCreature(monst, false);
             } else if (!inflictDamage(NULL, monst, randClumpedRange(6, 12, 2), &red, false)) {
                 demoteMonsterFromLeadership(monst);
+
+                if (rogue.patchVersion >= 3) {
+                    monst->status[STATUS_ENTRANCED] = 0;
+                    monst->bookkeepingFlags |= MB_PREPLACED;
+                    monst->bookkeepingFlags &= ~(MB_IS_FALLING | MB_SEIZED | MB_SEIZING);
+                    monst->targetCorpseLoc[0] = monst->targetCorpseLoc[1] = 0;
+                }
 
                 // remove from monster chain
                 for (previousCreature = monsters;
