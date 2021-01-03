@@ -2367,6 +2367,12 @@ boolean generallyValidBoltTarget(creature *caster, creature *target) {
         // bolts if we're discordant and wandering.
         return false;
     }
+    if (caster->creatureState == MONSTER_ALLY && !caster->status[STATUS_DISCORDANT]
+            && (target->bookkeepingFlags & MB_MARKED_FOR_SACRIFICE)) {
+        // Don't let (sane) allies cast at sacrifice targets.
+        return false;
+    }
+
     if (monsterIsHidden(target, caster)
         || (target->bookkeepingFlags & MB_SUBMERGED)) {
         // No bolt will affect a submerged creature. Can't shoot at invisible creatures unless it's in gas.
@@ -2759,6 +2765,12 @@ boolean monsterFleesFrom(creature *monst, creature *defender) {
         && !(defender->info.flags & MONST_IMMOBILE)) {
         // Don't charge if the monster is damage-immune and is NOT immobile;
         // i.e., keep distance from revenants and stone guardians but not mirror totems.
+        return true;
+    }
+
+    if (monst->creatureState == MONSTER_ALLY && !monst->status[STATUS_DISCORDANT]
+            && (defender->bookkeepingFlags & MB_MARKED_FOR_SACRIFICE)) {
+        // Willing allies shouldn't charge sacrifice targets.
         return true;
     }
 
