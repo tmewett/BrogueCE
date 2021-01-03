@@ -2427,6 +2427,10 @@ boolean specificallyValidBoltTarget(creature *caster, creature *target, enum bol
         // Don't shoot fireballs if you're standing on a tile that could combust into something that harms you.
         return false;
     }
+    if (rogue.patchVersion >= 4 && caster->creatureState == MONSTER_ALLY &&
+        !caster->status[STATUS_DISCORDANT] && (target->bookkeepingFlags & MB_MARKED_FOR_SACRIFICE)) {
+        return false;
+    }
 
     // Rules specific to bolt effects:
     switch (boltCatalog[theBoltType].boltEffect) {
@@ -2748,10 +2752,13 @@ boolean monsterFleesFrom(creature *monst, creature *defender) {
         return false;
     }
 
-    if ((defender->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE))
-        && !(defender->info.flags & MONST_IMMOBILE)) {
+    if (((defender->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE))
+        && !(defender->info.flags & MONST_IMMOBILE))
+        || (rogue.patchVersion >= 4 && monst->creatureState == MONSTER_ALLY &&
+            !monst->status[STATUS_DISCORDANT] && (defender->bookkeepingFlags & MB_MARKED_FOR_SACRIFICE))) {
         // Don't charge if the monster is damage-immune and is NOT immobile;
         // i.e., keep distance from revenants and stone guardians but not mirror totems.
+        // Willing allies shouldn't charge sacrifice targets either.
         return true;
     }
 
