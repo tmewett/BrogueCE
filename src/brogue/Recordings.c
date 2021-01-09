@@ -1086,11 +1086,7 @@ void getAvailableFilePath(char *returnPath, const char *defaultPath, const char 
     strcpy(returnPath, defaultPath);
     sprintf(fullPath, "%s%s", returnPath, suffix);
     while (fileExists(fullPath)) {
-#ifdef BROGUE_WEB
-        sprintf(returnPath, "%s_%i", defaultPath, fileNameIterator);
-#else
         sprintf(returnPath, "%s (%i)", defaultPath, fileNameIterator);
-#endif
         sprintf(fullPath, "%s%s", returnPath, suffix);
         fileNameIterator++;
     }
