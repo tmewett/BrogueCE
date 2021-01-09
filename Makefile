@@ -14,7 +14,7 @@ ifeq ($(TERMINAL),YES)
 endif
 
 ifeq ($(GRAPHICS),YES)
-	sources += $(addprefix src/platform/,sdl2-platform.c)
+	sources += $(addprefix src/platform/,sdl2-platform.c tiles.c)
 	cflags += $(shell $(SDL_CONFIG) --cflags)
 	cppflags += -DBROGUE_SDL
 	libs += $(shell $(SDL_CONFIG) --libs) -lSDL2_image
@@ -51,6 +51,7 @@ windows/icon.o: windows/icon.rc
 
 bin/brogue.exe: $(objects) windows/icon.o
 	$(CC) $(cflags) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(libs) $(LDLIBS)
+	mt -manifest windows/brogue.exe.manifest -outputresource:bin/brogue.exe;1
 
 clean:
 	$(RM) src/brogue/*.o src/platform/*.o bin/brogue{,.exe}
