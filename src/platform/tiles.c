@@ -145,11 +145,6 @@ static boolean isTileEmpty(int row, int column) {
 ///
 /// Wall tops are diagonal sine waves, approximately 4 pixels apart.
 ///
-/// If the floor tile is completely blank, we fill it with procedural noise that looks like dust, or dirt.
-/// This isn't needed for the official Brogue CE tiles, but when using custom tiles without the
-/// Hop-o'-My-Thumb / Pacman-inspired floor markers, it gives a great, resolution-dependent solution.
-/// If you prefer a completely blank tile for floors (no dot, no noise) simply set a pixel to a very dark grey.
-///
 /// \param surface the target surface
 /// \param tileWidth width (px) of tiles in the target surface
 /// \param tileHeight height (px) of tiles in the target surface
@@ -295,43 +290,6 @@ static double downscaleTile(SDL_Surface *surface, int tileWidth, int tileHeight,
         }
     }
     downscaled:
-
-    // procedural floor (if the floor tile is blank)
-    if (row == 20 && column == 2 && tileEmpty[row][column] && tileWidth > 2 && tileHeight > 2 && !optimizing) {
-        int w = tileWidth - 2;
-        int h = tileHeight - 2;
-        uint32_t *idx = malloc(w * h * sizeof(uint32_t));
-
-        // stitch edges together
-        for (int x = 0; x < w; x += 4) values[x] = (rand() % 1024) + 0x100000280U;
-        for (int y = 0; y < h; y += 4) values[y * tileWidth] = (rand() % 1024) + 0x100000280U;
-        for (int x = 2; x < w; x += 4) values[(h+1) * tileWidth + x] = (rand() % 1024) + 0x100000280U;
-        for (int y = 2; y < h; y += 4) values[y * tileWidth + (w+1)] = (rand() % 1024) + 0x100000280U;
-
-        // fill center with isolated dots, randomly placed
-        for (int i = 0; i < w * h; i++) idx[i] = i;             // array of indexes
-        for (int i = 0; i < w * h - 1; i++) {                   // shuffle the array
-            int j = i + (rand() % (w * h - i));                 // Fisher–Yates shuffle
-            uint64_t t = idx[i]; idx[i] = idx[j]; idx[j] = t;   // swap indexes
-        }
-        for (int i = 0; i < w * h; i++) {
-            int x = 1 + (idx[i] % w);
-            int y = 1 + (idx[i] / w);
-            int p = x + y * tileWidth;
-            if (!values[p+1] &&
-                !values[p-1] &&
-                !values[p+tileWidth] &&
-                !values[p+tileWidth+1] &&
-                !values[p+tileWidth-1] &&
-                !values[p-tileWidth] &&
-                !values[p-tileWidth+1] &&
-                !values[p-tileWidth-1])
-            {
-                values[p] = (rand() % 1024) + 0x100000280U;
-            }
-        }
-        free(idx);
-    }
 
     // procedural wall tops: diagonal sine waves
     if ((row == 16 && column == 2 || row == 21 && column == 1 || row == 22 && column == 4) && !optimizing) {
@@ -706,7 +664,6 @@ void updateScreen() {
                     int tileColumn = tile->charIndex % 16;
 
                     if (tileEmpty[tileRow][tileColumn]
-                            && !(tileRow == 20 && tileColumn == 2)     // floor (possibly procedural)
                             && !(tileRow == 21 && tileColumn == 1)) {  // wall top (procedural)
                         continue; // there is nothing to draw
                     }
