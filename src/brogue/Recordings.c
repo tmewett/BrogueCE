@@ -1108,12 +1108,14 @@ void getDefaultFilePath(char *defaultPath, boolean gameOver) {
     sprintf(seed, "%llu", (unsigned long long)rogue.seed);
     if (strlen(seed) > 11) sprintf(seed+3, "...%05lu", (unsigned long)(rogue.seed % 100000));
 
-#ifdef BROGUE_WEB
-    // With WebBrogue, filenames must fit into 30 bytes, including extension and terminal \0.
-    // It is enough for the seed and the optional file counter. The longest filename will be:
-    // "#184...51615_99999.broguesave" (30 bytes)
-    sprintf(defaultPath, "#%s", seed);
-#else
+    if (serverMode) {
+        // With WebBrogue, filenames must fit into 30 bytes, including extension and terminal \0.
+        // It is enough for the seed and the optional file counter. The longest filename will be:
+        // "#184...51615 (999).broguesave" (30 bytes)
+        sprintf(defaultPath, "#%s", seed);
+        return;
+    }
+
     if (!gameOver) {
         sprintf(defaultPath, "Saved #%s at depth %d", seed, rogue.depthLevel);
     } else if (rogue.quit) {
@@ -1130,7 +1132,6 @@ void getDefaultFilePath(char *defaultPath, boolean gameOver) {
     } else if (rogue.easyMode) {
         strcat(defaultPath, " (easy)");
     }
-#endif
 }
 
 void saveGameNoPrompt() {
