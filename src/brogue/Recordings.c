@@ -1087,7 +1087,7 @@ void getAvailableFilePath(char *returnPath, const char *defaultPath, const char 
     strcpy(returnPath, defaultPath);
     sprintf(fullPath, "%s%s", returnPath, suffix);
     while (fileExists(fullPath)) {
-        sprintf(returnPath, "%s %i", defaultPath, fileNameIterator);
+        sprintf(returnPath, "%s (%i)", defaultPath, fileNameIterator);
         sprintf(fullPath, "%s%s", returnPath, suffix);
         fileNameIterator++;
     }
@@ -1101,12 +1101,47 @@ boolean characterForbiddenInFilename(const char theChar) {
     }
 }
 
+void getDefaultFilePath(char *defaultPath, boolean gameOver) {
+    char seed[21];
+
+    // 32-bit numbers are printed in full
+    // 64-bit numbers longer than 11 digits are shortened to e.g "184...51615"
+    sprintf(seed, "%llu", (unsigned long long)rogue.seed);
+    if (strlen(seed) > 11) sprintf(seed+3, "...%05lu", (unsigned long)(rogue.seed % 100000));
+
+    if (serverMode) {
+        // With WebBrogue, filenames must fit into 30 bytes, including extension and terminal \0.
+        // It is enough for the seed and the optional file counter. The longest filename will be:
+        // "#184...51615 (999).broguesave" (30 bytes)
+        sprintf(defaultPath, "#%s", seed);
+        return;
+    }
+
+    if (!gameOver) {
+        sprintf(defaultPath, "Saved #%s at depth %d", seed, rogue.depthLevel);
+    } else if (rogue.quit) {
+        sprintf(defaultPath, "#%s Quit at depth %d", seed, rogue.depthLevel);
+    } else if (player.bookkeepingFlags & MB_IS_DYING) {
+        sprintf(defaultPath, "#%s Died at depth %d", seed, rogue.depthLevel);
+    } else if (rogue.depthLevel > 26) {
+        sprintf(defaultPath, "#%s Mastered the dungeons", seed);
+    } else {
+        sprintf(defaultPath, "#%s Escaped the dungeons", seed);
+    }
+    if (rogue.wizard) {
+        strcat(defaultPath, " (wizard)");
+    } else if (rogue.easyMode) {
+        strcat(defaultPath, " (easy)");
+    }
+}
+
 void saveGameNoPrompt() {
-    char filePath[BROGUE_FILENAME_MAX];
+    char filePath[BROGUE_FILENAME_MAX], defaultPath[BROGUE_FILENAME_MAX];
     if (rogue.playbackMode) {
         return;
     }
-    getAvailableFilePath(filePath, "Saved game", GAME_SUFFIX);
+    getDefaultFilePath(defaultPath, false);
+    getAvailableFilePath(filePath, defaultPath, GAME_SUFFIX);
     flushBufferToFile();
     strcat(filePath, GAME_SUFFIX);
     rename(currentFilePath, filePath);
@@ -1123,13 +1158,14 @@ void saveGame() {
         return; // Call me paranoid, but I'd rather it be impossible to embed malware in a recording.
     }
 
-    getAvailableFilePath(defaultPath, "Saved game", GAME_SUFFIX);
+    getDefaultFilePath(defaultPath, false);
+    getAvailableFilePath(filePath, defaultPath, GAME_SUFFIX);
 
     deleteMessages();
     do {
         askAgain = false;
         if (getInputTextString(filePath, "Save game as (<esc> to cancel): ",
-                               BROGUE_FILENAME_MAX - strlen(GAME_SUFFIX), defaultPath, GAME_SUFFIX, TEXT_INPUT_FILENAME, false)) {
+                               BROGUE_FILENAME_MAX - strlen(GAME_SUFFIX), filePath, GAME_SUFFIX, TEXT_INPUT_FILENAME, false)) {
             strcat(filePath, GAME_SUFFIX);
             if (!fileExists(filePath) || confirm("File of that name already exists. Overwrite?", true)) {
                 remove(filePath);
@@ -1147,12 +1183,13 @@ void saveGame() {
     deleteMessages();
 }
 
-void saveRecordingNoPrompt(char *filePath)
-{
+void saveRecordingNoPrompt(char *filePath) {
+    char defaultPath[BROGUE_FILENAME_MAX];
     if (rogue.playbackMode) {
         return;
     }
-    getAvailableFilePath(filePath, "Recording", RECORDING_SUFFIX);
+    getDefaultFilePath(defaultPath, true);
+    getAvailableFilePath(filePath, defaultPath, RECORDING_SUFFIX);
     strcat(filePath, RECORDING_SUFFIX);
     remove(filePath);
     rename(currentFilePath, filePath);
@@ -1167,13 +1204,14 @@ void saveRecording(char *filePath) {
         return;
     }
 
-    getAvailableFilePath(defaultPath, "Recording", RECORDING_SUFFIX);
+    getDefaultFilePath(defaultPath, true);
+    getAvailableFilePath(filePath, defaultPath, RECORDING_SUFFIX);
 
     deleteMessages();
     do {
         askAgain = false;
         if (getInputTextString(filePath, "Save recording as (<esc> to cancel): ",
-                               BROGUE_FILENAME_MAX - strlen(RECORDING_SUFFIX), defaultPath, RECORDING_SUFFIX, TEXT_INPUT_FILENAME, false)) {
+                               BROGUE_FILENAME_MAX - strlen(RECORDING_SUFFIX), filePath, RECORDING_SUFFIX, TEXT_INPUT_FILENAME, false)) {
 
             strcat(filePath, RECORDING_SUFFIX);
             if (!fileExists(filePath) || confirm("File of that name already exists. Overwrite?", true)) {
