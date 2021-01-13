@@ -11,8 +11,10 @@ jobs:
     steps:
     - name: "Install dependencies"
       run: |
+        # We need SDL 2.0.5+
+        sudo tee /etc/apt/sources.list.d/bionic.list <<<'deb http://azure.archive.ubuntu.com/ubuntu bionic main restricted universe multiverse'
         sudo apt update -y
-        sudo apt install -y libsdl2-dev libsdl2-image-dev
+        sudo apt install -y libsdl2-dev/bionic libsdl2-image-dev/bionic
 
     - name: "Checkout sources"
       uses: actions/checkout@v2
