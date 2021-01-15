@@ -428,6 +428,10 @@ void applyInstantTileEffectsToCreature(creature *monst) {
     if (cellHasTerrainFlag(*x, *y, T_IS_FIRE)) {
         exposeCreatureToFire(monst);
     } else if (cellHasTerrainFlag(*x, *y, T_IS_FLAMMABLE)
+            // We should only expose to fire if it is flammable and not on fire. However, when
+            // gas burns, it only sets the volume to 0 and doesn't clear the layer (for visual
+            // reasons). This can cause crashes if the fire tile fails to spawn, so we also exclude it.
+               && !(pmap[*x][*y].layers[GAS] != NOTHING && pmap[*x][*y].volume == 0)
                && !cellHasTerrainFlag(*x, *y, T_IS_FIRE)
                && monst->status[STATUS_BURNING]
                && !(monst->bookkeepingFlags & (MB_SUBMERGED | MB_IS_FALLING))) {
@@ -1171,6 +1175,8 @@ boolean exposeTileToFire(short x, short y, boolean alwaysIgnite) {
         // Flammable layers are consumed.
         for (layer=0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
             if (tileCatalog[pmap[x][y].layers[layer]].flags & T_IS_FLAMMABLE) {
+                // pmap[x][y].layers[GAS] is not cleared here, which is a bug.
+                // We preserve the layer anyways because this results in nicer gas burning behavior.
                 if (layer == GAS) {
                     pmap[x][y].volume = 0; // Flammable gas burns its volume away.
                 }
