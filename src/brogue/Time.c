@@ -98,7 +98,7 @@ boolean monsterShouldFall(creature *monst) {
 
 // Called at least every 100 ticks; may be called more frequently.
 void applyInstantTileEffectsToCreature(creature *monst) {
-    char buf[COLS], buf2[COLS];
+    char buf[COLS], buf2[COLS], buf3[COLS];
     short *x = &(monst->xLoc), *y = &(monst->yLoc), damage;
     enum dungeonLayers layer;
     item *theItem;
@@ -315,11 +315,14 @@ void applyInstantTileEffectsToCreature(creature *monst) {
                 monst->creatureState = MONSTER_TRACKING_SCENT;
             }
             monsterName(buf, monst, true);
+
+            // Get explosive layer before damage in case a death DF replaces the explosion
+            strcpy(buf3, tileCatalog[pmap[*x][*y].layers[layerWithFlag(*x, *y, T_CAUSES_EXPLOSIVE_DAMAGE)]].description);
             if (inflictDamage(NULL, monst, damage, &yellow, false)) {
                 // if killed
                 sprintf(buf2, "%s %s %s.", buf,
                         (monst->info.flags & MONST_INANIMATE) ? "is destroyed by" : "dies in",
-                        tileCatalog[pmap[*x][*y].layers[layerWithFlag(*x, *y, T_CAUSES_EXPLOSIVE_DAMAGE)]].description);
+                        buf3);
                 messageWithColor(buf2, messageColorFromVictim(monst), false);
                 refreshDungeonCell(*x, *y);
                 return;
