@@ -7,6 +7,13 @@ cppflags := -DDATADIR=$(DATADIR)
 
 sources := $(wildcard src/brogue/*.c) $(addprefix src/platform/,main.c platformdependent.c)
 
+ifeq ($(RELEASE),YES)
+	extra_version :=
+else
+	extra_version := $(shell tools/git-extra-version)
+endif
+cppflags += -DBROGUE_EXTRA_VERSION='"$(extra_version)"'
+
 ifeq ($(TERMINAL),YES)
 	sources += $(addprefix src/platform/,curses-platform.c term.c)
 	cppflags += -DBROGUE_CURSES
