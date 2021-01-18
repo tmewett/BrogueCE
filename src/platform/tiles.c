@@ -78,6 +78,17 @@ static void imgfatal(char *file, int line) {
 }
 
 
+#if !SDL_VERSION_ATLEAST(2, 0, 5)
+
+SDL_Surface *SDL_CreateRGBSurfaceWithFormat(Uint32 flags, int width, int height, int depth, Uint32 format) {
+    Uint32 r, g, b, a;
+    if (!SDL_PixelFormatEnumToMasks(format, &depth, &r, &g, &b, &a)) sdlfatal(__FILE__, __LINE__);
+    return SDL_CreateRGBSurface(flags, width, height, depth, r, g, b, a);
+}
+
+#endif
+
+
 /// Returns the numbers of black lines at the top and bottom of a given glyph in the source PNG.
 ///
 /// For example, if the glyph has 30 black lines at the top and 40 at the bottom, the function
@@ -218,7 +229,7 @@ static double downscaleTile(SDL_Surface *surface, int tileWidth, int tileHeight,
     map3 = map0 + glyphWidth * (double)(stop3 - stop0) / (stop4 - stop0) + shifts[1] * 0.1;
     map4 = map0 + glyphWidth;
 
-    // now we can interpolate the horital coordinates for all pixels
+    // now we can interpolate the horizontal coordinates for all pixels
     for (int x = stop0; x < stop1; x++) scaledX[x] = map0 + (map1 - map0) * (x - stop0) / (stop1 - stop0);
     for (int x = stop1; x < stop2; x++) scaledX[x] = map1 + (map2 - map1) * (x - stop1) / (stop2 - stop1);
     for (int x = stop2; x < stop3; x++) scaledX[x] = map2 + (map3 - map2) * (x - stop2) / (stop3 - stop2);
@@ -263,7 +274,7 @@ static double downscaleTile(SDL_Surface *surface, int tileWidth, int tileHeight,
     map2 += shifts[2] * 0.1;
     map3 += shifts[1] * 0.1;
 
-    // finally we can interpolate the horital coordinates for all pixels
+    // finally we can interpolate the vertical coordinates for all pixels
     for (int y = 0; y < stop0; y++) scaledY[y] = -1; // not mapped (can happen with fitted tiles)
     for (int y = stop0; y < stop1; y++) scaledY[y] = map0 + (map1 - map0) * (y - stop0) / (stop1 - stop0);
     for (int y = stop1; y < stop2; y++) scaledY[y] = map1 + (map2 - map1) * (y - stop1) / (stop2 - stop1);
