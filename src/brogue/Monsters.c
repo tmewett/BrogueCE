@@ -2381,6 +2381,15 @@ boolean targetEligibleForCombatBuff(creature *caster, creature *target) {
 // Assumes that the conditions in generallyValidBoltTarget have already been satisfied.
 boolean specificallyValidBoltTarget(creature *caster, creature *target, enum boltType theBoltType) {
 
+    if (rogue.patchVersion >= 3
+        && caster->status[STATUS_DISCORDANT]
+        && caster->creatureState == MONSTER_WANDERING
+        && target == &player
+        ) {
+
+        return false;
+    }
+
     if ((boltCatalog[theBoltType].flags & BF_TARGET_ALLIES)
         && (!monstersAreTeammates(caster, target) || monstersAreEnemies(caster, target))) {
 
