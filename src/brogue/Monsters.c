@@ -2384,9 +2384,12 @@ boolean specificallyValidBoltTarget(creature *caster, creature *target, enum bol
     if (rogue.patchVersion >= 3
         && caster->status[STATUS_DISCORDANT]
         && caster->creatureState == MONSTER_WANDERING
-        && target == &player
-        ) {
-
+        && target == &player) {
+        // Discordant monsters always try to cast spells regardless of whether
+        // they're hunting the player, so that they cast at other monsters. This
+        // by bypasses the usual awareness checks, so the player and any allies
+        // can be hit when far away. Hence, we don't target the player with
+        // bolts if we're discordant and wandering.
         return false;
     }
 
