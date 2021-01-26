@@ -44,7 +44,8 @@ pairmode_cell *cell_buffer;
 
 enum {
     coerce_16,
-    coerce_256
+    coerce_256,
+    truecolor
 } colormode;
 
 int is_xterm;
@@ -69,8 +70,13 @@ static void preparecolor ( ) {
         }
     }
 
-    if (COLORS >= 256) {
+    char *env = getenv("COLORTERM");
+    if (env && ((strncmp(env, "truecolor", 9) == 0) || (strncmp(env, "24bit", 5) == 0))) {
+        colormode = truecolor;
+    } else if (COLORS >= 256) {
         colormode = coerce_256;
+    } else {
+        colormode = coerce_16;
     }
 }
 
@@ -465,20 +471,33 @@ static void buffer_plot(int ch, int x, int y, fcolor *fg, fcolor *bg) {
 
     intcolor cube_fg, cube_bg;
 
-    coerce_colorcube(fg, &cube_fg);
-    coerce_colorcube(bg, &cube_bg);
-    if (cube_fg.idx == cube_bg.idx) {
-        // verify that the colors are really the same; otherwise, we'd better force the output apart
-        int naive_distance =
-            (fg->r - bg->r) * (fg->r - bg->r)
-            + (fg->g - bg->g) * (fg->g - bg->g)
-            + (fg->b - bg->b) * (fg->b - bg->b);
-        if (naive_distance > 3) {
-            // very arbitrary cutoff, and an arbitrary fix, very lazy
-            if (cube_bg.r > 0) {cube_bg.r -= 1; cube_bg.idx -= 1; }
-            if (cube_bg.g > 0) {cube_bg.g -= 1; cube_bg.idx -= 6; }
-            if (cube_bg.b > 0) {cube_bg.b -= 1; cube_bg.idx -= 36; }
+    if (colormode == coerce_256) {
+        coerce_colorcube(fg, &cube_fg);
+        coerce_colorcube(bg, &cube_bg);
+        if (cube_fg.idx == cube_bg.idx) {
+            // verify that the colors are really the same; otherwise, we'd better force the output apart
+            int naive_distance =
+                (fg->r - bg->r) * (fg->r - bg->r)
+                + (fg->g - bg->g) * (fg->g - bg->g)
+                + (fg->b - bg->b) * (fg->b - bg->b);
+            if (naive_distance > 3) {
+                // very arbitrary cutoff, and an arbitrary fix, very lazy
+                if (cube_bg.r > 0) {cube_bg.r -= 1; cube_bg.idx -= 1; }
+                if (cube_bg.g > 0) {cube_bg.g -= 1; cube_bg.idx -= 6; }
+                if (cube_bg.b > 0) {cube_bg.b -= 1; cube_bg.idx -= 36; }
+            }
         }
+    } else {
+        cube_fg = (intcolor){
+            .r = round(fg->r * 255),
+            .g = round(fg->g * 255),
+            .b = round(fg->b * 255)
+        };
+        cube_bg = (intcolor){
+            .r = round(bg->r * 255),
+            .g = round(bg->g * 255),
+            .b = round(bg->b * 255)
+        };
     }
 
     int cell = x + y * minsize.width;
@@ -522,6 +541,21 @@ static void buffer_render_256() {
     }
 }
 
+static void buffer_render_24bit() {
+    int i = 0;
+    for (int y = 0; y < minsize.height; y++) {
+        for (int x = 0; x < minsize.width; x++) {
+            pairmode_cell c = cell_buffer[i++];
+            printf("\033[%d;%df\033[38;2;%d;%d;%d;48;2;%d;%d;%dm%c",
+                y+1, x+1,
+                c.fore.r, c.fore.g, c.fore.b,
+                c.back.r, c.back.g, c.back.b,
+                c.ch);
+        }
+    }
+    fflush(stdout);
+}
+
 static void term_mvaddch(int x, int y, int ch, fcolor *fg, fcolor *bg) {
     if (x < 0 || y < 0 || x >= minsize.width || y >= minsize.height) return;
 
@@ -563,6 +597,8 @@ static void term_refresh() {
 
     if (colormode == coerce_256) {
         buffer_render_256();
+    } else if (colormode == truecolor) {
+        buffer_render_24bit();
     }
 
     refresh();
