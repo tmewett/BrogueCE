@@ -544,10 +544,10 @@ static void buffer_render_256() {
 static void buffer_render_24bit() {
     int i = 0;
     for (int y = 0; y < minsize.height; y++) {
+        printf("\033[%d;1f", y+1);
         for (int x = 0; x < minsize.width; x++) {
             pairmode_cell c = cell_buffer[i++];
-            printf("\033[%d;%df\033[38;2;%d;%d;%d;48;2;%d;%d;%dm%c",
-                y+1, x+1,
+            printf("\033[38;2;%d;%d;%d;48;2;%d;%d;%dm%c",
                 c.fore.r, c.fore.g, c.fore.b,
                 c.back.r, c.back.g, c.back.b,
                 c.ch);
