@@ -542,15 +542,36 @@ static void buffer_render_256() {
 }
 
 static void buffer_render_24bit() {
-    int i = 0;
+    int cx, cy;      // cursor coordinates
+    intcolor fg, bg; // current colors
+
+    cx = cy = fg.r = fg.g = fg.b = bg.r = bg.g = bg.b = -1;
+
     for (int y = 0; y < minsize.height; y++) {
-        printf("\033[%d;1f", y+1);
         for (int x = 0; x < minsize.width; x++) {
-            pairmode_cell c = cell_buffer[i++];
-            printf("\033[38;2;%d;%d;%d;48;2;%d;%d;%dm%c",
-                c.fore.r, c.fore.g, c.fore.b,
-                c.back.r, c.back.g, c.back.b,
-                c.ch);
+            pairmode_cell *c = &cell_buffer[x + y * minsize.width];
+
+            // move cursor if necessary
+            if (cx != x || cy != y) {
+                cx = x, cy = y;
+                printf("\033[%d;%df", cy+1, cx+1);
+            }
+
+            // change background color
+            if (c->back.r != bg.r || c->back.g != bg.g || c->back.b != bg.b) {
+                bg = c->back;
+                printf("\033[48;2;%d;%d;%dm", bg.r, bg.g, bg.b);
+            }
+
+            // change foreground color (doesn't matter for whitespace)
+            if (c->ch != ' ' && (fg.r != c->fore.r || fg.g != c->fore.g || fg.b != c->fore.b)) {
+                fg = c->fore;
+                printf("\033[38;2;%d;%d;%dm", fg.r, fg.g, fg.b);
+            }
+
+            // print character
+            printf("%c", c->ch);
+            cx++;
         }
     }
     fflush(stdout);
