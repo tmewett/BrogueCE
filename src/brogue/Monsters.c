@@ -4278,6 +4278,16 @@ void monsterDetails(char buf[], creature *monst) {
         strcat(buf, newText);
     }
 
+    if (monst->wasNegated && monst->newPowerCount == monst->totalPowerCount) {
+        i = strlen(buf);
+        i = encodeMessageColor(buf, i, &pink);
+        sprintf(newText, "%s is stripped of $HISHER special traits.", capMonstName);
+        resolvePronounEscapes(newText, monst);
+        upperCase(newText);
+        strcat(buf, "\n     ");
+        strcat(buf, newText);
+    }
+
     strcat(buf, "\n     ");
 
     i = strlen(buf);

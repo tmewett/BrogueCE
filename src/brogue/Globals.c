@@ -91,6 +91,7 @@ const color darkBlue =              {0,     0,      50,     0,      0,          
 const color darkTurquoise =         {0,     40,     65,     0,      0,          0,          0,      false};
 const color lightBlue =             {40,    40,     100,    0,      0,          0,          0,      false};
 const color pink =                  {100,   60,     66,     0,      0,          0,          0,      false};
+const color darkPink =              {50,    30,     33,     0,      0,          0,          0,      false};
 const color red  =                  {100,   0,      0,      0,      0,          0,          0,      false};
 const color darkRed =               {50,    0,      0,      0,      0,          0,          0,      false};
 const color tanColor =              {80,    67,     15,     0,      0,          0,          0,      false};
