@@ -539,7 +539,10 @@ static void buffer_render_256() {
             i++;
         }
     }
+    refresh();
 }
+
+static int fullRefresh = 1; // screen needs a full refresh
 
 static void buffer_render_24bit() {
     int cx, cy;      // cursor coordinates
@@ -551,11 +554,9 @@ static void buffer_render_24bit() {
         for (int x = 0; x < minsize.width; x++) {
             pairmode_cell *c = &cell_buffer[x + y * minsize.width];
 
-            // move cursor if necessary
-            if (cx != x || cy != y) {
-                cx = x, cy = y;
-                printf("\033[%d;%df", cy+1, cx+1);
-            }
+            // `pair` is set to -1 when a tile changes, which signals we need to print it
+            if (!c->pair && !fullRefresh) continue;
+            c->pair = 0;
 
             // change background color
             if (c->back.r != bg.r || c->back.g != bg.g || c->back.b != bg.b) {
@@ -569,12 +570,20 @@ static void buffer_render_24bit() {
                 printf("\033[38;2;%d;%d;%dm", fg.r, fg.g, fg.b);
             }
 
-            // print character
+            // move cursor if necessary
+            if (cx != x || cy != y) {
+                cx = x, cy = y;
+                printf("\033[%d;%df", cy+1, cx+1);
+            }
+
+            // print the character
             printf("%c", c->ch);
             cx++;
         }
     }
+
     fflush(stdout);
+    fullRefresh = 0;
 }
 
 static void term_mvaddch(int x, int y, int ch, fcolor *fg, fcolor *bg) {
@@ -615,14 +624,13 @@ static void term_refresh() {
         }
     }
 
-
-    if (colormode == coerce_256) {
-        buffer_render_256();
-    } else if (colormode == truecolor) {
+    if (colormode == truecolor) {
         buffer_render_24bit();
+    } else if (colormode == coerce_256) {
+        buffer_render_256();
+    } else if (colormode == coerce_16) {
+        refresh();
     }
-
-    refresh();
 }
 
 static void ensure_size( );
@@ -636,6 +644,7 @@ static int term_getkey( ) {
         int got = getch();
         if (got == KEY_RESIZE) {
             ensure_size( );
+            fullRefresh = 1;
         } else if (got == KEY_MOUSE) {
             MEVENT mevent;
             getmouse (&mevent);
