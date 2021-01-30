@@ -4185,19 +4185,12 @@ void monsterDetails(char buf[], creature *monst) {
         playerKnownAverageDamage = (player.info.damage.upperBound + player.info.damage.lowerBound) / 2;
         playerKnownMaxDamage = player.info.damage.upperBound;
     } else {
-        short tempEnchant = rogue.weapon->enchant1;
-        rogue.weapon->enchant1 = 0;
-        short tempLow = rogue.weapon->damage.lowerBound * damageFraction(netEnchant(rogue.weapon)) / FP_FACTOR;
-        short tempHigh = rogue.weapon->damage.upperBound * damageFraction(netEnchant(rogue.weapon)) / FP_FACTOR;
-        rogue.weapon->enchant1 = tempEnchant;
-        if (tempLow < 1) {
-            tempLow = 1;
-        }
-        if (tempHigh < 1) {
-            tempHigh = 1;
-        }
-        playerKnownAverageDamage = (tempLow + tempHigh) / 2;
-        playerKnownMaxDamage = tempHigh;
+        fixpt strengthFactor = damageFraction(strengthModifier(rogue.weapon));
+        short tempLow = rogue.weapon->damage.lowerBound * strengthFactor / FP_FACTOR;
+        short tempHigh = rogue.weapon->damage.upperBound * strengthFactor / FP_FACTOR;
+
+        playerKnownAverageDamage = max(1, (tempLow + tempHigh) / 2);
+        playerKnownMaxDamage = max(1, tempHigh);
     }
 
     // Combat info for the player attacking the monster (or whether it's captive)
