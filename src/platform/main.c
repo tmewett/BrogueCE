@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
                 int size = atoi(argv[i + 1]);
                 if (size > 0 && size <= 20) {
                     windowWidth = round(pow(1.1, size) * 620.);
-                    windowHeight = windowWidth * 9/16;
+                    // Height set automatically
                 };
 
                 i++;

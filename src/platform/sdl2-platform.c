@@ -175,7 +175,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
             } else if (key == SDLK_F11 || key == SDLK_F12
                     || key == SDLK_RETURN && (SDL_GetModState() & KMOD_ALT)) {
                 fullScreen = !fullScreen;
-                resizeWindow(windowWidth * 7/10, windowHeight * 7/10);
+                resizeWindow(-1, -1);  // Reset to starting resolution
                 continue;
             }
 
