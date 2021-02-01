@@ -10,7 +10,7 @@ sources := $(wildcard src/brogue/*.c) $(addprefix src/platform/,main.c platformd
 ifeq ($(RELEASE),YES)
 	extra_version :=
 else
-	extra_version := $(shell tools/git-extra-version)
+	extra_version := $(shell bash -c tools/git-extra-version)
 endif
 cppflags += -DBROGUE_EXTRA_VERSION='"$(extra_version)"'
 
