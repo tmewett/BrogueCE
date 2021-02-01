@@ -685,7 +685,7 @@ static void resetPlayback() {
 static void seek(unsigned long seekTarget, enum recordingSeekModes seekMode) {
     unsigned long progressBarRefreshInterval = 1, startTurnNumber = 0, targetTurnNumber = 0, avgTurnsPerLevel = 1;
     rogueEvent theEvent;
-    boolean pauseState, useProgressBar, arrivedAtDestination = false;
+    boolean pauseState, useProgressBar = false, arrivedAtDestination = false;
     cellDisplayBuffer dbuf[COLS][ROWS];
 
     pauseState = rogue.playbackPaused;
@@ -731,11 +731,12 @@ static void seek(unsigned long seekTarget, enum recordingSeekModes seekMode) {
         }
     }
 
-    clearDisplayBuffer(dbuf);
-    rectangularShading((COLS - 20) / 2, ROWS / 2, 20, 1, &black, INTERFACE_OPACITY, dbuf);
-    overlayDisplayBuffer(dbuf, 0);
-    commitDraws();
-    displayMoreSign();
+    if (useProgressBar) {
+        clearDisplayBuffer(dbuf);
+        rectangularShading((COLS - 20) / 2, ROWS / 2, 20, 1, &black, INTERFACE_OPACITY, dbuf);
+        overlayDisplayBuffer(dbuf, 0);
+        commitDraws();
+    }
     rogue.playbackFastForward = true;
 
     while (!arrivedAtDestination && !rogue.gameHasEnded && !rogue.playbackOOS) {
