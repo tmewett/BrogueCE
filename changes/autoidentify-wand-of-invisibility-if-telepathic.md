@@ -1,1 +1,0 @@
-autoidentify a wand of invisibility if it turns an enemy invisible while the player has a telepathic bond

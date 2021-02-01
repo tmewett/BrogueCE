@@ -1,1 +1,0 @@
-Discordant wandering monsters no longer target the player with bolts/spells from beyond stealth range
