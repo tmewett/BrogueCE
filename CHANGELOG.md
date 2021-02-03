@@ -1,3 +1,59 @@
+1.9.3
+=====
+
+Major graphical improvements on all platforms, some long-awaited bug fixes, and
+the usual general QoL.
+
+Thanks to contributors Andy, Anthony, bleakley, SanatMishra, withinwheels, and
+zenzombie.
+
+-
+  High DPI displays are now supported on all platforms (no more blurriness!)
+-
+  The window is now freely resizable, to perfectly fit any monitor up to 4K
+  size; tiles and fonts auto-scale but stay sharp
+-
+  Added 6 new tile graphics: vine, net, lichen, glass pipes, and 2 more types of
+  altars
+-
+  Fixed a bug that could cause monkeys with keys to jump into lava
+-
+  Discordant wandering monsters no longer target the player with bolts/spells
+  from beyond stealth range
+-
+  Closing the window no longer hangs in some cases, and the game is properly
+  auto-saved
+-
+  Fixed a bug that could cause crashes when entranced monsters move
+-
+  Explosive monsters no longer explode over chasms when they would die by
+  falling
+-
+  Fixed issues with off-level monster pathing that could cause monsters to go
+  into a corrupted state that cannot be attacked
+-
+  Fast/slow monsters now move the correct distance and to the correct spot when
+  reloading a level
+-
+  Added seed and level into default save and recording file names
+-
+  Expected damage info in monster info boxes now accounts for the strength bonus
+  from unidentified weapons
+-
+  When a mutated monster is negated, the mutation label is removed from the
+  sidebar. Excludes agile and juggernaut mutations, since they cannot be negated
+-
+  Wands of invisibility auto-ID if they turn an monster invisible while the
+  player has a telepathic bond
+-
+  Fixed crashes from pit bloat and gas interactions
+-
+  Added "go to previous level" key (`<`) to replay viewer
+-
+  Added new command line options to change settings on launch: `--full-screen`,
+  `--stealth`, and `--no-effects`
+
+
 1.9.2
 =====
 
