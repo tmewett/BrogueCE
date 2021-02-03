@@ -432,6 +432,18 @@ static void optimizeTiles() {
 }
 
 
+/// Adds a constant to all values in `tileShifts`.
+/// Without an offset, these values lie between -10 and +10,
+/// then some zealous AV software wrongly flags `tiles.bin` as suspicious.
+/// With an offset of 77 ('M'), they fall into the ASCII range [A-Z],
+/// which makes `tiles.bin` look like a plain text file.
+void offsetShifts(int sign) {
+    for (int i = 0; i < sizeof(tileShifts); i++) {
+        ((int8_t*)tileShifts)[i] += sign * 77;
+    }
+}
+
+
 /// Loads the PNG and analyses it.
 void initTiles() {
 
@@ -457,11 +469,14 @@ void initTiles() {
     FILE *file = fopen(filename, "rb");
     if (file) {
         fread(tileShifts, 1, sizeof(tileShifts), file);
+        offsetShifts(-1); // remove the offset
         fclose(file);
     } else {
         optimizeTiles();
         file = fopen(filename, "wb");
+        offsetShifts(+1); // temporarily bring all values into the [A-Z] range
         fwrite(tileShifts, 1, sizeof(tileShifts), file);
+        offsetShifts(-1); // undo it
         fclose(file);
     }
 }
