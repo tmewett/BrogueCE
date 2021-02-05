@@ -506,11 +506,12 @@ short pickHordeType(short depth, enum monsterTypes summonerType, unsigned long f
 
 void empowerMonster(creature *monst) {
     char theMonsterName[100], buf[200];
-    monst->info.maxHP += 12;
-    monst->info.defense += 10;
-    monst->info.accuracy += 10;
-    monst->info.damage.lowerBound += max(1, monst->info.damage.lowerBound / 10);
-    monst->info.damage.upperBound += max(1, monst->info.damage.upperBound / 10);
+    monst->info.maxHP += 15;
+    monst->currentHP += (15 * monst->currentHP / (monst->info.maxHP - 15));
+    monst->info.defense += 15;
+    monst->info.accuracy += 15;
+    monst->info.damage.lowerBound += max(1, monst->info.damage.lowerBound / 7);
+    monst->info.damage.upperBound += max(1, monst->info.damage.upperBound / 7);
     monst->newPowerCount++;
     monst->totalPowerCount++;
     heal(monst, 100, true);
