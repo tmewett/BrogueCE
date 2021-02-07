@@ -27,7 +27,7 @@ lucky few to return alive?
 Playing
 -------
 
-If you downloaded a release, you can open the game as follows:
+If you downloaded a [release][releases], you can open the game as follows:
 
 ### Windows
 
@@ -116,3 +116,6 @@ necessary.
 We don't know for sure whether Brian is still working on Brogue, or plans to
 release another version. However, he has implied that he considers the game
 complete, so we are working on the assumption that 1.7.5 is the final version.
+
+
+[releases]: https://github.com/tmewett/BrogueCE/releases
