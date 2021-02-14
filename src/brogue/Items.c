@@ -3625,7 +3625,6 @@ boolean polymorph(creature *monst) {
 
     // After polymorphing, don't "drop" any creature on death (e.g. phylactery, phoenix egg)
     if (monst->carriedMonster) {
-        killCreature(monst->carriedMonster, true);
         freeCreature(monst->carriedMonster);
         monst->carriedMonster = NULL;
     }
