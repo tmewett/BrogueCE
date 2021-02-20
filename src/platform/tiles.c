@@ -722,8 +722,8 @@ void resizeWindow(int width, int height) {
     if (SDL_GetCurrentDisplayMode(0, &mode) < 0) sdlfatal(__FILE__, __LINE__);
 
     // By default the window will have an aspect ratio of 16:10
-    // and either 70% of monitor width or 70% of monitor height, whichever is smaller
-    if (width < 0) width = min(mode.w * 7/10, mode.h * 28/25);
+    // and either 80% of monitor width or 80% of monitor height, whichever is smaller
+    if (width < 0) width = min(mode.w * 8/10, mode.h * 8*16/(10*10));
     if (height < 0) height = width * 10/16;
 
     // go to fullscreen mode if the window is as big as the screen
