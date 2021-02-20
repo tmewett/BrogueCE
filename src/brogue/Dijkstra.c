@@ -258,7 +258,7 @@ void calculateDistances(short **distanceMap,
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            char cost;
+            signed char cost;
             monst = monsterAtLoc(i, j);
             if (monst
                 && (monst->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE))
