@@ -2959,7 +2959,7 @@ extern "C" {
     short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2], const short targetLoc[2]);
     void getImpactLoc(short returnLoc[2], const short originLoc[2], const short targetLoc[2],
                       const short maxDistance, const boolean returnLastEmptySpace);
-    void negate(creature *monst);
+    boolean negate(creature *monst);
     short monsterAccuracyAdjusted(const creature *monst);
     fixpt monsterDamageAdjustmentAmount(const creature *monst);
     short monsterDefenseAdjusted(const creature *monst);

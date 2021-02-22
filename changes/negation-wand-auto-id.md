@@ -1,0 +1,1 @@
+Wands of negation auto-ID if the bolt has an effect. A combat message is shown for any monster affected by negation. 
