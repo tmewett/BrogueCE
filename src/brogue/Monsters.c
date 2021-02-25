@@ -612,9 +612,11 @@ creature *cloneMonster(creature *monst, boolean announce, boolean placeClone) {
 }
 
 unsigned long forbiddenFlagsForMonster(creatureType *monsterType) {
-    unsigned long flags;
+    unsigned long flags = 0;
 
-    flags = T_PATHING_BLOCKER;
+    if (!(monsterType->flags & MONST_ATTACKABLE_THRU_WALLS)) {
+        flags = T_PATHING_BLOCKER;
+    }
     if (monsterType->flags & MONST_INVULNERABLE) {
         flags &= ~(T_LAVA_INSTA_DEATH | T_SPONTANEOUSLY_IGNITES | T_IS_FIRE);
     }
