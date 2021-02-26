@@ -685,6 +685,9 @@ boolean spawnMinions(short hordeID, creature *leader, boolean summoned) {
         if (hordeCatalog[hordeID].spawnsIn) {
             forbiddenTerrainFlags &= ~(tileCatalog[hordeCatalog[hordeID].spawnsIn].flags);
         }
+        if (monsterCatalog[theHorde->memberType[iSpecies]].flags & MONST_FIERY) {
+            forbiddenTerrainFlags |= T_IS_FLAMMABLE;
+        }
 
         for (iMember = 0; iMember < count; iMember++) {
             monst = generateMonster(theHorde->memberType[iSpecies], true, !summoned);
