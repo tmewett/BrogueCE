@@ -6697,7 +6697,7 @@ void readScroll(item *theItem) {
                     y = player.yLoc + nbDirs[i][1];
                     if (!cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY) && !(pmap[x][y].flags & HAS_MONSTER)
                         && rand_percent(10) && (numberOfMonsters < 3)) {
-                        monst = spawnHorde(0, x, y, (HORDE_LEADER_CAPTIVE | HORDE_NO_PERIODIC_SPAWN | HORDE_IS_SUMMONED | HORDE_MACHINE_ONLY), 0);
+                        monst = spawnHorde(0, x, y, (HORDE_LEADER_CAPTIVE | HORDE_NO_PERIODIC_SPAWN | HORDE_IS_SUMMONED | HORDE_MACHINE_ONLY), 0, false);
                         if (monst) {
                             // refreshDungeonCell(x, y);
                             // monst->creatureState = MONSTER_TRACKING_SCENT;

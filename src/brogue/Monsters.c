@@ -752,12 +752,94 @@ void drawManacles(short x, short y) {
     }
 }
 
+boolean getRandomHordeSpawnLocation(short loc[2], short hordeID, boolean periodic) {
+    boolean validTurretLoc;
+    short i, j, k, newX, newY;
+    creatureType* leaderType = &(monsterCatalog[hordeCatalog[hordeID].leaderType]);
+    unsigned long avoidedTerrainFlags = avoidedFlagsForMonster(leaderType);
+    unsigned long avoidedMapFlags = HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | HAS_ITEM | IS_IN_MACHINE;
+
+    short **grid = allocGrid();
+    if (periodic) {
+        calculateDistances(grid, player.xLoc, player.yLoc, T_DIVIDES_LEVEL, NULL, true, true);
+        findReplaceGrid(grid, -30000, DCOLS/2-1, 0);
+        findReplaceGrid(grid, 30000, 30000, 0);
+        findReplaceGrid(grid, DCOLS/2, 30000-1, 1);
+    } else {
+        fillGrid(grid, 1);
+    }
+
+    if (periodic) {
+        avoidedMapFlags |= ANY_KIND_OF_VISIBLE;
+    } else {
+        // We need to exclude tiles marked with IN_FIELD_OF_VIEW to prevent the initial monsters from spawning within FOV of the entry stairs.
+        // IN_FIELD_OF_VIEW is specifically calculated from the entry stairs when the level is generated.
+        avoidedMapFlags |= IN_FIELD_OF_VIEW;
+    }
+
+    // Fiery monsters will not spawn in flammable terrain.
+    if (leaderType->flags & MONST_FIERY) {
+            avoidedTerrainFlags |= T_IS_FLAMMABLE;
+    }
+
+    getTerrainGrid(grid, 0, avoidedTerrainFlags, avoidedMapFlags);
+
+    for (i = 0; i < DCOLS; i++) {
+        for (j = 0; j < DROWS; j++) {
+            if (hordeCatalog[hordeID].spawnsIn && !cellHasTerrainType(i, j, hordeCatalog[hordeID].spawnsIn)) {
+                grid[i][j] = 0;
+            }
+
+            // This is the only check applied to periodic hordes.
+            if (periodic) {
+                continue;
+            }
+
+            if (!hordeCatalog[hordeID].spawnsIn && (pmap[i][j].layers[DUNGEON] != FLOOR || pmap[i][j].layers[LIQUID] != NOTHING)) {
+                grid[i][j] = 0;
+            }
+
+            // Don't spawn in hallways or anything similar.
+            if (passableArcCount(i, j) > 1) {
+                grid[i][j] = 0;
+            }
+
+            // Randomly spawned turrets should not spawn in a way that they can never fire
+            // (e.g. behind statue, surrounded by walls), or behind the stairs.
+            if (leaderType->flags & MONST_ATTACKABLE_THRU_WALLS) {
+                validTurretLoc = false;
+                for (k = 0; k < DIRECTION_COUNT; k++) {
+                    newX = i + nbDirs[k][0];
+                    newY = j + nbDirs[k][1];
+
+                    // Non-stair cells that a turret can fire through:
+                    if (coordinatesAreInMap(newX, newY) && !cellHasTerrainFlag(newX, newY, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))
+                        && !(pmap[newX][newY].flags & HAS_STAIRS)) {
+                        validTurretLoc = true;
+                    }
+                }
+                if (!validTurretLoc) {
+                    grid[i][j] = 0;
+                }
+            }
+
+        }
+    }
+
+    randomLocationInGrid(grid, &(loc[0]), &(loc[1]), 1);
+    freeGrid(grid);
+    if (loc[0] < 0 || loc[1] < 0) {
+        return false;
+    }
+    return true;
+}
+
 // If hordeID is 0, it's randomly assigned based on the depth, with a 10% chance of an out-of-depth spawn from 1-5 levels deeper.
 // If x is negative, location is random.
 // Returns a pointer to the leader.
-creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFlags, unsigned long requiredFlags) {
+creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFlags, unsigned long requiredFlags, boolean periodic) {
     short loc[2];
-    short i, failsafe, depth;
+    short failsafe, depth;
     hordeType *theHorde;
     creature *leader, *preexistingMonst;
     boolean tryAgain;
@@ -795,30 +877,24 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
         } while (--failsafe && tryAgain);
     }
 
-    failsafe = 50;
 
     if (x < 0 || y < 0) {
-        i = 0;
-        do {
-            while (!randomMatchingLocation(&(loc[0]), &(loc[1]), FLOOR, NOTHING, (hordeCatalog[hordeID].spawnsIn ? hordeCatalog[hordeID].spawnsIn : -1))
-                   || passableArcCount(loc[0], loc[1]) > 1) {
-                if (!--failsafe) {
-                    return NULL;
-                }
-                hordeID = pickHordeType(depth, 0, forbiddenFlags, 0);
-
-                if (hordeID < 0) {
-                    return NULL;
-                }
+        failsafe = 50;
+        while (failsafe > 0) {
+            if (getRandomHordeSpawnLocation(loc, hordeID, periodic)) {
+                x = loc[0];
+                y = loc[1];
+                break;
             }
-            x = loc[0];
-            y = loc[1];
-            i++;
-
-            // This "while" condition should contain IN_FIELD_OF_VIEW, since that is specifically
-            // calculated from the entry stairs when the level is generated, and will prevent monsters
-            // from spawning within FOV of the entry stairs.
-        } while (i < 25 && (pmap[x][y].flags & (ANY_KIND_OF_VISIBLE | IN_FIELD_OF_VIEW)));
+            hordeID = pickHordeType(depth, 0, forbiddenFlags, 0);
+            if (hordeID < 0) {
+                return NULL;
+            }
+            failsafe--;
+        }
+        if (failsafe == 0) {
+            return NULL;
+        }
     }
 
 //  if (hordeCatalog[hordeID].spawnsIn == DEEP_WATER && pmap[x][y].layers[LIQUID] != DEEP_WATER) {
@@ -1013,7 +1089,7 @@ void populateMonsters() {
         numberOfMonsters++;
     }
     for (i=0; i<numberOfMonsters; i++) {
-        spawnHorde(0, -1, -1, (HORDE_IS_SUMMONED | HORDE_MACHINE_ONLY), 0); // random horde type, random location
+        spawnHorde(0, -1, -1, (HORDE_IS_SUMMONED | HORDE_MACHINE_ONLY), 0, false); // random horde type, random location
     }
 }
 
@@ -1048,20 +1124,17 @@ boolean getRandomMonsterSpawnLocation(short *x, short *y) {
 
 void spawnPeriodicHorde() {
     creature *monst, *monst2;
-    short x, y;
 
     if (!MONSTERS_ENABLED) {
         return;
     }
 
-    if (getRandomMonsterSpawnLocation(&x, &y)) {
-        monst = spawnHorde(0, x, y, (HORDE_IS_SUMMONED | HORDE_LEADER_CAPTIVE | HORDE_NO_PERIODIC_SPAWN | HORDE_MACHINE_ONLY), 0);
-        if (monst) {
-            monst->creatureState = MONSTER_WANDERING;
-            for (monst2 = monsters->nextCreature; monst2 != NULL; monst2 = monst2->nextCreature) {
-                if (monst2->leader == monst) {
-                    monst2->creatureState = MONSTER_WANDERING;
-                }
+    monst = spawnHorde(0, -1, -1, (HORDE_IS_SUMMONED | HORDE_LEADER_CAPTIVE | HORDE_NO_PERIODIC_SPAWN | HORDE_MACHINE_ONLY), 0, true);
+    if (monst) {
+        monst->creatureState = MONSTER_WANDERING;
+        for (monst2 = monsters->nextCreature; monst2 != NULL; monst2 = monst2->nextCreature) {
+            if (monst2->leader == monst) {
+                monst2->creatureState = MONSTER_WANDERING;
             }
         }
     }

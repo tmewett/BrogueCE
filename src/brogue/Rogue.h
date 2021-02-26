@@ -2882,7 +2882,7 @@ extern "C" {
 
     creature *generateMonster(short monsterID, boolean itemPossible, boolean mutationPossible);
     short chooseMonster(short forLevel);
-    creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFlags, unsigned long requiredFlags);
+    creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFlags, unsigned long requiredFlags, boolean periodic);
     void fadeInMonster(creature *monst);
     boolean removeMonsterFromChain(creature *monst, creature *theChain);
     boolean monsterWillAttackTarget(const creature *attacker, const creature *defender);
