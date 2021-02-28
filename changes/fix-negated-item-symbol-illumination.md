@@ -1,0 +1,1 @@
+Fixed a bug that caused negated weapons and armor to remain illuminated when out of line of sight.
