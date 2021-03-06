@@ -3886,6 +3886,8 @@ void negationBlast(const char *emitterName, const short distance) {
                     theItem->enchant1 = theItem->enchant2 = theItem->charges = 0;
                     theItem->flags &= ~(ITEM_RUNIC | ITEM_RUNIC_HINTED | ITEM_RUNIC_IDENTIFIED | ITEM_PROTECTED);
                     identify(theItem);
+                    pmap[theItem->xLoc][theItem->yLoc].flags &= ~ITEM_DETECTED;
+                    refreshDungeonCell(theItem->xLoc, theItem->yLoc);
                     break;
                 case STAFF:
                     theItem->charges = 0;
