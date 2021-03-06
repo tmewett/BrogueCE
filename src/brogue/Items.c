@@ -4400,7 +4400,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 if (boltCatalog[BOLT_NEGATION].backColor) {
                     flashMonster(monst, boltCatalog[BOLT_NEGATION].backColor, 100);
                 }
-                if (rogue.patchVersion >= 4 && negated && autoID) {
+                if (rogue.patchVersion >= 4 && negated && autoID && canSeeMonster(monst)) {
                     *autoID = true;
                 }
 
