@@ -664,7 +664,7 @@ boolean monsterCanSubmergeNow(creature *monst) {
 }
 
 // Returns true if at least one minion spawned.
-boolean spawnMinions(short hordeID, creature *leader, boolean summoned) {
+boolean spawnMinions(short hordeID, creature *leader, boolean summoned, boolean itemPossible) {
     short iSpecies, iMember, count;
     unsigned long forbiddenTerrainFlags;
     hordeType *theHorde;
@@ -687,7 +687,11 @@ boolean spawnMinions(short hordeID, creature *leader, boolean summoned) {
         }
 
         for (iMember = 0; iMember < count; iMember++) {
-            monst = generateMonster(theHorde->memberType[iSpecies], true, !summoned);
+            if (rogue.patchVersion >=4) {
+                monst = generateMonster(theHorde->memberType[iSpecies], itemPossible, !summoned);
+            } else {
+                monst = generateMonster(theHorde->memberType[iSpecies], true, !summoned);
+            }
             failsafe = 0;
             do {
                 getQualifyingPathLocNear(&(monst->xLoc), &(monst->yLoc), x, y, summoned,
@@ -871,7 +875,7 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
         leader->bookkeepingFlags |= MB_SUBMERGED;
     }
 
-    spawnMinions(hordeID, leader, false);
+    spawnMinions(hordeID, leader, false, true);
 
     return leader;
 }
@@ -918,7 +922,11 @@ boolean summonMinions(creature *summoner) {
         removeMonsterFromChain(summoner, monsters);
     }
 
-    atLeastOneMinion = spawnMinions(hordeID, summoner, true);
+    if (rogue.patchVersion >= 4) {
+        atLeastOneMinion = spawnMinions(hordeID, summoner, true, false);
+    } else {
+        atLeastOneMinion = spawnMinions(hordeID, summoner, true, true);
+    }
 
     if (hordeCatalog[hordeID].flags & HORDE_SUMMONED_AT_DISTANCE) {
         // Create a grid where "1" denotes a valid summoning location: within DCOLS/2 pathing distance,
@@ -953,7 +961,8 @@ boolean summonMinions(creature *summoner) {
             }
             monst->ticksUntilTurn = 101;
             monst->leader = summoner;
-            if (monst->carriedItem) {
+
+            if (rogue.patchVersion < 4 && monst->carriedItem) {
                 deleteItem(monst->carriedItem);
                 monst->carriedItem = NULL;
             }
