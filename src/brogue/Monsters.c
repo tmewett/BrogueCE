@@ -1071,6 +1071,14 @@ void spawnPeriodicHorde() {
     }
 }
 
+// Instantally disentangles the player/creature. Useful for magical displacement like teleport and blink.
+void disentangle(creature *monst) {
+    if (monst == &player && monst->status[STATUS_STUCK]) {
+        message("you break free!", false);
+    }
+    monst->status[STATUS_STUCK] = 0;
+}
+
 // x and y are optional.
 void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidancePreferences) {
     short **grid, i, j;
@@ -1114,6 +1122,10 @@ void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidance
         if (x < 0 || y < 0) {
             return; // Failure!
         }
+    }
+    // Always break free on teleport
+    if (rogue.patchVersion >=4) {
+        disentangle(monst);
     }
     setMonsterLocation(monst, x, y);
     if (monst != &player) {

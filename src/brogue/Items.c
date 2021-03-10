@@ -4641,6 +4641,10 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
             pmap[x][y].flags |= (caster == &player ? HAS_PLAYER : HAS_MONSTER);
             caster->xLoc = x;
             caster->yLoc = y;
+            // Always break free on blink
+            if (rogue.patchVersion >=4) {
+                disentangle(caster);
+            }
             applyInstantTileEffectsToCreature(caster);
             if (caster == &player) {
                 // increase scent turn number so monsters don't sniff around at the old cell like idiots
