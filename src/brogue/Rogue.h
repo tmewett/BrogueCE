@@ -301,6 +301,12 @@ enum displayGlyph {
     G_ORB_ALTAR
 };
 
+enum graphicsModes {
+    TEXT_GRAPHICS,
+    TILES_GRAPHICS,
+    HYBRID_GRAPHICS, // text for items and creatures, tiles for environment
+};
+
 enum eventTypes {
     KEYSTROKE,
     MOUSE_UP,
@@ -2604,7 +2610,7 @@ typedef struct buttonState {
 
 extern boolean serverMode;
 extern boolean hasGraphics;
-extern boolean graphicsEnabled;
+extern enum graphicsModes graphicsMode;
 
 #if defined __cplusplus
 extern "C" {
@@ -2686,7 +2692,7 @@ extern "C" {
     void nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance);
     void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2);
     boolean takeScreenshot();
-    boolean setGraphicsEnabled(boolean);
+    enum graphicsModes setGraphicsMode(enum graphicsModes mode);
     boolean controlKeyIsDown();
     boolean shiftKeyIsDown();
     short getHighScoresList(rogueHighScoresEntry returnList[HIGH_SCORES_COUNT]);
