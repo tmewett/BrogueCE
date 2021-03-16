@@ -1907,7 +1907,8 @@ boolean traversiblePathBetween(creature *monst, short x2, short y2) {
     short originLoc[2] = {monst->xLoc, monst->yLoc};
     short targetLoc[2] = {x2, y2};
 
-    n = getLineCoordinates(coords, originLoc, targetLoc);
+    // Using BOLT_NONE here to favor a path that avoids obstacles to one that hits them
+    n = getLineCoordinates(coords, originLoc, targetLoc, &boltCatalog[BOLT_NONE]);
 
     for (i=0; i<n; i++) {
         x = coords[i][0];
@@ -1928,7 +1929,7 @@ boolean specifiedPathBetween(short x1, short y1, short x2, short y2,
     short coords[DCOLS][2], i, x, y, n;
     short originLoc[2] = {x1, y1};
     short targetLoc[2] = {x2, y2};
-    n = getLineCoordinates(coords, originLoc, targetLoc);
+    n = getLineCoordinates(coords, originLoc, targetLoc, &boltCatalog[BOLT_NONE]);
 
     for (i=0; i<n; i++) {
         x = coords[i][0];
@@ -1947,7 +1948,7 @@ boolean specifiedPathBetween(short x1, short y1, short x2, short y2,
 boolean openPathBetween(short x1, short y1, short x2, short y2) {
     short returnLoc[2], startLoc[2] = {x1, y1}, targetLoc[2] = {x2, y2};
 
-    getImpactLoc(returnLoc, startLoc, targetLoc, DCOLS, false);
+    getImpactLoc(returnLoc, startLoc, targetLoc, DCOLS, false, &boltCatalog[BOLT_NONE]);
     if (returnLoc[0] == targetLoc[0] && returnLoc[1] == targetLoc[1]) {
         return true;
     }
@@ -2219,7 +2220,7 @@ boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, bool
         target[0] += monst->xLoc;
         target[1] += monst->yLoc;
 
-        getImpactLoc(impact, origin, target, maxDistance, true);
+        getImpactLoc(impact, origin, target, maxDistance, true, &boltCatalog[BOLT_BLINKING]);
         nowPreference = preferenceMap[impact[0]][impact[1]];
 
         if (((blinkUphill && (nowPreference > bestPreference))

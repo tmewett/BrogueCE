@@ -615,7 +615,7 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
     originLoc[1] = attacker->yLoc;
     targetLoc[0] = attacker->xLoc + nbDirs[dir][0];
     targetLoc[1] = attacker->yLoc + nbDirs[dir][1];
-    getImpactLoc(strikeLoc, originLoc, targetLoc, 5, false);
+    getImpactLoc(strikeLoc, originLoc, targetLoc, 5, false, &boltCatalog[BOLT_WHIP]);
 
     defender = monsterAtLoc(strikeLoc[0], strikeLoc[1]);
     if (defender
