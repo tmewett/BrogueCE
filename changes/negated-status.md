@@ -1,0 +1,1 @@
+The sidebar and monster details now prominently display that a monster has been affected by negation

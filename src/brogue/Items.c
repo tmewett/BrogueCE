@@ -3517,7 +3517,10 @@ boolean tunnelize(short x, short y) {
     }
     return didSomething;
 }
-
+/* Negates the given creature. Returns true if there was an effect for the purpose of identifying a wand of negation.
+ * If the creature was stripped of any traits or abilities, the wasNegated property is set, which is used for display in
+ * sidebar and the creature's description.
+ */
 boolean negate(creature *monst) {
     short i, j;
     enum boltType backupBolts[20];
@@ -3529,6 +3532,7 @@ boolean negate(creature *monst) {
     if (monst->info.abilityFlags & ~MA_NON_NEGATABLE_ABILITIES) {
         monst->info.abilityFlags &= MA_NON_NEGATABLE_ABILITIES; // negated monsters lose all special abilities
         negated = true;
+        monst->wasNegated = true;
     }
 
     if (monst->bookkeepingFlags & MB_SEIZING){
@@ -3616,6 +3620,7 @@ boolean negate(creature *monst) {
         }
         if (monst->info.flags & MONST_IMMUNE_TO_FIRE) {
             monst->info.flags &= ~MONST_IMMUNE_TO_FIRE;
+            monst->wasNegated = true;
             negated = true;
         }
         if (monst->movementSpeed != monst->info.movementSpeed) {
@@ -3632,6 +3637,7 @@ boolean negate(creature *monst) {
 
             monst->mutationIndex = -1;
             negated = true;
+            monst->wasNegated = true;
         }
         if (monst != &player && (monst->info.flags & NEGATABLE_TRAITS)) {
             if ((monst->info.flags & MONST_FIERY) && monst->status[STATUS_BURNING]) {
@@ -3639,6 +3645,7 @@ boolean negate(creature *monst) {
             }
             monst->info.flags &= ~NEGATABLE_TRAITS;
             negated = true;
+            monst->wasNegated = true;
             refreshDungeonCell(monst->xLoc, monst->yLoc);
             refreshSideBar(-1, -1, false);
         }
