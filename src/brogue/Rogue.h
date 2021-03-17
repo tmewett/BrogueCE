@@ -2136,6 +2136,7 @@ typedef struct creature {
     enum creatureModes creatureMode;    // current behavioral mode (higher-level than state)
 
     short mutationIndex;                // what mutation the monster has (or -1 for none)
+    boolean wasNegated;                 // the monster has lost abilities due to negation
 
     // Waypoints:
     short targetWaypointIndex;          // the index number of the waypoint we're pathing toward
