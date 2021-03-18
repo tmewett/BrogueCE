@@ -444,10 +444,16 @@ static void optimizeTiles() {
 
 /// Loads the PNG and analyses it.
 void initTiles() {
-
-    // load the large PNG
     char filename[BROGUE_FILENAME_MAX];
     sprintf(filename, "%s/assets/tiles.png", dataDirectory);
+
+    // are we running Brogue from the correct folder to begin with?
+    if (!fileExists(filename)) {
+        fprintf(stderr, "Error: \"%s\" not found!\n", filename);
+        exit(1);
+    }
+
+    // load the large PNG
     SDL_Surface *image = IMG_Load(filename);
     if (!image) imgfatal(__FILE__, __LINE__);
     TilesPNG = SDL_ConvertSurfaceFormat(image, SDL_PIXELFORMAT_ARGB8888, 0);
@@ -469,8 +475,13 @@ void initTiles() {
         fread(tileShifts, 1, sizeof(tileShifts), file);
         fclose(file);
     } else {
+        fprintf(stderr, "\"%s\" not found. Re-generating it...\n", filename);
         optimizeTiles();
         file = fopen(filename, "wb");
+        if (!file) {
+            fprintf(stderr, "Error: could not write to \"%s\"\n", filename);
+            exit(1);
+        }
         fwrite(tileShifts, 1, sizeof(tileShifts), file);
         fclose(file);
     }
