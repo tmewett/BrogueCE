@@ -350,7 +350,7 @@ static double downscaleTile(SDL_Surface *surface, int tileWidth, int tileHeight,
 /// This is a slow function (takes ~2 minutes) so the results are saved to disk and reloaded when Brogue starts.
 /// After you modify the PNG, you should also delete "tiles.bin" and run Brogue so that the new tiles get optimized.
 static void optimizeTiles() {
-    SDL_Window *window = SDL_CreateWindow("Brogue", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 400, 300, 0);
+    SDL_Window *window = SDL_CreateWindow("Brogue", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 400, 300, 0);
 
     for (int row = 0; row < TILE_ROWS; row++) {
         for (int column = 0; column < TILE_COLS; column++) {
@@ -366,6 +366,16 @@ static void optimizeTiles() {
             if (SDL_BlitSurface(TilesPNG, &(SDL_Rect){.x=column*TILE_WIDTH, .y=row*TILE_HEIGHT, .w=TILE_WIDTH, .h=TILE_HEIGHT},
                     winSurface, &(SDL_Rect){.x=0, .y=0, .w=TILE_WIDTH, .h=TILE_HEIGHT}) < 0) sdlfatal(__FILE__, __LINE__);
             if (SDL_UpdateWindowSurface(window) < 0) sdlfatal(__FILE__, __LINE__);
+
+            // detect closing the window
+            SDL_Event event;
+            while (SDL_PollEvent(&event)) {
+                if (event.type == SDL_QUIT) {
+                    SDL_Quit();
+                    fprintf(stderr, "Aborted.\n");
+                    exit(1);
+                }
+            }
 
             // horizontal shifts
             baseTileHeight = MAX_TILE_SIZE;
