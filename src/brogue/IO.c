@@ -3030,14 +3030,61 @@ void dequeueEvent() {
     nextBrogueEvent(&returnEvent, false, false, true);
 }
 
+// Get a pointer to the archivedMessage the given number of entries back in history.
+// Pass zero to get the entry under messageArchivePosition.
+archivedMessage *getArchivedMessage(short back) {
+    return &messageArchive[(messageArchivePosition + MESSAGE_ARCHIVE_ENTRIES - back) % MESSAGE_ARCHIVE_ENTRIES];
+}
+
+int formatCountedMessage(char *buffer, size_t size, archivedMessage *m) {
+    int length;
+
+    if (m->count <= 1) {
+        length = snprintf(buffer, size, "%s", m->message);
+    } else if (m->count >= MAX_MESSAGE_REPEATS) {
+        length = snprintf(buffer, size, "%s (many)", m->message);
+    } else {
+        length = snprintf(buffer, size, "%s (x%d)", m->message, m->count);
+    }
+
+    return length;
+}
+
+// Fill the given buffer, which is height lines tall and COL*2 characters wide, with archived messages.
+// Fill from the bottom, so that the most recent message appears in the last line of buf.
+void formatRecentMessages(char buf[][COLS*2], size_t height) {
+    size_t i;
+
+    for (i = 0; i < height; i++) {
+        formatCountedMessage(buf[i], COLS*2, getArchivedMessage(height - i));
+    }
+}
+
+// Display recent archived messages
+void displayRecentMessages() {
+    short i;
+    char messageBuffer[MESSAGE_LINES][COLS*2];
+
+    formatRecentMessages(messageBuffer, MESSAGE_LINES);
+
+    for (i = 0; i < MESSAGE_LINES; i++) {
+        strcpy(displayedMessage[i], messageBuffer[MESSAGE_LINES - i - 1]);
+    }
+
+    updateMessageDisplay();
+}
+
 void displayMessageArchive() {
     short i, j, k, reverse, fadePercent, totalMessageCount, currentMessageCount;
     boolean fastForward;
     cellDisplayBuffer dbuf[COLS][ROWS], rbuf[COLS][ROWS];
+    char messageBuffer[MESSAGE_ARCHIVE_LINES][COLS*2];
+
+    formatRecentMessages(messageBuffer, MESSAGE_ARCHIVE_LINES);
 
     // Count the number of lines in the archive.
     for (totalMessageCount=0;
-         totalMessageCount < MESSAGE_ARCHIVE_LINES && messageArchive[totalMessageCount][0];
+         totalMessageCount < MESSAGE_ARCHIVE_ENTRIES && messageArchive[totalMessageCount].message[0];
          totalMessageCount++);
 
     if (totalMessageCount > MESSAGE_LINES) {
@@ -3055,8 +3102,8 @@ void displayMessageArchive() {
 
                 // Print the message archive text to the dbuf.
                 for (j=0; j < currentMessageCount && j < ROWS; j++) {
-                    printString(messageArchive[(messageArchivePosition - currentMessageCount + MESSAGE_ARCHIVE_LINES + j) % MESSAGE_ARCHIVE_LINES],
-                                mapToWindowX(0), j, &white, &black, dbuf);
+                    k = MESSAGE_ARCHIVE_LINES - currentMessageCount + j;
+                    printString(messageBuffer[k], mapToWindowX(0), j, &white, &black, dbuf);
                 }
 
                 // Set the dbuf opacity, and do a fade from bottom to top to make it clear that the bottom messages are the most recent.
@@ -3153,34 +3200,64 @@ void flavorMessage(char *msg) {
     }
 }
 
+// Insert or collapse a new message into the archive and redraw the recent
+// message display.  An incoming message may "collapse" into another (be
+// dropped in favor of bumping a repetition count) if the two have identical
+// content and one of two other conditions is met.  First, if the two messages
+// arrived on the same turn, they may collapse.  Alternately, they may collapse
+// if the older message is the latest one in the archive and the new one is not
+// semi-colon foldable (such as a combat message.)
 void messageWithoutCaps(char *msg, enum messageFlags flags) {
     short i;
+    archivedMessage *archiveEntry;
+    boolean newMessage;
+
     if (!msg[0]) {
         return;
     }
 
-    // need to confirm the oldest message? (Disabled!)
-    /*if (!messageConfirmed[MESSAGE_LINES - 1]) {
-        //refreshSideBar(-1, -1, false);
-        displayMoreSign();
-        for (i=0; i<MESSAGE_LINES; i++) {
-            messageConfirmed[i] = true;
-        }
-    }*/
+    // Add the message to the archive, bumping counts for recent duplicates
+    newMessage = true;
 
-    for (i = MESSAGE_LINES - 1; i >= 1; i--) {
-        messageConfirmed[i] = messageConfirmed[i-1];
-        strcpy(displayedMessage[i], displayedMessage[i-1]);
+    // For each at most MESSAGE_ARCHIVE_ENTRIES - 1 past entries..
+    for (i = 1; i < MESSAGE_ARCHIVE_ENTRIES; i++) {
+        archiveEntry = getArchivedMessage(i);
+
+        // Always consider the latest entry for collapse, but also past ones that arrived this turn
+        if (!(i == 1 || archiveEntry->turn == rogue.playerTurnNumber)) {
+            break;
+        }
+
+        if (strcmp(archiveEntry->message, msg) == 0) {
+            // We found an suitable older message to collapse into.  So we
+            // don't need to add another.  Instead consider the older message
+            // as having happened on the current turn, and bump its count if
+            // not maxxed out.
+            newMessage = false;
+            archiveEntry->turn = rogue.playerTurnNumber;
+            if (archiveEntry->count < MAX_MESSAGE_REPEATS) {
+                archiveEntry->count++;
+            }
+            break;
+        }
+    }
+
+    // We didn't collapse the new message, so initialize and insert a new
+    // archive entry for it instead.
+    if (newMessage) {
+        archiveEntry = &messageArchive[messageArchivePosition];
+        strcpy(archiveEntry->message, msg);
+        archiveEntry->count = 1;
+        archiveEntry->turn = rogue.playerTurnNumber;
+        messageArchivePosition = (messageArchivePosition + 1) % MESSAGE_ARCHIVE_ENTRIES;
+
+        for (i = MESSAGE_LINES - 1; i >= 1; i--) {
+            messageConfirmed[i] = messageConfirmed[i-1];
+        }
     }
     messageConfirmed[0] = false;
-    strcpy(displayedMessage[0], msg);
 
-    // Add the message to the archive.
-    strcpy(messageArchive[messageArchivePosition], msg);
-    messageArchivePosition = (messageArchivePosition + 1) % MESSAGE_ARCHIVE_LINES;
-
-    // display the message:
-    updateMessageDisplay();
+    displayRecentMessages();
 
     if ((flags & REQUIRE_ACKNOWLEDGMENT) || rogue.cautiousMode) {
         displayMoreSign();

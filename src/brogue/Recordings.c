@@ -1192,7 +1192,7 @@ void saveGame() {
             }
         }
     } while (askAgain);
-    deleteMessages();
+    displayRecentMessages();
 }
 
 void saveRecordingNoPrompt(char *filePath) {

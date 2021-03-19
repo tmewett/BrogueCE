@@ -119,6 +119,8 @@ typedef long long fixpt;
 
 #define MESSAGE_LINES           3
 #define MESSAGE_ARCHIVE_LINES   ROWS
+#define MESSAGE_ARCHIVE_ENTRIES (MESSAGE_ARCHIVE_LINES*4)
+#define MAX_MESSAGE_REPEATS     100
 
 // Size of the entire terminal window. These need to be hard-coded here and in Viewport.h
 #define COLS                    100
@@ -2614,6 +2616,12 @@ enum messageFlags {
     REFRESH_SIDEBAR               = Fl(1),
 };
 
+typedef struct archivedMessage {
+    char message[COLS*2];
+    unsigned char count;          // how many times this message appears
+    unsigned long turn;           // player turn of the first occurrence
+} archivedMessage;
+
 extern boolean serverMode;
 extern boolean hasGraphics;
 extern enum graphicsModes graphicsMode;
@@ -2864,6 +2872,8 @@ extern "C" {
     void playerTurnEnded();
     void resetScentTurnNumber();
     void displayMonsterFlashes(boolean flashingEnabled);
+    void formatRecentMessages(char buf[][COLS*2], size_t height);
+    void displayRecentMessages();
     void displayMessageArchive();
     void temporaryMessage(const char *msg1, enum messageFlags flags);
     void messageWithColor(char *msg, color *theColor, enum messageFlags flags);

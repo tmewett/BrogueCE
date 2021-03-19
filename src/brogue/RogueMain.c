@@ -254,8 +254,8 @@ void initializeRogue(uint64_t seed) {
     }
 
     deleteMessages();
-    for (i = 0; i < MESSAGE_ARCHIVE_LINES; i++) { // Clear the message archive.
-        messageArchive[i][0] = '\0';
+    for (i = 0; i < MESSAGE_ARCHIVE_ENTRIES; i++) { // Clear the message archive.
+        messageArchive[i].message[0] = '\0';
     }
     messageArchivePosition = 0;
 
