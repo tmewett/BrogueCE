@@ -44,7 +44,7 @@ extern item *packItems;
 extern item *monsterItemsHopper;
 extern short numberOfWaypoints;
 
-extern char displayedMessage[MESSAGE_LINES][COLS];
+extern char displayedMessage[MESSAGE_LINES][COLS*2];
 extern boolean messageConfirmed[3];
 extern char combatText[COLS];
 extern short messageArchivePosition;
