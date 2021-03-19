@@ -123,16 +123,16 @@ void benchmark() {
 
 void welcome() {
     char buf[DCOLS*3], buf2[DCOLS*3];
-    message("Hello and welcome, adventurer, to the Dungeons of Doom!", false);
+    message("Hello and welcome, adventurer, to the Dungeons of Doom!", 0);
     strcpy(buf, "Retrieve the ");
     encodeMessageColor(buf, strlen(buf), &itemMessageColor);
     strcat(buf, "Amulet of Yendor");
     encodeMessageColor(buf, strlen(buf), &white);
     sprintf(buf2, " from the %ith floor and escape with it!", AMULET_LEVEL);
     strcat(buf, buf2);
-    message(buf, false);
+    message(buf, 0);
     if (KEYBOARD_LABELS) {
-        messageWithColor("Press <?> for help at any time.", &backgroundMessageColor, false);
+        messageWithColor("Press <?> for help at any time.", &backgroundMessageColor, 0);
     }
     flavorMessage("The doors to the dungeon slam shut behind you.");
 }
@@ -750,9 +750,9 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     if (!levels[rogue.depthLevel-1].visited) {
         levels[rogue.depthLevel-1].visited = true;
         if (rogue.depthLevel == AMULET_LEVEL) {
-            messageWithColor("An alien energy permeates the area. The Amulet of Yendor must be nearby!", &itemMessageColor, false);
+            messageWithColor("An alien energy permeates the area. The Amulet of Yendor must be nearby!", &itemMessageColor, 0);
         } else if (rogue.depthLevel == DEEPEST_LEVEL) {
-            messageWithColor("An overwhelming sense of peace and tranquility settles upon you.", &lightBlue, false);
+            messageWithColor("An overwhelming sense of peace and tranquility settles upon you.", &lightBlue, 0);
         }
     }
 
@@ -985,7 +985,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         if (rogue.playbackMode) {
             playback = rogue.playbackMode;
             rogue.playbackMode = false;
-            message("(The player quit at this point.)", true);
+            message("(The player quit at this point.)", REQUIRE_ACKNOWLEDGMENT);
             rogue.playbackMode = playback;
         }
     } else {
@@ -1000,7 +1000,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         }
         player.currentHP = 0; // So it shows up empty in the side bar.
         refreshSideBar(-1, -1, false);
-        messageWithColor(buf, &badMessageColor, false);
+        messageWithColor(buf, &badMessageColor, 0);
         displayMoreSignWithoutWaitingForAcknowledgment();
 
         do {
@@ -1030,7 +1030,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     rogue.creaturesWillFlashThisTurn = false;
 
     if (D_IMMORTAL && !rogue.quit) {
-        message("...but then you get better.", false);
+        message("...but then you get better.", 0);
         player.currentHP = player.info.maxHP;
         if (player.status[STATUS_NUTRITION] < 10) {
             player.status[STATUS_NUTRITION] = STOMACH_SIZE;
@@ -1135,7 +1135,7 @@ void victory(boolean superVictory) {
     //
     deleteMessages();
     if (superVictory) {
-        message(    "Light streams through the portal, and you are teleported out of the dungeon.", false);
+        message(    "Light streams through the portal, and you are teleported out of the dungeon.", 0);
         copyDisplayBuffer(dbuf, displayBuffer);
         funkyFade(dbuf, &superVictoryColor, 0, 240, mapToWindowX(player.xLoc), mapToWindowY(player.yLoc), false);
         displayMoreSign();
@@ -1145,7 +1145,7 @@ void victory(boolean superVictory) {
         deleteMessages();
         strcpy(displayedMessage[0], "You retire in splendor, forever renowned for your remarkable triumph.     ");
     } else {
-        message(    "You are bathed in sunlight as you throw open the heavy doors.", false);
+        message(    "You are bathed in sunlight as you throw open the heavy doors.", 0);
         copyDisplayBuffer(dbuf, displayBuffer);
         funkyFade(dbuf, &white, 0, 240, mapToWindowX(player.xLoc), mapToWindowY(player.yLoc), false);
         displayMoreSign();
@@ -1269,22 +1269,22 @@ void victory(boolean superVictory) {
 
 void enableEasyMode() {
     if (rogue.easyMode) {
-        message("Alas, all hope of salvation is lost. You shed scalding tears at your plight.", false);
+        message("Alas, all hope of salvation is lost. You shed scalding tears at your plight.", 0);
         return;
     }
-    message("A dark presence surrounds you, whispering promises of stolen power.", true);
+    message("A dark presence surrounds you, whispering promises of stolen power.", REQUIRE_ACKNOWLEDGMENT);
     if (confirm("Succumb to demonic temptation (i.e. enable Easy Mode)?", false)) {
         recordKeystroke(EASY_MODE_KEY, false, true);
-        message("An ancient and terrible evil burrows into your willing flesh!", true);
+        message("An ancient and terrible evil burrows into your willing flesh!", REQUIRE_ACKNOWLEDGMENT);
         player.info.displayChar = '&';
         rogue.easyMode = true;
         refreshDungeonCell(player.xLoc, player.yLoc);
         refreshSideBar(-1, -1, false);
-        message("Wracked by spasms, your body contorts into an ALL-POWERFUL AMPERSAND!!!", false);
-        message("You have a feeling that you will take 20% as much damage from now on.", false);
-        message("But great power comes at a great price -- specifically, a 90% income tax rate.", false);
+        message("Wracked by spasms, your body contorts into an ALL-POWERFUL AMPERSAND!!!", 0);
+        message("You have a feeling that you will take 20% as much damage from now on.", 0);
+        message("But great power comes at a great price -- specifically, a 90% income tax rate.", 0);
     } else {
-        message("The evil dissipates, hissing, from the air around you.", false);
+        message("The evil dissipates, hissing, from the air around you.", 0);
     }
 }
 

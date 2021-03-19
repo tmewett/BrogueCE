@@ -596,7 +596,7 @@ void mainInputLoop() {
         originLoc[1] = player.yLoc;
 
         if (playingBack && rogue.cursorMode) {
-            temporaryMessage("Examine what? (<hjklyubn>, mouse, or <tab>)", false);
+            temporaryMessage("Examine what? (<hjklyubn>, mouse, or <tab>)", 0);
         }
 
         if (!playingBack
@@ -2238,7 +2238,7 @@ void displayWaypoints() {
             }
         }
     }
-    temporaryMessage("Waypoints:", true);
+    temporaryMessage("Waypoints:", REQUIRE_ACKNOWLEDGMENT);
 }
 
 void displayMachines() {
@@ -2371,9 +2371,9 @@ void exploreKey(const boolean controlKey) {
     }
 
     if (tooDark) {
-        message("It's too dark to explore!", false);
+        message("It's too dark to explore!", 0);
     } else if (x == player.xLoc && y == player.yLoc) {
-        message("I see no path for further exploration.", false);
+        message("I see no path for further exploration.", 0);
     } else if (proposeOrConfirmLocation(finalX, finalY, "I see no path for further exploration.")) {
         explore(controlKey ? 1 : 20); // Do the exploring until interrupted.
         hideCursor();
@@ -2430,7 +2430,7 @@ void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsD
 
     if (returnEvent->eventType == EVENT_ERROR) {
         rogue.playbackPaused = rogue.playbackMode; // pause if replaying
-        message("Event error!", true);
+        message("Event error!", REQUIRE_ACKNOWLEDGMENT);
     }
 }
 
@@ -2582,10 +2582,10 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             refreshSideBar(-1, -1, false);
             if (rogue.trueColorMode) {
                 messageWithColor(KEYBOARD_LABELS ? "Color effects disabled. Press '\\' again to enable." : "Color effects disabled.",
-                                 &teal, false);
+                                 &teal, 0);
             } else {
                 messageWithColor(KEYBOARD_LABELS ? "Color effects enabled. Press '\\' again to disable." : "Color effects enabled.",
-                                 &teal, false);
+                                 &teal, 0);
             }
             break;
         case AGGRO_DISPLAY_KEY:
@@ -2594,10 +2594,10 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             refreshSideBar(-1, -1, false);
             if (rogue.displayAggroRangeMode) {
                 messageWithColor(KEYBOARD_LABELS ? "Stealth range displayed. Press ']' again to hide." : "Stealth range displayed.",
-                                 &teal, false);
+                                 &teal, 0);
             } else {
                 messageWithColor(KEYBOARD_LABELS ? "Stealth range hidden. Press ']' again to display." : "Stealth range hidden.",
-                                 &teal, false);
+                                 &teal, 0);
             }
             break;
         case CALL_KEY:
@@ -2633,7 +2633,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                     rogue.nextGame = NG_VIEW_RECORDING;
                     rogue.gameHasEnded = true;
                 } else {
-                    message("File not found.", false);
+                    message("File not found.", 0);
                 }
             }
             break;
@@ -2649,7 +2649,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                     rogue.nextGame = NG_OPEN_GAME;
                     rogue.gameHasEnded = true;
                 } else {
-                    message("File not found.", false);
+                    message("File not found.", 0);
                 }
             }
             break;
@@ -2681,17 +2681,17 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                     case TEXT_GRAPHICS:
                         messageWithColor(KEYBOARD_LABELS
                             ? "Switched to text mode. Press 'G' again to enable tiles."
-                            : "Switched to text mode.", &teal, false);
+                            : "Switched to text mode.", &teal, 0);
                         break;
                     case TILES_GRAPHICS:
                         messageWithColor(KEYBOARD_LABELS
                             ? "Switched to graphical tiles. Press 'G' again to enable hybrid mode."
-                            : "Switched to graphical tiles.", &teal, false);
+                            : "Switched to graphical tiles.", &teal, 0);
                         break;
                     case HYBRID_GRAPHICS:
                         messageWithColor(KEYBOARD_LABELS
                             ? "Switched to hybrid mode. Press 'G' again to disable tiles."
-                            : "Switched to hybrid mode.", &teal, false);
+                            : "Switched to hybrid mode.", &teal, 0);
                         break;
                 }
             }
@@ -2774,7 +2774,7 @@ boolean getInputTextString(char *inputText,
         confirmMessages();
         x = mapToWindowX(strLenWithoutEscapes(prompt));
         y = MESSAGE_LINES - 1;
-        message(prompt, false);
+        message(prompt, 0);
         printString(defaultEntry, x, y, &white, &black, 0);
     }
 
@@ -3097,7 +3097,7 @@ void displayMessageArchive() {
 // Clears the message area and prints the given message in the area.
 // It will disappear when messages are refreshed and will not be archived.
 // This is primarily used to display prompts.
-void temporaryMessage(char *msg, boolean requireAcknowledgment) {
+void temporaryMessage(char *msg, enum messageFlags flags) {
     char message[COLS];
     short i, j;
 
@@ -3116,21 +3116,21 @@ void temporaryMessage(char *msg, boolean requireAcknowledgment) {
         }
     }
     printString(message, mapToWindowX(0), mapToWindowY(-1), &white, &black, 0);
-    if (requireAcknowledgment) {
+    if (flags & REQUIRE_ACKNOWLEDGMENT) {
         waitForAcknowledgment();
         updateMessageDisplay();
     }
     restoreRNG;
 }
 
-void messageWithColor(char *msg, color *theColor, boolean requireAcknowledgment) {
+void messageWithColor(char *msg, color *theColor, enum messageFlags flags) {
     char buf[COLS*2] = "";
     short i;
 
     i=0;
     i = encodeMessageColor(buf, i, theColor);
     strcpy(&(buf[i]), msg);
-    message(buf, requireAcknowledgment);
+    message(buf, flags);
 }
 
 void flavorMessage(char *msg) {
@@ -3151,7 +3151,7 @@ void flavorMessage(char *msg) {
     }
 }
 
-void messageWithoutCaps(char *msg, boolean requireAcknowledgment) {
+void messageWithoutCaps(char *msg, enum messageFlags flags) {
     short i;
     if (!msg[0]) {
         return;
@@ -3180,7 +3180,7 @@ void messageWithoutCaps(char *msg, boolean requireAcknowledgment) {
     // display the message:
     updateMessageDisplay();
 
-    if (requireAcknowledgment || rogue.cautiousMode) {
+    if ((flags & REQUIRE_ACKNOWLEDGMENT) || rogue.cautiousMode) {
         displayMoreSign();
         confirmMessages();
         rogue.cautiousMode = false;
@@ -3192,14 +3192,14 @@ void messageWithoutCaps(char *msg, boolean requireAcknowledgment) {
 }
 
 
-void message(const char *msg, boolean requireAcknowledgment) {
+void message(const char *msg, enum messageFlags flags) {
     char text[COLS*20], *msgPtr;
     short i, lines;
 
     assureCosmeticRNG;
 
     rogue.disturbed = true;
-    if (requireAcknowledgment) {
+    if (flags & REQUIRE_ACKNOWLEDGMENT) {
         refreshSideBar(-1, -1, false);
     }
     displayCombatText();
@@ -3227,13 +3227,13 @@ void message(const char *msg, boolean requireAcknowledgment) {
             if (text[i] == '\n') {
                 text[i] = '\0';
 
-                messageWithoutCaps(msgPtr, false);
+                messageWithoutCaps(msgPtr, flags & ~REQUIRE_ACKNOWLEDGMENT);
                 msgPtr = &(text[i+1]);
             }
         }
     }
 
-    messageWithoutCaps(msgPtr, requireAcknowledgment);
+    messageWithoutCaps(msgPtr, flags);
     restoreRNG;
 }
 
@@ -4165,7 +4165,7 @@ void displayGrid(short **map) {
 void printSeed() {
     char buf[COLS];
     snprintf(buf, COLS, "Dungeon seed #%llu; turn #%lu; version %s", (unsigned long long)rogue.seed, rogue.playerTurnNumber, BROGUE_VERSION_STRING);
-    message(buf, false);
+    message(buf, 0);
 }
 
 void printProgressBar(short x, short y, const char barLabel[COLS], long amtFilled, long amtMax, color *fillColor, boolean dim) {
