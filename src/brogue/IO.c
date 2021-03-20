@@ -3108,7 +3108,9 @@ void temporaryMessage(char *msg, enum messageFlags flags) {
         upperCase(&(message[i]));
     }
 
-    refreshSideBar(-1, -1, false);
+    if (flags & REFRESH_SIDEBAR) {
+        refreshSideBar(-1, -1, false);
+    }
 
     for (i=0; i<MESSAGE_LINES; i++) {
         for (j=0; j<DCOLS; j++) {
@@ -3199,7 +3201,7 @@ void message(const char *msg, enum messageFlags flags) {
     assureCosmeticRNG;
 
     rogue.disturbed = true;
-    if (flags & REQUIRE_ACKNOWLEDGMENT) {
+    if (flags & REQUIRE_ACKNOWLEDGMENT || flags & REFRESH_SIDEBAR) {
         refreshSideBar(-1, -1, false);
     }
     displayCombatText();

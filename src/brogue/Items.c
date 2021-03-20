@@ -5935,7 +5935,7 @@ void throwCommand(item *theItem, boolean autoThrow) {
     sprintf(buf, "Throw %s %s where? (<hjklyubn>, mouse, or <tab>)",
             (theItem->quantity > 1 ? "a" : "your"),
             theName);
-    temporaryMessage(buf, 0);
+    temporaryMessage(buf, REFRESH_SIDEBAR);
     maxDistance = (12 + 2 * max(rogue.strength - player.weaknessAmount - 12, 2));
     autoTarget = (theItem->category & (WEAPON | POTION)) ? true : false;
 
@@ -6116,7 +6116,7 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
         messageWithColor(buf, &itemMessageColor, 0);
         return false;
     }
-    temporaryMessage("Direction? (<hjklyubn>, mouse, or <tab>; <return> to confirm)", 0);
+    temporaryMessage("Direction? (<hjklyubn>, mouse, or <tab>; <return> to confirm)", REFRESH_SIDEBAR);
     itemName(theItem, buf2, false, false, NULL);
     sprintf(buf, "Zapping your %s:", buf2);
     printString(buf, mapToWindowX(0), 1, &itemMessageColor, &black, NULL);

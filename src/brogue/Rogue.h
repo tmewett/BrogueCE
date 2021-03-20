@@ -2611,6 +2611,7 @@ typedef struct buttonState {
 
 enum messageFlags {
     REQUIRE_ACKNOWLEDGMENT        = Fl(0),
+    REFRESH_SIDEBAR               = Fl(1),
 };
 
 extern boolean serverMode;
