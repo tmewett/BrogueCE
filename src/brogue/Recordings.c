@@ -1162,7 +1162,7 @@ void saveGameNoPrompt() {
 }
 
 void saveGame() {
-    char filePath[BROGUE_FILENAME_MAX], defaultPath[BROGUE_FILENAME_MAX];
+    char filePathWithoutSuffix[BROGUE_FILENAME_MAX], filePath[BROGUE_FILENAME_MAX], defaultPath[BROGUE_FILENAME_MAX];
     boolean askAgain;
 
     if (rogue.playbackMode) {
@@ -1170,14 +1170,15 @@ void saveGame() {
     }
 
     getDefaultFilePath(defaultPath, false);
-    getAvailableFilePath(filePath, defaultPath, GAME_SUFFIX);
+    getAvailableFilePath(filePathWithoutSuffix, defaultPath, GAME_SUFFIX);
+    filePath[0] = '\0';
 
     deleteMessages();
     do {
         askAgain = false;
-        if (getInputTextString(filePath, "Save game as (<esc> to cancel): ",
-                               BROGUE_FILENAME_MAX - strlen(GAME_SUFFIX), filePath, GAME_SUFFIX, TEXT_INPUT_FILENAME, false)) {
-            strcat(filePath, GAME_SUFFIX);
+        if (getInputTextString(filePathWithoutSuffix, "Save game as (<esc> to cancel): ",
+                               BROGUE_FILENAME_MAX - strlen(GAME_SUFFIX), filePathWithoutSuffix, GAME_SUFFIX, TEXT_INPUT_FILENAME, false)) {
+            snprintf(filePath, BROGUE_FILENAME_MAX, "%s%s", filePathWithoutSuffix, GAME_SUFFIX);
             if (!fileExists(filePath) || confirm("File of that name already exists. Overwrite?", true)) {
                 remove(filePath);
                 flushBufferToFile();
@@ -1207,8 +1208,8 @@ void saveRecordingNoPrompt(char *filePath) {
     rogue.recording = false;
 }
 
-void saveRecording(char *filePath) {
-    char defaultPath[BROGUE_FILENAME_MAX];
+void saveRecording(char *filePathWithoutSuffix) {
+    char filePath[BROGUE_FILENAME_MAX], defaultPath[BROGUE_FILENAME_MAX];
     boolean askAgain;
 
     if (rogue.playbackMode) {
@@ -1216,15 +1217,16 @@ void saveRecording(char *filePath) {
     }
 
     getDefaultFilePath(defaultPath, true);
-    getAvailableFilePath(filePath, defaultPath, RECORDING_SUFFIX);
+    getAvailableFilePath(filePathWithoutSuffix, defaultPath, RECORDING_SUFFIX);
+    filePath[0] = '\0';
 
     deleteMessages();
     do {
         askAgain = false;
-        if (getInputTextString(filePath, "Save recording as (<esc> to cancel): ",
-                               BROGUE_FILENAME_MAX - strlen(RECORDING_SUFFIX), filePath, RECORDING_SUFFIX, TEXT_INPUT_FILENAME, false)) {
+        if (getInputTextString(filePathWithoutSuffix, "Save recording as (<esc> to cancel): ",
+                               BROGUE_FILENAME_MAX - strlen(RECORDING_SUFFIX), filePathWithoutSuffix, RECORDING_SUFFIX, TEXT_INPUT_FILENAME, false)) {
 
-            strcat(filePath, RECORDING_SUFFIX);
+            snprintf(filePath, BROGUE_FILENAME_MAX, "%s%s", filePathWithoutSuffix, RECORDING_SUFFIX);
             if (!fileExists(filePath) || confirm("File of that name already exists. Overwrite?", true)) {
                 remove(filePath);
                 rename(currentFilePath, filePath);
@@ -1233,8 +1235,7 @@ void saveRecording(char *filePath) {
                 askAgain = true;
             }
         } else { // Declined to save recording; save it anyway as LastRecording, and delete LastRecording if it already exists.
-            strcpy(filePath, LAST_RECORDING_NAME);
-            strcat(filePath, RECORDING_SUFFIX);
+            snprintf(filePath, BROGUE_FILENAME_MAX, "%s%s", LAST_RECORDING_NAME, RECORDING_SUFFIX);
             if (fileExists(filePath)) {
                 remove(filePath);
             }
