@@ -348,8 +348,9 @@ void addLoops(short **grid, short minimumPathingDistance) {
                 oppY = y - dirCoords[d][1];
                 if (coordinatesAreInMap(newX, newY)
                     && coordinatesAreInMap(oppX, oppY)
-                    && grid[newX][newY] > 0
-                    && grid[oppX][oppY] > 0) { // If the tile being inspected has floor on both sides,
+                    && (rogue.patchVersion < 4 && grid[newX][newY] > 0 && grid[oppX][oppY] > 0
+                        || rogue.patchVersion >=4 && grid[newX][newY] == 1 && grid[oppX][oppY] == 1))) {
+                    // If the tile being inspected has floor on both sides,
 
                     fillGrid(pathMap, 30000);
                     pathMap[newX][newY] = 0;

@@ -1,0 +1,1 @@
+Fixes rare levelgen bug that could cause two doors to be generated next to one another.
