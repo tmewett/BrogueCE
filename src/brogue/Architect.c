@@ -634,8 +634,12 @@ void expandMachineInterior(char interior[DCOLS][DROWS], short minimumInteriorNei
                             }
                         }
                     }
-                } else if (pmap[i][j].layers[DUNGEON] == DOOR
-                           || pmap[i][j].layers[DUNGEON] == SECRET_DOOR) {
+                } else if (!(rogue.patchVersion >=4)
+                               && (pmap[i][j].layers[DUNGEON] == DOOR
+                                   || pmap[i][j].layers[DUNGEON] == SECRET_DOOR)) {
+                   // These lines should be removed in the next major release.
+                   // Their effect is to remove all doors and secret doors on the entire depth
+                   // whenever a machine is placed on the depth that uses this function.
                     pmap[i][j].layers[DUNGEON] = FLOOR;
                 }
             }
