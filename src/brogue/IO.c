@@ -2774,7 +2774,7 @@ boolean getInputTextString(char *inputText,
         confirmMessages();
         x = mapToWindowX(strLenWithoutEscapes(prompt));
         y = MESSAGE_LINES - 1;
-        message(prompt, 0);
+        temporaryMessage(prompt, 0);
         printString(defaultEntry, x, y, &white, &black, 0);
     }
 
@@ -3097,7 +3097,7 @@ void displayMessageArchive() {
 // Clears the message area and prints the given message in the area.
 // It will disappear when messages are refreshed and will not be archived.
 // This is primarily used to display prompts.
-void temporaryMessage(char *msg, enum messageFlags flags) {
+void temporaryMessage(const char *msg, enum messageFlags flags) {
     char message[COLS];
     short i, j;
 

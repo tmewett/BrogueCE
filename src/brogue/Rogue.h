@@ -2865,7 +2865,7 @@ extern "C" {
     void resetScentTurnNumber();
     void displayMonsterFlashes(boolean flashingEnabled);
     void displayMessageArchive();
-    void temporaryMessage(char *msg1, enum messageFlags flags);
+    void temporaryMessage(const char *msg1, enum messageFlags flags);
     void messageWithColor(char *msg, color *theColor, enum messageFlags flags);
     void flavorMessage(char *msg);
     void message(const char *msg, enum messageFlags flags);
