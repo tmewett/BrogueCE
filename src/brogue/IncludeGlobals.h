@@ -46,7 +46,7 @@ extern short numberOfWaypoints;
 
 extern char displayedMessage[MESSAGE_LINES][COLS*2];
 extern short messagesUnconfirmed;
-extern char combatText[COLS];
+extern char combatText[COLS*2];
 extern short messageArchivePosition;
 extern archivedMessage messageArchive[MESSAGE_ARCHIVE_ENTRIES];
 

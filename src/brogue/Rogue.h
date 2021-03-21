@@ -2614,12 +2614,14 @@ typedef struct buttonState {
 enum messageFlags {
     REQUIRE_ACKNOWLEDGMENT        = Fl(0),
     REFRESH_SIDEBAR               = Fl(1),
+    FOLDABLE                      = Fl(2),
 };
 
 typedef struct archivedMessage {
     char message[COLS*2];
     unsigned char count;          // how many times this message appears
     unsigned long turn;           // player turn of the first occurrence
+    enum messageFlags flags;
 } archivedMessage;
 
 extern boolean serverMode;
