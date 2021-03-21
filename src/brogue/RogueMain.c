@@ -574,7 +574,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             freeGrid(monst->mapToMe);
             monst->mapToMe = NULL;
         }
-        if (rogue.patchVersion < 3 && monst->safetyMap) {
+        if (COMPARE_TO_VERSION(1,9,3) < 0 && monst->safetyMap) {
             freeGrid(monst->safetyMap);
             monst->safetyMap = NULL;
         }
@@ -585,7 +585,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (pmap[i][j].flags & (rogue.patchVersion >= 3 ? ANY_KIND_OF_VISIBLE : VISIBLE)) {
+            if (pmap[i][j].flags & (COMPARE_TO_VERSION(1,9,3) >= 0 ? ANY_KIND_OF_VISIBLE : VISIBLE)) {
                 // Remember visible cells upon exiting.
                 storeMemories(i, j);
             }
@@ -593,7 +593,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                 levels[oldLevelNumber - 1].mapStorage[i][j].layers[layer] = pmap[i][j].layers[layer];
             }
             levels[oldLevelNumber - 1].mapStorage[i][j].volume = pmap[i][j].volume;
-            levels[oldLevelNumber - 1].mapStorage[i][j].flags = (pmap[i][j].flags & (rogue.patchVersion < 3 ? (PERMANENT_TILE_FLAGS & ~HAS_MONSTER) : PERMANENT_TILE_FLAGS));
+            levels[oldLevelNumber - 1].mapStorage[i][j].flags = (pmap[i][j].flags & (COMPARE_TO_VERSION(1,9,3) < 0 ? (PERMANENT_TILE_FLAGS & ~HAS_MONSTER) : PERMANENT_TILE_FLAGS));
             levels[oldLevelNumber - 1].mapStorage[i][j].machineNumber = pmap[i][j].machineNumber;
             levels[oldLevelNumber - 1].mapStorage[i][j].rememberedAppearance = pmap[i][j].rememberedAppearance;
             levels[oldLevelNumber - 1].mapStorage[i][j].rememberedItemCategory = pmap[i][j].rememberedItemCategory;
@@ -685,7 +685,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                     pmap[i][j].layers[layer] = levels[rogue.depthLevel - 1].mapStorage[i][j].layers[layer];
                 }
                 pmap[i][j].volume = levels[rogue.depthLevel - 1].mapStorage[i][j].volume;
-                pmap[i][j].flags = (levels[rogue.depthLevel - 1].mapStorage[i][j].flags & (rogue.patchVersion < 3 ? (PERMANENT_TILE_FLAGS & ~HAS_MONSTER) : PERMANENT_TILE_FLAGS));
+                pmap[i][j].flags = (levels[rogue.depthLevel - 1].mapStorage[i][j].flags & (COMPARE_TO_VERSION(1,9,3) < 0 ? (PERMANENT_TILE_FLAGS & ~HAS_MONSTER) : PERMANENT_TILE_FLAGS));
                 pmap[i][j].machineNumber = levels[rogue.depthLevel - 1].mapStorage[i][j].machineNumber;
                 pmap[i][j].rememberedAppearance = levels[rogue.depthLevel - 1].mapStorage[i][j].rememberedAppearance;
                 pmap[i][j].rememberedItemCategory = levels[rogue.depthLevel - 1].mapStorage[i][j].rememberedItemCategory;
@@ -718,7 +718,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             restoreItem(theItem);
         }
 
-        if (rogue.patchVersion < 3) {
+        if (COMPARE_TO_VERSION(1,9,3) < 0) {
             mapToStairs = allocGrid();
             mapToPit = allocGrid();
             fillGrid(mapToStairs, 0);
@@ -807,7 +807,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
         rogue.inWater = true;
     }
 
-    if (levels[rogue.depthLevel - 1].visited && rogue.patchVersion >= 3) {
+    if (levels[rogue.depthLevel - 1].visited && COMPARE_TO_VERSION(1,9,3) >= 0) {
         mapToStairs = allocGrid();
         mapToPit = allocGrid();
         fillGrid(mapToStairs, 0);

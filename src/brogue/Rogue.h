@@ -33,15 +33,23 @@
 #endif
 
 // unicode: comment this line to revert to ASCII
-
 #define USE_UNICODE
 
+// Brogue version number
+#define BROGUE_MAJOR 1
+#define BROGUE_MINOR 9
+#define BROGUE_PATCH 4
+
+// Expanding a macro as a string constant requires two levels of macros
+#define _str(x) #x
+#define STRINGIFY(x) _str(x)
+
 // Brogue version: what the user sees in the menu and title
-#define BROGUE_VERSION_STRING "CE 1.9.4" BROGUE_EXTRA_VERSION
+#define BROGUE_VERSION_STRING "CE " STRINGIFY(BROGUE_MAJOR) "." STRINGIFY(BROGUE_MINOR) "." STRINGIFY(BROGUE_PATCH) BROGUE_EXTRA_VERSION
 
 // Recording version. Saved into recordings and save files made by this version.
 // Cannot be longer than 16 chars
-#define BROGUE_RECORDING_VERSION_STRING "CE 1.9.4"
+#define BROGUE_RECORDING_VERSION_STRING "CE " STRINGIFY(BROGUE_MAJOR) "." STRINGIFY(BROGUE_MINOR) "." STRINGIFY(BROGUE_PATCH)
 
 /* Patch pattern. A scanf format string which matches an unsigned short. If this
 matches against a recording version string, it defines a "patch version." During
@@ -53,10 +61,13 @@ which is equal or less than the patch version of the current game
 (rogue.patchLevel is set to the recording's); or b) it doesn't match the version
 strings, but they are equal (rogue.patchLevel is set to 0).
 */
-#define BROGUE_PATCH_VERSION_PATTERN "CE 1.9.%hu"
+#define BROGUE_PATCH_VERSION_PATTERN "CE " STRINGIFY(BROGUE_MAJOR) "." STRINGIFY(BROGUE_MINOR) ".%hu"
 
 // Dungeon version. Used in seed catalog output.
 #define BROGUE_DUNGEON_VERSION_STRING "CE 1.9"
+
+// Macro to compare BROGUE_MAJOR.BROGUE_MINOR.patchVersion to a.b.c
+#define COMPARE_TO_VERSION(a,b,c) (BROGUE_MAJOR != (a) ? BROGUE_MAJOR - (a) : BROGUE_MINOR != (b) ? BROGUE_MINOR - (b) : rogue.patchVersion - (c))
 
 #define DEBUG                           if (rogue.wizard)
 #define MONSTERS_ENABLED                (!rogue.wizard || 1) // Quest room monsters can be generated regardless.

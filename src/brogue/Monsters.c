@@ -687,7 +687,7 @@ boolean spawnMinions(short hordeID, creature *leader, boolean summoned, boolean 
         }
 
         for (iMember = 0; iMember < count; iMember++) {
-            if (rogue.patchVersion >=4) {
+            if (COMPARE_TO_VERSION(1,9,4) >= 0) {
                 monst = generateMonster(theHorde->memberType[iSpecies], itemPossible, !summoned);
             } else {
                 monst = generateMonster(theHorde->memberType[iSpecies], true, !summoned);
@@ -855,7 +855,7 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
         leader->info.intrinsicLightType = SACRIFICE_MARK_LIGHT;
     }
 
-    if (rogue.patchVersion >= 3 && (theHorde->flags & HORDE_MACHINE_THIEF)) {
+    if (COMPARE_TO_VERSION(1,9,3) >= 0 && (theHorde->flags & HORDE_MACHINE_THIEF)) {
         leader->safetyMap = allocGrid(); // Keep thieves from fleeing before they see the player
         fillGrid(leader->safetyMap, 0);
     }
@@ -922,7 +922,7 @@ boolean summonMinions(creature *summoner) {
         removeMonsterFromChain(summoner, monsters);
     }
 
-    if (rogue.patchVersion >= 4) {
+    if (COMPARE_TO_VERSION(1,9,4) >= 0) {
         atLeastOneMinion = spawnMinions(hordeID, summoner, true, false);
     } else {
         atLeastOneMinion = spawnMinions(hordeID, summoner, true, true);
@@ -962,7 +962,7 @@ boolean summonMinions(creature *summoner) {
             monst->ticksUntilTurn = 101;
             monst->leader = summoner;
 
-            if (rogue.patchVersion < 4 && monst->carriedItem) {
+            if (COMPARE_TO_VERSION(1,9,4) < 0 && monst->carriedItem) {
                 deleteItem(monst->carriedItem);
                 monst->carriedItem = NULL;
             }
@@ -1124,7 +1124,7 @@ void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidance
         }
     }
     // Always break free on teleport
-    if (rogue.patchVersion >=4) {
+    if (COMPARE_TO_VERSION(1,9,4) >= 0) {
         disentangle(monst);
     }
     setMonsterLocation(monst, x, y);
@@ -2370,7 +2370,7 @@ boolean generallyValidBoltTarget(creature *caster, creature *target) {
         // Can't target yourself; that's the fundamental theorem of Brogue bolts.
         return false;
     }
-    if (rogue.patchVersion >= 3
+    if (COMPARE_TO_VERSION(1,9,3) >= 0
         && caster->status[STATUS_DISCORDANT]
         && caster->creatureState == MONSTER_WANDERING
         && target == &player) {
@@ -3297,7 +3297,7 @@ void monstersTurn(creature *monst) {
             dir = nextStep(safetyMap, monst->xLoc, monst->yLoc, NULL, true);
         } else {
             if (!monst->safetyMap) {
-                if (rogue.patchVersion >= 3 && !rogue.updatedSafetyMapThisTurn) {
+                if (COMPARE_TO_VERSION(1,9,3) >= 0 && !rogue.updatedSafetyMapThisTurn) {
                     updateSafetyMap();
                 }
                 monst->safetyMap = allocGrid();
@@ -3887,7 +3887,7 @@ void demoteMonsterFromLeadership(creature *monst) {
     }
 
     for (int level = 0; level <= DEEPEST_LEVEL; level++) {
-        if (rogue.patchVersion < 1 && level > 0) break; // to play back 1.9.0 recordings, skip other levels
+        if (COMPARE_TO_VERSION(1,9,1) < 0 && level > 0) break;
         // we'll work on this level's monsters first, so that the new leader is preferably on the same level
         creature *firstMonster = (level == 0 ? monsters->nextCreature : levels[level-1].monsters);
         for (follower = firstMonster; follower != NULL; follower = follower->nextCreature) {
@@ -3918,7 +3918,7 @@ void demoteMonsterFromLeadership(creature *monst) {
     }
 
     for (int level = 0; level <= DEEPEST_LEVEL; level++) {
-        if (rogue.patchVersion < 1 && level > 0) break;
+        if (COMPARE_TO_VERSION(1,9,1) < 0 && level > 0) break;
         creature *firstMonster = (level == 0 ? dormantMonsters->nextCreature : levels[level-1].dormantMonsters);
         for (follower = firstMonster; follower != NULL; follower = follower->nextCreature) {
             if (follower == monst || follower->leader != monst) continue;
