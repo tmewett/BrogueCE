@@ -17,7 +17,7 @@ struct keypair {
 
 static struct keypair remapping[MAX_REMAPS];
 static size_t nremaps = 0;
-static boolean showGraphics = false;
+static enum graphicsModes showGraphics = TEXT_GRAPHICS;
 
 static rogueEvent lastEvent;
 
@@ -336,7 +336,7 @@ static int fontIndex(enum displayGlyph glyph) {
     if (glyph < 128) {
         // ASCII characters map directly
         return glyph;
-    } else if (showGraphics && glyph >= 128) {
+    } else if (showGraphics == TILES_GRAPHICS || (showGraphics == HYBRID_GRAPHICS && isEnvironmentGlyph(glyph))) {
         // Tile glyphs have sprite indices starting at 256
         // -2 to disregard the up and down arrow glyphs
         return glyph + 128 - 2;
@@ -414,11 +414,11 @@ static boolean _takeScreenshot() {
 }
 
 
-static boolean _setGraphicsEnabled(boolean state) {
-    showGraphics = state;
+static enum graphicsModes _setGraphicsMode(enum graphicsModes mode) {
+    showGraphics = mode;
     refreshScreen();
     updateScreen();
-    return state;
+    return mode;
 }
 
 
@@ -431,5 +431,5 @@ struct brogueConsole sdlConsole = {
     _modifierHeld,
     NULL,
     _takeScreenshot,
-    _setGraphicsEnabled
+    _setGraphicsMode
 };

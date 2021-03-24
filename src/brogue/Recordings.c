@@ -1015,13 +1015,23 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                 return true;
             case GRAPHICS_KEY:
                 if (hasGraphics) {
-                    graphicsEnabled = setGraphicsEnabled(!graphicsEnabled);
-                    if (graphicsEnabled) {
-                        messageWithColor(KEYBOARD_LABELS ? "Enabled graphical tiles. Press 'G' again to disable." : "Enable graphical tiles.",
-                                        &teal, false);
-                    } else {
-                        messageWithColor(KEYBOARD_LABELS ? "Disabled graphical tiles. Press 'G' again to enable." : "Disabled graphical tiles.",
-                                        &teal, false);
+                    graphicsMode = setGraphicsMode((graphicsMode + 1) % 3);
+                    switch (graphicsMode) {
+                        case TEXT_GRAPHICS:
+                            messageWithColor(KEYBOARD_LABELS
+                                ? "Switched to text mode. Press 'G' again to enable tiles."
+                                : "Switched to text mode.", &teal, false);
+                            break;
+                        case TILES_GRAPHICS:
+                            messageWithColor(KEYBOARD_LABELS
+                                ? "Switched to graphical tiles. Press 'G' again to enable hybrid mode."
+                                : "Switched to graphical tiles.", &teal, false);
+                            break;
+                        case HYBRID_GRAPHICS:
+                            messageWithColor(KEYBOARD_LABELS
+                                ? "Switched to hybrid mode. Press 'G' again to disable tiles."
+                                : "Switched to hybrid mode.", &teal, false);
+                            break;
                     }
                 }
                 return true;

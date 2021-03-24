@@ -11,7 +11,7 @@ struct brogueConsole currentConsole;
 char dataDirectory[BROGUE_FILENAME_MAX] = STRINGIFY(DATADIR);
 boolean serverMode = false;
 boolean hasGraphics = false;
-boolean graphicsEnabled = false;
+enum graphicsModes graphicsMode = TEXT_GRAPHICS;
 boolean isCsvFormat = false;
 
 static void printCommandlineHelp() {
@@ -29,6 +29,7 @@ static void printCommandlineHelp() {
 #ifdef BROGUE_SDL
     "--size N                   starts the game at font size N (1 to 20)\n"
     "--graphics     -G          enable graphical tiles\n"
+    "--hybrid       -H          enable hybrid graphics\n"
     "--full-screen  -F          enable full screen\n"
     "--no-gpu                   disable hardware-accelerated graphics and HiDPI\n"
 #endif
@@ -94,7 +95,7 @@ int main(int argc, char *argv[])
     rogue.displayAggroRangeMode = false;
     rogue.trueColorMode = false;
 
-    boolean initialGraphics = false;
+    enum graphicsModes initialGraphics = TEXT_GRAPHICS;
 
     int i;
     for (i = 1; i < argc; i++) {
@@ -186,7 +187,12 @@ int main(int argc, char *argv[])
         }
 
         if (strcmp(argv[i], "-G") == 0 || strcmp(argv[i], "--graphics") == 0) {
-            initialGraphics = true;  // we call setGraphicsEnabled later
+            initialGraphics = TILES_GRAPHICS;  // we call setGraphicsMode later
+            continue;
+        }
+
+        if (strcmp(argv[i], "-H") == 0 || strcmp(argv[i], "--hybrid") == 0) {
+            initialGraphics = HYBRID_GRAPHICS;  // we call setGraphicsMode later
             continue;
         }
 
@@ -270,10 +276,10 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    hasGraphics = (currentConsole.setGraphicsEnabled != NULL);
+    hasGraphics = (currentConsole.setGraphicsMode != NULL);
     // Now actually set graphics. We do this to ensure there is exactly one
     // call, whether true or false
-    graphicsEnabled = setGraphicsEnabled(initialGraphics);
+    graphicsMode = setGraphicsMode(initialGraphics);
 
     loadKeymap();
     currentConsole.gameLoop();
