@@ -3302,7 +3302,7 @@ void displayMessageArchive() {
         return;
     }
 
-    height = min(length, MESSAGE_ARCHIVE_LINES);
+    height = min(length, MESSAGE_ARCHIVE_VIEW_LINES);
     offset = height;
 
     copyDisplayBuffer(rbuf, displayBuffer);

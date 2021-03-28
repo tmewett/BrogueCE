@@ -118,7 +118,8 @@ typedef long long fixpt;
 #define DATE_FORMAT             "%Y-%m-%d" // see strftime() documentation
 
 #define MESSAGE_LINES           3
-#define MESSAGE_ARCHIVE_LINES   ROWS
+#define MESSAGE_ARCHIVE_VIEW_LINES ROWS
+#define MESSAGE_ARCHIVE_LINES   (MESSAGE_ARCHIVE_VIEW_LINES*10)
 #define MESSAGE_ARCHIVE_ENTRIES (MESSAGE_ARCHIVE_LINES*4)
 #define MAX_MESSAGE_REPEATS     100
 
