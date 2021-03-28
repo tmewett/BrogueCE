@@ -3241,58 +3241,59 @@ void displayMessageArchive() {
 
     formatRecentMessages(messageBuffer, MESSAGE_ARCHIVE_LINES, &totalMessageCount, 0);
 
-    if (totalMessageCount > MESSAGE_LINES) {
+    if (totalMessageCount <= MESSAGE_LINES) {
+        return;
+    }
 
-        copyDisplayBuffer(rbuf, displayBuffer);
+    copyDisplayBuffer(rbuf, displayBuffer);
 
-        // Pull-down/pull-up animation:
-        for (reverse = 0; reverse <= 1; reverse++) {
-            fastForward = false;
-            for (currentMessageCount = (reverse ? totalMessageCount : MESSAGE_LINES);
-                 (reverse ? currentMessageCount >= MESSAGE_LINES : currentMessageCount <= totalMessageCount);
-                 currentMessageCount += (reverse ? -1 : 1)) {
+    // Pull-down/pull-up animation:
+    for (reverse = 0; reverse <= 1; reverse++) {
+        fastForward = false;
+        for (currentMessageCount = (reverse ? totalMessageCount : MESSAGE_LINES);
+             (reverse ? currentMessageCount >= MESSAGE_LINES : currentMessageCount <= totalMessageCount);
+             currentMessageCount += (reverse ? -1 : 1)) {
 
-                clearDisplayBuffer(dbuf);
+            clearDisplayBuffer(dbuf);
 
-                // Print the message archive text to the dbuf.
-                for (j=0; j < currentMessageCount && j < ROWS; j++) {
-                    k = MESSAGE_ARCHIVE_LINES - currentMessageCount + j;
-                    printString(messageBuffer[k], mapToWindowX(0), j, &white, &black, dbuf);
-                }
+            // Print the message archive text to the dbuf.
+            for (j=0; j < currentMessageCount && j < ROWS; j++) {
+                k = MESSAGE_ARCHIVE_LINES - currentMessageCount + j;
+                printString(messageBuffer[k], mapToWindowX(0), j, &white, &black, dbuf);
+            }
 
-                // Set the dbuf opacity, and do a fade from bottom to top to make it clear that the bottom messages are the most recent.
-                for (j=0; j < currentMessageCount && j<ROWS; j++) {
-                    fadePercent = 50 * (j + totalMessageCount - currentMessageCount) / totalMessageCount + 50;
-                    for (i=0; i<DCOLS; i++) {
-                        dbuf[mapToWindowX(i)][j].opacity = INTERFACE_OPACITY;
-                        if (dbuf[mapToWindowX(i)][j].character != ' ') {
-                            for (k=0; k<3; k++) {
-                                dbuf[mapToWindowX(i)][j].foreColorComponents[k] = dbuf[mapToWindowX(i)][j].foreColorComponents[k] * fadePercent / 100;
-                            }
+            // Set the dbuf opacity, and do a fade from bottom to top to make it clear that the bottom messages are the most recent.
+            for (j=0; j < currentMessageCount && j<ROWS; j++) {
+                fadePercent = 50 * (j + totalMessageCount - currentMessageCount) / totalMessageCount + 50;
+                for (i=0; i<DCOLS; i++) {
+                    dbuf[mapToWindowX(i)][j].opacity = INTERFACE_OPACITY;
+                    if (dbuf[mapToWindowX(i)][j].character != ' ') {
+                        for (k=0; k<3; k++) {
+                            dbuf[mapToWindowX(i)][j].foreColorComponents[k] = dbuf[mapToWindowX(i)][j].foreColorComponents[k] * fadePercent / 100;
                         }
                     }
                 }
-
-                // Display.
-                overlayDisplayBuffer(rbuf, 0);
-                overlayDisplayBuffer(dbuf, 0);
-
-                if (!fastForward && pauseBrogue(reverse ? 1 : 2)) {
-                    fastForward = true;
-                    dequeueEvent();
-                    currentMessageCount = (reverse ? MESSAGE_LINES + 1 : totalMessageCount - 1); // skip to the end
-                }
             }
 
-            if (!reverse) {
-                displayMoreSign();
+            // Display.
+            overlayDisplayBuffer(rbuf, 0);
+            overlayDisplayBuffer(dbuf, 0);
+
+            if (!fastForward && pauseBrogue(reverse ? 1 : 2)) {
+                fastForward = true;
+                dequeueEvent();
+                currentMessageCount = (reverse ? MESSAGE_LINES + 1 : totalMessageCount - 1); // skip to the end
             }
         }
-        overlayDisplayBuffer(rbuf, 0);
-        updateFlavorText();
-        confirmMessages();
-        updateMessageDisplay();
+
+        if (!reverse) {
+            displayMoreSign();
+        }
     }
+    overlayDisplayBuffer(rbuf, 0);
+    updateFlavorText();
+    confirmMessages();
+    updateMessageDisplay();
 }
 
 // Clears the message area and prints the given message in the area.
