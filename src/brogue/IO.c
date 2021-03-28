@@ -3234,14 +3234,14 @@ void displayRecentMessages() {
 }
 
 void displayMessageArchive() {
-    short i, j, k, reverse, fadePercent, totalMessageCount, currentMessageCount;
+    short i, j, k, reverse, fadePercent, length, currentMessageCount;
     boolean fastForward;
     cellDisplayBuffer dbuf[COLS][ROWS], rbuf[COLS][ROWS];
     char messageBuffer[MESSAGE_ARCHIVE_LINES][COLS*2];
 
-    formatRecentMessages(messageBuffer, MESSAGE_ARCHIVE_LINES, &totalMessageCount, 0);
+    formatRecentMessages(messageBuffer, MESSAGE_ARCHIVE_LINES, &length, 0);
 
-    if (totalMessageCount <= MESSAGE_LINES) {
+    if (length <= MESSAGE_LINES) {
         return;
     }
 
@@ -3250,8 +3250,8 @@ void displayMessageArchive() {
     // Pull-down/pull-up animation:
     for (reverse = 0; reverse <= 1; reverse++) {
         fastForward = false;
-        for (currentMessageCount = (reverse ? totalMessageCount : MESSAGE_LINES);
-             (reverse ? currentMessageCount >= MESSAGE_LINES : currentMessageCount <= totalMessageCount);
+        for (currentMessageCount = (reverse ? length : MESSAGE_LINES);
+             (reverse ? currentMessageCount >= MESSAGE_LINES : currentMessageCount <= length);
              currentMessageCount += (reverse ? -1 : 1)) {
 
             clearDisplayBuffer(dbuf);
@@ -3264,7 +3264,7 @@ void displayMessageArchive() {
 
             // Set the dbuf opacity, and do a fade from bottom to top to make it clear that the bottom messages are the most recent.
             for (j=0; j < currentMessageCount && j<ROWS; j++) {
-                fadePercent = 50 * (j + totalMessageCount - currentMessageCount) / totalMessageCount + 50;
+                fadePercent = 50 * (j + length - currentMessageCount) / length + 50;
                 for (i=0; i<DCOLS; i++) {
                     dbuf[mapToWindowX(i)][j].opacity = INTERFACE_OPACITY;
                     if (dbuf[mapToWindowX(i)][j].character != ' ') {
@@ -3282,7 +3282,7 @@ void displayMessageArchive() {
             if (!fastForward && pauseBrogue(reverse ? 1 : 2)) {
                 fastForward = true;
                 dequeueEvent();
-                currentMessageCount = (reverse ? MESSAGE_LINES + 1 : totalMessageCount - 1); // skip to the end
+                currentMessageCount = (reverse ? MESSAGE_LINES + 1 : length - 1); // skip to the end
             }
         }
 
