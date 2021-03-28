@@ -3291,6 +3291,78 @@ void animateMessageArchive(boolean opening, char messages[MESSAGE_ARCHIVE_LINES]
     }
 }
 
+// Accept keyboard input to navigate or dismiss the opened message archive
+// messages: the archived messages after all formatting passes
+// length: the number of rows in messages, filled from the "bottom", (unused rows have lower indexes)
+// offset: index of oldest (visually highest) message to draw
+// height: height in rows of the message archive display area
+// rbuf: background display buffer to draw against
+//
+// returns the new offset, which can change if the player scrolled around before closing
+short scrollMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height, cellDisplayBuffer rbuf[COLS][ROWS]) {
+    short lastOffset;
+    boolean exit;
+    rogueEvent theEvent;
+    signed long keystroke;
+
+    if (rogue.autoPlayingLevel || (rogue.playbackMode && !rogue.playbackOOS)) {
+        return offset;
+    }
+
+    exit = false;
+    do {
+        lastOffset = offset;
+        nextBrogueEvent(&theEvent, false, false, false);
+
+        if (theEvent.eventType == KEYSTROKE) {
+            keystroke = theEvent.param1;
+            stripShiftFromMovementKeystroke(&keystroke);
+
+            switch (keystroke) {
+                case UP_KEY:
+                case UP_ARROW:
+                case NUMPAD_8:
+                    if (theEvent.controlKey) {
+                        offset = length;
+                    } else if (theEvent.shiftKey) {
+                        offset++;
+                    } else {
+                        offset += MESSAGE_ARCHIVE_VIEW_LINES / 3;
+                    }
+                    break;
+                case DOWN_KEY:
+                case DOWN_ARROW:
+                case NUMPAD_2:
+                    if (theEvent.controlKey) {
+                        offset = height;
+                    } else if (theEvent.shiftKey) {
+                        offset--;
+                    } else {
+                        offset -= MESSAGE_ARCHIVE_VIEW_LINES / 3;
+                    }
+                    break;
+                case ACKNOWLEDGE_KEY:
+                case ESCAPE_KEY:
+                    exit = true;
+                    break;
+                default:
+                    flashTemporaryAlert(" -- Press space or click to continue -- ", 500);
+            }
+        }
+
+        if (theEvent.eventType == MOUSE_UP) {
+            exit = true;
+        }
+
+        offset = max(height, min(offset, length));
+        if (offset != lastOffset) {
+            drawMessageArchive(messages, length, offset, height, rbuf);
+        }
+    } while (!exit);
+
+    return offset;
+}
+
 void displayMessageArchive() {
     short length, offset, height;
     cellDisplayBuffer rbuf[COLS][ROWS];
@@ -3308,7 +3380,7 @@ void displayMessageArchive() {
     copyDisplayBuffer(rbuf, displayBuffer);
 
     animateMessageArchive(true, messageBuffer, length, offset, height, rbuf);
-    displayMoreSign();
+    offset = scrollMessageArchive(messageBuffer, length, offset, height, rbuf);
     animateMessageArchive(false, messageBuffer, length, offset, height, rbuf);
 
     overlayDisplayBuffer(rbuf, 0);
