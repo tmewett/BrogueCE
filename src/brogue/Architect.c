@@ -3467,12 +3467,12 @@ void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
             theMap = mapToStairs;
         }
 
-        if(rogue.patchVersion >= 3) {
+        if(BROGUE_VERSION_ATLEAST(1,9,3)) {
             pmap[*x][*y].flags &= ~HAS_MONSTER;
         }
         if (theMap) {
             // STATUS_ENTERS_LEVEL_IN accounts for monster speed; convert back to map distance and subtract from distance to stairs
-            turnCount = rogue.patchVersion < 3 ? ((theMap[monst->xLoc][monst->yLoc] * monst->movementSpeed / 100) - monst->status[STATUS_ENTERS_LEVEL_IN])
+            turnCount = !BROGUE_VERSION_ATLEAST(1,9,3) ? ((theMap[monst->xLoc][monst->yLoc] * monst->movementSpeed / 100) - monst->status[STATUS_ENTERS_LEVEL_IN])
                         : (theMap[monst->xLoc][monst->yLoc] - (monst->status[STATUS_ENTERS_LEVEL_IN] * 100 / monst->movementSpeed));
             for (i=0; i < turnCount; i++) {
                 if ((dir = nextStep(theMap, monst->xLoc, monst->yLoc, NULL, true)) != NO_DIRECTION) {

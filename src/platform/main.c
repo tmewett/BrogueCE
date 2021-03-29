@@ -6,10 +6,6 @@
 #error "The DATADIR macro is undefined."
 #endif
 
-// Expanding a macro as a string constant requires two levels of macros
-#define _str(x)  #x
-#define STRINGIFY(x)  _str(x)
-
 struct brogueConsole currentConsole;
 
 char dataDirectory[BROGUE_FILENAME_MAX] = STRINGIFY(DATADIR);
