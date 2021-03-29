@@ -2534,6 +2534,7 @@ const feat featTable[FEAT_COUNT] = {
     {"Ascetic",         "Ascend without eating.", true},
     {"Dragonslayer",    "Kill a dragon with a melee attack.", false},
     {"Paladin",         "Ascend without attacking an unaware or fleeing creature.", true},
+    {"Untempted",       "Ascend without picking up gold.", true},
 };
 
 const char monsterBehaviorFlagDescriptions[32][COLS] = {

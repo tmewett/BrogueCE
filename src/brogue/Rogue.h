@@ -2205,6 +2205,7 @@ enum featTypes {
     FEAT_ASCETIC,
     FEAT_DRAGONSLAYER,
     FEAT_PALADIN,
+    FEAT_TONE,
 
     FEAT_COUNT,
 };

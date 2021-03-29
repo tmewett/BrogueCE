@@ -780,6 +780,7 @@ void pickUpItemAt(short x, short y) {
 
         if (theItem->category & GOLD) {
             rogue.gold += theItem->quantity;
+            rogue.featRecord[FEAT_TONE] = false;
             sprintf(buf, "you found %i pieces of gold.", theItem->quantity);
             messageWithColor(buf, &itemMessageColor, false);
             deleteItem(theItem);
