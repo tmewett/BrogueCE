@@ -1342,7 +1342,7 @@ void monstersFall() {
     for (monst = monsters->nextCreature; monst != NULL; monst = nextCreature) {
         nextCreature = monst->nextCreature;
         if ((monst->bookkeepingFlags & MB_IS_FALLING) || monsterShouldFall(monst)) {
-            if (COMPARE_TO_VERSION(1,9,3) >= 0) monst->bookkeepingFlags |= MB_IS_FALLING;
+            if (BROGUE_VERSION_ATLEAST(1,9,3)) monst->bookkeepingFlags |= MB_IS_FALLING;
 
             x = monst->xLoc;
             y = monst->yLoc;
@@ -1353,7 +1353,7 @@ void monstersFall() {
                 messageWithColor(buf2, messageColorFromVictim(monst), false);
             }
 
-            if (COMPARE_TO_VERSION(1,9,3) < 0) {
+            if (!BROGUE_VERSION_ATLEAST(1,9,3)) {
                 monst->status[STATUS_ENTRANCED] = 0;
                 monst->bookkeepingFlags |= MB_PREPLACED;
                 monst->bookkeepingFlags &= ~(MB_IS_FALLING | MB_SEIZED | MB_SEIZING);
@@ -1366,7 +1366,7 @@ void monstersFall() {
             } else if (!inflictDamage(NULL, monst, randClumpedRange(6, 12, 2), &red, false)) {
                 demoteMonsterFromLeadership(monst);
 
-                if (COMPARE_TO_VERSION(1,9,3) >= 0) {
+                if (BROGUE_VERSION_ATLEAST(1,9,3)) {
                     monst->status[STATUS_ENTRANCED] = 0;
                     monst->bookkeepingFlags |= MB_PREPLACED;
                     monst->bookkeepingFlags &= ~(MB_IS_FALLING | MB_SEIZED | MB_SEIZING);
@@ -1853,7 +1853,7 @@ void monsterEntersLevel(creature *monst, short n) {
     char monstName[COLS], buf[COLS];
     boolean pit = false;
 
-    if (COMPARE_TO_VERSION(1,9,3) >= 0) {
+    if (BROGUE_VERSION_ATLEAST(1,9,3)) {
         levels[n].mapStorage[monst->xLoc][monst->yLoc].flags &= ~HAS_MONSTER;
     }
 

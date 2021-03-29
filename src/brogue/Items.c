@@ -3633,7 +3633,7 @@ boolean negate(creature *monst) {
         }
 
         if (monst != &player && monst->mutationIndex > -1 && mutationCatalog[monst->mutationIndex].canBeNegated
-            && COMPARE_TO_VERSION(1,9,3) >= 0) {
+            && BROGUE_VERSION_ATLEAST(1,9,3)) {
 
             monst->mutationIndex = -1;
             negated = true;
@@ -4409,7 +4409,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 if (boltCatalog[BOLT_NEGATION].backColor) {
                     flashMonster(monst, boltCatalog[BOLT_NEGATION].backColor, 100);
                 }
-                if (COMPARE_TO_VERSION(1,9,4) >= 0 && negated && autoID && canSeeMonster(monst)) {
+                if (BROGUE_VERSION_ATLEAST(1,9,4) && negated && autoID && canSeeMonster(monst)) {
                     *autoID = true;
                 }
 
@@ -4481,7 +4481,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
                     newMonst = cloneMonster(monst, true, true);
                     if (newMonst) {
-                        if (COMPARE_TO_VERSION(1,9,1) >= 0) {
+                        if (BROGUE_VERSION_ATLEAST(1,9,1)) {
                             monst->info.maxHP = newMonst->info.maxHP = (monst->info.maxHP + 1) / 2;
                             monst->currentHP = newMonst->currentHP = min(monst->currentHP, monst->info.maxHP);
                         } else {
@@ -4649,7 +4649,7 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
             caster->xLoc = x;
             caster->yLoc = y;
             // Always break free on blink
-            if (COMPARE_TO_VERSION(1,9,4) >= 0) {
+            if (BROGUE_VERSION_ATLEAST(1,9,4)) {
                 disentangle(caster);
             }
             applyInstantTileEffectsToCreature(caster);
