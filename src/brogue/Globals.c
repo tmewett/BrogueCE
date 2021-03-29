@@ -2531,7 +2531,7 @@ const feat featTable[FEAT_COUNT] = {
     {"Specialist",      "Enchant an item up to or above +16.", false},
     {"Jellymancer",     "Obtain at least 90 jelly allies simultaneously.", false},
     {"Indomitable",     "Ascend without taking damage.", true},
-    {"Mystic",          "Ascend without eating.", true},
+    {"Ascetic",         "Ascend without eating.", true},
     {"Dragonslayer",    "Kill a dragon with a melee attack.", false},
     {"Paladin",         "Ascend without attacking an unaware or fleeing creature.", true},
 };

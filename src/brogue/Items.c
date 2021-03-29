@@ -6259,7 +6259,7 @@ void apply(item *theItem, boolean recordCommands) {
             } else {
                 messageWithColor("My, what a yummy mango!", &itemMessageColor, false);
             }
-            rogue.featRecord[FEAT_MYSTIC] = false;
+            rogue.featRecord[FEAT_ASCETIC] = false;
             break;
         case POTION:
             command[c] = '\0';
