@@ -2965,9 +2965,9 @@ extern "C" {
     void pickUpItemAt(short x, short y);
     item *addItemToPack(item *theItem);
     void aggravateMonsters(short distance, short x, short y, const color *flashColor);
-    short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2], const short targetLoc[2]);
+    short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2], const short targetLoc[2], const bolt *theBolt);
     void getImpactLoc(short returnLoc[2], const short originLoc[2], const short targetLoc[2],
-                      const short maxDistance, const boolean returnLastEmptySpace);
+                      const short maxDistance, const boolean returnLastEmptySpace, const bolt *theBolt);
     void negate(creature *monst);
     short monsterAccuracyAdjusted(const creature *monst);
     fixpt monsterDamageAdjustmentAmount(const creature *monst);

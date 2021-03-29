@@ -3333,64 +3333,148 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
     freeGrid(grid);
 }
 
-// Simple line algorithm (maybe this is Bresenham?) that returns a list of coordinates
-// that extends all the way to the edge of the map based on an originLoc (which is not included
-// in the list of coordinates) and a targetLoc.
-// Returns the number of entries in the list, and includes (-1, -1) as an additional
-// terminus indicator after the end of the list.
-short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2], const short targetLoc[2]) {
-    fixpt targetVector[2], error[2], largerTargetComponent;
-    short currentVector[2], previousVector[2], quadrantTransform[2], i;
-    short currentLoc[2];
-    short cellNumber = 0;
+// Generates a list of coordinates extending in a straight line
+// from originLoc (not included in the output), through targetLoc,
+// all the way to the edge of the map.
+// Any straight line passing through the target cell generates a valid
+// path; the function tries several lines and picks the one that works
+// best for the specified bolt type.
+// The list is terminated by a marker (-1, -1).
+// Returns the number of entries in the list (not counting the terminal marker).
+short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2], const short targetLoc[2], const bolt *theBolt) {
+    fixpt point[2], step[2];
+    short listLength;
+    int score, bestScore = 0, offset, bestOffset = 0;
+
+    // Set of candidate waypoints strategically placed within a diamond shape.
+    // For why they must be within a diamond, google "diamond-exit rule".
+    const int numOffsets = 21;
+    const fixpt offsets[][2] = {
+        {50, 50}, // center of the square first (coordinates are in %)
+        {40, 40}, {60, 40}, {60, 60}, {40, 60},
+        {50, 30}, {70, 50}, {50, 70}, {30, 50},
+        {50, 20}, {80, 50}, {50, 80}, {20, 50},
+        {50, 10}, {90, 50}, {50, 90}, {10, 50},
+        {50,  1}, {99, 50}, {50, 99}, { 1, 50} };
 
     if (originLoc[0] == targetLoc[0] && originLoc[1] == targetLoc[1]) {
+        listOfCoordinates[0][0] = listOfCoordinates[0][1] = -1;
         return 0;
     }
 
-    // Neither vector is negative. We keep track of negatives with quadrantTransform.
-    for (i=0; i<= 1; i++) {
-        targetVector[i] = (targetLoc[i] - originLoc[i]) * FP_FACTOR;
-        if (targetVector[i] < 0) {
-            targetVector[i] *= -1;
-            quadrantTransform[i] = -1;
-        } else {
-            quadrantTransform[i] = 1;
+    // try all offsets; the last iteration will use the best offset found
+    for (offset = 0; offset < numOffsets + 1; offset++) {
+
+        listLength = 0;
+
+        for (int i = 0; i <= 1; i++) {
+            // always shoot from the center of the origin cell
+            point[i] = originLoc[i] * FP_FACTOR + FP_FACTOR/2;
+            // vector to target
+            step[i] = targetLoc[i] * FP_FACTOR + offsets[offset < numOffsets ? offset : bestOffset][i] * FP_FACTOR / 100 - point[i];
         }
-        currentVector[i] = previousVector[i] = error[i] = 0;
-        currentLoc[i] = originLoc[i];
-    }
 
-    // normalize target vector such that one dimension equals 1 and the other is in [0, 1].
-    largerTargetComponent = max(targetVector[0], targetVector[1]);
-    targetVector[0] = (targetVector[0] * FP_FACTOR) / largerTargetComponent;
-    targetVector[1] = (targetVector[1] * FP_FACTOR) / largerTargetComponent;
+        // normalize the step, to move exactly one row or column at a time
+        fixpt m = max(abs(step[0]), abs(step[1]));
+        step[0] = step[0] * FP_FACTOR / m;
+        step[1] = step[1] * FP_FACTOR / m;
 
-    do {
-        for (i=0; i<= 1; i++) {
+        // move until we exit the map
+        while (true) {
+            for (int i = 0; i <= 1; i++) {
+                point[i] += step[i];
+                listOfCoordinates[listLength][i] = (point[i] < 0 ? -1 : point[i] / FP_FACTOR);
+            }
+            if (!coordinatesAreInMap(listOfCoordinates[listLength][0], listOfCoordinates[listLength][1])) break;
+            listLength++;
+        };
 
-            currentVector[i] += targetVector[i] / FP_FACTOR;
-            error[i] += (targetVector[i] == FP_FACTOR ? 0 : targetVector[i]);
+        // last iteration does not need evaluation, we are returning it anyway
+        if (offset == numOffsets) break;
 
-            if (error[i] >= FP_FACTOR / 2) {
-                currentVector[i]++;
-                error[i] -= FP_FACTOR;
+        // No bolt means we don't want any tuning. Returning first path (using center of target)
+        if (theBolt == NULL) break;
+
+        // evaluate this path; we will return the path with the highest score
+        score = 0;
+
+        for (int i = 0; i < listLength; i++) {
+            short x = listOfCoordinates[i][0], y = listOfCoordinates[i][1];
+
+            boolean isImpassable = cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY);
+            boolean isOpaque = cellHasTerrainFlag(x, y, T_OBSTRUCTS_VISION);
+            boolean targetsEnemies = theBolt->flags & BF_TARGET_ENEMIES;
+            boolean targetsAllies = theBolt->flags & BF_TARGET_ALLIES;
+            boolean burningThrough = (theBolt->flags & BF_FIERY) && cellHasTerrainFlag(x, y, T_IS_FLAMMABLE);
+            boolean isCastByPlayer = (originLoc[0] == player.xLoc && originLoc[1] == player.yLoc);
+
+            creature *monst = monsterAtLoc(x, y);
+            boolean isMonster = monst
+                && !(monst->bookkeepingFlags & MB_SUBMERGED)
+                && !monsterIsHidden(monst, monsterAtLoc(originLoc[0], originLoc[1]));
+            boolean isAllyOfCaster = ((monst && monst->creatureState == MONSTER_ALLY) == isCastByPlayer);
+
+            // small bonus for making it this far
+            score += 2;
+
+            // target reached?
+            if (x == targetLoc[0] && y == targetLoc[1]) {
+
+                if ((!targetsEnemies && !targetsAllies) ||
+                    (targetsEnemies && isMonster && !isAllyOfCaster) ||
+                    (targetsAllies && isMonster && isAllyOfCaster)) {
+
+                    // big bonus for hitting the target
+                    score += 5000;
+                }
+
+                break; // we don't care about anything beyond the target--if the player did, they would have selected a farther target
             }
 
-            currentLoc[i] = quadrantTransform[i]*currentVector[i] + originLoc[i];
+            // if the caster is the player, undiscovered cells don't count (lest we reveal something about them)
+            if (isCastByPlayer && !(pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED))) continue;
 
-            listOfCoordinates[cellNumber][i] = currentLoc[i];
+            // nothing can get through impregnable obstacles
+            if (isImpassable && pmap[x][y].flags & IMPREGNABLE) {
+                break;
+            }
+
+            // tunneling goes through everything
+            if (theBolt->boltEffect == BE_TUNNELING) {
+                score += (isImpassable ? 50 : isOpaque ? 10 : 0);
+                continue;
+            }
+
+            // hitting a creature with a bolt meant for enemies
+            if (isMonster && targetsEnemies) {
+                score += !isAllyOfCaster ? 50 : -200;
+            }
+
+            // hitting a creature with a bolt meant for allies
+            if (isMonster && targetsAllies) {
+                score += isAllyOfCaster ? 50 : -200;
+            }
+
+            // small penalty for setting terrain on fire (to prefer not to)
+            if (burningThrough) {
+                score -= 1;
+            }
+
+            // check for obstruction
+            if (isMonster && (theBolt->flags & BF_PASSES_THRU_CREATURES)) continue;
+            if (isMonster || isImpassable || (isOpaque && !burningThrough)) break;
         }
 
-        //DEBUG printf("\ncell %i: (%i, %i)", cellNumber, listOfCoordinates[cellNumber][0], listOfCoordinates[cellNumber][1]);
-        cellNumber++;
+        if (score > bestScore) {
+            bestScore = score;
+            bestOffset = offset;
+        }
+    }
 
-    } while (coordinatesAreInMap(currentLoc[0], currentLoc[1]));
+    // demarcate the end of the list
+    listOfCoordinates[listLength][0] = listOfCoordinates[listLength][1] = -1;
 
-    cellNumber--;
-
-    listOfCoordinates[cellNumber][0] = listOfCoordinates[cellNumber][1] = -1; // demarcates the end of the list
-    return cellNumber;
+    return listLength;
 }
 
 // If a hypothetical bolt were launched from originLoc toward targetLoc,
@@ -3399,12 +3483,12 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
 // Takes into account the caster's knowledge; i.e. won't be blocked by monsters
 // that the caster is not aware of.
 void getImpactLoc(short returnLoc[2], const short originLoc[2], const short targetLoc[2],
-                  const short maxDistance, const boolean returnLastEmptySpace) {
+                  const short maxDistance, const boolean returnLastEmptySpace, const bolt *theBolt) {
     short coords[DCOLS + 1][2];
     short i, n;
     creature *monst;
 
-    n = getLineCoordinates(coords, originLoc, targetLoc);
+    n = getLineCoordinates(coords, originLoc, targetLoc, theBolt);
     n = min(n, maxDistance);
     for (i=0; i<n; i++) {
         monst = monsterAtLoc(coords[i][0], coords[i][1]);
@@ -4049,7 +4133,10 @@ short reflectBolt(short targetX, short targetY, short listOfCoordinates[][2], sh
         origin[1] = listOfCoordinates[2 * kinkCell][1];
         target[0] = targetX + (targetX - listOfCoordinates[kinkCell][0]);
         target[1] = targetY + (targetY - listOfCoordinates[kinkCell][1]);
-        newPathLength = getLineCoordinates(newPath, origin, target);
+
+        // (NULL because the reflected bolt is not under the caster's control, so its path should not be tuned)
+        newPathLength = getLineCoordinates(newPath, origin, target, NULL);
+
         for (k=0; k<=newPathLength; k++) {
             listOfCoordinates[2 * kinkCell + k + 1][0] = newPath[k][0];
             listOfCoordinates[2 * kinkCell + k + 1][1] = newPath[k][1];
@@ -4067,7 +4154,7 @@ short reflectBolt(short targetX, short targetY, short listOfCoordinates[][2], sh
                 target[0] = targetX;
                 target[1] = targetY;
             }
-            newPathLength = getLineCoordinates(newPath, listOfCoordinates[kinkCell], target);
+            newPathLength = getLineCoordinates(newPath, listOfCoordinates[kinkCell], target, NULL);
             if (newPathLength > 0
                 && !cellHasTerrainFlag(newPath[0][0], newPath[0][1], (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
 
@@ -4611,7 +4698,7 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
     y = originLoc[1];
 
     initialBoltLength = boltLength = 5 * theBolt->magnitude;
-    numCells = getLineCoordinates(listOfCoordinates, originLoc, targetLoc);
+    numCells = getLineCoordinates(listOfCoordinates, originLoc, targetLoc, (hideDetails ? NULL : theBolt));
     shootingMonst = monsterAtLoc(originLoc[0], originLoc[1]);
 
     if (hideDetails) {
@@ -4996,9 +5083,13 @@ boolean nextTargetAfter(short *returnX,
 }
 
 // Returns how far it went before hitting something.
-short hiliteTrajectory(short coordinateList[DCOLS][2], short numCells, boolean eraseHiliting, boolean passThroughMonsters, const color *hiliteColor) {
+short hiliteTrajectory(short coordinateList[DCOLS][2], short numCells, boolean eraseHiliting, const bolt *theBolt, const color *hiliteColor) {
     short x, y, i;
     creature *monst;
+
+    boolean isFiery = theBolt && (theBolt->flags & BF_FIERY);
+    boolean isTunneling = theBolt && (theBolt->boltEffect == BE_TUNNELING);
+    boolean passThroughMonsters = theBolt && (theBolt->flags & BF_PASSES_THRU_CREATURES);
 
     for (i=0; i<numCells; i++) {
         x = coordinateList[i][0];
@@ -5009,12 +5100,12 @@ short hiliteTrajectory(short coordinateList[DCOLS][2], short numCells, boolean e
             hiliteCell(x, y, hiliteColor, 20, true);
         }
 
-        if (cellHasTerrainFlag(x, y, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))
-            || pmap[x][y].flags & (HAS_PLAYER)) {
-            i++;
-            break;
-        } else if (!(pmap[x][y].flags & DISCOVERED)) {
-            break;
+        if (!(pmap[x][y].flags & DISCOVERED)) {
+            if (isTunneling) {
+                continue;
+            } else {
+                break;
+            }
         } else if (!passThroughMonsters && pmap[x][y].flags & (HAS_MONSTER)
                    && (playerCanSee(x, y) || player.status[STATUS_TELEPATHIC])) {
             monst = monsterAtLoc(x, y);
@@ -5024,6 +5115,12 @@ short hiliteTrajectory(short coordinateList[DCOLS][2], short numCells, boolean e
                 i++;
                 break;
             }
+        } else if (cellHasTerrainFlag(x, y, T_IS_FLAMMABLE) && isFiery) {
+            continue;
+        } else if (isTunneling && cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY) && (pmap[x][y].flags & IMPREGNABLE)
+                || !isTunneling && cellHasTerrainFlag(x, y, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
+            i++;
+            break;
         }
     }
     return i;
@@ -5272,7 +5369,7 @@ boolean chooseTarget(short returnLoc[2],
                      boolean stopAtTarget,
                      boolean autoTarget,
                      boolean targetAllies,
-                     boolean passThroughCreatures,
+                     const bolt *theBolt,
                      const color *trajectoryColor) {
     short originLoc[2], targetLoc[2], oldTargetLoc[2], coordinates[DCOLS][2], numCells, i, distance, newX, newY;
     creature *monst;
@@ -5319,7 +5416,7 @@ boolean chooseTarget(short returnLoc[2],
         }
     }
 
-    numCells = getLineCoordinates(coordinates, originLoc, targetLoc);
+    numCells = getLineCoordinates(coordinates, originLoc, targetLoc, theBolt);
     if (maxDistance > 0) {
         numCells = min(numCells, maxDistance);
     }
@@ -5334,7 +5431,7 @@ boolean chooseTarget(short returnLoc[2],
 
         if (canceled) {
             refreshDungeonCell(oldTargetLoc[0], oldTargetLoc[1]);
-            hiliteTrajectory(coordinates, numCells, true, passThroughCreatures, trajectoryColor);
+            hiliteTrajectory(coordinates, numCells, true, theBolt, trajectoryColor);
             confirmMessages();
             rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
             restoreRNG;
@@ -5363,10 +5460,10 @@ boolean chooseTarget(short returnLoc[2],
         }
 
         refreshDungeonCell(oldTargetLoc[0], oldTargetLoc[1]);
-        hiliteTrajectory(coordinates, numCells, true, passThroughCreatures, &trajColor);
+        hiliteTrajectory(coordinates, numCells, true, theBolt, &trajColor);
 
         if (!targetConfirmed) {
-            numCells = getLineCoordinates(coordinates, originLoc, targetLoc);
+            numCells = getLineCoordinates(coordinates, originLoc, targetLoc, theBolt);
             if (maxDistance > 0) {
                 numCells = min(numCells, maxDistance);
             }
@@ -5374,7 +5471,7 @@ boolean chooseTarget(short returnLoc[2],
             if (stopAtTarget) {
                 numCells = min(numCells, distanceBetween(player.xLoc, player.yLoc, targetLoc[0], targetLoc[1]));
             }
-            distance = hiliteTrajectory(coordinates, numCells, false, passThroughCreatures, &trajColor);
+            distance = hiliteTrajectory(coordinates, numCells, false, theBolt, &trajColor);
             cursorInTrajectory = false;
             for (i=0; i<distance; i++) {
                 if (coordinates[i][0] == targetLoc[0] && coordinates[i][1] == targetLoc[1]) {
@@ -5395,7 +5492,7 @@ boolean chooseTarget(short returnLoc[2],
     if (maxDistance > 0) {
         numCells = min(numCells, maxDistance);
     }
-    hiliteTrajectory(coordinates, numCells, true, passThroughCreatures, trajectoryColor);
+    hiliteTrajectory(coordinates, numCells, true, theBolt, trajectoryColor);
     refreshDungeonCell(oldTargetLoc[0], oldTargetLoc[1]);
 
     if (originLoc[0] == targetLoc[0] && originLoc[1] == targetLoc[1]) {
@@ -5599,7 +5696,8 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
     x = originLoc[0] = thrower->xLoc;
     y = originLoc[1] = thrower->yLoc;
 
-    numCells = getLineCoordinates(listOfCoordinates, originLoc, targetLoc);
+    // Using BOLT_NONE for throws because all flags are off, which means we'll try to avoid all obstacles in front of the target
+    numCells = getLineCoordinates(listOfCoordinates, originLoc, targetLoc, &boltCatalog[BOLT_NONE]);
 
     thrower->ticksUntilTurn = thrower->attackSpeed;
 
@@ -5843,7 +5941,7 @@ void throwCommand(item *theItem, boolean autoThrow) {
     if (autoThrow && creatureIsTargetable(rogue.lastTarget)) {
         zapTarget[0] = rogue.lastTarget->xLoc;
         zapTarget[1] = rogue.lastTarget->yLoc;
-    } else if (!chooseTarget(zapTarget, maxDistance, true, autoTarget, false, false, &red)) {
+    } else if (!chooseTarget(zapTarget, maxDistance, true, autoTarget, false, &boltCatalog[BOLT_NONE], &red)) {
         // player doesn't choose a target? return
         return;
     }
@@ -5953,7 +6051,7 @@ boolean playerCancelsBlinking(const short originLoc[2], const short targetLoc[2]
         return false;
     }
 
-    getImpactLoc(impactLoc, originLoc, targetLoc, maxDistance > 0 ? maxDistance : DCOLS, true);
+    getImpactLoc(impactLoc, originLoc, targetLoc, maxDistance > 0 ? maxDistance : DCOLS, true, &boltCatalog[BOLT_BLINKING]);
     getLocationFlags(impactLoc[0], impactLoc[1], &tFlags, &tmFlags, NULL, true);
     if (maxDistance > 0) {
         if ((pmap[impactLoc[0]][impactLoc[1]].flags & DISCOVERED)
@@ -5965,7 +6063,7 @@ boolean playerCancelsBlinking(const short originLoc[2], const short targetLoc[2]
         }
     } else {
         certainDeath = true;
-        numCells = getLineCoordinates(coordinates, originLoc, targetLoc);
+        numCells = getLineCoordinates(coordinates, originLoc, targetLoc, &boltCatalog[BOLT_BLINKING]);
         for (i = 0; i < numCells; i++) {
             x = coordinates[i][0];
             y = coordinates[i][1];
@@ -6003,7 +6101,7 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
     char buf[COLS], buf2[COLS];
     unsigned char command[10];
     short zapTarget[2], originLoc[2], maxDistance, c;
-    boolean autoTarget, targetAllies, autoID, boltKnown, passThroughCreatures, confirmedTarget;
+    boolean autoTarget, targetAllies, autoID, boltKnown, confirmedTarget;
     bolt theBolt;
     color trajectoryHiliteColor;
 
@@ -6035,7 +6133,7 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
         maxDistance = -1;
     }
     if (tableForItemCategory(theItem->category, NULL)[theItem->kind].identified) {
-        autoTarget = targetAllies = passThroughCreatures = false;
+        autoTarget = targetAllies = false;
         if (!player.status[STATUS_HALLUCINATING]) {
             if (theBolt.flags & (BF_TARGET_ALLIES | BF_TARGET_ENEMIES)) {
                 autoTarget = true;
@@ -6044,13 +6142,9 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
                 targetAllies = true;
             }
         }
-        if (theBolt.flags & BF_PASSES_THRU_CREATURES) {
-            passThroughCreatures = true;
-        }
     } else {
         autoTarget = true;
         targetAllies = false;
-        passThroughCreatures = false;
     }
     boltKnown = (((theItem->category & WAND) && wandTable[theItem->kind].identified)
                  || ((theItem->category & STAFF) && staffTable[theItem->kind].identified));
@@ -6064,7 +6158,8 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
 
     originLoc[0] = player.xLoc;
     originLoc[1] = player.yLoc;
-    confirmedTarget = chooseTarget(zapTarget, maxDistance, false, autoTarget, targetAllies, passThroughCreatures, &trajectoryHiliteColor);
+    confirmedTarget = chooseTarget(zapTarget, maxDistance, false, autoTarget,
+        targetAllies, (boltKnown ? &theBolt : NULL), &trajectoryHiliteColor);
     if (confirmedTarget
         && boltKnown
         && theBolt.boltEffect == BE_BLINKING
