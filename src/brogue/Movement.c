@@ -481,7 +481,7 @@ void moveEntrancedMonsters(enum directions dir) {
 
     dir = oppositeDirection(dir);
 
-    if (rogue.patchVersion >= 3) {
+    if (BROGUE_VERSION_ATLEAST(1,9,3)) {
         for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
             monst->bookkeepingFlags &= ~MB_HAS_ENTRANCED_MOVED;
         }
@@ -864,7 +864,7 @@ boolean playerMoves(short direction) {
             }
         }
 
-        if (rogue.patchVersion < 1 && player.status[STATUS_STUCK] && cellHasTerrainFlag(x, y, T_ENTANGLES)) {
+        if (!BROGUE_VERSION_ATLEAST(1,9,1) && player.status[STATUS_STUCK] && cellHasTerrainFlag(x, y, T_ENTANGLES)) {
                 // Don't interrupt exploration with this message.
             if (--player.status[STATUS_STUCK]) {
                 if (!rogue.automationActive) {
@@ -1090,7 +1090,7 @@ boolean playerMoves(short direction) {
             }
         }
 
-        if (rogue.patchVersion >= 1 && player.status[STATUS_STUCK] && cellHasTerrainFlag(x, y, T_ENTANGLES)) {
+        if (BROGUE_VERSION_ATLEAST(1,9,1) && player.status[STATUS_STUCK] && cellHasTerrainFlag(x, y, T_ENTANGLES)) {
                 // Don't interrupt exploration with this message.
             if (--player.status[STATUS_STUCK]) {
                 if (!rogue.automationActive) {
