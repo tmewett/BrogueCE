@@ -1,0 +1,1 @@
+Fixed bug that would eliminate all doors and secret doors on a depth whenever a machine was included on the depth that called expandMachineInterior().
