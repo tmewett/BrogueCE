@@ -348,8 +348,8 @@ void addLoops(short **grid, short minimumPathingDistance) {
                 oppY = y - dirCoords[d][1];
                 if (coordinatesAreInMap(newX, newY)
                     && coordinatesAreInMap(oppX, oppY)
-                    && (rogue.patchVersion < 4 && grid[newX][newY] > 0 && grid[oppX][oppY] > 0
-                        || rogue.patchVersion >=4 && grid[newX][newY] == 1 && grid[oppX][oppY] == 1)) {
+                    && grid[newX][newY] == 1
+                    && grid[oppX][oppY] == 1) {
                     // If the tile being inspected has floor on both sides,
 
                     fillGrid(pathMap, 30000);
@@ -635,13 +635,6 @@ void expandMachineInterior(char interior[DCOLS][DROWS], short minimumInteriorNei
                             }
                         }
                     }
-                } else if (!(rogue.patchVersion >=4)
-                               && (pmap[i][j].layers[DUNGEON] == DOOR
-                                   || pmap[i][j].layers[DUNGEON] == SECRET_DOOR)) {
-                   // These lines should be removed in the next major release.
-                   // Their effect is to remove all doors and secret doors on the entire depth
-                   // whenever a machine is placed on the depth that uses this function.
-                    pmap[i][j].layers[DUNGEON] = FLOOR;
                 }
             }
         }
