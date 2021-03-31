@@ -1126,6 +1126,7 @@ enum tileFlags {
 #define THROW_KEY           't'
 #define RETHROW_KEY         'T'
 #define RELABEL_KEY         'R'
+#define SWAP_KEY            'w'
 #define TRUE_COLORS_KEY     '\\'
 #define AGGRO_DISPLAY_KEY   ']'
 #define DROP_KEY            'd'
@@ -2254,6 +2255,8 @@ typedef struct playerCharacter {
     item *armor;
     item *ringLeft;
     item *ringRight;
+    item *swappedIn;
+    item *swappedOut;
 
     flare **flares;
     short flareCount;
@@ -3101,6 +3104,7 @@ extern "C" {
     void makeMonsterDropItem(creature *monst);
     void throwCommand(item *theItem, boolean autoThrow);
     void relabel(item *theItem);
+    void swapLastEquipment();
     void apply(item *theItem, boolean recordCommands);
     boolean itemCanBeCalled(item *theItem);
     void call(item *theItem);

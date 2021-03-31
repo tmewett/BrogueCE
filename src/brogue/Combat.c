@@ -448,6 +448,10 @@ void specialHit(creature *attacker, creature *defender, short damage) {
                         itemFromTopOfStack->quantity = stolenQuantity;
                         theItem = itemFromTopOfStack; // Redirect pointer.
                     } else {
+                        if (rogue.swappedIn == theItem || rogue.swappedOut == theItem) {
+                            rogue.swappedIn = NULL;
+                            rogue.swappedOut = NULL;
+                        }
                         removeItemFromChain(theItem, packItems);
                     }
                     theItem->flags &= ~ITEM_PLAYER_AVOIDS; // Explore will seek the item out if it ends up on the floor again.

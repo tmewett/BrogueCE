@@ -3155,6 +3155,10 @@ void equip(item *theItem) {
         command[c] = '\0';
         recordKeystrokeSequence(command);
 
+        // Something is only swapped in if something else swapped out
+        rogue.swappedOut = theItem2;
+        rogue.swappedIn = rogue.swappedOut ? theItem : NULL;
+
         playerTurnEnded();
     } else {
         confirmMessages();
@@ -5914,6 +5918,10 @@ void throwCommand(item *theItem, boolean autoThrow) {
         rogue.lastItemThrown = theItem;
     } else {
         rogue.lastItemThrown = NULL;
+        if (rogue.swappedIn == theItem || rogue.swappedOut == theItem) {
+            rogue.swappedIn = NULL;
+            rogue.swappedOut = NULL;
+        }
         removeItemFromChain(theItem, packItems);
         deleteItem(theItem);
     }
@@ -5972,6 +5980,34 @@ void relabel(item *theItem) {
             messageWithColor(buf, &itemMessageColor, 0);
         }
     }
+}
+
+// If the most recently equipped item caused another item to be unequiped, is
+// uncursed, and both haven't left the inventory since, swap them back.
+void swapLastEquipment() {
+    item *theItem;
+    unsigned char command[10];
+
+    if (rogue.swappedIn == NULL || rogue.swappedOut == NULL) {
+        confirmMessages();
+        message("You have nothing to swap.", 0);
+        return;
+    }
+
+    if (!equipItem(rogue.swappedOut, false, rogue.swappedIn)) {
+        // Cursed
+        return;
+    }
+
+    command[0] = SWAP_KEY;
+    command[1] = '\0';
+    recordKeystrokeSequence(command);
+
+    theItem = rogue.swappedIn;
+    rogue.swappedIn = rogue.swappedOut;
+    rogue.swappedOut = theItem;
+
+    playerTurnEnded();
 }
 
 // If the blink trajectory lands in lava based on the player's knowledge, abort.
@@ -7207,6 +7243,10 @@ item *dropItem(item *theItem) {
         placeItem(itemFromTopOfStack, player.xLoc, player.yLoc);
         return itemFromTopOfStack;
     } else { // drop the entire item
+        if (rogue.swappedIn == theItem || rogue.swappedOut == theItem) {
+            rogue.swappedIn = NULL;
+            rogue.swappedOut = NULL;
+        }
         removeItemFromChain(theItem, packItems);
         if (itemOnFloor) {
             itemOnFloor->inventoryLetter = theItem->inventoryLetter;

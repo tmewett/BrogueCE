@@ -349,6 +349,8 @@ void initializeRogue(uint64_t seed) {
     rogue.armor = NULL;
     rogue.ringLeft = NULL;
     rogue.ringRight = NULL;
+    rogue.swappedIn = NULL;
+    rogue.swappedOut = NULL;
     rogue.monsterSpawnFuse = rand_range(125, 175);
     rogue.ticksTillUpdateEnvironment = 100;
     rogue.mapToShore = NULL;
