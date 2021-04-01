@@ -780,6 +780,7 @@ void pickUpItemAt(short x, short y) {
 
         if (theItem->category & GOLD) {
             rogue.gold += theItem->quantity;
+            rogue.featRecord[FEAT_TONE] = false;
             sprintf(buf, "you found %i pieces of gold.", theItem->quantity);
             messageWithColor(buf, &itemMessageColor, false);
             deleteItem(theItem);
@@ -6354,7 +6355,7 @@ void apply(item *theItem, boolean recordCommands) {
             } else {
                 messageWithColor("My, what a yummy mango!", &itemMessageColor, false);
             }
-            rogue.featRecord[FEAT_MYSTIC] = false;
+            rogue.featRecord[FEAT_ASCETIC] = false;
             break;
         case POTION:
             command[c] = '\0';
