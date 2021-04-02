@@ -3045,7 +3045,7 @@ extern "C" {
     short displayedArmorValue();
     void strengthCheck(item *theItem);
     void recalculateEquipmentBonuses();
-    void equipItem(item *theItem, boolean force);
+    boolean equipItem(item *theItem, boolean force);
     void equip(item *theItem);
     item *keyInPackFor(short x, short y);
     item *keyOnTileAt(short x, short y);
@@ -3121,7 +3121,7 @@ extern "C" {
                               char *prompt,
                               boolean allowInventoryActions);
     item *itemOfPackLetter(char letter);
-    void unequipItem(item *theItem, boolean force);
+    boolean unequipItem(item *theItem, boolean force);
     short magicCharDiscoverySuffix(short category, short kind);
     int itemMagicPolarity(item *theItem);
     item *itemAtLoc(short x, short y);
