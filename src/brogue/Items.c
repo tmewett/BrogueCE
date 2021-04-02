@@ -7129,15 +7129,11 @@ void unequip(item *theItem) {
     } else {
         recordKeystrokeSequence(command);
         unequipItem(theItem, false);
-        if (theItem->category & RING) {
-            updateRingBonuses();
-        }
         itemName(theItem, buf2, true, true, NULL);
         if (strLenWithoutEscapes(buf2) > 52) {
             itemName(theItem, buf2, false, true, NULL);
         }
         confirmMessages();
-        updateEncumbrance();
         sprintf(buf, "you are no longer %s %s.", (theItem->category & WEAPON ? "wielding" : "wearing"), buf2);
         messageWithColor(buf, &itemMessageColor, 0);
     }
@@ -7400,7 +7396,6 @@ void unequipItem(item *theItem, boolean force) {
         }
     }
     updateEncumbrance();
-    return;
 }
 
 void updateRingBonuses() {
