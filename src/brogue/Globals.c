@@ -46,10 +46,10 @@ item *packItems;
 item *monsterItemsHopper;
 
 char displayedMessage[MESSAGE_LINES][COLS*2];
-boolean messageConfirmed[MESSAGE_LINES];
+short messagesUnconfirmed;
 char combatText[COLS * 2];
 short messageArchivePosition;
-char messageArchive[MESSAGE_ARCHIVE_LINES][COLS*2];
+archivedMessage messageArchive[MESSAGE_ARCHIVE_ENTRIES];
 
 char currentFilePath[BROGUE_FILENAME_MAX];
 

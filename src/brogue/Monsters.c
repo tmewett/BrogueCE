@@ -578,7 +578,7 @@ creature *cloneMonster(creature *monst, boolean announce, boolean placeClone) {
         if (announce && canSeeMonster(newMonst)) {
             monsterName(monstName, newMonst, false);
             sprintf(buf, "another %s appears!", monstName);
-            message(buf, false);
+            message(buf, 0);
         }
     }
 
@@ -817,7 +817,7 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
     }
 
 //  if (hordeCatalog[hordeID].spawnsIn == DEEP_WATER && pmap[x][y].layers[LIQUID] != DEEP_WATER) {
-//      message("Waterborne monsters spawned on land!", true);
+//      message("Waterborne monsters spawned on land!", REQUIRE_ACKNOWLEDGMENT);
 //  }
 
     theHorde = &hordeCatalog[hordeID];
@@ -969,7 +969,7 @@ boolean summonMinions(creature *summoner) {
         } else {
             sprintf(buf, "%s incants darkly!", monstName);
         }
-        message(buf, false);
+        message(buf, 0);
     }
 
     if (summoner->info.abilityFlags & MA_ENTER_SUMMONS) {
@@ -1032,7 +1032,7 @@ boolean getRandomMonsterSpawnLocation(short *x, short *y) {
     //        dumpLevelToScreen();
     //        hiliteGrid(grid, &orange, 50);
     //        plotCharWithColor('X', mapToWindowX(x), mapToWindowY(y), &black, &white);
-    //        temporaryMessage("Horde spawn location possibilities:", true);
+    //        temporaryMessage("Horde spawn location possibilities:", REQUIRE_ACKNOWLEDGMENT);
     //    }
     freeGrid(grid);
     if (*x < 0 || *y < 0) {
@@ -1099,7 +1099,7 @@ void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidance
 //            dumpLevelToScreen();
 //            hiliteGrid(grid, &orange, 50);
 //            plotCharWithColor('X', mapToWindowX(x), mapToWindowY(y), &white, &red);
-//            temporaryMessage("Teleport candidate locations:", true);
+//            temporaryMessage("Teleport candidate locations:", REQUIRE_ACKNOWLEDGMENT);
 //        }
         freeGrid(grid);
         if (x < 0 || y < 0) {
@@ -1793,7 +1793,7 @@ void decrementMonsterStatus(creature *monst) {
                             sprintf(buf2, "%s burns %s.",
                                     buf,
                                     (monst->info.flags & MONST_INANIMATE) ? "up" : "to death");
-                            messageWithColor(buf2, messageColorFromVictim(monst), false);
+                            messageWithColor(buf2, messageColorFromVictim(monst), 0);
                         }
                         return;
                     }
@@ -1810,7 +1810,7 @@ void decrementMonsterStatus(creature *monst) {
                         if (canSeeMonster(monst)) {
                             monsterName(buf, monst, true);
                             sprintf(buf2, "%s dissipates into thin air.", buf);
-                            messageWithColor(buf2, &white, false);
+                            messageWithColor(buf2, &white, 0);
                         }
                         return;
                     }
@@ -1823,7 +1823,7 @@ void decrementMonsterStatus(creature *monst) {
                         if (canSeeMonster(monst)) {
                             monsterName(buf, monst, true);
                             sprintf(buf2, "%s dies of poison.", buf);
-                            messageWithColor(buf2, messageColorFromVictim(monst), false);
+                            messageWithColor(buf2, messageColorFromVictim(monst), 0);
                         }
                         return;
                     }
@@ -2173,7 +2173,7 @@ void perimeterCoords(short returnCoords[2], short n) {
         returnCoords[0] = 5;
         returnCoords[1] = (n - 31) - 4;
     } else {
-        message("ERROR! Bad perimeter coordinate request!", true);
+        message("ERROR! Bad perimeter coordinate request!", REQUIRE_ACKNOWLEDGMENT);
         returnCoords[0] = returnCoords[1] = 0; // garbage in, garbage out
     }
 }
@@ -3012,7 +3012,7 @@ void moveAlly(creature *monst) {
             if (canSeeMonster(monst)) {
                 monsterName(monstName, monst, true);
                 sprintf(buf, "%s begins %s the fallen %s.", monstName, monsterText[monst->info.monsterID].absorbing, monst->targetCorpseName);
-                messageWithColor(buf, &goodMessageColor, false);
+                messageWithColor(buf, &goodMessageColor, 0);
             }
             monst->corpseAbsorptionCounter = 20;
             monst->bookkeepingFlags |= MB_ABSORBING;
@@ -3081,7 +3081,7 @@ boolean updateMonsterCorpseAbsorption(creature *monst) {
             if (canSeeMonster(monst)) {
                 monsterName(buf2, monst, true);
                 sprintf(buf, "%s finished %s the %s.", buf2, monsterText[monst->info.monsterID].absorbing, monst->targetCorpseName);
-                messageWithColor(buf, &goodMessageColor, false);
+                messageWithColor(buf, &goodMessageColor, 0);
                 if (monst->absorptionBolt != BOLT_NONE) {
                     sprintf(buf, "%s %s!", buf2, boltCatalog[monst->absorptionBolt].abilityDescription);
                 } else if (monst->absorbBehavior) {
@@ -3090,7 +3090,7 @@ boolean updateMonsterCorpseAbsorption(creature *monst) {
                     sprintf(buf, "%s now %s!", buf2, monsterAbilityFlagDescriptions[unflag(monst->absorptionFlags)]);
                 }
                 resolvePronounEscapes(buf, monst);
-                messageWithColor(buf, &advancementMessageColor, false);
+                messageWithColor(buf, &advancementMessageColor, 0);
             }
             monst->absorptionFlags = 0;
             monst->absorptionBolt = BOLT_NONE;

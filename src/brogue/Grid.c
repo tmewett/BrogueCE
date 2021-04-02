@@ -372,7 +372,7 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
 //    if (coordinatesAreInMap(*retValX, *retValY)) {
 //        hiliteCell(*retValX, *retValY, &yellow, 100, true);
 //    }
-//    temporaryMessage("Qualifying path selected:", true);
+//    temporaryMessage("Qualifying path selected:", REQUIRE_ACKNOWLEDGMENT);
 
     freeGrid(grid);
     freeGrid(costMap);
@@ -477,7 +477,7 @@ void createBlobOnGrid(short **grid,
 
 //        colorOverDungeon(&darkGray);
 //        hiliteGrid(grid, &white, 100);
-//        temporaryMessage("Random starting noise:", true);
+//        temporaryMessage("Random starting noise:", REQUIRE_ACKNOWLEDGMENT);
 
         // Some iterations of cellular automata
         for (k=0; k<roundCount; k++) {
@@ -485,12 +485,12 @@ void createBlobOnGrid(short **grid,
 
 //            colorOverDungeon(&darkGray);
 //            hiliteGrid(grid, &white, 100);
-//            temporaryMessage("Cellular automata progress:", true);
+//            temporaryMessage("Cellular automata progress:", REQUIRE_ACKNOWLEDGMENT);
         }
 
 //        colorOverDungeon(&darkGray);
 //        hiliteGrid(grid, &white, 100);
-//        temporaryMessage("Cellular automata result:", true);
+//        temporaryMessage("Cellular automata result:", REQUIRE_ACKNOWLEDGMENT);
 
         // Now to measure the result. These are best-of variables; start them out at worst-case values.
         topBlobSize =   0;
