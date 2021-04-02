@@ -3194,8 +3194,6 @@ void equip(item *theItem) {
         confirmMessages();
         messageWithColor(buf1, &itemMessageColor, 0);
 
-        strengthCheck(theItem);
-
         if (theItem->flags & ITEM_CURSED) {
             itemName(theItem, buf2, false, false, NULL);
             switch(theItem->category) {
@@ -7331,13 +7329,13 @@ void equipItem(item *theItem, boolean force) {
     }
     if (theItem->category & WEAPON) {
         rogue.weapon = theItem;
-        recalculateEquipmentBonuses();
+        strengthCheck(theItem);
     } else if (theItem->category & ARMOR) {
         if (!force) {
             player.status[STATUS_DONNING] = player.maxStatus[STATUS_DONNING] = theItem->armor / 10;
         }
         rogue.armor = theItem;
-        recalculateEquipmentBonuses();
+        strengthCheck(theItem);
     } else if (theItem->category & RING) {
         if (rogue.ringLeft && rogue.ringRight) {
             return;
@@ -7356,9 +7354,9 @@ void equipItem(item *theItem, boolean force) {
                    || theItem->kind == RING_STEALTH) {
             identifyItemKind(theItem);
         }
+        updateEncumbrance();
     }
     theItem->flags |= ITEM_EQUIPPED;
-    return;
 }
 
 void unequipItem(item *theItem, boolean force) {
