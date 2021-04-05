@@ -957,7 +957,7 @@ boolean buildAMachine(enum machineTypes bp,
                       item *parentSpawnedItems[MACHINES_BUFFER_LENGTH],
                       creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]) {
 
-    short i, j, k, feat, randIndex, totalFreq, instance, instanceCount = 0,
+    short i, j, k, layer, feat, randIndex, totalFreq, instance, instanceCount = 0,
         featX, featY, itemCount, monsterCount, qualifyingTileCount,
         **distanceMap = NULL, distance25, distance75, distanceBound[2],
         personalSpace, failsafe, locationFailsafe,
@@ -1198,6 +1198,12 @@ boolean buildAMachine(enum machineTypes bp,
                 // also clear any secret doors, since they screw up distance mapping and aren't fun inside machines
                 if (pmap[i][j].layers[DUNGEON] == SECRET_DOOR) {
                     pmap[i][j].layers[DUNGEON] = DOOR;
+                }
+                // Clear wired tiles in case we stole them from another machine.
+                for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
+                    if (tileCatalog[pmap[i][j].layers[layer]].mechFlags & (TM_IS_WIRED | TM_IS_CIRCUIT_BREAKER)) {
+                        pmap[i][j].layers[layer] = (layer == DUNGEON ? FLOOR : NOTHING);
+                    }
                 }
             }
         }
