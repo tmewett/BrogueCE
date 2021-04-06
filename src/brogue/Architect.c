@@ -638,6 +638,17 @@ void expandMachineInterior(char interior[DCOLS][DROWS], short minimumInteriorNei
             }
         }
     } while (madeChange);
+    
+    // Clear doors and secret doors out of the interior of the machine.
+    for(i=1; i<DCOLS-1; i++) {
+        for(j=1; j < DROWS-1; j++) {
+            if (interior[i][j]
+                && (pmap[i][j].layers[DUNGEON] == DOOR || pmap[i][j].layers[DUNGEON] == SECRET_DOOR)) {
+                
+                pmap[i][j].layers[DUNGEON] = FLOOR;
+            }
+        }
+    }
 }
 
 boolean fillInteriorForVestibuleMachine(char interior[DCOLS][DROWS], short bp, short originX, short originY) {
