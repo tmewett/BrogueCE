@@ -2,6 +2,7 @@
 bin/*.brogue*
 bin/BrogueHighScores.txt
 bin/brogue*
+**.desktop
 .vscode
 *.su
 *.gcda
