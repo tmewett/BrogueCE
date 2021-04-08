@@ -3132,9 +3132,6 @@ void equip(item *theItem) {
                     }
                     return;
                 } else {
-                    if (!unequipItem(theItem2, false)) {
-                        return;   // cursed
-                    }
                     command[c++] = theItem2->inventoryLetter;
                 }
             }
@@ -3146,7 +3143,12 @@ void equip(item *theItem) {
             return;
         }
 
-        if (!equipItem(theItem, false)) {
+        if (theItem->category & (WEAPON | ARMOR)) {
+            // Swapped out rings are handled above
+            theItem2 = theItem->category & WEAPON ? rogue.weapon : rogue.armor;
+        }
+
+        if (!equipItem(theItem, false, theItem2)) {
             return; // equip failed because current item is cursed
         }
 
@@ -5575,10 +5577,10 @@ boolean hitMonsterWithProjectileWeapon(creature *thrower, creature *monst, item 
 
     if (thrower == &player) {
         equippedWeapon = rogue.weapon;
-        equipItem(theItem, true);
+        equipItem(theItem, true, NULL);
         thrownWeaponHit = attackHit(&player, monst);
         if (equippedWeapon) {
-            equipItem(equippedWeapon, true);
+            equipItem(equippedWeapon, true, NULL);
         } else {
             unequipItem(theItem, true);
         }
@@ -6644,7 +6646,7 @@ void readScroll(item *theItem) {
                 rogue.featRecord[FEAT_SPECIALIST] = true;
             }
             if (theItem->flags & ITEM_EQUIPPED) {
-                equipItem(theItem, true);
+                equipItem(theItem, true, NULL);
             }
             itemName(theItem, buf, false, false, NULL);
             sprintf(buf2, "your %s gleam%s briefly in the darkness.", buf, (theItem->quantity == 1 ? "s" : ""));
@@ -7243,8 +7245,10 @@ void recalculateEquipmentBonuses() {
     }
 }
 
-// Returns true on success, false otherwise (for example, if failing to remove a cursed item)
-boolean equipItem(item *theItem, boolean force) {
+// Returns true on success, false otherwise (for example, if failing to remove
+// a cursed item) If something must be first unequipped and it is not clear
+// what, unequipHint will be used if passed.
+boolean equipItem(item *theItem, boolean force, item *unequipHint) {
     char buf1[COLS * 3], buf2[COLS * 3], buf3[COLS * 3];
     item *previouslyEquippedItem = NULL;
 
@@ -7256,7 +7260,12 @@ boolean equipItem(item *theItem, boolean force) {
         previouslyEquippedItem = rogue.weapon;
     } else if (theItem->category & ARMOR) {
         previouslyEquippedItem = rogue.armor;
+    } else if (theItem->category & RING
+              && unequipHint && rogue.ringLeft && rogue.ringRight
+              && (unequipHint == rogue.ringLeft || unequipHint == rogue.ringRight)) {
+        previouslyEquippedItem = unequipHint;
     }
+
     if (previouslyEquippedItem && !unequipItem(previouslyEquippedItem, force)) {
         return false; // already using a cursed item
     }
@@ -7271,7 +7280,7 @@ boolean equipItem(item *theItem, boolean force) {
         strengthCheck(theItem);
     } else if (theItem->category & RING) {
         if (rogue.ringLeft && rogue.ringRight) {
-            return false; // no available ring slot, see equip()
+            return false; // no available ring slot and no hint, see equip()
         }
         if (rogue.ringLeft) {
             rogue.ringRight = theItem;

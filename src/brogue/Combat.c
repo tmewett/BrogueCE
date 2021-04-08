@@ -390,7 +390,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
             && (rogue.armor->enchant1 + rogue.armor->armor/10 > -10)) {
 
             rogue.armor->enchant1--;
-            equipItem(rogue.armor, true);
+            equipItem(rogue.armor, true, NULL);
             itemName(rogue.armor, buf2, false, false, NULL);
             sprintf(buf, "your %s weakens!", buf2);
             messageWithColor(buf, &itemMessageColor, 0);
@@ -927,7 +927,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
             if (rand_percent(10)) {
                 rogue.armor->strengthRequired++;
                 sprintf(returnString, "your %s suddenly feels heavier!", armorName);
-                equipItem(rogue.armor, true);
+                equipItem(rogue.armor, true, NULL);
                 runicDiscovered = true;
             }
             break;
@@ -1214,7 +1214,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
             if (rogue.weapon->quiverNumber) {
                 rogue.weapon->quiverNumber = rand_range(1, 60000);
             }
-            equipItem(rogue.weapon, true);
+            equipItem(rogue.weapon, true, NULL);
             itemName(rogue.weapon, buf2, false, false, NULL);
             sprintf(buf, "your %s weakens!", buf2);
             messageWithColor(buf, &itemMessageColor, 0);

@@ -3045,7 +3045,7 @@ extern "C" {
     short displayedArmorValue();
     void strengthCheck(item *theItem);
     void recalculateEquipmentBonuses();
-    boolean equipItem(item *theItem, boolean force);
+    boolean equipItem(item *theItem, boolean force, item *unequipHint);
     void equip(item *theItem);
     item *keyInPackFor(short x, short y);
     item *keyOnTileAt(short x, short y);
