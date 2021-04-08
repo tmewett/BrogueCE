@@ -7,6 +7,8 @@ For general help on using GitHub to contribute to a project, check out the
 We have a Discord server for discussion; feel free to join it here:
 https://discord.gg/8pxE4j8.
 
+If you are having an issue with online brogue, that is a separate repository, found here: https://github.com/flend/web-brogue
+
 ## Testing
 
 The *master* branch represents the latest development snapshot, and should be
