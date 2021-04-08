@@ -142,6 +142,12 @@ void recordKeystroke(int keystroke, boolean controlKey, boolean shiftKey) {
     recordEvent(&theEvent);
 }
 
+void cancelKeystroke() {
+    brogueAssert(locationInRecordingBuffer >= 3);
+    locationInRecordingBuffer -= 3; // a keystroke is encoded into 3 bytes
+    recordingLocation -= 3;
+}
+
 // record a series of keystrokes; string must end with a null terminator
 void recordKeystrokeSequence(unsigned char *keystrokeSequence) {
     short i;
