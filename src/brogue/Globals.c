@@ -654,7 +654,7 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
     {0,             0,                      0,                      95, 0,  0,              0,          0,              0,              NO_LIGHT,       (0), (TM_IS_WIRED | TM_PROMOTES_ON_PLAYER_ENTRY),                                                   "the ground",           ""},
 
     // sacrifice altar
-    {G_SAC_ALTAR, &altarForeColor,        &altarBackColor,        17, 0,  0,              0,          DF_SACRIFICE_ALTAR,0,           CANDLE_LIGHT,   (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT), "a sacrifice altar", "demonological symbols decorate this altar."},
+    {G_SAC_ALTAR, &altarForeColor,        &altarBackColor,        17, 0,  0,              0,          DF_SACRIFICE_ALTAR,0,           CANDLE_LIGHT,   (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT), "a sacrificial altar", "demonological symbols decorate this altar."},
     {G_SAC_ALTAR, &altarForeColor,        &altarBackColor,        17, 0,  0,              0,          DF_SACRIFICE_COMPLETE,0,        CANDLE_LIGHT,   (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT | TM_PROMOTES_ON_SACRIFICE_ENTRY), "a sacrifice altar",    "demonological symbols decorate this altar."},
     {G_LIQUID,   &fireForeColor,         &lavaBackColor,         40, 0,  DF_OBSIDIAN,    0,          0,              0,              LAVA_LIGHT,     (T_LAVA_INSTA_DEATH), (TM_ALLOWS_SUBMERGING | TM_LIST_IN_SIDEBAR),                                  "a sacrificial pit",      "the smell of burnt flesh lingers over this pit of lava."},
     {G_WALL,     &altarBackColor,        &veryDarkGray,          17, 0,  0,              0,          DF_SACRIFICE_CAGE_ACTIVE,   0,  CANDLE_LIGHT,   (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_SURFACE_EFFECTS), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT),"an iron cage","the cage won't budge. Perhaps there is a way to raise it nearby..."},
@@ -893,7 +893,7 @@ dungeonFeature dungeonFeatureCatalog[NUMBER_DUNGEON_FEATURES] = {
     {MACHINE_TRIGGER_FLOOR_REPEATING, LIQUID, 300,  100,    DFF_SUPERPRIORITY, "", 0, 0, 0, CARPET},
 
     // sacrifice altars
-    {SACRIFICE_ALTAR,           DUNGEON,    0,      0,      0,  "a demonic presence whispers its demand: \"bring to me the marked sacrifice!\""},
+    {SACRIFICE_ALTAR,           DUNGEON,    0,      0,      0,  "a demonic presence whispers its demand: \"Bring to me the marked sacrifice!\""},
     {SACRIFICE_LAVA,            DUNGEON,    0,      0,      0,  "demonic cackling echoes through the room as the altar plunges downward!"},
     {ALTAR_CAGE_RETRACTABLE,    DUNGEON,    0,      0,      0},
 
