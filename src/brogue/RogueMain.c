@@ -763,7 +763,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     if (stairDirection == 0) { // fell into the level
 
         getQualifyingLocNear(loc, player.xLoc, player.yLoc, true, 0,
-                             (T_PATHING_BLOCKER),
+                             (T_PATHING_BLOCKER & ~T_IS_DEEP_WATER),
                              (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false, false);
     } else {
         if (stairDirection == 1) { // heading downward

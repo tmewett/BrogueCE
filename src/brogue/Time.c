@@ -989,10 +989,20 @@ void playerFalls() {
         rogue.depthLevel++;
         startLevel(rogue.depthLevel - 1, 0);
         damage = randClumpedRange(FALL_DAMAGE_MIN, FALL_DAMAGE_MAX, 2);
-        messageWithColor("You are damaged by the fall.", &badMessageColor, 0);
-        if (inflictDamage(NULL, &player, damage, &red, false)) {
-            gameOver("Killed by a fall", true);
-        } else if (rogue.depthLevel > rogue.deepestLevel) {
+        boolean killed = false;
+        if (terrainFlags(player.xLoc, player.yLoc) & T_IS_DEEP_WATER) {
+            messageWithColor("You fall into deep water, unharmed.", &badMessageColor, 0);
+        } else {
+            if (cellHasTMFlag(player.xLoc, player.yLoc, TM_ALLOWS_SUBMERGING)) {
+                damage /= 2; // falling into liquid (shallow water, bog, etc.) hurts less than hitting hard floor
+            }
+            messageWithColor("You are damaged by the fall.", &badMessageColor, 0);
+            if (inflictDamage(NULL, &player, damage, &red, false)) {
+                gameOver("Killed by a fall", true);
+                killed = true;
+            }
+        }
+        if (!killed && rogue.depthLevel > rogue.deepestLevel) {
             rogue.deepestLevel = rogue.depthLevel;
         }
     } else {
