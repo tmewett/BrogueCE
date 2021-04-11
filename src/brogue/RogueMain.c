@@ -980,6 +980,11 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     rogue.gameInProgress = false;
     flushBufferToFile();
 
+    if (rogue.playbackFastForward) {
+        rogue.playbackFastForward = false;
+        displayLevel();
+    }
+
     if (rogue.quit) {
         if (rogue.playbackMode) {
             playback = rogue.playbackMode;
@@ -1128,6 +1133,11 @@ void victory(boolean superVictory) {
 
     rogue.gameInProgress = false;
     flushBufferToFile();
+
+    if (rogue.playbackFastForward) {
+        rogue.playbackFastForward = false;
+        displayLevel();
+    }
 
     //
     // First screen - Congratulations...
