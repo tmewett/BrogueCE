@@ -2521,7 +2521,7 @@ void itemDetails(char *buf, item *theItem) {
                         (theItem->charges == 1 ? "" : "s"));
                 strcat(buf, buf2);
 
-                if ((theItem->charges < RING_DELAY_TO_AUTO_ID || (theItem->flags & (ITEM_MAGIC_DETECTED | ITEM_IDENTIFIED)))) {
+                if (!(theItem->flags & ITEM_IDENTIFIED) && (theItem->charges < RING_DELAY_TO_AUTO_ID || (theItem->flags & ITEM_MAGIC_DETECTED))) {
                     sprintf(buf2, ", and until then it will function, at best, as a +%i ring.", theItem->timesEnchanted + 1);
                     strcat(buf, buf2);
                 } else {
