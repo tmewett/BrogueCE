@@ -2576,6 +2576,9 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
         case RELABEL_KEY:
             relabel(NULL);
             break;
+        case SWAP_KEY:
+            swapLastEquipment();
+            break;
         case TRUE_COLORS_KEY:
             rogue.trueColorMode = !rogue.trueColorMode;
             displayLevel();
@@ -3994,33 +3997,33 @@ void printHelpScreen() {
         "",
         "          -- Commands --",
         "",
-        "         mouse  ****move cursor (including to examine monsters and terrain)",
-        "         click  ****travel",
-        " control-click  ****advance one space",
-        "      <return>  ****enable keyboard cursor control",
-        "   <space/esc>  ****disable keyboard cursor control",
+        "          mouse  ****move cursor (including to examine monsters and terrain)",
+        "          click  ****travel",
+        "  control-click  ****advance one space",
+        "       <return>  ****enable keyboard cursor control",
+        "    <space/esc>  ****disable keyboard cursor control",
         "hjklyubn, arrow keys, or numpad  ****move or attack (control or shift to run)",
         "",
-        " a/e/r/t/d/c/R  ****apply/equip/remove/throw/drop/call/relabel an item",
-        "             T  ****re-throw last item at last monster",
-        "i, right-click  ****view inventory",
-        "             D  ****list discovered items",
+        "a/e/r/t/d/c/R/w  ****apply/equip/remove/throw/drop/call/relabel/swap an item",
+        "              T  ****re-throw last item at last monster",
+        " i, right-click  ****view inventory",
+        "              D  ****list discovered items",
         "",
-        "             z  ****rest once",
-        "             Z  ****rest for 100 turns or until something happens",
-        "             s  ****search for secrets (control-s: long search)",
-        "          <, >  ****travel to stairs",
-        "             x  ****auto-explore (control-x: fast forward)",
-        "             A  ****autopilot (control-A: fast forward)",
-        "             M  ****display old messages",
-        "             G  ****toggle graphical tiles (when available)",
+        "              z  ****rest once",
+        "              Z  ****rest for 100 turns or until something happens",
+        "              s  ****search for secrets (control-s: long search)",
+        "           <, >  ****travel to stairs",
+        "              x  ****auto-explore (control-x: fast forward)",
+        "              A  ****autopilot (control-A: fast forward)",
+        "              M  ****display old messages",
+        "              G  ****toggle graphical tiles (when available)",
         "",
-        "             S  ****suspend game and quit",
-        "             Q  ****quit to title screen",
+        "              S  ****suspend game and quit",
+        "              Q  ****quit to title screen",
         "",
-        "             \\  ****disable/enable color effects",
-        "             ]  ****display/hide stealth range",
-        "   <space/esc>  ****clear message or cancel command",
+        "              \\  ****disable/enable color effects",
+        "              ]  ****display/hide stealth range",
+        "    <space/esc>  ****clear message or cancel command",
         "",
         "        -- press space or click to continue --"
     };

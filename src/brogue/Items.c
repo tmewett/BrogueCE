@@ -3094,30 +3094,11 @@ void strengthCheck(item *theItem) {
     }
 }
 
-boolean canEquip(item *theItem) {
-    item *previouslyEquippedItem = NULL;
-
-    if (theItem->category & WEAPON) {
-        previouslyEquippedItem = rogue.weapon;
-    } else if (theItem->category & ARMOR) {
-        previouslyEquippedItem = rogue.armor;
-    }
-    if (previouslyEquippedItem && (previouslyEquippedItem->flags & ITEM_CURSED)) {
-        return false; // already using a cursed item
-    }
-
-    if ((theItem->category & RING) && rogue.ringLeft && rogue.ringRight) {
-        return false;
-    }
-    return true;
-}
-
 // Will prompt for an item if none is given.
 // Equips the item and records input if successful.
 // Player's failure to select an item will result in failure.
 // Failure does not record input.
 void equip(item *theItem) {
-    char buf1[COLS * 3], buf2[COLS * 3];
     unsigned char command[10];
     short c = 0;
     item *theItem2;
@@ -3131,6 +3112,7 @@ void equip(item *theItem) {
         return;
     }
 
+    theItem2 = NULL;
     command[c++] = theItem->inventoryLetter;
 
     if (theItem->category & (WEAPON|ARMOR|RING)) {
@@ -3150,14 +3132,6 @@ void equip(item *theItem) {
                     }
                     return;
                 } else {
-                    if (theItem2->flags & ITEM_CURSED) {
-                        itemName(theItem2, buf1, false, false, NULL);
-                        sprintf(buf2, "You can't remove your %s: it appears to be cursed.", buf1);
-                        confirmMessages();
-                        messageWithColor(buf2, &itemMessageColor, 0);
-                        return;
-                    }
-                    unequipItem(theItem2, false);
                     command[c++] = theItem2->inventoryLetter;
                 }
             }
@@ -3169,51 +3143,22 @@ void equip(item *theItem) {
             return;
         }
 
-        if (!canEquip(theItem)) {
-            // equip failed because current item is cursed
-            if (theItem->category & WEAPON) {
-                itemName(rogue.weapon, buf1, false, false, NULL);
-            } else if (theItem->category & ARMOR) {
-                itemName(rogue.armor, buf1, false, false, NULL);
-            } else {
-                sprintf(buf1, "one");
-            }
-            sprintf(buf2, "You can't; the %s you are using appears to be cursed.", buf1);
-            confirmMessages();
-            messageWithColor(buf2, &itemMessageColor, 0);
-            return;
+        if (theItem->category & (WEAPON | ARMOR)) {
+            // Swapped out rings are handled above
+            theItem2 = theItem->category & WEAPON ? rogue.weapon : rogue.armor;
         }
+
+        if (!equipItem(theItem, false, theItem2)) {
+            return; // equip failed because current item is cursed
+        }
+
         command[c] = '\0';
         recordKeystrokeSequence(command);
 
+        // Something is only swapped in if something else swapped out
+        rogue.swappedOut = theItem2;
+        rogue.swappedIn = rogue.swappedOut ? theItem : NULL;
 
-        equipItem(theItem, false);
-
-        itemName(theItem, buf2, true, true, NULL);
-        sprintf(buf1, "Now %s %s.", (theItem->category & WEAPON ? "wielding" : "wearing"), buf2);
-        confirmMessages();
-        messageWithColor(buf1, &itemMessageColor, 0);
-
-        strengthCheck(theItem);
-
-        if (theItem->flags & ITEM_CURSED) {
-            itemName(theItem, buf2, false, false, NULL);
-            switch(theItem->category) {
-                case WEAPON:
-                    sprintf(buf1, "you wince as your grip involuntarily tightens around your %s.", buf2);
-                    break;
-                case ARMOR:
-                    sprintf(buf1, "your %s constricts around you painfully.", buf2);
-                    break;
-                case RING:
-                    sprintf(buf1, "your %s tightens around your finger painfully.", buf2);
-                    break;
-                default:
-                    sprintf(buf1, "your %s seizes you with a malevolent force.", buf2);
-                    break;
-            }
-            messageWithColor(buf1, &itemMessageColor, 0);
-        }
         playerTurnEnded();
     } else {
         confirmMessages();
@@ -5636,10 +5581,10 @@ boolean hitMonsterWithProjectileWeapon(creature *thrower, creature *monst, item 
 
     if (thrower == &player) {
         equippedWeapon = rogue.weapon;
-        equipItem(theItem, true);
+        equipItem(theItem, true, NULL);
         thrownWeaponHit = attackHit(&player, monst);
         if (equippedWeapon) {
-            equipItem(equippedWeapon, true);
+            equipItem(equippedWeapon, true, NULL);
         } else {
             unequipItem(theItem, true);
         }
@@ -5973,6 +5918,10 @@ void throwCommand(item *theItem, boolean autoThrow) {
         rogue.lastItemThrown = theItem;
     } else {
         rogue.lastItemThrown = NULL;
+        if (rogue.swappedIn == theItem || rogue.swappedOut == theItem) {
+            rogue.swappedIn = NULL;
+            rogue.swappedOut = NULL;
+        }
         removeItemFromChain(theItem, packItems);
         deleteItem(theItem);
     }
@@ -6031,6 +5980,34 @@ void relabel(item *theItem) {
             messageWithColor(buf, &itemMessageColor, 0);
         }
     }
+}
+
+// If the most recently equipped item caused another item to be unequiped, is
+// uncursed, and both haven't left the inventory since, swap them back.
+void swapLastEquipment() {
+    item *theItem;
+    unsigned char command[10];
+
+    if (rogue.swappedIn == NULL || rogue.swappedOut == NULL) {
+        confirmMessages();
+        message("You have nothing to swap.", 0);
+        return;
+    }
+
+    if (!equipItem(rogue.swappedOut, false, rogue.swappedIn)) {
+        // Cursed
+        return;
+    }
+
+    command[0] = SWAP_KEY;
+    command[1] = '\0';
+    recordKeystrokeSequence(command);
+
+    theItem = rogue.swappedIn;
+    rogue.swappedIn = rogue.swappedOut;
+    rogue.swappedOut = theItem;
+
+    playerTurnEnded();
 }
 
 // If the blink trajectory lands in lava based on the player's knowledge, abort.
@@ -6705,7 +6682,7 @@ void readScroll(item *theItem) {
                 rogue.featRecord[FEAT_SPECIALIST] = true;
             }
             if (theItem->flags & ITEM_EQUIPPED) {
-                equipItem(theItem, true);
+                equipItem(theItem, true, NULL);
             }
             itemName(theItem, buf, false, false, NULL);
             sprintf(buf2, "your %s gleam%s briefly in the darkness.", buf, (theItem->quantity == 1 ? "s" : ""));
@@ -7118,26 +7095,16 @@ void unequip(item *theItem) {
         confirmMessages();
         messageWithColor(buf, &itemMessageColor, 0);
         return;
-    } else if (theItem->flags & ITEM_CURSED) { // this is where the item gets unequipped
-        itemName(theItem, buf2, false, false, NULL);
-        sprintf(buf, "you can't; your %s appear%s to be cursed.",
-                buf2,
-                theItem->quantity == 1 ? "s" : "");
-        confirmMessages();
-        messageWithColor(buf, &itemMessageColor, 0);
-        return;
     } else {
-        recordKeystrokeSequence(command);
-        unequipItem(theItem, false);
-        if (theItem->category & RING) {
-            updateRingBonuses();
+        if (!unequipItem(theItem, false)) {
+            return; // cursed
         }
+        recordKeystrokeSequence(command);
         itemName(theItem, buf2, true, true, NULL);
         if (strLenWithoutEscapes(buf2) > 52) {
             itemName(theItem, buf2, false, true, NULL);
         }
         confirmMessages();
-        updateEncumbrance();
         sprintf(buf, "you are no longer %s %s.", (theItem->category & WEAPON ? "wielding" : "wearing"), buf2);
         messageWithColor(buf, &itemMessageColor, 0);
     }
@@ -7276,6 +7243,10 @@ item *dropItem(item *theItem) {
         placeItem(itemFromTopOfStack, player.xLoc, player.yLoc);
         return itemFromTopOfStack;
     } else { // drop the entire item
+        if (rogue.swappedIn == theItem || rogue.swappedOut == theItem) {
+            rogue.swappedIn = NULL;
+            rogue.swappedOut = NULL;
+        }
         removeItemFromChain(theItem, packItems);
         if (itemOnFloor) {
             itemOnFloor->inventoryLetter = theItem->inventoryLetter;
@@ -7314,37 +7285,42 @@ void recalculateEquipmentBonuses() {
     }
 }
 
-void equipItem(item *theItem, boolean force) {
+// Returns true on success, false otherwise (for example, if failing to remove
+// a cursed item) If something must be first unequipped and it is not clear
+// what, unequipHint will be used if passed.
+boolean equipItem(item *theItem, boolean force, item *unequipHint) {
+    char buf1[COLS * 3], buf2[COLS * 3], buf3[COLS * 3];
     item *previouslyEquippedItem = NULL;
 
     if ((theItem->category & RING) && (theItem->flags & ITEM_EQUIPPED)) {
-        return;
+        return false;
     }
 
     if (theItem->category & WEAPON) {
         previouslyEquippedItem = rogue.weapon;
     } else if (theItem->category & ARMOR) {
         previouslyEquippedItem = rogue.armor;
+    } else if (theItem->category & RING
+              && unequipHint && rogue.ringLeft && rogue.ringRight
+              && (unequipHint == rogue.ringLeft || unequipHint == rogue.ringRight)) {
+        previouslyEquippedItem = unequipHint;
     }
-    if (previouslyEquippedItem) {
-        if (!force && (previouslyEquippedItem->flags & ITEM_CURSED)) {
-            return; // already using a cursed item
-        } else {
-            unequipItem(previouslyEquippedItem, force);
-        }
+
+    if (previouslyEquippedItem && !unequipItem(previouslyEquippedItem, force)) {
+        return false; // already using a cursed item
     }
     if (theItem->category & WEAPON) {
         rogue.weapon = theItem;
-        recalculateEquipmentBonuses();
+        strengthCheck(theItem);
     } else if (theItem->category & ARMOR) {
         if (!force) {
             player.status[STATUS_DONNING] = player.maxStatus[STATUS_DONNING] = theItem->armor / 10;
         }
         rogue.armor = theItem;
-        recalculateEquipmentBonuses();
+        strengthCheck(theItem);
     } else if (theItem->category & RING) {
         if (rogue.ringLeft && rogue.ringRight) {
-            return;
+            return false; // no available ring slot and no hint, see equip()
         }
         if (rogue.ringLeft) {
             rogue.ringRight = theItem;
@@ -7360,18 +7336,59 @@ void equipItem(item *theItem, boolean force) {
                    || theItem->kind == RING_STEALTH) {
             identifyItemKind(theItem);
         }
+        updateEncumbrance();
     }
     theItem->flags |= ITEM_EQUIPPED;
-    return;
+
+    itemName(theItem, buf2, true, true, NULL);
+
+    if (previouslyEquippedItem) {
+        itemName(previouslyEquippedItem, buf3, false, false, NULL);
+        sprintf(buf1, "Now %s %s instead of your %s.", (theItem->category & WEAPON ? "wielding" : "wearing"), buf2, buf3);
+    } else {
+        sprintf(buf1, "Now %s %s.", (theItem->category & WEAPON ? "wielding" : "wearing"), buf2);
+    }
+
+    confirmMessages();
+    messageWithColor(buf1, &itemMessageColor, false);
+
+    if (theItem->flags & ITEM_CURSED) {
+        itemName(theItem, buf2, false, false, NULL);
+        switch(theItem->category) {
+            case WEAPON:
+                sprintf(buf1, "you wince as your grip involuntarily tightens around your %s.", buf2);
+                break;
+            case ARMOR:
+                sprintf(buf1, "your %s constricts around you painfully.", buf2);
+                break;
+            case RING:
+                sprintf(buf1, "your %s tightens around your finger painfully.", buf2);
+                break;
+            default:
+                sprintf(buf1, "your %s seizes you with a malevolent force.", buf2);
+                break;
+        }
+        messageWithColor(buf1, &itemMessageColor, 0);
+    }
+
+    return true;
 }
 
-void unequipItem(item *theItem, boolean force) {
+// Returns true on success, false otherwise (for example, if cursed and not forced)
+boolean unequipItem(item *theItem, boolean force) {
+    char buf[COLS * 3], buf2[COLS * 3];
 
     if (theItem == NULL || !(theItem->flags & ITEM_EQUIPPED)) {
-        return;
+        return false;
     }
     if ((theItem->flags & ITEM_CURSED) && !force) {
-        return;
+        itemName(theItem, buf2, false, false, NULL);
+        sprintf(buf, "you can't; your %s appear%s to be cursed.",
+                buf2,
+                theItem->quantity == 1 ? "s" : "");
+        confirmMessages();
+        messageWithColor(buf, &itemMessageColor, 0);
+        return false;
     }
     theItem->flags &= ~ITEM_EQUIPPED;
     if (theItem->category & WEAPON) {
@@ -7400,7 +7417,7 @@ void unequipItem(item *theItem, boolean force) {
         }
     }
     updateEncumbrance();
-    return;
+    return true;
 }
 
 void updateRingBonuses() {

@@ -1126,6 +1126,7 @@ enum tileFlags {
 #define THROW_KEY           't'
 #define RETHROW_KEY         'T'
 #define RELABEL_KEY         'R'
+#define SWAP_KEY            'w'
 #define TRUE_COLORS_KEY     '\\'
 #define AGGRO_DISPLAY_KEY   ']'
 #define DROP_KEY            'd'
@@ -2254,6 +2255,8 @@ typedef struct playerCharacter {
     item *armor;
     item *ringLeft;
     item *ringRight;
+    item *swappedIn;
+    item *swappedOut;
 
     flare **flares;
     short flareCount;
@@ -3045,7 +3048,7 @@ extern "C" {
     short displayedArmorValue();
     void strengthCheck(item *theItem);
     void recalculateEquipmentBonuses();
-    void equipItem(item *theItem, boolean force);
+    boolean equipItem(item *theItem, boolean force, item *unequipHint);
     void equip(item *theItem);
     item *keyInPackFor(short x, short y);
     item *keyOnTileAt(short x, short y);
@@ -3101,6 +3104,7 @@ extern "C" {
     void makeMonsterDropItem(creature *monst);
     void throwCommand(item *theItem, boolean autoThrow);
     void relabel(item *theItem);
+    void swapLastEquipment();
     void apply(item *theItem, boolean recordCommands);
     boolean itemCanBeCalled(item *theItem);
     void call(item *theItem);
@@ -3121,7 +3125,7 @@ extern "C" {
                               char *prompt,
                               boolean allowInventoryActions);
     item *itemOfPackLetter(char letter);
-    void unequipItem(item *theItem, boolean force);
+    boolean unequipItem(item *theItem, boolean force);
     short magicCharDiscoverySuffix(short category, short kind);
     int itemMagicPolarity(item *theItem);
     item *itemAtLoc(short x, short y);
