@@ -99,6 +99,7 @@ boolean monsterShouldFall(creature *monst) {
 // Called at least every 100 ticks; may be called more frequently.
 void applyInstantTileEffectsToCreature(creature *monst) {
     char buf[COLS], buf2[COLS], buf3[COLS];
+    char *s;
     short *x = &(monst->xLoc), *y = &(monst->yLoc), damage;
     enum dungeonLayers layer;
     item *theItem;
@@ -177,8 +178,14 @@ void applyInstantTileEffectsToCreature(creature *monst) {
         } else { // it's a monster
             if (canSeeMonster(monst)) {
                 monsterName(buf, monst, true);
-                sprintf(buf2, "%s is consumed by the %s instantly!", buf,
-                        tileCatalog[pmap[*x][*y].layers[layerWithFlag(*x, *y, T_LAVA_INSTA_DEATH)]].description);
+                s = tileCatalog[pmap[*x][*y].layers[layerWithFlag(*x, *y, T_LAVA_INSTA_DEATH)]].description;
+                // Skip over articles
+                if (strncmp(s, "a ", 2) == 0) {
+                    s += 2;
+                } else if (strncmp(s, "an ", 3) == 0) {
+                    s += 3;
+                }
+                sprintf(buf2, "%s is consumed by the %s instantly!", buf, s);
                 messageWithColor(buf2, messageColorFromVictim(monst), 0);
             }
             killCreature(monst, false);
