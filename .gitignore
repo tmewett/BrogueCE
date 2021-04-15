@@ -7,9 +7,11 @@ bin/brogue*
 BrogueCE-*
 
 .vscode
+.gdb_history
 
 *.su
 *.gcda
 *.gcno
 *.gcov
+*.desktop
 gmon.out
