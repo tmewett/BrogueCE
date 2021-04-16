@@ -481,6 +481,7 @@ void initializeRogue(uint64_t seed) {
 //          theItem = addItemToPack(theItem);
 //      }
     }
+    clearMessageArchive();
     blackOutScreen();
     welcome();
 }
