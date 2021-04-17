@@ -3162,6 +3162,7 @@ extern "C" {
     boolean loadSavedGame();
     void switchToPlaying();
     void recordKeystroke(int keystroke, boolean controlKey, boolean shiftKey);
+    void cancelKeystroke();
     void recordKeystrokeSequence(unsigned char *commandSequence);
     void recordMouseClick(short x, short y, boolean controlKey, boolean shiftKey);
     void OOSCheck(unsigned long x, short numberOfBytes);
