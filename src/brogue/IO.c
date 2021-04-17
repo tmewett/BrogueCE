@@ -3233,66 +3233,160 @@ void displayRecentMessages() {
     updateMessageDisplay();
 }
 
-void displayMessageArchive() {
-    short i, j, k, reverse, fadePercent, totalMessageCount, currentMessageCount;
-    boolean fastForward;
-    cellDisplayBuffer dbuf[COLS][ROWS], rbuf[COLS][ROWS];
-    char messageBuffer[MESSAGE_ARCHIVE_LINES][COLS*2];
+// Draw the given formatted messages to the screen:
+// messages: the archived messages after all formatting passes
+// length: the number of rows in messages, filled from the "bottom", (unused rows have lower indexes)
+// offset: index of oldest (visually highest) message to draw
+// height: height in rows of the message archive display area
+// rbuf: background display buffer to draw against
+void drawMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height, cellDisplayBuffer rbuf[COLS][ROWS]) {
+    int i, j, k, fadePercent;
+    cellDisplayBuffer dbuf[COLS][ROWS];
 
-    formatRecentMessages(messageBuffer, MESSAGE_ARCHIVE_LINES, &totalMessageCount, 0);
+    clearDisplayBuffer(dbuf);
 
-    if (totalMessageCount > MESSAGE_LINES) {
+    for (i = 0; (MESSAGE_ARCHIVE_LINES - offset + i) < MESSAGE_ARCHIVE_LINES && i < ROWS && i < height; i++) {
+        printString(messages[MESSAGE_ARCHIVE_LINES - offset + i], mapToWindowX(0), i, &white, &black, dbuf);
 
-        copyDisplayBuffer(rbuf, displayBuffer);
-
-        // Pull-down/pull-up animation:
-        for (reverse = 0; reverse <= 1; reverse++) {
-            fastForward = false;
-            for (currentMessageCount = (reverse ? totalMessageCount : MESSAGE_LINES);
-                 (reverse ? currentMessageCount >= MESSAGE_LINES : currentMessageCount <= totalMessageCount);
-                 currentMessageCount += (reverse ? -1 : 1)) {
-
-                clearDisplayBuffer(dbuf);
-
-                // Print the message archive text to the dbuf.
-                for (j=0; j < currentMessageCount && j < ROWS; j++) {
-                    k = MESSAGE_ARCHIVE_LINES - currentMessageCount + j;
-                    printString(messageBuffer[k], mapToWindowX(0), j, &white, &black, dbuf);
+        // Set the dbuf opacity, and do a fade from bottom to top to make it clear that the bottom messages are the most recent.
+        fadePercent = 50 * (length - offset + i) / length + 50;
+        for (j = 0; j < DCOLS; j++) {
+            dbuf[mapToWindowX(j)][i].opacity = INTERFACE_OPACITY;
+            if (dbuf[mapToWindowX(j)][i].character != ' ') {
+                for (k=0; k<3; k++) {
+                    dbuf[mapToWindowX(j)][i].foreColorComponents[k] = dbuf[mapToWindowX(j)][i].foreColorComponents[k] * fadePercent / 100;
                 }
-
-                // Set the dbuf opacity, and do a fade from bottom to top to make it clear that the bottom messages are the most recent.
-                for (j=0; j < currentMessageCount && j<ROWS; j++) {
-                    fadePercent = 50 * (j + totalMessageCount - currentMessageCount) / totalMessageCount + 50;
-                    for (i=0; i<DCOLS; i++) {
-                        dbuf[mapToWindowX(i)][j].opacity = INTERFACE_OPACITY;
-                        if (dbuf[mapToWindowX(i)][j].character != ' ') {
-                            for (k=0; k<3; k++) {
-                                dbuf[mapToWindowX(i)][j].foreColorComponents[k] = dbuf[mapToWindowX(i)][j].foreColorComponents[k] * fadePercent / 100;
-                            }
-                        }
-                    }
-                }
-
-                // Display.
-                overlayDisplayBuffer(rbuf, 0);
-                overlayDisplayBuffer(dbuf, 0);
-
-                if (!fastForward && pauseBrogue(reverse ? 1 : 2)) {
-                    fastForward = true;
-                    dequeueEvent();
-                    currentMessageCount = (reverse ? MESSAGE_LINES + 1 : totalMessageCount - 1); // skip to the end
-                }
-            }
-
-            if (!reverse) {
-                displayMoreSign();
             }
         }
-        overlayDisplayBuffer(rbuf, 0);
-        updateFlavorText();
-        confirmMessages();
-        updateMessageDisplay();
     }
+
+    overlayDisplayBuffer(rbuf, 0);
+    overlayDisplayBuffer(dbuf, 0);
+}
+
+// Pull-down/pull-up animation.
+// open: the desired state of the archived message display.  True when expanding, false when collapsing.
+// messages: the archived messages after all formatting passes
+// length: the number of rows in messages, filled from the "bottom", (unused rows have lower indexes)
+// offset: index of oldest (visually highest) message to draw in the fully expanded state
+// height: height in rows of the message archive display area in the fully expanded state
+// rbuf: background display buffer to draw against
+void animateMessageArchive(boolean opening, char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height, cellDisplayBuffer rbuf[COLS][ROWS]) {
+    short i;
+    boolean fastForward;
+
+    fastForward = false;
+
+    for (i = (opening ? MESSAGE_LINES : height);
+         (opening ? i <= height : i >= MESSAGE_LINES);
+         i += (opening ? 1 : -1)) {
+
+        drawMessageArchive(messages, length, offset - height + i, i, rbuf);
+
+        if (!fastForward && pauseBrogue(opening ? 2 : 1)) {
+            fastForward = true;
+            dequeueEvent();
+            i = (opening ? height - 1 : MESSAGE_LINES + 1); // skip to the end
+        }
+    }
+}
+
+// Accept keyboard input to navigate or dismiss the opened message archive
+// messages: the archived messages after all formatting passes
+// length: the number of rows in messages, filled from the "bottom", (unused rows have lower indexes)
+// offset: index of oldest (visually highest) message to draw
+// height: height in rows of the message archive display area
+// rbuf: background display buffer to draw against
+//
+// returns the new offset, which can change if the player scrolled around before closing
+short scrollMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height, cellDisplayBuffer rbuf[COLS][ROWS]) {
+    short lastOffset;
+    boolean exit;
+    rogueEvent theEvent;
+    signed long keystroke;
+
+    if (rogue.autoPlayingLevel || (rogue.playbackMode && !rogue.playbackOOS)) {
+        return offset;
+    }
+
+    exit = false;
+    do {
+        lastOffset = offset;
+        nextBrogueEvent(&theEvent, false, false, false);
+
+        if (theEvent.eventType == KEYSTROKE) {
+            keystroke = theEvent.param1;
+            stripShiftFromMovementKeystroke(&keystroke);
+
+            switch (keystroke) {
+                case UP_KEY:
+                case UP_ARROW:
+                case NUMPAD_8:
+                    if (theEvent.controlKey) {
+                        offset = length;
+                    } else if (theEvent.shiftKey) {
+                        offset++;
+                    } else {
+                        offset += MESSAGE_ARCHIVE_VIEW_LINES / 3;
+                    }
+                    break;
+                case DOWN_KEY:
+                case DOWN_ARROW:
+                case NUMPAD_2:
+                    if (theEvent.controlKey) {
+                        offset = height;
+                    } else if (theEvent.shiftKey) {
+                        offset--;
+                    } else {
+                        offset -= MESSAGE_ARCHIVE_VIEW_LINES / 3;
+                    }
+                    break;
+                case ACKNOWLEDGE_KEY:
+                case ESCAPE_KEY:
+                    exit = true;
+                    break;
+                default:
+                    flashTemporaryAlert(" -- Press space or click to continue -- ", 500);
+            }
+        }
+
+        if (theEvent.eventType == MOUSE_UP) {
+            exit = true;
+        }
+
+        offset = max(height, min(offset, length));
+        if (offset != lastOffset) {
+            drawMessageArchive(messages, length, offset, height, rbuf);
+        }
+    } while (!exit);
+
+    return offset;
+}
+
+void displayMessageArchive() {
+    short length, offset, height;
+    cellDisplayBuffer rbuf[COLS][ROWS];
+    char messageBuffer[MESSAGE_ARCHIVE_LINES][COLS*2];
+
+    formatRecentMessages(messageBuffer, MESSAGE_ARCHIVE_LINES, &length, 0);
+
+    if (length <= MESSAGE_LINES) {
+        return;
+    }
+
+    height = min(length, MESSAGE_ARCHIVE_VIEW_LINES);
+    offset = height;
+
+    copyDisplayBuffer(rbuf, displayBuffer);
+
+    animateMessageArchive(true, messageBuffer, length, offset, height, rbuf);
+    offset = scrollMessageArchive(messageBuffer, length, offset, height, rbuf);
+    animateMessageArchive(false, messageBuffer, length, offset, height, rbuf);
+
+    overlayDisplayBuffer(rbuf, 0);
+    updateFlavorText();
+    confirmMessages();
+    updateMessageDisplay();
 }
 
 // Clears the message area and prints the given message in the area.
