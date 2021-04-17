@@ -799,15 +799,13 @@ void promptToAdvanceToLocation(short keystroke) {
         if (enteredText && entryText[0] != '\0') {
             sscanf(entryText, "%lu", &destinationFrame);
 
-            if (destinationFrame >= rogue.howManyTurns) {
-                flashTemporaryAlert(" Past end of recording ", 3000);
-            } else if (rogue.playbackOOS && destinationFrame > rogue.playerTurnNumber) {
+            if (rogue.playbackOOS && destinationFrame > rogue.playerTurnNumber) {
                 flashTemporaryAlert(" Out of sync ", 3000);
             } else if (destinationFrame == rogue.playerTurnNumber) {
                 sprintf(buf, " Already at turn %li ", destinationFrame);
                 flashTemporaryAlert(buf, 1000);
             } else {
-                seek(destinationFrame, RECORDING_SEEK_MODE_TURN);
+                seek(min(destinationFrame, rogue.howManyTurns), RECORDING_SEEK_MODE_TURN);
             }
             rogue.playbackPaused = true;
         }
@@ -922,7 +920,7 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                         destinationFrame = rogue.playerTurnNumber + frameCount;
                     }
                 } else {
-                    destinationFrame = min(rogue.playerTurnNumber + frameCount, rogue.howManyTurns - 1);
+                    destinationFrame = min(rogue.playerTurnNumber + frameCount, rogue.howManyTurns);
                 }
 
                 if (destinationFrame == rogue.playerTurnNumber) {
