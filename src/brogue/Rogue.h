@@ -2878,6 +2878,7 @@ extern "C" {
     void playerTurnEnded();
     void resetScentTurnNumber();
     void displayMonsterFlashes(boolean flashingEnabled);
+    void clearMessageArchive();
     void formatRecentMessages(char buf[][COLS*2], size_t height, short *linesFormatted, short *latestMessageLines);
     void displayRecentMessages();
     void displayMessageArchive();

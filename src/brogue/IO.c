@@ -3033,6 +3033,11 @@ void dequeueEvent() {
     nextBrogueEvent(&returnEvent, false, false, true);
 }
 
+// Empty the message archive
+void clearMessageArchive() {
+    messageArchivePosition = 0;
+}
+
 // Get a pointer to the archivedMessage the given number of entries back in history.
 // Pass zero to get the entry under messageArchivePosition.
 archivedMessage *getArchivedMessage(short back) {
