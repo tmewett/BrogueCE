@@ -17,6 +17,7 @@ of what the dungeon gives you. You will make sacrifices, narrow escapes,
 and maybe even some friends along the way -- but will you be one of the
 lucky few to return alive?
 
+- [Downloads][releases]
 - [Wiki](https://brogue.fandom.com/wiki/Brogue_Wiki)
 - [Forum (Reddit)](https://www.reddit.com/r/brogueforum/)
 - [Roguelikes Discord](https://discord.gg/9pmFGKx) (we have a #brogue channel)
