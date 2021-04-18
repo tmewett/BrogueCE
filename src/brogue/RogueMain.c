@@ -765,6 +765,22 @@ void startLevel(short oldLevelNumber, short stairDirection) {
         getQualifyingLocNear(loc, player.xLoc, player.yLoc, true, 0,
                              (T_PATHING_BLOCKER & ~T_IS_DEEP_WATER),
                              (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false, false);
+
+        if (cellHasTerrainFlag(loc[0], loc[1], T_IS_DEEP_WATER)) {
+            // Fell into deep water... can we swim out of it?
+            short dryLoc[2];
+            getQualifyingLocNear(dryLoc, player.xLoc, player.yLoc, true, 0,
+                                (T_PATHING_BLOCKER),
+                                (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false, false);
+
+            short swimDistance = pathingDistance(loc[0], loc[1], dryLoc[0], dryLoc[1], T_PATHING_BLOCKER & ~T_IS_DEEP_WATER);
+            if (swimDistance == 30000) {
+                // Cannot swim out! This is an enclosed lake.
+                loc[0] = dryLoc[0];
+                loc[1] = dryLoc[1];
+            }
+        }
+
     } else {
         if (stairDirection == 1) { // heading downward
             player.xLoc = rogue.upLoc[0];
