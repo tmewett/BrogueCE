@@ -481,7 +481,7 @@ void moveEntrancedMonsters(enum directions dir) {
 
     dir = oppositeDirection(dir);
 
-    if (rogue.patchVersion >= 3) {
+    if (BROGUE_VERSION_ATLEAST(1,9,3)) {
         for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
             monst->bookkeepingFlags &= ~MB_HAS_ENTRANCED_MOVED;
         }
@@ -784,7 +784,7 @@ boolean playerMoves(short direction) {
     short initialDirection = direction, i, layer;
     short x = player.xLoc, y = player.yLoc;
     short newX, newY, newestX, newestY;
-    boolean playerMoved = false, alreadyRecorded = false, specialAttackAborted = false, anyAttackHit = false;
+    boolean playerMoved = false, specialAttackAborted = false, anyAttackHit = false;
     creature *defender = NULL, *tempMonst = NULL, *hitList[16] = {NULL};
     char monstName[COLS];
     char buf[COLS*3];
@@ -798,6 +798,10 @@ boolean playerMoves(short direction) {
     if (!coordinatesAreInMap(newX, newY)) {
         return false;
     }
+
+    // Save thet keystroke up-front; we'll revert if the player cancels.
+    recordKeystroke(directionKeys[initialDirection], false, false);
+    boolean committed = false; // as long as this is false, the keystroke can be cancelled
 
     if (player.status[STATUS_CONFUSED]) {
         // Confirmation dialog if you're moving while confused and you're next to lava and not levitating or immune to fire.
@@ -817,6 +821,7 @@ boolean playerMoves(short direction) {
                          && monsterAtLoc(newestX, newestY)->creatureState != MONSTER_ALLY)) {
 
                     if (!confirm("Risk stumbling into lava?", false)) {
+                        cancelKeystroke();
                         return false;
                     } else {
                         break;
@@ -827,17 +832,16 @@ boolean playerMoves(short direction) {
 
         direction = randValidDirectionFrom(&player, x, y, false);
         if (direction == -1) {
+            cancelKeystroke();
             return false;
         } else {
             newX = x + nbDirs[direction][0];
             newY = y + nbDirs[direction][1];
             if (!coordinatesAreInMap(newX, newY)) {
+                cancelKeystroke();
                 return false;
             }
-            if (!alreadyRecorded) {
-                recordKeystroke(directionKeys[initialDirection], false, false);
-                alreadyRecorded = true;
-            }
+            committed = true;
         }
     }
 
@@ -853,10 +857,7 @@ boolean playerMoves(short direction) {
         if (cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY) && cellHasTMFlag(newX, newY, TM_PROMOTES_ON_PLAYER_ENTRY)) {
             layer = layerWithTMFlag(newX, newY, TM_PROMOTES_ON_PLAYER_ENTRY);
             if (tileCatalog[pmap[newX][newY].layers[layer]].flags & T_OBSTRUCTS_PASSABILITY) {
-                if (!alreadyRecorded) {
-                    recordKeystroke(directionKeys[initialDirection], false, false);
-                    alreadyRecorded = true;
-                }
+                committed = true;
                 message(tileCatalog[pmap[newX][newY].layers[layer]].flavorText, 0);
                 promoteTile(newX, newY, layer, false);
                 playerTurnEnded();
@@ -864,7 +865,7 @@ boolean playerMoves(short direction) {
             }
         }
 
-        if (rogue.patchVersion < 1 && player.status[STATUS_STUCK] && cellHasTerrainFlag(x, y, T_ENTANGLES)) {
+        if (!BROGUE_VERSION_ATLEAST(1,9,1) && player.status[STATUS_STUCK] && cellHasTerrainFlag(x, y, T_ENTANGLES)) {
                 // Don't interrupt exploration with this message.
             if (--player.status[STATUS_STUCK]) {
                 if (!rogue.automationActive) {
@@ -879,10 +880,7 @@ boolean playerMoves(short direction) {
                 }
             }
             moveEntrancedMonsters(direction);
-            if (!alreadyRecorded) {
-                recordKeystroke(directionKeys[initialDirection], false, false);
-                alreadyRecorded = true;
-            }
+            committed = true;
             if (player.status[STATUS_STUCK]) {
                 playerTurnEnded();
                 return true;
@@ -899,16 +897,14 @@ boolean playerMoves(short direction) {
         if (handleWhipAttacks(&player, direction, &specialAttackAborted)
             || handleSpearAttacks(&player, direction, &specialAttackAborted)) {
 
-            if (!alreadyRecorded) {
-                recordKeystroke(directionKeys[initialDirection], false, false);
-                alreadyRecorded = true;
-            }
+            committed = true;
             playerRecoversFromAttacking(true);
             moveEntrancedMonsters(direction);
             playerTurnEnded();
             return true;
         } else if (specialAttackAborted) { // Canceled an attack against an acid mound.
-            brogueAssert(!alreadyRecorded);
+            brogueAssert(!committed);
+            cancelKeystroke();
             rogue.disturbed = true;
             return false;
         }
@@ -919,11 +915,8 @@ boolean playerMoves(short direction) {
             if (defender->bookkeepingFlags & MB_CAPTIVE) {
                 monsterName(monstName, defender, false);
                 sprintf(buf, "Free the captive %s?", monstName);
-                if (alreadyRecorded || confirm(buf, false)) {
-                    if (!alreadyRecorded) {
-                        recordKeystroke(directionKeys[initialDirection], false, false);
-                        alreadyRecorded = true;
-                    }
+                if (committed || confirm(buf, false)) {
+                    committed = true;
                     if (cellHasTMFlag(newX, newY, TM_PROMOTES_WITH_KEY) && keyInPackFor(newX, newY)) {
                         useKeyAt(keyInPackFor(newX, newY), newX, newY);
                     }
@@ -932,6 +925,7 @@ boolean playerMoves(short direction) {
                     playerTurnEnded();
                     return true;
                 } else {
+                    cancelKeystroke();
                     return false;
                 }
             }
@@ -945,16 +939,14 @@ boolean playerMoves(short direction) {
                              rogue.weapon && (rogue.weapon->flags & ITEM_ATTACKS_ALL_ADJACENT));
 
                 if (abortAttackAgainstAcidicTarget(hitList)) { // Acid mound attack confirmation.
-                    brogueAssert(!alreadyRecorded);
+                    brogueAssert(!committed);
+                    cancelKeystroke();
                     rogue.disturbed = true;
                     return false;
                 }
 
                 if (player.status[STATUS_NAUSEOUS]) {
-                    if (!alreadyRecorded) {
-                        recordKeystroke(directionKeys[initialDirection], false, false);
-                        alreadyRecorded = true;
-                    }
+                    committed = true;
                     if (rand_percent(25)) {
                         vomit(&player);
                         playerTurnEnded();
@@ -963,11 +955,7 @@ boolean playerMoves(short direction) {
                 }
 
                 // Proceeding with the attack.
-
-                if (!alreadyRecorded) {
-                    recordKeystroke(directionKeys[initialDirection], false, false);
-                    alreadyRecorded = true;
-                }
+                committed = true;
 
                 // Attack!
                 for (i=0; i<16; i++) {
@@ -998,11 +986,8 @@ boolean playerMoves(short direction) {
                     && !tempMonst->status[STATUS_ENTRANCED]) {
 
                     monsterName(monstName, tempMonst, true);
-                    if (alreadyRecorded || !canSeeMonster(tempMonst)) {
-                        if (!alreadyRecorded) {
-                            recordKeystroke(directionKeys[initialDirection], false, false);
-                            alreadyRecorded = true;
-                        }
+                    if (committed || !canSeeMonster(tempMonst)) {
+                        committed = true;
                         sprintf(buf, "you struggle but %s is holding your legs!", monstName);
                         moveEntrancedMonsters(direction);
                         message(buf, 0);
@@ -1011,6 +996,7 @@ boolean playerMoves(short direction) {
                     } else {
                         sprintf(buf, "you cannot move; %s is holding your legs!", monstName);
                         message(buf, 0);
+                        cancelKeystroke();
                         return false;
                     }
                 }
@@ -1026,7 +1012,10 @@ boolean playerMoves(short direction) {
             && !cellHasTerrainFlag(newX, newY, T_ENTANGLES)
             && !cellHasTMFlag(newX, newY, TM_IS_SECRET)) {
             message("that would be certain death!", 0);
+            brogueAssert(!committed);
+            cancelKeystroke();
             return false; // player won't willingly step into lava
+
         } else if (pmap[newX][newY].flags & (DISCOVERED | MAGIC_MAPPED)
                    && player.status[STATUS_LEVITATING] <= 1
                    && !player.status[STATUS_CONFUSED]
@@ -1034,7 +1023,11 @@ boolean playerMoves(short direction) {
                    && !cellHasTerrainFlag(newX, newY, T_ENTANGLES)
                    && !cellHasTMFlag(newX, newY, TM_IS_SECRET)
                    && !confirm("Dive into the depths?", false)) {
+
+            brogueAssert(!committed);
+            cancelKeystroke();
             return false;
+
         } else if (playerCanSee(newX, newY)
                    && !player.status[STATUS_CONFUSED]
                    && !player.status[STATUS_BURNING]
@@ -1042,14 +1035,22 @@ boolean playerMoves(short direction) {
                    && cellHasTerrainFlag(newX, newY, T_IS_FIRE)
                    && !cellHasTMFlag(newX, newY, TM_EXTINGUISHES_FIRE)
                    && !confirm("Venture into flame?", false)) {
+
+            brogueAssert(!committed);
+            cancelKeystroke();
             return false;
+
         } else if (playerCanSee(newX, newY)
                    && !player.status[STATUS_CONFUSED]
                    && !player.status[STATUS_BURNING]
                    && cellHasTerrainFlag(newX, newY, T_CAUSES_CONFUSION | T_CAUSES_PARALYSIS)
                    && (!rogue.armor || !(rogue.armor->flags & ITEM_RUNIC) || !(rogue.armor->flags & ITEM_RUNIC_IDENTIFIED) || rogue.armor->enchant2 != A_RESPIRATION)
                    && !confirm("Venture into dangerous gas?", false)) {
+
+            brogueAssert(!committed);
+            cancelKeystroke();
             return false;
+
         } else if (pmap[newX][newY].flags & (ANY_KIND_OF_VISIBLE | MAGIC_MAPPED)
                    && player.status[STATUS_LEVITATING] <= 1
                    && !player.status[STATUS_CONFUSED]
@@ -1057,6 +1058,9 @@ boolean playerMoves(short direction) {
                    && !(pmap[newX][newY].flags & PRESSURE_PLATE_DEPRESSED)
                    && !cellHasTMFlag(newX, newY, TM_IS_SECRET)
                    && !confirm("Step onto the pressure plate?", false)) {
+
+            brogueAssert(!committed);
+            cancelKeystroke();
             return false;
         }
 
@@ -1074,7 +1078,8 @@ boolean playerMoves(short direction) {
 
                     hitList[0] = tempMonst;
                     if (abortAttackAgainstAcidicTarget(hitList)) { // Acid mound attack confirmation.
-                        brogueAssert(!alreadyRecorded);
+                        brogueAssert(!committed);
+                        cancelKeystroke();
                         rogue.disturbed = true;
                         return false;
                     }
@@ -1084,23 +1089,21 @@ boolean playerMoves(short direction) {
         if (rogue.weapon && (rogue.weapon->flags & ITEM_PASS_ATTACKS)) {
             buildFlailHitList(x, y, newX, newY, hitList);
             if (abortAttackAgainstAcidicTarget(hitList)) { // Acid mound attack confirmation.
-                brogueAssert(!alreadyRecorded);
+                brogueAssert(!committed);
+                cancelKeystroke();
                 rogue.disturbed = true;
                 return false;
             }
         }
 
-        if (rogue.patchVersion >= 1 && player.status[STATUS_STUCK] && cellHasTerrainFlag(x, y, T_ENTANGLES)) {
+        if (BROGUE_VERSION_ATLEAST(1,9,1) && player.status[STATUS_STUCK] && cellHasTerrainFlag(x, y, T_ENTANGLES)) {
                 // Don't interrupt exploration with this message.
             if (--player.status[STATUS_STUCK]) {
                 if (!rogue.automationActive) {
                     message("you struggle but cannot free yourself.", 0);
                 }
                 moveEntrancedMonsters(direction);
-                if (!alreadyRecorded) {
-                    recordKeystroke(directionKeys[initialDirection], false, false);
-                    alreadyRecorded = true;
-                }
+                committed = true;
                 playerTurnEnded();
                 return true;
             } else {
@@ -1114,10 +1117,7 @@ boolean playerMoves(short direction) {
         }
 
         if (player.status[STATUS_NAUSEOUS]) {
-            if (!alreadyRecorded) {
-                recordKeystroke(directionKeys[initialDirection], false, false);
-                alreadyRecorded = true;
-            }
+            committed = true;
             if (rand_percent(25)) {
                 vomit(&player);
                 playerTurnEnded();
@@ -1127,23 +1127,14 @@ boolean playerMoves(short direction) {
 
         // Are we taking the stairs?
         if (rogue.downLoc[0] == newX && rogue.downLoc[1] == newY) {
-            if (!alreadyRecorded) {
-                recordKeystroke(directionKeys[initialDirection], false, false);
-                alreadyRecorded = true;
-            }
+            committed = true;
             useStairs(1);
         } else if (rogue.upLoc[0] == newX && rogue.upLoc[1] == newY) {
-            if (!alreadyRecorded) {
-                recordKeystroke(directionKeys[initialDirection], false, false);
-                alreadyRecorded = true;
-            }
+            committed = true;
             useStairs(-1);
         } else {
             // Okay, we're finally moving!
-            if (!alreadyRecorded) {
-                recordKeystroke(directionKeys[initialDirection], false, false);
-                alreadyRecorded = true;
-            }
+            committed = true;
 
             player.xLoc += nbDirs[direction][0];
             player.yLoc += nbDirs[direction][1];
@@ -1197,10 +1188,7 @@ boolean playerMoves(short direction) {
             && (!diagonalBlocked(x, y, newX, newY, false) || !cellHasTMFlag(newX, newY, TM_PROMOTES_WITH_KEY))) {
 
             if (!(pmap[newX][newY].flags & DISCOVERED)) {
-                if (!alreadyRecorded) {
-                    recordKeystroke(directionKeys[initialDirection], false, false);
-                    alreadyRecorded = true;
-                }
+                committed = true;
                 discoverCell(newX, newY);
                 refreshDungeonCell(newX, newY);
             }

@@ -664,7 +664,7 @@ boolean monsterCanSubmergeNow(creature *monst) {
 }
 
 // Returns true if at least one minion spawned.
-boolean spawnMinions(short hordeID, creature *leader, boolean summoned) {
+boolean spawnMinions(short hordeID, creature *leader, boolean summoned, boolean itemPossible) {
     short iSpecies, iMember, count;
     unsigned long forbiddenTerrainFlags;
     hordeType *theHorde;
@@ -687,7 +687,11 @@ boolean spawnMinions(short hordeID, creature *leader, boolean summoned) {
         }
 
         for (iMember = 0; iMember < count; iMember++) {
-            monst = generateMonster(theHorde->memberType[iSpecies], true, !summoned);
+            if (BROGUE_VERSION_ATLEAST(1,9,4)) {
+                monst = generateMonster(theHorde->memberType[iSpecies], itemPossible, !summoned);
+            } else {
+                monst = generateMonster(theHorde->memberType[iSpecies], true, !summoned);
+            }
             failsafe = 0;
             do {
                 getQualifyingPathLocNear(&(monst->xLoc), &(monst->yLoc), x, y, summoned,
@@ -851,7 +855,7 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
         leader->info.intrinsicLightType = SACRIFICE_MARK_LIGHT;
     }
 
-    if (rogue.patchVersion >= 3 && (theHorde->flags & HORDE_MACHINE_THIEF)) {
+    if (BROGUE_VERSION_ATLEAST(1,9,3) && (theHorde->flags & HORDE_MACHINE_THIEF)) {
         leader->safetyMap = allocGrid(); // Keep thieves from fleeing before they see the player
         fillGrid(leader->safetyMap, 0);
     }
@@ -871,7 +875,7 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
         leader->bookkeepingFlags |= MB_SUBMERGED;
     }
 
-    spawnMinions(hordeID, leader, false);
+    spawnMinions(hordeID, leader, false, true);
 
     return leader;
 }
@@ -918,7 +922,11 @@ boolean summonMinions(creature *summoner) {
         removeMonsterFromChain(summoner, monsters);
     }
 
-    atLeastOneMinion = spawnMinions(hordeID, summoner, true);
+    if (BROGUE_VERSION_ATLEAST(1,9,4)) {
+        atLeastOneMinion = spawnMinions(hordeID, summoner, true, false);
+    } else {
+        atLeastOneMinion = spawnMinions(hordeID, summoner, true, true);
+    }
 
     if (hordeCatalog[hordeID].flags & HORDE_SUMMONED_AT_DISTANCE) {
         // Create a grid where "1" denotes a valid summoning location: within DCOLS/2 pathing distance,
@@ -953,7 +961,8 @@ boolean summonMinions(creature *summoner) {
             }
             monst->ticksUntilTurn = 101;
             monst->leader = summoner;
-            if (monst->carriedItem) {
+
+            if (!BROGUE_VERSION_ATLEAST(1,9,4) && monst->carriedItem) {
                 deleteItem(monst->carriedItem);
                 monst->carriedItem = NULL;
             }
@@ -1062,6 +1071,14 @@ void spawnPeriodicHorde() {
     }
 }
 
+// Instantally disentangles the player/creature. Useful for magical displacement like teleport and blink.
+void disentangle(creature *monst) {
+    if (monst == &player && monst->status[STATUS_STUCK]) {
+        message("you break free!", false);
+    }
+    monst->status[STATUS_STUCK] = 0;
+}
+
 // x and y are optional.
 void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidancePreferences) {
     short **grid, i, j;
@@ -1105,6 +1122,10 @@ void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidance
         if (x < 0 || y < 0) {
             return; // Failure!
         }
+    }
+    // Always break free on teleport
+    if (BROGUE_VERSION_ATLEAST(1,9,4)) {
+        disentangle(monst);
     }
     setMonsterLocation(monst, x, y);
     if (monst != &player) {
@@ -2357,7 +2378,7 @@ boolean generallyValidBoltTarget(creature *caster, creature *target) {
         // Can't target yourself; that's the fundamental theorem of Brogue bolts.
         return false;
     }
-    if (rogue.patchVersion >= 3
+    if (BROGUE_VERSION_ATLEAST(1,9,3)
         && caster->status[STATUS_DISCORDANT]
         && caster->creatureState == MONSTER_WANDERING
         && target == &player) {
@@ -3868,7 +3889,7 @@ void demoteMonsterFromLeadership(creature *monst) {
     }
 
     for (int level = 0; level <= DEEPEST_LEVEL; level++) {
-        if (rogue.patchVersion < 1 && level > 0) break; // to play back 1.9.0 recordings, skip other levels
+        if (!BROGUE_VERSION_ATLEAST(1,9,1) && level > 0) break;
         // we'll work on this level's monsters first, so that the new leader is preferably on the same level
         creature *firstMonster = (level == 0 ? monsters->nextCreature : levels[level-1].monsters);
         for (follower = firstMonster; follower != NULL; follower = follower->nextCreature) {
@@ -3899,7 +3920,7 @@ void demoteMonsterFromLeadership(creature *monst) {
     }
 
     for (int level = 0; level <= DEEPEST_LEVEL; level++) {
-        if (rogue.patchVersion < 1 && level > 0) break;
+        if (!BROGUE_VERSION_ATLEAST(1,9,1) && level > 0) break;
         creature *firstMonster = (level == 0 ? dormantMonsters->nextCreature : levels[level-1].dormantMonsters);
         for (follower = firstMonster; follower != NULL; follower = follower->nextCreature) {
             if (follower == monst || follower->leader != monst) continue;
@@ -4266,6 +4287,16 @@ void monsterDetails(char buf[], creature *monst) {
         i = encodeMessageColor(buf, i, &itemMessageColor);
         itemName(monst->carriedItem, theItemName, true, true, NULL);
         sprintf(newText, "%s has %s.", capMonstName, theItemName);
+        upperCase(newText);
+        strcat(buf, "\n     ");
+        strcat(buf, newText);
+    }
+
+    if (monst->wasNegated && monst->newPowerCount == monst->totalPowerCount) {
+        i = strlen(buf);
+        i = encodeMessageColor(buf, i, &pink);
+        sprintf(newText, "%s is stripped of $HISHER special traits.", capMonstName);
+        resolvePronounEscapes(newText, monst);
         upperCase(newText);
         strcat(buf, "\n     ");
         strcat(buf, newText);

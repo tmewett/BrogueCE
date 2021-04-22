@@ -4755,6 +4755,12 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
             || monst->creatureState == MONSTER_ALLY)) {
 
             if (y < ROWS - 1) {
+                if (monst->wasNegated
+                    && monst->newPowerCount == monst->totalPowerCount
+                    && y < ROWS - 1
+                    && (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience )) {
+                    printString("      Negated       ", 0, y++, (dim ? &darkPink : &pink), &black, 0);
+                }
                 if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience && y < ROWS - 1) {
                     printString(hallucinationStrings[rand_range(0, 9)], 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if (monst->bookkeepingFlags & MB_CAPTIVE && y < ROWS - 1) {

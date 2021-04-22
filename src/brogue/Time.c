@@ -1349,7 +1349,7 @@ void monstersFall() {
     for (monst = monsters->nextCreature; monst != NULL; monst = nextCreature) {
         nextCreature = monst->nextCreature;
         if ((monst->bookkeepingFlags & MB_IS_FALLING) || monsterShouldFall(monst)) {
-            if (rogue.patchVersion >= 3) monst->bookkeepingFlags |= MB_IS_FALLING;
+            if (BROGUE_VERSION_ATLEAST(1,9,3)) monst->bookkeepingFlags |= MB_IS_FALLING;
 
             x = monst->xLoc;
             y = monst->yLoc;
@@ -1360,7 +1360,7 @@ void monstersFall() {
                 messageWithColor(buf2, messageColorFromVictim(monst), 0);
             }
 
-            if (rogue.patchVersion < 3) {
+            if (!BROGUE_VERSION_ATLEAST(1,9,3)) {
                 monst->status[STATUS_ENTRANCED] = 0;
                 monst->bookkeepingFlags |= MB_PREPLACED;
                 monst->bookkeepingFlags &= ~(MB_IS_FALLING | MB_SEIZED | MB_SEIZING);
@@ -1373,7 +1373,7 @@ void monstersFall() {
             } else if (!inflictDamage(NULL, monst, randClumpedRange(6, 12, 2), &red, false)) {
                 demoteMonsterFromLeadership(monst);
 
-                if (rogue.patchVersion >= 3) {
+                if (BROGUE_VERSION_ATLEAST(1,9,3)) {
                     monst->status[STATUS_ENTRANCED] = 0;
                     monst->bookkeepingFlags |= MB_PREPLACED;
                     monst->bookkeepingFlags &= ~(MB_IS_FALLING | MB_SEIZED | MB_SEIZING);
@@ -2472,7 +2472,6 @@ void playerTurnEnded() {
 
         for(monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
             if (canSeeMonster(monst) && !(monst->bookkeepingFlags & (MB_WAS_VISIBLE | MB_ALREADY_SEEN))) {
-                monst->bookkeepingFlags |= MB_WAS_VISIBLE;
                 if (monst->creatureState != MONSTER_ALLY) {
                     rogue.disturbed = true;
                     if (rogue.cautiousMode || rogue.automationActive) {
@@ -2493,6 +2492,10 @@ void playerTurnEnded() {
                         restoreRNG;
                     }
                 }
+            }
+
+            if (canSeeMonster(monst) && (BROGUE_VERSION_ATLEAST(1,9,4) || !(monst->bookkeepingFlags & (MB_WAS_VISIBLE | MB_ALREADY_SEEN)))) {
+                monst->bookkeepingFlags |= MB_WAS_VISIBLE;
                 if (cellHasTerrainFlag(monst->xLoc, monst->yLoc, T_OBSTRUCTS_PASSABILITY)
                     && cellHasTMFlag(monst->xLoc, monst->yLoc, TM_IS_SECRET)) {
 
@@ -2520,9 +2523,14 @@ void playerTurnEnded() {
                         messageWithColor(buf, &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
                     }
                 }
-            } else if (!canSeeMonster(monst)
-                       && (monst->bookkeepingFlags & MB_WAS_VISIBLE)
-                       && !(monst->bookkeepingFlags & MB_CAPTIVE)) {
+            }
+
+            if (!canSeeMonster(monst)
+                && (monst->bookkeepingFlags & MB_WAS_VISIBLE)
+                && !(monst->bookkeepingFlags & MB_CAPTIVE)) {
+                // For captives we never unset MB_WAS_VISIBLE because captives are not moving,
+                // so we don't want to get "You see a ..." every time they come back into view.
+
                 monst->bookkeepingFlags &= ~MB_WAS_VISIBLE;
             }
         }

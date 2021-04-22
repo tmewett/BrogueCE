@@ -91,6 +91,7 @@ extern color darkOrange;
 extern color darkBlue;
 extern color lightBlue;
 extern color pink;
+extern color darkPink;
 extern color tanColor;
 extern color sunlight;
 extern color rainbow;

@@ -142,6 +142,12 @@ void recordKeystroke(int keystroke, boolean controlKey, boolean shiftKey) {
     recordEvent(&theEvent);
 }
 
+void cancelKeystroke() {
+    brogueAssert(locationInRecordingBuffer >= 3);
+    locationInRecordingBuffer -= 3; // a keystroke is encoded into 3 bytes
+    recordingLocation -= 3;
+}
+
 // record a series of keystrokes; string must end with a null terminator
 void recordKeystrokeSequence(unsigned char *keystrokeSequence) {
     short i;
@@ -441,10 +447,15 @@ void displayAnnotation() {
 }
 
 // Attempts to extract the patch version of versionString into patchVersion,
-// according to the global pattern. Returns 0 if successful.
+// according to the global pattern. The Major and Minor versions must match ours.
+// Returns true if successful.
 static boolean getPatchVersion(char *versionString, unsigned short *patchVersion) {
-    int n = sscanf(versionString, BROGUE_PATCH_VERSION_PATTERN, patchVersion);
-    return n == 1;
+    if (strcmp(versionString, "CE 1.9") == 0) {
+        // this older version string didn't show the patch number
+        *patchVersion = 0;
+        return BROGUE_MAJOR == 1 && BROGUE_MINOR == 9;
+    }
+    return sscanf(versionString, BROGUE_PATCH_VERSION_PATTERN, patchVersion) == 1;
 }
 
 // creates a game recording file, or if in playback mode,
@@ -452,7 +463,7 @@ static boolean getPatchVersion(char *versionString, unsigned short *patchVersion
 void initRecording() {
     short i;
     boolean wizardMode;
-    unsigned short gamePatch, recPatch;
+    unsigned short recPatch;
     char buf[100], *versionString = rogue.versionString;
     FILE *recordFile;
 
@@ -487,16 +498,11 @@ void initRecording() {
         }
         wizardMode = recallChar();
 
-        if (getPatchVersion(versionString, &recPatch)
-                && getPatchVersion(BROGUE_RECORDING_VERSION_STRING, &gamePatch)
-                && recPatch <= gamePatch) {
+        if (getPatchVersion(versionString, &recPatch) && recPatch <= BROGUE_PATCH) {
+            // Major and Minor match ours, Patch is less than or equal to ours: we are compatible.
             rogue.patchVersion = recPatch;
-        } else if (strcmp(versionString, "CE 1.9") == 0) {
-            // Temporary measure until next release, as "CE 1.9" recording string
-            // doesn't have a patch version (".0"), but we can load it.
-            rogue.patchVersion = 0;
         } else if (strcmp(versionString, BROGUE_RECORDING_VERSION_STRING) != 0) {
-            // If we have neither a patch pattern match nor an exact match, we can't load.
+            // We have neither a compatible pattern match nor an exact match: we cannot load it.
             rogue.playbackMode = false;
             rogue.playbackFastForward = false;
             sprintf(buf, "This file is from version %s and cannot be opened in version %s.", versionString, BROGUE_VERSION_STRING);
@@ -508,7 +514,7 @@ void initRecording() {
             rogue.gameHasEnded = true;
         }
 
-        if (wizardMode != rogue.wizard && rogue.patchVersion > 1) { // (don't perform the check for version 1.9.1 or earlier)
+        if (wizardMode != rogue.wizard && BROGUE_VERSION_ATLEAST(1,9,2)) {
             // wizard game cannot be played in normal mode and vice versa
             rogue.playbackMode = false;
             rogue.playbackFastForward = false;
@@ -539,7 +545,7 @@ void initRecording() {
         }
     } else {
         // If present, set the patch version for playing the game.
-        getPatchVersion(BROGUE_RECORDING_VERSION_STRING, &rogue.patchVersion);
+        rogue.patchVersion = BROGUE_PATCH;
         strcpy(versionString, BROGUE_RECORDING_VERSION_STRING);
 
         lengthOfPlaybackFile = 1;
@@ -793,15 +799,13 @@ void promptToAdvanceToLocation(short keystroke) {
         if (enteredText && entryText[0] != '\0') {
             sscanf(entryText, "%lu", &destinationFrame);
 
-            if (destinationFrame >= rogue.howManyTurns) {
-                flashTemporaryAlert(" Past end of recording ", 3000);
-            } else if (rogue.playbackOOS && destinationFrame > rogue.playerTurnNumber) {
+            if (rogue.playbackOOS && destinationFrame > rogue.playerTurnNumber) {
                 flashTemporaryAlert(" Out of sync ", 3000);
             } else if (destinationFrame == rogue.playerTurnNumber) {
                 sprintf(buf, " Already at turn %li ", destinationFrame);
                 flashTemporaryAlert(buf, 1000);
             } else {
-                seek(destinationFrame, RECORDING_SEEK_MODE_TURN);
+                seek(min(destinationFrame, rogue.howManyTurns), RECORDING_SEEK_MODE_TURN);
             }
             rogue.playbackPaused = true;
         }
@@ -916,7 +920,7 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                         destinationFrame = rogue.playerTurnNumber + frameCount;
                     }
                 } else {
-                    destinationFrame = min(rogue.playerTurnNumber + frameCount, rogue.howManyTurns - 1);
+                    destinationFrame = min(rogue.playerTurnNumber + frameCount, rogue.howManyTurns);
                 }
 
                 if (destinationFrame == rogue.playerTurnNumber) {

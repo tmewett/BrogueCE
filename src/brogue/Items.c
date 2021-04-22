@@ -3547,16 +3547,30 @@ boolean tunnelize(short x, short y) {
     }
     return didSomething;
 }
-
-void negate(creature *monst) {
+/* Negates the given creature. Returns true if there was an effect for the purpose of identifying a wand of negation.
+ * If the creature was stripped of any traits or abilities, the wasNegated property is set, which is used for display in
+ * sidebar and the creature's description.
+ */
+boolean negate(creature *monst) {
     short i, j;
     enum boltType backupBolts[20];
-    monst->info.abilityFlags &= MA_NON_NEGATABLE_ABILITIES; // negated monsters lose all special abilities
-    monst->bookkeepingFlags &= ~MB_SEIZING;
+    char buf[DCOLS * 3], monstName[DCOLS];
+    boolean negated = false;
+
+    monsterName(monstName, monst, true);
+
+    if (monst->info.abilityFlags & ~MA_NON_NEGATABLE_ABILITIES) {
+        monst->info.abilityFlags &= MA_NON_NEGATABLE_ABILITIES; // negated monsters lose all special abilities
+        negated = true;
+        monst->wasNegated = true;
+    }
+
+    if (monst->bookkeepingFlags & MB_SEIZING){
+        monst->bookkeepingFlags &= ~MB_SEIZING;
+        negated = true;
+    }
 
     if (monst->info.flags & MONST_DIES_IF_NEGATED) {
-        char buf[DCOLS * 3], monstName[DCOLS];
-        monsterName(monstName, monst, true);
         if (monst->status[STATUS_LEVITATING]) {
             sprintf(buf, "%s dissipates into thin air", monstName);
         } else if (monst->info.flags & MONST_INANIMATE) {
@@ -3566,49 +3580,111 @@ void negate(creature *monst) {
         }
         killCreature(monst, false);
         combatMessage(buf, messageColorFromVictim(monst));
+        negated = true;
     } else if (!(monst->info.flags & MONST_INVULNERABLE)) {
         // works on inanimates
-        monst->status[STATUS_IMMUNE_TO_FIRE] = 0;
-        monst->status[STATUS_SLOWED] = 0;
-        monst->status[STATUS_HASTED] = 0;
-        monst->status[STATUS_CONFUSED] = 0;
-        monst->status[STATUS_ENTRANCED] = 0;
-        monst->status[STATUS_DISCORDANT] = 0;
-        monst->status[STATUS_SHIELDED] = 0;
-        monst->status[STATUS_INVISIBLE] = 0;
+        if (monst->status[STATUS_IMMUNE_TO_FIRE]) {
+            monst->status[STATUS_IMMUNE_TO_FIRE] = 0;
+            negated = true;
+        }
+        if (monst->status[STATUS_SLOWED]) {
+            monst->status[STATUS_SLOWED] = 0;
+            negated = true;
+        }
+        if (monst->status[STATUS_HASTED]) {
+            monst->status[STATUS_HASTED] = 0;
+            negated = true;
+        }
+        if (monst->status[STATUS_CONFUSED]) {
+            monst->status[STATUS_CONFUSED] = 0;
+            negated = true;
+        }
+        if (monst->status[STATUS_ENTRANCED]) {
+            monst->status[STATUS_ENTRANCED] = 0;
+            negated = true;
+        }
+        if (monst->status[STATUS_DISCORDANT]) {
+            monst->status[STATUS_DISCORDANT] = 0;
+            negated = true;
+        }
+        if (monst->status[STATUS_SHIELDED]) {
+            monst->status[STATUS_SHIELDED] = 0;
+            negated = true;
+        }
+        if (monst->status[STATUS_INVISIBLE]) {
+            monst->status[STATUS_INVISIBLE] = 0;
+            negated = true;
+        }
         if (monst == &player) {
-            monst->status[STATUS_TELEPATHIC] = min(monst->status[STATUS_TELEPATHIC], 1);
-            monst->status[STATUS_MAGICAL_FEAR] = min(monst->status[STATUS_MAGICAL_FEAR], 1);
-            monst->status[STATUS_LEVITATING] = min(monst->status[STATUS_LEVITATING], 1);
+            if (monst->status[STATUS_TELEPATHIC] > 1 ) {
+                monst->status[STATUS_TELEPATHIC] = 1;
+                negated = true;
+            }
+            if (monst->status[STATUS_MAGICAL_FEAR] > 1 ) {
+                monst->status[STATUS_MAGICAL_FEAR] = 1;
+                negated = true;
+            }
+            if (monst->status[STATUS_LEVITATING] > 1 ) {
+                monst->status[STATUS_LEVITATING] = 1;
+                negated = true;
+            }
             if (monst->status[STATUS_DARKNESS]) {
                 monst->status[STATUS_DARKNESS] = 0;
                 updateMinersLightRadius();
                 updateVision(true);
+                negated = true;
             }
         } else {
-            monst->status[STATUS_TELEPATHIC] = 0;
-            monst->status[STATUS_MAGICAL_FEAR] = 0;
-            monst->status[STATUS_LEVITATING] = 0;
+            if (monst->status[STATUS_TELEPATHIC] > 0 ) {
+                monst->status[STATUS_TELEPATHIC] = 0;
+                negated = true;
+            }
+            if (monst->status[STATUS_MAGICAL_FEAR] > 0 ) {
+                monst->status[STATUS_MAGICAL_FEAR] = 0;
+                negated = true;
+            }
+            if (monst->status[STATUS_LEVITATING] > 0 ) {
+                monst->status[STATUS_LEVITATING] = 0;
+                negated = true;
+            }
         }
-        monst->info.flags &= ~MONST_IMMUNE_TO_FIRE;
-        monst->movementSpeed = monst->info.movementSpeed;
-        monst->attackSpeed = monst->info.attackSpeed;
+        if (monst->info.flags & MONST_IMMUNE_TO_FIRE) {
+            monst->info.flags &= ~MONST_IMMUNE_TO_FIRE;
+            monst->wasNegated = true;
+            negated = true;
+        }
+        if (monst->movementSpeed != monst->info.movementSpeed) {
+            monst->movementSpeed = monst->info.movementSpeed;
+            negated = true;
+        }
+        if (monst->attackSpeed != monst->info.attackSpeed) {
+            monst->attackSpeed = monst->info.attackSpeed;
+            negated = true;
+        }
+
         if (monst != &player && monst->mutationIndex > -1 && mutationCatalog[monst->mutationIndex].canBeNegated
-            && rogue.patchVersion >= 3) {
+            && BROGUE_VERSION_ATLEAST(1,9,3)) {
 
             monst->mutationIndex = -1;
+            negated = true;
+            monst->wasNegated = true;
         }
         if (monst != &player && (monst->info.flags & NEGATABLE_TRAITS)) {
             if ((monst->info.flags & MONST_FIERY) && monst->status[STATUS_BURNING]) {
                 extinguishFireOnCreature(monst);
             }
             monst->info.flags &= ~NEGATABLE_TRAITS;
+            negated = true;
+            monst->wasNegated = true;
             refreshDungeonCell(monst->xLoc, monst->yLoc);
             refreshSideBar(-1, -1, false);
         }
         for (i = 0; i < 20; i++) {
             backupBolts[i] = monst->info.bolts[i];
             monst->info.bolts[i] = BOLT_NONE;
+            if (monst->info.bolts[i] && !(boltCatalog[monst->info.bolts[i]].flags & BF_NOT_NEGATABLE)) {
+                negated = true;
+            }
         }
         for (i = 0, j = 0; i < 20 && backupBolts[i]; i++) {
             if (boltCatalog[backupBolts[i]].flags & BF_NOT_NEGATABLE) {
@@ -3619,6 +3695,14 @@ void negate(creature *monst) {
         monst->newPowerCount = monst->totalPowerCount; // Allies can re-learn lost ability slots.
         applyInstantTileEffectsToCreature(monst); // in case it should immediately die or fall into a chasm
     }
+
+    if (negated && monst != &player && !(monst->info.flags & MONST_DIES_IF_NEGATED)) {
+        sprintf(buf, "%s is stripped of $HISHER special traits", monstName);
+        resolvePronounEscapes(buf, monst);
+        combatMessage(buf, messageColorFromVictim(monst));
+    }
+
+    return negated;
 }
 
 // Adds one to the creature's weakness, sets the weakness status duration to maxDuration.
@@ -3655,7 +3739,6 @@ boolean polymorph(creature *monst) {
 
     // After polymorphing, don't "drop" any creature on death (e.g. phylactery, phoenix egg)
     if (monst->carriedMonster) {
-        killCreature(monst->carriedMonster, true);
         freeCreature(monst->carriedMonster);
         monst->carriedMonster = NULL;
     }
@@ -3917,6 +4000,8 @@ void negationBlast(const char *emitterName, const short distance) {
                     theItem->enchant1 = theItem->enchant2 = theItem->charges = 0;
                     theItem->flags &= ~(ITEM_RUNIC | ITEM_RUNIC_HINTED | ITEM_RUNIC_IDENTIFIED | ITEM_PROTECTED);
                     identify(theItem);
+                    pmap[theItem->xLoc][theItem->yLoc].flags &= ~ITEM_DETECTED;
+                    refreshDungeonCell(theItem->xLoc, theItem->yLoc);
                     break;
                 case STAFF:
                     theItem->charges = 0;
@@ -4184,6 +4269,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
     creature *monst; // Creature being hit by the bolt, if any.
     creature *newMonst; // Utility variable for plenty
     boolean terminateBolt = false;
+    boolean negated = false;
 
     if (lightingChanged) {
         *lightingChanged = false;
@@ -4352,10 +4438,14 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 }
                 break;
             case BE_NEGATION:
-                negate(monst);
+                negated = negate(monst);
                 if (boltCatalog[BOLT_NEGATION].backColor) {
                     flashMonster(monst, boltCatalog[BOLT_NEGATION].backColor, 100);
                 }
+                if (BROGUE_VERSION_ATLEAST(1,9,4) && negated && autoID && canSeeMonster(monst)) {
+                    *autoID = true;
+                }
+
                 break;
             case BE_EMPOWERMENT:
                 if (monst != &player
@@ -4424,7 +4514,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
                     newMonst = cloneMonster(monst, true, true);
                     if (newMonst) {
-                        if (rogue.patchVersion >= 1) {
+                        if (BROGUE_VERSION_ATLEAST(1,9,1)) {
                             monst->info.maxHP = newMonst->info.maxHP = (monst->info.maxHP + 1) / 2;
                             monst->currentHP = newMonst->currentHP = min(monst->currentHP, monst->info.maxHP);
                         } else {
@@ -4591,6 +4681,10 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
             pmap[x][y].flags |= (caster == &player ? HAS_PLAYER : HAS_MONSTER);
             caster->xLoc = x;
             caster->yLoc = y;
+            // Always break free on blink
+            if (BROGUE_VERSION_ATLEAST(1,9,4)) {
+                disentangle(caster);
+            }
             applyInstantTileEffectsToCreature(caster);
             if (caster == &player) {
                 // increase scent turn number so monsters don't sniff around at the old cell like idiots

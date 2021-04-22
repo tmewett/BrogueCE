@@ -586,7 +586,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             freeGrid(monst->mapToMe);
             monst->mapToMe = NULL;
         }
-        if (rogue.patchVersion < 3 && monst->safetyMap) {
+        if (!BROGUE_VERSION_ATLEAST(1,9,3) && monst->safetyMap) {
             freeGrid(monst->safetyMap);
             monst->safetyMap = NULL;
         }
@@ -984,6 +984,11 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     rogue.gameInProgress = false;
     flushBufferToFile();
 
+    if (rogue.playbackFastForward) {
+        rogue.playbackFastForward = false;
+        displayLevel();
+    }
+
     if (rogue.quit) {
         if (rogue.playbackMode) {
             playback = rogue.playbackMode;
@@ -1132,6 +1137,11 @@ void victory(boolean superVictory) {
 
     rogue.gameInProgress = false;
     flushBufferToFile();
+
+    if (rogue.playbackFastForward) {
+        rogue.playbackFastForward = false;
+        displayLevel();
+    }
 
     //
     // First screen - Congratulations...
