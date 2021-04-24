@@ -754,6 +754,12 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     player.xLoc = px;
     player.yLoc = py;
 
+    // This level is now up-to-date as of the current turn.
+    // Get the ticker ready for the *next* environment update.
+    if (rogue.ticksTillUpdateEnvironment <= 0) {
+        rogue.ticksTillUpdateEnvironment += 100;
+    }
+
     if (!levels[rogue.depthLevel-1].visited) {
         levels[rogue.depthLevel-1].visited = true;
         if (rogue.depthLevel == AMULET_LEVEL) {
