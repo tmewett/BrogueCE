@@ -1365,6 +1365,7 @@ typedef struct item {
     short yLoc;
     keyLocationProfile keyLoc[KEY_ID_MAXIMUM];
     short originDepth;
+    unsigned long spawnTurnNumber;
     struct item *nextItem;
 } item;
 

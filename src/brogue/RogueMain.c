@@ -744,8 +744,12 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     px = player.xLoc;
     py = player.yLoc;
     player.xLoc = player.yLoc = 0;
-    for (i = 0; i < 100 && i < (short) timeAway; i++) {
+    timeAway = min(timeAway, 100);
+    while (timeAway--) {
+        unsigned long turn = rogue.absoluteTurnNumber;
+        rogue.absoluteTurnNumber = (turn > timeAway ? turn - timeAway : 0);
         updateEnvironment();
+        rogue.absoluteTurnNumber = turn;
     }
     player.xLoc = px;
     player.yLoc = py;
