@@ -806,7 +806,8 @@ void pickUpItemAt(short x, short y) {
         if ((theItem->category & AMULET)
             && !(rogue.yendorWarden)) {
             // Identify the amulet guardian, or generate one if there isn't one.
-            for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
+            for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
+                creature *monst = &(monstNode->creature);
                 if (monst->info.monsterID == MK_WARDEN_OF_YENDOR) {
                     rogue.yendorWarden = monst;
                     break;
@@ -3230,7 +3231,6 @@ item *keyOnTileAt(short x, short y) {
 
 // Aggroes out to the given distance.
 void aggravateMonsters(short distance, short x, short y, const color *flashColor) {
-    creature *monst;
     short i, j, **grid;
 
     rogue.wpCoordinates[0][0] = x;
@@ -3241,7 +3241,8 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
     fillGrid(grid, 0);
     calculateDistances(grid, x, y, T_PATHING_BLOCKER, NULL, true, false);
 
-    for (monst=monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
+    for (creatureListNode *monstNode=monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
+        creature *monst = &(monstNode->creature);
         if (grid[monst->xLoc][monst->yLoc] <= distance) {
             if (monst->creatureState == MONSTER_SLEEPING) {
                 wakeUp(monst);
@@ -3321,7 +3322,7 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
         }
 
         // normalize the step, to move exactly one row or column at a time
-        fixpt m = max(abs(step[0]), abs(step[1]));
+        fixpt m = max(llabs(step[0]), llabs(step[1]));
         step[0] = step[0] * FP_FACTOR / m;
         step[1] = step[1] * FP_FACTOR / m;
 
@@ -3739,7 +3740,7 @@ boolean polymorph(creature *monst) {
 
     // After polymorphing, don't "drop" any creature on death (e.g. phylactery, phoenix egg)
     if (monst->carriedMonster) {
-        freeCreature(monst->carriedMonster);
+        freeCreatureNode(monst->carriedMonster);
         monst->carriedMonster = NULL;
     }
 
@@ -3870,10 +3871,9 @@ void heal(creature *monst, short percent, boolean panacea) {
 }
 
 void makePlayerTelepathic(short duration) {
-    creature *monst;
-
     player.status[STATUS_TELEPATHIC] = player.maxStatus[STATUS_TELEPATHIC] = duration;
-    for (monst=monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
+    for (creatureListNode *monstNode=monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
+        creature *monst = &(monstNode->creature);
         refreshDungeonCell(monst->xLoc, monst->yLoc);
     }
     if (monsters->nextCreature == NULL) {
@@ -3968,7 +3968,6 @@ void rechargeItems(unsigned long categories) {
 //}
 
 void negationBlast(const char *emitterName, const short distance) {
-    creature *monst, *nextMonst;
     item *theItem;
     char buf[DCOLS];
 
@@ -3977,8 +3976,9 @@ void negationBlast(const char *emitterName, const short distance) {
     colorFlash(&pink, 0, IN_FIELD_OF_VIEW, 3 + distance / 5, distance, player.xLoc, player.yLoc);
     negate(&player);
     flashMonster(&player, &pink, 100);
-    for (monst = monsters->nextCreature; monst != NULL;) {
-        nextMonst = monst->nextCreature;
+    for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL;) {
+        creatureListNode *nextMonstNode = monstNode->nextCreature;
+        creature *monst = &(monstNode->creature);
         if ((pmap[monst->xLoc][monst->yLoc].flags & IN_FIELD_OF_VIEW)
             && (player.xLoc - monst->xLoc) * (player.xLoc - monst->xLoc) + (player.yLoc - monst->yLoc) * (player.yLoc - monst->yLoc) <= distance * distance) {
 
@@ -3987,7 +3987,7 @@ void negationBlast(const char *emitterName, const short distance) {
             }
             negate(monst); // This can be fatal.
         }
-        monst = nextMonst;
+        monstNode = nextMonstNode;
     }
     for (theItem = floorItems; theItem != NULL; theItem = theItem->nextItem) {
         if ((pmap[theItem->xLoc][theItem->yLoc].flags & IN_FIELD_OF_VIEW)
@@ -4026,14 +4026,14 @@ void negationBlast(const char *emitterName, const short distance) {
 }
 
 void discordBlast(const char *emitterName, const short distance) {
-    creature *monst, *nextMonst;
     char buf[DCOLS];
 
     sprintf(buf, "%s emits a wave of unsettling purple radiation!", emitterName);
     messageWithColor(buf, &itemMessageColor, 0);
     colorFlash(&discordColor, 0, IN_FIELD_OF_VIEW, 3 + distance / 5, distance, player.xLoc, player.yLoc);
-    for (monst = monsters->nextCreature; monst != NULL;) {
-        nextMonst = monst->nextCreature;
+    for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL;) {
+        creatureListNode *nextMonstNode = monstNode->nextCreature;
+        creature *monst = &(monstNode->creature);
         if ((pmap[monst->xLoc][monst->yLoc].flags & IN_FIELD_OF_VIEW)
             && (player.xLoc - monst->xLoc) * (player.xLoc - monst->xLoc) + (player.yLoc - monst->yLoc) * (player.yLoc - monst->yLoc) <= distance * distance) {
 
@@ -4044,7 +4044,7 @@ void discordBlast(const char *emitterName, const short distance) {
                 monst->status[STATUS_DISCORDANT] = monst->maxStatus[STATUS_DISCORDANT] = 30;
             }
         }
-        monst = nextMonst;
+        monstNode = nextMonstNode;
     }
 }
 
@@ -6909,7 +6909,6 @@ void detectMagicOnItem(item *theItem) {
 
 void drinkPotion(item *theItem) {
     item *tempItem = NULL;
-    creature *monst = NULL;
     boolean hadEffect = false;
     boolean hadEffect2 = false;
     char buf[1000] = "";
@@ -7000,7 +6999,8 @@ void drinkPotion(item *theItem) {
                     }
                 }
             }
-            for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
+            for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
+                creature *monst = &(monstNode->creature);
                 if (monst->carriedItem && (monst->carriedItem->category & CAN_BE_DETECTED)) {
                     detectMagicOnItem(monst->carriedItem);
                     if (itemMagicPolarity(monst->carriedItem)) {

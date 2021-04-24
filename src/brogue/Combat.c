@@ -266,11 +266,9 @@ void splitMonster(creature *monst, short x, short y) {
 }
 
 short alliedCloneCount(creature *monst) {
-    short count;
-    creature *temp;
-
-    count = 0;
-    for (temp = monsters->nextCreature; temp != NULL; temp = temp->nextCreature) {
+    short count = 0;
+    for (creatureListNode *tempNode = monsters->nextCreature; tempNode != NULL; tempNode = tempNode->nextCreature) {
+        creature *temp = &(tempNode->creature);
         if (temp != monst
             && temp->info.monsterID == monst->info.monsterID
             && monstersAreTeammates(temp, monst)) {
@@ -279,7 +277,8 @@ short alliedCloneCount(creature *monst) {
         }
     }
     if (rogue.depthLevel > 1) {
-        for (temp = levels[rogue.depthLevel - 2].monsters; temp != NULL; temp = temp->nextCreature) {
+        for (creatureListNode *tempNode = levels[rogue.depthLevel - 2].monsters; tempNode != NULL; tempNode = tempNode->nextCreature) {
+            creature *temp = &(tempNode->creature);
             if (temp != monst
                 && temp->info.monsterID == monst->info.monsterID
                 && monstersAreTeammates(temp, monst)) {
@@ -289,7 +288,8 @@ short alliedCloneCount(creature *monst) {
         }
     }
     if (rogue.depthLevel < DEEPEST_LEVEL) {
-        for (temp = levels[rogue.depthLevel].monsters; temp != NULL; temp = temp->nextCreature) {
+        for (creatureListNode *tempNode = levels[rogue.depthLevel].monsters; tempNode != NULL; tempNode = tempNode->nextCreature) {
+            creature *temp = &(tempNode->creature);
             if (temp != monst
                 && temp->info.monsterID == monst->info.monsterID
                 && monstersAreTeammates(temp, monst)) {
@@ -826,8 +826,12 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
                     monst->ticksUntilTurn = 100;
                     monst->info.monsterID = MK_SPECTRAL_IMAGE;
                     if (monst->carriedMonster) {
-                        killCreature(monst->carriedMonster, true); // Otherwise you can get infinite phoenices from a discordant phoenix.
+                        // We should only kill creatures that exist in the world:
+                        creatureListNode *carried = monst->carriedMonster;
                         monst->carriedMonster = NULL;
+                        carried->nextCreature = monsters->nextCreature;
+                        monsters->nextCreature = carried;
+                        killCreature(&(carried->creature), true); // Otherwise you can get infinite phoenices from a discordant phoenix.
                     }
 
                     // Give it the glowy red light and color.
@@ -1370,7 +1374,6 @@ boolean canAbsorb(creature *ally, boolean ourBolts[NUMBER_BOLT_KINDS], creature 
 boolean anyoneWantABite(creature *decedent) {
     short candidates, randIndex, i;
     short **grid;
-    creature *ally;
     boolean success = false;
     boolean ourBolts[NUMBER_BOLT_KINDS] = {false};
 
@@ -1388,56 +1391,60 @@ boolean anyoneWantABite(creature *decedent) {
     grid = allocGrid();
     fillGrid(grid, 0);
     calculateDistances(grid, decedent->xLoc, decedent->yLoc, T_PATHING_BLOCKER, NULL, true, true);
-    for (ally = monsters->nextCreature; ally != NULL; ally = ally->nextCreature) {
+    for (creatureListNode *allyNode = monsters->nextCreature; allyNode != NULL; allyNode = allyNode->nextCreature) {
+        creature *ally = &(allyNode->creature);
         if (canAbsorb(ally, ourBolts, decedent, grid)) {
             candidates++;
         }
     }
     if (candidates > 0) {
         randIndex = rand_range(1, candidates);
-        for (ally = monsters->nextCreature; ally != NULL; ally = ally->nextCreature) {
+        creature *firstAlly = NULL;
+        for (creatureListNode *allyNode = monsters->nextCreature; allyNode != NULL; allyNode = allyNode->nextCreature) {
+            creature *ally = &(allyNode->creature);
             // CanAbsorb() populates ourBolts if it returns true and there are no learnable behaviors or flags:
             if (canAbsorb(ally, ourBolts, decedent, grid) && !--randIndex) {
+                firstAlly = ally;
                 break;
             }
         }
-        if (ally) {
-            ally->targetCorpseLoc[0] = decedent->xLoc;
-            ally->targetCorpseLoc[1] = decedent->yLoc;
-            strcpy(ally->targetCorpseName, decedent->info.monsterName);
-            ally->corpseAbsorptionCounter = 20; // 20 turns to get there and start eating before he loses interest
+        if (firstAlly) {
+            firstAlly->targetCorpseLoc[0] = decedent->xLoc;
+            firstAlly->targetCorpseLoc[1] = decedent->yLoc;
+            strcpy(firstAlly->targetCorpseName, decedent->info.monsterName);
+            firstAlly->corpseAbsorptionCounter = 20; // 20 turns to get there and start eating before he loses interest
 
             // Choose a superpower.
             // First, select from among learnable ability or behavior flags, if one is available.
             candidates = 0;
             for (i=0; i<32; i++) {
-                if (Fl(i) & ~(ally->info.abilityFlags) & decedent->info.abilityFlags & LEARNABLE_ABILITIES) {
+                if (Fl(i) & ~(firstAlly->info.abilityFlags) & decedent->info.abilityFlags & LEARNABLE_ABILITIES) {
                     candidates++;
                 }
             }
             for (i=0; i<32; i++) {
-                if (Fl(i) & ~(ally->info.flags) & decedent->info.flags & LEARNABLE_BEHAVIORS) {
+                if (Fl(i) & ~(firstAlly->info.flags) & decedent->info.flags & LEARNABLE_BEHAVIORS) {
                     candidates++;
                 }
             }
             if (candidates > 0) {
                 randIndex = rand_range(1, candidates);
                 for (i=0; i<32; i++) {
-                    if ((Fl(i) & ~(ally->info.abilityFlags) & decedent->info.abilityFlags & LEARNABLE_ABILITIES)
+                    if ((Fl(i) & ~(firstAlly->info.abilityFlags) & decedent->info.abilityFlags & LEARNABLE_ABILITIES)
                         && !--randIndex) {
 
-                        ally->absorptionFlags = Fl(i);
-                        ally->absorbBehavior = false;
+                        firstAlly->absorptionFlags = Fl(i);
+                        firstAlly->absorbBehavior = false;
                         success = true;
                         break;
                     }
                 }
                 for (i=0; i<32 && !success; i++) {
-                    if ((Fl(i) & ~(ally->info.flags) & decedent->info.flags & LEARNABLE_BEHAVIORS)
+                    if ((Fl(i) & ~(firstAlly->info.flags) & decedent->info.flags & LEARNABLE_BEHAVIORS)
                         && !--randIndex) {
 
-                        ally->absorptionFlags = Fl(i);
-                        ally->absorbBehavior = true;
+                        firstAlly->absorptionFlags = Fl(i);
+                        firstAlly->absorbBehavior = true;
                         success = true;
                         break;
                     }
@@ -1459,7 +1466,7 @@ boolean anyoneWantABite(creature *decedent) {
                             && !ourBolts[decedent->info.bolts[i]]
                             && !--randIndex) {
 
-                            ally->absorptionBolt = decedent->info.bolts[i];
+                            firstAlly->absorptionBolt = decedent->info.bolts[i];
                             success = true;
                             break;
                         }
@@ -1667,19 +1674,26 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
         } else {
             pmap[x][y].flags &= ~HAS_MONSTER;
         }
-        removeMonsterFromChain(decedent, dormantMonsters);
-        removeMonsterFromChain(decedent, monsters);
+        // Obtain the node from either list.
+        creatureListNode *decedentNode = removeMonsterFromChain(decedent, &dormantMonsters->nextCreature);
+        if (!decedentNode) {
+            decedentNode = removeMonsterFromChain(decedent, &monsters->nextCreature);
+        }
+        if (!decedentNode) {
+            // TODO: panic or blow up or something.
+            // I think this is impossible but I can't be sure.
+        }
 
         if (decedent->leader == &player
             && !(decedent->info.flags & MONST_INANIMATE)
             && (decedent->bookkeepingFlags & MB_HAS_SOUL)
             && !administrativeDeath) {
 
-            decedent->nextCreature = purgatory->nextCreature;
-            purgatory->nextCreature = decedent;
+            decedentNode->nextCreature = purgatory->nextCreature;
+            purgatory->nextCreature = decedentNode;
         } else {
-            decedent->nextCreature = graveyard->nextCreature;
-            graveyard->nextCreature = decedent;
+            decedentNode->nextCreature = graveyard->nextCreature;
+            graveyard->nextCreature = decedentNode;
         }
 
         if (!administrativeDeath && !(decedent->bookkeepingFlags & MB_IS_DORMANT)) {
@@ -1688,19 +1702,20 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
                 // Insert it into the chain.
                 decedent->carriedMonster->nextCreature = monsters->nextCreature;
                 monsters->nextCreature = decedent->carriedMonster;
-                decedent->carriedMonster->xLoc = x;
-                decedent->carriedMonster->yLoc = y;
-                decedent->carriedMonster->ticksUntilTurn = 200;
+                creature *carriedMonster = &(decedent->carriedMonster->creature);
+                carriedMonster->xLoc = x;
+                carriedMonster->yLoc = y;
+                carriedMonster->ticksUntilTurn = 200;
                 pmap[x][y].flags |= HAS_MONSTER;
-                fadeInMonster(decedent->carriedMonster);
+                fadeInMonster(carriedMonster);
 
-                if (canSeeMonster(decedent->carriedMonster)) {
-                    monsterName(monstName, decedent->carriedMonster, true);
+                if (canSeeMonster(carriedMonster)) {
+                    monsterName(monstName, carriedMonster, true);
                     sprintf(buf, "%s appears", monstName);
                     combatMessage(buf, NULL);
                 }
 
-                applyInstantTileEffectsToCreature(decedent->carriedMonster);
+                applyInstantTileEffectsToCreature(carriedMonster);
                 decedent->carriedMonster = NULL;
             }
             refreshDungeonCell(x, y);

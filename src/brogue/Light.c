@@ -209,7 +209,6 @@ void updateLighting() {
     short i, j, k;
     enum dungeonLayers layer;
     enum tileType tile;
-    creature *monst;
 
     // Copy Light over oldLight
     recordOldLights();
@@ -255,7 +254,8 @@ void updateLighting() {
     }
 
     // Also paint telepathy lights for dormant monsters.
-    for (monst = dormantMonsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
+    for (creatureListNode *monstNode = dormantMonsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
+        creature *monst = &(monstNode->creature);
         if (monsterRevealed(monst)) {
             paintLight(&lightCatalog[TELEPATHY_LIGHT], monst->xLoc, monst->yLoc, false, true);
         }

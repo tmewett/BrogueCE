@@ -2997,10 +2997,8 @@ void clearMonsterFlashes() {
 }
 
 void displayMonsterFlashes(boolean flashingEnabled) {
-    creature *monst;
     short x[100], y[100], strength[100], count = 0;
     color *flashColor[100];
-    short oldRNG;
 
     rogue.creaturesWillFlashThisTurn = false;
 
@@ -3008,7 +3006,7 @@ void displayMonsterFlashes(boolean flashingEnabled) {
         return;
     }
 
-    oldRNG = rogue.RNG;
+    short oldRNG = rogue.RNG;
     rogue.RNG = RNG_COSMETIC;
     //assureCosmeticRNG;
 
@@ -3712,7 +3710,7 @@ enum entityDisplayTypes {
 // So if we try and fail, this function will call itself again, but with this set to true.
 void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst) {
     short printY, oldPrintY, shortestDistance, i, j, k, px, py, x = 0, y = 0, displayEntityCount, indirectVision;
-    creature *monst = NULL, *closestMonst = NULL;
+    creature *closestMonst = NULL;
     item *theItem, *closestItem = NULL;
     char buf[COLS];
     void *entityList[ROWS] = {0}, *focusEntity = NULL;
@@ -3734,7 +3732,7 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
         focusedEntityMustGoFirst = false; // just in case!
     } else {
         if (pmap[focusX][focusY].flags & (HAS_MONSTER | HAS_PLAYER)) {
-            monst = monsterAtLoc(focusX, focusY);
+            creature *monst = monsterAtLoc(focusX, focusY);
             if (canSeeMonster(monst) || rogue.playbackOmniscience) {
                 focusEntity = monst;
                 focusEntityType = EDT_CREATURE;
@@ -3807,7 +3805,8 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
         // Non-focused monsters.
         do {
             shortestDistance = 10000;
-            for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
+            for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
+                creature *monst = &(monstNode->creature);
                 if ((canDirectlySeeMonster(monst) || (indirectVision && (canSeeMonster(monst) || rogue.playbackOmniscience)))
                     && !addedEntity[monst->xLoc][monst->yLoc]
                     && !(monst->info.flags & MONST_NOT_LISTED_IN_SIDEBAR)
