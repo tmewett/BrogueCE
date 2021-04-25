@@ -236,7 +236,10 @@ void updateLighting() {
     }
 
     // Cycle through monsters and paint their lights:
-    CYCLE_MONSTERS_AND_PLAYERS(monst) {
+    boolean handledPlayer = false;
+    for (creatureIterator it = iterateCreatures(&monsters); !handledPlayer || hasNextCreature(it);) {
+        creature *monst = !handledPlayer ? &player : nextCreature(&it);
+        handledPlayer = true;
         if (monst->info.intrinsicLightType) {
             paintLight(&lightCatalog[monst->info.intrinsicLightType], monst->xLoc, monst->yLoc, false, false);
         }
@@ -254,8 +257,8 @@ void updateLighting() {
     }
 
     // Also paint telepathy lights for dormant monsters.
-    for (creatureListNode *monstNode = dormantMonsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-        creature *monst = &(monstNode->creature);
+    for (creatureIterator it = iterateCreatures(&dormantMonsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
         if (monsterRevealed(monst)) {
             paintLight(&lightCatalog[TELEPATHY_LIGHT], monst->xLoc, monst->yLoc, false, true);
         }

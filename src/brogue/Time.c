@@ -607,16 +607,16 @@ void updateTelepathy() {
     }
 
     zeroOutGrid(grid);
-    for (creatureListNode *monstNode = monsters->nextCreature; monstNode; monstNode = monstNode->nextCreature) {
-        creature *monst = &(monstNode->creature);
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
         if (monsterRevealed(monst)) {
             getFOVMask(grid, monst->xLoc, monst->yLoc, 2 * FP_FACTOR, T_OBSTRUCTS_VISION, 0, false);
             pmap[monst->xLoc][monst->yLoc].flags |= TELEPATHIC_VISIBLE;
             discoverCell(monst->xLoc, monst->yLoc);
         }
     }
-    for (creatureListNode *monstNode = dormantMonsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-        creature *monst = &(monstNode->creature);
+    for (creatureIterator it = iterateCreatures(&dormantMonsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
         if (monsterRevealed(monst)) {
             getFOVMask(grid, monst->xLoc, monst->yLoc, 2 * FP_FACTOR, T_OBSTRUCTS_VISION, 0, false);
             pmap[monst->xLoc][monst->yLoc].flags |= TELEPATHIC_VISIBLE;
@@ -787,8 +787,8 @@ void updateVision(boolean refreshDisplay) {
                 refreshDungeonCell(theItem->xLoc, theItem->yLoc);
             }
         }
-        for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-            creature *monst = &(monstNode->creature);
+        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            creature *monst = nextCreature(&it);
             if ((pmap[monst->xLoc][monst->yLoc].flags & DISCOVERED) && refreshDisplay) {
                 refreshDungeonCell(monst->xLoc, monst->yLoc);
             }
@@ -946,19 +946,19 @@ void addXPXPToAlly(short XPXP, creature *monst) {
 void handleXPXP() {
     //char buf[DCOLS*2], theMonsterName[50];
 
-    for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-        creature *monst = &(monstNode->creature);
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
         addXPXPToAlly(rogue.xpxpThisTurn, monst);
     }
     if (rogue.depthLevel > 1) {
-        for (creatureListNode *monstNode = levels[rogue.depthLevel - 2].monsters; monstNode != NULL; monstNode = monstNode->nextCreature) {
-            creature *monst = &(monstNode->creature);
+        for (creatureIterator it = iterateCreatures(&levels[rogue.depthLevel - 2].monsters); hasNextCreature(it);) {
+            creature *monst = nextCreature(&it);
             addXPXPToAlly(rogue.xpxpThisTurn, monst);
         }
     }
     if (rogue.depthLevel < DEEPEST_LEVEL) {
-        for (creatureListNode *monstNode = levels[rogue.depthLevel].monsters; monstNode != NULL; monstNode = monstNode->nextCreature) {
-            creature *monst = &(monstNode->creature);
+        for (creatureIterator it = iterateCreatures(&levels[rogue.depthLevel].monsters); hasNextCreature(it);) {
+            creature *monst = nextCreature(&it);
             addXPXPToAlly(rogue.xpxpThisTurn, monst);
         }
     }
@@ -1038,8 +1038,8 @@ void activateMachine(short machineNumber) {
 
     monsterCount = maxMonsters = 0;
     creature **activatedMonsterList = NULL;
-    for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-        creature *monst = &(monstNode->creature);
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
         if (monst->machineHome == machineNumber
             && monst->spawnDepth == rogue.depthLevel
             && (monst->info.flags & MONST_GETS_TURN_ON_ACTIVATION)) {
@@ -1313,7 +1313,7 @@ void updateYendorWardenTracking() {
     n = rogue.yendorWarden->depth - 1;
 
     // remove traversing monster from other level monster chain
-    creatureListNode *yendorWardenNode = removeMonsterFromChain(rogue.yendorWarden, &levels[n].monsters);
+    removeCreature(&levels[n].monsters, rogue.yendorWarden);
 
     if (rogue.yendorWarden->depth > rogue.depthLevel) {
         rogue.yendorWarden->depth = rogue.depthLevel + 1;
@@ -1328,8 +1328,7 @@ void updateYendorWardenTracking() {
         rogue.yendorWarden->xLoc = levels[n].upStairsLoc[0];
         rogue.yendorWarden->yLoc = levels[n].upStairsLoc[1];
     }
-    yendorWardenNode->nextCreature = levels[rogue.yendorWarden->depth - 1].monsters;
-    levels[rogue.yendorWarden->depth - 1].monsters = yendorWardenNode;
+    prependCreature(&levels[rogue.yendorWarden->depth - 1].monsters, rogue.yendorWarden);
     rogue.yendorWarden->bookkeepingFlags |= MB_PREPLACED;
     rogue.yendorWarden->status[STATUS_ENTERS_LEVEL_IN] = 50;
 }
@@ -1341,11 +1340,8 @@ void monstersFall() {
     char buf[DCOLS], buf2[DCOLS];
 
     // monsters plunge into chasms at the end of the turn
-    creatureListNode *nextCreatureNode;
-    for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = nextCreatureNode) {
-        nextCreatureNode = monstNode->nextCreature;
-
-        creature *monst = &(monstNode->creature);
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
         if ((monst->bookkeepingFlags & MB_IS_FALLING) || monsterShouldFall(monst)) {
             if (BROGUE_VERSION_ATLEAST(1,9,3)) monst->bookkeepingFlags |= MB_IS_FALLING;
 
@@ -1379,11 +1375,10 @@ void monstersFall() {
                 }
 
                 // remove from monster chain
-                removeMonsterFromChain(monst, &monsters->nextCreature);
+                removeCreature(&monsters, monst);
 
                 // add to next level's chain
-                monstNode->nextCreature = levels[rogue.depthLevel-1 + 1].monsters;
-                levels[rogue.depthLevel-1 + 1].monsters = monstNode;
+                prependCreature(&levels[rogue.depthLevel-1 + 1].monsters, monst);
 
                 monst->depth = rogue.depthLevel + 1;
 
@@ -1894,10 +1889,9 @@ void monsterEntersLevel(creature *monst, short n) {
     }
 
     // remove traversing monster from other level monster chain
-    creatureListNode *monstNode = removeMonsterFromChain(monst, &levels[n].monsters);
+    removeCreature(&levels[n].monsters, monst);
     // prepend traversing monster to current level monster chain
-    monstNode->nextCreature = monsters->nextCreature;
-    monsters->nextCreature = monstNode;
+    prependCreature(&monsters, monst);
 
     monst->status[STATUS_ENTERS_LEVEL_IN] = 0;
     monst->bookkeepingFlags |= MB_PREPLACED;
@@ -1933,16 +1927,13 @@ void monstersApproachStairs() {
 
     for (n = rogue.depthLevel - 2; n <= rogue.depthLevel; n += 2) { // cycle through previous and next level
         if (n >= 0 && n < DEEPEST_LEVEL && levels[n].visited) {
-            for (creatureListNode *monstNode = levels[n].monsters; monstNode != NULL;) {
-                creatureListNode *nextMonst = monstNode->nextCreature;
-
-                creature *monst = &(monstNode->creature);
+            for (creatureIterator it = iterateCreatures(&levels[n].monsters); hasNextCreature(it);) {
+                creature *monst = nextCreature(&it);
                 if (monst->status[STATUS_ENTERS_LEVEL_IN] > 1) {
                     monst->status[STATUS_ENTERS_LEVEL_IN]--;
                 } else if (monst->status[STATUS_ENTERS_LEVEL_IN] == 1) {
                     monsterEntersLevel(monst, n);
                 }
-                monstNode = nextMonst;
             }
         }
     }
@@ -2189,7 +2180,11 @@ void playerRecoversFromAttacking(boolean anAttackHit) {
 
 
 static void recordCurrentCreatureHealths() {
-    CYCLE_MONSTERS_AND_PLAYERS(monst) {
+
+    boolean handledPlayer = false;
+    for (creatureIterator it = iterateCreatures(&monsters); !handledPlayer || hasNextCreature(it);) {
+        creature *monst = !handledPlayer ? &player : nextCreature(&it);
+        handledPlayer = true;
         monst->previousHealthPoints = monst->currentHP;
     }
 }
@@ -2282,11 +2277,8 @@ void playerTurnEnded() {
             analyzeMap(false); // Don't need to update the chokemap.
         }
 
-        creatureListNode *nextMonstNode;
-        for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = nextMonstNode) {
-            nextMonstNode = monstNode->nextCreature;
-
-            creature *monst = &(monstNode->creature);
+        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            creature *monst = nextCreature(&it);
             if ((monst->bookkeepingFlags & MB_BOUND_TO_LEADER)
                 && (!monst->leader || !(monst->bookkeepingFlags & MB_FOLLOWER))
                 && (monst->creatureState != MONSTER_ALLY)) {
@@ -2336,8 +2328,8 @@ void playerTurnEnded() {
         rogue.updatedAllySafetyMapThisTurn      = false;
         rogue.updatedMapToSafeTerrainThisTurn   = false;
 
-        for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-            creature *monst = &(monstNode->creature);
+        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            creature *monst = nextCreature(&it);
             if (D_SAFETY_VISION || monst->creatureState == MONSTER_FLEEING && pmap[monst->xLoc][monst->yLoc].flags & IN_FIELD_OF_VIEW) {
                 updateSafetyMap(); // only if there is a fleeing monster who can see the player
                 break;
@@ -2358,14 +2350,14 @@ void playerTurnEnded() {
 
         while (player.ticksUntilTurn > 0) {
             soonestTurn = 10000;
-            for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-                creature *monst = &(monstNode->creature);
+            for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+                creature *monst = nextCreature(&it);
                 soonestTurn = min(soonestTurn, monst->ticksUntilTurn);
             }
             soonestTurn = min(soonestTurn, player.ticksUntilTurn);
             soonestTurn = min(soonestTurn, rogue.ticksTillUpdateEnvironment);
-            for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-                creature *monst = &(monstNode->creature);
+            for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+                creature *monst = nextCreature(&it);
                 monst->ticksUntilTurn -= soonestTurn;
             }
             rogue.ticksTillUpdateEnvironment -= soonestTurn;
@@ -2377,32 +2369,26 @@ void playerTurnEnded() {
                 processIncrementalAutoID();   // become more familiar with worn armor and rings
                 rogue.monsterSpawnFuse--; // monsters spawn in the level every so often
 
-                for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL;) {
-                    creatureListNode *nextMonst = monstNode->nextCreature;
-                    creature *monst = &(monstNode->creature);
+                for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+                    creature *monst = nextCreature(&it);
                     applyInstantTileEffectsToCreature(monst);
-                    monstNode = nextMonst; // this weirdness is in case the monster dies in the previous step
                 }
 
-                for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL;) {
-                    creatureListNode *nextMonst = monstNode->nextCreature;
-                    creature *monst = &(monstNode->creature);
+                for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+                    creature *monst = nextCreature(&it);
                     decrementMonsterStatus(monst);
-                    monstNode = nextMonst;
                 }
 
                 // monsters with a dungeon feature spawn it every so often
-                for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL;) {
-                    creatureListNode *nextMonst = monstNode->nextCreature;
+                for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+                    creature *monst = nextCreature(&it);
 
-                    creature *monst = &(monstNode->creature);
                     if (monst->info.DFChance
                         && !(monst->info.flags & MONST_GETS_TURN_ON_ACTIVATION)
                         && rand_percent(monst->info.DFChance)) {
 
                         spawnDungeonFeature(monst->xLoc, monst->yLoc, &dungeonFeatureCatalog[monst->info.DFType], true, false);
                     }
-                    monstNode = nextMonst;
                 }
 
                 updateEnvironment(); // Update fire and gas, items floating around in water, monsters falling into chasms, etc.
@@ -2425,8 +2411,8 @@ void playerTurnEnded() {
                 refreshWaypoint(rogue.wpRefreshTicker);
             }
 
-            for (creatureListNode *monstNode = monsters->nextCreature; (monstNode != NULL) && (rogue.gameHasEnded == false); monstNode = monstNode->nextCreature) {
-                creature *monst = &(monstNode->creature);
+            for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+                creature *monst = nextCreature(&it);
                 if (monst->ticksUntilTurn <= 0) {
                     if (monst->currentHP > monst->info.maxHP) {
                         monst->currentHP = monst->info.maxHP;
@@ -2443,14 +2429,14 @@ void playerTurnEnded() {
                         monstersTurn(monst);
                     }
 
-                    for(creatureListNode *monstNode2 = monsters->nextCreature; monstNode2 != NULL; monstNode2 = monstNode2->nextCreature) {
-                        creature *monst2 = &(monstNode2->creature);
+                    for (creatureIterator it2 = iterateCreatures(&monsters); hasNextCreature(it2);) {
+                        creature *monst2 = nextCreature(&it2);
                         if (monst2 == monst) { // monst still alive and on the level
                             applyGradualTileEffectsToCreature(monst, monst->ticksUntilTurn);
                             break;
                         }
                     }
-                    monstNode = monsters; // loop through from the beginning to be safe
+                    restartIterator(&it); // loop through from the beginning to be safe
                 }
             }
 
@@ -2469,8 +2455,8 @@ void playerTurnEnded() {
             displayLevel();
         }
 
-        for(creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-            creature *monst = &(monstNode->creature);
+        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            creature *monst = nextCreature(&it);
             if (canSeeMonster(monst) && !(monst->bookkeepingFlags & (MB_WAS_VISIBLE | MB_ALREADY_SEEN))) {
                 if (monst->creatureState != MONSTER_ALLY) {
                     rogue.disturbed = true;

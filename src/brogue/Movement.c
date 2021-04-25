@@ -480,13 +480,13 @@ void moveEntrancedMonsters(enum directions dir) {
     dir = oppositeDirection(dir);
 
     if (BROGUE_VERSION_ATLEAST(1,9,3)) {
-        for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-            creature *monst = &(monstNode->creature);
+        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            creature *monst = nextCreature(&it);
             monst->bookkeepingFlags &= ~MB_HAS_ENTRANCED_MOVED;
         }
 
-        for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-            creature *monst = &(monstNode->creature);
+        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            creature *monst = nextCreature(&it);
             if (!(monst->bookkeepingFlags & MB_HAS_ENTRANCED_MOVED)
                 && monst->status[STATUS_ENTRANCED]
                 && !monst->status[STATUS_STUCK]
@@ -495,15 +495,13 @@ void moveEntrancedMonsters(enum directions dir) {
 
                 moveMonster(monst, nbDirs[dir][0], nbDirs[dir][1]);
                 monst->bookkeepingFlags |= MB_HAS_ENTRANCED_MOVED;
-                monstNode = monsters; // loop through from the beginning to be safe
+                restartIterator(&it); // loop through from the beginning to be safe
             }
         }
 
     } else {
-        creatureListNode *nextMonst;
-        for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = nextMonst) {
-            nextMonst = monstNode->nextCreature;
-            creature *monst = &(monstNode->creature);
+        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            creature *monst = nextCreature(&it);
             if (monst->status[STATUS_ENTRANCED]
                 && !monst->status[STATUS_STUCK]
                 && !monst->status[STATUS_PARALYZED]
@@ -524,7 +522,7 @@ void becomeAllyWith(creature *monst) {
     }
     // If you're going to change into something, it should be friendly.
     if (monst->carriedMonster) {
-        becomeAllyWith(&monst->carriedMonster->creature);
+        becomeAllyWith(monst->carriedMonster);
     }
     monst->creatureState = MONSTER_ALLY;
     monst->bookkeepingFlags |= MB_FOLLOWER;
@@ -744,8 +742,8 @@ void buildFlailHitList(const short x, const short y, const short newX, const sho
     short mx, my;
     short i = 0;
 
-    for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-        creature *monst = &(monstNode->creature);
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
         mx = monst->xLoc;
         my = monst->yLoc;
         if (distanceBetween(x, y, mx, my) == 1
@@ -980,8 +978,8 @@ boolean playerMoves(short direction) {
         }
 
         if (player.bookkeepingFlags & MB_SEIZED) {
-            for (creatureListNode *tempMonstNode = monsters->nextCreature; tempMonstNode != NULL; tempMonstNode = tempMonstNode->nextCreature) {
-                creature *tempMonst = &(tempMonstNode->creature);
+            for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+                creature *tempMonst = nextCreature(&it);
                 if ((tempMonst->bookkeepingFlags & MB_SEIZING)
                     && monstersAreEnemies(&player, tempMonst)
                     && distanceBetween(player.xLoc, player.yLoc, tempMonst->xLoc, tempMonst->yLoc) == 1
@@ -1530,8 +1528,8 @@ void travelRoute(short path[1000][2], short steps) {
     rogue.disturbed = false;
     rogue.automationActive = true;
 
-    for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-        creature *monst = &(monstNode->creature);
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
         if (canSeeMonster(monst)) {
             monst->bookkeepingFlags |= MB_ALREADY_SEEN;
         } else {
@@ -1928,8 +1926,8 @@ boolean explore(short frameDelay) {
         return false;
     }
 
-    for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-        creature *monst = &(monstNode->creature);
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
         if (canSeeMonster(monst)) {
             monst->bookkeepingFlags |= MB_ALREADY_SEEN;
         } else {

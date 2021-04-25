@@ -1228,9 +1228,6 @@ boolean cellHasTerrainFlag(short x, short y, unsigned long flagMask);
                                             || (rogue.playbackOmniscience \
                                                 && (pmap[x][y].layers[DUNGEON] != GRANITE || (pmap[x][y].flags & DISCOVERED))))
 
-#define CYCLE_MONSTERS_AND_PLAYERS_OLD(x)       for ((x) = &player; (x) != NULL; (x) = ((x) == &player ? monsters->nextCreature : (x)->nextCreature))
-#define CYCLE_MONSTERS_AND_PLAYERS(var) creatureListNode *var ## Node = NULL; for (creature* var = &player; var ## Node != NULL || var == &player; (var ## Node = (var == &player ? monsters->nextCreature : var ## Node->nextCreature)), var = &(var ## Node->creature) )
-
 #define assureCosmeticRNG                   short oldRNG = rogue.RNG; rogue.RNG = RNG_COSMETIC;
 #define restoreRNG                          rogue.RNG = oldRNG;
 
@@ -2199,15 +2196,24 @@ typedef struct creature {
     short totalPowerCount;              // how many times has the monster been empowered? Used to recover abilities when negated.
 
     struct creature *leader;                 // only if monster is a follower
-    struct creatureListNode *carriedMonster; // when vampires turn into bats, one of the bats restores the vampire when it dies
+    struct creature *carriedMonster; // when vampires turn into bats, one of the bats restores the vampire when it dies
     struct item *carriedItem;                // only used for monsters
 } creature;
 
 typedef struct creatureListNode {
-    creature creature;
+    creature *creature;
     // A list node is just a creature that also knows who comes next.
     struct creatureListNode *nextCreature;
 } creatureListNode;
+
+typedef struct creatureList {
+    creatureListNode* head;
+} creatureList;
+
+typedef struct creatureIterator {
+    creatureList *list; // used for restarting
+    creatureListNode *next;
+} creatureIterator;
 
 enum NGCommands {
     NG_NOTHING = 0,
@@ -2373,8 +2379,8 @@ typedef struct levelData {
     boolean visited;
     pcell mapStorage[DCOLS][DROWS];
     struct item *items;
-    struct creatureListNode *monsters;
-    struct creatureListNode *dormantMonsters;
+    struct creatureList monsters;
+    struct creatureList dormantMonsters;
     short **scentMap;
     uint64_t levelSeed;
     short upStairsLoc[2];
@@ -2825,8 +2831,9 @@ extern "C" {
     void initializeLevel();
     void startLevel (short oldLevelNumber, short stairDirection);
     void updateMinersLightRadius();
-    void freeCreatureNode(creatureListNode *monst);
+    void freeCreature(creature *monst);
     void freeCreatureListEntire(creatureListNode **monst);
+    void freeCreatureList(creatureList *list);
     void emptyGraveyard();
     void freeEverything();
     boolean randomMatchingLocation(short *x, short *y, short dungeonType, short liquidType, short terrainType);
@@ -2936,7 +2943,16 @@ extern "C" {
     short chooseMonster(short forLevel);
     creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFlags, unsigned long requiredFlags);
     void fadeInMonster(creature *monst);
-    creatureListNode* removeMonsterFromChain(creature *monst, creatureListNode **theChain);
+
+    creatureList createCreatureList();
+    creatureIterator iterateCreatures(creatureList *list);
+    boolean hasNextCreature(creatureIterator iter);
+    creature *nextCreature(creatureIterator *iter);
+    void restartIterator(creatureIterator *iter);
+    void prependCreature(creatureList *list, creature *add);
+    boolean removeCreature(creatureList *list, creature *remove);
+    creature *firstCreature(creatureList *list);
+
     boolean monsterWillAttackTarget(const creature *attacker, const creature *defender);
     boolean monstersAreTeammates(const creature *monst1, const creature *monst2);
     boolean monstersAreEnemies(const creature *monst1, const creature *monst2);

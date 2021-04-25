@@ -806,8 +806,8 @@ void pickUpItemAt(short x, short y) {
         if ((theItem->category & AMULET)
             && !(rogue.yendorWarden)) {
             // Identify the amulet guardian, or generate one if there isn't one.
-            for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-                creature *monst = &(monstNode->creature);
+            for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+                creature *monst = nextCreature(&it);
                 if (monst->info.monsterID == MK_WARDEN_OF_YENDOR) {
                     rogue.yendorWarden = monst;
                     break;
@@ -3241,8 +3241,8 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
     fillGrid(grid, 0);
     calculateDistances(grid, x, y, T_PATHING_BLOCKER, NULL, true, false);
 
-    for (creatureListNode *monstNode=monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-        creature *monst = &(monstNode->creature);
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
         if (grid[monst->xLoc][monst->yLoc] <= distance) {
             if (monst->creatureState == MONSTER_SLEEPING) {
                 wakeUp(monst);
@@ -3740,7 +3740,7 @@ boolean polymorph(creature *monst) {
 
     // After polymorphing, don't "drop" any creature on death (e.g. phylactery, phoenix egg)
     if (monst->carriedMonster) {
-        freeCreatureNode(monst->carriedMonster);
+        freeCreature(monst->carriedMonster);
         monst->carriedMonster = NULL;
     }
 
@@ -3872,11 +3872,11 @@ void heal(creature *monst, short percent, boolean panacea) {
 
 void makePlayerTelepathic(short duration) {
     player.status[STATUS_TELEPATHIC] = player.maxStatus[STATUS_TELEPATHIC] = duration;
-    for (creatureListNode *monstNode=monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-        creature *monst = &(monstNode->creature);
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
         refreshDungeonCell(monst->xLoc, monst->yLoc);
     }
-    if (monsters->nextCreature == NULL) {
+    if (monsters.head == NULL) {
         message("you can somehow tell that you are alone on this depth at the moment.", 0);
     } else {
         message("you can somehow feel the presence of other creatures' minds!", 0);
@@ -3976,9 +3976,8 @@ void negationBlast(const char *emitterName, const short distance) {
     colorFlash(&pink, 0, IN_FIELD_OF_VIEW, 3 + distance / 5, distance, player.xLoc, player.yLoc);
     negate(&player);
     flashMonster(&player, &pink, 100);
-    for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL;) {
-        creatureListNode *nextMonstNode = monstNode->nextCreature;
-        creature *monst = &(monstNode->creature);
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
         if ((pmap[monst->xLoc][monst->yLoc].flags & IN_FIELD_OF_VIEW)
             && (player.xLoc - monst->xLoc) * (player.xLoc - monst->xLoc) + (player.yLoc - monst->yLoc) * (player.yLoc - monst->yLoc) <= distance * distance) {
 
@@ -3987,7 +3986,6 @@ void negationBlast(const char *emitterName, const short distance) {
             }
             negate(monst); // This can be fatal.
         }
-        monstNode = nextMonstNode;
     }
     for (theItem = floorItems; theItem != NULL; theItem = theItem->nextItem) {
         if ((pmap[theItem->xLoc][theItem->yLoc].flags & IN_FIELD_OF_VIEW)
@@ -4031,9 +4029,8 @@ void discordBlast(const char *emitterName, const short distance) {
     sprintf(buf, "%s emits a wave of unsettling purple radiation!", emitterName);
     messageWithColor(buf, &itemMessageColor, 0);
     colorFlash(&discordColor, 0, IN_FIELD_OF_VIEW, 3 + distance / 5, distance, player.xLoc, player.yLoc);
-    for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL;) {
-        creatureListNode *nextMonstNode = monstNode->nextCreature;
-        creature *monst = &(monstNode->creature);
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
         if ((pmap[monst->xLoc][monst->yLoc].flags & IN_FIELD_OF_VIEW)
             && (player.xLoc - monst->xLoc) * (player.xLoc - monst->xLoc) + (player.yLoc - monst->yLoc) * (player.yLoc - monst->yLoc) <= distance * distance) {
 
@@ -4044,7 +4041,6 @@ void discordBlast(const char *emitterName, const short distance) {
                 monst->status[STATUS_DISCORDANT] = monst->maxStatus[STATUS_DISCORDANT] = 30;
             }
         }
-        monstNode = nextMonstNode;
     }
 }
 
@@ -6999,8 +6995,8 @@ void drinkPotion(item *theItem) {
                     }
                 }
             }
-            for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-                creature *monst = &(monstNode->creature);
+            for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+                creature *monst = nextCreature(&it);
                 if (monst->carriedItem && (monst->carriedItem->category & CAN_BE_DETECTED)) {
                     detectMagicOnItem(monst->carriedItem);
                     if (itemMagicPolarity(monst->carriedItem)) {

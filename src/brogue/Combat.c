@@ -267,8 +267,8 @@ void splitMonster(creature *monst, short x, short y) {
 
 short alliedCloneCount(creature *monst) {
     short count = 0;
-    for (creatureListNode *tempNode = monsters->nextCreature; tempNode != NULL; tempNode = tempNode->nextCreature) {
-        creature *temp = &(tempNode->creature);
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature *temp = nextCreature(&it);
         if (temp != monst
             && temp->info.monsterID == monst->info.monsterID
             && monstersAreTeammates(temp, monst)) {
@@ -277,8 +277,8 @@ short alliedCloneCount(creature *monst) {
         }
     }
     if (rogue.depthLevel > 1) {
-        for (creatureListNode *tempNode = levels[rogue.depthLevel - 2].monsters; tempNode != NULL; tempNode = tempNode->nextCreature) {
-            creature *temp = &(tempNode->creature);
+        for (creatureIterator it = iterateCreatures(&levels[rogue.depthLevel - 2].monsters); hasNextCreature(it);) {
+            creature *temp = nextCreature(&it);
             if (temp != monst
                 && temp->info.monsterID == monst->info.monsterID
                 && monstersAreTeammates(temp, monst)) {
@@ -288,8 +288,8 @@ short alliedCloneCount(creature *monst) {
         }
     }
     if (rogue.depthLevel < DEEPEST_LEVEL) {
-        for (creatureListNode *tempNode = levels[rogue.depthLevel].monsters; tempNode != NULL; tempNode = tempNode->nextCreature) {
-            creature *temp = &(tempNode->creature);
+        for (creatureIterator it = iterateCreatures(&levels[rogue.depthLevel].monsters); hasNextCreature(it);) {
+            creature *temp = nextCreature(&it);
             if (temp != monst
                 && temp->info.monsterID == monst->info.monsterID
                 && monstersAreTeammates(temp, monst)) {
@@ -826,12 +826,9 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
                     monst->ticksUntilTurn = 100;
                     monst->info.monsterID = MK_SPECTRAL_IMAGE;
                     if (monst->carriedMonster) {
-                        // We should only kill creatures that exist in the world:
-                        creatureListNode *carried = monst->carriedMonster;
+                        creature *carried = monst->carriedMonster;
                         monst->carriedMonster = NULL;
-                        carried->nextCreature = monsters->nextCreature;
-                        monsters->nextCreature = carried;
-                        killCreature(&(carried->creature), true); // Otherwise you can get infinite phoenices from a discordant phoenix.
+                        killCreature(carried, true); // Otherwise you can get infinite phoenices from a discordant phoenix.
                     }
 
                     // Give it the glowy red light and color.
@@ -1391,8 +1388,8 @@ boolean anyoneWantABite(creature *decedent) {
     grid = allocGrid();
     fillGrid(grid, 0);
     calculateDistances(grid, decedent->xLoc, decedent->yLoc, T_PATHING_BLOCKER, NULL, true, true);
-    for (creatureListNode *allyNode = monsters->nextCreature; allyNode != NULL; allyNode = allyNode->nextCreature) {
-        creature *ally = &(allyNode->creature);
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature *ally = nextCreature(&it);
         if (canAbsorb(ally, ourBolts, decedent, grid)) {
             candidates++;
         }
@@ -1400,8 +1397,8 @@ boolean anyoneWantABite(creature *decedent) {
     if (candidates > 0) {
         randIndex = rand_range(1, candidates);
         creature *firstAlly = NULL;
-        for (creatureListNode *allyNode = monsters->nextCreature; allyNode != NULL; allyNode = allyNode->nextCreature) {
-            creature *ally = &(allyNode->creature);
+        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            creature *ally = nextCreature(&it);
             // CanAbsorb() populates ourBolts if it returns true and there are no learnable behaviors or flags:
             if (canAbsorb(ally, ourBolts, decedent, grid) && !--randIndex) {
                 firstAlly = ally;
@@ -1675,34 +1672,27 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
             pmap[x][y].flags &= ~HAS_MONSTER;
         }
         // Obtain the node from either list.
-        creatureListNode *decedentNode = removeMonsterFromChain(decedent, &dormantMonsters->nextCreature);
-        if (!decedentNode) {
-            decedentNode = removeMonsterFromChain(decedent, &monsters->nextCreature);
-        }
-        if (!decedentNode) {
-            // TODO: panic or blow up or something.
-            // I think this is impossible but I can't be sure.
-        }
+        removeCreature(&dormantMonsters, decedent);
+        removeCreature(&monsters, decedent);
 
         if (decedent->leader == &player
             && !(decedent->info.flags & MONST_INANIMATE)
             && (decedent->bookkeepingFlags & MB_HAS_SOUL)
             && !administrativeDeath) {
-
-            decedentNode->nextCreature = purgatory->nextCreature;
-            purgatory->nextCreature = decedentNode;
+            prependCreature(&purgatory, decedent);
         } else {
-            decedentNode->nextCreature = graveyard->nextCreature;
-            graveyard->nextCreature = decedentNode;
+            prependCreature(&graveyard, decedent);
+
         }
 
         if (!administrativeDeath && !(decedent->bookkeepingFlags & MB_IS_DORMANT)) {
             // Was there another monster inside?
             if (decedent->carriedMonster) {
                 // Insert it into the chain.
-                decedent->carriedMonster->nextCreature = monsters->nextCreature;
-                monsters->nextCreature = decedent->carriedMonster;
-                creature *carriedMonster = &(decedent->carriedMonster->creature);
+                creature *carriedMonster = decedent->carriedMonster;
+                decedent->carriedMonster = NULL;
+                prependCreature(&monsters, carriedMonster);
+                
                 carriedMonster->xLoc = x;
                 carriedMonster->yLoc = y;
                 carriedMonster->ticksUntilTurn = 200;
@@ -1716,7 +1706,6 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
                 }
 
                 applyInstantTileEffectsToCreature(carriedMonster);
-                decedent->carriedMonster = NULL;
             }
             refreshDungeonCell(x, y);
         }

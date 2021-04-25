@@ -1599,11 +1599,8 @@ boolean buildAMachine(enum machineTypes bp,
                             }
                         }
 
-                        creatureListNode *nextMonstNode = NULL;
-                        for (creatureListNode *monstNode = monsters->nextCreature; monstNode; monstNode = nextMonstNode) {
-                            // Have to cache the next monster, as the chain can get disrupted by making a monster dormant below.
-                            nextMonstNode = monstNode->nextCreature;
-                            creature *monst = &(monstNode->creature);
+                        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+                            creature *monst = nextCreature(&it);
                             if (monst->bookkeepingFlags & MB_JUST_SUMMONED) {
 
                                 // All monsters spawned by a machine are tribemates.
@@ -2986,8 +2983,8 @@ void refreshWaypoint(short wpIndex) {
 
     costMap = allocGrid();
     populateGenericCostMap(costMap);
-    for (creatureListNode* monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-        creature* monst = &(monstNode->creature);
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature* monst = nextCreature(&it);
         if ((monst->creatureState == MONSTER_SLEEPING || (monst->info.flags & MONST_IMMOBILE) || (monst->bookkeepingFlags & MB_CAPTIVE))
             && costMap[monst->xLoc][monst->yLoc] >= 0) {
 
@@ -3453,12 +3450,12 @@ boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refr
 
         // awaken dormant creatures?
         if (feat->flags & DFF_ACTIVATE_DORMANT_MONSTER) {
-            for (creatureListNode* monstNode = dormantMonsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-                creature *monst = &(monstNode->creature);
+            for (creatureIterator it = iterateCreatures(&dormantMonsters); hasNextCreature(it);) {
+                creature *monst = nextCreature(&it);
                 if (monst->xLoc == x && monst->yLoc == y || blockingMap[monst->xLoc][monst->yLoc]) {
                     // found it!
                     toggleMonsterDormancy(monst);
-                    monstNode = dormantMonsters;
+                    restartIterator(&it);
                 }
             }
         }
@@ -3520,8 +3517,8 @@ void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
 
     if (monst->bookkeepingFlags & MB_FOLLOWER) {
         // is the leader on the same level?
-        for (creatureListNode *leaderNode = monsters->nextCreature; leaderNode != NULL; leaderNode = leaderNode->nextCreature) {
-            creature *leader = &(leaderNode->creature);
+        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            creature *leader = nextCreature(&it);
             if (leader == monst->leader) {
                 foundLeader = true;
                 break;
@@ -3755,8 +3752,8 @@ void initializeLevel() {
                        NULL,
                        true,
                        true);
-    for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-        creature *monst = &(monstNode->creature);
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
         restoreMonster(monst, mapToStairs, mapToPit);
     }
     freeGrid(mapToStairs);

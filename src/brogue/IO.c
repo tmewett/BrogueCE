@@ -3010,7 +3010,10 @@ void displayMonsterFlashes(boolean flashingEnabled) {
     rogue.RNG = RNG_COSMETIC;
     //assureCosmeticRNG;
 
-    CYCLE_MONSTERS_AND_PLAYERS(monst) {
+    boolean handledPlayer = false;
+    for (creatureIterator it = iterateCreatures(&monsters); !handledPlayer || hasNextCreature(it);) {
+        creature *monst = !handledPlayer ? &player : nextCreature(&it);
+        handledPlayer = true;
         if (monst->bookkeepingFlags & MB_WILL_FLASH) {
             monst->bookkeepingFlags &= ~MB_WILL_FLASH;
             if (flashingEnabled && canSeeMonster(monst) && count < 100) {
@@ -3805,8 +3808,8 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
         // Non-focused monsters.
         do {
             shortestDistance = 10000;
-            for (creatureListNode *monstNode = monsters->nextCreature; monstNode != NULL; monstNode = monstNode->nextCreature) {
-                creature *monst = &(monstNode->creature);
+            for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+                creature *monst = nextCreature(&it);
                 if ((canDirectlySeeMonster(monst) || (indirectVision && (canSeeMonster(monst) || rogue.playbackOmniscience)))
                     && !addedEntity[monst->xLoc][monst->yLoc]
                     && !(monst->info.flags & MONST_NOT_LISTED_IN_SIDEBAR)
