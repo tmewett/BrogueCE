@@ -157,6 +157,7 @@ extern const color inLightMultiplierColor;
 extern const color inDarknessMultiplierColor;
 
 extern const color buttonHoverColor;
+extern const color buttonFocusColor;
 extern color titleButtonColor;
 
 // other colors

@@ -2970,6 +2970,9 @@ boolean confirm(char *prompt, boolean alsoDuringPlayback) {
     buttons[0].hotkey[1] = 'Y';
     buttons[0].hotkey[2] = RETURN_KEY;
     buttons[0].flags |= (B_WIDE_CLICK_AREA | B_KEYPRESS_HIGHLIGHT);
+    // A (weakly followed) convention is that the key bound to Return should be
+    // visibly highlighted.
+    buttons[0].buttonColor = buttonFocusColor;
 
     initializeButton(&(buttons[1]));
     sprintf(buttons[1].text, "     %sN%so      ", yellowColorEscape, whiteColorEscape);
@@ -5141,77 +5144,159 @@ unsigned long printCarriedItemDetails(item *theItem,
 
     itemDetails(textBuf, theItem);
 
-    for (b=0; b<20; b++) {
-        initializeButton(&(buttons[b]));
-        buttons[b].flags |= B_WIDE_CLICK_AREA;
-    }
+    cellDisplayBuffer oldbuf[COLS][ROWS];
+    clearDisplayBuffer(oldbuf);
 
-    b = 0;
-    if (includeButtons) {
-        encodeMessageColor(goldColorEscape, 0, KEYBOARD_LABELS ? &yellow : &white);
-        encodeMessageColor(whiteColorEscape, 0, &white);
+    cellDisplayBuffer emptybuf[COLS][ROWS];
+    clearDisplayBuffer(emptybuf);
+    overlayDisplayBuffer(emptybuf, oldbuf);
 
-        if (theItem->category & (FOOD | SCROLL | POTION | WAND | STAFF | CHARM)) {
-            sprintf(buttons[b].text, "   %sa%spply   ", goldColorEscape, whiteColorEscape);
-            buttons[b].hotkey[0] = APPLY_KEY;
-            b++;
+    // Tracks which of the options have been selected (initially none).
+    // If the user pressed left/right then this scrolls through the options
+    // without returning to the inventory screen.
+    int activeChoice = -1;
+
+    while (true) {
+        overlayDisplayBuffer(oldbuf, NULL);
+
+        for (b=0; b<20; b++) {
+            initializeButton(&(buttons[b]));
+            buttons[b].flags |= B_WIDE_CLICK_AREA;
         }
-        if (theItem->category & (ARMOR | WEAPON | RING)) {
-            if (theItem->flags & ITEM_EQUIPPED) {
-                sprintf(buttons[b].text, "  %sr%semove   ", goldColorEscape, whiteColorEscape);
-                buttons[b].hotkey[0] = UNEQUIP_KEY;
-                b++;
-            } else {
-                sprintf(buttons[b].text, "   %se%squip   ", goldColorEscape, whiteColorEscape);
-                buttons[b].hotkey[0] = EQUIP_KEY;
+
+        int lastButtonChoiceIndex = -1;
+        int primaryAction = -1;
+        b = 0;
+        if (includeButtons) {
+            encodeMessageColor(goldColorEscape, 0, KEYBOARD_LABELS ? &yellow : &white);
+            encodeMessageColor(whiteColorEscape, 0, &white);
+
+            if (theItem->category & (FOOD | SCROLL | POTION | WAND | STAFF | CHARM)) {
+                sprintf(buttons[b].text, "   %sa%spply   ", goldColorEscape, whiteColorEscape);
+                buttons[b].hotkey[0] = APPLY_KEY;
+                primaryAction = b;
                 b++;
             }
-        }
-        sprintf(buttons[b].text, "   %sd%srop    ", goldColorEscape, whiteColorEscape);
-        buttons[b].hotkey[0] = DROP_KEY;
-        b++;
+            if (theItem->category & (ARMOR | WEAPON | RING)) {
+                if (theItem->flags & ITEM_EQUIPPED) {
+                    sprintf(buttons[b].text, "  %sr%semove   ", goldColorEscape, whiteColorEscape);
+                    buttons[b].hotkey[0] = UNEQUIP_KEY;
+                    primaryAction = b;
+                    b++;
+                } else {
+                    sprintf(buttons[b].text, "   %se%squip   ", goldColorEscape, whiteColorEscape);
+                    buttons[b].hotkey[0] = EQUIP_KEY;
+                    primaryAction = b;
+                    b++;
+                }
+            }
+            sprintf(buttons[b].text, "   %sd%srop    ", goldColorEscape, whiteColorEscape);
+            buttons[b].hotkey[0] = DROP_KEY;
+            b++;
 
-        sprintf(buttons[b].text, "   %st%shrow   ", goldColorEscape, whiteColorEscape);
-        buttons[b].hotkey[0] = THROW_KEY;
-        b++;
+            sprintf(buttons[b].text, "   %st%shrow   ", goldColorEscape, whiteColorEscape);
+            buttons[b].hotkey[0] = THROW_KEY;
+            b++;
 
-        if (itemCanBeCalled(theItem)) {
-            sprintf(buttons[b].text, "   %sc%sall    ", goldColorEscape, whiteColorEscape);
-            buttons[b].hotkey[0] = CALL_KEY;
+            if (itemCanBeCalled(theItem)) {
+                sprintf(buttons[b].text, "   %sc%sall    ", goldColorEscape, whiteColorEscape);
+                buttons[b].hotkey[0] = CALL_KEY;
+                b++;
+            }
+
+            if (KEYBOARD_LABELS) {
+                sprintf(buttons[b].text, "  %sR%selabel  ", goldColorEscape, whiteColorEscape);
+                buttons[b].hotkey[0] = RELABEL_KEY;
+                b++;
+            }
+
+            lastButtonChoiceIndex = b-1;
+
+            // Add invisible previous and next buttons, so up and down arrows can page through items.
+            // Previous
+            buttons[b].flags = B_ENABLED; // clear everything else
+            buttons[b].hotkey[0] = UP_KEY;
+            buttons[b].hotkey[1] = NUMPAD_8;
+            buttons[b].hotkey[2] = UP_ARROW;
+            b++;
+            // Next
+            buttons[b].flags = B_ENABLED; // clear everything else
+            buttons[b].hotkey[0] = DOWN_KEY;
+            buttons[b].hotkey[1] = NUMPAD_2;
+            buttons[b].hotkey[2] = DOWN_ARROW;
+            b++;
+
+            // Add invisible left and right buttons, so that a choice can be selected on the menu
+            // without mouse-clicking or pressing any key.
+            buttons[b].flags = B_ENABLED; // clear everything else
+            buttons[b].hotkey[0] = LEFT_KEY;
+            buttons[b].hotkey[1] = NUMPAD_4;
+            buttons[b].hotkey[2] = LEFT_ARROW;
+            b++;
+            buttons[b].flags = B_ENABLED; // clear everything else
+            buttons[b].hotkey[0] = RIGHT_KEY;
+            buttons[b].hotkey[1] = NUMPAD_6;
+            buttons[b].hotkey[2] = RIGHT_ARROW;
+            if (activeChoice == -1) {
+                buttons[b].hotkey[3] = RETURN_KEY;
+                buttons[b].hotkey[4] = ACKNOWLEDGE_KEY;
+            }
             b++;
         }
 
-        if (KEYBOARD_LABELS) {
-            sprintf(buttons[b].text, "  %sR%selabel  ", goldColorEscape, whiteColorEscape);
-            buttons[b].hotkey[0] = RELABEL_KEY;
-            b++;
+        for (int i = 0; i < b; i++) {
+            if (i == activeChoice) {
+                // If a button is focused, then Return or Space will
+                // allow it to be selected.
+                buttons[i].buttonColor = buttonFocusColor;
+                buttons[i].hotkey[1] = RETURN_KEY;
+                buttons[i].hotkey[2] = ACKNOWLEDGE_KEY;
+            }
         }
 
-        // Add invisible previous and next buttons, so up and down arrows can page through items.
-        // Previous
-        buttons[b].flags = B_ENABLED; // clear everything else
-        buttons[b].hotkey[0] = UP_KEY;
-        buttons[b].hotkey[1] = NUMPAD_8;
-        buttons[b].hotkey[2] = UP_ARROW;
-        b++;
-        // Next
-        buttons[b].flags = B_ENABLED; // clear everything else
-        buttons[b].hotkey[0] = DOWN_KEY;
-        buttons[b].hotkey[1] = NUMPAD_2;
-        buttons[b].hotkey[2] = DOWN_ARROW;
-        b++;
-    }
-    b = printTextBox(textBuf, x, y, width, &white, &interfaceBoxColor, rbuf, buttons, b);
+        if (primaryAction < 0) {
+            primaryAction = 0;
+        }
 
-    if (!includeButtons) {
-        waitForKeystrokeOrMouseClick();
-        return -1;
-    }
+        b = printTextBox(textBuf, x, y, width, &white, &interfaceBoxColor, rbuf, buttons, b);
 
-    if (b >= 0) {
-        return buttons[b].hotkey[0];
-    } else {
-        return -1;
+        if (!includeButtons) {
+            waitForKeystrokeOrMouseClick();
+            return -1;
+        }
+
+        if (buttons[b].hotkey[0] == LEFT_KEY || buttons[b].hotkey[0] == RIGHT_KEY) {
+            // Focus on one of the item's action buttons.
+            if (activeChoice < 0) {
+                // Always start with the "primary" action, which is assumed from
+                // the object's type.
+                activeChoice = primaryAction;
+            } else {
+                boolean increase = buttons[b].hotkey[0] == LEFT_KEY;
+                if (increase) {
+                    activeChoice = activeChoice == lastButtonChoiceIndex ? 0 : activeChoice + 1;
+                } else {
+                    activeChoice = activeChoice == 0 ? lastButtonChoiceIndex : activeChoice - 1;
+                }
+            }
+            // Draw the item details again, with the new button focused.
+            continue;
+        }
+
+        if (b >= 0) {
+            return buttons[b].hotkey[0];
+        } else {
+            if (activeChoice >= 0) {
+                // If a button is focused, then we just defocus it. This means
+                // that the same item is selected in inventory, so the player can
+                // scroll up/down to the next item.
+                activeChoice = -1;
+
+                // Draw the item details again, without any button focused.
+                continue;
+            }
+            return -1;
+        }
     }
 }
 
