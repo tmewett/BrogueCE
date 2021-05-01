@@ -1188,7 +1188,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
             if (armorRunicString[0]) {
                 message(armorRunicString, 0);
                 if (rogue.armor && (rogue.armor->flags & ITEM_RUNIC) && rogue.armor->enchant2 == A_BURDEN) {
-                    strengthCheck(rogue.armor);
+                    strengthCheck(rogue.armor, true);
                 }
             }
         }

@@ -3065,7 +3065,7 @@ extern "C" {
     item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind);
     void updateEncumbrance();
     short displayedArmorValue();
-    void strengthCheck(item *theItem);
+    void strengthCheck(item *theItem, boolean noisy);
     void recalculateEquipmentBonuses();
     boolean equipItem(item *theItem, boolean force, item *unequipHint);
     void equip(item *theItem);
