@@ -3069,12 +3069,12 @@ short displayedArmorValue() {
     }
 }
 
-void strengthCheck(item *theItem) {
+void strengthCheck(item *theItem, boolean noisy) {
     char buf1[COLS], buf2[COLS*2];
     short strengthDeficiency;
 
     updateEncumbrance();
-    if (theItem) {
+    if (noisy && theItem) {
         if (theItem->category & WEAPON && theItem->strengthRequired > rogue.strength - player.weaknessAmount) {
             strengthDeficiency = theItem->strengthRequired - max(0, rogue.strength - player.weaknessAmount);
             strcpy(buf1, "");
@@ -3714,8 +3714,8 @@ void weaken(creature *monst, short maxDuration) {
     monst->maxStatus[STATUS_WEAKENED] = max(monst->maxStatus[STATUS_WEAKENED], maxDuration);
     if (monst == &player) {
         messageWithColor("your muscles weaken as an enervating toxin fills your veins.", &badMessageColor, 0);
-        strengthCheck(rogue.weapon);
-        strengthCheck(rogue.armor);
+        strengthCheck(rogue.weapon, true);
+        strengthCheck(rogue.armor, true);
     }
 }
 
@@ -7405,13 +7405,13 @@ boolean equipItem(item *theItem, boolean force, item *unequipHint) {
     }
     if (theItem->category & WEAPON) {
         rogue.weapon = theItem;
-        strengthCheck(theItem);
+        strengthCheck(theItem, !force);
     } else if (theItem->category & ARMOR) {
         if (!force) {
             player.status[STATUS_DONNING] = player.maxStatus[STATUS_DONNING] = theItem->armor / 10;
         }
         rogue.armor = theItem;
-        strengthCheck(theItem);
+        strengthCheck(theItem, !force);
     } else if (theItem->category & RING) {
         if (rogue.ringLeft && rogue.ringRight) {
             return false; // no available ring slot and no hint, see equip()
@@ -7436,33 +7436,35 @@ boolean equipItem(item *theItem, boolean force, item *unequipHint) {
 
     itemName(theItem, buf2, true, true, NULL);
 
-    if (previouslyEquippedItem) {
-        itemName(previouslyEquippedItem, buf3, false, false, NULL);
-        sprintf(buf1, "Now %s %s instead of your %s.", (theItem->category & WEAPON ? "wielding" : "wearing"), buf2, buf3);
-    } else {
-        sprintf(buf1, "Now %s %s.", (theItem->category & WEAPON ? "wielding" : "wearing"), buf2);
-    }
-
-    confirmMessages();
-    messageWithColor(buf1, &itemMessageColor, false);
-
-    if (theItem->flags & ITEM_CURSED) {
-        itemName(theItem, buf2, false, false, NULL);
-        switch(theItem->category) {
-            case WEAPON:
-                sprintf(buf1, "you wince as your grip involuntarily tightens around your %s.", buf2);
-                break;
-            case ARMOR:
-                sprintf(buf1, "your %s constricts around you painfully.", buf2);
-                break;
-            case RING:
-                sprintf(buf1, "your %s tightens around your finger painfully.", buf2);
-                break;
-            default:
-                sprintf(buf1, "your %s seizes you with a malevolent force.", buf2);
-                break;
+    if (!force) {
+        if (previouslyEquippedItem) {
+            itemName(previouslyEquippedItem, buf3, false, false, NULL);
+            sprintf(buf1, "Now %s %s instead of your %s.", (theItem->category & WEAPON ? "wielding" : "wearing"), buf2, buf3);
+        } else {
+            sprintf(buf1, "Now %s %s.", (theItem->category & WEAPON ? "wielding" : "wearing"), buf2);
         }
-        messageWithColor(buf1, &itemMessageColor, 0);
+
+        confirmMessages();
+        messageWithColor(buf1, &itemMessageColor, false);
+
+        if (theItem->flags & ITEM_CURSED) {
+            itemName(theItem, buf2, false, false, NULL);
+            switch(theItem->category) {
+                case WEAPON:
+                    sprintf(buf1, "you wince as your grip involuntarily tightens around your %s.", buf2);
+                    break;
+                case ARMOR:
+                    sprintf(buf1, "your %s constricts around you painfully.", buf2);
+                    break;
+                case RING:
+                    sprintf(buf1, "your %s tightens around your finger painfully.", buf2);
+                    break;
+                default:
+                    sprintf(buf1, "your %s seizes you with a malevolent force.", buf2);
+                    break;
+            }
+            messageWithColor(buf1, &itemMessageColor, 0);
+        }
     }
 
     return true;
