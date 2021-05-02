@@ -654,7 +654,6 @@ void mainBrogueJunction() {
     for (i=0; i<COLS; i++) {
         for (j=0; j<ROWS; j++) {
             displayBuffer[i][j].character = 0;
-            displayBuffer[i][j].needsUpdate = false;
             displayBuffer[i][j].opacity = 100;
             for (k=0; k<3; k++) {
                 displayBuffer[i][j].foreColorComponents[k] = 0;
