@@ -1152,9 +1152,9 @@ void updateFloorItems() {
             refreshDungeonCell(loc[0], loc[1]);
             continue;
         }
-        if (cellHasTMFlag(x, y, TM_PROMOTES_ON_STEP)) {
+        if (cellHasTMFlag(x, y, TM_PROMOTES_ON_ITEM)) {
             for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
-                if (tileCatalog[pmap[x][y].layers[layer]].mechFlags & TM_PROMOTES_ON_STEP) {
+                if (tileCatalog[pmap[x][y].layers[layer]].mechFlags & TM_PROMOTES_ON_ITEM) {
                     promoteTile(x, y, layer, false);
                 }
             }

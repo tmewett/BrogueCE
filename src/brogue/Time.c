@@ -239,7 +239,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
         }
     }
 
-    if (cellHasTMFlag(*x, *y, TM_PROMOTES_ON_STEP)) { // flying creatures activate too
+    if (cellHasTMFlag(*x, *y, TM_PROMOTES_ON_CREATURE)) { // flying creatures activate too
         // Because this uses no pressure plate to keep track of whether it's already depressed,
         // it will trigger every time this function is called while the monster or player is on the tile.
         // Because this function can be called several times per turn, multiple promotions can
@@ -247,7 +247,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
         // attribute. That's acceptable for some effects, e.g. doors opening,
         // but not for others, e.g. magical glyphs activating.
         for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
-            if (tileCatalog[pmap[*x][*y].layers[layer]].mechFlags & TM_PROMOTES_ON_STEP) {
+            if (tileCatalog[pmap[*x][*y].layers[layer]].mechFlags & TM_PROMOTES_ON_CREATURE) {
                 promoteTile(*x, *y, layer, false);
             }
         }
