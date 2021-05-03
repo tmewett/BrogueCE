@@ -744,11 +744,21 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     px = player.xLoc;
     py = player.yLoc;
     player.xLoc = player.yLoc = 0;
-    for (i = 0; i < 100 && i < (short) timeAway; i++) {
+    unsigned long currentTurnNumber = rogue.absoluteTurnNumber;
+    timeAway = min(timeAway, 100);
+    while (timeAway--) {
+        rogue.absoluteTurnNumber = max(currentTurnNumber, timeAway) - timeAway;
         updateEnvironment();
     }
+    rogue.absoluteTurnNumber = currentTurnNumber;
     player.xLoc = px;
     player.yLoc = py;
+
+    // This level is now up-to-date as of the current turn.
+    // Get the ticker ready for the *next* environment update.
+    if (rogue.ticksTillUpdateEnvironment <= 0) {
+        rogue.ticksTillUpdateEnvironment += 100;
+    }
 
     if (!levels[rogue.depthLevel-1].visited) {
         levels[rogue.depthLevel-1].visited = true;
@@ -763,8 +773,24 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     if (stairDirection == 0) { // fell into the level
 
         getQualifyingLocNear(loc, player.xLoc, player.yLoc, true, 0,
-                             (T_PATHING_BLOCKER),
+                             (T_PATHING_BLOCKER & ~T_IS_DEEP_WATER),
                              (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false, false);
+
+        if (cellHasTerrainFlag(loc[0], loc[1], T_IS_DEEP_WATER)) {
+            // Fell into deep water... can we swim out of it?
+            short dryLoc[2];
+            getQualifyingLocNear(dryLoc, player.xLoc, player.yLoc, true, 0,
+                                (T_PATHING_BLOCKER),
+                                (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false, false);
+
+            short swimDistance = pathingDistance(loc[0], loc[1], dryLoc[0], dryLoc[1], T_PATHING_BLOCKER & ~T_IS_DEEP_WATER);
+            if (swimDistance == 30000) {
+                // Cannot swim out! This is an enclosed lake.
+                loc[0] = dryLoc[0];
+                loc[1] = dryLoc[1];
+            }
+        }
+
     } else {
         if (stairDirection == 1) { // heading downward
             player.xLoc = rogue.upLoc[0];

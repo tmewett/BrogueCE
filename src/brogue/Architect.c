@@ -3540,8 +3540,12 @@ void restoreItem(item *theItem) {
 
     if (theItem->flags & ITEM_PREPLACED) {
         theItem->flags &= ~ITEM_PREPLACED;
-        getQualifyingLocNear(loc, *x, *y, true, 0, (T_OBSTRUCTS_ITEMS | T_AUTO_DESCENT | T_IS_DEEP_WATER | T_LAVA_INSTA_DEATH),
-                             (HAS_MONSTER | HAS_ITEM | HAS_STAIRS), true, false);
+
+        // Items can fall into deep water, enclaved lakes, another chasm, even lava!
+        getQualifyingLocNear(loc, *x, *y, true, 0,
+                            (T_OBSTRUCTS_ITEMS),
+                            (HAS_MONSTER | HAS_ITEM | HAS_STAIRS), false, false);
+
         *x = loc[0];
         *y = loc[1];
     }

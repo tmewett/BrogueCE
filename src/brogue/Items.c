@@ -1105,6 +1105,10 @@ void updateFloorItems() {
         nextItem = theItem->nextItem;
         x = theItem->xLoc;
         y = theItem->yLoc;
+        if (rogue.absoluteTurnNumber < theItem->spawnTurnNumber) {
+            // we are simulating an earlier turn than when the item fell into this level... let's not touch it yet
+            continue;
+        }
         if (cellHasTerrainFlag(x, y, T_AUTO_DESCENT)) {
             if (playerCanSeeOrSense(x, y)) {
                 itemName(theItem, buf, false, false, NULL);
@@ -1126,6 +1130,7 @@ void updateFloorItems() {
                 deleteItem(theItem);
             } else {
                 // Add to next level's chain.
+                theItem->spawnTurnNumber = rogue.absoluteTurnNumber;
                 theItem->nextItem = levels[rogue.depthLevel-1 + 1].items;
                 levels[rogue.depthLevel-1 + 1].items = theItem;
             }
