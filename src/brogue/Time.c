@@ -991,7 +991,7 @@ void playerFalls() {
         damage = randClumpedRange(FALL_DAMAGE_MIN, FALL_DAMAGE_MAX, 2);
         boolean killed = false;
         if (terrainFlags(player.xLoc, player.yLoc) & T_IS_DEEP_WATER) {
-            messageWithColor("You plunge into deep water, unharmed.", &badMessageColor, 0);
+            messageWithColor("You fall into deep water, unharmed.", &badMessageColor, 0);
         } else {
             if (cellHasTMFlag(player.xLoc, player.yLoc, TM_ALLOWS_SUBMERGING)) {
                 damage /= 2; // falling into liquid (shallow water, bog, etc.) hurts less than hitting hard floor
