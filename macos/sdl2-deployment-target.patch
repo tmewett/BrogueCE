@@ -1,0 +1,16 @@
+Set deployment target version environment variable, so SDL works on older
+versions of macOS.
+
+10.6 is chosen by SDL build scripts.
+
+--- sdl2.orig.rb	2021-05-04 20:03:55.235452559 +0100
++++ sdl2.rb	2021-05-04 20:04:30.930567811 +0100
+@@ -31,6 +31,8 @@
+   end
+
+   def install
++    ENV["MACOSX_DEPLOYMENT_TARGET"] = "10.6"
++
+     # we have to do this because most build scripts assume that all SDL modules
+     # are installed to the same prefix. Consequently SDL stuff cannot be
+     # keg-only but I doubt that will be needed.
