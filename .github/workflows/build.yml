@@ -38,9 +38,21 @@ jobs:
     - name: "Checkout sources"
       uses: actions/checkout@v2
 
+    - name: "Cache SDL2"
+      uses: actions/cache@v2
+      with:
+        path: sdl2-cellar
+        key: sdl2-${{hashFiles('macos/sdl2.rb')}}
+
     - name: "Compile and install dependencies"
       run: |
-        brew install --build-from-source ./macos/sdl2.rb
+        if [ -d sdl2-cellar ]; then
+          cp -r sdl2-cellar $(brew --cellar)/sdl2
+          brew link sdl2
+        else
+          brew install --build-from-source ./macos/sdl2.rb
+          cp -r $(brew --cellar)/sdl2 sdl2-cellar
+        fi
         brew install sdl2_image dylibbundler
 
     - name: "Compile"
