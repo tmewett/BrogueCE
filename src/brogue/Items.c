@@ -4488,7 +4488,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                     flashMonster(monst, &confusionGasColor, 100);
                     monst->status[STATUS_CONFUSED] = staffEntrancementDuration(theBolt->magnitude * FP_FACTOR);
                     monst->maxStatus[STATUS_CONFUSED] = max(monst->status[STATUS_CONFUSED], monst->maxStatus[STATUS_CONFUSED]);
-                    message("the bolt hits you and you suddently feel disoriented.", REQUIRE_ACKNOWLEDGMENT);
+                    message("the bolt hits you and you suddenly feel disoriented.", REQUIRE_ACKNOWLEDGMENT);
                     if (autoID) {
                         *autoID = true;
                     }
