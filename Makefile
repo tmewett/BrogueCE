@@ -106,3 +106,7 @@ Brogue.app: bin/brogue
 	cp macos/Info.plist $@/Contents
 	cp bin/brogue $@/Contents/MacOS
 	cp -r macos/Brogue.icns bin/assets $@/Contents/Resources
+
+macos/sdl2.rb:
+	curl -L 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/sdl2.rb' >$@
+	patch $@ macos/sdl2-deployment-target.patch
