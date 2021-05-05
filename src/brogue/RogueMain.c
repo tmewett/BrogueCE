@@ -531,10 +531,9 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                 }
             }
         }
-        dungeongrid *mapToStairs = allocGrid(0);
         for (flying = 0; flying <= 1; flying++) {
-            *mapToStairs = filledGrid(0);
-            calculateDistances(mapToStairs, px, py, (flying ? T_OBSTRUCTS_PASSABILITY : T_PATHING_BLOCKER) | T_SACRED, NULL, true, true);
+            dungeongrid mapToStairs = filledGrid(0);
+            calculateDistances(&mapToStairs, px, py, (flying ? T_OBSTRUCTS_PASSABILITY : T_PATHING_BLOCKER) | T_SACRED, NULL, true, true);
             for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
                 x = monst->xLoc;
                 y = monst->yLoc;
@@ -549,9 +548,9 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                     && !(cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY))
                     && !monst->status[STATUS_ENTRANCED]
                     && !monst->status[STATUS_PARALYZED]
-                    && (mapToStairs->cells[monst->xLoc][monst->yLoc] < 30000 || monst->creatureState == MONSTER_ALLY || monst == rogue.yendorWarden)) {
+                    && (mapToStairs.cells[monst->xLoc][monst->yLoc] < 30000 || monst->creatureState == MONSTER_ALLY || monst == rogue.yendorWarden)) {
 
-                    monst->status[STATUS_ENTERS_LEVEL_IN] = clamp(mapToStairs->cells[monst->xLoc][monst->yLoc] * monst->movementSpeed / 100 + 1, 1, 150);
+                    monst->status[STATUS_ENTERS_LEVEL_IN] = clamp(mapToStairs.cells[monst->xLoc][monst->yLoc] * monst->movementSpeed / 100 + 1, 1, 150);
                     switch (stairDirection) {
                         case 1:
                             monst->bookkeepingFlags |= MB_APPROACHING_DOWNSTAIRS;
@@ -568,7 +567,6 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                 }
             }
         }
-        freeGrid(mapToStairs);
     }
 
     for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
@@ -827,16 +825,14 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     }
 
     if (levels[rogue.depthLevel - 1].visited) {
-        dungeongrid *mapToStairs = allocGrid(0);
-        dungeongrid *mapToPit = allocGrid(0);
-        calculateDistances(mapToStairs, player.xLoc, player.yLoc, T_PATHING_BLOCKER, NULL, true, true);
-        calculateDistances(mapToPit, levels[rogue.depthLevel-1].playerExitedVia[0],
+        dungeongrid mapToStairs = filledGrid(0);
+        calculateDistances(&mapToStairs, player.xLoc, player.yLoc, T_PATHING_BLOCKER, NULL, true, true);
+        dungeongrid mapToPit = filledGrid(0);
+        calculateDistances(&mapToPit, levels[rogue.depthLevel-1].playerExitedVia[0],
                            levels[rogue.depthLevel-1].playerExitedVia[1], T_PATHING_BLOCKER, NULL, true, true);
         for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
-            restoreMonster(monst, mapToStairs, mapToPit);
+            restoreMonster(monst, &mapToStairs, &mapToPit);
         }
-        freeGrid(mapToStairs);
-        freeGrid(mapToPit);
     }
 
     updateMapToShore();

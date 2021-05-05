@@ -330,11 +330,9 @@ void addLoops(dungeongrid *grid, short minimumPathingDistance) {
         hiliteGrid(grid, &white, 100);
     }
 
-    dungeongrid *pathMap = allocGrid(0);
-    dungeongrid *costMap = allocGrid(0);
-    *costMap = *grid;
-    findReplaceGrid(costMap, 0, 0, PDS_OBSTRUCTION);
-    findReplaceGrid(costMap, 1, 30000, 1);
+    dungeongrid costMap = *grid;
+    findReplaceGrid(&costMap, 0, 0, PDS_OBSTRUCTION);
+    findReplaceGrid(&costMap, 1, 30000, 1);
 
     for (i = 0; i < DCOLS*DROWS; i++) {
         x = sCoord[i]/DROWS;
@@ -350,12 +348,12 @@ void addLoops(dungeongrid *grid, short minimumPathingDistance) {
                     && grid->cells[newX][newY] == 1
                     && grid->cells[oppX][oppY] == 1) { // If the tile being inspected has floor on both sides,
 
-                    *pathMap = filledGrid(30000);
-                    pathMap->cells[newX][newY] = 0;
-                    dijkstraScan(pathMap, costMap, false);
-                    if (pathMap->cells[oppX][oppY] > minimumPathingDistance) { // and if the pathing distance between the two flanking floor tiles exceeds minimumPathingDistance,
+                    dungeongrid pathMap = filledGrid(30000);
+                    pathMap.cells[newX][newY] = 0;
+                    dijkstraScan(&pathMap, &costMap, false);
+                    if (pathMap.cells[oppX][oppY] > minimumPathingDistance) { // and if the pathing distance between the two flanking floor tiles exceeds minimumPathingDistance,
                         grid->cells[x][y] = 2;             // then turn the tile into a doorway.
-                        costMap->cells[x][y] = 1;          // (Cost map also needs updating.)
+                        costMap.cells[x][y] = 1;          // (Cost map also needs updating.)
                         if (D_INSPECT_LEVELGEN) {
                             plotCharWithColor(G_CLOSED_DOOR, mapToWindowX(x), mapToWindowY(y), &black, &green);
                         }
@@ -368,8 +366,6 @@ void addLoops(dungeongrid *grid, short minimumPathingDistance) {
     if (D_INSPECT_LEVELGEN) {
         temporaryMessage("Added secondary connections:", REQUIRE_ACKNOWLEDGMENT);
     }
-    freeGrid(pathMap);
-    freeGrid(costMap);
 }
 
 // Assumes (startX, startY) is in the machine.
@@ -652,26 +648,24 @@ void expandMachineInterior(char interior[DCOLS][DROWS], short minimumInteriorNei
 
 boolean fillInteriorForVestibuleMachine(char interior[DCOLS][DROWS], short bp, short originX, short originY) {
     short qualifyingTileCount, totalFreq, sRows[DROWS], sCols[DCOLS], i, j, k;
-    dungeongrid *distanceMap, *costMap;
     boolean success = true;
 
     zeroOutGrid(interior);
 
-    distanceMap = allocGrid(30000);
-    distanceMap->cells[originX][originY] = 0;
+    dungeongrid distanceMap = filledGrid(30000);
+    distanceMap.cells[originX][originY] = 0;
 
-    costMap = allocGrid(0);
-    populateGenericCostMap(costMap);
+    dungeongrid costMap = filledGrid(0);
+    populateGenericCostMap(&costMap);
     for(i=0; i<DCOLS; i++) {
         for(j=0; j<DROWS; j++) {
-            if (costMap->cells[i][j] == 1 && (pmap[i][j].flags & IS_IN_MACHINE)) { //pmap[i][j].machineNumber) {
-                costMap->cells[i][j] = PDS_FORBIDDEN;
+            if (costMap.cells[i][j] == 1 && (pmap[i][j].flags & IS_IN_MACHINE)) { //pmap[i][j].machineNumber) {
+                costMap.cells[i][j] = PDS_FORBIDDEN;
             }
         }
     }
-    costMap->cells[originX][originY] = 1;
-    dijkstraScan(distanceMap, costMap, false);
-    freeGrid(costMap);
+    costMap.cells[originX][originY] = 1;
+    dijkstraScan(&distanceMap, &costMap, false);
 
     qualifyingTileCount = 0; // Keeps track of how many interior cells we've added.
     totalFreq = rand_range(blueprintCatalog[bp].roomSize[0], blueprintCatalog[bp].roomSize[1]); // Keeps track of the goal size.
@@ -684,7 +678,7 @@ boolean fillInteriorForVestibuleMachine(char interior[DCOLS][DROWS], short bp, s
     for (k=0; k<1000 && qualifyingTileCount < totalFreq; k++) {
         for(i=0; i<DCOLS && qualifyingTileCount < totalFreq; i++) {
             for(j=0; j<DROWS && qualifyingTileCount < totalFreq; j++) {
-                if (distanceMap->cells[sCols[i]][sRows[j]] == k) {
+                if (distanceMap.cells[sCols[i]][sRows[j]] == k) {
                     interior[sCols[i]][sRows[j]] = true;
                     qualifyingTileCount++;
 
@@ -706,7 +700,6 @@ boolean fillInteriorForVestibuleMachine(char interior[DCOLS][DROWS], short bp, s
                && levelIsDisconnectedWithBlockingMap(interior, true) < 100) {
         success = false;
     }
-    freeGrid(distanceMap);
     return success;
 }
 
@@ -715,21 +708,18 @@ void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY,
     enum directions dir;
     short orphanList[20][2];
     short orphanCount = 0;
-    dungeongrid *grid;
-    dungeongrid *pathingGrid;
-    dungeongrid *costGrid;
-    grid = allocGrid(0);
+    dungeongrid grid = filledGrid(0);
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
             if (interior[i][j]) {
                 if (i == originX && j == originY) {
-                    grid->cells[i][j] = 1; // All rooms must grow from this space.
+                    grid.cells[i][j] = 1; // All rooms must grow from this space.
                 } else {
-                    grid->cells[i][j] = 0; // Other interior squares are fair game for placing rooms.
+                    grid.cells[i][j] = 0; // Other interior squares are fair game for placing rooms.
                 }
             } else if (cellIsPassableOrDoor(i, j)) {
-                grid->cells[i][j] = 1; // Treat existing level as already built (though shielded by a film of -1s).
+                grid.cells[i][j] = 1; // Treat existing level as already built (though shielded by a film of -1s).
                 for (dir = 0; dir < 4; dir++) {
                     newX = i + nbDirs[dir][0];
                     newY = j + nbDirs[dir][1];
@@ -740,29 +730,29 @@ void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY,
                         orphanList[orphanCount][0] = newX;
                         orphanList[orphanCount][1] = newY;
                         orphanCount++;
-                        grid->cells[i][j] = -1; // Treat the orphaned door as off limits.
+                        grid.cells[i][j] = -1; // Treat the orphaned door as off limits.
 
                         break;
                     }
                 }
             } else {
-                grid->cells[i][j] = -1; // Exterior spaces are off limits.
+                grid.cells[i][j] = -1; // Exterior spaces are off limits.
             }
         }
     }
-    attachRooms(grid, &dungeonProfileCatalog[theProfileIndex], 40, 40);
+    attachRooms(&grid, &dungeonProfileCatalog[theProfileIndex], 40, 40);
 
     // Connect to preexisting rooms that were orphaned (mostly preexisting machine rooms).
     if (orphanCount > 0) {
-        pathingGrid = allocGrid(0);
-        costGrid = allocGrid(0);
+        dungeongrid pathingGrid = filledGrid(0);
+        dungeongrid costGrid = filledGrid(0);
         for (n = 0; n < orphanCount; n++) {
 
             if (D_INSPECT_MACHINES) {
                 dumpLevelToScreen();
-                *pathingGrid = *grid;
-                findReplaceGrid(pathingGrid, -1, -1, 0);
-                hiliteGrid(pathingGrid, &green, 50);
+                pathingGrid = grid;
+                findReplaceGrid(&pathingGrid, -1, -1, 0);
+                hiliteGrid(&pathingGrid, &green, 50);
                 plotCharWithColor('X', mapToWindowX(orphanList[n][0]), mapToWindowY(orphanList[n][1]), &black, &orange);
                 temporaryMessage("Orphan detected:", REQUIRE_ACKNOWLEDGMENT);
             }
@@ -770,32 +760,32 @@ void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY,
             for (i=0; i<DCOLS; i++) {
                 for (j=0; j<DROWS; j++) {
                     if (interior[i][j]) {
-                        if (grid->cells[i][j] > 0) {
-                            pathingGrid->cells[i][j] = 0;
-                            costGrid->cells[i][j] = 1;
+                        if (grid.cells[i][j] > 0) {
+                            pathingGrid.cells[i][j] = 0;
+                            costGrid.cells[i][j] = 1;
                         } else {
-                            pathingGrid->cells[i][j] = 30000;
-                            costGrid->cells[i][j] = 1;
+                            pathingGrid.cells[i][j] = 30000;
+                            costGrid.cells[i][j] = 1;
                         }
                     } else {
-                        pathingGrid->cells[i][j] = 30000;
-                        costGrid->cells[i][j] = PDS_OBSTRUCTION;
+                        pathingGrid.cells[i][j] = 30000;
+                        costGrid.cells[i][j] = PDS_OBSTRUCTION;
                     }
                 }
             }
-            dijkstraScan(pathingGrid, costGrid, false);
+            dijkstraScan(&pathingGrid, &costGrid, false);
 
             i = orphanList[n][0];
             j = orphanList[n][1];
-            while (pathingGrid->cells[i][j] > 0) {
+            while (pathingGrid.cells[i][j] > 0) {
                 for (dir = 0; dir < 4; dir++) {
                     newX = i + nbDirs[dir][0];
                     newY = j + nbDirs[dir][1];
 
                     if (coordinatesAreInMap(newX, newY)
-                        && pathingGrid->cells[newX][newY] < pathingGrid->cells[i][j]) {
+                        && pathingGrid.cells[newX][newY] < pathingGrid.cells[i][j]) {
 
-                        grid->cells[i][j] = 1;
+                        grid.cells[i][j] = 1;
                         i = newX;
                         j = newY;
                         break;
@@ -804,34 +794,31 @@ void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY,
                 brogueAssert(dir < 4);
                 if (D_INSPECT_MACHINES) {
                     dumpLevelToScreen();
-                    displayGrid(pathingGrid);
+                    displayGrid(&pathingGrid);
                     plotCharWithColor('X', mapToWindowX(i), mapToWindowY(j), &black, &orange);
                     temporaryMessage("Orphan connecting:", REQUIRE_ACKNOWLEDGMENT);
                 }
             }
         }
-        freeGrid(pathingGrid);
-        freeGrid(costGrid);
     }
 
-    addLoops(grid, 10);
+    addLoops(&grid, 10);
     for(i=0; i<DCOLS; i++) {
         for(j=0; j<DROWS; j++) {
             if (interior[i][j]) {
-                if (grid->cells[i][j] >= 0) {
+                if (grid.cells[i][j] >= 0) {
                     pmap[i][j].layers[SURFACE] = pmap[i][j].layers[GAS] = NOTHING;
                 }
-                if (grid->cells[i][j] == 0) {
+                if (grid.cells[i][j] == 0) {
                     pmap[i][j].layers[DUNGEON] = GRANITE;
                     interior[i][j] = false;
                 }
-                if (grid->cells[i][j] >= 1) {
+                if (grid.cells[i][j] >= 1) {
                     pmap[i][j].layers[DUNGEON] = FLOOR;
                 }
             }
         }
     }
-    freeGrid(grid);
 }
 
 void prepareInteriorWithMachineFlags(char interior[DCOLS][DROWS], short originX, short originY, unsigned long flags, short dungeonProfileIndex) {
@@ -994,15 +981,11 @@ boolean buildAMachine(enum machineTypes bp,
 
     chooseLocation = (originX <= 0 || originY <= 0 ? true : false);
 
-    dungeongrid *distanceMap = NULL;
 
     failsafe = 10;
     do {
         tryAgain = false;
         if (--failsafe <= 0) {
-            if (distanceMap) {
-                freeGrid(distanceMap);
-            }
             if (D_MESSAGE_MACHINE_GENERATION) {
                 if (chooseBP || chooseLocation) {
                     printf("\nDepth %i: Failed to build a machine; gave up after 10 unsuccessful attempts to find a suitable blueprint and/or location.",
@@ -1028,9 +1011,6 @@ boolean buildAMachine(enum machineTypes bp,
             }
 
             if (!totalFreq) { // If no suitable blueprints are in the library, fail.
-                if (distanceMap) {
-                    freeGrid(distanceMap);
-                }
                 if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to build a machine because no suitable blueprints were available.",
                              rogue.depthLevel);
                 free(p);
@@ -1085,9 +1065,6 @@ boolean buildAMachine(enum machineTypes bp,
                     originY = p->gateCandidates[randIndex][1];
                 } else {
                     // If no suitable sites, abort.
-                    if (distanceMap) {
-                        freeGrid(distanceMap);
-                    }
                     if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to build a machine; there was no eligible door candidate for the chosen room machine from blueprint %i.",
                                  rogue.depthLevel,
                                  bp);
@@ -1104,9 +1081,6 @@ boolean buildAMachine(enum machineTypes bp,
         } else if (blueprintCatalog[bp].flags & BP_VESTIBULE) {
             if (chooseLocation) {
                 // Door machines must have locations passed in. We can't pick one ourselves.
-                if (distanceMap) {
-                    freeGrid(distanceMap);
-                }
                 if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: ERROR: Attempted to build a door machine from blueprint %i without a location being provided.",
                              rogue.depthLevel,
                              bp);
@@ -1114,9 +1088,6 @@ boolean buildAMachine(enum machineTypes bp,
                 return false;
             }
             if (!fillInteriorForVestibuleMachine(p->interior, bp, originX, originY)) {
-                if (distanceMap) {
-                    freeGrid(distanceMap);
-                }
                 if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to build a door machine from blueprint %i; not enough room.",
                              rogue.depthLevel,
                              bp);
@@ -1140,11 +1111,8 @@ boolean buildAMachine(enum machineTypes bp,
                     randomMatchingLocation(&originX, &originY, FLOOR, NOTHING, -1);
                 }
 
-                if (!distanceMap) {
-                    distanceMap = allocGrid(0);
-                }
-                *distanceMap = filledGrid(0);
-                calculateDistances(distanceMap, originX, originY, T_PATHING_BLOCKER, NULL, true, false);
+                dungeongrid distanceMap = filledGrid(0);
+                calculateDistances(&distanceMap, originX, originY, T_PATHING_BLOCKER, NULL, true, false);
                 qualifyingTileCount = 0; // Keeps track of how many interior cells we've added.
                 totalFreq = rand_range(blueprintCatalog[bp].roomSize[0], blueprintCatalog[bp].roomSize[1]); // Keeps track of the goal size.
 
@@ -1156,7 +1124,7 @@ boolean buildAMachine(enum machineTypes bp,
                 for (k=0; k<1000 && qualifyingTileCount < totalFreq; k++) {
                     for(i=0; i<DCOLS && qualifyingTileCount < totalFreq; i++) {
                         for(j=0; j<DROWS && qualifyingTileCount < totalFreq; j++) {
-                            if (distanceMap->cells[p->sCols[i]][p->sRows[j]] == k) {
+                            if (distanceMap.cells[p->sCols[i]][p->sRows[j]] == k) {
                                 p->interior[p->sCols[i]][p->sRows[j]] = true;
                                 qualifyingTileCount++;
 
@@ -1186,9 +1154,6 @@ boolean buildAMachine(enum machineTypes bp,
         // If something went wrong, but we haven't been charged with choosing blueprint OR location,
         // then there is nothing to try again, so just fail.
         if (tryAgain && !chooseBP && !chooseLocation) {
-            if (distanceMap) {
-                freeGrid(distanceMap);
-            }
             free(p);
             return false;
         }
@@ -1228,11 +1193,8 @@ boolean buildAMachine(enum machineTypes bp,
 
     // Calculate the distance map (so that features that want to be close to or far from the origin can be placed accordingly)
     // and figure out the 33rd and 67th percentiles for features that want to be near or far from the origin.
-    if (!distanceMap) {
-        distanceMap = allocGrid(0);
-    }
-    *distanceMap = filledGrid(0);
-    calculateDistances(distanceMap, originX, originY, T_PATHING_BLOCKER, NULL, true, true);
+    dungeongrid distanceMap = filledGrid(0);
+    calculateDistances(&distanceMap, originX, originY, T_PATHING_BLOCKER, NULL, true, true);
     qualifyingTileCount = 0;
     for (i=0; i<100; i++) {
         p->distances[i] = 0;
@@ -1240,8 +1202,8 @@ boolean buildAMachine(enum machineTypes bp,
     for(i=0; i<DCOLS; i++) {
         for(j=0; j<DROWS; j++) {
             if (p->interior[i][j]
-                && distanceMap->cells[i][j] < 100) {
-                p->distances[distanceMap->cells[i][j]]++; // create a histogram of distances -- poor man's sort function
+                && distanceMap.cells[i][j] < 100) {
+                p->distances[distanceMap.cells[i][j]]++; // create a histogram of distances -- poor man's sort function
                 qualifyingTileCount++;
             }
         }
@@ -1345,7 +1307,7 @@ boolean buildAMachine(enum machineTypes bp,
                     if (cellIsFeatureCandidate(i, j,
                                                originX, originY,
                                                distanceBound,
-                                               p->interior, p->occupied, p->viewMap, distanceMap,
+                                               p->interior, p->occupied, p->viewMap, &distanceMap,
                                                machineNumber, feature->flags, blueprintCatalog[bp].flags)) {
                         qualifyingTileCount++;
                         p->candidates[i][j] = true;
@@ -1552,7 +1514,6 @@ boolean buildAMachine(enum machineTypes bp,
                             // failure! abort!
                             copyMap(p->levelBackup, pmap);
                             abortItemsAndMonsters(p->spawnedItems, p->spawnedMonsters);
-                            freeGrid(distanceMap);
                             free(p);
                             return false;
                         }
@@ -1659,7 +1620,6 @@ boolean buildAMachine(enum machineTypes bp,
             // Restore the map to how it was before we touched it.
             copyMap(p->levelBackup, pmap);
             abortItemsAndMonsters(p->spawnedItems, p->spawnedMonsters);
-            freeGrid(distanceMap);
             free(p);
             return false;
         }
@@ -1687,7 +1647,6 @@ boolean buildAMachine(enum machineTypes bp,
         torchBearer->carriedItem = torch;
     }
 
-    freeGrid(distanceMap);
     if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Built a machine from blueprint %i with an origin at (%i, %i).", rogue.depthLevel, bp, originX, originY);
 
     //Pass created items and monsters to parent where they will be deleted on failure to place parent machine
@@ -1943,9 +1902,9 @@ void designCavern(dungeongrid *grid, short minWidth, short maxWidth, short minHe
     short fillX = 0, fillY = 0;
     boolean foundFillPoint = false;
     
-    dungeongrid *blobGrid = allocGrid(0);
+    dungeongrid blobGrid = filledGrid(0);
     *grid = filledGrid(0);
-    createBlobOnGrid(blobGrid,
+    createBlobOnGrid(&blobGrid,
                      &caveX, &caveY, &caveWidth, &caveHeight,
                      5, minWidth, minHeight, maxWidth, maxHeight, 55, "ffffffttt", "ffffttttt");
 
@@ -1959,14 +1918,13 @@ void designCavern(dungeongrid *grid, short minWidth, short maxWidth, short minHe
     // ...pick a floodfill insertion point...
     for (fillX = 0; fillX < DCOLS && !foundFillPoint; fillX++) {
         for (fillY = 0; fillY < DROWS && !foundFillPoint; fillY++) {
-            if (blobGrid->cells[fillX][fillY]) {
+            if (blobGrid.cells[fillX][fillY]) {
                 foundFillPoint = true;
             }
         }
     }
     // ...and copy it to the master grid.
-    insertRoomAt(grid, blobGrid, destX - caveX, destY - caveY, fillX, fillY);
-    freeGrid(blobGrid);
+    insertRoomAt(grid, &blobGrid, destX - caveX, destY - caveY, fillX, fillY);
 }
 
 // This is a special room that appears at the entrance to the dungeon on depth 1.
@@ -2125,8 +2083,7 @@ void chooseRandomDoorSites(dungeongrid *roomMap, short doorSites[4][2]) {
     enum directions dir;
     boolean doorSiteFailed;
 
-    dungeongrid *grid = allocGrid(0);
-    *grid = *roomMap;
+    dungeongrid grid = *roomMap;
 
 //    colorOverDungeon(&darkGray);
 //    hiliteGrid(grid, &blue, 100);
@@ -2135,7 +2092,7 @@ void chooseRandomDoorSites(dungeongrid *roomMap, short doorSites[4][2]) {
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (!grid->cells[i][j]) {
+            if (!grid.cells[i][j]) {
                 dir = directionOfDoorSite(roomMap, i, j);
                 if (dir != NO_DIRECTION) {
                     // Trace a ray 10 spaces outward from the door site to make sure it doesn't intersect the room.
@@ -2144,7 +2101,7 @@ void chooseRandomDoorSites(dungeongrid *roomMap, short doorSites[4][2]) {
                     newY = j + nbDirs[dir][1];
                     doorSiteFailed = false;
                     for (k=0; k<10 && coordinatesAreInMap(newX, newY) && !doorSiteFailed; k++) {
-                        if (grid->cells[newX][newY]) {
+                        if (grid.cells[newX][newY]) {
                             doorSiteFailed = true;
                         }
                         newX += nbDirs[dir][0];
@@ -2152,7 +2109,7 @@ void chooseRandomDoorSites(dungeongrid *roomMap, short doorSites[4][2]) {
                     }
                     if (!doorSiteFailed) {
 //                        plotCharWithColor(dirChars[dir], mapToWindowX(i), mapToWindowY(j), &black, &green);
-                        grid->cells[i][j] = dir + 2; // So as not to conflict with 0 or 1, which are used to indicate exterior/interior.
+                        grid.cells[i][j] = dir + 2; // So as not to conflict with 0 or 1, which are used to indicate exterior/interior.
                     }
                 }
             }
@@ -2163,10 +2120,8 @@ void chooseRandomDoorSites(dungeongrid *roomMap, short doorSites[4][2]) {
 
     // Pick four doors, one in each direction, and store them in doorSites[dir].
     for (dir=0; dir<4; dir++) {
-        randomLocationInGrid(grid, &(doorSites[dir][0]), &(doorSites[dir][1]), dir + 2);
+        randomLocationInGrid(&grid, &(doorSites[dir][0]), &(doorSites[dir][1]), dir + 2);
     }
-
-    freeGrid(grid);
 }
 
 void attachHallwayTo(dungeongrid *grid, short doorSites[4][2]) {
@@ -2335,7 +2290,6 @@ boolean roomFitsAt(dungeongrid *dungeonMap, dungeongrid *roomMap, short roomToDu
 
 void attachRooms(dungeongrid *grid, const dungeonProfile *theDP, short attempts, short maxRoomCount) {
     short roomsBuilt, roomsAttempted;
-    dungeongrid *roomMap;
     short doorSites[4][2];
     short i, x, y, sCoord[DCOLS*DROWS];
     enum directions dir, oppDir;
@@ -2343,16 +2297,15 @@ void attachRooms(dungeongrid *grid, const dungeonProfile *theDP, short attempts,
     fillSequentialList(sCoord, DCOLS*DROWS);
     shuffleList(sCoord, DCOLS*DROWS);
 
-    roomMap = allocGrid(0);
     for (roomsBuilt = roomsAttempted = 0; roomsBuilt < maxRoomCount && roomsAttempted < attempts; roomsAttempted++) {
         // Build a room in hyperspace.
-        *roomMap = filledGrid(0);
-        designRandomRoom(roomMap, roomsAttempted <= attempts - 5 && rand_percent(theDP->corridorChance),
+        dungeongrid roomMap = filledGrid(0);
+        designRandomRoom(&roomMap, roomsAttempted <= attempts - 5 && rand_percent(theDP->corridorChance),
                          doorSites, theDP->roomFrequencies);
 
         if (D_INSPECT_LEVELGEN) {
             colorOverDungeon(&darkGray);
-            hiliteGrid(roomMap, &blue, 100);
+            hiliteGrid(&roomMap, &blue, 100);
             if (doorSites[0][0] != -1) plotCharWithColor('^', mapToWindowX(doorSites[0][0]), mapToWindowY(doorSites[0][1]), &black, &green);
             if (doorSites[1][0] != -1) plotCharWithColor('v', mapToWindowX(doorSites[1][0]), mapToWindowY(doorSites[1][1]), &black, &green);
             if (doorSites[2][0] != -1) plotCharWithColor('<', mapToWindowX(doorSites[2][0]), mapToWindowY(doorSites[2][1]), &black, &green);
@@ -2369,14 +2322,14 @@ void attachRooms(dungeongrid *grid, const dungeonProfile *theDP, short attempts,
             oppDir = oppositeDirection(dir);
             if (dir != NO_DIRECTION
                 && doorSites[oppDir][0] != -1
-                && roomFitsAt(grid, roomMap, x - doorSites[oppDir][0], y - doorSites[oppDir][1])) {
+                && roomFitsAt(grid, &roomMap, x - doorSites[oppDir][0], y - doorSites[oppDir][1])) {
 
                 // Room fits here.
                 if (D_INSPECT_LEVELGEN) {
                     colorOverDungeon(&darkGray);
                     hiliteGrid(grid, &white, 100);
                 }
-                insertRoomAt(grid, roomMap, x - doorSites[oppDir][0], y - doorSites[oppDir][1], doorSites[oppDir][0], doorSites[oppDir][1]);
+                insertRoomAt(grid, &roomMap, x - doorSites[oppDir][0], y - doorSites[oppDir][1], doorSites[oppDir][0], doorSites[oppDir][1]);
                 grid->cells[x][y] = 2; // Door site.
                 if (D_INSPECT_LEVELGEN) {
                     hiliteGrid(grid, &green, 50);
@@ -2387,8 +2340,6 @@ void attachRooms(dungeongrid *grid, const dungeonProfile *theDP, short attempts,
             }
         }
     }
-
-    freeGrid(roomMap);
 }
 
 void adjustDungeonProfileForDepth(dungeonProfile *theProfile) {
@@ -2557,9 +2508,8 @@ void lakeFloodFill(short x, short y, dungeongrid *floodMap, dungeongrid *grid, d
 boolean lakeDisruptsPassability(dungeongrid *grid, dungeongrid *lakeMap, short dungeonToGridX, short dungeonToGridY) {
     boolean result;
     short i, j, x, y;
-    dungeongrid *floodMap;
 
-    floodMap = allocGrid(0);
+    
     x = y = -1;
     // Get starting location for the fill.
     for (i=0; i<DCOLS && x == -1; i++) {
@@ -2575,7 +2525,8 @@ boolean lakeDisruptsPassability(dungeongrid *grid, dungeongrid *lakeMap, short d
     }
     brogueAssert(x != -1);
     // Do the flood fill.
-    lakeFloodFill(x, y, floodMap, grid, lakeMap, dungeonToGridX, dungeonToGridY);
+    dungeongrid floodMap = filledGrid(0);
+    lakeFloodFill(x, y, &floodMap, grid, lakeMap, dungeonToGridX, dungeonToGridY);
 
     // See if any dry tiles weren't reached by the flood fill.
     result = false;
@@ -2583,7 +2534,7 @@ boolean lakeDisruptsPassability(dungeongrid *grid, dungeongrid *lakeMap, short d
         for (j=0; j<DROWS && result == false; j++) {
             if (!cellHasTerrainFlag(i, j, T_PATHING_BLOCKER)
                 && !lakeMap->cells[i][j]
-                && !floodMap->cells[i][j]
+                && !floodMap.cells[i][j]
                 && (!coordinatesAreInMap(i+dungeonToGridX, j+dungeonToGridY) || !grid->cells[i+dungeonToGridX][j+dungeonToGridY])) {
 
 //                if (D_INSPECT_LEVELGEN) {
@@ -2599,7 +2550,6 @@ boolean lakeDisruptsPassability(dungeongrid *grid, dungeongrid *lakeMap, short d
         }
     }
 
-    freeGrid(floodMap);
     return result;
 }
 
@@ -2609,12 +2559,10 @@ void designLakes(dungeongrid *lakeMap) {
     short lakeMaxHeight, lakeMaxWidth;
     short lakeX, lakeY, lakeWidth, lakeHeight;
 
-    dungeongrid *grid = allocGrid(0); // Holds the current lake.
     *lakeMap = filledGrid(0);
     for (lakeMaxHeight = 15, lakeMaxWidth = 30; lakeMaxHeight >=10; lakeMaxHeight--, lakeMaxWidth -= 2) { // lake generations
-
-        *grid = filledGrid(0);
-        createBlobOnGrid(grid, &lakeX, &lakeY, &lakeWidth, &lakeHeight, 5, 4, 4, lakeMaxWidth, lakeMaxHeight, 55, "ffffftttt", "ffffttttt");
+        dungeongrid grid = filledGrid(0); // Holds the current lake.
+        createBlobOnGrid(&grid, &lakeX, &lakeY, &lakeWidth, &lakeHeight, 5, 4, 4, lakeMaxWidth, lakeMaxHeight, 55, "ffffftttt", "ffffttttt");
 
 //        if (D_INSPECT_LEVELGEN) {
 //            colorOverDungeon(&darkGray);
@@ -2627,13 +2575,13 @@ void designLakes(dungeongrid *lakeMap) {
             x = rand_range(1 - lakeX, DCOLS - lakeWidth - lakeX - 2);
             y = rand_range(1 - lakeY, DROWS - lakeHeight - lakeY - 2);
 
-            if (!lakeDisruptsPassability(grid, lakeMap, -x, -y)) { // level with lake is completely connected
+            if (!lakeDisruptsPassability(&grid, lakeMap, -x, -y)) { // level with lake is completely connected
                 //printf("Placed a lake!");
 
                 // copy in lake
                 for (i = 0; i < lakeWidth; i++) {
                     for (j = 0; j < lakeHeight; j++) {
-                        if (grid->cells[i + lakeX][j + lakeY]) {
+                        if (grid.cells[i + lakeX][j + lakeY]) {
                             lakeMap->cells[i + lakeX + x][j + lakeY + y] = true;
                             pmap[i + lakeX + x][j + lakeY + y].layers[DUNGEON] = FLOOR;
                         }
@@ -2649,7 +2597,6 @@ void designLakes(dungeongrid *lakeMap) {
             }
         }
     }
-    freeGrid(grid);
 }
 
 void createWreath(short shallowLiquid, short wreathWidth, char wreathMap[DCOLS][DROWS]) {
@@ -2843,8 +2790,6 @@ boolean buildABridge() {
 void digDungeon() {
     short i, j;
 
-    dungeongrid *grid;
-
     rogue.machineNumber = 0;
 
     topBlobMinX = topBlobMinY = blobWidth = blobHeight = 0;
@@ -2858,19 +2803,18 @@ void digDungeon() {
     // Clear level and fill with granite
     clearLevel();
 
-    grid = allocGrid(0);
-    carveDungeon(grid);
-    addLoops(grid, 20);
+    dungeongrid grid = filledGrid(0);
+    carveDungeon(&grid);
+    addLoops(&grid, 20);
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (grid->cells[i][j] == 1) {
+            if (grid.cells[i][j] == 1) {
                 pmap[i][j].layers[DUNGEON] = FLOOR;
-            } else if (grid->cells[i][j] == 2) {
+            } else if (grid.cells[i][j] == 2) {
                 pmap[i][j].layers[DUNGEON] = (rand_percent(60) && rogue.depthLevel < DEEPEST_LEVEL ? DOOR : FLOOR);
             }
         }
     }
-    freeGrid(grid);
 
     finishWalls(false);
 
@@ -2890,10 +2834,9 @@ void digDungeon() {
     // DEBUG logLevel();
 
     // Now design the lakes and then fill them with various liquids (lava, water, chasm, brimstone).
-    dungeongrid *lakeMap = allocGrid(0);
-    designLakes(lakeMap);
-    fillLakes(lakeMap);
-    freeGrid(lakeMap);
+    dungeongrid lakeMap = filledGrid(0);
+    designLakes(&lakeMap);
+    fillLakes(&lakeMap);
 
     // Run the non-machine autoGenerators.
     runAutogenerators(false);
@@ -2947,11 +2890,10 @@ void digDungeon() {
 
 void updateMapToShore() {
     short i, j;
-    dungeongrid *costMap;
 
     rogue.updatedMapToShoreThisTurn = true;
 
-    costMap = allocGrid(0);
+    dungeongrid costMap = filledGrid(0);
 
     // Calculate the map to shore for this level
     if (!rogue.mapToShore) {
@@ -2960,39 +2902,36 @@ void updateMapToShore() {
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
             if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)) {
-                costMap->cells[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
+                costMap.cells[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
                 rogue.mapToShore->cells[i][j] = 30000;
             } else {
-                costMap->cells[i][j] = 1;
+                costMap.cells[i][j] = 1;
                 rogue.mapToShore->cells[i][j] = (cellHasTerrainFlag(i, j, T_LAVA_INSTA_DEATH | T_IS_DEEP_WATER | T_AUTO_DESCENT)
                                           && !cellHasTMFlag(i, j, TM_IS_SECRET)) ? 30000 : 0;
             }
         }
     }
-    dijkstraScan(rogue.mapToShore, costMap, true);
-    freeGrid(costMap);
+    dijkstraScan(rogue.mapToShore, &costMap, true);
 }
 
 // Calculates the distance map for the given waypoint.
 // This is called on all waypoints during setUpWaypoints(),
 // and then one waypoint is recalculated per turn thereafter.
 void refreshWaypoint(short wpIndex) {
-    dungeongrid *costMap;
     creature *monst;
 
-    costMap = allocGrid(0);
-    populateGenericCostMap(costMap);
+    dungeongrid costMap = filledGrid(0);
+    populateGenericCostMap(&costMap);
     for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
         if ((monst->creatureState == MONSTER_SLEEPING || (monst->info.flags & MONST_IMMOBILE) || (monst->bookkeepingFlags & MB_CAPTIVE))
-            && costMap->cells[monst->xLoc][monst->yLoc] >= 0) {
+            && costMap.cells[monst->xLoc][monst->yLoc] >= 0) {
 
-            costMap->cells[monst->xLoc][monst->yLoc] = PDS_FORBIDDEN;
+            costMap.cells[monst->xLoc][monst->yLoc] = PDS_FORBIDDEN;
         }
     }
     *rogue.wpDistance[wpIndex] = filledGrid(30000);
     rogue.wpDistance[wpIndex]->cells[rogue.wpCoordinates[wpIndex][0]][rogue.wpCoordinates[wpIndex][1]] = 0;
-    dijkstraScan(rogue.wpDistance[wpIndex], costMap, true);
-    freeGrid(costMap);
+    dijkstraScan(rogue.wpDistance[wpIndex], &costMap, true);
 }
 
 void setUpWaypoints() {
@@ -3743,10 +3682,10 @@ void initializeLevel() {
     }
 
     // Restore creatures that fell from the previous depth or that have been pathing toward the stairs.
-    dungeongrid *mapToStairs = allocGrid(0);
-    dungeongrid *mapToPit = allocGrid(0);
-    calculateDistances(mapToStairs, player.xLoc, player.yLoc, T_PATHING_BLOCKER, NULL, true, true);
-    calculateDistances(mapToPit,
+    dungeongrid mapToStairs = filledGrid(0);
+    calculateDistances(&mapToStairs, player.xLoc, player.yLoc, T_PATHING_BLOCKER, NULL, true, true);
+    dungeongrid mapToPit = filledGrid(0);
+    calculateDistances(&mapToPit,
                        levels[rogue.depthLevel - 1].playerExitedVia[0],
                        levels[rogue.depthLevel - 1].playerExitedVia[1],
                        T_PATHING_BLOCKER,
@@ -3754,10 +3693,8 @@ void initializeLevel() {
                        true,
                        true);
     for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
-        restoreMonster(monst, mapToStairs, mapToPit);
+        restoreMonster(monst, &mapToStairs, &mapToPit);
     }
-    freeGrid(mapToStairs);
-    freeGrid(mapToPit);
 }
 
 // fills (*x, *y) with the coordinates of a random cell with

@@ -1020,19 +1020,17 @@ void populateMonsters() {
 }
 
 boolean getRandomMonsterSpawnLocation(short *x, short *y) {
-    dungeongrid *grid;
-
-    grid = allocGrid(0);
-    calculateDistances(grid, player.xLoc, player.yLoc, T_DIVIDES_LEVEL, NULL, true, true);
-    getTerrainGrid(grid, 0, (T_PATHING_BLOCKER | T_HARMFUL_TERRAIN), (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | IN_FIELD_OF_VIEW));
-    findReplaceGrid(grid, -30000, DCOLS/2-1, 0);
-    findReplaceGrid(grid, 30000, 30000, 0);
-    findReplaceGrid(grid, DCOLS/2, 30000-1, 1);
-    randomLocationInGrid(grid, x, y, 1);
+    dungeongrid grid = filledGrid(0);
+    calculateDistances(&grid, player.xLoc, player.yLoc, T_DIVIDES_LEVEL, NULL, true, true);
+    getTerrainGrid(&grid, 0, (T_PATHING_BLOCKER | T_HARMFUL_TERRAIN), (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | IN_FIELD_OF_VIEW));
+    findReplaceGrid(&grid, -30000, DCOLS/2-1, 0);
+    findReplaceGrid(&grid, 30000, 30000, 0);
+    findReplaceGrid(&grid, DCOLS/2, 30000-1, 1);
+    randomLocationInGrid(&grid, x, y, 1);
     if (*x < 0 || *y < 0) {
-        *grid = filledGrid(1);
-        getTerrainGrid(grid, 0, (T_PATHING_BLOCKER | T_HARMFUL_TERRAIN), (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | IN_FIELD_OF_VIEW | IS_IN_MACHINE));
-        randomLocationInGrid(grid, x, y, 1);
+        grid = filledGrid(1);
+        getTerrainGrid(&grid, 0, (T_PATHING_BLOCKER | T_HARMFUL_TERRAIN), (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | IN_FIELD_OF_VIEW | IS_IN_MACHINE));
+        randomLocationInGrid(&grid, x, y, 1);
     }
     //    DEBUG {
     //        dumpLevelToScreen();
@@ -1040,7 +1038,6 @@ boolean getRandomMonsterSpawnLocation(short *x, short *y) {
     //        plotCharWithColor('X', mapToWindowX(x), mapToWindowY(y), &black, &white);
     //        temporaryMessage("Horde spawn location possibilities:", REQUIRE_ACKNOWLEDGMENT);
     //    }
-    freeGrid(grid);
     if (*x < 0 || *y < 0) {
         return false;
     }
@@ -1084,37 +1081,36 @@ void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidance
     if (!coordinatesAreInMap(x, y)) {
         zeroOutGrid(monstFOV);
         getFOVMask(monstFOV, monst->xLoc, monst->yLoc, DCOLS * FP_FACTOR, T_OBSTRUCTS_VISION, 0, false);
-        dungeongrid *grid = allocGrid(0);
-        calculateDistances(grid, monst->xLoc, monst->yLoc, forbiddenFlagsForMonster(&(monst->info)) & T_DIVIDES_LEVEL, NULL, true, false);
-        findReplaceGrid(grid, -30000, DCOLS/2, 0);
-        findReplaceGrid(grid, 2, 30000, 1);
-        if (validLocationCount(grid, 1) < 1) {
-            *grid = filledGrid(1);
+        dungeongrid grid = filledGrid(0);
+        calculateDistances(&grid, monst->xLoc, monst->yLoc, forbiddenFlagsForMonster(&(monst->info)) & T_DIVIDES_LEVEL, NULL, true, false);
+        findReplaceGrid(&grid, -30000, DCOLS/2, 0);
+        findReplaceGrid(&grid, 2, 30000, 1);
+        if (validLocationCount(&grid, 1) < 1) {
+            grid = filledGrid(1);
         }
         if (respectTerrainAvoidancePreferences) {
             if (monst->info.flags & MONST_RESTRICTED_TO_LIQUID) {
-                *grid = filledGrid(0);
-                getTMGrid(grid, 1, TM_ALLOWS_SUBMERGING);
+                grid = filledGrid(0);
+                getTMGrid(&grid, 1, TM_ALLOWS_SUBMERGING);
             }
-            getTerrainGrid(grid, 0, avoidedFlagsForMonster(&(monst->info)), (IS_IN_MACHINE | HAS_PLAYER | HAS_MONSTER | HAS_STAIRS));
+            getTerrainGrid(&grid, 0, avoidedFlagsForMonster(&(monst->info)), (IS_IN_MACHINE | HAS_PLAYER | HAS_MONSTER | HAS_STAIRS));
         } else {
-            getTerrainGrid(grid, 0, forbiddenFlagsForMonster(&(monst->info)), (IS_IN_MACHINE | HAS_PLAYER | HAS_MONSTER | HAS_STAIRS));
+            getTerrainGrid(&grid, 0, forbiddenFlagsForMonster(&(monst->info)), (IS_IN_MACHINE | HAS_PLAYER | HAS_MONSTER | HAS_STAIRS));
         }
         for (i=0; i<DCOLS; i++) {
             for (j=0; j<DROWS; j++) {
                 if (monstFOV[i][j]) {
-                    grid->cells[i][j] = 0;
+                    grid.cells[i][j] = 0;
                 }
             }
         }
-        randomLocationInGrid(grid, &x, &y, 1);
+        randomLocationInGrid(&grid, &x, &y, 1);
 //        DEBUG {
 //            dumpLevelToScreen();
 //            hiliteGrid(grid, &orange, 50);
 //            plotCharWithColor('X', mapToWindowX(x), mapToWindowY(y), &white, &red);
 //            temporaryMessage("Teleport candidate locations:", REQUIRE_ACKNOWLEDGMENT);
 //        }
-        freeGrid(grid);
         if (x < 0 || y < 0) {
             return; // Failure!
         }
@@ -2971,20 +2967,20 @@ void moveAlly(creature *monst) {
         if (monsterHasBoltEffect(monst, BE_BLINKING)
             && ((monst->info.flags & MONST_ALWAYS_USE_ABILITY) || rand_percent(30))) {
 
-            dungeongrid *enemyMap = allocGrid(0);
-            dungeongrid *costMap = allocGrid(0);
+            dungeongrid enemyMap = filledGrid(0);
+            dungeongrid costMap = filledGrid(0);
 
             for (i=0; i<DCOLS; i++) {
                 for (j=0; j<DROWS; j++) {
                     if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)) {
-                        costMap->cells[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
-                        enemyMap->cells[i][j] = 0; // safeguard against OOS
+                        costMap.cells[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
+                        enemyMap.cells[i][j] = 0; // safeguard against OOS
                     } else if (monsterAvoids(monst, i, j)) {
-                        costMap->cells[i][j] = PDS_FORBIDDEN;
-                        enemyMap->cells[i][j] = 0; // safeguard against OOS
+                        costMap.cells[i][j] = PDS_FORBIDDEN;
+                        enemyMap.cells[i][j] = 0; // safeguard against OOS
                     } else {
-                        costMap->cells[i][j] = 1;
-                        enemyMap->cells[i][j] = 10000;
+                        costMap.cells[i][j] = 1;
+                        enemyMap.cells[i][j] = 10000;
                     }
                 }
             }
@@ -2998,20 +2994,17 @@ void moveAlly(creature *monst) {
                     && (!monsterAvoids(monst, target->xLoc, target->yLoc) || (target->info.flags & MONST_ATTACKABLE_THRU_WALLS))
                     && (!target->status[STATUS_INVISIBLE] || ((monst->info.flags & MONST_ALWAYS_USE_ABILITY) || rand_percent(33)))) {
 
-                    enemyMap->cells[target->xLoc][target->yLoc] = 0;
-                    costMap->cells[target->xLoc][target->yLoc] = 1;
+                    enemyMap.cells[target->xLoc][target->yLoc] = 0;
+                    costMap.cells[target->xLoc][target->yLoc] = 1;
                 }
             }
 
-            dijkstraScan(enemyMap, costMap, true);
-            freeGrid(costMap);
+            dijkstraScan(&enemyMap, &costMap, true);
 
-            if (monsterBlinkToPreferenceMap(monst, enemyMap, false)) {
+            if (monsterBlinkToPreferenceMap(monst, &enemyMap, false)) {
                 monst->ticksUntilTurn = monst->attackSpeed * (monst->info.flags & MONST_CAST_SPELLS_SLOWLY ? 2 : 1);
-                freeGrid(enemyMap);
                 return;
             }
-            freeGrid(enemyMap);
         }
 
         targetLoc[0] = closestMonster->xLoc;

@@ -589,15 +589,14 @@ void populateItems(short upstairsX, short upstairsY) {
     }
 
     if (D_INSPECT_LEVELGEN) {
-        dungeongrid *map = allocGrid(0);
+        dungeongrid map = filledGrid(0);
         for (i=0; i<DCOLS; i++) {
             for (j=0; j<DROWS; j++) {
-                map->cells[i][j] = itemSpawnHeatMap[i][j] * -1;
+                map.cells[i][j] = itemSpawnHeatMap[i][j] * -1;
             }
         }
         dumpLevelToScreen();
-        displayGrid(map);
-        freeGrid(map);
+        displayGrid(&map);
         temporaryMessage("Item spawn heat map:", REQUIRE_ACKNOWLEDGMENT);
     }
 
@@ -670,16 +669,15 @@ void populateItems(short upstairsX, short upstairsY) {
         brogueAssert(!cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY));
 
         if (D_INSPECT_LEVELGEN) {
-            dungeongrid *map = allocGrid(0);
+            dungeongrid map = filledGrid(0);
             short i2, j2;
             for (i2=0; i2<DCOLS; i2++) {
                 for (j2=0; j2<DROWS; j2++) {
-                    map->cells[i2][j2] = itemSpawnHeatMap[i2][j2] * -1;
+                    map.cells[i2][j2] = itemSpawnHeatMap[i2][j2] * -1;
                 }
             }
             dumpLevelToScreen();
-            displayGrid(map);
-            freeGrid(map);
+            displayGrid(&map);
             plotCharWithColor(theItem->displayChar, mapToWindowX(x), mapToWindowY(y), &black, &purple);
             temporaryMessage("Added an item.", REQUIRE_ACKNOWLEDGMENT);
         }
@@ -3242,11 +3240,11 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
     rogue.wpCoordinates[0][1] = y;
     refreshWaypoint(0);
 
-    dungeongrid *grid = allocGrid(0);
-    calculateDistances(grid, x, y, T_PATHING_BLOCKER, NULL, true, false);
+    dungeongrid grid = filledGrid(0);
+    calculateDistances(&grid, x, y, T_PATHING_BLOCKER, NULL, true, false);
 
     for (monst=monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
-        if (grid->cells[monst->xLoc][monst->yLoc] <= distance) {
+        if (grid.cells[monst->xLoc][monst->yLoc] <= distance) {
             if (monst->creatureState == MONSTER_SLEEPING) {
                 wakeUp(monst);
             }
@@ -3259,9 +3257,9 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
     }
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (grid->cells[i][j] >= 0 && grid->cells[i][j] <= distance) {
+            if (grid.cells[i][j] >= 0 && grid.cells[i][j] <= distance) {
                 scentMap->cells[i][j] = 0;
-                addScentToCell(i, j, 2 * grid->cells[i][j]);
+                addScentToCell(i, j, 2 * grid.cells[i][j]);
             }
         }
     }
@@ -3271,7 +3269,7 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
         rogue.aggroRange = currentAggroValue();
     }
 
-    if (grid->cells[player.xLoc][player.yLoc] >= 0 && grid->cells[player.xLoc][player.yLoc] <= distance) {
+    if (grid.cells[player.xLoc][player.yLoc] >= 0 && grid.cells[player.xLoc][player.yLoc] <= distance) {
         discover(x, y);
         discoverCell(x, y);
         colorFlash(flashColor, 0, (DISCOVERED | MAGIC_MAPPED), 10, distance, x, y);
@@ -3279,8 +3277,6 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
             message("You hear a piercing shriek; something must have triggered a nearby alarm.", 0);
         }
     }
-
-    freeGrid(grid);
 }
 
 // Generates a list of coordinates extending in a straight line

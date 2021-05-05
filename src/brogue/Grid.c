@@ -326,30 +326,30 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
     }
 
     // Allocate the grids.
-    dungeongrid *grid = allocGrid(30000);
+    dungeongrid grid = filledGrid(30000);
     // Start with a base of a high number everywhere.
-    dungeongrid *costMap = allocGrid(1);
+    dungeongrid costMap = filledGrid(1);
 
     // Block off the pathing blockers.
-    getTerrainGrid(costMap, PDS_FORBIDDEN, blockingTerrainFlags, blockingMapFlags);
+    getTerrainGrid(&costMap, PDS_FORBIDDEN, blockingTerrainFlags, blockingMapFlags);
     if (blockingTerrainFlags & (T_OBSTRUCTS_DIAGONAL_MOVEMENT | T_OBSTRUCTS_PASSABILITY)) {
-        getTerrainGrid(costMap, PDS_OBSTRUCTION, T_OBSTRUCTS_DIAGONAL_MOVEMENT, 0);
+        getTerrainGrid(&costMap, PDS_OBSTRUCTION, T_OBSTRUCTS_DIAGONAL_MOVEMENT, 0);
     }
 
     // Run the distance scan.
-    grid->cells[x][y] = 1;
-    costMap->cells[x][y] = 1;
-    dijkstraScan(grid, costMap, true);
-    findReplaceGrid(grid, 30000, 30000, 0);
+    grid.cells[x][y] = 1;
+    costMap.cells[x][y] = 1;
+    dijkstraScan(&grid, &costMap, true);
+    findReplaceGrid(&grid, 30000, 30000, 0);
 
     // Block off invalid targets that aren't pathing blockers.
-    getTerrainGrid(grid, 0, forbiddenTerrainFlags, forbiddenMapFlags);
+    getTerrainGrid(&grid, 0, forbiddenTerrainFlags, forbiddenMapFlags);
     if (!hallwaysAllowed) {
-        getPassableArcGrid(grid, 2, 10, 0);
+        getPassableArcGrid(&grid, 2, 10, 0);
     }
 
     // Get the solution.
-    randomLeastPositiveLocationInGrid(grid, retValX, retValY, deterministic);
+    randomLeastPositiveLocationInGrid(&grid, retValX, retValY, deterministic);
 
 //    dumpLevelToScreen();
 //    displayGrid(grid);
@@ -357,9 +357,6 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
 //        hiliteCell(*retValX, *retValY, &yellow, 100, true);
 //    }
 //    temporaryMessage("Qualifying path selected:", REQUIRE_ACKNOWLEDGMENT);
-
-    freeGrid(grid);
-    freeGrid(costMap);
 
     // Fall back to a pathing-agnostic alternative if there are no solutions.
     if (*retValX == -1 && *retValY == -1) {
@@ -381,10 +378,8 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
 void cellularAutomataRound(dungeongrid *grid, char birthParameters[9], char survivalParameters[9]) {
     short i, j, nbCount, newX, newY;
     enum directions dir;
-    dungeongrid *buffer2;
 
-    buffer2 = allocGrid(0);
-    *buffer2 = *grid; // Make a backup of grid in buffer2, so that each generation is isolated.
+    dungeongrid buffer2 = *grid; // Make a backup of grid in buffer2, so that each generation is isolated.
 
     for(i=0; i<DCOLS; i++) {
         for(j=0; j<DROWS; j++) {
@@ -393,22 +388,20 @@ void cellularAutomataRound(dungeongrid *grid, char birthParameters[9], char surv
                 newX = i + nbDirs[dir][0];
                 newY = j + nbDirs[dir][1];
                 if (coordinatesAreInMap(newX, newY)
-                    && buffer2->cells[newX][newY]) {
+                    && buffer2.cells[newX][newY]) {
 
                     nbCount++;
                 }
             }
-            if (!buffer2->cells[i][j] && birthParameters[nbCount] == 't') {
+            if (!buffer2.cells[i][j] && birthParameters[nbCount] == 't') {
                 grid->cells[i][j] = 1; // birth
-            } else if (buffer2->cells[i][j] && survivalParameters[nbCount] == 't') {
+            } else if (buffer2.cells[i][j] && survivalParameters[nbCount] == 't') {
                 // survival
             } else {
                 grid->cells[i][j] = 0; // death
             }
         }
     }
-
-    freeGrid(buffer2);
 }
 
 // Marks a cell as being a member of blobNumber, then recursively iterates through the rest of the blob

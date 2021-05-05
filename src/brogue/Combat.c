@@ -1369,7 +1369,6 @@ boolean canAbsorb(creature *ally, boolean ourBolts[NUMBER_BOLT_KINDS], creature 
 
 boolean anyoneWantABite(creature *decedent) {
     short candidates, randIndex, i;
-    dungeongrid *grid;
     creature *ally;
     boolean success = false;
     boolean ourBolts[NUMBER_BOLT_KINDS] = {false};
@@ -1385,10 +1384,10 @@ boolean anyoneWantABite(creature *decedent) {
         return false;
     }
 
-    grid = allocGrid(0);
-    calculateDistances(grid, decedent->xLoc, decedent->yLoc, T_PATHING_BLOCKER, NULL, true, true);
+    dungeongrid grid = filledGrid(0);
+    calculateDistances(&grid, decedent->xLoc, decedent->yLoc, T_PATHING_BLOCKER, NULL, true, true);
     for (ally = monsters->nextCreature; ally != NULL; ally = ally->nextCreature) {
-        if (canAbsorb(ally, ourBolts, decedent, grid)) {
+        if (canAbsorb(ally, ourBolts, decedent, &grid)) {
             candidates++;
         }
     }
@@ -1396,7 +1395,7 @@ boolean anyoneWantABite(creature *decedent) {
         randIndex = rand_range(1, candidates);
         for (ally = monsters->nextCreature; ally != NULL; ally = ally->nextCreature) {
             // CanAbsorb() populates ourBolts if it returns true and there are no learnable behaviors or flags:
-            if (canAbsorb(ally, ourBolts, decedent, grid) && !--randIndex) {
+            if (canAbsorb(ally, ourBolts, decedent, &grid) && !--randIndex) {
                 break;
             }
         }
@@ -1467,7 +1466,6 @@ boolean anyoneWantABite(creature *decedent) {
             }
         }
     }
-    freeGrid(grid);
     return success;
 }
 

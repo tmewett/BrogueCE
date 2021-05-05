@@ -1643,12 +1643,12 @@ void travel(short x, short y, boolean autoConfirm) {
         return;
     }
 
-    dungeongrid *distanceMap = allocGrid(0);
+    dungeongrid distanceMap = filledGrid(0);
 
-    calculateDistances(distanceMap, x, y, 0, &player, false, false);
-    if (distanceMap->cells[player.xLoc][player.yLoc] < 30000) {
+    calculateDistances(&distanceMap, x, y, 0, &player, false, false);
+    if (distanceMap.cells[player.xLoc][player.yLoc] < 30000) {
         if (autoConfirm) {
-            travelMap(distanceMap);
+            travelMap(&distanceMap);
             //refreshSideBar(-1, -1, false);
         } else {
             if (rogue.upLoc[0] == x && rogue.upLoc[1] == y) {
@@ -1658,14 +1658,14 @@ void travel(short x, short y, boolean autoConfirm) {
             } else {
                 staircaseConfirmKey = 0;
             }
-            displayRoute(distanceMap, false);
+            displayRoute(&distanceMap, false);
             message("Travel this route? (y/n)", 0);
 
             do {
                 nextBrogueEvent(&theEvent, true, false, false);
             } while (theEvent.eventType != MOUSE_UP && theEvent.eventType != KEYSTROKE);
 
-            displayRoute(distanceMap, true); // clear route display
+            displayRoute(&distanceMap, true); // clear route display
             confirmMessages();
 
             if ((theEvent.eventType == MOUSE_UP && windowToMapX(theEvent.param1) == x && windowToMapY(theEvent.param2) == y)
@@ -1673,7 +1673,7 @@ void travel(short x, short y, boolean autoConfirm) {
                                                         || theEvent.param1 == RETURN_KEY
                                                         || (theEvent.param1 == staircaseConfirmKey
                                                             && theEvent.param1 != 0)))) {
-                travelMap(distanceMap);
+                travelMap(&distanceMap);
                 //refreshSideBar(-1, -1, false);
                 commitDraws();
             } else if (theEvent.eventType == MOUSE_UP) {
@@ -1690,7 +1690,6 @@ void travel(short x, short y, boolean autoConfirm) {
         rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
         message("No path is available.", 0);
     }
-    freeGrid(distanceMap);
 }
 
 void populateGenericCostMap(dungeongrid *costMap) {
@@ -1862,8 +1861,8 @@ void getExploreMap(dungeongrid *map, boolean headingToStairs) {// calculate expl
     short i, j;
     item *theItem;
 
-    dungeongrid *costMap = allocGrid(0);
-    populateCreatureCostMap(costMap, &player);
+    dungeongrid costMap = filledGrid(0);
+    populateCreatureCostMap(&costMap, &player);
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
@@ -1873,38 +1872,36 @@ void getExploreMap(dungeongrid *map, boolean headingToStairs) {// calculate expl
                 if ((pmap[i][j].flags & MAGIC_MAPPED)
                     && (tileCatalog[pmap[i][j].layers[DUNGEON]].flags | tileCatalog[pmap[i][j].layers[LIQUID]].flags) & T_PATHING_BLOCKER) {
                     // Magic-mapped cells revealed as obstructions should be treated as such even though they're not discovered.
-                    costMap->cells[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
+                    costMap.cells[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
                 } else {
-                    costMap->cells[i][j] = 1;
+                    costMap.cells[i][j] = 1;
                     map->cells[i][j] = exploreGoalValue(i, j);
                 }
             } else if (theItem
                        && !monsterAvoids(&player, i, j)) {
                 if (theItem->flags & ITEM_PLAYER_AVOIDS) {
-                    costMap->cells[i][j] = 20;
+                    costMap.cells[i][j] = 20;
                 } else {
-                    costMap->cells[i][j] = 1;
+                    costMap.cells[i][j] = 1;
                     map->cells[i][j] = exploreGoalValue(i, j) - 10;
                 }
             }
         }
     }
 
-    costMap->cells[rogue.downLoc[0]][rogue.downLoc[1]] = 100;
-    costMap->cells[rogue.upLoc[0]][rogue.upLoc[1]]     = 100;
+    costMap.cells[rogue.downLoc[0]][rogue.downLoc[1]] = 100;
+    costMap.cells[rogue.upLoc[0]][rogue.upLoc[1]]     = 100;
 
     if (headingToStairs) {
         map->cells[rogue.downLoc[0]][rogue.downLoc[1]] = 0; // head to the stairs
     }
 
-    dijkstraScan(map, costMap, true);
+    dijkstraScan(map, &costMap, true);
 
     //displayGrid(costMap);
-    freeGrid(costMap);
 }
 
 boolean explore(short frameDelay) {
-    dungeongrid *distanceMap;
     short path[1000][2], steps;
     boolean madeProgress, headingToStairs;
     enum directions dir;
@@ -1957,7 +1954,7 @@ boolean explore(short frameDelay) {
     rogue.disturbed = false;
     rogue.automationActive = true;
 
-    distanceMap = allocGrid(0);
+    
     do {
         // fight any adjacent enemies
         dir = adjacentFightingDir();
@@ -1972,14 +1969,15 @@ boolean explore(short frameDelay) {
             continue;
         }
 
-        getExploreMap(distanceMap, headingToStairs);
+        dungeongrid distanceMap = filledGrid(0);
+        getExploreMap(&distanceMap, headingToStairs);
 
         // hilite path
-        steps = getPlayerPathOnMap(path, distanceMap, player.xLoc, player.yLoc);
+        steps = getPlayerPathOnMap(path, &distanceMap, player.xLoc, player.yLoc);
         hilitePath(path, steps, false);
 
         // take a step
-        dir = nextStep(distanceMap, player.xLoc, player.yLoc, NULL, false);
+        dir = nextStep(&distanceMap, player.xLoc, player.yLoc, NULL, false);
 
         if (!headingToStairs && rogue.autoPlayingLevel && dir == NO_DIRECTION) {
             headingToStairs = true;
@@ -2004,7 +2002,6 @@ boolean explore(short frameDelay) {
     //clearCursorPath();
     rogue.automationActive = false;
     refreshSideBar(-1, -1, false);
-    freeGrid(distanceMap);
     return madeProgress;
 }
 
