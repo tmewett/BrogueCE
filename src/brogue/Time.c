@@ -1733,12 +1733,12 @@ void updateSafeTerrainMap() {
                 && (!cellHasTMFlag(i, j, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc(i, j) & T_OBSTRUCTS_PASSABILITY))) {
 
                 costMap.cells[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
-                rogue.mapToSafeTerrain->cells[i][j] = 30000; // OOS prophylactic
+                rogue.mapToSafeTerrain.cells[i][j] = 30000; // OOS prophylactic
             } else if ((monst && (monst->turnsSpentStationary > 1 || (monst->info.flags & MONST_GETS_TURN_ON_ACTIVATION)))
                        || (cellHasTerrainFlag(i, j, T_PATHING_BLOCKER & ~T_HARMFUL_TERRAIN) && !cellHasTMFlag(i, j, TM_IS_SECRET))) {
 
                 costMap.cells[i][j] = PDS_FORBIDDEN;
-                rogue.mapToSafeTerrain->cells[i][j] = 30000;
+                rogue.mapToSafeTerrain.cells[i][j] = 30000;
             } else if (cellHasTerrainFlag(i, j, T_HARMFUL_TERRAIN) || pmap[i][j].layers[DUNGEON] == DOOR) {
                 // The door thing is an aesthetically offensive but necessary hack to make sure
                 // that monsters trying to find their way out of caustic gas do not sprint for
@@ -1747,14 +1747,14 @@ void updateSafeTerrainMap() {
                 // allies will fidget back and forth in a doorway while they asphyxiate.
                 // This will have to do. It's a difficult problem to solve elegantly.
                 costMap.cells[i][j] = 1;
-                rogue.mapToSafeTerrain->cells[i][j] = 30000;
+                rogue.mapToSafeTerrain.cells[i][j] = 30000;
             } else {
                 costMap.cells[i][j] = 1;
-                rogue.mapToSafeTerrain->cells[i][j] = 0;
+                rogue.mapToSafeTerrain.cells[i][j] = 0;
             }
         }
     }
-    dijkstraScan(rogue.mapToSafeTerrain, &costMap, false);
+    dijkstraScan(&rogue.mapToSafeTerrain, &costMap, false);
 }
 
 void processIncrementalAutoID() {
@@ -2582,7 +2582,7 @@ void playerTurnEnded() {
     if ((player.status[STATUS_LEVITATING] && cellHasTerrainFlag(player.xLoc, player.yLoc, T_LAVA_INSTA_DEATH | T_IS_DEEP_WATER | T_AUTO_DESCENT))
         || (player.status[STATUS_IMMUNE_TO_FIRE] && cellHasTerrainFlag(player.xLoc, player.yLoc, T_LAVA_INSTA_DEATH))) {
         if (!rogue.receivedLevitationWarning) {
-            turnsRequiredToShore = rogue.mapToShore->cells[player.xLoc][player.yLoc] * player.movementSpeed / 100;
+            turnsRequiredToShore = rogue.mapToShore.cells[player.xLoc][player.yLoc] * player.movementSpeed / 100;
             if (cellHasTerrainFlag(player.xLoc, player.yLoc, T_LAVA_INSTA_DEATH)) {
                 turnsToShore = max(player.status[STATUS_LEVITATING], player.status[STATUS_IMMUNE_TO_FIRE]) * 100 / player.movementSpeed;
             } else {
@@ -2619,10 +2619,10 @@ void resetScentTurnNumber() { // don't want player.scentTurnNumber to roll over 
         if (levels[d].visited) {
             for (i=0; i<DCOLS; i++) {
                 for (j=0; j<DROWS; j++) {
-                    if (levels[d].scentMap->cells[i][j] > 15000) {
-                        levels[d].scentMap->cells[i][j] -= 15000;
+                    if (levels[d].scentMap.cells[i][j] > 15000) {
+                        levels[d].scentMap.cells[i][j] -= 15000;
                     } else {
-                        levels[d].scentMap->cells[i][j] = 0;
+                        levels[d].scentMap.cells[i][j] = 0;
                     }
                 }
             }

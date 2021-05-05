@@ -1766,7 +1766,7 @@ void populateCreatureCostMap(dungeongrid *costMap, creature *monst) {
             if ((tFlags & T_LAVA_INSTA_DEATH)
                 && !(monst->info.flags & (MONST_IMMUNE_TO_FIRE | MONST_FLIES | MONST_INVULNERABLE))
                 && (monst->status[STATUS_LEVITATING] || monst->status[STATUS_IMMUNE_TO_FIRE])
-                && max(monst->status[STATUS_LEVITATING], monst->status[STATUS_IMMUNE_TO_FIRE]) < (rogue.mapToShore->cells[i][j] + distanceBetween(i, j, monst->xLoc, monst->yLoc) * monst->movementSpeed / 100)) {
+                && max(monst->status[STATUS_LEVITATING], monst->status[STATUS_IMMUNE_TO_FIRE]) < (rogue.mapToShore.cells[i][j] + distanceBetween(i, j, monst->xLoc, monst->yLoc) * monst->movementSpeed / 100)) {
                 // Only a temporary effect will permit the monster to survive the lava, and the remaining duration either isn't
                 // enough to get it to the spot, or it won't suffice to let it return to shore if it does get there.
                 // Treat these locations as obstacles.
@@ -1777,7 +1777,7 @@ void populateCreatureCostMap(dungeongrid *costMap, creature *monst) {
             if (((tFlags & T_AUTO_DESCENT) || (tFlags & T_IS_DEEP_WATER) && !(monst->info.flags & MONST_IMMUNE_TO_WATER))
                 && !(monst->info.flags & MONST_FLIES)
                 && (monst->status[STATUS_LEVITATING])
-                && monst->status[STATUS_LEVITATING] < (rogue.mapToShore->cells[i][j] + distanceBetween(i, j, monst->xLoc, monst->yLoc) * monst->movementSpeed / 100)) {
+                && monst->status[STATUS_LEVITATING] < (rogue.mapToShore.cells[i][j] + distanceBetween(i, j, monst->xLoc, monst->yLoc) * monst->movementSpeed / 100)) {
                 // Only a temporary effect will permit the monster to levitate over the chasm/water, and the remaining duration either isn't
                 // enough to get it to the spot, or it won't suffice to let it return to shore if it does get there.
                 // Treat these locations as obstacles.

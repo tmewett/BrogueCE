@@ -2309,8 +2309,8 @@ typedef struct playerCharacter {
     short sidebarLocationList[ROWS*2][2];   // to keep track of which location each line of the sidebar references
 
     // maps
-    dungeongrid *mapToShore;                 // how many steps to get back to shore
-    dungeongrid *mapToSafeTerrain;           // so monsters can get to safety
+    dungeongrid mapToShore;                 // how many steps to get back to shore
+    dungeongrid mapToSafeTerrain;           // so monsters can get to safety
 
     // recording info
     boolean recording;                  // whether we are recording the game
@@ -2374,7 +2374,7 @@ typedef struct levelData {
     struct item *items;
     struct creature *monsters;
     struct creature *dormantMonsters;
-    dungeongrid *scentMap;
+    dungeongrid scentMap;
     uint64_t levelSeed;
     short upStairsLoc[2];
     short downStairsLoc[2];

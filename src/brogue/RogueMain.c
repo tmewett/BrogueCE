@@ -205,7 +205,7 @@ void initializeRogue(uint64_t seed) {
         levels[i].monsters = NULL;
         levels[i].dormantMonsters = NULL;
         levels[i].items = NULL;
-        levels[i].scentMap = NULL;
+        levels[i].scentMap = filledGrid(0);
         levels[i].visited = false;
         levels[i].playerExitedVia[0] = 0;
         levels[i].playerExitedVia[1] = 0;
@@ -298,7 +298,7 @@ void initializeRogue(uint64_t seed) {
     allySafetyMap       = allocGrid(0);
     chokeMap            = allocGrid(0);
 
-    rogue.mapToSafeTerrain = allocGrid(0);
+    rogue.mapToSafeTerrain = filledGrid(0);
 
     // initialize the player
 
@@ -346,7 +346,7 @@ void initializeRogue(uint64_t seed) {
     rogue.swappedOut = NULL;
     rogue.monsterSpawnFuse = rand_range(125, 175);
     rogue.ticksTillUpdateEnvironment = 100;
-    rogue.mapToShore = NULL;
+    rogue.mapToShore = filledGrid(0);
     rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
     rogue.xpxpThisTurn = 0;
 
@@ -619,8 +619,10 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     updateRingBonuses(); // also updates miner's light
 
     if (!levels[rogue.depthLevel - 1].visited) { // level has not already been visited
-        levels[rogue.depthLevel - 1].scentMap = allocGrid(0);
-        scentMap = levels[rogue.depthLevel - 1].scentMap;
+        levels[rogue.depthLevel - 1].scentMap = filledGrid(0);
+        // Point to the scent map, so modifications to global
+        // scentMap also affect the level's data!
+        scentMap = &levels[rogue.depthLevel - 1].scentMap;
 
         // generate a seed from the current RNG state
         do {
@@ -681,7 +683,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     } else { // level has already been visited
 
         // restore level
-        scentMap = levels[rogue.depthLevel - 1].scentMap;
+        scentMap = &levels[rogue.depthLevel - 1].scentMap;
         timeAway = clamp(0, rogue.absoluteTurnNumber - levels[rogue.depthLevel - 1].awaySince, 30000);
 
         for (i=0; i<DCOLS; i++) {
@@ -899,8 +901,6 @@ void freeEverything() {
     freeGlobalDynamicGrid(&safetyMap);
     freeGlobalDynamicGrid(&allySafetyMap);
     freeGlobalDynamicGrid(&chokeMap);
-    freeGlobalDynamicGrid(&rogue.mapToShore);
-    freeGlobalDynamicGrid(&rogue.mapToSafeTerrain);
 
     for (i=0; i<DEEPEST_LEVEL+1; i++) {
         for (monst = levels[i].monsters; monst != NULL; monst = monst2) {
@@ -918,10 +918,7 @@ void freeEverything() {
             deleteItem(theItem);
         }
         levels[i].items = NULL;
-        if (levels[i].scentMap) {
-            freeGrid(levels[i].scentMap);
-            levels[i].scentMap = NULL;
-        }
+        levels[i].scentMap = filledGrid(0);
     }
     scentMap = NULL;
     for (monst = monsters; monst != NULL; monst = monst2) {

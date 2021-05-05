@@ -2896,22 +2896,20 @@ void updateMapToShore() {
     dungeongrid costMap = filledGrid(0);
 
     // Calculate the map to shore for this level
-    if (!rogue.mapToShore) {
-        rogue.mapToShore = allocGrid(0);
-    }
+    rogue.mapToShore = filledGrid(0);
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
             if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)) {
                 costMap.cells[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
-                rogue.mapToShore->cells[i][j] = 30000;
+                rogue.mapToShore.cells[i][j] = 30000;
             } else {
                 costMap.cells[i][j] = 1;
-                rogue.mapToShore->cells[i][j] = (cellHasTerrainFlag(i, j, T_LAVA_INSTA_DEATH | T_IS_DEEP_WATER | T_AUTO_DESCENT)
+                rogue.mapToShore.cells[i][j] = (cellHasTerrainFlag(i, j, T_LAVA_INSTA_DEATH | T_IS_DEEP_WATER | T_AUTO_DESCENT)
                                           && !cellHasTMFlag(i, j, TM_IS_SECRET)) ? 30000 : 0;
             }
         }
     }
-    dijkstraScan(rogue.mapToShore, &costMap, true);
+    dijkstraScan(&rogue.mapToShore, &costMap, true);
 }
 
 // Calculates the distance map for the given waypoint.

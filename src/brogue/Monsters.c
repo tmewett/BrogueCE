@@ -908,7 +908,6 @@ boolean summonMinions(creature *summoner) {
     creature *monst, *host;
     char buf[DCOLS];
     char monstName[DCOLS];
-    dungeongrid *grid;
 
     if (hordeID < 0) {
         return false;
@@ -927,16 +926,16 @@ boolean summonMinions(creature *summoner) {
         atLeastOneMinion = spawnMinions(hordeID, summoner, true, true);
     }
 
+    boolean is_grid = false;
+    dungeongrid grid = filledGrid(0);
     if (hordeCatalog[hordeID].flags & HORDE_SUMMONED_AT_DISTANCE) {
         // Create a grid where "1" denotes a valid summoning location: within DCOLS/2 pathing distance,
         // not in harmful terrain, and outside of the player's field of view.
-        grid = allocGrid(0);
-        calculateDistances(grid, summoner->xLoc, summoner->yLoc, (T_PATHING_BLOCKER | T_SACRED), NULL, true, true);
-        findReplaceGrid(grid, 1, DCOLS/2, 1);
-        findReplaceGrid(grid, 2, 30000, 0);
-        getTerrainGrid(grid, 0, (T_PATHING_BLOCKER | T_HARMFUL_TERRAIN), (IN_FIELD_OF_VIEW | CLAIRVOYANT_VISIBLE | HAS_PLAYER | HAS_MONSTER));
-    } else {
-        grid = NULL;
+        is_grid = true;
+        calculateDistances(&grid, summoner->xLoc, summoner->yLoc, (T_PATHING_BLOCKER | T_SACRED), NULL, true, true);
+        findReplaceGrid(&grid, 1, DCOLS/2, 1);
+        findReplaceGrid(&grid, 2, 30000, 0);
+        getTerrainGrid(&grid, 0, (T_PATHING_BLOCKER | T_HARMFUL_TERRAIN), (IN_FIELD_OF_VIEW | CLAIRVOYANT_VISIBLE | HAS_PLAYER | HAS_MONSTER));
     }
 
     for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
@@ -945,10 +944,10 @@ boolean summonMinions(creature *summoner) {
 
             if (hordeCatalog[hordeID].flags & HORDE_SUMMONED_AT_DISTANCE) {
                 x = y = -1;
-                randomLocationInGrid(grid, &x, &y, 1);
+                randomLocationInGrid(&grid, &x, &y, 1);
                 teleport(monst, x, y, true);
-                if (x != -1 && y != -1 && grid != NULL) {
-                    grid->cells[x][y] = 0;
+                if (x != -1 && y != -1 && is_grid) {
+                    grid.cells[x][y] = 0;
                 }
             }
 
@@ -995,10 +994,6 @@ boolean summonMinions(creature *summoner) {
         summoner->bookkeepingFlags |= MB_LEADER;
     }
     createFlare(summoner->xLoc, summoner->yLoc, SUMMONING_FLASH_LIGHT);
-
-    if (grid) {
-        freeGrid(grid);
-    }
 
     return atLeastOneMinion;
 }
@@ -1373,7 +1368,7 @@ boolean monsterAvoids(creature *monst, short x, short y) {
     if ((tFlags & T_IS_FIRE & ~terrainImmunities)
         && !cellHasTerrainFlag(monst->xLoc, monst->yLoc, T_IS_FIRE)
         && !(cFlags & (HAS_MONSTER | HAS_PLAYER))
-        && (monst != &player || rogue.mapToShore->cells[x][y] >= player.status[STATUS_IMMUNE_TO_FIRE])) {
+        && (monst != &player || rogue.mapToShore.cells[x][y] >= player.status[STATUS_IMMUNE_TO_FIRE])) {
         return true;
     }
 
@@ -1402,7 +1397,7 @@ boolean monsterAvoids(creature *monst, short x, short y) {
     // lava
     if ((tFlags & T_LAVA_INSTA_DEATH & ~terrainImmunities)
         && (!(tFlags & T_ENTANGLES) || !(monst->info.flags & MONST_IMMUNE_TO_WEBS))
-        && (monst != &player || rogue.mapToShore->cells[x][y] >= max(player.status[STATUS_IMMUNE_TO_FIRE], player.status[STATUS_LEVITATING]))) {
+        && (monst != &player || rogue.mapToShore.cells[x][y] >= max(player.status[STATUS_IMMUNE_TO_FIRE], player.status[STATUS_LEVITATING]))) {
         return true;
     }
 
@@ -2875,12 +2870,12 @@ void moveAlly(creature *monst) {
             updateSafeTerrainMap();
         }
 
-        if (monsterBlinkToPreferenceMap(monst, rogue.mapToSafeTerrain, false)) {
+        if (monsterBlinkToPreferenceMap(monst, &rogue.mapToSafeTerrain, false)) {
             monst->ticksUntilTurn = monst->attackSpeed * (monst->info.flags & MONST_CAST_SPELLS_SLOWLY ? 2 : 1);
             return;
         }
 
-        dir = nextStep(rogue.mapToSafeTerrain, x, y, monst, true);
+        dir = nextStep(&rogue.mapToSafeTerrain, x, y, monst, true);
         if (dir != -1) {
             targetLoc[0] = x + nbDirs[dir][0];
             targetLoc[1] = y + nbDirs[dir][1];
@@ -3321,12 +3316,12 @@ void monstersTurn(creature *monst) {
                 updateSafeTerrainMap();
             }
 
-            if (monsterBlinkToPreferenceMap(monst, rogue.mapToSafeTerrain, false)) {
+            if (monsterBlinkToPreferenceMap(monst, &rogue.mapToSafeTerrain, false)) {
                 monst->ticksUntilTurn = monst->attackSpeed * (monst->info.flags & MONST_CAST_SPELLS_SLOWLY ? 2 : 1);
                 return;
             }
 
-            dir = nextStep(rogue.mapToSafeTerrain, x, y, monst, true);
+            dir = nextStep(&rogue.mapToSafeTerrain, x, y, monst, true);
             if (dir != -1) {
                 targetLoc[0] = x + nbDirs[dir][0];
                 targetLoc[1] = y + nbDirs[dir][1];
