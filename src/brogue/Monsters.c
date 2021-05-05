@@ -856,8 +856,7 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
     }
 
     if (BROGUE_VERSION_ATLEAST(1,9,3) && (theHorde->flags & HORDE_MACHINE_THIEF)) {
-        leader->safetyMap = allocGrid(); // Keep thieves from fleeing before they see the player
-        fillGrid(leader->safetyMap, 0);
+        leader->safetyMap = allocGrid(0); // Keep thieves from fleeing before they see the player
     }
 
     preexistingMonst = monsterAtLoc(x, y);
@@ -931,8 +930,7 @@ boolean summonMinions(creature *summoner) {
     if (hordeCatalog[hordeID].flags & HORDE_SUMMONED_AT_DISTANCE) {
         // Create a grid where "1" denotes a valid summoning location: within DCOLS/2 pathing distance,
         // not in harmful terrain, and outside of the player's field of view.
-        grid = allocGrid();
-        fillGrid(grid, 0);
+        grid = allocGrid(0);
         calculateDistances(grid, summoner->xLoc, summoner->yLoc, (T_PATHING_BLOCKER | T_SACRED), NULL, true, true);
         findReplaceGrid(grid, 1, DCOLS/2, 1);
         findReplaceGrid(grid, 2, 30000, 0);
@@ -1024,8 +1022,7 @@ void populateMonsters() {
 boolean getRandomMonsterSpawnLocation(short *x, short *y) {
     dungeongrid *grid;
 
-    grid = allocGrid();
-    fillGrid(grid, 0);
+    grid = allocGrid(0);
     calculateDistances(grid, player.xLoc, player.yLoc, T_DIVIDES_LEVEL, NULL, true, true);
     getTerrainGrid(grid, 0, (T_PATHING_BLOCKER | T_HARMFUL_TERRAIN), (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | IN_FIELD_OF_VIEW));
     findReplaceGrid(grid, -30000, DCOLS/2-1, 0);
@@ -1087,8 +1084,7 @@ void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidance
     if (!coordinatesAreInMap(x, y)) {
         zeroOutGrid(monstFOV);
         getFOVMask(monstFOV, monst->xLoc, monst->yLoc, DCOLS * FP_FACTOR, T_OBSTRUCTS_VISION, 0, false);
-        dungeongrid *grid = allocGrid();
-        fillGrid(grid, 0);
+        dungeongrid *grid = allocGrid(0);
         calculateDistances(grid, monst->xLoc, monst->yLoc, forbiddenFlagsForMonster(&(monst->info)) & T_DIVIDES_LEVEL, NULL, true, false);
         findReplaceGrid(grid, -30000, DCOLS/2, 0);
         findReplaceGrid(grid, 2, 30000, 1);
@@ -2023,8 +2019,7 @@ void pathTowardCreature(creature *monst, creature *target) {
 
     // is the target missing his map altogether?
     if (!target->mapToMe) {
-        target->mapToMe = allocGrid();
-        fillGrid(target->mapToMe, 0);
+        target->mapToMe = allocGrid(0);
         calculateDistances(target->mapToMe, target->xLoc, target->yLoc, 0, monst, true, false);
     }
 
@@ -2299,7 +2294,7 @@ static dungeongrid *getSafetyMap(creature *monst) {
             if (!rogue.updatedSafetyMapThisTurn) {
                 updateSafetyMap();
             }
-            monst->safetyMap = allocGrid();
+            monst->safetyMap = allocGrid(0);
             *monst->safetyMap = *safetyMap;
         }
         return monst->safetyMap;
@@ -2976,8 +2971,8 @@ void moveAlly(creature *monst) {
         if (monsterHasBoltEffect(monst, BE_BLINKING)
             && ((monst->info.flags & MONST_ALWAYS_USE_ABILITY) || rand_percent(30))) {
 
-            dungeongrid *enemyMap = allocGrid();
-            dungeongrid *costMap = allocGrid();
+            dungeongrid *enemyMap = allocGrid(0);
+            dungeongrid *costMap = allocGrid(0);
 
             for (i=0; i<DCOLS; i++) {
                 for (j=0; j<DROWS; j++) {

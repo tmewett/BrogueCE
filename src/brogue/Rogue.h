@@ -3094,7 +3094,7 @@ extern "C" {
                                      boolean deterministic);
 
     // Grid operations
-    dungeongrid *allocGrid();
+    dungeongrid *allocGrid(short initial);
     void freeGrid(dungeongrid *array);
     void fillGrid(dungeongrid *grid, short fillValue);
     void hiliteGrid(dungeongrid *grid, color *hiliteColor, short hiliteStrength);

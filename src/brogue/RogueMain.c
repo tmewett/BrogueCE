@@ -222,8 +222,7 @@ void initializeRogue(uint64_t seed) {
 
     // initialize the waypoints list
     for (i=0; i<MAX_WAYPOINT_COUNT; i++) {
-        rogue.wpDistance[i] = allocGrid();
-        fillGrid(rogue.wpDistance[i], 0);
+        rogue.wpDistance[i] = allocGrid(0);
     }
 
     rogue.rewardRoomsGenerated = 0;
@@ -295,17 +294,11 @@ void initializeRogue(uint64_t seed) {
     purgatory->nextCreature = NULL;
 
     scentMap            = NULL;
-    safetyMap           = allocGrid();
-    allySafetyMap       = allocGrid();
-    chokeMap            = allocGrid();
+    safetyMap           = allocGrid(0);
+    allySafetyMap       = allocGrid(0);
+    chokeMap            = allocGrid(0);
 
-    rogue.mapToSafeTerrain = allocGrid();
-
-    // Zero out the dynamic grids, as an essential safeguard against OOSes:
-    fillGrid(safetyMap, 0);
-    fillGrid(allySafetyMap, 0);
-    fillGrid(chokeMap, 0);
-    fillGrid(rogue.mapToSafeTerrain, 0);
+    rogue.mapToSafeTerrain = allocGrid(0);
 
     // initialize the player
 
@@ -538,8 +531,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                 }
             }
         }
-        dungeongrid *mapToStairs = allocGrid();
-        fillGrid(mapToStairs, 0);
+        dungeongrid *mapToStairs = allocGrid(0);
         for (flying = 0; flying <= 1; flying++) {
             fillGrid(mapToStairs, 0);
             calculateDistances(mapToStairs, px, py, (flying ? T_OBSTRUCTS_PASSABILITY : T_PATHING_BLOCKER) | T_SACRED, NULL, true, true);
@@ -629,9 +621,8 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     updateRingBonuses(); // also updates miner's light
 
     if (!levels[rogue.depthLevel - 1].visited) { // level has not already been visited
-        levels[rogue.depthLevel - 1].scentMap = allocGrid();
+        levels[rogue.depthLevel - 1].scentMap = allocGrid(0);
         scentMap = levels[rogue.depthLevel - 1].scentMap;
-        fillGrid(levels[rogue.depthLevel - 1].scentMap, 0);
 
         // generate a seed from the current RNG state
         do {
@@ -836,10 +827,8 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     }
 
     if (levels[rogue.depthLevel - 1].visited) {
-        dungeongrid *mapToStairs = allocGrid();
-        dungeongrid *mapToPit = allocGrid();
-        fillGrid(mapToStairs, 0);
-        fillGrid(mapToPit, 0);
+        dungeongrid *mapToStairs = allocGrid(0);
+        dungeongrid *mapToPit = allocGrid(0);
         calculateDistances(mapToStairs, player.xLoc, player.yLoc, T_PATHING_BLOCKER, NULL, true, true);
         calculateDistances(mapToPit, levels[rogue.depthLevel-1].playerExitedVia[0],
                            levels[rogue.depthLevel-1].playerExitedVia[1], T_PATHING_BLOCKER, NULL, true, true);

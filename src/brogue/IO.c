@@ -145,11 +145,10 @@ void getClosestValidLocationOnMap(short loc[2], dungeongrid *map, short x, short
 }
 
 void processSnapMap(dungeongrid *map) {
-    dungeongrid *costMap;
     enum directions dir;
     short i, j, newX, newY;
 
-    costMap = allocGrid();
+    dungeongrid *costMap = allocGrid(0);
 
     populateCreatureCostMap(costMap, &player);
     fillGrid(map, 30000);
@@ -576,9 +575,9 @@ void mainInputLoop() {
 
     playingBack = rogue.playbackMode;
     rogue.playbackMode = false;
-    dungeongrid *costMap = allocGrid();
-    dungeongrid *playerPathingMap = allocGrid();
-    dungeongrid *cursorSnapMap = allocGrid();
+    dungeongrid *costMap = allocGrid(0);
+    dungeongrid *playerPathingMap = allocGrid(0);
+    dungeongrid *cursorSnapMap = allocGrid(0);
 
     cursor[0] = cursor[1] = -1;
 
@@ -2137,8 +2136,7 @@ void funkyFade(cellDisplayBuffer displayBuf[COLS][ROWS], const color *colorStart
     assureCosmeticRNG;
 
     fastForward = false;
-    distanceMap = allocGrid();
-    fillGrid(distanceMap, 0);
+    distanceMap = allocGrid(0);
     calculateDistances(distanceMap, player.xLoc, player.yLoc, T_OBSTRUCTS_PASSABILITY, 0, true, true);
 
     for (i=0; i<COLS; i++) {
@@ -2349,7 +2347,7 @@ void exploreKey(const boolean controlKey) {
             x = finalX = player.xLoc;
             y = finalY = player.yLoc;
 
-            exploreMap = allocGrid();
+            exploreMap = allocGrid(0);
             getExploreMap(exploreMap, false);
             do {
                 dir = nextStep(exploreMap, x, y, NULL, false);

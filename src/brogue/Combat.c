@@ -1385,8 +1385,7 @@ boolean anyoneWantABite(creature *decedent) {
         return false;
     }
 
-    grid = allocGrid();
-    fillGrid(grid, 0);
+    grid = allocGrid(0);
     calculateDistances(grid, decedent->xLoc, decedent->yLoc, T_PATHING_BLOCKER, NULL, true, true);
     for (ally = monsters->nextCreature; ally != NULL; ally = ally->nextCreature) {
         if (canAbsorb(ally, ourBolts, decedent, grid)) {

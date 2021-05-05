@@ -589,7 +589,7 @@ void populateItems(short upstairsX, short upstairsY) {
     }
 
     if (D_INSPECT_LEVELGEN) {
-        dungeongrid *map = allocGrid();
+        dungeongrid *map = allocGrid(0);
         for (i=0; i<DCOLS; i++) {
             for (j=0; j<DROWS; j++) {
                 map->cells[i][j] = itemSpawnHeatMap[i][j] * -1;
@@ -670,7 +670,7 @@ void populateItems(short upstairsX, short upstairsY) {
         brogueAssert(!cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY));
 
         if (D_INSPECT_LEVELGEN) {
-            dungeongrid *map = allocGrid();
+            dungeongrid *map = allocGrid(0);
             short i2, j2;
             for (i2=0; i2<DCOLS; i2++) {
                 for (j2=0; j2<DROWS; j2++) {
@@ -3242,8 +3242,7 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
     rogue.wpCoordinates[0][1] = y;
     refreshWaypoint(0);
 
-    dungeongrid *grid = allocGrid();
-    fillGrid(grid, 0);
+    dungeongrid *grid = allocGrid(0);
     calculateDistances(grid, x, y, T_PATHING_BLOCKER, NULL, true, false);
 
     for (monst=monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {

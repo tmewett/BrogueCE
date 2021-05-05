@@ -1521,8 +1521,8 @@ void updateAllySafetyMap() {
 
     rogue.updatedAllySafetyMapThisTurn = true;
 
-    dungeongrid *playerCostMap = allocGrid();
-    dungeongrid *monsterCostMap = allocGrid();
+    dungeongrid *playerCostMap = allocGrid(0);
+    dungeongrid *monsterCostMap = allocGrid(0);
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
@@ -1597,8 +1597,8 @@ void updateSafetyMap() {
 
     rogue.updatedSafetyMapThisTurn = true;
 
-    dungeongrid *playerCostMap = allocGrid();
-    dungeongrid *monsterCostMap = allocGrid();
+    dungeongrid *playerCostMap = allocGrid(0);
+    dungeongrid *monsterCostMap = allocGrid(0);
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
@@ -1729,7 +1729,7 @@ void updateSafeTerrainMap() {
     creature *monst;
 
     rogue.updatedMapToSafeTerrainThisTurn = true;
-    dungeongrid *costMap = allocGrid();
+    dungeongrid *costMap = allocGrid(0);
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {

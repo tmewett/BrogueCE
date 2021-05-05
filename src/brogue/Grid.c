@@ -26,8 +26,14 @@
 
 
 // mallocing two-dimensional arrays! dun dun DUN!
-dungeongrid *allocGrid() {
-    return (dungeongrid *)calloc(1, sizeof(dungeongrid));
+dungeongrid *allocGrid(short initial) {
+    dungeongrid *grid = (dungeongrid *)calloc(1, sizeof(dungeongrid));
+    for (int i = 0; i < DCOLS; i++) {
+        for (int j = 0; j < DROWS; j++) {
+            grid->cells[i][j] = initial;
+        }
+    }
+    return grid;
 }
 
 void freeGrid(dungeongrid *array) {
@@ -319,12 +325,9 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
     }
 
     // Allocate the grids.
-    dungeongrid *grid = allocGrid();
-    dungeongrid *costMap = allocGrid();
-
+    dungeongrid *grid = allocGrid(30000);
     // Start with a base of a high number everywhere.
-    fillGrid(grid, 30000);
-    fillGrid(costMap, 1);
+    dungeongrid *costMap = allocGrid(1);
 
     // Block off the pathing blockers.
     getTerrainGrid(costMap, PDS_FORBIDDEN, blockingTerrainFlags, blockingMapFlags);
@@ -379,7 +382,7 @@ void cellularAutomataRound(dungeongrid *grid, char birthParameters[9], char surv
     enum directions dir;
     dungeongrid *buffer2;
 
-    buffer2 = allocGrid();
+    buffer2 = allocGrid(0);
     *buffer2 = *grid; // Make a backup of grid in buffer2, so that each generation is isolated.
 
     for(i=0; i<DCOLS; i++) {

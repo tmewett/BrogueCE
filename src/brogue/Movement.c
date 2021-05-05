@@ -1643,7 +1643,7 @@ void travel(short x, short y, boolean autoConfirm) {
         return;
     }
 
-    dungeongrid *distanceMap = allocGrid();
+    dungeongrid *distanceMap = allocGrid(0);
 
     calculateDistances(distanceMap, x, y, 0, &player, false, false);
     if (distanceMap->cells[player.xLoc][player.yLoc] < 30000) {
@@ -1862,7 +1862,7 @@ void getExploreMap(dungeongrid *map, boolean headingToStairs) {// calculate expl
     short i, j;
     item *theItem;
 
-    dungeongrid *costMap = allocGrid();
+    dungeongrid *costMap = allocGrid(0);
     populateCreatureCostMap(costMap, &player);
 
     for (i=0; i<DCOLS; i++) {
@@ -1957,7 +1957,7 @@ boolean explore(short frameDelay) {
     rogue.disturbed = false;
     rogue.automationActive = true;
 
-    distanceMap = allocGrid();
+    distanceMap = allocGrid(0);
     do {
         // fight any adjacent enemies
         dir = adjacentFightingDir();

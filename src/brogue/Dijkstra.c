@@ -292,7 +292,7 @@ void calculateDistances(dungeongrid *distanceMap,
 }
 
 short pathingDistance(short x1, short y1, short x2, short y2, unsigned long blockingTerrainFlags) {
-    dungeongrid *distanceMap = allocGrid();
+    dungeongrid *distanceMap = allocGrid(0);
     calculateDistances(distanceMap, x2, y2, blockingTerrainFlags, NULL, true, true);
     short retval = distanceMap->cells[x1][y1];
     freeGrid(distanceMap);

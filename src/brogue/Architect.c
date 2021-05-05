@@ -330,8 +330,8 @@ void addLoops(dungeongrid *grid, short minimumPathingDistance) {
         hiliteGrid(grid, &white, 100);
     }
 
-    dungeongrid *pathMap = allocGrid();
-    dungeongrid *costMap = allocGrid();
+    dungeongrid *pathMap = allocGrid(0);
+    dungeongrid *costMap = allocGrid(0);
     *costMap = *grid;
     findReplaceGrid(costMap, 0, 0, PDS_OBSTRUCTION);
     findReplaceGrid(costMap, 1, 30000, 1);
@@ -657,11 +657,10 @@ boolean fillInteriorForVestibuleMachine(char interior[DCOLS][DROWS], short bp, s
 
     zeroOutGrid(interior);
 
-    distanceMap = allocGrid();
-    fillGrid(distanceMap, 30000);
+    distanceMap = allocGrid(30000);
     distanceMap->cells[originX][originY] = 0;
 
-    costMap = allocGrid();
+    costMap = allocGrid(0);
     populateGenericCostMap(costMap);
     for(i=0; i<DCOLS; i++) {
         for(j=0; j<DROWS; j++) {
@@ -719,7 +718,7 @@ void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY,
     dungeongrid *grid;
     dungeongrid *pathingGrid;
     dungeongrid *costGrid;
-    grid = allocGrid();
+    grid = allocGrid(0);
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
@@ -755,8 +754,8 @@ void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY,
 
     // Connect to preexisting rooms that were orphaned (mostly preexisting machine rooms).
     if (orphanCount > 0) {
-        pathingGrid = allocGrid();
-        costGrid = allocGrid();
+        pathingGrid = allocGrid(0);
+        costGrid = allocGrid(0);
         for (n = 0; n < orphanCount; n++) {
 
             if (D_INSPECT_MACHINES) {
@@ -1142,7 +1141,7 @@ boolean buildAMachine(enum machineTypes bp,
                 }
 
                 if (!distanceMap) {
-                    distanceMap = allocGrid();
+                    distanceMap = allocGrid(0);
                 }
                 fillGrid(distanceMap, 0);
                 calculateDistances(distanceMap, originX, originY, T_PATHING_BLOCKER, NULL, true, false);
@@ -1230,7 +1229,7 @@ boolean buildAMachine(enum machineTypes bp,
     // Calculate the distance map (so that features that want to be close to or far from the origin can be placed accordingly)
     // and figure out the 33rd and 67th percentiles for features that want to be near or far from the origin.
     if (!distanceMap) {
-        distanceMap = allocGrid();
+        distanceMap = allocGrid(0);
     }
     fillGrid(distanceMap, 0);
     calculateDistances(distanceMap, originX, originY, T_PATHING_BLOCKER, NULL, true, true);
@@ -1944,7 +1943,7 @@ void designCavern(dungeongrid *grid, short minWidth, short maxWidth, short minHe
     short fillX = 0, fillY = 0;
     boolean foundFillPoint = false;
     
-    dungeongrid *blobGrid = allocGrid();
+    dungeongrid *blobGrid = allocGrid(0);
     fillGrid(grid, 0);
     createBlobOnGrid(blobGrid,
                      &caveX, &caveY, &caveWidth, &caveHeight,
@@ -2126,7 +2125,7 @@ void chooseRandomDoorSites(dungeongrid *roomMap, short doorSites[4][2]) {
     enum directions dir;
     boolean doorSiteFailed;
 
-    dungeongrid *grid = allocGrid();
+    dungeongrid *grid = allocGrid(0);
     *grid = *roomMap;
 
 //    colorOverDungeon(&darkGray);
@@ -2344,7 +2343,7 @@ void attachRooms(dungeongrid *grid, const dungeonProfile *theDP, short attempts,
     fillSequentialList(sCoord, DCOLS*DROWS);
     shuffleList(sCoord, DCOLS*DROWS);
 
-    roomMap = allocGrid();
+    roomMap = allocGrid(0);
     for (roomsBuilt = roomsAttempted = 0; roomsBuilt < maxRoomCount && roomsAttempted < attempts; roomsAttempted++) {
         // Build a room in hyperspace.
         fillGrid(roomMap, 0);
@@ -2560,8 +2559,7 @@ boolean lakeDisruptsPassability(dungeongrid *grid, dungeongrid *lakeMap, short d
     short i, j, x, y;
     dungeongrid *floodMap;
 
-    floodMap = allocGrid();
-    fillGrid(floodMap, 0);
+    floodMap = allocGrid(0);
     x = y = -1;
     // Get starting location for the fill.
     for (i=0; i<DCOLS && x == -1; i++) {
@@ -2611,9 +2609,7 @@ void designLakes(dungeongrid *lakeMap) {
     short lakeMaxHeight, lakeMaxWidth;
     short lakeX, lakeY, lakeWidth, lakeHeight;
 
-    dungeongrid *grid; // Holds the current lake.
-
-    grid = allocGrid();
+    dungeongrid *grid = allocGrid(0); // Holds the current lake.
     fillGrid(lakeMap, 0);
     for (lakeMaxHeight = 15, lakeMaxWidth = 30; lakeMaxHeight >=10; lakeMaxHeight--, lakeMaxWidth -= 2) { // lake generations
 
@@ -2862,7 +2858,7 @@ void digDungeon() {
     // Clear level and fill with granite
     clearLevel();
 
-    grid = allocGrid();
+    grid = allocGrid(0);
     carveDungeon(grid);
     addLoops(grid, 20);
     for (i=0; i<DCOLS; i++) {
@@ -2894,7 +2890,7 @@ void digDungeon() {
     // DEBUG logLevel();
 
     // Now design the lakes and then fill them with various liquids (lava, water, chasm, brimstone).
-    dungeongrid *lakeMap = allocGrid();
+    dungeongrid *lakeMap = allocGrid(0);
     designLakes(lakeMap);
     fillLakes(lakeMap);
     freeGrid(lakeMap);
@@ -2955,12 +2951,11 @@ void updateMapToShore() {
 
     rogue.updatedMapToShoreThisTurn = true;
 
-    costMap = allocGrid();
+    costMap = allocGrid(0);
 
     // Calculate the map to shore for this level
     if (!rogue.mapToShore) {
-        rogue.mapToShore = allocGrid();
-        fillGrid(rogue.mapToShore, 0);
+        rogue.mapToShore = allocGrid(0);
     }
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
@@ -2985,7 +2980,7 @@ void refreshWaypoint(short wpIndex) {
     dungeongrid *costMap;
     creature *monst;
 
-    costMap = allocGrid();
+    costMap = allocGrid(0);
     populateGenericCostMap(costMap);
     for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
         if ((monst->creatureState == MONSTER_SLEEPING || (monst->info.flags & MONST_IMMOBILE) || (monst->bookkeepingFlags & MB_CAPTIVE))
@@ -3748,10 +3743,8 @@ void initializeLevel() {
     }
 
     // Restore creatures that fell from the previous depth or that have been pathing toward the stairs.
-    dungeongrid *mapToStairs = allocGrid();
-    fillGrid(mapToStairs, 0);
-    dungeongrid *mapToPit = allocGrid();
-    fillGrid(mapToPit, 0);
+    dungeongrid *mapToStairs = allocGrid(0);
+    dungeongrid *mapToPit = allocGrid(0);
     calculateDistances(mapToStairs, player.xLoc, player.yLoc, T_PATHING_BLOCKER, NULL, true, true);
     calculateDistances(mapToPit,
                        levels[rogue.depthLevel - 1].playerExitedVia[0],
