@@ -533,7 +533,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
         }
         dungeongrid *mapToStairs = allocGrid(0);
         for (flying = 0; flying <= 1; flying++) {
-            fillGrid(mapToStairs, 0);
+            *mapToStairs = filledGrid(0);
             calculateDistances(mapToStairs, px, py, (flying ? T_OBSTRUCTS_PASSABILITY : T_PATHING_BLOCKER) | T_SACRED, NULL, true, true);
             for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
                 x = monst->xLoc;

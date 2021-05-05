@@ -350,7 +350,7 @@ void addLoops(dungeongrid *grid, short minimumPathingDistance) {
                     && grid->cells[newX][newY] == 1
                     && grid->cells[oppX][oppY] == 1) { // If the tile being inspected has floor on both sides,
 
-                    fillGrid(pathMap, 30000);
+                    *pathMap = filledGrid(30000);
                     pathMap->cells[newX][newY] = 0;
                     dijkstraScan(pathMap, costMap, false);
                     if (pathMap->cells[oppX][oppY] > minimumPathingDistance) { // and if the pathing distance between the two flanking floor tiles exceeds minimumPathingDistance,
@@ -1143,7 +1143,7 @@ boolean buildAMachine(enum machineTypes bp,
                 if (!distanceMap) {
                     distanceMap = allocGrid(0);
                 }
-                fillGrid(distanceMap, 0);
+                *distanceMap = filledGrid(0);
                 calculateDistances(distanceMap, originX, originY, T_PATHING_BLOCKER, NULL, true, false);
                 qualifyingTileCount = 0; // Keeps track of how many interior cells we've added.
                 totalFreq = rand_range(blueprintCatalog[bp].roomSize[0], blueprintCatalog[bp].roomSize[1]); // Keeps track of the goal size.
@@ -1231,7 +1231,7 @@ boolean buildAMachine(enum machineTypes bp,
     if (!distanceMap) {
         distanceMap = allocGrid(0);
     }
-    fillGrid(distanceMap, 0);
+    *distanceMap = filledGrid(0);
     calculateDistances(distanceMap, originX, originY, T_PATHING_BLOCKER, NULL, true, true);
     qualifyingTileCount = 0;
     for (i=0; i<100; i++) {
@@ -1944,7 +1944,7 @@ void designCavern(dungeongrid *grid, short minWidth, short maxWidth, short minHe
     boolean foundFillPoint = false;
     
     dungeongrid *blobGrid = allocGrid(0);
-    fillGrid(grid, 0);
+    *grid = filledGrid(0);
     createBlobOnGrid(blobGrid,
                      &caveX, &caveY, &caveWidth, &caveHeight,
                      5, minWidth, minHeight, maxWidth, maxHeight, 55, "ffffffttt", "ffffttttt");
@@ -1973,7 +1973,7 @@ void designCavern(dungeongrid *grid, short minWidth, short maxWidth, short minHe
 void designEntranceRoom(dungeongrid *grid) {
     short roomWidth, roomHeight, roomWidth2, roomHeight2, roomX, roomY, roomX2, roomY2;
 
-    fillGrid(grid, 0);
+    *grid = filledGrid(0);
 
     roomWidth = 8;
     roomHeight = 10;
@@ -1991,7 +1991,7 @@ void designEntranceRoom(dungeongrid *grid) {
 void designCrossRoom(dungeongrid *grid) {
     short roomWidth, roomHeight, roomWidth2, roomHeight2, roomX, roomY, roomX2, roomY2;
 
-    fillGrid(grid, 0);
+    *grid = filledGrid(0);
 
     roomWidth = rand_range(3, 12);
     roomX = rand_range(max(0, DCOLS/2 - (roomWidth - 1)), min(DCOLS, DCOLS/2));
@@ -2011,7 +2011,7 @@ void designCrossRoom(dungeongrid *grid) {
 void designSymmetricalCrossRoom(dungeongrid *grid) {
     short majorWidth, majorHeight, minorWidth, minorHeight;
 
-    fillGrid(grid, 0);
+    *grid = filledGrid(0);
 
     majorWidth = rand_range(4, 8);
     majorHeight = rand_range(4, 5);
@@ -2032,7 +2032,7 @@ void designSymmetricalCrossRoom(dungeongrid *grid) {
 void designSmallRoom(dungeongrid *grid) {
     short width, height;
 
-    fillGrid(grid, 0);
+    *grid = filledGrid(0);
     width = rand_range(3, 6);
     height = rand_range(2, 4);
     drawRectangleOnGrid(grid, (DCOLS - width) / 2, (DROWS - height) / 2, width, height, 1);
@@ -2047,7 +2047,7 @@ void designCircularRoom(dungeongrid *grid) {
         radius = rand_range(2, 4);
     }
 
-    fillGrid(grid, 0);
+    *grid = filledGrid(0);
     drawCircleOnGrid(grid, DCOLS/2, DROWS/2, radius, 1);
 
     if (radius > 6
@@ -2061,7 +2061,7 @@ void designChunkyRoom(dungeongrid *grid) {
     short minX, maxX, minY, maxY;
     short chunkCount = rand_range(2, 8);
 
-    fillGrid(grid, 0);
+    *grid = filledGrid(0);
     drawCircleOnGrid(grid, DCOLS/2, DROWS/2, 2, 1);
     minX = DCOLS/2 - 3;
     maxX = DCOLS/2 + 3;
@@ -2346,7 +2346,7 @@ void attachRooms(dungeongrid *grid, const dungeonProfile *theDP, short attempts,
     roomMap = allocGrid(0);
     for (roomsBuilt = roomsAttempted = 0; roomsBuilt < maxRoomCount && roomsAttempted < attempts; roomsAttempted++) {
         // Build a room in hyperspace.
-        fillGrid(roomMap, 0);
+        *roomMap = filledGrid(0);
         designRandomRoom(roomMap, roomsAttempted <= attempts - 5 && rand_percent(theDP->corridorChance),
                          doorSites, theDP->roomFrequencies);
 
@@ -2610,10 +2610,10 @@ void designLakes(dungeongrid *lakeMap) {
     short lakeX, lakeY, lakeWidth, lakeHeight;
 
     dungeongrid *grid = allocGrid(0); // Holds the current lake.
-    fillGrid(lakeMap, 0);
+    *lakeMap = filledGrid(0);
     for (lakeMaxHeight = 15, lakeMaxWidth = 30; lakeMaxHeight >=10; lakeMaxHeight--, lakeMaxWidth -= 2) { // lake generations
 
-        fillGrid(grid, 0);
+        *grid = filledGrid(0);
         createBlobOnGrid(grid, &lakeX, &lakeY, &lakeWidth, &lakeHeight, 5, 4, 4, lakeMaxWidth, lakeMaxHeight, 55, "ffffftttt", "ffffttttt");
 
 //        if (D_INSPECT_LEVELGEN) {
@@ -2989,7 +2989,7 @@ void refreshWaypoint(short wpIndex) {
             costMap->cells[monst->xLoc][monst->yLoc] = PDS_FORBIDDEN;
         }
     }
-    fillGrid(rogue.wpDistance[wpIndex], 30000);
+    *rogue.wpDistance[wpIndex] = filledGrid(30000);
     rogue.wpDistance[wpIndex]->cells[rogue.wpCoordinates[wpIndex][0]][rogue.wpCoordinates[wpIndex][1]] = 0;
     dijkstraScan(rogue.wpDistance[wpIndex], costMap, true);
     freeGrid(costMap);

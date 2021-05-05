@@ -40,13 +40,14 @@ void freeGrid(dungeongrid *array) {
     free(array);
 }
 
-
-void fillGrid(dungeongrid *grid, short fillValue) {
+dungeongrid filledGrid(short fillValue) {
+    dungeongrid grid;
     for(int i = 0; i < DCOLS; i++) {
         for(int j = 0; j < DROWS; j++) {
-            grid->cells[i][j] = fillValue;
+            grid.cells[i][j] = fillValue;
         }
     }
+    return grid;
 }
 
 // Highlight the portion indicated by hiliteCharGrid with the hiliteColor at the hiliteStrength -- both latter arguments are optional.
@@ -449,7 +450,7 @@ void createBlobOnGrid(dungeongrid *grid,
     // Generate blobs until they satisfy the minBlobWidth and minBlobHeight restraints
     do {
         // Clear buffer.
-        fillGrid(grid, 0);
+        *grid = filledGrid(0);
 
         // Fill relevant portion with noise based on the percentSeeded argument.
         for(i=0; i<maxBlobWidth; i++) {

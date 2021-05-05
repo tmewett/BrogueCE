@@ -151,7 +151,7 @@ void processSnapMap(dungeongrid *map) {
     dungeongrid *costMap = allocGrid(0);
 
     populateCreatureCostMap(costMap, &player);
-    fillGrid(map, 30000);
+    *map = filledGrid(30000);
     map->cells[player.xLoc][player.yLoc] = 0;
     dijkstraScan(map, costMap, true);
     for (i = 0; i < DCOLS; i++) {
@@ -615,7 +615,7 @@ void mainInputLoop() {
 
         populateCreatureCostMap(costMap, &player);
 
-        fillGrid(playerPathingMap, 30000);
+        *playerPathingMap = filledGrid(30000);
         playerPathingMap->cells[player.xLoc][player.yLoc] = 0;
         dijkstraScan(playerPathingMap, costMap, true);
         processSnapMap(cursorSnapMap);
@@ -642,7 +642,7 @@ void mainInputLoop() {
                         getClosestValidLocationOnMap(pathDestination, cursorSnapMap, cursor[0], cursor[1]);
                     }
 
-                    fillGrid(playerPathingMap, 30000);
+                    *playerPathingMap = filledGrid(30000);
                     playerPathingMap->cells[pathDestination[0]][pathDestination[1]] = 0;
                     backupCost = costMap->cells[pathDestination[0]][pathDestination[1]];
                     costMap->cells[pathDestination[0]][pathDestination[1]] = 1;

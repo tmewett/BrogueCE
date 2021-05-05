@@ -1030,7 +1030,7 @@ boolean getRandomMonsterSpawnLocation(short *x, short *y) {
     findReplaceGrid(grid, DCOLS/2, 30000-1, 1);
     randomLocationInGrid(grid, x, y, 1);
     if (*x < 0 || *y < 0) {
-        fillGrid(grid, 1);
+        *grid = filledGrid(1);
         getTerrainGrid(grid, 0, (T_PATHING_BLOCKER | T_HARMFUL_TERRAIN), (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | IN_FIELD_OF_VIEW | IS_IN_MACHINE));
         randomLocationInGrid(grid, x, y, 1);
     }
@@ -1089,11 +1089,11 @@ void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidance
         findReplaceGrid(grid, -30000, DCOLS/2, 0);
         findReplaceGrid(grid, 2, 30000, 1);
         if (validLocationCount(grid, 1) < 1) {
-            fillGrid(grid, 1);
+            *grid = filledGrid(1);
         }
         if (respectTerrainAvoidancePreferences) {
             if (monst->info.flags & MONST_RESTRICTED_TO_LIQUID) {
-                fillGrid(grid, 0);
+                *grid = filledGrid(0);
                 getTMGrid(grid, 1, TM_ALLOWS_SUBMERGING);
             }
             getTerrainGrid(grid, 0, avoidedFlagsForMonster(&(monst->info)), (IS_IN_MACHINE | HAS_PLAYER | HAS_MONSTER | HAS_STAIRS));

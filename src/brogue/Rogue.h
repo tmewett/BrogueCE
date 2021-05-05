@@ -3095,8 +3095,8 @@ extern "C" {
 
     // Grid operations
     dungeongrid *allocGrid(short initial);
+    dungeongrid filledGrid(short initial);
     void freeGrid(dungeongrid *array);
-    void fillGrid(dungeongrid *grid, short fillValue);
     void hiliteGrid(dungeongrid *grid, color *hiliteColor, short hiliteStrength);
     void findReplaceGrid(dungeongrid *grid, short findValueMin, short findValueMax, short fillValue);
     short floodFillGrid(dungeongrid *grid, short x, short y, short eligibleValueMin, short eligibleValueMax, short fillValue);
