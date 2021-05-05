@@ -205,7 +205,7 @@ void initializeRogue(uint64_t seed) {
         levels[i].monsters = NULL;
         levels[i].dormantMonsters = NULL;
         levels[i].items = NULL;
-        levels[i].scentMap = NULL;
+        levels[i].scentMap = filledGrid(0);
         levels[i].visited = false;
         levels[i].playerExitedVia[0] = 0;
         levels[i].playerExitedVia[1] = 0;
@@ -222,8 +222,7 @@ void initializeRogue(uint64_t seed) {
 
     // initialize the waypoints list
     for (i=0; i<MAX_WAYPOINT_COUNT; i++) {
-        rogue.wpDistance[i] = allocGrid();
-        fillGrid(rogue.wpDistance[i], 0);
+        rogue.wpDistance[i] = allocGrid(0);
     }
 
     rogue.rewardRoomsGenerated = 0;
@@ -295,17 +294,11 @@ void initializeRogue(uint64_t seed) {
     purgatory->nextCreature = NULL;
 
     scentMap            = NULL;
-    safetyMap           = allocGrid();
-    allySafetyMap       = allocGrid();
-    chokeMap            = allocGrid();
+    safetyMap           = allocGrid(0);
+    allySafetyMap       = allocGrid(0);
+    chokeMap            = allocGrid(0);
 
-    rogue.mapToSafeTerrain = allocGrid();
-
-    // Zero out the dynamic grids, as an essential safeguard against OOSes:
-    fillGrid(safetyMap, 0);
-    fillGrid(allySafetyMap, 0);
-    fillGrid(chokeMap, 0);
-    fillGrid(rogue.mapToSafeTerrain, 0);
+    rogue.mapToSafeTerrain = filledGrid(0);
 
     // initialize the player
 
@@ -353,7 +346,7 @@ void initializeRogue(uint64_t seed) {
     rogue.swappedOut = NULL;
     rogue.monsterSpawnFuse = rand_range(125, 175);
     rogue.ticksTillUpdateEnvironment = 100;
-    rogue.mapToShore = NULL;
+    rogue.mapToShore = filledGrid(0);
     rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
     rogue.xpxpThisTurn = 0;
 
@@ -504,8 +497,6 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     creature *monst;
     enum dungeonLayers layer;
     unsigned long timeAway;
-    short **mapToStairs;
-    short **mapToPit;
     boolean connectingStairsDiscovered;
 
     if (oldLevelNumber == DEEPEST_LEVEL && stairDirection != -1) {
@@ -540,11 +531,9 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                 }
             }
         }
-        mapToStairs = allocGrid();
-        fillGrid(mapToStairs, 0);
         for (flying = 0; flying <= 1; flying++) {
-            fillGrid(mapToStairs, 0);
-            calculateDistances(mapToStairs, px, py, (flying ? T_OBSTRUCTS_PASSABILITY : T_PATHING_BLOCKER) | T_SACRED, NULL, true, true);
+            dungeongrid mapToStairs = filledGrid(0);
+            calculateDistances(&mapToStairs, px, py, (flying ? T_OBSTRUCTS_PASSABILITY : T_PATHING_BLOCKER) | T_SACRED, NULL, true, true);
             for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
                 x = monst->xLoc;
                 y = monst->yLoc;
@@ -559,9 +548,9 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                     && !(cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY))
                     && !monst->status[STATUS_ENTRANCED]
                     && !monst->status[STATUS_PARALYZED]
-                    && (mapToStairs[monst->xLoc][monst->yLoc] < 30000 || monst->creatureState == MONSTER_ALLY || monst == rogue.yendorWarden)) {
+                    && (mapToStairs.cells[monst->xLoc][monst->yLoc] < 30000 || monst->creatureState == MONSTER_ALLY || monst == rogue.yendorWarden)) {
 
-                    monst->status[STATUS_ENTERS_LEVEL_IN] = clamp(mapToStairs[monst->xLoc][monst->yLoc] * monst->movementSpeed / 100 + 1, 1, 150);
+                    monst->status[STATUS_ENTERS_LEVEL_IN] = clamp(mapToStairs.cells[monst->xLoc][monst->yLoc] * monst->movementSpeed / 100 + 1, 1, 150);
                     switch (stairDirection) {
                         case 1:
                             monst->bookkeepingFlags |= MB_APPROACHING_DOWNSTAIRS;
@@ -578,7 +567,6 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                 }
             }
         }
-        freeGrid(mapToStairs);
     }
 
     for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
@@ -631,9 +619,10 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     updateRingBonuses(); // also updates miner's light
 
     if (!levels[rogue.depthLevel - 1].visited) { // level has not already been visited
-        levels[rogue.depthLevel - 1].scentMap = allocGrid();
-        scentMap = levels[rogue.depthLevel - 1].scentMap;
-        fillGrid(levels[rogue.depthLevel - 1].scentMap, 0);
+        levels[rogue.depthLevel - 1].scentMap = filledGrid(0);
+        // Point to the scent map, so modifications to global
+        // scentMap also affect the level's data!
+        scentMap = &levels[rogue.depthLevel - 1].scentMap;
 
         // generate a seed from the current RNG state
         do {
@@ -694,7 +683,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     } else { // level has already been visited
 
         // restore level
-        scentMap = levels[rogue.depthLevel - 1].scentMap;
+        scentMap = &levels[rogue.depthLevel - 1].scentMap;
         timeAway = clamp(0, rogue.absoluteTurnNumber - levels[rogue.depthLevel - 1].awaySince, 30000);
 
         for (i=0; i<DCOLS; i++) {
@@ -838,18 +827,14 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     }
 
     if (levels[rogue.depthLevel - 1].visited) {
-        mapToStairs = allocGrid();
-        mapToPit = allocGrid();
-        fillGrid(mapToStairs, 0);
-        fillGrid(mapToPit, 0);
-        calculateDistances(mapToStairs, player.xLoc, player.yLoc, T_PATHING_BLOCKER, NULL, true, true);
-        calculateDistances(mapToPit, levels[rogue.depthLevel-1].playerExitedVia[0],
+        dungeongrid mapToStairs = filledGrid(0);
+        calculateDistances(&mapToStairs, player.xLoc, player.yLoc, T_PATHING_BLOCKER, NULL, true, true);
+        dungeongrid mapToPit = filledGrid(0);
+        calculateDistances(&mapToPit, levels[rogue.depthLevel-1].playerExitedVia[0],
                            levels[rogue.depthLevel-1].playerExitedVia[1], T_PATHING_BLOCKER, NULL, true, true);
         for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
-            restoreMonster(monst, mapToStairs, mapToPit);
+            restoreMonster(monst, &mapToStairs, &mapToPit);
         }
-        freeGrid(mapToStairs);
-        freeGrid(mapToPit);
     }
 
     updateMapToShore();
@@ -874,7 +859,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     hideCursor();
 }
 
-void freeGlobalDynamicGrid(short ***grid) {
+void freeGlobalDynamicGrid(dungeongrid **grid) {
     if (*grid) {
         freeGrid(*grid);
         *grid = NULL;
@@ -916,8 +901,6 @@ void freeEverything() {
     freeGlobalDynamicGrid(&safetyMap);
     freeGlobalDynamicGrid(&allySafetyMap);
     freeGlobalDynamicGrid(&chokeMap);
-    freeGlobalDynamicGrid(&rogue.mapToShore);
-    freeGlobalDynamicGrid(&rogue.mapToSafeTerrain);
 
     for (i=0; i<DEEPEST_LEVEL+1; i++) {
         for (monst = levels[i].monsters; monst != NULL; monst = monst2) {
@@ -935,10 +918,7 @@ void freeEverything() {
             deleteItem(theItem);
         }
         levels[i].items = NULL;
-        if (levels[i].scentMap) {
-            freeGrid(levels[i].scentMap);
-            levels[i].scentMap = NULL;
-        }
+        levels[i].scentMap = filledGrid(0);
     }
     scentMap = NULL;
     for (monst = monsters; monst != NULL; monst = monst2) {

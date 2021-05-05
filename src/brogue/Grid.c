@@ -26,44 +26,32 @@
 
 
 // mallocing two-dimensional arrays! dun dun DUN!
-short **allocGrid() {
-    short i;
-    short **array = malloc(DCOLS * sizeof(short *));
-
-    array[0] = malloc(DROWS * DCOLS * sizeof(short));
-    for(i = 1; i < DCOLS; i++) {
-        array[i] = array[0] + i * DROWS;
+dungeongrid *allocGrid(short initial) {
+    dungeongrid *grid = (dungeongrid *)calloc(1, sizeof(dungeongrid));
+    for (int i = 0; i < DCOLS; i++) {
+        for (int j = 0; j < DROWS; j++) {
+            grid->cells[i][j] = initial;
+        }
     }
-    return array;
+    return grid;
 }
 
-void freeGrid(short **array) {
-    free(array[0]);
+void freeGrid(dungeongrid *array) {
     free(array);
 }
 
-void copyGrid(short **to, short **from) {
-    short i, j;
-
-    for(i = 0; i < DCOLS; i++) {
-        for(j = 0; j < DROWS; j++) {
-            to[i][j] = from[i][j];
+dungeongrid filledGrid(short fillValue) {
+    dungeongrid grid;
+    for(int i = 0; i < DCOLS; i++) {
+        for(int j = 0; j < DROWS; j++) {
+            grid.cells[i][j] = fillValue;
         }
     }
-}
-
-void fillGrid(short **grid, short fillValue) {
-    short i, j;
-
-    for(i = 0; i < DCOLS; i++) {
-        for(j = 0; j < DROWS; j++) {
-            grid[i][j] = fillValue;
-        }
-    }
+    return grid;
 }
 
 // Highlight the portion indicated by hiliteCharGrid with the hiliteColor at the hiliteStrength -- both latter arguments are optional.
-void hiliteGrid(short **grid, color *hiliteColor, short hiliteStrength) {
+void hiliteGrid(dungeongrid *grid, color *hiliteColor, short hiliteStrength) {
     short i, j, x, y;
     color hCol;
 
@@ -83,7 +71,7 @@ void hiliteGrid(short **grid, color *hiliteColor, short hiliteStrength) {
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (grid[i][j]) {
+            if (grid->cells[i][j]) {
                 x = mapToWindowX(i);
                 y = mapToWindowY(j);
 
@@ -100,13 +88,13 @@ void hiliteGrid(short **grid, color *hiliteColor, short hiliteStrength) {
     restoreRNG;
 }
 
-void findReplaceGrid(short **grid, short findValueMin, short findValueMax, short fillValue) {
+void findReplaceGrid(dungeongrid *grid, short findValueMin, short findValueMax, short fillValue) {
     short i, j;
 
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
-            if (grid[i][j] >= findValueMin && grid[i][j] <= findValueMax) {
-                grid[i][j] = fillValue;
+            if (grid->cells[i][j] >= findValueMin && grid->cells[i][j] <= findValueMax) {
+                grid->cells[i][j] = fillValue;
             }
         }
     }
@@ -114,124 +102,124 @@ void findReplaceGrid(short **grid, short findValueMin, short findValueMax, short
 
 // Flood-fills the grid from (x, y) along cells that are within the eligible range.
 // Returns the total count of filled cells.
-short floodFillGrid(short **grid, short x, short y, short eligibleValueMin, short eligibleValueMax, short fillValue) {
+short floodFillGrid(dungeongrid *grid, short x, short y, short eligibleValueMin, short eligibleValueMax, short fillValue) {
     enum directions dir;
     short newX, newY, fillCount = 1;
 
     brogueAssert(fillValue < eligibleValueMin || fillValue > eligibleValueMax);
 
-    grid[x][y] = fillValue;
+    grid->cells[x][y] = fillValue;
     for (dir = 0; dir < 4; dir++) {
         newX = x + nbDirs[dir][0];
         newY = y + nbDirs[dir][1];
         if (coordinatesAreInMap(newX, newY)
-            && grid[newX][newY] >= eligibleValueMin
-            && grid[newX][newY] <= eligibleValueMax) {
+            && grid->cells[newX][newY] >= eligibleValueMin
+            && grid->cells[newX][newY] <= eligibleValueMax) {
             fillCount += floodFillGrid(grid, newX, newY, eligibleValueMin, eligibleValueMax, fillValue);
         }
     }
     return fillCount;
 }
 
-void drawRectangleOnGrid(short **grid, short x, short y, short width, short height, short value) {
+void drawRectangleOnGrid(dungeongrid *grid, short x, short y, short width, short height, short value) {
     short i, j;
 
     for (i=x; i < x+width; i++) {
         for (j=y; j<y+height; j++) {
-            grid[i][j] = value;
+            grid->cells[i][j] = value;
         }
     }
 }
 
-void drawCircleOnGrid(short **grid, short x, short y, short radius, short value) {
+void drawCircleOnGrid(dungeongrid *grid, short x, short y, short radius, short value) {
     short i, j;
 
     for (i=max(0, x - radius - 1); i < max(DCOLS, x + radius); i++) {
         for (j=max(0, y - radius - 1); j < max(DROWS, y + radius); j++) {
             if ((i-x)*(i-x) + (j-y)*(j-y) < radius * radius + radius) {
-                grid[i][j] = value;
+                grid->cells[i][j] = value;
             }
         }
     }
 }
 
-void intersectGrids(short **onto, short **from) {
+void intersectGrids(dungeongrid *onto, dungeongrid *from) {
     short i, j;
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
-            if (onto[i][j] && from[i][j]) {
-                onto[i][j] = true;
+            if (onto->cells[i][j] && from->cells[i][j]) {
+                onto->cells[i][j] = true;
             } else {
-                onto[i][j] = false;
+                onto->cells[i][j] = false;
             }
         }
     }
 }
 
-void uniteGrids(short **onto, short **from) {
+void uniteGrids(dungeongrid *onto, dungeongrid *from) {
     short i, j;
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
-            if (!onto[i][j] && from[i][j]) {
-                onto[i][j] = from[i][j];
+            if (!onto->cells[i][j] && from->cells[i][j]) {
+                onto->cells[i][j] = from->cells[i][j];
             }
         }
     }
 }
 
-void invertGrid(short **grid) {
+void invertGrid(dungeongrid *grid) {
     short i, j;
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
-            grid[i][j] = !grid[i][j];
+            grid->cells[i][j] = !grid->cells[i][j];
         }
     }
 }
 
 // Fills grid locations with the given value if they match any terrain flags or map flags.
 // Otherwise does not change the grid location.
-void getTerrainGrid(short **grid, short value, unsigned long terrainFlags, unsigned long mapFlags) {
+void getTerrainGrid(dungeongrid *grid, short value, unsigned long terrainFlags, unsigned long mapFlags) {
     short i, j;
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
-            if (grid[i][j] != value && cellHasTerrainFlag(i, j, terrainFlags) || (pmap[i][j].flags & mapFlags)) {
-                grid[i][j] = value;
+            if (grid->cells[i][j] != value && cellHasTerrainFlag(i, j, terrainFlags) || (pmap[i][j].flags & mapFlags)) {
+                grid->cells[i][j] = value;
             }
         }
     }
 }
 
-void getTMGrid(short **grid, short value, unsigned long TMflags) {
+void getTMGrid(dungeongrid *grid, short value, unsigned long TMflags) {
     short i, j;
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
-            if (grid[i][j] != value && cellHasTMFlag(i, j, TMflags)) {
-                grid[i][j] = value;
+            if (grid->cells[i][j] != value && cellHasTMFlag(i, j, TMflags)) {
+                grid->cells[i][j] = value;
             }
         }
     }
 }
 
-void getPassableArcGrid(short **grid, short minPassableArc, short maxPassableArc, short value) {
+void getPassableArcGrid(dungeongrid *grid, short minPassableArc, short maxPassableArc, short value) {
     short i, j, count;
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
-            if (grid[i][j] != value) {
+            if (grid->cells[i][j] != value) {
                 count = passableArcCount(i, j);
                 if (count >= minPassableArc && count <= maxPassableArc) {
-                    grid[i][j] = value;
+                    grid->cells[i][j] = value;
                 }
             }
         }
     }
 }
 
-short validLocationCount(short **grid, short validValue) {
+short validLocationCount(dungeongrid *grid, short validValue) {
     short i, j, count;
     count = 0;
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
-            if (grid[i][j] == validValue) {
+            if (grid->cells[i][j] == validValue) {
                 count++;
             }
         }
@@ -239,12 +227,12 @@ short validLocationCount(short **grid, short validValue) {
     return count;
 }
 
-short leastPositiveValueInGrid(short **grid) {
-    short i, j, leastPositiveValue = 0;
-    for(i = 0; i < DCOLS; i++) {
-        for(j = 0; j < DROWS; j++) {
-            if (grid[i][j] > 0 && (leastPositiveValue == 0 || grid[i][j] < leastPositiveValue)) {
-                leastPositiveValue = grid[i][j];
+short leastPositiveValueInGrid(dungeongrid *grid) {
+    short leastPositiveValue = 0;
+    for(int i = 0; i < DCOLS; i++) {
+        for(int j = 0; j < DROWS; j++) {
+            if (grid->cells[i][j] > 0 && (leastPositiveValue == 0 || grid->cells[i][j] < leastPositiveValue)) {
+                leastPositiveValue = grid->cells[i][j];
             }
         }
     }
@@ -253,7 +241,7 @@ short leastPositiveValueInGrid(short **grid) {
 
 // Takes a grid as a mask of valid locations, chooses one randomly and returns it as (x, y).
 // If there are no valid locations, returns (-1, -1).
-void randomLocationInGrid(short **grid, short *x, short *y, short validValue) {
+void randomLocationInGrid(dungeongrid *grid, short *x, short *y, short validValue) {
     const short locationCount = validLocationCount(grid, validValue);
     short i, j;
 
@@ -264,7 +252,7 @@ void randomLocationInGrid(short **grid, short *x, short *y, short validValue) {
     short index = rand_range(0, locationCount - 1);
     for(i = 0; i < DCOLS && index >= 0; i++) {
         for(j = 0; j < DROWS && index >= 0; j++) {
-            if (grid[i][j] == validValue) {
+            if (grid->cells[i][j] == validValue) {
                 if (index == 0) {
                     *x = i;
                     *y = j;
@@ -278,7 +266,7 @@ void randomLocationInGrid(short **grid, short *x, short *y, short validValue) {
 
 // Finds the lowest positive number in a grid, chooses one location with that number randomly and returns it as (x, y).
 // If there are no valid locations, returns (-1, -1).
-void randomLeastPositiveLocationInGrid(short **grid, short *x, short *y, boolean deterministic) {
+void randomLeastPositiveLocationInGrid(dungeongrid *grid, short *x, short *y, boolean deterministic) {
     const short targetValue = leastPositiveValueInGrid(grid);
     short locationCount;
     short i, j, index;
@@ -291,7 +279,7 @@ void randomLeastPositiveLocationInGrid(short **grid, short *x, short *y, boolean
     locationCount = 0;
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
-            if (grid[i][j] == targetValue) {
+            if (grid->cells[i][j] == targetValue) {
                 locationCount++;
             }
         }
@@ -305,7 +293,7 @@ void randomLeastPositiveLocationInGrid(short **grid, short *x, short *y, boolean
 
     for(i = 0; i < DCOLS && index >= 0; i++) {
         for(j = 0; j < DROWS && index >= 0; j++) {
-            if (grid[i][j] == targetValue) {
+            if (grid->cells[i][j] == targetValue) {
                 if (index == 0) {
                     *x = i;
                     *y = j;
@@ -325,7 +313,6 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
                                  unsigned long forbiddenTerrainFlags,
                                  unsigned long forbiddenMapFlags,
                                  boolean deterministic) {
-    short **grid, **costMap;
     short loc[2];
 
     // First check the given location to see if it works, as an optimization.
@@ -339,33 +326,30 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
     }
 
     // Allocate the grids.
-    grid = allocGrid();
-    costMap = allocGrid();
-
+    dungeongrid grid = filledGrid(30000);
     // Start with a base of a high number everywhere.
-    fillGrid(grid, 30000);
-    fillGrid(costMap, 1);
+    dungeongrid costMap = filledGrid(1);
 
     // Block off the pathing blockers.
-    getTerrainGrid(costMap, PDS_FORBIDDEN, blockingTerrainFlags, blockingMapFlags);
+    getTerrainGrid(&costMap, PDS_FORBIDDEN, blockingTerrainFlags, blockingMapFlags);
     if (blockingTerrainFlags & (T_OBSTRUCTS_DIAGONAL_MOVEMENT | T_OBSTRUCTS_PASSABILITY)) {
-        getTerrainGrid(costMap, PDS_OBSTRUCTION, T_OBSTRUCTS_DIAGONAL_MOVEMENT, 0);
+        getTerrainGrid(&costMap, PDS_OBSTRUCTION, T_OBSTRUCTS_DIAGONAL_MOVEMENT, 0);
     }
 
     // Run the distance scan.
-    grid[x][y] = 1;
-    costMap[x][y] = 1;
-    dijkstraScan(grid, costMap, true);
-    findReplaceGrid(grid, 30000, 30000, 0);
+    grid.cells[x][y] = 1;
+    costMap.cells[x][y] = 1;
+    dijkstraScan(&grid, &costMap, true);
+    findReplaceGrid(&grid, 30000, 30000, 0);
 
     // Block off invalid targets that aren't pathing blockers.
-    getTerrainGrid(grid, 0, forbiddenTerrainFlags, forbiddenMapFlags);
+    getTerrainGrid(&grid, 0, forbiddenTerrainFlags, forbiddenMapFlags);
     if (!hallwaysAllowed) {
-        getPassableArcGrid(grid, 2, 10, 0);
+        getPassableArcGrid(&grid, 2, 10, 0);
     }
 
     // Get the solution.
-    randomLeastPositiveLocationInGrid(grid, retValX, retValY, deterministic);
+    randomLeastPositiveLocationInGrid(&grid, retValX, retValY, deterministic);
 
 //    dumpLevelToScreen();
 //    displayGrid(grid);
@@ -373,9 +357,6 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
 //        hiliteCell(*retValX, *retValY, &yellow, 100, true);
 //    }
 //    temporaryMessage("Qualifying path selected:", REQUIRE_ACKNOWLEDGMENT);
-
-    freeGrid(grid);
-    freeGrid(costMap);
 
     // Fall back to a pathing-agnostic alternative if there are no solutions.
     if (*retValX == -1 && *retValY == -1) {
@@ -394,13 +375,11 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
     }
 }
 
-void cellularAutomataRound(short **grid, char birthParameters[9], char survivalParameters[9]) {
+void cellularAutomataRound(dungeongrid *grid, char birthParameters[9], char survivalParameters[9]) {
     short i, j, nbCount, newX, newY;
     enum directions dir;
-    short **buffer2;
 
-    buffer2 = allocGrid();
-    copyGrid(buffer2, grid); // Make a backup of grid in buffer2, so that each generation is isolated.
+    dungeongrid buffer2 = *grid; // Make a backup of grid in buffer2, so that each generation is isolated.
 
     for(i=0; i<DCOLS; i++) {
         for(j=0; j<DROWS; j++) {
@@ -409,30 +388,28 @@ void cellularAutomataRound(short **grid, char birthParameters[9], char survivalP
                 newX = i + nbDirs[dir][0];
                 newY = j + nbDirs[dir][1];
                 if (coordinatesAreInMap(newX, newY)
-                    && buffer2[newX][newY]) {
+                    && buffer2.cells[newX][newY]) {
 
                     nbCount++;
                 }
             }
-            if (!buffer2[i][j] && birthParameters[nbCount] == 't') {
-                grid[i][j] = 1; // birth
-            } else if (buffer2[i][j] && survivalParameters[nbCount] == 't') {
+            if (!buffer2.cells[i][j] && birthParameters[nbCount] == 't') {
+                grid->cells[i][j] = 1; // birth
+            } else if (buffer2.cells[i][j] && survivalParameters[nbCount] == 't') {
                 // survival
             } else {
-                grid[i][j] = 0; // death
+                grid->cells[i][j] = 0; // death
             }
         }
     }
-
-    freeGrid(buffer2);
 }
 
 // Marks a cell as being a member of blobNumber, then recursively iterates through the rest of the blob
-short fillContiguousRegion(short **grid, short x, short y, short fillValue) {
+short fillContiguousRegion(dungeongrid *grid, short x, short y, short fillValue) {
     enum directions dir;
     short newX, newY, numberOfCells = 1;
 
-    grid[x][y] = fillValue;
+    grid->cells[x][y] = fillValue;
 
     // Iterate through the four cardinal neighbors.
     for (dir=0; dir<4; dir++) {
@@ -441,7 +418,7 @@ short fillContiguousRegion(short **grid, short x, short y, short fillValue) {
         if (!coordinatesAreInMap(newX, newY)) {
             break;
         }
-        if (grid[newX][newY] == 1) { // If the neighbor is an unmarked region cell,
+        if (grid->cells[newX][newY] == 1) { // If the neighbor is an unmarked region cell,
             numberOfCells += fillContiguousRegion(grid, newX, newY, fillValue); // then recurse.
         }
     }
@@ -449,7 +426,7 @@ short fillContiguousRegion(short **grid, short x, short y, short fillValue) {
 }
 
 // Loads up **grid with the results of a cellular automata simulation.
-void createBlobOnGrid(short **grid,
+void createBlobOnGrid(dungeongrid *grid,
                       short *retMinX, short *retMinY, short *retWidth, short *retHeight,
                       short roundCount,
                       short minBlobWidth, short minBlobHeight,
@@ -466,12 +443,12 @@ void createBlobOnGrid(short **grid,
     // Generate blobs until they satisfy the minBlobWidth and minBlobHeight restraints
     do {
         // Clear buffer.
-        fillGrid(grid, 0);
+        *grid = filledGrid(0);
 
         // Fill relevant portion with noise based on the percentSeeded argument.
         for(i=0; i<maxBlobWidth; i++) {
             for(j=0; j<maxBlobHeight; j++) {
-                grid[i][j] = (rand_percent(percentSeeded) ? 1 : 0);
+                grid->cells[i][j] = (rand_percent(percentSeeded) ? 1 : 0);
             }
         }
 
@@ -505,7 +482,7 @@ void createBlobOnGrid(short **grid,
 
         for(i=0; i<DCOLS; i++) {
             for(j=0; j<DROWS; j++) {
-                if (grid[i][j] == 1) { // an unmarked blob
+                if (grid->cells[i][j] == 1) { // an unmarked blob
                     // Mark all the cells and returns the total size:
                     blobSize = fillContiguousRegion(grid, i, j, blobNumber);
                     if (blobSize > topBlobSize) { // if this blob is a new record
@@ -522,7 +499,7 @@ void createBlobOnGrid(short **grid,
         for(i=0; i<DCOLS; i++) {
             foundACellThisLine = false;
             for(j=0; j<DROWS; j++) {
-                if (grid[i][j] == topBlobNumber) {
+                if (grid->cells[i][j] == topBlobNumber) {
                     foundACellThisLine = true;
                     break;
                 }
@@ -541,7 +518,7 @@ void createBlobOnGrid(short **grid,
         for(j=0; j<DROWS; j++) {
             foundACellThisLine = false;
             for(i=0; i<DCOLS; i++) {
-                if (grid[i][j] == topBlobNumber) {
+                if (grid->cells[i][j] == topBlobNumber) {
                     foundACellThisLine = true;
                     break;
                 }
@@ -566,10 +543,10 @@ void createBlobOnGrid(short **grid,
     // Replace the winning blob with 1's, and everything else with 0's:
     for(i=0; i<DCOLS; i++) {
         for(j=0; j<DROWS; j++) {
-            if (grid[i][j] == topBlobNumber) {
-                grid[i][j] = 1;
+            if (grid->cells[i][j] == topBlobNumber) {
+                grid->cells[i][j] = 1;
             } else {
-                grid[i][j] = 0;
+                grid->cells[i][j] = 0;
             }
         }
     }

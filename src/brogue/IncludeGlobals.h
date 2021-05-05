@@ -23,12 +23,12 @@
 
 extern tcell tmap[DCOLS][DROWS];                        // grids with info about the map
 extern pcell pmap[DCOLS][DROWS];                        // grids with info about the map
-extern short **scentMap;
+extern dungeongrid *scentMap;
 extern cellDisplayBuffer displayBuffer[COLS][ROWS];
 extern short terrainRandomValues[DCOLS][DROWS][8];
-extern short **safetyMap;                                       // used to help monsters flee
-extern short **allySafetyMap;
-extern short **chokeMap;
+extern dungeongrid *safetyMap;                                       // used to help monsters flee
+extern dungeongrid *allySafetyMap;
+extern dungeongrid *chokeMap;
 
 extern const short nbDirs[8][2];
 extern const short cDirs[8][2];
