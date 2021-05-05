@@ -909,7 +909,7 @@ boolean summonMinions(creature *summoner) {
     creature *monst, *host;
     char buf[DCOLS];
     char monstName[DCOLS];
-    short **grid;
+    dungeongrid *grid;
 
     if (hordeID < 0) {
         return false;
@@ -950,7 +950,7 @@ boolean summonMinions(creature *summoner) {
                 randomLocationInGrid(grid, &x, &y, 1);
                 teleport(monst, x, y, true);
                 if (x != -1 && y != -1 && grid != NULL) {
-                    grid[x][y] = 0;
+                    grid->cells[x][y] = 0;
                 }
             }
 
@@ -1022,7 +1022,7 @@ void populateMonsters() {
 }
 
 boolean getRandomMonsterSpawnLocation(short *x, short *y) {
-    short **grid;
+    dungeongrid *grid;
 
     grid = allocGrid();
     fillGrid(grid, 0);
@@ -1081,13 +1081,13 @@ void disentangle(creature *monst) {
 
 // x and y are optional.
 void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidancePreferences) {
-    short **grid, i, j;
+    short i, j;
     char monstFOV[DCOLS][DROWS];
 
     if (!coordinatesAreInMap(x, y)) {
         zeroOutGrid(monstFOV);
         getFOVMask(monstFOV, monst->xLoc, monst->yLoc, DCOLS * FP_FACTOR, T_OBSTRUCTS_VISION, 0, false);
-        grid = allocGrid();
+        dungeongrid *grid = allocGrid();
         fillGrid(grid, 0);
         calculateDistances(grid, monst->xLoc, monst->yLoc, forbiddenFlagsForMonster(&(monst->info)) & T_DIVIDES_LEVEL, NULL, true, false);
         findReplaceGrid(grid, -30000, DCOLS/2, 0);
@@ -1107,7 +1107,7 @@ void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidance
         for (i=0; i<DCOLS; i++) {
             for (j=0; j<DROWS; j++) {
                 if (monstFOV[i][j]) {
-                    grid[i][j] = 0;
+                    grid->cells[i][j] = 0;
                 }
             }
         }
@@ -1137,7 +1137,7 @@ boolean isValidWanderDestination(creature *monst, short wpIndex) {
     return (wpIndex >= 0
             && wpIndex < rogue.wpCount
             && !monst->waypointAlreadyVisited[wpIndex]
-            && rogue.wpDistance[wpIndex][monst->xLoc][monst->yLoc] >= 0
+            && rogue.wpDistance[wpIndex]->cells[monst->xLoc][monst->yLoc] >= 0
             && nextStep(rogue.wpDistance[wpIndex], monst->xLoc, monst->yLoc, monst, false) != NO_DIRECTION);
 }
 
@@ -1148,9 +1148,9 @@ short closestWaypointIndex(creature *monst) {
     closestIndex = -1;
     for (i=0; i < rogue.wpCount; i++) {
         if (isValidWanderDestination(monst, i)
-            && rogue.wpDistance[i][monst->xLoc][monst->yLoc] < closestDistance) {
+            && rogue.wpDistance[i]->cells[monst->xLoc][monst->yLoc] < closestDistance) {
 
-            closestDistance = rogue.wpDistance[i][monst->xLoc][monst->yLoc];
+            closestDistance = rogue.wpDistance[i]->cells[monst->xLoc][monst->yLoc];
             closestIndex = i;
         }
     }
@@ -1381,7 +1381,7 @@ boolean monsterAvoids(creature *monst, short x, short y) {
     if ((tFlags & T_IS_FIRE & ~terrainImmunities)
         && !cellHasTerrainFlag(monst->xLoc, monst->yLoc, T_IS_FIRE)
         && !(cFlags & (HAS_MONSTER | HAS_PLAYER))
-        && (monst != &player || rogue.mapToShore[x][y] >= player.status[STATUS_IMMUNE_TO_FIRE])) {
+        && (monst != &player || rogue.mapToShore->cells[x][y] >= player.status[STATUS_IMMUNE_TO_FIRE])) {
         return true;
     }
 
@@ -1410,7 +1410,7 @@ boolean monsterAvoids(creature *monst, short x, short y) {
     // lava
     if ((tFlags & T_LAVA_INSTA_DEATH & ~terrainImmunities)
         && (!(tFlags & T_ENTANGLES) || !(monst->info.flags & MONST_IMMUNE_TO_WEBS))
-        && (monst != &player || rogue.mapToShore[x][y] >= max(player.status[STATUS_IMMUNE_TO_FIRE], player.status[STATUS_LEVITATING]))) {
+        && (monst != &player || rogue.mapToShore->cells[x][y] >= max(player.status[STATUS_IMMUNE_TO_FIRE], player.status[STATUS_LEVITATING]))) {
         return true;
     }
 
@@ -1575,7 +1575,7 @@ short awarenessDistance(creature *observer, creature *target) {
             // use absolute distance.
             perceivedDistance = scentDistance(observer->xLoc, observer->yLoc, target->xLoc, target->yLoc);
         } else {
-            perceivedDistance = (rogue.scentTurnNumber - scentMap[observer->xLoc][observer->yLoc]); // this value is double the apparent distance
+            perceivedDistance = (rogue.scentTurnNumber - scentMap->cells[observer->xLoc][observer->yLoc]); // this value is double the apparent distance
         }
 
     perceivedDistance = min(perceivedDistance, 1000);
@@ -1630,8 +1630,8 @@ short closestWaypointIndexTo(const short x, const short y) {
     closestDistance = 1000;
     closestIndex = -1;
     for (i=0; i < rogue.wpCount; i++) {
-        if (rogue.wpDistance[i][x][y] < closestDistance) {
-            closestDistance = rogue.wpDistance[i][x][y];
+        if (rogue.wpDistance[i]->cells[x][y] < closestDistance) {
+            closestDistance = rogue.wpDistance[i]->cells[x][y];
             closestIndex = i;
         }
     }
@@ -2029,7 +2029,7 @@ void pathTowardCreature(creature *monst, creature *target) {
     }
 
     // is the target map out of date?
-    if (target->mapToMe[target->xLoc][target->yLoc] > 3) {
+    if (target->mapToMe->cells[target->xLoc][target->yLoc] > 3) {
         // it is. recalculate the map.
         calculateDistances(target->mapToMe, target->xLoc, target->yLoc, 0, monst, true, false);
     }
@@ -2202,7 +2202,7 @@ void perimeterCoords(short returnCoords[2], short n) {
 // Tries to make the monster blink to the most desirable square it can aim at, according to the
 // preferenceMap argument. "blinkUphill" determines whether it's aiming for higher or lower numbers on
 // the preference map -- true means higher. Returns true if the monster blinked; false if it didn't.
-boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, boolean blinkUphill) {
+boolean monsterBlinkToPreferenceMap(creature *monst, dungeongrid *preferenceMap, boolean blinkUphill) {
     short i, bestTarget[2], bestPreference, nowPreference, maxDistance, target[2], impact[2], origin[2];
     boolean gotOne;
     char monstName[DCOLS];
@@ -2223,11 +2223,11 @@ boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, bool
 
     bestTarget[0]   = 0;
     bestTarget[1]   = 0;
-    bestPreference  = preferenceMap[monst->xLoc][monst->yLoc];
+    bestPreference  = preferenceMap->cells[monst->xLoc][monst->yLoc];
 
     // make sure that we beat the four cardinal neighbors
     for (i = 0; i < 4; i++) {
-        nowPreference = preferenceMap[monst->xLoc + nbDirs[i][0]][monst->yLoc + nbDirs[i][1]];
+        nowPreference = preferenceMap->cells[monst->xLoc + nbDirs[i][0]][monst->yLoc + nbDirs[i][1]];
 
         if (((blinkUphill && nowPreference > bestPreference) || (!blinkUphill && nowPreference < bestPreference))
             && !monsterAvoids(monst, monst->xLoc + nbDirs[i][0], monst->yLoc + nbDirs[i][1])) {
@@ -2242,7 +2242,7 @@ boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, bool
         target[1] += monst->yLoc;
 
         getImpactLoc(impact, origin, target, maxDistance, true, &boltCatalog[BOLT_BLINKING]);
-        nowPreference = preferenceMap[impact[0]][impact[1]];
+        nowPreference = preferenceMap->cells[impact[0]][impact[1]];
 
         if (((blinkUphill && (nowPreference > bestPreference))
              || (!blinkUphill && (nowPreference < bestPreference)))
@@ -2284,7 +2284,7 @@ boolean fleeingMonsterAwareOfPlayer(creature *monst) {
     }
 }
 
-static short **getSafetyMap(creature *monst) {
+static dungeongrid *getSafetyMap(creature *monst) {
     if (fleeingMonsterAwareOfPlayer(monst)) {
         if (monst->safetyMap) {
             freeGrid(monst->safetyMap);
@@ -2300,7 +2300,7 @@ static short **getSafetyMap(creature *monst) {
                 updateSafetyMap();
             }
             monst->safetyMap = allocGrid();
-            copyGrid(monst->safetyMap, safetyMap);
+            *monst->safetyMap = *safetyMap;
         }
         return monst->safetyMap;
     }
@@ -2308,7 +2308,7 @@ static short **getSafetyMap(creature *monst) {
 
 // returns whether the monster did something (and therefore ended its turn)
 boolean monsterBlinkToSafety(creature *monst) {
-    short **blinkSafetyMap;
+    dungeongrid *blinkSafetyMap;
 
     if (monst->creatureState == MONSTER_ALLY) {
         if (!rogue.updatedAllySafetyMapThisTurn) {
@@ -2659,13 +2659,13 @@ boolean isLocalScentMaximum(short x, short y) {
     enum directions dir;
     short newX, newY;
 
-    const short baselineScent = scentMap[x][y];
+    const short baselineScent = scentMap->cells[x][y];
 
     for (dir=0; dir< DIRECTION_COUNT; dir++) {
         newX = x + nbDirs[dir][0];
         newY = y + nbDirs[dir][1];
         if (coordinatesAreInMap(newX, newY)
-            && (scentMap[newX][newY] > baselineScent)
+            && (scentMap->cells[newX][newY] > baselineScent)
             && !cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)
             && !diagonalBlocked(x, y, newX, newY, false)) {
 
@@ -2693,18 +2693,18 @@ enum directions scentDirection(creature *monst) {
             newY = y + nbDirs[dir][1];
             otherMonst = monsterAtLoc(newX, newY);
             if (coordinatesAreInMap(newX, newY)
-                && (scentMap[newX][newY] > bestNearbyScent)
+                && (scentMap->cells[newX][newY] > bestNearbyScent)
                 && (!(pmap[newX][newY].flags & HAS_MONSTER) || (otherMonst && canPass(monst, otherMonst)))
                 && !cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)
                 && !diagonalBlocked(x, y, newX, newY, false)
                 && !monsterAvoids(monst, newX, newY)) {
 
-                bestNearbyScent = scentMap[newX][newY];
+                bestNearbyScent = scentMap->cells[newX][newY];
                 bestDirection = dir;
             }
         }
 
-        if (bestDirection >= 0 && bestNearbyScent > scentMap[x][y]) {
+        if (bestDirection >= 0 && bestNearbyScent > scentMap->cells[x][y]) {
             return bestDirection;
         }
 
@@ -2721,7 +2721,7 @@ enum directions scentDirection(creature *monst) {
                     newestX = newX + nbDirs[dir2][0];
                     newestY = newY + nbDirs[dir2][1];
                     if (coordinatesAreInMap(newX, newY) && coordinatesAreInMap(newestX, newestY)) {
-                        scentMap[newX][newY] = max(scentMap[newX][newY], scentMap[newestX][newestY] - 1);
+                        scentMap->cells[newX][newY] = max(scentMap->cells[newX][newY], scentMap->cells[newestX][newestY] - 1);
                     }
                 }
             }
@@ -2863,7 +2863,6 @@ void monsterMillAbout(creature *monst, short movementChance) {
 void moveAlly(creature *monst) {
     creature *target, *closestMonster = NULL;
     short i, j, x, y, dir, shortestDistance, targetLoc[2], leashLength;
-    short **enemyMap, **costMap;
     char buf[DCOLS], monstName[DCOLS];
 
     x = monst->xLoc;
@@ -2936,7 +2935,7 @@ void moveAlly(creature *monst) {
             targetLoc[1] = y + nbDirs[dir][1];
         }
         if (dir == -1
-            || (allySafetyMap[targetLoc[0]][targetLoc[1]] >= allySafetyMap[x][y])
+            || (allySafetyMap->cells[targetLoc[0]][targetLoc[1]] >= allySafetyMap->cells[x][y])
             || (!moveMonster(monst, nbDirs[dir][0], nbDirs[dir][1]) && !moveMonsterPassivelyTowards(monst, targetLoc, true))) {
             // ally can't flee; continue below
         } else {
@@ -2977,20 +2976,20 @@ void moveAlly(creature *monst) {
         if (monsterHasBoltEffect(monst, BE_BLINKING)
             && ((monst->info.flags & MONST_ALWAYS_USE_ABILITY) || rand_percent(30))) {
 
-            enemyMap = allocGrid();
-            costMap = allocGrid();
+            dungeongrid *enemyMap = allocGrid();
+            dungeongrid *costMap = allocGrid();
 
             for (i=0; i<DCOLS; i++) {
                 for (j=0; j<DROWS; j++) {
                     if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)) {
-                        costMap[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
-                        enemyMap[i][j] = 0; // safeguard against OOS
+                        costMap->cells[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
+                        enemyMap->cells[i][j] = 0; // safeguard against OOS
                     } else if (monsterAvoids(monst, i, j)) {
-                        costMap[i][j] = PDS_FORBIDDEN;
-                        enemyMap[i][j] = 0; // safeguard against OOS
+                        costMap->cells[i][j] = PDS_FORBIDDEN;
+                        enemyMap->cells[i][j] = 0; // safeguard against OOS
                     } else {
-                        costMap[i][j] = 1;
-                        enemyMap[i][j] = 10000;
+                        costMap->cells[i][j] = 1;
+                        enemyMap->cells[i][j] = 10000;
                     }
                 }
             }
@@ -3004,8 +3003,8 @@ void moveAlly(creature *monst) {
                     && (!monsterAvoids(monst, target->xLoc, target->yLoc) || (target->info.flags & MONST_ATTACKABLE_THRU_WALLS))
                     && (!target->status[STATUS_INVISIBLE] || ((monst->info.flags & MONST_ALWAYS_USE_ABILITY) || rand_percent(33)))) {
 
-                    enemyMap[target->xLoc][target->yLoc] = 0;
-                    costMap[target->xLoc][target->yLoc] = 1;
+                    enemyMap->cells[target->xLoc][target->yLoc] = 0;
+                    costMap->cells[target->xLoc][target->yLoc] = 1;
                 }
             }
 

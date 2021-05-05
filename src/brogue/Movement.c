@@ -1206,7 +1206,7 @@ boolean playerMoves(short direction) {
 // replaced in Dijkstra.c:
 /*
 // returns true if the cell value changed
-boolean updateDistanceCell(short **distanceMap, short x, short y) {
+boolean updateDistanceCell(dungeongrid *distanceMap, short x, short y) {
     short dir, newX, newY;
     boolean somethingChanged = false;
 
@@ -1225,7 +1225,7 @@ boolean updateDistanceCell(short **distanceMap, short x, short y) {
     return somethingChanged;
 }
 
-void dijkstraScan(short **distanceMap, char passMap[DCOLS][DROWS], boolean allowDiagonals) {
+void dijkstraScan(dungeongrid *distanceMap, char passMap[DCOLS][DROWS], boolean allowDiagonals) {
     short i, j, maxDir;
     enum directions dir;
     boolean somethingChanged;
@@ -1358,7 +1358,7 @@ void dequeue(short *x, short *y, short *val, distanceQueue *dQ) {
 
 }
 
-void dijkstraScan(short **distanceMap, char passMap[DCOLS][DROWS], boolean allowDiagonals) {
+void dijkstraScan(dungeongrid *distanceMap, char passMap[DCOLS][DROWS], boolean allowDiagonals) {
     short i, j, maxDir, val;
     enum directions dir;
     distanceQueue dQ;
@@ -1405,7 +1405,7 @@ void dijkstraScan(short **distanceMap, char passMap[DCOLS][DROWS], boolean allow
 }*/
 
 /*
-void calculateDistances(short **distanceMap, short destinationX, short destinationY, unsigned long blockingTerrainFlags, creature *traveler) {
+void calculateDistances(dungeongrid *distanceMap, short destinationX, short destinationY, unsigned long blockingTerrainFlags, creature *traveler) {
     short i, j;
     boolean somethingChanged;
 
@@ -1446,7 +1446,7 @@ void calculateDistances(short **distanceMap, short destinationX, short destinati
 // Always rolls downhill on the distance map.
 // If monst is provided, do not return a direction pointing to
 // a cell that the monster avoids.
-short nextStep(short **distanceMap, short x, short y, creature *monst, boolean preferDiagonals) {
+short nextStep(dungeongrid *distanceMap, short x, short y, creature *monst, boolean preferDiagonals) {
     short newX, newY, bestScore;
     enum directions dir, bestDir;
     creature *blocker;
@@ -1479,24 +1479,24 @@ short nextStep(short **distanceMap, short x, short y, creature *monst, boolean p
                        && !monstersAreEnemies(monst, blocker)) {
                 blocked = true;
             }
-            if ((distanceMap[x][y] - distanceMap[newX][newY]) > bestScore
+            if ((distanceMap->cells[x][y] - distanceMap->cells[newX][newY]) > bestScore
                 && !diagonalBlocked(x, y, newX, newY, monst == &player)
                 && knownToPlayerAsPassableOrSecretDoor(newX, newY)
                 && !blocked) {
 
                 bestDir = dir;
-                bestScore = distanceMap[x][y] - distanceMap[newX][newY];
+                bestScore = distanceMap->cells[x][y] - distanceMap->cells[newX][newY];
             }
         }
     }
     return bestDir;
 }
 
-void displayRoute(short **distanceMap, boolean removeRoute) {
+void displayRoute(dungeongrid *distanceMap, boolean removeRoute) {
     short currentX = player.xLoc, currentY = player.yLoc, dir, newX, newY;
     boolean advanced;
 
-    if (distanceMap[player.xLoc][player.yLoc] < 0 || distanceMap[player.xLoc][player.yLoc] == 30000) {
+    if (distanceMap->cells[player.xLoc][player.yLoc] < 0 || distanceMap->cells[player.xLoc][player.yLoc] == 30000) {
         return;
     }
     do {
@@ -1510,7 +1510,7 @@ void displayRoute(short **distanceMap, boolean removeRoute) {
             newX = currentX + nbDirs[dir][0];
             newY = currentY + nbDirs[dir][1];
             if (coordinatesAreInMap(newX, newY)
-                && distanceMap[newX][newY] >= 0 && distanceMap[newX][newY] < distanceMap[currentX][currentY]
+                && distanceMap->cells[newX][newY] >= 0 && distanceMap->cells[newX][newY] < distanceMap->cells[currentX][currentY]
                 && !diagonalBlocked(currentX, currentY, newX, newY, true)) {
 
                 currentX = newX;
@@ -1569,14 +1569,14 @@ void travelRoute(short path[1000][2], short steps) {
     updateFlavorText();
 }
 
-void travelMap(short **distanceMap) {
+void travelMap(dungeongrid *distanceMap) {
     short currentX = player.xLoc, currentY = player.yLoc, dir, newX, newY;
     boolean advanced;
 
     rogue.disturbed = false;
     rogue.automationActive = true;
 
-    if (distanceMap[player.xLoc][player.yLoc] < 0 || distanceMap[player.xLoc][player.yLoc] == 30000) {
+    if (distanceMap->cells[player.xLoc][player.yLoc] < 0 || distanceMap->cells[player.xLoc][player.yLoc] == 30000) {
         return;
     }
     do {
@@ -1585,8 +1585,8 @@ void travelMap(short **distanceMap) {
             newX = currentX + nbDirs[dir][0];
             newY = currentY + nbDirs[dir][1];
             if (coordinatesAreInMap(newX, newY)
-                && distanceMap[newX][newY] >= 0
-                && distanceMap[newX][newY] < distanceMap[currentX][currentY]
+                && distanceMap->cells[newX][newY] >= 0
+                && distanceMap->cells[newX][newY] < distanceMap->cells[currentX][currentY]
                 && !diagonalBlocked(currentX, currentY, newX, newY, true)) {
 
                 if (!playerMoves(dir)) {
@@ -1608,7 +1608,7 @@ void travelMap(short **distanceMap) {
 }
 
 void travel(short x, short y, boolean autoConfirm) {
-    short **distanceMap, i;
+    short i;
     rogueEvent theEvent;
     unsigned short staircaseConfirmKey;
 
@@ -1643,10 +1643,10 @@ void travel(short x, short y, boolean autoConfirm) {
         return;
     }
 
-    distanceMap = allocGrid();
+    dungeongrid *distanceMap = allocGrid();
 
     calculateDistances(distanceMap, x, y, 0, &player, false, false);
-    if (distanceMap[player.xLoc][player.yLoc] < 30000) {
+    if (distanceMap->cells[player.xLoc][player.yLoc] < 30000) {
         if (autoConfirm) {
             travelMap(distanceMap);
             //refreshSideBar(-1, -1, false);
@@ -1693,7 +1693,7 @@ void travel(short x, short y, boolean autoConfirm) {
     freeGrid(distanceMap);
 }
 
-void populateGenericCostMap(short **costMap) {
+void populateGenericCostMap(dungeongrid *costMap) {
     short i, j;
 
     for (i=0; i<DCOLS; i++) {
@@ -1701,11 +1701,11 @@ void populateGenericCostMap(short **costMap) {
             if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)
                 && (!cellHasTMFlag(i, j, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc(i, j) & T_OBSTRUCTS_PASSABILITY))) {
 
-                costMap[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
+                costMap->cells[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
             } else if (cellHasTerrainFlag(i, j, T_PATHING_BLOCKER & ~T_OBSTRUCTS_PASSABILITY)) {
-                costMap[i][j] = PDS_FORBIDDEN;
+                costMap->cells[i][j] = PDS_FORBIDDEN;
             } else {
-                costMap[i][j] = 1;
+                costMap->cells[i][j] = 1;
             }
         }
     }
@@ -1740,7 +1740,7 @@ void getLocationFlags(const short x, const short y,
     }
 }
 
-void populateCreatureCostMap(short **costMap, creature *monst) {
+void populateCreatureCostMap(dungeongrid *costMap, creature *monst) {
     short i, j, unexploredCellCost;
     creature *currentTenant;
     item *theItem;
@@ -1751,7 +1751,7 @@ void populateCreatureCostMap(short **costMap, creature *monst) {
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
             if (monst == &player && !(pmap[i][j].flags & (DISCOVERED | MAGIC_MAPPED))) {
-                costMap[i][j] = PDS_OBSTRUCTION;
+                costMap->cells[i][j] = PDS_OBSTRUCTION;
                 continue;
             }
 
@@ -1760,34 +1760,34 @@ void populateCreatureCostMap(short **costMap, creature *monst) {
             if ((tFlags & T_OBSTRUCTS_PASSABILITY)
                  && (!cellHasTMFlag(i, j, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc(i, j) & T_OBSTRUCTS_PASSABILITY) || monst == &player)) {
 
-                costMap[i][j] = (tFlags & T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
+                costMap->cells[i][j] = (tFlags & T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
                 continue;
             }
 
             if ((tFlags & T_LAVA_INSTA_DEATH)
                 && !(monst->info.flags & (MONST_IMMUNE_TO_FIRE | MONST_FLIES | MONST_INVULNERABLE))
                 && (monst->status[STATUS_LEVITATING] || monst->status[STATUS_IMMUNE_TO_FIRE])
-                && max(monst->status[STATUS_LEVITATING], monst->status[STATUS_IMMUNE_TO_FIRE]) < (rogue.mapToShore[i][j] + distanceBetween(i, j, monst->xLoc, monst->yLoc) * monst->movementSpeed / 100)) {
+                && max(monst->status[STATUS_LEVITATING], monst->status[STATUS_IMMUNE_TO_FIRE]) < (rogue.mapToShore->cells[i][j] + distanceBetween(i, j, monst->xLoc, monst->yLoc) * monst->movementSpeed / 100)) {
                 // Only a temporary effect will permit the monster to survive the lava, and the remaining duration either isn't
                 // enough to get it to the spot, or it won't suffice to let it return to shore if it does get there.
                 // Treat these locations as obstacles.
-                costMap[i][j] = PDS_FORBIDDEN;
+                costMap->cells[i][j] = PDS_FORBIDDEN;
                 continue;
             }
 
             if (((tFlags & T_AUTO_DESCENT) || (tFlags & T_IS_DEEP_WATER) && !(monst->info.flags & MONST_IMMUNE_TO_WATER))
                 && !(monst->info.flags & MONST_FLIES)
                 && (monst->status[STATUS_LEVITATING])
-                && monst->status[STATUS_LEVITATING] < (rogue.mapToShore[i][j] + distanceBetween(i, j, monst->xLoc, monst->yLoc) * monst->movementSpeed / 100)) {
+                && monst->status[STATUS_LEVITATING] < (rogue.mapToShore->cells[i][j] + distanceBetween(i, j, monst->xLoc, monst->yLoc) * monst->movementSpeed / 100)) {
                 // Only a temporary effect will permit the monster to levitate over the chasm/water, and the remaining duration either isn't
                 // enough to get it to the spot, or it won't suffice to let it return to shore if it does get there.
                 // Treat these locations as obstacles.
-                costMap[i][j] = PDS_FORBIDDEN;
+                costMap->cells[i][j] = PDS_FORBIDDEN;
                 continue;
             }
 
             if (monsterAvoids(monst, i, j)) {
-                costMap[i][j] = PDS_FORBIDDEN;
+                costMap->cells[i][j] = PDS_FORBIDDEN;
                 continue;
             }
 
@@ -1797,7 +1797,7 @@ void populateCreatureCostMap(short **costMap, creature *monst) {
                     && (currentTenant->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE))
                     && !canPass(monst, currentTenant)) {
 
-                    costMap[i][j] = PDS_FORBIDDEN;
+                    costMap->cells[i][j] = PDS_FORBIDDEN;
                     continue;
                 }
             }
@@ -1805,12 +1805,12 @@ void populateCreatureCostMap(short **costMap, creature *monst) {
             if ((cFlags & KNOWN_TO_BE_TRAP_FREE)
                 || (monst != &player && monst->creatureState != MONSTER_ALLY)) {
 
-                costMap[i][j] = 10;
+                costMap->cells[i][j] = 10;
             } else {
                 // Player and allies give locations that are known to be free of traps
                 // an advantage that increases with depth level, based on the depths
                 // at which traps are generated.
-                costMap[i][j] = unexploredCellCost;
+                costMap->cells[i][j] = unexploredCellCost;
             }
 
             if (!(monst->info.flags & MONST_INVULNERABLE)) {
@@ -1818,14 +1818,14 @@ void populateCreatureCostMap(short **costMap, creature *monst) {
                     || cellHasTMFlag(i, j, TM_PROMOTES_ON_ITEM_PICKUP)
                     || (tFlags & T_ENTANGLES) && !(monst->info.flags & MONST_IMMUNE_TO_WEBS)) {
 
-                    costMap[i][j] += 20;
+                    costMap->cells[i][j] += 20;
                 }
             }
 
             if (monst == &player) {
                 theItem = itemAtLoc(i, j);
                 if (theItem && (theItem->flags & ITEM_PLAYER_AVOIDS)) {
-                    costMap[i][j] += 10;
+                    costMap->cells[i][j] += 10;
                 }
             }
         }
@@ -1858,44 +1858,43 @@ enum directions adjacentFightingDir() {
 
 #define exploreGoalValue(x, y)  (0 - abs((x) - DCOLS / 2) / 3 - abs((x) - DCOLS / 2) / 4)
 
-void getExploreMap(short **map, boolean headingToStairs) {// calculate explore map
+void getExploreMap(dungeongrid *map, boolean headingToStairs) {// calculate explore map
     short i, j;
-    short **costMap;
     item *theItem;
 
-    costMap = allocGrid();
+    dungeongrid *costMap = allocGrid();
     populateCreatureCostMap(costMap, &player);
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            map[i][j] = 30000; // Can be overridden later.
+            map->cells[i][j] = 30000; // Can be overridden later.
             theItem = itemAtLoc(i, j);
             if (!(pmap[i][j].flags & DISCOVERED)) {
                 if ((pmap[i][j].flags & MAGIC_MAPPED)
                     && (tileCatalog[pmap[i][j].layers[DUNGEON]].flags | tileCatalog[pmap[i][j].layers[LIQUID]].flags) & T_PATHING_BLOCKER) {
                     // Magic-mapped cells revealed as obstructions should be treated as such even though they're not discovered.
-                    costMap[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
+                    costMap->cells[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
                 } else {
-                    costMap[i][j] = 1;
-                    map[i][j] = exploreGoalValue(i, j);
+                    costMap->cells[i][j] = 1;
+                    map->cells[i][j] = exploreGoalValue(i, j);
                 }
             } else if (theItem
                        && !monsterAvoids(&player, i, j)) {
                 if (theItem->flags & ITEM_PLAYER_AVOIDS) {
-                    costMap[i][j] = 20;
+                    costMap->cells[i][j] = 20;
                 } else {
-                    costMap[i][j] = 1;
-                    map[i][j] = exploreGoalValue(i, j) - 10;
+                    costMap->cells[i][j] = 1;
+                    map->cells[i][j] = exploreGoalValue(i, j) - 10;
                 }
             }
         }
     }
 
-    costMap[rogue.downLoc[0]][rogue.downLoc[1]] = 100;
-    costMap[rogue.upLoc[0]][rogue.upLoc[1]]     = 100;
+    costMap->cells[rogue.downLoc[0]][rogue.downLoc[1]] = 100;
+    costMap->cells[rogue.upLoc[0]][rogue.upLoc[1]]     = 100;
 
     if (headingToStairs) {
-        map[rogue.downLoc[0]][rogue.downLoc[1]] = 0; // head to the stairs
+        map->cells[rogue.downLoc[0]][rogue.downLoc[1]] = 0; // head to the stairs
     }
 
     dijkstraScan(map, costMap, true);
@@ -1905,7 +1904,7 @@ void getExploreMap(short **map, boolean headingToStairs) {// calculate explore m
 }
 
 boolean explore(short frameDelay) {
-    short **distanceMap;
+    dungeongrid *distanceMap;
     short path[1000][2], steps;
     boolean madeProgress, headingToStairs;
     enum directions dir;
@@ -2495,6 +2494,6 @@ void addScentToCell(short x, short y, short distance) {
     unsigned short value;
     if (!cellHasTerrainFlag(x, y, T_OBSTRUCTS_SCENT) || !cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY)) {
         value = rogue.scentTurnNumber - distance;
-        scentMap[x][y] = max(value, (unsigned short) scentMap[x][y]);
+        scentMap->cells[x][y] = max(value, (unsigned short) scentMap->cells[x][y]);
     }
 }

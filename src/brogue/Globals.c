@@ -25,12 +25,12 @@
 
 tcell tmap[DCOLS][DROWS];                       // grids with info about the map
 pcell pmap[DCOLS][DROWS];
-short **scentMap;
+dungeongrid *scentMap;
 cellDisplayBuffer displayBuffer[COLS][ROWS];    // used to optimize plotCharWithColor
 short terrainRandomValues[DCOLS][DROWS][8];
-short **safetyMap;                              // used to help monsters flee
-short **allySafetyMap;                          // used to help allies flee
-short **chokeMap;                               // used to assess the importance of the map's various chokepoints
+dungeongrid *safetyMap;                              // used to help monsters flee
+dungeongrid *allySafetyMap;                          // used to help allies flee
+dungeongrid *chokeMap;                               // used to assess the importance of the map's various chokepoints
 const short nbDirs[8][2] = {{0,-1}, {0,1}, {-1,0}, {1,0}, {-1,-1}, {-1,1}, {1,-1}, {1,1}};
 const short cDirs[8][2] = {{0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}, {-1, 0}, {-1, 1}};
 short numberOfWaypoints;

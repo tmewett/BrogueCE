@@ -28,7 +28,7 @@
 #include "IncludeGlobals.h"
 
 // Populates path[][] with a list of coordinates starting at origin and traversing down the map. Returns the number of steps in the path.
-short getPlayerPathOnMap(short path[1000][2], short **map, short originX, short originY) {
+short getPlayerPathOnMap(short path[1000][2], dungeongrid *map, short originX, short originY) {
     short dir, x, y, steps;
 
     x = originX;
@@ -119,33 +119,33 @@ void showCursor() {
     }
 }
 
-void getClosestValidLocationOnMap(short loc[2], short **map, short x, short y) {
+void getClosestValidLocationOnMap(short loc[2], dungeongrid *map, short x, short y) {
     short i, j, dist, closestDistance, lowestMapScore;
 
     closestDistance = 10000;
     lowestMapScore = 10000;
     for (i=1; i<DCOLS-1; i++) {
         for (j=1; j<DROWS-1; j++) {
-            if (map[i][j] >= 0
-                && map[i][j] < 30000) {
+            if (map->cells[i][j] >= 0
+                && map->cells[i][j] < 30000) {
 
                 dist = (i - x)*(i - x) + (j - y)*(j - y);
                 //hiliteCell(i, j, &purple, min(dist / 2, 100), false);
                 if (dist < closestDistance
-                    || dist == closestDistance && map[i][j] < lowestMapScore) {
+                    || dist == closestDistance && map->cells[i][j] < lowestMapScore) {
 
                     loc[0] = i;
                     loc[1] = j;
                     closestDistance = dist;
-                    lowestMapScore = map[i][j];
+                    lowestMapScore = map->cells[i][j];
                 }
             }
         }
     }
 }
 
-void processSnapMap(short **map) {
-    short **costMap;
+void processSnapMap(dungeongrid *map) {
+    dungeongrid *costMap;
     enum directions dir;
     short i, j, newX, newY;
 
@@ -153,7 +153,7 @@ void processSnapMap(short **map) {
 
     populateCreatureCostMap(costMap, &player);
     fillGrid(map, 30000);
-    map[player.xLoc][player.yLoc] = 0;
+    map->cells[player.xLoc][player.yLoc] = 0;
     dijkstraScan(map, costMap, true);
     for (i = 0; i < DCOLS; i++) {
         for (j = 0; j < DROWS; j++) {
@@ -162,10 +162,10 @@ void processSnapMap(short **map) {
                     newX = i + nbDirs[dir][0];
                     newY = j + nbDirs[dir][1];
                     if (coordinatesAreInMap(newX, newY)
-                        && map[newX][newY] >= 0
-                        && map[newX][newY] < map[i][j]) {
+                        && map->cells[newX][newY] >= 0
+                        && map->cells[newX][newY] < map->cells[i][j]) {
 
-                        map[i][j] = map[newX][newY];
+                        map->cells[i][j] = map->cells[newX][newY];
                     }
                 }
             }
@@ -558,7 +558,6 @@ void mainInputLoop() {
     playingBack, doEvent, textDisplayed;
 
     rogueEvent theEvent;
-    short **costMap, **playerPathingMap, **cursorSnapMap;
     brogueButton buttons[5] = {{{0}}};
     buttonState state;
     short buttonInput;
@@ -577,9 +576,9 @@ void mainInputLoop() {
 
     playingBack = rogue.playbackMode;
     rogue.playbackMode = false;
-    costMap = allocGrid();
-    playerPathingMap = allocGrid();
-    cursorSnapMap = allocGrid();
+    dungeongrid *costMap = allocGrid();
+    dungeongrid *playerPathingMap = allocGrid();
+    dungeongrid *cursorSnapMap = allocGrid();
 
     cursor[0] = cursor[1] = -1;
 
@@ -618,7 +617,7 @@ void mainInputLoop() {
         populateCreatureCostMap(costMap, &player);
 
         fillGrid(playerPathingMap, 30000);
-        playerPathingMap[player.xLoc][player.yLoc] = 0;
+        playerPathingMap->cells[player.xLoc][player.yLoc] = 0;
         dijkstraScan(playerPathingMap, costMap, true);
         processSnapMap(cursorSnapMap);
 
@@ -634,8 +633,8 @@ void mainInputLoop() {
                     hilitePath(path, steps, true);                                  // Unhilite old path.
                 }
                 if (coordinatesAreInMap(cursor[0], cursor[1])) {
-                    if (cursorSnapMap[cursor[0]][cursor[1]] >= 0
-                        && cursorSnapMap[cursor[0]][cursor[1]] < 30000) {
+                    if (cursorSnapMap->cells[cursor[0]][cursor[1]] >= 0
+                        && cursorSnapMap->cells[cursor[0]][cursor[1]] < 30000) {
 
                         pathDestination[0] = cursor[0];
                         pathDestination[1] = cursor[1];
@@ -645,11 +644,11 @@ void mainInputLoop() {
                     }
 
                     fillGrid(playerPathingMap, 30000);
-                    playerPathingMap[pathDestination[0]][pathDestination[1]] = 0;
-                    backupCost = costMap[pathDestination[0]][pathDestination[1]];
-                    costMap[pathDestination[0]][pathDestination[1]] = 1;
+                    playerPathingMap->cells[pathDestination[0]][pathDestination[1]] = 0;
+                    backupCost = costMap->cells[pathDestination[0]][pathDestination[1]];
+                    costMap->cells[pathDestination[0]][pathDestination[1]] = 1;
                     dijkstraScan(playerPathingMap, costMap, true);
-                    costMap[pathDestination[0]][pathDestination[1]] = backupCost;
+                    costMap->cells[pathDestination[0]][pathDestination[1]] = backupCost;
                     steps = getPlayerPathOnMap(path, playerPathingMap, player.xLoc, player.yLoc);
 
 //                  steps = getPlayerPathOnMap(path, playerPathingMap, pathDestination[0], pathDestination[1]) - 1; // Get new path.
@@ -661,7 +660,7 @@ void mainInputLoop() {
                     }
                     steps++;
 //                  if (playerPathingMap[cursor[0]][cursor[1]] != 1
-                    if (playerPathingMap[player.xLoc][player.yLoc] != 1
+                    if (playerPathingMap->cells[player.xLoc][player.yLoc] != 1
                         || pathDestination[0] != cursor[0]
                         || pathDestination[1] != cursor[1]) {
 
@@ -1437,7 +1436,7 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
     bakeTerrainColors(&cellForeColor, &cellBackColor, x, y);
 
     if (rogue.displayAggroRangeMode && (pmap[x][y].flags & IN_FIELD_OF_VIEW)) {
-        distance = min(rogue.scentTurnNumber - scentMap[x][y], scentDistance(x, y, player.xLoc, player.yLoc));
+        distance = min(rogue.scentTurnNumber - scentMap->cells[x][y], scentDistance(x, y, player.xLoc, player.yLoc));
         if (distance > rogue.aggroRange * 2) {
             applyColorAverage(&cellForeColor, &orange, 12);
             applyColorAverage(&cellBackColor, &orange, 12);
@@ -1472,11 +1471,11 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
     }
 
     if (D_SCENT_VISION) {
-        if (rogue.scentTurnNumber > (unsigned short) scentMap[x][y]) {
-            cellBackColor.red = rogue.scentTurnNumber - (unsigned short) scentMap[x][y];
+        if (rogue.scentTurnNumber > (unsigned short) scentMap->cells[x][y]) {
+            cellBackColor.red = rogue.scentTurnNumber - (unsigned short) scentMap->cells[x][y];
             cellBackColor.red = clamp(cellBackColor.red, 0, 100);
         } else {
-            cellBackColor.green = abs(rogue.scentTurnNumber - (unsigned short) scentMap[x][y]);
+            cellBackColor.green = abs(rogue.scentTurnNumber - (unsigned short) scentMap->cells[x][y]);
             cellBackColor.green = clamp(cellBackColor.green, 0, 100);
         }
     }
@@ -2132,7 +2131,7 @@ void funkyFade(cellDisplayBuffer displayBuf[COLS][ROWS], const color *colorStart
     double x2, y2, weightGrid[COLS][ROWS][3], percentComplete;
     color tempColor, colorMid, foreColor, backColor;
     enum displayGlyph tempChar;
-    short **distanceMap;
+    dungeongrid *distanceMap;
     boolean fastForward;
 
     assureCosmeticRNG;
@@ -2166,8 +2165,8 @@ void funkyFade(cellDisplayBuffer displayBuf[COLS][ROWS], const color *colorStart
 
                 // the fade color floods the reachable dungeon tiles faster
                 if (!invert && coordinatesAreInMap(windowToMapX(i), windowToMapY(j))
-                    && distanceMap[windowToMapX(i)][windowToMapY(j)] >= 0 && distanceMap[windowToMapX(i)][windowToMapY(j)] < 30000) {
-                    percentComplete *= 1.0 + (100.0 - min(100, distanceMap[windowToMapX(i)][windowToMapY(j)])) / 100.;
+                    && distanceMap->cells[windowToMapX(i)][windowToMapY(j)] >= 0 && distanceMap->cells[windowToMapX(i)][windowToMapY(j)] < 30000) {
+                    percentComplete *= 1.0 + (100.0 - min(100, distanceMap->cells[windowToMapX(i)][windowToMapY(j)])) / 100.;
                 }
 
                 weight = (short)(percentComplete + weightGrid[i][j][2] * percentComplete * 10);
@@ -2229,8 +2228,8 @@ void displayWaypoints() {
         for (j=0; j<DROWS; j++) {
             lowestDistance = 30000;
             for (w=0; w<rogue.wpCount; w++) {
-                if (rogue.wpDistance[w][i][j] < lowestDistance) {
-                    lowestDistance = rogue.wpDistance[w][i][j];
+                if (rogue.wpDistance[w]->cells[i][j] < lowestDistance) {
+                    lowestDistance = rogue.wpDistance[w]->cells[i][j];
                 }
             }
             if (lowestDistance < 10) {
@@ -2286,15 +2285,15 @@ void displayChokeMap() {
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (chokeMap[i][j] < CHOKEMAP_DISPLAY_CUTOFF) {
+            if (chokeMap->cells[i][j] < CHOKEMAP_DISPLAY_CUTOFF) {
                 if (pmap[i][j].flags & IS_GATE_SITE) {
                     getCellAppearance(i, j, &dchar, &foreColor, &backColor);
                     applyColorAugment(&backColor, &teal, 50);
                     plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &backColor);
                 } else
-                    if (chokeMap[i][j] < CHOKEMAP_DISPLAY_CUTOFF) {
+                    if (chokeMap->cells[i][j] < CHOKEMAP_DISPLAY_CUTOFF) {
                     getCellAppearance(i, j, &dchar, &foreColor, &backColor);
-                    applyColorAugment(&backColor, &red, 100 - chokeMap[i][j] * 100 / CHOKEMAP_DISPLAY_CUTOFF);
+                    applyColorAugment(&backColor, &red, 100 - chokeMap->cells[i][j] * 100 / CHOKEMAP_DISPLAY_CUTOFF);
                     plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &backColor);
                 }
             }
@@ -2329,7 +2328,7 @@ void displayLoops() {
 
 void exploreKey(const boolean controlKey) {
     short x, y, finalX = 0, finalY = 0;
-    short **exploreMap;
+    dungeongrid *exploreMap;
     enum directions dir;
     boolean tooDark = false;
 
@@ -4402,7 +4401,7 @@ void printHighScores(boolean hiliteMostRecent) {
     waitForAcknowledgment();
 }
 
-void displayGrid(short **map) {
+void displayGrid(dungeongrid *map) {
     short i, j, score, topRange, bottomRange;
     color tempColor, foreColor, backColor;
     enum displayGlyph dchar;
@@ -4417,17 +4416,17 @@ void displayGrid(short **map) {
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (cellHasTerrainFlag(i, j, T_WAYPOINT_BLOCKER) || (map[i][j] == map[0][0]) || (i == player.xLoc && j == player.yLoc)) {
+            if (cellHasTerrainFlag(i, j, T_WAYPOINT_BLOCKER) || (map->cells[i][j] == map->cells[0][0]) || (i == player.xLoc && j == player.yLoc)) {
                 continue;
             }
-            if (map[i][j] > topRange) {
-                topRange = map[i][j];
+            if (map->cells[i][j] > topRange) {
+                topRange = map->cells[i][j];
                 //if (topRange == 0) {
                     //printf("\ntop is zero at %i,%i", i, j);
                 //}
             }
-            if (map[i][j] < bottomRange) {
-                bottomRange = map[i][j];
+            if (map->cells[i][j] < bottomRange) {
+                bottomRange = map->cells[i][j];
             }
         }
     }
@@ -4435,11 +4434,11 @@ void displayGrid(short **map) {
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
             if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY | T_LAVA_INSTA_DEATH)
-                || (map[i][j] == map[0][0])
+                || (map->cells[i][j] == map->cells[0][0])
                 || (i == player.xLoc && j == player.yLoc)) {
                 continue;
             }
-            score = 300 - (map[i][j] - bottomRange) * 300 / max(1, (topRange - bottomRange));
+            score = 300 - (map->cells[i][j] - bottomRange) * 300 / max(1, (topRange - bottomRange));
             tempColor.blue = max(min(score, 100), 0);
             score -= 100;
             tempColor.red = max(min(score, 100), 0);

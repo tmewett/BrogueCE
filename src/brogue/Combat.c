@@ -1333,7 +1333,7 @@ void flashMonster(creature *monst, const color *theColor, short strength) {
     }
 }
 
-boolean canAbsorb(creature *ally, boolean ourBolts[NUMBER_BOLT_KINDS], creature *prey, short **grid) {
+boolean canAbsorb(creature *ally, boolean ourBolts[NUMBER_BOLT_KINDS], creature *prey, dungeongrid *grid) {
     short i;
 
     if (ally->creatureState == MONSTER_ALLY
@@ -1341,7 +1341,7 @@ boolean canAbsorb(creature *ally, boolean ourBolts[NUMBER_BOLT_KINDS], creature 
         && (ally->targetCorpseLoc[0] <= 0)
         && !((ally->info.flags | prey->info.flags) & (MONST_INANIMATE | MONST_IMMOBILE))
         && !monsterAvoids(ally, prey->xLoc, prey->yLoc)
-        && grid[ally->xLoc][ally->yLoc] <= 10) {
+        && grid->cells[ally->xLoc][ally->yLoc] <= 10) {
 
         if (~(ally->info.abilityFlags) & prey->info.abilityFlags & LEARNABLE_ABILITIES) {
             return true;
@@ -1369,7 +1369,7 @@ boolean canAbsorb(creature *ally, boolean ourBolts[NUMBER_BOLT_KINDS], creature 
 
 boolean anyoneWantABite(creature *decedent) {
     short candidates, randIndex, i;
-    short **grid;
+    dungeongrid *grid;
     creature *ally;
     boolean success = false;
     boolean ourBolts[NUMBER_BOLT_KINDS] = {false};

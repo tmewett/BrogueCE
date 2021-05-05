@@ -138,13 +138,13 @@ void pdsSetDistance(pdsMap *map, short x, short y, short distance) {
     }
 }
 
-void pdsSetCosts(pdsMap *map, short **costMap) {
+void pdsSetCosts(pdsMap *map, dungeongrid *costMap) {
     short i, j;
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
             if (i != 0 && j != 0 && i < DCOLS - 1 && j < DROWS - 1) {
-                PDS_CELL(map, i, j)->cost = costMap[i][j];
+                PDS_CELL(map, i, j)->cost = costMap->cells[i][j];
             } else {
                 PDS_CELL(map, i, j)->cost = PDS_FORBIDDEN;
             }
@@ -152,7 +152,7 @@ void pdsSetCosts(pdsMap *map, short **costMap) {
     }
 }
 
-void pdsBatchInput(pdsMap *map, short **distanceMap, short **costMap, short maxDistance, boolean eightWays) {
+void pdsBatchInput(pdsMap *map, dungeongrid *distanceMap, dungeongrid *costMap, short maxDistance, boolean eightWays) {
     short i, j;
     pdsLink *left, *right;
 
@@ -167,7 +167,7 @@ void pdsBatchInput(pdsMap *map, short **distanceMap, short **costMap, short maxD
             pdsLink *link = PDS_CELL(map, i, j);
 
             if (distanceMap != NULL) {
-                link->distance = distanceMap[i][j];
+                link->distance = distanceMap->cells[i][j];
             } else {
                 if (costMap != NULL) {
                     // totally hackish; refactor
@@ -183,7 +183,7 @@ void pdsBatchInput(pdsMap *map, short **distanceMap, short **costMap, short maxD
                 if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY) && cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT)) cost = PDS_OBSTRUCTION;
                 else cost = PDS_FORBIDDEN;
             } else {
-                cost = costMap[i][j];
+                cost = costMap->cells[i][j];
             }
 
             link->cost = cost;
@@ -222,14 +222,14 @@ void pdsBatchInput(pdsMap *map, short **distanceMap, short **costMap, short maxD
     }
 }
 
-void pdsBatchOutput(pdsMap *map, short **distanceMap) {
+void pdsBatchOutput(pdsMap *map, dungeongrid *distanceMap) {
     short i, j;
 
     pdsUpdate(map);
     // transfer results to the distanceMap
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            distanceMap[i][j] = PDS_CELL(map, i, j)->distance;
+            distanceMap->cells[i][j] = PDS_CELL(map, i, j)->distance;
         }
     }
 }
@@ -238,14 +238,14 @@ void pdsInvalidate(pdsMap *map, short maxDistance) {
     pdsBatchInput(map, NULL, NULL, maxDistance, map->eightWays);
 }
 
-void dijkstraScan(short **distanceMap, short **costMap, boolean useDiagonals) {
+void dijkstraScan(dungeongrid *distanceMap, dungeongrid *costMap, boolean useDiagonals) {
     static pdsMap map;
 
     pdsBatchInput(&map, distanceMap, costMap, 30000, useDiagonals);
     pdsBatchOutput(&map, distanceMap);
 }
 
-void calculateDistances(short **distanceMap,
+void calculateDistances(dungeongrid *distanceMap,
                         short destinationX, short destinationY,
                         unsigned long blockingTerrainFlags,
                         creature *traveler,
@@ -292,9 +292,9 @@ void calculateDistances(short **distanceMap,
 }
 
 short pathingDistance(short x1, short y1, short x2, short y2, unsigned long blockingTerrainFlags) {
-    short retval, **distanceMap = allocGrid();
+    dungeongrid *distanceMap = allocGrid();
     calculateDistances(distanceMap, x2, y2, blockingTerrainFlags, NULL, true, true);
-    retval = distanceMap[x1][y1];
+    short retval = distanceMap->cells[x1][y1];
     freeGrid(distanceMap);
     return retval;
 }

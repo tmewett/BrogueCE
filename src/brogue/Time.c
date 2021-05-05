@@ -1518,57 +1518,56 @@ void updateEnvironment() {
 
 void updateAllySafetyMap() {
     short i, j;
-    short **playerCostMap, **monsterCostMap;
 
     rogue.updatedAllySafetyMapThisTurn = true;
 
-    playerCostMap = allocGrid();
-    monsterCostMap = allocGrid();
+    dungeongrid *playerCostMap = allocGrid();
+    dungeongrid *monsterCostMap = allocGrid();
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            allySafetyMap[i][j] = 30000;
+            allySafetyMap->cells[i][j] = 30000;
 
-            playerCostMap[i][j] = monsterCostMap[i][j] = 1;
+            playerCostMap->cells[i][j] = monsterCostMap->cells[i][j] = 1;
 
             if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)
                 && (!cellHasTMFlag(i, j, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc(i, j) & T_OBSTRUCTS_PASSABILITY))) {
 
-                playerCostMap[i][j] = monsterCostMap[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
+                playerCostMap->cells[i][j] = monsterCostMap->cells[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
             } else if (cellHasTerrainFlag(i, j, T_PATHING_BLOCKER & ~T_OBSTRUCTS_PASSABILITY)) {
-                playerCostMap[i][j] = monsterCostMap[i][j] = PDS_FORBIDDEN;
+                playerCostMap->cells[i][j] = monsterCostMap->cells[i][j] = PDS_FORBIDDEN;
             } else if (cellHasTerrainFlag(i, j, T_SACRED)) {
-                playerCostMap[i][j] = 1;
-                monsterCostMap[i][j] = PDS_FORBIDDEN;
+                playerCostMap->cells[i][j] = 1;
+                monsterCostMap->cells[i][j] = PDS_FORBIDDEN;
             } else if ((pmap[i][j].flags & HAS_MONSTER) && monstersAreEnemies(&player, monsterAtLoc(i, j))) {
-                playerCostMap[i][j] = 1;
-                monsterCostMap[i][j] = PDS_FORBIDDEN;
-                allySafetyMap[i][j] = 0;
+                playerCostMap->cells[i][j] = 1;
+                monsterCostMap->cells[i][j] = PDS_FORBIDDEN;
+                allySafetyMap->cells[i][j] = 0;
             }
         }
     }
 
-    playerCostMap[player.xLoc][player.yLoc] = PDS_FORBIDDEN;
-    monsterCostMap[player.xLoc][player.yLoc] = PDS_FORBIDDEN;
+    playerCostMap->cells[player.xLoc][player.yLoc] = PDS_FORBIDDEN;
+    monsterCostMap->cells[player.xLoc][player.yLoc] = PDS_FORBIDDEN;
 
     dijkstraScan(allySafetyMap, playerCostMap, false);
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (monsterCostMap[i][j] < 0) {
+            if (monsterCostMap->cells[i][j] < 0) {
                 continue;
             }
 
-            if (allySafetyMap[i][j] == 30000) {
-                allySafetyMap[i][j] = 150;
+            if (allySafetyMap->cells[i][j] == 30000) {
+                allySafetyMap->cells[i][j] = 150;
             }
 
-            allySafetyMap[i][j] = 50 * allySafetyMap[i][j] / (50 + allySafetyMap[i][j]);
+            allySafetyMap->cells[i][j] = 50 * allySafetyMap->cells[i][j] / (50 + allySafetyMap->cells[i][j]);
 
-            allySafetyMap[i][j] *= -3;
+            allySafetyMap->cells[i][j] *= -3;
 
             if (pmap[i][j].flags & IN_LOOP) {
-                allySafetyMap[i][j] -= 10;
+                allySafetyMap->cells[i][j] -= 10;
             }
         }
     }
@@ -1578,49 +1577,48 @@ void updateAllySafetyMap() {
     freeGrid(monsterCostMap);
 }
 
-void resetDistanceCellInGrid(short **grid, short x, short y) {
+void resetDistanceCellInGrid(dungeongrid *grid, short x, short y) {
     enum directions dir;
     short newX, newY;
     for (dir = 0; dir < 4; dir++) {
         newX = x + nbDirs[dir][0];
         newY = y + nbDirs[dir][1];
         if (coordinatesAreInMap(newX, newY)
-            && grid[x][y] > grid[newX][newY] + 1) {
+            && grid->cells[x][y] > grid->cells[newX][newY] + 1) {
 
-            grid[x][y] = grid[newX][newY] + 1;
+            grid->cells[x][y] = grid->cells[newX][newY] + 1;
         }
     }
 }
 
 void updateSafetyMap() {
     short i, j;
-    short **playerCostMap, **monsterCostMap;
     creature *monst;
 
     rogue.updatedSafetyMapThisTurn = true;
 
-    playerCostMap = allocGrid();
-    monsterCostMap = allocGrid();
+    dungeongrid *playerCostMap = allocGrid();
+    dungeongrid *monsterCostMap = allocGrid();
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            safetyMap[i][j] = 30000;
+            safetyMap->cells[i][j] = 30000;
 
-            playerCostMap[i][j] = monsterCostMap[i][j] = 1; // prophylactic
+            playerCostMap->cells[i][j] = monsterCostMap->cells[i][j] = 1; // prophylactic
 
             if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)
                 && (!cellHasTMFlag(i, j, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc(i, j) & T_OBSTRUCTS_PASSABILITY))) {
 
-                playerCostMap[i][j] = monsterCostMap[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
+                playerCostMap->cells[i][j] = monsterCostMap->cells[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
             } else if (cellHasTerrainFlag(i, j, T_SACRED)) {
-                playerCostMap[i][j] = 1;
-                monsterCostMap[i][j] = PDS_FORBIDDEN;
+                playerCostMap->cells[i][j] = 1;
+                monsterCostMap->cells[i][j] = PDS_FORBIDDEN;
             } else if (cellHasTerrainFlag(i, j, T_LAVA_INSTA_DEATH)) {
-                monsterCostMap[i][j] = PDS_FORBIDDEN;
+                monsterCostMap->cells[i][j] = PDS_FORBIDDEN;
                 if (player.status[STATUS_LEVITATING] || !player.status[STATUS_IMMUNE_TO_FIRE]) {
-                    playerCostMap[i][j] = 1;
+                    playerCostMap->cells[i][j] = 1;
                 } else {
-                    playerCostMap[i][j] = PDS_FORBIDDEN;
+                    playerCostMap->cells[i][j] = PDS_FORBIDDEN;
                 }
             } else {
                 if (pmap[i][j].flags & HAS_MONSTER) {
@@ -1631,54 +1629,54 @@ void updateSafetyMap() {
                          || monst->creatureState == MONSTER_ALLY)
                         && monst->creatureState != MONSTER_FLEEING) {
 
-                        playerCostMap[i][j] = 1;
-                        monsterCostMap[i][j] = PDS_FORBIDDEN;
+                        playerCostMap->cells[i][j] = 1;
+                        monsterCostMap->cells[i][j] = PDS_FORBIDDEN;
                         continue;
                     }
                 }
 
                 if (cellHasTerrainFlag(i, j, (T_AUTO_DESCENT | T_IS_DF_TRAP))) {
-                    monsterCostMap[i][j] = PDS_FORBIDDEN;
+                    monsterCostMap->cells[i][j] = PDS_FORBIDDEN;
                     if (player.status[STATUS_LEVITATING]) {
-                        playerCostMap[i][j] = 1;
+                        playerCostMap->cells[i][j] = 1;
                     } else {
-                        playerCostMap[i][j] = PDS_FORBIDDEN;
+                        playerCostMap->cells[i][j] = PDS_FORBIDDEN;
                     }
                 } else if (cellHasTerrainFlag(i, j, T_IS_FIRE)) {
-                    monsterCostMap[i][j] = PDS_FORBIDDEN;
+                    monsterCostMap->cells[i][j] = PDS_FORBIDDEN;
                     if (player.status[STATUS_IMMUNE_TO_FIRE]) {
-                        playerCostMap[i][j] = 1;
+                        playerCostMap->cells[i][j] = 1;
                     } else {
-                        playerCostMap[i][j] = PDS_FORBIDDEN;
+                        playerCostMap->cells[i][j] = PDS_FORBIDDEN;
                     }
                 } else if (cellHasTerrainFlag(i, j, (T_IS_DEEP_WATER | T_SPONTANEOUSLY_IGNITES))) {
                     if (player.status[STATUS_LEVITATING]) {
-                        playerCostMap[i][j] = 1;
+                        playerCostMap->cells[i][j] = 1;
                     } else {
-                        playerCostMap[i][j] = 5;
+                        playerCostMap->cells[i][j] = 5;
                     }
-                    monsterCostMap[i][j] = 5;
+                    monsterCostMap->cells[i][j] = 5;
                 } else if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)
                            && cellHasTMFlag(i, j, TM_IS_SECRET) && !(discoveredTerrainFlagsAtLoc(i, j) & T_OBSTRUCTS_PASSABILITY)
                            && !(pmap[i][j].flags & IN_FIELD_OF_VIEW)) {
                     // Secret door that the player can't currently see
-                    playerCostMap[i][j] = 100;
-                    monsterCostMap[i][j] = 1;
+                    playerCostMap->cells[i][j] = 100;
+                    monsterCostMap->cells[i][j] = 1;
                 } else {
-                    playerCostMap[i][j] = monsterCostMap[i][j] = 1;
+                    playerCostMap->cells[i][j] = monsterCostMap->cells[i][j] = 1;
                 }
             }
         }
     }
 
-    safetyMap[player.xLoc][player.yLoc] = 0;
-    playerCostMap[player.xLoc][player.yLoc] = 1;
-    monsterCostMap[player.xLoc][player.yLoc] = PDS_FORBIDDEN;
+    safetyMap->cells[player.xLoc][player.yLoc] = 0;
+    playerCostMap->cells[player.xLoc][player.yLoc] = 1;
+    monsterCostMap->cells[player.xLoc][player.yLoc] = PDS_FORBIDDEN;
 
-    playerCostMap[rogue.upLoc[0]][rogue.upLoc[1]] = PDS_FORBIDDEN;
-    monsterCostMap[rogue.upLoc[0]][rogue.upLoc[1]] = PDS_FORBIDDEN;
-    playerCostMap[rogue.downLoc[0]][rogue.downLoc[1]] = PDS_FORBIDDEN;
-    monsterCostMap[rogue.downLoc[0]][rogue.downLoc[1]] = PDS_FORBIDDEN;
+    playerCostMap->cells[rogue.upLoc[0]][rogue.upLoc[1]] = PDS_FORBIDDEN;
+    monsterCostMap->cells[rogue.upLoc[0]][rogue.upLoc[1]] = PDS_FORBIDDEN;
+    playerCostMap->cells[rogue.downLoc[0]][rogue.downLoc[1]] = PDS_FORBIDDEN;
+    monsterCostMap->cells[rogue.downLoc[0]][rogue.downLoc[1]] = PDS_FORBIDDEN;
 
     dijkstraScan(safetyMap, playerCostMap, false);
 
@@ -1697,28 +1695,28 @@ void updateSafetyMap() {
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (monsterCostMap[i][j] < 0) {
+            if (monsterCostMap->cells[i][j] < 0) {
                 continue;
             }
 
-            if (safetyMap[i][j] == 30000) {
-                safetyMap[i][j] = 150;
+            if (safetyMap->cells[i][j] == 30000) {
+                safetyMap->cells[i][j] = 150;
             }
 
-            safetyMap[i][j] = 50 * safetyMap[i][j] / (50 + safetyMap[i][j]);
+            safetyMap->cells[i][j] = 50 * safetyMap->cells[i][j] / (50 + safetyMap->cells[i][j]);
 
-            safetyMap[i][j] *= -3;
+            safetyMap->cells[i][j] *= -3;
 
             if (pmap[i][j].flags & IN_LOOP) {
-                safetyMap[i][j] -= 10;
+                safetyMap->cells[i][j] -= 10;
             }
         }
     }
     dijkstraScan(safetyMap, monsterCostMap, false);
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (monsterCostMap[i][j] < 0) {
-                safetyMap[i][j] = 30000;
+            if (monsterCostMap->cells[i][j] < 0) {
+                safetyMap->cells[i][j] = 30000;
             }
         }
     }
@@ -1728,11 +1726,10 @@ void updateSafetyMap() {
 
 void updateSafeTerrainMap() {
     short i, j;
-    short **costMap;
     creature *monst;
 
     rogue.updatedMapToSafeTerrainThisTurn = true;
-    costMap = allocGrid();
+    dungeongrid *costMap = allocGrid();
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
@@ -1740,13 +1737,13 @@ void updateSafeTerrainMap() {
             if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)
                 && (!cellHasTMFlag(i, j, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc(i, j) & T_OBSTRUCTS_PASSABILITY))) {
 
-                costMap[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
-                rogue.mapToSafeTerrain[i][j] = 30000; // OOS prophylactic
+                costMap->cells[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
+                rogue.mapToSafeTerrain->cells[i][j] = 30000; // OOS prophylactic
             } else if ((monst && (monst->turnsSpentStationary > 1 || (monst->info.flags & MONST_GETS_TURN_ON_ACTIVATION)))
                        || (cellHasTerrainFlag(i, j, T_PATHING_BLOCKER & ~T_HARMFUL_TERRAIN) && !cellHasTMFlag(i, j, TM_IS_SECRET))) {
 
-                costMap[i][j] = PDS_FORBIDDEN;
-                rogue.mapToSafeTerrain[i][j] = 30000;
+                costMap->cells[i][j] = PDS_FORBIDDEN;
+                rogue.mapToSafeTerrain->cells[i][j] = 30000;
             } else if (cellHasTerrainFlag(i, j, T_HARMFUL_TERRAIN) || pmap[i][j].layers[DUNGEON] == DOOR) {
                 // The door thing is an aesthetically offensive but necessary hack to make sure
                 // that monsters trying to find their way out of caustic gas do not sprint for
@@ -1754,11 +1751,11 @@ void updateSafeTerrainMap() {
                 // gas will fill their tile, so they are not actually safe. Without this fix,
                 // allies will fidget back and forth in a doorway while they asphyxiate.
                 // This will have to do. It's a difficult problem to solve elegantly.
-                costMap[i][j] = 1;
-                rogue.mapToSafeTerrain[i][j] = 30000;
+                costMap->cells[i][j] = 1;
+                rogue.mapToSafeTerrain->cells[i][j] = 30000;
             } else {
-                costMap[i][j] = 1;
-                rogue.mapToSafeTerrain[i][j] = 0;
+                costMap->cells[i][j] = 1;
+                rogue.mapToSafeTerrain->cells[i][j] = 0;
             }
         }
     }
@@ -2591,7 +2588,7 @@ void playerTurnEnded() {
     if ((player.status[STATUS_LEVITATING] && cellHasTerrainFlag(player.xLoc, player.yLoc, T_LAVA_INSTA_DEATH | T_IS_DEEP_WATER | T_AUTO_DESCENT))
         || (player.status[STATUS_IMMUNE_TO_FIRE] && cellHasTerrainFlag(player.xLoc, player.yLoc, T_LAVA_INSTA_DEATH))) {
         if (!rogue.receivedLevitationWarning) {
-            turnsRequiredToShore = rogue.mapToShore[player.xLoc][player.yLoc] * player.movementSpeed / 100;
+            turnsRequiredToShore = rogue.mapToShore->cells[player.xLoc][player.yLoc] * player.movementSpeed / 100;
             if (cellHasTerrainFlag(player.xLoc, player.yLoc, T_LAVA_INSTA_DEATH)) {
                 turnsToShore = max(player.status[STATUS_LEVITATING], player.status[STATUS_IMMUNE_TO_FIRE]) * 100 / player.movementSpeed;
             } else {
@@ -2628,10 +2625,10 @@ void resetScentTurnNumber() { // don't want player.scentTurnNumber to roll over 
         if (levels[d].visited) {
             for (i=0; i<DCOLS; i++) {
                 for (j=0; j<DROWS; j++) {
-                    if (levels[d].scentMap[i][j] > 15000) {
-                        levels[d].scentMap[i][j] -= 15000;
+                    if (levels[d].scentMap->cells[i][j] > 15000) {
+                        levels[d].scentMap->cells[i][j] -= 15000;
                     } else {
-                        levels[d].scentMap[i][j] = 0;
+                        levels[d].scentMap->cells[i][j] = 0;
                     }
                 }
             }

@@ -2149,6 +2149,10 @@ typedef struct monsterClass {
     enum monsterTypes memberList[15];
 } monsterClass;
 
+typedef struct dungeongrid {
+    short cells[DCOLS][DROWS];
+} dungeongrid;
+
 typedef struct creature {
     creatureType info;
     short xLoc;
@@ -2177,8 +2181,8 @@ typedef struct creature {
     short absorptionBolt;               // bolt index that the monster will learn to cast when absorption is complete
     short corpseAbsorptionCounter;      // used to measure both the time until the monster stops being interested in the corpse,
                                         // and, later, the time until the monster finishes absorbing the corpse.
-    short **mapToMe;                    // if a pack leader, this is a periodically updated pathing map to get to the leader
-    short **safetyMap;                  // fleeing monsters store their own safety map when out of player FOV to avoid omniscience
+    dungeongrid *mapToMe;                    // if a pack leader, this is a periodically updated pathing map to get to the leader
+    dungeongrid *safetyMap;                  // fleeing monsters store their own safety map when out of player FOV to avoid omniscience
     short ticksUntilTurn;               // how long before the creature gets its next move
 
     // Locally cached statistics that may be temporarily modified:
@@ -2305,8 +2309,8 @@ typedef struct playerCharacter {
     short sidebarLocationList[ROWS*2][2];   // to keep track of which location each line of the sidebar references
 
     // maps
-    short **mapToShore;                 // how many steps to get back to shore
-    short **mapToSafeTerrain;           // so monsters can get to safety
+    dungeongrid *mapToShore;                 // how many steps to get back to shore
+    dungeongrid *mapToSafeTerrain;           // so monsters can get to safety
 
     // recording info
     boolean recording;                  // whether we are recording the game
@@ -2348,7 +2352,7 @@ typedef struct playerCharacter {
     boolean featRecord[FEAT_COUNT];
 
     // waypoints:
-    short **wpDistance[MAX_WAYPOINT_COUNT];
+    dungeongrid *wpDistance[MAX_WAYPOINT_COUNT];
     short wpCount;
     short wpCoordinates[MAX_WAYPOINT_COUNT][2];
     short wpRefreshTicker;
@@ -2370,7 +2374,7 @@ typedef struct levelData {
     struct item *items;
     struct creature *monsters;
     struct creature *dormantMonsters;
-    short **scentMap;
+    dungeongrid *scentMap;
     uint64_t levelSeed;
     short upStairsLoc[2];
     short downStairsLoc[2];
@@ -2649,6 +2653,7 @@ extern boolean serverMode;
 extern boolean hasGraphics;
 extern enum graphicsModes graphicsMode;
 
+
 #if defined __cplusplus
 extern "C" {
 #endif
@@ -2689,7 +2694,7 @@ extern "C" {
     void normColor(color *baseColor, const short aggregateMultiplier, const short colorTranslation);
     void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *returnForeColor, color *returnBackColor);
     void logBuffer(char array[DCOLS][DROWS]);
-    //void logBuffer(short **array);
+    //void logBuffer(dungeongrid *array);
     boolean search(short searchStrength);
     boolean proposeOrConfirmLocation(short x, short y, char *failureMessage);
     boolean useStairs(short stairDirection);
@@ -2701,7 +2706,7 @@ extern "C" {
                           item *adoptiveItem,
                           item *parentSpawnedItems[50],
                           creature *parentSpawnedMonsters[50]);
-    void attachRooms(short **grid, const dungeonProfile *theDP, short attempts, short maxRoomCount);
+    void attachRooms(dungeongrid *grid, const dungeonProfile *theDP, short attempts, short maxRoomCount);
     void digDungeon();
     void updateMapToShore();
     short levelIsDisconnectedWithBlockingMap(char blockingMap[DCOLS][DROWS], boolean countRegionSize);
@@ -2713,7 +2718,7 @@ extern "C" {
                          boolean refresh,
                          boolean superpriority);
     boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refreshCell, boolean abortIfBlocking);
-    void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit);
+    void restoreMonster(creature *monst, dungeongrid *mapToStairs, dungeongrid *mapToPit);
     void restoreItem(item *theItem);
     void refreshWaypoint(short wpIndex);
     void setUpWaypoints();
@@ -2742,7 +2747,7 @@ extern "C" {
     void printHelpScreen();
     void printDiscoveriesScreen();
     void printHighScores(boolean hiliteMostRecent);
-    void displayGrid(short **map);
+    void displayGrid(dungeongrid *map);
     void printSeed();
     void printProgressBar(short x, short y, const char barLabel[COLS], long amtFilled, long amtMax, color *fillColor, boolean dim);
     short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight);
@@ -2847,25 +2852,25 @@ extern "C" {
     boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *aborted);
     boolean diagonalBlocked(const short x1, const short y1, const short x2, const short y2, const boolean limitToPlayerKnowledge);
     boolean playerMoves(short direction);
-    void calculateDistances(short **distanceMap,
+    void calculateDistances(dungeongrid *distanceMap,
                             short destinationX, short destinationY,
                             unsigned long blockingTerrainFlags,
                             creature *traveler,
                             boolean canUseSecretDoors,
                             boolean eightWays);
     short pathingDistance(short x1, short y1, short x2, short y2, unsigned long blockingTerrainFlags);
-    short nextStep(short **distanceMap, short x, short y, creature *monst, boolean reverseDirections);
+    short nextStep(dungeongrid *distanceMap, short x, short y, creature *monst, boolean reverseDirections);
     void travelRoute(short path[1000][2], short steps);
     void travel(short x, short y, boolean autoConfirm);
-    void populateGenericCostMap(short **costMap);
+    void populateGenericCostMap(dungeongrid *costMap);
     void getLocationFlags(const short x, const short y,
                           unsigned long *tFlags, unsigned long *TMFlags, unsigned long *cellFlags,
                           const boolean limitToPlayerKnowledge);
-    void populateCreatureCostMap(short **costMap, creature *monst);
+    void populateCreatureCostMap(dungeongrid *costMap, creature *monst);
     enum directions adjacentFightingDir();
-    void getExploreMap(short **map, boolean headingToStairs);
+    void getExploreMap(dungeongrid *map, boolean headingToStairs);
     boolean explore(short frameDelay);
-    short getPlayerPathOnMap(short path[1000][2], short **map, short originX, short originY);
+    short getPlayerPathOnMap(short path[1000][2], dungeongrid *map, short originX, short originY);
     void reversePath(short path[1000][2], short steps);
     void hilitePath(short path[1000][2], short steps, boolean unhilite);
     void clearCursorPath();
@@ -2953,7 +2958,7 @@ extern "C" {
     creature *monsterAtLoc(short x, short y);
     creature *dormantMonsterAtLoc(short x, short y);
     void perimeterCoords(short returnCoords[2], short n);
-    boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, boolean blinkUphill);
+    boolean monsterBlinkToPreferenceMap(creature *monst, dungeongrid *preferenceMap, boolean blinkUphill);
     boolean monsterSummons(creature *monst, boolean alwaysUse);
     boolean resurrectAlly(const short x, const short y);
     void unAlly(creature *monst);
@@ -3089,19 +3094,18 @@ extern "C" {
                                      boolean deterministic);
 
     // Grid operations
-    short **allocGrid();
-    void freeGrid(short **array);
-    void copyGrid(short **to, short **from);
-    void fillGrid(short **grid, short fillValue);
-    void hiliteGrid(short **grid, color *hiliteColor, short hiliteStrength);
-    void findReplaceGrid(short **grid, short findValueMin, short findValueMax, short fillValue);
-    short floodFillGrid(short **grid, short x, short y, short eligibleValueMin, short eligibleValueMax, short fillValue);
-    void drawRectangleOnGrid(short **grid, short x, short y, short width, short height, short value);
-    void drawCircleOnGrid(short **grid, short x, short y, short radius, short value);
-    void getTerrainGrid(short **grid, short value, unsigned long terrainFlags, unsigned long mapFlags);
-    void getTMGrid(short **grid, short value, unsigned long TMflags);
-    short validLocationCount(short **grid, short validValue);
-    void randomLocationInGrid(short **grid, short *x, short *y, short validValue);
+    dungeongrid *allocGrid();
+    void freeGrid(dungeongrid *array);
+    void fillGrid(dungeongrid *grid, short fillValue);
+    void hiliteGrid(dungeongrid *grid, color *hiliteColor, short hiliteStrength);
+    void findReplaceGrid(dungeongrid *grid, short findValueMin, short findValueMax, short fillValue);
+    short floodFillGrid(dungeongrid *grid, short x, short y, short eligibleValueMin, short eligibleValueMax, short fillValue);
+    void drawRectangleOnGrid(dungeongrid *grid, short x, short y, short width, short height, short value);
+    void drawCircleOnGrid(dungeongrid *grid, short x, short y, short radius, short value);
+    void getTerrainGrid(dungeongrid *grid, short value, unsigned long terrainFlags, unsigned long mapFlags);
+    void getTMGrid(dungeongrid *grid, short value, unsigned long TMflags);
+    short validLocationCount(dungeongrid *grid, short validValue);
+    void randomLocationInGrid(dungeongrid *grid, short *x, short *y, short validValue);
     boolean getQualifyingPathLocNear(short *retValX, short *retValY,
                                      short x, short y,
                                      boolean hallwaysAllowed,
@@ -3110,7 +3114,7 @@ extern "C" {
                                      unsigned long forbiddenTerrainFlags,
                                      unsigned long forbiddenMapFlags,
                                      boolean deterministic);
-    void createBlobOnGrid(short **grid,
+    void createBlobOnGrid(dungeongrid *grid,
                           short *retMinX, short *retMinY, short *retWidth, short *retHeight,
                           short roundCount,
                           short minBlobWidth, short minBlobHeight,
@@ -3271,10 +3275,10 @@ extern "C" {
                           short winHeight,
                           rogueEvent *returnEvent);
 
-    void dijkstraScan(short **distanceMap, short **costMap, boolean useDiagonals);
+    void dijkstraScan(dungeongrid *distanceMap, dungeongrid *costMap, boolean useDiagonals);
     void pdsClear(pdsMap *map, short maxDistance, boolean eightWays);
     void pdsSetDistance(pdsMap *map, short x, short y, short distance);
-    void pdsBatchOutput(pdsMap *map, short **distanceMap);
+    void pdsBatchOutput(pdsMap *map, dungeongrid *distanceMap);
 
 #if defined __cplusplus
 }

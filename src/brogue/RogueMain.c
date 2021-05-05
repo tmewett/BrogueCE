@@ -504,8 +504,6 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     creature *monst;
     enum dungeonLayers layer;
     unsigned long timeAway;
-    short **mapToStairs;
-    short **mapToPit;
     boolean connectingStairsDiscovered;
 
     if (oldLevelNumber == DEEPEST_LEVEL && stairDirection != -1) {
@@ -540,7 +538,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                 }
             }
         }
-        mapToStairs = allocGrid();
+        dungeongrid *mapToStairs = allocGrid();
         fillGrid(mapToStairs, 0);
         for (flying = 0; flying <= 1; flying++) {
             fillGrid(mapToStairs, 0);
@@ -559,9 +557,9 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                     && !(cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY))
                     && !monst->status[STATUS_ENTRANCED]
                     && !monst->status[STATUS_PARALYZED]
-                    && (mapToStairs[monst->xLoc][monst->yLoc] < 30000 || monst->creatureState == MONSTER_ALLY || monst == rogue.yendorWarden)) {
+                    && (mapToStairs->cells[monst->xLoc][monst->yLoc] < 30000 || monst->creatureState == MONSTER_ALLY || monst == rogue.yendorWarden)) {
 
-                    monst->status[STATUS_ENTERS_LEVEL_IN] = clamp(mapToStairs[monst->xLoc][monst->yLoc] * monst->movementSpeed / 100 + 1, 1, 150);
+                    monst->status[STATUS_ENTERS_LEVEL_IN] = clamp(mapToStairs->cells[monst->xLoc][monst->yLoc] * monst->movementSpeed / 100 + 1, 1, 150);
                     switch (stairDirection) {
                         case 1:
                             monst->bookkeepingFlags |= MB_APPROACHING_DOWNSTAIRS;
@@ -838,8 +836,8 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     }
 
     if (levels[rogue.depthLevel - 1].visited) {
-        mapToStairs = allocGrid();
-        mapToPit = allocGrid();
+        dungeongrid *mapToStairs = allocGrid();
+        dungeongrid *mapToPit = allocGrid();
         fillGrid(mapToStairs, 0);
         fillGrid(mapToPit, 0);
         calculateDistances(mapToStairs, player.xLoc, player.yLoc, T_PATHING_BLOCKER, NULL, true, true);
@@ -874,7 +872,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     hideCursor();
 }
 
-void freeGlobalDynamicGrid(short ***grid) {
+void freeGlobalDynamicGrid(dungeongrid **grid) {
     if (*grid) {
         freeGrid(*grid);
         *grid = NULL;

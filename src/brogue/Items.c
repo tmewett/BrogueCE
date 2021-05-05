@@ -589,10 +589,10 @@ void populateItems(short upstairsX, short upstairsY) {
     }
 
     if (D_INSPECT_LEVELGEN) {
-        short **map = allocGrid();
+        dungeongrid *map = allocGrid();
         for (i=0; i<DCOLS; i++) {
             for (j=0; j<DROWS; j++) {
-                map[i][j] = itemSpawnHeatMap[i][j] * -1;
+                map->cells[i][j] = itemSpawnHeatMap[i][j] * -1;
             }
         }
         dumpLevelToScreen();
@@ -670,11 +670,11 @@ void populateItems(short upstairsX, short upstairsY) {
         brogueAssert(!cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY));
 
         if (D_INSPECT_LEVELGEN) {
-            short **map = allocGrid();
+            dungeongrid *map = allocGrid();
             short i2, j2;
             for (i2=0; i2<DCOLS; i2++) {
                 for (j2=0; j2<DROWS; j2++) {
-                    map[i2][j2] = itemSpawnHeatMap[i2][j2] * -1;
+                    map->cells[i2][j2] = itemSpawnHeatMap[i2][j2] * -1;
                 }
             }
             dumpLevelToScreen();
@@ -3236,18 +3236,18 @@ item *keyOnTileAt(short x, short y) {
 // Aggroes out to the given distance.
 void aggravateMonsters(short distance, short x, short y, const color *flashColor) {
     creature *monst;
-    short i, j, **grid;
+    short i, j;
 
     rogue.wpCoordinates[0][0] = x;
     rogue.wpCoordinates[0][1] = y;
     refreshWaypoint(0);
 
-    grid = allocGrid();
+    dungeongrid *grid = allocGrid();
     fillGrid(grid, 0);
     calculateDistances(grid, x, y, T_PATHING_BLOCKER, NULL, true, false);
 
     for (monst=monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
-        if (grid[monst->xLoc][monst->yLoc] <= distance) {
+        if (grid->cells[monst->xLoc][monst->yLoc] <= distance) {
             if (monst->creatureState == MONSTER_SLEEPING) {
                 wakeUp(monst);
             }
@@ -3260,9 +3260,9 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
     }
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (grid[i][j] >= 0 && grid[i][j] <= distance) {
-                scentMap[i][j] = 0;
-                addScentToCell(i, j, 2 * grid[i][j]);
+            if (grid->cells[i][j] >= 0 && grid->cells[i][j] <= distance) {
+                scentMap->cells[i][j] = 0;
+                addScentToCell(i, j, 2 * grid->cells[i][j]);
             }
         }
     }
@@ -3272,7 +3272,7 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
         rogue.aggroRange = currentAggroValue();
     }
 
-    if (grid[player.xLoc][player.yLoc] >= 0 && grid[player.xLoc][player.yLoc] <= distance) {
+    if (grid->cells[player.xLoc][player.yLoc] >= 0 && grid->cells[player.xLoc][player.yLoc] <= distance) {
         discover(x, y);
         discoverCell(x, y);
         colorFlash(flashColor, 0, (DISCOVERED | MAGIC_MAPPED), 10, distance, x, y);
