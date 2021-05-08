@@ -1562,21 +1562,21 @@ boolean monsterCanShootWebs(creature *monst) {
 // Returns approximately double the actual (quasi-euclidian) distance.
 short awarenessDistance(creature *observer, creature *target) {
     long perceivedDistance;
-
-    // start with base distance
-    if ((observer->status[STATUS_LEVITATING]
-         || (observer->info.flags & MONST_RESTRICTED_TO_LIQUID)
-         || (observer->info.flags & MONST_IMMOBILE)
-         || (observer->bookkeepingFlags & MB_SUBMERGED)
-         || ((observer->info.flags & MONST_IMMUNE_TO_WEBS) && monsterCanShootWebs(observer)))
-        && ((target == &player && (pmap[observer->xLoc][observer->yLoc].flags & IN_FIELD_OF_VIEW))
-            || (target != &player && openPathBetween(observer->xLoc, observer->yLoc, target->xLoc, target->yLoc)))) {
-            // if monster flies or is immobile or waterbound or underwater or can cross pits with webs,
-            // use absolute distance.
-            perceivedDistance = scentDistance(observer->xLoc, observer->yLoc, target->xLoc, target->yLoc);
-        } else {
-            perceivedDistance = (rogue.scentTurnNumber - scentMap[observer->xLoc][observer->yLoc]); // this value is double the apparent distance
-        }
+    
+    // When determining distance from the player for purposes of monster state changes
+    // (i.e. whether they start or stop hunting), take the scent value of the monster's tile
+    // OR, if the monster is in the player's FOV (including across chasms, through green crystal, etc.),
+    // the direct distance -- whichever is less.
+    // This means that monsters can aggro within stealth range if they're on the other side
+    // of a transparent obstruction, and may just stand motionless but hunting if there's no scent map
+    // to guide them, but only as long as the player is within FOV. After that, we switch to wandering
+    // and wander toward the last location that we saw the player.
+    perceivedDistance = (rogue.scentTurnNumber - scentMap[observer->xLoc][observer->yLoc]); // this value is double the apparent distance
+    if ((target == &player && (pmap[observer->xLoc][observer->yLoc].flags & IN_FIELD_OF_VIEW))
+        || (target != &player && openPathBetween(observer->xLoc, observer->yLoc, target->xLoc, target->yLoc))) {
+        
+        perceivedDistance = min(perceivedDistance, scentDistance(observer->xLoc, observer->yLoc, target->xLoc, target->yLoc));
+    }
 
     perceivedDistance = min(perceivedDistance, 1000);
 
@@ -3280,15 +3280,17 @@ void monstersTurn(creature *monst) {
 
         dir = scentDirection(monst);
         if (dir == NO_DIRECTION) {
-            alreadyAtBestScent = isLocalScentMaximum(monst->xLoc, monst->yLoc);
-            if (alreadyAtBestScent && monst->creatureState != MONSTER_ALLY) {
+            alreadyAtBestScent = isLocalScentMaximum(x, y);
+            if (alreadyAtBestScent && monst->creatureState != MONSTER_ALLY && !(pmap[x][y].flags & IN_FIELD_OF_VIEW)) {
                 if (monst->info.flags & MONST_ALWAYS_HUNTING) {
                     pathTowardCreature(monst, &player);
                     monst->bookkeepingFlags |= MB_GIVEN_UP_ON_SCENT;
                     return;
                 }
                 monst->creatureState = MONSTER_WANDERING;
-                chooseNewWanderDestination(monst);
+                // If we're out of the player's FOV and the scent map is a dead end,
+                // wander over to near where we last saw the player.
+                wanderToward(monst, monst->lastSeenPlayerAt[0], monst->lastSeenPlayerAt[1]);
             }
         } else {
             moveMonster(monst, nbDirs[dir][0], nbDirs[dir][1]);
