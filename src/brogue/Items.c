@@ -3322,7 +3322,7 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
         }
 
         // normalize the step, to move exactly one row or column at a time
-        fixpt m = max(llabs(step[0]), llabs(step[1]));
+        fixpt m = max(abs(step[0]), abs(step[1]));
         step[0] = step[0] * FP_FACTOR / m;
         step[1] = step[1] * FP_FACTOR / m;
 
@@ -3876,7 +3876,7 @@ void makePlayerTelepathic(short duration) {
         creature *monst = nextCreature(&it);
         refreshDungeonCell(monst->xLoc, monst->yLoc);
     }
-    if (monsters.head == NULL) {
+    if (!hasNextCreature(iterateCreatures(&monsters))) {
         message("you can somehow tell that you are alone on this depth at the moment.", 0);
     } else {
         message("you can somehow feel the presence of other creatures' minds!", 0);

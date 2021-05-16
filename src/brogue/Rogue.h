@@ -2832,7 +2832,6 @@ extern "C" {
     void startLevel (short oldLevelNumber, short stairDirection);
     void updateMinersLightRadius();
     void freeCreature(creature *monst);
-    void freeCreatureListEntire(creatureListNode **monst);
     void freeCreatureList(creatureList *list);
     void emptyGraveyard();
     void freeEverything();

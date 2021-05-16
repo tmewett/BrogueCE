@@ -861,15 +861,6 @@ void freeCreature(creature *monst) {
     }
     free(monst);
 }
-void freeCreatureListEntire(creatureListNode **list) {
-    creatureListNode *monst2;
-    for (creatureListNode *monstNode = *list; monstNode != NULL; monstNode = monst2) {
-        monst2 = monstNode->nextCreature;
-        freeCreature(monstNode->creature);
-        free(monstNode);
-    }
-    *list = NULL;
-}
 
 void emptyGraveyard() {
     freeCreatureList(&graveyard);

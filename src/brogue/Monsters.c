@@ -933,7 +933,13 @@ creature *firstCreature(creatureList *list) {
     return list->head->creature;
 }
 void freeCreatureList(creatureList *list) {
-    freeCreatureListEntire(&list->head);
+    creatureListNode *nextMonst;
+    for (creatureListNode *monstNode = list->head; monstNode != NULL; monstNode = nextMonst) {
+        nextMonst = monstNode->nextCreature;
+        freeCreature(monstNode->creature);
+        free(monstNode);
+    }
+    list->head = NULL;
 }
 
 boolean summonMinions(creature *summoner) {
@@ -941,7 +947,6 @@ boolean summonMinions(creature *summoner) {
     const short hordeID = pickHordeType(0, summonerType, 0, 0);
     short seenMinionCount = 0, x, y;
     boolean atLeastOneMinion = false;
-    creature *host;
     char buf[DCOLS];
     char monstName[DCOLS];
     short **grid;
@@ -949,8 +954,6 @@ boolean summonMinions(creature *summoner) {
     if (hordeID < 0) {
         return false;
     }
-
-    host = NULL;
 
     if (summoner->info.abilityFlags & MA_ENTER_SUMMONS) {
         pmap[summoner->xLoc][summoner->yLoc].flags &= ~HAS_MONSTER;
@@ -975,6 +978,8 @@ boolean summonMinions(creature *summoner) {
     } else {
         grid = NULL;
     }
+
+    creature *host = NULL;
     for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         if (monst != summoner && monstersAreTeammates(monst, summoner)
@@ -1019,10 +1024,6 @@ boolean summonMinions(creature *summoner) {
     if (summoner->info.abilityFlags & MA_ENTER_SUMMONS) {
         removeCreature(&monsters, summoner);
         if (atLeastOneMinion && host) {
-            // TODO: is this right? This removes the summoner from the field,
-            // whererever it is that they are.
-            // TODO: what if there's more than one candidate?
-            // can this add the same summoner to multiple minions?
             host->carriedMonster = summoner;
             demoteMonsterFromLeadership(summoner);
             refreshDungeonCell(summoner->xLoc, summoner->yLoc);
@@ -2031,8 +2032,10 @@ creature *monsterAtLoc(short x, short y) {
             return monst;
         }
     }
-    fprintf(stderr, "unreachable - monsterAtLoc!\n");
-    return NULL; // unreachable?
+    // This should be unreachable, since the HAS_MONSTER
+    // flag was true at (x, y).
+    brogueAssert(0);
+    return NULL;
 }
 
 creature *dormantMonsterAtLoc(short x, short y) {
@@ -2046,7 +2049,10 @@ creature *dormantMonsterAtLoc(short x, short y) {
             return monst;
         }
     }
-    return NULL; // unreachable?
+    // This should be unreachable, since the HAS_DORMANT_MONSTER
+    // flag was true at (x, y).
+    brogueAssert(0);
+    return NULL;
 }
 
 enum boltType monsterHasBoltEffect(creature *monst, enum boltEffects boltEffectIndex) {
@@ -2209,7 +2215,7 @@ enum directions monsterSwarmDirection(creature *monst, creature *enemy) {
             if (!alternateDirectionExists) {
                 // OK, no alternative open spaces exist.
                 // Check that the ally isn't already occupied with an enemy of its own.
-                int foundConflict = false;
+                boolean foundConflict = false;
                 boolean handledPlayer = false;
                 for (creatureIterator it2 = iterateCreatures(&monsters); !handledPlayer || hasNextCreature(it2);) {
                     creature *otherEnemy = !handledPlayer ? &player : nextCreature(&it2);
@@ -3964,7 +3970,7 @@ void demoteMonsterFromLeadership(creature *monst) {
     for (int level = 0; level <= DEEPEST_LEVEL; level++) {
         if (!BROGUE_VERSION_ATLEAST(1,9,1) && level > 0) break;
         // we'll work on this level's monsters first, so that the new leader is preferably on the same level
-        creatureList *nearbyList = level == 0 ? &monsters : &levels[level-1].monsters;
+        creatureList *nearbyList = (level == 0 ? &monsters : &levels[level-1].monsters);
         for (creatureIterator it = iterateCreatures(nearbyList); hasNextCreature(it);) {
             creature *follower = nextCreature(&it);
             if (follower == monst || follower->leader != monst) continue;
@@ -3995,7 +4001,7 @@ void demoteMonsterFromLeadership(creature *monst) {
 
     for (int level = 0; level <= DEEPEST_LEVEL; level++) {
         if (!BROGUE_VERSION_ATLEAST(1,9,1) && level > 0) break;
-        creatureList *candidateList = level == 0 ? &dormantMonsters : &levels[level-1].dormantMonsters;
+        creatureList *candidateList = (level == 0 ? &dormantMonsters : &levels[level-1].dormantMonsters);
         for (creatureIterator it = iterateCreatures(candidateList); hasNextCreature(it);) {
             creature *follower = nextCreature(&it);
             if (follower == monst || follower->leader != monst) continue;

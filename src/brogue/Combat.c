@@ -1671,7 +1671,6 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
         } else {
             pmap[x][y].flags &= ~HAS_MONSTER;
         }
-        // Obtain the node from either list.
         removeCreature(&dormantMonsters, decedent);
         removeCreature(&monsters, decedent);
 

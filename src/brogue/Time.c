@@ -1059,8 +1059,9 @@ void activateMachine(short machineNumber) {
         }
     }
 
-    
-    free(activatedMonsterList);
+    if (activatedMonsterList) {
+        free(activatedMonsterList);
+    }
 }
 
 boolean circuitBreakersPreventActivation(short machineNumber) {
@@ -2411,7 +2412,7 @@ void playerTurnEnded() {
                 refreshWaypoint(rogue.wpRefreshTicker);
             }
 
-            for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it) && rogue.gameHasEnded == false;) {
                 creature *monst = nextCreature(&it);
                 if (monst->ticksUntilTurn <= 0) {
                     if (monst->currentHP > monst->info.maxHP) {
