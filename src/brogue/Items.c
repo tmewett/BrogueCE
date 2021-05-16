@@ -50,6 +50,9 @@ item *initializeItem() {
     theItem->quiverNumber = 0;
     theItem->originDepth = 0;
     theItem->inscription[0] = '\0';
+    theItem->lastUsed[0] = 0;
+    theItem->lastUsed[1] = 0;
+    theItem->lastUsed[2] = 0;
     theItem->nextItem = NULL;
 
     for (i=0; i < KEY_ID_MAXIMUM; i++) {
@@ -1800,6 +1803,7 @@ void itemDetails(char *buf, item *theItem) {
     fixpt enchant;
     fixpt currentDamage, newDamage;
     short nextLevelState = 0, new, current, accuracyChange, damageChange;
+    unsigned long turnsSinceLatestUse;
     const char weaponRunicEffectDescriptions[NUMBER_WEAPON_RUNIC_KINDS][DCOLS] = {
         "time will stop while you take an extra turn",
         "the enemy will die instantly",
@@ -2356,6 +2360,25 @@ void itemDetails(char *buf, item *theItem) {
                         theItem->enchant1,
                         new == 0 ? "" : ", with your current rings,",
                         FP_DIV(staffChargeDuration(theItem), 10 * ringWisdomMultiplier(new * FP_FACTOR)));
+                strcat(buf, buf2);
+            }
+
+            if (theItem->lastUsed[0] > 0 && theItem->lastUsed[1] > 0 && theItem->lastUsed[2] > 0) {
+                sprintf(buf2, "You last used it %i, %i and %i turns ago. ",
+                        rogue.absoluteTurnNumber - theItem->lastUsed[0],
+                        rogue.absoluteTurnNumber - theItem->lastUsed[1],
+                        rogue.absoluteTurnNumber - theItem->lastUsed[2]);
+                strcat(buf, buf2);
+            } else if (theItem->lastUsed[0] > 0 && theItem->lastUsed[1] > 0) {
+                sprintf(buf2, "You last used it %i and %i turns ago. ",
+                        rogue.absoluteTurnNumber - theItem->lastUsed[0],
+                        rogue.absoluteTurnNumber - theItem->lastUsed[1]);
+                strcat(buf, buf2);
+            } else if (theItem->lastUsed[0] > 0) {
+                turnsSinceLatestUse = rogue.absoluteTurnNumber - theItem->lastUsed[0];
+                sprintf(buf2, "You last used it %i turn%s ago. ",
+                        turnsSinceLatestUse,
+                        turnsSinceLatestUse == 1 ? "" : "s");
                 strcat(buf, buf2);
             }
 
@@ -6495,6 +6518,10 @@ void apply(item *theItem, boolean recordCommands) {
     if (revealItemType) {
         autoIdentify(theItem);
     }
+
+    theItem->lastUsed[2] = theItem->lastUsed[1];
+    theItem->lastUsed[1] = theItem->lastUsed[0];
+    theItem->lastUsed[0] = rogue.absoluteTurnNumber;
 
     if (theItem->category & CHARM) {
         theItem->charges = charmRechargeDelay(theItem->kind, theItem->enchant1);

@@ -1366,6 +1366,7 @@ typedef struct item {
     keyLocationProfile keyLoc[KEY_ID_MAXIMUM];
     short originDepth;
     unsigned long spawnTurnNumber;
+    unsigned long lastUsed[3];         // Absolute turns last applied
     struct item *nextItem;
 } item;
 
