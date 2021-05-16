@@ -1565,7 +1565,8 @@ boolean buildAMachine(enum machineTypes bp,
                                                featX,
                                                featY,
                                                ((HORDE_IS_SUMMONED | HORDE_LEADER_CAPTIVE) & ~(feature->hordeFlags)),
-                                               feature->hordeFlags);
+                                               feature->hordeFlags,
+                                               false);
                             if (monst) {
                                 monst->bookkeepingFlags |= MB_JUST_SUMMONED;
                             }
