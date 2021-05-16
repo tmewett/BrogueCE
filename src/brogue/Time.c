@@ -1132,9 +1132,11 @@ boolean exposeTileToFire(short x, short y, boolean alwaysIgnite) {
     enum directions dir;
     boolean fireIgnited = false, explosivePromotion = false;
 
-    if (!cellHasTerrainFlag(x, y, T_IS_FLAMMABLE)) {
+    if (!cellHasTerrainFlag(x, y, T_IS_FLAMMABLE) || pmap[x][y].exposedToFire >= 12) {
         return false;
     }
+
+    pmap[x][y].exposedToFire++;
 
     // Pick the extinguishing layer with the best priority.
     for (layer=0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
@@ -1404,6 +1406,13 @@ void updateEnvironment() {
     boolean isVolumetricGas = false;
 
     monstersFall();
+
+    // reset exposedToFire
+    for (i=0; i<DCOLS; i++) {
+        for (j=0; j<DROWS; j++) {
+            pmap[i][j].exposedToFire = 0;
+        }
+    }
 
     // update gases twice
     for (i=0; i<DCOLS && !isVolumetricGas; i++) {
