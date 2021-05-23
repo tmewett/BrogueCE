@@ -5932,12 +5932,22 @@ void throwCommand(item *theItem, boolean autoThrow) {
     temporaryMessage(buf, false);
     maxDistance = (12 + 2 * max(rogue.strength - player.weaknessAmount - 12, 2));
 
-    // Automatically pick a target for potions and throwing weapons
+    // Automatically pick a target for known bad potions and throwing weapons
     boolean autoTarget = false;
-    if ((theItem->category == WEAPON && (theItem->kind == DART || theItem->kind == INCENDIARY_DART || theItem->kind == JAVELIN))
-        || theItem->category == POTION) {
-
-        autoTarget = true;
+    switch (theItem->category) {
+        case WEAPON:
+            if (theItem->kind == DART || theItem->kind == INCENDIARY_DART || theItem->kind == JAVELIN) {
+                autoTarget = true;
+            }
+            break;
+        case POTION:
+            if ((theItem->flags & ITEM_MAGIC_DETECTED || potionTable[theItem->kind].identified)
+                    && itemMagicPolarity(theItem) == -1) {
+                autoTarget = true;
+            }
+            break;
+        default:
+            break;
     }
 
     if (autoThrow && creatureIsTargetable(rogue.lastTarget)) {
