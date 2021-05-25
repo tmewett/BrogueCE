@@ -3875,7 +3875,7 @@ void printDiscoveries(short category, short count, unsigned short itemCharacter,
     color *theColor, goodColor, badColor;
     char buf[COLS], buf2[COLS];
     short i, magic, totalFrequency;
-    itemTable *theTable = tableForItemCategory(category, NULL);
+    itemTable *theTable = tableForItemCategory(category);
 
     goodColor = goodMessageColor;
     applyColorAverage(&goodColor, &black, 50);
@@ -4581,7 +4581,8 @@ void describeHallucinatedItem(char *buf) {
     short cat, kind, maxKinds;
     assureCosmeticRNG;
     cat = itemCats[rand_range(0, 9)];
-    tableForItemCategory(cat, &maxKinds);
+    tableForItemCategory(cat);
+    maxKinds = itemKindCount(cat, 0);
     kind = rand_range(0, maxKinds - 1);
     describedItemBasedOnParameters(cat, kind, 1, 1, buf);
     restoreRNG;
