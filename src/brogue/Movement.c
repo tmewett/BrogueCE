@@ -477,16 +477,16 @@ void vomit(creature *monst) {
 }
 
 void moveEntrancedMonsters(enum directions dir) {
-    creature *monst, *nextMonst;
-
     dir = oppositeDirection(dir);
 
     if (BROGUE_VERSION_ATLEAST(1,9,3)) {
-        for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
+        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            creature *monst = nextCreature(&it);
             monst->bookkeepingFlags &= ~MB_HAS_ENTRANCED_MOVED;
         }
 
-        for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
+        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            creature *monst = nextCreature(&it);
             if (!(monst->bookkeepingFlags & MB_HAS_ENTRANCED_MOVED)
                 && monst->status[STATUS_ENTRANCED]
                 && !monst->status[STATUS_STUCK]
@@ -495,13 +495,13 @@ void moveEntrancedMonsters(enum directions dir) {
 
                 moveMonster(monst, nbDirs[dir][0], nbDirs[dir][1]);
                 monst->bookkeepingFlags |= MB_HAS_ENTRANCED_MOVED;
-                monst = monsters; // loop through from the beginning to be safe
+                restartIterator(&it); // loop through from the beginning to be safe
             }
         }
 
     } else {
-        for (monst = monsters->nextCreature; monst != NULL; monst = nextMonst) {
-            nextMonst = monst->nextCreature;
+        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            creature *monst = nextCreature(&it);
             if (monst->status[STATUS_ENTRANCED]
                 && !monst->status[STATUS_STUCK]
                 && !monst->status[STATUS_PARALYZED]
@@ -739,11 +739,11 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
 }
 
 void buildFlailHitList(const short x, const short y, const short newX, const short newY, creature *hitList[16]) {
-    creature *monst;
     short mx, my;
     short i = 0;
 
-    for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
         mx = monst->xLoc;
         my = monst->yLoc;
         if (distanceBetween(x, y, mx, my) == 1
@@ -978,7 +978,8 @@ boolean playerMoves(short direction) {
         }
 
         if (player.bookkeepingFlags & MB_SEIZED) {
-            for (tempMonst = monsters->nextCreature; tempMonst != NULL; tempMonst = tempMonst->nextCreature) {
+            for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+                creature *tempMonst = nextCreature(&it);
                 if ((tempMonst->bookkeepingFlags & MB_SEIZING)
                     && monstersAreEnemies(&player, tempMonst)
                     && distanceBetween(player.xLoc, player.yLoc, tempMonst->xLoc, tempMonst->yLoc) == 1
@@ -1525,14 +1526,14 @@ void displayRoute(short **distanceMap, boolean removeRoute) {
 void travelRoute(short path[1000][2], short steps) {
     short i, j;
     short dir;
-    creature *monst;
 
     brogueAssert(!rogue.playbackMode);
 
     rogue.disturbed = false;
     rogue.automationActive = true;
 
-    for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
         if (canSeeMonster(monst)) {
             monst->bookkeepingFlags |= MB_ALREADY_SEEN;
         } else {
@@ -1909,7 +1910,6 @@ boolean explore(short frameDelay) {
     short path[1000][2], steps;
     boolean madeProgress, headingToStairs;
     enum directions dir;
-    creature *monst;
 
     // Explore commands should never be written to a recording.
     // Instead, the elemental movement commands that compose it
@@ -1930,7 +1930,8 @@ boolean explore(short frameDelay) {
         return false;
     }
 
-    for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
         if (canSeeMonster(monst)) {
             monst->bookkeepingFlags |= MB_ALREADY_SEEN;
         } else {

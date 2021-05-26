@@ -979,7 +979,7 @@ boolean buildAMachine(enum machineTypes bp,
     boolean DFSucceeded, terrainSucceeded, generateEverywhere, chooseBP,
         chooseLocation, tryAgain, success = false, skipFeature[20];
 
-    creature *monst = NULL, *nextMonst, *torchBearer = NULL, *leader = NULL;
+    creature *monst = NULL, *torchBearer = NULL, *leader = NULL;
 
     item *theItem = NULL, *torch = NULL;
 
@@ -1599,9 +1599,8 @@ boolean buildAMachine(enum machineTypes bp,
                             }
                         }
 
-                        for (monst = monsters->nextCreature; monst; monst = nextMonst) {
-                            // Have to cache the next monster, as the chain can get disrupted by making a monster dormant below.
-                            nextMonst = monst->nextCreature;
+                        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+                            creature *monst = nextCreature(&it);
                             if (monst->bookkeepingFlags & MB_JUST_SUMMONED) {
 
                                 // All monsters spawned by a machine are tribemates.
@@ -2981,11 +2980,11 @@ void updateMapToShore() {
 // and then one waypoint is recalculated per turn thereafter.
 void refreshWaypoint(short wpIndex) {
     short **costMap;
-    creature *monst;
 
     costMap = allocGrid();
     populateGenericCostMap(costMap);
-    for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature* monst = nextCreature(&it);
         if ((monst->creatureState == MONSTER_SLEEPING || (monst->info.flags & MONST_IMMOBILE) || (monst->bookkeepingFlags & MB_CAPTIVE))
             && costMap[monst->xLoc][monst->yLoc] >= 0) {
 
@@ -3331,7 +3330,6 @@ boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refr
     char blockingMap[DCOLS][DROWS];
     boolean blocking;
     boolean succeeded;
-    creature *monst;
 
     if ((feat->flags & DFF_RESURRECT_ALLY)
         && !resurrectAlly(x, y)) {
@@ -3452,11 +3450,12 @@ boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refr
 
         // awaken dormant creatures?
         if (feat->flags & DFF_ACTIVATE_DORMANT_MONSTER) {
-            for (monst = dormantMonsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
+            for (creatureIterator it = iterateCreatures(&dormantMonsters); hasNextCreature(it);) {
+                creature *monst = nextCreature(&it);
                 if (monst->xLoc == x && monst->yLoc == y || blockingMap[monst->xLoc][monst->yLoc]) {
                     // found it!
                     toggleMonsterDormancy(monst);
-                    monst = dormantMonsters;
+                    restartIterator(&it);
                 }
             }
         }
@@ -3466,7 +3465,6 @@ boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refr
 
 void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
     short i, *x, *y, turnCount;//, loc[2];
-    creature *leader;
     boolean foundLeader = false;
     short **theMap;
     enum directions dir;
@@ -3519,7 +3517,8 @@ void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
 
     if (monst->bookkeepingFlags & MB_FOLLOWER) {
         // is the leader on the same level?
-        for (leader = monsters->nextCreature; leader != NULL; leader = leader->nextCreature) {
+        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            creature *leader = nextCreature(&it);
             if (leader == monst->leader) {
                 foundLeader = true;
                 break;
@@ -3647,7 +3646,6 @@ void prepareForStairs(short x, short y, char grid[DCOLS][DROWS]) {
 void initializeLevel() {
     short i, j, dir;
     short upLoc[2], downLoc[2], **mapToStairs, **mapToPit;
-    creature *monst;
     item *theItem;
     char grid[DCOLS][DROWS];
     short n = rogue.depthLevel - 1;
@@ -3758,7 +3756,8 @@ void initializeLevel() {
                        NULL,
                        true,
                        true);
-    for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
+    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
         restoreMonster(monst, mapToStairs, mapToPit);
     }
     freeGrid(mapToStairs);
