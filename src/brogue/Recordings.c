@@ -295,7 +295,7 @@ unsigned long recallNumber(short numberOfBytes) {
 
 #define OOS_APOLOGY "Playback of the recording has diverged from the originally recorded game.\n\n\
 This could be caused by recording or playing the file on a modified version of Brogue, or it could \
-simply be the result of a bug.  (The recording feature is still in beta for this reason.)\n\n\
+simply be the result of a bug.\n\n\
 If this is a different computer from the one on which the recording was saved, the recording \
 might succeed on the original computer."
 

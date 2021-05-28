@@ -2670,7 +2670,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             if (rogue.playbackMode || serverMode) {
                 return;
             }
-            if (confirm("Suspend this game? (This feature is still in beta.)", false)) {
+            if (confirm("Suspend this game?", false)) {
                 saveGame();
             }
             break;
