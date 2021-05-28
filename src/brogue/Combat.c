@@ -267,7 +267,7 @@ void splitMonster(creature *monst, short x, short y) {
 
 short alliedCloneCount(creature *monst) {
     short count = 0;
-    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *temp = nextCreature(&it);
         if (temp != monst
             && temp->info.monsterID == monst->info.monsterID
@@ -1388,7 +1388,7 @@ boolean anyoneWantABite(creature *decedent) {
     grid = allocGrid();
     fillGrid(grid, 0);
     calculateDistances(grid, decedent->xLoc, decedent->yLoc, T_PATHING_BLOCKER, NULL, true, true);
-    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *ally = nextCreature(&it);
         if (canAbsorb(ally, ourBolts, decedent, grid)) {
             candidates++;
@@ -1397,7 +1397,7 @@ boolean anyoneWantABite(creature *decedent) {
     if (candidates > 0) {
         randIndex = rand_range(1, candidates);
         creature *firstAlly = NULL;
-        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *ally = nextCreature(&it);
             // CanAbsorb() populates ourBolts if it returns true and there are no learnable behaviors or flags:
             if (canAbsorb(ally, ourBolts, decedent, grid) && !--randIndex) {
@@ -1671,8 +1671,8 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
         } else {
             pmap[x][y].flags &= ~HAS_MONSTER;
         }
-        removeCreature(&dormantMonsters, decedent);
-        removeCreature(&monsters, decedent);
+        removeCreature(dormantMonsters, decedent);
+        removeCreature(monsters, decedent);
 
         if (decedent->leader == &player
             && !(decedent->info.flags & MONST_INANIMATE)
@@ -1690,7 +1690,7 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
                 // Insert it into the chain.
                 creature *carriedMonster = decedent->carriedMonster;
                 decedent->carriedMonster = NULL;
-                prependCreature(&monsters, carriedMonster);
+                prependCreature(monsters, carriedMonster);
                 
                 carriedMonster->xLoc = x;
                 carriedMonster->yLoc = y;

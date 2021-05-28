@@ -88,7 +88,7 @@ creature *generateMonster(short monsterID, boolean itemPossible, boolean mutatio
         }
     }
 
-    prependCreature(&monsters, monst);
+    prependCreature(monsters, monst);
     monst->xLoc = monst->yLoc = 0;
     monst->depth = rogue.depthLevel;
     monst->bookkeepingFlags = 0;
@@ -541,8 +541,8 @@ creature *cloneMonster(creature *monst, boolean announce, boolean placeClone) {
     newMonst->carriedItem = NULL;
     if (monst->carriedMonster) {
         creature *parentMonst = cloneMonster(monst->carriedMonster, false, false); // Also clone the carriedMonster
-        removeCreature(&monsters, parentMonst); // The cloned create will be added to the world, which we immediately undo.
-        removeCreature(&dormantMonsters, parentMonst); // in case it's added as a dormant creature? TODO: is this possible?
+        removeCreature(monsters, parentMonst); // The cloned create will be added to the world, which we immediately undo.
+        removeCreature(dormantMonsters, parentMonst); // in case it's added as a dormant creature? TODO: is this possible?
     }
     newMonst->ticksUntilTurn = 101;
     if (!(monst->creatureState == MONSTER_ALLY)) {
@@ -591,7 +591,7 @@ creature *cloneMonster(creature *monst, boolean announce, boolean placeClone) {
         && !rogue.featRecord[FEAT_JELLYMANCER]) {
 
         jellyCount = 0;
-        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *nextMonst = nextCreature(&it);
             if (nextMonst->creatureState == MONSTER_ALLY
                 && (nextMonst->info.abilityFlags & MA_CLONE_SELF_ON_DEFEND)) {
@@ -957,7 +957,7 @@ boolean summonMinions(creature *summoner) {
 
     if (summoner->info.abilityFlags & MA_ENTER_SUMMONS) {
         pmap[summoner->xLoc][summoner->yLoc].flags &= ~HAS_MONSTER;
-        removeCreature(&monsters, summoner);
+        removeCreature(monsters, summoner);
     }
 
     if (BROGUE_VERSION_ATLEAST(1,9,4)) {
@@ -980,7 +980,7 @@ boolean summonMinions(creature *summoner) {
     }
 
     creature *host = NULL;
-    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         if (monst != summoner && monstersAreTeammates(monst, summoner)
             && (monst->bookkeepingFlags & MB_JUST_SUMMONED)) {
@@ -1022,7 +1022,7 @@ boolean summonMinions(creature *summoner) {
     }
 
     if (summoner->info.abilityFlags & MA_ENTER_SUMMONS) {
-        removeCreature(&monsters, summoner);
+        removeCreature(monsters, summoner);
         if (atLeastOneMinion && host) {
             host->carriedMonster = summoner;
             demoteMonsterFromLeadership(summoner);
@@ -1030,7 +1030,7 @@ boolean summonMinions(creature *summoner) {
         } else {
             pmap[summoner->xLoc][summoner->yLoc].flags |= HAS_MONSTER;
             // TODO: why move to the beginning?
-            prependCreature(&monsters, summoner);
+            prependCreature(monsters, summoner);
         }
     } else if (atLeastOneMinion) {
         summoner->bookkeepingFlags |= MB_LEADER;
@@ -1101,7 +1101,7 @@ void spawnPeriodicHorde() {
         monst = spawnHorde(0, x, y, (HORDE_IS_SUMMONED | HORDE_LEADER_CAPTIVE | HORDE_NO_PERIODIC_SPAWN | HORDE_MACHINE_ONLY), 0);
         if (monst) {
             monst->creatureState = MONSTER_WANDERING;
-            for (creatureIterator it2 = iterateCreatures(&monsters); hasNextCreature(it2);) {
+            for (creatureIterator it2 = iterateCreatures(monsters); hasNextCreature(it2);) {
                 creature *monst2 = nextCreature(&it2);
                 if (monst2->leader == monst) {
                     monst2->creatureState = MONSTER_WANDERING;
@@ -1570,7 +1570,7 @@ void wakeUp(creature *monst) {
         alertMonster(monst);
     }
     monst->ticksUntilTurn = 100;
-    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *teammate = nextCreature(&it);
         if (monst != teammate && monstersAreTeammates(monst, teammate) && teammate->creatureMode == MODE_NORMAL) {
             if (teammate->creatureState == MONSTER_SLEEPING
@@ -1723,7 +1723,7 @@ void updateMonsterState(creature *monst) {
     closestFearedEnemy = DCOLS+DROWS;
     
     boolean handledPlayer = false;
-    for (creatureIterator it = iterateCreatures(&monsters); !handledPlayer || hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); !handledPlayer || hasNextCreature(it);) {
         creature *monst2 = !handledPlayer ? &player : nextCreature(&it);
         handledPlayer = true;
         if (monsterFleesFrom(monst, monst2)
@@ -2026,7 +2026,7 @@ creature *monsterAtLoc(short x, short y) {
     if (player.xLoc == x && player.yLoc == y) {
         return &player;
     }
-    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         if (monst->xLoc == x && monst->yLoc == y) {
             return monst;
@@ -2043,7 +2043,7 @@ creature *dormantMonsterAtLoc(short x, short y) {
         return NULL;
     }
 
-    for (creatureIterator it = iterateCreatures(&dormantMonsters); hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(dormantMonsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         if (monst->xLoc == x && monst->yLoc == y) {
             return monst;
@@ -2183,7 +2183,7 @@ enum directions monsterSwarmDirection(creature *monst, creature *enemy) {
     // OK, now we have a place to move toward. Let's analyze the teammates around us to make sure that
     // one of them could take advantage of the space we open.
     boolean handledPlayer = false;
-    for (creatureIterator it = iterateCreatures(&monsters); !handledPlayer || hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); !handledPlayer || hasNextCreature(it);) {
         creature *ally = !handledPlayer ? &player : nextCreature(&it);
         handledPlayer = true;
         if (ally != monst
@@ -2217,7 +2217,7 @@ enum directions monsterSwarmDirection(creature *monst, creature *enemy) {
                 // Check that the ally isn't already occupied with an enemy of its own.
                 boolean foundConflict = false;
                 boolean handledPlayer = false;
-                for (creatureIterator it2 = iterateCreatures(&monsters); !handledPlayer || hasNextCreature(it2);) {
+                for (creatureIterator it2 = iterateCreatures(monsters); !handledPlayer || hasNextCreature(it2);) {
                     creature *otherEnemy = !handledPlayer ? &player : nextCreature(&it2);
                     handledPlayer = true;
                     if (ally != otherEnemy
@@ -2391,7 +2391,7 @@ boolean monsterSummons(creature *monst, boolean alwaysUse) {
 
     if (monst->info.abilityFlags & (MA_CAST_SUMMON)) {
         // Count existing minions.
-        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *target = nextCreature(&it);
             if (monst->creatureState == MONSTER_ALLY) {
                 if (target->creatureState == MONSTER_ALLY) {
@@ -2473,7 +2473,7 @@ boolean targetEligibleForCombatBuff(creature *caster, creature *target) {
     if (caster->creatureState == MONSTER_ALLY) {
         if (canDirectlySeeMonster(caster)) {
             boolean handledPlayer = false;
-            for (creatureIterator it = iterateCreatures(&monsters); !handledPlayer || hasNextCreature(it);) {
+            for (creatureIterator it = iterateCreatures(monsters); !handledPlayer || hasNextCreature(it);) {
                 creature *enemy = !handledPlayer ? &player : nextCreature(&it);
                 handledPlayer = true;
                 if (monstersAreEnemies(&player, enemy)
@@ -2692,7 +2692,7 @@ boolean monstUseBolt(creature *monst) {
     }
 
     boolean handledPlayer = false;
-    for (creatureIterator it = iterateCreatures(&monsters); !handledPlayer || hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); !handledPlayer || hasNextCreature(it);) {
         creature *target = !handledPlayer ? &player : nextCreature(&it);
         handledPlayer = true;
         if (generallyValidBoltTarget(monst, target)) {
@@ -2807,7 +2807,7 @@ boolean resurrectAlly(const short x, const short y) {
     if (monst) {
         // Remove from purgatory and insert into the mortal plane.
         removeCreature(&purgatory, monst);
-        prependCreature(&monsters, monst);
+        prependCreature(monsters, monst);
 
         getQualifyingPathLocNear(&monst->xLoc, &monst->yLoc, x, y, true,
                                  (T_PATHING_BLOCKER | T_HARMFUL_TERRAIN), 0,
@@ -2970,7 +2970,7 @@ void moveAlly(creature *monst) {
 
     // Look around for enemies; shortestDistance will be the distance to the nearest.
     shortestDistance = max(DROWS, DCOLS);
-    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *target = nextCreature(&it);
         if (target != monst
             && (!(target->bookkeepingFlags & MB_SUBMERGED) || (monst->bookkeepingFlags & MB_SUBMERGED))
@@ -3064,7 +3064,7 @@ void moveAlly(creature *monst) {
                 }
             }
 
-            for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
                 creature *target = nextCreature(&it);
                 if (target != monst
                     && (!(target->bookkeepingFlags & MB_SUBMERGED) || (monst->bookkeepingFlags & MB_SUBMERGED))
@@ -3274,7 +3274,7 @@ void monstersTurn(creature *monst) {
         shortestDistance = max(DROWS, DCOLS);
         closestMonster = NULL;
         boolean handledPlayer = false;
-        for (creatureIterator it = iterateCreatures(&monsters); !handledPlayer || hasNextCreature(it);) {
+        for (creatureIterator it = iterateCreatures(monsters); !handledPlayer || hasNextCreature(it);) {
             creature *target = !handledPlayer ? &player : nextCreature(&it);
             handledPlayer = true;
             if (target != monst
@@ -3321,7 +3321,7 @@ void monstersTurn(creature *monst) {
         // if the monster is adjacent to an ally and not adjacent to the player, attack the ally
         if (distanceBetween(x, y, player.xLoc, player.yLoc) > 1
             || diagonalBlocked(x, y, player.xLoc, player.yLoc, false)) {
-            for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
                 creature *ally = nextCreature(&it);
                 if (monsterWillAttackTarget(monst, ally)
                     && distanceBetween(x, y, ally->xLoc, ally->yLoc) == 1
@@ -3389,7 +3389,7 @@ void monstersTurn(creature *monst) {
         }
         if (dir == -1 || (!moveMonster(monst, nbDirs[dir][0], nbDirs[dir][1]) && !moveMonsterPassivelyTowards(monst, targetLoc, true))) {
             boolean handledPlayer = false;
-            for (creatureIterator it = iterateCreatures(&monsters); !handledPlayer || hasNextCreature(it);) {
+            for (creatureIterator it = iterateCreatures(monsters); !handledPlayer || hasNextCreature(it);) {
                 creature *ally = !handledPlayer ? &player : nextCreature(&it);
                 handledPlayer = true;
                 if (!monst->status[STATUS_MAGICAL_FEAR] // Fearful monsters will never attack.
@@ -3451,7 +3451,7 @@ void monstersTurn(creature *monst) {
 
         // if the monster is adjacent to an ally and not fleeing, attack the ally
         if (monst->creatureState == MONSTER_WANDERING) {
-            for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
                 creature *ally = nextCreature(&it);
                 if (monsterWillAttackTarget(monst, ally)
                     && distanceBetween(x, y, ally->xLoc, ally->yLoc) == 1
@@ -3659,7 +3659,7 @@ boolean moveMonster(creature *monst, short dx, short dy) {
         defender = monsterAtLoc(newX, newY);
     } else {
         if (monst->bookkeepingFlags & MB_SEIZED) {
-            for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
                 creature *defender = nextCreature(&it);
                 if ((defender->bookkeepingFlags & MB_SEIZING)
                     && monstersAreEnemies(monst, defender)
@@ -3946,7 +3946,7 @@ void checkForContinuedLeadership(creature *monst) {
     boolean maintainLeadership = false;
 
     if (monst->bookkeepingFlags & MB_LEADER) {
-        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *follower = nextCreature(&it);
             if (follower->leader == monst && monst != follower) {
                 maintainLeadership = true;
@@ -3972,7 +3972,7 @@ void demoteMonsterFromLeadership(creature *monst) {
     for (int level = 0; level <= DEEPEST_LEVEL; level++) {
         if (!BROGUE_VERSION_ATLEAST(1,9,1) && level > 0) break;
         // we'll work on this level's monsters first, so that the new leader is preferably on the same level
-        creatureList *nearbyList = (level == 0 ? &monsters : &levels[level-1].monsters);
+        creatureList *nearbyList = (level == 0 ? monsters : &levels[level-1].monsters);
         for (creatureIterator it = iterateCreatures(nearbyList); hasNextCreature(it);) {
             creature *follower = nextCreature(&it);
             if (follower == monst || follower->leader != monst) continue;
@@ -4003,7 +4003,7 @@ void demoteMonsterFromLeadership(creature *monst) {
 
     for (int level = 0; level <= DEEPEST_LEVEL; level++) {
         if (!BROGUE_VERSION_ATLEAST(1,9,1) && level > 0) break;
-        creatureList *candidateList = (level == 0 ? &dormantMonsters : &levels[level-1].dormantMonsters);
+        creatureList *candidateList = (level == 0 ? dormantMonsters : &levels[level-1].dormantMonsters);
         for (creatureIterator it = iterateCreatures(candidateList); hasNextCreature(it);) {
             creature *follower = nextCreature(&it);
             if (follower == monst || follower->leader != monst) continue;
@@ -4017,12 +4017,12 @@ void demoteMonsterFromLeadership(creature *monst) {
 void toggleMonsterDormancy(creature *monst) {
     //short loc[2] = {0, 0};
 
-    if (removeCreature(&dormantMonsters, monst)) {
+    if (removeCreature(dormantMonsters, monst)) {
         // Found it! It's dormant. Wake it up.
         // It's been removed from the dormant list.
 
         // Add it to the normal list.
-        prependCreature(&monsters, monst);
+        prependCreature(monsters, monst);
 
         pmap[monst->xLoc][monst->yLoc].flags &= ~HAS_DORMANT_MONSTER;
 
@@ -4062,10 +4062,10 @@ void toggleMonsterDormancy(creature *monst) {
         return;
     }
 
-    if (removeCreature(&monsters, monst)) {
+    if (removeCreature(monsters, monst)) {
         // Found it! It's alive. Put it into dormancy.
         // Add it to the dormant chain.
-        prependCreature(&dormantMonsters, monst);
+        prependCreature(dormantMonsters, monst);
         // Miscellaneous transitional tasks.
         pmap[monst->xLoc][monst->yLoc].flags &= ~HAS_MONSTER;
         pmap[monst->xLoc][monst->yLoc].flags |= HAS_DORMANT_MONSTER;

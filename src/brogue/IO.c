@@ -3011,7 +3011,7 @@ void displayMonsterFlashes(boolean flashingEnabled) {
     //assureCosmeticRNG;
 
     boolean handledPlayer = false;
-    for (creatureIterator it = iterateCreatures(&monsters); !handledPlayer || hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); !handledPlayer || hasNextCreature(it);) {
         creature *monst = !handledPlayer ? &player : nextCreature(&it);
         handledPlayer = true;
         if (monst->bookkeepingFlags & MB_WILL_FLASH) {
@@ -3808,7 +3808,7 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
         // Non-focused monsters.
         do {
             shortestDistance = 10000;
-            for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
                 creature *monst = nextCreature(&it);
                 if ((canDirectlySeeMonster(monst) || (indirectVision && (canSeeMonster(monst) || rogue.playbackOmniscience)))
                     && !addedEntity[monst->xLoc][monst->yLoc]
