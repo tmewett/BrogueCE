@@ -1254,7 +1254,6 @@ typedef struct cellDisplayBuffer {
     char foreColorComponents[3];
     char backColorComponents[3];
     char opacity;
-    boolean needsUpdate;
 } cellDisplayBuffer;
 
 typedef struct pcell {                              // permanent cell; have to remember this stuff to save levels
@@ -1271,6 +1270,7 @@ typedef struct pcell {                              // permanent cell; have to r
     unsigned long rememberedCellFlags;              // map cell flags the player remembers from that spot
     unsigned long rememberedTerrainFlags;           // terrain flags the player remembers from that spot
     unsigned long rememberedTMFlags;                // TM flags the player remembers from that spot
+    short exposedToFire;                            // number of times the tile has been exposed to fire since the last environment update
 } pcell;
 
 typedef struct tcell {          // transient cell; stuff we don't need to remember between levels

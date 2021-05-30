@@ -871,17 +871,62 @@ void considerCautiousMode() {
     }*/
 }
 
+// previouslyPlottedCells is only accessed by commitDraws and refreshScreen,
+// as below.
+static cellDisplayBuffer previouslyPlottedCells[COLS][ROWS];
+
+// Only cells which have changed since the previous commitDraws are actually
+// drawn.
+void commitDraws() {
+    for (int j = 0; j < ROWS; j++) {
+        for (int i = 0; i < COLS; i++) {
+            cellDisplayBuffer *lastPlotted = &previouslyPlottedCells[i][j];
+            cellDisplayBuffer *curr = &displayBuffer[i][j];
+            boolean needsUpdate =
+                lastPlotted->character != curr->character
+                || lastPlotted->foreColorComponents[0] != curr->foreColorComponents[0]
+                || lastPlotted->foreColorComponents[1] != curr->foreColorComponents[1]
+                || lastPlotted->foreColorComponents[2] != curr->foreColorComponents[2]
+                || lastPlotted->backColorComponents[0] != curr->backColorComponents[0]
+                || lastPlotted->backColorComponents[1] != curr->backColorComponents[1]
+                || lastPlotted->backColorComponents[2] != curr->backColorComponents[2];
+
+            if (!needsUpdate) {
+                continue;
+            }
+
+            plotChar(curr->character, i, j,
+                     curr->foreColorComponents[0],
+                     curr->foreColorComponents[1],
+                     curr->foreColorComponents[2],
+                     curr->backColorComponents[0],
+                     curr->backColorComponents[1],
+                     curr->backColorComponents[2]
+            );
+            *lastPlotted = *curr;
+        }
+    }
+}
+
 // flags the entire window as needing to be redrawn at next flush.
 // very low level -- does not interface with the guts of the game.
 void refreshScreen() {
-    short i, j;
-
-    for( i=0; i<COLS; i++ ) {
-        for( j=0; j<ROWS; j++ ) {
-            displayBuffer[i][j].needsUpdate = true;
+    for (int i = 0; i < COLS; i++) {
+        for (int j = 0; j < ROWS; j++) {
+            cellDisplayBuffer *curr = &displayBuffer[i][j];
+            plotChar(curr->character, i, j,
+                     curr->foreColorComponents[0],
+                     curr->foreColorComponents[1],
+                     curr->foreColorComponents[2],
+                     curr->backColorComponents[0],
+                     curr->backColorComponents[1],
+                     curr->backColorComponents[2]
+            );
+            // Remember that it was previously plotted, so that
+            // commitDraws still knows when it needs updates.
+            previouslyPlottedCells[i][j] = *curr;
         }
     }
-    commitDraws();
 }
 
 // higher-level redraw
@@ -1778,24 +1823,14 @@ void plotCharWithColor(enum displayGlyph inputChar, short xLoc, short yLoc, cons
         inputChar = ' ';
     }
 
-    if (inputChar       != displayBuffer[xLoc][yLoc].character
-        || foreRed      != displayBuffer[xLoc][yLoc].foreColorComponents[0]
-        || foreGreen    != displayBuffer[xLoc][yLoc].foreColorComponents[1]
-        || foreBlue     != displayBuffer[xLoc][yLoc].foreColorComponents[2]
-        || backRed      != displayBuffer[xLoc][yLoc].backColorComponents[0]
-        || backGreen    != displayBuffer[xLoc][yLoc].backColorComponents[1]
-        || backBlue     != displayBuffer[xLoc][yLoc].backColorComponents[2]) {
-
-        displayBuffer[xLoc][yLoc].needsUpdate = true;
-
-        displayBuffer[xLoc][yLoc].character = inputChar;
-        displayBuffer[xLoc][yLoc].foreColorComponents[0] = foreRed;
-        displayBuffer[xLoc][yLoc].foreColorComponents[1] = foreGreen;
-        displayBuffer[xLoc][yLoc].foreColorComponents[2] = foreBlue;
-        displayBuffer[xLoc][yLoc].backColorComponents[0] = backRed;
-        displayBuffer[xLoc][yLoc].backColorComponents[1] = backGreen;
-        displayBuffer[xLoc][yLoc].backColorComponents[2] = backBlue;
-    }
+    cellDisplayBuffer *target = &displayBuffer[xLoc][yLoc];
+    target->character = inputChar;
+    target->foreColorComponents[0] = foreRed;
+    target->foreColorComponents[1] = foreGreen;
+    target->foreColorComponents[2] = foreBlue;
+    target->backColorComponents[0] = backRed;
+    target->backColorComponents[1] = backGreen;
+    target->backColorComponents[2] = backBlue;
 
     restoreRNG;
 }
@@ -1835,27 +1870,6 @@ void plotForegroundChar(enum displayGlyph inputChar, short x, short y, color *fo
         applyColorMultiplier(&myColor, &multColor);
     }
     plotCharWithColor(inputChar, mapToWindowX(x), mapToWindowY(y), &myColor, &backColor);
-}
-
-// Set to false and draws don't take effect, they simply queue up. Set to true and all of the
-// queued up draws take effect.
-void commitDraws() {
-    short i, j;
-
-    for (j=0; j<ROWS; j++) {
-        for (i=0; i<COLS; i++) {
-            if (displayBuffer[i][j].needsUpdate) {
-                plotChar(displayBuffer[i][j].character, i, j,
-                         displayBuffer[i][j].foreColorComponents[0],
-                         displayBuffer[i][j].foreColorComponents[1],
-                         displayBuffer[i][j].foreColorComponents[2],
-                         displayBuffer[i][j].backColorComponents[0],
-                         displayBuffer[i][j].backColorComponents[1],
-                         displayBuffer[i][j].backColorComponents[2]);
-                displayBuffer[i][j].needsUpdate = false;
-            }
-        }
-    }
 }
 
 // Debug feature: display the level to the screen without regard to lighting, field of view, etc.
@@ -1911,7 +1925,6 @@ void hiliteCharGrid(char hiliteCharGrid[DCOLS][DROWS], color *hiliteColor, short
                 x = mapToWindowX(i);
                 y = mapToWindowY(j);
 
-                displayBuffer[x][y].needsUpdate = true;
                 displayBuffer[x][y].backColorComponents[0] = clamp(displayBuffer[x][y].backColorComponents[0] + hCol.red * hiliteStrength / 100, 0, 100);
                 displayBuffer[x][y].backColorComponents[1] = clamp(displayBuffer[x][y].backColorComponents[1] + hCol.green * hiliteStrength / 100, 0, 100);
                 displayBuffer[x][y].backColorComponents[2] = clamp(displayBuffer[x][y].backColorComponents[2] + hCol.blue * hiliteStrength / 100, 0, 100);
@@ -4523,8 +4536,6 @@ void highlightScreenCell(short x, short y, color *highlightColor, short strength
     tempColor = colorFromComponents(displayBuffer[x][y].backColorComponents);
     applyColorAugment(&tempColor, highlightColor, strength);
     storeColorComponents(displayBuffer[x][y].backColorComponents, &tempColor);
-
-    displayBuffer[x][y].needsUpdate = true;
 }
 
 short estimatedArmorValue() {

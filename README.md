@@ -21,8 +21,9 @@ lucky few to return alive?
 - [Wiki](https://brogue.fandom.com/wiki/Brogue_Wiki)
 - [Forum (Reddit)](https://www.reddit.com/r/brogueforum/)
 - [Roguelikes Discord](https://discord.gg/9pmFGKx) (we have a #brogue channel)
-- IRC: ##brogue on Freenode
+- IRC: ##brogue on Libera Chat
 - [Original website](https://sites.google.com/site/broguegame/)
+- [Android port](https://github.com/bilgincoskun/brogue-android-port/releases)
 
 
 Playing

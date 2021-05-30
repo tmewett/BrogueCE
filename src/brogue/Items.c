@@ -5948,7 +5948,6 @@ void throwCommand(item *theItem, boolean autoThrow) {
     char buf[COLS], theName[COLS];
     unsigned char command[10];
     short maxDistance, zapTarget[2], quantity;
-    boolean autoTarget;
 
     command[0] = THROW_KEY;
 
@@ -6000,7 +5999,24 @@ void throwCommand(item *theItem, boolean autoThrow) {
             theName);
     temporaryMessage(buf, REFRESH_SIDEBAR);
     maxDistance = (12 + 2 * max(rogue.strength - player.weaknessAmount - 12, 2));
-    autoTarget = (theItem->category & (WEAPON | POTION)) ? true : false;
+
+    // Automatically pick a target for known bad potions and throwing weapons
+    boolean autoTarget = false;
+    switch (theItem->category) {
+        case WEAPON:
+            if (theItem->kind == DART || theItem->kind == INCENDIARY_DART || theItem->kind == JAVELIN) {
+                autoTarget = true;
+            }
+            break;
+        case POTION:
+            if ((theItem->flags & ITEM_MAGIC_DETECTED || potionTable[theItem->kind].identified)
+                    && itemMagicPolarity(theItem) == -1) {
+                autoTarget = true;
+            }
+            break;
+        default:
+            break;
+    }
 
     if (autoThrow && creatureIsTargetable(rogue.lastTarget)) {
         zapTarget[0] = rogue.lastTarget->xLoc;
