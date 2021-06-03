@@ -1,0 +1,1 @@
+Identify the last benevolent/malevolent staff, potion, scroll, or wand, if possible

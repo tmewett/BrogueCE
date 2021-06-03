@@ -376,8 +376,8 @@ short runicWeaponChance(item *theItem, boolean customEnchantLevel, fixpt enchant
     }
 
     // Innately high-damage weapon types are less likely to trigger runic effects.
-    adjustedBaseDamage = (tableForItemCategory(theItem->category, NULL)[theItem->kind].range.lowerBound
-                          + tableForItemCategory(theItem->category, NULL)[theItem->kind].range.upperBound) / 2;
+    adjustedBaseDamage = (tableForItemCategory(theItem->category)[theItem->kind].range.lowerBound
+                          + tableForItemCategory(theItem->category)[theItem->kind].range.upperBound) / 2;
 
     if (theItem->flags & ITEM_ATTACKS_STAGGER) {
         adjustedBaseDamage /= 2; // Normalize as though they attacked once per turn instead of every other turn.
