@@ -3383,11 +3383,13 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
             boolean burningThrough = (theBolt->flags & BF_FIERY) && cellHasTerrainFlag(x, y, T_IS_FLAMMABLE);
             boolean isCastByPlayer = (originLoc[0] == player.xLoc && originLoc[1] == player.yLoc);
 
+            creature *caster = monsterAtLoc(originLoc[0], originLoc[1]);
             creature *monst = monsterAtLoc(x, y);
             boolean isMonster = monst
                 && !(monst->bookkeepingFlags & MB_SUBMERGED)
-                && !monsterIsHidden(monst, monsterAtLoc(originLoc[0], originLoc[1]));
-            boolean isAllyOfCaster = ((monst && monst->creatureState == MONSTER_ALLY) == isCastByPlayer);
+                && !monsterIsHidden(monst, caster);
+            boolean isEnemyOfCaster = (monst && caster && monstersAreEnemies(monst, caster));
+            boolean isAllyOfCaster = (monst && caster && monstersAreTeammates(monst, caster));
 
             // small bonus for making it this far
             score += 2;
@@ -3396,7 +3398,7 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
             if (x == targetLoc[0] && y == targetLoc[1]) {
 
                 if ((!targetsEnemies && !targetsAllies) ||
-                    (targetsEnemies && isMonster && !isAllyOfCaster) ||
+                    (targetsEnemies && isMonster && isEnemyOfCaster) ||
                     (targetsAllies && isMonster && isAllyOfCaster)) {
 
                     // big bonus for hitting the target
@@ -3422,7 +3424,7 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
 
             // hitting a creature with a bolt meant for enemies
             if (isMonster && targetsEnemies) {
-                score += !isAllyOfCaster ? 50 : -200;
+                score += isEnemyOfCaster ? 50 : -200;
             }
 
             // hitting a creature with a bolt meant for allies
