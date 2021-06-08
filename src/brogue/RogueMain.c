@@ -1137,7 +1137,6 @@ void victory(boolean superVictory) {
     //
     // First screen - Congratulations...
     //
-    deleteMessages();
     if (superVictory) {
         message(    "Light streams through the portal, and you are teleported out of the dungeon.", 0);
         copyDisplayBuffer(dbuf, displayBuffer);
