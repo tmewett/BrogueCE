@@ -70,7 +70,7 @@ static void printSeedCatalogItem(item *theItem, creature *theMonster, boolean is
 
     if (theMonster != NULL) {   //carried by monster
         if (isCsvFormat) {
-            sprintf(carriedByMonsterName, theMonster->info.monsterName);
+            sprintf(carriedByMonsterName, "%s", theMonster->info.monsterName);
             strcpy(mutationName, theMonster->mutationIndex >= 0 ? mutationCatalog[theMonster->mutationIndex].title : "");
         } else {
             getMonsterDetailedName(theMonster, carriedByMonsterName);
