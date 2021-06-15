@@ -1599,7 +1599,7 @@ boolean buildAMachine(enum machineTypes bp,
                             }
                         }
 
-                        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+                        for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
                             creature *monst = nextCreature(&it);
                             if (monst->bookkeepingFlags & MB_JUST_SUMMONED) {
 
@@ -2983,7 +2983,7 @@ void refreshWaypoint(short wpIndex) {
 
     costMap = allocGrid();
     populateGenericCostMap(costMap);
-    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature* monst = nextCreature(&it);
         if ((monst->creatureState == MONSTER_SLEEPING || (monst->info.flags & MONST_IMMOBILE) || (monst->bookkeepingFlags & MB_CAPTIVE))
             && costMap[monst->xLoc][monst->yLoc] >= 0) {
@@ -3450,7 +3450,7 @@ boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refr
 
         // awaken dormant creatures?
         if (feat->flags & DFF_ACTIVATE_DORMANT_MONSTER) {
-            for (creatureIterator it = iterateCreatures(&dormantMonsters); hasNextCreature(it);) {
+            for (creatureIterator it = iterateCreatures(dormantMonsters); hasNextCreature(it);) {
                 creature *monst = nextCreature(&it);
                 if (monst->xLoc == x && monst->yLoc == y || blockingMap[monst->xLoc][monst->yLoc]) {
                     // found it!
@@ -3517,7 +3517,7 @@ void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
 
     if (monst->bookkeepingFlags & MB_FOLLOWER) {
         // is the leader on the same level?
-        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *leader = nextCreature(&it);
             if (leader == monst->leader) {
                 foundLeader = true;
@@ -3756,7 +3756,7 @@ void initializeLevel() {
                        NULL,
                        true,
                        true);
-    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         restoreMonster(monst, mapToStairs, mapToPit);
     }

@@ -480,12 +480,12 @@ void moveEntrancedMonsters(enum directions dir) {
     dir = oppositeDirection(dir);
 
     if (BROGUE_VERSION_ATLEAST(1,9,3)) {
-        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
             monst->bookkeepingFlags &= ~MB_HAS_ENTRANCED_MOVED;
         }
 
-        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
             if (!(monst->bookkeepingFlags & MB_HAS_ENTRANCED_MOVED)
                 && monst->status[STATUS_ENTRANCED]
@@ -500,7 +500,7 @@ void moveEntrancedMonsters(enum directions dir) {
         }
 
     } else {
-        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
             if (monst->status[STATUS_ENTRANCED]
                 && !monst->status[STATUS_STUCK]
@@ -742,7 +742,7 @@ void buildFlailHitList(const short x, const short y, const short newX, const sho
     short mx, my;
     short i = 0;
 
-    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         mx = monst->xLoc;
         my = monst->yLoc;
@@ -978,7 +978,7 @@ boolean playerMoves(short direction) {
         }
 
         if (player.bookkeepingFlags & MB_SEIZED) {
-            for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
                 creature *tempMonst = nextCreature(&it);
                 if ((tempMonst->bookkeepingFlags & MB_SEIZING)
                     && monstersAreEnemies(&player, tempMonst)
@@ -1532,7 +1532,7 @@ void travelRoute(short path[1000][2], short steps) {
     rogue.disturbed = false;
     rogue.automationActive = true;
 
-    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         if (canSeeMonster(monst)) {
             monst->bookkeepingFlags |= MB_ALREADY_SEEN;
@@ -1930,7 +1930,7 @@ boolean explore(short frameDelay) {
         return false;
     }
 
-    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         if (canSeeMonster(monst)) {
             monst->bookkeepingFlags |= MB_ALREADY_SEEN;

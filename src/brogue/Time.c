@@ -607,7 +607,7 @@ void updateTelepathy() {
     }
 
     zeroOutGrid(grid);
-    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         if (monsterRevealed(monst)) {
             getFOVMask(grid, monst->xLoc, monst->yLoc, 2 * FP_FACTOR, T_OBSTRUCTS_VISION, 0, false);
@@ -615,7 +615,7 @@ void updateTelepathy() {
             discoverCell(monst->xLoc, monst->yLoc);
         }
     }
-    for (creatureIterator it = iterateCreatures(&dormantMonsters); hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(dormantMonsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         if (monsterRevealed(monst)) {
             getFOVMask(grid, monst->xLoc, monst->yLoc, 2 * FP_FACTOR, T_OBSTRUCTS_VISION, 0, false);
@@ -787,7 +787,7 @@ void updateVision(boolean refreshDisplay) {
                 refreshDungeonCell(theItem->xLoc, theItem->yLoc);
             }
         }
-        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
             if ((pmap[monst->xLoc][monst->yLoc].flags & DISCOVERED) && refreshDisplay) {
                 refreshDungeonCell(monst->xLoc, monst->yLoc);
@@ -946,7 +946,7 @@ void addXPXPToAlly(short XPXP, creature *monst) {
 void handleXPXP() {
     //char buf[DCOLS*2], theMonsterName[50];
 
-    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         addXPXPToAlly(rogue.xpxpThisTurn, monst);
     }
@@ -1048,7 +1048,7 @@ void activateMachine(short machineNumber) {
 
     monsterCount = maxMonsters = 0;
     creature **activatedMonsterList = NULL;
-    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         if (monst->machineHome == machineNumber
             && monst->spawnDepth == rogue.depthLevel
@@ -1353,7 +1353,7 @@ void monstersFall() {
     char buf[DCOLS], buf2[DCOLS];
 
     // monsters plunge into chasms at the end of the turn
-    for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         if ((monst->bookkeepingFlags & MB_IS_FALLING) || monsterShouldFall(monst)) {
             if (BROGUE_VERSION_ATLEAST(1,9,3)) monst->bookkeepingFlags |= MB_IS_FALLING;
@@ -1388,7 +1388,7 @@ void monstersFall() {
                 }
 
                 // remove from monster chain
-                removeCreature(&monsters, monst);
+                removeCreature(monsters, monst);
 
                 // add to next level's chain
                 prependCreature(&levels[rogue.depthLevel-1 + 1].monsters, monst);
@@ -1911,7 +1911,7 @@ void monsterEntersLevel(creature *monst, short n) {
     // remove traversing monster from other level monster chain
     removeCreature(&levels[n].monsters, monst);
     // prepend traversing monster to current level monster chain
-    prependCreature(&monsters, monst);
+    prependCreature(monsters, monst);
 
     monst->status[STATUS_ENTERS_LEVEL_IN] = 0;
     monst->bookkeepingFlags |= MB_PREPLACED;
@@ -2202,7 +2202,7 @@ void playerRecoversFromAttacking(boolean anAttackHit) {
 static void recordCurrentCreatureHealths() {
 
     boolean handledPlayer = false;
-    for (creatureIterator it = iterateCreatures(&monsters); !handledPlayer || hasNextCreature(it);) {
+    for (creatureIterator it = iterateCreatures(monsters); !handledPlayer || hasNextCreature(it);) {
         creature *monst = !handledPlayer ? &player : nextCreature(&it);
         handledPlayer = true;
         monst->previousHealthPoints = monst->currentHP;
@@ -2297,7 +2297,7 @@ void playerTurnEnded() {
             analyzeMap(false); // Don't need to update the chokemap.
         }
 
-        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
             if ((monst->bookkeepingFlags & MB_BOUND_TO_LEADER)
                 && (!monst->leader || !(monst->bookkeepingFlags & MB_FOLLOWER))
@@ -2348,7 +2348,7 @@ void playerTurnEnded() {
         rogue.updatedAllySafetyMapThisTurn      = false;
         rogue.updatedMapToSafeTerrainThisTurn   = false;
 
-        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
             if (D_SAFETY_VISION || monst->creatureState == MONSTER_FLEEING && pmap[monst->xLoc][monst->yLoc].flags & IN_FIELD_OF_VIEW) {
                 updateSafetyMap(); // only if there is a fleeing monster who can see the player
@@ -2370,13 +2370,13 @@ void playerTurnEnded() {
 
         while (player.ticksUntilTurn > 0) {
             soonestTurn = 10000;
-            for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
                 creature *monst = nextCreature(&it);
                 soonestTurn = min(soonestTurn, monst->ticksUntilTurn);
             }
             soonestTurn = min(soonestTurn, player.ticksUntilTurn);
             soonestTurn = min(soonestTurn, rogue.ticksTillUpdateEnvironment);
-            for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+            for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
                 creature *monst = nextCreature(&it);
                 monst->ticksUntilTurn -= soonestTurn;
             }
@@ -2389,18 +2389,18 @@ void playerTurnEnded() {
                 processIncrementalAutoID();   // become more familiar with worn armor and rings
                 rogue.monsterSpawnFuse--; // monsters spawn in the level every so often
 
-                for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+                for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
                     creature *monst = nextCreature(&it);
                     applyInstantTileEffectsToCreature(monst);
                 }
 
-                for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+                for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
                     creature *monst = nextCreature(&it);
                     decrementMonsterStatus(monst);
                 }
 
                 // monsters with a dungeon feature spawn it every so often
-                for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+                for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
                     creature *monst = nextCreature(&it);
 
                     if (monst->info.DFChance
@@ -2431,7 +2431,7 @@ void playerTurnEnded() {
                 refreshWaypoint(rogue.wpRefreshTicker);
             }
 
-            for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it) && rogue.gameHasEnded == false;) {
+            for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it) && rogue.gameHasEnded == false;) {
                 creature *monst = nextCreature(&it);
                 if (monst->ticksUntilTurn <= 0) {
                     if (monst->currentHP > monst->info.maxHP) {
@@ -2449,7 +2449,7 @@ void playerTurnEnded() {
                         monstersTurn(monst);
                     }
 
-                    for (creatureIterator it2 = iterateCreatures(&monsters); hasNextCreature(it2);) {
+                    for (creatureIterator it2 = iterateCreatures(monsters); hasNextCreature(it2);) {
                         creature *monst2 = nextCreature(&it2);
                         if (monst2 == monst) { // monst still alive and on the level
                             applyGradualTileEffectsToCreature(monst, monst->ticksUntilTurn);
@@ -2475,7 +2475,7 @@ void playerTurnEnded() {
             displayLevel();
         }
 
-        for (creatureIterator it = iterateCreatures(&monsters); hasNextCreature(it);) {
+        for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
             if (canSeeMonster(monst) && !(monst->bookkeepingFlags & (MB_WAS_VISIBLE | MB_ALREADY_SEEN))) {
                 if (monst->creatureState != MONSTER_ALLY) {
