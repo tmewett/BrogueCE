@@ -2204,7 +2204,7 @@ void funkyFade(cellDisplayBuffer displayBuf[COLS][ROWS], const color *colorStart
 
                 foreColor = (invert ? white : black);
 
-                if (j < MESSAGE_LINES
+                if (j == (MESSAGE_LINES - 1)
                     && i >= mapToWindowX(0)
                     && i < mapToWindowX(strLenWithoutEscapes(displayedMessage[MESSAGE_LINES - j - 1]))) {
                     tempChar = displayedMessage[MESSAGE_LINES - j - 1][windowToMapX(i)];
