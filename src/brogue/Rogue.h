@@ -37,8 +37,8 @@
 
 // Brogue version number
 #define BROGUE_MAJOR 1
-#define BROGUE_MINOR 9
-#define BROGUE_PATCH 4
+#define BROGUE_MINOR 10
+#define BROGUE_PATCH 0
 
 // Expanding a macro as a string constant requires two levels of macros
 #define _str(x) #x
@@ -1897,7 +1897,7 @@ enum terrainMechanicalFlagCatalog {
     TM_INTERRUPT_EXPLORATION_WHEN_SEEN = Fl(23),    // will generate a message when discovered during exploration to interrupt exploration
     TM_INVERT_WHEN_HIGHLIGHTED      = Fl(24),       // will flip fore and back colors when highlighted with pathing
     TM_SWAP_ENCHANTS_ACTIVATION     = Fl(25),       // in machine, swap item enchantments when two suitable items are on this terrain, and activate the machine when that happens
-    
+
     TM_PROMOTES_ON_STEP             = (TM_PROMOTES_ON_CREATURE | TM_PROMOTES_ON_ITEM),
 };
 
