@@ -3693,8 +3693,7 @@ boolean negate(creature *monst) {
             negated = true;
         }
 
-        if (monst != &player && monst->mutationIndex > -1 && mutationCatalog[monst->mutationIndex].canBeNegated
-            && BROGUE_VERSION_ATLEAST(1,9,3)) {
+        if (monst != &player && monst->mutationIndex > -1 && mutationCatalog[monst->mutationIndex].canBeNegated) {
 
             monst->mutationIndex = -1;
             negated = true;
@@ -4468,7 +4467,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 if (boltCatalog[BOLT_NEGATION].backColor) {
                     flashMonster(monst, boltCatalog[BOLT_NEGATION].backColor, 100);
                 }
-                if (BROGUE_VERSION_ATLEAST(1,9,4) && negated && autoID && canSeeMonster(monst)) {
+                if (negated && autoID && canSeeMonster(monst)) {
                     *autoID = true;
                 }
 
@@ -4540,13 +4539,8 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
                     newMonst = cloneMonster(monst, true, true);
                     if (newMonst) {
-                        if (BROGUE_VERSION_ATLEAST(1,9,1)) {
-                            monst->info.maxHP = newMonst->info.maxHP = (monst->info.maxHP + 1) / 2;
-                            monst->currentHP = newMonst->currentHP = min(monst->currentHP, monst->info.maxHP);
-                        } else {
-                            newMonst->currentHP = newMonst->info.maxHP = (newMonst->currentHP + 1) / 2;
-                            monst->currentHP = monst->info.maxHP = (monst->currentHP + 1) / 2;
-                        }
+                        monst->info.maxHP = newMonst->info.maxHP = (monst->info.maxHP + 1) / 2;
+                        monst->currentHP = newMonst->currentHP = min(monst->currentHP, monst->info.maxHP);
                         if (boltCatalog[BOLT_PLENTY].backColor) {
                             flashMonster(monst, boltCatalog[BOLT_PLENTY].backColor, 100);
                             flashMonster(newMonst, boltCatalog[BOLT_PLENTY].backColor, 100);
@@ -4708,9 +4702,7 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
             caster->xLoc = x;
             caster->yLoc = y;
             // Always break free on blink
-            if (BROGUE_VERSION_ATLEAST(1,9,4)) {
-                disentangle(caster);
-            }
+            disentangle(caster);
             applyInstantTileEffectsToCreature(caster);
             if (caster == &player) {
                 // increase scent turn number so monsters don't sniff around at the old cell like idiots

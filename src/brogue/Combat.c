@@ -1054,9 +1054,8 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
 
     if ((attacker->info.abilityFlags & MA_SEIZES)
         && (!(attacker->bookkeepingFlags & MB_SEIZING) || !(defender->bookkeepingFlags & MB_SEIZED))
-        && (!BROGUE_VERSION_ATLEAST(1,9,2) ||
-            (distanceBetween(attacker->xLoc, attacker->yLoc, defender->xLoc, defender->yLoc) == 1
-            && !diagonalBlocked(attacker->xLoc, attacker->yLoc, defender->xLoc, defender->yLoc, false)))) {
+        && (distanceBetween(attacker->xLoc, attacker->yLoc, defender->xLoc, defender->yLoc) == 1
+            && !diagonalBlocked(attacker->xLoc, attacker->yLoc, defender->xLoc, defender->yLoc, false))) {
 
         attacker->bookkeepingFlags |= MB_SEIZING;
         defender->bookkeepingFlags |= MB_SEIZED;
@@ -1641,7 +1640,7 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
     }
 
     if (!administrativeDeath && (decedent->info.abilityFlags & MA_DF_ON_DEATH)
-        && ((!BROGUE_VERSION_ATLEAST(1,9,3)) || !(decedent->bookkeepingFlags & MB_IS_FALLING))) {
+        && !(decedent->bookkeepingFlags & MB_IS_FALLING)) {
         spawnDungeonFeature(decedent->xLoc, decedent->yLoc, &dungeonFeatureCatalog[decedent->info.DFType], true, false);
 
         if (monsterText[decedent->info.monsterID].DFMessage[0] && canSeeMonster(decedent)) {
@@ -1691,7 +1690,7 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
                 creature *carriedMonster = decedent->carriedMonster;
                 decedent->carriedMonster = NULL;
                 prependCreature(monsters, carriedMonster);
-                
+
                 carriedMonster->xLoc = x;
                 carriedMonster->yLoc = y;
                 carriedMonster->ticksUntilTurn = 200;

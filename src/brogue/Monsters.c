@@ -682,11 +682,7 @@ boolean spawnMinions(short hordeID, creature *leader, boolean summoned, boolean 
         }
 
         for (iMember = 0; iMember < count; iMember++) {
-            if (BROGUE_VERSION_ATLEAST(1,9,4)) {
-                monst = generateMonster(theHorde->memberType[iSpecies], itemPossible, !summoned);
-            } else {
-                monst = generateMonster(theHorde->memberType[iSpecies], true, !summoned);
-            }
+            monst = generateMonster(theHorde->memberType[iSpecies], itemPossible, !summoned);
             failsafe = 0;
             do {
                 getQualifyingPathLocNear(&(monst->xLoc), &(monst->yLoc), x, y, summoned,
@@ -850,7 +846,7 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
         leader->info.intrinsicLightType = SACRIFICE_MARK_LIGHT;
     }
 
-    if (BROGUE_VERSION_ATLEAST(1,9,3) && (theHorde->flags & HORDE_MACHINE_THIEF)) {
+    if ((theHorde->flags & HORDE_MACHINE_THIEF)) {
         leader->safetyMap = allocGrid(); // Keep thieves from fleeing before they see the player
         fillGrid(leader->safetyMap, 0);
     }
@@ -960,11 +956,7 @@ boolean summonMinions(creature *summoner) {
         removeCreature(monsters, summoner);
     }
 
-    if (BROGUE_VERSION_ATLEAST(1,9,4)) {
-        atLeastOneMinion = spawnMinions(hordeID, summoner, true, false);
-    } else {
-        atLeastOneMinion = spawnMinions(hordeID, summoner, true, true);
-    }
+    atLeastOneMinion = spawnMinions(hordeID, summoner, true, false);
 
     if (hordeCatalog[hordeID].flags & HORDE_SUMMONED_AT_DISTANCE) {
         // Create a grid where "1" denotes a valid summoning location: within DCOLS/2 pathing distance,
@@ -1002,10 +994,6 @@ boolean summonMinions(creature *summoner) {
             monst->ticksUntilTurn = 101;
             monst->leader = summoner;
 
-            if (!BROGUE_VERSION_ATLEAST(1,9,4) && monst->carriedItem) {
-                deleteItem(monst->carriedItem);
-                monst->carriedItem = NULL;
-            }
             fadeInMonster(monst);
             host = monst;
         }
@@ -1164,9 +1152,7 @@ void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidance
         }
     }
     // Always break free on teleport
-    if (BROGUE_VERSION_ATLEAST(1,9,4)) {
-        disentangle(monst);
-    }
+    disentangle(monst);
     setMonsterLocation(monst, x, y);
     if (monst != &player) {
         chooseNewWanderDestination(monst);
@@ -1601,7 +1587,7 @@ boolean monsterCanShootWebs(creature *monst) {
 // Returns approximately double the actual (quasi-euclidian) distance.
 short awarenessDistance(creature *observer, creature *target) {
     long perceivedDistance;
-    
+
     // When determining distance from the player for purposes of monster state changes
     // (i.e. whether they start or stop hunting), take the scent value of the monster's tile
     // OR, if the monster is in the player's FOV (including across chasms, through green crystal, etc.),
@@ -1613,7 +1599,7 @@ short awarenessDistance(creature *observer, creature *target) {
     perceivedDistance = (rogue.scentTurnNumber - scentMap[observer->xLoc][observer->yLoc]); // this value is double the apparent distance
     if ((target == &player && (pmap[observer->xLoc][observer->yLoc].flags & IN_FIELD_OF_VIEW))
         || (target != &player && openPathBetween(observer->xLoc, observer->yLoc, target->xLoc, target->yLoc))) {
-        
+
         perceivedDistance = min(perceivedDistance, scentDistance(observer->xLoc, observer->yLoc, target->xLoc, target->yLoc));
     }
 
@@ -1721,7 +1707,7 @@ void updateMonsterState(creature *monst) {
     }
 
     closestFearedEnemy = DCOLS+DROWS;
-    
+
     boolean handledPlayer = false;
     for (creatureIterator it = iterateCreatures(monsters); !handledPlayer || hasNextCreature(it);) {
         creature *monst2 = !handledPlayer ? &player : nextCreature(&it);
@@ -2444,8 +2430,7 @@ boolean generallyValidBoltTarget(creature *caster, creature *target) {
         // Can't target yourself; that's the fundamental theorem of Brogue bolts.
         return false;
     }
-    if (BROGUE_VERSION_ATLEAST(1,9,3)
-        && caster->status[STATUS_DISCORDANT]
+    if (caster->status[STATUS_DISCORDANT]
         && caster->creatureState == MONSTER_WANDERING
         && target == &player) {
         // Discordant monsters always try to cast spells regardless of whether
@@ -3970,7 +3955,6 @@ void demoteMonsterFromLeadership(creature *monst) {
     }
 
     for (int level = 0; level <= DEEPEST_LEVEL; level++) {
-        if (!BROGUE_VERSION_ATLEAST(1,9,1) && level > 0) break;
         // we'll work on this level's monsters first, so that the new leader is preferably on the same level
         creatureList *nearbyList = (level == 0 ? monsters : &levels[level-1].monsters);
         for (creatureIterator it = iterateCreatures(nearbyList); hasNextCreature(it);) {
@@ -4002,7 +3986,6 @@ void demoteMonsterFromLeadership(creature *monst) {
     }
 
     for (int level = 0; level <= DEEPEST_LEVEL; level++) {
-        if (!BROGUE_VERSION_ATLEAST(1,9,1) && level > 0) break;
         creatureList *candidateList = (level == 0 ? dormantMonsters : &levels[level-1].dormantMonsters);
         for (creatureIterator it = iterateCreatures(candidateList); hasNextCreature(it);) {
             creature *follower = nextCreature(&it);

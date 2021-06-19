@@ -1356,7 +1356,7 @@ void monstersFall() {
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         if ((monst->bookkeepingFlags & MB_IS_FALLING) || monsterShouldFall(monst)) {
-            if (BROGUE_VERSION_ATLEAST(1,9,3)) monst->bookkeepingFlags |= MB_IS_FALLING;
+            monst->bookkeepingFlags |= MB_IS_FALLING;
 
             x = monst->xLoc;
             y = monst->yLoc;
@@ -1367,25 +1367,16 @@ void monstersFall() {
                 messageWithColor(buf2, messageColorFromVictim(monst), 0);
             }
 
-            if (!BROGUE_VERSION_ATLEAST(1,9,3)) {
-                monst->status[STATUS_ENTRANCED] = 0;
-                monst->bookkeepingFlags |= MB_PREPLACED;
-                monst->bookkeepingFlags &= ~(MB_IS_FALLING | MB_SEIZED | MB_SEIZING);
-                monst->targetCorpseLoc[0] = monst->targetCorpseLoc[1] = 0;
-            }
-
             if (monst->info.flags & MONST_GETS_TURN_ON_ACTIVATION) {
                 // Guardians and mirrored totems never survive the fall. If they did, they might block the level below.
                 killCreature(monst, false);
             } else if (!inflictDamage(NULL, monst, randClumpedRange(6, 12, 2), &red, false)) {
                 demoteMonsterFromLeadership(monst);
 
-                if (BROGUE_VERSION_ATLEAST(1,9,3)) {
-                    monst->status[STATUS_ENTRANCED] = 0;
-                    monst->bookkeepingFlags |= MB_PREPLACED;
-                    monst->bookkeepingFlags &= ~(MB_IS_FALLING | MB_SEIZED | MB_SEIZING);
-                    monst->targetCorpseLoc[0] = monst->targetCorpseLoc[1] = 0;
-                }
+                monst->status[STATUS_ENTRANCED] = 0;
+                monst->bookkeepingFlags |= MB_PREPLACED;
+                monst->bookkeepingFlags &= ~(MB_IS_FALLING | MB_SEIZED | MB_SEIZING);
+                monst->targetCorpseLoc[0] = monst->targetCorpseLoc[1] = 0;
 
                 // remove from monster chain
                 removeCreature(monsters, monst);
@@ -2500,7 +2491,7 @@ void playerTurnEnded() {
                 }
             }
 
-            if (canSeeMonster(monst) && (BROGUE_VERSION_ATLEAST(1,9,4) || !(monst->bookkeepingFlags & (MB_WAS_VISIBLE | MB_ALREADY_SEEN)))) {
+            if (canSeeMonster(monst)) {
                 monst->bookkeepingFlags |= MB_WAS_VISIBLE;
                 if (cellHasTerrainFlag(monst->xLoc, monst->yLoc, T_OBSTRUCTS_PASSABILITY)
                     && cellHasTMFlag(monst->xLoc, monst->yLoc, TM_IS_SECRET)) {
