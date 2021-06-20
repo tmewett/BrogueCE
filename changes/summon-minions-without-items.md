@@ -1,2 +1,0 @@
-Fixed a bug where summoned minions could spawn with a carried item which was then deleted, making it unavailable for 
-future monster drops and leading to differences in available items for players playing the same seed 

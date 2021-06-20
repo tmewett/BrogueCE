@@ -1,3 +1,113 @@
+1.10
+====
+
+A new gameplay version is here! Features some new mechanics, rebalancing, UI
+improvements, and bug fixes. Replays and saves are not compatible with 1.9.x.
+
+CE's scope has been changing since we released 1.9. Originally, we weren't
+considering making many original or notable changes to the gameplay itself. But
+now that the project is more mature, and importantly Pender (Brian) is involved
+in development, we are now open to these kind of changes. Other than that, the
+project is just the same - community-focused and trying to make a great game
+even better. Enjoy!
+
+Thanks to many contributors: Andy Bayer, Antony Boucher, zenzombie, bleakley,
+Byron Altice, Jon Knapp, Konstantin Mikhailov, Nathan Fenner, RojjaCebolla,
+SanatMishra, anaseto, austen0, flend, pender, and withinwheels.
+
+## Notable changes
+-
+  It is now possible to fall through chasms into deep water, without damage.
+  Falling into shallow water or bog deals half the damage as hitting hard floor.
+  Items falling through chasms may now land into deep water, another chasm, or
+  lava.
+-
+  Rebalance Staff of Obstruction builds by (1) preventing crystals from
+  persisting on cells occupied by creatures, and (2) allowing hunting monsters
+  to remain hunting as long as they are close enough and can see the player,
+  even if impassable transparent terrain is between them.
+-
+  Cautious monsters now enter corridors if they have been attacked recently and
+  are below 50% health.
+-
+  Allies will no longer attack or cast spells at sacrifice targets.
+-
+  Aiming at a target now automatically aims for or avoids enemies/allies/walls,
+  depending on the projectile type. This removes most of the need to aim for a
+  cell beyond your intended target to get the best result. It also applies to
+  spells cast by enemies!
+-
+  Increased average damage for flails by 0.5, and flails now have a 2.5% (up
+  from 0%) chance to be runic.
+-
+  Added a sanctuary tile in front of spark turret vaults to prevent allies from
+  destroying the turrets.
+-
+  Scrolls of sanctuary can now be used on brimstone and obsidian.
+-
+  Added a hybrid graphical mode that uses text for creatures and items but
+  graphical tiles for everything else.
+-
+  The sidebar and monster details now prominently display that a monster has
+  been affected by negation.
+-
+  The message archive is now larger, and can be navigated with the up and down
+  arrow keys. Holding shift scrolls one line at a time, holding control jumps to
+  the end.
+-
+  Pressing "w" will hot-swap between recently equipped gear, enabling
+  weapon/armor/ring juggling.
+-
+  "Untempted" feat has been added, for picking up no gold.
+-
+  "Mystic" feat has been renamed to "Ascetic".
+
+## Bug fixes and other changes
+-
+  The save game feature is now out of beta!
+-
+  Fixed a bug causing the game to crash when polymorphing a lich or phoenix.
+-
+  Seeds are now 64-bits, going up to 18446744073709551615! There are now 2
+  billion times more dungeons to explore!
+-
+  Wands of negation auto-ID if the bolt has an effect. A combat message is shown
+  for any monster affected by negation.
+-
+  When wearing known respiration armor, don't warn when stepping on immune gas
+  traps.
+-
+  Staff descriptions now report the number of turns since their last use.
+-
+  Fixed a bug where summoned minions could spawn with a carried item which was
+  then deleted, making it unavailable for future monster drops and leading to
+  differences in available items for players playing the same seed.
+-
+  When throwing a potion, auto-targeting is now enabled only for potions known
+  to be malevolent. When throwing a melee weapon, auto-targeting is now
+  disabled.
+-
+  Fixed a bug with machine rooms where events (such as guardian movement) could
+  trigger twice.
+-
+  Dungeon generation on ARM processors is now the same as with x86.
+-
+  Fixed doors sometimes being generated adjacent to one another.
+-
+  Fixed a bug that caused negated weapons and armor to remain illuminated when
+  out of line of sight.
+-
+  Fixed a bug which slightly delayed the reset of stuck status after blinking or
+  teleporting in or out of a web/net. Adjacent monsters at the destination were
+  afforded a free hit while the player was "dangling helplessly" in error.
+-
+  Repeated messages now sometimes collapse together with a count.
+-
+  Use 24-bit colors when the terminal supports it (curses build).
+-
+  Brogue now starts with a reasonable window size on ultra-wide monitors.
+
+
 1.9.3
 =====
 

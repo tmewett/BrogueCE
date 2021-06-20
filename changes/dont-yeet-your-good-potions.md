@@ -1,1 +1,0 @@
-When throwing a potion, auto-targeting is now enabled only for potions known to be malevolent

@@ -1,1 +1,0 @@
-Fixed a bug causing the game to crash when polymorphing a lich or phoenix

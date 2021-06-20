@@ -1,1 +1,0 @@
-Use 24-bit colors when the terminal supports it (curses build).
