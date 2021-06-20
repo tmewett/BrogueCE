@@ -479,39 +479,24 @@ void vomit(creature *monst) {
 void moveEntrancedMonsters(enum directions dir) {
     dir = oppositeDirection(dir);
 
-    if (BROGUE_VERSION_ATLEAST(1,9,3)) {
-        for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
-            creature *monst = nextCreature(&it);
-            monst->bookkeepingFlags &= ~MB_HAS_ENTRANCED_MOVED;
-        }
-
-        for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
-            creature *monst = nextCreature(&it);
-            if (!(monst->bookkeepingFlags & MB_HAS_ENTRANCED_MOVED)
-                && monst->status[STATUS_ENTRANCED]
-                && !monst->status[STATUS_STUCK]
-                && !monst->status[STATUS_PARALYZED]
-                && !(monst->bookkeepingFlags & MB_CAPTIVE)) {
-
-                moveMonster(monst, nbDirs[dir][0], nbDirs[dir][1]);
-                monst->bookkeepingFlags |= MB_HAS_ENTRANCED_MOVED;
-                restartIterator(&it); // loop through from the beginning to be safe
-            }
-        }
-
-    } else {
-        for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
-            creature *monst = nextCreature(&it);
-            if (monst->status[STATUS_ENTRANCED]
-                && !monst->status[STATUS_STUCK]
-                && !monst->status[STATUS_PARALYZED]
-                && !(monst->bookkeepingFlags & MB_CAPTIVE)) {
-
-                moveMonster(monst, nbDirs[dir][0], nbDirs[dir][1]);
-            }
-        }
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
+        monst->bookkeepingFlags &= ~MB_HAS_ENTRANCED_MOVED;
     }
 
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
+        if (!(monst->bookkeepingFlags & MB_HAS_ENTRANCED_MOVED)
+            && monst->status[STATUS_ENTRANCED]
+            && !monst->status[STATUS_STUCK]
+            && !monst->status[STATUS_PARALYZED]
+            && !(monst->bookkeepingFlags & MB_CAPTIVE)) {
+
+            moveMonster(monst, nbDirs[dir][0], nbDirs[dir][1]);
+            monst->bookkeepingFlags |= MB_HAS_ENTRANCED_MOVED;
+            restartIterator(&it); // loop through from the beginning to be safe
+        }
+    }
 }
 
 void becomeAllyWith(creature *monst) {
@@ -865,27 +850,6 @@ boolean playerMoves(short direction) {
             }
         }
 
-        if (!BROGUE_VERSION_ATLEAST(1,9,1) && player.status[STATUS_STUCK] && cellHasTerrainFlag(x, y, T_ENTANGLES)) {
-                // Don't interrupt exploration with this message.
-            if (--player.status[STATUS_STUCK]) {
-                if (!rogue.automationActive) {
-                    message("you struggle but cannot free yourself.", 0);
-                }
-            } else {
-                if (!rogue.automationActive) {
-                    message("you break free!", 0);
-                }
-                if (tileCatalog[pmap[x][y].layers[SURFACE]].flags & T_ENTANGLES) {
-                    pmap[x][y].layers[SURFACE] = NOTHING;
-                }
-            }
-            moveEntrancedMonsters(direction);
-            committed = true;
-            if (player.status[STATUS_STUCK]) {
-                playerTurnEnded();
-                return true;
-            }
-        }
     }
 
     if (((!cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY) || (cellHasTMFlag(newX, newY, TM_PROMOTES_WITH_KEY) && keyInPackFor(newX, newY)))
@@ -1101,7 +1065,7 @@ boolean playerMoves(short direction) {
             }
         }
 
-        if (BROGUE_VERSION_ATLEAST(1,9,1) && player.status[STATUS_STUCK] && cellHasTerrainFlag(x, y, T_ENTANGLES)) {
+        if (player.status[STATUS_STUCK] && cellHasTerrainFlag(x, y, T_ENTANGLES)) {
                 // Don't interrupt exploration with this message.
             if (--player.status[STATUS_STUCK]) {
                 if (!rogue.automationActive) {

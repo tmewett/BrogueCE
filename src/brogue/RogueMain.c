@@ -576,10 +576,6 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             freeGrid(monst->mapToMe);
             monst->mapToMe = NULL;
         }
-        if (!BROGUE_VERSION_ATLEAST(1,9,3) && monst->safetyMap) {
-            freeGrid(monst->safetyMap);
-            monst->safetyMap = NULL;
-        }
     }
     levels[oldLevelNumber-1].items = floorItems->nextItem;
 
@@ -903,7 +899,7 @@ void freeEverything() {
     for (i=0; i<DEEPEST_LEVEL+1; i++) {
         freeCreatureList(&levels[i].monsters);
         freeCreatureList(&levels[i].dormantMonsters);
-        
+
         for (theItem = levels[i].items; theItem != NULL; theItem = theItem2) {
             theItem2 = theItem->nextItem;
             deleteItem(theItem);
@@ -917,7 +913,7 @@ void freeEverything() {
     scentMap = NULL;
     freeCreatureList(&graveyard);
     freeCreatureList(&purgatory);
-    
+
     for (theItem = floorItems; theItem != NULL; theItem = theItem2) {
         theItem2 = theItem->nextItem;
         deleteItem(theItem);

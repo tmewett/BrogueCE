@@ -514,7 +514,7 @@ void initRecording() {
             rogue.gameHasEnded = true;
         }
 
-        if (wizardMode != rogue.wizard && BROGUE_VERSION_ATLEAST(1,9,2)) {
+        if (wizardMode != rogue.wizard) {
             // wizard game cannot be played in normal mode and vice versa
             rogue.playbackMode = false;
             rogue.playbackFastForward = false;
