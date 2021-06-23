@@ -2594,9 +2594,6 @@ typedef struct feat {
 #define PDS_OBSTRUCTION -2
 #define PDS_CELL(map, x, y) ((map)->links + ((x) + DCOLS * (y)))
 
-typedef struct pdsLink pdsLink;
-typedef struct pdsMap pdsMap;
-
 typedef struct brogueButton {
     char text[COLS*3];          // button label; can include color escapes
     short x;                    // button's leftmost cell will be drawn at (x, y)
@@ -3298,9 +3295,6 @@ extern "C" {
                           rogueEvent *returnEvent);
 
     void dijkstraScan(short **distanceMap, short **costMap, boolean useDiagonals);
-    void pdsClear(pdsMap *map, short maxDistance, boolean eightWays);
-    void pdsSetDistance(pdsMap *map, short x, short y, short distance);
-    void pdsBatchOutput(pdsMap *map, short **distanceMap);
 
 #if defined __cplusplus
 }
