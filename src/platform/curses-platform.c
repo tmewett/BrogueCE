@@ -62,7 +62,7 @@ static char glyphToAscii(enum displayGlyph glyph) {
 }
 
 static void curses_plotChar(enum displayGlyph ch,
-              short xLoc, short yLoc,
+              short loc.x, short loc.y,
               short foreRed, short foreGreen, short foreBlue,
               short backRed, short backGreen, short backBlue) {
 
@@ -79,7 +79,7 @@ static void curses_plotChar(enum displayGlyph ch,
     ch = glyphToAscii(ch);
 
     if (ch < ' ' || ch > 127) ch = ' ';
-    Term.put(xLoc, yLoc, ch, &fore, &back);
+    Term.put(loc.x, loc.y, ch, &fore, &back);
 }
 
 

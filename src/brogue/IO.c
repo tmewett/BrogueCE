@@ -109,8 +109,8 @@ void hideCursor() {
 void showCursor() {
     // Return or enter turns on cursor mode. When the path is hidden, move the cursor to the player.
     if (!coordinatesAreInMap(rogue.cursorLoc[0], rogue.cursorLoc[1])) {
-        rogue.cursorLoc[0] = player.xLoc;
-        rogue.cursorLoc[1] = player.yLoc;
+        rogue.cursorLoc[0] = player.loc.x;
+        rogue.cursorLoc[1] = player.loc.y;
         rogue.cursorMode = true;
         rogue.cursorPathIntensity = (rogue.cursorMode ? 50 : 20);
     } else {
@@ -153,7 +153,7 @@ void processSnapMap(short **map) {
 
     populateCreatureCostMap(costMap, &player);
     fillGrid(map, 30000);
-    map[player.xLoc][player.yLoc] = 0;
+    map[player.loc.x][player.loc.y] = 0;
     dijkstraScan(map, costMap, true);
     for (i = 0; i < DCOLS; i++) {
         for (j = 0; j < DROWS; j++) {
@@ -592,16 +592,16 @@ void mainInputLoop() {
         steps = 0;
         clearCursorPath();
 
-        originLoc[0] = player.xLoc;
-        originLoc[1] = player.yLoc;
+        originLoc[0] = player.loc.x;
+        originLoc[1] = player.loc.y;
 
         if (playingBack && rogue.cursorMode) {
             temporaryMessage("Examine what? (<hjklyubn>, mouse, or <tab>)", 0);
         }
 
         if (!playingBack
-            && player.xLoc == cursor[0]
-            && player.yLoc == cursor[1]
+            && player.loc.x == cursor[0]
+            && player.loc.y == cursor[1]
             && oldTargetLoc[0] == cursor[0]
             && oldTargetLoc[1] == cursor[1]) {
 
@@ -618,7 +618,7 @@ void mainInputLoop() {
         populateCreatureCostMap(costMap, &player);
 
         fillGrid(playerPathingMap, 30000);
-        playerPathingMap[player.xLoc][player.yLoc] = 0;
+        playerPathingMap[player.loc.x][player.loc.y] = 0;
         dijkstraScan(playerPathingMap, costMap, true);
         processSnapMap(cursorSnapMap);
 
@@ -650,7 +650,7 @@ void mainInputLoop() {
                     costMap[pathDestination[0]][pathDestination[1]] = 1;
                     dijkstraScan(playerPathingMap, costMap, true);
                     costMap[pathDestination[0]][pathDestination[1]] = backupCost;
-                    steps = getPlayerPathOnMap(path, playerPathingMap, player.xLoc, player.yLoc);
+                    steps = getPlayerPathOnMap(path, playerPathingMap, player.loc.x, player.loc.y);
 
 //                  steps = getPlayerPathOnMap(path, playerPathingMap, pathDestination[0], pathDestination[1]) - 1; // Get new path.
 //                  reversePath(path, steps);   // Flip it around, back-to-front.
@@ -661,7 +661,7 @@ void mainInputLoop() {
                     }
                     steps++;
 //                  if (playerPathingMap[cursor[0]][cursor[1]] != 1
-                    if (playerPathingMap[player.xLoc][player.yLoc] != 1
+                    if (playerPathingMap[player.loc.x][player.loc.y] != 1
                         || pathDestination[0] != cursor[0]
                         || pathDestination[1] != cursor[1]) {
 
@@ -676,7 +676,7 @@ void mainInputLoop() {
                            &white,
                            (steps <= 0
                             || (path[steps-1][0] == cursor[0] && path[steps-1][1] == cursor[1])
-                            || (!playingBack && distanceBetween(player.xLoc, player.yLoc, cursor[0], cursor[1]) <= 1) ? 100 : 25),
+                            || (!playingBack && distanceBetween(player.loc.x, player.loc.y, cursor[0], cursor[1]) <= 1) ? 100 : 25),
                            true);
 
                 oldTargetLoc[0] = cursor[0];
@@ -771,8 +771,8 @@ void mainInputLoop() {
             }
 
             if (theEvent.eventType == KEYSTROKE
-                && (theEvent.param1 == ASCEND_KEY && cursor[0] == rogue.upLoc[0] && cursor[1] == rogue.upLoc[1]
-                    || theEvent.param1 == DESCEND_KEY && cursor[0] == rogue.downLoc[0] && cursor[1] == rogue.downLoc[1])) {
+                && (theEvent.param1 == ASCEND_KEY && cursor[0] == rogue.upLoc.x && cursor[1] == rogue.upLoc.y
+                    || theEvent.param1 == DESCEND_KEY && cursor[0] == rogue.downLoc.x && cursor[1] == rogue.downLoc.y)) {
 
                     targetConfirmed = true;
                     doEvent = false;
@@ -794,7 +794,7 @@ void mainInputLoop() {
                 && steps > 1) {
                 // Control-clicking moves the player one step along the path.
                 for (dir=0;
-                     dir < DIRECTION_COUNT && (player.xLoc + nbDirs[dir][0] != path[0][0] || player.yLoc + nbDirs[dir][1] != path[0][1]);
+                     dir < DIRECTION_COUNT && (player.loc.x + nbDirs[dir][0] != path[0][0] || player.loc.y + nbDirs[dir][1] != path[0][1]);
                      dir++);
                 playerMoves(dir);
             } else if (D_WORMHOLING) {
@@ -805,14 +805,14 @@ void mainInputLoop() {
                     && originLoc[1] == cursor[1]) {
 
                     confirmMessages();
-                } else if (abs(player.xLoc - cursor[0]) + abs(player.yLoc - cursor[1]) == 1 // horizontal or vertical
-                           || (distanceBetween(player.xLoc, player.yLoc, cursor[0], cursor[1]) == 1 // includes diagonals
-                               && (!diagonalBlocked(player.xLoc, player.yLoc, cursor[0], cursor[1], !rogue.playbackOmniscience)
+                } else if (abs(player.loc.x - cursor[0]) + abs(player.loc.y - cursor[1]) == 1 // horizontal or vertical
+                           || (distanceBetween(player.loc.x, player.loc.y, cursor[0], cursor[1]) == 1 // includes diagonals
+                               && (!diagonalBlocked(player.loc.x, player.loc.y, cursor[0], cursor[1], !rogue.playbackOmniscience)
                                    || ((pmap[cursor[0]][cursor[1]].flags & HAS_MONSTER) && (monsterAtLoc(cursor[0], cursor[1])->info.flags & MONST_ATTACKABLE_THRU_WALLS)) // there's a turret there
                                    || ((terrainFlags(cursor[0], cursor[1]) & T_OBSTRUCTS_PASSABILITY) && (terrainMechFlags(cursor[0], cursor[1]) & TM_PROMOTES_ON_PLAYER_ENTRY))))) { // there's a lever there
                                                                                                                                                                                       // Clicking one space away will cause the player to try to move there directly irrespective of path.
                                    for (dir=0;
-                                        dir < DIRECTION_COUNT && (player.xLoc + nbDirs[dir][0] != cursor[0] || player.yLoc + nbDirs[dir][1] != cursor[1]);
+                                        dir < DIRECTION_COUNT && (player.loc.x + nbDirs[dir][0] != cursor[0] || player.loc.y + nbDirs[dir][1] != cursor[1]);
                                         dir++);
                                    playerMoves(dir);
                                } else if (steps) {
@@ -1482,7 +1482,7 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
     bakeTerrainColors(&cellForeColor, &cellBackColor, x, y);
 
     if (rogue.displayAggroRangeMode && (pmap[x][y].flags & IN_FIELD_OF_VIEW)) {
-        distance = min(rogue.scentTurnNumber - scentMap[x][y], scentDistance(x, y, player.xLoc, player.yLoc));
+        distance = min(rogue.scentTurnNumber - scentMap[x][y], scentDistance(x, y, player.loc.x, player.loc.y));
         if (distance > rogue.aggroRange * 2) {
             applyColorAverage(&cellForeColor, &orange, 12);
             applyColorAverage(&cellBackColor, &orange, 12);
@@ -1776,7 +1776,8 @@ void colorMultiplierFromDungeonLight(short x, short y, color *editColor) {
     editColor->colorDances = false;
 }
 
-void plotCharWithColor(enum displayGlyph inputChar, short xLoc, short yLoc, const color *cellForeColor, const color *cellBackColor) {
+void plotCharWithColor(enum displayGlyph inputChar, short x, short y, const color *cellForeColor, const color *cellBackColor) {
+    pos loc = { x, y };
     short oldRNG;
 
     short foreRed = cellForeColor->red,
@@ -1789,7 +1790,7 @@ void plotCharWithColor(enum displayGlyph inputChar, short xLoc, short yLoc, cons
 
     foreRand, backRand;
 
-    brogueAssert(coordinatesAreInWindow(xLoc, yLoc));
+    brogueAssert(coordinatesAreInWindow(loc.x, loc.y));
 
     if (rogue.gameHasEnded || rogue.playbackFastForward) {
         return;
@@ -1823,7 +1824,7 @@ void plotCharWithColor(enum displayGlyph inputChar, short xLoc, short yLoc, cons
         inputChar = ' ';
     }
 
-    cellDisplayBuffer *target = &displayBuffer[xLoc][yLoc];
+    cellDisplayBuffer *target = &displayBuffer[loc.x][loc.y];
     target->character = inputChar;
     target->foreColorComponents[0] = foreRed;
     target->foreColorComponents[1] = foreGreen;
@@ -2153,7 +2154,7 @@ void funkyFade(cellDisplayBuffer displayBuf[COLS][ROWS], const color *colorStart
     fastForward = false;
     distanceMap = allocGrid();
     fillGrid(distanceMap, 0);
-    calculateDistances(distanceMap, player.xLoc, player.yLoc, T_OBSTRUCTS_PASSABILITY, 0, true, true);
+    calculateDistances(distanceMap, player.loc.x, player.loc.y, T_OBSTRUCTS_PASSABILITY, 0, true, true);
 
     for (i=0; i<COLS; i++) {
         x2 = (double) ((i - x) * 5.0 / COLS);
@@ -2350,8 +2351,8 @@ void exploreKey(const boolean controlKey) {
     dir = adjacentFightingDir();
     if (dir == NO_DIRECTION) {
         for (dir = 0; dir < DIRECTION_COUNT; dir++) {
-            x = player.xLoc + nbDirs[dir][0];
-            y = player.yLoc + nbDirs[dir][1];
+            x = player.loc.x + nbDirs[dir][0];
+            y = player.loc.y + nbDirs[dir][1];
             if (coordinatesAreInMap(x, y)
                 && !(pmap[x][y].flags & DISCOVERED)) {
 
@@ -2360,8 +2361,8 @@ void exploreKey(const boolean controlKey) {
             }
         }
         if (!tooDark) {
-            x = finalX = player.xLoc;
-            y = finalY = player.yLoc;
+            x = finalX = player.loc.x;
+            y = finalY = player.loc.y;
 
             exploreMap = allocGrid();
             getExploreMap(exploreMap, false);
@@ -2379,13 +2380,13 @@ void exploreKey(const boolean controlKey) {
             freeGrid(exploreMap);
         }
     } else {
-        x = finalX = player.xLoc + nbDirs[dir][0];
-        y = finalY = player.yLoc + nbDirs[dir][1];
+        x = finalX = player.loc.x + nbDirs[dir][0];
+        y = finalY = player.loc.y + nbDirs[dir][1];
     }
 
     if (tooDark) {
         message("It's too dark to explore!", 0);
-    } else if (x == player.xLoc && y == player.yLoc) {
+    } else if (x == player.loc.x && y == player.loc.y) {
         message("I see no path for further exploration.", 0);
     } else if (proposeOrConfirmLocation(finalX, finalY, "I see no path for further exploration.")) {
         explore(controlKey ? 1 : 20); // Do the exploring until interrupted.
@@ -2520,8 +2521,8 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             if (D_WORMHOLING) {
                 recordKeystroke(DESCEND_KEY, false, false);
                 useStairs(1);
-            } else if (proposeOrConfirmLocation(rogue.downLoc[0], rogue.downLoc[1], "I see no way down.")) {
-                travel(rogue.downLoc[0], rogue.downLoc[1], true);
+            } else if (proposeOrConfirmLocation(rogue.downLoc.x, rogue.downLoc.y, "I see no way down.")) {
+                travel(rogue.downLoc.x, rogue.downLoc.y, true);
             }
             break;
         case ASCEND_KEY:
@@ -2529,8 +2530,8 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             if (D_WORMHOLING) {
                 recordKeystroke(ASCEND_KEY, false, false);
                 useStairs(-1);
-            } else if (proposeOrConfirmLocation(rogue.upLoc[0], rogue.upLoc[1], "I see no way up.")) {
-                travel(rogue.upLoc[0], rogue.upLoc[1], true);
+            } else if (proposeOrConfirmLocation(rogue.upLoc.x, rogue.upLoc.y, "I see no way up.")) {
+                travel(rogue.upLoc.x, rogue.upLoc.y, true);
             }
             break;
         case RETURN_KEY:
@@ -2716,7 +2717,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             /*DEBUG {
                 cellDisplayBuffer dbuf[COLS][ROWS];
                 copyDisplayBuffer(dbuf, displayBuffer);
-                funkyFade(dbuf, &white, 0, 100, mapToWindowX(player.xLoc), mapToWindowY(player.yLoc), false);
+                funkyFade(dbuf, &white, 0, 100, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
             }*/
             // DEBUG displayLoops();
             // DEBUG displayChokeMap();
@@ -2724,7 +2725,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             //DEBUG displayWaypoints();
             // DEBUG {displayGrid(safetyMap); displayMoreSign(); displayLevel();}
             // parseFile();
-            // DEBUG spawnDungeonFeature(player.xLoc, player.yLoc, &dungeonFeatureCatalog[DF_METHANE_GAS_ARMAGEDDON], true, false);
+            // DEBUG spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_METHANE_GAS_ARMAGEDDON], true, false);
             printSeed();
             break;
         case EASY_MODE_KEY:
@@ -3030,8 +3031,8 @@ void displayMonsterFlashes(boolean flashingEnabled) {
         if (monst->bookkeepingFlags & MB_WILL_FLASH) {
             monst->bookkeepingFlags &= ~MB_WILL_FLASH;
             if (flashingEnabled && canSeeMonster(monst) && count < 100) {
-                x[count] = monst->xLoc;
-                y[count] = monst->yLoc;
+                x[count] = monst->loc.x;
+                y[count] = monst->loc.y;
                 strength[count] = monst->flashStrength;
                 flashColor[count] = &(monst->flashColor);
                 count++;
@@ -3772,8 +3773,8 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
 
     printY = 0;
 
-    px = player.xLoc;
-    py = player.yLoc;
+    px = player.loc.x;
+    py = player.loc.y;
 
     zeroOutGrid(addedEntity);
 
@@ -3805,7 +3806,7 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
     entityList[displayEntityCount] = &player;
     entityType[displayEntityCount] = EDT_CREATURE;
     displayEntityCount++;
-    addedEntity[player.xLoc][player.yLoc] = true;
+    addedEntity[player.loc.x][player.loc.y] = true;
 
     // Focused entity, if it must go first.
     if (focusedEntityMustGoFirst && !addedEntity[focusX][focusY]) {
@@ -3824,16 +3825,16 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
             for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
                 creature *monst = nextCreature(&it);
                 if ((canDirectlySeeMonster(monst) || (indirectVision && (canSeeMonster(monst) || rogue.playbackOmniscience)))
-                    && !addedEntity[monst->xLoc][monst->yLoc]
+                    && !addedEntity[monst->loc.x][monst->loc.y]
                     && !(monst->info.flags & MONST_NOT_LISTED_IN_SIDEBAR)
-                    && (px - monst->xLoc) * (px - monst->xLoc) + (py - monst->yLoc) * (py - monst->yLoc) < shortestDistance) {
+                    && (px - monst->loc.x) * (px - monst->loc.x) + (py - monst->loc.y) * (py - monst->loc.y) < shortestDistance) {
 
-                    shortestDistance = (px - monst->xLoc) * (px - monst->xLoc) + (py - monst->yLoc) * (py - monst->yLoc);
+                    shortestDistance = (px - monst->loc.x) * (px - monst->loc.x) + (py - monst->loc.y) * (py - monst->loc.y);
                     closestMonst = monst;
                 }
             }
             if (shortestDistance < 10000) {
-                addedEntity[closestMonst->xLoc][closestMonst->yLoc] = true;
+                addedEntity[closestMonst->loc.x][closestMonst->loc.y] = true;
                 entityList[displayEntityCount] = closestMonst;
                 entityType[displayEntityCount] = EDT_CREATURE;
                 displayEntityCount++;
@@ -3844,16 +3845,16 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
         do {
             shortestDistance = 10000;
             for (theItem = floorItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
-                if ((playerCanDirectlySee(theItem->xLoc, theItem->yLoc) || (indirectVision && (playerCanSeeOrSense(theItem->xLoc, theItem->yLoc) || rogue.playbackOmniscience)))
-                    && !addedEntity[theItem->xLoc][theItem->yLoc]
-                    && (px - theItem->xLoc) * (px - theItem->xLoc) + (py - theItem->yLoc) * (py - theItem->yLoc) < shortestDistance) {
+                if ((playerCanDirectlySee(theItem->loc.x, theItem->loc.y) || (indirectVision && (playerCanSeeOrSense(theItem->loc.x, theItem->loc.y) || rogue.playbackOmniscience)))
+                    && !addedEntity[theItem->loc.x][theItem->loc.y]
+                    && (px - theItem->loc.x) * (px - theItem->loc.x) + (py - theItem->loc.y) * (py - theItem->loc.y) < shortestDistance) {
 
-                    shortestDistance = (px - theItem->xLoc) * (px - theItem->xLoc) + (py - theItem->yLoc) * (py - theItem->yLoc);
+                    shortestDistance = (px - theItem->loc.x) * (px - theItem->loc.x) + (py - theItem->loc.y) * (py - theItem->loc.y);
                     closestItem = theItem;
                 }
             }
             if (shortestDistance < 10000) {
-                addedEntity[closestItem->xLoc][closestItem->yLoc] = true;
+                addedEntity[closestItem->loc.x][closestItem->loc.y] = true;
                 entityList[displayEntityCount] = closestItem;
                 entityType[displayEntityCount] = EDT_ITEM;
                 displayEntityCount++;
@@ -3893,16 +3894,16 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
     for (i=0; i<displayEntityCount && printY < ROWS - 1; i++) { // Bottom line is reserved for the depth.
         oldPrintY = printY;
         if (entityType[i] == EDT_CREATURE) {
-            x = ((creature *) entityList[i])->xLoc;
-            y = ((creature *) entityList[i])->yLoc;
+            x = ((creature *) entityList[i])->loc.x;
+            y = ((creature *) entityList[i])->loc.y;
             printY = printMonsterInfo((creature *) entityList[i],
                                       printY,
                                       (focusEntity && (x != focusX || y != focusY)),
                                       (x == focusX && y == focusY));
 
         } else if (entityType[i] == EDT_ITEM) {
-            x = ((item *) entityList[i])->xLoc;
-            y = ((item *) entityList[i])->yLoc;
+            x = ((item *) entityList[i])->loc.x;
+            y = ((item *) entityList[i])->loc.y;
             printY = printItemInfo((item *) entityList[i],
                                    printY,
                                    (focusEntity && (x != focusX || y != focusY)),
@@ -4432,7 +4433,7 @@ void displayGrid(short **map) {
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (cellHasTerrainFlag(i, j, T_WAYPOINT_BLOCKER) || (map[i][j] == map[0][0]) || (i == player.xLoc && j == player.yLoc)) {
+            if (cellHasTerrainFlag(i, j, T_WAYPOINT_BLOCKER) || (map[i][j] == map[0][0]) || (i == player.loc.x && j == player.loc.y)) {
                 continue;
             }
             if (map[i][j] > topRange) {
@@ -4451,7 +4452,7 @@ void displayGrid(short **map) {
         for (j=0; j<DROWS; j++) {
             if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY | T_LAVA_INSTA_DEATH)
                 || (map[i][j] == map[0][0])
-                || (i == player.xLoc && j == player.yLoc)) {
+                || (i == player.loc.x && j == player.loc.y)) {
                 continue;
             }
             score = 300 - (map[i][j] - bottomRange) * 300 / max(1, (topRange - bottomRange));
@@ -4626,13 +4627,13 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
         printString("                    ", 0, y, &white, &black, 0); // Start with a blank line
 
         // Unhighlight if it's highlighted as part of the path.
-        inPath = (pmap[monst->xLoc][monst->yLoc].flags & IS_IN_PATH) ? true : false;
-        pmap[monst->xLoc][monst->yLoc].flags &= ~IS_IN_PATH;
-        getCellAppearance(monst->xLoc, monst->yLoc, &monstChar, &monstForeColor, &monstBackColor);
+        inPath = (pmap[monst->loc.x][monst->loc.y].flags & IS_IN_PATH) ? true : false;
+        pmap[monst->loc.x][monst->loc.y].flags &= ~IS_IN_PATH;
+        getCellAppearance(monst->loc.x, monst->loc.y, &monstChar, &monstForeColor, &monstBackColor);
         applyColorBounds(&monstForeColor, 0, 100);
         applyColorBounds(&monstBackColor, 0, 100);
         if (inPath) {
-            pmap[monst->xLoc][monst->yLoc].flags |= IS_IN_PATH;
+            pmap[monst->loc.x][monst->loc.y].flags |= IS_IN_PATH;
         }
 
         if (dim) {
@@ -4659,7 +4660,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                 //encodeMessageColor(monstName, strlen(monstName) - 4, &playerInDarknessColor);
                 encodeMessageColor(monstName, strlen(monstName) - 4, &monstForeColor);
                 strcat(monstName, "(dark)");
-            } else if (!(pmap[player.xLoc][player.yLoc].flags & IS_IN_SHADOW)) {
+            } else if (!(pmap[player.loc.x][player.loc.y].flags & IS_IN_SHADOW)) {
                 strcat(monstName, " xxxx");
                 //encodeMessageColor(monstName, strlen(monstName) - 4, &playerInLightColor);
                 encodeMessageColor(monstName, strlen(monstName) - 4, &monstForeColor);
@@ -4758,7 +4759,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                 printProgressBar(0, y++, statusStrings[i], monst->status[i], monst->maxStatus[i], &redBar, dim);
             }
         }
-        if (monst->targetCorpseLoc[0] == monst->xLoc && monst->targetCorpseLoc[1] == monst->yLoc) {
+        if (monst->targetCorpseLoc[0] == monst->loc.x && monst->targetCorpseLoc[1] == monst->loc.y) {
             printProgressBar(0, y++,  monsterText[monst->info.monsterID].absorbStatus, monst->corpseAbsorptionCounter, 20, &redBar, dim);
         }
     }
@@ -4779,7 +4780,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                 } else if (monst->bookkeepingFlags & MB_CAPTIVE && y < ROWS - 1) {
                     printString("     (Captive)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID)
-                           && !cellHasTMFlag(monst->xLoc, monst->yLoc, TM_ALLOWS_SUBMERGING)) {
+                           && !cellHasTMFlag(monst->loc.x, monst->loc.y, TM_ALLOWS_SUBMERGING)) {
                     printString("     (Helpless)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if (monst->creatureState == MONSTER_SLEEPING && y < ROWS - 1) {
                     printString("     (Sleeping)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
@@ -4912,13 +4913,13 @@ short printItemInfo(item *theItem, short y, boolean dim, boolean highlight) {
 
     if (y < ROWS - 1) {
         // Unhighlight if it's highlighted as part of the path.
-        inPath = (pmap[theItem->xLoc][theItem->yLoc].flags & IS_IN_PATH) ? true : false;
-        pmap[theItem->xLoc][theItem->yLoc].flags &= ~IS_IN_PATH;
-        getCellAppearance(theItem->xLoc, theItem->yLoc, &itemChar, &itemForeColor, &itemBackColor);
+        inPath = (pmap[theItem->loc.x][theItem->loc.y].flags & IS_IN_PATH) ? true : false;
+        pmap[theItem->loc.x][theItem->loc.y].flags &= ~IS_IN_PATH;
+        getCellAppearance(theItem->loc.x, theItem->loc.y, &itemChar, &itemForeColor, &itemBackColor);
         applyColorBounds(&itemForeColor, 0, 100);
         applyColorBounds(&itemBackColor, 0, 100);
         if (inPath) {
-            pmap[theItem->xLoc][theItem->yLoc].flags |= IS_IN_PATH;
+            pmap[theItem->loc.x][theItem->loc.y].flags |= IS_IN_PATH;
         }
         if (dim) {
             applyColorAverage(&itemForeColor, &black, 50);
@@ -5138,7 +5139,7 @@ void printMonsterDetails(creature *monst, cellDisplayBuffer rbuf[COLS][ROWS]) {
     char textBuf[COLS * 100];
 
     monsterDetails(textBuf, monst);
-    printTextBox(textBuf, monst->xLoc, 0, 0, &white, &black, rbuf, NULL, 0);
+    printTextBox(textBuf, monst->loc.x, 0, 0, &white, &black, rbuf, NULL, 0);
 }
 
 // Displays the item info box with the dark blue background.
@@ -5233,5 +5234,5 @@ void printFloorItemDetails(item *theItem, cellDisplayBuffer rbuf[COLS][ROWS]) {
     char textBuf[COLS * 100];
 
     itemDetails(textBuf, theItem);
-    printTextBox(textBuf, theItem->xLoc, 0, 0, &white, &black, rbuf, NULL, 0);
+    printTextBox(textBuf, theItem->loc.x, 0, 0, &white, &black, rbuf, NULL, 0);
 }
