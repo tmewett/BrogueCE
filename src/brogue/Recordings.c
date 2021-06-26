@@ -65,9 +65,9 @@ unsigned char compressKeystroke(long c) {
     return UNKNOWN_KEY;
 }
 
-void numberToString(unsigned long number, short numberOfBytes, unsigned char *recordTo) {
+void numberToString(uint64_t number, short numberOfBytes, unsigned char *recordTo) {
     short i;
-    unsigned long n;
+    uint64_t n;
 
     n = number;
     for (i=numberOfBytes - 1; i >= 0; i--) {
@@ -75,7 +75,7 @@ void numberToString(unsigned long number, short numberOfBytes, unsigned char *re
         n /= 256;
     }
     if (n > 0) {
-        printf("\nError: the number %li does not fit in %i bytes.", number, numberOfBytes);
+        printf("\nError: the number %llu does not fit in %i bytes.", number, numberOfBytes);
         brogueAssert(false);
     }
 }
@@ -280,15 +280,15 @@ long uncompressKeystroke(unsigned char c) {
     return (long)c;
 }
 
-unsigned long recallNumber(short numberOfBytes) {
+uint64_t recallNumber(short numberOfBytes) {
     short i;
-    unsigned long n;
+    uint64_t n;
 
     n = 0;
 
     for (i=0; i<numberOfBytes; i++) {
         n *= 256;
-        n += (unsigned long) recallChar();
+        n += (uint64_t) recallChar();
     }
     return n;
 }
