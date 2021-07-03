@@ -197,7 +197,7 @@ short actionMenu(short x, boolean playingBack) {
 
     do {
         for (i=0; i<ROWS; i++) {
-            initializeButton(&(buttons[i]));
+            buttons[i] = defaultButton();
             buttons[i].buttonColor = interfaceBoxColor;
             buttons[i].opacity = INTERFACE_OPACITY;
         }
@@ -438,17 +438,16 @@ short actionMenu(short x, boolean playingBack) {
 
 #define MAX_MENU_BUTTON_COUNT 5
 
-void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
-    short i, x, buttonCount;
+buttonState createMenuButtonState(brogueButton buttons[5]) {
+    short x, buttonCount;
     char goldTextEscape[MAX_MENU_BUTTON_COUNT] = "";
     char whiteTextEscape[MAX_MENU_BUTTON_COUNT] = "";
-    color tempColor;
 
     encodeMessageColor(goldTextEscape, 0, KEYBOARD_LABELS ? &yellow : &white);
     encodeMessageColor(whiteTextEscape, 0, &white);
 
-    for (i=0; i<MAX_MENU_BUTTON_COUNT; i++) {
-        initializeButton(&(buttons[i]));
+    for (int i=0; i<MAX_MENU_BUTTON_COUNT; i++) {
+        buttons[i] = defaultButton();
         buttons[i].opacity = 75;
         buttons[i].buttonColor = interfaceButtonColor;
         buttons[i].y = ROWS - 1;
@@ -517,32 +516,35 @@ void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
     buttons[4].hotkey[1] = 'I';
 
     x = mapToWindowX(0);
-    for (i=0; i<5; i++) {
+    for (int i=0; i<5; i++) {
         buttons[i].x = x;
         x += strLenWithoutEscapes(buttons[i].text) + 2; // Gap between buttons.
     }
 
-    initializeButtonState(state,
-                          buttons,
-                          5,
-                          mapToWindowX(0),
-                          ROWS - 1,
-                          COLS - mapToWindowX(0),
-                          1);
+    buttonState state = createButtonState(
+        buttons,
+        5,
+        mapToWindowX(0),
+        ROWS - 1,
+        COLS - mapToWindowX(0),
+        1
+    );
 
-    for (i=0; i < 5; i++) {
-        drawButton(&(state->buttons[i]), BUTTON_NORMAL, state->rbuf);
+    for (int i=0; i < 5; i++) {
+        drawButton(&(state.buttons[i]), BUTTON_NORMAL, state.rbuf);
     }
-    for (i=0; i<COLS; i++) { // So the buttons stay (but are dimmed and desaturated) when inactive.
-        tempColor = colorFromComponents(state->rbuf[i][ROWS - 1].backColorComponents);
+    for (int i=0; i<COLS; i++) { // So the buttons stay (but are dimmed and desaturated) when inactive.
+        color tempColor = colorFromComponents(state.rbuf[i][ROWS - 1].backColorComponents);
         desaturate(&tempColor, 60);
         applyColorAverage(&tempColor, &black, 50);
-        storeColorComponents(state->rbuf[i][ROWS - 1].backColorComponents, &tempColor);
-        tempColor = colorFromComponents(state->rbuf[i][ROWS - 1].foreColorComponents);
+        storeColorComponents(state.rbuf[i][ROWS - 1].backColorComponents, &tempColor);
+        tempColor = colorFromComponents(state.rbuf[i][ROWS - 1].foreColorComponents);
         desaturate(&tempColor, 60);
         applyColorAverage(&tempColor, &black, 50);
-        storeColorComponents(state->rbuf[i][ROWS - 1].foreColorComponents, &tempColor);
+        storeColorComponents(state.rbuf[i][ROWS - 1].foreColorComponents, &tempColor);
     }
+
+    return state;
 }
 
 
@@ -560,7 +562,6 @@ void mainInputLoop() {
     rogueEvent theEvent;
     short **costMap, **playerPathingMap, **cursorSnapMap;
     brogueButton buttons[5] = {{{0}}};
-    buttonState state;
     short buttonInput;
     short backupCost;
 
@@ -573,7 +574,7 @@ void mainInputLoop() {
     rogue.cursorPathIntensity = (rogue.cursorMode ? 50 : 20);
 
     // Initialize buttons.
-    initializeMenuButtons(&state, buttons);
+    buttonState state = createMenuButtonState(buttons);
 
     playingBack = rogue.playbackMode;
     rogue.playbackMode = false;
@@ -831,7 +832,7 @@ void mainInputLoop() {
                 if (!rogue.playbackMode) {
                     // Playback mode is off, user must have taken control
                     // Redraw buttons to reflect that
-                    initializeMenuButtons(&state, buttons);
+                    state = createMenuButtonState(buttons);
                 }
 #endif
                 playingBack = rogue.playbackMode;
@@ -1958,10 +1959,8 @@ void colorOverDungeon(const color *color) {
 }
 
 void copyDisplayBuffer(cellDisplayBuffer toBuf[COLS][ROWS], cellDisplayBuffer fromBuf[COLS][ROWS]) {
-    short i, j;
-
-    for (i=0; i<COLS; i++) {
-        for (j=0; j<ROWS; j++) {
+    for (int i=0; i<COLS; i++) {
+        for (int j=0; j<ROWS; j++) {
             toBuf[i][j] = fromBuf[i][j];
         }
     }
@@ -2977,14 +2976,14 @@ boolean confirm(char *prompt, boolean alsoDuringPlayback) {
     encodeMessageColor(whiteColorEscape, 0, &white);
     encodeMessageColor(yellowColorEscape, 0, KEYBOARD_LABELS ? &yellow : &white);
 
-    initializeButton(&(buttons[0]));
+    buttons[0] = defaultButton();
     sprintf(buttons[0].text, "     %sY%ses     ", yellowColorEscape, whiteColorEscape);
     buttons[0].hotkey[0] = 'y';
     buttons[0].hotkey[1] = 'Y';
     buttons[0].hotkey[2] = RETURN_KEY;
     buttons[0].flags |= (B_WIDE_CLICK_AREA | B_KEYPRESS_HIGHLIGHT);
 
-    initializeButton(&(buttons[1]));
+    buttons[1] = defaultButton();
     sprintf(buttons[1].text, "     %sN%so      ", yellowColorEscape, whiteColorEscape);
     buttons[1].hotkey[0] = 'n';
     buttons[1].hotkey[1] = 'N';
@@ -4276,7 +4275,7 @@ void printDiscoveriesScreen() {
 //    encodeMessageColor(yellowColorEscape, 0, &itemColor);
 //
 //  for (i = 0; i < count; i++) {
-//        initializeButton(&(buttons[i]));
+//        buttons[i] = defaultButton();
 //        buttons[i].flags = (B_DRAW | B_HOVER_ENABLED | B_ENABLED); // Clear other flags.
 //        buttons[i].buttonColor = black;
 //        buttons[i].opacity = 100;
@@ -5155,7 +5154,7 @@ unsigned long printCarriedItemDetails(item *theItem,
     itemDetails(textBuf, theItem);
 
     for (b=0; b<20; b++) {
-        initializeButton(&(buttons[b]));
+        buttons[b] = defaultButton();
         buttons[b].flags |= B_WIDE_CLICK_AREA;
     }
 
