@@ -3350,7 +3350,7 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
         }
 
         // normalize the step, to move exactly one row or column at a time
-        fixpt m = max(abs(step[0]), abs(step[1]));
+        fixpt m = max(llabs(step[0]), llabs(step[1]));
         step[0] = step[0] * FP_FACTOR / m;
         step[1] = step[1] * FP_FACTOR / m;
 
