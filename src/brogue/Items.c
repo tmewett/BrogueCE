@@ -3373,6 +3373,7 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
         // evaluate this path; we will return the path with the highest score
         score = 0;
 
+        boolean passesThroughUnknown = false;
         for (int i = 0; i < listLength; i++) {
             short x = listOfCoordinates[i][0], y = listOfCoordinates[i][1];
 
@@ -3401,15 +3402,21 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
                     (targetsEnemies && isMonster && isEnemyOfCaster) ||
                     (targetsAllies && isMonster && isAllyOfCaster)) {
 
-                    // big bonus for hitting the target
-                    score += 5000;
+                    // Big bonus for hitting the target, but that bonus
+                    // is lower if this path uses an unknown tile.
+                    score += passesThroughUnknown ? 2500 : 5000;
                 }
 
                 break; // we don't care about anything beyond the target--if the player did, they would have selected a farther target
             }
 
             // if the caster is the player, undiscovered cells don't count (lest we reveal something about them)
-            if (isCastByPlayer && !(pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED))) continue;
+            if (isCastByPlayer && !(pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED))) {
+                // Remember that this path used an unknown cell, so that a
+                // less-risky path can be used instead if one is known.
+                passesThroughUnknown = true;
+                continue;
+            }
 
             // nothing can get through impregnable obstacles
             if (isImpassable && pmap[x][y].flags & IMPREGNABLE) {
