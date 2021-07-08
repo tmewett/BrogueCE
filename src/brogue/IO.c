@@ -102,15 +102,13 @@ void hideCursor() {
     // Drop out of cursor mode if we're in it, and hide the path either way.
     rogue.cursorMode = false;
     rogue.cursorPathIntensity = (rogue.cursorMode ? 50 : 20);
-    rogue.cursorLoc[0] = -1;
-    rogue.cursorLoc[1] = -1;
+    rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
 }
 
 void showCursor() {
     // Return or enter turns on cursor mode. When the path is hidden, move the cursor to the player.
-    if (!coordinatesAreInMap(rogue.cursorLoc[0], rogue.cursorLoc[1])) {
-        rogue.cursorLoc[0] = player.loc.x;
-        rogue.cursorLoc[1] = player.loc.y;
+    if (!coordinatesAreInMap(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
+        rogue.cursorLoc = player.loc;
         rogue.cursorMode = true;
         rogue.cursorPathIntensity = (rogue.cursorMode ? 50 : 20);
     } else {
@@ -564,8 +562,6 @@ void mainInputLoop() {
     short buttonInput;
     short backupCost;
 
-    short *cursor = rogue.cursorLoc; // shorthand
-
     canceled = false;
     rogue.cursorMode = false; // Controls whether the keyboard moves the cursor or the character.
     steps = 0;
@@ -581,7 +577,7 @@ void mainInputLoop() {
     playerPathingMap = allocGrid();
     cursorSnapMap = allocGrid();
 
-    cursor[0] = cursor[1] = -1;
+    rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
 
     while (!rogue.gameHasEnded && (!playingBack || !canceled)) { // repeats until the game ends
 
@@ -600,20 +596,19 @@ void mainInputLoop() {
         }
 
         if (!playingBack
-            && player.loc.x == cursor[0]
-            && player.loc.y == cursor[1]
-            && oldTargetLoc[0] == cursor[0]
-            && oldTargetLoc[1] == cursor[1]) {
+            && player.loc.x == rogue.cursorLoc.x
+            && player.loc.y == rogue.cursorLoc.y
+            && oldTargetLoc[0] == rogue.cursorLoc.x
+            && oldTargetLoc[1] == rogue.cursorLoc.y) {
 
             // Path hides when you reach your destination.
             rogue.cursorMode = false;
             rogue.cursorPathIntensity = (rogue.cursorMode ? 50 : 20);
-            cursor[0] = -1;
-            cursor[1] = -1;
+            rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
         }
 
-        oldTargetLoc[0] = cursor[0];
-        oldTargetLoc[1] = cursor[1];
+        oldTargetLoc[0] = rogue.cursorLoc.x;
+        oldTargetLoc[1] = rogue.cursorLoc.y;
 
         populateCreatureCostMap(costMap, &player);
 
@@ -633,15 +628,15 @@ void mainInputLoop() {
                 if (coordinatesAreInMap(oldTargetLoc[0], oldTargetLoc[1])) {
                     hilitePath(path, steps, true);                                  // Unhilite old path.
                 }
-                if (coordinatesAreInMap(cursor[0], cursor[1])) {
-                    if (cursorSnapMap[cursor[0]][cursor[1]] >= 0
-                        && cursorSnapMap[cursor[0]][cursor[1]] < 30000) {
+                if (coordinatesAreInMap(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
+                    if (cursorSnapMap[rogue.cursorLoc.x][rogue.cursorLoc.y] >= 0
+                        && cursorSnapMap[rogue.cursorLoc.x][rogue.cursorLoc.y] < 30000) {
 
-                        pathDestination[0] = cursor[0];
-                        pathDestination[1] = cursor[1];
+                        pathDestination[0] = rogue.cursorLoc.x;
+                        pathDestination[1] = rogue.cursorLoc.y;
                     } else {
                         // If the cursor is aimed at an inaccessible area, find the nearest accessible area to path toward.
-                        getClosestValidLocationOnMap(pathDestination, cursorSnapMap, cursor[0], cursor[1]);
+                        getClosestValidLocationOnMap(pathDestination, cursorSnapMap, rogue.cursorLoc.x, rogue.cursorLoc.y);
                     }
 
                     fillGrid(playerPathingMap, 30000);
@@ -662,31 +657,31 @@ void mainInputLoop() {
                     steps++;
 //                  if (playerPathingMap[cursor[0]][cursor[1]] != 1
                     if (playerPathingMap[player.loc.x][player.loc.y] != 1
-                        || pathDestination[0] != cursor[0]
-                        || pathDestination[1] != cursor[1]) {
+                        || pathDestination[0] != rogue.cursorLoc.x
+                        || pathDestination[1] != rogue.cursorLoc.y) {
 
                         hilitePath(path, steps, false);     // Hilite new path.
                     }
                 }
             }
 
-            if (coordinatesAreInMap(cursor[0], cursor[1])) {
-                hiliteCell(cursor[0],
-                           cursor[1],
+            if (coordinatesAreInMap(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
+                hiliteCell(rogue.cursorLoc.x,
+                           rogue.cursorLoc.y,
                            &white,
                            (steps <= 0
-                            || (path[steps-1][0] == cursor[0] && path[steps-1][1] == cursor[1])
-                            || (!playingBack && distanceBetween(player.loc.x, player.loc.y, cursor[0], cursor[1]) <= 1) ? 100 : 25),
+                            || (path[steps-1][0] == rogue.cursorLoc.x && path[steps-1][1] == rogue.cursorLoc.y)
+                            || (!playingBack && distanceBetween(player.loc.x, player.loc.y, rogue.cursorLoc.x, rogue.cursorLoc.y) <= 1) ? 100 : 25),
                            true);
 
-                oldTargetLoc[0] = cursor[0];
-                oldTargetLoc[1] = cursor[1];
+                oldTargetLoc[0] = rogue.cursorLoc.x;
+                oldTargetLoc[1] = rogue.cursorLoc.y;
 
-                monst = monsterAtLoc(cursor[0], cursor[1]);
-                theItem = itemAtLoc(cursor[0], cursor[1]);
+                monst = monsterAtLoc(rogue.cursorLoc.x, rogue.cursorLoc.y);
+                theItem = itemAtLoc(rogue.cursorLoc.x, rogue.cursorLoc.y);
                 if (monst != NULL && (canSeeMonster(monst) || rogue.playbackOmniscience)) {
                     rogue.playbackMode = playingBack;
-                    refreshSideBar(cursor[0], cursor[1], false);
+                    refreshSideBar(rogue.cursorLoc.x, rogue.cursorLoc.y, false);
                     rogue.playbackMode = false;
 
                     focusedOnMonster = true;
@@ -694,9 +689,9 @@ void mainInputLoop() {
                         printMonsterDetails(monst, rbuf);
                         textDisplayed = true;
                     }
-                } else if (theItem != NULL && playerCanSeeOrSense(cursor[0], cursor[1])) {
+                } else if (theItem != NULL && playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
                     rogue.playbackMode = playingBack;
-                    refreshSideBar(cursor[0], cursor[1], false);
+                    refreshSideBar(rogue.cursorLoc.x, rogue.cursorLoc.y, false);
                     rogue.playbackMode = false;
 
                     focusedOnItem = true;
@@ -704,19 +699,19 @@ void mainInputLoop() {
                         printFloorItemDetails(theItem, rbuf);
                         textDisplayed = true;
                     }
-                } else if (cellHasTMFlag(cursor[0], cursor[1], TM_LIST_IN_SIDEBAR) && playerCanSeeOrSense(cursor[0], cursor[1])) {
+                } else if (cellHasTMFlag(rogue.cursorLoc.x, rogue.cursorLoc.y, TM_LIST_IN_SIDEBAR) && playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
                     rogue.playbackMode = playingBack;
-                    refreshSideBar(cursor[0], cursor[1], false);
+                    refreshSideBar(rogue.cursorLoc.x, rogue.cursorLoc.y, false);
                     rogue.playbackMode = false;
                     focusedOnTerrain = true;
                 }
 
-                printLocationDescription(cursor[0], cursor[1]);
+                printLocationDescription(rogue.cursorLoc.x, rogue.cursorLoc.y);
             }
 
             // Get the input!
             rogue.playbackMode = playingBack;
-            doEvent = moveCursor(&targetConfirmed, &canceled, &tabKey, cursor, &theEvent, &state, !textDisplayed, rogue.cursorMode, true);
+            doEvent = moveCursor(&targetConfirmed, &canceled, &tabKey, &rogue.cursorLoc, &theEvent, &state, !textDisplayed, rogue.cursorMode, true);
             rogue.playbackMode = false;
 
             if (state.buttonChosen == 3) { // Actions menu button.
@@ -764,15 +759,15 @@ void mainInputLoop() {
             }
 
             if (tabKey && !playingBack) { // The tab key cycles the cursor through monsters, items and terrain features.
-                if (nextTargetAfter(&newX, &newY, cursor[0], cursor[1], true, true, true, true, false, theEvent.shiftKey)) {
-                    cursor[0] = newX;
-                    cursor[1] = newY;
+                if (nextTargetAfter(&newX, &newY, rogue.cursorLoc.x, rogue.cursorLoc.y, true, true, true, true, false, theEvent.shiftKey)) {
+                    rogue.cursorLoc.x = newX;
+                    rogue.cursorLoc.y = newY;
                 }
             }
 
             if (theEvent.eventType == KEYSTROKE
-                && (theEvent.param1 == ASCEND_KEY && cursor[0] == rogue.upLoc.x && cursor[1] == rogue.upLoc.y
-                    || theEvent.param1 == DESCEND_KEY && cursor[0] == rogue.downLoc.x && cursor[1] == rogue.downLoc.y)) {
+                && (theEvent.param1 == ASCEND_KEY && rogue.cursorLoc.x == rogue.upLoc.x && rogue.cursorLoc.y == rogue.upLoc.y
+                    || theEvent.param1 == DESCEND_KEY && rogue.cursorLoc.x == rogue.downLoc.x && rogue.cursorLoc.y == rogue.downLoc.y)) {
 
                     targetConfirmed = true;
                     doEvent = false;
@@ -780,7 +775,7 @@ void mainInputLoop() {
         } while (!targetConfirmed && !canceled && !doEvent && !rogue.gameHasEnded);
 
         if (coordinatesAreInMap(oldTargetLoc[0], oldTargetLoc[1])) {
-            refreshDungeonCell(oldTargetLoc[0], oldTargetLoc[1]);                       // Remove old cursor.
+            refreshDungeonCell(oldTargetLoc[0], oldTargetLoc[1]);                       // Remove old rogue.cursorLoc.
         }
 
         restoreRNG;
@@ -788,7 +783,7 @@ void mainInputLoop() {
         if (canceled && !playingBack) {
             hideCursor();
             confirmMessages();
-        } else if (targetConfirmed && !playingBack && coordinatesAreInMap(cursor[0], cursor[1])) {
+        } else if (targetConfirmed && !playingBack && coordinatesAreInMap(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
             if (theEvent.eventType == MOUSE_UP
                 && theEvent.controlKey
                 && steps > 1) {
@@ -798,21 +793,21 @@ void mainInputLoop() {
                      dir++);
                 playerMoves(dir);
             } else if (D_WORMHOLING) {
-                travel(cursor[0], cursor[1], true);
+                travel(rogue.cursorLoc.x, rogue.cursorLoc.y, true);
             } else {
                 confirmMessages();
-                if (originLoc[0] == cursor[0]
-                    && originLoc[1] == cursor[1]) {
+                if (originLoc[0] == rogue.cursorLoc.x
+                    && originLoc[1] == rogue.cursorLoc.y) {
 
                     confirmMessages();
-                } else if (abs(player.loc.x - cursor[0]) + abs(player.loc.y - cursor[1]) == 1 // horizontal or vertical
-                           || (distanceBetween(player.loc.x, player.loc.y, cursor[0], cursor[1]) == 1 // includes diagonals
-                               && (!diagonalBlocked(player.loc.x, player.loc.y, cursor[0], cursor[1], !rogue.playbackOmniscience)
-                                   || ((pmap[cursor[0]][cursor[1]].flags & HAS_MONSTER) && (monsterAtLoc(cursor[0], cursor[1])->info.flags & MONST_ATTACKABLE_THRU_WALLS)) // there's a turret there
-                                   || ((terrainFlags(cursor[0], cursor[1]) & T_OBSTRUCTS_PASSABILITY) && (terrainMechFlags(cursor[0], cursor[1]) & TM_PROMOTES_ON_PLAYER_ENTRY))))) { // there's a lever there
+                } else if (abs(player.loc.x - rogue.cursorLoc.x) + abs(player.loc.y - rogue.cursorLoc.y) == 1 // horizontal or vertical
+                           || (distanceBetween(player.loc.x, player.loc.y, rogue.cursorLoc.x, rogue.cursorLoc.y) == 1 // includes diagonals
+                               && (!diagonalBlocked(player.loc.x, player.loc.y, rogue.cursorLoc.x, rogue.cursorLoc.y, !rogue.playbackOmniscience)
+                                   || ((pmap[rogue.cursorLoc.x][rogue.cursorLoc.y].flags & HAS_MONSTER) && (monsterAtLoc(rogue.cursorLoc.x, rogue.cursorLoc.y)->info.flags & MONST_ATTACKABLE_THRU_WALLS)) // there's a turret there
+                                   || ((terrainFlags(rogue.cursorLoc.x, rogue.cursorLoc.y) & T_OBSTRUCTS_PASSABILITY) && (terrainMechFlags(rogue.cursorLoc.x, rogue.cursorLoc.y) & TM_PROMOTES_ON_PLAYER_ENTRY))))) { // there's a lever there
                                                                                                                                                                                       // Clicking one space away will cause the player to try to move there directly irrespective of path.
                                    for (dir=0;
-                                        dir < DIRECTION_COUNT && (player.loc.x + nbDirs[dir][0] != cursor[0] || player.loc.y + nbDirs[dir][1] != cursor[1]);
+                                        dir < DIRECTION_COUNT && (player.loc.x + nbDirs[dir][0] != rogue.cursorLoc.x || player.loc.y + nbDirs[dir][1] != rogue.cursorLoc.y);
                                         dir++);
                                    playerMoves(dir);
                                } else if (steps) {
@@ -998,7 +993,7 @@ void shuffleTerrainColors(short percentOfCells, boolean refreshCells) {
                 && (!rogue.automationActive || !(rogue.playerTurnNumber % 5))
                 && ((pmap[i][j].flags & TERRAIN_COLORS_DANCING)
                     || (player.status[STATUS_HALLUCINATING] && playerCanDirectlySee(i, j)))
-                && (i != rogue.cursorLoc[0] || j != rogue.cursorLoc[1])
+                && (i != rogue.cursorLoc.x || j != rogue.cursorLoc.y)
                 && (percentOfCells >= 100 || rand_range(1, 100) <= percentOfCells)) {
 
                     for (dir=0; dir<DIRECTION_COUNT; dir++) {
@@ -2461,8 +2456,8 @@ void executeMouseClick(rogueEvent *theEvent) {
         if (autoConfirm) {
             travel(windowToMapX(x), windowToMapY(y), autoConfirm);
         } else {
-            rogue.cursorLoc[0] = windowToMapX(x);
-            rogue.cursorLoc[1] = windowToMapY(y);
+            rogue.cursorLoc.x = windowToMapX(x);
+            rogue.cursorLoc.y = windowToMapY(y);
             mainInputLoop();
         }
 

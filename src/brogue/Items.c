@@ -5188,7 +5188,7 @@ short hiliteTrajectory(short coordinateList[DCOLS][2], short numCells, boolean e
 boolean moveCursor(boolean *targetConfirmed,
                    boolean *canceled,
                    boolean *tabKey,
-                   short targetLoc[2],
+                   pos *targetLoc,
                    rogueEvent *event,
                    buttonState *state,
                    boolean colorsDance,
@@ -5201,10 +5201,7 @@ boolean moveCursor(boolean *targetConfirmed,
     rogueEvent theEvent;
     short oldRNG;
 
-    short *cursor = rogue.cursorLoc; // shorthand
-
-    cursor[0] = targetLoc[0];
-    cursor[1] = targetLoc[1];
+    rogue.cursorLoc = *targetLoc;
 
     *targetConfirmed = *canceled = *tabKey = false;
     sidebarHighlighted = false;
@@ -5250,11 +5247,11 @@ boolean moveCursor(boolean *targetConfirmed,
                 && rogue.sidebarLocationList[theEvent.param2][0] > -1) {
 
                 // If the cursor is on an entity in the sidebar.
-                cursor[0] = rogue.sidebarLocationList[theEvent.param2][0];
-                cursor[1] = rogue.sidebarLocationList[theEvent.param2][1];
+                rogue.cursorLoc.x = rogue.sidebarLocationList[theEvent.param2][0];
+                rogue.cursorLoc.y = rogue.sidebarLocationList[theEvent.param2][1];
                 sidebarHighlighted = true;
                 cursorMovementCommand = true;
-                refreshSideBar(cursor[0], cursor[1], false);
+                refreshSideBar(rogue.cursorLoc.x, rogue.cursorLoc.y, false);
                 if (theEvent.eventType == MOUSE_UP) {
                     *targetConfirmed = true;
                 }
@@ -5264,12 +5261,12 @@ boolean moveCursor(boolean *targetConfirmed,
                 // If the cursor is in the map area, or is allowed to leave the map and it isn't a click.
                 if (theEvent.eventType == MOUSE_UP
                     && !theEvent.shiftKey
-                    && (theEvent.controlKey || (cursor[0] == windowToMapX(theEvent.param1) && cursor[1] == windowToMapY(theEvent.param2)))) {
+                    && (theEvent.controlKey || (rogue.cursorLoc.x == windowToMapX(theEvent.param1) && rogue.cursorLoc.y == windowToMapY(theEvent.param2)))) {
 
                     *targetConfirmed = true;
                 }
-                cursor[0] = windowToMapX(theEvent.param1);
-                cursor[1] = windowToMapY(theEvent.param2);
+                rogue.cursorLoc.x = windowToMapX(theEvent.param1);
+                rogue.cursorLoc.y = windowToMapY(theEvent.param2);
                 cursorMovementCommand = true;
             } else {
                 cursorMovementCommand = false;
@@ -5283,64 +5280,64 @@ boolean moveCursor(boolean *targetConfirmed,
                 case LEFT_ARROW:
                 case LEFT_KEY:
                 case NUMPAD_4:
-                    if (keysMoveCursor && cursor[0] > 0) {
-                        cursor[0] -= moveIncrement;
+                    if (keysMoveCursor && rogue.cursorLoc.x > 0) {
+                        rogue.cursorLoc.x -= moveIncrement;
                     }
                     cursorMovementCommand = movementKeystroke = keysMoveCursor;
                     break;
                 case RIGHT_ARROW:
                 case RIGHT_KEY:
                 case NUMPAD_6:
-                    if (keysMoveCursor && cursor[0] < DCOLS - 1) {
-                        cursor[0] += moveIncrement;
+                    if (keysMoveCursor && rogue.cursorLoc.x < DCOLS - 1) {
+                        rogue.cursorLoc.x += moveIncrement;
                     }
                     cursorMovementCommand = movementKeystroke = keysMoveCursor;
                     break;
                 case UP_ARROW:
                 case UP_KEY:
                 case NUMPAD_8:
-                    if (keysMoveCursor && cursor[1] > 0) {
-                        cursor[1] -= moveIncrement;
+                    if (keysMoveCursor && rogue.cursorLoc.y > 0) {
+                        rogue.cursorLoc.y -= moveIncrement;
                     }
                     cursorMovementCommand = movementKeystroke = keysMoveCursor;
                     break;
                 case DOWN_ARROW:
                 case DOWN_KEY:
                 case NUMPAD_2:
-                    if (keysMoveCursor && cursor[1] < DROWS - 1) {
-                        cursor[1] += moveIncrement;
+                    if (keysMoveCursor && rogue.cursorLoc.y < DROWS - 1) {
+                        rogue.cursorLoc.y += moveIncrement;
                     }
                     cursorMovementCommand = movementKeystroke = keysMoveCursor;
                     break;
                 case UPLEFT_KEY:
                 case NUMPAD_7:
-                    if (keysMoveCursor && cursor[0] > 0 && cursor[1] > 0) {
-                        cursor[0] -= moveIncrement;
-                        cursor[1] -= moveIncrement;
+                    if (keysMoveCursor && rogue.cursorLoc.x > 0 && rogue.cursorLoc.y > 0) {
+                        rogue.cursorLoc.x -= moveIncrement;
+                        rogue.cursorLoc.y -= moveIncrement;
                     }
                     cursorMovementCommand = movementKeystroke = keysMoveCursor;
                     break;
                 case UPRIGHT_KEY:
                 case NUMPAD_9:
-                    if (keysMoveCursor && cursor[0] < DCOLS - 1 && cursor[1] > 0) {
-                        cursor[0] += moveIncrement;
-                        cursor[1] -= moveIncrement;
+                    if (keysMoveCursor && rogue.cursorLoc.x < DCOLS - 1 && rogue.cursorLoc.y > 0) {
+                        rogue.cursorLoc.x += moveIncrement;
+                        rogue.cursorLoc.y -= moveIncrement;
                     }
                     cursorMovementCommand = movementKeystroke = keysMoveCursor;
                     break;
                 case DOWNLEFT_KEY:
                 case NUMPAD_1:
-                    if (keysMoveCursor && cursor[0] > 0 && cursor[1] < DROWS - 1) {
-                        cursor[0] -= moveIncrement;
-                        cursor[1] += moveIncrement;
+                    if (keysMoveCursor && rogue.cursorLoc.x > 0 && rogue.cursorLoc.y < DROWS - 1) {
+                        rogue.cursorLoc.x -= moveIncrement;
+                        rogue.cursorLoc.y += moveIncrement;
                     }
                     cursorMovementCommand = movementKeystroke = keysMoveCursor;
                     break;
                 case DOWNRIGHT_KEY:
                 case NUMPAD_3:
-                    if (keysMoveCursor && cursor[0] < DCOLS - 1 && cursor[1] < DROWS - 1) {
-                        cursor[0] += moveIncrement;
-                        cursor[1] += moveIncrement;
+                    if (keysMoveCursor && rogue.cursorLoc.x < DCOLS - 1 && rogue.cursorLoc.y < DROWS - 1) {
+                        rogue.cursorLoc.x += moveIncrement;
+                        rogue.cursorLoc.y += moveIncrement;
                     }
                     cursorMovementCommand = movementKeystroke = keysMoveCursor;
                     break;
@@ -5366,10 +5363,10 @@ boolean moveCursor(boolean *targetConfirmed,
         }
 
         if (sidebarHighlighted
-            && (!(pmap[cursor[0]][cursor[1]].flags & (HAS_PLAYER | HAS_MONSTER))
-                || !canSeeMonster(monsterAtLoc(cursor[0], cursor[1])))
-            && (!(pmap[cursor[0]][cursor[1]].flags & HAS_ITEM) || !playerCanSeeOrSense(cursor[0], cursor[1]))
-            && (!cellHasTMFlag(cursor[0], cursor[1], TM_LIST_IN_SIDEBAR) || !playerCanSeeOrSense(cursor[0], cursor[1]))) {
+            && (!(pmap[rogue.cursorLoc.x][rogue.cursorLoc.y].flags & (HAS_PLAYER | HAS_MONSTER))
+                || !canSeeMonster(monsterAtLoc(rogue.cursorLoc.x, rogue.cursorLoc.y)))
+            && (!(pmap[rogue.cursorLoc.x][rogue.cursorLoc.y].flags & HAS_ITEM) || !playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y))
+            && (!cellHasTMFlag(rogue.cursorLoc.x, rogue.cursorLoc.y, TM_LIST_IN_SIDEBAR) || !playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y))) {
 
             // The sidebar is highlighted but the cursor is not on a visible item, monster or terrain. Un-highlight the sidebar.
             refreshSideBar(-1, -1, false);
@@ -5378,11 +5375,11 @@ boolean moveCursor(boolean *targetConfirmed,
 
         if (targetCanLeaveMap && !movementKeystroke) {
             // permit it to leave the map by up to 1 space in any direction if mouse controlled.
-            cursor[0] = clamp(cursor[0], -1, DCOLS);
-            cursor[1] = clamp(cursor[1], -1, DROWS);
+            rogue.cursorLoc.x = clamp(rogue.cursorLoc.x, -1, DCOLS);
+            rogue.cursorLoc.y = clamp(rogue.cursorLoc.y, -1, DROWS);
         } else {
-            cursor[0] = clamp(cursor[0], 0, DCOLS - 1);
-            cursor[1] = clamp(cursor[1], 0, DROWS - 1);
+            rogue.cursorLoc.x = clamp(rogue.cursorLoc.x, 0, DCOLS - 1);
+            rogue.cursorLoc.y = clamp(rogue.cursorLoc.y, 0, DROWS - 1);
         }
     } while (again && (!event || !cursorMovementCommand));
 
@@ -5396,8 +5393,7 @@ boolean moveCursor(boolean *targetConfirmed,
         sidebarHighlighted = false;
     }
 
-    targetLoc[0] = cursor[0];
-    targetLoc[1] = cursor[1];
+    *targetLoc = rogue.cursorLoc;
 
     return !cursorMovementCommand;
 }
@@ -5429,7 +5425,7 @@ boolean chooseTarget(short returnLoc[2],
                      boolean targetAllies,
                      const bolt *theBolt,
                      const color *trajectoryColor) {
-    short originLoc[2], targetLoc[2], oldTargetLoc[2], coordinates[DCOLS][2], numCells, i, distance, newX, newY;
+    short originLoc[2], oldTargetLoc[2], coordinates[DCOLS][2], numCells, i, distance, newX, newY;
     creature *monst;
     boolean canceled, targetConfirmed, tabKey, cursorInTrajectory, focusedOnSomething = false;
     rogueEvent event = {0};
@@ -5441,7 +5437,7 @@ boolean chooseTarget(short returnLoc[2],
     if (rogue.playbackMode) {
         // In playback, pull the next event (a mouseclick) and use that location as the target.
         pullMouseClickDuringPlayback(returnLoc);
-        rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
+        rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
         return true;
     }
 
@@ -5452,97 +5448,96 @@ boolean chooseTarget(short returnLoc[2],
     originLoc[0] = player.loc.x;
     originLoc[1] = player.loc.y;
 
-    targetLoc[0] = oldTargetLoc[0] = player.loc.x;
-    targetLoc[1] = oldTargetLoc[1] = player.loc.y;
+    oldTargetLoc[0] = player.loc.x;
+    oldTargetLoc[1] = player.loc.y;
+
+    pos targetLoc = player.loc;
 
     if (autoTarget) {
         if (creatureIsTargetable(rogue.lastTarget) && (targetAllies == (rogue.lastTarget->creatureState == MONSTER_ALLY))) {
             monst = rogue.lastTarget;
         } else {
             //rogue.lastTarget = NULL;
-            if (nextTargetAfter(&newX, &newY, targetLoc[0], targetLoc[1], !targetAllies, targetAllies, false, false, true, false)) {
-                targetLoc[0] = newX;
-                targetLoc[1] = newY;
+            if (nextTargetAfter(&newX, &newY, targetLoc.x, targetLoc.y, !targetAllies, targetAllies, false, false, true, false)) {
+                targetLoc = (pos) { .x = newX, .y = newY };
             }
-            monst = monsterAtLoc(targetLoc[0], targetLoc[1]);
+            monst = monsterAtLoc(targetLoc.x, targetLoc.y);
         }
         if (monst) {
-            targetLoc[0] = monst->loc.x;
-            targetLoc[1] = monst->loc.y;
+            targetLoc = monst->loc;
             refreshSideBar(monst->loc.x, monst->loc.y, false);
             focusedOnSomething = true;
         }
     }
 
-    numCells = getLineCoordinates(coordinates, originLoc, targetLoc, theBolt);
+    numCells = getLineCoordinates(coordinates, originLoc, (const short[2]){ targetLoc.x, targetLoc.y }, theBolt);
     if (maxDistance > 0) {
         numCells = min(numCells, maxDistance);
     }
     if (stopAtTarget) {
-        numCells = min(numCells, distanceBetween(player.loc.x, player.loc.y, targetLoc[0], targetLoc[1]));
+        numCells = min(numCells, distanceBetween(player.loc.x, player.loc.y, targetLoc.x, targetLoc.y));
     }
 
     targetConfirmed = canceled = tabKey = false;
 
     do {
-        printLocationDescription(targetLoc[0], targetLoc[1]);
+        printLocationDescription(targetLoc.x, targetLoc.y);
 
         if (canceled) {
             refreshDungeonCell(oldTargetLoc[0], oldTargetLoc[1]);
             hiliteTrajectory(coordinates, numCells, true, theBolt, trajectoryColor);
             confirmMessages();
-            rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
+            rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
             restoreRNG;
             return false;
         }
 
         if (tabKey) {
-            if (nextTargetAfter(&newX, &newY, targetLoc[0], targetLoc[1], !targetAllies, targetAllies, false, false, true, event.shiftKey)) {
-                targetLoc[0] = newX;
-                targetLoc[1] = newY;
+            if (nextTargetAfter(&newX, &newY, targetLoc.x, targetLoc.y, !targetAllies, targetAllies, false, false, true, event.shiftKey)) {
+                targetLoc = (pos) { .x = newX, .y = newY };
             }
         }
 
-        monst = monsterAtLoc(targetLoc[0], targetLoc[1]);
+        monst = monsterAtLoc(targetLoc.x, targetLoc.y);
         if (monst != NULL && monst != &player && canSeeMonster(monst)) {
             focusedOnSomething = true;
-        } else if (playerCanSeeOrSense(targetLoc[0], targetLoc[1])
-                   && (pmap[targetLoc[0]][targetLoc[1]].flags & HAS_ITEM) || cellHasTMFlag(targetLoc[0], targetLoc[1], TM_LIST_IN_SIDEBAR)) {
+        } else if (playerCanSeeOrSense(targetLoc.x, targetLoc.y)
+                   && (pmap[targetLoc.x][targetLoc.y].flags & HAS_ITEM) || cellHasTMFlag(targetLoc.x, targetLoc.y, TM_LIST_IN_SIDEBAR)) {
             focusedOnSomething = true;
         } else if (focusedOnSomething) {
             refreshSideBar(-1, -1, false);
             focusedOnSomething = false;
         }
         if (focusedOnSomething) {
-            refreshSideBar(targetLoc[0], targetLoc[1], false);
+            refreshSideBar(targetLoc.x, targetLoc.y, false);
         }
 
         refreshDungeonCell(oldTargetLoc[0], oldTargetLoc[1]);
         hiliteTrajectory(coordinates, numCells, true, theBolt, &trajColor);
 
         if (!targetConfirmed) {
-            numCells = getLineCoordinates(coordinates, originLoc, targetLoc, theBolt);
+            numCells = getLineCoordinates(coordinates, originLoc, (const short[2]){targetLoc.x, targetLoc.y}, theBolt);
             if (maxDistance > 0) {
                 numCells = min(numCells, maxDistance);
             }
 
             if (stopAtTarget) {
-                numCells = min(numCells, distanceBetween(player.loc.x, player.loc.y, targetLoc[0], targetLoc[1]));
+                numCells = min(numCells, distanceBetween(player.loc.x, player.loc.y, targetLoc.x, targetLoc.y));
             }
             distance = hiliteTrajectory(coordinates, numCells, false, theBolt, &trajColor);
             cursorInTrajectory = false;
             for (i=0; i<distance; i++) {
-                if (coordinates[i][0] == targetLoc[0] && coordinates[i][1] == targetLoc[1]) {
+                if (coordinates[i][0] == targetLoc.x && coordinates[i][1] == targetLoc.y) {
                     cursorInTrajectory = true;
                     break;
                 }
             }
-            hiliteCell(targetLoc[0], targetLoc[1], &white, (cursorInTrajectory ? 100 : 35), true);
+            hiliteCell(targetLoc.x, targetLoc.y, &white, (cursorInTrajectory ? 100 : 35), true);
         }
 
-        oldTargetLoc[0] = targetLoc[0];
-        oldTargetLoc[1] = targetLoc[1];
-        moveCursor(&targetConfirmed, &canceled, &tabKey, targetLoc, &event, NULL, false, true, false);
+        oldTargetLoc[0] = targetLoc.x;
+        oldTargetLoc[1] = targetLoc.y;
+        moveCursor(&targetConfirmed, &canceled, &tabKey, &targetLoc, &event, NULL, false, true, false);
         if (event.eventType == RIGHT_MOUSE_UP) { // Right mouse cancels.
             canceled = true;
         }
@@ -5553,22 +5548,22 @@ boolean chooseTarget(short returnLoc[2],
     hiliteTrajectory(coordinates, numCells, true, theBolt, trajectoryColor);
     refreshDungeonCell(oldTargetLoc[0], oldTargetLoc[1]);
 
-    if (originLoc[0] == targetLoc[0] && originLoc[1] == targetLoc[1]) {
+    if (originLoc[0] == targetLoc.x && originLoc[1] == targetLoc.y) {
         confirmMessages();
         restoreRNG;
-        rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
+        rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
         return false;
     }
 
-    monst = monsterAtLoc(targetLoc[0], targetLoc[1]);
+    monst = monsterAtLoc(targetLoc.x, targetLoc.y);
     if (monst && monst != &player && canSeeMonster(monst)) {
         rogue.lastTarget = monst;
     }
 
-    returnLoc[0] = targetLoc[0];
-    returnLoc[1] = targetLoc[1];
+    returnLoc[0] = targetLoc.x;
+    returnLoc[1] = targetLoc.y;
     restoreRNG;
-    rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
+    rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
     return true;
 }
 

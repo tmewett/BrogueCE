@@ -1646,13 +1646,13 @@ void travel(short x, short y, boolean autoConfirm) {
             }
         }
 //      if (player.loc.x == x && player.loc.y == y) {
-//          rogue.cursorLoc[0] = rogue.cursorLoc[1] = 0;
+//          rogue.cursorLoc.x = rogue.cursorLoc.y = 0;
 //      } else {
-//          rogue.cursorLoc[0] = x;
-//          rogue.cursorLoc[1] = y;
+//          rogue.cursorLoc.x = x;
+//          rogue.cursorLoc.y = y;
 //      }
     } else {
-        rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
+        rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
         message("No path is available.", 0);
     }
     freeGrid(distanceMap);
@@ -2141,11 +2141,11 @@ boolean proposeOrConfirmLocation(short x, short y, char *failureMessage) {
     if (player.loc.x == x && player.loc.y == y) {
         message("you are already there.", 0);
     } else if (pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED)) {
-        if (rogue.cursorLoc[0] == x && rogue.cursorLoc[1] == y) {
+        if (rogue.cursorLoc.x == x && rogue.cursorLoc.y == y) {
             retval = true;
         } else {
-            rogue.cursorLoc[0] = x;
-            rogue.cursorLoc[1] = y;
+            rogue.cursorLoc.x = x;
+            rogue.cursorLoc.y = y;
         }
     } else {
         message(failureMessage, 0);
@@ -2160,7 +2160,7 @@ boolean useStairs(short stairDirection) {
     if (stairDirection == 1) {
         if (rogue.depthLevel < DEEPEST_LEVEL) {
             //copyDisplayBuffer(fromBuf, displayBuffer);
-            rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
+            rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
             rogue.depthLevel++;
             message("You descend.", 0);
             startLevel(rogue.depthLevel - 1, stairDirection);
@@ -2179,7 +2179,7 @@ boolean useStairs(short stairDirection) {
         succeeded = true;
     } else {
         if (rogue.depthLevel > 1 || numberOfMatchingPackItems(AMULET, 0, 0, false)) {
-            rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
+            rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
             rogue.depthLevel--;
             if (rogue.depthLevel == 0) {
                 victory(false);
