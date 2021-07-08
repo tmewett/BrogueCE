@@ -2316,7 +2316,7 @@ typedef struct playerCharacter {
     pos upLoc;                          // upstairs location this level
     pos downLoc;                        // downstairs location this level
 
-    short cursorLoc[2];                 // used for the return key functionality
+    pos cursorLoc;                      // used for the return key functionality
     creature *lastTarget;               // to keep track of the last monster the player has thrown at or zapped
     item *lastItemThrown;
     short rewardRoomsGenerated;         // to meter the number of reward machines
@@ -3062,7 +3062,7 @@ extern "C" {
     boolean moveCursor(boolean *targetConfirmed,
                        boolean *canceled,
                        boolean *tabKey,
-                       short targetLoc[2],
+                       pos *targetLoc,
                        rogueEvent *event,
                        buttonState *state,
                        boolean colorsDance,

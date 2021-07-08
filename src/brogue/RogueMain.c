@@ -342,7 +342,7 @@ void initializeRogue(uint64_t seed) {
     rogue.monsterSpawnFuse = rand_range(125, 175);
     rogue.ticksTillUpdateEnvironment = 100;
     rogue.mapToShore = NULL;
-    rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
+    rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
     rogue.xpxpThisTurn = 0;
 
     rogue.yendorWarden = NULL;
@@ -505,8 +505,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     rogue.updatedAllySafetyMapThisTurn      = false;
     rogue.updatedMapToSafeTerrainThisTurn   = false;
 
-    rogue.cursorLoc[0] = -1;
-    rogue.cursorLoc[1] = -1;
+    rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
     rogue.lastTarget = NULL;
 
     connectingStairsDiscovered = (pmap[rogue.downLoc.x][rogue.downLoc.y].flags & (DISCOVERED | MAGIC_MAPPED) ? true : false);
