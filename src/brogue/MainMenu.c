@@ -269,7 +269,6 @@ void titleMenu() {
     boolean controlKeyWasDown = false;
 
     short i, b, x, y, button;
-    buttonState state;
     brogueButton buttons[6];
     char whiteColorEscape[10] = "";
     char goldColorEscape[10] = "";
@@ -295,31 +294,31 @@ void titleMenu() {
     b = 0;
     button = -1;
 
-    initializeButton(&(buttons[b]));
+    buttons[b] = defaultButton();
     strcpy(buttons[b].text, newGameText);
     buttons[b].hotkey[0] = 'n';
     buttons[b].hotkey[1] = 'N';
     b++;
 
-    initializeButton(&(buttons[b]));
+    buttons[b] = defaultButton();
     sprintf(buttons[b].text, "     %sO%spen Game      ", goldColorEscape, whiteColorEscape);
     buttons[b].hotkey[0] = 'o';
     buttons[b].hotkey[1] = 'O';
     b++;
 
-    initializeButton(&(buttons[b]));
+    buttons[b] = defaultButton();
     sprintf(buttons[b].text, "   %sV%siew Recording   ", goldColorEscape, whiteColorEscape);
     buttons[b].hotkey[0] = 'v';
     buttons[b].hotkey[1] = 'V';
     b++;
 
-    initializeButton(&(buttons[b]));
+    buttons[b] = defaultButton();
     sprintf(buttons[b].text, "    %sH%sigh Scores     ", goldColorEscape, whiteColorEscape);
     buttons[b].hotkey[0] = 'h';
     buttons[b].hotkey[1] = 'H';
     b++;
 
-    initializeButton(&(buttons[b]));
+    buttons[b] = defaultButton();
     sprintf(buttons[b].text, "        %sQ%suit        ", goldColorEscape, whiteColorEscape);
     buttons[b].hotkey[0] = 'q';
     buttons[b].hotkey[1] = 'Q';
@@ -337,7 +336,7 @@ void titleMenu() {
 
     blackOutScreen();
     clearDisplayBuffer(shadowBuf);
-    initializeButtonState(&state, buttons, b, x, y, 20, b*2-1);
+    buttonState state = createButtonState(buttons, b, x, y, 20, b*2-1);
     rectangularShading(x, y, 20, b*2-1, &black, INTERFACE_OPACITY, shadowBuf);
     drawButtonsInState(&state);
 
@@ -412,8 +411,7 @@ void quitImmediately() {
 void dialogAlert(char *message) {
     cellDisplayBuffer rbuf[COLS][ROWS];
 
-    brogueButton OKButton;
-    initializeButton(&OKButton);
+    brogueButton OKButton = defaultButton();
     strcpy(OKButton.text, "     OK     ");
     OKButton.hotkey[0] = RETURN_KEY;
     OKButton.hotkey[1] = ACKNOWLEDGE_KEY;
@@ -506,7 +504,7 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
         again = false;
 
         for (i=0; i<min(count - currentPageStart, FILES_ON_PAGE_MAX); i++) {
-            initializeButton(&(buttons[i]));
+            buttons[i] = defaultButton();
             buttons[i].flags &= ~(B_WIDE_CLICK_AREA | B_GRADIENT);
             buttons[i].buttonColor = *dialogColor;
             if (KEYBOARD_LABELS) {
@@ -549,7 +547,7 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
 
         if (count > FILES_ON_PAGE_MAX) {
             // Create up and down arrows.
-            initializeButton(&(buttons[i]));
+            buttons[i] = defaultButton();
             strcpy(buttons[i].text, "     *     ");
             buttons[i].symbol[0] = G_UP_ARROW;
             if (currentPageStart <= 0) {
@@ -563,7 +561,7 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
             buttons[i].y = y;
 
             i++;
-            initializeButton(&(buttons[i]));
+            buttons[i] = defaultButton();
             strcpy(buttons[i].text, "     *     ");
             buttons[i].symbol[0] = G_DOWN_ARROW;
             if (currentPageStart + FILES_ON_PAGE_MAX >= count) {

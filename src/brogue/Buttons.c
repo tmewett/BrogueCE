@@ -121,12 +121,17 @@ void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDispl
     restoreRNG;
 }
 
-void initializeButton(brogueButton *button) {
-    memset((void *) button, 0, sizeof( brogueButton ));
-    button->text[0] = '\0';
-    button->flags |= (B_ENABLED | B_GRADIENT | B_HOVER_ENABLED | B_DRAW | B_KEYPRESS_HIGHLIGHT);
-    button->buttonColor = interfaceButtonColor;
-    button->opacity = 100;
+brogueButton defaultButton(void) {
+    return (brogueButton){
+        .text = {'\0'}, // button label
+        .x = 0,
+        .y = 0,
+        .hotkey = {0},
+        .buttonColor = interfaceButtonColor,
+        .opacity = 100,
+        .symbol = {0},
+        .flags = B_ENABLED | B_GRADIENT | B_HOVER_ENABLED | B_DRAW | B_KEYPRESS_HIGHLIGHT,
+    };
 }
 
 void drawButtonsInState(buttonState *state) {
@@ -138,41 +143,51 @@ void drawButtonsInState(buttonState *state) {
     }
 }
 
-void initializeButtonState(buttonState *state,
-                           brogueButton *buttons,
-                           short buttonCount,
-                           short winX,
-                           short winY,
-                           short winWidth,
-                           short winHeight) {
-    // Initialize variables for the state struct:
-    state->buttonChosen = state->buttonFocused = state->buttonDepressed = -1;
-    state->buttonCount  = buttonCount;
-    state->winX         = winX;
-    state->winY         = winY;
-    state->winWidth     = winWidth;
-    state->winHeight    = winHeight;
-    for (int i=0; i < state->buttonCount; i++) {
-        state->buttons[i] = buttons[i];
-    }
-    copyDisplayBuffer(state->rbuf, displayBuffer);
-    clearDisplayBuffer(state->dbuf);
+buttonState createButtonState(
+    brogueButton *buttons,
+    short buttonCount,
+    short winX,
+    short winY,
+    short winWidth,
+    short winHeight
+) {
+    buttonState state = {
+        .buttonFocused   = -1,
+        .buttonDepressed = -1,
+        .buttonChosen    = -1,
 
-    drawButtonsInState(state);
+        .buttonCount = buttonCount,
+
+        .winX = winX,
+        .winY = winY,
+        .winWidth  = winWidth,
+        .winHeight = winHeight,
+    };
+
+    // Initialize variables for the state struct:
+    for (int i=0; i < state.buttonCount; i++) {
+        state.buttons[i] = buttons[i];
+    }
+    copyDisplayBuffer(state.rbuf, displayBuffer);
+    clearDisplayBuffer(state.dbuf);
+
+    drawButtonsInState(&state);
 
     // Clear the rbuf so that it resets only those parts of the screen in which buttons are drawn in the first place:
     for (int i=0; i<COLS; i++) {
         for (int j=0; j<ROWS; j++) {
-            state->rbuf[i][j].opacity = (state->dbuf[i][j].opacity ? 100 : 0);
+            state.rbuf[i][j].opacity = (state.dbuf[i][j].opacity ? 100 : 0);
         }
     }
+
+    return state;
 }
 
 // Processes one round of user input, and bakes the necessary graphical changes into state->dbuf.
 // Does NOT display the buttons or revert the display afterward.
 // Assumes that the display has already been updated (via overlayDisplayBuffer(state->dbuf, NULL))
 // and that input has been solicited (via nextBrogueEvent(event, ___, ___, ___)).
-// Also relies on the buttonState having been initialized with initializeButtonState() or otherwise.
+// Also relies on the buttonState having been initialized with createButtonState() or otherwise.
 // Returns the index of a button if one is chosen.
 // Otherwise, returns -1. That can be if the user canceled (in which case *canceled is true),
 // or, more commonly, if the user's input in this particular split-second round was not decisive.
@@ -318,12 +333,11 @@ short buttonInputLoop(brogueButton *buttons,
     short button;
     boolean canceled;
     rogueEvent theEvent;
-    buttonState state = {0};
 
     assureCosmeticRNG;
 
     canceled = false;
-    initializeButtonState(&state, buttons, buttonCount, winX, winY, winWidth, winHeight);
+    buttonState state = createButtonState(buttons, buttonCount, winX, winY, winWidth, winHeight);
 
     do {
         // Update the display.

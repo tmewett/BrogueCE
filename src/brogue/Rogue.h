@@ -3274,15 +3274,16 @@ extern "C" {
     void mainBrogueJunction();
     void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsigned int scanThroughDepth, boolean isCsvFormat);
 
-    void initializeButton(brogueButton *button);
+    brogueButton defaultButton(void);
     void drawButtonsInState(buttonState *state);
-    void initializeButtonState(buttonState *state,
-                               brogueButton *buttons,
-                               short buttonCount,
-                               short winX,
-                               short winY,
-                               short winWidth,
-                               short winHeight);
+    buttonState createButtonState(
+        brogueButton *buttons,
+        short buttonChosen,
+        short winX,
+        short winY,
+        short winWidth,
+        short winHeight
+    );
     short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *event);
     short smoothHiliteGradient(const short currentXValue, const short maxXValue);
     void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDisplayBuffer dbuf[COLS][ROWS]);
