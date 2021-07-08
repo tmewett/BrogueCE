@@ -78,16 +78,16 @@ static void printSeedCatalogItem(item *theItem, creature *theMonster, boolean is
     }
 
     // vaultNumber
-    if (pmap[theItem->xLoc][theItem->yLoc].machineNumber > 0) {
+    if (pmap[theItem->loc.x][theItem->loc.y].machineNumber > 0) {
         //not all machines are "vaults" so we need to exclude some.
-        if (pmap[theItem->xLoc][theItem->yLoc].layers[0] != ALTAR_SWITCH
-            && pmap[theItem->xLoc][theItem->yLoc].layers[0] != ALTAR_SWITCH_RETRACTING
-            && pmap[theItem->xLoc][theItem->yLoc].layers[0] != ALTAR_CAGE_RETRACTABLE
-            && pmap[theItem->xLoc][theItem->yLoc].layers[0] != ALTAR_INERT
-            && pmap[theItem->xLoc][theItem->yLoc].layers[0] != AMULET_SWITCH
-            && pmap[theItem->xLoc][theItem->yLoc].layers[0] != FLOOR) {
+        if (pmap[theItem->loc.x][theItem->loc.y].layers[0] != ALTAR_SWITCH
+            && pmap[theItem->loc.x][theItem->loc.y].layers[0] != ALTAR_SWITCH_RETRACTING
+            && pmap[theItem->loc.x][theItem->loc.y].layers[0] != ALTAR_CAGE_RETRACTABLE
+            && pmap[theItem->loc.x][theItem->loc.y].layers[0] != ALTAR_INERT
+            && pmap[theItem->loc.x][theItem->loc.y].layers[0] != AMULET_SWITCH
+            && pmap[theItem->loc.x][theItem->loc.y].layers[0] != FLOOR) {
 
-            sprintf(vaultNumber, isCsvFormat ? "%i" : " (vault %i)", pmap[theItem->xLoc][theItem->yLoc].machineNumber);
+            sprintf(vaultNumber, isCsvFormat ? "%i" : " (vault %i)", pmap[theItem->loc.x][theItem->loc.y].machineNumber);
         }
     }
 
@@ -118,7 +118,7 @@ static void printSeedCatalogMonster(creature *theMonster, boolean isCsvFormat) {
 
     if (theMonster->bookkeepingFlags & MB_CAPTIVE) {
         strcpy(categoryName,"ally");
-        if (cellHasTMFlag(theMonster->xLoc, theMonster->yLoc, TM_PROMOTES_WITH_KEY)) {
+        if (cellHasTMFlag(theMonster->loc.x, theMonster->loc.y, TM_PROMOTES_WITH_KEY)) {
             strcpy(allyStatusName, isCsvFormat ? "caged" : "A caged ");
         } else {
             strcpy(allyStatusName, isCsvFormat ? "shackled" : "A shackled ");

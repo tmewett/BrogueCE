@@ -325,7 +325,6 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
                                  unsigned long forbiddenMapFlags,
                                  boolean deterministic) {
     short **grid, **costMap;
-    short loc[2];
 
     // First check the given location to see if it works, as an optimization.
     if (!cellHasTerrainFlag(x, y, blockingTerrainFlags | forbiddenTerrainFlags)
@@ -378,12 +377,13 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
 
     // Fall back to a pathing-agnostic alternative if there are no solutions.
     if (*retValX == -1 && *retValY == -1) {
-        if (getQualifyingLocNear(loc, x, y, hallwaysAllowed, NULL,
+        pos loc;
+        if (getQualifyingLocNear(&loc, x, y, hallwaysAllowed, NULL,
                                  (blockingTerrainFlags | forbiddenTerrainFlags),
                                  (blockingMapFlags | forbiddenMapFlags),
                                  false, deterministic)) {
-            *retValX = loc[0];
-            *retValY = loc[1];
+            *retValX = loc.x;
+            *retValY = loc.y;
             return true; // Found a fallback solution.
         } else {
             return false; // No solutions.

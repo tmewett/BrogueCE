@@ -148,7 +148,7 @@ static unsigned int fixUnicode(unsigned int code) {
 }
 
 static void web_plotChar(enum displayGlyph inputChar,
-                         short xLoc, short yLoc,
+                         short loc.x, short loc.y,
                          short foreRed, short foreGreen, short foreBlue,
                          short backRed, short backGreen, short backBlue) {
     unsigned char outputBuffer[OUTPUT_SIZE];
@@ -161,8 +161,8 @@ static void web_plotChar(enum displayGlyph inputChar,
     firstCharByte = translatedChar >> 8 & 0xff;
     secondCharByte = translatedChar;
 
-    outputBuffer[0] = (unsigned char)xLoc;
-    outputBuffer[1] = (unsigned char)yLoc;
+    outputBuffer[0] = (unsigned char)loc.x;
+    outputBuffer[1] = (unsigned char)loc.y;
     outputBuffer[2] = firstCharByte;
     outputBuffer[3] = secondCharByte;
     outputBuffer[4] = (unsigned char)foreRed * 255 / 100;
