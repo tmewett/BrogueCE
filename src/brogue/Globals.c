@@ -323,6 +323,7 @@ const color hiliteColor =           {100,   100,    0,      0,      0,          
 const color interfaceBoxColor =     {7,     6,      15,     0,      0,          0,          0,      false};
 const color interfaceButtonColor =  {18,    15,     38,     0,      0,          0,          0,      false};
 const color buttonHoverColor =      {100,   70,     40,     0,      0,          0,          0,      false};
+const color buttonFocusColor =      {100,   70,     40,     0,      0,          0,          0,      false};
 const color titleButtonColor =      {23,    15,     30,     0,      0,          0,          0,      false};
 
 const color playerInvisibleColor =  {20,    20,     30,     0,      0,          80,         0,      true};
