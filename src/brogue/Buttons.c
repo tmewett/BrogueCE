@@ -275,8 +275,13 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
                             overlayDisplayBuffer(state->rbuf, NULL);
                             overlayDisplayBuffer(state->dbuf, NULL);
 
-                            // Wait for a little; then we're done.
-                            pauseBrogue(50);
+                            if (!rogue.playbackMode || rogue.playbackPaused) {
+                                // Wait for a little; then we're done.
+                                pauseBrogue(50);
+                            } else {
+                                // Wait long enough for the viewer to see what was selected.
+                                pauseAnimation(1000);
+                            }
                         }
                     }
 

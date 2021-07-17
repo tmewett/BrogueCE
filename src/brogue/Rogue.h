@@ -2830,6 +2830,7 @@ extern "C" {
     void displayChokeMap();
     void displayLoops();
     boolean pauseBrogue(short milliseconds);
+    boolean pauseAnimation(short milliseconds);
     void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance, boolean realInputEvenInPlayback);
     void executeMouseClick(rogueEvent *theEvent);
     void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKey);

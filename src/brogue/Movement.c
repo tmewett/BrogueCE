@@ -709,7 +709,7 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
             attack(attacker, hitList[i], false);
         }
         if (visualEffect) {
-            pauseBrogue(16);
+            pauseAnimation(16);
             for (i = 0; i < range; i++) {
                 targetLoc[0] = attacker->loc.x + (1 + i) * nbDirs[dir][0];
                 targetLoc[1] = attacker->loc.y + (1 + i) * nbDirs[dir][1];
@@ -1522,7 +1522,7 @@ void travelRoute(short path[1000][2], short steps) {
                 if (!playerMoves(dir)) {
                     rogue.disturbed = true;
                 }
-                if (pauseBrogue(25)) {
+                if (pauseAnimation(25)) {
                     rogue.disturbed = true;
                 }
                 break;
@@ -1557,7 +1557,7 @@ void travelMap(short **distanceMap) {
                 if (!playerMoves(dir)) {
                     rogue.disturbed = true;
                 }
-                if (pauseBrogue(500)) {
+                if (pauseAnimation(500)) {
                     rogue.disturbed = true;
                 }
                 currentX = newX;
@@ -1960,7 +1960,7 @@ boolean explore(short frameDelay) {
             rogue.disturbed = true;
         } else {
             madeProgress = true;
-            if (pauseBrogue(frameDelay)) {
+            if (pauseAnimation(frameDelay)) {
                 rogue.disturbed = true;
                 rogue.autoPlayingLevel = false;
             }
@@ -2053,7 +2053,7 @@ boolean startFighting(enum directions dir, boolean tillDeath) {
         if (!playerMoves(dir)) {
             break;
         }
-        if (pauseBrogue(1)) {
+        if (pauseAnimation(1)) {
             break;
         }
     } while (!rogue.disturbed && !rogue.gameHasEnded && (tillDeath || player.currentHP > expectedDamage)
