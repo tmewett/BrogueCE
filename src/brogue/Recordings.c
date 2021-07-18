@@ -74,10 +74,7 @@ void numberToString(uint64_t number, short numberOfBytes, unsigned char *recordT
         recordTo[i] = n % 256;
         n /= 256;
     }
-    if (n > 0) {
-        printf("\nError: the number %llu does not fit in %i bytes.", number, numberOfBytes);
-        brogueAssert(false);
-    }
+    brogueAssert(n == 0);
 }
 
 // numberOfBytes can't be greater than 10
