@@ -22,13 +22,13 @@ jobs:
     - name: "Create artifact"
       run: |
         make BrogueCE-linux
-        tar -czvf BrogueCE-linux-x86_64.tar.gz BrogueCE-linux
+        tar -czvf BrogueLite-linux-x86_64.tar.gz BrogueCE-linux
 
     - name: "Upload artifact"
       uses: actions/upload-artifact@v2
       with:
         name: linux-x86_64
-        path: BrogueCE-linux-x86_64.tar.gz
+        path: BrogueLite-linux-x86_64.tar.gz
 
   macos:
     runs-on: macos-latest
@@ -71,13 +71,13 @@ jobs:
     - name: "Create artifact"
       run: |
         make BrogueCE-macos
-        zip -rll BrogueCE-macos-x86_64.zip BrogueCE-macos
+        zip -rll BrogueLite-macos-x86_64.zip BrogueCE-macos
 
     - name: "Upload artifact"
       uses: actions/upload-artifact@v2
       with:
         name: macos-x86_64
-        path: BrogueCE-macos-x86_64.zip
+        path: BrogueLite-macos-x86_64.zip
 
   windows:
     runs-on: windows-latest
@@ -103,10 +103,10 @@ jobs:
         cp SDL2_image\x86_64-w64-mingw32\bin\zlib1.dll BrogueCE-windows
         cp SDL2_image\x86_64-w64-mingw32\bin\SDL2_image.dll BrogueCE-windows
         cp SDL2_image\x86_64-w64-mingw32\bin\libpng16-16.dll BrogueCE-windows
-        7z a BrogueCE-windows-x86_64.zip BrogueCE-windows
+        7z a BrogueLite-windows-x86_64.zip BrogueCE-windows
 
     - name: "Upload artifact"
       uses: actions/upload-artifact@v2
       with:
         name: windows-x86_64
-        path: BrogueCE-windows-x86_64.zip
+        path: BrogueLite-windows-x86_64.zip
