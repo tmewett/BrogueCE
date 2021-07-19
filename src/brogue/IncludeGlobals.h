@@ -78,6 +78,7 @@ extern color gray;
 extern color darkGray;
 extern color veryDarkGray;
 extern color black;
+extern color sidebarBackColor;
 extern color yellow;
 extern color darkYellow;
 extern color teal;

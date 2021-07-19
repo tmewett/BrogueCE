@@ -390,6 +390,10 @@ void useKeyAt(item *theItem, short x, short y) {
     creature *monst;
     char buf[COLS], buf2[COLS], terrainName[COLS], preposition[10];
     boolean disposable;
+    boolean acceptsFungible;
+
+    disposable = false;
+    acceptsFungible = false;
 
     strcpy(terrainName, "unknown terrain"); // redundant failsafe
     for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
@@ -405,38 +409,63 @@ void useKeyAt(item *theItem, short x, short y) {
             } else {
                 strcpy(preposition, "on");
             }
+
+            // Brogue Lite: Keys can be used in any iron door
+            if (tileCatalog[pmap[x][y].layers[layer]].mechFlags & TM_ACCEPTS_FUNGIBLE_KEY) {
+                acceptsFungible = true;
+            }
+
             promoteTile(x, y, layer, false);
         }
     }
 
-    disposable = false;
-    for (i=0; i < KEY_ID_MAXIMUM && (theItem->keyLoc[i].x || theItem->keyLoc[i].machine); i++) {
-        if (theItem->keyLoc[i].x == x && theItem->keyLoc[i].y == y && theItem->keyLoc[i].disposableHere) {
-            disposable = true;
-        } else if (theItem->keyLoc[i].machine == pmap[x][y].machineNumber && theItem->keyLoc[i].disposableHere) {
-            disposable = true;
+    if ((theItem->flags & ITEM_IS_KEY)
+        && (theItem->flags & ITEM_IS_FUNGIBLE_KEY)
+        && acceptsFungible) {
+          disposable = true;
+    }
+
+    for (i=0; i < KEY_ID_MAXIMUM; i++) {
+
+        if (theItem->keyLoc[i].x || theItem->keyLoc[i].machine) {
+          if (theItem->keyLoc[i].x == x && theItem->keyLoc[i].y == y && theItem->keyLoc[i].disposableHere) {
+              disposable = true;
+          } else if (theItem->keyLoc[i].machine == pmap[x][y].machineNumber && theItem->keyLoc[i].disposableHere) {
+              disposable = true;
+          }
         }
     }
 
     if (disposable) {
-        if (removeItemFromChain(theItem, packItems)) {
-            itemName(theItem, buf2, true, false, NULL);
-            sprintf(buf, "you use your %s %s %s.",
-                    buf2,
-                    preposition,
-                    terrainName);
-            messageWithColor(buf, &itemMessageColor, 0);
-            deleteItem(theItem);
-        } else if (removeItemFromChain(theItem, floorItems)) {
-            deleteItem(theItem);
-            pmap[x][y].flags &= ~HAS_ITEM;
-        } else if (pmap[x][y].flags & HAS_MONSTER) {
-            monst = monsterAtLoc(x, y);
-            if (monst->carriedItem && monst->carriedItem == theItem) {
-                monst->carriedItem = NULL;
-                deleteItem(theItem);
-            }
-        }
+      // Brogue Lite: fungiblek keys can stack, so shouldn't delete but decrement the stack instead
+      if (theItem->quantity > 1) {
+          theItem->quantity--;
+
+          itemName(theItem, buf2, true, false, NULL);
+          sprintf(buf, "you use one of your %ss %s %s.",
+                  buf2,
+                  preposition,
+                  terrainName);
+          messageWithColor(buf, &itemMessageColor, 0);
+        } else {
+          if (removeItemFromChain(theItem, packItems)) {
+              itemName(theItem, buf2, true, false, NULL);
+              sprintf(buf, "you use your %s %s %s.",
+                      buf2,
+                      preposition,
+                      terrainName);
+              messageWithColor(buf, &itemMessageColor, 0);
+          } else if (removeItemFromChain(theItem, floorItems)) {
+              deleteItem(theItem);
+              pmap[x][y].flags &= ~HAS_ITEM;
+          } else if (pmap[x][y].flags & HAS_MONSTER) {
+              monst = monsterAtLoc(x, y);
+              if (monst->carriedItem && monst->carriedItem == theItem) {
+                  monst->carriedItem = NULL;
+                  deleteItem(theItem);
+              }
+          }
+      }
     }
 }
 
@@ -2162,11 +2191,15 @@ boolean useStairs(short stairDirection) {
             //copyDisplayBuffer(fromBuf, displayBuffer);
             rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
             rogue.depthLevel++;
-            message("You descend.", 0);
+
             startLevel(rogue.depthLevel - 1, stairDirection);
             if (rogue.depthLevel > rogue.deepestLevel) {
                 rogue.deepestLevel = rogue.depthLevel;
             }
+
+            // Brogue Lite: print descend message with level feeling if there is a lake, chasm, or lava.
+            printLevelFeeling();
+
             //copyDisplayBuffer(toBuf, displayBuffer);
             //irisFadeBetweenBuffers(fromBuf, toBuf, mapToWindowX(player.xLoc), mapToWindowY(player.yLoc), 20, false);
         } else if (numberOfMatchingPackItems(AMULET, 0, 0, false)) {
@@ -2203,6 +2236,38 @@ boolean useStairs(short stairDirection) {
     }
 
     return succeeded;
+}
+
+
+void printLevelFeeling() {
+  short i, j;
+
+  int lavaCount = 0;
+  int chasmCount = 0;
+  int lakeCount = 0;
+
+  for (i=0; i<DCOLS; i++) {
+      for (j=0; j<DROWS; j++) {
+          if (cellHasTerrainFlag(i, j, T_LAVA_INSTA_DEATH)) {
+              lavaCount++;
+          } else if (cellHasTerrainFlag(i, j, T_AUTO_DESCENT)) {
+              chasmCount++;
+          } else if (cellHasTerrainFlag(i, j, T_IS_DEEP_WATER)) {
+              lakeCount++;
+          }
+      }
+  }
+
+  // Try to print the most prominent feature when more than one present.
+  if (lavaCount >= chasmCount && lavaCount >= lakeCount) {
+      messageWithColor("You descend. The air turns hot and sulphurous.", &badMessageColor, false);
+  } else if (chasmCount >= lavaCount && chasmCount >= lakeCount) {
+      messageWithColor("You descend. A chilly draft rises from below.", &badMessageColor, false);
+  } else if (lakeCount >= chasmCount && lakeCount >= lavaCount) {
+      message("You descend. The air feels moist.", false);
+  } else {
+    message("You descend.", false);
+  }
 }
 
 void storeMemories(const short x, const short y) {

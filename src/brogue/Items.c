@@ -75,7 +75,38 @@ item *generateItem(unsigned short theCategory, short theKind) {
 
 unsigned long pickItemCategory(unsigned long theCategory) {
     short i, sum, randIndex;
-    short probabilities[13] =                       {50,    42,     52,     3,      3,      10,     8,      2,      3,      2,        0,        0,      0};
+
+    //short probabilities[13] =                       {50,    42,     52,     3,      3,      10,     8,      2,      3,      2,        0,        0,      0};
+
+    // Brogue Lite: adjust item frequencies
+    //
+    // We've removed scroll of identify, which is 30/158 of scrolls = 19%.
+    // So should we reduce the relative frequency of scrolls by 19%?
+    // From 42 to 34.
+    // Also, aggravate monsters = 15/158 and summon monsters = 10/158.
+    // Removing all of them is a total 55/158 frequency, so reducing overall
+    // scroll frequency by 35% = from 42 to ~27.
+    // After removing scroll of remove curse (15):
+    //
+    // 42*(1-(70/158)) = 23.39 ~= 23
+    //
+    // Potions had a total frequency of 189, with hallucination 10/189 = 5%.
+    // So, after removing hallucinationg, reduce overall potion
+    // probability from 52 to (52*(1-10/189)) ~= 49.
+    //
+    // Before removing curses:
+    // 16% of rings were cursed.
+    // 50% of enchanted weapons/armor were cursed. Since enchanted weapons/armor were 40% of weapons/armor in general,
+    // this means that 40%*20% = 8% of all weapons/armor were cursed.
+    // After removing curses:
+    // we must reduce the frequency of rings by 16%, and weapons and armor by 8%.
+    // rings:   16%*3 = 0.48 ~= 1 => reduce from 3 to 2
+    // weapons: 8%*10 = 0.89 ~= 1 => reduce from 10 to 9
+    // armor:   8%*8  = 0.64 ~= 1 => reduce from 8 to 7
+
+
+    short probabilities[13] =                       {50,    23,     49,     3,      3,      9,      7,      2,      2,      2,        0,        0,      0};
+
     unsigned short correspondingCategories[13] =    {GOLD,  SCROLL, POTION, STAFF,  WAND,   WEAPON, ARMOR,  FOOD,   RING,   CHARM,    AMULET,   GEM,    KEY};
 
     sum = 0;
@@ -163,23 +194,27 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                     break;
             }
 
-            if (rand_percent(40)) {
+            // Brogue Lite: don't generate cursed weapons.
+            // Reduce chance of enchanted weapons by half, from 40 to 20m,
+            // since the 50% of cursed enchants is removed
+            if (rand_percent(20)) {
                 theItem->enchant1 += rand_range(1, 3);
-                if (rand_percent(50)) {
+                /*if (rand_percent(50)) {
                     // cursed
                     theItem->enchant1 *= -1;
                     theItem->flags |= ITEM_CURSED;
                     if (rand_percent(33)) { // give it a bad runic
-                        theItem->enchant2 = rand_range(NUMBER_GOOD_WEAPON_ENCHANT_KINDS, NUMBER_WEAPON_RUNIC_KINDS - 1);
+                        theItem->enchant2 = rand_range(NUMBER_WEAPON_RUNIC_KINDS, NUMBER_WEAPON_RUNIC_KINDS - 1);
                         theItem->flags |= ITEM_RUNIC;
                     }
-                } else if (rand_range(3, 10)
+                } else */
+                if (rand_range(3, 10)
                            * ((theItem->flags & ITEM_ATTACKS_STAGGER) ? 2 : 1)
                            / ((theItem->flags & ITEM_ATTACKS_QUICKLY) ? 2 : 1)
                            / ((theItem->flags & ITEM_ATTACKS_EXTEND) ? 2 : 1)
                            > theItem->damage.lowerBound) {
                     // give it a good runic; lower damage items are more likely to be runic
-                    theItem->enchant2 = rand_range(0, NUMBER_GOOD_WEAPON_ENCHANT_KINDS - 1);
+                    theItem->enchant2 = rand_range(0, NUMBER_WEAPON_RUNIC_KINDS - 1);
                     theItem->flags |= ITEM_RUNIC;
                     if (theItem->enchant2 == W_SLAYING) {
                         theItem->vorpalEnemy = chooseVorpalEnemy();
@@ -212,18 +247,26 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             theItem->strengthRequired = armorTable[itemKind].strengthRequired;
             theItem->displayChar = G_ARMOR;
             theItem->charges = ARMOR_DELAY_TO_AUTO_ID; // this many turns until it reveals its enchants and whether runic
-            if (rand_percent(40)) {
+
+
+            // Brogue Lite: don't generate cursed armors.
+            // Reduce chance of enchanted armors by half, from 40 to 20m,
+            // since the 50% of cursed enchants is removed
+            if (rand_percent(20)) {
+            theEntry = &armorTable[itemKind];
+            theItem->armor = randClump(armorTable[itemKind].range);
                 theItem->enchant1 += rand_range(1, 3);
-                if (rand_percent(50)) {
+                /*if (rand_percent(50)) {
                     // cursed
                     theItem->enchant1 *= -1;
                     theItem->flags |= ITEM_CURSED;
                     if (rand_percent(33)) { // give it a bad runic
-                        theItem->enchant2 = rand_range(NUMBER_GOOD_ARMOR_ENCHANT_KINDS, NUMBER_ARMOR_ENCHANT_KINDS - 1);
+                        theItem->enchant2 = rand_range(NUMBER_ARMOR_ENCHANT_KINDS, NUMBER_ARMOR_ENCHANT_KINDS - 1);
                         theItem->flags |= ITEM_RUNIC;
                     }
-                } else if (rand_range(0, 95) > theItem->armor) { // give it a good runic
-                    theItem->enchant2 = rand_range(0, NUMBER_GOOD_ARMOR_ENCHANT_KINDS - 1);
+                } else*/
+                if (rand_range(0, 95) > theItem->armor) { // give it a good runic
+                    theItem->enchant2 = rand_range(0, NUMBER_ARMOR_ENCHANT_KINDS - 1);
                     theItem->flags |= ITEM_RUNIC;
                     if (theItem->enchant2 == A_IMMUNITY) {
                         theItem->vorpalEnemy = chooseVorpalEnemy();
@@ -285,15 +328,17 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             theItem->displayChar = G_RING;
             theItem->enchant1 = randClump(ringTable[itemKind].range);
             theItem->charges = RING_DELAY_TO_AUTO_ID; // how many turns of being worn until it auto-identifies
-            if (rand_percent(16)) {
+
+            // Brogue Lite: don't generate cursed rings.
+            /*if (rand_percent(16)) {
                 // cursed
                 theItem->enchant1 *= -1;
                 theItem->flags |= ITEM_CURSED;
-            } else {
+            } else {*/
                 while (rand_percent(10)) {
                     theItem->enchant1++;
                 }
-            }
+            //}
             break;
         case CHARM:
             if (itemKind < 0) {
@@ -398,6 +443,10 @@ item *placeItem(item *theItem, short x, short y) {
             }
         }
     }
+
+    // Brogue Lite: identify items automatically when placed in level
+    identify(theItem);
+
     return theItem;
 }
 
@@ -896,7 +945,25 @@ item *addItemToPack(item *theItem) {
                 return tempItem;
             }
         }
-    } else if (theItem->category & WEAPON && theItem->quiverNumber > 0) {
+    } else if (theItem->category & KEY) {
+      // Brogue lite: stack fungible keys
+      if ((theItem->flags & ITEM_IS_KEY)
+          && (theItem->flags & ITEM_IS_FUNGIBLE_KEY)) {
+            for (tempItem = packItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
+                if ((tempItem->flags & ITEM_IS_KEY)
+                    && (tempItem->flags & ITEM_IS_FUNGIBLE_KEY)) {
+
+                    // We found a match!
+                    stackItems(tempItem, theItem);
+
+                    // Pass back the incremented (old) item. No need to add it to the pack since it's already there.
+                    return tempItem;
+                }
+            }
+
+          }
+    }
+    else if (theItem->category & WEAPON && theItem->quiverNumber > 0) {
         for (tempItem = packItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
             if (theItem->category == tempItem->category && theItem->kind == tempItem->kind
                 && theItem->quiverNumber == tempItem->quiverNumber) {
@@ -961,8 +1028,9 @@ char nextAvailableInventoryCharacter() {
 void checkForDisenchantment(item *theItem) {
     char buf[COLS], buf2[COLS];
 
+    // Why do good runics get removed when enchanted to zero, but not bad runics when going up to zero?
     if ((theItem->flags & ITEM_RUNIC)
-        && (((theItem->category & WEAPON) && theItem->enchant2 < NUMBER_GOOD_WEAPON_ENCHANT_KINDS) || ((theItem->category & ARMOR) && theItem->enchant2 < NUMBER_GOOD_ARMOR_ENCHANT_KINDS))
+        && (((theItem->category & WEAPON) && theItem->enchant2 < NUMBER_WEAPON_RUNIC_KINDS) || ((theItem->category & ARMOR) && theItem->enchant2 < NUMBER_ARMOR_ENCHANT_KINDS))
         && theItem->enchant1 <= 0) {
 
         theItem->enchant2 = 0;
@@ -1582,17 +1650,18 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
             sprintf(root, "%slumenstone%s%s from depth %i", yellowEscapeSequence, pluralization, baseEscapeSequence, theItem->originDepth);
             break;
         case KEY:
-            if (includeDetails && theItem->originDepth > 0 && theItem->originDepth != rogue.depthLevel) {
+            if (includeDetails && theItem->originDepth > 0 && theItem->originDepth != rogue.depthLevel
+              && (!(theItem->flags & ITEM_IS_FUNGIBLE_KEY))) { // Brogue Lite: fungible keys' depth doesn't matter
                 sprintf(root, "%s%s%s from depth %i",
                         keyTable[theItem->kind].name,
                         pluralization,
                         grayEscapeSequence,
                         theItem->originDepth);
             } else {
-                sprintf(root,
-                        keyTable[theItem->kind].name,
-                        "%s%s",
-                        pluralization);
+                  sprintf(root,
+                          "%s%s",
+                          keyTable[theItem->kind].name,
+                          pluralization);
             }
             break;
         default:
@@ -1813,9 +1882,7 @@ void itemDetails(char *buf, item *theItem) {
         "the enemy will be slowed",
         "the enemy will be confused",
         "the enemy will be flung",
-        "[slaying]", // never used
-        "the enemy will be healed",
-        "the enemy will be cloned"
+        "[slaying]" // never used
     };
 
     goodColorEscape[0] = badColorEscape[0] = whiteColorEscape[0] = '\0';
@@ -2167,10 +2234,10 @@ void itemDetails(char *buf, item *theItem) {
                                         strcat(buf, buf2);
                                         nextLevelState = weaponForceDistance(enchant + enchantIncrement(theItem));
                                         break;
-                                    case W_MERCY:
+                                    /*case W_MERCY:
                                         strcpy(buf2, " by 50% of its maximum health. ");
                                         strcat(buf, buf2);
-                                        break;
+                                        break;*/
                                     default:
                                         strcpy(buf2, ". ");
                                         strcat(buf, buf2);
@@ -2305,7 +2372,7 @@ void itemDetails(char *buf, item *theItem) {
                             case A_DAMPENING:
                                 strcpy(buf2, "When worn, it will safely absorb the concussive impact of any explosions (though you may still be burned). ");
                                 break;
-                            case A_BURDEN:
+                            /*case A_BURDEN:
                                 strcpy(buf2, "10% of the time it absorbs a blow, its strength requirement will permanently increase. ");
                                 break;
                             case A_VULNERABILITY:
@@ -2313,7 +2380,7 @@ void itemDetails(char *buf, item *theItem) {
                                 break;
                             case A_IMMOLATION:
                                 strcpy(buf2, "10% of the time it absorbs a blow, it will explode in flames. ");
-                                break;
+                                break;*/
                             default:
                                 break;
                         }
@@ -2800,7 +2867,7 @@ char displayInventory(unsigned short categoryMask,
         itemName(theItem, buf, true, true, (buttons[i].flags & B_HOVER_ENABLED) ? &white : &gray);
         upperCase(buf);
 
-        if ((theItem->flags & ITEM_MAGIC_DETECTED)
+        if ((true) // Brogue Lite: always reveal magic polarity of inventory items
             && !(theItem->category & AMULET)) { // Won't include food, keys, lumenstones or amulet.
 
             int polarity = itemMagicPolarity(theItem);
@@ -3202,6 +3269,13 @@ void equip(item *theItem) {
 // (3) either its key (x, y) location matches (x, y), or its machine number matches the machine number at (x, y).
 boolean keyMatchesLocation(item *theItem, short x, short y) {
     short i;
+
+    // Brogue Lite: any key can be used in iron doors
+    if ((theItem->flags & ITEM_IS_KEY)
+        && (theItem->flags & ITEM_IS_FUNGIBLE_KEY)
+        && (tileCatalog[pmap[x][y].layers[DUNGEON]].mechFlags & TM_ACCEPTS_FUNGIBLE_KEY)) {
+      return true;
+    }
 
     if ((theItem->flags & ITEM_IS_KEY)
         && theItem->originDepth == rogue.depthLevel) {
@@ -5912,9 +5986,7 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
             sprintf(buf, "the flask shatters and %s liquid splashes harmlessly %s %s.",
                     potionTable[theItem->kind].flavor, buf2, tileText(x, y));
             message(buf, 0);
-            if (theItem->kind == POTION_HALLUCINATION && (theItem->flags & ITEM_MAGIC_DETECTED)) {
-                autoIdentify(theItem);
-            }
+
         }
         deleteItem(theItem);
         return; // potions disappear when they break
@@ -6480,8 +6552,7 @@ void apply(item *theItem, boolean recordCommands) {
                 commandsRecorded = true; // have to record in case further keystrokes are necessary (e.g. enchant scroll)
             }
             if (!scrollTable[theItem->kind].identified
-                && theItem->kind != SCROLL_ENCHANTING
-                && theItem->kind != SCROLL_IDENTIFY) {
+                && theItem->kind != SCROLL_ENCHANTING) {
 
                 revealItemType = true;
             }
@@ -6692,48 +6763,20 @@ void magicMapCell(short x, short y) {
 }
 
 void readScroll(item *theItem) {
-    short i, j, x, y, numberOfMonsters = 0;
+    //short i, j, x, y, numberOfMonsters = 0;
+    short i, j = 0;
     item *tempItem;
-    creature *monst;
-    boolean hadEffect = false;
+    //creature *monst;
+    //boolean hadEffect = false;
     char buf[COLS * 3], buf2[COLS * 3];
 
     rogue.featRecord[FEAT_ARCHIVIST] = false;
 
     switch (theItem->kind) {
-        case SCROLL_IDENTIFY:
-            identify(theItem);
-            updateIdentifiableItems();
-            messageWithColor("this is a scroll of identify.", &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
-            if (numberOfMatchingPackItems(ALL_ITEMS, ITEM_CAN_BE_IDENTIFIED, 0, false) == 0) {
-                message("everything in your pack is already identified.", 0);
-                break;
-            }
-            do {
-                theItem = promptForItemOfType((ALL_ITEMS), ITEM_CAN_BE_IDENTIFIED, 0,
-                                              KEYBOARD_LABELS ? "Identify what? (a-z; shift for more info)" : "Identify what?",
-                                              false);
-                if (rogue.gameHasEnded) {
-                    return;
-                }
-                if (theItem && !(theItem->flags & ITEM_CAN_BE_IDENTIFIED)) {
-                    confirmMessages();
-                    itemName(theItem, buf2, true, true, NULL);
-                    sprintf(buf, "you already know %s %s.", (theItem->quantity > 1 ? "they're" : "it's"), buf2);
-                    messageWithColor(buf, &itemMessageColor, 0);
-                }
-            } while (theItem == NULL || !(theItem->flags & ITEM_CAN_BE_IDENTIFIED));
-            recordKeystroke(theItem->inventoryLetter, false, false);
-            confirmMessages();
-            identify(theItem);
-            itemName(theItem, buf, true, true, NULL);
-            sprintf(buf2, "%s %s.", (theItem->quantity == 1 ? "this is" : "these are"), buf);
-            messageWithColor(buf2, &itemMessageColor, 0);
-            break;
         case SCROLL_TELEPORT:
             teleport(&player, -1, -1, true);
             break;
-        case SCROLL_REMOVE_CURSE:
+        /*case SCROLL_REMOVE_CURSE:
             for (tempItem = packItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
                 if (tempItem->flags & ITEM_CURSED) {
                     hadEffect = true;
@@ -6745,7 +6788,7 @@ void readScroll(item *theItem) {
             } else {
                 message("your pack glows with a cleansing light, but nothing happens.", 0);
             }
-            break;
+            break;*/
         case SCROLL_ENCHANTING:
             identify(theItem);
             messageWithColor("this is a scroll of enchanting.", &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
@@ -6891,37 +6934,6 @@ void readScroll(item *theItem) {
             }
             colorFlash(&magicMapFlashColor, 0, MAGIC_MAPPED, 15, DCOLS + DROWS, player.xLoc, player.yLoc);
             break;
-        case SCROLL_AGGRAVATE_MONSTER:
-            aggravateMonsters(DCOLS + DROWS, player.xLoc, player.yLoc, &gray);
-            message("the scroll emits a piercing shriek that echoes throughout the dungeon!", 0);
-            break;
-        case SCROLL_SUMMON_MONSTER:
-            for (j=0; j<25 && numberOfMonsters < 3; j++) {
-                for (i=0; i<8; i++) {
-                    x = player.xLoc + nbDirs[i][0];
-                    y = player.yLoc + nbDirs[i][1];
-                    if (!cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY) && !(pmap[x][y].flags & HAS_MONSTER)
-                        && rand_percent(10) && (numberOfMonsters < 3)) {
-                        monst = spawnHorde(0, x, y, (HORDE_LEADER_CAPTIVE | HORDE_NO_PERIODIC_SPAWN | HORDE_IS_SUMMONED | HORDE_MACHINE_ONLY), 0);
-                        if (monst) {
-                            // refreshDungeonCell(x, y);
-                            // monst->creatureState = MONSTER_TRACKING_SCENT;
-                            // monst->ticksUntilTurn = player.movementSpeed;
-                            wakeUp(monst);
-                            fadeInMonster(monst);
-                            numberOfMonsters++;
-                        }
-                    }
-                }
-            }
-            if (numberOfMonsters > 1) {
-                message("the fabric of space ripples, and monsters appear!", 0);
-            } else if (numberOfMonsters == 1) {
-                message("the fabric of space ripples, and a monster appears!", 0);
-            } else {
-                message("the fabric of space boils violently around you, but nothing happens.", 0);
-            }
-            break;
         case SCROLL_NEGATION:
             negationBlast("the scroll", DCOLS);
             break;
@@ -6948,7 +6960,6 @@ void detectMagicOnItem(item *theItem) {
 void drinkPotion(item *theItem) {
     item *tempItem = NULL;
     boolean hadEffect = false;
-    boolean hadEffect2 = false;
     char buf[1000] = "";
 
     brogueAssert(rogue.RNG == RNG_SUBSTANTIVE);
@@ -6965,10 +6976,6 @@ void drinkPotion(item *theItem) {
             heal(&player, 100, true);
             updatePlayerRegenerationDelay();
             messageWithColor(buf, &advancementMessageColor, 0);
-            break;
-        case POTION_HALLUCINATION:
-            player.status[STATUS_HALLUCINATING] = player.maxStatus[STATUS_HALLUCINATING] = 300;
-            message("colors are everywhere! The walls are singing!", 0);
             break;
         case POTION_INCINERATION:
             //colorFlash(&darkOrange, 0, IN_FIELD_OF_VIEW, 4, 4, player.xLoc, player.yLoc);
@@ -7026,7 +7033,6 @@ void drinkPotion(item *theItem) {
             break;
         case POTION_DETECT_MAGIC:
             hadEffect = false;
-            hadEffect2 = false;
             for (tempItem = floorItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
                 if (tempItem->category & CAN_BE_DETECTED) {
                     detectMagicOnItem(tempItem);
@@ -7050,21 +7056,12 @@ void drinkPotion(item *theItem) {
             for (tempItem = packItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
                 if (tempItem->category & CAN_BE_DETECTED) {
                     detectMagicOnItem(tempItem);
-                    if (itemMagicPolarity(tempItem)) {
-                        if (tempItem->flags & ITEM_MAGIC_DETECTED) {
-                            hadEffect2 = true;
-                        }
-                    }
+                    // Brogue Lite: inventory items' polarity is already displayed, so no need to print a message.
+                    // However, inventory items that are detected here and then thrown or stolen will glow on the map.
                 }
             }
-            if (hadEffect || hadEffect2) {
-                if (hadEffect && hadEffect2) {
-                    message("you can somehow feel the presence of magic on the level and in your pack.", 0);
-                } else if (hadEffect) {
-                    message("you can somehow feel the presence of magic on the level.", 0);
-                } else {
-                    message("you can somehow feel the presence of magic in your pack.", 0);
-                }
+            if (hadEffect) {
+                message("you can somehow feel the presence of magic on the level.", 0);
             } else {
                 message("you can somehow feel the absence of magic on the level and in your pack.", 0);
             }
@@ -7095,10 +7092,6 @@ short magicCharDiscoverySuffix(short category, short kind) {
     switch (category) {
         case SCROLL:
             switch (kind) {
-                case SCROLL_AGGRAVATE_MONSTER:
-                case SCROLL_SUMMON_MONSTER:
-                    result = -1;
-                    break;
                 default:
                     result = 1;
                     break;
@@ -7106,7 +7099,6 @@ short magicCharDiscoverySuffix(short category, short kind) {
             break;
         case POTION:
             switch (kind) {
-                case POTION_HALLUCINATION:
                 case POTION_INCINERATION:
                 case POTION_DESCENT:
                 case POTION_POISON:
@@ -7156,15 +7148,11 @@ int itemMagicPolarity(item *theItem) {
             break;
         case SCROLL:
             switch (theItem->kind) {
-                case SCROLL_AGGRAVATE_MONSTER:
-                case SCROLL_SUMMON_MONSTER:
-                    return -1;
                 default:
                     return 1;
             }
         case POTION:
             switch (theItem->kind) {
-                case POTION_HALLUCINATION:
                 case POTION_INCINERATION:
                 case POTION_DESCENT:
                 case POTION_POISON:

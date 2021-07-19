@@ -1,3 +1,85 @@
+Brogue Lite
+=========
+
+Brogue Lite is a variant of the roguelike game Brogue, specifically, of
+Brogue Community Edition. Brogue Lite changes the game to make it easier.
+Certain systems (like item identification) are streamlined or removed.
+
+
+About
+-----
+
+### Who is Brogue Lite for?
+
+-
+  Novice players who want to practice the rules of the game before
+  graduating to the classic Brogue experience.
+-
+  Roguelike players who dislike the item identification game.
+-
+  Brogue players who occasionally want to switch it up with a more casual experience.
+
+
+### How is Brogue Lite different from Brogue CE?
+
+Certain tricky systems like item identification are streamlined or removed.
+Otherwise, Brogue Lite will remain quite "vanilla" - the goal is not to add
+new monsters, etc., though in some cases new items may need to be added
+to balance out the ones that are removed.
+
+
+### List of changed features
+
+
+Currently implemented:
+
+-
+  Removed the identification system. All items are identified upon creation.
+-
+  Removed negative scrolls that have very little use once identified.
+-
+  Removed potion of hallucination, which has no use once identified.
+-
+  Removed cursed equipment, and negative runics, which have no use once identified. Also removed scroll of remove curse.
+-
+  Added "level feeling" messages when descending, as well as messages when monsters notice you, etc.
+-
+  Various visual changes to sidebar.
+
+
+Possible ideas for potential further changes, TBD:
+
+-
+  Are there any staffs or wands which have no good use once identified that need to be removed or reworked?
+-
+  Are wands an unnecessary complication - if so, should wands be removed and replaced with staffs or charms where appropriate?
+-
+  Guaranteed vaults on dungeon level 1? Probably not needed since amount of items feels quite generous
+  at the moment (since you're not wasting any on use-ID).
+-
+  Replace some of the removed negative items/runics with new ones that make more sense
+  with the lack of an identification minigame?
+  Or perhaps give the existing ones positive effects? For example: aggravating monsters makes them unable to cast spells.
+  Armor of immolation automatically removes webs, nets, and creeping death at your feet.
+-
+  What should be done with the ally system? Is it complex enough to consider removing it, or an important part
+  of the game's appeal to new players? Should there be an alternative for players who don't wish to use allies but with an opportunity cost?
+  (For example, instead of freeing a captured enemy, you could sacrifice it for some other reward?)
+
+
+
+
+
+
+
+
+
+
+
+The original readme for Brogue CE follows.
+=========
+
+
 Brogue CE
 =========
 

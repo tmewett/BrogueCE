@@ -357,9 +357,7 @@ short runicWeaponChance(item *theItem, boolean customEnchantLevel, fixpt enchant
         POW_14_RUNIC_DECREMENT, // W_SLOWING
         POW_11_RUNIC_DECREMENT, // W_CONFUSION
         POW_15_RUNIC_DECREMENT, // W_FORCE
-        0,      // W_SLAYING
-        0,      // W_MERCY
-        0};     // W_PLENTY
+        };
 
     fixpt modifier;
     short runicType = theItem->enchant2;
@@ -368,7 +366,7 @@ short runicWeaponChance(item *theItem, boolean customEnchantLevel, fixpt enchant
     if (runicType == W_SLAYING) {
         return 0;
     }
-    if (runicType >= NUMBER_GOOD_WEAPON_ENCHANT_KINDS) { // bad runic
+    if (runicType >= NUMBER_WEAPON_RUNIC_KINDS) { // bad runic
         return 15;
     }
     if (!customEnchantLevel) {

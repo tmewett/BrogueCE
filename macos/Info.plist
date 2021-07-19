@@ -9,13 +9,13 @@
     <key>CFBundleIconFile</key>
     <string>Brogue.icns</string>
     <key>CFBundleIdentifier</key>
-    <string>com.Brogue.CommunityEdition</string>
+    <string>com.BrogueLite.BrogueLite</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>Brogue CE</string>
+    <string>BrogueLite</string>
     <key>CFBundleDisplayName</key>
-    <string>Brogue CE</string>
+    <string>BrogueLite/string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleVersion</key>
