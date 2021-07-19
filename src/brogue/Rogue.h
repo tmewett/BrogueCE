@@ -28,16 +28,28 @@
 #include <time.h>
 #include "PlatformDefines.h"
 
-// unicode: comment this line to revert to ASCII
+#ifndef BROGUE_EXTRA_VERSION
+#error "The BROGUE_EXTRA_VERSION macro is undefined."
+#endif
 
+// unicode: comment this line to revert to ASCII
 #define USE_UNICODE
 
+// Brogue version number
+#define BROGUE_MAJOR 1
+#define BROGUE_MINOR 10
+#define BROGUE_PATCH 0
+
+// Expanding a macro as a string constant requires two levels of macros
+#define _str(x) #x
+#define STRINGIFY(x) _str(x)
+
 // Brogue version: what the user sees in the menu and title
-#define BROGUE_VERSION_STRING "CE 1.9.4" BROGUE_EXTRA_VERSION
+#define BROGUE_VERSION_STRING "CE " STRINGIFY(BROGUE_MAJOR) "." STRINGIFY(BROGUE_MINOR) "." STRINGIFY(BROGUE_PATCH) BROGUE_EXTRA_VERSION
 
 // Recording version. Saved into recordings and save files made by this version.
 // Cannot be longer than 16 chars
-#define BROGUE_RECORDING_VERSION_STRING "CE 1.9.4"
+#define BROGUE_RECORDING_VERSION_STRING "CE " STRINGIFY(BROGUE_MAJOR) "." STRINGIFY(BROGUE_MINOR) "." STRINGIFY(BROGUE_PATCH)
 
 /* Patch pattern. A scanf format string which matches an unsigned short. If this
 matches against a recording version string, it defines a "patch version." During
@@ -49,10 +61,13 @@ which is equal or less than the patch version of the current game
 (rogue.patchLevel is set to the recording's); or b) it doesn't match the version
 strings, but they are equal (rogue.patchLevel is set to 0).
 */
-#define BROGUE_PATCH_VERSION_PATTERN "CE 1.9.%hu"
+#define BROGUE_PATCH_VERSION_PATTERN "CE " STRINGIFY(BROGUE_MAJOR) "." STRINGIFY(BROGUE_MINOR) ".%hu"
 
 // Dungeon version. Used in seed catalog output.
 #define BROGUE_DUNGEON_VERSION_STRING "CE 1.9"
+
+// Macro to compare BROGUE_MAJOR.BROGUE_MINOR.patchVersion to a.b.c
+#define BROGUE_VERSION_ATLEAST(a,b,c) (BROGUE_MAJOR != (a) ? BROGUE_MAJOR > (a) : BROGUE_MINOR != (b) ? BROGUE_MINOR > (b) : rogue.patchVersion >= (c))
 
 #define DEBUG                           if (rogue.wizard)
 #define MONSTERS_ENABLED                (!rogue.wizard || 1) // Quest room monsters can be generated regardless.
@@ -118,7 +133,10 @@ typedef long long fixpt;
 #define DATE_FORMAT             "%Y-%m-%d" // see strftime() documentation
 
 #define MESSAGE_LINES           3
-#define MESSAGE_ARCHIVE_LINES   ROWS
+#define MESSAGE_ARCHIVE_VIEW_LINES ROWS
+#define MESSAGE_ARCHIVE_LINES   (MESSAGE_ARCHIVE_VIEW_LINES*10)
+#define MESSAGE_ARCHIVE_ENTRIES (MESSAGE_ARCHIVE_LINES*4)
+#define MAX_MESSAGE_REPEATS     100
 
 // Size of the entire terminal window. These need to be hard-coded here and in Viewport.h
 #define COLS                    100
@@ -1124,6 +1142,7 @@ enum tileFlags {
 #define THROW_KEY           't'
 #define RETHROW_KEY         'T'
 #define RELABEL_KEY         'R'
+#define SWAP_KEY            'w'
 #define TRUE_COLORS_KEY     '\\'
 #define AGGRO_DISPLAY_KEY   ']'
 #define DROP_KEY            'd'
@@ -1209,8 +1228,6 @@ boolean cellHasTerrainFlag(short x, short y, unsigned long flagMask);
                                             || (rogue.playbackOmniscience \
                                                 && (pmap[x][y].layers[DUNGEON] != GRANITE || (pmap[x][y].flags & DISCOVERED))))
 
-#define CYCLE_MONSTERS_AND_PLAYERS(x)       for ((x) = &player; (x) != NULL; (x) = ((x) == &player ? monsters->nextCreature : (x)->nextCreature))
-
 #define assureCosmeticRNG                   short oldRNG = rogue.RNG; rogue.RNG = RNG_COSMETIC;
 #define restoreRNG                          rogue.RNG = oldRNG;
 
@@ -1237,7 +1254,6 @@ typedef struct cellDisplayBuffer {
     char foreColorComponents[3];
     char backColorComponents[3];
     char opacity;
-    boolean needsUpdate;
 } cellDisplayBuffer;
 
 typedef struct pcell {                              // permanent cell; have to remember this stuff to save levels
@@ -1254,6 +1270,7 @@ typedef struct pcell {                              // permanent cell; have to r
     unsigned long rememberedCellFlags;              // map cell flags the player remembers from that spot
     unsigned long rememberedTerrainFlags;           // terrain flags the player remembers from that spot
     unsigned long rememberedTMFlags;                // TM flags the player remembers from that spot
+    short exposedToFire;                            // number of times the tile has been exposed to fire since the last environment update
 } pcell;
 
 typedef struct tcell {          // transient cell; stuff we don't need to remember between levels
@@ -1346,6 +1363,8 @@ typedef struct item {
     short yLoc;
     keyLocationProfile keyLoc[KEY_ID_MAXIMUM];
     short originDepth;
+    unsigned long spawnTurnNumber;
+    unsigned long lastUsed[3];         // Absolute turns last applied
     struct item *nextItem;
 } item;
 
@@ -1855,28 +1874,31 @@ enum terrainMechanicalFlagCatalog {
     TM_IS_SECRET                    = Fl(0),        // successful search or being stepped on while visible transforms it into discoverType
     TM_PROMOTES_WITH_KEY            = Fl(1),        // promotes if the key is present on the tile (in your pack, carried by monster, or lying on the ground)
     TM_PROMOTES_WITHOUT_KEY         = Fl(2),        // promotes if the key is NOT present on the tile (in your pack, carried by monster, or lying on the ground)
-    TM_PROMOTES_ON_STEP             = Fl(3),        // promotes when a creature, player or item is on the tile (whether or not levitating)
-    TM_PROMOTES_ON_ITEM_PICKUP      = Fl(4),        // promotes when an item is lifted from the tile (primarily for altars)
-    TM_PROMOTES_ON_PLAYER_ENTRY     = Fl(5),        // promotes when the player enters the tile (whether or not levitating)
-    TM_PROMOTES_ON_SACRIFICE_ENTRY  = Fl(6),        // promotes when the sacrifice target enters the tile (whether or not levitating)
-    TM_PROMOTES_ON_ELECTRICITY      = Fl(7),        // promotes when hit by a lightning bolt
-    TM_ALLOWS_SUBMERGING            = Fl(8),        // allows submersible monsters to submerge in this terrain
-    TM_IS_WIRED                     = Fl(9),        // if wired, promotes when powered, and sends power when promoting
-    TM_IS_CIRCUIT_BREAKER           = Fl(10),       // prevents power from circulating in its machine
-    TM_GAS_DISSIPATES               = Fl(11),       // does not just hang in the air forever
-    TM_GAS_DISSIPATES_QUICKLY       = Fl(12),       // dissipates quickly
-    TM_EXTINGUISHES_FIRE            = Fl(13),       // extinguishes burning terrain or creatures
-    TM_VANISHES_UPON_PROMOTION      = Fl(14),       // vanishes when creating promotion dungeon feature, even if the replacement terrain priority doesn't require it
-    TM_REFLECTS_BOLTS               = Fl(15),       // magic bolts reflect off of its surface randomly (similar to pmap flag IMPREGNABLE)
-    TM_STAND_IN_TILE                = Fl(16),       // earthbound creatures will be said to stand "in" the tile, not on it
-    TM_LIST_IN_SIDEBAR              = Fl(17),       // terrain will be listed in the sidebar with a description of the terrain type
-    TM_VISUALLY_DISTINCT            = Fl(18),       // terrain will be color-adjusted if necessary so the character stands out from the background
-    TM_BRIGHT_MEMORY                = Fl(19),       // no blue fade when this tile is out of sight
-    TM_EXPLOSIVE_PROMOTE            = Fl(20),       // when burned, will promote to promoteType instead of burningType if surrounded by tiles with T_IS_FIRE or TM_EXPLOSIVE_PROMOTE
-    TM_CONNECTS_LEVEL               = Fl(21),       // will be treated as passable for purposes of calculating level connectedness, irrespective of other aspects of this terrain layer
-    TM_INTERRUPT_EXPLORATION_WHEN_SEEN = Fl(22),    // will generate a message when discovered during exploration to interrupt exploration
-    TM_INVERT_WHEN_HIGHLIGHTED      = Fl(23),       // will flip fore and back colors when highlighted with pathing
-    TM_SWAP_ENCHANTS_ACTIVATION     = Fl(24),       // in machine, swap item enchantments when two suitable items are on this terrain, and activate the machine when that happens
+    TM_PROMOTES_ON_CREATURE         = Fl(3),        // promotes when a creature or player is on the tile (whether or not levitating)
+    TM_PROMOTES_ON_ITEM             = Fl(4),        // promotes when an item is on the tile
+    TM_PROMOTES_ON_ITEM_PICKUP      = Fl(5),        // promotes when an item is lifted from the tile (primarily for altars)
+    TM_PROMOTES_ON_PLAYER_ENTRY     = Fl(6),        // promotes when the player enters the tile (whether or not levitating)
+    TM_PROMOTES_ON_SACRIFICE_ENTRY  = Fl(7),        // promotes when the sacrifice target enters the tile (whether or not levitating)
+    TM_PROMOTES_ON_ELECTRICITY      = Fl(8),        // promotes when hit by a lightning bolt
+    TM_ALLOWS_SUBMERGING            = Fl(9),        // allows submersible monsters to submerge in this terrain
+    TM_IS_WIRED                     = Fl(10),        // if wired, promotes when powered, and sends power when promoting
+    TM_IS_CIRCUIT_BREAKER           = Fl(11),       // prevents power from circulating in its machine
+    TM_GAS_DISSIPATES               = Fl(12),       // does not just hang in the air forever
+    TM_GAS_DISSIPATES_QUICKLY       = Fl(13),       // dissipates quickly
+    TM_EXTINGUISHES_FIRE            = Fl(14),       // extinguishes burning terrain or creatures
+    TM_VANISHES_UPON_PROMOTION      = Fl(15),       // vanishes when creating promotion dungeon feature, even if the replacement terrain priority doesn't require it
+    TM_REFLECTS_BOLTS               = Fl(16),       // magic bolts reflect off of its surface randomly (similar to pmap flag IMPREGNABLE)
+    TM_STAND_IN_TILE                = Fl(17),       // earthbound creatures will be said to stand "in" the tile, not on it
+    TM_LIST_IN_SIDEBAR              = Fl(18),       // terrain will be listed in the sidebar with a description of the terrain type
+    TM_VISUALLY_DISTINCT            = Fl(19),       // terrain will be color-adjusted if necessary so the character stands out from the background
+    TM_BRIGHT_MEMORY                = Fl(20),       // no blue fade when this tile is out of sight
+    TM_EXPLOSIVE_PROMOTE            = Fl(21),       // when burned, will promote to promoteType instead of burningType if surrounded by tiles with T_IS_FIRE or TM_EXPLOSIVE_PROMOTE
+    TM_CONNECTS_LEVEL               = Fl(22),       // will be treated as passable for purposes of calculating level connectedness, irrespective of other aspects of this terrain layer
+    TM_INTERRUPT_EXPLORATION_WHEN_SEEN = Fl(23),    // will generate a message when discovered during exploration to interrupt exploration
+    TM_INVERT_WHEN_HIGHLIGHTED      = Fl(24),       // will flip fore and back colors when highlighted with pathing
+    TM_SWAP_ENCHANTS_ACTIVATION     = Fl(25),       // in machine, swap item enchantments when two suitable items are on this terrain, and activate the machine when that happens
+
+    TM_PROMOTES_ON_STEP             = (TM_PROMOTES_ON_CREATURE | TM_PROMOTES_ON_ITEM),
 };
 
 enum statusEffects {
@@ -2143,6 +2165,7 @@ typedef struct creature {
     enum creatureModes creatureMode;    // current behavioral mode (higher-level than state)
 
     short mutationIndex;                // what mutation the monster has (or -1 for none)
+    boolean wasNegated;                 // the monster has lost abilities due to negation
 
     // Waypoints:
     short targetWaypointIndex;          // the index number of the waypoint we're pathing toward
@@ -2177,11 +2200,25 @@ typedef struct creature {
     short newPowerCount;                // how many more times this monster can absorb a fallen monster
     short totalPowerCount;              // how many times has the monster been empowered? Used to recover abilities when negated.
 
-    struct creature *leader;            // only if monster is a follower
-    struct creature *carriedMonster;    // when vampires turn into bats, one of the bats restores the vampire when it dies
-    struct creature *nextCreature;
-    struct item *carriedItem;           // only used for monsters
+    struct creature *leader;                 // only if monster is a follower
+    struct creature *carriedMonster; // when vampires turn into bats, one of the bats restores the vampire when it dies
+    struct item *carriedItem;                // only used for monsters
 } creature;
+
+typedef struct creatureListNode {
+    creature *creature;
+    // A list node is just a creature that also knows who comes next.
+    struct creatureListNode *nextCreature;
+} creatureListNode;
+
+typedef struct creatureList {
+    creatureListNode* head;
+} creatureList;
+
+typedef struct creatureIterator {
+    creatureList *list; // used for restarting
+    creatureListNode *next;
+} creatureIterator;
 
 enum NGCommands {
     NG_NOTHING = 0,
@@ -2202,9 +2239,10 @@ enum featTypes {
     FEAT_SPECIALIST,
     FEAT_JELLYMANCER,
     FEAT_INDOMITABLE,
-    FEAT_MYSTIC,
+    FEAT_ASCETIC,
     FEAT_DRAGONSLAYER,
     FEAT_PALADIN,
+    FEAT_TONE,
 
     FEAT_COUNT,
 };
@@ -2251,6 +2289,8 @@ typedef struct playerCharacter {
     item *armor;
     item *ringLeft;
     item *ringRight;
+    item *swappedIn;
+    item *swappedOut;
 
     flare **flares;
     short flareCount;
@@ -2344,8 +2384,8 @@ typedef struct levelData {
     boolean visited;
     pcell mapStorage[DCOLS][DROWS];
     struct item *items;
-    struct creature *monsters;
-    struct creature *dormantMonsters;
+    struct creatureList monsters;
+    struct creatureList dormantMonsters;
     short **scentMap;
     uint64_t levelSeed;
     short upStairsLoc[2];
@@ -2608,6 +2648,19 @@ typedef struct buttonState {
     cellDisplayBuffer rbuf[COLS][ROWS]; // Reversion screen state.
 } buttonState;
 
+enum messageFlags {
+    REQUIRE_ACKNOWLEDGMENT        = Fl(0),
+    REFRESH_SIDEBAR               = Fl(1),
+    FOLDABLE                      = Fl(2),
+};
+
+typedef struct archivedMessage {
+    char message[COLS*2];
+    unsigned char count;          // how many times this message appears
+    unsigned long turn;           // player turn of the first occurrence
+    enum messageFlags flags;
+} archivedMessage;
+
 extern boolean serverMode;
 extern boolean hasGraphics;
 extern enum graphicsModes graphicsMode;
@@ -2784,6 +2837,7 @@ extern "C" {
     void startLevel (short oldLevelNumber, short stairDirection);
     void updateMinersLightRadius();
     void freeCreature(creature *monst);
+    void freeCreatureList(creatureList *list);
     void emptyGraveyard();
     void freeEverything();
     boolean randomMatchingLocation(short *x, short *y, short dungeonType, short liquidType, short terrainType);
@@ -2858,11 +2912,14 @@ extern "C" {
     void playerTurnEnded();
     void resetScentTurnNumber();
     void displayMonsterFlashes(boolean flashingEnabled);
+    void clearMessageArchive();
+    void formatRecentMessages(char buf[][COLS*2], size_t height, short *linesFormatted, short *latestMessageLines);
+    void displayRecentMessages();
     void displayMessageArchive();
-    void temporaryMessage(char *msg1, boolean requireAcknowledgment);
-    void messageWithColor(char *msg, color *theColor, boolean requireAcknowledgment);
+    void temporaryMessage(const char *msg1, enum messageFlags flags);
+    void messageWithColor(char *msg, color *theColor, enum messageFlags flags);
     void flavorMessage(char *msg);
-    void message(const char *msg, boolean requireAcknowledgment);
+    void message(const char *msg, enum messageFlags flags);
     void displayMoreSignWithoutWaitingForAcknowledgment();
     void displayMoreSign();
     short encodeMessageColor(char *msg, short i, const color *theColor);
@@ -2890,7 +2947,16 @@ extern "C" {
     short chooseMonster(short forLevel);
     creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFlags, unsigned long requiredFlags);
     void fadeInMonster(creature *monst);
-    boolean removeMonsterFromChain(creature *monst, creature *theChain);
+
+    creatureList createCreatureList();
+    creatureIterator iterateCreatures(creatureList *list);
+    boolean hasNextCreature(creatureIterator iter);
+    creature *nextCreature(creatureIterator *iter);
+    void restartIterator(creatureIterator *iter);
+    void prependCreature(creatureList *list, creature *add);
+    boolean removeCreature(creatureList *list, creature *remove);
+    creature *firstCreature(creatureList *list);
+
     boolean monsterWillAttackTarget(const creature *attacker, const creature *defender);
     boolean monstersAreTeammates(const creature *monst1, const creature *monst2);
     boolean monstersAreEnemies(const creature *monst1, const creature *monst2);
@@ -2925,6 +2991,7 @@ extern "C" {
     void moralAttack(creature *attacker, creature *defender);
     short runicWeaponChance(item *theItem, boolean customEnchantLevel, fixpt enchantLevel);
     void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed);
+    void disentangle(creature *monst);
     void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidancePreferences);
     void chooseNewWanderDestination(creature *monst);
     boolean canPass(creature *mover, creature *blocker);
@@ -2965,10 +3032,10 @@ extern "C" {
     void pickUpItemAt(short x, short y);
     item *addItemToPack(item *theItem);
     void aggravateMonsters(short distance, short x, short y, const color *flashColor);
-    short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2], const short targetLoc[2]);
+    short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2], const short targetLoc[2], const bolt *theBolt);
     void getImpactLoc(short returnLoc[2], const short originLoc[2], const short targetLoc[2],
-                      const short maxDistance, const boolean returnLastEmptySpace);
-    void negate(creature *monst);
+                      const short maxDistance, const boolean returnLastEmptySpace, const bolt *theBolt);
+    boolean negate(creature *monst);
     short monsterAccuracyAdjusted(const creature *monst);
     fixpt monsterDamageAdjustmentAmount(const creature *monst);
     short monsterDefenseAdjusted(const creature *monst);
@@ -3025,9 +3092,9 @@ extern "C" {
     item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind);
     void updateEncumbrance();
     short displayedArmorValue();
-    void strengthCheck(item *theItem);
+    void strengthCheck(item *theItem, boolean noisy);
     void recalculateEquipmentBonuses();
-    void equipItem(item *theItem, boolean force);
+    boolean equipItem(item *theItem, boolean force, item *unequipHint);
     void equip(item *theItem);
     item *keyInPackFor(short x, short y);
     item *keyOnTileAt(short x, short y);
@@ -3083,6 +3150,7 @@ extern "C" {
     void makeMonsterDropItem(creature *monst);
     void throwCommand(item *theItem, boolean autoThrow);
     void relabel(item *theItem);
+    void swapLastEquipment();
     void apply(item *theItem, boolean recordCommands);
     boolean itemCanBeCalled(item *theItem);
     void call(item *theItem);
@@ -3103,7 +3171,7 @@ extern "C" {
                               char *prompt,
                               boolean allowInventoryActions);
     item *itemOfPackLetter(char letter);
-    void unequipItem(item *theItem, boolean force);
+    boolean unequipItem(item *theItem, boolean force);
     short magicCharDiscoverySuffix(short category, short kind);
     int itemMagicPolarity(item *theItem);
     item *itemAtLoc(short x, short y);
@@ -3154,6 +3222,7 @@ extern "C" {
     boolean loadSavedGame();
     void switchToPlaying();
     void recordKeystroke(int keystroke, boolean controlKey, boolean shiftKey);
+    void cancelKeystroke();
     void recordKeystrokeSequence(unsigned char *commandSequence);
     void recordMouseClick(short x, short y, boolean controlKey, boolean shiftKey);
     void OOSCheck(unsigned long x, short numberOfBytes);

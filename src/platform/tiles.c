@@ -350,7 +350,7 @@ static double downscaleTile(SDL_Surface *surface, int tileWidth, int tileHeight,
 /// This is a slow function (takes ~2 minutes) so the results are saved to disk and reloaded when Brogue starts.
 /// After you modify the PNG, you should also delete "tiles.bin" and run Brogue so that the new tiles get optimized.
 static void optimizeTiles() {
-    SDL_Window *window = SDL_CreateWindow("Brogue", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 400, 300, 0);
+    SDL_Window *window = SDL_CreateWindow("Brogue", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 400, 300, 0);
 
     for (int row = 0; row < TILE_ROWS; row++) {
         for (int column = 0; column < TILE_COLS; column++) {
@@ -366,6 +366,16 @@ static void optimizeTiles() {
             if (SDL_BlitSurface(TilesPNG, &(SDL_Rect){.x=column*TILE_WIDTH, .y=row*TILE_HEIGHT, .w=TILE_WIDTH, .h=TILE_HEIGHT},
                     winSurface, &(SDL_Rect){.x=0, .y=0, .w=TILE_WIDTH, .h=TILE_HEIGHT}) < 0) sdlfatal(__FILE__, __LINE__);
             if (SDL_UpdateWindowSurface(window) < 0) sdlfatal(__FILE__, __LINE__);
+
+            // detect closing the window
+            SDL_Event event;
+            while (SDL_PollEvent(&event)) {
+                if (event.type == SDL_QUIT) {
+                    SDL_Quit();
+                    fprintf(stderr, "Aborted.\n");
+                    exit(1);
+                }
+            }
 
             // horizontal shifts
             baseTileHeight = MAX_TILE_SIZE;
@@ -434,10 +444,16 @@ static void optimizeTiles() {
 
 /// Loads the PNG and analyses it.
 void initTiles() {
-
-    // load the large PNG
     char filename[BROGUE_FILENAME_MAX];
     sprintf(filename, "%s/assets/tiles.png", dataDirectory);
+
+    // are we running Brogue from the correct folder to begin with?
+    if (!fileExists(filename)) {
+        fprintf(stderr, "Error: \"%s\" not found!\n", filename);
+        exit(1);
+    }
+
+    // load the large PNG
     SDL_Surface *image = IMG_Load(filename);
     if (!image) imgfatal(__FILE__, __LINE__);
     TilesPNG = SDL_ConvertSurfaceFormat(image, SDL_PIXELFORMAT_ARGB8888, 0);
@@ -459,8 +475,13 @@ void initTiles() {
         fread(tileShifts, 1, sizeof(tileShifts), file);
         fclose(file);
     } else {
+        fprintf(stderr, "\"%s\" not found. Re-generating it...\n", filename);
         optimizeTiles();
         file = fopen(filename, "wb");
+        if (!file) {
+            fprintf(stderr, "Error: could not write to \"%s\"\n", filename);
+            exit(1);
+        }
         fwrite(tileShifts, 1, sizeof(tileShifts), file);
         fclose(file);
     }
@@ -721,8 +742,9 @@ void resizeWindow(int width, int height) {
     SDL_DisplayMode mode;
     if (SDL_GetCurrentDisplayMode(0, &mode) < 0) sdlfatal(__FILE__, __LINE__);
 
-    // 70% of monitor width by default, with height following 16:10 aspect ratio
-    if (width < 0) width = mode.w * 7/10;
+    // By default the window will have an aspect ratio of 16:10
+    // and either 80% of monitor width or 80% of monitor height, whichever is smaller
+    if (width < 0) width = min(mode.w * 8/10, mode.h * 8*16/(10*10));
     if (height < 0) height = width * 10/16;
 
     // go to fullscreen mode if the window is as big as the screen

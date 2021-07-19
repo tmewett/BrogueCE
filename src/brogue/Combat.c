@@ -210,7 +210,7 @@ void splitMonster(creature *monst, short x, short y) {
 //    DEBUG {
 //        hiliteCharGrid(eligibleGrid, &green, 75);
 //        hiliteCharGrid(monsterGrid, &blue, 75);
-//        temporaryMessage("Jelly spawn possibilities (green = eligible, blue = monster):", true);
+//        temporaryMessage("Jelly spawn possibilities (green = eligible, blue = monster):", REQUIRE_ACKNOWLEDGMENT);
 //        displayLevel();
 //    }
 
@@ -255,7 +255,7 @@ void splitMonster(creature *monst, short x, short y) {
 
                     if (canDirectlySeeMonster(monst)) {
                         sprintf(buf, "%s splits in two!", monstName);
-                        message(buf, false);
+                        message(buf, 0);
                     }
 
                     return;
@@ -266,11 +266,9 @@ void splitMonster(creature *monst, short x, short y) {
 }
 
 short alliedCloneCount(creature *monst) {
-    short count;
-    creature *temp;
-
-    count = 0;
-    for (temp = monsters->nextCreature; temp != NULL; temp = temp->nextCreature) {
+    short count = 0;
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
+        creature *temp = nextCreature(&it);
         if (temp != monst
             && temp->info.monsterID == monst->info.monsterID
             && monstersAreTeammates(temp, monst)) {
@@ -279,7 +277,8 @@ short alliedCloneCount(creature *monst) {
         }
     }
     if (rogue.depthLevel > 1) {
-        for (temp = levels[rogue.depthLevel - 2].monsters; temp != NULL; temp = temp->nextCreature) {
+        for (creatureIterator it = iterateCreatures(&levels[rogue.depthLevel - 2].monsters); hasNextCreature(it);) {
+            creature *temp = nextCreature(&it);
             if (temp != monst
                 && temp->info.monsterID == monst->info.monsterID
                 && monstersAreTeammates(temp, monst)) {
@@ -289,7 +288,8 @@ short alliedCloneCount(creature *monst) {
         }
     }
     if (rogue.depthLevel < DEEPEST_LEVEL) {
-        for (temp = levels[rogue.depthLevel].monsters; temp != NULL; temp = temp->nextCreature) {
+        for (creatureIterator it = iterateCreatures(&levels[rogue.depthLevel].monsters); hasNextCreature(it);) {
+            creature *temp = nextCreature(&it);
             if (temp != monst
                 && temp->info.monsterID == monst->info.monsterID
                 && monstersAreTeammates(temp, monst)) {
@@ -390,10 +390,10 @@ void specialHit(creature *attacker, creature *defender, short damage) {
             && (rogue.armor->enchant1 + rogue.armor->armor/10 > -10)) {
 
             rogue.armor->enchant1--;
-            equipItem(rogue.armor, true);
+            equipItem(rogue.armor, true, NULL);
             itemName(rogue.armor, buf2, false, false, NULL);
             sprintf(buf, "your %s weakens!", buf2);
-            messageWithColor(buf, &itemMessageColor, false);
+            messageWithColor(buf, &itemMessageColor, 0);
             checkForDisenchantment(rogue.armor);
         }
         if (attacker->info.abilityFlags & MA_HIT_HALLUCINATE) {
@@ -448,6 +448,10 @@ void specialHit(creature *attacker, creature *defender, short damage) {
                         itemFromTopOfStack->quantity = stolenQuantity;
                         theItem = itemFromTopOfStack; // Redirect pointer.
                     } else {
+                        if (rogue.swappedIn == theItem || rogue.swappedOut == theItem) {
+                            rogue.swappedIn = NULL;
+                            rogue.swappedOut = NULL;
+                        }
                         removeItemFromChain(theItem, packItems);
                     }
                     theItem->flags &= ~ITEM_PLAYER_AVOIDS; // Explore will seek the item out if it ends up on the floor again.
@@ -457,7 +461,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
                     monsterName(buf2, attacker, true);
                     itemName(theItem, buf3, false, true, NULL);
                     sprintf(buf, "%s stole %s!", buf2, buf3);
-                    messageWithColor(buf, &badMessageColor, false);
+                    messageWithColor(buf, &badMessageColor, 0);
                 }
             }
         }
@@ -714,7 +718,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
                 }
                 updateVision(true);
 
-                message(buf, false);
+                message(buf, 0);
                 autoID = true;
                 break;
             case W_SLOWING:
@@ -822,8 +826,9 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
                     monst->ticksUntilTurn = 100;
                     monst->info.monsterID = MK_SPECTRAL_IMAGE;
                     if (monst->carriedMonster) {
-                        killCreature(monst->carriedMonster, true); // Otherwise you can get infinite phoenices from a discordant phoenix.
+                        creature *carried = monst->carriedMonster;
                         monst->carriedMonster = NULL;
+                        killCreature(carried, true); // Otherwise you can get infinite phoenices from a discordant phoenix.
                     }
 
                     // Give it the glowy red light and color.
@@ -927,7 +932,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
             if (rand_percent(10)) {
                 rogue.armor->strengthRequired++;
                 sprintf(returnString, "your %s suddenly feels heavier!", armorName);
-                equipItem(rogue.armor, true);
+                equipItem(rogue.armor, true, NULL);
                 runicDiscovered = true;
             }
             break;
@@ -941,7 +946,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
         case A_IMMOLATION:
             if (rand_percent(10)) {
                 sprintf(returnString, "flames suddenly explode out of your %s!", armorName);
-                message(returnString, !runicKnown);
+                message(returnString, runicKnown ? 0 : REQUIRE_ACKNOWLEDGMENT);
                 returnString[0] = '\0';
                 spawnDungeonFeature(player.xLoc, player.yLoc, &(dungeonFeatureCatalog[DF_ARMOR_IMMOLATION]), true, false);
                 runicDiscovered = true;
@@ -964,10 +969,10 @@ void decrementWeaponAutoIDTimer() {
 
         rogue.weapon->flags |= ITEM_IDENTIFIED;
         updateIdentifiableItems();
-        messageWithColor("you are now familiar enough with your weapon to identify it.", &itemMessageColor, false);
+        messageWithColor("you are now familiar enough with your weapon to identify it.", &itemMessageColor, 0);
         itemName(rogue.weapon, buf2, true, true, NULL);
         sprintf(buf, "%s %s.", (rogue.weapon->quantity > 1 ? "they are" : "it is"), buf2);
-        messageWithColor(buf, &itemMessageColor, false);
+        messageWithColor(buf, &itemMessageColor, 0);
     }
 }
 
@@ -1049,15 +1054,14 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
 
     if ((attacker->info.abilityFlags & MA_SEIZES)
         && (!(attacker->bookkeepingFlags & MB_SEIZING) || !(defender->bookkeepingFlags & MB_SEIZED))
-        && (rogue.patchVersion < 2 ||
-            (distanceBetween(attacker->xLoc, attacker->yLoc, defender->xLoc, defender->yLoc) == 1
-            && !diagonalBlocked(attacker->xLoc, attacker->yLoc, defender->xLoc, defender->yLoc, false)))) {
+        && (distanceBetween(attacker->xLoc, attacker->yLoc, defender->xLoc, defender->yLoc) == 1
+            && !diagonalBlocked(attacker->xLoc, attacker->yLoc, defender->xLoc, defender->yLoc, false))) {
 
         attacker->bookkeepingFlags |= MB_SEIZING;
         defender->bookkeepingFlags |= MB_SEIZED;
         if (canSeeMonster(attacker) || canSeeMonster(defender)) {
             sprintf(buf, "%s seizes %s!", attackerName, (defender == &player ? "your legs" : defenderName));
-            messageWithColor(buf, &white, false);
+            messageWithColor(buf, &white, 0);
         }
         return false;
     }
@@ -1182,9 +1186,9 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
                 specialHit(attacker, defender, (attacker->info.abilityFlags & MA_POISONS) ? poisonDamage : damage);
             }
             if (armorRunicString[0]) {
-                message(armorRunicString, false);
+                message(armorRunicString, 0);
                 if (rogue.armor && (rogue.armor->flags & ITEM_RUNIC) && rogue.armor->enchant2 == A_BURDEN) {
-                    strengthCheck(rogue.armor);
+                    strengthCheck(rogue.armor, true);
                 }
             }
         }
@@ -1214,10 +1218,10 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
             if (rogue.weapon->quiverNumber) {
                 rogue.weapon->quiverNumber = rand_range(1, 60000);
             }
-            equipItem(rogue.weapon, true);
+            equipItem(rogue.weapon, true, NULL);
             itemName(rogue.weapon, buf2, false, false, NULL);
             sprintf(buf, "your %s weakens!", buf2);
-            messageWithColor(buf, &itemMessageColor, false);
+            messageWithColor(buf, &itemMessageColor, 0);
             checkForDisenchantment(rogue.weapon);
         }
 
@@ -1254,7 +1258,10 @@ short strLenWithoutEscapes(const char *str) {
     return count;
 }
 
+// Buffer messages generated by combat until flushed by displayCombatText().
+// Messages in the buffer are delimited by newlines.
 void combatMessage(char *theMsg, color *theColor) {
+    short length;
     char newMsg[COLS * 2];
 
     if (theColor == 0) {
@@ -1265,28 +1272,53 @@ void combatMessage(char *theMsg, color *theColor) {
     encodeMessageColor(newMsg, 0, theColor);
     strcat(newMsg, theMsg);
 
-    if (strLenWithoutEscapes(combatText) + strLenWithoutEscapes(newMsg) + 3 > DCOLS) {
-        // the "3" is for the semicolon, space and period that get added to conjoined combat texts.
+    length = strlen(combatText);
+
+    // Buffer combat messages here just for timing; otherwise player combat
+    // messages appear after monsters, rather than before.  The -2 is for the
+    // newline and terminator.
+    if (length + strlen(newMsg) > COLS * 2 - 2) {
         displayCombatText();
     }
 
     if (combatText[0]) {
-        strcat(combatText, "; ");
-        strcat(combatText, newMsg);
+        snprintf(&combatText[length], COLS * 2 - length, "\n%s", newMsg);
     } else {
         strcpy(combatText, newMsg);
     }
 }
 
+// Flush any buffered, newline-delimited combat messages, passing each to
+// message().  These messages are "foldable", meaning that if space permits
+// they may be joined together by semi-colons.  Notice that combat messages may
+// be flushed by a number of different callers.  One is message() itself
+// creating a recursion, which this function is responsible for terminating.
 void displayCombatText() {
-    char buf[COLS];
+    char buf[COLS * 2];
+    char *start, *end;
 
-    if (combatText[0]) {
-        sprintf(buf, "%s.", combatText);
-        combatText[0] = '\0';
-        message(buf, rogue.cautiousMode);
-        rogue.cautiousMode = false;
+    // message itself will call displayCombatText.  For this guard to terminate
+    // the recursion, we need to copy combatText out and empty it before
+    // calling message.
+    if (combatText[0] == '\0') {
+        return;
     }
+
+    strcpy(buf, combatText);
+    combatText[0] = '\0';
+
+    start = buf;
+    for (end = start; *end != '\0'; end++) {
+        if (*end == '\n') {
+            *end = '\0';
+            message(start, FOLDABLE | (rogue.cautiousMode ? REQUIRE_ACKNOWLEDGMENT : 0));
+            start = end + 1;
+        }
+    }
+
+    message(start, FOLDABLE | (rogue.cautiousMode ? REQUIRE_ACKNOWLEDGMENT : 0));
+
+    rogue.cautiousMode = false;
 }
 
 void flashMonster(creature *monst, const color *theColor, short strength) {
@@ -1338,7 +1370,6 @@ boolean canAbsorb(creature *ally, boolean ourBolts[NUMBER_BOLT_KINDS], creature 
 boolean anyoneWantABite(creature *decedent) {
     short candidates, randIndex, i;
     short **grid;
-    creature *ally;
     boolean success = false;
     boolean ourBolts[NUMBER_BOLT_KINDS] = {false};
 
@@ -1356,56 +1387,60 @@ boolean anyoneWantABite(creature *decedent) {
     grid = allocGrid();
     fillGrid(grid, 0);
     calculateDistances(grid, decedent->xLoc, decedent->yLoc, T_PATHING_BLOCKER, NULL, true, true);
-    for (ally = monsters->nextCreature; ally != NULL; ally = ally->nextCreature) {
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
+        creature *ally = nextCreature(&it);
         if (canAbsorb(ally, ourBolts, decedent, grid)) {
             candidates++;
         }
     }
     if (candidates > 0) {
         randIndex = rand_range(1, candidates);
-        for (ally = monsters->nextCreature; ally != NULL; ally = ally->nextCreature) {
+        creature *firstAlly = NULL;
+        for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
+            creature *ally = nextCreature(&it);
             // CanAbsorb() populates ourBolts if it returns true and there are no learnable behaviors or flags:
             if (canAbsorb(ally, ourBolts, decedent, grid) && !--randIndex) {
+                firstAlly = ally;
                 break;
             }
         }
-        if (ally) {
-            ally->targetCorpseLoc[0] = decedent->xLoc;
-            ally->targetCorpseLoc[1] = decedent->yLoc;
-            strcpy(ally->targetCorpseName, decedent->info.monsterName);
-            ally->corpseAbsorptionCounter = 20; // 20 turns to get there and start eating before he loses interest
+        if (firstAlly) {
+            firstAlly->targetCorpseLoc[0] = decedent->xLoc;
+            firstAlly->targetCorpseLoc[1] = decedent->yLoc;
+            strcpy(firstAlly->targetCorpseName, decedent->info.monsterName);
+            firstAlly->corpseAbsorptionCounter = 20; // 20 turns to get there and start eating before he loses interest
 
             // Choose a superpower.
             // First, select from among learnable ability or behavior flags, if one is available.
             candidates = 0;
             for (i=0; i<32; i++) {
-                if (Fl(i) & ~(ally->info.abilityFlags) & decedent->info.abilityFlags & LEARNABLE_ABILITIES) {
+                if (Fl(i) & ~(firstAlly->info.abilityFlags) & decedent->info.abilityFlags & LEARNABLE_ABILITIES) {
                     candidates++;
                 }
             }
             for (i=0; i<32; i++) {
-                if (Fl(i) & ~(ally->info.flags) & decedent->info.flags & LEARNABLE_BEHAVIORS) {
+                if (Fl(i) & ~(firstAlly->info.flags) & decedent->info.flags & LEARNABLE_BEHAVIORS) {
                     candidates++;
                 }
             }
             if (candidates > 0) {
                 randIndex = rand_range(1, candidates);
                 for (i=0; i<32; i++) {
-                    if ((Fl(i) & ~(ally->info.abilityFlags) & decedent->info.abilityFlags & LEARNABLE_ABILITIES)
+                    if ((Fl(i) & ~(firstAlly->info.abilityFlags) & decedent->info.abilityFlags & LEARNABLE_ABILITIES)
                         && !--randIndex) {
 
-                        ally->absorptionFlags = Fl(i);
-                        ally->absorbBehavior = false;
+                        firstAlly->absorptionFlags = Fl(i);
+                        firstAlly->absorbBehavior = false;
                         success = true;
                         break;
                     }
                 }
                 for (i=0; i<32 && !success; i++) {
-                    if ((Fl(i) & ~(ally->info.flags) & decedent->info.flags & LEARNABLE_BEHAVIORS)
+                    if ((Fl(i) & ~(firstAlly->info.flags) & decedent->info.flags & LEARNABLE_BEHAVIORS)
                         && !--randIndex) {
 
-                        ally->absorptionFlags = Fl(i);
-                        ally->absorbBehavior = true;
+                        firstAlly->absorptionFlags = Fl(i);
+                        firstAlly->absorbBehavior = true;
                         success = true;
                         break;
                     }
@@ -1427,7 +1462,7 @@ boolean anyoneWantABite(creature *decedent) {
                             && !ourBolts[decedent->info.bolts[i]]
                             && !--randIndex) {
 
-                            ally->absorptionBolt = decedent->info.bolts[i];
+                            firstAlly->absorptionBolt = decedent->info.bolts[i];
                             success = true;
                             break;
                         }
@@ -1605,14 +1640,14 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
     }
 
     if (!administrativeDeath && (decedent->info.abilityFlags & MA_DF_ON_DEATH)
-        && ((rogue.patchVersion < 3) || !(decedent->bookkeepingFlags & MB_IS_FALLING))) {
+        && !(decedent->bookkeepingFlags & MB_IS_FALLING)) {
         spawnDungeonFeature(decedent->xLoc, decedent->yLoc, &dungeonFeatureCatalog[decedent->info.DFType], true, false);
 
         if (monsterText[decedent->info.monsterID].DFMessage[0] && canSeeMonster(decedent)) {
             monsterName(monstName, decedent, true);
             snprintf(buf, DCOLS * 3, "%s %s", monstName, monsterText[decedent->info.monsterID].DFMessage);
             resolvePronounEscapes(buf, decedent);
-            message(buf, false);
+            message(buf, 0);
         }
     }
 
@@ -1626,7 +1661,7 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
             && !(decedent->bookkeepingFlags & MB_BOUND_TO_LEADER)
             && !decedent->carriedMonster) {
 
-            messageWithColor("you feel a sense of loss.", &badMessageColor, false);
+            messageWithColor("you feel a sense of loss.", &badMessageColor, 0);
         }
         x = decedent->xLoc;
         y = decedent->yLoc;
@@ -1635,41 +1670,40 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
         } else {
             pmap[x][y].flags &= ~HAS_MONSTER;
         }
-        removeMonsterFromChain(decedent, dormantMonsters);
-        removeMonsterFromChain(decedent, monsters);
+        removeCreature(dormantMonsters, decedent);
+        removeCreature(monsters, decedent);
 
         if (decedent->leader == &player
             && !(decedent->info.flags & MONST_INANIMATE)
             && (decedent->bookkeepingFlags & MB_HAS_SOUL)
             && !administrativeDeath) {
-
-            decedent->nextCreature = purgatory->nextCreature;
-            purgatory->nextCreature = decedent;
+            prependCreature(&purgatory, decedent);
         } else {
-            decedent->nextCreature = graveyard->nextCreature;
-            graveyard->nextCreature = decedent;
+            prependCreature(&graveyard, decedent);
+
         }
 
         if (!administrativeDeath && !(decedent->bookkeepingFlags & MB_IS_DORMANT)) {
             // Was there another monster inside?
             if (decedent->carriedMonster) {
                 // Insert it into the chain.
-                decedent->carriedMonster->nextCreature = monsters->nextCreature;
-                monsters->nextCreature = decedent->carriedMonster;
-                decedent->carriedMonster->xLoc = x;
-                decedent->carriedMonster->yLoc = y;
-                decedent->carriedMonster->ticksUntilTurn = 200;
-                pmap[x][y].flags |= HAS_MONSTER;
-                fadeInMonster(decedent->carriedMonster);
+                creature *carriedMonster = decedent->carriedMonster;
+                decedent->carriedMonster = NULL;
+                prependCreature(monsters, carriedMonster);
 
-                if (canSeeMonster(decedent->carriedMonster)) {
-                    monsterName(monstName, decedent->carriedMonster, true);
+                carriedMonster->xLoc = x;
+                carriedMonster->yLoc = y;
+                carriedMonster->ticksUntilTurn = 200;
+                pmap[x][y].flags |= HAS_MONSTER;
+                fadeInMonster(carriedMonster);
+
+                if (canSeeMonster(carriedMonster)) {
+                    monsterName(monstName, carriedMonster, true);
                     sprintf(buf, "%s appears", monstName);
                     combatMessage(buf, NULL);
                 }
 
-                applyInstantTileEffectsToCreature(decedent->carriedMonster);
-                decedent->carriedMonster = NULL;
+                applyInstantTileEffectsToCreature(carriedMonster);
             }
             refreshDungeonCell(x, y);
         }

@@ -7,6 +7,9 @@ For general help on using GitHub to contribute to a project, check out the
 We have a Discord server for discussion; feel free to join it here:
 https://discord.gg/8pxE4j8.
 
+If you are having an issue with online brogue, that is a separate repository,
+found here: https://github.com/flend/web-brogue
+
 ## Testing
 
 The *master* branch represents the latest development snapshot, and should be
@@ -23,18 +26,14 @@ an issue report.
 
 ### Branches and versions
 
-Brogue CE version numbers follow 1.MINOR.PATCH. Essentially, patch-level
-releases don't change the gameplay experience in any way--this is to avoid
-breaking saves and replays. Minor-point releases may do so.
+Brogue CE version numbers follow 1.MINOR.PATCH. Patch-level releases don't
+change the gameplay experience very much, but minor-point releases may do.
 
-The are two long-term branches which you should base PRs on:
+There are two long-term branches which you should base PRs on:
 
 * *master* is for gameplay changes for the next minor-point release
 * *release* is for bug fixes and other non-gameplay changes, for the next patch
   release. It is merged into *master* periodically.
-
-Any other public branches may be rebased and force-pushed at any time, so please
-be careful when branching from them.
 
 ### Commits
 
@@ -55,13 +54,11 @@ multiple commits, add it in a separate commit.
 
 ### Style
 
-- Use 4 space of indentation
+- Use 4 spaces of indentation
 - Be consistent with formatting (pay attention to whitespace between brackets,
-  commas, etc.)
-- Try to follow the style of existing code
+  commas, etc.) and try to follow how existing code looks
 - Declare functions and variables local to a file as `static`
-- Prefer `int` in new integer declarations; use `short` only when working with
-  existing `short` variables
+- Prefer `int` over `short` in new integer declarations
 - Use braces for control structures on multiple lines
 
   ```c
@@ -99,7 +96,7 @@ multiple commits, add it in a separate commit.
   as the body. It can be clearer to over-indent to separate it
 
   ```c
-  // same indent is ok
+  // same indent is ok, but...
   while ((A && B)
       || C) {
       ...

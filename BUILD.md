@@ -1,13 +1,13 @@
 Building Brogue CE
 ==================
 
-You need these things to compile the game:
+You need these things at minimum to compile the game:
 
 - a C compiler (Clang or GCC)
 - Make
-- anything extra listed in `config.mk` that you require
 
-Once you have those, the game is built by running `make`. You can configure
+You will also need additional dependencies based on the build options you select.
+You can see the options and their requirements in `config.mk`. You can configure
 the build by editing `config.mk` or appending options to the Make command,
 e.g. `make TERMINAL=YES`.
 
@@ -74,6 +74,21 @@ just like for the Linux version.
     ```
     make bin/brogue
     ```
+
+### App distribution
+
+The above steps will suffice for single-user testing, but to create an app
+bundle instead of a loose binary:
+
+1.  (`make clean` if necessary)
+1.  `make GRAPHICS=YES MAC_APP=YES Brogue.app`
+1.  Rename to "Brogue CE.app"
+
+To distribute this app you will have to bundle the dylib libraries, e.g. with
+[dylibbundler][]. See our GitHub Actions workflow for more details.
+
+[dylibbundler]: https://github.com/auriamg/macdylibbundler
+
 
 Linux
 -----

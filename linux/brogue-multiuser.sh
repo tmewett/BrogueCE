@@ -15,4 +15,4 @@ userdir="${XDG_DATA_HOME:-$HOME/.local/share}/Brogue"  # where you want user fil
 
 mkdir -p "$userdir"
 cd "$userdir"
-exec "$broguedir"/brogue
+exec "$broguedir"/brogue "$@"
