@@ -21,8 +21,8 @@ jobs:
 
     - name: "Create artifact"
       run: |
-        make BrogueCE-linux
-        tar -czvf BrogueLite-linux-x86_64.tar.gz BrogueCE-linux
+        make BrogueLite-linux
+        tar -czvf BrogueLite-linux-x86_64.tar.gz BrogueLite-linux
 
     - name: "Upload artifact"
       uses: actions/upload-artifact@v2
@@ -70,8 +70,8 @@ jobs:
 
     - name: "Create artifact"
       run: |
-        make BrogueCE-macos
-        zip -rll BrogueLite-macos-x86_64.zip BrogueCE-macos
+        make BrogueLite-macos
+        zip -rll BrogueLite-macos-x86_64.zip BrogueLite-macos
 
     - name: "Upload artifact"
       uses: actions/upload-artifact@v2
@@ -98,12 +98,12 @@ jobs:
 
     - name: "Create artifact"
       run: |
-        mingw32-make BrogueCE-windows
-        cp SDL2\x86_64-w64-mingw32\bin\SDL2.dll BrogueCE-windows
-        cp SDL2_image\x86_64-w64-mingw32\bin\zlib1.dll BrogueCE-windows
-        cp SDL2_image\x86_64-w64-mingw32\bin\SDL2_image.dll BrogueCE-windows
-        cp SDL2_image\x86_64-w64-mingw32\bin\libpng16-16.dll BrogueCE-windows
-        7z a BrogueLite-windows-x86_64.zip BrogueCE-windows
+        mingw32-make BrogueLite-windows
+        cp SDL2\x86_64-w64-mingw32\bin\SDL2.dll BrogueLite-windows
+        cp SDL2_image\x86_64-w64-mingw32\bin\zlib1.dll BrogueLite-windows
+        cp SDL2_image\x86_64-w64-mingw32\bin\SDL2_image.dll BrogueLite-windows
+        cp SDL2_image\x86_64-w64-mingw32\bin\libpng16-16.dll BrogueLite-windows
+        7z a BrogueLite-windows-x86_64.zip BrogueLite-windows
 
     - name: "Upload artifact"
       uses: actions/upload-artifact@v2
