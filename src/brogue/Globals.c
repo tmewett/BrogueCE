@@ -316,6 +316,7 @@ const color poisonGasColor =        {75,    25,     85,     0,      0,          
 const color confusionGasColor =     {60,    60,     60,     40,     40,         40,         0,      true};
 
 // interface colors
+const color sidebarBackColor =      {4,     4,      8,      0,      0,          0,          0,      false};
 const color itemColor =             {100,   95,     -30,    0,      0,          0,          0,      false};
 const color blueBar =               {15,    10,     50,     0,      0,          0,          0,      false};
 const color redBar =                {45,    10,     15,     0,      0,          0,          0,      false};
@@ -446,7 +447,7 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
     {G_CLOSED_DOOR, &doorForeColor,         &doorBackColor,         25, 50, DF_EMBERS,      0,          DF_OPEN_DOOR,   0,              NO_LIGHT,       (T_OBSTRUCTS_VISION | T_OBSTRUCTS_GAS | T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_PROMOTES_ON_STEP | TM_VISUALLY_DISTINCT), "a wooden door", "you pass through the doorway."},
     {G_OPEN_DOOR,   &doorForeColor,         &doorBackColor,         25, 50, DF_EMBERS,      0,          DF_CLOSED_DOOR, 10000,          NO_LIGHT,       (T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_VISUALLY_DISTINCT),           "an open door",         "you pass through the doorway."},
     {G_WALL,        &wallForeColor,         &wallBackColor,         0,  50, DF_EMBERS,      DF_SHOW_DOOR,0,             0,              NO_LIGHT,       (T_OBSTRUCTS_EVERYTHING | T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_IS_SECRET),  "a stone wall",     "The rough stone wall is firm and unyielding."},
-    {G_CLOSED_IRON_DOOR,&ironDoorForeColor, &ironDoorBackColor,     15, 50, DF_EMBERS,      0,          DF_OPEN_IRON_DOOR_INERT,0,      NO_LIGHT,       (T_OBSTRUCTS_EVERYTHING), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_PROMOTES_WITH_KEY | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT | TM_BRIGHT_MEMORY | TM_INTERRUPT_EXPLORATION_WHEN_SEEN | TM_INVERT_WHEN_HIGHLIGHTED),  "a locked iron door",   "you search your pack but do not have a matching key."},
+    {G_CLOSED_IRON_DOOR,&ironDoorForeColor, &ironDoorBackColor,     15, 50, DF_EMBERS,      0,          DF_OPEN_IRON_DOOR_INERT,0,      NO_LIGHT,       (T_OBSTRUCTS_EVERYTHING), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_PROMOTES_WITH_KEY | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT | TM_BRIGHT_MEMORY | TM_INTERRUPT_EXPLORATION_WHEN_SEEN | TM_INVERT_WHEN_HIGHLIGHTED | TM_ACCEPTS_FUNGIBLE_KEY),  "a locked iron door",   "you search your pack but do not have an iron key."},
     {G_OPEN_IRON_DOOR,&white,               &ironDoorBackColor,     90, 50, DF_EMBERS,      0,          0,              0,              NO_LIGHT,       (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_STAND_IN_TILE | TM_VISUALLY_DISTINCT),                           "an open iron door",    "you pass through the doorway."},
     {G_DOWN_STAIRS, &itemColor,             &stairsBackColor,       30, 0,  DF_PLAIN_FIRE,  0,          DF_REPEL_CREATURES, 0,          NO_LIGHT,       (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_SURFACE_EFFECTS), (TM_PROMOTES_ON_STEP | TM_STAND_IN_TILE | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT | TM_BRIGHT_MEMORY | TM_INTERRUPT_EXPLORATION_WHEN_SEEN | TM_INVERT_WHEN_HIGHLIGHTED), "a downward staircase",   "stairs spiral downward into the depths."},
     {G_UP_STAIRS,   &itemColor,             &stairsBackColor,       30, 0,  DF_PLAIN_FIRE,  0,          DF_REPEL_CREATURES, 0,          NO_LIGHT,       (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_SURFACE_EFFECTS), (TM_PROMOTES_ON_STEP | TM_STAND_IN_TILE | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT | TM_BRIGHT_MEMORY | TM_INTERRUPT_EXPLORATION_WHEN_SEEN | TM_INVERT_WHEN_HIGHLIGHTED), "an upward staircase",    "stairs spiral upward."},
@@ -1242,7 +1243,7 @@ const blueprint blueprintCatalog[NUMBER_BLUEPRINTS] = {
 
     // Plain locked door, key guarded by an adoptive room
     {{1, AMULET_LEVEL}, {1, 1},     100,        1,      0,                  (BP_VESTIBULE), {
-        {0,         LOCKED_DOOR, DUNGEON,       {1,1},      1,          KEY,        KEY_DOOR,   0,              1,              0,          (ITEM_IS_KEY | ITEM_PLAYER_AVOIDS), (MF_BUILD_AT_ORIGIN | MF_PERMIT_BLOCKING | MF_GENERATE_ITEM | MF_OUTSOURCE_ITEM_TO_MACHINE | MF_KEY_DISPOSABLE | MF_IMPREGNABLE)}}},
+        {0,         LOCKED_DOOR, DUNGEON,       {1,1},      1,          KEY,        KEY_DOOR,   0,              1,              0,          (ITEM_IS_KEY | ITEM_IS_FUNGIBLE_KEY | ITEM_PLAYER_AVOIDS), (MF_BUILD_AT_ORIGIN | MF_PERMIT_BLOCKING | MF_GENERATE_ITEM | MF_OUTSOURCE_ITEM_TO_MACHINE | MF_KEY_DISPOSABLE | MF_IMPREGNABLE)}}},
     // Plain secret door
     {{2, AMULET_LEVEL}, {1, 1},     1,      1,          0,                  (BP_VESTIBULE), {
         {0,         SECRET_DOOR, DUNGEON,       {1,1},      1,          0,          0,          0,              1,              0,          0,          (MF_BUILD_AT_ORIGIN | MF_PERMIT_BLOCKING)}}},
@@ -2330,7 +2331,7 @@ const char itemGemsRef[NUMBER_ITEM_GEMS][30] = {
 //} itemTable;
 
 const itemTable keyTable[NUMBER_KEY_TYPES] = {
-    {"door key",            "", "", 1, 0,   0, {0,0,0}, true, false, "The notches on this ancient iron key are well worn; its leather lanyard is battered by age. What door might it open?"},
+    {"iron key",            "", "", 1, 0,   0, {0,0,0}, true, false, "The notches on these ancient iron keys are well worn; their leather lanyards battered by age. Perhaps there are iron doors somewhere?"},
     {"cage key",            "", "", 1, 0,   0, {0,0,0}, true, false, "The rust accreted on this iron key has been stained with flecks of blood; it must have been used recently. What cage might it open?"},
     {"crystal orb",         "", "", 1, 0,   0, {0,0,0}, true, false, "A faceted orb, seemingly cut from a single crystal, sparkling and perpetually warm to the touch. What manner of device might such an object activate?"},
 };
@@ -2381,8 +2382,6 @@ const char weaponRunicNames[NUMBER_WEAPON_RUNIC_KINDS][30] = {
     "confusion",
     "force",
     "slaying",
-    "mercy",
-    "plenty"
 };
 
 const char armorRunicNames[NUMBER_ARMOR_ENCHANT_KINDS][30] = {
@@ -2394,16 +2393,11 @@ const char armorRunicNames[NUMBER_ARMOR_ENCHANT_KINDS][30] = {
     "reflection",
     "respiration",
     "dampening",
-    "burden",
-    "vulnerability",
-    "immolation",
 };
 
 itemTable scrollTable[NUMBER_SCROLL_KINDS] = {
     {"enchanting",          itemTitles[0], "",  0,  550,    0,{0,0,0}, false, false, "This ancient enchanting sorcery will imbue a single item with a powerful and permanent magical charge. A staff will increase in power and in number of charges; a weapon will inflict more damage and find its mark more easily; a suit of armor will deflect attacks more often; the magic of a ring will intensify; and a wand will gain expendable charges in the least amount that such a wand can be found with. Weapons and armor will also require less strength to use, and any curses on the item will be lifted."}, // frequency is dynamically adjusted
-    {"identify",            itemTitles[1], "",  30, 300,    0,{0,0,0}, false, false, "This scrying magic will permanently reveal all of the secrets of a single item."},
     {"teleportation",       itemTitles[2], "",  10, 500,    0,{0,0,0}, false, false, "This escape spell will instantly relocate you to a random location on the dungeon level. It can be used to escape a dangerous situation with luck. The unlucky reader might find himself in an even more dangerous place."},
-    {"remove curse",        itemTitles[3], "",  15, 150,    0,{0,0,0}, false, false, "This redemption spell will instantly strip from the reader's weapon, armor, rings and carried items any evil enchantments that might prevent the wearer from removing them."},
     {"recharging",          itemTitles[4], "",  12, 375,    0,{0,0,0}, false, false, "The power bound up in this parchment will instantly recharge all of your staffs and charms."},
     {"protect armor",       itemTitles[5], "",  10, 400,    0,{0,0,0}, false, false, "This ceremonial shielding magic will permanently proof your armor against degradation by acid."},
     {"protect weapon",      itemTitles[6], "",  10, 400,    0,{0,0,0}, false, false, "This ceremonial shielding magic will permanently proof your weapon against degradation by acid."},
@@ -2412,8 +2406,6 @@ itemTable scrollTable[NUMBER_SCROLL_KINDS] = {
     {"negation",            itemTitles[9], "",  8,  400,    0,{0,0,0}, false, false, "When this powerful anti-magic is released, all creatures (including yourself) and all items lying on the ground within your field of view will be exposed to its blast and stripped of magic. Creatures animated purely by magic will die. Potions, scrolls, items being held by other creatures and items in your inventory will not be affected."},
     {"shattering",          itemTitles[10],"",  8,  500,    0,{0,0,0}, false, false, "This strange incantation will alter the physical structure of nearby stone, causing it to evaporate into the air over the ensuing minutes."},
     {"discord",             itemTitles[11], "", 8,  400,    0,{0,0,0}, false, false, "This scroll will unleash a powerful blast of mind magic. Any creatures within line of sight will turn against their companions and attack indiscriminately for 30 turns."},
-    {"aggravate monsters",  itemTitles[12], "", 15, 50,     0,{0,0,0}, false, false, "This scroll will unleash a piercing shriek that will awaken all monsters and alert them to the reader's location."},
-    {"summon monsters",     itemTitles[13], "", 10, 50,     0,{0,0,0}, false, false, "This summoning incantation will call out to creatures in other planes of existence, drawing them through the fabric of reality to confront the reader."},
 };
 
 itemTable potionTable[NUMBER_POTION_KINDS] = {
@@ -2427,7 +2419,6 @@ itemTable potionTable[NUMBER_POTION_KINDS] = {
     {"invisibility",        itemColors[8], "",  15, 400,    0,{0,0,0}, false, false, "Drinking this potion will render you temporarily invisible. Enemies more than two spaces away will be unable to track you."},
     {"caustic gas",         itemColors[9], "",  15, 200,    0,{0,0,0}, false, false, "Uncorking or shattering this pressurized glass will cause its contents to explode into a deadly cloud of caustic purple gas. You might choose to fling this potion at distant enemies instead of uncorking it by hand."},
     {"paralysis",           itemColors[10], "", 10, 250,    0,{0,0,0}, false, false, "Upon exposure to open air, the liquid in this flask will vaporize into a numbing pink haze. Anyone who inhales the cloud will be paralyzed instantly, unable to move for some time after the cloud dissipates. This item can be thrown at distant enemies to catch them within the effect of the gas."},
-    {"hallucination",       itemColors[11], "", 10, 500,    0,{0,0,0}, false, false, "This flask contains a vicious and long-lasting hallucinogen. Under its dazzling effect, you will wander through a rainbow wonderland, unable to discern the form of any creatures or items you see."},
     {"confusion",           itemColors[12], "", 15, 450,    0,{0,0,0}, false, false, "This unstable chemical will quickly vaporize into a glittering cloud upon contact with open air, causing any creature that inhales it to lose control of the direction of its movements until the effect wears off (although its ability to aim projectile attacks will not be affected). Its vertiginous intoxication can cause creatures and adventurers to careen into one another or into chasms or lava pits, so extreme care should be taken when under its effect. Its contents can be weaponized by throwing the flask at distant enemies."},
     {"incineration",        itemColors[13], "", 15, 500,    0,{0,0,0}, false, false, "This flask contains an unstable compound which will burst violently into flame upon exposure to open air. You might throw the flask at distant enemies -- or into a deep lake, to cleanse the cavern with scalding steam."},
     {"darkness",            itemColors[14], "", 7,  150,    0,{0,0,0}, false, false, "Drinking this potion will plunge you into darkness. At first, you will be completely blind to anything not illuminated by an independent light source, but over time your vision will regain its former strength. Throwing the potion will create a cloud of supernatural darkness, and enemies will have difficulty seeing or following you if you take refuge under its cover."},
@@ -2462,6 +2453,7 @@ itemTable staffTable[NUMBER_STAFF_KINDS] = {
     {"protection",      itemWoods[12], "",  5,  900,    BOLT_SHIELDING,     {2,4,1}, false, false, "This staff will bathe a creature in a protective light that will absorb all damage until it is depleted. Unfortunately, you cannot use this or any staff on yourself except by reflecting the bolt."},
 };
 
+// TODO: remove cursed descriptions
 itemTable ringTable[NUMBER_RING_KINDS] = {
     {"clairvoyance",    itemGems[0], "",    1,  900,    0,{1,3,1}, false, false, "This ring of eldritch scrying will permit you to see through nearby walls and doors, within a radius determined by the level of the ring. A cursed ring of clairvoyance will blind you to your immediate surroundings."},
     {"stealth",         itemGems[1], "",    1,  800,    0,{1,3,1}, false, false, "This ring of silent passage will reduce your stealth range, making enemies less likely to notice you and more likely to lose your trail. Staying motionless and lurking in the shadows will make you even harder to spot. Cursed rings of stealth will increase your stealth range, making you easier to spot and to track."},

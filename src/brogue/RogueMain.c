@@ -357,9 +357,13 @@ void initializeRogue(uint64_t seed) {
     = rogue.stealthBonus = rogue.transference = rogue.wisdomBonus = rogue.reaping = 0;
     rogue.lightMultiplier = 1;
 
+    // Player starting inventory:
+
+    // 1 food
     theItem = generateItem(FOOD, RATION);
     theItem = addItemToPack(theItem);
 
+    // dagger
     theItem = generateItem(WEAPON, DAGGER);
     theItem->enchant1 = theItem->enchant2 = 0;
     theItem->flags &= ~(ITEM_CURSED | ITEM_RUNIC);
@@ -367,6 +371,7 @@ void initializeRogue(uint64_t seed) {
     theItem = addItemToPack(theItem);
     equipItem(theItem, false, NULL);
 
+    // 15 darts
     theItem = generateItem(WEAPON, DART);
     theItem->enchant1 = theItem->enchant2 = 0;
     theItem->quantity = 15;
@@ -374,6 +379,7 @@ void initializeRogue(uint64_t seed) {
     identify(theItem);
     theItem = addItemToPack(theItem);
 
+    // leather armor
     theItem = generateItem(ARMOR, LEATHER_ARMOR);
     theItem->enchant1 = 0;
     theItem->flags &= ~(ITEM_CURSED | ITEM_RUNIC);
@@ -381,6 +387,16 @@ void initializeRogue(uint64_t seed) {
     theItem = addItemToPack(theItem);
     equipItem(theItem, false, NULL);
     player.status[STATUS_DONNING] = 0;
+
+    // Brogue lite: grant starting keys
+    theItem = generateItem(KEY, 0);
+    theItem->flags |= (ITEM_IS_KEY | ITEM_IS_FUNGIBLE_KEY);
+    theItem = addItemToPack(theItem);
+
+    theItem = generateItem(KEY, 0);
+    theItem->flags |= (ITEM_IS_KEY | ITEM_IS_FUNGIBLE_KEY);
+    theItem = addItemToPack(theItem);
+
 
     recalculateEquipmentBonuses();
 

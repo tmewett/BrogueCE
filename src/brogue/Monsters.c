@@ -1676,6 +1676,8 @@ void wanderToward(creature *monst, const short x, const short y) {
 void updateMonsterState(creature *monst) {
     short x, y, closestFearedEnemy;
     boolean awareOfPlayer;
+    char buf[COLS];
+    char buf2[COLS];
 
     x = monst->xLoc;
     y = monst->yLoc;
@@ -1725,10 +1727,21 @@ void updateMonsterState(creature *monst) {
         && awareOfPlayer
         && (pmap[player.xLoc][player.yLoc].flags & IN_FIELD_OF_VIEW)) {
         // If wandering and you notice the player, start tracking the scent.
+
+        if (canSeeMonster(monst)) {
+            monsterName(buf, monst, false);
+            sprintf(buf2, "The %s notices you!", buf);
+            messageWithColor(buf2, &badMessageColor, false);
+        }
         alertMonster(monst);
     } else if (monst->creatureState == MONSTER_SLEEPING) {
         // if sleeping, the monster has a chance to awaken
         if (awareOfPlayer) {
+            if (canSeeMonster(monst)) {
+                monsterName(buf, monst, false);
+                sprintf(buf2, "The %s wakes up!", buf);
+                messageWithColor(buf2, &badMessageColor, false);
+            }
             wakeUp(monst); // wakes up the whole horde if necessary
         }
     } else if (monst->creatureState == MONSTER_TRACKING_SCENT && !awareOfPlayer) {
@@ -1737,6 +1750,13 @@ void updateMonsterState(creature *monst) {
         wanderToward(monst, monst->lastSeenPlayerAt[0], monst->lastSeenPlayerAt[1]);
     } else if (monst->creatureState == MONSTER_TRACKING_SCENT
                && closestFearedEnemy < 3) {
+
+        if (canSeeMonster(monst)) {
+            monsterName(buf, monst, false);
+            sprintf(buf2, "The %s flees!", buf);
+            messageWithColor(buf2, &badMessageColor, false);
+        }
+
         monst->creatureState = MONSTER_FLEEING;
     } else if (monst->creatureState != MONSTER_ALLY
                && (monst->info.flags & MONST_FLEES_NEAR_DEATH)
