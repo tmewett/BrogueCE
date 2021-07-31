@@ -189,7 +189,7 @@ const color fireForeColor =         {70,    20,     0,      15,     10,         
 const color lavaForeColor =         {20,    20,     20,     100,    10,         0,          0,      true};
 const color brimstoneForeColor =    {100,   50,     10,     0,      50,         40,         0,      true};
 const color brimstoneBackColor =    {18,    12,     9,      0,      0,          5,          0,      false};
-
+                                //Red     Green   Blue    RedRand GreenRand   BlueRand    Rand    Dances
 const color lavaBackColor =         {70,    20,     0,      15,     10,         0,          0,      true};
 const color acidBackColor =         {15,    80,     25,     5,      15,         10,         0,      true};
 

@@ -24,7 +24,12 @@ ifeq ($(GRAPHICS),YES)
 	sources += $(addprefix src/platform/,sdl2-platform.c tiles.c)
 	cflags += $(shell $(SDL_CONFIG) --cflags)
 	cppflags += -DBROGUE_SDL
-	libs += $(shell $(SDL_CONFIG) --libs) -lSDL2_image -lespeak-ng
+	libs += $(shell $(SDL_CONFIG) --libs) -lSDL2_image
+endif
+
+ifeq ($(SPEECH),YES)
+	cppflags += -DBROGUE_SPEECH
+	libs += -lespeak-ng
 endif
 
 ifeq ($(WEBBROGUE),YES)

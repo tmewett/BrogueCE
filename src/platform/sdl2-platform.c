@@ -146,7 +146,9 @@ static boolean audioInit() {
 
 
 static void _playSpeech(char *text) {
+#ifdef BROGUE_SPEECH
     espeak_Synth(text, strlen(text), 0, 0, 0, espeakCHARS_UTF8, NULL, NULL);
+#endif
 }
 
 
@@ -444,6 +446,6 @@ struct brogueConsole sdlConsole = {
     _modifierHeld,
     NULL,
     _takeScreenshot,
-    _setGraphicsMode
+    _setGraphicsMode,
     .playSpeech = _playSpeech
 };

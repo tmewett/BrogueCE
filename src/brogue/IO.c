@@ -2974,6 +2974,11 @@ boolean confirm(char *prompt, boolean alsoDuringPlayback) {
         return true; // oh yes he did
     }
 
+#ifdef BROGUE_SPEECH
+    playSpeech(prompt);
+    playSpeech("Yes... No");
+#endif
+
     encodeMessageColor(whiteColorEscape, 0, &white);
     encodeMessageColor(yellowColorEscape, 0, KEYBOARD_LABELS ? &yellow : &white);
 
@@ -3437,6 +3442,10 @@ void temporaryMessage(const char *msg, enum messageFlags flags) {
         updateMessageDisplay();
     }
     restoreRNG;
+
+    #ifdef BROGUE_SPEECH
+    playSpeech(msg);
+    #endif
 }
 
 void messageWithColor(char *msg, color *theColor, enum messageFlags flags) {
@@ -3543,6 +3552,10 @@ void message(const char *msg, enum messageFlags flags) {
     }
 
     restoreRNG;
+
+#ifdef BROGUE_SPEECH
+    playSpeech(msg);
+#endif
 }
 
 // Only used for the "you die..." message, to enable posthumous inventory viewing.

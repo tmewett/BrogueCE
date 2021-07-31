@@ -377,6 +377,37 @@ void describeLocation(char *buf, short x, short y) {
 
     sprintf(buf, "%s %s %s %s.", subject, verb, preposition, object);
     restoreRNG;
+
+// #ifdef BROGUE_SPEECH
+    static char lastMSG[DCOLS*3];
+	char nowMSG[DCOLS*3];
+
+    if(strlen(buf) < 2) {
+        strcpy(nowMSG, "Blank.");
+    } else {
+        strcpy(nowMSG, buf);
+    }
+
+    int Ty = player.yLoc;
+    char posX[20] = "";
+    char posY[20] = "";
+
+    if(player.yLoc < y) {
+        sprintf(posY, " %d down.", abs(y-player.yLoc));
+    } else if (player.yLoc > y) {
+        sprintf(posY, " %d up.", abs(y-player.yLoc));
+    }
+    if(player.xLoc < x) {
+        sprintf(posX, " %d right.", abs(x-player.xLoc));
+    } else if(player.xLoc > x) {
+        sprintf(posX, " %d left.", abs(x-player.xLoc));
+    }
+
+    strcat(nowMSG, posY);
+    strcat(nowMSG, posX);
+
+    playSpeech(nowMSG);
+// #endif 
 }
 
 void printLocationDescription(short x, short y) {

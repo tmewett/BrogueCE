@@ -252,6 +252,10 @@ int main(int argc, char *argv[])
             continue;
         }
 
+#ifdef BROGUE_SPEECH
+            rogue.trueColorMode = false;
+#endif
+
         if (strcmp(argv[i], "--wizard") == 0 || strcmp(argv[i], "-W") == 0) {
             rogue.wizard = true;
             continue;

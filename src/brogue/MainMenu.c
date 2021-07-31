@@ -344,7 +344,11 @@ void titleMenu() {
     initializeMenuFlames(true, colors, colorStorage, colorSources, flames, mask);
     rogue.creaturesWillFlashThisTurn = false; // total unconscionable hack
 
+#ifdef BROGUE_SPEECH
     playSpeech("Welcome to Brogue!");
+#else
+    playSpeech("Welcome to Brogue2!");
+#endif
 
     do {
         if (isApplicationActive()) {
