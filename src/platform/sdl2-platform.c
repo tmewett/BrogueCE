@@ -22,7 +22,7 @@ static size_t nremaps = 0;
 static enum graphicsModes showGraphics = TEXT_GRAPHICS;
 
 static rogueEvent lastEvent;
-
+static speechData lastSpeech;
 
 static void sdlfatal(char *file, int line) {
     fprintf(stderr, "Fatal SDL error (%s:%d): %s\n", file, line, SDL_GetError());
@@ -140,12 +140,24 @@ static char applyRemaps(char c) {
 }
 
 
-static boolean audioInit() {
-    return espeak_Initialize(AUDIO_OUTPUT_PLAYBACK, 0, NULL, 0) != -1;
+static void speechCallback(short *wav, int numsamples, espeak_EVENT *events) {
+    return;
 }
 
 
-static void _playSpeech(char *text) {
+static boolean audioInit() {
+    espeak_SetSynthCallback(speechCallback);
+    return espeak_Initialize(AUDIO_OUTPUT_PLAYBACK, 0, NULL, 0) != -1;
+}
+
+static void _playSpeech(
+    char *text,
+    boolean interruptable,
+    boolean interruptPrevious
+) {
+    if (interruptPrevious && lastSpeech.interruptable) {
+        espeak_Cancel();
+    }
     // remove any escape codes from the text
     int i, j;
     char sanitizedMessage[90] = "";
@@ -161,6 +173,7 @@ static void _playSpeech(char *text) {
 
         sanitizedMessage[j++]= text[i];
     }
+    printf(sanitizedMessage);
     espeak_Synth(
         sanitizedMessage,
         strlen(sanitizedMessage),
@@ -171,6 +184,7 @@ static void _playSpeech(char *text) {
         NULL,
         NULL
     );
+    // TODO: mark interruptable messages with unique_identifier
 }
 
 

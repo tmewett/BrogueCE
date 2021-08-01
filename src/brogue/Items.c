@@ -2958,7 +2958,7 @@ char displayInventory(unsigned short categoryMask,
 
                 overlayDisplayBuffer(dbuf, NULL);
                 
-                playSpeech(buttons[highlightItemLine].text);
+                playSpeech(buttons[highlightItemLine].text, true, true);
 
                 //buttons[highlightItemLine].buttonColor = interfaceBoxColor;
                 drawButton(&(buttons[highlightItemLine]), BUTTON_PRESSED, NULL);

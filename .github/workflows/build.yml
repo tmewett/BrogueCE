@@ -10,7 +10,7 @@ jobs:
     - name: "Install dependencies"
       run: |
         sudo apt update -y
-        sudo apt install -y libsdl2-dev libsdl2-image-dev
+        sudo apt install -y libsdl2-dev libsdl2-image-dev espeak-ng
 
     - name: "Checkout sources"
       uses: actions/checkout@v2

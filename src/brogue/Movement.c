@@ -159,6 +159,7 @@ void describeLocation(char *buf, short x, short y) {
             strcpy(buf, tileFlavor(x, y));
         }
         restoreRNG;
+        speakLocation(buf, x, y);
         return;
     }
 
@@ -199,6 +200,7 @@ void describeLocation(char *buf, short x, short y) {
         }
         sprintf(buf, "you can detect the aura of %s here.", object);
         restoreRNG;
+        speakLocation(buf, x, y);
         return;
     }
 
@@ -227,6 +229,7 @@ void describeLocation(char *buf, short x, short y) {
 
         sprintf(buf, "you can sense a %s psychic emanation %s%s.", adjective, preposition, object);
         restoreRNG;
+        speakLocation(buf, x, y);
         return;
     }
 
@@ -249,10 +252,12 @@ void describeLocation(char *buf, short x, short y) {
             }
             sprintf(buf, "you remember seeing %s here.", object);
             restoreRNG;
+            speakLocation(buf, x, y);
             return;
         } else if (pmap[x][y].flags & MAGIC_MAPPED) { // magic mapped
             sprintf(buf, "you expect %s to be here.", tileCatalog[pmap[x][y].rememberedTerrain].description);
             restoreRNG;
+            speakLocation(buf, x, y);
             return;
         }
         strcpy(buf, "");
@@ -267,6 +272,7 @@ void describeLocation(char *buf, short x, short y) {
         if (pmap[x][y].layers[GAS] && monst->status[STATUS_INVISIBLE]) { // phantoms in gas
             sprintf(buf, "you can perceive the faint outline of %s in %s.", subject, tileCatalog[pmap[x][y].layers[GAS]].description);
             restoreRNG;
+            speakLocation(buf, x, y);
             return;
         }
 
@@ -371,48 +377,41 @@ void describeLocation(char *buf, short x, short y) {
         } else { // no item
             sprintf(buf, "you %s %s.", (playerCanDirectlySee(x, y) ? "see" : "sense"), object);
             restoreRNG;
+            speakLocation(buf, x, y);
             return;
         }
     }
 
     sprintf(buf, "%s %s %s %s.", subject, verb, preposition, object);
     restoreRNG;
+    speakLocation(buf, x, y);
+}
 
-	char locationMessage[DCOLS*3];
+void speakLocation(char *locationDescription, short x, short y) {
+    char locationMessage[DCOLS*3];
 
-    if(strlen(buf) < 2) {
+    if(strlen(locationDescription) < 2) {
         strcpy(locationMessage, "Blank.");
     } else {
-        strcpy(locationMessage, buf);
+        strcpy(locationMessage, locationDescription);
     }
 
-    int Ty = player.yLoc;
     char posX[20] = "";
     char posY[20] = "";
 
-    if(player.yLoc < y) {
-        sprintf(posY, " %d down.", abs(y-player.yLoc));
-    } else if (player.yLoc > y) {
-        sprintf(posY, " %d up.", abs(y-player.yLoc));
-    }
-    if(player.xLoc < x) {
-        sprintf(posX, " %d right.", abs(x-player.xLoc));
-    } else if(player.xLoc > x) {
-        sprintf(posX, " %d left.", abs(x-player.xLoc));
-    }
+    sprintf(posY, " %d %s.", abs(y - player.yLoc), player.yLoc < y ? "down" : "up");
+    sprintf(posX, " %d %s.", abs(x - player.xLoc), player.xLoc < x ? "right" : "left");
 
     strcat(locationMessage, posY);
     strcat(locationMessage, posX);
 
-    playSpeech(locationMessage);
+    playSpeech(locationMessage, true, true);
 }
 
 void printLocationDescription(short x, short y) {
     char buf[DCOLS*3];
     describeLocation(buf, x, y);
     flavorMessage(buf);
-    // TODO: diff against previous message?
-    playSpeech(buf);
 }
 
 void useKeyAt(item *theItem, short x, short y) {

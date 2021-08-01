@@ -355,6 +355,11 @@ typedef struct rogueEvent {
     boolean shiftKey;
 } rogueEvent;
 
+typedef struct speechData {
+    boolean interruptable;
+    char message[DCOLS];
+} speechData;
+
 typedef struct rogueHighScoresEntry {
     signed long score;
     char date[100];
@@ -2746,7 +2751,7 @@ extern "C" {
     void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2);
     boolean takeScreenshot();
     enum graphicsModes setGraphicsMode(enum graphicsModes mode);
-    void playSpeech(char *text);
+    void playSpeech(char *text, boolean interruptable, boolean interruptPrevious);
     boolean controlKeyIsDown();
     boolean shiftKeyIsDown();
     short getHighScoresList(rogueHighScoresEntry returnList[HIGH_SCORES_COUNT]);
@@ -2849,6 +2854,7 @@ extern "C" {
     char *tileText(short x, short y);
     void describedItemBasedOnParameters(short theCategory, short theKind, short theQuantity, short theItemOriginDepth, char *buf);
     void describeLocation(char buf[DCOLS], short x, short y);
+    void speakLocation(char *locationDescription, short x, short y);
     void printLocationDescription(short x, short y);
     void useKeyAt(item *theItem, short x, short y);
     void playerRuns(short direction);

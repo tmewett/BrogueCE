@@ -2974,8 +2974,8 @@ boolean confirm(char *prompt, boolean alsoDuringPlayback) {
         return true; // oh yes he did
     }
 
-    playSpeech(prompt);
-    playSpeech("Yes... No");
+    playSpeech(prompt, false, true);
+    playSpeech("Yes... No", false, false);
 
     encodeMessageColor(whiteColorEscape, 0, &white);
     encodeMessageColor(yellowColorEscape, 0, KEYBOARD_LABELS ? &yellow : &white);
@@ -3441,7 +3441,7 @@ void temporaryMessage(const char *msg, enum messageFlags flags) {
     }
     restoreRNG;
 
-    playSpeech(msg);
+    playSpeech(msg, false, true);
 }
 
 void messageWithColor(char *msg, color *theColor, enum messageFlags flags) {
@@ -3549,7 +3549,7 @@ void message(const char *msg, enum messageFlags flags) {
 
     restoreRNG;
 
-    playSpeech(msg);
+    playSpeech(msg, false, true);
 }
 
 // Only used for the "you die..." message, to enable posthumous inventory viewing.
