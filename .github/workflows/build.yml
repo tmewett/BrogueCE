@@ -5,7 +5,7 @@ on:
 jobs:
 
   linux:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     steps:
     - name: "Install dependencies"
       run: |
@@ -55,7 +55,7 @@ jobs:
           brew install --build-from-source ./macos/sdl2.rb
           cp -r $(brew --cellar)/sdl2 sdl2-cellar
         fi
-        brew install sdl2_image dylibbundler
+        brew install sdl2_image dylibbundler espeak-ng
 
     - name: "Compile"
       run: |

@@ -3338,7 +3338,7 @@ boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refr
 
     if (feat->description[0] && !feat->messageDisplayed && playerCanSee(x, y)) {
         feat->messageDisplayed = true;
-        message(feat->description, 0);
+        message(feat->description, 0, 0);
     }
 
     zeroOutGrid(blockingMap);

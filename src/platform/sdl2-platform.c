@@ -152,11 +152,12 @@ static boolean audioInit() {
 
 static void _playSpeech(
     char *text,
-    boolean interruptable,
-    boolean interruptPrevious
+    short priority
 ) {
-    if (interruptPrevious && lastSpeech.interruptable) {
+    if (priority >= lastSpeech.priority) {
         espeak_Cancel();
+    } else {
+        espeak_Synchronize();
     }
     // remove any escape codes from the text
     int i, j;
@@ -185,6 +186,7 @@ static void _playSpeech(
         NULL
     );
     // TODO: mark interruptable messages with unique_identifier
+    lastSpeech.priority = priority;
 }
 
 

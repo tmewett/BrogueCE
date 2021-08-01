@@ -312,7 +312,7 @@ void playbackPanic() {
         refreshSideBar(-1, -1, false);
 
         confirmMessages();
-        message("Playback is out of sync.", 0);
+        message("Playback is out of sync.", 0, 0);
 
         printTextBox(OOS_APOLOGY, 0, 0, 0, &white, &black, rbuf, NULL, 0);
 
@@ -360,7 +360,7 @@ void recallEvent(rogueEvent *event) {
             case END_OF_RECORDING:
             case EVENT_ERROR:
             default:
-                message("Unrecognized event type in playback.", REQUIRE_ACKNOWLEDGMENT);
+                message("Unrecognized event type in playback.", REQUIRE_ACKNOWLEDGMENT, 0);
                 printf("Unrecognized event type in playback: event ID %i", c);
                 tryAgain = true;
                 playbackPanic();
@@ -817,13 +817,13 @@ void pausePlayback() {
     if (!rogue.playbackPaused) {
         rogue.playbackPaused = true;
         messageWithColor(KEYBOARD_LABELS ? "recording paused. Press space to play." : "recording paused.",
-                         &teal, 0);
+                         &teal, 0, 0);
         refreshSideBar(-1, -1, false);
         //oldRNG = rogue.RNG;
         //rogue.RNG = RNG_SUBSTANTIVE;
         mainInputLoop();
         //rogue.RNG = oldRNG;
-        messageWithColor("recording unpaused.", &teal, 0);
+        messageWithColor("recording unpaused.", &teal, 0, 0);
         rogue.playbackPaused = false;
         refreshSideBar(-1, -1, false);
         rogue.playbackDelayThisTurn = DEFAULT_PLAYBACK_DELAY;
@@ -877,9 +877,9 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                 displayLevel();
                 refreshSideBar(-1, -1, false);
                 if (rogue.playbackOmniscience) {
-                    messageWithColor("Omniscience enabled.", &teal, 0);
+                    messageWithColor("Omniscience enabled.", &teal, 0, 0);
                 } else {
-                    messageWithColor("Omniscience disabled.", &teal, 0);
+                    messageWithColor("Omniscience disabled.", &teal, 0, 0);
                 }
                 return true;
             case ASCEND_KEY:
@@ -959,7 +959,7 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                         rogue.nextGame = NG_VIEW_RECORDING;
                         rogue.gameHasEnded = true;
                     } else {
-                        message("File not found.", 0);
+                        message("File not found.", 0, 0);
                     }
                 }
                 rogue.playbackMode = true;
@@ -973,7 +973,7 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                         rogue.nextGame = NG_OPEN_GAME;
                         rogue.gameHasEnded = true;
                     } else {
-                        message("File not found.", 0);
+                        message("File not found.", 0, 0);
                     }
                 }
                 rogue.playbackMode = true;
@@ -999,10 +999,10 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                 refreshSideBar(-1, -1, false);
                 if (rogue.trueColorMode) {
                     messageWithColor(KEYBOARD_LABELS ? "Color effects disabled. Press '\\' again to enable." : "Color effects disabled.",
-                                     &teal, 0);
+                                     &teal, 0, 0);
                 } else {
                     messageWithColor(KEYBOARD_LABELS ? "Color effects enabled. Press '\\' again to disable." : "Color effects enabled.",
-                                     &teal, 0);
+                                     &teal, 0, 0);
                 }
                 return true;
             case AGGRO_DISPLAY_KEY:
@@ -1011,10 +1011,10 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                 refreshSideBar(-1, -1, false);
                 if (rogue.displayAggroRangeMode) {
                     messageWithColor(KEYBOARD_LABELS ? "Stealth range displayed. Press ']' again to hide." : "Stealth range displayed.",
-                                     &teal, 0);
+                                     &teal, 0, 0);
                 } else {
                     messageWithColor(KEYBOARD_LABELS ? "Stealth range hidden. Press ']' again to display." : "Stealth range hidden.",
-                                     &teal, 0);
+                                     &teal, 0, 0);
                 }
                 return true;
             case GRAPHICS_KEY:
@@ -1024,17 +1024,17 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                         case TEXT_GRAPHICS:
                             messageWithColor(KEYBOARD_LABELS
                                 ? "Switched to text mode. Press 'G' again to enable tiles."
-                                : "Switched to text mode.", &teal, 0);
+                                : "Switched to text mode.", &teal, 0, 0);
                             break;
                         case TILES_GRAPHICS:
                             messageWithColor(KEYBOARD_LABELS
                                 ? "Switched to graphical tiles. Press 'G' again to enable hybrid mode."
-                                : "Switched to graphical tiles.", &teal, 0);
+                                : "Switched to graphical tiles.", &teal, 0, 0);
                             break;
                         case HYBRID_GRAPHICS:
                             messageWithColor(KEYBOARD_LABELS
                                 ? "Switched to hybrid mode. Press 'G' again to disable tiles."
-                                : "Switched to hybrid mode.", &teal, 0);
+                                : "Switched to hybrid mode.", &teal, 0, 0);
                             break;
                     }
                 }
@@ -1189,7 +1189,7 @@ void saveGame() {
                 rename(currentFilePath, filePath);
                 strcpy(currentFilePath, filePath);
                 rogue.recording = false;
-                message("Saved.", REQUIRE_ACKNOWLEDGMENT);
+                message("Saved.", REQUIRE_ACKNOWLEDGMENT, 0);
                 rogue.gameHasEnded = true;
             } else {
                 askAgain = true;
@@ -1415,7 +1415,7 @@ boolean selectFile(char *prompt, char *defaultName, char *suffix) {
             retval = true;
         } else {
             confirmMessages();
-            message("File not found.", 0);
+            message("File not found.", 0, 0);
             retval = false;
         }
     }
@@ -1496,7 +1496,7 @@ void parseFile() {
         recordingLocation = oldRecLoc;
         lengthOfPlaybackFile = oldLength;
         locationInRecordingBuffer = oldBufLoc;
-        message("File parsed.", 0);
+        message("File parsed.", 0, 0);
     } else {
         confirmMessages();
     }

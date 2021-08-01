@@ -356,7 +356,7 @@ typedef struct rogueEvent {
 } rogueEvent;
 
 typedef struct speechData {
-    boolean interruptable;
+    short priority;
     char message[DCOLS];
 } speechData;
 
@@ -2751,7 +2751,7 @@ extern "C" {
     void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2);
     boolean takeScreenshot();
     enum graphicsModes setGraphicsMode(enum graphicsModes mode);
-    void playSpeech(char *text, boolean interruptable, boolean interruptPrevious);
+    void playSpeech(char *text, short priority);
     boolean controlKeyIsDown();
     boolean shiftKeyIsDown();
     short getHighScoresList(rogueHighScoresEntry returnList[HIGH_SCORES_COUNT]);
@@ -2924,9 +2924,9 @@ extern "C" {
     void displayRecentMessages();
     void displayMessageArchive();
     void temporaryMessage(const char *msg1, enum messageFlags flags);
-    void messageWithColor(char *msg, color *theColor, enum messageFlags flags);
+    void messageWithColor(char *msg, color *theColor, enum messageFlags flags, short speechPriority);
     void flavorMessage(char *msg);
-    void message(const char *msg, enum messageFlags flags);
+    void message(const char *msg, enum messageFlags flags, short speechPriority);
     void displayMoreSignWithoutWaitingForAcknowledgment();
     void displayMoreSign();
     short encodeMessageColor(char *msg, short i, const color *theColor);

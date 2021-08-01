@@ -267,9 +267,9 @@ enum graphicsModes setGraphicsMode(enum graphicsModes mode) {
     }
 }
 
-void playSpeech(char *text, boolean interruptable, boolean interruptPrevious) {
+void playSpeech(char *text, short priority) {
     if (currentConsole.playSpeech) {
-        currentConsole.playSpeech(text, interruptable, interruptPrevious);
+        currentConsole.playSpeech(text, priority);
     }
 }
 
