@@ -411,6 +411,8 @@ void printLocationDescription(short x, short y) {
     char buf[DCOLS*3];
     describeLocation(buf, x, y);
     flavorMessage(buf);
+    // TODO: diff against previous message?
+    playSpeech(buf);
 }
 
 void useKeyAt(item *theItem, short x, short y) {
