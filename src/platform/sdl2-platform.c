@@ -146,9 +146,31 @@ static boolean audioInit() {
 
 
 static void _playSpeech(char *text) {
-#ifdef BROGUE_SPEECH
-    espeak_Synth(text, strlen(text), 0, 0, 0, espeakCHARS_UTF8, NULL, NULL);
-#endif
+    // remove any escape codes from the text
+    int i, j;
+    char sanitizedMessage[90] = "";
+    for(i = 0, j = 0; i < strlen(text); i++)
+    {
+        while (text[i] == COLOR_ESCAPE) {
+            i += 4;
+        }
+
+        if(i >= strlen(text)) {
+            break;
+        }
+
+        sanitizedMessage[j++]= text[i];
+    }
+    espeak_Synth(
+        sanitizedMessage,
+        strlen(sanitizedMessage),
+        0,
+        0,
+        0,
+        espeakCHARS_UTF8,
+        NULL,
+        NULL
+    );
 }
 
 

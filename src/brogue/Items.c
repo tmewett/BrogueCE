@@ -2957,6 +2957,8 @@ char displayInventory(unsigned short categoryMask,
                 // Yes. Highlight the selected item. Do this by changing the button color and re-displaying it.
 
                 overlayDisplayBuffer(dbuf, NULL);
+                
+                playSpeech(buttons[highlightItemLine].text);
 
                 //buttons[highlightItemLine].buttonColor = interfaceBoxColor;
                 drawButton(&(buttons[highlightItemLine]), BUTTON_PRESSED, NULL);
