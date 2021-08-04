@@ -1,6 +1,9 @@
 name: "Build"
 on:
   push:
+    # Only run on branches
+    branches:
+    - '**'
 
 jobs:
 
