@@ -43,6 +43,7 @@ static void printCommandlineHelp() {
     "                           (optional csv format)\n"
     "                           prints a catalog of the first LEVELS levels of NUM\n"
     "                           seeds from seed START (defaults: 1 1000 5)\n"
+    "--data-dir DIRECTORY       specify directory containing game resources (experimental)\n"
     );
     return;
 }
@@ -255,6 +256,13 @@ int main(int argc, char *argv[])
         if (strcmp(argv[i], "--wizard") == 0 || strcmp(argv[i], "-W") == 0) {
             rogue.wizard = true;
             continue;
+        }
+
+        if (strcmp(argv[i], "--data-dir") == 0) {
+            if (i + 1 < argc) {
+                strcpy(dataDirectory, argv[++i]);
+                continue;
+            }
         }
 
         // maybe it ends with .broguesave or .broguerec, then?
