@@ -357,6 +357,7 @@ typedef struct rogueEvent {
 
 typedef struct speechData {
     short priority;
+    unsigned long flags;
     char message[DCOLS];
 } speechData;
 
@@ -1160,6 +1161,7 @@ enum tileFlags {
 #define AUTOPLAY_KEY        'A'
 #define SEED_KEY            '~'
 #define EASY_MODE_KEY       '&'
+#define TTS_TOGGLE_KEY      '!'
 #define ESCAPE_KEY          '\033'
 #define RETURN_KEY          '\012'
 #define DELETE_KEY          '\177'
@@ -2657,6 +2659,12 @@ enum messageFlags {
     REQUIRE_ACKNOWLEDGMENT        = Fl(0),
     REFRESH_SIDEBAR               = Fl(1),
     FOLDABLE                      = Fl(2),
+    NO_SPEECH                     = Fl(3),
+    ZERO_SPEECH                   = Fl(4),
+    ONE_SPEECH                    = Fl(5),
+    TWO_SPEECH                    = Fl(6),
+    THREE_SPEECH                  = Fl(7),
+    SPEECH_BLOCKS                 = Fl(8)
 };
 
 typedef struct archivedMessage {
@@ -2750,8 +2758,9 @@ extern "C" {
     void nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance);
     void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2);
     boolean takeScreenshot();
+    void toggleTTS();
     enum graphicsModes setGraphicsMode(enum graphicsModes mode);
-    void playSpeech(char *text, short priority);
+    void playSpeech(char *text, enum messageFlags flags);
     boolean controlKeyIsDown();
     boolean shiftKeyIsDown();
     short getHighScoresList(rogueHighScoresEntry returnList[HIGH_SCORES_COUNT]);
@@ -2924,9 +2933,9 @@ extern "C" {
     void displayRecentMessages();
     void displayMessageArchive();
     void temporaryMessage(const char *msg1, enum messageFlags flags);
-    void messageWithColor(char *msg, color *theColor, enum messageFlags flags, short speechPriority);
+    void messageWithColor(char *msg, color *theColor, enum messageFlags flags);
     void flavorMessage(char *msg);
-    void message(const char *msg, enum messageFlags flags, short speechPriority);
+    void message(const char *msg, enum messageFlags flags);
     void displayMoreSignWithoutWaitingForAcknowledgment();
     void displayMoreSign();
     short encodeMessageColor(char *msg, short i, const color *theColor);

@@ -84,6 +84,7 @@ struct brogueConsole {
     */
     enum graphicsModes (*setGraphicsMode)(enum graphicsModes mode);
     void (*playSpeech)();
+    boolean (*toggleTTS)();
 };
 
 // defined in platform

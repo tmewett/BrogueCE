@@ -405,7 +405,7 @@ void speakLocation(char *locationDescription, short x, short y) {
     strcat(locationMessage, posY);
     strcat(locationMessage, posX);
 
-    playSpeech(locationMessage, 0);
+    playSpeech(locationMessage, ZERO_SPEECH);
 }
 
 void printLocationDescription(short x, short y) {
@@ -454,7 +454,7 @@ void useKeyAt(item *theItem, short x, short y) {
                     buf2,
                     preposition,
                     terrainName);
-            messageWithColor(buf, &itemMessageColor, 0, 1);
+            messageWithColor(buf, &itemMessageColor, 0);
             deleteItem(theItem);
         } else if (removeItemFromChain(theItem, floorItems)) {
             deleteItem(theItem);
@@ -551,7 +551,7 @@ void freeCaptive(creature *monst) {
     becomeAllyWith(monst);
     monsterName(monstName, monst, false);
     sprintf(buf, "you free the grateful %s and gain a faithful ally.", monstName);
-    message(buf, 0, 2);
+    message(buf, TWO_SPEECH);
 }
 
 boolean freeCaptivesEmbeddedAt(short x, short y) {
@@ -872,7 +872,7 @@ boolean playerMoves(short direction) {
             layer = layerWithTMFlag(newX, newY, TM_PROMOTES_ON_PLAYER_ENTRY);
             if (tileCatalog[pmap[newX][newY].layers[layer]].flags & T_OBSTRUCTS_PASSABILITY) {
                 committed = true;
-                message(tileCatalog[pmap[newX][newY].layers[layer]].flavorText, 0, 1);
+                message(tileCatalog[pmap[newX][newY].layers[layer]].flavorText, 0);
                 promoteTile(newX, newY, layer, false);
                 playerTurnEnded();
                 return true;
@@ -984,12 +984,12 @@ boolean playerMoves(short direction) {
                         committed = true;
                         sprintf(buf, "you struggle but %s is holding your legs!", monstName);
                         moveEntrancedMonsters(direction);
-                        message(buf, 0, 2);
+                        message(buf, TWO_SPEECH);
                         playerTurnEnded();
                         return true;
                     } else {
                         sprintf(buf, "you cannot move; %s is holding your legs!", monstName);
-                        message(buf, 0, 2);
+                        message(buf, TWO_SPEECH);
                         cancelKeystroke();
                         return false;
                     }
@@ -1005,7 +1005,7 @@ boolean playerMoves(short direction) {
             && player.status[STATUS_IMMUNE_TO_FIRE] <= 1
             && !cellHasTerrainFlag(newX, newY, T_ENTANGLES)
             && !cellHasTMFlag(newX, newY, TM_IS_SECRET)) {
-            message("that would be certain death!", 0, 2);
+            message("that would be certain death!", TWO_SPEECH);
             brogueAssert(!committed);
             cancelKeystroke();
             return false; // player won't willingly step into lava
@@ -1098,7 +1098,7 @@ boolean playerMoves(short direction) {
                 // Don't interrupt exploration with this message.
             if (--player.status[STATUS_STUCK]) {
                 if (!rogue.automationActive) {
-                    message("you struggle but cannot free yourself.", 0, 2);
+                    message("you struggle but cannot free yourself.", TWO_SPEECH);
                 }
                 moveEntrancedMonsters(direction);
                 committed = true;
@@ -1106,7 +1106,7 @@ boolean playerMoves(short direction) {
                 return true;
             } else {
                 if (!rogue.automationActive) {
-                    message("you break free!", 0, 2);
+                    message("you break free!", TWO_SPEECH);
                 }
                 if (tileCatalog[pmap[x][y].layers[SURFACE]].flags & T_ENTANGLES) {
                     pmap[x][y].layers[SURFACE] = NOTHING;
@@ -1191,7 +1191,7 @@ boolean playerMoves(short direction) {
                 refreshDungeonCell(newX, newY);
             }
 
-            messageWithColor(tileCatalog[i].flavorText, &backgroundMessageColor, 0, 2);
+            messageWithColor(tileCatalog[i].flavorText, &backgroundMessageColor, TWO_SPEECH);
         }
     }
     return playerMoved;
@@ -1633,7 +1633,7 @@ void travel(short x, short y, boolean autoConfirm) {
     }
 
     if (!(pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED))) {
-        message("You have not explored that location.", 0, 2);
+        message("You have not explored that location.", TWO_SPEECH);
         return;
     }
 
@@ -1653,7 +1653,7 @@ void travel(short x, short y, boolean autoConfirm) {
                 staircaseConfirmKey = 0;
             }
             displayRoute(distanceMap, false);
-            message("Travel this route? (y/n)", 0, 2);
+            message("Travel this route? (y/n)", TWO_SPEECH);
 
             do {
                 nextBrogueEvent(&theEvent, true, false, false);
@@ -1682,7 +1682,7 @@ void travel(short x, short y, boolean autoConfirm) {
 //      }
     } else {
         rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
-        message("No path is available.", 0, 2);
+        message("No path is available.", TWO_SPEECH);
     }
     freeGrid(distanceMap);
 }
@@ -1915,11 +1915,11 @@ boolean explore(short frameDelay) {
     headingToStairs = false;
 
     if (player.status[STATUS_CONFUSED]) {
-        message("Not while you're confused.", 0, 2);
+        message("Not while you're confused.", TWO_SPEECH);
         return false;
     }
     if (cellHasTerrainFlag(player.xLoc, player.yLoc, T_OBSTRUCTS_PASSABILITY)) {
-        message("Not while you're trapped.", 0, 2);
+        message("Not while you're trapped.", TWO_SPEECH);
         return false;
     }
 
@@ -1942,7 +1942,7 @@ boolean explore(short frameDelay) {
 
     if (!rogue.autoPlayingLevel) {
         message(KEYBOARD_LABELS ? "Exploring... press any key to stop." : "Exploring... touch anywhere to stop.",
-                0, 0);
+                0);
         // A little hack so the exploring message remains bright while exploring and then auto-dims when
         // another message is displayed:
         confirmMessages();
@@ -2009,7 +2009,7 @@ void autoPlayLevel(boolean fastForward) {
     rogue.autoPlayingLevel = true;
 
     confirmMessages();
-    message(KEYBOARD_LABELS ? "Playing... press any key to stop." : "Playing... touch anywhere to stop.", 0, 0);
+    message(KEYBOARD_LABELS ? "Playing... press any key to stop." : "Playing... touch anywhere to stop.", 0);
 
     // explore until we are not making progress
     do {
@@ -2168,7 +2168,7 @@ boolean search(short searchStrength) {
 boolean proposeOrConfirmLocation(short x, short y, char *failureMessage) {
     boolean retval = false;
     if (player.xLoc == x && player.yLoc == y) {
-        message("you are already there.", 0, 0);
+        message("you are already there.", 0);
     } else if (pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED)) {
         if (rogue.cursorLoc[0] == x && rogue.cursorLoc[1] == y) {
             retval = true;
@@ -2177,7 +2177,7 @@ boolean proposeOrConfirmLocation(short x, short y, char *failureMessage) {
             rogue.cursorLoc[1] = y;
         }
     } else {
-        message(failureMessage, 0, 0);
+        message(failureMessage, 0);
     }
     return retval;
 }
@@ -2191,7 +2191,7 @@ boolean useStairs(short stairDirection) {
             //copyDisplayBuffer(fromBuf, displayBuffer);
             rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
             rogue.depthLevel++;
-            message("You descend.", 0, 1);
+            message("You descend.", 0);
             startLevel(rogue.depthLevel - 1, stairDirection);
             if (rogue.depthLevel > rogue.deepestLevel) {
                 rogue.deepestLevel = rogue.depthLevel;
@@ -2202,8 +2202,8 @@ boolean useStairs(short stairDirection) {
             victory(true);
         } else {
             confirmMessages();
-            messageWithColor("the crystal archway repels you with a mysterious force!", &lightBlue, 0, 1);
-            messageWithColor("(Only the bearer of the Amulet of Yendor may pass.)", &backgroundMessageColor, 0, 1);
+            messageWithColor("the crystal archway repels you with a mysterious force!", &lightBlue, 0);
+            messageWithColor("(Only the bearer of the Amulet of Yendor may pass.)", &backgroundMessageColor, 0);
         }
         succeeded = true;
     } else {
@@ -2214,7 +2214,7 @@ boolean useStairs(short stairDirection) {
                 victory(false);
             } else {
                 //copyDisplayBuffer(fromBuf, displayBuffer);
-                message("You ascend.", 0, 1);
+                message("You ascend.", 0);
                 startLevel(rogue.depthLevel + 1, stairDirection);
                 //copyDisplayBuffer(toBuf, displayBuffer);
                 //irisFadeBetweenBuffers(fromBuf, toBuf, mapToWindowX(player.xLoc), mapToWindowY(player.yLoc), 20, true);
@@ -2222,8 +2222,8 @@ boolean useStairs(short stairDirection) {
             succeeded = true;
         } else {
             confirmMessages();
-            messageWithColor("The dungeon exit is magically sealed!", &lightBlue, 0, 1);
-            messageWithColor("(Only the bearer of the Amulet of Yendor may pass.)", &backgroundMessageColor, 0, 1);
+            messageWithColor("The dungeon exit is magically sealed!", &lightBlue, 0);
+            messageWithColor("(Only the bearer of the Amulet of Yendor may pass.)", &backgroundMessageColor, 0);
         }
     }
 
@@ -2266,7 +2266,7 @@ void updateFieldOfViewDisplay(boolean updateDancingTerrain, boolean refreshDispl
                         if (theItem && (theItem->category & KEY)) {
                             itemName(theItem, name, false, true, NULL);
                             sprintf(buf, "you see %s.", name);
-                            messageWithColor(buf, &itemMessageColor, 0, 1);
+                            messageWithColor(buf, &itemMessageColor, 0);
                         }
                     }
                     if (!(pmap[i][j].flags & MAGIC_MAPPED)
@@ -2274,7 +2274,7 @@ void updateFieldOfViewDisplay(boolean updateDancingTerrain, boolean refreshDispl
 
                         strcpy(name, tileCatalog[pmap[i][j].layers[layerWithTMFlag(i, j, TM_INTERRUPT_EXPLORATION_WHEN_SEEN)]].description);
                         sprintf(buf, "you see %s.", name);
-                        messageWithColor(buf, &backgroundMessageColor, 0, 1);
+                        messageWithColor(buf, &backgroundMessageColor, 0);
                     }
                 }
                 discoverCell(i, j);

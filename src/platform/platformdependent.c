@@ -267,9 +267,15 @@ enum graphicsModes setGraphicsMode(enum graphicsModes mode) {
     }
 }
 
-void playSpeech(char *text, short priority) {
+void toggleTTS() {
+    if (currentConsole.toggleTTS) {
+        currentConsole.toggleTTS();
+    }
+}
+
+void playSpeech(char *text, enum messageFlags flags) {
     if (currentConsole.playSpeech) {
-        currentConsole.playSpeech(text, priority);
+        currentConsole.playSpeech(text, flags);
     }
 }
 

@@ -2381,12 +2381,13 @@ void exploreKey(const boolean controlKey) {
     } else {
         x = finalX = player.xLoc + nbDirs[dir][0];
         y = finalY = player.yLoc + nbDirs[dir][1];
+        hideCursor();
     }
 
     if (tooDark) {
-        message("It's too dark to explore!", 0, 2);
+        message("It's too dark to explore!", 0);
     } else if (x == player.xLoc && y == player.yLoc) {
-        message("I see no path for further exploration.", 0, 2);
+        message("I see no path for further exploration.", 0);
     } else if (proposeOrConfirmLocation(finalX, finalY, "I see no path for further exploration.")) {
         explore(controlKey ? 1 : 20); // Do the exploring until interrupted.
         hideCursor();
@@ -2443,7 +2444,7 @@ void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsD
 
     if (returnEvent->eventType == EVENT_ERROR) {
         rogue.playbackPaused = rogue.playbackMode; // pause if replaying
-        message("Event error!", REQUIRE_ACKNOWLEDGMENT, 3);
+        message("Event error!", REQUIRE_ACKNOWLEDGMENT | THREE_SPEECH);
     }
 }
 
@@ -2598,10 +2599,10 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             refreshSideBar(-1, -1, false);
             if (rogue.trueColorMode) {
                 messageWithColor(KEYBOARD_LABELS ? "Color effects disabled. Press '\\' again to enable." : "Color effects disabled.",
-                                 &teal, 0, 0);
+                                 &teal, 0);
             } else {
                 messageWithColor(KEYBOARD_LABELS ? "Color effects enabled. Press '\\' again to disable." : "Color effects enabled.",
-                                 &teal, 0, 0);
+                                 &teal, 0);
             }
             break;
         case AGGRO_DISPLAY_KEY:
@@ -2610,10 +2611,10 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             refreshSideBar(-1, -1, false);
             if (rogue.displayAggroRangeMode) {
                 messageWithColor(KEYBOARD_LABELS ? "Stealth range displayed. Press ']' again to hide." : "Stealth range displayed.",
-                                 &teal, 0, 0);
+                                 &teal, 0);
             } else {
                 messageWithColor(KEYBOARD_LABELS ? "Stealth range hidden. Press ']' again to display." : "Stealth range hidden.",
-                                 &teal, 0, 0);
+                                 &teal, 0);
             }
             break;
         case CALL_KEY:
@@ -2649,7 +2650,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                     rogue.nextGame = NG_VIEW_RECORDING;
                     rogue.gameHasEnded = true;
                 } else {
-                    message("File not found.", 0, 0);
+                    message("File not found.", 0);
                 }
             }
             break;
@@ -2665,7 +2666,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                     rogue.nextGame = NG_OPEN_GAME;
                     rogue.gameHasEnded = true;
                 } else {
-                    message("File not found.", 0, 0);
+                    message("File not found.", 0);
                 }
             }
             break;
@@ -2690,6 +2691,9 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                 gameOver("Quit", true);
             }
             break;
+        case TTS_TOGGLE_KEY:
+            toggleTTS();
+            break;
         case GRAPHICS_KEY:
             if (hasGraphics) {
                 graphicsMode = setGraphicsMode((graphicsMode + 1) % 3);
@@ -2697,17 +2701,17 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                     case TEXT_GRAPHICS:
                         messageWithColor(KEYBOARD_LABELS
                             ? "Switched to text mode. Press 'G' again to enable tiles."
-                            : "Switched to text mode.", &teal, 0, 1);
+                            : "Switched to text mode.", &teal, 0);
                         break;
                     case TILES_GRAPHICS:
                         messageWithColor(KEYBOARD_LABELS
                             ? "Switched to graphical tiles. Press 'G' again to enable hybrid mode."
-                            : "Switched to graphical tiles.", &teal, 0, 1);
+                            : "Switched to graphical tiles.", &teal, 0);
                         break;
                     case HYBRID_GRAPHICS:
                         messageWithColor(KEYBOARD_LABELS
                             ? "Switched to hybrid mode. Press 'G' again to disable tiles."
-                            : "Switched to hybrid mode.", &teal, 0, 1);
+                            : "Switched to hybrid mode.", &teal, 0);
                         break;
                 }
             }
@@ -2974,8 +2978,8 @@ boolean confirm(char *prompt, boolean alsoDuringPlayback) {
         return true; // oh yes he did
     }
 
-    playSpeech(prompt, 3);
-    playSpeech("Yes... No", 3);
+    playSpeech(prompt, THREE_SPEECH | SPEECH_BLOCKS);
+    playSpeech("Yes... No", THREE_SPEECH);
 
     encodeMessageColor(whiteColorEscape, 0, &white);
     encodeMessageColor(yellowColorEscape, 0, KEYBOARD_LABELS ? &yellow : &white);
@@ -3441,17 +3445,17 @@ void temporaryMessage(const char *msg, enum messageFlags flags) {
     }
     restoreRNG;
 
-    playSpeech(msg, 1);
+    playSpeech(msg, ONE_SPEECH);
 }
 
-void messageWithColor(char *msg, color *theColor, enum messageFlags flags, short speechPriority) {
+void messageWithColor(char *msg, color *theColor, enum messageFlags flags) {
     char buf[COLS*2] = "";
     short i;
 
     i=0;
     i = encodeMessageColor(buf, i, theColor);
     strcpy(&(buf[i]), msg);
-    message(buf, flags, speechPriority);
+    message(buf, flags);
 }
 
 void flavorMessage(char *msg) {
@@ -3479,7 +3483,7 @@ void flavorMessage(char *msg) {
 // arrived on the same turn, they may collapse.  Alternately, they may collapse
 // if the older message is the latest one in the archive and the new one is not
 // semi-colon foldable (such as a combat message.)
-void message(const char *msg, enum messageFlags flags, short speechPriority) {
+void message(const char *msg, enum messageFlags flags) {
     short i;
     archivedMessage *archiveEntry;
     boolean newMessage;
@@ -3549,7 +3553,7 @@ void message(const char *msg, enum messageFlags flags, short speechPriority) {
 
     restoreRNG;
 
-    playSpeech(msg, speechPriority);
+    playSpeech(msg, 0);
 }
 
 // Only used for the "you die..." message, to enable posthumous inventory viewing.
@@ -4478,7 +4482,7 @@ void displayGrid(short **map) {
 void printSeed() {
     char buf[COLS];
     snprintf(buf, COLS, "Dungeon seed #%llu; turn #%lu; version %s", (unsigned long long)rogue.seed, rogue.playerTurnNumber, BROGUE_VERSION_STRING);
-    message(buf, 0, 0);
+    message(buf, 0);
 }
 
 void printProgressBar(short x, short y, const char barLabel[COLS], long amtFilled, long amtMax, color *fillColor, boolean dim) {

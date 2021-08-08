@@ -21,6 +21,12 @@ static struct keypair remapping[MAX_REMAPS];
 static size_t nremaps = 0;
 static enum graphicsModes showGraphics = TEXT_GRAPHICS;
 
+#ifdef BROGUE_SPEECH
+    static boolean useTTS = true;
+#else 
+    static boolean useTTS = false;
+#endif
+
 static rogueEvent lastEvent;
 static speechData lastSpeech;
 
@@ -152,20 +158,25 @@ static boolean audioInit() {
 
 static void _playSpeech(
     char *text,
-    short priority
+    enum messageFlags flags
 ) {
-    if (priority >= lastSpeech.priority) {
-        espeak_Cancel();
-    } else {
+    if (!useTTS) {
+        return;
+    }
+    long priority = flags & (NO_SPEECH | ZERO_SPEECH | ONE_SPEECH | TWO_SPEECH | THREE_SPEECH);
+    if (lastSpeech.flags & SPEECH_BLOCKS) {
         espeak_Synchronize();
+    } else if (priority >= lastSpeech.priority) {
+        espeak_Cancel();
     }
     // remove any escape codes from the text
     int i, j;
     char sanitizedMessage[90] = "";
+    color white;
     for(i = 0, j = 0; i < strlen(text); i++)
     {
-        while (text[i] == COLOR_ESCAPE) {
-            i += 4;
+        if (text[i] == COLOR_ESCAPE) {
+            i = decodeMessageColor(text, i, &white);
         }
 
         if(i >= strlen(text)) {
@@ -175,18 +186,21 @@ static void _playSpeech(
         sanitizedMessage[j++]= text[i];
     }
     printf(sanitizedMessage);
-    espeak_Synth(
-        sanitizedMessage,
-        strlen(sanitizedMessage),
-        0,
-        0,
-        0,
-        espeakCHARS_UTF8,
-        NULL,
-        NULL
-    );
+    if (strlen(sanitizedMessage) > 0) {
+        espeak_Synth(
+            sanitizedMessage,
+            strlen(sanitizedMessage),
+            0,
+            0,
+            0,
+            espeakCHARS_UTF8,
+            NULL,
+            NULL
+        );
+    }
     // TODO: mark interruptable messages with unique_identifier
     lastSpeech.priority = priority;
+    lastSpeech.flags = flags;
 }
 
 
@@ -474,6 +488,13 @@ static enum graphicsModes _setGraphicsMode(enum graphicsModes mode) {
     return mode;
 }
 
+static boolean _toggleTTS() {
+    useTTS = !useTTS;
+    if (useTTS) {
+        playSpeech("Speech enabled", ZERO_SPEECH);
+    }
+}
+
 
 struct brogueConsole sdlConsole = {
     _gameLoop,
@@ -485,5 +506,6 @@ struct brogueConsole sdlConsole = {
     NULL,
     _takeScreenshot,
     _setGraphicsMode,
+    .toggleTTS = _toggleTTS,
     .playSpeech = _playSpeech
 };
