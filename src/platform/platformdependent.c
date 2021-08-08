@@ -267,6 +267,18 @@ enum graphicsModes setGraphicsMode(enum graphicsModes mode) {
     }
 }
 
+void toggleTTS() {
+    if (currentConsole.toggleTTS) {
+        currentConsole.toggleTTS();
+    }
+}
+
+void playSpeech(char *text, enum messageFlags flags) {
+    if (currentConsole.playSpeech) {
+        currentConsole.playSpeech(text, flags);
+    }
+}
+
 // creates an empty high scores file
 void initScores() {
     short i;

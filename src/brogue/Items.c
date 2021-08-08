@@ -331,7 +331,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             break;
         default:
             theEntry = NULL;
-            message("something has gone terribly wrong!", REQUIRE_ACKNOWLEDGMENT);
+            message("something has gone terribly wrong!", REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
             break;
     }
     if (theItem
@@ -389,7 +389,7 @@ item *placeItem(item *theItem, short x, short y) {
             }
             itemName(theItem, theItemName, false, false, NULL);
             sprintf(buf, "a pressure plate clicks underneath the %s!", theItemName);
-            message(buf, REQUIRE_ACKNOWLEDGMENT);
+            message(buf, REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
         }
         for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
             if (tileCatalog[pmap[x][y].layers[layer]].flags & T_IS_DF_TRAP) {
@@ -755,7 +755,7 @@ void pickUpItemAt(short x, short y) {
     theItem = itemAtLoc(x, y);
 
     if (!theItem) {
-        message("Error: Expected item; item not found.", REQUIRE_ACKNOWLEDGMENT);
+        message("Error: Expected item; item not found.", REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
         return;
     }
 
@@ -2957,6 +2957,8 @@ char displayInventory(unsigned short categoryMask,
                 // Yes. Highlight the selected item. Do this by changing the button color and re-displaying it.
 
                 overlayDisplayBuffer(dbuf, NULL);
+                
+                playSpeech(buttons[highlightItemLine].text, THREE_SPEECH);
 
                 //buttons[highlightItemLine].buttonColor = interfaceBoxColor;
                 drawButton(&(buttons[highlightItemLine]), BUTTON_PRESSED, NULL);
@@ -4508,7 +4510,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                     flashMonster(monst, &confusionGasColor, 100);
                     monst->status[STATUS_CONFUSED] = staffEntrancementDuration(theBolt->magnitude * FP_FACTOR);
                     monst->maxStatus[STATUS_CONFUSED] = max(monst->status[STATUS_CONFUSED], monst->maxStatus[STATUS_CONFUSED]);
-                    message("the bolt hits you and you suddenly feel disoriented.", REQUIRE_ACKNOWLEDGMENT);
+                    message("the bolt hits you and you suddenly feel disoriented.", REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
                     if (autoID) {
                         *autoID = true;
                     }
@@ -6704,7 +6706,7 @@ void readScroll(item *theItem) {
         case SCROLL_IDENTIFY:
             identify(theItem);
             updateIdentifiableItems();
-            messageWithColor("this is a scroll of identify.", &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
+            messageWithColor("this is a scroll of identify.", &itemMessageColor, REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
             if (numberOfMatchingPackItems(ALL_ITEMS, ITEM_CAN_BE_IDENTIFIED, 0, false) == 0) {
                 message("everything in your pack is already identified.", 0);
                 break;
@@ -6748,7 +6750,7 @@ void readScroll(item *theItem) {
             break;
         case SCROLL_ENCHANTING:
             identify(theItem);
-            messageWithColor("this is a scroll of enchanting.", &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
+            messageWithColor("this is a scroll of enchanting.", &itemMessageColor, REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
             if (!numberOfMatchingPackItems((WEAPON | ARMOR | RING | STAFF | WAND | CHARM), 0, 0, false)) {
                 confirmMessages();
                 message("you have nothing that can be enchanted.", 0);
@@ -6760,7 +6762,7 @@ void readScroll(item *theItem) {
                                               false);
                 confirmMessages();
                 if (theItem == NULL || !(theItem->category & (WEAPON | ARMOR | RING | STAFF | WAND | CHARM))) {
-                    message("Can't enchant that.", REQUIRE_ACKNOWLEDGMENT);
+                    message("Can't enchant that.", REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
                 }
                 if (rogue.gameHasEnded) {
                     return;
@@ -7084,7 +7086,7 @@ void drinkPotion(item *theItem) {
             message("you shiver as a chill runs up your spine.", 0);
             break;
         default:
-            message("you feel very strange, as though your body doesn't know how to react!", REQUIRE_ACKNOWLEDGMENT);
+            message("you feel very strange, as though your body doesn't know how to react!", REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
     }
 }
 
@@ -7348,7 +7350,7 @@ item *itemAtLoc(short x, short y) {
         pmap[x][y].flags &= ~HAS_ITEM;
         hiliteCell(x, y, &white, 75, true);
         rogue.automationActive = false;
-        message("ERROR: An item was supposed to be here, but I couldn't find it.", REQUIRE_ACKNOWLEDGMENT);
+        message("ERROR: An item was supposed to be here, but I couldn't find it.", REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
         refreshDungeonCell(x, y);
     }
     return theItem;
@@ -7483,7 +7485,7 @@ boolean equipItem(item *theItem, boolean force, item *unequipHint) {
         }
 
         confirmMessages();
-        messageWithColor(buf1, &itemMessageColor, false);
+        messageWithColor(buf1, &itemMessageColor, 0);
 
         if (theItem->flags & ITEM_CURSED) {
             itemName(theItem, buf2, false, false, NULL);

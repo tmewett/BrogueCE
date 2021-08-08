@@ -170,7 +170,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
         if (monst == &player) {
             sprintf(buf, "you plunge into %s!",
                     tileCatalog[pmap[*x][*y].layers[layerWithFlag(*x, *y, T_LAVA_INSTA_DEATH)]].description);
-            message(buf, REQUIRE_ACKNOWLEDGMENT);
+            message(buf, REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
             sprintf(buf, "Killed by %s",
                     tileCatalog[pmap[*x][*y].layers[layerWithFlag(*x, *y, T_LAVA_INSTA_DEATH)]].description);
             gameOver(buf, true);
@@ -226,10 +226,10 @@ void applyInstantTileEffectsToCreature(creature *monst) {
         if (canSeeMonster(monst)) {
             monsterName(buf, monst, true);
             sprintf(buf2, "a pressure plate clicks underneath %s!", buf);
-            message(buf2, REQUIRE_ACKNOWLEDGMENT);
+            message(buf2, REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
         } else if (playerCanSee(*x, *y)) {
             // usually means an invisible monster
-            message("a pressure plate clicks!", 0);
+            message("a pressure plate clicks!", 0 | SPEECH_BLOCKS);
         }
         for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
             if (tileCatalog[pmap[*x][*y].layers[layer]].flags & T_IS_DF_TRAP) {
@@ -813,17 +813,17 @@ void checkNutrition() {
     } else if (player.status[STATUS_NUTRITION] == WEAK_THRESHOLD) {
         player.status[STATUS_NUTRITION]--;
         sprintf(buf, "you feel weak with hunger%s.", foodWarning);
-        message(buf, REQUIRE_ACKNOWLEDGMENT);
+        message(buf, REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
     } else if (player.status[STATUS_NUTRITION] == FAINT_THRESHOLD) {
         player.status[STATUS_NUTRITION]--;
         sprintf(buf, "you feel faint with hunger%s.", foodWarning);
-        message(buf, REQUIRE_ACKNOWLEDGMENT);
+        message(buf, REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
     } else if (player.status[STATUS_NUTRITION] <= 1) {
         // Force the player to eat something if he has it
         for (theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
             if (theItem->category == FOOD) {
                 sprintf(buf, "unable to control your hunger, you eat a %s.", (theItem->kind == FRUIT ? "mango" : "ration of food"));
-                messageWithColor(buf, &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
+                messageWithColor(buf, &itemMessageColor, REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
                 apply(theItem, false);
                 break;
             }
@@ -832,7 +832,7 @@ void checkNutrition() {
 
     if (player.status[STATUS_NUTRITION] == 1) { // Didn't manage to eat any food above.
         player.status[STATUS_NUTRITION] = 0;    // So the status bar changes in time for the message:
-        message("you are starving to death!", REQUIRE_ACKNOWLEDGMENT);
+        message("you are starving to death!", REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
     }
 }
 
@@ -980,9 +980,9 @@ void playerFalls() {
 
     layer = layerWithFlag(player.xLoc, player.yLoc, T_AUTO_DESCENT);
     if (layer >= 0) {
-        message(tileCatalog[pmap[player.xLoc][player.yLoc].layers[layer]].flavorText, REQUIRE_ACKNOWLEDGMENT);
+        message(tileCatalog[pmap[player.xLoc][player.yLoc].layers[layer]].flavorText, REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
     } else if (layer == -1) {
-        message("You plunge downward!", REQUIRE_ACKNOWLEDGMENT);
+        message("You plunge downward!", REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
     }
 
     player.bookkeepingFlags &= ~(MB_IS_FALLING | MB_SEIZED | MB_SEIZING);
@@ -2482,7 +2482,7 @@ void playerTurnEnded() {
                                 buf2);
                         if (rogue.cautiousMode) {
                             strcat(buf, ".");
-                            message(buf, REQUIRE_ACKNOWLEDGMENT);
+                            message(buf, REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
                         } else {
                             combatMessage(buf, 0);
                         }
@@ -2507,7 +2507,7 @@ void playerTurnEnded() {
                         rogue.weapon->flags |= ITEM_RUNIC_HINTED;
                         itemName(rogue.weapon, buf2, false, false, NULL);
                         sprintf(buf, "the runes on your %s gleam balefully.", buf2);
-                        messageWithColor(buf, &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
+                        messageWithColor(buf, &itemMessageColor, REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
                     }
                     if (rogue.armor && rogue.armor->flags & ITEM_RUNIC
                         && rogue.armor->enchant2 == A_IMMUNITY
@@ -2517,7 +2517,7 @@ void playerTurnEnded() {
                         rogue.armor->flags |= ITEM_RUNIC_HINTED;
                         itemName(rogue.armor, buf2, false, false, NULL);
                         sprintf(buf, "the runes on your %s glow protectively.", buf2);
-                        messageWithColor(buf, &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
+                        messageWithColor(buf, &itemMessageColor, REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
                     }
                 }
             }
@@ -2585,11 +2585,11 @@ void playerTurnEnded() {
                 turnsToShore = player.status[STATUS_LEVITATING] * 100 / player.movementSpeed;
             }
             if (turnsRequiredToShore == turnsToShore || turnsRequiredToShore + 1 == turnsToShore) {
-                message("better head back to solid ground!", REQUIRE_ACKNOWLEDGMENT);
+                message("better head back to solid ground!", REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
                 rogue.receivedLevitationWarning = true;
             } else if (turnsRequiredToShore > turnsToShore
                        && turnsRequiredToShore < 10000) {
-                message("you're past the point of no return!", REQUIRE_ACKNOWLEDGMENT);
+                message("you're past the point of no return!", REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
                 rogue.receivedLevitationWarning = true;
             }
         }

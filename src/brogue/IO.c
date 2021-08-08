@@ -2381,6 +2381,7 @@ void exploreKey(const boolean controlKey) {
     } else {
         x = finalX = player.xLoc + nbDirs[dir][0];
         y = finalY = player.yLoc + nbDirs[dir][1];
+        hideCursor();
     }
 
     if (tooDark) {
@@ -2443,7 +2444,7 @@ void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsD
 
     if (returnEvent->eventType == EVENT_ERROR) {
         rogue.playbackPaused = rogue.playbackMode; // pause if replaying
-        message("Event error!", REQUIRE_ACKNOWLEDGMENT);
+        message("Event error!", REQUIRE_ACKNOWLEDGMENT | THREE_SPEECH);
     }
 }
 
@@ -2689,6 +2690,9 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                 rogue.quit = true;
                 gameOver("Quit", true);
             }
+            break;
+        case TTS_TOGGLE_KEY:
+            toggleTTS();
             break;
         case GRAPHICS_KEY:
             if (hasGraphics) {
@@ -2973,6 +2977,9 @@ boolean confirm(char *prompt, boolean alsoDuringPlayback) {
     if (rogue.autoPlayingLevel || (!alsoDuringPlayback && rogue.playbackMode)) {
         return true; // oh yes he did
     }
+
+    playSpeech(prompt, THREE_SPEECH | SPEECH_BLOCKS);
+    playSpeech("Yes... No", THREE_SPEECH);
 
     encodeMessageColor(whiteColorEscape, 0, &white);
     encodeMessageColor(yellowColorEscape, 0, KEYBOARD_LABELS ? &yellow : &white);
@@ -3437,6 +3444,8 @@ void temporaryMessage(const char *msg, enum messageFlags flags) {
         updateMessageDisplay();
     }
     restoreRNG;
+
+    playSpeech(msg, ONE_SPEECH);
 }
 
 void messageWithColor(char *msg, color *theColor, enum messageFlags flags) {
@@ -3543,6 +3552,8 @@ void message(const char *msg, enum messageFlags flags) {
     }
 
     restoreRNG;
+
+    playSpeech(msg, 0);
 }
 
 // Only used for the "you die..." message, to enable posthumous inventory viewing.

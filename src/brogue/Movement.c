@@ -159,6 +159,7 @@ void describeLocation(char *buf, short x, short y) {
             strcpy(buf, tileFlavor(x, y));
         }
         restoreRNG;
+        speakLocation(buf, x, y);
         return;
     }
 
@@ -199,6 +200,7 @@ void describeLocation(char *buf, short x, short y) {
         }
         sprintf(buf, "you can detect the aura of %s here.", object);
         restoreRNG;
+        speakLocation(buf, x, y);
         return;
     }
 
@@ -227,6 +229,7 @@ void describeLocation(char *buf, short x, short y) {
 
         sprintf(buf, "you can sense a %s psychic emanation %s%s.", adjective, preposition, object);
         restoreRNG;
+        speakLocation(buf, x, y);
         return;
     }
 
@@ -249,10 +252,12 @@ void describeLocation(char *buf, short x, short y) {
             }
             sprintf(buf, "you remember seeing %s here.", object);
             restoreRNG;
+            speakLocation(buf, x, y);
             return;
         } else if (pmap[x][y].flags & MAGIC_MAPPED) { // magic mapped
             sprintf(buf, "you expect %s to be here.", tileCatalog[pmap[x][y].rememberedTerrain].description);
             restoreRNG;
+            speakLocation(buf, x, y);
             return;
         }
         strcpy(buf, "");
@@ -267,6 +272,7 @@ void describeLocation(char *buf, short x, short y) {
         if (pmap[x][y].layers[GAS] && monst->status[STATUS_INVISIBLE]) { // phantoms in gas
             sprintf(buf, "you can perceive the faint outline of %s in %s.", subject, tileCatalog[pmap[x][y].layers[GAS]].description);
             restoreRNG;
+            speakLocation(buf, x, y);
             return;
         }
 
@@ -371,12 +377,35 @@ void describeLocation(char *buf, short x, short y) {
         } else { // no item
             sprintf(buf, "you %s %s.", (playerCanDirectlySee(x, y) ? "see" : "sense"), object);
             restoreRNG;
+            speakLocation(buf, x, y);
             return;
         }
     }
 
     sprintf(buf, "%s %s %s %s.", subject, verb, preposition, object);
     restoreRNG;
+    speakLocation(buf, x, y);
+}
+
+void speakLocation(char *locationDescription, short x, short y) {
+    char locationMessage[DCOLS*3];
+
+    if(strlen(locationDescription) < 2) {
+        strcpy(locationMessage, "Blank.");
+    } else {
+        strcpy(locationMessage, locationDescription);
+    }
+
+    char posX[20] = "";
+    char posY[20] = "";
+
+    sprintf(posY, " %d %s.", abs(y - player.yLoc), player.yLoc < y ? "down" : "up");
+    sprintf(posX, " %d %s.", abs(x - player.xLoc), player.xLoc < x ? "right" : "left");
+
+    strcat(locationMessage, posY);
+    strcat(locationMessage, posX);
+
+    playSpeech(locationMessage, ZERO_SPEECH);
 }
 
 void printLocationDescription(short x, short y) {
@@ -522,7 +551,7 @@ void freeCaptive(creature *monst) {
     becomeAllyWith(monst);
     monsterName(monstName, monst, false);
     sprintf(buf, "you free the grateful %s and gain a faithful ally.", monstName);
-    message(buf, 0);
+    message(buf, TWO_SPEECH);
 }
 
 boolean freeCaptivesEmbeddedAt(short x, short y) {
@@ -955,12 +984,12 @@ boolean playerMoves(short direction) {
                         committed = true;
                         sprintf(buf, "you struggle but %s is holding your legs!", monstName);
                         moveEntrancedMonsters(direction);
-                        message(buf, 0);
+                        message(buf, TWO_SPEECH);
                         playerTurnEnded();
                         return true;
                     } else {
                         sprintf(buf, "you cannot move; %s is holding your legs!", monstName);
-                        message(buf, 0);
+                        message(buf, TWO_SPEECH);
                         cancelKeystroke();
                         return false;
                     }
@@ -976,7 +1005,7 @@ boolean playerMoves(short direction) {
             && player.status[STATUS_IMMUNE_TO_FIRE] <= 1
             && !cellHasTerrainFlag(newX, newY, T_ENTANGLES)
             && !cellHasTMFlag(newX, newY, TM_IS_SECRET)) {
-            message("that would be certain death!", 0);
+            message("that would be certain death!", TWO_SPEECH);
             brogueAssert(!committed);
             cancelKeystroke();
             return false; // player won't willingly step into lava
@@ -1069,7 +1098,7 @@ boolean playerMoves(short direction) {
                 // Don't interrupt exploration with this message.
             if (--player.status[STATUS_STUCK]) {
                 if (!rogue.automationActive) {
-                    message("you struggle but cannot free yourself.", 0);
+                    message("you struggle but cannot free yourself.", TWO_SPEECH);
                 }
                 moveEntrancedMonsters(direction);
                 committed = true;
@@ -1077,7 +1106,7 @@ boolean playerMoves(short direction) {
                 return true;
             } else {
                 if (!rogue.automationActive) {
-                    message("you break free!", 0);
+                    message("you break free!", TWO_SPEECH);
                 }
                 if (tileCatalog[pmap[x][y].layers[SURFACE]].flags & T_ENTANGLES) {
                     pmap[x][y].layers[SURFACE] = NOTHING;
@@ -1162,7 +1191,7 @@ boolean playerMoves(short direction) {
                 refreshDungeonCell(newX, newY);
             }
 
-            messageWithColor(tileCatalog[i].flavorText, &backgroundMessageColor, 0);
+            messageWithColor(tileCatalog[i].flavorText, &backgroundMessageColor, TWO_SPEECH);
         }
     }
     return playerMoved;
@@ -1604,7 +1633,7 @@ void travel(short x, short y, boolean autoConfirm) {
     }
 
     if (!(pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED))) {
-        message("You have not explored that location.", 0);
+        message("You have not explored that location.", TWO_SPEECH);
         return;
     }
 
@@ -1624,7 +1653,7 @@ void travel(short x, short y, boolean autoConfirm) {
                 staircaseConfirmKey = 0;
             }
             displayRoute(distanceMap, false);
-            message("Travel this route? (y/n)", 0);
+            message("Travel this route? (y/n)", TWO_SPEECH);
 
             do {
                 nextBrogueEvent(&theEvent, true, false, false);
@@ -1653,7 +1682,7 @@ void travel(short x, short y, boolean autoConfirm) {
 //      }
     } else {
         rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
-        message("No path is available.", 0);
+        message("No path is available.", TWO_SPEECH);
     }
     freeGrid(distanceMap);
 }
@@ -1886,11 +1915,11 @@ boolean explore(short frameDelay) {
     headingToStairs = false;
 
     if (player.status[STATUS_CONFUSED]) {
-        message("Not while you're confused.", 0);
+        message("Not while you're confused.", TWO_SPEECH);
         return false;
     }
     if (cellHasTerrainFlag(player.xLoc, player.yLoc, T_OBSTRUCTS_PASSABILITY)) {
-        message("Not while you're trapped.", 0);
+        message("Not while you're trapped.", TWO_SPEECH);
         return false;
     }
 

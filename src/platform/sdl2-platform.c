@@ -4,6 +4,8 @@
 
 #include <limits.h>
 #include <SDL_image.h>
+#include <espeak-ng/speak_lib.h>
+
 #include "platform.h"
 #include "tiles.h"
 
@@ -19,8 +21,14 @@ static struct keypair remapping[MAX_REMAPS];
 static size_t nremaps = 0;
 static enum graphicsModes showGraphics = TEXT_GRAPHICS;
 
-static rogueEvent lastEvent;
+#ifdef BROGUE_SPEECH
+    static boolean useTTS = true;
+#else 
+    static boolean useTTS = false;
+#endif
 
+static rogueEvent lastEvent;
+static speechData lastSpeech;
 
 static void sdlfatal(char *file, int line) {
     fprintf(stderr, "Fatal SDL error (%s:%d): %s\n", file, line, SDL_GetError());
@@ -135,6 +143,64 @@ static char applyRemaps(char c) {
         if (remapping[i].from == c) return remapping[i].to;
     }
     return c;
+}
+
+
+static void speechCallback(short *wav, int numsamples, espeak_EVENT *events) {
+    return;
+}
+
+
+static boolean audioInit() {
+    espeak_SetSynthCallback(speechCallback);
+    return espeak_Initialize(AUDIO_OUTPUT_PLAYBACK, 0, NULL, 0) != -1;
+}
+
+static void _playSpeech(
+    char *text,
+    enum messageFlags flags
+) {
+    if (!useTTS) {
+        return;
+    }
+    long priority = flags & (NO_SPEECH | ZERO_SPEECH | ONE_SPEECH | TWO_SPEECH | THREE_SPEECH);
+    if (lastSpeech.flags & SPEECH_BLOCKS) {
+        espeak_Synchronize();
+    } else if (priority >= lastSpeech.priority) {
+        espeak_Cancel();
+    }
+    // remove any escape codes from the text
+    int i, j;
+    char sanitizedMessage[90] = "";
+    color white;
+    for(i = 0, j = 0; i < strlen(text); i++)
+    {
+        if (text[i] == COLOR_ESCAPE) {
+            i = decodeMessageColor(text, i, &white);
+        }
+
+        if(i >= strlen(text)) {
+            break;
+        }
+
+        sanitizedMessage[j++]= text[i];
+    }
+    printf(sanitizedMessage);
+    if (strlen(sanitizedMessage) > 0) {
+        espeak_Synth(
+            sanitizedMessage,
+            strlen(sanitizedMessage),
+            0,
+            0,
+            0,
+            espeakCHARS_UTF8,
+            NULL,
+            NULL
+        );
+    }
+    // TODO: mark interruptable messages with unique_identifier
+    lastSpeech.priority = priority;
+    lastSpeech.flags = flags;
 }
 
 
@@ -267,6 +333,7 @@ static void _gameLoop() {
     if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) imgfatal(__FILE__, __LINE__);
 
     initTiles();
+    audioInit();
 
     lastEvent.eventType = EVENT_ERROR;
 
@@ -421,6 +488,13 @@ static enum graphicsModes _setGraphicsMode(enum graphicsModes mode) {
     return mode;
 }
 
+static boolean _toggleTTS() {
+    useTTS = !useTTS;
+    if (useTTS) {
+        playSpeech("Speech enabled", ZERO_SPEECH);
+    }
+}
+
 
 struct brogueConsole sdlConsole = {
     _gameLoop,
@@ -431,5 +505,7 @@ struct brogueConsole sdlConsole = {
     _modifierHeld,
     NULL,
     _takeScreenshot,
-    _setGraphicsMode
+    _setGraphicsMode,
+    .toggleTTS = _toggleTTS,
+    .playSpeech = _playSpeech
 };

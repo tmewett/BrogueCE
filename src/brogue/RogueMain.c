@@ -1263,10 +1263,10 @@ void enableEasyMode() {
         message("Alas, all hope of salvation is lost. You shed scalding tears at your plight.", 0);
         return;
     }
-    message("A dark presence surrounds you, whispering promises of stolen power.", REQUIRE_ACKNOWLEDGMENT);
+    message("A dark presence surrounds you, whispering promises of stolen power.", REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
     if (confirm("Succumb to demonic temptation (i.e. enable Easy Mode)?", false)) {
         recordKeystroke(EASY_MODE_KEY, false, true);
-        message("An ancient and terrible evil burrows into your willing flesh!", REQUIRE_ACKNOWLEDGMENT);
+        message("An ancient and terrible evil burrows into your willing flesh!", REQUIRE_ACKNOWLEDGMENT | SPEECH_BLOCKS);
         player.info.displayChar = '&';
         rogue.easyMode = true;
         refreshDungeonCell(player.xLoc, player.yLoc);

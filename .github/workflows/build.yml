@@ -13,7 +13,7 @@ jobs:
     - name: "Install dependencies"
       run: |
         sudo apt update -y
-        sudo apt install -y libsdl2-dev libsdl2-image-dev
+        sudo apt install -y libsdl2-dev libsdl2-image-dev espeak-ng
 
     - name: "Checkout sources"
       uses: actions/checkout@v2
@@ -58,7 +58,7 @@ jobs:
           brew install --build-from-source ./macos/sdl2.rb
           cp -r $(brew --cellar)/sdl2 sdl2-cellar
         fi
-        brew install sdl2_image dylibbundler
+        brew install sdl2_image dylibbundler espeak-ng
 
     - name: "Compile"
       run: |

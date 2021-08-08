@@ -83,6 +83,8 @@ struct brogueConsole {
     very start of the program, even before .gameLoop, to set the initial value.
     */
     enum graphicsModes (*setGraphicsMode)(enum graphicsModes mode);
+    void (*playSpeech)();
+    boolean (*toggleTTS)();
 };
 
 // defined in platform

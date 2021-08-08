@@ -355,6 +355,12 @@ typedef struct rogueEvent {
     boolean shiftKey;
 } rogueEvent;
 
+typedef struct speechData {
+    short priority;
+    unsigned long flags;
+    char message[DCOLS];
+} speechData;
+
 typedef struct rogueHighScoresEntry {
     signed long score;
     char date[100];
@@ -1155,6 +1161,7 @@ enum tileFlags {
 #define AUTOPLAY_KEY        'A'
 #define SEED_KEY            '~'
 #define EASY_MODE_KEY       '&'
+#define TTS_TOGGLE_KEY      '!'
 #define ESCAPE_KEY          '\033'
 #define RETURN_KEY          '\012'
 #define DELETE_KEY          '\177'
@@ -2649,6 +2656,12 @@ enum messageFlags {
     REQUIRE_ACKNOWLEDGMENT        = Fl(0),
     REFRESH_SIDEBAR               = Fl(1),
     FOLDABLE                      = Fl(2),
+    NO_SPEECH                     = Fl(3),
+    ZERO_SPEECH                   = Fl(4),
+    ONE_SPEECH                    = Fl(5),
+    TWO_SPEECH                    = Fl(6),
+    THREE_SPEECH                  = Fl(7),
+    SPEECH_BLOCKS                 = Fl(8)
 };
 
 typedef struct archivedMessage {
@@ -2742,7 +2755,9 @@ extern "C" {
     void nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance);
     void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2);
     boolean takeScreenshot();
+    void toggleTTS();
     enum graphicsModes setGraphicsMode(enum graphicsModes mode);
+    void playSpeech(char *text, enum messageFlags flags);
     boolean controlKeyIsDown();
     boolean shiftKeyIsDown();
     short getHighScoresList(rogueHighScoresEntry returnList[HIGH_SCORES_COUNT]);
@@ -2845,6 +2860,7 @@ extern "C" {
     char *tileText(short x, short y);
     void describedItemBasedOnParameters(short theCategory, short theKind, short theQuantity, short theItemOriginDepth, char *buf);
     void describeLocation(char buf[DCOLS], short x, short y);
+    void speakLocation(char *locationDescription, short x, short y);
     void printLocationDescription(short x, short y);
     void useKeyAt(item *theItem, short x, short y);
     void playerRuns(short direction);

@@ -255,7 +255,7 @@ void splitMonster(creature *monst, short x, short y) {
 
                     if (canDirectlySeeMonster(monst)) {
                         sprintf(buf, "%s splits in two!", monstName);
-                        message(buf, 0);
+                        message(buf, TWO_SPEECH);
                     }
 
                     return;
@@ -393,7 +393,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
             equipItem(rogue.armor, true, NULL);
             itemName(rogue.armor, buf2, false, false, NULL);
             sprintf(buf, "your %s weakens!", buf2);
-            messageWithColor(buf, &itemMessageColor, 0);
+            messageWithColor(buf, &itemMessageColor, TWO_SPEECH);
             checkForDisenchantment(rogue.armor);
         }
         if (attacker->info.abilityFlags & MA_HIT_HALLUCINATE) {
@@ -461,7 +461,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
                     monsterName(buf2, attacker, true);
                     itemName(theItem, buf3, false, true, NULL);
                     sprintf(buf, "%s stole %s!", buf2, buf3);
-                    messageWithColor(buf, &badMessageColor, 0);
+                    messageWithColor(buf, &badMessageColor, TWO_SPEECH);
                 }
             }
         }
@@ -718,7 +718,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
                 }
                 updateVision(true);
 
-                message(buf, 0);
+                message(buf, TWO_SPEECH);
                 autoID = true;
                 break;
             case W_SLOWING:
@@ -946,7 +946,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
         case A_IMMOLATION:
             if (rand_percent(10)) {
                 sprintf(returnString, "flames suddenly explode out of your %s!", armorName);
-                message(returnString, runicKnown ? 0 : REQUIRE_ACKNOWLEDGMENT);
+                message(returnString, runicKnown ? 0 : REQUIRE_ACKNOWLEDGMENT | TWO_SPEECH);
                 returnString[0] = '\0';
                 spawnDungeonFeature(player.xLoc, player.yLoc, &(dungeonFeatureCatalog[DF_ARMOR_IMMOLATION]), true, false);
                 runicDiscovered = true;
@@ -969,10 +969,10 @@ void decrementWeaponAutoIDTimer() {
 
         rogue.weapon->flags |= ITEM_IDENTIFIED;
         updateIdentifiableItems();
-        messageWithColor("you are now familiar enough with your weapon to identify it.", &itemMessageColor, 0);
+        messageWithColor("you are now familiar enough with your weapon to identify it.", &itemMessageColor, TWO_SPEECH);
         itemName(rogue.weapon, buf2, true, true, NULL);
         sprintf(buf, "%s %s.", (rogue.weapon->quantity > 1 ? "they are" : "it is"), buf2);
-        messageWithColor(buf, &itemMessageColor, 0);
+        messageWithColor(buf, &itemMessageColor, TWO_SPEECH);
     }
 }
 
@@ -1061,7 +1061,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
         defender->bookkeepingFlags |= MB_SEIZED;
         if (canSeeMonster(attacker) || canSeeMonster(defender)) {
             sprintf(buf, "%s seizes %s!", attackerName, (defender == &player ? "your legs" : defenderName));
-            messageWithColor(buf, &white, 0);
+            messageWithColor(buf, &white, TWO_SPEECH);
         }
         return false;
     }
@@ -1186,7 +1186,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
                 specialHit(attacker, defender, (attacker->info.abilityFlags & MA_POISONS) ? poisonDamage : damage);
             }
             if (armorRunicString[0]) {
-                message(armorRunicString, 0);
+                message(armorRunicString, TWO_SPEECH);
                 if (rogue.armor && (rogue.armor->flags & ITEM_RUNIC) && rogue.armor->enchant2 == A_BURDEN) {
                     strengthCheck(rogue.armor, true);
                 }
@@ -1221,7 +1221,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
             equipItem(rogue.weapon, true, NULL);
             itemName(rogue.weapon, buf2, false, false, NULL);
             sprintf(buf, "your %s weakens!", buf2);
-            messageWithColor(buf, &itemMessageColor, 0);
+            messageWithColor(buf, &itemMessageColor, TWO_SPEECH);
             checkForDisenchantment(rogue.weapon);
         }
 
@@ -1311,12 +1311,12 @@ void displayCombatText() {
     for (end = start; *end != '\0'; end++) {
         if (*end == '\n') {
             *end = '\0';
-            message(start, FOLDABLE | (rogue.cautiousMode ? REQUIRE_ACKNOWLEDGMENT : 0));
+            message(start, FOLDABLE | (rogue.cautiousMode ? REQUIRE_ACKNOWLEDGMENT : 0) | TWO_SPEECH | SPEECH_BLOCKS);
             start = end + 1;
         }
     }
 
-    message(start, FOLDABLE | (rogue.cautiousMode ? REQUIRE_ACKNOWLEDGMENT : 0));
+    message(start, FOLDABLE | (rogue.cautiousMode ? REQUIRE_ACKNOWLEDGMENT : 0) | TWO_SPEECH | SPEECH_BLOCKS);
 
     rogue.cautiousMode = false;
 }
@@ -1647,7 +1647,7 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
             monsterName(monstName, decedent, true);
             snprintf(buf, DCOLS * 3, "%s %s", monstName, monsterText[decedent->info.monsterID].DFMessage);
             resolvePronounEscapes(buf, decedent);
-            message(buf, 0);
+            message(buf, TWO_SPEECH);
         }
     }
 
@@ -1661,7 +1661,7 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
             && !(decedent->bookkeepingFlags & MB_BOUND_TO_LEADER)
             && !decedent->carriedMonster) {
 
-            messageWithColor("you feel a sense of loss.", &badMessageColor, 0);
+            messageWithColor("you feel a sense of loss.", &badMessageColor, TWO_SPEECH);
         }
         x = decedent->xLoc;
         y = decedent->yLoc;
