@@ -149,7 +149,7 @@ void updateMinersLightRadius() {
         lightRadius = max(lightRadius / 2, 3 * FP_FACTOR);
     }
 
-    rogue.minersLight.radialFadeToPercent = (35 + max(0, min(65, rogue.lightMultiplier * 5)) * fraction) / FP_FACTOR;
+    rogue.minersLight.radialFadeToPercent = 35 + (max(0, min(65, rogue.lightMultiplier * 5)) * fraction) / FP_FACTOR;
     rogue.minersLight.lightRadius.upperBound = rogue.minersLight.lightRadius.lowerBound = clamp(lightRadius / FP_FACTOR, -30000, 30000);
 }
 
@@ -209,7 +209,6 @@ void updateLighting() {
     short i, j, k;
     enum dungeonLayers layer;
     enum tileType tile;
-    creature *monst;
 
     // Copy Light over oldLight
     recordOldLights();
@@ -237,7 +236,10 @@ void updateLighting() {
     }
 
     // Cycle through monsters and paint their lights:
-    CYCLE_MONSTERS_AND_PLAYERS(monst) {
+    boolean handledPlayer = false;
+    for (creatureIterator it = iterateCreatures(monsters); !handledPlayer || hasNextCreature(it);) {
+        creature *monst = !handledPlayer ? &player : nextCreature(&it);
+        handledPlayer = true;
         if (monst->info.intrinsicLightType) {
             paintLight(&lightCatalog[monst->info.intrinsicLightType], monst->xLoc, monst->yLoc, false, false);
         }
@@ -255,7 +257,8 @@ void updateLighting() {
     }
 
     // Also paint telepathy lights for dormant monsters.
-    for (monst = dormantMonsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
+    for (creatureIterator it = iterateCreatures(dormantMonsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
         if (monsterRevealed(monst)) {
             paintLight(&lightCatalog[TELEPATHY_LIGHT], monst->xLoc, monst->yLoc, false, true);
         }

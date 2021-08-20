@@ -37,19 +37,19 @@ short numberOfWaypoints;
 levelData *levels;
 creature player;
 playerCharacter rogue;
-creature *monsters;
-creature *dormantMonsters;
-creature *graveyard;
-creature *purgatory;
+creatureList *monsters;
+creatureList *dormantMonsters;
+creatureList graveyard;
+creatureList purgatory;
 item *floorItems;
 item *packItems;
 item *monsterItemsHopper;
 
 char displayedMessage[MESSAGE_LINES][COLS*2];
-boolean messageConfirmed[MESSAGE_LINES];
+short messagesUnconfirmed;
 char combatText[COLS * 2];
 short messageArchivePosition;
-char messageArchive[MESSAGE_ARCHIVE_LINES][COLS*2];
+archivedMessage messageArchive[MESSAGE_ARCHIVE_ENTRIES];
 
 char currentFilePath[BROGUE_FILENAME_MAX];
 
@@ -67,7 +67,7 @@ unsigned long lengthOfPlaybackFile;
 unsigned long recordingLocation;
 unsigned long maxLevelChanges;
 char annotationPathname[BROGUE_FILENAME_MAX];   // pathname of annotation file
-unsigned long previousGameSeed;
+uint64_t previousGameSeed;
 
 //                                  Red     Green   Blue    RedRand GreenRand   BlueRand    Rand    Dances?
 // basic colors
@@ -91,6 +91,7 @@ const color darkBlue =              {0,     0,      50,     0,      0,          
 const color darkTurquoise =         {0,     40,     65,     0,      0,          0,          0,      false};
 const color lightBlue =             {40,    40,     100,    0,      0,          0,          0,      false};
 const color pink =                  {100,   60,     66,     0,      0,          0,          0,      false};
+const color darkPink =              {50,    30,     33,     0,      0,          0,          0,      false};
 const color red  =                  {100,   0,      0,      0,      0,          0,          0,      false};
 const color darkRed =               {50,    0,      0,      0,      0,          0,          0,      false};
 const color tanColor =              {80,    67,     15,     0,      0,          0,          0,      false};
@@ -477,11 +478,11 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
     {G_FLOOR,    &floorForeColor,        &floorBackColor,        95, 0,  DF_PLAIN_FIRE,  0,          0,              0,              DARKNESS_CLOUD_LIGHT, 0, 0,                                                                                         "the ground",           ""},
     {G_FLOOR,    &floorForeColor,        &floorBackColor,        95, 0,  DF_PLAIN_FIRE,  0,          0,              0,              NO_LIGHT,       (0), (TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_PROMOTES_ON_PLAYER_ENTRY),                      "the ground",           ""},
     {G_ALTAR,    &altarForeColor,        &altarBackColor,        17, 0,  0,              0,          0,              0,              CANDLE_LIGHT,   (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT),                         "a candle-lit altar",   "a gilded altar is adorned with candles that flicker in the breeze."},
-    {G_ALTAR,      &altarForeColor,        &altarBackColor,        17, 0,  0,              0,          0,              0,              CANDLE_LIGHT,   (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_PROMOTES_WITH_KEY | TM_IS_WIRED | TM_LIST_IN_SIDEBAR),           "a candle-lit altar",   "ornate gilding spirals around a spherical depression in the top of the altar."},
+    {G_ORB_ALTAR, &altarForeColor,        &altarBackColor,        17, 0,  0,              0,          0,              0,              CANDLE_LIGHT,   (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_PROMOTES_WITH_KEY | TM_IS_WIRED | TM_LIST_IN_SIDEBAR),           "a candle-lit altar",   "ornate gilding spirals around a spherical depression in the top of the altar."},
     {G_ALTAR,    &altarForeColor,        &altarBackColor,        17, 0,  0,              0,          DF_ITEM_CAGE_CLOSE, 0,          CANDLE_LIGHT,   (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_PROMOTES_WITHOUT_KEY | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT),"a candle-lit altar",   "a cage, open on the bottom, hangs over this altar on a retractable chain."},
     {G_CLOSED_CAGE,     &altarBackColor,        &veryDarkGray,          17, 0,  0,              0,          DF_ITEM_CAGE_OPEN,  0,          CANDLE_LIGHT,   (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_SURFACE_EFFECTS), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_PROMOTES_WITH_KEY | TM_IS_WIRED | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT),"an iron cage","the missing item must be replaced before you can access the remaining items."},
-    {G_ALTAR,    &altarForeColor,        &altarBackColor,        17, 0,  0,              0,          DF_ALTAR_INERT, 0,              CANDLE_LIGHT,   (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_PROMOTES_ON_ITEM_PICKUP | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT), "a candle-lit altar",   "a weathered stone altar is adorned with candles that flicker in the breeze."},
-    {G_ALTAR,    &altarForeColor,        &altarBackColor,        17, 0,  0,              0,          DF_ALTAR_RETRACT,0,             CANDLE_LIGHT,   (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_PROMOTES_ON_ITEM_PICKUP | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT), "a candle-lit altar",   "a weathered stone altar is adorned with candles that flicker in the breeze."},
+    {G_SAC_ALTAR, &altarForeColor,        &altarBackColor,        17, 0,  0,              0,          DF_ALTAR_INERT, 0,              CANDLE_LIGHT,   (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_PROMOTES_ON_ITEM_PICKUP | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT), "a candle-lit altar",   "a weathered stone altar is adorned with candles that flicker in the breeze."},
+    {G_SAC_ALTAR, &altarForeColor,        &altarBackColor,        17, 0,  0,              0,          DF_ALTAR_RETRACT,0,             CANDLE_LIGHT,   (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_PROMOTES_ON_ITEM_PICKUP | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT), "a candle-lit altar",   "a weathered stone altar is adorned with candles that flicker in the breeze."},
     {G_CLOSED_CAGE,     &altarBackColor,        &veryDarkGray,          17, 0,  0,              0,          DF_CAGE_DISAPPEARS, 0,          CANDLE_LIGHT,   (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_SURFACE_EFFECTS), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT),"an iron cage","the cage won't budge. Perhaps there is a way to raise it nearby..."},
     {G_PEDESTAL,    &altarForeColor,        &pedestalBackColor,     17, 0,  0,              0,          0,              0,              CANDLE_LIGHT,   (T_OBSTRUCTS_SURFACE_EFFECTS), 0,                                                                   "a stone pedestal",     "elaborate carvings wind around this ancient pedestal."},
     {G_OPEN_CAGE,    &floorBackColor,        &veryDarkGray,          17, 0,  0,              0,          0,              0,              NO_LIGHT,       (0), (TM_STAND_IN_TILE),                                                                            "an open cage",         "the interior of the cage is filthy and reeks of decay."},
@@ -562,7 +563,7 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
     {G_GRASS,    &deadGrassColor,        0,                      60, 40, DF_PLAIN_FIRE,  0,          0,              0,              NO_LIGHT,       (T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION),                                  "withered fungus",      "dead fungus covers the ground."},
     {G_GRASS,    &grayFungusColor,       0,                      51, 10, DF_PLAIN_FIRE,  0,          0,              0,              NO_LIGHT,       (T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION),                                  "withered fungus",      "groping tendrils of pale fungus rise from the muck."},
     {G_GRASS,    &fungusColor,           0,                      60, 10, DF_PLAIN_FIRE,  0,          0,              0,              FUNGUS_LIGHT,   (T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION),                                  "luminescent fungus",   "luminescent fungus casts a pale, eerie glow."},
-    {G_GRASS,    &lichenColor,           0,                      60, 50, DF_PLAIN_FIRE,  0,          DF_LICHEN_GROW, 10000,          NO_LIGHT,       (T_CAUSES_POISON | T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION),                "deadly lichen",        "venomous barbs cover the quivering tendrils of this fast-growing lichen."},
+    {G_LICHEN,   &lichenColor,           0,                      60, 50, DF_PLAIN_FIRE,  0,          DF_LICHEN_GROW, 10000,          NO_LIGHT,       (T_CAUSES_POISON | T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION),                "deadly lichen",        "venomous barbs cover the quivering tendrils of this fast-growing lichen."},
     {G_GRASS,    &hayColor,              &refuseBackColor,       57, 50, DF_STENCH_BURN, 0,          0,              0,              NO_LIGHT,       (T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION),                                  "filthy hay",           "a pile of hay, matted with filth, has been arranged here as a makeshift bed."},
     {G_FLOOR_ALT,    &humanBloodColor,       0,                      80, 0,  DF_PLAIN_FIRE,  0,          0,              0,              NO_LIGHT,       (0), (TM_STAND_IN_TILE),                                                                            "a pool of blood",      "the floor is splattered with blood."},
     {G_FLOOR_ALT,    &insectBloodColor,      0,                      80, 0,  DF_PLAIN_FIRE,  0,          0,              0,              NO_LIGHT,       (0), (TM_STAND_IN_TILE),                                                                            "a pool of green blood", "the floor is splattered with green blood."},
@@ -582,15 +583,15 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
     {G_FLOOR_ALT,    &ectoplasmColor,        0,                      70, 0,  DF_PLAIN_FIRE,  0,          0,              0,              ECTOPLASM_LIGHT,(0), (TM_STAND_IN_TILE),                                                                            "ectoplasmic residue",  "a thick, glowing substance has congealed on the ground."},
     {G_ASHES,      &fireForeColor,         0,                      70, 0,  DF_PLAIN_FIRE,  0,          DF_ASH,         300,            EMBER_LIGHT,    (0), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION),                                               "sputtering embers",    "sputtering embers cover the ground."},
     {G_WEB,      &white,                 0,                      19, 100,DF_PLAIN_FIRE,  0,          0,              0,              NO_LIGHT,       (T_ENTANGLES | T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_VISUALLY_DISTINCT),"a spiderweb",       "thick, sticky spiderwebs fill the area."},
-    {G_WEB,      &brown,                 0,                      19, 40, DF_PLAIN_FIRE,  0,          0,              0,              NO_LIGHT,       (T_ENTANGLES | T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_VISUALLY_DISTINCT),"a net",             "a dense tangle of netting fills the area."},
+    {G_NET,      &brown,                 0,                      19, 40, DF_PLAIN_FIRE,  0,          0,              0,              NO_LIGHT,       (T_ENTANGLES | T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_VISUALLY_DISTINCT),"a net",             "a dense tangle of netting fills the area."},
     {G_FOLIAGE,  &foliageColor,          0,                      45, 15, DF_PLAIN_FIRE,  0,          DF_TRAMPLED_FOLIAGE, 0,         NO_LIGHT,       (T_OBSTRUCTS_VISION | T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_PROMOTES_ON_STEP), "dense foliage",   "dense foliage fills the area, thriving on what sunlight trickles in."},
     {G_FOLIAGE,  &deadFoliageColor,      0,                      45, 80, DF_PLAIN_FIRE,  0,          DF_SMALL_DEAD_GRASS, 0,         NO_LIGHT,       (T_OBSTRUCTS_VISION | T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_PROMOTES_ON_STEP), "dead foliage",    "the decaying husk of a fungal growth fills the area."},
     {G_GRASS,    &foliageColor,   0,                      60, 15, DF_PLAIN_FIRE,  0,          DF_FOLIAGE_REGROW, 100,         NO_LIGHT,       (T_IS_FLAMMABLE), (TM_VANISHES_UPON_PROMOTION),                                                     "trampled foliage",     "dense foliage fills the area, thriving on what sunlight trickles in."},
     {G_FOLIAGE,  &fungusForestLightColor,0,                      45, 15, DF_PLAIN_FIRE,  0,          DF_TRAMPLED_FUNGUS_FOREST, 0,   FUNGUS_FOREST_LIGHT,(T_OBSTRUCTS_VISION | T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_PROMOTES_ON_STEP),"a luminescent fungal forest", "luminescent fungal growth fills the area, groping upward from the rich soil."},
     {G_GRASS,    &fungusForestLightColor,0,               60, 15, DF_PLAIN_FIRE,  0,          DF_FUNGUS_FOREST_REGROW, 100,   FUNGUS_LIGHT,   (T_IS_FLAMMABLE), (TM_VANISHES_UPON_PROMOTION),                                                     "trampled fungal foliage", "luminescent fungal growth fills the area, groping upward from the rich soil."},
-    {G_CRYSTAL,  &forceFieldColor,       &forceFieldColor,       0,  0,  0,              0,          DF_FORCEFIELD_MELT, -200,       FORCEFIELD_LIGHT, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_GAS | T_OBSTRUCTS_DIAGONAL_MOVEMENT), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_PROMOTES_ON_STEP),       "a green crystal",      "The translucent green crystal is melting away in front of your eyes."},
-    {G_CRYSTAL,  &black,                 &forceFieldColor,       0,  0,  0,              0,          0,              -10000,         FORCEFIELD_LIGHT, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_GAS | T_OBSTRUCTS_DIAGONAL_MOVEMENT), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION),     "a dissolving crystal",     "The translucent green crystal is melting away in front of your eyes."},
-    {G_MAGIC_GLYPH,    &sacredGlyphColor,      0,                      57, 0,  0,              0,          0,              0,              SACRED_GLYPH_LIGHT, (T_SACRED), 0,                                                                                  "a sacred glyph",       "a sacred glyph adorns the floor, glowing with a powerful warding enchantment."},
+    {G_CRYSTAL,  &forceFieldColor,       &forceFieldColor,       0,  0,  0,              0,          DF_FORCEFIELD_MELT, -200,       FORCEFIELD_LIGHT, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_GAS | T_OBSTRUCTS_DIAGONAL_MOVEMENT), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_PROMOTES_ON_CREATURE),       "a green crystal",      "The translucent green crystal is melting away in front of your eyes."},
+    {G_CRYSTAL,  &black,                 &forceFieldColor,       0,  0,  0,              0,          0,              -10000,         FORCEFIELD_LIGHT, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_GAS | T_OBSTRUCTS_DIAGONAL_MOVEMENT), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_PROMOTES_ON_CREATURE),     "a dissolving crystal",     "The translucent green crystal is melting away in front of your eyes."},
+    {G_MAGIC_GLYPH,    &sacredGlyphColor,      0,                      7, 0,  0,              0,          0,              0,              SACRED_GLYPH_LIGHT, (T_SACRED), 0,                                                                                  "a sacred glyph",       "a sacred glyph adorns the floor, glowing with a powerful warding enchantment."},
     {G_CHAIN_TOP_LEFT,&gray,                  0,                      20, 0,  0,              0,          0,              0,              NO_LIGHT,       0, 0,                                                                                               "an iron manacle",      "a thick iron manacle is anchored to the ceiling."},
     {G_CHAIN_BOTTOM_RIGHT, &gray,             0,                      20, 0,  0,              0,          0,              0,              NO_LIGHT,       0, 0,                                                                                               "an iron manacle",      "a thick iron manacle is anchored to the floor."},
     {G_CHAIN_TOP_RIGHT, &gray,                0,                      20, 0,  0,              0,          0,              0,              NO_LIGHT,       0, 0,                                                                                               "an iron manacle",      "a thick iron manacle is anchored to the ceiling."},
@@ -636,17 +637,17 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
     {G_LIQUID,   &deepWaterForeColor,    &deepWaterBackColor,    39, 100,DF_STEAM_ACCUMULATION,  0,  DF_ALGAE_REVERT,300,            LUMINESCENT_ALGAE_GREEN_LIGHT,(T_IS_FLAMMABLE | T_IS_DEEP_WATER), (TM_STAND_IN_TILE | TM_EXTINGUISHES_FIRE | TM_ALLOWS_SUBMERGING), "luminescent waters",   "blooming algae fills the waters with a swirling luminescence."},
 
     // ancient spirit terrain
-    {G_WEB,     &lichenColor,           0,                      19, 100,DF_PLAIN_FIRE,  0,          DF_ANCIENT_SPIRIT_GRASS,1000,   NO_LIGHT,       (T_ENTANGLES | T_CAUSES_DAMAGE | T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_VISUALLY_DISTINCT | TM_PROMOTES_ON_PLAYER_ENTRY),"thorned vines",       "thorned vines make a rustling noise as they quiver restlessly."}, // +tile
+    {G_VINE,     &lichenColor,           0,                      19, 100,DF_PLAIN_FIRE,  0,          DF_ANCIENT_SPIRIT_GRASS,1000,   NO_LIGHT,       (T_ENTANGLES | T_CAUSES_DAMAGE | T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_VISUALLY_DISTINCT | TM_PROMOTES_ON_PLAYER_ENTRY),"thorned vines",       "thorned vines make a rustling noise as they quiver restlessly."}, // +tile
     {G_GRASS,    &grassColor,            0,                      60, 15, DF_PLAIN_FIRE,  0,          0,              0,              NO_LIGHT,       (T_IS_FLAMMABLE), (TM_STAND_IN_TILE),                                                               "a tuft of grass",      "tufts of lush grass have improbably pushed upward through the stone ground."},
 
     // Yendor amulet floor tile
     {G_FLOOR,    &floorForeColor,        &floorBackColor,        95, 0,  DF_PLAIN_FIRE,  0,          0,              0,              NO_LIGHT,       0, (TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_PROMOTES_ON_ITEM_PICKUP),                         "the ground",           ""},
 
     // commutation device
-    {G_ALTAR,    &altarForeColor,        &greenAltarBackColor,   17, 0,  0,              0,          DF_ALTAR_COMMUTE,0,             NO_LIGHT,       (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_SWAP_ENCHANTS_ACTIVATION | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT),    "a commutation altar",  "crude diagrams on this altar and its twin invite you to place items upon them."},
-    {G_ALTAR,    &black,                 &greenAltarBackColor,   17, 0,  0,              0,          0,              0,              NO_LIGHT,       (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT),                         "a scorched altar",     "scorch marks cover the surface of the altar, but it is cold to the touch."},
-    {'+',           &veryDarkGray,          0,                      45, 0,  DF_PLAIN_FIRE,  0,          DF_INERT_PIPE,  0,              CONFUSION_GAS_LIGHT, (0), (TM_IS_WIRED | TM_VANISHES_UPON_PROMOTION),                                               "glowing glass pipes",  "glass pipes are set into the floor and emit a soft glow of shifting color."},
-    {'+',           &black,                 0,                      45, 0,  DF_PLAIN_FIRE,  0,          0,              0,              NO_LIGHT,       (0), (0),                                                                                           "charred glass pipes",  "the inside of the glass pipes are charred."},
+    {G_ORB_ALTAR, &altarForeColor,        &greenAltarBackColor,   17, 0,  0,              0,          DF_ALTAR_COMMUTE,0,             NO_LIGHT,       (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_SWAP_ENCHANTS_ACTIVATION | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT),    "a commutation altar",  "crude diagrams on this altar and its twin invite you to place items upon them."},
+    {G_ORB_ALTAR, &black,                 &greenAltarBackColor,   17, 0,  0,              0,          0,              0,              NO_LIGHT,       (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT),                         "a scorched altar",     "scorch marks cover the surface of the altar, but it is cold to the touch."},
+    {G_PIPES,    &veryDarkGray,          0,                      45, 0,  DF_PLAIN_FIRE,  0,          DF_INERT_PIPE,  0,              CONFUSION_GAS_LIGHT, (0), (TM_IS_WIRED | TM_VANISHES_UPON_PROMOTION),                                               "glowing glass pipes",  "glass pipes are set into the floor and emit a soft glow of shifting color."},
+    {G_PIPES,    &black,                 0,                      45, 0,  DF_PLAIN_FIRE,  0,          0,              0,              NO_LIGHT,       (0), (0),                                                                                           "charred glass pipes",  "the inside of the glass pipes are charred."},
 
     // resurrection altar
     {G_ALTAR,    &altarForeColor,        &goldAltarBackColor,    17, 0,  0,              0,          DF_ALTAR_RESURRECT,0,           CANDLE_LIGHT,   (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_IS_WIRED | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT),           "a resurrection altar", "the souls of the dead surround you. A deceased ally might be called back."},
@@ -654,9 +655,9 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
     {0,             0,                      0,                      95, 0,  0,              0,          0,              0,              NO_LIGHT,       (0), (TM_IS_WIRED | TM_PROMOTES_ON_PLAYER_ENTRY),                                                   "the ground",           ""},
 
     // sacrifice altar
-    {G_ALTAR,    &altarForeColor,        &altarBackColor,        17, 0,  0,              0,          DF_SACRIFICE_ALTAR,0,           CANDLE_LIGHT,   (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT), "a sacrifice altar", "demonological symbols decorate this altar."},
-    {G_ALTAR,    &altarForeColor,        &altarBackColor,        17, 0,  0,              0,          DF_SACRIFICE_COMPLETE,0,        CANDLE_LIGHT,   (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT | TM_PROMOTES_ON_SACRIFICE_ENTRY), "a sacrifice altar",    "demonological symbols decorate this altar."},
-    {G_LIQUID,   &fireForeColor,         &lavaBackColor,         40, 0,  DF_OBSIDIAN,    0,          0,              0,              LAVA_LIGHT,     (T_LAVA_INSTA_DEATH), (TM_ALLOWS_SUBMERGING | TM_LIST_IN_SIDEBAR),                                  "sacrificial pit",      "the smell of burnt flesh lingers over this pit of lava."},
+    {G_SAC_ALTAR, &altarForeColor,        &altarBackColor,        17, 0,  0,              0,          DF_SACRIFICE_ALTAR,0,           CANDLE_LIGHT,   (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT), "a sacrificial altar", "demonological symbols decorate this altar."},
+    {G_SAC_ALTAR, &altarForeColor,        &altarBackColor,        17, 0,  0,              0,          DF_SACRIFICE_COMPLETE,0,        CANDLE_LIGHT,   (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT | TM_PROMOTES_ON_SACRIFICE_ENTRY), "a sacrifice altar",    "demonological symbols decorate this altar."},
+    {G_LIQUID,   &fireForeColor,         &lavaBackColor,         40, 0,  DF_OBSIDIAN,    0,          0,              0,              LAVA_LIGHT,     (T_LAVA_INSTA_DEATH), (TM_ALLOWS_SUBMERGING | TM_LIST_IN_SIDEBAR),                                  "a sacrificial pit",      "the smell of burnt flesh lingers over this pit of lava."},
     {G_WALL,     &altarBackColor,        &veryDarkGray,          17, 0,  0,              0,          DF_SACRIFICE_CAGE_ACTIVE,   0,  CANDLE_LIGHT,   (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_SURFACE_EFFECTS), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT),"an iron cage","the cage won't budge. Perhaps there is a way to raise it nearby..."},
     {G_STATUE,   &wallBackColor,         &statueBackColor,       0,  0,  DF_PLAIN_FIRE,  0,          0,              0,              DEMONIC_STATUE_LIGHT,   (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_GAS | T_OBSTRUCTS_SURFACE_EFFECTS), (TM_STAND_IN_TILE),  "a demonic statue", "An obsidian statue of a leering demon looms over the room."},
 
@@ -767,7 +768,7 @@ dungeonFeature dungeonFeatureCatalog[NUMBER_DUNGEON_FEATURES] = {
     {ECTOPLASM,                 SURFACE,    0,      0,      0},
     {FORCEFIELD,                SURFACE,    100,    50,     0},
     {FORCEFIELD_MELT,           SURFACE,    0,      0,      0},
-    {SACRED_GLYPH,              LIQUID,     100,    100,    0,  "", EMPOWERMENT_LIGHT},
+    {SACRED_GLYPH,              SURFACE,    100,    100,    0,  "", EMPOWERMENT_LIGHT},
     {LICHEN,                    SURFACE,    2,      100,    (DFF_BLOCKED_BY_OTHER_LAYERS)}, // Lichen won't spread through lava.
     {RUBBLE,                    SURFACE,    45,     23,     (DFF_ACTIVATE_DORMANT_MONSTER)},
     {RUBBLE,                    SURFACE,    0,      0,      (DFF_ACTIVATE_DORMANT_MONSTER)},
@@ -890,10 +891,10 @@ dungeonFeature dungeonFeatureCatalog[NUMBER_DUNGEON_FEATURES] = {
 
     // resurrection altars
     {RESURRECTION_ALTAR_INERT,  DUNGEON,    0,      0,      DFF_RESURRECT_ALLY, "An old friend emerges from a bloom of sacred light!", EMPOWERMENT_LIGHT},
-    {MACHINE_TRIGGER_FLOOR_REPEATING, LIQUID, 300,  100,    DFF_SUPERPRIORITY},
+    {MACHINE_TRIGGER_FLOOR_REPEATING, LIQUID, 300,  100,    DFF_SUPERPRIORITY, "", 0, 0, 0, CARPET},
 
     // sacrifice altars
-    {SACRIFICE_ALTAR,           DUNGEON,    0,      0,      0,  "a demonic presence whispers its demand: \"bring to me the marked sacrifice!\""},
+    {SACRIFICE_ALTAR,           DUNGEON,    0,      0,      0,  "a demonic presence whispers its demand: \"Bring to me the marked sacrifice!\""},
     {SACRIFICE_LAVA,            DUNGEON,    0,      0,      0,  "demonic cackling echoes through the room as the altar plunges downward!"},
     {ALTAR_CAGE_RETRACTABLE,    DUNGEON,    0,      0,      0},
 
@@ -1172,7 +1173,7 @@ const blueprint blueprintCatalog[NUMBER_BLUEPRINTS] = {
     {{13, AMULET_LEVEL},{10, 30},   30,     4,          0,                  (BP_ROOM | BP_PURGE_INTERIOR | BP_SURROUND_WITH_WALLS | BP_OPEN_INTERIOR | BP_IMPREGNABLE | BP_REWARD), {
         {0,         CARPET,     DUNGEON,        {0,0},      0,          0,          -1,         0,              0,              0,          0,          (MF_EVERYWHERE)},
         {0,         STATUE_INERT,DUNGEON,       {1,3},      0,          0,          -1,         0,              2,              0,          0,          (MF_TREAT_AS_BLOCKING | MF_BUILD_IN_WALLS | MF_IMPREGNABLE)},
-        {DF_MACHINE_FLOOR_TRIGGER_REPEATING, RESURRECTION_ALTAR,DUNGEON, {1,1}, 1, 0, -1,       0,              2,              0,          0,          (MF_TREAT_AS_BLOCKING)},
+        {DF_MACHINE_FLOOR_TRIGGER_REPEATING, RESURRECTION_ALTAR,DUNGEON, {1,1}, 1, 0, -1,       0,              2,              0,          0,          (MF_TREAT_AS_BLOCKING | MF_FAR_FROM_ORIGIN)},
         {0,         0,          0,              {1,1},      1,          0,          0,          0,              2,              0,          0,          (MF_BUILD_AT_ORIGIN | MF_PERMIT_BLOCKING | MF_BUILD_VESTIBULE)}}},
     // Outsourced item -- same item possibilities as in the good permanent item reward room (plus charms), but directly adopted by 1-2 key machines.
     {{5, 17},           {0, 0},     20,     4,          0,                  (BP_REWARD | BP_NO_INTERIOR_FLAG),  {
@@ -1456,9 +1457,10 @@ const blueprint blueprintCatalog[NUMBER_BLUEPRINTS] = {
         {DF_SWAMP,  ALTAR_SWITCH,DUNGEON,       {1,1},      1,          0,          -1,         0,              2,              0,          0,          (MF_ADOPT_ITEM | MF_FAR_FROM_ORIGIN | MF_TREAT_AS_BLOCKING)},
         {DF_MUD_DORMANT,0,      0,              {3,4},      3,          0,          -1,         0,              1,              HORDE_MACHINE_MUD,0,    (MF_GENERATE_HORDE | MF_MONSTERS_DORMANT)}}},
     // Electric crystals -- key caged on an altar, darkened crystal globes around the room, lightning the globes to release the key.
-    {{6, AMULET_LEVEL},{40, 60},    10,     4,          0,                  (BP_ROOM | BP_ADOPT_ITEM | BP_SURROUND_WITH_WALLS | BP_OPEN_INTERIOR | BP_PURGE_INTERIOR),  {
+    {{6, AMULET_LEVEL},{40, 60},    10,     5,          0,                  (BP_ROOM | BP_ADOPT_ITEM | BP_SURROUND_WITH_WALLS | BP_OPEN_INTERIOR | BP_PURGE_INTERIOR),  {
         {0,         CARPET,     DUNGEON,        {0,0},      0,          0,          -1,         0,              0,              0,          0,          (MF_EVERYWHERE)},
         {0,         ELECTRIC_CRYSTAL_OFF,DUNGEON,{3,4},     3,          0,          -1,         0,              3,              0,          0,          (MF_NOT_IN_HALLWAY | MF_IMPREGNABLE)},
+        {0,         SACRED_GLYPH,  DUNGEON,     {1, 1},     1,          0,          -1,         0,              1,              0,          0,          (MF_BUILD_AT_ORIGIN)},
         {0,         ALTAR_CAGE_RETRACTABLE,DUNGEON,{1,1},   1,          0,          -1,         0,              3,              0,          0,          (MF_ADOPT_ITEM | MF_IMPREGNABLE | MF_NOT_IN_HALLWAY | MF_FAR_FROM_ORIGIN)},
         {0,         TURRET_LEVER, DUNGEON,      {7,9},      4,          0,          -1,         MK_SPARK_TURRET,3,              0,          0,          (MF_BUILD_IN_WALLS | MF_MONSTERS_DORMANT)}}},
     // Zombie crypt -- key on an altar; coffins scattered around; brazier in the room; take key to cause zombies to burst out of all of the coffins
@@ -1937,23 +1939,23 @@ const monsterWords monsterText[NUMBER_MONSTER_KINDS] = {
 };
 
 const mutation mutationCatalog[NUMBER_MUTATORS] = {
-    //Title         textColor       healthFactor    moveSpdMult attackSpdMult   defMult damMult DF% DFtype  light   monstFlags  abilityFlags    forbiddenFlags      forbiddenAbilities
+    //Title         textColor       healthFactor    moveSpdMult attackSpdMult   defMult damMult DF% DFtype  light   monstFlags  abilityFlags    forbiddenFlags      forbiddenAbilities      canBeNegated
     {"explosive",   &orange,        50,             100,        100,            50,     100,    0,  DF_MUTATION_EXPLOSION, EXPLOSIVE_BLOAT_LIGHT, 0, MA_DF_ON_DEATH, MONST_SUBMERGES, 0,
-        "A rare mutation will cause $HIMHER to explode violently when $HESHE dies."},
+        "A rare mutation will cause $HIMHER to explode violently when $HESHE dies.",    true},
     {"infested",    &lichenColor,   50,             100,        100,            50,     100,    0,  DF_MUTATION_LICHEN, 0, 0,   MA_DF_ON_DEATH, 0,               0,
-        "$HESHE has been infested by deadly lichen spores; poisonous fungus will spread from $HISHER corpse when $HESHE dies."},
+        "$HESHE has been infested by deadly lichen spores; poisonous fungus will spread from $HISHER corpse when $HESHE dies.", true},
     {"agile",       &lightBlue,     100,            50,         100,            150,    100,    -1, 0,      0,      MONST_FLEES_NEAR_DEATH, 0, MONST_FLEES_NEAR_DEATH, 0,
-        "A rare mutation greatly enhances $HISHER mobility."},
+        "A rare mutation greatly enhances $HISHER mobility.",   false},
     {"juggernaut",  &brown,         300,            200,        200,            75,     200,    -1, 0,      0,      0,          MA_ATTACKS_STAGGER, MONST_MAINTAINS_DISTANCE, 0,
-        "A rare mutation has hardened $HISHER flesh, increasing $HISHER health and power but compromising $HISHER speed."},
+        "A rare mutation has hardened $HISHER flesh, increasing $HISHER health and power but compromising $HISHER speed.",  false},
     {"grappling",   &tanColor,      150,            100,        100,            50,     100,    -1, 0,      0,      0,          MA_SEIZES,      MONST_MAINTAINS_DISTANCE, MA_SEIZES,
-        "A rare mutation has caused suckered tentacles to sprout from $HISHER frame, increasing $HISHER health and allowing $HIMHER to grapple with $HISHER prey."},
+        "A rare mutation has caused suckered tentacles to sprout from $HISHER frame, increasing $HISHER health and allowing $HIMHER to grapple with $HISHER prey.", true},
     {"vampiric",    &red,           100,            100,        100,            100,    100,    -1, 0,      0,      0,          MA_TRANSFERENCE, MONST_MAINTAINS_DISTANCE, MA_TRANSFERENCE,
-        "A rare mutation allows $HIMHER to heal $HIMSELFHERSELF with every attack."},
+        "A rare mutation allows $HIMHER to heal $HIMSELFHERSELF with every attack.",    true},
     {"toxic",       &green,         100,            100,        200,            100,    20,     -1, 0,      0,      0,          (MA_CAUSES_WEAKNESS | MA_POISONS), MONST_MAINTAINS_DISTANCE, (MA_CAUSES_WEAKNESS | MA_POISONS),
-        "A rare mutation causes $HIMHER to poison $HISHER victims and sap their strength with every attack."},
+        "A rare mutation causes $HIMHER to poison $HISHER victims and sap their strength with every attack.",   true},
     {"reflective",  &darkTurquoise, 100,            100,        100,            100,    100,    -1, 0,      0,      MONST_REFLECT_4, 0,         (MONST_REFLECT_4 | MONST_ALWAYS_USE_ABILITY), 0,
-        "A rare mutation has coated $HISHER flesh with reflective scales."},
+        "A rare mutation has coated $HISHER flesh with reflective scales.",     true},
 };
 
 const hordeType hordeCatalog[NUMBER_HORDES] = {
@@ -2186,6 +2188,22 @@ const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT] = {
 
 char itemTitles[NUMBER_SCROLL_KINDS][30];
 
+const char itemCategoryNames[NUMBER_ITEM_CATEGORIES][7] = {
+        "food",
+        "weapon",
+        "armor",
+        "potion",
+        "scroll",
+        "staff",
+        "wand",
+        "ring",
+        "charm",
+        "gold",
+        "amulet",
+        "gem",
+        "key"
+};
+
 const char titlePhonemes[NUMBER_TITLE_PHONEMES][30] = {
     "glorp",
     "snarg",
@@ -2329,7 +2347,7 @@ const itemTable weaponTable[NUMBER_WEAPON_KINDS] = {
 
     {"whip",                "", "", 10, 440,        14, {3, 5,  1},     true, false, "The lash from this coil of braided leather can tear bark from trees, and it will reach opponents up to five spaces away."},
     {"rapier",              "", "", 10, 440,        15, {3, 5,  1},     true, false, "This blade is thin and flexible, designed for deft and rapid maneuvers. It inflicts less damage than comparable weapons, but permits you to attack twice as quickly. If there is one space between you and an enemy and you step directly toward it, you will perform a devastating lunge attack, which deals treble damage and never misses."},
-    {"flail",               "", "", 10, 440,        17, {10,13, 1},     true, false, "This spiked iron ball can be whirled at the end of its chain in synchronicity with your movement, allowing you a free attack whenever moving between two spaces that are adjacent to an enemy."},
+    {"flail",               "", "", 10, 440,        17, {9, 15, 1},     true, false, "This spiked iron ball can be whirled at the end of its chain in synchronicity with your movement, allowing you a free attack whenever moving between two spaces that are adjacent to an enemy."},
 
     {"mace",                "", "", 10, 660,        16, {16, 20, 1},    true, false, "The iron flanges at the head of this weapon inflict substantial damage with every weighty blow. Because of its heft, it takes an extra turn to recover when it hits, and will push your opponent backward if there is room."},
     {"war hammer",          "", "", 10, 1100,       20, {25, 35, 1},    true, false, "Few creatures can withstand the crushing blow of this towering mass of lead and steel, but only the strongest of adventurers can effectively wield it. Because of its heft, it takes an extra turn to recover when it hits, and will push your opponent backward if there is room."},
@@ -2390,7 +2408,7 @@ itemTable scrollTable[NUMBER_SCROLL_KINDS] = {
     {"protect armor",       itemTitles[5], "",  10, 400,    0,{0,0,0}, false, false, "This ceremonial shielding magic will permanently proof your armor against degradation by acid."},
     {"protect weapon",      itemTitles[6], "",  10, 400,    0,{0,0,0}, false, false, "This ceremonial shielding magic will permanently proof your weapon against degradation by acid."},
     {"sanctuary",           itemTitles[7], "",  10, 500,    0,{0,0,0}, false, false, "This protection rite will imbue the area with powerful warding glyphs, when released over plain ground. Monsters will not willingly set foot on the affected area."},
-    {"magic mapping",       itemTitles[8], "",  12, 500,    0,{0,0,0}, false, false, "This powerful scouting magic will etch a purple-hued image of crystal clarity into your memory, alerting you to the precise layout of the level and revealing all hidden secrets."},
+    {"magic mapping",       itemTitles[8], "",  12, 500,    0,{0,0,0}, false, false, "This powerful scouting magic will etch a purple-hued image of crystal clarity into your memory, alerting you to the precise layout of the level and revealing all traps, secret doors and hidden levers."},
     {"negation",            itemTitles[9], "",  8,  400,    0,{0,0,0}, false, false, "When this powerful anti-magic is released, all creatures (including yourself) and all items lying on the ground within your field of view will be exposed to its blast and stripped of magic. Creatures animated purely by magic will die. Potions, scrolls, items being held by other creatures and items in your inventory will not be affected."},
     {"shattering",          itemTitles[10],"",  8,  500,    0,{0,0,0}, false, false, "This strange incantation will alter the physical structure of nearby stone, causing it to evaporate into the air over the ensuing minutes."},
     {"discord",             itemTitles[11], "", 8,  400,    0,{0,0,0}, false, false, "This scroll will unleash a powerful blast of mind magic. Any creatures within line of sight will turn against their companions and attack indiscriminately for 30 turns."},
@@ -2422,18 +2440,18 @@ itemTable wandTable[NUMBER_WAND_KINDS] = {
     {"slowness",        itemMetals[1], "",  3,  800,    BOLT_SLOW,          {2,5,1}, false, false, "This wand will cause a creature to move at half its ordinary speed for 30 turns."},
     {"polymorphism",    itemMetals[2], "",  3,  700,    BOLT_POLYMORPH,     {3,5,1}, false, false, "This mischievous magic will transform a creature into another creature at random. Beware: the tamest of creatures might turn into the most fearsome. The horror of the transformation will turn an allied victim against you."},
     {"negation",        itemMetals[3], "",  3,  550,    BOLT_NEGATION,      {4,6,1}, false, false, "This powerful anti-magic will strip a creature of a host of magical traits, including flight, invisibility, acidic corrosiveness, telepathy, magical speed or slowness, hypnosis, magical fear, immunity to physical attack, fire resistance and the ability to blink. Spellcasters will lose their magical abilities and magical totems will be rendered inert. Creatures animated purely by magic will die."},
-    {"domination",      itemMetals[4], "",  1,  1000,   BOLT_DOMINATION,    {1,2,1}, false, false, "This wand can forever bind an enemy to the caster's will, turning it into a steadfast ally. However, the magic works only against enemies that are near death."},
+    {"domination",      itemMetals[4], "",  1,  1000,   BOLT_DOMINATION,    {1,2,1}, false, false, "This wand can forever bind an enemy to the caster's will, turning it into a steadfast ally. However, the magic only works effectively against enemies that are near death."},
     {"beckoning",       itemMetals[5], "",  3,  500,    BOLT_BECKONING,     {2,4,1}, false, false, "The force of this wand will draw the targeted creature into direct proximity."},
     {"plenty",          itemMetals[6], "",  2,  700,    BOLT_PLENTY,        {1,2,1}, false, false, "The creature at the other end of this wand, friend or foe, will be beside itself -- literally! This mischievous cloning magic splits the body and life essence of its target into two. Both the creature and its clone will be weaker than the original."},
     {"invisibility",    itemMetals[7], "",  3,  100,    BOLT_INVISIBILITY,  {3,5,1}, false, false, "This wand will render a creature temporarily invisible to the naked eye. Only with telepathy or in the silhouette of a thick gas will an observer discern the creature's hazy outline."},
-    {"empowerment",     itemMetals[8], "",  1,  100,    BOLT_EMPOWERMENT,   {1,1,1}, false, false, "This sacred magic will permanently improve the mind and body of any monster it hits. A wise adventurer will use it on allies, making them stronger in combat and able to learn a new talent from a fallen foe. If the bolt is reflected back at you, it will have no effect."},
+    {"empowerment",     itemMetals[8], "",  2,  100,    BOLT_EMPOWERMENT,   {1,1,1}, false, false, "This sacred magic will permanently improve the mind and body of any monster it hits. A wise adventurer will use it on allies, making them stronger in combat and able to learn a new talent from a fallen foe. If the bolt is reflected back at you, it will have no effect."},
 };
 
 itemTable staffTable[NUMBER_STAFF_KINDS] = {
     {"lightning",       itemWoods[0], "",   15, 1300,   BOLT_LIGHTNING,     {2,4,1}, false, false, "This staff conjures forth deadly arcs of electricity to damage to any number of creatures in a straight line."},
     {"firebolt",        itemWoods[1], "",   15, 1300,   BOLT_FIRE,          {2,4,1}, false, false, "This staff unleashes bursts of magical fire. It will ignite flammable terrain and burn any creature that it hits. Creatures with an immunity to fire will be unaffected by the bolt."},
     {"poison",          itemWoods[3], "",   10, 1200,   BOLT_POISON,        {2,4,1}, false, false, "The vile blast of this twisted staff will imbue its target with a deadly venom. Each turn, a creature that is poisoned will suffer one point of damage per dose of poison it has received, and poisoned creatures will not regenerate lost health until the poison clears."},
-    {"tunneling",       itemWoods[4], "",   10, 1000,   BOLT_TUNNELING,     {2,4,1}, false, false, "Bursts of magic from this staff will pass harmlessly through creatures but will reduce obstructions to rubble."},
+    {"tunneling",       itemWoods[4], "",   10, 1000,   BOLT_TUNNELING,     {2,4,1}, false, false, "Bursts of magic from this staff will pass harmlessly through creatures but will reduce most obstructions to rubble."},
     {"blinking",        itemWoods[5], "",   11, 1200,   BOLT_BLINKING,      {2,4,1}, false, false, "This staff will allow you to teleport in the chosen direction. Creatures and inanimate obstructions will block the teleportation."},
     {"entrancement",    itemWoods[6], "",   6,  1000,   BOLT_ENTRANCEMENT,  {2,4,1}, false, false, "This staff will send creatures into a temporary trance, causing them to mindlessly mirror your movements. You can use the effect to cause one creature to attack another or to step into hazardous terrain, but the spell will be broken if you attack the creature under the effect."},
     {"obstruction",     itemWoods[7], "",   10, 1000,   BOLT_OBSTRUCTION,   {2,4,1}, false, false, "This staff will conjure a mass of impenetrable green crystal, preventing anything from moving through the affected area and temporarily entombing anything that is already there. The crystal will dissolve into the air as time passes. Higher level staffs will create larger obstructions."},
@@ -2450,7 +2468,7 @@ itemTable ringTable[NUMBER_RING_KINDS] = {
     {"regeneration",    itemGems[2], "",    1,  750,    0,{1,3,1}, false, false, "This ring of sacred life will allow you to recover lost health at an accelerated rate. Cursed rings will decrease or even halt your natural regeneration."},
     {"transference",    itemGems[3], "",    1,  750,    0,{1,3,1}, false, false, "This ring of blood magic will heal you in proportion to the damage you inflict on others. Cursed rings will cause you to lose health when inflicting damage."},
     {"light",           itemGems[4], "",    1,  600,    0,{1,3,1}, false, false, "This ring of preternatural vision will allow you to see farther in the dimming light of the deeper dungeon levels. It will not make you more noticeable to enemies."},
-    {"awareness",       itemGems[5], "",    1,  700,    0,{1,3,1}, false, false, "This ring of effortless vigilance will enable you to notice hidden secrets (traps, secret doors and hidden levers) more often and from a greater distance. Cursed rings of awareness will dull your senses, making it harder to notice secrets without actively searching for them."},
+    {"awareness",       itemGems[5], "",    1,  700,    0,{1,3,1}, false, false, "This ring of effortless vigilance will enable you to notice traps, secret doors and hidden levers more often and from a greater distance. Cursed rings of awareness will dull your senses, making it harder to notice secrets without actively searching for them."},
     {"wisdom",          itemGems[6], "",    1,  700,    0,{1,3,1}, false, false, "This ring of arcane power will cause your staffs to recharge at an accelerated rate. Cursed rings of wisdom will cause your staffs to recharge more slowly."},
     {"reaping",         itemGems[7], "",    1,  700,    0,{1,3,1}, false, false, "This ring of blood magic will recharge your staffs and charms every time you hit an enemy. Cursed rings of reaping will drain your staffs and charms with every hit."},
 };
@@ -2514,9 +2532,10 @@ const feat featTable[FEAT_COUNT] = {
     {"Specialist",      "Enchant an item up to or above +16.", false},
     {"Jellymancer",     "Obtain at least 90 jelly allies simultaneously.", false},
     {"Indomitable",     "Ascend without taking damage.", true},
-    {"Mystic",          "Ascend without eating.", true},
+    {"Ascetic",         "Ascend without eating.", true},
     {"Dragonslayer",    "Kill a dragon with a melee attack.", false},
     {"Paladin",         "Ascend without attacking an unaware or fleeing creature.", true},
+    {"Untempted",       "Ascend without picking up gold.", true},
 };
 
 const char monsterBehaviorFlagDescriptions[32][COLS] = {

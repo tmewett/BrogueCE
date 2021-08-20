@@ -1,29 +1,18 @@
+#include <math.h>
+#include <limits.h>
 #include "platform.h"
 
-// Expanding a macro as a string constant requires two levels of macros
-#define _str(x)  #x
-#define STRINGIFY(x)  _str(x)
+#ifndef DATADIR
+#error "The DATADIR macro is undefined."
+#endif
 
 struct brogueConsole currentConsole;
 
-int brogueFontSize = 0;
 char dataDirectory[BROGUE_FILENAME_MAX] = STRINGIFY(DATADIR);
 boolean serverMode = false;
 boolean hasGraphics = false;
-boolean graphicsEnabled = false;
-
-static boolean endswith(const char *str, const char *ending)
-{
-    int str_len = strlen(str), ending_len = strlen(ending);
-    if (str_len < ending_len) return false;
-    return strcmp(str + str_len - ending_len, ending) == 0 ? true : false;
-}
-
-static void append(char *str, char *ending, int bufsize) {
-    int str_len = strlen(str), ending_len = strlen(ending);
-    if (str_len + ending_len + 1 > bufsize) return;
-    strcpy(str + str_len, ending);
-}
+enum graphicsModes graphicsMode = TEXT_GRAPHICS;
+boolean isCsvFormat = false;
 
 static void printCommandlineHelp() {
     printf("%s",
@@ -38,16 +27,23 @@ static void printCommandlineHelp() {
     "--server-mode              run the game in web-brogue server mode\n"
 #endif
 #ifdef BROGUE_SDL
-    "--size N                   starts the game at font size N (1 to 13)\n"
+    "--size N                   starts the game at font size N (1 to 20)\n"
     "--graphics     -G          enable graphical tiles\n"
+    "--hybrid       -H          enable hybrid graphics\n"
+    "--full-screen  -F          enable full screen\n"
+    "--no-gpu                   disable hardware-accelerated graphics and HiDPI\n"
 #endif
 #ifdef BROGUE_CURSES
     "--term         -t          run in ncurses-based terminal mode\n"
 #endif
-#ifdef WIZARD
-    "--wizard       -W          run in debug mode\n"
-#endif
-    "--print-seed-catalog       prints a catalog of the first five levels of seeds 1-1000\n"
+    "--stealth      -S          display stealth range\n"
+    "--no-effects   -E          disable color effects\n"
+    "--wizard       -W          run in wizard mode, invincible with powerful items\n"
+    "[--csv] --print-seed-catalog [START NUM LEVELS]\n"
+    "                           (optional csv format)\n"
+    "                           prints a catalog of the first LEVELS levels of NUM\n"
+    "                           seeds from seed START (defaults: 1 1000 5)\n"
+    "--data-dir DIRECTORY       specify directory containing game resources (experimental)\n"
     );
     return;
 }
@@ -55,6 +51,20 @@ static void printCommandlineHelp() {
 static void badArgument(const char *arg) {
     printf("Bad argument: %s\n\n", arg);
     printCommandlineHelp();
+}
+
+boolean tryParseUint64(char *str, uint64_t *num) {
+    unsigned long long n;
+    char buf[100];
+    if (strlen(str)                 // we need some input
+        && sscanf(str, "%llu", &n)  // try to convert to number
+        && sprintf(buf, "%llu", n)  // convert back to string
+        && !strcmp(buf, str)) {     // compare (we need them equal)
+        *num = (uint64_t)n;
+        return true; // success
+    } else {
+        return false; // input was too large or not a decimal number
+    }
 }
 
 int main(int argc, char *argv[])
@@ -75,7 +85,7 @@ int main(int argc, char *argv[])
     currentConsole = sdlConsole;
 #elif BROGUE_WEB
     currentConsole = webConsole;
-#else
+#elif BROGUE_CURSES
     currentConsole = cursesConsole;
 #endif
 
@@ -83,8 +93,10 @@ int main(int argc, char *argv[])
     rogue.nextGamePath[0] = '\0';
     rogue.nextGameSeed = 0;
     rogue.wizard = false;
+    rogue.displayAggroRangeMode = false;
+    rogue.trueColorMode = false;
 
-    boolean initialGraphics = false;
+    enum graphicsModes initialGraphics = TEXT_GRAPHICS;
 
     int i;
     for (i = 1; i < argc; i++) {
@@ -96,15 +108,17 @@ int main(int argc, char *argv[])
 
         if (strcmp(argv[i], "--seed") == 0 || strcmp(argv[i], "-s") == 0) {
             // pick a seed!
-            if (i + 1 < argc) {
-                unsigned int seed = atof(argv[i + 1]); // plenty of precision in a double, and simpler than any other option
-                if (seed != 0) {
-                    i++;
-                    rogue.nextGameSeed = seed;
-                    rogue.nextGame = NG_NEW_GAME_WITH_SEED;
-                    continue;
-                }
+            uint64_t seed;
+            if (i + 1 == argc || !tryParseUint64(argv[i + 1], &seed)) {
+                printf("Invalid seed, please specify a number between 1 and 18446744073709551615\n");
+                return 1;
             }
+            if (seed != 0) {
+                rogue.nextGameSeed = seed;
+                rogue.nextGame = NG_NEW_GAME_WITH_SEED;
+            }
+            i++;
+            continue;
         }
 
         if (strcmp(argv[i], "-n") == 0) {
@@ -147,8 +161,20 @@ int main(int argc, char *argv[])
         }
 
         if (strcmp(argv[i], "--print-seed-catalog") == 0) {
-            rogue.nextGame = NG_SCUM;
-            continue;
+            if (i + 3 < argc) {
+                uint64_t startingSeed, numberOfSeeds;
+                // Use converter for the type the next size up, because it returns signed
+                unsigned int numberOfLevels = atol(argv[i + 3]);
+
+                if (tryParseUint64(argv[i+1], &startingSeed) && tryParseUint64(argv[i+2], &numberOfSeeds)
+                        && startingSeed > 0 && numberOfLevels <= 40) {
+                    printSeedCatalog(startingSeed, numberOfSeeds, numberOfLevels, isCsvFormat);
+                    return 0;
+                }
+            } else {
+                printSeedCatalog(1, 1000, 5, isCsvFormat);
+                return 0;
+            }
         }
 
         if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) {
@@ -162,19 +188,42 @@ int main(int argc, char *argv[])
         }
 
         if (strcmp(argv[i], "-G") == 0 || strcmp(argv[i], "--graphics") == 0) {
-            initialGraphics = true;  // we call setGraphicsEnabled later
+            initialGraphics = TILES_GRAPHICS;  // we call setGraphicsMode later
+            continue;
+        }
+
+        if (strcmp(argv[i], "-H") == 0 || strcmp(argv[i], "--hybrid") == 0) {
+            initialGraphics = HYBRID_GRAPHICS;  // we call setGraphicsMode later
+            continue;
+        }
+
+        if (strcmp(argv[i], "--csv") == 0 ) {
+            isCsvFormat = true;  // we call printSeedCatalog later
             continue;
         }
 
 #ifdef BROGUE_SDL
         if (strcmp(argv[i], "--size") == 0) {
-            // pick a font size
-            int size = atoi(argv[i + 1]);
-            if (size != 0) {
+            if (i + 1 < argc) {
+                int size = atoi(argv[i + 1]);
+                if (size > 0 && size <= 20) {
+                    windowWidth = round(pow(1.1, size) * 620.);
+                    // Height set automatically
+                };
+
                 i++;
-                brogueFontSize = size;
                 continue;
-            };
+            }
+        }
+
+        if (strcmp(argv[i], "-F") == 0 || strcmp(argv[i], "--full-screen") == 0) {
+            fullScreen = true;
+            continue;
+        }
+
+        if (strcmp(argv[i], "--no-gpu") == 0) {
+            softwareRendering = true;
+            continue;
         }
 #endif
 
@@ -194,9 +243,26 @@ int main(int argc, char *argv[])
         }
 #endif
 
+        if (strcmp(argv[i], "--stealth") == 0 || strcmp(argv[i], "-S") == 0) {
+            rogue.displayAggroRangeMode = true;
+            continue;
+        }
+
+        if (strcmp(argv[i], "--no-effects") == 0 || strcmp(argv[i], "-E") == 0) {
+            rogue.trueColorMode = true;
+            continue;
+        }
+
         if (strcmp(argv[i], "--wizard") == 0 || strcmp(argv[i], "-W") == 0) {
             rogue.wizard = true;
             continue;
+        }
+
+        if (strcmp(argv[i], "--data-dir") == 0) {
+            if (i + 1 < argc) {
+                strcpy(dataDirectory, argv[++i]);
+                continue;
+            }
         }
 
         // maybe it ends with .broguesave or .broguerec, then?
@@ -218,10 +284,10 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    hasGraphics = (currentConsole.setGraphicsEnabled != NULL);
+    hasGraphics = (currentConsole.setGraphicsMode != NULL);
     // Now actually set graphics. We do this to ensure there is exactly one
     // call, whether true or false
-    graphicsEnabled = setGraphicsEnabled(initialGraphics);
+    graphicsMode = setGraphicsMode(initialGraphics);
 
     loadKeymap();
     currentConsole.gameLoop();

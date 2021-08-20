@@ -35,20 +35,20 @@ extern const short cDirs[8][2];
 extern levelData *levels;
 extern creature player;
 extern playerCharacter rogue;
-extern creature *monsters;
-extern creature *dormantMonsters;
-extern creature *graveyard;
-extern creature *purgatory;
+extern creatureList *monsters;
+extern creatureList *dormantMonsters;
+extern creatureList graveyard;
+extern creatureList purgatory;
 extern item *floorItems;
 extern item *packItems;
 extern item *monsterItemsHopper;
 extern short numberOfWaypoints;
 
-extern char displayedMessage[MESSAGE_LINES][COLS];
-extern boolean messageConfirmed[3];
-extern char combatText[COLS];
+extern char displayedMessage[MESSAGE_LINES][COLS*2];
+extern short messagesUnconfirmed;
+extern char combatText[COLS*2];
 extern short messageArchivePosition;
-extern char messageArchive[MESSAGE_ARCHIVE_LINES][COLS*2];
+extern archivedMessage messageArchive[MESSAGE_ARCHIVE_ENTRIES];
 
 extern char currentFilePath[BROGUE_FILENAME_MAX];
 extern unsigned long randomNumbersGenerated;
@@ -67,7 +67,7 @@ extern unsigned long lengthOfPlaybackFile;
 extern unsigned long recordingLocation;
 extern unsigned long maxLevelChanges;
 extern char annotationPathname[BROGUE_FILENAME_MAX];    // pathname of annotation file
-extern unsigned long previousGameSeed;
+extern uint64_t previousGameSeed;
 
 // basic colors
 extern color white;
@@ -91,6 +91,7 @@ extern color darkOrange;
 extern color darkBlue;
 extern color lightBlue;
 extern color pink;
+extern color darkPink;
 extern color tanColor;
 extern color sunlight;
 extern color rainbow;
@@ -200,6 +201,7 @@ extern const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT];
 extern const feat featTable[FEAT_COUNT];
 
 // ITEMS
+extern char itemCategoryNames[NUMBER_ITEM_CATEGORIES][7];
 extern char itemTitles[NUMBER_SCROLL_KINDS][30];
 extern char titlePhonemes[NUMBER_TITLE_PHONEMES][30];
 extern char itemColors[NUMBER_ITEM_COLORS][30];

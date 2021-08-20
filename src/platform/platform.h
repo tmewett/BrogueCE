@@ -82,16 +82,21 @@ struct brogueConsole {
     is called when the user changes the option in-game. It is also called at the
     very start of the program, even before .gameLoop, to set the initial value.
     */
-    boolean (*setGraphicsEnabled)(boolean);
+    enum graphicsModes (*setGraphicsMode)(enum graphicsModes mode);
 };
 
 // defined in platform
 void loadKeymap();
 void dumpScores();
 unsigned int glyphToUnicode(enum displayGlyph glyph);
+boolean isEnvironmentGlyph(enum displayGlyph glyph);
 
 #ifdef BROGUE_SDL
 extern struct brogueConsole sdlConsole;
+extern int windowWidth;
+extern int windowHeight;
+extern boolean fullScreen;
+extern boolean softwareRendering;
 #endif
 
 #ifdef BROGUE_CURSES
@@ -104,7 +109,6 @@ extern struct brogueConsole webConsole;
 
 extern struct brogueConsole currentConsole;
 extern boolean noMenu;
-extern int brogueFontSize;
 extern char dataDirectory[];
 
 // defined in brogue

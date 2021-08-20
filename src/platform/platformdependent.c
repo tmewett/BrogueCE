@@ -172,6 +172,12 @@ unsigned int glyphToUnicode(enum displayGlyph glyph) {
         case G_ASHES: return '\'';
         case G_BEDROLL: return '=';
         case G_BLOODWORT_POD: return '*';
+        case G_VINE: return ':';
+        case G_NET: return ':';
+        case G_LICHEN: return '"';
+        case G_PIPES: return '+';
+        case G_SAC_ALTAR: return '|';
+        case G_ORB_ALTAR: return '|';
 
         default:
             brogueAssert(false);
@@ -179,6 +185,39 @@ unsigned int glyphToUnicode(enum displayGlyph glyph) {
     }
 }
 
+/*
+Tells if a glyph represents part of the environment (true) or an item or creature (false).
+*/
+boolean isEnvironmentGlyph(enum displayGlyph glyph) {
+    switch (glyph) {
+        // items
+        case G_AMULET: case G_ARMOR: case G_BEDROLL: case G_CHARM:
+        case G_DEWAR: case G_EGG: case G_FOOD: case G_GEM: case G_BLOODWORT_POD:
+        case G_GOLD: case G_KEY: case G_POTION: case G_RING:
+        case G_SCROLL: case G_STAFF: case G_WAND: case G_WEAPON:
+            return false;
+
+        // creatures
+        case G_ANCIENT_SPIRIT: case G_BAT: case G_BLOAT: case G_BOG_MONSTER:
+        case G_CENTAUR: case G_CENTIPEDE: case G_DAR_BATTLEMAGE: case G_DAR_BLADEMASTER:
+        case G_DAR_PRIESTESS: case G_DEMON: case G_DRAGON: case G_EEL:
+        case G_FLAMEDANCER: case G_FURY: case G_GOBLIN: case G_GOBLIN_CHIEFTAN:
+        case G_GOBLIN_MAGIC: case G_GOLEM: case G_GUARDIAN: case G_IFRIT:
+        case G_IMP: case G_JACKAL: case G_JELLY: case G_KOBOLD:
+        case G_KRAKEN: case G_LICH: case G_MONKEY: case G_MOUND:
+        case G_NAGA: case G_OGRE: case G_OGRE_MAGIC: case G_PHANTOM:
+        case G_PHOENIX: case G_PIXIE: case G_PLAYER: case G_RAT:
+        case G_REVENANT: case G_SALAMANDER: case G_SPIDER: case G_TENTACLE_HORROR:
+        case G_TOAD: case G_TROLL: case G_UNDERWORM: case G_UNICORN:
+        case G_VAMPIRE: case G_WARDEN: case G_WINGED_GUARDIAN: case G_WISP:
+        case G_WRAITH: case G_ZOMBIE:
+            return false;
+
+        // everything else is considered part of the environment
+        default:
+            return true;
+    }
+}
 
 void plotChar(enum displayGlyph inputChar,
               short xLoc, short yLoc,
@@ -220,11 +259,11 @@ boolean takeScreenshot() {
     }
 }
 
-boolean setGraphicsEnabled(boolean state) {
-    if (currentConsole.setGraphicsEnabled) {
-        return currentConsole.setGraphicsEnabled(state);
+enum graphicsModes setGraphicsMode(enum graphicsModes mode) {
+    if (currentConsole.setGraphicsMode) {
+        return currentConsole.setGraphicsMode(mode);
     } else {
-        return false;
+        return TEXT_GRAPHICS;
     }
 }
 
@@ -553,7 +592,7 @@ fileEntry *listFiles(short *fileCount, char **namebuffer) {
 
 // end of file listing
 
-void initializeLaunchArguments(enum NGCommands *command, char *path, unsigned long *seed) {
+void initializeLaunchArguments(enum NGCommands *command, char *path, uint64_t *seed) {
     // we've actually already done this at this point, except for the seed.
 }
 

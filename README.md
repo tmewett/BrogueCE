@@ -17,17 +17,19 @@ of what the dungeon gives you. You will make sacrifices, narrow escapes,
 and maybe even some friends along the way -- but will you be one of the
 lucky few to return alive?
 
+- [Downloads][releases]
 - [Wiki](https://brogue.fandom.com/wiki/Brogue_Wiki)
 - [Forum (Reddit)](https://www.reddit.com/r/brogueforum/)
 - [Roguelikes Discord](https://discord.gg/9pmFGKx) (we have a #brogue channel)
-- IRC: ##brogue on Freenode
+- IRC: ##brogue on Libera Chat
 - [Original website](https://sites.google.com/site/broguegame/)
+- [Android port](https://github.com/bilgincoskun/brogue-android-port/releases)
 
 
 Playing
 -------
 
-If you downloaded a release, you can open the game as follows:
+If you downloaded a [release][releases], you can open the game as follows:
 
 ### Windows
 
@@ -68,13 +70,41 @@ what the wiki reports!
 If you downloaded the source code, you will need to build the game first. For
 instructions, see `BUILD.md`.
 
+On Windows, if you want to run from the command prompt, use `brogue-cmd.bat`
+instead of `brogue.exe`.
 
-About Community Edition
------------------------
+
+About
+-----
+
+### What is Community Edition?
 
 Brogue was created by Brian Walker. This version, *Brogue: Community Edition*,
 is a continuation of its development. It has several main goals:
 
-- add community-accepted bugfixes and game changes
-- provide a cross-platform build system
+- fix bugs and crashes
+- add useful quality of life and non-gameplay features
+- improve the gameplay and keep it exciting
+- ease development and maintenance
 - be a convenient base for forks and ports to new platforms
+
+### How is CE different from the original Brogue?
+
+Please refer to the changelog or release history for a complete list. There is
+also a wiki page: [Changes from original][cfo].
+
+[cfo]: https://github.com/tmewett/BrogueCE/wiki/Changes-from-original
+
+### How is the project run, and how are changes decided?
+
+The project is run with a "benevolent dictator" model, with myself (tmewett) in
+charge. There are many other testers and regular contributors; see the
+contribution guide to get involved!
+
+We always try to make changes in the same spirit as the rest of the game. Anyone
+can propose a change - all discussion occurs in our GitHub issue tracker or on
+our development Discord (see CONTRIBUTING.md). We also make sure that things are
+well play-tested.
+
+
+[releases]: https://github.com/tmewett/BrogueCE/releases

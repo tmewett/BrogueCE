@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
-#include "term.h"
-#include <sys/timeb.h>
 #include <stdint.h>
 #include <signal.h>
+#include <sys/time.h>
 #include "platform.h"
+#include "term.h"
 
 static void gameLoop() {
     signal(SIGINT, SIG_DFL); // keep SDL from overriding the default ^C handler when it's linked
@@ -108,10 +107,10 @@ static int rewriteKey(int key, boolean text) {
 
 #define PAUSE_BETWEEN_EVENT_POLLING     34//17
 
-static uint32_t getTime() {
-    struct timeb time;
-    ftime(&time);
-    return 1000 * time.time + time.millitm;
+static uint64_t getTime() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (uint64_t)tv.tv_sec * 1000 + tv.tv_usec / 1000;
 }
 
 static boolean curses_pauseForMilliseconds(short milliseconds) {
@@ -125,7 +124,7 @@ static boolean curses_pauseForMilliseconds(short milliseconds) {
 static void curses_nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance) {
     int key;
     // TCOD_mouse_t mouse;
-    uint32_t theTime, waitTime;
+    uint64_t theTime, waitTime;
     // short x, y;
 
     Term.refresh();

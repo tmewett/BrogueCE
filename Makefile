@@ -1,11 +1,19 @@
 include config.mk
 
 cflags := -Isrc/brogue -Isrc/platform -std=c99 \
-	-Wall -Wpedantic -Werror=implicit -Wno-parentheses -Wno-unused-result -Wno-format
+	-Wall -Wpedantic -Werror=implicit -Wno-parentheses -Wno-unused-result \
+	-Wformat -Werror=format-security -Wformat-overflow=0 -Wformat-truncation=0
 libs := -lm
 cppflags := -DDATADIR=$(DATADIR)
 
 sources := $(wildcard src/brogue/*.c) $(addprefix src/platform/,main.c platformdependent.c)
+
+ifeq ($(RELEASE),YES)
+	extra_version :=
+else
+	extra_version := $(shell bash tools/git-extra-version)
+endif
+cppflags += -DBROGUE_EXTRA_VERSION='"$(extra_version)"'
 
 ifeq ($(TERMINAL),YES)
 	sources += $(addprefix src/platform/,curses-platform.c term.c)
@@ -14,7 +22,7 @@ ifeq ($(TERMINAL),YES)
 endif
 
 ifeq ($(GRAPHICS),YES)
-	sources += $(addprefix src/platform/,sdl2-platform.c)
+	sources += $(addprefix src/platform/,sdl2-platform.c tiles.c)
 	cflags += $(shell $(SDL_CONFIG) --cflags)
 	cppflags += -DBROGUE_SDL
 	libs += $(shell $(SDL_CONFIG) --libs) -lSDL2_image
@@ -30,7 +38,8 @@ ifeq ($(MAC_APP),YES)
 endif
 
 ifeq ($(DEBUG),YES)
-	cflags += -g
+	cflags += -g -Og
+	cppflags += -DENABLE_PLAYBACK_SWITCH
 else
 	cflags += -O2
 endif
@@ -50,28 +59,40 @@ windows/icon.o: windows/icon.rc
 
 bin/brogue.exe: $(objects) windows/icon.o
 	$(CC) $(cflags) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(libs) $(LDLIBS)
+	mt -manifest windows/brogue.exe.manifest '-outputresource:bin/brogue.exe;1'
 
 clean:
-	$(RM) src/brogue/*.o src/platform/*.o bin/brogue{,.exe}
+	$(RM) src/brogue/*.o src/platform/*.o windows/icon.o bin/brogue{,.exe}
 
 
-common-files := README.txt CHANGELOG.txt LICENSE.txt seed-catalog.txt
-common-bin := bin/assets bin/keymap.txt
+# Release archives
 
-%.txt: %.md
-	cp $< $@
+common_bin := bin/assets bin/keymap.txt
 
-windows.zip: $(common-files) $(common-bin)
-	zip -rvl $@ $^ bin/brogue.exe bin/*.dll
+define make_release_base
+	mkdir $@
+	cp README.md $@/README.txt
+	cp CHANGELOG.md $@/CHANGELOG.txt
+	cp LICENSE.txt $@
+endef
 
-macos.zip: $(common-files)
-	chmod +x "Brogue CE.app"/Contents/MacOS/brogue
-	zip -rv -ll $@ $^ "Brogue CE.app"
+# Flatten bin/ in the Windows archive
+BrogueCE-windows: bin/brogue.exe
+	$(make_release_base)
+	cp -r $(common_bin) bin/{brogue.exe,brogue-cmd.bat} $@
 
-linux.tar.gz: $(common-files) $(common-bin) brogue
-	chmod +x bin/brogue
-	tar -cavf $@ $^ bin/brogue -C linux make-link-for-desktop.sh
+BrogueCE-macos: Brogue.app
+	$(make_release_base)
+	cp -r Brogue.app $@/"Brogue CE.app"
 
+BrogueCE-linux: bin/brogue
+	$(make_release_base)
+	cp brogue $@
+	cp -r --parents $(common_bin) bin/brogue $@
+	cp linux/make-link-for-desktop.sh $@
+
+
+# macOS app bundle
 
 # $* is the matched %
 icon_%.png: bin/assets/icon.png
@@ -86,3 +107,7 @@ Brogue.app: bin/brogue
 	cp macos/Info.plist $@/Contents
 	cp bin/brogue $@/Contents/MacOS
 	cp -r macos/Brogue.icns bin/assets $@/Contents/Resources
+
+macos/sdl2.rb:
+	curl -L 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/sdl2.rb' >$@
+	patch $@ macos/sdl2-deployment-target.patch

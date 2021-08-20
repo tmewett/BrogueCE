@@ -115,9 +115,11 @@ static void flushOutputBuffer() {
     int no_bytes_sent;
 
     no_bytes_sent = sendto(wfd, outputBuffer, outputBufferPos, 0, (struct sockaddr *)&addr_write, sizeof(struct sockaddr_un));
-    if (no_bytes_sent != outputBufferPos)
-    {
-        snprintf(msg, 80, "Sent %ld bytes only %s\n", (long)no_bytes_sent, strerror(errno));
+    if (no_bytes_sent == -1) {
+        snprintf(msg, 80, "Error: %s\n", strerror(errno));
+        writeToLog(msg);
+    } else if (no_bytes_sent != outputBufferPos) {
+        snprintf(msg, 80, "Sent %d bytes only - %s\n", no_bytes_sent, strerror(errno));
         writeToLog(msg);
     }
 

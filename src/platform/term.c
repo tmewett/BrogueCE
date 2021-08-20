@@ -44,7 +44,8 @@ pairmode_cell *cell_buffer;
 
 enum {
     coerce_16,
-    coerce_256
+    coerce_256,
+    truecolor
 } colormode;
 
 int is_xterm;
@@ -69,8 +70,13 @@ static void preparecolor ( ) {
         }
     }
 
-    if (COLORS >= 256) {
+    char *env = getenv("COLORTERM");
+    if (env && ((strncmp(env, "truecolor", 9) == 0) || (strncmp(env, "24bit", 5) == 0))) {
+        colormode = truecolor;
+    } else if (COLORS >= 256) {
         colormode = coerce_256;
+    } else {
+        colormode = coerce_16;
     }
 }
 
@@ -465,20 +471,33 @@ static void buffer_plot(int ch, int x, int y, fcolor *fg, fcolor *bg) {
 
     intcolor cube_fg, cube_bg;
 
-    coerce_colorcube(fg, &cube_fg);
-    coerce_colorcube(bg, &cube_bg);
-    if (cube_fg.idx == cube_bg.idx) {
-        // verify that the colors are really the same; otherwise, we'd better force the output apart
-        int naive_distance =
-            (fg->r - bg->r) * (fg->r - bg->r)
-            + (fg->g - bg->g) * (fg->g - bg->g)
-            + (fg->b - bg->b) * (fg->b - bg->b);
-        if (naive_distance > 3) {
-            // very arbitrary cutoff, and an arbitrary fix, very lazy
-            if (cube_bg.r > 0) {cube_bg.r -= 1; cube_bg.idx -= 1; }
-            if (cube_bg.g > 0) {cube_bg.g -= 1; cube_bg.idx -= 6; }
-            if (cube_bg.b > 0) {cube_bg.b -= 1; cube_bg.idx -= 36; }
+    if (colormode == coerce_256) {
+        coerce_colorcube(fg, &cube_fg);
+        coerce_colorcube(bg, &cube_bg);
+        if (cube_fg.idx == cube_bg.idx) {
+            // verify that the colors are really the same; otherwise, we'd better force the output apart
+            int naive_distance =
+                (fg->r - bg->r) * (fg->r - bg->r)
+                + (fg->g - bg->g) * (fg->g - bg->g)
+                + (fg->b - bg->b) * (fg->b - bg->b);
+            if (naive_distance > 3) {
+                // very arbitrary cutoff, and an arbitrary fix, very lazy
+                if (cube_bg.r > 0) {cube_bg.r -= 1; cube_bg.idx -= 1; }
+                if (cube_bg.g > 0) {cube_bg.g -= 1; cube_bg.idx -= 6; }
+                if (cube_bg.b > 0) {cube_bg.b -= 1; cube_bg.idx -= 36; }
+            }
         }
+    } else {
+        cube_fg = (intcolor){
+            .r = round(fg->r * 255),
+            .g = round(fg->g * 255),
+            .b = round(fg->b * 255)
+        };
+        cube_bg = (intcolor){
+            .r = round(bg->r * 255),
+            .g = round(bg->g * 255),
+            .b = round(bg->b * 255)
+        };
     }
 
     int cell = x + y * minsize.width;
@@ -520,6 +539,51 @@ static void buffer_render_256() {
             i++;
         }
     }
+    refresh();
+}
+
+static int fullRefresh = 1; // screen needs a full refresh
+
+static void buffer_render_24bit() {
+    int cx, cy;      // cursor coordinates
+    intcolor fg, bg; // current colors
+
+    cx = cy = fg.r = fg.g = fg.b = bg.r = bg.g = bg.b = -1;
+
+    for (int y = 0; y < minsize.height; y++) {
+        for (int x = 0; x < minsize.width; x++) {
+            pairmode_cell *c = &cell_buffer[x + y * minsize.width];
+
+            // `pair` is set to -1 when a tile changes, which signals we need to print it
+            if (!c->pair && !fullRefresh) continue;
+            c->pair = 0;
+
+            // change background color
+            if (c->back.r != bg.r || c->back.g != bg.g || c->back.b != bg.b) {
+                bg = c->back;
+                printf("\033[48;2;%d;%d;%dm", bg.r, bg.g, bg.b);
+            }
+
+            // change foreground color (doesn't matter for whitespace)
+            if (c->ch != ' ' && (fg.r != c->fore.r || fg.g != c->fore.g || fg.b != c->fore.b)) {
+                fg = c->fore;
+                printf("\033[38;2;%d;%d;%dm", fg.r, fg.g, fg.b);
+            }
+
+            // move cursor if necessary
+            if (cx != x || cy != y) {
+                cx = x, cy = y;
+                printf("\033[%d;%df", cy+1, cx+1);
+            }
+
+            // print the character
+            printf("%c", c->ch);
+            cx++;
+        }
+    }
+
+    fflush(stdout);
+    fullRefresh = 0;
 }
 
 static void term_mvaddch(int x, int y, int ch, fcolor *fg, fcolor *bg) {
@@ -560,12 +624,13 @@ static void term_refresh() {
         }
     }
 
-
-    if (colormode == coerce_256) {
+    if (colormode == truecolor) {
+        buffer_render_24bit();
+    } else if (colormode == coerce_256) {
         buffer_render_256();
+    } else if (colormode == coerce_16) {
+        refresh();
     }
-
-    refresh();
 }
 
 static void ensure_size( );
@@ -579,6 +644,7 @@ static int term_getkey( ) {
         int got = getch();
         if (got == KEY_RESIZE) {
             ensure_size( );
+            fullRefresh = 1;
         } else if (got == KEY_MOUSE) {
             MEVENT mevent;
             getmouse (&mevent);

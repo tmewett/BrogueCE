@@ -98,9 +98,10 @@ u4 ranval( ranctx *x ) {
     return x->d;
 }
 
-void raninit( ranctx *x, u4 seed ) {
+void raninit( ranctx *x, uint64_t seed ) {
     u4 i;
-    x->a = 0xf1ea5eed, x->b = x->c = x->d = seed;
+    x->a = 0xf1ea5eed, x->b = x->c = x->d = (u4)seed;
+    x->c ^= (u4)(seed >> 32);
     for (i=0; i<20; ++i) {
         (void)ranval(x);
     }
@@ -116,9 +117,9 @@ void raninit( ranctx *x, u4 seed ) {
 
 #define RAND_MAX_COMBO ((unsigned long) UINT32_MAX)
 
-int range(int n, short RNG) {
+long range(long n, short RNG) {
     unsigned long div;
-    int r;
+    long r;
 
     div = RAND_MAX_COMBO/n;
 
@@ -132,43 +133,52 @@ int range(int n, short RNG) {
 // Get a random int between lowerBound and upperBound, inclusive, with uniform probability distribution
 
 #ifdef AUDIT_RNG // debug version
-int rand_range(int lowerBound, int upperBound) {
+long rand_range(long lowerBound, long upperBound) {
     int retval;
     char RNGMessage[100];
-
-    brogueAssert(lowerBound <= INT_MAX && upperBound <= INT_MAX);
-
     if (upperBound <= lowerBound) {
         return lowerBound;
     }
-    retval = lowerBound + range(upperBound-lowerBound+1, rogue.RNG);
+    long interval = upperBound - lowerBound + 1;
+    brogueAssert(interval > 1); // to verify that we didn't wrap around
+    retval = lowerBound + range(interval, rogue.RNG);
     if (rogue.RNG == RNG_SUBSTANTIVE) {
         randomNumbersGenerated++;
         if (1) { //randomNumbersGenerated >= 1128397) {
-            sprintf(RNGMessage, "\n#%lu, %i to %i: %i", randomNumbersGenerated, lowerBound, upperBound, retval);
+            sprintf(RNGMessage, "\n#%lu, %ld to %ld: %ld", randomNumbersGenerated, lowerBound, upperBound, retval);
             RNGLog(RNGMessage);
         }
     }
     return retval;
 }
 #else // normal version
-int rand_range(int lowerBound, int upperBound) {
-    brogueAssert(lowerBound <= INT_MAX && upperBound <= INT_MAX);
+long rand_range(long lowerBound, long upperBound) {
     if (upperBound <= lowerBound) {
         return lowerBound;
     }
     if (rogue.RNG == RNG_SUBSTANTIVE) {
         randomNumbersGenerated++;
     }
-    return lowerBound + range(upperBound-lowerBound+1, rogue.RNG);
+    long interval = upperBound - lowerBound + 1;
+    brogueAssert(interval > 1); // to verify that we didn't wrap around
+    return lowerBound + range(interval, rogue.RNG);
 }
 #endif
 
+uint64_t rand_64bits() {
+    if (rogue.RNG == RNG_SUBSTANTIVE) {
+        randomNumbersGenerated++;
+    }
+    uint64_t hi = ranval(&(RNGState[rogue.RNG]));
+    uint64_t lo = ranval(&(RNGState[rogue.RNG]));
+    return (hi << 32) | lo;
+}
+
 // seeds with the time if called with a parameter of 0; returns the seed regardless.
 // All RNGs are seeded simultaneously and identically.
-unsigned long seedRandomGenerator(unsigned long seed) {
+uint64_t seedRandomGenerator(uint64_t seed) {
     if (seed == 0) {
-        seed = (unsigned long) time(NULL) - 1352700000;
+        seed = (uint64_t) time(NULL) - 1352700000;
     }
     raninit(&(RNGState[RNG_SUBSTANTIVE]), seed);
     raninit(&(RNGState[RNG_COSMETIC]), seed);
@@ -208,8 +218,23 @@ static fixpt fp_exp2(int n) {
 // f(x) = x^2 - u.
 fixpt fp_sqrt(fixpt u) {
 
+    static const fixpt SQUARE_ROOTS[] = { // values were computed by the code that follows
+        0,      65536,  92682,  113511, 131073, 146543, 160529, 173392, 185363, 196608, 207243, 217359, 227023, 236293, 245213, 253819,
+        262145, 270211, 278045, 285665, 293086, 300323, 307391, 314299, 321059, 327680, 334169, 340535, 346784, 352923, 358955, 364889,
+        370727, 376475, 382137, 387717, 393216, 398640, 403991, 409273, 414487, 419635, 424721, 429749, 434717, 439629, 444487, 449293,
+        454047, 458752, 463409, 468021, 472587, 477109, 481589, 486028, 490427, 494786, 499107, 503391, 507639, 511853, 516031, 520175,
+        524289, 528369, 532417, 536435, 540423, 544383, 548313, 552217, 556091, 559939, 563762, 567559, 571329, 575077, 578799, 582497,
+        586171, 589824, 593453, 597061, 600647, 604213, 607755, 611279, 614783, 618265, 621729, 625173, 628599, 632007, 635395, 638765,
+        642119, 645455, 648773, 652075, 655360, 658629, 661881, 665117, 668339, 671545, 674735, 677909, 681071, 684215, 687347, 690465,
+        693567, 696657, 699733, 702795, 705845, 708881, 711903, 714913, 717911, 720896, 723869, 726829, 729779, 732715, 735639, 738553
+    };
+
     if (u < 0) return -fp_sqrt(-u);
-    if (u == 0 || u == FP_FACTOR) return u;
+
+    if ((u & (127LL << FP_BASE)) == u) {
+        // u is an integer between 0 and 127
+        return SQUARE_ROOTS[u >> FP_BASE];
+    }
 
     // Find the unique k such that 2^(k-1) <= u < 2^k
     // FP_BASE is the msbpos-1 of FP_FACTOR ("one")
