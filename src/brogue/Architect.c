@@ -714,7 +714,7 @@ boolean fillInteriorForVestibuleMachine(char interior[DCOLS][DROWS], short bp, s
 void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY, short theProfileIndex) {
     short i, j, n, newX, newY;
     enum directions dir;
-    short orphanList[20][2];
+    pos orphanList[20];
     short orphanCount = 0;
     short **grid, **pathingGrid, **costGrid;
     grid = allocGrid();
@@ -736,8 +736,7 @@ void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY,
                         && interior[newX][newY]
                         && (newX != originX || newY != originY)) {
 
-                        orphanList[orphanCount][0] = newX;
-                        orphanList[orphanCount][1] = newY;
+                        orphanList[orphanCount] = (pos){ .x = newX, .y = newY };
                         orphanCount++;
                         grid[i][j] = -1; // Treat the orphaned door as off limits.
 
@@ -762,7 +761,7 @@ void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY,
                 copyGrid(pathingGrid, grid);
                 findReplaceGrid(pathingGrid, -1, -1, 0);
                 hiliteGrid(pathingGrid, &green, 50);
-                plotCharWithColor('X', mapToWindowX(orphanList[n][0]), mapToWindowY(orphanList[n][1]), &black, &orange);
+                plotCharWithColor('X', mapToWindowX(orphanList[n].x), mapToWindowY(orphanList[n].y), &black, &orange);
                 temporaryMessage("Orphan detected:", REQUIRE_ACKNOWLEDGMENT);
             }
 
@@ -784,8 +783,8 @@ void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY,
             }
             dijkstraScan(pathingGrid, costGrid, false);
 
-            i = orphanList[n][0];
-            j = orphanList[n][1];
+            i = orphanList[n].x;
+            j = orphanList[n].y;
             while (pathingGrid[i][j] > 0) {
                 for (dir = 0; dir < 4; dir++) {
                     newX = i + nbDirs[dir][0];
@@ -953,7 +952,7 @@ typedef struct machineData {
     creature *spawnedMonsters[MACHINES_BUFFER_LENGTH];
     creature *spawnedMonstersSub[MACHINES_BUFFER_LENGTH];
 
-    short gateCandidates[50][2];
+    pos gateCandidates[50];
     short distances[100];
     short sRows[DROWS];
     short sCols[DCOLS];
@@ -1068,8 +1067,7 @@ boolean buildAMachine(enum machineTypes bp,
                             && chokeMap[i][j] <= blueprintCatalog[bp].roomSize[1]) {
 
                             //DEBUG printf("\nDepth %i: Gate site qualified with interior size of %i.", rogue.depthLevel, chokeMap[i][j]);
-                            p->gateCandidates[totalFreq][0] = i;
-                            p->gateCandidates[totalFreq][1] = j;
+                            p->gateCandidates[totalFreq] = (pos){ .x = i, .y = j };
                             totalFreq++;
                         }
                     }
@@ -1078,8 +1076,8 @@ boolean buildAMachine(enum machineTypes bp,
                 if (totalFreq) {
                     // Choose the gate.
                     randIndex = rand_range(0, totalFreq - 1);
-                    originX = p->gateCandidates[randIndex][0];
-                    originY = p->gateCandidates[randIndex][1];
+                    originX = p->gateCandidates[randIndex].x;
+                    originY = p->gateCandidates[randIndex].y;
                 } else {
                     // If no suitable sites, abort.
                     if (distanceMap) {
@@ -2116,7 +2114,7 @@ enum directions directionOfDoorSite(short **grid, short x, short y) {
     return solutionDir;
 }
 
-void chooseRandomDoorSites(short **roomMap, short doorSites[4][2]) {
+void chooseRandomDoorSites(short **roomMap, pos doorSites[4]) {
     short i, j, k, newX, newY;
     enum directions dir;
     short **grid;
@@ -2160,13 +2158,13 @@ void chooseRandomDoorSites(short **roomMap, short doorSites[4][2]) {
 
     // Pick four doors, one in each direction, and store them in doorSites[dir].
     for (dir=0; dir<4; dir++) {
-        randomLocationInGrid(grid, &(doorSites[dir][0]), &(doorSites[dir][1]), dir + 2);
+        randomLocationInGrid(grid, &(doorSites[dir].x), &(doorSites[dir].y), dir + 2);
     }
 
     freeGrid(grid);
 }
 
-void attachHallwayTo(short **grid, short doorSites[4][2]) {
+void attachHallwayTo(short **grid, pos doorSites[4]) {
     short i, x, y, newX, newY, dirs[4];
     short length;
     enum directions dir, dir2;
@@ -2177,10 +2175,10 @@ void attachHallwayTo(short **grid, short doorSites[4][2]) {
     shuffleList(dirs, 4);
     for (i=0; i<4; i++) {
         dir = dirs[i];
-        if (doorSites[dir][0] != -1
-            && doorSites[dir][1] != -1
-            && coordinatesAreInMap(doorSites[dir][0] + nbDirs[dir][0] * HORIZONTAL_CORRIDOR_MAX_LENGTH,
-                                   doorSites[dir][1] + nbDirs[dir][1] * VERTICAL_CORRIDOR_MAX_LENGTH)) {
+        if (doorSites[dir].x != -1
+            && doorSites[dir].y != -1
+            && coordinatesAreInMap(doorSites[dir].x + nbDirs[dir][0] * HORIZONTAL_CORRIDOR_MAX_LENGTH,
+                                   doorSites[dir].y + nbDirs[dir][1] * VERTICAL_CORRIDOR_MAX_LENGTH)) {
                 break; // That's our direction!
         }
     }
@@ -2194,8 +2192,8 @@ void attachHallwayTo(short **grid, short doorSites[4][2]) {
         length = rand_range(HORIZONTAL_CORRIDOR_MIN_LENGTH, HORIZONTAL_CORRIDOR_MAX_LENGTH);
     }
 
-    x = doorSites[dir][0];
-    y = doorSites[dir][1];
+    x = doorSites[dir].x;
+    y = doorSites[dir].y;
     for (i = 0; i < length; i++) {
         if (coordinatesAreInMap(x, y)) {
             grid[x][y] = true;
@@ -2214,11 +2212,9 @@ void attachHallwayTo(short **grid, short doorSites[4][2]) {
             || !coordinatesAreInMap(newX, newY)
             || grid[newX][newY]) {
 
-            doorSites[dir2][0] = -1;
-            doorSites[dir2][1] = -1;
+            doorSites[dir2] = (pos){ .x = -1, .y = -1 };
         } else {
-            doorSites[dir2][0] = newX;
-            doorSites[dir2][1] = newY;
+            doorSites[dir2] = (pos){ .x = newX, .y = newY };
         }
     }
 }
@@ -2237,7 +2233,7 @@ void attachHallwayTo(short **grid, short doorSites[4][2]) {
 //      6. Cavern (the kind that fills a level)
 //      7. Entrance room (the big upside-down T room at the start of depth 1)
 
-void designRandomRoom(short **grid, boolean attachHallway, short doorSites[4][2],
+void designRandomRoom(short **grid, boolean attachHallway, pos doorSites[4],
                       const short roomTypeFrequencies[ROOM_TYPE_COUNT]) {
     short randIndex, i, sum;
     enum directions dir;
@@ -2299,7 +2295,7 @@ void designRandomRoom(short **grid, boolean attachHallway, short doorSites[4][2]
         chooseRandomDoorSites(grid, doorSites);
         if (attachHallway) {
             dir = rand_range(0, 3);
-            for (i=0; doorSites[dir][0] == -1 && i < 3; i++) {
+            for (i=0; doorSites[dir].x == -1 && i < 3; i++) {
                 dir = (dir + 1) % 4; // Each room will have at least 2 valid directions for doors.
             }
             attachHallwayTo(grid, doorSites);
@@ -2333,7 +2329,7 @@ boolean roomFitsAt(short **dungeonMap, short **roomMap, short roomToDungeonX, sh
 void attachRooms(short **grid, const dungeonProfile *theDP, short attempts, short maxRoomCount) {
     short roomsBuilt, roomsAttempted;
     short **roomMap;
-    short doorSites[4][2];
+    pos doorSites[4];
     short i, x, y, sCoord[DCOLS*DROWS];
     enum directions dir, oppDir;
 
@@ -2350,10 +2346,10 @@ void attachRooms(short **grid, const dungeonProfile *theDP, short attempts, shor
         if (D_INSPECT_LEVELGEN) {
             colorOverDungeon(&darkGray);
             hiliteGrid(roomMap, &blue, 100);
-            if (doorSites[0][0] != -1) plotCharWithColor('^', mapToWindowX(doorSites[0][0]), mapToWindowY(doorSites[0][1]), &black, &green);
-            if (doorSites[1][0] != -1) plotCharWithColor('v', mapToWindowX(doorSites[1][0]), mapToWindowY(doorSites[1][1]), &black, &green);
-            if (doorSites[2][0] != -1) plotCharWithColor('<', mapToWindowX(doorSites[2][0]), mapToWindowY(doorSites[2][1]), &black, &green);
-            if (doorSites[3][0] != -1) plotCharWithColor('>', mapToWindowX(doorSites[3][0]), mapToWindowY(doorSites[3][1]), &black, &green);
+            if (doorSites[0].x != -1) plotCharWithColor('^', mapToWindowX(doorSites[0].x), mapToWindowY(doorSites[0].y), &black, &green);
+            if (doorSites[1].x != -1) plotCharWithColor('v', mapToWindowX(doorSites[1].x), mapToWindowY(doorSites[1].y), &black, &green);
+            if (doorSites[2].x != -1) plotCharWithColor('<', mapToWindowX(doorSites[2].x), mapToWindowY(doorSites[2].y), &black, &green);
+            if (doorSites[3].x != -1) plotCharWithColor('>', mapToWindowX(doorSites[3].x), mapToWindowY(doorSites[3].y), &black, &green);
             temporaryMessage("Generating this room:", REQUIRE_ACKNOWLEDGMENT);
         }
 
@@ -2365,15 +2361,15 @@ void attachRooms(short **grid, const dungeonProfile *theDP, short attempts, shor
             dir = directionOfDoorSite(grid, x, y);
             oppDir = oppositeDirection(dir);
             if (dir != NO_DIRECTION
-                && doorSites[oppDir][0] != -1
-                && roomFitsAt(grid, roomMap, x - doorSites[oppDir][0], y - doorSites[oppDir][1])) {
+                && doorSites[oppDir].x != -1
+                && roomFitsAt(grid, roomMap, x - doorSites[oppDir].x, y - doorSites[oppDir].y)) {
 
                 // Room fits here.
                 if (D_INSPECT_LEVELGEN) {
                     colorOverDungeon(&darkGray);
                     hiliteGrid(grid, &white, 100);
                 }
-                insertRoomAt(grid, roomMap, x - doorSites[oppDir][0], y - doorSites[oppDir][1], doorSites[oppDir][0], doorSites[oppDir][1]);
+                insertRoomAt(grid, roomMap, x - doorSites[oppDir].x, y - doorSites[oppDir].y, doorSites[oppDir].x, doorSites[oppDir].y);
                 grid[x][y] = 2; // Door site.
                 if (D_INSPECT_LEVELGEN) {
                     hiliteGrid(grid, &green, 50);
@@ -3462,7 +3458,7 @@ boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refr
 }
 
 void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
-    short i, *x, *y, turnCount;//, loc[2];
+    short i, *x, *y, turnCount;;
     boolean foundLeader = false;
     short **theMap;
     enum directions dir;

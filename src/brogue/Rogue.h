@@ -2992,7 +2992,7 @@ extern "C" {
     boolean openPathBetween(short x1, short y1, short x2, short y2);
     creature *monsterAtLoc(short x, short y);
     creature *dormantMonsterAtLoc(short x, short y);
-    void perimeterCoords(short returnCoords[2], short n);
+    pos perimeterCoords(short n);
     boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, boolean blinkUphill);
     boolean monsterSummons(creature *monst, boolean alwaysUse);
     boolean resurrectAlly(const short x, const short y);
@@ -3046,8 +3046,8 @@ extern "C" {
     void pickUpItemAt(short x, short y);
     item *addItemToPack(item *theItem);
     void aggravateMonsters(short distance, short x, short y, const color *flashColor);
-    short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2], const short targetLoc[2], const bolt *theBolt);
-    void getImpactLoc(short returnLoc[2], const short originLoc[2], const short targetLoc[2],
+    short getLineCoordinates(pos listOfCoordinates[], const pos originLoc, const pos targetLoc, const bolt *theBolt);
+    void getImpactLoc(pos *returnLoc, const pos originLoc, const pos targetLoc,
                       const short maxDistance, const boolean returnLastEmptySpace, const bolt *theBolt);
     boolean negate(creature *monst);
     short monsterAccuracyAdjusted(const creature *monst);
@@ -3058,11 +3058,11 @@ extern "C" {
     void haste(creature *monst, short turns);
     void heal(creature *monst, short percent, boolean panacea);
     boolean projectileReflects(creature *attacker, creature *defender);
-    short reflectBolt(short targetX, short targetY, short listOfCoordinates[][2], short kinkCell, boolean retracePath);
+    short reflectBolt(short targetX, short targetY, pos listOfCoordinates[], short kinkCell, boolean retracePath);
     void checkForMissingKeys(short x, short y);
     enum boltEffects boltEffectForItem(item *theItem);
     enum boltType boltForItem(item *theItem);
-    boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideDetails);
+    boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails);
     boolean nextTargetAfter(short *returnX,
                             short *returnY,
                             short targetX,
