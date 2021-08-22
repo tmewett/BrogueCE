@@ -142,6 +142,11 @@ typedef long long fixpt;
 #define COLS                    100
 #define ROWS                    (31 + MESSAGE_LINES)
 
+typedef struct pos {
+    short x;
+    short y;
+} pos;
+
 // Size of the portion of the terminal window devoted to displaying the dungeon:
 #define DCOLS                   (COLS - STAT_BAR_WIDTH - 1) // n columns on the left for the sidebar;
                                                             // one column to separate the sidebar from the map.
@@ -1359,8 +1364,7 @@ typedef struct item {
     short quantity;
     char inventoryLetter;
     char inscription[DCOLS];
-    short xLoc;
-    short yLoc;
+    pos loc;
     keyLocationProfile keyLoc[KEY_ID_MAXIMUM];
     short originDepth;
     unsigned long spawnTurnNumber;
@@ -1717,7 +1721,7 @@ typedef struct flare {
     lightSource *light;                 // Flare light
     short coeffChangeAmount;            // The constant amount by which the coefficient changes per frame, e.g. -25 means it gets 25% dimmer per frame.
     short coeffLimit;                   // Flare ends if the coefficient passes this percentage (whether going up or down).
-    short xLoc, yLoc;                   // Current flare location.
+    pos loc;                            // Current flare location.
     long coeff;                         // Current flare coefficient; always starts at 100.
     unsigned long turnNumber;           // So we can eliminate those that fired one or more turns ago.
 } flare;
@@ -2153,8 +2157,7 @@ typedef struct monsterClass {
 
 typedef struct creature {
     creatureType info;
-    short xLoc;
-    short yLoc;
+    pos loc;
     short depth;
     short currentHP;
     long turnsUntilRegen;
@@ -2310,10 +2313,10 @@ typedef struct playerCharacter {
 
     short previousPoisonPercent;        // and your poison proportion, to display percentage alerts for each.
 
-    short upLoc[2];                     // upstairs location this level
-    short downLoc[2];                   // downstairs location this level
+    pos upLoc;                          // upstairs location this level
+    pos downLoc;                        // downstairs location this level
 
-    short cursorLoc[2];                 // used for the return key functionality
+    pos cursorLoc;                      // used for the return key functionality
     creature *lastTarget;               // to keep track of the last monster the player has thrown at or zapped
     item *lastItemThrown;
     short rewardRoomsGenerated;         // to meter the number of reward machines
@@ -2388,9 +2391,9 @@ typedef struct levelData {
     struct creatureList dormantMonsters;
     short **scentMap;
     uint64_t levelSeed;
-    short upStairsLoc[2];
-    short downStairsLoc[2];
-    short playerExitedVia[2];
+    pos upStairsLoc;
+    pos downStairsLoc;
+    pos playerExitedVia;
     unsigned long awaySince;
 } levelData;
 
@@ -3059,7 +3062,7 @@ extern "C" {
     boolean moveCursor(boolean *targetConfirmed,
                        boolean *canceled,
                        boolean *tabKey,
-                       short targetLoc[2],
+                       pos *targetLoc,
                        rogueEvent *event,
                        buttonState *state,
                        boolean colorsDance,
@@ -3098,7 +3101,7 @@ extern "C" {
     void unequip(item *theItem);
     void drop(item *theItem);
     void findAlternativeHomeFor(creature *monst, short *x, short *y, boolean chooseRandomly);
-    boolean getQualifyingLocNear(short loc[2],
+    boolean getQualifyingLocNear(pos *loc,
                                  short x, short y,
                                  boolean hallwaysAllowed,
                                  char blockingMap[DCOLS][DROWS],
@@ -3106,7 +3109,7 @@ extern "C" {
                                  unsigned long forbiddenMapFlags,
                                  boolean forbidLiquid,
                                  boolean deterministic);
-    boolean getQualifyingGridLocNear(short loc[2],
+    boolean getQualifyingGridLocNear(pos *loc,
                                      short x, short y,
                                      boolean grid[DCOLS][DROWS],
                                      boolean deterministic);
