@@ -870,6 +870,7 @@ void flashCreatureAlert(creature *monst, char msg[200], color *foreColor, color 
     }
     flashMessage(msg, x, y, (rogue.playbackMode ? 100 : 1000), foreColor, backColor);
     rogue.disturbed = true;
+    rogue.autoPlayingLevel = false;
 }
 
 void handleHealthAlerts() {

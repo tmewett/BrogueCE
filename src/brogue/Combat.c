@@ -462,6 +462,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
                     itemName(theItem, buf3, false, true, NULL);
                     sprintf(buf, "%s stole %s!", buf2, buf3);
                     messageWithColor(buf, &badMessageColor, 0);
+                    rogue.autoPlayingLevel = false;
                 }
             }
         }
