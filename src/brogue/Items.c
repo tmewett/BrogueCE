@@ -4905,7 +4905,7 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
             }
         }
         if (!fastForward && (boltInView || rogue.playbackOmniscience)) {
-            fastForward = rogue.playbackFastForward || pauseBrogue(16);
+            fastForward = rogue.playbackFastForward || pauseAnimation(16);
         }
 
         if (theBolt->boltEffect == BE_BLINKING) {
@@ -5048,7 +5048,7 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
                 }
 
                 if (!fastForward && boltInView) {
-                    fastForward = rogue.playbackFastForward || pauseBrogue(16);
+                    fastForward = rogue.playbackFastForward || pauseAnimation(16);
                 }
             }
         } else if (theBolt->flags & BF_DISPLAY_CHAR_ALONG_LENGTH) {
@@ -5833,7 +5833,7 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
             plotCharWithColor(theItem->displayChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor);
 
             if (!fastForward) {
-                fastForward = rogue.playbackFastForward || pauseBrogue(25);
+                fastForward = rogue.playbackFastForward || pauseAnimation(25);
             }
 
             refreshDungeonCell(x, y);

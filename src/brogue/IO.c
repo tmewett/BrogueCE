@@ -1718,7 +1718,7 @@ void irisFadeBetweenBuffers(cellDisplayBuffer fromBuf[COLS][ROWS],
             }
         }
 
-        fastForward = pauseBrogue(16);
+        fastForward = pauseAnimation(16);
         frame++;
     } while (frame <= frameCount && !fastForward);
     overlayDisplayBuffer(toBuf, NULL);
@@ -2057,7 +2057,7 @@ void flashForeground(short *x, short *y, color **flashColor, short *flashStrengt
             plotCharWithColor(displayChar[i], mapToWindowX(x[i]), mapToWindowY(y[i]), &newColor, &(bColor[i]));
         }
         if (j) {
-            if (pauseBrogue(16)) {
+            if (pauseAnimation(16)) {
                 j = 1;
             }
         }
@@ -2076,7 +2076,7 @@ void flashCell(color *theColor, short frames, short x, short y) {
 
     for (i=0; i<frames && !interrupted; i++) {
         colorBlendCell(x, y, theColor, 100 - 100 * i / frames);
-        interrupted = pauseBrogue(50);
+        interrupted = pauseAnimation(50);
     }
 
     refreshDungeonCell(x, y);
@@ -2125,7 +2125,7 @@ void colorFlash(const color *theColor, unsigned long reqTerrainFlags,
                 }
             }
         }
-        if (!fastForward && (rogue.playbackFastForward || pauseBrogue(50))) {
+        if (!fastForward && (rogue.playbackFastForward || pauseAnimation(50))) {
             k = frames - 1;
             fastForward = true;
         }
@@ -2217,7 +2217,7 @@ void funkyFade(cellDisplayBuffer displayBuf[COLS][ROWS], const color *colorStart
                 plotCharWithColor(tempChar, i, j, &foreColor, &backColor);
             }
         }
-        if (!fastForward && pauseBrogue(16)) {
+        if (!fastForward && pauseAnimation(16)) {
             // drop the event - skipping the transition should only skip the transition
             rogueEvent event;
             nextKeyOrMouseEvent(&event, false, false);
@@ -2391,15 +2391,26 @@ void exploreKey(const boolean controlKey) {
 }
 
 boolean pauseBrogue(short milliseconds) {
-    boolean interrupted;
-
     commitDraws();
     if (rogue.playbackMode && rogue.playbackFastForward) {
-        interrupted = true;
-    } else {
-        interrupted = pauseForMilliseconds(milliseconds);
+        return true;
     }
-    return interrupted;
+    // For long delays, let's pause in small increments so that we can immediately react to user interruptions.
+    while (milliseconds > 100) {
+        if (pauseForMilliseconds(50)) return true;
+        milliseconds -= 50;
+    }
+    return pauseForMilliseconds(milliseconds);
+}
+
+// Same as pauseBrogue, but during playback the delay scales according to playback speed.
+boolean pauseAnimation(short milliseconds) {
+    if (rogue.playbackMode && !rogue.playbackPaused && milliseconds > 0) {
+        double factor = rogue.playbackDelayPerTurn / (double)DEFAULT_PLAYBACK_DELAY;
+        if (factor > 1.) factor = sqrt(factor); // so that animations don't slow down too much
+        milliseconds = max(1, lround(milliseconds * factor));
+    }
+    return pauseBrogue(milliseconds);
 }
 
 void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance, boolean realInputEvenInPlayback) {
@@ -2550,7 +2561,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                 rogue.automationActive = true;
                 do {
                     manualSearch();
-                    if (pauseBrogue(80)) {
+                    if (pauseAnimation(80)) {
                         rogue.disturbed = true;
                     }
                 } while (player.status[STATUS_SEARCHING] < 5 && !rogue.disturbed);
@@ -3535,7 +3546,7 @@ void message(const char *msg, enum messageFlags flags) {
     }
 
     if (rogue.playbackMode) {
-        rogue.playbackDelayThisTurn += rogue.playbackDelayPerTurn * 5;
+        rogue.playbackDelayThisTurn += min(2000, rogue.playbackDelayPerTurn * 5);
     }
 
     restoreRNG;
