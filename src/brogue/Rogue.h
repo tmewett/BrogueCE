@@ -2658,7 +2658,7 @@ typedef struct archivedMessage {
     char message[COLS*2];
     unsigned char count;          // how many times this message appears
     unsigned long turn;           // player turn of the first occurrence
-    enum messageFlags flags;
+    unsigned long flags;
 } archivedMessage;
 
 extern boolean serverMode;
@@ -2917,10 +2917,10 @@ extern "C" {
     void formatRecentMessages(char buf[][COLS*2], size_t height, short *linesFormatted, short *latestMessageLines);
     void displayRecentMessages();
     void displayMessageArchive();
-    void temporaryMessage(const char *msg1, enum messageFlags flags);
-    void messageWithColor(char *msg, color *theColor, enum messageFlags flags);
+    void temporaryMessage(const char *msg1, unsigned long flags);
+    void messageWithColor(char *msg, color *theColor, unsigned long flags);
     void flavorMessage(char *msg);
-    void message(const char *msg, enum messageFlags flags);
+    void message(const char *msg, unsigned long flags);
     void displayMoreSignWithoutWaitingForAcknowledgment();
     void displayMoreSign();
     short encodeMessageColor(char *msg, short i, const color *theColor);

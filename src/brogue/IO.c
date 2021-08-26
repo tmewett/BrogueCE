@@ -3418,7 +3418,7 @@ void displayMessageArchive() {
 // Clears the message area and prints the given message in the area.
 // It will disappear when messages are refreshed and will not be archived.
 // This is primarily used to display prompts.
-void temporaryMessage(const char *msg, enum messageFlags flags) {
+void temporaryMessage(const char *msg, unsigned long flags) {
     char message[COLS];
     short i, j;
 
@@ -3446,7 +3446,7 @@ void temporaryMessage(const char *msg, enum messageFlags flags) {
     restoreRNG;
 }
 
-void messageWithColor(char *msg, color *theColor, enum messageFlags flags) {
+void messageWithColor(char *msg, color *theColor, unsigned long flags) {
     char buf[COLS*2] = "";
     short i;
 
@@ -3481,7 +3481,7 @@ void flavorMessage(char *msg) {
 // arrived on the same turn, they may collapse.  Alternately, they may collapse
 // if the older message is the latest one in the archive and the new one is not
 // semi-colon foldable (such as a combat message.)
-void message(const char *msg, enum messageFlags flags) {
+void message(const char *msg, unsigned long flags) {
     short i;
     archivedMessage *archiveEntry;
     boolean newMessage;
