@@ -81,7 +81,7 @@ static void closeLogfile() {
 }
 
 static void writeToLog(const char *msg) {
-    fprintf(logfile, msg);
+    fprintf(logfile, "%s", msg);
     fflush(logfile);
 }
 
@@ -148,7 +148,7 @@ static unsigned int fixUnicode(unsigned int code) {
 }
 
 static void web_plotChar(enum displayGlyph inputChar,
-                         short loc.x, short loc.y,
+                         short xLoc, short yLoc,
                          short foreRed, short foreGreen, short foreBlue,
                          short backRed, short backGreen, short backBlue) {
     unsigned char outputBuffer[OUTPUT_SIZE];
@@ -161,8 +161,8 @@ static void web_plotChar(enum displayGlyph inputChar,
     firstCharByte = translatedChar >> 8 & 0xff;
     secondCharByte = translatedChar;
 
-    outputBuffer[0] = (unsigned char)loc.x;
-    outputBuffer[1] = (unsigned char)loc.y;
+    outputBuffer[0] = (unsigned char)xLoc;
+    outputBuffer[1] = (unsigned char)yLoc;
     outputBuffer[2] = firstCharByte;
     outputBuffer[3] = secondCharByte;
     outputBuffer[4] = (unsigned char)foreRed * 255 / 100;
