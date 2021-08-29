@@ -6884,6 +6884,13 @@ void readScroll(item *theItem) {
                     }
                 }
             }
+            for (i=0; i<DCOLS; i++) {
+                for (j=0; j<DROWS; j++) {
+                    if (!(cellHasTerrainFlag(i, j, T_IS_DF_TRAP))) {
+                        pmap[i][j].flags |= KNOWN_TO_BE_TRAP_FREE;
+                    }
+                }
+            }
             colorFlash(&magicMapFlashColor, 0, MAGIC_MAPPED, 15, DCOLS + DROWS, player.loc.x, player.loc.y);
             break;
         case SCROLL_AGGRAVATE_MONSTER:
