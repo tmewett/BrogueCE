@@ -31,8 +31,8 @@ void playerRuns(short direction) {
     rogue.disturbed = (player.status[STATUS_CONFUSED] ? true : false);
 
     for (dir = 0; dir < 4; dir++) {
-        newX = player.xLoc + nbDirs[dir][0];
-        newY = player.yLoc + nbDirs[dir][1];
+        newX = player.loc.x + nbDirs[dir][0];
+        newY = player.loc.y + nbDirs[dir][1];
         cardinalPassability[dir] = monsterAvoids(&player, newX, newY);
     }
 
@@ -42,19 +42,19 @@ void playerRuns(short direction) {
             break;
         }
 
-        newX = player.xLoc + nbDirs[direction][0];
-        newY = player.yLoc + nbDirs[direction][1];
+        newX = player.loc.x + nbDirs[direction][0];
+        newY = player.loc.y + nbDirs[direction][1];
         if (!coordinatesAreInMap(newX, newY)
             || monsterAvoids(&player, newX, newY)) {
 
             rogue.disturbed = true;
         }
-        if (isDisturbed(player.xLoc, player.yLoc)) {
+        if (isDisturbed(player.loc.x, player.loc.y)) {
             rogue.disturbed = true;
         } else if (direction < 4) {
             for (dir = 0; dir < 4; dir++) {
-                newX = player.xLoc + nbDirs[dir][0];
-                newY = player.yLoc + nbDirs[dir][1];
+                newX = player.loc.x + nbDirs[dir][0];
+                newY = player.loc.y + nbDirs[dir][1];
                 if (cardinalPassability[dir] != monsterAvoids(&player, newX, newY)
                     && !(nbDirs[dir][0] + nbDirs[direction][0] == 0 &&
                          nbDirs[dir][1] + nbDirs[direction][1] == 0)) {
@@ -152,7 +152,7 @@ void describeLocation(char *buf, short x, short y) {
 
     assureCosmeticRNG;
 
-    if (x == player.xLoc && y == player.yLoc) {
+    if (x == player.loc.x && y == player.loc.y) {
         if (player.status[STATUS_LEVITATING]) {
             sprintf(buf, "you are hovering above %s.", tileText(x, y));
         } else {
@@ -305,7 +305,7 @@ void describeLocation(char *buf, short x, short y) {
         } else if (monst->status[STATUS_CONFUSED]) {
             strcpy(verb, "is staggering");
         } else if ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID)
-                   && !cellHasTMFlag(monst->xLoc, monst->yLoc, TM_ALLOWS_SUBMERGING)) {
+                   && !cellHasTMFlag(monst->loc.x, monst->loc.y, TM_ALLOWS_SUBMERGING)) {
             strcpy(verb, "is lying");
             subjectMoving = false;
         } else if (monst->info.flags & MONST_IMMOBILE) {
@@ -465,7 +465,7 @@ short randValidDirectionFrom(creature *monst, short x, short y, boolean respectA
 
 void vomit(creature *monst) {
     char buf[COLS], monstName[COLS];
-    spawnDungeonFeature(monst->xLoc, monst->yLoc, &dungeonFeatureCatalog[DF_VOMIT], true, false);
+    spawnDungeonFeature(monst->loc.x, monst->loc.y, &dungeonFeatureCatalog[DF_VOMIT], true, false);
 
     if (canDirectlySeeMonster(monst)
         && !rogue.automationActive) {
@@ -513,7 +513,7 @@ void becomeAllyWith(creature *monst) {
     monst->bookkeepingFlags |= MB_FOLLOWER;
     monst->leader = &player;
     monst->bookkeepingFlags &= ~(MB_CAPTIVE | MB_SEIZED);
-    refreshDungeonCell(monst->xLoc, monst->yLoc);
+    refreshDungeonCell(monst->loc.x, monst->loc.y);
 }
 
 void freeCaptive(creature *monst) {
@@ -596,10 +596,10 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
     } else if (!(attacker->info.abilityFlags & MA_ATTACKS_EXTEND)) {
         return false;
     }
-    originLoc[0] = attacker->xLoc;
-    originLoc[1] = attacker->yLoc;
-    targetLoc[0] = attacker->xLoc + nbDirs[dir][0];
-    targetLoc[1] = attacker->yLoc + nbDirs[dir][1];
+    originLoc[0] = attacker->loc.x;
+    originLoc[1] = attacker->loc.y;
+    targetLoc[0] = attacker->loc.x + nbDirs[dir][0];
+    targetLoc[1] = attacker->loc.y + nbDirs[dir][1];
     getImpactLoc(strikeLoc, originLoc, targetLoc, 5, false, &boltCatalog[BOLT_WHIP]);
 
     defender = monsterAtLoc(strikeLoc[0], strikeLoc[1]);
@@ -649,8 +649,8 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
     }
 
     for (i = 0; i < range; i++) {
-        targetLoc[0] = attacker->xLoc + (1 + i) * nbDirs[dir][0];
-        targetLoc[1] = attacker->yLoc + (1 + i) * nbDirs[dir][1];
+        targetLoc[0] = attacker->loc.x + (1 + i) * nbDirs[dir][0];
+        targetLoc[1] = attacker->loc.y + (1 + i) * nbDirs[dir][1];
         if (!coordinatesAreInMap(targetLoc[0], targetLoc[1])) {
             break;
         }
@@ -692,8 +692,8 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
         }
         if (!rogue.playbackFastForward) {
             for (i = 0; i < range; i++) {
-                targetLoc[0] = attacker->xLoc + (1 + i) * nbDirs[dir][0];
-                targetLoc[1] = attacker->yLoc + (1 + i) * nbDirs[dir][1];
+                targetLoc[0] = attacker->loc.x + (1 + i) * nbDirs[dir][0];
+                targetLoc[1] = attacker->loc.y + (1 + i) * nbDirs[dir][1];
                 if (coordinatesAreInMap(targetLoc[0], targetLoc[1])
                     && playerCanSeeOrSense(targetLoc[0], targetLoc[1])) {
 
@@ -709,10 +709,10 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
             attack(attacker, hitList[i], false);
         }
         if (visualEffect) {
-            pauseBrogue(16);
+            pauseAnimation(16);
             for (i = 0; i < range; i++) {
-                targetLoc[0] = attacker->xLoc + (1 + i) * nbDirs[dir][0];
-                targetLoc[1] = attacker->yLoc + (1 + i) * nbDirs[dir][1];
+                targetLoc[0] = attacker->loc.x + (1 + i) * nbDirs[dir][0];
+                targetLoc[1] = attacker->loc.y + (1 + i) * nbDirs[dir][1];
                 if (coordinatesAreInMap(targetLoc[0], targetLoc[1])) {
                     refreshDungeonCell(targetLoc[0], targetLoc[1]);
                 }
@@ -729,15 +729,15 @@ void buildFlailHitList(const short x, const short y, const short newX, const sho
 
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
-        mx = monst->xLoc;
-        my = monst->yLoc;
+        mx = monst->loc.x;
+        my = monst->loc.y;
         if (distanceBetween(x, y, mx, my) == 1
             && distanceBetween(newX, newY, mx, my) == 1
             && canSeeMonster(monst)
             && monstersAreEnemies(&player, monst)
             && monst->creatureState != MONSTER_ALLY
             && !(monst->bookkeepingFlags & MB_IS_DYING)
-            && (!cellHasTerrainFlag(monst->xLoc, monst->yLoc, T_OBSTRUCTS_PASSABILITY) || (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS))) {
+            && (!cellHasTerrainFlag(monst->loc.x, monst->loc.y, T_OBSTRUCTS_PASSABILITY) || (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS))) {
 
             while (hitList[i]) {
                 i++;
@@ -767,7 +767,7 @@ boolean diagonalBlocked(const short x1, const short y1, const short x2, const sh
 // Can be called from movement keys, exploration, or auto-travel.
 boolean playerMoves(short direction) {
     short initialDirection = direction, i, layer;
-    short x = player.xLoc, y = player.yLoc;
+    short x = player.loc.x, y = player.loc.y;
     short newX, newY, newestX, newestY;
     boolean playerMoved = false, specialAttackAborted = false, anyAttackHit = false;
     creature *defender = NULL, *tempMonst = NULL, *hitList[16] = {NULL};
@@ -946,8 +946,8 @@ boolean playerMoves(short direction) {
                 creature *tempMonst = nextCreature(&it);
                 if ((tempMonst->bookkeepingFlags & MB_SEIZING)
                     && monstersAreEnemies(&player, tempMonst)
-                    && distanceBetween(player.xLoc, player.yLoc, tempMonst->xLoc, tempMonst->yLoc) == 1
-                    && !diagonalBlocked(player.xLoc, player.yLoc, tempMonst->xLoc, tempMonst->yLoc, false)
+                    && distanceBetween(player.loc.x, player.loc.y, tempMonst->loc.x, tempMonst->loc.y) == 1
+                    && !diagonalBlocked(player.loc.x, player.loc.y, tempMonst->loc.x, tempMonst->loc.y, false)
                     && !tempMonst->status[STATUS_ENTRANCED]) {
 
                     monsterName(monstName, tempMonst, true);
@@ -1034,8 +1034,8 @@ boolean playerMoves(short direction) {
         }
 
         if (rogue.weapon && (rogue.weapon->flags & ITEM_LUNGE_ATTACKS)) {
-            newestX = player.xLoc + 2*nbDirs[direction][0];
-            newestY = player.yLoc + 2*nbDirs[direction][1];
+            newestX = player.loc.x + 2*nbDirs[direction][0];
+            newestY = player.loc.y + 2*nbDirs[direction][1];
             if (coordinatesAreInMap(newestX, newestY) && (pmap[newestX][newestY].flags & HAS_MONSTER)) {
                 tempMonst = monsterAtLoc(newestX, newestY);
                 if (tempMonst
@@ -1043,7 +1043,7 @@ boolean playerMoves(short direction) {
                     && monstersAreEnemies(&player, tempMonst)
                     && tempMonst->creatureState != MONSTER_ALLY
                     && !(tempMonst->bookkeepingFlags & MB_IS_DYING)
-                    && (!cellHasTerrainFlag(tempMonst->xLoc, tempMonst->yLoc, T_OBSTRUCTS_PASSABILITY) || (tempMonst->info.flags & MONST_ATTACKABLE_THRU_WALLS))) {
+                    && (!cellHasTerrainFlag(tempMonst->loc.x, tempMonst->loc.y, T_OBSTRUCTS_PASSABILITY) || (tempMonst->info.flags & MONST_ATTACKABLE_THRU_WALLS))) {
 
                     hitList[0] = tempMonst;
                     if (abortAttackAgainstAcidicTarget(hitList)) { // Acid mound attack confirmation.
@@ -1095,40 +1095,40 @@ boolean playerMoves(short direction) {
         }
 
         // Are we taking the stairs?
-        if (rogue.downLoc[0] == newX && rogue.downLoc[1] == newY) {
+        if (rogue.downLoc.x == newX && rogue.downLoc.y == newY) {
             committed = true;
             useStairs(1);
-        } else if (rogue.upLoc[0] == newX && rogue.upLoc[1] == newY) {
+        } else if (rogue.upLoc.x == newX && rogue.upLoc.y == newY) {
             committed = true;
             useStairs(-1);
         } else {
             // Okay, we're finally moving!
             committed = true;
 
-            player.xLoc += nbDirs[direction][0];
-            player.yLoc += nbDirs[direction][1];
+            player.loc.x += nbDirs[direction][0];
+            player.loc.y += nbDirs[direction][1];
             pmap[x][y].flags &= ~HAS_PLAYER;
-            pmap[player.xLoc][player.yLoc].flags |= HAS_PLAYER;
-            pmap[player.xLoc][player.yLoc].flags &= ~IS_IN_PATH;
+            pmap[player.loc.x][player.loc.y].flags |= HAS_PLAYER;
+            pmap[player.loc.x][player.loc.y].flags &= ~IS_IN_PATH;
             if (defender && defender->creatureState == MONSTER_ALLY) { // Swap places with ally.
-                pmap[defender->xLoc][defender->yLoc].flags &= ~HAS_MONSTER;
-                defender->xLoc = x;
-                defender->yLoc = y;
+                pmap[defender->loc.x][defender->loc.y].flags &= ~HAS_MONSTER;
+                defender->loc.x = x;
+                defender->loc.y = y;
                 if (monsterAvoids(defender, x, y)) {
-                    getQualifyingPathLocNear(&(defender->xLoc), &(defender->yLoc), player.xLoc, player.yLoc, true, forbiddenFlagsForMonster(&(defender->info)), 0, 0, (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
+                    getQualifyingPathLocNear(&(defender->loc.x), &(defender->loc.y), player.loc.x, player.loc.y, true, forbiddenFlagsForMonster(&(defender->info)), 0, 0, (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
                 }
-                //getQualifyingLocNear(loc, player.xLoc, player.yLoc, true, NULL, forbiddenFlagsForMonster(&(defender->info)) & ~(T_IS_DF_TRAP | T_IS_DEEP_WATER | T_SPONTANEOUSLY_IGNITES), HAS_MONSTER, false, false);
-                //defender->xLoc = loc[0];
-                //defender->yLoc = loc[1];
-                pmap[defender->xLoc][defender->yLoc].flags |= HAS_MONSTER;
+                //getQualifyingLocNear(loc, player.loc.x, player.loc.y, true, NULL, forbiddenFlagsForMonster(&(defender->info)) & ~(T_IS_DF_TRAP | T_IS_DEEP_WATER | T_SPONTANEOUSLY_IGNITES), HAS_MONSTER, false, false);
+                //defender->loc.x = loc[0];
+                //defender->loc.y = loc[1];
+                pmap[defender->loc.x][defender->loc.y].flags |= HAS_MONSTER;
             }
 
-            if (pmap[player.xLoc][player.yLoc].flags & HAS_ITEM) {
-                pickUpItemAt(player.xLoc, player.yLoc);
+            if (pmap[player.loc.x][player.loc.y].flags & HAS_ITEM) {
+                pickUpItemAt(player.loc.x, player.loc.y);
                 rogue.disturbed = true;
             }
             refreshDungeonCell(x, y);
-            refreshDungeonCell(player.xLoc, player.yLoc);
+            refreshDungeonCell(player.loc.x, player.loc.y);
             playerMoved = true;
 
             checkForMissingKeys(x, y);
@@ -1458,10 +1458,10 @@ short nextStep(short **distanceMap, short x, short y, creature *monst, boolean p
 }
 
 void displayRoute(short **distanceMap, boolean removeRoute) {
-    short currentX = player.xLoc, currentY = player.yLoc, dir, newX, newY;
+    short currentX = player.loc.x, currentY = player.loc.y, dir, newX, newY;
     boolean advanced;
 
-    if (distanceMap[player.xLoc][player.yLoc] < 0 || distanceMap[player.xLoc][player.yLoc] == 30000) {
+    if (distanceMap[player.loc.x][player.loc.y] < 0 || distanceMap[player.loc.x][player.loc.y] == 30000) {
         return;
     }
     do {
@@ -1516,13 +1516,13 @@ void travelRoute(short path[1000][2], short steps) {
             }
         }
         for (dir = 0; dir < DIRECTION_COUNT && !rogue.disturbed; dir++) {
-            if (player.xLoc + nbDirs[dir][0] == path[i][0]
-                && player.yLoc + nbDirs[dir][1] == path[i][1]) {
+            if (player.loc.x + nbDirs[dir][0] == path[i][0]
+                && player.loc.y + nbDirs[dir][1] == path[i][1]) {
 
                 if (!playerMoves(dir)) {
                     rogue.disturbed = true;
                 }
-                if (pauseBrogue(25)) {
+                if (pauseAnimation(25)) {
                     rogue.disturbed = true;
                 }
                 break;
@@ -1535,13 +1535,13 @@ void travelRoute(short path[1000][2], short steps) {
 }
 
 void travelMap(short **distanceMap) {
-    short currentX = player.xLoc, currentY = player.yLoc, dir, newX, newY;
+    short currentX = player.loc.x, currentY = player.loc.y, dir, newX, newY;
     boolean advanced;
 
     rogue.disturbed = false;
     rogue.automationActive = true;
 
-    if (distanceMap[player.xLoc][player.yLoc] < 0 || distanceMap[player.xLoc][player.yLoc] == 30000) {
+    if (distanceMap[player.loc.x][player.loc.y] < 0 || distanceMap[player.loc.x][player.loc.y] == 30000) {
         return;
     }
     do {
@@ -1557,7 +1557,7 @@ void travelMap(short **distanceMap) {
                 if (!playerMoves(dir)) {
                     rogue.disturbed = true;
                 }
-                if (pauseBrogue(500)) {
+                if (pauseAnimation(500)) {
                     rogue.disturbed = true;
                 }
                 currentX = newX;
@@ -1581,10 +1581,10 @@ void travel(short x, short y, boolean autoConfirm) {
 
     if (D_WORMHOLING) {
         recordMouseClick(mapToWindowX(x), mapToWindowY(y), true, false);
-        pmap[player.xLoc][player.yLoc].flags &= ~HAS_PLAYER;
-        refreshDungeonCell(player.xLoc, player.yLoc);
-        player.xLoc = x;
-        player.yLoc = y;
+        pmap[player.loc.x][player.loc.y].flags &= ~HAS_PLAYER;
+        refreshDungeonCell(player.loc.x, player.loc.y);
+        player.loc.x = x;
+        player.loc.y = y;
         pmap[x][y].flags |= HAS_PLAYER;
         updatePlayerUnderwaterness();
         refreshDungeonCell(x, y);
@@ -1592,10 +1592,10 @@ void travel(short x, short y, boolean autoConfirm) {
         return;
     }
 
-    if (abs(player.xLoc - x) + abs(player.yLoc - y) == 1) {
+    if (abs(player.loc.x - x) + abs(player.loc.y - y) == 1) {
         // targeting a cardinal neighbor
         for (i=0; i<4; i++) {
-            if (nbDirs[i][0] == (x - player.xLoc) && nbDirs[i][1] == (y - player.yLoc)) {
+            if (nbDirs[i][0] == (x - player.loc.x) && nbDirs[i][1] == (y - player.loc.y)) {
                 playerMoves(i);
                 break;
             }
@@ -1611,14 +1611,14 @@ void travel(short x, short y, boolean autoConfirm) {
     distanceMap = allocGrid();
 
     calculateDistances(distanceMap, x, y, 0, &player, false, false);
-    if (distanceMap[player.xLoc][player.yLoc] < 30000) {
+    if (distanceMap[player.loc.x][player.loc.y] < 30000) {
         if (autoConfirm) {
             travelMap(distanceMap);
             //refreshSideBar(-1, -1, false);
         } else {
-            if (rogue.upLoc[0] == x && rogue.upLoc[1] == y) {
+            if (rogue.upLoc.x == x && rogue.upLoc.y == y) {
                 staircaseConfirmKey = ASCEND_KEY;
-            } else if (rogue.downLoc[0] == x && rogue.downLoc[1] == y) {
+            } else if (rogue.downLoc.x == x && rogue.downLoc.y == y) {
                 staircaseConfirmKey = DESCEND_KEY;
             } else {
                 staircaseConfirmKey = 0;
@@ -1645,14 +1645,14 @@ void travel(short x, short y, boolean autoConfirm) {
                 executeMouseClick(&theEvent);
             }
         }
-//      if (player.xLoc == x && player.yLoc == y) {
-//          rogue.cursorLoc[0] = rogue.cursorLoc[1] = 0;
+//      if (player.loc.x == x && player.loc.y == y) {
+//          rogue.cursorLoc.x = rogue.cursorLoc.y = 0;
 //      } else {
-//          rogue.cursorLoc[0] = x;
-//          rogue.cursorLoc[1] = y;
+//          rogue.cursorLoc.x = x;
+//          rogue.cursorLoc.y = y;
 //      }
     } else {
-        rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
+        rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
         message("No path is available.", 0);
     }
     freeGrid(distanceMap);
@@ -1732,7 +1732,7 @@ void populateCreatureCostMap(short **costMap, creature *monst) {
             if ((tFlags & T_LAVA_INSTA_DEATH)
                 && !(monst->info.flags & (MONST_IMMUNE_TO_FIRE | MONST_FLIES | MONST_INVULNERABLE))
                 && (monst->status[STATUS_LEVITATING] || monst->status[STATUS_IMMUNE_TO_FIRE])
-                && max(monst->status[STATUS_LEVITATING], monst->status[STATUS_IMMUNE_TO_FIRE]) < (rogue.mapToShore[i][j] + distanceBetween(i, j, monst->xLoc, monst->yLoc) * monst->movementSpeed / 100)) {
+                && max(monst->status[STATUS_LEVITATING], monst->status[STATUS_IMMUNE_TO_FIRE]) < (rogue.mapToShore[i][j] + distanceBetween(i, j, monst->loc.x, monst->loc.y) * monst->movementSpeed / 100)) {
                 // Only a temporary effect will permit the monster to survive the lava, and the remaining duration either isn't
                 // enough to get it to the spot, or it won't suffice to let it return to shore if it does get there.
                 // Treat these locations as obstacles.
@@ -1743,7 +1743,7 @@ void populateCreatureCostMap(short **costMap, creature *monst) {
             if (((tFlags & T_AUTO_DESCENT) || (tFlags & T_IS_DEEP_WATER) && !(monst->info.flags & MONST_IMMUNE_TO_WATER))
                 && !(monst->info.flags & MONST_FLIES)
                 && (monst->status[STATUS_LEVITATING])
-                && monst->status[STATUS_LEVITATING] < (rogue.mapToShore[i][j] + distanceBetween(i, j, monst->xLoc, monst->yLoc) * monst->movementSpeed / 100)) {
+                && monst->status[STATUS_LEVITATING] < (rogue.mapToShore[i][j] + distanceBetween(i, j, monst->loc.x, monst->loc.y) * monst->movementSpeed / 100)) {
                 // Only a temporary effect will permit the monster to levitate over the chasm/water, and the remaining duration either isn't
                 // enough to get it to the spot, or it won't suffice to let it return to shore if it does get there.
                 // Treat these locations as obstacles.
@@ -1802,16 +1802,16 @@ enum directions adjacentFightingDir() {
     enum directions dir;
     creature *monst;
 
-    if (cellHasTerrainFlag(player.xLoc, player.yLoc, T_OBSTRUCTS_PASSABILITY)) {
+    if (cellHasTerrainFlag(player.loc.x, player.loc.y, T_OBSTRUCTS_PASSABILITY)) {
         return NO_DIRECTION;
     }
     for (dir = 0; dir < DIRECTION_COUNT; dir++) {
-        newX = player.xLoc + nbDirs[dir][0];
-        newY = player.yLoc + nbDirs[dir][1];
+        newX = player.loc.x + nbDirs[dir][0];
+        newY = player.loc.y + nbDirs[dir][1];
         monst = monsterAtLoc(newX, newY);
         if (monst
             && canSeeMonster(monst)
-            && (!diagonalBlocked(player.xLoc, player.yLoc, newX, newY, false) || (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS))
+            && (!diagonalBlocked(player.loc.x, player.loc.y, newX, newY, false) || (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS))
             && monstersAreEnemies(&player, monst)
             && !(monst->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE))) {
 
@@ -1856,11 +1856,11 @@ void getExploreMap(short **map, boolean headingToStairs) {// calculate explore m
         }
     }
 
-    costMap[rogue.downLoc[0]][rogue.downLoc[1]] = 100;
-    costMap[rogue.upLoc[0]][rogue.upLoc[1]]     = 100;
+    costMap[rogue.downLoc.x][rogue.downLoc.y] = 100;
+    costMap[rogue.upLoc.x][rogue.upLoc.y]     = 100;
 
     if (headingToStairs) {
-        map[rogue.downLoc[0]][rogue.downLoc[1]] = 0; // head to the stairs
+        map[rogue.downLoc.x][rogue.downLoc.y] = 0; // head to the stairs
     }
 
     dijkstraScan(map, costMap, true);
@@ -1889,7 +1889,7 @@ boolean explore(short frameDelay) {
         message("Not while you're confused.", 0);
         return false;
     }
-    if (cellHasTerrainFlag(player.xLoc, player.yLoc, T_OBSTRUCTS_PASSABILITY)) {
+    if (cellHasTerrainFlag(player.loc.x, player.loc.y, T_OBSTRUCTS_PASSABILITY)) {
         message("Not while you're trapped.", 0);
         return false;
     }
@@ -1941,11 +1941,11 @@ boolean explore(short frameDelay) {
         getExploreMap(distanceMap, headingToStairs);
 
         // hilite path
-        steps = getPlayerPathOnMap(path, distanceMap, player.xLoc, player.yLoc);
+        steps = getPlayerPathOnMap(path, distanceMap, player.loc.x, player.loc.y);
         hilitePath(path, steps, false);
 
         // take a step
-        dir = nextStep(distanceMap, player.xLoc, player.yLoc, NULL, false);
+        dir = nextStep(distanceMap, player.loc.x, player.loc.y, NULL, false);
 
         if (!headingToStairs && rogue.autoPlayingLevel && dir == NO_DIRECTION) {
             headingToStairs = true;
@@ -1960,7 +1960,7 @@ boolean explore(short frameDelay) {
             rogue.disturbed = true;
         } else {
             madeProgress = true;
-            if (pauseBrogue(frameDelay)) {
+            if (pauseAnimation(frameDelay)) {
                 rogue.disturbed = true;
                 rogue.autoPlayingLevel = false;
             }
@@ -1987,7 +1987,7 @@ void autoPlayLevel(boolean fastForward) {
         madeProgress = explore(fastForward ? 1 : 50);
         //refreshSideBar(-1, -1, false);
 
-        if (!madeProgress && rogue.downLoc[0] == player.xLoc && rogue.downLoc[1] == player.yLoc) {
+        if (!madeProgress && rogue.downLoc.x == player.loc.x && rogue.downLoc.y == player.loc.y) {
             useStairs(1);
             madeProgress = true;
         }
@@ -2037,8 +2037,8 @@ boolean startFighting(enum directions dir, boolean tillDeath) {
     short x, y, expectedDamage;
     creature *monst;
 
-    x = player.xLoc + nbDirs[dir][0];
-    y = player.yLoc + nbDirs[dir][1];
+    x = player.loc.x + nbDirs[dir][0];
+    y = player.loc.y + nbDirs[dir][1];
     monst = monsterAtLoc(x, y);
     if (monst->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE)) {
         return false;
@@ -2053,7 +2053,7 @@ boolean startFighting(enum directions dir, boolean tillDeath) {
         if (!playerMoves(dir)) {
             break;
         }
-        if (pauseBrogue(1)) {
+        if (pauseAnimation(1)) {
             break;
         }
     } while (!rogue.disturbed && !rogue.gameHasEnded && (tillDeath || player.currentHP > expectedDamage)
@@ -2108,8 +2108,8 @@ boolean search(short searchStrength) {
     boolean foundSomething = false;
 
     radius = searchStrength / 10;
-    x = player.xLoc;
-    y = player.yLoc;
+    x = player.loc.x;
+    y = player.loc.y;
 
     for (i = x - radius; i <= x + radius; i++) {
         for (j = y - radius; j <= y + radius; j++) {
@@ -2138,14 +2138,14 @@ boolean search(short searchStrength) {
 
 boolean proposeOrConfirmLocation(short x, short y, char *failureMessage) {
     boolean retval = false;
-    if (player.xLoc == x && player.yLoc == y) {
+    if (player.loc.x == x && player.loc.y == y) {
         message("you are already there.", 0);
     } else if (pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED)) {
-        if (rogue.cursorLoc[0] == x && rogue.cursorLoc[1] == y) {
+        if (rogue.cursorLoc.x == x && rogue.cursorLoc.y == y) {
             retval = true;
         } else {
-            rogue.cursorLoc[0] = x;
-            rogue.cursorLoc[1] = y;
+            rogue.cursorLoc.x = x;
+            rogue.cursorLoc.y = y;
         }
     } else {
         message(failureMessage, 0);
@@ -2160,7 +2160,7 @@ boolean useStairs(short stairDirection) {
     if (stairDirection == 1) {
         if (rogue.depthLevel < DEEPEST_LEVEL) {
             //copyDisplayBuffer(fromBuf, displayBuffer);
-            rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
+            rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
             rogue.depthLevel++;
             message("You descend.", 0);
             startLevel(rogue.depthLevel - 1, stairDirection);
@@ -2168,7 +2168,7 @@ boolean useStairs(short stairDirection) {
                 rogue.deepestLevel = rogue.depthLevel;
             }
             //copyDisplayBuffer(toBuf, displayBuffer);
-            //irisFadeBetweenBuffers(fromBuf, toBuf, mapToWindowX(player.xLoc), mapToWindowY(player.yLoc), 20, false);
+            //irisFadeBetweenBuffers(fromBuf, toBuf, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), 20, false);
         } else if (numberOfMatchingPackItems(AMULET, 0, 0, false)) {
             victory(true);
         } else {
@@ -2179,7 +2179,7 @@ boolean useStairs(short stairDirection) {
         succeeded = true;
     } else {
         if (rogue.depthLevel > 1 || numberOfMatchingPackItems(AMULET, 0, 0, false)) {
-            rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
+            rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
             rogue.depthLevel--;
             if (rogue.depthLevel == 0) {
                 victory(false);
@@ -2188,7 +2188,7 @@ boolean useStairs(short stairDirection) {
                 message("You ascend.", 0);
                 startLevel(rogue.depthLevel + 1, stairDirection);
                 //copyDisplayBuffer(toBuf, displayBuffer);
-                //irisFadeBetweenBuffers(fromBuf, toBuf, mapToWindowX(player.xLoc), mapToWindowY(player.yLoc), 20, true);
+                //irisFadeBetweenBuffers(fromBuf, toBuf, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), 20, true);
             }
             succeeded = true;
         } else {
@@ -2355,7 +2355,7 @@ void betweenOctant1andN(short *x, short *y, short x0, short y0, short n) {
     }
 }
 
-// Returns a boolean grid indicating whether each square is in the field of view of (xLoc, yLoc).
+// Returns a boolean grid indicating whether each square is in the field of view of (loc.x, loc.y).
 // forbiddenTerrain is the set of terrain flags that will block vision (but the blocking cell itself is
 // illuminated); forbiddenFlags is the set of map flags that will block vision.
 // If cautiousOnWalls is set, we will not illuminate blocking tiles unless the tile one space closer to the origin
@@ -2363,10 +2363,10 @@ void betweenOctant1andN(short *x, short *y, short x0, short y0, short n) {
 // side of the wall.
 void getFOVMask(char grid[DCOLS][DROWS], short xLoc, short yLoc, fixpt maxRadius,
                 unsigned long forbiddenTerrain, unsigned long forbiddenFlags, boolean cautiousOnWalls) {
-    short i;
+    pos loc = { xLoc, yLoc };
 
-    for (i=1; i<=8; i++) {
-        scanOctantFOV(grid, xLoc, yLoc, i, maxRadius, 1, LOS_SLOPE_GRANULARITY * -1, 0,
+    for (int i=1; i<=8; i++) {
+        scanOctantFOV(grid, loc.x, loc.y, i, maxRadius, 1, LOS_SLOPE_GRANULARITY * -1, 0,
                       forbiddenTerrain, forbiddenFlags, cautiousOnWalls);
     }
 }
@@ -2375,6 +2375,7 @@ void getFOVMask(char grid[DCOLS][DROWS], short xLoc, short yLoc, fixpt maxRadius
 void scanOctantFOV(char grid[DCOLS][DROWS], short xLoc, short yLoc, short octant, fixpt maxRadius,
                    short columnsRightFromOrigin, long startSlope, long endSlope, unsigned long forbiddenTerrain,
                    unsigned long forbiddenFlags, boolean cautiousOnWalls) {
+    const pos loc = { xLoc, yLoc };
 
     if (columnsRightFromOrigin * FP_FACTOR >= maxRadius) return;
 
@@ -2398,15 +2399,15 @@ void scanOctantFOV(char grid[DCOLS][DROWS], short xLoc, short yLoc, short octant
         iStart = (int) (-1 * fp_sqrt((maxRadius*maxRadius / FP_FACTOR) - (columnsRightFromOrigin*columnsRightFromOrigin * FP_FACTOR)) / FP_FACTOR);
     }
 
-    x = xLoc + columnsRightFromOrigin;
-    y = yLoc + iStart;
-    betweenOctant1andN(&x, &y, xLoc, yLoc, octant);
+    x = loc.x + columnsRightFromOrigin;
+    y = loc.y + iStart;
+    betweenOctant1andN(&x, &y, loc.x, loc.y, octant);
     boolean currentlyLit = coordinatesAreInMap(x, y) && !(cellHasTerrainFlag(x, y, forbiddenTerrain) ||
                                                           (pmap[x][y].flags & forbiddenFlags));
     for (i = iStart; i <= iEnd; i++) {
-        x = xLoc + columnsRightFromOrigin;
-        y = yLoc + i;
-        betweenOctant1andN(&x, &y, xLoc, yLoc, octant);
+        x = loc.x + columnsRightFromOrigin;
+        y = loc.y + i;
+        betweenOctant1andN(&x, &y, loc.x, loc.y, octant);
         if (!coordinatesAreInMap(x, y)) {
             // We're off the map -- here there be memory corruption.
             continue;
@@ -2415,14 +2416,14 @@ void scanOctantFOV(char grid[DCOLS][DROWS], short xLoc, short yLoc, short octant
         // if we're cautious on walls and this is a wall:
         if (cautiousOnWalls && cellObstructed) {
             // (x2, y2) is the tile one space closer to the origin from the tile we're on:
-            x2 = xLoc + columnsRightFromOrigin - 1;
-            y2 = yLoc + i;
+            x2 = loc.x + columnsRightFromOrigin - 1;
+            y2 = loc.y + i;
             if (i < 0) {
                 y2++;
             } else if (i > 0) {
                 y2--;
             }
-            betweenOctant1andN(&x2, &y2, xLoc, yLoc, octant);
+            betweenOctant1andN(&x2, &y2, loc.x, loc.y, octant);
 
             if (pmap[x2][y2].flags & IN_FIELD_OF_VIEW) {
                 // previous tile is visible, so illuminate
@@ -2440,7 +2441,7 @@ void scanOctantFOV(char grid[DCOLS][DROWS], short xLoc, short yLoc, short octant
                             / (columnsRightFromOrigin * 2 - 1) * 2);
             if (newStartSlope <= newEndSlope) {
                 // run next column
-                scanOctantFOV(grid, xLoc, yLoc, octant, maxRadius, columnsRightFromOrigin + 1, newStartSlope, newEndSlope,
+                scanOctantFOV(grid, loc.x, loc.y, octant, maxRadius, columnsRightFromOrigin + 1, newStartSlope, newEndSlope,
                               forbiddenTerrain, forbiddenFlags, cautiousOnWalls);
             }
             currentlyLit = false;
@@ -2450,7 +2451,7 @@ void scanOctantFOV(char grid[DCOLS][DROWS], short xLoc, short yLoc, short octant
         newEndSlope = endSlope;
         if (newStartSlope <= newEndSlope) {
             // run next column
-            scanOctantFOV(grid, xLoc, yLoc, octant, maxRadius, columnsRightFromOrigin + 1, newStartSlope, newEndSlope,
+            scanOctantFOV(grid, loc.x, loc.y, octant, maxRadius, columnsRightFromOrigin + 1, newStartSlope, newEndSlope,
                           forbiddenTerrain, forbiddenFlags, cautiousOnWalls);
         }
     }
