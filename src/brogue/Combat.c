@@ -344,14 +344,6 @@ void moralAttack(creature *attacker, creature *defender) {
 
             alertMonster(defender); // this alerts the monster that you're nearby
         }
-
-        if ((defender->info.abilityFlags & MA_CLONE_SELF_ON_DEFEND) && alliedCloneCount(defender) < 100) {
-            if (distanceBetween(defender->loc.x, defender->loc.y, attacker->loc.x, attacker->loc.y) <= 1) {
-                splitMonster(defender, attacker->loc.x, attacker->loc.y);
-            } else {
-                splitMonster(defender, 0, 0);
-            }
-        }
     }
 }
 
@@ -1197,6 +1189,14 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
 
         if (attacker == &player && rogue.weapon && (rogue.weapon->flags & ITEM_RUNIC)) {
             magicWeaponHit(defender, rogue.weapon, sneakAttack || defenderWasAsleep || defenderWasParalyzed);
+        }
+        
+        if (!(defender->bookkeepingFlags & MB_IS_DYING) && (defender->info.abilityFlags & MA_CLONE_SELF_ON_DEFEND) && alliedCloneCount(defender) < 100) {
+            if (distanceBetween(defender->loc.x, defender->loc.y, attacker->loc.x, attacker->loc.y) <= 1) {
+                splitMonster(defender, attacker->loc.x, attacker->loc.y);
+            } else {
+                splitMonster(defender, 0, 0);
+            }
         }
 
         if (attacker == &player
