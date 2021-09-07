@@ -2042,14 +2042,18 @@ void itemDetails(char *buf, item *theItem) {
                             abs((short) damageChange),
                             whiteColorEscape);
                 } else {
-                    new = theItem->armor;
+                    new = 0;
+
                     if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                        new += 10 * netEnchant(theItem) / FP_FACTOR;
+                        new = theItem->armor / 10;
+                        new += netEnchant(theItem) / FP_FACTOR;
                     } else {
-                        new += 10 * strengthModifier(theItem) / FP_FACTOR;
+                        new = ((armorTable[theItem->kind].range.upperBound + armorTable[theItem->kind].range.lowerBound) / 2) / 10;
+                        new += strengthModifier(theItem) / FP_FACTOR;
                     }
+
                     new = max(0, new);
-                    new /= 10;
+
                     sprintf(buf2, "Wearing the %s%s will result in an armor rating of %s%i%s. ",
                             theName,
                             ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) ? "" : ", assuming it has no hidden properties,",
