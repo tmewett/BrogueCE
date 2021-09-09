@@ -3,6 +3,8 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include "Rogue.h"
+#include <ctype.h>
 
 
 // As a rule, everything in term.c is the result of gradual evolutionary
@@ -140,8 +142,9 @@ static int curses_init( ) {
     refresh( );
     leaveok(stdscr, TRUE);
     preparecolor( );
-    cbreak( );
+    raw( );
     noecho( );
+    nonl( );
 
     nodelay(stdscr, TRUE);
     meta(stdscr, TRUE);
@@ -887,6 +890,34 @@ int term_keycodeByName(const char *name) {
     return name[0];
 }
 
+static int term_ctrlPressed(int* key) {
+    // The keycode representing the enter key depends on curses initialization settings. With the
+    // current settings, it's represented as 13, so return `RETURN_KEY` instead.
+    if (*key == 13) {
+        *key = RETURN_KEY;
+        return 0;
+    }
+    if (*key == '\t') { // Tab is represented as "^I"
+        return 0;
+    }
+    const char* str = keyname(*key);
+    if (str == NULL) {
+        return 0;
+    }
+    if (strlen(str) == 2 && str[0] == '^' && isalpha(str[1])) {
+        // Curses doesn't distinguish between `ctrl-A` and `ctrl-shift-A`, so this special case is
+        // needed for autopilot to work.
+        if (str[1] == 'A') {
+            *key = 'A';
+        } else {
+            *key = tolower(str[1]);
+        }
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 
 struct term_t Term = {
     term_start,
@@ -899,5 +930,6 @@ struct term_t Term = {
     term_title,
     term_resize,
     term_keycodeByName,
+    term_ctrlPressed,
     {KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_BACKSPACE, KEY_DC, KEY_F(12)}
 };
