@@ -162,7 +162,7 @@ static void curses_nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInpu
             key = rewriteKey(key, textInput);
 
             returnEvent->eventType = KEYSTROKE;
-            returnEvent->controlKey = 0; //(key.rctrl || key.lctrl);
+            returnEvent->controlKey = Term.ctrlPressed(&key); //(key.rctrl || key.lctrl);
             returnEvent->shiftKey = 0; //key.shift;
             returnEvent->param1 = key;
 
