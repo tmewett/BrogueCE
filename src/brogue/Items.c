@@ -3799,7 +3799,7 @@ boolean polymorph(creature *monst) {
         monst->movementSpeed *= 2;
         monst->attackSpeed *= 2;
     }
-
+    monst->wasNegated = false;
     clearStatus(monst);
 
     if (monst->info.flags & MONST_FIERY) {
