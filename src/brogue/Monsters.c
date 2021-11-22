@@ -2808,26 +2808,44 @@ enum directions scentDirection(creature *monst) {
 // returns true if the resurrection was successful.
 boolean resurrectAlly(const short x, const short y) {
     boolean success;
-    creature *monst = firstCreature(&purgatory);
-    if (monst) {
-        // Remove from purgatory and insert into the mortal plane.
-        removeCreature(&purgatory, monst);
-        prependCreature(monsters, monst);
+    creatureIterator allyIterator = iterateCreatures(&purgatory);
+    creature *monToCheck, *monToRaise;
+    monToCheck = monToRaise = nextCreature(&allyIterator);
 
-        getQualifyingPathLocNear(&monst->loc.x, &monst->loc.y, x, y, true,
+    if (!monToCheck) { // No allies dead yet; fail.
+        return false;
+    }
+
+    // Prefer most empowered ally.  In case of tie, prefer ally with greatest monsterID (thus
+    // preferring allies found deeper in the dungeon over ones found higher up and preferring
+    // legendary allies over everyone else).
+    while (monToCheck = nextCreature(&allyIterator)) {
+        if (monToCheck->totalPowerCount > monToRaise->totalPowerCount ||
+            (monToCheck->totalPowerCount == monToRaise->totalPowerCount &&
+             monToCheck->info.monsterID > monToRaise->info.monsterID)) {
+            monToRaise = monToCheck;
+        }
+    }
+
+    if (monToRaise) {
+        // Remove from purgatory and insert into the mortal plane.
+        removeCreature(&purgatory, monToRaise);
+        prependCreature(monsters, monToRaise);
+
+        getQualifyingPathLocNear(&monToRaise->loc.x, &monToRaise->loc.y, x, y, true,
                                  (T_PATHING_BLOCKER | T_HARMFUL_TERRAIN), 0,
                                  0, (HAS_PLAYER | HAS_MONSTER), false);
-        pmap[monst->loc.x][monst->loc.y].flags |= HAS_MONSTER;
+        pmap[monToRaise->loc.x][monToRaise->loc.y].flags |= HAS_MONSTER;
 
         // Restore health etc.
-        monst->bookkeepingFlags &= ~(MB_IS_DYING | MB_ADMINISTRATIVE_DEATH | MB_HAS_DIED | MB_IS_FALLING);
-        if (!(monst->info.flags & MONST_FIERY)
-            && monst->status[STATUS_BURNING]) {
+        monToRaise->bookkeepingFlags &= ~(MB_IS_DYING | MB_ADMINISTRATIVE_DEATH | MB_HAS_DIED | MB_IS_FALLING);
+        if (!(monToRaise->info.flags & MONST_FIERY)
+            && monToRaise->status[STATUS_BURNING]) {
 
-            monst->status[STATUS_BURNING] = 0;
+            monToRaise->status[STATUS_BURNING] = 0;
         }
-        monst->status[STATUS_DISCORDANT] = 0;
-        heal(monst, 100, true);
+        monToRaise->status[STATUS_DISCORDANT] = 0;
+        heal(monToRaise, 100, true);
 
         success = true;
     } else {
