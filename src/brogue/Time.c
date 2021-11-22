@@ -2594,7 +2594,7 @@ void playerTurnEnded() {
         rogue.receivedLevitationWarning = false;
     }
 
-    emptyGraveyard();
+    removeDeadMonsters();
     rogue.playbackBetweenTurns = true;
     RNGCheck();
     handleHealthAlerts();

@@ -869,7 +869,34 @@ void freeCreature(creature *monst) {
     free(monst);
 }
 
-void emptyGraveyard() {
+static void removeDeadMonstersFromList(creatureList *list) {
+    // This needs to be able to access creatures that are dying, but `creatureIterator` skips
+    // dying monsters so it can't be used here.
+    creatureListNode *next = list->head;
+    while (next != NULL) {
+        creature *decedent = next->creature;
+        next = next->nextCreature;
+        if (decedent->bookkeepingFlags & MB_HAS_DIED) {
+            removeCreature(list, decedent);
+            if (decedent->leader == &player
+                && !(decedent->info.flags & MONST_INANIMATE)
+                && (decedent->bookkeepingFlags & MB_HAS_SOUL)
+                && !(decedent->bookkeepingFlags & MB_ADMINISTRATIVE_DEATH)) {
+                prependCreature(&purgatory, decedent);
+            } else {
+                prependCreature(&graveyard, decedent);
+            }
+        }
+    }
+}
+
+// Removes dead monsters from `monsters`/`dormantMonsters` and inserts them into `graveyard` or
+// `purgatory`; if the decedent is a player ally at the moment of death, inserts it into the
+// purgatory chain for possible future resurrection.
+// Also empties the graveyard.
+void removeDeadMonsters() {
+    removeDeadMonstersFromList(monsters);
+    removeDeadMonstersFromList(dormantMonsters);
     freeCreatureList(&graveyard);
 }
 

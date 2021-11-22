@@ -2058,12 +2058,14 @@ enum monsterBookkeepingFlags {
     MB_ABSORBING                = Fl(16),   // currently learning a skill by absorbing an enemy corpse
     MB_DOES_NOT_TRACK_LEADER    = Fl(17),   // monster will not follow its leader around
     MB_IS_FALLING               = Fl(18),   // monster is plunging downward at the end of the turn
-    MB_IS_DYING                 = Fl(19),   // monster has already been killed and is awaiting the end-of-turn graveyard sweep (or in purgatory)
+    MB_IS_DYING                 = Fl(19),   // monster is currently dying; the death is still being processed
     MB_GIVEN_UP_ON_SCENT        = Fl(20),   // to help the monster remember that the scent map is a dead end
     MB_IS_DORMANT               = Fl(21),   // lurking, waiting to burst out
     MB_HAS_SOUL                 = Fl(22),   // slaying the monster will count toward weapon auto-ID
     MB_ALREADY_SEEN             = Fl(23),   // seeing this monster won't interrupt exploration
-    MB_HAS_ENTRANCED_MOVED      = Fl(24)    // has already moved while entranced and should not move again
+    MB_HAS_ENTRANCED_MOVED      = Fl(24),   // has already moved while entranced and should not move again
+    MB_ADMINISTRATIVE_DEATH     = Fl(25),   // like the `administrativeDeath` parameter to `killCreature`
+    MB_HAS_DIED                 = Fl(26)    // monster has already been killed but not yet removed from `monsters`
 };
 
 // Defines all creatures, which include monsters and the player:
@@ -2839,7 +2841,7 @@ extern "C" {
     void updateMinersLightRadius();
     void freeCreature(creature *monst);
     void freeCreatureList(creatureList *list);
-    void emptyGraveyard();
+    void removeDeadMonsters();
     void freeEverything();
     boolean randomMatchingLocation(short *x, short *y, short dungeonType, short liquidType, short terrainType);
     enum dungeonLayers highestPriorityLayer(short x, short y, boolean skipGas);

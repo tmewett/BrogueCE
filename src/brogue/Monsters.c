@@ -887,6 +887,10 @@ creatureIterator iterateCreatures(creatureList *list) {
     creatureIterator iter;
     iter.list = list;
     iter.next = list->head;
+    // Skip monsters that have died.
+    while (iter.next != NULL && iter.next->creature->bookkeepingFlags & MB_HAS_DIED) {
+        iter.next = iter.next->nextCreature;
+    }
     return iter;
 }
 boolean hasNextCreature(creatureIterator iter) {
@@ -898,10 +902,18 @@ creature *nextCreature(creatureIterator *iter) {
     }
     creature *result = iter->next->creature;
     iter->next = iter->next->nextCreature;
+    // Skip monsters that have died.
+    while (iter->next != NULL && iter->next->creature->bookkeepingFlags & MB_HAS_DIED) {
+        iter->next = iter->next->nextCreature;
+    }
     return result;
 }
 void restartIterator(creatureIterator *iter) {
     iter->next = iter->list->head;
+    // Skip monsters that have died.
+    while (iter->next != NULL && iter->next->creature->bookkeepingFlags & MB_HAS_DIED) {
+        iter->next = iter->next->nextCreature;
+    }
 }
 void prependCreature(creatureList *list, creature *add) {
     creatureListNode *node = calloc(1, sizeof(creatureListNode));
@@ -2800,7 +2812,7 @@ boolean resurrectAlly(const short x, const short y) {
         pmap[monst->loc.x][monst->loc.y].flags |= HAS_MONSTER;
 
         // Restore health etc.
-        monst->bookkeepingFlags &= ~(MB_IS_DYING | MB_IS_FALLING);
+        monst->bookkeepingFlags &= ~(MB_IS_DYING | MB_ADMINISTRATIVE_DEATH | MB_HAS_DIED | MB_IS_FALLING);
         if (!(monst->info.flags & MONST_FIERY)
             && monst->status[STATUS_BURNING]) {
 
