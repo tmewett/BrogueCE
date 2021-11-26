@@ -5615,6 +5615,99 @@ int itemKindCount(enum itemCategory category, int polarityConstraint) {
     return kindCount;
 }
 
+// Gets the final unidentified item kind for the given category and magic polarity, if possible. Returns -1 if
+// the final item kind cannot be determined.
+static int tryGetLastUnidentifiedItemKind(enum itemCategory category, int polarityConstraint) {
+    int lastItemKind = -1;
+    int totalItemKinds = itemKindCount(category, 0);
+    itemTable *theItemTable = tableForItemCategory(category);
+
+    if (theItemTable && (totalItemKinds > 0)) {
+        for (int i = 0; i < totalItemKinds; i++) {
+            if (!(theItemTable[i].identified)
+                && (theItemTable[i].magicPolarity == polarityConstraint || polarityConstraint == MAGIC_POLARITY_ANY)) {
+                if (lastItemKind != -1) {
+                    return -1; // At least two unidentified items remain.
+                }
+                lastItemKind = i;
+            }
+        }
+    }
+    return lastItemKind;
+}
+
+// Counts the number of items where the magic polarity has been revealed for the given item category
+// and magic polarity.
+static int magicPolarityRevealedItemKindCount(enum itemCategory category, int polarityConstraint) {
+    int kindCount = -1;
+    int totalItemKinds = itemKindCount(category, 0);
+    itemTable *theItemTable = tableForItemCategory(category);
+
+    if (theItemTable && (totalItemKinds > 0) && polarityConstraint) {
+        kindCount = 0;
+        for (int i = 0; i < totalItemKinds; i++) {
+            if (theItemTable[i].magicPolarity == polarityConstraint &&
+                    (theItemTable[i].identified || theItemTable[i].magicPolarityRevealed)) {
+                kindCount += 1;
+            }
+        }
+    }
+    return kindCount;
+}
+
+// Try to identify the last item kind in a given category.
+// The category must be in HAS_INTRINSIC_POLARITY.
+// polarityConstraint is either 0 (ignore polarity) or +1/-1.
+//
+// We can identify the last unidentified item kind...
+// 1. Of a category
+// 2. Of a given polarity within a category if either...
+//  A. Its polarity is known
+//  B. All items of the opposite polarity are either identified or their polarity is known
+static void tryIdentifyLastItemKind(enum itemCategory category, int polarityConstraint) {
+    itemTable *theItemTable = tableForItemCategory(category);
+    int lastItemKind = tryGetLastUnidentifiedItemKind(category, polarityConstraint);
+    int oppositeCount, oppositeRevealedCount;
+
+    if (lastItemKind >= 0) {
+
+        if (polarityConstraint == MAGIC_POLARITY_ANY) {
+            theItemTable[lastItemKind].identified = true;
+        } else {
+            int oppositeMagicPolarity = polarityConstraint * -1;
+            oppositeRevealedCount = magicPolarityRevealedItemKindCount(category, oppositeMagicPolarity);
+            oppositeCount = itemKindCount(category, oppositeMagicPolarity);
+            if (theItemTable[lastItemKind].magicPolarityRevealed || oppositeRevealedCount == oppositeCount) {
+                theItemTable[lastItemKind].identified = true;
+            }
+        }
+    }
+}
+
+// Try to identify the last item of the given category or all categories. This function
+// operates on flavored categories only. The base type of non-flavored categories are
+// already identified (e.g. weapons, armor, charms, etc.)
+static void tryIdentifyLastItemKinds(enum itemCategory category) {
+    enum itemCategory loopCategory;
+    int categoryCount = 1;
+
+    if (category == HAS_INTRINSIC_POLARITY) {
+        categoryCount = NUMBER_ITEM_CATEGORIES;
+    }
+
+    for (int i=0; i<categoryCount; i++) {
+        loopCategory = categoryCount == 1 ? category : Fl(i);
+        if (category & HAS_INTRINSIC_POLARITY & loopCategory) {
+            if (BROGUE_VERSION_ATLEAST(1,10,2)) {
+                tryIdentifyLastItemKind(loopCategory, MAGIC_POLARITY_BENEVOLENT);
+                tryIdentifyLastItemKind(loopCategory, MAGIC_POLARITY_MALEVOLENT);
+            } else {
+                tryIdentifyLastItemKind(loopCategory, MAGIC_POLARITY_ANY);
+            }
+        }
+    }
+}
+
 void identifyItemKind(item *theItem) {
     itemTable *theTable;
     short tableCount, i, lastItem;
@@ -5658,18 +5751,7 @@ void identifyItemKind(item *theItem) {
         }
         if (tableCount) {
             theTable[theItem->kind].identified = true;
-            for (i=0; i<tableCount; i++) {
-                if (!(theTable[i].identified)) {
-                    if (lastItem != -1) {
-                        return; // At least two unidentified items remain.
-                    }
-                    lastItem = i;
-                }
-            }
-            if (lastItem != -1) {
-                // Exactly one unidentified item remains; identify it.
-                theTable[lastItem].identified = true;
-            }
+            tryIdentifyLastItemKinds(theItem->category);
         }
     }
 }
@@ -7112,6 +7194,9 @@ void drinkPotion(item *theItem) {
                 }
             }
             if (hadEffect || hadEffect2) {
+                if (BROGUE_VERSION_ATLEAST(1,10,2)) {
+                    tryIdentifyLastItemKinds(HAS_INTRINSIC_POLARITY);
+                }
                 if (hadEffect && hadEffect2) {
                     message("you can somehow feel the presence of magic on the level and in your pack.", 0);
                 } else if (hadEffect) {
