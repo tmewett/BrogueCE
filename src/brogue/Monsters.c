@@ -4059,7 +4059,7 @@ boolean staffOrWandEffectOnMonsterDescription(char *newText, item *theItem, crea
     fixpt enchant = netEnchant(theItem);
 
     if ((theItem->category & (STAFF | WAND))
-        && tableForItemCategory(theItem->category, NULL)[theItem->kind].identified) {
+        && tableForItemCategory(theItem->category)[theItem->kind].identified) {
 
         monsterName(monstName, monst, true);
         itemName(theItem, theItemName, false, false, NULL);

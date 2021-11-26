@@ -762,6 +762,7 @@ enum potionKind {
     POTION_FIRE_IMMUNITY,
     POTION_INVISIBILITY,
     POTION_POISON,
+    NUMBER_GOOD_POTION_KINDS = POTION_POISON,
     POTION_PARALYSIS,
     POTION_HALLUCINATION,
     POTION_CONFUSION,
@@ -845,6 +846,7 @@ enum wandKind {
     WAND_DOMINATION,
     WAND_BECKONING,
     WAND_PLENTY,
+    NUMBER_GOOD_WAND_KINDS = WAND_PLENTY,
     WAND_INVISIBILITY,
     WAND_EMPOWERMENT,
     NUMBER_WAND_KINDS
@@ -861,6 +863,7 @@ enum staffKind {
     STAFF_DISCORD,
     STAFF_CONJURATION,
     STAFF_HEALING,
+    NUMBER_GOOD_STAFF_KINDS = STAFF_HEALING,
     STAFF_HASTE,
     STAFF_PROTECTION,
     NUMBER_STAFF_KINDS
@@ -943,6 +946,7 @@ enum scrollKind {
     SCROLL_SHATTERING,
     SCROLL_DISCORD,
     SCROLL_AGGRAVATE_MONSTER,
+    NUMBER_GOOD_SCROLL_KINDS = SCROLL_AGGRAVATE_MONSTER,
     SCROLL_SUMMON_MONSTER,
     NUMBER_SCROLL_KINDS
 };
@@ -3078,6 +3082,7 @@ extern "C" {
     void itemKindName(item *theItem, char *kindName);
     void itemRunicName(item *theItem, char *runicName);
     void itemName(item *theItem, char *root, boolean includeDetails, boolean includeArticle, color *baseColor);
+    int itemKindCount(enum itemCategory category, int magicPolarity);
     char displayInventory(unsigned short categoryMask,
                           unsigned long requiredFlags,
                           unsigned long forbiddenFlags,
@@ -3177,7 +3182,7 @@ extern "C" {
     int itemMagicPolarity(item *theItem);
     item *itemAtLoc(short x, short y);
     item *dropItem(item *theItem);
-    itemTable *tableForItemCategory(enum itemCategory theCat, short *kindCount);
+    itemTable *tableForItemCategory(enum itemCategory theCat);
     boolean isVowelish(char *theChar);
     short charmEffectDuration(short charmKind, short enchant);
     short charmRechargeDelay(short charmKind, short enchant);
