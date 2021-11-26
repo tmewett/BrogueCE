@@ -6986,6 +6986,10 @@ void readScroll(item *theItem) {
 }
 
 void detectMagicOnItem(item *theItem) {
+    if (theItem->category & HAS_INTRINSIC_POLARITY) {
+        itemTable *theItemTable = tableForItemCategory(theItem->category);
+        theItemTable[theItem->kind].magicPolarityRevealed = true;
+    }
     theItem->flags |= ITEM_MAGIC_DETECTED;
     if ((theItem->category & (WEAPON | ARMOR))
         && theItem->enchant1 == 0
@@ -7194,62 +7198,38 @@ short magicCharDiscoverySuffix(short category, short kind) {
  0 if it is neutral
  1 if it is of good magic */
 int itemMagicPolarity(item *theItem) {
+    itemTable *theItemTable = tableForItemCategory(theItem->category);
     switch (theItem->category) {
         case WEAPON:
         case ARMOR:
             if ((theItem->flags & ITEM_CURSED) || theItem->enchant1 < 0) {
-                return -1;
+                return MAGIC_POLARITY_MALEVOLENT;
             } else if (theItem->enchant1 > 0) {
-                return 1;
+                return MAGIC_POLARITY_BENEVOLENT;
             }
-            return 0;
-            break;
-        case SCROLL:
-            switch (theItem->kind) {
-                case SCROLL_AGGRAVATE_MONSTER:
-                case SCROLL_SUMMON_MONSTER:
-                    return -1;
-                default:
-                    return 1;
-            }
-        case POTION:
-            switch (theItem->kind) {
-                case POTION_HALLUCINATION:
-                case POTION_INCINERATION:
-                case POTION_DESCENT:
-                case POTION_POISON:
-                case POTION_PARALYSIS:
-                case POTION_CONFUSION:
-                case POTION_LICHEN:
-                case POTION_DARKNESS:
-                    return -1;
-                default:
-                    return 1;
-            }
+            return MAGIC_POLARITY_NEUTRAL;
         case WAND:
             if (theItem->charges == 0) {
-                return 0;
+                return MAGIC_POLARITY_NEUTRAL;
             }
+        case SCROLL:
+        case POTION:
+        case CHARM:
         case STAFF:
-            if (boltCatalog[tableForItemCategory(theItem->category)[theItem->kind].strengthRequired].flags & (BF_TARGET_ALLIES)) {
-                return -1;
-            } else {
-                return 1;
-            }
+            return theItemTable[theItem->kind].magicPolarity;
         case RING:
             if (theItem->flags & ITEM_CURSED || theItem->enchant1 < 0) {
-                return -1;
+                return MAGIC_POLARITY_MALEVOLENT;
             } else if (theItem->enchant1 > 0) {
-                return 1;
+                return MAGIC_POLARITY_BENEVOLENT;
             } else {
-                return 0;
+                return MAGIC_POLARITY_NEUTRAL;
             }
-        case CHARM:
-            return 1;
         case AMULET:
-            return 1;
+            return MAGIC_POLARITY_BENEVOLENT;
+        default:
+            return MAGIC_POLARITY_NEUTRAL;
     }
-    return 0;
 }
 
 void unequip(item *theItem) {
@@ -7696,6 +7676,7 @@ void deleteItem(item *theItem) {
 
 void resetItemTableEntry(itemTable *theEntry) {
     theEntry->identified = false;
+    theEntry->magicPolarityRevealed = false;
     theEntry->called = false;
     theEntry->callTitle[0] = '\0';
 }

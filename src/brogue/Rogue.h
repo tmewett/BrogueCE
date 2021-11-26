@@ -732,6 +732,13 @@ enum itemCategory {
     GEM                 = Fl(11),
     KEY                 = Fl(12),
 
+    // Categories where the kinds have intrinsic magic polarity; i.e. each kind
+    // has a certain polarity (with positive enchant) which doesn't depend on
+    // the specific item. NOTE: Rings are considered to be naturally good, but
+    // may be bad when negatively enchanted. We also assume that none of the
+    // kinds in these categories have neutral polarity.
+    HAS_INTRINSIC_POLARITY = (POTION | SCROLL | RING | WAND | STAFF),
+
     CAN_BE_DETECTED     = (WEAPON | ARMOR | POTION | SCROLL | RING | CHARM | WAND | STAFF | AMULET),
     PRENAMED_CATEGORY   = (FOOD | GOLD | AMULET | GEM | KEY),
     NEVER_IDENTIFIABLE  = (FOOD | CHARM | GOLD | AMULET | GEM | KEY),
@@ -1386,6 +1393,8 @@ typedef struct itemTable {
     randomRange range;
     boolean identified;
     boolean called;
+    int magicPolarity;
+    boolean magicPolarityRevealed;
     char description[1500];
 } itemTable;
 
