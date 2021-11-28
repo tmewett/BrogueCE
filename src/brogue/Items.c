@@ -1400,7 +1400,7 @@ void call(item *theItem) {
 //  BaseColor itself will be the color that the name reverts to outside of these colored portions.
 void itemName(item *theItem, char *root, boolean includeDetails, boolean includeArticle, color *baseColor) {
     char buf[DCOLS * 5], pluralization[10], article[10] = "", runicName[30],
-    grayEscapeSequence[5], purpleEscapeSequence[5], yellowEscapeSequence[5], baseEscapeSequence[5];
+    grayEscapeSequence[5], purpleEscapeSequence[5], yellowEscapeSequence[5], redEscapeSequence[5], baseEscapeSequence[5];
     color tempColor;
 
     strcpy(pluralization, (theItem->quantity > 1 ? "s" : ""));
@@ -1408,6 +1408,7 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
     grayEscapeSequence[0] = '\0';
     purpleEscapeSequence[0] = '\0';
     yellowEscapeSequence[0] = '\0';
+    redEscapeSequence[0] = '\0';
     baseEscapeSequence[0] = '\0';
     if (baseColor) {
         tempColor = backgroundMessageColor;
@@ -1421,6 +1422,9 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
         tempColor = itemMessageColor;
         applyColorMultiplier(&tempColor, baseColor);
         encodeMessageColor(yellowEscapeSequence, 0, &tempColor);
+
+        tempColor = badMessageColor;
+        encodeMessageColor(redEscapeSequence, 0, &tempColor);
 
         encodeMessageColor(baseEscapeSequence, 0, baseColor);
     }
@@ -1458,7 +1462,12 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
                         strcat(root, " (unknown runic)");
                     }
                 }
-                sprintf(buf, "%s%s <%i>", root, grayEscapeSequence, theItem->strengthRequired);
+                // Brogue Lite: print strength requirement in red if not met
+                if (theItem->strengthRequired > rogue.strength) {
+                  sprintf(buf, "%s%s <%s%i%s>", root, grayEscapeSequence, redEscapeSequence, theItem->strengthRequired, grayEscapeSequence);
+                } else {
+                  sprintf(buf, "%s%s <%i>", root, grayEscapeSequence, theItem->strengthRequired);
+                }
                 strcpy(root, buf);
             }
             break;
@@ -1476,15 +1485,33 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
 
                 if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
                     if (theItem->enchant1 == 0) {
-                        sprintf(buf, "%s%s [%i]<%i>", root, grayEscapeSequence, theItem->armor/10, theItem->strengthRequired);
+                        // Brogue Lite: print strength requirement in red if not met
+                        if (theItem->strengthRequired > rogue.strength) {
+                          sprintf(buf, "%s%s [%i]<%s%i%s>", root, grayEscapeSequence, theItem->armor/10, redEscapeSequence, theItem->strengthRequired, grayEscapeSequence);
+                        } else {
+                          sprintf(buf, "%s%s [%i]<%i>", root, grayEscapeSequence, theItem->armor/10, theItem->strengthRequired);
+                        }
                     } else {
-                        sprintf(buf, "%s%i %s%s [%i]<%i>",
-                                (theItem->enchant1 < 0 ? "" : "+"),
-                                theItem->enchant1,
-                                root,
-                                grayEscapeSequence,
-                                theItem->armor/10 + theItem->enchant1,
-                                theItem->strengthRequired);
+                        // Brogue Lite: print strength requirement in red if not met
+                        if (theItem->strengthRequired > rogue.strength) {
+                          sprintf(buf, "%s%i %s%s [%i]<%s%i%s>",
+                                  (theItem->enchant1 < 0 ? "" : "+"),
+                                  theItem->enchant1,
+                                  root,
+                                  grayEscapeSequence,
+                                  theItem->armor/10 + theItem->enchant1,
+                                  redEscapeSequence,
+                                  theItem->strengthRequired,
+                                  grayEscapeSequence);
+                        } else {
+                          sprintf(buf, "%s%i %s%s [%i]<%i>",
+                                  (theItem->enchant1 < 0 ? "" : "+"),
+                                  theItem->enchant1,
+                                  root,
+                                  grayEscapeSequence,
+                                  theItem->armor/10 + theItem->enchant1,
+                                  theItem->strengthRequired);
+                        }
                     }
                     strcpy(root, buf);
                 } else {
