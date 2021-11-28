@@ -1423,7 +1423,7 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
         applyColorMultiplier(&tempColor, baseColor);
         encodeMessageColor(yellowEscapeSequence, 0, &tempColor);
 
-        tempColor = red;
+        tempColor = badMessageColor;
         encodeMessageColor(redEscapeSequence, 0, &tempColor);
 
         encodeMessageColor(baseEscapeSequence, 0, baseColor);
