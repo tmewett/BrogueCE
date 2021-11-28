@@ -2432,19 +2432,19 @@ void itemDetails(char *buf, item *theItem) {
             }
 
             if (theItem->lastUsed[0] > 0 && theItem->lastUsed[1] > 0 && theItem->lastUsed[2] > 0) {
-                sprintf(buf2, "You last used it %i, %i and %i turns ago. ",
+                sprintf(buf2, "You last used it %li, %li and %li turns ago. ",
                         rogue.absoluteTurnNumber - theItem->lastUsed[0],
                         rogue.absoluteTurnNumber - theItem->lastUsed[1],
                         rogue.absoluteTurnNumber - theItem->lastUsed[2]);
                 strcat(buf, buf2);
             } else if (theItem->lastUsed[0] > 0 && theItem->lastUsed[1] > 0) {
-                sprintf(buf2, "You last used it %i and %i turns ago. ",
+                sprintf(buf2, "You last used it %li and %li turns ago. ",
                         rogue.absoluteTurnNumber - theItem->lastUsed[0],
                         rogue.absoluteTurnNumber - theItem->lastUsed[1]);
                 strcat(buf, buf2);
             } else if (theItem->lastUsed[0] > 0) {
                 turnsSinceLatestUse = rogue.absoluteTurnNumber - theItem->lastUsed[0];
-                sprintf(buf2, "You last used it %i turn%s ago. ",
+                sprintf(buf2, "You last used it %li turn%s ago. ",
                         turnsSinceLatestUse,
                         turnsSinceLatestUse == 1 ? "" : "s");
                 strcat(buf, buf2);
@@ -3424,7 +3424,7 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
         }
 
         // normalize the step, to move exactly one row or column at a time
-        fixpt m = max(abs(step[0]), abs(step[1]));
+        fixpt m = max(llabs(step[0]), llabs(step[1]));
         step[0] = step[0] * FP_FACTOR / m;
         step[1] = step[1] * FP_FACTOR / m;
 

@@ -26,39 +26,34 @@
 #include "Rogue.h"
 #include "IncludeGlobals.h"
 
-struct pdsLink {
+typedef struct pdsLink {
     short distance;
     short cost;
-    pdsLink *left, *right;
-};
+    struct pdsLink *left;
+    struct pdsLink *right;
+} pdsLink;
 
-struct pdsMap {
-    boolean eightWays;
-
+typedef struct pdsMap {
     pdsLink front;
     pdsLink links[DCOLS * DROWS];
-};
+} pdsMap;
 
-void pdsUpdate(pdsMap *map) {
-    short dir, dirs;
-    pdsLink *left = NULL, *right = NULL, *link = NULL;
-
-    dirs = map->eightWays ? 8 : 4;
+static void pdsUpdate(pdsMap *map, boolean useDiagonals) {
+    short dirs = useDiagonals ? 8 : 4;
 
     pdsLink *head = map->front.right;
     map->front.right = NULL;
 
     while (head != NULL) {
-        for (dir = 0; dir < dirs; dir++) {
-            link = head + (nbDirs[dir][0] + DCOLS * nbDirs[dir][1]);
+        for (short dir = 0; dir < dirs; dir++) {
+            pdsLink *link = head + (nbDirs[dir][0] + DCOLS * nbDirs[dir][1]);
             if (link < map->links || link >= map->links + DCOLS * DROWS) continue;
 
             // verify passability
             if (link->cost < 0) continue;
             if (dir >= 4) {
-                pdsLink *way1, *way2;
-                way1 = head + nbDirs[dir][0];
-                way2 = head + DCOLS * nbDirs[dir][1];
+                pdsLink *way1 = head + nbDirs[dir][0];
+                pdsLink *way2 = head + DCOLS * nbDirs[dir][1];
                 if (way1->cost == PDS_OBSTRUCTION || way2->cost == PDS_OBSTRUCTION) continue;
             }
 
@@ -71,8 +66,8 @@ void pdsUpdate(pdsMap *map) {
                 if (link->right != NULL) link->right->left = link->left;
                 if (link->left != NULL) link->left->right = link->right;
 
-                left = head;
-                right = head->right;
+                pdsLink *left = head;
+                pdsLink *right = head->right;
                 while (right != NULL && right->distance < link->distance) {
                     left = right;
                     right = right->right;
@@ -84,7 +79,7 @@ void pdsUpdate(pdsMap *map) {
             }
         }
 
-        right = head->right;
+        pdsLink *right = head->right;
 
         head->left = NULL;
         head->right = NULL;
@@ -93,37 +88,27 @@ void pdsUpdate(pdsMap *map) {
     }
 }
 
-void pdsClear(pdsMap *map, short maxDistance, boolean eightWays) {
-    short i;
-
-    map->eightWays = eightWays;
-
+static void pdsClear(pdsMap *map, short maxDistance) {
     map->front.right = NULL;
 
-    for (i=0; i < DCOLS*DROWS; i++) {
+    for (int i=0; i < DCOLS*DROWS; i++) {
         map->links[i].distance = maxDistance;
-        map->links[i].left = map->links[i].right = NULL;
+        map->links[i].left = NULL;
+        map->links[i].right = NULL;
     }
 }
 
-short pdsGetDistance(pdsMap *map, short x, short y) {
-    pdsUpdate(map);
-    return PDS_CELL(map, x, y)->distance;
-}
-
-void pdsSetDistance(pdsMap *map, short x, short y, short distance) {
-    pdsLink *left, *right, *link;
-
+static void pdsSetDistance(pdsMap *map, short x, short y, short distance) {
     if (x > 0 && y > 0 && x < DCOLS - 1 && y < DROWS - 1) {
-        link = PDS_CELL(map, x, y);
+        pdsLink *link = PDS_CELL(map, x, y);
         if (link->distance > distance) {
             link->distance = distance;
 
             if (link->right != NULL) link->right->left = link->left;
             if (link->left != NULL) link->left->right = link->right;
 
-            left = &map->front;
-            right = map->front.right;
+            pdsLink *left = &map->front;
+            pdsLink *right = map->front.right;
 
             while (right != NULL && right->distance < link->distance) {
                 left = right;
@@ -138,32 +123,13 @@ void pdsSetDistance(pdsMap *map, short x, short y, short distance) {
     }
 }
 
-void pdsSetCosts(pdsMap *map, short **costMap) {
-    short i, j;
-
-    for (i=0; i<DCOLS; i++) {
-        for (j=0; j<DROWS; j++) {
-            if (i != 0 && j != 0 && i < DCOLS - 1 && j < DROWS - 1) {
-                PDS_CELL(map, i, j)->cost = costMap[i][j];
-            } else {
-                PDS_CELL(map, i, j)->cost = PDS_FORBIDDEN;
-            }
-        }
-    }
-}
-
-void pdsBatchInput(pdsMap *map, short **distanceMap, short **costMap, short maxDistance, boolean eightWays) {
-    short i, j;
-    pdsLink *left, *right;
-
-    map->eightWays = eightWays;
-
-    left = NULL;
-    right = NULL;
+static void pdsBatchInput(pdsMap *map, short **distanceMap, short **costMap, short maxDistance) {
+    pdsLink *left = NULL;
+    pdsLink *right = NULL;
 
     map->front.right = NULL;
-    for (i=0; i<DCOLS; i++) {
-        for (j=0; j<DROWS; j++) {
+    for (int i=0; i<DCOLS; i++) {
+        for (int j=0; j<DROWS; j++) {
             pdsLink *link = PDS_CELL(map, i, j);
 
             if (distanceMap != NULL) {
@@ -222,27 +188,21 @@ void pdsBatchInput(pdsMap *map, short **distanceMap, short **costMap, short maxD
     }
 }
 
-void pdsBatchOutput(pdsMap *map, short **distanceMap) {
-    short i, j;
-
-    pdsUpdate(map);
+static void pdsBatchOutput(pdsMap *map, short **distanceMap, boolean useDiagonals) {
+    pdsUpdate(map, useDiagonals);
     // transfer results to the distanceMap
-    for (i=0; i<DCOLS; i++) {
-        for (j=0; j<DROWS; j++) {
+    for (int i=0; i<DCOLS; i++) {
+        for (int j=0; j<DROWS; j++) {
             distanceMap[i][j] = PDS_CELL(map, i, j)->distance;
         }
     }
 }
 
-void pdsInvalidate(pdsMap *map, short maxDistance) {
-    pdsBatchInput(map, NULL, NULL, maxDistance, map->eightWays);
-}
-
 void dijkstraScan(short **distanceMap, short **costMap, boolean useDiagonals) {
     static pdsMap map;
 
-    pdsBatchInput(&map, distanceMap, costMap, 30000, useDiagonals);
-    pdsBatchOutput(&map, distanceMap);
+    pdsBatchInput(&map, distanceMap, costMap, 30000);
+    pdsBatchOutput(&map, distanceMap, useDiagonals);
 }
 
 void calculateDistances(short **distanceMap,
@@ -251,15 +211,12 @@ void calculateDistances(short **distanceMap,
                         creature *traveler,
                         boolean canUseSecretDoors,
                         boolean eightWays) {
-    creature *monst;
     static pdsMap map;
 
-    short i, j;
-
-    for (i=0; i<DCOLS; i++) {
-        for (j=0; j<DROWS; j++) {
+    for (int i=0; i<DCOLS; i++) {
+        for (int j=0; j<DROWS; j++) {
             signed char cost;
-            monst = monsterAtLoc(i, j);
+            creature *monst = monsterAtLoc(i, j);
             if (monst
                 && (monst->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE))
                 && (monst->info.flags & (MONST_IMMOBILE | MONST_GETS_TURN_ON_ACTIVATION))) {
@@ -286,15 +243,15 @@ void calculateDistances(short **distanceMap,
         }
     }
 
-    pdsClear(&map, 30000, eightWays);
+    pdsClear(&map, 30000);
     pdsSetDistance(&map, destinationX, destinationY, 0);
-    pdsBatchOutput(&map, distanceMap);
+    pdsBatchOutput(&map, distanceMap, eightWays);
 }
 
 short pathingDistance(short x1, short y1, short x2, short y2, unsigned long blockingTerrainFlags) {
-    short retval, **distanceMap = allocGrid();
+    short **distanceMap = allocGrid();
     calculateDistances(distanceMap, x2, y2, blockingTerrainFlags, NULL, true, true);
-    retval = distanceMap[x1][y1];
+    short retval = distanceMap[x1][y1];
     freeGrid(distanceMap);
     return retval;
 }

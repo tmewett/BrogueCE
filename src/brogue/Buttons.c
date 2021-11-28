@@ -38,22 +38,16 @@ short smoothHiliteGradient(const short currentXValue, const short maxXValue) {
 //      Hovering highlight augments fore and back colors with buttonHoverColor by 20%.
 //      Pressed darkens the middle color (or turns it the hover color if the button is black).
 void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDisplayBuffer dbuf[COLS][ROWS]) {
-    short i, textLoc, width, midPercent, symbolNumber, opacity, oldRNG;
-    color fColor, bColor, fColorBase, bColorBase, bColorEdge, bColorMid;
-    enum displayGlyph displayCharacter;
-
     if (!(button->flags & B_DRAW)) {
         return;
     }
     //assureCosmeticRNG;
-    oldRNG = rogue.RNG;
+    short oldRNG = rogue.RNG;
     rogue.RNG = RNG_COSMETIC;
 
-    symbolNumber = 0;
-
-    width = strLenWithoutEscapes(button->text);
-    bColorBase = button->buttonColor;
-    fColorBase = ((button->flags & B_ENABLED) ? white : gray);
+    const int width = strLenWithoutEscapes(button->text);
+    color bColorBase = button->buttonColor;
+    color fColorBase = ((button->flags & B_ENABLED) ? white : gray);
 
     if (highlight == BUTTON_HOVER && (button->flags & B_HOVER_ENABLED)) {
         //applyColorAugment(&fColorBase, &buttonHoverColor, 20);
@@ -62,8 +56,8 @@ void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDispl
         applyColorAverage(&bColorBase, &buttonHoverColor, 25);
     }
 
-    bColorEdge  = bColorBase;
-    bColorMid   = bColorBase;
+    color bColorEdge  = bColorBase;
+    color bColorMid   = bColorBase;
     applyColorAverage(&bColorEdge, &black, 50);
 
     if (highlight == BUTTON_PRESSED) {
@@ -73,22 +67,24 @@ void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDispl
             applyColorAverage(&bColorMid, &buttonHoverColor, 50);
         }
     }
-    bColor = bColorMid;
+    color bColor = bColorMid;
 
-    opacity = button->opacity;
+    short opacity = button->opacity;
     if (highlight == BUTTON_HOVER || highlight == BUTTON_PRESSED) {
         opacity = 100 - ((100 - opacity) * opacity / 100); // Apply the opacity twice.
     }
 
-    for (i = textLoc = 0; i < width && i + button->x < COLS; i++, textLoc++) {
+    short symbolNumber = 0;
+
+    for (int i = 0, textLoc = 0; i < width && i + button->x < COLS; i++, textLoc++) {
         while (button->text[textLoc] == COLOR_ESCAPE) {
             textLoc = decodeMessageColor(button->text, textLoc, &fColorBase);
         }
 
-        fColor = fColorBase;
+        color fColor = fColorBase;
 
         if (button->flags & B_GRADIENT) {
-            midPercent = smoothHiliteGradient(i, width - 1);
+            const int midPercent = smoothHiliteGradient(i, width - 1);
             bColor = bColorEdge;
             applyColorAverage(&bColor, &bColorMid, midPercent);
         }
@@ -105,7 +101,7 @@ void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDispl
         bakeColor(&bColor);
         separateColors(&fColor, &bColor);
 
-        displayCharacter = button->text[textLoc];
+        enum displayGlyph displayCharacter = button->text[textLoc];
         if (button->text[textLoc] == '*') {
             if (button->symbol[symbolNumber]) {
                 displayCharacter = button->symbol[symbolNumber];
@@ -134,10 +130,8 @@ void initializeButton(brogueButton *button) {
 }
 
 void drawButtonsInState(buttonState *state) {
-    short i;
-
     // Draw the buttons to the dbuf:
-    for (i=0; i < state->buttonCount; i++) {
+    for (int i=0; i < state->buttonCount; i++) {
         if (state->buttons[i].flags & B_DRAW) {
             drawButton(&(state->buttons[i]), BUTTON_NORMAL, state->dbuf);
         }
@@ -151,8 +145,6 @@ void initializeButtonState(buttonState *state,
                            short winY,
                            short winWidth,
                            short winHeight) {
-    short i, j;
-
     // Initialize variables for the state struct:
     state->buttonChosen = state->buttonFocused = state->buttonDepressed = -1;
     state->buttonCount  = buttonCount;
@@ -160,7 +152,7 @@ void initializeButtonState(buttonState *state,
     state->winY         = winY;
     state->winWidth     = winWidth;
     state->winHeight    = winHeight;
-    for (i=0; i < state->buttonCount; i++) {
+    for (int i=0; i < state->buttonCount; i++) {
         state->buttons[i] = buttons[i];
     }
     copyDisplayBuffer(state->rbuf, displayBuffer);
@@ -169,8 +161,8 @@ void initializeButtonState(buttonState *state,
     drawButtonsInState(state);
 
     // Clear the rbuf so that it resets only those parts of the screen in which buttons are drawn in the first place:
-    for (i=0; i<COLS; i++) {
-        for (j=0; j<ROWS; j++) {
+    for (int i=0; i<COLS; i++) {
+        for (int j=0; j<ROWS; j++) {
             state->rbuf[i][j].opacity = (state->dbuf[i][j].opacity ? 100 : 0);
         }
     }
@@ -185,7 +177,6 @@ void initializeButtonState(buttonState *state,
 // Otherwise, returns -1. That can be if the user canceled (in which case *canceled is true),
 // or, more commonly, if the user's input in this particular split-second round was not decisive.
 short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *event) {
-    short i, k, x, y;
     boolean buttonUsed = false;
 
     // Mouse event:
@@ -193,8 +184,8 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
         || event->eventType == MOUSE_UP
         || event->eventType == MOUSE_ENTERED_CELL) {
 
-        x = event->param1;
-        y = event->param2;
+        int x = event->param1;
+        int y = event->param2;
 
         // Revert the button with old focus, if any.
         if (state->buttonFocused >= 0) {
@@ -203,21 +194,22 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
         }
 
         // Find the button with new focus, if any.
-        for (i=0; i < state->buttonCount; i++) {
-            if ((state->buttons[i].flags & B_DRAW)
-                && (state->buttons[i].flags & B_ENABLED)
-                && (state->buttons[i].y == y || ((state->buttons[i].flags & B_WIDE_CLICK_AREA) && abs(state->buttons[i].y - y) <= 1))
-                && x >= state->buttons[i].x
-                && x < state->buttons[i].x + strLenWithoutEscapes(state->buttons[i].text)) {
+        int focusIndex;
+        for (focusIndex=0; focusIndex < state->buttonCount; focusIndex++) {
+            if ((state->buttons[focusIndex].flags & B_DRAW)
+                && (state->buttons[focusIndex].flags & B_ENABLED)
+                && (state->buttons[focusIndex].y == y || ((state->buttons[focusIndex].flags & B_WIDE_CLICK_AREA) && abs(state->buttons[focusIndex].y - y) <= 1))
+                && x >= state->buttons[focusIndex].x
+                && x < state->buttons[focusIndex].x + strLenWithoutEscapes(state->buttons[focusIndex].text)) {
 
-                state->buttonFocused = i;
+                state->buttonFocused = focusIndex;
                 if (event->eventType == MOUSE_DOWN) {
-                    state->buttonDepressed = i; // Keeps track of which button is down at the moment. Cleared on mouseup.
+                    state->buttonDepressed = focusIndex; // Keeps track of which button is down at the moment. Cleared on mouseup.
                 }
                 break;
             }
         }
-        if (i == state->buttonCount) { // No focus this round.
+        if (focusIndex == state->buttonCount) { // No focus this round.
             state->buttonFocused = -1;
         }
 
@@ -260,8 +252,8 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
     if (event->eventType == KEYSTROKE) {
 
         // Cycle through all of the hotkeys of all of the buttons.
-        for (i=0; i < state->buttonCount; i++) {
-            for (k = 0; k < 10 && state->buttons[i].hotkey[k]; k++) {
+        for (int i=0; i < state->buttonCount; i++) {
+            for (int k = 0; k < 10 && state->buttons[i].hotkey[k]; k++) {
                 if (event->param1 == state->buttons[i].hotkey[k]) {
                     // This button was chosen.
 
