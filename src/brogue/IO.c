@@ -1486,7 +1486,7 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
         }
     }
 
-    if (rogue.trueColorMode
+    if ((rogue.trueColorMode || rogue.displayStealthRangeMode)
         && playerCanSeeOrSense(x, y)) {
 
         if (displayDetail[x][y] == DV_DARK) {
