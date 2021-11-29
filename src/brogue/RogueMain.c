@@ -1068,7 +1068,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     }
     strcpy(highScoreText, buf);
     //if (theEntry.score > 0) {
-        sprintf(buf2, " with %li gold", theEntry.score);
+        sprintf(buf2, " with %li gold (%li points)", rogue.gold, theEntry.score);
         strcat(buf, buf2);
     //}
     if (numberOfMatchingPackItems(AMULET, 0, 0, false) > 0) {
