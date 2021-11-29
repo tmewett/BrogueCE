@@ -1063,13 +1063,14 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     }
     theEntry.score = rogue.gold;
     if (rogue.easyMode) {
-        theEntry.score /= 10;
+        // Brogue Lite: easy mode (developer mode) stores high score as 0
+        theEntry.score = 0;
     }
     strcpy(highScoreText, buf);
-    if (theEntry.score > 0) {
-        sprintf(buf2, " with %li gold", theEntry.score);
+    //if (theEntry.score > 0) {
+        sprintf(buf2, " with %li gold (%li points)", rogue.gold, theEntry.score);
         strcat(buf, buf2);
-    }
+    //}
     if (numberOfMatchingPackItems(AMULET, 0, 0, false) > 0) {
         strcat(buf, ", amulet in hand");
     }
@@ -1238,8 +1239,9 @@ void victory(boolean superVictory) {
 
     theEntry.score = totalValue;
 
+    // Brogue Lite: easy mode (developer mode) stores high score as 0
     if (rogue.easyMode) {
-        theEntry.score /= 10;
+        theEntry.score = 0;
     }
 
     if (!rogue.wizard && !rogue.playbackMode) {
@@ -1279,19 +1281,19 @@ void enableEasyMode() {
         message("Alas, all hope of salvation is lost. You shed scalding tears at your plight.", 0);
         return;
     }
-    message("A dark presence surrounds you, whispering promises of stolen power.", REQUIRE_ACKNOWLEDGMENT);
-    if (confirm("Succumb to demonic temptation (i.e. enable Easy Mode)?", false)) {
+    message("A devilish developer appears before you, whispering promises of forbidden knowledge.", REQUIRE_ACKNOWLEDGMENT);
+    if (confirm("Enable developer mode?", false)) {
         recordKeystroke(EASY_MODE_KEY, false, true);
         message("An ancient and terrible evil burrows into your willing flesh!", REQUIRE_ACKNOWLEDGMENT);
         player.info.displayChar = '&';
         rogue.easyMode = true;
         refreshDungeonCell(player.xLoc, player.yLoc);
         refreshSideBar(-1, -1, false);
-        message("Wracked by spasms, your body contorts into an ALL-POWERFUL AMPERSAND!!!", 0);
-        message("You have a feeling that you will take 20% as much damage from now on.", 0);
-        message("But great power comes at a great price -- specifically, a 90% income tax rate.", 0);
+        message("You are transformed into an immortal and bitwise AMPERSAND!!!", 0);
+        message("You have a feeling that you are now impervious to most damage.", 0);
+        message("However, your high score will not be recorded.", 0);
     } else {
-        message("The evil dissipates, hissing, from the air around you.", 0);
+        message("The devil dissipates, hissing, from the air around you.", 0);
     }
 }
 

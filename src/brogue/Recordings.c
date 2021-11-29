@@ -1143,7 +1143,7 @@ void getDefaultFilePath(char *defaultPath, boolean gameOver) {
     if (rogue.wizard) {
         strcat(defaultPath, " (wizard)");
     } else if (rogue.easyMode) {
-        strcat(defaultPath, " (easy)");
+        strcat(defaultPath, " (developer)");
     }
 }
 
@@ -1376,7 +1376,7 @@ void describeKeystroke(unsigned char key, char *description) {
         "equip", "unequip", "apply", "throw", "relabel", "drop", "call",
         //"fight", "fight to death",
         "help", "discoveries", "repeat travel", "explore", "autoplay", "seed",
-        "easy mode", "escape", "return", "delete", "tab", "period", "open file",
+        "developer mode", "escape", "return", "delete", "tab", "period", "open file",
         "numpad 0", "numpad 1", "numpad 2", "numpad 3", "numpad 4", "numpad 5", "numpad 6",
         "numpad 7", "numpad 8", "numpad 9", "unknown", "ERROR"};
 

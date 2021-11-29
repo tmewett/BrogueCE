@@ -1524,7 +1524,8 @@ boolean inflictDamage(creature *attacker, creature *defender,
     if (defender == &player
         && rogue.easyMode
         && damage > 0) {
-        damage = max(1, damage/5);
+        // Brogue Lite: take 0 damage instead of 20% damage
+        damage = 0;
     }
 
     if (((attacker == &player && rogue.transference) || (attacker && attacker != &player && (attacker->info.abilityFlags & MA_TRANSFERENCE)))

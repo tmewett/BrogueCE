@@ -291,9 +291,9 @@ short actionMenu(short x, boolean playingBack) {
 
             if (!rogue.easyMode) {
                 if (KEYBOARD_LABELS) {
-                    sprintf(buttons[buttonCount].text, "  %s&: %sEasy mode  ",              yellowColorEscape, whiteColorEscape);
+                    sprintf(buttons[buttonCount].text, "  %s&: %sDev mode  ",              yellowColorEscape, whiteColorEscape);
                 } else {
-                    strcpy(buttons[buttonCount].text, "  Easy mode  ");
+                    strcpy(buttons[buttonCount].text, "  Dev mode  ");
                 }
                 buttons[buttonCount].hotkey[0] = EASY_MODE_KEY;
                 buttonCount++;
