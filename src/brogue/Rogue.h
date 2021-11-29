@@ -1160,7 +1160,7 @@ enum tileFlags {
 #define RELABEL_KEY         'R'
 #define SWAP_KEY            'w'
 #define TRUE_COLORS_KEY     '\\'
-#define AGGRO_DISPLAY_KEY   ']'
+#define STEALTH_RANGE_KEY   ']'
 #define DROP_KEY            'd'
 #define CALL_KEY            'c'
 #define QUIT_KEY            'Q'
@@ -2292,7 +2292,7 @@ typedef struct playerCharacter {
     boolean alreadyFell;                // so the player can fall only one depth per turn
     boolean eligibleToUseStairs;        // so the player uses stairs only when he steps onto them
     boolean trueColorMode;              // whether lighting effects are disabled
-    boolean displayAggroRangeMode;      // whether your stealth range is displayed
+    boolean displayStealthRangeMode;    // whether your stealth range is displayed
     boolean quit;                       // to skip the typical end-game theatrics when the player quits
     uint64_t seed;                      // the master seed for generating the entire dungeon
     short RNG;                          // which RNG are we currently using?
@@ -2322,7 +2322,7 @@ typedef struct playerCharacter {
     unsigned long absoluteTurnNumber;   // number of turns since the beginning of time. Always increments.
     signed long milliseconds;           // milliseconds since launch, to decide whether to engage cautious mode
     short xpxpThisTurn;                 // how many squares the player explored this turn
-    short aggroRange;                   // distance from which monsters will notice you
+    short stealthRange;                 // distance from which monsters will notice you
 
     short previousPoisonPercent;        // and your poison proportion, to display percentage alerts for each.
 
@@ -3224,8 +3224,8 @@ extern "C" {
     void autoPlayLevel(boolean fastForward);
     void updateClairvoyance();
     short scentDistance(short x1, short y1, short x2, short y2);
-    short armorAggroAdjustment(item *theArmor);
-    short currentAggroValue();
+    short armorStealthAdjustment(item *theArmor);
+    short currentStealthRange();
 
     void initRecording();
     void flushBufferToFile();

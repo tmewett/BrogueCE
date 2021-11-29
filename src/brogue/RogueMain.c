@@ -143,7 +143,7 @@ void welcome() {
 void initializeRogue(uint64_t seed) {
     short i, j, k;
     item *theItem;
-    boolean playingback, playbackFF, playbackPaused, wizard, displayAggroRangeMode;
+    boolean playingback, playbackFF, playbackPaused, wizard, displayStealthRangeMode;
     boolean trueColorMode;
     short oldRNG;
 
@@ -151,14 +151,14 @@ void initializeRogue(uint64_t seed) {
     playbackPaused = rogue.playbackPaused;
     playbackFF = rogue.playbackFastForward;
     wizard = rogue.wizard;
-    displayAggroRangeMode = rogue.displayAggroRangeMode;
+    displayStealthRangeMode = rogue.displayStealthRangeMode;
     trueColorMode = rogue.trueColorMode;
     memset((void *) &rogue, 0, sizeof( playerCharacter )); // the flood
     rogue.playbackMode = playingback;
     rogue.playbackPaused = playbackPaused;
     rogue.playbackFastForward = playbackFF;
     rogue.wizard = wizard;
-    rogue.displayAggroRangeMode = displayAggroRangeMode;
+    rogue.displayStealthRangeMode = displayStealthRangeMode;
     rogue.trueColorMode = trueColorMode;
 
     rogue.gameHasEnded = false;
@@ -827,7 +827,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
 
     updateMapToShore();
     updateVision(true);
-    rogue.aggroRange = currentAggroValue();
+    rogue.stealthRange = currentStealthRange();
 
     // update monster states so none are hunting if there is no scent and they can't see the player
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
