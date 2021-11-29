@@ -5710,14 +5710,13 @@ static void tryIdentifyLastItemKinds(enum itemCategory category) {
 
 void identifyItemKind(item *theItem) {
     itemTable *theTable;
-    short tableCount, i, lastItem;
+    short tableCount;
 
     theTable = tableForItemCategory(theItem->category);
     if (theTable) {
         theItem->flags &= ~ITEM_KIND_AUTO_ID;
 
         tableCount = 0;
-        lastItem = -1;
 
         switch (theItem->category) {
             case SCROLL:
