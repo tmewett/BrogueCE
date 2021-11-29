@@ -1290,7 +1290,7 @@ void enableEasyMode() {
         refreshDungeonCell(player.xLoc, player.yLoc);
         refreshSideBar(-1, -1, false);
         message("You are transformed into an immortal and bitwise AMPERSAND!!!", 0);
-        message("You have a feeling that you are now impervious to damage.", 0);
+        message("You have a feeling that you are now impervious to most damage.", 0);
         message("However, your high score will not be recorded.", 0);
     } else {
         message("The devil dissipates, hissing, from the air around you.", 0);
