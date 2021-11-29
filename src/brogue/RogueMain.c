@@ -1063,13 +1063,14 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     }
     theEntry.score = rogue.gold;
     if (rogue.easyMode) {
-        theEntry.score /= 10;
+        // Brogue Lite: easy mode (developer mode) stores high score as 0
+        theEntry.score = 0;
     }
     strcpy(highScoreText, buf);
-    if (theEntry.score > 0) {
+    //if (theEntry.score > 0) {
         sprintf(buf2, " with %li gold", theEntry.score);
         strcat(buf, buf2);
-    }
+    //}
     if (numberOfMatchingPackItems(AMULET, 0, 0, false) > 0) {
         strcat(buf, ", amulet in hand");
     }
@@ -1238,8 +1239,9 @@ void victory(boolean superVictory) {
 
     theEntry.score = totalValue;
 
+    // Brogue Lite: easy mode (developer mode) stores high score as 0
     if (rogue.easyMode) {
-        theEntry.score /= 10;
+        theEntry.score = 0;
     }
 
     if (!rogue.wizard && !rogue.playbackMode) {
