@@ -4108,7 +4108,7 @@ char nextKeyPress(boolean textInput) {
     return theEvent.param1;
 }
 
-#define BROGUE_HELP_LINE_COUNT  33
+#define BROGUE_HELP_LINE_COUNT  34
 
 void printHelpScreen() {
     short i, j;
@@ -4130,7 +4130,7 @@ void printHelpScreen() {
         " i, right-click  ****view inventory",
         "              D  ****list discovered items",
         "",
-        "              z  ****rest once",
+        "         z, '.'  ****rest for a turn",
         "              Z  ****rest for 100 turns or until something happens",
         "              s  ****search for secrets (control-s: long search)",
         "           <, >  ****travel to stairs",
@@ -4140,6 +4140,7 @@ void printHelpScreen() {
         "              G  ****toggle graphical tiles (when available)",
         "",
         "              S  ****suspend game and quit",
+        "            ','  ****take screenshot",
         "              Q  ****quit to title screen",
         "",
         "              \\  ****disable/enable color effects",
