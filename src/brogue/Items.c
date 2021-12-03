@@ -3586,14 +3586,18 @@ boolean negate(creature *monst) {
     short i, j;
     enum boltType backupBolts[20];
     char buf[DCOLS * 3], monstName[DCOLS];
-    boolean negated = false;
+    boolean negated = false, abilitiesNegated = false;
+    creatureType species;
+    unsigned long naturalAbilities = 0;
+    unsigned long naturalTraits = 0;
 
     monsterName(monstName, monst, true);
-
-    if (monst->info.abilityFlags & ~MA_NON_NEGATABLE_ABILITIES) {
-        monst->info.abilityFlags &= MA_NON_NEGATABLE_ABILITIES; // negated monsters lose all special abilities
-        negated = true;
-        monst->wasNegated = true;
+    species = monsterCatalog[monst->info.monsterID];
+    naturalTraits |= species.flags;
+    naturalAbilities |= species.abilityFlags;
+    if (monst->mutationIndex > -1) {
+        naturalTraits |= mutationCatalog[monst->mutationIndex].monsterFlags;
+        naturalAbilities |= mutationCatalog[monst->mutationIndex].monsterAbilityFlags;
     }
 
     if (monst->bookkeepingFlags & MB_SEIZING){
@@ -3601,6 +3605,7 @@ boolean negate(creature *monst) {
         negated = true;
     }
 
+    // Animated-by-magic monsters just die; skip everything else
     if (monst->info.flags & MONST_DIES_IF_NEGATED) {
         if (monst->status[STATUS_LEVITATING]) {
             sprintf(buf, "%s dissipates into thin air", monstName);
@@ -3611,9 +3616,11 @@ boolean negate(creature *monst) {
         }
         killCreature(monst, false);
         combatMessage(buf, messageColorFromVictim(monst));
-        negated = true;
-    } else if (!(monst->info.flags & MONST_INVULNERABLE)) {
-        // works on inanimates
+        return true;
+    }
+
+    if (!(monst->info.flags & MONST_INVULNERABLE)) {
+        // clear statuses
         if (monst->status[STATUS_IMMUNE_TO_FIRE]) {
             monst->status[STATUS_IMMUNE_TO_FIRE] = 0;
             negated = true;
@@ -3679,11 +3686,8 @@ boolean negate(creature *monst) {
                 negated = true;
             }
         }
-        if (monst->info.flags & MONST_IMMUNE_TO_FIRE) {
-            monst->info.flags &= ~MONST_IMMUNE_TO_FIRE;
-            monst->wasNegated = true;
-            negated = true;
-        }
+
+        // End haste/slow effects
         if (monst->movementSpeed != monst->info.movementSpeed) {
             monst->movementSpeed = monst->info.movementSpeed;
             negated = true;
@@ -3693,44 +3697,66 @@ boolean negate(creature *monst) {
             negated = true;
         }
 
-        if (monst != &player && monst->mutationIndex > -1 && mutationCatalog[monst->mutationIndex].canBeNegated) {
-
-            monst->mutationIndex = -1;
+        // Monsters lose all special abilities and traits if negated once and
+        // gain them back if negated again.
+        if (naturalAbilities & ~MA_NON_NEGATABLE_ABILITIES) {
+            monst->info.abilityFlags ^= 
+                naturalAbilities & ~MA_NON_NEGATABLE_ABILITIES;
             negated = true;
-            monst->wasNegated = true;
+            abilitiesNegated = !monst->wasNegated;
         }
-        if (monst != &player && (monst->info.flags & NEGATABLE_TRAITS)) {
+
+        if (monst != &player && (naturalTraits & NEGATABLE_TRAITS)) {
             if ((monst->info.flags & MONST_FIERY) && monst->status[STATUS_BURNING]) {
                 extinguishFireOnCreature(monst);
             }
-            monst->info.flags &= ~NEGATABLE_TRAITS;
+            monst->info.flags ^= (naturalTraits & NEGATABLE_TRAITS);
+            if ((monst->info.flags & MONST_FIERY)) {
+                monst->status[STATUS_BURNING] = monst->maxStatus[STATUS_BURNING];
+            }
             negated = true;
-            monst->wasNegated = true;
+            abilitiesNegated = !monst->wasNegated;
             refreshDungeonCell(monst->loc.x, monst->loc.y);
             refreshSideBar(-1, -1, false);
         }
-        for (i = 0; i < 20; i++) {
-            backupBolts[i] = monst->info.bolts[i];
-            monst->info.bolts[i] = BOLT_NONE;
-            if (monst->info.bolts[i] && !(boltCatalog[monst->info.bolts[i]].flags & BF_NOT_NEGATABLE)) {
-                negated = true;
+        if (!monst->wasNegated) {
+            for (i = 0; i < 20; i++) {
+                backupBolts[i] = monst->info.bolts[i];
+                monst->info.bolts[i] = BOLT_NONE;
+                if (monst->info.bolts[i] && !(boltCatalog[monst->info.bolts[i]].flags & BF_NOT_NEGATABLE)) {
+                    negated = true;
+                    abilitiesNegated = true;
+                }
+            }
+            for (i = 0, j = 0; i < 20 && backupBolts[i]; i++) {
+                if (boltCatalog[backupBolts[i]].flags & BF_NOT_NEGATABLE) {
+                    monst->info.bolts[j] = backupBolts[i];
+                    j++;
+                }
+            }
+        } else {
+            // If monster was already negated, then just give it back all of the bolts from 
+            // its species template.  This will clobber any learned bolts, but the negation
+            // is supposed to remove those anyway.
+            for (i = 0; i < 20; i++) {
+                monst->info.bolts[i] = species.bolts[i];
             }
         }
-        for (i = 0, j = 0; i < 20 && backupBolts[i]; i++) {
-            if (boltCatalog[backupBolts[i]].flags & BF_NOT_NEGATABLE) {
-                monst->info.bolts[j] = backupBolts[i];
-                j++;
-            }
-        }
+
         monst->newPowerCount = monst->totalPowerCount; // Allies can re-learn lost ability slots.
         applyInstantTileEffectsToCreature(monst); // in case it should immediately die or fall into a chasm
+        // Removal of learned powers happens even if monster is being negated a second time
     }
 
-    if (negated && monst != &player && !(monst->info.flags & MONST_DIES_IF_NEGATED)) {
+    if (monst->wasNegated && monst != &player) {
+        sprintf(buf, "as the anti-magic strikes %s, the prior negation effect is undone", monstName);
+        combatMessage(buf, NULL);
+    } else if (negated && monst != &player) {
         sprintf(buf, "%s is stripped of $HISHER special traits", monstName);
         resolvePronounEscapes(buf, monst);
         combatMessage(buf, messageColorFromVictim(monst));
     }
+    monst->wasNegated = abilitiesNegated;
 
     return negated;
 }

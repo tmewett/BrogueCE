@@ -2127,6 +2127,7 @@ typedef struct mutation {
     unsigned long forbiddenFlags;
     unsigned long forbiddenAbilityFlags;
     char description[1000];
+    char negatedDescription[1000];
     boolean canBeNegated;
 } mutation;
 

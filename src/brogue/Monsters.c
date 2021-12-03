@@ -4158,15 +4158,31 @@ void monsterDetails(char buf[], creature *monst) {
     }
 
     if (monst->mutationIndex >= 0) {
+        mutation mutationInfo = mutationCatalog[monst->mutationIndex];
+        boolean mutationNegated =
+            monst->wasNegated && mutationInfo.canBeNegated;
         i = strlen(buf);
-        i = encodeMessageColor(buf, i, mutationCatalog[monst->mutationIndex].textColor);
-        strcpy(newText, mutationCatalog[monst->mutationIndex].description);
+        i = encodeMessageColor(buf, i, mutationInfo.textColor);
+        strcpy(newText, mutationInfo.description);
+        if (mutationNegated) {
+            strcat(newText, ", ");
+        } else {
+            strcat(newText, ".");
+        }
         resolvePronounEscapes(newText, monst);
         upperCase(newText);
-        strcat(newText, "\n     ");
         strcat(buf, newText);
         i = strlen(buf);
+        if (mutationNegated) {
+            i = encodeMessageColor(buf, i, &pink);
+            sprintf(newText, "but negation has ");
+            strcat(newText, mutationInfo.negatedDescription);
+            resolvePronounEscapes(newText, monst);
+            strcat(buf, newText);
+        }
+        i = strlen(buf);
         i = encodeMessageColor(buf, i, &white);
+        strcat(buf, "\n     ");
     }
 
     if (!(monst->info.flags & MONST_ATTACKABLE_THRU_WALLS)
@@ -4355,8 +4371,7 @@ void monsterDetails(char buf[], creature *monst) {
     if (monst->wasNegated && monst->newPowerCount == monst->totalPowerCount) {
         i = strlen(buf);
         i = encodeMessageColor(buf, i, &pink);
-        sprintf(newText, "%s is stripped of $HISHER special traits.", capMonstName);
-        resolvePronounEscapes(newText, monst);
+        sprintf(newText, "%s is stripped of any special traits.", capMonstName);
         upperCase(newText);
         strcat(buf, "\n     ");
         strcat(buf, newText);

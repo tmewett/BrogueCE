@@ -240,10 +240,10 @@ void updateLighting() {
     for (creatureIterator it = iterateCreatures(monsters); !handledPlayer || hasNextCreature(it);) {
         creature *monst = !handledPlayer ? &player : nextCreature(&it);
         handledPlayer = true;
-        if (monst->info.intrinsicLightType) {
+        if (monst->info.intrinsicLightType && !monst->wasNegated) {
             paintLight(&lightCatalog[monst->info.intrinsicLightType], monst->loc.x, monst->loc.y, false, false);
         }
-        if (monst->mutationIndex >= 0 && mutationCatalog[monst->mutationIndex].light != NO_LIGHT) {
+        if (monst->mutationIndex >= 0 && mutationCatalog[monst->mutationIndex].light != NO_LIGHT && !monst->wasNegated) {
             paintLight(&lightCatalog[mutationCatalog[monst->mutationIndex].light], monst->loc.x, monst->loc.y, false, false);
         }
 
