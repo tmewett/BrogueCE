@@ -1412,17 +1412,13 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
                     }
 
                 if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                    if (theItem->enchant1 == 0) {
-                        sprintf(buf, "%s%s [%i]<%i>", root, grayEscapeSequence, theItem->armor/10, theItem->strengthRequired);
-                    } else {
-                        sprintf(buf, "%s%i %s%s [%i]<%i>",
-                                (theItem->enchant1 < 0 ? "" : "+"),
-                                theItem->enchant1,
-                                root,
-                                grayEscapeSequence,
-                                theItem->armor/10 + theItem->enchant1,
-                                theItem->strengthRequired);
-                    }
+                    sprintf(buf, "%s%i %s%s [%i]<%i>",
+                            (theItem->enchant1 < 0 ? "" : "+"),
+                            theItem->enchant1,
+                            root,
+                            grayEscapeSequence,
+                            theItem->armor/10 + theItem->enchant1,
+                            theItem->strengthRequired);
                     strcpy(root, buf);
                 } else {
                     sprintf(buf, "%s%s <%i>", root, grayEscapeSequence, theItem->strengthRequired);
