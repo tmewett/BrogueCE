@@ -897,7 +897,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
             }
             break;
         case A_ABSORPTION:
-            *damage -= rand_range(0, armorAbsorptionMax(enchant));
+            *damage -= rand_range(1, armorAbsorptionMax(enchant));
             if (*damage <= 0) {
                 *damage = 0;
                 runicDiscovered = true;
