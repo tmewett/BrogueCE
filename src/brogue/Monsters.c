@@ -1764,7 +1764,13 @@ void updateMonsterState(creature *monst) {
                && !(monst->carriedItem)) {
 
         monst->creatureMode = MODE_NORMAL;
-        alertMonster(monst);
+
+        if (BROGUE_VERSION_ATLEAST(1,10,2) && monst->leader == &player) {
+            monst->creatureState = MONSTER_ALLY; // Reset state if a discorded ally steals an item and then loses it (probably in deep water)
+        } else {
+            alertMonster(monst);
+        }
+
     } else if (monst->creatureMode == MODE_NORMAL
                && monst->creatureState == MONSTER_FLEEING
                && (monst->info.flags & MONST_FLEES_NEAR_DEATH)
