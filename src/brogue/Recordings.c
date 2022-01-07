@@ -1163,7 +1163,7 @@ void saveGameNoPrompt() {
 }
 
 void saveGame() {
-    char filePathWithoutSuffix[BROGUE_FILENAME_MAX], filePath[BROGUE_FILENAME_MAX], defaultPath[BROGUE_FILENAME_MAX];
+    char filePathWithoutSuffix[BROGUE_FILENAME_MAX - sizeof(GAME_SUFFIX)], filePath[BROGUE_FILENAME_MAX], defaultPath[BROGUE_FILENAME_MAX];
     boolean askAgain;
 
     if (rogue.playbackMode) {
