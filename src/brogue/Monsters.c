@@ -239,7 +239,7 @@ void monsterName(char *buf, creature *monst, boolean includeArticle) {
         return;
     }
     if (canSeeMonster(monst) || rogue.playbackOmniscience) {
-        if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience) {
+        if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience && !player.status[STATUS_TELEPATHIC]) {
 
             oldRNG = rogue.RNG;
             rogue.RNG = RNG_COSMETIC;
