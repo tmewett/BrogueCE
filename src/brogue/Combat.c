@@ -462,6 +462,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
                     itemName(theItem, buf3, false, true, NULL);
                     sprintf(buf, "%s stole %s!", buf2, buf3);
                     messageWithColor(buf, &badMessageColor, 0);
+                    rogue.autoPlayingLevel = false;
                 }
             }
         }
@@ -1262,7 +1263,7 @@ short strLenWithoutEscapes(const char *str) {
 // Messages in the buffer are delimited by newlines.
 void combatMessage(char *theMsg, color *theColor) {
     short length;
-    char newMsg[COLS * 2];
+    char newMsg[COLS * 2 - 1]; // -1 for the newline when appending later
 
     if (theColor == 0) {
         theColor = &white;
@@ -1270,7 +1271,8 @@ void combatMessage(char *theMsg, color *theColor) {
 
     newMsg[0] = '\0';
     encodeMessageColor(newMsg, 0, theColor);
-    strcat(newMsg, theMsg);
+    length = strlen(newMsg);
+    strncat(&newMsg[length], theMsg, (COLS * 2 - 1) - length - 1);
 
     length = strlen(combatText);
 

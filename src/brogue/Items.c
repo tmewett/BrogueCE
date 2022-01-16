@@ -25,6 +25,11 @@
 #include "Rogue.h"
 #include "IncludeGlobals.h"
 
+#define MAGIC_POLARITY_BENEVOLENT 1
+#define MAGIC_POLARITY_MALEVOLENT -1
+#define MAGIC_POLARITY_NEUTRAL 0
+#define MAGIC_POLARITY_ANY 0
+
 item *initializeItem() {
     short i;
     item *theItem;
@@ -760,8 +765,8 @@ void pickUpItemAt(short x, short y) {
     }
 
     if ((theItem->flags & ITEM_KIND_AUTO_ID)
-        && tableForItemCategory(theItem->category, NULL)
-        && !(tableForItemCategory(theItem->category, NULL)[theItem->kind].identified)) {
+        && tableForItemCategory(theItem->category)
+        && !(tableForItemCategory(theItem->category)[theItem->kind].identified)) {
 
         identifyItemKind(theItem);
     }
@@ -1222,7 +1227,7 @@ boolean itemCanBeCalled(item *theItem) {
     if (theItem->category & (WEAPON|ARMOR|SCROLL|RING|POTION|STAFF|WAND|CHARM)) {
         return true;
     } else if ((theItem->category & (POTION | SCROLL))
-               && !tableForItemCategory(theItem->category, NULL)[theItem->kind].identified) {
+               && !tableForItemCategory(theItem->category)[theItem->kind].identified) {
         return true;
     } else {
         return false;
@@ -1243,7 +1248,7 @@ void call(item *theItem) {
         // and then reset it immediately afterward.
         for (tempItem = packItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
             if ((tempItem->category & (POTION | SCROLL))
-                && tableForItemCategory(tempItem->category, NULL)[tempItem->kind].identified) {
+                && tableForItemCategory(tempItem->category)[tempItem->kind].identified) {
 
                 tempItem->flags &= ~ITEM_CAN_BE_IDENTIFIED;
             } else {
@@ -1278,7 +1283,7 @@ void call(item *theItem) {
     }
 
     if (theItem->category & (WEAPON | ARMOR | STAFF | WAND | RING)) {
-        if (tableForItemCategory(theItem->category, NULL)[theItem->kind].identified) {
+        if (tableForItemCategory(theItem->category)[theItem->kind].identified) {
             if (inscribeItem(theItem)) {
                 command[c++] = '\0';
                 strcat((char *) command, theItem->inscription);
@@ -1300,8 +1305,8 @@ void call(item *theItem) {
         }
     }
 
-    if (tableForItemCategory(theItem->category, NULL)
-        && !(tableForItemCategory(theItem->category, NULL)[theItem->kind].identified)) {
+    if (tableForItemCategory(theItem->category)
+        && !(tableForItemCategory(theItem->category)[theItem->kind].identified)) {
 
         if (getInputTextString(itemText, "call them: \"", 29, "", "\"", TEXT_INPUT_NORMAL, false)) {
             command[c++] = '\0';
@@ -1309,11 +1314,11 @@ void call(item *theItem) {
             recordKeystrokeSequence(command);
             recordKeystroke(RETURN_KEY, false, false);
             if (itemText[0]) {
-                strcpy(tableForItemCategory(theItem->category, NULL)[theItem->kind].callTitle, itemText);
-                tableForItemCategory(theItem->category, NULL)[theItem->kind].called = true;
+                strcpy(tableForItemCategory(theItem->category)[theItem->kind].callTitle, itemText);
+                tableForItemCategory(theItem->category)[theItem->kind].called = true;
             } else {
-                tableForItemCategory(theItem->category, NULL)[theItem->kind].callTitle[0] = '\0';
-                tableForItemCategory(theItem->category, NULL)[theItem->kind].called = false;
+                tableForItemCategory(theItem->category)[theItem->kind].callTitle[0] = '\0';
+                tableForItemCategory(theItem->category)[theItem->kind].called = false;
             }
             confirmMessages();
             itemName(theItem, buf, false, true, NULL);
@@ -1407,17 +1412,13 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
                     }
 
                 if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                    if (theItem->enchant1 == 0) {
-                        sprintf(buf, "%s%s [%i]<%i>", root, grayEscapeSequence, theItem->armor/10, theItem->strengthRequired);
-                    } else {
-                        sprintf(buf, "%s%i %s%s [%i]<%i>",
-                                (theItem->enchant1 < 0 ? "" : "+"),
-                                theItem->enchant1,
-                                root,
-                                grayEscapeSequence,
-                                theItem->armor/10 + theItem->enchant1,
-                                theItem->strengthRequired);
-                    }
+                    sprintf(buf, "%s%i %s%s [%i]<%i>",
+                            (theItem->enchant1 < 0 ? "" : "+"),
+                            theItem->enchant1,
+                            root,
+                            grayEscapeSequence,
+                            theItem->armor/10 + theItem->enchant1,
+                            theItem->strengthRequired);
                     strcpy(root, buf);
                 } else {
                     sprintf(buf, "%s%s <%i>", root, grayEscapeSequence, theItem->strengthRequired);
@@ -1629,7 +1630,7 @@ void itemKindName(item *theItem, char *kindName) {
 
     // use lookup table for randomly generated items with more than one kind per category
     if (theItem->category & (ARMOR | CHARM | FOOD | POTION | RING | SCROLL | STAFF | WAND | WEAPON)) {
-        strcpy(kindName, tableForItemCategory(theItem->category, NULL)[theItem->kind].name);
+        strcpy(kindName, tableForItemCategory(theItem->category)[theItem->kind].name);
     } else {
         switch (theItem->category) {
             case KEY:
@@ -1668,56 +1669,29 @@ void itemRunicName(item *theItem, char *runicName) {
     }
 }
 
-// kindCount is optional
-itemTable *tableForItemCategory(enum itemCategory theCat, short *kindCount) {
-    itemTable *returnedTable;
-    short returnedCount;
+itemTable *tableForItemCategory(enum itemCategory theCat) {
     switch (theCat) {
         case FOOD:
-            returnedTable = foodTable;
-            returnedCount = NUMBER_FOOD_KINDS;
-            break;
+            return foodTable;
         case WEAPON:
-            returnedTable = weaponTable;
-            returnedCount = NUMBER_WEAPON_KINDS;
-            break;
+            return weaponTable;
         case ARMOR:
-            returnedTable = armorTable;
-            returnedCount = NUMBER_ARMOR_KINDS;
-            break;
+            return armorTable;
         case POTION:
-            returnedTable = potionTable;
-            returnedCount = NUMBER_POTION_KINDS;
-            break;
+            return potionTable;
         case SCROLL:
-            returnedTable = scrollTable;
-            returnedCount = NUMBER_SCROLL_KINDS;
-            break;
+            return scrollTable;
         case RING:
-            returnedTable = ringTable;
-            returnedCount = NUMBER_RING_KINDS;
-            break;
+            return ringTable;
         case WAND:
-            returnedTable = wandTable;
-            returnedCount = NUMBER_WAND_KINDS;
-            break;
+            return wandTable;
         case STAFF:
-            returnedTable = staffTable;
-            returnedCount = NUMBER_STAFF_KINDS;
-            break;
+            return staffTable;
         case CHARM:
-            returnedTable = charmTable;
-            returnedCount = NUMBER_CHARM_KINDS;
-            break;
+            return charmTable;
         default:
-            returnedTable = NULL;
-            returnedCount = 0;
-            break;
+            return NULL;
     }
-    if (kindCount) {
-        *kindCount = returnedCount;
-    }
-    return returnedTable;
 }
 
 boolean isVowelish(char *theChar) {
@@ -1844,10 +1818,10 @@ void itemDetails(char *buf, item *theItem) {
     itemName(theItem, theName, false, false, NULL);
 
     // introductory text
-    if (tableForItemCategory(theItem->category, NULL)
-        && (tableForItemCategory(theItem->category, NULL)[theItem->kind].identified || rogue.playbackOmniscience)) {
+    if (tableForItemCategory(theItem->category)
+        && (tableForItemCategory(theItem->category)[theItem->kind].identified || rogue.playbackOmniscience)) {
 
-        strcat(buf, tableForItemCategory(theItem->category, NULL)[theItem->kind].description);
+        strcat(buf, tableForItemCategory(theItem->category)[theItem->kind].description);
 
         if (theItem->category == POTION && theItem->kind == POTION_LIFE) {
             sprintf(buf2, "\n\nIt will increase your maximum health by %s%i%%%s.",
@@ -1863,7 +1837,7 @@ void itemDetails(char *buf, item *theItem) {
                         (singular ? "This" : "These"),
                         (singular ? "" : "s"),
                         (singular ? "s" : ""),
-                        tableForItemCategory(theItem->category, NULL)[theItem->kind].flavor,
+                        tableForItemCategory(theItem->category)[theItem->kind].flavor,
                         (singular ? "it" : "they"));
                 break;
             case SCROLL:
@@ -1872,21 +1846,21 @@ void itemDetails(char *buf, item *theItem) {
                         (singular ? "" : "s"),
                         (singular ? "is" : "are"),
                         (singular ? "s" : ""),
-                        tableForItemCategory(theItem->category, NULL)[theItem->kind].flavor,
+                        tableForItemCategory(theItem->category)[theItem->kind].flavor,
                         (singular ? "it" : "they"));
                 break;
             case STAFF:
                 sprintf(buf2, "This gnarled %s staff is warm to the touch. Who knows what it will do when used?",
-                        tableForItemCategory(theItem->category, NULL)[theItem->kind].flavor);
+                        tableForItemCategory(theItem->category)[theItem->kind].flavor);
                 break;
             case WAND:
                 sprintf(buf2, "This thin %s wand is warm to the touch. Who knows what it will do when used?",
-                        tableForItemCategory(theItem->category, NULL)[theItem->kind].flavor);
+                        tableForItemCategory(theItem->category)[theItem->kind].flavor);
                 break;
             case RING:
                 sprintf(buf2, "This metal band is adorned with a%s %s gem that glitters in the darkness. Who knows what effect it has when worn? ",
-                        isVowelish(tableForItemCategory(theItem->category, NULL)[theItem->kind].flavor) ? "n" : "",
-                        tableForItemCategory(theItem->category, NULL)[theItem->kind].flavor);
+                        isVowelish(tableForItemCategory(theItem->category)[theItem->kind].flavor) ? "n" : "",
+                        tableForItemCategory(theItem->category)[theItem->kind].flavor);
                 break;
             case CHARM: // Should never be displayed.
                 strcat(buf2, "What a perplexing charm!");
@@ -2042,14 +2016,18 @@ void itemDetails(char *buf, item *theItem) {
                             abs((short) damageChange),
                             whiteColorEscape);
                 } else {
-                    new = theItem->armor;
+                    new = 0;
+
                     if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                        new += 10 * netEnchant(theItem) / FP_FACTOR;
+                        new = theItem->armor / 10;
+                        new += netEnchant(theItem) / FP_FACTOR;
                     } else {
-                        new += 10 * strengthModifier(theItem) / FP_FACTOR;
+                        new = ((armorTable[theItem->kind].range.upperBound + armorTable[theItem->kind].range.lowerBound) / 2) / 10;
+                        new += strengthModifier(theItem) / FP_FACTOR;
                     }
+
                     new = max(0, new);
-                    new /= 10;
+
                     sprintf(buf2, "Wearing the %s%s will result in an armor rating of %s%i%s. ",
                             theName,
                             ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) ? "" : ", assuming it has no hidden properties,",
@@ -2649,7 +2627,7 @@ void itemDetails(char *buf, item *theItem) {
                             charmRechargeDelay(theItem->kind, theItem->enchant1 + 1));
                     break;
                 case CHARM_NEGATION:
-                    sprintf(buf2, "\n\nWhen used, the charm will negate all magical effects on the creatures in your field of view and the items on the ground up to %i spaces away, and recharge in %i turns. (If the charm is enchanted, it will reach up to %i spaces and recharge in %i turns.)",
+                    sprintf(buf2, "\n\nWhen used, the charm will emit a wave of anti-magic up to %i spaces away, negating all magical effects on you and on creatures and dropped items in your field of view. It will recharge in %i turns. (If the charm is enchanted, it will reach up to %i spaces and recharge in %i turns.)",
                             charmNegationRadius(enchant),
                             charmRechargeDelay(theItem->kind, theItem->enchant1),
                             charmNegationRadius(enchant + FP_FACTOR),
@@ -3795,7 +3773,7 @@ boolean polymorph(creature *monst) {
         monst->movementSpeed *= 2;
         monst->attackSpeed *= 2;
     }
-
+    monst->wasNegated = false;
     clearStatus(monst);
 
     if (monst->info.flags & MONST_FIERY) {
@@ -4264,7 +4242,7 @@ void beckonMonster(creature *monst, short x, short y) {
 
 enum boltEffects boltEffectForItem(item *theItem) {
     if (theItem->category & (STAFF | WAND)) {
-        return boltCatalog[tableForItemCategory(theItem->category, NULL)[theItem->kind].strengthRequired].boltEffect;
+        return boltCatalog[tableForItemCategory(theItem->category)[theItem->kind].strengthRequired].boltEffect;
     } else {
         return BE_NONE;
     }
@@ -4272,7 +4250,7 @@ enum boltEffects boltEffectForItem(item *theItem) {
 
 enum boltType boltForItem(item *theItem) {
     if (theItem->category & (STAFF | WAND)) {
-        return tableForItemCategory(theItem->category, NULL)[theItem->kind].strengthRequired;
+        return tableForItemCategory(theItem->category)[theItem->kind].strengthRequired;
     } else {
         return 0;
     }
@@ -5567,16 +5545,174 @@ boolean chooseTarget(short returnLoc[2],
     return true;
 }
 
+// Returns the number of total, good, or bad item kinds for the given item category. To ignore
+// polarity and get the total kinds, pass polarityConstraint = 0.
+int itemKindCount(enum itemCategory category, int polarityConstraint) {
+    int kindCount = -1, totalKinds, goodKinds;
+
+    switch (category) {
+        case SCROLL:
+            totalKinds = NUMBER_SCROLL_KINDS;
+            goodKinds = NUMBER_GOOD_SCROLL_KINDS;
+            break;
+        case POTION:
+            totalKinds = NUMBER_POTION_KINDS;
+            goodKinds = NUMBER_GOOD_POTION_KINDS;
+            break;
+        case WAND:
+            totalKinds = NUMBER_WAND_KINDS;
+            goodKinds = NUMBER_GOOD_WAND_KINDS;
+            break;
+        case STAFF:
+            totalKinds = NUMBER_STAFF_KINDS;
+            goodKinds = NUMBER_GOOD_STAFF_KINDS;
+            break;
+        case FOOD:
+            totalKinds = NUMBER_FOOD_KINDS;
+            goodKinds = 0;
+            break;
+        case WEAPON:
+            totalKinds = NUMBER_WEAPON_KINDS;
+            goodKinds = 0;
+            break;
+        case ARMOR:
+            totalKinds = NUMBER_ARMOR_KINDS;
+            goodKinds = 0;
+            break;
+        case RING:
+            totalKinds = NUMBER_RING_KINDS;
+            goodKinds = NUMBER_RING_KINDS;
+            break;
+        case CHARM:
+            totalKinds = NUMBER_CHARM_KINDS;
+            goodKinds = NUMBER_CHARM_KINDS;
+            break;
+        default:
+            totalKinds = 0;
+            goodKinds = 0;
+            break;
+    }
+
+    switch (polarityConstraint) {
+        case MAGIC_POLARITY_MALEVOLENT:
+            if (goodKinds == 0) {
+                kindCount = 0;
+            } else {
+                kindCount = totalKinds - goodKinds;
+            }
+            break;
+        case MAGIC_POLARITY_BENEVOLENT:
+            kindCount = goodKinds;
+            break;
+        default:
+            kindCount = totalKinds;
+            break;
+    }
+    return kindCount;
+}
+
+// Gets the final unidentified item kind for the given category and magic polarity, if possible. Returns -1 if
+// the final item kind cannot be determined.
+static int tryGetLastUnidentifiedItemKind(enum itemCategory category, int polarityConstraint) {
+    int lastItemKind = -1;
+    int totalItemKinds = itemKindCount(category, 0);
+    itemTable *theItemTable = tableForItemCategory(category);
+
+    if (theItemTable && (totalItemKinds > 0)) {
+        for (int i = 0; i < totalItemKinds; i++) {
+            if (!(theItemTable[i].identified)
+                && (theItemTable[i].magicPolarity == polarityConstraint || polarityConstraint == MAGIC_POLARITY_ANY)) {
+                if (lastItemKind != -1) {
+                    return -1; // At least two unidentified items remain.
+                }
+                lastItemKind = i;
+            }
+        }
+    }
+    return lastItemKind;
+}
+
+// Counts the number of items where the magic polarity has been revealed for the given item category
+// and magic polarity.
+static int magicPolarityRevealedItemKindCount(enum itemCategory category, int polarityConstraint) {
+    int kindCount = -1;
+    int totalItemKinds = itemKindCount(category, 0);
+    itemTable *theItemTable = tableForItemCategory(category);
+
+    if (theItemTable && (totalItemKinds > 0) && polarityConstraint) {
+        kindCount = 0;
+        for (int i = 0; i < totalItemKinds; i++) {
+            if (theItemTable[i].magicPolarity == polarityConstraint &&
+                    (theItemTable[i].identified || theItemTable[i].magicPolarityRevealed)) {
+                kindCount += 1;
+            }
+        }
+    }
+    return kindCount;
+}
+
+// Try to identify the last item kind in a given category.
+// The category must be in HAS_INTRINSIC_POLARITY.
+// polarityConstraint is either 0 (ignore polarity) or +1/-1.
+//
+// We can identify the last unidentified item kind...
+// 1. Of a category
+// 2. Of a given polarity within a category if either...
+//  A. Its polarity is known
+//  B. All items of the opposite polarity are either identified or their polarity is known
+static void tryIdentifyLastItemKind(enum itemCategory category, int polarityConstraint) {
+    itemTable *theItemTable = tableForItemCategory(category);
+    int lastItemKind = tryGetLastUnidentifiedItemKind(category, polarityConstraint);
+    int oppositeCount, oppositeRevealedCount;
+
+    if (lastItemKind >= 0) {
+
+        if (polarityConstraint == MAGIC_POLARITY_ANY) {
+            theItemTable[lastItemKind].identified = true;
+        } else {
+            int oppositeMagicPolarity = polarityConstraint * -1;
+            oppositeRevealedCount = magicPolarityRevealedItemKindCount(category, oppositeMagicPolarity);
+            oppositeCount = itemKindCount(category, oppositeMagicPolarity);
+            if (theItemTable[lastItemKind].magicPolarityRevealed || oppositeRevealedCount == oppositeCount) {
+                theItemTable[lastItemKind].identified = true;
+            }
+        }
+    }
+}
+
+// Try to identify the last item of the given category or all categories. This function
+// operates on flavored categories only. The base type of non-flavored categories are
+// already identified (e.g. weapons, armor, charms, etc.)
+static void tryIdentifyLastItemKinds(enum itemCategory category) {
+    enum itemCategory loopCategory;
+    int categoryCount = 1;
+
+    if (category == HAS_INTRINSIC_POLARITY) {
+        categoryCount = NUMBER_ITEM_CATEGORIES;
+    }
+
+    for (int i=0; i<categoryCount; i++) {
+        loopCategory = categoryCount == 1 ? category : Fl(i);
+        if (category & HAS_INTRINSIC_POLARITY & loopCategory) {
+            if (BROGUE_VERSION_ATLEAST(1,10,2)) {
+                tryIdentifyLastItemKind(loopCategory, MAGIC_POLARITY_BENEVOLENT);
+                tryIdentifyLastItemKind(loopCategory, MAGIC_POLARITY_MALEVOLENT);
+            } else {
+                tryIdentifyLastItemKind(loopCategory, MAGIC_POLARITY_ANY);
+            }
+        }
+    }
+}
+
 void identifyItemKind(item *theItem) {
     itemTable *theTable;
-    short tableCount, i, lastItem;
+    short tableCount;
 
-    theTable = tableForItemCategory(theItem->category, NULL);
+    theTable = tableForItemCategory(theItem->category);
     if (theTable) {
         theItem->flags &= ~ITEM_KIND_AUTO_ID;
 
         tableCount = 0;
-        lastItem = -1;
 
         switch (theItem->category) {
             case SCROLL:
@@ -5610,18 +5746,7 @@ void identifyItemKind(item *theItem) {
         }
         if (tableCount) {
             theTable[theItem->kind].identified = true;
-            for (i=0; i<tableCount; i++) {
-                if (!(theTable[i].identified)) {
-                    if (lastItem != -1) {
-                        return; // At least two unidentified items remain.
-                    }
-                    lastItem = i;
-                }
-            }
-            if (lastItem != -1) {
-                // Exactly one unidentified item remains; identify it.
-                theTable[lastItem].identified = true;
-            }
+            tryIdentifyLastItemKinds(theItem->category);
         }
     }
 }
@@ -5630,8 +5755,8 @@ void autoIdentify(item *theItem) {
     short quantityBackup;
     char buf[COLS * 3], oldName[COLS * 3], newName[COLS * 3];
 
-    if (tableForItemCategory(theItem->category, NULL)
-        && !tableForItemCategory(theItem->category, NULL)[theItem->kind].identified) {
+    if (tableForItemCategory(theItem->category)
+        && !tableForItemCategory(theItem->category)[theItem->kind].identified) {
 
         identifyItemKind(theItem);
         quantityBackup = theItem->quantity;
@@ -6221,7 +6346,7 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
     sprintf(buf, "Zapping your %s:", buf2);
     printString(buf, mapToWindowX(0), 1, &itemMessageColor, &black, NULL);
 
-    theBolt = boltCatalog[tableForItemCategory(theItem->category, NULL)[theItem->kind].strengthRequired];
+    theBolt = boltCatalog[tableForItemCategory(theItem->category)[theItem->kind].strengthRequired];
     if (theItem->category == STAFF) {
         theBolt.magnitude = theItem->enchant1;
     }
@@ -6233,7 +6358,7 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
     } else {
         maxDistance = -1;
     }
-    if (tableForItemCategory(theItem->category, NULL)[theItem->kind].identified) {
+    if (tableForItemCategory(theItem->category)[theItem->kind].identified) {
         autoTarget = targetAllies = false;
         if (!player.status[STATUS_HALLUCINATING]) {
             if (theBolt.flags & (BF_TARGET_ALLIES | BF_TARGET_ENEMIES)) {
@@ -6285,7 +6410,7 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
                          &theBolt,
                          !boltKnown);   // hide bolt details
             if (autoID) {
-                if (!tableForItemCategory(theItem->category, NULL)[theItem->kind].identified) {
+                if (!tableForItemCategory(theItem->category)[theItem->kind].identified) {
                     itemName(theItem, buf2, false, false, NULL);
                     sprintf(buf, "(Your %s must be ", buf2);
                     identifyItemKind(theItem);
@@ -6419,14 +6544,14 @@ void apply(item *theItem, boolean recordCommands) {
 
     if ((theItem->category == SCROLL || theItem->category == POTION)
         && magicCharDiscoverySuffix(theItem->category, theItem->kind) == -1
-        && ((theItem->flags & ITEM_MAGIC_DETECTED) || tableForItemCategory(theItem->category, NULL)[theItem->kind].identified)) {
+        && ((theItem->flags & ITEM_MAGIC_DETECTED) || tableForItemCategory(theItem->category)[theItem->kind].identified)) {
 
-        if (tableForItemCategory(theItem->category, NULL)[theItem->kind].identified) {
+        if (tableForItemCategory(theItem->category)[theItem->kind].identified) {
             sprintf(buf,
                     "Really %s a %s of %s?",
                     theItem->category == SCROLL ? "read" : "drink",
                     theItem->category == SCROLL ? "scroll" : "potion",
-                    tableForItemCategory(theItem->category, NULL)[theItem->kind].name);
+                    tableForItemCategory(theItem->category)[theItem->kind].name);
         } else {
             sprintf(buf,
                     "Really %s a cursed %s?",
@@ -6652,7 +6777,7 @@ void updateIdentifiableItem(item *theItem) {
         theItem->flags &= ~ITEM_CAN_BE_IDENTIFIED;
     } else if ((theItem->category & (RING | STAFF | WAND))
                && (theItem->flags & ITEM_IDENTIFIED)
-               && tableForItemCategory(theItem->category, NULL)[theItem->kind].identified) {
+               && tableForItemCategory(theItem->category)[theItem->kind].identified) {
 
         theItem->flags &= ~ITEM_CAN_BE_IDENTIFIED;
     } else if ((theItem->category & (WEAPON | ARMOR))
@@ -6938,6 +7063,10 @@ void readScroll(item *theItem) {
 }
 
 void detectMagicOnItem(item *theItem) {
+    if (theItem->category & HAS_INTRINSIC_POLARITY) {
+        itemTable *theItemTable = tableForItemCategory(theItem->category);
+        theItemTable[theItem->kind].magicPolarityRevealed = true;
+    }
     theItem->flags |= ITEM_MAGIC_DETECTED;
     if ((theItem->category & (WEAPON | ARMOR))
         && theItem->enchant1 == 0
@@ -7060,6 +7189,9 @@ void drinkPotion(item *theItem) {
                 }
             }
             if (hadEffect || hadEffect2) {
+                if (BROGUE_VERSION_ATLEAST(1,10,2)) {
+                    tryIdentifyLastItemKinds(HAS_INTRINSIC_POLARITY);
+                }
                 if (hadEffect && hadEffect2) {
                     message("you can somehow feel the presence of magic on the level and in your pack.", 0);
                 } else if (hadEffect) {
@@ -7125,7 +7257,7 @@ short magicCharDiscoverySuffix(short category, short kind) {
             break;
         case WAND:
         case STAFF:
-            if (boltCatalog[tableForItemCategory(category, NULL)[kind].strengthRequired].flags & (BF_TARGET_ALLIES)) {
+            if (boltCatalog[tableForItemCategory(category)[kind].strengthRequired].flags & (BF_TARGET_ALLIES)) {
                 result = -1;
             } else {
                 result = 1;
@@ -7146,62 +7278,38 @@ short magicCharDiscoverySuffix(short category, short kind) {
  0 if it is neutral
  1 if it is of good magic */
 int itemMagicPolarity(item *theItem) {
+    itemTable *theItemTable = tableForItemCategory(theItem->category);
     switch (theItem->category) {
         case WEAPON:
         case ARMOR:
             if ((theItem->flags & ITEM_CURSED) || theItem->enchant1 < 0) {
-                return -1;
+                return MAGIC_POLARITY_MALEVOLENT;
             } else if (theItem->enchant1 > 0) {
-                return 1;
+                return MAGIC_POLARITY_BENEVOLENT;
             }
-            return 0;
-            break;
-        case SCROLL:
-            switch (theItem->kind) {
-                case SCROLL_AGGRAVATE_MONSTER:
-                case SCROLL_SUMMON_MONSTER:
-                    return -1;
-                default:
-                    return 1;
-            }
-        case POTION:
-            switch (theItem->kind) {
-                case POTION_HALLUCINATION:
-                case POTION_INCINERATION:
-                case POTION_DESCENT:
-                case POTION_POISON:
-                case POTION_PARALYSIS:
-                case POTION_CONFUSION:
-                case POTION_LICHEN:
-                case POTION_DARKNESS:
-                    return -1;
-                default:
-                    return 1;
-            }
+            return MAGIC_POLARITY_NEUTRAL;
         case WAND:
             if (theItem->charges == 0) {
-                return 0;
+                return MAGIC_POLARITY_NEUTRAL;
             }
+        case SCROLL:
+        case POTION:
+        case CHARM:
         case STAFF:
-            if (boltCatalog[tableForItemCategory(theItem->category, NULL)[theItem->kind].strengthRequired].flags & (BF_TARGET_ALLIES)) {
-                return -1;
-            } else {
-                return 1;
-            }
+            return theItemTable[theItem->kind].magicPolarity;
         case RING:
             if (theItem->flags & ITEM_CURSED || theItem->enchant1 < 0) {
-                return -1;
+                return MAGIC_POLARITY_MALEVOLENT;
             } else if (theItem->enchant1 > 0) {
-                return 1;
+                return MAGIC_POLARITY_BENEVOLENT;
             } else {
-                return 0;
+                return MAGIC_POLARITY_NEUTRAL;
             }
-        case CHARM:
-            return 1;
         case AMULET:
-            return 1;
+            return MAGIC_POLARITY_BENEVOLENT;
+        default:
+            return MAGIC_POLARITY_NEUTRAL;
     }
-    return 0;
 }
 
 void unequip(item *theItem) {
@@ -7648,6 +7756,7 @@ void deleteItem(item *theItem) {
 
 void resetItemTableEntry(itemTable *theEntry) {
     theEntry->identified = false;
+    theEntry->magicPolarityRevealed = false;
     theEntry->called = false;
     theEntry->callTitle[0] = '\0';
 }
