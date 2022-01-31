@@ -2517,6 +2517,24 @@ void itemDetails(char *buf, item *theItem) {
                                     abs(theItem->enchant1 + 1));
                             strcat(buf, buf2);
                             break;
+                        case RING_AWARENESS:
+                            if (theItem->enchant1 > -1) {
+                                sprintf(buf2, "\n\nWith this ring equipped, you will have a %i%% chance to notice"
+                                        " adjacent traps. (If the ring is enchanted, the chance will %s %i%%.)",
+                                        min(100, max(0, theItem->enchant1 * 20 + 20)),
+                                        (theItem->enchant1 >= 4 ? "remain" : "increase to"),
+                                        min(100, max(0, theItem->enchant1 * 20 + 40)));
+                                sprintf(buf3, "\nYou may notice traps up to %i spaces away, though at that distance the"
+                                        " chance is only 10%%. (If the ring is enchanted, the distance becomes %i.)",
+                                        2 + 2 * (theItem->enchant1),
+                                        2 + 2 * (theItem->enchant1 + 1));
+                                strcat (buf2, buf3);
+                            } else {
+                                sprintf(buf2, "\n\nWith this ring equipped, you can only find secret doors and traps"
+                                        " by searching for them, and your searches are half as effective.");
+                            }
+                            strcat(buf, buf2);
+                            break;
                         default:
                             break;
                     }
