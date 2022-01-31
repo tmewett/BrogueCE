@@ -851,9 +851,10 @@ void burnItem(item *theItem) {
     if (pmap[x][y].flags & (ANY_KIND_OF_VISIBLE | DISCOVERED | ITEM_DETECTED)) {
         refreshDungeonCell(x, y);
     }
-    if (playerCanSee(x, y)) {
-        messageWithColor(buf2, &itemMessageColor, 0);
+    if (!playerCanSee(x, y)) {
+        sprintf(buf2, "Somewhere, a scream emanates from a burning scroll.");
     }
+    messageWithColor(buf2, &itemMessageColor, 0);
     spawnDungeonFeature(x, y, &(dungeonFeatureCatalog[DF_ITEM_FIRE]), true, false);
 }
 
