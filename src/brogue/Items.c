@@ -1885,9 +1885,10 @@ void itemDetails(char *buf, item *theItem) {
     }
 
     if (carried && theItem->originDepth > 0) {
-        sprintf(buf2, " (You found %s on depth %i.) ",
+        sprintf(buf2, " (You found %s on depth %i%s.) ",
                 singular ? "it" : "them",
-                theItem->originDepth);
+                theItem->originDepth,
+                theItem->flags & ITEM_IS_KEY ? " atop a candle-lit altar" : "");
         strcat(buf, buf2);
     }
 
