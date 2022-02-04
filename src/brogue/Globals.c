@@ -1883,7 +1883,7 @@ const monsterWords monsterText[NUMBER_MONSTER_KINDS] = {
     {"This blob of jet-black goo is as rare as $HESHE is deadly. Few creatures of the dungeon can withstand $HISHER caustic assault. Beware.",
         "absorbing", "Feeding",
         {"smears", "slimes", "drenches"}},
-    {"This vampire lives a solitary life deep underground, consuming any warm-blooded creature unfortunate to venture near $HISHER lair.",
+    {"This vampire lives a solitary life deep underground, consuming any warm-blooded creature unfortunate enough to venture near $HISHER lair.",
         "draining", "Drinking",
         {"grazes", "bites", "buries $HISHER fangs in", {0}},
         {0},
