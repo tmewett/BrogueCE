@@ -2807,7 +2807,9 @@ boolean getInputTextString(char *inputText,
     maxLength = min(maxLength, COLS - x);
 
 
-    strcpy(inputText, defaultEntry);
+    if (inputText != defaultEntry) {
+        strcpy(inputText, defaultEntry);
+    }
     charNum = strLenWithoutEscapes(inputText);
     for (i = charNum; i < maxLength; i++) {
         inputText[i] = ' ';

@@ -6031,8 +6031,12 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
             sprintf(buf, "the flask shatters and %s liquid splashes harmlessly %s %s.",
                     potionTable[theItem->kind].flavor, buf2, tileText(x, y));
             message(buf, 0);
-            if (theItem->kind == POTION_HALLUCINATION && (theItem->flags & ITEM_MAGIC_DETECTED)) {
-                autoIdentify(theItem);
+            // hallucination is the only malevolent potion that splashes harmlessly when thrown
+            if (theItem->kind == POTION_HALLUCINATION) {
+                if (theItem->flags & ITEM_MAGIC_DETECTED
+                    || (BROGUE_VERSION_ATLEAST(1,10,2) && magicPolarityRevealedItemKindCount(theItem->category, 1) == NUMBER_GOOD_POTION_KINDS)) {
+                    autoIdentify(theItem);
+                }
             }
         }
         deleteItem(theItem);
