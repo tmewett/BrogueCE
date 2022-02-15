@@ -4517,8 +4517,8 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
                     newMonst = cloneMonster(monst, true, true);
                     if (newMonst) {
-                        monst->info.maxHP = newMonst->info.maxHP = (monst->info.maxHP + 1) / 2;
-                        monst->currentHP = newMonst->currentHP = min(monst->currentHP, monst->info.maxHP);
+                        monst->currentHP = (monst->currentHP + 1) / 2;
+                        newMonst->currentHP = (newMonst->currentHP + 1) / 2;
                         if (boltCatalog[BOLT_PLENTY].backColor) {
                             flashMonster(monst, boltCatalog[BOLT_PLENTY].backColor, 100);
                             flashMonster(newMonst, boltCatalog[BOLT_PLENTY].backColor, 100);
