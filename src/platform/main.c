@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
     rogue.nextGamePath[0] = '\0';
     rogue.nextGameSeed = 0;
     rogue.wizard = false;
-    rogue.displayAggroRangeMode = false;
+    rogue.displayStealthRangeMode = false;
     rogue.trueColorMode = false;
 
     enum graphicsModes initialGraphics = TEXT_GRAPHICS;
@@ -244,7 +244,7 @@ int main(int argc, char *argv[])
 #endif
 
         if (strcmp(argv[i], "--stealth") == 0 || strcmp(argv[i], "-S") == 0) {
-            rogue.displayAggroRangeMode = true;
+            rogue.displayStealthRangeMode = true;
             continue;
         }
 

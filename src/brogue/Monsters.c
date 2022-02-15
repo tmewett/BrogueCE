@@ -1619,7 +1619,7 @@ short awarenessDistance(creature *observer, creature *target) {
 // takes into account whether it is ALREADY aware of the target.
 boolean awareOfTarget(creature *observer, creature *target) {
     short perceivedDistance = awarenessDistance(observer, target);
-    short awareness = rogue.aggroRange * 2;
+    short awareness = rogue.stealthRange * 2;
     boolean retval;
 
     brogueAssert(perceivedDistance >= 0 && awareness >= 0);
