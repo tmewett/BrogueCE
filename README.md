@@ -21,7 +21,7 @@ lucky few to return alive?
 - [Wiki](https://brogue.fandom.com/wiki/Brogue_Wiki)
 - [Forum (Reddit)](https://www.reddit.com/r/brogueforum/)
 - [Roguelikes Discord](https://discord.gg/9pmFGKx) (we have a #brogue channel)
-- IRC: ##brogue on Libera Chat
+- IRC: [##brogue on Libera Chat](https://kiwiirc.com/nextclient/irc.libera.chat/##brogue)
 - [Original website](https://sites.google.com/site/broguegame/)
 - [Android port](https://github.com/bilgincoskun/brogue-android-port/releases)
 
@@ -33,7 +33,7 @@ If you downloaded a [release][releases], you can open the game as follows:
 
 ### Windows
 
-Go to the `bin` folder and run `brogue.exe`.
+Run `brogue.exe`.
 
 ### Mac
 
