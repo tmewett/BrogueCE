@@ -1884,7 +1884,7 @@ void itemDetails(char *buf, item *theItem) {
         strcat(buf, buf2);
     }
 
-    if (carried && theItem->originDepth > 0) {
+    if (carried && theItem->originDepth > 0 && !(theItem->category & KEY)) {
         sprintf(buf2, " (You found %s on depth %i%s.) ",
                 singular ? "it" : "them",
                 theItem->originDepth,
