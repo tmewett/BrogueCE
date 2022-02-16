@@ -2807,22 +2807,18 @@ enum directions scentDirection(creature *monst) {
 
 // returns true if the resurrection was successful.
 boolean resurrectAlly(const short x, const short y) {
-    boolean success;
     creatureIterator allyIterator = iterateCreatures(&purgatory);
-    creature *monToCheck, *monToRaise;
-    monToCheck = monToRaise = nextCreature(&allyIterator);
-
-    if (!monToCheck) { // No allies dead yet; fail.
-        return false;
-    }
 
     // Prefer most empowered ally.  In case of tie, prefer ally with greatest monsterID (thus
     // preferring allies found deeper in the dungeon over ones found higher up and preferring
     // legendary allies over everyone else).
+    creature *monToCheck, *monToRaise = NULL;
     while (monToCheck = nextCreature(&allyIterator)) {
-        if (monToCheck->totalPowerCount > monToRaise->totalPowerCount ||
-            (monToCheck->totalPowerCount == monToRaise->totalPowerCount &&
-             monToCheck->info.monsterID > monToRaise->info.monsterID)) {
+        if (monToRaise == NULL
+            || monToCheck->totalPowerCount > monToRaise->totalPowerCount
+            || (monToCheck->totalPowerCount == monToRaise->totalPowerCount
+                && monToCheck->info.monsterID > monToRaise->info.monsterID)) {
+
             monToRaise = monToCheck;
         }
     }
@@ -2847,11 +2843,10 @@ boolean resurrectAlly(const short x, const short y) {
         monToRaise->status[STATUS_DISCORDANT] = 0;
         heal(monToRaise, 100, true);
 
-        success = true;
+        return true;
     } else {
-        success = false;
+        return false;
     }
-    return success;
 }
 
 void unAlly(creature *monst) {
