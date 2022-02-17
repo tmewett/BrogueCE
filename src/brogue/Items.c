@@ -1888,7 +1888,7 @@ void itemDetails(char *buf, item *theItem) {
         sprintf(buf2, " (You found %s on depth %i%s.) ",
                 singular ? "it" : "them",
                 theItem->originDepth,
-                theItem->flags & ITEM_IS_KEY ? " atop a candle-lit altar" : "");
+                theItem->flags & ITEM_IS_KEY ? " in a room of candle-lit altars" : "");
         strcat(buf, buf2);
     }
 
