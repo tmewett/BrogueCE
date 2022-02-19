@@ -3458,7 +3458,7 @@ boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refr
 }
 
 void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
-    short i, *x, *y, turnCount;;
+    short i, *x, *y, turnCount;
     boolean foundLeader = false;
     short **theMap;
     enum directions dir;
