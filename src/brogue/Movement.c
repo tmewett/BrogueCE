@@ -583,7 +583,6 @@ boolean abortAttackAgainstAcidicTarget(creature *hitList[8]) {
 boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *aborted) {
     bolt theBolt;
     creature *defender, *hitList[8] = {0};
-    short strikeLoc[2], originLoc[2], targetLoc[2];
 
     const char boltChar[DIRECTION_COUNT] = "||~~\\//\\";
 
@@ -596,13 +595,15 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
     } else if (!(attacker->info.abilityFlags & MA_ATTACKS_EXTEND)) {
         return false;
     }
-    originLoc[0] = attacker->loc.x;
-    originLoc[1] = attacker->loc.y;
-    targetLoc[0] = attacker->loc.x + nbDirs[dir][0];
-    targetLoc[1] = attacker->loc.y + nbDirs[dir][1];
-    getImpactLoc(strikeLoc, originLoc, targetLoc, 5, false, &boltCatalog[BOLT_WHIP]);
+    pos originLoc = attacker->loc;
+    pos targetLoc = (pos){
+        .x = attacker->loc.x + nbDirs[dir][0],
+        .y = attacker->loc.y + nbDirs[dir][1]
+    };
+    pos strikeLoc;
+    getImpactLoc(&strikeLoc, originLoc, targetLoc, 5, false, &boltCatalog[BOLT_WHIP]);
 
-    defender = monsterAtLoc(strikeLoc[0], strikeLoc[1]);
+    defender = monsterAtLoc(strikeLoc.x, strikeLoc.y);
     if (defender
         && (attacker != &player || canSeeMonster(defender))
         && !monsterIsHidden(defender, attacker)

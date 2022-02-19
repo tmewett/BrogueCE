@@ -1962,16 +1962,16 @@ void decrementMonsterStatus(creature *monst) {
 }
 
 boolean traversiblePathBetween(creature *monst, short x2, short y2) {
-    short coords[DCOLS][2], i, x, y, n;
-    short originLoc[2] = {monst->loc.x, monst->loc.y};
-    short targetLoc[2] = {x2, y2};
+    pos originLoc = monst->loc;
+    pos targetLoc = (pos){ .x = x2, .y = y2 };
 
     // Using BOLT_NONE here to favor a path that avoids obstacles to one that hits them
-    n = getLineCoordinates(coords, originLoc, targetLoc, &boltCatalog[BOLT_NONE]);
+    pos coords[DCOLS];
+    int n = getLineCoordinates(coords, originLoc, targetLoc, &boltCatalog[BOLT_NONE]);
 
-    for (i=0; i<n; i++) {
-        x = coords[i][0];
-        y = coords[i][1];
+    for (int i=0; i<n; i++) {
+        short x = coords[i].x;
+        short y = coords[i].y;
         if (x == x2 && y == y2) {
             return true;
         }
@@ -1985,14 +1985,14 @@ boolean traversiblePathBetween(creature *monst, short x2, short y2) {
 
 boolean specifiedPathBetween(short x1, short y1, short x2, short y2,
                              unsigned long blockingTerrain, unsigned long blockingFlags) {
-    short coords[DCOLS][2], i, x, y, n;
-    short originLoc[2] = {x1, y1};
-    short targetLoc[2] = {x2, y2};
-    n = getLineCoordinates(coords, originLoc, targetLoc, &boltCatalog[BOLT_NONE]);
+    pos originLoc = (pos){ .x = x1, .y = y1 };
+    pos targetLoc = (pos){ .x = x2, .y = y2 };
+    pos coords[DCOLS];
+    int n = getLineCoordinates(coords, originLoc, targetLoc, &boltCatalog[BOLT_NONE]);
 
-    for (i=0; i<n; i++) {
-        x = coords[i][0];
-        y = coords[i][1];
+    for (int i=0; i<n; i++) {
+        short x = coords[i].x;
+        short y = coords[i].y;
         if (cellHasTerrainFlag(x, y, blockingTerrain) || (pmap[x][y].flags & blockingFlags)) {
             return false;
         }
@@ -2005,10 +2005,12 @@ boolean specifiedPathBetween(short x1, short y1, short x2, short y2,
 }
 
 boolean openPathBetween(short x1, short y1, short x2, short y2) {
-    short returnLoc[2], startLoc[2] = {x1, y1}, targetLoc[2] = {x2, y2};
+    pos startLoc = (pos){ .x = x1, .y = y1 };
+    pos targetLoc = (pos){ .x = x2, .y = y2 };
 
-    getImpactLoc(returnLoc, startLoc, targetLoc, DCOLS, false, &boltCatalog[BOLT_NONE]);
-    if (returnLoc[0] == targetLoc[0] && returnLoc[1] == targetLoc[1]) {
+    pos returnLoc;
+    getImpactLoc(&returnLoc, startLoc, targetLoc, DCOLS, false, &boltCatalog[BOLT_NONE]);
+    if (returnLoc.x == targetLoc.x && returnLoc.y == targetLoc.y) {
         return true;
     }
     return false;
@@ -2240,22 +2242,30 @@ enum directions monsterSwarmDirection(creature *monst, creature *enemy) {
 // Isomorphs a number in [0, 39] to coordinates along the square of radius 5 surrounding (0,0).
 // This is used as the sample space for bolt target coordinates, e.g. when reflecting or when
 // monsters are deciding where to blink.
-void perimeterCoords(short returnCoords[2], short n) {
+pos perimeterCoords(short n) {
     if (n <= 10) {          // top edge, left to right
-        returnCoords[0] = n - 5;
-        returnCoords[1] = -5;
+        return (pos){
+            .x = n - 5,
+            .y = -5
+        };
     } else if (n <= 21) {   // bottom edge, left to right
-        returnCoords[0] = (n - 11) - 5;
-        returnCoords[1] = 5;
+        return (pos){
+            .x = (n - 11) - 5,
+            .y = 5
+        };
     } else if (n <= 30) {   // left edge, top to bottom
-        returnCoords[0] = -5;
-        returnCoords[1] = (n - 22) - 4;
+        return (pos){
+            .x = -5,
+            .y = (n - 22) - 4
+        };
     } else if (n <= 39) {   // right edge, top to bottom
-        returnCoords[0] = 5;
-        returnCoords[1] = (n - 31) - 4;
+        return (pos){
+            .x = 5,
+            .y = (n - 31) - 4
+        };
     } else {
         message("ERROR! Bad perimeter coordinate request!", REQUIRE_ACKNOWLEDGMENT);
-        returnCoords[0] = returnCoords[1] = 0; // garbage in, garbage out
+        return (pos){ .x = 0, .y = 0 }; // garbage in, garbage out
     }
 }
 
@@ -2263,7 +2273,7 @@ void perimeterCoords(short returnCoords[2], short n) {
 // preferenceMap argument. "blinkUphill" determines whether it's aiming for higher or lower numbers on
 // the preference map -- true means higher. Returns true if the monster blinked; false if it didn't.
 boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, boolean blinkUphill) {
-    short i, bestTarget[2], bestPreference, nowPreference, maxDistance, target[2], impact[2], origin[2];
+    short i, nowPreference, maxDistance;
     boolean gotOne;
     char monstName[DCOLS];
     char buf[DCOLS];
@@ -2278,12 +2288,9 @@ boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, bool
     maxDistance = staffBlinkDistance(5 * FP_FACTOR);
     gotOne = false;
 
-    origin[0] = monst->loc.x;
-    origin[1] = monst->loc.y;
-
-    bestTarget[0]   = 0;
-    bestTarget[1]   = 0;
-    bestPreference  = preferenceMap[monst->loc.x][monst->loc.y];
+    pos origin = monst->loc;
+    pos bestTarget = (pos){ .x = 0, .y = 0 };
+    short bestPreference = preferenceMap[monst->loc.x][monst->loc.y];
 
     // make sure that we beat the four cardinal neighbors
     for (i = 0; i < 4; i++) {
@@ -2297,24 +2304,25 @@ boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, bool
     }
 
     for (i=0; i<40; i++) {
-        perimeterCoords(target, i);
-        target[0] += monst->loc.x;
-        target[1] += monst->loc.y;
+        pos target = perimeterCoords(i);
+        target.x += monst->loc.x;
+        target.y += monst->loc.y;
 
-        getImpactLoc(impact, origin, target, maxDistance, true, &boltCatalog[BOLT_BLINKING]);
-        nowPreference = preferenceMap[impact[0]][impact[1]];
+        pos impact;
+        getImpactLoc(&impact, origin, target, maxDistance, true, &boltCatalog[BOLT_BLINKING]);
+        nowPreference = preferenceMap[impact.x][impact.y];
 
         if (((blinkUphill && (nowPreference > bestPreference))
              || (!blinkUphill && (nowPreference < bestPreference)))
-            && !monsterAvoids(monst, impact[0], impact[1])) {
+            && !monsterAvoids(monst, impact.x, impact.y)) {
 
-            bestTarget[0]   = target[0];
-            bestTarget[1]   = target[1];
+            bestTarget = target;
             bestPreference  = nowPreference;
 
-            if ((abs(impact[0] - origin[0]) > 1 || abs(impact[1] - origin[1]) > 1)
-                || (cellHasTerrainFlag(impact[0], origin[1], T_OBSTRUCTS_PASSABILITY))
-                || (cellHasTerrainFlag(origin[0], impact[1], T_OBSTRUCTS_PASSABILITY))) {
+            if ((abs(impact.x - origin.x) > 1 || abs(impact.y - origin.y) > 1)
+                // Note: these are deliberately backwards:
+                || (cellHasTerrainFlag(impact.x, origin.y, T_OBSTRUCTS_PASSABILITY))
+                || (cellHasTerrainFlag(origin.x, impact.y, T_OBSTRUCTS_PASSABILITY))) {
                 gotOne = true;
             } else {
                 gotOne = false;
@@ -2656,7 +2664,6 @@ boolean specificallyValidBoltTarget(creature *caster, creature *target, enum bol
 
 void monsterCastSpell(creature *caster, creature *target, enum boltType boltIndex) {
     bolt theBolt;
-    short originLoc[2], targetLoc[2];
     char buf[200], monstName[100];
 
     if (canDirectlySeeMonster(caster)) {
@@ -2667,10 +2674,8 @@ void monsterCastSpell(creature *caster, creature *target, enum boltType boltInde
     }
 
     theBolt = boltCatalog[boltIndex];
-    originLoc[0] = caster->loc.x;
-    originLoc[1] = caster->loc.y;
-    targetLoc[0] = target->loc.x;
-    targetLoc[1] = target->loc.y;
+    pos originLoc = caster->loc;
+    pos targetLoc = target->loc;
     zap(originLoc, targetLoc, &theBolt, false);
 
     if (player.currentHP <= 0) {

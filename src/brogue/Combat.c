@@ -485,7 +485,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
 }
 
 boolean forceWeaponHit(creature *defender, item *theItem) {
-    short oldLoc[2], newLoc[2], forceDamage;
+    short forceDamage;
     char buf[DCOLS*3], buf2[COLS], monstName[DCOLS];
     creature *otherMonster = NULL;
     boolean knowFirstMonsterDied = false, autoID = false;
@@ -493,13 +493,14 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
 
     monsterName(monstName, defender, true);
 
-    oldLoc[0] = defender->loc.x;
-    oldLoc[1] = defender->loc.y;
-    newLoc[0] = defender->loc.x + clamp(defender->loc.x - player.loc.x, -1, 1);
-    newLoc[1] = defender->loc.y + clamp(defender->loc.y - player.loc.y, -1, 1);
+    pos oldLoc = defender->loc;
+    pos newLoc = (pos){
+        .x = defender->loc.x + clamp(defender->loc.x - player.loc.x, -1, 1),
+        .y = defender->loc.y + clamp(defender->loc.y - player.loc.y, -1, 1)
+    };
     if (canDirectlySeeMonster(defender)
-        && !cellHasTerrainFlag(newLoc[0], newLoc[1], T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION)
-        && !(pmap[newLoc[0]][newLoc[1]].flags & (HAS_MONSTER | HAS_PLAYER))) {
+        && !cellHasTerrainFlag(newLoc.x, newLoc.y, T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION)
+        && !(pmap[newLoc.x][newLoc.y].flags & (HAS_MONSTER | HAS_PLAYER))) {
         sprintf(buf, "you launch %s backward with the force of your blow", monstName);
         buf[DCOLS] = '\0';
         combatMessage(buf, messageColorFromVictim(defender));
@@ -509,18 +510,18 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
     theBolt.magnitude = max(1, netEnchant(theItem) / FP_FACTOR);
     zap(oldLoc, newLoc, &theBolt, false);
     if (!(defender->bookkeepingFlags & MB_IS_DYING)
-        && distanceBetween(oldLoc[0], oldLoc[1], defender->loc.x, defender->loc.y) > 0
-        && distanceBetween(oldLoc[0], oldLoc[1], defender->loc.x, defender->loc.y) < weaponForceDistance(netEnchant(theItem))) {
+        && distanceBetween(oldLoc.x, oldLoc.y, defender->loc.x, defender->loc.y) > 0
+        && distanceBetween(oldLoc.x, oldLoc.y, defender->loc.x, defender->loc.y) < weaponForceDistance(netEnchant(theItem))) {
 
-        if (pmap[defender->loc.x + newLoc[0] - oldLoc[0]][defender->loc.y + newLoc[1] - oldLoc[1]].flags & (HAS_MONSTER | HAS_PLAYER)) {
-            otherMonster = monsterAtLoc(defender->loc.x + newLoc[0] - oldLoc[0], defender->loc.y + newLoc[1] - oldLoc[1]);
+        if (pmap[defender->loc.x + newLoc.x - oldLoc.x][defender->loc.y + newLoc.y - oldLoc.y].flags & (HAS_MONSTER | HAS_PLAYER)) {
+            otherMonster = monsterAtLoc(defender->loc.x + newLoc.x - oldLoc.x, defender->loc.y + newLoc.y - oldLoc.y);
             monsterName(buf2, otherMonster, true);
         } else {
             otherMonster = NULL;
-            strcpy(buf2, tileCatalog[pmap[defender->loc.x + newLoc[0] - oldLoc[0]][defender->loc.y + newLoc[1] - oldLoc[1]].layers[highestPriorityLayer(defender->loc.x + newLoc[0] - oldLoc[0], defender->loc.y + newLoc[1] - oldLoc[1], true)]].description);
+            strcpy(buf2, tileCatalog[pmap[defender->loc.x + newLoc.x - oldLoc.x][defender->loc.y + newLoc.y - oldLoc.y].layers[highestPriorityLayer(defender->loc.x + newLoc.x - oldLoc.x, defender->loc.y + newLoc.y - oldLoc.y, true)]].description);
         }
 
-        forceDamage = distanceBetween(oldLoc[0], oldLoc[1], defender->loc.x, defender->loc.y);
+        forceDamage = distanceBetween(oldLoc.x, oldLoc.y, defender->loc.x, defender->loc.y);
 
         if (!(defender->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE))
             && inflictDamage(NULL, defender, forceDamage, &white, false)) {
