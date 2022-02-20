@@ -58,7 +58,7 @@ short randClumpedRange(short lowerBound, short upperBound, short clumpFactor) {
     return (total + lowerBound);
 }
 
-// Get a random int between lowerBound and upperBound, inclusive
+// Test a random roll with a success chance of percent out of 100
 boolean rand_percent(short percent) {
     return (rand_range(0, 99) < clamp(percent, 0, 100));
 }
