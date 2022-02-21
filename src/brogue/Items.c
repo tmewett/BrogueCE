@@ -619,8 +619,8 @@ void populateItems(short upstairsX, short upstairsY) {
         potionTable[POTION_LIFE].frequency = rogue.lifePotionFrequency;
 
         // Adjust the desired item category if necessary.
-        if ((rogue.foodSpawned + foodTable[RATION].strengthRequired / 3) * 4 * FP_FACTOR
-            <= (POW_FOOD[rogue.depthLevel-1] + (randomDepthOffset * FP_FACTOR)) * foodTable[RATION].strengthRequired * 45/100) {
+        if ((rogue.foodSpawned + foodTable[RATION].power / 3) * 4 * FP_FACTOR
+            <= (POW_FOOD[rogue.depthLevel-1] + (randomDepthOffset * FP_FACTOR)) * foodTable[RATION].power * 45/100) {
             // Guarantee a certain nutrition minimum of the approximate equivalent of one ration every four levels,
             // with more food on deeper levels since they generally take more turns to complete.
             theCategory = FOOD;
@@ -639,7 +639,7 @@ void populateItems(short upstairsX, short upstairsY) {
         theItem->originDepth = rogue.depthLevel;
 
         if (theItem->category & FOOD) {
-            rogue.foodSpawned += foodTable[theItem->kind].strengthRequired;
+            rogue.foodSpawned += foodTable[theItem->kind].power;
             if (D_MESSAGE_ITEM_GENERATION) printf("\n(:)  Depth %i: generated food", rogue.depthLevel);
         }
 
@@ -1896,7 +1896,7 @@ void itemDetails(char *buf, item *theItem) {
 
         case FOOD:
             sprintf(buf2, "\n\nYou are %shungry enough to fully enjoy a %s.",
-                    ((STOMACH_SIZE - player.status[STATUS_NUTRITION]) >= foodTable[theItem->kind].strengthRequired ? "" : "not yet "),
+                    ((STOMACH_SIZE - player.status[STATUS_NUTRITION]) >= foodTable[theItem->kind].power ? "" : "not yet "),
                     foodTable[theItem->kind].name);
             strcat(buf, buf2);
             break;
@@ -6606,14 +6606,14 @@ void apply(item *theItem, boolean recordCommands) {
     confirmMessages();
     switch (theItem->category) {
         case FOOD:
-            if (STOMACH_SIZE - player.status[STATUS_NUTRITION] < foodTable[theItem->kind].strengthRequired) { // Not hungry enough.
+            if (STOMACH_SIZE - player.status[STATUS_NUTRITION] < foodTable[theItem->kind].power) { // Not hungry enough.
                 sprintf(buf, "You're not hungry enough to fully enjoy the %s. Eat it anyway?",
                         (theItem->kind == RATION ? "food" : "mango"));
                 if (!confirm(buf, false)) {
                     return;
                 }
             }
-            player.status[STATUS_NUTRITION] = min(foodTable[theItem->kind].strengthRequired + player.status[STATUS_NUTRITION], STOMACH_SIZE);
+            player.status[STATUS_NUTRITION] = min(foodTable[theItem->kind].power + player.status[STATUS_NUTRITION], STOMACH_SIZE);
             if (theItem->kind == RATION) {
                 messageWithColor("That food tasted delicious!", &itemMessageColor, 0);
             } else {

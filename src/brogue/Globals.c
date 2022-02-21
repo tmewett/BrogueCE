@@ -2345,8 +2345,8 @@ const itemTable keyTable[NUMBER_KEY_TYPES] = {
 };
 
 const itemTable foodTable[NUMBER_FOOD_KINDS] = {
-    {"ration of food",      "", "", 3, 25,  1800, 0, {0,0,0}, true, false, 0, false, "A ration of food. Was it left by former adventurers? Is it a curious byproduct of the subterranean ecosystem?"},
-    {"mango",               "", "", 1, 15,  1550, 0, {0,0,0}, true, false, 0, false, "An odd fruit to be found so deep beneath the surface of the earth, but only slightly less filling than a ration of food."}
+    {"ration of food",      "", "", 3, 25,  0, 1800, {0,0,0}, true, false, 0, false, "A ration of food. Was it left by former adventurers? Is it a curious byproduct of the subterranean ecosystem?"},
+    {"mango",               "", "", 1, 15,  0, 1550, {0,0,0}, true, false, 0, false, "An odd fruit to be found so deep beneath the surface of the earth, but only slightly less filling than a ration of food."}
 };
 
 const itemTable weaponTable[NUMBER_WEAPON_KINDS] = {
