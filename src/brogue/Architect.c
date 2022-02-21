@@ -2484,8 +2484,8 @@ void finishWalls(boolean includingDiagonals) {
 void liquidType(short *deep, short *shallow, short *shallowWidth) {
     short randMin, randMax, rand;
 
-    randMin = (rogue.depthLevel < 4 ? 1 : 0); // no lava before level 4
-    randMax = (rogue.depthLevel < 17 ? 2 : 3); // no brimstone before level 18
+    randMin = (rogue.depthLevel < MINIMUM_LAVA_LEVEL ? 1 : 0);
+    randMax = (rogue.depthLevel < MINIMUM_BRIMSTONE_LEVEL ? 2 : 3);
     rand = rand_range(randMin, randMax);
     if (rogue.depthLevel == DEEPEST_LEVEL) {
         rand = 1;

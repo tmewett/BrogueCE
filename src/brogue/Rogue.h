@@ -169,6 +169,9 @@ typedef struct pos {
 #define AMULET_LEVEL            26          // how deep before the amulet appears
 #define DEEPEST_LEVEL           40          // how deep the universe goes
 
+#define MINIMUM_LAVA_LEVEL      4           // how deep before lava can be generated
+#define MINIMUM_BRIMSTONE_LEVEL 17          // how deep before brimstone can be generated
+
 #define MACHINES_FACTOR         FP_FACTOR   // use this to adjust machine frequency
 
 #define MACHINES_BUFFER_LENGTH  200
