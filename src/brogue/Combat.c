@@ -1538,7 +1538,7 @@ boolean inflictDamage(creature *attacker, creature *defender,
         transferenceAmount = min(damage, defender->currentHP); // Maximum transferred damage can't exceed the victim's remaining health.
 
         if (attacker == &player) {
-            transferenceAmount = transferenceAmount * rogue.transference / 20;
+            transferenceAmount = transferenceAmount * rogue.transference / PLAYER_TRANSFERENCE_RATIO;
             if (transferenceAmount == 0) {
                 transferenceAmount = ((rogue.transference > 0) ? 1 : -1);
             }

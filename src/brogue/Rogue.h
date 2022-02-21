@@ -180,6 +180,8 @@ typedef struct pos {
 #define FALL_DAMAGE_MIN         8
 #define FALL_DAMAGE_MAX         10
 
+#define PLAYER_TRANSFERENCE_RATIO 20        // player transference heal is (enchant / PLAYER_TRANSFERENCE_RATIO)
+
 #define INPUT_RECORD_BUFFER     1000        // how many bytes of input data to keep in memory before saving it to disk
 #define DEFAULT_PLAYBACK_DELAY  50
 
