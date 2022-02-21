@@ -1404,6 +1404,7 @@ typedef struct itemTable {
     short frequency;
     short marketValue;
     short strengthRequired;
+    int power;
     randomRange range;
     boolean identified;
     boolean called;
