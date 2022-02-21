@@ -7120,24 +7120,29 @@ void drinkPotion(item *theItem) {
     boolean hadEffect = false;
     boolean hadEffect2 = false;
     char buf[1000] = "";
+    int magnitude;
 
     brogueAssert(rogue.RNG == RNG_SUBSTANTIVE);
 
     rogue.featRecord[FEAT_ARCHIVIST] = false;
 
+    itemTable potionTable = tableForItemCategory(theItem->category)[theItem->kind];
+
     switch (theItem->kind) {
         case POTION_LIFE:
+            magnitude = randClump(potionTable.range);
             sprintf(buf, "%syour maximum health increases by %i%%.",
                     ((player.currentHP < player.info.maxHP) ? "you heal completely and " : ""),
-                    (player.info.maxHP + 10) * 100 / player.info.maxHP - 100);
+                    (player.info.maxHP + magnitude) * 100 / player.info.maxHP - 100);
 
-            player.info.maxHP += 10;
+            player.info.maxHP += magnitude;
             heal(&player, 100, true);
             updatePlayerRegenerationDelay();
             messageWithColor(buf, &advancementMessageColor, 0);
             break;
         case POTION_HALLUCINATION:
-            player.status[STATUS_HALLUCINATING] = player.maxStatus[STATUS_HALLUCINATING] = 300;
+            magnitude = randClump(potionTable.range);
+            player.status[STATUS_HALLUCINATING] = player.maxStatus[STATUS_HALLUCINATING] = magnitude;
             message("colors are everywhere! The walls are singing!", 0);
             break;
         case POTION_INCINERATION:
@@ -7147,8 +7152,9 @@ void drinkPotion(item *theItem) {
             exposeCreatureToFire(&player);
             break;
         case POTION_DARKNESS:
-            player.status[STATUS_DARKNESS] = max(400, player.status[STATUS_DARKNESS]);
-            player.maxStatus[STATUS_DARKNESS] = max(400, player.maxStatus[STATUS_DARKNESS]);
+            magnitude = randClump(potionTable.range);
+            player.status[STATUS_DARKNESS] = max(magnitude, player.status[STATUS_DARKNESS]);
+            player.maxStatus[STATUS_DARKNESS] = max(magnitude, player.maxStatus[STATUS_DARKNESS]);
             updateMinersLightRadius();
             updateVision(true);
             message("your vision flickers as a cloak of darkness settles around you!", 0);
@@ -7162,7 +7168,8 @@ void drinkPotion(item *theItem) {
             }
             break;
         case POTION_STRENGTH:
-            rogue.strength++;
+            magnitude = randClump(potionTable.range);
+            rogue.strength += magnitude;
             if (player.status[STATUS_WEAKENED]) {
                 player.status[STATUS_WEAKENED] = 1;
             }
@@ -7179,10 +7186,12 @@ void drinkPotion(item *theItem) {
             message("your muscles stiffen as a cloud of pink gas bursts from the open flask!", 0);
             break;
         case POTION_TELEPATHY:
-            makePlayerTelepathic(300);
+            magnitude = randClump(potionTable.range);
+            makePlayerTelepathic(magnitude);
             break;
         case POTION_LEVITATION:
-            player.status[STATUS_LEVITATING] = player.maxStatus[STATUS_LEVITATING] = 100;
+            magnitude = randClump(potionTable.range);
+            player.status[STATUS_LEVITATING] = player.maxStatus[STATUS_LEVITATING] = magnitude;
             player.bookkeepingFlags &= ~MB_SEIZED; // break free of holding monsters
             message("you float into the air!", 0);
             break;
@@ -7241,17 +7250,20 @@ void drinkPotion(item *theItem) {
             }
             break;
         case POTION_HASTE_SELF:
-            haste(&player, 25);
+            magnitude = randClump(potionTable.range);
+            haste(&player, magnitude);
             break;
         case POTION_FIRE_IMMUNITY:
-            player.status[STATUS_IMMUNE_TO_FIRE] = player.maxStatus[STATUS_IMMUNE_TO_FIRE] = 150;
+            magnitude = randClump(potionTable.range);
+            player.status[STATUS_IMMUNE_TO_FIRE] = player.maxStatus[STATUS_IMMUNE_TO_FIRE] = magnitude;
             if (player.status[STATUS_BURNING]) {
                 extinguishFireOnCreature(&player);
             }
             message("a comforting breeze envelops you, and you no longer fear fire.", 0);
             break;
         case POTION_INVISIBILITY:
-            player.status[STATUS_INVISIBLE] = player.maxStatus[STATUS_INVISIBLE] = 75;
+            magnitude = randClump(potionTable.range);
+            player.status[STATUS_INVISIBLE] = player.maxStatus[STATUS_INVISIBLE] = magnitude;
             message("you shiver as a chill runs up your spine.", 0);
             break;
         default:
