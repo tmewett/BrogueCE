@@ -180,6 +180,10 @@ typedef struct pos {
 #define FALL_DAMAGE_MIN         8
 #define FALL_DAMAGE_MAX         10
 
+#define ON_HIT_HALLUCINATE_DURATION 20      // duration of on-hit hallucination effect on player
+#define ON_HIT_WEAKEN_DURATION  300         // duration of on-hit weaken effect
+#define ON_HIT_MERCY_HEAL_PERCENT 50        // percentage of damage healed on-hit by mercy weapon effect
+
 #define INPUT_RECORD_BUFFER     1000        // how many bytes of input data to keep in memory before saving it to disk
 #define DEFAULT_PLAYBACK_DELAY  50
 
