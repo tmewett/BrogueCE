@@ -4253,7 +4253,7 @@ void beckonMonster(creature *monst, short x, short y) {
 
 enum boltEffects boltEffectForItem(item *theItem) {
     if (theItem->category & (STAFF | WAND)) {
-        return boltCatalog[tableForItemCategory(theItem->category)[theItem->kind].strengthRequired].boltEffect;
+        return boltCatalog[tableForItemCategory(theItem->category)[theItem->kind].power].boltEffect;
     } else {
         return BE_NONE;
     }
@@ -4261,7 +4261,7 @@ enum boltEffects boltEffectForItem(item *theItem) {
 
 enum boltType boltForItem(item *theItem) {
     if (theItem->category & (STAFF | WAND)) {
-        return tableForItemCategory(theItem->category)[theItem->kind].strengthRequired;
+        return tableForItemCategory(theItem->category)[theItem->kind].power;
     } else {
         return 0;
     }
@@ -6384,7 +6384,7 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
     sprintf(buf, "Zapping your %s:", buf2);
     printString(buf, mapToWindowX(0), 1, &itemMessageColor, &black, NULL);
 
-    theBolt = boltCatalog[tableForItemCategory(theItem->category)[theItem->kind].strengthRequired];
+    theBolt = boltCatalog[tableForItemCategory(theItem->category)[theItem->kind].power];
     if (theItem->category == STAFF) {
         theBolt.magnitude = theItem->enchant1;
     }
