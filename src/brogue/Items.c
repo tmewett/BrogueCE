@@ -4409,7 +4409,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 }
                 break;
             case BE_INVISIBILITY:
-                if (imbueInvisibility(monst, 150) && autoID) {
+                if (imbueInvisibility(monst, theBolt->magnitude * 15) && autoID) {
                     *autoID = true;
                 }
                 break;
