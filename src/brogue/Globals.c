@@ -2408,6 +2408,43 @@ const char armorRunicNames[NUMBER_ARMOR_ENCHANT_KINDS][30] = {
     "immolation",
 };
 
+// To meter item generation (on level generation):
+// incrementFreq must be != 0 for frequency biasing
+// lvlScale != 0 for thresholding
+//  { category, kind,                   initFreq,   incFreq,decFreq,gMulti, gInc,   lvlScale }
+const meteredItemGenerationTable meteredItemsGenerationTable[NUMBER_METERED_ITEMS] = {
+    { SCROLL,   SCROLL_ENCHANTING,      60,         30,     50,     0,      0,      0},
+    { SCROLL,   SCROLL_IDENTIFY,        0,          0,      0,      0,      0,      0},
+    { SCROLL,   SCROLL_TELEPORT,        0,          0,      0,      0,      0,      0},
+    { SCROLL,   SCROLL_REMOVE_CURSE,    0,          0,      0,      0,      0,      0},
+    { SCROLL,   SCROLL_RECHARGING,      0,          0,      0,      0,      0,      0},
+    { SCROLL,   SCROLL_PROTECT_ARMOR,   0,          0,      0,      0,      0,      0},
+    { SCROLL,   SCROLL_PROTECT_WEAPON,  0,          0,      0,      0,      0,      0},
+    { SCROLL,   SCROLL_SANCTUARY,       0,          0,      0,      0,      0,      0},
+    { SCROLL,   SCROLL_MAGIC_MAPPING,   0,          0,      0,      0,      0,      0},
+    { SCROLL,   SCROLL_NEGATION,        0,          0,      0,      0,      0,      0},
+    { SCROLL,   SCROLL_SHATTERING,      0,          0,      0,      0,      0,      0},
+    { SCROLL,   SCROLL_DISCORD,         0,          0,      0,      0,      0,      0},
+    { SCROLL,   SCROLL_AGGRAVATE_MONSTER,0,         0,      0,      0,      0,      0},
+    { SCROLL,   SCROLL_SUMMON_MONSTER,  0,          0,      0,      0,      0,      0},
+    { POTION,   POTION_LIFE,            0,          34,     150,    4,      3,      1},
+    { POTION,   POTION_STRENGTH,        40,         17,     50,     0,      0,      0},
+    { POTION,   POTION_TELEPATHY,       0,          0,      0,      0,      0,      0},
+    { POTION,   POTION_LEVITATION,      0,          0,      0,      0,      0,      0},
+    { POTION,   POTION_DETECT_MAGIC,    0,          0,      0,      0,      0,      0},
+    { POTION,   POTION_HASTE_SELF,      0,          0,      0,      0,      0,      0},
+    { POTION,   POTION_FIRE_IMMUNITY,   0,          0,      0,      0,      0,      0},
+    { POTION,   POTION_INVISIBILITY,    0,          0,      0,      0,      0,      0},
+    { POTION,   POTION_POISON,          0,          0,      0,      0,      0,      0},
+    { POTION,   POTION_PARALYSIS,       0,          0,      0,      0,      0,      0},
+    { POTION,   POTION_HALLUCINATION,   0,          0,      0,      0,      0,      0},
+    { POTION,   POTION_CONFUSION,       0,          0,      0,      0,      0,      0},
+    { POTION,   POTION_INCINERATION,    0,          0,      0,      0,      0,      0},
+    { POTION,   POTION_DARKNESS,        0,          0,      0,      0,      0,      0},
+    { POTION,   POTION_DESCENT,         0,          0,      0,      0,      0,      0},
+    { POTION,   POTION_LICHEN,          0,          0,      0,      0,      0,      0}
+};
+
 itemTable scrollTable[NUMBER_SCROLL_KINDS] = {
     {"enchanting",          itemTitles[0], "",  0,  550,    0, 1, {0,0,0}, false, false, 1,  false, "This ancient enchanting sorcery will imbue a single item with a powerful and permanent magical charge. A staff will increase in power and in number of charges; a weapon will inflict more damage and find its mark more easily; a suit of armor will deflect attacks more often; the magic of a ring will intensify; and a wand will gain expendable charges in the least amount that such a wand can be found with. Weapons and armor will also require less strength to use, and any curses on the item will be lifted."}, // frequency is dynamically adjusted
     {"identify",            itemTitles[1], "",  30, 300,    0, 0, {0,0,0}, false, false, 1,  false, "This scrying magic will permanently reveal all of the secrets of a single item."},

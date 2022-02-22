@@ -971,6 +971,13 @@ enum scrollKind {
     NUMBER_SCROLL_KINDS
 };
 
+typedef struct meteredItem {
+    int frequency;
+    int numberSpawned;
+} meteredItem;
+
+#define NUMBER_METERED_ITEMS (NUMBER_SCROLL_KINDS + NUMBER_POTION_KINDS)
+
 #define MAX_PACK_ITEMS              26
 
 enum monsterTypes {
@@ -1412,6 +1419,17 @@ typedef struct itemTable {
     boolean magicPolarityRevealed;
     char description[1500];
 } itemTable;
+
+typedef struct meteredItemGenerationTable {
+    unsigned short category;
+    short kind;
+    int initialFrequency;
+    int incrementFrequency;
+    int decrementFrequency;
+    int genMultiplier;
+    int genIncrement;
+    int levelScaling;
+} meteredItemGenerationTable;
 
 enum dungeonFeatureTypes {
     DF_GRANITE_COLUMN = 1,
@@ -2377,10 +2395,7 @@ typedef struct playerCharacter {
 
     // metered items
     long long foodSpawned;                    // amount of nutrition units spawned so far this game
-    short lifePotionFrequency;
-    short lifePotionsSpawned;
-    short strengthPotionFrequency;
-    short enchantScrollFrequency;
+    meteredItem meteredItems[NUMBER_METERED_ITEMS];
 
     // ring bonuses:
     short clairvoyance;
