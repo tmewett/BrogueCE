@@ -2444,7 +2444,6 @@ void playerTurnEnded() {
                             break;
                         }
                     }
-                    restartIterator(&it); // loop through from the beginning to be safe
                 }
             }
 

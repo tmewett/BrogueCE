@@ -279,7 +279,6 @@ void initializeRogue(uint64_t seed) {
 
     monsters = &levels[0].monsters;
     dormantMonsters = &levels[0].dormantMonsters;
-    graveyard = createCreatureList();
     purgatory = createCreatureList();
 
     scentMap            = NULL;
@@ -884,20 +883,17 @@ static void removeDeadMonstersFromList(creatureList *list) {
                 && !(decedent->bookkeepingFlags & MB_ADMINISTRATIVE_DEATH)) {
                 prependCreature(&purgatory, decedent);
             } else {
-                prependCreature(&graveyard, decedent);
+                freeCreature(decedent);
             }
         }
     }
 }
 
-// Removes dead monsters from `monsters`/`dormantMonsters` and inserts them into `graveyard` or
-// `purgatory`; if the decedent is a player ally at the moment of death, inserts it into the
-// purgatory chain for possible future resurrection.
-// Also empties the graveyard.
+// Removes dead monsters from `monsters`/`dormantMonsters`, and inserts them into `purgatory` if
+// the decedent is a player ally at the moment of death, for possible future resurrection.
 void removeDeadMonsters() {
     removeDeadMonstersFromList(monsters);
     removeDeadMonstersFromList(dormantMonsters);
-    freeCreatureList(&graveyard);
 }
 
 void freeEverything() {
@@ -929,7 +925,6 @@ void freeEverything() {
         }
     }
     scentMap = NULL;
-    freeCreatureList(&graveyard);
     freeCreatureList(&purgatory);
 
     for (theItem = floorItems; theItem != NULL; theItem = theItem2) {

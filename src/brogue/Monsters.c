@@ -908,13 +908,6 @@ creature *nextCreature(creatureIterator *iter) {
     }
     return result;
 }
-void restartIterator(creatureIterator *iter) {
-    iter->next = iter->list->head;
-    // Skip monsters that have died.
-    while (iter->next != NULL && iter->next->creature->bookkeepingFlags & MB_HAS_DIED) {
-        iter->next = iter->next->nextCreature;
-    }
-}
 void prependCreature(creatureList *list, creature *add) {
     creatureListNode *node = calloc(1, sizeof(creatureListNode));
     node->creature = add;

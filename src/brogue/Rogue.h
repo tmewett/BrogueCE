@@ -2063,9 +2063,8 @@ enum monsterBookkeepingFlags {
     MB_IS_DORMANT               = Fl(21),   // lurking, waiting to burst out
     MB_HAS_SOUL                 = Fl(22),   // slaying the monster will count toward weapon auto-ID
     MB_ALREADY_SEEN             = Fl(23),   // seeing this monster won't interrupt exploration
-    MB_HAS_ENTRANCED_MOVED      = Fl(24),   // has already moved while entranced and should not move again
-    MB_ADMINISTRATIVE_DEATH     = Fl(25),   // like the `administrativeDeath` parameter to `killCreature`
-    MB_HAS_DIED                 = Fl(26)    // monster has already been killed but not yet removed from `monsters`
+    MB_ADMINISTRATIVE_DEATH     = Fl(24),   // like the `administrativeDeath` parameter to `killCreature`
+    MB_HAS_DIED                 = Fl(25)    // monster has already been killed but not yet removed from `monsters`
 };
 
 // Defines all creatures, which include monsters and the player:
@@ -2955,7 +2954,6 @@ extern "C" {
     creatureIterator iterateCreatures(creatureList *list);
     boolean hasNextCreature(creatureIterator iter);
     creature *nextCreature(creatureIterator *iter);
-    void restartIterator(creatureIterator *iter);
     void prependCreature(creatureList *list, creature *add);
     boolean removeCreature(creatureList *list, creature *remove);
     creature *firstCreature(creatureList *list);
