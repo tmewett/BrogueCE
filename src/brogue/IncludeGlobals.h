@@ -37,7 +37,6 @@ extern creature player;
 extern playerCharacter rogue;
 extern creatureList *monsters;
 extern creatureList *dormantMonsters;
-extern creatureList graveyard;
 extern creatureList purgatory;
 extern item *floorItems;
 extern item *packItems;

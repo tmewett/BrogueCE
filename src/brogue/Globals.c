@@ -39,7 +39,6 @@ creature player;
 playerCharacter rogue;
 creatureList *monsters;
 creatureList *dormantMonsters;
-creatureList graveyard;
 creatureList purgatory;
 item *floorItems;
 item *packItems;

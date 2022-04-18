@@ -279,7 +279,6 @@ void initializeRogue(uint64_t seed) {
 
     monsters = &levels[0].monsters;
     dormantMonsters = &levels[0].dormantMonsters;
-    graveyard = createCreatureList();
     purgatory = createCreatureList();
 
     scentMap            = NULL;
@@ -869,8 +868,32 @@ void freeCreature(creature *monst) {
     free(monst);
 }
 
-void emptyGraveyard() {
-    freeCreatureList(&graveyard);
+static void removeDeadMonstersFromList(creatureList *list) {
+    // This needs to be able to access creatures that are dying, but `creatureIterator` skips
+    // dying monsters so it can't be used here.
+    creatureListNode *next = list->head;
+    while (next != NULL) {
+        creature *decedent = next->creature;
+        next = next->nextCreature;
+        if (decedent->bookkeepingFlags & MB_HAS_DIED) {
+            removeCreature(list, decedent);
+            if (decedent->leader == &player
+                && !(decedent->info.flags & MONST_INANIMATE)
+                && (decedent->bookkeepingFlags & MB_HAS_SOUL)
+                && !(decedent->bookkeepingFlags & MB_ADMINISTRATIVE_DEATH)) {
+                prependCreature(&purgatory, decedent);
+            } else {
+                freeCreature(decedent);
+            }
+        }
+    }
+}
+
+// Removes dead monsters from `monsters`/`dormantMonsters`, and inserts them into `purgatory` if
+// the decedent is a player ally at the moment of death, for possible future resurrection.
+void removeDeadMonsters() {
+    removeDeadMonstersFromList(monsters);
+    removeDeadMonstersFromList(dormantMonsters);
 }
 
 void freeEverything() {
@@ -902,7 +925,6 @@ void freeEverything() {
         }
     }
     scentMap = NULL;
-    freeCreatureList(&graveyard);
     freeCreatureList(&purgatory);
 
     for (theItem = floorItems; theItem != NULL; theItem = theItem2) {
