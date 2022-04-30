@@ -1885,9 +1885,14 @@ void itemDetails(char *buf, item *theItem) {
     }
 
     if (carried && theItem->originDepth > 0) {
-        sprintf(buf2, " (You found %s on depth %i.) ",
-                singular ? "it" : "them",
-                theItem->originDepth);
+        sprintf(buf2, " (You found %s%s on depth %i.) ",
+            singular ? "it" : "them",
+            // items in an item-choice vault are "keys", but are not a KEY
+            // we ignore any actual KEY, as those might not be on an altar
+            theItem->flags & ITEM_IS_KEY && !(theItem->category & KEY)
+                ? " in a vault" : "",
+            theItem->originDepth
+        );
         strcat(buf, buf2);
     }
 
