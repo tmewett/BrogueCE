@@ -2052,14 +2052,14 @@ void itemDetails(char *buf, item *theItem) {
             }
 
             // heavy armor?
-            current = armorAggroAdjustment(rogue.armor);
+            current = armorStealthAdjustment(rogue.armor);
             if ((theItem->category & ARMOR)
                 && !(theItem->flags & ITEM_EQUIPPED)
-                && (current != armorAggroAdjustment(theItem))) {
+                && (current != armorStealthAdjustment(theItem))) {
 
-                new = armorAggroAdjustment(theItem);
+                new = armorStealthAdjustment(theItem);
                 if (rogue.armor) {
-                    new -= armorAggroAdjustment(rogue.armor);
+                    new -= armorStealthAdjustment(rogue.armor);
                 }
                 sprintf(buf2, "Equipping the %s will %s%s your stealth range by %i%s. ",
                         theName,
@@ -3276,7 +3276,7 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
 
     if (player.loc.x == x && player.loc.y == y) {
         player.status[STATUS_AGGRAVATING] = player.maxStatus[STATUS_AGGRAVATING] = distance;
-        rogue.aggroRange = currentAggroValue();
+        rogue.stealthRange = currentStealthRange();
     }
 
     if (grid[player.loc.x][player.loc.y] >= 0 && grid[player.loc.x][player.loc.y] <= distance) {

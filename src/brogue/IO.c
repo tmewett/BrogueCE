@@ -339,11 +339,11 @@ short actionMenu(short x, boolean playingBack) {
         takeActionOurselves[buttonCount] = true;
         buttonCount++;
         if (KEYBOARD_LABELS) {
-            sprintf(buttons[buttonCount].text, "  %s]: %s[%s] Display stealth range  ", yellowColorEscape, whiteColorEscape, rogue.displayAggroRangeMode ? "X" : " ");
+            sprintf(buttons[buttonCount].text, "  %s]: %s[%s] Display stealth range  ", yellowColorEscape, whiteColorEscape, rogue.displayStealthRangeMode ? "X" : " ");
         } else {
-            sprintf(buttons[buttonCount].text, "  [%s] Show stealth range  ",   rogue.displayAggroRangeMode ? "X" : " ");
+            sprintf(buttons[buttonCount].text, "  [%s] Show stealth range  ",   rogue.displayStealthRangeMode ? "X" : " ");
         }
-        buttons[buttonCount].hotkey[0] = AGGRO_DISPLAY_KEY;
+        buttons[buttonCount].hotkey[0] = STEALTH_RANGE_KEY;
         takeActionOurselves[buttonCount] = true;
         buttonCount++;
 
@@ -1479,9 +1479,9 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
 
     bakeTerrainColors(&cellForeColor, &cellBackColor, x, y);
 
-    if (rogue.displayAggroRangeMode && (pmap[x][y].flags & IN_FIELD_OF_VIEW)) {
+    if (rogue.displayStealthRangeMode && (pmap[x][y].flags & IN_FIELD_OF_VIEW)) {
         distance = min(rogue.scentTurnNumber - scentMap[x][y], scentDistance(x, y, player.loc.x, player.loc.y));
-        if (distance > rogue.aggroRange * 2) {
+        if (distance > rogue.stealthRange * 2) {
             applyColorAverage(&cellForeColor, &orange, 12);
             applyColorAverage(&cellBackColor, &orange, 12);
             applyColorAugment(&cellForeColor, &orange, 12);
@@ -1489,7 +1489,7 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
         }
     }
 
-    if (rogue.trueColorMode
+    if ((rogue.trueColorMode || rogue.displayStealthRangeMode)
         && playerCanSeeOrSense(x, y)) {
 
         if (displayDetail[x][y] == DV_DARK) {
@@ -2614,11 +2614,11 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                                  &teal, 0);
             }
             break;
-        case AGGRO_DISPLAY_KEY:
-            rogue.displayAggroRangeMode = !rogue.displayAggroRangeMode;
+        case STEALTH_RANGE_KEY:
+            rogue.displayStealthRangeMode = !rogue.displayStealthRangeMode;
             displayLevel();
             refreshSideBar(-1, -1, false);
-            if (rogue.displayAggroRangeMode) {
+            if (rogue.displayStealthRangeMode) {
                 messageWithColor(KEYBOARD_LABELS ? "Stealth range displayed. Press ']' again to hide." : "Stealth range displayed.",
                                  &teal, 0);
             } else {
@@ -4858,7 +4858,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                 tempColorEscape[0] = '\0';
                 grayColorEscape[0] = '\0';
                 tempColor = playerInShadowColor;
-                percent = (rogue.aggroRange - 2) * 100 / 28;
+                percent = (rogue.stealthRange - 2) * 100 / 28;
                 applyColorAverage(&tempColor, &black, percent);
                 applyColorAugment(&tempColor, &playerInLightColor, percent);
                 if (dim) {
@@ -4868,7 +4868,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                 encodeMessageColor(grayColorEscape, 0, (dim ? &darkGray : &gray));
                 sprintf(buf, "%sStealth range: %i%s",
                         tempColorEscape,
-                        rogue.aggroRange,
+                        rogue.stealthRange,
                         grayColorEscape);
                 printString("                    ", 0, y, &white, &black, 0);
                 printString(buf, 1, y++, (dim ? &darkGray : &gray), &black, 0);

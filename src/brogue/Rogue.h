@@ -1160,7 +1160,7 @@ enum tileFlags {
 #define RELABEL_KEY         'R'
 #define SWAP_KEY            'w'
 #define TRUE_COLORS_KEY     '\\'
-#define AGGRO_DISPLAY_KEY   ']'
+#define STEALTH_RANGE_KEY   ']'
 #define DROP_KEY            'd'
 #define CALL_KEY            'c'
 #define QUIT_KEY            'Q'
@@ -2071,12 +2071,13 @@ enum monsterBookkeepingFlags {
     MB_ABSORBING                = Fl(16),   // currently learning a skill by absorbing an enemy corpse
     MB_DOES_NOT_TRACK_LEADER    = Fl(17),   // monster will not follow its leader around
     MB_IS_FALLING               = Fl(18),   // monster is plunging downward at the end of the turn
-    MB_IS_DYING                 = Fl(19),   // monster has already been killed and is awaiting the end-of-turn graveyard sweep (or in purgatory)
+    MB_IS_DYING                 = Fl(19),   // monster is currently dying; the death is still being processed
     MB_GIVEN_UP_ON_SCENT        = Fl(20),   // to help the monster remember that the scent map is a dead end
     MB_IS_DORMANT               = Fl(21),   // lurking, waiting to burst out
     MB_HAS_SOUL                 = Fl(22),   // slaying the monster will count toward weapon auto-ID
     MB_ALREADY_SEEN             = Fl(23),   // seeing this monster won't interrupt exploration
-    MB_HAS_ENTRANCED_MOVED      = Fl(24)    // has already moved while entranced and should not move again
+    MB_ADMINISTRATIVE_DEATH     = Fl(24),   // like the `administrativeDeath` parameter to `killCreature`
+    MB_HAS_DIED                 = Fl(25)    // monster has already been killed but not yet removed from `monsters`
 };
 
 // Defines all creatures, which include monsters and the player:
@@ -2292,7 +2293,7 @@ typedef struct playerCharacter {
     boolean alreadyFell;                // so the player can fall only one depth per turn
     boolean eligibleToUseStairs;        // so the player uses stairs only when he steps onto them
     boolean trueColorMode;              // whether lighting effects are disabled
-    boolean displayAggroRangeMode;      // whether your stealth range is displayed
+    boolean displayStealthRangeMode;    // whether your stealth range is displayed
     boolean quit;                       // to skip the typical end-game theatrics when the player quits
     uint64_t seed;                      // the master seed for generating the entire dungeon
     short RNG;                          // which RNG are we currently using?
@@ -2322,7 +2323,7 @@ typedef struct playerCharacter {
     unsigned long absoluteTurnNumber;   // number of turns since the beginning of time. Always increments.
     signed long milliseconds;           // milliseconds since launch, to decide whether to engage cautious mode
     short xpxpThisTurn;                 // how many squares the player explored this turn
-    short aggroRange;                   // distance from which monsters will notice you
+    short stealthRange;                 // distance from which monsters will notice you
 
     short previousPoisonPercent;        // and your poison proportion, to display percentage alerts for each.
 
@@ -2852,7 +2853,7 @@ extern "C" {
     void updateMinersLightRadius();
     void freeCreature(creature *monst);
     void freeCreatureList(creatureList *list);
-    void emptyGraveyard();
+    void removeDeadMonsters();
     void freeEverything();
     boolean randomMatchingLocation(short *x, short *y, short dungeonType, short liquidType, short terrainType);
     enum dungeonLayers highestPriorityLayer(short x, short y, boolean skipGas);
@@ -2966,7 +2967,6 @@ extern "C" {
     creatureIterator iterateCreatures(creatureList *list);
     boolean hasNextCreature(creatureIterator iter);
     creature *nextCreature(creatureIterator *iter);
-    void restartIterator(creatureIterator *iter);
     void prependCreature(creatureList *list, creature *add);
     boolean removeCreature(creatureList *list, creature *remove);
     creature *firstCreature(creatureList *list);
@@ -3224,8 +3224,8 @@ extern "C" {
     void autoPlayLevel(boolean fastForward);
     void updateClairvoyance();
     short scentDistance(short x1, short y1, short x2, short y2);
-    short armorAggroAdjustment(item *theArmor);
-    short currentAggroValue();
+    short armorStealthAdjustment(item *theArmor);
+    short currentStealthRange();
 
     void initRecording();
     void flushBufferToFile();

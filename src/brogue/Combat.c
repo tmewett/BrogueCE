@@ -1609,15 +1609,15 @@ void addPoison(creature *monst, short durationIncrement, short concentrationIncr
 }
 
 
-// Removes the decedent from the screen and from the monster chain; inserts it into the graveyard chain; does NOT free the memory.
-// Or, if the decedent is a player ally at the moment of death, insert it into the purgatory chain for possible future resurrection.
+// Marks the decedent as dying, but does not remove it from the monster chain to avoid iterator invalidation;
+// that is done in `removeDeadMonsters`.
 // Use "administrativeDeath" if the monster is being deleted for administrative purposes, as opposed to dying as a result of physical actions.
 // AdministrativeDeath means the monster simply disappears, with no messages, dropped item, DFs or other effect.
 void killCreature(creature *decedent, boolean administrativeDeath) {
     short x, y;
     char monstName[DCOLS], buf[DCOLS * 3];
 
-    if (decedent->bookkeepingFlags & MB_IS_DYING) {
+    if (decedent->bookkeepingFlags & (MB_IS_DYING | MB_HAS_DIED)) {
         // monster has already been killed; let's avoid overkill
         return;
     }
@@ -1673,17 +1673,12 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
         } else {
             pmap[x][y].flags &= ~HAS_MONSTER;
         }
-        removeCreature(dormantMonsters, decedent);
-        removeCreature(monsters, decedent);
 
-        if (decedent->leader == &player
-            && !(decedent->info.flags & MONST_INANIMATE)
-            && (decedent->bookkeepingFlags & MB_HAS_SOUL)
-            && !administrativeDeath) {
-            prependCreature(&purgatory, decedent);
-        } else {
-            prependCreature(&graveyard, decedent);
-
+        // This must be done at the same time as removing the HAS_MONSTER flag, or game state might
+        // end up inconsistent.
+        decedent->bookkeepingFlags |= MB_HAS_DIED;
+        if (administrativeDeath) {
+            decedent->bookkeepingFlags |= MB_ADMINISTRATIVE_DEATH;
         }
 
         if (!administrativeDeath && !(decedent->bookkeepingFlags & MB_IS_DORMANT)) {

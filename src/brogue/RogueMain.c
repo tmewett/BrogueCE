@@ -143,7 +143,7 @@ void welcome() {
 void initializeRogue(uint64_t seed) {
     short i, j, k;
     item *theItem;
-    boolean playingback, playbackFF, playbackPaused, wizard, displayAggroRangeMode;
+    boolean playingback, playbackFF, playbackPaused, wizard, displayStealthRangeMode;
     boolean trueColorMode;
     short oldRNG;
 
@@ -151,14 +151,14 @@ void initializeRogue(uint64_t seed) {
     playbackPaused = rogue.playbackPaused;
     playbackFF = rogue.playbackFastForward;
     wizard = rogue.wizard;
-    displayAggroRangeMode = rogue.displayAggroRangeMode;
+    displayStealthRangeMode = rogue.displayStealthRangeMode;
     trueColorMode = rogue.trueColorMode;
     memset((void *) &rogue, 0, sizeof( playerCharacter )); // the flood
     rogue.playbackMode = playingback;
     rogue.playbackPaused = playbackPaused;
     rogue.playbackFastForward = playbackFF;
     rogue.wizard = wizard;
-    rogue.displayAggroRangeMode = displayAggroRangeMode;
+    rogue.displayStealthRangeMode = displayStealthRangeMode;
     rogue.trueColorMode = trueColorMode;
 
     rogue.gameHasEnded = false;
@@ -279,7 +279,6 @@ void initializeRogue(uint64_t seed) {
 
     monsters = &levels[0].monsters;
     dormantMonsters = &levels[0].dormantMonsters;
-    graveyard = createCreatureList();
     purgatory = createCreatureList();
 
     scentMap            = NULL;
@@ -827,7 +826,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
 
     updateMapToShore();
     updateVision(true);
-    rogue.aggroRange = currentAggroValue();
+    rogue.stealthRange = currentStealthRange();
 
     // update monster states so none are hunting if there is no scent and they can't see the player
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
@@ -869,8 +868,32 @@ void freeCreature(creature *monst) {
     free(monst);
 }
 
-void emptyGraveyard() {
-    freeCreatureList(&graveyard);
+static void removeDeadMonstersFromList(creatureList *list) {
+    // This needs to be able to access creatures that are dying, but `creatureIterator` skips
+    // dying monsters so it can't be used here.
+    creatureListNode *next = list->head;
+    while (next != NULL) {
+        creature *decedent = next->creature;
+        next = next->nextCreature;
+        if (decedent->bookkeepingFlags & MB_HAS_DIED) {
+            removeCreature(list, decedent);
+            if (decedent->leader == &player
+                && !(decedent->info.flags & MONST_INANIMATE)
+                && (decedent->bookkeepingFlags & MB_HAS_SOUL)
+                && !(decedent->bookkeepingFlags & MB_ADMINISTRATIVE_DEATH)) {
+                prependCreature(&purgatory, decedent);
+            } else {
+                freeCreature(decedent);
+            }
+        }
+    }
+}
+
+// Removes dead monsters from `monsters`/`dormantMonsters`, and inserts them into `purgatory` if
+// the decedent is a player ally at the moment of death, for possible future resurrection.
+void removeDeadMonsters() {
+    removeDeadMonstersFromList(monsters);
+    removeDeadMonstersFromList(dormantMonsters);
 }
 
 void freeEverything() {
@@ -902,7 +925,6 @@ void freeEverything() {
         }
     }
     scentMap = NULL;
-    freeCreatureList(&graveyard);
     freeCreatureList(&purgatory);
 
     for (theItem = floorItems; theItem != NULL; theItem = theItem2) {

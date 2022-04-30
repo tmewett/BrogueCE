@@ -481,20 +481,12 @@ void moveEntrancedMonsters(enum directions dir) {
 
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
-        monst->bookkeepingFlags &= ~MB_HAS_ENTRANCED_MOVED;
-    }
-
-    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
-        creature *monst = nextCreature(&it);
-        if (!(monst->bookkeepingFlags & MB_HAS_ENTRANCED_MOVED)
-            && monst->status[STATUS_ENTRANCED]
+        if (monst->status[STATUS_ENTRANCED]
             && !monst->status[STATUS_STUCK]
             && !monst->status[STATUS_PARALYZED]
             && !(monst->bookkeepingFlags & MB_CAPTIVE)) {
 
             moveMonster(monst, nbDirs[dir][0], nbDirs[dir][1]);
-            monst->bookkeepingFlags |= MB_HAS_ENTRANCED_MOVED;
-            restartIterator(&it); // loop through from the beginning to be safe
         }
     }
 }

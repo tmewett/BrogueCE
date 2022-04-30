@@ -3449,7 +3449,6 @@ boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refr
                 if (monst->loc.x == x && monst->loc.y == y || blockingMap[monst->loc.x][monst->loc.y]) {
                     // found it!
                     toggleMonsterDormancy(monst);
-                    restartIterator(&it);
                 }
             }
         }

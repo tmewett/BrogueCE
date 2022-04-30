@@ -659,7 +659,7 @@ void updateScent() {
     addScentToCell(player.loc.x, player.loc.y, 0);
 }
 
-short armorAggroAdjustment(item *theArmor) {
+short armorStealthAdjustment(item *theArmor) {
     if (!theArmor
         || !(theArmor->category & ARMOR)) {
 
@@ -668,46 +668,46 @@ short armorAggroAdjustment(item *theArmor) {
     return max(0, armorTable[theArmor->kind].strengthRequired - 12);
 }
 
-short currentAggroValue() {
+short currentStealthRange() {
     // Default value of 14 in the light.
-    short stealthVal = 14;
+    short stealthRange = 14;
 
     if (player.status[STATUS_INVISIBLE]) {
-        stealthVal = 1; // Invisibility means stealth range of 1, no matter what.
+        stealthRange = 1; // Invisibility means stealth range of 1, no matter what.
     } else {
         if (playerInDarkness()) {
             // In darkness, halve, rounded down.
-            stealthVal = stealthVal / 2;
+            stealthRange = stealthRange / 2;
         }
         if (pmap[player.loc.x][player.loc.y].flags & IS_IN_SHADOW) {
             // When not standing in a lit area, halve, rounded down (stacks with darkness halving).
-            stealthVal = stealthVal / 2;
+            stealthRange = stealthRange / 2;
         }
 
         // Add 1 for each point of your armor's natural (unenchanted) strength requirement above 12.
-        stealthVal += armorAggroAdjustment(rogue.armor);
+        stealthRange += armorStealthAdjustment(rogue.armor);
 
         // Halve (rounded up) if you just rested.
         if (rogue.justRested) {
-            stealthVal = (stealthVal + 1) / 2;
+            stealthRange = (stealthRange + 1) / 2;
         }
 
         if (player.status[STATUS_AGGRAVATING] > 0) {
-            stealthVal += player.status[STATUS_AGGRAVATING];
+            stealthRange += player.status[STATUS_AGGRAVATING];
         }
 
         // Subtract your bonuses from rings of stealth.
         // (Cursed rings of stealth will end up adding here.)
-        stealthVal -= rogue.stealthBonus;
+        stealthRange -= rogue.stealthBonus;
 
         // Can't go below 2 unless you just rested.
-        if (stealthVal < 2 && !rogue.justRested) {
-            stealthVal = 2;
-        } else if (stealthVal < 1) { // Can't go below 1, ever.
-            stealthVal = 1;
+        if (stealthRange < 2 && !rogue.justRested) {
+            stealthRange = 2;
+        } else if (stealthRange < 1) { // Can't go below 1, ever.
+            stealthRange = 1;
         }
     }
-    return stealthVal;
+    return stealthRange;
 }
 
 void demoteVisibility() {
@@ -2329,8 +2329,8 @@ void playerTurnEnded() {
 
         updateScent();
 //      updateVision(true);
-//        rogue.aggroRange = currentAggroValue();
-//        if (rogue.displayAggroRangeMode) {
+//        rogue.stealthRange = currentStealthRange();
+//        if (rogue.displayStealthRangeMode) {
 //            displayLevel();
 //        }
         rogue.updatedSafetyMapThisTurn          = false;
@@ -2445,7 +2445,6 @@ void playerTurnEnded() {
                             break;
                         }
                     }
-                    restartIterator(&it); // loop through from the beginning to be safe
                 }
             }
 
@@ -2459,8 +2458,8 @@ void playerTurnEnded() {
         //checkForDungeonErrors();
 
         updateVision(true);
-        rogue.aggroRange = currentAggroValue();
-        if (rogue.displayAggroRangeMode) {
+        rogue.stealthRange = currentStealthRange();
+        if (rogue.displayStealthRangeMode) {
             displayLevel();
         }
 
@@ -2595,7 +2594,7 @@ void playerTurnEnded() {
         rogue.receivedLevitationWarning = false;
     }
 
-    emptyGraveyard();
+    removeDeadMonsters();
     rogue.playbackBetweenTurns = true;
     RNGCheck();
     handleHealthAlerts();
