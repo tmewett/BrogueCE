@@ -468,20 +468,16 @@ the given depth are considered. (Depth 0 means current depth.) Otherwise, all
 hordes with summonerType as a leader are considered.
 */
 short pickHordeType(short depth, enum monsterTypes summonerType, unsigned long forbiddenFlags, unsigned long requiredFlags) {
-    short i, index, minLevel, possCount = 0;
+    short i, index, possCount = 0;
 
     if (depth <= 0) {
         depth = rogue.depthLevel;
     }
 
     for (i=0; i<NUMBER_HORDES; i++) {
-        minLevel = hordeCatalog[i].minLevel;  //remove this assignment and variable on next minor release
-        if (!BROGUE_VERSION_ATLEAST(1,10,2) && (hordeCatalog[i].flags & HORDE_SACRIFICE_TARGET) && (minLevel == 21)) {
-            minLevel = 22;
-        }
         if (!(hordeCatalog[i].flags & forbiddenFlags)
             && !(~(hordeCatalog[i].flags) & requiredFlags)
-            && ((!summonerType && minLevel <= depth && hordeCatalog[i].maxLevel >= depth) //replace minLevel with hordeCatalog[i].minLevel on next minor release
+            && ((!summonerType && hordeCatalog[i].minLevel <= depth && hordeCatalog[i].maxLevel >= depth)
                 || (summonerType && (hordeCatalog[i].flags & HORDE_IS_SUMMONED) && hordeCatalog[i].leaderType == summonerType))) {
                 possCount += hordeCatalog[i].frequency;
         }
@@ -1770,7 +1766,7 @@ void updateMonsterState(creature *monst) {
 
         monst->creatureMode = MODE_NORMAL;
 
-        if (BROGUE_VERSION_ATLEAST(1,10,2) && monst->leader == &player) {
+        if (monst->leader == &player) {
             monst->creatureState = MONSTER_ALLY; // Reset state if a discorded ally steals an item and then loses it (probably in deep water)
         } else {
             alertMonster(monst);

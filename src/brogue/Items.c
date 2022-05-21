@@ -5698,12 +5698,8 @@ static void tryIdentifyLastItemKinds(enum itemCategory category) {
     for (int i=0; i<categoryCount; i++) {
         loopCategory = categoryCount == 1 ? category : Fl(i);
         if (category & HAS_INTRINSIC_POLARITY & loopCategory) {
-            if (BROGUE_VERSION_ATLEAST(1,10,2)) {
-                tryIdentifyLastItemKind(loopCategory, MAGIC_POLARITY_BENEVOLENT);
-                tryIdentifyLastItemKind(loopCategory, MAGIC_POLARITY_MALEVOLENT);
-            } else {
-                tryIdentifyLastItemKind(loopCategory, MAGIC_POLARITY_ANY);
-            }
+            tryIdentifyLastItemKind(loopCategory, MAGIC_POLARITY_BENEVOLENT);
+            tryIdentifyLastItemKind(loopCategory, MAGIC_POLARITY_MALEVOLENT);
         }
     }
 }
@@ -6039,7 +6035,7 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
             // hallucination is the only malevolent potion that splashes harmlessly when thrown
             if (theItem->kind == POTION_HALLUCINATION) {
                 if (theItem->flags & ITEM_MAGIC_DETECTED
-                    || (BROGUE_VERSION_ATLEAST(1,10,2) && magicPolarityRevealedItemKindCount(theItem->category, 1) == NUMBER_GOOD_POTION_KINDS)) {
+                    || (magicPolarityRevealedItemKindCount(theItem->category, 1) == NUMBER_GOOD_POTION_KINDS)) {
                     autoIdentify(theItem);
                 }
             }
@@ -7197,9 +7193,7 @@ void drinkPotion(item *theItem) {
                 }
             }
             if (hadEffect || hadEffect2) {
-                if (BROGUE_VERSION_ATLEAST(1,10,2)) {
-                    tryIdentifyLastItemKinds(HAS_INTRINSIC_POLARITY);
-                }
+                tryIdentifyLastItemKinds(HAS_INTRINSIC_POLARITY);
                 if (hadEffect && hadEffect2) {
                     message("you can somehow feel the presence of magic on the level and in your pack.", 0);
                 } else if (hadEffect) {
