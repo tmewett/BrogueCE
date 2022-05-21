@@ -881,6 +881,9 @@ static void removeDeadMonstersFromList(creatureList *list) {
                 && !(decedent->info.flags & MONST_INANIMATE)
                 && (decedent->bookkeepingFlags & MB_HAS_SOUL)
                 && !(decedent->bookkeepingFlags & MB_ADMINISTRATIVE_DEATH)) {
+
+                // Unset flag, since the purgatory list should be iterable.
+                decedent->bookkeepingFlags &= ~MB_HAS_DIED;
                 prependCreature(&purgatory, decedent);
             } else {
                 freeCreature(decedent);
