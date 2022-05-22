@@ -1,1 +1,0 @@
-Fixed the infobar to correctly reflect that negated status is removed on polymorph

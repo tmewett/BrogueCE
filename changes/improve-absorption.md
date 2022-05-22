@@ -1,1 +1,0 @@
-Increase absorption's minimum roll to 1, helping the runic to be less mediocre, and also to give it a stronger identity: it now makes the player effectively immune to goblin conjurers, and strong against jellies or packs of weak enemies.

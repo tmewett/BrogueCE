@@ -1,1 +1,0 @@
-A potion of hallucination is identified when thrown if all benevolent potions are either identified or magic detected
