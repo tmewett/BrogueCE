@@ -5390,7 +5390,7 @@ pos pullMouseClickDuringPlayback(void) {
     nextBrogueEvent(&theEvent, false, false, false);
     return (pos){
         .x = windowToMapX(theEvent.param1),
-        .y = windowToMapX(theEvent.param2)
+        .y = windowToMapY(theEvent.param2)
     };
 }
 
