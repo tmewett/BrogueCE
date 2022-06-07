@@ -403,7 +403,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
             if (!player.status[STATUS_HALLUCINATING]) {
                 player.maxStatus[STATUS_HALLUCINATING] = 0;
             }
-            player.status[STATUS_HALLUCINATING] += 20;
+            player.status[STATUS_HALLUCINATING] += ON_HIT_HALLUCINATE_DURATION;
             player.maxStatus[STATUS_HALLUCINATING] = max(player.maxStatus[STATUS_HALLUCINATING], player.status[STATUS_HALLUCINATING]);
         }
         if (attacker->info.abilityFlags & MA_HIT_BURN
@@ -477,7 +477,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
         && damage > 0
         && !(defender->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
 
-        weaken(defender, 300);
+        weaken(defender, ON_HIT_WEAKEN_DURATION);
     }
     if (attacker->info.abilityFlags & MA_ATTACKS_STAGGER) {
         processStaggerHit(attacker, defender);
@@ -746,7 +746,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
                 autoID = forceWeaponHit(defender, theItem);
                 break;
             case W_MERCY:
-                heal(defender, 50, false);
+                heal(defender, ON_HIT_MERCY_HEAL_PERCENT, false);
                 if (canSeeMonster(defender)) {
                     autoID = true;
                 }
