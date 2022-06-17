@@ -4105,7 +4105,7 @@ boolean staffOrWandEffectOnMonsterDescription(char *newText, item *theItem, crea
                     successfulDescription = true;
                 } else if (theItem->flags & (ITEM_MAX_CHARGES_KNOWN | ITEM_IDENTIFIED)) {
                     if (staffDamageLow(enchant) >= monst->currentHP) {
-                        sprintf(newText, "\n     Your %s (%c) will %s the %s in one hit.",
+                        sprintf(newText, "\n     Your %s (%c) will %s %s in one hit.",
                                 theItemName,
                                 theItem->inventoryLetter,
                                 (monst->info.flags & MONST_INANIMATE) ? "destroy" : "kill",
