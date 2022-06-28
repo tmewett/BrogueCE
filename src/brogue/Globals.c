@@ -2190,7 +2190,7 @@ const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT] = {
 
 char itemTitles[NUMBER_SCROLL_KINDS][30];
 
-const char itemCategoryNames[NUMBER_ITEM_CATEGORIES][7] = {
+const char itemCategoryNames[NUMBER_ITEM_CATEGORIES][11] = {
         "food",
         "weapon",
         "armor",
@@ -2202,7 +2202,7 @@ const char itemCategoryNames[NUMBER_ITEM_CATEGORIES][7] = {
         "charm",
         "gold",
         "amulet",
-        "gem",
+        "lumenstone",
         "key"
 };
 
@@ -2619,3 +2619,5 @@ const char monsterBookkeepingFlagDescriptions[32][COLS] = {
     "is anchored to reality by $HISHER summoner",// MB_BOUND_TO_LEADER
     "is marked for demonic sacrifice",          // MB_MARKED_FOR_SACRIFICE
 };
+
+const pos WINDOW_POSITION_DUNGEON_TOP_LEFT = { STAT_BAR_WIDTH + 3, MESSAGE_LINES + 2};

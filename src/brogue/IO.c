@@ -340,6 +340,15 @@ short actionMenu(short x, boolean playingBack) {
             strcpy(buttons[buttonCount].text, "  Discovered items  ");
         }
         buttons[buttonCount].hotkey[0] = DISCOVERIES_KEY;
+        DEBUG {
+            buttonCount++;
+            if (KEYBOARD_LABELS) {
+                sprintf(buttons[buttonCount].text, "  %sC: %sCreate item or monster  ", yellowColorEscape, whiteColorEscape);
+            } else {
+                strcpy(buttons[buttonCount].text, "  Create item or monster  ");
+            }
+            buttons[buttonCount].hotkey[0] = CREATE_ITEM_MONSTER_KEY;
+        }
         buttonCount++;
         if (KEYBOARD_LABELS) {
             sprintf(buttons[buttonCount].text, "  %s~: %sView dungeon seed  ",  yellowColorEscape, whiteColorEscape);
@@ -2644,6 +2653,11 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
         case DISCOVERIES_KEY:
             printDiscoveriesScreen();
             break;
+        case CREATE_ITEM_MONSTER_KEY:
+            DEBUG {
+                dialogCreateItemOrMonster();
+            }
+            break;
         case SAVE_GAME_KEY:
             if (rogue.playbackMode || serverMode) {
                 return;
@@ -4099,7 +4113,7 @@ void printHelpScreen() {
         "              T  ****re-throw last item at last monster",
         " i, right-click  ****view inventory",
         "              D  ****list discovered items",
-        "",
+        "              C  ****create item or monster (wizard mode)",
         "              z  ****rest once",
         "              Z  ****rest for 100 turns or until something happens",
         "              s  ****search for secrets (control-s: long search)",
