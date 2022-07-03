@@ -168,6 +168,9 @@ typedef struct pos {
 
 #define AMULET_LEVEL            26          // how deep before the amulet appears
 #define DEEPEST_LEVEL           40          // how deep the universe goes
+#define DEPTH_ACCELERATOR       1           // factor for how fast depth-dependent features scale compared to usual 26-level dungeon
+
+#define MUTATIONS_OCCUR_ABOVE_LEVEL 10      // how deep before mutations can occur
 
 #define MINIMUM_LAVA_LEVEL      4           // how deep before lava can be generated
 #define MINIMUM_BRIMSTONE_LEVEL 17          // how deep before brimstone can be generated
