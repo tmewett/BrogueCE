@@ -515,12 +515,7 @@ void populateItems(short upstairsX, short upstairsY) {
 #endif
 
     if (rogue.depthLevel > AMULET_LEVEL) {
-        if (rogue.depthLevel - AMULET_LEVEL - 1 >= 8) {
-            numberOfItems = 1;
-        } else {
-            const short lumenstoneDistribution[8] = {3, 3, 3, 2, 2, 2, 2, 2};
-            numberOfItems = lumenstoneDistribution[rogue.depthLevel - AMULET_LEVEL - 1];
-        }
+        numberOfItems = lumenstoneDistribution[rogue.depthLevel - AMULET_LEVEL - 1];
         numberOfGoldPiles = 0;
     } else {
         rogue.lifePotionFrequency += 34;

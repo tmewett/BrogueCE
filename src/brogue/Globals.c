@@ -366,6 +366,9 @@ const color *dynamicColors[NUMBER_DYNAMIC_COLORS][3] = {
     {&chasmEdgeBackColor,   &chasmEdgeBackColorStart,   &chasmEdgeBackColorEnd},
 };
 
+// Number of lumenstones on each level past amulet
+const short lumenstoneDistribution[DEEPEST_LEVEL - AMULET_LEVEL] = {3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1};
+
 const autoGenerator autoGeneratorCatalog[NUMBER_AUTOGENERATORS] = {
 //   terrain                    layer   DF                          Machine                     reqDungeon  reqLiquid   >Depth  <Depth          freq    minIncp minSlope    maxNumber
     // Ordinary features of the dungeon
