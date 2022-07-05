@@ -37,7 +37,6 @@ extern creature player;
 extern playerCharacter rogue;
 extern creatureList *monsters;
 extern creatureList *dormantMonsters;
-extern creatureList graveyard;
 extern creatureList purgatory;
 extern item *floorItems;
 extern item *packItems;
@@ -182,6 +181,7 @@ extern const color superVictoryColor;
 extern color *dynamicColors[NUMBER_DYNAMIC_COLORS][3];
 
 extern const autoGenerator autoGeneratorCatalog[NUMBER_AUTOGENERATORS];
+extern const short lumenstoneDistribution[DEEPEST_LEVEL - AMULET_LEVEL];
 
 extern floorTileType tileCatalog[NUMBER_TILETYPES];
 

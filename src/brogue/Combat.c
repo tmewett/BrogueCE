@@ -403,7 +403,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
             if (!player.status[STATUS_HALLUCINATING]) {
                 player.maxStatus[STATUS_HALLUCINATING] = 0;
             }
-            player.status[STATUS_HALLUCINATING] += 20;
+            player.status[STATUS_HALLUCINATING] += ON_HIT_HALLUCINATE_DURATION;
             player.maxStatus[STATUS_HALLUCINATING] = max(player.maxStatus[STATUS_HALLUCINATING], player.status[STATUS_HALLUCINATING]);
         }
         if (attacker->info.abilityFlags & MA_HIT_BURN
@@ -477,7 +477,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
         && damage > 0
         && !(defender->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
 
-        weaken(defender, 300);
+        weaken(defender, ON_HIT_WEAKEN_DURATION);
     }
     if (attacker->info.abilityFlags & MA_ATTACKS_STAGGER) {
         processStaggerHit(attacker, defender);
@@ -485,7 +485,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
 }
 
 boolean forceWeaponHit(creature *defender, item *theItem) {
-    short oldLoc[2], newLoc[2], forceDamage;
+    short forceDamage;
     char buf[DCOLS*3], buf2[COLS], monstName[DCOLS];
     creature *otherMonster = NULL;
     boolean knowFirstMonsterDied = false, autoID = false;
@@ -493,13 +493,14 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
 
     monsterName(monstName, defender, true);
 
-    oldLoc[0] = defender->loc.x;
-    oldLoc[1] = defender->loc.y;
-    newLoc[0] = defender->loc.x + clamp(defender->loc.x - player.loc.x, -1, 1);
-    newLoc[1] = defender->loc.y + clamp(defender->loc.y - player.loc.y, -1, 1);
+    pos oldLoc = defender->loc;
+    pos newLoc = (pos){
+        .x = defender->loc.x + clamp(defender->loc.x - player.loc.x, -1, 1),
+        .y = defender->loc.y + clamp(defender->loc.y - player.loc.y, -1, 1)
+    };
     if (canDirectlySeeMonster(defender)
-        && !cellHasTerrainFlag(newLoc[0], newLoc[1], T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION)
-        && !(pmap[newLoc[0]][newLoc[1]].flags & (HAS_MONSTER | HAS_PLAYER))) {
+        && !cellHasTerrainFlag(newLoc.x, newLoc.y, T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION)
+        && !(pmap[newLoc.x][newLoc.y].flags & (HAS_MONSTER | HAS_PLAYER))) {
         sprintf(buf, "you launch %s backward with the force of your blow", monstName);
         buf[DCOLS] = '\0';
         combatMessage(buf, messageColorFromVictim(defender));
@@ -509,18 +510,18 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
     theBolt.magnitude = max(1, netEnchant(theItem) / FP_FACTOR);
     zap(oldLoc, newLoc, &theBolt, false);
     if (!(defender->bookkeepingFlags & MB_IS_DYING)
-        && distanceBetween(oldLoc[0], oldLoc[1], defender->loc.x, defender->loc.y) > 0
-        && distanceBetween(oldLoc[0], oldLoc[1], defender->loc.x, defender->loc.y) < weaponForceDistance(netEnchant(theItem))) {
+        && distanceBetween(oldLoc.x, oldLoc.y, defender->loc.x, defender->loc.y) > 0
+        && distanceBetween(oldLoc.x, oldLoc.y, defender->loc.x, defender->loc.y) < weaponForceDistance(netEnchant(theItem))) {
 
-        if (pmap[defender->loc.x + newLoc[0] - oldLoc[0]][defender->loc.y + newLoc[1] - oldLoc[1]].flags & (HAS_MONSTER | HAS_PLAYER)) {
-            otherMonster = monsterAtLoc(defender->loc.x + newLoc[0] - oldLoc[0], defender->loc.y + newLoc[1] - oldLoc[1]);
+        if (pmap[defender->loc.x + newLoc.x - oldLoc.x][defender->loc.y + newLoc.y - oldLoc.y].flags & (HAS_MONSTER | HAS_PLAYER)) {
+            otherMonster = monsterAtLoc(defender->loc.x + newLoc.x - oldLoc.x, defender->loc.y + newLoc.y - oldLoc.y);
             monsterName(buf2, otherMonster, true);
         } else {
             otherMonster = NULL;
-            strcpy(buf2, tileCatalog[pmap[defender->loc.x + newLoc[0] - oldLoc[0]][defender->loc.y + newLoc[1] - oldLoc[1]].layers[highestPriorityLayer(defender->loc.x + newLoc[0] - oldLoc[0], defender->loc.y + newLoc[1] - oldLoc[1], true)]].description);
+            strcpy(buf2, tileCatalog[pmap[defender->loc.x + newLoc.x - oldLoc.x][defender->loc.y + newLoc.y - oldLoc.y].layers[highestPriorityLayer(defender->loc.x + newLoc.x - oldLoc.x, defender->loc.y + newLoc.y - oldLoc.y, true)]].description);
         }
 
-        forceDamage = distanceBetween(oldLoc[0], oldLoc[1], defender->loc.x, defender->loc.y);
+        forceDamage = distanceBetween(oldLoc.x, oldLoc.y, defender->loc.x, defender->loc.y);
 
         if (!(defender->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE))
             && inflictDamage(NULL, defender, forceDamage, &white, false)) {
@@ -745,7 +746,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
                 autoID = forceWeaponHit(defender, theItem);
                 break;
             case W_MERCY:
-                heal(defender, 50, false);
+                heal(defender, ON_HIT_MERCY_HEAL_PERCENT, false);
                 if (canSeeMonster(defender)) {
                     autoID = true;
                 }
@@ -898,7 +899,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
             }
             break;
         case A_ABSORPTION:
-            *damage -= rand_range(0, armorAbsorptionMax(enchant));
+            *damage -= rand_range(1, armorAbsorptionMax(enchant));
             if (*damage <= 0) {
                 *damage = 0;
                 runicDiscovered = true;
@@ -1608,15 +1609,15 @@ void addPoison(creature *monst, short durationIncrement, short concentrationIncr
 }
 
 
-// Removes the decedent from the screen and from the monster chain; inserts it into the graveyard chain; does NOT free the memory.
-// Or, if the decedent is a player ally at the moment of death, insert it into the purgatory chain for possible future resurrection.
+// Marks the decedent as dying, but does not remove it from the monster chain to avoid iterator invalidation;
+// that is done in `removeDeadMonsters`.
 // Use "administrativeDeath" if the monster is being deleted for administrative purposes, as opposed to dying as a result of physical actions.
 // AdministrativeDeath means the monster simply disappears, with no messages, dropped item, DFs or other effect.
 void killCreature(creature *decedent, boolean administrativeDeath) {
     short x, y;
     char monstName[DCOLS], buf[DCOLS * 3];
 
-    if (decedent->bookkeepingFlags & MB_IS_DYING) {
+    if (decedent->bookkeepingFlags & (MB_IS_DYING | MB_HAS_DIED)) {
         // monster has already been killed; let's avoid overkill
         return;
     }
@@ -1672,17 +1673,12 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
         } else {
             pmap[x][y].flags &= ~HAS_MONSTER;
         }
-        removeCreature(dormantMonsters, decedent);
-        removeCreature(monsters, decedent);
 
-        if (decedent->leader == &player
-            && !(decedent->info.flags & MONST_INANIMATE)
-            && (decedent->bookkeepingFlags & MB_HAS_SOUL)
-            && !administrativeDeath) {
-            prependCreature(&purgatory, decedent);
-        } else {
-            prependCreature(&graveyard, decedent);
-
+        // This must be done at the same time as removing the HAS_MONSTER flag, or game state might
+        // end up inconsistent.
+        decedent->bookkeepingFlags |= MB_HAS_DIED;
+        if (administrativeDeath) {
+            decedent->bookkeepingFlags |= MB_ADMINISTRATIVE_DEATH;
         }
 
         if (!administrativeDeath && !(decedent->bookkeepingFlags & MB_IS_DORMANT)) {

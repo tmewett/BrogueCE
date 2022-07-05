@@ -68,13 +68,12 @@ creature *generateMonster(short monsterID, boolean itemPossible, boolean mutatio
     if (mutationPossible
         && !(monst->info.flags & MONST_NEVER_MUTATED)
         && !(monst->info.abilityFlags & MA_NEVER_MUTATED)
-        && rogue.depthLevel > 10) {
-
+        && rogue.depthLevel > MUTATIONS_OCCUR_ABOVE_LEVEL) {
 
         if (rogue.depthLevel <= AMULET_LEVEL) {
-            mutationChance = clamp(rogue.depthLevel - 10, 1, 10);
+            mutationChance = clamp((rogue.depthLevel - MUTATIONS_OCCUR_ABOVE_LEVEL) * DEPTH_ACCELERATOR, 1, 10);
         } else {
-            mutationChance = POW_DEEP_MUTATION[min(rogue.depthLevel - AMULET_LEVEL, 12)];
+            mutationChance = POW_DEEP_MUTATION[min((rogue.depthLevel - AMULET_LEVEL) * DEPTH_ACCELERATOR, 12)];
             mutationChance = min(mutationChance, 75);
         }
 
@@ -239,7 +238,7 @@ void monsterName(char *buf, creature *monst, boolean includeArticle) {
         return;
     }
     if (canSeeMonster(monst) || rogue.playbackOmniscience) {
-        if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience) {
+        if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience && !player.status[STATUS_TELEPATHIC]) {
 
             oldRNG = rogue.RNG;
             rogue.RNG = RNG_COSMETIC;
@@ -468,20 +467,16 @@ the given depth are considered. (Depth 0 means current depth.) Otherwise, all
 hordes with summonerType as a leader are considered.
 */
 short pickHordeType(short depth, enum monsterTypes summonerType, unsigned long forbiddenFlags, unsigned long requiredFlags) {
-    short i, index, minLevel, possCount = 0;
+    short i, index, possCount = 0;
 
     if (depth <= 0) {
         depth = rogue.depthLevel;
     }
 
     for (i=0; i<NUMBER_HORDES; i++) {
-        minLevel = hordeCatalog[i].minLevel;  //remove this assignment and variable on next minor release
-        if (!BROGUE_VERSION_ATLEAST(1,10,2) && (hordeCatalog[i].flags & HORDE_SACRIFICE_TARGET) && (minLevel == 21)) {
-            minLevel = 22;
-        }
         if (!(hordeCatalog[i].flags & forbiddenFlags)
             && !(~(hordeCatalog[i].flags) & requiredFlags)
-            && ((!summonerType && minLevel <= depth && hordeCatalog[i].maxLevel >= depth) //replace minLevel with hordeCatalog[i].minLevel on next minor release
+            && ((!summonerType && hordeCatalog[i].minLevel <= depth && hordeCatalog[i].maxLevel >= depth)
                 || (summonerType && (hordeCatalog[i].flags & HORDE_IS_SUMMONED) && hordeCatalog[i].leaderType == summonerType))) {
                 possCount += hordeCatalog[i].frequency;
         }
@@ -891,6 +886,10 @@ creatureIterator iterateCreatures(creatureList *list) {
     creatureIterator iter;
     iter.list = list;
     iter.next = list->head;
+    // Skip monsters that have died.
+    while (iter.next != NULL && iter.next->creature->bookkeepingFlags & MB_HAS_DIED) {
+        iter.next = iter.next->nextCreature;
+    }
     return iter;
 }
 boolean hasNextCreature(creatureIterator iter) {
@@ -902,10 +901,11 @@ creature *nextCreature(creatureIterator *iter) {
     }
     creature *result = iter->next->creature;
     iter->next = iter->next->nextCreature;
+    // Skip monsters that have died.
+    while (iter->next != NULL && iter->next->creature->bookkeepingFlags & MB_HAS_DIED) {
+        iter->next = iter->next->nextCreature;
+    }
     return result;
-}
-void restartIterator(creatureIterator *iter) {
-    iter->next = iter->list->head;
 }
 void prependCreature(creatureList *list, creature *add) {
     creatureListNode *node = calloc(1, sizeof(creatureListNode));
@@ -1765,7 +1765,7 @@ void updateMonsterState(creature *monst) {
 
         monst->creatureMode = MODE_NORMAL;
 
-        if (BROGUE_VERSION_ATLEAST(1,10,2) && monst->leader == &player) {
+        if (monst->leader == &player) {
             monst->creatureState = MONSTER_ALLY; // Reset state if a discorded ally steals an item and then loses it (probably in deep water)
         } else {
             alertMonster(monst);
@@ -1962,16 +1962,16 @@ void decrementMonsterStatus(creature *monst) {
 }
 
 boolean traversiblePathBetween(creature *monst, short x2, short y2) {
-    short coords[DCOLS][2], i, x, y, n;
-    short originLoc[2] = {monst->loc.x, monst->loc.y};
-    short targetLoc[2] = {x2, y2};
+    pos originLoc = monst->loc;
+    pos targetLoc = (pos){ .x = x2, .y = y2 };
 
     // Using BOLT_NONE here to favor a path that avoids obstacles to one that hits them
-    n = getLineCoordinates(coords, originLoc, targetLoc, &boltCatalog[BOLT_NONE]);
+    pos coords[DCOLS];
+    int n = getLineCoordinates(coords, originLoc, targetLoc, &boltCatalog[BOLT_NONE]);
 
-    for (i=0; i<n; i++) {
-        x = coords[i][0];
-        y = coords[i][1];
+    for (int i=0; i<n; i++) {
+        short x = coords[i].x;
+        short y = coords[i].y;
         if (x == x2 && y == y2) {
             return true;
         }
@@ -1985,14 +1985,14 @@ boolean traversiblePathBetween(creature *monst, short x2, short y2) {
 
 boolean specifiedPathBetween(short x1, short y1, short x2, short y2,
                              unsigned long blockingTerrain, unsigned long blockingFlags) {
-    short coords[DCOLS][2], i, x, y, n;
-    short originLoc[2] = {x1, y1};
-    short targetLoc[2] = {x2, y2};
-    n = getLineCoordinates(coords, originLoc, targetLoc, &boltCatalog[BOLT_NONE]);
+    pos originLoc = (pos){ .x = x1, .y = y1 };
+    pos targetLoc = (pos){ .x = x2, .y = y2 };
+    pos coords[DCOLS];
+    int n = getLineCoordinates(coords, originLoc, targetLoc, &boltCatalog[BOLT_NONE]);
 
-    for (i=0; i<n; i++) {
-        x = coords[i][0];
-        y = coords[i][1];
+    for (int i=0; i<n; i++) {
+        short x = coords[i].x;
+        short y = coords[i].y;
         if (cellHasTerrainFlag(x, y, blockingTerrain) || (pmap[x][y].flags & blockingFlags)) {
             return false;
         }
@@ -2005,10 +2005,12 @@ boolean specifiedPathBetween(short x1, short y1, short x2, short y2,
 }
 
 boolean openPathBetween(short x1, short y1, short x2, short y2) {
-    short returnLoc[2], startLoc[2] = {x1, y1}, targetLoc[2] = {x2, y2};
+    pos startLoc = (pos){ .x = x1, .y = y1 };
+    pos targetLoc = (pos){ .x = x2, .y = y2 };
 
-    getImpactLoc(returnLoc, startLoc, targetLoc, DCOLS, false, &boltCatalog[BOLT_NONE]);
-    if (returnLoc[0] == targetLoc[0] && returnLoc[1] == targetLoc[1]) {
+    pos returnLoc;
+    getImpactLoc(&returnLoc, startLoc, targetLoc, DCOLS, false, &boltCatalog[BOLT_NONE]);
+    if (returnLoc.x == targetLoc.x && returnLoc.y == targetLoc.y) {
         return true;
     }
     return false;
@@ -2240,22 +2242,30 @@ enum directions monsterSwarmDirection(creature *monst, creature *enemy) {
 // Isomorphs a number in [0, 39] to coordinates along the square of radius 5 surrounding (0,0).
 // This is used as the sample space for bolt target coordinates, e.g. when reflecting or when
 // monsters are deciding where to blink.
-void perimeterCoords(short returnCoords[2], short n) {
+pos perimeterCoords(short n) {
     if (n <= 10) {          // top edge, left to right
-        returnCoords[0] = n - 5;
-        returnCoords[1] = -5;
+        return (pos){
+            .x = n - 5,
+            .y = -5
+        };
     } else if (n <= 21) {   // bottom edge, left to right
-        returnCoords[0] = (n - 11) - 5;
-        returnCoords[1] = 5;
+        return (pos){
+            .x = (n - 11) - 5,
+            .y = 5
+        };
     } else if (n <= 30) {   // left edge, top to bottom
-        returnCoords[0] = -5;
-        returnCoords[1] = (n - 22) - 4;
+        return (pos){
+            .x = -5,
+            .y = (n - 22) - 4
+        };
     } else if (n <= 39) {   // right edge, top to bottom
-        returnCoords[0] = 5;
-        returnCoords[1] = (n - 31) - 4;
+        return (pos){
+            .x = 5,
+            .y = (n - 31) - 4
+        };
     } else {
         message("ERROR! Bad perimeter coordinate request!", REQUIRE_ACKNOWLEDGMENT);
-        returnCoords[0] = returnCoords[1] = 0; // garbage in, garbage out
+        return (pos){ .x = 0, .y = 0 }; // garbage in, garbage out
     }
 }
 
@@ -2263,7 +2273,7 @@ void perimeterCoords(short returnCoords[2], short n) {
 // preferenceMap argument. "blinkUphill" determines whether it's aiming for higher or lower numbers on
 // the preference map -- true means higher. Returns true if the monster blinked; false if it didn't.
 boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, boolean blinkUphill) {
-    short i, bestTarget[2], bestPreference, nowPreference, maxDistance, target[2], impact[2], origin[2];
+    short i, nowPreference, maxDistance;
     boolean gotOne;
     char monstName[DCOLS];
     char buf[DCOLS];
@@ -2278,12 +2288,9 @@ boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, bool
     maxDistance = staffBlinkDistance(5 * FP_FACTOR);
     gotOne = false;
 
-    origin[0] = monst->loc.x;
-    origin[1] = monst->loc.y;
-
-    bestTarget[0]   = 0;
-    bestTarget[1]   = 0;
-    bestPreference  = preferenceMap[monst->loc.x][monst->loc.y];
+    pos origin = monst->loc;
+    pos bestTarget = (pos){ .x = 0, .y = 0 };
+    short bestPreference = preferenceMap[monst->loc.x][monst->loc.y];
 
     // make sure that we beat the four cardinal neighbors
     for (i = 0; i < 4; i++) {
@@ -2297,24 +2304,25 @@ boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, bool
     }
 
     for (i=0; i<40; i++) {
-        perimeterCoords(target, i);
-        target[0] += monst->loc.x;
-        target[1] += monst->loc.y;
+        pos target = perimeterCoords(i);
+        target.x += monst->loc.x;
+        target.y += monst->loc.y;
 
-        getImpactLoc(impact, origin, target, maxDistance, true, &boltCatalog[BOLT_BLINKING]);
-        nowPreference = preferenceMap[impact[0]][impact[1]];
+        pos impact;
+        getImpactLoc(&impact, origin, target, maxDistance, true, &boltCatalog[BOLT_BLINKING]);
+        nowPreference = preferenceMap[impact.x][impact.y];
 
         if (((blinkUphill && (nowPreference > bestPreference))
              || (!blinkUphill && (nowPreference < bestPreference)))
-            && !monsterAvoids(monst, impact[0], impact[1])) {
+            && !monsterAvoids(monst, impact.x, impact.y)) {
 
-            bestTarget[0]   = target[0];
-            bestTarget[1]   = target[1];
+            bestTarget = target;
             bestPreference  = nowPreference;
 
-            if ((abs(impact[0] - origin[0]) > 1 || abs(impact[1] - origin[1]) > 1)
-                || (cellHasTerrainFlag(impact[0], origin[1], T_OBSTRUCTS_PASSABILITY))
-                || (cellHasTerrainFlag(origin[0], impact[1], T_OBSTRUCTS_PASSABILITY))) {
+            if ((abs(impact.x - origin.x) > 1 || abs(impact.y - origin.y) > 1)
+                // Note: these are deliberately backwards:
+                || (cellHasTerrainFlag(impact.x, origin.y, T_OBSTRUCTS_PASSABILITY))
+                || (cellHasTerrainFlag(origin.x, impact.y, T_OBSTRUCTS_PASSABILITY))) {
                 gotOne = true;
             } else {
                 gotOne = false;
@@ -2656,7 +2664,6 @@ boolean specificallyValidBoltTarget(creature *caster, creature *target, enum bol
 
 void monsterCastSpell(creature *caster, creature *target, enum boltType boltIndex) {
     bolt theBolt;
-    short originLoc[2], targetLoc[2];
     char buf[200], monstName[100];
 
     if (canDirectlySeeMonster(caster)) {
@@ -2667,10 +2674,8 @@ void monsterCastSpell(creature *caster, creature *target, enum boltType boltInde
     }
 
     theBolt = boltCatalog[boltIndex];
-    originLoc[0] = caster->loc.x;
-    originLoc[1] = caster->loc.y;
-    targetLoc[0] = target->loc.x;
-    targetLoc[1] = target->loc.y;
+    pos originLoc = caster->loc;
+    pos targetLoc = target->loc;
     zap(originLoc, targetLoc, &theBolt, false);
 
     if (player.currentHP <= 0) {
@@ -2797,33 +2802,46 @@ enum directions scentDirection(creature *monst) {
 
 // returns true if the resurrection was successful.
 boolean resurrectAlly(const short x, const short y) {
-    boolean success;
-    creature *monst = firstCreature(&purgatory);
-    if (monst) {
-        // Remove from purgatory and insert into the mortal plane.
-        removeCreature(&purgatory, monst);
-        prependCreature(monsters, monst);
+    creatureIterator allyIterator = iterateCreatures(&purgatory);
 
-        getQualifyingPathLocNear(&monst->loc.x, &monst->loc.y, x, y, true,
+    // Prefer most empowered ally.  In case of tie, prefer ally with greatest monsterID (thus
+    // preferring allies found deeper in the dungeon over ones found higher up and preferring
+    // legendary allies over everyone else).
+    creature *monToCheck, *monToRaise = NULL;
+    while (monToCheck = nextCreature(&allyIterator)) {
+        if (monToRaise == NULL
+            || monToCheck->totalPowerCount > monToRaise->totalPowerCount
+            || (monToCheck->totalPowerCount == monToRaise->totalPowerCount
+                && monToCheck->info.monsterID > monToRaise->info.monsterID)) {
+
+            monToRaise = monToCheck;
+        }
+    }
+
+    if (monToRaise) {
+        // Remove from purgatory and insert into the mortal plane.
+        removeCreature(&purgatory, monToRaise);
+        prependCreature(monsters, monToRaise);
+
+        getQualifyingPathLocNear(&monToRaise->loc.x, &monToRaise->loc.y, x, y, true,
                                  (T_PATHING_BLOCKER | T_HARMFUL_TERRAIN), 0,
                                  0, (HAS_PLAYER | HAS_MONSTER), false);
-        pmap[monst->loc.x][monst->loc.y].flags |= HAS_MONSTER;
+        pmap[monToRaise->loc.x][monToRaise->loc.y].flags |= HAS_MONSTER;
 
         // Restore health etc.
-        monst->bookkeepingFlags &= ~(MB_IS_DYING | MB_IS_FALLING);
-        if (!(monst->info.flags & MONST_FIERY)
-            && monst->status[STATUS_BURNING]) {
+        monToRaise->bookkeepingFlags &= ~(MB_IS_DYING | MB_ADMINISTRATIVE_DEATH | MB_HAS_DIED | MB_IS_FALLING);
+        if (!(monToRaise->info.flags & MONST_FIERY)
+            && monToRaise->status[STATUS_BURNING]) {
 
-            monst->status[STATUS_BURNING] = 0;
+            monToRaise->status[STATUS_BURNING] = 0;
         }
-        monst->status[STATUS_DISCORDANT] = 0;
-        heal(monst, 100, true);
+        monToRaise->status[STATUS_DISCORDANT] = 0;
+        heal(monToRaise, 100, true);
 
-        success = true;
+        return true;
     } else {
-        success = false;
+        return false;
     }
-    return success;
 }
 
 void unAlly(creature *monst) {
@@ -4086,7 +4104,7 @@ boolean staffOrWandEffectOnMonsterDescription(char *newText, item *theItem, crea
                     successfulDescription = true;
                 } else if (theItem->flags & (ITEM_MAX_CHARGES_KNOWN | ITEM_IDENTIFIED)) {
                     if (staffDamageLow(enchant) >= monst->currentHP) {
-                        sprintf(newText, "\n     Your %s (%c) will %s the %s in one hit.",
+                        sprintf(newText, "\n     Your %s (%c) will %s %s in one hit.",
                                 theItemName,
                                 theItem->inventoryLetter,
                                 (monst->info.flags & MONST_INANIMATE) ? "destroy" : "kill",

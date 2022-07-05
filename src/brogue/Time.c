@@ -2445,7 +2445,6 @@ void playerTurnEnded() {
                             break;
                         }
                     }
-                    restartIterator(&it); // loop through from the beginning to be safe
                 }
             }
 
@@ -2595,7 +2594,7 @@ void playerTurnEnded() {
         rogue.receivedLevitationWarning = false;
     }
 
-    emptyGraveyard();
+    removeDeadMonsters();
     rogue.playbackBetweenTurns = true;
     RNGCheck();
     handleHealthAlerts();

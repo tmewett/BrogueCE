@@ -37,8 +37,8 @@
 
 // Brogue version number
 #define BROGUE_MAJOR 1
-#define BROGUE_MINOR 10
-#define BROGUE_PATCH 2
+#define BROGUE_MINOR 11
+#define BROGUE_PATCH 0
 
 // Expanding a macro as a string constant requires two levels of macros
 #define _str(x) #x
@@ -168,6 +168,12 @@ typedef struct pos {
 
 #define AMULET_LEVEL            26          // how deep before the amulet appears
 #define DEEPEST_LEVEL           40          // how deep the universe goes
+#define DEPTH_ACCELERATOR       1           // factor for how fast depth-dependent features scale compared to usual 26-level dungeon
+
+#define MUTATIONS_OCCUR_ABOVE_LEVEL 10      // how deep before mutations can occur
+
+#define MINIMUM_LAVA_LEVEL      4           // how deep before lava can be generated
+#define MINIMUM_BRIMSTONE_LEVEL 17          // how deep before brimstone can be generated
 
 #define MACHINES_FACTOR         FP_FACTOR   // use this to adjust machine frequency
 
@@ -181,6 +187,10 @@ typedef struct pos {
 #define FALL_DAMAGE_MAX         10
 
 #define PLAYER_TRANSFERENCE_RATIO 20        // player transference heal is (enchant / PLAYER_TRANSFERENCE_RATIO)
+
+#define ON_HIT_HALLUCINATE_DURATION 20      // duration of on-hit hallucination effect on player
+#define ON_HIT_WEAKEN_DURATION  300         // duration of on-hit weaken effect
+#define ON_HIT_MERCY_HEAL_PERCENT 50        // percentage of damage healed on-hit by mercy weapon effect
 
 #define INPUT_RECORD_BUFFER     1000        // how many bytes of input data to keep in memory before saving it to disk
 #define DEFAULT_PLAYBACK_DELAY  50
@@ -2073,12 +2083,13 @@ enum monsterBookkeepingFlags {
     MB_ABSORBING                = Fl(16),   // currently learning a skill by absorbing an enemy corpse
     MB_DOES_NOT_TRACK_LEADER    = Fl(17),   // monster will not follow its leader around
     MB_IS_FALLING               = Fl(18),   // monster is plunging downward at the end of the turn
-    MB_IS_DYING                 = Fl(19),   // monster has already been killed and is awaiting the end-of-turn graveyard sweep (or in purgatory)
+    MB_IS_DYING                 = Fl(19),   // monster is currently dying; the death is still being processed
     MB_GIVEN_UP_ON_SCENT        = Fl(20),   // to help the monster remember that the scent map is a dead end
     MB_IS_DORMANT               = Fl(21),   // lurking, waiting to burst out
     MB_HAS_SOUL                 = Fl(22),   // slaying the monster will count toward weapon auto-ID
     MB_ALREADY_SEEN             = Fl(23),   // seeing this monster won't interrupt exploration
-    MB_HAS_ENTRANCED_MOVED      = Fl(24)    // has already moved while entranced and should not move again
+    MB_ADMINISTRATIVE_DEATH     = Fl(24),   // like the `administrativeDeath` parameter to `killCreature`
+    MB_HAS_DIED                 = Fl(25)    // monster has already been killed but not yet removed from `monsters`
 };
 
 // Defines all creatures, which include monsters and the player:
@@ -2854,7 +2865,7 @@ extern "C" {
     void updateMinersLightRadius();
     void freeCreature(creature *monst);
     void freeCreatureList(creatureList *list);
-    void emptyGraveyard();
+    void removeDeadMonsters();
     void freeEverything();
     boolean randomMatchingLocation(short *x, short *y, short dungeonType, short liquidType, short terrainType);
     enum dungeonLayers highestPriorityLayer(short x, short y, boolean skipGas);
@@ -2968,7 +2979,6 @@ extern "C" {
     creatureIterator iterateCreatures(creatureList *list);
     boolean hasNextCreature(creatureIterator iter);
     creature *nextCreature(creatureIterator *iter);
-    void restartIterator(creatureIterator *iter);
     void prependCreature(creatureList *list, creature *add);
     boolean removeCreature(creatureList *list, creature *remove);
     creature *firstCreature(creatureList *list);
@@ -2994,7 +3004,7 @@ extern "C" {
     boolean openPathBetween(short x1, short y1, short x2, short y2);
     creature *monsterAtLoc(short x, short y);
     creature *dormantMonsterAtLoc(short x, short y);
-    void perimeterCoords(short returnCoords[2], short n);
+    pos perimeterCoords(short n);
     boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, boolean blinkUphill);
     boolean monsterSummons(creature *monst, boolean alwaysUse);
     boolean resurrectAlly(const short x, const short y);
@@ -3048,8 +3058,8 @@ extern "C" {
     void pickUpItemAt(short x, short y);
     item *addItemToPack(item *theItem);
     void aggravateMonsters(short distance, short x, short y, const color *flashColor);
-    short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2], const short targetLoc[2], const bolt *theBolt);
-    void getImpactLoc(short returnLoc[2], const short originLoc[2], const short targetLoc[2],
+    short getLineCoordinates(pos listOfCoordinates[], const pos originLoc, const pos targetLoc, const bolt *theBolt);
+    void getImpactLoc(pos *returnLoc, const pos originLoc, const pos targetLoc,
                       const short maxDistance, const boolean returnLastEmptySpace, const bolt *theBolt);
     boolean negate(creature *monst);
     short monsterAccuracyAdjusted(const creature *monst);
@@ -3060,11 +3070,11 @@ extern "C" {
     void haste(creature *monst, short turns);
     void heal(creature *monst, short percent, boolean panacea);
     boolean projectileReflects(creature *attacker, creature *defender);
-    short reflectBolt(short targetX, short targetY, short listOfCoordinates[][2], short kinkCell, boolean retracePath);
+    short reflectBolt(short targetX, short targetY, pos listOfCoordinates[], short kinkCell, boolean retracePath);
     void checkForMissingKeys(short x, short y);
     enum boltEffects boltEffectForItem(item *theItem);
     enum boltType boltForItem(item *theItem);
-    boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideDetails);
+    boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails);
     boolean nextTargetAfter(short *returnX,
                             short *returnY,
                             short targetX,

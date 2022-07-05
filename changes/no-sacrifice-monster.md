@@ -1,1 +1,0 @@
-Fix a bug which prevented sacrifice monsters from spawning on depth 21

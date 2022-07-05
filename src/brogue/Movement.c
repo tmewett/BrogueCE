@@ -481,20 +481,12 @@ void moveEntrancedMonsters(enum directions dir) {
 
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
-        monst->bookkeepingFlags &= ~MB_HAS_ENTRANCED_MOVED;
-    }
-
-    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
-        creature *monst = nextCreature(&it);
-        if (!(monst->bookkeepingFlags & MB_HAS_ENTRANCED_MOVED)
-            && monst->status[STATUS_ENTRANCED]
+        if (monst->status[STATUS_ENTRANCED]
             && !monst->status[STATUS_STUCK]
             && !monst->status[STATUS_PARALYZED]
             && !(monst->bookkeepingFlags & MB_CAPTIVE)) {
 
             moveMonster(monst, nbDirs[dir][0], nbDirs[dir][1]);
-            monst->bookkeepingFlags |= MB_HAS_ENTRANCED_MOVED;
-            restartIterator(&it); // loop through from the beginning to be safe
         }
     }
 }
@@ -583,7 +575,6 @@ boolean abortAttackAgainstAcidicTarget(creature *hitList[8]) {
 boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *aborted) {
     bolt theBolt;
     creature *defender, *hitList[8] = {0};
-    short strikeLoc[2], originLoc[2], targetLoc[2];
 
     const char boltChar[DIRECTION_COUNT] = "||~~\\//\\";
 
@@ -596,13 +587,15 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
     } else if (!(attacker->info.abilityFlags & MA_ATTACKS_EXTEND)) {
         return false;
     }
-    originLoc[0] = attacker->loc.x;
-    originLoc[1] = attacker->loc.y;
-    targetLoc[0] = attacker->loc.x + nbDirs[dir][0];
-    targetLoc[1] = attacker->loc.y + nbDirs[dir][1];
-    getImpactLoc(strikeLoc, originLoc, targetLoc, 5, false, &boltCatalog[BOLT_WHIP]);
+    pos originLoc = attacker->loc;
+    pos targetLoc = (pos){
+        .x = attacker->loc.x + nbDirs[dir][0],
+        .y = attacker->loc.y + nbDirs[dir][1]
+    };
+    pos strikeLoc;
+    getImpactLoc(&strikeLoc, originLoc, targetLoc, 5, false, &boltCatalog[BOLT_WHIP]);
 
-    defender = monsterAtLoc(strikeLoc[0], strikeLoc[1]);
+    defender = monsterAtLoc(strikeLoc.x, strikeLoc.y);
     if (defender
         && (attacker != &player || canSeeMonster(defender))
         && !monsterIsHidden(defender, attacker)

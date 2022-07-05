@@ -685,7 +685,7 @@ void mainInputLoop() {
                     rogue.playbackMode = false;
 
                     focusedOnMonster = true;
-                    if (monst != &player && (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience)) {
+                    if (monst != &player && (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience || player.status[STATUS_TELEPATHIC])) {
                         printMonsterDetails(monst, rbuf);
                         textDisplayed = true;
                     }
@@ -1256,7 +1256,10 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
                    && (playerCanSeeOrSense(x, y) || ((monst->info.flags & MONST_IMMOBILE) && (pmap[x][y].flags & DISCOVERED)))
                    && (!monsterIsHidden(monst, &player) || rogue.playbackOmniscience)) {
             needDistinctness = true;
-            if (player.status[STATUS_HALLUCINATING] > 0 && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE)) && !rogue.playbackOmniscience) {
+            if (player.status[STATUS_HALLUCINATING] > 0
+                    && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))
+                    && !rogue.playbackOmniscience
+                    && !player.status[STATUS_TELEPATHIC]) {
                 cellChar = monsterCatalog[randomAnimateMonster()].displayChar;
                 cellForeColor = *(monsterCatalog[randomAnimateMonster()].foreColor);
             } else {
@@ -1280,7 +1283,7 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
         } else if (monst
                    && monsterRevealed(monst)
                    && !canSeeMonster(monst)) {
-            if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience) {
+            if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience && !player.status[STATUS_TELEPATHIC]) {
                 cellChar = (rand_range(0, 1) ? 'X' : 'x');
             } else {
                 cellChar = (monst->info.isLarge ? 'X' : 'x');
@@ -1336,7 +1339,7 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
                 && !monsterRevealed(monst)
                 && !monsterHiddenBySubmersion(monst, &player)) {
 
-                if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience) {
+                if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience && !player.status[STATUS_TELEPATHIC]) {
                     cellChar = monsterCatalog[randomAnimateMonster()].displayChar;
                 } else {
                     cellChar = monst->info.displayChar;

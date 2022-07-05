@@ -515,12 +515,7 @@ void populateItems(short upstairsX, short upstairsY) {
 #endif
 
     if (rogue.depthLevel > AMULET_LEVEL) {
-        if (rogue.depthLevel - AMULET_LEVEL - 1 >= 8) {
-            numberOfItems = 1;
-        } else {
-            const short lumenstoneDistribution[8] = {3, 3, 3, 2, 2, 2, 2, 2};
-            numberOfItems = lumenstoneDistribution[rogue.depthLevel - AMULET_LEVEL - 1];
-        }
+        numberOfItems = lumenstoneDistribution[rogue.depthLevel - AMULET_LEVEL - 1];
         numberOfGoldPiles = 0;
     } else {
         rogue.lifePotionFrequency += 34;
@@ -1885,9 +1880,14 @@ void itemDetails(char *buf, item *theItem) {
     }
 
     if (carried && theItem->originDepth > 0) {
-        sprintf(buf2, " (You found %s on depth %i.) ",
-                singular ? "it" : "them",
-                theItem->originDepth);
+        sprintf(buf2, " (You found %s%s on depth %i.) ",
+            singular ? "it" : "them",
+            // items in an item-choice vault are "keys", but are not a KEY
+            // we ignore any actual KEY, as those might not be on an altar
+            theItem->flags & ITEM_IS_KEY && !(theItem->category & KEY)
+                ? " in a vault" : "",
+            theItem->originDepth
+        );
         strcat(buf, buf2);
     }
 
@@ -2229,7 +2229,7 @@ void itemDetails(char *buf, item *theItem) {
                                 break;
                             case A_ABSORPTION:
                                 if (theItem->flags & ITEM_IDENTIFIED) {
-                                    sprintf(buf2, "It will reduce the damage of inbound attacks by a random amount between 0 and %i, which is %i%% of your current maximum health. (If the %s is enchanted, this maximum amount will %s %i.) ",
+                                    sprintf(buf2, "It will reduce the damage of inbound attacks by a random amount between 1 and %i, which is %i%% of your current maximum health. (If the %s is enchanted, this maximum amount will %s %i.) ",
                                             (int) armorAbsorptionMax(enchant),
                                             (int) (100 * armorAbsorptionMax(enchant) / player.info.maxHP),
                                             theName,
@@ -3294,7 +3294,7 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
 // best for the specified bolt type.
 // The list is terminated by a marker (-1, -1).
 // Returns the number of entries in the list (not counting the terminal marker).
-short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2], const short targetLoc[2], const bolt *theBolt) {
+short getLineCoordinates(pos listOfCoordinates[], const pos originLoc, const pos targetLoc, const bolt *theBolt) {
     fixpt point[2], step[2];
     short listLength;
     int score, bestScore = 0, offset, bestOffset = 0;
@@ -3310,8 +3310,8 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
         {50, 10}, {90, 50}, {50, 90}, {10, 50},
         {50,  1}, {99, 50}, {50, 99}, { 1, 50} };
 
-    if (originLoc[0] == targetLoc[0] && originLoc[1] == targetLoc[1]) {
-        listOfCoordinates[0][0] = listOfCoordinates[0][1] = -1;
+    if (originLoc.x == targetLoc.x && originLoc.y == targetLoc.y) {
+        listOfCoordinates[0] = (pos){ .x = -1, .y = -1 };
         return 0;
     }
 
@@ -3320,12 +3320,13 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
 
         listLength = 0;
 
-        for (int i = 0; i <= 1; i++) {
+
             // always shoot from the center of the origin cell
-            point[i] = originLoc[i] * FP_FACTOR + FP_FACTOR/2;
+            point[0] = originLoc.x * FP_FACTOR + FP_FACTOR/2;
+            point[1] = originLoc.y * FP_FACTOR + FP_FACTOR/2;
             // vector to target
-            step[i] = targetLoc[i] * FP_FACTOR + offsets[offset < numOffsets ? offset : bestOffset][i] * FP_FACTOR / 100 - point[i];
-        }
+            step[0] = targetLoc.x * FP_FACTOR + offsets[offset < numOffsets ? offset : bestOffset][0] * FP_FACTOR / 100 - point[0];
+            step[1] = targetLoc.y * FP_FACTOR + offsets[offset < numOffsets ? offset : bestOffset][1] * FP_FACTOR / 100 - point[1];
 
         // normalize the step, to move exactly one row or column at a time
         fixpt m = max(llabs(step[0]), llabs(step[1]));
@@ -3334,11 +3335,13 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
 
         // move until we exit the map
         while (true) {
-            for (int i = 0; i <= 1; i++) {
-                point[i] += step[i];
-                listOfCoordinates[listLength][i] = (point[i] < 0 ? -1 : point[i] / FP_FACTOR);
-            }
-            if (!coordinatesAreInMap(listOfCoordinates[listLength][0], listOfCoordinates[listLength][1])) break;
+            point[0] += step[0];
+            point[1] += step[1];
+            listOfCoordinates[listLength] = (pos){
+                .x = (point[0] < 0 ? -1 : point[0] / FP_FACTOR),
+                .y = (point[1] < 0 ? -1 : point[1] / FP_FACTOR)
+            };
+            if (!coordinatesAreInMap(listOfCoordinates[listLength].x, listOfCoordinates[listLength].y)) break;
             listLength++;
         };
 
@@ -3351,17 +3354,19 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
         // evaluate this path; we will return the path with the highest score
         score = 0;
 
+        boolean passesThroughUnknown = false;
         for (int i = 0; i < listLength; i++) {
-            short x = listOfCoordinates[i][0], y = listOfCoordinates[i][1];
+            short x = listOfCoordinates[i].x;
+            short y = listOfCoordinates[i].y;
 
             boolean isImpassable = cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY);
             boolean isOpaque = cellHasTerrainFlag(x, y, T_OBSTRUCTS_VISION);
             boolean targetsEnemies = theBolt->flags & BF_TARGET_ENEMIES;
             boolean targetsAllies = theBolt->flags & BF_TARGET_ALLIES;
             boolean burningThrough = (theBolt->flags & BF_FIERY) && cellHasTerrainFlag(x, y, T_IS_FLAMMABLE);
-            boolean isCastByPlayer = (originLoc[0] == player.loc.x && originLoc[1] == player.loc.y);
+            boolean isCastByPlayer = (originLoc.x == player.loc.x && originLoc.y == player.loc.y);
 
-            creature *caster = monsterAtLoc(originLoc[0], originLoc[1]);
+            creature *caster = monsterAtLoc(originLoc.x, originLoc.y);
             creature *monst = monsterAtLoc(x, y);
             boolean isMonster = monst
                 && !(monst->bookkeepingFlags & MB_SUBMERGED)
@@ -3373,21 +3378,27 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
             score += 2;
 
             // target reached?
-            if (x == targetLoc[0] && y == targetLoc[1]) {
+            if (x == targetLoc.x && y == targetLoc.y) {
 
                 if ((!targetsEnemies && !targetsAllies) ||
                     (targetsEnemies && isMonster && isEnemyOfCaster) ||
                     (targetsAllies && isMonster && isAllyOfCaster)) {
 
-                    // big bonus for hitting the target
-                    score += 5000;
+                    // Big bonus for hitting the target, but that bonus
+                    // is lower if this path uses an unknown tile.
+                    score += passesThroughUnknown ? 2500 : 5000;
                 }
 
                 break; // we don't care about anything beyond the target--if the player did, they would have selected a farther target
             }
 
             // if the caster is the player, undiscovered cells don't count (lest we reveal something about them)
-            if (isCastByPlayer && !(pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED))) continue;
+            if (isCastByPlayer && !(pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED))) {
+                // Remember that this path used an unknown cell, so that a
+                // less-risky path can be used instead if one is known.
+                passesThroughUnknown = true;
+                continue;
+            }
 
             // nothing can get through impregnable obstacles
             if (isImpassable && pmap[x][y].flags & IMPREGNABLE) {
@@ -3427,7 +3438,7 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
     }
 
     // demarcate the end of the list
-    listOfCoordinates[listLength][0] = listOfCoordinates[listLength][1] = -1;
+    listOfCoordinates[listLength] = (pos){ .x = -1, .y = -1 };
 
     return listLength;
 }
@@ -3437,42 +3448,38 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
 // or one space prior, where would it stop?
 // Takes into account the caster's knowledge; i.e. won't be blocked by monsters
 // that the caster is not aware of.
-void getImpactLoc(short returnLoc[2], const short originLoc[2], const short targetLoc[2],
+void getImpactLoc(pos *returnLoc, const pos originLoc, const pos targetLoc,
                   const short maxDistance, const boolean returnLastEmptySpace, const bolt *theBolt) {
-    short coords[DCOLS + 1][2];
+    pos coords[DCOLS + 1];
     short i, n;
     creature *monst;
 
     n = getLineCoordinates(coords, originLoc, targetLoc, theBolt);
     n = min(n, maxDistance);
     for (i=0; i<n; i++) {
-        monst = monsterAtLoc(coords[i][0], coords[i][1]);
+        monst = monsterAtLoc(coords[i].x, coords[i].y);
         if (monst
-            && !monsterIsHidden(monst, monsterAtLoc(originLoc[0], originLoc[1]))
+            && !monsterIsHidden(monst, monsterAtLoc(originLoc.x, originLoc.y))
             && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
             // Imaginary bolt hit the player or a monster.
             break;
         }
-        if (cellHasTerrainFlag(coords[i][0], coords[i][1], (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
+        if (cellHasTerrainFlag(coords[i].x, coords[i].y, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
             break;
         }
     }
     if (i == maxDistance) {
-        returnLoc[0] = coords[i-1][0];
-        returnLoc[1] = coords[i-1][1];
+        *returnLoc = coords[i-1];
     } else if (returnLastEmptySpace) {
         if (i == 0) {
-            returnLoc[0] = originLoc[0];
-            returnLoc[1] = originLoc[1];
+            *returnLoc = originLoc;
         } else {
-            returnLoc[0] = coords[i-1][0];
-            returnLoc[1] = coords[i-1][1];
+            *returnLoc = coords[i-1];
         }
     } else {
-        returnLoc[0] = coords[i][0];
-        returnLoc[1] = coords[i][1];
+        *returnLoc = coords[i];
     }
-    brogueAssert(coordinatesAreInMap(returnLoc[0], returnLoc[1]));
+    brogueAssert(coordinatesAreInMap(returnLoc->x, returnLoc->y));
 }
 
 // Returns true if the two coordinates are unobstructed and diagonally adjacent,
@@ -4142,18 +4149,15 @@ boolean projectileReflects(creature *attacker, creature *defender) {
 // Alters listOfCoordinates to describe reflected path,
 // which diverges from the existing path at kinkCell,
 // and then returns the path length of the reflected path.
-short reflectBolt(short targetX, short targetY, short listOfCoordinates[][2], short kinkCell, boolean retracePath) {
-    short k, target[2], origin[2], newPath[DCOLS][2], newPathLength, failsafe, finalLength;
-    boolean needRandomTarget;
+short reflectBolt(short targetX, short targetY, pos listOfCoordinates[], short kinkCell, boolean retracePath) {
+    boolean needRandomTarget = (targetX < 0 || targetY < 0
+                        || (targetX == listOfCoordinates[kinkCell].x && targetY == listOfCoordinates[kinkCell].y));
 
-    needRandomTarget = (targetX < 0 || targetY < 0
-                        || (targetX == listOfCoordinates[kinkCell][0] && targetY == listOfCoordinates[kinkCell][1]));
-
+    short finalLength;
     if (retracePath) {
         // if reflecting back at caster, follow precise trajectory until we reach the caster
-        for (k = 1; k <= kinkCell && kinkCell + k < MAX_BOLT_LENGTH; k++) {
-            listOfCoordinates[kinkCell + k][0] = listOfCoordinates[kinkCell - k][0];
-            listOfCoordinates[kinkCell + k][1] = listOfCoordinates[kinkCell - k][1];
+        for (int k = 1; k <= kinkCell && kinkCell + k < MAX_BOLT_LENGTH; k++) {
+            listOfCoordinates[kinkCell + k] = listOfCoordinates[kinkCell - k];
         }
 
         // Calculate a new "extension" path, with an origin at the caster, and a destination at
@@ -4163,49 +4167,50 @@ short reflectBolt(short targetX, short targetY, short listOfCoordinates[][2], sh
         // is from (2,3) to (4,6):
         // (2,3) + ((2,3) - (0,0)) = (4,6).
 
-        origin[0] = listOfCoordinates[2 * kinkCell][0];
-        origin[1] = listOfCoordinates[2 * kinkCell][1];
-        target[0] = targetX + (targetX - listOfCoordinates[kinkCell][0]);
-        target[1] = targetY + (targetY - listOfCoordinates[kinkCell][1]);
+        pos origin = listOfCoordinates[2 * kinkCell];
+        pos target = (pos){
+            .x = targetX + (targetX - listOfCoordinates[kinkCell].x),
+            .y = targetY + (targetY - listOfCoordinates[kinkCell].y)
+        };
 
+        pos newPath[DCOLS];
         // (NULL because the reflected bolt is not under the caster's control, so its path should not be tuned)
-        newPathLength = getLineCoordinates(newPath, origin, target, NULL);
+        const short newPathLength = getLineCoordinates(newPath, origin, target, NULL);
 
-        for (k=0; k<=newPathLength; k++) {
-            listOfCoordinates[2 * kinkCell + k + 1][0] = newPath[k][0];
-            listOfCoordinates[2 * kinkCell + k + 1][1] = newPath[k][1];
+        for (int k=0; k<=newPathLength; k++) {
+            listOfCoordinates[2 * kinkCell + k + 1] = newPath[k];
         }
         finalLength = 2 * kinkCell + newPathLength + 1;
     } else {
-        failsafe = 50;
+        short failsafe = 50;
+        pos newPath[DCOLS];
+        int newPathLength;
         do {
+            pos target;
             if (needRandomTarget) {
                 // pick random target
-                perimeterCoords(target, rand_range(0, 39));
-                target[0] += listOfCoordinates[kinkCell][0];
-                target[1] += listOfCoordinates[kinkCell][1];
+                target = perimeterCoords(rand_range(0, 39));
+                target.x += listOfCoordinates[kinkCell].x;
+                target.y += listOfCoordinates[kinkCell].y;
             } else {
-                target[0] = targetX;
-                target[1] = targetY;
+                target = (pos){ .x = targetX, .y = targetY };
             }
             newPathLength = getLineCoordinates(newPath, listOfCoordinates[kinkCell], target, NULL);
             if (newPathLength > 0
-                && !cellHasTerrainFlag(newPath[0][0], newPath[0][1], (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
+                && !cellHasTerrainFlag(newPath[0].x, newPath[0].y, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
 
                 needRandomTarget = false;
             }
         } while (needRandomTarget && --failsafe);
 
-        for (k = 0; k < newPathLength; k++) {
-            listOfCoordinates[kinkCell + k + 1][0] = newPath[k][0];
-            listOfCoordinates[kinkCell + k + 1][1] = newPath[k][1];
+        for (int k = 0; k < newPathLength; k++) {
+            listOfCoordinates[kinkCell + k + 1] = newPath[k];
         }
 
         finalLength = kinkCell + newPathLength + 1;
     }
 
-    listOfCoordinates[finalLength][0] = -1;
-    listOfCoordinates[finalLength][1] = -1;
+    listOfCoordinates[finalLength] = (pos){ .x = -1, .y = -1 };
     return finalLength;
 }
 
@@ -4223,16 +4228,13 @@ void checkForMissingKeys(short x, short y) {
 }
 
 void beckonMonster(creature *monst, short x, short y) {
-    short from[2], to[2];
     bolt theBolt = boltCatalog[BOLT_BLINKING];
 
     if (monst->bookkeepingFlags & MB_CAPTIVE) {
         freeCaptive(monst);
     }
-    from[0] = monst->loc.x;
-    from[1] = monst->loc.y;
-    to[0] = x;
-    to[1] = y;
+    pos from = monst->loc;
+    pos to = (pos){ .x = x, .y = y };
     theBolt.magnitude = max(1, (distanceBetween(x, y, monst->loc.x, monst->loc.y) - 2) / 2);
     zap(from, to, &theBolt, false);
     if (monst->ticksUntilTurn < player.attackSpeed+1) {
@@ -4517,8 +4519,8 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
                     newMonst = cloneMonster(monst, true, true);
                     if (newMonst) {
-                        monst->info.maxHP = newMonst->info.maxHP = (monst->info.maxHP + 1) / 2;
-                        monst->currentHP = newMonst->currentHP = min(monst->currentHP, monst->info.maxHP);
+                        monst->currentHP = (monst->currentHP + 1) / 2;
+                        newMonst->currentHP = (newMonst->currentHP + 1) / 2;
                         if (boltCatalog[BOLT_PLENTY].backColor) {
                             flashMonster(monst, boltCatalog[BOLT_PLENTY].backColor, 100);
                             flashMonster(newMonst, boltCatalog[BOLT_PLENTY].backColor, 100);
@@ -4706,8 +4708,8 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
 }
 
 // returns whether the bolt effect should autoID any staff or wand it came from, if it came from a staff or wand
-boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideDetails) {
-    short listOfCoordinates[MAX_BOLT_LENGTH][2];
+boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails) {
+    pos listOfCoordinates[MAX_BOLT_LENGTH];
     short i, j, k, x, y, x2, y2, numCells, blinkDistance = 0, boltLength, initialBoltLength, lights[DCOLS][DROWS][3];
     creature *monst = NULL, *shootingMonst;
     char buf[COLS], monstName[COLS];
@@ -4725,17 +4727,17 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
     lightSource boltLights[500];
     color boltLightColors[500];
 
-    brogueAssert(originLoc[0] != targetLoc[0] || originLoc[1] != targetLoc[1]);
-    if (originLoc[0] == targetLoc[0] && originLoc[1] == targetLoc[1]) {
+    brogueAssert(originLoc.x != targetLoc.x || originLoc.y != targetLoc.y);
+    if (originLoc.x == targetLoc.x && originLoc.y == targetLoc.y) {
         return false;
     }
 
-    x = originLoc[0];
-    y = originLoc[1];
+    x = originLoc.x;
+    y = originLoc.y;
 
     initialBoltLength = boltLength = 5 * theBolt->magnitude;
     numCells = getLineCoordinates(listOfCoordinates, originLoc, targetLoc, (hideDetails ? &boltCatalog[BOLT_NONE] : theBolt));
-    shootingMonst = monsterAtLoc(originLoc[0], originLoc[1]);
+    shootingMonst = monsterAtLoc(originLoc.x, originLoc.y);
 
     if (hideDetails) {
         boltColor = &gray;
@@ -4747,18 +4749,18 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
     displayCombatText(); // To announce who fired the bolt while the animation plays.
 
     if (theBolt->boltEffect == BE_BLINKING) {
-        if (cellHasTerrainFlag(listOfCoordinates[0][0], listOfCoordinates[0][1], (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION))
-            || ((pmap[listOfCoordinates[0][0]][listOfCoordinates[0][1]].flags & (HAS_PLAYER | HAS_MONSTER))
-                && !(monsterAtLoc(listOfCoordinates[0][0], listOfCoordinates[0][1])->bookkeepingFlags & MB_SUBMERGED))) {
+        if (cellHasTerrainFlag(listOfCoordinates[0].x, listOfCoordinates[0].y, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION))
+            || ((pmap[listOfCoordinates[0].x][listOfCoordinates[0].y].flags & (HAS_PLAYER | HAS_MONSTER))
+                && !(monsterAtLoc(listOfCoordinates[0].x, listOfCoordinates[0].y)->bookkeepingFlags & MB_SUBMERGED))) {
                 // shooting blink point-blank into an obstruction does nothing.
                 return false;
             }
         theBolt->foreColor = &black;
         theBolt->theChar = shootingMonst->info.displayChar;
-        pmap[originLoc[0]][originLoc[1]].flags &= ~(HAS_PLAYER | HAS_MONSTER);
-        refreshDungeonCell(originLoc[0], originLoc[1]);
+        pmap[originLoc.x][originLoc.y].flags &= ~(HAS_PLAYER | HAS_MONSTER);
+        refreshDungeonCell(originLoc.x, originLoc.y);
         blinkDistance = theBolt->magnitude * 2 + 1;
-        checkForMissingKeys(originLoc[0], originLoc[1]);
+        checkForMissingKeys(originLoc.x, originLoc.y);
     }
 
     if (boltColor) {
@@ -4774,15 +4776,15 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
     }
 
     if (theBolt->boltEffect == BE_TUNNELING) {
-        tunnelize(originLoc[0], originLoc[1]);
+        tunnelize(originLoc.x, originLoc.y);
     }
 
     backUpLighting(lights);
     boltInView = true;
     for (i=0; i<numCells; i++) {
 
-        x = listOfCoordinates[i][0];
-        y = listOfCoordinates[i][1];
+        x = listOfCoordinates[i].x;
+        y = listOfCoordinates[i].y;
 
         monst = monsterAtLoc(x, y);
 
@@ -4793,7 +4795,7 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
             && i < MAX_BOLT_LENGTH - max(DCOLS, DROWS)) {
 
             if (projectileReflects(shootingMonst, monst)) { // if it scores another reflection roll, reflect at caster
-                numCells = reflectBolt(originLoc[0], originLoc[1], listOfCoordinates, i, !alreadyReflected);
+                numCells = reflectBolt(originLoc.x, originLoc.y, listOfCoordinates, i, !alreadyReflected);
             } else {
                 numCells = reflectBolt(-1, -1, listOfCoordinates, i, false); // otherwise reflect randomly
             }
@@ -4834,7 +4836,7 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
             restoreLighting(lights);
             for (k = min(i, boltLength + 2); k >= 0; k--) {
                 if (k < initialBoltLength) {
-                    paintLight(&boltLights[k], listOfCoordinates[i-k][0], listOfCoordinates[i-k][1], false, false);
+                    paintLight(&boltLights[k], listOfCoordinates[i-k].x, listOfCoordinates[i-k].y, false, false);
                 }
             }
         }
@@ -4842,8 +4844,8 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
         updateFieldOfViewDisplay(false, true);
         // Now draw the bolt itself.
         for (k = min(i, boltLength + 2); k >= 0; k--) {
-            x2 = listOfCoordinates[i-k][0];
-            y2 = listOfCoordinates[i-k][1];
+            x2 = listOfCoordinates[i-k].x;
+            y2 = listOfCoordinates[i-k].y;
             if (playerCanSeeOrSense(x2, y2)) {
                 if (!fastForward) {
                     getCellAppearance(x2, y2, &theChar, &foreColor, &backColor);
@@ -4890,7 +4892,7 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
             theBolt->magnitude = (blinkDistance - i) / 2 + 1;
             boltLength = theBolt->magnitude * 5;
             for (j=0; j<i; j++) {
-                refreshDungeonCell(listOfCoordinates[j][0], listOfCoordinates[j][1]);
+                refreshDungeonCell(listOfCoordinates[j].x, listOfCoordinates[j].y);
             }
             if (i >= blinkDistance) {
                 break;
@@ -4901,15 +4903,15 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
         if ((theBolt->flags & BF_HALTS_BEFORE_OBSTRUCTION)
             && i + 1 < numCells) {
 
-            x2 = listOfCoordinates[i+1][0];
-            y2 = listOfCoordinates[i+1][1];
+            x2 = listOfCoordinates[i+1].x;
+            y2 = listOfCoordinates[i+1].y;
 
             if (cellHasTerrainFlag(x2, y2, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
                 break;
             }
 
             if (!(theBolt->flags & BF_PASSES_THRU_CREATURES)) {
-                monst = monsterAtLoc(listOfCoordinates[i+1][0], listOfCoordinates[i+1][1]);
+                monst = monsterAtLoc(listOfCoordinates[i+1].x, listOfCoordinates[i+1].y);
                 if (monst && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
                     break;
                 }
@@ -4927,10 +4929,10 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
             theBolt->magnitude--;
             boltLength = theBolt->magnitude * 5;
             for (j=0; j<i; j++) {
-                refreshDungeonCell(listOfCoordinates[j][0], listOfCoordinates[j][1]);
+                refreshDungeonCell(listOfCoordinates[j].x, listOfCoordinates[j].y);
             }
             if (theBolt->magnitude <= 0) {
-                refreshDungeonCell(listOfCoordinates[i-1][0], listOfCoordinates[i-1][1]);
+                refreshDungeonCell(listOfCoordinates[i-1].x, listOfCoordinates[i-1].y);
                 refreshDungeonCell(x, y);
                 break;
             }
@@ -4946,8 +4948,8 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
         if (i + 1 < numCells
             && !(theBolt->flags & BF_NEVER_REFLECTS)) {
 
-            x2 = listOfCoordinates[i+1][0];
-            y2 = listOfCoordinates[i+1][1];
+            x2 = listOfCoordinates[i+1].x;
+            y2 = listOfCoordinates[i+1].y;
             if (cellHasTerrainFlag(x2, y2, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))
                 && (projectileReflects(shootingMonst, NULL)
                     || cellHasTMFlag(x2, y2, TM_REFLECTS_BOLTS)
@@ -4957,7 +4959,7 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
                 sprintf(buf, "the bolt reflects off of %s", tileText(x2, y2));
                 if (projectileReflects(shootingMonst, NULL)) {
                     // If it scores another reflection roll, reflect at caster, unless it's already reflected.
-                    numCells = reflectBolt(originLoc[0], originLoc[1], listOfCoordinates, i, !alreadyReflected);
+                    numCells = reflectBolt(originLoc.x, originLoc.y, listOfCoordinates, i, !alreadyReflected);
                 } else {
                     numCells = reflectBolt(-1, -1, listOfCoordinates, i, false); // Otherwise reflect randomly.
                 }
@@ -4972,7 +4974,7 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
     if (!fastForward) {
         refreshDungeonCell(x, y);
         if (i > 0) {
-            refreshDungeonCell(listOfCoordinates[i-1][0], listOfCoordinates[i-1][1]);
+            refreshDungeonCell(listOfCoordinates[i-1].x, listOfCoordinates[i-1].y);
         }
     }
 
@@ -5006,7 +5008,7 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
 
                     for (k = min(j, boltLength + 2); k >= j-i; k--) {
                         if (k < initialBoltLength) {
-                            paintLight(&boltLights[k], listOfCoordinates[j-k][0], listOfCoordinates[j-k][1], false, false);
+                            paintLight(&boltLights[k], listOfCoordinates[j-k].x, listOfCoordinates[j-k].y, false, false);
                         }
                     }
                     updateFieldOfViewDisplay(false, true);
@@ -5017,9 +5019,9 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
                 // beam graphic
                 // k iterates from the tail tip of the visible portion of the bolt to the head
                 for (k = min(j, boltLength + 2); k >= j-i; k--) {
-                    if (playerCanSee(listOfCoordinates[j-k][0], listOfCoordinates[j-k][1])) {
+                    if (playerCanSee(listOfCoordinates[j-k].x, listOfCoordinates[j-k].y)) {
                         if (boltColor) {
-                            hiliteCell(listOfCoordinates[j-k][0], listOfCoordinates[j-k][1], boltColor, max(0, 100 - k * 100 / (boltLength)), false);
+                            hiliteCell(listOfCoordinates[j-k].x, listOfCoordinates[j-k].y, boltColor, max(0, 100 - k * 100 / (boltLength)), false);
                         }
                         boltInView = true;
                     }
@@ -5031,8 +5033,8 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
             }
         } else if (theBolt->flags & BF_DISPLAY_CHAR_ALONG_LENGTH) {
             for (j = 0; j < i; j++) {
-                x2 = listOfCoordinates[j][0];
-                y2 = listOfCoordinates[j][1];
+                x2 = listOfCoordinates[j].x;
+                y2 = listOfCoordinates[j].y;
                 if (playerCanSeeOrSense(x2, y2)) {
                     refreshDungeonCell(x2, y2);
                 }
@@ -5119,7 +5121,7 @@ boolean nextTargetAfter(short *returnX,
 }
 
 // Returns how far it went before hitting something.
-short hiliteTrajectory(short coordinateList[DCOLS][2], short numCells, boolean eraseHiliting, const bolt *theBolt, const color *hiliteColor) {
+short hiliteTrajectory(const pos coordinateList[DCOLS], short numCells, boolean eraseHiliting, const bolt *theBolt, const color *hiliteColor) {
     short x, y, i;
     creature *monst;
 
@@ -5128,8 +5130,8 @@ short hiliteTrajectory(short coordinateList[DCOLS][2], short numCells, boolean e
     boolean passThroughMonsters = theBolt && (theBolt->flags & BF_PASSES_THRU_CREATURES);
 
     for (i=0; i<numCells; i++) {
-        x = coordinateList[i][0];
-        y = coordinateList[i][1];
+        x = coordinateList[i].x;
+        y = coordinateList[i].y;
         if (eraseHiliting) {
             refreshDungeonCell(x, y);
         } else {
@@ -5376,13 +5378,15 @@ boolean moveCursor(boolean *targetConfirmed,
     return !cursorMovementCommand;
 }
 
-void pullMouseClickDuringPlayback(short loc[2]) {
+pos pullMouseClickDuringPlayback(void) {
     rogueEvent theEvent;
 
     brogueAssert(rogue.playbackMode);
     nextBrogueEvent(&theEvent, false, false, false);
-    loc[0] = windowToMapX(theEvent.param1);
-    loc[1] = windowToMapY(theEvent.param2);
+    return (pos){
+        .x = windowToMapX(theEvent.param1),
+        .y = windowToMapY(theEvent.param2)
+    };
 }
 
 // Returns whether monst is targetable with thrown items, staves, wands, etc.
@@ -5396,14 +5400,15 @@ static boolean creatureIsTargetable(creature *monst) {
 }
 
 // Return true if a target is chosen, or false if canceled.
-boolean chooseTarget(short returnLoc[2],
+boolean chooseTarget(pos *returnLoc,
                      short maxDistance,
                      boolean stopAtTarget,
                      boolean autoTarget,
                      boolean targetAllies,
                      const bolt *theBolt,
                      const color *trajectoryColor) {
-    short originLoc[2], oldTargetLoc[2], coordinates[DCOLS][2], numCells, i, distance, newX, newY;
+    short numCells, i, distance, newX, newY;
+    pos coordinates[DCOLS];
     creature *monst;
     boolean canceled, targetConfirmed, tabKey, cursorInTrajectory, focusedOnSomething = false;
     rogueEvent event = {0};
@@ -5414,7 +5419,7 @@ boolean chooseTarget(short returnLoc[2],
 
     if (rogue.playbackMode) {
         // In playback, pull the next event (a mouseclick) and use that location as the target.
-        pullMouseClickDuringPlayback(returnLoc);
+        *returnLoc = pullMouseClickDuringPlayback();
         rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
         return true;
     }
@@ -5423,12 +5428,8 @@ boolean chooseTarget(short returnLoc[2],
     rogue.RNG = RNG_COSMETIC;
     //assureCosmeticRNG;
 
-    originLoc[0] = player.loc.x;
-    originLoc[1] = player.loc.y;
-
-    oldTargetLoc[0] = player.loc.x;
-    oldTargetLoc[1] = player.loc.y;
-
+    pos originLoc = player.loc;
+    pos oldTargetLoc = player.loc;
     pos targetLoc = player.loc;
 
     if (autoTarget) {
@@ -5448,7 +5449,7 @@ boolean chooseTarget(short returnLoc[2],
         }
     }
 
-    numCells = getLineCoordinates(coordinates, originLoc, (const short[2]){ targetLoc.x, targetLoc.y }, theBolt);
+    numCells = getLineCoordinates(coordinates, originLoc, targetLoc, theBolt);
     if (maxDistance > 0) {
         numCells = min(numCells, maxDistance);
     }
@@ -5462,7 +5463,7 @@ boolean chooseTarget(short returnLoc[2],
         printLocationDescription(targetLoc.x, targetLoc.y);
 
         if (canceled) {
-            refreshDungeonCell(oldTargetLoc[0], oldTargetLoc[1]);
+            refreshDungeonCell(oldTargetLoc.x, oldTargetLoc.y);
             hiliteTrajectory(coordinates, numCells, true, theBolt, trajectoryColor);
             confirmMessages();
             rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
@@ -5490,11 +5491,11 @@ boolean chooseTarget(short returnLoc[2],
             refreshSideBar(targetLoc.x, targetLoc.y, false);
         }
 
-        refreshDungeonCell(oldTargetLoc[0], oldTargetLoc[1]);
+        refreshDungeonCell(oldTargetLoc.x, oldTargetLoc.y);
         hiliteTrajectory(coordinates, numCells, true, theBolt, &trajColor);
 
         if (!targetConfirmed) {
-            numCells = getLineCoordinates(coordinates, originLoc, (const short[2]){targetLoc.x, targetLoc.y}, theBolt);
+            numCells = getLineCoordinates(coordinates, originLoc, targetLoc, theBolt);
             if (maxDistance > 0) {
                 numCells = min(numCells, maxDistance);
             }
@@ -5505,7 +5506,7 @@ boolean chooseTarget(short returnLoc[2],
             distance = hiliteTrajectory(coordinates, numCells, false, theBolt, &trajColor);
             cursorInTrajectory = false;
             for (i=0; i<distance; i++) {
-                if (coordinates[i][0] == targetLoc.x && coordinates[i][1] == targetLoc.y) {
+                if (coordinates[i].x == targetLoc.x && coordinates[i].y == targetLoc.y) {
                     cursorInTrajectory = true;
                     break;
                 }
@@ -5513,8 +5514,7 @@ boolean chooseTarget(short returnLoc[2],
             hiliteCell(targetLoc.x, targetLoc.y, &white, (cursorInTrajectory ? 100 : 35), true);
         }
 
-        oldTargetLoc[0] = targetLoc.x;
-        oldTargetLoc[1] = targetLoc.y;
+        oldTargetLoc = targetLoc;
         moveCursor(&targetConfirmed, &canceled, &tabKey, &targetLoc, &event, NULL, false, true, false);
         if (event.eventType == RIGHT_MOUSE_UP) { // Right mouse cancels.
             canceled = true;
@@ -5524,9 +5524,9 @@ boolean chooseTarget(short returnLoc[2],
         numCells = min(numCells, maxDistance);
     }
     hiliteTrajectory(coordinates, numCells, true, theBolt, trajectoryColor);
-    refreshDungeonCell(oldTargetLoc[0], oldTargetLoc[1]);
+    refreshDungeonCell(oldTargetLoc.x, oldTargetLoc.y);
 
-    if (originLoc[0] == targetLoc.x && originLoc[1] == targetLoc.y) {
+    if (originLoc.x == targetLoc.x && originLoc.y == targetLoc.y) {
         confirmMessages();
         restoreRNG;
         rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
@@ -5538,8 +5538,7 @@ boolean chooseTarget(short returnLoc[2],
         rogue.lastTarget = monst;
     }
 
-    returnLoc[0] = targetLoc.x;
-    returnLoc[1] = targetLoc.y;
+    *returnLoc = targetLoc;
     restoreRNG;
     rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
     return true;
@@ -5694,12 +5693,8 @@ static void tryIdentifyLastItemKinds(enum itemCategory category) {
     for (int i=0; i<categoryCount; i++) {
         loopCategory = categoryCount == 1 ? category : Fl(i);
         if (category & HAS_INTRINSIC_POLARITY & loopCategory) {
-            if (BROGUE_VERSION_ATLEAST(1,10,2)) {
-                tryIdentifyLastItemKind(loopCategory, MAGIC_POLARITY_BENEVOLENT);
-                tryIdentifyLastItemKind(loopCategory, MAGIC_POLARITY_MALEVOLENT);
-            } else {
-                tryIdentifyLastItemKind(loopCategory, MAGIC_POLARITY_ANY);
-            }
+            tryIdentifyLastItemKind(loopCategory, MAGIC_POLARITY_BENEVOLENT);
+            tryIdentifyLastItemKind(loopCategory, MAGIC_POLARITY_MALEVOLENT);
         }
     }
 }
@@ -5858,9 +5853,8 @@ boolean hitMonsterWithProjectileWeapon(creature *thrower, creature *monst, item 
     }
 }
 
-void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDistance) {
-    short listOfCoordinates[MAX_BOLT_LENGTH][2], originLoc[2];
-    short i, x, y, numCells;
+void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistance) {
+    short i, numCells;
     creature *monst = NULL;
     char buf[COLS*3], buf2[COLS*3], buf3[COLS*3];
     enum displayGlyph displayChar;
@@ -5870,16 +5864,18 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
 
     theItem->flags |= ITEM_PLAYER_AVOIDS; // Avoid thrown items, unless it's a weapon that misses a monster.
 
-    x = originLoc[0] = thrower->loc.x;
-    y = originLoc[1] = thrower->loc.y;
+    pos originLoc = thrower->loc;
+    short x = originLoc.x;
+    short y = originLoc.y;
 
     // Using BOLT_NONE for throws because all flags are off, which means we'll try to avoid all obstacles in front of the target
+    pos listOfCoordinates[MAX_BOLT_LENGTH];
     numCells = getLineCoordinates(listOfCoordinates, originLoc, targetLoc, &boltCatalog[BOLT_NONE]);
 
     thrower->ticksUntilTurn = thrower->attackSpeed;
 
     if (thrower != &player
-        && (pmap[originLoc[0]][originLoc[1]].flags & IN_FIELD_OF_VIEW)) {
+        && (pmap[originLoc.x][originLoc.y].flags & IN_FIELD_OF_VIEW)) {
 
         monsterName(buf2, thrower, true);
         itemName(theItem, buf3, false, true, NULL);
@@ -5888,15 +5884,15 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
     }
 
     for (i=0; i<numCells && i < maxDistance; i++) {
-        x = listOfCoordinates[i][0];
-        y = listOfCoordinates[i][1];
+        x = listOfCoordinates[i].x;
+        y = listOfCoordinates[i].y;
 
         if (pmap[x][y].flags & (HAS_MONSTER | HAS_PLAYER)) {
             monst = monsterAtLoc(x, y);
             if (!(monst->bookkeepingFlags & MB_SUBMERGED)) {
 //          if (projectileReflects(thrower, monst) && i < DCOLS*2) {
 //              if (projectileReflects(thrower, monst)) { // if it scores another reflection roll, reflect at caster
-//                  numCells = reflectBolt(originLoc[0], originLoc[1], listOfCoordinates, i, true);
+//                  numCells = reflectBolt(originLoc[0], originLoc.y, listOfCoordinates, i, true);
 //              } else {
 //                  numCells = reflectBolt(-1, -1, listOfCoordinates, i, false); // otherwise reflect randomly
 //              }
@@ -5935,8 +5931,8 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
             } else {
                 i--;
                 if (i >= 0) {
-                    x = listOfCoordinates[i][0];
-                    y = listOfCoordinates[i][1];
+                    x = listOfCoordinates[i].x;
+                    y = listOfCoordinates[i].y;
                 } else { // it was aimed point-blank into an obstruction
                     x = thrower->loc.x;
                     y = thrower->loc.y;
@@ -5964,7 +5960,7 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
             refreshDungeonCell(x, y);
         }
 
-        if (x == targetLoc[0] && y == targetLoc[1]) { // reached its target
+        if (x == targetLoc.x && y == targetLoc.y) { // reached its target
             break;
         }
     }
@@ -6034,7 +6030,7 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
             // hallucination is the only malevolent potion that splashes harmlessly when thrown
             if (theItem->kind == POTION_HALLUCINATION) {
                 if (theItem->flags & ITEM_MAGIC_DETECTED
-                    || (BROGUE_VERSION_ATLEAST(1,10,2) && magicPolarityRevealedItemKindCount(theItem->category, 1) == NUMBER_GOOD_POTION_KINDS)) {
+                    || (magicPolarityRevealedItemKindCount(theItem->category, 1) == NUMBER_GOOD_POTION_KINDS)) {
                     autoIdentify(theItem);
                 }
             }
@@ -6065,7 +6061,7 @@ void throwCommand(item *theItem, boolean autoThrow) {
     item *thrownItem;
     char buf[COLS], theName[COLS];
     unsigned char command[10];
-    short maxDistance, zapTarget[2], quantity;
+    short maxDistance, quantity;
 
     command[0] = THROW_KEY;
 
@@ -6136,10 +6132,10 @@ void throwCommand(item *theItem, boolean autoThrow) {
             break;
     }
 
+    pos zapTarget;
     if (autoThrow && creatureIsTargetable(rogue.lastTarget)) {
-        zapTarget[0] = rogue.lastTarget->loc.x;
-        zapTarget[1] = rogue.lastTarget->loc.y;
-    } else if (!chooseTarget(zapTarget, maxDistance, true, autoTarget, false, &boltCatalog[BOLT_NONE], &red)) {
+        zapTarget = rogue.lastTarget->loc;
+    } else if (!chooseTarget(&zapTarget, maxDistance, true, autoTarget, false, &boltCatalog[BOLT_NONE], &red)) {
         // player doesn't choose a target? return
         return;
     }
@@ -6149,7 +6145,7 @@ void throwCommand(item *theItem, boolean autoThrow) {
     }
     command[2] = '\0';
     recordKeystrokeSequence(command);
-    recordMouseClick(mapToWindowX(zapTarget[0]), mapToWindowY(zapTarget[1]), true, false);
+    recordMouseClick(mapToWindowX(zapTarget.x), mapToWindowY(zapTarget.y), true, false);
 
     confirmMessages();
 
@@ -6265,8 +6261,7 @@ void swapLastEquipment() {
 // If the blink trajectory lands in lava based on the player's knowledge, abort.
 // If the blink trajectory might land in lava based on the player's knowledge,
 // prompt for confirmation.
-boolean playerCancelsBlinking(const short originLoc[2], const short targetLoc[2], const short maxDistance) {
-    short coordinates[DCOLS][2], impactLoc[2];
+boolean playerCancelsBlinking(const pos originLoc, const pos targetLoc, const short maxDistance) {
     short numCells, i, x, y;
     boolean certainDeath = false;
     boolean possibleDeath = false;
@@ -6281,10 +6276,11 @@ boolean playerCancelsBlinking(const short originLoc[2], const short targetLoc[2]
         return false;
     }
 
-    getImpactLoc(impactLoc, originLoc, targetLoc, maxDistance > 0 ? maxDistance : DCOLS, true, &boltCatalog[BOLT_BLINKING]);
-    getLocationFlags(impactLoc[0], impactLoc[1], &tFlags, &tmFlags, NULL, true);
+    pos impactLoc;
+    getImpactLoc(&impactLoc, originLoc, targetLoc, maxDistance > 0 ? maxDistance : DCOLS, true, &boltCatalog[BOLT_BLINKING]);
+    getLocationFlags(impactLoc.x, impactLoc.y, &tFlags, &tmFlags, NULL, true);
     if (maxDistance > 0) {
-        if ((pmap[impactLoc[0]][impactLoc[1]].flags & DISCOVERED)
+        if ((pmap[impactLoc.x][impactLoc.y].flags & DISCOVERED)
             && (tFlags & T_LAVA_INSTA_DEATH)
             && !(tFlags & (T_ENTANGLES | T_AUTO_DESCENT))
             && !(tmFlags & TM_EXTINGUISHES_FIRE)) {
@@ -6293,10 +6289,11 @@ boolean playerCancelsBlinking(const short originLoc[2], const short targetLoc[2]
         }
     } else {
         certainDeath = true;
+        pos coordinates[DCOLS];
         numCells = getLineCoordinates(coordinates, originLoc, targetLoc, &boltCatalog[BOLT_BLINKING]);
         for (i = 0; i < numCells; i++) {
-            x = coordinates[i][0];
-            y = coordinates[i][1];
+            x = coordinates[i].x;
+            y = coordinates[i].y;
             if (pmap[x][y].flags & DISCOVERED) {
                 getLocationFlags(x, y, &tFlags, NULL, NULL, true);
                 if ((tFlags & T_LAVA_INSTA_DEATH)
@@ -6309,9 +6306,7 @@ boolean playerCancelsBlinking(const short originLoc[2], const short targetLoc[2]
                     certainDeath = false;
                 }
             }
-            if (x == impactLoc[0]
-                && y == impactLoc[1]) {
-
+            if (x == impactLoc.x && y == impactLoc.y) {
                 break;
             }
         }
@@ -6330,7 +6325,7 @@ boolean playerCancelsBlinking(const short originLoc[2], const short targetLoc[2]
 boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
     char buf[COLS], buf2[COLS];
     unsigned char command[10];
-    short zapTarget[2], originLoc[2], maxDistance, c;
+    short maxDistance, c;
     boolean autoTarget, targetAllies, autoID, boltKnown, confirmedTarget;
     bolt theBolt;
     color trajectoryHiliteColor;
@@ -6386,9 +6381,9 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
         trajectoryHiliteColor = *theBolt.backColor;
     }
 
-    originLoc[0] = player.loc.x;
-    originLoc[1] = player.loc.y;
-    confirmedTarget = chooseTarget(zapTarget, maxDistance, false, autoTarget,
+    pos originLoc = player.loc;
+    pos zapTarget;
+    confirmedTarget = chooseTarget(&zapTarget, maxDistance, false, autoTarget,
         targetAllies, (boltKnown ? &theBolt : &boltCatalog[BOLT_NONE]), &trajectoryHiliteColor);
     if (confirmedTarget
         && boltKnown
@@ -6402,7 +6397,7 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
         command[c] = '\0';
         if (!(*commandsRecorded)) {
             recordKeystrokeSequence(command);
-            recordMouseClick(mapToWindowX(zapTarget[0]), mapToWindowY(zapTarget[1]), true, false);
+            recordMouseClick(mapToWindowX(zapTarget.x), mapToWindowY(zapTarget.y), true, false);
             *commandsRecorded = true;
         }
         confirmMessages();
@@ -7193,9 +7188,7 @@ void drinkPotion(item *theItem) {
                 }
             }
             if (hadEffect || hadEffect2) {
-                if (BROGUE_VERSION_ATLEAST(1,10,2)) {
-                    tryIdentifyLastItemKinds(HAS_INTRINSIC_POLARITY);
-                }
+                tryIdentifyLastItemKinds(HAS_INTRINSIC_POLARITY);
                 if (hadEffect && hadEffect2) {
                     message("you can somehow feel the presence of magic on the level and in your pack.", 0);
                 } else if (hadEffect) {

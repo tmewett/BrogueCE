@@ -59,19 +59,25 @@ place on your desktop or applications folder.
 
 ### More information
 
-If you're running the graphical version (default), the game window can be
-resized using the PageDown/PageUp or -/+ keys. Graphical tiles are included;
-press 'G' to toggle them.
+Graphical tiles are included; press 'G' to toggle them.
 
 For some tips on playing the game, see the original website, linked above. Also
-check out the wiki -- although this version contains some modifications from
-what the wiki reports!
+check out the wiki -- although keep in mind CE may differ from it.
 
 If you downloaded the source code, you will need to build the game first. For
 instructions, see `BUILD.md`.
 
 On Windows, if you want to run from the command prompt, use `brogue-cmd.bat`
 instead of `brogue.exe`.
+
+
+Contributing
+------------
+
+Please see our [contribution guide][contrib] for all the ways you can help make
+Brogue better!
+
+[contrib]: https://github.com/tmewett/BrogueCE/wiki/Contribution-guide
 
 
 About
