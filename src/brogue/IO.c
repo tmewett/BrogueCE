@@ -2659,7 +2659,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             }
             break;
         case QUIT_KEY:
-            if (confirm("Quit and abandon this game? This cannot be undone; the savefile will be deleted.", false)) {
+            if (confirm("Quit and abandon this game? (The save will be deleted.)", false)) {
                 recordKeystroke(QUIT_KEY, false, false);
                 rogue.quit = true;
                 gameOver("Quit", true);
