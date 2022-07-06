@@ -300,34 +300,6 @@ short actionMenu(short x, boolean playingBack) {
             sprintf(buttons[buttonCount].text, "    %s---", darkGrayColorEscape);
             buttons[buttonCount].flags &= ~B_ENABLED;
             buttonCount++;
-
-            if(!serverMode) {
-                if (KEYBOARD_LABELS) {
-                    sprintf(buttons[buttonCount].text, "  %sS: %sSuspend game and quit  ",  yellowColorEscape, whiteColorEscape);
-                } else {
-                    strcpy(buttons[buttonCount].text, "  Suspend game and quit  ");
-                }
-                buttons[buttonCount].hotkey[0] = SAVE_GAME_KEY;
-                buttonCount++;
-                if (KEYBOARD_LABELS) {
-                    sprintf(buttons[buttonCount].text, "  %sO: %sOpen suspended game  ",        yellowColorEscape, whiteColorEscape);
-                } else {
-                    strcpy(buttons[buttonCount].text, "  Open suspended game  ");
-                }
-                buttons[buttonCount].hotkey[0] = LOAD_SAVED_GAME_KEY;
-                buttonCount++;
-                if (KEYBOARD_LABELS) {
-                    sprintf(buttons[buttonCount].text, "  %sV: %sView saved recording  ",       yellowColorEscape, whiteColorEscape);
-                } else {
-                    strcpy(buttons[buttonCount].text, "  View saved recording  ");
-                }
-                buttons[buttonCount].hotkey[0] = VIEW_RECORDING_KEY;
-                buttonCount++;
-
-                sprintf(buttons[buttonCount].text, "    %s---", darkGrayColorEscape);
-                buttons[buttonCount].flags &= ~B_ENABLED;
-                buttonCount++;
-            }
         }
 
         if (KEYBOARD_LABELS) {
@@ -385,10 +357,36 @@ short actionMenu(short x, boolean playingBack) {
         buttons[buttonCount].flags &= ~B_ENABLED;
         buttonCount++;
 
+        if (!serverMode) {
+            if (playingBack) {
+                 if (KEYBOARD_LABELS) {
+                    sprintf(buttons[buttonCount].text, "  %sO: %sOpen saved game  ",        yellowColorEscape, whiteColorEscape);
+                } else {
+                    strcpy(buttons[buttonCount].text, "  Open saved game  ");
+                }
+                buttons[buttonCount].hotkey[0] = LOAD_SAVED_GAME_KEY;
+                buttonCount++;
+                if (KEYBOARD_LABELS) {
+                    sprintf(buttons[buttonCount].text, "  %sV: %sView saved recording  ",       yellowColorEscape, whiteColorEscape);
+                } else {
+                    strcpy(buttons[buttonCount].text, "  View saved recording  ");
+                }
+                buttons[buttonCount].hotkey[0] = VIEW_RECORDING_KEY;
+                buttonCount++;
+            } else {
+                if (KEYBOARD_LABELS) {
+                    sprintf(buttons[buttonCount].text, "  %sS: %sSave and exit  ",  yellowColorEscape, whiteColorEscape);
+                } else {
+                    strcpy(buttons[buttonCount].text, "  Save and exit  ");
+                }
+                buttons[buttonCount].hotkey[0] = SAVE_GAME_KEY;
+                buttonCount++;
+            }
+        }
         if (KEYBOARD_LABELS) {
-            sprintf(buttons[buttonCount].text, "  %sQ: %sQuit %s  ",    yellowColorEscape, whiteColorEscape, (playingBack ? "to title screen" : "without saving"));
+            sprintf(buttons[buttonCount].text, "  %sQ: %sQuit %s  ",    yellowColorEscape, whiteColorEscape, (playingBack ? "to title screen" : "and abandon game"));
         } else {
-            sprintf(buttons[buttonCount].text, "  Quit %s  ",   (playingBack ? "to title screen" : "without saving"));
+            sprintf(buttons[buttonCount].text, "  Quit %s  ",   (playingBack ? "to title screen" : "and abandon game"));
         }
         buttons[buttonCount].hotkey[0] = QUIT_KEY;
         buttonCount++;
@@ -2482,7 +2480,6 @@ void executeMouseClick(rogueEvent *theEvent) {
 }
 
 void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKey) {
-    char path[BROGUE_FILENAME_MAX];
     short direction = -1;
 
     confirmMessages();
@@ -2647,43 +2644,11 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
         case DISCOVERIES_KEY:
             printDiscoveriesScreen();
             break;
-        case VIEW_RECORDING_KEY:
-            if (rogue.playbackMode || serverMode) {
-                return;
-            }
-            confirmMessages();
-            if ((rogue.playerTurnNumber < 50 || confirm("End this game and view a recording?", false))
-                && dialogChooseFile(path, RECORDING_SUFFIX, "View recording: ")) {
-                if (fileExists(path)) {
-                    strcpy(rogue.nextGamePath, path);
-                    rogue.nextGame = NG_VIEW_RECORDING;
-                    rogue.gameHasEnded = true;
-                } else {
-                    message("File not found.", 0);
-                }
-            }
-            break;
-        case LOAD_SAVED_GAME_KEY:
-            if (rogue.playbackMode || serverMode) {
-                return;
-            }
-            confirmMessages();
-            if ((rogue.playerTurnNumber < 50 || confirm("End this game and load a saved game?", false))
-                && dialogChooseFile(path, GAME_SUFFIX, "Open saved game: ")) {
-                if (fileExists(path)) {
-                    strcpy(rogue.nextGamePath, path);
-                    rogue.nextGame = NG_OPEN_GAME;
-                    rogue.gameHasEnded = true;
-                } else {
-                    message("File not found.", 0);
-                }
-            }
-            break;
         case SAVE_GAME_KEY:
             if (rogue.playbackMode || serverMode) {
                 return;
             }
-            if (confirm("Suspend this game?", false)) {
+            if (confirm("Save this game and exit?", false)) {
                 saveGame();
             }
             break;
@@ -2694,7 +2659,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             }
             break;
         case QUIT_KEY:
-            if (confirm("Quit this game without saving?", false)) {
+            if (confirm("Quit and abandon this game? (The save will be deleted.)", false)) {
                 recordKeystroke(QUIT_KEY, false, false);
                 rogue.quit = true;
                 gameOver("Quit", true);
@@ -4144,8 +4109,8 @@ void printHelpScreen() {
         "              M  ****display old messages",
         "              G  ****toggle graphical tiles (when available)",
         "",
-        "              S  ****suspend game and quit",
-        "              Q  ****quit to title screen",
+        "              S  ****save and exit",
+        "              Q  ****quit and abandon game",
         "",
         "              \\  ****disable/enable color effects",
         "              ]  ****display/hide stealth range",
