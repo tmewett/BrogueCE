@@ -4550,6 +4550,8 @@ void highlightScreenCell(short x, short y, color *highlightColor, short strength
     storeColorComponents(displayBuffer[x][y].backColorComponents, &tempColor);
 }
 
+// Like `armorValueIfUnenchanted` for the currently-equipped armor, but takes the penalty from
+// donning into account.
 static short estimatedArmorValue() {
     short retVal = armorValueIfUnenchanted(rogue.armor) - player.status[STATUS_DONNING];
     return max(0, retVal);
