@@ -4597,6 +4597,8 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
     };
     const char statusStrings[NUMBER_OF_STATUS_EFFECTS][COLS] = {
         "Searching",
+        // Brogue+
+        "Petrifying",
         "Donning Armor",
         "Weakened: -",
         "Telepathic",
