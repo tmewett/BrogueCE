@@ -38,7 +38,7 @@
 // Brogue version number
 #define BROGUE_MAJOR 1
 #define BROGUE_MINOR 11
-#define BROGUE_PATCH 0
+#define BROGUE_PATCH 1
 
 // Expanding a macro as a string constant requires two levels of macros
 #define _str(x) #x
@@ -108,6 +108,9 @@ strings, but they are equal (rogue.patchLevel is set to 0).
 
 #define false                   0
 #define true                    1
+
+//Math for Brogue+ idk
+#define FLOAT_FUDGE             0.00001
 
 #define Fl(N)                   ((unsigned long) 1 << (N))
 
@@ -645,6 +648,11 @@ enum tileType {
     MUD_WALL,
     MUD_DOORWAY,
 
+    //Brogue+
+    //unfortunate creatures turned to stone
+    MEDUSA_STATUE,
+    MEDUSA_STATUE_CRACKING,
+
     NUMBER_TILETYPES,
 };
 
@@ -908,6 +916,7 @@ enum boltType {
     BOLT_POISON_DART,
     BOLT_ANCIENT_SPIRIT_VINES,
     BOLT_WHIP,
+    BOLT_THROWN_SPEAR,
     NUMBER_BOLT_KINDS
 };
 
@@ -1033,6 +1042,12 @@ enum monsterTypes {
     MK_PHOENIX_EGG,
     MK_ANCIENT_SPIRIT,
 
+    // -> Brogue+
+    MK_VALKYRIE,
+    MK_DAR_ASSASSIN,
+    MK_MEDUSA,
+    MK_GOBLIN_SKIRMISHER,
+
     NUMBER_MONSTER_KINDS
 };
 
@@ -1098,6 +1113,8 @@ enum tileFlags {
 #define TURNS_FOR_FULL_REGEN                300
 #define STOMACH_SIZE                        2150
 #define HUNGER_THRESHOLD                    (STOMACH_SIZE - 1800)
+//Brogue+
+#define TURNS_TO_PETRIFY                    8
 #define WEAK_THRESHOLD                      150
 #define FAINT_THRESHOLD                     50
 #define MAX_EXP_LEVEL                       20
@@ -1710,6 +1727,11 @@ enum dungeonFeatureTypes {
     DF_STENCH_BURN,
     DF_STENCH_SMOLDER,
 
+    //Brogue+
+    // unfortunate creatures turned to stone
+    DF_MEDUSA_STATUE,
+    DF_MEDUSA_STATUE_CRACKING,
+
     NUMBER_DUNGEON_FEATURES,
 };
 
@@ -1719,6 +1741,8 @@ enum dungeonProfileTypes {
 
     DP_GOBLIN_WARREN,
     DP_SENTINEL_SANCTUARY,
+    // -> Brogue+
+    DP_MEDUSA_LAIR,
 
     NUMBER_DUNGEON_PROFILES,
 };
@@ -1920,6 +1944,8 @@ enum terrainMechanicalFlagCatalog {
 
 enum statusEffects {
     STATUS_SEARCHING = 0,
+    //Brogue+
+    STATUS_PETRIFYING,
     STATUS_DONNING,
     STATUS_WEAKENED,
     STATUS_TELEPATHIC,
@@ -2012,6 +2038,8 @@ enum monsterBehaviorFlags {
     MONST_GETS_TURN_ON_ACTIVATION   = Fl(28),   // monster never gets a turn, except when its machine is activated
     MONST_ALWAYS_USE_ABILITY        = Fl(29),   // monster will never fail to use special ability if eligible (no random factor)
     MONST_NO_POLYMORPH              = Fl(30),   // monster cannot result from a polymorph spell (liches, phoenixes and Warden of Yendor)
+    //Valkyrie Stuff -> Brogue+
+    MONST_NEVER_FLEES               = Fl(31),   // monster never flees, even when allied
 
     NEGATABLE_TRAITS                = (MONST_INVISIBLE | MONST_DEFEND_DEGRADE_WEAPON | MONST_IMMUNE_TO_WEAPONS | MONST_FLIES
                                        | MONST_FLITS | MONST_IMMUNE_TO_FIRE | MONST_REFLECT_4 | MONST_FIERY | MONST_MAINTAINS_DISTANCE),
@@ -2041,9 +2069,14 @@ enum monsterAbilityFlags {
     MA_ATTACKS_EXTEND               = Fl(15),   // monster attacks from a distance in a cardinal direction, like a whip
     MA_ATTACKS_STAGGER              = Fl(16),   // monster attacks will push the player backward by one space if there is room
     MA_AVOID_CORRIDORS              = Fl(17),   // monster will avoid corridors when hunting
+    //Brogue+
+    MA_HIT_DISCORD                  = Fl(18),   // monster can hit to cause discord
+    MA_DEFEND_INVISIBLE             = Fl(19),   // monster hit turns temporarily invisible and moves to a nearby space
+    MA_STONE_GAZE                   = Fl(20),   // monster will turn others to stone if within view for 8 consecutive turns
+    MA_LIMITED_AMMO                 = Fl(21),   // monster has a chance to run out of ammunition
 
     SPECIAL_HIT                     = (MA_HIT_HALLUCINATE | MA_HIT_STEAL_FLEE | MA_HIT_DEGRADE_ARMOR | MA_POISONS
-                                       | MA_TRANSFERENCE | MA_CAUSES_WEAKNESS | MA_HIT_BURN | MA_ATTACKS_STAGGER),
+                                       | MA_TRANSFERENCE | MA_CAUSES_WEAKNESS | MA_HIT_BURN | MA_ATTACKS_STAGGER | MA_HIT_DISCORD),
     LEARNABLE_ABILITIES             = (MA_TRANSFERENCE | MA_CAUSES_WEAKNESS),
 
     MA_NON_NEGATABLE_ABILITIES      = (MA_ATTACKS_PENETRATE | MA_ATTACKS_ALL_ADJACENT | MA_ATTACKS_EXTEND | MA_ATTACKS_STAGGER),
@@ -2077,7 +2110,8 @@ enum monsterBookkeepingFlags {
     MB_HAS_SOUL                 = Fl(22),   // slaying the monster will count toward weapon auto-ID
     MB_ALREADY_SEEN             = Fl(23),   // seeing this monster won't interrupt exploration
     MB_ADMINISTRATIVE_DEATH     = Fl(24),   // like the `administrativeDeath` parameter to `killCreature`
-    MB_HAS_DIED                 = Fl(25)    // monster has already been killed but not yet removed from `monsters`
+    MB_HAS_DIED                 = Fl(25),   // monster has already been killed but not yet removed from `monsters`
+    MB_GAZED_THIS_TURN          = Fl(26)    // monster has been looked at by medusa this turn
 };
 
 // Defines all creatures, which include monsters and the player:
@@ -2510,6 +2544,8 @@ enum machineTypes {
     MT_REWARD_ASTRAL_PORTAL,
     MT_REWARD_GOBLIN_WARREN,
     MT_REWARD_SENTINEL_SANCTUARY,
+    //Brogue+
+    MT_REWARD_MEDUSA_LAIR,
 
     // Amulet holder:
     MT_AMULET_AREA,
@@ -3313,6 +3349,7 @@ extern "C" {
                           rogueEvent *returnEvent);
 
     void dijkstraScan(short **distanceMap, short **costMap, boolean useDiagonals);
+    void updateThrownSpears(creature* monst, boolean reload);
 
 #if defined __cplusplus
 }
