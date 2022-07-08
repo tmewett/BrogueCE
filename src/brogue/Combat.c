@@ -301,6 +301,69 @@ short alliedCloneCount(creature *monst) {
     return count;
 }
 
+//used to disappear when hit -> Brogue+
+void ninjaVanish(creature* attacker, creature* defender, short duration) {
+    short i, x, y, xLocus, yLocus, dirs[8];
+    enum directions dir;
+    char buf[COLS], monstName[DCOLS];
+
+    if (defender != &player) {
+        monsterName(monstName, defender, true);
+        sprintf(buf, "%s vanishes!", monstName);
+        buf[DCOLS] = '\0';
+        message(buf, false);
+    }
+
+    defender->status[STATUS_INVISIBLE] = defender->maxStatus[STATUS_INVISIBLE] = duration;
+    createFlare(defender->loc.x, defender->loc.y, POTION_STRENGTH_LIGHT);
+
+    if (distanceBetween(attacker->loc.x, attacker->loc.y, defender->loc.x, defender->loc.y) == 1) {
+        xLocus = attacker->loc.x;
+        yLocus = attacker->loc.y;
+    }
+    else {
+        xLocus = defender->loc.x;
+        yLocus = defender->loc.y;
+    }
+
+    fillSequentialList(dirs, 8);
+    shuffleList(dirs, 8);
+
+    for (i = 0; i < 8; i++) {
+        dir = dirs[i];
+        x = xLocus + nbDirs[dir][0];
+        y = yLocus + nbDirs[dir][1];
+        if (!cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY) &&
+            (!cellHasTerrainFlag(x, y, T_AUTO_DESCENT) || defender->status[STATUS_LEVITATING]) &&
+            (!cellHasTerrainFlag(x, y, T_LAVA_INSTA_DEATH) || defender->status[STATUS_LEVITATING] || defender->status[STATUS_IMMUNE_TO_FIRE]) &&
+            !(pmap[x][y].flags & HAS_MONSTER)) {
+            pmap[defender->loc.x][defender->loc.y].flags &= ~HAS_MONSTER;
+            refreshDungeonCell(defender->loc.x, defender->loc.y);
+            if (defender == &player) {
+                pmap[player.loc.x][player.loc.y].flags &= ~HAS_PLAYER;
+                refreshDungeonCell(player.loc.x, player.loc.y);
+                defender->loc.x = x;
+                defender->loc.y = y;
+                pmap[player.loc.x][player.loc.y].flags |= HAS_PLAYER;
+                updateVision(true);
+                // get any items at the destination location
+                if (pmap[player.loc.x][player.loc.y].flags & HAS_ITEM) {
+                    pickUpItemAt(player.loc.x, player.loc.y);
+                }
+                attacker->creatureState = MONSTER_WANDERING;
+            }
+            else {
+                pmap[defender->loc.x][defender->loc.y].flags &= ~HAS_MONSTER;
+                refreshDungeonCell(defender->loc.x, defender->loc.y);
+                defender->loc.x = x;
+                defender->loc.y = y;
+                pmap[defender->loc.x][defender->loc.y].flags |= HAS_MONSTER;
+                refreshDungeonCell(defender->loc.x, defender->loc.y);
+            }
+        }
+    }
+}
+
 // This function is called whenever one creature acts aggressively against another in a way that directly causes damage.
 // This can be things like melee attacks, fire/lightning attacks or throwing a weapon.
 void moralAttack(creature *attacker, creature *defender) {
@@ -343,6 +406,10 @@ void moralAttack(creature *attacker, creature *defender) {
             && defender->creatureState != MONSTER_ALLY) {
 
             alertMonster(defender); // this alerts the monster that you're nearby
+        }
+
+        if (!(defender->status[STATUS_INVISIBLE]) && (defender->info.abilityFlags & MA_DEFEND_INVISIBLE)) {
+                ninjaVanish(attacker, defender, 10);
         }
 
         if ((defender->info.abilityFlags & MA_CLONE_SELF_ON_DEFEND) && alliedCloneCount(defender) < 100) {
@@ -481,6 +548,16 @@ void specialHit(creature *attacker, creature *defender, short damage) {
     }
     if (attacker->info.abilityFlags & MA_ATTACKS_STAGGER) {
         processStaggerHit(attacker, defender);
+    }
+    if ((attacker->info.abilityFlags & MA_HIT_DISCORD)
+        && defender != &player
+        && damage > 0
+        && !(defender->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
+
+        if (canSeeMonster(defender)) {
+            flashMonster(defender, &discordColor, 100);
+        }
+        defender->status[STATUS_DISCORDANT] = defender->maxStatus[STATUS_DISCORDANT] = 30;
     }
 }
 
