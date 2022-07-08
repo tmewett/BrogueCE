@@ -505,6 +505,10 @@ short pickHordeType(short depth, enum monsterTypes summonerType, unsigned long f
 
 void empowerMonster(creature *monst) {
     char theMonsterName[100], buf[200];
+    //Brogue+
+    if (monst->info.abilityFlags & MA_LIMITED_AMMO) {
+        updateThrownSpears(monst, true);
+    }
     monst->info.maxHP += 12;
     monst->info.defense += 10;
     monst->info.accuracy += 10;
@@ -518,6 +522,68 @@ void empowerMonster(creature *monst) {
         monsterName(theMonsterName, monst, true);
         sprintf(buf, "%s looks stronger", theMonsterName);
         combatMessage(buf, &advancementMessageColor);
+    }
+}
+
+//Brogue+
+void updateThrownSpears(creature* monst, boolean reload) {
+    short i, j;
+    char theMonsterName[100], buf[200];
+    monsterName(theMonsterName, monst, true);
+    if (!reload) {
+        short chanceToRunOut = clamp((short)(100 / (3 + 3 * (monst->totalPowerCount)) + FLOAT_FUDGE), 1, 100);
+        enum boltType backupBolts[20];
+
+        //sprintf(buf, "%i%% chance to run out of ammo", chanceToRunOut);
+        //message(buf, false);
+
+        if (rand_percent(chanceToRunOut)) {
+            sprintf(buf, "%s is out of spears.", theMonsterName);
+            message(buf, false);
+            //monster doesn't have a spear anymore
+            monst->info.abilityFlags &= ~MA_ATTACKS_PENETRATE;
+            monst->info.damage.lowerBound -= 2;
+            monst->info.damage.upperBound -= 3;
+            //monster doesn't have a throwing attack anymore
+            for (i = 0; i < 20; i++) {
+                backupBolts[i] = monst->info.bolts[i];
+                monst->info.bolts[i] = BOLT_NONE;
+            }
+            for (i = 0, j = 0; i < 20 && backupBolts[i]; i++) {
+                if (backupBolts[i] != BOLT_THROWN_SPEAR) {
+                    monst->info.bolts[j] = backupBolts[i];
+                    j++;
+                }
+            }
+        }
+    }
+    else {
+        //gets his spear back
+        monst->info.abilityFlags |= MA_ATTACKS_PENETRATE;
+        monst->info.damage.lowerBound += 2;
+        monst->info.damage.upperBound += 3;
+        //but he's more aggressive than before
+        //monst->info.flags |= MONST_MAINTAINS_DISTANCE;
+        for (i = 0; i < 20; i++) {
+            if (monst->info.bolts[i] == BOLT_NONE) {
+                monst->info.bolts[i] = BOLT_THROWN_SPEAR;
+                break;
+            }
+        }
+        sprintf(buf, "%s finds a few more spears.", theMonsterName);
+        message(buf, false);
+    }
+
+    boolean noBolts = true;
+    for (i = 0; i < 20; i++) {
+        if (monst->info.bolts[i] != BOLT_NONE) {
+            noBolts = false;
+            break;
+        }
+    }
+    //so he should close to attack, unless he can summon allies
+    if (noBolts && !(monst->info.abilityFlags & MA_CAST_SUMMON)) {
+        monst->info.flags &= ~MONST_MAINTAINS_DISTANCE;
     }
 }
 
@@ -1937,6 +2003,8 @@ void decrementMonsterStatus(creature *monst) {
                     refreshDungeonCell(monst->loc.x, monst->loc.y);
                 }
                 break;
+            case STATUS_PETRIFYING:
+                break;
             default:
                 if (monst->status[i]) {
                     monst->status[i]--;
@@ -2903,6 +2971,11 @@ boolean allyFlees(creature *ally, creature *closestEnemy) {
     }
 
     if (ally->info.maxHP <= 1 || (ally->status[STATUS_LIFESPAN_REMAINING]) > 0) { // Spectral blades and timed allies should never flee.
+        return false;
+    }
+
+    //Valkyrie Stuff -> Brogue+
+    if (ally->info.flags & MONST_NEVER_FLEES) {
         return false;
     }
 
