@@ -3850,6 +3850,13 @@ void heal(creature *monst, short percent, boolean panacea) {
     char buf[COLS], monstName[COLS];
     monst->currentHP = min(monst->info.maxHP, monst->currentHP + percent * monst->info.maxHP / 100);
     if (panacea) {
+        //Brogue+
+        if (monst->status[STATUS_PETRIFYING] > 1) {
+            monst->status[STATUS_PETRIFYING] = 0;
+        }
+        if (monst->status[STATUS_DISCORDANT] > 1) {
+            monst->status[STATUS_DISCORDANT] = 1;
+        }
         if (monst->status[STATUS_HALLUCINATING] > 1) {
             monst->status[STATUS_HALLUCINATING] = 1;
         }
@@ -4744,6 +4751,10 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails) {
     numCells = getLineCoordinates(listOfCoordinates, originLoc, targetLoc, (hideDetails ? &boltCatalog[BOLT_NONE] : theBolt));
     shootingMonst = monsterAtLoc(originLoc.x, originLoc.y);
 
+    if ((theBolt->boltEffect == BE_ATTACK) && (shootingMonst->info.abilityFlags & MA_LIMITED_AMMO)) {
+        updateThrownSpears(shootingMonst, false);
+    }
+
     if (hideDetails) {
         boltColor = &gray;
     } else {
@@ -5390,7 +5401,7 @@ pos pullMouseClickDuringPlayback(void) {
     nextBrogueEvent(&theEvent, false, false, false);
     return (pos){
         .x = windowToMapX(theEvent.param1),
-        .y = windowToMapX(theEvent.param2)
+        .y = windowToMapY(theEvent.param2)
     };
 }
 
