@@ -45,7 +45,7 @@ on various playthroughs. More of the things I want to add you
 should not encounter on your first run (save one or two monsters).
 
 
-New Content *spoilers*
+New Content (*spoilers*)
 -----
 - Goblin Brawler
 - Dar Assassin
