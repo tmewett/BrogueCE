@@ -26,11 +26,13 @@ Brogue was created by Brian Walker. Brogue: Community Edition,
 is a continuation of its development lead by Temewett, which 
 kBrogue branches off from.
 
+
 Main Goals of kBrogue
 -----
 While the community edition focuses on fixing bugs/crashes,
 quality of life improvements, etc. My goal for kBrogue is 
 to add additional content and expiremental changes.
+
 This includes:
 - new monsters
 - more room/puzzle machines
@@ -39,10 +41,12 @@ This includes:
 - Quality of Life improvements that I personally enjoy that
      might not be the best option for the Community Edition
 
+
 Overall I still want to maintain the vanilla feel of Brogue
 while still being able to suprise the player with new content
 on various playthroughs. More of the things I want to add you
-should not encounter on your first run (save one or two monsters).
+should not encounter on your first run, rather have the player
+discover this content across multiple playthroughs.
 
 
 New Content (*spoilers*)
@@ -51,6 +55,7 @@ New Content (*spoilers*)
 - Dar Assassin
 - Valkyrie (legendary ally)
 - Medusa (boss with a custom room)
+
 
 Useful Sites/Links
 -------
