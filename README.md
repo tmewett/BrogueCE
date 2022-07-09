@@ -26,6 +26,8 @@ Brogue was created by Brian Walker. Brogue: Community Edition,
 is a continuation of its development lead by Temewett, which 
 kBrogue branches off from.
 
+Main Goals of kBrogue
+-----
 While the community edition focuses on fixing bugs/crashes,
 quality of life improvements, etc. My goal for kBrogue is 
 to add additional content and expiremental changes.
@@ -43,6 +45,12 @@ on various playthroughs. More of the things I want to add you
 should not encounter on your first run (save one or two monsters).
 
 
+New Content *spoilers*
+-----
+- Goblin Brawler
+- Dar Assassin
+- Valkyrie (legendary ally)
+- Medusa (boss with a custom room)
 
 Useful Sites/Links
 -------
