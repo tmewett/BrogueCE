@@ -1740,7 +1740,7 @@ creatureType monsterCatalog[NUMBER_MONSTER_KINDS] = {
         (MONST_CARRY_ITEM_25 | MONST_MALE | MONST_FEMALE), (MA_POISONS | MA_DEFEND_INVISIBLE) },
     {0, "medusa", G_ANCIENT_SPIRIT, &darPriestessColor, 40,	    60,		120,	{4, 12, 1},		20,	100,	100,	DF_RED_BLOOD,   0,        true,  0, 0,              {0},
         (MONST_MAINTAINS_DISTANCE | MONST_FEMALE | MONST_NEVER_SLEEPS), (MA_POISONS | MA_STONE_GAZE)},
-    { 0, "goblin skirmisher", G_GOBLIN,	&orange,	12,		10,		150,	{4, 7, 1},		20,	100,	100,	DF_RED_BLOOD,	0,      false,		0,		0,              {BOLT_THROWN_SPEAR},
+    { 0, "goblin brawler", G_GOBLIN,	&orange,	12,		10,		150,	{4, 7, 1},		20,	100,	100,	DF_RED_BLOOD,	0,      false,		0,		0,              {BOLT_THROWN_SPEAR},
         (MONST_MAINTAINS_DISTANCE),  (MA_AVOID_CORRIDORS | MA_ATTACKS_PENETRATE | MA_LIMITED_AMMO) },
 };
 
@@ -2020,16 +2020,16 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_EXPLOSIVE_BLOAT,0,      {0},                                    {{0}},                          10,     26,     10},
     {MK_GOBLIN,         0,      {0},                                    {{0}},                          3,      10,     100},
     {MK_GOBLIN_CONJURER,0,      {0},                                    {{0}},                          3,      10,     60},
-    {MK_GOBLIN_SKIRMISHER,0,	{0},					                {{0}},					    	5,		12,		40},
+    {MK_GOBLIN_BRAWLER, 0,	    {0},					                {{0}},					    	5,		12,		40},
     {MK_TOAD,           0,      {0},                                    {{0}},                          4,      11,     100},
     {MK_PINK_JELLY,     0,      {0},                                    {{0}},                          4,      13,     100},
-    {MK_GOBLIN_TOTEM,   2,      {MK_GOBLIN,MK_GOBLIN_SKIRMISHER},       {{2,4,1},{0,1,1}},              5,      13,     100,        0,              MT_CAMP_AREA,   HORDE_NO_PERIODIC_SPAWN},
+    {MK_GOBLIN_TOTEM,   2,      {MK_GOBLIN,MK_GOBLIN_BRAWLER},           {{2,4,1},{0,1,1}},              5,      13,     100,        0,              MT_CAMP_AREA,   HORDE_NO_PERIODIC_SPAWN},
     {MK_ARROW_TURRET,   0,      {0},                                    {{0}},                          5,      13,     100,        WALL,   0,                      HORDE_NO_PERIODIC_SPAWN},
     {MK_MONKEY,         1,      {MK_MONKEY},                            {{2,4,1}},                      5,      13,     20},
     {MK_VAMPIRE_BAT,    0,      {0},                                    {{0}},                          6,      13,     30},
     {MK_VAMPIRE_BAT,    1,      {MK_VAMPIRE_BAT},                       {{1,2,1}},                      6,      13,     70,      0,              0,              HORDE_NEVER_OOD},
     {MK_ACID_MOUND,     0,      {0},                                    {{0}},                          6,      13,     100},
-    {MK_GOBLIN,         4,      {MK_GOBLIN, MK_GOBLIN_MYSTIC, MK_JACKAL,MK_GOBLIN_SKIRMISHER},{{2, 3, 1}, {1,2,1}, {1,2,1},{1,1,1}}, 6,      12,     40},
+    {MK_GOBLIN,         4,      {MK_GOBLIN, MK_GOBLIN_MYSTIC, MK_JACKAL,MK_GOBLIN_BRAWLER},{{2, 3, 1}, {1,2,1}, {1,2,1},{1,1,1}}, 6,      12,     40},
     {MK_GOBLIN_CONJURER,2,      {MK_GOBLIN_CONJURER, MK_GOBLIN_MYSTIC}, {{0,1,1}, {1,1,1}},             7,      15,     40},
     {MK_CENTIPEDE,      0,      {0},                                    {{0}},                          7,      14,     100},
     {MK_BOG_MONSTER,    0,      {0},                                    {{0}},                          7,      14,     80,     MUD,            0,              HORDE_NEVER_OOD},
@@ -2040,7 +2040,7 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_DAR_BLADEMASTER,1,      {MK_DAR_BLADEMASTER},                   {{0, 1, 1}},                    10,     14,     100},
     {MK_WILL_O_THE_WISP,0,      {0},                                    {{0}},                          10,     17,     100},
     {MK_WRAITH,         0,      {0},                                    {{0}},                          10,     17,     100},
-    {MK_GOBLIN_TOTEM,   5,      {MK_GOBLIN_TOTEM, MK_GOBLIN_CONJURER, MK_GOBLIN_MYSTIC, MK_GOBLIN, MK_GOBLIN_SKIRMISHER}, {{1,2,1},{1,2,1},{1,2,1},{3,4,1},{0,1,1}},10,17,80,0,MT_CAMP_AREA,  HORDE_NO_PERIODIC_SPAWN},
+    {MK_GOBLIN_TOTEM,   5,      {MK_GOBLIN_TOTEM, MK_GOBLIN_CONJURER, MK_GOBLIN_MYSTIC, MK_GOBLIN, MK_GOBLIN_BRAWLER}, {{1,2,1},{1,2,1},{1,2,1},{3,4,1},{0,1,1}},10,17,80,0,MT_CAMP_AREA,  HORDE_NO_PERIODIC_SPAWN},
     {MK_SPARK_TURRET,   0,      {0},                                    {{0}},                          11,     18,     100,        WALL,   0,                      HORDE_NO_PERIODIC_SPAWN},
     {MK_ZOMBIE,         0,      {0},                                    {{0}},                          11,     18,     100},
     {MK_TROLL,          0,      {0},                                    {{0}},                          12,     19,     100},
@@ -2082,7 +2082,7 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_LICH,           1,      {MK_PHANTOM},                           {{2, 3, 1}},                    0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED},
     {MK_LICH,           1,      {MK_FURY},                              {{2, 3, 1}},                    0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED},
     {MK_PHYLACTERY,     1,      {MK_LICH},                              {{1,1,1}},                      0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED},
-    {MK_GOBLIN_CHIEFTAN,2,      {MK_GOBLIN_CONJURER, MK_GOBLIN,MK_GOBLIN_SKIRMISHER},        {{1,1,1}, {2,3,1},{1,1,1}},             0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED | HORDE_SUMMONED_AT_DISTANCE},
+    {MK_GOBLIN_CHIEFTAN,2,      {MK_GOBLIN_CONJURER, MK_GOBLIN,MK_GOBLIN_BRAWLER},        {{1,1,1}, {2,3,1},{1,1,1}},             0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED | HORDE_SUMMONED_AT_DISTANCE},
     {MK_PHOENIX_EGG,    1,      {MK_PHOENIX},                           {{1,1,1}},                      0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED},
     {MK_ELDRITCH_TOTEM, 1,      {MK_SPECTRAL_BLADE},                    {{4, 7, 1}},                    0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED | HORDE_DIES_ON_LEADER_DEATH},
     {MK_ELDRITCH_TOTEM, 1,      {MK_FURY},                              {{2, 3, 1}},                    0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED | HORDE_DIES_ON_LEADER_DEATH},
@@ -2090,8 +2090,8 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     // captives
     {MK_MONKEY,         1,      {MK_KOBOLD},                            {{1, 2, 1}},                    1,      5,      10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_GOBLIN,         1,      {MK_GOBLIN},                            {{1, 2, 1}},                    3,      7,      10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
-    {MK_GOBLIN_SKIRMISHER,1,	{MK_GOBLIN},							{{1, 2, 1}},					3,		7,		1,		0,			0,					HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
-    {MK_OGRE,           2,      {MK_GOBLIN,MK_GOBLIN_SKIRMISHER},       {{3, 4, 1},{0,2,1}},            4,      10,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
+    {MK_GOBLIN_BRAWLER, 1,	    {MK_GOBLIN},							{{1, 2, 1}},					3,		7,		1,		0,			0,					HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
+    {MK_OGRE,           2,      {MK_GOBLIN,MK_GOBLIN_BRAWLER},          {{3, 4, 1},{0,2,1}},            4,      10,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_GOBLIN_MYSTIC,  1,      {MK_KOBOLD},                            {{3, 7, 1}},                    5,      11,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_OGRE,           1,      {MK_OGRE},                              {{1, 2, 1}},                    8,      15,     20,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_TROLL,          1,      {MK_TROLL},                             {{1, 2, 1}},                    14,     19,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
@@ -2211,12 +2211,12 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     // goblin warren
     {MK_GOBLIN,         0,      {0},                                    {{0}},                          1,      10,     100,     0,              0,              HORDE_MACHINE_GOBLIN_WARREN},
     {MK_GOBLIN_CONJURER,0,      {0},                                    {{0}},                          1,      10,     50,      0,              0,              HORDE_MACHINE_GOBLIN_WARREN},
-    {MK_GOBLIN_TOTEM,   2,      {MK_GOBLIN,MK_GOBLIN_SKIRMISHER},       {{2,3,1},{0,1,1}},              5,      13,     100,     0,              MT_CAMP_AREA,   HORDE_MACHINE_GOBLIN_WARREN},
-    {MK_GOBLIN,         3,      {MK_GOBLIN, MK_GOBLIN_MYSTIC, MK_GOBLIN_SKIRMISHER},{{2, 4, 1}, {1,2,1}, {0,1,1}}, 6,      12,     40,      0,   0,              HORDE_MACHINE_GOBLIN_WARREN},
+    {MK_GOBLIN_TOTEM,   2,      {MK_GOBLIN,MK_GOBLIN_BRAWLER},          {{2,3,1},{0,1,1}},              5,      13,     100,     0,              MT_CAMP_AREA,   HORDE_MACHINE_GOBLIN_WARREN},
+    {MK_GOBLIN,         3,      {MK_GOBLIN, MK_GOBLIN_MYSTIC, MK_GOBLIN_BRAWLER},{{2, 4, 1}, {1,2,1}, {0,1,1}}, 6,      12,     40,      0,   0,              HORDE_MACHINE_GOBLIN_WARREN},
     {MK_GOBLIN_CONJURER,2,      {MK_GOBLIN_CONJURER, MK_GOBLIN_MYSTIC}, {{0,1,1}, {1,1,1}},             7,      15,     40,      0,              0,              HORDE_MACHINE_GOBLIN_WARREN},
     {MK_GOBLIN_TOTEM,   4,      {MK_GOBLIN_TOTEM, MK_GOBLIN_CONJURER, MK_GOBLIN_MYSTIC, MK_GOBLIN}, {{1,2,1},{1,2,1},{1,2,1},{3,5,1}},10,17,80,0,MT_CAMP_AREA,   HORDE_MACHINE_GOBLIN_WARREN},
     {MK_GOBLIN,         1,      {MK_GOBLIN},                            {{1, 2, 1}},                    3,      7,      10,      0,              0,              HORDE_MACHINE_GOBLIN_WARREN | HORDE_LEADER_CAPTIVE},
-    {MK_GOBLIN_SKIRMISHER,0,    {0},                                    {{0}},                          1,      10,     50,      0,              0,              HORDE_MACHINE_GOBLIN_WARREN },
+    {MK_GOBLIN_BRAWLER, 0,      {0},                                    {{0}},                          1,      10,     50,      0,              0,              HORDE_MACHINE_GOBLIN_WARREN },
 };
 
 const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT] = {
@@ -2224,7 +2224,7 @@ const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT] = {
     {"abomination",     10,         -1,         {MK_BOG_MONSTER, MK_UNDERWORM, MK_KRAKEN, MK_TENTACLE_HORROR}},
     {"dar",             10,         22,         {MK_DAR_BLADEMASTER, MK_DAR_PRIESTESS, MK_DAR_BATTLEMAGE, MK_DAR_ASSASSIN}},
     {"animal",          10,         10,         {MK_RAT, MK_MONKEY, MK_JACKAL, MK_EEL, MK_TOAD, MK_VAMPIRE_BAT, MK_CENTIPEDE, MK_SPIDER}},
-    {"goblin",          10,         10,         {MK_GOBLIN, MK_GOBLIN_CONJURER, MK_GOBLIN_MYSTIC, MK_GOBLIN_TOTEM, MK_GOBLIN_CHIEFTAN, MK_SPECTRAL_BLADE,MK_GOBLIN_SKIRMISHER}},
+    {"goblin",          10,         10,         {MK_GOBLIN, MK_GOBLIN_CONJURER, MK_GOBLIN_MYSTIC, MK_GOBLIN_TOTEM, MK_GOBLIN_CHIEFTAN, MK_SPECTRAL_BLADE,MK_GOBLIN_BRAWLER}},
     {"ogre",            10,         16,         {MK_OGRE, MK_OGRE_SHAMAN, MK_OGRE_TOTEM}},
     {"dragon",          10,         -1,         {MK_DRAGON}},
     {"undead",          10,         -1,         {MK_ZOMBIE, MK_WRAITH, MK_VAMPIRE, MK_PHANTOM, MK_LICH, MK_REVENANT}},
@@ -2582,7 +2582,7 @@ const bolt boltCatalog[NUMBER_BOLT_KINDS] = {
     {"poisoned dart",           "fires a dart",                 "fires strength-sapping darts",             G_WEAPON,&centipedeColor,NULL,              BE_ATTACK,      1,              0,          0,          0,                          (BF_TARGET_ENEMIES | BF_NEVER_REFLECTS | BF_NOT_LEARNABLE)},
     {"growing vines",           "releases carnivorous vines into the ground", "conjures carnivorous vines", G_GRASS,&tanColor,      NULL,               BE_NONE,        5,              DF_ANCIENT_SPIRIT_GRASS, DF_ANCIENT_SPIRIT_VINES, (MONST_INANIMATE | MONST_IMMUNE_TO_WEBS),   (BF_TARGET_ENEMIES | BF_NEVER_REFLECTS)},
     {"whip",                    "whips",                        "wields a whip",                            '*',    &tanColor,      NULL,               BE_ATTACK,      1,              0,          0,          MONST_IMMUNE_TO_WEAPONS,    (BF_TARGET_ENEMIES | BF_NEVER_REFLECTS | BF_NOT_LEARNABLE | BF_DISPLAY_CHAR_ALONG_LENGTH)},
-    {"spear",                   "throws a spear",               "can throw his weapon",                     G_WEAPON,&gray,         NULL,               BE_ATTACK,      1,              0,          0,          MONST_IMMUNE_TO_WEAPONS,    (BF_TARGET_ENEMIES | BF_NEVER_REFLECTS | BF_NOT_LEARNABLE)},
+    {"spear",                   "throws a spear",               "can throw $HISHER weapon",                 G_WEAPON,&gray,         NULL,               BE_ATTACK,      1,              0,          0,          MONST_IMMUNE_TO_WEAPONS,    (BF_TARGET_ENEMIES | BF_NEVER_REFLECTS | BF_NOT_LEARNABLE)},
 };
 
 const feat featTable[FEAT_COUNT] = {
