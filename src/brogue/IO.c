@@ -2722,6 +2722,16 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                 }
             }
             break;
+        case HEALTH_VALUE_KEY:
+            rogue.displayHealthValue = !rogue.displayHealthValue;
+            refreshSideBar(-1, -1, false);
+            if (rogue.displayHealthValue) {
+                messageWithColor(KEYBOARD_LABELS ? "Health values displayed. Press '%' again to hide." : "Health values displayed.",
+                                 &teal, 0);
+            } else {
+                messageWithColor(KEYBOARD_LABELS ? "Health values hidden. Press '%' again to display." : "Health values hidden.",
+                                 &teal, 0);
+            }
         case SEED_KEY:
             /*DEBUG {
                 cellDisplayBuffer dbuf[COLS][ROWS];
@@ -4149,6 +4159,7 @@ void printHelpScreen() {
         "",
         "              \\  ****disable/enable color effects",
         "              ]  ****display/hide stealth range",
+        "              %  ****display/hide health values",
         "    <space/esc>  ****clear message or cancel command",
         "",
         "        -- press space or click to continue --"
@@ -4573,7 +4584,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
     char buf[COLS * 2], buf2[COLS * 2], monstName[COLS], tempColorEscape[5], grayColorEscape[5];
     enum displayGlyph monstChar;
     color monstForeColor, monstBackColor, healthBarColor, tempColor;
-    short initialY, i, j, highlightStrength, displayedArmor, percent;
+    short initialY, i, j, highlightStrength, displayedArmor, percent, randomHallucinationHP;
     boolean inPath;
     short oldRNG;
 
@@ -4718,12 +4729,23 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
         percent = creatureHealthChangePercent(monst);
         if (monst->currentHP <= 0) {
             strcpy(buf, "Dead");
-        } else if (percent != 0) {
-            strcpy(buf, "       Health       ");
-            sprintf(buf2, "(%s%i%%)", percent > 0 ? "+" : "", percent);
-            strcpy(&(buf[20 - strlen(buf2)]), buf2);
-        } else {
-            strcpy(buf, "Health");
+        } else if (!rogue.displayHealthValue){
+                if (percent != 0) {
+                    strcpy(buf, "       Health       ");
+                    sprintf(buf2, "(%s%i%%)", percent > 0 ? "+" : "", percent);
+                    strcpy(&(buf[20 - strlen(buf2)]), buf2);
+                } else {
+                    strcpy(buf, "Health");
+                }
+        }
+        else {
+            if (player.status[STATUS_HALLUCINATING] && monst != &player)
+            {
+                randomHallucinationHP = rand_range(1, 99);
+                sprintf(buf, "Health %i/%i", rand_range(1, randomHallucinationHP), rand_range(1, 99));
+            }else {
+                sprintf(buf, "Health %i/%i", monst->currentHP, monst->info.maxHP);
+            }
         }
         printProgressBar(0, y++, buf, monst->currentHP, monst->info.maxHP, &healthBarColor, dim);
     }
