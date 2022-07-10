@@ -188,7 +188,7 @@ unsigned int glyphToUnicode(enum displayGlyph glyph) {
 /*
 Tells if a glyph represents part of the environment (true) or an item or creature (false).
 */
-boolean isEnvironmentGlyph(enum displayGlyph glyph) {
+boolean isHybridGlyph(enum displayGlyph glyph) {
     switch (glyph) {
         // items
         case G_AMULET: case G_ARMOR: case G_BEDROLL: case G_CHARM:
@@ -212,7 +212,12 @@ boolean isEnvironmentGlyph(enum displayGlyph glyph) {
         case G_VAMPIRE: case G_WARDEN: case G_WINGED_GUARDIAN: case G_WISP:
         case G_WRAITH: case G_ZOMBIE:
             return false;
-
+        
+        //kBrogue
+        //Aditional glyphs to not use tiles in hybrid
+        case G_DOWN_STAIRS: case G_UP_STAIRS: case G_TRAP: case G_TOTEM:
+        case G_GOOD_MAGIC: case G_BAD_MAGIC: case G_DOORWAY:
+            return false;
         // everything else is considered part of the environment
         default:
             return true;
