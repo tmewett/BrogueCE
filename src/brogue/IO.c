@@ -2732,6 +2732,8 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                 messageWithColor(KEYBOARD_LABELS ? "Health values hidden. Press '%' again to display." : "Health values hidden.",
                                  &teal, 0);
             }
+            break;
+
         case SEED_KEY:
             /*DEBUG {
                 cellDisplayBuffer dbuf[COLS][ROWS];
