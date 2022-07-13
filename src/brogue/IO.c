@@ -4515,13 +4515,10 @@ void highlightScreenCell(short x, short y, color *highlightColor, short strength
     storeColorComponents(displayBuffer[x][y].backColorComponents, &tempColor);
 }
 
-short estimatedArmorValue() {
-    short retVal;
-
-    retVal = ((armorTable[rogue.armor->kind].range.upperBound + armorTable[rogue.armor->kind].range.lowerBound) / 2) / 10;
-    retVal += strengthModifier(rogue.armor) / FP_FACTOR;
-    retVal -= player.status[STATUS_DONNING];
-
+// Like `armorValueIfUnenchanted` for the currently-equipped armor, but takes the penalty from
+// donning into account.
+static short estimatedArmorValue() {
+    short retVal = armorValueIfUnenchanted(rogue.armor) - player.status[STATUS_DONNING];
     return max(0, retVal);
 }
 
@@ -4538,7 +4535,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
     char buf[COLS * 2], buf2[COLS * 2], monstName[COLS], tempColorEscape[5], grayColorEscape[5];
     enum displayGlyph monstChar;
     color monstForeColor, monstBackColor, healthBarColor, tempColor;
-    short initialY, i, j, highlightStrength, displayedArmor, percent;
+    short initialY, i, j, highlightStrength, percent;
     boolean inPath;
     short oldRNG;
 
@@ -4793,15 +4790,13 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                     encodeMessageColor(grayColorEscape, 0, (dim ? &darkGray : &gray));
                 }
 
-                displayedArmor = displayedArmorValue();
-
                 if (!rogue.armor || rogue.armor->flags & ITEM_IDENTIFIED || rogue.playbackOmniscience) {
 
                     sprintf(buf, "Str: %s%i%s  Armor: %i",
                             tempColorEscape,
                             rogue.strength - player.weaknessAmount,
                             grayColorEscape,
-                            displayedArmor);
+                            displayedArmorValue());
                 } else {
                     sprintf(buf, "Str: %s%i%s  Armor: %i?",
                             tempColorEscape,

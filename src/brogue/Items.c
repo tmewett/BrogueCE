@@ -2019,11 +2019,11 @@ void itemDetails(char *buf, item *theItem) {
                     new = 0;
 
                     if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                        new = theItem->armor / 10;
-                        new += netEnchant(theItem) / FP_FACTOR;
+                        new = theItem->armor;
+                        new += 10 * netEnchant(theItem) / FP_FACTOR;
+                        new /= 10;
                     } else {
-                        new = ((armorTable[theItem->kind].range.upperBound + armorTable[theItem->kind].range.lowerBound) / 2) / 10;
-                        new += strengthModifier(theItem) / FP_FACTOR;
+                        new = armorValueIfUnenchanted(theItem);
                     }
 
                     new = max(0, new);
@@ -3067,12 +3067,19 @@ void updateEncumbrance() {
     recalculateEquipmentBonuses();
 }
 
+// Estimates the armor value of the given item, assuming the item is unenchanted.
+short armorValueIfUnenchanted(item *theItem) {
+    short averageValue = (armorTable[theItem->kind].range.upperBound + armorTable[theItem->kind].range.lowerBound) / 2;
+    short strengthAdjusted = averageValue + 10 * strengthModifier(theItem) / FP_FACTOR;
+    return max(0, strengthAdjusted / 10);
+}
+
+// Calculates the armor value to display to the player (estimated if the item is unidentified).
 short displayedArmorValue() {
     if (!rogue.armor || (rogue.armor->flags & ITEM_IDENTIFIED)) {
         return player.info.defense / 10;
     } else {
-        return ((armorTable[rogue.armor->kind].range.upperBound + armorTable[rogue.armor->kind].range.lowerBound) * FP_FACTOR / 2 / 10
-                + strengthModifier(rogue.armor)) / FP_FACTOR;
+        return armorValueIfUnenchanted(rogue.armor);
     }
 }
 
