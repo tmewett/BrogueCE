@@ -2722,14 +2722,14 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                 }
             }
             break;
-        case HEALTH_VALUE_KEY:
-            rogue.displayHealthValue = !rogue.displayHealthValue;
+        case HIT_POINTS_KEY:
+            rogue.displayHitPoints = !rogue.displayHitPoints;
             refreshSideBar(-1, -1, false);
-            if (rogue.displayHealthValue) {
-                messageWithColor(KEYBOARD_LABELS ? "Health values displayed. Press '%' again to hide." : "Health values displayed.",
+            if (rogue.displayHitPoints) {
+                messageWithColor(KEYBOARD_LABELS ? "Hit points displayed. Press '%' again to hide." : "Hit points displayed.",
                                  &teal, 0);
             } else {
-                messageWithColor(KEYBOARD_LABELS ? "Health values hidden. Press '%' again to display." : "Health values hidden.",
+                messageWithColor(KEYBOARD_LABELS ? "Hit points hidden. Press '%' again to display." : "Hit points hidden.",
                                  &teal, 0);
             }
             break;
@@ -4161,7 +4161,7 @@ void printHelpScreen() {
         "",
         "              \\  ****disable/enable color effects",
         "              ]  ****display/hide stealth range",
-        "              %  ****display/hide health values",
+        "              %  ****display/hide hit points",
         "    <space/esc>  ****clear message or cancel command",
         "",
         "        -- press space or click to continue --"
@@ -4731,7 +4731,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
         percent = creatureHealthChangePercent(monst);
         if (monst->currentHP <= 0) {
             strcpy(buf, "Dead");
-        } else if (!rogue.displayHealthValue){
+        } else if (!rogue.displayHitPoints){
                 if (percent != 0) {
                     strcpy(buf, "       Health       ");
                     sprintf(buf2, "(%s%i%%)", percent > 0 ? "+" : "", percent);
