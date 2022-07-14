@@ -2296,6 +2296,8 @@ enum featTypes {
     FEAT_DRAGONSLAYER,
     FEAT_PALADIN,
     FEAT_TONE,
+    FEAT_GEMINI,
+    FEAT_ESOTERIC,
 
     FEAT_COUNT,
 };

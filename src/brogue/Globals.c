@@ -2598,6 +2598,8 @@ const feat featTable[FEAT_COUNT] = {
     {"Dragonslayer",    "Kill a dragon with a melee attack.", false},
     {"Paladin",         "Ascend without attacking an unaware or fleeing creature.", true},
     {"Untempted",       "Ascend without picking up gold.", true},
+    {"Gemini",          "Create a clone of yourself.", false},
+    {"Esoteric",        "Obtain a flying allied Kraken.", false},
 };
 
 const char monsterBehaviorFlagDescriptions[32][COLS] = {

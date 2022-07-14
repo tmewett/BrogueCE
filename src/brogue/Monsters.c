@@ -650,6 +650,7 @@ creature *cloneMonster(creature *monst, boolean announce, boolean placeClone) {
         newMonst->info.defense = 0;
         strcpy(newMonst->info.monsterName, "clone");
         newMonst->creatureState = MONSTER_ALLY;
+        rogue.featRecord[FEAT_GEMINI] = true;
     }
 
     if (monst->creatureState == MONSTER_ALLY
@@ -3269,6 +3270,9 @@ boolean updateMonsterCorpseAbsorption(creature *monst) {
                 }
                 resolvePronounEscapes(buf, monst);
                 messageWithColor(buf, &advancementMessageColor, 0);
+                if(monst->info.monsterName == "kraken" & monst->status[STATUS_LEVITATING] == 1000){
+                    rogue.featRecord[FEAT_ESOTERIC] = true;
+                }
             }
             monst->absorptionFlags = 0;
             monst->absorptionBolt = BOLT_NONE;
