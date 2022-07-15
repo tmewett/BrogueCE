@@ -6051,6 +6051,11 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
                 }
             }
         }
+
+        // Broken Glass when throwing potions
+        refreshDungeonCell(x, y);
+        spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_DEWAR_GLASS], true, false);
+
         deleteItem(theItem);
         return; // potions disappear when they break
     }
