@@ -216,7 +216,7 @@ boolean isHybridGlyph(enum displayGlyph glyph) {
         //kBrogue
         //Aditional glyphs to not use tiles in hybrid
         case G_DOWN_STAIRS: case G_UP_STAIRS: case G_TRAP: case G_TOTEM:
-        case G_GOOD_MAGIC: case G_BAD_MAGIC: case G_DOORWAY:
+        case G_GOOD_MAGIC: case G_BAD_MAGIC: case G_DOORWAY: case G_ASHES:
             return false;
         // everything else is considered part of the environment
         default:
