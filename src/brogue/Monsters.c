@@ -541,7 +541,7 @@ void updateThrownSpears(creature* monst, boolean reload) {
             sprintf(buf, "%s is out of spears.", theMonsterName);
             message(buf, false);
             //monster doesn't have a spear anymore
-            monst->info.abilityFlags &= ~MA_ATTACKS_PENETRATE;
+            //monst->info.abilityFlags &= ~MA_ATTACKS_PENETRATE;
             monst->info.damage.lowerBound -= 2;
             monst->info.damage.upperBound -= 3;
             //monster doesn't have a throwing attack anymore
@@ -581,7 +581,7 @@ void updateThrownSpears(creature* monst, boolean reload) {
             break;
         }
     }
-    //so he should close to attack, unless he can summon allies
+    //so he should close in to attack, unless he can summon allies
     if (noBolts && !(monst->info.abilityFlags & MA_CAST_SUMMON)) {
         monst->info.flags &= ~MONST_MAINTAINS_DISTANCE;
     }
