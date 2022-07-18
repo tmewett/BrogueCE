@@ -1055,8 +1055,6 @@ dungeonProfile dungeonProfileCatalog[NUMBER_DUNGEON_PROFILES] = {
     {{0,    5,  0,  1,  0,  0,  0,  0}, 0},     // Sentinel sanctuaries
     //Brogue+
     {{0,    5,  0,  1,  0,  0,  10,  0}, 0},    // Medusa's lair
-    //gBrogue
-    {{0,    0,  0,  0,  1,  1,  0,  0}, 0},     // Ogre armory
 
 };
 
