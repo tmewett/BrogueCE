@@ -613,6 +613,7 @@ enum tileType {
     COMMUTATION_ALTAR_INERT,
     PIPE_GLOWING,
     PIPE_INERT,
+    GRAFFITI,
 
     RESURRECTION_ALTAR,
     RESURRECTION_ALTAR_INERT,
@@ -1592,6 +1593,7 @@ enum dungeonFeatureTypes {
     DF_ALTAR_COMMUTE,
     DF_MAGIC_PIPING,
     DF_INERT_PIPE,
+    DF_GRAFFITI,
 
     // resurrection altar
     DF_ALTAR_RESURRECT,
@@ -1743,7 +1745,7 @@ enum dungeonProfileTypes {
 
     DP_GOBLIN_WARREN,
     DP_SENTINEL_SANCTUARY,
-    // -> Brogue+
+    //Brogue+
     DP_MEDUSA_LAIR,
 
     NUMBER_DUNGEON_PROFILES,
