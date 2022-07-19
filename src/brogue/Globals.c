@@ -1748,7 +1748,7 @@ creatureType monsterCatalog[NUMBER_MONSTER_KINDS] = {
         (MONST_MAINTAINS_DISTANCE),  (MA_AVOID_CORRIDORS | MA_ATTACKS_PENETRATE | MA_LIMITED_AMMO) },
 
     //kBrogue
-    {0, "crystal jelly",   G_JELLY,    &forceFieldColor,100,     0,      115,     {4, 6, 1},      0,  100,    100,    DF_FORCEFIELD,0,        true,   1, DF_FORCEFIELD, {0},
+    {0, "crystal jelly",   G_JELLY,    &goblinMysticColor,100,     0,      115,     {4, 6, 1},      0,  100,    100,    DF_FORCEFIELD,0,        true,   1, DF_FORCEFIELD, {0},
         (MONST_NEVER_SLEEPS) },
 };
 
@@ -2063,7 +2063,7 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_OGRE_SHAMAN,    1,      {MK_OGRE},                              {{1, 3, 1}},                    14,     20,     100},
     {MK_CENTAUR,        1,      {MK_CENTAUR},                           {{1, 1, 1}},                    14,     21,     100},
     {MK_ACID_JELLY,     0,      {0},                                    {{0}},                          14,     21,     100},
-    {MK_CRYSTAL_JELLY,  0,      {0},                                    {{0}},                          10,     17,     100},
+    {MK_CRYSTAL_JELLY,  0,      {0},                                    {{0}},                          10,     17,     80},
     {MK_DART_TURRET,    0,      {0},                                    {{0}},                          15,     22,     100,        WALL,   0,                      HORDE_NO_PERIODIC_SPAWN},
     {MK_PIXIE,          0,      {0},                                    {{0}},                          14,     21,     80},
     {MK_FLAME_TURRET,   0,      {0},                                    {{0}},                          14,     24,     100,        WALL,   0,                      HORDE_NO_PERIODIC_SPAWN},
@@ -2240,7 +2240,7 @@ const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT] = {
     {"ogre",            10,         16,         {MK_OGRE, MK_OGRE_SHAMAN, MK_OGRE_TOTEM}},
     {"dragon",          10,         -1,         {MK_DRAGON}},
     {"undead",          10,         -1,         {MK_ZOMBIE, MK_WRAITH, MK_VAMPIRE, MK_PHANTOM, MK_LICH, MK_REVENANT}},
-    {"jelly",           10,         15,         {MK_PINK_JELLY, MK_BLACK_JELLY, MK_ACID_JELLY}},
+    {"jelly",           10,         15,         {MK_PINK_JELLY, MK_BLACK_JELLY, MK_ACID_JELLY, MK_CRYSTAL_JELLY}},
     {"turret",          5,          18,         {MK_ARROW_TURRET, MK_SPARK_TURRET, MK_DART_TURRET, MK_FLAME_TURRET}},
     {"infernal",        10,         -1,         {MK_FLAMEDANCER, MK_IMP, MK_REVENANT, MK_FURY, MK_PHANTOM, MK_IFRIT}},
     {"mage",            10,         -1,         {MK_GOBLIN_CONJURER, MK_GOBLIN_MYSTIC, MK_OGRE_SHAMAN, MK_DAR_PRIESTESS, MK_DAR_BATTLEMAGE, MK_PIXIE, MK_LICH}},
