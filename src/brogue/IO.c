@@ -346,6 +346,14 @@ short actionMenu(short x, boolean playingBack) {
         buttons[buttonCount].hotkey[0] = STEALTH_RANGE_KEY;
         takeActionOurselves[buttonCount] = true;
         buttonCount++;
+        if (KEYBOARD_LABELS) {
+            sprintf(buttons[buttonCount].text, "  %s%: %s[%s] Display hit points  ", yellowColorEscape, whiteColorEscape, rogue.displayHitPoints ? "X" : " ");
+        } else {
+            sprintf(buttons[buttonCount].text, "  [%s] Display hit points  ",   rogue.displayStealthRangeMode ? "X" : " ");
+        }
+        buttons[buttonCount].hotkey[0] = HIT_POINTS_KEY;
+        takeActionOurselves[buttonCount] = true;
+        buttonCount++;
 
         if (hasGraphics) {
             if (KEYBOARD_LABELS) {
