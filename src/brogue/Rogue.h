@@ -1049,6 +1049,9 @@ enum monsterTypes {
     MK_MEDUSA,
     MK_GOBLIN_BRAWLER,
 
+    //kBrogue
+    MK_CRYSTAL_JELLY,
+
     NUMBER_MONSTER_KINDS
 };
 

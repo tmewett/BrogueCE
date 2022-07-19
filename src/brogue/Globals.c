@@ -1746,6 +1746,10 @@ creatureType monsterCatalog[NUMBER_MONSTER_KINDS] = {
         (MONST_MAINTAINS_DISTANCE | MONST_FEMALE | MONST_NEVER_SLEEPS), (MA_POISONS | MA_STONE_GAZE)},
     { 0, "goblin brawler", G_GOBLIN,	&orange,	12,		10,		150,	{4, 7, 1},		20,	100,	100,	DF_RED_BLOOD,	0,      false,		0,		0,              {BOLT_THROWN_SPEAR},
         (MONST_MAINTAINS_DISTANCE),  (MA_AVOID_CORRIDORS | MA_ATTACKS_PENETRATE | MA_LIMITED_AMMO) },
+
+    //kBrogue
+    {0, "crystal jelly",   G_JELLY,    &forceFieldColor,100,     0,      115,     {2, 6, 1},      0,  100,    100,    DF_FORCEFIELD,0,        true,   1, DF_FORCEFIELD, {0},
+        (MONST_NEVER_SLEEPS) },
 };
 
 const monsterWords monsterText[NUMBER_MONSTER_KINDS] = {
@@ -1987,6 +1991,9 @@ const monsterWords monsterText[NUMBER_MONSTER_KINDS] = {
     { "This clever goblin will pelt you with spears before closing in to fight.",
         "chanting over", "Chanting",
         {"hits", "skewers", {0}} },
+    {"A jelly that abosorbs crystals which have dissolved into the floor. Occasionally, parts of this jelly fall off and solidify once agian.",
+        "absorbing", "Feeding",
+        {"smears", "slimes", "drenches", {0}} },
 };
 
 const mutation mutationCatalog[NUMBER_MUTATORS] = {
@@ -2056,6 +2063,7 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_OGRE_SHAMAN,    1,      {MK_OGRE},                              {{1, 3, 1}},                    14,     20,     100},
     {MK_CENTAUR,        1,      {MK_CENTAUR},                           {{1, 1, 1}},                    14,     21,     100},
     {MK_ACID_JELLY,     0,      {0},                                    {{0}},                          14,     21,     100},
+    {MK_CRYSTAL_JELLY,  0,      {0},                                    {{0}},                          10,     17,     100},
     {MK_DART_TURRET,    0,      {0},                                    {{0}},                          15,     22,     100,        WALL,   0,                      HORDE_NO_PERIODIC_SPAWN},
     {MK_PIXIE,          0,      {0},                                    {{0}},                          14,     21,     80},
     {MK_FLAME_TURRET,   0,      {0},                                    {{0}},                          14,     24,     100,        WALL,   0,                      HORDE_NO_PERIODIC_SPAWN},
@@ -2519,7 +2527,7 @@ itemTable staffTable[NUMBER_STAFF_KINDS] = {
     {"tunneling",       itemWoods[4], "",   10, 1000,   BOLT_TUNNELING,     {2,4,1}, false, false, 1,  false, "Bursts of magic from this staff will pass harmlessly through creatures but will reduce most obstructions to rubble."},
     {"blinking",        itemWoods[5], "",   11, 1200,   BOLT_BLINKING,      {2,4,1}, false, false, 1,  false, "This staff will allow you to teleport in the chosen direction. Creatures and inanimate obstructions will block the teleportation."},
     {"entrancement",    itemWoods[6], "",   6,  1000,   BOLT_ENTRANCEMENT,  {2,4,1}, false, false, 1,  false, "This staff will send creatures into a temporary trance, causing them to mindlessly mirror your movements. You can use the effect to cause one creature to attack another or to step into hazardous terrain, but the spell will be broken if you attack the creature under the effect."},
-    {"obstruction",     itemWoods[7], "",   10, 1000,   BOLT_OBSTRUCTION,   {2,4,1}, false, false, 1,  false, "This staff will conjure a mass of impenetrable green crystal, preventing anything from moving through the affected area and temporarily entombing anything that is already there. The crystal will dissolve into the air as time passes. Higher level staffs will create larger obstructions."},
+    {"obstruction",     itemWoods[7], "",   10, 1000,   BOLT_OBSTRUCTION,   {2,4,1}, false, false, 1,  false, "This staff will conjure a mass of impenetrable green crystal, preventing anything from moving through the affected area and temporarily entombing anything that is already there. The crystal will dissolve as time passes. Higher level staffs will create larger obstructions."},
     {"discord",         itemWoods[8], "",   10, 1000,   BOLT_DISCORD,       {2,4,1}, false, false, 1,  false, "This staff will alter the perception of a creature and cause it to lash out indiscriminately. Strangers and allies alike will turn on the victim."},
     {"conjuration",     itemWoods[9], "",   8,  1000,   BOLT_CONJURATION,   {2,4,1}, false, false, 1,  false, "A flick of this staff will summon a number of phantom blades to fight on your behalf."},
     {"healing",         itemWoods[10], "",  5,  1100,   BOLT_HEALING,       {2,4,1}, false, false, -1, false, "This staff will heal any creature, friend or foe. Unfortunately, you cannot use this or any staff on yourself except by reflecting the bolt."},
