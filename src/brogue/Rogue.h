@@ -1596,7 +1596,6 @@ enum dungeonFeatureTypes {
     DF_ALTAR_COMMUTE,
     DF_MAGIC_PIPING,
     DF_INERT_PIPE,
-    DF_GRAFFITI,
 
     // resurrection altar
     DF_ALTAR_RESURRECT,
