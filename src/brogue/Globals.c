@@ -1748,7 +1748,7 @@ creatureType monsterCatalog[NUMBER_MONSTER_KINDS] = {
         (MONST_MAINTAINS_DISTANCE),  (MA_AVOID_CORRIDORS | MA_ATTACKS_PENETRATE | MA_LIMITED_AMMO) },
 
     //kBrogue
-    {0, "crystal jelly",   G_JELLY,    &goblinMysticColor,60,     0,      100,     {2, 6, 1},      0,  100,    100,    DF_FORCEFIELD,0,        true,   1, DF_FORCEFIELD, {0},
+    {0, "crystal jelly",   G_JELLY,    &goblinMysticColor,60,     0,      100,     {2, 6, 1},      0,  100,    100,    DF_FORCEFIELD,0,        true,   2, DF_FORCEFIELD, {0},
         (MONST_NEVER_SLEEPS), (MA_CLONE_SELF_ON_DEFEND) },
 };
 
