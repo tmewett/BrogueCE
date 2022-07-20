@@ -1748,7 +1748,7 @@ creatureType monsterCatalog[NUMBER_MONSTER_KINDS] = {
         (MONST_MAINTAINS_DISTANCE),  (MA_AVOID_CORRIDORS | MA_ATTACKS_PENETRATE | MA_LIMITED_AMMO) },
 
     //kBrogue
-    {0, "crystal jelly",   G_JELLY,    &goblinMysticColor,60,     0,      100,     {2, 6, 1},      0,  100,    100,    DF_FORCEFIELD,0,        true,   2, DF_FORCEFIELD, {0},
+    {0, "crystal jelly",   G_JELLY,    &goblinMysticColor,60,     0,      100,     {2, 6, 1},      0,  100,    100,    DF_FORCEFIELD,0,        true,   3, DF_FORCEFIELD, {0},
         (MONST_NEVER_SLEEPS), (MA_CLONE_SELF_ON_DEFEND) },
 };
 
@@ -2030,11 +2030,11 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_PIT_BLOAT,      1,      {MK_PIT_BLOAT},                         {{0, 2, 1}},                    14,     26,     10},
     {MK_EXPLOSIVE_BLOAT,0,      {0},                                    {{0}},                          10,     26,     10},
     {MK_GOBLIN,         0,      {0},                                    {{0}},                          3,      10,     100},
-    {MK_GOBLIN_CONJURER,0,      {0},                                    {{0}},                          3,      10,     60},
+    {MK_GOBLIN_CONJURER,0,      {0},                                    {{0}},                          3,      10,     70},
     {MK_GOBLIN_BRAWLER, 0,	    {0},					                {{0}},					    	5,		12,		40},
     {MK_TOAD,           0,      {0},                                    {{0}},                          4,      11,     100},
     {MK_PINK_JELLY,     0,      {0},                                    {{0}},                          4,      13,     100},
-    {MK_GOBLIN_TOTEM,   2,      {MK_GOBLIN,MK_GOBLIN_BRAWLER},           {{2,4,1},{0,1,1}},              5,      13,     100,        0,              MT_CAMP_AREA,   HORDE_NO_PERIODIC_SPAWN},
+    {MK_GOBLIN_TOTEM,   2,      {MK_GOBLIN,MK_GOBLIN_BRAWLER},          {{2,4,1},{0,1,1}},              5,      13,     100,        0,              MT_CAMP_AREA,   HORDE_NO_PERIODIC_SPAWN},
     {MK_ARROW_TURRET,   0,      {0},                                    {{0}},                          5,      13,     100,        WALL,   0,                      HORDE_NO_PERIODIC_SPAWN},
     {MK_MONKEY,         1,      {MK_MONKEY},                            {{2,4,1}},                      5,      13,     20},
     {MK_VAMPIRE_BAT,    0,      {0},                                    {{0}},                          6,      13,     30},
@@ -2046,6 +2046,7 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_BOG_MONSTER,    0,      {0},                                    {{0}},                          7,      14,     80,     MUD,            0,              HORDE_NEVER_OOD},
     {MK_OGRE,           0,      {0},                                    {{0}},                          7,      13,     100},
     {MK_EEL,            1,      {MK_EEL},                               {{2, 4, 1}},                    8,      22,     70,     DEEP_WATER},
+    {MK_CRYSTAL_JELLY,  0,      {0},                                    {{0}},                          8,      13,     40},
     {MK_ACID_MOUND,     1,      {MK_ACID_MOUND},                        {{2, 4, 1}},                    9,      13,     30},
     {MK_SPIDER,         0,      {0},                                    {{0}},                          9,      16,     100},
     {MK_DAR_BLADEMASTER,1,      {MK_DAR_BLADEMASTER},                   {{0, 1, 1}},                    10,     14,     100},
@@ -2055,7 +2056,7 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_SPARK_TURRET,   0,      {0},                                    {{0}},                          11,     18,     100,        WALL,   0,                      HORDE_NO_PERIODIC_SPAWN},
     {MK_ZOMBIE,         0,      {0},                                    {{0}},                          11,     18,     100},
     {MK_TROLL,          0,      {0},                                    {{0}},                          12,     19,     100},
-    {MK_DAR_ASSASSIN,   1,		{MK_DAR_ASSASSIN},  	                {{0, 1, 1}},			        12,		20,		50},
+    {MK_DAR_ASSASSIN,   1,		{MK_DAR_ASSASSIN},  	                {{0, 1, 1}},			        14,		20,		40},
     {MK_OGRE_TOTEM,     1,      {MK_OGRE},                              {{2,4,1}},                      12,     19,     60,     0,          0,                  HORDE_NO_PERIODIC_SPAWN},
     {MK_BOG_MONSTER,    1,      {MK_BOG_MONSTER},                       {{2,4,1}},                      12,     26,     100,        MUD},
     {MK_NAGA,           0,      {0},                                    {{0}},                          13,     20,     100,        DEEP_WATER},
@@ -2063,7 +2064,6 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_OGRE_SHAMAN,    1,      {MK_OGRE},                              {{1, 3, 1}},                    14,     20,     100},
     {MK_CENTAUR,        1,      {MK_CENTAUR},                           {{1, 1, 1}},                    14,     21,     100},
     {MK_ACID_JELLY,     0,      {0},                                    {{0}},                          14,     21,     100},
-    {MK_CRYSTAL_JELLY,  0,      {0},                                    {{0}},                          10,     17,     80},
     {MK_DART_TURRET,    0,      {0},                                    {{0}},                          15,     22,     100,        WALL,   0,                      HORDE_NO_PERIODIC_SPAWN},
     {MK_PIXIE,          0,      {0},                                    {{0}},                          14,     21,     80},
     {MK_FLAME_TURRET,   0,      {0},                                    {{0}},                          14,     24,     100,        WALL,   0,                      HORDE_NO_PERIODIC_SPAWN},
