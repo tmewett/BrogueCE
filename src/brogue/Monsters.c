@@ -172,6 +172,8 @@ boolean monsterRevealed(creature *monst) {
         return true;
     } else if (player.status[STATUS_TELEPATHIC] && !(monst->info.flags & MONST_INANIMATE)) {
         return true;
+    } else if (playerCanSee(monst->loc.x, monst->loc.y) && (rogue.lightMultiplier > 1) && (monst->status[STATUS_INVISIBLE])) {
+        return true;
     }
     return false;
 }
@@ -226,6 +228,9 @@ boolean canDirectlySeeMonster(creature *monst) {
         return true;
     }
     if (playerCanDirectlySee(monst->loc.x, monst->loc.y) && !monsterIsHidden(monst, &player)) {
+        return true;
+    }
+    if (playerCanDirectlySee(monst->loc.x, monst->loc.y) && rogue.lightMultiplier > 1) {
         return true;
     }
     return false;
@@ -3270,7 +3275,7 @@ boolean updateMonsterCorpseAbsorption(creature *monst) {
                 }
                 resolvePronounEscapes(buf, monst);
                 messageWithColor(buf, &advancementMessageColor, 0);
-                if(monst->info.monsterName == "kraken" & monst->status[STATUS_LEVITATING] == 1000){
+                if(monst->info.monsterName == "kraken" && monst->status[STATUS_LEVITATING] == 1000){
                     rogue.featRecord[FEAT_ESOTERIC] = true;
                 }
             }
