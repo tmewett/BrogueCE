@@ -1176,7 +1176,7 @@ const blueprint blueprintCatalog[NUMBER_BLUEPRINTS] = {
         {0,         PEDESTAL,   DUNGEON,        {1,1},      1,          (POTION),   POTION_LIFE,0,              2,              0,          (ITEM_KIND_AUTO_ID),    (MF_GENERATE_ITEM | MF_ALTERNATIVE | MF_TREAT_AS_BLOCKING)},
         {0,         0,          0,              {1,1},      1,          0,          0,          0,              2,              0,          0,          (MF_BUILD_AT_ORIGIN | MF_PERMIT_BLOCKING | MF_BUILD_VESTIBULE)}}},
     // Commutation altars
-    {{13, AMULET_LEVEL},{10, 30},   50,     4,          0,                  (BP_ROOM | BP_PURGE_INTERIOR | BP_SURROUND_WITH_WALLS | BP_OPEN_INTERIOR | BP_IMPREGNABLE | BP_REWARD), {
+    {{13, AMULET_LEVEL},{10, 30},   50,     5,          0,                  (BP_ROOM | BP_PURGE_INTERIOR | BP_SURROUND_WITH_WALLS | BP_OPEN_INTERIOR | BP_IMPREGNABLE | BP_REWARD), {
         {0,         CARPET,     DUNGEON,        {0,0},      0,          0,          -1,         0,              0,              0,          0,          (MF_EVERYWHERE)},
         {0,         STATUE_INERT,DUNGEON,       {1,3},      0,          0,          -1,         0,              2,              0,          0,          (MF_TREAT_AS_BLOCKING | MF_BUILD_IN_WALLS | MF_IMPREGNABLE)},
         {DF_MAGIC_PIPING,COMMUTATION_ALTAR,DUNGEON,{2,2},   2,          0,          -1,         0,              2,              0,          0,          (MF_TREAT_AS_BLOCKING)},
@@ -1245,7 +1245,7 @@ const blueprint blueprintCatalog[NUMBER_BLUEPRINTS] = {
     
     //Brogue+
     // Medusa's lair
-    { {10, 18},           {150, 300}, 15,  12,			DP_MEDUSA_LAIR, (BP_ROOM | BP_REWARD | BP_MAXIMIZE_INTERIOR | BP_REDESIGN_INTERIOR | BP_SURROUND_WITH_WALLS),	{
+    { {10, 18},           {150, 300}, 10,  12,			DP_MEDUSA_LAIR, (BP_ROOM | BP_REWARD | BP_MAXIMIZE_INTERIOR | BP_REDESIGN_INTERIOR | BP_SURROUND_WITH_WALLS),	{
         {0,			RUBBLE,DUNGEON,		        {0,0},		0,			0,			-1,			0,				0,				0,			0,			(MF_EVERYWHERE)},
         {0,         SACRED_GLYPH,  DUNGEON,     {1, 1},		1,			0,			-1,			0,				3,				0,			0,			(MF_BUILD_AT_ORIGIN)},
         {0,         WALL,DUNGEON,               {5,10},      0,          0,			-1,			0,				0,				0,			0,			(MF_BUILD_IN_WALLS)},//MF_EVERYWHERE
