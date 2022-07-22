@@ -60,6 +60,10 @@ New Content (*spoilers*)
 - % toggles hit points On/Off in game
 - Ring of light reveals invisible enemies within physical vision
 - Feature added to commutation room as a hint on what the altars do
+- Hybrid tileset adjusted to show more ASCII characters than before
+- New Feat: Gemini (Clone Yourself)
+- New Feat: Esoteric (Get an allied flying Kraken)
+- Shattered glass appears on the floor when throwing potions
 
 
 Useful Sites/Links
