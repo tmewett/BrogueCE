@@ -37,7 +37,7 @@
 
 // Brogue version number
 #define BROGUE_MAJOR 1
-#define BROGUE_MINOR 1
+#define BROGUE_MINOR 2
 #define BROGUE_PATCH 0
 
 // Expanding a macro as a string constant requires two levels of macros
@@ -1048,6 +1048,9 @@ enum monsterTypes {
     MK_DAR_ASSASSIN,
     MK_MEDUSA,
     MK_GOBLIN_BRAWLER,
+
+    //gBrogue
+    MK_NETHER_JELLY,
 
     //kBrogue
     MK_CRYSTAL_JELLY,
