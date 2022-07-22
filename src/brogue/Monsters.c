@@ -230,9 +230,9 @@ boolean canDirectlySeeMonster(creature *monst) {
     if (playerCanDirectlySee(monst->loc.x, monst->loc.y) && !monsterIsHidden(monst, &player)) {
         return true;
     }
-    if (playerCanDirectlySee(monst->loc.x, monst->loc.y) && rogue.lightMultiplier > 1) {
+    /*if (playerCanDirectlySee(monst->loc.x, monst->loc.y) && (rogue.lightMultiplier > 1) && (monst->status[STATUS_INVISIBLE])) {
         return true;
-    }
+    }*/
     return false;
 }
 
