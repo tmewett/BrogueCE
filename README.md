@@ -55,6 +55,11 @@ New Content (*spoilers*)
 - Dar Assassin
 - Valkyrie (legendary ally)
 - Medusa (boss with a custom room)
+- Crystal Jelly
+- Nether Jelly
+- % toggles hit points On/Off in game
+- Ring of light reveals invisible enemies within physical vision
+- Feature added to commutation room as a hint on what the altars do
 
 
 Useful Sites/Links
