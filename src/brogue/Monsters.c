@@ -3275,7 +3275,7 @@ boolean updateMonsterCorpseAbsorption(creature *monst) {
                 }
                 resolvePronounEscapes(buf, monst);
                 messageWithColor(buf, &advancementMessageColor, 0);
-                if(monst->info.monsterName == "kraken" && monst->status[STATUS_LEVITATING] == 1000){
+                if((monst->info.flags & MONST_RESTRICTED_TO_LIQUID) && monst->status[STATUS_LEVITATING]){
                     rogue.featRecord[FEAT_ESOTERIC] = true;
                 }
             }
