@@ -494,6 +494,8 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
     {G_TRAP,     &poisonGasColor,        0,                      30, 0,  DF_POISON_GAS_CLOUD, 0,     0,              0,              NO_LIGHT,       (T_IS_DF_TRAP), (TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT),                                        "a caustic gas trap",   "there is a hidden pressure plate in the floor above a reserve of caustic gas."},
     {G_FLOOR,    &floorForeColor,        &floorBackColor,        95, 0,  DF_POISON_GAS_CLOUD, DF_SHOW_TRAPDOOR,0,    0,              NO_LIGHT,       (T_AUTO_DESCENT), (TM_IS_SECRET),                                                                   "the ground",           "you plunge through a hidden trap door!"},
     {G_CHASM,    &chasmForeColor,        &black,                 30, 0,  DF_POISON_GAS_CLOUD,0,      0,              0,              NO_LIGHT,       (T_AUTO_DESCENT), 0,                                                                                "a hole",               "you plunge through a hole in the ground!"},
+    //unBrogue
+    {G_CHASM,  	 &chasmForeColor,		 &black,				 30, 0,	 DF_POISON_GAS_CLOUD,0,      DF_WOODEN_PLATFORM,0,			 NO_LIGHT,		 (T_AUTO_DESCENT), (TM_IS_WIRED | TM_VANISHES_UPON_PROMOTION),										 "a hole",				 "you plunge through a hole in the ground!"},
     {G_FLOOR,    &floorForeColor,        &floorBackColor,        95, 0,  0,              DF_SHOW_PARALYSIS_GAS_TRAP, 0, 0,           NO_LIGHT,       (T_IS_DF_TRAP), (TM_IS_SECRET | TM_IS_WIRED),                                                       "the ground",           ""},
     {G_TRAP,     &pink,                  0,                      30, 0,  0,              0,          0,              0,              NO_LIGHT,       (T_IS_DF_TRAP), (TM_IS_WIRED | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT),                          "a paralysis trigger",  "there is a hidden pressure plate in the floor."},
     {G_FLOOR,    &floorForeColor,        &floorBackColor,        95, 0,  DF_PLAIN_FIRE,  DF_DISCOVER_PARALYSIS_VENT, DF_PARALYSIS_VENT_SPEW,0,NO_LIGHT,  (0), (TM_VANISHES_UPON_PROMOTION | TM_IS_SECRET | TM_IS_WIRED),                                 "the ground",           ""},
@@ -543,6 +545,7 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
     {G_BRIDGE,   &bridgeFrontColor,      &bridgeBackColor,       45, 50, DF_BRIDGE_FIRE, 0,          0,              0,              NO_LIGHT,       (T_IS_FLAMMABLE), (TM_VANISHES_UPON_PROMOTION),                                                     "a rickety rope bridge","the rickety rope bridge creaks underfoot."},
     {G_BRIDGE,   &bridgeFrontColor,      &bridgeBackColor,       45, 50, DF_BRIDGE_FALL, 0,          DF_BRIDGE_FALL, 10000,          NO_LIGHT,       (T_IS_FLAMMABLE), (TM_VANISHES_UPON_PROMOTION),                                                     "a plummeting bridge",  "the bridge is plunging into the chasm before your eyes!"},
     {G_BRIDGE,   &bridgeFrontColor,      &bridgeBackColor,       45, 50, DF_PLAIN_FIRE,  0,          0,              0,              NO_LIGHT,       (T_IS_FLAMMABLE), (TM_VANISHES_UPON_PROMOTION),                                                     "a rickety rope bridge","the rickety rope bridge is staked to the edge of the chasm."},
+    {G_BRIDGE,	 &bridgeFrontColor,		 &bridgeBackColor,		 20, 50, DF_BRIDGE_FIRE, 0,			 0,				 0,				 NO_LIGHT,		 (T_IS_FLAMMABLE), (TM_VANISHES_UPON_PROMOTION),													 "a wooden platform",	 "the wooden platform tilts precariously to one side."},
     {G_FLOOR,    &white,                 &chasmEdgeBackColor,    20, 50, DF_BRIDGE_FIRE, 0,          0,              0,              NO_LIGHT,       0, 0,                                                                                               "a stone bridge",       "the narrow stone bridge winds precariously across the chasm."},
     {0,          &shallowWaterForeColor, &shallowWaterBackColor, 60, 0,  DF_STEAM_ACCUMULATION,  0,  DF_SPREADABLE_WATER,0,          NO_LIGHT,       (0), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_EXTINGUISHES_FIRE | TM_ALLOWS_SUBMERGING),   "shallow water",    "the water is cold and reaches your knees."},
     {0,          &shallowWaterForeColor, &shallowWaterBackColor, 60, 0,  DF_STEAM_ACCUMULATION,  0,  DF_WATER_SPREADS,2500,          NO_LIGHT,       (0), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_EXTINGUISHES_FIRE | TM_ALLOWS_SUBMERGING), "shallow water",        "the water is cold and reaches your knees."},
@@ -914,6 +917,11 @@ dungeonFeature dungeonFeatureCatalog[NUMBER_DUNGEON_FEATURES] = {
     {LAVA,                      LIQUID,     225,    100,    (DFF_CLEAR_OTHER_TERRAIN)},
     {MACHINE_PRESSURE_PLATE_USED,DUNGEON,   0,      0,      0},
 
+    //unBrogue
+    // not a throwing tutorial:
+	{TRAP_DOOR_ELEVATOR,		LIQUID,		225,	100,	(DFF_CLEAR_OTHER_TERRAIN | DFF_SUBSEQ_EVERYWHERE), "", 0, 0, 0, 0, DF_SHOW_TRAPDOOR_HALO},
+	{WOODEN_PLATFORM,			LIQUID,		0,		0,		(DFF_CLEAR_OTHER_TERRAIN | DFF_EVACUATE_CREATURES_FIRST | DFF_ACTIVATE_DORMANT_MONSTER), "a wooden platform descends from above!"},
+
     // rat trap:
     {RAT_TRAP_WALL_CRACKING,    DUNGEON,    0,      0,      0,  "a scratching sound emanates from the nearby walls!", 0, 0, 0, 0, DF_RUBBLE},
 
@@ -1269,6 +1277,13 @@ const blueprint blueprintCatalog[NUMBER_BLUEPRINTS] = {
 
     // -- VESTIBULES --
 
+    //unBrogue
+    // Kobold elevator ambush -- toss an item onto the pressure plate to retract the portcullis -- results in an elevator lowering and kobolds/bloats attacking
+	{{1, 4},			{70, 70},	6,     4,           0,                  (BP_VESTIBULE | BP_NO_INTERIOR_FLAG), {
+		{DF_MEDIUM_ELEVATOR_SHAFT, MACHINE_PRESSURE_PLATE, LIQUID, {1,1}, 1,0,		0,			0,				1,				0,			0,			(MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)},
+		{0,			0,				0,			{2, 3},		1,			0,			0,			0,				1,				HORDE_MACHINE_AMBUSH,0,	(MF_GENERATE_HORDE | MF_MONSTERS_DORMANT)},
+		{0,			PORTCULLIS_CLOSED,DUNGEON,  {1,1},      1,			0,			0,			0,				3,				0,			0,			(MF_IMPREGNABLE | MF_PERMIT_BLOCKING | MF_BUILD_AT_ORIGIN | MF_ALTERNATIVE)},
+		{0,         WORM_TUNNEL_OUTER_WALL,DUNGEON,{1,1},	1,			0,			-1,			0,				1,				0,			0,			(MF_BUILD_AT_ORIGIN | MF_PERMIT_BLOCKING | MF_IMPREGNABLE | MF_ALTERNATIVE)}}},
     // Plain locked door, key guarded by an adoptive room
     {{1, AMULET_LEVEL}, {1, 1},     100,        1,      0,                  (BP_VESTIBULE), {
         {0,         LOCKED_DOOR, DUNGEON,       {1,1},      1,          KEY,        KEY_DOOR,   0,              1,              0,          (ITEM_IS_KEY | ITEM_PLAYER_AVOIDS), (MF_BUILD_AT_ORIGIN | MF_PERMIT_BLOCKING | MF_GENERATE_ITEM | MF_OUTSOURCE_ITEM_TO_MACHINE | MF_KEY_DISPOSABLE | MF_IMPREGNABLE)}}},
@@ -1294,7 +1309,7 @@ const blueprint blueprintCatalog[NUMBER_BLUEPRINTS] = {
         {0,         STATUE_DORMANT_DOORWAY,DUNGEON,     {1, 1}, 1,      0,          -1,         0,              1,              HORDE_MACHINE_STATUE,0, (MF_PERMIT_BLOCKING | MF_GENERATE_HORDE | MF_MONSTERS_DORMANT | MF_BUILD_AT_ORIGIN | MF_ALTERNATIVE)},
         {0,         MACHINE_TRIGGER_FLOOR,DUNGEON,{0,0},    1,          0,          -1,         0,              0,              0,          0,          (MF_EVERYWHERE)}}},
     // Throwing tutorial -- toss an item onto the pressure plate to retract the portcullis
-    {{1, 4},            {70, 70},   8,      3,          0,                  (BP_VESTIBULE), {
+    {{1, 4},            {70, 70},   6,      3,          0,                  (BP_VESTIBULE), {
         {DF_MEDIUM_HOLE, MACHINE_PRESSURE_PLATE, LIQUID, {1,1}, 1,      0,          0,          0,              1,              0,          0,          (MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)},
         {0,         PORTCULLIS_CLOSED,DUNGEON,  {1,1},      1,          0,          0,          0,              3,              0,          0,          (MF_IMPREGNABLE | MF_PERMIT_BLOCKING | MF_BUILD_AT_ORIGIN | MF_ALTERNATIVE)},
         {0,         WORM_TUNNEL_OUTER_WALL,DUNGEON,{1,1},   1,          0,          -1,         0,              1,              0,          0,          (MF_BUILD_AT_ORIGIN | MF_PERMIT_BLOCKING | MF_IMPREGNABLE | MF_ALTERNATIVE)}}},
@@ -1327,12 +1342,18 @@ const blueprint blueprintCatalog[NUMBER_BLUEPRINTS] = {
         {0,         ALTAR_CAGE_OPEN,DUNGEON,    {1,2},      1,          (STAFF|RING|CHARM),-1,  0,              2,              0,          (ITEM_IS_KEY | ITEM_KIND_AUTO_ID | ITEM_MAX_CHARGES_KNOWN | ITEM_PLAYER_AVOIDS),    (MF_GENERATE_ITEM | MF_NO_THROWING_WEAPONS | MF_TREAT_AS_BLOCKING | MF_IMPREGNABLE)},
         {0,         ALTAR_CAGE_OPEN,DUNGEON,    {1,1},      1,          0,          -1,         0,              2,              0,          (ITEM_IS_KEY | ITEM_PLAYER_AVOIDS | ITEM_MAX_CHARGES_KNOWN),    (MF_ADOPT_ITEM | MF_TREAT_AS_BLOCKING | MF_IMPREGNABLE)},
         {0,         STATUE_INERT,DUNGEON,       {1,3},      0,          0,          -1,         0,              2,              0,          0,          (MF_TREAT_AS_BLOCKING | MF_BUILD_IN_WALLS | MF_IMPREGNABLE)}}},
+    //unBrogue
+    // Kobold elevator ambush -- toss an item onto the pressure plate to retract the cage and reveal the key -- results in an elevator lowering and kobolds/bloats attacking
+	{{1, 4},			{70, 80},   6,		3,			0,              (BP_ADOPT_ITEM | BP_NO_INTERIOR_FLAG), {
+		{0,			ALTAR_CAGE_RETRACTABLE,DUNGEON,{1,1},	1,			0,			-1,			0,				3,				0,			0,			(MF_ADOPT_ITEM | MF_IMPREGNABLE | MF_NOT_IN_HALLWAY)},
+		{DF_MEDIUM_ELEVATOR_SHAFT, MACHINE_PRESSURE_PLATE, LIQUID, {1,1}, 1,0,		0,			0,				1,				0,			0,			(MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)},
+		{0,			0,				0,			{2, 3},		1,			0,			0,			0,				1,				HORDE_MACHINE_AMBUSH,0,	(MF_GENERATE_HORDE | MF_MONSTERS_DORMANT)}}},
     // Secret room -- key on an altar in a secret room
     {{1, AMULET_LEVEL}, {15, 100},  1,      2,          0,                  (BP_ROOM | BP_ADOPT_ITEM), {
         {0,         ALTAR_INERT,DUNGEON,        {1,1},      1,          0,          -1,         0,              1,              0,          ITEM_PLAYER_AVOIDS, (MF_ADOPT_ITEM | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)},
         {0,         SECRET_DOOR,DUNGEON,        {1,1},      1,          0,          0,          0,              1,              0,          0,          (MF_PERMIT_BLOCKING | MF_BUILD_AT_ORIGIN)}}},
     // Throwing tutorial -- toss an item onto the pressure plate to retract the cage and reveal the key
-    {{1, 4},            {70, 80},   8,      2,          0,                  (BP_ADOPT_ITEM), {
+    {{1, 4},            {70, 80},   6,      2,          0,                  (BP_ADOPT_ITEM), {
         {0,         ALTAR_CAGE_RETRACTABLE,DUNGEON,{1,1},   1,          0,          -1,         0,              3,              0,          0,          (MF_ADOPT_ITEM | MF_IMPREGNABLE | MF_NOT_IN_HALLWAY)},
         {DF_MEDIUM_HOLE, MACHINE_PRESSURE_PLATE, LIQUID, {1,1}, 1,      0,          0,          0,              1,              0,          0,          (MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)}}},
     // Rat trap -- getting the key triggers paralysis vents nearby and also causes rats to burst out of the walls
@@ -1459,7 +1480,7 @@ const blueprint blueprintCatalog[NUMBER_BLUEPRINTS] = {
         {0,         MACHINE_GLYPH,DUNGEON,      {1,1},      1,          0,          0,          0,              1,              0,          0,          (MF_PERMIT_BLOCKING | MF_EVERYWHERE)},
         {0,         MACHINE_GLYPH,DUNGEON,      {1,1},      1,          0,          -1,         0,              1,              0,          0,          (MF_IN_PASSABLE_VIEW_OF_ORIGIN | MF_NOT_IN_HALLWAY | MF_BUILD_ANYWHERE_ON_LEVEL)}}},
     // Sacrifice altar -- lure the chosen monster from elsewhere on the level onto the altar to release the key.
-    {{4, AMULET_LEVEL}, {20, 60},   12,     6,          0,                  (BP_ROOM | BP_ADOPT_ITEM | BP_PURGE_INTERIOR | BP_OPEN_INTERIOR | BP_SURROUND_WITH_WALLS),        {
+    {{5, AMULET_LEVEL}, {20, 60},   12,     6,          0,                  (BP_ROOM | BP_ADOPT_ITEM | BP_PURGE_INTERIOR | BP_OPEN_INTERIOR | BP_SURROUND_WITH_WALLS),        {
         {DF_BONES,  0,          0,              {3,4},      2,          0,          -1,         0,              1,              0,          0,          0},
         {0,         0,          0,              {1,1},      0,          0,          -1,         0,              2,              0,          0,          (MF_BUILD_IN_WALLS | MF_EVERYWHERE)},
         {DF_TRIGGER_AREA,SACRIFICE_ALTAR_DORMANT,DUNGEON,{1,1},1,       0,          -1,         0,              2,              0,          0,          (MF_FAR_FROM_ORIGIN | MF_NOT_IN_HALLWAY)},
@@ -1737,7 +1758,7 @@ creatureType monsterCatalog[NUMBER_MONSTER_KINDS] = {
     {0, "mangrove dryad",G_ANCIENT_SPIRIT,   &tanColor,      70,     60,     175,    {2, 8, 2},      6,  100,    100,    DF_ASH_BLOOD,   0,    true,       0,      0,              {BOLT_ANCIENT_SPIRIT_VINES},
         (MONST_IMMUNE_TO_WEBS | MONST_ALWAYS_USE_ABILITY | MONST_MAINTAINS_DISTANCE | MONST_NO_POLYMORPH | MONST_MALE | MONST_FEMALE), (0)},
 
-        //New Monsters -> Brogue+
+    //New Monsters -> Brogue+
     {0, "valkyrie",	G_VAMPIRE,	&orange,	            60,		75,     200,	{10, 15, 2},		20,	50,		100,	DF_RED_BLOOD,0,       true,  0, 0,              {BOLT_HASTE},
         (MONST_REFLECT_4 | MONST_FEMALE | MONST_NEVER_FLEES | MONST_FLIES), (MA_ATTACKS_PENETRATE | MA_HIT_DISCORD) },
     {0, "dar assassin", G_DAR_BLADEMASTER,	&red,		30,		70,     160,	{4, 8, 2},		20,	100,	100,	DF_RED_BLOOD,	0,		  false, 0,	0,              {0},
@@ -1746,6 +1767,10 @@ creatureType monsterCatalog[NUMBER_MONSTER_KINDS] = {
         (MONST_MAINTAINS_DISTANCE | MONST_FEMALE | MONST_NEVER_SLEEPS), (MA_POISONS | MA_STONE_GAZE)},
     { 0, "goblin brawler", G_GOBLIN,	&orange,	12,		10,		150,	{4, 7, 1},		20,	100,	100,	DF_RED_BLOOD,	0,      false,		0,		0,              {BOLT_THROWN_SPEAR},
         (MONST_MAINTAINS_DISTANCE),  (MA_AVOID_CORRIDORS | MA_ATTACKS_PENETRATE | MA_LIMITED_AMMO) },
+
+    //New Monsters -> gBrogue
+    {0,	"nether jelly",	G_JELLY,	&ectoplasmColor,	50, 	0,		130,	{2, 3, 1},	0,	150,	150,    DF_ECTOPLASM_BLOOD, 0,         true, 2,	DF_ECTOPLASM_DROPLET,{0},
+		(MONST_INVISIBLE), (MA_CLONE_SELF_ON_DEFEND)},
 
     //kBrogue
     {0, "crystal jelly",   G_JELLY,    &goblinMysticColor,60,     0,      100,     {2, 6, 1},      0,  100,    100,    DF_FORCEFIELD,0,        true,   3, DF_FORCEFIELD, {0},
@@ -1991,6 +2016,9 @@ const monsterWords monsterText[NUMBER_MONSTER_KINDS] = {
     { "This clever goblin will pelt you with spears before closing in to fight.",
         "chanting over", "Chanting",
         {"hits", "skewers", {0}} },
+    {"This slimy mass lurks in the shadows, invisible to the naked eye. Although weak, when it splits, it can disorient an adventure.",
+		"absorbing", "Feeding",
+		{"smears", "slimes", "drenches"}},
     {"A jelly that abosorbs crystals which have dissolved into the floor. Occasionally, parts of this jelly fall off and solidify once agian.",
         "absorbing", "Feeding",
         {"smears", "slimes", "drenches", {0}} },
@@ -2082,6 +2110,7 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_DRAGON,         0,      {0},                                    {{0}},                          24,     DEEPEST_LEVEL-1,        70},
     {MK_DRAGON,         1,      {MK_DRAGON},                            {{1,1,1}},                      27,     DEEPEST_LEVEL-1,        30},
     {MK_GOLEM,          3,      {MK_GOLEM, MK_DAR_PRIESTESS, MK_DAR_BATTLEMAGE}, {{1, 2, 1}, {0,1,1},{0,1,1}},27,DEEPEST_LEVEL-1,   80},
+    {MK_NETHER_JELLY,  	0,		{0},            					    {{0}},    						28,		DEEPEST_LEVEL-1,    20},
     {MK_GOLEM,          1,      {MK_GOLEM},                             {{5, 10, 2}},                   30,     DEEPEST_LEVEL-1,    20},
     {MK_KRAKEN,         1,      {MK_KRAKEN},                            {{5, 10, 2}},                   30,     DEEPEST_LEVEL-1,    100,        DEEP_WATER},
     {MK_TENTACLE_HORROR,2,      {MK_TENTACLE_HORROR, MK_REVENANT},      {{1, 3, 1}, {2, 4, 1}},         32,     DEEPEST_LEVEL-1,    20},
@@ -2157,6 +2186,10 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_DRAGON,         0,      {0},                                    {{0}},                          29,     DEEPEST_LEVEL,  100,    STATUE_DORMANT, 0,          HORDE_MACHINE_STATUE},
     {MK_TENTACLE_HORROR,0,      {0},                                    {{0}},                          29,     DEEPEST_LEVEL,  100,    STATUE_DORMANT, 0,          HORDE_MACHINE_STATUE},
 
+    //unBrogue
+    // group ambushes -- elevator, chasm, stone bridge, deep water. note chasm edge ambushes are larger here because they are not multiplied in a machine
+	{MK_KOBOLD,			1,		{MK_KOBOLD},							{{2, 4, 1}},					1,		4,		100,	   TRAP_DOOR_ELEVATOR,0,			HORDE_MACHINE_AMBUSH},
+
     // machine turrets
     {MK_ARROW_TURRET,   0,      {0},                                    {{0}},                          5,      13,     100,        TURRET_DORMANT, 0,              HORDE_MACHINE_TURRET},
     {MK_SPARK_TURRET,   0,      {0},                                    {{0}},                          11,     18,     100,        TURRET_DORMANT, 0,              HORDE_MACHINE_TURRET},
@@ -2228,7 +2261,7 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_GOBLIN_CONJURER,2,      {MK_GOBLIN_CONJURER, MK_GOBLIN_MYSTIC}, {{0,1,1}, {1,1,1}},             7,      15,     40,      0,              0,              HORDE_MACHINE_GOBLIN_WARREN},
     {MK_GOBLIN_TOTEM,   4,      {MK_GOBLIN_TOTEM, MK_GOBLIN_CONJURER, MK_GOBLIN_MYSTIC, MK_GOBLIN}, {{1,2,1},{1,2,1},{1,2,1},{3,5,1}},10,17,80,0,MT_CAMP_AREA,   HORDE_MACHINE_GOBLIN_WARREN},
     {MK_GOBLIN,         1,      {MK_GOBLIN},                            {{1, 2, 1}},                    3,      7,      10,      0,              0,              HORDE_MACHINE_GOBLIN_WARREN | HORDE_LEADER_CAPTIVE},
-    {MK_GOBLIN_BRAWLER, 0,      {0},                                    {{0}},                          1,      10,     50,      0,              0,              HORDE_MACHINE_GOBLIN_WARREN },
+    {MK_GOBLIN_BRAWLER, 0,      {0},                                    {{0}},                          1,      10,     50,      0,              0,              HORDE_MACHINE_GOBLIN_WARREN},
 };
 
 const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT] = {

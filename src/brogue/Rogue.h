@@ -470,6 +470,8 @@ enum tileType {
     GAS_TRAP_POISON,
     TRAP_DOOR_HIDDEN,
     TRAP_DOOR,
+    //unBrogue
+    TRAP_DOOR_ELEVATOR,
     GAS_TRAP_PARALYSIS_HIDDEN,
     GAS_TRAP_PARALYSIS,
     MACHINE_PARALYSIS_VENT_HIDDEN,
@@ -518,6 +520,8 @@ enum tileType {
     BRIDGE,
     BRIDGE_FALLING,
     BRIDGE_EDGE,
+    //unBrogue
+    WOODEN_PLATFORM,
     STONE_BRIDGE,
     MACHINE_FLOOD_WATER_DORMANT,
     MACHINE_FLOOD_WATER_SPREADING,
@@ -1620,6 +1624,11 @@ enum dungeonFeatureTypes {
     DF_MEDIUM_LAVA_POND,
     DF_MACHINE_PRESSURE_PLATE_USED,
 
+    //unBrogue
+    //kobold elevator ambush
+    DF_MEDIUM_ELEVATOR_SHAFT,
+	DF_WOODEN_PLATFORM,
+
     // rat trap
     DF_WALL_CRACK,
 
@@ -1783,6 +1792,7 @@ enum DFFlags {
     DFF_SUPERPRIORITY               = Fl(7),    // Will overwrite terrain of a superior priority.
     DFF_AGGRAVATES_MONSTERS         = Fl(8),    // Will act as though an aggravate monster scroll of effectRadius radius had been read at that point.
     DFF_RESURRECT_ALLY              = Fl(9),    // Will bring back to life your most recently deceased ally.
+    DFF_HORDE_MACHINE_AMBUSH_DORMANT = Fl(10),	// If placed, add a dormant ambush machine horde here
 };
 
 enum boltEffects {
@@ -2005,6 +2015,7 @@ enum hordeFlags {
     HORDE_MACHINE_THIEF             = Fl(16),   // monsters that can be generated in the key thief area machines
     HORDE_MACHINE_GOBLIN_WARREN     = Fl(17),   // can spawn in goblin warrens
     HORDE_SACRIFICE_TARGET          = Fl(18),   // can be the target of an assassination challenge; leader will get scary light.
+    HORDE_MACHINE_AMBUSH            = Fl(19),   // monsters ambush from foliage, fungus forests, chasm edges and under stone bridges
 
     HORDE_MACHINE_ONLY              = (HORDE_MACHINE_BOSS | HORDE_MACHINE_WATER_MONSTER
                                        | HORDE_MACHINE_CAPTIVE | HORDE_MACHINE_STATUE
@@ -2012,7 +2023,7 @@ enum hordeFlags {
                                        | HORDE_MACHINE_KENNEL | HORDE_VAMPIRE_FODDER
                                        | HORDE_MACHINE_LEGENDARY_ALLY | HORDE_MACHINE_THIEF
                                        | HORDE_MACHINE_GOBLIN_WARREN
-                                       | HORDE_SACRIFICE_TARGET),
+                                       | HORDE_SACRIFICE_TARGET | HORDE_MACHINE_AMBUSH),
 };
 
 enum monsterBehaviorFlags {
@@ -2564,6 +2575,8 @@ enum machineTypes {
     MT_AMULET_AREA,
 
     // Door guard machines:
+    //unBrogue
+    MT_KOBOLD_ELEVATOR_AMBUSH_VESTIBULE,
     MT_LOCKED_DOOR_VESTIBULE,
     MT_SECRET_DOOR_VESTIBULE,
     MT_SECRET_LEVER_VESTIBULE,
@@ -2577,6 +2590,8 @@ enum machineTypes {
 
     // Key guard machines:
     MT_KEY_REWARD_LIBRARY,
+    //unBrogue
+    MT_KEY_KOBOLD_ELEVATOR_AMBUSH_AREA,
     MT_KEY_SECRET_ROOM,
     MT_KEY_THROWING_TUTORIAL_AREA,
     MT_KEY_RAT_TRAP_ROOM,
