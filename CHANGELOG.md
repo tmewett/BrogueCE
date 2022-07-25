@@ -1,3 +1,10 @@
+1.11.1
+======
+
+- Fixed replay out-of-sync error from throwing an item.
+- Fixed wand of plenty description still referring to halving HP.
+
+
 1.11
 ====
 
