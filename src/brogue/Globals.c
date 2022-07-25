@@ -693,7 +693,7 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
     // goblin warren
     {G_FLOOR,    &mudBackColor,          &refuseBackColor,       85, 0,  DF_STENCH_SMOLDER,0,        0,              0,              NO_LIGHT,       (T_IS_FLAMMABLE), (TM_VANISHES_UPON_PROMOTION),                                                     "the mud floor",        "Rotting animal matter has been ground into the mud floor; the stench is awful."},
     {G_WALL,     &mudWallForeColor,      &mudWallBackColor,      0,  0,  DF_PLAIN_FIRE,  0,          0,              0,              NO_LIGHT,       (T_OBSTRUCTS_EVERYTHING), (TM_STAND_IN_TILE),                                                       "a mud-covered wall",   "A malodorous layer of clay and fecal matter coats the wall."},
-    {G_DOORWAY,    &mudWallForeColor,      &refuseBackColor,     25, 50, DF_EMBERS,      0,          0,              0,              NO_LIGHT,       (T_OBSTRUCTS_VISION | T_OBSTRUCTS_GAS | T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VISUALLY_DISTINCT), "hanging animal skins", "you push through the animal skins that hang across the threshold."},
+    {G_DOORWAY,  &mudWallForeColor,      &refuseBackColor,       25, 50, DF_EMBERS,      0,          0,              0,              NO_LIGHT,       (T_OBSTRUCTS_VISION | T_OBSTRUCTS_GAS | T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VISUALLY_DISTINCT), "hanging animal skins", "you push through the animal skins that hang across the threshold."},
 
     //Brogue+
     //unfortunate creatures turned to stone
@@ -1766,11 +1766,13 @@ creatureType monsterCatalog[NUMBER_MONSTER_KINDS] = {
     {0, "medusa", G_ANCIENT_SPIRIT, &darPriestessColor, 40,	    60,		120,	{4, 12, 1},		20,	100,	100,	DF_RED_BLOOD,   0,        true,  0, 0,              {0},
         (MONST_MAINTAINS_DISTANCE | MONST_FEMALE | MONST_NEVER_SLEEPS), (MA_POISONS | MA_STONE_GAZE)},
     { 0, "goblin brawler", G_GOBLIN,	&orange,	12,		10,		150,	{4, 7, 1},		20,	100,	100,	DF_RED_BLOOD,	0,      false,		0,		0,              {BOLT_THROWN_SPEAR},
-        (MONST_MAINTAINS_DISTANCE),  (MA_AVOID_CORRIDORS | MA_ATTACKS_PENETRATE | MA_LIMITED_AMMO) },
+        (MONST_ALWAYS_USE_ABILITY),  (MA_AVOID_CORRIDORS | MA_ATTACKS_PENETRATE | MA_LIMITED_AMMO) },
 
     //New Monsters -> gBrogue
-    {0,	"nether jelly",	G_JELLY,	&ectoplasmColor,	50, 	0,		130,	{2, 3, 1},	0,	150,	150,    DF_ECTOPLASM_BLOOD, 0,         true, 2,	DF_ECTOPLASM_DROPLET,{0},
-		(MONST_INVISIBLE), (MA_CLONE_SELF_ON_DEFEND)},
+    {0,	"nether jelly",	G_JELLY,	&ectoplasmColor,	80, 	0,		130,	{2, 6, 1},	0,	150,	150,    DF_ECTOPLASM_BLOOD, 0,         true, 2,	DF_ECTOPLASM_DROPLET,{0},
+		(MONST_NEVER_SLEEPS | MONST_INVISIBLE), (MA_CLONE_SELF_ON_DEFEND)},
+    {0, "goblin thief",	G_GOBLIN,	&darkGray,      17,		10,		110,		{2, 5, 1},		10,	110,	100,	DF_RED_BLOOD,	0,		0,		0,              {0},
+        (MONST_NEVER_SLEEPS),  (MA_AVOID_CORRIDORS | MA_HIT_STEAL_FLEE)},
 
     //kBrogue
     {0, "crystal jelly",   G_JELLY,    &goblinMysticColor,60,     0,      100,     {2, 6, 1},      0,  100,    100,    DF_FORCEFIELD,0,        true,   3, DF_FORCEFIELD, {0},
@@ -2004,6 +2006,7 @@ const monsterWords monsterText[NUMBER_MONSTER_KINDS] = {
     {"This mangrove dryad is as old as the earth, and $HISHER gnarled figure houses an ancient power. When angered, $HESHE can call upon the forces of nature to bind $HISHER foes and tear them to shreds.",
         "absorbing", "Absorbing",
         {"whips", "lashes", "thrashes", "lacerates", {0}}},
+    //Brogue+
     {"Clad in shimmering armor, this winged maiden is a terror on the battlefield. $HESHE revels in slaughter and will always fight $HISHER foes to the death.",
         "praying over", "Praying",
         {"slashes", "cuts", "stabs", "skewers", {0}} },
@@ -2016,9 +2019,14 @@ const monsterWords monsterText[NUMBER_MONSTER_KINDS] = {
     { "This clever goblin will pelt you with spears before closing in to fight.",
         "chanting over", "Chanting",
         {"hits", "skewers", {0}} },
+    //gBrogue
     {"This slimy mass lurks in the shadows, invisible to the naked eye. Although weak, when it splits, it can disorient an adventure.",
 		"absorbing", "Feeding",
 		{"smears", "slimes", "drenches"}},
+    {"Much less tribal in nature than others, this goblin relies on $HISHER own cunning and agility to relive adventurers of their treasures. $HESHE wields a stone arrowhead as a makeshift dagger.",
+		"studying", "Studying",
+		{"stabs", "cuts", {0}}},
+    //kBrogue
     {"A jelly that abosorbs crystals which have dissolved into the floor. Occasionally, parts of this jelly fall off and solidify once agian.",
         "absorbing", "Feeding",
         {"smears", "slimes", "drenches", {0}} },
@@ -2059,22 +2067,23 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_EXPLOSIVE_BLOAT,0,      {0},                                    {{0}},                          10,     26,     10},
     {MK_GOBLIN,         0,      {0},                                    {{0}},                          3,      10,     100},
     {MK_GOBLIN_CONJURER,0,      {0},                                    {{0}},                          3,      10,     70},
-    {MK_GOBLIN_BRAWLER, 0,	    {0},					                {{0}},					    	5,		12,		40},
     {MK_TOAD,           0,      {0},                                    {{0}},                          4,      11,     100},
     {MK_PINK_JELLY,     0,      {0},                                    {{0}},                          4,      13,     100},
+    {MK_GOBLIN_BRAWLER, 0,	    {0},					                {{0}},					    	5,		12,		20},
     {MK_GOBLIN_TOTEM,   2,      {MK_GOBLIN,MK_GOBLIN_BRAWLER},          {{2,4,1},{0,1,1}},              5,      13,     100,        0,              MT_CAMP_AREA,   HORDE_NO_PERIODIC_SPAWN},
     {MK_ARROW_TURRET,   0,      {0},                                    {{0}},                          5,      13,     100,        WALL,   0,                      HORDE_NO_PERIODIC_SPAWN},
     {MK_MONKEY,         1,      {MK_MONKEY},                            {{2,4,1}},                      5,      13,     20},
     {MK_VAMPIRE_BAT,    0,      {0},                                    {{0}},                          6,      13,     30},
     {MK_VAMPIRE_BAT,    1,      {MK_VAMPIRE_BAT},                       {{1,2,1}},                      6,      13,     70,      0,              0,              HORDE_NEVER_OOD},
     {MK_ACID_MOUND,     0,      {0},                                    {{0}},                          6,      13,     100},
-    {MK_GOBLIN,         4,      {MK_GOBLIN, MK_GOBLIN_MYSTIC, MK_JACKAL,MK_GOBLIN_BRAWLER},{{2, 3, 1}, {1,2,1}, {1,2,1},{1,1,1}}, 6,      12,     40},
+    {MK_GOBLIN,         4,      {MK_GOBLIN, MK_GOBLIN_MYSTIC, MK_JACKAL,MK_GOBLIN_BRAWLER},{{2, 3, 1}, {1,2,1}, {1,2,1},{0,1,1}}, 6,      12,     40},
+    {MK_CRYSTAL_JELLY,  0,      {0},                                    {{0}},                          7,      12,     20},
     {MK_GOBLIN_CONJURER,2,      {MK_GOBLIN_CONJURER, MK_GOBLIN_MYSTIC}, {{0,1,1}, {1,1,1}},             7,      15,     40},
     {MK_CENTIPEDE,      0,      {0},                                    {{0}},                          7,      14,     100},
     {MK_BOG_MONSTER,    0,      {0},                                    {{0}},                          7,      14,     80,     MUD,            0,              HORDE_NEVER_OOD},
     {MK_OGRE,           0,      {0},                                    {{0}},                          7,      13,     100},
+    {MK_GOBLIN_THIEF,   0,		{0},									{{0}},							8,		13,		20},
     {MK_EEL,            1,      {MK_EEL},                               {{2, 4, 1}},                    8,      22,     70,     DEEP_WATER},
-    {MK_CRYSTAL_JELLY,  0,      {0},                                    {{0}},                          8,      13,     40},
     {MK_ACID_MOUND,     1,      {MK_ACID_MOUND},                        {{2, 4, 1}},                    9,      13,     30},
     {MK_SPIDER,         0,      {0},                                    {{0}},                          9,      16,     100},
     {MK_DAR_BLADEMASTER,1,      {MK_DAR_BLADEMASTER},                   {{0, 1, 1}},                    10,     14,     100},
@@ -2084,11 +2093,11 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_SPARK_TURRET,   0,      {0},                                    {{0}},                          11,     18,     100,        WALL,   0,                      HORDE_NO_PERIODIC_SPAWN},
     {MK_ZOMBIE,         0,      {0},                                    {{0}},                          11,     18,     100},
     {MK_TROLL,          0,      {0},                                    {{0}},                          12,     19,     100},
-    {MK_DAR_ASSASSIN,   1,		{MK_DAR_ASSASSIN},  	                {{0, 1, 1}},			        14,		20,		40},
     {MK_OGRE_TOTEM,     1,      {MK_OGRE},                              {{2,4,1}},                      12,     19,     60,     0,          0,                  HORDE_NO_PERIODIC_SPAWN},
     {MK_BOG_MONSTER,    1,      {MK_BOG_MONSTER},                       {{2,4,1}},                      12,     26,     100,        MUD},
     {MK_NAGA,           0,      {0},                                    {{0}},                          13,     20,     100,        DEEP_WATER},
     {MK_SALAMANDER,     0,      {0},                                    {{0}},                          13,     20,     100,        LAVA},
+    {MK_DAR_ASSASSIN,   1,		{MK_DAR_ASSASSIN},  	                {{0, 1, 1}},			        14,		20,		20},
     {MK_OGRE_SHAMAN,    1,      {MK_OGRE},                              {{1, 3, 1}},                    14,     20,     100},
     {MK_CENTAUR,        1,      {MK_CENTAUR},                           {{1, 1, 1}},                    14,     21,     100},
     {MK_ACID_JELLY,     0,      {0},                                    {{0}},                          14,     21,     100},
@@ -2123,7 +2132,7 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_LICH,           1,      {MK_PHANTOM},                           {{2, 3, 1}},                    0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED},
     {MK_LICH,           1,      {MK_FURY},                              {{2, 3, 1}},                    0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED},
     {MK_PHYLACTERY,     1,      {MK_LICH},                              {{1,1,1}},                      0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED},
-    {MK_GOBLIN_CHIEFTAN,2,      {MK_GOBLIN_CONJURER, MK_GOBLIN,MK_GOBLIN_BRAWLER},        {{1,1,1}, {2,3,1},{1,1,1}},             0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED | HORDE_SUMMONED_AT_DISTANCE},
+    {MK_GOBLIN_CHIEFTAN,3,      {MK_GOBLIN_CONJURER, MK_GOBLIN,MK_GOBLIN_BRAWLER}, {{1,1,1}, {2,3,1},{1,1,1}},0,0,      100,    0,          0,                  HORDE_IS_SUMMONED | HORDE_SUMMONED_AT_DISTANCE},
     {MK_PHOENIX_EGG,    1,      {MK_PHOENIX},                           {{1,1,1}},                      0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED},
     {MK_ELDRITCH_TOTEM, 1,      {MK_SPECTRAL_BLADE},                    {{4, 7, 1}},                    0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED | HORDE_DIES_ON_LEADER_DEATH},
     {MK_ELDRITCH_TOTEM, 1,      {MK_FURY},                              {{2, 3, 1}},                    0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED | HORDE_DIES_ON_LEADER_DEATH},
@@ -2132,7 +2141,7 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_MONKEY,         1,      {MK_KOBOLD},                            {{1, 2, 1}},                    1,      5,      10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_GOBLIN,         1,      {MK_GOBLIN},                            {{1, 2, 1}},                    3,      7,      10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_GOBLIN_BRAWLER, 1,	    {MK_GOBLIN},							{{1, 2, 1}},					3,		7,		1,		0,			0,					HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
-    {MK_OGRE,           2,      {MK_GOBLIN,MK_GOBLIN_BRAWLER},          {{3, 4, 1},{0,2,1}},            4,      10,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
+    {MK_OGRE,           2,      {MK_GOBLIN,MK_GOBLIN_BRAWLER},          {{3, 5, 1},{0,1,1}},            4,      10,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_GOBLIN_MYSTIC,  1,      {MK_KOBOLD},                            {{3, 7, 1}},                    5,      11,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_OGRE,           1,      {MK_OGRE},                              {{1, 2, 1}},                    8,      15,     20,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_TROLL,          1,      {MK_TROLL},                             {{1, 2, 1}},                    14,     19,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
@@ -2253,15 +2262,14 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     //legendary ally from Brogue+
     {MK_VALKYRIE,		0,		{0},									{{0}},							1,		DEEPEST_LEVEL,	100,	0,		0,					HORDE_MACHINE_LEGENDARY_ALLY | HORDE_ALLIED_WITH_PLAYER },
 
-    // goblin warren
+     // goblin warren
     {MK_GOBLIN,         0,      {0},                                    {{0}},                          1,      10,     100,     0,              0,              HORDE_MACHINE_GOBLIN_WARREN},
-    {MK_GOBLIN_CONJURER,0,      {0},                                    {{0}},                          1,      10,     50,      0,              0,              HORDE_MACHINE_GOBLIN_WARREN},
-    {MK_GOBLIN_TOTEM,   2,      {MK_GOBLIN,MK_GOBLIN_BRAWLER},          {{2,3,1},{0,1,1}},              5,      13,     100,     0,              MT_CAMP_AREA,   HORDE_MACHINE_GOBLIN_WARREN},
-    {MK_GOBLIN,         3,      {MK_GOBLIN, MK_GOBLIN_MYSTIC, MK_GOBLIN_BRAWLER},{{2, 4, 1}, {1,2,1}, {0,1,1}}, 6,      12,     40,      0,   0,              HORDE_MACHINE_GOBLIN_WARREN},
+    {MK_GOBLIN_CONJURER,0,      {0},                                    {{0}},                          1,      10,     60,      0,              0,              HORDE_MACHINE_GOBLIN_WARREN},
+    {MK_GOBLIN_TOTEM,   1,      {MK_GOBLIN},                            {{2,4,1}},                      5,      13,     100,     0,              MT_CAMP_AREA,   HORDE_MACHINE_GOBLIN_WARREN},
+    {MK_GOBLIN,         3,      {MK_GOBLIN, MK_GOBLIN_MYSTIC, MK_JACKAL},{{2, 3, 1}, {1,2,1}, {1,2,1}},6,12,    40,      0,              0,              HORDE_MACHINE_GOBLIN_WARREN},
     {MK_GOBLIN_CONJURER,2,      {MK_GOBLIN_CONJURER, MK_GOBLIN_MYSTIC}, {{0,1,1}, {1,1,1}},             7,      15,     40,      0,              0,              HORDE_MACHINE_GOBLIN_WARREN},
-    {MK_GOBLIN_TOTEM,   4,      {MK_GOBLIN_TOTEM, MK_GOBLIN_CONJURER, MK_GOBLIN_MYSTIC, MK_GOBLIN}, {{1,2,1},{1,2,1},{1,2,1},{3,5,1}},10,17,80,0,MT_CAMP_AREA,   HORDE_MACHINE_GOBLIN_WARREN},
+    {MK_GOBLIN_TOTEM,   4,      {MK_GOBLIN_TOTEM, MK_GOBLIN_CONJURER, MK_GOBLIN_MYSTIC, MK_GOBLIN}, {{1,2,1},{1,2,1},{1,2,1},{3,5,1}},10,17,80,0,MT_CAMP_AREA,  HORDE_MACHINE_GOBLIN_WARREN},
     {MK_GOBLIN,         1,      {MK_GOBLIN},                            {{1, 2, 1}},                    3,      7,      10,      0,              0,              HORDE_MACHINE_GOBLIN_WARREN | HORDE_LEADER_CAPTIVE},
-    {MK_GOBLIN_BRAWLER, 0,      {0},                                    {{0}},                          1,      10,     50,      0,              0,              HORDE_MACHINE_GOBLIN_WARREN},
 };
 
 const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT] = {

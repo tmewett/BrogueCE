@@ -1055,6 +1055,7 @@ enum monsterTypes {
 
     //gBrogue
     MK_NETHER_JELLY,
+    MK_GOBLIN_THIEF,
 
     //kBrogue
     MK_CRYSTAL_JELLY,
