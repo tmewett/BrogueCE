@@ -1280,8 +1280,8 @@ const blueprint blueprintCatalog[NUMBER_BLUEPRINTS] = {
     //unBrogue
     // Kobold elevator ambush -- toss an item onto the pressure plate to retract the portcullis -- results in an elevator lowering and kobolds/bloats attacking
 	{{1, 4},			{70, 70},	6,     4,           0,                  (BP_VESTIBULE | BP_NO_INTERIOR_FLAG), {
-		{DF_MEDIUM_ELEVATOR_SHAFT, MACHINE_PRESSURE_PLATE, LIQUID, {1,1}, 1,0,		0,			0,				1,				0,			0,			(MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)},
-		{0,			0,				0,			{2, 3},		1,			0,			0,			0,				1,				HORDE_MACHINE_AMBUSH,0,	(MF_GENERATE_HORDE | MF_MONSTERS_DORMANT)},
+		{DF_MEDIUM_ELEVATOR_SHAFT, MACHINE_PRESSURE_PLATE, LIQUID, {1,1}, 1,0,		0,			0,				1,				0,			0,			(MF_SET_AS_TARGET | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)},
+		{0,			0,	0,		{2, 3},		1,			0,			0,			0,				1,				HORDE_MACHINE_AMBUSH,0,	(MF_ADJACENT_TO_TARGET | MF_GENERATE_HORDE | MF_MONSTERS_DORMANT)},
 		{0,			PORTCULLIS_CLOSED,DUNGEON,  {1,1},      1,			0,			0,			0,				3,				0,			0,			(MF_IMPREGNABLE | MF_PERMIT_BLOCKING | MF_BUILD_AT_ORIGIN | MF_ALTERNATIVE)},
 		{0,         WORM_TUNNEL_OUTER_WALL,DUNGEON,{1,1},	1,			0,			-1,			0,				1,				0,			0,			(MF_BUILD_AT_ORIGIN | MF_PERMIT_BLOCKING | MF_IMPREGNABLE | MF_ALTERNATIVE)}}},
     // Plain locked door, key guarded by an adoptive room
@@ -1342,12 +1342,14 @@ const blueprint blueprintCatalog[NUMBER_BLUEPRINTS] = {
         {0,         ALTAR_CAGE_OPEN,DUNGEON,    {1,2},      1,          (STAFF|RING|CHARM),-1,  0,              2,              0,          (ITEM_IS_KEY | ITEM_KIND_AUTO_ID | ITEM_MAX_CHARGES_KNOWN | ITEM_PLAYER_AVOIDS),    (MF_GENERATE_ITEM | MF_NO_THROWING_WEAPONS | MF_TREAT_AS_BLOCKING | MF_IMPREGNABLE)},
         {0,         ALTAR_CAGE_OPEN,DUNGEON,    {1,1},      1,          0,          -1,         0,              2,              0,          (ITEM_IS_KEY | ITEM_PLAYER_AVOIDS | ITEM_MAX_CHARGES_KNOWN),    (MF_ADOPT_ITEM | MF_TREAT_AS_BLOCKING | MF_IMPREGNABLE)},
         {0,         STATUE_INERT,DUNGEON,       {1,3},      0,          0,          -1,         0,              2,              0,          0,          (MF_TREAT_AS_BLOCKING | MF_BUILD_IN_WALLS | MF_IMPREGNABLE)}}},
+
     //unBrogue
     // Kobold elevator ambush -- toss an item onto the pressure plate to retract the cage and reveal the key -- results in an elevator lowering and kobolds/bloats attacking
-	{{1, 4},			{70, 80},   6,		3,			0,              (BP_ADOPT_ITEM | BP_NO_INTERIOR_FLAG), {
+	{{1, 4},			{70, 80},   6,		3,			0,                 (BP_ADOPT_ITEM | BP_NO_INTERIOR_FLAG), {
 		{0,			ALTAR_CAGE_RETRACTABLE,DUNGEON,{1,1},	1,			0,			-1,			0,				3,				0,			0,			(MF_ADOPT_ITEM | MF_IMPREGNABLE | MF_NOT_IN_HALLWAY)},
-		{DF_MEDIUM_ELEVATOR_SHAFT, MACHINE_PRESSURE_PLATE, LIQUID, {1,1}, 1,0,		0,			0,				1,				0,			0,			(MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)},
-		{0,			0,				0,			{2, 3},		1,			0,			0,			0,				1,				HORDE_MACHINE_AMBUSH,0,	(MF_GENERATE_HORDE | MF_MONSTERS_DORMANT)}}},
+		{DF_MEDIUM_ELEVATOR_SHAFT, MACHINE_PRESSURE_PLATE, LIQUID, {1,1}, 1,0,		0,			0,				1,				0,			0,			(MF_SET_AS_TARGET | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)},
+		{0,			0,				0,			{2, 3},		1,			0,			0,			0,				1,				HORDE_MACHINE_AMBUSH,0,	(MF_ADJACENT_TO_TARGET | MF_GENERATE_HORDE | MF_MONSTERS_DORMANT)}}},
+
     // Secret room -- key on an altar in a secret room
     {{1, AMULET_LEVEL}, {15, 100},  1,      2,          0,                  (BP_ROOM | BP_ADOPT_ITEM), {
         {0,         ALTAR_INERT,DUNGEON,        {1,1},      1,          0,          -1,         0,              1,              0,          ITEM_PLAYER_AVOIDS, (MF_ADOPT_ITEM | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)},
@@ -1487,10 +1489,12 @@ const blueprint blueprintCatalog[NUMBER_BLUEPRINTS] = {
         {0,         SACRIFICE_CAGE_DORMANT,DUNGEON,{1,1},   1,          0,          -1,         0,              2,              0,          0,          (MF_ADOPT_ITEM | MF_NOT_IN_HALLWAY | MF_IMPREGNABLE)},
         {0,         DEMONIC_STATUE,DUNGEON,     {1,1},      1,          0,          -1,         0,              2,              0,          0,          (MF_FAR_FROM_ORIGIN | MF_NOT_IN_HALLWAY | MF_IMPREGNABLE)},
         {0,         STATUE_INSTACRACK,DUNGEON,  {1,1},      1,          0,          -1,         0,              2,              (HORDE_SACRIFICE_TARGET), 0, (MF_BUILD_ANYWHERE_ON_LEVEL | MF_GENERATE_HORDE | MF_MONSTERS_DORMANT | MF_TREAT_AS_BLOCKING | MF_IMPREGNABLE | MF_NOT_IN_HALLWAY)}}},
-    // Summoning circle -- key in a room with an eldritch totem, glyphs unavoidable. // DISABLED. (Not fun enough.)
-    {{12, AMULET_LEVEL}, {50, 100}, 0,      2,          0,                  (BP_ROOM | BP_OPEN_INTERIOR | BP_ADOPT_ITEM),   {
-        {DF_GLYPH_CIRCLE,ALTAR_INERT,DUNGEON,   {1,1},      1,          0,          -1,         0,              3,              0,          0,          (MF_ADOPT_ITEM | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY | MF_FAR_FROM_ORIGIN)},
-        {DF_GLYPH_CIRCLE,0,     0,              {1,1},      1,          0,          -1,         MK_ELDRITCH_TOTEM,3,            0,          0,          (MF_FAR_FROM_ORIGIN | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)}}},
+    // Summoning circle -- key in a room with an eldritch totem, glyphs unavoidable. // enabled again, with unBrogue adjustments
+    {{12, AMULET_LEVEL}, {50, 100}, 7,      4,          0,                  (BP_ROOM | BP_OPEN_INTERIOR | BP_ADOPT_ITEM),   {
+        {DF_GLYPH_CIRCLE,ALTAR_SWITCH,DUNGEON,   {1,1},      1,         0,          -1,         0,              3,              0,          0,          (MF_ADOPT_ITEM | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY | MF_FAR_FROM_ORIGIN)},
+		{0,			MACHINE_POISON_GAS_VENT_HIDDEN,DUNGEON,{1,2}, 1,	0,			-1,			0,				2,				0,			0,			(MF_FAR_FROM_ORIGIN | MF_ALTERNATIVE)},
+        {DF_GLYPH_CIRCLE,0,     0,              {1,1},      1,          0,          -1,         MK_ELDRITCH_TOTEM,3,            0,          0,          (MF_FAR_FROM_ORIGIN | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)},
+        {0,         MACHINE_GLYPH,DUNGEON,      {1,1},		0,			0,			-1,			0,				1,				0,			0,			(MF_BUILD_AT_ORIGIN)}}},
     // Beckoning obstacle -- key surrounded by glyphs in a room with a mirrored totem.
     {{5, AMULET_LEVEL}, {60, 100},  10,     4,          0,                  (BP_ROOM | BP_PURGE_INTERIOR | BP_SURROUND_WITH_WALLS | BP_OPEN_INTERIOR | BP_ADOPT_ITEM), {
         {DF_GLYPH_CIRCLE,ALTAR_INERT,DUNGEON,   {1,1},      1,          0,          -1,         0,              3,              0,          0,          (MF_ADOPT_ITEM | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY | MF_FAR_FROM_ORIGIN | MF_IN_VIEW_OF_ORIGIN)},
@@ -1765,15 +1769,19 @@ creatureType monsterCatalog[NUMBER_MONSTER_KINDS] = {
         (MONST_CARRY_ITEM_25 | MONST_MALE | MONST_FEMALE), (MA_POISONS | MA_DEFEND_INVISIBLE) },
     {0, "medusa", G_ANCIENT_SPIRIT, &darPriestessColor, 40,	    60,		120,	{4, 12, 1},		20,	100,	100,	DF_RED_BLOOD,   0,        true,  0, 0,              {0},
         (MONST_MAINTAINS_DISTANCE | MONST_FEMALE | MONST_NEVER_SLEEPS), (MA_POISONS | MA_STONE_GAZE)},
-    { 0, "goblin brawler", G_GOBLIN,	&orange,	12,		10,		150,	{4, 7, 1},		20,	100,	100,	DF_RED_BLOOD,	0,      false,		0,		0,              {BOLT_THROWN_SPEAR},
+    { 0, "goblin brawler", G_GOBLIN,	    &orange,	12,		10,		150,	{4, 7, 1},		20,	100,	100,	DF_RED_BLOOD,	0,        false, 0,	0,              {BOLT_THROWN_SPEAR},
         (MONST_ALWAYS_USE_ABILITY),  (MA_AVOID_CORRIDORS | MA_ATTACKS_PENETRATE | MA_LIMITED_AMMO) },
 
     //New Monsters -> gBrogue
-    {0,	"nether jelly",	G_JELLY,	&ectoplasmColor,	80, 	0,		130,	{2, 6, 1},	0,	150,	150,    DF_ECTOPLASM_BLOOD, 0,         true, 2,	DF_ECTOPLASM_DROPLET,{0},
+    {0,	"nether jelly",	G_JELLY,	&ectoplasmColor,	100, 	0,		130,	{2, 6, 1},	0,	150,	150,    DF_ECTOPLASM_BLOOD, 0,         true, 2,	DF_ECTOPLASM_DROPLET,{0},
 		(MONST_NEVER_SLEEPS | MONST_INVISIBLE), (MA_CLONE_SELF_ON_DEFEND)},
+    {0, "goblin thief",	G_GOBLIN,	&darkGray,      17,		10,		110,		{2, 5, 1},		10,	110,	100,	DF_RED_BLOOD,	0,		  false, 0,	0,              {0},
+        (MONST_NEVER_SLEEPS),  (MA_AVOID_CORRIDORS | MA_HIT_STEAL_FLEE)},
+    {0, "paralytic bloat",	G_BLOAT,&pink,           4,		 0,		100,	    {0, 0, 0},		5,	120,	100,	DF_RED_BLOOD,   0,		  false, 0,	DF_PARALYSIS_GAS_CLOUD_POTION, {0},
+		(MONST_FLIES | MONST_FLITS), (MA_KAMIKAZE | MA_DF_ON_DEATH)},
 
     //kBrogue
-    {0, "crystal jelly",   G_JELLY,    &goblinMysticColor,60,     0,      100,     {2, 6, 1},      0,  100,    100,    DF_FORCEFIELD,0,        true,   3, DF_FORCEFIELD, {0},
+    {0, "crystal jelly",   G_JELLY,    &goblinMysticColor,70,     0,      100,     {1, 4, 1},      0,  100,    100,    DF_FORCEFIELD,0,        true,   3, DF_FORCEFIELD, {0},
         (MONST_NEVER_SLEEPS), (MA_CLONE_SELF_ON_DEFEND) },
 };
 
@@ -2004,6 +2012,7 @@ const monsterWords monsterText[NUMBER_MONSTER_KINDS] = {
     {"This mangrove dryad is as old as the earth, and $HISHER gnarled figure houses an ancient power. When angered, $HESHE can call upon the forces of nature to bind $HISHER foes and tear them to shreds.",
         "absorbing", "Absorbing",
         {"whips", "lashes", "thrashes", "lacerates", {0}}},
+    //Brogue+
     {"Clad in shimmering armor, this winged maiden is a terror on the battlefield. $HESHE revels in slaughter and will always fight $HISHER foes to the death.",
         "praying over", "Praying",
         {"slashes", "cuts", "stabs", "skewers", {0}} },
@@ -2016,9 +2025,18 @@ const monsterWords monsterText[NUMBER_MONSTER_KINDS] = {
     { "This clever goblin will pelt you with spears before closing in to fight.",
         "chanting over", "Chanting",
         {"hits", "skewers", {0}} },
+    //gBrogue
     {"This slimy mass lurks in the shadows, invisible to the naked eye. Although weak, when it splits, it can disorient an adventure.",
 		"absorbing", "Feeding",
 		{"smears", "slimes", "drenches"}},
+    {"Much less tribal in nature than others, this goblin relies on $HISHER own cunning and agility to relive adventurers of their treasures. $HESHE wields a stone arrowhead as a makeshift dagger.",
+		"studying", "Studying",
+		{"stabs", "cuts", {0}}}, 
+    {"This floating membrane is filled with paralytic gas. $HESHE can be weaponized if burst from a distance, but $HESHE can also be quite deadly to adventurers distracted by other monsters and unaware of $HISHER presence.",
+		"gazing at", "Gazing",
+		{"bumps", {0}},
+		"bursts, leaving behind an expanding cloud of numbing gas!"},
+    //kBrogue
     {"A jelly that abosorbs crystals which have dissolved into the floor. Occasionally, parts of this jelly fall off and solidify once agian.",
         "absorbing", "Feeding",
         {"smears", "slimes", "drenches", {0}} },
@@ -2057,14 +2075,16 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_BLOAT,          1,      {MK_BLOAT},                             {{0, 2, 1}},                    14,     26,     30},
     {MK_PIT_BLOAT,      1,      {MK_PIT_BLOAT},                         {{0, 2, 1}},                    14,     26,     10},
     {MK_EXPLOSIVE_BLOAT,0,      {0},                                    {{0}},                          10,     26,     10},
+    {MK_PARALYTIC_BLOAT,0,		{0},									{{0}},							6,		26,		10},
     {MK_GOBLIN,         0,      {0},                                    {{0}},                          3,      10,     100},
     {MK_GOBLIN_CONJURER,0,      {0},                                    {{0}},                          3,      10,     70},
-    {MK_GOBLIN_BRAWLER, 0,	    {0},					                {{0}},					    	5,		12,		40},
     {MK_TOAD,           0,      {0},                                    {{0}},                          4,      11,     100},
     {MK_PINK_JELLY,     0,      {0},                                    {{0}},                          4,      13,     100},
-    {MK_GOBLIN_TOTEM,   2,      {MK_GOBLIN,MK_GOBLIN_BRAWLER},          {{2,4,1},{0,1,1}},              5,      13,     100,        0,              MT_CAMP_AREA,   HORDE_NO_PERIODIC_SPAWN},
+    {MK_GOBLIN_BRAWLER, 0,	    {0},					                {{0}},					    	5,		12,		20},
+    {MK_GOBLIN_TOTEM,   1,      {MK_GOBLIN},                            {{2,5,1}},                      5,      13,     100,        0,              MT_CAMP_AREA,   HORDE_NO_PERIODIC_SPAWN},
     {MK_ARROW_TURRET,   0,      {0},                                    {{0}},                          5,      13,     100,        WALL,   0,                      HORDE_NO_PERIODIC_SPAWN},
     {MK_MONKEY,         1,      {MK_MONKEY},                            {{2,4,1}},                      5,      13,     20},
+    {MK_CRYSTAL_JELLY,  0,      {0},                                    {{0}},                          5,      14,     20},
     {MK_VAMPIRE_BAT,    0,      {0},                                    {{0}},                          6,      13,     30},
     {MK_VAMPIRE_BAT,    1,      {MK_VAMPIRE_BAT},                       {{1,2,1}},                      6,      13,     70,      0,              0,              HORDE_NEVER_OOD},
     {MK_ACID_MOUND,     0,      {0},                                    {{0}},                          6,      13,     100},
@@ -2073,8 +2093,8 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_CENTIPEDE,      0,      {0},                                    {{0}},                          7,      14,     100},
     {MK_BOG_MONSTER,    0,      {0},                                    {{0}},                          7,      14,     80,     MUD,            0,              HORDE_NEVER_OOD},
     {MK_OGRE,           0,      {0},                                    {{0}},                          7,      13,     100},
+    {MK_GOBLIN_THIEF,   0,		{0},									{{0}},							8,		13,		20},
     {MK_EEL,            1,      {MK_EEL},                               {{2, 4, 1}},                    8,      22,     70,     DEEP_WATER},
-    {MK_CRYSTAL_JELLY,  0,      {0},                                    {{0}},                          8,      13,     20},
     {MK_ACID_MOUND,     1,      {MK_ACID_MOUND},                        {{2, 4, 1}},                    9,      13,     30},
     {MK_SPIDER,         0,      {0},                                    {{0}},                          9,      16,     100},
     {MK_DAR_BLADEMASTER,1,      {MK_DAR_BLADEMASTER},                   {{0, 1, 1}},                    10,     14,     100},
@@ -2130,8 +2150,9 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
 
     // captives
     {MK_MONKEY,         1,      {MK_KOBOLD},                            {{1, 2, 1}},                    1,      5,      10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
+    {MK_JACKAL,         1,      {MK_GOBLIN},                            {{1, 2, 1}},                    1,      5,      2,      0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_GOBLIN,         1,      {MK_GOBLIN},                            {{1, 2, 1}},                    3,      7,      10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
-    {MK_GOBLIN_BRAWLER, 1,	    {MK_GOBLIN},							{{1, 2, 1}},					3,		7,		1,		0,			0,					HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
+    {MK_GOBLIN_BRAWLER, 1,	    {MK_GOBLIN},							{{1, 2, 1}},					5,		9,		2,		0,			0,					HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_OGRE,           2,      {MK_GOBLIN,MK_GOBLIN_BRAWLER},          {{3, 5, 1},{0,1,1}},            4,      10,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_GOBLIN_MYSTIC,  1,      {MK_KOBOLD},                            {{3, 7, 1}},                    5,      11,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_OGRE,           1,      {MK_OGRE},                              {{1, 2, 1}},                    8,      15,     20,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
@@ -2141,7 +2162,7 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_DAR_BLADEMASTER,1,      {MK_TROLL},                             {{1, 2, 1}},                    12,     19,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_NAGA,           1,      {MK_SALAMANDER},                        {{1, 2, 1}},                    14,     20,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_SALAMANDER,     1,      {MK_NAGA},                              {{1, 2, 1}},                    13,     20,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
-    {MK_DAR_ASSASSIN,   1,		{MK_TROLL},								{{1, 2, 1}},					13,		20,		1,		0,			0,					HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
+    {MK_DAR_ASSASSIN,   1,		{MK_TROLL},								{{1, 2, 1}},					13,		20,		2,		0,			0,					HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_TROLL,          1,      {MK_SALAMANDER},                        {{1, 2, 1}},                    13,     19,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_IMP,            1,      {MK_FURY},                              {{2, 4, 1}},                    18,     26,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_PIXIE,          1,      {MK_IMP, MK_PHANTOM},                   {{1, 2, 1}, {1, 2, 1}},         14,     21,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
@@ -2188,7 +2209,7 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
 
     //unBrogue
     // group ambushes -- elevator, chasm, stone bridge, deep water. note chasm edge ambushes are larger here because they are not multiplied in a machine
-	{MK_KOBOLD,			1,		{MK_KOBOLD},							{{2, 4, 1}},					1,		4,		100,	   TRAP_DOOR_ELEVATOR,0,			HORDE_MACHINE_AMBUSH},
+	{MK_KOBOLD,			1,		{MK_KOBOLD},							{{2, 2, 1}},					1,		4,		100,	   TRAP_DOOR_ELEVATOR,0,			HORDE_MACHINE_AMBUSH},
 
     // machine turrets
     {MK_ARROW_TURRET,   0,      {0},                                    {{0}},                          5,      13,     100,        TURRET_DORMANT, 0,              HORDE_MACHINE_TURRET},
