@@ -2478,7 +2478,7 @@ enum machineFeatureFlags {
     MF_NO_THROWING_WEAPONS          = Fl(4),    // the generated item cannot be a throwing weapon
     MF_GENERATE_HORDE               = Fl(5),    // generate a monster horde that has all of the horde flags
     MF_BUILD_AT_ORIGIN              = Fl(6),    // generate this feature at the room entrance
-    // unused                       = Fl(7),    //
+    MF_SET_AS_TARGET				= Fl(7),	// set this grid as the target for view/path calculations. Target defaults to origin if this is not set.
     MF_PERMIT_BLOCKING              = Fl(8),    // permit the feature to block the map's passability (e.g. to add a locked door)
     MF_TREAT_AS_BLOCKING            = Fl(9),    // treat this terrain as though it blocks, for purposes of deciding whether it can be placed there
     MF_NEAR_ORIGIN                  = Fl(10),   // feature must spawn in the rough quarter of tiles closest to the origin
@@ -2491,7 +2491,7 @@ enum machineFeatureFlags {
     MF_ALTERNATIVE_2                = Fl(17),   // same as MF_ALTERNATIVE, but provides for a second set of alternatives of which only one will be chosen
     MF_REQUIRE_GOOD_RUNIC           = Fl(18),   // generated item must be uncursed runic
     MF_MONSTERS_DORMANT             = Fl(19),   // monsters are dormant, and appear when a dungeon feature with DFF_ACTIVATE_DORMANT_MONSTER spawns on their tile
-    // unused                       = Fl(20),   //
+    MF_ADJACENT_TO_TARGET			= Fl(20),	// build 1 grid from the target, ignoring occupation restrictions
     MF_BUILD_IN_WALLS               = Fl(21),   // build in an impassable tile that is adjacent to the interior
     MF_BUILD_ANYWHERE_ON_LEVEL      = Fl(22),   // build anywhere on the level that is not inside the machine
     MF_REPEAT_UNTIL_NO_PROGRESS     = Fl(23),   // keep trying to build this feature set until no changes are made
@@ -2502,6 +2502,12 @@ enum machineFeatureFlags {
     MF_NOT_ON_LEVEL_PERIMETER       = Fl(28),   // don't build it in the outermost walls of the level
     MF_SKELETON_KEY                 = Fl(29),   // if a key is generated or adopted by this feature, it will open all locks in this machine.
     MF_KEY_DISPOSABLE               = Fl(30),   // if a key is generated or adopted, it will self-destruct after being used at this current location.
+    MF_ADJACENT_TO_ORIGIN           = Fl(31),   // build 1 grid from the origin, ignoring occupation restrictions
+
+    MF_TARGET_CANDIDATES		= (MF_ADJACENT_TO_TARGET),
+												// calls candidate finding routine with target instead of origin. TODO: Change this so both are supported in one machine.
+	MF_DYNAMIC_CANDIDATES		= (MF_ADJACENT_TO_TARGET),
+												// recalculate candidates every time a feature is placed, instead of for every feature line
 };
 
 typedef struct machineFeature {
@@ -2593,6 +2599,7 @@ enum machineTypes {
     MT_KEY_REWARD_LIBRARY,
     //unBrogue
     MT_KEY_KOBOLD_ELEVATOR_AMBUSH_AREA,
+
     MT_KEY_SECRET_ROOM,
     MT_KEY_THROWING_TUTORIAL_AREA,
     MT_KEY_RAT_TRAP_ROOM,

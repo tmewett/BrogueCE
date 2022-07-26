@@ -1280,8 +1280,8 @@ const blueprint blueprintCatalog[NUMBER_BLUEPRINTS] = {
     //unBrogue
     // Kobold elevator ambush -- toss an item onto the pressure plate to retract the portcullis -- results in an elevator lowering and kobolds/bloats attacking
 	{{1, 4},			{70, 70},	6,     4,           0,                  (BP_VESTIBULE | BP_NO_INTERIOR_FLAG), {
-		{DF_MEDIUM_ELEVATOR_SHAFT, MACHINE_PRESSURE_PLATE, LIQUID, {1,1}, 1,0,		0,			0,				1,				0,			0,			(MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)},
-		{0,			0,				0,			{2, 3},		1,			0,			0,			0,				1,				HORDE_MACHINE_AMBUSH,0,	(MF_GENERATE_HORDE | MF_MONSTERS_DORMANT)},
+		{DF_MEDIUM_ELEVATOR_SHAFT, MACHINE_PRESSURE_PLATE, LIQUID, {1,1}, 1,0,		0,			0,				1,				0,			0,			(MF_SET_AS_TARGET | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)},
+		{0,			0,	0,		{2, 3},		1,			0,			0,			0,				1,				HORDE_MACHINE_AMBUSH,0,	(MF_ADJACENT_TO_TARGET | MF_GENERATE_HORDE | MF_MONSTERS_DORMANT)},
 		{0,			PORTCULLIS_CLOSED,DUNGEON,  {1,1},      1,			0,			0,			0,				3,				0,			0,			(MF_IMPREGNABLE | MF_PERMIT_BLOCKING | MF_BUILD_AT_ORIGIN | MF_ALTERNATIVE)},
 		{0,         WORM_TUNNEL_OUTER_WALL,DUNGEON,{1,1},	1,			0,			-1,			0,				1,				0,			0,			(MF_BUILD_AT_ORIGIN | MF_PERMIT_BLOCKING | MF_IMPREGNABLE | MF_ALTERNATIVE)}}},
     // Plain locked door, key guarded by an adoptive room
@@ -1342,12 +1342,14 @@ const blueprint blueprintCatalog[NUMBER_BLUEPRINTS] = {
         {0,         ALTAR_CAGE_OPEN,DUNGEON,    {1,2},      1,          (STAFF|RING|CHARM),-1,  0,              2,              0,          (ITEM_IS_KEY | ITEM_KIND_AUTO_ID | ITEM_MAX_CHARGES_KNOWN | ITEM_PLAYER_AVOIDS),    (MF_GENERATE_ITEM | MF_NO_THROWING_WEAPONS | MF_TREAT_AS_BLOCKING | MF_IMPREGNABLE)},
         {0,         ALTAR_CAGE_OPEN,DUNGEON,    {1,1},      1,          0,          -1,         0,              2,              0,          (ITEM_IS_KEY | ITEM_PLAYER_AVOIDS | ITEM_MAX_CHARGES_KNOWN),    (MF_ADOPT_ITEM | MF_TREAT_AS_BLOCKING | MF_IMPREGNABLE)},
         {0,         STATUE_INERT,DUNGEON,       {1,3},      0,          0,          -1,         0,              2,              0,          0,          (MF_TREAT_AS_BLOCKING | MF_BUILD_IN_WALLS | MF_IMPREGNABLE)}}},
+
     //unBrogue
     // Kobold elevator ambush -- toss an item onto the pressure plate to retract the cage and reveal the key -- results in an elevator lowering and kobolds/bloats attacking
-	{{1, 4},			{70, 80},   6,		3,			0,              (BP_ADOPT_ITEM | BP_NO_INTERIOR_FLAG), {
+	{{1, 4},			{70, 80},   6,		3,			0,                 (BP_ADOPT_ITEM | BP_NO_INTERIOR_FLAG), {
 		{0,			ALTAR_CAGE_RETRACTABLE,DUNGEON,{1,1},	1,			0,			-1,			0,				3,				0,			0,			(MF_ADOPT_ITEM | MF_IMPREGNABLE | MF_NOT_IN_HALLWAY)},
-		{DF_MEDIUM_ELEVATOR_SHAFT, MACHINE_PRESSURE_PLATE, LIQUID, {1,1}, 1,0,		0,			0,				1,				0,			0,			(MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)},
-		{0,			0,				0,			{2, 3},		1,			0,			0,			0,				1,				HORDE_MACHINE_AMBUSH,0,	(MF_GENERATE_HORDE | MF_MONSTERS_DORMANT)}}},
+		{DF_MEDIUM_ELEVATOR_SHAFT, MACHINE_PRESSURE_PLATE, LIQUID, {1,1}, 1,0,		0,			0,				1,				0,			0,			(MF_SET_AS_TARGET | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)},
+		{0,			0,				0,			{2, 3},		1,			0,			0,			0,				1,				HORDE_MACHINE_AMBUSH,0,	(MF_ADJACENT_TO_TARGET | MF_GENERATE_HORDE | MF_MONSTERS_DORMANT)}}},
+
     // Secret room -- key on an altar in a secret room
     {{1, AMULET_LEVEL}, {15, 100},  1,      2,          0,                  (BP_ROOM | BP_ADOPT_ITEM), {
         {0,         ALTAR_INERT,DUNGEON,        {1,1},      1,          0,          -1,         0,              1,              0,          ITEM_PLAYER_AVOIDS, (MF_ADOPT_ITEM | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)},
@@ -1765,13 +1767,13 @@ creatureType monsterCatalog[NUMBER_MONSTER_KINDS] = {
         (MONST_CARRY_ITEM_25 | MONST_MALE | MONST_FEMALE), (MA_POISONS | MA_DEFEND_INVISIBLE) },
     {0, "medusa", G_ANCIENT_SPIRIT, &darPriestessColor, 40,	    60,		120,	{4, 12, 1},		20,	100,	100,	DF_RED_BLOOD,   0,        true,  0, 0,              {0},
         (MONST_MAINTAINS_DISTANCE | MONST_FEMALE | MONST_NEVER_SLEEPS), (MA_POISONS | MA_STONE_GAZE)},
-    { 0, "goblin brawler", G_GOBLIN,	&orange,	12,		10,		150,	{4, 7, 1},		20,	100,	100,	DF_RED_BLOOD,	0,      false,		0,		0,              {BOLT_THROWN_SPEAR},
+    { 0, "goblin brawler", G_GOBLIN,	    &orange,	12,		10,		150,	{4, 7, 1},		20,	100,	100,	DF_RED_BLOOD,	0,        false, 0,	0,              {BOLT_THROWN_SPEAR},
         (MONST_ALWAYS_USE_ABILITY),  (MA_AVOID_CORRIDORS | MA_ATTACKS_PENETRATE | MA_LIMITED_AMMO) },
 
     //New Monsters -> gBrogue
     {0,	"nether jelly",	G_JELLY,	&ectoplasmColor,	80, 	0,		130,	{2, 6, 1},	0,	150,	150,    DF_ECTOPLASM_BLOOD, 0,         true, 2,	DF_ECTOPLASM_DROPLET,{0},
 		(MONST_NEVER_SLEEPS | MONST_INVISIBLE), (MA_CLONE_SELF_ON_DEFEND)},
-    {0, "goblin thief",	G_GOBLIN,	&darkGray,      17,		10,		110,		{2, 5, 1},		10,	110,	100,	DF_RED_BLOOD,	0,		0,		0,              {0},
+    {0, "goblin thief",	G_GOBLIN,	&darkGray,      17,		10,		110,		{2, 5, 1},		10,	110,	100,	DF_RED_BLOOD,	0,		  false, 0,	0,              {0},
         (MONST_NEVER_SLEEPS),  (MA_AVOID_CORRIDORS | MA_HIT_STEAL_FLEE)},
 
     //kBrogue
@@ -2197,7 +2199,7 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
 
     //unBrogue
     // group ambushes -- elevator, chasm, stone bridge, deep water. note chasm edge ambushes are larger here because they are not multiplied in a machine
-	{MK_KOBOLD,			1,		{MK_KOBOLD},							{{2, 4, 1}},					1,		4,		100,	   TRAP_DOOR_ELEVATOR,0,			HORDE_MACHINE_AMBUSH},
+	{MK_KOBOLD,			1,		{MK_KOBOLD},							{{2, 2, 1}},					1,		4,		100,	   TRAP_DOOR_ELEVATOR,0,			HORDE_MACHINE_AMBUSH},
 
     // machine turrets
     {MK_ARROW_TURRET,   0,      {0},                                    {{0}},                          5,      13,     100,        TURRET_DORMANT, 0,              HORDE_MACHINE_TURRET},
