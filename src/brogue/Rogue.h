@@ -1065,7 +1065,7 @@ enum monsterTypes {
 
 #define NUMBER_MUTATORS             8
 
-#define NUMBER_HORDES               177
+#define NUMBER_HORDES               179
 
 #define MONSTER_CLASS_COUNT         15
 
