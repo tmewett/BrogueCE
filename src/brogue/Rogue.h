@@ -1056,6 +1056,7 @@ enum monsterTypes {
     //gBrogue
     MK_NETHER_JELLY,
     MK_GOBLIN_THIEF,
+    MK_PARALYTIC_BLOAT,
 
     //kBrogue
     MK_CRYSTAL_JELLY,
@@ -1065,7 +1066,7 @@ enum monsterTypes {
 
 #define NUMBER_MUTATORS             8
 
-#define NUMBER_HORDES               179
+#define NUMBER_HORDES               185
 
 #define MONSTER_CLASS_COUNT         15
 

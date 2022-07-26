@@ -1490,9 +1490,11 @@ const blueprint blueprintCatalog[NUMBER_BLUEPRINTS] = {
         {0,         DEMONIC_STATUE,DUNGEON,     {1,1},      1,          0,          -1,         0,              2,              0,          0,          (MF_FAR_FROM_ORIGIN | MF_NOT_IN_HALLWAY | MF_IMPREGNABLE)},
         {0,         STATUE_INSTACRACK,DUNGEON,  {1,1},      1,          0,          -1,         0,              2,              (HORDE_SACRIFICE_TARGET), 0, (MF_BUILD_ANYWHERE_ON_LEVEL | MF_GENERATE_HORDE | MF_MONSTERS_DORMANT | MF_TREAT_AS_BLOCKING | MF_IMPREGNABLE | MF_NOT_IN_HALLWAY)}}},
     // Summoning circle -- key in a room with an eldritch totem, glyphs unavoidable. // DISABLED. (Not fun enough.)
-    {{12, AMULET_LEVEL}, {50, 100}, 0,      2,          0,                  (BP_ROOM | BP_OPEN_INTERIOR | BP_ADOPT_ITEM),   {
-        {DF_GLYPH_CIRCLE,ALTAR_INERT,DUNGEON,   {1,1},      1,          0,          -1,         0,              3,              0,          0,          (MF_ADOPT_ITEM | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY | MF_FAR_FROM_ORIGIN)},
-        {DF_GLYPH_CIRCLE,0,     0,              {1,1},      1,          0,          -1,         MK_ELDRITCH_TOTEM,3,            0,          0,          (MF_FAR_FROM_ORIGIN | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)}}},
+    {{12, AMULET_LEVEL}, {50, 100}, 7,      4,          0,                  (BP_ROOM | BP_OPEN_INTERIOR | BP_ADOPT_ITEM),   {
+        {DF_GLYPH_CIRCLE,ALTAR_SWITCH,DUNGEON,   {1,1},      1,         0,          -1,         0,              3,              0,          0,          (MF_ADOPT_ITEM | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY | MF_FAR_FROM_ORIGIN)},
+		{0,			MACHINE_POISON_GAS_VENT_HIDDEN,DUNGEON,{1,2}, 1,	0,			-1,			0,				2,				0,			0,			(MF_FAR_FROM_ORIGIN | MF_ALTERNATIVE)},
+        {DF_GLYPH_CIRCLE,0,     0,              {1,1},      1,          0,          -1,         MK_ELDRITCH_TOTEM,3,            0,          0,          (MF_FAR_FROM_ORIGIN | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)},
+        {0,         MACHINE_GLYPH,DUNGEON,      {1,1},		0,			0,			-1,			0,				1,				0,			0,			(MF_BUILD_AT_ORIGIN)}}},
     // Beckoning obstacle -- key surrounded by glyphs in a room with a mirrored totem.
     {{5, AMULET_LEVEL}, {60, 100},  10,     4,          0,                  (BP_ROOM | BP_PURGE_INTERIOR | BP_SURROUND_WITH_WALLS | BP_OPEN_INTERIOR | BP_ADOPT_ITEM), {
         {DF_GLYPH_CIRCLE,ALTAR_INERT,DUNGEON,   {1,1},      1,          0,          -1,         0,              3,              0,          0,          (MF_ADOPT_ITEM | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY | MF_FAR_FROM_ORIGIN | MF_IN_VIEW_OF_ORIGIN)},
@@ -1775,6 +1777,8 @@ creatureType monsterCatalog[NUMBER_MONSTER_KINDS] = {
 		(MONST_NEVER_SLEEPS | MONST_INVISIBLE), (MA_CLONE_SELF_ON_DEFEND)},
     {0, "goblin thief",	G_GOBLIN,	&darkGray,      17,		10,		110,		{2, 5, 1},		10,	110,	100,	DF_RED_BLOOD,	0,		  false, 0,	0,              {0},
         (MONST_NEVER_SLEEPS),  (MA_AVOID_CORRIDORS | MA_HIT_STEAL_FLEE)},
+    {0, "paralytic bloat",	G_BLOAT,&pink,           4,		 0,		100,	    {0, 0, 0},		5,	120,	100,	DF_RED_BLOOD,   0,		  false, 0,	DF_PARALYSIS_GAS_CLOUD_POTION, {0},
+		(MONST_FLIES | MONST_FLITS), (MA_KAMIKAZE | MA_DF_ON_DEATH)},
 
     //kBrogue
     {0, "crystal jelly",   G_JELLY,    &goblinMysticColor,60,     0,      100,     {2, 6, 1},      0,  100,    100,    DF_FORCEFIELD,0,        true,   3, DF_FORCEFIELD, {0},
@@ -2027,7 +2031,11 @@ const monsterWords monsterText[NUMBER_MONSTER_KINDS] = {
 		{"smears", "slimes", "drenches"}},
     {"Much less tribal in nature than others, this goblin relies on $HISHER own cunning and agility to relive adventurers of their treasures. $HESHE wields a stone arrowhead as a makeshift dagger.",
 		"studying", "Studying",
-		{"stabs", "cuts", {0}}},
+		{"stabs", "cuts", {0}}}, 
+    {"This floating membrane is filled with paralytic gas. $HESHE can be weaponized if burst from a distance, but $HESHE can also be quite deadly to adventurers distracted by other monsters and unaware of $HISHER presence.",
+		"gazing at", "Gazing",
+		{"bumps", {0}},
+		"bursts, leaving behind an expanding cloud of numbing gas!"},
     //kBrogue
     {"A jelly that abosorbs crystals which have dissolved into the floor. Occasionally, parts of this jelly fall off and solidify once agian.",
         "absorbing", "Feeding",
@@ -2067,6 +2075,7 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_BLOAT,          1,      {MK_BLOAT},                             {{0, 2, 1}},                    14,     26,     30},
     {MK_PIT_BLOAT,      1,      {MK_PIT_BLOAT},                         {{0, 2, 1}},                    14,     26,     10},
     {MK_EXPLOSIVE_BLOAT,0,      {0},                                    {{0}},                          10,     26,     10},
+    {MK_PARALYTIC_BLOAT,0,		{0},									{{0}},							6,		26,		10},
     {MK_GOBLIN,         0,      {0},                                    {{0}},                          3,      10,     100},
     {MK_GOBLIN_CONJURER,0,      {0},                                    {{0}},                          3,      10,     70},
     {MK_TOAD,           0,      {0},                                    {{0}},                          4,      11,     100},
