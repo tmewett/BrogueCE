@@ -693,7 +693,7 @@ void mainInputLoop() {
                     rogue.playbackMode = false;
 
                     focusedOnMonster = true;
-                    if (monst != &player && (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience || player.status[STATUS_TELEPATHIC])) {
+                    if (monst != &player && (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience || player.status[STATUS_TELEPATHIC] || rogue.lightMultiplier > 1)) {
                         printMonsterDetails(monst, rbuf);
                         textDisplayed = true;
                     }
@@ -4827,7 +4827,9 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                 } else if ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID)
                            && !cellHasTMFlag(monst->loc.x, monst->loc.y, TM_ALLOWS_SUBMERGING)) {
                     printString("     (Helpless)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
-                } else if (monst->creatureState == MONSTER_SLEEPING && y < ROWS - 1) {
+                } else if((monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader && (monst->leader->info.flags & MONST_CARRY_ITEM_25) && (monst->leader->info.abilityFlags & MA_ATTACKS_ALL_ADJACENT)) {
+                    printString("     (Worshipping)  ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                }else if (monst->creatureState == MONSTER_SLEEPING && y < ROWS - 1) {
                     printString("     (Sleeping)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if ((monst->creatureState == MONSTER_ALLY) && y < ROWS - 1) {
                     printString("       (Ally)       ", 0, y++, (dim ? &darkGray : &gray), &black, 0);

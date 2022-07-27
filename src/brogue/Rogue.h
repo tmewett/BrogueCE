@@ -1060,13 +1060,14 @@ enum monsterTypes {
 
     //kBrogue
     MK_CRYSTAL_JELLY,
+    MK_ADOLECENT_DRAGON,
 
     NUMBER_MONSTER_KINDS
 };
 
 #define NUMBER_MUTATORS             8
 
-#define NUMBER_HORDES               185
+#define NUMBER_HORDES               194
 
 #define MONSTER_CLASS_COUNT         15
 

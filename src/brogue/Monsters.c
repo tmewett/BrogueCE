@@ -310,6 +310,9 @@ boolean monsterWillAttackTarget(const creature *attacker, const creature *defend
     if (attacker == defender || (defender->bookkeepingFlags & MB_IS_DYING)) {
         return false;
     }
+    if ((attacker->info.flags & MONST_CARRY_ITEM_25) && (attacker->info.abilityFlags & MA_ATTACKS_ALL_ADJACENT)) {
+        return true;
+    }
     if (attacker == &player
         && defender->creatureState == MONSTER_ALLY) {
 
@@ -773,7 +776,12 @@ boolean spawnMinions(short hordeID, creature *leader, boolean summoned, boolean 
             pmap[monst->loc.x][monst->loc.y].flags |= HAS_MONSTER;
             monst->bookkeepingFlags |= (MB_FOLLOWER | MB_JUST_SUMMONED);
             monst->leader = leader;
-            monst->creatureState = leader->creatureState;
+            if ((monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader 
+                && (monst->leader->info.flags & MONST_CARRY_ITEM_25) && (monst->leader->info.abilityFlags & MA_ATTACKS_ALL_ADJACENT)){
+                monst->creatureState = MONSTER_WANDERING;
+            } else {
+                monst->creatureState = leader->creatureState;
+            }
             monst->mapToMe = NULL;
             if (theHorde->flags & HORDE_DIES_ON_LEADER_DEATH) {
                 monst->bookkeepingFlags |= MB_BOUND_TO_LEADER;
@@ -3566,7 +3574,8 @@ void monstersTurn(creature *monst) {
         if (monst->bookkeepingFlags & MB_FOLLOWER) {
             if (distanceBetween(x, y, monst->leader->loc.x, monst->leader->loc.y) > 2) {
                 pathTowardCreature(monst, monst->leader);
-            } else if (monst->leader->info.flags & MONST_IMMOBILE) {
+            } else if (monst->leader->info.flags & MONST_IMMOBILE
+                        || (monst->leader->info.flags & MONST_CARRY_ITEM_25) && (monst->leader->info.abilityFlags & MA_ATTACKS_ALL_ADJACENT)) {
                 monsterMillAbout(monst, 100); // Worshipers will pace frenetically.
             } else if (monst->leader->bookkeepingFlags & MB_CAPTIVE) {
                 monsterMillAbout(monst, 10); // Captors are languid.
@@ -3620,6 +3629,10 @@ boolean canPass(creature *mover, creature *blocker) {
 
         return false;
     }
+    if ((mover->info.flags & MONST_CARRY_ITEM_25) && (mover->info.abilityFlags & MA_ATTACKS_ALL_ADJACENT)
+        || (blocker->info.flags & MONST_CARRY_ITEM_25) && (blocker->info.abilityFlags & MA_ATTACKS_ALL_ADJACENT)) {
+        return false;
+        }
 
     if ((blocker->bookkeepingFlags & (MB_CAPTIVE | MB_ABSORBING))
         || (blocker->info.flags & MONST_IMMOBILE)) {
