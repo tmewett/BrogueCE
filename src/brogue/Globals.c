@@ -1783,8 +1783,8 @@ creatureType monsterCatalog[NUMBER_MONSTER_KINDS] = {
     //kBrogue
     {0, "crystal jelly",   G_JELLY,    &goblinMysticColor,70,     0,      100,     {1, 4, 1},      0,  100,    100,    DF_FORCEFIELD,0,        true,   3, DF_FORCEFIELD, {0},
         (MONST_NEVER_SLEEPS), (MA_CLONE_SELF_ON_DEFEND) },
-    {0, "adolecent dragon", G_DRAGON,  &red,              100,    90,     250,    {8, 15, 4},     20, 50,     100,    DF_GREEN_BLOOD,0,       true,   0, 0,             {0},
-        (MONST_FLIES | MONST_IMMUNE_TO_FIRE | MONST_CARRY_ITEM_25), (MA_ATTACKS_ALL_ADJACENT)},
+    {0, "adolecent dragon", G_DRAGON,  &red,              100,    90,     250,    {8, 15, 4},     20, 100,     100,    DF_GREEN_BLOOD,0,       true,   0, 0,             {0},
+        (MONST_IMMUNE_TO_FIRE | MONST_CARRY_ITEM_25), (MA_ATTACKS_ALL_ADJACENT)},
 };
 
 const monsterWords monsterText[NUMBER_MONSTER_KINDS] = {
@@ -2303,7 +2303,7 @@ const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT] = {
     {"animal",          10,         10,         {MK_RAT, MK_MONKEY, MK_JACKAL, MK_EEL, MK_TOAD, MK_VAMPIRE_BAT, MK_CENTIPEDE, MK_SPIDER}},
     {"goblin",          10,         10,         {MK_GOBLIN, MK_GOBLIN_CONJURER, MK_GOBLIN_MYSTIC, MK_GOBLIN_TOTEM, MK_GOBLIN_CHIEFTAN, MK_SPECTRAL_BLADE,MK_GOBLIN_BRAWLER, MK_GOBLIN_THIEF}},
     {"ogre",            10,         16,         {MK_OGRE, MK_OGRE_SHAMAN, MK_OGRE_TOTEM}},
-    {"dragon",          10,         -1,         {MK_DRAGON}},
+    {"dragon",          10,         -1,         {MK_DRAGON, MK_ADOLECENT_DRAGON}},
     {"undead",          10,         -1,         {MK_ZOMBIE, MK_WRAITH, MK_VAMPIRE, MK_PHANTOM, MK_LICH, MK_REVENANT}},
     {"jelly",           10,         15,         {MK_PINK_JELLY, MK_BLACK_JELLY, MK_ACID_JELLY, MK_CRYSTAL_JELLY, MK_NETHER_JELLY}},
     {"turret",          5,          18,         {MK_ARROW_TURRET, MK_SPARK_TURRET, MK_DART_TURRET, MK_FLAME_TURRET}},
@@ -2605,7 +2605,7 @@ itemTable ringTable[NUMBER_RING_KINDS] = {
     {"stealth",         itemGems[1], "",    1,  800,    0,{1,3,1}, false, false, 1, false, "This ring of silent passage will reduce your stealth range, making enemies less likely to notice you and more likely to lose your trail. Staying motionless and lurking in the shadows will make you even harder to spot. Cursed rings of stealth will increase your stealth range, making you easier to spot and to track."},
     {"regeneration",    itemGems[2], "",    1,  750,    0,{1,3,1}, false, false, 1, false, "This ring of sacred life will allow you to recover lost health at an accelerated rate. Cursed rings will decrease or even halt your natural regeneration."},
     {"transference",    itemGems[3], "",    1,  750,    0,{1,3,1}, false, false, 1, false, "This ring of blood magic will heal you in proportion to the damage you inflict on others. Cursed rings will cause you to lose health when inflicting damage."},
-    {"light",           itemGems[4], "",    1,  600,    0,{1,3,1}, false, false, 1, false, "This ring of preternatural vision will allow you to see farther in the dimming light of the deeper dungeon levels. It will not make you more noticeable to enemies."},
+    {"light",           itemGems[4], "",    1,  600,    0,{1,3,1}, false, false, 1, false, "This ring of preternatural vision will allow you to see farther in the dimming light of the deeper dungeon levels. It will not make you more noticeable to enemies. As long as the ring is not cursed, it will also help you see enemies that would otherwise go unnoticed."},
     {"awareness",       itemGems[5], "",    1,  700,    0,{1,3,1}, false, false, 1, false, "This ring of effortless vigilance will enable you to notice traps, secret doors and hidden levers more often and from a greater distance. Cursed rings of awareness will dull your senses, making it harder to notice secrets without actively searching for them."},
     {"wisdom",          itemGems[6], "",    1,  700,    0,{1,3,1}, false, false, 1, false, "This ring of arcane power will cause your staffs to recharge at an accelerated rate. Cursed rings of wisdom will cause your staffs to recharge more slowly."},
     {"reaping",         itemGems[7], "",    1,  700,    0,{1,3,1}, false, false, 1, false, "This ring of blood magic will recharge your staffs and charms every time you hit an enemy. Cursed rings of reaping will drain your staffs and charms with every hit."},
