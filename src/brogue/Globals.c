@@ -1779,11 +1779,13 @@ creatureType monsterCatalog[NUMBER_MONSTER_KINDS] = {
         (MONST_NEVER_SLEEPS),  (MA_AVOID_CORRIDORS | MA_HIT_STEAL_FLEE)},
     {0, "paralytic bloat",	G_BLOAT,&pink,           4,		 0,		100,	    {0, 0, 0},		5,	120,	100,	DF_RED_BLOOD,   0,		  false, 0,	DF_PARALYSIS_GAS_CLOUD_POTION, {0},
 		(MONST_FLIES | MONST_FLITS), (MA_KAMIKAZE | MA_DF_ON_DEATH)},
+    {0, "black dragon",	G_DRAGON,	&darkGray,	 50,	100,     250,	{12, 15, 4},	20,	70,		200,	DF_ECTOPLASM_BLOOD,	LICH_LIGHT, true, 0,	0,              {BOLT_POISON_BREATH},
+		(MONST_CARRY_ITEM_100 | MONST_IMMUNE_TO_WEAPONS), (MA_ATTACKS_ALL_ADJACENT)},
 
     //kBrogue
     {0, "crystal jelly",   G_JELLY,    &goblinMysticColor,70,     0,      100,     {1, 4, 1},      0,  100,    100,    DF_FORCEFIELD,0,        true,   3, DF_FORCEFIELD, {0},
         (MONST_NEVER_SLEEPS), (MA_CLONE_SELF_ON_DEFEND) },
-    {0, "adolecent dragon", G_DRAGON,  &red,              100,    90,     250,    {8, 15, 4},     20, 100,     100,    DF_GREEN_BLOOD,0,       true,   0, 0,             {0},
+    {0, "adolecent dragon", G_DRAGON,  &red,              100,    90,     250,    {8, 14, 4},     20, 100,     100,    DF_GREEN_BLOOD,0,       true,   0, 0,             {0},
         (MONST_IMMUNE_TO_FIRE | MONST_CARRY_ITEM_25), (MA_ATTACKS_ALL_ADJACENT)},
 };
 
@@ -2038,6 +2040,9 @@ const monsterWords monsterText[NUMBER_MONSTER_KINDS] = {
 		"gazing at", "Gazing",
 		{"bumps", {0}},
 		"bursts, leaving behind an expanding cloud of numbing gas!"},
+    {"Though this creature is clearly undead, the dark hide on this dragon shimmers in what little light trickles in to the lower depths of the dungeon. $HISHER penetrating yellow eyes and noxious breath round out its horrifying form.",
+		"consuming", "Consuming",
+		{"claws", "tail-whips", "bites", {0}}},
     //kBrogue
     {"A jelly that abosorbs crystals which have dissolved into the floor. Occasionally, parts of this jelly fall off and solidify once agian.",
         "absorbing", "Feeding",
@@ -2136,7 +2141,8 @@ const hordeType hordeCatalog[NUMBER_HORDES] = {
     {MK_DRAGON,         0,      {0},                                    {{0}},                          24,     DEEPEST_LEVEL-1,        70},
     {MK_DRAGON,         1,      {MK_DRAGON},                            {{1,1,1}},                      27,     DEEPEST_LEVEL-1,        30},
     {MK_GOLEM,          3,      {MK_GOLEM, MK_DAR_PRIESTESS, MK_DAR_BATTLEMAGE}, {{1, 2, 1}, {0,1,1},{0,1,1}},27,DEEPEST_LEVEL-1,   80},
-    {MK_NETHER_JELLY,  	0,		{0},            					    {{0}},    						28,		DEEPEST_LEVEL-1,    20},
+    {MK_NETHER_JELLY,  	0,		{0},            					    {{0}},    						27,		DEEPEST_LEVEL-1,    20},
+    {MK_BLACK_DRAGON,   0,      {0},                                    {{0}},                          28,     DEEPEST_LEVEL-1,    20},
     {MK_GOLEM,          1,      {MK_GOLEM},                             {{5, 10, 2}},                   30,     DEEPEST_LEVEL-1,    20},
     {MK_KRAKEN,         1,      {MK_KRAKEN},                            {{5, 10, 2}},                   30,     DEEPEST_LEVEL-1,    100,        DEEP_WATER},
     {MK_TENTACLE_HORROR,2,      {MK_TENTACLE_HORROR, MK_REVENANT},      {{1, 3, 1}, {2, 4, 1}},         32,     DEEPEST_LEVEL-1,    20},
@@ -2303,15 +2309,15 @@ const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT] = {
     {"animal",          10,         10,         {MK_RAT, MK_MONKEY, MK_JACKAL, MK_EEL, MK_TOAD, MK_VAMPIRE_BAT, MK_CENTIPEDE, MK_SPIDER}},
     {"goblin",          10,         10,         {MK_GOBLIN, MK_GOBLIN_CONJURER, MK_GOBLIN_MYSTIC, MK_GOBLIN_TOTEM, MK_GOBLIN_CHIEFTAN, MK_SPECTRAL_BLADE,MK_GOBLIN_BRAWLER, MK_GOBLIN_THIEF}},
     {"ogre",            10,         16,         {MK_OGRE, MK_OGRE_SHAMAN, MK_OGRE_TOTEM}},
-    {"dragon",          10,         -1,         {MK_DRAGON, MK_ADOLECENT_DRAGON}},
-    {"undead",          10,         -1,         {MK_ZOMBIE, MK_WRAITH, MK_VAMPIRE, MK_PHANTOM, MK_LICH, MK_REVENANT}},
+    {"dragon",          10,         -1,         {MK_DRAGON, MK_ADOLECENT_DRAGON, MK_BLACK_DRAGON}},
+    {"undead",          10,         -1,         {MK_ZOMBIE, MK_WRAITH, MK_VAMPIRE, MK_PHANTOM, MK_LICH, MK_REVENANT, MK_BLACK_DRAGON}},
     {"jelly",           10,         15,         {MK_PINK_JELLY, MK_BLACK_JELLY, MK_ACID_JELLY, MK_CRYSTAL_JELLY, MK_NETHER_JELLY}},
     {"turret",          5,          18,         {MK_ARROW_TURRET, MK_SPARK_TURRET, MK_DART_TURRET, MK_FLAME_TURRET}},
     {"infernal",        10,         -1,         {MK_FLAMEDANCER, MK_IMP, MK_REVENANT, MK_FURY, MK_PHANTOM, MK_IFRIT}},
     {"mage",            10,         -1,         {MK_GOBLIN_CONJURER, MK_GOBLIN_MYSTIC, MK_OGRE_SHAMAN, MK_DAR_PRIESTESS, MK_DAR_BATTLEMAGE, MK_PIXIE, MK_LICH}},
     {"waterborne",      10,         17,         {MK_EEL, MK_NAGA, MK_KRAKEN}},
-    {"airborne",        10,         15,         {MK_VAMPIRE_BAT, MK_WILL_O_THE_WISP, MK_PIXIE, MK_PHANTOM, MK_FURY, MK_IFRIT, MK_PHOENIX}},
-    {"fireborne",       10,         12,         {MK_WILL_O_THE_WISP, MK_SALAMANDER, MK_FLAMEDANCER, MK_PHOENIX}},
+    {"airborne",        10,         15,         {MK_VAMPIRE_BAT, MK_WILL_O_THE_WISP, MK_PIXIE, MK_PHANTOM, MK_FURY, MK_IFRIT, MK_PHOENIX, MK_VALKYRIE}},
+    {"fireborne",       10,         12,         {MK_WILL_O_THE_WISP, MK_SALAMANDER, MK_FLAMEDANCER, MK_PHOENIX, MK_PHOENIX_EGG}},
     {"troll",           10,         15,         {MK_TROLL}},
 };
 
@@ -2660,6 +2666,7 @@ const bolt boltCatalog[NUMBER_BOLT_KINDS] = {
     {"growing vines",           "releases carnivorous vines into the ground", "conjures carnivorous vines", G_GRASS,&tanColor,      NULL,               BE_NONE,        5,              DF_ANCIENT_SPIRIT_GRASS, DF_ANCIENT_SPIRIT_VINES, (MONST_INANIMATE | MONST_IMMUNE_TO_WEBS),   (BF_TARGET_ENEMIES | BF_NEVER_REFLECTS)},
     {"whip",                    "whips",                        "wields a whip",                            '*',    &tanColor,      NULL,               BE_ATTACK,      1,              0,          0,          MONST_IMMUNE_TO_WEAPONS,    (BF_TARGET_ENEMIES | BF_NEVER_REFLECTS | BF_NOT_LEARNABLE | BF_DISPLAY_CHAR_ALONG_LENGTH)},
     {"spear",                   "throws a spear",               "can throw $HISHER weapon",                 G_WEAPON,&gray,         NULL,               BE_ATTACK,      1,              0,          0,          MONST_IMMUNE_TO_WEAPONS,    (BF_TARGET_ENEMIES | BF_NEVER_REFLECTS | BF_NOT_LEARNABLE)},
+    {"poisonous breath",        "breathes poisonous fumes", "can breathe poisonous fumes",                  0,    NULL,           &poisonColor,     BE_POISON,            5,              0,          0,         0,       (BF_TARGET_ENEMIES | BF_NOT_LEARNABLE)},
 };
 
 const feat featTable[FEAT_COUNT] = {

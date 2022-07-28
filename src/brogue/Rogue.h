@@ -922,6 +922,7 @@ enum boltType {
     BOLT_ANCIENT_SPIRIT_VINES,
     BOLT_WHIP,
     BOLT_THROWN_SPEAR,
+    BOLT_POISON_BREATH,
     NUMBER_BOLT_KINDS
 };
 
@@ -1057,6 +1058,7 @@ enum monsterTypes {
     MK_NETHER_JELLY,
     MK_GOBLIN_THIEF,
     MK_PARALYTIC_BLOAT,
+    MK_BLACK_DRAGON,
 
     //kBrogue
     MK_CRYSTAL_JELLY,
@@ -1067,7 +1069,7 @@ enum monsterTypes {
 
 #define NUMBER_MUTATORS             8
 
-#define NUMBER_HORDES               194
+#define NUMBER_HORDES               195
 
 #define MONSTER_CLASS_COUNT         15
 
