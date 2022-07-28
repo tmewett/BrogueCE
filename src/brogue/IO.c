@@ -4827,8 +4827,6 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                 } else if ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID)
                            && !cellHasTMFlag(monst->loc.x, monst->loc.y, TM_ALLOWS_SUBMERGING)) {
                     printString("     (Helpless)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
-                } else if((monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader && (monst->leader->info.flags & MONST_CARRY_ITEM_25) && (monst->leader->info.abilityFlags & MA_ATTACKS_ALL_ADJACENT)) {
-                    printString("     (Worshipping)  ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 }else if (monst->creatureState == MONSTER_SLEEPING && y < ROWS - 1) {
                     printString("     (Sleeping)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if ((monst->creatureState == MONSTER_ALLY) && y < ROWS - 1) {
@@ -4836,7 +4834,8 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                 } else if (monst->creatureState == MONSTER_FLEEING && y < ROWS - 1) {
                     printString("     (Fleeing)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if ((monst->creatureState == MONSTER_WANDERING) && y < ROWS - 1) {
-                    if ((monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader && (monst->leader->info.flags & MONST_IMMOBILE)) {
+                    if ((monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader && (monst->leader->info.flags & MONST_IMMOBILE)
+                        || (monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader && (monst->leader->info.flags & MONST_CARRY_ITEM_25) && (monst->leader->info.abilityFlags & MA_ATTACKS_ALL_ADJACENT)) {
                         // follower of an immobile leader -- i.e. a totem
                         printString("    (Worshiping)    ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                     } else if ((monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader && (monst->leader->bookkeepingFlags & MB_CAPTIVE)) {
