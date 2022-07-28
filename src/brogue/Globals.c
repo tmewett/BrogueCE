@@ -342,16 +342,16 @@ const color backgroundMessageColor ={60,    20,     70,     0,      0,          
 const color superVictoryColor =     {150,   100,    300,    0,      0,          0,          0,      false};
 
 //const color flameSourceColor = {0, 0, 0, 65, 40, 100, 0, true}; // 1
-//const color flameSourceColor = {0, 0, 0, 80, 50, 100, 0, true}; // 2
+const color flameSourceColor = {7, 0, 0, 50, 30, 200, 0, true}; // 2
 //const color flameSourceColor = {25, 13, 25, 50, 25, 50, 0, true}; // 3
 //const color flameSourceColor = {20, 20, 20, 60, 20, 40, 0, true}; // 4
 //const color flameSourceColor = {30, 18, 18, 70, 36, 36, 0, true}; // 7**
-const color flameSourceColor = {20, 7, 7, 60, 40, 40, 0, true}; // 8
+//const color flameSourceColor = {20, 7, 7, 60, 40, 40, 0, true}; // 8
 const color flameSourceColorSecondary = {7, 2, 0, 10, 0, 0, 0, true};
 
 //const color flameTitleColor = {0, 0, 0, 17, 10, 6, 0, true}; // pale orange
-//const color flameTitleColor = {0, 0, 0, 7, 7, 10, 0, true}; // *pale blue*
-const color flameTitleColor = {0, 0, 0, 9, 9, 15, 0, true}; // *pale blue**
+const color flameTitleColor = {0, 0, 0, 7, 7, 10, 0, true}; // *pale blue*
+//const color flameTitleColor = {0, 0, 0, 9, 9, 15, 0, true}; // *pale blue**
 //const color flameTitleColor = {0, 0, 0, 11, 11, 18, 0, true}; // *pale blue*
 //const color flameTitleColor = {0, 0, 0, 15, 15, 9, 0, true}; // pale yellow
 //const color flameTitleColor = {0, 0, 0, 15, 9, 15, 0, true}; // pale purple
