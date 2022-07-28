@@ -890,6 +890,13 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
     monsterName(attackerName, attacker, true);
 
     switch (rogue.armor->enchant2) {
+        case A_VANISHING:
+	        if (melee && !(attacker->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE)) && rand_percent(10)) {
+                    if (!(player.status[STATUS_INVISIBLE])){
+                        ninjaVanish(attacker, &player, armorImageCount(enchant));
+                    }
+	        }
+	        break;
         case A_MULTIPLICITY:
             if (melee && !(attacker->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE)) && rand_percent(33)) {
                 for (i = 0; i < armorImageCount(enchant); i++) {
