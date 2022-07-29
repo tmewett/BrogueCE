@@ -51,14 +51,24 @@ discover this content across multiple playthroughs.
 
 New Content (*spoilers*)
 -----
+ENEMIES
 - Goblin Brawler
+- Goblin Thief
 - Dar Assassin
+- Paralytic Bloat
 - Valkyrie (legendary ally)
 - Medusa (boss with a custom room)
+- Black Dragon
+- Adolescent Dragon
 - Crystal Jelly
 - Nether Jelly
-- % toggles hit points On/Off in game
+
+WEAPON CHANGES
+- Added armor runic of invisibility
 - Ring of light reveals invisible enemies within physical vision
+
+MISC CHANGES
+- % toggles hit points On/Off in game
 - Feature added to commutation room as a hint on what the altars do
 - Hybrid tileset adjusted to show more ASCII characters than before
 - New Feat: Gemini (Clone Yourself)
