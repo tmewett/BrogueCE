@@ -202,7 +202,7 @@ void describeLocation(char *buf, short x, short y) {
         return;
     }
 
-    // telepathy & ring of light
+    // telepathy
     if (monst
         && !canSeeMonster(monst)
         && monsterRevealed(monst)) {
@@ -225,11 +225,7 @@ void describeLocation(char *buf, short x, short y) {
             strcpy(preposition, "");
         }
 
-        if(player.status[STATUS_TELEPATHIC]) {
-            sprintf(buf, "you can sense a %s psychic emanation %s%s.", adjective, preposition, object);
-        } else {
-            sprintf(buf, "your ring of light casts a %s shadow %s%s.", adjective, preposition, object);
-        }
+        sprintf(buf, "you can sense a %s psychic emanation %s%s.", adjective, preposition, object);
         restoreRNG;
         return;
     }

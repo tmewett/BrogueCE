@@ -36,20 +36,20 @@
 #define USE_UNICODE
 
 // Brogue version number
-#define BROGUE_MAJOR 2
-#define BROGUE_MINOR 0
-#define BROGUE_PATCH 0
+#define BROGUE_MAJOR 1
+#define BROGUE_MINOR 11
+#define BROGUE_PATCH 1
 
 // Expanding a macro as a string constant requires two levels of macros
 #define _str(x) #x
 #define STRINGIFY(x) _str(x)
 
 // Brogue version: what the user sees in the menu and title
-#define BROGUE_VERSION_STRING "kBrogue " STRINGIFY(BROGUE_MAJOR) "." STRINGIFY(BROGUE_MINOR) "." STRINGIFY(BROGUE_PATCH) //BROGUE_EXTRA_VERSION
+#define BROGUE_VERSION_STRING "CE " STRINGIFY(BROGUE_MAJOR) "." STRINGIFY(BROGUE_MINOR) "." STRINGIFY(BROGUE_PATCH) BROGUE_EXTRA_VERSION
 
 // Recording version. Saved into recordings and save files made by this version.
 // Cannot be longer than 16 chars
-#define BROGUE_RECORDING_VERSION_STRING "kBrogue " STRINGIFY(BROGUE_MAJOR) "." STRINGIFY(BROGUE_MINOR) "." STRINGIFY(BROGUE_PATCH)
+#define BROGUE_RECORDING_VERSION_STRING "CE " STRINGIFY(BROGUE_MAJOR) "." STRINGIFY(BROGUE_MINOR) "." STRINGIFY(BROGUE_PATCH)
 
 /* Patch pattern. A scanf format string which matches an unsigned short. If this
 matches against a recording version string, it defines a "patch version." During
@@ -61,10 +61,10 @@ which is equal or less than the patch version of the current game
 (rogue.patchLevel is set to the recording's); or b) it doesn't match the version
 strings, but they are equal (rogue.patchLevel is set to 0).
 */
-#define BROGUE_PATCH_VERSION_PATTERN "kBrogue " STRINGIFY(BROGUE_MAJOR) "." STRINGIFY(BROGUE_MINOR) ".%hu"
+#define BROGUE_PATCH_VERSION_PATTERN "CE " STRINGIFY(BROGUE_MAJOR) "." STRINGIFY(BROGUE_MINOR) ".%hu"
 
 // Dungeon version. Used in seed catalog output.
-#define BROGUE_DUNGEON_VERSION_STRING "1.9"
+#define BROGUE_DUNGEON_VERSION_STRING "CE 1.9"
 
 // Macro to compare BROGUE_MAJOR.BROGUE_MINOR.patchVersion to a.b.c
 #define BROGUE_VERSION_ATLEAST(a,b,c) (BROGUE_MAJOR != (a) ? BROGUE_MAJOR > (a) : BROGUE_MINOR != (b) ? BROGUE_MINOR > (b) : rogue.patchVersion >= (c))
@@ -108,9 +108,6 @@ strings, but they are equal (rogue.patchLevel is set to 0).
 
 #define false                   0
 #define true                    1
-
-//Math for Brogue+ idk
-#define FLOAT_FUDGE             0.00001
 
 #define Fl(N)                   ((unsigned long) 1 << (N))
 
@@ -470,8 +467,6 @@ enum tileType {
     GAS_TRAP_POISON,
     TRAP_DOOR_HIDDEN,
     TRAP_DOOR,
-    //unBrogue
-    TRAP_DOOR_ELEVATOR,
     GAS_TRAP_PARALYSIS_HIDDEN,
     GAS_TRAP_PARALYSIS,
     MACHINE_PARALYSIS_VENT_HIDDEN,
@@ -520,8 +515,6 @@ enum tileType {
     BRIDGE,
     BRIDGE_FALLING,
     BRIDGE_EDGE,
-    //unBrogue
-    WOODEN_PLATFORM,
     STONE_BRIDGE,
     MACHINE_FLOOD_WATER_DORMANT,
     MACHINE_FLOOD_WATER_SPREADING,
@@ -617,7 +610,6 @@ enum tileType {
     COMMUTATION_ALTAR_INERT,
     PIPE_GLOWING,
     PIPE_INERT,
-    GRAFFITI,
 
     RESURRECTION_ALTAR,
     RESURRECTION_ALTAR_INERT,
@@ -652,11 +644,6 @@ enum tileType {
     MUD_FLOOR,
     MUD_WALL,
     MUD_DOORWAY,
-
-    //Brogue+
-    //unfortunate creatures turned to stone
-    MEDUSA_STATUE,
-    MEDUSA_STATUE_CRACKING,
 
     NUMBER_TILETYPES,
 };
@@ -851,7 +838,6 @@ enum armorEnchants {
     A_REFLECTION,
     A_RESPIRATION,
     A_DAMPENING,
-    A_VANISHING,
     A_BURDEN,
     NUMBER_GOOD_ARMOR_ENCHANT_KINDS = A_BURDEN,
     A_VULNERABILITY,
@@ -922,8 +908,6 @@ enum boltType {
     BOLT_POISON_DART,
     BOLT_ANCIENT_SPIRIT_VINES,
     BOLT_WHIP,
-    BOLT_THROWN_SPEAR,
-    BOLT_POISON_BREATH,
     NUMBER_BOLT_KINDS
 };
 
@@ -1049,28 +1033,12 @@ enum monsterTypes {
     MK_PHOENIX_EGG,
     MK_ANCIENT_SPIRIT,
 
-    // -> Brogue+
-    MK_VALKYRIE,
-    MK_DAR_ASSASSIN,
-    MK_MEDUSA,
-    MK_GOBLIN_BRAWLER,
-
-    //gBrogue
-    MK_NETHER_JELLY,
-    MK_GOBLIN_THIEF,
-    MK_PARALYTIC_BLOAT,
-    MK_BLACK_DRAGON,
-
-    //kBrogue
-    MK_CRYSTAL_JELLY,
-    MK_ADOLECENT_DRAGON,
-
     NUMBER_MONSTER_KINDS
 };
 
 #define NUMBER_MUTATORS             8
 
-#define NUMBER_HORDES               195
+#define NUMBER_HORDES               177
 
 #define MONSTER_CLASS_COUNT         15
 
@@ -1130,8 +1098,6 @@ enum tileFlags {
 #define TURNS_FOR_FULL_REGEN                300
 #define STOMACH_SIZE                        2150
 #define HUNGER_THRESHOLD                    (STOMACH_SIZE - 1800)
-//Brogue+
-#define TURNS_TO_PETRIFY                    8
 #define WEAK_THRESHOLD                      150
 #define FAINT_THRESHOLD                     50
 #define MAX_EXP_LEVEL                       20
@@ -1216,7 +1182,6 @@ enum tileFlags {
 #define SAVE_GAME_KEY       'S'
 #define NEW_GAME_KEY        'N'
 #define GRAPHICS_KEY        'G'
-//kBrogue
 #define HIT_POINTS_KEY      '%'
 #define SWITCH_TO_PLAYING_KEY 'P'
 #define NUMPAD_0            48
@@ -1630,11 +1595,6 @@ enum dungeonFeatureTypes {
     DF_MEDIUM_LAVA_POND,
     DF_MACHINE_PRESSURE_PLATE_USED,
 
-    //unBrogue
-    //kobold elevator ambush
-    DF_MEDIUM_ELEVATOR_SHAFT,
-	DF_WOODEN_PLATFORM,
-
     // rat trap
     DF_WALL_CRACK,
 
@@ -1751,11 +1711,6 @@ enum dungeonFeatureTypes {
     DF_STENCH_BURN,
     DF_STENCH_SMOLDER,
 
-    //Brogue+
-    // unfortunate creatures turned to stone
-    DF_MEDUSA_STATUE,
-    DF_MEDUSA_STATUE_CRACKING,
-
     NUMBER_DUNGEON_FEATURES,
 };
 
@@ -1765,8 +1720,6 @@ enum dungeonProfileTypes {
 
     DP_GOBLIN_WARREN,
     DP_SENTINEL_SANCTUARY,
-    //Brogue+
-    DP_MEDUSA_LAIR,
 
     NUMBER_DUNGEON_PROFILES,
 };
@@ -1798,7 +1751,6 @@ enum DFFlags {
     DFF_SUPERPRIORITY               = Fl(7),    // Will overwrite terrain of a superior priority.
     DFF_AGGRAVATES_MONSTERS         = Fl(8),    // Will act as though an aggravate monster scroll of effectRadius radius had been read at that point.
     DFF_RESURRECT_ALLY              = Fl(9),    // Will bring back to life your most recently deceased ally.
-    DFF_HORDE_MACHINE_AMBUSH_DORMANT = Fl(10),	// If placed, add a dormant ambush machine horde here
 };
 
 enum boltEffects {
@@ -1969,8 +1921,6 @@ enum terrainMechanicalFlagCatalog {
 
 enum statusEffects {
     STATUS_SEARCHING = 0,
-    //Brogue+
-    STATUS_PETRIFYING,
     STATUS_DONNING,
     STATUS_WEAKENED,
     STATUS_TELEPATHIC,
@@ -2021,7 +1971,6 @@ enum hordeFlags {
     HORDE_MACHINE_THIEF             = Fl(16),   // monsters that can be generated in the key thief area machines
     HORDE_MACHINE_GOBLIN_WARREN     = Fl(17),   // can spawn in goblin warrens
     HORDE_SACRIFICE_TARGET          = Fl(18),   // can be the target of an assassination challenge; leader will get scary light.
-    HORDE_MACHINE_AMBUSH            = Fl(19),   // monsters ambush from foliage, fungus forests, chasm edges and under stone bridges
 
     HORDE_MACHINE_ONLY              = (HORDE_MACHINE_BOSS | HORDE_MACHINE_WATER_MONSTER
                                        | HORDE_MACHINE_CAPTIVE | HORDE_MACHINE_STATUE
@@ -2029,7 +1978,7 @@ enum hordeFlags {
                                        | HORDE_MACHINE_KENNEL | HORDE_VAMPIRE_FODDER
                                        | HORDE_MACHINE_LEGENDARY_ALLY | HORDE_MACHINE_THIEF
                                        | HORDE_MACHINE_GOBLIN_WARREN
-                                       | HORDE_SACRIFICE_TARGET | HORDE_MACHINE_AMBUSH),
+                                       | HORDE_SACRIFICE_TARGET),
 };
 
 enum monsterBehaviorFlags {
@@ -2064,8 +2013,6 @@ enum monsterBehaviorFlags {
     MONST_GETS_TURN_ON_ACTIVATION   = Fl(28),   // monster never gets a turn, except when its machine is activated
     MONST_ALWAYS_USE_ABILITY        = Fl(29),   // monster will never fail to use special ability if eligible (no random factor)
     MONST_NO_POLYMORPH              = Fl(30),   // monster cannot result from a polymorph spell (liches, phoenixes and Warden of Yendor)
-    //Valkyrie Stuff -> Brogue+
-    MONST_NEVER_FLEES               = Fl(31),   // monster never flees, even when allied
 
     NEGATABLE_TRAITS                = (MONST_INVISIBLE | MONST_DEFEND_DEGRADE_WEAPON | MONST_IMMUNE_TO_WEAPONS | MONST_FLIES
                                        | MONST_FLITS | MONST_IMMUNE_TO_FIRE | MONST_REFLECT_4 | MONST_FIERY | MONST_MAINTAINS_DISTANCE),
@@ -2095,14 +2042,9 @@ enum monsterAbilityFlags {
     MA_ATTACKS_EXTEND               = Fl(15),   // monster attacks from a distance in a cardinal direction, like a whip
     MA_ATTACKS_STAGGER              = Fl(16),   // monster attacks will push the player backward by one space if there is room
     MA_AVOID_CORRIDORS              = Fl(17),   // monster will avoid corridors when hunting
-    //Brogue+
-    MA_HIT_DISCORD                  = Fl(18),   // monster can hit to cause discord
-    MA_DEFEND_INVISIBLE             = Fl(19),   // monster hit turns temporarily invisible and moves to a nearby space
-    MA_STONE_GAZE                   = Fl(20),   // monster will turn others to stone if within view for 8 consecutive turns
-    MA_LIMITED_AMMO                 = Fl(21),   // monster has a chance to run out of ammunition
 
     SPECIAL_HIT                     = (MA_HIT_HALLUCINATE | MA_HIT_STEAL_FLEE | MA_HIT_DEGRADE_ARMOR | MA_POISONS
-                                       | MA_TRANSFERENCE | MA_CAUSES_WEAKNESS | MA_HIT_BURN | MA_ATTACKS_STAGGER | MA_HIT_DISCORD),
+                                       | MA_TRANSFERENCE | MA_CAUSES_WEAKNESS | MA_HIT_BURN | MA_ATTACKS_STAGGER),
     LEARNABLE_ABILITIES             = (MA_TRANSFERENCE | MA_CAUSES_WEAKNESS),
 
     MA_NON_NEGATABLE_ABILITIES      = (MA_ATTACKS_PENETRATE | MA_ATTACKS_ALL_ADJACENT | MA_ATTACKS_EXTEND | MA_ATTACKS_STAGGER),
@@ -2136,8 +2078,7 @@ enum monsterBookkeepingFlags {
     MB_HAS_SOUL                 = Fl(22),   // slaying the monster will count toward weapon auto-ID
     MB_ALREADY_SEEN             = Fl(23),   // seeing this monster won't interrupt exploration
     MB_ADMINISTRATIVE_DEATH     = Fl(24),   // like the `administrativeDeath` parameter to `killCreature`
-    MB_HAS_DIED                 = Fl(25),   // monster has already been killed but not yet removed from `monsters`
-    MB_GAZED_THIS_TURN          = Fl(26)    // monster has been looked at by medusa this turn
+    MB_HAS_DIED                 = Fl(25)    // monster has already been killed but not yet removed from `monsters`
 };
 
 // Defines all creatures, which include monsters and the player:
@@ -2320,8 +2261,6 @@ enum featTypes {
     FEAT_DRAGONSLAYER,
     FEAT_PALADIN,
     FEAT_TONE,
-    FEAT_GEMINI,
-    FEAT_ESOTERIC,
 
     FEAT_COUNT,
 };
@@ -2356,8 +2295,7 @@ typedef struct playerCharacter {
     boolean eligibleToUseStairs;        // so the player uses stairs only when he steps onto them
     boolean trueColorMode;              // whether lighting effects are disabled
     boolean displayStealthRangeMode;    // whether your stealth range is displayed
-    //kBrogue
-    boolean displayHitPoints;           // whether hit points are displayed
+    boolean displayHealthValue;         // whether health values are displayed
     boolean quit;                       // to skip the typical end-game theatrics when the player quits
     uint64_t seed;                      // the master seed for generating the entire dungeon
     short RNG;                          // which RNG are we currently using?
@@ -2483,7 +2421,7 @@ enum machineFeatureFlags {
     MF_NO_THROWING_WEAPONS          = Fl(4),    // the generated item cannot be a throwing weapon
     MF_GENERATE_HORDE               = Fl(5),    // generate a monster horde that has all of the horde flags
     MF_BUILD_AT_ORIGIN              = Fl(6),    // generate this feature at the room entrance
-    MF_SET_AS_TARGET				= Fl(7),	// set this grid as the target for view/path calculations. Target defaults to origin if this is not set.
+    // unused                       = Fl(7),    //
     MF_PERMIT_BLOCKING              = Fl(8),    // permit the feature to block the map's passability (e.g. to add a locked door)
     MF_TREAT_AS_BLOCKING            = Fl(9),    // treat this terrain as though it blocks, for purposes of deciding whether it can be placed there
     MF_NEAR_ORIGIN                  = Fl(10),   // feature must spawn in the rough quarter of tiles closest to the origin
@@ -2496,7 +2434,7 @@ enum machineFeatureFlags {
     MF_ALTERNATIVE_2                = Fl(17),   // same as MF_ALTERNATIVE, but provides for a second set of alternatives of which only one will be chosen
     MF_REQUIRE_GOOD_RUNIC           = Fl(18),   // generated item must be uncursed runic
     MF_MONSTERS_DORMANT             = Fl(19),   // monsters are dormant, and appear when a dungeon feature with DFF_ACTIVATE_DORMANT_MONSTER spawns on their tile
-    MF_ADJACENT_TO_TARGET			= Fl(20),	// build 1 grid from the target, ignoring occupation restrictions
+    // unused                       = Fl(20),   //
     MF_BUILD_IN_WALLS               = Fl(21),   // build in an impassable tile that is adjacent to the interior
     MF_BUILD_ANYWHERE_ON_LEVEL      = Fl(22),   // build anywhere on the level that is not inside the machine
     MF_REPEAT_UNTIL_NO_PROGRESS     = Fl(23),   // keep trying to build this feature set until no changes are made
@@ -2507,12 +2445,6 @@ enum machineFeatureFlags {
     MF_NOT_ON_LEVEL_PERIMETER       = Fl(28),   // don't build it in the outermost walls of the level
     MF_SKELETON_KEY                 = Fl(29),   // if a key is generated or adopted by this feature, it will open all locks in this machine.
     MF_KEY_DISPOSABLE               = Fl(30),   // if a key is generated or adopted, it will self-destruct after being used at this current location.
-    MF_ADJACENT_TO_ORIGIN           = Fl(31),   // build 1 grid from the origin, ignoring occupation restrictions
-
-    MF_TARGET_CANDIDATES		= (MF_ADJACENT_TO_TARGET),
-												// calls candidate finding routine with target instead of origin. TODO: Change this so both are supported in one machine.
-	MF_DYNAMIC_CANDIDATES		= (MF_ADJACENT_TO_TARGET),
-												// recalculate candidates every time a feature is placed, instead of for every feature line
 };
 
 typedef struct machineFeature {
@@ -2580,15 +2512,11 @@ enum machineTypes {
     MT_REWARD_ASTRAL_PORTAL,
     MT_REWARD_GOBLIN_WARREN,
     MT_REWARD_SENTINEL_SANCTUARY,
-    //Brogue+
-    MT_REWARD_MEDUSA_LAIR,
 
     // Amulet holder:
     MT_AMULET_AREA,
 
     // Door guard machines:
-    //unBrogue
-    MT_KOBOLD_ELEVATOR_AMBUSH_VESTIBULE,
     MT_LOCKED_DOOR_VESTIBULE,
     MT_SECRET_DOOR_VESTIBULE,
     MT_SECRET_LEVER_VESTIBULE,
@@ -2602,9 +2530,6 @@ enum machineTypes {
 
     // Key guard machines:
     MT_KEY_REWARD_LIBRARY,
-    //unBrogue
-    MT_KEY_KOBOLD_ELEVATOR_AMBUSH_AREA,
-
     MT_KEY_SECRET_ROOM,
     MT_KEY_THROWING_TUTORIAL_AREA,
     MT_KEY_RAT_TRAP_ROOM,
@@ -3390,7 +3315,6 @@ extern "C" {
                           rogueEvent *returnEvent);
 
     void dijkstraScan(short **distanceMap, short **costMap, boolean useDiagonals);
-    void updateThrownSpears(creature* monst, boolean reload);
 
 #if defined __cplusplus
 }

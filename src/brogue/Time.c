@@ -2198,109 +2198,6 @@ static void recordCurrentCreatureHealths() {
     }
 }
 
-//Brogue+
-//You looked at Medusa too long and died
-void petrify(creature* victim) {
-    if (victim == &player) {
-        gameOver("Turned to stone", true);
-    }
-    else {
-        char buf[DCOLS * 3], monstName[DCOLS];
-        short x, y;
-        dungeonFeature theStatue;
-        x = victim->loc.x;
-        y = victim->loc.y;
-        monsterName(monstName, victim, true);
-        if (canSeeMonster(victim)) {
-            sprintf(buf, "%s has been petrified", monstName);
-            buf[DCOLS] = '\0';
-            combatMessage(buf, messageColorFromVictim(victim));
-        }
-        else if (victim->creatureState == MONSTER_ALLY) {
-            messageWithColor("you feel a sense of loss.", &badMessageColor, false);
-        }
-        //administrative death, so no DF or other death effects
-        killCreature(victim, true);
-        refreshDungeonCell(x, y);
-        theStatue = dungeonFeatureCatalog[DF_MEDUSA_STATUE];
-        theStatue.startProbability = 1;
-        //it will eventually be replaced with a crumbling statue, so the rogue won't get stuck
-        spawnDungeonFeature(x, y, &theStatue, true, true);
-        createFlare(x, y, SCROLL_ENCHANTMENT_LIGHT);
-    }
-}
-
-//Brogue+
-//You will become petrified if looking at medusa too long -> Brogue+
-void updatePetrification() {
-    creature* monst, * monst2, * nextMonst;
-
-    //to start with unflag all creatures
-    player.bookkeepingFlags &= ~MB_GAZED_THIS_TURN;
-    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
-        monst = nextCreature(&it);
-        nextMonst = nextCreature(&it);
-        monst->bookkeepingFlags &= ~MB_GAZED_THIS_TURN;
-        monst = nextMonst;
-    }
-
-    //next give each creature (including the player) a flag if he can see a medusa
-    // This should be efficient enough because there will never be very many medusas
-    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
-        monst = nextCreature(&it);
-        nextMonst = nextCreature(&it);
-        if ((monst->info.abilityFlags & MA_STONE_GAZE)
-            && !(monst->status[STATUS_INVISIBLE])) {
-
-            //check if the player can see her
-            if (!player.status[STATUS_HALLUCINATING] && canDirectlySeeMonster(monst)) {
-                player.bookkeepingFlags |= MB_GAZED_THIS_TURN;
-            }
-
-            //check if monsters can see her
-            for (creatureIterator it2 = iterateCreatures(monsters); hasNextCreature(it2);) {
-                monst2 = nextCreature(&it2);
-                nextMonst = nextCreature(&it2);
-                if (monst != monst2
-                    && !(monst2->info.flags & MONST_INANIMATE)
-                    && openPathBetween(monst2->loc.x, monst2->loc.y, monst->loc.x, monst->loc.y)) {
-                    monst2->bookkeepingFlags |= MB_GAZED_THIS_TURN;
-                }
-                monst2 = nextMonst;
-            }
-        }
-        monst = nextMonst;
-    }
-
-    if (player.bookkeepingFlags & MB_GAZED_THIS_TURN)
-    {
-        messageWithColor("you feel your flesh turning to stone.", &badMessageColor, false);
-        player.maxStatus[STATUS_PETRIFYING] = TURNS_TO_PETRIFY;
-        if (++(player.status[STATUS_PETRIFYING]) > TURNS_TO_PETRIFY) {
-            petrify(&player);
-        }
-    }
-    else {
-        player.maxStatus[STATUS_PETRIFYING] = player.status[STATUS_PETRIFYING] = 0;
-    }
-
-    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
-        monst = nextCreature(&it);
-        nextMonst = nextCreature(&it);
-
-        if (monst->bookkeepingFlags & MB_GAZED_THIS_TURN) {
-            monst->maxStatus[STATUS_PETRIFYING] = TURNS_TO_PETRIFY;
-            if (++(monst->status[STATUS_PETRIFYING]) > TURNS_TO_PETRIFY) {
-                petrify(monst);
-            }
-        }
-        else {
-            monst->status[STATUS_PETRIFYING] = monst->maxStatus[STATUS_PETRIFYING] = 0;
-        }
-        monst = nextMonst;
-    }
-}
-
 // This is the dungeon schedule manager, called every time the player's turn comes to an end.
 // It hands control over to monsters until they've all expended their accumulated ticks,
 // updating the environment (gas spreading, flames spreading and burning out, etc.) every
@@ -2481,9 +2378,6 @@ void playerTurnEnded() {
                 processIncrementalAutoID();   // become more familiar with worn armor and rings
                 rogue.monsterSpawnFuse--; // monsters spawn in the level every so often
 
-                //Brogue+
-                updatePetrification();
-
                 for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
                     creature *monst = nextCreature(&it);
                     applyInstantTileEffectsToCreature(monst);
@@ -2572,12 +2466,6 @@ void playerTurnEnded() {
         for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
             if (canSeeMonster(monst) && !(monst->bookkeepingFlags & (MB_WAS_VISIBLE | MB_ALREADY_SEEN))) {
-                //Brogue+
-                //alert the player if gazing at medusa
-                if ((monst->info.abilityFlags & MA_STONE_GAZE) && !monst->status[STATUS_INVISIBLE] && !player.status[STATUS_HALLUCINATING] && canDirectlySeeMonster(monst)) {
-                    message("you gaze at the medusa!", true);
-                    player.bookkeepingFlags |= MB_GAZED_THIS_TURN;
-                }
                 if (monst->creatureState != MONSTER_ALLY) {
                     rogue.disturbed = true;
                     if (rogue.cautiousMode || rogue.automationActive) {

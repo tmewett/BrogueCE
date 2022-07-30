@@ -172,8 +172,6 @@ boolean monsterRevealed(creature *monst) {
         return true;
     } else if (player.status[STATUS_TELEPATHIC] && !(monst->info.flags & MONST_INANIMATE)) {
         return true;
-    } else if (playerCanSee(monst->loc.x, monst->loc.y) && (rogue.lightMultiplier > 1) && (monst->status[STATUS_INVISIBLE])) {
-        return true;
     }
     return false;
 }
@@ -230,9 +228,6 @@ boolean canDirectlySeeMonster(creature *monst) {
     if (playerCanDirectlySee(monst->loc.x, monst->loc.y) && !monsterIsHidden(monst, &player)) {
         return true;
     }
-    /*if (playerCanDirectlySee(monst->loc.x, monst->loc.y) && (rogue.lightMultiplier > 1) && (monst->status[STATUS_INVISIBLE])) {
-        return true;
-    }*/
     return false;
 }
 
@@ -309,9 +304,6 @@ boolean attackWouldBeFutile(const creature *attacker, const creature *defender) 
 boolean monsterWillAttackTarget(const creature *attacker, const creature *defender) {
     if (attacker == defender || (defender->bookkeepingFlags & MB_IS_DYING)) {
         return false;
-    }
-    if ((attacker->info.flags & MONST_CARRY_ITEM_25) && (attacker->info.abilityFlags & MA_ATTACKS_ALL_ADJACENT)) {
-        return true;
     }
     if (attacker == &player
         && defender->creatureState == MONSTER_ALLY) {
@@ -513,10 +505,6 @@ short pickHordeType(short depth, enum monsterTypes summonerType, unsigned long f
 
 void empowerMonster(creature *monst) {
     char theMonsterName[100], buf[200];
-    //Brogue+
-    if (monst->info.abilityFlags & MA_LIMITED_AMMO) {
-        updateThrownSpears(monst, true);
-    }
     monst->info.maxHP += 12;
     monst->info.defense += 10;
     monst->info.accuracy += 10;
@@ -530,68 +518,6 @@ void empowerMonster(creature *monst) {
         monsterName(theMonsterName, monst, true);
         sprintf(buf, "%s looks stronger", theMonsterName);
         combatMessage(buf, &advancementMessageColor);
-    }
-}
-
-//Brogue+
-void updateThrownSpears(creature* monst, boolean reload) {
-    short i, j;
-    char theMonsterName[100], buf[200];
-    monsterName(theMonsterName, monst, true);
-    if (!reload) {
-        short chanceToRunOut = clamp((short)(100 / (3 + 3 * (monst->totalPowerCount)) + FLOAT_FUDGE), 1, 100);
-        enum boltType backupBolts[20];
-
-        //sprintf(buf, "%i%% chance to run out of ammo", chanceToRunOut);
-        //message(buf, false);
-
-        if (rand_percent(chanceToRunOut)) {
-            sprintf(buf, "%s is out of spears.", theMonsterName);
-            message(buf, false);
-            //monster doesn't have a spear anymore
-            //monst->info.abilityFlags &= ~MA_ATTACKS_PENETRATE;
-            monst->info.damage.lowerBound -= 2;
-            monst->info.damage.upperBound -= 3;
-            //monster doesn't have a throwing attack anymore
-            for (i = 0; i < 20; i++) {
-                backupBolts[i] = monst->info.bolts[i];
-                monst->info.bolts[i] = BOLT_NONE;
-            }
-            for (i = 0, j = 0; i < 20 && backupBolts[i]; i++) {
-                if (backupBolts[i] != BOLT_THROWN_SPEAR) {
-                    monst->info.bolts[j] = backupBolts[i];
-                    j++;
-                }
-            }
-        }
-    }
-    else {
-        //gets his spear back
-        monst->info.abilityFlags |= MA_ATTACKS_PENETRATE;
-        monst->info.damage.lowerBound += 2;
-        monst->info.damage.upperBound += 3;
-        //but he's more aggressive than before
-        //monst->info.flags |= MONST_MAINTAINS_DISTANCE;
-        for (i = 0; i < 20; i++) {
-            if (monst->info.bolts[i] == BOLT_NONE) {
-                monst->info.bolts[i] = BOLT_THROWN_SPEAR;
-                break;
-            }
-        }
-        sprintf(buf, "%s finds a few more spears.", theMonsterName);
-        message(buf, false);
-    }
-
-    boolean noBolts = true;
-    for (i = 0; i < 20; i++) {
-        if (monst->info.bolts[i] != BOLT_NONE) {
-            noBolts = false;
-            break;
-        }
-    }
-    //so he should close in to attack, unless he can summon allies
-    if (noBolts && !(monst->info.abilityFlags & MA_CAST_SUMMON)) {
-        monst->info.flags &= ~MONST_MAINTAINS_DISTANCE;
     }
 }
 
@@ -658,7 +584,6 @@ creature *cloneMonster(creature *monst, boolean announce, boolean placeClone) {
         newMonst->info.defense = 0;
         strcpy(newMonst->info.monsterName, "clone");
         newMonst->creatureState = MONSTER_ALLY;
-        rogue.featRecord[FEAT_GEMINI] = true;
     }
 
     if (monst->creatureState == MONSTER_ALLY
@@ -776,12 +701,7 @@ boolean spawnMinions(short hordeID, creature *leader, boolean summoned, boolean 
             pmap[monst->loc.x][monst->loc.y].flags |= HAS_MONSTER;
             monst->bookkeepingFlags |= (MB_FOLLOWER | MB_JUST_SUMMONED);
             monst->leader = leader;
-            if ((monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader 
-                && (monst->leader->info.flags & MONST_CARRY_ITEM_25) && (monst->leader->info.abilityFlags & MA_ATTACKS_ALL_ADJACENT)){
-                monst->creatureState = MONSTER_WANDERING;
-            } else {
-                monst->creatureState = leader->creatureState;
-            }
+            monst->creatureState = leader->creatureState;
             monst->mapToMe = NULL;
             if (theHorde->flags & HORDE_DIES_ON_LEADER_DEATH) {
                 monst->bookkeepingFlags |= MB_BOUND_TO_LEADER;
@@ -2017,8 +1937,6 @@ void decrementMonsterStatus(creature *monst) {
                     refreshDungeonCell(monst->loc.x, monst->loc.y);
                 }
                 break;
-            case STATUS_PETRIFYING:
-                break;
             default:
                 if (monst->status[i]) {
                     monst->status[i]--;
@@ -2988,11 +2906,6 @@ boolean allyFlees(creature *ally, creature *closestEnemy) {
         return false;
     }
 
-    //Valkyrie Stuff -> Brogue+
-    if (ally->info.flags & MONST_NEVER_FLEES) {
-        return false;
-    }
-
     if (distanceBetween(x, y, closestEnemy->loc.x, closestEnemy->loc.y) < 10
         && (100 * ally->currentHP / ally->info.maxHP <= 33)
         && ally->info.turnsBetweenRegen > 0
@@ -3283,9 +3196,6 @@ boolean updateMonsterCorpseAbsorption(creature *monst) {
                 }
                 resolvePronounEscapes(buf, monst);
                 messageWithColor(buf, &advancementMessageColor, 0);
-                if((monst->info.flags & MONST_RESTRICTED_TO_LIQUID) && monst->status[STATUS_LEVITATING]){
-                    rogue.featRecord[FEAT_ESOTERIC] = true;
-                }
             }
             monst->absorptionFlags = 0;
             monst->absorptionBolt = BOLT_NONE;
@@ -3574,8 +3484,7 @@ void monstersTurn(creature *monst) {
         if (monst->bookkeepingFlags & MB_FOLLOWER) {
             if (distanceBetween(x, y, monst->leader->loc.x, monst->leader->loc.y) > 2) {
                 pathTowardCreature(monst, monst->leader);
-            } else if (monst->leader->info.flags & MONST_IMMOBILE
-                        || (monst->leader->info.flags & MONST_CARRY_ITEM_25) && (monst->leader->info.abilityFlags & MA_ATTACKS_ALL_ADJACENT)) {
+            } else if (monst->leader->info.flags & MONST_IMMOBILE) {
                 monsterMillAbout(monst, 100); // Worshipers will pace frenetically.
             } else if (monst->leader->bookkeepingFlags & MB_CAPTIVE) {
                 monsterMillAbout(monst, 10); // Captors are languid.
@@ -3629,10 +3538,6 @@ boolean canPass(creature *mover, creature *blocker) {
 
         return false;
     }
-    if ((mover->info.flags & MONST_CARRY_ITEM_25) && (mover->info.abilityFlags & MA_ATTACKS_ALL_ADJACENT)
-        || (blocker->info.flags & MONST_CARRY_ITEM_25) && (blocker->info.abilityFlags & MA_ATTACKS_ALL_ADJACENT)) {
-        return false;
-        }
 
     if ((blocker->bookkeepingFlags & (MB_CAPTIVE | MB_ABSORBING))
         || (blocker->info.flags & MONST_IMMOBILE)) {

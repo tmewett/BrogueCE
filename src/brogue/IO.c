@@ -693,7 +693,7 @@ void mainInputLoop() {
                     rogue.playbackMode = false;
 
                     focusedOnMonster = true;
-                    if (monst != &player && (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience || player.status[STATUS_TELEPATHIC] || rogue.lightMultiplier > 1)) {
+                    if (monst != &player && (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience || player.status[STATUS_TELEPATHIC])) {
                         printMonsterDetails(monst, rbuf);
                         textDisplayed = true;
                     }
@@ -2741,7 +2741,6 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                                  &teal, 0);
             }
             break;
-
         case SEED_KEY:
             /*DEBUG {
                 cellDisplayBuffer dbuf[COLS][ROWS];
@@ -4618,8 +4617,6 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
     };
     const char statusStrings[NUMBER_OF_STATUS_EFFECTS][COLS] = {
         "Searching",
-        // Brogue+
-        "Petrifying",
         "Donning Armor",
         "Weakened: -",
         "Telepathic",
@@ -4827,15 +4824,14 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                 } else if ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID)
                            && !cellHasTMFlag(monst->loc.x, monst->loc.y, TM_ALLOWS_SUBMERGING)) {
                     printString("     (Helpless)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
-                }else if (monst->creatureState == MONSTER_SLEEPING && y < ROWS - 1) {
+                } else if (monst->creatureState == MONSTER_SLEEPING && y < ROWS - 1) {
                     printString("     (Sleeping)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if ((monst->creatureState == MONSTER_ALLY) && y < ROWS - 1) {
                     printString("       (Ally)       ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if (monst->creatureState == MONSTER_FLEEING && y < ROWS - 1) {
                     printString("     (Fleeing)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if ((monst->creatureState == MONSTER_WANDERING) && y < ROWS - 1) {
-                    if ((monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader && (monst->leader->info.flags & MONST_IMMOBILE)
-                        || (monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader && (monst->leader->info.flags & MONST_CARRY_ITEM_25) && (monst->leader->info.abilityFlags & MA_ATTACKS_ALL_ADJACENT)) {
+                    if ((monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader && (monst->leader->info.flags & MONST_IMMOBILE)) {
                         // follower of an immobile leader -- i.e. a totem
                         printString("    (Worshiping)    ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                     } else if ((monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader && (monst->leader->bookkeepingFlags & MB_CAPTIVE)) {

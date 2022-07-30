@@ -2216,19 +2216,8 @@ void itemDetails(char *buf, item *theItem) {
                                 theName);
                         strcat(buf, buf2);
 
-                        // A_VANISHING, A_MULTIPLICITY, A_MUTUALITY, A_ABSORPTION, A_REPRISAL, A_IMMUNITY, A_REFLECTION, A_BURDEN, A_VULNERABILITY, A_IMMOLATION
+                        // A_MULTIPLICITY, A_MUTUALITY, A_ABSORPTION, A_REPRISAL, A_IMMUNITY, A_REFLECTION, A_BURDEN, A_VULNERABILITY, A_IMMOLATION
                         switch (theItem->enchant2) {
-                            case A_VANISHING:
-								sprintf(buf2, "When worn, 10%% of the time that an enemy's attack connects, your attacker will lose your tail as you move to a nearby spot and become invisible for %i turn%s. ",
-										armorImageCount(enchant),
-                                        (armorImageCount(enchant) == 1 ? "":"s"));
-								if (true) {
-									sprintf(buf3, "(If the %s is enchanted, the chance will increase to 10%% and the duration will increase to %i.) ",
-											theName,
-                                            (armorImageCount(enchant + enchantIncrement(theItem))));
-									strcat(buf2, buf3);
-								}
-								break;
                             case A_MULTIPLICITY:
                                 sprintf(buf2, "When worn, 33%% of the time that an enemy's attack connects, %i allied spectral duplicate%s of your attacker will appear for 3 turns. ",
                                         armorImageCount(enchant),
@@ -3861,13 +3850,6 @@ void heal(creature *monst, short percent, boolean panacea) {
     char buf[COLS], monstName[COLS];
     monst->currentHP = min(monst->info.maxHP, monst->currentHP + percent * monst->info.maxHP / 100);
     if (panacea) {
-        //Brogue+
-        if (monst->status[STATUS_PETRIFYING] > 1) {
-            monst->status[STATUS_PETRIFYING] = 0;
-        }
-        if (monst->status[STATUS_DISCORDANT] > 1) {
-            monst->status[STATUS_DISCORDANT] = 1;
-        }
         if (monst->status[STATUS_HALLUCINATING] > 1) {
             monst->status[STATUS_HALLUCINATING] = 1;
         }
@@ -4761,10 +4743,6 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails) {
     initialBoltLength = boltLength = 5 * theBolt->magnitude;
     numCells = getLineCoordinates(listOfCoordinates, originLoc, targetLoc, (hideDetails ? &boltCatalog[BOLT_NONE] : theBolt));
     shootingMonst = monsterAtLoc(originLoc.x, originLoc.y);
-
-    if ((theBolt->boltEffect == BE_ATTACK) && (shootingMonst->info.abilityFlags & MA_LIMITED_AMMO)) {
-        updateThrownSpears(shootingMonst, false);
-    }
 
     if (hideDetails) {
         boltColor = &gray;
@@ -6062,11 +6040,6 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
                 }
             }
         }
-
-        // Broken Glass when throwing potions
-        refreshDungeonCell(x, y);
-        spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_DEWAR_GLASS], true, false);
-
         deleteItem(theItem);
         return; // potions disappear when they break
     }

@@ -89,7 +89,7 @@ struct brogueConsole {
 void loadKeymap();
 void dumpScores();
 unsigned int glyphToUnicode(enum displayGlyph glyph);
-boolean isHybridGlyph(enum displayGlyph glyph);
+boolean isEnvironmentGlyph(enum displayGlyph glyph);
 
 #ifdef BROGUE_SDL
 extern struct brogueConsole sdlConsole;

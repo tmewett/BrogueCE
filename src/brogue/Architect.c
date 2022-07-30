@@ -503,21 +503,15 @@ boolean cellIsFeatureCandidate(short x, short y,
     }
 
     // No building in another feature's personal space!
-	if (occupied[x][y] && !(featureFlags & (MF_ADJACENT_TO_TARGET | MF_ADJACENT_TO_ORIGIN))) {
-		return false; 
-	}
+    if (occupied[x][y]) {
+        return false;
+    }
 
     // Must be in the viewmap if the appropriate flag is set.
     if ((featureFlags & (MF_IN_VIEW_OF_ORIGIN | MF_IN_PASSABLE_VIEW_OF_ORIGIN))
         && !viewMap[x][y]) {
         return false;
     }
-
-    // Must be one grid from origin/target
-	if ((featureFlags & (MF_ADJACENT_TO_TARGET | MF_ADJACENT_TO_ORIGIN)) && 
-			   distanceBetween(originX, originY, x, y) != 1) {
-		return false;
-	}
 
     // Do a distance check if the feature requests it.
     if (cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY)) { // Distance is calculated for walls too.
@@ -974,8 +968,7 @@ boolean buildAMachine(enum machineTypes bp,
                       creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]) {
 
     short i, j, k, layer, feat, randIndex, totalFreq, instance, instanceCount = 0,
-        featX, featY, targetX = originX, targetY = originY,
-        itemCount, monsterCount, qualifyingTileCount,
+        featX, featY, itemCount, monsterCount, qualifyingTileCount,
         **distanceMap = NULL, distance25, distance75, distanceBound[2],
         personalSpace, failsafe, locationFailsafe,
         machineNumber;
@@ -1083,8 +1076,8 @@ boolean buildAMachine(enum machineTypes bp,
                 if (totalFreq) {
                     // Choose the gate.
                     randIndex = rand_range(0, totalFreq - 1);
-                    originX = targetX = p->gateCandidates[randIndex].x;
-                    originY = targetY = p->gateCandidates[randIndex].y;
+                    originX = p->gateCandidates[randIndex].x;
+                    originY = p->gateCandidates[randIndex].y;
                 } else {
                     // If no suitable sites, abort.
                     if (distanceMap) {
@@ -1340,24 +1333,19 @@ boolean buildAMachine(enum machineTypes bp,
 
         do { // If the MF_REPEAT_UNTIL_NO_PROGRESS flag is set, repeat until we fail to build the required number of instances.
 
-        // Determine this later if we're computing candidates every time we place a feature
-			if (feature->flags & (MF_DYNAMIC_CANDIDATES)) {
-				qualifyingTileCount = 1; // force qualification and recalculate once in loop
-			} else {
-                // Make a master map of candidate locations for this feature.
-                qualifyingTileCount = 0;
-                for(i=0; i<DCOLS; i++) {
-                    for(j=0; j<DROWS; j++) {
-                        if (cellIsFeatureCandidate(i, j,
-                                               feature->flags & MF_TARGET_CANDIDATES ? targetX : originX, feature->flags & MF_TARGET_CANDIDATES ? targetY : originY,
+            // Make a master map of candidate locations for this feature.
+            qualifyingTileCount = 0;
+            for(i=0; i<DCOLS; i++) {
+                for(j=0; j<DROWS; j++) {
+                    if (cellIsFeatureCandidate(i, j,
+                                               originX, originY,
                                                distanceBound,
                                                p->interior, p->occupied, p->viewMap, distanceMap,
                                                machineNumber, feature->flags, blueprintCatalog[bp].flags)) {
-                            qualifyingTileCount++;
-                            p->candidates[i][j] = true;
-                        } else {
+                        qualifyingTileCount++;
+                        p->candidates[i][j] = true;
+                    } else {
                         p->candidates[i][j] = false;
-                        }
                     }
                 }
             }
@@ -1415,29 +1403,6 @@ boolean buildAMachine(enum machineTypes bp,
                 p->candidates[featX][featY] = false;
                 qualifyingTileCount--;
 
-                if (feature->flags & (MF_DYNAMIC_CANDIDATES)) {
-					// Regenerate a master map of candidate locations for this feature.
-					qualifyingTileCount = 0;
-                    for(i=0; i<DCOLS; i++) {
-                        for(j=0; j<DROWS; j++) {
-                            if (cellIsFeatureCandidate(i, j,
-                                                feature->flags & MF_TARGET_CANDIDATES ? targetX : originX, feature->flags & MF_TARGET_CANDIDATES ? targetY : originY,
-                                                distanceBound,
-                                                p->interior, p->occupied, p->viewMap, distanceMap,
-                                                machineNumber, feature->flags, blueprintCatalog[bp].flags)) {
-                                qualifyingTileCount++;
-                                p->candidates[i][j] = true;
-                            } else {
-                            p->candidates[i][j] = false;
-                            }
-                        }
-                    }
-					
-					if (!qualifyingTileCount) {
-						break;
-					}
-				}
-
                 DFSucceeded = terrainSucceeded = true;
 
                 // Try to build the DF first, if any, since we don't want it to be disrupted by subsequently placed terrain.
@@ -1482,7 +1447,7 @@ boolean buildAMachine(enum machineTypes bp,
                             }
                         }
                     }
-                    instance++; // we've placed an instance 
+                    instance++; // we've placed an instance
                     //DEBUG printf("\nPlaced instance #%i of feature %i at (%i, %i).", instance, feat, featX, featY);
                 }
 
@@ -1498,12 +1463,6 @@ boolean buildAMachine(enum machineTypes bp,
                     if (feature->flags & MF_IMPREGNABLE) {
                         pmap[featX][featY].flags |= IMPREGNABLE;
                     }
-
-                    // Set the target if requested. We do this after using the target for this feature to allow chaining of grids together
-					if (feature->flags & MF_SET_AS_TARGET) {
-						targetX = featX;
-						targetY = featY;
-					}
 
                     // Generate an item as necessary.
                     if ((feature->flags & MF_GENERATE_ITEM)

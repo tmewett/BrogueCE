@@ -336,7 +336,7 @@ static int fontIndex(enum displayGlyph glyph) {
     if (glyph < 128) {
         // ASCII characters map directly
         return glyph;
-    } else if (showGraphics == TILES_GRAPHICS || (showGraphics == HYBRID_GRAPHICS && isHybridGlyph(glyph))) {
+    } else if (showGraphics == TILES_GRAPHICS || (showGraphics == HYBRID_GRAPHICS && isEnvironmentGlyph(glyph))) {
         // Tile glyphs have sprite indices starting at 256
         // -2 to disregard the up and down arrow glyphs
         return glyph + 128 - 2;
