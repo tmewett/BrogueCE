@@ -1854,6 +1854,7 @@ void decrementMonsterStatus(creature *monst) {
                                     (monst->info.flags & MONST_INANIMATE) ? "up" : "to death");
                             messageWithColor(buf2, messageColorFromVictim(monst), 0);
                         }
+                        killCreatureAfterInflictDamage(monst);
                         return;
                     }
                     if (monst->status[i] <= 0) {
@@ -1884,6 +1885,7 @@ void decrementMonsterStatus(creature *monst) {
                             sprintf(buf2, "%s dies of poison.", buf);
                             messageWithColor(buf2, messageColorFromVictim(monst), 0);
                         }
+                        killCreatureAfterInflictDamage(monst);
                         return;
                     }
                     if (!monst->status[i]) {

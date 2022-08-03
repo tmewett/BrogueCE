@@ -3053,6 +3053,7 @@ extern "C" {
     void inflictLethalDamage(creature *attacker, creature *defender);
     boolean inflictDamage(creature *attacker, creature *defender,
                           short damage, const color *flashColor, boolean ignoresProtectionShield);
+    void killCreatureAfterInflictDamage(creature *defender);
     void addPoison(creature *monst, short totalDamage, short concentrationIncrement);
     void killCreature(creature *decedent, boolean administrativeDeath);
     void buildHitList(creature **hitList, const creature *attacker, creature *defender, const boolean sweep);
