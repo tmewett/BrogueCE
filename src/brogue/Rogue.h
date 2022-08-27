@@ -752,6 +752,7 @@ enum itemCategory {
     HAS_INTRINSIC_POLARITY = (POTION | SCROLL | RING | WAND | STAFF),
 
     CAN_BE_DETECTED     = (WEAPON | ARMOR | POTION | SCROLL | RING | CHARM | WAND | STAFF | AMULET),
+    CAN_BE_ENCHANTED    = (WEAPON | ARMOR | RING | CHARM | WAND | STAFF),
     PRENAMED_CATEGORY   = (FOOD | GOLD | AMULET | GEM | KEY),
     NEVER_IDENTIFIABLE  = (FOOD | CHARM | GOLD | AMULET | GEM | KEY),
     CAN_BE_SWAPPED      = (WEAPON | ARMOR | STAFF | CHARM | RING),
@@ -1179,6 +1180,7 @@ enum tileFlags {
 #define MESSAGE_ARCHIVE_KEY 'M'
 #define BROGUE_HELP_KEY     '?'
 #define DISCOVERIES_KEY     'D'
+#define CREATE_ITEM_MONSTER_KEY 'C'
 #define EXPLORE_KEY         'x'
 #define AUTOPLAY_KEY        'A'
 #define SEED_KEY            '~'
@@ -2971,6 +2973,7 @@ extern "C" {
                        unsigned long forbiddenFlags, boolean cautiousOnWalls);
 
     creature *generateMonster(short monsterID, boolean itemPossible, boolean mutationPossible);
+    void mutateMonster(creature *monst, short mutationIndex);
     short chooseMonster(short forLevel);
     creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFlags, unsigned long requiredFlags);
     void fadeInMonster(creature *monst);
@@ -3038,6 +3041,8 @@ extern "C" {
     boolean canDirectlySeeMonster(creature *monst);
     void monsterName(char *buf, creature *monst, boolean includeArticle);
     boolean monsterIsInClass(const creature *monst, const short monsterClass);
+    boolean chooseTarget(pos *returnLoc, short maxDistance, boolean stopAtTarget, boolean autoTarget,
+                         boolean targetAllies, const bolt *theBolt, const color *trajectoryColor);
     fixpt strengthModifier(item *theItem);
     fixpt netEnchant(item *theItem);
     short hitProbability(creature *attacker, creature *defender);
@@ -3300,6 +3305,7 @@ extern "C" {
     void checkForDungeonErrors();
 
     boolean dialogChooseFile(char *path, const char *suffix, const char *prompt);
+    void dialogCreateItemOrMonster();
     void quitImmediately();
     void dialogAlert(char *message);
     void mainBrogueJunction();

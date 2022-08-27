@@ -340,6 +340,15 @@ short actionMenu(short x, boolean playingBack) {
             strcpy(buttons[buttonCount].text, "  Discovered items  ");
         }
         buttons[buttonCount].hotkey[0] = DISCOVERIES_KEY;
+        DEBUG {
+            buttonCount++;
+            if (KEYBOARD_LABELS) {
+                sprintf(buttons[buttonCount].text, "  %sC: %sCreate item or monster  ", yellowColorEscape, whiteColorEscape);
+            } else {
+                strcpy(buttons[buttonCount].text, "  Create item or monster  ");
+            }
+            buttons[buttonCount].hotkey[0] = CREATE_ITEM_MONSTER_KEY;
+        }
         buttonCount++;
         if (KEYBOARD_LABELS) {
             sprintf(buttons[buttonCount].text, "  %s~: %sView dungeon seed  ",  yellowColorEscape, whiteColorEscape);
@@ -2643,6 +2652,11 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             break;
         case DISCOVERIES_KEY:
             printDiscoveriesScreen();
+            break;
+        case CREATE_ITEM_MONSTER_KEY:
+            DEBUG {
+                dialogCreateItemOrMonster();
+            }
             break;
         case SAVE_GAME_KEY:
             if (rogue.playbackMode || serverMode) {
