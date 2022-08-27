@@ -147,11 +147,6 @@ typedef struct pos {
     short y;
 } pos;
 
-typedef struct windowSize {
-    short width;
-    short height;
-} windowSize;
-
 // Size of the portion of the terminal window devoted to displaying the dungeon:
 #define DCOLS                   (COLS - STAT_BAR_WIDTH - 1) // n columns on the left for the sidebar;
                                                             // one column to separate the sidebar from the map.
@@ -2680,14 +2675,6 @@ typedef struct buttonState {
     cellDisplayBuffer dbuf[COLS][ROWS]; // Where buttons are drawn.
     cellDisplayBuffer rbuf[COLS][ROWS]; // Reversion screen state.
 } buttonState;
-
-enum windowSizeModes {
-    WINDOW_SIZE_MODE_FIT_CONTENT
-};
-
-enum windowPositionModes {
-    WINDOW_POSITION_MODE_FIXED
-};
 
 enum messageFlags {
     REQUIRE_ACKNOWLEDGMENT        = Fl(0),

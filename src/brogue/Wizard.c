@@ -35,13 +35,9 @@ void initializeCreateItemButton(brogueButton *button, char *text) {
 #define DIALOG_CREATE_ITEM_MAX_BUTTONS 26
 
 // Display a dialog window for the user to select a single entry from a list
-short dialogSelectEntryFromList(
+static short dialogSelectEntryFromList(
         brogueButton *buttons,
         short buttonCount,
-        enum windowPositionModes windowPositionMode,
-        pos windowPosition,
-        enum windowSizeModes windowSizeMode,
-        windowSize theWindowSize,
         char *windowTitle
 ) {
 
@@ -57,8 +53,8 @@ short dialogSelectEntryFromList(
         buttons[i].buttonColor = interfaceBoxColor;
         buttons[i].hotkey[0] = 'a' + i;
         buttons[i].hotkey[1] = 'A' + i;
-        buttons[i].x = windowPosition.x;
-        buttons[i].y = windowPosition.y + 1 + i;
+        buttons[i].x = WINDOW_POSITION_DUNGEON_TOP_LEFT.x;
+        buttons[i].y = WINDOW_POSITION_DUNGEON_TOP_LEFT.y + 1 + i;
         if (KEYBOARD_LABELS) {
             sprintf(buttonText, "%c) %s", (int)buttons[i].hotkey[0], buttons[i].text);
             strcpy(buttons[i].text, buttonText);
@@ -69,15 +65,10 @@ short dialogSelectEntryFromList(
         }
     }
 
-    if (windowSizeMode == WINDOW_SIZE_MODE_FIT_CONTENT) {
-        width = maxLen + 1;
-        height = buttonCount + 2;
-    }
-
-    if (windowPositionMode == WINDOW_POSITION_MODE_FIXED) {
-        x = windowPosition.x;
-        y = windowPosition.y;
-    }
+    width = maxLen + 1;
+    height = buttonCount + 2;
+    x = WINDOW_POSITION_DUNGEON_TOP_LEFT.x;
+    y = WINDOW_POSITION_DUNGEON_TOP_LEFT.y;
     clearDisplayBuffer(dbuf);
 
     //Dialog Title
@@ -95,7 +86,7 @@ short dialogSelectEntryFromList(
 }
 
 // Display a dialog window for the user to chose a vorpal enemy. Remove the runic if none selected.
-short dialogCreateItemChooseVorpalEnemy() {
+static short dialogCreateItemChooseVorpalEnemy() {
     char buttonText[COLS];
     short i;
     brogueButton buttons[DIALOG_CREATE_ITEM_MAX_BUTTONS];
@@ -105,15 +96,19 @@ short dialogCreateItemChooseVorpalEnemy() {
         initializeCreateItemButton(&(buttons[i]), buttonText);
     }
 
-    return dialogSelectEntryFromList(buttons, i, WINDOW_POSITION_MODE_FIXED, WINDOW_POSITION_DUNGEON_TOP_LEFT, WINDOW_SIZE_MODE_FIT_CONTENT, (windowSize) {0,0}, "Chose a vorpal enemy:");
+    return dialogSelectEntryFromList(buttons, i, "Choose a vorpal enemy:");
 }
 
 // Display a dialog window for the user to select a runic for the given armor or weapon.
 // Assigns the selected runic and vorpal enemy (if applicable) to the item. No return value.
-void dialogCreateItemChooseRunic(item *theItem){
+static void dialogCreateItemChooseRunic(item *theItem){
     char buttonText[COLS];
     short i=0, runicOffset =0, noRunic, selectedRunic, selectedVorpalEnemy;
     brogueButton buttons[DIALOG_CREATE_ITEM_MAX_BUTTONS];
+
+    if (!(theItem->category & (WEAPON | ARMOR))) {
+        return;
+    }
 
     // Heavy weapons can only have bad runics. The logic below but differs from that used in dungeon generation, which
     // is based on minimum weapon damage, but has the same net effect. Might be nice to consolidate. Perhaps add a flag
@@ -148,37 +143,35 @@ void dialogCreateItemChooseRunic(item *theItem){
             }
         }
     }
-    if (theItem->category & (WEAPON | ARMOR)) {
-        // add an extra button for choosing no runic
-        initializeCreateItemButton(&(buttons[i]), "No Runic");
-        noRunic = i;
+    // add an extra button for choosing no runic
+    initializeCreateItemButton(&(buttons[i]), "No Runic");
+    noRunic = i;
 
-        selectedRunic = dialogSelectEntryFromList(buttons, i+1, WINDOW_POSITION_MODE_FIXED, WINDOW_POSITION_DUNGEON_TOP_LEFT, WINDOW_SIZE_MODE_FIT_CONTENT, (windowSize) {0,0}, "Choose a runic:");
+    selectedRunic = dialogSelectEntryFromList(buttons, i+1, "Choose a runic:");
 
-        if (selectedRunic >=0 && selectedRunic != noRunic) {
-            theItem->enchant2 = selectedRunic + runicOffset;
-            theItem->flags |= ITEM_RUNIC;
+    if (selectedRunic >=0 && selectedRunic != noRunic) {
+        theItem->enchant2 = selectedRunic + runicOffset;
+        theItem->flags |= ITEM_RUNIC;
 
-            if ((theItem->enchant2 == W_SLAYING && theItem->category == WEAPON)
-                || (theItem->enchant2 == A_IMMUNITY && theItem->category == ARMOR)) {
-                selectedVorpalEnemy = dialogCreateItemChooseVorpalEnemy();
+        if ((theItem->enchant2 == W_SLAYING && theItem->category == WEAPON)
+            || (theItem->enchant2 == A_IMMUNITY && theItem->category == ARMOR)) {
+            selectedVorpalEnemy = dialogCreateItemChooseVorpalEnemy();
 
-                if (selectedVorpalEnemy >=0) {
-                    theItem->vorpalEnemy = selectedVorpalEnemy;
-                } else { // remove the runic if no vorpal enemy chosen
-                    theItem->enchant2 = 0;
-                    theItem->flags &= ~(ITEM_RUNIC);
-                }
+            if (selectedVorpalEnemy >=0) {
+                theItem->vorpalEnemy = selectedVorpalEnemy;
+            } else { // remove the runic if no vorpal enemy chosen
+                theItem->enchant2 = 0;
+                theItem->flags &= ~(ITEM_RUNIC);
             }
-        } else if (selectedRunic == noRunic) {
-            theItem->enchant2 = 0;
-            theItem->flags &= ~(ITEM_RUNIC);
         }
+    } else if (selectedRunic == noRunic) {
+        theItem->enchant2 = 0;
+        theItem->flags &= ~(ITEM_RUNIC);
     }
 }
 
 // Display a dialog window for the user to select an item kind from the specified catogory. Returns the selected kind.
-short dialogCreateItemChooseKind(enum itemCategory category) {
+static short dialogCreateItemChooseKind(enum itemCategory category) {
     char buttonText[COLS];
     short i;
     brogueButton buttons[DIALOG_CREATE_ITEM_MAX_BUTTONS];
@@ -195,12 +188,12 @@ short dialogCreateItemChooseKind(enum itemCategory category) {
     }
 
     sprintf(title,"Create %s:",itemCategoryNames[unflag(category)]);
-    return dialogSelectEntryFromList(buttons, i, WINDOW_POSITION_MODE_FIXED, WINDOW_POSITION_DUNGEON_TOP_LEFT, WINDOW_SIZE_MODE_FIT_CONTENT, (windowSize) {0,0}, title);
+    return dialogSelectEntryFromList(buttons, i, title);
 }
 
 // Display an input dialog for the user to enter the enchantment level for the item being created.
 // Assigns the enchantment level to the item. Does not return a value.
-void dialogCreateItemChooseEnchantmentLevel(item *theItem) {
+static void dialogCreateItemChooseEnchantmentLevel(item *theItem) {
     short minVal = 0, maxVal = 50, defaultVal, maxInputLength = 2;
     char prompt[100], buf[100], inputBuf[100]="";
     int enchants;
@@ -267,7 +260,7 @@ void dialogCreateItemChooseEnchantmentLevel(item *theItem) {
     }
 }
 
-int creatureTypeCompareMonsterNames (const void * a, const void * b) {
+static int creatureTypeCompareMonsterNames (const void * a, const void * b) {
     creatureType *c1 = (creatureType *)a;
     creatureType *c2 = (creatureType *)b;
 
@@ -282,7 +275,7 @@ int creatureTypeCompareMonsterNames (const void * a, const void * b) {
 }
 
 // Display a dialog window for the user to select a mutation for the specified monster.
-void dialogCreateMonsterChooseMutation(creature *theMonster) {
+static void dialogCreateMonsterChooseMutation(creature *theMonster) {
     char buttonText[COLS];
     short i, j = 0, noMutation, selectedMutation;
     brogueButton buttons[DIALOG_CREATE_ITEM_MAX_BUTTONS];
@@ -299,7 +292,7 @@ void dialogCreateMonsterChooseMutation(creature *theMonster) {
     initializeCreateItemButton(&(buttons[j]), "No mutation");
     noMutation = j;
 
-    selectedMutation = dialogSelectEntryFromList(buttons, j+1, WINDOW_POSITION_MODE_FIXED, WINDOW_POSITION_DUNGEON_TOP_LEFT, WINDOW_SIZE_MODE_FIT_CONTENT, (windowSize) {0,0}, "Choose a mutation:");
+    selectedMutation = dialogSelectEntryFromList(buttons, j+1, "Choose a mutation:");
 
     if (selectedMutation != noMutation) {
         mutateMonster(theMonster, selectedMutation);
@@ -307,7 +300,7 @@ void dialogCreateMonsterChooseMutation(creature *theMonster) {
 }
 
 // Display a series of dialog windows for creating an arbitrary monster chosen by the user
-void dialogCreateMonster() {
+static void dialogCreateMonster() {
     brogueButton buttons[DIALOG_CREATE_ITEM_MAX_BUTTONS];
     char buttonText[COLS];
     pos selectedPosition;
@@ -344,7 +337,7 @@ void dialogCreateMonster() {
     }
 
     // choose a monster range
-    monsterOffset = dialogSelectEntryFromList(buttons, buttonCount, WINDOW_POSITION_MODE_FIXED, WINDOW_POSITION_DUNGEON_TOP_LEFT, WINDOW_SIZE_MODE_FIT_CONTENT, (windowSize) {0,0}, "Create monster:");
+    monsterOffset = dialogSelectEntryFromList(buttons, buttonCount, "Create monster:");
     if (monsterOffset == -1) {
         return;
     }
@@ -359,7 +352,7 @@ void dialogCreateMonster() {
     }
 
     // choose a monster
-    selectedMonster = dialogSelectEntryFromList(buttons, buttonCount, WINDOW_POSITION_MODE_FIXED, WINDOW_POSITION_DUNGEON_TOP_LEFT, WINDOW_SIZE_MODE_FIT_CONTENT, (windowSize) {0,0}, "Create monster:");
+    selectedMonster = dialogSelectEntryFromList(buttons, buttonCount, "Create monster:");
     if (selectedMonster == -1) {
         return;
     }
@@ -440,7 +433,7 @@ void dialogCreateMonster() {
 }
 
 // Display a series of dialog windows for creating an arbitrary item chosen by the user
-void dialogCreateItem() {
+static void dialogCreateItem() {
     brogueButton buttons[DIALOG_CREATE_ITEM_MAX_BUTTONS];
     char buttonText[COLS];
     short i, selectedCategory, selectedKind;
@@ -458,7 +451,7 @@ void dialogCreateItem() {
         initializeCreateItemButton(&(buttons[i]), buttonText);
     }
 
-    selectedCategory = dialogSelectEntryFromList(buttons, i, WINDOW_POSITION_MODE_FIXED, WINDOW_POSITION_DUNGEON_TOP_LEFT, WINDOW_SIZE_MODE_FIT_CONTENT, (windowSize) {0,0}, "Create item:");
+    selectedCategory = dialogSelectEntryFromList(buttons, i, "Create item:");
 
     if (tableForItemCategory(Fl(selectedCategory))) {
         selectedKind = dialogCreateItemChooseKind(Fl(selectedCategory));
@@ -516,7 +509,7 @@ void dialogCreateItemOrMonster() {
     initializeCreateItemButton(&(buttons[0]), "Item");
     initializeCreateItemButton(&(buttons[1]), "Monster");
 
-    selectedType = dialogSelectEntryFromList(buttons, 2, WINDOW_POSITION_MODE_FIXED, WINDOW_POSITION_DUNGEON_TOP_LEFT, WINDOW_SIZE_MODE_FIT_CONTENT, (windowSize) {0,0}, "Create:");
+    selectedType = dialogSelectEntryFromList(buttons, 2, "Create:");
 
     if (selectedType == 0) {
         dialogCreateItem();

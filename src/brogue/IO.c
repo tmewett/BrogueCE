@@ -4113,7 +4113,7 @@ void printHelpScreen() {
         "              T  ****re-throw last item at last monster",
         " i, right-click  ****view inventory",
         "              D  ****list discovered items",
-        "              C  ****create item or monster (wizard mode)",
+        "",
         "              z  ****rest once",
         "              Z  ****rest for 100 turns or until something happens",
         "              s  ****search for secrets (control-s: long search)",
