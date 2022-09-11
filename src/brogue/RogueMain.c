@@ -382,6 +382,12 @@ void initializeRogue(uint64_t seed) {
 
     recalculateEquipmentBonuses();
 
+    theItem = generateItem(STAFF, STAFF_ICE);
+    theItem->enchant1 = 10;
+    theItem->charges = 300;
+    identify(theItem);
+    theItem = addItemToPack(theItem);
+
     DEBUG {
         theItem = generateItem(RING, RING_CLAIRVOYANCE);
         theItem->enchant1 = max(DROWS, DCOLS);

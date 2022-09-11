@@ -105,8 +105,9 @@ const color invulnerabilityColor =  {25,    0,      25,     0,      0,          
 const color dominationColor =       {0,     0,      100,    80,     25,         0,          0,      true};
 const color empowermentColor =      {30,    100,    40,     25,     80,         25,         0,      true};
 const color fireBoltColor =         {500,   150,    0,      45,     30,         0,          0,      true};
-const color yendorLightColor =      {50,    -100,    30,     0,      0,          0,          0,      true};
+const color yendorLightColor =      {50,    -100,    30,     0,      0,          0,          0,     true};
 const color dragonFireColor =       {500,   150,    0,      45,     30,         45,         0,      true};
+const color iceBlastColor =         {100,    100,   500,    0,       0,         100,        0,      true};
 const color flamedancerCoronaColor ={500,   150,    100,    45,     30,         0,          0,      true};
 //const color shieldingColor =      {100,   50,     0,      0,      50,         100,        0,      true};
 const color shieldingColor =        {150,   75,     0,      0,      50,         175,        0,      true};
@@ -2453,9 +2454,26 @@ itemTable wandTable[NUMBER_WAND_KINDS] = {
     {"empowerment",     itemMetals[8], "",  1,  100,    BOLT_EMPOWERMENT,   {1,1,1}, false, false, -1, false, "This sacred magic will permanently improve the mind and body of any monster it hits. A wise adventurer will use it on allies, making them stronger in combat and able to learn a new talent from a fallen foe. If the bolt is reflected back at you, it will have no effect."},
 };
 
+/*
+typedef struct itemTable {
+    char *name;
+    char *flavor;
+    char callTitle[30];
+    short frequency;
+    short marketValue;
+    short strengthRequired;
+    randomRange range;
+    boolean identified;
+    boolean called;
+    int magicPolarity;
+    boolean magicPolarityRevealed;
+    char description[1500];
+} itemTable;
+*/
+
 itemTable staffTable[NUMBER_STAFF_KINDS] = {
     {"lightning",       itemWoods[0], "",   15, 1300,   BOLT_LIGHTNING,     {2,4,1}, false, false, 1,  false, "This staff conjures forth deadly arcs of electricity to damage to any number of creatures in a straight line."},
-    {"firebolt",        itemWoods[1], "",   15, 1300,   BOLT_FIRE,          {2,4,1}, false, false, 1,  false, "This staff unleashes bursts of magical fire. It will ignite flammable terrain and burn any creature that it hits. Creatures with an immunity to fire will be unaffected by the bolt."},
+    {"firebolt",        itemWoods[1], "",   10, 1300,   BOLT_FIRE,          {2,4,1}, false, false, 1,  false, "This staff unleashes bursts of magical fire. It will ignite flammable terrain and burn any creature that it hits. Creatures with an immunity to fire will be unaffected by the bolt."},
     {"poison",          itemWoods[3], "",   10, 1200,   BOLT_POISON,        {2,4,1}, false, false, 1,  false, "The vile blast of this twisted staff will imbue its target with a deadly venom. Each turn, a creature that is poisoned will suffer one point of damage per dose of poison it has received, and poisoned creatures will not regenerate lost health until the poison clears."},
     {"tunneling",       itemWoods[4], "",   10, 1000,   BOLT_TUNNELING,     {2,4,1}, false, false, 1,  false, "Bursts of magic from this staff will pass harmlessly through creatures but will reduce most obstructions to rubble."},
     {"blinking",        itemWoods[5], "",   11, 1200,   BOLT_BLINKING,      {2,4,1}, false, false, 1,  false, "This staff will allow you to teleport in the chosen direction. Creatures and inanimate obstructions will block the teleportation."},
@@ -2466,6 +2484,7 @@ itemTable staffTable[NUMBER_STAFF_KINDS] = {
     {"healing",         itemWoods[10], "",  5,  1100,   BOLT_HEALING,       {2,4,1}, false, false, -1, false, "This staff will heal any creature, friend or foe. Unfortunately, you cannot use this or any staff on yourself except by reflecting the bolt."},
     {"haste",           itemWoods[11], "",  5,  900,    BOLT_HASTE,         {2,4,1}, false, false, -1, false, "This staff will temporarily double the speed of any creature, friend or foe. Unfortunately, you cannot use this or any staff on yourself except by reflecting the bolt."},
     {"protection",      itemWoods[12], "",  5,  900,    BOLT_SHIELDING,     {2,4,1}, false, false, -1, false, "This staff will bathe a creature in a protective light that will absorb all damage until it is depleted. Unfortunately, you cannot use this or any staff on yourself except by reflecting the bolt."},
+    {"ice",             itemWoods[13], "",  5,  900,    BOLT_FREEZE,        {2,4,1}, false, false, 1, false,  "This staff will blast a creature with ice temporarily disabling them while they thaw. It also puts out fires, cools lava, and creates ice bridges across lakes."},
 };
 
 itemTable ringTable[NUMBER_RING_KINDS] = {
@@ -2527,6 +2546,7 @@ const bolt boltCatalog[NUMBER_BOLT_KINDS] = {
     {"poisoned dart",           "fires a dart",                 "fires strength-sapping darts",             G_WEAPON,&centipedeColor,NULL,              BE_ATTACK,      1,              0,          0,          0,                          (BF_TARGET_ENEMIES | BF_NEVER_REFLECTS | BF_NOT_LEARNABLE)},
     {"growing vines",           "releases carnivorous vines into the ground", "conjures carnivorous vines", G_GRASS,&tanColor,      NULL,               BE_NONE,        5,              DF_ANCIENT_SPIRIT_GRASS, DF_ANCIENT_SPIRIT_VINES, (MONST_INANIMATE | MONST_IMMUNE_TO_WEBS),   (BF_TARGET_ENEMIES | BF_NEVER_REFLECTS)},
     {"whip",                    "whips",                        "wields a whip",                            '*',    &tanColor,      NULL,               BE_ATTACK,      1,              0,          0,          MONST_IMMUNE_TO_WEAPONS,    (BF_TARGET_ENEMIES | BF_NEVER_REFLECTS | BF_NOT_LEARNABLE | BF_DISPLAY_CHAR_ALONG_LENGTH)},
+    {"ice",                     "casts a blast of ice",         "can send out a blast of ice",              0,      NULL,           &iceBlastColor,          BE_FREEZE,      10,             0,          0,          MONST_IMMUNE_TO_FIRE,       (BF_TARGET_ENEMIES | BF_ICY)},
 };
 
 const feat featTable[FEAT_COUNT] = {

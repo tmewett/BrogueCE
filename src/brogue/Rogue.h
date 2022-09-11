@@ -873,7 +873,8 @@ enum staffKind {
     NUMBER_GOOD_STAFF_KINDS = STAFF_HEALING,
     STAFF_HASTE,
     STAFF_PROTECTION,
-    NUMBER_STAFF_KINDS
+    STAFF_ICE,
+    NUMBER_STAFF_KINDS,
 };
 
 // these must be wand bolts, in order, and then staff bolts, in order:
@@ -908,6 +909,7 @@ enum boltType {
     BOLT_POISON_DART,
     BOLT_ANCIENT_SPIRIT_VINES,
     BOLT_WHIP,
+    BOLT_FREEZE,
     NUMBER_BOLT_KINDS
 };
 
@@ -1775,6 +1777,7 @@ enum boltEffects {
     BE_HEALING,
     BE_HASTE,
     BE_SHIELDING,
+    BE_FREEZE,
 };
 
 enum boltFlags {
@@ -1788,6 +1791,7 @@ enum boltFlags {
     BF_NOT_NEGATABLE                = Fl(8),    // Won't be erased by negation.
     BF_ELECTRIC                     = Fl(9),    // Activates terrain that has TM_PROMOTES_ON_ELECTRICITY
     BF_DISPLAY_CHAR_ALONG_LENGTH    = Fl(10),   // Display the character along the entire length of the bolt instead of just at the front.
+    BF_ICY                          = Fl(11),   // Bolt freezes the ground, puts out fire
 };
 
 typedef struct bolt {

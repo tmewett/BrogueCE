@@ -2378,6 +2378,9 @@ void itemDetails(char *buf, item *theItem) {
                         sprintf(buf2, "This staff deals damage to any creature that it hits, unless the creature is immune to fire. (If the staff is enchanted, its average damage will increase by %i%%.) It also sets creatures and flammable terrain on fire.",
                                 (int) (100 * (staffDamageLow(enchant + FP_FACTOR) + staffDamageHigh(enchant + FP_FACTOR)) / (staffDamageLow(enchant) + staffDamageHigh(enchant)) - 100));
                         break;
+                    case STAFF_ICE:
+                        sprintf(buf2, "This staff freezes any creature that its hits, unless the creature on fire.");
+                        break;
                     case STAFF_POISON:
                         sprintf(buf2, "The bolt from this staff will poison any creature that it hits for %i turns. (If the staff is enchanted, this will increase to %i turns.)",
                                 staffPoison(enchant),
@@ -4397,6 +4400,16 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                     *autoID = true;
                 }
                 break;
+            case BE_FREEZE:
+                monst->status[STATUS_PARALYZED] = monst->maxStatus[STATUS_PARALYZED] = max(monst->status[STATUS_PARALYZED], 20);
+
+                if (boltCatalog[BOLT_SLOW].backColor) {
+                    flashMonster(monst, boltCatalog[BOLT_FREEZE].backColor, 100);
+                }
+                if (autoID) {
+                    *autoID = true;
+                }
+            break;
             case BE_HASTE:
                 haste(monst, staffHasteDuration(theBolt->magnitude * FP_FACTOR));
                 if (boltCatalog[BOLT_HASTE].backColor) {
