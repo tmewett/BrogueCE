@@ -714,7 +714,7 @@ boolean fillInteriorForVestibuleMachine(char interior[DCOLS][DROWS], short bp, s
 void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY, short theProfileIndex) {
     short i, j, n, newX, newY;
     enum directions dir;
-    short orphanList[20][2];
+    pos orphanList[20];
     short orphanCount = 0;
     short **grid, **pathingGrid, **costGrid;
     grid = allocGrid();
@@ -736,8 +736,7 @@ void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY,
                         && interior[newX][newY]
                         && (newX != originX || newY != originY)) {
 
-                        orphanList[orphanCount][0] = newX;
-                        orphanList[orphanCount][1] = newY;
+                        orphanList[orphanCount] = (pos){ .x = newX, .y = newY };
                         orphanCount++;
                         grid[i][j] = -1; // Treat the orphaned door as off limits.
 
@@ -762,7 +761,7 @@ void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY,
                 copyGrid(pathingGrid, grid);
                 findReplaceGrid(pathingGrid, -1, -1, 0);
                 hiliteGrid(pathingGrid, &green, 50);
-                plotCharWithColor('X', mapToWindowX(orphanList[n][0]), mapToWindowY(orphanList[n][1]), &black, &orange);
+                plotCharWithColor('X', mapToWindowX(orphanList[n].x), mapToWindowY(orphanList[n].y), &black, &orange);
                 temporaryMessage("Orphan detected:", REQUIRE_ACKNOWLEDGMENT);
             }
 
@@ -784,8 +783,8 @@ void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY,
             }
             dijkstraScan(pathingGrid, costGrid, false);
 
-            i = orphanList[n][0];
-            j = orphanList[n][1];
+            i = orphanList[n].x;
+            j = orphanList[n].y;
             while (pathingGrid[i][j] > 0) {
                 for (dir = 0; dir < 4; dir++) {
                     newX = i + nbDirs[dir][0];
@@ -953,7 +952,7 @@ typedef struct machineData {
     creature *spawnedMonsters[MACHINES_BUFFER_LENGTH];
     creature *spawnedMonstersSub[MACHINES_BUFFER_LENGTH];
 
-    short gateCandidates[50][2];
+    pos gateCandidates[50];
     short distances[100];
     short sRows[DROWS];
     short sCols[DCOLS];
@@ -1068,8 +1067,7 @@ boolean buildAMachine(enum machineTypes bp,
                             && chokeMap[i][j] <= blueprintCatalog[bp].roomSize[1]) {
 
                             //DEBUG printf("\nDepth %i: Gate site qualified with interior size of %i.", rogue.depthLevel, chokeMap[i][j]);
-                            p->gateCandidates[totalFreq][0] = i;
-                            p->gateCandidates[totalFreq][1] = j;
+                            p->gateCandidates[totalFreq] = (pos){ .x = i, .y = j };
                             totalFreq++;
                         }
                     }
@@ -1078,8 +1076,8 @@ boolean buildAMachine(enum machineTypes bp,
                 if (totalFreq) {
                     // Choose the gate.
                     randIndex = rand_range(0, totalFreq - 1);
-                    originX = p->gateCandidates[randIndex][0];
-                    originY = p->gateCandidates[randIndex][1];
+                    originX = p->gateCandidates[randIndex].x;
+                    originY = p->gateCandidates[randIndex].y;
                 } else {
                     // If no suitable sites, abort.
                     if (distanceMap) {
@@ -1578,9 +1576,8 @@ boolean buildAMachine(enum machineTypes bp,
                             }
                             monst = generateMonster(feature->monsterID, true, true);
                             if (monst) {
-                                monst->xLoc = featX;
-                                monst->yLoc = featY;
-                                pmap[monst->xLoc][monst->yLoc].flags |= HAS_MONSTER;
+                                monst->loc = (pos){ .x = featX, .y = featY };
+                                pmap[monst->loc.x][monst->loc.y].flags |= HAS_MONSTER;
                                 monst->bookkeepingFlags |= MB_JUST_SUMMONED;
                             }
                         }
@@ -2117,7 +2114,7 @@ enum directions directionOfDoorSite(short **grid, short x, short y) {
     return solutionDir;
 }
 
-void chooseRandomDoorSites(short **roomMap, short doorSites[4][2]) {
+void chooseRandomDoorSites(short **roomMap, pos doorSites[4]) {
     short i, j, k, newX, newY;
     enum directions dir;
     short **grid;
@@ -2161,13 +2158,13 @@ void chooseRandomDoorSites(short **roomMap, short doorSites[4][2]) {
 
     // Pick four doors, one in each direction, and store them in doorSites[dir].
     for (dir=0; dir<4; dir++) {
-        randomLocationInGrid(grid, &(doorSites[dir][0]), &(doorSites[dir][1]), dir + 2);
+        randomLocationInGrid(grid, &(doorSites[dir].x), &(doorSites[dir].y), dir + 2);
     }
 
     freeGrid(grid);
 }
 
-void attachHallwayTo(short **grid, short doorSites[4][2]) {
+void attachHallwayTo(short **grid, pos doorSites[4]) {
     short i, x, y, newX, newY, dirs[4];
     short length;
     enum directions dir, dir2;
@@ -2178,10 +2175,10 @@ void attachHallwayTo(short **grid, short doorSites[4][2]) {
     shuffleList(dirs, 4);
     for (i=0; i<4; i++) {
         dir = dirs[i];
-        if (doorSites[dir][0] != -1
-            && doorSites[dir][1] != -1
-            && coordinatesAreInMap(doorSites[dir][0] + nbDirs[dir][0] * HORIZONTAL_CORRIDOR_MAX_LENGTH,
-                                   doorSites[dir][1] + nbDirs[dir][1] * VERTICAL_CORRIDOR_MAX_LENGTH)) {
+        if (doorSites[dir].x != -1
+            && doorSites[dir].y != -1
+            && coordinatesAreInMap(doorSites[dir].x + nbDirs[dir][0] * HORIZONTAL_CORRIDOR_MAX_LENGTH,
+                                   doorSites[dir].y + nbDirs[dir][1] * VERTICAL_CORRIDOR_MAX_LENGTH)) {
                 break; // That's our direction!
         }
     }
@@ -2195,8 +2192,8 @@ void attachHallwayTo(short **grid, short doorSites[4][2]) {
         length = rand_range(HORIZONTAL_CORRIDOR_MIN_LENGTH, HORIZONTAL_CORRIDOR_MAX_LENGTH);
     }
 
-    x = doorSites[dir][0];
-    y = doorSites[dir][1];
+    x = doorSites[dir].x;
+    y = doorSites[dir].y;
     for (i = 0; i < length; i++) {
         if (coordinatesAreInMap(x, y)) {
             grid[x][y] = true;
@@ -2215,11 +2212,9 @@ void attachHallwayTo(short **grid, short doorSites[4][2]) {
             || !coordinatesAreInMap(newX, newY)
             || grid[newX][newY]) {
 
-            doorSites[dir2][0] = -1;
-            doorSites[dir2][1] = -1;
+            doorSites[dir2] = (pos){ .x = -1, .y = -1 };
         } else {
-            doorSites[dir2][0] = newX;
-            doorSites[dir2][1] = newY;
+            doorSites[dir2] = (pos){ .x = newX, .y = newY };
         }
     }
 }
@@ -2238,7 +2233,7 @@ void attachHallwayTo(short **grid, short doorSites[4][2]) {
 //      6. Cavern (the kind that fills a level)
 //      7. Entrance room (the big upside-down T room at the start of depth 1)
 
-void designRandomRoom(short **grid, boolean attachHallway, short doorSites[4][2],
+void designRandomRoom(short **grid, boolean attachHallway, pos doorSites[4],
                       const short roomTypeFrequencies[ROOM_TYPE_COUNT]) {
     short randIndex, i, sum;
     enum directions dir;
@@ -2300,7 +2295,7 @@ void designRandomRoom(short **grid, boolean attachHallway, short doorSites[4][2]
         chooseRandomDoorSites(grid, doorSites);
         if (attachHallway) {
             dir = rand_range(0, 3);
-            for (i=0; doorSites[dir][0] == -1 && i < 3; i++) {
+            for (i=0; doorSites[dir].x == -1 && i < 3; i++) {
                 dir = (dir + 1) % 4; // Each room will have at least 2 valid directions for doors.
             }
             attachHallwayTo(grid, doorSites);
@@ -2334,7 +2329,7 @@ boolean roomFitsAt(short **dungeonMap, short **roomMap, short roomToDungeonX, sh
 void attachRooms(short **grid, const dungeonProfile *theDP, short attempts, short maxRoomCount) {
     short roomsBuilt, roomsAttempted;
     short **roomMap;
-    short doorSites[4][2];
+    pos doorSites[4];
     short i, x, y, sCoord[DCOLS*DROWS];
     enum directions dir, oppDir;
 
@@ -2351,10 +2346,10 @@ void attachRooms(short **grid, const dungeonProfile *theDP, short attempts, shor
         if (D_INSPECT_LEVELGEN) {
             colorOverDungeon(&darkGray);
             hiliteGrid(roomMap, &blue, 100);
-            if (doorSites[0][0] != -1) plotCharWithColor('^', mapToWindowX(doorSites[0][0]), mapToWindowY(doorSites[0][1]), &black, &green);
-            if (doorSites[1][0] != -1) plotCharWithColor('v', mapToWindowX(doorSites[1][0]), mapToWindowY(doorSites[1][1]), &black, &green);
-            if (doorSites[2][0] != -1) plotCharWithColor('<', mapToWindowX(doorSites[2][0]), mapToWindowY(doorSites[2][1]), &black, &green);
-            if (doorSites[3][0] != -1) plotCharWithColor('>', mapToWindowX(doorSites[3][0]), mapToWindowY(doorSites[3][1]), &black, &green);
+            if (doorSites[0].x != -1) plotCharWithColor('^', mapToWindowX(doorSites[0].x), mapToWindowY(doorSites[0].y), &black, &green);
+            if (doorSites[1].x != -1) plotCharWithColor('v', mapToWindowX(doorSites[1].x), mapToWindowY(doorSites[1].y), &black, &green);
+            if (doorSites[2].x != -1) plotCharWithColor('<', mapToWindowX(doorSites[2].x), mapToWindowY(doorSites[2].y), &black, &green);
+            if (doorSites[3].x != -1) plotCharWithColor('>', mapToWindowX(doorSites[3].x), mapToWindowY(doorSites[3].y), &black, &green);
             temporaryMessage("Generating this room:", REQUIRE_ACKNOWLEDGMENT);
         }
 
@@ -2366,15 +2361,15 @@ void attachRooms(short **grid, const dungeonProfile *theDP, short attempts, shor
             dir = directionOfDoorSite(grid, x, y);
             oppDir = oppositeDirection(dir);
             if (dir != NO_DIRECTION
-                && doorSites[oppDir][0] != -1
-                && roomFitsAt(grid, roomMap, x - doorSites[oppDir][0], y - doorSites[oppDir][1])) {
+                && doorSites[oppDir].x != -1
+                && roomFitsAt(grid, roomMap, x - doorSites[oppDir].x, y - doorSites[oppDir].y)) {
 
                 // Room fits here.
                 if (D_INSPECT_LEVELGEN) {
                     colorOverDungeon(&darkGray);
                     hiliteGrid(grid, &white, 100);
                 }
-                insertRoomAt(grid, roomMap, x - doorSites[oppDir][0], y - doorSites[oppDir][1], doorSites[oppDir][0], doorSites[oppDir][1]);
+                insertRoomAt(grid, roomMap, x - doorSites[oppDir].x, y - doorSites[oppDir].y, doorSites[oppDir].x, doorSites[oppDir].y);
                 grid[x][y] = 2; // Door site.
                 if (D_INSPECT_LEVELGEN) {
                     hiliteGrid(grid, &green, 50);
@@ -2986,9 +2981,9 @@ void refreshWaypoint(short wpIndex) {
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature* monst = nextCreature(&it);
         if ((monst->creatureState == MONSTER_SLEEPING || (monst->info.flags & MONST_IMMOBILE) || (monst->bookkeepingFlags & MB_CAPTIVE))
-            && costMap[monst->xLoc][monst->yLoc] >= 0) {
+            && costMap[monst->loc.x][monst->loc.y] >= 0) {
 
-            costMap[monst->xLoc][monst->yLoc] = PDS_FORBIDDEN;
+            costMap[monst->loc.x][monst->loc.y] = PDS_FORBIDDEN;
         }
     }
     fillGrid(rogue.wpDistance[wpIndex], 30000);
@@ -3216,8 +3211,8 @@ boolean fillSpawnMap(enum dungeonLayers layer,
 
                 if (refresh) {
                     refreshDungeonCell(i, j);
-                    if (player.xLoc == i && player.yLoc == j && !player.status[STATUS_LEVITATING] && refresh) {
-                        flavorMessage(tileFlavor(player.xLoc, player.yLoc));
+                    if (player.loc.x == i && player.loc.y == j && !player.status[STATUS_LEVITATING] && refresh) {
+                        flavorMessage(tileFlavor(player.loc.x, player.loc.y));
                     }
                     if (pmap[i][j].flags & (HAS_MONSTER)) {
                         monst = monsterAtLoc(i, j);
@@ -3298,16 +3293,16 @@ void spawnMapDF(short x, short y,
 }
 
 void evacuateCreatures(char blockingMap[DCOLS][DROWS]) {
-    short i, j, newLoc[2];
     creature *monst;
 
-    for (i=0; i<DCOLS; i++) {
-        for (j=0; j<DROWS; j++) {
+    for (int i=0; i<DCOLS; i++) {
+        for (int j=0; j<DROWS; j++) {
             if (blockingMap[i][j]
                 && (pmap[i][j].flags & (HAS_MONSTER | HAS_PLAYER))) {
 
                 monst = monsterAtLoc(i, j);
-                getQualifyingLocNear(newLoc,
+                pos newLoc;
+                getQualifyingLocNear(&newLoc,
                                      i, j,
                                      true,
                                      blockingMap,
@@ -3315,10 +3310,9 @@ void evacuateCreatures(char blockingMap[DCOLS][DROWS]) {
                                      (HAS_MONSTER | HAS_PLAYER),
                                      false,
                                      false);
-                monst->xLoc = newLoc[0];
-                monst->yLoc = newLoc[1];
+                monst->loc = newLoc;
                 pmap[i][j].flags &= ~(HAS_MONSTER | HAS_PLAYER);
-                pmap[newLoc[0]][newLoc[1]].flags |= (monst == &player ? HAS_PLAYER : HAS_MONSTER);
+                pmap[newLoc.x][newLoc.y].flags |= (monst == &player ? HAS_PLAYER : HAS_MONSTER);
             }
         }
     }
@@ -3417,7 +3411,7 @@ boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refr
 
     if (refreshCell
         && (tileCatalog[feat->tile].flags & (T_IS_FIRE | T_AUTO_DESCENT))
-        && cellHasTerrainFlag(player.xLoc, player.yLoc, (T_IS_FIRE | T_AUTO_DESCENT))) {
+        && cellHasTerrainFlag(player.loc.x, player.loc.y, (T_IS_FIRE | T_AUTO_DESCENT))) {
 
         applyInstantTileEffectsToCreature(&player);
     }
@@ -3452,10 +3446,9 @@ boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refr
         if (feat->flags & DFF_ACTIVATE_DORMANT_MONSTER) {
             for (creatureIterator it = iterateCreatures(dormantMonsters); hasNextCreature(it);) {
                 creature *monst = nextCreature(&it);
-                if (monst->xLoc == x && monst->yLoc == y || blockingMap[monst->xLoc][monst->yLoc]) {
+                if (monst->loc.x == x && monst->loc.y == y || blockingMap[monst->loc.x][monst->loc.y]) {
                     // found it!
                     toggleMonsterDormancy(monst);
-                    restartIterator(&it);
                 }
             }
         }
@@ -3464,13 +3457,13 @@ boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refr
 }
 
 void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
-    short i, *x, *y, turnCount;//, loc[2];
+    short i, *x, *y, turnCount;
     boolean foundLeader = false;
     short **theMap;
     enum directions dir;
 
-    x = &(monst->xLoc);
-    y = &(monst->yLoc);
+    x = &(monst->loc.x);
+    y = &(monst->loc.y);
 
     if (monst->status[STATUS_ENTERS_LEVEL_IN] > 0) {
         if (monst->bookkeepingFlags & (MB_APPROACHING_PIT)) {
@@ -3482,11 +3475,11 @@ void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
         pmap[*x][*y].flags &= ~HAS_MONSTER;
         if (theMap) {
             // STATUS_ENTERS_LEVEL_IN accounts for monster speed; convert back to map distance and subtract from distance to stairs
-            turnCount = (theMap[monst->xLoc][monst->yLoc] - (monst->status[STATUS_ENTERS_LEVEL_IN] * 100 / monst->movementSpeed));
+            turnCount = (theMap[monst->loc.x][monst->loc.y] - (monst->status[STATUS_ENTERS_LEVEL_IN] * 100 / monst->movementSpeed));
             for (i=0; i < turnCount; i++) {
-                if ((dir = nextStep(theMap, monst->xLoc, monst->yLoc, NULL, true)) != NO_DIRECTION) {
-                    monst->xLoc += nbDirs[dir][0];
-                    monst->yLoc += nbDirs[dir][1];
+                if ((dir = nextStep(theMap, monst->loc.x, monst->loc.y, NULL, true)) != NO_DIRECTION) {
+                    monst->loc.x += nbDirs[dir][0];
+                    monst->loc.y += nbDirs[dir][1];
                 } else {
                     break;
                 }
@@ -3533,24 +3526,20 @@ void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
 }
 
 void restoreItem(item *theItem) {
-    short *x, *y, loc[2];
-    x = &(theItem->xLoc);
-    y = &(theItem->yLoc);
-
     if (theItem->flags & ITEM_PREPLACED) {
         theItem->flags &= ~ITEM_PREPLACED;
 
+        pos loc;
         // Items can fall into deep water, enclaved lakes, another chasm, even lava!
-        getQualifyingLocNear(loc, *x, *y, true, 0,
+        getQualifyingLocNear(&loc, theItem->loc.x, theItem->loc.y, true, 0,
                             (T_OBSTRUCTS_ITEMS),
                             (HAS_MONSTER | HAS_ITEM | HAS_STAIRS), false, false);
 
-        *x = loc[0];
-        *y = loc[1];
+        theItem->loc = loc;
     }
-    pmap[*x][*y].flags |= HAS_ITEM;
+    pmap[theItem->loc.x][theItem->loc.y].flags |= HAS_ITEM;
     if (theItem->flags & ITEM_MAGIC_DETECTED && itemMagicPolarity(theItem)) {
-        pmap[*x][*y].flags |= ITEM_DETECTED;
+        pmap[theItem->loc.x][theItem->loc.y].flags |= ITEM_DETECTED;
     }
 }
 
@@ -3645,15 +3634,15 @@ void prepareForStairs(short x, short y, char grid[DCOLS][DROWS]) {
 // Places the player, monsters, items and stairs.
 void initializeLevel() {
     short i, j, dir;
-    short upLoc[2], downLoc[2], **mapToStairs, **mapToPit;
+    short **mapToStairs, **mapToPit;
     item *theItem;
     char grid[DCOLS][DROWS];
     short n = rogue.depthLevel - 1;
 
     // Place the stairs.
 
-    for (i=0; i < DCOLS; i++) {
-        for (j=0; j < DROWS; j++) {
+    for (int i=0; i < DCOLS; i++) {
+        for (int j=0; j < DROWS; j++) {
             grid[i][j] = validStairLoc(i, j);
         }
     }
@@ -3664,69 +3653,66 @@ void initializeLevel() {
         temporaryMessage("Stair location candidates:", REQUIRE_ACKNOWLEDGMENT);
     }
 
-    if (getQualifyingGridLocNear(downLoc, levels[n].downStairsLoc[0], levels[n].downStairsLoc[1], grid, false)) {
-        prepareForStairs(downLoc[0], downLoc[1], grid);
+    pos downLoc;
+    if (getQualifyingGridLocNear(&downLoc, levels[n].downStairsLoc.x, levels[n].downStairsLoc.y, grid, false)) {
+        prepareForStairs(downLoc.x, downLoc.y, grid);
     } else {
-        getQualifyingLocNear(downLoc, levels[n].downStairsLoc[0], levels[n].downStairsLoc[1], false, 0,
+        getQualifyingLocNear(&downLoc, levels[n].downStairsLoc.x, levels[n].downStairsLoc.y, false, 0,
                              (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_ITEMS | T_AUTO_DESCENT | T_IS_DEEP_WATER | T_LAVA_INSTA_DEATH | T_IS_DF_TRAP),
                              (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), true, false);
     }
 
     if (rogue.depthLevel == DEEPEST_LEVEL) {
-        pmap[downLoc[0]][downLoc[1]].layers[DUNGEON] = DUNGEON_PORTAL;
+        pmap[downLoc.x][downLoc.y].layers[DUNGEON] = DUNGEON_PORTAL;
     } else {
-        pmap[downLoc[0]][downLoc[1]].layers[DUNGEON] = DOWN_STAIRS;
+        pmap[downLoc.x][downLoc.y].layers[DUNGEON] = DOWN_STAIRS;
     }
-    pmap[downLoc[0]][downLoc[1]].layers[LIQUID]     = NOTHING;
-    pmap[downLoc[0]][downLoc[1]].layers[SURFACE]    = NOTHING;
+    pmap[downLoc.x][downLoc.y].layers[LIQUID]     = NOTHING;
+    pmap[downLoc.x][downLoc.y].layers[SURFACE]    = NOTHING;
 
     if (!levels[n+1].visited) {
-        levels[n+1].upStairsLoc[0] = downLoc[0];
-        levels[n+1].upStairsLoc[1] = downLoc[1];
+        levels[n+1].upStairsLoc = downLoc;
     }
-    levels[n].downStairsLoc[0] = downLoc[0];
-    levels[n].downStairsLoc[1] = downLoc[1];
+    levels[n].downStairsLoc = downLoc;
 
-    if (getQualifyingGridLocNear(upLoc, levels[n].upStairsLoc[0], levels[n].upStairsLoc[1], grid, false)) {
-        prepareForStairs(upLoc[0], upLoc[1], grid);
+    pos upLoc;
+    if (getQualifyingGridLocNear(&upLoc, levels[n].upStairsLoc.x, levels[n].upStairsLoc.y, grid, false)) {
+        prepareForStairs(upLoc.x, upLoc.y, grid);
     } else { // Hopefully this never happens.
-        getQualifyingLocNear(upLoc, levels[n].upStairsLoc[0], levels[n].upStairsLoc[1], false, 0,
+        getQualifyingLocNear(&upLoc, levels[n].upStairsLoc.x, levels[n].upStairsLoc.y, false, 0,
                              (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_ITEMS | T_AUTO_DESCENT | T_IS_DEEP_WATER | T_LAVA_INSTA_DEATH | T_IS_DF_TRAP),
                              (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), true, false);
     }
 
-    levels[n].upStairsLoc[0] = upLoc[0];
-    levels[n].upStairsLoc[1] = upLoc[1];
+    levels[n].upStairsLoc = upLoc;
 
     if (rogue.depthLevel == 1) {
-        pmap[upLoc[0]][upLoc[1]].layers[DUNGEON] = DUNGEON_EXIT;
+        pmap[upLoc.x][upLoc.y].layers[DUNGEON] = DUNGEON_EXIT;
     } else {
-        pmap[upLoc[0]][upLoc[1]].layers[DUNGEON] = UP_STAIRS;
+        pmap[upLoc.x][upLoc.y].layers[DUNGEON] = UP_STAIRS;
     }
-    pmap[upLoc[0]][upLoc[1]].layers[LIQUID] = NOTHING;
-    pmap[upLoc[0]][upLoc[1]].layers[SURFACE] = NOTHING;
+    pmap[upLoc.x][upLoc.y].layers[LIQUID] = NOTHING;
+    pmap[upLoc.x][upLoc.y].layers[SURFACE] = NOTHING;
 
-    rogue.downLoc[0] = downLoc[0];
-    rogue.downLoc[1] = downLoc[1];
-    pmap[downLoc[0]][downLoc[1]].flags |= HAS_STAIRS;
-    rogue.upLoc[0] = upLoc[0];
-    rogue.upLoc[1] = upLoc[1];
-    pmap[upLoc[0]][upLoc[1]].flags |= HAS_STAIRS;
+    rogue.downLoc = downLoc;
+    pmap[downLoc.x][downLoc.y].flags |= HAS_STAIRS;
+    rogue.upLoc = upLoc;
+    pmap[upLoc.x][upLoc.y].flags |= HAS_STAIRS;
 
     if (!levels[rogue.depthLevel-1].visited) {
 
         // Run a field of view check from up stairs so that monsters do not spawn within sight of it.
         for (dir=0; dir<4; dir++) {
-            if (coordinatesAreInMap(upLoc[0] + nbDirs[dir][0], upLoc[1] + nbDirs[dir][1])
-                && !cellHasTerrainFlag(upLoc[0] + nbDirs[dir][0], upLoc[1] + nbDirs[dir][1], T_OBSTRUCTS_PASSABILITY)) {
+            if (coordinatesAreInMap(upLoc.x + nbDirs[dir][0], upLoc.y + nbDirs[dir][1])
+                && !cellHasTerrainFlag(upLoc.x + nbDirs[dir][0], upLoc.y + nbDirs[dir][1], T_OBSTRUCTS_PASSABILITY)) {
 
-                upLoc[0] += nbDirs[dir][0];
-                upLoc[1] += nbDirs[dir][1];
+                upLoc.x += nbDirs[dir][0];
+                upLoc.y += nbDirs[dir][1];
                 break;
             }
         }
         zeroOutGrid(grid);
-        getFOVMask(grid, upLoc[0], upLoc[1], max(DCOLS, DROWS) * FP_FACTOR, (T_OBSTRUCTS_VISION), 0, false);
+        getFOVMask(grid, upLoc.x, upLoc.y, max(DCOLS, DROWS) * FP_FACTOR, (T_OBSTRUCTS_VISION), 0, false);
         for (i=0; i<DCOLS; i++) {
             for (j=0; j<DROWS; j++) {
                 if (grid[i][j]) {
@@ -3734,7 +3720,7 @@ void initializeLevel() {
                 }
             }
         }
-        populateItems(upLoc[0], upLoc[1]);
+        populateItems(upLoc.x, upLoc.y);
         populateMonsters();
     }
 
@@ -3748,10 +3734,10 @@ void initializeLevel() {
     fillGrid(mapToStairs, 0);
     mapToPit = allocGrid();
     fillGrid(mapToPit, 0);
-    calculateDistances(mapToStairs, player.xLoc, player.yLoc, T_PATHING_BLOCKER, NULL, true, true);
+    calculateDistances(mapToStairs, player.loc.x, player.loc.y, T_PATHING_BLOCKER, NULL, true, true);
     calculateDistances(mapToPit,
-                       levels[rogue.depthLevel - 1].playerExitedVia[0],
-                       levels[rogue.depthLevel - 1].playerExitedVia[1],
+                       levels[rogue.depthLevel - 1].playerExitedVia.x,
+                       levels[rogue.depthLevel - 1].playerExitedVia.y,
                        T_PATHING_BLOCKER,
                        NULL,
                        true,

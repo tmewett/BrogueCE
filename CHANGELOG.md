@@ -1,3 +1,64 @@
+1.11
+====
+
+A new gameplay version featuring some ally buffs, a new auto-ID system, and UI
+improvements. Replays and saves are not compatible with 1.10.x.
+
+Thanks to contributors Alex Kahn, Antony Boucher, L-french, nathanf, nstoddard,
+RojjaCebolla, Vivit-R, ash-nolan, bleakley, kiedtl, withinwheels, and zenzombie.
+
+-
+  Wand of plenty no longer halves the max HP of cloned monsters.
+-
+  Resurrection altars now prioritise allies by number of times empowered,
+  instead of by most recent death. In the case of a tie, they choose the monster
+  type which is found deepest in the dungeon.
+-
+  The game now automatically identifies items where it is possible to deduce
+  them from the discovered items screen.
+-
+  Potions of hallucination are identified when thrown if all benevolent potions
+  are either identified or magic-detected.
+-
+  Increased absorption runic's minimum absorbed damage from 0 to 1.
+-
+  When the player is telepathic, correct monsters are shown when also
+  hallucinating.
+-
+  When "display stealth range" is on, lit and dark areas are shown more clearly.
+-
+  Items which were taken from a vault now have a note indicating this in their
+  item description.
+-
+  Identified +0 armor is prefixed with a +0, just like weapons.
+-
+  Autopilot is stopped when an item is stolen or a health alert is displayed.
+-
+  The automatic throw/cast path-adjusting tries to avoid unknown cells.
+-
+  Fixed that commands that use the control key (such as Ctrl+S for long search)
+  not working in the terminal version.
+-
+  Fixed a bug which prevented a discorded ally from returning to normal after
+  losing a stolen item in deep water.
+-
+  Fixed a crash that can happen when an explosive monster dies from poison or
+  burning damage.
+-
+  Fix a bug which prevented sacrifice monsters from spawning on depth 21.
+-
+  Fixed over-cautious pathing through deeper dungeon levels when revealed by
+  magic mapping.
+-
+  Fixed the sidebar to correctly show that negated status is removed on
+  polymorph.
+-
+  Speeding up recording playback now also speeds up animations.
+-
+  During extra-slow recording playback, mouse and keyboard now respond
+  instantly.
+
+
 1.10.1
 ======
 

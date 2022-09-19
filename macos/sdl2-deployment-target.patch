@@ -11,6 +11,6 @@ versions of macOS.
    def install
 +    ENV["MACOSX_DEPLOYMENT_TARGET"] = "10.6"
 +
-     # we have to do this because most build scripts assume that all SDL modules
+     # We have to do this because most build scripts assume that all SDL modules
      # are installed to the same prefix. Consequently SDL stuff cannot be
      # keg-only but I doubt that will be needed.

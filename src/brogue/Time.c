@@ -30,14 +30,14 @@ void exposeCreatureToFire(creature *monst) {
         || monst->status[STATUS_IMMUNE_TO_FIRE]
         || (monst->info.flags & MONST_INVULNERABLE)
         || (monst->bookkeepingFlags & MB_SUBMERGED)
-        || ((!monst->status[STATUS_LEVITATING]) && cellHasTMFlag(monst->xLoc, monst->yLoc, TM_EXTINGUISHES_FIRE))) {
+        || ((!monst->status[STATUS_LEVITATING]) && cellHasTMFlag(monst->loc.x, monst->loc.y, TM_EXTINGUISHES_FIRE))) {
         return;
     }
     if (monst->status[STATUS_BURNING] == 0) {
         if (monst == &player) {
             rogue.minersLight.lightColor = &fireForeColor;
             player.info.foreColor = &torchLightColor;
-            refreshDungeonCell(player.xLoc, player.yLoc);
+            refreshDungeonCell(player.loc.x, player.loc.y);
             //updateVision(); // this screws up the firebolt visual effect by erasing it while a message is displayed
             combatMessage("you catch fire", &badMessageColor);
         } else if (canDirectlySeeMonster(monst)) {
@@ -55,22 +55,22 @@ void updateFlavorText() {
         if (rogue.armor
             && (rogue.armor->flags & ITEM_RUNIC)
             && rogue.armor->enchant2 == A_RESPIRATION
-            && tileCatalog[pmap[player.xLoc][player.yLoc].layers[highestPriorityLayer(player.xLoc, player.yLoc, false)]].flags & T_RESPIRATION_IMMUNITIES) {
+            && tileCatalog[pmap[player.loc.x][player.loc.y].layers[highestPriorityLayer(player.loc.x, player.loc.y, false)]].flags & T_RESPIRATION_IMMUNITIES) {
 
             flavorMessage("A pocket of cool, clean air swirls around you.");
         } else if (player.status[STATUS_LEVITATING]) {
-            describeLocation(buf, player.xLoc, player.yLoc);
+            describeLocation(buf, player.loc.x, player.loc.y);
             flavorMessage(buf);
         } else {
-            flavorMessage(tileFlavor(player.xLoc, player.yLoc));
+            flavorMessage(tileFlavor(player.loc.x, player.loc.y));
         }
     }
 }
 
 void updatePlayerUnderwaterness() {
     if (rogue.inWater) {
-        if (!cellHasTerrainFlag(player.xLoc, player.yLoc, T_IS_DEEP_WATER) || player.status[STATUS_LEVITATING]
-            || cellHasTerrainFlag(player.xLoc, player.yLoc, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))) {
+        if (!cellHasTerrainFlag(player.loc.x, player.loc.y, T_IS_DEEP_WATER) || player.status[STATUS_LEVITATING]
+            || cellHasTerrainFlag(player.loc.x, player.loc.y, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))) {
 
             rogue.inWater = false;
             updateMinersLightRadius();
@@ -78,8 +78,8 @@ void updatePlayerUnderwaterness() {
             displayLevel();
         }
     } else {
-        if (cellHasTerrainFlag(player.xLoc, player.yLoc, T_IS_DEEP_WATER) && !player.status[STATUS_LEVITATING]
-            && !cellHasTerrainFlag(player.xLoc, player.yLoc, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))) {
+        if (cellHasTerrainFlag(player.loc.x, player.loc.y, T_IS_DEEP_WATER) && !player.status[STATUS_LEVITATING]
+            && !cellHasTerrainFlag(player.loc.x, player.loc.y, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))) {
 
             rogue.inWater = true;
             updateMinersLightRadius();
@@ -91,8 +91,8 @@ void updatePlayerUnderwaterness() {
 
 boolean monsterShouldFall(creature *monst) {
     return (!(monst->status[STATUS_LEVITATING])
-            && cellHasTerrainFlag(monst->xLoc, monst->yLoc, T_AUTO_DESCENT)
-            && !cellHasTerrainFlag(monst->xLoc, monst->yLoc, T_ENTANGLES | T_OBSTRUCTS_PASSABILITY)
+            && cellHasTerrainFlag(monst->loc.x, monst->loc.y, T_AUTO_DESCENT)
+            && !cellHasTerrainFlag(monst->loc.x, monst->loc.y, T_ENTANGLES | T_OBSTRUCTS_PASSABILITY)
             && !(monst->bookkeepingFlags & MB_PREPLACED));
 }
 
@@ -100,7 +100,7 @@ boolean monsterShouldFall(creature *monst) {
 void applyInstantTileEffectsToCreature(creature *monst) {
     char buf[COLS], buf2[COLS], buf3[COLS];
     char *s;
-    short *x = &(monst->xLoc), *y = &(monst->yLoc), damage;
+    short *x = &(monst->loc.x), *y = &(monst->loc.y), damage;
     enum dungeonLayers layer;
     item *theItem;
 
@@ -453,7 +453,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
 
 void applyGradualTileEffectsToCreature(creature *monst, short ticks) {
     short itemCandidates, randItemIndex;
-    short x = monst->xLoc, y = monst->yLoc, damage;
+    short x = monst->loc.x, y = monst->loc.y, damage;
     char buf[COLS * 5], buf2[COLS * 3];
     item *theItem;
     enum dungeonLayers layer;
@@ -571,11 +571,11 @@ void updateClairvoyance() {
         cFlags = CLAIRVOYANT_VISIBLE | DISCOVERED;
     }
 
-    for (i = max(0, player.xLoc - clairvoyanceRadius); i < min(DCOLS, player.xLoc + clairvoyanceRadius + 1); i++) {
-        for (j = max(0, player.yLoc - clairvoyanceRadius); j < min(DROWS, player.yLoc + clairvoyanceRadius + 1); j++) {
+    for (i = max(0, player.loc.x - clairvoyanceRadius); i < min(DCOLS, player.loc.x + clairvoyanceRadius + 1); i++) {
+        for (j = max(0, player.loc.y - clairvoyanceRadius); j < min(DROWS, player.loc.y + clairvoyanceRadius + 1); j++) {
 
-            dx = (player.xLoc - i);
-            dy = (player.yLoc - j);
+            dx = (player.loc.x - i);
+            dy = (player.loc.y - j);
 
             if (dx*dx + dy*dy < clairvoyanceRadius*clairvoyanceRadius + clairvoyanceRadius
                 && (pmap[i][j].layers[DUNGEON] != GRANITE || pmap[i][j].flags & DISCOVERED)) {
@@ -610,17 +610,17 @@ void updateTelepathy() {
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         if (monsterRevealed(monst)) {
-            getFOVMask(grid, monst->xLoc, monst->yLoc, 2 * FP_FACTOR, T_OBSTRUCTS_VISION, 0, false);
-            pmap[monst->xLoc][monst->yLoc].flags |= TELEPATHIC_VISIBLE;
-            discoverCell(monst->xLoc, monst->yLoc);
+            getFOVMask(grid, monst->loc.x, monst->loc.y, 2 * FP_FACTOR, T_OBSTRUCTS_VISION, 0, false);
+            pmap[monst->loc.x][monst->loc.y].flags |= TELEPATHIC_VISIBLE;
+            discoverCell(monst->loc.x, monst->loc.y);
         }
     }
     for (creatureIterator it = iterateCreatures(dormantMonsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         if (monsterRevealed(monst)) {
-            getFOVMask(grid, monst->xLoc, monst->yLoc, 2 * FP_FACTOR, T_OBSTRUCTS_VISION, 0, false);
-            pmap[monst->xLoc][monst->yLoc].flags |= TELEPATHIC_VISIBLE;
-            discoverCell(monst->xLoc, monst->yLoc);
+            getFOVMask(grid, monst->loc.x, monst->loc.y, 2 * FP_FACTOR, T_OBSTRUCTS_VISION, 0, false);
+            pmap[monst->loc.x][monst->loc.y].flags |= TELEPATHIC_VISIBLE;
+            discoverCell(monst->loc.x, monst->loc.y);
         }
     }
     for (i = 0; i < DCOLS; i++) {
@@ -647,19 +647,19 @@ void updateScent() {
 
     zeroOutGrid(grid);
 
-    getFOVMask(grid, player.xLoc, player.yLoc, DCOLS * FP_FACTOR, T_OBSTRUCTS_SCENT, 0, false);
+    getFOVMask(grid, player.loc.x, player.loc.y, DCOLS * FP_FACTOR, T_OBSTRUCTS_SCENT, 0, false);
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
             if (grid[i][j]) {
-                addScentToCell(i, j, scentDistance(player.xLoc, player.yLoc, i, j));
+                addScentToCell(i, j, scentDistance(player.loc.x, player.loc.y, i, j));
             }
         }
     }
-    addScentToCell(player.xLoc, player.yLoc, 0);
+    addScentToCell(player.loc.x, player.loc.y, 0);
 }
 
-short armorAggroAdjustment(item *theArmor) {
+short armorStealthAdjustment(item *theArmor) {
     if (!theArmor
         || !(theArmor->category & ARMOR)) {
 
@@ -668,46 +668,46 @@ short armorAggroAdjustment(item *theArmor) {
     return max(0, armorTable[theArmor->kind].strengthRequired - 12);
 }
 
-short currentAggroValue() {
+short currentStealthRange() {
     // Default value of 14 in the light.
-    short stealthVal = 14;
+    short stealthRange = 14;
 
     if (player.status[STATUS_INVISIBLE]) {
-        stealthVal = 1; // Invisibility means stealth range of 1, no matter what.
+        stealthRange = 1; // Invisibility means stealth range of 1, no matter what.
     } else {
         if (playerInDarkness()) {
             // In darkness, halve, rounded down.
-            stealthVal = stealthVal / 2;
+            stealthRange = stealthRange / 2;
         }
-        if (pmap[player.xLoc][player.yLoc].flags & IS_IN_SHADOW) {
+        if (pmap[player.loc.x][player.loc.y].flags & IS_IN_SHADOW) {
             // When not standing in a lit area, halve, rounded down (stacks with darkness halving).
-            stealthVal = stealthVal / 2;
+            stealthRange = stealthRange / 2;
         }
 
         // Add 1 for each point of your armor's natural (unenchanted) strength requirement above 12.
-        stealthVal += armorAggroAdjustment(rogue.armor);
+        stealthRange += armorStealthAdjustment(rogue.armor);
 
         // Halve (rounded up) if you just rested.
         if (rogue.justRested) {
-            stealthVal = (stealthVal + 1) / 2;
+            stealthRange = (stealthRange + 1) / 2;
         }
 
         if (player.status[STATUS_AGGRAVATING] > 0) {
-            stealthVal += player.status[STATUS_AGGRAVATING];
+            stealthRange += player.status[STATUS_AGGRAVATING];
         }
 
         // Subtract your bonuses from rings of stealth.
         // (Cursed rings of stealth will end up adding here.)
-        stealthVal -= rogue.stealthBonus;
+        stealthRange -= rogue.stealthBonus;
 
         // Can't go below 2 unless you just rested.
-        if (stealthVal < 2 && !rogue.justRested) {
-            stealthVal = 2;
-        } else if (stealthVal < 1) { // Can't go below 1, ever.
-            stealthVal = 1;
+        if (stealthRange < 2 && !rogue.justRested) {
+            stealthRange = 2;
+        } else if (stealthRange < 1) { // Can't go below 1, ever.
+            stealthRange = 1;
         }
     }
-    return stealthVal;
+    return stealthRange;
 }
 
 void demoteVisibility() {
@@ -748,7 +748,7 @@ void updateVision(boolean refreshDisplay) {
 
     // Calculate player's field of view (distinct from what is visible, as lighting hasn't been done yet).
     zeroOutGrid(grid);
-    getFOVMask(grid, player.xLoc, player.yLoc, (DCOLS + DROWS) * FP_FACTOR, (T_OBSTRUCTS_VISION), 0, false);
+    getFOVMask(grid, player.loc.x, player.loc.y, (DCOLS + DROWS) * FP_FACTOR, (T_OBSTRUCTS_VISION), 0, false);
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
             if (grid[i][j]) {
@@ -756,10 +756,10 @@ void updateVision(boolean refreshDisplay) {
             }
         }
     }
-    pmap[player.xLoc][player.yLoc].flags |= IN_FIELD_OF_VIEW | VISIBLE;
+    pmap[player.loc.x][player.loc.y].flags |= IN_FIELD_OF_VIEW | VISIBLE;
 
     if (rogue.clairvoyance < 0) {
-        discoverCell(player.xLoc, player.yLoc);
+        discoverCell(player.loc.x, player.loc.y);
     }
 
     if (rogue.clairvoyance != 0) {
@@ -783,14 +783,14 @@ void updateVision(boolean refreshDisplay) {
 
     if (player.status[STATUS_HALLUCINATING] > 0) {
         for (theItem = floorItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
-            if ((pmap[theItem->xLoc][theItem->yLoc].flags & DISCOVERED) && refreshDisplay) {
-                refreshDungeonCell(theItem->xLoc, theItem->yLoc);
+            if ((pmap[theItem->loc.x][theItem->loc.y].flags & DISCOVERED) && refreshDisplay) {
+                refreshDungeonCell(theItem->loc.x, theItem->loc.y);
             }
         }
         for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
-            if ((pmap[monst->xLoc][monst->yLoc].flags & DISCOVERED) && refreshDisplay) {
-                refreshDungeonCell(monst->xLoc, monst->yLoc);
+            if ((pmap[monst->loc.x][monst->loc.y].flags & DISCOVERED) && refreshDisplay) {
+                refreshDungeonCell(monst->loc.x, monst->loc.y);
             }
         }
     }
@@ -843,8 +843,8 @@ void burnItem(item *theItem) {
     sprintf(buf2, "%s burn%s up!",
             buf1,
             theItem->quantity == 1 ? "s" : "");
-    x = theItem->xLoc;
-    y = theItem->yLoc;
+    x = theItem->loc.x;
+    y = theItem->loc.y;
     removeItemFromChain(theItem, floorItems);
     deleteItem(theItem);
     pmap[x][y].flags &= ~(HAS_ITEM | ITEM_DETECTED);
@@ -859,17 +859,18 @@ void burnItem(item *theItem) {
 
 void flashCreatureAlert(creature *monst, char msg[200], color *foreColor, color *backColor) {
     short x, y;
-    if (monst->yLoc > DROWS / 2) {
-        y = mapToWindowY(monst->yLoc - 2);
+    if (monst->loc.y > DROWS / 2) {
+        y = mapToWindowY(monst->loc.y - 2);
     } else {
-        y = mapToWindowY(monst->yLoc + 2);
+        y = mapToWindowY(monst->loc.y + 2);
     }
-    x = mapToWindowX(monst->xLoc - strLenWithoutEscapes(msg) / 2);
+    x = mapToWindowX(monst->loc.x - strLenWithoutEscapes(msg) / 2);
     if (x > COLS - strLenWithoutEscapes(msg)) {
         x = COLS - strLenWithoutEscapes(msg);
     }
     flashMessage(msg, x, y, (rogue.playbackMode ? 100 : 1000), foreColor, backColor);
     rogue.disturbed = true;
+    rogue.autoPlayingLevel = false;
 }
 
 void handleHealthAlerts() {
@@ -969,18 +970,18 @@ void playerFalls() {
     short damage;
     short layer;
 
-    if (cellHasTMFlag(player.xLoc, player.yLoc, TM_IS_SECRET)
-        && playerCanSee(player.xLoc, player.yLoc)) {
+    if (cellHasTMFlag(player.loc.x, player.loc.y, TM_IS_SECRET)
+        && playerCanSee(player.loc.x, player.loc.y)) {
 
-        discover(player.xLoc, player.yLoc);
+        discover(player.loc.x, player.loc.y);
     }
 
     monstersFall(); // Monsters must fall with the player rather than getting suspended on the previous level.
     updateFloorItems(); // Likewise, items should fall with the player rather than getting suspended above.
 
-    layer = layerWithFlag(player.xLoc, player.yLoc, T_AUTO_DESCENT);
+    layer = layerWithFlag(player.loc.x, player.loc.y, T_AUTO_DESCENT);
     if (layer >= 0) {
-        message(tileCatalog[pmap[player.xLoc][player.yLoc].layers[layer]].flavorText, REQUIRE_ACKNOWLEDGMENT);
+        message(tileCatalog[pmap[player.loc.x][player.loc.y].layers[layer]].flavorText, REQUIRE_ACKNOWLEDGMENT);
     } else if (layer == -1) {
         message("You plunge downward!", REQUIRE_ACKNOWLEDGMENT);
     }
@@ -993,10 +994,10 @@ void playerFalls() {
         startLevel(rogue.depthLevel - 1, 0);
         damage = randClumpedRange(FALL_DAMAGE_MIN, FALL_DAMAGE_MAX, 2);
         boolean killed = false;
-        if (terrainFlags(player.xLoc, player.yLoc) & T_IS_DEEP_WATER) {
+        if (terrainFlags(player.loc.x, player.loc.y) & T_IS_DEEP_WATER) {
             messageWithColor("You fall into deep water, unharmed.", &badMessageColor, 0);
         } else {
-            if (cellHasTMFlag(player.xLoc, player.yLoc, TM_ALLOWS_SUBMERGING)) {
+            if (cellHasTMFlag(player.loc.x, player.loc.y, TM_ALLOWS_SUBMERGING)) {
                 damage /= 2; // falling into liquid (shallow water, bog, etc.) hurts less than hitting hard floor
             }
             messageWithColor("You are injured by the fall.", &badMessageColor, 0);
@@ -1012,7 +1013,7 @@ void playerFalls() {
         message("A strange force seizes you as you fall.", 0);
         teleport(&player, -1, -1, true);
     }
-    createFlare(player.xLoc, player.yLoc, GENERIC_FLASH_LIGHT);
+    createFlare(player.loc.x, player.loc.y, GENERIC_FLASH_LIGHT);
     animateFlares(rogue.flares, rogue.flareCount);
     rogue.flareCount = 0;
 }
@@ -1321,7 +1322,7 @@ void updateYendorWardenTracking() {
         return;
     }
     if (!(rogue.yendorWarden->bookkeepingFlags & MB_PREPLACED)) {
-        levels[rogue.yendorWarden->depth - 1].mapStorage[rogue.yendorWarden->xLoc][rogue.yendorWarden->yLoc].flags &= ~HAS_MONSTER;
+        levels[rogue.yendorWarden->depth - 1].mapStorage[rogue.yendorWarden->loc.x][rogue.yendorWarden->loc.y].flags &= ~HAS_MONSTER;
     }
     n = rogue.yendorWarden->depth - 1;
 
@@ -1332,14 +1333,14 @@ void updateYendorWardenTracking() {
         rogue.yendorWarden->depth = rogue.depthLevel + 1;
         n = rogue.yendorWarden->depth - 1;
         rogue.yendorWarden->bookkeepingFlags |= MB_APPROACHING_UPSTAIRS;
-        rogue.yendorWarden->xLoc = levels[n].downStairsLoc[0];
-        rogue.yendorWarden->yLoc = levels[n].downStairsLoc[1];
+        rogue.yendorWarden->loc.x = levels[n].downStairsLoc.x;
+        rogue.yendorWarden->loc.y = levels[n].downStairsLoc.y;
     } else {
         rogue.yendorWarden->depth = rogue.depthLevel - 1;
         n = rogue.yendorWarden->depth - 1;
         rogue.yendorWarden->bookkeepingFlags |= MB_APPROACHING_DOWNSTAIRS;
-        rogue.yendorWarden->xLoc = levels[n].upStairsLoc[0];
-        rogue.yendorWarden->yLoc = levels[n].upStairsLoc[1];
+        rogue.yendorWarden->loc.x = levels[n].upStairsLoc.x;
+        rogue.yendorWarden->loc.y = levels[n].upStairsLoc.y;
     }
     prependCreature(&levels[rogue.yendorWarden->depth - 1].monsters, rogue.yendorWarden);
     rogue.yendorWarden->bookkeepingFlags |= MB_PREPLACED;
@@ -1358,8 +1359,8 @@ void monstersFall() {
         if ((monst->bookkeepingFlags & MB_IS_FALLING) || monsterShouldFall(monst)) {
             monst->bookkeepingFlags |= MB_IS_FALLING;
 
-            x = monst->xLoc;
-            y = monst->yLoc;
+            x = monst->loc.x;
+            y = monst->loc.y;
 
             if (canSeeMonster(monst)) {
                 monsterName(buf, monst, true);
@@ -1539,8 +1540,8 @@ void updateAllySafetyMap() {
         }
     }
 
-    playerCostMap[player.xLoc][player.yLoc] = PDS_FORBIDDEN;
-    monsterCostMap[player.xLoc][player.yLoc] = PDS_FORBIDDEN;
+    playerCostMap[player.loc.x][player.loc.y] = PDS_FORBIDDEN;
+    monsterCostMap[player.loc.x][player.loc.y] = PDS_FORBIDDEN;
 
     dijkstraScan(allySafetyMap, playerCostMap, false);
 
@@ -1662,14 +1663,14 @@ void updateSafetyMap() {
         }
     }
 
-    safetyMap[player.xLoc][player.yLoc] = 0;
-    playerCostMap[player.xLoc][player.yLoc] = 1;
-    monsterCostMap[player.xLoc][player.yLoc] = PDS_FORBIDDEN;
+    safetyMap[player.loc.x][player.loc.y] = 0;
+    playerCostMap[player.loc.x][player.loc.y] = 1;
+    monsterCostMap[player.loc.x][player.loc.y] = PDS_FORBIDDEN;
 
-    playerCostMap[rogue.upLoc[0]][rogue.upLoc[1]] = PDS_FORBIDDEN;
-    monsterCostMap[rogue.upLoc[0]][rogue.upLoc[1]] = PDS_FORBIDDEN;
-    playerCostMap[rogue.downLoc[0]][rogue.downLoc[1]] = PDS_FORBIDDEN;
-    monsterCostMap[rogue.downLoc[0]][rogue.downLoc[1]] = PDS_FORBIDDEN;
+    playerCostMap[rogue.upLoc.x][rogue.upLoc.y] = PDS_FORBIDDEN;
+    monsterCostMap[rogue.upLoc.x][rogue.upLoc.y] = PDS_FORBIDDEN;
+    playerCostMap[rogue.downLoc.x][rogue.downLoc.y] = PDS_FORBIDDEN;
+    monsterCostMap[rogue.downLoc.x][rogue.downLoc.y] = PDS_FORBIDDEN;
 
     dijkstraScan(safetyMap, playerCostMap, false);
 
@@ -1849,7 +1850,7 @@ void extinguishFireOnCreature(creature *monst) {
     if (monst == &player) {
         player.info.foreColor = &white;
         rogue.minersLight.lightColor = &minersLightColor;
-        refreshDungeonCell(player.xLoc, player.yLoc);
+        refreshDungeonCell(player.loc.x, player.loc.y);
         updateVision(true);
         message("you are no longer on fire.", 0);
     }
@@ -1860,19 +1861,16 @@ void monsterEntersLevel(creature *monst, short n) {
     char monstName[COLS], buf[COLS];
     boolean pit = false;
 
-    levels[n].mapStorage[monst->xLoc][monst->yLoc].flags &= ~HAS_MONSTER;
+    levels[n].mapStorage[monst->loc.x][monst->loc.y].flags &= ~HAS_MONSTER;
 
     // place traversing monster near the stairs on this level
     if (monst->bookkeepingFlags & MB_APPROACHING_DOWNSTAIRS) {
-        monst->xLoc = rogue.upLoc[0];
-        monst->yLoc = rogue.upLoc[1];
+        monst->loc = rogue.upLoc;
     } else if (monst->bookkeepingFlags & MB_APPROACHING_UPSTAIRS) {
-        monst->xLoc = rogue.downLoc[0];
-        monst->yLoc = rogue.downLoc[1];
+        monst->loc = rogue.downLoc;
     } else if (monst->bookkeepingFlags & MB_APPROACHING_PIT) { // jumping down pit
         pit = true;
-        monst->xLoc = levels[n].playerExitedVia[0];
-        monst->yLoc = levels[n].playerExitedVia[1];
+        monst->loc = levels[n].playerExitedVia;
     } else {
         brogueAssert(false);
     }
@@ -1880,23 +1878,23 @@ void monsterEntersLevel(creature *monst, short n) {
     monst->targetCorpseLoc[0] = monst->targetCorpseLoc[1] = 0;
 
     if (!pit) {
-        getQualifyingPathLocNear(&(monst->xLoc), &(monst->yLoc), monst->xLoc, monst->yLoc, true,
+        getQualifyingPathLocNear(&(monst->loc.x), &(monst->loc.y), monst->loc.x, monst->loc.y, true,
                                  T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)), 0,
                                  avoidedFlagsForMonster(&(monst->info)), HAS_STAIRS, false);
     }
     if (!pit
-        && (pmap[monst->xLoc][monst->yLoc].flags & (HAS_PLAYER | HAS_MONSTER))
-        && !(terrainFlags(monst->xLoc, monst->yLoc) & avoidedFlagsForMonster(&(monst->info)))) {
+        && (pmap[monst->loc.x][monst->loc.y].flags & (HAS_PLAYER | HAS_MONSTER))
+        && !(terrainFlags(monst->loc.x, monst->loc.y) & avoidedFlagsForMonster(&(monst->info)))) {
         // Monsters using the stairs will displace any creatures already located there, to thwart stair-dancing.
-        creature *prevMonst = monsterAtLoc(monst->xLoc, monst->yLoc);
+        creature *prevMonst = monsterAtLoc(monst->loc.x, monst->loc.y);
         brogueAssert(prevMonst);
-        getQualifyingPathLocNear(&(prevMonst->xLoc), &(prevMonst->yLoc), monst->xLoc, monst->yLoc, true,
+        getQualifyingPathLocNear(&(prevMonst->loc.x), &(prevMonst->loc.y), monst->loc.x, monst->loc.y, true,
                                  T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(prevMonst->info)), 0,
                                  avoidedFlagsForMonster(&(prevMonst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_STAIRS), false);
-        pmap[monst->xLoc][monst->yLoc].flags &= ~(HAS_PLAYER | HAS_MONSTER);
-        pmap[prevMonst->xLoc][prevMonst->yLoc].flags |= (prevMonst == &player ? HAS_PLAYER : HAS_MONSTER);
-        refreshDungeonCell(prevMonst->xLoc, prevMonst->yLoc);
-        //DEBUG printf("\nBumped a creature (%s) from (%i, %i) to (%i, %i).", prevMonst->info.monsterName, monst->xLoc, monst->yLoc, prevMonst->xLoc, prevMonst->yLoc);
+        pmap[monst->loc.x][monst->loc.y].flags &= ~(HAS_PLAYER | HAS_MONSTER);
+        pmap[prevMonst->loc.x][prevMonst->loc.y].flags |= (prevMonst == &player ? HAS_PLAYER : HAS_MONSTER);
+        refreshDungeonCell(prevMonst->loc.x, prevMonst->loc.y);
+        //DEBUG printf("\nBumped a creature (%s) from (%i, %i) to (%i, %i).", prevMonst->info.monsterName, monst->loc.x, monst->loc.y, prevMonst->loc.x, prevMonst->loc.y);
     }
 
     // remove traversing monster from other level monster chain
@@ -1908,9 +1906,9 @@ void monsterEntersLevel(creature *monst, short n) {
     monst->bookkeepingFlags |= MB_PREPLACED;
     monst->bookkeepingFlags &= ~MB_IS_FALLING;
     restoreMonster(monst, NULL, NULL);
-    //DEBUG printf("\nPlaced a creature (%s) at (%i, %i).", monst->info.monsterName, monst->xLoc, monst->yLoc);
+    //DEBUG printf("\nPlaced a creature (%s) at (%i, %i).", monst->info.monsterName, monst->loc.x, monst->loc.y);
     monst->ticksUntilTurn = monst->movementSpeed;
-    refreshDungeonCell(monst->xLoc, monst->yLoc);
+    refreshDungeonCell(monst->loc.x, monst->loc.y);
 
     if (pit) {
         monsterName(monstName, monst, true);
@@ -2029,7 +2027,7 @@ void decrementPlayerStatus() {
         message("you no longer feel immune to fire.", 0);
     }
 
-    if (player.status[STATUS_STUCK] && !cellHasTerrainFlag(player.xLoc, player.yLoc, T_ENTANGLES)) {
+    if (player.status[STATUS_STUCK] && !cellHasTerrainFlag(player.loc.x, player.loc.y, T_ENTANGLES)) {
         player.status[STATUS_STUCK] = 0;
     }
 
@@ -2066,8 +2064,8 @@ boolean dangerChanged(boolean danger[4]) {
     enum directions dir;
     short newX, newY;
     for (dir = 0; dir < 4; dir++) {
-        newX = player.xLoc + nbDirs[dir][0];
-        newY = player.yLoc + nbDirs[dir][1];
+        newX = player.loc.x + nbDirs[dir][0];
+        newY = player.loc.y + nbDirs[dir][1];
         if (danger[dir] != monsterAvoids(&player, newX, newY)) {
             return true;
         }
@@ -2083,14 +2081,14 @@ void autoRest() {
     enum directions dir;
 
     for (dir = 0; dir < 4; dir++) {
-        newX = player.xLoc + nbDirs[dir][0];
-        newY = player.yLoc + nbDirs[dir][1];
+        newX = player.loc.x + nbDirs[dir][0];
+        newY = player.loc.y + nbDirs[dir][1];
         danger[dir] = monsterAvoids(&player, newX, newY);
     }
 
     rogue.disturbed = false;
     rogue.automationActive = true;
-    initiallyEmbedded = cellHasTerrainFlag(player.xLoc, player.yLoc, T_OBSTRUCTS_PASSABILITY);
+    initiallyEmbedded = cellHasTerrainFlag(player.loc.x, player.loc.y, T_OBSTRUCTS_PASSABILITY);
 
     if ((player.currentHP < player.info.maxHP
          || player.status[STATUS_HALLUCINATING]
@@ -2107,14 +2105,14 @@ void autoRest() {
                    || player.status[STATUS_NAUSEOUS]
                    || player.status[STATUS_POISONED]
                    || player.status[STATUS_DARKNESS]
-                   || cellHasTerrainFlag(player.xLoc, player.yLoc, T_OBSTRUCTS_PASSABILITY))
+                   || cellHasTerrainFlag(player.loc.x, player.loc.y, T_OBSTRUCTS_PASSABILITY))
                && !rogue.disturbed
-               && (!initiallyEmbedded || cellHasTerrainFlag(player.xLoc, player.yLoc, T_OBSTRUCTS_PASSABILITY))) {
+               && (!initiallyEmbedded || cellHasTerrainFlag(player.loc.x, player.loc.y, T_OBSTRUCTS_PASSABILITY))) {
 
             recordKeystroke(REST_KEY, false, false);
             rogue.justRested = true;
             playerTurnEnded();
-            if (dangerChanged(danger) || pauseBrogue(1)) {
+            if (dangerChanged(danger) || pauseAnimation(1)) {
                 rogue.disturbed = true;
             }
         }
@@ -2123,7 +2121,7 @@ void autoRest() {
             recordKeystroke(REST_KEY, false, false);
             rogue.justRested = true;
             playerTurnEnded();
-            if (dangerChanged(danger) || pauseBrogue(1)) {
+            if (dangerChanged(danger) || pauseAnimation(1)) {
                 rogue.disturbed = true;
             }
         }
@@ -2275,10 +2273,10 @@ void playerTurnEnded() {
             }
         }
 
-        if (rogue.awarenessBonus > -30 && !(pmap[player.xLoc][player.yLoc].flags & SEARCHED_FROM_HERE)) {
+        if (rogue.awarenessBonus > -30 && !(pmap[player.loc.x][player.loc.y].flags & SEARCHED_FROM_HERE)) {
             // Low-grade auto-search wherever you step, but only once per tile.
             search(rogue.awarenessBonus + 30);
-            pmap[player.xLoc][player.yLoc].flags |= SEARCHED_FROM_HERE;
+            pmap[player.loc.x][player.loc.y].flags |= SEARCHED_FROM_HERE;
         }
         if (!rogue.justSearched && player.status[STATUS_SEARCHING] > 0) {
             // Searching only "charges up" when done on consecutive turns
@@ -2331,8 +2329,8 @@ void playerTurnEnded() {
 
         updateScent();
 //      updateVision(true);
-//        rogue.aggroRange = currentAggroValue();
-//        if (rogue.displayAggroRangeMode) {
+//        rogue.stealthRange = currentStealthRange();
+//        if (rogue.displayStealthRangeMode) {
 //            displayLevel();
 //        }
         rogue.updatedSafetyMapThisTurn          = false;
@@ -2341,7 +2339,7 @@ void playerTurnEnded() {
 
         for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
-            if (D_SAFETY_VISION || monst->creatureState == MONSTER_FLEEING && pmap[monst->xLoc][monst->yLoc].flags & IN_FIELD_OF_VIEW) {
+            if (D_SAFETY_VISION || monst->creatureState == MONSTER_FLEEING && pmap[monst->loc.x][monst->loc.y].flags & IN_FIELD_OF_VIEW) {
                 updateSafetyMap(); // only if there is a fleeing monster who can see the player
                 break;
             }
@@ -2398,7 +2396,7 @@ void playerTurnEnded() {
                         && !(monst->info.flags & MONST_GETS_TURN_ON_ACTIVATION)
                         && rand_percent(monst->info.DFChance)) {
 
-                        spawnDungeonFeature(monst->xLoc, monst->yLoc, &dungeonFeatureCatalog[monst->info.DFType], true, false);
+                        spawnDungeonFeature(monst->loc.x, monst->loc.y, &dungeonFeatureCatalog[monst->info.DFType], true, false);
                     }
                 }
 
@@ -2411,7 +2409,7 @@ void playerTurnEnded() {
                 monstersApproachStairs();
 
                 if (player.ticksUntilTurn > 100 && !fastForward) {
-                    fastForward = rogue.playbackFastForward || pauseBrogue(25);
+                    fastForward = rogue.playbackFastForward || pauseAnimation(25);
                 }
 
                 // Rolling waypoint refresh:
@@ -2447,7 +2445,6 @@ void playerTurnEnded() {
                             break;
                         }
                     }
-                    restartIterator(&it); // loop through from the beginning to be safe
                 }
             }
 
@@ -2461,8 +2458,8 @@ void playerTurnEnded() {
         //checkForDungeonErrors();
 
         updateVision(true);
-        rogue.aggroRange = currentAggroValue();
-        if (rogue.displayAggroRangeMode) {
+        rogue.stealthRange = currentStealthRange();
+        if (rogue.displayStealthRangeMode) {
             displayLevel();
         }
 
@@ -2477,7 +2474,7 @@ void playerTurnEnded() {
                         //assureCosmeticRNG;
                         monsterName(buf2, monst, false);
                         sprintf(buf, "you %s a%s %s",
-                                playerCanDirectlySee(monst->xLoc, monst->yLoc) ? "see" : "sense",
+                                playerCanDirectlySee(monst->loc.x, monst->loc.y) ? "see" : "sense",
                                 (isVowelish(buf2) ? "n" : ""),
                                 buf2);
                         if (rogue.cautiousMode) {
@@ -2493,10 +2490,10 @@ void playerTurnEnded() {
 
             if (canSeeMonster(monst)) {
                 monst->bookkeepingFlags |= MB_WAS_VISIBLE;
-                if (cellHasTerrainFlag(monst->xLoc, monst->yLoc, T_OBSTRUCTS_PASSABILITY)
-                    && cellHasTMFlag(monst->xLoc, monst->yLoc, TM_IS_SECRET)) {
+                if (cellHasTerrainFlag(monst->loc.x, monst->loc.y, T_OBSTRUCTS_PASSABILITY)
+                    && cellHasTMFlag(monst->loc.x, monst->loc.y, TM_IS_SECRET)) {
 
-                    discover(monst->xLoc, monst->yLoc);
+                    discover(monst->loc.x, monst->loc.y);
                 }
                 if (canDirectlySeeMonster(monst)) {
                     if (rogue.weapon && rogue.weapon->flags & ITEM_RUNIC
@@ -2536,7 +2533,7 @@ void playerTurnEnded() {
 
         if (player.status[STATUS_PARALYZED]) {
             if (!fastForward) {
-                fastForward = rogue.playbackFastForward || pauseBrogue(25);
+                fastForward = rogue.playbackFastForward || pauseAnimation(25);
             }
         }
 
@@ -2575,11 +2572,11 @@ void playerTurnEnded() {
     }
 
     // "point of no return" check
-    if ((player.status[STATUS_LEVITATING] && cellHasTerrainFlag(player.xLoc, player.yLoc, T_LAVA_INSTA_DEATH | T_IS_DEEP_WATER | T_AUTO_DESCENT))
-        || (player.status[STATUS_IMMUNE_TO_FIRE] && cellHasTerrainFlag(player.xLoc, player.yLoc, T_LAVA_INSTA_DEATH))) {
+    if ((player.status[STATUS_LEVITATING] && cellHasTerrainFlag(player.loc.x, player.loc.y, T_LAVA_INSTA_DEATH | T_IS_DEEP_WATER | T_AUTO_DESCENT))
+        || (player.status[STATUS_IMMUNE_TO_FIRE] && cellHasTerrainFlag(player.loc.x, player.loc.y, T_LAVA_INSTA_DEATH))) {
         if (!rogue.receivedLevitationWarning) {
-            turnsRequiredToShore = rogue.mapToShore[player.xLoc][player.yLoc] * player.movementSpeed / 100;
-            if (cellHasTerrainFlag(player.xLoc, player.yLoc, T_LAVA_INSTA_DEATH)) {
+            turnsRequiredToShore = rogue.mapToShore[player.loc.x][player.loc.y] * player.movementSpeed / 100;
+            if (cellHasTerrainFlag(player.loc.x, player.loc.y, T_LAVA_INSTA_DEATH)) {
                 turnsToShore = max(player.status[STATUS_LEVITATING], player.status[STATUS_IMMUNE_TO_FIRE]) * 100 / player.movementSpeed;
             } else {
                 turnsToShore = player.status[STATUS_LEVITATING] * 100 / player.movementSpeed;
@@ -2597,7 +2594,7 @@ void playerTurnEnded() {
         rogue.receivedLevitationWarning = false;
     }
 
-    emptyGraveyard();
+    removeDeadMonsters();
     rogue.playbackBetweenTurns = true;
     RNGCheck();
     handleHealthAlerts();

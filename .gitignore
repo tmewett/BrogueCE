@@ -2,6 +2,7 @@
 bin/*.brogue*
 bin/BrogueHighScores.txt
 bin/brogue*
+bin/*.png
 
 # Release dirs and archives
 BrogueCE-*
