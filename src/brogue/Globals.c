@@ -2485,17 +2485,16 @@ itemTable staffTable[NUMBER_STAFF_KINDS] = {
 
 // Brogue Lite note:
 // Rings can no longer be cursed.
-// TODO: remove cursed descriptions
 
 itemTable ringTable[NUMBER_RING_KINDS] = {
-    {"clairvoyance",    itemGems[0], "",    1,  900,    0,{1,3,1}, false, false, 1, false, "This ring of eldritch scrying will permit you to see through nearby walls and doors, within a radius determined by the level of the ring. A cursed ring of clairvoyance will blind you to your immediate surroundings."},
-    {"stealth",         itemGems[1], "",    1,  800,    0,{1,3,1}, false, false, 1, false, "This ring of silent passage will reduce your stealth range, making enemies less likely to notice you and more likely to lose your trail. Staying motionless and lurking in the shadows will make you even harder to spot. Cursed rings of stealth will increase your stealth range, making you easier to spot and to track."},
-    {"regeneration",    itemGems[2], "",    1,  750,    0,{1,3,1}, false, false, 1, false, "This ring of sacred life will allow you to recover lost health at an accelerated rate. Cursed rings will decrease or even halt your natural regeneration."},
-    {"transference",    itemGems[3], "",    1,  750,    0,{1,3,1}, false, false, 1, false, "This ring of blood magic will heal you in proportion to the damage you inflict on others. Cursed rings will cause you to lose health when inflicting damage."},
+    {"clairvoyance",    itemGems[0], "",    1,  900,    0,{1,3,1}, false, false, 1, false, "This ring of eldritch scrying will permit you to see through nearby walls and doors, within a radius determined by the level of the ring."},
+    {"stealth",         itemGems[1], "",    1,  800,    0,{1,3,1}, false, false, 1, false, "This ring of silent passage will reduce your stealth range, making enemies less likely to notice you and more likely to lose your trail. Staying motionless and lurking in the shadows will make you even harder to spot."},
+    {"regeneration",    itemGems[2], "",    1,  750,    0,{1,3,1}, false, false, 1, false, "This ring of sacred life will allow you to recover lost health at an accelerated rate."},
+    {"transference",    itemGems[3], "",    1,  750,    0,{1,3,1}, false, false, 1, false, "This ring of blood magic will heal you in proportion to the damage you inflict on others."},
     {"light",           itemGems[4], "",    1,  600,    0,{1,3,1}, false, false, 1, false, "This ring of preternatural vision will allow you to see farther in the dimming light of the deeper dungeon levels. It will not make you more noticeable to enemies."},
-    {"awareness",       itemGems[5], "",    1,  700,    0,{1,3,1}, false, false, 1, false, "This ring of effortless vigilance will enable you to notice traps, secret doors and hidden levers more often and from a greater distance. Cursed rings of awareness will dull your senses, making it harder to notice secrets without actively searching for them."},
-    {"wisdom",          itemGems[6], "",    1,  700,    0,{1,3,1}, false, false, 1, false, "This ring of arcane power will cause your staffs to recharge at an accelerated rate. Cursed rings of wisdom will cause your staffs to recharge more slowly."},
-    {"reaping",         itemGems[7], "",    1,  700,    0,{1,3,1}, false, false, 1, false, "This ring of blood magic will recharge your staffs and charms every time you hit an enemy. Cursed rings of reaping will drain your staffs and charms with every hit."},
+    {"awareness",       itemGems[5], "",    1,  700,    0,{1,3,1}, false, false, 1, false, "This ring of effortless vigilance will enable you to notice hidden secrets (traps, secret doors and hidden levers) more often and from a greater distance."},
+    {"wisdom",          itemGems[6], "",    1,  700,    0,{1,3,1}, false, false, 1, false, "This ring of arcane power will cause your staffs to recharge at an accelerated rate."},
+    {"reaping",         itemGems[7], "",    1,  700,    0,{1,3,1}, false, false, 1, false, "This ring of blood magic will recharge your staffs and charms every time you hit an enemy."},
 };
 
 itemTable charmTable[NUMBER_CHARM_KINDS] = {
