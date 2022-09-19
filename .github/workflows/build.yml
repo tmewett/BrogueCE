@@ -1,6 +1,9 @@
 name: "Build"
 on:
   push:
+    # Only run on branches
+    branches:
+    - '**'
 
 jobs:
 
@@ -93,7 +96,7 @@ jobs:
       shell: powershell
       run: |
         $env:path = $env:path + ";" + (Join-Path $pwd.Drive.Root "opt/local/x86_64-w64-mingw32/bin")
-        $env:path = $env:path + ';C:\Program Files (x86)\Windows Kits\10\bin\x64'
+        $env:path = $env:path + ';C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64'
         mingw32-make CC=gcc bin/brogue.exe
 
     - name: "Create artifact"

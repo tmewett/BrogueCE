@@ -25,6 +25,11 @@
 #include "Rogue.h"
 #include "IncludeGlobals.h"
 
+#define MAGIC_POLARITY_BENEVOLENT 1
+#define MAGIC_POLARITY_MALEVOLENT -1
+#define MAGIC_POLARITY_NEUTRAL 0
+#define MAGIC_POLARITY_ANY 0
+
 item *initializeItem() {
     short i;
     item *theItem;
@@ -409,18 +414,18 @@ item *placeItem(item *theItem, short x, short y) {
     char theItemName[DCOLS], buf[DCOLS];
     if (x <= 0 || y <= 0) {
         randomMatchingLocation(&(loc[0]), &(loc[1]), FLOOR, NOTHING, -1);
-        theItem->xLoc = loc[0];
-        theItem->yLoc = loc[1];
+        theItem->loc.x = loc[0];
+        theItem->loc.y = loc[1];
     } else {
-        theItem->xLoc = x;
-        theItem->yLoc = y;
+        theItem->loc.x = x;
+        theItem->loc.y = y;
     }
 
     removeItemFromChain(theItem, floorItems); // just in case; double-placing an item will result in game-crashing loops in the item list
     addItemToChain(theItem, floorItems);
-    pmap[theItem->xLoc][theItem->yLoc].flags |= HAS_ITEM;
+    pmap[theItem->loc.x][theItem->loc.y].flags |= HAS_ITEM;
     if ((theItem->flags & ITEM_MAGIC_DETECTED) && itemMagicPolarity(theItem)) {
-        pmap[theItem->xLoc][theItem->yLoc].flags |= ITEM_DETECTED;
+        pmap[theItem->loc.x][theItem->loc.y].flags |= ITEM_DETECTED;
     }
     if (cellHasTerrainFlag(x, y, T_IS_DF_TRAP)
         && !cellHasTerrainFlag(x, y, T_MOVES_ITEMS)
@@ -809,8 +814,8 @@ void pickUpItemAt(short x, short y) {
     }
 
     if ((theItem->flags & ITEM_KIND_AUTO_ID)
-        && tableForItemCategory(theItem->category, NULL)
-        && !(tableForItemCategory(theItem->category, NULL)[theItem->kind].identified)) {
+        && tableForItemCategory(theItem->category)
+        && !(tableForItemCategory(theItem->category)[theItem->kind].identified)) {
 
         identifyItemKind(theItem);
     }
@@ -868,8 +873,8 @@ void pickUpItemAt(short x, short y) {
             if (!rogue.yendorWarden) {
                 getRandomMonsterSpawnLocation(&guardianX, &guardianY);
                 monst = generateMonster(MK_WARDEN_OF_YENDOR, false, false);
-                monst->xLoc = guardianX;
-                monst->yLoc = guardianY;
+                monst->loc.x = guardianX;
+                monst->loc.y = guardianY;
                 pmap[guardianX][guardianY].flags |= HAS_MONSTER;
                 rogue.yendorWarden = monst;
             }
@@ -1029,6 +1034,7 @@ void checkForDisenchantment(item *theItem) {
     char buf[COLS], buf2[COLS];
 
     // Why do good runics get removed when enchanted to zero, but not bad runics when going up to zero?
+
     if ((theItem->flags & ITEM_RUNIC)
         && (((theItem->category & WEAPON) && theItem->enchant2 < NUMBER_WEAPON_RUNIC_KINDS) || ((theItem->category & ARMOR) && theItem->enchant2 < NUMBER_ARMOR_ENCHANT_KINDS))
         && theItem->enchant1 <= 0) {
@@ -1072,8 +1078,8 @@ void swapItemToEnchantLevel(item *theItem, short newEnchant, boolean enchantment
         sprintf(buf2, "%s shatter%s from the strain!",
                 buf1,
                 theItem->quantity == 1 ? "s" : "");
-        x = theItem->xLoc;
-        y = theItem->yLoc;
+        x = theItem->loc.x;
+        y = theItem->loc.y;
         removeItemFromChain(theItem, floorItems);
         pmap[x][y].flags &= ~(HAS_ITEM | ITEM_DETECTED);
         if (pmap[x][y].flags & (ANY_KIND_OF_VISIBLE | DISCOVERED | ITEM_DETECTED)) {
@@ -1168,15 +1174,15 @@ boolean swapItemEnchants(const short machineNumber) {
 }
 
 void updateFloorItems() {
-    short x, y, loc[2];
+    short x, y;
     char buf[DCOLS*3], buf2[DCOLS*3];
     enum dungeonLayers layer;
     item *theItem, *nextItem;
 
     for (theItem=floorItems->nextItem; theItem != NULL; theItem = nextItem) {
         nextItem = theItem->nextItem;
-        x = theItem->xLoc;
-        y = theItem->yLoc;
+        x = theItem->loc.x;
+        y = theItem->loc.y;
         if (rogue.absoluteTurnNumber < theItem->spawnTurnNumber) {
             // we are simulating an earlier turn than when the item fell into this level... let's not touch it yet
             continue;
@@ -1216,17 +1222,17 @@ void updateFloorItems() {
             continue;
         }
         if (cellHasTerrainFlag(x, y, T_MOVES_ITEMS)) {
-            getQualifyingLocNear(loc, x, y, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM), false, false);
+            pos loc;
+            getQualifyingLocNear(&loc, x, y, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM), false, false);
             removeItemFrom(x, y);
-            pmap[loc[0]][loc[1]].flags |= HAS_ITEM;
+            pmap[loc.x][loc.y].flags |= HAS_ITEM;
             if (pmap[x][y].flags & ITEM_DETECTED) {
                 pmap[x][y].flags &= ~ITEM_DETECTED;
-                pmap[loc[0]][loc[1]].flags |= ITEM_DETECTED;
+                pmap[loc.x][loc.y].flags |= ITEM_DETECTED;
             }
-            theItem->xLoc = loc[0];
-            theItem->yLoc = loc[1];
+            theItem->loc = loc;
             refreshDungeonCell(x, y);
-            refreshDungeonCell(loc[0], loc[1]);
+            refreshDungeonCell(loc.x, loc.y);
             continue;
         }
         if (cellHasTMFlag(x, y, TM_PROMOTES_ON_ITEM)) {
@@ -1238,7 +1244,7 @@ void updateFloorItems() {
             continue;
         }
         if (pmap[x][y].machineNumber
-            && pmap[x][y].machineNumber == pmap[player.xLoc][player.yLoc].machineNumber
+            && pmap[x][y].machineNumber == pmap[player.loc.x][player.loc.y].machineNumber
             && (theItem->flags & ITEM_KIND_AUTO_ID)) {
 
             identifyItemKind(theItem);
@@ -1247,8 +1253,8 @@ void updateFloorItems() {
             && pmap[x][y].machineNumber) {
 
             while (nextItem != NULL
-                   && pmap[x][y].machineNumber == pmap[nextItem->xLoc][nextItem->yLoc].machineNumber
-                   && cellHasTMFlag(nextItem->xLoc, nextItem->yLoc, TM_SWAP_ENCHANTS_ACTIVATION)) {
+                   && pmap[x][y].machineNumber == pmap[nextItem->loc.x][nextItem->loc.y].machineNumber
+                   && cellHasTMFlag(nextItem->loc.x, nextItem->loc.y, TM_SWAP_ENCHANTS_ACTIVATION)) {
 
                 // Skip future items that are also swappable, so that we don't inadvertently
                 // destroy the next item and then try to update it.
@@ -1290,7 +1296,7 @@ boolean itemCanBeCalled(item *theItem) {
     if (theItem->category & (WEAPON|ARMOR|SCROLL|RING|POTION|STAFF|WAND|CHARM)) {
         return true;
     } else if ((theItem->category & (POTION | SCROLL))
-               && !tableForItemCategory(theItem->category, NULL)[theItem->kind].identified) {
+               && !tableForItemCategory(theItem->category)[theItem->kind].identified) {
         return true;
     } else {
         return false;
@@ -1311,7 +1317,7 @@ void call(item *theItem) {
         // and then reset it immediately afterward.
         for (tempItem = packItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
             if ((tempItem->category & (POTION | SCROLL))
-                && tableForItemCategory(tempItem->category, NULL)[tempItem->kind].identified) {
+                && tableForItemCategory(tempItem->category)[tempItem->kind].identified) {
 
                 tempItem->flags &= ~ITEM_CAN_BE_IDENTIFIED;
             } else {
@@ -1346,7 +1352,7 @@ void call(item *theItem) {
     }
 
     if (theItem->category & (WEAPON | ARMOR | STAFF | WAND | RING)) {
-        if (tableForItemCategory(theItem->category, NULL)[theItem->kind].identified) {
+        if (tableForItemCategory(theItem->category)[theItem->kind].identified) {
             if (inscribeItem(theItem)) {
                 command[c++] = '\0';
                 strcat((char *) command, theItem->inscription);
@@ -1368,8 +1374,8 @@ void call(item *theItem) {
         }
     }
 
-    if (tableForItemCategory(theItem->category, NULL)
-        && !(tableForItemCategory(theItem->category, NULL)[theItem->kind].identified)) {
+    if (tableForItemCategory(theItem->category)
+        && !(tableForItemCategory(theItem->category)[theItem->kind].identified)) {
 
         if (getInputTextString(itemText, "call them: \"", 29, "", "\"", TEXT_INPUT_NORMAL, false)) {
             command[c++] = '\0';
@@ -1377,11 +1383,11 @@ void call(item *theItem) {
             recordKeystrokeSequence(command);
             recordKeystroke(RETURN_KEY, false, false);
             if (itemText[0]) {
-                strcpy(tableForItemCategory(theItem->category, NULL)[theItem->kind].callTitle, itemText);
-                tableForItemCategory(theItem->category, NULL)[theItem->kind].called = true;
+                strcpy(tableForItemCategory(theItem->category)[theItem->kind].callTitle, itemText);
+                tableForItemCategory(theItem->category)[theItem->kind].called = true;
             } else {
-                tableForItemCategory(theItem->category, NULL)[theItem->kind].callTitle[0] = '\0';
-                tableForItemCategory(theItem->category, NULL)[theItem->kind].called = false;
+                tableForItemCategory(theItem->category)[theItem->kind].callTitle[0] = '\0';
+                tableForItemCategory(theItem->category)[theItem->kind].called = false;
             }
             confirmMessages();
             itemName(theItem, buf, false, true, NULL);
@@ -1725,7 +1731,7 @@ void itemKindName(item *theItem, char *kindName) {
 
     // use lookup table for randomly generated items with more than one kind per category
     if (theItem->category & (ARMOR | CHARM | FOOD | POTION | RING | SCROLL | STAFF | WAND | WEAPON)) {
-        strcpy(kindName, tableForItemCategory(theItem->category, NULL)[theItem->kind].name);
+        strcpy(kindName, tableForItemCategory(theItem->category)[theItem->kind].name);
     } else {
         switch (theItem->category) {
             case KEY:
@@ -1764,56 +1770,29 @@ void itemRunicName(item *theItem, char *runicName) {
     }
 }
 
-// kindCount is optional
-itemTable *tableForItemCategory(enum itemCategory theCat, short *kindCount) {
-    itemTable *returnedTable;
-    short returnedCount;
+itemTable *tableForItemCategory(enum itemCategory theCat) {
     switch (theCat) {
         case FOOD:
-            returnedTable = foodTable;
-            returnedCount = NUMBER_FOOD_KINDS;
-            break;
+            return foodTable;
         case WEAPON:
-            returnedTable = weaponTable;
-            returnedCount = NUMBER_WEAPON_KINDS;
-            break;
+            return weaponTable;
         case ARMOR:
-            returnedTable = armorTable;
-            returnedCount = NUMBER_ARMOR_KINDS;
-            break;
+            return armorTable;
         case POTION:
-            returnedTable = potionTable;
-            returnedCount = NUMBER_POTION_KINDS;
-            break;
+            return potionTable;
         case SCROLL:
-            returnedTable = scrollTable;
-            returnedCount = NUMBER_SCROLL_KINDS;
-            break;
+            return scrollTable;
         case RING:
-            returnedTable = ringTable;
-            returnedCount = NUMBER_RING_KINDS;
-            break;
+            return ringTable;
         case WAND:
-            returnedTable = wandTable;
-            returnedCount = NUMBER_WAND_KINDS;
-            break;
+            return wandTable;
         case STAFF:
-            returnedTable = staffTable;
-            returnedCount = NUMBER_STAFF_KINDS;
-            break;
+            return staffTable;
         case CHARM:
-            returnedTable = charmTable;
-            returnedCount = NUMBER_CHARM_KINDS;
-            break;
+            return charmTable;
         default:
-            returnedTable = NULL;
-            returnedCount = 0;
-            break;
+            return NULL;
     }
-    if (kindCount) {
-        *kindCount = returnedCount;
-    }
-    return returnedTable;
 }
 
 boolean isVowelish(char *theChar) {
@@ -1901,6 +1880,10 @@ void itemDetails(char *buf, item *theItem) {
     fixpt currentDamage, newDamage;
     short nextLevelState = 0, new, current, accuracyChange, damageChange;
     unsigned long turnsSinceLatestUse;
+
+    // Brogue Lite:
+    // Removed descriptions for mercy and duplication runics
+
     const char weaponRunicEffectDescriptions[NUMBER_WEAPON_RUNIC_KINDS][DCOLS] = {
         "time will stop while you take an extra turn",
         "the enemy will die instantly",
@@ -1938,10 +1921,10 @@ void itemDetails(char *buf, item *theItem) {
     itemName(theItem, theName, false, false, NULL);
 
     // introductory text
-    if (tableForItemCategory(theItem->category, NULL)
-        && (tableForItemCategory(theItem->category, NULL)[theItem->kind].identified || rogue.playbackOmniscience)) {
+    if (tableForItemCategory(theItem->category)
+        && (tableForItemCategory(theItem->category)[theItem->kind].identified || rogue.playbackOmniscience)) {
 
-        strcat(buf, tableForItemCategory(theItem->category, NULL)[theItem->kind].description);
+        strcat(buf, tableForItemCategory(theItem->category)[theItem->kind].description);
 
         if (theItem->category == POTION && theItem->kind == POTION_LIFE) {
             sprintf(buf2, "\n\nIt will increase your maximum health by %s%i%%%s.",
@@ -1957,7 +1940,7 @@ void itemDetails(char *buf, item *theItem) {
                         (singular ? "This" : "These"),
                         (singular ? "" : "s"),
                         (singular ? "s" : ""),
-                        tableForItemCategory(theItem->category, NULL)[theItem->kind].flavor,
+                        tableForItemCategory(theItem->category)[theItem->kind].flavor,
                         (singular ? "it" : "they"));
                 break;
             case SCROLL:
@@ -1966,21 +1949,21 @@ void itemDetails(char *buf, item *theItem) {
                         (singular ? "" : "s"),
                         (singular ? "is" : "are"),
                         (singular ? "s" : ""),
-                        tableForItemCategory(theItem->category, NULL)[theItem->kind].flavor,
+                        tableForItemCategory(theItem->category)[theItem->kind].flavor,
                         (singular ? "it" : "they"));
                 break;
             case STAFF:
                 sprintf(buf2, "This gnarled %s staff is warm to the touch. Who knows what it will do when used?",
-                        tableForItemCategory(theItem->category, NULL)[theItem->kind].flavor);
+                        tableForItemCategory(theItem->category)[theItem->kind].flavor);
                 break;
             case WAND:
                 sprintf(buf2, "This thin %s wand is warm to the touch. Who knows what it will do when used?",
-                        tableForItemCategory(theItem->category, NULL)[theItem->kind].flavor);
+                        tableForItemCategory(theItem->category)[theItem->kind].flavor);
                 break;
             case RING:
                 sprintf(buf2, "This metal band is adorned with a%s %s gem that glitters in the darkness. Who knows what effect it has when worn? ",
-                        isVowelish(tableForItemCategory(theItem->category, NULL)[theItem->kind].flavor) ? "n" : "",
-                        tableForItemCategory(theItem->category, NULL)[theItem->kind].flavor);
+                        isVowelish(tableForItemCategory(theItem->category)[theItem->kind].flavor) ? "n" : "",
+                        tableForItemCategory(theItem->category)[theItem->kind].flavor);
                 break;
             case CHARM: // Should never be displayed.
                 strcat(buf2, "What a perplexing charm!");
@@ -2005,9 +1988,14 @@ void itemDetails(char *buf, item *theItem) {
     }
 
     if (carried && theItem->originDepth > 0) {
-        sprintf(buf2, " (You found %s on depth %i.) ",
-                singular ? "it" : "them",
-                theItem->originDepth);
+        sprintf(buf2, " (You found %s%s on depth %i.) ",
+            singular ? "it" : "them",
+            // items in an item-choice vault are "keys", but are not a KEY
+            // we ignore any actual KEY, as those might not be on an altar
+            theItem->flags & ITEM_IS_KEY && !(theItem->category & KEY)
+                ? " in a vault" : "",
+            theItem->originDepth
+        );
         strcat(buf, buf2);
     }
 
@@ -2136,14 +2124,18 @@ void itemDetails(char *buf, item *theItem) {
                             abs((short) damageChange),
                             whiteColorEscape);
                 } else {
-                    new = theItem->armor;
+                    new = 0;
+
                     if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                        new += 10 * netEnchant(theItem) / FP_FACTOR;
+                        new = theItem->armor / 10;
+                        new += netEnchant(theItem) / FP_FACTOR;
                     } else {
-                        new += 10 * strengthModifier(theItem) / FP_FACTOR;
+                        new = ((armorTable[theItem->kind].range.upperBound + armorTable[theItem->kind].range.lowerBound) / 2) / 10;
+                        new += strengthModifier(theItem) / FP_FACTOR;
                     }
+
                     new = max(0, new);
-                    new /= 10;
+
                     sprintf(buf2, "Wearing the %s%s will result in an armor rating of %s%i%s. ",
                             theName,
                             ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) ? "" : ", assuming it has no hidden properties,",
@@ -2163,14 +2155,14 @@ void itemDetails(char *buf, item *theItem) {
             }
 
             // heavy armor?
-            current = armorAggroAdjustment(rogue.armor);
+            current = armorStealthAdjustment(rogue.armor);
             if ((theItem->category & ARMOR)
                 && !(theItem->flags & ITEM_EQUIPPED)
-                && (current != armorAggroAdjustment(theItem))) {
+                && (current != armorStealthAdjustment(theItem))) {
 
-                new = armorAggroAdjustment(theItem);
+                new = armorStealthAdjustment(theItem);
                 if (rogue.armor) {
-                    new -= armorAggroAdjustment(rogue.armor);
+                    new -= armorStealthAdjustment(rogue.armor);
                 }
                 sprintf(buf2, "Equipping the %s will %s%s your stealth range by %i%s. ",
                         theName,
@@ -2261,6 +2253,10 @@ void itemDetails(char *buf, item *theItem) {
                                         strcat(buf, buf2);
                                         nextLevelState = weaponForceDistance(enchant + enchantIncrement(theItem));
                                         break;
+
+                                    // Brogue Lite note:
+                                    // Removed (commented out) case for W_MERCY.
+
                                     /*case W_MERCY:
                                         strcpy(buf2, " by 50% of its maximum health. ");
                                         strcat(buf, buf2);
@@ -2345,7 +2341,7 @@ void itemDetails(char *buf, item *theItem) {
                                 break;
                             case A_ABSORPTION:
                                 if (theItem->flags & ITEM_IDENTIFIED) {
-                                    sprintf(buf2, "It will reduce the damage of inbound attacks by a random amount between 0 and %i, which is %i%% of your current maximum health. (If the %s is enchanted, this maximum amount will %s %i.) ",
+                                    sprintf(buf2, "It will reduce the damage of inbound attacks by a random amount between 1 and %i, which is %i%% of your current maximum health. (If the %s is enchanted, this maximum amount will %s %i.) ",
                                             (int) armorAbsorptionMax(enchant),
                                             (int) (100 * armorAbsorptionMax(enchant) / player.info.maxHP),
                                             theName,
@@ -2399,6 +2395,10 @@ void itemDetails(char *buf, item *theItem) {
                             case A_DAMPENING:
                                 strcpy(buf2, "When worn, it will safely absorb the concussive impact of any explosions (though you may still be burned). ");
                                 break;
+
+                            // Brogue Lite note:
+                            // Removed (commented out) cases for negative armor runics
+
                             /*case A_BURDEN:
                                 strcpy(buf2, "10% of the time it absorbs a blow, its strength requirement will permanently increase. ");
                                 break;
@@ -2743,7 +2743,7 @@ void itemDetails(char *buf, item *theItem) {
                             charmRechargeDelay(theItem->kind, theItem->enchant1 + 1));
                     break;
                 case CHARM_NEGATION:
-                    sprintf(buf2, "\n\nWhen used, the charm will negate all magical effects on the creatures in your field of view and the items on the ground up to %i spaces away, and recharge in %i turns. (If the charm is enchanted, it will reach up to %i spaces and recharge in %i turns.)",
+                    sprintf(buf2, "\n\nWhen used, the charm will emit a wave of anti-magic up to %i spaces away, negating all magical effects on you and on creatures and dropped items in your field of view. It will recharge in %i turns. (If the charm is enchanted, it will reach up to %i spaces and recharge in %i turns.)",
                             charmNegationRadius(enchant),
                             charmRechargeDelay(theItem->kind, theItem->enchant1),
                             charmNegationRadius(enchant + FP_FACTOR),
@@ -3334,8 +3334,8 @@ item *keyOnTileAt(short x, short y) {
     creature *monst;
 
     if ((pmap[x][y].flags & HAS_PLAYER)
-        && player.xLoc == x
-        && player.yLoc == y
+        && player.loc.x == x
+        && player.loc.y == y
         && keyInPackFor(x, y)) {
 
         return keyInPackFor(x, y);
@@ -3372,7 +3372,7 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
 
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
-        if (grid[monst->xLoc][monst->yLoc] <= distance) {
+        if (grid[monst->loc.x][monst->loc.y] <= distance) {
             if (monst->creatureState == MONSTER_SLEEPING) {
                 wakeUp(monst);
             }
@@ -3392,12 +3392,12 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
         }
     }
 
-    if (player.xLoc == x && player.yLoc == y) {
+    if (player.loc.x == x && player.loc.y == y) {
         player.status[STATUS_AGGRAVATING] = player.maxStatus[STATUS_AGGRAVATING] = distance;
-        rogue.aggroRange = currentAggroValue();
+        rogue.stealthRange = currentStealthRange();
     }
 
-    if (grid[player.xLoc][player.yLoc] >= 0 && grid[player.xLoc][player.yLoc] <= distance) {
+    if (grid[player.loc.x][player.loc.y] >= 0 && grid[player.loc.x][player.loc.y] <= distance) {
         discover(x, y);
         discoverCell(x, y);
         colorFlash(flashColor, 0, (DISCOVERED | MAGIC_MAPPED), 10, distance, x, y);
@@ -3417,7 +3417,7 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
 // best for the specified bolt type.
 // The list is terminated by a marker (-1, -1).
 // Returns the number of entries in the list (not counting the terminal marker).
-short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2], const short targetLoc[2], const bolt *theBolt) {
+short getLineCoordinates(pos listOfCoordinates[], const pos originLoc, const pos targetLoc, const bolt *theBolt) {
     fixpt point[2], step[2];
     short listLength;
     int score, bestScore = 0, offset, bestOffset = 0;
@@ -3433,8 +3433,8 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
         {50, 10}, {90, 50}, {50, 90}, {10, 50},
         {50,  1}, {99, 50}, {50, 99}, { 1, 50} };
 
-    if (originLoc[0] == targetLoc[0] && originLoc[1] == targetLoc[1]) {
-        listOfCoordinates[0][0] = listOfCoordinates[0][1] = -1;
+    if (originLoc.x == targetLoc.x && originLoc.y == targetLoc.y) {
+        listOfCoordinates[0] = (pos){ .x = -1, .y = -1 };
         return 0;
     }
 
@@ -3443,12 +3443,13 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
 
         listLength = 0;
 
-        for (int i = 0; i <= 1; i++) {
+
             // always shoot from the center of the origin cell
-            point[i] = originLoc[i] * FP_FACTOR + FP_FACTOR/2;
+            point[0] = originLoc.x * FP_FACTOR + FP_FACTOR/2;
+            point[1] = originLoc.y * FP_FACTOR + FP_FACTOR/2;
             // vector to target
-            step[i] = targetLoc[i] * FP_FACTOR + offsets[offset < numOffsets ? offset : bestOffset][i] * FP_FACTOR / 100 - point[i];
-        }
+            step[0] = targetLoc.x * FP_FACTOR + offsets[offset < numOffsets ? offset : bestOffset][0] * FP_FACTOR / 100 - point[0];
+            step[1] = targetLoc.y * FP_FACTOR + offsets[offset < numOffsets ? offset : bestOffset][1] * FP_FACTOR / 100 - point[1];
 
         // normalize the step, to move exactly one row or column at a time
         fixpt m = max(llabs(step[0]), llabs(step[1]));
@@ -3457,11 +3458,13 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
 
         // move until we exit the map
         while (true) {
-            for (int i = 0; i <= 1; i++) {
-                point[i] += step[i];
-                listOfCoordinates[listLength][i] = (point[i] < 0 ? -1 : point[i] / FP_FACTOR);
-            }
-            if (!coordinatesAreInMap(listOfCoordinates[listLength][0], listOfCoordinates[listLength][1])) break;
+            point[0] += step[0];
+            point[1] += step[1];
+            listOfCoordinates[listLength] = (pos){
+                .x = (point[0] < 0 ? -1 : point[0] / FP_FACTOR),
+                .y = (point[1] < 0 ? -1 : point[1] / FP_FACTOR)
+            };
+            if (!coordinatesAreInMap(listOfCoordinates[listLength].x, listOfCoordinates[listLength].y)) break;
             listLength++;
         };
 
@@ -3474,17 +3477,19 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
         // evaluate this path; we will return the path with the highest score
         score = 0;
 
+        boolean passesThroughUnknown = false;
         for (int i = 0; i < listLength; i++) {
-            short x = listOfCoordinates[i][0], y = listOfCoordinates[i][1];
+            short x = listOfCoordinates[i].x;
+            short y = listOfCoordinates[i].y;
 
             boolean isImpassable = cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY);
             boolean isOpaque = cellHasTerrainFlag(x, y, T_OBSTRUCTS_VISION);
             boolean targetsEnemies = theBolt->flags & BF_TARGET_ENEMIES;
             boolean targetsAllies = theBolt->flags & BF_TARGET_ALLIES;
             boolean burningThrough = (theBolt->flags & BF_FIERY) && cellHasTerrainFlag(x, y, T_IS_FLAMMABLE);
-            boolean isCastByPlayer = (originLoc[0] == player.xLoc && originLoc[1] == player.yLoc);
+            boolean isCastByPlayer = (originLoc.x == player.loc.x && originLoc.y == player.loc.y);
 
-            creature *caster = monsterAtLoc(originLoc[0], originLoc[1]);
+            creature *caster = monsterAtLoc(originLoc.x, originLoc.y);
             creature *monst = monsterAtLoc(x, y);
             boolean isMonster = monst
                 && !(monst->bookkeepingFlags & MB_SUBMERGED)
@@ -3496,21 +3501,27 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
             score += 2;
 
             // target reached?
-            if (x == targetLoc[0] && y == targetLoc[1]) {
+            if (x == targetLoc.x && y == targetLoc.y) {
 
                 if ((!targetsEnemies && !targetsAllies) ||
                     (targetsEnemies && isMonster && isEnemyOfCaster) ||
                     (targetsAllies && isMonster && isAllyOfCaster)) {
 
-                    // big bonus for hitting the target
-                    score += 5000;
+                    // Big bonus for hitting the target, but that bonus
+                    // is lower if this path uses an unknown tile.
+                    score += passesThroughUnknown ? 2500 : 5000;
                 }
 
                 break; // we don't care about anything beyond the target--if the player did, they would have selected a farther target
             }
 
             // if the caster is the player, undiscovered cells don't count (lest we reveal something about them)
-            if (isCastByPlayer && !(pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED))) continue;
+            if (isCastByPlayer && !(pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED))) {
+                // Remember that this path used an unknown cell, so that a
+                // less-risky path can be used instead if one is known.
+                passesThroughUnknown = true;
+                continue;
+            }
 
             // nothing can get through impregnable obstacles
             if (isImpassable && pmap[x][y].flags & IMPREGNABLE) {
@@ -3550,7 +3561,7 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
     }
 
     // demarcate the end of the list
-    listOfCoordinates[listLength][0] = listOfCoordinates[listLength][1] = -1;
+    listOfCoordinates[listLength] = (pos){ .x = -1, .y = -1 };
 
     return listLength;
 }
@@ -3560,42 +3571,38 @@ short getLineCoordinates(short listOfCoordinates[][2], const short originLoc[2],
 // or one space prior, where would it stop?
 // Takes into account the caster's knowledge; i.e. won't be blocked by monsters
 // that the caster is not aware of.
-void getImpactLoc(short returnLoc[2], const short originLoc[2], const short targetLoc[2],
+void getImpactLoc(pos *returnLoc, const pos originLoc, const pos targetLoc,
                   const short maxDistance, const boolean returnLastEmptySpace, const bolt *theBolt) {
-    short coords[DCOLS + 1][2];
+    pos coords[DCOLS + 1];
     short i, n;
     creature *monst;
 
     n = getLineCoordinates(coords, originLoc, targetLoc, theBolt);
     n = min(n, maxDistance);
     for (i=0; i<n; i++) {
-        monst = monsterAtLoc(coords[i][0], coords[i][1]);
+        monst = monsterAtLoc(coords[i].x, coords[i].y);
         if (monst
-            && !monsterIsHidden(monst, monsterAtLoc(originLoc[0], originLoc[1]))
+            && !monsterIsHidden(monst, monsterAtLoc(originLoc.x, originLoc.y))
             && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
             // Imaginary bolt hit the player or a monster.
             break;
         }
-        if (cellHasTerrainFlag(coords[i][0], coords[i][1], (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
+        if (cellHasTerrainFlag(coords[i].x, coords[i].y, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
             break;
         }
     }
     if (i == maxDistance) {
-        returnLoc[0] = coords[i-1][0];
-        returnLoc[1] = coords[i-1][1];
+        *returnLoc = coords[i-1];
     } else if (returnLastEmptySpace) {
         if (i == 0) {
-            returnLoc[0] = originLoc[0];
-            returnLoc[1] = originLoc[1];
+            *returnLoc = originLoc;
         } else {
-            returnLoc[0] = coords[i-1][0];
-            returnLoc[1] = coords[i-1][1];
+            *returnLoc = coords[i-1];
         }
     } else {
-        returnLoc[0] = coords[i][0];
-        returnLoc[1] = coords[i][1];
+        *returnLoc = coords[i];
     }
-    brogueAssert(coordinatesAreInMap(returnLoc[0], returnLoc[1]));
+    brogueAssert(coordinatesAreInMap(returnLoc->x, returnLoc->y));
 }
 
 // Returns true if the two coordinates are unobstructed and diagonally adjacent,
@@ -3807,7 +3814,7 @@ boolean negate(creature *monst) {
             monst->info.flags &= ~NEGATABLE_TRAITS;
             negated = true;
             monst->wasNegated = true;
-            refreshDungeonCell(monst->xLoc, monst->yLoc);
+            refreshDungeonCell(monst->loc.x, monst->loc.y);
             refreshSideBar(-1, -1, false);
         }
         for (i = 0; i < 20; i++) {
@@ -3896,7 +3903,7 @@ boolean polymorph(creature *monst) {
         monst->movementSpeed *= 2;
         monst->attackSpeed *= 2;
     }
-
+    monst->wasNegated = false;
     clearStatus(monst);
 
     if (monst->info.flags & MONST_FIERY) {
@@ -3922,7 +3929,7 @@ boolean polymorph(creature *monst) {
 
     monst->ticksUntilTurn = max(monst->ticksUntilTurn, 101);
 
-    refreshDungeonCell(monst->xLoc, monst->yLoc);
+    refreshDungeonCell(monst->loc.x, monst->loc.y);
     if (boltCatalog[BOLT_POLYMORPH].backColor) {
         flashMonster(monst, boltCatalog[BOLT_POLYMORPH].backColor, 100);
     }
@@ -4004,7 +4011,7 @@ void makePlayerTelepathic(short duration) {
     player.status[STATUS_TELEPATHIC] = player.maxStatus[STATUS_TELEPATHIC] = duration;
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
-        refreshDungeonCell(monst->xLoc, monst->yLoc);
+        refreshDungeonCell(monst->loc.x, monst->loc.y);
     }
     if (!hasNextCreature(iterateCreatures(monsters))) {
         message("you can somehow tell that you are alone on this depth at the moment.", 0);
@@ -4074,7 +4081,7 @@ void rechargeItems(unsigned long categories) {
 //    char buf[DCOLS*3], mName[DCOLS];
 //
 //    for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
-//        if (pmap[monst->xLoc][monst->yLoc].flags & IN_FIELD_OF_VIEW
+//        if (pmap[monst->loc.x][monst->loc.y].flags & IN_FIELD_OF_VIEW
 //            && monst->creatureState != MONSTER_FLEEING
 //            && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
 //
@@ -4094,7 +4101,7 @@ void rechargeItems(unsigned long categories) {
 //        sprintf(buf, "%s emits a brilliant flash of red light!", emitterName);
 //    }
 //    message(buf, 0);
-//    colorFlash(&redFlashColor, 0, IN_FIELD_OF_VIEW, 15, DCOLS, player.xLoc, player.yLoc);
+//    colorFlash(&redFlashColor, 0, IN_FIELD_OF_VIEW, 15, DCOLS, player.loc.x, player.loc.y);
 //}
 
 void negationBlast(const char *emitterName, const short distance) {
@@ -4103,13 +4110,13 @@ void negationBlast(const char *emitterName, const short distance) {
 
     sprintf(buf, "%s emits a numbing torrent of anti-magic!", emitterName);
     messageWithColor(buf, &itemMessageColor, 0);
-    colorFlash(&pink, 0, IN_FIELD_OF_VIEW, 3 + distance / 5, distance, player.xLoc, player.yLoc);
+    colorFlash(&pink, 0, IN_FIELD_OF_VIEW, 3 + distance / 5, distance, player.loc.x, player.loc.y);
     negate(&player);
     flashMonster(&player, &pink, 100);
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
-        if ((pmap[monst->xLoc][monst->yLoc].flags & IN_FIELD_OF_VIEW)
-            && (player.xLoc - monst->xLoc) * (player.xLoc - monst->xLoc) + (player.yLoc - monst->yLoc) * (player.yLoc - monst->yLoc) <= distance * distance) {
+        if ((pmap[monst->loc.x][monst->loc.y].flags & IN_FIELD_OF_VIEW)
+            && (player.loc.x - monst->loc.x) * (player.loc.x - monst->loc.x) + (player.loc.y - monst->loc.y) * (player.loc.y - monst->loc.y) <= distance * distance) {
 
             if (canSeeMonster(monst)) {
                 flashMonster(monst, &pink, 100);
@@ -4118,8 +4125,8 @@ void negationBlast(const char *emitterName, const short distance) {
         }
     }
     for (theItem = floorItems; theItem != NULL; theItem = theItem->nextItem) {
-        if ((pmap[theItem->xLoc][theItem->yLoc].flags & IN_FIELD_OF_VIEW)
-            && (player.xLoc - theItem->xLoc) * (player.xLoc - theItem->xLoc) + (player.yLoc - theItem->yLoc) * (player.yLoc - theItem->yLoc) <= distance * distance) {
+        if ((pmap[theItem->loc.x][theItem->loc.y].flags & IN_FIELD_OF_VIEW)
+            && (player.loc.x - theItem->loc.x) * (player.loc.x - theItem->loc.x) + (player.loc.y - theItem->loc.y) * (player.loc.y - theItem->loc.y) <= distance * distance) {
 
             theItem->flags &= ~(ITEM_MAGIC_DETECTED | ITEM_CURSED);
             switch (theItem->category) {
@@ -4128,8 +4135,8 @@ void negationBlast(const char *emitterName, const short distance) {
                     theItem->enchant1 = theItem->enchant2 = theItem->charges = 0;
                     theItem->flags &= ~(ITEM_RUNIC | ITEM_RUNIC_HINTED | ITEM_RUNIC_IDENTIFIED | ITEM_PROTECTED);
                     identify(theItem);
-                    pmap[theItem->xLoc][theItem->yLoc].flags &= ~ITEM_DETECTED;
-                    refreshDungeonCell(theItem->xLoc, theItem->yLoc);
+                    pmap[theItem->loc.x][theItem->loc.y].flags &= ~ITEM_DETECTED;
+                    refreshDungeonCell(theItem->loc.x, theItem->loc.y);
                     break;
                 case STAFF:
                     theItem->charges = 0;
@@ -4158,11 +4165,11 @@ void discordBlast(const char *emitterName, const short distance) {
 
     sprintf(buf, "%s emits a wave of unsettling purple radiation!", emitterName);
     messageWithColor(buf, &itemMessageColor, 0);
-    colorFlash(&discordColor, 0, IN_FIELD_OF_VIEW, 3 + distance / 5, distance, player.xLoc, player.yLoc);
+    colorFlash(&discordColor, 0, IN_FIELD_OF_VIEW, 3 + distance / 5, distance, player.loc.x, player.loc.y);
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
-        if ((pmap[monst->xLoc][monst->yLoc].flags & IN_FIELD_OF_VIEW)
-            && (player.xLoc - monst->xLoc) * (player.xLoc - monst->xLoc) + (player.yLoc - monst->yLoc) * (player.yLoc - monst->yLoc) <= distance * distance) {
+        if ((pmap[monst->loc.x][monst->loc.y].flags & IN_FIELD_OF_VIEW)
+            && (player.loc.x - monst->loc.x) * (player.loc.x - monst->loc.x) + (player.loc.y - monst->loc.y) * (player.loc.y - monst->loc.y) <= distance * distance) {
 
             if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
                 if (canSeeMonster(monst)) {
@@ -4181,7 +4188,7 @@ void crystalize(short radius) {
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j < DROWS; j++) {
-            if ((player.xLoc - i) * (player.xLoc - i) + (player.yLoc - j) * (player.yLoc - j) <= radius * radius
+            if ((player.loc.x - i) * (player.loc.x - i) + (player.loc.y - j) * (player.loc.y - j) <= radius * radius
                 && !(pmap[i][j].flags & IMPREGNABLE)) {
 
                 if (i == 0 || i == DCOLS - 1 || j == 0 || j == DROWS - 1) {
@@ -4204,7 +4211,7 @@ void crystalize(short radius) {
         }
     }
     updateVision(false);
-    colorFlash(&forceFieldColor, 0, 0, radius, radius, player.xLoc, player.yLoc);
+    colorFlash(&forceFieldColor, 0, 0, radius, radius, player.loc.x, player.loc.y);
     displayLevel();
     refreshSideBar(-1, -1, false);
 }
@@ -4219,7 +4226,7 @@ boolean imbueInvisibility(creature *monst, short duration) {
             autoID = true;
         }
         monst->status[STATUS_INVISIBLE] = monst->maxStatus[STATUS_INVISIBLE] = duration;
-        refreshDungeonCell(monst->xLoc, monst->yLoc);
+        refreshDungeonCell(monst->loc.x, monst->loc.y);
         refreshSideBar(-1, -1, false);
         if (boltCatalog[BOLT_POLYMORPH].backColor) {
             flashMonster(monst, boltCatalog[BOLT_INVISIBILITY].backColor, 100);
@@ -4265,18 +4272,15 @@ boolean projectileReflects(creature *attacker, creature *defender) {
 // Alters listOfCoordinates to describe reflected path,
 // which diverges from the existing path at kinkCell,
 // and then returns the path length of the reflected path.
-short reflectBolt(short targetX, short targetY, short listOfCoordinates[][2], short kinkCell, boolean retracePath) {
-    short k, target[2], origin[2], newPath[DCOLS][2], newPathLength, failsafe, finalLength;
-    boolean needRandomTarget;
+short reflectBolt(short targetX, short targetY, pos listOfCoordinates[], short kinkCell, boolean retracePath) {
+    boolean needRandomTarget = (targetX < 0 || targetY < 0
+                        || (targetX == listOfCoordinates[kinkCell].x && targetY == listOfCoordinates[kinkCell].y));
 
-    needRandomTarget = (targetX < 0 || targetY < 0
-                        || (targetX == listOfCoordinates[kinkCell][0] && targetY == listOfCoordinates[kinkCell][1]));
-
+    short finalLength;
     if (retracePath) {
         // if reflecting back at caster, follow precise trajectory until we reach the caster
-        for (k = 1; k <= kinkCell && kinkCell + k < MAX_BOLT_LENGTH; k++) {
-            listOfCoordinates[kinkCell + k][0] = listOfCoordinates[kinkCell - k][0];
-            listOfCoordinates[kinkCell + k][1] = listOfCoordinates[kinkCell - k][1];
+        for (int k = 1; k <= kinkCell && kinkCell + k < MAX_BOLT_LENGTH; k++) {
+            listOfCoordinates[kinkCell + k] = listOfCoordinates[kinkCell - k];
         }
 
         // Calculate a new "extension" path, with an origin at the caster, and a destination at
@@ -4286,49 +4290,50 @@ short reflectBolt(short targetX, short targetY, short listOfCoordinates[][2], sh
         // is from (2,3) to (4,6):
         // (2,3) + ((2,3) - (0,0)) = (4,6).
 
-        origin[0] = listOfCoordinates[2 * kinkCell][0];
-        origin[1] = listOfCoordinates[2 * kinkCell][1];
-        target[0] = targetX + (targetX - listOfCoordinates[kinkCell][0]);
-        target[1] = targetY + (targetY - listOfCoordinates[kinkCell][1]);
+        pos origin = listOfCoordinates[2 * kinkCell];
+        pos target = (pos){
+            .x = targetX + (targetX - listOfCoordinates[kinkCell].x),
+            .y = targetY + (targetY - listOfCoordinates[kinkCell].y)
+        };
 
+        pos newPath[DCOLS];
         // (NULL because the reflected bolt is not under the caster's control, so its path should not be tuned)
-        newPathLength = getLineCoordinates(newPath, origin, target, NULL);
+        const short newPathLength = getLineCoordinates(newPath, origin, target, NULL);
 
-        for (k=0; k<=newPathLength; k++) {
-            listOfCoordinates[2 * kinkCell + k + 1][0] = newPath[k][0];
-            listOfCoordinates[2 * kinkCell + k + 1][1] = newPath[k][1];
+        for (int k=0; k<=newPathLength; k++) {
+            listOfCoordinates[2 * kinkCell + k + 1] = newPath[k];
         }
         finalLength = 2 * kinkCell + newPathLength + 1;
     } else {
-        failsafe = 50;
+        short failsafe = 50;
+        pos newPath[DCOLS];
+        int newPathLength;
         do {
+            pos target;
             if (needRandomTarget) {
                 // pick random target
-                perimeterCoords(target, rand_range(0, 39));
-                target[0] += listOfCoordinates[kinkCell][0];
-                target[1] += listOfCoordinates[kinkCell][1];
+                target = perimeterCoords(rand_range(0, 39));
+                target.x += listOfCoordinates[kinkCell].x;
+                target.y += listOfCoordinates[kinkCell].y;
             } else {
-                target[0] = targetX;
-                target[1] = targetY;
+                target = (pos){ .x = targetX, .y = targetY };
             }
             newPathLength = getLineCoordinates(newPath, listOfCoordinates[kinkCell], target, NULL);
             if (newPathLength > 0
-                && !cellHasTerrainFlag(newPath[0][0], newPath[0][1], (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
+                && !cellHasTerrainFlag(newPath[0].x, newPath[0].y, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
 
                 needRandomTarget = false;
             }
         } while (needRandomTarget && --failsafe);
 
-        for (k = 0; k < newPathLength; k++) {
-            listOfCoordinates[kinkCell + k + 1][0] = newPath[k][0];
-            listOfCoordinates[kinkCell + k + 1][1] = newPath[k][1];
+        for (int k = 0; k < newPathLength; k++) {
+            listOfCoordinates[kinkCell + k + 1] = newPath[k];
         }
 
         finalLength = kinkCell + newPathLength + 1;
     }
 
-    listOfCoordinates[finalLength][0] = -1;
-    listOfCoordinates[finalLength][1] = -1;
+    listOfCoordinates[finalLength] = (pos){ .x = -1, .y = -1 };
     return finalLength;
 }
 
@@ -4346,17 +4351,14 @@ void checkForMissingKeys(short x, short y) {
 }
 
 void beckonMonster(creature *monst, short x, short y) {
-    short from[2], to[2];
     bolt theBolt = boltCatalog[BOLT_BLINKING];
 
     if (monst->bookkeepingFlags & MB_CAPTIVE) {
         freeCaptive(monst);
     }
-    from[0] = monst->xLoc;
-    from[1] = monst->yLoc;
-    to[0] = x;
-    to[1] = y;
-    theBolt.magnitude = max(1, (distanceBetween(x, y, monst->xLoc, monst->yLoc) - 2) / 2);
+    pos from = monst->loc;
+    pos to = (pos){ .x = x, .y = y };
+    theBolt.magnitude = max(1, (distanceBetween(x, y, monst->loc.x, monst->loc.y) - 2) / 2);
     zap(from, to, &theBolt, false);
     if (monst->ticksUntilTurn < player.attackSpeed+1) {
         monst->ticksUntilTurn = player.attackSpeed+1;
@@ -4365,7 +4367,7 @@ void beckonMonster(creature *monst, short x, short y) {
 
 enum boltEffects boltEffectForItem(item *theItem) {
     if (theItem->category & (STAFF | WAND)) {
-        return boltCatalog[tableForItemCategory(theItem->category, NULL)[theItem->kind].strengthRequired].boltEffect;
+        return boltCatalog[tableForItemCategory(theItem->category)[theItem->kind].strengthRequired].boltEffect;
     } else {
         return BE_NONE;
     }
@@ -4373,7 +4375,7 @@ enum boltEffects boltEffectForItem(item *theItem) {
 
 enum boltType boltForItem(item *theItem) {
     if (theItem->category & (STAFF | WAND)) {
-        return tableForItemCategory(theItem->category, NULL)[theItem->kind].strengthRequired;
+        return tableForItemCategory(theItem->category)[theItem->kind].strengthRequired;
     } else {
         return 0;
     }
@@ -4493,12 +4495,12 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
             case BE_BECKONING:
                 if (!(monst->info.flags & MONST_IMMOBILE)
                     && caster
-                    && distanceBetween(caster->xLoc, caster->yLoc, monst->xLoc, monst->yLoc) > 1) {
+                    && distanceBetween(caster->loc.x, caster->loc.y, monst->loc.x, monst->loc.y) > 1) {
 
                     if (canSeeMonster(monst) && autoID) {
                         *autoID = true;
                     }
-                    beckonMonster(monst, caster->xLoc, caster->yLoc);
+                    beckonMonster(monst, caster->loc.x, caster->loc.y);
                     if (canSeeMonster(monst) && autoID) {
                         *autoID = true;
                     }
@@ -4543,7 +4545,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                         monst->status[STATUS_DISCORDANT] = 0;
                         becomeAllyWith(monst);
                         //refreshSideBar(-1, -1, false);
-                        refreshDungeonCell(monst->xLoc, monst->yLoc);
+                        refreshDungeonCell(monst->loc.x, monst->loc.y);
                         if (canSeeMonster(monst)) {
                             if (autoID) {
                                 *autoID = true;
@@ -4578,7 +4580,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                     && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
 
                     empowerMonster(monst);
-                    createFlare(monst->xLoc, monst->yLoc, EMPOWERMENT_LIGHT);
+                    createFlare(monst->loc.x, monst->loc.y, EMPOWERMENT_LIGHT);
                     if (canSeeMonster(monst) && autoID) {
                         *autoID = true;
                     }
@@ -4640,8 +4642,8 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
                     newMonst = cloneMonster(monst, true, true);
                     if (newMonst) {
-                        monst->info.maxHP = newMonst->info.maxHP = (monst->info.maxHP + 1) / 2;
-                        monst->currentHP = newMonst->currentHP = min(monst->currentHP, monst->info.maxHP);
+                        monst->currentHP = (monst->currentHP + 1) / 2;
+                        newMonst->currentHP = (newMonst->currentHP + 1) / 2;
                         if (boltCatalog[BOLT_PLENTY].backColor) {
                             flashMonster(monst, boltCatalog[BOLT_PLENTY].backColor, 100);
                             flashMonster(newMonst, boltCatalog[BOLT_PLENTY].backColor, 100);
@@ -4691,8 +4693,8 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
     switch (theBolt->boltEffect) {
         case BE_BLINKING:
             if (caster == &player) {
-                player.xLoc = x;
-                player.yLoc = y;
+                player.loc.x = x;
+                player.loc.y = y;
                 if (lightingChanged) {
                     *lightingChanged = true;
                 }
@@ -4759,7 +4761,7 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
         case BE_CONJURATION:
             for (i = 0; i < (staffBladeCount(theBolt->magnitude * FP_FACTOR)); i++) {
                 monst = generateMonster(MK_SPECTRAL_BLADE, true, false);
-                getQualifyingPathLocNear(&(monst->xLoc), &(monst->yLoc), x, y, true,
+                getQualifyingPathLocNear(&(monst->loc.x), &(monst->loc.y), x, y, true,
                                          T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)) & ~T_SPONTANEOUSLY_IGNITES, HAS_PLAYER,
                                          avoidedFlagsForMonster(&(monst->info)) & ~T_SPONTANEOUSLY_IGNITES, (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
                 monst->bookkeepingFlags |= (MB_FOLLOWER | MB_BOUND_TO_LEADER | MB_DOES_NOT_TRACK_LEADER);
@@ -4767,8 +4769,8 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
                 monst->leader = &player;
                 monst->creatureState = MONSTER_ALLY;
                 monst->ticksUntilTurn = monst->info.attackSpeed + 1; // So they don't move before the player's next turn.
-                pmap[monst->xLoc][monst->yLoc].flags |= HAS_MONSTER;
-                //refreshDungeonCell(monst->xLoc, monst->yLoc);
+                pmap[monst->loc.x][monst->loc.y].flags |= HAS_MONSTER;
+                //refreshDungeonCell(monst->loc.x, monst->loc.y);
                 fadeInMonster(monst);
             }
             updateVision(true);
@@ -4781,13 +4783,13 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
         case BE_BLINKING:
             if (pmap[x][y].flags & HAS_MONSTER) { // We're blinking onto an area already occupied by a submerged monster.
                                                   // Make sure we don't get the shooting monster by accident.
-                caster->xLoc = caster->yLoc = -1; // Will be set back to the destination in a moment.
+                caster->loc.x = caster->loc.y = -1; // Will be set back to the destination in a moment.
                 monst = monsterAtLoc(x, y);
                 findAlternativeHomeFor(monst, &x2, &y2, true);
                 if (x2 >= 0) {
                     // Found an alternative location.
-                    monst->xLoc = x2;
-                    monst->yLoc = y2;
+                    monst->loc.x = x2;
+                    monst->loc.y = y2;
                     pmap[x][y].flags &= ~HAS_MONSTER;
                     pmap[x2][y2].flags |= HAS_MONSTER;
                 } else {
@@ -4800,8 +4802,8 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
             }
             caster->bookkeepingFlags &= ~MB_SUBMERGED;
             pmap[x][y].flags |= (caster == &player ? HAS_PLAYER : HAS_MONSTER);
-            caster->xLoc = x;
-            caster->yLoc = y;
+            caster->loc.x = x;
+            caster->loc.y = y;
             // Always break free on blink
             disentangle(caster);
             applyInstantTileEffectsToCreature(caster);
@@ -4809,8 +4811,8 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
                 // increase scent turn number so monsters don't sniff around at the old cell like idiots
                 rogue.scentTurnNumber += 30;
                 // get any items at the destination location
-                if (pmap[player.xLoc][player.yLoc].flags & HAS_ITEM) {
-                    pickUpItemAt(player.xLoc, player.yLoc);
+                if (pmap[player.loc.x][player.loc.y].flags & HAS_ITEM) {
+                    pickUpItemAt(player.loc.x, player.loc.y);
                 }
                 updateVision(true);
             }
@@ -4829,8 +4831,8 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
 }
 
 // returns whether the bolt effect should autoID any staff or wand it came from, if it came from a staff or wand
-boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideDetails) {
-    short listOfCoordinates[MAX_BOLT_LENGTH][2];
+boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails) {
+    pos listOfCoordinates[MAX_BOLT_LENGTH];
     short i, j, k, x, y, x2, y2, numCells, blinkDistance = 0, boltLength, initialBoltLength, lights[DCOLS][DROWS][3];
     creature *monst = NULL, *shootingMonst;
     char buf[COLS], monstName[COLS];
@@ -4848,17 +4850,17 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
     lightSource boltLights[500];
     color boltLightColors[500];
 
-    brogueAssert(originLoc[0] != targetLoc[0] || originLoc[1] != targetLoc[1]);
-    if (originLoc[0] == targetLoc[0] && originLoc[1] == targetLoc[1]) {
+    brogueAssert(originLoc.x != targetLoc.x || originLoc.y != targetLoc.y);
+    if (originLoc.x == targetLoc.x && originLoc.y == targetLoc.y) {
         return false;
     }
 
-    x = originLoc[0];
-    y = originLoc[1];
+    x = originLoc.x;
+    y = originLoc.y;
 
     initialBoltLength = boltLength = 5 * theBolt->magnitude;
     numCells = getLineCoordinates(listOfCoordinates, originLoc, targetLoc, (hideDetails ? &boltCatalog[BOLT_NONE] : theBolt));
-    shootingMonst = monsterAtLoc(originLoc[0], originLoc[1]);
+    shootingMonst = monsterAtLoc(originLoc.x, originLoc.y);
 
     if (hideDetails) {
         boltColor = &gray;
@@ -4870,18 +4872,18 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
     displayCombatText(); // To announce who fired the bolt while the animation plays.
 
     if (theBolt->boltEffect == BE_BLINKING) {
-        if (cellHasTerrainFlag(listOfCoordinates[0][0], listOfCoordinates[0][1], (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION))
-            || ((pmap[listOfCoordinates[0][0]][listOfCoordinates[0][1]].flags & (HAS_PLAYER | HAS_MONSTER))
-                && !(monsterAtLoc(listOfCoordinates[0][0], listOfCoordinates[0][1])->bookkeepingFlags & MB_SUBMERGED))) {
+        if (cellHasTerrainFlag(listOfCoordinates[0].x, listOfCoordinates[0].y, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION))
+            || ((pmap[listOfCoordinates[0].x][listOfCoordinates[0].y].flags & (HAS_PLAYER | HAS_MONSTER))
+                && !(monsterAtLoc(listOfCoordinates[0].x, listOfCoordinates[0].y)->bookkeepingFlags & MB_SUBMERGED))) {
                 // shooting blink point-blank into an obstruction does nothing.
                 return false;
             }
         theBolt->foreColor = &black;
         theBolt->theChar = shootingMonst->info.displayChar;
-        pmap[originLoc[0]][originLoc[1]].flags &= ~(HAS_PLAYER | HAS_MONSTER);
-        refreshDungeonCell(originLoc[0], originLoc[1]);
+        pmap[originLoc.x][originLoc.y].flags &= ~(HAS_PLAYER | HAS_MONSTER);
+        refreshDungeonCell(originLoc.x, originLoc.y);
         blinkDistance = theBolt->magnitude * 2 + 1;
-        checkForMissingKeys(originLoc[0], originLoc[1]);
+        checkForMissingKeys(originLoc.x, originLoc.y);
     }
 
     if (boltColor) {
@@ -4897,15 +4899,15 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
     }
 
     if (theBolt->boltEffect == BE_TUNNELING) {
-        tunnelize(originLoc[0], originLoc[1]);
+        tunnelize(originLoc.x, originLoc.y);
     }
 
     backUpLighting(lights);
     boltInView = true;
     for (i=0; i<numCells; i++) {
 
-        x = listOfCoordinates[i][0];
-        y = listOfCoordinates[i][1];
+        x = listOfCoordinates[i].x;
+        y = listOfCoordinates[i].y;
 
         monst = monsterAtLoc(x, y);
 
@@ -4916,7 +4918,7 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
             && i < MAX_BOLT_LENGTH - max(DCOLS, DROWS)) {
 
             if (projectileReflects(shootingMonst, monst)) { // if it scores another reflection roll, reflect at caster
-                numCells = reflectBolt(originLoc[0], originLoc[1], listOfCoordinates, i, !alreadyReflected);
+                numCells = reflectBolt(originLoc.x, originLoc.y, listOfCoordinates, i, !alreadyReflected);
             } else {
                 numCells = reflectBolt(-1, -1, listOfCoordinates, i, false); // otherwise reflect randomly
             }
@@ -4957,7 +4959,7 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
             restoreLighting(lights);
             for (k = min(i, boltLength + 2); k >= 0; k--) {
                 if (k < initialBoltLength) {
-                    paintLight(&boltLights[k], listOfCoordinates[i-k][0], listOfCoordinates[i-k][1], false, false);
+                    paintLight(&boltLights[k], listOfCoordinates[i-k].x, listOfCoordinates[i-k].y, false, false);
                 }
             }
         }
@@ -4965,8 +4967,8 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
         updateFieldOfViewDisplay(false, true);
         // Now draw the bolt itself.
         for (k = min(i, boltLength + 2); k >= 0; k--) {
-            x2 = listOfCoordinates[i-k][0];
-            y2 = listOfCoordinates[i-k][1];
+            x2 = listOfCoordinates[i-k].x;
+            y2 = listOfCoordinates[i-k].y;
             if (playerCanSeeOrSense(x2, y2)) {
                 if (!fastForward) {
                     getCellAppearance(x2, y2, &theChar, &foreColor, &backColor);
@@ -5006,14 +5008,14 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
             }
         }
         if (!fastForward && (boltInView || rogue.playbackOmniscience)) {
-            fastForward = rogue.playbackFastForward || pauseBrogue(16);
+            fastForward = rogue.playbackFastForward || pauseAnimation(16);
         }
 
         if (theBolt->boltEffect == BE_BLINKING) {
             theBolt->magnitude = (blinkDistance - i) / 2 + 1;
             boltLength = theBolt->magnitude * 5;
             for (j=0; j<i; j++) {
-                refreshDungeonCell(listOfCoordinates[j][0], listOfCoordinates[j][1]);
+                refreshDungeonCell(listOfCoordinates[j].x, listOfCoordinates[j].y);
             }
             if (i >= blinkDistance) {
                 break;
@@ -5024,15 +5026,15 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
         if ((theBolt->flags & BF_HALTS_BEFORE_OBSTRUCTION)
             && i + 1 < numCells) {
 
-            x2 = listOfCoordinates[i+1][0];
-            y2 = listOfCoordinates[i+1][1];
+            x2 = listOfCoordinates[i+1].x;
+            y2 = listOfCoordinates[i+1].y;
 
             if (cellHasTerrainFlag(x2, y2, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
                 break;
             }
 
             if (!(theBolt->flags & BF_PASSES_THRU_CREATURES)) {
-                monst = monsterAtLoc(listOfCoordinates[i+1][0], listOfCoordinates[i+1][1]);
+                monst = monsterAtLoc(listOfCoordinates[i+1].x, listOfCoordinates[i+1].y);
                 if (monst && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
                     break;
                 }
@@ -5050,10 +5052,10 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
             theBolt->magnitude--;
             boltLength = theBolt->magnitude * 5;
             for (j=0; j<i; j++) {
-                refreshDungeonCell(listOfCoordinates[j][0], listOfCoordinates[j][1]);
+                refreshDungeonCell(listOfCoordinates[j].x, listOfCoordinates[j].y);
             }
             if (theBolt->magnitude <= 0) {
-                refreshDungeonCell(listOfCoordinates[i-1][0], listOfCoordinates[i-1][1]);
+                refreshDungeonCell(listOfCoordinates[i-1].x, listOfCoordinates[i-1].y);
                 refreshDungeonCell(x, y);
                 break;
             }
@@ -5069,8 +5071,8 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
         if (i + 1 < numCells
             && !(theBolt->flags & BF_NEVER_REFLECTS)) {
 
-            x2 = listOfCoordinates[i+1][0];
-            y2 = listOfCoordinates[i+1][1];
+            x2 = listOfCoordinates[i+1].x;
+            y2 = listOfCoordinates[i+1].y;
             if (cellHasTerrainFlag(x2, y2, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))
                 && (projectileReflects(shootingMonst, NULL)
                     || cellHasTMFlag(x2, y2, TM_REFLECTS_BOLTS)
@@ -5080,7 +5082,7 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
                 sprintf(buf, "the bolt reflects off of %s", tileText(x2, y2));
                 if (projectileReflects(shootingMonst, NULL)) {
                     // If it scores another reflection roll, reflect at caster, unless it's already reflected.
-                    numCells = reflectBolt(originLoc[0], originLoc[1], listOfCoordinates, i, !alreadyReflected);
+                    numCells = reflectBolt(originLoc.x, originLoc.y, listOfCoordinates, i, !alreadyReflected);
                 } else {
                     numCells = reflectBolt(-1, -1, listOfCoordinates, i, false); // Otherwise reflect randomly.
                 }
@@ -5095,7 +5097,7 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
     if (!fastForward) {
         refreshDungeonCell(x, y);
         if (i > 0) {
-            refreshDungeonCell(listOfCoordinates[i-1][0], listOfCoordinates[i-1][1]);
+            refreshDungeonCell(listOfCoordinates[i-1].x, listOfCoordinates[i-1].y);
         }
     }
 
@@ -5129,7 +5131,7 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
 
                     for (k = min(j, boltLength + 2); k >= j-i; k--) {
                         if (k < initialBoltLength) {
-                            paintLight(&boltLights[k], listOfCoordinates[j-k][0], listOfCoordinates[j-k][1], false, false);
+                            paintLight(&boltLights[k], listOfCoordinates[j-k].x, listOfCoordinates[j-k].y, false, false);
                         }
                     }
                     updateFieldOfViewDisplay(false, true);
@@ -5140,22 +5142,22 @@ boolean zap(short originLoc[2], short targetLoc[2], bolt *theBolt, boolean hideD
                 // beam graphic
                 // k iterates from the tail tip of the visible portion of the bolt to the head
                 for (k = min(j, boltLength + 2); k >= j-i; k--) {
-                    if (playerCanSee(listOfCoordinates[j-k][0], listOfCoordinates[j-k][1])) {
+                    if (playerCanSee(listOfCoordinates[j-k].x, listOfCoordinates[j-k].y)) {
                         if (boltColor) {
-                            hiliteCell(listOfCoordinates[j-k][0], listOfCoordinates[j-k][1], boltColor, max(0, 100 - k * 100 / (boltLength)), false);
+                            hiliteCell(listOfCoordinates[j-k].x, listOfCoordinates[j-k].y, boltColor, max(0, 100 - k * 100 / (boltLength)), false);
                         }
                         boltInView = true;
                     }
                 }
 
                 if (!fastForward && boltInView) {
-                    fastForward = rogue.playbackFastForward || pauseBrogue(16);
+                    fastForward = rogue.playbackFastForward || pauseAnimation(16);
                 }
             }
         } else if (theBolt->flags & BF_DISPLAY_CHAR_ALONG_LENGTH) {
             for (j = 0; j < i; j++) {
-                x2 = listOfCoordinates[j][0];
-                y2 = listOfCoordinates[j][1];
+                x2 = listOfCoordinates[j].x;
+                y2 = listOfCoordinates[j].y;
                 if (playerCanSeeOrSense(x2, y2)) {
                     refreshDungeonCell(x2, y2);
                 }
@@ -5203,9 +5205,9 @@ boolean nextTargetAfter(short *returnX,
         n = (selectedIndex + i) % targetCount;
         newX = deduplicatedTargetList[n][0];
         newY = deduplicatedTargetList[n][1];
-        if ((newX != player.xLoc || newY != player.yLoc)
+        if ((newX != player.loc.x || newY != player.loc.y)
             && (newX != targetX || newY != targetY)
-            && (!requireOpenPath || openPathBetween(player.xLoc, player.yLoc, newX, newY))) {
+            && (!requireOpenPath || openPathBetween(player.loc.x, player.loc.y, newX, newY))) {
 
             brogueAssert(coordinatesAreInMap(newX, newY));
             brogueAssert(n >= 0 && n < targetCount);
@@ -5242,7 +5244,7 @@ boolean nextTargetAfter(short *returnX,
 }
 
 // Returns how far it went before hitting something.
-short hiliteTrajectory(short coordinateList[DCOLS][2], short numCells, boolean eraseHiliting, const bolt *theBolt, const color *hiliteColor) {
+short hiliteTrajectory(const pos coordinateList[DCOLS], short numCells, boolean eraseHiliting, const bolt *theBolt, const color *hiliteColor) {
     short x, y, i;
     creature *monst;
 
@@ -5251,8 +5253,8 @@ short hiliteTrajectory(short coordinateList[DCOLS][2], short numCells, boolean e
     boolean passThroughMonsters = theBolt && (theBolt->flags & BF_PASSES_THRU_CREATURES);
 
     for (i=0; i<numCells; i++) {
-        x = coordinateList[i][0];
-        y = coordinateList[i][1];
+        x = coordinateList[i].x;
+        y = coordinateList[i].y;
         if (eraseHiliting) {
             refreshDungeonCell(x, y);
         } else {
@@ -5289,7 +5291,7 @@ short hiliteTrajectory(short coordinateList[DCOLS][2], short numCells, boolean e
 boolean moveCursor(boolean *targetConfirmed,
                    boolean *canceled,
                    boolean *tabKey,
-                   short targetLoc[2],
+                   pos *targetLoc,
                    rogueEvent *event,
                    buttonState *state,
                    boolean colorsDance,
@@ -5302,10 +5304,7 @@ boolean moveCursor(boolean *targetConfirmed,
     rogueEvent theEvent;
     short oldRNG;
 
-    short *cursor = rogue.cursorLoc; // shorthand
-
-    cursor[0] = targetLoc[0];
-    cursor[1] = targetLoc[1];
+    rogue.cursorLoc = *targetLoc;
 
     *targetConfirmed = *canceled = *tabKey = false;
     sidebarHighlighted = false;
@@ -5351,11 +5350,11 @@ boolean moveCursor(boolean *targetConfirmed,
                 && rogue.sidebarLocationList[theEvent.param2][0] > -1) {
 
                 // If the cursor is on an entity in the sidebar.
-                cursor[0] = rogue.sidebarLocationList[theEvent.param2][0];
-                cursor[1] = rogue.sidebarLocationList[theEvent.param2][1];
+                rogue.cursorLoc.x = rogue.sidebarLocationList[theEvent.param2][0];
+                rogue.cursorLoc.y = rogue.sidebarLocationList[theEvent.param2][1];
                 sidebarHighlighted = true;
                 cursorMovementCommand = true;
-                refreshSideBar(cursor[0], cursor[1], false);
+                refreshSideBar(rogue.cursorLoc.x, rogue.cursorLoc.y, false);
                 if (theEvent.eventType == MOUSE_UP) {
                     *targetConfirmed = true;
                 }
@@ -5365,12 +5364,12 @@ boolean moveCursor(boolean *targetConfirmed,
                 // If the cursor is in the map area, or is allowed to leave the map and it isn't a click.
                 if (theEvent.eventType == MOUSE_UP
                     && !theEvent.shiftKey
-                    && (theEvent.controlKey || (cursor[0] == windowToMapX(theEvent.param1) && cursor[1] == windowToMapY(theEvent.param2)))) {
+                    && (theEvent.controlKey || (rogue.cursorLoc.x == windowToMapX(theEvent.param1) && rogue.cursorLoc.y == windowToMapY(theEvent.param2)))) {
 
                     *targetConfirmed = true;
                 }
-                cursor[0] = windowToMapX(theEvent.param1);
-                cursor[1] = windowToMapY(theEvent.param2);
+                rogue.cursorLoc.x = windowToMapX(theEvent.param1);
+                rogue.cursorLoc.y = windowToMapY(theEvent.param2);
                 cursorMovementCommand = true;
             } else {
                 cursorMovementCommand = false;
@@ -5384,64 +5383,64 @@ boolean moveCursor(boolean *targetConfirmed,
                 case LEFT_ARROW:
                 case LEFT_KEY:
                 case NUMPAD_4:
-                    if (keysMoveCursor && cursor[0] > 0) {
-                        cursor[0] -= moveIncrement;
+                    if (keysMoveCursor && rogue.cursorLoc.x > 0) {
+                        rogue.cursorLoc.x -= moveIncrement;
                     }
                     cursorMovementCommand = movementKeystroke = keysMoveCursor;
                     break;
                 case RIGHT_ARROW:
                 case RIGHT_KEY:
                 case NUMPAD_6:
-                    if (keysMoveCursor && cursor[0] < DCOLS - 1) {
-                        cursor[0] += moveIncrement;
+                    if (keysMoveCursor && rogue.cursorLoc.x < DCOLS - 1) {
+                        rogue.cursorLoc.x += moveIncrement;
                     }
                     cursorMovementCommand = movementKeystroke = keysMoveCursor;
                     break;
                 case UP_ARROW:
                 case UP_KEY:
                 case NUMPAD_8:
-                    if (keysMoveCursor && cursor[1] > 0) {
-                        cursor[1] -= moveIncrement;
+                    if (keysMoveCursor && rogue.cursorLoc.y > 0) {
+                        rogue.cursorLoc.y -= moveIncrement;
                     }
                     cursorMovementCommand = movementKeystroke = keysMoveCursor;
                     break;
                 case DOWN_ARROW:
                 case DOWN_KEY:
                 case NUMPAD_2:
-                    if (keysMoveCursor && cursor[1] < DROWS - 1) {
-                        cursor[1] += moveIncrement;
+                    if (keysMoveCursor && rogue.cursorLoc.y < DROWS - 1) {
+                        rogue.cursorLoc.y += moveIncrement;
                     }
                     cursorMovementCommand = movementKeystroke = keysMoveCursor;
                     break;
                 case UPLEFT_KEY:
                 case NUMPAD_7:
-                    if (keysMoveCursor && cursor[0] > 0 && cursor[1] > 0) {
-                        cursor[0] -= moveIncrement;
-                        cursor[1] -= moveIncrement;
+                    if (keysMoveCursor && rogue.cursorLoc.x > 0 && rogue.cursorLoc.y > 0) {
+                        rogue.cursorLoc.x -= moveIncrement;
+                        rogue.cursorLoc.y -= moveIncrement;
                     }
                     cursorMovementCommand = movementKeystroke = keysMoveCursor;
                     break;
                 case UPRIGHT_KEY:
                 case NUMPAD_9:
-                    if (keysMoveCursor && cursor[0] < DCOLS - 1 && cursor[1] > 0) {
-                        cursor[0] += moveIncrement;
-                        cursor[1] -= moveIncrement;
+                    if (keysMoveCursor && rogue.cursorLoc.x < DCOLS - 1 && rogue.cursorLoc.y > 0) {
+                        rogue.cursorLoc.x += moveIncrement;
+                        rogue.cursorLoc.y -= moveIncrement;
                     }
                     cursorMovementCommand = movementKeystroke = keysMoveCursor;
                     break;
                 case DOWNLEFT_KEY:
                 case NUMPAD_1:
-                    if (keysMoveCursor && cursor[0] > 0 && cursor[1] < DROWS - 1) {
-                        cursor[0] -= moveIncrement;
-                        cursor[1] += moveIncrement;
+                    if (keysMoveCursor && rogue.cursorLoc.x > 0 && rogue.cursorLoc.y < DROWS - 1) {
+                        rogue.cursorLoc.x -= moveIncrement;
+                        rogue.cursorLoc.y += moveIncrement;
                     }
                     cursorMovementCommand = movementKeystroke = keysMoveCursor;
                     break;
                 case DOWNRIGHT_KEY:
                 case NUMPAD_3:
-                    if (keysMoveCursor && cursor[0] < DCOLS - 1 && cursor[1] < DROWS - 1) {
-                        cursor[0] += moveIncrement;
-                        cursor[1] += moveIncrement;
+                    if (keysMoveCursor && rogue.cursorLoc.x < DCOLS - 1 && rogue.cursorLoc.y < DROWS - 1) {
+                        rogue.cursorLoc.x += moveIncrement;
+                        rogue.cursorLoc.y += moveIncrement;
                     }
                     cursorMovementCommand = movementKeystroke = keysMoveCursor;
                     break;
@@ -5467,10 +5466,10 @@ boolean moveCursor(boolean *targetConfirmed,
         }
 
         if (sidebarHighlighted
-            && (!(pmap[cursor[0]][cursor[1]].flags & (HAS_PLAYER | HAS_MONSTER))
-                || !canSeeMonster(monsterAtLoc(cursor[0], cursor[1])))
-            && (!(pmap[cursor[0]][cursor[1]].flags & HAS_ITEM) || !playerCanSeeOrSense(cursor[0], cursor[1]))
-            && (!cellHasTMFlag(cursor[0], cursor[1], TM_LIST_IN_SIDEBAR) || !playerCanSeeOrSense(cursor[0], cursor[1]))) {
+            && (!(pmap[rogue.cursorLoc.x][rogue.cursorLoc.y].flags & (HAS_PLAYER | HAS_MONSTER))
+                || !canSeeMonster(monsterAtLoc(rogue.cursorLoc.x, rogue.cursorLoc.y)))
+            && (!(pmap[rogue.cursorLoc.x][rogue.cursorLoc.y].flags & HAS_ITEM) || !playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y))
+            && (!cellHasTMFlag(rogue.cursorLoc.x, rogue.cursorLoc.y, TM_LIST_IN_SIDEBAR) || !playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y))) {
 
             // The sidebar is highlighted but the cursor is not on a visible item, monster or terrain. Un-highlight the sidebar.
             refreshSideBar(-1, -1, false);
@@ -5479,11 +5478,11 @@ boolean moveCursor(boolean *targetConfirmed,
 
         if (targetCanLeaveMap && !movementKeystroke) {
             // permit it to leave the map by up to 1 space in any direction if mouse controlled.
-            cursor[0] = clamp(cursor[0], -1, DCOLS);
-            cursor[1] = clamp(cursor[1], -1, DROWS);
+            rogue.cursorLoc.x = clamp(rogue.cursorLoc.x, -1, DCOLS);
+            rogue.cursorLoc.y = clamp(rogue.cursorLoc.y, -1, DROWS);
         } else {
-            cursor[0] = clamp(cursor[0], 0, DCOLS - 1);
-            cursor[1] = clamp(cursor[1], 0, DROWS - 1);
+            rogue.cursorLoc.x = clamp(rogue.cursorLoc.x, 0, DCOLS - 1);
+            rogue.cursorLoc.y = clamp(rogue.cursorLoc.y, 0, DROWS - 1);
         }
     } while (again && (!event || !cursorMovementCommand));
 
@@ -5497,19 +5496,20 @@ boolean moveCursor(boolean *targetConfirmed,
         sidebarHighlighted = false;
     }
 
-    targetLoc[0] = cursor[0];
-    targetLoc[1] = cursor[1];
+    *targetLoc = rogue.cursorLoc;
 
     return !cursorMovementCommand;
 }
 
-void pullMouseClickDuringPlayback(short loc[2]) {
+pos pullMouseClickDuringPlayback(void) {
     rogueEvent theEvent;
 
     brogueAssert(rogue.playbackMode);
     nextBrogueEvent(&theEvent, false, false, false);
-    loc[0] = windowToMapX(theEvent.param1);
-    loc[1] = windowToMapY(theEvent.param2);
+    return (pos){
+        .x = windowToMapX(theEvent.param1),
+        .y = windowToMapX(theEvent.param2)
+    };
 }
 
 // Returns whether monst is targetable with thrown items, staves, wands, etc.
@@ -5519,18 +5519,19 @@ static boolean creatureIsTargetable(creature *monst) {
         && canSeeMonster(monst)
         && monst->depth == rogue.depthLevel
         && !(monst->bookkeepingFlags & MB_IS_DYING)
-        && openPathBetween(player.xLoc, player.yLoc, monst->xLoc, monst->yLoc);
+        && openPathBetween(player.loc.x, player.loc.y, monst->loc.x, monst->loc.y);
 }
 
 // Return true if a target is chosen, or false if canceled.
-boolean chooseTarget(short returnLoc[2],
+boolean chooseTarget(pos *returnLoc,
                      short maxDistance,
                      boolean stopAtTarget,
                      boolean autoTarget,
                      boolean targetAllies,
                      const bolt *theBolt,
                      const color *trajectoryColor) {
-    short originLoc[2], targetLoc[2], oldTargetLoc[2], coordinates[DCOLS][2], numCells, i, distance, newX, newY;
+    short numCells, i, distance, newX, newY;
+    pos coordinates[DCOLS];
     creature *monst;
     boolean canceled, targetConfirmed, tabKey, cursorInTrajectory, focusedOnSomething = false;
     rogueEvent event = {0};
@@ -5541,8 +5542,8 @@ boolean chooseTarget(short returnLoc[2],
 
     if (rogue.playbackMode) {
         // In playback, pull the next event (a mouseclick) and use that location as the target.
-        pullMouseClickDuringPlayback(returnLoc);
-        rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
+        *returnLoc = pullMouseClickDuringPlayback();
+        rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
         return true;
     }
 
@@ -5550,27 +5551,23 @@ boolean chooseTarget(short returnLoc[2],
     rogue.RNG = RNG_COSMETIC;
     //assureCosmeticRNG;
 
-    originLoc[0] = player.xLoc;
-    originLoc[1] = player.yLoc;
-
-    targetLoc[0] = oldTargetLoc[0] = player.xLoc;
-    targetLoc[1] = oldTargetLoc[1] = player.yLoc;
+    pos originLoc = player.loc;
+    pos oldTargetLoc = player.loc;
+    pos targetLoc = player.loc;
 
     if (autoTarget) {
         if (creatureIsTargetable(rogue.lastTarget) && (targetAllies == (rogue.lastTarget->creatureState == MONSTER_ALLY))) {
             monst = rogue.lastTarget;
         } else {
             //rogue.lastTarget = NULL;
-            if (nextTargetAfter(&newX, &newY, targetLoc[0], targetLoc[1], !targetAllies, targetAllies, false, false, true, false)) {
-                targetLoc[0] = newX;
-                targetLoc[1] = newY;
+            if (nextTargetAfter(&newX, &newY, targetLoc.x, targetLoc.y, !targetAllies, targetAllies, false, false, true, false)) {
+                targetLoc = (pos) { .x = newX, .y = newY };
             }
-            monst = monsterAtLoc(targetLoc[0], targetLoc[1]);
+            monst = monsterAtLoc(targetLoc.x, targetLoc.y);
         }
         if (monst) {
-            targetLoc[0] = monst->xLoc;
-            targetLoc[1] = monst->yLoc;
-            refreshSideBar(monst->xLoc, monst->yLoc, false);
+            targetLoc = monst->loc;
+            refreshSideBar(monst->loc.x, monst->loc.y, false);
             focusedOnSomething = true;
         }
     }
@@ -5580,45 +5577,44 @@ boolean chooseTarget(short returnLoc[2],
         numCells = min(numCells, maxDistance);
     }
     if (stopAtTarget) {
-        numCells = min(numCells, distanceBetween(player.xLoc, player.yLoc, targetLoc[0], targetLoc[1]));
+        numCells = min(numCells, distanceBetween(player.loc.x, player.loc.y, targetLoc.x, targetLoc.y));
     }
 
     targetConfirmed = canceled = tabKey = false;
 
     do {
-        printLocationDescription(targetLoc[0], targetLoc[1]);
+        printLocationDescription(targetLoc.x, targetLoc.y);
 
         if (canceled) {
-            refreshDungeonCell(oldTargetLoc[0], oldTargetLoc[1]);
+            refreshDungeonCell(oldTargetLoc.x, oldTargetLoc.y);
             hiliteTrajectory(coordinates, numCells, true, theBolt, trajectoryColor);
             confirmMessages();
-            rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
+            rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
             restoreRNG;
             return false;
         }
 
         if (tabKey) {
-            if (nextTargetAfter(&newX, &newY, targetLoc[0], targetLoc[1], !targetAllies, targetAllies, false, false, true, event.shiftKey)) {
-                targetLoc[0] = newX;
-                targetLoc[1] = newY;
+            if (nextTargetAfter(&newX, &newY, targetLoc.x, targetLoc.y, !targetAllies, targetAllies, false, false, true, event.shiftKey)) {
+                targetLoc = (pos) { .x = newX, .y = newY };
             }
         }
 
-        monst = monsterAtLoc(targetLoc[0], targetLoc[1]);
+        monst = monsterAtLoc(targetLoc.x, targetLoc.y);
         if (monst != NULL && monst != &player && canSeeMonster(monst)) {
             focusedOnSomething = true;
-        } else if (playerCanSeeOrSense(targetLoc[0], targetLoc[1])
-                   && (pmap[targetLoc[0]][targetLoc[1]].flags & HAS_ITEM) || cellHasTMFlag(targetLoc[0], targetLoc[1], TM_LIST_IN_SIDEBAR)) {
+        } else if (playerCanSeeOrSense(targetLoc.x, targetLoc.y)
+                   && (pmap[targetLoc.x][targetLoc.y].flags & HAS_ITEM) || cellHasTMFlag(targetLoc.x, targetLoc.y, TM_LIST_IN_SIDEBAR)) {
             focusedOnSomething = true;
         } else if (focusedOnSomething) {
             refreshSideBar(-1, -1, false);
             focusedOnSomething = false;
         }
         if (focusedOnSomething) {
-            refreshSideBar(targetLoc[0], targetLoc[1], false);
+            refreshSideBar(targetLoc.x, targetLoc.y, false);
         }
 
-        refreshDungeonCell(oldTargetLoc[0], oldTargetLoc[1]);
+        refreshDungeonCell(oldTargetLoc.x, oldTargetLoc.y);
         hiliteTrajectory(coordinates, numCells, true, theBolt, &trajColor);
 
         if (!targetConfirmed) {
@@ -5628,22 +5624,21 @@ boolean chooseTarget(short returnLoc[2],
             }
 
             if (stopAtTarget) {
-                numCells = min(numCells, distanceBetween(player.xLoc, player.yLoc, targetLoc[0], targetLoc[1]));
+                numCells = min(numCells, distanceBetween(player.loc.x, player.loc.y, targetLoc.x, targetLoc.y));
             }
             distance = hiliteTrajectory(coordinates, numCells, false, theBolt, &trajColor);
             cursorInTrajectory = false;
             for (i=0; i<distance; i++) {
-                if (coordinates[i][0] == targetLoc[0] && coordinates[i][1] == targetLoc[1]) {
+                if (coordinates[i].x == targetLoc.x && coordinates[i].y == targetLoc.y) {
                     cursorInTrajectory = true;
                     break;
                 }
             }
-            hiliteCell(targetLoc[0], targetLoc[1], &white, (cursorInTrajectory ? 100 : 35), true);
+            hiliteCell(targetLoc.x, targetLoc.y, &white, (cursorInTrajectory ? 100 : 35), true);
         }
 
-        oldTargetLoc[0] = targetLoc[0];
-        oldTargetLoc[1] = targetLoc[1];
-        moveCursor(&targetConfirmed, &canceled, &tabKey, targetLoc, &event, NULL, false, true, false);
+        oldTargetLoc = targetLoc;
+        moveCursor(&targetConfirmed, &canceled, &tabKey, &targetLoc, &event, NULL, false, true, false);
         if (event.eventType == RIGHT_MOUSE_UP) { // Right mouse cancels.
             canceled = true;
         }
@@ -5652,37 +5647,190 @@ boolean chooseTarget(short returnLoc[2],
         numCells = min(numCells, maxDistance);
     }
     hiliteTrajectory(coordinates, numCells, true, theBolt, trajectoryColor);
-    refreshDungeonCell(oldTargetLoc[0], oldTargetLoc[1]);
+    refreshDungeonCell(oldTargetLoc.x, oldTargetLoc.y);
 
-    if (originLoc[0] == targetLoc[0] && originLoc[1] == targetLoc[1]) {
+    if (originLoc.x == targetLoc.x && originLoc.y == targetLoc.y) {
         confirmMessages();
         restoreRNG;
-        rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
+        rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
         return false;
     }
 
-    monst = monsterAtLoc(targetLoc[0], targetLoc[1]);
+    monst = monsterAtLoc(targetLoc.x, targetLoc.y);
     if (monst && monst != &player && canSeeMonster(monst)) {
         rogue.lastTarget = monst;
     }
 
-    returnLoc[0] = targetLoc[0];
-    returnLoc[1] = targetLoc[1];
+    *returnLoc = targetLoc;
     restoreRNG;
-    rogue.cursorLoc[0] = rogue.cursorLoc[1] = -1;
+    rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
     return true;
+}
+
+// Returns the number of total, good, or bad item kinds for the given item category. To ignore
+// polarity and get the total kinds, pass polarityConstraint = 0.
+int itemKindCount(enum itemCategory category, int polarityConstraint) {
+    int kindCount = -1, totalKinds, goodKinds;
+
+    switch (category) {
+        case SCROLL:
+            totalKinds = NUMBER_SCROLL_KINDS;
+            goodKinds = NUMBER_GOOD_SCROLL_KINDS;
+            break;
+        case POTION:
+            totalKinds = NUMBER_POTION_KINDS;
+            goodKinds = NUMBER_GOOD_POTION_KINDS;
+            break;
+        case WAND:
+            totalKinds = NUMBER_WAND_KINDS;
+            goodKinds = NUMBER_GOOD_WAND_KINDS;
+            break;
+        case STAFF:
+            totalKinds = NUMBER_STAFF_KINDS;
+            goodKinds = NUMBER_GOOD_STAFF_KINDS;
+            break;
+        case FOOD:
+            totalKinds = NUMBER_FOOD_KINDS;
+            goodKinds = 0;
+            break;
+        case WEAPON:
+            totalKinds = NUMBER_WEAPON_KINDS;
+            goodKinds = 0;
+            break;
+        case ARMOR:
+            totalKinds = NUMBER_ARMOR_KINDS;
+            goodKinds = 0;
+            break;
+        case RING:
+            totalKinds = NUMBER_RING_KINDS;
+            goodKinds = NUMBER_RING_KINDS;
+            break;
+        case CHARM:
+            totalKinds = NUMBER_CHARM_KINDS;
+            goodKinds = NUMBER_CHARM_KINDS;
+            break;
+        default:
+            totalKinds = 0;
+            goodKinds = 0;
+            break;
+    }
+
+    switch (polarityConstraint) {
+        case MAGIC_POLARITY_MALEVOLENT:
+            if (goodKinds == 0) {
+                kindCount = 0;
+            } else {
+                kindCount = totalKinds - goodKinds;
+            }
+            break;
+        case MAGIC_POLARITY_BENEVOLENT:
+            kindCount = goodKinds;
+            break;
+        default:
+            kindCount = totalKinds;
+            break;
+    }
+    return kindCount;
+}
+
+// Gets the final unidentified item kind for the given category and magic polarity, if possible. Returns -1 if
+// the final item kind cannot be determined.
+static int tryGetLastUnidentifiedItemKind(enum itemCategory category, int polarityConstraint) {
+    int lastItemKind = -1;
+    int totalItemKinds = itemKindCount(category, 0);
+    itemTable *theItemTable = tableForItemCategory(category);
+
+    if (theItemTable && (totalItemKinds > 0)) {
+        for (int i = 0; i < totalItemKinds; i++) {
+            if (!(theItemTable[i].identified)
+                && (theItemTable[i].magicPolarity == polarityConstraint || polarityConstraint == MAGIC_POLARITY_ANY)) {
+                if (lastItemKind != -1) {
+                    return -1; // At least two unidentified items remain.
+                }
+                lastItemKind = i;
+            }
+        }
+    }
+    return lastItemKind;
+}
+
+// Counts the number of items where the magic polarity has been revealed for the given item category
+// and magic polarity.
+static int magicPolarityRevealedItemKindCount(enum itemCategory category, int polarityConstraint) {
+    int kindCount = -1;
+    int totalItemKinds = itemKindCount(category, 0);
+    itemTable *theItemTable = tableForItemCategory(category);
+
+    if (theItemTable && (totalItemKinds > 0) && polarityConstraint) {
+        kindCount = 0;
+        for (int i = 0; i < totalItemKinds; i++) {
+            if (theItemTable[i].magicPolarity == polarityConstraint &&
+                    (theItemTable[i].identified || theItemTable[i].magicPolarityRevealed)) {
+                kindCount += 1;
+            }
+        }
+    }
+    return kindCount;
+}
+
+// Try to identify the last item kind in a given category.
+// The category must be in HAS_INTRINSIC_POLARITY.
+// polarityConstraint is either 0 (ignore polarity) or +1/-1.
+//
+// We can identify the last unidentified item kind...
+// 1. Of a category
+// 2. Of a given polarity within a category if either...
+//  A. Its polarity is known
+//  B. All items of the opposite polarity are either identified or their polarity is known
+static void tryIdentifyLastItemKind(enum itemCategory category, int polarityConstraint) {
+    itemTable *theItemTable = tableForItemCategory(category);
+    int lastItemKind = tryGetLastUnidentifiedItemKind(category, polarityConstraint);
+    int oppositeCount, oppositeRevealedCount;
+
+    if (lastItemKind >= 0) {
+
+        if (polarityConstraint == MAGIC_POLARITY_ANY) {
+            theItemTable[lastItemKind].identified = true;
+        } else {
+            int oppositeMagicPolarity = polarityConstraint * -1;
+            oppositeRevealedCount = magicPolarityRevealedItemKindCount(category, oppositeMagicPolarity);
+            oppositeCount = itemKindCount(category, oppositeMagicPolarity);
+            if (theItemTable[lastItemKind].magicPolarityRevealed || oppositeRevealedCount == oppositeCount) {
+                theItemTable[lastItemKind].identified = true;
+            }
+        }
+    }
+}
+
+// Try to identify the last item of the given category or all categories. This function
+// operates on flavored categories only. The base type of non-flavored categories are
+// already identified (e.g. weapons, armor, charms, etc.)
+static void tryIdentifyLastItemKinds(enum itemCategory category) {
+    enum itemCategory loopCategory;
+    int categoryCount = 1;
+
+    if (category == HAS_INTRINSIC_POLARITY) {
+        categoryCount = NUMBER_ITEM_CATEGORIES;
+    }
+
+    for (int i=0; i<categoryCount; i++) {
+        loopCategory = categoryCount == 1 ? category : Fl(i);
+        if (category & HAS_INTRINSIC_POLARITY & loopCategory) {
+            tryIdentifyLastItemKind(loopCategory, MAGIC_POLARITY_BENEVOLENT);
+            tryIdentifyLastItemKind(loopCategory, MAGIC_POLARITY_MALEVOLENT);
+        }
+    }
 }
 
 void identifyItemKind(item *theItem) {
     itemTable *theTable;
-    short tableCount, i, lastItem;
+    short tableCount;
 
-    theTable = tableForItemCategory(theItem->category, NULL);
+    theTable = tableForItemCategory(theItem->category);
     if (theTable) {
         theItem->flags &= ~ITEM_KIND_AUTO_ID;
 
         tableCount = 0;
-        lastItem = -1;
 
         switch (theItem->category) {
             case SCROLL:
@@ -5716,18 +5864,7 @@ void identifyItemKind(item *theItem) {
         }
         if (tableCount) {
             theTable[theItem->kind].identified = true;
-            for (i=0; i<tableCount; i++) {
-                if (!(theTable[i].identified)) {
-                    if (lastItem != -1) {
-                        return; // At least two unidentified items remain.
-                    }
-                    lastItem = i;
-                }
-            }
-            if (lastItem != -1) {
-                // Exactly one unidentified item remains; identify it.
-                theTable[lastItem].identified = true;
-            }
+            tryIdentifyLastItemKinds(theItem->category);
         }
     }
 }
@@ -5736,8 +5873,8 @@ void autoIdentify(item *theItem) {
     short quantityBackup;
     char buf[COLS * 3], oldName[COLS * 3], newName[COLS * 3];
 
-    if (tableForItemCategory(theItem->category, NULL)
-        && !tableForItemCategory(theItem->category, NULL)[theItem->kind].identified) {
+    if (tableForItemCategory(theItem->category)
+        && !tableForItemCategory(theItem->category)[theItem->kind].identified) {
 
         identifyItemKind(theItem);
         quantityBackup = theItem->quantity;
@@ -5839,29 +5976,29 @@ boolean hitMonsterWithProjectileWeapon(creature *thrower, creature *monst, item 
     }
 }
 
-void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDistance) {
-    short listOfCoordinates[MAX_BOLT_LENGTH][2], originLoc[2];
-    short i, x, y, numCells;
+void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistance) {
+    short i, numCells;
     creature *monst = NULL;
     char buf[COLS*3], buf2[COLS*3], buf3[COLS*3];
     enum displayGlyph displayChar;
     color foreColor, backColor, multColor;
-    short dropLoc[2];
     boolean hitSomethingSolid = false, fastForward = false;
     enum dungeonLayers layer;
 
     theItem->flags |= ITEM_PLAYER_AVOIDS; // Avoid thrown items, unless it's a weapon that misses a monster.
 
-    x = originLoc[0] = thrower->xLoc;
-    y = originLoc[1] = thrower->yLoc;
+    pos originLoc = thrower->loc;
+    short x = originLoc.x;
+    short y = originLoc.y;
 
     // Using BOLT_NONE for throws because all flags are off, which means we'll try to avoid all obstacles in front of the target
+    pos listOfCoordinates[MAX_BOLT_LENGTH];
     numCells = getLineCoordinates(listOfCoordinates, originLoc, targetLoc, &boltCatalog[BOLT_NONE]);
 
     thrower->ticksUntilTurn = thrower->attackSpeed;
 
     if (thrower != &player
-        && (pmap[originLoc[0]][originLoc[1]].flags & IN_FIELD_OF_VIEW)) {
+        && (pmap[originLoc.x][originLoc.y].flags & IN_FIELD_OF_VIEW)) {
 
         monsterName(buf2, thrower, true);
         itemName(theItem, buf3, false, true, NULL);
@@ -5870,15 +6007,15 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
     }
 
     for (i=0; i<numCells && i < maxDistance; i++) {
-        x = listOfCoordinates[i][0];
-        y = listOfCoordinates[i][1];
+        x = listOfCoordinates[i].x;
+        y = listOfCoordinates[i].y;
 
         if (pmap[x][y].flags & (HAS_MONSTER | HAS_PLAYER)) {
             monst = monsterAtLoc(x, y);
             if (!(monst->bookkeepingFlags & MB_SUBMERGED)) {
 //          if (projectileReflects(thrower, monst) && i < DCOLS*2) {
 //              if (projectileReflects(thrower, monst)) { // if it scores another reflection roll, reflect at caster
-//                  numCells = reflectBolt(originLoc[0], originLoc[1], listOfCoordinates, i, true);
+//                  numCells = reflectBolt(originLoc[0], originLoc.y, listOfCoordinates, i, true);
 //              } else {
 //                  numCells = reflectBolt(-1, -1, listOfCoordinates, i, false); // otherwise reflect randomly
 //              }
@@ -5917,11 +6054,11 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
             } else {
                 i--;
                 if (i >= 0) {
-                    x = listOfCoordinates[i][0];
-                    y = listOfCoordinates[i][1];
+                    x = listOfCoordinates[i].x;
+                    y = listOfCoordinates[i].y;
                 } else { // it was aimed point-blank into an obstruction
-                    x = thrower->xLoc;
-                    y = thrower->yLoc;
+                    x = thrower->loc.x;
+                    y = thrower->loc.y;
                 }
             }
             hitSomethingSolid = true;
@@ -5940,13 +6077,13 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
             plotCharWithColor(theItem->displayChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor);
 
             if (!fastForward) {
-                fastForward = rogue.playbackFastForward || pauseBrogue(25);
+                fastForward = rogue.playbackFastForward || pauseAnimation(25);
             }
 
             refreshDungeonCell(x, y);
         }
 
-        if (x == targetLoc[0] && y == targetLoc[1]) { // reached its target
+        if (x == targetLoc.x && y == targetLoc.y) { // reached its target
             break;
         }
     }
@@ -6014,6 +6151,9 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
                     potionTable[theItem->kind].flavor, buf2, tileText(x, y));
             message(buf, 0);
 
+            // Brogue Lite note:
+            // No more need to identify hallucination potion when it splashes harmlessly.
+
         }
         deleteItem(theItem);
         return; // potions disappear when they break
@@ -6026,9 +6166,10 @@ void throwItem(item *theItem, creature *thrower, short targetLoc[2], short maxDi
         deleteItem(theItem);
         return;
     }
-    getQualifyingLocNear(dropLoc, x, y, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM), false, false);
-    placeItem(theItem, dropLoc[0], dropLoc[1]);
-    refreshDungeonCell(dropLoc[0], dropLoc[1]);
+    pos dropLoc;
+    getQualifyingLocNear(&dropLoc, x, y, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM), false, false);
+    placeItem(theItem, dropLoc.x, dropLoc.y);
+    refreshDungeonCell(dropLoc.x, dropLoc.y);
 }
 
 /*
@@ -6040,7 +6181,7 @@ void throwCommand(item *theItem, boolean autoThrow) {
     item *thrownItem;
     char buf[COLS], theName[COLS];
     unsigned char command[10];
-    short maxDistance, zapTarget[2], quantity;
+    short maxDistance, quantity;
 
     command[0] = THROW_KEY;
 
@@ -6111,10 +6252,10 @@ void throwCommand(item *theItem, boolean autoThrow) {
             break;
     }
 
+    pos zapTarget;
     if (autoThrow && creatureIsTargetable(rogue.lastTarget)) {
-        zapTarget[0] = rogue.lastTarget->xLoc;
-        zapTarget[1] = rogue.lastTarget->yLoc;
-    } else if (!chooseTarget(zapTarget, maxDistance, true, autoTarget, false, &boltCatalog[BOLT_NONE], &red)) {
+        zapTarget = rogue.lastTarget->loc;
+    } else if (!chooseTarget(&zapTarget, maxDistance, true, autoTarget, false, &boltCatalog[BOLT_NONE], &red)) {
         // player doesn't choose a target? return
         return;
     }
@@ -6124,7 +6265,7 @@ void throwCommand(item *theItem, boolean autoThrow) {
     }
     command[2] = '\0';
     recordKeystrokeSequence(command);
-    recordMouseClick(mapToWindowX(zapTarget[0]), mapToWindowY(zapTarget[1]), true, false);
+    recordMouseClick(mapToWindowX(zapTarget.x), mapToWindowY(zapTarget.y), true, false);
 
     confirmMessages();
 
@@ -6240,8 +6381,7 @@ void swapLastEquipment() {
 // If the blink trajectory lands in lava based on the player's knowledge, abort.
 // If the blink trajectory might land in lava based on the player's knowledge,
 // prompt for confirmation.
-boolean playerCancelsBlinking(const short originLoc[2], const short targetLoc[2], const short maxDistance) {
-    short coordinates[DCOLS][2], impactLoc[2];
+boolean playerCancelsBlinking(const pos originLoc, const pos targetLoc, const short maxDistance) {
     short numCells, i, x, y;
     boolean certainDeath = false;
     boolean possibleDeath = false;
@@ -6256,10 +6396,11 @@ boolean playerCancelsBlinking(const short originLoc[2], const short targetLoc[2]
         return false;
     }
 
-    getImpactLoc(impactLoc, originLoc, targetLoc, maxDistance > 0 ? maxDistance : DCOLS, true, &boltCatalog[BOLT_BLINKING]);
-    getLocationFlags(impactLoc[0], impactLoc[1], &tFlags, &tmFlags, NULL, true);
+    pos impactLoc;
+    getImpactLoc(&impactLoc, originLoc, targetLoc, maxDistance > 0 ? maxDistance : DCOLS, true, &boltCatalog[BOLT_BLINKING]);
+    getLocationFlags(impactLoc.x, impactLoc.y, &tFlags, &tmFlags, NULL, true);
     if (maxDistance > 0) {
-        if ((pmap[impactLoc[0]][impactLoc[1]].flags & DISCOVERED)
+        if ((pmap[impactLoc.x][impactLoc.y].flags & DISCOVERED)
             && (tFlags & T_LAVA_INSTA_DEATH)
             && !(tFlags & (T_ENTANGLES | T_AUTO_DESCENT))
             && !(tmFlags & TM_EXTINGUISHES_FIRE)) {
@@ -6268,10 +6409,11 @@ boolean playerCancelsBlinking(const short originLoc[2], const short targetLoc[2]
         }
     } else {
         certainDeath = true;
+        pos coordinates[DCOLS];
         numCells = getLineCoordinates(coordinates, originLoc, targetLoc, &boltCatalog[BOLT_BLINKING]);
         for (i = 0; i < numCells; i++) {
-            x = coordinates[i][0];
-            y = coordinates[i][1];
+            x = coordinates[i].x;
+            y = coordinates[i].y;
             if (pmap[x][y].flags & DISCOVERED) {
                 getLocationFlags(x, y, &tFlags, NULL, NULL, true);
                 if ((tFlags & T_LAVA_INSTA_DEATH)
@@ -6284,9 +6426,7 @@ boolean playerCancelsBlinking(const short originLoc[2], const short targetLoc[2]
                     certainDeath = false;
                 }
             }
-            if (x == impactLoc[0]
-                && y == impactLoc[1]) {
-
+            if (x == impactLoc.x && y == impactLoc.y) {
                 break;
             }
         }
@@ -6305,7 +6445,7 @@ boolean playerCancelsBlinking(const short originLoc[2], const short targetLoc[2]
 boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
     char buf[COLS], buf2[COLS];
     unsigned char command[10];
-    short zapTarget[2], originLoc[2], maxDistance, c;
+    short maxDistance, c;
     boolean autoTarget, targetAllies, autoID, boltKnown, confirmedTarget;
     bolt theBolt;
     color trajectoryHiliteColor;
@@ -6325,7 +6465,7 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
     sprintf(buf, "Zapping your %s:", buf2);
     printString(buf, mapToWindowX(0), 1, &itemMessageColor, &black, NULL);
 
-    theBolt = boltCatalog[tableForItemCategory(theItem->category, NULL)[theItem->kind].strengthRequired];
+    theBolt = boltCatalog[tableForItemCategory(theItem->category)[theItem->kind].strengthRequired];
     if (theItem->category == STAFF) {
         theBolt.magnitude = theItem->enchant1;
     }
@@ -6337,7 +6477,7 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
     } else {
         maxDistance = -1;
     }
-    if (tableForItemCategory(theItem->category, NULL)[theItem->kind].identified) {
+    if (tableForItemCategory(theItem->category)[theItem->kind].identified) {
         autoTarget = targetAllies = false;
         if (!player.status[STATUS_HALLUCINATING]) {
             if (theBolt.flags & (BF_TARGET_ALLIES | BF_TARGET_ENEMIES)) {
@@ -6361,9 +6501,9 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
         trajectoryHiliteColor = *theBolt.backColor;
     }
 
-    originLoc[0] = player.xLoc;
-    originLoc[1] = player.yLoc;
-    confirmedTarget = chooseTarget(zapTarget, maxDistance, false, autoTarget,
+    pos originLoc = player.loc;
+    pos zapTarget;
+    confirmedTarget = chooseTarget(&zapTarget, maxDistance, false, autoTarget,
         targetAllies, (boltKnown ? &theBolt : &boltCatalog[BOLT_NONE]), &trajectoryHiliteColor);
     if (confirmedTarget
         && boltKnown
@@ -6377,7 +6517,7 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
         command[c] = '\0';
         if (!(*commandsRecorded)) {
             recordKeystrokeSequence(command);
-            recordMouseClick(mapToWindowX(zapTarget[0]), mapToWindowY(zapTarget[1]), true, false);
+            recordMouseClick(mapToWindowX(zapTarget.x), mapToWindowY(zapTarget.y), true, false);
             *commandsRecorded = true;
         }
         confirmMessages();
@@ -6389,7 +6529,7 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
                          &theBolt,
                          !boltKnown);   // hide bolt details
             if (autoID) {
-                if (!tableForItemCategory(theItem->category, NULL)[theItem->kind].identified) {
+                if (!tableForItemCategory(theItem->category)[theItem->kind].identified) {
                     itemName(theItem, buf2, false, false, NULL);
                     sprintf(buf, "(Your %s must be ", buf2);
                     identifyItemKind(theItem);
@@ -6418,11 +6558,11 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
 }
 
 void summonGuardian(item *theItem) {
-    short x = player.xLoc, y = player.yLoc;
+    short x = player.loc.x, y = player.loc.y;
     creature *monst;
 
     monst = generateMonster(MK_CHARM_GUARDIAN, false, false);
-    getQualifyingPathLocNear(&(monst->xLoc), &(monst->yLoc), x, y, true,
+    getQualifyingPathLocNear(&(monst->loc.x), &(monst->loc.y), x, y, true,
                              T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)) & ~T_SPONTANEOUSLY_IGNITES, HAS_PLAYER,
                              avoidedFlagsForMonster(&(monst->info)) & ~T_SPONTANEOUSLY_IGNITES, (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
     monst->bookkeepingFlags |= (MB_FOLLOWER | MB_BOUND_TO_LEADER | MB_DOES_NOT_TRACK_LEADER);
@@ -6431,7 +6571,7 @@ void summonGuardian(item *theItem) {
     monst->creatureState = MONSTER_ALLY;
     monst->ticksUntilTurn = monst->info.attackSpeed + 1; // So they don't move before the player's next turn.
     monst->status[STATUS_LIFESPAN_REMAINING] = monst->maxStatus[STATUS_LIFESPAN_REMAINING] = charmGuardianLifespan(netEnchant(theItem));
-    pmap[monst->xLoc][monst->yLoc].flags |= HAS_MONSTER;
+    pmap[monst->loc.x][monst->loc.y].flags |= HAS_MONSTER;
     fadeInMonster(monst);
 }
 
@@ -6523,14 +6663,14 @@ void apply(item *theItem, boolean recordCommands) {
 
     if ((theItem->category == SCROLL || theItem->category == POTION)
         && magicCharDiscoverySuffix(theItem->category, theItem->kind) == -1
-        && ((theItem->flags & ITEM_MAGIC_DETECTED) || tableForItemCategory(theItem->category, NULL)[theItem->kind].identified)) {
+        && ((theItem->flags & ITEM_MAGIC_DETECTED) || tableForItemCategory(theItem->category)[theItem->kind].identified)) {
 
-        if (tableForItemCategory(theItem->category, NULL)[theItem->kind].identified) {
+        if (tableForItemCategory(theItem->category)[theItem->kind].identified) {
             sprintf(buf,
                     "Really %s a %s of %s?",
                     theItem->category == SCROLL ? "read" : "drink",
                     theItem->category == SCROLL ? "scroll" : "potion",
-                    tableForItemCategory(theItem->category, NULL)[theItem->kind].name);
+                    tableForItemCategory(theItem->category)[theItem->kind].name);
         } else {
             sprintf(buf,
                     "Really %s a cursed %s?",
@@ -6755,7 +6895,7 @@ void updateIdentifiableItem(item *theItem) {
         theItem->flags &= ~ITEM_CAN_BE_IDENTIFIED;
     } else if ((theItem->category & (RING | STAFF | WAND))
                && (theItem->flags & ITEM_IDENTIFIED)
-               && tableForItemCategory(theItem->category, NULL)[theItem->kind].identified) {
+               && tableForItemCategory(theItem->category)[theItem->kind].identified) {
 
         theItem->flags &= ~ITEM_CAN_BE_IDENTIFIED;
     } else if ((theItem->category & (WEAPON | ARMOR))
@@ -6800,9 +6940,16 @@ void readScroll(item *theItem) {
     rogue.featRecord[FEAT_ARCHIVIST] = false;
 
     switch (theItem->kind) {
+        // Brogue Lite note:
+        // Removed case for SCROLL_IDENTIFY.
+
         case SCROLL_TELEPORT:
             teleport(&player, -1, -1, true);
             break;
+
+        // Brogue Lite note:
+        // Removed (commented out) case for SCROLL_REMOVE_CURSE.
+
         /*case SCROLL_REMOVE_CURSE:
             for (tempItem = packItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
                 if (tempItem->flags & ITEM_CURSED) {
@@ -6894,7 +7041,7 @@ void readScroll(item *theItem) {
                 messageWithColor(buf2, &itemMessageColor, 0);
                 theItem->flags &= ~ITEM_CURSED;
             }
-            createFlare(player.xLoc, player.yLoc, SCROLL_ENCHANTMENT_LIGHT);
+            createFlare(player.loc.x, player.loc.y, SCROLL_ENCHANTMENT_LIGHT);
             break;
         case SCROLL_RECHARGING:
             rechargeItems(STAFF | CHARM);
@@ -6914,7 +7061,7 @@ void readScroll(item *theItem) {
             } else {
                 message("a protective golden light surrounds you, but it quickly disperses.", 0);
             }
-            createFlare(player.xLoc, player.yLoc, SCROLL_PROTECTION_LIGHT);
+            createFlare(player.loc.x, player.loc.y, SCROLL_PROTECTION_LIGHT);
             break;
         case SCROLL_PROTECT_WEAPON:
             if (rogue.weapon) {
@@ -6934,10 +7081,10 @@ void readScroll(item *theItem) {
             } else {
                 message("a protective golden light covers your empty hands, but it quickly disperses.", 0);
             }
-            createFlare(player.xLoc, player.yLoc, SCROLL_PROTECTION_LIGHT);
+            createFlare(player.loc.x, player.loc.y, SCROLL_PROTECTION_LIGHT);
             break;
         case SCROLL_SANCTUARY:
-            spawnDungeonFeature(player.xLoc, player.yLoc, &dungeonFeatureCatalog[DF_SACRED_GLYPHS], true, false);
+            spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_SACRED_GLYPHS], true, false);
             messageWithColor("sprays of color arc to the ground, forming glyphs where they alight.", &itemMessageColor, 0);
             break;
         case SCROLL_MAGIC_MAPPING:
@@ -6959,8 +7106,19 @@ void readScroll(item *theItem) {
                     }
                 }
             }
-            colorFlash(&magicMapFlashColor, 0, MAGIC_MAPPED, 15, DCOLS + DROWS, player.xLoc, player.yLoc);
+            for (i=0; i<DCOLS; i++) {
+                for (j=0; j<DROWS; j++) {
+                    if (!(cellHasTerrainFlag(i, j, T_IS_DF_TRAP))) {
+                        pmap[i][j].flags |= KNOWN_TO_BE_TRAP_FREE;
+                    }
+                }
+            }
+            colorFlash(&magicMapFlashColor, 0, MAGIC_MAPPED, 15, DCOLS + DROWS, player.loc.x, player.loc.y);
             break;
+
+        // Brogue Lite note:
+        // Removed cases for SCROLL_AGGRAVATE_MONSTER and SCROLL_SUMMON_MONSTER
+
         case SCROLL_NEGATION:
             negationBlast("the scroll", DCOLS);
             break;
@@ -6975,6 +7133,10 @@ void readScroll(item *theItem) {
 }
 
 void detectMagicOnItem(item *theItem) {
+    if (theItem->category & HAS_INTRINSIC_POLARITY) {
+        itemTable *theItemTable = tableForItemCategory(theItem->category);
+        theItemTable[theItem->kind].magicPolarityRevealed = true;
+    }
     theItem->flags |= ITEM_MAGIC_DETECTED;
     if ((theItem->category & (WEAPON | ARMOR))
         && theItem->enchant1 == 0
@@ -7004,10 +7166,14 @@ void drinkPotion(item *theItem) {
             updatePlayerRegenerationDelay();
             messageWithColor(buf, &advancementMessageColor, 0);
             break;
+
+        // Brogue Lite note:
+        // Removed case for POTION_HALLUCINATION.
+
         case POTION_INCINERATION:
-            //colorFlash(&darkOrange, 0, IN_FIELD_OF_VIEW, 4, 4, player.xLoc, player.yLoc);
+            //colorFlash(&darkOrange, 0, IN_FIELD_OF_VIEW, 4, 4, player.loc.x, player.loc.y);
             message("as you uncork the flask, it explodes in flame!", 0);
-            spawnDungeonFeature(player.xLoc, player.yLoc, &dungeonFeatureCatalog[DF_INCINERATION_POTION], true, false);
+            spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_INCINERATION_POTION], true, false);
             exposeCreatureToFire(&player);
             break;
         case POTION_DARKNESS:
@@ -7018,9 +7184,9 @@ void drinkPotion(item *theItem) {
             message("your vision flickers as a cloak of darkness settles around you!", 0);
             break;
         case POTION_DESCENT:
-            colorFlash(&darkBlue, 0, IN_FIELD_OF_VIEW, 3, 3, player.xLoc, player.yLoc);
+            colorFlash(&darkBlue, 0, IN_FIELD_OF_VIEW, 3, 3, player.loc.x, player.loc.y);
             message("vapor pours out of the flask and causes the floor to disappear!", 0);
-            spawnDungeonFeature(player.xLoc, player.yLoc, &dungeonFeatureCatalog[DF_HOLE_POTION], true, false);
+            spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_HOLE_POTION], true, false);
             if (!player.status[STATUS_LEVITATING]) {
                 player.bookkeepingFlags |= MB_IS_FALLING;
             }
@@ -7032,14 +7198,14 @@ void drinkPotion(item *theItem) {
             }
             updateEncumbrance();
             messageWithColor("newfound strength surges through your body.", &advancementMessageColor, 0);
-            createFlare(player.xLoc, player.yLoc, POTION_STRENGTH_LIGHT);
+            createFlare(player.loc.x, player.loc.y, POTION_STRENGTH_LIGHT);
             break;
         case POTION_POISON:
-            spawnDungeonFeature(player.xLoc, player.yLoc, &dungeonFeatureCatalog[DF_POISON_GAS_CLOUD_POTION], true, false);
+            spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_POISON_GAS_CLOUD_POTION], true, false);
             message("caustic gas billows out of the open flask!", 0);
             break;
         case POTION_PARALYSIS:
-            spawnDungeonFeature(player.xLoc, player.yLoc, &dungeonFeatureCatalog[DF_PARALYSIS_GAS_CLOUD_POTION], true, false);
+            spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_PARALYSIS_GAS_CLOUD_POTION], true, false);
             message("your muscles stiffen as a cloud of pink gas bursts from the open flask!", 0);
             break;
         case POTION_TELEPATHY:
@@ -7051,12 +7217,12 @@ void drinkPotion(item *theItem) {
             message("you float into the air!", 0);
             break;
         case POTION_CONFUSION:
-            spawnDungeonFeature(player.xLoc, player.yLoc, &dungeonFeatureCatalog[DF_CONFUSION_GAS_CLOUD_POTION], true, false);
+            spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_CONFUSION_GAS_CLOUD_POTION], true, false);
             message("a shimmering cloud of rainbow-colored gas billows out of the open flask!", 0);
             break;
         case POTION_LICHEN:
             message("a handful of tiny spores burst out of the open flask!", 0);
-            spawnDungeonFeature(player.xLoc, player.yLoc, &dungeonFeatureCatalog[DF_LICHEN_PLANTED], true, false);
+            spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_LICHEN_PLANTED], true, false);
             break;
         case POTION_DETECT_MAGIC:
             hadEffect = false;
@@ -7064,9 +7230,9 @@ void drinkPotion(item *theItem) {
                 if (tempItem->category & CAN_BE_DETECTED) {
                     detectMagicOnItem(tempItem);
                     if (itemMagicPolarity(tempItem)) {
-                        pmap[tempItem->xLoc][tempItem->yLoc].flags |= ITEM_DETECTED;
+                        pmap[tempItem->loc.x][tempItem->loc.y].flags |= ITEM_DETECTED;
                         hadEffect = true;
-                        refreshDungeonCell(tempItem->xLoc, tempItem->yLoc);
+                        refreshDungeonCell(tempItem->loc.x, tempItem->loc.y);
                     }
                 }
             }
@@ -7076,7 +7242,7 @@ void drinkPotion(item *theItem) {
                     detectMagicOnItem(monst->carriedItem);
                     if (itemMagicPolarity(monst->carriedItem)) {
                         hadEffect = true;
-                        refreshDungeonCell(monst->xLoc, monst->yLoc);
+                        refreshDungeonCell(monst->loc.x, monst->loc.y);
                     }
                 }
             }
@@ -7119,6 +7285,9 @@ short magicCharDiscoverySuffix(short category, short kind) {
     switch (category) {
         case SCROLL:
             switch (kind) {
+                // Brogue Lite note:
+                // Removed cases for SCROLL_AGGRAVATE_MONSTER, SCROLL_SUMMON_MONSTER.
+
                 default:
                     result = 1;
                     break;
@@ -7126,6 +7295,9 @@ short magicCharDiscoverySuffix(short category, short kind) {
             break;
         case POTION:
             switch (kind) {
+                // Brogue Lite note:
+                // Removed case for POTION_HALLUCINATION.
+
                 case POTION_INCINERATION:
                 case POTION_DESCENT:
                 case POTION_POISON:
@@ -7142,7 +7314,7 @@ short magicCharDiscoverySuffix(short category, short kind) {
             break;
         case WAND:
         case STAFF:
-            if (boltCatalog[tableForItemCategory(category, NULL)[kind].strengthRequired].flags & (BF_TARGET_ALLIES)) {
+            if (boltCatalog[tableForItemCategory(category)[kind].strengthRequired].flags & (BF_TARGET_ALLIES)) {
                 result = -1;
             } else {
                 result = 1;
@@ -7163,58 +7335,38 @@ short magicCharDiscoverySuffix(short category, short kind) {
  0 if it is neutral
  1 if it is of good magic */
 int itemMagicPolarity(item *theItem) {
+    itemTable *theItemTable = tableForItemCategory(theItem->category);
     switch (theItem->category) {
         case WEAPON:
         case ARMOR:
             if ((theItem->flags & ITEM_CURSED) || theItem->enchant1 < 0) {
-                return -1;
+                return MAGIC_POLARITY_MALEVOLENT;
             } else if (theItem->enchant1 > 0) {
-                return 1;
+                return MAGIC_POLARITY_BENEVOLENT;
             }
-            return 0;
-            break;
-        case SCROLL:
-            switch (theItem->kind) {
-                default:
-                    return 1;
-            }
-        case POTION:
-            switch (theItem->kind) {
-                case POTION_INCINERATION:
-                case POTION_DESCENT:
-                case POTION_POISON:
-                case POTION_PARALYSIS:
-                case POTION_CONFUSION:
-                case POTION_LICHEN:
-                case POTION_DARKNESS:
-                    return -1;
-                default:
-                    return 1;
-            }
+            return MAGIC_POLARITY_NEUTRAL;
         case WAND:
             if (theItem->charges == 0) {
-                return 0;
+                return MAGIC_POLARITY_NEUTRAL;
             }
+        case SCROLL:
+        case POTION:
+        case CHARM:
         case STAFF:
-            if (boltCatalog[tableForItemCategory(theItem->category, NULL)[theItem->kind].strengthRequired].flags & (BF_TARGET_ALLIES)) {
-                return -1;
-            } else {
-                return 1;
-            }
+            return theItemTable[theItem->kind].magicPolarity;
         case RING:
             if (theItem->flags & ITEM_CURSED || theItem->enchant1 < 0) {
-                return -1;
+                return MAGIC_POLARITY_MALEVOLENT;
             } else if (theItem->enchant1 > 0) {
-                return 1;
+                return MAGIC_POLARITY_BENEVOLENT;
             } else {
-                return 0;
+                return MAGIC_POLARITY_NEUTRAL;
             }
-        case CHARM:
-            return 1;
         case AMULET:
-            return 1;
+            return MAGIC_POLARITY_BENEVOLENT;
+        default:
+            return MAGIC_POLARITY_NEUTRAL;
     }
-    return 0;
 }
 
 void unequip(item *theItem) {
@@ -7259,7 +7411,7 @@ void unequip(item *theItem) {
 }
 
 boolean canDrop() {
-    if (cellHasTerrainFlag(player.xLoc, player.yLoc, T_OBSTRUCTS_ITEMS)) {
+    if (cellHasTerrainFlag(player.loc.x, player.loc.y, T_OBSTRUCTS_ITEMS)) {
         return false;
     }
     return true;
@@ -7358,7 +7510,7 @@ item *itemAtLoc(short x, short y) {
     if (!(pmap[x][y].flags & HAS_ITEM)) {
         return NULL; // easy optimization
     }
-    for (theItem = floorItems->nextItem; theItem != NULL && (theItem->xLoc != x || theItem->yLoc != y); theItem = theItem->nextItem);
+    for (theItem = floorItems->nextItem; theItem != NULL && (theItem->loc.x != x || theItem->loc.y != y); theItem = theItem->nextItem);
     if (theItem == NULL) {
         pmap[x][y].flags &= ~HAS_ITEM;
         hiliteCell(x, y, &white, 75, true);
@@ -7372,11 +7524,11 @@ item *itemAtLoc(short x, short y) {
 item *dropItem(item *theItem) {
     item *itemFromTopOfStack, *itemOnFloor;
 
-    if (cellHasTerrainFlag(player.xLoc, player.yLoc, T_OBSTRUCTS_ITEMS)) {
+    if (cellHasTerrainFlag(player.loc.x, player.loc.y, T_OBSTRUCTS_ITEMS)) {
         return NULL;
     }
 
-    itemOnFloor = itemAtLoc(player.xLoc, player.yLoc);
+    itemOnFloor = itemAtLoc(player.loc.x, player.loc.y);
 
     if (theItem->quantity > 1 && !(theItem->category & (WEAPON | GEM))) { // peel off the top item and drop it
         itemFromTopOfStack = generateItem(ALL_ITEMS, -1);
@@ -7385,9 +7537,9 @@ item *dropItem(item *theItem) {
         itemFromTopOfStack->quantity = 1;
         if (itemOnFloor) {
             itemOnFloor->inventoryLetter = theItem->inventoryLetter; // just in case all letters are taken
-            pickUpItemAt(player.xLoc, player.yLoc);
+            pickUpItemAt(player.loc.x, player.loc.y);
         }
-        placeItem(itemFromTopOfStack, player.xLoc, player.yLoc);
+        placeItem(itemFromTopOfStack, player.loc.x, player.loc.y);
         return itemFromTopOfStack;
     } else { // drop the entire item
         if (rogue.swappedIn == theItem || rogue.swappedOut == theItem) {
@@ -7397,9 +7549,9 @@ item *dropItem(item *theItem) {
         removeItemFromChain(theItem, packItems);
         if (itemOnFloor) {
             itemOnFloor->inventoryLetter = theItem->inventoryLetter;
-            pickUpItemAt(player.xLoc, player.yLoc);
+            pickUpItemAt(player.loc.x, player.loc.y);
         }
-        placeItem(theItem, player.xLoc, player.yLoc);
+        placeItem(theItem, player.loc.x, player.loc.y);
         return theItem;
     }
 }
@@ -7661,6 +7813,7 @@ void deleteItem(item *theItem) {
 
 void resetItemTableEntry(itemTable *theEntry) {
     theEntry->identified = false;
+    theEntry->magicPolarityRevealed = false;
     theEntry->called = false;
     theEntry->callTitle[0] = '\0';
 }

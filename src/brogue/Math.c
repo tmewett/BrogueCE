@@ -64,11 +64,16 @@ boolean rand_percent(short percent) {
 }
 
 void shuffleList(short *list, short listLength) {
-    short i, r, buf;
-    for (i=0; i<listLength; i++) {
-        r = rand_range(0, listLength-1);
+    // See https://en.wikipedia.org/wiki/Fisher-Yates_shuffle
+    // A "fair" shuffle requires choosing only items between the
+    // current index and the end of the array to swap with the
+    // current item.
+    for (int i = 0; i < listLength - 1; i++) {
+        // We can skip the last item, since it could only swap
+        // with itself.
+        int r = rand_range(i, listLength - 1);
         if (i != r) {
-            buf = list[r];
+            short buf = list[r];
             list[r] = list[i];
             list[i] = buf;
         }

@@ -1,0 +1,17 @@
+#!/bin/sh
+set -exo pipefail
+
+unzip windows-x86_64.zip
+unzip BrogueCE-windows-x86_64.zip
+cd BrogueCE-windows
+wine brogue.exe
+cd ..
+
+unzip linux-x86_64.zip
+tar -xaf BrogueCE-linux-x86_64.tar.gz
+cd BrogueCE-linux
+./brogue
+cd ..
+
+unzip macos-x86_64.zip
+unzip -l BrogueCE-macos-x86_64.zip

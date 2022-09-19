@@ -103,7 +103,7 @@ lucky few to return alive?
 - [Wiki](https://brogue.fandom.com/wiki/Brogue_Wiki)
 - [Forum (Reddit)](https://www.reddit.com/r/brogueforum/)
 - [Roguelikes Discord](https://discord.gg/9pmFGKx) (we have a #brogue channel)
-- IRC: ##brogue on Libera Chat
+- IRC: [##brogue on Libera Chat](https://kiwiirc.com/nextclient/irc.libera.chat/##brogue)
 - [Original website](https://sites.google.com/site/broguegame/)
 - [Android port](https://github.com/bilgincoskun/brogue-android-port/releases)
 
@@ -115,7 +115,7 @@ If you downloaded a [release][releases], you can open the game as follows:
 
 ### Windows
 
-Go to the `bin` folder and run `brogue.exe`.
+Run `brogue.exe`.
 
 ### Mac
 
@@ -141,19 +141,25 @@ place on your desktop or applications folder.
 
 ### More information
 
-If you're running the graphical version (default), the game window can be
-resized using the PageDown/PageUp or -/+ keys. Graphical tiles are included;
-press 'G' to toggle them.
+Graphical tiles are included; press 'G' to toggle them.
 
 For some tips on playing the game, see the original website, linked above. Also
-check out the wiki -- although this version contains some modifications from
-what the wiki reports!
+check out the wiki -- although keep in mind CE may differ from it.
 
 If you downloaded the source code, you will need to build the game first. For
 instructions, see `BUILD.md`.
 
 On Windows, if you want to run from the command prompt, use `brogue-cmd.bat`
 instead of `brogue.exe`.
+
+
+Contributing
+------------
+
+Please see our [contribution guide][contrib] for all the ways you can help make
+Brogue better!
+
+[contrib]: https://github.com/tmewett/BrogueCE/wiki/Contribution-guide
 
 
 About

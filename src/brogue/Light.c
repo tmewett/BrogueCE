@@ -241,18 +241,18 @@ void updateLighting() {
         creature *monst = !handledPlayer ? &player : nextCreature(&it);
         handledPlayer = true;
         if (monst->info.intrinsicLightType) {
-            paintLight(&lightCatalog[monst->info.intrinsicLightType], monst->xLoc, monst->yLoc, false, false);
+            paintLight(&lightCatalog[monst->info.intrinsicLightType], monst->loc.x, monst->loc.y, false, false);
         }
         if (monst->mutationIndex >= 0 && mutationCatalog[monst->mutationIndex].light != NO_LIGHT) {
-            paintLight(&lightCatalog[mutationCatalog[monst->mutationIndex].light], monst->xLoc, monst->yLoc, false, false);
+            paintLight(&lightCatalog[mutationCatalog[monst->mutationIndex].light], monst->loc.x, monst->loc.y, false, false);
         }
 
         if (monst->status[STATUS_BURNING] && !(monst->info.flags & MONST_FIERY)) {
-            paintLight(&lightCatalog[BURNING_CREATURE_LIGHT], monst->xLoc, monst->yLoc, false, false);
+            paintLight(&lightCatalog[BURNING_CREATURE_LIGHT], monst->loc.x, monst->loc.y, false, false);
         }
 
         if (monsterRevealed(monst)) {
-            paintLight(&lightCatalog[TELEPATHY_LIGHT], monst->xLoc, monst->yLoc, false, true);
+            paintLight(&lightCatalog[TELEPATHY_LIGHT], monst->loc.x, monst->loc.y, false, true);
         }
     }
 
@@ -260,20 +260,20 @@ void updateLighting() {
     for (creatureIterator it = iterateCreatures(dormantMonsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         if (monsterRevealed(monst)) {
-            paintLight(&lightCatalog[TELEPATHY_LIGHT], monst->xLoc, monst->yLoc, false, true);
+            paintLight(&lightCatalog[TELEPATHY_LIGHT], monst->loc.x, monst->loc.y, false, true);
         }
     }
 
     updateDisplayDetail();
 
     // Miner's light:
-    paintLight(&rogue.minersLight, player.xLoc, player.yLoc, true, true);
+    paintLight(&rogue.minersLight, player.loc.x, player.loc.y, true, true);
 
     if (player.status[STATUS_INVISIBLE]) {
         player.info.foreColor = &playerInvisibleColor;
     } else if (playerInDarkness()) {
         player.info.foreColor = &playerInDarknessColor;
-    } else if (pmap[player.xLoc][player.yLoc].flags & IS_IN_SHADOW) {
+    } else if (pmap[player.loc.x][player.loc.y].flags & IS_IN_SHADOW) {
         player.info.foreColor = &playerInShadowColor;
     } else {
         player.info.foreColor = &playerInLightColor;
@@ -281,9 +281,9 @@ void updateLighting() {
 }
 
 boolean playerInDarkness() {
-    return (tmap[player.xLoc][player.yLoc].light[0] + 10 < minersLightColor.red
-            && tmap[player.xLoc][player.yLoc].light[1] + 10 < minersLightColor.green
-            && tmap[player.xLoc][player.yLoc].light[2] + 10 < minersLightColor.blue);
+    return (tmap[player.loc.x][player.loc.y].light[0] + 10 < minersLightColor.red
+            && tmap[player.loc.x][player.loc.y].light[1] + 10 < minersLightColor.green
+            && tmap[player.loc.x][player.loc.y].light[2] + 10 < minersLightColor.blue);
 }
 
 #define flarePrecision 1000
@@ -292,8 +292,8 @@ flare *newFlare(lightSource *light, short x, short y, short changePerFrame, shor
     flare *theFlare = malloc(sizeof(flare));
     memset(theFlare, '\0', sizeof(flare));
     theFlare->light = light;
-    theFlare->xLoc = x;
-    theFlare->yLoc = y;
+    theFlare->loc.x = x;
+    theFlare->loc.y = y;
     theFlare->coeffChangeAmount = changePerFrame;
     if (theFlare->coeffChangeAmount == 0) {
         theFlare->coeffChangeAmount = 1; // no change would mean it lasts forever, which usually breaks things
@@ -360,7 +360,7 @@ boolean drawFlareFrame(flare *theFlare) {
     tempLight.lightRadius.upperBound = ((long) tempLight.lightRadius.upperBound) * theFlare->coeff / (flarePrecision * 100);
     applyColorScalar(&tempColor, theFlare->coeff / flarePrecision);
     tempLight.lightColor = &tempColor;
-    inView = paintLight(&tempLight, theFlare->xLoc, theFlare->yLoc, false, true);
+    inView = paintLight(&tempLight, theFlare->loc.x, theFlare->loc.y, false, true);
 
     return inView;
 }
@@ -395,7 +395,7 @@ void animateFlares(flare **flares, short count) {
         demoteVisibility();
         updateFieldOfViewDisplay(false, true);
         if (!fastForward && (inView || rogue.playbackOmniscience) && atLeastOneFlareStillActive) {
-            fastForward = pauseBrogue(10);
+            fastForward = pauseAnimation(10);
         }
         recordOldLights();
         restoreLighting(lights);
