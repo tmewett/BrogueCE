@@ -15,3 +15,5 @@ BrogueCE-*
 *.gcov
 *.desktop
 gmon.out
+
+.idea
