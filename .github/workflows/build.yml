@@ -34,6 +34,7 @@ jobs:
         path: BrogueLite-linux-x86_64.tar.gz
 
   macos:
+    if: ${{ false }}  # Disable broken MacOS build job for now - see issue at: https://github.com/tmewett/BrogueCE/issues/509
     runs-on: macos-latest
     steps:
     - name: "Checkout sources"
