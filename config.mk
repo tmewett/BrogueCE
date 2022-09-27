@@ -16,7 +16,7 @@ WEBBROGUE := NO
 DEBUG := NO
 
 # Declare this is a release build
-RELEASE := YES
+RELEASE := NO
 
 # Configure the executable to run from a macOS .app bundle (only works in graphical mode)
 MAC_APP := NO
