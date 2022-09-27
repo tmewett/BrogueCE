@@ -3,8 +3,13 @@ include config.mk
 cflags := -Isrc/brogue -Isrc/platform -std=c99 \
 	-Wall -Wpedantic -Werror=implicit -Wno-parentheses -Wno-unused-result \
 	-Wformat -Werror=format-security -Wformat-overflow=0
-libs := -lm
+libs := -lm 
 cppflags := -DDATADIR=$(DATADIR)
+ifeq ($(OS2_APP),YES)
+	cflags += -D__ST_MT_ERRNO__ -O2 -march=pentium4 -mtune=pentium4 -Wall -Zmt -Wno-narrowing
+	cppflags += -D__ST_MT_ERRNO__ -O2 -march=pentium4 -mtune=pentium4 -Wall -Zmt -Wno-narrowing
+	libs += -lcx -lc -Zomf -Zbin-files -Zargs-wild -Zargs-resp -Zhigh-mem -Zstack 8000 -D__ST_MT_ERRNO__
+endif
 
 sources := $(wildcard src/brogue/*.c) $(addprefix src/platform/,main.c platformdependent.c)
 
@@ -19,6 +24,9 @@ ifeq ($(TERMINAL),YES)
 	sources += $(addprefix src/platform/,curses-platform.c term.c)
 	cppflags += -DBROGUE_CURSES
 	libs += -lncurses
+	ifeq ($(OS2_APP),YES)
+		libs += -ltinfo
+	endif
 endif
 
 ifeq ($(GRAPHICS),YES)
@@ -51,8 +59,19 @@ objects := $(sources:.c=.o)
 %.o: %.c src/brogue/Rogue.h src/brogue/IncludeGlobals.h
 	$(CC) $(cppflags) $(CPPFLAGS) $(cflags) $(CFLAGS) -c $< -o $@
 
+
 bin/brogue: $(objects)
 	$(CC) $(cflags) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(libs) $(LDLIBS)
+
+os2/icon.res: os2/icon.rc
+	wrc -qr $< -fo=$@
+
+os2/brogue.lib: os2/brogue.def
+	emximp -o $@ $<
+	
+bin/brogue_os2.exe: $(objects) os2/icon.res os2/brogue.lib
+	$(CC) $(cflags) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(libs) $(LDLIBS)
+
 
 windows/icon.o: windows/icon.rc
 	windres $< $@
@@ -61,8 +80,10 @@ bin/brogue.exe: $(objects) windows/icon.o
 	$(CC) $(cflags) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(libs) $(LDLIBS)
 	mt -manifest windows/brogue.exe.manifest '-outputresource:bin/brogue.exe;1'
 
+
 clean:
-	$(RM) src/brogue/*.o src/platform/*.o windows/icon.o bin/brogue{,.exe}
+	$(RM) src/brogue/*.o src/platform/*.o windows/icon.o bin/brogue{,_os2}{,.exe} \
+	os2/icon.res os2/brogue.lib
 
 
 # Release archives
@@ -70,7 +91,7 @@ clean:
 common_bin := bin/assets bin/keymap.txt
 
 define make_release_base
-	mkdir $@
+	mkdir -p $@
 	cp README.md $@/README.txt
 	cp CHANGELOG.md $@/CHANGELOG.txt
 	cp LICENSE.txt $@
@@ -90,6 +111,12 @@ BrogueCE-linux: bin/brogue
 	cp brogue $@
 	cp -r --parents $(common_bin) bin/brogue $@
 	cp linux/make-link-for-desktop.sh $@
+
+ifeq ($(OS2_APP),YES)
+BrogueCE-os2: bin/brogue_os2.exe
+	$(make_release_base)
+	cp -r $(common_bin) bin/brogue_os2.exe $@
+endif
 
 
 # macOS app bundle
