@@ -216,6 +216,10 @@ void writeHeaderInfo(char *path) {
 }
 
 void flushBufferToFile() {
+    if (currentFilePath[0] == '\0') {
+        return;
+    }
+
     short i;
     FILE *recordFile;
 
@@ -453,6 +457,10 @@ static boolean getPatchVersion(char *versionString, unsigned short *patchVersion
 // creates a game recording file, or if in playback mode,
 // initializes based on and starts reading from the recording file
 void initRecording() {
+    if (currentFilePath[0] == '\0') {
+        return;
+    }
+
     short i;
     boolean wizardMode;
     unsigned short recPatch;

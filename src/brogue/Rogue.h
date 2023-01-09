@@ -118,7 +118,6 @@ typedef long long fixpt;
 #define FP_DIV(x, y)  ((x) * FP_FACTOR / (y))
 
 // recording and save filenames
-#define LAST_GAME_PATH          "LastGame.broguesave"
 #define LAST_GAME_NAME          "LastGame"
 #define LAST_RECORDING_NAME     "LastRecording"
 #define RECORDING_SUFFIX        ".broguerec"
