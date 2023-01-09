@@ -382,6 +382,10 @@ void initializeRogue(uint64_t seed) {
 
     recalculateEquipmentBonuses();
 
+    if (D_OMNISCENCE) {
+        rogue.playbackOmniscience = 1;
+    }
+
     DEBUG {
         theItem = generateItem(RING, RING_CLAIRVOYANCE);
         theItem->enchant1 = max(DROWS, DCOLS);
