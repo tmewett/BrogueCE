@@ -4742,9 +4742,16 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
 
     initialBoltLength = boltLength = 5 * theBolt->magnitude;
     if (reverseBoltDir) {
-        // Compute the bolt as if it went the other way, and then reverse the list of coordinates.
-        // This is to ensure that when a mirrored totem beckons the player, the player doesn't get
-        // stuck in their current location if blocked by a monster (issue #497).
+        // Beckoning (from mirrored totems and the wand) is implemented as two bolts, one going from
+        // the totem/player to the target, and another from the target back to the source, to blink
+        // them adjacent. However, bolt paths are asymmetric; the path from A to B isn't necessarily
+        // the same as the path from B to A. If the second bolt (the blink) follows a different
+        // path, it's possible for the target not to be blinked all the way back to the source
+        // because it hits an obstacle (usually a monster). This results in issue #497, as well as
+        // unintuitive behavior for the wand of beckoning. As a workaround, for the second bolt, we
+        // compute it as if it went from the source to the target, and then reverse the list of
+        // coordinates. This ensures that the two bolts will include exactly the same coordinates,
+        // so the target won't get stuck on any obstacles while being beckoned.
         pos listOfCoordinatesTmp[MAX_BOLT_LENGTH];
         short numCellsTmp = getLineCoordinates(listOfCoordinatesTmp, targetLoc, originLoc, (hideDetails ? &boltCatalog[BOLT_NONE] : theBolt));
         numCells = -1;
