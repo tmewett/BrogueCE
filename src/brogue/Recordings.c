@@ -216,6 +216,10 @@ void writeHeaderInfo(char *path) {
 }
 
 void flushBufferToFile() {
+    if (currentFilePath[0] == '\0') {
+        return;
+    }
+
     short i;
     FILE *recordFile;
 
@@ -447,17 +451,16 @@ void displayAnnotation() {
 // according to the global pattern. The Major and Minor versions must match ours.
 // Returns true if successful.
 static boolean getPatchVersion(char *versionString, unsigned short *patchVersion) {
-    if (strcmp(versionString, "CE 1.9") == 0) {
-        // this older version string didn't show the patch number
-        *patchVersion = 0;
-        return BROGUE_MAJOR == 1 && BROGUE_MINOR == 9;
-    }
     return sscanf(versionString, BROGUE_PATCH_VERSION_PATTERN, patchVersion) == 1;
 }
 
 // creates a game recording file, or if in playback mode,
 // initializes based on and starts reading from the recording file
 void initRecording() {
+    if (currentFilePath[0] == '\0') {
+        return;
+    }
+
     short i;
     boolean wizardMode;
     unsigned short recPatch;

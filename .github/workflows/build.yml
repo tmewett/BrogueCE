@@ -64,8 +64,7 @@ jobs:
       run: |
         make MAC_APP=YES Brogue.app
       env:
-        # 10.6 is the version targeted by the SDL build scripts
-        MACOSX_DEPLOYMENT_TARGET: "10.6"
+        MACOSX_DEPLOYMENT_TARGET: "10.7"
 
     - name: "Fix and bundle dylib references"
       run: |
