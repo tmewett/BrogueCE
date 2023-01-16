@@ -3062,7 +3062,7 @@ extern "C" {
     void checkForMissingKeys(short x, short y);
     enum boltEffects boltEffectForItem(item *theItem);
     enum boltType boltForItem(item *theItem);
-    boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails);
+    boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, boolean reverseBoltDir);
     boolean nextTargetAfter(short *returnX,
                             short *returnY,
                             short targetX,

@@ -508,7 +508,7 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
     }
     theBolt = boltCatalog[BOLT_BLINKING];
     theBolt.magnitude = max(1, netEnchant(theItem) / FP_FACTOR);
-    zap(oldLoc, newLoc, &theBolt, false);
+    zap(oldLoc, newLoc, &theBolt, false, false);
     if (!(defender->bookkeepingFlags & MB_IS_DYING)
         && distanceBetween(oldLoc.x, oldLoc.y, defender->loc.x, defender->loc.y) > 0
         && distanceBetween(oldLoc.x, oldLoc.y, defender->loc.x, defender->loc.y) < weaponForceDistance(netEnchant(theItem))) {
