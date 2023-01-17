@@ -978,7 +978,7 @@ boolean playerMoves(short direction) {
                    && player.status[STATUS_LEVITATING] <= 1
                    && !player.status[STATUS_CONFUSED]
                    && cellHasTerrainFlag(newX, newY, T_AUTO_DESCENT)
-                   && !cellHasTerrainFlag(newX, newY, T_ENTANGLES)
+                   && (!cellHasTerrainFlag(newX, newY, T_ENTANGLES) || cellHasTMFlag(newX, newY, TM_PROMOTES_ON_PLAYER_ENTRY))
                    && !cellHasTMFlag(newX, newY, TM_IS_SECRET)
                    && !confirm("Dive into the depths?", false)) {
 
