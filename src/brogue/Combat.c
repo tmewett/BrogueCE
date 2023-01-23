@@ -536,7 +536,7 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
                 combatMessage(buf, messageColorFromVictim(defender));
                 autoID = true;
             }
-            killCreatureAfterInflictDamage(defender);
+            killCreature(defender, false);
         } else {
             if (canDirectlySeeMonster(defender)) {
                 sprintf(buf, "%s slams against %s",
@@ -564,7 +564,7 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
                     combatMessage(buf, messageColorFromVictim(otherMonster));
                     autoID = true;
                 }
-                killCreatureAfterInflictDamage(otherMonster);
+                killCreature(otherMonster, false);
             }
             if (otherMonster->creatureState != MONSTER_ALLY) {
                 // Allies won't defect if you throw another monster at them, even though it hurts.
@@ -647,7 +647,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
                         (defender->info.flags & MONST_INANIMATE) ? "shatters" : "dies");
                 buf[DCOLS] = '\0';
                 combatMessage(buf, messageColorFromVictim(defender));
-                killCreatureAfterInflictDamage(defender);
+                killCreature(defender, false);
                 autoID = true;
                 break;
             case W_PARALYSIS:
@@ -888,7 +888,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
                                     sprintf(buf, "%s %s", monstName, ((hitList[i]->info.flags & MONST_INANIMATE) ? "is destroyed" : "dies"));
                                     combatMessage(buf, messageColorFromVictim(hitList[i]));
                                 }
-                                killCreatureAfterInflictDamage(hitList[i]);
+                                killCreature(hitList[i], false);
                             }
                         }
                     }
@@ -920,7 +920,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
                         sprintf(returnString, "your %s pulses and %s drops dead!", armorName, attackerName);
                         runicDiscovered = true;
                     }
-                    killCreatureAfterInflictDamage(attacker);
+                    killCreature(attacker, false);
                 } else if (!runicKnown) {
                     if (canSeeMonster(attacker)) {
                         sprintf(returnString, "your %s pulses and %s shudders in pain!", armorName, attackerName);
@@ -1164,7 +1164,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
             } else {
                 combatMessage(buf, (damage > 0 ? messageColorFromVictim(defender) : &white));
             }
-            killCreatureAfterInflictDamage(defender);
+            killCreature(defender, false);
             if (&player == defender) {
                 gameOver(attacker->info.monsterName, false);
                 return true;
@@ -1490,7 +1490,7 @@ void inflictLethalDamage(creature *attacker, creature *defender) {
     inflictDamage(attacker, defender, defender->currentHP, NULL, true);
 }
 
-// returns true if this was a killing stroke; does NOT free the pointer, but DOES remove it from the monster chain
+// returns true if this was a killing stroke; does NOT call killCreature
 // flashColor indicates the color that the damage will cause the creature to flash
 boolean inflictDamage(creature *attacker, creature *defender,
                       short damage, const color *flashColor, boolean ignoresProtectionShield) {
@@ -1562,11 +1562,9 @@ boolean inflictDamage(creature *attacker, creature *defender,
     }
 
     if (defender->currentHP <= damage) { // killed
-        // More processing has to be done here, but to make sure the message order is correct,
-        // it's done by `killCreatureAfterInflictDamage`.
         return true;
     } else { // survived
-        if (damage < 0 && defender->currentHP - damage > defender->info.maxHP) {
+        if (damage < 0 && defender->currentHP - damage > defender->info.maxHP, false) {
             defender->currentHP = max(defender->currentHP, defender->info.maxHP);
         } else {
             defender->currentHP -= damage; // inflict the damage!
@@ -1588,12 +1586,6 @@ boolean inflictDamage(creature *attacker, creature *defender,
 
     refreshSideBar(-1, -1, false);
     return false;
-}
-
-void killCreatureAfterInflictDamage(creature *defender) {
-    killCreature(defender, false);
-    anyoneWantABite(defender);
-    refreshSideBar(-1, -1, false);
 }
 
 void addPoison(creature *monst, short durationIncrement, short concentrationIncrement) {
@@ -1713,6 +1705,7 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
 
                 applyInstantTileEffectsToCreature(carriedMonster);
             }
+            anyoneWantABite(decedent);
             refreshDungeonCell(x, y);
         }
     }
