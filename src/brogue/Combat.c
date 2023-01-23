@@ -1564,7 +1564,7 @@ boolean inflictDamage(creature *attacker, creature *defender,
     if (defender->currentHP <= damage) { // killed
         return true;
     } else { // survived
-        if (damage < 0 && defender->currentHP - damage > defender->info.maxHP, false) {
+        if (damage < 0 && defender->currentHP - damage > defender->info.maxHP) {
             defender->currentHP = max(defender->currentHP, defender->info.maxHP);
         } else {
             defender->currentHP -= damage; // inflict the damage!
