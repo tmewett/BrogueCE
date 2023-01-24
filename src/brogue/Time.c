@@ -312,6 +312,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
                 messageWithColor(buf, &goodMessageColor, 0);
                 autoIdentify(rogue.armor);
             } else if (inflictDamage(NULL, &player, damage, &yellow, false)) {
+                killCreature(&player, false);
                 strcpy(buf2, tileCatalog[pmap[*x][*y].layers[layerWithFlag(*x, *y, T_CAUSES_EXPLOSIVE_DAMAGE)]].description);
                 sprintf(buf, "Killed by %s", buf2);
                 gameOver(buf, true);
@@ -331,6 +332,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
                         (monst->info.flags & MONST_INANIMATE) ? "is destroyed by" : "dies in",
                         buf3);
                 messageWithColor(buf2, messageColorFromVictim(monst), 0);
+                killCreature(monst, false);
                 refreshDungeonCell(*x, *y);
                 return;
             } else {
@@ -508,6 +510,7 @@ void applyGradualTileEffectsToCreature(creature *monst, short ticks) {
                 rogue.disturbed = true;
                 messageWithColor(tileCatalog[pmap[x][y].layers[layer]].flavorText, &badMessageColor, 0);
                 if (inflictDamage(NULL, &player, damage, tileCatalog[pmap[x][y].layers[layer]].backColor, true)) {
+                    killCreature(&player, false);
                     sprintf(buf, "Killed by %s", tileCatalog[pmap[x][y].layers[layer]].description);
                     gameOver(buf, true);
                     return;
@@ -523,6 +526,7 @@ void applyGradualTileEffectsToCreature(creature *monst, short ticks) {
                     sprintf(buf2, "%s dies.", buf);
                     messageWithColor(buf2, messageColorFromVictim(monst), 0);
                 }
+                killCreature(monst, false);
                 refreshDungeonCell(x, y);
                 return;
             }
@@ -1002,6 +1006,7 @@ void playerFalls() {
             }
             messageWithColor("You are injured by the fall.", &badMessageColor, 0);
             if (inflictDamage(NULL, &player, damage, &red, false)) {
+                killCreature(&player, false);
                 gameOver("Killed by a fall", true);
                 killed = true;
             }
@@ -1390,6 +1395,8 @@ void monstersFall() {
                 if (monst == rogue.yendorWarden) {
                     updateYendorWardenTracking();
                 }
+            } else {
+                killCreature(monst, false);
             }
 
             pmap[x][y].flags &= ~HAS_MONSTER;
@@ -1918,6 +1925,7 @@ void monsterEntersLevel(creature *monst, short n) {
                     sprintf(buf, "%s plummets from above and splatters against the ground!", monstName);
                     messageWithColor(buf, messageColorFromVictim(monst), 0);
                 }
+                killCreature(monst, false);
             } else {
                 if (canSeeMonster(monst)) {
                     sprintf(buf, "%s falls from above and crashes to the ground!", monstName);
@@ -2304,6 +2312,7 @@ void playerTurnEnded() {
         if (player.status[STATUS_BURNING] > 0) {
             damage = rand_range(1, 3);
             if (!(player.status[STATUS_IMMUNE_TO_FIRE]) && inflictDamage(NULL, &player, damage, &orange, true)) {
+                killCreature(&player, false);
                 gameOver("Burned to death", true);
             }
             if (!--player.status[STATUS_BURNING]) {
@@ -2314,6 +2323,7 @@ void playerTurnEnded() {
         if (player.status[STATUS_POISONED] > 0) {
             player.status[STATUS_POISONED]--;
             if (inflictDamage(NULL, &player, player.poisonAmount, &green, true)) {
+                killCreature(&player, false);
                 gameOver("Died from poison", true);
             }
             if (!player.status[STATUS_POISONED]) {

@@ -3546,6 +3546,7 @@ boolean tunnelize(short x, short y) {
             monst = monsterAtLoc(x, y);
             if (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS) {
                 inflictLethalDamage(NULL, monst);
+                killCreature(monst, false);
             }
         }
     }
@@ -4086,6 +4087,7 @@ void crystalize(short radius) {
                         monst = monsterAtLoc(i, j);
                         if (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS) {
                             inflictLethalDamage(NULL, monst);
+                            killCreature(monst, false);
                         } else {
                             freeCaptivesEmbeddedAt(i, j);
                         }
@@ -4322,6 +4324,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 } else if (inflictDamage(caster, monst, staffDamage(theBolt->magnitude * FP_FACTOR), theBolt->backColor, false)) {
                     // killed monster
                     if (player.currentHP <= 0) {
+                        killCreature(monst, false);
                         if (caster == &player) {
                             sprintf(buf, "Killed by a reflected %s", theBolt->name);
                             gameOver(buf, true);
@@ -4340,6 +4343,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                         sprintf(buf, "you hear %s %s", monstName, ((monst->info.flags & MONST_INANIMATE) ? "get destroyed" : "die"));
                         combatMessage(buf, 0);
                     }
+                    killCreature(monst, false);
                 } else {
                     // monster lives
                     if (monst->creatureMode != MODE_PERM_FLEEING
@@ -5867,6 +5871,7 @@ boolean hitMonsterWithProjectileWeapon(creature *thrower, creature *monst, item 
                     (monst->info.flags & MONST_INANIMATE) ? "destroyed" : "killed",
                     targetName);
             messageWithColor(buf, messageColorFromVictim(monst), 0);
+            killCreature(monst, false);
         } else {
             sprintf(buf, "the %s hit %s.", theItemName, targetName);
             if (theItem->flags & ITEM_RUNIC) {
