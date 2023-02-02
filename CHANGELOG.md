@@ -1,3 +1,39 @@
+1.12
+====
+
+A small non-gameplay update. Enjoy!
+
+Thanks to contributors flend, glob, nstoddard, and zenzombie.
+
+-
+  Added a wizard mode menu action for creating an item or monster.
+-
+  Monster death messages are now printed in the correct order. For instance,
+  "The dart killed the bloat" is now printed before the message about the bloat
+  bursting.
+-
+  Fixed an issue with beckoning bolt paths. This could cause mirrored totems to
+  instakill the player and made it difficult to target enemies behind obstacles.
+-
+  Autoexplore now avoids items on candle-lit altars outside of vaults.
+-
+  Changed the graphic and description of statues that can be broken with
+  shattering, to clearly distinguish them from regular statues.
+-
+  "Quit without saving" is now "Quit and abandon game"; "Suspend game and quit"
+  is now "Save and exit".
+-
+  You are now prompted when stepping onto a chasm tile with Mangrove Dryad vines
+  on it, since you fall through them.
+-
+  Removed the commands for opening saved games and recordings from within a
+  game, as they could be used for save scumming. (Both can still be done from
+  the main menu.)
+-
+  The `--print-seed-catalog` option no longer creates unnecessary .broguesave
+  files.
+
+
 1.11.1
 ======
 

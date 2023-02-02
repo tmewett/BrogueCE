@@ -1,1 +1,0 @@
-"Quit without saving" is now "Quit and abandon game"; "Suspend game and quit" is now "Save and exit". Also remove the commands for opening saved games and recordings from within a game, as they could be used for save scumming (both can still be done from the main menu).
