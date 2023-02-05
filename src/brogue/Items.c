@@ -1149,7 +1149,7 @@ void updateFloorItems() {
         }
         if (cellHasTerrainFlag(x, y, T_MOVES_ITEMS)) {
             pos loc;
-            getQualifyingLocNear(&loc, x, y, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM), false, false);
+            getQualifyingLocNear(&loc, x, y, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM | HAS_MONSTER), false, false);
             removeItemFrom(x, y);
             pmap[loc.x][loc.y].flags |= HAS_ITEM;
             if (pmap[x][y].flags & ITEM_DETECTED) {
