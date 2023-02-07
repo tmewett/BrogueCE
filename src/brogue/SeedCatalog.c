@@ -253,12 +253,8 @@ static void printSeedCatalogAltars(boolean isCsvFormat) {
 void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsigned int scanThroughDepth,
                       boolean isCsvFormat) {
     uint64_t theSeed;
-    char path[BROGUE_FILENAME_MAX];
     char message[1000] = "";
     rogue.nextGame = NG_NOTHING;
-
-    getAvailableFilePath(path, LAST_GAME_NAME, GAME_SUFFIX);
-    strcat(path, GAME_SUFFIX);
 
     sprintf(message, "Brogue seed catalog, seeds %llu to %llu, through depth %u.\n"
                      "Generated with %s. Dungeons unchanged since %s.\n\n"
@@ -286,7 +282,7 @@ void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsig
         rogue.playbackFastForward = false;
         rogue.playbackBetweenTurns = false;
 
-        strcpy(currentFilePath, path);
+        currentFilePath[0] = '\0';
         initializeRogue(theSeed);
         rogue.playbackOmniscience = true;
         for (rogue.depthLevel = 1; rogue.depthLevel <= scanThroughDepth; rogue.depthLevel++) {
@@ -304,7 +300,6 @@ void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsig
         }
 
         freeEverything();
-        remove(currentFilePath); // Don't add a spurious LastGame file to the brogue folder.
     }
 
 }

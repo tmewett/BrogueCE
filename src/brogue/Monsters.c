@@ -68,13 +68,12 @@ creature *generateMonster(short monsterID, boolean itemPossible, boolean mutatio
     if (mutationPossible
         && !(monst->info.flags & MONST_NEVER_MUTATED)
         && !(monst->info.abilityFlags & MA_NEVER_MUTATED)
-        && rogue.depthLevel > 10) {
-
+        && rogue.depthLevel > MUTATIONS_OCCUR_ABOVE_LEVEL) {
 
         if (rogue.depthLevel <= AMULET_LEVEL) {
-            mutationChance = clamp(rogue.depthLevel - 10, 1, 10);
+            mutationChance = clamp((rogue.depthLevel - MUTATIONS_OCCUR_ABOVE_LEVEL) * DEPTH_ACCELERATOR, 1, 10);
         } else {
-            mutationChance = POW_DEEP_MUTATION[min(rogue.depthLevel - AMULET_LEVEL, 12)];
+            mutationChance = POW_DEEP_MUTATION[min((rogue.depthLevel - AMULET_LEVEL) * DEPTH_ACCELERATOR, 12)];
             mutationChance = min(mutationChance, 75);
         }
 
@@ -1855,6 +1854,7 @@ void decrementMonsterStatus(creature *monst) {
                                     (monst->info.flags & MONST_INANIMATE) ? "up" : "to death");
                             messageWithColor(buf2, messageColorFromVictim(monst), 0);
                         }
+                        killCreature(monst, false);
                         return;
                     }
                     if (monst->status[i] <= 0) {
@@ -1885,6 +1885,7 @@ void decrementMonsterStatus(creature *monst) {
                             sprintf(buf2, "%s dies of poison.", buf);
                             messageWithColor(buf2, messageColorFromVictim(monst), 0);
                         }
+                        killCreature(monst, false);
                         return;
                     }
                     if (!monst->status[i]) {
@@ -2339,7 +2340,7 @@ boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, bool
         }
         monst->ticksUntilTurn = monst->attackSpeed * (monst->info.flags & MONST_CAST_SPELLS_SLOWLY ? 2 : 1);
         theBolt = boltCatalog[theBoltType];
-        zap(origin, bestTarget, &theBolt, false);
+        zap(origin, bestTarget, &theBolt, false, false);
         return true;
     }
     return false;
@@ -2677,7 +2678,7 @@ void monsterCastSpell(creature *caster, creature *target, enum boltType boltInde
     theBolt = boltCatalog[boltIndex];
     pos originLoc = caster->loc;
     pos targetLoc = target->loc;
-    zap(originLoc, targetLoc, &theBolt, false);
+    zap(originLoc, targetLoc, &theBolt, false, false);
 
     if (player.currentHP <= 0) {
         gameOver(monsterCatalog[caster->info.monsterID].monsterName, false);
@@ -4105,7 +4106,7 @@ boolean staffOrWandEffectOnMonsterDescription(char *newText, item *theItem, crea
                     successfulDescription = true;
                 } else if (theItem->flags & (ITEM_MAX_CHARGES_KNOWN | ITEM_IDENTIFIED)) {
                     if (staffDamageLow(enchant) >= monst->currentHP) {
-                        sprintf(newText, "\n     Your %s (%c) will %s the %s in one hit.",
+                        sprintf(newText, "\n     Your %s (%c) will %s %s in one hit.",
                                 theItemName,
                                 theItem->inventoryLetter,
                                 (monst->info.flags & MONST_INANIMATE) ? "destroy" : "kill",

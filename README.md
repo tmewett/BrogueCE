@@ -67,8 +67,9 @@ check out the wiki -- although keep in mind CE may differ from it.
 If you downloaded the source code, you will need to build the game first. For
 instructions, see `BUILD.md`.
 
-On Windows, if you want to run from the command prompt, use `brogue-cmd.bat`
-instead of `brogue.exe`.
+Brogue supports some command-line options; run `brogue --help` for more info.
+(On Windows, if you want to see output in the command prompt, use
+`brogue-cmd.bat`.)
 
 
 Contributing
@@ -109,7 +110,7 @@ contribution guide to get involved!
 
 We always try to make changes in the same spirit as the rest of the game. Anyone
 can propose a change - all discussion occurs in our GitHub issue tracker or on
-our development Discord (see CONTRIBUTING.md). We also make sure that things are
+our development Discord (see contributing guide). We also make sure that things are
 well play-tested.
 
 
