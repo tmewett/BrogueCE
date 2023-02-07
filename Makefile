@@ -53,6 +53,9 @@ objects := $(sources:.c=.o)
 
 include recipes/*.mk
 
+clean:
+	$(warning 'make clean' is no longer needed in many situations, so is not supported. Use 'make -B' to force rebuild something.)
+
 escape = $(subst ','\'',$(1))
 vars:
 	mkdir vars
