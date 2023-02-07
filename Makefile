@@ -7,6 +7,12 @@ libs := -lm
 cppflags := -DDATADIR=$(DATADIR)
 
 sources := $(wildcard src/brogue/*.c) $(addprefix src/platform/,main.c platformdependent.c)
+objects :=
+
+ifeq ($(SYSTEM),WINDOWS)
+objects += windows/icon.o
+.exe := .exe
+endif
 
 ifeq ($(RELEASE),YES)
 extra_version :=
@@ -49,9 +55,10 @@ cflags += $(CFLAGS)
 cppflags += $(CPPFLAGS)
 libs += $(LDLIBS)
 
-objects := $(sources:.c=.o)
+objects += $(sources:.c=.o)
 
 include make/*.mk
+.DEFAULT_GOAL := bin/brogue$(.exe)
 
 clean:
 	$(warning 'make clean' is no longer needed in many situations, so is not supported. Use 'make -B' to force rebuild something.)
