@@ -14,6 +14,14 @@ objects += windows/icon.o
 .exe := .exe
 endif
 
+ifeq ($(SYSTEM),OS2)
+cflags += -march=pentium4 -mtune=pentium4 -Zmt -Wno-narrowing
+cppflags += -D__ST_MT_ERRNO__
+libs += -lcx -lc -Zomf -Zbin-files -Zargs-wild -Zargs-resp -Zhigh-mem -Zstack 8000
+objects += os2/icon.res os2/brogue.lib
+.exe := .exe
+endif
+
 ifeq ($(RELEASE),YES)
 extra_version :=
 else
@@ -25,6 +33,9 @@ ifeq ($(TERMINAL),YES)
 sources += $(addprefix src/platform/,curses-platform.c term.c)
 cppflags += -DBROGUE_CURSES
 libs += -lncurses
+ifeq ($(SYSTEM),OS2)
+libs += -ltinfo
+endif
 endif
 
 ifeq ($(GRAPHICS),YES)

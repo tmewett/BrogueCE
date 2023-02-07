@@ -1,7 +1,7 @@
 # Where to look for game data files (found in 'bin'). Must be without trailing slashes!
 DATADIR := .
 
-# Host and target platform. Values: LINUXLIKE, WINDOWS
+# Host and target platform. Values: LINUXLIKE, WINDOWS, OS2
 SYSTEM := LINUXLIKE
 
 # Include terminal support. Requires ncurses
