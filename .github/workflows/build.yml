@@ -100,7 +100,7 @@ jobs:
 
     - name: "Create artifact"
       run: |
-        mingw32-make BrogueCE-windows
+        mingw32-make SYSTEM=WINDOWS BrogueCE-windows
         cp SDL2\x86_64-w64-mingw32\bin\SDL2.dll BrogueCE-windows
         cp SDL2_image\x86_64-w64-mingw32\bin\zlib1.dll BrogueCE-windows
         cp SDL2_image\x86_64-w64-mingw32\bin\SDL2_image.dll BrogueCE-windows
