@@ -2758,7 +2758,7 @@ extern "C" {
                          boolean superpriority);
     boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refreshCell, boolean abortIfBlocking);
     void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit);
-    void restoreItem(item *theItem);
+    void restoreItems();
     void refreshWaypoint(short wpIndex);
     void setUpWaypoints();
     void zeroOutGrid(char grid[DCOLS][DROWS]);

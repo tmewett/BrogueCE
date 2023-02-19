@@ -711,9 +711,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
 
         levels[rogue.depthLevel-1].items           = NULL;
 
-        for (theItem = floorItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
-            restoreItem(theItem);
-        }
+        restoreItems();
 
     }
 

@@ -3525,21 +3525,32 @@ void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
     }
 }
 
-void restoreItem(item *theItem) {
-    if (theItem->flags & ITEM_PREPLACED) {
-        theItem->flags &= ~ITEM_PREPLACED;
+void restoreItems() {
+    item *theItem, *nextItem;
+    pos loc;
+    item preplaced;
+    preplaced.nextItem = NULL;
 
-        pos loc;
+    // Remove preplaced items from the floor chain
+    for (theItem = floorItems->nextItem; theItem != NULL; theItem = nextItem) {
+        nextItem = theItem->nextItem;
+
+        if (theItem->flags & ITEM_PREPLACED) {
+            theItem->flags &= ~ITEM_PREPLACED;
+            removeItemFromChain(theItem, floorItems);
+            addItemToChain(theItem, &preplaced);
+        }
+    }
+
+    // Place items properly
+    for (theItem = preplaced.nextItem; theItem != NULL; theItem = nextItem) {
+        nextItem = theItem->nextItem;
+
         // Items can fall into deep water, enclaved lakes, another chasm, even lava!
         getQualifyingLocNear(&loc, theItem->loc.x, theItem->loc.y, true, 0,
                             (T_OBSTRUCTS_ITEMS),
                             (HAS_MONSTER | HAS_ITEM | HAS_STAIRS), false, false);
-
-        theItem->loc = loc;
-    }
-    pmap[theItem->loc.x][theItem->loc.y].flags |= HAS_ITEM;
-    if (theItem->flags & ITEM_MAGIC_DETECTED && itemMagicPolarity(theItem)) {
-        pmap[theItem->loc.x][theItem->loc.y].flags |= ITEM_DETECTED;
+        placeItem(theItem, loc.x, loc.y );
     }
 }
 
@@ -3635,7 +3646,6 @@ void prepareForStairs(short x, short y, char grid[DCOLS][DROWS]) {
 void initializeLevel() {
     short i, j, dir;
     short **mapToStairs, **mapToPit;
-    item *theItem;
     char grid[DCOLS][DROWS];
     short n = rogue.depthLevel - 1;
 
@@ -3725,9 +3735,7 @@ void initializeLevel() {
     }
 
     // Restore items that fell from the previous depth.
-    for (theItem = floorItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
-        restoreItem(theItem);
-    }
+    restoreItems();
 
     // Restore creatures that fell from the previous depth or that have been pathing toward the stairs.
     mapToStairs = allocGrid();
