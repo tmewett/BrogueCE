@@ -3497,7 +3497,7 @@ void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
             pmap[*x][*y].flags &= ~HAS_MONSTER;
         }
         getQualifyingPathLocNear(x, y, *x, *y, true, T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)), 0,
-                                 avoidedFlagsForMonster(&(monst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_STAIRS), true);
+                                 avoidedFlagsForMonster(&(monst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_STAIRS | IS_IN_MACHINE), true);
     }
     pmap[*x][*y].flags |= HAS_MONSTER;
     monst->bookkeepingFlags &= ~(MB_PREPLACED | MB_APPROACHING_DOWNSTAIRS | MB_APPROACHING_UPSTAIRS | MB_APPROACHING_PIT | MB_ABSORBING);
@@ -3533,7 +3533,7 @@ void restoreItem(item *theItem) {
         // Items can fall into deep water, enclaved lakes, another chasm, even lava!
         getQualifyingLocNear(&loc, theItem->loc.x, theItem->loc.y, true, 0,
                             (T_OBSTRUCTS_ITEMS),
-                            (HAS_MONSTER | HAS_ITEM | HAS_STAIRS), false, false);
+                            (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false, false);
 
         theItem->loc = loc;
     }
