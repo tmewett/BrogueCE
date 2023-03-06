@@ -683,7 +683,7 @@ void populateItems(short upstairsX, short upstairsY) {
             dumpLevelToScreen();
             displayGrid(map);
             freeGrid(map);
-            plotCharWithColor(theItem->displayChar, mapToWindowX(x), mapToWindowY(y), &black, &purple);
+            plotCharWithColor(theItem->displayChar, mapToWindow((pos){ x, y }), &black, &purple);
             temporaryMessage("Added an item.", REQUIRE_ACKNOWLEDGMENT);
         }
     }
@@ -4906,9 +4906,9 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
 
                         colorMultiplierFromDungeonLight(x2, y2, &multColor);
                         applyColorMultiplier(&foreColor, &multColor);
-                        plotCharWithColor(theChar, mapToWindowX(x2), mapToWindowY(y2), &foreColor, &backColor);
+                        plotCharWithColor(theChar, mapToWindow((pos){ x2, y2 }), &foreColor, &backColor);
                     } else if (boltColor) {
-                        plotCharWithColor(theChar, mapToWindowX(x2), mapToWindowY(y2), &foreColor, &backColor);
+                        plotCharWithColor(theChar, mapToWindow((pos){ x2, y2 }), &foreColor, &backColor);
                     } else if (k == 1
                                && theBolt->foreColor
                                && theBolt->theChar) {
@@ -5990,7 +5990,7 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
             } else { // clairvoyant visible
                 applyColorMultiplier(&foreColor, &clairvoyanceColor);
             }
-            plotCharWithColor(theItem->displayChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor);
+            plotCharWithColor(theItem->displayChar, mapToWindow((pos){ x, y }), &foreColor, &backColor);
 
             if (!fastForward) {
                 fastForward = rogue.playbackFastForward || pauseAnimation(25);

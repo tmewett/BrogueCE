@@ -113,7 +113,7 @@ void benchmark() {
         for (i=0; i<COLS; i++) {
             for (j=0; j<ROWS; j++) {
                 theChar = rand_range('!', '~');
-                plotCharWithColor(theChar, i, j, &sparklesauce, &sparklesauce);
+                plotCharWithColor(theChar, (windowpos){ i, j }, &sparklesauce, &sparklesauce);
             }
         }
         pauseBrogue(1);

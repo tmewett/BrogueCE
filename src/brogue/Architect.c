@@ -358,7 +358,8 @@ void addLoops(short **grid, short minimumPathingDistance) {
                         grid[x][y] = 2;             // then turn the tile into a doorway.
                         costMap[x][y] = 1;          // (Cost map also needs updating.)
                         if (D_INSPECT_LEVELGEN) {
-                            plotCharWithColor(G_CLOSED_DOOR, mapToWindowX(x), mapToWindowY(y), &black, &green);
+                            pos p = { x, y };
+                            plotCharWithColor(G_CLOSED_DOOR, mapToWindow(p), &black, &green);
                         }
                         break;
                     }
@@ -761,7 +762,7 @@ void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY,
                 copyGrid(pathingGrid, grid);
                 findReplaceGrid(pathingGrid, -1, -1, 0);
                 hiliteGrid(pathingGrid, &green, 50);
-                plotCharWithColor('X', mapToWindowX(orphanList[n].x), mapToWindowY(orphanList[n].y), &black, &orange);
+                plotCharWithColor('X', mapToWindow(orphanList[n]), &black, &orange);
                 temporaryMessage("Orphan detected:", REQUIRE_ACKNOWLEDGMENT);
             }
 
@@ -803,7 +804,8 @@ void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY,
                 if (D_INSPECT_MACHINES) {
                     dumpLevelToScreen();
                     displayGrid(pathingGrid);
-                    plotCharWithColor('X', mapToWindowX(i), mapToWindowY(j), &black, &orange);
+                    pos p = { i, j };
+                    plotCharWithColor('X', mapToWindow(p), &black, &orange);
                     temporaryMessage("Orphan connecting:", REQUIRE_ACKNOWLEDGMENT);
                 }
             }
@@ -2146,7 +2148,7 @@ void chooseRandomDoorSites(short **roomMap, pos doorSites[4]) {
                         newY += nbDirs[dir][1];
                     }
                     if (!doorSiteFailed) {
-//                        plotCharWithColor(dirChars[dir], mapToWindowX(i), mapToWindowY(j), &black, &green);
+//                        plotCharWithColor(dirChars[dir], mapToWindow((pos){ i, j }), &black, &green);
                         grid[i][j] = dir + 2; // So as not to conflict with 0 or 1, which are used to indicate exterior/interior.
                     }
                 }
@@ -2346,10 +2348,10 @@ void attachRooms(short **grid, const dungeonProfile *theDP, short attempts, shor
         if (D_INSPECT_LEVELGEN) {
             colorOverDungeon(&darkGray);
             hiliteGrid(roomMap, &blue, 100);
-            if (doorSites[0].x != -1) plotCharWithColor('^', mapToWindowX(doorSites[0].x), mapToWindowY(doorSites[0].y), &black, &green);
-            if (doorSites[1].x != -1) plotCharWithColor('v', mapToWindowX(doorSites[1].x), mapToWindowY(doorSites[1].y), &black, &green);
-            if (doorSites[2].x != -1) plotCharWithColor('<', mapToWindowX(doorSites[2].x), mapToWindowY(doorSites[2].y), &black, &green);
-            if (doorSites[3].x != -1) plotCharWithColor('>', mapToWindowX(doorSites[3].x), mapToWindowY(doorSites[3].y), &black, &green);
+            if (doorSites[0].x != -1) plotCharWithColor('^', mapToWindow(doorSites[0]), &black, &green);
+            if (doorSites[1].x != -1) plotCharWithColor('v', mapToWindow(doorSites[1]), &black, &green);
+            if (doorSites[2].x != -1) plotCharWithColor('<', mapToWindow(doorSites[2]), &black, &green);
+            if (doorSites[3].x != -1) plotCharWithColor('>', mapToWindow(doorSites[3]), &black, &green);
             temporaryMessage("Generating this room:", REQUIRE_ACKNOWLEDGMENT);
         }
 
@@ -2584,7 +2586,7 @@ boolean lakeDisruptsPassability(short **grid, short **lakeMap, short dungeonToGr
 //                    dumpLevelToScreen();
 //                    hiliteGrid(lakeMap, &darkBlue, 75);
 //                    hiliteGrid(floodMap, &white, 20);
-//                    plotCharWithColor('X', mapToWindowX(i), mapToWindowY(j), &black, &red);
+//                    plotCharWithColor('X', mapToWindow((pos){ i, j }), &black, &red);
 //                    temporaryMessage("Failed here.", REQUIRE_ACKNOWLEDGMENT);
 //                }
 

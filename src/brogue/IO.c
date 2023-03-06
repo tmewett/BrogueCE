@@ -1545,7 +1545,7 @@ void refreshDungeonCell(short x, short y) {
     brogueAssert(coordinatesAreInMap(x, y));
 
     getCellAppearance(x, y, &cellChar, &foreColor, &backColor);
-    plotCharWithColor(cellChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor);
+    plotCharWithColor(cellChar, mapToWindow((pos){ x, y }), &foreColor, &backColor);
 }
 
 void applyColorMultiplier(color *baseColor, const color *multiplierColor) {
@@ -1724,7 +1724,7 @@ void irisFadeBetweenBuffers(cellDisplayBuffer fromBuf[COLS][ROWS],
                 toChar = toBuf[i][j].character;
 
                 blendAppearances(&fromForeColor, &fromBackColor, fromChar, &toForeColor, &toBackColor, toChar, &currentForeColor, &currentBackColor, &currentChar, clamp(thisCellPercent, 0, 100));
-                plotCharWithColor(currentChar, i, j, &currentForeColor, &currentBackColor);
+                plotCharWithColor(currentChar, (windowpos){ i, j }, &currentForeColor, &currentBackColor);
             }
         }
 
@@ -1742,7 +1742,7 @@ void colorBlendCell(short x, short y, color *hiliteColor, short hiliteStrength) 
     getCellAppearance(x, y, &displayChar, &foreColor, &backColor);
     applyColorAverage(&foreColor, hiliteColor, hiliteStrength);
     applyColorAverage(&backColor, hiliteColor, hiliteStrength);
-    plotCharWithColor(displayChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor);
+    plotCharWithColor(displayChar, mapToWindow((pos){ x, y }), &foreColor, &backColor);
 }
 
 // takes dungeon coordinates
@@ -1758,7 +1758,7 @@ void hiliteCell(short x, short y, const color *hiliteColor, short hiliteStrength
     if (distinctColors) {
         separateColors(&foreColor, &backColor);
     }
-    plotCharWithColor(displayChar, mapToWindowX(x), mapToWindowY(y), &foreColor, &backColor);
+    plotCharWithColor(displayChar, mapToWindow((pos){ x, y }), &foreColor, &backColor);
 
     restoreRNG;
 }
@@ -1781,8 +1781,7 @@ void colorMultiplierFromDungeonLight(short x, short y, color *editColor) {
     editColor->colorDances = false;
 }
 
-void plotCharWithColor(enum displayGlyph inputChar, short x, short y, const color *cellForeColor, const color *cellBackColor) {
-    pos loc = { x, y };
+void plotCharWithColor(enum displayGlyph inputChar, windowpos loc, const color *cellForeColor, const color *cellBackColor) {
     short oldRNG;
 
     short foreRed = cellForeColor->red,
@@ -1795,7 +1794,7 @@ void plotCharWithColor(enum displayGlyph inputChar, short x, short y, const colo
 
     foreRand, backRand;
 
-    brogueAssert(coordinatesAreInWindow(loc.x, loc.y));
+    brogueAssert(coordinatesAreInWindow(loc.window_x, loc.window_y));
 
     if (rogue.gameHasEnded || rogue.playbackFastForward) {
         return;
@@ -1829,7 +1828,7 @@ void plotCharWithColor(enum displayGlyph inputChar, short x, short y, const colo
         inputChar = ' ';
     }
 
-    cellDisplayBuffer *target = &displayBuffer[loc.x][loc.y];
+    cellDisplayBuffer *target = &displayBuffer[loc.window_x][loc.window_y];
     target->character = inputChar;
     target->foreColorComponents[0] = foreRed;
     target->foreColorComponents[1] = foreGreen;
@@ -1845,7 +1844,7 @@ void plotCharToBuffer(enum displayGlyph inputChar, short x, short y, color *fore
     short oldRNG;
 
     if (!dbuf) {
-        plotCharWithColor(inputChar, x, y, foreColor, backColor);
+        plotCharWithColor(inputChar, (windowpos){ x, y }, foreColor, backColor);
         return;
     }
 
@@ -1875,7 +1874,7 @@ void plotForegroundChar(enum displayGlyph inputChar, short x, short y, color *fo
         colorMultiplierFromDungeonLight(x, y, &multColor);
         applyColorMultiplier(&myColor, &multColor);
     }
-    plotCharWithColor(inputChar, mapToWindowX(x), mapToWindowY(y), &myColor, &backColor);
+    plotCharWithColor(inputChar, mapToWindow((pos){ x, y }), &myColor, &backColor);
 }
 
 // Debug feature: display the level to the screen without regard to lighting, field of view, etc.
@@ -1897,7 +1896,7 @@ void dumpLevelToScreen() {
                 refreshDungeonCell(i, j);
                 pmap[i][j] = backup;
             } else {
-                plotCharWithColor(' ', mapToWindowX(i), mapToWindowY(j), &white, &black);
+                plotCharWithColor(' ', mapToWindow((pos){ i, j }), &white, &black);
             }
 
         }
@@ -1948,7 +1947,7 @@ void blackOutScreen() {
 
     for (i=0; i<COLS; i++) {
         for (j=0; j<ROWS; j++) {
-            plotCharWithColor(' ', i, j, &black, &black);
+            plotCharWithColor(' ', (windowpos){ i, j }, &black, &black);
         }
     }
 }
@@ -1958,7 +1957,7 @@ void colorOverDungeon(const color *color) {
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            plotCharWithColor(' ', mapToWindowX(i), mapToWindowY(j), color, color);
+            plotCharWithColor(' ', mapToWindow((pos){ i, j }), color, color);
         }
     }
 }
@@ -2027,7 +2026,7 @@ void overlayDisplayBuffer(cellDisplayBuffer overBuf[COLS][ROWS], cellDisplayBuff
                 tempColor = colorFromComponents(displayBuffer[i][j].backColorComponents);
                 applyColorAverage(&backColor, &tempColor, 100 - overBuf[i][j].opacity);
 
-                plotCharWithColor(character, i, j, &foreColor, &backColor);
+                plotCharWithColor(character, (windowpos){ i, j }, &foreColor, &backColor);
             }
         }
     }
@@ -2064,7 +2063,7 @@ void flashForeground(short *x, short *y, color **flashColor, short *flashStrengt
             percent = flashStrength[i] * j / frames;
             newColor = fColor[i];
             applyColorAverage(&newColor, flashColor[i], percent);
-            plotCharWithColor(displayChar[i], mapToWindowX(x[i]), mapToWindowY(y[i]), &newColor, &(bColor[i]));
+            plotCharWithColor(displayChar[i], mapToWindow((pos){ x[i], y[i] }), &newColor, &(bColor[i]));
         }
         if (j) {
             if (pauseAnimation(16)) {
@@ -2224,7 +2223,7 @@ void funkyFade(cellDisplayBuffer displayBuf[COLS][ROWS], const color *colorStart
                     applyColorAverage(&foreColor, &tempColor, weight);
                 }
                 applyColorAverage(&backColor, &tempColor, weight);
-                plotCharWithColor(tempChar, i, j, &foreColor, &backColor);
+                plotCharWithColor(tempChar, (windowpos){ i, j }, &foreColor, &backColor);
             }
         }
         if (!fastForward && pauseAnimation(16)) {
@@ -2279,7 +2278,7 @@ void displayMachines() {
             if (pmap[i][j].machineNumber) {
                 getCellAppearance(i, j, &dchar, &foreColor, &backColor);
                 applyColorAugment(&backColor, &(machineColors[pmap[i][j].machineNumber]), 50);
-                //plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &backColor);
+                //plotCharWithColor(dchar, mapToWindow((pos){ i, j }), &foreColor, &backColor);
                 if (pmap[i][j].machineNumber < 10) {
                     dchar ='0' + pmap[i][j].machineNumber;
                 } else if (pmap[i][j].machineNumber < 10 + 26) {
@@ -2287,7 +2286,7 @@ void displayMachines() {
                 } else {
                     dchar = 'A' + pmap[i][j].machineNumber - 10 - 26;
                 }
-                plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &backColor);
+                plotCharWithColor(dchar, mapToWindow((pos){ i, j }), &foreColor, &backColor);
             }
         }
     }
@@ -2309,12 +2308,12 @@ void displayChokeMap() {
                 if (pmap[i][j].flags & IS_GATE_SITE) {
                     getCellAppearance(i, j, &dchar, &foreColor, &backColor);
                     applyColorAugment(&backColor, &teal, 50);
-                    plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &backColor);
+                    plotCharWithColor(dchar, mapToWindow((pos){ i, j }), &foreColor, &backColor);
                 } else
                     if (chokeMap[i][j] < CHOKEMAP_DISPLAY_CUTOFF) {
                     getCellAppearance(i, j, &dchar, &foreColor, &backColor);
                     applyColorAugment(&backColor, &red, 100 - chokeMap[i][j] * 100 / CHOKEMAP_DISPLAY_CUTOFF);
-                    plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &backColor);
+                    plotCharWithColor(dchar, mapToWindow((pos){ i, j }), &foreColor, &backColor);
                 }
             }
         }
@@ -2333,13 +2332,13 @@ void displayLoops() {
             if (pmap[i][j].flags & IN_LOOP) {
                 getCellAppearance(i, j, &dchar, &foreColor, &backColor);
                 applyColorAugment(&backColor, &yellow, 50);
-                plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &backColor);
+                plotCharWithColor(dchar, mapToWindow((pos){ i, j }), &foreColor, &backColor);
                 //colorBlendCell(i, j, &tempColor, 100);//hiliteCell(i, j, &tempColor, 100, true);
             }
             if (pmap[i][j].flags & IS_CHOKEPOINT) {
                 getCellAppearance(i, j, &dchar, &foreColor, &backColor);
                 applyColorAugment(&backColor, &teal, 50);
-                plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &backColor);
+                plotCharWithColor(dchar, mapToWindow((pos){ i, j }), &foreColor, &backColor);
             }
         }
     }
@@ -2772,7 +2771,7 @@ boolean getInputTextString(char *inputText,
         overlayDisplayBuffer(dbuf, rbuf);
         printString(prompt, x, y - 1, &white, &interfaceBoxColor, NULL);
         for (i=0; i<maxLength; i++) {
-            plotCharWithColor(' ', x + i, y, &black, &black);
+            plotCharWithColor(' ', (windowpos){ x + i, y }, &black, &black);
         }
         printString(defaultEntry, x, y, &white, &black, 0);
     } else {
@@ -2802,11 +2801,11 @@ boolean getInputTextString(char *inputText,
 
     do {
         printString(suffix, charNum + x, y, &gray, &black, 0);
-        plotCharWithColor((suffix[0] ? suffix[0] : ' '), x + charNum, y, &black, &white);
+        plotCharWithColor((suffix[0] ? suffix[0] : ' '), (windowpos){ x + charNum, y }, &black, &white);
         keystroke = nextKeyPress(true);
         if (keystroke == DELETE_KEY && charNum > 0) {
             printString(suffix, charNum + x - 1, y, &gray, &black, 0);
-            plotCharWithColor(' ', x + charNum + strlen(suffix) - 1, y, &black, &black);
+            plotCharWithColor(' ', (windowpos){ x + charNum + strlen(suffix) - 1, y }, &black, &black);
             charNum--;
             inputText[charNum] = ' ';
         } else if (keystroke >= textEntryBounds[textEntryType][0]
@@ -2819,7 +2818,7 @@ boolean getInputTextString(char *inputText,
             }
 
             inputText[charNum] = keystroke;
-            plotCharWithColor(keystroke, x + charNum, y, &white, &black);
+            plotCharWithColor(keystroke, (windowpos){ x + charNum, y }, &white, &black);
             printString(suffix, charNum + x + 1, y, &gray, &black, 0);
             if (charNum < maxLength) {
                 charNum++;
@@ -2838,7 +2837,7 @@ boolean getInputTextString(char *inputText,
                         && characterForbiddenInFilename(character)) {
                         character = '-';
                     }
-                    plotCharWithColor(character, x + charNum, y, &white, &black);
+                    plotCharWithColor(character, (windowpos){ x + charNum, y }, &white, &black);
                     if (charNum < maxLength) {
                         charNum++;
                     }
@@ -2913,7 +2912,7 @@ void flashMessage(char *message, short x, short y, int time, color *fColor, colo
                     foreColor = colorFromComponents(dbufs[j].foreColorComponents);
                     applyColorAverage(&foreColor, &backColor, (100 - percentComplete) * 2);
                 }
-                plotCharWithColor(dchar, j+x, y, &foreColor, &backColor);
+                plotCharWithColor(dchar, (windowpos){ j+x, y }, &foreColor, &backColor);
             }
         }
         previousPercentComplete = percentComplete;
@@ -2921,7 +2920,7 @@ void flashMessage(char *message, short x, short y, int time, color *fColor, colo
     }
     for (j=0; j<messageLength; j++) {
         foreColor = colorFromComponents(dbufs[j].foreColorComponents);
-        plotCharWithColor(dbufs[j].character, j+x, y, &foreColor, &(backColors[j]));
+        plotCharWithColor(dbufs[j].character, (windowpos){ j+x, y }, &foreColor, &(backColors[j]));
     }
 
     restoreRNG;
@@ -3419,7 +3418,7 @@ void temporaryMessage(const char *msg, unsigned long flags) {
 
     for (i=0; i<MESSAGE_LINES; i++) {
         for (j=0; j<DCOLS; j++) {
-            plotCharWithColor(' ', mapToWindowX(j), i, &black, &black);
+            plotCharWithColor(' ', (windowpos){ mapToWindowX(j), i }, &black, &black);
         }
     }
     printString(message, mapToWindowX(0), mapToWindowY(-1), &white, &black, 0);
@@ -3454,7 +3453,7 @@ void flavorMessage(char *msg) {
 
     printString(text, mapToWindowX(0), ROWS - 2, &flavorTextColor, &black, 0);
     for (i = strLenWithoutEscapes(text); i < DCOLS; i++) {
-        plotCharWithColor(' ', mapToWindowX(i), ROWS - 2, &black, &black);
+        plotCharWithColor(' ', (windowpos) { mapToWindowX(i), ROWS - 2 }, &black, &black);
     }
 }
 
@@ -3654,12 +3653,12 @@ void updateMessageDisplay() {
                 }
             }
 
-            plotCharWithColor(displayedMessage[i][m], mapToWindowX(j), MESSAGE_LINES - i - 1,
+            plotCharWithColor(displayedMessage[i][m], (windowpos){ mapToWindowX(j), MESSAGE_LINES - i - 1 },
                               &messageColor,
                               &black);
         }
         for (; j < DCOLS; j++) {
-            plotCharWithColor(' ', mapToWindowX(j), MESSAGE_LINES - i - 1, &black, &black);
+            plotCharWithColor(' ', (windowpos){ mapToWindowX(j), MESSAGE_LINES - i - 1 }, &black, &black);
         }
     }
 }
@@ -3948,7 +3947,7 @@ void printString(const char *theString, short x, short y, color *foreColor, colo
         if (dbuf) {
             plotCharToBuffer(theString[i], x, y, &fColor, backColor, dbuf);
         } else {
-            plotCharWithColor(theString[i], x, y, &fColor, backColor);
+            plotCharWithColor(theString[i], (windowpos) { x, y }, &fColor, backColor);
         }
     }
 }
@@ -4075,7 +4074,7 @@ short printStringWithWrapping(char *theString, short x, short y, short width, co
             }
         } else {
             if (coordinatesAreInWindow(px, py)) {
-                plotCharWithColor(printString[i], px, py, &fColor, backColor);
+                plotCharWithColor(printString[i], (windowpos) { px, py }, &fColor, backColor);
             }
         }
 
@@ -4152,7 +4151,7 @@ void printHelpScreen() {
     // Set the dbuf opacity.
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<ROWS; j++) {
-            //plotCharWithColor(' ', mapToWindowX(i), j, &black, &black);
+            //plotCharWithColor(' ', (windowpos) { mapToWindowX(i), j }, &black, &black);
             dbuf[mapToWindowX(i)][j].opacity = INTERFACE_OPACITY;
         }
     }
@@ -4452,7 +4451,7 @@ void displayGrid(short **map) {
             score -= 100;
             tempColor.green = max(min(score, 100), 0);
             getCellAppearance(i, j, &dchar, &foreColor, &backColor);
-            plotCharWithColor(dchar, mapToWindowX(i), mapToWindowY(j), &foreColor, &tempColor);
+            plotCharWithColor(dchar, mapToWindow((pos){ i, j }), &foreColor, &tempColor);
             //colorBlendCell(i, j, &tempColor, 100);//hiliteCell(i, j, &tempColor, 100, false);
         }
     }
@@ -4512,7 +4511,7 @@ void printProgressBar(short x, short y, const char barLabel[COLS], long amtFille
         }
         textColor = (dim ? gray : white);
         applyColorAverage(&textColor, &currentFillColor, (dim ? 50 : 33));
-        plotCharWithColor(barText[i], x + i, y, &textColor, &currentFillColor);
+        plotCharWithColor(barText[i], (windowpos){ x + i, y }, &textColor, &currentFillColor);
     }
 }
 
@@ -4630,9 +4629,9 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
             applyColorAugment(&monstForeColor, &black, 100);
             applyColorAugment(&monstBackColor, &black, 100);
         }
-        plotCharWithColor(monstChar, 0, y, &monstForeColor, &monstBackColor);
+        plotCharWithColor(monstChar, (windowpos){ 0, y }, &monstForeColor, &monstBackColor);
         if(monst->carriedItem) {
-            plotCharWithColor(monst->carriedItem->displayChar, 1, y, &itemColor, &black);
+            plotCharWithColor(monst->carriedItem->displayChar, (windowpos) { 1, y }, &itemColor, &black);
         }
         monsterName(monstName, monst, false);
         upperCase(monstName);
@@ -4911,7 +4910,7 @@ short printItemInfo(item *theItem, short y, boolean dim, boolean highlight) {
             applyColorAverage(&itemForeColor, &black, 50);
             applyColorAverage(&itemBackColor, &black, 50);
         }
-        plotCharWithColor(itemChar, 0, y, &itemForeColor, &itemBackColor);
+        plotCharWithColor(itemChar, (windowpos){ 0, y }, &itemForeColor, &itemBackColor);
         printString(":                  ", 1, y, (dim ? &gray : &white), &black, 0);
         if (rogue.playbackOmniscience || !player.status[STATUS_HALLUCINATING]) {
             itemName(theItem, name, true, true, (dim ? &gray : &white));
@@ -4974,7 +4973,7 @@ short printTerrainInfo(short x, short y, short py, const char *description, bool
             applyColorAverage(&foreColor, &black, 50);
             applyColorAverage(&backColor, &black, 50);
         }
-        plotCharWithColor(displayChar, 0, py, &foreColor, &backColor);
+        plotCharWithColor(displayChar, (windowpos){ 0, py }, &foreColor, &backColor);
         printString(":                  ", 1, py, (dim ? &gray : &white), &black, 0);
         strcpy(name, description);
         upperCase(name);
@@ -5030,7 +5029,7 @@ void rectangularShading(short x, short y, short width, short height,
 //  for (i=0; i<COLS; i++) {
 //      for (j=0; j<ROWS; j++) {
 //          if (i >= x && i < x + width && j >= y && j < y + height) {
-//              plotCharWithColor(' ', i, j, &white, &darkGreen);
+//              plotCharWithColor(' ', (windowpos){ i, j }, &white, &darkGreen);
 //          }
 //      }
 //  }

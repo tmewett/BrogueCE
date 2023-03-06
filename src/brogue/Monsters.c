@@ -1071,7 +1071,7 @@ boolean getRandomMonsterSpawnLocation(short *x, short *y) {
     //    DEBUG {
     //        dumpLevelToScreen();
     //        hiliteGrid(grid, &orange, 50);
-    //        plotCharWithColor('X', mapToWindowX(x), mapToWindowY(y), &black, &white);
+    //        plotCharWithColor('X', mapToWindow((pos){ x, y }), &black, &white);
     //        temporaryMessage("Horde spawn location possibilities:", REQUIRE_ACKNOWLEDGMENT);
     //    }
     freeGrid(grid);
@@ -1147,7 +1147,7 @@ void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidance
 //        DEBUG {
 //            dumpLevelToScreen();
 //            hiliteGrid(grid, &orange, 50);
-//            plotCharWithColor('X', mapToWindowX(x), mapToWindowY(y), &white, &red);
+//            plotCharWithColor('X', mapToWindow((pos){ x, y }), &white, &red);
 //            temporaryMessage("Teleport candidate locations:", REQUIRE_ACKNOWLEDGMENT);
 //        }
         freeGrid(grid);
