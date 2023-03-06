@@ -6844,6 +6844,22 @@ void magicMapCell(short x, short y) {
     }
 }
 
+boolean uncurse( item *theItem ) {
+    if (theItem->flags & ITEM_CURSED) {
+
+        // Uncurse the item
+        theItem->flags &= ~ITEM_CURSED;
+
+        // Also reduce curse duration if it is equipped
+        if (theItem->flags & ITEM_EQUIPPED) {
+            // Need to leave 1 tick on the status in case multiple cursed items contributed to the debuf
+            player.status[STATUS_CURSED] = max( 1, player.status[STATUS_CURSED] - CURSED_ITEM_DURATION );
+        }
+        return true;
+    }
+    return false;
+}
+
 void readScroll(item *theItem) {
     short i, j, x, y, numberOfMonsters = 0;
     item *tempItem;
@@ -6888,10 +6904,7 @@ void readScroll(item *theItem) {
             break;
         case SCROLL_REMOVE_CURSE:
             for (tempItem = packItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
-                if (tempItem->flags & ITEM_CURSED) {
-                    hadEffect = true;
-                    tempItem->flags &= ~ITEM_CURSED;
-                }
+                hadEffect |= uncurse(tempItem);
             }
             if (hadEffect) {
                 player.status[STATUS_CURSED] = 0;
@@ -6973,10 +6986,9 @@ void readScroll(item *theItem) {
             itemName(theItem, buf, false, false, NULL);
             sprintf(buf2, "your %s gleam%s briefly in the darkness.", buf, (theItem->quantity == 1 ? "s" : ""));
             messageWithColor(buf2, &itemMessageColor, 0);
-            if (theItem->flags & ITEM_CURSED) {
+            if (uncurse(theItem)) {
                 sprintf(buf2, "a malevolent force leaves your %s.", buf);
                 messageWithColor(buf2, &itemMessageColor, 0);
-                theItem->flags &= ~ITEM_CURSED;
             }
             createFlare(player.loc.x, player.loc.y, SCROLL_ENCHANTMENT_LIGHT);
             break;
@@ -6990,10 +7002,9 @@ void readScroll(item *theItem) {
                 itemName(tempItem, buf2, false, false, NULL);
                 sprintf(buf, "a protective golden light covers your %s.", buf2);
                 messageWithColor(buf, &itemMessageColor, 0);
-                if (tempItem->flags & ITEM_CURSED) {
+                if (uncurse(tempItem)) {
                     sprintf(buf, "a malevolent force leaves your %s.", buf2);
                     messageWithColor(buf, &itemMessageColor, 0);
-                    tempItem->flags &= ~ITEM_CURSED;
                 }
             } else {
                 message("a protective golden light surrounds you, but it quickly disperses.", 0);
@@ -7007,10 +7018,9 @@ void readScroll(item *theItem) {
                 itemName(tempItem, buf2, false, false, NULL);
                 sprintf(buf, "a protective golden light covers your %s.", buf2);
                 messageWithColor(buf, &itemMessageColor, 0);
-                if (tempItem->flags & ITEM_CURSED) {
+                if (uncurse(tempItem)) {
                     sprintf(buf, "a malevolent force leaves your %s.", buf2);
                     messageWithColor(buf, &itemMessageColor, 0);
-                    tempItem->flags &= ~ITEM_CURSED;
                 }
                 if (rogue.weapon->quiverNumber) {
                     rogue.weapon->quiverNumber = rand_range(1, 60000);
