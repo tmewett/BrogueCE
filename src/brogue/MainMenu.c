@@ -161,7 +161,7 @@ void antiAlias(unsigned char mask[COLS][ROWS]) {
                 for (dir=0; dir<4; dir++) {
                     x = i + nbDirs[dir][0];
                     y = j + nbDirs[dir][1];
-                    if (coordinatesAreInWindow(x, y) && mask[x][y] == 100) {
+                    if (locIsInWindow((windowpos){ x, y }) && mask[x][y] == 100) {
                         nbCount++;
                     }
                 }

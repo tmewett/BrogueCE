@@ -1257,7 +1257,10 @@ boolean cellHasTerrainFlag(short x, short y, unsigned long flagMask);
                                                 && cellHasTerrainFlag((x), (y), T_OBSTRUCTS_PASSABILITY)))
 
 #define coordinatesAreInMap(x, y)           ((x) >= 0 && (x) < DCOLS    && (y) >= 0 && (y) < DROWS)
-#define coordinatesAreInWindow(x, y)        ((x) >= 0 && (x) < COLS     && (y) >= 0 && (y) < ROWS)
+
+inline static boolean locIsInWindow(windowpos w) {
+    return w.window_x >= 0 && w.window_x < COLS && w.window_y >= 0 && w.window_y < ROWS;
+}
 
 inline static pos windowToMap(windowpos w) {
     return (pos) {

@@ -1794,7 +1794,7 @@ void plotCharWithColor(enum displayGlyph inputChar, windowpos loc, const color *
 
     foreRand, backRand;
 
-    brogueAssert(coordinatesAreInWindow(loc.window_x, loc.window_y));
+    brogueAssert(locIsInWindow(loc));
 
     if (rogue.gameHasEnded || rogue.playbackFastForward) {
         return;
@@ -1848,7 +1848,7 @@ void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, color *foreCol
         return;
     }
 
-    brogueAssert(coordinatesAreInWindow(loc.x, loc.y));
+    brogueAssert(locIsInWindow(loc));
 
     oldRNG = rogue.RNG;
     rogue.RNG = RNG_COSMETIC;
@@ -2455,7 +2455,7 @@ void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsD
         }
         do {
             nextKeyOrMouseEvent(returnEvent, textInput, colorsDance); // No mouse clicks outside of the window will register.
-        } while (returnEvent->eventType == MOUSE_UP && !coordinatesAreInWindow(returnEvent->param1, returnEvent->param2));
+        } while (returnEvent->eventType == MOUSE_UP && !locIsInWindow((windowpos){ returnEvent->param1, returnEvent->param2 }));
         // recording done elsewhere
     }
 
@@ -4066,7 +4066,7 @@ short printStringWithWrapping(char *theString, short x, short y, short width, co
             continue;
         }
 
-        if (coordinatesAreInWindow(px, py)) {
+        if (locIsInWindow((windowpos){ px, py })) {
             plotCharToBuffer(printString[i], (windowpos){ px, py }, &fColor, backColor, dbuf);
         }
 
