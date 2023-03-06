@@ -1,6 +1,10 @@
 #include <math.h>
 #include <stdlib.h>
+#ifdef _MSC_VER
 #include <SDL_image.h>
+#else
+#include <SDL2/SDL_image.h>
+#endif
 #include "platform.h"
 #include "tiles.h"
 
