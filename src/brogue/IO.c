@@ -1840,27 +1840,29 @@ void plotCharWithColor(enum displayGlyph inputChar, windowpos loc, const color *
     restoreRNG;
 }
 
-void plotCharToBuffer(enum displayGlyph inputChar, short x, short y, color *foreColor, color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]) {
+void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, color *foreColor, color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]) {
     short oldRNG;
 
     if (!dbuf) {
-        plotCharWithColor(inputChar, (windowpos){ x, y }, foreColor, backColor);
+        plotCharWithColor(inputChar, loc, foreColor, backColor);
         return;
     }
 
-    brogueAssert(coordinatesAreInWindow(x, y));
+    brogueAssert(coordinatesAreInWindow(loc.x, loc.y));
 
     oldRNG = rogue.RNG;
     rogue.RNG = RNG_COSMETIC;
     //assureCosmeticRNG;
-    dbuf[x][y].foreColorComponents[0] = foreColor->red + rand_range(0, foreColor->redRand) + rand_range(0, foreColor->rand);
-    dbuf[x][y].foreColorComponents[1] = foreColor->green + rand_range(0, foreColor->greenRand) + rand_range(0, foreColor->rand);
-    dbuf[x][y].foreColorComponents[2] = foreColor->blue + rand_range(0, foreColor->blueRand) + rand_range(0, foreColor->rand);
-    dbuf[x][y].backColorComponents[0] = backColor->red + rand_range(0, backColor->redRand) + rand_range(0, backColor->rand);
-    dbuf[x][y].backColorComponents[1] = backColor->green + rand_range(0, backColor->greenRand) + rand_range(0, backColor->rand);
-    dbuf[x][y].backColorComponents[2] = backColor->blue + rand_range(0, backColor->blueRand) + rand_range(0, backColor->rand);
-    dbuf[x][y].character = inputChar;
-    dbuf[x][y].opacity = 100;
+
+    cellDisplayBuffer* cell = &dbuf[loc.window_x][loc.window_y];
+    cell->foreColorComponents[0] = foreColor->red + rand_range(0, foreColor->redRand) + rand_range(0, foreColor->rand);
+    cell->foreColorComponents[1] = foreColor->green + rand_range(0, foreColor->greenRand) + rand_range(0, foreColor->rand);
+    cell->foreColorComponents[2] = foreColor->blue + rand_range(0, foreColor->blueRand) + rand_range(0, foreColor->rand);
+    cell->backColorComponents[0] = backColor->red + rand_range(0, backColor->redRand) + rand_range(0, backColor->rand);
+    cell->backColorComponents[1] = backColor->green + rand_range(0, backColor->greenRand) + rand_range(0, backColor->rand);
+    cell->backColorComponents[2] = backColor->blue + rand_range(0, backColor->blueRand) + rand_range(0, backColor->rand);
+    cell->character = inputChar;
+    cell->opacity = 100;
     restoreRNG;
 }
 
@@ -3944,11 +3946,7 @@ void printString(const char *theString, short x, short y, color *foreColor, colo
             }
         }
 
-        if (dbuf) {
-            plotCharToBuffer(theString[i], x, y, &fColor, backColor, dbuf);
-        } else {
-            plotCharWithColor(theString[i], (windowpos) { x, y }, &fColor, backColor);
-        }
+        plotCharToBuffer(theString[i], (windowpos){ x, y }, &fColor, backColor, dbuf);
     }
 }
 
@@ -4068,14 +4066,8 @@ short printStringWithWrapping(char *theString, short x, short y, short width, co
             continue;
         }
 
-        if (dbuf) {
-            if (coordinatesAreInWindow(px, py)) {
-                plotCharToBuffer(printString[i], px, py, &fColor, backColor, dbuf);
-            }
-        } else {
-            if (coordinatesAreInWindow(px, py)) {
-                plotCharWithColor(printString[i], (windowpos) { px, py }, &fColor, backColor);
-            }
+        if (coordinatesAreInWindow(px, py)) {
+            plotCharToBuffer(printString[i], (windowpos){ px, py }, &fColor, backColor, dbuf);
         }
 
         px++;
@@ -4185,14 +4177,14 @@ void printDiscoveries(short category, short count, unsigned short itemCharacter,
     for (i = 0; i < count; i++) {
         if (theTable[i].identified) {
             theColor = &white;
-            plotCharToBuffer(itemCharacter, x, y + i, &itemColor, &black, dbuf);
+            plotCharToBuffer(itemCharacter, (windowpos){ x, y + i }, &itemColor, &black, dbuf);
         } else {
             theColor = &darkGray;
             magic = magicCharDiscoverySuffix(category, i);
             if (magic == 1) {
-                plotCharToBuffer(G_GOOD_MAGIC, x, y + i, &goodColor, &black, dbuf);
+                plotCharToBuffer(G_GOOD_MAGIC, (windowpos){ x, y + i }, &goodColor, &black, dbuf);
             } else if (magic == -1) {
-                plotCharToBuffer(G_BAD_MAGIC, x, y + i, &badColor, &black, dbuf);
+                plotCharToBuffer(G_BAD_MAGIC, (windowpos){ x, y + i }, &badColor, &black, dbuf);
             }
         }
         strcpy(buf, theTable[i].name);

@@ -110,11 +110,10 @@ void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDispl
         }
 
         if (coordinatesAreInWindow(button->x + i, button->y)) {
+            plotCharToBuffer(displayCharacter, (windowpos){ button->x + i, button->y }, &fColor, &bColor, dbuf);
             if (dbuf) {
-                plotCharToBuffer(displayCharacter, button->x + i, button->y, &fColor, &bColor, dbuf);
+                // Only buffers can have opacity set.
                 dbuf[button->x + i][button->y].opacity = opacity;
-            } else {
-                plotCharWithColor(displayCharacter, (windowpos){ button->x + i, button->y }, &fColor, &bColor);
             }
         }
     }
