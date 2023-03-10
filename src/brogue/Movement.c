@@ -587,8 +587,9 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
 
     defender = monsterAtLoc(strikeLoc);
     if (defender
-        && (attacker != &player || canSeeMonster(defender))
-        && !monsterIsHidden(defender, attacker)
+        && (attacker != &player
+           || canSeeMonster(defender)
+           || monsterRevealed(defender))
         && monsterWillAttackTarget(attacker, defender)) {
 
         if (attacker == &player) {
@@ -654,8 +655,10 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
             /* We check if i=0, i.e. the defender is right next to us, because
             we have to do "normal" attacking here. We can't just return
             false and leave to playerMoves/moveMonster due to the collateral hitlist. */
-            if (i == 0 || !monsterIsHidden(defender, attacker)
-                && (attacker != &player || canSeeMonster(defender))) {
+            if (i == 0
+                || attacker != &player
+                || canSeeMonster(defender)
+                || monsterRevealed(defender)) {
                 // We'll attack.
                 proceed = true;
             }

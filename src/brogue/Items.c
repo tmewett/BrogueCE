@@ -639,7 +639,7 @@ void populateItems(pos upstairs) {
         } else if (rogue.depthLevel > gameConst->amuletLevel) {
             theCategory = GEM;
         } else {
-            
+
             for (int j = 0; j < gameConst->numberMeteredItems; j++) {
                 // Create any metered items that reach generation thresholds
                 if (meteredItemsGenerationTable[j].levelScaling != 0 &&
@@ -3497,7 +3497,8 @@ void getImpactLoc(pos *returnLoc, const pos originLoc, const pos targetLoc,
     for (i=0; i<n; i++) {
         monst = monsterAtLoc(coords[i]);
         if (monst
-            && !monsterIsHidden(monst, monsterAtLoc(originLoc))
+            && (!monsterIsHidden(monst, monsterAtLoc(originLoc))
+                || monsterRevealed(monst))
             && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
             // Imaginary bolt hit the player or a monster.
             break;
