@@ -3491,15 +3491,13 @@ void getImpactLoc(pos *returnLoc, const pos originLoc, const pos targetLoc,
     pos coords[DCOLS + 1];
     short i, n;
     creature *monst;
+    creature *orig = monsterAtLoc(originLoc);
 
     n = getLineCoordinates(coords, originLoc, targetLoc, theBolt);
     n = min(n, maxDistance);
     for (i=0; i<n; i++) {
         monst = monsterAtLoc(coords[i]);
-        if (monst
-            && (!monsterIsHidden(monst, monsterAtLoc(originLoc))
-                || monsterRevealed(monst))
-            && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
+        if (canAttack(orig, monst)) {
             // Imaginary bolt hit the player or a monster.
             break;
         }

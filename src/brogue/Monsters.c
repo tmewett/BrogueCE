@@ -231,6 +231,30 @@ boolean canDirectlySeeMonster(creature *monst) {
     return false;
 }
 
+// Centralize the logic of whether an attacker can/will attack the defender
+boolean canAttack( creature *attacker, creature *defender ) {
+    if (attacker == NULL || defender == NULL) return false;
+
+    // Must be enemies
+    boolean areEnemies = monsterWillAttackTarget(attacker, defender);
+
+    // Must be able to attack the cell where the defender is located
+    boolean canAttackCell = !cellHasTerrainFlag(defender->loc.x, defender->loc.y, T_OBSTRUCTS_PASSABILITY)
+                    || (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS);
+
+    // Must be able to detect the defender
+    boolean locationKnown = !monsterIsHidden(defender, attacker);
+
+    // If the player is the attacker, also check vision and telepathy
+    if (attacker == &player) {
+        locationKnown = (locationKnown && playerCanSee(defender->loc.x, defender->loc.y))
+                        || monsterRevealed(defender);
+    }
+
+    // All three requirements must be met
+    return (areEnemies && canAttackCell && locationKnown);
+}
+
 void monsterName(char *buf, creature *monst, boolean includeArticle) {
     short oldRNG;
 
