@@ -294,7 +294,7 @@ static double downscaleTile(SDL_Surface *surface, int tileWidth, int tileHeight,
             dst[scaledX[x0]] += (value * value) | 0x100000000U; // (gamma = 2.0, count = 1)
         }
         // interpolate skipped lines, if any
-        if (y1 >= 2 && scaledY[y0 - 1] == y1 - 2) {
+        if (y1 >= 2 && y0 >= 1 && scaledY[y0 - 1] == y1 - 2) {
             for (int x1 = 0; x1 < tileWidth; x1++) {
                 dst[x1 - tileWidth] = dst[x1 - 2*tileWidth] + dst[x1];
             }
