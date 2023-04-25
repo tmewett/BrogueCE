@@ -37,7 +37,7 @@
  * The hit is then randomly determined according to this final percentage.
  *
  * Some environmental factors can modify these numbers. An unaware, sleeping, stuck or paralyzed
- * combatant is always hit. An unaware, sleeping or paralyzed combatant also takes treble damage.
+ * combatant is always hit. An unaware, sleeping or paralyzed combatant also takes triple damage.
  *
  * If the hit lands, damage is calculated in the range provided. However, the clumping factor affects the
  * probability distribution. If the range is 0-10 with a clumping factor of 1, it's a uniform distribution.
@@ -1094,7 +1094,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
 
                 damage *= 5; // 5x damage for dagger sneak attacks.
             } else {
-                damage *= 3; // Treble damage for general sneak attacks.
+                damage *= 3; // Triple damage for general sneak attacks.
             }
         }
 
