@@ -586,7 +586,8 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
     getImpactLoc(&strikeLoc, originLoc, targetLoc, 5, false, &boltCatalog[BOLT_WHIP]);
 
     defender = monsterAtLoc(strikeLoc);
-    if (canAttack(attacker, defender)) {
+    if (canAttack(attacker, defender)
+        && !(defender->bookkeepingFlags & MB_SUBMERGED)) {
         if (attacker == &player) {
             hitList[0] = defender;
             if (abortAttackAgainstAcidicTarget(hitList)) {

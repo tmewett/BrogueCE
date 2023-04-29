@@ -3497,7 +3497,8 @@ void getImpactLoc(pos *returnLoc, const pos originLoc, const pos targetLoc,
     n = min(n, maxDistance);
     for (i=0; i<n; i++) {
         monst = monsterAtLoc(coords[i]);
-        if (canAttack(orig, monst)) {
+        if (canAttack(orig, monst)
+            && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
             // Imaginary bolt hit the player or a monster.
             break;
         }
