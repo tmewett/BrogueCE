@@ -625,8 +625,7 @@ void populateItems(short upstairsX, short upstairsY) {
             if (meteredItemsGenerationTable[j].incrementFrequency != 0) {
                 if (j >= NUMBER_SCROLL_KINDS) {
                     potionTable[j - NUMBER_SCROLL_KINDS].frequency = rogue.meteredItems[j].frequency;
-                }
-                else {
+                } else {
                     scrollTable[j].frequency = rogue.meteredItems[j].frequency;
                 }
             }
@@ -683,8 +682,7 @@ void populateItems(short upstairsX, short upstairsY) {
                 (theItem->category & meteredItemsGenerationTable[j].category) && theItem->kind == meteredItemsGenerationTable[j].kind) {
                 if (j >= NUMBER_SCROLL_KINDS) {
                     if (D_MESSAGE_ITEM_GENERATION) printf("\n(!)  Depth %i: generated an %s potion at %i frequency", rogue.depthLevel, potionTable[j - NUMBER_SCROLL_KINDS].name, rogue.meteredItems[j].frequency);
-                }
-                else {
+                } else {
                     if (D_MESSAGE_ITEM_GENERATION) printf("\n(?)  Depth %i: generated an %s scroll at %i frequency", rogue.depthLevel, scrollTable[j].name, rogue.meteredItems[j].frequency);
                 }
                 rogue.meteredItems[j].frequency -= meteredItemsGenerationTable[j].decrementFrequency;
