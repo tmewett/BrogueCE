@@ -2409,8 +2409,8 @@ const char armorRunicNames[NUMBER_ARMOR_ENCHANT_KINDS][30] = {
 };
 
 // To meter item generation (on level generation):
-// incrementFreq must be != 0 for frequency biasing
-// lvlScale != 0 for thresholding
+// .incrementFrequency must be != 0 for frequency biasing
+// .levelScaling != 0 for thresholding
 const meteredItemGenerationTable meteredItemsGenerationTable[NUMBER_METERED_ITEMS] = {
 { .category = SCROLL, .kind = SCROLL_ENCHANTING, .initialFrequency = 60, .incrementFrequency = 30, .decrementFrequency = 50 },
 { .category = SCROLL, .kind = SCROLL_IDENTIFY },
