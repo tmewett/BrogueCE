@@ -2739,6 +2739,7 @@ typedef struct archivedMessage {
 } archivedMessage;
 
 extern boolean serverMode;
+extern boolean nonInteractivePlayback;
 extern boolean hasGraphics;
 extern enum graphicsModes graphicsMode;
 

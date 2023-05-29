@@ -989,14 +989,13 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
 
     if (rogue.quit) {
         if (rogue.playbackMode) {
-            playback = rogue.playbackMode;
             rogue.playbackMode = false;
             message("(The player quit at this point.)", REQUIRE_ACKNOWLEDGMENT);
-            rogue.playbackMode = playback;
+            rogue.playbackMode = true;
         }
     } else {
         playback = rogue.playbackMode;
-        if (!D_IMMORTAL) {
+        if (!D_IMMORTAL && !nonInteractivePlayback) {
             rogue.playbackMode = false;
         }
         strcpy(buf, "You die...");
