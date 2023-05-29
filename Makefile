@@ -50,6 +50,11 @@ sources += $(addprefix src/platform/,web-platform.c)
 cppflags += -DBROGUE_WEB
 endif
 
+ifeq ($(NULL),YES)
+sources += $(addprefix src/platform/,null-platform.c)
+cppflags += -DBROGUE_NULL
+endif
+
 ifeq ($(MAC_APP),YES)
 cppflags += -DSDL_PATHS
 endif

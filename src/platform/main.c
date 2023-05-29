@@ -89,6 +89,8 @@ int main(int argc, char *argv[])
     currentConsole = webConsole;
 #elif BROGUE_CURSES
     currentConsole = cursesConsole;
+#elif BROGUE_NULL
+    currentConsole = nullConsole;
 #endif
 
     rogue.nextGame = NG_NOTHING;
@@ -258,6 +260,13 @@ int main(int argc, char *argv[])
             currentConsole = webConsole;
             rogue.nextGame = NG_NEW_GAME;
             serverMode = true;
+            continue;
+        }
+#endif
+
+#ifdef BROGUE_NULL
+        if (strcmp(argv[i], "--null") == 0) {
+            currentConsole = nullConsole;
             continue;
         }
 #endif

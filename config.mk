@@ -12,6 +12,9 @@ GRAPHICS := YES
 # Path to sdl2-config script
 SDL_CONFIG := sdl2-config
 
+# Include null (no console) output
+NULL := NO
+
 # Select web brogue mode. Requires POSIX system.
 WEBBROGUE := NO
 
