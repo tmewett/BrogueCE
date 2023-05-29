@@ -2457,6 +2457,9 @@ typedef struct playerCharacter {
     enum NGCommands nextGame;
     char nextGamePath[BROGUE_FILENAME_MAX];
     uint64_t nextGameSeed;
+
+    // Path of the current save game or recording, NULL for a new game
+    char currentGamePath[BROGUE_FILENAME_MAX];
 } playerCharacter;
 
 // Stores the necessary info about a level so it can be regenerated:

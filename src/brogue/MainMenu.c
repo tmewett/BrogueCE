@@ -727,6 +727,7 @@ void mainBrogueJunction() {
                 path[0] = '\0';
                 if (rogue.nextGamePath[0]) {
                     strcpy(path, rogue.nextGamePath);
+                    strcpy(rogue.currentGamePath, rogue.nextGamePath);
                     rogue.nextGamePath[0] = '\0';
                 } else {
                     dialogChooseFile(path, GAME_SUFFIX, "Open saved game:");
@@ -754,6 +755,7 @@ void mainBrogueJunction() {
                 path[0] = '\0';
                 if (rogue.nextGamePath[0]) {
                     strcpy(path, rogue.nextGamePath);
+                    strcpy(rogue.currentGamePath, rogue.nextGamePath);
                     rogue.nextGamePath[0] = '\0';
                 } else {
                     dialogChooseFile(path, RECORDING_SUFFIX, "View recording:");

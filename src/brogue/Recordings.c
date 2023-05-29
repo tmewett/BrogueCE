@@ -981,6 +981,7 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                 if (dialogChooseFile(path, RECORDING_SUFFIX, "View recording: ")) {
                     if (fileExists(path)) {
                         strcpy(rogue.nextGamePath, path);
+                        strcpy(rogue.currentGamePath, path);
                         rogue.nextGame = NG_VIEW_RECORDING;
                         rogue.gameHasEnded = true;
                     } else {
@@ -995,6 +996,7 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                 if (dialogChooseFile(path, GAME_SUFFIX, "Open saved game: ")) {
                     if (fileExists(path)) {
                         strcpy(rogue.nextGamePath, path);
+                        strcpy(rogue.currentGamePath, path);
                         rogue.nextGame = NG_OPEN_GAME;
                         rogue.gameHasEnded = true;
                     } else {
