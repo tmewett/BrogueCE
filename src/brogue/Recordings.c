@@ -1454,10 +1454,10 @@ void parseFile() {
         numDepths   = recallNumber(4);
         fileLength  = recallNumber(4);
 
-        fprintf(descriptionFile, "Parsed file \"%s\":\n\tVersion: %s\n\tSeed: %li\n\tNumber of turns: %li\n\tNumber of depth changes: %li\n\tFile length: %li\n",
+        fprintf(descriptionFile, "Parsed file \"%s\":\n\tVersion: %s\n\tSeed: %lld\n\tNumber of turns: %lu\n\tNumber of depth changes: %lu\n\tFile length: %lu\n",
                 currentFilePath,
                 versionString,
-                seed,
+                (unsigned long long)seed,
                 numTurns,
                 numDepths,
                 fileLength);
