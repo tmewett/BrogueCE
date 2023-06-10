@@ -493,6 +493,7 @@ void populateItems(short upstairsX, short upstairsY) {
     short i, j, numberOfItems, numberOfGoldPiles, goldBonusProbability, x = 0, y = 0;
     unsigned long totalHeat;
     short theCategory, theKind, randomDepthOffset = 0;
+    itemTable potionTableCopy[NUMBER_POTION_KINDS], scrollTableCopy[NUMBER_SCROLL_KINDS];
 
     const int POW_GOLD[] = {
         // b^3.05, with b from 0 to 25:
@@ -514,13 +515,18 @@ void populateItems(short upstairsX, short upstairsY) {
     char RNGmessage[100];
 #endif
 
+    // Store copy of potion and scroll tables, since they are modified during level item generation.
+    memcpy(&scrollTableCopy, &scrollTable, sizeof(scrollTable));
+    memcpy(&potionTableCopy, &potionTable, sizeof(potionTable));
+
     if (rogue.depthLevel > AMULET_LEVEL) {
         numberOfItems = lumenstoneDistribution[rogue.depthLevel - AMULET_LEVEL - 1];
         numberOfGoldPiles = 0;
     } else {
-        rogue.lifePotionFrequency += 34;
-        rogue.strengthPotionFrequency += 17;
-        rogue.enchantScrollFrequency += 30;
+        // Add frequency to metered items memory
+        for (i = 0; i < NUMBER_METERED_ITEMS; i++) {
+            rogue.meteredItems[i].frequency += meteredItemsGenerationTable[i].incrementFrequency;
+        }
         numberOfItems = 3;
         while (rand_percent(60)) {
             numberOfItems++;
@@ -614,9 +620,16 @@ void populateItems(short upstairsX, short upstairsY) {
         theCategory = ALL_ITEMS & ~GOLD; // gold is placed separately, below, so it's not a punishment
         theKind = -1;
 
-        scrollTable[SCROLL_ENCHANTING].frequency = rogue.enchantScrollFrequency;
-        potionTable[POTION_STRENGTH].frequency = rogue.strengthPotionFrequency;
-        potionTable[POTION_LIFE].frequency = rogue.lifePotionFrequency;
+        // Set metered item itemTable frequency to memory.
+        for (j = 0; j < NUMBER_METERED_ITEMS; j++) {
+            if (meteredItemsGenerationTable[j].incrementFrequency != 0) {
+                if (j >= NUMBER_SCROLL_KINDS) {
+                    potionTable[j - NUMBER_SCROLL_KINDS].frequency = rogue.meteredItems[j].frequency;
+                } else {
+                    scrollTable[j].frequency = rogue.meteredItems[j].frequency;
+                }
+            }
+        }
 
         // Adjust the desired item category if necessary.
         if ((rogue.foodSpawned + foodTable[RATION].power / 3) * 4 * FP_FACTOR
@@ -629,9 +642,17 @@ void populateItems(short upstairsX, short upstairsY) {
             }
         } else if (rogue.depthLevel > AMULET_LEVEL) {
             theCategory = GEM;
-        } else if (rogue.lifePotionsSpawned * 4 + 3 < rogue.depthLevel + randomDepthOffset) {
-            theCategory = POTION;
-            theKind = POTION_LIFE;
+        } else {
+            // Guarantee any metered items that reach generation thresholds.
+            for (j = 0; j < NUMBER_METERED_ITEMS; j++) {
+                if (meteredItemsGenerationTable[j].levelScaling != 0 &&
+                    rogue.meteredItems[j].numberSpawned * meteredItemsGenerationTable[j].genMultiplier + meteredItemsGenerationTable[j].genIncrement <
+                    rogue.depthLevel * meteredItemsGenerationTable[j].levelScaling + randomDepthOffset) {
+                        theCategory = meteredItemsGenerationTable[j].category;
+                        theKind = meteredItemsGenerationTable[j].kind;
+                        break;
+                }
+            }
         }
 
         // Generate the item.
@@ -655,17 +676,18 @@ void populateItems(short upstairsX, short upstairsY) {
         // Cool off the item spawning heat map at the chosen location:
         coolHeatMapAt(itemSpawnHeatMap, x, y, &totalHeat);
 
-        // Regulate the frequency of enchantment scrolls and strength/life potions.
-        if ((theItem->category & SCROLL) && theItem->kind == SCROLL_ENCHANTING) {
-            rogue.enchantScrollFrequency -= 50;
-            if (D_MESSAGE_ITEM_GENERATION) printf("\n(?)  Depth %i: generated an enchant scroll at %i frequency", rogue.depthLevel, rogue.enchantScrollFrequency);
-        } else if (theItem->category & POTION && theItem->kind == POTION_LIFE) {
-            if (D_MESSAGE_ITEM_GENERATION) printf("\n(!l) Depth %i: generated a life potion at %i frequency", rogue.depthLevel, rogue.lifePotionFrequency);
-            rogue.lifePotionFrequency -= 150;
-            rogue.lifePotionsSpawned++;
-        } else if (theItem->category & POTION && theItem->kind == POTION_STRENGTH) {
-            if (D_MESSAGE_ITEM_GENERATION) printf("\n(!s) Depth %i: generated a strength potion at %i frequency", rogue.depthLevel, rogue.strengthPotionFrequency);
-            rogue.strengthPotionFrequency -= 50;
+        // Remove frequency from spawned metered items memory.
+        for (j = 0; j < NUMBER_METERED_ITEMS; j++) {
+            if (meteredItemsGenerationTable[j].incrementFrequency != 0 && 
+                (theItem->category & meteredItemsGenerationTable[j].category) && theItem->kind == meteredItemsGenerationTable[j].kind) {
+                if (j >= NUMBER_SCROLL_KINDS) {
+                    if (D_MESSAGE_ITEM_GENERATION) printf("\n(!)  Depth %i: generated an %s potion at %i frequency", rogue.depthLevel, potionTable[j - NUMBER_SCROLL_KINDS].name, rogue.meteredItems[j].frequency);
+                } else {
+                    if (D_MESSAGE_ITEM_GENERATION) printf("\n(?)  Depth %i: generated an %s scroll at %i frequency", rogue.depthLevel, scrollTable[j].name, rogue.meteredItems[j].frequency);
+                }
+                rogue.meteredItems[j].frequency -= meteredItemsGenerationTable[j].decrementFrequency;
+                rogue.meteredItems[j].numberSpawned++;
+            }
         }
 
         // Place the item.
@@ -702,9 +724,14 @@ void populateItems(short upstairsX, short upstairsY) {
         temporaryMessage("Added gold.", REQUIRE_ACKNOWLEDGMENT);
     }
 
-    scrollTable[SCROLL_ENCHANTING].frequency    = 0;    // No enchant scrolls or strength/life potions can spawn except via initial
-    potionTable[POTION_STRENGTH].frequency      = 0;    // item population or blueprints that create them specifically.
-    potionTable[POTION_LIFE].frequency          = 0;
+    // No enchant scrolls or strength/life potions can spawn except via initial
+    // item population or blueprints that create them specifically.
+
+    // Restore potion and scroll tables which sets the frequency of these items
+    // to zero.
+
+    memcpy(&scrollTable, &scrollTableCopy, sizeof(scrollTableCopy));
+    memcpy(&potionTable, &potionTableCopy, sizeof(potionTableCopy));
 
     if (D_MESSAGE_ITEM_GENERATION) printf("\n---- Depth %i: %lu gold generated so far.", rogue.depthLevel, rogue.goldGenerated);
 }

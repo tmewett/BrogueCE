@@ -224,6 +224,7 @@ extern itemTable wandTable[NUMBER_WAND_KINDS];
 extern itemTable staffTable[NUMBER_STAFF_KINDS];
 extern itemTable ringTable[NUMBER_RING_KINDS];
 extern itemTable charmTable[NUMBER_CHARM_KINDS];
+extern meteredItemGenerationTable meteredItemsGenerationTable[NUMBER_METERED_ITEMS];
 
 extern const bolt boltCatalog[NUMBER_BOLT_KINDS];
 

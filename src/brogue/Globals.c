@@ -2408,6 +2408,42 @@ const char armorRunicNames[NUMBER_ARMOR_ENCHANT_KINDS][30] = {
     "immolation",
 };
 
+// To meter item generation (on level generation):
+// .incrementFrequency must be != 0 for frequency biasing
+// .levelScaling != 0 for thresholding
+const meteredItemGenerationTable meteredItemsGenerationTable[NUMBER_METERED_ITEMS] = {
+{ .category = SCROLL, .kind = SCROLL_ENCHANTING, .initialFrequency = 60, .incrementFrequency = 30, .decrementFrequency = 50 },
+{ .category = SCROLL, .kind = SCROLL_IDENTIFY },
+{ .category = SCROLL, .kind = SCROLL_TELEPORT },
+{ .category = SCROLL, .kind = SCROLL_REMOVE_CURSE },
+{ .category = SCROLL, .kind = SCROLL_RECHARGING },
+{ .category = SCROLL, .kind = SCROLL_PROTECT_ARMOR },
+{ .category = SCROLL, .kind = SCROLL_PROTECT_WEAPON },
+{ .category = SCROLL, .kind = SCROLL_SANCTUARY },
+{ .category = SCROLL, .kind = SCROLL_MAGIC_MAPPING },
+{ .category = SCROLL, .kind = SCROLL_NEGATION },
+{ .category = SCROLL, .kind = SCROLL_SHATTERING },
+{ .category = SCROLL, .kind = SCROLL_DISCORD },
+{ .category = SCROLL, .kind = SCROLL_AGGRAVATE_MONSTER },
+{ .category = SCROLL, .kind = SCROLL_SUMMON_MONSTER },
+{ .category = POTION, .kind = POTION_LIFE, .initialFrequency = 0, .incrementFrequency = 34, .decrementFrequency = 150, .genMultiplier = 4, .genIncrement = 3, .levelScaling = 1 },
+{ .category = POTION, .kind = POTION_STRENGTH, .initialFrequency = 40, .incrementFrequency = 17, .decrementFrequency = 50 },
+{ .category = POTION, .kind = POTION_TELEPATHY },
+{ .category = POTION, .kind = POTION_LEVITATION },
+{ .category = POTION, .kind = POTION_DETECT_MAGIC },
+{ .category = POTION, .kind = POTION_HASTE_SELF },
+{ .category = POTION, .kind = POTION_FIRE_IMMUNITY },
+{ .category = POTION, .kind = POTION_INVISIBILITY },
+{ .category = POTION, .kind = POTION_POISON },
+{ .category = POTION, .kind = POTION_PARALYSIS },
+{ .category = POTION, .kind = POTION_HALLUCINATION },
+{ .category = POTION, .kind = POTION_CONFUSION },
+{ .category = POTION, .kind = POTION_INCINERATION },
+{ .category = POTION, .kind = POTION_DARKNESS },
+{ .category = POTION, .kind = POTION_DESCENT },
+{ .category = POTION, .kind = POTION_LICHEN }
+};
+
 itemTable scrollTable[NUMBER_SCROLL_KINDS] = {
     {"enchanting",          itemTitles[0], "",  0,  550,    0, 1, {0,0,0}, false, false, 1,  false, "This ancient enchanting sorcery will imbue a single item with a powerful and permanent magical charge. A staff will increase in power and in number of charges; a weapon will inflict more damage and find its mark more easily; a suit of armor will deflect attacks more often; the magic of a ring will intensify; and a wand will gain expendable charges in the least amount that such a wand can be found with. Weapons and armor will also require less strength to use, and any curses on the item will be lifted."}, // frequency is dynamically adjusted
     {"identify",            itemTitles[1], "",  30, 300,    0, 0, {0,0,0}, false, false, 1,  false, "This scrying magic will permanently reveal all of the secrets of a single item."},
