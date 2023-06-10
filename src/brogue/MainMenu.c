@@ -58,7 +58,7 @@ void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3
             }
 
             if (mask[i][j] == 100) {
-                plotCharWithColor(dchar, i, j, &veryDarkGray, maskColor);
+                plotCharWithColor(dchar, (windowpos){ i, j }, &veryDarkGray, maskColor);
             } else {
                 tempColor = black;
                 tempColor.red   = flames[i][j][0] / MENU_FLAME_PRECISION_FACTOR;
@@ -67,7 +67,7 @@ void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3
                 if (mask[i][j] > 0) {
                     applyColorAverage(&tempColor, maskColor, mask[i][j]);
                 }
-                plotCharWithColor(dchar, i, j, &veryDarkGray, &tempColor);
+                plotCharWithColor(dchar, (windowpos){ i, j }, &veryDarkGray, &tempColor);
             }
         }
     }
@@ -161,7 +161,7 @@ void antiAlias(unsigned char mask[COLS][ROWS]) {
                 for (dir=0; dir<4; dir++) {
                     x = i + nbDirs[dir][0];
                     y = j + nbDirs[dir][1];
-                    if (coordinatesAreInWindow(x, y) && mask[x][y] == 100) {
+                    if (locIsInWindow((windowpos){ x, y }) && mask[x][y] == 100) {
                         nbCount++;
                     }
                 }
@@ -657,7 +657,7 @@ void mainBrogueJunction() {
                 displayBuffer[i][j].foreColorComponents[k] = 0;
                 displayBuffer[i][j].backColorComponents[k] = 0;
             }
-            plotCharWithColor(' ', i, j, &black, &black);
+            plotCharWithColor(' ', (windowpos){ i, j }, &black, &black);
         }
     }
 

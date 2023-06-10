@@ -777,9 +777,9 @@ void updateVision(boolean refreshDisplay) {
     //  for (i=0; i<DCOLS; i++) {
     //      for (j=0; j<DROWS; j++) {
     //          if (pmap[i][j].flags & VISIBLE) {
-    //              plotCharWithColor(' ', mapToWindowX(i), mapToWindowY(j), &yellow, &yellow);
+    //              plotCharWithColor(' ', mapToWindow((pos){ i, j }), &yellow, &yellow);
     //          } else if (pmap[i][j].flags & IN_FIELD_OF_VIEW) {
-    //              plotCharWithColor(' ', mapToWindowX(i), mapToWindowY(j), &blue, &blue);
+    //              plotCharWithColor(' ', mapToWindow((pos){ i, j }), &blue, &blue);
     //          }
     //      }
     //  }
