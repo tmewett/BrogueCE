@@ -724,12 +724,14 @@ void populateItems(short upstairsX, short upstairsY) {
         temporaryMessage("Added gold.", REQUIRE_ACKNOWLEDGMENT);
     }
 
-    // Restore potion and scroll tables.
-    memcpy(&scrollTable, &scrollTableCopy, sizeof(scrollTableCopy));
-    memcpy(&potionTable, &potionTableCopy, sizeof(potionTableCopy));
-
     // No enchant scrolls or strength/life potions can spawn except via initial
     // item population or blueprints that create them specifically.
+
+    // Restore potion and scroll tables which sets the frequency of these items
+    // to zero.
+
+    memcpy(&scrollTable, &scrollTableCopy, sizeof(scrollTableCopy));
+    memcpy(&potionTable, &potionTableCopy, sizeof(potionTableCopy));
 
     if (D_MESSAGE_ITEM_GENERATION) printf("\n---- Depth %i: %lu gold generated so far.", rogue.depthLevel, rogue.goldGenerated);
 }
