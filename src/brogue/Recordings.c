@@ -24,6 +24,7 @@
 #include <math.h>
 #include <limits.h>
 #include "Rogue.h"
+#include "IncludeGlobalsBase.h"
 #include "IncludeGlobals.h"
 
 #define RECORDING_HEADER_LENGTH     36  // bytes at the start of the recording file to store global data

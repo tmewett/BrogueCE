@@ -22,6 +22,7 @@
  */
 
 #include "Rogue.h"
+#include "IncludeGlobalsBase.h"
 #include "IncludeGlobals.h"
 
 void mutateMonster(creature *monst, short mutationIndex) {

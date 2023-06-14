@@ -22,6 +22,7 @@
  */
 #include "Rogue.h"
 
+<<<<<<< HEAD
 extern tcell tmap[DCOLS][DROWS];                        // grids with info about the map
 extern pcell pmap[DCOLS][DROWS];                        // grids with info about the map
 
@@ -138,15 +139,15 @@ extern color mudForeColor;
 extern color mudBackColor;
 extern color chasmForeColor;
 extern color chasmEdgeBackColor;
+=======
+
+>>>>>>> Breaking out Globals.c into universal (base) and moddable items
 extern color fireForeColor;
 
 // light colors
 extern color minersLightColor;
-extern color minersLightStartColor;
-extern color minersLightEndColor;
 extern color torchLightColor;
 extern color deepWaterLightColor;
-extern color redFlashColor;
 
 extern color discordColor;
 extern color memoryColor;
@@ -157,7 +158,6 @@ extern color telepathyMultiplier;
 extern color omniscienceColor;
 extern color basicLightColor;
 
-extern color colorDim25;
 extern color colorMultiplier100;
 
 extern color magicMapFlashColor;
@@ -174,16 +174,13 @@ extern color playerInShadowColor;
 extern color playerInLightColor;
 extern color playerInDarknessColor;
 
-extern const color inLightMultiplierColor;
 extern const color inDarknessMultiplierColor;
 
 extern const color buttonHoverColor;
 extern color titleButtonColor;
 
 // other colors
-extern color centipedeColor;
 extern color confusionGasColor;
-extern color lightningColor;
 extern color spectralImageColor;
 
 extern color goodMessageColor;
@@ -253,9 +250,3 @@ extern const bolt boltCatalog[NUMBER_BOLT_KINDS];
 extern const char weaponRunicNames[NUMBER_WEAPON_RUNIC_KINDS][30];
 
 extern const char armorRunicNames[NUMBER_ARMOR_ENCHANT_KINDS][30];
-
-extern const char monsterBehaviorFlagDescriptions[32][COLS];
-extern const char monsterAbilityFlagDescriptions[32][COLS];
-extern const char monsterBookkeepingFlagDescriptions[32][COLS];
-
-extern const pos WINDOW_POSITION_DUNGEON_TOP_LEFT;
