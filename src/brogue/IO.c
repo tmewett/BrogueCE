@@ -25,6 +25,7 @@
 #include <time.h>
 
 #include "Rogue.h"
+#include "IncludeGlobalsBase.h"
 #include "IncludeGlobals.h"
 
 // Populates path[][] with a list of coordinates starting at origin and traversing down the map. Returns the number of steps in the path.

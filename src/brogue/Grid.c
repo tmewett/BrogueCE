@@ -23,6 +23,7 @@
 
 #include "Rogue.h"
 #include "IncludeGlobals.h"
+#include "IncludeGlobalsBase.h"
 
 
 // mallocing two-dimensional arrays! dun dun DUN!

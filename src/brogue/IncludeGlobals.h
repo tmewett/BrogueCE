@@ -21,110 +21,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-extern tcell tmap[DCOLS][DROWS];                        // grids with info about the map
-extern pcell pmap[DCOLS][DROWS];                        // grids with info about the map
-extern short **scentMap;
-extern cellDisplayBuffer displayBuffer[COLS][ROWS];
-extern short terrainRandomValues[DCOLS][DROWS][8];
-extern short **safetyMap;                                       // used to help monsters flee
-extern short **allySafetyMap;
-extern short **chokeMap;
 
-extern const short nbDirs[8][2];
-extern const short cDirs[8][2];
-extern levelData *levels;
-extern creature player;
-extern playerCharacter rogue;
-extern creatureList *monsters;
-extern creatureList *dormantMonsters;
-extern creatureList purgatory;
-extern item *floorItems;
-extern item *packItems;
-extern item *monsterItemsHopper;
-extern short numberOfWaypoints;
-
-extern char displayedMessage[MESSAGE_LINES][COLS*2];
-extern short messagesUnconfirmed;
-extern char combatText[COLS*2];
-extern short messageArchivePosition;
-extern archivedMessage messageArchive[MESSAGE_ARCHIVE_ENTRIES];
-
-extern char currentFilePath[BROGUE_FILENAME_MAX];
-extern unsigned long randomNumbersGenerated;
-
-extern char displayDetail[DCOLS][DROWS];
-
-#ifdef AUDIT_RNG
-extern FILE *RNGLogFile;
-#endif
-
-extern unsigned char inputRecordBuffer[INPUT_RECORD_BUFFER + 100];
-extern unsigned short locationInRecordingBuffer;
-
-extern unsigned long positionInPlaybackFile;
-extern unsigned long lengthOfPlaybackFile;
-extern unsigned long recordingLocation;
-extern unsigned long maxLevelChanges;
-extern char annotationPathname[BROGUE_FILENAME_MAX];    // pathname of annotation file
-extern uint64_t previousGameSeed;
-
-// basic colors
-extern color white;
-extern color red;
-extern color blue;
-extern color darkRed;
-extern color gray;
-extern color darkGray;
-extern color veryDarkGray;
-extern color black;
-extern color yellow;
-extern color darkYellow;
-extern color teal;
-extern color purple;
-extern color darkPurple;
-extern color brown;
-extern color green;
-extern color darkGreen;
-extern color orange;
-extern color darkOrange;
-extern color darkBlue;
-extern color lightBlue;
-extern color pink;
-extern color darkPink;
-extern color tanColor;
-extern color sunlight;
-extern color rainbow;
-
-// tile colors
-extern color undiscoveredColor;
-
-extern color wallForeColor;
-extern color wallBackColorStart;
-extern color wallBackColorEnd;
-extern color wallBackColor;
-extern color graniteBackColor;
-extern color floorForeColor;
-extern color floorBackColor;
-extern color doorForeColor;
-extern color doorBackColor;
-
-extern color deepWaterForeColor;
-extern color deepWaterBackColor;
-extern color shallowWaterForeColor;
-extern color shallowWaterBackColor;
-extern color mudForeColor;
-extern color mudBackColor;
-extern color chasmForeColor;
-extern color chasmEdgeBackColor;
 extern color fireForeColor;
 
 // light colors
 extern color minersLightColor;
-extern color minersLightStartColor;
-extern color minersLightEndColor;
 extern color torchLightColor;
 extern color deepWaterLightColor;
-extern color redFlashColor;
 
 extern color discordColor;
 extern color memoryColor;
@@ -135,7 +38,6 @@ extern color telepathyMultiplier;
 extern color omniscienceColor;
 extern color basicLightColor;
 
-extern color colorDim25;
 extern color colorMultiplier100;
 
 extern color magicMapFlashColor;
@@ -152,16 +54,13 @@ extern color playerInShadowColor;
 extern color playerInLightColor;
 extern color playerInDarknessColor;
 
-extern const color inLightMultiplierColor;
 extern const color inDarknessMultiplierColor;
 
 extern const color buttonHoverColor;
 extern color titleButtonColor;
 
 // other colors
-extern color centipedeColor;
 extern color confusionGasColor;
-extern color lightningColor;
 extern color spectralImageColor;
 
 extern color goodMessageColor;
@@ -231,9 +130,3 @@ extern const bolt boltCatalog[NUMBER_BOLT_KINDS];
 extern const char weaponRunicNames[NUMBER_WEAPON_RUNIC_KINDS][30];
 
 extern const char armorRunicNames[NUMBER_ARMOR_ENCHANT_KINDS][30];
-
-extern const char monsterBehaviorFlagDescriptions[32][COLS];
-extern const char monsterAbilityFlagDescriptions[32][COLS];
-extern const char monsterBookkeepingFlagDescriptions[32][COLS];
-
-extern const pos WINDOW_POSITION_DUNGEON_TOP_LEFT;

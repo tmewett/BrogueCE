@@ -21,6 +21,7 @@
  */
 
 #include "Rogue.h"
+#include "IncludeGlobalsBase.h"
 #include "IncludeGlobals.h"
 
 void initializeCreateItemButton(brogueButton *button, char *text) {
