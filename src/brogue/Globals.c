@@ -23,266 +23,273 @@
 
 #include "Rogue.h"
 #include "IncludeGlobalsBase.h"
+#include "IncludeGlobals.h"
+
+#define AMULET_LEVEL            6          // how deep before the amulet appears
+#define DEEPEST_LEVEL           10          // how deep the universe goes
+
+#define NUMBER_AUTOGENERATORS 49
+
 
 // bolt colors
-const color descentBoltColor =      {-40,   -40,    -40,    0,      0,          80,         80,     true};
-const color discordColor =          {25,    0,      25,     66,     0,          0,          0,      true};
-const color poisonColor =           {0,     0,      0,      10,     50,         10,         0,      true};
-const color beckonColor =           {10,    10,     10,     5,      5,          5,          50,     true};
-const color invulnerabilityColor =  {25,    0,      25,     0,      0,          66,         0,      true};
-const color dominationColor =       {0,     0,      100,    80,     25,         0,          0,      true};
-const color empowermentColor =      {30,    100,    40,     25,     80,         25,         0,      true};
-const color fireBoltColor =         {500,   150,    0,      45,     30,         0,          0,      true};
-const color yendorLightColor =      {50,    -100,    30,     0,      0,          0,          0,      true};
-const color dragonFireColor =       {500,   150,    0,      45,     30,         45,         0,      true};
-const color flamedancerCoronaColor ={500,   150,    100,    45,     30,         0,          0,      true};
-//const color shieldingColor =      {100,   50,     0,      0,      50,         100,        0,      true};
-const color shieldingColor =        {150,   75,     0,      0,      50,         175,        0,      true};
+color descentBoltColor =      {-40,   -40,    -40,    0,      0,          80,         80,     true};
+color discordColor =          {25,    0,      25,     66,     0,          0,          0,      true};
+color poisonColor =           {0,     0,      0,      10,     50,         10,         0,      true};
+color beckonColor =           {10,    10,     10,     5,      5,          5,          50,     true};
+color invulnerabilityColor =  {25,    0,      25,     0,      0,          66,         0,      true};
+color dominationColor =       {0,     0,      100,    80,     25,         0,          0,      true};
+color empowermentColor =      {30,    100,    40,     25,     80,         25,         0,      true};
+color fireBoltColor =         {500,   150,    0,      45,     30,         0,          0,      true};
+color yendorLightColor =      {50,    -100,    30,     0,      0,          0,          0,      true};
+color dragonFireColor =       {500,   150,    0,      45,     30,         45,         0,      true};
+color flamedancerCoronaColor ={500,   150,    100,    45,     30,         0,          0,      true};
+//color shieldingColor =      {100,   50,     0,      0,      50,         100,        0,      true};
+color shieldingColor =        {150,   75,     0,      0,      50,         175,        0,      true};
 
 // tile colors
-const color wallForeColor =         {7,     7,      7,      3,      3,          3,          0,      false};
+color wallForeColor =         {7,     7,      7,      3,      3,          3,          0,      false};
 
 color wallBackColor;
-const color wallBackColorStart =    {45,    40,     40,     15,     0,          5,          20,     false};
-const color wallBackColorEnd =      {40,    30,     35,     0,      20,         30,         20,     false};
+color wallBackColorStart =    {45,    40,     40,     15,     0,          5,          20,     false};
+color wallBackColorEnd =      {40,    30,     35,     0,      20,         30,         20,     false};
 
-const color mudWallForeColor =      {55,    45,     0,      5,      5,          5,          1,      false};
-//const color mudWallForeColor =      {40,  34,     7,      0,      3,          0,          3,      false};
-const color mudWallBackColor =      {20,    12,     3,      8,      4,          3,          0,      false};
+color mudWallForeColor =      {55,    45,     0,      5,      5,          5,          1,      false};
+//color mudWallForeColor =      {40,  34,     7,      0,      3,          0,          3,      false};
+color mudWallBackColor =      {20,    12,     3,      8,      4,          3,          0,      false};
 
-const color graniteBackColor =      {10,    10,     10,     0,      0,          0,          0,      false};
+color graniteBackColor =      {10,    10,     10,     0,      0,          0,          0,      false};
 
-const color floorForeColor =        {30,    30,     30,     0,      0,          0,          35,     false};
+color floorForeColor =        {30,    30,     30,     0,      0,          0,          35,     false};
 
 color floorBackColor;
-const color floorBackColorStart =   {2,     2,      10,     2,      2,          0,          0,      false};
-const color floorBackColorEnd =     {5,     5,      5,      2,      2,          0,          0,      false};
+color floorBackColorStart =   {2,     2,      10,     2,      2,          0,          0,      false};
+color floorBackColorEnd =     {5,     5,      5,      2,      2,          0,          0,      false};
 
-const color stairsBackColor =       {15,    15,     5,      0,      0,          0,          0,      false};
-const color firstStairsBackColor =  {10,    10,     25,     0,      0,          0,          0,      false};
+color stairsBackColor =       {15,    15,     5,      0,      0,          0,          0,      false};
+color firstStairsBackColor =  {10,    10,     25,     0,      0,          0,          0,      false};
 
-const color refuseBackColor =       {6,     5,      3,      2,      2,          0,          0,      false};
-const color rubbleBackColor =       {7,     7,      8,      2,      2,          1,          0,      false};
-const color bloodflowerForeColor =  {30,    5,      40,     5,      1,          3,          0,      false};
-const color bloodflowerPodForeColor = {50,  5,      25,     5,      1,          3,          0,      false};
-const color bloodflowerBackColor =  {15,    3,      10,     3,      1,          3,          0,      false};
-const color bedrollBackColor =      {10,    8,      5,      1,      1,          0,          0,      false};
+color refuseBackColor =       {6,     5,      3,      2,      2,          0,          0,      false};
+color rubbleBackColor =       {7,     7,      8,      2,      2,          1,          0,      false};
+color bloodflowerForeColor =  {30,    5,      40,     5,      1,          3,          0,      false};
+color bloodflowerPodForeColor = {50,  5,      25,     5,      1,          3,          0,      false};
+color bloodflowerBackColor =  {15,    3,      10,     3,      1,          3,          0,      false};
+color bedrollBackColor =      {10,    8,      5,      1,      1,          0,          0,      false};
 
-const color obsidianBackColor =     {6,     0,      8,      2,      0,          3,          0,      false};
-const color carpetForeColor =       {23,    30,     38,     0,      0,          0,          0,      false};
-const color carpetBackColor =       {15,    8,      5,      0,      0,          0,          0,      false};
-const color marbleForeColor =       {30,    23,     38,     0,      0,          0,          0,      false};
-const color marbleBackColor =       {6,     5,      13,     1,      0,          1,          0,      false};
-const color doorForeColor =         {70,    35,     15,     0,      0,          0,          0,      false};
-const color doorBackColor =         {30,    10,     5,      0,      0,          0,          0,      false};
-//const color ironDoorForeColor =       {40,    40,     40,     0,      0,          0,          0,      false};
-const color ironDoorForeColor =     {500,   500,    500,    0,      0,          0,          0,      false};
-const color ironDoorBackColor =     {15,    15,     30,     0,      0,          0,          0,      false};
-const color bridgeFrontColor =      {33,    12,     12,     12,     7,          2,          0,      false};
-const color bridgeBackColor =       {12,    3,      2,      3,      2,          1,          0,      false};
-const color statueBackColor =       {20,    20,     20,     0,      0,          0,          0,      false};
-const color glyphColor =            {20,    5,      5,      50,     0,          0,          0,      true};
-const color glyphLightColor =       {150,   0,      0,      150,    0,          0,          0,      true};
-const color sacredGlyphColor =      {5,     20,     5,      0,      50,         0,          0,      true};
-const color sacredGlyphLightColor = {45,    150,    60,     25,     80,         25,         0,      true};
+color obsidianBackColor =     {6,     0,      8,      2,      0,          3,          0,      false};
+color carpetForeColor =       {23,    30,     38,     0,      0,          0,          0,      false};
+color carpetBackColor =       {15,    8,      5,      0,      0,          0,          0,      false};
+color marbleForeColor =       {30,    23,     38,     0,      0,          0,          0,      false};
+color marbleBackColor =       {6,     5,      13,     1,      0,          1,          0,      false};
+color doorForeColor =         {70,    35,     15,     0,      0,          0,          0,      false};
+color doorBackColor =         {30,    10,     5,      0,      0,          0,          0,      false};
+//color ironDoorForeColor =       {40,    40,     40,     0,      0,          0,          0,      false};
+color ironDoorForeColor =     {500,   500,    500,    0,      0,          0,          0,      false};
+color ironDoorBackColor =     {15,    15,     30,     0,      0,          0,          0,      false};
+color bridgeFrontColor =      {33,    12,     12,     12,     7,          2,          0,      false};
+color bridgeBackColor =       {12,    3,      2,      3,      2,          1,          0,      false};
+color statueBackColor =       {20,    20,     20,     0,      0,          0,          0,      false};
+color glyphColor =            {20,    5,      5,      50,     0,          0,          0,      true};
+color glyphLightColor =       {150,   0,      0,      150,    0,          0,          0,      true};
+color sacredGlyphColor =      {5,     20,     5,      0,      50,         0,          0,      true};
+color sacredGlyphLightColor = {45,    150,    60,     25,     80,         25,         0,      true};
 
-//const color deepWaterForeColor =  {5,     5,      40,     0,      0,          10,         10,     true};
+//color deepWaterForeColor =  {5,     5,      40,     0,      0,          10,         10,     true};
 //color deepWaterBackColor;
-//const color deepWaterBackColorStart = {5, 5,      55,     5,      5,          10,         10,     true};
-//const color deepWaterBackColorEnd =   {5,     5,      45,     2,      2,          5,          5,      true};
-//const color shallowWaterForeColor =   {40,    40,     90,     0,      0,          10,         10,     true};
+//color deepWaterBackColorStart = {5, 5,      55,     5,      5,          10,         10,     true};
+//color deepWaterBackColorEnd =   {5,     5,      45,     2,      2,          5,          5,      true};
+//color shallowWaterForeColor =   {40,    40,     90,     0,      0,          10,         10,     true};
 //color shallowWaterBackColor;
-//const color shallowWaterBackColorStart ={30,30,       80,     0,      0,          10,         10,     true};
-//const color shallowWaterBackColorEnd ={20,    20,     60,     0,      0,          5,          5,      true};
+//color shallowWaterBackColorStart ={30,30,       80,     0,      0,          10,         10,     true};
+//color shallowWaterBackColorEnd ={20,    20,     60,     0,      0,          5,          5,      true};
 
-const color deepWaterForeColor =    {5,     8,      20,     0,      4,          15,         10,     true};
+color deepWaterForeColor =    {5,     8,      20,     0,      4,          15,         10,     true};
 color deepWaterBackColor;
-const color deepWaterBackColorStart = {5,   10,     31,     5,      5,          5,          6,      true};
-const color deepWaterBackColorEnd = {5,     8,      20,     2,      3,          5,          5,      true};
-const color shallowWaterForeColor = {28,    28,     60,     0,      0,          10,         10,     true};
+color deepWaterBackColorStart = {5,   10,     31,     5,      5,          5,          6,      true};
+color deepWaterBackColorEnd = {5,     8,      20,     2,      3,          5,          5,      true};
+color shallowWaterForeColor = {28,    28,     60,     0,      0,          10,         10,     true};
 color shallowWaterBackColor;
-const color shallowWaterBackColorStart ={20,20,     60,     0,      0,          10,         10,     true};
-const color shallowWaterBackColorEnd ={12,  15,     40,     0,      0,          5,          5,      true};
+color shallowWaterBackColorStart ={20,20,     60,     0,      0,          10,         10,     true};
+color shallowWaterBackColorEnd ={12,  15,     40,     0,      0,          5,          5,      true};
 
-const color mudForeColor =          {18,    14,     5,      5,      5,          0,          0,      false};
-const color mudBackColor =          {23,    17,     7,      5,      5,          0,          0,      false};
-const color chasmForeColor =        {7,     7,      15,     4,      4,          8,          0,      false};
+color mudForeColor =          {18,    14,     5,      5,      5,          0,          0,      false};
+color mudBackColor =          {23,    17,     7,      5,      5,          0,          0,      false};
+color chasmForeColor =        {7,     7,      15,     4,      4,          8,          0,      false};
 color chasmEdgeBackColor;
-const color chasmEdgeBackColorStart ={5,    5,      25,     2,      2,          2,          0,      false};
-const color chasmEdgeBackColorEnd = {8,     8,      20,     2,      2,          2,          0,      false};
-const color fireForeColor =         {70,    20,     0,      15,     10,         0,          0,      true};
-const color lavaForeColor =         {20,    20,     20,     100,    10,         0,          0,      true};
-const color brimstoneForeColor =    {100,   50,     10,     0,      50,         40,         0,      true};
-const color brimstoneBackColor =    {18,    12,     9,      0,      0,          5,          0,      false};
+color chasmEdgeBackColorStart ={5,    5,      25,     2,      2,          2,          0,      false};
+color chasmEdgeBackColorEnd = {8,     8,      20,     2,      2,          2,          0,      false};
+color fireForeColor =         {70,    20,     0,      15,     10,         0,          0,      true};
+color lavaForeColor =         {20,    20,     20,     100,    10,         0,          0,      true};
+color brimstoneForeColor =    {100,   50,     10,     0,      50,         40,         0,      true};
+color brimstoneBackColor =    {18,    12,     9,      0,      0,          5,          0,      false};
 
-const color lavaBackColor =         {70,    20,     0,      15,     10,         0,          0,      true};
-const color acidBackColor =         {15,    80,     25,     5,      15,         10,         0,      true};
+color lavaBackColor =         {70,    20,     0,      15,     10,         0,          0,      true};
+color acidBackColor =         {15,    80,     25,     5,      15,         10,         0,      true};
 
-const color lightningColor =        {100,   150,    500,    50,     50,         0,          50,     true};
-const color fungusLightColor =      {2,     11,     11,     4,      3,          3,          0,      true};
-const color lavaLightColor =        {47,    13,     0,      10,     7,          0,          0,      true};
-const color deepWaterLightColor =   {10,    30,     100,    0,      30,         100,        0,      true};
+color lightningColor =        {100,   150,    500,    50,     50,         0,          50,     true};
+color fungusLightColor =      {2,     11,     11,     4,      3,          3,          0,      true};
+color lavaLightColor =        {47,    13,     0,      10,     7,          0,          0,      true};
+color deepWaterLightColor =   {10,    30,     100,    0,      30,         100,        0,      true};
 
-const color grassColor =            {15,    40,     15,     15,     50,         15,         10,     false};
-const color deadGrassColor =        {20,    13,     0,      20,     10,         5,          10,     false};
-const color fungusColor =           {15,    50,     50,     0,      25,         0,          30,     true};
-const color grayFungusColor =       {30,    30,     30,     5,      5,          5,          10,     false};
-const color foliageColor =          {25,    100,    25,     15,     0,          15,         0,      false};
-const color deadFoliageColor =      {20,    13,     0,      30,     15,         0,          20,     false};
-const color lichenColor =           {50,    5,      25,     10,     0,          5,          0,      true};
-const color hayColor =              {70,    55,     5,      0,      20,         20,         0,      false};
-const color ashForeColor =          {20,    20,     20,     0,      0,          0,          20,     false};
-const color bonesForeColor =        {80,    80,     30,     5,      5,          35,         5,      false};
-const color ectoplasmColor =        {45,    20,     55,     25,     0,          25,         5,      false};
-const color forceFieldColor =       {0,     25,     25,     0,      25,         25,         0,      true};
-const color wallCrystalColor =      {40,    40,     60,     20,     20,         40,         0,      true};
-const color altarForeColor =        {5,     7,      9,      0,      0,          0,          0,      false};
-const color altarBackColor =        {35,    18,     18,     0,      0,          0,          0,      false};
-const color greenAltarBackColor =   {18,    25,     18,     0,      0,          0,          0,      false};
-const color goldAltarBackColor =    {25,    24,     12,     0,      0,          0,          0,      false};
-const color pedestalBackColor =     {10,    5,      20,     0,      0,          0,          0,      false};
+color grassColor =            {15,    40,     15,     15,     50,         15,         10,     false};
+color deadGrassColor =        {20,    13,     0,      20,     10,         5,          10,     false};
+color fungusColor =           {15,    50,     50,     0,      25,         0,          30,     true};
+color grayFungusColor =       {30,    30,     30,     5,      5,          5,          10,     false};
+color foliageColor =          {25,    100,    25,     15,     0,          15,         0,      false};
+color deadFoliageColor =      {20,    13,     0,      30,     15,         0,          20,     false};
+color lichenColor =           {50,    5,      25,     10,     0,          5,          0,      true};
+color hayColor =              {70,    55,     5,      0,      20,         20,         0,      false};
+color ashForeColor =          {20,    20,     20,     0,      0,          0,          20,     false};
+color bonesForeColor =        {80,    80,     30,     5,      5,          35,         5,      false};
+color ectoplasmColor =        {45,    20,     55,     25,     0,          25,         5,      false};
+color forceFieldColor =       {0,     25,     25,     0,      25,         25,         0,      true};
+color wallCrystalColor =      {40,    40,     60,     20,     20,         40,         0,      true};
+color altarForeColor =        {5,     7,      9,      0,      0,          0,          0,      false};
+color altarBackColor =        {35,    18,     18,     0,      0,          0,          0,      false};
+color greenAltarBackColor =   {18,    25,     18,     0,      0,          0,          0,      false};
+color goldAltarBackColor =    {25,    24,     12,     0,      0,          0,          0,      false};
+color pedestalBackColor =     {10,    5,      20,     0,      0,          0,          0,      false};
 
 // monster colors
-const color goblinColor =           {40,    30,     20,     0,      0,          0,          0,      false};
-const color jackalColor =           {60,    42,     27,     0,      0,          0,          0,      false};
-const color ogreColor =             {60,    25,     25,     0,      0,          0,          0,      false};
-const color eelColor =              {30,    12,     12,     0,      0,          0,          0,      false};
-const color goblinConjurerColor =   {67,    10,     100,    0,      0,          0,          0,      false};
-const color spectralBladeColor =    {15,    15,     60,     0,      0,          70,         50,     true};
-const color spectralImageColor =    {13,    0,      0,      25,     0,          0,          0,      true};
-const color toadColor =             {40,    65,     30,     0,      0,          0,          0,      false};
-const color trollColor =            {40,    60,     15,     0,      0,          0,          0,      false};
-const color centipedeColor =        {75,    25,     85,     0,      0,          0,          0,      false};
-const color dragonColor =           {20,    80,     15,     0,      0,          0,          0,      false};
-const color krakenColor =           {100,   55,     55,     0,      0,          0,          0,      false};
-const color salamanderColor =       {40,    10,     0,      8,      5,          0,          0,      true};
-const color pixieColor =            {60,    60,     60,     40,     40,         40,         0,      true};
-const color darPriestessColor =     {0,     50,     50,     0,      0,          0,          0,      false};
-const color darMageColor =          {50,    50,     0,      0,      0,          0,          0,      false};
-const color wraithColor =           {66,    66,     25,     0,      0,          0,          0,      false};
-const color pinkJellyColor =        {100,   40,     40,     5,      5,          5,          20,     true};
-const color wormColor =             {80,    60,     40,     0,      0,          0,          0,      false};
-const color sentinelColor =         {3,     3,      30,     0,      0,          10,         0,      true};
-const color goblinMysticColor =     {10,    67,     100,    0,      0,          0,          0,      false};
-const color ifritColor =            {50,    10,     100,    75,     0,          20,         0,      true};
-const color phoenixColor =          {100,   0,      0,      0,      100,        0,          0,      true};
+color goblinColor =           {40,    30,     20,     0,      0,          0,          0,      false};
+color jackalColor =           {60,    42,     27,     0,      0,          0,          0,      false};
+color ogreColor =             {60,    25,     25,     0,      0,          0,          0,      false};
+color eelColor =              {30,    12,     12,     0,      0,          0,          0,      false};
+color goblinConjurerColor =   {67,    10,     100,    0,      0,          0,          0,      false};
+color spectralBladeColor =    {15,    15,     60,     0,      0,          70,         50,     true};
+color spectralImageColor =    {13,    0,      0,      25,     0,          0,          0,      true};
+color toadColor =             {40,    65,     30,     0,      0,          0,          0,      false};
+color trollColor =            {40,    60,     15,     0,      0,          0,          0,      false};
+color centipedeColor =        {75,    25,     85,     0,      0,          0,          0,      false};
+color dragonColor =           {20,    80,     15,     0,      0,          0,          0,      false};
+color krakenColor =           {100,   55,     55,     0,      0,          0,          0,      false};
+color salamanderColor =       {40,    10,     0,      8,      5,          0,          0,      true};
+color pixieColor =            {60,    60,     60,     40,     40,         40,         0,      true};
+color darPriestessColor =     {0,     50,     50,     0,      0,          0,          0,      false};
+color darMageColor =          {50,    50,     0,      0,      0,          0,          0,      false};
+color wraithColor =           {66,    66,     25,     0,      0,          0,          0,      false};
+color pinkJellyColor =        {100,   40,     40,     5,      5,          5,          20,     true};
+color wormColor =             {80,    60,     40,     0,      0,          0,          0,      false};
+color sentinelColor =         {3,     3,      30,     0,      0,          10,         0,      true};
+color goblinMysticColor =     {10,    67,     100,    0,      0,          0,          0,      false};
+color ifritColor =            {50,    10,     100,    75,     0,          20,         0,      true};
+color phoenixColor =          {100,   0,      0,      0,      100,        0,          0,      true};
 
 // light colors
 color minersLightColor;
-const color minersLightStartColor = {180,   180,    180,    0,      0,          0,          0,      false};
-const color minersLightEndColor =   {90,    90,     120,    0,      0,          0,          0,      false};
-const color torchColor =            {150,   75,     30,     0,      30,         20,         0,      true};
-const color torchLightColor =       {75,    38,     15,     0,      15,         7,          0,      true};
-//const color hauntedTorchColor =     {75,  30,     150,    30,     20,         0,          0,      true};
-const color hauntedTorchColor =     {75,    20,     40,     30,     10,         0,          0,      true};
-//const color hauntedTorchLightColor ={19,     7,       37,     8,      4,          0,          0,      true};
-const color hauntedTorchLightColor ={67,    10,     10,     20,     4,          0,          0,      true};
-const color ifritLightColor =       {0,     10,     150,    100,    0,          100,        0,      true};
-//const color unicornLightColor =       {-50,   -50,    -50,    200,    200,        200,        0,      true};
-const color unicornLightColor =     {-50,   -50,    -50,    250,    250,        250,        0,      true};
-const color wispLightColor =        {75,    100,    250,    33,     10,         0,          0,      true};
-const color summonedImageLightColor ={200,  0,      75,     0,      0,          0,          0,      true};
-const color spectralBladeLightColor ={40,   0,      230,    0,      0,          0,          0,      true};
-const color ectoplasmLightColor =   {23,    10,     28,     13,     0,          13,         3,      false};
-const color explosionColor =        {10,    8,      2,      0,      2,          2,          0,      true};
-const color explosiveAuraColor =    {2000,  0,      -1000,  200,    200,        0,          0,      true};
-const color sacrificeTargetColor =  {100,   -100,   -300,   0,      100,        100,        0,      true};
-const color dartFlashColor =        {500,   500,    500,    0,      2,          2,          0,      true};
-const color lichLightColor =        {-50,   80,     30,     0,      0,          20,         0,      true};
-const color forceFieldLightColor =  {10,    10,     10,     0,      50,         50,         0,      true};
-const color crystalWallLightColor = {10,    10,     10,     0,      0,          50,         0,      true};
-const color sunLightColor =         {100,   100,    75,     0,      0,          0,          0,      false};
-const color fungusForestLightColor ={30,    40,     60,     0,      0,          0,          40,     true};
-const color fungusTrampledLightColor ={10,  10,     10,     0,      50,         50,         0,      true};
-const color redFlashColor =         {100,   10,     10,     0,      0,          0,          0,      false};
-const color darknessPatchColor =    {-10,   -10,    -10,    0,      0,          0,          0,      false};
-const color darknessCloudColor =    {-20,   -20,    -20,    0,      0,          0,          0,      false};
-const color magicMapFlashColor =    {60,    20,     60,     0,      0,          0,          0,      false};
-const color sentinelLightColor =    {20,    20,     120,    10,     10,         60,         0,      true};
-const color telepathyColor =        {30,    30,     130,    0,      0,          0,          0,      false};
-const color confusionLightColor =   {10,    10,     10,     10,     10,         10,         0,      true};
-const color portalActivateLightColor ={300, 400,    500,    0,      0,          0,          0,      true};
-const color descentLightColor =     {20,    20,     70,     0,      0,          0,          0,      false};
-const color algaeBlueLightColor =   {20,    15,     50,     0,      0,          0,          0,      false};
-const color algaeGreenLightColor =  {15,    50,     20,     0,      0,          0,          0,      false};
+color minersLightStartColor = {180,   180,    180,    0,      0,          0,          0,      false};
+color minersLightEndColor =   {90,    90,     120,    0,      0,          0,          0,      false};
+color torchColor =            {150,   75,     30,     0,      30,         20,         0,      true};
+color torchLightColor =       {75,    38,     15,     0,      15,         7,          0,      true};
+//color hauntedTorchColor =     {75,  30,     150,    30,     20,         0,          0,      true};
+color hauntedTorchColor =     {75,    20,     40,     30,     10,         0,          0,      true};
+//color hauntedTorchLightColor ={19,     7,       37,     8,      4,          0,          0,      true};
+color hauntedTorchLightColor ={67,    10,     10,     20,     4,          0,          0,      true};
+color ifritLightColor =       {0,     10,     150,    100,    0,          100,        0,      true};
+//color unicornLightColor =       {-50,   -50,    -50,    200,    200,        200,        0,      true};
+color unicornLightColor =     {-50,   -50,    -50,    250,    250,        250,        0,      true};
+color wispLightColor =        {75,    100,    250,    33,     10,         0,          0,      true};
+color summonedImageLightColor ={200,  0,      75,     0,      0,          0,          0,      true};
+color spectralBladeLightColor ={40,   0,      230,    0,      0,          0,          0,      true};
+color ectoplasmLightColor =   {23,    10,     28,     13,     0,          13,         3,      false};
+color explosionColor =        {10,    8,      2,      0,      2,          2,          0,      true};
+color explosiveAuraColor =    {2000,  0,      -1000,  200,    200,        0,          0,      true};
+color sacrificeTargetColor =  {100,   -100,   -300,   0,      100,        100,        0,      true};
+color dartFlashColor =        {500,   500,    500,    0,      2,          2,          0,      true};
+color lichLightColor =        {-50,   80,     30,     0,      0,          20,         0,      true};
+color forceFieldLightColor =  {10,    10,     10,     0,      50,         50,         0,      true};
+color crystalWallLightColor = {10,    10,     10,     0,      0,          50,         0,      true};
+color sunLightColor =         {100,   100,    75,     0,      0,          0,          0,      false};
+color fungusForestLightColor ={30,    40,     60,     0,      0,          0,          40,     true};
+color fungusTrampledLightColor ={10,  10,     10,     0,      50,         50,         0,      true};
+color redFlashColor =         {100,   10,     10,     0,      0,          0,          0,      false};
+color darknessPatchColor =    {-10,   -10,    -10,    0,      0,          0,          0,      false};
+color darknessCloudColor =    {-20,   -20,    -20,    0,      0,          0,          0,      false};
+color magicMapFlashColor =    {60,    20,     60,     0,      0,          0,          0,      false};
+color sentinelLightColor =    {20,    20,     120,    10,     10,         60,         0,      true};
+color telepathyColor =        {30,    30,     130,    0,      0,          0,          0,      false};
+color confusionLightColor =   {10,    10,     10,     10,     10,         10,         0,      true};
+color portalActivateLightColor ={300, 400,    500,    0,      0,          0,          0,      true};
+color descentLightColor =     {20,    20,     70,     0,      0,          0,          0,      false};
+color algaeBlueLightColor =   {20,    15,     50,     0,      0,          0,          0,      false};
+color algaeGreenLightColor =  {15,    50,     20,     0,      0,          0,          0,      false};
 
 // flare colors
-const color scrollProtectionColor = {375,   750,    0,      0,      0,          0,          0,      true};
-const color scrollEnchantmentColor ={250,   225,    300,    0,      0,          450,        0,      true};
-const color potionStrengthColor =   {1000,  0,      400,    600,    0,          0,          0,      true};
-const color empowermentFlashColor = {500,   1000,   600,    0,      500,        0,          0,      true};
-const color genericFlashColor =     {800,   800,    800,    0,      0,          0,          0,      false};
-const color summoningFlashColor =   {0,     0,      0,      600,    0,          1200,       0,      true};
-const color fireFlashColor =        {750,   225,    0,      100,    50,         0,          0,      true};
-const color explosionFlareColor =   {10000, 6000,   1000,   0,      0,          0,          0,      false};
-const color quietusFlashColor =     {0,     -1000,  -200,   0,      0,          0,          0,      true};
-const color slayingFlashColor =     {-1000, -200,   0,      0,      0,          0,          0,      true};
+color scrollProtectionColor = {375,   750,    0,      0,      0,          0,          0,      true};
+color scrollEnchantmentColor ={250,   225,    300,    0,      0,          450,        0,      true};
+color potionStrengthColor =   {1000,  0,      400,    600,    0,          0,          0,      true};
+color empowermentFlashColor = {500,   1000,   600,    0,      500,        0,          0,      true};
+color genericFlashColor =     {800,   800,    800,    0,      0,          0,          0,      false};
+color summoningFlashColor =   {0,     0,      0,      600,    0,          1200,       0,      true};
+color fireFlashColor =        {750,   225,    0,      100,    50,         0,          0,      true};
+color explosionFlareColor =   {10000, 6000,   1000,   0,      0,          0,          0,      false};
+color quietusFlashColor =     {0,     -1000,  -200,   0,      0,          0,          0,      true};
+color slayingFlashColor =     {-1000, -200,   0,      0,      0,          0,          0,      true};
 
 // color multipliers
-const color colorDim25 =            {25,    25,     25,     25,     25,         25,         25,     false};
-const color colorMultiplier100 =    {100,   100,    100,    100,    100,        100,        100,    false};
-const color memoryColor =           {25,    25,     50,     20,     20,         20,         0,      false};
-const color memoryOverlay =         {25,    25,     50,     0,      0,          0,          0,      false};
-const color magicMapColor =         {60,    20,     60,     60,     20,         60,         0,      false};
-const color clairvoyanceColor =     {50,    90,     50,     50,     90,         50,         66,     false};
-const color telepathyMultiplier =   {30,    30,     130,    30,     30,         130,        66,     false};
-const color omniscienceColor =      {140,   100,    60,     140,    100,        60,         90,     false};
-const color basicLightColor =       {180,   180,    180,    180,    180,        180,        180,    false};
+color colorDim25 =            {25,    25,     25,     25,     25,         25,         25,     false};
+color colorMultiplier100 =    {100,   100,    100,    100,    100,        100,        100,    false};
+color memoryColor =           {25,    25,     50,     20,     20,         20,         0,      false};
+color memoryOverlay =         {25,    25,     50,     0,      0,          0,          0,      false};
+color magicMapColor =         {60,    20,     60,     60,     20,         60,         0,      false};
+color clairvoyanceColor =     {50,    90,     50,     50,     90,         50,         66,     false};
+color telepathyMultiplier =   {30,    30,     130,    30,     30,         130,        66,     false};
+color omniscienceColor =      {140,   100,    60,     140,    100,        60,         90,     false};
+color basicLightColor =       {180,   180,    180,    180,    180,        180,        180,    false};
 
 // blood colors
-const color humanBloodColor =       {60,    20,     10,     15,     0,          0,          15,     false};
-const color insectBloodColor =      {10,    60,     20,     0,      15,         0,          15,     false};
-const color vomitColor =            {60,    50,     5,      0,      15,         15,         0,      false};
-const color urineColor =            {70,    70,     40,     0,      0,          0,          10,     false};
-const color methaneColor =          {45,    60,     15,     0,      0,          0,          0,      false};
+color humanBloodColor =       {60,    20,     10,     15,     0,          0,          15,     false};
+color insectBloodColor =      {10,    60,     20,     0,      15,         0,          15,     false};
+color vomitColor =            {60,    50,     5,      0,      15,         15,         0,      false};
+color urineColor =            {70,    70,     40,     0,      0,          0,          10,     false};
+color methaneColor =          {45,    60,     15,     0,      0,          0,          0,      false};
 
 // gas colors
-const color poisonGasColor =        {75,    25,     85,     0,      0,          0,          0,      false};
-const color confusionGasColor =     {60,    60,     60,     40,     40,         40,         0,      true};
+color poisonGasColor =        {75,    25,     85,     0,      0,          0,          0,      false};
+color confusionGasColor =     {60,    60,     60,     40,     40,         40,         0,      true};
 
 // interface colors
-const color itemColor =             {100,   95,     -30,    0,      0,          0,          0,      false};
-const color blueBar =               {15,    10,     50,     0,      0,          0,          0,      false};
-const color redBar =                {45,    10,     15,     0,      0,          0,          0,      false};
-const color hiliteColor =           {100,   100,    0,      0,      0,          0,          0,      false};
-const color interfaceBoxColor =     {7,     6,      15,     0,      0,          0,          0,      false};
-const color interfaceButtonColor =  {18,    15,     38,     0,      0,          0,          0,      false};
-const color buttonHoverColor =      {100,   70,     40,     0,      0,          0,          0,      false};
-const color titleButtonColor =      {23,    15,     30,     0,      0,          0,          0,      false};
+color itemColor =             {100,   95,     -30,    0,      0,          0,          0,      false};
+color blueBar =               {15,    10,     50,     0,      0,          0,          0,      false};
+color redBar =                {45,    10,     15,     0,      0,          0,          0,      false};
+color hiliteColor =           {100,   100,    0,      0,      0,          0,          0,      false};
+color interfaceBoxColor =     {7,     6,      15,     0,      0,          0,          0,      false};
+color interfaceButtonColor =  {18,    15,     38,     0,      0,          0,          0,      false};
+color buttonHoverColor =      {100,   70,     40,     0,      0,          0,          0,      false};
+color titleButtonColor =      {23,    15,     30,     0,      0,          0,          0,      false};
 
-const color playerInvisibleColor =  {20,    20,     30,     0,      0,          80,         0,      true};
-const color playerInLightColor =    {100,   90,     30,     0,      0,          0,          0,      false};
-const color playerInShadowColor =   {60,    60,     100,    0,      0,          0,          0,      false};
-const color playerInDarknessColor = {30,    30,     65,     0,      0,          0,          0,      false};
+color playerInvisibleColor =  {20,    20,     30,     0,      0,          80,         0,      true};
+color playerInLightColor =    {100,   90,     30,     0,      0,          0,          0,      false};
+color playerInShadowColor =   {60,    60,     100,    0,      0,          0,          0,      false};
+color playerInDarknessColor = {30,    30,     65,     0,      0,          0,          0,      false};
 
-const color inLightMultiplierColor ={150,   150,    75,     150,    150,        75,         100,    true};
-const color inDarknessMultiplierColor={66,  66,     120,    66,     66,         120,        66,     true};
+color inLightMultiplierColor ={150,   150,    75,     150,    150,        75,         100,    true};
+color inDarknessMultiplierColor={66,  66,     120,    66,     66,         120,        66,     true};
 
-const color goodMessageColor =      {60,    50,     100,    0,      0,          0,          0,      false};
-const color badMessageColor =       {100,   50,     60,     0,      0,          0,          0,      false};
-const color advancementMessageColor ={50,   100,    60,     0,      0,          0,          0,      false};
-const color itemMessageColor =      {100,   100,    50,     0,      0,          0,          0,      false};
-const color flavorTextColor =       {50,    40,     90,     0,      0,          0,          0,      false};
-const color backgroundMessageColor ={60,    20,     70,     0,      0,          0,          0,      false};
+color goodMessageColor =      {60,    50,     100,    0,      0,          0,          0,      false};
+color badMessageColor =       {100,   50,     60,     0,      0,          0,          0,      false};
+color advancementMessageColor ={50,   100,    60,     0,      0,          0,          0,      false};
+color itemMessageColor =      {100,   100,    50,     0,      0,          0,          0,      false};
+color flavorTextColor =       {50,    40,     90,     0,      0,          0,          0,      false};
+color backgroundMessageColor ={60,    20,     70,     0,      0,          0,          0,      false};
 
-const color superVictoryColor =     {150,   100,    300,    0,      0,          0,          0,      false};
+color superVictoryColor =     {150,   100,    300,    0,      0,          0,          0,      false};
 
-//const color flameSourceColor = {0, 0, 0, 65, 40, 100, 0, true}; // 1
-//const color flameSourceColor = {0, 0, 0, 80, 50, 100, 0, true}; // 2
-//const color flameSourceColor = {25, 13, 25, 50, 25, 50, 0, true}; // 3
-//const color flameSourceColor = {20, 20, 20, 60, 20, 40, 0, true}; // 4
-//const color flameSourceColor = {30, 18, 18, 70, 36, 36, 0, true}; // 7**
-const color flameSourceColor = {20, 7, 7, 60, 40, 40, 0, true}; // 8
-const color flameSourceColorSecondary = {7, 2, 0, 10, 0, 0, 0, true};
+//color flameSourceColor = {0, 0, 0, 65, 40, 100, 0, true}; // 1
+//color flameSourceColor = {0, 0, 0, 80, 50, 100, 0, true}; // 2
+//color flameSourceColor = {25, 13, 25, 50, 25, 50, 0, true}; // 3
+//color flameSourceColor = {20, 20, 20, 60, 20, 40, 0, true}; // 4
+//color flameSourceColor = {30, 18, 18, 70, 36, 36, 0, true}; // 7**
+color flameSourceColor = {20, 7, 7, 60, 40, 40, 0, true}; // 8
+color flameSourceColorSecondary = {7, 2, 0, 10, 0, 0, 0, true};
 
-//const color flameTitleColor = {0, 0, 0, 17, 10, 6, 0, true}; // pale orange
-//const color flameTitleColor = {0, 0, 0, 7, 7, 10, 0, true}; // *pale blue*
-const color flameTitleColor = {0, 0, 0, 9, 9, 15, 0, true}; // *pale blue**
-//const color flameTitleColor = {0, 0, 0, 11, 11, 18, 0, true}; // *pale blue*
-//const color flameTitleColor = {0, 0, 0, 15, 15, 9, 0, true}; // pale yellow
-//const color flameTitleColor = {0, 0, 0, 15, 9, 15, 0, true}; // pale purple
+//color flameTitleColor = {0, 0, 0, 17, 10, 6, 0, true}; // pale orange
+//color flameTitleColor = {0, 0, 0, 7, 7, 10, 0, true}; // *pale blue*
+color flameTitleColor = {0, 0, 0, 9, 9, 15, 0, true}; // *pale blue**
+//color flameTitleColor = {0, 0, 0, 11, 11, 18, 0, true}; // *pale blue*
+//color flameTitleColor = {0, 0, 0, 15, 15, 9, 0, true}; // pale yellow
+//color flameTitleColor = {0, 0, 0, 15, 9, 15, 0, true}; // pale purple
 
-const color *dynamicColors[NUMBER_DYNAMIC_COLORS][3] = {
+color *dynamicColors[NUMBER_DYNAMIC_COLORS][3] = {
     // used color           shallow color               deep color
     {&minersLightColor,     &minersLightStartColor,     &minersLightEndColor},
     {&wallBackColor,        &wallBackColorStart,        &wallBackColorEnd},
@@ -293,9 +300,9 @@ const color *dynamicColors[NUMBER_DYNAMIC_COLORS][3] = {
 };
 
 // Number of lumenstones on each level past amulet
-const short lumenstoneDistribution[DEEPEST_LEVEL - AMULET_LEVEL] = {3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1};
+short lumenstoneDistribution_Brogue[DEEPEST_LEVEL - AMULET_LEVEL] = {3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1};
 
-const autoGenerator autoGeneratorCatalog[NUMBER_AUTOGENERATORS] = {
+autoGenerator autoGeneratorCatalog_Brogue[NUMBER_AUTOGENERATORS] = {
 //   terrain                    layer   DF                          Machine                     reqDungeon  reqLiquid   >Depth  <Depth          freq    minIncp minSlope    maxNumber
     // Ordinary features of the dungeon
     {0,                         0,      DF_GRANITE_COLUMN,          0,                          FLOOR,      NOTHING,    1,      DEEPEST_LEVEL,  60,     100,    0,          4},
@@ -2406,7 +2413,7 @@ itemTable potionTable[NUMBER_POTION_KINDS] = {
     {"creeping death",      itemColors[16], "", 7,  450,    0, 0, {0,0,0}, false, false, -1, false, "When the cork is popped or the flask is thrown, tiny spores will spill across the ground and begin to grow a deadly lichen. Anything that touches the lichen will be poisoned by its clinging tendrils, and the lichen will slowly grow to fill the area. Fire will purge the infestation."},
 };
 
-itemTable wandTable[NUMBER_WAND_KINDS] = {
+itemTable wandTable_Brogue[NUMBER_WAND_KINDS] = {
     {"teleportation",   itemMetals[0], "",  3,  800,    0, BOLT_TELEPORT,      {3,5,1}, false, false, 1,  false, "This wand will teleport a creature to a random place on the level. Aquatic or mud-bound creatures will be rendered helpless on dry land."},
     {"slowness",        itemMetals[1], "",  3,  800,    0, BOLT_SLOW,          {2,5,1}, false, false, 1,  false, "This wand will cause a creature to move at half its ordinary speed for 30 turns."},
     {"polymorphism",    itemMetals[2], "",  3,  700,    0, BOLT_POLYMORPH,     {3,5,1}, false, false, 1,  false, "This mischievous magic will transform a creature into another creature at random. Beware: the tamest of creatures might turn into the most fearsome. The horror of the transformation will turn an allied victim against you."},
@@ -2460,7 +2467,7 @@ itemTable charmTable[NUMBER_CHARM_KINDS] = {
     {"negation",        "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "A featureless gray disc hangs from a lanyard. When you touch it, your hand and arm go numb."},
 };
 
-const bolt boltCatalog[NUMBER_BOLT_KINDS] = {
+const bolt boltCatalog_Brogue[NUMBER_BOLT_KINDS] = {
     {{0}},
     //name                      bolt description                ability description                         char    foreColor       backColor           boltEffect      magnitude       pathDF      targetDF    forbiddenMonsterFlags       flags
     {"teleportation spell",     "casts a teleport spell",       "can teleport other creatures",             0,      NULL,           &blue,              BE_TELEPORT,    10,             0,          0,          MONST_IMMOBILE,             (BF_TARGET_ENEMIES)},
@@ -2582,4 +2589,16 @@ const char monsterBookkeepingFlagDescriptions[32][COLS] = {
     "is marked for demonic sacrifice",          // MB_MARKED_FOR_SACRIFICE
 };
 
-const pos WINDOW_POSITION_DUNGEON_TOP_LEFT = { STAT_BAR_WIDTH + 3, MESSAGE_LINES + 2};
+
+void initializeGameConst() {
+    gameConst.numberAutogenerators = NUMBER_AUTOGENERATORS;
+    gameConst.deepestLevel = DEEPEST_LEVEL;
+    gameConst.amuletLevel = AMULET_LEVEL;
+}
+
+void initializeGameGlobals() {
+    autoGeneratorCatalog = autoGeneratorCatalog_Brogue;
+    lumenstoneDistribution = lumenstoneDistribution_Brogue;
+    wandTable = wandTable_Brogue;
+    boltCatalog = boltCatalog_Brogue;
+}

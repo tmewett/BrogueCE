@@ -2152,7 +2152,7 @@ boolean useStairs(short stairDirection) {
     //cellDisplayBuffer fromBuf[COLS][ROWS], toBuf[COLS][ROWS];
 
     if (stairDirection == 1) {
-        if (rogue.depthLevel < DEEPEST_LEVEL) {
+        if (rogue.depthLevel < gameConst.deepestLevel) {
             //copyDisplayBuffer(fromBuf, displayBuffer);
             rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
             rogue.depthLevel++;

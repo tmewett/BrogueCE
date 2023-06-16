@@ -1,5 +1,5 @@
 /*
- *  Globals.c
+ *  GlobalsBase.c
  *  Brogue
  *
  *  Created by Brian Walker on 1/10/09.
@@ -37,6 +37,7 @@ short numberOfWaypoints;
 levelData *levels;
 creature player;
 playerCharacter rogue;
+gameConstants gameConst;
 creatureList *monsters;
 creatureList *dormantMonsters;
 creatureList purgatory;
@@ -67,6 +68,8 @@ unsigned long recordingLocation;
 unsigned long maxLevelChanges;
 char annotationPathname[BROGUE_FILENAME_MAX];   // pathname of annotation file
 uint64_t previousGameSeed;
+
+const pos WINDOW_POSITION_DUNGEON_TOP_LEFT = { STAT_BAR_WIDTH + 3, MESSAGE_LINES + 2};
 
 //                                  Red     Green   Blue    RedRand GreenRand   BlueRand    Rand    Dances?
 // basic colors

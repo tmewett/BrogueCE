@@ -21,6 +21,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+void initializeGameConst();
+void initializeGameGlobals();
 
 extern color fireForeColor;
 
@@ -54,9 +56,9 @@ extern color playerInShadowColor;
 extern color playerInLightColor;
 extern color playerInDarknessColor;
 
-extern const color inDarknessMultiplierColor;
+extern color inDarknessMultiplierColor;
 
-extern const color buttonHoverColor;
+extern color buttonHoverColor;
 extern color titleButtonColor;
 
 // other colors
@@ -71,16 +73,16 @@ extern color backgroundMessageColor;
 
 extern color flavorTextColor;
 
-extern const color flameSourceColor;
-extern const color flameSourceColorSecondary;
-extern const color flameTitleColor;
+extern color flameSourceColor;
+extern color flameSourceColorSecondary;
+extern color flameTitleColor;
 
-extern const color superVictoryColor;
+extern color superVictoryColor;
 
 extern color *dynamicColors[NUMBER_DYNAMIC_COLORS][3];
 
-extern const autoGenerator autoGeneratorCatalog[NUMBER_AUTOGENERATORS];
-extern const short lumenstoneDistribution[DEEPEST_LEVEL - AMULET_LEVEL];
+extern autoGenerator *autoGeneratorCatalog;
+extern short *lumenstoneDistribution;
 
 extern floorTileType tileCatalog[NUMBER_TILETYPES];
 
@@ -119,13 +121,13 @@ extern itemTable weaponTable[NUMBER_WEAPON_KINDS];
 extern itemTable armorTable[NUMBER_ARMOR_KINDS];
 extern itemTable scrollTable[NUMBER_SCROLL_KINDS];
 extern itemTable potionTable[NUMBER_POTION_KINDS];
-extern itemTable wandTable[NUMBER_WAND_KINDS];
+extern itemTable *wandTable;
 extern itemTable staffTable[NUMBER_STAFF_KINDS];
 extern itemTable ringTable[NUMBER_RING_KINDS];
 extern itemTable charmTable[NUMBER_CHARM_KINDS];
-extern meteredItemGenerationTable meteredItemsGenerationTable[NUMBER_METERED_ITEMS];
+extern const meteredItemGenerationTable meteredItemsGenerationTable[NUMBER_METERED_ITEMS];
 
-extern const bolt boltCatalog[NUMBER_BOLT_KINDS];
+extern const bolt *boltCatalog;
 
 extern const char weaponRunicNames[NUMBER_WEAPON_RUNIC_KINDS][30];
 

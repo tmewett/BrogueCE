@@ -36,6 +36,7 @@ extern const short cDirs[8][2];
 extern levelData *levels;
 extern creature player;
 extern playerCharacter rogue;
+extern gameConstants gameConst;
 extern creatureList *monsters;
 extern creatureList *dormantMonsters;
 extern creatureList purgatory;
