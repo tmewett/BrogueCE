@@ -130,7 +130,7 @@ void welcome() {
     encodeMessageColor(buf, strlen(buf), &itemMessageColor);
     strcat(buf, "Amulet of Yendor");
     encodeMessageColor(buf, strlen(buf), &white);
-    sprintf(buf2, " from the %ith floor and escape with it!", AMULET_LEVEL);
+    sprintf(buf2, " from the %ith floor and escape with it!", gameConst.amuletLevel);
     strcat(buf, buf2);
     message(buf, 0);
     if (KEYBOARD_LABELS) {
@@ -149,6 +149,9 @@ void initializeRogue(uint64_t seed) {
     boolean trueColorMode;
     short oldRNG;
     char currentGamePath[BROGUE_FILENAME_MAX];
+
+    initializeGameConst();
+    initializeGameGlobals();
 
     playingback = rogue.playbackMode; // the only animals that need to go on the ark
     playbackPaused = rogue.playbackPaused;
@@ -183,7 +186,7 @@ void initializeRogue(uint64_t seed) {
 
     initRecording();
 
-    levels = malloc(sizeof(levelData) * (DEEPEST_LEVEL+1));
+    levels = malloc(sizeof(levelData) * (gameConst.deepestLevel+1));
     levels[0].upStairsLoc.x = (DCOLS - 1) / 2 - 1;
     levels[0].upStairsLoc.y = DROWS - 2;
 
@@ -196,7 +199,7 @@ void initializeRogue(uint64_t seed) {
     resetDFMessageEligibility();
 
     // initialize the levels list
-    for (i=0; i<DEEPEST_LEVEL+1; i++) {
+    for (i=0; i<gameConst.deepestLevel+1; i++) {
         if (rogue.seed >> 32) {
             // generate a 64-bit seed
             levels[i].levelSeed = rand_64bits();
@@ -218,7 +221,7 @@ void initializeRogue(uint64_t seed) {
             levels[i].downStairsLoc.x = rand_range(1, DCOLS - 2);
             levels[i].downStairsLoc.y = rand_range(1, DROWS - 2);
         } while (distanceBetween(levels[i].upStairsLoc, levels[i].downStairsLoc) < DCOLS / 3);
-        if (i < DEEPEST_LEVEL) {
+        if (i < gameConst.deepestLevel) {
             levels[i+1].upStairsLoc.x = levels[i].downStairsLoc.x;
             levels[i+1].upStairsLoc.y = levels[i].downStairsLoc.y;
         }
@@ -487,7 +490,7 @@ void updateColors() {
 
     for (i=0; i<NUMBER_DYNAMIC_COLORS; i++) {
         *(dynamicColors[i][0]) = *(dynamicColors[i][1]);
-        applyColorAverage(dynamicColors[i][0], dynamicColors[i][2], min(100, max(0, rogue.depthLevel * 100 / AMULET_LEVEL)));
+        applyColorAverage(dynamicColors[i][0], dynamicColors[i][2], min(100, max(0, rogue.depthLevel * 100 / gameConst.amuletLevel)));
     }
 }
 
@@ -502,7 +505,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     short **mapToPit;
     boolean connectingStairsDiscovered;
 
-    if (oldLevelNumber == DEEPEST_LEVEL && stairDirection != -1) {
+    if (oldLevelNumber == gameConst.deepestLevel && stairDirection != -1) {
         return;
     }
 
@@ -647,7 +650,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
         // If we somehow failed to generate the amulet altar,
         // just toss an amulet in there somewhere.
         // It'll be fiiine!
-        if (rogue.depthLevel == AMULET_LEVEL
+        if (rogue.depthLevel == gameConst.amuletLevel
             && !numberOfMatchingPackItems(AMULET, 0, 0, false)
             && levels[rogue.depthLevel-1].visited == false) {
 
@@ -745,9 +748,9 @@ void startLevel(short oldLevelNumber, short stairDirection) {
 
     if (!levels[rogue.depthLevel-1].visited) {
         levels[rogue.depthLevel-1].visited = true;
-        if (rogue.depthLevel == AMULET_LEVEL) {
+        if (rogue.depthLevel == gameConst.amuletLevel) {
             messageWithColor("An alien energy permeates the area. The Amulet of Yendor must be nearby!", &itemMessageColor, 0);
-        } else if (rogue.depthLevel == DEEPEST_LEVEL) {
+        } else if (rogue.depthLevel == gameConst.deepestLevel) {
             messageWithColor("An overwhelming sense of peace and tranquility settles upon you.", &lightBlue, 0);
         }
     }
@@ -920,7 +923,7 @@ void freeEverything() {
     freeGlobalDynamicGrid(&rogue.mapToShore);
     freeGlobalDynamicGrid(&rogue.mapToSafeTerrain);
 
-    for (i=0; i<DEEPEST_LEVEL+1; i++) {
+    for (i=0; i<gameConst.deepestLevel+1; i++) {
         freeCreatureList(&levels[i].monsters);
         freeCreatureList(&levels[i].dormantMonsters);
 

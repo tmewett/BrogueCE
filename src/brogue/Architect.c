@@ -1709,7 +1709,7 @@ void addMachines() {
     analyzeMap(true);
 
     // Add the amulet holder if it's depth 26:
-    if (rogue.depthLevel == AMULET_LEVEL) {
+    if (rogue.depthLevel == gameConst.amuletLevel) {
         for (failsafe = 50; failsafe; failsafe--) {
             if (buildAMachine(MT_AMULET_AREA, -1, -1, 0, NULL, NULL, NULL)) {
                 break;
@@ -1719,7 +1719,7 @@ void addMachines() {
 
     // Add reward rooms, if any:
     machineCount = 0;
-    while (rogue.depthLevel <= AMULET_LEVEL
+    while (rogue.depthLevel <= gameConst.amuletLevel
         && (rogue.rewardRoomsGenerated + machineCount) * 4 + 2 < rogue.depthLevel * MACHINES_FACTOR / FP_FACTOR) {
         // try to build at least one every four levels on average
         machineCount++;
@@ -1747,7 +1747,7 @@ void runAutogenerators(boolean buildAreaMachines) {
     char grid[DCOLS][DROWS];
 
     // Cycle through the autoGenerators.
-    for (AG=1; AG<NUMBER_AUTOGENERATORS; AG++) {
+    for (AG=1; AG<gameConst.numberAutogenerators; AG++) {
 
         // Shortcut:
         gen = &(autoGeneratorCatalog[AG]);
@@ -2387,7 +2387,7 @@ void attachRooms(short **grid, const dungeonProfile *theDP, short attempts, shor
 }
 
 void adjustDungeonProfileForDepth(dungeonProfile *theProfile) {
-    const short descentPercent = clamp(100 * (rogue.depthLevel - 1) / (AMULET_LEVEL - 1), 0, 100);
+    const short descentPercent = clamp(100 * (rogue.depthLevel - 1) / (gameConst.amuletLevel - 1), 0, 100);
 
     theProfile->roomFrequencies[0] += 20 * (100 - descentPercent) / 100;
     theProfile->roomFrequencies[1] += 10 * (100 - descentPercent) / 100;
@@ -2399,7 +2399,7 @@ void adjustDungeonProfileForDepth(dungeonProfile *theProfile) {
 
 void adjustDungeonFirstRoomProfileForDepth(dungeonProfile *theProfile) {
     short i;
-    const short descentPercent = clamp(100 * (rogue.depthLevel - 1) / (AMULET_LEVEL - 1), 0, 100);
+    const short descentPercent = clamp(100 * (rogue.depthLevel - 1) / (gameConst.amuletLevel - 1), 0, 100);
 
     if (rogue.depthLevel == 1) {
         // All dungeons start with the entrance room on depth 1.
@@ -2485,7 +2485,7 @@ void liquidType(short *deep, short *shallow, short *shallowWidth) {
     randMin = (rogue.depthLevel < MINIMUM_LAVA_LEVEL ? 1 : 0);
     randMax = (rogue.depthLevel < MINIMUM_BRIMSTONE_LEVEL ? 2 : 3);
     rand = rand_range(randMin, randMax);
-    if (rogue.depthLevel == DEEPEST_LEVEL) {
+    if (rogue.depthLevel == gameConst.deepestLevel) {
         rand = 1;
     }
 
@@ -2696,7 +2696,7 @@ void fillLakes(short **lakeMap) {
 
 void finishDoors() {
     short i, j;
-    const short secretDoorChance = clamp((rogue.depthLevel - 1) * 67 / (AMULET_LEVEL - 1), 0, 67);
+    const short secretDoorChance = clamp((rogue.depthLevel - 1) * 67 / (gameConst.amuletLevel - 1), 0, 67);
     for (i=1; i<DCOLS-1; i++) {
         for (j=1; j<DROWS-1; j++) {
             if (pmap[i][j].layers[DUNGEON] == DOOR
@@ -2864,7 +2864,7 @@ void digDungeon() {
             if (grid[i][j] == 1) {
                 pmap[i][j].layers[DUNGEON] = FLOOR;
             } else if (grid[i][j] == 2) {
-                pmap[i][j].layers[DUNGEON] = (rand_percent(60) && rogue.depthLevel < DEEPEST_LEVEL ? DOOR : FLOOR);
+                pmap[i][j].layers[DUNGEON] = (rand_percent(60) && rogue.depthLevel < gameConst.deepestLevel ? DOOR : FLOOR);
             }
         }
     }
@@ -3664,7 +3664,7 @@ void initializeLevel() {
                              (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), true, false);
     }
 
-    if (rogue.depthLevel == DEEPEST_LEVEL) {
+    if (rogue.depthLevel == gameConst.deepestLevel) {
         pmapAt(downLoc)->layers[DUNGEON] = DUNGEON_PORTAL;
     } else {
         pmapAt(downLoc)->layers[DUNGEON] = DOWN_STAIRS;

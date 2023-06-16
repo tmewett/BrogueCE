@@ -197,8 +197,6 @@ typedef struct windowpos {
 
 #define VISIBILITY_THRESHOLD    50          // how bright cumulative light has to be before the cell is marked visible
 
-#define AMULET_LEVEL            26          // how deep before the amulet appears
-#define DEEPEST_LEVEL           40          // how deep the universe goes
 #define DEPTH_ACCELERATOR       1           // factor for how fast depth-dependent features scale compared to usual 26-level dungeon
 
 #define MUTATIONS_OCCUR_ABOVE_LEVEL 10      // how deep before mutations can occur
@@ -2361,6 +2359,13 @@ enum exitStatus {
     EXIT_STATUS_FAILURE_SDL_ERROR
 };
 
+// Constants for the current game, initialized after the choice of mod
+typedef struct gameConstants {
+    unsigned int numberAutogenerators;
+    unsigned int deepestLevel;
+    unsigned int amuletLevel;
+} gameConstants;
+
 // these are basically global variables pertaining to the game state and player's unique variables:
 typedef struct playerCharacter {
     boolean wizard;                     // in wizard mode
@@ -2696,8 +2701,6 @@ typedef struct autoGenerator {
     short minNumberSlope; // actually slope * 100
     short maxNumber;
 } autoGenerator;
-
-#define NUMBER_AUTOGENERATORS 49
 
 typedef struct feat {
     char name[100];

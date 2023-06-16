@@ -520,8 +520,8 @@ void populateItems(short upstairsX, short upstairsY) {
     memcpy(&scrollTableCopy, &scrollTable, sizeof(scrollTable));
     memcpy(&potionTableCopy, &potionTable, sizeof(potionTable));
 
-    if (rogue.depthLevel > AMULET_LEVEL) {
-        numberOfItems = lumenstoneDistribution[rogue.depthLevel - AMULET_LEVEL - 1];
+    if (rogue.depthLevel > gameConst.amuletLevel) {
+        numberOfItems = lumenstoneDistribution[rogue.depthLevel - gameConst.amuletLevel - 1];
         numberOfGoldPiles = 0;
     } else {
         // Add frequency to metered items memory
@@ -638,10 +638,10 @@ void populateItems(short upstairsX, short upstairsY) {
             // Guarantee a certain nutrition minimum of the approximate equivalent of one ration every four levels,
             // with more food on deeper levels since they generally take more turns to complete.
             theCategory = FOOD;
-            if (rogue.depthLevel > AMULET_LEVEL) {
+            if (rogue.depthLevel > gameConst.amuletLevel) {
                 numberOfItems++; // Food isn't at the expense of lumenstones.
             }
-        } else if (rogue.depthLevel > AMULET_LEVEL) {
+        } else if (rogue.depthLevel > gameConst.amuletLevel) {
             theCategory = GEM;
         } else {
             // Guarantee any metered items that reach generation thresholds.
@@ -1157,7 +1157,7 @@ void updateFloorItems() {
 
             pmap[x][y].flags &= ~(HAS_ITEM | ITEM_DETECTED);
 
-            if (theItem->category == POTION || rogue.depthLevel == DEEPEST_LEVEL) {
+            if (theItem->category == POTION || rogue.depthLevel == gameConst.deepestLevel) {
                 // Potions don't survive the fall.
                 deleteItem(theItem);
             } else {
