@@ -475,11 +475,11 @@ short pickHordeType(short depth, enum monsterTypes summonerType, unsigned long f
     }
 
     for (i=0; i<NUMBER_HORDES; i++) {
-        if (!(hordeCatalog[i].flags & forbiddenFlags)
-            && !(~(hordeCatalog[i].flags) & requiredFlags)
-            && ((!summonerType && hordeCatalog[i].minLevel <= depth && hordeCatalog[i].maxLevel >= depth)
-                || (summonerType && (hordeCatalog[i].flags & HORDE_IS_SUMMONED) && hordeCatalog[i].leaderType == summonerType))) {
-                possCount += hordeCatalog[i].frequency;
+        if (!((*hordeCatalog)[i].flags & forbiddenFlags)
+            && !(~((*hordeCatalog)[i].flags) & requiredFlags)
+            && ((!summonerType && (*hordeCatalog)[i].minLevel <= depth && (*hordeCatalog)[i].maxLevel >= depth)
+                || (summonerType && ((*hordeCatalog)[i].flags & HORDE_IS_SUMMONED) && (*hordeCatalog)[i].leaderType == summonerType))) {
+                possCount += (*hordeCatalog)[i].frequency;
         }
     }
 
@@ -490,14 +490,14 @@ short pickHordeType(short depth, enum monsterTypes summonerType, unsigned long f
     index = rand_range(1, possCount);
 
     for (i=0; i<NUMBER_HORDES; i++) {
-        if (!(hordeCatalog[i].flags & forbiddenFlags)
-            && !(~(hordeCatalog[i].flags) & requiredFlags)
-            && ((!summonerType && hordeCatalog[i].minLevel <= depth && hordeCatalog[i].maxLevel >= depth)
-                || (summonerType && (hordeCatalog[i].flags & HORDE_IS_SUMMONED) && hordeCatalog[i].leaderType == summonerType))) {
-                if (index <= hordeCatalog[i].frequency) {
+        if (!((*hordeCatalog)[i].flags & forbiddenFlags)
+            && !(~((*hordeCatalog)[i].flags) & requiredFlags)
+            && ((!summonerType && (*hordeCatalog)[i].minLevel <= depth && (*hordeCatalog)[i].maxLevel >= depth)
+                || (summonerType && ((*hordeCatalog)[i].flags & HORDE_IS_SUMMONED) && (*hordeCatalog)[i].leaderType == summonerType))) {
+                if (index <= (*hordeCatalog)[i].frequency) {
                     return i;
                 }
-                index -= hordeCatalog[i].frequency;
+                index -= (*hordeCatalog)[i].frequency;
             }
     }
     return 0; // should never happen
@@ -671,14 +671,14 @@ boolean spawnMinions(short hordeID, creature *leader, boolean summoned, boolean 
     x = leader->loc.x;
     y = leader->loc.y;
 
-    theHorde = &hordeCatalog[hordeID];
+    theHorde = &(*hordeCatalog)[hordeID];
 
     for (iSpecies = 0; iSpecies < theHorde->numberOfMemberTypes; iSpecies++) {
         count = randClump(theHorde->memberCount[iSpecies]);
 
         forbiddenTerrainFlags = forbiddenFlagsForMonster(&(monsterCatalog[theHorde->memberType[iSpecies]]));
-        if (hordeCatalog[hordeID].spawnsIn) {
-            forbiddenTerrainFlags &= ~(tileCatalog[hordeCatalog[hordeID].spawnsIn].flags);
+        if ((*hordeCatalog)[hordeID].spawnsIn) {
+            forbiddenTerrainFlags &= ~(tileCatalog[(*hordeCatalog)[hordeID].spawnsIn].flags);
         }
 
         for (iMember = 0; iMember < count; iMember++) {
@@ -706,7 +706,7 @@ boolean spawnMinions(short hordeID, creature *leader, boolean summoned, boolean 
             if (theHorde->flags & HORDE_DIES_ON_LEADER_DEATH) {
                 monst->bookkeepingFlags |= MB_BOUND_TO_LEADER;
             }
-            if (hordeCatalog[hordeID].flags & HORDE_ALLIED_WITH_PLAYER) {
+            if ((*hordeCatalog)[hordeID].flags & HORDE_ALLIED_WITH_PLAYER) {
                 becomeAllyWith(monst);
             }
             atLeastOneMinion = true;
@@ -772,12 +772,12 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
             }
             if (x >= 0 && y >= 0) {
                 if (cellHasTerrainFlag(x, y, T_PATHING_BLOCKER)
-                    && (!hordeCatalog[hordeID].spawnsIn || !cellHasTerrainType(x, y, hordeCatalog[hordeID].spawnsIn))) {
+                    && (!(*hordeCatalog)[hordeID].spawnsIn || !cellHasTerrainType(x, y, (*hordeCatalog)[hordeID].spawnsIn))) {
 
                     // don't spawn a horde in special terrain unless it's meant to spawn there
                     tryAgain = true;
                 }
-                if (hordeCatalog[hordeID].spawnsIn && !cellHasTerrainType(x, y, hordeCatalog[hordeID].spawnsIn)) {
+                if ((*hordeCatalog)[hordeID].spawnsIn && !cellHasTerrainType(x, y, (*hordeCatalog)[hordeID].spawnsIn)) {
                     // don't spawn a horde on normal terrain if it's meant for special terrain
                     tryAgain = true;
                 }
@@ -790,7 +790,7 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
     if (x < 0 || y < 0) {
         i = 0;
         do {
-            while (!randomMatchingLocation(&(loc[0]), &(loc[1]), FLOOR, NOTHING, (hordeCatalog[hordeID].spawnsIn ? hordeCatalog[hordeID].spawnsIn : -1))
+            while (!randomMatchingLocation(&(loc[0]), &(loc[1]), FLOOR, NOTHING, ((*hordeCatalog)[hordeID].spawnsIn ? (*hordeCatalog)[hordeID].spawnsIn : -1))
                    || passableArcCount(loc[0], loc[1]) > 1) {
                 if (!--failsafe) {
                     return NULL;
@@ -811,11 +811,11 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
         } while (i < 25 && (pmap[x][y].flags & (ANY_KIND_OF_VISIBLE | IN_FIELD_OF_VIEW)));
     }
 
-//  if (hordeCatalog[hordeID].spawnsIn == DEEP_WATER && pmap[x][y].layers[LIQUID] != DEEP_WATER) {
+//  if ((*hordeCatalog)[hordeID].spawnsIn == DEEP_WATER && pmap[x][y].layers[LIQUID] != DEEP_WATER) {
 //      message("Waterborne monsters spawned on land!", REQUIRE_ACKNOWLEDGMENT);
 //  }
 
-    theHorde = &hordeCatalog[hordeID];
+    theHorde = &(*hordeCatalog)[hordeID];
 
     if (theHorde->machine > 0) {
         // Build the accompanying machine (e.g. a goblin encampment)
@@ -826,7 +826,7 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
     leader->loc.x = x;
     leader->loc.y = y;
 
-    if (hordeCatalog[hordeID].flags & HORDE_LEADER_CAPTIVE) {
+    if ((*hordeCatalog)[hordeID].flags & HORDE_LEADER_CAPTIVE) {
         leader->bookkeepingFlags |= MB_CAPTIVE;
         leader->creatureState = MONSTER_WANDERING;
         if (leader->info.turnsBetweenRegen > 0) {
@@ -834,14 +834,14 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
         }
 
         // Draw the manacles unless the horde spawns in weird terrain (e.g. cages).
-        if (!hordeCatalog[hordeID].spawnsIn) {
+        if (!(*hordeCatalog)[hordeID].spawnsIn) {
             drawManacles(x, y);
         }
-    } else if (hordeCatalog[hordeID].flags & HORDE_ALLIED_WITH_PLAYER) {
+    } else if ((*hordeCatalog)[hordeID].flags & HORDE_ALLIED_WITH_PLAYER) {
         becomeAllyWith(leader);
     }
 
-    if (hordeCatalog[hordeID].flags & HORDE_SACRIFICE_TARGET) {
+    if ((*hordeCatalog)[hordeID].flags & HORDE_SACRIFICE_TARGET) {
         leader->bookkeepingFlags |= MB_MARKED_FOR_SACRIFICE;
         leader->info.intrinsicLightType = SACRIFICE_MARK_LIGHT;
     }
@@ -963,7 +963,7 @@ boolean summonMinions(creature *summoner) {
 
     atLeastOneMinion = spawnMinions(hordeID, summoner, true, false);
 
-    if (hordeCatalog[hordeID].flags & HORDE_SUMMONED_AT_DISTANCE) {
+    if ((*hordeCatalog)[hordeID].flags & HORDE_SUMMONED_AT_DISTANCE) {
         // Create a grid where "1" denotes a valid summoning location: within DCOLS/2 pathing distance,
         // not in harmful terrain, and outside of the player's field of view.
         grid = allocGrid();
@@ -982,7 +982,7 @@ boolean summonMinions(creature *summoner) {
         if (monst != summoner && monstersAreTeammates(monst, summoner)
             && (monst->bookkeepingFlags & MB_JUST_SUMMONED)) {
 
-            if (hordeCatalog[hordeID].flags & HORDE_SUMMONED_AT_DISTANCE) {
+            if ((*hordeCatalog)[hordeID].flags & HORDE_SUMMONED_AT_DISTANCE) {
                 x = y = -1;
                 randomLocationInGrid(grid, &x, &y, 1);
                 teleport(monst, x, y, true);

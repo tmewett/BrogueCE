@@ -25,6 +25,11 @@
 #include "IncludeGlobalsBase.h"
 #include "IncludeGlobals.h"
 #include "IncludeGlobals_Brogue.h"
+#ifdef RAPID_BROGUE
+#include "IncludeGlobals_RapidBrogue.h"
+#endif
+
+
 #include <time.h>
 
 int rogueMain() {
@@ -140,9 +145,18 @@ void welcome() {
 }
 
 void initializeGameSpecifics() {
-    
-    initializeGameConst_Brogue();
-    initializeGameGlobals_Brogue();
+
+    switch (gameVariant) {
+#ifdef RAPID_BROGUE
+        case VARIANT_RAPID_BROGUE:
+            initializeGameConst_RapidBrogue();
+            initializeGameGlobals_RapidBrogue();
+            break;
+#endif
+        default:
+            initializeGameConst_Brogue();
+            initializeGameGlobals_Brogue();
+    }
 }
 
 // Seed is used as the dungeon seed unless it's zero, in which case generate a new one.

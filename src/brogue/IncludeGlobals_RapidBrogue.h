@@ -1,5 +1,5 @@
 /*
- *  Include Globals Brogue.h
+ *  Include Globals Rapid Brogue.h
  *  Brogue
  *
  *  Created by Brian Walker on 2/8/09.
@@ -21,5 +21,5 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-void initializeGameConst_Brogue();
-void initializeGameGlobals_Brogue();
+void initializeGameConst_RapidBrogue();
+void initializeGameGlobals_RapidBrogue();
