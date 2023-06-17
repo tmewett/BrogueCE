@@ -24,8 +24,8 @@
 #include "Rogue.h"
 #include "IncludeGlobalsBase.h"
 #include "IncludeGlobals.h"
+#include "IncludeGlobals_Brogue.h"
 #include <time.h>
-
 
 void rogueMain() {
     previousGameSeed = 0;
@@ -138,6 +138,12 @@ void welcome() {
     flavorMessage("The doors to the dungeon slam shut behind you.");
 }
 
+void initializeGameSpecifics() {
+    
+    initializeGameConst_Brogue();
+    initializeGameGlobals_Brogue();
+}
+
 // Seed is used as the dungeon seed unless it's zero, in which case generate a new one.
 // Either way, previousGameSeed is set to the seed we use.
 // None of this seed stuff is applicable if we're playing a recording.
@@ -148,8 +154,7 @@ void initializeRogue(uint64_t seed) {
     boolean trueColorMode;
     short oldRNG;
 
-    initializeGameConst();
-    initializeGameGlobals();
+    initializeGameSpecifics();
 
     playingback = rogue.playbackMode; // the only animals that need to go on the ark
     playbackPaused = rogue.playbackPaused;

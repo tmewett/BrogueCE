@@ -21,9 +21,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-void initializeGameConst();
-void initializeGameGlobals();
-
 extern const color fireForeColor;
 
 // light colors
