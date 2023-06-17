@@ -2372,6 +2372,7 @@ typedef struct gameConstants {
     unsigned int deepestLevel;
     unsigned int amuletLevel;
     unsigned int numberBoltKinds;
+    unsigned int numberBlueprints;
 } gameConstants;
 
 // these are basically global variables pertaining to the game state and player's unique variables:
@@ -2685,9 +2686,7 @@ enum machineTypes {
     MT_PARALYSIS_TRAP_HIDDEN_AREA,
     MT_TRICK_STATUE_AREA,
     MT_WORM_AREA,
-    MT_SENTINEL_AREA,
-
-    NUMBER_BLUEPRINTS,
+    MT_SENTINEL_AREA
 };
 
 typedef struct autoGenerator {
