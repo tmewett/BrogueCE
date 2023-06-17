@@ -64,7 +64,7 @@ void fillGrid(short **grid, short fillValue) {
 }
 
 // Highlight the portion indicated by hiliteCharGrid with the hiliteColor at the hiliteStrength -- both latter arguments are optional.
-void hiliteGrid(short **grid, color *hiliteColor, short hiliteStrength) {
+void hiliteGrid(short **grid, const color *hiliteColor, short hiliteStrength) {
     short i, j, x, y;
     color hCol;
 

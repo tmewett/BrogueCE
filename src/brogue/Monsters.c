@@ -662,7 +662,7 @@ boolean monsterCanSubmergeNow(creature *monst) {
 boolean spawnMinions(short hordeID, creature *leader, boolean summoned, boolean itemPossible) {
     short iSpecies, iMember, count;
     unsigned long forbiddenTerrainFlags;
-    hordeType *theHorde;
+    const hordeType *theHorde;
     creature *monst;
     short x, y;
     short failsafe;
@@ -748,7 +748,7 @@ void drawManacles(short x, short y) {
 creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFlags, unsigned long requiredFlags) {
     short loc[2];
     short i, failsafe, depth;
-    hordeType *theHorde;
+    const hordeType *theHorde;
     creature *leader, *preexistingMonst;
     boolean tryAgain;
 

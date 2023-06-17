@@ -20,10 +20,8 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-<<<<<<< HEAD
 #include "Rogue.h"
 
-<<<<<<< HEAD
 extern tcell tmap[DCOLS][DROWS];                        // grids with info about the map
 extern pcell pmap[DCOLS][DROWS];                        // grids with info about the map
 
@@ -92,153 +90,100 @@ extern unsigned long maxLevelChanges;
 extern char annotationPathname[BROGUE_FILENAME_MAX];    // pathname of annotation file
 extern uint64_t previousGameSeed;
 
-// basic colors
-extern color white;
-extern color red;
-extern color blue;
-extern color darkRed;
-extern color gray;
-extern color darkGray;
-extern color veryDarkGray;
-extern color black;
-extern color yellow;
-extern color darkYellow;
-extern color teal;
-extern color purple;
-extern color darkPurple;
-extern color brown;
-extern color green;
-extern color darkGreen;
-extern color orange;
-extern color darkOrange;
-extern color darkBlue;
-extern color lightBlue;
-extern color pink;
-extern color darkPink;
-extern color tanColor;
-extern color sunlight;
-extern color rainbow;
-
-// tile colors
-extern color undiscoveredColor;
-
-extern color wallForeColor;
-extern color wallBackColorStart;
-extern color wallBackColorEnd;
-extern color wallBackColor;
-extern color graniteBackColor;
-extern color floorForeColor;
-extern color floorBackColor;
-extern color doorForeColor;
-extern color doorBackColor;
-
-extern color deepWaterForeColor;
-extern color deepWaterBackColor;
-extern color shallowWaterForeColor;
-extern color shallowWaterBackColor;
-extern color mudForeColor;
-extern color mudBackColor;
-extern color chasmForeColor;
-extern color chasmEdgeBackColor;
-=======
-
->>>>>>> Breaking out Globals.c into universal (base) and moddable items
-=======
-
 void initializeGameConst();
 void initializeGameGlobals();
 
->>>>>>> Further progress towards setting structs at runtime
-extern color fireForeColor;
+extern const color fireForeColor;
 
 // light colors
-extern color minersLightColor;
-extern color torchLightColor;
-extern color deepWaterLightColor;
+color minersLightColor; //dynamic
+extern const color torchLightColor;
+extern const color deepWaterLightColor;
 
-extern color discordColor;
-extern color memoryColor;
-extern color memoryOverlay;
-extern color magicMapColor;
-extern color clairvoyanceColor;
-extern color telepathyMultiplier;
-extern color omniscienceColor;
-extern color basicLightColor;
+extern const color discordColor;
+extern const color memoryColor;
+extern const color memoryOverlay;
+extern const color magicMapColor;
+extern const color clairvoyanceColor;
+extern const color telepathyMultiplier;
+extern const color omniscienceColor;
+extern const color basicLightColor;
 
-extern color colorMultiplier100;
+extern const color colorMultiplier100;
 
-extern color magicMapFlashColor;
+extern const color magicMapFlashColor;
 
-extern color itemColor;
-extern color blueBar;
-extern color redBar;
-extern color hiliteColor;
-extern color interfaceBoxColor;
-extern color interfaceButtonColor;
+extern const color itemColor;
+extern const color blueBar;
+extern const color redBar;
+extern const color hiliteColor;
+extern const color interfaceBoxColor;
+extern const color interfaceButtonColor;
 
-extern color playerInvisibleColor;
-extern color playerInShadowColor;
-extern color playerInLightColor;
-extern color playerInDarknessColor;
+extern const color playerInvisibleColor;
+extern const color playerInShadowColor;
+extern const color playerInLightColor;
+extern const color playerInDarknessColor;
 
-extern color inDarknessMultiplierColor;
+extern const color inDarknessMultiplierColor;
 
-extern color buttonHoverColor;
-extern color titleButtonColor;
+extern const color buttonHoverColor;
+extern const color titleButtonColor;
 
 // other colors
-extern color confusionGasColor;
-extern color spectralImageColor;
+extern const color confusionGasColor;
+extern const color spectralImageColor;
 
-extern color goodMessageColor;
-extern color badMessageColor;
-extern color advancementMessageColor;
-extern color itemMessageColor;
-extern color backgroundMessageColor;
+extern const color goodMessageColor;
+extern const color badMessageColor;
+extern const color advancementMessageColor;
+extern const color itemMessageColor;
+extern const color backgroundMessageColor;
 
-extern color flavorTextColor;
+extern const color flavorTextColor;
 
-extern color flameSourceColor;
-extern color flameSourceColorSecondary;
-extern color flameTitleColor;
+extern const color flameSourceColor;
+extern const color flameSourceColorSecondary;
+extern const color flameTitleColor;
 
-extern color superVictoryColor;
+extern const color superVictoryColor;
 
-extern color *dynamicColors[NUMBER_DYNAMIC_COLORS][3];
+extern color *dynamicColors[NUMBER_DYNAMIC_COLORS];
+extern const color *dynamicColorsBounds[NUMBER_DYNAMIC_COLORS][2];
 
-extern autoGenerator *autoGeneratorCatalog;
-extern short *lumenstoneDistribution;
+extern const autoGenerator *autoGeneratorCatalog;
+extern const short *lumenstoneDistribution;
 
-extern floorTileType tileCatalog[NUMBER_TILETYPES];
+extern const floorTileType tileCatalog[NUMBER_TILETYPES];
 
 extern dungeonFeature dungeonFeatureCatalog[NUMBER_DUNGEON_FEATURES];
-extern dungeonProfile dungeonProfileCatalog[NUMBER_DUNGEON_PROFILES];
+extern const dungeonProfile dungeonProfileCatalog[NUMBER_DUNGEON_PROFILES];
 
-extern lightSource lightCatalog[NUMBER_LIGHT_KINDS];
+extern const lightSource lightCatalog[NUMBER_LIGHT_KINDS];
 
 extern const blueprint blueprintCatalog[NUMBER_BLUEPRINTS];
 
 extern creatureType monsterCatalog[NUMBER_MONSTER_KINDS];
-extern monsterWords monsterText[NUMBER_MONSTER_KINDS];
-extern hordeType hordeCatalog[NUMBER_HORDES];
+extern const monsterWords monsterText[NUMBER_MONSTER_KINDS];
+extern const hordeType hordeCatalog[NUMBER_HORDES];
 extern const mutation mutationCatalog[NUMBER_MUTATORS];
 extern const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT];
 
 extern const feat featTable[FEAT_COUNT];
 
 // ITEMS
-extern char itemCategoryNames[NUMBER_ITEM_CATEGORIES][11];
 extern char itemTitles[NUMBER_SCROLL_KINDS][30];
-extern char titlePhonemes[NUMBER_TITLE_PHONEMES][30];
 extern char itemColors[NUMBER_ITEM_COLORS][30];
 extern char itemWoods[NUMBER_ITEM_WOODS][30];
 extern char itemMetals[NUMBER_ITEM_METALS][30];
 extern char itemGems[NUMBER_ITEM_GEMS][30];
 
-extern char itemColorsRef[NUMBER_ITEM_COLORS][30];
-extern char itemWoodsRef[NUMBER_ITEM_WOODS][30];
-extern char itemMetalsRef[NUMBER_ITEM_METALS][30];
-extern char itemGemsRef[NUMBER_ITEM_GEMS][30];
+extern const char itemCategoryNames[NUMBER_ITEM_CATEGORIES][11];
+extern const char titlePhonemes[NUMBER_TITLE_PHONEMES][30];
+extern const char itemColorsRef[NUMBER_ITEM_COLORS][30];
+extern const char itemWoodsRef[NUMBER_ITEM_WOODS][30];
+extern const char itemMetalsRef[NUMBER_ITEM_METALS][30];
+extern const char itemGemsRef[NUMBER_ITEM_GEMS][30];
 
 extern itemTable keyTable[NUMBER_KEY_TYPES];
 extern itemTable foodTable[NUMBER_FOOD_KINDS];

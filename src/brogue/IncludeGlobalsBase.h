@@ -83,34 +83,34 @@ extern char annotationPathname[BROGUE_FILENAME_MAX];    // pathname of annotatio
 extern uint64_t previousGameSeed;
 
 // basic colors
-extern color white;
-extern color red;
-extern color blue;
-extern color darkRed;
-extern color gray;
-extern color darkGray;
-extern color veryDarkGray;
-extern color black;
-extern color yellow;
-extern color darkYellow;
-extern color teal;
-extern color purple;
-extern color darkPurple;
-extern color brown;
-extern color green;
-extern color darkGreen;
-extern color orange;
-extern color darkOrange;
-extern color darkBlue;
-extern color darkTurquoise;
-extern color lightBlue;
-extern color pink;
-extern color darkPink;
-extern color tanColor;
-extern color rainbow;
+extern const color white;
+extern const color red;
+extern const color blue;
+extern const color darkRed;
+extern const color gray;
+extern const color darkGray;
+extern const color veryDarkGray;
+extern const color black;
+extern const color yellow;
+extern const color darkYellow;
+extern const color teal;
+extern const color purple;
+extern const color darkPurple;
+extern const color brown;
+extern const color green;
+extern const color darkGreen;
+extern const color orange;
+extern const color darkOrange;
+extern const color darkBlue;
+extern const color darkTurquoise;
+extern const color lightBlue;
+extern const color pink;
+extern const color darkPink;
+extern const color tanColor;
+extern const color rainbow;
 
 // tile colors
-extern color undiscoveredColor;
+extern const color undiscoveredColor;
 
 extern const char monsterBehaviorFlagDescriptions[32][COLS];
 extern const char monsterAbilityFlagDescriptions[32][COLS];
