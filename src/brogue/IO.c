@@ -810,7 +810,7 @@ void mainInputLoop() {
                 } else if (abs(player.loc.x - rogue.cursorLoc.x) + abs(player.loc.y - rogue.cursorLoc.y) == 1 // horizontal or vertical
                            || (distanceBetween(player.loc.x, player.loc.y, rogue.cursorLoc.x, rogue.cursorLoc.y) == 1 // includes diagonals
                                && (!diagonalBlocked(player.loc.x, player.loc.y, rogue.cursorLoc.x, rogue.cursorLoc.y, !rogue.playbackOmniscience)
-                                   || ((pmap[rogue.cursorLoc.x][rogue.cursorLoc.y].flags & HAS_MONSTER) && (monsterAtLoc(rogue.cursorLoc.x, rogue.cursorLoc.y)->info.flags & MONST_ATTACKABLE_THRU_WALLS)) // there's a turret there
+                                   || ((pmapAt(rogue.cursorLoc)->flags & HAS_MONSTER) && (monsterAtLoc(rogue.cursorLoc.x, rogue.cursorLoc.y)->info.flags & MONST_ATTACKABLE_THRU_WALLS)) // there's a turret there
                                    || ((terrainFlags(rogue.cursorLoc.x, rogue.cursorLoc.y) & T_OBSTRUCTS_PASSABILITY) && (terrainMechFlags(rogue.cursorLoc.x, rogue.cursorLoc.y) & TM_PROMOTES_ON_PLAYER_ENTRY))))) { // there's a lever there
                                                                                                                                                                                       // Clicking one space away will cause the player to try to move there directly irrespective of path.
                                    for (dir=0;
@@ -4605,13 +4605,13 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
         printString("                    ", 0, y, &white, &black, 0); // Start with a blank line
 
         // Unhighlight if it's highlighted as part of the path.
-        inPath = (pmap[monst->loc.x][monst->loc.y].flags & IS_IN_PATH) ? true : false;
-        pmap[monst->loc.x][monst->loc.y].flags &= ~IS_IN_PATH;
+        inPath = (pmapAt(monst->loc)->flags & IS_IN_PATH) ? true : false;
+        pmapAt(monst->loc)->flags &= ~IS_IN_PATH;
         getCellAppearance(monst->loc.x, monst->loc.y, &monstChar, &monstForeColor, &monstBackColor);
         applyColorBounds(&monstForeColor, 0, 100);
         applyColorBounds(&monstBackColor, 0, 100);
         if (inPath) {
-            pmap[monst->loc.x][monst->loc.y].flags |= IS_IN_PATH;
+            pmapAt(monst->loc)->flags |= IS_IN_PATH;
         }
 
         if (dim) {
@@ -4638,7 +4638,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                 //encodeMessageColor(monstName, strlen(monstName) - 4, &playerInDarknessColor);
                 encodeMessageColor(monstName, strlen(monstName) - 4, &monstForeColor);
                 strcat(monstName, "(dark)");
-            } else if (!(pmap[player.loc.x][player.loc.y].flags & IS_IN_SHADOW)) {
+            } else if (!(pmapAt(player.loc)->flags & IS_IN_SHADOW)) {
                 strcat(monstName, " xxxx");
                 //encodeMessageColor(monstName, strlen(monstName) - 4, &playerInLightColor);
                 encodeMessageColor(monstName, strlen(monstName) - 4, &monstForeColor);
@@ -4890,13 +4890,13 @@ short printItemInfo(item *theItem, short y, boolean dim, boolean highlight) {
 
     if (y < ROWS - 1) {
         // Unhighlight if it's highlighted as part of the path.
-        inPath = (pmap[theItem->loc.x][theItem->loc.y].flags & IS_IN_PATH) ? true : false;
-        pmap[theItem->loc.x][theItem->loc.y].flags &= ~IS_IN_PATH;
+        inPath = (pmapAt(theItem->loc)->flags & IS_IN_PATH) ? true : false;
+        pmapAt(theItem->loc)->flags &= ~IS_IN_PATH;
         getCellAppearance(theItem->loc.x, theItem->loc.y, &itemChar, &itemForeColor, &itemBackColor);
         applyColorBounds(&itemForeColor, 0, 100);
         applyColorBounds(&itemBackColor, 0, 100);
         if (inPath) {
-            pmap[theItem->loc.x][theItem->loc.y].flags |= IS_IN_PATH;
+            pmapAt(theItem->loc)->flags |= IS_IN_PATH;
         }
         if (dim) {
             applyColorAverage(&itemForeColor, &black, 50);

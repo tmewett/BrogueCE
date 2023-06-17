@@ -378,9 +378,9 @@ item *placeItem(item *theItem, short x, short y) {
 
     removeItemFromChain(theItem, floorItems); // just in case; double-placing an item will result in game-crashing loops in the item list
     addItemToChain(theItem, floorItems);
-    pmap[theItem->loc.x][theItem->loc.y].flags |= HAS_ITEM;
+    pmapAt(theItem->loc)->flags |= HAS_ITEM;
     if ((theItem->flags & ITEM_MAGIC_DETECTED) && itemMagicPolarity(theItem)) {
-        pmap[theItem->loc.x][theItem->loc.y].flags |= ITEM_DETECTED;
+        pmapAt(theItem->loc)->flags |= ITEM_DETECTED;
     }
     if (cellHasTerrainFlag(x, y, T_IS_DF_TRAP)
         && !cellHasTerrainFlag(x, y, T_MOVES_ITEMS)
@@ -1178,10 +1178,10 @@ void updateFloorItems() {
             pos loc;
             getQualifyingLocNear(&loc, x, y, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM), false, false);
             removeItemFrom(x, y);
-            pmap[loc.x][loc.y].flags |= HAS_ITEM;
+            pmapAt(loc)->flags |= HAS_ITEM;
             if (pmap[x][y].flags & ITEM_DETECTED) {
                 pmap[x][y].flags &= ~ITEM_DETECTED;
-                pmap[loc.x][loc.y].flags |= ITEM_DETECTED;
+                pmapAt(loc)->flags |= ITEM_DETECTED;
             }
             theItem->loc = loc;
             refreshDungeonCell(x, y);
@@ -1197,7 +1197,7 @@ void updateFloorItems() {
             continue;
         }
         if (pmap[x][y].machineNumber
-            && pmap[x][y].machineNumber == pmap[player.loc.x][player.loc.y].machineNumber
+            && pmap[x][y].machineNumber == pmapAt(player.loc)->machineNumber
             && (theItem->flags & ITEM_KIND_AUTO_ID)) {
 
             identifyItemKind(theItem);
@@ -1206,7 +1206,7 @@ void updateFloorItems() {
             && pmap[x][y].machineNumber) {
 
             while (nextItem != NULL
-                   && pmap[x][y].machineNumber == pmap[nextItem->loc.x][nextItem->loc.y].machineNumber
+                   && pmap[x][y].machineNumber == pmapAt(nextItem->loc)->machineNumber
                    && cellHasTMFlag(nextItem->loc.x, nextItem->loc.y, TM_SWAP_ENCHANTS_ACTIVATION)) {
 
                 // Skip future items that are also swappable, so that we don't inadvertently
@@ -3997,7 +3997,7 @@ void rechargeItems(unsigned long categories) {
 //    char buf[DCOLS*3], mName[DCOLS];
 //
 //    for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
-//        if (pmap[monst->loc.x][monst->loc.y].flags & IN_FIELD_OF_VIEW
+//        if (pmapAt(monst->loc)->flags & IN_FIELD_OF_VIEW
 //            && monst->creatureState != MONSTER_FLEEING
 //            && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
 //
@@ -4031,7 +4031,7 @@ void negationBlast(const char *emitterName, const short distance) {
     flashMonster(&player, &pink, 100);
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
-        if ((pmap[monst->loc.x][monst->loc.y].flags & IN_FIELD_OF_VIEW)
+        if ((pmapAt(monst->loc)->flags & IN_FIELD_OF_VIEW)
             && (player.loc.x - monst->loc.x) * (player.loc.x - monst->loc.x) + (player.loc.y - monst->loc.y) * (player.loc.y - monst->loc.y) <= distance * distance) {
 
             if (canSeeMonster(monst)) {
@@ -4041,7 +4041,7 @@ void negationBlast(const char *emitterName, const short distance) {
         }
     }
     for (theItem = floorItems; theItem != NULL; theItem = theItem->nextItem) {
-        if ((pmap[theItem->loc.x][theItem->loc.y].flags & IN_FIELD_OF_VIEW)
+        if ((pmapAt(theItem->loc)->flags & IN_FIELD_OF_VIEW)
             && (player.loc.x - theItem->loc.x) * (player.loc.x - theItem->loc.x) + (player.loc.y - theItem->loc.y) * (player.loc.y - theItem->loc.y) <= distance * distance) {
 
             theItem->flags &= ~(ITEM_MAGIC_DETECTED | ITEM_CURSED);
@@ -4051,7 +4051,7 @@ void negationBlast(const char *emitterName, const short distance) {
                     theItem->enchant1 = theItem->enchant2 = theItem->charges = 0;
                     theItem->flags &= ~(ITEM_RUNIC | ITEM_RUNIC_HINTED | ITEM_RUNIC_IDENTIFIED | ITEM_PROTECTED);
                     identify(theItem);
-                    pmap[theItem->loc.x][theItem->loc.y].flags &= ~ITEM_DETECTED;
+                    pmapAt(theItem->loc)->flags &= ~ITEM_DETECTED;
                     refreshDungeonCell(theItem->loc.x, theItem->loc.y);
                     break;
                 case STAFF:
@@ -4084,7 +4084,7 @@ void discordBlast(const char *emitterName, const short distance) {
     colorFlash(&discordColor, 0, IN_FIELD_OF_VIEW, 3 + distance / 5, distance, player.loc.x, player.loc.y);
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
-        if ((pmap[monst->loc.x][monst->loc.y].flags & IN_FIELD_OF_VIEW)
+        if ((pmapAt(monst->loc)->flags & IN_FIELD_OF_VIEW)
             && (player.loc.x - monst->loc.x) * (player.loc.x - monst->loc.x) + (player.loc.y - monst->loc.y) * (player.loc.y - monst->loc.y) <= distance * distance) {
 
             if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
@@ -4688,7 +4688,7 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
                 monst->leader = &player;
                 monst->creatureState = MONSTER_ALLY;
                 monst->ticksUntilTurn = monst->info.attackSpeed + 1; // So they don't move before the player's next turn.
-                pmap[monst->loc.x][monst->loc.y].flags |= HAS_MONSTER;
+                pmapAt(monst->loc)->flags |= HAS_MONSTER;
                 //refreshDungeonCell(monst->loc.x, monst->loc.y);
                 fadeInMonster(monst);
             }
@@ -4730,7 +4730,7 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
                 // increase scent turn number so monsters don't sniff around at the old cell like idiots
                 rogue.scentTurnNumber += 30;
                 // get any items at the destination location
-                if (pmap[player.loc.x][player.loc.y].flags & HAS_ITEM) {
+                if (pmapAt(player.loc)->flags & HAS_ITEM) {
                     pickUpItemAt(player.loc.x, player.loc.y);
                 }
                 updateVision(true);
@@ -4819,14 +4819,14 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
 
     if (theBolt->boltEffect == BE_BLINKING) {
         if (cellHasTerrainFlag(listOfCoordinates[0].x, listOfCoordinates[0].y, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION))
-            || ((pmap[listOfCoordinates[0].x][listOfCoordinates[0].y].flags & (HAS_PLAYER | HAS_MONSTER))
+            || ((pmapAt(listOfCoordinates[0])->flags & (HAS_PLAYER | HAS_MONSTER))
                 && !(monsterAtLoc(listOfCoordinates[0].x, listOfCoordinates[0].y)->bookkeepingFlags & MB_SUBMERGED))) {
                 // shooting blink point-blank into an obstruction does nothing.
                 return false;
             }
         theBolt->foreColor = &black;
         theBolt->theChar = shootingMonst->info.displayChar;
-        pmap[originLoc.x][originLoc.y].flags &= ~(HAS_PLAYER | HAS_MONSTER);
+        pmapAt(originLoc)->flags &= ~(HAS_PLAYER | HAS_MONSTER);
         refreshDungeonCell(originLoc.x, originLoc.y);
         blinkDistance = theBolt->magnitude * 2 + 1;
         checkForMissingKeys(originLoc.x, originLoc.y);
@@ -5412,9 +5412,9 @@ boolean moveCursor(boolean *targetConfirmed,
         }
 
         if (sidebarHighlighted
-            && (!(pmap[rogue.cursorLoc.x][rogue.cursorLoc.y].flags & (HAS_PLAYER | HAS_MONSTER))
+            && (!(pmapAt(rogue.cursorLoc)->flags & (HAS_PLAYER | HAS_MONSTER))
                 || !canSeeMonster(monsterAtLoc(rogue.cursorLoc.x, rogue.cursorLoc.y)))
-            && (!(pmap[rogue.cursorLoc.x][rogue.cursorLoc.y].flags & HAS_ITEM) || !playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y))
+            && (!(pmapAt(rogue.cursorLoc)->flags & HAS_ITEM) || !playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y))
             && (!cellHasTMFlag(rogue.cursorLoc.x, rogue.cursorLoc.y, TM_LIST_IN_SIDEBAR) || !playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y))) {
 
             // The sidebar is highlighted but the cursor is not on a visible item, monster or terrain. Un-highlight the sidebar.
@@ -5550,7 +5550,7 @@ boolean chooseTarget(pos *returnLoc,
         if (monst != NULL && monst != &player && canSeeMonster(monst)) {
             focusedOnSomething = true;
         } else if (playerCanSeeOrSense(targetLoc.x, targetLoc.y)
-                   && (pmap[targetLoc.x][targetLoc.y].flags & HAS_ITEM) || cellHasTMFlag(targetLoc.x, targetLoc.y, TM_LIST_IN_SIDEBAR)) {
+                   && (pmapAt(targetLoc)->flags & HAS_ITEM) || cellHasTMFlag(targetLoc.x, targetLoc.y, TM_LIST_IN_SIDEBAR)) {
             focusedOnSomething = true;
         } else if (focusedOnSomething) {
             refreshSideBar(-1, -1, false);
@@ -5945,7 +5945,7 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
     thrower->ticksUntilTurn = thrower->attackSpeed;
 
     if (thrower != &player
-        && (pmap[originLoc.x][originLoc.y].flags & IN_FIELD_OF_VIEW)) {
+        && (pmapAt(originLoc)->flags & IN_FIELD_OF_VIEW)) {
 
         monsterName(buf2, thrower, true);
         itemName(theItem, buf3, false, true, NULL);
@@ -6350,7 +6350,7 @@ boolean playerCancelsBlinking(const pos originLoc, const pos targetLoc, const sh
     getImpactLoc(&impactLoc, originLoc, targetLoc, maxDistance > 0 ? maxDistance : DCOLS, true, &boltCatalog[BOLT_BLINKING]);
     getLocationFlags(impactLoc.x, impactLoc.y, &tFlags, &tmFlags, NULL, true);
     if (maxDistance > 0) {
-        if ((pmap[impactLoc.x][impactLoc.y].flags & DISCOVERED)
+        if ((pmapAt(impactLoc)->flags & DISCOVERED)
             && (tFlags & T_LAVA_INSTA_DEATH)
             && !(tFlags & (T_ENTANGLES | T_AUTO_DESCENT))
             && !(tmFlags & TM_EXTINGUISHES_FIRE)) {
@@ -6522,7 +6522,7 @@ void summonGuardian(item *theItem) {
     monst->creatureState = MONSTER_ALLY;
     monst->ticksUntilTurn = monst->info.attackSpeed + 1; // So they don't move before the player's next turn.
     monst->status[STATUS_LIFESPAN_REMAINING] = monst->maxStatus[STATUS_LIFESPAN_REMAINING] = charmGuardianLifespan(netEnchant(theItem));
-    pmap[monst->loc.x][monst->loc.y].flags |= HAS_MONSTER;
+    pmapAt(monst->loc)->flags |= HAS_MONSTER;
     fadeInMonster(monst);
 }
 
@@ -7241,7 +7241,7 @@ void drinkPotion(item *theItem) {
                 if (tempItem->category & CAN_BE_DETECTED) {
                     detectMagicOnItem(tempItem);
                     if (itemMagicPolarity(tempItem)) {
-                        pmap[tempItem->loc.x][tempItem->loc.y].flags |= ITEM_DETECTED;
+                        pmapAt(tempItem->loc)->flags |= ITEM_DETECTED;
                         hadEffect = true;
                         refreshDungeonCell(tempItem->loc.x, tempItem->loc.y);
                     }

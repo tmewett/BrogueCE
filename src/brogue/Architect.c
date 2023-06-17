@@ -1579,7 +1579,7 @@ boolean buildAMachine(enum machineTypes bp,
                             monst = generateMonster(feature->monsterID, true, true);
                             if (monst) {
                                 monst->loc = (pos){ .x = featX, .y = featY };
-                                pmap[monst->loc.x][monst->loc.y].flags |= HAS_MONSTER;
+                                pmapAt(monst->loc)->flags |= HAS_MONSTER;
                                 monst->bookkeepingFlags |= MB_JUST_SUMMONED;
                             }
                         }
@@ -3314,7 +3314,7 @@ void evacuateCreatures(char blockingMap[DCOLS][DROWS]) {
                                      false);
                 monst->loc = newLoc;
                 pmap[i][j].flags &= ~(HAS_MONSTER | HAS_PLAYER);
-                pmap[newLoc.x][newLoc.y].flags |= (monst == &player ? HAS_PLAYER : HAS_MONSTER);
+                pmapAt(newLoc)->flags |= (monst == &player ? HAS_PLAYER : HAS_MONSTER);
             }
         }
     }
@@ -3539,9 +3539,9 @@ void restoreItem(item *theItem) {
 
         theItem->loc = loc;
     }
-    pmap[theItem->loc.x][theItem->loc.y].flags |= HAS_ITEM;
+    pmapAt(theItem->loc)->flags |= HAS_ITEM;
     if (theItem->flags & ITEM_MAGIC_DETECTED && itemMagicPolarity(theItem)) {
-        pmap[theItem->loc.x][theItem->loc.y].flags |= ITEM_DETECTED;
+        pmapAt(theItem->loc)->flags |= ITEM_DETECTED;
     }
 }
 
@@ -3665,12 +3665,12 @@ void initializeLevel() {
     }
 
     if (rogue.depthLevel == DEEPEST_LEVEL) {
-        pmap[downLoc.x][downLoc.y].layers[DUNGEON] = DUNGEON_PORTAL;
+        pmapAt(downLoc)->layers[DUNGEON] = DUNGEON_PORTAL;
     } else {
-        pmap[downLoc.x][downLoc.y].layers[DUNGEON] = DOWN_STAIRS;
+        pmapAt(downLoc)->layers[DUNGEON] = DOWN_STAIRS;
     }
-    pmap[downLoc.x][downLoc.y].layers[LIQUID]     = NOTHING;
-    pmap[downLoc.x][downLoc.y].layers[SURFACE]    = NOTHING;
+    pmapAt(downLoc)->layers[LIQUID]     = NOTHING;
+    pmapAt(downLoc)->layers[SURFACE]    = NOTHING;
 
     if (!levels[n+1].visited) {
         levels[n+1].upStairsLoc = downLoc;
@@ -3689,17 +3689,17 @@ void initializeLevel() {
     levels[n].upStairsLoc = upLoc;
 
     if (rogue.depthLevel == 1) {
-        pmap[upLoc.x][upLoc.y].layers[DUNGEON] = DUNGEON_EXIT;
+        pmapAt(upLoc)->layers[DUNGEON] = DUNGEON_EXIT;
     } else {
-        pmap[upLoc.x][upLoc.y].layers[DUNGEON] = UP_STAIRS;
+        pmapAt(upLoc)->layers[DUNGEON] = UP_STAIRS;
     }
-    pmap[upLoc.x][upLoc.y].layers[LIQUID] = NOTHING;
-    pmap[upLoc.x][upLoc.y].layers[SURFACE] = NOTHING;
+    pmapAt(upLoc)->layers[LIQUID] = NOTHING;
+    pmapAt(upLoc)->layers[SURFACE] = NOTHING;
 
     rogue.downLoc = downLoc;
-    pmap[downLoc.x][downLoc.y].flags |= HAS_STAIRS;
+    pmapAt(downLoc)->flags |= HAS_STAIRS;
     rogue.upLoc = upLoc;
-    pmap[upLoc.x][upLoc.y].flags |= HAS_STAIRS;
+    pmapAt(upLoc)->flags |= HAS_STAIRS;
 
     if (!levels[rogue.depthLevel-1].visited) {
 
