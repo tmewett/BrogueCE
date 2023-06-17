@@ -3173,7 +3173,7 @@ extern "C" {
     item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind);
     void updateEncumbrance();
     short displayedArmorValue();
-    short armorValueIfUnenchanted();
+    short armorValueIfUnenchanted(item *theItem);
     void strengthCheck(item *theItem, boolean noisy);
     void recalculateEquipmentBonuses();
     boolean equipItem(item *theItem, boolean force, item *unequipHint);
