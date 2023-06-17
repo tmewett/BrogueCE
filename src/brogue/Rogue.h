@@ -937,8 +937,7 @@ enum boltType {
     BOLT_DISTANCE_ATTACK,
     BOLT_POISON_DART,
     BOLT_ANCIENT_SPIRIT_VINES,
-    BOLT_WHIP,
-    NUMBER_BOLT_KINDS
+    BOLT_WHIP
 };
 
 enum ringKind {
@@ -2341,6 +2340,7 @@ typedef struct gameConstants {
     unsigned int numberAutogenerators;
     unsigned int deepestLevel;
     unsigned int amuletLevel;
+    unsigned int numberBoltKinds;
 } gameConstants;
 
 // these are basically global variables pertaining to the game state and player's unique variables:

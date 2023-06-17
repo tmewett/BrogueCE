@@ -32,6 +32,7 @@
 
 #define NUMBER_AUTOGENERATORS 49
 
+#define NUMBER_BOLT_KINDS 30 
 
 const color dominationColor_RapidBrogue =       {0,     0,      100,    80,     25,         0,          0,      true};
 const color beckonColor_RapidBrogue =           {10,    10,     10,     5,      5,          5,          50,     true};
@@ -817,6 +818,7 @@ void initializeGameConst_RapidBrogue() {
     gameConst.numberAutogenerators = NUMBER_AUTOGENERATORS;
     gameConst.deepestLevel = DEEPEST_LEVEL;
     gameConst.amuletLevel = AMULET_LEVEL;
+    gameConst.numberBoltKinds = NUMBER_BOLT_KINDS;
 }
 
 void initializeGameGlobals_RapidBrogue() {
