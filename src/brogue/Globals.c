@@ -2594,7 +2594,7 @@ void initializeGameConst() {
 const autoGenerator (*autoGeneratorCatalog)[];
 const short (*lumenstoneDistribution)[];
 const bolt (*boltCatalog)[];
-extern itemTable (*wandTable)[];
+itemTable (*wandTable)[];
 
 void initializeGameGlobals() {
     autoGeneratorCatalog = &autoGeneratorCatalog_Brogue;
