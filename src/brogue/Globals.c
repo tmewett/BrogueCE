@@ -640,7 +640,7 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
 
 // Features in the gas layer use the startprob as volume, ignore probdecr, and spawn in only a single point.
 // Intercepts and slopes are in units of 0.01.
-//This cannot be const, since messageDisplayed is set
+// This cannot be const, since messageDisplayed is set
 dungeonFeature dungeonFeatureCatalog[NUMBER_DUNGEON_FEATURES] = {
     // tileType                 layer       start   decr    fl  txt  flare   fCol fRad  propTerrain subseqDF
     {0}, // nothing
@@ -2585,16 +2585,20 @@ const char monsterBookkeepingFlagDescriptions[32][COLS] = {
     "is marked for demonic sacrifice",          // MB_MARKED_FOR_SACRIFICE
 };
 
-
 void initializeGameConst() {
     gameConst.numberAutogenerators = NUMBER_AUTOGENERATORS;
     gameConst.deepestLevel = DEEPEST_LEVEL;
     gameConst.amuletLevel = AMULET_LEVEL;
 }
 
+const autoGenerator (*autoGeneratorCatalog)[];
+const short (*lumenstoneDistribution)[];
+const bolt (*boltCatalog)[];
+extern itemTable (*wandTable)[];
+
 void initializeGameGlobals() {
-    autoGeneratorCatalog = autoGeneratorCatalog_Brogue;
-    lumenstoneDistribution = lumenstoneDistribution_Brogue;
-    wandTable = wandTable_Brogue;
-    boltCatalog = boltCatalog_Brogue;
+    autoGeneratorCatalog = &autoGeneratorCatalog_Brogue;
+    lumenstoneDistribution = &lumenstoneDistribution_Brogue;
+    wandTable = &wandTable_Brogue;
+    boltCatalog = &boltCatalog_Brogue;
 }

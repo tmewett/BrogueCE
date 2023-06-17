@@ -277,11 +277,11 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             break;
         case WAND:
             if (itemKind < 0) {
-                itemKind = chooseKind(wandTable, NUMBER_WAND_KINDS);
+                itemKind = chooseKind(*wandTable, NUMBER_WAND_KINDS);
             }
-            theEntry = &wandTable[itemKind];
+            theEntry = &((*wandTable)[itemKind]);
             theItem->displayChar = G_WAND;
-            theItem->charges = randClump(wandTable[itemKind].range);
+            theItem->charges = randClump((*wandTable)[itemKind].range);
             break;
         case RING:
             if (itemKind < 0) {
@@ -521,7 +521,7 @@ void populateItems(short upstairsX, short upstairsY) {
     memcpy(&potionTableCopy, &potionTable, sizeof(potionTable));
 
     if (rogue.depthLevel > gameConst.amuletLevel) {
-        numberOfItems = lumenstoneDistribution[rogue.depthLevel - gameConst.amuletLevel - 1];
+        numberOfItems = (*lumenstoneDistribution)[rogue.depthLevel - gameConst.amuletLevel - 1];
         numberOfGoldPiles = 0;
     } else {
         // Add frequency to metered items memory
@@ -795,8 +795,8 @@ void pickUpItemAt(short x, short y) {
     }
 
     if ((theItem->category & WAND)
-        && wandTable[theItem->kind].identified
-        && wandTable[theItem->kind].range.lowerBound == wandTable[theItem->kind].range.upperBound) {
+        && (*wandTable)[theItem->kind].identified
+        && (*wandTable)[theItem->kind].range.lowerBound == (*wandTable)[theItem->kind].range.upperBound) {
 
         theItem->flags |= ITEM_IDENTIFIED;
     }
@@ -1491,20 +1491,20 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
             }
             break;
         case WAND:
-            if (wandTable[theItem->kind].identified || rogue.playbackOmniscience) {
+            if ((*wandTable)[theItem->kind].identified || rogue.playbackOmniscience) {
                 sprintf(root, "wand%s of %s",
                         pluralization,
-                        wandTable[theItem->kind].name);
-            } else if (wandTable[theItem->kind].called) {
+                        (*wandTable)[theItem->kind].name);
+            } else if ((*wandTable)[theItem->kind].called) {
                 sprintf(root, "wand%s called %s%s%s",
                         pluralization,
                         purpleEscapeSequence,
-                        wandTable[theItem->kind].callTitle,
+                        (*wandTable)[theItem->kind].callTitle,
                         baseEscapeSequence);
             } else {
                 sprintf(root, "%s%s%s wand%s",
                         purpleEscapeSequence,
-                        wandTable[theItem->kind].flavor,
+                        (*wandTable)[theItem->kind].flavor,
                         baseEscapeSequence,
                         pluralization);
             }
@@ -1711,7 +1711,7 @@ itemTable *tableForItemCategory(enum itemCategory theCat) {
         case RING:
             return ringTable;
         case WAND:
-            return wandTable;
+            return (*wandTable);
         case STAFF:
             return staffTable;
         case CHARM:
@@ -2476,12 +2476,12 @@ void itemDetails(char *buf, item *theItem) {
                             theItem->charges,
                             (theItem->charges == 1 ? "" : "s"),
                             (theItem->charges == 1 ? "s" : ""),
-                            wandTable[theItem->kind].range.lowerBound * enchantMagnitude(),
-                            (wandTable[theItem->kind].range.lowerBound * enchantMagnitude() == 1 ? "" : "s"));
+                            (*wandTable)[theItem->kind].range.lowerBound * enchantMagnitude(),
+                            ((*wandTable)[theItem->kind].range.lowerBound * enchantMagnitude() == 1 ? "" : "s"));
                 } else {
                     sprintf(buf2, "No charges remain.  Enchanting this wand will add %i charge%s.",
-                            wandTable[theItem->kind].range.lowerBound * enchantMagnitude(),
-                            (wandTable[theItem->kind].range.lowerBound * enchantMagnitude() == 1 ? "" : "s"));
+                            (*wandTable)[theItem->kind].range.lowerBound * enchantMagnitude(),
+                            ((*wandTable)[theItem->kind].range.lowerBound * enchantMagnitude() == 1 ? "" : "s"));
                 }
             } else {
                 if (theItem->enchant2) {
@@ -2492,13 +2492,13 @@ void itemDetails(char *buf, item *theItem) {
                     strcpy(buf2, "You have not yet used this wand.");
                 }
 
-                if (wandTable[theItem->kind].identified) {
+                if ((*wandTable)[theItem->kind].identified) {
                     strcat(buf, buf2);
                     sprintf(buf2, " Wands of this type can be found with %i to %i charges. Enchanting this wand will add %i charge%s.",
-                            wandTable[theItem->kind].range.lowerBound,
-                            wandTable[theItem->kind].range.upperBound,
-                            wandTable[theItem->kind].range.lowerBound * enchantMagnitude(),
-                            (wandTable[theItem->kind].range.lowerBound * enchantMagnitude() == 1 ? "" : "s"));
+                            (*wandTable)[theItem->kind].range.lowerBound,
+                            (*wandTable)[theItem->kind].range.upperBound,
+                            (*wandTable)[theItem->kind].range.lowerBound * enchantMagnitude(),
+                            ((*wandTable)[theItem->kind].range.lowerBound * enchantMagnitude() == 1 ? "" : "s"));
                 }
             }
             strcat(buf, buf2);
@@ -3737,12 +3737,12 @@ boolean negate(creature *monst) {
         for (i = 0; i < 20; i++) {
             backupBolts[i] = monst->info.bolts[i];
             monst->info.bolts[i] = BOLT_NONE;
-            if (monst->info.bolts[i] && !(boltCatalog[monst->info.bolts[i]].flags & BF_NOT_NEGATABLE)) {
+            if (monst->info.bolts[i] && !((*boltCatalog)[monst->info.bolts[i]].flags & BF_NOT_NEGATABLE)) {
                 negated = true;
             }
         }
         for (i = 0, j = 0; i < 20 && backupBolts[i]; i++) {
-            if (boltCatalog[backupBolts[i]].flags & BF_NOT_NEGATABLE) {
+            if ((*boltCatalog)[backupBolts[i]].flags & BF_NOT_NEGATABLE) {
                 monst->info.bolts[j] = backupBolts[i];
                 j++;
             }
@@ -3847,8 +3847,8 @@ boolean polymorph(creature *monst) {
     monst->ticksUntilTurn = max(monst->ticksUntilTurn, 101);
 
     refreshDungeonCell(monst->loc.x, monst->loc.y);
-    if (boltCatalog[BOLT_POLYMORPH].backColor) {
-        flashMonster(monst, boltCatalog[BOLT_POLYMORPH].backColor, 100);
+    if ((*boltCatalog)[BOLT_POLYMORPH].backColor) {
+        flashMonster(monst, (*boltCatalog)[BOLT_POLYMORPH].backColor, 100);
     }
     return true;
 }
@@ -4146,8 +4146,8 @@ boolean imbueInvisibility(creature *monst, short duration) {
         monst->status[STATUS_INVISIBLE] = monst->maxStatus[STATUS_INVISIBLE] = duration;
         refreshDungeonCell(monst->loc.x, monst->loc.y);
         refreshSideBar(-1, -1, false);
-        if (boltCatalog[BOLT_POLYMORPH].backColor) {
-            flashMonster(monst, boltCatalog[BOLT_INVISIBILITY].backColor, 100);
+        if ((*boltCatalog)[BOLT_POLYMORPH].backColor) {
+            flashMonster(monst, (*boltCatalog)[BOLT_INVISIBILITY].backColor, 100);
         }
     }
     return autoID;
@@ -4269,7 +4269,7 @@ void checkForMissingKeys(short x, short y) {
 }
 
 void beckonMonster(creature *monst, short x, short y) {
-    bolt theBolt = boltCatalog[BOLT_BLINKING];
+    bolt theBolt = (*boltCatalog)[BOLT_BLINKING];
 
     if (monst->bookkeepingFlags & MB_CAPTIVE) {
         freeCaptive(monst);
@@ -4285,7 +4285,7 @@ void beckonMonster(creature *monst, short x, short y) {
 
 enum boltEffects boltEffectForItem(item *theItem) {
     if (theItem->category & (STAFF | WAND)) {
-        return boltCatalog[tableForItemCategory(theItem->category)[theItem->kind].power].boltEffect;
+        return (*boltCatalog)[tableForItemCategory(theItem->category)[theItem->kind].power].boltEffect;
     } else {
         return BE_NONE;
     }
@@ -4428,8 +4428,8 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 break;
             case BE_SLOW:
                 slow(monst, theBolt->magnitude * 5);
-                if (boltCatalog[BOLT_SLOW].backColor) {
-                    flashMonster(monst, boltCatalog[BOLT_SLOW].backColor, 100);
+                if ((*boltCatalog)[BOLT_SLOW].backColor) {
+                    flashMonster(monst, (*boltCatalog)[BOLT_SLOW].backColor, 100);
                 }
                 if (autoID) {
                     *autoID = true;
@@ -4437,8 +4437,8 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 break;
             case BE_HASTE:
                 haste(monst, staffHasteDuration(theBolt->magnitude * FP_FACTOR));
-                if (boltCatalog[BOLT_HASTE].backColor) {
-                    flashMonster(monst, boltCatalog[BOLT_HASTE].backColor, 100);
+                if ((*boltCatalog)[BOLT_HASTE].backColor) {
+                    flashMonster(monst, (*boltCatalog)[BOLT_HASTE].backColor, 100);
                 }
                 if (autoID) {
                     *autoID = true;
@@ -4472,8 +4472,8 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                             }
                             sprintf(buf, "%s is bound to your will!", monstName);
                             message(buf, 0);
-                            if (boltCatalog[BOLT_DOMINATION].backColor) {
-                                flashMonster(monst, boltCatalog[BOLT_DOMINATION].backColor, 100);
+                            if ((*boltCatalog)[BOLT_DOMINATION].backColor) {
+                                flashMonster(monst, (*boltCatalog)[BOLT_DOMINATION].backColor, 100);
                             }
                         }
                     } else if (canSeeMonster(monst)) {
@@ -4487,8 +4487,8 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 break;
             case BE_NEGATION:
                 negated = negate(monst);
-                if (boltCatalog[BOLT_NEGATION].backColor) {
-                    flashMonster(monst, boltCatalog[BOLT_NEGATION].backColor, 100);
+                if ((*boltCatalog)[BOLT_NEGATION].backColor) {
+                    flashMonster(monst, (*boltCatalog)[BOLT_NEGATION].backColor, 100);
                 }
                 if (negated && autoID && canSeeMonster(monst)) {
                     *autoID = true;
@@ -4510,8 +4510,8 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
                     addPoison(monst, staffPoison(theBolt->magnitude * FP_FACTOR), 1);
                     if (canSeeMonster(monst)) {
-                        if (boltCatalog[BOLT_POISON].backColor) {
-                            flashMonster(monst, boltCatalog[BOLT_POISON].backColor, 100);
+                        if ((*boltCatalog)[BOLT_POISON].backColor) {
+                            flashMonster(monst, (*boltCatalog)[BOLT_POISON].backColor, 100);
                         }
                         if (autoID) {
                             *autoID = true;
@@ -4539,8 +4539,8 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                     monst->status[STATUS_ENTRANCED] = monst->maxStatus[STATUS_ENTRANCED] = staffEntrancementDuration(theBolt->magnitude * FP_FACTOR);
                     wakeUp(monst);
                     if (canSeeMonster(monst)) {
-                        if (boltCatalog[BOLT_ENTRANCEMENT].backColor) {
-                            flashMonster(monst, boltCatalog[BOLT_ENTRANCEMENT].backColor, 100);
+                        if ((*boltCatalog)[BOLT_ENTRANCEMENT].backColor) {
+                            flashMonster(monst, (*boltCatalog)[BOLT_ENTRANCEMENT].backColor, 100);
                         }
                         if (autoID) {
                             *autoID = true;
@@ -4564,9 +4564,9 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                     if (newMonst) {
                         monst->currentHP = (monst->currentHP + 1) / 2;
                         newMonst->currentHP = (newMonst->currentHP + 1) / 2;
-                        if (boltCatalog[BOLT_PLENTY].backColor) {
-                            flashMonster(monst, boltCatalog[BOLT_PLENTY].backColor, 100);
-                            flashMonster(newMonst, boltCatalog[BOLT_PLENTY].backColor, 100);
+                        if ((*boltCatalog)[BOLT_PLENTY].backColor) {
+                            flashMonster(monst, (*boltCatalog)[BOLT_PLENTY].backColor, 100);
+                            flashMonster(newMonst, (*boltCatalog)[BOLT_PLENTY].backColor, 100);
                         }
                         if (autoID) {
                             *autoID = true;
@@ -4579,8 +4579,8 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                     monst->status[STATUS_DISCORDANT] = monst->maxStatus[STATUS_DISCORDANT] = max(staffDiscordDuration(theBolt->magnitude * FP_FACTOR),
                                                                                                  monst->status[STATUS_DISCORDANT]);
                     if (canSeeMonster(monst)) {
-                        if (boltCatalog[BOLT_DISCORD].backColor) {
-                            flashMonster(monst, boltCatalog[BOLT_DISCORD].backColor, 100);
+                        if ((*boltCatalog)[BOLT_DISCORD].backColor) {
+                            flashMonster(monst, (*boltCatalog)[BOLT_DISCORD].backColor, 100);
                         }
                         if (autoID) {
                             *autoID = true;
@@ -4593,8 +4593,8 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                     monst->status[STATUS_SHIELDED] = staffProtection(theBolt->magnitude * FP_FACTOR);
                 }
                 monst->maxStatus[STATUS_SHIELDED] = monst->status[STATUS_SHIELDED];
-                if (boltCatalog[BOLT_SHIELDING].backColor) {
-                    flashMonster(monst, boltCatalog[BOLT_SHIELDING].backColor, 100);
+                if ((*boltCatalog)[BOLT_SHIELDING].backColor) {
+                    flashMonster(monst, (*boltCatalog)[BOLT_SHIELDING].backColor, 100);
                 }
                 if (autoID) {
                     *autoID = true;
@@ -4791,7 +4791,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
         // coordinates. This ensures that the two bolts will include exactly the same coordinates,
         // so the target won't get stuck on any obstacles while being beckoned.
         pos listOfCoordinatesTmp[MAX_BOLT_LENGTH];
-        short numCellsTmp = getLineCoordinates(listOfCoordinatesTmp, targetLoc, originLoc, (hideDetails ? &boltCatalog[BOLT_NONE] : theBolt));
+        short numCellsTmp = getLineCoordinates(listOfCoordinatesTmp, targetLoc, originLoc, (hideDetails ? &(*boltCatalog)[BOLT_NONE] : theBolt));
         numCells = -1;
         for (int i = 0; i < numCellsTmp; i++) {
             if (listOfCoordinatesTmp[i].x == originLoc.x && listOfCoordinatesTmp[i].y == originLoc.y) {
@@ -4805,7 +4805,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
         }
         listOfCoordinates[numCells-1] = targetLoc;
     } else {
-        numCells = getLineCoordinates(listOfCoordinates, originLoc, targetLoc, (hideDetails ? &boltCatalog[BOLT_NONE] : theBolt));
+        numCells = getLineCoordinates(listOfCoordinates, originLoc, targetLoc, (hideDetails ? &(*boltCatalog)[BOLT_NONE] : theBolt));
     }
     shootingMonst = monsterAtLoc(originLoc.x, originLoc.y);
 
@@ -5941,7 +5941,7 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
 
     // Using BOLT_NONE for throws because all flags are off, which means we'll try to avoid all obstacles in front of the target
     pos listOfCoordinates[MAX_BOLT_LENGTH];
-    numCells = getLineCoordinates(listOfCoordinates, originLoc, targetLoc, &boltCatalog[BOLT_NONE]);
+    numCells = getLineCoordinates(listOfCoordinates, originLoc, targetLoc, &(*boltCatalog)[BOLT_NONE]);
 
     thrower->ticksUntilTurn = thrower->attackSpeed;
 
@@ -6206,7 +6206,7 @@ void throwCommand(item *theItem, boolean autoThrow) {
     pos zapTarget;
     if (autoThrow && creatureIsTargetable(rogue.lastTarget)) {
         zapTarget = rogue.lastTarget->loc;
-    } else if (!chooseTarget(&zapTarget, maxDistance, true, autoTarget, false, &boltCatalog[BOLT_NONE], &red)) {
+    } else if (!chooseTarget(&zapTarget, maxDistance, true, autoTarget, false, &(*boltCatalog)[BOLT_NONE], &red)) {
         // player doesn't choose a target? return
         return;
     }
@@ -6348,7 +6348,7 @@ boolean playerCancelsBlinking(const pos originLoc, const pos targetLoc, const sh
     }
 
     pos impactLoc;
-    getImpactLoc(&impactLoc, originLoc, targetLoc, maxDistance > 0 ? maxDistance : DCOLS, true, &boltCatalog[BOLT_BLINKING]);
+    getImpactLoc(&impactLoc, originLoc, targetLoc, maxDistance > 0 ? maxDistance : DCOLS, true, &(*boltCatalog)[BOLT_BLINKING]);
     getLocationFlags(impactLoc.x, impactLoc.y, &tFlags, &tmFlags, NULL, true);
     if (maxDistance > 0) {
         if ((pmapAt(impactLoc)->flags & DISCOVERED)
@@ -6361,7 +6361,7 @@ boolean playerCancelsBlinking(const pos originLoc, const pos targetLoc, const sh
     } else {
         certainDeath = true;
         pos coordinates[DCOLS];
-        numCells = getLineCoordinates(coordinates, originLoc, targetLoc, &boltCatalog[BOLT_BLINKING]);
+        numCells = getLineCoordinates(coordinates, originLoc, targetLoc, &(*boltCatalog)[BOLT_BLINKING]);
         for (i = 0; i < numCells; i++) {
             x = coordinates[i].x;
             y = coordinates[i].y;
@@ -6416,7 +6416,7 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
     sprintf(buf, "Zapping your %s:", buf2);
     printString(buf, mapToWindowX(0), 1, &itemMessageColor, &black, NULL);
 
-    theBolt = boltCatalog[tableForItemCategory(theItem->category)[theItem->kind].power];
+    theBolt = (*boltCatalog)[tableForItemCategory(theItem->category)[theItem->kind].power];
     if (theItem->category == STAFF) {
         theBolt.magnitude = theItem->enchant1;
     }
@@ -6442,7 +6442,7 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
         autoTarget = true;
         targetAllies = false;
     }
-    boltKnown = (((theItem->category & WAND) && wandTable[theItem->kind].identified)
+    boltKnown = (((theItem->category & WAND) && (*wandTable)[theItem->kind].identified)
                  || ((theItem->category & STAFF) && staffTable[theItem->kind].identified));
     if (!boltKnown) {
         trajectoryHiliteColor = gray;
@@ -6455,7 +6455,7 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
     pos originLoc = player.loc;
     pos zapTarget;
     confirmedTarget = chooseTarget(&zapTarget, maxDistance, false, autoTarget,
-        targetAllies, (boltKnown ? &theBolt : &boltCatalog[BOLT_NONE]), &trajectoryHiliteColor);
+        targetAllies, (boltKnown ? &theBolt : &(*boltCatalog)[BOLT_NONE]), &trajectoryHiliteColor);
     if (confirmedTarget
         && boltKnown
         && theBolt.boltEffect == BE_BLINKING
@@ -6542,8 +6542,8 @@ void useCharm(item *theItem) {
                 player.status[STATUS_SHIELDED] = charmProtection(enchant);
             }
             player.maxStatus[STATUS_SHIELDED] = player.status[STATUS_SHIELDED];
-            if (boltCatalog[BOLT_SHIELDING].backColor) {
-                flashMonster(&player, boltCatalog[BOLT_SHIELDING].backColor, 100);
+            if ((*boltCatalog)[BOLT_SHIELDING].backColor) {
+                flashMonster(&player, (*boltCatalog)[BOLT_SHIELDING].backColor, 100);
             }
             message("A shimmering shield coalesces around you.", 0);
             break;
@@ -6985,7 +6985,7 @@ void readScroll(item *theItem) {
                     theItem->enchant2 = 500 / theItem->enchant1;
                     break;
                 case WAND:
-                    theItem->charges += wandTable[theItem->kind].range.lowerBound * enchantMagnitude();
+                    theItem->charges += (*wandTable)[theItem->kind].range.lowerBound * enchantMagnitude();
                     break;
                 case CHARM:
                     theItem->enchant1 += enchantMagnitude();
@@ -7338,7 +7338,7 @@ short magicCharDiscoverySuffix(short category, short kind) {
             break;
         case WAND:
         case STAFF:
-            if (boltCatalog[tableForItemCategory(category)[kind].strengthRequired].flags & (BF_TARGET_ALLIES)) {
+            if ((*boltCatalog)[tableForItemCategory(category)[kind].strengthRequired].flags & (BF_TARGET_ALLIES)) {
                 result = -1;
             } else {
                 result = 1;
@@ -7853,7 +7853,7 @@ void shuffleFlavors() {
         resetItemTableEntry(staffTable+ i);
     }
     for (i=0; i<NUMBER_WAND_KINDS; i++) {
-        resetItemTableEntry(wandTable + i);
+        resetItemTableEntry(&((*wandTable)[i]));
     }
     for (i=0; i<NUMBER_SCROLL_KINDS; i++) {
         resetItemTableEntry(scrollTable + i);

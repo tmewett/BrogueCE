@@ -1750,7 +1750,7 @@ void runAutogenerators(boolean buildAreaMachines) {
     for (AG=1; AG<gameConst.numberAutogenerators; AG++) {
 
         // Shortcut:
-        gen = &(autoGeneratorCatalog[AG]);
+        gen = &((*autoGeneratorCatalog)[AG]);
 
         if (gen->machine > 0 == buildAreaMachines) {
 

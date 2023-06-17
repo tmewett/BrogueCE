@@ -505,7 +505,7 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
         combatMessage(buf, messageColorFromVictim(defender));
         autoID = true;
     }
-    theBolt = boltCatalog[BOLT_BLINKING];
+    theBolt = (*boltCatalog)[BOLT_BLINKING];
     theBolt.magnitude = max(1, netEnchant(theItem) / FP_FACTOR);
     zap(oldLoc, newLoc, &theBolt, false, false);
     if (!(defender->bookkeepingFlags & MB_IS_DYING)
@@ -1364,7 +1364,7 @@ boolean canAbsorb(creature *ally, boolean ourBolts[NUMBER_BOLT_KINDS], creature 
             }
 
             for (i=0; prey->info.bolts[i] != BOLT_NONE; i++) {
-                if (!(boltCatalog[prey->info.bolts[i]].flags & BF_NOT_LEARNABLE)
+                if (!((*boltCatalog)[prey->info.bolts[i]].flags & BF_NOT_LEARNABLE)
                     && !ourBolts[prey->info.bolts[i]]) {
 
                     return true;
@@ -1456,7 +1456,7 @@ boolean anyoneWantABite(creature *decedent) {
                 // If there are no learnable ability or behavior flags, pick a learnable bolt.
                 candidates = 0;
                 for (i=0; decedent->info.bolts[i] != BOLT_NONE; i++) {
-                    if (!(boltCatalog[decedent->info.bolts[i]].flags & BF_NOT_LEARNABLE)
+                    if (!((*boltCatalog)[decedent->info.bolts[i]].flags & BF_NOT_LEARNABLE)
                         && !ourBolts[decedent->info.bolts[i]]) {
 
                         candidates++;
@@ -1465,7 +1465,7 @@ boolean anyoneWantABite(creature *decedent) {
                 if (candidates > 0) {
                     randIndex = rand_range(1, candidates);
                     for (i=0; decedent->info.bolts[i] != BOLT_NONE; i++) {
-                        if (!(boltCatalog[decedent->info.bolts[i]].flags & BF_NOT_LEARNABLE)
+                        if (!((*boltCatalog)[decedent->info.bolts[i]].flags & BF_NOT_LEARNABLE)
                             && !ourBolts[decedent->info.bolts[i]]
                             && !--randIndex) {
 
