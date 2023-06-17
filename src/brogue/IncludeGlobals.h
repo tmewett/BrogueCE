@@ -90,9 +90,6 @@ extern unsigned long maxLevelChanges;
 extern char annotationPathname[BROGUE_FILENAME_MAX];    // pathname of annotation file
 extern uint64_t previousGameSeed;
 
-void initializeGameConst();
-void initializeGameGlobals();
-
 extern const color fireForeColor;
 
 // light colors
