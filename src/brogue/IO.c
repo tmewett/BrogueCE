@@ -1020,8 +1020,9 @@ void shuffleTerrainColors(short percentOfCells, boolean refreshCells) {
 
 // if forecolor is too similar to back, darken or lighten it and return true.
 // Assumes colors have already been baked (no random components).
-boolean separateColors(color *fore, color *back) {
-    color f, b, *modifier;
+boolean separateColors(color *fore, const color *back) {
+    color f, b;
+    const color *modifier;
     short failsafe;
     boolean madeChange;
 
@@ -1736,7 +1737,7 @@ void irisFadeBetweenBuffers(cellDisplayBuffer fromBuf[COLS][ROWS],
 }
 
 // takes dungeon coordinates
-void colorBlendCell(short x, short y, color *hiliteColor, short hiliteStrength) {
+void colorBlendCell(short x, short y, const color *hiliteColor, short hiliteStrength) {
     enum displayGlyph displayChar;
     color foreColor, backColor;
 
@@ -1841,7 +1842,7 @@ void plotCharWithColor(enum displayGlyph inputChar, windowpos loc, const color *
     restoreRNG;
 }
 
-void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, color *foreColor, color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]) {
+void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, const color *foreColor, const color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]) {
     short oldRNG;
 
     if (!dbuf) {
@@ -1867,7 +1868,7 @@ void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, color *foreCol
     restoreRNG;
 }
 
-void plotForegroundChar(enum displayGlyph inputChar, short x, short y, color *foreColor, boolean affectedByLighting) {
+void plotForegroundChar(enum displayGlyph inputChar, short x, short y, const color *foreColor, boolean affectedByLighting) {
     color multColor, myColor, backColor, ignoredColor;
     enum displayGlyph ignoredChar;
 
@@ -1909,7 +1910,7 @@ void dumpLevelToScreen() {
 
 // To be used immediately after dumpLevelToScreen() above.
 // Highlight the portion indicated by hiliteCharGrid with the hiliteColor at the hiliteStrength -- both latter arguments are optional.
-void hiliteCharGrid(char hiliteCharGrid[DCOLS][DROWS], color *hiliteColor, short hiliteStrength) {
+void hiliteCharGrid(char hiliteCharGrid[DCOLS][DROWS], const color *hiliteColor, short hiliteStrength) {
     short i, j, x, y;
     color hCol;
 
@@ -2037,7 +2038,7 @@ void overlayDisplayBuffer(cellDisplayBuffer overBuf[COLS][ROWS], cellDisplayBuff
 
 // Takes a list of locations, a color and a list of strengths and flashes the foregrounds of those locations.
 // Strengths are percentages measuring how hard the color flashes at its peak.
-void flashForeground(short *x, short *y, color **flashColor, short *flashStrength, short count, short frames) {
+void flashForeground(short *x, short *y, const color **flashColor, short *flashStrength, short count, short frames) {
     short i, j, percent;
     enum displayGlyph *displayChar;
     color *bColor, *fColor, newColor;
@@ -2082,7 +2083,7 @@ void flashForeground(short *x, short *y, color **flashColor, short *flashStrengt
     restoreRNG;
 }
 
-void flashCell(color *theColor, short frames, short x, short y) {
+void flashCell(const color *theColor, short frames, short x, short y) {
     short i;
     boolean interrupted = false;
 
@@ -2869,7 +2870,7 @@ void displayCenteredAlert(char *message) {
 }
 
 // Flashes a message on the screen starting at (x, y) lasting for the given time (in ms) and with the given colors.
-void flashMessage(char *message, short x, short y, int time, color *fColor, color *bColor) {
+void flashMessage(char *message, short x, short y, int time, const color *fColor, const color *bColor) {
     boolean fastForward;
     int     i, j, messageLength, percentComplete, previousPercentComplete;
     color backColors[COLS], backColor, foreColor;
@@ -3004,7 +3005,7 @@ void clearMonsterFlashes() {
 
 void displayMonsterFlashes(boolean flashingEnabled) {
     short x[100], y[100], strength[100], count = 0;
-    color *flashColor[100];
+    const color *flashColor[100];
 
     rogue.creaturesWillFlashThisTurn = false;
 
@@ -3432,7 +3433,7 @@ void temporaryMessage(const char *msg, unsigned long flags) {
     restoreRNG;
 }
 
-void messageWithColor(char *msg, color *theColor, unsigned long flags) {
+void messageWithColor(const char *msg, const color *theColor, unsigned long flags) {
     char buf[COLS*2] = "";
     short i;
 
@@ -3442,7 +3443,7 @@ void messageWithColor(char *msg, color *theColor, unsigned long flags) {
     message(buf, flags);
 }
 
-void flavorMessage(char *msg) {
+void flavorMessage(const char *msg) {
     short i;
     char text[COLS*20];
 
@@ -3598,13 +3599,30 @@ short encodeMessageColor(char *msg, short i, const color *theColor) {
     return i;
 }
 
+color copyColor(const color *source) {
+    color newColor;
+
+    newColor.red = source->red;
+    newColor.green = source->green;
+    newColor.blue = source->blue;
+
+    newColor.redRand = source->redRand;
+    newColor.greenRand = source->greenRand;
+    newColor.blueRand = source->blueRand;
+
+    newColor.rand = source->rand;
+
+    newColor.colorDances = source->colorDances;
+    
+    return newColor;
+}
+
 // Call this when the i'th character of msg is COLOR_ESCAPE.
 // It will return the encoded color, and will advance i past the color escape sequence.
 short decodeMessageColor(const char *msg, short i, color *returnColor) {
 
     if (msg[i] != COLOR_ESCAPE) {
         printf("\nAsked to decode a color escape that didn't exist!");
-        *returnColor = white;
     } else {
         i++;
         *returnColor = black;
@@ -3620,7 +3638,7 @@ short decodeMessageColor(const char *msg, short i, color *returnColor) {
 }
 
 // Returns a color for combat text based on the identity of the victim.
-color *messageColorFromVictim(creature *monst) {
+const color *messageColorFromVictim(creature *monst) {
     if (monst == &player) {
         return &badMessageColor;
     } else if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience) {
@@ -3722,7 +3740,7 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
     creature *closestMonst = NULL;
     item *theItem, *closestItem = NULL;
     char buf[COLS];
-    void *entityList[ROWS] = {0}, *focusEntity = NULL;
+    const void *entityList[ROWS] = {0}, *focusEntity = NULL;
     enum entityDisplayTypes entityType[ROWS] = {0}, focusEntityType = EDT_NOTHING;
     short terrainLocationMap[ROWS][2];
     boolean gotFocusedEntityOnScreen = (focusX >= 0 ? false : true);
@@ -3933,11 +3951,10 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
     restoreRNG;
 }
 
-void printString(const char *theString, short x, short y, color *foreColor, color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]) {
-    color fColor;
+void printString(const char *theString, short x, short y, const color *foreColor, const color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]) {
     short i;
 
-    fColor = *foreColor;
+    color fColor = *foreColor;
 
     for (i=0; theString[i] != '\0' && x < COLS; i++, x++) {
         while (theString[i] == COLOR_ESCAPE) {
@@ -3947,7 +3964,7 @@ void printString(const char *theString, short x, short y, color *foreColor, colo
             }
         }
 
-        plotCharToBuffer(theString[i], (windowpos){ x, y }, &fColor, backColor, dbuf);
+        plotCharToBuffer(theString[i], (windowpos){ x, y }, foreColor, backColor, dbuf);
     }
 }
 
@@ -4040,8 +4057,8 @@ short wrapText(char *to, const char *sourceText, short width) {
 }
 
 // returns the y-coordinate of the last line
-short printStringWithWrapping(char *theString, short x, short y, short width, color *foreColor,
-                             color*backColor, cellDisplayBuffer dbuf[COLS][ROWS]) {
+short printStringWithWrapping(char *theString, short x, short y, short width, const color *foreColor,
+                              const color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]) {
     color fColor;
     char printString[COLS * ROWS * 2];
     short i, px, py;
@@ -4158,7 +4175,8 @@ void printHelpScreen() {
 }
 
 void printDiscoveries(short category, short count, unsigned short itemCharacter, short x, short y, cellDisplayBuffer dbuf[COLS][ROWS]) {
-    color *theColor, goodColor, badColor;
+    color goodColor, badColor;
+    const color *theColor;
     char buf[COLS], buf2[COLS];
     short i, magic, totalFrequency;
     itemTable *theTable = tableForItemCategory(category);
@@ -4457,7 +4475,7 @@ void printSeed() {
     message(buf, 0);
 }
 
-void printProgressBar(short x, short y, const char barLabel[COLS], long amtFilled, long amtMax, color *fillColor, boolean dim) {
+void printProgressBar(short x, short y, const char barLabel[COLS], long amtFilled, long amtMax, const color *fillColor, boolean dim) {
     char barText[] = "                    "; // string length is 20
     short i, labelOffset;
     color currentFillColor, textColor, progressBarColor, darkenedBarColor;
@@ -4509,7 +4527,7 @@ void printProgressBar(short x, short y, const char barLabel[COLS], long amtFille
 }
 
 // Very low-level. Changes displayBuffer directly.
-void highlightScreenCell(short x, short y, color *highlightColor, short strength) {
+void highlightScreenCell(short x, short y, const color *highlightColor, short strength) {
     color tempColor;
 
     tempColor = colorFromComponents(displayBuffer[x][y].foreColorComponents);
@@ -5041,7 +5059,7 @@ void rectangularShading(short x, short y, short width, short height,
 // run a button input loop and return the result.
 // (Returns -1 for canceled; otherwise the button index number.)
 short printTextBox(char *textBuf, short x, short y, short width,
-                   color *foreColor, color *backColor,
+                   const color *foreColor, const color *backColor,
                    cellDisplayBuffer rbuf[COLS][ROWS],
                    brogueButton *buttons, short buttonCount) {
     cellDisplayBuffer dbuf[COLS][ROWS];

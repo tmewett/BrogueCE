@@ -485,8 +485,8 @@ void updateColors() {
     short i;
 
     for (i=0; i<NUMBER_DYNAMIC_COLORS; i++) {
-        *(dynamicColors[i][0]) = *(dynamicColors[i][1]);
-        applyColorAverage(dynamicColors[i][0], dynamicColors[i][2], min(100, max(0, rogue.depthLevel * 100 / gameConst.amuletLevel)));
+        *(dynamicColors[i]) = *(dynamicColorsBounds[i][0]);
+        applyColorAverage(dynamicColors[i], dynamicColorsBounds[i][1], min(100, max(0, rogue.depthLevel * 100 / gameConst.amuletLevel)));
     }
 }
 

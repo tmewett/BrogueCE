@@ -466,7 +466,7 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
     fileEntry *files;
     boolean retval = false, again;
     cellDisplayBuffer dbuf[COLS][ROWS], rbuf[COLS][ROWS];
-    color *dialogColor = &interfaceBoxColor;
+    const color *dialogColor = &interfaceBoxColor;
     char *membuf;
     char fileDate [11];
 

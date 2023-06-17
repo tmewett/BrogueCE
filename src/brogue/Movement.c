@@ -107,12 +107,12 @@ enum dungeonLayers layerWithFlag(short x, short y, unsigned long flag) {
 }
 
 // Retrieves a pointer to the flavor text of the highest-priority terrain at the given location
-char *tileFlavor(short x, short y) {
+const char *tileFlavor(short x, short y) {
     return tileCatalog[pmap[x][y].layers[highestPriorityLayer(x, y, false)]].flavorText;
 }
 
 // Retrieves a pointer to the description text of the highest-priority terrain at the given location
-char *tileText(short x, short y) {
+const char *tileText(short x, short y) {
     return tileCatalog[pmap[x][y].layers[highestPriorityLayer(x, y, false)]].description;
 }
 

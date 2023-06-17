@@ -110,7 +110,7 @@ unsigned long pickItemCategory(unsigned long theCategory) {
 
 // Sets an item to the given type and category (or chooses randomly if -1) with all other stats
 item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
-    itemTable *theEntry = NULL;
+    const itemTable *theEntry = NULL;
 
     if (itemCategory <= 0) {
         itemCategory = ALL_ITEMS;
@@ -351,7 +351,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
     return theItem;
 }
 
-short chooseKind(itemTable *theTable, short numKinds) {
+short chooseKind(const itemTable *theTable, short numKinds) {
     short i, totalFrequencies = 0, randomFrequency;
     for (i=0; i<numKinds; i++) {
         totalFrequencies += max(0, theTable[i].frequency);
@@ -1358,7 +1358,7 @@ void call(item *theItem) {
 // If baseColor is provided, then the suffix will be in gray, flavor portions of the item name (e.g. a "pink" potion,
 //  a "sandalwood" staff, a "ruby" ring) will be in dark purple, and the Amulet of Yendor and lumenstones will be in yellow.
 //  BaseColor itself will be the color that the name reverts to outside of these colored portions.
-void itemName(item *theItem, char *root, boolean includeDetails, boolean includeArticle, color *baseColor) {
+void itemName(item *theItem, char *root, boolean includeDetails, boolean includeArticle, const color *baseColor) {
     char buf[DCOLS * 5], pluralization[10], article[10] = "", runicName[30],
     grayEscapeSequence[5], purpleEscapeSequence[5], yellowEscapeSequence[5], baseEscapeSequence[5];
     color tempColor;
