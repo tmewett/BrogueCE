@@ -32,7 +32,8 @@
 
 #define NUMBER_AUTOGENERATORS 49
 
-#define NUMBER_BOLT_KINDS 30 
+#define NUMBER_BOLT_KINDS 30
+#define NUMBER_BLUEPRINTS 72
 
 const color dominationColor_RapidBrogue =       {0,     0,      100,    80,     25,         0,          0,      true};
 const color beckonColor_RapidBrogue =           {10,    10,     10,     5,      5,          5,          50,     true};
@@ -819,6 +820,7 @@ void initializeGameConst_RapidBrogue() {
     gameConst.deepestLevel = DEEPEST_LEVEL;
     gameConst.amuletLevel = AMULET_LEVEL;
     gameConst.numberBoltKinds = NUMBER_BOLT_KINDS;
+    gameConst.numberBlueprints = NUMBER_BLUEPRINTS;
 }
 
 void initializeGameGlobals_RapidBrogue() {
@@ -827,6 +829,7 @@ void initializeGameGlobals_RapidBrogue() {
     wandTable = &wandTable_RapidBrogue;
     boltCatalog = &boltCatalog_RapidBrogue;
     hordeCatalog = &hordeCatalog_RapidBrogue;
+    blueprintCatalog = &blueprintCatalog_RapidBrogue;
 }
 
 #endif

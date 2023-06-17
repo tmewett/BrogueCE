@@ -89,7 +89,7 @@ extern const dungeonProfile dungeonProfileCatalog[NUMBER_DUNGEON_PROFILES];
 
 extern const lightSource lightCatalog[NUMBER_LIGHT_KINDS];
 
-extern const blueprint blueprintCatalog[NUMBER_BLUEPRINTS];
+extern const blueprint (*blueprintCatalog)[];
 
 extern creatureType monsterCatalog[NUMBER_MONSTER_KINDS];
 extern const monsterWords monsterText[NUMBER_MONSTER_KINDS];
