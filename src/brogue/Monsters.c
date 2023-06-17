@@ -1580,7 +1580,7 @@ void wakeUp(creature *monst) {
 boolean monsterCanShootWebs(creature *monst) {
     short i;
     for (i=0; monst->info.bolts[i] != 0; i++) {
-        const bolt *theBolt = &boltCatalog[monst->info.bolts[i]];
+        const bolt *theBolt = &(*boltCatalog)[monst->info.bolts[i]];
         if (theBolt->pathDF && (tileCatalog[dungeonFeatureCatalog[theBolt->pathDF].tile].flags & T_ENTANGLES)) {
             return true;
         }
@@ -1970,7 +1970,7 @@ boolean traversiblePathBetween(creature *monst, short x2, short y2) {
 
     // Using BOLT_NONE here to favor a path that avoids obstacles to one that hits them
     pos coords[DCOLS];
-    int n = getLineCoordinates(coords, originLoc, targetLoc, &boltCatalog[BOLT_NONE]);
+    int n = getLineCoordinates(coords, originLoc, targetLoc, &(*boltCatalog)[BOLT_NONE]);
 
     for (int i=0; i<n; i++) {
         short x = coords[i].x;
@@ -1991,7 +1991,7 @@ boolean specifiedPathBetween(short x1, short y1, short x2, short y2,
     pos originLoc = (pos){ .x = x1, .y = y1 };
     pos targetLoc = (pos){ .x = x2, .y = y2 };
     pos coords[DCOLS];
-    int n = getLineCoordinates(coords, originLoc, targetLoc, &boltCatalog[BOLT_NONE]);
+    int n = getLineCoordinates(coords, originLoc, targetLoc, &(*boltCatalog)[BOLT_NONE]);
 
     for (int i=0; i<n; i++) {
         short x = coords[i].x;
@@ -2012,7 +2012,7 @@ boolean openPathBetween(short x1, short y1, short x2, short y2) {
     pos targetLoc = (pos){ .x = x2, .y = y2 };
 
     pos returnLoc;
-    getImpactLoc(&returnLoc, startLoc, targetLoc, DCOLS, false, &boltCatalog[BOLT_NONE]);
+    getImpactLoc(&returnLoc, startLoc, targetLoc, DCOLS, false, &(*boltCatalog)[BOLT_NONE]);
     if (returnLoc.x == targetLoc.x && returnLoc.y == targetLoc.y) {
         return true;
     }
@@ -2059,7 +2059,7 @@ creature *dormantMonsterAtLoc(short x, short y) {
 enum boltType monsterHasBoltEffect(creature *monst, enum boltEffects boltEffectIndex) {
     short i;
     for (i=0; monst->info.bolts[i] != 0; i++) {
-        if (boltCatalog[monst->info.bolts[i]].boltEffect == boltEffectIndex) {
+        if ((*boltCatalog)[monst->info.bolts[i]].boltEffect == boltEffectIndex) {
             return monst->info.bolts[i];
         }
     }
@@ -2312,7 +2312,7 @@ boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, bool
         target.y += monst->loc.y;
 
         pos impact;
-        getImpactLoc(&impact, origin, target, maxDistance, true, &boltCatalog[BOLT_BLINKING]);
+        getImpactLoc(&impact, origin, target, maxDistance, true, &(*boltCatalog)[BOLT_BLINKING]);
         nowPreference = preferenceMap[impact.x][impact.y];
 
         if (((blinkUphill && (nowPreference > bestPreference))
@@ -2340,7 +2340,7 @@ boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, bool
             combatMessage(buf, 0);
         }
         monst->ticksUntilTurn = monst->attackSpeed * (monst->info.flags & MONST_CAST_SPELLS_SLOWLY ? 2 : 1);
-        theBolt = boltCatalog[theBoltType];
+        theBolt = (*boltCatalog)[theBoltType];
         zap(origin, bestTarget, &theBolt, false, false);
         return true;
     }
@@ -2500,44 +2500,44 @@ boolean targetEligibleForCombatBuff(creature *caster, creature *target) {
 // Assumes that the conditions in generallyValidBoltTarget have already been satisfied.
 boolean specificallyValidBoltTarget(creature *caster, creature *target, enum boltType theBoltType) {
 
-    if ((boltCatalog[theBoltType].flags & BF_TARGET_ALLIES)
+    if (((*boltCatalog)[theBoltType].flags & BF_TARGET_ALLIES)
         && (!monstersAreTeammates(caster, target) || monstersAreEnemies(caster, target))) {
 
         return false;
     }
-    if ((boltCatalog[theBoltType].flags & BF_TARGET_ENEMIES)
+    if (((*boltCatalog)[theBoltType].flags & BF_TARGET_ENEMIES)
         && (!monstersAreEnemies(caster, target))) {
 
         return false;
     }
-    if ((boltCatalog[theBoltType].flags & BF_TARGET_ENEMIES)
+    if (((*boltCatalog)[theBoltType].flags & BF_TARGET_ENEMIES)
         && (target->info.flags & MONST_INVULNERABLE)) {
 
         return false;
     }
     if ((target->info.flags & MONST_REFLECT_4)
         && target->creatureState != MONSTER_ALLY
-        && !(boltCatalog[theBoltType].flags & (BF_NEVER_REFLECTS | BF_HALTS_BEFORE_OBSTRUCTION))) {
+        && !((*boltCatalog)[theBoltType].flags & (BF_NEVER_REFLECTS | BF_HALTS_BEFORE_OBSTRUCTION))) {
         // Don't fire a reflectable bolt at a reflective target unless it's your ally.
         return false;
     }
-    if (boltCatalog[theBoltType].forbiddenMonsterFlags & target->info.flags) {
+    if ((*boltCatalog)[theBoltType].forbiddenMonsterFlags & target->info.flags) {
         // Don't fire a bolt at a creature type that it won't affect.
         return false;
     }
-    if ((boltCatalog[theBoltType].flags & BF_FIERY)
+    if (((*boltCatalog)[theBoltType].flags & BF_FIERY)
         && target->status[STATUS_IMMUNE_TO_FIRE]) {
         // Don't shoot fireballs at fire-immune creatures.
         return false;
     }
-    if ((boltCatalog[theBoltType].flags & BF_FIERY)
+    if (((*boltCatalog)[theBoltType].flags & BF_FIERY)
         && burnedTerrainFlagsAtLoc(caster->loc.x, caster->loc.y) & avoidedFlagsForMonster(&(caster->info))) {
         // Don't shoot fireballs if you're standing on a tile that could combust into something that harms you.
         return false;
     }
 
     // Rules specific to bolt effects:
-    switch (boltCatalog[theBoltType].boltEffect) {
+    switch ((*boltCatalog)[theBoltType].boltEffect) {
         case BE_BECKONING:
             if (distanceBetween(caster->loc.x, caster->loc.y, target->loc.x, target->loc.y) <= 1) {
                 return false;
@@ -2560,14 +2560,14 @@ boolean specificallyValidBoltTarget(creature *caster, creature *target, enum bol
         case BE_NONE:
             // BE_NONE bolts are always going to be all about the terrain effects,
             // so our logic has to follow from the terrain parameters of the bolt's target DF.
-            if (boltCatalog[theBoltType].targetDF) {
-                const unsigned long terrainFlags = tileCatalog[dungeonFeatureCatalog[boltCatalog[theBoltType].targetDF].tile].flags;
+            if ((*boltCatalog)[theBoltType].targetDF) {
+                const unsigned long terrainFlags = tileCatalog[dungeonFeatureCatalog[(*boltCatalog)[theBoltType].targetDF].tile].flags;
                 if ((terrainFlags & T_ENTANGLES)
                     && target->status[STATUS_STUCK]) {
                     // Don't try to entangle a creature that is already entangled.
                     return false;
                 }
-                if ((boltCatalog[theBoltType].flags & BF_TARGET_ENEMIES)
+                if (((*boltCatalog)[theBoltType].flags & BF_TARGET_ENEMIES)
                     && !(terrainFlags & avoidedFlagsForMonster(&(target->info)))
                     && (!(terrainFlags & T_ENTANGLES) || (target->info.flags & MONST_IMMUNE_TO_WEBS))) {
 
@@ -2671,12 +2671,12 @@ void monsterCastSpell(creature *caster, creature *target, enum boltType boltInde
 
     if (canDirectlySeeMonster(caster)) {
         monsterName(monstName, caster, true);
-        sprintf(buf, "%s %s", monstName, boltCatalog[boltIndex].description);
+        sprintf(buf, "%s %s", monstName, (*boltCatalog)[boltIndex].description);
         resolvePronounEscapes(buf, caster);
         combatMessage(buf, 0);
     }
 
-    theBolt = boltCatalog[boltIndex];
+    theBolt = (*boltCatalog)[boltIndex];
     pos originLoc = caster->loc;
     pos targetLoc = target->loc;
     zap(originLoc, targetLoc, &theBolt, false, false);
@@ -2700,7 +2700,7 @@ boolean monstUseBolt(creature *monst) {
         handledPlayer = true;
         if (generallyValidBoltTarget(monst, target)) {
             for (i = 0; monst->info.bolts[i]; i++) {
-                if (boltCatalog[monst->info.bolts[i]].boltEffect == BE_BLINKING) {
+                if ((*boltCatalog)[monst->info.bolts[i]].boltEffect == BE_BLINKING) {
                     continue; // Blinking is handled elsewhere.
                 }
                 if (specificallyValidBoltTarget(monst, target, monst->info.bolts[i])) {
@@ -3190,7 +3190,7 @@ boolean updateMonsterCorpseAbsorption(creature *monst) {
                 sprintf(buf, "%s finished %s the %s.", buf2, monsterText[monst->info.monsterID].absorbing, monst->targetCorpseName);
                 messageWithColor(buf, &goodMessageColor, 0);
                 if (monst->absorptionBolt != BOLT_NONE) {
-                    sprintf(buf, "%s %s!", buf2, boltCatalog[monst->absorptionBolt].abilityDescription);
+                    sprintf(buf, "%s %s!", buf2, (*boltCatalog)[monst->absorptionBolt].abilityDescription);
                 } else if (monst->absorbBehavior) {
                     sprintf(buf, "%s now %s!", buf2, monsterBehaviorFlagDescriptions[unflag(monst->absorptionFlags)]);
                 } else {
@@ -4097,7 +4097,7 @@ boolean staffOrWandEffectOnMonsterDescription(char *newText, item *theItem, crea
 
         switch (boltEffectForItem(theItem)) {
             case BE_DAMAGE:
-                if ((boltCatalog[boltForItem(theItem)].flags & BF_FIERY) && (monst->status[STATUS_IMMUNE_TO_FIRE])
+                if (((*boltCatalog)[boltForItem(theItem)].flags & BF_FIERY) && (monst->status[STATUS_IMMUNE_TO_FIRE])
                     || (monst->info.flags & MONST_INVULNERABLE)) {
 
                     sprintf(newText, "\n     Your %s (%c) will not harm %s.",
@@ -4443,12 +4443,12 @@ void monsterDetails(char buf[], creature *monst) {
 
     // bolt flags
     for (i = 0; monst->info.bolts[i] != BOLT_NONE; i++) {
-        if (boltCatalog[monst->info.bolts[i]].abilityDescription[0]) {
+        if ((*boltCatalog)[monst->info.bolts[i]].abilityDescription[0]) {
             if (anyFlags) {
                 strcat(newText, "& ");
                 commaCount++;
             }
-            strcat(newText, boltCatalog[monst->info.bolts[i]].abilityDescription);
+            strcat(newText, (*boltCatalog)[monst->info.bolts[i]].abilityDescription);
             anyFlags = true;
         }
     }
