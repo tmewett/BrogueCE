@@ -93,7 +93,7 @@ extern const blueprint blueprintCatalog[NUMBER_BLUEPRINTS];
 
 extern creatureType monsterCatalog[NUMBER_MONSTER_KINDS];
 extern const monsterWords monsterText[NUMBER_MONSTER_KINDS];
-extern const hordeType hordeCatalog[NUMBER_HORDES];
+extern const hordeType (*hordeCatalog)[];
 extern const mutation mutationCatalog[NUMBER_MUTATORS];
 extern const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT];
 

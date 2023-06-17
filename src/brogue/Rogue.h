@@ -210,6 +210,14 @@ typedef struct windowpos {
 #define COLOR_ESCAPE            25
 #define COLOR_VALUE_INTERCEPT   25
 
+// variants supported in this code base
+enum gameVariant {
+    VARIANT_BROGUE,
+#ifdef RAPID_BROGUE
+    VARIANT_RAPID_BROGUE
+#endif
+};
+
 // display characters:
 
 enum displayGlyph {

@@ -38,6 +38,7 @@ levelData *levels;
 creature player;
 playerCharacter rogue;
 gameConstants gameConst;
+int gameVariant = VARIANT_BROGUE;
 creatureList *monsters;
 creatureList *dormantMonsters;
 creatureList purgatory;

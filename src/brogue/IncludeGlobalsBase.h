@@ -37,6 +37,7 @@ extern levelData *levels;
 extern creature player;
 extern playerCharacter rogue;
 extern gameConstants gameConst;
+extern int gameVariant;
 extern creatureList *monsters;
 extern creatureList *dormantMonsters;
 extern creatureList purgatory;
