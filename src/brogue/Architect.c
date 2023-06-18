@@ -434,14 +434,14 @@ boolean itemIsADuplicate(item *theItem, item **spawnedItems, short itemCount) {
 }
 
 boolean blueprintQualifies(short i, unsigned long requiredMachineFlags) {
-    if ((*blueprintCatalog)[i].depthRange[0] > rogue.depthLevel
-        || (*blueprintCatalog)[i].depthRange[1] < rogue.depthLevel
+    if (blueprintCatalog[i].depthRange[0] > rogue.depthLevel
+        || blueprintCatalog[i].depthRange[1] < rogue.depthLevel
                 // Must have the required flags:
-        || (~((*blueprintCatalog)[i].flags) & requiredMachineFlags)
+        || (~(blueprintCatalog[i].flags) & requiredMachineFlags)
                 // May NOT have BP_ADOPT_ITEM unless that flag is required:
-        || ((*blueprintCatalog)[i].flags & BP_ADOPT_ITEM & ~requiredMachineFlags)
+        || (blueprintCatalog[i].flags & BP_ADOPT_ITEM & ~requiredMachineFlags)
                 // May NOT have BP_VESTIBULE unless that flag is required:
-        || ((*blueprintCatalog)[i].flags & BP_VESTIBULE & ~requiredMachineFlags)) {
+        || (blueprintCatalog[i].flags & BP_VESTIBULE & ~requiredMachineFlags)) {
 
         return false;
     }
@@ -677,7 +677,7 @@ boolean fillInteriorForVestibuleMachine(char interior[DCOLS][DROWS], short bp, s
     freeGrid(costMap);
 
     qualifyingTileCount = 0; // Keeps track of how many interior cells we've added.
-    totalFreq = rand_range((*blueprintCatalog)[bp].roomSize[0], (*blueprintCatalog)[bp].roomSize[1]); // Keeps track of the goal size.
+    totalFreq = rand_range(blueprintCatalog[bp].roomSize[0], blueprintCatalog[bp].roomSize[1]); // Keeps track of the goal size.
 
     fillSequentialList(sCols, DCOLS);
     shuffleList(sCols, DCOLS);
@@ -702,10 +702,10 @@ boolean fillInteriorForVestibuleMachine(char interior[DCOLS][DROWS], short bp, s
     }
 
     // Now make sure the interior map satisfies the machine's qualifications.
-    if (((*blueprintCatalog)[bp].flags & BP_TREAT_AS_BLOCKING)
+    if ((blueprintCatalog[bp].flags & BP_TREAT_AS_BLOCKING)
         && levelIsDisconnectedWithBlockingMap(interior, false)) {
         success = false;
-    } else if (((*blueprintCatalog)[bp].flags & BP_REQUIRE_BLOCKING)
+    } else if ((blueprintCatalog[bp].flags & BP_REQUIRE_BLOCKING)
                && levelIsDisconnectedWithBlockingMap(interior, true) < 100) {
         success = false;
     }
@@ -1022,7 +1022,7 @@ boolean buildAMachine(enum machineTypes bp,
             totalFreq = 0;
             for (i=1; i<gameConst.numberBlueprints; i++) {
                 if (blueprintQualifies(i, requiredMachineFlags)) {
-                    totalFreq += (*blueprintCatalog)[i].frequency;
+                    totalFreq += blueprintCatalog[i].frequency;
                 }
             }
 
@@ -1040,11 +1040,11 @@ boolean buildAMachine(enum machineTypes bp,
             randIndex = rand_range(1, totalFreq);
             for (i=1; i<gameConst.numberBlueprints; i++) {
                 if (blueprintQualifies(i, requiredMachineFlags)) {
-                    if (randIndex <= (*blueprintCatalog)[i].frequency) {
+                    if (randIndex <= blueprintCatalog[i].frequency) {
                         bp = i;
                         break;
                     } else {
-                        randIndex -= (*blueprintCatalog)[i].frequency;
+                        randIndex -= blueprintCatalog[i].frequency;
                     }
                 }
             }
@@ -1054,7 +1054,7 @@ boolean buildAMachine(enum machineTypes bp,
         }
 
         // Find a location and map out the machine interior.
-        if ((*blueprintCatalog)[bp].flags & BP_ROOM) {
+        if (blueprintCatalog[bp].flags & BP_ROOM) {
             // If it's a room machine, count up the gates of appropriate
             // choke size and remember where they are. The origin of the room will be the gate location.
             zeroOutGrid(p->interior);
@@ -1066,8 +1066,8 @@ boolean buildAMachine(enum machineTypes bp,
                     for(j=0; j<DROWS && totalFreq < 50; j++) {
                         if ((pmap[i][j].flags & IS_GATE_SITE)
                             && !(pmap[i][j].flags & IS_IN_MACHINE)
-                            && chokeMap[i][j] >= (*blueprintCatalog)[bp].roomSize[0]
-                            && chokeMap[i][j] <= (*blueprintCatalog)[bp].roomSize[1]) {
+                            && chokeMap[i][j] >= blueprintCatalog[bp].roomSize[0]
+                            && chokeMap[i][j] <= blueprintCatalog[bp].roomSize[1]) {
 
                             //DEBUG printf("\nDepth %i: Gate site qualified with interior size of %i.", rogue.depthLevel, chokeMap[i][j]);
                             p->gateCandidates[totalFreq] = (pos){ .x = i, .y = j };
@@ -1099,7 +1099,7 @@ boolean buildAMachine(enum machineTypes bp,
             // same or lower choke value, ignoring any tiles that are already part of a machine.
             // If we get false from this, try again. If we've tried too many times already, abort.
             tryAgain = !addTileToMachineInteriorAndIterate(p->interior, originX, originY);
-        } else if ((*blueprintCatalog)[bp].flags & BP_VESTIBULE) {
+        } else if (blueprintCatalog[bp].flags & BP_VESTIBULE) {
             if (chooseLocation) {
                 // Door machines must have locations passed in. We can't pick one ourselves.
                 if (distanceMap) {
@@ -1144,7 +1144,7 @@ boolean buildAMachine(enum machineTypes bp,
                 fillGrid(distanceMap, 0);
                 calculateDistances(distanceMap, originX, originY, T_PATHING_BLOCKER, NULL, true, false);
                 qualifyingTileCount = 0; // Keeps track of how many interior cells we've added.
-                totalFreq = rand_range((*blueprintCatalog)[bp].roomSize[0], (*blueprintCatalog)[bp].roomSize[1]); // Keeps track of the goal size.
+                totalFreq = rand_range(blueprintCatalog[bp].roomSize[0], blueprintCatalog[bp].roomSize[1]); // Keeps track of the goal size.
 
                 fillSequentialList(p->sCols, DCOLS);
                 shuffleList(p->sCols, DCOLS);
@@ -1169,10 +1169,10 @@ boolean buildAMachine(enum machineTypes bp,
                 }
 
                 // Now make sure the interior map satisfies the machine's qualifications.
-                if (((*blueprintCatalog)[bp].flags & BP_TREAT_AS_BLOCKING)
+                if ((blueprintCatalog[bp].flags & BP_TREAT_AS_BLOCKING)
                     && levelIsDisconnectedWithBlockingMap(p->interior, false)) {
                     tryAgain = true;
-                } else if (((*blueprintCatalog)[bp].flags & BP_REQUIRE_BLOCKING)
+                } else if ((blueprintCatalog[bp].flags & BP_REQUIRE_BLOCKING)
                            && levelIsDisconnectedWithBlockingMap(p->interior, true) < 100) {
                     tryAgain = true; // BP_REQUIRE_BLOCKING needs some work to make sure the disconnect is interesting.
                 }
@@ -1198,14 +1198,14 @@ boolean buildAMachine(enum machineTypes bp,
     copyMap(pmap, p->levelBackup);
 
     // Perform any transformations to the interior indicated by the blueprint flags, including expanding the interior if requested.
-    prepareInteriorWithMachineFlags(p->interior, originX, originY, (*blueprintCatalog)[bp].flags, (*blueprintCatalog)[bp].dungeonProfileType);
+    prepareInteriorWithMachineFlags(p->interior, originX, originY, blueprintCatalog[bp].flags, blueprintCatalog[bp].dungeonProfileType);
 
     // If necessary, label the interior as IS_IN_AREA_MACHINE or IS_IN_ROOM_MACHINE and mark down the number.
     machineNumber = ++rogue.machineNumber; // Reserve this machine number, starting with 1.
     for(i=0; i<DCOLS; i++) {
         for(j=0; j<DROWS; j++) {
             if (p->interior[i][j]) {
-                pmap[i][j].flags |= (((*blueprintCatalog)[bp].flags & BP_ROOM) ? IS_IN_ROOM_MACHINE : IS_IN_AREA_MACHINE);
+                pmap[i][j].flags |= ((blueprintCatalog[bp].flags & BP_ROOM) ? IS_IN_ROOM_MACHINE : IS_IN_AREA_MACHINE);
                 pmap[i][j].machineNumber = machineNumber;
                 // also clear any secret doors, since they screw up distance mapping and aren't fun inside machines
                 if (pmap[i][j].layers[DUNGEON] == SECRET_DOOR) {
@@ -1267,21 +1267,21 @@ boolean buildAMachine(enum machineTypes bp,
     // Now decide which features will be skipped -- of the features marked MF_ALTERNATIVE, skip all but one, chosen randomly.
     // Then repeat and do the same with respect to MF_ALTERNATIVE_2, to provide up to two independent sets of alternative features per machine.
 
-    for (i=0; i<(*blueprintCatalog)[bp].featureCount; i++) {
+    for (i=0; i<blueprintCatalog[bp].featureCount; i++) {
         skipFeature[i] = false;
     }
     for (j = 0; j <= 1; j++) {
         totalFreq = 0;
-        for (i=0; i<(*blueprintCatalog)[bp].featureCount; i++) {
-            if ((*blueprintCatalog)[bp].feature[i].flags & alternativeFlags[j]) {
+        for (i=0; i<blueprintCatalog[bp].featureCount; i++) {
+            if (blueprintCatalog[bp].feature[i].flags & alternativeFlags[j]) {
                 skipFeature[i] = true;
                 totalFreq++;
             }
         }
         if (totalFreq > 0) {
             randIndex = rand_range(1, totalFreq);
-            for (i=0; i<(*blueprintCatalog)[bp].featureCount; i++) {
-                if ((*blueprintCatalog)[bp].feature[i].flags & alternativeFlags[j]) {
+            for (i=0; i<blueprintCatalog[bp].featureCount; i++) {
+                if (blueprintCatalog[bp].feature[i].flags & alternativeFlags[j]) {
                     if (randIndex == 1) {
                         skipFeature[i] = false; // This is the alternative that gets built. The rest do not.
                         break;
@@ -1300,13 +1300,13 @@ boolean buildAMachine(enum machineTypes bp,
     zeroOutGrid(p->occupied);
 
     // Now tick through the features and build them.
-    for (feat = 0; feat < (*blueprintCatalog)[bp].featureCount; feat++) {
+    for (feat = 0; feat < blueprintCatalog[bp].featureCount; feat++) {
 
         if (skipFeature[feat]) {
             continue; // Skip the alternative features that were not selected for building.
         }
 
-        feature = &((*blueprintCatalog)[bp].feature[feat]);
+        feature = &(blueprintCatalog[bp].feature[feat]);
 
         // Figure out the distance bounds.
         distanceBound[0] = 0;
@@ -1344,7 +1344,7 @@ boolean buildAMachine(enum machineTypes bp,
                                                originX, originY,
                                                distanceBound,
                                                p->interior, p->occupied, p->viewMap, distanceMap,
-                                               machineNumber, feature->flags, (*blueprintCatalog)[bp].flags)) {
+                                               machineNumber, feature->flags, blueprintCatalog[bp].flags)) {
                         qualifyingTileCount++;
                         p->candidates[i][j] = true;
                     } else {
@@ -1459,7 +1459,7 @@ boolean buildAMachine(enum machineTypes bp,
                     theItem = NULL;
 
                     // Mark the feature location as part of the machine, in case it is not already inside of it.
-                    pmap[featX][featY].flags |= (((*blueprintCatalog)[bp].flags & BP_ROOM) ? IS_IN_ROOM_MACHINE : IS_IN_AREA_MACHINE);
+                    pmap[featX][featY].flags |= ((blueprintCatalog[bp].flags & BP_ROOM) ? IS_IN_ROOM_MACHINE : IS_IN_AREA_MACHINE);
                     pmap[featX][featY].machineNumber = machineNumber;
 
                     // Mark the feature location as impregnable if requested.
@@ -1469,9 +1469,9 @@ boolean buildAMachine(enum machineTypes bp,
 
                     // Generate an item as necessary.
                     if ((feature->flags & MF_GENERATE_ITEM)
-                        || (adoptiveItem && (feature->flags & MF_ADOPT_ITEM) && ((*blueprintCatalog)[bp].flags & BP_ADOPT_ITEM))) {
+                        || (adoptiveItem && (feature->flags & MF_ADOPT_ITEM) && (blueprintCatalog[bp].flags & BP_ADOPT_ITEM))) {
                         // Are we adopting an item instead of generating one?
-                        if (adoptiveItem && (feature->flags & MF_ADOPT_ITEM) && ((*blueprintCatalog)[bp].flags & BP_ADOPT_ITEM)) {
+                        if (adoptiveItem && (feature->flags & MF_ADOPT_ITEM) && (blueprintCatalog[bp].flags & BP_ADOPT_ITEM)) {
                             theItem = adoptiveItem;
                             adoptiveItem = NULL; // can be adopted only once
                         } else {
@@ -1662,7 +1662,7 @@ boolean buildAMachine(enum machineTypes bp,
     }
 
     // Clear out the interior flag for all non-wired cells, if requested.
-    if ((*blueprintCatalog)[bp].flags & BP_NO_INTERIOR_FLAG) {
+    if (blueprintCatalog[bp].flags & BP_NO_INTERIOR_FLAG) {
         for(i=0; i<DCOLS; i++) {
             for(j=0; j<DROWS; j++) {
                 if (pmap[i][j].machineNumber == machineNumber
@@ -1751,7 +1751,7 @@ void runAutogenerators(boolean buildAreaMachines) {
     for (AG=1; AG<gameConst.numberAutogenerators; AG++) {
 
         // Shortcut:
-        gen = &((*autoGeneratorCatalog)[AG]);
+        gen = &(autoGeneratorCatalog[AG]);
 
         if (gen->machine > 0 == buildAreaMachines) {
 

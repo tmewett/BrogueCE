@@ -1810,10 +1810,10 @@ const char monsterBookkeepingFlagDescriptions[32][COLS] = {
     "is marked for demonic sacrifice",          // MB_MARKED_FOR_SACRIFICE
 };
 
-const autoGenerator (*autoGeneratorCatalog)[];
-const short (*lumenstoneDistribution)[];
-const bolt (*boltCatalog)[];
-itemTable (*wandTable)[];
-const hordeType (*hordeCatalog)[];
-const blueprint (*blueprintCatalog)[];
+const autoGenerator *autoGeneratorCatalog;
+const short *lumenstoneDistribution;
+const bolt *boltCatalog;
+itemTable *wandTable;
+const hordeType *hordeCatalog;
+const blueprint *blueprintCatalog;
 

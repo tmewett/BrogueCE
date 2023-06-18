@@ -79,8 +79,8 @@ extern const color superVictoryColor;
 extern color *dynamicColors[NUMBER_DYNAMIC_COLORS];
 extern const color *dynamicColorsBounds[NUMBER_DYNAMIC_COLORS][2];
 
-extern const autoGenerator (*autoGeneratorCatalog)[];
-extern const short (*lumenstoneDistribution)[];
+extern const autoGenerator *autoGeneratorCatalog;
+extern const short *lumenstoneDistribution;
 
 extern const floorTileType tileCatalog[NUMBER_TILETYPES];
 
@@ -89,11 +89,11 @@ extern const dungeonProfile dungeonProfileCatalog[NUMBER_DUNGEON_PROFILES];
 
 extern const lightSource lightCatalog[NUMBER_LIGHT_KINDS];
 
-extern const blueprint (*blueprintCatalog)[];
+extern const blueprint *blueprintCatalog;
 
 extern creatureType monsterCatalog[NUMBER_MONSTER_KINDS];
 extern const monsterWords monsterText[NUMBER_MONSTER_KINDS];
-extern const hordeType (*hordeCatalog)[];
+extern const hordeType *hordeCatalog;
 extern const mutation mutationCatalog[NUMBER_MUTATORS];
 extern const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT];
 
@@ -119,13 +119,13 @@ extern itemTable weaponTable[NUMBER_WEAPON_KINDS];
 extern itemTable armorTable[NUMBER_ARMOR_KINDS];
 extern itemTable scrollTable[NUMBER_SCROLL_KINDS];
 extern itemTable potionTable[NUMBER_POTION_KINDS];
-extern itemTable (*wandTable)[];
+extern itemTable *wandTable;
 extern itemTable staffTable[NUMBER_STAFF_KINDS];
 extern itemTable ringTable[NUMBER_RING_KINDS];
 extern itemTable charmTable[NUMBER_CHARM_KINDS];
 extern const meteredItemGenerationTable meteredItemsGenerationTable[NUMBER_METERED_ITEMS];
 
-extern const bolt (*boltCatalog)[];
+extern const bolt *boltCatalog;
 
 extern const char weaponRunicNames[NUMBER_WEAPON_RUNIC_KINDS][30];
 
