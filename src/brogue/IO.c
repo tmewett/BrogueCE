@@ -3599,24 +3599,6 @@ short encodeMessageColor(char *msg, short i, const color *theColor) {
     return i;
 }
 
-color copyColor(const color *source) {
-    color newColor;
-
-    newColor.red = source->red;
-    newColor.green = source->green;
-    newColor.blue = source->blue;
-
-    newColor.redRand = source->redRand;
-    newColor.greenRand = source->greenRand;
-    newColor.blueRand = source->blueRand;
-
-    newColor.rand = source->rand;
-
-    newColor.colorDances = source->colorDances;
-    
-    return newColor;
-}
-
 // Call this when the i'th character of msg is COLOR_ESCAPE.
 // It will return the encoded color, and will advance i past the color escape sequence.
 short decodeMessageColor(const char *msg, short i, color *returnColor) {
