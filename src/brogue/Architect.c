@@ -1720,12 +1720,12 @@ void addMachines() {
     // Add reward rooms, if any:
     machineCount = 0;
     while (rogue.depthLevel <= gameConst.amuletLevel
-        && (rogue.rewardRoomsGenerated + machineCount) * 4 + 2 < rogue.depthLevel * MACHINES_FACTOR / FP_FACTOR) {
+        && (rogue.rewardRoomsGenerated + machineCount) * gameConst.machinesPerLevelSuppressionMultiplier + gameConst.machinesPerLevelSuppressionOffset < rogue.depthLevel * gameConst.machinesPerLevelIncreaseFactor) {
         // try to build at least one every four levels on average
         machineCount++;
     }
-    randomMachineFactor = (rogue.depthLevel < 3 && (rogue.rewardRoomsGenerated + machineCount) == 0 ? 40 : 15);
-    while (rand_percent(max(randomMachineFactor, 15 * MACHINES_FACTOR / FP_FACTOR)) && machineCount < 100) {
+    randomMachineFactor = (rogue.depthLevel <= gameConst.maxLevelForBonusMachines && (rogue.rewardRoomsGenerated + machineCount) == 0 ? 40 : 15);
+    while (rand_percent(max(randomMachineFactor, 15 * gameConst.machinesPerLevelIncreaseFactor)) && machineCount < 100) {
         randomMachineFactor = 15;
         machineCount++;
     }
