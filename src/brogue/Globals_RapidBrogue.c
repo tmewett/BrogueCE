@@ -30,14 +30,6 @@
 #define AMULET_LEVEL            6          // how deep before the amulet appears
 #define DEEPEST_LEVEL           10          // how deep the universe goes
 
-#define NUMBER_AUTOGENERATORS 49
-
-#define NUMBER_AUTOGENERATORS 49
-#define NUMBER_BLUEPRINTS 72
-#define NUMBER_BOLT_KINDS 30
-#define NUMBER_WAND_KINDS 9
-#define NUMBER_HORDES 175
-
 const color dominationColor_RapidBrogue =       {0,     0,      100,    80,     25,         0,          0,      true};
 const color beckonColor_RapidBrogue =           {10,    10,     10,     5,      5,          5,          50,     true};
 const color empowermentColor_RapidBrogue =      {30,    100,    40,     25,     80,         25,         0,      true};
@@ -53,7 +45,7 @@ const color centipedeColor_RapidBrogue =        {75,    25,     85,     0,      
 // Number of lumenstones on each level past amulet
 const short lumenstoneDistribution_RapidBrogue[DEEPEST_LEVEL - AMULET_LEVEL] = {7, 6, 6, 6};
 
-const bolt boltCatalog_RapidBrogue[NUMBER_BOLT_KINDS] = {
+const bolt boltCatalog_RapidBrogue[] = {
     {{0}},
     //name                      bolt description                ability description                         char    foreColor       backColor           boltEffect      magnitude       pathDF      targetDF    forbiddenMonsterFlags       flags
     {"teleportation spell",     "casts a teleport spell",       "can teleport other creatures",             0,      NULL,           &blue,              BE_TELEPORT,    10,             0,          0,          MONST_IMMOBILE,             (BF_TARGET_ENEMIES)},
@@ -87,7 +79,7 @@ const bolt boltCatalog_RapidBrogue[NUMBER_BOLT_KINDS] = {
     {"whip",                    "whips",                        "wields a whip",                            '*',    &tanColor,      NULL,               BE_ATTACK,      1,              0,          0,          MONST_IMMUNE_TO_WEAPONS,    (BF_TARGET_ENEMIES | BF_NEVER_REFLECTS | BF_NOT_LEARNABLE | BF_DISPLAY_CHAR_ALONG_LENGTH)},
 };
 
-const autoGenerator autoGeneratorCatalog_RapidBrogue[NUMBER_AUTOGENERATORS] = {
+const autoGenerator autoGeneratorCatalog_RapidBrogue[] = {
 //   terrain                    layer   DF                          Machine                     reqDungeon  reqLiquid   >=Depth <=Depth          freq    minIncp minSlope    maxNumber
     // Ordinary features of the dungeon
     {0,                         0,      DF_GRANITE_COLUMN,          0,                          FLOOR,      NOTHING,    1,      DEEPEST_LEVEL,  60,     100,    0,          4},
@@ -149,7 +141,7 @@ const autoGenerator autoGeneratorCatalog_RapidBrogue[NUMBER_AUTOGENERATORS] = {
     {0,                         0,      0,                          MT_WORM_AREA,               FLOOR,      NOTHING,    4,      DEEPEST_LEVEL,  12,     0,      0,          3},
 };
 
-const blueprint blueprintCatalog_RapidBrogue[NUMBER_BLUEPRINTS] = {
+const blueprint blueprintCatalog_RapidBrogue[] = {
     {{0}}, // nothing
     //BLUEPRINTS:
     //depths            roomSize    freq    featureCt   dungeonProfileType  flags   (features on subsequent lines)
@@ -599,7 +591,7 @@ const blueprint blueprintCatalog_RapidBrogue[NUMBER_BLUEPRINTS] = {
         {DF_ASH,    0,          0,              {2, 3},     0,          0,          -1,         0,              0,              0,          0,          0}}},
 };
 
-const hordeType hordeCatalog_RapidBrogue[NUMBER_HORDES] = {
+const hordeType hordeCatalog_RapidBrogue[] = {
     // leader       #members    member list                             member numbers                  minL    maxL    freq    spawnsIn        machine         flags
     {MK_RAT,            0,      {0},                                    {{0}},                          1,      2,      150},
     {MK_KOBOLD,         0,      {0},                                    {{0}},                          1,      2,      150},
@@ -806,7 +798,7 @@ const hordeType hordeCatalog_RapidBrogue[NUMBER_HORDES] = {
     {MK_GOBLIN,         1,      {MK_GOBLIN},                            {{1, 2, 1}},                    1,      3,      10,     0,              0,              HORDE_MACHINE_GOBLIN_WARREN | HORDE_LEADER_CAPTIVE},
 };
 
-itemTable wandTable_RapidBrogue[NUMBER_WAND_KINDS] = {
+itemTable wandTable_RapidBrogue[] = {
     {"teleportation",   itemMetals[0], "",  3,  800,    0, BOLT_TELEPORT,      {1,2,1}, false, false, 1,  false, "This wand will teleport a creature to a random place on the level. Aquatic or mud-bound creatures will be rendered helpless on dry land."},
     {"slowness",        itemMetals[1], "",  3,  800,    0, BOLT_SLOW,          {2,4,1}, false, false, 1,  false, "This wand will cause a creature to move at half its ordinary speed for 30 turns."},
     {"polymorphism",    itemMetals[2], "",  3,  700,    0, BOLT_POLYMORPH,     {1,2,1}, false, false, 1,  false, "This mischievous magic will transform a creature into another creature at random. Beware: the tamest of creatures might turn into the most fearsome. The horror of the transformation will turn an allied victim against you."},
@@ -845,10 +837,11 @@ void initializeGameConst_RapidBrogue() {
     gameConst.fallDamageMin = 8;
     gameConst.fallDamageMax = 10;
     
-    gameConst.numberAutogenerators = NUMBER_AUTOGENERATORS;
-    gameConst.numberBoltKinds = NUMBER_BOLT_KINDS;
-    gameConst.numberBlueprints = NUMBER_BLUEPRINTS;
-    gameConst.numberWandKinds = NUMBER_WAND_KINDS;
+    gameConst.numberAutogenerators = sizeof(autoGeneratorCatalog_RapidBrogue) / sizeof(autoGenerator);
+    gameConst.numberBoltKinds = sizeof(boltCatalog_RapidBrogue) / sizeof(bolt);
+    gameConst.numberBlueprints = sizeof(blueprintCatalog_RapidBrogue) / sizeof(blueprint);
+    gameConst.numberWandKinds = sizeof(wandTable_RapidBrogue) / sizeof(itemTable);
+    gameConst.numberHordes = sizeof(hordeCatalog_RapidBrogue) / sizeof(hordeType);
     gameConst.numberGoodWandKinds = 6;
 }
 

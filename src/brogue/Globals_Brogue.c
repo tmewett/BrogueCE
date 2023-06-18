@@ -28,12 +28,6 @@
 #define AMULET_LEVEL            26          
 #define DEEPEST_LEVEL           40          
 
-#define NUMBER_AUTOGENERATORS 49
-#define NUMBER_BLUEPRINTS 72
-#define NUMBER_BOLT_KINDS 30
-#define NUMBER_WAND_KINDS 9
-#define NUMBER_HORDES 175
-
 const color dominationColor_Brogue =       {0,     0,      100,    80,     25,         0,          0,      true};
 const color beckonColor_Brogue =           {10,    10,     10,     5,      5,          5,          50,     true};
 const color empowermentColor_Brogue =      {30,    100,    40,     25,     80,         25,         0,      true};
@@ -47,7 +41,7 @@ const color dragonFireColor_Brogue =       {500,   150,    0,      45,     30,  
 const color centipedeColor_Brogue =        {75,    25,     85,     0,      0,          0,          0,      false};
 
 
-const bolt boltCatalog_Brogue[NUMBER_BOLT_KINDS] = {
+const bolt boltCatalog_Brogue[] = {
     {{0}},
     //name                      bolt description                ability description                         char    foreColor       backColor           boltEffect      magnitude       pathDF      targetDF    forbiddenMonsterFlags       flags
     {"teleportation spell",     "casts a teleport spell",       "can teleport other creatures",             0,      NULL,           &blue,              BE_TELEPORT,    10,             0,          0,          MONST_IMMOBILE,             (BF_TARGET_ENEMIES)},
@@ -84,7 +78,7 @@ const bolt boltCatalog_Brogue[NUMBER_BOLT_KINDS] = {
 // Number of lumenstones on each level past amulet
 const short lumenstoneDistribution_Brogue[DEEPEST_LEVEL - AMULET_LEVEL] = {3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1};
 
-const autoGenerator autoGeneratorCatalog_Brogue[NUMBER_AUTOGENERATORS] = {
+const autoGenerator autoGeneratorCatalog_Brogue[] = {
 //   terrain                    layer   DF                          Machine                     reqDungeon  reqLiquid   >Depth  <Depth          freq    minIncp minSlope    maxNumber
     // Ordinary features of the dungeon
     {0,                         0,      DF_GRANITE_COLUMN,          0,                          FLOOR,      NOTHING,    1,      DEEPEST_LEVEL,  60,     100,    0,          4},
@@ -146,7 +140,7 @@ const autoGenerator autoGeneratorCatalog_Brogue[NUMBER_AUTOGENERATORS] = {
     {0,                         0,      0,                          MT_WORM_AREA,               FLOOR,      NOTHING,    12,     DEEPEST_LEVEL-1,12,     0,      0,          3},
 };
 
-const blueprint blueprintCatalog_Brogue[NUMBER_BLUEPRINTS] = {
+const blueprint blueprintCatalog_Brogue[] = {
     {{0}}, // nothing
     //BLUEPRINTS:
     //depths            roomSize    freq    featureCt   dungeonProfileType  flags   (features on subsequent lines)
@@ -596,7 +590,7 @@ const blueprint blueprintCatalog_Brogue[NUMBER_BLUEPRINTS] = {
         {DF_ASH,    0,          0,              {2, 3},     0,          0,          -1,         0,              0,              0,          0,          0}}},
 };
 
-itemTable wandTable_Brogue[NUMBER_WAND_KINDS] = {
+itemTable wandTable_Brogue[] = {
     {"teleportation",   itemMetals[0], "",  3,  800,    0, BOLT_TELEPORT,      {3,5,1}, false, false, 1,  false, "This wand will teleport a creature to a random place on the level. Aquatic or mud-bound creatures will be rendered helpless on dry land."},
     {"slowness",        itemMetals[1], "",  3,  800,    0, BOLT_SLOW,          {2,5,1}, false, false, 1,  false, "This wand will cause a creature to move at half its ordinary speed for 30 turns."},
     {"polymorphism",    itemMetals[2], "",  3,  700,    0, BOLT_POLYMORPH,     {3,5,1}, false, false, 1,  false, "This mischievous magic will transform a creature into another creature at random. Beware: the tamest of creatures might turn into the most fearsome. The horror of the transformation will turn an allied victim against you."},
@@ -608,7 +602,7 @@ itemTable wandTable_Brogue[NUMBER_WAND_KINDS] = {
     {"empowerment",     itemMetals[8], "",  1,  100,    0, BOLT_EMPOWERMENT,   {1,1,1}, false, false, -1, false, "This sacred magic will permanently improve the mind and body of any monster it hits. A wise adventurer will use it on allies, making them stronger in combat and able to learn a new talent from a fallen foe. If the bolt is reflected back at you, it will have no effect."},
 };
 
-const hordeType hordeCatalog_Brogue[NUMBER_HORDES] = {
+const hordeType hordeCatalog_Brogue[] = {
     // leader       #members    member list                             member numbers                  minL    maxL    freq    spawnsIn        machine         flags
     {MK_RAT,            0,      {0},                                    {{0}},                          1,      5,      150},
     {MK_KOBOLD,         0,      {0},                                    {{0}},                          1,      6,      150},
@@ -842,10 +836,11 @@ void initializeGameConst_Brogue() {
     gameConst.fallDamageMin = 8;
     gameConst.fallDamageMax = 10;
     
-    gameConst.numberAutogenerators = NUMBER_AUTOGENERATORS;
-    gameConst.numberBoltKinds = NUMBER_BOLT_KINDS;
-    gameConst.numberBlueprints = NUMBER_BLUEPRINTS;
-    gameConst.numberWandKinds = NUMBER_WAND_KINDS;
+    gameConst.numberAutogenerators = sizeof(autoGeneratorCatalog_Brogue) / sizeof(autoGenerator);
+    gameConst.numberBoltKinds = sizeof(boltCatalog_Brogue) / sizeof(bolt);
+    gameConst.numberBlueprints = sizeof(blueprintCatalog_Brogue) / sizeof(blueprint);
+    gameConst.numberWandKinds = sizeof(wandTable_Brogue) / sizeof(itemTable);
+    gameConst.numberHordes = sizeof(hordeCatalog_Brogue) / sizeof(hordeType);
     gameConst.numberGoodWandKinds = 6;
 }
 
