@@ -1816,4 +1816,4 @@ const bolt *boltCatalog;
 itemTable *wandTable;
 const hordeType *hordeCatalog;
 const blueprint *blueprintCatalog;
-
+const short *itemGenerationProbabilities;

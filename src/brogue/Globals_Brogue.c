@@ -78,6 +78,10 @@ const bolt boltCatalog_Brogue[] = {
 // Number of lumenstones on each level past amulet
 const short lumenstoneDistribution_Brogue[DEEPEST_LEVEL - AMULET_LEVEL] = {3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1};
 
+// Relative generation probabilities of item categories
+//                                                   (GOLD,  SCROLL, POTION, STAFF,  WAND,   WEAPON, ARMOR,  FOOD,   RING,   CHARM,    AMULET,   GEM,    KEY)
+const short itemGenerationProbabilities_Brogue[13] = {50,    42,     52,     3,      3,      10,     8,      2,      3,      2,        0,        0,      0};
+
 const autoGenerator autoGeneratorCatalog_Brogue[] = {
 //   terrain                    layer   DF                          Machine                     reqDungeon  reqLiquid   >Depth  <Depth          freq    minIncp minSlope    maxNumber
     // Ordinary features of the dungeon
@@ -847,6 +851,7 @@ void initializeGameConst_Brogue() {
 void initializeGameGlobals_Brogue() {
     autoGeneratorCatalog = autoGeneratorCatalog_Brogue;
     lumenstoneDistribution = lumenstoneDistribution_Brogue;
+    itemGenerationProbabilities = itemGenerationProbabilities_Brogue;
     wandTable = wandTable_Brogue;
     boltCatalog = boltCatalog_Brogue;
     hordeCatalog = hordeCatalog_Brogue;
