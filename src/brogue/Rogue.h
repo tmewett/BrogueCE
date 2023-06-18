@@ -177,8 +177,6 @@ typedef struct windowpos {
 
 #define VISIBILITY_THRESHOLD    50          // how bright cumulative light has to be before the cell is marked visible
 
-#define MACHINES_FACTOR         FP_FACTOR   // use this to adjust machine frequency
-
 #define MACHINES_BUFFER_LENGTH  200
     
 #define INPUT_RECORD_BUFFER     1000        // how many bytes of input data to keep in memory before saving it to disk
@@ -863,10 +861,8 @@ enum wandKind {
     WAND_DOMINATION,
     WAND_BECKONING,
     WAND_PLENTY,
-    NUMBER_GOOD_WAND_KINDS = WAND_PLENTY,
     WAND_INVISIBILITY,
-    WAND_EMPOWERMENT,
-    NUMBER_WAND_KINDS
+    WAND_EMPOWERMENT
 };
 
 enum staffKind {
@@ -1053,8 +1049,6 @@ enum monsterTypes {
 };
 
 #define NUMBER_MUTATORS             8
-
-#define NUMBER_HORDES               177
 
 #define MONSTER_CLASS_COUNT         15
 
@@ -2346,6 +2340,9 @@ typedef struct gameConstants {
     unsigned int numberAutogenerators;      // size of autoGeneratorCatalog table
     unsigned int numberBoltKinds;           // size of boltKinds table
     unsigned int numberBlueprints;          // size of blueprintCatalog table
+    unsigned int numberWandKinds;           // size of the wands table
+    unsigned int numberGoodWandKinds;       // number of good wands in the game (first in order in the table)
+    unsigned int numberHordes;              // size of the horde table
 } gameConstants;
 
 // these are basically global variables pertaining to the game state and player's unique variables:

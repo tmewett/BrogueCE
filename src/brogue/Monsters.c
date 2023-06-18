@@ -474,7 +474,7 @@ short pickHordeType(short depth, enum monsterTypes summonerType, unsigned long f
         depth = rogue.depthLevel;
     }
 
-    for (i=0; i<NUMBER_HORDES; i++) {
+    for (i=0; i<gameConst.numberHordes; i++) {
         if (!(hordeCatalog[i].flags & forbiddenFlags)
             && !(~(hordeCatalog[i].flags) & requiredFlags)
             && ((!summonerType && hordeCatalog[i].minLevel <= depth && hordeCatalog[i].maxLevel >= depth)
@@ -489,7 +489,7 @@ short pickHordeType(short depth, enum monsterTypes summonerType, unsigned long f
 
     index = rand_range(1, possCount);
 
-    for (i=0; i<NUMBER_HORDES; i++) {
+    for (i=0; i<gameConst.numberHordes; i++) {
         if (!(hordeCatalog[i].flags & forbiddenFlags)
             && !(~(hordeCatalog[i].flags) & requiredFlags)
             && ((!summonerType && hordeCatalog[i].minLevel <= depth && hordeCatalog[i].maxLevel >= depth)

@@ -29,9 +29,10 @@
 #define DEEPEST_LEVEL           40          
 
 #define NUMBER_AUTOGENERATORS 49
-
-#define NUMBER_BOLT_KINDS 30
 #define NUMBER_BLUEPRINTS 72
+#define NUMBER_BOLT_KINDS 30
+#define NUMBER_WAND_KINDS 9
+#define NUMBER_HORDES 175
 
 const color dominationColor_Brogue =       {0,     0,      100,    80,     25,         0,          0,      true};
 const color beckonColor_Brogue =           {10,    10,     10,     5,      5,          5,          50,     true};
@@ -595,7 +596,6 @@ const blueprint blueprintCatalog_Brogue[NUMBER_BLUEPRINTS] = {
         {DF_ASH,    0,          0,              {2, 3},     0,          0,          -1,         0,              0,              0,          0,          0}}},
 };
 
-
 itemTable wandTable_Brogue[NUMBER_WAND_KINDS] = {
     {"teleportation",   itemMetals[0], "",  3,  800,    0, BOLT_TELEPORT,      {3,5,1}, false, false, 1,  false, "This wand will teleport a creature to a random place on the level. Aquatic or mud-bound creatures will be rendered helpless on dry land."},
     {"slowness",        itemMetals[1], "",  3,  800,    0, BOLT_SLOW,          {2,5,1}, false, false, 1,  false, "This wand will cause a creature to move at half its ordinary speed for 30 turns."},
@@ -815,7 +815,6 @@ const hordeType hordeCatalog_Brogue[NUMBER_HORDES] = {
     {MK_GOBLIN,         1,      {MK_GOBLIN},                            {{1, 2, 1}},                    3,      7,      10,     0,              0,              HORDE_MACHINE_GOBLIN_WARREN | HORDE_LEADER_CAPTIVE},
 };
 
-
 void initializeGameConst_Brogue() {
 
     gameConst.deepestLevel = DEEPEST_LEVEL;
@@ -846,6 +845,8 @@ void initializeGameConst_Brogue() {
     gameConst.numberAutogenerators = NUMBER_AUTOGENERATORS;
     gameConst.numberBoltKinds = NUMBER_BOLT_KINDS;
     gameConst.numberBlueprints = NUMBER_BLUEPRINTS;
+    gameConst.numberWandKinds = NUMBER_WAND_KINDS;
+    gameConst.numberGoodWandKinds = 6;
 }
 
 void initializeGameGlobals_Brogue() {

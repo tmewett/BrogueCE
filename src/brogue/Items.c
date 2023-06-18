@@ -277,7 +277,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             break;
         case WAND:
             if (itemKind < 0) {
-                itemKind = chooseKind(wandTable, NUMBER_WAND_KINDS);
+                itemKind = chooseKind(wandTable, gameConst.numberWandKinds);
             }
             theEntry = &(wandTable[itemKind]);
             theItem->displayChar = G_WAND;
@@ -5629,8 +5629,8 @@ int itemKindCount(enum itemCategory category, int polarityConstraint) {
             goodKinds = NUMBER_GOOD_POTION_KINDS;
             break;
         case WAND:
-            totalKinds = NUMBER_WAND_KINDS;
-            goodKinds = NUMBER_GOOD_WAND_KINDS;
+            totalKinds = gameConst.numberWandKinds;
+            goodKinds = gameConst.numberGoodWandKinds;
             break;
         case STAFF:
             totalKinds = NUMBER_STAFF_KINDS;
@@ -5787,7 +5787,7 @@ void identifyItemKind(item *theItem) {
                 tableCount = NUMBER_POTION_KINDS;
                 break;
             case WAND:
-                tableCount = NUMBER_WAND_KINDS;
+                tableCount = gameConst.numberWandKinds;
                 break;
             case STAFF:
                 tableCount = NUMBER_STAFF_KINDS;
@@ -6747,48 +6747,6 @@ void identify(item *theItem) {
     }
     identifyItemKind(theItem);
 }
-/*
-enum monsterTypes chooseVorpalEnemy() {
-    short i, index, possCount = 0, deepestLevel = 0, deepestHorde, chosenHorde, failsafe = 25;
-    enum monsterTypes candidate;
-
-    for (i=0; i<NUMBER_HORDES; i++) {
-        if (hordeCatalog[i].minLevel >= rogue.depthLevel && !hordeCatalog[i].flags) {
-            possCount += hordeCatalog[i].frequency;
-        }
-        if (hordeCatalog[i].minLevel > deepestLevel) {
-            deepestHorde = i;
-            deepestLevel = hordeCatalog[i].minLevel;
-        }
-    }
-
-    do {
-        if (possCount == 0) {
-            chosenHorde = deepestHorde;
-        } else {
-            index = rand_range(1, possCount);
-            for (i=0; i<NUMBER_HORDES; i++) {
-                if (hordeCatalog[i].minLevel >= rogue.depthLevel && !hordeCatalog[i].flags) {
-                    if (index <= hordeCatalog[i].frequency) {
-                        chosenHorde = i;
-                        break;
-                    }
-                    index -= hordeCatalog[i].frequency;
-                }
-            }
-        }
-
-        index = rand_range(-1, hordeCatalog[chosenHorde].numberOfMemberTypes - 1);
-        if (index == -1) {
-            candidate = hordeCatalog[chosenHorde].leaderType;
-        } else {
-            candidate = hordeCatalog[chosenHorde].memberType[index];
-        }
-    } while (((monsterCatalog[candidate].flags & MONST_NEVER_VORPAL_ENEMY)
-              || (monsterCatalog[candidate].abilityFlags & MA_NEVER_VORPAL_ENEMY))
-             && --failsafe > 0);
-    return candidate;
-}*/
 
 short lotteryDraw(short *frequencies, short itemCount) {
     short i, maxFreq, randIndex;
@@ -7852,7 +7810,7 @@ void shuffleFlavors() {
     for (i=0; i<NUMBER_STAFF_KINDS; i++) {
         resetItemTableEntry(staffTable+ i);
     }
-    for (i=0; i<NUMBER_WAND_KINDS; i++) {
+    for (i=0; i<gameConst.numberWandKinds; i++) {
         resetItemTableEntry(&(wandTable[i]));
     }
     for (i=0; i<NUMBER_SCROLL_KINDS; i++) {

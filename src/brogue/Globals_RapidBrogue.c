@@ -32,8 +32,11 @@
 
 #define NUMBER_AUTOGENERATORS 49
 
-#define NUMBER_BOLT_KINDS 30
+#define NUMBER_AUTOGENERATORS 49
 #define NUMBER_BLUEPRINTS 72
+#define NUMBER_BOLT_KINDS 30
+#define NUMBER_WAND_KINDS 9
+#define NUMBER_HORDES 175
 
 const color dominationColor_RapidBrogue =       {0,     0,      100,    80,     25,         0,          0,      true};
 const color beckonColor_RapidBrogue =           {10,    10,     10,     5,      5,          5,          50,     true};
@@ -845,6 +848,8 @@ void initializeGameConst_RapidBrogue() {
     gameConst.numberAutogenerators = NUMBER_AUTOGENERATORS;
     gameConst.numberBoltKinds = NUMBER_BOLT_KINDS;
     gameConst.numberBlueprints = NUMBER_BLUEPRINTS;
+    gameConst.numberWandKinds = NUMBER_WAND_KINDS;
+    gameConst.numberGoodWandKinds = 6;
 }
 
 void initializeGameGlobals_RapidBrogue() {
