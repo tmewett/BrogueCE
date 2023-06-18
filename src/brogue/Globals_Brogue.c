@@ -826,6 +826,11 @@ void initializeGameConst_Brogue() {
     gameConst.minimumBrimstoneLevel = 17;
     gameConst.minimumMutationsLevel = 10;
 
+    gameConst.machinesPerLevelSuppressionMultiplier = 4;
+    gameConst.machinesPerLevelSuppressionOffset = 2;
+    gameConst.machinesPerLevelIncreaseFactor = 1;
+    gameConst.maxLevelForBonusMachines = 2;
+
     gameConst.playerTransferenceRatio = 20;
     gameConst.onHitHallucinateDuration = 20;
     gameConst.onHitWeakenDuration = 300;

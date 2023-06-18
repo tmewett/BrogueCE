@@ -2326,6 +2326,11 @@ typedef struct gameConstants {
     unsigned int minimumBrimstoneLevel;     // how deep before brimstone can be generated
     unsigned int minimumMutationsLevel;     // how deep before monster mutations can be generated
 
+    unsigned int machinesPerLevelSuppressionMultiplier; // scale factor for limiting number of machines generated so far against depth
+    unsigned int machinesPerLevelSuppressionOffset;     // offset for limiting number of machines generated so far against depth
+    unsigned int machinesPerLevelIncreaseFactor;        // scale factor for increasing number of machines generated so far against depth
+    unsigned int maxLevelForBonusMachines;              // deepest level that gets bonus machine generation chance
+
     unsigned int playerTransferenceRatio;   // player transference heal is (enchant / gameConst.playerTransferenceRatio)
     unsigned int onHitHallucinateDuration;  // duration of on-hit hallucination effect on player
     unsigned int onHitWeakenDuration;       // duration of on-hit weaken effect
