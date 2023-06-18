@@ -4223,7 +4223,7 @@ void printDiscoveriesScreen() {
     printDiscoveries(STAFF, NUMBER_STAFF_KINDS, G_STAFF, mapToWindowX(54), ++y, dbuf);
 
     printString("-- WANDS --", mapToWindowX(53), y += NUMBER_STAFF_KINDS + 1, &flavorTextColor, &black, dbuf);
-    printDiscoveries(WAND, NUMBER_WAND_KINDS, G_WAND, mapToWindowX(54), ++y, dbuf);
+    printDiscoveries(WAND, gameConst.numberWandKinds, G_WAND, mapToWindowX(54), ++y, dbuf);
 
     printString(KEYBOARD_LABELS ? "-- press any key to continue --" : "-- touch anywhere to continue --",
                 mapToWindowX(20), mapToWindowY(DROWS-2), &itemMessageColor, &black, dbuf);
@@ -4302,7 +4302,7 @@ void printDiscoveriesScreen() {
 //void printDiscoveriesScreen() {
 //  short i, j, y, buttonCount;
 //  cellDisplayBuffer dbuf[COLS][ROWS], rbuf[COLS][ROWS];
-//  brogueButton buttons[NUMBER_SCROLL_KINDS + NUMBER_WAND_KINDS + NUMBER_POTION_KINDS + NUMBER_STAFF_KINDS + NUMBER_RING_KINDS] = {{{0}}};
+//  brogueButton buttons[NUMBER_SCROLL_KINDS + gameConst.numberWandKinds + NUMBER_POTION_KINDS + NUMBER_STAFF_KINDS + NUMBER_RING_KINDS] = {{{0}}};
 //    rogueEvent theEvent;
 //
 //  clearDisplayBuffer(dbuf);
@@ -4312,7 +4312,7 @@ void printDiscoveriesScreen() {
 //  buttonCount += createDiscoveriesButtons(SCROLL, NUMBER_SCROLL_KINDS, SCROLL_CHAR, mapToWindowX(3), ++y, &(buttons[buttonCount]));
 //
 //  printString("-- WANDS --", mapToWindowX(3), y += NUMBER_SCROLL_KINDS + 1, &flavorTextColor, &black, dbuf);
-//  buttonCount += createDiscoveriesButtons(WAND, NUMBER_WAND_KINDS, WAND_CHAR, mapToWindowX(3), ++y, &(buttons[buttonCount]));
+//  buttonCount += createDiscoveriesButtons(WAND, gameConst.numberWandKinds, WAND_CHAR, mapToWindowX(3), ++y, &(buttons[buttonCount]));
 //
 //  printString("-- POTIONS --", mapToWindowX(29), y = mapToWindowY(1), &flavorTextColor, &black, dbuf);
 //  buttonCount += createDiscoveriesButtons(POTION, NUMBER_POTION_KINDS, POTION_CHAR, mapToWindowX(29), ++y, &(buttons[buttonCount]));
