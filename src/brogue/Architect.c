@@ -2482,8 +2482,8 @@ void finishWalls(boolean includingDiagonals) {
 void liquidType(short *deep, short *shallow, short *shallowWidth) {
     short randMin, randMax, rand;
 
-    randMin = (rogue.depthLevel < MINIMUM_LAVA_LEVEL ? 1 : 0);
-    randMax = (rogue.depthLevel < MINIMUM_BRIMSTONE_LEVEL ? 2 : 3);
+    randMin = (rogue.depthLevel < gameConst.minimumLavaLevel ? 1 : 0);
+    randMax = (rogue.depthLevel < gameConst.minimumBrimstoneLevel ? 2 : 3);
     rand = rand_range(randMin, randMax);
     if (rogue.depthLevel == gameConst.deepestLevel) {
         rand = 1;
@@ -2752,8 +2752,8 @@ boolean buildABridge() {
     short bridgeRatioX, bridgeRatioY;
     boolean foundExposure;
 
-    bridgeRatioX = (short) (100 + (100 + 100 * rogue.depthLevel * DEPTH_ACCELERATOR / 9) * rand_range(10, 20) / 10);
-    bridgeRatioY = (short) (100 + (400 + 100 * rogue.depthLevel * DEPTH_ACCELERATOR / 18) * rand_range(10, 20) / 10);
+    bridgeRatioX = (short) (100 + (100 + 100 * rogue.depthLevel * gameConst.depthAccelerator / 9) * rand_range(10, 20) / 10);
+    bridgeRatioY = (short) (100 + (400 + 100 * rogue.depthLevel * gameConst.depthAccelerator / 18) * rand_range(10, 20) / 10);
 
     fillSequentialList(nCols, DCOLS);
     shuffleList(nCols, DCOLS);

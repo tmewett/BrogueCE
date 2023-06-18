@@ -206,7 +206,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                 theItem->flags &= ~(ITEM_CURSED | ITEM_RUNIC); // throwing weapons can't be cursed or runic
                 theItem->enchant1 = 0; // throwing weapons can't be magical
             }
-            theItem->charges = WEAPON_KILLS_TO_AUTO_ID; // kill 20 enemies to auto-identify
+            theItem->charges = gameConst.weaponKillsToAutoID; // kill 20 enemies to auto-identify
             break;
 
         case ARMOR:
@@ -217,7 +217,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             theItem->armor = randClump(armorTable[itemKind].range);
             theItem->strengthRequired = armorTable[itemKind].strengthRequired;
             theItem->displayChar = G_ARMOR;
-            theItem->charges = ARMOR_DELAY_TO_AUTO_ID; // this many turns until it reveals its enchants and whether runic
+            theItem->charges = gameConst.armorDelayToAutoID; // this many turns until it reveals its enchants and whether runic
             if (rand_percent(40)) {
                 theItem->enchant1 += rand_range(1, 3);
                 if (rand_percent(50)) {
@@ -290,7 +290,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             theEntry = &ringTable[itemKind];
             theItem->displayChar = G_RING;
             theItem->enchant1 = randClump(ringTable[itemKind].range);
-            theItem->charges = RING_DELAY_TO_AUTO_ID; // how many turns of being worn until it auto-identifies
+            theItem->charges = gameConst.ringDelayToAutoID; // how many turns of being worn until it auto-identifies
             if (rand_percent(16)) {
                 // cursed
                 theItem->enchant1 *= -1;
@@ -1061,11 +1061,11 @@ void swapItemToEnchantLevel(item *theItem, short newEnchant, boolean enchantment
             theItem->flags &= ~(ITEM_MAX_CHARGES_KNOWN | ITEM_IDENTIFIED);
             theItem->flags |= ITEM_CAN_BE_IDENTIFIED;
             if (theItem->category & WEAPON) {
-                theItem->charges = WEAPON_KILLS_TO_AUTO_ID; // kill this many enemies to auto-identify
+                theItem->charges = gameConst.weaponKillsToAutoID; // kill this many enemies to auto-identify
             } else if (theItem->category & ARMOR) {
-                theItem->charges = ARMOR_DELAY_TO_AUTO_ID; // this many turns until it reveals its enchants and whether runic
+                theItem->charges = gameConst.armorDelayToAutoID; // this many turns until it reveals its enchants and whether runic
             } else if (theItem->category & RING) {
-                theItem->charges = RING_DELAY_TO_AUTO_ID; // how many turns of being worn until it auto-identifies
+                theItem->charges = gameConst.ringDelayToAutoID; // how many turns of being worn until it auto-identifies
             }
         }
         if (theItem->category & WAND) {
@@ -1997,12 +1997,12 @@ void itemDetails(char *buf, item *theItem) {
                 if (theItem->category & WEAPON) {
                     sprintf(buf2, "It will reveal its secrets if you defeat %i%s %s with it. ",
                             theItem->charges,
-                            (theItem->charges == WEAPON_KILLS_TO_AUTO_ID ? "" : " more"),
+                            (theItem->charges == gameConst.weaponKillsToAutoID ? "" : " more"),
                             (theItem->charges == 1 ? "enemy" : "enemies"));
                 } else {
                     sprintf(buf2, "It will reveal its secrets if worn for %i%s turn%s. ",
                             theItem->charges,
-                            (theItem->charges == ARMOR_DELAY_TO_AUTO_ID ? "" : " more"),
+                            (theItem->charges == gameConst.armorDelayToAutoID ? "" : " more"),
                             (theItem->charges == 1 ? "" : "s"));
                 }
                 strcat(buf, buf2);
@@ -2556,11 +2556,11 @@ void itemDetails(char *buf, item *theItem) {
             } else {
                 sprintf(buf2, "\n\nIt will reveal its secrets if worn for %i%s turn%s",
                         theItem->charges,
-                        (theItem->charges == RING_DELAY_TO_AUTO_ID ? "" : " more"),
+                        (theItem->charges == gameConst.ringDelayToAutoID ? "" : " more"),
                         (theItem->charges == 1 ? "" : "s"));
                 strcat(buf, buf2);
 
-                if (!(theItem->flags & ITEM_IDENTIFIED) && (theItem->charges < RING_DELAY_TO_AUTO_ID || (theItem->flags & ITEM_MAGIC_DETECTED))) {
+                if (!(theItem->flags & ITEM_IDENTIFIED) && (theItem->charges < gameConst.ringDelayToAutoID || (theItem->flags & ITEM_MAGIC_DETECTED))) {
                     sprintf(buf2, ", and until then it will function, at best, as a +%i ring.", theItem->timesEnchanted + 1);
                     strcat(buf, buf2);
                 } else {

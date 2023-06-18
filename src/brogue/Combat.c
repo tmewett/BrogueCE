@@ -402,7 +402,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
             if (!player.status[STATUS_HALLUCINATING]) {
                 player.maxStatus[STATUS_HALLUCINATING] = 0;
             }
-            player.status[STATUS_HALLUCINATING] += ON_HIT_HALLUCINATE_DURATION;
+            player.status[STATUS_HALLUCINATING] += gameConst.onHitHallucinateDuration;
             player.maxStatus[STATUS_HALLUCINATING] = max(player.maxStatus[STATUS_HALLUCINATING], player.status[STATUS_HALLUCINATING]);
         }
         if (attacker->info.abilityFlags & MA_HIT_BURN
@@ -476,7 +476,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
         && damage > 0
         && !(defender->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
 
-        weaken(defender, ON_HIT_WEAKEN_DURATION);
+        weaken(defender, gameConst.onHitWeakenDuration);
     }
     if (attacker->info.abilityFlags & MA_ATTACKS_STAGGER) {
         processStaggerHit(attacker, defender);
@@ -748,7 +748,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
                 autoID = forceWeaponHit(defender, theItem);
                 break;
             case W_MERCY:
-                heal(defender, ON_HIT_MERCY_HEAL_PERCENT, false);
+                heal(defender, gameConst.onHitMercyHealPercent, false);
                 if (canSeeMonster(defender)) {
                     autoID = true;
                 }
@@ -1544,7 +1544,7 @@ boolean inflictDamage(creature *attacker, creature *defender,
         transferenceAmount = min(damage, defender->currentHP); // Maximum transferred damage can't exceed the victim's remaining health.
 
         if (attacker == &player) {
-            transferenceAmount = transferenceAmount * rogue.transference / PLAYER_TRANSFERENCE_RATIO;
+            transferenceAmount = transferenceAmount * rogue.transference / gameConst.playerTransferenceRatio;
             if (transferenceAmount == 0) {
                 transferenceAmount = ((rogue.transference > 0) ? 1 : -1);
             }

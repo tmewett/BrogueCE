@@ -197,30 +197,10 @@ typedef struct windowpos {
 
 #define VISIBILITY_THRESHOLD    50          // how bright cumulative light has to be before the cell is marked visible
 
-#define DEPTH_ACCELERATOR       1           // factor for how fast depth-dependent features scale compared to usual 26-level dungeon
-
-#define MUTATIONS_OCCUR_ABOVE_LEVEL 10      // how deep before mutations can occur
-
-#define MINIMUM_LAVA_LEVEL      4           // how deep before lava can be generated
-#define MINIMUM_BRIMSTONE_LEVEL 17          // how deep before brimstone can be generated
-
 #define MACHINES_FACTOR         FP_FACTOR   // use this to adjust machine frequency
 
 #define MACHINES_BUFFER_LENGTH  200
-
-#define WEAPON_KILLS_TO_AUTO_ID 20
-#define ARMOR_DELAY_TO_AUTO_ID  1000
-#define RING_DELAY_TO_AUTO_ID   1500
-
-#define FALL_DAMAGE_MIN         8
-#define FALL_DAMAGE_MAX         10
-
-#define PLAYER_TRANSFERENCE_RATIO 20        // player transference heal is (enchant / PLAYER_TRANSFERENCE_RATIO)
-
-#define ON_HIT_HALLUCINATE_DURATION 20      // duration of on-hit hallucination effect on player
-#define ON_HIT_WEAKEN_DURATION  300         // duration of on-hit weaken effect
-#define ON_HIT_MERCY_HEAL_PERCENT 50        // percentage of damage healed on-hit by mercy weapon effect
-
+    
 #define INPUT_RECORD_BUFFER     1000        // how many bytes of input data to keep in memory before saving it to disk
 #define DEFAULT_PLAYBACK_DELAY  50
 
@@ -2368,11 +2348,30 @@ enum exitStatus {
 
 // Constants for the current game, initialized after the choice of mod
 typedef struct gameConstants {
-    unsigned int numberAutogenerators;
-    unsigned int deepestLevel;
-    unsigned int amuletLevel;
-    unsigned int numberBoltKinds;
-    unsigned int numberBlueprints;
+
+    unsigned int deepestLevel;              // deepest level in the dungeon
+    unsigned int amuletLevel;               // level on which the amulet appears
+
+    unsigned int depthAccelerator;          // factor for how fast depth-dependent features scale compared to usual 26-level dungeon
+    unsigned int minimumLavaLevel;          // how deep before lava can be generated
+    unsigned int minimumBrimstoneLevel;     // how deep before brimstone can be generated
+    unsigned int minimumMutationsLevel;     // how deep before monster mutations can be generated
+
+    unsigned int playerTransferenceRatio;   // player transference heal is (enchant / gameConst.playerTransferenceRatio)
+    unsigned int onHitHallucinateDuration;  // duration of on-hit hallucination effect on player
+    unsigned int onHitWeakenDuration;       // duration of on-hit weaken effect
+    unsigned int onHitMercyHealPercent;     // percentage of damage healed on-hit by mercy weapon effect
+
+    unsigned int fallDamageMin;             // minimum for fall damage range
+    unsigned int fallDamageMax;             // maximum for fall damage range
+
+    unsigned int weaponKillsToAutoID;       // number of kills until unknown weapon is IDed
+    unsigned int armorDelayToAutoID;        // number of turns until unknown armor is IDed
+    unsigned int ringDelayToAutoID;         // number of turns until unknown ring is IDed
+
+    unsigned int numberAutogenerators;      // size of autoGeneratorCatalog table
+    unsigned int numberBoltKinds;           // size of boltKinds table
+    unsigned int numberBlueprints;          // size of blueprintCatalog table
 } gameConstants;
 
 // these are basically global variables pertaining to the game state and player's unique variables:
