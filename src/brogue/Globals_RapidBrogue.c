@@ -824,12 +824,12 @@ void initializeGameConst_RapidBrogue() {
 }
 
 void initializeGameGlobals_RapidBrogue() {
-    autoGeneratorCatalog = &autoGeneratorCatalog_RapidBrogue;
-    lumenstoneDistribution = &lumenstoneDistribution_RapidBrogue;
-    wandTable = &wandTable_RapidBrogue;
-    boltCatalog = &boltCatalog_RapidBrogue;
-    hordeCatalog = &hordeCatalog_RapidBrogue;
-    blueprintCatalog = &blueprintCatalog_RapidBrogue;
+    autoGeneratorCatalog = autoGeneratorCatalog_RapidBrogue;
+    lumenstoneDistribution = lumenstoneDistribution_RapidBrogue;
+    wandTable = wandTable_RapidBrogue;
+    boltCatalog = boltCatalog_RapidBrogue;
+    hordeCatalog = hordeCatalog_RapidBrogue;
+    blueprintCatalog = blueprintCatalog_RapidBrogue;
 }
 
 #endif

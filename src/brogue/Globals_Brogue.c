@@ -825,10 +825,10 @@ void initializeGameConst_Brogue() {
 }
 
 void initializeGameGlobals_Brogue() {
-    autoGeneratorCatalog = &autoGeneratorCatalog_Brogue;
-    lumenstoneDistribution = &lumenstoneDistribution_Brogue;
-    wandTable = &wandTable_Brogue;
-    boltCatalog = &boltCatalog_Brogue;
-    hordeCatalog = &hordeCatalog_Brogue;
-    blueprintCatalog = &blueprintCatalog_Brogue;
+    autoGeneratorCatalog = autoGeneratorCatalog_Brogue;
+    lumenstoneDistribution = lumenstoneDistribution_Brogue;
+    wandTable = wandTable_Brogue;
+    boltCatalog = boltCatalog_Brogue;
+    hordeCatalog = hordeCatalog_Brogue;
+    blueprintCatalog = blueprintCatalog_Brogue;
 }
