@@ -629,7 +629,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
 
     //  Prepare the new level
     rogue.minersLightRadius = (DCOLS - 1) * FP_FACTOR;
-    for (i = 0; i < rogue.depthLevel * DEPTH_ACCELERATOR; i++) {
+    for (i = 0; i < rogue.depthLevel * gameConst.depthAccelerator; i++) {
         rogue.minersLightRadius = rogue.minersLightRadius * 85 / 100;
     }
     rogue.minersLightRadius += FP_FACTOR * 225 / 100;

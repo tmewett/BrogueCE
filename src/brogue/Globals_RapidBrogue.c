@@ -816,9 +816,28 @@ itemTable wandTable_RapidBrogue[NUMBER_WAND_KINDS] = {
 };
 
 void initializeGameConst_RapidBrogue() {
-    gameConst.numberAutogenerators = NUMBER_AUTOGENERATORS;
+    
     gameConst.deepestLevel = DEEPEST_LEVEL;
     gameConst.amuletLevel = AMULET_LEVEL;
+
+    gameConst.depthAccelerator = 1;
+    gameConst.minimumLavaLevel = 2;
+    gameConst.minimumBrimstoneLevel = 5;
+    gameConst.minimumMutationsLevel = 3;
+
+    gameConst.playerTransferenceRatio = 10;
+    gameConst.onHitHallucinateDuration = 20;
+    gameConst.onHitWeakenDuration = 100;
+    gameConst.onHitMercyHealPercent = 50;
+    
+    gameConst.weaponKillsToAutoID = 5;
+    gameConst.armorDelayToAutoID = 250;
+    gameConst.ringDelayToAutoID = 250;
+
+    gameConst.fallDamageMin = 8;
+    gameConst.fallDamageMax = 10;
+    
+    gameConst.numberAutogenerators = NUMBER_AUTOGENERATORS;
     gameConst.numberBoltKinds = NUMBER_BOLT_KINDS;
     gameConst.numberBlueprints = NUMBER_BLUEPRINTS;
 }

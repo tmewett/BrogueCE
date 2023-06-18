@@ -997,7 +997,7 @@ void playerFalls() {
     if (rogue.depthLevel < gameConst.deepestLevel) {
         rogue.depthLevel++;
         startLevel(rogue.depthLevel - 1, 0);
-        damage = randClumpedRange(FALL_DAMAGE_MIN, FALL_DAMAGE_MAX, 2);
+        damage = randClumpedRange(gameConst.fallDamageMin, gameConst.fallDamageMax, 2);
         boolean killed = false;
         if (terrainFlags(player.loc.x, player.loc.y) & T_IS_DEEP_WATER) {
             messageWithColor("You fall into deep water, unharmed.", &badMessageColor, 0);

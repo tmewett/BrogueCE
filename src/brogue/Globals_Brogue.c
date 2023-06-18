@@ -25,8 +25,8 @@
 #include "IncludeGlobalsBase.h"
 #include "IncludeGlobals.h"
 
-#define AMULET_LEVEL            26          // how deep before the amulet appears
-#define DEEPEST_LEVEL           40          // how deep the universe goes
+#define AMULET_LEVEL            26          
+#define DEEPEST_LEVEL           40          
 
 #define NUMBER_AUTOGENERATORS 49
 
@@ -817,9 +817,28 @@ const hordeType hordeCatalog_Brogue[NUMBER_HORDES] = {
 
 
 void initializeGameConst_Brogue() {
-    gameConst.numberAutogenerators = NUMBER_AUTOGENERATORS;
+
     gameConst.deepestLevel = DEEPEST_LEVEL;
     gameConst.amuletLevel = AMULET_LEVEL;
+
+    gameConst.depthAccelerator = 1;
+    gameConst.minimumLavaLevel = 4;
+    gameConst.minimumBrimstoneLevel = 17;
+    gameConst.minimumMutationsLevel = 10;
+
+    gameConst.playerTransferenceRatio = 20;
+    gameConst.onHitHallucinateDuration = 20;
+    gameConst.onHitWeakenDuration = 300;
+    gameConst.onHitMercyHealPercent = 50;
+    
+    gameConst.weaponKillsToAutoID = 20;
+    gameConst.armorDelayToAutoID = 1000;
+    gameConst.ringDelayToAutoID = 1500;
+
+    gameConst.fallDamageMin = 8;
+    gameConst.fallDamageMax = 10;
+    
+    gameConst.numberAutogenerators = NUMBER_AUTOGENERATORS;
     gameConst.numberBoltKinds = NUMBER_BOLT_KINDS;
     gameConst.numberBlueprints = NUMBER_BLUEPRINTS;
 }

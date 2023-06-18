@@ -69,12 +69,12 @@ creature *generateMonster(short monsterID, boolean itemPossible, boolean mutatio
     if (mutationPossible
         && !(monst->info.flags & MONST_NEVER_MUTATED)
         && !(monst->info.abilityFlags & MA_NEVER_MUTATED)
-        && rogue.depthLevel > MUTATIONS_OCCUR_ABOVE_LEVEL) {
+        && rogue.depthLevel > gameConst.minimumMutationsLevel) {
 
         if (rogue.depthLevel <= gameConst.amuletLevel) {
-            mutationChance = clamp((rogue.depthLevel - MUTATIONS_OCCUR_ABOVE_LEVEL) * DEPTH_ACCELERATOR, 1, 10);
+            mutationChance = clamp((rogue.depthLevel - gameConst.minimumMutationsLevel) * gameConst.depthAccelerator, 1, 10);
         } else {
-            mutationChance = POW_DEEP_MUTATION[min((rogue.depthLevel - gameConst.amuletLevel) * DEPTH_ACCELERATOR, 12)];
+            mutationChance = POW_DEEP_MUTATION[min((rogue.depthLevel - gameConst.amuletLevel) * gameConst.depthAccelerator, 12)];
             mutationChance = min(mutationChance, 75);
         }
 
