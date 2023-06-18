@@ -81,14 +81,13 @@ item *generateItem(unsigned short theCategory, short theKind) {
 
 unsigned long pickItemCategory(unsigned long theCategory) {
     short i, sum, randIndex;
-    short probabilities[13] =                       {50,    42,     52,     3,      3,      10,     8,      2,      3,      2,        0,        0,      0};
     unsigned short correspondingCategories[13] =    {GOLD,  SCROLL, POTION, STAFF,  WAND,   WEAPON, ARMOR,  FOOD,   RING,   CHARM,    AMULET,   GEM,    KEY};
 
     sum = 0;
 
     for (i=0; i<13; i++) {
         if (theCategory <= 0 || theCategory & correspondingCategories[i]) {
-            sum += probabilities[i];
+            sum += itemGenerationProbabilities[i];
         }
     }
 
@@ -100,10 +99,10 @@ unsigned long pickItemCategory(unsigned long theCategory) {
 
     for (i=0; ; i++) {
         if (theCategory <= 0 || theCategory & correspondingCategories[i]) {
-            if (randIndex <= probabilities[i]) {
+            if (randIndex <= itemGenerationProbabilities[i]) {
                 return correspondingCategories[i];
             }
-            randIndex -= probabilities[i];
+            randIndex -= itemGenerationProbabilities[i];
         }
     }
 }

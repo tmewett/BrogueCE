@@ -150,6 +150,7 @@ extern const color *dynamicColorsBounds[NUMBER_DYNAMIC_COLORS][2];
 
 extern const autoGenerator *autoGeneratorCatalog;
 extern const short *lumenstoneDistribution;
+extern const short *itemGenerationProbabilities;
 
 extern const floorTileType tileCatalog[NUMBER_TILETYPES];
 

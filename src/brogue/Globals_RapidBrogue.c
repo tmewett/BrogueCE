@@ -45,6 +45,10 @@ const color centipedeColor_RapidBrogue =        {75,    25,     85,     0,      
 // Number of lumenstones on each level past amulet
 const short lumenstoneDistribution_RapidBrogue[DEEPEST_LEVEL - AMULET_LEVEL] = {7, 6, 6, 6};
 
+// Relative generation probabilities of item categories
+//                                                        (GOLD,  SCROLL, POTION, STAFF,  WAND,   WEAPON, ARMOR,  FOOD,   RING,   CHARM,    AMULET,   GEM,    KEY)
+const short itemGenerationProbabilities_RapidBrogue[13] = {50,    84,     104,     3,      3,     10,     8,      2,      3,      2,        0,        0,      0};
+
 const bolt boltCatalog_RapidBrogue[] = {
     {{0}},
     //name                      bolt description                ability description                         char    foreColor       backColor           boltEffect      magnitude       pathDF      targetDF    forbiddenMonsterFlags       flags
@@ -848,6 +852,7 @@ void initializeGameConst_RapidBrogue() {
 void initializeGameGlobals_RapidBrogue() {
     autoGeneratorCatalog = autoGeneratorCatalog_RapidBrogue;
     lumenstoneDistribution = lumenstoneDistribution_RapidBrogue;
+    itemGenerationProbabilities = itemGenerationProbabilities_RapidBrogue;
     wandTable = wandTable_RapidBrogue;
     boltCatalog = boltCatalog_RapidBrogue;
     hordeCatalog = hordeCatalog_RapidBrogue;
