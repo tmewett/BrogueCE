@@ -4211,13 +4211,13 @@ void printDiscoveriesScreen() {
     clearDisplayBuffer(dbuf);
 
     printString("-- SCROLLS --", mapToWindowX(2), y = mapToWindowY(1), &flavorTextColor, &black, dbuf);
-    printDiscoveries(SCROLL, NUMBER_SCROLL_KINDS, G_SCROLL, mapToWindowX(3), ++y, dbuf);
+    printDiscoveries(SCROLL, gameConst.numberScrollKinds, G_SCROLL, mapToWindowX(3), ++y, dbuf);
 
-    printString("-- RINGS --", mapToWindowX(2), y += NUMBER_SCROLL_KINDS + 1, &flavorTextColor, &black, dbuf);
+    printString("-- RINGS --", mapToWindowX(2), y += gameConst.numberScrollKinds + 1, &flavorTextColor, &black, dbuf);
     printDiscoveries(RING, NUMBER_RING_KINDS, G_RING, mapToWindowX(3), ++y, dbuf);
 
     printString("-- POTIONS --", mapToWindowX(29), y = mapToWindowY(1), &flavorTextColor, &black, dbuf);
-    printDiscoveries(POTION, NUMBER_POTION_KINDS, G_POTION, mapToWindowX(30), ++y, dbuf);
+    printDiscoveries(POTION, gameConst.numberPotionKinds, G_POTION, mapToWindowX(30), ++y, dbuf);
 
     printString("-- STAFFS --", mapToWindowX(53), y = mapToWindowY(1), &flavorTextColor, &black, dbuf);
     printDiscoveries(STAFF, NUMBER_STAFF_KINDS, G_STAFF, mapToWindowX(54), ++y, dbuf);
@@ -4239,105 +4239,6 @@ void printDiscoveriesScreen() {
 
     overlayDisplayBuffer(rbuf, NULL);
 }
-
-// Creates buttons for the discoveries screen in the buttons pointer; returns the number of buttons created.
-//short createDiscoveriesButtons(short category, short count, unsigned short itemCharacter, short x, short y, brogueButton *buttons) {
-//  color goodColor, badColor;
-//  char whiteColorEscape[20] = "", darkGrayColorEscape[20] = "", yellowColorEscape[20] = "", goodColorEscape[20] = "", badColorEscape[20] = "";
-//  short i, magic, symbolCount;
-//  itemTable *theTable = tableForItemCategory(category, NULL);
-//    char buf[COLS] = "";
-//
-//  goodColor = goodMessageColor;
-//  applyColorAverage(&goodColor, &black, 50);
-//  encodeMessageColor(goodColorEscape, 0, &goodColor);
-//  badColor = badMessageColor;
-//  applyColorAverage(&badColor, &black, 50);
-//  encodeMessageColor(badColorEscape, 0, &badColor);
-//  encodeMessageColor(whiteColorEscape, 0, &white);
-//    encodeMessageColor(darkGrayColorEscape, 0, &darkGray);
-//    encodeMessageColor(yellowColorEscape, 0, &itemColor);
-//
-//  for (i = 0; i < count; i++) {
-//        initializeButton(&(buttons[i]));
-//        buttons[i].flags = (B_DRAW | B_HOVER_ENABLED | B_ENABLED); // Clear other flags.
-//        buttons[i].buttonColor = black;
-//        buttons[i].opacity = 100;
-//      buttons[i].x = x;
-//      buttons[i].y = y + i;
-//      symbolCount = 0;
-//      if (theTable[i].identified) {
-//          strcat(buttons[i].text, yellowColorEscape);
-//          buttons[i].symbol[symbolCount++] = itemCharacter;
-//          strcat(buttons[i].text, "*");
-//            strcat(buttons[i].text, whiteColorEscape);
-//            strcat(buttons[i].text, " ");
-//        } else {
-//            strcat(buttons[i].text, "  ");
-//          strcat(buttons[i].text, darkGrayColorEscape);
-//      }
-//      strcpy(buf, theTable[i].name);
-//      upperCase(buf);
-//        strcat(buttons[i].text, buf);
-//        strcat(buttons[i].text, "  ");
-//        strcat(buttons[i].text, darkGrayColorEscape);
-//        magic = magicCharDiscoverySuffix(category, i);
-//        strcat(buttons[i].text, "(");
-//        if (magic != -1) {
-//            strcat(buttons[i].text, goodColorEscape);
-//            strcat(buttons[i].text, "*");
-//            buttons[i].symbol[symbolCount++] = G_GOOD_MAGIC;
-//      }
-//        if (magic != 1) {
-//            strcat(buttons[i].text, badColorEscape);
-//            strcat(buttons[i].text, "*");
-//            buttons[i].symbol[symbolCount++] = BAD_MAGIC_CHAR;
-//        }
-//        strcat(buttons[i].text, darkGrayColorEscape);
-//        strcat(buttons[i].text, ")");
-//  }
-//  return i;
-//}
-//
-//void printDiscoveriesScreen() {
-//  short i, j, y, buttonCount;
-//  cellDisplayBuffer dbuf[COLS][ROWS], rbuf[COLS][ROWS];
-//  brogueButton buttons[NUMBER_SCROLL_KINDS + gameConst.numberWandKinds + NUMBER_POTION_KINDS + NUMBER_STAFF_KINDS + NUMBER_RING_KINDS] = {{{0}}};
-//    rogueEvent theEvent;
-//
-//  clearDisplayBuffer(dbuf);
-//  buttonCount = 0;
-//
-//  printString("-- SCROLLS --", mapToWindowX(3), y = mapToWindowY(1), &flavorTextColor, &black, dbuf);
-//  buttonCount += createDiscoveriesButtons(SCROLL, NUMBER_SCROLL_KINDS, SCROLL_CHAR, mapToWindowX(3), ++y, &(buttons[buttonCount]));
-//
-//  printString("-- WANDS --", mapToWindowX(3), y += NUMBER_SCROLL_KINDS + 1, &flavorTextColor, &black, dbuf);
-//  buttonCount += createDiscoveriesButtons(WAND, gameConst.numberWandKinds, WAND_CHAR, mapToWindowX(3), ++y, &(buttons[buttonCount]));
-//
-//  printString("-- POTIONS --", mapToWindowX(29), y = mapToWindowY(1), &flavorTextColor, &black, dbuf);
-//  buttonCount += createDiscoveriesButtons(POTION, NUMBER_POTION_KINDS, POTION_CHAR, mapToWindowX(29), ++y, &(buttons[buttonCount]));
-//
-//  printString("-- STAFFS --", mapToWindowX(54), y = mapToWindowY(1), &flavorTextColor, &black, dbuf);
-//  buttonCount += createDiscoveriesButtons(STAFF, NUMBER_STAFF_KINDS, STAFF_CHAR, mapToWindowX(54), ++y, &(buttons[buttonCount]));
-//
-//  printString("-- RINGS --", mapToWindowX(54), y += NUMBER_STAFF_KINDS + 1, &flavorTextColor, &black, dbuf);
-//  buttonCount += createDiscoveriesButtons(RING, NUMBER_RING_KINDS, RING_CHAR, mapToWindowX(54), ++y, &(buttons[buttonCount]));
-//
-//  for (i=0; i<COLS; i++) {
-//      for (j=0; j<ROWS; j++) {
-//          dbuf[i][j].opacity = (i < STAT_BAR_WIDTH ? 0 : INTERFACE_OPACITY);
-//      }
-//  }
-//    overlayDisplayBuffer(dbuf, rbuf);
-//    y = buttonInputLoop(buttons,
-//                        buttonCount,
-//                        mapToWindowX(3),
-//                        mapToWindowY(1),
-//                        DCOLS - 6,
-//                        DROWS - 2,
-//                        &theEvent);
-//    overlayDisplayBuffer(rbuf, NULL);
-//}
 
 void printHighScores(boolean hiliteMostRecent) {
     short i, hiliteLineNum, maxLength = 0, leftOffset;

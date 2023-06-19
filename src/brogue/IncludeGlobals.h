@@ -170,7 +170,7 @@ extern const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT];
 extern const feat featTable[FEAT_COUNT];
 
 // ITEMS
-extern char itemTitles[NUMBER_SCROLL_KINDS][30];
+extern char itemTitles[NUMBER_ITEM_TITLES][30];
 extern char itemColors[NUMBER_ITEM_COLORS][30];
 extern char itemWoods[NUMBER_ITEM_WOODS][30];
 extern char itemMetals[NUMBER_ITEM_METALS][30];
@@ -187,13 +187,13 @@ extern itemTable keyTable[NUMBER_KEY_TYPES];
 extern itemTable foodTable[NUMBER_FOOD_KINDS];
 extern itemTable weaponTable[NUMBER_WEAPON_KINDS];
 extern itemTable armorTable[NUMBER_ARMOR_KINDS];
-extern itemTable scrollTable[NUMBER_SCROLL_KINDS];
-extern itemTable potionTable[NUMBER_POTION_KINDS];
+extern itemTable *potionTable;
+extern itemTable *scrollTable;
 extern itemTable *wandTable;
 extern itemTable staffTable[NUMBER_STAFF_KINDS];
 extern itemTable ringTable[NUMBER_RING_KINDS];
 extern itemTable charmTable[NUMBER_CHARM_KINDS];
-extern const meteredItemGenerationTable meteredItemsGenerationTable[NUMBER_METERED_ITEMS];
+extern const meteredItemGenerationTable *meteredItemsGenerationTable;
 
 extern const bolt *boltCatalog;
 
