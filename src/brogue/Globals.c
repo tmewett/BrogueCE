@@ -25,8 +25,18 @@
 #include "IncludeGlobalsBase.h"
 #include "IncludeGlobals.h"
 
-#define AMULET_LEVEL            26          // how deep before the amulet appears
-#define DEEPEST_LEVEL           40          // how deep the universe goes
+// Define global tables that are set by the variant
+
+const autoGenerator *autoGeneratorCatalog;
+const short *lumenstoneDistribution;
+const bolt *boltCatalog;
+itemTable *potionTable;
+itemTable *scrollTable;
+itemTable *wandTable;
+const hordeType *hordeCatalog;
+const blueprint *blueprintCatalog;
+const short *itemGenerationProbabilities;
+const meteredItemGenerationTable *meteredItemsGenerationTable;
 
 // bolt colors
 const color descentBoltColor =      {-40,   -40,    -40,    0,      0,          80,         80,     true};
@@ -278,7 +288,7 @@ const color flameTitleColor = {0, 0, 0, 9, 9, 15, 0, true}; // *pale blue**
 //const color flameTitleColor = {0, 0, 0, 15, 15, 9, 0, true}; // pale yellow
 //const color flameTitleColor = {0, 0, 0, 15, 9, 15, 0, true}; // pale purple
 
-// This cannot be const, since we update the colors
+// Constant bounds for dynamic colors
 const color *dynamicColorsBounds[NUMBER_DYNAMIC_COLORS][2] = {
     // shallow color               deep color
     {&minersLightStartColor,     &minersLightEndColor},
@@ -289,8 +299,7 @@ const color *dynamicColorsBounds[NUMBER_DYNAMIC_COLORS][2] = {
     {&chasmEdgeBackColorStart,   &chasmEdgeBackColorEnd}
 };
 
-//Dynamic colors (these change at runtime)
-
+// Dynamic colors (these change at runtime)
 color minersLightColor, wallBackColor, deepWaterBackColor, shallowWaterBackColor, floorBackColor, chasmEdgeBackColor;
 
 color *dynamicColors[NUMBER_DYNAMIC_COLORS] = {
@@ -1403,7 +1412,7 @@ const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT] = {
 
 // ITEMS
 
-char itemTitles[NUMBER_SCROLL_KINDS][30];
+char itemTitles[NUMBER_ITEM_TITLES][30];
 
 const char itemCategoryNames[NUMBER_ITEM_CATEGORIES][11] = {
         "food",
@@ -1607,78 +1616,6 @@ const char armorRunicNames[NUMBER_ARMOR_ENCHANT_KINDS][30] = {
     "immolation",
 };
 
-// To meter item generation (on level generation):
-// .incrementFrequency must be != 0 for frequency biasing
-// .levelScaling != 0 for thresholding
-const meteredItemGenerationTable meteredItemsGenerationTable[NUMBER_METERED_ITEMS] = {
-{ .category = SCROLL, .kind = SCROLL_ENCHANTING, .initialFrequency = 60, .incrementFrequency = 30, .decrementFrequency = 50 },
-{ .category = SCROLL, .kind = SCROLL_IDENTIFY },
-{ .category = SCROLL, .kind = SCROLL_TELEPORT },
-{ .category = SCROLL, .kind = SCROLL_REMOVE_CURSE },
-{ .category = SCROLL, .kind = SCROLL_RECHARGING },
-{ .category = SCROLL, .kind = SCROLL_PROTECT_ARMOR },
-{ .category = SCROLL, .kind = SCROLL_PROTECT_WEAPON },
-{ .category = SCROLL, .kind = SCROLL_SANCTUARY },
-{ .category = SCROLL, .kind = SCROLL_MAGIC_MAPPING },
-{ .category = SCROLL, .kind = SCROLL_NEGATION },
-{ .category = SCROLL, .kind = SCROLL_SHATTERING },
-{ .category = SCROLL, .kind = SCROLL_DISCORD },
-{ .category = SCROLL, .kind = SCROLL_AGGRAVATE_MONSTER },
-{ .category = SCROLL, .kind = SCROLL_SUMMON_MONSTER },
-{ .category = POTION, .kind = POTION_LIFE, .initialFrequency = 0, .incrementFrequency = 34, .decrementFrequency = 150, .genMultiplier = 4, .genIncrement = 3, .levelScaling = 1 },
-{ .category = POTION, .kind = POTION_STRENGTH, .initialFrequency = 40, .incrementFrequency = 17, .decrementFrequency = 50 },
-{ .category = POTION, .kind = POTION_TELEPATHY },
-{ .category = POTION, .kind = POTION_LEVITATION },
-{ .category = POTION, .kind = POTION_DETECT_MAGIC },
-{ .category = POTION, .kind = POTION_HASTE_SELF },
-{ .category = POTION, .kind = POTION_FIRE_IMMUNITY },
-{ .category = POTION, .kind = POTION_INVISIBILITY },
-{ .category = POTION, .kind = POTION_POISON },
-{ .category = POTION, .kind = POTION_PARALYSIS },
-{ .category = POTION, .kind = POTION_HALLUCINATION },
-{ .category = POTION, .kind = POTION_CONFUSION },
-{ .category = POTION, .kind = POTION_INCINERATION },
-{ .category = POTION, .kind = POTION_DARKNESS },
-{ .category = POTION, .kind = POTION_DESCENT },
-{ .category = POTION, .kind = POTION_LICHEN }
-};
-
-itemTable scrollTable[NUMBER_SCROLL_KINDS] = {
-    {"enchanting",          itemTitles[0], "",  0,  550,    0, 1, {0,0,0}, false, false, 1,  false, "This ancient enchanting sorcery will imbue a single item with a powerful and permanent magical charge. A staff will increase in power and in number of charges; a weapon will inflict more damage and find its mark more easily; a suit of armor will deflect attacks more often; the magic of a ring will intensify; and a wand will gain expendable charges in the least amount that such a wand can be found with. Weapons and armor will also require less strength to use, and any curses on the item will be lifted."}, // frequency is dynamically adjusted
-    {"identify",            itemTitles[1], "",  30, 300,    0, 0, {0,0,0}, false, false, 1,  false, "This scrying magic will permanently reveal all of the secrets of a single item."},
-    {"teleportation",       itemTitles[2], "",  10, 500,    0, 0, {0,0,0}, false, false, 1,  false, "This escape spell will instantly relocate you to a random location on the dungeon level. It can be used to escape a dangerous situation with luck. The unlucky reader might find himself in an even more dangerous place."},
-    {"remove curse",        itemTitles[3], "",  15, 150,    0, 0, {0,0,0}, false, false, 1,  false, "This redemption spell will instantly strip from the reader's weapon, armor, rings and carried items any evil enchantments that might prevent the wearer from removing them."},
-    {"recharging",          itemTitles[4], "",  12, 375,    0, 0, {0,0,0}, false, false, 1,  false, "The power bound up in this parchment will instantly recharge all of your staffs and charms."},
-    {"protect armor",       itemTitles[5], "",  10, 400,    0, 0, {0,0,0}, false, false, 1,  false, "This ceremonial shielding magic will permanently proof your armor against degradation by acid."},
-    {"protect weapon",      itemTitles[6], "",  10, 400,    0, 0, {0,0,0}, false, false, 1,  false, "This ceremonial shielding magic will permanently proof your weapon against degradation by acid."},
-    {"sanctuary",           itemTitles[7], "",  10, 500,    0, 0, {0,0,0}, false, false, 1,  false, "This protection rite will imbue the area with powerful warding glyphs, when released over plain ground. Monsters will not willingly set foot on the affected area."},
-    {"magic mapping",       itemTitles[8], "",  12, 500,    0, 0, {0,0,0}, false, false, 1,  false, "This powerful scouting magic will etch a purple-hued image of crystal clarity into your memory, alerting you to the precise layout of the level and revealing all traps, secret doors and hidden levers."},
-    {"negation",            itemTitles[9], "",  8,  400,    0, 0, {0,0,0}, false, false, 1,  false, "When this powerful anti-magic is released, all creatures (including yourself) and all items lying on the ground within your field of view will be exposed to its blast and stripped of magic. Creatures animated purely by magic will die. Potions, scrolls, items being held by other creatures and items in your inventory will not be affected."},
-    {"shattering",          itemTitles[10],"",  8,  500,    0, 0, {0,0,0}, false, false, 1,  false, "This strange incantation will alter the physical structure of nearby stone, causing it to evaporate into the air over the ensuing minutes."},
-    {"discord",             itemTitles[11], "", 8,  400,    0, 0, {0,0,0}, false, false, 1,  false, "This scroll will unleash a powerful blast of mind magic. Any creatures within line of sight will turn against their companions and attack indiscriminately for 30 turns."},
-    {"aggravate monsters",  itemTitles[12], "", 15, 50,     0, 0, {0,0,0}, false, false, -1, false, "This scroll will unleash a piercing shriek that will awaken all monsters and alert them to the reader's location."},
-    {"summon monsters",     itemTitles[13], "", 10, 50,     0, 0, {0,0,0}, false, false, -1, false, "This summoning incantation will call out to creatures in other planes of existence, drawing them through the fabric of reality to confront the reader."},
-};
-
-itemTable potionTable[NUMBER_POTION_KINDS] = {
-    {"life",                itemColors[1], "",  0,  500,    0, 0, {10,10,0}, false, false, 1,  false, "A swirling elixir that will instantly heal you, cure you of ailments, and permanently increase your maximum health."}, // frequency is dynamically adjusted
-    {"strength",            itemColors[2], "",  0,  400,    0, 0, {1,1,0}, false, false, 1,  false, "This powerful medicine will course through your muscles, permanently increasing your strength by one point."}, // frequency is dynamically adjusted
-    {"telepathy",           itemColors[3], "",  20, 350,    0, 0, {300,300,0}, false, false, 1,  false, "This mysterious liquid will attune your mind to the psychic signature of distant creatures. Its effects will not reveal inanimate objects, such as totems, turrets and traps."},
-    {"levitation",          itemColors[4], "",  15, 250,    0, 0, {100,100,0}, false, false, 1,  false, "This curious liquid will cause you to hover in the air, able to drift effortlessly over lava, water, chasms and traps. Flames, gases and spiderwebs fill the air, and cannot be bypassed while airborne. Creatures that dwell in water or mud will be unable to attack you while you levitate."},
-    {"detect magic",        itemColors[5], "",  20, 500,    0, 0, {0,0,0}, false, false, 1,  false, "This mysterious brew will sensitize your mind to the radiance of magic. Items imbued with helpful enchantments will be marked with a full sigil; items corrupted by curses or designed to bring misfortune upon the bearer will be marked with a hollow sigil. The Amulet of Yendor will be revealed by its unique aura."},
-    {"speed",               itemColors[6], "",  10, 500,    0, 0, {25,25,0}, false, false, 1,  false, "Quaffing the contents of this flask will enable you to move at blinding speed for several minutes."},
-    {"fire immunity",       itemColors[7], "",  15, 500,    0, 0, {150,150,0}, false, false, 1,  false, "This potion will render you impervious to heat and permit you to wander through fire and lava and ignore otherwise deadly bolts of flame. It will not guard against the concussive impact of an explosion, however."},
-    {"invisibility",        itemColors[8], "",  15, 400,    0, 0, {75,75,0}, false, false, 1,  false, "Drinking this potion will render you temporarily invisible. Enemies more than two spaces away will be unable to track you."},
-    {"caustic gas",         itemColors[9], "",  15, 200,    0, 0, {0,0,0}, false, false, -1, false, "Uncorking or shattering this pressurized glass will cause its contents to explode into a deadly cloud of caustic purple gas. You might choose to fling this potion at distant enemies instead of uncorking it by hand."},
-    {"paralysis",           itemColors[10], "", 10, 250,    0, 0, {0,0,0}, false, false, -1, false, "Upon exposure to open air, the liquid in this flask will vaporize into a numbing pink haze. Anyone who inhales the cloud will be paralyzed instantly, unable to move for some time after the cloud dissipates. This item can be thrown at distant enemies to catch them within the effect of the gas."},
-    {"hallucination",       itemColors[11], "", 10, 500,    0, 0, {300,300,0}, false, false, -1, false, "This flask contains a vicious and long-lasting hallucinogen. Under its dazzling effect, you will wander through a rainbow wonderland, unable to discern the form of any creatures or items you see."},
-    {"confusion",           itemColors[12], "", 15, 450,    0, 0, {0,0,0}, false, false, -1, false, "This unstable chemical will quickly vaporize into a glittering cloud upon contact with open air, causing any creature that inhales it to lose control of the direction of its movements until the effect wears off (although its ability to aim projectile attacks will not be affected). Its vertiginous intoxication can cause creatures and adventurers to careen into one another or into chasms or lava pits, so extreme care should be taken when under its effect. Its contents can be weaponized by throwing the flask at distant enemies."},
-    {"incineration",        itemColors[13], "", 15, 500,    0, 0, {0,0,0}, false, false, -1, false, "This flask contains an unstable compound which will burst violently into flame upon exposure to open air. You might throw the flask at distant enemies -- or into a deep lake, to cleanse the cavern with scalding steam."},
-    {"darkness",            itemColors[14], "", 7,  150,    0, 0, {400,400,0}, false, false, -1, false, "Drinking this potion will plunge you into darkness. At first, you will be completely blind to anything not illuminated by an independent light source, but over time your vision will regain its former strength. Throwing the potion will create a cloud of supernatural darkness, and enemies will have difficulty seeing or following you if you take refuge under its cover."},
-    {"descent",             itemColors[15], "", 15, 500,    0, 0, {0,0,0}, false, false, -1, false, "When this flask is uncorked by hand or shattered by being thrown, the fog that seeps out will temporarily cause the ground in the vicinity to vanish."},
-    {"creeping death",      itemColors[16], "", 7,  450,    0, 0, {0,0,0}, false, false, -1, false, "When the cork is popped or the flask is thrown, tiny spores will spill across the ground and begin to grow a deadly lichen. Anything that touches the lichen will be poisoned by its clinging tendrils, and the lichen will slowly grow to fill the area. Fire will purge the infestation."},
-};
-
 itemTable staffTable[NUMBER_STAFF_KINDS] = {
     {"lightning",       itemWoods[0], "",   15, 1300,   0, BOLT_LIGHTNING,     {2,4,1}, false, false, 1,  false, "This staff conjures forth deadly arcs of electricity to damage to any number of creatures in a straight line."},
     {"firebolt",        itemWoods[1], "",   15, 1300,   0, BOLT_FIRE,          {2,4,1}, false, false, 1,  false, "This staff unleashes bursts of magical fire. It will ignite flammable terrain and burn any creature that it hits. Creatures with an immunity to fire will be unaffected by the bolt."},
@@ -1809,11 +1746,3 @@ const char monsterBookkeepingFlagDescriptions[32][COLS] = {
     "is anchored to reality by $HISHER summoner",// MB_BOUND_TO_LEADER
     "is marked for demonic sacrifice",          // MB_MARKED_FOR_SACRIFICE
 };
-
-const autoGenerator *autoGeneratorCatalog;
-const short *lumenstoneDistribution;
-const bolt *boltCatalog;
-itemTable *wandTable;
-const hordeType *hordeCatalog;
-const blueprint *blueprintCatalog;
-const short *itemGenerationProbabilities;

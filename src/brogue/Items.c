@@ -242,7 +242,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             break;
         case SCROLL:
             if (itemKind < 0) {
-                itemKind = chooseKind(scrollTable, NUMBER_SCROLL_KINDS);
+                itemKind = chooseKind(scrollTable, gameConst.numberScrollKinds);
             }
             theEntry = &scrollTable[itemKind];
             theItem->displayChar = G_SCROLL;
@@ -250,7 +250,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             break;
         case POTION:
             if (itemKind < 0) {
-                itemKind = chooseKind(potionTable, NUMBER_POTION_KINDS);
+                itemKind = chooseKind(potionTable, gameConst.numberPotionKinds);
             }
             theEntry = &potionTable[itemKind];
             theItem->displayChar = G_POTION;
@@ -493,7 +493,7 @@ void populateItems(short upstairsX, short upstairsY) {
     short i, j, numberOfItems, numberOfGoldPiles, goldBonusProbability, x = 0, y = 0;
     unsigned long totalHeat;
     short theCategory, theKind, randomDepthOffset = 0;
-    itemTable potionTableCopy[NUMBER_POTION_KINDS], scrollTableCopy[NUMBER_SCROLL_KINDS];
+    itemTable *potionTableCopy, *scrollTableCopy;
 
     const int POW_GOLD[] = {
         // b^3.05, with b from 0 to 25:
@@ -516,15 +516,18 @@ void populateItems(short upstairsX, short upstairsY) {
 #endif
 
     // Store copy of potion and scroll tables, since they are modified during level item generation.
-    memcpy(&scrollTableCopy, &scrollTable, sizeof(scrollTable));
-    memcpy(&potionTableCopy, &potionTable, sizeof(potionTable));
+    potionTableCopy = calloc(gameConst.numberPotionKinds, sizeof(itemTable));
+    scrollTableCopy = calloc(gameConst.numberScrollKinds, sizeof(itemTable));
+
+    memcpy(potionTableCopy, &potionTable, sizeof(potionTable));
+    memcpy(scrollTableCopy, &scrollTable, sizeof(scrollTable));
 
     if (rogue.depthLevel > gameConst.amuletLevel) {
         numberOfItems = lumenstoneDistribution[rogue.depthLevel - gameConst.amuletLevel - 1];
         numberOfGoldPiles = 0;
     } else {
         // Add frequency to metered items memory
-        for (i = 0; i < NUMBER_METERED_ITEMS; i++) {
+        for (i = 0; i < gameConst.numberMeteredItems; i++) {
             rogue.meteredItems[i].frequency += meteredItemsGenerationTable[i].incrementFrequency;
         }
         numberOfItems = 3;
@@ -623,10 +626,10 @@ void populateItems(short upstairsX, short upstairsY) {
         theKind = -1;
 
         // Set metered item itemTable frequency to memory.
-        for (j = 0; j < NUMBER_METERED_ITEMS; j++) {
+        for (j = 0; j < gameConst.numberMeteredItems; j++) {
             if (meteredItemsGenerationTable[j].incrementFrequency != 0) {
-                if (j >= NUMBER_SCROLL_KINDS) {
-                    potionTable[j - NUMBER_SCROLL_KINDS].frequency = rogue.meteredItems[j].frequency;
+                if (j >= gameConst.numberScrollKinds) {
+                    potionTable[j - gameConst.numberScrollKinds].frequency = rogue.meteredItems[j].frequency;
                 } else {
                     scrollTable[j].frequency = rogue.meteredItems[j].frequency;
                 }
@@ -646,7 +649,7 @@ void populateItems(short upstairsX, short upstairsY) {
             theCategory = GEM;
         } else {
             // Guarantee any metered items that reach generation thresholds.
-            for (j = 0; j < NUMBER_METERED_ITEMS; j++) {
+            for (j = 0; j < gameConst.numberMeteredItems; j++) {
                 if (meteredItemsGenerationTable[j].levelScaling != 0 &&
                     rogue.meteredItems[j].numberSpawned * meteredItemsGenerationTable[j].genMultiplier + meteredItemsGenerationTable[j].genIncrement <
                     rogue.depthLevel * meteredItemsGenerationTable[j].levelScaling + randomDepthOffset) {
@@ -679,11 +682,11 @@ void populateItems(short upstairsX, short upstairsY) {
         coolHeatMapAt(itemSpawnHeatMap, x, y, &totalHeat);
 
         // Remove frequency from spawned metered items memory.
-        for (j = 0; j < NUMBER_METERED_ITEMS; j++) {
+        for (j = 0; j < gameConst.numberMeteredItems; j++) {
             if (meteredItemsGenerationTable[j].incrementFrequency != 0 && 
                 (theItem->category & meteredItemsGenerationTable[j].category) && theItem->kind == meteredItemsGenerationTable[j].kind) {
-                if (j >= NUMBER_SCROLL_KINDS) {
-                    if (D_MESSAGE_ITEM_GENERATION) printf("\n(!)  Depth %i: generated an %s potion at %i frequency", rogue.depthLevel, potionTable[j - NUMBER_SCROLL_KINDS].name, rogue.meteredItems[j].frequency);
+                if (j >= gameConst.numberScrollKinds) {
+                    if (D_MESSAGE_ITEM_GENERATION) printf("\n(!)  Depth %i: generated an %s potion at %i frequency", rogue.depthLevel, potionTable[j - gameConst.numberScrollKinds].name, rogue.meteredItems[j].frequency);
                 } else {
                     if (D_MESSAGE_ITEM_GENERATION) printf("\n(?)  Depth %i: generated an %s scroll at %i frequency", rogue.depthLevel, scrollTable[j].name, rogue.meteredItems[j].frequency);
                 }
@@ -732,8 +735,11 @@ void populateItems(short upstairsX, short upstairsY) {
     // Restore potion and scroll tables which sets the frequency of these items
     // to zero.
 
-    memcpy(&scrollTable, &scrollTableCopy, sizeof(scrollTableCopy));
-    memcpy(&potionTable, &potionTableCopy, sizeof(potionTableCopy));
+    memcpy(&potionTable, potionTableCopy, sizeof(potionTableCopy));
+    memcpy(&scrollTable, scrollTableCopy, sizeof(scrollTableCopy));
+
+    free(potionTableCopy);
+    free(scrollTableCopy);
 
     if (D_MESSAGE_ITEM_GENERATION) printf("\n---- Depth %i: %lu gold generated so far.", rogue.depthLevel, rogue.goldGenerated);
 }
@@ -5622,12 +5628,12 @@ int itemKindCount(enum itemCategory category, int polarityConstraint) {
 
     switch (category) {
         case SCROLL:
-            totalKinds = NUMBER_SCROLL_KINDS;
-            goodKinds = NUMBER_GOOD_SCROLL_KINDS;
+            totalKinds = gameConst.numberScrollKinds;
+            goodKinds = gameConst.numberGoodScrollKinds;
             break;
         case POTION:
-            totalKinds = NUMBER_POTION_KINDS;
-            goodKinds = NUMBER_GOOD_POTION_KINDS;
+            totalKinds = gameConst.numberPotionKinds;
+            goodKinds = gameConst.numberGoodPotionKinds;
             break;
         case WAND:
             totalKinds = gameConst.numberWandKinds;
@@ -5782,10 +5788,10 @@ void identifyItemKind(item *theItem) {
 
         switch (theItem->category) {
             case SCROLL:
-                tableCount = NUMBER_SCROLL_KINDS;
+                tableCount = gameConst.numberScrollKinds;
                 break;
             case POTION:
-                tableCount = NUMBER_POTION_KINDS;
+                tableCount = gameConst.numberPotionKinds;
                 break;
             case WAND:
                 tableCount = gameConst.numberWandKinds;
@@ -6102,7 +6108,7 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
             // hallucination is the only malevolent potion that splashes harmlessly when thrown
             if (theItem->kind == POTION_HALLUCINATION) {
                 if (theItem->flags & ITEM_MAGIC_DETECTED
-                    || (magicPolarityRevealedItemKindCount(theItem->category, 1) == NUMBER_GOOD_POTION_KINDS)) {
+                    || (magicPolarityRevealedItemKindCount(theItem->category, 1) == gameConst.numberGoodPotionKinds)) {
                     autoIdentify(theItem);
                 }
             }
@@ -7805,7 +7811,7 @@ void shuffleFlavors() {
     short i, j, randIndex, randNumber;
     char buf[COLS];
 
-    for (i=0; i<NUMBER_POTION_KINDS; i++) {
+    for (i=0; i<gameConst.numberPotionKinds; i++) {
         resetItemTableEntry(potionTable + i);
     }
     for (i=0; i<NUMBER_STAFF_KINDS; i++) {
@@ -7814,7 +7820,7 @@ void shuffleFlavors() {
     for (i=0; i<gameConst.numberWandKinds; i++) {
         resetItemTableEntry(&(wandTable[i]));
     }
-    for (i=0; i<NUMBER_SCROLL_KINDS; i++) {
+    for (i=0; i<gameConst.numberScrollKinds; i++) {
         resetItemTableEntry(scrollTable + i);
     }
     for (i=0; i<NUMBER_RING_KINDS; i++) {
@@ -7869,7 +7875,7 @@ void shuffleFlavors() {
         }
     }
 
-    for (i=0; i<NUMBER_SCROLL_KINDS; i++) {
+    for (i=0; i<NUMBER_ITEM_TITLES; i++) {
         itemTitles[i][0] = '\0';
         randNumber = rand_range(3, 4);
         for (j=0; j<randNumber; j++) {

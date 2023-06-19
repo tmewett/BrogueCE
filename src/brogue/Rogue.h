@@ -777,7 +777,6 @@ enum potionKind {
     POTION_FIRE_IMMUNITY,
     POTION_INVISIBILITY,
     POTION_POISON,
-    NUMBER_GOOD_POTION_KINDS = POTION_POISON,
     POTION_PARALYSIS,
     POTION_HALLUCINATION,
     POTION_CONFUSION,
@@ -785,7 +784,6 @@ enum potionKind {
     POTION_DARKNESS,
     POTION_DESCENT,
     POTION_LICHEN,
-    NUMBER_POTION_KINDS
 };
 
 enum weaponKind {
@@ -958,17 +956,13 @@ enum scrollKind {
     SCROLL_SHATTERING,
     SCROLL_DISCORD,
     SCROLL_AGGRAVATE_MONSTER,
-    NUMBER_GOOD_SCROLL_KINDS = SCROLL_AGGRAVATE_MONSTER,
     SCROLL_SUMMON_MONSTER,
-    NUMBER_SCROLL_KINDS
 };
 
 typedef struct meteredItem {
     int frequency;
     int numberSpawned;
 } meteredItem;
-
-#define NUMBER_METERED_ITEMS (NUMBER_SCROLL_KINDS + NUMBER_POTION_KINDS)
 
 #define MAX_PACK_ITEMS              26
 
@@ -1054,6 +1048,7 @@ enum monsterTypes {
 
 // flavors
 
+#define NUMBER_ITEM_TITLES          14
 #define NUMBER_ITEM_COLORS          21
 #define NUMBER_TITLE_PHONEMES       21
 #define NUMBER_ITEM_WOODS           21
@@ -2343,9 +2338,15 @@ typedef struct gameConstants {
     unsigned int numberAutogenerators;      // size of autoGeneratorCatalog table
     unsigned int numberBoltKinds;           // size of boltKinds table
     unsigned int numberBlueprints;          // size of blueprintCatalog table
-    unsigned int numberWandKinds;           // size of the wands table
-    unsigned int numberGoodWandKinds;       // number of good wands in the game (first in order in the table)
     unsigned int numberHordes;              // size of the horde table
+    
+    unsigned int numberMeteredItems;        // size of the metered items table
+    unsigned int numberPotionKinds;         // size of the potion table
+    unsigned int numberGoodPotionKinds;     // number of good potions in the game (ordered first in the table)
+    unsigned int numberScrollKinds;         // size of the scroll table
+    unsigned int numberGoodScrollKinds;     // number of good scrolls in the game (ordered first in the table)
+    unsigned int numberWandKinds;           // size of the wands table
+    unsigned int numberGoodWandKinds;       // number of good wands in the game (ordered first in the table)
 } gameConstants;
 
 // these are basically global variables pertaining to the game state and player's unique variables:
@@ -2446,7 +2447,7 @@ typedef struct playerCharacter {
 
     // metered items
     long long foodSpawned;                    // amount of nutrition units spawned so far this game
-    meteredItem meteredItems[NUMBER_METERED_ITEMS];
+    meteredItem *meteredItems;
 
     // ring bonuses:
     short clairvoyance;

@@ -176,6 +176,11 @@ void initializeRogue(uint64_t seed) {
     wizard = rogue.wizard;
     displayStealthRangeMode = rogue.displayStealthRangeMode;
     trueColorMode = rogue.trueColorMode;
+
+    if (rogue.meteredItems != NULL) {
+        free(rogue.meteredItems);
+    }
+
     memset((void *) &rogue, 0, sizeof( playerCharacter )); // the flood
     rogue.playbackMode = playingback;
     rogue.playbackPaused = playbackPaused;
@@ -189,6 +194,8 @@ void initializeRogue(uint64_t seed) {
     rogue.highScoreSaved = false;
     rogue.cautiousMode = false;
     rogue.milliseconds = 0;
+
+    rogue.meteredItems = calloc(gameConst.numberMeteredItems, sizeof(meteredItem));
 
     rogue.RNG = RNG_SUBSTANTIVE;
     if (!rogue.playbackMode) {
@@ -205,7 +212,7 @@ void initializeRogue(uint64_t seed) {
     levels[0].upStairsLoc.y = DROWS - 2;
 
     // Set metered item frequencies to initial values.
-    for (i = 0; i < NUMBER_METERED_ITEMS; i++) {
+    for (i = 0; i < gameConst.numberMeteredItems; i++) {
         rogue.meteredItems[i].frequency = meteredItemsGenerationTable[i].initialFrequency;
     }
 
