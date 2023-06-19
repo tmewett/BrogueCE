@@ -829,6 +829,9 @@ void initializeGameConst_RapidBrogue() {
     gameConst.machinesPerLevelIncreaseFactor = 4;
     gameConst.maxLevelForBonusMachines = 1;
 
+    gameConst.extraItemsPerLevel = 4;
+    gameConst.goldAdjustmentStartDepth = 3;
+
     gameConst.playerTransferenceRatio = 10;
     gameConst.onHitHallucinateDuration = 20;
     gameConst.onHitWeakenDuration = 100;
