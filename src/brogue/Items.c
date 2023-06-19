@@ -315,7 +315,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
         case GOLD:
             theEntry = NULL;
             theItem->displayChar = G_GOLD;
-            theItem->quantity = rand_range(50 + rogue.depthLevel * 10, 100 + rogue.depthLevel * 15);
+            theItem->quantity = rand_range(50 + rogue.depthLevel * 10 * gameConst.depthAccelerator, 100 + rogue.depthLevel * 15 * gameConst.depthAccelerator);
             break;
         case AMULET:
             theEntry = NULL;
@@ -537,7 +537,9 @@ void populateItems(short upstairsX, short upstairsY) {
             numberOfItems++; // and 2 more here
         }
 
-        numberOfGoldPiles = min(5, rogue.depthLevel / 4);
+        numberOfItems += gameConst.extraItemsPerLevel;
+
+        numberOfGoldPiles = min(5, rogue.depthLevel * gameConst.depthAccelerator / 4);
         for (goldBonusProbability = 60;
              rand_percent(goldBonusProbability) && numberOfGoldPiles <= 10;
              goldBonusProbability -= 15) {
@@ -546,10 +548,10 @@ void populateItems(short upstairsX, short upstairsY) {
         }
         // Adjust the amount of gold if we're past depth 5 and we were below or above
         // the production schedule as of the previous depth.
-        if (rogue.depthLevel > 5) {
-            if (rogue.goldGenerated < aggregateGoldLowerBound(rogue.depthLevel - 1)) {
+        if (rogue.depthLevel >= gameConst.goldAdjustmentStartDepth) {
+            if (rogue.goldGenerated < aggregateGoldLowerBound(rogue.depthLevel * gameConst.depthAccelerator - 1)) {
                 numberOfGoldPiles += 2;
-            } else if (rogue.goldGenerated > aggregateGoldUpperBound(rogue.depthLevel - 1)) {
+            } else if (rogue.goldGenerated > aggregateGoldUpperBound(rogue.depthLevel * gameConst.depthAccelerator - 1)) {
                 numberOfGoldPiles -= 2;
             }
         }

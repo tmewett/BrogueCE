@@ -2320,6 +2320,9 @@ typedef struct gameConstants {
     unsigned int minimumBrimstoneLevel;     // how deep before brimstone can be generated
     unsigned int minimumMutationsLevel;     // how deep before monster mutations can be generated
 
+    unsigned int extraItemsPerLevel;        // how many extra items generated per level above vanilla
+    unsigned int goldAdjustmentStartDepth;  // depth from which gold is adjusted based on generation so far
+
     unsigned int machinesPerLevelSuppressionMultiplier; // scale factor for limiting number of machines generated so far against depth
     unsigned int machinesPerLevelSuppressionOffset;     // offset for limiting number of machines generated so far against depth
     unsigned int machinesPerLevelIncreaseFactor;        // scale factor for increasing number of machines generated so far against depth
