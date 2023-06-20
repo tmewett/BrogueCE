@@ -512,8 +512,7 @@ void initRecording() {
             if (!nonInteractivePlayback) {
                 sprintf(buf, "This file is from version %s and cannot be opened in version %s.", versionString, BROGUE_VERSION_STRING);
                 dialogAlert(buf);
-            }
-            else {
+            } else {
                 printf("This file is from version %s and cannot be opened in version %s.", versionString, BROGUE_VERSION_STRING);
             }
             rogue.playbackMode = true;

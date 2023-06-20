@@ -6,7 +6,7 @@ cflags := -Isrc/brogue -Isrc/platform -std=c99 \
 libs := -lm
 cppflags := -DDATADIR=$(DATADIR)
 
-sources := $(wildcard src/brogue/*.c) $(addprefix src/platform/,main.c platformdependent.c)
+sources := $(wildcard src/brogue/*.c) $(addprefix src/platform/,main.c platformdependent.c null-platform.c)
 objects :=
 
 ifeq ($(SYSTEM),WINDOWS)
@@ -48,11 +48,6 @@ endif
 ifeq ($(WEBBROGUE),YES)
 sources += $(addprefix src/platform/,web-platform.c)
 cppflags += -DBROGUE_WEB
-endif
-
-ifeq ($(NULL),YES)
-sources += $(addprefix src/platform/,null-platform.c)
-cppflags += -DBROGUE_NULL
 endif
 
 ifeq ($(MAC_APP),YES)
