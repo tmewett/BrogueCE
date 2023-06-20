@@ -885,6 +885,30 @@ const hordeType hordeCatalog_Brogue[] = {
     {MK_GOBLIN,         1,      {MK_GOBLIN},                            {{1, 2, 1}},                    3,      7,      10,     0,              0,              HORDE_MACHINE_GOBLIN_WARREN | HORDE_LEADER_CAPTIVE},
 };
 
+#define MENU_TITLE_WIDTH    74
+#define MENU_TITLE_HEIGHT   19
+
+const char *mainMenuTitle_Brogue =
+"########   ########       ######         #######   ####     ###  #########\
+ ##   ###   ##   ###    ##     ###     ##      ##   ##       #    ##     #\
+ ##    ##   ##    ##   ##       ###   ##        #   ##       #    ##     #\
+ ##    ##   ##    ##   #    #    ##   #         #   ##       #    ##      \
+ ##    ##   ##    ##  ##   ##     ## ##             ##       #    ##    # \
+ ##   ##    ##   ##   ##   ###    ## ##             ##       #    ##    # \
+ ######     ## ###    ##   ####   ## ##             ##       #    ####### \
+ ##    ##   ##  ##    ##   ####   ## ##             ##       #    ##    # \
+ ##     ##  ##   ##   ##    ###   ## ##      #####  ##       #    ##    # \
+ ##     ##  ##   ##   ###    ##   ## ###       ##   ##       #    ##      \
+ ##     ##  ##    ##   ##    #    #   ##       ##   ##       #    ##      \
+ ##     ##  ##    ##   ###       ##   ###      ##   ###      #    ##     #\
+ ##    ##   ##     ##   ###     ##     ###    ###    ###    #     ##     #\
+########   ####    ###    ######         #####        ######     #########\
+                            ##                                            \
+                        ##########                                        \
+                            ##                                            \
+                            ##                                            \
+                           ####                                           ";
+
 void initializeGameConst_Brogue() {
 
     gameConst.deepestLevel = DEEPEST_LEVEL;
@@ -926,6 +950,9 @@ void initializeGameConst_Brogue() {
     gameConst.numberGoodWandKinds = 6;
 
     gameConst.numberHordes = sizeof(hordeCatalog_Brogue) / sizeof(hordeType);
+
+    gameConst.mainMenuTitleHeight = MENU_TITLE_HEIGHT;
+    gameConst.mainMenuTitleWidth = MENU_TITLE_WIDTH;
 }
 
 void initializeGameGlobals_Brogue() {
@@ -942,4 +969,6 @@ void initializeGameGlobals_Brogue() {
     boltCatalog = boltCatalog_Brogue;
     hordeCatalog = hordeCatalog_Brogue;
     blueprintCatalog = blueprintCatalog_Brogue;
+
+    mainMenuTitle = mainMenuTitle_Brogue;
 }

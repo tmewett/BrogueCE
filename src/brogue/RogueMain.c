@@ -168,8 +168,6 @@ void initializeRogue(uint64_t seed) {
     boolean trueColorMode;
     short oldRNG;
 
-    initializeGameSpecifics();
-
     playingback = rogue.playbackMode; // the only animals that need to go on the ark
     playbackPaused = rogue.playbackPaused;
     playbackFF = rogue.playbackFastForward;

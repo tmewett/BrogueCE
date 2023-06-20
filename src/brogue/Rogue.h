@@ -2347,6 +2347,9 @@ typedef struct gameConstants {
     unsigned int numberGoodScrollKinds;     // number of good scrolls in the game (ordered first in the table)
     unsigned int numberWandKinds;           // size of the wands table
     unsigned int numberGoodWandKinds;       // number of good wands in the game (ordered first in the table)
+
+    unsigned int mainMenuTitleHeight;           // height of the title screen in characters
+    unsigned int mainMenuTitleWidth;            // width of the title screen in characters
 } gameConstants;
 
 // these are basically global variables pertaining to the game state and player's unique variables:
