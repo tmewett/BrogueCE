@@ -33,6 +33,7 @@ const bolt *boltCatalog;
 itemTable *potionTable;
 itemTable *scrollTable;
 itemTable *wandTable;
+const levelFeeling *levelFeelings;
 const hordeType *hordeCatalog;
 const blueprint *blueprintCatalog;
 const short *itemGenerationProbabilities;

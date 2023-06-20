@@ -838,6 +838,12 @@ const meteredItemGenerationTable meteredItemsGenerationTable_RapidBrogue[] = {
     { .category = POTION, .kind = POTION_LICHEN }
 };
 
+// levelFeelings[0] -> AMULET_LEVEL, levelFeelings[1] -> DEEPEST_LEVEL
+levelFeeling levelFeelings_RapidBrogue[] = {
+    { .message = "An alien energy permeates the area. The Amulet of Yendor must be nearby!", .color = &itemMessageColor },
+    { .message = "An overwhelming sense of peace and tranquility settles upon you... then you see monsters. Doh.", .color = &lightBlue }
+};
+
 itemTable potionTable_RapidBrogue[] = {
     {"life",                itemColors[1], "",  0,  500,    0, 0, {10,10,0}, false, false, 1,  false, "A swirling elixir that will instantly heal you, cure you of ailments, and permanently increase your maximum health."}, // frequency is dynamically adjusted
     {"strength",            itemColors[2], "",  0,  400,    0, 0, {2,2,0}, false, false, 1,  false, "This powerful medicine will course through your muscles, permanently increasing your strength by one point."}, // frequency is dynamically adjusted
@@ -978,6 +984,7 @@ void initializeGameGlobals_RapidBrogue() {
     blueprintCatalog = blueprintCatalog_RapidBrogue;
 
     mainMenuTitle = mainMenuTitle_RapidBrogue;
+    levelFeelings = levelFeelings_RapidBrogue;
 }
 
 #endif

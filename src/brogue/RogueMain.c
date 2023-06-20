@@ -769,9 +769,9 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     if (!levels[rogue.depthLevel-1].visited) {
         levels[rogue.depthLevel-1].visited = true;
         if (rogue.depthLevel == gameConst.amuletLevel) {
-            messageWithColor("An alien energy permeates the area. The Amulet of Yendor must be nearby!", &itemMessageColor, 0);
+            messageWithColor(levelFeelings[0].message, levelFeelings[0].color, 0);
         } else if (rogue.depthLevel == gameConst.deepestLevel) {
-            messageWithColor("An overwhelming sense of peace and tranquility settles upon you.", &lightBlue, 0);
+            messageWithColor(levelFeelings[1].message, levelFeelings[1].color, 0);
         }
     }
 
