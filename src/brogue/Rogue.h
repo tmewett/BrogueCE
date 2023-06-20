@@ -2344,7 +2344,7 @@ enum exitStatus {
 typedef struct gameConstants {
 
     unsigned int deepestLevel;              // deepest level in the dungeon
-    unsigned int amuletLevel;               // level on which the amulet appears
+    int amuletLevel;                        // level on which the amulet appears (used in signed arithmetic)
 
     unsigned int depthAccelerator;          // factor for how fast depth-dependent features scale compared to usual 26-level dungeon
     unsigned int minimumLavaLevel;          // how deep before lava can be generated
