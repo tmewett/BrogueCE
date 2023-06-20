@@ -172,9 +172,6 @@ void antiAlias(unsigned char mask[COLS][ROWS]) {
     }
 }
 
-#define MENU_TITLE_WIDTH    74
-#define MENU_TITLE_HEIGHT   19
-
 void initializeMenuFlames(boolean includeTitle,
                           const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)],
                           color colorStorage[COLS],
@@ -182,27 +179,6 @@ void initializeMenuFlames(boolean includeTitle,
                           signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3],
                           unsigned char mask[COLS][ROWS]) {
     short i, j, k, colorSourceCount;
-    const char title[MENU_TITLE_HEIGHT][MENU_TITLE_WIDTH+1] = {
-        "########   ########       ######         #######   ####     ###  #########",
-        " ##   ###   ##   ###    ##     ###     ##      ##   ##       #    ##     #",
-        " ##    ##   ##    ##   ##       ###   ##        #   ##       #    ##     #",
-        " ##    ##   ##    ##   #    #    ##   #         #   ##       #    ##      ",
-        " ##    ##   ##    ##  ##   ##     ## ##             ##       #    ##    # ",
-        " ##   ##    ##   ##   ##   ###    ## ##             ##       #    ##    # ",
-        " ######     ## ###    ##   ####   ## ##             ##       #    ####### ",
-        " ##    ##   ##  ##    ##   ####   ## ##             ##       #    ##    # ",
-        " ##     ##  ##   ##   ##    ###   ## ##      #####  ##       #    ##    # ",
-        " ##     ##  ##   ##   ###    ##   ## ###       ##   ##       #    ##      ",
-        " ##     ##  ##    ##   ##    #    #   ##       ##   ##       #    ##      ",
-        " ##     ##  ##    ##   ###       ##   ###      ##   ###      #    ##     #",
-        " ##    ##   ##     ##   ###     ##     ###    ###    ###    #     ##     #",
-        "########   ####    ###    ######         #####        ######     #########",
-        "                            ##                                            ",
-        "                        ##########                                        ",
-        "                            ##                                            ",
-        "                            ##                                            ",
-        "                           ####                                           ",
-    };
 
     for (i=0; i<COLS; i++) {
         for (j=0; j<ROWS; j++) {
@@ -238,12 +214,12 @@ void initializeMenuFlames(boolean includeTitle,
 
     if (includeTitle) {
         // Wreathe the title in flames, and mask it in black.
-        for (i=0; i<MENU_TITLE_WIDTH; i++) {
-            for (j=0; j<MENU_TITLE_HEIGHT; j++) {
-                if (title[j][i] != ' ') {
-                    colors[(COLS - MENU_TITLE_WIDTH)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - MENU_TITLE_HEIGHT)/2 + j + MENU_TITLE_OFFSET_Y] = &flameTitleColor;
+        for (i=0; i<gameConst.mainMenuTitleWidth; i++) {
+            for (j=0; j<gameConst.mainMenuTitleHeight; j++) {
+                if (mainMenuTitle[j * gameConst.mainMenuTitleWidth + i] != ' ') {
+                    colors[(COLS - gameConst.mainMenuTitleWidth)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - gameConst.mainMenuTitleHeight)/2 + j + MENU_TITLE_OFFSET_Y] = &flameTitleColor;
                     colorSourceCount++;
-                    mask[(COLS - MENU_TITLE_WIDTH)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - MENU_TITLE_HEIGHT)/2 + j + MENU_TITLE_OFFSET_Y] = 100;
+                    mask[(COLS - gameConst.mainMenuTitleWidth)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - gameConst.mainMenuTitleHeight)/2 + j + MENU_TITLE_OFFSET_Y] = 100;
                 }
             }
         }
@@ -661,6 +637,8 @@ void mainBrogueJunction() {
             plotCharWithColor(' ', (windowpos){ i, j }, &black, &black);
         }
     }
+
+    initializeGameSpecifics();
 
     initializeLaunchArguments(&rogue.nextGame, rogue.nextGamePath, &rogue.nextGameSeed);
 

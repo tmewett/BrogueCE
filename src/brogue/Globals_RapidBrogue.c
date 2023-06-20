@@ -886,6 +886,36 @@ itemTable wandTable_RapidBrogue[] = {
     {"empowerment",     itemMetals[8], "",  1,  100,    0, BOLT_EMPOWERMENT,   {1,1,1}, false, false, -1, false, "This sacred magic will permanently improve the mind and body of any monster it hits. A wise adventurer will use it on allies, making them stronger in combat and able to learn a new talent from a fallen foe. If the bolt is reflected back at you, it will have no effect."},
 };
 
+#define MENU_TITLE_WIDTH    74
+#define MENU_TITLE_HEIGHT   25
+
+const char *mainMenuTitle_RapidBrogue = 
+"########   ########       ######         #######   ####     ###  #########\
+ ##   ###   ##   ###    ##     ###     ##      ##   ##       #    ##     #\
+ ##    ##   ##    ##   ##       ###   ##        #   ##       #    ##     #\
+ ##    ##   ##    ##   #    #    ##   #         #   ##       #    ##      \
+ ##    ##   ##    ##  ##   ##     ## ##             ##       #    ##    # \
+ ##   ##    ##   ##   ##   ###    ## ##             ##       #    ##    # \
+ ######     ## ###    ##   ####   ## ##             ##       #    ####### \
+ ##    ##   ##  ##    ##   ####   ## ##             ##       #    ##    # \
+ ##     ##  ##   ##   ##    ###   ## ##      #####  ##       #    ##    # \
+ ##     ##  ##   ##   ###    ##   ## ###       ##   ##       #    ##      \
+ ##     ##  ##    ##   ##    #    #   ##       ##   ##       #    ##      \
+ ##     ##  ##    ##   ###       ##   ###      ##   ###      #    ##     #\
+ ##    ##   ##     ##   ###     ##     ###    ###    ###    #     ##     #\
+########   ####    ###    ######         #####        ######     #########\
+                            ##                                            \
+                        ##########                                        \
+                            ##                                            \
+                            ##                                            \
+                           ####                                           \
+                                                                          \
+                           ######   #####  ######  ## ######              \
+                           ##   ## ##   ## ##   ## ## ##   ##             \
+                           ######  ####### ######  ## ##   ##             \
+                           ##   ## ##   ## ##      ## ##   ##             \
+                           ##   ## ##   ## ##      ## ######              ";
+
 void initializeGameConst_RapidBrogue() {
     
     gameConst.deepestLevel = DEEPEST_LEVEL;
@@ -927,6 +957,9 @@ void initializeGameConst_RapidBrogue() {
     gameConst.numberGoodWandKinds = 6;
 
     gameConst.numberHordes = sizeof(hordeCatalog_RapidBrogue) / sizeof(hordeType);
+
+    gameConst.mainMenuTitleHeight = MENU_TITLE_HEIGHT;
+    gameConst.mainMenuTitleWidth = MENU_TITLE_WIDTH;
 }
 
 void initializeGameGlobals_RapidBrogue() {
@@ -943,6 +976,8 @@ void initializeGameGlobals_RapidBrogue() {
     boltCatalog = boltCatalog_RapidBrogue;
     hordeCatalog = hordeCatalog_RapidBrogue;
     blueprintCatalog = blueprintCatalog_RapidBrogue;
+
+    mainMenuTitle = mainMenuTitle_RapidBrogue;
 }
 
 #endif

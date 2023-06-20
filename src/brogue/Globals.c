@@ -37,6 +37,7 @@ const hordeType *hordeCatalog;
 const blueprint *blueprintCatalog;
 const short *itemGenerationProbabilities;
 const meteredItemGenerationTable *meteredItemsGenerationTable;
+const char *mainMenuTitle;
 
 // bolt colors
 const color descentBoltColor =      {-40,   -40,    -40,    0,      0,          80,         80,     true};

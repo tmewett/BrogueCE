@@ -170,8 +170,6 @@ void initializeRogue(uint64_t seed) {
     short oldRNG;
     char currentGamePath[BROGUE_FILENAME_MAX];
 
-    initializeGameSpecifics();
-
     playingback = rogue.playbackMode; // the only animals that need to go on the ark
     playbackPaused = rogue.playbackPaused;
     playbackFF = rogue.playbackFastForward;
