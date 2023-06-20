@@ -630,6 +630,12 @@ const meteredItemGenerationTable meteredItemsGenerationTable_Brogue[] = {
     { .category = POTION, .kind = POTION_LICHEN }
 };
 
+// levelFeelings[0] -> AMULET_LEVEL, levelFeelings[1] -> DEEPEST_LEVEL
+levelFeeling levelFeelings_Brogue[] = {
+    { .message = "An alien energy permeates the area. The Amulet of Yendor must be nearby!", .color = &itemMessageColor },
+    { .message = "An overwhelming sense of peace and tranquility settles upon you.", .color = &lightBlue }
+};
+
 itemTable potionTable_Brogue[] = {
     {"life",                itemColors[1], "",  0,  500,    0, 0, {10,10,0}, false, false, 1,  false, "A swirling elixir that will instantly heal you, cure you of ailments, and permanently increase your maximum health."}, // frequency is dynamically adjusted
     {"strength",            itemColors[2], "",  0,  400,    0, 0, {1,1,0}, false, false, 1,  false, "This powerful medicine will course through your muscles, permanently increasing your strength by one point."}, // frequency is dynamically adjusted
@@ -971,4 +977,5 @@ void initializeGameGlobals_Brogue() {
     blueprintCatalog = blueprintCatalog_Brogue;
 
     mainMenuTitle = mainMenuTitle_Brogue;
+    levelFeelings = levelFeelings_Brogue;
 }

@@ -1462,6 +1462,11 @@ typedef struct meteredItemGenerationTable {
     int levelScaling;
 } meteredItemGenerationTable;
 
+typedef struct levelFeeling {
+    const char *message;
+    const color *color;
+} levelFeeling;
+
 enum dungeonFeatureTypes {
     DF_GRANITE_COLUMN = 1,
     DF_CRYSTAL_WALL,
