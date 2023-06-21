@@ -958,8 +958,7 @@ enum charmKind {
     CHARM_GUARDIAN,
     CHARM_TELEPORTATION,
     CHARM_RECHARGING,
-    CHARM_NEGATION,
-    NUMBER_CHARM_KINDS
+    CHARM_NEGATION
 };
 
 enum scrollKind {
@@ -1450,6 +1449,16 @@ typedef struct itemTable {
     boolean magicPolarityRevealed;
     char description[1500];
 } itemTable;
+
+typedef struct charmEffectTableEntry {
+    const short kind;
+    const int effectDurationBase;
+    const fixpt *effectDurationIncrement;
+    const int rechargeDelayDuration;
+    const int rechargeDelayBase;
+    const int effectMagnitudeConstant;
+    const int effectMagnitudeMultiplier;
+} charmEffectTableEntry;
 
 typedef struct meteredItemGenerationTable {
     unsigned short category;
@@ -2377,6 +2386,7 @@ typedef struct gameConstants {
     int numberHordes;              // size of the horde table
     
     int numberMeteredItems;        // size of the metered items table
+    int numberCharmKinds;          // size of the charms table
     int numberPotionKinds;         // size of the potion table
     int numberGoodPotionKinds;     // number of good potions in the game (ordered first in the table)
     int numberScrollKinds;         // size of the scroll table

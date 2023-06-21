@@ -496,11 +496,6 @@ void initializeRogue(uint64_t seed) {
         identify(theItem);
         theItem = addItemToPack(theItem);
 
-//      short i;
-//      for (i=0; i < NUMBER_CHARM_KINDS && i < 4; i++) {
-//          theItem = generateItem(CHARM, i);
-//          theItem = addItemToPack(theItem);
-//      }
     }
     clearMessageArchive();
     blackOutScreen();
