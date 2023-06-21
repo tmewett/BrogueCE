@@ -213,7 +213,7 @@ short charmRechargeDelay(short charmKind, short enchant) {
     enchant = clamp(enchant, 1, 50);
     short delay = charmEffectDuration(charmKind, enchant)
         + (charmEffectTable[charmKind].rechargeDelayDuration * fp_pow(charmEffectTable[charmKind].rechargeDelayBase, enchant) / FP_FACTOR);
-    return max(1, delay);
+    return max(charmEffectTable[charmKind].rechargeDelayMinTurns, delay);
 }
 
 short runicWeaponChance(item *theItem, boolean customEnchantLevel, fixpt enchantLevel) {
