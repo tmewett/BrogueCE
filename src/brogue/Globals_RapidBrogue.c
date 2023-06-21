@@ -892,6 +892,40 @@ itemTable wandTable_RapidBrogue[] = {
     {"empowerment",     itemMetals[8], "",  1,  100,    0, BOLT_EMPOWERMENT,   {1,1,1}, false, false, -1, false, "This sacred magic will permanently improve the mind and body of any monster it hits. A wise adventurer will use it on allies, making them stronger in combat and able to learn a new talent from a fallen foe. If the bolt is reflected back at you, it will have no effect."},
 };
 
+itemTable charmTable_RapidBrogue[] = {
+    {"health",          "", "", 5,  900,    0, 0, {1,2,1}, true, false, 1, false, "A handful of dried bloodwort and mandrake root has been bound together with leather cord and imbued with a powerful healing magic."},
+    {"protection",      "", "", 5,  800,    0, 0, {1,2,1}, true, false, 1, false, "Four copper rings have been joined into a tetrahedron. The construct is oddly warm to the touch."},
+    {"haste",           "", "", 5,  750,    0, 0, {1,2,1}, true, false, 1, false, "Various animals have been etched into the surface of this brass bangle. It emits a barely audible hum."},
+    {"fire immunity",   "", "", 3,  750,    0, 0, {1,2,1}, true, false, 1, false, "Eldritch flames flicker within this polished crystal bauble."},
+    {"invisibility",    "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "A jade figurine depicts a strange humanoid creature. It has a face on both sides of its head, but all four eyes are closed."},
+    {"telepathy",       "", "", 3,  700,    0, 0, {1,2,1}, true, false, 1, false, "Seven tiny glass eyes roll freely within this glass sphere. Somehow, they always come to rest facing outward."},
+    {"levitation",      "", "", 1,  700,    0, 0, {1,2,1}, true, false, 1, false, "Sparkling dust and fragments of feather waft and swirl endlessly inside this small glass sphere."},
+    {"shattering",      "", "", 1,  700,    0, 0, {1,2,1}, true, false, 1, false, "This turquoise crystal, fixed to a leather lanyard, hums with an arcane energy that sets your teeth on edge."},
+    {"guardian",        "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "When you touch this tiny granite statue, a rhythmic booming echoes in your mind."},
+//    {"fear",            "", "",   3,  700,    0,{1,2,1}, true, false, "When you gaze into the murky interior of this obsidian cube, you feel as though something predatory is watching you."},
+    {"teleportation",   "", "", 4,  700,    0, 0, {1,2,1}, true, false, 1, false, "The surface of this nickel sphere has been etched with a perfect grid pattern. Somehow, the squares of the grid are all exactly the same size."},
+    {"recharging",      "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "A strip of bronze has been wound around a rough wooden sphere. Each time you touch it, you feel a tiny electric shock."},
+    {"negation",        "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "A featureless gray disc hangs from a lanyard. When you touch it, your hand and arm go numb."},
+};
+
+// To meter item generation (on level generation):
+// .incrementFrequency must be != 0 for frequency biasing
+// .levelScaling != 0 for thresholding
+const charmEffectTableEntry charmEffectTable_RapidBrogue[] = {
+    { .kind = CHARM_HEALTH, .effectDurationBase = 3, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 2500, .rechargeDelayBase = FP_FACTOR * 55 / 100 },
+    { .kind = CHARM_PROTECTION, .effectDurationBase = 20, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 1000, .rechargeDelayBase = FP_FACTOR * 60 / 100 },
+    { .kind = CHARM_HASTE, .effectDurationBase = 7, .effectDurationIncrement = POW_120_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100 },
+    { .kind = CHARM_FIRE_IMMUNITY, .effectDurationBase = 10, .effectDurationIncrement = POW_125_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 60 / 100 },
+    { .kind = CHARM_INVISIBILITY, .effectDurationBase = 5, .effectDurationIncrement = POW_120_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100 },
+    { .kind = CHARM_TELEPATHY, .effectDurationBase = 25, .effectDurationIncrement = POW_125_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100 },
+    { .kind = CHARM_LEVITATION, .effectDurationBase = 10, .effectDurationIncrement = POW_125_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100 },
+    { .kind = CHARM_SHATTERING, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 2500, .rechargeDelayBase = FP_FACTOR * 60 / 100 },
+    { .kind = CHARM_GUARDIAN, .effectDurationBase = 18, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 700, .rechargeDelayBase = FP_FACTOR * 70 / 100 },
+    { .kind = CHARM_TELEPORTATION, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 920, .rechargeDelayBase = FP_FACTOR * 60 / 100 },
+    { .kind = CHARM_RECHARGING, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 10000, .rechargeDelayBase = FP_FACTOR * 55 / 100 },
+    { .kind = CHARM_NEGATION, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 2500, .rechargeDelayBase = FP_FACTOR * 60 / 100 }
+};
+
 #define MENU_TITLE_WIDTH    74
 #define MENU_TITLE_HEIGHT   25
 
@@ -961,6 +995,7 @@ void initializeGameConst_RapidBrogue() {
     gameConst.numberGoodScrollKinds = 12;
     gameConst.numberWandKinds = sizeof(wandTable_RapidBrogue) / sizeof(itemTable);
     gameConst.numberGoodWandKinds = 6;
+    gameConst.numberCharmKinds = sizeof(charmTable_RapidBrogue) / sizeof(itemTable);
     gameConst.numberMeteredItems = sizeof(meteredItemsGenerationTable_RapidBrogue) / sizeof(meteredItemGenerationTable);
 
     gameConst.numberHordes = sizeof(hordeCatalog_RapidBrogue) / sizeof(hordeType);
@@ -979,6 +1014,9 @@ void initializeGameGlobals_RapidBrogue() {
     potionTable = potionTable_RapidBrogue;
     scrollTable = scrollTable_RapidBrogue;
     wandTable = wandTable_RapidBrogue;
+    charmTable = charmTable_RapidBrogue;
+
+    charmEffectTable = charmEffectTable_RapidBrogue;
     
     boltCatalog = boltCatalog_RapidBrogue;
     hordeCatalog = hordeCatalog_RapidBrogue;

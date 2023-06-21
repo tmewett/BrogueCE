@@ -302,7 +302,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             break;
         case CHARM:
             if (itemKind < 0) {
-                itemKind = chooseKind(charmTable, NUMBER_CHARM_KINDS);
+                itemKind = chooseKind(charmTable, gameConst.numberCharmKinds);
             }
             theItem->displayChar = G_CHARM;
             theItem->charges = 0; // Charms are initially ready for use.
@@ -5660,8 +5660,8 @@ int itemKindCount(enum itemCategory category, int polarityConstraint) {
             goodKinds = NUMBER_RING_KINDS;
             break;
         case CHARM:
-            totalKinds = NUMBER_CHARM_KINDS;
-            goodKinds = NUMBER_CHARM_KINDS;
+            totalKinds = gameConst.numberCharmKinds;
+            goodKinds = gameConst.numberCharmKinds;
             break;
         default:
             totalKinds = 0;

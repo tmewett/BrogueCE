@@ -123,7 +123,9 @@ extern itemTable *scrollTable;
 extern itemTable *wandTable;
 extern itemTable staffTable[NUMBER_STAFF_KINDS];
 extern itemTable ringTable[NUMBER_RING_KINDS];
-extern itemTable charmTable[NUMBER_CHARM_KINDS];
+extern itemTable *charmTable;
+extern const charmEffectTableEntry *charmEffectTable;
+
 extern const meteredItemGenerationTable *meteredItemsGenerationTable;
 
 extern const bolt *boltCatalog;
@@ -134,3 +136,8 @@ extern const char armorRunicNames[NUMBER_ARMOR_ENCHANT_KINDS][30];
 
 extern const char *mainMenuTitle;
 extern const levelFeeling *levelFeelings;
+
+#define CHARM_EFFECT_DURATION_INCREMENT_ARRAY_SIZE 50
+extern const fixpt POW_0_CHARM_INCREMENT[];
+extern const fixpt POW_120_CHARM_INCREMENT[];
+extern const fixpt POW_125_CHARM_INCREMENT[];

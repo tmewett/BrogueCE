@@ -33,6 +33,8 @@ const bolt *boltCatalog;
 itemTable *potionTable;
 itemTable *scrollTable;
 itemTable *wandTable;
+itemTable *charmTable;
+const charmEffectTableEntry *charmEffectTable;
 const levelFeeling *levelFeelings;
 const hordeType *hordeCatalog;
 const blueprint *blueprintCatalog;
@@ -1644,23 +1646,6 @@ itemTable ringTable[NUMBER_RING_KINDS] = {
     {"reaping",         itemGems[7], "",    1,  700,    0, 0, {1,3,1}, false, false, 1, false, "This ring of blood magic will recharge your staffs and charms every time you hit an enemy. Cursed rings of reaping will drain your staffs and charms with every hit."},
 };
 
-itemTable charmTable[NUMBER_CHARM_KINDS] = {
-    {"health",          "", "", 5,  900,    0, 0, {1,2,1}, true, false, 1, false, "A handful of dried bloodwort and mandrake root has been bound together with leather cord and imbued with a powerful healing magic."},
-    {"protection",      "", "", 5,  800,    0, 0, {1,2,1}, true, false, 1, false, "Four copper rings have been joined into a tetrahedron. The construct is oddly warm to the touch."},
-    {"haste",           "", "", 5,  750,    0, 0, {1,2,1}, true, false, 1, false, "Various animals have been etched into the surface of this brass bangle. It emits a barely audible hum."},
-    {"fire immunity",   "", "", 3,  750,    0, 0, {1,2,1}, true, false, 1, false, "Eldritch flames flicker within this polished crystal bauble."},
-    {"invisibility",    "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "A jade figurine depicts a strange humanoid creature. It has a face on both sides of its head, but all four eyes are closed."},
-    {"telepathy",       "", "", 3,  700,    0, 0, {1,2,1}, true, false, 1, false, "Seven tiny glass eyes roll freely within this glass sphere. Somehow, they always come to rest facing outward."},
-    {"levitation",      "", "", 1,  700,    0, 0, {1,2,1}, true, false, 1, false, "Sparkling dust and fragments of feather waft and swirl endlessly inside this small glass sphere."},
-    {"shattering",      "", "", 1,  700,    0, 0, {1,2,1}, true, false, 1, false, "This turquoise crystal, fixed to a leather lanyard, hums with an arcane energy that sets your teeth on edge."},
-    {"guardian",        "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "When you touch this tiny granite statue, a rhythmic booming echoes in your mind."},
-//    {"fear",            "", "",   3,  700,    0,{1,2,1}, true, false, "When you gaze into the murky interior of this obsidian cube, you feel as though something predatory is watching you."},
-    {"teleportation",   "", "", 4,  700,    0, 0, {1,2,1}, true, false, 1, false, "The surface of this nickel sphere has been etched with a perfect grid pattern. Somehow, the squares of the grid are all exactly the same size."},
-    {"recharging",      "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "A strip of bronze has been wound around a rough wooden sphere. Each time you touch it, you feel a tiny electric shock."},
-    {"negation",        "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "A featureless gray disc hangs from a lanyard. When you touch it, your hand and arm go numb."},
-};
-
-
 const feat featTable[FEAT_COUNT] = {
     {"Pure Mage",       "Ascend without using fists or a weapon.", true},
     {"Pure Warrior",    "Ascend without using a staff, wand or charm.", true},
@@ -1748,3 +1733,18 @@ const char monsterBookkeepingFlagDescriptions[32][COLS] = {
     "is anchored to reality by $HISHER summoner",// MB_BOUND_TO_LEADER
     "is marked for demonic sacrifice",          // MB_MARKED_FOR_SACRIFICE
 };
+
+const fixpt POW_0_CHARM_INCREMENT[] = { // 1.0
+    65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536,
+    65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536,
+    65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536};
+const fixpt POW_120_CHARM_INCREMENT[] = { // 1.20^x fixed point, with x from 1 to 50 in increments of 1:
+    78643, 94371, 113246, 135895, 163074, 195689, 234827, 281792, 338151, 405781, 486937, 584325, 701190, 841428, 1009714, 1211657,
+    1453988, 1744786, 2093744, 2512492, 3014991, 3617989, 4341587, 5209905, 6251886, 7502263, 9002716, 10803259, 12963911, 15556694,
+    18668032, 22401639, 26881967, 32258360, 38710033, 46452039, 55742447, 66890937, 80269124, 96322949, 115587539, 138705047, 166446056,
+    199735268, 239682321, 287618785, 345142543, 414171051, 497005262, 596406314, 715687577};
+const fixpt POW_125_CHARM_INCREMENT[] = { // 1.25^x fixed point, with x from 1 to 50 in increments of 1:
+    81920, 102400, 128000, 160000, 200000, 250000, 312500, 390625, 488281, 610351, 762939, 953674, 1192092, 1490116, 1862645, 2328306,
+    2910383, 3637978, 4547473, 5684341, 7105427, 8881784, 11102230, 13877787, 17347234, 21684043, 27105054, 33881317, 42351647, 52939559,
+    66174449, 82718061, 103397576, 129246970, 161558713, 201948391, 252435489, 315544362, 394430452, 493038065, 616297582, 770371977,
+    962964972, 1203706215, 1504632769, 1880790961, 2350988701, 2938735877, 3673419846, 4591774807, 5739718509};
