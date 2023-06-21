@@ -824,7 +824,7 @@ const meteredItemGenerationTable meteredItemsGenerationTable_RapidBrogue[] = {
     { .category = POTION, .kind = POTION_STRENGTH, .initialFrequency = 40, .incrementFrequency = 17, .decrementFrequency = 50, .genMultiplier = 4, .genIncrement = 3, .levelScaling = 4 },
     { .category = POTION, .kind = POTION_TELEPATHY },
     { .category = POTION, .kind = POTION_LEVITATION },
-    { .category = POTION, .kind = POTION_DETECT_MAGIC, .genMultiplier = 1, .genIncrement = 0, .levelScaling = 1 }, //this is not quite the same logic as in RB, may generate too many detect magics post-l2
+    { .category = POTION, .kind = POTION_DETECT_MAGIC, .levelGuarantee = 2, .itemNumberGuarantee = 1 },
     { .category = POTION, .kind = POTION_HASTE_SELF },
     { .category = POTION, .kind = POTION_FIRE_IMMUNITY },
     { .category = POTION, .kind = POTION_INVISIBILITY },
