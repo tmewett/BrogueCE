@@ -1470,6 +1470,8 @@ typedef struct meteredItemGenerationTable {
     int genMultiplier;
     int genIncrement;
     int levelScaling;
+    int levelGuarantee;
+    int itemNumberGuarantee;
 } meteredItemGenerationTable;
 
 typedef struct levelFeeling {

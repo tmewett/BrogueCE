@@ -648,8 +648,8 @@ void populateItems(short upstairsX, short upstairsY) {
         } else if (rogue.depthLevel > gameConst.amuletLevel) {
             theCategory = GEM;
         } else {
-            // Guarantee any metered items that reach generation thresholds.
             for (j = 0; j < gameConst.numberMeteredItems; j++) {
+                // Create any metered items that reach generation thresholds
                 if (meteredItemsGenerationTable[j].levelScaling != 0 &&
                     rogue.meteredItems[j].numberSpawned * meteredItemsGenerationTable[j].genMultiplier + meteredItemsGenerationTable[j].genIncrement <
                     rogue.depthLevel * meteredItemsGenerationTable[j].levelScaling + randomDepthOffset) {
@@ -657,6 +657,13 @@ void populateItems(short upstairsX, short upstairsY) {
                         theKind = meteredItemsGenerationTable[j].kind;
                         break;
                 }
+                // Create any metered items that reach hard by-level guarantees
+                if (rogue.depthLevel == meteredItemsGenerationTable[j].levelGuarantee &&
+                    rogue.meteredItems[j].numberSpawned < meteredItemsGenerationTable[j].itemNumberGuarantee) {
+                        theCategory = meteredItemsGenerationTable[j].category;
+                        theKind = meteredItemsGenerationTable[j].kind;
+                        break;
+                    }
             }
         }
 
