@@ -519,8 +519,8 @@ void populateItems(short upstairsX, short upstairsY) {
     potionTableCopy = calloc(gameConst.numberPotionKinds, sizeof(itemTable));
     scrollTableCopy = calloc(gameConst.numberScrollKinds, sizeof(itemTable));
 
-    memcpy(potionTableCopy, &potionTable, sizeof(potionTable));
-    memcpy(scrollTableCopy, &scrollTable, sizeof(scrollTable));
+    memcpy(potionTableCopy, potionTable, gameConst.numberPotionKinds * sizeof(itemTable));
+    memcpy(scrollTableCopy, scrollTable, gameConst.numberScrollKinds * sizeof(itemTable));
 
     if (rogue.depthLevel > gameConst.amuletLevel) {
         numberOfItems = lumenstoneDistribution[rogue.depthLevel - gameConst.amuletLevel - 1];
@@ -735,8 +735,8 @@ void populateItems(short upstairsX, short upstairsY) {
     // Restore potion and scroll tables which sets the frequency of these items
     // to zero.
 
-    memcpy(&potionTable, potionTableCopy, sizeof(potionTableCopy));
-    memcpy(&scrollTable, scrollTableCopy, sizeof(scrollTableCopy));
+    memcpy(potionTable, potionTableCopy, gameConst.numberPotionKinds * sizeof(itemTable));
+    memcpy(scrollTable, scrollTableCopy, gameConst.numberScrollKinds * sizeof(itemTable));
 
     free(potionTableCopy);
     free(scrollTableCopy);
