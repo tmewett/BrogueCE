@@ -961,6 +961,7 @@ void initializeGameConst_RapidBrogue() {
     gameConst.numberGoodScrollKinds = 12;
     gameConst.numberWandKinds = sizeof(wandTable_RapidBrogue) / sizeof(itemTable);
     gameConst.numberGoodWandKinds = 6;
+    gameConst.numberMeteredItems = sizeof(meteredItemsGenerationTable_RapidBrogue) / sizeof(meteredItem);
 
     gameConst.numberHordes = sizeof(hordeCatalog_RapidBrogue) / sizeof(hordeType);
 
