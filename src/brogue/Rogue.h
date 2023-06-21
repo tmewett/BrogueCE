@@ -2343,49 +2343,49 @@ enum exitStatus {
 // Constants for the current game, initialized after the choice of mod
 typedef struct gameConstants {
 
-    unsigned int deepestLevel;              // deepest level in the dungeon
+    int deepestLevel;              // deepest level in the dungeon
     int amuletLevel;                        // level on which the amulet appears (used in signed arithmetic)
 
-    unsigned int depthAccelerator;          // factor for how fast depth-dependent features scale compared to usual 26-level dungeon
-    unsigned int minimumLavaLevel;          // how deep before lava can be generated
-    unsigned int minimumBrimstoneLevel;     // how deep before brimstone can be generated
-    unsigned int minimumMutationsLevel;     // how deep before monster mutations can be generated
+    int depthAccelerator;          // factor for how fast depth-dependent features scale compared to usual 26-level dungeon
+    int minimumLavaLevel;          // how deep before lava can be generated
+    int minimumBrimstoneLevel;     // how deep before brimstone can be generated
+    int minimumMutationsLevel;     // how deep before monster mutations can be generated
 
-    unsigned int extraItemsPerLevel;        // how many extra items generated per level above vanilla
-    unsigned int goldAdjustmentStartDepth;  // depth from which gold is adjusted based on generation so far
+    int extraItemsPerLevel;        // how many extra items generated per level above vanilla
+    int goldAdjustmentStartDepth;  // depth from which gold is adjusted based on generation so far
 
-    unsigned int machinesPerLevelSuppressionMultiplier; // scale factor for limiting number of machines generated so far against depth
-    unsigned int machinesPerLevelSuppressionOffset;     // offset for limiting number of machines generated so far against depth
-    unsigned int machinesPerLevelIncreaseFactor;        // scale factor for increasing number of machines generated so far against depth
-    unsigned int maxLevelForBonusMachines;              // deepest level that gets bonus machine generation chance
+    int machinesPerLevelSuppressionMultiplier; // scale factor for limiting number of machines generated so far against depth
+    int machinesPerLevelSuppressionOffset;     // offset for limiting number of machines generated so far against depth
+    int machinesPerLevelIncreaseFactor;        // scale factor for increasing number of machines generated so far against depth
+    int maxLevelForBonusMachines;              // deepest level that gets bonus machine generation chance
 
-    unsigned int playerTransferenceRatio;   // player transference heal is (enchant / gameConst.playerTransferenceRatio)
-    unsigned int onHitHallucinateDuration;  // duration of on-hit hallucination effect on player
-    unsigned int onHitWeakenDuration;       // duration of on-hit weaken effect
-    unsigned int onHitMercyHealPercent;     // percentage of damage healed on-hit by mercy weapon effect
+    int playerTransferenceRatio;   // player transference heal is (enchant / gameConst.playerTransferenceRatio)
+    int onHitHallucinateDuration;  // duration of on-hit hallucination effect on player
+    int onHitWeakenDuration;       // duration of on-hit weaken effect
+    int onHitMercyHealPercent;     // percentage of damage healed on-hit by mercy weapon effect
 
-    unsigned int fallDamageMin;             // minimum for fall damage range
-    unsigned int fallDamageMax;             // maximum for fall damage range
+    int fallDamageMin;             // minimum for fall damage range
+    int fallDamageMax;             // maximum for fall damage range
 
-    unsigned int weaponKillsToAutoID;       // number of kills until unknown weapon is IDed
-    unsigned int armorDelayToAutoID;        // number of turns until unknown armor is IDed
-    unsigned int ringDelayToAutoID;         // number of turns until unknown ring is IDed
+    int weaponKillsToAutoID;       // number of kills until unknown weapon is IDed
+    int armorDelayToAutoID;        // number of turns until unknown armor is IDed
+    int ringDelayToAutoID;         // number of turns until unknown ring is IDed
 
-    unsigned int numberAutogenerators;      // size of autoGeneratorCatalog table
-    unsigned int numberBoltKinds;           // size of boltKinds table
-    unsigned int numberBlueprints;          // size of blueprintCatalog table
-    unsigned int numberHordes;              // size of the horde table
+    int numberAutogenerators;      // size of autoGeneratorCatalog table
+    int numberBoltKinds;           // size of boltKinds table
+    int numberBlueprints;          // size of blueprintCatalog table
+    int numberHordes;              // size of the horde table
     
-    unsigned int numberMeteredItems;        // size of the metered items table
-    unsigned int numberPotionKinds;         // size of the potion table
-    unsigned int numberGoodPotionKinds;     // number of good potions in the game (ordered first in the table)
-    unsigned int numberScrollKinds;         // size of the scroll table
-    unsigned int numberGoodScrollKinds;     // number of good scrolls in the game (ordered first in the table)
-    unsigned int numberWandKinds;           // size of the wands table
-    unsigned int numberGoodWandKinds;       // number of good wands in the game (ordered first in the table)
+    int numberMeteredItems;        // size of the metered items table
+    int numberPotionKinds;         // size of the potion table
+    int numberGoodPotionKinds;     // number of good potions in the game (ordered first in the table)
+    int numberScrollKinds;         // size of the scroll table
+    int numberGoodScrollKinds;     // number of good scrolls in the game (ordered first in the table)
+    int numberWandKinds;           // size of the wands table
+    int numberGoodWandKinds;       // number of good wands in the game (ordered first in the table)
 
-    unsigned int mainMenuTitleHeight;           // height of the title screen in characters
-    unsigned int mainMenuTitleWidth;            // width of the title screen in characters
+    int mainMenuTitleHeight;           // height of the title screen in characters
+    int mainMenuTitleWidth;            // width of the title screen in characters
 } gameConstants;
 
 // these are basically global variables pertaining to the game state and player's unique variables:
