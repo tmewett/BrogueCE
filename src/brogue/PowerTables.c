@@ -79,10 +79,10 @@ fixpt ringWisdomMultiplier(fixpt enchant) {
     return POW_WISDOM[idx];
 }
 
-short charmHealing(fixpt enchant)              {return ((int) clamp(20 * (enchant) / FP_FACTOR, 0, 100));}
-short charmShattering(fixpt enchant)           {return ((int) (4 + (enchant / FP_FACTOR)));}
-short charmGuardianLifespan(fixpt enchant)     {return ((int) (4 + 2 * (enchant / FP_FACTOR)));}
-short charmNegationRadius(fixpt enchant)       {return ((int) (1 + 3 * (enchant / FP_FACTOR)));}
+short charmHealing(fixpt enchant)              {return ((int) clamp(charmEffectTable[CHARM_HEALTH].effectMagnitudeMultiplier * (enchant) / FP_FACTOR, 0, 100));}
+short charmShattering(fixpt enchant)           {return ((int) (charmEffectTable[CHARM_SHATTERING].effectMagnitudeConstant + (enchant / FP_FACTOR)));}
+short charmGuardianLifespan(fixpt enchant)     {return ((int) (charmEffectTable[CHARM_GUARDIAN].effectMagnitudeConstant + charmEffectTable[CHARM_GUARDIAN].effectMagnitudeMultiplier * (enchant / FP_FACTOR)));}
+short charmNegationRadius(fixpt enchant)       {return ((int) (charmEffectTable[CHARM_NEGATION].effectMagnitudeConstant + charmEffectTable[CHARM_NEGATION].effectMagnitudeMultiplier * (enchant / FP_FACTOR)));}
 int charmProtection(fixpt enchant) {
     const fixpt POW_CHARM_PROTECTION[] = {
         // 1.35^x fixed point, with x from 0 to 50 in increments of 1:
@@ -92,7 +92,7 @@ int charmProtection(fixpt enchant) {
         48028554155, 64838548109, 87532039948, 118168253930, 159527142806, 215361642788};
 
     short idx = clamp(enchant / FP_FACTOR - 1, 0, LAST_INDEX(POW_CHARM_PROTECTION));
-    return 150 * POW_CHARM_PROTECTION[idx] / FP_FACTOR;
+    return charmEffectTable[CHARM_PROTECTION].effectMagnitudeMultiplier * POW_CHARM_PROTECTION[idx] / FP_FACTOR;
 }
 
 short weaponParalysisDuration(fixpt enchant)   {return (max(2, (int) (2 + ((enchant) / 2 / FP_FACTOR))));}
