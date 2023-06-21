@@ -700,22 +700,19 @@ itemTable charmTable_Brogue[] = {
     {"negation",        "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "A featureless gray disc hangs from a lanyard. When you touch it, your hand and arm go numb."},
 };
 
-// To meter item generation (on level generation):
-// .incrementFrequency must be != 0 for frequency biasing
-// .levelScaling != 0 for thresholding
 const charmEffectTableEntry charmEffectTable_Brogue[] = {
-    { .kind = CHARM_HEALTH, .effectDurationBase = 3, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 2500, .rechargeDelayBase = FP_FACTOR * 55 / 100, .effectMagnitudeMultiplier = 20 },
-    { .kind = CHARM_PROTECTION, .effectDurationBase = 20, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 1000, .rechargeDelayBase = FP_FACTOR * 60 / 100, .effectMagnitudeMultiplier = 150 },
-    { .kind = CHARM_HASTE, .effectDurationBase = 7, .effectDurationIncrement = POW_120_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100 },
-    { .kind = CHARM_FIRE_IMMUNITY, .effectDurationBase = 10, .effectDurationIncrement = POW_125_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 60 / 100 },
-    { .kind = CHARM_INVISIBILITY, .effectDurationBase = 5, .effectDurationIncrement = POW_120_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100 },
-    { .kind = CHARM_TELEPATHY, .effectDurationBase = 25, .effectDurationIncrement = POW_125_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100 },
-    { .kind = CHARM_LEVITATION, .effectDurationBase = 10, .effectDurationIncrement = POW_125_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100 },
-    { .kind = CHARM_SHATTERING, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 2500, .rechargeDelayBase = FP_FACTOR * 60 / 100, .effectMagnitudeConstant = 4 },
-    { .kind = CHARM_GUARDIAN, .effectDurationBase = 18, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 700, .rechargeDelayBase = FP_FACTOR * 70 / 100, .effectMagnitudeConstant = 4, .effectMagnitudeMultiplier = 2 },
-    { .kind = CHARM_TELEPORTATION, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 920, .rechargeDelayBase = FP_FACTOR * 60 / 100 },
-    { .kind = CHARM_RECHARGING, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 10000, .rechargeDelayBase = FP_FACTOR * 55 / 100 },
-    { .kind = CHARM_NEGATION, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 2500, .rechargeDelayBase = FP_FACTOR * 60 / 100, .effectMagnitudeConstant = 1, .effectMagnitudeMultiplier = 3 }
+    { .kind = CHARM_HEALTH, .effectDurationBase = 3, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 2500, .rechargeDelayBase = FP_FACTOR * 55 / 100, .rechargeDelayMinTurns = 1, .effectMagnitudeMultiplier = 20 },
+    { .kind = CHARM_PROTECTION, .effectDurationBase = 20, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 1000, .rechargeDelayBase = FP_FACTOR * 60 / 100, .rechargeDelayMinTurns = 1, .effectMagnitudeMultiplier = 150 },
+    { .kind = CHARM_HASTE, .effectDurationBase = 7, .effectDurationIncrement = POW_120_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100, .rechargeDelayMinTurns = 1 },
+    { .kind = CHARM_FIRE_IMMUNITY, .effectDurationBase = 10, .effectDurationIncrement = POW_125_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 60 / 100, .rechargeDelayMinTurns = 1 },
+    { .kind = CHARM_INVISIBILITY, .effectDurationBase = 5, .effectDurationIncrement = POW_120_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100, .rechargeDelayMinTurns = 1 },
+    { .kind = CHARM_TELEPATHY, .effectDurationBase = 25, .effectDurationIncrement = POW_125_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100, .rechargeDelayMinTurns = 1 },
+    { .kind = CHARM_LEVITATION, .effectDurationBase = 10, .effectDurationIncrement = POW_125_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100, .rechargeDelayMinTurns = 1 },
+    { .kind = CHARM_SHATTERING, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 2500, .rechargeDelayBase = FP_FACTOR * 60 / 100, .rechargeDelayMinTurns = 1, .effectMagnitudeConstant = 4 },
+    { .kind = CHARM_GUARDIAN, .effectDurationBase = 18, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 700, .rechargeDelayBase = FP_FACTOR * 70 / 100, .rechargeDelayMinTurns = 1, .effectMagnitudeConstant = 4, .effectMagnitudeMultiplier = 2 },
+    { .kind = CHARM_TELEPORTATION, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 920, .rechargeDelayBase = FP_FACTOR * 60 / 100, .rechargeDelayMinTurns = 1 },
+    { .kind = CHARM_RECHARGING, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 10000, .rechargeDelayBase = FP_FACTOR * 55 / 100, .rechargeDelayMinTurns = 1 },
+    { .kind = CHARM_NEGATION, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 2500, .rechargeDelayBase = FP_FACTOR * 60 / 100, .rechargeDelayMinTurns = 1, .effectMagnitudeConstant = 1, .effectMagnitudeMultiplier = 3 }
 };
 
 const hordeType hordeCatalog_Brogue[] = {

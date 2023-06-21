@@ -1432,6 +1432,7 @@ typedef struct charmEffectTableEntry {
     const fixpt *effectDurationIncrement;
     const int rechargeDelayDuration;
     const int rechargeDelayBase;
+    const int rechargeDelayMinTurns;
     const int effectMagnitudeConstant;
     const int effectMagnitudeMultiplier;
 } charmEffectTableEntry;
