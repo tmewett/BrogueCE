@@ -23,3 +23,6 @@
 
 void initializeGameConst_Brogue();
 void initializeGameGlobals_Brogue();
+
+// Brogue version: what the user sees in the menu and title
+extern const char *brogueVersion;
