@@ -995,7 +995,7 @@ void initializeGameVariantRapidBrogue() {
     gameConst.deepestLevel = DEEPEST_LEVEL;
     gameConst.amuletLevel = AMULET_LEVEL;
 
-    gameConst.depthAccelerator = 1;
+    gameConst.depthAccelerator = 4;
     gameConst.minimumLavaLevel = 2;
     gameConst.minimumBrimstoneLevel = 5;
     gameConst.minimumMutationsLevel = 3;
