@@ -490,7 +490,7 @@ void populateItems(short upstairsX, short upstairsY) {
     }
     item *theItem;
     unsigned short itemSpawnHeatMap[DCOLS][DROWS];
-    short i, j, numberOfItems, numberOfGoldPiles, goldBonusProbability, x = 0, y = 0;
+    short i, j, k, numberOfItems, numberOfGoldPiles, goldBonusProbability, x = 0, y = 0;
     unsigned long totalHeat;
     short theCategory, theKind, randomDepthOffset = 0;
     itemTable *potionTableCopy, *scrollTableCopy;
@@ -648,7 +648,12 @@ void populateItems(short upstairsX, short upstairsY) {
         } else if (rogue.depthLevel > gameConst.amuletLevel) {
             theCategory = GEM;
         } else {
-            for (j = 0; j < gameConst.numberMeteredItems; j++) {
+            
+            //To preserve the ability to load RB 1.4 games, we need to create items in the same order as that codebase
+            const int j_iteration_order[] = { 14, 18, 0, 15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29};
+
+            for (k = 0; k < gameConst.numberMeteredItems; k++) {
+                j = j_iteration_order[k];
                 // Create any metered items that reach generation thresholds
                 if (meteredItemsGenerationTable[j].levelScaling != 0 &&
                     rogue.meteredItems[j].numberSpawned * meteredItemsGenerationTable[j].genMultiplier + meteredItemsGenerationTable[j].genIncrement <

@@ -965,7 +965,7 @@ void initializeGameConst_RapidBrogue() {
 
     gameConst.machinesPerLevelSuppressionMultiplier = 2;
     gameConst.machinesPerLevelSuppressionOffset = 0;
-    gameConst.machinesPerLevelIncreaseFactor = 4;
+    gameConst.machinesPerLevelIncreaseFactor = 3;
     gameConst.maxLevelForBonusMachines = 1;
 
     gameConst.extraItemsPerLevel = 4;
