@@ -452,7 +452,7 @@ void displayAnnotation() {
 // according to the global pattern. The Major and Minor versions must match ours.
 // Returns true if successful.
 static boolean getPatchVersion(char *versionString, unsigned short *patchVersion) {
-    return sscanf(versionString, BROGUE_PATCH_VERSION_PATTERN, patchVersion) == 1;
+    return sscanf(versionString, gameConst.patchVersionPattern, patchVersion) == 1;
 }
 
 // creates a game recording file, or if in playback mode,
@@ -499,14 +499,14 @@ void initRecording() {
         }
         wizardMode = recallChar();
 
-        if (getPatchVersion(versionString, &recPatch) && recPatch <= BROGUE_PATCH) {
+        if (getPatchVersion(versionString, &recPatch) && recPatch <= gameConst.patchVersion) {
             // Major and Minor match ours, Patch is less than or equal to ours: we are compatible.
             rogue.patchVersion = recPatch;
-        } else if (strcmp(versionString, BROGUE_RECORDING_VERSION_STRING) != 0) {
+        } else if (strcmp(versionString, gameConst.recordingVersionString) != 0) {
             // We have neither a compatible pattern match nor an exact match: we cannot load it.
             rogue.playbackMode = false;
             rogue.playbackFastForward = false;
-            sprintf(buf, "This file is from version %s and cannot be opened in version %s.", versionString, BROGUE_VERSION_STRING);
+            sprintf(buf, "This file is from version %s and cannot be opened in version %s.", versionString, gameConst.versionString);
             dialogAlert(buf);
             rogue.playbackMode = true;
             rogue.playbackPaused = true;
@@ -547,7 +547,7 @@ void initRecording() {
     } else {
         // If present, set the patch version for playing the game.
         rogue.patchVersion = BROGUE_PATCH;
-        strcpy(versionString, BROGUE_RECORDING_VERSION_STRING);
+        strcpy(versionString, gameConst.recordingVersionString);
 
         lengthOfPlaybackFile = 1;
         remove(currentFilePath);

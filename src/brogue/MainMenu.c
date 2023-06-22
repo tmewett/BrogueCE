@@ -48,12 +48,12 @@ void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3
     const color *maskColor = &black;
     char dchar;
 
-    versionStringLength = strLenWithoutEscapes(BROGUE_VERSION_STRING);
+    versionStringLength = strLenWithoutEscapes(gameConst.versionString);
 
     for (j=0; j<ROWS; j++) {
         for (i=0; i<COLS; i++) {
             if (j == ROWS - 1 && i >= COLS - versionStringLength) {
-                dchar = BROGUE_VERSION_STRING[i - (COLS - versionStringLength)];
+                dchar = gameConst.versionString[i - (COLS - versionStringLength)];
             } else {
                 dchar = ' ';
             }

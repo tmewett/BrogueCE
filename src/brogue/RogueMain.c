@@ -29,12 +29,18 @@
 #include "IncludeGlobals_RapidBrogue.h"
 #endif
 
-
 #include <time.h>
 
 void rogueMain() {
     previousGameSeed = 0;
     mainBrogueJunction();
+}
+
+void printBrogueVersion() {
+    printf("Brogue version: %s\n", brogueVersion);
+#ifdef RAPID_BROGUE
+    printf("Supports variant: %s\n", rapidBrogueVersion);
+#endif
 }
 
 void executeEvent(rogueEvent *theEvent) {

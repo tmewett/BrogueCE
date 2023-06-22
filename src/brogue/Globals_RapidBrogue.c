@@ -27,6 +27,28 @@
 #include "IncludeGlobalsBase.h"
 #include "IncludeGlobals.h"
 
+// Brogue version: what the user sees in the menu and title
+const char *rapidBrogueVersion = "RB 1.4.0";
+
+// Recording version. Saved into recordings and save files made by this version.
+// Cannot be longer than 16 chars
+const char *rapidBrogueRecordingVersion = "RB 1.4.0";
+
+/* Patch pattern. A scanf format string which matches an unsigned short. If this
+matches against a recording version string, it defines a "patch version." During
+normal play, rogue.patchVersion is set to the match of the game's recording
+version above, or 0 if it doesn't match.
+
+The game will only load a recording/save if either a) it has a patch version
+which is equal or less than the patch version of the current game
+(rogue.patchLevel is set to the recording's); or b) it doesn't match the version
+strings, but they are equal (rogue.patchLevel is set to 0).
+*/
+const char *rapidBroguePatchVersionPattern = "RB 1.4.%hu";
+
+// Earliest version that has identical dungeons to this version
+const char *rapidBrogueDungeonVersion = "RB 1.4";
+
 #define AMULET_LEVEL            6          // how deep before the amulet appears
 #define DEEPEST_LEVEL           10          // how deep the universe goes
 
@@ -955,6 +977,15 @@ const char *mainMenuTitle_RapidBrogue =
 
 void initializeGameConst_RapidBrogue() {
     
+    gameConst.majorVersion = 1;
+    gameConst.minorVersion = 4;
+    gameConst.patchVersion = 0;
+
+    gameConst.versionString = rapidBrogueVersion;
+    gameConst.dungeonVersionString = rapidBrogueDungeonVersion;
+    gameConst.patchVersionPattern = rapidBroguePatchVersionPattern;
+    gameConst.recordingVersionString = rapidBrogueRecordingVersion;
+
     gameConst.deepestLevel = DEEPEST_LEVEL;
     gameConst.amuletLevel = AMULET_LEVEL;
 

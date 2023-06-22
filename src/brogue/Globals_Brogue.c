@@ -25,6 +25,28 @@
 #include "IncludeGlobalsBase.h"
 #include "IncludeGlobals.h"
 
+// Brogue version: what the user sees in the menu and title
+const char *brogueVersion = "CE 1.12.0";
+
+// Recording version. Saved into recordings and save files made by this version.
+// Cannot be longer than 16 chars
+const char *brogueRecordingVersion = "CE 1.12.0";
+
+/* Patch pattern. A scanf format string which matches an unsigned short. If this
+matches against a recording version string, it defines a "patch version." During
+normal play, rogue.patchVersion is set to the match of the game's recording
+version above, or 0 if it doesn't match.
+
+The game will only load a recording/save if either a) it has a patch version
+which is equal or less than the patch version of the current game
+(rogue.patchLevel is set to the recording's); or b) it doesn't match the version
+strings, but they are equal (rogue.patchLevel is set to 0).
+*/
+const char *broguePatchVersionPattern = "CE 1.12.%hu";
+
+// Earliest version that has identical dungeons to this version
+const char *brogueDungeonVersion = "CE 1.9";
+
 #define AMULET_LEVEL            26          
 #define DEEPEST_LEVEL           40          
 
@@ -948,6 +970,15 @@ const char *mainMenuTitle_Brogue =
 
 void initializeGameConst_Brogue() {
 
+    gameConst.majorVersion = 1;
+    gameConst.minorVersion = 12;
+    gameConst.patchVersion = 0;
+
+    gameConst.versionString = brogueVersion;
+    gameConst.dungeonVersionString = brogueDungeonVersion;
+    gameConst.patchVersionPattern = broguePatchVersionPattern;
+    gameConst.recordingVersionString = brogueRecordingVersion;
+
     gameConst.deepestLevel = DEEPEST_LEVEL;
     gameConst.amuletLevel = AMULET_LEVEL;
 
@@ -995,6 +1026,7 @@ void initializeGameConst_Brogue() {
 }
 
 void initializeGameGlobals_Brogue() {
+    
     autoGeneratorCatalog = autoGeneratorCatalog_Brogue;
     lumenstoneDistribution = lumenstoneDistribution_Brogue;
     itemGenerationProbabilities = itemGenerationProbabilities_Brogue;
