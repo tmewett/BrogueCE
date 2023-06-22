@@ -1982,7 +1982,9 @@ void decrementPlayerStatus() {
     if (player.status[STATUS_DARKNESS] > 0) {
         player.status[STATUS_DARKNESS]--;
         updateMinersLightRadius();
-        //updateVision();
+        if (!player.status[STATUS_DARKNESS]) {
+            message("the cloak of darkness lifts from your vision.", 0);
+        }
     }
 
     if (player.status[STATUS_HALLUCINATING] > 0 && !--player.status[STATUS_HALLUCINATING]) {
