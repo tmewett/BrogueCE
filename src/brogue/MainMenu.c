@@ -770,8 +770,7 @@ void mainBrogueJunction() {
                         startLevel(rogue.depthLevel, 1);
                         if (nonInteractivePlayback) {
                             rogue.playbackPaused = false;
-                        }
-                        else {
+                        } else {
                             rogue.playbackPaused = true;
                         }
                         displayAnnotation(); // in case there's an annotation for turn 0

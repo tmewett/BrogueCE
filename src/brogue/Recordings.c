@@ -530,16 +530,14 @@ void initRecording() {
                 if (!nonInteractivePlayback) {
                     sprintf(buf, "This game was played in wizard mode. You must start Brogue in wizard mode to replay it.");
                     dialogAlert(buf);
-                }
-                else {
+                } else {
                     printf("This game was played in wizard mode. You must start Brogue in wizard mode to replay it.");
                 }
             } else {
                 if (!nonInteractivePlayback) {
                     sprintf(buf, "To play this regular recording, please restart Brogue without the wizard mode option.");
                     dialogAlert(buf);
-                }
-                else {
+                } else {
                     printf("To play this regular recording, please restart Brogue without the wizard mode option.");
                 }
             }
