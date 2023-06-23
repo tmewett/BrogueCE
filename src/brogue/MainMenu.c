@@ -252,7 +252,7 @@ void titleMenu() {
     char goldColorEscape[10] = "";
     char newGameText[100] = "", customNewGameText[100] = "";
     rogueEvent theEvent;
-    enum NGCommands buttonCommands[6] = {NG_NEW_GAME, NG_OPEN_GAME, NG_VIEW_RECORDING, NG_HIGH_SCORES, NG_QUIT};
+    enum NGCommands buttonCommands[6] = {NG_NEW_GAME, NG_OPEN_GAME, NG_VIEW_RECORDING, NG_HIGH_SCORES, NG_SWITCH_VARIANT, NG_QUIT};
 
     cellDisplayBuffer shadowBuf[COLS][ROWS];
 
@@ -294,6 +294,12 @@ void titleMenu() {
     sprintf(buttons[b].text, "    %sH%sigh Scores     ", goldColorEscape, whiteColorEscape);
     buttons[b].hotkey[0] = 'h';
     buttons[b].hotkey[1] = 'H';
+    b++;
+
+    initializeButton(&(buttons[b]));
+    sprintf(buttons[b].text, "   %sS%switch Variant   ", goldColorEscape, whiteColorEscape);
+    buttons[b].hotkey[0] = 's';
+    buttons[b].hotkey[1] = 'S';
     b++;
 
     initializeButton(&(buttons[b]));
@@ -789,6 +795,10 @@ void mainBrogueJunction() {
             case NG_HIGH_SCORES:
                 rogue.nextGame = NG_NOTHING;
                 printHighScores(false);
+                break;
+            case NG_SWITCH_VARIANT:
+                rogue.nextGame = NG_NOTHING;
+                switchVariant();
                 break;
             case NG_QUIT:
                 // No need to do anything.

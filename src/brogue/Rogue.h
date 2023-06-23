@@ -187,8 +187,9 @@ typedef struct windowpos {
 enum gameVariant {
     VARIANT_BROGUE,
 #ifdef RAPID_BROGUE
-    VARIANT_RAPID_BROGUE
+    VARIANT_RAPID_BROGUE,
 #endif
+    NUMBER_VARIANTS
 };
 
 // display characters:
@@ -2300,6 +2301,7 @@ enum NGCommands {
     NG_OPEN_GAME,
     NG_VIEW_RECORDING,
     NG_HIGH_SCORES,
+    NG_SWITCH_VARIANT,
     NG_QUIT,
 };
 
@@ -2810,6 +2812,7 @@ extern "C" {
 
     int rogueMain();
     void printBrogueVersion();
+    void switchVariant();
     void executeEvent(rogueEvent *theEvent);
     boolean fileExists(const char *pathname);
     boolean chooseFile(char *path, char *prompt, char *defaultName, char *suffix);

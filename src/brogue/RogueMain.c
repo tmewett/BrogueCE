@@ -44,6 +44,14 @@ void printBrogueVersion() {
 #endif
 }
 
+void switchVariant() {
+    gameVariant++;
+    if (gameVariant == NUMBER_VARIANTS) {
+        gameVariant = 0;
+    }
+    initializeGameSpecifics();
+}
+
 void executeEvent(rogueEvent *theEvent) {
     rogue.playbackBetweenTurns = false;
     if (theEvent->eventType == KEYSTROKE) {
