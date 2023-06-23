@@ -113,7 +113,7 @@ void benchmark() {
         for (i=0; i<COLS; i++) {
             for (j=0; j<ROWS; j++) {
                 theChar = rand_range('!', '~');
-                plotCharWithColor(theChar, i, j, &sparklesauce, &sparklesauce);
+                plotCharWithColor(theChar, (windowpos){ i, j }, &sparklesauce, &sparklesauce);
             }
         }
         pauseBrogue(1);
@@ -146,6 +146,7 @@ void initializeRogue(uint64_t seed) {
     boolean playingback, playbackFF, playbackPaused, wizard, displayStealthRangeMode;
     boolean trueColorMode;
     short oldRNG;
+    char currentGamePath[BROGUE_FILENAME_MAX];
 
     playingback = rogue.playbackMode; // the only animals that need to go on the ark
     playbackPaused = rogue.playbackPaused;
@@ -153,6 +154,7 @@ void initializeRogue(uint64_t seed) {
     wizard = rogue.wizard;
     displayStealthRangeMode = rogue.displayStealthRangeMode;
     trueColorMode = rogue.trueColorMode;
+    strcpy(currentGamePath, rogue.currentGamePath);
     memset((void *) &rogue, 0, sizeof( playerCharacter )); // the flood
     rogue.playbackMode = playingback;
     rogue.playbackPaused = playbackPaused;
@@ -166,6 +168,8 @@ void initializeRogue(uint64_t seed) {
     rogue.highScoreSaved = false;
     rogue.cautiousMode = false;
     rogue.milliseconds = 0;
+
+    strcpy(rogue.currentGamePath, currentGamePath);
 
     rogue.RNG = RNG_SUBSTANTIVE;
     if (!rogue.playbackMode) {
@@ -181,10 +185,10 @@ void initializeRogue(uint64_t seed) {
     levels[0].upStairsLoc.x = (DCOLS - 1) / 2 - 1;
     levels[0].upStairsLoc.y = DROWS - 2;
 
-    // reset enchant and gain strength frequencies
-    rogue.lifePotionFrequency = 0;
-    rogue.strengthPotionFrequency = 40;
-    rogue.enchantScrollFrequency = 60;
+    // Set metered item frequencies to initial values.
+    for (i = 0; i < NUMBER_METERED_ITEMS; i++) {
+        rogue.meteredItems[i].frequency = meteredItemsGenerationTable[i].initialFrequency;
+    }
 
     // all DF messages are eligible for display
     resetDFMessageEligibility();
@@ -316,7 +320,6 @@ void initializeRogue(uint64_t seed) {
     rogue.absoluteTurnNumber = 0;
     rogue.previousPoisonPercent = 0;
     rogue.foodSpawned = 0;
-    rogue.lifePotionsSpawned = 0;
     rogue.gold = 0;
     rogue.goldGenerated = 0;
     rogue.disturbed = false;
@@ -511,7 +514,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
     rogue.lastTarget = NULL;
 
-    connectingStairsDiscovered = (pmap[rogue.downLoc.x][rogue.downLoc.y].flags & (DISCOVERED | MAGIC_MAPPED) ? true : false);
+    connectingStairsDiscovered = (pmapAt(rogue.downLoc)->flags & (DISCOVERED | MAGIC_MAPPED) ? true : false);
     if (stairDirection == 0) { // fallen
         levels[oldLevelNumber-1].playerExitedVia = (pos){ .x = player.loc.x, .y = player.loc.y };
     }
@@ -607,8 +610,8 @@ void startLevel(short oldLevelNumber, short stairDirection) {
 
     //  Prepare the new level
     rogue.minersLightRadius = (DCOLS - 1) * FP_FACTOR;
-    for (i = 0; i < rogue.depthLevel; i++) {
-        rogue.minersLightRadius = rogue.minersLightRadius * DEPTH_ACCELERATOR * 85 / 100;
+    for (i = 0; i < rogue.depthLevel * DEPTH_ACCELERATOR; i++) {
+        rogue.minersLightRadius = rogue.minersLightRadius * 85 / 100;
     }
     rogue.minersLightRadius += FP_FACTOR * 225 / 100;
     updateColors();
@@ -779,7 +782,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             loc.x = player.loc.x + nbDirs[dir][0];
             loc.y = player.loc.y + nbDirs[dir][1];
             if (!cellHasTerrainFlag(loc.x, loc.y, T_PATHING_BLOCKER)
-                && !(pmap[loc.x][loc.y].flags & (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE))) {
+                && !(pmapAt(loc)->flags & (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE))) {
                 placedPlayer = true;
             }
         }
@@ -794,7 +797,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     }
     player.loc = loc;
 
-    pmap[player.loc.x][player.loc.y].flags |= HAS_PLAYER;
+    pmapAt(player.loc)->flags |= HAS_PLAYER;
 
     if (connectingStairsDiscovered) {
         for (i = rogue.upLoc.x-1; i <= rogue.upLoc.x + 1; i++) {
@@ -988,14 +991,13 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
 
     if (rogue.quit) {
         if (rogue.playbackMode) {
-            playback = rogue.playbackMode;
             rogue.playbackMode = false;
             message("(The player quit at this point.)", REQUIRE_ACKNOWLEDGMENT);
-            rogue.playbackMode = playback;
+            rogue.playbackMode = true;
         }
     } else {
         playback = rogue.playbackMode;
-        if (!D_IMMORTAL) {
+        if (!D_IMMORTAL && !nonInteractivePlayback) {
             rogue.playbackMode = false;
         }
         strcpy(buf, "You die...");
@@ -1114,6 +1116,10 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         saveRecording(recordingFilename);
     }
 
+    if (rogue.playbackMode && nonInteractivePlayback) {
+        printf("Recording: %s ended after %li turns (game over).\n", rogue.currentGamePath, rogue.playerTurnNumber);
+    }
+
     if (!rogue.playbackMode) {
         if (!rogue.quit) {
             notifyEvent(GAMEOVER_DEATH, theEntry.score, 0, theEntry.description, recordingFilename);
@@ -1175,7 +1181,7 @@ void victory(boolean superVictory) {
     //
     printString(displayedMessage[0], mapToWindowX(0), mapToWindowY(-1), &white, &black, dbuf);
 
-    plotCharToBuffer(G_GOLD, mapToWindowX(2), mapToWindowY(1), &yellow, &black, dbuf);
+    plotCharToBuffer(G_GOLD, mapToWindow((pos){ 2, 1 }), &yellow, &black, dbuf);
     printString("Gold", mapToWindowX(4), mapToWindowY(1), &white, &black, dbuf);
     sprintf(buf, "%li", rogue.gold);
     printString(buf, mapToWindowX(60), mapToWindowY(1), &itemMessageColor, &black, dbuf);
@@ -1186,7 +1192,7 @@ void victory(boolean superVictory) {
             gemCount += theItem->quantity;
         }
         if (theItem->category == AMULET && superVictory) {
-            plotCharToBuffer(G_AMULET, mapToWindowX(2), min(ROWS-1, i + 1), &yellow, &black, dbuf);
+            plotCharToBuffer(G_AMULET, (windowpos){ mapToWindowX(2), min(ROWS-1, i + 1) }, &yellow, &black, dbuf);
             printString("The Birthright of Yendor", mapToWindowX(4), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
             sprintf(buf, "%li", max(0, itemValue(theItem) * 2));
             printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
@@ -1197,7 +1203,7 @@ void victory(boolean superVictory) {
             itemName(theItem, buf, true, true, &white);
             upperCase(buf);
 
-            plotCharToBuffer(theItem->displayChar, mapToWindowX(2), min(ROWS-1, i + 1), &yellow, &black, dbuf);
+            plotCharToBuffer(theItem->displayChar, (windowpos){ mapToWindowX(2), min(ROWS-1, i + 1) }, &yellow, &black, dbuf);
             printString(buf, mapToWindowX(4), min(ROWS-1, i + 1), &white, &black, dbuf);
 
             if (itemValue(theItem) > 0) {
@@ -1266,6 +1272,10 @@ void victory(boolean superVictory) {
     } else {
         saveRecording(recordingFilename);
         printHighScores(qualified);
+    }
+
+    if (rogue.playbackMode && nonInteractivePlayback) {
+        printf("Recording: %s ended after %li turns (victory).\n", rogue.currentGamePath, rogue.playerTurnNumber);
     }
 
     if (!rogue.playbackMode) {

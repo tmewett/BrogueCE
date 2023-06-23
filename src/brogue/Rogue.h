@@ -21,6 +21,9 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#ifndef ROGUE_H
+#define ROGUE_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -142,10 +145,21 @@ typedef long long fixpt;
 #define COLS                    100
 #define ROWS                    (31 + MESSAGE_LINES)
 
+// A location within the dungeon.
+// Typically, 0 <= x < DCOLS and 0 <= y < DROWS,
+// but occasionally coordinates are used which point outside of this region.
 typedef struct pos {
     short x;
     short y;
 } pos;
+
+// A location within the window.
+// Convert between `windowpos` and `pos` with `mapToWindow` and
+// `windowToMap`
+typedef struct windowpos {
+    short window_x;
+    short window_y;
+} windowpos;
 
 // Size of the portion of the terminal window devoted to displaying the dungeon:
 #define DCOLS                   (COLS - STAT_BAR_WIDTH - 1) // n columns on the left for the sidebar;
@@ -972,6 +986,13 @@ enum scrollKind {
     NUMBER_SCROLL_KINDS
 };
 
+typedef struct meteredItem {
+    int frequency;
+    int numberSpawned;
+} meteredItem;
+
+#define NUMBER_METERED_ITEMS (NUMBER_SCROLL_KINDS + NUMBER_POTION_KINDS)
+
 #define MAX_PACK_ITEMS              26
 
 enum monsterTypes {
@@ -1247,10 +1268,32 @@ boolean cellHasTerrainFlag(short x, short y, unsigned long flagMask);
                                                 && cellHasTerrainFlag((x), (y), T_OBSTRUCTS_PASSABILITY)))
 
 #define coordinatesAreInMap(x, y)           ((x) >= 0 && (x) < DCOLS    && (y) >= 0 && (y) < DROWS)
-#define coordinatesAreInWindow(x, y)        ((x) >= 0 && (x) < COLS     && (y) >= 0 && (y) < ROWS)
+
+inline static boolean locIsInWindow(windowpos w) {
+    return w.window_x >= 0 && w.window_x < COLS && w.window_y >= 0 && w.window_y < ROWS;
+}
+
+inline static pos windowToMap(windowpos w) {
+    return (pos) {
+        .x = w.window_x - STAT_BAR_WIDTH - 1,
+        .y = w.window_y - MESSAGE_LINES,
+    };
+}
+
+inline static windowpos mapToWindow(pos p) {
+    return (windowpos) {
+        .window_x = p.x + STAT_BAR_WIDTH + 1,
+        .window_y = p.y + MESSAGE_LINES,
+    };
+}
+
+// Prefer using `mapToWindow` to combine both coordinates together.
 #define mapToWindowX(x)                     ((x) + STAT_BAR_WIDTH + 1)
+// Prefer using `mapToWindow` to combine both coordinates together.
 #define mapToWindowY(y)                     ((y) + MESSAGE_LINES)
+// Prefer using `windowToMap` to combine both coordinates together.
 #define windowToMapX(x)                     ((x) - STAT_BAR_WIDTH - 1)
+// Prefer using `windowToMap` to combine both coordinates together.
 #define windowToMapY(y)                     ((y) - MESSAGE_LINES)
 
 #define playerCanDirectlySee(x, y)          (pmap[x][y].flags & VISIBLE)
@@ -1405,6 +1448,7 @@ typedef struct itemTable {
     short frequency;
     short marketValue;
     short strengthRequired;
+    int power;
     randomRange range;
     boolean identified;
     boolean called;
@@ -1412,6 +1456,17 @@ typedef struct itemTable {
     boolean magicPolarityRevealed;
     char description[1500];
 } itemTable;
+
+typedef struct meteredItemGenerationTable {
+    unsigned short category;
+    short kind;
+    int initialFrequency;
+    int incrementFrequency;
+    int decrementFrequency;
+    int genMultiplier;
+    int genIncrement;
+    int levelScaling;
+} meteredItemGenerationTable;
 
 enum dungeonFeatureTypes {
     DF_GRANITE_COLUMN = 1,
@@ -2378,10 +2433,7 @@ typedef struct playerCharacter {
 
     // metered items
     long long foodSpawned;                    // amount of nutrition units spawned so far this game
-    short lifePotionFrequency;
-    short lifePotionsSpawned;
-    short strengthPotionFrequency;
-    short enchantScrollFrequency;
+    meteredItem meteredItems[NUMBER_METERED_ITEMS];
 
     // ring bonuses:
     short clairvoyance;
@@ -2410,6 +2462,9 @@ typedef struct playerCharacter {
     enum NGCommands nextGame;
     char nextGamePath[BROGUE_FILENAME_MAX];
     uint64_t nextGameSeed;
+
+    // Path of the current save game or recording, NULL for a new game
+    char currentGamePath[BROGUE_FILENAME_MAX];
 } playerCharacter;
 
 // Stores the necessary info about a level so it can be regenerated:
@@ -2692,6 +2747,7 @@ typedef struct archivedMessage {
 } archivedMessage;
 
 extern boolean serverMode;
+extern boolean nonInteractivePlayback;
 extern boolean hasGraphics;
 extern enum graphicsModes graphicsMode;
 
@@ -2831,8 +2887,8 @@ extern "C" {
     void colorBlendCell(short x, short y, color *hiliteColor, short hiliteStrength);
     void hiliteCell(short x, short y, const color *hiliteColor, short hiliteStrength, boolean distinctColors);
     void colorMultiplierFromDungeonLight(short x, short y, color *editColor);
-    void plotCharWithColor(enum displayGlyph inputChar, short xLoc, short yLoc, const color *cellForeColor, const color *cellBackColor);
-    void plotCharToBuffer(enum displayGlyph inputChar, short x, short y, color *foreColor, color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
+    void plotCharWithColor(enum displayGlyph inputChar, windowpos loc, const color *cellForeColor, const color *cellBackColor);
+    void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, color *foreColor, color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
     void plotForegroundChar(enum displayGlyph inputChar, short x, short y, color *foreColor, boolean affectedByLighting);
     void commitDraws();
     void dumpLevelToScreen();
@@ -3126,7 +3182,7 @@ extern "C" {
     item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind);
     void updateEncumbrance();
     short displayedArmorValue();
-    short armorValueIfUnenchanted();
+    short armorValueIfUnenchanted(item *theItem);
     void strengthCheck(item *theItem, boolean noisy);
     void recalculateEquipmentBonuses();
     boolean equipItem(item *theItem, boolean force, item *unequipHint);
@@ -3337,4 +3393,6 @@ extern "C" {
 
 #if defined __cplusplus
 }
+#endif
+
 #endif

@@ -246,6 +246,7 @@ static void _gameLoop() {
 #ifdef SDL_PATHS
     char *path = SDL_GetBasePath();
     if (path) {
+        fprintf(stderr, "Base path: %s\n", path);
         path[strlen(path) - 1] = '\0';  // remove trailing separator
         strcpy(dataDirectory, path);
     } else {
@@ -259,6 +260,7 @@ static void _gameLoop() {
         fprintf(stderr, "Failed to find or change to the save directory\n");
         exit(1);
     }
+    fprintf(stderr, "Save path: %s\n", path);
     free(path);
 #endif
 

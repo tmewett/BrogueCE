@@ -58,7 +58,7 @@ void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3
             }
 
             if (mask[i][j] == 100) {
-                plotCharWithColor(dchar, i, j, &veryDarkGray, maskColor);
+                plotCharWithColor(dchar, (windowpos){ i, j }, &veryDarkGray, maskColor);
             } else {
                 tempColor = black;
                 tempColor.red   = flames[i][j][0] / MENU_FLAME_PRECISION_FACTOR;
@@ -67,7 +67,7 @@ void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3
                 if (mask[i][j] > 0) {
                     applyColorAverage(&tempColor, maskColor, mask[i][j]);
                 }
-                plotCharWithColor(dchar, i, j, &veryDarkGray, &tempColor);
+                plotCharWithColor(dchar, (windowpos){ i, j }, &veryDarkGray, &tempColor);
             }
         }
     }
@@ -161,7 +161,7 @@ void antiAlias(unsigned char mask[COLS][ROWS]) {
                 for (dir=0; dir<4; dir++) {
                     x = i + nbDirs[dir][0];
                     y = j + nbDirs[dir][1];
-                    if (coordinatesAreInWindow(x, y) && mask[x][y] == 100) {
+                    if (locIsInWindow((windowpos){ x, y }) && mask[x][y] == 100) {
                         nbCount++;
                     }
                 }
@@ -657,7 +657,7 @@ void mainBrogueJunction() {
                 displayBuffer[i][j].foreColorComponents[k] = 0;
                 displayBuffer[i][j].backColorComponents[k] = 0;
             }
-            plotCharWithColor(' ', i, j, &black, &black);
+            plotCharWithColor(' ', (windowpos){ i, j }, &black, &black);
         }
     }
 
@@ -727,6 +727,7 @@ void mainBrogueJunction() {
                 path[0] = '\0';
                 if (rogue.nextGamePath[0]) {
                     strcpy(path, rogue.nextGamePath);
+                    strcpy(rogue.currentGamePath, rogue.nextGamePath);
                     rogue.nextGamePath[0] = '\0';
                 } else {
                     dialogChooseFile(path, GAME_SUFFIX, "Open saved game:");
@@ -754,6 +755,7 @@ void mainBrogueJunction() {
                 path[0] = '\0';
                 if (rogue.nextGamePath[0]) {
                     strcpy(path, rogue.nextGamePath);
+                    strcpy(rogue.currentGamePath, rogue.nextGamePath);
                     rogue.nextGamePath[0] = '\0';
                 } else {
                     dialogChooseFile(path, RECORDING_SUFFIX, "View recording:");
@@ -766,7 +768,11 @@ void mainBrogueJunction() {
                     initializeRogue(0); // Seed argument is ignored because we're in playback.
                     if (!rogue.gameHasEnded) {
                         startLevel(rogue.depthLevel, 1);
-                        rogue.playbackPaused = true;
+                        if (nonInteractivePlayback) {
+                            rogue.playbackPaused = false;
+                        } else {
+                            rogue.playbackPaused = true;
+                        }
                         displayAnnotation(); // in case there's an annotation for turn 0
                     }
 
@@ -797,7 +803,7 @@ void mainBrogueJunction() {
                 rogue.playbackMode = false;
                 rogue.playbackOOS = false;
 
-                if(serverMode) {
+                if(serverMode || nonInteractivePlayback) {
                     rogue.nextGame = NG_QUIT;
                 }
                 break;

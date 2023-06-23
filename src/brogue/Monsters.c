@@ -198,7 +198,7 @@ boolean monsterIsHidden(const creature *monst, const creature *observer) {
         // Teammates can always see each other.
         return false;
     }
-    if ((monst->status[STATUS_INVISIBLE] && !pmap[monst->loc.x][monst->loc.y].layers[GAS])) {
+    if ((monst->status[STATUS_INVISIBLE] && !pmapAt(monst->loc)->layers[GAS])) {
         // invisible and not in gas
         return true;
     }
@@ -566,7 +566,7 @@ creature *cloneMonster(creature *monst, boolean announce, boolean placeClone) {
         getQualifyingPathLocNear(&(newMonst->loc.x), &(newMonst->loc.y), monst->loc.x, monst->loc.y, true,
                                  T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(newMonst->info)), HAS_PLAYER,
                                  avoidedFlagsForMonster(&(newMonst->info)), (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
-        pmap[newMonst->loc.x][newMonst->loc.y].flags |= HAS_MONSTER;
+        pmapAt(newMonst->loc)->flags |= HAS_MONSTER;
         refreshDungeonCell(newMonst->loc.x, newMonst->loc.y);
         if (announce && canSeeMonster(newMonst)) {
             monsterName(monstName, newMonst, false);
@@ -696,8 +696,8 @@ boolean spawnMinions(short hordeID, creature *leader, boolean summoned, boolean 
             if (monsterCanSubmergeNow(monst)) {
                 monst->bookkeepingFlags |= MB_SUBMERGED;
             }
-            brogueAssert(!(pmap[monst->loc.x][monst->loc.y].flags & HAS_MONSTER));
-            pmap[monst->loc.x][monst->loc.y].flags |= HAS_MONSTER;
+            brogueAssert(!(pmapAt(monst->loc)->flags & HAS_MONSTER));
+            pmapAt(monst->loc)->flags |= HAS_MONSTER;
             monst->bookkeepingFlags |= (MB_FOLLOWER | MB_JUST_SUMMONED);
             monst->leader = leader;
             monst->creatureState = leader->creatureState;
@@ -956,7 +956,7 @@ boolean summonMinions(creature *summoner) {
     }
 
     if (summoner->info.abilityFlags & MA_ENTER_SUMMONS) {
-        pmap[summoner->loc.x][summoner->loc.y].flags &= ~HAS_MONSTER;
+        pmapAt(summoner->loc)->flags &= ~HAS_MONSTER;
         removeCreature(monsters, summoner);
     }
 
@@ -1020,7 +1020,7 @@ boolean summonMinions(creature *summoner) {
             demoteMonsterFromLeadership(summoner);
             refreshDungeonCell(summoner->loc.x, summoner->loc.y);
         } else {
-            pmap[summoner->loc.x][summoner->loc.y].flags |= HAS_MONSTER;
+            pmapAt(summoner->loc)->flags |= HAS_MONSTER;
             // TODO: why move to the beginning?
             prependCreature(monsters, summoner);
         }
@@ -1071,7 +1071,7 @@ boolean getRandomMonsterSpawnLocation(short *x, short *y) {
     //    DEBUG {
     //        dumpLevelToScreen();
     //        hiliteGrid(grid, &orange, 50);
-    //        plotCharWithColor('X', mapToWindowX(x), mapToWindowY(y), &black, &white);
+    //        plotCharWithColor('X', mapToWindow((pos){ x, y }), &black, &white);
     //        temporaryMessage("Horde spawn location possibilities:", REQUIRE_ACKNOWLEDGMENT);
     //    }
     freeGrid(grid);
@@ -1147,7 +1147,7 @@ void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidance
 //        DEBUG {
 //            dumpLevelToScreen();
 //            hiliteGrid(grid, &orange, 50);
-//            plotCharWithColor('X', mapToWindowX(x), mapToWindowY(y), &white, &red);
+//            plotCharWithColor('X', mapToWindow((pos){ x, y }), &white, &red);
 //            temporaryMessage("Teleport candidate locations:", REQUIRE_ACKNOWLEDGMENT);
 //        }
         freeGrid(grid);
@@ -1601,7 +1601,7 @@ short awarenessDistance(creature *observer, creature *target) {
     // to guide them, but only as long as the player is within FOV. After that, we switch to wandering
     // and wander toward the last location that we saw the player.
     perceivedDistance = (rogue.scentTurnNumber - scentMap[observer->loc.x][observer->loc.y]); // this value is double the apparent distance
-    if ((target == &player && (pmap[observer->loc.x][observer->loc.y].flags & IN_FIELD_OF_VIEW))
+    if ((target == &player && (pmapAt(observer->loc)->flags & IN_FIELD_OF_VIEW))
         || (target != &player && openPathBetween(observer->loc.x, observer->loc.y, target->loc.x, target->loc.y))) {
 
         perceivedDistance = min(perceivedDistance, scentDistance(observer->loc.x, observer->loc.y, target->loc.x, target->loc.y));
@@ -1641,7 +1641,7 @@ boolean awareOfTarget(creature *observer, creature *target) {
             retval = true;
          }
     } else if (target == &player
-        && !(pmap[observer->loc.x][observer->loc.y].flags & IN_FIELD_OF_VIEW)) {
+        && !(pmapAt(observer->loc)->flags & IN_FIELD_OF_VIEW)) {
         // observer not hunting and player-target not in field of view
         retval = false;
     } else if (perceivedDistance <= awareness) {
@@ -1727,7 +1727,7 @@ void updateMonsterState(creature *monst) {
 
     if ((monst->creatureState == MONSTER_WANDERING)
         && awareOfPlayer
-        && (pmap[player.loc.x][player.loc.y].flags & IN_FIELD_OF_VIEW)) {
+        && (pmapAt(player.loc)->flags & IN_FIELD_OF_VIEW)) {
         // If wandering and you notice the player, start tracking the scent.
         alertMonster(monst);
     } else if (monst->creatureState == MONSTER_SLEEPING) {
@@ -2350,7 +2350,7 @@ boolean fleeingMonsterAwareOfPlayer(creature *monst) {
     if (player.status[STATUS_INVISIBLE]) {
         return (distanceBetween(monst->loc.x, monst->loc.y, player.loc.x, player.loc.y) <= 1);
     } else {
-        return (pmap[monst->loc.x][monst->loc.y].flags & IN_FIELD_OF_VIEW) ? true : false;
+        return (pmapAt(monst->loc)->flags & IN_FIELD_OF_VIEW) ? true : false;
     }
 }
 
@@ -2483,7 +2483,7 @@ boolean targetEligibleForCombatBuff(creature *caster, creature *target) {
                 handledPlayer = true;
                 if (monstersAreEnemies(&player, enemy)
                     && canSeeMonster(enemy)
-                    && (pmap[enemy->loc.x][enemy->loc.y].flags & IN_FIELD_OF_VIEW)) {
+                    && (pmapAt(enemy->loc)->flags & IN_FIELD_OF_VIEW)) {
 
                     return true;
                 }
@@ -2828,7 +2828,7 @@ boolean resurrectAlly(const short x, const short y) {
         getQualifyingPathLocNear(&monToRaise->loc.x, &monToRaise->loc.y, x, y, true,
                                  (T_PATHING_BLOCKER | T_HARMFUL_TERRAIN), 0,
                                  0, (HAS_PLAYER | HAS_MONSTER), false);
-        pmap[monToRaise->loc.x][monToRaise->loc.y].flags |= HAS_MONSTER;
+        pmapAt(monToRaise->loc)->flags |= HAS_MONSTER;
 
         // Restore health etc.
         monToRaise->bookkeepingFlags &= ~(MB_IS_DYING | MB_ADMINISTRATIVE_DEATH | MB_HAS_DIED | MB_IS_FALLING);
@@ -3575,7 +3575,7 @@ boolean knownToPlayerAsPassableOrSecretDoor(short x, short y) {
 
 void setMonsterLocation(creature *monst, short newX, short newY) {
     unsigned long creatureFlag = (monst == &player ? HAS_PLAYER : HAS_MONSTER);
-    pmap[monst->loc.x][monst->loc.y].flags &= ~creatureFlag;
+    pmapAt(monst->loc)->flags &= ~creatureFlag;
     refreshDungeonCell(monst->loc.x, monst->loc.y);
     monst->turnsSpentStationary = 0;
     monst->loc.x = newX;
@@ -3595,7 +3595,7 @@ void setMonsterLocation(creature *monst, short newX, short newY) {
     if (monst == &player) {
         updateVision(true);
         // get any items at the destination location
-        if (pmap[player.loc.x][player.loc.y].flags & HAS_ITEM) {
+        if (pmapAt(player.loc)->flags & HAS_ITEM) {
             pickUpItemAt(player.loc.x, player.loc.y);
         }
     }
@@ -3719,15 +3719,15 @@ boolean moveMonster(creature *monst, short dx, short dy) {
                 if (canPass(monst, defender)) {
 
                     // swap places
-                    pmap[defender->loc.x][defender->loc.y].flags &= ~HAS_MONSTER;
+                    pmapAt(defender->loc)->flags &= ~HAS_MONSTER;
                     refreshDungeonCell(defender->loc.x, defender->loc.y);
 
-                    pmap[monst->loc.x][monst->loc.y].flags &= ~HAS_MONSTER;
+                    pmapAt(monst->loc)->flags &= ~HAS_MONSTER;
                     refreshDungeonCell(monst->loc.x, monst->loc.y);
 
                     monst->loc.x = newX;
                     monst->loc.y = newY;
-                    pmap[monst->loc.x][monst->loc.y].flags |= HAS_MONSTER;
+                    pmapAt(monst->loc)->flags |= HAS_MONSTER;
 
                     if (monsterAvoids(defender, x, y)) { // don't want a flying monster to swap a non-flying monster into lava!
                         getQualifyingPathLocNear(&(defender->loc.x), &(defender->loc.y), x, y, true,
@@ -3737,7 +3737,7 @@ boolean moveMonster(creature *monst, short dx, short dy) {
                         defender->loc.x = x;
                         defender->loc.y = y;
                     }
-                    pmap[defender->loc.x][defender->loc.y].flags |= HAS_MONSTER;
+                    pmapAt(defender->loc)->flags |= HAS_MONSTER;
 
                     refreshDungeonCell(monst->loc.x, monst->loc.y);
                     refreshDungeonCell(defender->loc.x, defender->loc.y);
@@ -4033,10 +4033,10 @@ void toggleMonsterDormancy(creature *monst) {
         // Add it to the normal list.
         prependCreature(monsters, monst);
 
-        pmap[monst->loc.x][monst->loc.y].flags &= ~HAS_DORMANT_MONSTER;
+        pmapAt(monst->loc)->flags &= ~HAS_DORMANT_MONSTER;
 
         // Does it need a new location?
-        if (pmap[monst->loc.x][monst->loc.y].flags & (HAS_MONSTER | HAS_PLAYER)) { // Occupied!
+        if (pmapAt(monst->loc)->flags & (HAS_MONSTER | HAS_PLAYER)) { // Occupied!
             getQualifyingPathLocNear(
                 &(monst->loc.x),
                 &(monst->loc.y),
@@ -4065,7 +4065,7 @@ void toggleMonsterDormancy(creature *monst) {
         // Don't want it to move before the player has a chance to react.
         monst->ticksUntilTurn = 200;
 
-        pmap[monst->loc.x][monst->loc.y].flags |= HAS_MONSTER;
+        pmapAt(monst->loc)->flags |= HAS_MONSTER;
         monst->bookkeepingFlags &= ~MB_IS_DORMANT;
         fadeInMonster(monst);
         return;
@@ -4076,8 +4076,8 @@ void toggleMonsterDormancy(creature *monst) {
         // Add it to the dormant chain.
         prependCreature(dormantMonsters, monst);
         // Miscellaneous transitional tasks.
-        pmap[monst->loc.x][monst->loc.y].flags &= ~HAS_MONSTER;
-        pmap[monst->loc.x][monst->loc.y].flags |= HAS_DORMANT_MONSTER;
+        pmapAt(monst->loc)->flags &= ~HAS_MONSTER;
+        pmapAt(monst->loc)->flags |= HAS_DORMANT_MONSTER;
         monst->bookkeepingFlags |= MB_IS_DORMANT;
         return;
     }
@@ -4204,8 +4204,8 @@ void monsterDetails(char buf[], creature *monst) {
         // If the monster is trapped in impassible terrain, explain as much.
         sprintf(newText, "%s is trapped %s %s.\n     ",
                 capMonstName,
-                (tileCatalog[pmap[monst->loc.x][monst->loc.y].layers[layerWithFlag(monst->loc.x, monst->loc.y, T_OBSTRUCTS_PASSABILITY)]].mechFlags & TM_STAND_IN_TILE) ? "in" : "on",
-                tileCatalog[pmap[monst->loc.x][monst->loc.y].layers[layerWithFlag(monst->loc.x, monst->loc.y, T_OBSTRUCTS_PASSABILITY)]].description);
+                (tileCatalog[pmapAt(monst->loc)->layers[layerWithFlag(monst->loc.x, monst->loc.y, T_OBSTRUCTS_PASSABILITY)]].mechFlags & TM_STAND_IN_TILE) ? "in" : "on",
+                tileCatalog[pmapAt(monst->loc)->layers[layerWithFlag(monst->loc.x, monst->loc.y, T_OBSTRUCTS_PASSABILITY)]].description);
         strcat(buf, newText);
     }
 

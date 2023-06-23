@@ -358,7 +358,8 @@ void addLoops(short **grid, short minimumPathingDistance) {
                         grid[x][y] = 2;             // then turn the tile into a doorway.
                         costMap[x][y] = 1;          // (Cost map also needs updating.)
                         if (D_INSPECT_LEVELGEN) {
-                            plotCharWithColor(G_CLOSED_DOOR, mapToWindowX(x), mapToWindowY(y), &black, &green);
+                            pos p = { x, y };
+                            plotCharWithColor(G_CLOSED_DOOR, mapToWindow(p), &black, &green);
                         }
                         break;
                     }
@@ -761,7 +762,7 @@ void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY,
                 copyGrid(pathingGrid, grid);
                 findReplaceGrid(pathingGrid, -1, -1, 0);
                 hiliteGrid(pathingGrid, &green, 50);
-                plotCharWithColor('X', mapToWindowX(orphanList[n].x), mapToWindowY(orphanList[n].y), &black, &orange);
+                plotCharWithColor('X', mapToWindow(orphanList[n]), &black, &orange);
                 temporaryMessage("Orphan detected:", REQUIRE_ACKNOWLEDGMENT);
             }
 
@@ -803,7 +804,8 @@ void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY,
                 if (D_INSPECT_MACHINES) {
                     dumpLevelToScreen();
                     displayGrid(pathingGrid);
-                    plotCharWithColor('X', mapToWindowX(i), mapToWindowY(j), &black, &orange);
+                    pos p = { i, j };
+                    plotCharWithColor('X', mapToWindow(p), &black, &orange);
                     temporaryMessage("Orphan connecting:", REQUIRE_ACKNOWLEDGMENT);
                 }
             }
@@ -1577,7 +1579,7 @@ boolean buildAMachine(enum machineTypes bp,
                             monst = generateMonster(feature->monsterID, true, true);
                             if (monst) {
                                 monst->loc = (pos){ .x = featX, .y = featY };
-                                pmap[monst->loc.x][monst->loc.y].flags |= HAS_MONSTER;
+                                pmapAt(monst->loc)->flags |= HAS_MONSTER;
                                 monst->bookkeepingFlags |= MB_JUST_SUMMONED;
                             }
                         }
@@ -2146,7 +2148,7 @@ void chooseRandomDoorSites(short **roomMap, pos doorSites[4]) {
                         newY += nbDirs[dir][1];
                     }
                     if (!doorSiteFailed) {
-//                        plotCharWithColor(dirChars[dir], mapToWindowX(i), mapToWindowY(j), &black, &green);
+//                        plotCharWithColor(dirChars[dir], mapToWindow((pos){ i, j }), &black, &green);
                         grid[i][j] = dir + 2; // So as not to conflict with 0 or 1, which are used to indicate exterior/interior.
                     }
                 }
@@ -2346,10 +2348,10 @@ void attachRooms(short **grid, const dungeonProfile *theDP, short attempts, shor
         if (D_INSPECT_LEVELGEN) {
             colorOverDungeon(&darkGray);
             hiliteGrid(roomMap, &blue, 100);
-            if (doorSites[0].x != -1) plotCharWithColor('^', mapToWindowX(doorSites[0].x), mapToWindowY(doorSites[0].y), &black, &green);
-            if (doorSites[1].x != -1) plotCharWithColor('v', mapToWindowX(doorSites[1].x), mapToWindowY(doorSites[1].y), &black, &green);
-            if (doorSites[2].x != -1) plotCharWithColor('<', mapToWindowX(doorSites[2].x), mapToWindowY(doorSites[2].y), &black, &green);
-            if (doorSites[3].x != -1) plotCharWithColor('>', mapToWindowX(doorSites[3].x), mapToWindowY(doorSites[3].y), &black, &green);
+            if (doorSites[0].x != -1) plotCharWithColor('^', mapToWindow(doorSites[0]), &black, &green);
+            if (doorSites[1].x != -1) plotCharWithColor('v', mapToWindow(doorSites[1]), &black, &green);
+            if (doorSites[2].x != -1) plotCharWithColor('<', mapToWindow(doorSites[2]), &black, &green);
+            if (doorSites[3].x != -1) plotCharWithColor('>', mapToWindow(doorSites[3]), &black, &green);
             temporaryMessage("Generating this room:", REQUIRE_ACKNOWLEDGMENT);
         }
 
@@ -2584,7 +2586,7 @@ boolean lakeDisruptsPassability(short **grid, short **lakeMap, short dungeonToGr
 //                    dumpLevelToScreen();
 //                    hiliteGrid(lakeMap, &darkBlue, 75);
 //                    hiliteGrid(floodMap, &white, 20);
-//                    plotCharWithColor('X', mapToWindowX(i), mapToWindowY(j), &black, &red);
+//                    plotCharWithColor('X', mapToWindow((pos){ i, j }), &black, &red);
 //                    temporaryMessage("Failed here.", REQUIRE_ACKNOWLEDGMENT);
 //                }
 
@@ -3312,7 +3314,7 @@ void evacuateCreatures(char blockingMap[DCOLS][DROWS]) {
                                      false);
                 monst->loc = newLoc;
                 pmap[i][j].flags &= ~(HAS_MONSTER | HAS_PLAYER);
-                pmap[newLoc.x][newLoc.y].flags |= (monst == &player ? HAS_PLAYER : HAS_MONSTER);
+                pmapAt(newLoc)->flags |= (monst == &player ? HAS_PLAYER : HAS_MONSTER);
             }
         }
     }
@@ -3550,7 +3552,7 @@ void restoreItems() {
         getQualifyingLocNear(&loc, theItem->loc.x, theItem->loc.y, true, 0,
                             (T_OBSTRUCTS_ITEMS),
                             (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false, false);
-        placeItem(theItem, loc.x, loc.y );
+        placeItem(theItem, loc.x, loc.y);
     }
 }
 
@@ -3673,12 +3675,12 @@ void initializeLevel() {
     }
 
     if (rogue.depthLevel == DEEPEST_LEVEL) {
-        pmap[downLoc.x][downLoc.y].layers[DUNGEON] = DUNGEON_PORTAL;
+        pmapAt(downLoc)->layers[DUNGEON] = DUNGEON_PORTAL;
     } else {
-        pmap[downLoc.x][downLoc.y].layers[DUNGEON] = DOWN_STAIRS;
+        pmapAt(downLoc)->layers[DUNGEON] = DOWN_STAIRS;
     }
-    pmap[downLoc.x][downLoc.y].layers[LIQUID]     = NOTHING;
-    pmap[downLoc.x][downLoc.y].layers[SURFACE]    = NOTHING;
+    pmapAt(downLoc)->layers[LIQUID]     = NOTHING;
+    pmapAt(downLoc)->layers[SURFACE]    = NOTHING;
 
     if (!levels[n+1].visited) {
         levels[n+1].upStairsLoc = downLoc;
@@ -3697,17 +3699,17 @@ void initializeLevel() {
     levels[n].upStairsLoc = upLoc;
 
     if (rogue.depthLevel == 1) {
-        pmap[upLoc.x][upLoc.y].layers[DUNGEON] = DUNGEON_EXIT;
+        pmapAt(upLoc)->layers[DUNGEON] = DUNGEON_EXIT;
     } else {
-        pmap[upLoc.x][upLoc.y].layers[DUNGEON] = UP_STAIRS;
+        pmapAt(upLoc)->layers[DUNGEON] = UP_STAIRS;
     }
-    pmap[upLoc.x][upLoc.y].layers[LIQUID] = NOTHING;
-    pmap[upLoc.x][upLoc.y].layers[SURFACE] = NOTHING;
+    pmapAt(upLoc)->layers[LIQUID] = NOTHING;
+    pmapAt(upLoc)->layers[SURFACE] = NOTHING;
 
     rogue.downLoc = downLoc;
-    pmap[downLoc.x][downLoc.y].flags |= HAS_STAIRS;
+    pmapAt(downLoc)->flags |= HAS_STAIRS;
     rogue.upLoc = upLoc;
-    pmap[upLoc.x][upLoc.y].flags |= HAS_STAIRS;
+    pmapAt(upLoc)->flags |= HAS_STAIRS;
 
     if (!levels[rogue.depthLevel-1].visited) {
 

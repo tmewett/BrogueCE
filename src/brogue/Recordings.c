@@ -323,6 +323,10 @@ void playbackPanic() {
 
         overlayDisplayBuffer(rbuf, 0);
 
+        if (nonInteractivePlayback) {
+            rogue.gameHasEnded = true;
+        }
+
         printf("Playback panic at location %li! Turn number %li.\n", recordingLocation - 1, rogue.playerTurnNumber);
         overlayDisplayBuffer(rbuf, 0);
 
@@ -505,8 +509,12 @@ void initRecording() {
             // We have neither a compatible pattern match nor an exact match: we cannot load it.
             rogue.playbackMode = false;
             rogue.playbackFastForward = false;
-            sprintf(buf, "This file is from version %s and cannot be opened in version %s.", versionString, BROGUE_VERSION_STRING);
-            dialogAlert(buf);
+            if (!nonInteractivePlayback) {
+                sprintf(buf, "This file is from version %s and cannot be opened in version %s.", versionString, BROGUE_VERSION_STRING);
+                dialogAlert(buf);
+            } else {
+                printf("This file is from version %s and cannot be opened in version %s.", versionString, BROGUE_VERSION_STRING);
+            }
             rogue.playbackMode = true;
             rogue.playbackPaused = true;
             rogue.playbackFastForward = false;
@@ -519,11 +527,21 @@ void initRecording() {
             rogue.playbackMode = false;
             rogue.playbackFastForward = false;
             if (wizardMode) {
-                sprintf(buf, "This game was played in wizard mode. You must start Brogue in wizard mode to replay it.");
+                if (!nonInteractivePlayback) {
+                    sprintf(buf, "This game was played in wizard mode. You must start Brogue in wizard mode to replay it.");
+                    dialogAlert(buf);
+                } else {
+                    printf("This game was played in wizard mode. You must start Brogue in wizard mode to replay it.");
+                }
             } else {
-                sprintf(buf, "To play this regular recording, please restart Brogue without the wizard mode option.");
+                if (!nonInteractivePlayback) {
+                    sprintf(buf, "To play this regular recording, please restart Brogue without the wizard mode option.");
+                    dialogAlert(buf);
+                } else {
+                    printf("To play this regular recording, please restart Brogue without the wizard mode option.");
+                }
             }
-            dialogAlert(buf);
+
             rogue.playbackMode = true;
             rogue.playbackPaused = true;
             rogue.playbackFastForward = false;
@@ -842,6 +860,10 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
         return false;
     }
 
+    if (nonInteractivePlayback) {
+        return false;
+    }
+
     if (recordingInput->eventType == KEYSTROKE) {
         key = recordingInput->param1;
         stripShiftFromMovementKeystroke(&key);
@@ -956,6 +978,7 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                 if (dialogChooseFile(path, RECORDING_SUFFIX, "View recording: ")) {
                     if (fileExists(path)) {
                         strcpy(rogue.nextGamePath, path);
+                        strcpy(rogue.currentGamePath, path);
                         rogue.nextGame = NG_VIEW_RECORDING;
                         rogue.gameHasEnded = true;
                     } else {
@@ -970,6 +993,7 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                 if (dialogChooseFile(path, GAME_SUFFIX, "Open saved game: ")) {
                     if (fileExists(path)) {
                         strcpy(rogue.nextGamePath, path);
+                        strcpy(rogue.currentGamePath, path);
                         rogue.nextGame = NG_OPEN_GAME;
                         rogue.gameHasEnded = true;
                     } else {
@@ -1454,10 +1478,10 @@ void parseFile() {
         numDepths   = recallNumber(4);
         fileLength  = recallNumber(4);
 
-        fprintf(descriptionFile, "Parsed file \"%s\":\n\tVersion: %s\n\tSeed: %li\n\tNumber of turns: %li\n\tNumber of depth changes: %li\n\tFile length: %li\n",
+        fprintf(descriptionFile, "Parsed file \"%s\":\n\tVersion: %s\n\tSeed: %lld\n\tNumber of turns: %lu\n\tNumber of depth changes: %lu\n\tFile length: %lu\n",
                 currentFilePath,
                 versionString,
-                seed,
+                (unsigned long long)seed,
                 numTurns,
                 numDepths,
                 fileLength);

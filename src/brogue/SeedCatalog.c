@@ -78,16 +78,16 @@ static void printSeedCatalogItem(item *theItem, creature *theMonster, boolean is
     }
 
     // vaultNumber
-    if (pmap[theItem->loc.x][theItem->loc.y].machineNumber > 0) {
+    if (pmapAt(theItem->loc)->machineNumber > 0) {
         //not all machines are "vaults" so we need to exclude some.
-        if (pmap[theItem->loc.x][theItem->loc.y].layers[0] != ALTAR_SWITCH
-            && pmap[theItem->loc.x][theItem->loc.y].layers[0] != ALTAR_SWITCH_RETRACTING
-            && pmap[theItem->loc.x][theItem->loc.y].layers[0] != ALTAR_CAGE_RETRACTABLE
-            && pmap[theItem->loc.x][theItem->loc.y].layers[0] != ALTAR_INERT
-            && pmap[theItem->loc.x][theItem->loc.y].layers[0] != AMULET_SWITCH
-            && pmap[theItem->loc.x][theItem->loc.y].layers[0] != FLOOR) {
+        if (pmapAt(theItem->loc)->layers[0] != ALTAR_SWITCH
+            && pmapAt(theItem->loc)->layers[0] != ALTAR_SWITCH_RETRACTING
+            && pmapAt(theItem->loc)->layers[0] != ALTAR_CAGE_RETRACTABLE
+            && pmapAt(theItem->loc)->layers[0] != ALTAR_INERT
+            && pmapAt(theItem->loc)->layers[0] != AMULET_SWITCH
+            && pmapAt(theItem->loc)->layers[0] != FLOOR) {
 
-            sprintf(vaultNumber, isCsvFormat ? "%i" : " (vault %i)", pmap[theItem->loc.x][theItem->loc.y].machineNumber);
+            sprintf(vaultNumber, isCsvFormat ? "%i" : " (vault %i)", pmapAt(theItem->loc)->machineNumber);
         }
     }
 
