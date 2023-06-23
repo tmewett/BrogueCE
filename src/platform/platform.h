@@ -22,6 +22,8 @@
 #define U_CIRCLE_BARS  0x29F2
 #define U_FILLED_CIRCLE_BARS  0x29F3
 
+#define HIGH_SCORE_FILENAME_LENGTH 100
+
 // #define U_UP_TRIANGLE  0x2206
 // #define U_DOWN_TRIANGLE  0x2207
 // #define U_THETA  0x03B8
@@ -90,6 +92,7 @@ void loadKeymap();
 void dumpScores();
 unsigned int glyphToUnicode(enum displayGlyph glyph);
 boolean isEnvironmentGlyph(enum displayGlyph glyph);
+void setHighScoresFilename(char *buffer);
 
 #ifdef BROGUE_SDL
 extern struct brogueConsole sdlConsole;
