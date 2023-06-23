@@ -168,10 +168,6 @@ int main(int argc, char *argv[])
 #ifdef RAPID_BROGUE
                 if (!strcmp("rapid_brogue", argv[i + 1])) {
                     gameVariant = VARIANT_RAPID_BROGUE;
-                    printf("rapid brogue selected");
-                }
-                else {
-                    printf("other brogue selected: %s", argv[i + 1]);
                 }
 #endif
                 i++;

@@ -325,7 +325,6 @@ void setHighScoresFilename(char *buffer) {
     strncpy(buffer, gameConst.variantName, 100);
     strncat(buffer, "HighScores.txt", 100);
     buffer[0] = toupper(buffer[0]);
-    printf("%s\n", buffer);
 }
 
 // loads the ([V]ariantName)HighScores.txt file into the scoreBuffer global variable
