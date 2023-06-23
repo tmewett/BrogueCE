@@ -30,6 +30,7 @@
 #include <dirent.h>
 
 #include "platform.h"
+#include "IncludeGlobalsBase.h"
 
 typedef struct brogueScoreEntry {
     long int score;
@@ -271,8 +272,11 @@ enum graphicsModes setGraphicsMode(enum graphicsModes mode) {
 void initScores() {
     short i;
     FILE *scoresFile;
+    char highScoresFilename[HIGH_SCORE_FILENAME_LENGTH];
 
-    scoresFile = fopen("BrogueHighScores.txt", "w");
+    setHighScoresFilename(highScoresFilename);
+
+    scoresFile = fopen(highScoresFilename, "w");
     for (i=0; i<HIGH_SCORES_COUNT; i++) {
         fprintf(scoresFile, "%li\t%li\t%s", (long) 0, (long) 0, "(empty entry)\n");
     }
@@ -317,7 +321,14 @@ short sortScoreBuffer() {
     return mostRecentSortedLine;
 }
 
-// loads the BrogueHighScores.txt file into the scoreBuffer global variable
+void setHighScoresFilename(char *buffer) {
+    strncpy(buffer, gameConst.variantName, 100);
+    strncat(buffer, "HighScores.txt", 100);
+    buffer[0] = toupper(buffer[0]);
+    printf("%s\n", buffer);
+}
+
+// loads the ([V]ariantName)HighScores.txt file into the scoreBuffer global variable
 // score file format is: score, tab, date in seconds, tab, description, newline.
 short loadScoreBuffer() {
     short i;
@@ -325,11 +336,14 @@ short loadScoreBuffer() {
     time_t rawtime;
     struct tm * timeinfo;
 
-    scoresFile = fopen("BrogueHighScores.txt", "r");
+    char highScoresFilename[HIGH_SCORE_FILENAME_LENGTH];
+    setHighScoresFilename(highScoresFilename);
+
+    scoresFile = fopen(highScoresFilename, "r");
 
     if (scoresFile == NULL) {
         initScores();
-        scoresFile = fopen("BrogueHighScores.txt", "r");
+        scoresFile = fopen(highScoresFilename, "r");
     }
 
     for (i=0; i<HIGH_SCORES_COUNT; i++) {
@@ -394,8 +408,11 @@ void loadKeymap() {
 void saveScoreBuffer() {
     short i;
     FILE *scoresFile;
+    char highScoresFilename[HIGH_SCORE_FILENAME_LENGTH];
 
-    scoresFile = fopen("BrogueHighScores.txt", "w");
+    setHighScoresFilename(highScoresFilename);
+
+    scoresFile = fopen(highScoresFilename, "w");
 
     for (i=0; i<HIGH_SCORES_COUNT; i++) {
         // save the entry

@@ -979,6 +979,8 @@ void initializeGameConst_Brogue() {
     gameConst.patchVersionPattern = broguePatchVersionPattern;
     gameConst.recordingVersionString = brogueRecordingVersion;
 
+    gameConst.variantName = "brogue";
+
     gameConst.deepestLevel = DEEPEST_LEVEL;
     gameConst.amuletLevel = AMULET_LEVEL;
 

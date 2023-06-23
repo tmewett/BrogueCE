@@ -2330,17 +2330,19 @@ enum exitStatus {
 // Constants for the current game, initialized after the choice of mod
 typedef struct gameConstants {
 
-    int majorVersion;
-    int minorVersion;
-    int patchVersion;
+    int majorVersion;                   //Variant major version x._._
+    int minorVersion;                   //Variant minor version _.y._
+    int patchVersion;                   //Variant patch version _._.z
 
-    const char *versionString;         //Version string <codename> <major>.<minor>.<patch>
-    const char *dungeonVersionString;  //Version string for last compatible dungeon
-    const char *patchVersionPattern;   //Version pattern for patches that match this release
-    const char *recordingVersionString;//Version string used in recordings / saves
+    const char *variantName;            //Variant name in no-spaces, lower-case form (e.g. "brogue")
 
-    int deepestLevel;              // deepest level in the dungeon
-    int amuletLevel;                        // level on which the amulet appears (used in signed arithmetic)
+    const char *versionString;          //Version string <codename> <major>.<minor>.<patch>
+    const char *dungeonVersionString;   //Version string for last compatible dungeon
+    const char *patchVersionPattern;    //Version pattern for patches that match this release
+    const char *recordingVersionString; //Version string used in recordings / saves
+
+    int deepestLevel;                   // deepest level in the dungeon
+    int amuletLevel;                    // level on which the amulet appears (used in signed arithmetic)
 
     int depthAccelerator;          // factor for how fast depth-dependent features scale compared to usual 26-level dungeon
     int minimumLavaLevel;          // how deep before lava can be generated

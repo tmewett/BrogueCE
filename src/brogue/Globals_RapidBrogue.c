@@ -986,6 +986,8 @@ void initializeGameConst_RapidBrogue() {
     gameConst.patchVersionPattern = rapidBroguePatchVersionPattern;
     gameConst.recordingVersionString = rapidBrogueRecordingVersion;
 
+    gameConst.variantName = "rapidBrogue";
+
     gameConst.deepestLevel = DEEPEST_LEVEL;
     gameConst.amuletLevel = AMULET_LEVEL;
 
