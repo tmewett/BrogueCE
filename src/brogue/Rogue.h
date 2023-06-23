@@ -2343,6 +2343,8 @@ typedef struct gameConstants {
     const char *patchVersionPattern;    //Version pattern for patches that match this release
     const char *recordingVersionString; //Version string used in recordings / saves
 
+    const char *variantMenuMessage;     //A message about the variant to show on the title menu
+
     int deepestLevel;                   // deepest level in the dungeon
     int amuletLevel;                    // level on which the amulet appears (used in signed arithmetic)
 
@@ -3434,6 +3436,7 @@ extern "C" {
                                short winY,
                                short winWidth,
                                short winHeight);
+    void drawMessagesInState(buttonState *state);
     short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *event);
     short smoothHiliteGradient(const short currentXValue, const short maxXValue);
     void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDisplayBuffer dbuf[COLS][ROWS]);

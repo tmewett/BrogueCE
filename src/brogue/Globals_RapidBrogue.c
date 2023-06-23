@@ -988,6 +988,8 @@ void initializeGameConst_RapidBrogue() {
 
     gameConst.variantName = "rapidBrogue";
 
+    gameConst.variantMenuMessage = "RapidBrogue is a shorter Brogue experience compressed into fewer levels. The action comes thick and fast, so recommended for experienced Brogue players!";
+
     gameConst.deepestLevel = DEEPEST_LEVEL;
     gameConst.amuletLevel = AMULET_LEVEL;
 

@@ -138,6 +138,14 @@ void drawButtonsInState(buttonState *state) {
     }
 }
 
+void drawMessagesInState(buttonState *state) {
+    
+    // Draw a message
+    if (gameConst.variantMenuMessage != NULL) {
+        printStringWithWrapping(gameConst.variantMenuMessage, 5, ROWS - 5, COLS - 28 - 5, &white, &black, state->dbuf);
+    }
+}
+
 void initializeButtonState(buttonState *state,
                            brogueButton *buttons,
                            short buttonCount,

@@ -323,6 +323,7 @@ void titleMenu() {
     initializeButtonState(&state, buttons, b, x, y, 20, b*2-1);
     rectangularShading(x, y, 20, b*2-1, &black, INTERFACE_OPACITY, shadowBuf);
     drawButtonsInState(&state);
+    drawMessagesInState(&state);
 
     initializeMenuFlames(true, colors, colorStorage, colorSources, flames, mask);
     rogue.creaturesWillFlashThisTurn = false; // total unconscionable hack

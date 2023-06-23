@@ -981,6 +981,8 @@ void initializeGameConst_Brogue() {
 
     gameConst.variantName = "brogue";
 
+    gameConst.variantMenuMessage = NULL;
+
     gameConst.deepestLevel = DEEPEST_LEVEL;
     gameConst.amuletLevel = AMULET_LEVEL;
 
