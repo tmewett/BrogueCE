@@ -55,7 +55,7 @@ void updateFlavorText() {
         if (rogue.armor
             && (rogue.armor->flags & ITEM_RUNIC)
             && rogue.armor->enchant2 == A_RESPIRATION
-            && tileCatalog[pmap[player.loc.x][player.loc.y].layers[highestPriorityLayer(player.loc.x, player.loc.y, false)]].flags & T_RESPIRATION_IMMUNITIES) {
+            && tileCatalog[pmapAt(player.loc)->layers[highestPriorityLayer(player.loc.x, player.loc.y, false)]].flags & T_RESPIRATION_IMMUNITIES) {
 
             flavorMessage("A pocket of cool, clean air swirls around you.");
         } else if (player.status[STATUS_LEVITATING]) {
@@ -615,7 +615,7 @@ void updateTelepathy() {
         creature *monst = nextCreature(&it);
         if (monsterRevealed(monst)) {
             getFOVMask(grid, monst->loc.x, monst->loc.y, 2 * FP_FACTOR, T_OBSTRUCTS_VISION, 0, false);
-            pmap[monst->loc.x][monst->loc.y].flags |= TELEPATHIC_VISIBLE;
+            pmapAt(monst->loc)->flags |= TELEPATHIC_VISIBLE;
             discoverCell(monst->loc.x, monst->loc.y);
         }
     }
@@ -623,7 +623,7 @@ void updateTelepathy() {
         creature *monst = nextCreature(&it);
         if (monsterRevealed(monst)) {
             getFOVMask(grid, monst->loc.x, monst->loc.y, 2 * FP_FACTOR, T_OBSTRUCTS_VISION, 0, false);
-            pmap[monst->loc.x][monst->loc.y].flags |= TELEPATHIC_VISIBLE;
+            pmapAt(monst->loc)->flags |= TELEPATHIC_VISIBLE;
             discoverCell(monst->loc.x, monst->loc.y);
         }
     }
@@ -683,7 +683,7 @@ short currentStealthRange() {
             // In darkness, halve, rounded down.
             stealthRange = stealthRange / 2;
         }
-        if (pmap[player.loc.x][player.loc.y].flags & IS_IN_SHADOW) {
+        if (pmapAt(player.loc)->flags & IS_IN_SHADOW) {
             // When not standing in a lit area, halve, rounded down (stacks with darkness halving).
             stealthRange = stealthRange / 2;
         }
@@ -760,7 +760,7 @@ void updateVision(boolean refreshDisplay) {
             }
         }
     }
-    pmap[player.loc.x][player.loc.y].flags |= IN_FIELD_OF_VIEW | VISIBLE;
+    pmapAt(player.loc)->flags |= IN_FIELD_OF_VIEW | VISIBLE;
 
     if (rogue.clairvoyance < 0) {
         discoverCell(player.loc.x, player.loc.y);
@@ -787,13 +787,13 @@ void updateVision(boolean refreshDisplay) {
 
     if (player.status[STATUS_HALLUCINATING] > 0) {
         for (theItem = floorItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
-            if ((pmap[theItem->loc.x][theItem->loc.y].flags & DISCOVERED) && refreshDisplay) {
+            if ((pmapAt(theItem->loc)->flags & DISCOVERED) && refreshDisplay) {
                 refreshDungeonCell(theItem->loc.x, theItem->loc.y);
             }
         }
         for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
-            if ((pmap[monst->loc.x][monst->loc.y].flags & DISCOVERED) && refreshDisplay) {
+            if ((pmapAt(monst->loc)->flags & DISCOVERED) && refreshDisplay) {
                 refreshDungeonCell(monst->loc.x, monst->loc.y);
             }
         }
@@ -985,7 +985,7 @@ void playerFalls() {
 
     layer = layerWithFlag(player.loc.x, player.loc.y, T_AUTO_DESCENT);
     if (layer >= 0) {
-        message(tileCatalog[pmap[player.loc.x][player.loc.y].layers[layer]].flavorText, REQUIRE_ACKNOWLEDGMENT);
+        message(tileCatalog[pmapAt(player.loc)->layers[layer]].flavorText, REQUIRE_ACKNOWLEDGMENT);
     } else if (layer == -1) {
         message("You plunge downward!", REQUIRE_ACKNOWLEDGMENT);
     }
@@ -1890,7 +1890,7 @@ void monsterEntersLevel(creature *monst, short n) {
                                  avoidedFlagsForMonster(&(monst->info)), HAS_STAIRS, false);
     }
     if (!pit
-        && (pmap[monst->loc.x][monst->loc.y].flags & (HAS_PLAYER | HAS_MONSTER))
+        && (pmapAt(monst->loc)->flags & (HAS_PLAYER | HAS_MONSTER))
         && !(terrainFlags(monst->loc.x, monst->loc.y) & avoidedFlagsForMonster(&(monst->info)))) {
         // Monsters using the stairs will displace any creatures already located there, to thwart stair-dancing.
         creature *prevMonst = monsterAtLoc(monst->loc.x, monst->loc.y);
@@ -1898,8 +1898,8 @@ void monsterEntersLevel(creature *monst, short n) {
         getQualifyingPathLocNear(&(prevMonst->loc.x), &(prevMonst->loc.y), monst->loc.x, monst->loc.y, true,
                                  T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(prevMonst->info)), 0,
                                  avoidedFlagsForMonster(&(prevMonst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_STAIRS), false);
-        pmap[monst->loc.x][monst->loc.y].flags &= ~(HAS_PLAYER | HAS_MONSTER);
-        pmap[prevMonst->loc.x][prevMonst->loc.y].flags |= (prevMonst == &player ? HAS_PLAYER : HAS_MONSTER);
+        pmapAt(monst->loc)->flags &= ~(HAS_PLAYER | HAS_MONSTER);
+        pmapAt(prevMonst->loc)->flags |= (prevMonst == &player ? HAS_PLAYER : HAS_MONSTER);
         refreshDungeonCell(prevMonst->loc.x, prevMonst->loc.y);
         //DEBUG printf("\nBumped a creature (%s) from (%i, %i) to (%i, %i).", prevMonst->info.monsterName, monst->loc.x, monst->loc.y, prevMonst->loc.x, prevMonst->loc.y);
     }
@@ -2283,10 +2283,10 @@ void playerTurnEnded() {
             }
         }
 
-        if (rogue.awarenessBonus > -30 && !(pmap[player.loc.x][player.loc.y].flags & SEARCHED_FROM_HERE)) {
+        if (rogue.awarenessBonus > -30 && !(pmapAt(player.loc)->flags & SEARCHED_FROM_HERE)) {
             // Low-grade auto-search wherever you step, but only once per tile.
             search(rogue.awarenessBonus + 30);
-            pmap[player.loc.x][player.loc.y].flags |= SEARCHED_FROM_HERE;
+            pmapAt(player.loc)->flags |= SEARCHED_FROM_HERE;
         }
         if (!rogue.justSearched && player.status[STATUS_SEARCHING] > 0) {
             // Searching only "charges up" when done on consecutive turns
@@ -2351,7 +2351,7 @@ void playerTurnEnded() {
 
         for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
-            if (D_SAFETY_VISION || monst->creatureState == MONSTER_FLEEING && pmap[monst->loc.x][monst->loc.y].flags & IN_FIELD_OF_VIEW) {
+            if (D_SAFETY_VISION || monst->creatureState == MONSTER_FLEEING && pmapAt(monst->loc)->flags & IN_FIELD_OF_VIEW) {
                 updateSafetyMap(); // only if there is a fleeing monster who can see the player
                 break;
             }

@@ -510,7 +510,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
     rogue.lastTarget = NULL;
 
-    connectingStairsDiscovered = (pmap[rogue.downLoc.x][rogue.downLoc.y].flags & (DISCOVERED | MAGIC_MAPPED) ? true : false);
+    connectingStairsDiscovered = (pmapAt(rogue.downLoc)->flags & (DISCOVERED | MAGIC_MAPPED) ? true : false);
     if (stairDirection == 0) { // fallen
         levels[oldLevelNumber-1].playerExitedVia = (pos){ .x = player.loc.x, .y = player.loc.y };
     }
@@ -780,7 +780,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             loc.x = player.loc.x + nbDirs[dir][0];
             loc.y = player.loc.y + nbDirs[dir][1];
             if (!cellHasTerrainFlag(loc.x, loc.y, T_PATHING_BLOCKER)
-                && !(pmap[loc.x][loc.y].flags & (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE))) {
+                && !(pmapAt(loc)->flags & (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE))) {
                 placedPlayer = true;
             }
         }
@@ -795,7 +795,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     }
     player.loc = loc;
 
-    pmap[player.loc.x][player.loc.y].flags |= HAS_PLAYER;
+    pmapAt(player.loc)->flags |= HAS_PLAYER;
 
     if (connectingStairsDiscovered) {
         for (i = rogue.upLoc.x-1; i <= rogue.upLoc.x + 1; i++) {

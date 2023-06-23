@@ -1101,10 +1101,10 @@ boolean playerMoves(short direction) {
             player.loc.x += nbDirs[direction][0];
             player.loc.y += nbDirs[direction][1];
             pmap[x][y].flags &= ~HAS_PLAYER;
-            pmap[player.loc.x][player.loc.y].flags |= HAS_PLAYER;
-            pmap[player.loc.x][player.loc.y].flags &= ~IS_IN_PATH;
+            pmapAt(player.loc)->flags |= HAS_PLAYER;
+            pmapAt(player.loc)->flags &= ~IS_IN_PATH;
             if (defender && defender->creatureState == MONSTER_ALLY) { // Swap places with ally.
-                pmap[defender->loc.x][defender->loc.y].flags &= ~HAS_MONSTER;
+                pmapAt(defender->loc)->flags &= ~HAS_MONSTER;
                 defender->loc.x = x;
                 defender->loc.y = y;
                 if (monsterAvoids(defender, x, y)) {
@@ -1113,10 +1113,10 @@ boolean playerMoves(short direction) {
                 //getQualifyingLocNear(loc, player.loc.x, player.loc.y, true, NULL, forbiddenFlagsForMonster(&(defender->info)) & ~(T_IS_DF_TRAP | T_IS_DEEP_WATER | T_SPONTANEOUSLY_IGNITES), HAS_MONSTER, false, false);
                 //defender->loc.x = loc[0];
                 //defender->loc.y = loc[1];
-                pmap[defender->loc.x][defender->loc.y].flags |= HAS_MONSTER;
+                pmapAt(defender->loc)->flags |= HAS_MONSTER;
             }
 
-            if (pmap[player.loc.x][player.loc.y].flags & HAS_ITEM) {
+            if (pmapAt(player.loc)->flags & HAS_ITEM) {
                 pickUpItemAt(player.loc.x, player.loc.y);
                 rogue.disturbed = true;
             }
@@ -1574,7 +1574,7 @@ void travel(short x, short y, boolean autoConfirm) {
 
     if (D_WORMHOLING) {
         recordMouseClick(mapToWindowX(x), mapToWindowY(y), true, false);
-        pmap[player.loc.x][player.loc.y].flags &= ~HAS_PLAYER;
+        pmapAt(player.loc)->flags &= ~HAS_PLAYER;
         refreshDungeonCell(player.loc.x, player.loc.y);
         player.loc.x = x;
         player.loc.y = y;
