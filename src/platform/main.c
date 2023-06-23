@@ -10,6 +10,7 @@ struct brogueConsole currentConsole;
 
 char dataDirectory[BROGUE_FILENAME_MAX] = STRINGIFY(DATADIR);
 boolean serverMode = false;
+boolean nonInteractivePlayback = false;
 boolean hasGraphics = false;
 enum graphicsModes graphicsMode = TEXT_GRAPHICS;
 boolean isCsvFormat = false;
@@ -23,6 +24,7 @@ static void printCommandlineHelp() {
     "-s seed                    start a new game with the specified numerical seed\n"
     "-o filename[.broguesave]   open a save file (extension optional)\n"
     "-v recording[.broguerec]   view a recording (extension optional)\n"
+    "-vn recording[.broguerec]  view a recording non-interactively (extension optional)\n"
 #ifdef BROGUE_WEB
     "--server-mode              run the game in web-brogue server mode\n"
 #endif
@@ -87,6 +89,8 @@ int main(int argc, char *argv[])
     currentConsole = webConsole;
 #elif BROGUE_CURSES
     currentConsole = cursesConsole;
+#else
+    currentConsole = nullConsole;
 #endif
 
     rogue.nextGame = NG_NOTHING;
@@ -154,6 +158,24 @@ int main(int argc, char *argv[])
                 if (!endswith(rogue.nextGamePath, RECORDING_SUFFIX)) {
                     append(rogue.nextGamePath, RECORDING_SUFFIX, BROGUE_FILENAME_MAX);
                 }
+
+                i++;
+                continue;
+            }
+        }
+
+        if (strcmp(argv[i], "-vn") == 0) {
+            if (i + 1 < argc) {
+                strncpy(rogue.nextGamePath, argv[i + 1], BROGUE_FILENAME_MAX);
+                rogue.nextGamePath[BROGUE_FILENAME_MAX - 1] = '\0';
+                rogue.nextGame = NG_VIEW_RECORDING;
+
+                if (!endswith(rogue.nextGamePath, RECORDING_SUFFIX)) {
+                    append(rogue.nextGamePath, RECORDING_SUFFIX, BROGUE_FILENAME_MAX);
+                }
+
+                currentConsole = nullConsole;
+                nonInteractivePlayback = true;
 
                 i++;
                 continue;

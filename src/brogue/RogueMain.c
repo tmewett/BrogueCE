@@ -146,6 +146,7 @@ void initializeRogue(uint64_t seed) {
     boolean playingback, playbackFF, playbackPaused, wizard, displayStealthRangeMode;
     boolean trueColorMode;
     short oldRNG;
+    char currentGamePath[BROGUE_FILENAME_MAX];
 
     playingback = rogue.playbackMode; // the only animals that need to go on the ark
     playbackPaused = rogue.playbackPaused;
@@ -153,6 +154,7 @@ void initializeRogue(uint64_t seed) {
     wizard = rogue.wizard;
     displayStealthRangeMode = rogue.displayStealthRangeMode;
     trueColorMode = rogue.trueColorMode;
+    strcpy(currentGamePath, rogue.currentGamePath);
     memset((void *) &rogue, 0, sizeof( playerCharacter )); // the flood
     rogue.playbackMode = playingback;
     rogue.playbackPaused = playbackPaused;
@@ -166,6 +168,8 @@ void initializeRogue(uint64_t seed) {
     rogue.highScoreSaved = false;
     rogue.cautiousMode = false;
     rogue.milliseconds = 0;
+
+    strcpy(rogue.currentGamePath, currentGamePath);
 
     rogue.RNG = RNG_SUBSTANTIVE;
     if (!rogue.playbackMode) {
@@ -989,14 +993,13 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
 
     if (rogue.quit) {
         if (rogue.playbackMode) {
-            playback = rogue.playbackMode;
             rogue.playbackMode = false;
             message("(The player quit at this point.)", REQUIRE_ACKNOWLEDGMENT);
-            rogue.playbackMode = playback;
+            rogue.playbackMode = true;
         }
     } else {
         playback = rogue.playbackMode;
-        if (!D_IMMORTAL) {
+        if (!D_IMMORTAL && !nonInteractivePlayback) {
             rogue.playbackMode = false;
         }
         strcpy(buf, "You die...");
@@ -1108,6 +1111,10 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         }
         blackOutScreen();
         saveRecording(recordingFilename);
+    }
+
+    if (rogue.playbackMode && nonInteractivePlayback) {
+        printf("Recording: %s ended after %li turns (game over).\n", rogue.currentGamePath, rogue.playerTurnNumber);
     }
 
     if (!rogue.playbackMode) {
@@ -1262,6 +1269,10 @@ void victory(boolean superVictory) {
     } else {
         saveRecording(recordingFilename);
         printHighScores(qualified);
+    }
+
+    if (rogue.playbackMode && nonInteractivePlayback) {
+        printf("Recording: %s ended after %li turns (victory).\n", rogue.currentGamePath, rogue.playerTurnNumber);
     }
 
     if (!rogue.playbackMode) {

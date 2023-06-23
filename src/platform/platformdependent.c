@@ -377,7 +377,9 @@ void loadKeymap() {
             if (input_name != NULL && output_name != NULL) {
                 if (input_name[0] == '#') continue; // must be a comment
 
-                currentConsole.remap(input_name, output_name);
+                if (currentConsole.remap) {
+                    currentConsole.remap(input_name, output_name);
+                }
             }
         }
         fclose(f);

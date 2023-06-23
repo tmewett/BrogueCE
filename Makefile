@@ -6,7 +6,7 @@ cflags := -Isrc/brogue -Isrc/platform -std=c99 \
 libs := -lm
 cppflags := -DDATADIR=$(DATADIR)
 
-sources := $(wildcard src/brogue/*.c) $(addprefix src/platform/,main.c platformdependent.c)
+sources := $(wildcard src/brogue/*.c) $(addprefix src/platform/,main.c platformdependent.c null-platform.c)
 objects :=
 
 ifeq ($(SYSTEM),WINDOWS)
