@@ -21,8 +21,8 @@
  */
 
 #include "Rogue.h"
-#include "IncludeGlobalsBase.h"
-#include "IncludeGlobals.h"
+#include "GlobalsBase.h"
+#include "Globals.h"
 
 #define  CSV_HEADER_STRING "dungeon_version,seed,depth,quantity,category,kind,enchantment,runic,vault_number,opens_vault_number,carried_by_monster_name,ally_status_name,mutation_name"
 #define  NO_ENCHANTMENT_STRING ""

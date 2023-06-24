@@ -22,8 +22,8 @@
  */
 
 #include "Rogue.h"
-#include "IncludeGlobalsBase.h"
-#include "IncludeGlobals.h"
+#include "GlobalsBase.h"
+#include "Globals.h"
 
 void exposeCreatureToFire(creature *monst) {
     char buf[COLS], buf2[COLS];

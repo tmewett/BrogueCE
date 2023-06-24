@@ -25,8 +25,8 @@
 #include <time.h>
 
 #include "Rogue.h"
-#include "IncludeGlobalsBase.h"
-#include "IncludeGlobals.h"
+#include "GlobalsBase.h"
+#include "Globals.h"
 
 // Populates path[][] with a list of coordinates starting at origin and traversing down the map. Returns the number of steps in the path.
 short getPlayerPathOnMap(short path[1000][2], short **map, short originX, short originY) {

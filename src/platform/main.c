@@ -1,8 +1,7 @@
 #include <math.h>
 #include <limits.h>
 #include "platform.h"
-#include "IncludeGlobalsBase.h"
-#include "IncludeGlobals_Brogue.h"
+#include "GlobalsBase.h"
 
 #ifndef DATADIR
 #error "The DATADIR macro is undefined."
