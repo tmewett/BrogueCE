@@ -23,8 +23,8 @@
 
 
 #include "Rogue.h"
-#include "IncludeGlobalsBase.h"
-#include "IncludeGlobals.h"
+#include "GlobalsBase.h"
+#include "Globals.h"
 
 #define MAGIC_POLARITY_BENEVOLENT 1
 #define MAGIC_POLARITY_MALEVOLENT -1

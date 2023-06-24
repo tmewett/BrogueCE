@@ -22,11 +22,11 @@
  */
 
 #include "Rogue.h"
-#include "IncludeGlobalsBase.h"
-#include "IncludeGlobals.h"
-#include "IncludeGlobals_Brogue.h"
+#include "GlobalsBase.h"
+#include "Globals.h"
+#include "Globals_Brogue.h"
 #ifdef RAPID_BROGUE
-#include "IncludeGlobals_RapidBrogue.h"
+#include "Globals_RapidBrogue.h"
 #endif
 
 #include <time.h>

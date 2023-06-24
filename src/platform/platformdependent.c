@@ -30,7 +30,7 @@
 #include <dirent.h>
 
 #include "platform.h"
-#include "IncludeGlobalsBase.h"
+#include "GlobalsBase.h"
 
 typedef struct brogueScoreEntry {
     long int score;

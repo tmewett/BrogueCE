@@ -26,7 +26,7 @@
 #include <stdint.h> // C99
 
 #include "Rogue.h"
-#include "IncludeGlobalsBase.h"
+#include "GlobalsBase.h"
 
 
     // Random number generation

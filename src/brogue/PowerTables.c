@@ -22,7 +22,8 @@
  */
 
 #include "Rogue.h"
-#include "IncludeGlobals.h"
+#include "Globals.h"
+#include "GlobalsBase.h"
 
 #define LAST_INDEX(a) (sizeof(a) / sizeof(fixpt) - 1)
 
