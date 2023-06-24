@@ -678,7 +678,7 @@ void mainInputLoop() {
                            &white,
                            (steps <= 0
                             || (path[steps-1][0] == rogue.cursorLoc.x && path[steps-1][1] == rogue.cursorLoc.y)
-                            || (!playingBack && distanceBetween(player.loc.x, player.loc.y, rogue.cursorLoc.x, rogue.cursorLoc.y) <= 1) ? 100 : 25),
+                            || (!playingBack && distanceBetween(player.loc, rogue.cursorLoc) <= 1) ? 100 : 25),
                            true);
 
                 oldTargetLoc[0] = rogue.cursorLoc.x;
@@ -808,7 +808,7 @@ void mainInputLoop() {
 
                     confirmMessages();
                 } else if (abs(player.loc.x - rogue.cursorLoc.x) + abs(player.loc.y - rogue.cursorLoc.y) == 1 // horizontal or vertical
-                           || (distanceBetween(player.loc.x, player.loc.y, rogue.cursorLoc.x, rogue.cursorLoc.y) == 1 // includes diagonals
+                           || (distanceBetween(player.loc, rogue.cursorLoc) == 1 // includes diagonals
                                && (!diagonalBlocked(player.loc.x, player.loc.y, rogue.cursorLoc.x, rogue.cursorLoc.y, !rogue.playbackOmniscience)
                                    || ((pmapAt(rogue.cursorLoc)->flags & HAS_MONSTER) && (monsterAtLoc(rogue.cursorLoc.x, rogue.cursorLoc.y)->info.flags & MONST_ATTACKABLE_THRU_WALLS)) // there's a turret there
                                    || ((terrainFlags(rogue.cursorLoc.x, rogue.cursorLoc.y) & T_OBSTRUCTS_PASSABILITY) && (terrainMechFlags(rogue.cursorLoc.x, rogue.cursorLoc.y) & TM_PROMOTES_ON_PLAYER_ENTRY))))) { // there's a lever there

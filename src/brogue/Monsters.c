@@ -1303,7 +1303,7 @@ boolean monsterAvoids(creature *monst, short x, short y) {
             // This is so monsters can use secret doors but won't embed themselves in secret levers.
             return false;
         }
-        if (distanceBetween(monst->loc.x, monst->loc.y, x, y) <= 1) {
+        if (distanceBetween(monst->loc, (pos){x, y}) <= 1) {
             defender = monsterAtLoc(x, y);
             if (defender
                 && (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS)) {
@@ -1315,7 +1315,7 @@ boolean monsterAvoids(creature *monst, short x, short y) {
 
     // Monsters can always attack unfriendly neighboring monsters,
     // unless it is immune to us for whatever reason.
-    if (distanceBetween(monst->loc.x, monst->loc.y, x, y) <= 1) {
+    if (distanceBetween(monst->loc, (pos){x, y}) <= 1) {
         defender = monsterAtLoc(x, y);
         if (defender
             && !(defender->bookkeepingFlags & MB_IS_DYING)
@@ -1516,7 +1516,7 @@ boolean moveMonsterPassivelyTowards(creature *monst, short targetLoc[2], boolean
     // If that fails, try both directions for the shorter coordinate.
     // If they all fail, return false.
     if (monsterAvoids(monst, newX, newY) || (!willingToAttackPlayer && (pmap[newX][newY].flags & HAS_PLAYER)) || !moveMonster(monst, dx, dy)) {
-        if (distanceBetween(x, y, targetLoc[0], targetLoc[1]) <= 1 && (dx == 0 || dy == 0)) { // cardinally adjacent
+        if (distanceBetween((pos){x, y}, (pos){targetLoc[0], targetLoc[1]}) <= 1 && (dx == 0 || dy == 0)) { // cardinally adjacent
             return false; // destination is blocked
         }
         //abs(targetLoc[0] - x) < abs(targetLoc[1] - y)
@@ -1545,8 +1545,8 @@ boolean moveMonsterPassivelyTowards(creature *monst, short targetLoc[2], boolean
     return true;
 }
 
-short distanceBetween(short x1, short y1, short x2, short y2) {
-    return max(abs(x1 - x2), abs(y1 - y2));
+short distanceBetween(pos loc1, pos loc2) {
+    return max(abs(loc1.x - loc2.x), abs(loc1.y - loc2.y));
 }
 
 void alertMonster(creature *monst) {
@@ -1717,11 +1717,11 @@ void updateMonsterState(creature *monst) {
         creature *monst2 = !handledPlayer ? &player : nextCreature(&it);
         handledPlayer = true;
         if (monsterFleesFrom(monst, monst2)
-            && distanceBetween(x, y, monst2->loc.x, monst2->loc.y) < closestFearedEnemy
+            && distanceBetween((pos){x, y}, monst2->loc) < closestFearedEnemy
             && traversiblePathBetween(monst2, x, y)
             && openPathBetween(x, y, monst2->loc.x, monst2->loc.y)) {
 
-            closestFearedEnemy = distanceBetween(x, y, monst2->loc.x, monst2->loc.y);
+            closestFearedEnemy = distanceBetween((pos){x, y}, monst2->loc);
         }
     }
 
@@ -2069,7 +2069,7 @@ void pathTowardCreature(creature *monst, creature *target) {
     short targetLoc[2], dir;
 
     if (traversiblePathBetween(monst, target->loc.x, target->loc.y)) {
-        if (distanceBetween(monst->loc.x, monst->loc.y, target->loc.x, target->loc.y) <= 2) {
+        if (distanceBetween(monst->loc, target->loc) <= 2) {
             monst->bookkeepingFlags &= ~MB_GIVEN_UP_ON_SCENT;
         }
         targetLoc[0] = target->loc.x;
@@ -2092,7 +2092,7 @@ void pathTowardCreature(creature *monst, creature *target) {
     }
 
     // blink to the target?
-    if (distanceBetween(monst->loc.x, monst->loc.y, target->loc.x, target->loc.y) > 10
+    if (distanceBetween(monst->loc, target->loc) > 10
         || monstersAreEnemies(monst, target)) {
 
         if (monsterBlinkToPreferenceMap(monst, target->mapToMe, false)) { // if it blinked
@@ -2151,7 +2151,7 @@ enum directions monsterSwarmDirection(creature *monst, creature *enemy) {
         return NO_DIRECTION;
     }
 
-    if (distanceBetween(monst->loc.x, monst->loc.y, enemy->loc.x, enemy->loc.y) != 1
+    if (distanceBetween(monst->loc, enemy->loc) != 1
         || (diagonalBlocked(monst->loc.x, monst->loc.y, enemy->loc.x, enemy->loc.y, false) || (enemy->info.flags & MONST_ATTACKABLE_THRU_WALLS))
         || !monstersAreEnemies(monst, enemy)) {
 
@@ -2167,7 +2167,7 @@ enum directions monsterSwarmDirection(creature *monst, creature *enemy) {
         newX = monst->loc.x + nbDirs[dir][0];
         newY = monst->loc.y + nbDirs[dir][1];
         if (coordinatesAreInMap(newX, newY)
-            && distanceBetween(enemy->loc.x, enemy->loc.y, newX, newY) == 1
+            && distanceBetween(enemy->loc, (pos){newX, newY}) == 1
             && !(pmap[newX][newY].flags & (HAS_PLAYER | HAS_MONSTER))
             && !diagonalBlocked(monst->loc.x, monst->loc.y, newX, newY, false)
             && (!diagonalBlocked(enemy->loc.x, enemy->loc.y, newX, newY, false) || (enemy->info.flags & MONST_ATTACKABLE_THRU_WALLS))
@@ -2191,10 +2191,10 @@ enum directions monsterSwarmDirection(creature *monst, creature *enemy) {
             && monstersAreTeammates(monst, ally)
             && monstersAreEnemies(ally, enemy)
             && creatureEligibleForSwarming(ally)
-            && distanceBetween(monst->loc.x, monst->loc.y, ally->loc.x, ally->loc.y) == 1
+            && distanceBetween(monst->loc, ally->loc) == 1
             && !diagonalBlocked(monst->loc.x, monst->loc.y, ally->loc.x, ally->loc.y, false)
             && !monsterAvoids(ally, monst->loc.x, monst->loc.y)
-            && (distanceBetween(enemy->loc.x, enemy->loc.y, ally->loc.x, ally->loc.y) > 1 || diagonalBlocked(enemy->loc.x, enemy->loc.y, ally->loc.x, ally->loc.y, false))) {
+            && (distanceBetween(enemy->loc, ally->loc) > 1 || diagonalBlocked(enemy->loc.x, enemy->loc.y, ally->loc.x, ally->loc.y, false))) {
 
             // Found a prospective ally.
             // Check that there isn't already an open space from which to attack the enemy that is accessible to the ally.
@@ -2204,7 +2204,7 @@ enum directions monsterSwarmDirection(creature *monst, creature *enemy) {
                 newY = ally->loc.y + nbDirs[dir][1];
                 if (coordinatesAreInMap(newX, newY)
                     && !(pmap[newX][newY].flags & (HAS_PLAYER | HAS_MONSTER))
-                    && distanceBetween(enemy->loc.x, enemy->loc.y, newX, newY) == 1
+                    && distanceBetween(enemy->loc, (pos){newX, newY}) == 1
                     && !diagonalBlocked(enemy->loc.x, enemy->loc.y, newX, newY, false)
                     && !diagonalBlocked(ally->loc.x, ally->loc.y, newX, newY, false)
                     && !monsterAvoids(ally, newX, newY)) {
@@ -2224,7 +2224,7 @@ enum directions monsterSwarmDirection(creature *monst, creature *enemy) {
                         && monst != otherEnemy
                         && enemy != otherEnemy
                         && monstersAreEnemies(ally, otherEnemy)
-                        && distanceBetween(ally->loc.x, ally->loc.y, otherEnemy->loc.x, otherEnemy->loc.y) == 1
+                        && distanceBetween(ally->loc, otherEnemy->loc) == 1
                         && (!diagonalBlocked(ally->loc.x, ally->loc.y, otherEnemy->loc.x, otherEnemy->loc.y, false) || (otherEnemy->info.flags & MONST_ATTACKABLE_THRU_WALLS))) {
 
                         foundConflict = true;
@@ -2348,7 +2348,7 @@ boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, bool
 
 boolean fleeingMonsterAwareOfPlayer(creature *monst) {
     if (player.status[STATUS_INVISIBLE]) {
-        return (distanceBetween(monst->loc.x, monst->loc.y, player.loc.x, player.loc.y) <= 1);
+        return (distanceBetween(monst->loc, player.loc) <= 1);
     } else {
         return (pmapAt(monst->loc)->flags & IN_FIELD_OF_VIEW) ? true : false;
     }
@@ -2538,7 +2538,7 @@ boolean specificallyValidBoltTarget(creature *caster, creature *target, enum bol
     // Rules specific to bolt effects:
     switch (boltCatalog[theBoltType].boltEffect) {
         case BE_BECKONING:
-            if (distanceBetween(caster->loc.x, caster->loc.y, target->loc.x, target->loc.y) <= 1) {
+            if (distanceBetween(caster->loc, target->loc) <= 1) {
                 return false;
             }
             break;
@@ -2862,7 +2862,7 @@ boolean monsterFleesFrom(creature *monst, creature *defender) {
         return false;
     }
 
-    if (distanceBetween(x, y, defender->loc.x, defender->loc.y) >= 4) {
+    if (distanceBetween((pos){x, y}, defender->loc) >= 4) {
         return false;
     }
 
@@ -2907,7 +2907,7 @@ boolean allyFlees(creature *ally, creature *closestEnemy) {
         return false;
     }
 
-    if (distanceBetween(x, y, closestEnemy->loc.x, closestEnemy->loc.y) < 10
+    if (distanceBetween((pos){x, y}, closestEnemy->loc) < 10
         && (100 * ally->currentHP / ally->info.maxHP <= 33)
         && ally->info.turnsBetweenRegen > 0
         && !ally->carriedMonster
@@ -2990,12 +2990,12 @@ void moveAlly(creature *monst) {
         if (target != monst
             && (!(target->bookkeepingFlags & MB_SUBMERGED) || (monst->bookkeepingFlags & MB_SUBMERGED))
             && monsterWillAttackTarget(monst, target)
-            && distanceBetween(x, y, target->loc.x, target->loc.y) < shortestDistance
+            && distanceBetween((pos){x, y}, target->loc) < shortestDistance
             && traversiblePathBetween(monst, target->loc.x, target->loc.y)
             && (!cellHasTerrainFlag(target->loc.x, target->loc.y, T_OBSTRUCTS_PASSABILITY) || (target->info.flags & MONST_ATTACKABLE_THRU_WALLS))
             && (!target->status[STATUS_INVISIBLE] || rand_percent(33))) {
 
-            shortestDistance = distanceBetween(x, y, target->loc.x, target->loc.y);
+            shortestDistance = distanceBetween((pos){x, y}, target->loc);
             closestMonster = target;
         }
     }
@@ -3053,7 +3053,7 @@ void moveAlly(creature *monst) {
     }
 
     if (closestMonster
-        && (distanceBetween(x, y, player.loc.x, player.loc.y) < leashLength || (monst->bookkeepingFlags & MB_DOES_NOT_TRACK_LEADER))
+        && (distanceBetween((pos){x, y}, player.loc) < leashLength || (monst->bookkeepingFlags & MB_DOES_NOT_TRACK_LEADER))
         && !(monst->info.flags & MONST_MAINTAINS_DISTANCE)
         && !attackWouldBeFutile(monst, closestMonster)) {
 
@@ -3084,7 +3084,7 @@ void moveAlly(creature *monst) {
                 if (target != monst
                     && (!(target->bookkeepingFlags & MB_SUBMERGED) || (monst->bookkeepingFlags & MB_SUBMERGED))
                     && monsterWillAttackTarget(monst, target)
-                    && distanceBetween(x, y, target->loc.x, target->loc.y) < shortestDistance
+                    && distanceBetween((pos){x, y}, target->loc) < shortestDistance
                     && traversiblePathBetween(monst, target->loc.x, target->loc.y)
                     && (!monsterAvoids(monst, target->loc.x, target->loc.y) || (target->info.flags & MONST_ATTACKABLE_THRU_WALLS))
                     && (!target->status[STATUS_INVISIBLE] || ((monst->info.flags & MONST_ALWAYS_USE_ABILITY) || rand_percent(33)))) {
@@ -3124,13 +3124,13 @@ void moveAlly(creature *monst) {
             monst->bookkeepingFlags |= MB_ABSORBING;
         }
     } else if ((monst->bookkeepingFlags & MB_DOES_NOT_TRACK_LEADER)
-               || (distanceBetween(x, y, player.loc.x, player.loc.y) < 3 && (pmap[x][y].flags & IN_FIELD_OF_VIEW))) {
+               || (distanceBetween((pos){x, y}, player.loc) < 3 && (pmap[x][y].flags & IN_FIELD_OF_VIEW))) {
 
         monst->bookkeepingFlags &= ~MB_GIVEN_UP_ON_SCENT;
         monsterMillAbout(monst, 30);
     } else {
         if (!(monst->bookkeepingFlags & MB_GIVEN_UP_ON_SCENT)
-            && distanceBetween(x, y, player.loc.x, player.loc.y) > 10
+            && distanceBetween((pos){x, y}, player.loc) > 10
             && monsterBlinkToPreferenceMap(monst, scentMap, true)) {
 
             monst->ticksUntilTurn = monst->attackSpeed * (monst->info.flags & MONST_CAST_SPELLS_SLOWLY ? 2 : 1);
@@ -3295,12 +3295,12 @@ void monstersTurn(creature *monst) {
             if (target != monst
                 && (!(target->bookkeepingFlags & MB_SUBMERGED) || (monst->bookkeepingFlags & MB_SUBMERGED))
                 && monsterWillAttackTarget(monst, target)
-                && distanceBetween(x, y, target->loc.x, target->loc.y) < shortestDistance
+                && distanceBetween((pos){x, y}, target->loc) < shortestDistance
                 && traversiblePathBetween(monst, target->loc.x, target->loc.y)
                 && (!monsterAvoids(monst, target->loc.x, target->loc.y) || (target->info.flags & MONST_ATTACKABLE_THRU_WALLS))
                 && (!target->status[STATUS_INVISIBLE] || rand_percent(33))) {
 
-                shortestDistance = distanceBetween(x, y, target->loc.x, target->loc.y);
+                shortestDistance = distanceBetween((pos){x, y}, target->loc);
                 closestMonster = target;
             }
         }
@@ -3334,12 +3334,12 @@ void monstersTurn(creature *monst) {
             }
 
         // if the monster is adjacent to an ally and not adjacent to the player, attack the ally
-        if (distanceBetween(x, y, player.loc.x, player.loc.y) > 1
+        if (distanceBetween((pos){x, y}, player.loc) > 1
             || diagonalBlocked(x, y, player.loc.x, player.loc.y, false)) {
             for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
                 creature *ally = nextCreature(&it);
                 if (monsterWillAttackTarget(monst, ally)
-                    && distanceBetween(x, y, ally->loc.x, ally->loc.y) == 1
+                    && distanceBetween((pos){x, y}, ally->loc) == 1
                     && (!ally->status[STATUS_INVISIBLE] || rand_percent(33))) {
 
                     targetLoc[0] = ally->loc.x;
@@ -3409,7 +3409,7 @@ void monstersTurn(creature *monst) {
                 handledPlayer = true;
                 if (!monst->status[STATUS_MAGICAL_FEAR] // Fearful monsters will never attack.
                     && monsterWillAttackTarget(monst, ally)
-                    && distanceBetween(x, y, ally->loc.x, ally->loc.y) <= 1) {
+                    && distanceBetween((pos){x, y}, ally->loc) <= 1) {
 
                     moveMonster(monst, ally->loc.x - x, ally->loc.y - y); // attack the player if cornered
                     return;
@@ -3452,7 +3452,7 @@ void monstersTurn(creature *monst) {
             && !(monst->info.abilityFlags & MA_POISONS)
             && !diagonalBlocked(monst->loc.x, monst->loc.y, monst->leader->loc.x, monst->leader->loc.y, false)) {
 
-            if (distanceBetween(monst->loc.x, monst->loc.y, monst->leader->loc.x, monst->leader->loc.y) == 1) {
+            if (distanceBetween(monst->loc, monst->leader->loc) == 1) {
                 // Attack if adjacent.
                 monst->ticksUntilTurn = monst->attackSpeed;
                 attack(monst, monst->leader, false);
@@ -3469,7 +3469,7 @@ void monstersTurn(creature *monst) {
             for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
                 creature *ally = nextCreature(&it);
                 if (monsterWillAttackTarget(monst, ally)
-                    && distanceBetween(x, y, ally->loc.x, ally->loc.y) == 1
+                    && distanceBetween((pos){x, y}, ally->loc) == 1
                     && (!ally->status[STATUS_INVISIBLE] || rand_percent(33))) {
 
                     targetLoc[0] = ally->loc.x;
@@ -3483,7 +3483,7 @@ void monstersTurn(creature *monst) {
 
         // if you're a follower, don't get separated from the pack
         if (monst->bookkeepingFlags & MB_FOLLOWER) {
-            if (distanceBetween(x, y, monst->leader->loc.x, monst->leader->loc.y) > 2) {
+            if (distanceBetween((pos){x, y}, monst->leader->loc) > 2) {
                 pathTowardCreature(monst, monst->leader);
             } else if (monst->leader->info.flags & MONST_IMMOBILE) {
                 monsterMillAbout(monst, 100); // Worshipers will pace frenetically.
@@ -3678,7 +3678,7 @@ boolean moveMonster(creature *monst, short dx, short dy) {
                 creature *defender = nextCreature(&it);
                 if ((defender->bookkeepingFlags & MB_SEIZING)
                     && monstersAreEnemies(monst, defender)
-                    && distanceBetween(monst->loc.x, monst->loc.y, defender->loc.x, defender->loc.y) == 1
+                    && distanceBetween(monst->loc, defender->loc) == 1
                     && !diagonalBlocked(monst->loc.x, monst->loc.y, defender->loc.x, defender->loc.y, false)) {
 
                     monst->ticksUntilTurn = monst->movementSpeed;

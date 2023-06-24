@@ -4275,7 +4275,7 @@ void beckonMonster(creature *monst, short x, short y) {
     }
     pos from = monst->loc;
     pos to = (pos){ .x = x, .y = y };
-    theBolt.magnitude = max(1, (distanceBetween(x, y, monst->loc.x, monst->loc.y) - 2) / 2);
+    theBolt.magnitude = max(1, (distanceBetween((pos){x, y}, monst->loc) - 2) / 2);
     zap(from, to, &theBolt, false, true);
     if (monst->ticksUntilTurn < player.attackSpeed+1) {
         monst->ticksUntilTurn = player.attackSpeed+1;
@@ -4414,7 +4414,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
             case BE_BECKONING:
                 if (!(monst->info.flags & MONST_IMMOBILE)
                     && caster
-                    && distanceBetween(caster->loc.x, caster->loc.y, monst->loc.x, monst->loc.y) > 1) {
+                    && distanceBetween(caster->loc, monst->loc) > 1) {
 
                     if (canSeeMonster(monst) && autoID) {
                         *autoID = true;
@@ -5523,7 +5523,7 @@ boolean chooseTarget(pos *returnLoc,
         numCells = min(numCells, maxDistance);
     }
     if (stopAtTarget) {
-        numCells = min(numCells, distanceBetween(player.loc.x, player.loc.y, targetLoc.x, targetLoc.y));
+        numCells = min(numCells, distanceBetween(player.loc, targetLoc));
     }
 
     targetConfirmed = canceled = tabKey = false;
@@ -5570,7 +5570,7 @@ boolean chooseTarget(pos *returnLoc,
             }
 
             if (stopAtTarget) {
-                numCells = min(numCells, distanceBetween(player.loc.x, player.loc.y, targetLoc.x, targetLoc.y));
+                numCells = min(numCells, distanceBetween(player.loc, targetLoc));
             }
             distance = hiliteTrajectory(coordinates, numCells, false, theBolt, &trajColor);
             cursorInTrajectory = false;

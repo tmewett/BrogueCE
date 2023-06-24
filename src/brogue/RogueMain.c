@@ -215,8 +215,7 @@ void initializeRogue(uint64_t seed) {
         do {
             levels[i].downStairsLoc.x = rand_range(1, DCOLS - 2);
             levels[i].downStairsLoc.y = rand_range(1, DROWS - 2);
-        } while (distanceBetween(levels[i].upStairsLoc.x, levels[i].upStairsLoc.y,
-                                 levels[i].downStairsLoc.x, levels[i].downStairsLoc.y) < DCOLS / 3);
+        } while (distanceBetween(levels[i].upStairsLoc, levels[i].downStairsLoc) < DCOLS / 3);
         if (i < DEEPEST_LEVEL) {
             levels[i+1].upStairsLoc.x = levels[i].downStairsLoc.x;
             levels[i+1].upStairsLoc.y = levels[i].downStairsLoc.y;

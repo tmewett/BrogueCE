@@ -344,7 +344,7 @@ void moralAttack(creature *attacker, creature *defender) {
         }
 
         if ((defender->info.abilityFlags & MA_CLONE_SELF_ON_DEFEND) && alliedCloneCount(defender) < 100) {
-            if (distanceBetween(defender->loc.x, defender->loc.y, attacker->loc.x, attacker->loc.y) <= 1) {
+            if (distanceBetween(defender->loc, attacker->loc) <= 1) {
                 splitMonster(defender, attacker->loc);
             } else {
                 splitMonster(defender, INVALID_POS);
@@ -508,8 +508,8 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
     theBolt.magnitude = max(1, netEnchant(theItem) / FP_FACTOR);
     zap(oldLoc, newLoc, &theBolt, false, false);
     if (!(defender->bookkeepingFlags & MB_IS_DYING)
-        && distanceBetween(oldLoc.x, oldLoc.y, defender->loc.x, defender->loc.y) > 0
-        && distanceBetween(oldLoc.x, oldLoc.y, defender->loc.x, defender->loc.y) < weaponForceDistance(netEnchant(theItem))) {
+        && distanceBetween(oldLoc, defender->loc) > 0
+        && distanceBetween(oldLoc, defender->loc) < weaponForceDistance(netEnchant(theItem))) {
 
         if (pmap[defender->loc.x + newLoc.x - oldLoc.x][defender->loc.y + newLoc.y - oldLoc.y].flags & (HAS_MONSTER | HAS_PLAYER)) {
             otherMonster = monsterAtLoc(defender->loc.x + newLoc.x - oldLoc.x, defender->loc.y + newLoc.y - oldLoc.y);
@@ -519,7 +519,7 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
             strcpy(buf2, tileCatalog[pmap[defender->loc.x + newLoc.x - oldLoc.x][defender->loc.y + newLoc.y - oldLoc.y].layers[highestPriorityLayer(defender->loc.x + newLoc.x - oldLoc.x, defender->loc.y + newLoc.y - oldLoc.y, true)]].description);
         }
 
-        forceDamage = distanceBetween(oldLoc.x, oldLoc.y, defender->loc.x, defender->loc.y);
+        forceDamage = distanceBetween(oldLoc, defender->loc);
 
         if (!(defender->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE))
             && inflictDamage(NULL, defender, forceDamage, &white, false)) {
@@ -1059,7 +1059,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
 
     if ((attacker->info.abilityFlags & MA_SEIZES)
         && (!(attacker->bookkeepingFlags & MB_SEIZING) || !(defender->bookkeepingFlags & MB_SEIZED))
-        && (distanceBetween(attacker->loc.x, attacker->loc.y, defender->loc.x, defender->loc.y) == 1
+        && (distanceBetween(attacker->loc, defender->loc) == 1
             && !diagonalBlocked(attacker->loc.x, attacker->loc.y, defender->loc.x, defender->loc.y, false))) {
 
         attacker->bookkeepingFlags |= MB_SEIZING;

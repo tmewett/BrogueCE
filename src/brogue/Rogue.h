@@ -3093,7 +3093,7 @@ extern "C" {
     unsigned long burnedTerrainFlagsAtLoc(short x, short y);
     unsigned long discoveredTerrainFlagsAtLoc(short x, short y);
     boolean monsterAvoids(creature *monst, short x, short y);
-    short distanceBetween(short x1, short y1, short x2, short y2);
+    short distanceBetween(pos loc1, pos loc2);
     void alertMonster(creature *monst);
     void wakeUp(creature *monst);
     boolean monsterRevealed(creature *monst);
