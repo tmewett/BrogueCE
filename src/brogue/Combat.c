@@ -168,8 +168,7 @@ void addMonsterToContiguousMonsterGrid(short x, short y, creature *monst, char g
 // group of monsters that the monster would not avoid.
 // The contiguous group is supplemented with the given (x, y) coordinates, if any;
 // this is so that jellies et al. can spawn behind the player in a hallway.
-void splitMonster(creature *monst, short x, short y) {
-    short i, j, b, dir, newX, newY, eligibleLocationCount, randIndex;
+void splitMonster(creature *monst, pos loc) {
     char buf[DCOLS * 3];
     char monstName[DCOLS];
     char monsterGrid[DCOLS][DROWS], eligibleGrid[DCOLS][DROWS];
@@ -177,23 +176,23 @@ void splitMonster(creature *monst, short x, short y) {
 
     zeroOutGrid(monsterGrid);
     zeroOutGrid(eligibleGrid);
-    eligibleLocationCount = 0;
+    int eligibleLocationCount = 0;
 
     // Add the (x, y) location to the contiguous group, if any.
-    if (x > 0 && y > 0) {
-        monsterGrid[x][y] = true;
+    if (isPosInMap(loc)) {
+        monsterGrid[loc.x][loc.y] = true;
     }
 
     // Find the contiguous group of monsters.
     addMonsterToContiguousMonsterGrid(monst->loc.x, monst->loc.y, monst, monsterGrid);
 
     // Find the eligible edges around the group of monsters.
-    for (i=0; i<DCOLS; i++) {
-        for (j=0; j<DROWS; j++) {
+    for (int i=0; i<DCOLS; i++) {
+        for (int j=0; j<DROWS; j++) {
             if (monsterGrid[i][j]) {
-                for (dir=0; dir<4; dir++) {
-                    newX = i + nbDirs[dir][0];
-                    newY = j + nbDirs[dir][1];
+                for (int dir=0; dir<4; dir++) {
+                    const int newX = i + nbDirs[dir][0];
+                    const int newY = j + nbDirs[dir][1];
                     if (coordinatesAreInMap(newX, newY)
                         && !eligibleGrid[newX][newY]
                         && !monsterGrid[newX][newY]
@@ -216,9 +215,9 @@ void splitMonster(creature *monst, short x, short y) {
 
     // Pick a random location on the eligibleGrid and add the clone there.
     if (eligibleLocationCount) {
-        randIndex = rand_range(1, eligibleLocationCount);
-        for (i=0; i<DCOLS; i++) {
-            for (j=0; j<DROWS; j++) {
+        int randIndex = rand_range(1, eligibleLocationCount);
+        for (int i=0; i<DCOLS; i++) {
+            for (int j=0; j<DROWS; j++) {
                 if (eligibleGrid[i][j] && !--randIndex) {
                     // Found the spot!
 
@@ -236,7 +235,7 @@ void splitMonster(creature *monst, short x, short y) {
                         clone->info.flags           &= monsterCatalog[clone->info.monsterID].flags;
                         clone->info.abilityFlags    &= monsterCatalog[clone->info.monsterID].abilityFlags;
                     }
-                    for (b = 0; b < 20; b++) {
+                    for (int b = 0; b < 20; b++) {
                         clone->info.bolts[b] = monsterCatalog[clone->info.monsterID].bolts[b];
                     }
 
@@ -246,8 +245,7 @@ void splitMonster(creature *monst, short x, short y) {
                         clone->status[STATUS_LEVITATING] = 0;
                     }
 
-                    clone->loc.x = i;
-                    clone->loc.y = j;
+                    clone->loc = (pos){.x = i, .y = j};
                     pmap[i][j].flags |= HAS_MONSTER;
                     clone->ticksUntilTurn = max(clone->ticksUntilTurn, 101);
                     fadeInMonster(clone);
@@ -347,9 +345,9 @@ void moralAttack(creature *attacker, creature *defender) {
 
         if ((defender->info.abilityFlags & MA_CLONE_SELF_ON_DEFEND) && alliedCloneCount(defender) < 100) {
             if (distanceBetween(defender->loc.x, defender->loc.y, attacker->loc.x, attacker->loc.y) <= 1) {
-                splitMonster(defender, attacker->loc.x, attacker->loc.y);
+                splitMonster(defender, attacker->loc);
             } else {
-                splitMonster(defender, 0, 0);
+                splitMonster(defender, INVALID_POS);
             }
         }
     }
