@@ -3349,7 +3349,7 @@ short getLineCoordinates(pos listOfCoordinates[], const pos originLoc, const pos
         {50,  1}, {99, 50}, {50, 99}, { 1, 50} };
 
     if (originLoc.x == targetLoc.x && originLoc.y == targetLoc.y) {
-        listOfCoordinates[0] = (pos){ .x = -1, .y = -1 };
+        listOfCoordinates[0] = INVALID_POS;
         return 0;
     }
 
@@ -3476,7 +3476,7 @@ short getLineCoordinates(pos listOfCoordinates[], const pos originLoc, const pos
     }
 
     // demarcate the end of the list
-    listOfCoordinates[listLength] = (pos){ .x = -1, .y = -1 };
+    listOfCoordinates[listLength] = INVALID_POS;
 
     return listLength;
 }
@@ -4250,7 +4250,7 @@ short reflectBolt(short targetX, short targetY, pos listOfCoordinates[], short k
         finalLength = kinkCell + newPathLength + 1;
     }
 
-    listOfCoordinates[finalLength] = (pos){ .x = -1, .y = -1 };
+    listOfCoordinates[finalLength] = INVALID_POS;
     return finalLength;
 }
 
@@ -5489,7 +5489,7 @@ boolean chooseTarget(pos *returnLoc,
     if (rogue.playbackMode) {
         // In playback, pull the next event (a mouseclick) and use that location as the target.
         *returnLoc = pullMouseClickDuringPlayback();
-        rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
+        rogue.cursorLoc = INVALID_POS;
         return true;
     }
 
@@ -5535,7 +5535,7 @@ boolean chooseTarget(pos *returnLoc,
             refreshDungeonCell(oldTargetLoc.x, oldTargetLoc.y);
             hiliteTrajectory(coordinates, numCells, true, theBolt, trajectoryColor);
             confirmMessages();
-            rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
+            rogue.cursorLoc = INVALID_POS;
             restoreRNG;
             return false;
         }
@@ -5598,7 +5598,7 @@ boolean chooseTarget(pos *returnLoc,
     if (originLoc.x == targetLoc.x && originLoc.y == targetLoc.y) {
         confirmMessages();
         restoreRNG;
-        rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
+        rogue.cursorLoc = INVALID_POS;
         return false;
     }
 
@@ -5609,7 +5609,7 @@ boolean chooseTarget(pos *returnLoc,
 
     *returnLoc = targetLoc;
     restoreRNG;
-    rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
+    rogue.cursorLoc = INVALID_POS;
     return true;
 }
 

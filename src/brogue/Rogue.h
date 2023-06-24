@@ -153,6 +153,8 @@ typedef struct pos {
     short y;
 } pos;
 
+#define INVALID_POS ((pos) { .x = -1, .y = -1 })
+
 // A location within the window.
 // Convert between `windowpos` and `pos` with `mapToWindow` and
 // `windowToMap`

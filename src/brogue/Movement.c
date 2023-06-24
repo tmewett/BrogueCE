@@ -1645,7 +1645,7 @@ void travel(short x, short y, boolean autoConfirm) {
 //          rogue.cursorLoc.y = y;
 //      }
     } else {
-        rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
+        rogue.cursorLoc = INVALID_POS;
         message("No path is available.", 0);
     }
     freeGrid(distanceMap);
@@ -2153,7 +2153,7 @@ boolean useStairs(short stairDirection) {
     if (stairDirection == 1) {
         if (rogue.depthLevel < DEEPEST_LEVEL) {
             //copyDisplayBuffer(fromBuf, displayBuffer);
-            rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
+            rogue.cursorLoc = INVALID_POS;
             rogue.depthLevel++;
             message("You descend.", 0);
             startLevel(rogue.depthLevel - 1, stairDirection);
@@ -2172,7 +2172,7 @@ boolean useStairs(short stairDirection) {
         succeeded = true;
     } else {
         if (rogue.depthLevel > 1 || numberOfMatchingPackItems(AMULET, 0, 0, false)) {
-            rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
+            rogue.cursorLoc = INVALID_POS;
             rogue.depthLevel--;
             if (rogue.depthLevel == 0) {
                 victory(false);
