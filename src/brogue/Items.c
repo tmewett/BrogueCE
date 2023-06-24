@@ -3379,7 +3379,7 @@ short getLineCoordinates(pos listOfCoordinates[], const pos originLoc, const pos
                 .x = (point[0] < 0 ? -1 : point[0] / FP_FACTOR),
                 .y = (point[1] < 0 ? -1 : point[1] / FP_FACTOR)
             };
-            if (!coordinatesAreInMap(listOfCoordinates[listLength].x, listOfCoordinates[listLength].y)) break;
+            if (!isPosInMap(listOfCoordinates[listLength])) break;
             listLength++;
         };
 

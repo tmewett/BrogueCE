@@ -107,7 +107,7 @@ void hideCursor() {
 
 void showCursor() {
     // Return or enter turns on cursor mode. When the path is hidden, move the cursor to the player.
-    if (!coordinatesAreInMap(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
+    if (!isPosInMap(rogue.cursorLoc)) {
         rogue.cursorLoc = player.loc;
         rogue.cursorMode = true;
         rogue.cursorPathIntensity = (rogue.cursorMode ? 50 : 20);
@@ -635,7 +635,7 @@ void mainInputLoop() {
                 if (coordinatesAreInMap(oldTargetLoc[0], oldTargetLoc[1])) {
                     hilitePath(path, steps, true);                                  // Unhilite old path.
                 }
-                if (coordinatesAreInMap(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
+                if (isPosInMap(rogue.cursorLoc)) {
                     if (cursorSnapMap[rogue.cursorLoc.x][rogue.cursorLoc.y] >= 0
                         && cursorSnapMap[rogue.cursorLoc.x][rogue.cursorLoc.y] < 30000) {
 
@@ -672,7 +672,7 @@ void mainInputLoop() {
                 }
             }
 
-            if (coordinatesAreInMap(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
+            if (isPosInMap(rogue.cursorLoc)) {
                 hiliteCell(rogue.cursorLoc.x,
                            rogue.cursorLoc.y,
                            &white,
@@ -790,7 +790,7 @@ void mainInputLoop() {
         if (canceled && !playingBack) {
             hideCursor();
             confirmMessages();
-        } else if (targetConfirmed && !playingBack && coordinatesAreInMap(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
+        } else if (targetConfirmed && !playingBack && isPosInMap(rogue.cursorLoc)) {
             if (theEvent.eventType == MOUSE_UP
                 && theEvent.controlKey
                 && steps > 1) {
