@@ -24,6 +24,19 @@
 
 extern tcell tmap[DCOLS][DROWS];                        // grids with info about the map
 extern pcell pmap[DCOLS][DROWS];                        // grids with info about the map
+
+// Returns a pointer to the `tcell` at the given position. The position must be in-bounds.
+static inline tcell* tmapAt(pos p) {
+  brogueAssert(p.x >= 0 && p.x < DCOLS && p.y >= 0 && p.y < DROWS);
+  return &tmap[p.x][p.y];
+}
+
+// Returns a pointer to the `pcell` at the given position. The position must be in-bounds.
+static inline pcell* pmapAt(pos p) {
+  brogueAssert(p.x >= 0 && p.x < DCOLS && p.y >= 0 && p.y < DROWS);
+  return &pmap[p.x][p.y];
+}
+
 extern short **scentMap;
 extern cellDisplayBuffer displayBuffer[COLS][ROWS];
 extern short terrainRandomValues[DCOLS][DROWS][8];

@@ -501,7 +501,7 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
     };
     if (canDirectlySeeMonster(defender)
         && !cellHasTerrainFlag(newLoc.x, newLoc.y, T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION)
-        && !(pmap[newLoc.x][newLoc.y].flags & (HAS_MONSTER | HAS_PLAYER))) {
+        && !(pmapAt(newLoc)->flags & (HAS_MONSTER | HAS_PLAYER))) {
         sprintf(buf, "you launch %s backward with the force of your blow", monstName);
         buf[DCOLS] = '\0';
         combatMessage(buf, messageColorFromVictim(defender));
@@ -719,7 +719,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
                                 break;
                         }
                     }
-                    pmap[newMonst->loc.x][newMonst->loc.y].flags |= HAS_MONSTER;
+                    pmapAt(newMonst->loc)->flags |= HAS_MONSTER;
                     fadeInMonster(newMonst);
                 }
                 updateVision(true);

@@ -21,6 +21,9 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#ifndef ROGUE_H
+#define ROGUE_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -2487,6 +2490,9 @@ typedef struct playerCharacter {
     enum NGCommands nextGame;
     char nextGamePath[BROGUE_FILENAME_MAX];
     uint64_t nextGameSeed;
+
+    // Path of the current save game or recording, NULL for a new game
+    char currentGamePath[BROGUE_FILENAME_MAX];
 } playerCharacter;
 
 // Stores the necessary info about a level so it can be regenerated:
@@ -2765,6 +2771,7 @@ typedef struct archivedMessage {
 } archivedMessage;
 
 extern boolean serverMode;
+extern boolean nonInteractivePlayback;
 extern boolean hasGraphics;
 extern enum graphicsModes graphicsMode;
 
@@ -3204,7 +3211,7 @@ extern "C" {
     item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind);
     void updateEncumbrance();
     short displayedArmorValue();
-    short armorValueIfUnenchanted();
+    short armorValueIfUnenchanted(item *theItem);
     void strengthCheck(item *theItem, boolean noisy);
     void recalculateEquipmentBonuses();
     boolean equipItem(item *theItem, boolean force, item *unequipHint);
@@ -3416,4 +3423,6 @@ extern "C" {
 
 #if defined __cplusplus
 }
+#endif
+
 #endif

@@ -274,7 +274,7 @@ void updateLighting() {
         player.info.foreColor = &playerInvisibleColor;
     } else if (playerInDarkness()) {
         player.info.foreColor = &playerInDarknessColor;
-    } else if (pmap[player.loc.x][player.loc.y].flags & IS_IN_SHADOW) {
+    } else if (pmapAt(player.loc)->flags & IS_IN_SHADOW) {
         player.info.foreColor = &playerInShadowColor;
     } else {
         player.info.foreColor = &playerInLightColor;
@@ -282,9 +282,9 @@ void updateLighting() {
 }
 
 boolean playerInDarkness() {
-    return (tmap[player.loc.x][player.loc.y].light[0] + 10 < minersLightColor.red
-            && tmap[player.loc.x][player.loc.y].light[1] + 10 < minersLightColor.green
-            && tmap[player.loc.x][player.loc.y].light[2] + 10 < minersLightColor.blue);
+    return (tmapAt(player.loc)->light[0] + 10 < minersLightColor.red
+            && tmapAt(player.loc)->light[1] + 10 < minersLightColor.green
+            && tmapAt(player.loc)->light[2] + 10 < minersLightColor.blue);
 }
 
 #define flarePrecision 1000

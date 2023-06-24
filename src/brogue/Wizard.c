@@ -381,7 +381,7 @@ static void dialogCreateMonster() {
         if (!playerCanSeeOrSense(selectedPosition.x, selectedPosition.y)) {
             locationIsValid = false;
         }
-        if (theMonster->info.displayChar == G_TURRET && (!(pmap[selectedPosition.x][selectedPosition.y].layers[DUNGEON] == WALL))) {
+        if (theMonster->info.displayChar == G_TURRET && (!(pmapAt(selectedPosition)->layers[DUNGEON] == WALL))) {
             locationIsValid = false;
         }
         if (!(theMonster->info.displayChar == G_TURRET) && cellHasTerrainFlag(selectedPosition.x, selectedPosition.y, T_OBSTRUCTS_PASSABILITY)) {
@@ -404,7 +404,7 @@ static void dialogCreateMonster() {
         }
 
         theMonster->loc = selectedPosition;
-        pmap[theMonster->loc.x][theMonster->loc.y].flags |= HAS_MONSTER;
+        pmapAt(theMonster->loc)->flags |= HAS_MONSTER;
         theMonster->creatureState = MONSTER_WANDERING;
         fadeInMonster(theMonster);
         refreshSideBar(-1, -1, false);

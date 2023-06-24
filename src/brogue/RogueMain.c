@@ -179,6 +179,7 @@ void initializeRogue(uint64_t seed) {
     boolean playingback, playbackFF, playbackPaused, wizard, displayStealthRangeMode;
     boolean trueColorMode;
     short oldRNG;
+    char currentGamePath[BROGUE_FILENAME_MAX];
 
     playingback = rogue.playbackMode; // the only animals that need to go on the ark
     playbackPaused = rogue.playbackPaused;
@@ -191,6 +192,7 @@ void initializeRogue(uint64_t seed) {
         free(rogue.meteredItems);
     }
 
+    strcpy(currentGamePath, rogue.currentGamePath);
     memset((void *) &rogue, 0, sizeof( playerCharacter )); // the flood
     rogue.playbackMode = playingback;
     rogue.playbackPaused = playbackPaused;
@@ -206,6 +208,7 @@ void initializeRogue(uint64_t seed) {
     rogue.milliseconds = 0;
 
     rogue.meteredItems = calloc(gameConst.numberMeteredItems, sizeof(meteredItem));
+    strcpy(rogue.currentGamePath, currentGamePath);
 
     rogue.RNG = RNG_SUBSTANTIVE;
     if (!rogue.playbackMode) {
@@ -545,7 +548,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
     rogue.lastTarget = NULL;
 
-    connectingStairsDiscovered = (pmap[rogue.downLoc.x][rogue.downLoc.y].flags & (DISCOVERED | MAGIC_MAPPED) ? true : false);
+    connectingStairsDiscovered = (pmapAt(rogue.downLoc)->flags & (DISCOVERED | MAGIC_MAPPED) ? true : false);
     if (stairDirection == 0) { // fallen
         levels[oldLevelNumber-1].playerExitedVia = (pos){ .x = player.loc.x, .y = player.loc.y };
     }
@@ -815,7 +818,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             loc.x = player.loc.x + nbDirs[dir][0];
             loc.y = player.loc.y + nbDirs[dir][1];
             if (!cellHasTerrainFlag(loc.x, loc.y, T_PATHING_BLOCKER)
-                && !(pmap[loc.x][loc.y].flags & (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE))) {
+                && !(pmapAt(loc)->flags & (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE))) {
                 placedPlayer = true;
             }
         }
@@ -830,7 +833,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     }
     player.loc = loc;
 
-    pmap[player.loc.x][player.loc.y].flags |= HAS_PLAYER;
+    pmapAt(player.loc)->flags |= HAS_PLAYER;
 
     if (connectingStairsDiscovered) {
         for (i = rogue.upLoc.x-1; i <= rogue.upLoc.x + 1; i++) {
@@ -1024,14 +1027,13 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
 
     if (rogue.quit) {
         if (rogue.playbackMode) {
-            playback = rogue.playbackMode;
             rogue.playbackMode = false;
             message("(The player quit at this point.)", REQUIRE_ACKNOWLEDGMENT);
-            rogue.playbackMode = playback;
+            rogue.playbackMode = true;
         }
     } else {
         playback = rogue.playbackMode;
-        if (!D_IMMORTAL) {
+        if (!D_IMMORTAL && !nonInteractivePlayback) {
             rogue.playbackMode = false;
         }
         strcpy(buf, "You die...");
@@ -1143,6 +1145,10 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         }
         blackOutScreen();
         saveRecording(recordingFilename);
+    }
+
+    if (rogue.playbackMode && nonInteractivePlayback) {
+        printf("Recording: %s ended after %li turns (game over).\n", rogue.currentGamePath, rogue.playerTurnNumber);
     }
 
     if (!rogue.playbackMode) {
@@ -1297,6 +1303,10 @@ void victory(boolean superVictory) {
     } else {
         saveRecording(recordingFilename);
         printHighScores(qualified);
+    }
+
+    if (rogue.playbackMode && nonInteractivePlayback) {
+        printf("Recording: %s ended after %li turns (victory).\n", rogue.currentGamePath, rogue.playerTurnNumber);
     }
 
     if (!rogue.playbackMode) {

@@ -110,6 +110,8 @@ extern struct brogueConsole cursesConsole;
 extern struct brogueConsole webConsole;
 #endif
 
+extern struct brogueConsole nullConsole;
+
 extern struct brogueConsole currentConsole;
 extern boolean noMenu;
 extern char dataDirectory[];
