@@ -2962,7 +2962,7 @@ extern "C" {
     void colorFlash(const color *theColor, unsigned long reqTerrainFlags, unsigned long reqTileFlags, short frames, short maxRadius, short x, short y);
     void printString(const char *theString, short x, short y, const color *foreColor, const color* backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
     short wrapText(char *to, const char *sourceText, short width);
-    short printStringWithWrapping(char *theString, short x, short y, short width, const color *foreColor,
+    short printStringWithWrapping(const char *theString, short x, short y, short width, const color *foreColor,
                                   const color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
     boolean getInputTextString(char *inputText,
                                const char *prompt,

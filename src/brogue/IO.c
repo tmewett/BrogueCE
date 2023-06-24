@@ -4039,7 +4039,7 @@ short wrapText(char *to, const char *sourceText, short width) {
 }
 
 // returns the y-coordinate of the last line
-short printStringWithWrapping(char *theString, short x, short y, short width, const color *foreColor,
+short printStringWithWrapping(const char *theString, short x, short y, short width, const color *foreColor,
                               const color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]) {
     color fColor;
     char printString[COLS * ROWS * 2];
