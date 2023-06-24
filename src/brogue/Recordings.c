@@ -1134,15 +1134,15 @@ void getDefaultFilePath(char *defaultPath, boolean gameOver) {
     }
 
     if (!gameOver) {
-        sprintf(defaultPath, "Saved #%s at depth %d", seed, rogue.depthLevel);
+        sprintf(defaultPath, "Saved %s #%s at depth %d", gameConst.versionString, seed, rogue.depthLevel);
     } else if (rogue.quit) {
-        sprintf(defaultPath, "#%s Quit at depth %d", seed, rogue.depthLevel);
+        sprintf(defaultPath, "%s #%s Quit at depth %d", gameConst.versionString, seed, rogue.depthLevel);
     } else if (player.bookkeepingFlags & MB_IS_DYING) {
-        sprintf(defaultPath, "#%s Died at depth %d", seed, rogue.depthLevel);
+        sprintf(defaultPath, "%s #%s Died at depth %d", gameConst.versionString, seed, rogue.depthLevel);
     } else if (rogue.depthLevel > 26) {
-        sprintf(defaultPath, "#%s Mastered the dungeons", seed);
+        sprintf(defaultPath, "%s #%s Mastered the dungeons", gameConst.versionString, seed);
     } else {
-        sprintf(defaultPath, "#%s Escaped the dungeons", seed);
+        sprintf(defaultPath, "%s #%s Escaped the dungeons", gameConst.versionString, seed);
     }
     if (rogue.wizard) {
         strcat(defaultPath, " (wizard)");
