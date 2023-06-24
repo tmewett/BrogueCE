@@ -645,7 +645,7 @@ void mainBrogueJunction() {
         }
     }
 
-    initializeGameSpecifics();
+    initializeGameVariant();
 
     initializeLaunchArguments(&rogue.nextGame, rogue.nextGamePath, &rogue.nextGameSeed);
 

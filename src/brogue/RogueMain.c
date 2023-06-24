@@ -49,7 +49,7 @@ void switchVariant() {
     if (gameVariant == NUMBER_VARIANTS) {
         gameVariant = 0;
     }
-    initializeGameSpecifics();
+    initializeGameVariant();
 }
 
 void executeEvent(rogueEvent *theEvent) {
@@ -158,18 +158,16 @@ void welcome() {
     flavorMessage("The doors to the dungeon slam shut behind you.");
 }
 
-void initializeGameSpecifics() {
+void initializeGameVariant() {
 
     switch (gameVariant) {
 #ifdef RAPID_BROGUE
         case VARIANT_RAPID_BROGUE:
-            initializeGameConst_RapidBrogue();
-            initializeGameGlobals_RapidBrogue();
+            initializeGameVariantRapidBrogue();
             break;
 #endif
         default:
-            initializeGameConst_Brogue();
-            initializeGameGlobals_Brogue();
+            initializeGameVariantBrogue();
     }
 }
 

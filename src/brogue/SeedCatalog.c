@@ -257,7 +257,7 @@ void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsig
     char message[1000] = "";
     rogue.nextGame = NG_NOTHING;
 
-    initializeGameSpecifics();
+    initializeGameVariant();
 
     sprintf(message, "Brogue seed catalog, seeds %llu to %llu, through depth %u.\n"
                      "Generated with %s. Dungeons unchanged since %s.\n\n"
