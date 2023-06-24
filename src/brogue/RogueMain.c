@@ -24,9 +24,9 @@
 #include "Rogue.h"
 #include "GlobalsBase.h"
 #include "Globals.h"
-#include "Globals_Brogue.h"
+#include "GlobalsBrogue.h"
 #ifdef RAPID_BROGUE
-#include "Globals_RapidBrogue.h"
+#include "GlobalsRapidBrogue.h"
 #endif
 
 #include <time.h>
