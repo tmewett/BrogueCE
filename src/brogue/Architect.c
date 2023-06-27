@@ -37,7 +37,7 @@ boolean checkLoopiness(short x, short y) {
     short newX, newY, dir, sdir;
     short numStrings, maxStringLength, currentStringLength;
 
-    if (!(pmapAt((pos){x, y})->flags & IN_LOOP)) {
+    if (!(pmap[x][y].flags & IN_LOOP)) {
         return false;
     }
 
