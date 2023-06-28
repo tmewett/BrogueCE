@@ -153,6 +153,8 @@ typedef struct pos {
     short y;
 } pos;
 
+#define INVALID_POS ((pos) { .x = -1, .y = -1 })
+
 // A location within the window.
 // Convert between `windowpos` and `pos` with `mapToWindow` and
 // `windowToMap`
@@ -1267,6 +1269,10 @@ boolean cellHasTerrainFlag(short x, short y, unsigned long flagMask);
                                                 && cellHasTerrainFlag((x), (y), T_OBSTRUCTS_PASSABILITY)))
 
 #define coordinatesAreInMap(x, y)           ((x) >= 0 && (x) < DCOLS    && (y) >= 0 && (y) < DROWS)
+
+inline static boolean isPosInMap(pos p) {
+    return p.x >= 0 && p.x < DCOLS && p.y >= 0 && p.y < DROWS;
+}
 
 inline static boolean locIsInWindow(windowpos w) {
     return w.window_x >= 0 && w.window_x < COLS && w.window_y >= 0 && w.window_y < ROWS;
@@ -3087,7 +3093,7 @@ extern "C" {
     unsigned long burnedTerrainFlagsAtLoc(short x, short y);
     unsigned long discoveredTerrainFlagsAtLoc(short x, short y);
     boolean monsterAvoids(creature *monst, short x, short y);
-    short distanceBetween(short x1, short y1, short x2, short y2);
+    short distanceBetween(pos loc1, pos loc2);
     void alertMonster(creature *monst);
     void wakeUp(creature *monst);
     boolean monsterRevealed(creature *monst);
