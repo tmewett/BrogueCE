@@ -196,7 +196,6 @@ static short dialogCreateItemChooseKind(enum itemCategory category) {
 static void dialogCreateItemChooseEnchantmentLevel(item *theItem) {
     short minVal = 0, maxVal = 50, defaultVal, maxInputLength = 2;
     char prompt[100], buf[100], inputBuf[100]="";
-    int enchants;
 
     defaultVal = theItem->enchant1;
 
@@ -234,6 +233,7 @@ static void dialogCreateItemChooseEnchantmentLevel(item *theItem) {
     getInputTextString(inputBuf, prompt, maxInputLength, "", "", TEXT_INPUT_NORMAL, true);
 
     // Validate the input
+    int enchants;
     if (strlen(inputBuf)                      // we need some input
         && sscanf(inputBuf, "%d", &enchants)  // try to convert to number
         && sprintf(buf, "%d", enchants)       // convert back to string
@@ -244,15 +244,15 @@ static void dialogCreateItemChooseEnchantmentLevel(item *theItem) {
         } else if (enchants < minVal) {
             enchants = defaultVal;
         }
-    }
 
-    // set enchantment level based on item category
-    if (theItem->category == WAND) {
-        theItem->charges = enchants;
-    } else if (theItem->category == STAFF) {
-        theItem->charges = theItem->enchant1 = enchants;
-    } else {
-        theItem->enchant1 = enchants;
+        // set enchantment level based on item category
+        if (theItem->category == WAND) {
+            theItem->charges = enchants;
+        } else if (theItem->category == STAFF) {
+            theItem->charges = theItem->enchant1 = enchants;
+        } else {
+            theItem->enchant1 = enchants;
+        }
     }
 
     if (theItem->enchant1 < 0) {
