@@ -279,10 +279,24 @@ static void _gameLoop() {
     SDL_Quit();
 }
 
+static long lastDelayTime = 0;
+
+// Like SDL_Delay, but reduces the delay if time has passed since the last delay
+static void _delayUpTo(short ms) {
+    long curTime = SDL_GetTicks();
+    long timeDiff = curTime - lastDelayTime;
+    ms -= timeDiff;
+
+    if (ms > 0) {
+        SDL_Delay(ms);
+    } // else delaying further would go past the time we want to delay until
+
+    lastDelayTime = SDL_GetTicks();
+}
 
 static boolean _pauseForMilliseconds(short ms) {
     updateScreen();
-    SDL_Delay(ms);
+    _delayUpTo(ms);
 
     if (lastEvent.eventType != EVENT_ERROR
         && lastEvent.eventType != MOUSE_ENTERED_CELL) {
@@ -296,8 +310,6 @@ static boolean _pauseForMilliseconds(short ms) {
 
 
 static void _nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance) {
-    long tstart, dt;
-
     updateScreen();
 
     if (lastEvent.eventType != EVENT_ERROR) {
@@ -307,8 +319,6 @@ static void _nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boo
     }
 
     while (true) {
-        tstart = SDL_GetTicks();
-
         if (colorsDance) {
             shuffleTerrainColors(3, true);
             commitDraws();
@@ -318,10 +328,7 @@ static void _nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boo
 
         if (pollBrogueEvent(returnEvent, textInput)) break;
 
-        dt = PAUSE_BETWEEN_EVENT_POLLING - (SDL_GetTicks() - tstart);
-        if (dt > 0) {
-            SDL_Delay(dt);
-        }
+        _delayUpTo(PAUSE_BETWEEN_EVENT_POLLING);
     }
 }
 
