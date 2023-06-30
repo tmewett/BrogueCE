@@ -4737,7 +4737,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                 printProgressBar(0, y++, statusStrings[i], monst->status[i], monst->maxStatus[i], &redBar, dim);
             }
         }
-        if (monst->targetCorpseLoc[0] == monst->loc.x && monst->targetCorpseLoc[1] == monst->loc.y) {
+        if (posEq(monst->targetCorpseLoc, monst->loc)) {
             printProgressBar(0, y++,  monsterText[monst->info.monsterID].absorbStatus, monst->corpseAbsorptionCounter, 20, &redBar, dim);
         }
     }
