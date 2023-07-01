@@ -393,7 +393,7 @@ void titleMenu() {
 }
 
 // Closes Brogue without any further prompts, animations, or user interaction.
-void quitImmediately() {
+int quitImmediately() {
     // If we are recording a game, save it.
     if (rogue.recording) {
         flushBufferToFile();
@@ -406,7 +406,7 @@ void quitImmediately() {
             saveRecordingNoPrompt(path);
         }
     }
-    exit(0);
+    return EXIT_STATUS_SUCCESS;
 }
 
 void dialogAlert(char *message) {
