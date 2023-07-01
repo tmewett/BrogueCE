@@ -138,9 +138,8 @@ void drawButtonsInState(buttonState *state) {
     }
 }
 
-void drawMessagesInState(buttonState *state) {
-    
-    // Draw a message
+// Draw main menu messages into the buttonState (contains screen buffer)
+void drawMainMenuMessagesIntoButtonState(buttonState *state) {
     if (gameConst.variantMenuMessage != NULL) {
         printStringWithWrapping(gameConst.variantMenuMessage, 5, ROWS - 5, COLS - 28 - 5, &white, &black, state->dbuf);
     }

@@ -3436,7 +3436,7 @@ extern "C" {
                                short winY,
                                short winWidth,
                                short winHeight);
-    void drawMessagesInState(buttonState *state);
+    void drawMainMenuMessagesIntoButtonState(buttonState *state);
     short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *event);
     short smoothHiliteGradient(const short currentXValue, const short maxXValue);
     void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDisplayBuffer dbuf[COLS][ROWS]);
