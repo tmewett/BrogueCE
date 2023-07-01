@@ -956,7 +956,7 @@ const char *mainMenuTitle_RapidBrogue =
 // Version shown in ./brogue --version
 const char *rapidBrogueVersion = "RB 1.4.0";
 
-gameConstants rapidBrogueGameConst = {
+const gameConstants rapidBrogueGameConst = {
     .majorVersion = 1,
     .minorVersion = 4,
     .patchVersion = 0,
