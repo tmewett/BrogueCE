@@ -725,8 +725,8 @@ void buildFlailHitList(const short x, const short y, const short newX, const sho
         creature *monst = nextCreature(&it);
         mx = monst->loc.x;
         my = monst->loc.y;
-        if (distanceBetween(x, y, mx, my) == 1
-            && distanceBetween(newX, newY, mx, my) == 1
+        if (distanceBetween((pos){x, y}, (pos){mx, my}) == 1
+            && distanceBetween((pos){newX, newY}, (pos){mx, my}) == 1
             && canSeeMonster(monst)
             && monstersAreEnemies(&player, monst)
             && monst->creatureState != MONSTER_ALLY
@@ -940,7 +940,7 @@ boolean playerMoves(short direction) {
                 creature *tempMonst = nextCreature(&it);
                 if ((tempMonst->bookkeepingFlags & MB_SEIZING)
                     && monstersAreEnemies(&player, tempMonst)
-                    && distanceBetween(player.loc.x, player.loc.y, tempMonst->loc.x, tempMonst->loc.y) == 1
+                    && distanceBetween(player.loc, tempMonst->loc) == 1
                     && !diagonalBlocked(player.loc.x, player.loc.y, tempMonst->loc.x, tempMonst->loc.y, false)
                     && !tempMonst->status[STATUS_ENTRANCED]) {
 
@@ -1646,7 +1646,7 @@ void travel(short x, short y, boolean autoConfirm) {
 //          rogue.cursorLoc.y = y;
 //      }
     } else {
-        rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
+        rogue.cursorLoc = INVALID_POS;
         message("No path is available.", 0);
     }
     freeGrid(distanceMap);
@@ -1726,7 +1726,7 @@ void populateCreatureCostMap(short **costMap, creature *monst) {
             if ((tFlags & T_LAVA_INSTA_DEATH)
                 && !(monst->info.flags & (MONST_IMMUNE_TO_FIRE | MONST_FLIES | MONST_INVULNERABLE))
                 && (monst->status[STATUS_LEVITATING] || monst->status[STATUS_IMMUNE_TO_FIRE])
-                && max(monst->status[STATUS_LEVITATING], monst->status[STATUS_IMMUNE_TO_FIRE]) < (rogue.mapToShore[i][j] + distanceBetween(i, j, monst->loc.x, monst->loc.y) * monst->movementSpeed / 100)) {
+                && max(monst->status[STATUS_LEVITATING], monst->status[STATUS_IMMUNE_TO_FIRE]) < (rogue.mapToShore[i][j] + distanceBetween((pos){i, j}, monst->loc) * monst->movementSpeed / 100)) {
                 // Only a temporary effect will permit the monster to survive the lava, and the remaining duration either isn't
                 // enough to get it to the spot, or it won't suffice to let it return to shore if it does get there.
                 // Treat these locations as obstacles.
@@ -1737,7 +1737,7 @@ void populateCreatureCostMap(short **costMap, creature *monst) {
             if (((tFlags & T_AUTO_DESCENT) || (tFlags & T_IS_DEEP_WATER) && !(monst->info.flags & MONST_IMMUNE_TO_WATER))
                 && !(monst->info.flags & MONST_FLIES)
                 && (monst->status[STATUS_LEVITATING])
-                && monst->status[STATUS_LEVITATING] < (rogue.mapToShore[i][j] + distanceBetween(i, j, monst->loc.x, monst->loc.y) * monst->movementSpeed / 100)) {
+                && monst->status[STATUS_LEVITATING] < (rogue.mapToShore[i][j] + distanceBetween((pos){i, j}, monst->loc) * monst->movementSpeed / 100)) {
                 // Only a temporary effect will permit the monster to levitate over the chasm/water, and the remaining duration either isn't
                 // enough to get it to the spot, or it won't suffice to let it return to shore if it does get there.
                 // Treat these locations as obstacles.
@@ -2110,7 +2110,7 @@ boolean search(short searchStrength) {
             if (coordinatesAreInMap(i, j)
                 && playerCanDirectlySee(i, j)) {
 
-                percent = searchStrength - distanceBetween(x, y, i, j) * 10;
+                percent = searchStrength - distanceBetween((pos){x, y}, (pos){i, j}) * 10;
                 if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)) {
                     percent = percent * 2/3;
                 }
@@ -2154,7 +2154,7 @@ boolean useStairs(short stairDirection) {
     if (stairDirection == 1) {
         if (rogue.depthLevel < gameConst.deepestLevel) {
             //copyDisplayBuffer(fromBuf, displayBuffer);
-            rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
+            rogue.cursorLoc = INVALID_POS;
             rogue.depthLevel++;
             message("You descend.", 0);
             startLevel(rogue.depthLevel - 1, stairDirection);
@@ -2173,7 +2173,7 @@ boolean useStairs(short stairDirection) {
         succeeded = true;
     } else {
         if (rogue.depthLevel > 1 || numberOfMatchingPackItems(AMULET, 0, 0, false)) {
-            rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
+            rogue.cursorLoc = INVALID_POS;
             rogue.depthLevel--;
             if (rogue.depthLevel == 0) {
                 victory(false);

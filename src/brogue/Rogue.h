@@ -128,6 +128,12 @@ typedef struct pos {
     short y;
 } pos;
 
+#define INVALID_POS ((pos) { .x = -1, .y = -1 })
+
+static inline boolean posEq(pos a, pos b) {
+    return a.x == b.x && a.y == b.y;
+}
+
 // A location within the window.
 // Convert between `windowpos` and `pos` with `mapToWindow` and
 // `windowToMap`
@@ -1217,6 +1223,10 @@ boolean cellHasTerrainFlag(short x, short y, unsigned long flagMask);
 
 #define coordinatesAreInMap(x, y)           ((x) >= 0 && (x) < DCOLS    && (y) >= 0 && (y) < DROWS)
 
+inline static boolean isPosInMap(pos p) {
+    return p.x >= 0 && p.x < DCOLS && p.y >= 0 && p.y < DROWS;
+}
+
 inline static boolean locIsInWindow(windowpos w) {
     return w.window_x >= 0 && w.window_x < COLS && w.window_y >= 0 && w.window_y < ROWS;
 }
@@ -2223,9 +2233,9 @@ typedef struct creature {
     // Waypoints:
     short targetWaypointIndex;          // the index number of the waypoint we're pathing toward
     boolean waypointAlreadyVisited[MAX_WAYPOINT_COUNT]; // checklist of waypoints
-    short lastSeenPlayerAt[2];          // last location at which the monster hunted the player
+    pos lastSeenPlayerAt;          // last location at which the monster hunted the player
 
-    short targetCorpseLoc[2];           // location of the corpse that the monster is approaching to gain its abilities
+    pos targetCorpseLoc;           // location of the corpse that the monster is approaching to gain its abilities
     char targetCorpseName[30];          // name of the deceased monster that we're approaching to gain its abilities
     unsigned long absorptionFlags;      // ability/behavior flags that the monster will gain when absorption is complete
     boolean absorbBehavior;             // above flag is behavior instead of ability (ignored if absorptionBolt is set)
@@ -3118,7 +3128,7 @@ extern "C" {
     unsigned long burnedTerrainFlagsAtLoc(short x, short y);
     unsigned long discoveredTerrainFlagsAtLoc(short x, short y);
     boolean monsterAvoids(creature *monst, short x, short y);
-    short distanceBetween(short x1, short y1, short x2, short y2);
+    short distanceBetween(pos loc1, pos loc2);
     void alertMonster(creature *monst);
     void wakeUp(creature *monst);
     boolean monsterRevealed(creature *monst);

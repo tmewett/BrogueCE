@@ -169,8 +169,7 @@ void addMonsterToContiguousMonsterGrid(short x, short y, creature *monst, char g
 // group of monsters that the monster would not avoid.
 // The contiguous group is supplemented with the given (x, y) coordinates, if any;
 // this is so that jellies et al. can spawn behind the player in a hallway.
-void splitMonster(creature *monst, short x, short y) {
-    short i, j, b, dir, newX, newY, eligibleLocationCount, randIndex;
+void splitMonster(creature *monst, pos loc) {
     char buf[DCOLS * 3];
     char monstName[DCOLS];
     char monsterGrid[DCOLS][DROWS], eligibleGrid[DCOLS][DROWS];
@@ -178,23 +177,23 @@ void splitMonster(creature *monst, short x, short y) {
 
     zeroOutGrid(monsterGrid);
     zeroOutGrid(eligibleGrid);
-    eligibleLocationCount = 0;
+    int eligibleLocationCount = 0;
 
     // Add the (x, y) location to the contiguous group, if any.
-    if (x > 0 && y > 0) {
-        monsterGrid[x][y] = true;
+    if (isPosInMap(loc)) {
+        monsterGrid[loc.x][loc.y] = true;
     }
 
     // Find the contiguous group of monsters.
     addMonsterToContiguousMonsterGrid(monst->loc.x, monst->loc.y, monst, monsterGrid);
 
     // Find the eligible edges around the group of monsters.
-    for (i=0; i<DCOLS; i++) {
-        for (j=0; j<DROWS; j++) {
+    for (int i=0; i<DCOLS; i++) {
+        for (int j=0; j<DROWS; j++) {
             if (monsterGrid[i][j]) {
-                for (dir=0; dir<4; dir++) {
-                    newX = i + nbDirs[dir][0];
-                    newY = j + nbDirs[dir][1];
+                for (int dir=0; dir<4; dir++) {
+                    const int newX = i + nbDirs[dir][0];
+                    const int newY = j + nbDirs[dir][1];
                     if (coordinatesAreInMap(newX, newY)
                         && !eligibleGrid[newX][newY]
                         && !monsterGrid[newX][newY]
@@ -217,9 +216,9 @@ void splitMonster(creature *monst, short x, short y) {
 
     // Pick a random location on the eligibleGrid and add the clone there.
     if (eligibleLocationCount) {
-        randIndex = rand_range(1, eligibleLocationCount);
-        for (i=0; i<DCOLS; i++) {
-            for (j=0; j<DROWS; j++) {
+        int randIndex = rand_range(1, eligibleLocationCount);
+        for (int i=0; i<DCOLS; i++) {
+            for (int j=0; j<DROWS; j++) {
                 if (eligibleGrid[i][j] && !--randIndex) {
                     // Found the spot!
 
@@ -237,7 +236,7 @@ void splitMonster(creature *monst, short x, short y) {
                         clone->info.flags           &= monsterCatalog[clone->info.monsterID].flags;
                         clone->info.abilityFlags    &= monsterCatalog[clone->info.monsterID].abilityFlags;
                     }
-                    for (b = 0; b < 20; b++) {
+                    for (int b = 0; b < 20; b++) {
                         clone->info.bolts[b] = monsterCatalog[clone->info.monsterID].bolts[b];
                     }
 
@@ -247,8 +246,7 @@ void splitMonster(creature *monst, short x, short y) {
                         clone->status[STATUS_LEVITATING] = 0;
                     }
 
-                    clone->loc.x = i;
-                    clone->loc.y = j;
+                    clone->loc = (pos){.x = i, .y = j};
                     pmap[i][j].flags |= HAS_MONSTER;
                     clone->ticksUntilTurn = max(clone->ticksUntilTurn, 101);
                     fadeInMonster(clone);
@@ -347,10 +345,10 @@ void moralAttack(creature *attacker, creature *defender) {
         }
 
         if ((defender->info.abilityFlags & MA_CLONE_SELF_ON_DEFEND) && alliedCloneCount(defender) < 100) {
-            if (distanceBetween(defender->loc.x, defender->loc.y, attacker->loc.x, attacker->loc.y) <= 1) {
-                splitMonster(defender, attacker->loc.x, attacker->loc.y);
+            if (distanceBetween(defender->loc, attacker->loc) <= 1) {
+                splitMonster(defender, attacker->loc);
             } else {
-                splitMonster(defender, 0, 0);
+                splitMonster(defender, INVALID_POS);
             }
         }
     }
@@ -511,8 +509,8 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
     theBolt.magnitude = max(1, netEnchant(theItem) / FP_FACTOR);
     zap(oldLoc, newLoc, &theBolt, false, false);
     if (!(defender->bookkeepingFlags & MB_IS_DYING)
-        && distanceBetween(oldLoc.x, oldLoc.y, defender->loc.x, defender->loc.y) > 0
-        && distanceBetween(oldLoc.x, oldLoc.y, defender->loc.x, defender->loc.y) < weaponForceDistance(netEnchant(theItem))) {
+        && distanceBetween(oldLoc, defender->loc) > 0
+        && distanceBetween(oldLoc, defender->loc) < weaponForceDistance(netEnchant(theItem))) {
 
         if (pmap[defender->loc.x + newLoc.x - oldLoc.x][defender->loc.y + newLoc.y - oldLoc.y].flags & (HAS_MONSTER | HAS_PLAYER)) {
             otherMonster = monsterAtLoc(defender->loc.x + newLoc.x - oldLoc.x, defender->loc.y + newLoc.y - oldLoc.y);
@@ -522,7 +520,7 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
             strcpy(buf2, tileCatalog[pmap[defender->loc.x + newLoc.x - oldLoc.x][defender->loc.y + newLoc.y - oldLoc.y].layers[highestPriorityLayer(defender->loc.x + newLoc.x - oldLoc.x, defender->loc.y + newLoc.y - oldLoc.y, true)]].description);
         }
 
-        forceDamage = distanceBetween(oldLoc.x, oldLoc.y, defender->loc.x, defender->loc.y);
+        forceDamage = distanceBetween(oldLoc, defender->loc);
 
         if (!(defender->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE))
             && inflictDamage(NULL, defender, forceDamage, &white, false)) {
@@ -1062,7 +1060,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
 
     if ((attacker->info.abilityFlags & MA_SEIZES)
         && (!(attacker->bookkeepingFlags & MB_SEIZING) || !(defender->bookkeepingFlags & MB_SEIZED))
-        && (distanceBetween(attacker->loc.x, attacker->loc.y, defender->loc.x, defender->loc.y) == 1
+        && (distanceBetween(attacker->loc, defender->loc) == 1
             && !diagonalBlocked(attacker->loc.x, attacker->loc.y, defender->loc.x, defender->loc.y, false))) {
 
         attacker->bookkeepingFlags |= MB_SEIZING;
@@ -1348,7 +1346,7 @@ boolean canAbsorb(creature *ally, boolean ourBolts[], creature *prey, short **gr
 
     if (ally->creatureState == MONSTER_ALLY
         && ally->newPowerCount > 0
-        && (ally->targetCorpseLoc[0] <= 0)
+        && (!isPosInMap(ally->targetCorpseLoc))
         && !((ally->info.flags | prey->info.flags) & (MONST_INANIMATE | MONST_IMMOBILE))
         && !monsterAvoids(ally, prey->loc.x, prey->loc.y)
         && grid[ally->loc.x][ally->loc.y] <= 10) {
@@ -1417,8 +1415,7 @@ boolean anyoneWantABite(creature *decedent) {
             }
         }
         if (firstAlly) {
-            firstAlly->targetCorpseLoc[0] = decedent->loc.x;
-            firstAlly->targetCorpseLoc[1] = decedent->loc.y;
+            firstAlly->targetCorpseLoc = decedent->loc;
             strcpy(firstAlly->targetCorpseName, decedent->info.monsterName);
             firstAlly->corpseAbsorptionCounter = 20; // 20 turns to get there and start eating before he loses interest
 

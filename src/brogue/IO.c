@@ -103,12 +103,12 @@ void hideCursor() {
     // Drop out of cursor mode if we're in it, and hide the path either way.
     rogue.cursorMode = false;
     rogue.cursorPathIntensity = (rogue.cursorMode ? 50 : 20);
-    rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
+    rogue.cursorLoc = INVALID_POS;
 }
 
 void showCursor() {
     // Return or enter turns on cursor mode. When the path is hidden, move the cursor to the player.
-    if (!coordinatesAreInMap(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
+    if (!isPosInMap(rogue.cursorLoc)) {
         rogue.cursorLoc = player.loc;
         rogue.cursorMode = true;
         rogue.cursorPathIntensity = (rogue.cursorMode ? 50 : 20);
@@ -585,7 +585,7 @@ void mainInputLoop() {
     playerPathingMap = allocGrid();
     cursorSnapMap = allocGrid();
 
-    rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
+    rogue.cursorLoc = INVALID_POS;
 
     while (!rogue.gameHasEnded && (!playingBack || !canceled)) { // repeats until the game ends
 
@@ -612,7 +612,7 @@ void mainInputLoop() {
             // Path hides when you reach your destination.
             rogue.cursorMode = false;
             rogue.cursorPathIntensity = (rogue.cursorMode ? 50 : 20);
-            rogue.cursorLoc = (pos) { .x = -1, .y = -1 };
+            rogue.cursorLoc = INVALID_POS;
         }
 
         oldTargetLoc[0] = rogue.cursorLoc.x;
@@ -636,7 +636,7 @@ void mainInputLoop() {
                 if (coordinatesAreInMap(oldTargetLoc[0], oldTargetLoc[1])) {
                     hilitePath(path, steps, true);                                  // Unhilite old path.
                 }
-                if (coordinatesAreInMap(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
+                if (isPosInMap(rogue.cursorLoc)) {
                     if (cursorSnapMap[rogue.cursorLoc.x][rogue.cursorLoc.y] >= 0
                         && cursorSnapMap[rogue.cursorLoc.x][rogue.cursorLoc.y] < 30000) {
 
@@ -673,13 +673,13 @@ void mainInputLoop() {
                 }
             }
 
-            if (coordinatesAreInMap(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
+            if (isPosInMap(rogue.cursorLoc)) {
                 hiliteCell(rogue.cursorLoc.x,
                            rogue.cursorLoc.y,
                            &white,
                            (steps <= 0
                             || (path[steps-1][0] == rogue.cursorLoc.x && path[steps-1][1] == rogue.cursorLoc.y)
-                            || (!playingBack && distanceBetween(player.loc.x, player.loc.y, rogue.cursorLoc.x, rogue.cursorLoc.y) <= 1) ? 100 : 25),
+                            || (!playingBack && distanceBetween(player.loc, rogue.cursorLoc) <= 1) ? 100 : 25),
                            true);
 
                 oldTargetLoc[0] = rogue.cursorLoc.x;
@@ -791,7 +791,7 @@ void mainInputLoop() {
         if (canceled && !playingBack) {
             hideCursor();
             confirmMessages();
-        } else if (targetConfirmed && !playingBack && coordinatesAreInMap(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
+        } else if (targetConfirmed && !playingBack && isPosInMap(rogue.cursorLoc)) {
             if (theEvent.eventType == MOUSE_UP
                 && theEvent.controlKey
                 && steps > 1) {
@@ -809,7 +809,7 @@ void mainInputLoop() {
 
                     confirmMessages();
                 } else if (abs(player.loc.x - rogue.cursorLoc.x) + abs(player.loc.y - rogue.cursorLoc.y) == 1 // horizontal or vertical
-                           || (distanceBetween(player.loc.x, player.loc.y, rogue.cursorLoc.x, rogue.cursorLoc.y) == 1 // includes diagonals
+                           || (distanceBetween(player.loc, rogue.cursorLoc) == 1 // includes diagonals
                                && (!diagonalBlocked(player.loc.x, player.loc.y, rogue.cursorLoc.x, rogue.cursorLoc.y, !rogue.playbackOmniscience)
                                    || ((pmapAt(rogue.cursorLoc)->flags & HAS_MONSTER) && (monsterAtLoc(rogue.cursorLoc.x, rogue.cursorLoc.y)->info.flags & MONST_ATTACKABLE_THRU_WALLS)) // there's a turret there
                                    || ((terrainFlags(rogue.cursorLoc.x, rogue.cursorLoc.y) & T_OBSTRUCTS_PASSABILITY) && (terrainMechFlags(rogue.cursorLoc.x, rogue.cursorLoc.y) & TM_PROMOTES_ON_PLAYER_ENTRY))))) { // there's a lever there
@@ -4640,7 +4640,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                 printProgressBar(0, y++, statusStrings[i], monst->status[i], monst->maxStatus[i], &redBar, dim);
             }
         }
-        if (monst->targetCorpseLoc[0] == monst->loc.x && monst->targetCorpseLoc[1] == monst->loc.y) {
+        if (posEq(monst->targetCorpseLoc, monst->loc)) {
             printProgressBar(0, y++,  monsterText[monst->info.monsterID].absorbStatus, monst->corpseAbsorptionCounter, 20, &redBar, dim);
         }
     }

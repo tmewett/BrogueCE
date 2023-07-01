@@ -1383,7 +1383,7 @@ void monstersFall() {
                 monst->status[STATUS_ENTRANCED] = 0;
                 monst->bookkeepingFlags |= MB_PREPLACED;
                 monst->bookkeepingFlags &= ~(MB_IS_FALLING | MB_SEIZED | MB_SEIZING);
-                monst->targetCorpseLoc[0] = monst->targetCorpseLoc[1] = 0;
+                monst->targetCorpseLoc = INVALID_POS;
 
                 // remove from monster chain
                 removeCreature(monsters, monst);
@@ -1883,7 +1883,7 @@ void monsterEntersLevel(creature *monst, short n) {
         brogueAssert(false);
     }
     monst->depth = rogue.depthLevel;
-    monst->targetCorpseLoc[0] = monst->targetCorpseLoc[1] = 0;
+    monst->targetCorpseLoc = INVALID_POS;
 
     if (!pit) {
         getQualifyingPathLocNear(&(monst->loc.x), &(monst->loc.y), monst->loc.x, monst->loc.y, true,

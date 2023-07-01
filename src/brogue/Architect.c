@@ -35,7 +35,6 @@ boolean cellHasTerrainFlag(short x, short y, unsigned long flagMask) {
 #endif
 
 boolean checkLoopiness(short x, short y) {
-    boolean inString;
     short newX, newY, dir, sdir;
     short numStrings, maxStringLength, currentStringLength;
 
@@ -59,7 +58,7 @@ boolean checkLoopiness(short x, short y) {
     // starting on this unloopy neighbor, work clockwise and count up (a) the number of strings
     // of loopy neighbors, and (b) the length of the longest such string.
     numStrings = maxStringLength = currentStringLength = 0;
-    inString = false;
+    boolean inString = false;
     for (dir = sdir; dir < sdir + 8; dir++) {
         newX = x + cDirs[dir % 8][0];
         newY = y + cDirs[dir % 8][1];
@@ -2215,7 +2214,7 @@ void attachHallwayTo(short **grid, pos doorSites[4]) {
             || !coordinatesAreInMap(newX, newY)
             || grid[newX][newY]) {
 
-            doorSites[dir2] = (pos){ .x = -1, .y = -1 };
+            doorSites[dir2] = INVALID_POS;
         } else {
             doorSites[dir2] = (pos){ .x = newX, .y = newY };
         }
