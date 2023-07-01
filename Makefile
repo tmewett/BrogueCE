@@ -76,7 +76,7 @@ clean:
 
 escape = $(subst ','\'',$(1))
 vars:
-	mkdir vars
+	mkdir -p vars
 # Write the value to a temporary file and only overwrite if it's different.
 vars/%: vars FORCE
 	@echo '$(call escape,$($*))' > vars/$*.tmp
