@@ -166,6 +166,18 @@ int main(int argc, char *argv[])
             }
         }
 
+        if (strcmp(argv[i], "-m") == 0 || strcmp(argv[i], "--mod") == 0) {
+            if (i + 1 < argc) {
+#ifdef RAPID_BROGUE
+                if (!strcmp("rapid_brogue", argv[i + 1])) {
+                    gameVariant = VARIANT_RAPID_BROGUE;
+                }
+#endif
+                i++;
+                continue;
+            }
+        }
+        
         if (strcmp(argv[i], "-vn") == 0) {
             if (i + 1 < argc) {
                 strncpy(rogue.nextGamePath, argv[i + 1], BROGUE_FILENAME_MAX);
