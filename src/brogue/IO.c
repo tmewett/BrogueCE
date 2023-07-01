@@ -1842,7 +1842,7 @@ void plotCharWithColor(enum displayGlyph inputChar, windowpos loc, const color *
     restoreRNG;
 }
 
-void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, const color *foreColor, const color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]) {
+void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, const color *foreColor, const color *backColor, int opacity, cellDisplayBuffer dbuf[COLS][ROWS]) {
     short oldRNG;
 
     if (!dbuf) {
@@ -1864,7 +1864,7 @@ void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, const color *f
     cell->backColorComponents[1] = backColor->green + rand_range(0, backColor->greenRand) + rand_range(0, backColor->rand);
     cell->backColorComponents[2] = backColor->blue + rand_range(0, backColor->blueRand) + rand_range(0, backColor->rand);
     cell->character = inputChar;
-    cell->opacity = 100;
+    cell->opacity = opacity;
     restoreRNG;
 }
 
@@ -3947,7 +3947,7 @@ void printString(const char *theString, short x, short y, const color *foreColor
             }
         }
 
-        plotCharToBuffer(theString[i], (windowpos){ x, y }, foreColor, backColor, dbuf);
+        plotCharToBuffer(theString[i], (windowpos){ x, y }, foreColor, backColor, 100, dbuf);
     }
 }
 
@@ -4041,7 +4041,7 @@ short wrapText(char *to, const char *sourceText, short width) {
 
 // returns the y-coordinate of the last line
 short printStringWithWrapping(const char *theString, short x, short y, short width, const color *foreColor,
-                              const color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]) {
+                              const color *backColor, short opacity, cellDisplayBuffer dbuf[COLS][ROWS]) {
     color fColor;
     char printString[COLS * ROWS * 2];
     short i, px, py;
@@ -4068,7 +4068,7 @@ short printStringWithWrapping(const char *theString, short x, short y, short wid
         }
 
         if (locIsInWindow((windowpos){ px, py })) {
-            plotCharToBuffer(printString[i], (windowpos){ px, py }, &fColor, backColor, dbuf);
+            plotCharToBuffer(printString[i], (windowpos){ px, py }, &fColor, backColor, opacity, dbuf);
         }
 
         px++;
@@ -4179,14 +4179,14 @@ void printDiscoveries(short category, short count, unsigned short itemCharacter,
     for (i = 0; i < count; i++) {
         if (theTable[i].identified) {
             theColor = &white;
-            plotCharToBuffer(itemCharacter, (windowpos){ x, y + i }, &itemColor, &black, dbuf);
+            plotCharToBuffer(itemCharacter, (windowpos){ x, y + i }, &itemColor, &black, 100, dbuf);
         } else {
             theColor = &darkGray;
             magic = magicCharDiscoverySuffix(category, i);
             if (magic == 1) {
-                plotCharToBuffer(G_GOOD_MAGIC, (windowpos){ x, y + i }, &goodColor, &black, dbuf);
+                plotCharToBuffer(G_GOOD_MAGIC, (windowpos){ x, y + i }, &goodColor, &black, 100, dbuf);
             } else if (magic == -1) {
-                plotCharToBuffer(G_BAD_MAGIC, (windowpos){ x, y + i }, &badColor, &black, dbuf);
+                plotCharToBuffer(G_BAD_MAGIC, (windowpos){ x, y + i }, &badColor, &black, 100, dbuf);
             }
         }
         strcpy(buf, theTable[i].name);
@@ -4817,7 +4817,7 @@ short printItemInfo(item *theItem, short y, boolean dim, boolean highlight) {
         for (i=initialY + 1; i <= initialY + lineCount + 1 && i < ROWS - 1; i++) {
             printString("                    ", 0, i, (dim ? &darkGray : &gray), &black, 0);
         }
-        y = printStringWithWrapping(name, 3, y, 20-3, (dim ? &gray : &white), &black, NULL); // Advances y.
+        y = printStringWithWrapping(name, 3, y, 20-3, (dim ? &gray : &white), &black, 100, NULL); // Advances y.
     }
 
     if (highlight) {
@@ -4880,7 +4880,7 @@ short printTerrainInfo(short x, short y, short py, const char *description, bool
         if (dim) {
             applyColorScalar(&textColor, 50);
         }
-        py = printStringWithWrapping(name, 3, py, 20-3, &textColor, &black, NULL); // Advances y.
+        py = printStringWithWrapping(name, 3, py, 20-3, &textColor, &black, 100, NULL); // Advances y.
     }
 
     if (highlight) {
@@ -5004,7 +5004,7 @@ short printTextBox(char *textBuf, short x, short y, short width,
     }
 
     clearDisplayBuffer(dbuf);
-    printStringWithWrapping(textBuf, x2, y2, width, foreColor, backColor, dbuf);
+    printStringWithWrapping(textBuf, x2, y2, width, foreColor, backColor, 100, dbuf);
     rectangularShading(x2, y2, width, lineCount + padLines, backColor, INTERFACE_OPACITY, dbuf);
     overlayDisplayBuffer(dbuf, rbuf);
 

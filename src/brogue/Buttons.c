@@ -111,7 +111,7 @@ void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDispl
         }
 
         if (locIsInWindow((windowpos){ button->x + i, button->y })) {
-            plotCharToBuffer(displayCharacter, (windowpos){ button->x + i, button->y }, &fColor, &bColor, dbuf);
+            plotCharToBuffer(displayCharacter, (windowpos){ button->x + i, button->y }, &fColor, &bColor, 100, dbuf);
             if (dbuf) {
                 // Only buffers can have opacity set.
                 dbuf[button->x + i][button->y].opacity = opacity;
@@ -141,7 +141,7 @@ void drawButtonsInState(buttonState *state) {
 // Draw main menu messages into the buttonState (contains screen buffer)
 void drawMainMenuMessagesIntoButtonState(buttonState *state) {
     if (gameConst->variantMenuMessage != NULL) {
-        printStringWithWrapping(gameConst->variantMenuMessage, 5, ROWS - 5, COLS - 28 - 5, &white, &black, state->dbuf);
+        printStringWithWrapping(gameConst->variantMenuMessage, 5, ROWS - 5, COLS - 28 - 5, &white, &black, 50, state->dbuf);
     }
 }
 
