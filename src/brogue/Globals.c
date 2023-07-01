@@ -25,7 +25,7 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
-// Define global tables that are set by the variant
+// Global tables that are set by variants
 
 const autoGenerator *autoGeneratorCatalog;
 const short *lumenstoneDistribution;
@@ -51,16 +51,15 @@ const color invulnerabilityColor =  {25,    0,      25,     0,      0,          
 const color fireBoltColor =         {500,   150,    0,      45,     30,         0,          0,      true};
 const color yendorLightColor =      {50,    -100,    30,     0,      0,          0,          0,      true};
 const color flamedancerCoronaColor ={500,   150,    100,    45,     30,         0,          0,      true};
-//const color shieldingColor =      {100,   50,     0,      0,      50,         100,        0,      true};
 
 // tile colors
-const color wallForeColor =         {7,     7,      7,      3,      3,          3,          0,      false};
+const color undiscoveredColor =     {0,     0,      0,      0,      0,          0,          0,      false};
 
+const color wallForeColor =         {7,     7,      7,      3,      3,          3,          0,      false};
 const color wallBackColorStart =    {45,    40,     40,     15,     0,          5,          20,     false};
 const color wallBackColorEnd =      {40,    30,     35,     0,      20,         30,         20,     false};
 
 const color mudWallForeColor =      {55,    45,     0,      5,      5,          5,          1,      false};
-//const color mudWallForeColor =      {40,  34,     7,      0,      3,          0,          3,      false};
 const color mudWallBackColor =      {20,    12,     3,      8,      4,          3,          0,      false};
 
 const color graniteBackColor =      {10,    10,     10,     0,      0,          0,          0,      false};
@@ -87,7 +86,6 @@ const color marbleForeColor =       {30,    23,     38,     0,      0,          
 const color marbleBackColor =       {6,     5,      13,     1,      0,          1,          0,      false};
 const color doorForeColor =         {70,    35,     15,     0,      0,          0,          0,      false};
 const color doorBackColor =         {30,    10,     5,      0,      0,          0,          0,      false};
-//const color ironDoorForeColor =       {40,    40,     40,     0,      0,          0,          0,      false};
 const color ironDoorForeColor =     {500,   500,    500,    0,      0,          0,          0,      false};
 const color ironDoorBackColor =     {15,    15,     30,     0,      0,          0,          0,      false};
 const color bridgeFrontColor =      {33,    12,     12,     12,     7,          2,          0,      false};
@@ -97,15 +95,6 @@ const color glyphColor =            {20,    5,      5,      50,     0,          
 const color glyphLightColor =       {150,   0,      0,      150,    0,          0,          0,      true};
 const color sacredGlyphColor =      {5,     20,     5,      0,      50,         0,          0,      true};
 const color sacredGlyphLightColor = {45,    150,    60,     25,     80,         25,         0,      true};
-
-//const color deepWaterForeColor =  {5,     5,      40,     0,      0,          10,         10,     true};
-//const color deepWaterBackColor;
-//const color deepWaterBackColorStart = {5, 5,      55,     5,      5,          10,         10,     true};
-//const color deepWaterBackColorEnd =   {5,     5,      45,     2,      2,          5,          5,      true};
-//const color shallowWaterForeColor =   {40,    40,     90,     0,      0,          10,         10,     true};
-//const color shallowWaterBackColor;
-//const color shallowWaterBackColorStart ={30,30,       80,     0,      0,          10,         10,     true};
-//const color shallowWaterBackColorEnd ={20,    20,     60,     0,      0,          5,          5,      true};
 
 const color minersLightStartColor = {180,   180,    180,    0,      0,          0,          0,      false};
 const color minersLightEndColor =   {90,    90,     120,    0,      0,          0,          0,      false};
@@ -183,12 +172,9 @@ const color phoenixColor =          {100,   0,      0,      0,      100,        
 // light colors
 
 const color torchLightColor =       {75,    38,     15,     0,      15,         7,          0,      true};
-//const color hauntedTorchColor =     {75,  30,     150,    30,     20,         0,          0,      true};
 const color hauntedTorchColor =     {75,    20,     40,     30,     10,         0,          0,      true};
-//const color hauntedTorchLightColor ={19,     7,       37,     8,      4,          0,          0,      true};
 const color hauntedTorchLightColor ={67,    10,     10,     20,     4,          0,          0,      true};
 const color ifritLightColor =       {0,     10,     150,    100,    0,          100,        0,      true};
-//const color unicornLightColor =       {-50,   -50,    -50,    200,    200,        200,        0,      true};
 const color unicornLightColor =     {-50,   -50,    -50,    250,    250,        250,        0,      true};
 const color wispLightColor =        {75,    100,    250,    33,     10,         0,          0,      true};
 const color summonedImageLightColor ={200,  0,      75,     0,      0,          0,          0,      true};
@@ -277,20 +263,10 @@ const color backgroundMessageColor ={60,    20,     70,     0,      0,          
 
 const color superVictoryColor =     {150,   100,    300,    0,      0,          0,          0,      false};
 
-//const color flameSourceColor = {0, 0, 0, 65, 40, 100, 0, true}; // 1
-//const color flameSourceColor = {0, 0, 0, 80, 50, 100, 0, true}; // 2
-//const color flameSourceColor = {25, 13, 25, 50, 25, 50, 0, true}; // 3
-//const color flameSourceColor = {20, 20, 20, 60, 20, 40, 0, true}; // 4
-//const color flameSourceColor = {30, 18, 18, 70, 36, 36, 0, true}; // 7**
 const color flameSourceColor = {20, 7, 7, 60, 40, 40, 0, true}; // 8
 const color flameSourceColorSecondary = {7, 2, 0, 10, 0, 0, 0, true};
 
-//const color flameTitleColor = {0, 0, 0, 17, 10, 6, 0, true}; // pale orange
-//const color flameTitleColor = {0, 0, 0, 7, 7, 10, 0, true}; // *pale blue*
 const color flameTitleColor = {0, 0, 0, 9, 9, 15, 0, true}; // *pale blue**
-//const color flameTitleColor = {0, 0, 0, 11, 11, 18, 0, true}; // *pale blue*
-//const color flameTitleColor = {0, 0, 0, 15, 15, 9, 0, true}; // pale yellow
-//const color flameTitleColor = {0, 0, 0, 15, 9, 15, 0, true}; // pale purple
 
 // Constant bounds for dynamic colors
 const color *dynamicColorsBounds[NUMBER_DYNAMIC_COLORS][2] = {

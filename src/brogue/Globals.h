@@ -21,25 +21,30 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-extern const color fireForeColor;
-
-// light colors
-extern color minersLightColor; //dynamic
-extern const color torchLightColor;
-extern const color deepWaterLightColor;
+// Colors that are used outside of Globals tables - may be set by variants
 
 extern const color discordColor;
+
+extern const color undiscoveredColor;
+extern const color fireForeColor;
+extern const color deepWaterLightColor;
+
+extern const color confusionGasColor;
+
+extern color minersLightColor; //dynamic
+extern const color basicLightColor;
+extern const color torchLightColor;
+
+extern const color magicMapFlashColor;
+extern const color spectralImageColor;
+
+extern const color colorMultiplier100;
 extern const color memoryColor;
 extern const color memoryOverlay;
 extern const color magicMapColor;
 extern const color clairvoyanceColor;
 extern const color telepathyMultiplier;
 extern const color omniscienceColor;
-extern const color basicLightColor;
-
-extern const color colorMultiplier100;
-
-extern const color magicMapFlashColor;
 
 extern const color itemColor;
 extern const color blueBar;
@@ -47,34 +52,29 @@ extern const color redBar;
 extern const color hiliteColor;
 extern const color interfaceBoxColor;
 extern const color interfaceButtonColor;
+extern const color buttonHoverColor;
+extern const color titleButtonColor;
 
 extern const color playerInvisibleColor;
 extern const color playerInShadowColor;
 extern const color playerInLightColor;
 extern const color playerInDarknessColor;
-
 extern const color inDarknessMultiplierColor;
-
-extern const color buttonHoverColor;
-extern const color titleButtonColor;
-
-// other colors
-extern const color confusionGasColor;
-extern const color spectralImageColor;
 
 extern const color goodMessageColor;
 extern const color badMessageColor;
 extern const color advancementMessageColor;
 extern const color itemMessageColor;
+extern const color flavorTextColor;
 extern const color backgroundMessageColor;
 
-extern const color flavorTextColor;
+extern const color superVictoryColor;
 
 extern const color flameSourceColor;
 extern const color flameSourceColorSecondary;
 extern const color flameTitleColor;
 
-extern const color superVictoryColor;
+// Tables that define game play - may be set by variants
 
 extern color *dynamicColors[NUMBER_DYNAMIC_COLORS];
 extern const color *dynamicColorsBounds[NUMBER_DYNAMIC_COLORS][2];
@@ -100,7 +100,6 @@ extern const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT];
 
 extern const feat featTable[FEAT_COUNT];
 
-// ITEMS
 extern char itemTitles[NUMBER_ITEM_TITLES][30];
 extern char itemColors[NUMBER_ITEM_COLORS][30];
 extern char itemWoods[NUMBER_ITEM_WOODS][30];
