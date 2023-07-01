@@ -3605,6 +3605,7 @@ short decodeMessageColor(const char *msg, short i, color *returnColor) {
 
     if (msg[i] != COLOR_ESCAPE) {
         printf("\nAsked to decode a color escape that didn't exist!");
+        *returnColor = white;
     } else {
         i++;
         *returnColor = black;
