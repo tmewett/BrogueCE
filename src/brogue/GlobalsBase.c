@@ -99,9 +99,7 @@ const color red  =                  {100,   0,      0,      0,      0,          
 const color darkRed =               {50,    0,      0,      0,      0,          0,          0,      false};
 const color tanColor =              {80,    67,     15,     0,      0,          0,          0,      false};
 
-// basic colors
-const color undiscoveredColor =     {0,     0,      0,      0,      0,          0,          0,      false};
-
+// tile colors
 const color rainbow =               {-70,   -70,    -70,    170,    170,        170,        0,      true};
 
 // charm constants
