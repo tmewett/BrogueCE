@@ -930,7 +930,7 @@ void addXPXPToAlly(short XPXP, creature *monst) {
         && !(monst->bookkeepingFlags & MB_TELEPATHICALLY_REVEALED)
         && monst->creatureState == MONSTER_ALLY
         && monst->spawnDepth <= rogue.depthLevel
-        && rogue.depthLevel <= gameConst.amuletLevel) {
+        && rogue.depthLevel <= gameConst->amuletLevel) {
 
         monst->xpxp += XPXP;
         //printf("\n%i xpxp added to your %s this turn.", rogue.xpxpThisTurn, monst->info.monsterName);
@@ -962,7 +962,7 @@ void handleXPXP() {
             addXPXPToAlly(rogue.xpxpThisTurn, monst);
         }
     }
-    if (rogue.depthLevel < gameConst.deepestLevel) {
+    if (rogue.depthLevel < gameConst->deepestLevel) {
         for (creatureIterator it = iterateCreatures(&levels[rogue.depthLevel].monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
             addXPXPToAlly(rogue.xpxpThisTurn, monst);
@@ -994,10 +994,10 @@ void playerFalls() {
     player.bookkeepingFlags &= ~(MB_IS_FALLING | MB_SEIZED | MB_SEIZING);
     rogue.disturbed = true;
 
-    if (rogue.depthLevel < gameConst.deepestLevel) {
+    if (rogue.depthLevel < gameConst->deepestLevel) {
         rogue.depthLevel++;
         startLevel(rogue.depthLevel - 1, 0);
-        damage = randClumpedRange(gameConst.fallDamageMin, gameConst.fallDamageMax, 2);
+        damage = randClumpedRange(gameConst->fallDamageMin, gameConst->fallDamageMax, 2);
         boolean killed = false;
         if (terrainFlags(player.loc.x, player.loc.y) & T_IS_DEEP_WATER) {
             messageWithColor("You fall into deep water, unharmed.", &badMessageColor, 0);
@@ -1944,7 +1944,7 @@ void monstersApproachStairs() {
     short n;
 
     for (n = rogue.depthLevel - 2; n <= rogue.depthLevel; n += 2) { // cycle through previous and next level
-        if (n >= 0 && n < gameConst.deepestLevel && levels[n].visited) {
+        if (n >= 0 && n < gameConst->deepestLevel && levels[n].visited) {
             for (creatureIterator it = iterateCreatures(&levels[n].monsters); hasNextCreature(it);) {
                 creature *monst = nextCreature(&it);
                 if (monst->status[STATUS_ENTERS_LEVEL_IN] > 1) {
@@ -2615,7 +2615,7 @@ void playerTurnEnded() {
 void resetScentTurnNumber() { // don't want player.scentTurnNumber to roll over the short maxint!
     short i, j, d;
     rogue.scentTurnNumber -= 15000;
-    for (d = 0; d < gameConst.deepestLevel; d++) {
+    for (d = 0; d < gameConst->deepestLevel; d++) {
         if (levels[d].visited) {
             for (i=0; i<DCOLS; i++) {
                 for (j=0; j<DROWS; j++) {

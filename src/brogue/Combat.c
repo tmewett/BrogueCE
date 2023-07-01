@@ -286,7 +286,7 @@ short alliedCloneCount(creature *monst) {
             }
         }
     }
-    if (rogue.depthLevel < gameConst.deepestLevel) {
+    if (rogue.depthLevel < gameConst->deepestLevel) {
         for (creatureIterator it = iterateCreatures(&levels[rogue.depthLevel].monsters); hasNextCreature(it);) {
             creature *temp = nextCreature(&it);
             if (temp != monst
@@ -402,7 +402,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
             if (!player.status[STATUS_HALLUCINATING]) {
                 player.maxStatus[STATUS_HALLUCINATING] = 0;
             }
-            player.status[STATUS_HALLUCINATING] += gameConst.onHitHallucinateDuration;
+            player.status[STATUS_HALLUCINATING] += gameConst->onHitHallucinateDuration;
             player.maxStatus[STATUS_HALLUCINATING] = max(player.maxStatus[STATUS_HALLUCINATING], player.status[STATUS_HALLUCINATING]);
         }
         if (attacker->info.abilityFlags & MA_HIT_BURN
@@ -476,7 +476,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
         && damage > 0
         && !(defender->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
 
-        weaken(defender, gameConst.onHitWeakenDuration);
+        weaken(defender, gameConst->onHitWeakenDuration);
     }
     if (attacker->info.abilityFlags & MA_ATTACKS_STAGGER) {
         processStaggerHit(attacker, defender);
@@ -748,7 +748,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
                 autoID = forceWeaponHit(defender, theItem);
                 break;
             case W_MERCY:
-                heal(defender, gameConst.onHitMercyHealPercent, false);
+                heal(defender, gameConst->onHitMercyHealPercent, false);
                 if (canSeeMonster(defender)) {
                     autoID = true;
                 }
@@ -1356,7 +1356,7 @@ boolean canAbsorb(creature *ally, boolean ourBolts[], creature *prey, short **gr
         } else if (~(ally->info.flags) & prey->info.flags & LEARNABLE_BEHAVIORS) {
             return true;
         } else {
-            for (i = 0; i < gameConst.numberBoltKinds; i++) {
+            for (i = 0; i < gameConst->numberBoltKinds; i++) {
                 ourBolts[i] = false;
             }
             for (i = 0; ally->info.bolts[i] != BOLT_NONE; i++) {
@@ -1381,7 +1381,7 @@ boolean anyoneWantABite(creature *decedent) {
     boolean success = false;
     boolean *ourBolts;
     
-    ourBolts = (boolean *)calloc(gameConst.numberBoltKinds, sizeof(boolean));
+    ourBolts = (boolean *)calloc(gameConst->numberBoltKinds, sizeof(boolean));
 
     candidates = 0;
     if ((!(decedent->info.abilityFlags & LEARNABLE_ABILITIES)
@@ -1544,7 +1544,7 @@ boolean inflictDamage(creature *attacker, creature *defender,
         transferenceAmount = min(damage, defender->currentHP); // Maximum transferred damage can't exceed the victim's remaining health.
 
         if (attacker == &player) {
-            transferenceAmount = transferenceAmount * rogue.transference / gameConst.playerTransferenceRatio;
+            transferenceAmount = transferenceAmount * rogue.transference / gameConst->playerTransferenceRatio;
             if (transferenceAmount == 0) {
                 transferenceAmount = ((rogue.transference > 0) ? 1 : -1);
             }

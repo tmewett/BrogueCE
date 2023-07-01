@@ -4212,19 +4212,19 @@ void printDiscoveriesScreen() {
     clearDisplayBuffer(dbuf);
 
     printString("-- SCROLLS --", mapToWindowX(2), y = mapToWindowY(1), &flavorTextColor, &black, dbuf);
-    printDiscoveries(SCROLL, gameConst.numberScrollKinds, G_SCROLL, mapToWindowX(3), ++y, dbuf);
+    printDiscoveries(SCROLL, gameConst->numberScrollKinds, G_SCROLL, mapToWindowX(3), ++y, dbuf);
 
-    printString("-- RINGS --", mapToWindowX(2), y += gameConst.numberScrollKinds + 1, &flavorTextColor, &black, dbuf);
+    printString("-- RINGS --", mapToWindowX(2), y += gameConst->numberScrollKinds + 1, &flavorTextColor, &black, dbuf);
     printDiscoveries(RING, NUMBER_RING_KINDS, G_RING, mapToWindowX(3), ++y, dbuf);
 
     printString("-- POTIONS --", mapToWindowX(29), y = mapToWindowY(1), &flavorTextColor, &black, dbuf);
-    printDiscoveries(POTION, gameConst.numberPotionKinds, G_POTION, mapToWindowX(30), ++y, dbuf);
+    printDiscoveries(POTION, gameConst->numberPotionKinds, G_POTION, mapToWindowX(30), ++y, dbuf);
 
     printString("-- STAFFS --", mapToWindowX(53), y = mapToWindowY(1), &flavorTextColor, &black, dbuf);
     printDiscoveries(STAFF, NUMBER_STAFF_KINDS, G_STAFF, mapToWindowX(54), ++y, dbuf);
 
     printString("-- WANDS --", mapToWindowX(53), y += NUMBER_STAFF_KINDS + 1, &flavorTextColor, &black, dbuf);
-    printDiscoveries(WAND, gameConst.numberWandKinds, G_WAND, mapToWindowX(54), ++y, dbuf);
+    printDiscoveries(WAND, gameConst->numberWandKinds, G_WAND, mapToWindowX(54), ++y, dbuf);
 
     printString(KEYBOARD_LABELS ? "-- press any key to continue --" : "-- touch anywhere to continue --",
                 mapToWindowX(20), mapToWindowY(DROWS-2), &itemMessageColor, &black, dbuf);
@@ -4355,7 +4355,7 @@ void displayGrid(short **map) {
 
 void printSeed() {
     char buf[COLS];
-    snprintf(buf, COLS, "Dungeon seed #%llu; turn #%lu; version %s", (unsigned long long)rogue.seed, rogue.playerTurnNumber, gameConst.versionString);
+    snprintf(buf, COLS, "Dungeon seed #%llu; turn #%lu; version %s", (unsigned long long)rogue.seed, rogue.playerTurnNumber, gameConst->versionString);
     message(buf, 0);
 }
 

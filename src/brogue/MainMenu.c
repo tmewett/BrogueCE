@@ -48,12 +48,12 @@ void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3
     const color *maskColor = &black;
     char dchar;
 
-    versionStringLength = strLenWithoutEscapes(gameConst.versionString);
+    versionStringLength = strLenWithoutEscapes(gameConst->versionString);
 
     for (j=0; j<ROWS; j++) {
         for (i=0; i<COLS; i++) {
             if (j == ROWS - 1 && i >= COLS - versionStringLength) {
-                dchar = gameConst.versionString[i - (COLS - versionStringLength)];
+                dchar = gameConst->versionString[i - (COLS - versionStringLength)];
             } else {
                 dchar = ' ';
             }
@@ -214,12 +214,12 @@ void initializeMenuFlames(boolean includeTitle,
 
     if (includeTitle) {
         // Wreathe the title in flames, and mask it in black.
-        for (i=0; i<gameConst.mainMenuTitleWidth; i++) {
-            for (j=0; j<gameConst.mainMenuTitleHeight; j++) {
-                if (mainMenuTitle[j * gameConst.mainMenuTitleWidth + i] != ' ') {
-                    colors[(COLS - gameConst.mainMenuTitleWidth)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - gameConst.mainMenuTitleHeight)/2 + j + MENU_TITLE_OFFSET_Y] = &flameTitleColor;
+        for (i=0; i<gameConst->mainMenuTitleWidth; i++) {
+            for (j=0; j<gameConst->mainMenuTitleHeight; j++) {
+                if (mainMenuTitle[j * gameConst->mainMenuTitleWidth + i] != ' ') {
+                    colors[(COLS - gameConst->mainMenuTitleWidth)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - gameConst->mainMenuTitleHeight)/2 + j + MENU_TITLE_OFFSET_Y] = &flameTitleColor;
                     colorSourceCount++;
-                    mask[(COLS - gameConst.mainMenuTitleWidth)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - gameConst.mainMenuTitleHeight)/2 + j + MENU_TITLE_OFFSET_Y] = 100;
+                    mask[(COLS - gameConst->mainMenuTitleWidth)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - gameConst->mainMenuTitleHeight)/2 + j + MENU_TITLE_OFFSET_Y] = 100;
                 }
             }
         }
