@@ -173,6 +173,8 @@ int main(int argc, char *argv[])
                     gameVariant = VARIANT_RAPID_BROGUE;
                 }
 #endif
+                i++;
+                continue;
             }
         }
         
