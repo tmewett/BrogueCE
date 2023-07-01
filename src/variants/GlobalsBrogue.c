@@ -949,7 +949,7 @@ const char *mainMenuTitle_Brogue =
 // Version shown in ./brogue --version
 const char *brogueVersion = "CE 1.12.0";
 
-gameConstants brogueGameConst = {
+const gameConstants brogueGameConst = {
     .majorVersion = 1,
     .minorVersion = 12,
     .patchVersion = 0,

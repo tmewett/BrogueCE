@@ -2329,7 +2329,7 @@ enum exitStatus {
     EXIT_STATUS_FAILURE_SDL_ERROR
 };
 
-// Constants for the current game, initialized after the choice of mod
+// Constants for the current game, initialized after the choice of variant
 typedef struct gameConstants {
 
     const int majorVersion;                         // variant major version x._._
