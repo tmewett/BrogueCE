@@ -322,7 +322,7 @@ short sortScoreBuffer() {
 }
 
 void setHighScoresFilename(char *buffer) {
-    strncpy(buffer, gameConst.variantName, 100);
+    strncpy(buffer, gameConst->variantName, 100);
     strncat(buffer, "HighScores.txt", 100);
     buffer[0] = toupper(buffer[0]);
 }

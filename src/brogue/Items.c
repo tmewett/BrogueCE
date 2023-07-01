@@ -205,7 +205,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                 theItem->flags &= ~(ITEM_CURSED | ITEM_RUNIC); // throwing weapons can't be cursed or runic
                 theItem->enchant1 = 0; // throwing weapons can't be magical
             }
-            theItem->charges = gameConst.weaponKillsToAutoID; // kill 20 enemies to auto-identify
+            theItem->charges = gameConst->weaponKillsToAutoID; // kill 20 enemies to auto-identify
             break;
 
         case ARMOR:
@@ -216,7 +216,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             theItem->armor = randClump(armorTable[itemKind].range);
             theItem->strengthRequired = armorTable[itemKind].strengthRequired;
             theItem->displayChar = G_ARMOR;
-            theItem->charges = gameConst.armorDelayToAutoID; // this many turns until it reveals its enchants and whether runic
+            theItem->charges = gameConst->armorDelayToAutoID; // this many turns until it reveals its enchants and whether runic
             if (rand_percent(40)) {
                 theItem->enchant1 += rand_range(1, 3);
                 if (rand_percent(50)) {
@@ -242,7 +242,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             break;
         case SCROLL:
             if (itemKind < 0) {
-                itemKind = chooseKind(scrollTable, gameConst.numberScrollKinds);
+                itemKind = chooseKind(scrollTable, gameConst->numberScrollKinds);
             }
             theEntry = &scrollTable[itemKind];
             theItem->displayChar = G_SCROLL;
@@ -250,7 +250,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             break;
         case POTION:
             if (itemKind < 0) {
-                itemKind = chooseKind(potionTable, gameConst.numberPotionKinds);
+                itemKind = chooseKind(potionTable, gameConst->numberPotionKinds);
             }
             theEntry = &potionTable[itemKind];
             theItem->displayChar = G_POTION;
@@ -276,7 +276,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             break;
         case WAND:
             if (itemKind < 0) {
-                itemKind = chooseKind(wandTable, gameConst.numberWandKinds);
+                itemKind = chooseKind(wandTable, gameConst->numberWandKinds);
             }
             theEntry = &(wandTable[itemKind]);
             theItem->displayChar = G_WAND;
@@ -289,7 +289,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             theEntry = &ringTable[itemKind];
             theItem->displayChar = G_RING;
             theItem->enchant1 = randClump(ringTable[itemKind].range);
-            theItem->charges = gameConst.ringDelayToAutoID; // how many turns of being worn until it auto-identifies
+            theItem->charges = gameConst->ringDelayToAutoID; // how many turns of being worn until it auto-identifies
             if (rand_percent(16)) {
                 // cursed
                 theItem->enchant1 *= -1;
@@ -302,7 +302,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             break;
         case CHARM:
             if (itemKind < 0) {
-                itemKind = chooseKind(charmTable, gameConst.numberCharmKinds);
+                itemKind = chooseKind(charmTable, gameConst->numberCharmKinds);
             }
             theItem->displayChar = G_CHARM;
             theItem->charges = 0; // Charms are initially ready for use.
@@ -315,7 +315,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
         case GOLD:
             theEntry = NULL;
             theItem->displayChar = G_GOLD;
-            theItem->quantity = rand_range(50 + rogue.depthLevel * 10 * gameConst.depthAccelerator, 100 + rogue.depthLevel * 15 * gameConst.depthAccelerator);
+            theItem->quantity = rand_range(50 + rogue.depthLevel * 10 * gameConst->depthAccelerator, 100 + rogue.depthLevel * 15 * gameConst->depthAccelerator);
             break;
         case AMULET:
             theEntry = NULL;
@@ -516,18 +516,18 @@ void populateItems(short upstairsX, short upstairsY) {
 #endif
 
     // Store copy of potion and scroll tables, since they are modified during level item generation.
-    potionTableCopy = calloc(gameConst.numberPotionKinds, sizeof(itemTable));
-    scrollTableCopy = calloc(gameConst.numberScrollKinds, sizeof(itemTable));
+    potionTableCopy = calloc(gameConst->numberPotionKinds, sizeof(itemTable));
+    scrollTableCopy = calloc(gameConst->numberScrollKinds, sizeof(itemTable));
 
-    memcpy(potionTableCopy, potionTable, gameConst.numberPotionKinds * sizeof(itemTable));
-    memcpy(scrollTableCopy, scrollTable, gameConst.numberScrollKinds * sizeof(itemTable));
+    memcpy(potionTableCopy, potionTable, gameConst->numberPotionKinds * sizeof(itemTable));
+    memcpy(scrollTableCopy, scrollTable, gameConst->numberScrollKinds * sizeof(itemTable));
 
-    if (rogue.depthLevel > gameConst.amuletLevel) {
-        numberOfItems = lumenstoneDistribution[rogue.depthLevel - gameConst.amuletLevel - 1];
+    if (rogue.depthLevel > gameConst->amuletLevel) {
+        numberOfItems = lumenstoneDistribution[rogue.depthLevel - gameConst->amuletLevel - 1];
         numberOfGoldPiles = 0;
     } else {
         // Add frequency to metered items memory
-        for (i = 0; i < gameConst.numberMeteredItems; i++) {
+        for (i = 0; i < gameConst->numberMeteredItems; i++) {
             rogue.meteredItems[i].frequency += meteredItemsGenerationTable[i].incrementFrequency;
         }
         numberOfItems = 3;
@@ -540,9 +540,9 @@ void populateItems(short upstairsX, short upstairsY) {
             numberOfItems++; // and 2 more here
         }
 
-        numberOfItems += gameConst.extraItemsPerLevel;
+        numberOfItems += gameConst->extraItemsPerLevel;
 
-        numberOfGoldPiles = min(5, rogue.depthLevel * gameConst.depthAccelerator / 4);
+        numberOfGoldPiles = min(5, rogue.depthLevel * gameConst->depthAccelerator / 4);
         for (goldBonusProbability = 60;
              rand_percent(goldBonusProbability) && numberOfGoldPiles <= 10;
              goldBonusProbability -= 15) {
@@ -551,10 +551,10 @@ void populateItems(short upstairsX, short upstairsY) {
         }
         // Adjust the amount of gold if we're past depth 5 and we were below or above
         // the production schedule as of the previous depth.
-        if (rogue.depthLevel >= gameConst.goldAdjustmentStartDepth) {
-            if (rogue.goldGenerated < aggregateGoldLowerBound(rogue.depthLevel * gameConst.depthAccelerator - 1)) {
+        if (rogue.depthLevel >= gameConst->goldAdjustmentStartDepth) {
+            if (rogue.goldGenerated < aggregateGoldLowerBound(rogue.depthLevel * gameConst->depthAccelerator - 1)) {
                 numberOfGoldPiles += 2;
-            } else if (rogue.goldGenerated > aggregateGoldUpperBound(rogue.depthLevel * gameConst.depthAccelerator - 1)) {
+            } else if (rogue.goldGenerated > aggregateGoldUpperBound(rogue.depthLevel * gameConst->depthAccelerator - 1)) {
                 numberOfGoldPiles -= 2;
             }
         }
@@ -626,10 +626,10 @@ void populateItems(short upstairsX, short upstairsY) {
         theKind = -1;
 
         // Set metered item itemTable frequency to memory.
-        for (j = 0; j < gameConst.numberMeteredItems; j++) {
+        for (j = 0; j < gameConst->numberMeteredItems; j++) {
             if (meteredItemsGenerationTable[j].incrementFrequency != 0) {
-                if (j >= gameConst.numberScrollKinds) {
-                    potionTable[j - gameConst.numberScrollKinds].frequency = rogue.meteredItems[j].frequency;
+                if (j >= gameConst->numberScrollKinds) {
+                    potionTable[j - gameConst->numberScrollKinds].frequency = rogue.meteredItems[j].frequency;
                 } else {
                     scrollTable[j].frequency = rogue.meteredItems[j].frequency;
                 }
@@ -642,17 +642,17 @@ void populateItems(short upstairsX, short upstairsY) {
             // Guarantee a certain nutrition minimum of the approximate equivalent of one ration every four levels,
             // with more food on deeper levels since they generally take more turns to complete.
             theCategory = FOOD;
-            if (rogue.depthLevel > gameConst.amuletLevel) {
+            if (rogue.depthLevel > gameConst->amuletLevel) {
                 numberOfItems++; // Food isn't at the expense of lumenstones.
             }
-        } else if (rogue.depthLevel > gameConst.amuletLevel) {
+        } else if (rogue.depthLevel > gameConst->amuletLevel) {
             theCategory = GEM;
         } else {
             
             //To preserve the ability to load RB 1.4 games, we need to create items in the same order as that codebase
             const int j_iteration_order[] = { 14, 18, 0, 15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29};
 
-            for (k = 0; k < gameConst.numberMeteredItems; k++) {
+            for (k = 0; k < gameConst->numberMeteredItems; k++) {
                 j = j_iteration_order[k];
                 // Create any metered items that reach generation thresholds
                 if (meteredItemsGenerationTable[j].levelScaling != 0 &&
@@ -694,10 +694,10 @@ void populateItems(short upstairsX, short upstairsY) {
         coolHeatMapAt(itemSpawnHeatMap, x, y, &totalHeat);
 
         // Remove frequency from spawned metered items memory.
-        for (j = 0; j < gameConst.numberMeteredItems; j++) {
+        for (j = 0; j < gameConst->numberMeteredItems; j++) {
             if ((theItem->category & meteredItemsGenerationTable[j].category) && theItem->kind == meteredItemsGenerationTable[j].kind) {
-                if (j >= gameConst.numberScrollKinds) {
-                    if (D_MESSAGE_ITEM_GENERATION) printf("\n(!)  Depth %i: generated an %s potion at %i frequency", rogue.depthLevel, potionTable[j - gameConst.numberScrollKinds].name, rogue.meteredItems[j].frequency);
+                if (j >= gameConst->numberScrollKinds) {
+                    if (D_MESSAGE_ITEM_GENERATION) printf("\n(!)  Depth %i: generated an %s potion at %i frequency", rogue.depthLevel, potionTable[j - gameConst->numberScrollKinds].name, rogue.meteredItems[j].frequency);
                 } else {
                     if (D_MESSAGE_ITEM_GENERATION) printf("\n(?)  Depth %i: generated an %s scroll at %i frequency", rogue.depthLevel, scrollTable[j].name, rogue.meteredItems[j].frequency);
                 }
@@ -746,8 +746,8 @@ void populateItems(short upstairsX, short upstairsY) {
     // Restore potion and scroll tables which sets the frequency of these items
     // to zero.
 
-    memcpy(potionTable, potionTableCopy, gameConst.numberPotionKinds * sizeof(itemTable));
-    memcpy(scrollTable, scrollTableCopy, gameConst.numberScrollKinds * sizeof(itemTable));
+    memcpy(potionTable, potionTableCopy, gameConst->numberPotionKinds * sizeof(itemTable));
+    memcpy(scrollTable, scrollTableCopy, gameConst->numberScrollKinds * sizeof(itemTable));
 
     free(potionTableCopy);
     free(scrollTableCopy);
@@ -1079,11 +1079,11 @@ void swapItemToEnchantLevel(item *theItem, short newEnchant, boolean enchantment
             theItem->flags &= ~(ITEM_MAX_CHARGES_KNOWN | ITEM_IDENTIFIED);
             theItem->flags |= ITEM_CAN_BE_IDENTIFIED;
             if (theItem->category & WEAPON) {
-                theItem->charges = gameConst.weaponKillsToAutoID; // kill this many enemies to auto-identify
+                theItem->charges = gameConst->weaponKillsToAutoID; // kill this many enemies to auto-identify
             } else if (theItem->category & ARMOR) {
-                theItem->charges = gameConst.armorDelayToAutoID; // this many turns until it reveals its enchants and whether runic
+                theItem->charges = gameConst->armorDelayToAutoID; // this many turns until it reveals its enchants and whether runic
             } else if (theItem->category & RING) {
-                theItem->charges = gameConst.ringDelayToAutoID; // how many turns of being worn until it auto-identifies
+                theItem->charges = gameConst->ringDelayToAutoID; // how many turns of being worn until it auto-identifies
             }
         }
         if (theItem->category & WAND) {
@@ -1175,7 +1175,7 @@ void updateFloorItems() {
 
             pmap[x][y].flags &= ~(HAS_ITEM | ITEM_DETECTED);
 
-            if (theItem->category == POTION || rogue.depthLevel == gameConst.deepestLevel) {
+            if (theItem->category == POTION || rogue.depthLevel == gameConst->deepestLevel) {
                 // Potions don't survive the fall.
                 deleteItem(theItem);
             } else {
@@ -2015,12 +2015,12 @@ void itemDetails(char *buf, item *theItem) {
                 if (theItem->category & WEAPON) {
                     sprintf(buf2, "It will reveal its secrets if you defeat %i%s %s with it. ",
                             theItem->charges,
-                            (theItem->charges == gameConst.weaponKillsToAutoID ? "" : " more"),
+                            (theItem->charges == gameConst->weaponKillsToAutoID ? "" : " more"),
                             (theItem->charges == 1 ? "enemy" : "enemies"));
                 } else {
                     sprintf(buf2, "It will reveal its secrets if worn for %i%s turn%s. ",
                             theItem->charges,
-                            (theItem->charges == gameConst.armorDelayToAutoID ? "" : " more"),
+                            (theItem->charges == gameConst->armorDelayToAutoID ? "" : " more"),
                             (theItem->charges == 1 ? "" : "s"));
                 }
                 strcat(buf, buf2);
@@ -2574,11 +2574,11 @@ void itemDetails(char *buf, item *theItem) {
             } else {
                 sprintf(buf2, "\n\nIt will reveal its secrets if worn for %i%s turn%s",
                         theItem->charges,
-                        (theItem->charges == gameConst.ringDelayToAutoID ? "" : " more"),
+                        (theItem->charges == gameConst->ringDelayToAutoID ? "" : " more"),
                         (theItem->charges == 1 ? "" : "s"));
                 strcat(buf, buf2);
 
-                if (!(theItem->flags & ITEM_IDENTIFIED) && (theItem->charges < gameConst.ringDelayToAutoID || (theItem->flags & ITEM_MAGIC_DETECTED))) {
+                if (!(theItem->flags & ITEM_IDENTIFIED) && (theItem->charges < gameConst->ringDelayToAutoID || (theItem->flags & ITEM_MAGIC_DETECTED))) {
                     sprintf(buf2, ", and until then it will function, at best, as a +%i ring.", theItem->timesEnchanted + 1);
                     strcat(buf, buf2);
                 } else {
@@ -5639,16 +5639,16 @@ int itemKindCount(enum itemCategory category, int polarityConstraint) {
 
     switch (category) {
         case SCROLL:
-            totalKinds = gameConst.numberScrollKinds;
-            goodKinds = gameConst.numberGoodScrollKinds;
+            totalKinds = gameConst->numberScrollKinds;
+            goodKinds = gameConst->numberGoodScrollKinds;
             break;
         case POTION:
-            totalKinds = gameConst.numberPotionKinds;
-            goodKinds = gameConst.numberGoodPotionKinds;
+            totalKinds = gameConst->numberPotionKinds;
+            goodKinds = gameConst->numberGoodPotionKinds;
             break;
         case WAND:
-            totalKinds = gameConst.numberWandKinds;
-            goodKinds = gameConst.numberGoodWandKinds;
+            totalKinds = gameConst->numberWandKinds;
+            goodKinds = gameConst->numberGoodWandKinds;
             break;
         case STAFF:
             totalKinds = NUMBER_STAFF_KINDS;
@@ -5671,8 +5671,8 @@ int itemKindCount(enum itemCategory category, int polarityConstraint) {
             goodKinds = NUMBER_RING_KINDS;
             break;
         case CHARM:
-            totalKinds = gameConst.numberCharmKinds;
-            goodKinds = gameConst.numberCharmKinds;
+            totalKinds = gameConst->numberCharmKinds;
+            goodKinds = gameConst->numberCharmKinds;
             break;
         default:
             totalKinds = 0;
@@ -5799,13 +5799,13 @@ void identifyItemKind(item *theItem) {
 
         switch (theItem->category) {
             case SCROLL:
-                tableCount = gameConst.numberScrollKinds;
+                tableCount = gameConst->numberScrollKinds;
                 break;
             case POTION:
-                tableCount = gameConst.numberPotionKinds;
+                tableCount = gameConst->numberPotionKinds;
                 break;
             case WAND:
-                tableCount = gameConst.numberWandKinds;
+                tableCount = gameConst->numberWandKinds;
                 break;
             case STAFF:
                 tableCount = NUMBER_STAFF_KINDS;
@@ -6119,7 +6119,7 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
             // hallucination is the only malevolent potion that splashes harmlessly when thrown
             if (theItem->kind == POTION_HALLUCINATION) {
                 if (theItem->flags & ITEM_MAGIC_DETECTED
-                    || (magicPolarityRevealedItemKindCount(theItem->category, 1) == gameConst.numberGoodPotionKinds)) {
+                    || (magicPolarityRevealedItemKindCount(theItem->category, 1) == gameConst->numberGoodPotionKinds)) {
                     autoIdentify(theItem);
                 }
             }
@@ -7822,16 +7822,16 @@ void shuffleFlavors() {
     short i, j, randIndex, randNumber;
     char buf[COLS];
 
-    for (i=0; i<gameConst.numberPotionKinds; i++) {
+    for (i=0; i<gameConst->numberPotionKinds; i++) {
         resetItemTableEntry(potionTable + i);
     }
     for (i=0; i<NUMBER_STAFF_KINDS; i++) {
         resetItemTableEntry(staffTable+ i);
     }
-    for (i=0; i<gameConst.numberWandKinds; i++) {
+    for (i=0; i<gameConst->numberWandKinds; i++) {
         resetItemTableEntry(wandTable + i);
     }
-    for (i=0; i<gameConst.numberScrollKinds; i++) {
+    for (i=0; i<gameConst->numberScrollKinds; i++) {
         resetItemTableEntry(scrollTable + i);
     }
     for (i=0; i<NUMBER_RING_KINDS; i++) {

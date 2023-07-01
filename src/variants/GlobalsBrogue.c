@@ -25,28 +25,6 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
-// Brogue version: what the user sees in the menu and title
-const char *brogueVersion = "CE 1.12.0";
-
-// Recording version. Saved into recordings and save files made by this version.
-// Cannot be longer than 16 chars
-const char *brogueRecordingVersion = "CE 1.12.0";
-
-/* Patch pattern. A scanf format string which matches an unsigned short. If this
-matches against a recording version string, it defines a "patch version." During
-normal play, rogue.patchVersion is set to the match of the game's recording
-version above, or 0 if it doesn't match.
-
-The game will only load a recording/save if either a) it has a patch version
-which is equal or less than the patch version of the current game
-(rogue.patchLevel is set to the recording's); or b) it doesn't match the version
-strings, but they are equal (rogue.patchLevel is set to 0).
-*/
-const char *broguePatchVersionPattern = "CE 1.12.%hu";
-
-// Earliest version that has identical dungeons to this version
-const char *brogueDungeonVersion = "CE 1.9";
-
 #define AMULET_LEVEL            26          
 #define DEEPEST_LEVEL           40          
 
@@ -968,70 +946,73 @@ const char *mainMenuTitle_Brogue =
                             ##                                            \
                            ####                                           ";
 
+// Version shown in ./brogue --version
+const char *brogueVersion = "CE 1.12.0";
+
+gameConstants brogueGameConst = {
+    .majorVersion = 1,
+    .minorVersion = 12,
+    .patchVersion = 0,
+
+    .versionString = "CE 1.12.0",
+    .dungeonVersionString = "CE 1.9",
+    .patchVersionPattern = "CE 1.12.%hu",
+    .recordingVersionString = "CE 1.12.0",
+
+    .variantName = "brogue",
+    .variantMenuMessage = NULL,
+
+    .deepestLevel = DEEPEST_LEVEL,
+    .amuletLevel = AMULET_LEVEL,
+
+    .depthAccelerator = 1,
+    .minimumLavaLevel = 4,
+    .minimumBrimstoneLevel = 17,
+    .minimumMutationsLevel = 10,
+
+    .machinesPerLevelSuppressionMultiplier = 4,
+    .machinesPerLevelSuppressionOffset = 2,
+    .machinesPerLevelIncreaseFactor = 1,
+    .maxLevelForBonusMachines = 2,
+
+    .extraItemsPerLevel = 0,
+    .goldAdjustmentStartDepth = 6,
+
+    .playerTransferenceRatio = 20,
+    .onHitHallucinateDuration = 20,
+    .onHitWeakenDuration = 300,
+    .onHitMercyHealPercent = 50,
+
+    .weaponKillsToAutoID = 20,
+    .armorDelayToAutoID = 1000,
+    .ringDelayToAutoID = 1500,
+
+    .fallDamageMin = 8,
+    .fallDamageMax = 10,
+
+    .numberAutogenerators = sizeof(autoGeneratorCatalog_Brogue) / sizeof(autoGenerator),
+    .numberBoltKinds = sizeof(boltCatalog_Brogue) / sizeof(bolt),
+    .numberBlueprints = sizeof(blueprintCatalog_Brogue) / sizeof(blueprint),
+    .numberPotionKinds = sizeof(potionTable_Brogue) / sizeof(itemTable),
+    .numberGoodPotionKinds = 8,
+    .numberScrollKinds = sizeof(scrollTable_Brogue) / sizeof(itemTable),
+    .numberGoodScrollKinds = 12,
+    .numberWandKinds = sizeof(wandTable_Brogue) / sizeof(itemTable),
+    .numberGoodWandKinds = 6,
+    .numberCharmKinds = sizeof(charmTable_Brogue) / sizeof(itemTable),
+    .numberMeteredItems = sizeof(meteredItemsGenerationTable_Brogue) / sizeof(meteredItemGenerationTable),
+    .numberHordes = sizeof(hordeCatalog_Brogue) / sizeof(hordeType),
+
+    .mainMenuTitleHeight = MENU_TITLE_HEIGHT,
+    .mainMenuTitleWidth = MENU_TITLE_WIDTH
+};
+
 void initializeGameVariantBrogue() {
 
     // Game constants
-
-    gameConst.majorVersion = 1;
-    gameConst.minorVersion = 12;
-    gameConst.patchVersion = 0;
-
-    gameConst.versionString = brogueVersion;
-    gameConst.dungeonVersionString = brogueDungeonVersion;
-    gameConst.patchVersionPattern = broguePatchVersionPattern;
-    gameConst.recordingVersionString = brogueRecordingVersion;
-
-    gameConst.variantName = "brogue";
-
-    gameConst.variantMenuMessage = NULL;
-
-    gameConst.deepestLevel = DEEPEST_LEVEL;
-    gameConst.amuletLevel = AMULET_LEVEL;
-
-    gameConst.depthAccelerator = 1;
-    gameConst.minimumLavaLevel = 4;
-    gameConst.minimumBrimstoneLevel = 17;
-    gameConst.minimumMutationsLevel = 10;
-
-    gameConst.machinesPerLevelSuppressionMultiplier = 4;
-    gameConst.machinesPerLevelSuppressionOffset = 2;
-    gameConst.machinesPerLevelIncreaseFactor = 1;
-    gameConst.maxLevelForBonusMachines = 2;
-
-    gameConst.extraItemsPerLevel = 0;
-    gameConst.goldAdjustmentStartDepth = 6;
-
-    gameConst.playerTransferenceRatio = 20;
-    gameConst.onHitHallucinateDuration = 20;
-    gameConst.onHitWeakenDuration = 300;
-    gameConst.onHitMercyHealPercent = 50;
-    
-    gameConst.weaponKillsToAutoID = 20;
-    gameConst.armorDelayToAutoID = 1000;
-    gameConst.ringDelayToAutoID = 1500;
-
-    gameConst.fallDamageMin = 8;
-    gameConst.fallDamageMax = 10;
-    
-    gameConst.numberAutogenerators = sizeof(autoGeneratorCatalog_Brogue) / sizeof(autoGenerator);
-    gameConst.numberBoltKinds = sizeof(boltCatalog_Brogue) / sizeof(bolt);
-    gameConst.numberBlueprints = sizeof(blueprintCatalog_Brogue) / sizeof(blueprint);
-    gameConst.numberPotionKinds = sizeof(potionTable_Brogue) / sizeof(itemTable);
-    gameConst.numberGoodPotionKinds = 8;
-    gameConst.numberScrollKinds = sizeof(scrollTable_Brogue) / sizeof(itemTable);
-    gameConst.numberGoodScrollKinds = 12;
-    gameConst.numberWandKinds = sizeof(wandTable_Brogue) / sizeof(itemTable);
-    gameConst.numberGoodWandKinds = 6;
-    gameConst.numberCharmKinds = sizeof(charmTable_Brogue) / sizeof(itemTable);
-    gameConst.numberMeteredItems = sizeof(meteredItemsGenerationTable_Brogue) / sizeof(meteredItemGenerationTable);
-
-    gameConst.numberHordes = sizeof(hordeCatalog_Brogue) / sizeof(hordeType);
-
-    gameConst.mainMenuTitleHeight = MENU_TITLE_HEIGHT;
-    gameConst.mainMenuTitleWidth = MENU_TITLE_WIDTH;
+    gameConst = &brogueGameConst;
 
     // Global variables
-
     autoGeneratorCatalog = autoGeneratorCatalog_Brogue;
     lumenstoneDistribution = lumenstoneDistribution_Brogue;
     itemGenerationProbabilities = itemGenerationProbabilities_Brogue;

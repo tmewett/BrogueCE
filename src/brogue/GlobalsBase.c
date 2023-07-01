@@ -37,7 +37,7 @@ short numberOfWaypoints;
 levelData *levels;
 creature player;
 playerCharacter rogue;
-gameConstants gameConst;
+gameConstants *gameConst;
 int gameVariant = VARIANT_BROGUE;
 creatureList *monsters;
 creatureList *dormantMonsters;

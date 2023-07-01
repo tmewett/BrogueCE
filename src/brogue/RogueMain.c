@@ -148,7 +148,7 @@ void welcome() {
     encodeMessageColor(buf, strlen(buf), &itemMessageColor);
     strcat(buf, "Amulet of Yendor");
     encodeMessageColor(buf, strlen(buf), &white);
-    sprintf(buf2, " from the %ith floor and escape with it!", gameConst.amuletLevel);
+    sprintf(buf2, " from the %ith floor and escape with it!", gameConst->amuletLevel);
     strcat(buf, buf2);
     message(buf, 0);
     if (KEYBOARD_LABELS) {
@@ -207,7 +207,7 @@ void initializeRogue(uint64_t seed) {
     rogue.cautiousMode = false;
     rogue.milliseconds = 0;
 
-    rogue.meteredItems = calloc(gameConst.numberMeteredItems, sizeof(meteredItem));
+    rogue.meteredItems = calloc(gameConst->numberMeteredItems, sizeof(meteredItem));
     strcpy(rogue.currentGamePath, currentGamePath);
 
     rogue.RNG = RNG_SUBSTANTIVE;
@@ -220,12 +220,12 @@ void initializeRogue(uint64_t seed) {
 
     initRecording();
 
-    levels = malloc(sizeof(levelData) * (gameConst.deepestLevel+1));
+    levels = malloc(sizeof(levelData) * (gameConst->deepestLevel+1));
     levels[0].upStairsLoc.x = (DCOLS - 1) / 2 - 1;
     levels[0].upStairsLoc.y = DROWS - 2;
 
     // Set metered item frequencies to initial values.
-    for (i = 0; i < gameConst.numberMeteredItems; i++) {
+    for (i = 0; i < gameConst->numberMeteredItems; i++) {
         rogue.meteredItems[i].frequency = meteredItemsGenerationTable[i].initialFrequency;
     }
 
@@ -233,7 +233,7 @@ void initializeRogue(uint64_t seed) {
     resetDFMessageEligibility();
 
     // initialize the levels list
-    for (i=0; i<gameConst.deepestLevel+1; i++) {
+    for (i=0; i<gameConst->deepestLevel+1; i++) {
         if (rogue.seed >> 32) {
             // generate a 64-bit seed
             levels[i].levelSeed = rand_64bits();
@@ -255,7 +255,7 @@ void initializeRogue(uint64_t seed) {
             levels[i].downStairsLoc.x = rand_range(1, DCOLS - 2);
             levels[i].downStairsLoc.y = rand_range(1, DROWS - 2);
         } while (distanceBetween(levels[i].upStairsLoc, levels[i].downStairsLoc) < DCOLS / 3);
-        if (i < gameConst.deepestLevel) {
+        if (i < gameConst->deepestLevel) {
             levels[i+1].upStairsLoc.x = levels[i].downStairsLoc.x;
             levels[i+1].upStairsLoc.y = levels[i].downStairsLoc.y;
         }
@@ -519,7 +519,7 @@ void updateColors() {
 
     for (i=0; i<NUMBER_DYNAMIC_COLORS; i++) {
         *(dynamicColors[i]) = *(dynamicColorsBounds[i][0]);
-        applyColorAverage(dynamicColors[i], dynamicColorsBounds[i][1], min(100, max(0, rogue.depthLevel * 100 / gameConst.amuletLevel)));
+        applyColorAverage(dynamicColors[i], dynamicColorsBounds[i][1], min(100, max(0, rogue.depthLevel * 100 / gameConst->amuletLevel)));
     }
 }
 
@@ -534,7 +534,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     short **mapToPit;
     boolean connectingStairsDiscovered;
 
-    if (oldLevelNumber == gameConst.deepestLevel && stairDirection != -1) {
+    if (oldLevelNumber == gameConst->deepestLevel && stairDirection != -1) {
         return;
     }
 
@@ -643,7 +643,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
 
     //  Prepare the new level
     rogue.minersLightRadius = (DCOLS - 1) * FP_FACTOR;
-    for (i = 0; i < rogue.depthLevel * gameConst.depthAccelerator; i++) {
+    for (i = 0; i < rogue.depthLevel * gameConst->depthAccelerator; i++) {
         rogue.minersLightRadius = rogue.minersLightRadius * 85 / 100;
     }
     rogue.minersLightRadius += FP_FACTOR * 225 / 100;
@@ -679,7 +679,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
         // If we somehow failed to generate the amulet altar,
         // just toss an amulet in there somewhere.
         // It'll be fiiine!
-        if (rogue.depthLevel == gameConst.amuletLevel
+        if (rogue.depthLevel == gameConst->amuletLevel
             && !numberOfMatchingPackItems(AMULET, 0, 0, false)
             && levels[rogue.depthLevel-1].visited == false) {
 
@@ -777,9 +777,9 @@ void startLevel(short oldLevelNumber, short stairDirection) {
 
     if (!levels[rogue.depthLevel-1].visited) {
         levels[rogue.depthLevel-1].visited = true;
-        if (rogue.depthLevel == gameConst.amuletLevel) {
+        if (rogue.depthLevel == gameConst->amuletLevel) {
             messageWithColor(levelFeelings[0].message, levelFeelings[0].color, 0);
-        } else if (rogue.depthLevel == gameConst.deepestLevel) {
+        } else if (rogue.depthLevel == gameConst->deepestLevel) {
             messageWithColor(levelFeelings[1].message, levelFeelings[1].color, 0);
         }
     }
@@ -953,7 +953,7 @@ void freeEverything() {
     freeGlobalDynamicGrid(&rogue.mapToShore);
     freeGlobalDynamicGrid(&rogue.mapToSafeTerrain);
 
-    for (i=0; i<gameConst.deepestLevel+1; i++) {
+    for (i=0; i<gameConst->deepestLevel+1; i++) {
         freeCreatureList(&levels[i].monsters);
         freeCreatureList(&levels[i].dormantMonsters);
 

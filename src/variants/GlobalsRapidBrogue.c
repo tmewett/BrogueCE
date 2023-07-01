@@ -27,28 +27,6 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
-// Brogue version: what the user sees in the menu and title
-const char *rapidBrogueVersion = "RB 1.4.0";
-
-// Recording version. Saved into recordings and save files made by this version.
-// Cannot be longer than 16 chars
-const char *rapidBrogueRecordingVersion = "RB 1.4.0";
-
-/* Patch pattern. A scanf format string which matches an unsigned short. If this
-matches against a recording version string, it defines a "patch version." During
-normal play, rogue.patchVersion is set to the match of the game's recording
-version above, or 0 if it doesn't match.
-
-The game will only load a recording/save if either a) it has a patch version
-which is equal or less than the patch version of the current game
-(rogue.patchLevel is set to the recording's); or b) it doesn't match the version
-strings, but they are equal (rogue.patchLevel is set to 0).
-*/
-const char *rapidBroguePatchVersionPattern = "RB 1.4.%hu";
-
-// Earliest version that has identical dungeons to this version
-const char *rapidBrogueDungeonVersion = "RB 1.4";
-
 #define AMULET_LEVEL            6          // how deep before the amulet appears
 #define DEEPEST_LEVEL           10          // how deep the universe goes
 
@@ -975,70 +953,73 @@ const char *mainMenuTitle_RapidBrogue =
                            ##   ## ##   ## ##      ## ##   ##             \
                            ##   ## ##   ## ##      ## ######              ";
 
+// Version shown in ./brogue --version
+const char *rapidBrogueVersion = "RB 1.4.0";
+
+gameConstants rapidBrogueGameConst = {
+    .majorVersion = 1,
+    .minorVersion = 4,
+    .patchVersion = 0,
+
+    .versionString = "RB 1.4.0",
+    .dungeonVersionString = "RB 1.4",
+    .patchVersionPattern = "RB 1.4.%hu",
+    .recordingVersionString = "RB 1.4.0",
+
+    .variantName = "rapidBrogue",
+    .variantMenuMessage = "RapidBrogue is a shorter Brogue experience compressed into fewer levels. The action comes thick and fast, so recommended for experienced Brogue players!",
+
+    .deepestLevel = DEEPEST_LEVEL,
+    .amuletLevel = AMULET_LEVEL,
+
+    .depthAccelerator = 4,
+    .minimumLavaLevel = 2,
+    .minimumBrimstoneLevel = 5,
+    .minimumMutationsLevel = 3,
+
+    .machinesPerLevelSuppressionMultiplier = 2,
+    .machinesPerLevelSuppressionOffset = 0,
+    .machinesPerLevelIncreaseFactor = 3,
+    .maxLevelForBonusMachines = 1,
+
+    .extraItemsPerLevel = 4,
+    .goldAdjustmentStartDepth = 3,
+
+    .playerTransferenceRatio = 10,
+    .onHitHallucinateDuration = 20,
+    .onHitWeakenDuration = 100,
+    .onHitMercyHealPercent = 50,
+
+    .weaponKillsToAutoID = 5,
+    .armorDelayToAutoID = 250,
+    .ringDelayToAutoID = 250,
+
+    .fallDamageMin = 8,
+    .fallDamageMax = 10,
+
+    .numberAutogenerators = sizeof(autoGeneratorCatalog_RapidBrogue) / sizeof(autoGenerator),
+    .numberBoltKinds = sizeof(boltCatalog_RapidBrogue) / sizeof(bolt),
+    .numberBlueprints = sizeof(blueprintCatalog_RapidBrogue) / sizeof(blueprint),
+    .numberPotionKinds = sizeof(potionTable_RapidBrogue) / sizeof(itemTable),
+    .numberGoodPotionKinds = 8,
+    .numberScrollKinds = sizeof(scrollTable_RapidBrogue) / sizeof(itemTable),
+    .numberGoodScrollKinds = 12,
+    .numberWandKinds = sizeof(wandTable_RapidBrogue) / sizeof(itemTable),
+    .numberGoodWandKinds = 6,
+    .numberCharmKinds = sizeof(charmTable_RapidBrogue) / sizeof(itemTable),
+    .numberMeteredItems = sizeof(meteredItemsGenerationTable_RapidBrogue) / sizeof(meteredItemGenerationTable),
+    .numberHordes = sizeof(hordeCatalog_RapidBrogue) / sizeof(hordeType),
+    
+    .mainMenuTitleHeight = MENU_TITLE_HEIGHT,
+    .mainMenuTitleWidth = MENU_TITLE_WIDTH
+};
+
 void initializeGameVariantRapidBrogue() {
-    
+
     // Game constants
-
-    gameConst.majorVersion = 1;
-    gameConst.minorVersion = 4;
-    gameConst.patchVersion = 0;
-
-    gameConst.versionString = rapidBrogueVersion;
-    gameConst.dungeonVersionString = rapidBrogueDungeonVersion;
-    gameConst.patchVersionPattern = rapidBroguePatchVersionPattern;
-    gameConst.recordingVersionString = rapidBrogueRecordingVersion;
-
-    gameConst.variantName = "rapidBrogue";
-
-    gameConst.variantMenuMessage = "RapidBrogue is a shorter Brogue experience compressed into fewer levels. The action comes thick and fast, so recommended for experienced Brogue players!";
-
-    gameConst.deepestLevel = DEEPEST_LEVEL;
-    gameConst.amuletLevel = AMULET_LEVEL;
-
-    gameConst.depthAccelerator = 4;
-    gameConst.minimumLavaLevel = 2;
-    gameConst.minimumBrimstoneLevel = 5;
-    gameConst.minimumMutationsLevel = 3;
-
-    gameConst.machinesPerLevelSuppressionMultiplier = 2;
-    gameConst.machinesPerLevelSuppressionOffset = 0;
-    gameConst.machinesPerLevelIncreaseFactor = 3;
-    gameConst.maxLevelForBonusMachines = 1;
-
-    gameConst.extraItemsPerLevel = 4;
-    gameConst.goldAdjustmentStartDepth = 3;
-
-    gameConst.playerTransferenceRatio = 10;
-    gameConst.onHitHallucinateDuration = 20;
-    gameConst.onHitWeakenDuration = 100;
-    gameConst.onHitMercyHealPercent = 50;
-    
-    gameConst.weaponKillsToAutoID = 5;
-    gameConst.armorDelayToAutoID = 250;
-    gameConst.ringDelayToAutoID = 250;
-
-    gameConst.fallDamageMin = 8;
-    gameConst.fallDamageMax = 10;
-    
-    gameConst.numberAutogenerators = sizeof(autoGeneratorCatalog_RapidBrogue) / sizeof(autoGenerator);
-    gameConst.numberBoltKinds = sizeof(boltCatalog_RapidBrogue) / sizeof(bolt);
-    gameConst.numberBlueprints = sizeof(blueprintCatalog_RapidBrogue) / sizeof(blueprint);
-    gameConst.numberPotionKinds = sizeof(potionTable_RapidBrogue) / sizeof(itemTable);
-    gameConst.numberGoodPotionKinds = 8;
-    gameConst.numberScrollKinds = sizeof(scrollTable_RapidBrogue) / sizeof(itemTable);
-    gameConst.numberGoodScrollKinds = 12;
-    gameConst.numberWandKinds = sizeof(wandTable_RapidBrogue) / sizeof(itemTable);
-    gameConst.numberGoodWandKinds = 6;
-    gameConst.numberCharmKinds = sizeof(charmTable_RapidBrogue) / sizeof(itemTable);
-    gameConst.numberMeteredItems = sizeof(meteredItemsGenerationTable_RapidBrogue) / sizeof(meteredItemGenerationTable);
-
-    gameConst.numberHordes = sizeof(hordeCatalog_RapidBrogue) / sizeof(hordeType);
-
-    gameConst.mainMenuTitleHeight = MENU_TITLE_HEIGHT;
-    gameConst.mainMenuTitleWidth = MENU_TITLE_WIDTH;
-
+    gameConst = &rapidBrogueGameConst;
+        
     // Global variables
-
     autoGeneratorCatalog = autoGeneratorCatalog_RapidBrogue;
     lumenstoneDistribution = lumenstoneDistribution_RapidBrogue;
     itemGenerationProbabilities = itemGenerationProbabilities_RapidBrogue;

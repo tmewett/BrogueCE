@@ -37,7 +37,7 @@ static void printSeedCatalogCsvLine(uint64_t seed, short depth, short quantity, 
                                     char enchantment[50], char runicName[50], char vaultNumber[10], char opensVaultNumber[10],
                                     char carriedByMonsterName[50], char allyStatusName[20], char mutationName[100]){
 
-    printf("%s,%llu,%i,%i,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", gameConst.dungeonVersionString, (unsigned long long) seed, depth, quantity, categoryName,
+    printf("%s,%llu,%i,%i,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", gameConst->dungeonVersionString, (unsigned long long) seed, depth, quantity, categoryName,
            kindName, enchantment, runicName, vaultNumber, opensVaultNumber, carriedByMonsterName, allyStatusName,
            mutationName);
 }
@@ -263,8 +263,8 @@ void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsig
                      "Generated with %s. Dungeons unchanged since %s.\n\n"
                      "To play one of these seeds, press control-N from the title screen"
                      " and enter the seed number.\n",
-            (unsigned long long) startingSeed, (unsigned long long) startingSeed + numberOfSeedsToScan - 1, scanThroughDepth, gameConst.versionString,
-            gameConst.dungeonVersionString);
+            (unsigned long long) startingSeed, (unsigned long long) startingSeed + numberOfSeedsToScan - 1, scanThroughDepth, gameConst->versionString,
+            gameConst->dungeonVersionString);
 
     if (isCsvFormat) {
         fprintf(stderr, "%s", message);
