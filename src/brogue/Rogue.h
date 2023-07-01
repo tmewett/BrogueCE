@@ -155,6 +155,10 @@ typedef struct pos {
 
 #define INVALID_POS ((pos) { .x = -1, .y = -1 })
 
+static inline boolean posEq(pos a, pos b) {
+    return a.x == b.x && a.y == b.y;
+}
+
 // A location within the window.
 // Convert between `windowpos` and `pos` with `mapToWindow` and
 // `windowToMap`
@@ -2262,9 +2266,9 @@ typedef struct creature {
     // Waypoints:
     short targetWaypointIndex;          // the index number of the waypoint we're pathing toward
     boolean waypointAlreadyVisited[MAX_WAYPOINT_COUNT]; // checklist of waypoints
-    short lastSeenPlayerAt[2];          // last location at which the monster hunted the player
+    pos lastSeenPlayerAt;          // last location at which the monster hunted the player
 
-    short targetCorpseLoc[2];           // location of the corpse that the monster is approaching to gain its abilities
+    pos targetCorpseLoc;           // location of the corpse that the monster is approaching to gain its abilities
     char targetCorpseName[30];          // name of the deceased monster that we're approaching to gain its abilities
     unsigned long absorptionFlags;      // ability/behavior flags that the monster will gain when absorption is complete
     boolean absorbBehavior;             // above flag is behavior instead of ability (ignored if absorptionBolt is set)

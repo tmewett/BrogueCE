@@ -1345,7 +1345,7 @@ boolean canAbsorb(creature *ally, boolean ourBolts[NUMBER_BOLT_KINDS], creature 
 
     if (ally->creatureState == MONSTER_ALLY
         && ally->newPowerCount > 0
-        && (ally->targetCorpseLoc[0] <= 0)
+        && (!isPosInMap(ally->targetCorpseLoc))
         && !((ally->info.flags | prey->info.flags) & (MONST_INANIMATE | MONST_IMMOBILE))
         && !monsterAvoids(ally, prey->loc.x, prey->loc.y)
         && grid[ally->loc.x][ally->loc.y] <= 10) {
@@ -1412,8 +1412,7 @@ boolean anyoneWantABite(creature *decedent) {
             }
         }
         if (firstAlly) {
-            firstAlly->targetCorpseLoc[0] = decedent->loc.x;
-            firstAlly->targetCorpseLoc[1] = decedent->loc.y;
+            firstAlly->targetCorpseLoc = decedent->loc;
             strcpy(firstAlly->targetCorpseName, decedent->info.monsterName);
             firstAlly->corpseAbsorptionCounter = 20; // 20 turns to get there and start eating before he loses interest
 
