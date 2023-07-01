@@ -7830,7 +7830,7 @@ void shuffleFlavors() {
         resetItemTableEntry(staffTable+ i);
     }
     for (i=0; i<gameConst.numberWandKinds; i++) {
-        resetItemTableEntry(&(wandTable[i]));
+        resetItemTableEntry(wandTable + i);
     }
     for (i=0; i<gameConst.numberScrollKinds; i++) {
         resetItemTableEntry(scrollTable + i);
