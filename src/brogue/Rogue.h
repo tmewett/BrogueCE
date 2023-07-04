@@ -145,6 +145,17 @@ typedef long long fixpt;
 #define COLS                    100
 #define ROWS                    (31 + MESSAGE_LINES)
 
+// Returns the sign of the input:
+// - if (x == 0)  ===> returns 0
+// - if (x >= 1)  ===> returns +1
+// - if (x <= -1) ===> returns -1
+static inline int signum(int x) {
+    if (x == 0) {
+        return 0;
+    }
+    return x > 0 ? 1 : -1;
+}
+
 // A location within the dungeon.
 // Typically, 0 <= x < DCOLS and 0 <= y < DROWS,
 // but occasionally coordinates are used which point outside of this region.
@@ -3096,7 +3107,7 @@ extern "C" {
     boolean moveMonster(creature *monst, short dx, short dy);
     unsigned long burnedTerrainFlagsAtLoc(short x, short y);
     unsigned long discoveredTerrainFlagsAtLoc(short x, short y);
-    boolean monsterAvoids(creature *monst, short x, short y);
+    boolean monsterAvoids(creature *monst, pos p);
     short distanceBetween(pos loc1, pos loc2);
     void alertMonster(creature *monst);
     void wakeUp(creature *monst);

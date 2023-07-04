@@ -3704,11 +3704,9 @@ void initializeLevel() {
 
         // Run a field of view check from up stairs so that monsters do not spawn within sight of it.
         for (dir=0; dir<4; dir++) {
-            if (coordinatesAreInMap(upLoc.x + nbDirs[dir][0], upLoc.y + nbDirs[dir][1])
-                && !cellHasTerrainFlag(upLoc.x + nbDirs[dir][0], upLoc.y + nbDirs[dir][1], T_OBSTRUCTS_PASSABILITY)) {
-
-                upLoc.x += nbDirs[dir][0];
-                upLoc.y += nbDirs[dir][1];
+            pos nextLoc = posNeighborInDirection(upLoc, dir);
+            if (isPosInMap(nextLoc) && !cellHasTerrainFlag(nextLoc.x, nextLoc.y, T_OBSTRUCTS_PASSABILITY)) {
+                upLoc = nextLoc;
                 break;
             }
         }

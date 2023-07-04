@@ -197,7 +197,7 @@ void splitMonster(creature *monst, pos loc) {
                         && !eligibleGrid[newX][newY]
                         && !monsterGrid[newX][newY]
                         && !(pmap[newX][newY].flags & (HAS_PLAYER | HAS_MONSTER))
-                        && !monsterAvoids(monst, newX, newY)) {
+                        && !monsterAvoids(monst, (pos){ newX, newY })) {
 
                         eligibleGrid[newX][newY] = true;
                         eligibleLocationCount++;
@@ -1347,7 +1347,7 @@ boolean canAbsorb(creature *ally, boolean ourBolts[NUMBER_BOLT_KINDS], creature 
         && ally->newPowerCount > 0
         && (!isPosInMap(ally->targetCorpseLoc))
         && !((ally->info.flags | prey->info.flags) & (MONST_INANIMATE | MONST_IMMOBILE))
-        && !monsterAvoids(ally, prey->loc.x, prey->loc.y)
+        && !monsterAvoids(ally, prey->loc)
         && grid[ally->loc.x][ally->loc.y] <= 10) {
 
         if (~(ally->info.abilityFlags) & prey->info.abilityFlags & LEARNABLE_ABILITIES) {
