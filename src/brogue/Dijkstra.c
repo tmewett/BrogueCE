@@ -233,7 +233,7 @@ void calculateDistances(short **distanceMap,
                        || (traveler && traveler == &player && !(pmap[i][j].flags & (DISCOVERED | MAGIC_MAPPED)))) {
 
                 cost = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
-            } else if ((traveler && monsterAvoids(traveler, i, j)) || cellHasTerrainFlag(i, j, blockingTerrainFlags)) {
+            } else if ((traveler && monsterAvoids(traveler, (pos){i, j})) || cellHasTerrainFlag(i, j, blockingTerrainFlags)) {
                 cost = PDS_FORBIDDEN;
             } else {
                 cost = 1;

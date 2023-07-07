@@ -2071,12 +2071,9 @@ void decrementPlayerStatus() {
 }
 
 boolean dangerChanged(boolean danger[4]) {
-    enum directions dir;
-    short newX, newY;
-    for (dir = 0; dir < 4; dir++) {
-        newX = player.loc.x + nbDirs[dir][0];
-        newY = player.loc.y + nbDirs[dir][1];
-        if (danger[dir] != monsterAvoids(&player, newX, newY)) {
+    for (enum directions dir = 0; dir < 4; dir++) {
+        const pos newLoc = posNeighborInDirection(player.loc, dir);
+        if (danger[dir] != monsterAvoids(&player, newLoc)) {
             return true;
         }
     }
@@ -2084,21 +2081,16 @@ boolean dangerChanged(boolean danger[4]) {
 }
 
 void autoRest() {
-    short i = 0;
-    boolean initiallyEmbedded; // Stop as soon as we're free from crystal.
     boolean danger[4];
-    short newX, newY;
-    enum directions dir;
-
-    for (dir = 0; dir < 4; dir++) {
-        newX = player.loc.x + nbDirs[dir][0];
-        newY = player.loc.y + nbDirs[dir][1];
-        danger[dir] = monsterAvoids(&player, newX, newY);
+    for (enum directions dir = 0; dir < 4; dir++) {
+        const pos newLoc = posNeighborInDirection(player.loc, dir);
+        danger[dir] = monsterAvoids(&player, newLoc);
     }
 
     rogue.disturbed = false;
     rogue.automationActive = true;
-    initiallyEmbedded = cellHasTerrainFlag(player.loc.x, player.loc.y, T_OBSTRUCTS_PASSABILITY);
+    // Stop as soon as we're free from crystal.
+    const boolean initiallyEmbedded = cellHasTerrainFlag(player.loc.x, player.loc.y, T_OBSTRUCTS_PASSABILITY);
 
     if ((player.currentHP < player.info.maxHP
          || player.status[STATUS_HALLUCINATING]
@@ -2108,6 +2100,8 @@ void autoRest() {
          || player.status[STATUS_DARKNESS]
          || initiallyEmbedded)
         && !rogue.disturbed) {
+
+        int i = 0;
         while (i++ < TURNS_FOR_FULL_REGEN
                && (player.currentHP < player.info.maxHP
                    || player.status[STATUS_HALLUCINATING]
@@ -2127,7 +2121,7 @@ void autoRest() {
             }
         }
     } else {
-        for (i=0; i<100 && !rogue.disturbed; i++) {
+        for (int i=0; i<100 && !rogue.disturbed; i++) {
             recordKeystroke(REST_KEY, false, false);
             rogue.justRested = true;
             playerTurnEnded();

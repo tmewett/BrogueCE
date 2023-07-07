@@ -25,15 +25,12 @@
 #include "IncludeGlobals.h"
 
 void playerRuns(short direction) {
-    short newX, newY, dir;
     boolean cardinalPassability[4];
 
     rogue.disturbed = (player.status[STATUS_CONFUSED] ? true : false);
 
-    for (dir = 0; dir < 4; dir++) {
-        newX = player.loc.x + nbDirs[dir][0];
-        newY = player.loc.y + nbDirs[dir][1];
-        cardinalPassability[dir] = monsterAvoids(&player, newX, newY);
+    for (int dir = 0; dir < 4; dir++) {
+        cardinalPassability[dir] = monsterAvoids(&player, posNeighborInDirection(player.loc, dir));
     }
 
     while (!rogue.disturbed) {
@@ -42,22 +39,17 @@ void playerRuns(short direction) {
             break;
         }
 
-        newX = player.loc.x + nbDirs[direction][0];
-        newY = player.loc.y + nbDirs[direction][1];
-        if (!coordinatesAreInMap(newX, newY)
-            || monsterAvoids(&player, newX, newY)) {
-
+        const pos newLoc = posNeighborInDirection(player.loc, direction);
+        if (!isPosInMap(newLoc) || monsterAvoids(&player, newLoc)) {
             rogue.disturbed = true;
         }
         if (isDisturbed(player.loc.x, player.loc.y)) {
             rogue.disturbed = true;
         } else if (direction < 4) {
-            for (dir = 0; dir < 4; dir++) {
-                newX = player.loc.x + nbDirs[dir][0];
-                newY = player.loc.y + nbDirs[dir][1];
-                if (cardinalPassability[dir] != monsterAvoids(&player, newX, newY)
-                    && !(nbDirs[dir][0] + nbDirs[direction][0] == 0 &&
-                         nbDirs[dir][1] + nbDirs[direction][1] == 0)) {
+            for (int dir = 0; dir < 4; dir++) {
+                const pos newLoc = posNeighborInDirection(player.loc, dir);
+                if (cardinalPassability[dir] != monsterAvoids(&player, newLoc)
+                    && !posEq(player.loc, posNeighborInDirection(newLoc, direction))) {
                         // dir is not the x-opposite or y-opposite of direction
                     rogue.disturbed = true;
                 }
@@ -451,7 +443,7 @@ short randValidDirectionFrom(creature *monst, short x, short y, boolean respectA
             && !cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)
             && !diagonalBlocked(x, y, newX, newY, false)
             && (!respectAvoidancePreferences
-                || (!monsterAvoids(monst, newX, newY))
+                || (!monsterAvoids(monst, (pos){newX, newY}))
                 || ((pmap[newX][newY].flags & HAS_PLAYER) && monst->creatureState != MONSTER_ALLY))) {
             validDirections[count++] = i;
         }
@@ -588,10 +580,7 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
         return false;
     }
     pos originLoc = attacker->loc;
-    pos targetLoc = (pos){
-        .x = attacker->loc.x + nbDirs[dir][0],
-        .y = attacker->loc.y + nbDirs[dir][1]
-    };
+    pos targetLoc = posNeighborInDirection(attacker->loc, dir);
     pos strikeLoc;
     getImpactLoc(&strikeLoc, originLoc, targetLoc, 5, false, &boltCatalog[BOLT_WHIP]);
 
@@ -1107,7 +1096,7 @@ boolean playerMoves(short direction) {
                 pmapAt(defender->loc)->flags &= ~HAS_MONSTER;
                 defender->loc.x = x;
                 defender->loc.y = y;
-                if (monsterAvoids(defender, x, y)) {
+                if (monsterAvoids(defender, (pos){x, y})) {
                     getQualifyingPathLocNear(&(defender->loc.x), &(defender->loc.y), player.loc.x, player.loc.y, true, forbiddenFlagsForMonster(&(defender->info)), 0, 0, (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
                 }
                 //getQualifyingLocNear(loc, player.loc.x, player.loc.y, true, NULL, forbiddenFlagsForMonster(&(defender->info)) & ~(T_IS_DF_TRAP | T_IS_DEEP_WATER | T_SPONTANEOUSLY_IGNITES), HAS_MONSTER, false, false);
@@ -1370,7 +1359,7 @@ void calculateDistances(short **distanceMap, short destinationX, short destinati
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
             distanceMap[i][j] = ((traveler && traveler == &player && !(pmap[i][j].flags & (DISCOVERED | MAGIC_MAPPED)))
-                                 || ((traveler && monsterAvoids(traveler, i, j))
+                                 || ((traveler && monsterAvoids(traveler, (pos){i, j}))
                                      || cellHasTerrainFlag(i, j, blockingTerrainFlags))) ? -1 : 30000;
         }
     }
@@ -1427,7 +1416,7 @@ short nextStep(short **distanceMap, short x, short y, creature *monst, boolean p
             blocked = false;
             blocker = monsterAtLoc(newX, newY);
             if (monst
-                && monsterAvoids(monst, newX, newY)) {
+                && monsterAvoids(monst, (pos){newX, newY})) {
 
                 blocked = true;
             } else if (monst
@@ -1502,7 +1491,7 @@ void travelRoute(short path[1000][2], short steps) {
         for (j = i + 1; j < steps - 1; j++) {
             // Check to see if the path has become obstructed or avoided since the last time we saw it.
             if (diagonalBlocked(path[j-1][0], path[j-1][1], path[j][0], path[j][1], true)
-                || monsterAvoids(&player, path[j][0], path[j][1])) {
+                || monsterAvoids(&player, (pos){path[j][0], path[j][1]})) {
 
                 rogue.disturbed = true;
                 break;
@@ -1744,7 +1733,7 @@ void populateCreatureCostMap(short **costMap, creature *monst) {
                 continue;
             }
 
-            if (monsterAvoids(monst, i, j)) {
+            if (monsterAvoids(monst, (pos){i, j})) {
                 costMap[i][j] = PDS_FORBIDDEN;
                 continue;
             }
@@ -1791,20 +1780,15 @@ void populateCreatureCostMap(short **costMap, creature *monst) {
 }
 
 enum directions adjacentFightingDir() {
-    short newX, newY;
-    enum directions dir;
-    creature *monst;
-
     if (cellHasTerrainFlag(player.loc.x, player.loc.y, T_OBSTRUCTS_PASSABILITY)) {
         return NO_DIRECTION;
     }
-    for (dir = 0; dir < DIRECTION_COUNT; dir++) {
-        newX = player.loc.x + nbDirs[dir][0];
-        newY = player.loc.y + nbDirs[dir][1];
-        monst = monsterAtLoc(newX, newY);
+    for (enum directions dir = 0; dir < DIRECTION_COUNT; dir++) {
+        const pos newLoc = posNeighborInDirection(player.loc, dir);
+        creature *const monst = monsterAtLoc(newLoc.x, newLoc.y);
         if (monst
             && canSeeMonster(monst)
-            && (!diagonalBlocked(player.loc.x, player.loc.y, newX, newY, false) || (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS))
+            && (!diagonalBlocked(player.loc.x, player.loc.y, newLoc.x, newLoc.y, false) || (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS))
             && monstersAreEnemies(&player, monst)
             && !(monst->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE))) {
 
@@ -1838,7 +1822,7 @@ void getExploreMap(short **map, boolean headingToStairs) {// calculate explore m
                     map[i][j] = exploreGoalValue(i, j);
                 }
             } else if (theItem
-                       && !monsterAvoids(&player, i, j)) {
+                       && !monsterAvoids(&player, (pos){i, j})) {
                 if (theItem->flags & ITEM_PLAYER_AVOIDS) {
                     costMap[i][j] = 20;
                 } else {
@@ -2027,16 +2011,12 @@ short directionOfKeypress(unsigned short ch) {
 }
 
 boolean startFighting(enum directions dir, boolean tillDeath) {
-    short x, y, expectedDamage;
-    creature *monst;
-
-    x = player.loc.x + nbDirs[dir][0];
-    y = player.loc.y + nbDirs[dir][1];
-    monst = monsterAtLoc(x, y);
+    const pos neighborLoc = posNeighborInDirection(player.loc, dir);
+    creature * const monst = monsterAtLoc(neighborLoc.x, neighborLoc.y);
     if (monst->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE)) {
         return false;
     }
-    expectedDamage = monst->info.damage.upperBound * monsterDamageAdjustmentAmount(monst) / FP_FACTOR;
+    int expectedDamage = monst->info.damage.upperBound * monsterDamageAdjustmentAmount(monst) / FP_FACTOR;
     if (rogue.easyMode) {
         expectedDamage /= 5;
     }
@@ -2050,7 +2030,7 @@ boolean startFighting(enum directions dir, boolean tillDeath) {
             break;
         }
     } while (!rogue.disturbed && !rogue.gameHasEnded && (tillDeath || player.currentHP > expectedDamage)
-             && (pmap[x][y].flags & HAS_MONSTER) && monsterAtLoc(x, y) == monst);
+             && (pmapAt(neighborLoc)->flags & HAS_MONSTER) && monsterAtLoc(neighborLoc.x, neighborLoc.y) == monst);
 
     rogue.blockCombatText = false;
     return rogue.disturbed;
