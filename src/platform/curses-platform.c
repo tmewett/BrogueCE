@@ -173,6 +173,7 @@ static void curses_nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInpu
             else if (key == Term.keys.right) returnEvent->param1 = RIGHT_ARROW;
             else if (key == Term.keys.quit) {
                 rogue.gameHasEnded = true;
+                rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
                 rogue.nextGame = NG_QUIT; // causes the menu to drop out immediately
             }
             else if ((key >= 'A' && key <= 'Z')) {

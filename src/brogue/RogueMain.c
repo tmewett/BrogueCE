@@ -26,9 +26,10 @@
 #include <time.h>
 
 
-void rogueMain() {
+int rogueMain() {
     previousGameSeed = 0;
     mainBrogueJunction();
+    return rogue.gameExitStatusCode;
 }
 
 void executeEvent(rogueEvent *theEvent) {
@@ -1126,6 +1127,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     }
 
     rogue.gameHasEnded = true;
+    rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
 }
 
 void victory(boolean superVictory) {
@@ -1284,6 +1286,7 @@ void victory(boolean superVictory) {
     }
 
     rogue.gameHasEnded = true;
+    rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
 }
 
 void enableEasyMode() {

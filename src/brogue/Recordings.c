@@ -326,6 +326,7 @@ void playbackPanic() {
         if (nonInteractivePlayback) {
             rogue.gameHasEnded = true;
         }
+        rogue.gameExitStatusCode = EXIT_STATUS_FAILURE_RECORDING_OOS;
 
         printf("Playback panic at location %li! Turn number %li.\n", recordingLocation - 1, rogue.playerTurnNumber);
         overlayDisplayBuffer(rbuf, 0);
@@ -468,7 +469,7 @@ void initRecording() {
     short i;
     boolean wizardMode;
     unsigned short recPatch;
-    char buf[100], *versionString = rogue.versionString;
+    char buf[1000], *versionString = rogue.versionString;
     FILE *recordFile;
 
 #ifdef AUDIT_RNG
@@ -510,16 +511,17 @@ void initRecording() {
             rogue.playbackMode = false;
             rogue.playbackFastForward = false;
             if (!nonInteractivePlayback) {
-                sprintf(buf, "This file is from version %s and cannot be opened in version %s.", versionString, BROGUE_VERSION_STRING);
+                snprintf(buf, 1000, "This file is from version %s and cannot be opened in version %s.\n", versionString, BROGUE_VERSION_STRING);
                 dialogAlert(buf);
             } else {
-                printf("This file is from version %s and cannot be opened in version %s.", versionString, BROGUE_VERSION_STRING);
+                printf("This file is from version %s and cannot be opened in version %s.\n", versionString, BROGUE_VERSION_STRING);
             }
             rogue.playbackMode = true;
             rogue.playbackPaused = true;
             rogue.playbackFastForward = false;
             rogue.playbackOOS = false;
             rogue.gameHasEnded = true;
+            rogue.gameExitStatusCode = EXIT_STATUS_FAILURE_RECORDING_WRONG_VERSION;
         }
 
         if (wizardMode != rogue.wizard) {
@@ -547,6 +549,7 @@ void initRecording() {
             rogue.playbackFastForward = false;
             rogue.playbackOOS = false;
             rogue.gameHasEnded = true;
+            rogue.gameExitStatusCode = EXIT_STATUS_FAILURE_RECORDING_WRONG_VERSION;
         }
 
         rogue.seed              = recallNumber(8);          // master random seed
@@ -981,6 +984,7 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                         strcpy(rogue.currentGamePath, path);
                         rogue.nextGame = NG_VIEW_RECORDING;
                         rogue.gameHasEnded = true;
+                        rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
                     } else {
                         message("File not found.", 0);
                     }
@@ -1013,6 +1017,7 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
             case QUIT_KEY:
                 //freeEverything();
                 rogue.gameHasEnded = true;
+                rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
                 rogue.playbackOOS = false;
                 rogue.creaturesWillFlashThisTurn = false;
                 notifyEvent(GAMEOVER_RECORDING, 0, 0, "recording ended", "none");
@@ -1186,6 +1191,7 @@ void saveGameNoPrompt() {
     rename(currentFilePath, filePath);
     strcpy(currentFilePath, filePath);
     rogue.gameHasEnded = true;
+    rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
     rogue.recording = false;
 }
 
@@ -1215,6 +1221,7 @@ void saveGame() {
                 rogue.recording = false;
                 message("Saved.", REQUIRE_ACKNOWLEDGMENT);
                 rogue.gameHasEnded = true;
+                rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
             } else {
                 askAgain = true;
             }

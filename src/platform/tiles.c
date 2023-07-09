@@ -67,14 +67,14 @@ boolean softwareRendering = false;  // true if hardware acceleration is disabled
 /// Prints the fatal error message provided by SDL then closes the app.
 static void sdlfatal(char *file, int line) {
     fprintf(stderr, "Fatal SDL error (%s:%d): %s\n", file, line, SDL_GetError());
-    exit(1);
+    exit(EXIT_STATUS_FAILURE_SDL_ERROR);
 }
 
 
 /// Prints the fatal error message provided by SDL_image then closes the app.
 static void imgfatal(char *file, int line) {
     fprintf(stderr, "Fatal SDL_image error (%s:%d): %s\n", file, line, IMG_GetError());
-    exit(1);
+    exit(EXIT_STATUS_FAILURE_SDL_ERROR);
 }
 
 
@@ -373,7 +373,7 @@ static void optimizeTiles() {
                 if (event.type == SDL_QUIT) {
                     SDL_Quit();
                     fprintf(stderr, "Aborted.\n");
-                    exit(1);
+                    exit(EXIT_STATUS_FAILURE_SDL_ERROR);
                 }
             }
 
@@ -450,7 +450,7 @@ void initTiles() {
     // are we running Brogue from the correct folder to begin with?
     if (!fileExists(filename)) {
         fprintf(stderr, "Error: \"%s\" not found!\n", filename);
-        exit(1);
+        exit(EXIT_STATUS_FAILURE_SDL_ERROR);
     }
 
     // load the large PNG
@@ -480,7 +480,7 @@ void initTiles() {
         file = fopen(filename, "wb");
         if (!file) {
             fprintf(stderr, "Error: could not write to \"%s\"\n", filename);
-            exit(1);
+            exit(EXIT_STATUS_FAILURE_SDL_ERROR);
         }
         fwrite(tileShifts, 1, sizeof(tileShifts), file);
         fclose(file);

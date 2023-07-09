@@ -2354,6 +2354,13 @@ enum featTypes {
     FEAT_COUNT,
 };
 
+enum exitStatus {
+    EXIT_STATUS_SUCCESS,
+    EXIT_STATUS_FAILURE_RECORDING_WRONG_VERSION,
+    EXIT_STATUS_FAILURE_RECORDING_OOS,
+    EXIT_STATUS_FAILURE_SDL_ERROR
+};
+
 // these are basically global variables pertaining to the game state and player's unique variables:
 typedef struct playerCharacter {
     boolean wizard;                     // in wizard mode
@@ -2449,6 +2456,7 @@ typedef struct playerCharacter {
     unsigned long nextAnnotationTurn;   // the turn number during which to display the next annotation
     char nextAnnotation[5000];          // the next annotation
     unsigned long locationInAnnotationFile; // how far we've read in the annotations file
+    int gameExitStatusCode;             // exit status code indicating if brogue exited successfully or with an error
 
     // metered items
     long long foodSpawned;                    // amount of nutrition units spawned so far this game
@@ -2778,7 +2786,7 @@ extern "C" {
     boolean endswith(const char *str, const char *ending);
     void append(char *str, char *ending, int bufsize);
 
-    void rogueMain();
+    int rogueMain();
     void executeEvent(rogueEvent *theEvent);
     boolean fileExists(const char *pathname);
     boolean chooseFile(char *path, char *prompt, char *defaultName, char *suffix);
@@ -3383,7 +3391,7 @@ extern "C" {
 
     boolean dialogChooseFile(char *path, const char *suffix, const char *prompt);
     void dialogCreateItemOrMonster();
-    void quitImmediately();
+    int quitImmediately();
     void dialogAlert(char *message);
     void mainBrogueJunction();
     void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsigned int scanThroughDepth, boolean isCsvFormat);
