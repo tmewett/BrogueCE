@@ -2302,7 +2302,6 @@ enum NGCommands {
     NG_OPEN_GAME,
     NG_VIEW_RECORDING,
     NG_HIGH_SCORES,
-    NG_SWITCH_VARIANT,
     NG_QUIT,
 };
 
@@ -2344,8 +2343,6 @@ typedef struct gameConstants {
     const char *dungeonVersionString;               // earliest version that has identical dungeons to this version
     const char *patchVersionPattern;                // scanf format string for patches that match this release
     const char *recordingVersionString;             // version string used in recordings / saves. Cannot be longer than 16 chars.
-
-    const char *variantMenuMessage;                 // A message about the variant to show on the title menu
 
     const int deepestLevel;                         // deepest level in the dungeon
     const int amuletLevel;                          // level on which the amulet appears (used in signed arithmetic)
@@ -2817,7 +2814,6 @@ extern "C" {
 
     int rogueMain();
     void printBrogueVersion();
-    void switchVariant();
     void executeEvent(rogueEvent *theEvent);
     boolean fileExists(const char *pathname);
     boolean chooseFile(char *path, char *prompt, char *defaultName, char *suffix);
@@ -3439,7 +3435,6 @@ extern "C" {
                                short winY,
                                short winWidth,
                                short winHeight);
-    void drawMainMenuMessagesIntoButtonState(buttonState *state);
     short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *event);
     short smoothHiliteGradient(const short currentXValue, const short maxXValue);
     void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDisplayBuffer dbuf[COLS][ROWS]);

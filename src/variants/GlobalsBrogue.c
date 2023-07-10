@@ -996,7 +996,6 @@ const gameConstants brogueGameConst = {
     .recordingVersionString = BROGUE_RECORDING_VERSION_STRING,
 
     .variantName = "brogue",
-    .variantMenuMessage = NULL,
 
     .deepestLevel = DEEPEST_LEVEL,
     .amuletLevel = AMULET_LEVEL,

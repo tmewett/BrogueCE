@@ -1005,7 +1005,6 @@ const gameConstants rapidBrogueGameConst = {
     .recordingVersionString = RAPID_BROGUE_RECORDING_VERSION_STRING,
 
     .variantName = "rapidBrogue",
-    .variantMenuMessage = "RapidBrogue is a shorter Brogue experience compressed into fewer levels. The action comes thick and fast, so recommended for experienced Brogue players!",
 
     .deepestLevel = DEEPEST_LEVEL,
     .amuletLevel = AMULET_LEVEL,

@@ -138,13 +138,6 @@ void drawButtonsInState(buttonState *state) {
     }
 }
 
-// Draw main menu messages into the buttonState (contains screen buffer)
-void drawMainMenuMessagesIntoButtonState(buttonState *state) {
-    if (gameConst->variantMenuMessage != NULL) {
-        printStringWithWrapping(gameConst->variantMenuMessage, 5, ROWS - 5, COLS - 28 - 5, &white, &black, 50, state->dbuf);
-    }
-}
-
 void initializeButtonState(buttonState *state,
                            brogueButton *buttons,
                            short buttonCount,

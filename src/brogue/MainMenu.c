@@ -252,7 +252,7 @@ void titleMenu() {
     char goldColorEscape[10] = "";
     char newGameText[100] = "", customNewGameText[100] = "";
     rogueEvent theEvent;
-    enum NGCommands buttonCommands[6] = {NG_NEW_GAME, NG_OPEN_GAME, NG_VIEW_RECORDING, NG_HIGH_SCORES, NG_SWITCH_VARIANT, NG_QUIT};
+    enum NGCommands buttonCommands[6] = {NG_NEW_GAME, NG_OPEN_GAME, NG_VIEW_RECORDING, NG_HIGH_SCORES, NG_QUIT};
 
     cellDisplayBuffer shadowBuf[COLS][ROWS];
 
@@ -297,12 +297,6 @@ void titleMenu() {
     b++;
 
     initializeButton(&(buttons[b]));
-    sprintf(buttons[b].text, "   %sS%switch Variant   ", goldColorEscape, whiteColorEscape);
-    buttons[b].hotkey[0] = 's';
-    buttons[b].hotkey[1] = 'S';
-    b++;
-
-    initializeButton(&(buttons[b]));
     sprintf(buttons[b].text, "        %sQ%suit        ", goldColorEscape, whiteColorEscape);
     buttons[b].hotkey[0] = 'q';
     buttons[b].hotkey[1] = 'Q';
@@ -323,7 +317,6 @@ void titleMenu() {
     initializeButtonState(&state, buttons, b, x, y, 20, b*2-1);
     rectangularShading(x, y, 20, b*2-1, &black, INTERFACE_OPACITY, shadowBuf);
     drawButtonsInState(&state);
-    drawMainMenuMessagesIntoButtonState(&state);
 
     initializeMenuFlames(true, colors, colorStorage, colorSources, flames, mask);
     rogue.creaturesWillFlashThisTurn = false; // total unconscionable hack
@@ -796,10 +789,6 @@ void mainBrogueJunction() {
             case NG_HIGH_SCORES:
                 rogue.nextGame = NG_NOTHING;
                 printHighScores(false);
-                break;
-            case NG_SWITCH_VARIANT:
-                rogue.nextGame = NG_NOTHING;
-                switchVariant();
                 break;
             case NG_QUIT:
                 // No need to do anything.
