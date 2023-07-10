@@ -196,7 +196,6 @@ void initializeRogue(uint64_t seed) {
 
     rogue.meteredItems = calloc(gameConst->numberMeteredItems, sizeof(meteredItem));
     strcpy(rogue.currentGamePath, currentGamePath);
-    rogue.meteredItems = calloc(gameConst.numberMeteredItems, sizeof(meteredItem));
 
     rogue.RNG = RNG_SUBSTANTIVE;
     if (!rogue.playbackMode) {
