@@ -36,7 +36,7 @@ void rogueMain() {
 
 void printBrogueVersion() {
     printf("Brogue version: %s\n", brogueVersion);
-    printf("Supports variant: %s\n", rapidBrogueVersion);
+    printf("Supports variant (rapid_brogue): %s\n", rapidBrogueVersion);
 }
 
 void switchVariant() {

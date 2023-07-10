@@ -47,6 +47,9 @@
 #define _str(x) #x
 #define STRINGIFY(x) _str(x)
 
+// Macro to compare BROGUE_MAJOR.BROGUE_MINOR.patchVersion to a.b.c
+#define BROGUE_VERSION_ATLEAST(a,b,c) (BROGUE_MAJOR != (a) ? BROGUE_MAJOR > (a) : BROGUE_MINOR != (b) ? BROGUE_MINOR > (b) : rogue.patchVersion >= (c))
+
 #define DEBUG                           if (rogue.wizard)
 #define MONSTERS_ENABLED                (!rogue.wizard || 1) // Quest room monsters can be generated regardless.
 #define ITEMS_ENABLED                   (!rogue.wizard || 1)

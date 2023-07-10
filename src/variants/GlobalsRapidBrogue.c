@@ -965,18 +965,44 @@ const char *mainMenuTitle_RapidBrogue =
                            ##   ## ##   ## ##      ## ##   ##             \
                            ##   ## ##   ## ##      ## ######              ";
 
+#define RAPID_BROGUE_MAJOR 1
+#define RAPID_BROGUE_MINOR 4
+#define RAPID_BROGUE_PATCH 0
+
+// Brogue version: what the user sees in the menu and title
+#define RAPID_BROGUE_VERSION_STRING "RB " STRINGIFY(RAPID_BROGUE_MAJOR) "." STRINGIFY(RAPID_BROGUE_MINOR) "." STRINGIFY(RAPID_BROGUE_PATCH) BROGUE_EXTRA_VERSION
+
+// Recording version. Saved into recordings and save files made by this version.
+// Cannot be longer than 16 chars
+#define RAPID_BROGUE_RECORDING_VERSION_STRING "RB " STRINGIFY(RAPID_BROGUE_MAJOR) "." STRINGIFY(RAPID_BROGUE_MINOR) "." STRINGIFY(RAPID_BROGUE_PATCH)
+
+/* Patch pattern. A scanf format string which matches an unsigned short. If this
+matches against a recording version string, it defines a "patch version." During
+normal play, rogue.patchVersion is set to the match of the game's recording
+version above, or 0 if it doesn't match.
+The game will only load a recording/save if either a) it has a patch version
+which is equal or less than the patch version of the current game
+(rogue.patchLevel is set to the recording's); or b) it doesn't match the version
+strings, but they are equal (rogue.patchLevel is set to 0).
+*/
+#define RAPID_BROGUE_PATCH_VERSION_PATTERN "RB " STRINGIFY(RAPID_BROGUE_MAJOR) "." STRINGIFY(RAPID_BROGUE_MINOR) ".%hu"
+
+// Dungeon version - the earliest version where each seed creates a dungeon identical
+// to that in the current version. Used in seed catalog output.
+#define RAPID_BROGUE_DUNGEON_VERSION_STRING "RB 1.5"
+
 // Version shown in ./brogue --version
-const char *rapidBrogueVersion = "RB 1.4.0";
+const char *rapidBrogueVersion = RAPID_BROGUE_VERSION_STRING;
 
 const gameConstants rapidBrogueGameConst = {
-    .majorVersion = 1,
-    .minorVersion = 4,
-    .patchVersion = 0,
+    .majorVersion = RAPID_BROGUE_MAJOR,
+    .minorVersion = RAPID_BROGUE_MINOR,
+    .patchVersion = RAPID_BROGUE_PATCH,
 
-    .versionString = "RB 1.4.0",
-    .dungeonVersionString = "RB 1.4",
-    .patchVersionPattern = "RB 1.4.%hu",
-    .recordingVersionString = "RB 1.4.0",
+    .versionString = RAPID_BROGUE_VERSION_STRING,
+    .dungeonVersionString = RAPID_BROGUE_DUNGEON_VERSION_STRING,
+    .patchVersionPattern = RAPID_BROGUE_PATCH_VERSION_PATTERN,
+    .recordingVersionString = RAPID_BROGUE_RECORDING_VERSION_STRING,
 
     .variantName = "rapidBrogue",
     .variantMenuMessage = "RapidBrogue is a shorter Brogue experience compressed into fewer levels. The action comes thick and fast, so recommended for experienced Brogue players!",
