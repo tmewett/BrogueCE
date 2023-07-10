@@ -960,18 +960,40 @@ const char *mainMenuTitle_Brogue =
                             ##                                            \
                            ####                                           ";
 
+// Brogue version: what the user sees in the menu and title
+#define BROGUE_VERSION_STRING "CE " STRINGIFY(BROGUE_MAJOR) "." STRINGIFY(BROGUE_MINOR) "." STRINGIFY(BROGUE_PATCH) BROGUE_EXTRA_VERSION
+
+// Recording version. Saved into recordings and save files made by this version.
+// Cannot be longer than 16 chars
+#define BROGUE_RECORDING_VERSION_STRING "CE " STRINGIFY(BROGUE_MAJOR) "." STRINGIFY(BROGUE_MINOR) "." STRINGIFY(BROGUE_PATCH)
+
+/* Patch pattern. A scanf format string which matches an unsigned short. If this
+matches against a recording version string, it defines a "patch version." During
+normal play, rogue.patchVersion is set to the match of the game's recording
+version above, or 0 if it doesn't match.
+The game will only load a recording/save if either a) it has a patch version
+which is equal or less than the patch version of the current game
+(rogue.patchLevel is set to the recording's); or b) it doesn't match the version
+strings, but they are equal (rogue.patchLevel is set to 0).
+*/
+#define BROGUE_PATCH_VERSION_PATTERN "CE " STRINGIFY(BROGUE_MAJOR) "." STRINGIFY(BROGUE_MINOR) ".%hu"
+
+// Dungeon version - the earliest version where each seed creates a dungeon identical
+// to that in the current version. Used in seed catalog output.
+#define BROGUE_DUNGEON_VERSION_STRING "CE 1.9"
+
 // Version shown in ./brogue --version
-const char *brogueVersion = "CE 1.12.0";
+const char *brogueVersion = BROGUE_VERSION_STRING;
 
 const gameConstants brogueGameConst = {
-    .majorVersion = 1,
-    .minorVersion = 12,
-    .patchVersion = 0,
+    .majorVersion = BROGUE_MAJOR,
+    .minorVersion = BROGUE_MINOR,
+    .patchVersion = BROGUE_PATCH,
 
-    .versionString = "CE 1.12.0",
-    .dungeonVersionString = "CE 1.9",
-    .patchVersionPattern = "CE 1.12.%hu",
-    .recordingVersionString = "CE 1.12.0",
+    .versionString = BROGUE_VERSION_STRING,
+    .dungeonVersionString = BROGUE_DUNGEON_VERSION_STRING,
+    .patchVersionPattern = BROGUE_PATCH_VERSION_PATTERN,
+    .recordingVersionString = BROGUE_RECORDING_VERSION_STRING,
 
     .variantName = "brogue",
     .variantMenuMessage = NULL,
