@@ -21,14 +21,26 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef RAPID_BROGUE
+/* This file contains variant-specific constants and tables that
+ * contain mostly constant data associated with game objects.
+ *
+ * This data is associated with the Rapid Brogue variant.
+ *
+ * Non-array and table-based constant data is defined in the
+ * gameConstants struct (see rapidBrogueGameConst).
+ *
+ * The initializeGameVariantRapidBrogue() function is called when
+ * the variant is selected and sets the relevant global
+ * variables (mostly defined in Globals.c) to the
+ * variant-specific data.
+ */
 
 #include "Rogue.h"
 #include "GlobalsBase.h"
 #include "Globals.h"
 
 #define AMULET_LEVEL            6          // how deep before the amulet appears
-#define DEEPEST_LEVEL           10          // how deep the universe goes
+#define DEEPEST_LEVEL           10         // how deep the universe goes
 
 const color dominationColor_RapidBrogue =       {0,     0,      100,    80,     25,         0,          0,      true};
 const color beckonColor_RapidBrogue =           {10,    10,     10,     5,      5,          5,          50,     true};
@@ -1040,5 +1052,3 @@ void initializeGameVariantRapidBrogue() {
     mainMenuTitle = mainMenuTitle_RapidBrogue;
     levelFeelings = levelFeelings_RapidBrogue;
 }
-
-#endif

@@ -21,6 +21,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* This file contains global variables that manage global game
+ * state and universal constants that are not tied to particular
+ * game objects, for example the definiton of base colors. */
+
 #include "Rogue.h"
 
 tcell tmap[DCOLS][DROWS];                       // grids with info about the map

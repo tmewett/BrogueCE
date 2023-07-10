@@ -186,9 +186,7 @@ typedef struct windowpos {
 // variants supported in this code base
 enum gameVariant {
     VARIANT_BROGUE,
-#ifdef RAPID_BROGUE
     VARIANT_RAPID_BROGUE,
-#endif
     NUMBER_VARIANTS
 };
 
@@ -2329,7 +2327,8 @@ enum exitStatus {
     EXIT_STATUS_FAILURE_SDL_ERROR
 };
 
-// Constants for the current game, initialized after the choice of variant
+// Constants for the selected game variant, set in Globals{variant}.c
+// Many of these constants were migrated from #defines prior to variant support
 typedef struct gameConstants {
 
     const int majorVersion;                         // variant major version x._._

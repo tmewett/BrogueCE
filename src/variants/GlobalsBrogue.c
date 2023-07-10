@@ -21,6 +21,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* This file contains variant-specific constants and tables that
+ * contain mostly constant data associated with game objects.
+ *
+ * This data is associated with the vanilla Brogue CE game.
+ *
+ * Non-array and table-based constant data is defined in the
+ * gameConstants struct (see brogueGameConst).
+ *
+ * The initializeGameVariantBrogue() function is called when the
+ * variant is selected and sets the relevant global
+ * variables (mostly defined in Globals.c) to the
+ * variant-specific data.
+ */
+
 #include "Rogue.h"
 #include "GlobalsBase.h"
 #include "Globals.h"
