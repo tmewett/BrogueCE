@@ -24,13 +24,13 @@ static rogueEvent lastEvent;
 
 static void sdlfatal(char *file, int line) {
     fprintf(stderr, "Fatal SDL error (%s:%d): %s\n", file, line, SDL_GetError());
-    exit(EXIT_STATUS_FAILURE_SDL_ERROR);
+    exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
 }
 
 
 static void imgfatal(char *file, int line) {
     fprintf(stderr, "Fatal SDL_image error (%s:%d): %s\n", file, line, IMG_GetError());
-    exit(EXIT_STATUS_FAILURE_SDL_ERROR);
+    exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
 }
 
 
@@ -252,14 +252,14 @@ static void _gameLoop() {
         strcpy(dataDirectory, path);
     } else {
         fprintf(stderr, "Failed to find the path to the application\n");
-        exit(EXIT_STATUS_FAILURE_SDL_ERROR);
+        exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
     }
     free(path);
 
     path = SDL_GetPrefPath("Brogue", "Brogue CE");
     if (!path || chdir(path) != 0) {
         fprintf(stderr, "Failed to find or change to the save directory\n");
-        exit(EXIT_STATUS_FAILURE_SDL_ERROR);
+        exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
     }
     fprintf(stderr, "Save path: %s\n", path);
     free(path);

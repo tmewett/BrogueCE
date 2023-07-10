@@ -2358,7 +2358,7 @@ enum exitStatus {
     EXIT_STATUS_SUCCESS,
     EXIT_STATUS_FAILURE_RECORDING_WRONG_VERSION,
     EXIT_STATUS_FAILURE_RECORDING_OOS,
-    EXIT_STATUS_FAILURE_SDL_ERROR
+    EXIT_STATUS_FAILURE_PLATFORM_ERROR
 };
 
 // these are basically global variables pertaining to the game state and player's unique variables:
