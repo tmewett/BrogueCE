@@ -21,11 +21,31 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*  This file contains constants associated with game objects,
+ *  including colors and material descriptions. The file also
+ *  contains large tables (e.g. tileCatalog) that consist of
+ *  constant data associated with game objects, including creation
+ *  probabilities, descriptions and in-game attributes.
+ *
+ *  Where possible the tables are defined as const arrays,
+ *  because the data typically is not dynamic. Some tables,
+ *  however, also store some mutable flags, so cannot be made
+ *  constant.  For tables that are
+ *  variant-specific (e.g. autoGeneratorCatalog), the tables are
+ *  declared as pointers (again typically const * since the data
+ *  contained is constant).
+ *
+ *  These tables are defined on a per-variant basis in
+ *  Globals{variant}.c. When a variant is selected, the pointers
+ *  declared in this file are set to the definitions in the chosen
+ *  Globals{variant}.c file.
+ */
+
 #include "Rogue.h"
 #include "GlobalsBase.h"
 #include "Globals.h"
 
-// Global tables that are set by variants
+// Global tables, definitions are found in Globals_{variant}.c
 
 const autoGenerator *autoGeneratorCatalog;
 const short *lumenstoneDistribution;

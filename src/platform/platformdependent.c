@@ -272,9 +272,9 @@ enum graphicsModes setGraphicsMode(enum graphicsModes mode) {
 void initScores() {
     short i;
     FILE *scoresFile;
-    char highScoresFilename[HIGH_SCORE_FILENAME_LENGTH];
+    char highScoresFilename[BROGUE_FILENAME_MAX];
 
-    setHighScoresFilename(highScoresFilename);
+    setHighScoresFilename(highScoresFilename, BROGUE_FILENAME_MAX);
 
     scoresFile = fopen(highScoresFilename, "w");
     for (i=0; i<HIGH_SCORES_COUNT; i++) {
@@ -321,9 +321,9 @@ short sortScoreBuffer() {
     return mostRecentSortedLine;
 }
 
-void setHighScoresFilename(char *buffer) {
-    strncpy(buffer, gameConst->variantName, 100);
-    strncat(buffer, "HighScores.txt", 100);
+void setHighScoresFilename(char *buffer, int bufferMaxLength) {
+    strncpy(buffer, gameConst->variantName, bufferMaxLength);
+    strncat(buffer, "HighScores.txt", bufferMaxLength);
     buffer[0] = toupper(buffer[0]);
 }
 
@@ -335,8 +335,8 @@ short loadScoreBuffer() {
     time_t rawtime;
     struct tm * timeinfo;
 
-    char highScoresFilename[HIGH_SCORE_FILENAME_LENGTH];
-    setHighScoresFilename(highScoresFilename);
+    char highScoresFilename[BROGUE_FILENAME_MAX];
+    setHighScoresFilename(highScoresFilename, BROGUE_FILENAME_MAX);
 
     scoresFile = fopen(highScoresFilename, "r");
 
@@ -407,9 +407,9 @@ void loadKeymap() {
 void saveScoreBuffer() {
     short i;
     FILE *scoresFile;
-    char highScoresFilename[HIGH_SCORE_FILENAME_LENGTH];
+    char highScoresFilename[BROGUE_FILENAME_MAX];
 
-    setHighScoresFilename(highScoresFilename);
+    setHighScoresFilename(highScoresFilename, BROGUE_FILENAME_MAX);
 
     scoresFile = fopen(highScoresFilename, "w");
 
