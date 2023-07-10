@@ -39,14 +39,6 @@ void printBrogueVersion() {
     printf("Supports variant (rapid_brogue): %s\n", rapidBrogueVersion);
 }
 
-void switchVariant() {
-    gameVariant++;
-    if (gameVariant == NUMBER_VARIANTS) {
-        gameVariant = 0;
-    }
-    initializeGameVariant();
-}
-
 void executeEvent(rogueEvent *theEvent) {
     rogue.playbackBetweenTurns = false;
     if (theEvent->eventType == KEYSTROKE) {
