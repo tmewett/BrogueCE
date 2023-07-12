@@ -745,7 +745,6 @@ void drawManacles(short x, short y) {
 // If x is negative, location is random.
 // Returns a pointer to the leader.
 creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFlags, unsigned long requiredFlags) {
-    short loc[2];
     short i, failsafe, depth;
     hordeType *theHorde;
     creature *leader, *preexistingMonst;
@@ -789,8 +788,9 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
     if (x < 0 || y < 0) {
         i = 0;
         do {
-            while (!randomMatchingLocation(&(loc[0]), &(loc[1]), FLOOR, NOTHING, (hordeCatalog[hordeID].spawnsIn ? hordeCatalog[hordeID].spawnsIn : -1))
-                   || passableArcCount(loc[0], loc[1]) > 1) {
+            pos loc;
+            while (!randomMatchingLocation(&loc.x, &loc.y, FLOOR, NOTHING, (hordeCatalog[hordeID].spawnsIn ? hordeCatalog[hordeID].spawnsIn : -1))
+                   || passableArcCount(loc.x, loc.y) > 1) {
                 if (!--failsafe) {
                     return NULL;
                 }
@@ -800,8 +800,8 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
                     return NULL;
                 }
             }
-            x = loc[0];
-            y = loc[1];
+            x = loc.x;
+            y = loc.y;
             i++;
 
             // This "while" condition should contain IN_FIELD_OF_VIEW, since that is specifically
@@ -4008,7 +4008,6 @@ void demoteMonsterFromLeadership(creature *monst) {
 
 // Makes a monster dormant, or awakens it from that state
 void toggleMonsterDormancy(creature *monst) {
-    //short loc[2] = {0, 0};
 
     if (removeCreature(dormantMonsters, monst)) {
         // Found it! It's dormant. Wake it up.

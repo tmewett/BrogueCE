@@ -2432,7 +2432,7 @@ typedef struct playerCharacter {
     item *lastItemThrown;
     short rewardRoomsGenerated;         // to meter the number of reward machines
     short machineNumber;                // so each machine on a level gets a unique number
-    short sidebarLocationList[ROWS*2][2];   // to keep track of which location each line of the sidebar references
+    pos sidebarLocationList[ROWS*2];    // to keep track of which location each line of the sidebar references
 
     // maps
     short **mapToShore;                 // how many steps to get back to shore
@@ -2478,7 +2478,7 @@ typedef struct playerCharacter {
     // waypoints:
     short **wpDistance[MAX_WAYPOINT_COUNT];
     short wpCount;
-    short wpCoordinates[MAX_WAYPOINT_COUNT][2];
+    pos wpCoordinates[MAX_WAYPOINT_COUNT];
     short wpRefreshTicker;
 
     // cursor trail:
@@ -2986,7 +2986,7 @@ extern "C" {
                             boolean eightWays);
     short pathingDistance(short x1, short y1, short x2, short y2, unsigned long blockingTerrainFlags);
     short nextStep(short **distanceMap, short x, short y, creature *monst, boolean reverseDirections);
-    void travelRoute(short path[1000][2], short steps);
+    void travelRoute(pos path[1000], short steps);
     void travel(short x, short y, boolean autoConfirm);
     void populateGenericCostMap(short **costMap);
     void getLocationFlags(const short x, const short y,
@@ -2996,9 +2996,9 @@ extern "C" {
     enum directions adjacentFightingDir();
     void getExploreMap(short **map, boolean headingToStairs);
     boolean explore(short frameDelay);
-    short getPlayerPathOnMap(short path[1000][2], short **map, short originX, short originY);
-    void reversePath(short path[1000][2], short steps);
-    void hilitePath(short path[1000][2], short steps, boolean unhilite);
+    short getPlayerPathOnMap(pos path[1000], short **map, pos origin);
+    void reversePath(pos path[1000], short steps);
+    void hilitePath(pos path[1000], short steps, boolean unhilite);
     void clearCursorPath();
     void hideCursor();
     void showCursor();
