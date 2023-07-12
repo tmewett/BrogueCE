@@ -364,13 +364,12 @@ short chooseKind(const itemTable *theTable, short numKinds) {
 
 // Places an item at (x,y) if provided or else a random location if they're 0. Inserts item into the floor list.
 item *placeItem(item *theItem, short x, short y) {
-    short loc[2];
     enum dungeonLayers layer;
     char theItemName[DCOLS], buf[DCOLS];
     if (x <= 0 || y <= 0) {
-        randomMatchingLocation(&(loc[0]), &(loc[1]), FLOOR, NOTHING, -1);
-        theItem->loc.x = loc[0];
-        theItem->loc.y = loc[1];
+        pos loc;
+        randomMatchingLocation(&loc.x, &loc.y, FLOOR, NOTHING, -1);
+        theItem->loc = loc;
     } else {
         theItem->loc.x = x;
         theItem->loc.y = y;
@@ -3296,8 +3295,7 @@ item *keyOnTileAt(short x, short y) {
 void aggravateMonsters(short distance, short x, short y, const color *flashColor) {
     short i, j, **grid;
 
-    rogue.wpCoordinates[0][0] = x;
-    rogue.wpCoordinates[0][1] = y;
+    rogue.wpCoordinates[0] = (pos) { x, y };
     refreshWaypoint(0);
 
     grid = allocGrid();
@@ -5143,40 +5141,33 @@ boolean nextTargetAfter(short *returnX,
                         boolean targetTerrain,
                         boolean requireOpenPath,
                         boolean reverseDirection) {
-    short i, n, targetCount, newX, newY;
     short selectedIndex = 0;
-    creature *monst;
-    item *theItem;
-    short deduplicatedTargetList[ROWS][2];
+    pos deduplicatedTargetList[ROWS];
 
-    targetCount = 0;
-    for (i=0; i<ROWS; i++) {
-        if (rogue.sidebarLocationList[i][0] != -1) {
-            if (targetCount == 0
-                || deduplicatedTargetList[targetCount-1][0] != rogue.sidebarLocationList[i][0]
-                || deduplicatedTargetList[targetCount-1][1] != rogue.sidebarLocationList[i][1]) {
+    int targetCount = 0;
+    for (int i=0; i<ROWS; i++) {
+        if (isPosInMap(rogue.sidebarLocationList[i])) {
+            if (targetCount == 0 || !posEq(deduplicatedTargetList[targetCount-1], rogue.sidebarLocationList[i])) {
 
-                deduplicatedTargetList[targetCount][0] = rogue.sidebarLocationList[i][0];
-                deduplicatedTargetList[targetCount][1] = rogue.sidebarLocationList[i][1];
-                if (rogue.sidebarLocationList[i][0] == targetX
-                    && rogue.sidebarLocationList[i][1] == targetY) {
+                deduplicatedTargetList[targetCount] = rogue.sidebarLocationList[i];
+                if (posEq(rogue.sidebarLocationList[i], (pos){ targetX, targetY })) {
                     selectedIndex = targetCount;
                 }
                 targetCount++;
             }
         }
     }
-    for (i = reverseDirection ? targetCount - 1 : 0; reverseDirection ? i >= 0 : i < targetCount; reverseDirection ? i-- : i++) {
-        n = (selectedIndex + i) % targetCount;
-        newX = deduplicatedTargetList[n][0];
-        newY = deduplicatedTargetList[n][1];
+    for (int i = reverseDirection ? targetCount - 1 : 0; reverseDirection ? i >= 0 : i < targetCount; reverseDirection ? i-- : i++) {
+        const int n = (selectedIndex + i) % targetCount;
+        const int newX = deduplicatedTargetList[n].x;
+        const int newY = deduplicatedTargetList[n].y;
         if ((newX != player.loc.x || newY != player.loc.y)
             && (newX != targetX || newY != targetY)
             && (!requireOpenPath || openPathBetween(player.loc.x, player.loc.y, newX, newY))) {
 
             brogueAssert(coordinatesAreInMap(newX, newY));
             brogueAssert(n >= 0 && n < targetCount);
-            monst = monsterAtLoc(newX, newY);
+            creature *const monst = monsterAtLoc(newX, newY);
             if (monst) {
                 if (monstersAreEnemies(&player, monst)) {
                     if (targetEnemies) {
@@ -5192,7 +5183,7 @@ boolean nextTargetAfter(short *returnX,
                     }
                 }
             }
-            theItem = itemAtLoc(newX, newY);
+            item *const theItem = itemAtLoc(newX, newY);
             if (!monst && theItem && targetItems) {
                 *returnX = newX;
                 *returnY = newY;
@@ -5312,11 +5303,10 @@ boolean moveCursor(boolean *targetConfirmed,
                 && theEvent.param1 < mapToWindowX(0)
                 && theEvent.param2 >= 0
                 && theEvent.param2 < ROWS - 1
-                && rogue.sidebarLocationList[theEvent.param2][0] > -1) {
+                && isPosInMap(rogue.sidebarLocationList[theEvent.param2])) {
 
                 // If the cursor is on an entity in the sidebar.
-                rogue.cursorLoc.x = rogue.sidebarLocationList[theEvent.param2][0];
-                rogue.cursorLoc.y = rogue.sidebarLocationList[theEvent.param2][1];
+                rogue.cursorLoc = rogue.sidebarLocationList[theEvent.param2];
                 sidebarHighlighted = true;
                 cursorMovementCommand = true;
                 refreshSideBar(rogue.cursorLoc.x, rogue.cursorLoc.y, false);

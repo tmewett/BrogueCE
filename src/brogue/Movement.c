@@ -616,7 +616,7 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
 // (in which case the player/monster should move instead).
 boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *aborted) {
     creature *defender, *hitList[8] = {0};
-    short targetLoc[2], range = 2, i = 0, h = 0;
+    short range = 2, i = 0, h = 0;
     boolean proceed = false, visualEffect = false;
 
     const char boltChar[DIRECTION_COUNT] = "||--\\//\\";
@@ -632,18 +632,20 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
     }
 
     for (i = 0; i < range; i++) {
-        targetLoc[0] = attacker->loc.x + (1 + i) * nbDirs[dir][0];
-        targetLoc[1] = attacker->loc.y + (1 + i) * nbDirs[dir][1];
-        if (!coordinatesAreInMap(targetLoc[0], targetLoc[1])) {
+        const pos targetLoc = (pos) {
+            attacker->loc.x + (1 + i) * nbDirs[dir][0],
+            attacker->loc.y + (1 + i) * nbDirs[dir][1]
+        };
+        if (!isPosInMap(targetLoc)) {
             break;
         }
 
         /* Add creatures that we are willing to attack to the potential
         hitlist. Any of those that are either right by us or visible will
         trigger the attack. */
-        defender = monsterAtLoc(targetLoc[0], targetLoc[1]);
+        defender = monsterAtLoc(targetLoc.x, targetLoc.y);
         if (defender
-            && (!cellHasTerrainFlag(targetLoc[0], targetLoc[1], T_OBSTRUCTS_PASSABILITY)
+            && (!cellHasTerrainFlag(targetLoc.x, targetLoc.y, T_OBSTRUCTS_PASSABILITY)
                 || (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS))
             && monsterWillAttackTarget(attacker, defender)) {
 
@@ -659,7 +661,7 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
             }
         }
 
-        if (cellHasTerrainFlag(targetLoc[0], targetLoc[1], (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION))) {
+        if (cellHasTerrainFlag(targetLoc.x, targetLoc.y, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION))) {
             break;
         }
     }
@@ -675,13 +677,15 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
         }
         if (!rogue.playbackFastForward) {
             for (i = 0; i < range; i++) {
-                targetLoc[0] = attacker->loc.x + (1 + i) * nbDirs[dir][0];
-                targetLoc[1] = attacker->loc.y + (1 + i) * nbDirs[dir][1];
-                if (coordinatesAreInMap(targetLoc[0], targetLoc[1])
-                    && playerCanSeeOrSense(targetLoc[0], targetLoc[1])) {
+                const pos targetLoc = (pos) {
+                    attacker->loc.x + (1 + i) * nbDirs[dir][0],
+                    attacker->loc.y + (1 + i) * nbDirs[dir][1]
+                };
+                if (isPosInMap(targetLoc)
+                    && playerCanSeeOrSense(targetLoc.x, targetLoc.y)) {
 
                     visualEffect = true;
-                    plotForegroundChar(boltChar[dir], targetLoc[0], targetLoc[1], &lightBlue, true);
+                    plotForegroundChar(boltChar[dir], targetLoc.x, targetLoc.y, &lightBlue, true);
                 }
             }
         }
@@ -694,10 +698,12 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
         if (visualEffect) {
             pauseAnimation(16);
             for (i = 0; i < range; i++) {
-                targetLoc[0] = attacker->loc.x + (1 + i) * nbDirs[dir][0];
-                targetLoc[1] = attacker->loc.y + (1 + i) * nbDirs[dir][1];
-                if (coordinatesAreInMap(targetLoc[0], targetLoc[1])) {
-                    refreshDungeonCell(targetLoc[0], targetLoc[1]);
+                const pos targetLoc = (pos) {
+                    attacker->loc.x + (1 + i) * nbDirs[dir][0],
+                    attacker->loc.y + (1 + i) * nbDirs[dir][1]
+                };
+                if (isPosInMap(targetLoc)) {
+                    refreshDungeonCell(targetLoc.x, targetLoc.y);
                 }
             }
         }
@@ -1470,7 +1476,7 @@ void displayRoute(short **distanceMap, boolean removeRoute) {
     } while (advanced);
 }
 
-void travelRoute(short path[1000][2], short steps) {
+void travelRoute(pos path[1000], short steps) {
     short i, j;
     short dir;
 
@@ -1491,17 +1497,15 @@ void travelRoute(short path[1000][2], short steps) {
     for (i=0; i < steps && !rogue.disturbed; i++) {
         for (j = i + 1; j < steps - 1; j++) {
             // Check to see if the path has become obstructed or avoided since the last time we saw it.
-            if (diagonalBlocked(path[j-1][0], path[j-1][1], path[j][0], path[j][1], true)
-                || monsterAvoids(&player, (pos){path[j][0], path[j][1]})) {
+            if (diagonalBlocked(path[j-1].x, path[j-1].y, path[j].x, path[j].y, true)
+                || monsterAvoids(&player, path[j])) {
 
                 rogue.disturbed = true;
                 break;
             }
         }
         for (dir = 0; dir < DIRECTION_COUNT && !rogue.disturbed; dir++) {
-            if (player.loc.x + nbDirs[dir][0] == path[i][0]
-                && player.loc.y + nbDirs[dir][1] == path[i][1]) {
-
+            if (posEq(posNeighborInDirection(player.loc, dir), path[i])) {
                 if (!playerMoves(dir)) {
                     rogue.disturbed = true;
                 }
@@ -1848,11 +1852,6 @@ void getExploreMap(short **map, boolean headingToStairs) {// calculate explore m
 }
 
 boolean explore(short frameDelay) {
-    short **distanceMap;
-    short path[1000][2], steps;
-    boolean madeProgress, headingToStairs;
-    enum directions dir;
-
     // Explore commands should never be written to a recording.
     // Instead, the elemental movement commands that compose it
     // should be written individually.
@@ -1860,8 +1859,8 @@ boolean explore(short frameDelay) {
 
     clearCursorPath();
 
-    madeProgress    = false;
-    headingToStairs = false;
+    boolean madeProgress    = false;
+    boolean headingToStairs = false;
 
     if (player.status[STATUS_CONFUSED]) {
         message("Not while you're confused.", 0);
@@ -1882,7 +1881,7 @@ boolean explore(short frameDelay) {
     }
 
     // fight any adjacent enemies
-    dir = adjacentFightingDir();
+    enum directions dir = adjacentFightingDir();
     if (dir != NO_DIRECTION
         && startFighting(dir, (player.status[STATUS_HALLUCINATING] ? true : false))) {
 
@@ -1901,7 +1900,7 @@ boolean explore(short frameDelay) {
     rogue.disturbed = false;
     rogue.automationActive = true;
 
-    distanceMap = allocGrid();
+    short** distanceMap = allocGrid();
     do {
         // fight any adjacent enemies
         dir = adjacentFightingDir();
@@ -1919,7 +1918,8 @@ boolean explore(short frameDelay) {
         getExploreMap(distanceMap, headingToStairs);
 
         // hilite path
-        steps = getPlayerPathOnMap(path, distanceMap, player.loc.x, player.loc.y);
+        pos path[1000];
+        const int steps = getPlayerPathOnMap(path, distanceMap, player.loc);
         hilitePath(path, steps, false);
 
         // take a step

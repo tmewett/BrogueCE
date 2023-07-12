@@ -2989,7 +2989,7 @@ void refreshWaypoint(short wpIndex) {
         }
     }
     fillGrid(rogue.wpDistance[wpIndex], 30000);
-    rogue.wpDistance[wpIndex][rogue.wpCoordinates[wpIndex][0]][rogue.wpCoordinates[wpIndex][1]] = 0;
+    rogue.wpDistance[wpIndex][rogue.wpCoordinates[wpIndex].x][rogue.wpCoordinates[wpIndex].y] = 0;
     dijkstraScan(rogue.wpDistance[wpIndex], costMap, true);
     freeGrid(costMap);
 }
@@ -3016,8 +3016,7 @@ void setUpWaypoints() {
         if (!grid[x][y]) {
             getFOVMask(grid, x, y, WAYPOINT_SIGHT_RADIUS * FP_FACTOR, T_OBSTRUCTS_SCENT, 0, false);
             grid[x][y] = true;
-            rogue.wpCoordinates[rogue.wpCount][0] = x;
-            rogue.wpCoordinates[rogue.wpCount][1] = y;
+            rogue.wpCoordinates[rogue.wpCount] = (pos) { x, y };
             rogue.wpCount++;
 //            blackOutScreen();
 //            dumpLevelToScreen();

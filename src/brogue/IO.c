@@ -29,56 +29,42 @@
 #include "Globals.h"
 
 // Populates path[][] with a list of coordinates starting at origin and traversing down the map. Returns the number of steps in the path.
-short getPlayerPathOnMap(short path[1000][2], short **map, short originX, short originY) {
-    short dir, x, y, steps;
+short getPlayerPathOnMap(pos path[1000], short **map, pos origin) {
+    pos at = origin;
 
-    x = originX;
-    y = originY;
-
-    dir = 0;
-
-    for (steps = 0; dir != -1;) {
-        dir = nextStep(map, x, y, &player, false);
-        if (dir != -1) {
-            x += nbDirs[dir][0];
-            y += nbDirs[dir][1];
-            path[steps][0] = x;
-            path[steps][1] = y;
-            steps++;
-            brogueAssert(coordinatesAreInMap(x, y));
+    int steps;
+    for (steps = 0; true; steps++) {
+        const int dir = nextStep(map, at.x, at.y, &player, false);
+        if (dir == -1) {
+            break;
         }
+        at = posNeighborInDirection(at, dir);
+        path[steps] = at;
+        brogueAssert(coordinatesAreInMap(x, y));
     }
     return steps;
 }
 
-void reversePath(short path[1000][2], short steps) {
-    short i, x, y;
-
-    for (i=0; i<steps / 2; i++) {
-        x = path[steps - i - 1][0];
-        y = path[steps - i - 1][1];
-
-        path[steps - i - 1][0] = path[i][0];
-        path[steps - i - 1][1] = path[i][1];
-
-        path[i][0] = x;
-        path[i][1] = y;
+void reversePath(pos path[1000], short steps) {
+    for (int i=0; i<steps / 2; i++) {
+        pos temp = path[steps - i - 1];
+        path[steps - i - 1] = path[i];
+        path[i] = temp;
     }
 }
 
-void hilitePath(short path[1000][2], short steps, boolean unhilite) {
-    short i;
+void hilitePath(pos path[1000], short steps, boolean unhilite) {
     if (unhilite) {
-        for (i=0; i<steps; i++) {
-            brogueAssert(coordinatesAreInMap(path[i][0], path[i][1]));
-            pmap[path[i][0]][path[i][1]].flags &= ~IS_IN_PATH;
-            refreshDungeonCell(path[i][0], path[i][1]);
+        for (int i=0; i<steps; i++) {
+            brogueAssert(isPosInMap(path[i]));
+            pmapAt(path[i])->flags &= ~IS_IN_PATH;
+            refreshDungeonCell(path[i].x, path[i].y);
         }
     } else {
-        for (i=0; i<steps; i++) {
-            brogueAssert(coordinatesAreInMap(path[i][0], path[i][1]));
-            pmap[path[i][0]][path[i][1]].flags |= IS_IN_PATH;
-            refreshDungeonCell(path[i][0], path[i][1]);
+        for (int i=0; i<steps; i++) {
+            brogueAssert(isPosInMap(path[i]));
+            pmapAt(path[i])->flags |= IS_IN_PATH;
+            refreshDungeonCell(path[i].x, path[i].y);
         }
     }
 }
@@ -118,29 +104,29 @@ void showCursor() {
     }
 }
 
-void getClosestValidLocationOnMap(short loc[2], short **map, short x, short y) {
-    short i, j, dist, closestDistance, lowestMapScore;
+pos getClosestValidLocationOnMap(short **map, short x, short y) {
+    pos answer = INVALID_POS;
 
-    closestDistance = 10000;
-    lowestMapScore = 10000;
-    for (i=1; i<DCOLS-1; i++) {
-        for (j=1; j<DROWS-1; j++) {
-            if (map[i][j] >= 0
-                && map[i][j] < 30000) {
+    int closestDistance = 10000;
+    int lowestMapScore = 10000;
+    for (int i=1; i<DCOLS-1; i++) {
+        for (int j=1; j<DROWS-1; j++) {
+            if (map[i][j] >= 0 && map[i][j] < 30000) {
 
-                dist = (i - x)*(i - x) + (j - y)*(j - y);
+                const int dist = (i - x)*(i - x) + (j - y)*(j - y);
                 //hiliteCell(i, j, &purple, min(dist / 2, 100), false);
                 if (dist < closestDistance
                     || dist == closestDistance && map[i][j] < lowestMapScore) {
 
-                    loc[0] = i;
-                    loc[1] = j;
+                    answer = (pos){ i, j };
                     closestDistance = dist;
                     lowestMapScore = map[i][j];
                 }
             }
         }
     }
+
+    return answer;
 }
 
 void processSnapMap(short **map) {
@@ -554,8 +540,9 @@ void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
 
 // This is basically the main loop for the game.
 void mainInputLoop() {
-    short originLoc[2], pathDestination[2], oldTargetLoc[2] = { 0, 0 },
-    path[1000][2], steps, oldRNG, dir, newX, newY;
+    pos oldTargetLoc = { 0, 0 };
+    short steps, oldRNG, dir, newX, newY;
+    pos path[1000];
     creature *monst;
     item *theItem;
     cellDisplayBuffer rbuf[COLS][ROWS];
@@ -596,18 +583,15 @@ void mainInputLoop() {
         steps = 0;
         clearCursorPath();
 
-        originLoc[0] = player.loc.x;
-        originLoc[1] = player.loc.y;
+        const pos originLoc = player.loc;
 
         if (playingBack && rogue.cursorMode) {
             temporaryMessage("Examine what? (<hjklyubn>, mouse, or <tab>)", 0);
         }
 
         if (!playingBack
-            && player.loc.x == rogue.cursorLoc.x
-            && player.loc.y == rogue.cursorLoc.y
-            && oldTargetLoc[0] == rogue.cursorLoc.x
-            && oldTargetLoc[1] == rogue.cursorLoc.y) {
+            && posEq(player.loc, rogue.cursorLoc)
+            && posEq(oldTargetLoc, rogue.cursorLoc)) {
 
             // Path hides when you reach your destination.
             rogue.cursorMode = false;
@@ -615,8 +599,7 @@ void mainInputLoop() {
             rogue.cursorLoc = INVALID_POS;
         }
 
-        oldTargetLoc[0] = rogue.cursorLoc.x;
-        oldTargetLoc[1] = rogue.cursorLoc.y;
+        oldTargetLoc = rogue.cursorLoc;
 
         populateCreatureCostMap(costMap, &player);
 
@@ -629,44 +612,41 @@ void mainInputLoop() {
             textDisplayed = false;
 
             // Draw the cursor and path
-            if (coordinatesAreInMap(oldTargetLoc[0], oldTargetLoc[1])) {
-                refreshDungeonCell(oldTargetLoc[0], oldTargetLoc[1]);               // Remove old cursor.
+            if (isPosInMap(oldTargetLoc)) {
+                refreshDungeonCell(oldTargetLoc.x, oldTargetLoc.y);               // Remove old cursor.
             }
             if (!playingBack) {
-                if (coordinatesAreInMap(oldTargetLoc[0], oldTargetLoc[1])) {
+                if (isPosInMap(oldTargetLoc)) {
                     hilitePath(path, steps, true);                                  // Unhilite old path.
                 }
                 if (isPosInMap(rogue.cursorLoc)) {
+                    pos pathDestination;
                     if (cursorSnapMap[rogue.cursorLoc.x][rogue.cursorLoc.y] >= 0
                         && cursorSnapMap[rogue.cursorLoc.x][rogue.cursorLoc.y] < 30000) {
-
-                        pathDestination[0] = rogue.cursorLoc.x;
-                        pathDestination[1] = rogue.cursorLoc.y;
+                        pathDestination = rogue.cursorLoc;
                     } else {
                         // If the cursor is aimed at an inaccessible area, find the nearest accessible area to path toward.
-                        getClosestValidLocationOnMap(pathDestination, cursorSnapMap, rogue.cursorLoc.x, rogue.cursorLoc.y);
+                        pathDestination = getClosestValidLocationOnMap(cursorSnapMap, rogue.cursorLoc.x, rogue.cursorLoc.y);
                     }
 
                     fillGrid(playerPathingMap, 30000);
-                    playerPathingMap[pathDestination[0]][pathDestination[1]] = 0;
-                    backupCost = costMap[pathDestination[0]][pathDestination[1]];
-                    costMap[pathDestination[0]][pathDestination[1]] = 1;
+                    playerPathingMap[pathDestination.x][pathDestination.y] = 0;
+                    backupCost = costMap[pathDestination.x][pathDestination.y];
+                    costMap[pathDestination.x][pathDestination.y] = 1;
                     dijkstraScan(playerPathingMap, costMap, true);
-                    costMap[pathDestination[0]][pathDestination[1]] = backupCost;
-                    steps = getPlayerPathOnMap(path, playerPathingMap, player.loc.x, player.loc.y);
+                    costMap[pathDestination.x][pathDestination.y] = backupCost;
+                    steps = getPlayerPathOnMap(path, playerPathingMap, player.loc);
 
 //                  steps = getPlayerPathOnMap(path, playerPathingMap, pathDestination[0], pathDestination[1]) - 1; // Get new path.
 //                  reversePath(path, steps);   // Flip it around, back-to-front.
 
                     if (steps >= 0) {
-                        path[steps][0] = pathDestination[0];
-                        path[steps][1] = pathDestination[1];
+                        path[steps] = pathDestination;
                     }
                     steps++;
 //                  if (playerPathingMap[cursor[0]][cursor[1]] != 1
                     if (playerPathingMap[player.loc.x][player.loc.y] != 1
-                        || pathDestination[0] != rogue.cursorLoc.x
-                        || pathDestination[1] != rogue.cursorLoc.y) {
+                        || !posEq(pathDestination, rogue.cursorLoc)) {
 
                         hilitePath(path, steps, false);     // Hilite new path.
                     }
@@ -678,12 +658,11 @@ void mainInputLoop() {
                            rogue.cursorLoc.y,
                            &white,
                            (steps <= 0
-                            || (path[steps-1][0] == rogue.cursorLoc.x && path[steps-1][1] == rogue.cursorLoc.y)
+                            || posEq(path[steps-1], rogue.cursorLoc)
                             || (!playingBack && distanceBetween(player.loc, rogue.cursorLoc) <= 1) ? 100 : 25),
                            true);
 
-                oldTargetLoc[0] = rogue.cursorLoc.x;
-                oldTargetLoc[1] = rogue.cursorLoc.y;
+                oldTargetLoc = rogue.cursorLoc;
 
                 monst = monsterAtLoc(rogue.cursorLoc.x, rogue.cursorLoc.y);
                 theItem = itemAtLoc(rogue.cursorLoc.x, rogue.cursorLoc.y);
@@ -782,8 +761,8 @@ void mainInputLoop() {
                 }
         } while (!targetConfirmed && !canceled && !doEvent && !rogue.gameHasEnded);
 
-        if (coordinatesAreInMap(oldTargetLoc[0], oldTargetLoc[1])) {
-            refreshDungeonCell(oldTargetLoc[0], oldTargetLoc[1]);                       // Remove old rogue.cursorLoc.
+        if (isPosInMap(oldTargetLoc)) {
+            refreshDungeonCell(oldTargetLoc.x, oldTargetLoc.y);                       // Remove old rogue.cursorLoc.
         }
 
         restoreRNG;
@@ -797,16 +776,14 @@ void mainInputLoop() {
                 && steps > 1) {
                 // Control-clicking moves the player one step along the path.
                 for (dir=0;
-                     dir < DIRECTION_COUNT && (player.loc.x + nbDirs[dir][0] != path[0][0] || player.loc.y + nbDirs[dir][1] != path[0][1]);
+                     dir < DIRECTION_COUNT && !posEq(posNeighborInDirection(player.loc, dir) , path[0]);
                      dir++);
                 playerMoves(dir);
             } else if (D_WORMHOLING) {
                 travel(rogue.cursorLoc.x, rogue.cursorLoc.y, true);
             } else {
                 confirmMessages();
-                if (originLoc[0] == rogue.cursorLoc.x
-                    && originLoc[1] == rogue.cursorLoc.y) {
-
+                if (posEq(originLoc, rogue.cursorLoc)) {
                     confirmMessages();
                 } else if (abs(player.loc.x - rogue.cursorLoc.x) + abs(player.loc.y - rogue.cursorLoc.y) == 1 // horizontal or vertical
                            || (distanceBetween(player.loc, rogue.cursorLoc) == 1 // includes diagonals
@@ -3712,7 +3689,7 @@ enum entityDisplayTypes {
 // If a monster, item or terrain is focused, then display the sidebar with that monster/item highlighted,
 // in the order it would normally appear. If it would normally not fit on the sidebar at all,
 // then list it first.
-// Also update rogue.sidebarLocationList[ROWS][2] list of locations so that each row of
+// Also update `pos rogue.sidebarLocationList[ROWS]` list of locations so that each row of
 // the screen is mapped to the corresponding entity, if any.
 // FocusedEntityMustGoFirst should usually be false when called externally. This is because
 // we won't know if it will fit on the screen in normal order until we try.
@@ -3724,7 +3701,7 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
     char buf[COLS];
     const void *entityList[ROWS] = {0}, *focusEntity = NULL;
     enum entityDisplayTypes entityType[ROWS] = {0}, focusEntityType = EDT_NOTHING;
-    short terrainLocationMap[ROWS][2];
+    pos terrainLocationMap[ROWS];
     boolean gotFocusedEntityOnScreen = (focusX >= 0 ? false : true);
     char addedEntity[DCOLS][DROWS];
     short oldRNG;
@@ -3790,8 +3767,7 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
     // Initialization.
     displayEntityCount = 0;
     for (i=0; i<ROWS*2; i++) {
-        rogue.sidebarLocationList[i][0] = -1;
-        rogue.sidebarLocationList[i][1] = -1;
+        rogue.sidebarLocationList[i] = INVALID_POS;
     }
 
     // Player always goes first.
@@ -3805,8 +3781,7 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
         addedEntity[focusX][focusY] = true;
         entityList[displayEntityCount] = focusEntity;
         entityType[displayEntityCount] = focusEntityType;
-        terrainLocationMap[displayEntityCount][0] = focusX;
-        terrainLocationMap[displayEntityCount][1] = focusY;
+        terrainLocationMap[displayEntityCount] = (pos) { focusX, focusY };
         displayEntityCount++;
     }
 
@@ -3871,8 +3846,7 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
                         addedEntity[i][j] = true;
                         entityList[displayEntityCount] = tileCatalog[pmap[i][j].layers[layerWithTMFlag(i, j, TM_LIST_IN_SIDEBAR)]].description;
                         entityType[displayEntityCount] = EDT_TERRAIN;
-                        terrainLocationMap[displayEntityCount][0] = i;
-                        terrainLocationMap[displayEntityCount][1] = j;
+                        terrainLocationMap[displayEntityCount] = (pos) { i, j };
                         displayEntityCount++;
                     }
                 }
@@ -3901,8 +3875,8 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
                                    (focusEntity && (x != focusX || y != focusY)),
                                    (x == focusX && y == focusY));
         } else if (entityType[i] == EDT_TERRAIN) {
-            x = terrainLocationMap[i][0];
-            y = terrainLocationMap[i][1];
+            x = terrainLocationMap[i].x;
+            y = terrainLocationMap[i].y;
             printY = printTerrainInfo(x, y,
                                       printY,
                                       ((const char *) entityList[i]),
@@ -3913,8 +3887,7 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
             gotFocusedEntityOnScreen = true;
         }
         for (j=oldPrintY; j<printY; j++) {
-            rogue.sidebarLocationList[j][0] = x;
-            rogue.sidebarLocationList[j][1] = y;
+            rogue.sidebarLocationList[j] = (pos){ x, y };
         }
     }
 
