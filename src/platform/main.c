@@ -26,7 +26,6 @@ static void printCommandlineHelp() {
     "-o filename[.broguesave]   open a save file (extension optional)\n"
     "-v recording[.broguerec]   view a recording (extension optional)\n"
     "-vn recording[.broguerec]  view a recording non-interactively (extension optional)\n"
-    "-m variant_name            run a variant game\n"
 #ifdef BROGUE_WEB
     "--server-mode              run the game in web-brogue server mode\n"
 #endif
@@ -190,18 +189,6 @@ int main(int argc, char *argv[])
                 currentConsole = nullConsole;
                 nonInteractivePlayback = true;
 
-                i++;
-                continue;
-            }
-        }
-
-        if (strcmp(argv[i], "-m") == 0 || strcmp(argv[i], "--mod") == 0) {
-            if (i + 1 < argc) {
-#ifdef RAPID_BROGUE
-                if (!strcmp("rapid_brogue", argv[i + 1])) {
-                    gameVariant = VARIANT_RAPID_BROGUE;
-                }
-#endif
                 i++;
                 continue;
             }
