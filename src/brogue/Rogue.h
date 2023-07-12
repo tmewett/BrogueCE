@@ -2945,7 +2945,7 @@ extern "C" {
     void hiliteCell(short x, short y, const color *hiliteColor, short hiliteStrength, boolean distinctColors);
     void colorMultiplierFromDungeonLight(short x, short y, color *editColor);
     void plotCharWithColor(enum displayGlyph inputChar, windowpos loc, const color *cellForeColor, const color *cellBackColor);
-    void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, const color *foreColor, const color *backColor, int opacity, cellDisplayBuffer dbuf[COLS][ROWS]);
+    void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, const color *foreColor, const color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
     void plotForegroundChar(enum displayGlyph inputChar, short x, short y, const color *foreColor, boolean affectedByLighting);
     void commitDraws();
     void dumpLevelToScreen();
@@ -2962,7 +2962,7 @@ extern "C" {
     void printString(const char *theString, short x, short y, const color *foreColor, const color* backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
     short wrapText(char *to, const char *sourceText, short width);
     short printStringWithWrapping(const char *theString, short x, short y, short width, const color *foreColor,
-                                  const color *backColor, short opacity, cellDisplayBuffer dbuf[COLS][ROWS]);
+                                  const color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
     boolean getInputTextString(char *inputText,
                                const char *prompt,
                                short maxLength,
