@@ -396,7 +396,7 @@ static void dialogCreateMonster() {
         }
 
         // If there's already a monster here, quietly bury the body.
-        oldMonster = monsterAtLoc(selectedPosition.x, selectedPosition.y);
+        oldMonster = monsterAtLoc(selectedPosition);
         if (oldMonster) {
             killCreature(oldMonster, true);
             removeDeadMonsters();

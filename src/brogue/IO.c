@@ -663,7 +663,7 @@ void mainInputLoop() {
 
                 oldTargetLoc = rogue.cursorLoc;
 
-                monst = monsterAtLoc(rogue.cursorLoc.x, rogue.cursorLoc.y);
+                monst = monsterAtLoc(rogue.cursorLoc);
                 theItem = itemAtLoc(rogue.cursorLoc.x, rogue.cursorLoc.y);
                 if (monst != NULL && (canSeeMonster(monst) || rogue.playbackOmniscience)) {
                     rogue.playbackMode = playingBack;
@@ -787,7 +787,7 @@ void mainInputLoop() {
                 } else if (abs(player.loc.x - rogue.cursorLoc.x) + abs(player.loc.y - rogue.cursorLoc.y) == 1 // horizontal or vertical
                            || (distanceBetween(player.loc, rogue.cursorLoc) == 1 // includes diagonals
                                && (!diagonalBlocked(player.loc.x, player.loc.y, rogue.cursorLoc.x, rogue.cursorLoc.y, !rogue.playbackOmniscience)
-                                   || ((pmapAt(rogue.cursorLoc)->flags & HAS_MONSTER) && (monsterAtLoc(rogue.cursorLoc.x, rogue.cursorLoc.y)->info.flags & MONST_ATTACKABLE_THRU_WALLS)) // there's a turret there
+                                   || ((pmapAt(rogue.cursorLoc)->flags & HAS_MONSTER) && (monsterAtLoc(rogue.cursorLoc)->info.flags & MONST_ATTACKABLE_THRU_WALLS)) // there's a turret there
                                    || ((terrainFlags(rogue.cursorLoc.x, rogue.cursorLoc.y) & T_OBSTRUCTS_PASSABILITY) && (terrainMechFlags(rogue.cursorLoc.x, rogue.cursorLoc.y) & TM_PROMOTES_ON_PLAYER_ENTRY))))) { // there's a lever there
                                                                                                                                                                                       // Clicking one space away will cause the player to try to move there directly irrespective of path.
                                    for (dir=0;
@@ -1111,9 +1111,9 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
     brogueAssert(coordinatesAreInMap(x, y));
 
     if (pmap[x][y].flags & HAS_MONSTER) {
-        monst = monsterAtLoc(x, y);
+        monst = monsterAtLoc((pos){ x, y });
     } else if (pmap[x][y].flags & HAS_DORMANT_MONSTER) {
-        monst = dormantMonsterAtLoc(x, y);
+        monst = dormantMonsterAtLoc((pos){ x, y });
     }
     if (monst) {
         monsterWithDetectedItem = (monst->carriedItem && (monst->carriedItem->flags & ITEM_MAGIC_DETECTED)
@@ -3717,7 +3717,7 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
         focusedEntityMustGoFirst = false; // just in case!
     } else {
         if (pmap[focusX][focusY].flags & (HAS_MONSTER | HAS_PLAYER)) {
-            creature *monst = monsterAtLoc(focusX, focusY);
+            creature *monst = monsterAtLoc((pos){ focusX, focusY });
             if (canSeeMonster(monst) || rogue.playbackOmniscience) {
                 focusEntity = monst;
                 focusEntityType = EDT_CREATURE;

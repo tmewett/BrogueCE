@@ -850,7 +850,7 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
         fillGrid(leader->safetyMap, 0);
     }
 
-    preexistingMonst = monsterAtLoc(x, y);
+    preexistingMonst = monsterAtLoc((pos){ x, y });
     if (preexistingMonst) {
         killCreature(preexistingMonst, true); // If there's already a monster here, quietly bury the body.
     }
@@ -1304,7 +1304,7 @@ boolean monsterAvoids(creature *monst, pos p) {
             return false;
         }
         if (distanceBetween(monst->loc, p) <= 1) {
-            defender = monsterAtLoc(p.x, p.y);
+            defender = monsterAtLoc(p);
             if (defender
                 && (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS)) {
                 return false;
@@ -1316,7 +1316,7 @@ boolean monsterAvoids(creature *monst, pos p) {
     // Monsters can always attack unfriendly neighboring monsters,
     // unless it is immune to us for whatever reason.
     if (distanceBetween(monst->loc, p) <= 1) {
-        defender = monsterAtLoc(p.x, p.y);
+        defender = monsterAtLoc(p);
         if (defender
             && !(defender->bookkeepingFlags & MB_IS_DYING)
             && monsterWillAttackTarget(monst, defender)) {
@@ -1330,7 +1330,7 @@ boolean monsterAvoids(creature *monst, pos p) {
     }
 
     // Monsters always avoid enemy monsters that we can't damage.
-    defender = monsterAtLoc(p.x, p.y);
+    defender = monsterAtLoc(p);
     if (defender
         && !(defender->bookkeepingFlags & MB_IS_DYING)
         && monstersAreEnemies(monst, defender)
@@ -2004,17 +2004,17 @@ boolean openPathBetween(short x1, short y1, short x2, short y2) {
     return false;
 }
 
-// will return the player if the player is at (x, y).
-creature *monsterAtLoc(short x, short y) {
-    if (!(pmap[x][y].flags & (HAS_MONSTER | HAS_PLAYER))) {
+// will return the player if the player is at (p.x, p.y).
+creature *monsterAtLoc(pos p) {
+    if (!(pmapAt(p)->flags & (HAS_MONSTER | HAS_PLAYER))) {
         return NULL;
     }
-    if (player.loc.x == x && player.loc.y == y) {
+    if (posEq(player.loc, p)) {
         return &player;
     }
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
-        if (monst->loc.x == x && monst->loc.y == y) {
+        if (posEq(monst->loc, p)) {
             return monst;
         }
     }
@@ -2024,14 +2024,14 @@ creature *monsterAtLoc(short x, short y) {
     return NULL;
 }
 
-creature *dormantMonsterAtLoc(short x, short y) {
-    if (!(pmap[x][y].flags & HAS_DORMANT_MONSTER)) {
+creature *dormantMonsterAtLoc(pos p) {
+    if (!(pmapAt(p)->flags & HAS_DORMANT_MONSTER)) {
         return NULL;
     }
 
     for (creatureIterator it = iterateCreatures(dormantMonsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
-        if (monst->loc.x == x && monst->loc.y == y) {
+        if (posEq(monst->loc, p)) {
             return monst;
         }
     }
@@ -2741,7 +2741,7 @@ enum directions scentDirection(creature *monst) {
         for (dir=0; dir< DIRECTION_COUNT; dir++) {
             newX = x + nbDirs[dir][0];
             newY = y + nbDirs[dir][1];
-            otherMonst = monsterAtLoc(newX, newY);
+            otherMonst = monsterAtLoc((pos){ newX, newY });
             if (coordinatesAreInMap(newX, newY)
                 && (scentMap[newX][newY] > bestNearbyScent)
                 && (!(pmap[newX][newY].flags & HAS_MONSTER) || (otherMonst && canPass(monst, otherMonst)))
@@ -3656,7 +3656,7 @@ boolean moveMonster(creature *monst, short dx, short dy) {
     }
 
     if (pmap[newX][newY].flags & (HAS_MONSTER | HAS_PLAYER)) {
-        defender = monsterAtLoc(newX, newY);
+        defender = monsterAtLoc((pos){ newX, newY });
     } else {
         if (monst->bookkeepingFlags & MB_SEIZED) {
             for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {

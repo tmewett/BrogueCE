@@ -3261,7 +3261,7 @@ item *keyOnTileAt(short x, short y) {
         }
     }
     if (pmap[x][y].flags & HAS_MONSTER) {
-        monst = monsterAtLoc(x, y);
+        monst = monsterAtLoc((pos){ x, y });
         if (monst->carriedItem) {
             theItem = monst->carriedItem;
             if (keyMatchesLocation(theItem, x, y)) {
@@ -3402,8 +3402,8 @@ short getLineCoordinates(pos listOfCoordinates[], const pos originLoc, const pos
             boolean burningThrough = (theBolt->flags & BF_FIERY) && cellHasTerrainFlag(x, y, T_IS_FLAMMABLE);
             boolean isCastByPlayer = (originLoc.x == player.loc.x && originLoc.y == player.loc.y);
 
-            creature *caster = monsterAtLoc(originLoc.x, originLoc.y);
-            creature *monst = monsterAtLoc(x, y);
+            creature *caster = monsterAtLoc(originLoc);
+            creature *monst = monsterAtLoc((pos){ x, y });
             boolean isMonster = monst
                 && !(monst->bookkeepingFlags & MB_SUBMERGED)
                 && !monsterIsHidden(monst, caster);
@@ -3493,9 +3493,9 @@ void getImpactLoc(pos *returnLoc, const pos originLoc, const pos targetLoc,
     n = getLineCoordinates(coords, originLoc, targetLoc, theBolt);
     n = min(n, maxDistance);
     for (i=0; i<n; i++) {
-        monst = monsterAtLoc(coords[i].x, coords[i].y);
+        monst = monsterAtLoc(coords[i]);
         if (monst
-            && !monsterIsHidden(monst, monsterAtLoc(originLoc.x, originLoc.y))
+            && !monsterIsHidden(monst, monsterAtLoc(originLoc))
             && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
             // Imaginary bolt hit the player or a monster.
             break;
@@ -3572,7 +3572,7 @@ boolean tunnelize(short x, short y) {
         spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_TUNNELIZE], true, false);
         if (pmap[x][y].flags & HAS_MONSTER) {
             // Kill turrets and sentinels if you tunnelize them.
-            monst = monsterAtLoc(x, y);
+            monst = monsterAtLoc((pos){ x, y });
             if (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS) {
                 inflictLethalDamage(NULL, monst);
                 killCreature(monst, false);
@@ -4113,7 +4113,7 @@ void crystalize(short radius) {
                     spawnDungeonFeature(i, j, &dungeonFeatureCatalog[DF_SHATTERING_SPELL], true, false);
 
                     if (pmap[i][j].flags & HAS_MONSTER) {
-                        monst = monsterAtLoc(i, j);
+                        monst = monsterAtLoc((pos){ i, j });
                         if (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS) {
                             inflictLethalDamage(NULL, monst);
                             killCreature(monst, false);
@@ -4320,7 +4320,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
 
     // Handle collisions with monsters.
 
-    monst = monsterAtLoc(x, y);
+    monst = monsterAtLoc((pos){ x, y });
     if (monst && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
         monsterName(monstName, monst, true);
 
@@ -4698,10 +4698,11 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
             }
             break;
         case BE_BLINKING:
-            if (pmap[x][y].flags & HAS_MONSTER) { // We're blinking onto an area already occupied by a submerged monster.
-                                                  // Make sure we don't get the shooting monster by accident.
-                caster->loc.x = caster->loc.y = -1; // Will be set back to the destination in a moment.
-                monst = monsterAtLoc(x, y);
+            if (pmap[x][y].flags & HAS_MONSTER) {
+                // We're blinking onto an area already occupied by a submerged monster.
+                // Make sure we don't get the shooting monster by accident.
+                caster->loc = INVALID_POS; // Will be set back to the destination in a moment.
+                monst = monsterAtLoc((pos){ x, y });
                 findAlternativeHomeFor(monst, &x2, &y2, true);
                 if (x2 >= 0) {
                     // Found an alternative location.
@@ -4804,7 +4805,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
     } else {
         numCells = getLineCoordinates(listOfCoordinates, originLoc, targetLoc, (hideDetails ? &boltCatalog[BOLT_NONE] : theBolt));
     }
-    shootingMonst = monsterAtLoc(originLoc.x, originLoc.y);
+    shootingMonst = monsterAtLoc(originLoc);
 
     if (hideDetails) {
         boltColor = &gray;
@@ -4818,7 +4819,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
     if (theBolt->boltEffect == BE_BLINKING) {
         if (cellHasTerrainFlag(listOfCoordinates[0].x, listOfCoordinates[0].y, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION))
             || ((pmapAt(listOfCoordinates[0])->flags & (HAS_PLAYER | HAS_MONSTER))
-                && !(monsterAtLoc(listOfCoordinates[0].x, listOfCoordinates[0].y)->bookkeepingFlags & MB_SUBMERGED))) {
+                && !(monsterAtLoc(listOfCoordinates[0])->bookkeepingFlags & MB_SUBMERGED))) {
                 // shooting blink point-blank into an obstruction does nothing.
                 return false;
             }
@@ -4853,7 +4854,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
         x = listOfCoordinates[i].x;
         y = listOfCoordinates[i].y;
 
-        monst = monsterAtLoc(x, y);
+        monst = monsterAtLoc(listOfCoordinates[i]);
 
         // Handle bolt reflection off of creatures (reflection off of terrain is handled further down).
         if (monst
@@ -4978,7 +4979,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
             }
 
             if (!(theBolt->flags & BF_PASSES_THRU_CREATURES)) {
-                monst = monsterAtLoc(listOfCoordinates[i+1].x, listOfCoordinates[i+1].y);
+                monst = monsterAtLoc(listOfCoordinates[i+1]);
                 if (monst && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
                     break;
                 }
@@ -5046,7 +5047,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
     }
 
     if (pmap[x][y].flags & (HAS_MONSTER | HAS_PLAYER)) {
-        monst = monsterAtLoc(x, y);
+        monst = monsterAtLoc((pos){ x, y });
         monsterName(monstName, monst, true);
     } else {
         monst = NULL;
@@ -5148,7 +5149,7 @@ boolean nextTargetAfter(short *returnX,
 
             brogueAssert(coordinatesAreInMap(newX, newY));
             brogueAssert(n >= 0 && n < targetCount);
-            creature *const monst = monsterAtLoc(newX, newY);
+            creature *const monst = monsterAtLoc((pos){ newX, newY });
             if (monst) {
                 if (monstersAreEnemies(&player, monst)) {
                     if (targetEnemies) {
@@ -5206,7 +5207,7 @@ short hiliteTrajectory(const pos coordinateList[DCOLS], short numCells, boolean 
             }
         } else if (!passThroughMonsters && pmap[x][y].flags & (HAS_MONSTER)
                    && (playerCanSee(x, y) || player.status[STATUS_TELEPATHIC])) {
-            monst = monsterAtLoc(x, y);
+            monst = monsterAtLoc((pos){ x, y });
             if (!(monst->bookkeepingFlags & MB_SUBMERGED)
                 && !monsterIsHidden(monst, &player)) {
 
@@ -5403,7 +5404,7 @@ boolean moveCursor(boolean *targetConfirmed,
 
         if (sidebarHighlighted
             && (!(pmapAt(rogue.cursorLoc)->flags & (HAS_PLAYER | HAS_MONSTER))
-                || !canSeeMonster(monsterAtLoc(rogue.cursorLoc.x, rogue.cursorLoc.y)))
+                || !canSeeMonster(monsterAtLoc(rogue.cursorLoc)))
             && (!(pmapAt(rogue.cursorLoc)->flags & HAS_ITEM) || !playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y))
             && (!cellHasTMFlag(rogue.cursorLoc.x, rogue.cursorLoc.y, TM_LIST_IN_SIDEBAR) || !playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y))) {
 
@@ -5499,7 +5500,7 @@ boolean chooseTarget(pos *returnLoc,
             if (nextTargetAfter(&newX, &newY, targetLoc.x, targetLoc.y, !targetAllies, targetAllies, false, false, true, false)) {
                 targetLoc = (pos) { .x = newX, .y = newY };
             }
-            monst = monsterAtLoc(targetLoc.x, targetLoc.y);
+            monst = monsterAtLoc(targetLoc);
         }
         if (monst) {
             targetLoc = monst->loc;
@@ -5536,7 +5537,7 @@ boolean chooseTarget(pos *returnLoc,
             }
         }
 
-        monst = monsterAtLoc(targetLoc.x, targetLoc.y);
+        monst = monsterAtLoc(targetLoc);
         if (monst != NULL && monst != &player && canSeeMonster(monst)) {
             focusedOnSomething = true;
         } else if (playerCanSeeOrSense(targetLoc.x, targetLoc.y)
@@ -5592,7 +5593,7 @@ boolean chooseTarget(pos *returnLoc,
         return false;
     }
 
-    monst = monsterAtLoc(targetLoc.x, targetLoc.y);
+    monst = monsterAtLoc(targetLoc);
     if (monst && monst != &player && canSeeMonster(monst)) {
         rogue.lastTarget = monst;
     }
@@ -5948,7 +5949,7 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
         y = listOfCoordinates[i].y;
 
         if (pmap[x][y].flags & (HAS_MONSTER | HAS_PLAYER)) {
-            monst = monsterAtLoc(x, y);
+            monst = monsterAtLoc((pos){ x, y });
             if (!(monst->bookkeepingFlags & MB_SUBMERGED)) {
 //          if (projectileReflects(thrower, monst) && i < DCOLS*2) {
 //              if (projectileReflects(thrower, monst)) { // if it scores another reflection roll, reflect at caster
@@ -6073,7 +6074,7 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
             refreshDungeonCell(x, y);
 
             //if (pmap[x][y].flags & (HAS_MONSTER | HAS_PLAYER)) {
-            //  monst = monsterAtLoc(x, y);
+            //  monst = monsterAtLoc((pos){ x, y });
             //  applyInstantTileEffectsToCreature(monst);
             //}
         } else {
@@ -6101,7 +6102,7 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
     if ((theItem->category & WEAPON) && theItem->kind == INCENDIARY_DART) {
         spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_DART_EXPLOSION], true, false);
         if (pmap[x][y].flags & (HAS_MONSTER | HAS_PLAYER)) {
-            exposeCreatureToFire(monsterAtLoc(x, y));
+            exposeCreatureToFire(monsterAtLoc((pos){ x, y }));
         }
         deleteItem(theItem);
         return;

@@ -1539,7 +1539,7 @@ void updateAllySafetyMap() {
             } else if (cellHasTerrainFlag(i, j, T_SACRED)) {
                 playerCostMap[i][j] = 1;
                 monsterCostMap[i][j] = PDS_FORBIDDEN;
-            } else if ((pmap[i][j].flags & HAS_MONSTER) && monstersAreEnemies(&player, monsterAtLoc(i, j))) {
+            } else if ((pmap[i][j].flags & HAS_MONSTER) && monstersAreEnemies(&player, monsterAtLoc((pos){ i, j }))) {
                 playerCostMap[i][j] = 1;
                 monsterCostMap[i][j] = PDS_FORBIDDEN;
                 allySafetyMap[i][j] = 0;
@@ -1623,7 +1623,7 @@ void updateSafetyMap() {
                 }
             } else {
                 if (pmap[i][j].flags & HAS_MONSTER) {
-                    monst = monsterAtLoc(i, j);
+                    monst = monsterAtLoc((pos){ i, j });
                     if ((monst->creatureState == MONSTER_SLEEPING
                          || monst->turnsSpentStationary > 2
                          || (monst->info.flags & MONST_GETS_TURN_ON_ACTIVATION)
@@ -1735,7 +1735,7 @@ void updateSafeTerrainMap() {
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            monst = monsterAtLoc(i, j);
+            monst = monsterAtLoc((pos){ i, j });
             if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)
                 && (!cellHasTMFlag(i, j, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc(i, j) & T_OBSTRUCTS_PASSABILITY))) {
 
@@ -1893,7 +1893,7 @@ void monsterEntersLevel(creature *monst, short n) {
         && (pmapAt(monst->loc)->flags & (HAS_PLAYER | HAS_MONSTER))
         && !(terrainFlags(monst->loc.x, monst->loc.y) & avoidedFlagsForMonster(&(monst->info)))) {
         // Monsters using the stairs will displace any creatures already located there, to thwart stair-dancing.
-        creature *prevMonst = monsterAtLoc(monst->loc.x, monst->loc.y);
+        creature *prevMonst = monsterAtLoc(monst->loc);
         brogueAssert(prevMonst);
         getQualifyingPathLocNear(&(prevMonst->loc.x), &(prevMonst->loc.y), monst->loc.x, monst->loc.y, true,
                                  T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(prevMonst->info)), 0,
