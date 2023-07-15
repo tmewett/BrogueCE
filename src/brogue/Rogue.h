@@ -2297,6 +2297,10 @@ typedef struct creatureIterator {
 
 enum NGCommands {
     NG_NOTHING = 0,
+    NG_FLYOUT_PLAY,
+    NG_FLYOUT_VIEW,
+    NG_FLYOUT_OPTIONS,
+    NG_GAME_VARIANT,
     NG_NEW_GAME,
     NG_NEW_GAME_WITH_SEED,
     NG_OPEN_GAME,
