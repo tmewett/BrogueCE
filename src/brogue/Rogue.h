@@ -2753,6 +2753,7 @@ typedef struct brogueButton {
                                 // the nth character supplied here, if one is given.
                                 // (Primarily to display magic character and item symbols in the inventory display.)
     unsigned long flags;
+    enum NGCommands command;
 } brogueButton;
 
 enum buttonDrawStates {
