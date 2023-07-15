@@ -444,136 +444,110 @@ static void redrawMainMenuButtons(buttonState *menu) {
     }
 }
 
+#define FLYOUT_X 59
+
 void titleMenu() {
     signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3]; // red, green and blue
     signed short colorSources[MENU_FLAME_COLOR_SOURCE_COUNT][4]; // red, green, blue, and rand, one for each color source (no more than MENU_FLAME_COLOR_SOURCE_COUNT).
     const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)];
     color colorStorage[COLS];
     unsigned char mask[COLS][ROWS];
-    boolean controlKeyWasDown = false;
 
-    short i, b, x, y, button;
-    buttonState state;
-    brogueButton buttons[6];
-    char whiteColorEscape[10] = "";
-    char goldColorEscape[10] = "";
-    char newGameText[100] = "", customNewGameText[100] = "";
-    rogueEvent theEvent;
-    enum NGCommands buttonCommands[6] = {NG_NEW_GAME, NG_OPEN_GAME, NG_VIEW_RECORDING, NG_HIGH_SCORES, NG_QUIT};
+    // Main menu
+    buttonState mainMenu;
+    brogueButton mainButtons[MAIN_MENU_BUTTON_COUNT];
+    cellDisplayBuffer mainShadowBuf[COLS][ROWS];
 
-    cellDisplayBuffer shadowBuf[COLS][ROWS];
+    // Flyout menu
+    buttonState flyoutMenu;
+    brogueButton flyoutButtons[10];
+    cellDisplayBuffer flyoutShadowBuf[COLS][ROWS];
 
     // Initialize the RNG so the flames aren't always the same.
-
     seedRandomGenerator(0);
 
     // Empty nextGamePath and nextGameSeed so that the buttons don't try to load an old game path or seed.
     rogue.nextGamePath[0] = '\0';
     rogue.nextGameSeed = 0;
 
-    // Initialize the title menu buttons.
-    encodeMessageColor(whiteColorEscape, 0, &white);
-    encodeMessageColor(goldColorEscape, 0, KEYBOARD_LABELS ? &itemMessageColor : &white);
-    sprintf(newGameText, "      %sN%sew Game      ", goldColorEscape, whiteColorEscape);
-    sprintf(customNewGameText, " %sN%sew Game (custom) ", goldColorEscape, whiteColorEscape);
-    b = 0;
-    button = -1;
-
-    initializeButton(&(buttons[b]));
-    strcpy(buttons[b].text, newGameText);
-    buttons[b].hotkey[0] = 'n';
-    buttons[b].hotkey[1] = 'N';
-    b++;
-
-    initializeButton(&(buttons[b]));
-    sprintf(buttons[b].text, "     %sO%spen Game      ", goldColorEscape, whiteColorEscape);
-    buttons[b].hotkey[0] = 'o';
-    buttons[b].hotkey[1] = 'O';
-    b++;
-
-    initializeButton(&(buttons[b]));
-    sprintf(buttons[b].text, "   %sV%siew Recording   ", goldColorEscape, whiteColorEscape);
-    buttons[b].hotkey[0] = 'v';
-    buttons[b].hotkey[1] = 'V';
-    b++;
-
-    initializeButton(&(buttons[b]));
-    sprintf(buttons[b].text, "    %sH%sigh Scores     ", goldColorEscape, whiteColorEscape);
-    buttons[b].hotkey[0] = 'h';
-    buttons[b].hotkey[1] = 'H';
-    b++;
-
-    initializeButton(&(buttons[b]));
-    sprintf(buttons[b].text, "        %sQ%suit        ", goldColorEscape, whiteColorEscape);
-    buttons[b].hotkey[0] = 'q';
-    buttons[b].hotkey[1] = 'Q';
-    b++;
-
-    x = COLS - 1 - 20 - 2;
-    y = ROWS - 1;
-    for (i = b-1; i >= 0; i--) {
-        y -= 2;
-        buttons[i].x = x;
-        buttons[i].y = y;
-        buttons[i].buttonColor = titleButtonColor;
-        buttons[i].flags |= B_WIDE_CLICK_AREA;
-    }
-
     blackOutScreen();
-    clearDisplayBuffer(shadowBuf);
-    initializeButtonState(&state, buttons, b, x, y, 20, b*2-1);
-    rectangularShading(x, y, 20, b*2-1, &black, INTERFACE_OPACITY, shadowBuf);
-    drawButtonsInState(&state);
 
+    // Initialize the main menu with buttons stacked on top of the quit button
+    windowpos quitButtonPosition = {COLS - 20, ROWS - 3};
+    initializeMainMenu(&mainMenu, mainButtons, quitButtonPosition, mainShadowBuf);
+
+    // Display the title and flames
     initializeMenuFlames(true, colors, colorStorage, colorSources, flames, mask);
     rogue.creaturesWillFlashThisTurn = false; // total unconscionable hack
 
+    rogueEvent theEvent;
+    short mainIndex = -1;
+    short flyoutIndex = -1;
+    windowpos bPos;
+
+    // Outer loop for menu navigation (showing/hiding the flyout menus). Repeat until the user selects
+    // a button with a command handled by mainBrogueJunction.
+    do {
+        if (isFlyoutActive()) {
+            bPos = getNextGameButtonPos(mainButtons);
+            initializeFlyoutMenu(&flyoutMenu, flyoutShadowBuf, flyoutButtons, (windowpos){FLYOUT_X, bPos.window_y});
+    }
+        redrawMainMenuButtons(&mainMenu);
+
+        // Inner input loop until the user selects a button or presses a key. For mouse input, a button
+        // is considered selected only on the MOUSE_UP event.
     do {
         if (isApplicationActive()) {
             // Revert the display.
-            overlayDisplayBuffer(state.rbuf, NULL);
-
-            if (!controlKeyWasDown && controlKeyIsDown()) {
-                strcpy(state.buttons[0].text, customNewGameText);
-                drawButtonsInState(&state);
-                buttonCommands[0] = NG_NEW_GAME_WITH_SEED;
-                controlKeyWasDown = true;
-            } else if (controlKeyWasDown && !controlKeyIsDown()) {
-                strcpy(state.buttons[0].text, newGameText);
-                drawButtonsInState(&state);
-                buttonCommands[0] = NG_NEW_GAME;
-                controlKeyWasDown = false;
-            }
+                overlayDisplayBuffer(mainMenu.rbuf, NULL);
 
             // Update the display.
             updateMenuFlames(colors, colorSources, flames);
             drawMenuFlames(flames, mask);
-            overlayDisplayBuffer(shadowBuf, NULL);
-            overlayDisplayBuffer(state.dbuf, NULL);
+                overlayDisplayBuffer(mainShadowBuf, NULL);
+                overlayDisplayBuffer(mainMenu.dbuf, NULL);
 
+                //Show flyout if selected
+                if (isFlyoutActive()) {
+                    overlayDisplayBuffer(flyoutShadowBuf, NULL);
+                    overlayDisplayBuffer(flyoutMenu.dbuf, NULL);
+                }
             // Pause briefly.
             if (pauseBrogue(MENU_FLAME_UPDATE_DELAY)) {
                 // There was input during the pause! Get the input.
                 nextBrogueEvent(&theEvent, true, false, true);
 
-                // Process the input.
-                button = processButtonInput(&state, NULL, &theEvent);
+                    // quickstart a new game
+                    if (theEvent.param1 == 'n' || theEvent.param1 == 'N') {
+                        rogue.nextGame = NG_NEW_GAME;
+                        break;
             }
 
+                    // Process the flyout menu input as needed
+                    if (isFlyoutActive()) {
+                        flyoutIndex = processButtonInput(&flyoutMenu, NULL, &theEvent);
+                        if (flyoutIndex != -1 && theEvent.eventType == MOUSE_UP || theEvent.eventType == KEYSTROKE) {
+                            rogue.nextGame = flyoutButtons[flyoutIndex].command;
+                        }
+                    }
+
+                    // Process the main menu input
+                    mainIndex = processButtonInput(&mainMenu, NULL, &theEvent);
+                    if (theEvent.eventType == MOUSE_UP || theEvent.eventType == KEYSTROKE) {   
+                        if (mainIndex != - 1) {
+                            rogue.nextGame = mainButtons[mainIndex].command;
+                        // Hide the flyout menu on the next pass if the user clicked somewhere random or pressed a random key
+                        } else if (flyoutIndex == -1) {
+                            rogue.nextGame = NG_NOTHING; //
+                        }
+                    }
+                }
         } else {
             pauseBrogue(64);
         }
-    } while (button == -1 && rogue.nextGame == NG_NOTHING);
+        } while (theEvent.eventType != MOUSE_UP && theEvent.eventType != KEYSTROKE && (isFlyoutActive() || rogue.nextGame == NG_NOTHING));
+    } while (isFlyoutActive() || rogue.nextGame == NG_NOTHING);
     drawMenuFlames(flames, mask);
-    if (button != -1) {
-        if (button == 0 && controlKeyIsDown()) {
-            // Should fix an issue with Linux/Windows ports that require moving the mouse after
-            // pressing control to get the button to change.
-            rogue.nextGame = NG_NEW_GAME_WITH_SEED;
-        } else {
-            rogue.nextGame = buttonCommands[button];
-        }
-    }
 }
 
 // Closes Brogue without any further prompts, animations, or user interaction.
