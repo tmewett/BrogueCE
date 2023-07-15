@@ -237,6 +237,181 @@ void initializeMenuFlames(boolean includeTitle,
 
 }
 
+/// @brief Inititializes a main menu button. Does not position the button.
+/// @param button The button to initialize
+/// @param textWithHotkey The button text. A string with 2 format specifiers for color escapes,  
+/// denoting the start and end of the hotkey text (e.g. "%sN%sew Game").
+/// @param hotkey1 Keyboard hotkey #1
+/// @param hotkey2 Keyboard hotkey #2
+static void initializeMainMenuButton(brogueButton *button, char *textWithHotkey, unsigned long hotkey1, unsigned long hotkey2, enum NGCommands command) {
+
+    initializeButton(button);
+
+    char textWithoutHotkey[BUTTON_TEXT_SIZE];
+    snprintf(textWithoutHotkey, BUTTON_TEXT_SIZE - 1, textWithHotkey, "","");
+
+    setButtonText(button,textWithHotkey,textWithoutHotkey);
+    button->hotkey[0] = hotkey1;
+    button->hotkey[1] = hotkey2;
+    button->flags |= B_WIDE_CLICK_AREA;
+    button->buttonColor = titleButtonColor;
+    button->command = command;
+}
+
+#define MAIN_MENU_BUTTON_COUNT 4
+
+/// @brief Initializes the main menu buttons
+/// @param buttons An array of buttons to initialize
+static void initializeMainMenuButtons(brogueButton *buttons) {
+
+    initializeMainMenuButton(&(buttons[0]), " <     %sP%slay       ", 'p', 'P', NG_FLYOUT_PLAY);
+    initializeMainMenuButton(&(buttons[1]), " <     %sV%siew       ", 'v', 'V', NG_FLYOUT_VIEW);
+    initializeMainMenuButton(&(buttons[2]), " <   %sO%sptions      ", 'o', 'O', NG_FLYOUT_OPTIONS);
+    initializeMainMenuButton(&(buttons[3]), "       %sQ%suit       ", 'q', 'Q', NG_QUIT);
+
+}
+
+/// @brief Sets button x,y coordinates, stacking them vertically either top to bottom or bottom to top
+/// @param buttons An array of buttons to stack
+/// @param buttonCount The number of buttons in the array
+/// @param startPosition The position of the first button to place
+/// @param spacing The number of rows between buttons
+/// @param topToBottomFlag If true, @position is the top of the stack. Otherwise it's the bottom and the array is processed in reverse order.  
+static void stackButtons(brogueButton *buttons, short buttonCount, windowpos startPosition, short spacing, boolean topToBottomFlag) {
+    short y = startPosition.window_y;
+
+    if (topToBottomFlag) {
+        for (int i = 0; i < buttonCount; i++) {
+            buttons[i].x = startPosition.window_x;
+            buttons[i].y = y;
+            y += spacing;
+        }    
+    } else {
+        for (int i = buttonCount - 1; i >= 0; i--) {
+            buttons[i].x = startPosition.window_x;
+            buttons[i].y = y;
+            y -= spacing;
+        }    
+    }
+}
+
+/// @brief Initializes a menu with buttons and a background/shadow. Relies on pre-positioned buttons with text.
+/// Dynamically determines the menu size based on the button positions and text.
+/// @param menu The menu to initialize
+/// @param buttons An array of initialized, positioned buttons, with text
+/// @param buttonCount The number of buttons in the array
+/// @param shadowBuf The display buffer object for the background/shadow
+static void initializeMenu(buttonState *menu, brogueButton *buttons, short buttonCount, cellDisplayBuffer shadowBuf[COLS][ROWS]) {
+    memset((void *) menu, 0, sizeof( buttonState ));
+    short minX, maxX, minY, maxY;
+    minX = COLS;
+    minY = ROWS;
+    maxX = maxY = 0;
+ 
+    // determine the button frame size and position (upper-left)
+    for (int i = 0; i < buttonCount; i++) {
+        minX = min(minX, buttons[i].x);
+        maxX = max(maxX, buttons[i].x + strLenWithoutEscapes(buttons[i].text));
+        minY = min(minY, buttons[i].y);
+        maxY = max(maxY, buttons[i].y);
+    }
+
+    short width = maxX - minX;
+    short height = maxY - minY;
+
+    clearDisplayBuffer(shadowBuf);
+    // copies the current display to a reversion buffer. draws the buttons on the button state display buffer.
+    initializeButtonState(menu, buttons, buttonCount, minX, minY, width, height);
+
+    // Draws a rectangular shaded area of the specified color and opacity to a buffer. Position x,y is the upper/left.
+    // The shading effect outside the rectangle decreases with distance.
+    // Warning: shading of neighboring rectangles stacks
+    rectangularShading(minX, minY, width, height + 1, &black, INTERFACE_OPACITY, shadowBuf);
+}
+
+/// @brief Initialize the main menu
+/// @param menu The main menu
+/// @param buttons The main menu buttons
+/// @param position The window position of the quit button
+/// @param shadowBuf The display buffer object for the background/shadow
+static void initializeMainMenu(buttonState *menu, brogueButton *buttons, windowpos position, cellDisplayBuffer shadowBuf[COLS][ROWS]) {
+    initializeMainMenuButtons(buttons);
+    stackButtons(buttons, MAIN_MENU_BUTTON_COUNT, position, 2, false);
+
+    initializeMenu(menu, buttons, MAIN_MENU_BUTTON_COUNT, shadowBuf);
+}
+
+/// @brief Initialize a flyout menu and position the buttons
+/// @param menu The menu to initialize
+/// @param shadowBuf The display buffer for the menu background/shadow
+/// @param buttons The buttons to add to the menu
+/// @param position The window position of the anchor button. All buttons are positioned relative to this location. 
+static void initializeFlyoutMenu(buttonState *menu, cellDisplayBuffer shadowBuf[COLS][ROWS], brogueButton *buttons, windowpos position) {
+    short buttonCount = 0;
+
+    if (rogue.nextGame == NG_FLYOUT_PLAY) {
+
+        buttonCount = 3;
+        initializeMainMenuButton(&(buttons[0]), "      %sN%sew Game     ", 'n','N', NG_NEW_GAME);
+        initializeMainMenuButton(&(buttons[1]), "  New %sS%seeded Game  ", 's','S', NG_NEW_GAME_WITH_SEED);
+        initializeMainMenuButton(&(buttons[2]), "     %sL%soad Game     ", 'l','L', NG_OPEN_GAME);
+
+    } else if (rogue.nextGame == NG_FLYOUT_VIEW) {
+
+        buttonCount = 2;
+        initializeMainMenuButton(&(buttons[0]), "   View %sR%secording  ", 'r','R', NG_VIEW_RECORDING);
+        initializeMainMenuButton(&(buttons[1]), "    %sH%sigh Scores    ", 'h','H', NG_HIGH_SCORES);
+
+    } else if (rogue.nextGame == NG_FLYOUT_OPTIONS) {
+
+        buttonCount = 1;
+        initializeMainMenuButton(&(buttons[0]), "    Game V%sa%sriant   ", 'a','A', NG_NOTHING);
+
+    } else {
+        return;
+    }
+
+    stackButtons(buttons, buttonCount, position, 2, false);
+    initializeMenu(menu, buttons, buttonCount, shadowBuf);
+}
+
+
+/// @brief Used on the title screen for showing/hiding the flyout menus
+/// @return True if rogue.nextGame is a flyout command 
+static boolean isFlyoutActive() {
+    return ((int)rogue.nextGame >= (int)NG_FLYOUT_PLAY && rogue.nextGame <= (int)NG_FLYOUT_OPTIONS);
+}
+
+/// @brief Used to align the bottom flyout button of a flyout menu with the position of the
+/// main menu button that triggers the flyout
+/// @param buttons The array of main menu buttons
+/// @return The window position (bottom-left) of the button associated with the current nextGame value
+static windowpos getNextGameButtonPos(brogueButton *buttons) {
+    for (int i = 0; i < MAIN_MENU_BUTTON_COUNT; i++) {
+        if (buttons[i].command == rogue.nextGame) {
+            return (windowpos) {buttons[i].x, buttons[i].y};
+        }
+    }
+    return mapToWindow(INVALID_POS);
+}
+
+/// @brief Changes the appearance of the main menu buttons based the active flyout menu (if any), so
+/// the button associated with the active flyout is more prominently displayed.
+/// @param menu The main menu
+static void redrawMainMenuButtons(buttonState *menu) {
+    enum buttonDrawStates drawState;
+
+    if (rogue.nextGame == NG_NOTHING) {
+        drawButtonsInState(menu);
+    } else {
+        //darken the main menu buttons not selected
+        for (int i = 0; i < MAIN_MENU_BUTTON_COUNT; i++) {
+            drawState = (menu->buttons[i].command == rogue.nextGame) ? BUTTON_NORMAL : BUTTON_PRESSED;
+            drawButton(&(menu->buttons[i]), drawState, menu->dbuf);
+        }
+    }
+}
+
 void titleMenu() {
     signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3]; // red, green and blue
     signed short colorSources[MENU_FLAME_COLOR_SOURCE_COUNT][4]; // red, green, blue, and rand, one for each color source (no more than MENU_FLAME_COLOR_SOURCE_COUNT).
