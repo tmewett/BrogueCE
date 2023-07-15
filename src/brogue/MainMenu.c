@@ -43,17 +43,27 @@
 
 
 void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3], unsigned char mask[COLS][ROWS]) {
-    short i, j, versionStringLength;
+    short i, j, versionStringLength, gameModeStringLength;
     color tempColor = {0};
     const color *maskColor = &black;
+    char gameModeString[COLS] = "";
     char dchar;
 
     versionStringLength = strLenWithoutEscapes(gameConst->versionString);
+
+    if (rogue.wizard) {
+        strcpy(gameModeString,"Wizard Mode");
+    } else if (rogue.easyMode) {
+        strcpy(gameModeString,"Easy Mode");
+    }
+    gameModeStringLength = strLenWithoutEscapes(gameModeString);
 
     for (j=0; j<ROWS; j++) {
         for (i=0; i<COLS; i++) {
             if (j == ROWS - 1 && i >= COLS - versionStringLength) {
                 dchar = gameConst->versionString[i - (COLS - versionStringLength)];
+            } else if (gameModeStringLength && j == ROWS - 1 && i <= gameModeStringLength) {
+                dchar = gameModeString[i];
             } else {
                 dchar = ' ';
             }
@@ -401,8 +411,9 @@ static void initializeFlyoutMenu(buttonState *menu, cellDisplayBuffer shadowBuf[
 
     } else if (rogue.nextGame == NG_FLYOUT_OPTIONS) {
 
-        buttonCount = 1;
+        buttonCount = 2;
         initializeMainMenuButton(&(buttons[0]), "    Game V%sa%sriant   ", 'a','A', NG_NOTHING);
+        initializeMainMenuButton(&(buttons[1]), "     Game %sM%sode     ", 'm','M', NG_GAME_MODE);
 
     } else {
         return;
@@ -412,6 +423,48 @@ static void initializeFlyoutMenu(buttonState *menu, cellDisplayBuffer shadowBuf[
     initializeMenu(menu, buttons, buttonCount, shadowBuf);
 }
 
+/// @brief Displays a dialog window for the user to chose a game mode. The game mode is displayed in the bottom left
+/// on the title screen (except normal mode).
+static void chooseGameMode() {
+    short gameMode;
+    char textBuf[COLS * ROWS] = "", tmpBuf[COLS * ROWS] = "", goldColorEscape[5] = "", whiteColorEscape[5] = "";
+
+    encodeMessageColor(goldColorEscape, 0, &yellow);
+    encodeMessageColor(whiteColorEscape, 0, &white);
+
+    sprintf(tmpBuf,"%sNormal Mode%s\n",goldColorEscape,whiteColorEscape);
+    strcat(textBuf, tmpBuf);
+    strcat(textBuf, "Punishingly difficult. Maliciously alluring. Perfectly normal.\n\n");
+
+    sprintf(tmpBuf,"%sEasy Mode%s\n",goldColorEscape,whiteColorEscape);
+    strcat(textBuf, tmpBuf);
+    strcat(textBuf, "Succumb to demonic temptation and play as an all-powerful ampersand, taking 20%% as much damage. But great power comes at a great price -- specifically, a 90% income tax rate.\n\n");
+
+    sprintf(tmpBuf,"%sWizard Mode%s\n",goldColorEscape,whiteColorEscape);
+    strcat(textBuf, tmpBuf);
+    strcat(textBuf, "Play as an invincible wizard that starts with legendary items and is magically reborn after every death. Summon monsters and make them friend or foe. Conjure any item out of thin air. All this and more, for the bargain basement price of forfeiting your score.");
+
+    brogueButton buttons[3];
+    cellDisplayBuffer rbuf[COLS][ROWS];
+    copyDisplayBuffer(rbuf,displayBuffer);
+    initializeMainMenuButton(&(buttons[0]), "      %sW%sizard       ", 'w','W', NG_NOTHING);
+    initializeMainMenuButton(&(buttons[1]), "       %sE%sasy        ", 'e','E', NG_NOTHING);
+    initializeMainMenuButton(&(buttons[2]), "      %sN%sormal       ", 'n','N', NG_NOTHING);
+    gameMode = printTextBox(textBuf, 20, 5, 66, &white, &black, rbuf, buttons, 3);
+    overlayDisplayBuffer(rbuf, NULL);
+    if (gameMode == 0) {
+        rogue.wizard = true;
+        rogue.easyMode = false;
+    } else if (gameMode == 1) {
+        rogue.wizard = false;
+        rogue.easyMode = true;
+    } else if (gameMode == 2) {
+        rogue.wizard = false;
+        rogue.easyMode = false;
+    }
+
+    rogue.nextGame = NG_NOTHING;
+}
 
 /// @brief Used on the title screen for showing/hiding the flyout menus
 /// @return True if rogue.nextGame is a flyout command 
@@ -533,6 +586,9 @@ void titleMenu() {
                         flyoutIndex = processButtonInput(&flyoutMenu, NULL, &theEvent);
                         if (flyoutIndex != -1 && theEvent.eventType == MOUSE_UP || theEvent.eventType == KEYSTROKE) {
                             rogue.nextGame = flyoutButtons[flyoutIndex].command;
+                        }
+                        if (rogue.nextGame == NG_GAME_MODE) {
+                            chooseGameMode();
                         }
                     }
 
