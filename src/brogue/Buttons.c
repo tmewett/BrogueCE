@@ -127,6 +127,8 @@ void initializeButton(brogueButton *button) {
     button->flags |= (B_ENABLED | B_GRADIENT | B_HOVER_ENABLED | B_DRAW | B_KEYPRESS_HIGHLIGHT);
     button->buttonColor = interfaceButtonColor;
     button->opacity = 100;
+    button->textColor = white;
+    button->hotkeytextColor = KEYBOARD_LABELS ? itemMessageColor : white;
 }
 
 void drawButtonsInState(buttonState *state) {

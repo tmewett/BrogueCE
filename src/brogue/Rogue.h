@@ -2735,12 +2735,15 @@ typedef struct feat {
 #define PDS_OBSTRUCTION -2
 #define PDS_CELL(map, x, y) ((map)->links + ((x) + DCOLS * (y)))
 
+#define BUTTON_TEXT_SIZE COLS*3
 typedef struct brogueButton {
-    char text[COLS*3];          // button label; can include color escapes
+    char text[BUTTON_TEXT_SIZE];// button label; can include color escapes
     short x;                    // button's leftmost cell will be drawn at (x, y)
     short y;
     signed long hotkey[10];     // up to 10 hotkeys to trigger the button
     color buttonColor;          // background of the button; further gradient-ized when displayed
+    color textColor;            // color of the button text
+    color hotkeytextColor;      // color of the portion of the button text that highlights the keyboard hotkey 
     short opacity;              // further reduced by 50% if not enabled
     enum displayGlyph symbol[COLS];         // Automatically replace the nth asterisk in the button label text with
                                 // the nth character supplied here, if one is given.
