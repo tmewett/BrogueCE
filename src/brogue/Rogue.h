@@ -2916,6 +2916,7 @@ extern "C" {
                        const color *foreColor, const color *backColor,
                        cellDisplayBuffer rbuf[COLS][ROWS],
                        brogueButton *buttons, short buttonCount);
+    void setButtonText(brogueButton *button, const char *textWithHotkey, const char *textWithoutHotkey);
     void printMonsterDetails(creature *monst, cellDisplayBuffer rbuf[COLS][ROWS]);
     void printFloorItemDetails(item *theItem, cellDisplayBuffer rbuf[COLS][ROWS]);
     unsigned long printCarriedItemDetails(item *theItem,
