@@ -179,6 +179,7 @@ unsigned int glyphToUnicode(enum displayGlyph glyph) {
         case G_PIPES: return '+';
         case G_SAC_ALTAR: return '|';
         case G_ORB_ALTAR: return '|';
+        case G_LEFT_TRIANGLE: return U_LEFT_TRIANGLE;
 
         default:
             brogueAssert(false);
@@ -195,7 +196,7 @@ boolean isEnvironmentGlyph(enum displayGlyph glyph) {
         case G_AMULET: case G_ARMOR: case G_BEDROLL: case G_CHARM:
         case G_DEWAR: case G_EGG: case G_FOOD: case G_GEM: case G_BLOODWORT_POD:
         case G_GOLD: case G_KEY: case G_POTION: case G_RING:
-        case G_SCROLL: case G_STAFF: case G_WAND: case G_WEAPON:
+        case G_SCROLL: case G_STAFF: case G_WAND: case G_WEAPON: case G_LEFT_TRIANGLE:
             return false;
 
         // creatures

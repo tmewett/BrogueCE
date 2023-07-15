@@ -296,10 +296,15 @@ static void initializeMainMenuButton(brogueButton *button, char *textWithHotkey,
 /// @param buttons An array of buttons to initialize
 static void initializeMainMenuButtons(brogueButton *buttons) {
 
-    initializeMainMenuButton(&(buttons[0]), " <     %sP%slay       ", 'p', 'P', NG_FLYOUT_PLAY);
-    initializeMainMenuButton(&(buttons[1]), " <     %sV%siew       ", 'v', 'V', NG_FLYOUT_VIEW);
-    initializeMainMenuButton(&(buttons[2]), " <   %sO%sptions      ", 'o', 'O', NG_FLYOUT_OPTIONS);
+    initializeMainMenuButton(&(buttons[0]), " *     %sP%slay       ", 'p', 'P', NG_FLYOUT_PLAY);
+    initializeMainMenuButton(&(buttons[1]), " *     %sV%siew       ", 'v', 'V', NG_FLYOUT_VIEW);
+    initializeMainMenuButton(&(buttons[2]), " *   %sO%sptions      ", 'o', 'O', NG_FLYOUT_OPTIONS);
     initializeMainMenuButton(&(buttons[3]), "       %sQ%suit       ", 'q', 'Q', NG_QUIT);
+
+    // Add a left-facing triangle to all the buttons except quit
+    for (int i=0; i<MAIN_MENU_BUTTON_COUNT-1; i++) {
+        buttons[i].symbol[0] = G_LEFT_TRIANGLE;
+    }
 
 }
 
