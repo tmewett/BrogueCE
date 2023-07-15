@@ -171,6 +171,10 @@ void antiAlias(unsigned char mask[COLS][ROWS]) {
         }
     }
 }
+#define TITLE_WIDTH    68
+#define TITLE_HEIGHT   26
+#define TITLE_OFFSET_X (-7)
+#define TITLE_OFFSET_Y (-2)
 
 void initializeMenuFlames(boolean includeTitle,
                           const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)],
@@ -179,6 +183,34 @@ void initializeMenuFlames(boolean includeTitle,
                           signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3],
                           unsigned char mask[COLS][ROWS]) {
     short i, j, k, colorSourceCount;
+    const char title[TITLE_HEIGHT][TITLE_WIDTH+1] = {
+        "                                                                    ",
+        "                                                                    ",
+        "                                                                    ",
+        "                                                                    ",
+        "                                                                    ",
+        "                                                                    ",
+        "                                                                    ",
+        "########  ########      ######         ######  ####    ### #########",
+        " ##   ###  ##   ###   ##     ###     ##     ##  ##      #   ##     #",
+        " ##    ##  ##    ##  ##       ###   ##       #  ##      #   ##     #",
+        " ##    ##  ##    ##  #    #    ##   #        #  ##      #   ##      ",
+        " ##    ##  ##    ## ##   ##     ## ##           ##      #   ##    # ",
+        " ##   ##   ##   ##  ##   ###    ## ##           ##      #   ##    # ",
+        " ######    ## ###   ##   ####   ## ##           ##      #   ####### ",
+        " ##    ##  ##  ##   ##   ####   ## ##           ##      #   ##    # ",
+        " ##     ## ##   ##  ##    ###   ## ##     ##### ##      #   ##    # ",
+        " ##     ## ##   ##  ###    ##   ## ###      ##  ##      #   ##      ",
+        " ##     ## ##    ##  ##    #    #   ##      ##  ##      #   ##      ",
+        " ##     ## ##    ##  ###       ##   ###     ##  ###     #   ##     #",
+        " ##    ##  ##     ##  ###     ##     ###   ###   ###   #    ##     #",
+        "########  ####    ###   ######         ####       #####    #########",
+        "                          ##                                        ",
+        "                      ##########                                    ",
+        "                          ##                                        ",
+        "                          ##                                        ",
+        "                         ####                                       ",
+    };
 
     for (i=0; i<COLS; i++) {
         for (j=0; j<ROWS; j++) {
@@ -217,10 +249,10 @@ void initializeMenuFlames(boolean includeTitle,
         for (i=0; i<gameConst->mainMenuTitleWidth; i++) {
             for (j=0; j<gameConst->mainMenuTitleHeight; j++) {
                 if (mainMenuTitle[j * gameConst->mainMenuTitleWidth + i] != ' ') {
-                    colors[(COLS - gameConst->mainMenuTitleWidth)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - gameConst->mainMenuTitleHeight)/2 + j + MENU_TITLE_OFFSET_Y] = &flameTitleColor;
+                    colors[(COLS - gameConst->mainMenuTitleWidth)/2 + i + TITLE_OFFSET_X][(ROWS - gameConst->mainMenuTitleHeight)/2 + j + TITLE_OFFSET_Y] = &flameTitleColor;
                     colorSourceCount++;
-                    mask[(COLS - gameConst->mainMenuTitleWidth)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - gameConst->mainMenuTitleHeight)/2 + j + MENU_TITLE_OFFSET_Y] = 100;
-                }
+                    mask[(COLS - gameConst->mainMenuTitleWidth)/2 + i + TITLE_OFFSET_X][(ROWS - gameConst->mainMenuTitleHeight)/2 + j + TITLE_OFFSET_Y] = 100;
+               }
             }
         }
 
