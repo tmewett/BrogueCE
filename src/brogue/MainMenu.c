@@ -34,9 +34,6 @@
 #define MENU_FLAME_FADE_SPEED           20
 #define MENU_FLAME_UPDATE_DELAY         50
 #define MENU_FLAME_ROW_PADDING          2
-#define MENU_TITLE_OFFSET_X             (-4)
-#define MENU_TITLE_OFFSET_Y             (-1)
-
 #define MENU_FLAME_COLOR_SOURCE_COUNT   1136
 
 #define MENU_FLAME_DENOMINATOR          (100 + MENU_FLAME_RISE_SPEED + MENU_FLAME_SPREAD_SPEED)
@@ -584,7 +581,7 @@ void titleMenu() {
                 // Process the flyout menu input as needed
                 if (isFlyoutActive()) {
                     flyoutIndex = processButtonInput(&flyoutMenu, NULL, &theEvent);
-                    if (flyoutIndex != -1 && theEvent.eventType == MOUSE_UP || theEvent.eventType == KEYSTROKE) {
+                    if (flyoutIndex != -1 && (theEvent.eventType == MOUSE_UP || theEvent.eventType == KEYSTROKE)) {
                         rogue.nextGame = flyoutButtons[flyoutIndex].command;
                     }
                     if (rogue.nextGame == NG_GAME_MODE) {
@@ -595,10 +592,11 @@ void titleMenu() {
                 // Process the main menu input
                 mainIndex = processButtonInput(&mainMenu, NULL, &theEvent);
                 if (theEvent.eventType == MOUSE_UP || theEvent.eventType == KEYSTROKE) {   
-                    if (mainIndex != - 1) {
+                    if (mainIndex != - 1 && rogue.nextGame != mainButtons[mainIndex].command) {
                         rogue.nextGame = mainButtons[mainIndex].command;
                     } else if (flyoutIndex == -1) {
-                        // Hide the flyout menu on the next pass if the user clicked somewhere random or pressed a random key
+                        // Hide the flyout menu if the user clicked somewhere random, pressed a random key, or re-selected the
+                        // button for the active flyout (e.g. 'p', 'p' in succession opens and closes the play flyout)
                         rogue.nextGame = NG_NOTHING;
                     }
                 }
