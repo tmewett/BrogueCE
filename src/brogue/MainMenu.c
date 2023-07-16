@@ -553,57 +553,57 @@ void titleMenu() {
         // is considered selected only on the MOUSE_UP event.
         do {
             if (isApplicationActive()) {
-            // Revert the display.
+                // Revert the display.
                 overlayDisplayBuffer(mainMenu.rbuf, NULL);
 
-            // Update the display.
-            updateMenuFlames(colors, colorSources, flames);
-            drawMenuFlames(flames, mask);
-            overlayDisplayBuffer(mainShadowBuf, NULL);
-            overlayDisplayBuffer(mainMenu.dbuf, NULL);
+                // Update the display.
+                updateMenuFlames(colors, colorSources, flames);
+                drawMenuFlames(flames, mask);
+                overlayDisplayBuffer(mainShadowBuf, NULL);
+                overlayDisplayBuffer(mainMenu.dbuf, NULL);
 
-            //Show flyout if selected
-            if (isFlyoutActive()) {
-                overlayDisplayBuffer(flyoutShadowBuf, NULL);
-                overlayDisplayBuffer(flyoutMenu.dbuf, NULL);
-            }
-            // Pause briefly.
-            if (pauseBrogue(MENU_FLAME_UPDATE_DELAY)) {
-                // There was input during the pause! Get the input.
-                nextBrogueEvent(&theEvent, true, false, true);
-
-                // quickstart a new game
-                if (theEvent.param1 == 'n' || theEvent.param1 == 'N') {
-                    rogue.nextGame = NG_NEW_GAME;
-                    break;
-                }
-
-                // Process the flyout menu input as needed
+                //Show flyout if selected
                 if (isFlyoutActive()) {
-                    flyoutIndex = processButtonInput(&flyoutMenu, NULL, &theEvent);
-                    if (flyoutIndex != -1 && (theEvent.eventType == MOUSE_UP || theEvent.eventType == KEYSTROKE)) {
-                        rogue.nextGame = flyoutButtons[flyoutIndex].command;
-                    }
-                    if (rogue.nextGame == NG_GAME_MODE) {
-                        chooseGameMode();
-                    }
+                    overlayDisplayBuffer(flyoutShadowBuf, NULL);
+                    overlayDisplayBuffer(flyoutMenu.dbuf, NULL);
                 }
+                // Pause briefly.
+                if (pauseBrogue(MENU_FLAME_UPDATE_DELAY)) {
+                    // There was input during the pause! Get the input.
+                    nextBrogueEvent(&theEvent, true, false, true);
 
-                // Process the main menu input
-                mainIndex = processButtonInput(&mainMenu, NULL, &theEvent);
-                if (theEvent.eventType == MOUSE_UP || theEvent.eventType == KEYSTROKE) {   
-                    if (mainIndex != - 1 && rogue.nextGame != mainButtons[mainIndex].command) {
-                        rogue.nextGame = mainButtons[mainIndex].command;
-                    } else if (flyoutIndex == -1) {
-                        // Hide the flyout menu if the user clicked somewhere random, pressed a random key, or re-selected the
-                        // button for the active flyout (e.g. 'p', 'p' in succession opens and closes the play flyout)
-                        rogue.nextGame = NG_NOTHING;
+                    // quickstart a new game
+                    if (theEvent.param1 == 'n' || theEvent.param1 == 'N') {
+                        rogue.nextGame = NG_NEW_GAME;
+                        break;
+                    }
+
+                    // Process the flyout menu input as needed
+                    if (isFlyoutActive()) {
+                        flyoutIndex = processButtonInput(&flyoutMenu, NULL, &theEvent);
+                        if (flyoutIndex != -1 && (theEvent.eventType == MOUSE_UP || theEvent.eventType == KEYSTROKE)) {
+                            rogue.nextGame = flyoutButtons[flyoutIndex].command;
+                        }
+                        if (rogue.nextGame == NG_GAME_MODE) {
+                            chooseGameMode();
+                        }
+                    }
+
+                    // Process the main menu input
+                    mainIndex = processButtonInput(&mainMenu, NULL, &theEvent);
+                    if (theEvent.eventType == MOUSE_UP || theEvent.eventType == KEYSTROKE) {   
+                        if (mainIndex != - 1 && rogue.nextGame != mainButtons[mainIndex].command) {
+                            rogue.nextGame = mainButtons[mainIndex].command;
+                        } else if (flyoutIndex == -1) {
+                            // Hide the flyout menu if the user clicked somewhere random, pressed a random key, or re-selected the
+                            // button for the active flyout (e.g. 'p', 'p' in succession opens and closes the play flyout)
+                            rogue.nextGame = NG_NOTHING;
+                        }
                     }
                 }
+            } else {
+                pauseBrogue(64);
             }
-        } else {
-            pauseBrogue(64);
-        }
         } while (theEvent.eventType != MOUSE_UP && theEvent.eventType != KEYSTROKE && (isFlyoutActive() || rogue.nextGame == NG_NOTHING));
     } while (isFlyoutActive() || rogue.nextGame == NG_NOTHING);
     drawMenuFlames(flames, mask);
