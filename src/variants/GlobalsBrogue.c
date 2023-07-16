@@ -1,5 +1,5 @@
 /*
- *  Globals_Brogue.c
+ *  GlobalsBrogue.c
  *  Brogue
  *
  *  Created by Brian Walker on 1/10/09.

@@ -1,5 +1,5 @@
 /*
- *  Include Globals Rapid Brogue.h
+ *  GlobalsRapidBrogue.h
  *  Brogue
  *
  *  Created by Brian Walker on 2/8/09.

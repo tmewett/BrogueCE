@@ -1,5 +1,5 @@
 /*
- *  Include Globals Brogue.h
+ *  GlobalsBrogue.h
  *  Brogue
  *
  *  Created by Brian Walker on 2/8/09.

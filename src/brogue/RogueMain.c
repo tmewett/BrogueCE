@@ -175,10 +175,6 @@ void initializeRogue(uint64_t seed) {
     displayStealthRangeMode = rogue.displayStealthRangeMode;
     trueColorMode = rogue.trueColorMode;
 
-    if (rogue.meteredItems != NULL) {
-        free(rogue.meteredItems);
-    }
-
     strcpy(currentGamePath, rogue.currentGamePath);
 
     if (rogue.meteredItems != NULL) {
