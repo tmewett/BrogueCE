@@ -2522,6 +2522,7 @@ typedef struct playerCharacter {
     boolean cursorMode;
 
     // What do you want to do, player -- play, play with seed, resume, recording, high scores or quit?
+    // Also used for main menu flyout navigation
     enum NGCommands nextGame;
     char nextGamePath[BROGUE_FILENAME_MAX];
     uint64_t nextGameSeed;
