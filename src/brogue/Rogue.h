@@ -2350,7 +2350,7 @@ typedef struct gameConstants {
     const int depthAccelerator;                     // factor for how fast depth-dependent features scale compared to usual 26-level dungeon
     const int minimumLavaLevel;                     // how deep before lava can be generated
     const int minimumBrimstoneLevel;                // how deep before brimstone can be generated
-    const int minimumMutationsLevel;                // how deep before monster mutations can be generated
+    const int mutationsOccurAboveLevel;                // how deep before monster mutations can be generated
 
     const int extraItemsPerLevel;                   // how many extra items generated per level above vanilla
     const int goldAdjustmentStartDepth;             // depth from which gold is adjusted based on generation so far

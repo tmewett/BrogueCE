@@ -1003,7 +1003,7 @@ const gameConstants brogueGameConst = {
     .depthAccelerator = 1,
     .minimumLavaLevel = 4,
     .minimumBrimstoneLevel = 17,
-    .minimumMutationsLevel = 10,
+    .mutationsOccurAboveLevel = 10,
 
     .machinesPerLevelSuppressionMultiplier = 4,
     .machinesPerLevelSuppressionOffset = 2,

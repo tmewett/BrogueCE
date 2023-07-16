@@ -1012,7 +1012,7 @@ const gameConstants rapidBrogueGameConst = {
     .depthAccelerator = 4,
     .minimumLavaLevel = 2,
     .minimumBrimstoneLevel = 5,
-    .minimumMutationsLevel = 3,
+    .mutationsOccurAboveLevel = 3,
 
     .machinesPerLevelSuppressionMultiplier = 2,
     .machinesPerLevelSuppressionOffset = 0,
