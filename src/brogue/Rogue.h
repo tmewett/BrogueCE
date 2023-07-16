@@ -2833,6 +2833,7 @@ extern "C" {
     void initializeRogue(uint64_t seed);
     void gameOver(char *killedBy, boolean useCustomPhrasing);
     void victory(boolean superVictory);
+    void setPlayerDisplayChar();
     void initializeDynamicColors();
     void enableEasyMode();
     boolean tryParseUint64(char *str, uint64_t *num);

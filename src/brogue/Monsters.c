@@ -382,6 +382,15 @@ void initializeGender(creature *monst) {
     }
 }
 
+/// @brief Sets the character used to represent the player in the game, based on the game mode
+void setPlayerDisplayChar() {
+    if (rogue.easyMode) {
+        player.info.displayChar = '&';
+    } else {
+        player.info.displayChar = '@';
+    }
+}
+
 // Returns true if either string has a null terminator before they otherwise disagree.
 boolean stringsMatch(const char *str1, const char *str2) {
     short i;

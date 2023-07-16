@@ -4325,9 +4325,17 @@ void displayGrid(short **map) {
     //printf("\ntop: %i; bottom: %i", topRange, bottomRange);
 }
 
+/// @brief Display a message with the seed #, turn #, game mode (except normal), and game version
 void printSeed() {
     char buf[COLS];
-    snprintf(buf, COLS, "Dungeon seed #%llu; turn #%lu; version %s", (unsigned long long)rogue.seed, rogue.playerTurnNumber, gameConst->versionString);
+    char mode[COLS] = "";
+
+    if (rogue.easyMode) {
+        strcpy(mode,"easy mode; ");
+    } else if (rogue.wizard) {
+        strcpy(mode,"wizard mode; ");
+    }
+    snprintf(buf, COLS, "Dungeon seed #%llu; turn #%lu; %sversion %s", (unsigned long long)rogue.seed, rogue.playerTurnNumber, mode, gameConst->versionString);
     message(buf, 0);
 }
 
