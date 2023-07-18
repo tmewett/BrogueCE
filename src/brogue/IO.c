@@ -4328,7 +4328,7 @@ void displayGrid(short **map) {
 /// @brief Display a message with the seed #, turn #, game mode (except normal), and game version
 void printSeed() {
     char buf[COLS];
-    char mode[COLS] = "";
+    char mode[14] = "";
 
     if (rogue.easyMode) {
         strcpy(mode,"easy mode; ");
