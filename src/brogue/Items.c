@@ -7189,7 +7189,6 @@ void drinkPotion(item *theItem) {
     item *tempItem = NULL;
     boolean hadEffect = false;
     boolean hadEffect2 = false;
-    char buf[1000] = "";
     int magnitude;
 
     brogueAssert(rogue.RNG == RNG_SUBSTANTIVE);
