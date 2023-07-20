@@ -22,7 +22,8 @@
  */
 
 #include "Rogue.h"
-#include "IncludeGlobals.h"
+#include "GlobalsBase.h"
+#include "Globals.h"
 #include <time.h>
 #include <limits.h>
 
@@ -47,12 +48,12 @@ void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3
     const color *maskColor = &black;
     char dchar;
 
-    versionStringLength = strLenWithoutEscapes(BROGUE_VERSION_STRING);
+    versionStringLength = strLenWithoutEscapes(gameConst->versionString);
 
     for (j=0; j<ROWS; j++) {
         for (i=0; i<COLS; i++) {
             if (j == ROWS - 1 && i >= COLS - versionStringLength) {
-                dchar = BROGUE_VERSION_STRING[i - (COLS - versionStringLength)];
+                dchar = gameConst->versionString[i - (COLS - versionStringLength)];
             } else {
                 dchar = ' ';
             }
@@ -171,9 +172,6 @@ void antiAlias(unsigned char mask[COLS][ROWS]) {
     }
 }
 
-#define MENU_TITLE_WIDTH    74
-#define MENU_TITLE_HEIGHT   19
-
 void initializeMenuFlames(boolean includeTitle,
                           const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)],
                           color colorStorage[COLS],
@@ -181,27 +179,6 @@ void initializeMenuFlames(boolean includeTitle,
                           signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3],
                           unsigned char mask[COLS][ROWS]) {
     short i, j, k, colorSourceCount;
-    const char title[MENU_TITLE_HEIGHT][MENU_TITLE_WIDTH+1] = {
-        "########   ########       ######         #######   ####     ###  #########",
-        " ##   ###   ##   ###    ##     ###     ##      ##   ##       #    ##     #",
-        " ##    ##   ##    ##   ##       ###   ##        #   ##       #    ##     #",
-        " ##    ##   ##    ##   #    #    ##   #         #   ##       #    ##      ",
-        " ##    ##   ##    ##  ##   ##     ## ##             ##       #    ##    # ",
-        " ##   ##    ##   ##   ##   ###    ## ##             ##       #    ##    # ",
-        " ######     ## ###    ##   ####   ## ##             ##       #    ####### ",
-        " ##    ##   ##  ##    ##   ####   ## ##             ##       #    ##    # ",
-        " ##     ##  ##   ##   ##    ###   ## ##      #####  ##       #    ##    # ",
-        " ##     ##  ##   ##   ###    ##   ## ###       ##   ##       #    ##      ",
-        " ##     ##  ##    ##   ##    #    #   ##       ##   ##       #    ##      ",
-        " ##     ##  ##    ##   ###       ##   ###      ##   ###      #    ##     #",
-        " ##    ##   ##     ##   ###     ##     ###    ###    ###    #     ##     #",
-        "########   ####    ###    ######         #####        ######     #########",
-        "                            ##                                            ",
-        "                        ##########                                        ",
-        "                            ##                                            ",
-        "                            ##                                            ",
-        "                           ####                                           ",
-    };
 
     for (i=0; i<COLS; i++) {
         for (j=0; j<ROWS; j++) {
@@ -237,12 +214,12 @@ void initializeMenuFlames(boolean includeTitle,
 
     if (includeTitle) {
         // Wreathe the title in flames, and mask it in black.
-        for (i=0; i<MENU_TITLE_WIDTH; i++) {
-            for (j=0; j<MENU_TITLE_HEIGHT; j++) {
-                if (title[j][i] != ' ') {
-                    colors[(COLS - MENU_TITLE_WIDTH)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - MENU_TITLE_HEIGHT)/2 + j + MENU_TITLE_OFFSET_Y] = &flameTitleColor;
+        for (i=0; i<gameConst->mainMenuTitleWidth; i++) {
+            for (j=0; j<gameConst->mainMenuTitleHeight; j++) {
+                if (mainMenuTitle[j * gameConst->mainMenuTitleWidth + i] != ' ') {
+                    colors[(COLS - gameConst->mainMenuTitleWidth)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - gameConst->mainMenuTitleHeight)/2 + j + MENU_TITLE_OFFSET_Y] = &flameTitleColor;
                     colorSourceCount++;
-                    mask[(COLS - MENU_TITLE_WIDTH)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - MENU_TITLE_HEIGHT)/2 + j + MENU_TITLE_OFFSET_Y] = 100;
+                    mask[(COLS - gameConst->mainMenuTitleWidth)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - gameConst->mainMenuTitleHeight)/2 + j + MENU_TITLE_OFFSET_Y] = 100;
                 }
             }
         }
@@ -465,7 +442,7 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
     fileEntry *files;
     boolean retval = false, again;
     cellDisplayBuffer dbuf[COLS][ROWS], rbuf[COLS][ROWS];
-    color *dialogColor = &interfaceBoxColor;
+    const color *dialogColor = &interfaceBoxColor;
     char *membuf;
     char fileDate [11];
 
@@ -660,6 +637,8 @@ void mainBrogueJunction() {
             plotCharWithColor(' ', (windowpos){ i, j }, &black, &black);
         }
     }
+
+    initializeGameVariant();
 
     initializeLaunchArguments(&rogue.nextGame, rogue.nextGamePath, &rogue.nextGameSeed);
 

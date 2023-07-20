@@ -1,12 +1,12 @@
 include config.mk
 
-cflags := -Isrc/brogue -Isrc/platform -std=c99 \
+cflags := -Isrc/brogue -Isrc/platform -Isrc/variants -std=c99 \
 	-Wall -Wpedantic -Werror=implicit -Wno-parentheses -Wno-unused-result \
 	-Wformat -Werror=format-security -Wformat-overflow=0
 libs := -lm
 cppflags := -DDATADIR=$(DATADIR)
 
-sources := $(wildcard src/brogue/*.c) $(addprefix src/platform/,main.c platformdependent.c null-platform.c)
+sources := $(wildcard src/brogue/*.c) $(wildcard src/variants/*.c) $(addprefix src/platform/,main.c platformdependent.c null-platform.c)
 objects :=
 
 ifeq ($(SYSTEM),WINDOWS)
@@ -48,6 +48,10 @@ endif
 ifeq ($(WEBBROGUE),YES)
 sources += $(addprefix src/platform/,web-platform.c)
 cppflags += -DBROGUE_WEB
+endif
+
+ifeq ($(RAPIDBROGUE),YES)
+cppflags += -DRAPID_BROGUE
 endif
 
 ifeq ($(MAC_APP),YES)

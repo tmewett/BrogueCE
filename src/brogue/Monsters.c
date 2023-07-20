@@ -22,7 +22,8 @@
  */
 
 #include "Rogue.h"
-#include "IncludeGlobals.h"
+#include "GlobalsBase.h"
+#include "Globals.h"
 
 void mutateMonster(creature *monst, short mutationIndex) {
     monst->mutationIndex = mutationIndex;
@@ -68,12 +69,12 @@ creature *generateMonster(short monsterID, boolean itemPossible, boolean mutatio
     if (mutationPossible
         && !(monst->info.flags & MONST_NEVER_MUTATED)
         && !(monst->info.abilityFlags & MA_NEVER_MUTATED)
-        && rogue.depthLevel > MUTATIONS_OCCUR_ABOVE_LEVEL) {
+        && rogue.depthLevel > gameConst->mutationsOccurAboveLevel) {
 
-        if (rogue.depthLevel <= AMULET_LEVEL) {
-            mutationChance = clamp((rogue.depthLevel - MUTATIONS_OCCUR_ABOVE_LEVEL) * DEPTH_ACCELERATOR, 1, 10);
+        if (rogue.depthLevel <= gameConst->amuletLevel) {
+            mutationChance = clamp((rogue.depthLevel - gameConst->mutationsOccurAboveLevel) * gameConst->depthAccelerator, 1, 10);
         } else {
-            mutationChance = POW_DEEP_MUTATION[min((rogue.depthLevel - AMULET_LEVEL) * DEPTH_ACCELERATOR, 12)];
+            mutationChance = POW_DEEP_MUTATION[min((rogue.depthLevel - gameConst->amuletLevel) * gameConst->depthAccelerator, 12)];
             mutationChance = min(mutationChance, 75);
         }
 
@@ -141,7 +142,7 @@ creature *generateMonster(short monsterID, boolean itemPossible, boolean mutatio
 
     if (ITEMS_ENABLED
         && itemPossible
-        && (rogue.depthLevel <= AMULET_LEVEL)
+        && (rogue.depthLevel <= gameConst->amuletLevel)
         && monsterItemsHopper->nextItem
         && rand_percent(itemChance)) {
 
@@ -473,7 +474,7 @@ short pickHordeType(short depth, enum monsterTypes summonerType, unsigned long f
         depth = rogue.depthLevel;
     }
 
-    for (i=0; i<NUMBER_HORDES; i++) {
+    for (i=0; i<gameConst->numberHordes; i++) {
         if (!(hordeCatalog[i].flags & forbiddenFlags)
             && !(~(hordeCatalog[i].flags) & requiredFlags)
             && ((!summonerType && hordeCatalog[i].minLevel <= depth && hordeCatalog[i].maxLevel >= depth)
@@ -488,7 +489,7 @@ short pickHordeType(short depth, enum monsterTypes summonerType, unsigned long f
 
     index = rand_range(1, possCount);
 
-    for (i=0; i<NUMBER_HORDES; i++) {
+    for (i=0; i<gameConst->numberHordes; i++) {
         if (!(hordeCatalog[i].flags & forbiddenFlags)
             && !(~(hordeCatalog[i].flags) & requiredFlags)
             && ((!summonerType && hordeCatalog[i].minLevel <= depth && hordeCatalog[i].maxLevel >= depth)
@@ -661,7 +662,7 @@ boolean monsterCanSubmergeNow(creature *monst) {
 boolean spawnMinions(short hordeID, creature *leader, boolean summoned, boolean itemPossible) {
     short iSpecies, iMember, count;
     unsigned long forbiddenTerrainFlags;
-    hordeType *theHorde;
+    const hordeType *theHorde;
     creature *monst;
     short x, y;
     short failsafe;
@@ -746,14 +747,14 @@ void drawManacles(short x, short y) {
 // Returns a pointer to the leader.
 creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFlags, unsigned long requiredFlags) {
     short i, failsafe, depth;
-    hordeType *theHorde;
+    const hordeType *theHorde;
     creature *leader, *preexistingMonst;
     boolean tryAgain;
 
     if (rogue.depthLevel > 1 && rand_percent(10)) {
         depth = rogue.depthLevel + rand_range(1, min(5, rogue.depthLevel / 2));
-        if (depth > AMULET_LEVEL) {
-            depth = max(rogue.depthLevel, AMULET_LEVEL);
+        if (depth > gameConst->amuletLevel) {
+            depth = max(rogue.depthLevel, gameConst->amuletLevel);
         }
         forbiddenFlags |= HORDE_NEVER_OOD;
     } else {
@@ -1042,7 +1043,7 @@ void populateMonsters() {
         return;
     }
 
-    short i, numberOfMonsters = min(20, 6 + 3 * max(0, rogue.depthLevel - AMULET_LEVEL)); // almost always 6.
+    short i, numberOfMonsters = min(20, 6 + 3 * max(0, rogue.depthLevel - gameConst->amuletLevel)); // almost always 6.
 
     while (rand_percent(60)) {
         numberOfMonsters++;
@@ -2395,7 +2396,7 @@ boolean monsterSummons(creature *monst, boolean alwaysUse) {
                     }
                 }
             }
-            if (rogue.depthLevel < DEEPEST_LEVEL) {
+            if (rogue.depthLevel < gameConst->deepestLevel) {
                 for (creatureIterator it = iterateCreatures(&levels[rogue.depthLevel].monsters); hasNextCreature(it);) {
                     creature *target = nextCreature(&it);
                     if (target->creatureState == MONSTER_ALLY && !(target->info.flags & MONST_WILL_NOT_USE_STAIRS)) {
@@ -3964,7 +3965,7 @@ void demoteMonsterFromLeadership(creature *monst) {
         monst->mapToMe = NULL;
     }
 
-    for (int level = 0; level <= DEEPEST_LEVEL; level++) {
+    for (int level = 0; level <= gameConst->deepestLevel; level++) {
         // we'll work on this level's monsters first, so that the new leader is preferably on the same level
         creatureList *nearbyList = (level == 0 ? monsters : &levels[level-1].monsters);
         for (creatureIterator it = iterateCreatures(nearbyList); hasNextCreature(it);) {
@@ -3995,7 +3996,7 @@ void demoteMonsterFromLeadership(creature *monst) {
         newLeader->bookkeepingFlags &= ~MB_LEADER;
     }
 
-    for (int level = 0; level <= DEEPEST_LEVEL; level++) {
+    for (int level = 0; level <= gameConst->deepestLevel; level++) {
         creatureList *candidateList = (level == 0 ? dormantMonsters : &levels[level-1].dormantMonsters);
         for (creatureIterator it = iterateCreatures(candidateList); hasNextCreature(it);) {
             creature *follower = nextCreature(&it);

@@ -22,7 +22,8 @@
  */
 
 #include "Rogue.h"
-#include "IncludeGlobals.h"
+#include "GlobalsBase.h"
+#include "Globals.h"
 
 void playerRuns(short direction) {
     boolean cardinalPassability[4];
@@ -98,12 +99,12 @@ enum dungeonLayers layerWithFlag(short x, short y, unsigned long flag) {
 }
 
 // Retrieves a pointer to the flavor text of the highest-priority terrain at the given location
-char *tileFlavor(short x, short y) {
+const char *tileFlavor(short x, short y) {
     return tileCatalog[pmap[x][y].layers[highestPriorityLayer(x, y, false)]].flavorText;
 }
 
 // Retrieves a pointer to the description text of the highest-priority terrain at the given location
-char *tileText(short x, short y) {
+const char *tileText(short x, short y) {
     return tileCatalog[pmap[x][y].layers[highestPriorityLayer(x, y, false)]].description;
 }
 
@@ -2131,7 +2132,7 @@ boolean useStairs(short stairDirection) {
     //cellDisplayBuffer fromBuf[COLS][ROWS], toBuf[COLS][ROWS];
 
     if (stairDirection == 1) {
-        if (rogue.depthLevel < DEEPEST_LEVEL) {
+        if (rogue.depthLevel < gameConst->deepestLevel) {
             //copyDisplayBuffer(fromBuf, displayBuffer);
             rogue.cursorLoc = INVALID_POS;
             rogue.depthLevel++;

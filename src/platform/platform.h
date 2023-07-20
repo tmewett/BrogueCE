@@ -90,6 +90,7 @@ void loadKeymap();
 void dumpScores();
 unsigned int glyphToUnicode(enum displayGlyph glyph);
 boolean isEnvironmentGlyph(enum displayGlyph glyph);
+void setHighScoresFilename(char *buffer, int bufferMaxLength);
 
 #ifdef BROGUE_SDL
 extern struct brogueConsole sdlConsole;

@@ -1,6 +1,7 @@
 #include <math.h>
 #include <limits.h>
 #include "platform.h"
+#include "GlobalsBase.h"
 
 #ifndef DATADIR
 #error "The DATADIR macro is undefined."
@@ -17,9 +18,9 @@ boolean isCsvFormat = false;
 
 static void printCommandlineHelp() {
     printf("%s",
-    "--help         -h          print this help message\n"
-    "--version      -V          print the version (i.e., " BROGUE_VERSION_STRING ")\n"
-    "--scores                   dump scores to output and exit immediately\n"
+    "--help         -h          print this help message and exit \n"
+    "--version      -V          print the version and exit\n"
+    "--scores                   dump scores to output and exit\n"
     "-n                         start a new game, skipping the menu\n"
     "-s seed                    start a new game with the specified numerical seed\n"
     "-o filename[.broguesave]   open a save file (extension optional)\n"
@@ -38,6 +39,7 @@ static void printCommandlineHelp() {
 #ifdef BROGUE_CURSES
     "--term         -t          run in ncurses-based terminal mode\n"
 #endif
+    "--variant variant_name     run a variant game (options: rapid_brogue)\n"
     "--stealth      -S          display stealth range\n"
     "--no-effects   -E          disable color effects\n"
     "--wizard       -W          run in wizard mode, invincible with powerful items\n"
@@ -164,6 +166,16 @@ int main(int argc, char *argv[])
             }
         }
 
+        if (strcmp(argv[i], "--variant") == 0) {
+            if (i + 1 < argc) {
+                if (!strcmp("rapid_brogue", argv[i + 1])) {
+                    gameVariant = VARIANT_RAPID_BROGUE;
+                }
+                i++;
+                continue;
+            }
+        }
+        
         if (strcmp(argv[i], "-vn") == 0) {
             if (i + 1 < argc) {
                 strncpy(rogue.nextGamePath, argv[i + 1], BROGUE_FILENAME_MAX);
@@ -200,7 +212,7 @@ int main(int argc, char *argv[])
         }
 
         if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) {
-            printf("%s\n", BROGUE_VERSION_STRING);
+            printBrogueVersion();
             return 0;
         }
 

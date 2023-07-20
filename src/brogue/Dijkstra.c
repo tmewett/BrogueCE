@@ -24,7 +24,8 @@
 // Thanks very much, Joshua.
 
 #include "Rogue.h"
-#include "IncludeGlobals.h"
+#include "GlobalsBase.h"
+#include "Globals.h"
 
 typedef struct pdsLink {
     short distance;
