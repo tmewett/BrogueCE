@@ -5977,6 +5977,8 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
                 if ((theItem->category & POTION)
                     && monst->creatureState == MONSTER_ALLY
                     && theItem->kind == POTION_LIFE) {
+                        sprintf(buf, "your %s ally catches the potion and guzzles down the whole thing.", monst->info.monsterName);
+                        message(buf, 0);
                         itemTable potionTable = tableForItemCategory(theItem->category)[theItem->kind];
                         increaseMaxHealthAndHeal(monst, randClump(potionTable.range));
                         return;
