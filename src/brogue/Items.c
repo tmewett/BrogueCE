@@ -5982,7 +5982,7 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
                         itemTable potionTable = tableForItemCategory(theItem->category)[theItem->kind];
                         increaseMaxHealthAndHeal(monst, randClump(potionTable.range));
                         return;
-                    }
+                }
 
                 break;
             }
