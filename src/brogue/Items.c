@@ -5973,6 +5973,15 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
                     deleteItem(theItem);
                     return;
                 }
+
+                if ((theItem->category & POTION)
+                    && monst->creatureState == MONSTER_ALLY
+                    && theItem->kind == POTION_LIFE) {
+                        itemTable potionTable = tableForItemCategory(theItem->category)[theItem->kind];
+                        increaseMaxHealthAndHeal(monst, randClump(potionTable.range));
+                        return;
+                    }
+
                 break;
             }
         }
@@ -7162,18 +7171,16 @@ void increaseMaxHealthAndHeal(creature *monst, int maxHealthIncrease) {
 
     if (monst == &player) {
         sprintf(buf, "%syour maximum health increases by %i%%.", isHealed ? "you heal completely and " : "", healthIncrease);
-
     } else if (monst->creatureState == MONSTER_ALLY) {
         if (isHealed) {
             sprintf(buf, "your %s ally heals completely and $HISHER maximum health increases by %i%%.", monst->info.monsterName, healthIncrease);
-            resolvePronounEscapes(buf, &monst);
+            resolvePronounEscapes(buf, monst);
         } else {
             sprintf(buf, "your %s ally's maximum health increases by %i%%.", monst->info.monsterName, healthIncrease);
         }
     }
 
     messageWithColor(buf, &advancementMessageColor, 0);
-
 }
 
 void drinkPotion(item *theItem) {
@@ -7191,7 +7198,7 @@ void drinkPotion(item *theItem) {
 
     switch (theItem->kind) {
         case POTION_LIFE:
-            int magnitude = randClump(potionTable.range);
+            magnitude = randClump(potionTable.range);
             increaseMaxHealthAndHeal(&player, magnitude);
             updatePlayerRegenerationDelay();
             break;

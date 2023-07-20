@@ -3255,6 +3255,7 @@ extern "C" {
     void updatePlayerRegenerationDelay();
     boolean removeItemFromChain(item *theItem, item *theChain);
     void addItemToChain(item *theItem, item *theChain);
+    void increaseMaxHealthAndHeal(creature *monst, int maxHealthIncrease);
     void drinkPotion(item *theItem);
     item *promptForItemOfType(unsigned short category,
                               unsigned long requiredFlags,
