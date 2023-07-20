@@ -7151,6 +7151,31 @@ void detectMagicOnItem(item *theItem) {
     }
 }
 
+void increaseMaxHealthAndHeal(creature *monst, int maxHealthIncrease) {
+    char buf[1000] = "";
+
+    int healthIncrease = (monst->info.maxHP + maxHealthIncrease) * 100 / monst->info.maxHP - 100;
+    boolean isHealed = monst->currentHP < monst->info.maxHP;
+
+    monst->info.maxHP += maxHealthIncrease;
+    heal(monst, 100, true);
+
+    if (monst == &player) {
+        sprintf(buf, "%syour maximum health increases by %i%%.", isHealed ? "you heal completely and " : "", healthIncrease);
+
+    } else if (monst->creatureState == MONSTER_ALLY) {
+        if (isHealed) {
+            sprintf(buf, "your %s ally heals completely and $HISHER maximum health increases by %i%%.", monst->info.monsterName, healthIncrease);
+            resolvePronounEscapes(buf, &monst);
+        } else {
+            sprintf(buf, "your %s ally's maximum health increases by %i%%.", monst->info.monsterName, healthIncrease);
+        }
+    }
+
+    messageWithColor(buf, &advancementMessageColor, 0);
+
+}
+
 void drinkPotion(item *theItem) {
     item *tempItem = NULL;
     boolean hadEffect = false;
@@ -7166,15 +7191,9 @@ void drinkPotion(item *theItem) {
 
     switch (theItem->kind) {
         case POTION_LIFE:
-            magnitude = randClump(potionTable.range);
-            sprintf(buf, "%syour maximum health increases by %i%%.",
-                    ((player.currentHP < player.info.maxHP) ? "you heal completely and " : ""),
-                    (player.info.maxHP + magnitude) * 100 / player.info.maxHP - 100);
-
-            player.info.maxHP += magnitude;
-            heal(&player, 100, true);
+            int magnitude = randClump(potionTable.range);
+            increaseMaxHealthAndHeal(&player, magnitude);
             updatePlayerRegenerationDelay();
-            messageWithColor(buf, &advancementMessageColor, 0);
             break;
         case POTION_HALLUCINATION:
             magnitude = randClump(potionTable.range);
