@@ -405,7 +405,7 @@ static void chooseGameVariant() {
 
     sprintf(tmpBuf, "%sRapid Brogue%s\n", goldColorEscape, whiteColorEscape);
     strcat(textBuf, tmpBuf);
-    strcat(textBuf, "For those who prefer to die faster, and more often!\n\n");
+    strcat(textBuf, "Die faster and more often in this quarter-length version of the classic game!\n\n");
 
     brogueButton buttons[2];
     cellDisplayBuffer rbuf[COLS][ROWS];
