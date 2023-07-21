@@ -178,10 +178,9 @@ void antiAlias(unsigned char mask[COLS][ROWS]) {
         }
     }
 }
-#define TITLE_WIDTH    68
-#define TITLE_HEIGHT   26
-#define TITLE_OFFSET_X (-7)
-#define TITLE_OFFSET_Y (-2)
+
+#define MENU_TITLE_OFFSET_X (-7)
+#define MENU_TITLE_OFFSET_Y (-2)
 
 void initializeMenuFlames(boolean includeTitle,
                           const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)],
@@ -190,34 +189,6 @@ void initializeMenuFlames(boolean includeTitle,
                           signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3],
                           unsigned char mask[COLS][ROWS]) {
     short i, j, k, colorSourceCount;
-    const char title[TITLE_HEIGHT][TITLE_WIDTH+1] = {
-        "                                                                    ",
-        "                                                                    ",
-        "                                                                    ",
-        "                                                                    ",
-        "                                                                    ",
-        "                                                                    ",
-        "                                                                    ",
-        "########  ########      ######         ######  ####    ### #########",
-        " ##   ###  ##   ###   ##     ###     ##     ##  ##      #   ##     #",
-        " ##    ##  ##    ##  ##       ###   ##       #  ##      #   ##     #",
-        " ##    ##  ##    ##  #    #    ##   #        #  ##      #   ##      ",
-        " ##    ##  ##    ## ##   ##     ## ##           ##      #   ##    # ",
-        " ##   ##   ##   ##  ##   ###    ## ##           ##      #   ##    # ",
-        " ######    ## ###   ##   ####   ## ##           ##      #   ####### ",
-        " ##    ##  ##  ##   ##   ####   ## ##           ##      #   ##    # ",
-        " ##     ## ##   ##  ##    ###   ## ##     ##### ##      #   ##    # ",
-        " ##     ## ##   ##  ###    ##   ## ###      ##  ##      #   ##      ",
-        " ##     ## ##    ##  ##    #    #   ##      ##  ##      #   ##      ",
-        " ##     ## ##    ##  ###       ##   ###     ##  ###     #   ##     #",
-        " ##    ##  ##     ##  ###     ##     ###   ###   ###   #    ##     #",
-        "########  ####    ###   ######         ####       #####    #########",
-        "                          ##                                        ",
-        "                      ##########                                    ",
-        "                          ##                                        ",
-        "                          ##                                        ",
-        "                         ####                                       ",
-    };
 
     for (i=0; i<COLS; i++) {
         for (j=0; j<ROWS; j++) {
@@ -256,9 +227,9 @@ void initializeMenuFlames(boolean includeTitle,
         for (i=0; i<gameConst->mainMenuTitleWidth; i++) {
             for (j=0; j<gameConst->mainMenuTitleHeight; j++) {
                 if (mainMenuTitle[j * gameConst->mainMenuTitleWidth + i] != ' ') {
-                    colors[(COLS - gameConst->mainMenuTitleWidth)/2 + i + TITLE_OFFSET_X][(ROWS - gameConst->mainMenuTitleHeight)/2 + j + TITLE_OFFSET_Y] = &flameTitleColor;
+                    colors[(COLS - gameConst->mainMenuTitleWidth)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - gameConst->mainMenuTitleHeight)/2 + j + MENU_TITLE_OFFSET_Y] = &flameTitleColor;
                     colorSourceCount++;
-                    mask[(COLS - gameConst->mainMenuTitleWidth)/2 + i + TITLE_OFFSET_X][(ROWS - gameConst->mainMenuTitleHeight)/2 + j + TITLE_OFFSET_Y] = 100;
+                    mask[(COLS - gameConst->mainMenuTitleWidth)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - gameConst->mainMenuTitleHeight)/2 + j + MENU_TITLE_OFFSET_Y] = 100;
                }
             }
         }
@@ -409,7 +380,7 @@ static void initializeFlyoutMenu(buttonState *menu, cellDisplayBuffer shadowBuf[
     } else if (rogue.nextGame == NG_FLYOUT_OPTIONS) {
 
         buttonCount = 2;
-        initializeMainMenuButton(&(buttons[0]), "    Game V%sa%sriant   ", 'a', 'A', NG_NOTHING);
+        initializeMainMenuButton(&(buttons[0]), "    Game V%sa%sriant   ", 'a', 'A', NG_GAME_VARIANT);
         initializeMainMenuButton(&(buttons[1]), "     Game %sM%sode     ", 'm', 'M', NG_GAME_MODE);
 
     } else {
@@ -418,6 +389,39 @@ static void initializeFlyoutMenu(buttonState *menu, cellDisplayBuffer shadowBuf[
 
     stackButtons(buttons, buttonCount, position, 2, false);
     initializeMenu(menu, buttons, buttonCount, shadowBuf);
+}
+
+/// @brief Displays a dialog window for the user to chose a game variant
+static void chooseGameVariant() {
+    short gameVariantChoice;
+    char textBuf[COLS * ROWS] = "", tmpBuf[COLS * ROWS] = "", goldColorEscape[5] = "", whiteColorEscape[5] = "";
+
+    encodeMessageColor(goldColorEscape, 0, &yellow);
+    encodeMessageColor(whiteColorEscape, 0, &white);
+
+    sprintf(tmpBuf, "%sBrogue%s\n", goldColorEscape, whiteColorEscape);
+    strcat(textBuf, tmpBuf);
+    strcat(textBuf, "Classic Brogue. The endlessly captivating masterpiece of dungeon adventuring.\n\n");
+
+    sprintf(tmpBuf, "%sRapid Brogue%s\n", goldColorEscape, whiteColorEscape);
+    strcat(textBuf, tmpBuf);
+    strcat(textBuf, "For those who prefer to die faster, and more often!\n\n");
+
+    brogueButton buttons[2];
+    cellDisplayBuffer rbuf[COLS][ROWS];
+    copyDisplayBuffer(rbuf, displayBuffer);
+    initializeMainMenuButton(&(buttons[0]), "  %sR%sapid Brogue     ", 'r', 'R', NG_NOTHING);
+    initializeMainMenuButton(&(buttons[1]), "     %sB%srogue        ", 'b', 'B', NG_NOTHING);
+    gameVariantChoice = printTextBox(textBuf, 20, 7, 45, &white, &black, rbuf, buttons, 2);
+    overlayDisplayBuffer(rbuf, NULL);
+
+    if (gameVariantChoice == 1) {
+        gameVariant = VARIANT_BROGUE;
+    } else if (gameVariantChoice == 0) {
+        gameVariant = VARIANT_RAPID_BROGUE;
+    } else {
+        rogue.nextGame = NG_NOTHING;
+    }
 }
 
 /// @brief Displays a dialog window for the user to chose a game mode. The game mode is displayed in the bottom left
@@ -586,6 +590,8 @@ void titleMenu() {
                         }
                         if (rogue.nextGame == NG_GAME_MODE) {
                             chooseGameMode();
+                        } else if (rogue.nextGame == NG_GAME_VARIANT) {
+                            chooseGameVariant();
                         }
                     }
 
@@ -890,6 +896,10 @@ void mainBrogueJunction() {
             case NG_NOTHING:
                 // Run the main menu to get a decision out of the player.
                 titleMenu();
+                break;
+            case NG_GAME_VARIANT:
+                rogue.nextGame = NG_NOTHING;
+                initializeGameVariant();
                 break;
             case NG_NEW_GAME:
             case NG_NEW_GAME_WITH_SEED:
