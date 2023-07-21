@@ -2326,7 +2326,7 @@ enum exitStatus {
     EXIT_STATUS_SUCCESS,
     EXIT_STATUS_FAILURE_RECORDING_WRONG_VERSION,
     EXIT_STATUS_FAILURE_RECORDING_OOS,
-    EXIT_STATUS_FAILURE_SDL_ERROR
+    EXIT_STATUS_FAILURE_PLATFORM_ERROR
 };
 
 // Constants for the selected game variant, set in Globals{variant}.c
