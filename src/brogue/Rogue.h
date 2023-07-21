@@ -3120,8 +3120,8 @@ extern "C" {
                                  unsigned long blockingTerrain, unsigned long blockingFlags);
     boolean traversiblePathBetween(creature *monst, short x2, short y2);
     boolean openPathBetween(short x1, short y1, short x2, short y2);
-    creature *monsterAtLoc(short x, short y);
-    creature *dormantMonsterAtLoc(short x, short y);
+    creature *monsterAtLoc(pos p);
+    creature *dormantMonsterAtLoc(pos p);
     pos perimeterCoords(short n);
     boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, boolean blinkUphill);
     boolean monsterSummons(creature *monst, boolean alwaysUse);

@@ -160,9 +160,9 @@ void describeLocation(char *buf, short x, short y) {
     theItem = itemAtLoc(x, y);
     monsterDormant = false;
     if (pmap[x][y].flags & HAS_MONSTER) {
-        monst = monsterAtLoc(x, y);
+        monst = monsterAtLoc((pos){ x, y });
     } else if (pmap[x][y].flags & HAS_DORMANT_MONSTER) {
-        monst = dormantMonsterAtLoc(x, y);
+        monst = dormantMonsterAtLoc((pos){ x, y });
         monsterDormant = true;
     }
 
@@ -424,7 +424,7 @@ void useKeyAt(item *theItem, short x, short y) {
             deleteItem(theItem);
             pmap[x][y].flags &= ~HAS_ITEM;
         } else if (pmap[x][y].flags & HAS_MONSTER) {
-            monst = monsterAtLoc(x, y);
+            monst = monsterAtLoc((pos){ x, y });
             if (monst->carriedItem && monst->carriedItem == theItem) {
                 monst->carriedItem = NULL;
                 deleteItem(theItem);
@@ -515,7 +515,7 @@ boolean freeCaptivesEmbeddedAt(short x, short y) {
 
     if (pmap[x][y].flags & HAS_MONSTER) {
         // Free any captives trapped in the tunnelized terrain.
-        monst = monsterAtLoc(x, y);
+        monst = monsterAtLoc((pos){ x, y });
         if ((monst->bookkeepingFlags & MB_CAPTIVE)
             && !(monst->info.flags & MONST_ATTACKABLE_THRU_WALLS)
             && (cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY))) {
@@ -585,7 +585,7 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
     pos strikeLoc;
     getImpactLoc(&strikeLoc, originLoc, targetLoc, 5, false, &boltCatalog[BOLT_WHIP]);
 
-    defender = monsterAtLoc(strikeLoc.x, strikeLoc.y);
+    defender = monsterAtLoc(strikeLoc);
     if (defender
         && (attacker != &player || canSeeMonster(defender))
         && !monsterIsHidden(defender, attacker)
@@ -643,7 +643,7 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
         /* Add creatures that we are willing to attack to the potential
         hitlist. Any of those that are either right by us or visible will
         trigger the attack. */
-        defender = monsterAtLoc(targetLoc.x, targetLoc.y);
+        defender = monsterAtLoc(targetLoc);
         if (defender
             && (!cellHasTerrainFlag(targetLoc.x, targetLoc.y, T_OBSTRUCTS_PASSABILITY)
                 || (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS))
@@ -791,8 +791,8 @@ boolean playerMoves(short direction) {
                     && cellHasTerrainFlag(newestX, newestY, T_LAVA_INSTA_DEATH)
                     && !cellHasTerrainFlag(newestX, newestY, T_OBSTRUCTS_PASSABILITY | T_ENTANGLES)
                     && !((pmap[newestX][newestY].flags & HAS_MONSTER)
-                         && canSeeMonster(monsterAtLoc(newestX, newestY))
-                         && monsterAtLoc(newestX, newestY)->creatureState != MONSTER_ALLY)) {
+                         && canSeeMonster(monsterAtLoc((pos){ newestX, newestY }))
+                         && monsterAtLoc((pos){ newestX, newestY })->creatureState != MONSTER_ALLY)) {
 
                     if (!confirm("Risk stumbling into lava?", false)) {
                         cancelKeystroke();
@@ -820,7 +820,7 @@ boolean playerMoves(short direction) {
     }
 
     if (pmap[newX][newY].flags & HAS_MONSTER) {
-        defender = monsterAtLoc(newX, newY);
+        defender = monsterAtLoc((pos){ newX, newY });
     }
 
     // If there's no enemy at the movement location that the player is aware of, consider terrain promotions.
@@ -1026,7 +1026,7 @@ boolean playerMoves(short direction) {
             newestX = player.loc.x + 2*nbDirs[direction][0];
             newestY = player.loc.y + 2*nbDirs[direction][1];
             if (coordinatesAreInMap(newestX, newestY) && (pmap[newestX][newestY].flags & HAS_MONSTER)) {
-                tempMonst = monsterAtLoc(newestX, newestY);
+                tempMonst = monsterAtLoc((pos){ newestX, newestY });
                 if (tempMonst
                     && canSeeMonster(tempMonst)
                     && monstersAreEnemies(&player, tempMonst)
@@ -1421,7 +1421,7 @@ short nextStep(short **distanceMap, short x, short y, creature *monst, boolean p
         brogueAssert(coordinatesAreInMap(newX, newY));
         if (coordinatesAreInMap(newX, newY)) {
             blocked = false;
-            blocker = monsterAtLoc(newX, newY);
+            blocker = monsterAtLoc((pos){ newX, newY });
             if (monst
                 && monsterAvoids(monst, (pos){newX, newY})) {
 
@@ -1744,7 +1744,7 @@ void populateCreatureCostMap(short **costMap, creature *monst) {
             }
 
             if (cFlags & HAS_MONSTER) {
-                currentTenant = monsterAtLoc(i, j);
+                currentTenant = monsterAtLoc((pos){ i, j });
                 if (currentTenant
                     && (currentTenant->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE))
                     && !canPass(monst, currentTenant)) {
@@ -1790,7 +1790,7 @@ enum directions adjacentFightingDir() {
     }
     for (enum directions dir = 0; dir < DIRECTION_COUNT; dir++) {
         const pos newLoc = posNeighborInDirection(player.loc, dir);
-        creature *const monst = monsterAtLoc(newLoc.x, newLoc.y);
+        creature *const monst = monsterAtLoc(newLoc);
         if (monst
             && canSeeMonster(monst)
             && (!diagonalBlocked(player.loc.x, player.loc.y, newLoc.x, newLoc.y, false) || (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS))
@@ -2013,7 +2013,7 @@ short directionOfKeypress(unsigned short ch) {
 
 boolean startFighting(enum directions dir, boolean tillDeath) {
     const pos neighborLoc = posNeighborInDirection(player.loc, dir);
-    creature * const monst = monsterAtLoc(neighborLoc.x, neighborLoc.y);
+    creature * const monst = monsterAtLoc(neighborLoc);
     if (monst->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE)) {
         return false;
     }
@@ -2031,18 +2031,18 @@ boolean startFighting(enum directions dir, boolean tillDeath) {
             break;
         }
     } while (!rogue.disturbed && !rogue.gameHasEnded && (tillDeath || player.currentHP > expectedDamage)
-             && (pmapAt(neighborLoc)->flags & HAS_MONSTER) && monsterAtLoc(neighborLoc.x, neighborLoc.y) == monst);
+             && (pmapAt(neighborLoc)->flags & HAS_MONSTER) && monsterAtLoc(neighborLoc) == monst);
 
     rogue.blockCombatText = false;
     return rogue.disturbed;
 }
 
 boolean isDisturbed(short x, short y) {
-    short i;
-    creature *monst;
-    for (i=0; i< DIRECTION_COUNT; i++) {
-        monst = monsterAtLoc(x + nbDirs[i][0], y + nbDirs[i][1]);
-        if (pmap[x + nbDirs[i][0]][y + nbDirs[i][1]].flags & (HAS_ITEM)) {
+    pos p = (pos){ x, y };
+    for (int i=0; i< DIRECTION_COUNT; i++) {
+        const pos neighborPos = posNeighborInDirection(p, i);
+        creature *const monst = monsterAtLoc(neighborPos);
+        if (pmapAt(neighborPos)->flags & (HAS_ITEM)) {
             // Do not trigger for submerged or invisible or unseen monsters.
             return true;
         }

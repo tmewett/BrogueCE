@@ -1572,7 +1572,7 @@ boolean buildAMachine(enum machineTypes bp,
                         }
 
                         if (feature->monsterID) {
-                            monst = monsterAtLoc(featX, featY);
+                            monst = monsterAtLoc((pos){ featX, featY });
                             if (monst) {
                                 killCreature(monst, true); // If there's already a monster here, quietly bury the body.
                             }
@@ -3216,7 +3216,7 @@ boolean fillSpawnMap(enum dungeonLayers layer,
                         flavorMessage(tileFlavor(player.loc.x, player.loc.y));
                     }
                     if (pmap[i][j].flags & (HAS_MONSTER)) {
-                        monst = monsterAtLoc(i, j);
+                        monst = monsterAtLoc((pos){ i, j });
                         applyInstantTileEffectsToCreature(monst);
                         if (rogue.gameHasEnded) {
                             return true;
@@ -3301,7 +3301,7 @@ void evacuateCreatures(char blockingMap[DCOLS][DROWS]) {
             if (blockingMap[i][j]
                 && (pmap[i][j].flags & (HAS_MONSTER | HAS_PLAYER))) {
 
-                monst = monsterAtLoc(i, j);
+                monst = monsterAtLoc((pos) { i, j });
                 pos newLoc;
                 getQualifyingLocNear(&newLoc,
                                      i, j,

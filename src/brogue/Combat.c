@@ -156,7 +156,7 @@ void addMonsterToContiguousMonsterGrid(short x, short y, creature *monst, char g
         newY = y + nbDirs[dir][1];
 
         if (coordinatesAreInMap(newX, newY) && !grid[newX][newY]) {
-            tempMonst = monsterAtLoc(newX, newY);
+            tempMonst = monsterAtLoc((pos){ newX, newY });
             if (tempMonst && monstersAreTeammates(monst, tempMonst)) {
                 addMonsterToContiguousMonsterGrid(newX, newY, monst, grid);
             }
@@ -513,7 +513,7 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
         && distanceBetween(oldLoc, defender->loc) < weaponForceDistance(netEnchant(theItem))) {
 
         if (pmap[defender->loc.x + newLoc.x - oldLoc.x][defender->loc.y + newLoc.y - oldLoc.y].flags & (HAS_MONSTER | HAS_PLAYER)) {
-            otherMonster = monsterAtLoc(defender->loc.x + newLoc.x - oldLoc.x, defender->loc.y + newLoc.y - oldLoc.y);
+            otherMonster = monsterAtLoc((pos){ defender->loc.x + newLoc.x - oldLoc.x, defender->loc.y + newLoc.y - oldLoc.y });
             monsterName(buf2, otherMonster, true);
         } else {
             otherMonster = NULL;
@@ -866,7 +866,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
                     newX = player.loc.x + nbDirs[dir][0];
                     newY = player.loc.y + nbDirs[dir][1];
                     if (coordinatesAreInMap(newX, newY) && (pmap[newX][newY].flags & HAS_MONSTER)) {
-                        monst = monsterAtLoc(newX, newY);
+                        monst = monsterAtLoc((pos){ newX, newY });
                         if (monst
                             && monst != attacker
                             && monstersAreEnemies(&player, monst)
@@ -1745,7 +1745,7 @@ void buildHitList(creature **hitList, const creature *attacker, creature *defend
             newestX = x + cDirs[newDir][0];
             newestY = y + cDirs[newDir][1];
             if (coordinatesAreInMap(newestX, newestY) && (pmap[newestX][newestY].flags & (HAS_MONSTER | HAS_PLAYER))) {
-                defender = monsterAtLoc(newestX, newestY);
+                defender = monsterAtLoc((pos){ newestX, newestY });
                 if (defender
                     && monsterWillAttackTarget(attacker, defender)
                     && (!cellHasTerrainFlag(defender->loc.x, defender->loc.y, T_OBSTRUCTS_PASSABILITY) || (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS))) {
