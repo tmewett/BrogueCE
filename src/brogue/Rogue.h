@@ -145,6 +145,9 @@ typedef long long fixpt;
 #define COLS                    100
 #define ROWS                    (31 + MESSAGE_LINES)
 
+// Max size for messages displayed in the console
+#define MESSAGE_MAX_LENGTH      COLS*2
+
 // A location within the dungeon.
 // Typically, 0 <= x < DCOLS and 0 <= y < DROWS,
 // but occasionally coordinates are used which point outside of this region.

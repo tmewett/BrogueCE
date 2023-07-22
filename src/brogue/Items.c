@@ -5918,22 +5918,40 @@ boolean hitMonsterWithProjectileWeapon(creature *thrower, creature *monst, item 
 }
 
 static void increaseMaxHealthAndHeal(creature *monst, int maxHealthIncrease) {
-    char buf[COLS*2] = "";
+    char buf[MESSAGE_MAX_LENGTH] = "";
 
     int healthIncrease = (monst->info.maxHP + maxHealthIncrease) * 100 / monst->info.maxHP - 100;
     boolean isHealed = monst->currentHP < monst->info.maxHP;
 
     monst->info.maxHP += maxHealthIncrease;
-    heal(monst, COLS*2, true);
+    heal(monst, MESSAGE_MAX_LENGTH, true);
 
     if (monst == &player) {
-        snprintf(buf, COLS*2, "%syour maximum health increases by %i%%.", isHealed ? "you heal completely and " : "", healthIncrease);
+        snprintf(
+            buf, 
+            MESSAGE_MAX_LENGTH, 
+            "%syour maximum health increases by %i%%.", 
+            isHealed ? "you heal completely and " : "", 
+            healthIncrease
+        );
     } else if (monst->creatureState == MONSTER_ALLY) {
         if (isHealed) {
-            snprintf(buf, COLS*2, "your %s ally heals completely and $HISHER maximum health increases by %i%%.", monst->info.monsterName, healthIncrease);
+            snprintf(
+                buf, 
+                MESSAGE_MAX_LENGTH, 
+                "your %s ally heals completely and $HISHER maximum health increases by %i%%.", 
+                monst->info.monsterName, 
+                healthIncrease
+            );
             resolvePronounEscapes(buf, monst);
         } else {
-            snprintf(buf, COLS*2, "your %s ally's maximum health increases by %i%%.", monst->info.monsterName, healthIncrease);
+            snprintf(
+                buf, 
+                MESSAGE_MAX_LENGTH, 
+                "your %s ally's maximum health increases by %i%%.", 
+                monst->info.monsterName, 
+                healthIncrease
+            );
         }
     }
 
