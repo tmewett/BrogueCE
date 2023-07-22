@@ -969,8 +969,7 @@ boolean buildAMachine(enum machineTypes bp,
                       item *parentSpawnedItems[MACHINES_BUFFER_LENGTH],
                       creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]) {
 
-    short instanceCount = 0,
-        featX, featY, itemCount, monsterCount, qualifyingTileCount,
+    short featX, featY, itemCount, monsterCount, qualifyingTileCount,
         **distanceMap = NULL, distance25, distance75, distanceBound[2],
         personalSpace, failsafe, locationFailsafe,
         machineNumber;
@@ -1361,6 +1360,7 @@ boolean buildAMachine(enum machineTypes bp,
                 temporaryMessage("Indicating: Occupied (red); Candidates (green); Interior (blue).", REQUIRE_ACKNOWLEDGMENT);
             }
 
+            int instanceCount = 0;
             if (feature->flags & MF_EVERYWHERE & ~MF_BUILD_AT_ORIGIN) {
                 // Generate everywhere that qualifies -- instead of randomly picking tiles, keep spawning until we run out of eligible tiles.
                 generateEverywhere = true;
