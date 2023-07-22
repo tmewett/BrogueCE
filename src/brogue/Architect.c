@@ -969,7 +969,7 @@ boolean buildAMachine(enum machineTypes bp,
                       item *parentSpawnedItems[MACHINES_BUFFER_LENGTH],
                       creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]) {
 
-    short instance, instanceCount = 0,
+    short instanceCount = 0,
         featX, featY, itemCount, monsterCount, qualifyingTileCount,
         **distanceMap = NULL, distance25, distance75, distanceBound[2],
         personalSpace, failsafe, locationFailsafe,
@@ -1333,6 +1333,7 @@ boolean buildAMachine(enum machineTypes bp,
             }
         }
 
+        int instance;
         do { // If the MF_REPEAT_UNTIL_NO_PROGRESS flag is set, repeat until we fail to build the required number of instances.
 
             // Make a master map of candidate locations for this feature.
@@ -1372,7 +1373,8 @@ boolean buildAMachine(enum machineTypes bp,
             // Cache the personal space constant.
             personalSpace = feature->personalSpace;
 
-            for (instance = 0; (generateEverywhere || instance < instanceCount) && qualifyingTileCount > 0;) {
+            instance = 0;
+            while ((generateEverywhere || instance < instanceCount) && qualifyingTileCount > 0) {
 
                 // Find a location for the feature.
                 if (feature->flags & MF_BUILD_AT_ORIGIN) {
