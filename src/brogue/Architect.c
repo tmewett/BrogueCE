@@ -969,7 +969,7 @@ boolean buildAMachine(enum machineTypes bp,
                       item *parentSpawnedItems[MACHINES_BUFFER_LENGTH],
                       creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]) {
 
-    short itemCount, monsterCount, qualifyingTileCount,
+    short qualifyingTileCount,
         **distanceMap = NULL, distance25, distance75, distanceBound[2],
         personalSpace, failsafe, locationFailsafe,
         machineNumber;
@@ -1292,7 +1292,8 @@ boolean buildAMachine(enum machineTypes bp,
     }
 
     // Keep track of all monsters and items that we spawn -- if we abort, we have to go back and delete them all.
-    itemCount = monsterCount = 0;
+    int monsterCount = 0;
+    int itemCount = 0;
 
     // Zero out occupied[][], and use it to keep track of the personal space around each feature that gets placed.
     zeroOutGrid(p->occupied);
