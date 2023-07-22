@@ -969,8 +969,7 @@ boolean buildAMachine(enum machineTypes bp,
                       item *parentSpawnedItems[MACHINES_BUFFER_LENGTH],
                       creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]) {
 
-    short qualifyingTileCount,
-        **distanceMap = NULL, distance25, distance75, distanceBound[2],
+    short **distanceMap = NULL, distance25, distance75, distanceBound[2],
         personalSpace, failsafe, locationFailsafe,
         machineNumber;
 
@@ -1141,7 +1140,7 @@ boolean buildAMachine(enum machineTypes bp,
                 }
                 fillGrid(distanceMap, 0);
                 calculateDistances(distanceMap, originX, originY, T_PATHING_BLOCKER, NULL, true, false);
-                qualifyingTileCount = 0; // Keeps track of how many interior cells we've added.
+                int qualifyingTileCount = 0; // Keeps track of how many interior cells we've added.
                 const int totalFreq = rand_range(blueprintCatalog[bp].roomSize[0], blueprintCatalog[bp].roomSize[1]); // Keeps track of the goal size.
 
                 fillSequentialList(p->sCols, DCOLS);
@@ -1229,7 +1228,7 @@ boolean buildAMachine(enum machineTypes bp,
     }
     fillGrid(distanceMap, 0);
     calculateDistances(distanceMap, originX, originY, T_PATHING_BLOCKER, NULL, true, true);
-    qualifyingTileCount = 0;
+    int qualifyingTileCount = 0;
     for (int i=0; i<100; i++) {
         p->distances[i] = 0;
     }
