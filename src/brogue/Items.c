@@ -5958,7 +5958,6 @@ static void increaseMaxHealthAndHeal(creature *monst, int maxHealthIncrease) {
     messageWithColor(buf, &advancementMessageColor, 0);
 }
 
-
 void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistance) {
     short i, numCells;
     creature *monst = NULL;
