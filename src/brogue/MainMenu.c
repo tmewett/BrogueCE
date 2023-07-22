@@ -394,18 +394,17 @@ static void initializeFlyoutMenu(buttonState *menu, cellDisplayBuffer shadowBuf[
 /// @brief Displays a dialog window for the user to chose a game variant
 static void chooseGameVariant() {
     short gameVariantChoice;
-    int bufLen = COLS * ROWS;
-    char textBuf[COLS * ROWS] = "", tmpBuf[COLS * ROWS] = "", goldColorEscape[5] = "", whiteColorEscape[5] = "";
+    char textBuf[TEXT_MAX_LENGTH] = "", tmpBuf[TEXT_MAX_LENGTH] = "", goldColorEscape[5] = "", whiteColorEscape[5] = "";
 
     encodeMessageColor(goldColorEscape, 0, &yellow);
     encodeMessageColor(whiteColorEscape, 0, &white);
 
-    snprintf(textBuf, bufLen, "%sBrogue%s\n", goldColorEscape, whiteColorEscape);
-    append(textBuf, "Classic Brogue. The endlessly captivating masterpiece of dungeon adventuring.\n\n", bufLen);
+    snprintf(textBuf, TEXT_MAX_LENGTH, "%sBrogue%s\n", goldColorEscape, whiteColorEscape);
+    append(textBuf, "Classic Brogue. The endlessly captivating masterpiece of dungeon adventuring.\n\n", TEXT_MAX_LENGTH);
 
-    snprintf(tmpBuf, bufLen, "%sRapid Brogue%s\n", goldColorEscape, whiteColorEscape);
-    append(textBuf, tmpBuf, bufLen);
-    append(textBuf, "Die faster and more often in this quarter-length version of the classic game!\n\n", bufLen);
+    snprintf(tmpBuf, TEXT_MAX_LENGTH, "%sRapid Brogue%s\n", goldColorEscape, whiteColorEscape);
+    append(textBuf, tmpBuf, TEXT_MAX_LENGTH);
+    append(textBuf, "Die faster and more often in this quarter-length version of the classic game!\n\n", TEXT_MAX_LENGTH);
 
     brogueButton buttons[2];
     cellDisplayBuffer rbuf[COLS][ROWS];
@@ -428,25 +427,24 @@ static void chooseGameVariant() {
 /// on the title screen (except normal mode).
 static void chooseGameMode() {
     short gameMode;
-    int bufLen = COLS * ROWS;
-    char textBuf[COLS * ROWS] = "", tmpBuf[COLS * ROWS] = "", goldColorEscape[5] = "", whiteColorEscape[5] = "";
+    char textBuf[TEXT_MAX_LENGTH] = "", tmpBuf[TEXT_MAX_LENGTH] = "", goldColorEscape[5] = "", whiteColorEscape[5] = "";
 
     encodeMessageColor(goldColorEscape, 0, &yellow);
     encodeMessageColor(whiteColorEscape, 0, &white);
 
-    snprintf(textBuf, bufLen, "%sNormal Mode%s\n", goldColorEscape, whiteColorEscape);
-    append(textBuf, "Punishingly difficult. Maliciously alluring. Perfectly normal.\n\n", bufLen);
+    snprintf(textBuf, TEXT_MAX_LENGTH, "%sNormal Mode%s\n", goldColorEscape, whiteColorEscape);
+    append(textBuf, "Punishingly difficult. Maliciously alluring. Perfectly normal.\n\n", TEXT_MAX_LENGTH);
 
-    snprintf(tmpBuf, bufLen, "%sEasy Mode%s\n", goldColorEscape, whiteColorEscape);
-    append(textBuf, tmpBuf, bufLen);
+    snprintf(tmpBuf, TEXT_MAX_LENGTH, "%sEasy Mode%s\n", goldColorEscape, whiteColorEscape);
+    append(textBuf, tmpBuf, TEXT_MAX_LENGTH);
     append(textBuf, "Succumb to demonic temptation and play as an all-powerful ampersand, taking 20%% as much damage. "
-                    "But great power comes at a great price -- specifically, a 90% income tax rate.\n\n", bufLen);
+                    "But great power comes at a great price -- specifically, a 90% income tax rate.\n\n", TEXT_MAX_LENGTH);
 
-    snprintf(tmpBuf, bufLen, "%sWizard Mode%s\n", goldColorEscape, whiteColorEscape);
-    append(textBuf, tmpBuf, bufLen);
+    snprintf(tmpBuf, TEXT_MAX_LENGTH, "%sWizard Mode%s\n", goldColorEscape, whiteColorEscape);
+    append(textBuf, tmpBuf, TEXT_MAX_LENGTH);
     append(textBuf, "Play as an invincible wizard that starts with legendary items and is magically reborn after every "
                     "death. Summon monsters and make them friend or foe. Conjure any item out of thin air. All this and"
-                    " more, for the bargain basement price of forfeiting your score.", bufLen);
+                    " more, for the bargain basement price of forfeiting your score.", TEXT_MAX_LENGTH);
 
     brogueButton buttons[3];
     cellDisplayBuffer rbuf[COLS][ROWS];

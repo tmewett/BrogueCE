@@ -123,6 +123,10 @@ typedef long long fixpt;
 #define COLS                    100
 #define ROWS                    (31 + MESSAGE_LINES)
 
+// Maximum string size supported by various functions like printTextBox, wrapText, 
+// printStringWithWrapping, and breakUpLongWordsIn
+#define TEXT_MAX_LENGTH (COLS * ROWS * 2)
+
 // Returns the sign of the input:
 // - if (x == 0)  ===> returns 0
 // - if (x >= 1)  ===> returns +1
