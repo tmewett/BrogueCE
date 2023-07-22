@@ -969,7 +969,7 @@ boolean buildAMachine(enum machineTypes bp,
                       item *parentSpawnedItems[MACHINES_BUFFER_LENGTH],
                       creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]) {
 
-    short totalFreq, instance, instanceCount = 0,
+    short instance, instanceCount = 0,
         featX, featY, itemCount, monsterCount, qualifyingTileCount,
         **distanceMap = NULL, distance25, distance75, distanceBound[2],
         personalSpace, failsafe, locationFailsafe,
@@ -1018,7 +1018,7 @@ boolean buildAMachine(enum machineTypes bp,
 
             // First, choose the blueprint. We choose from among blueprints
             // that have the required blueprint flags and that satisfy the depth requirements.
-            totalFreq = 0;
+            int totalFreq = 0;
             for (int i=1; i<gameConst->numberBlueprints; i++) {
                 if (blueprintQualifies(i, requiredMachineFlags)) {
                     totalFreq += blueprintCatalog[i].frequency;
@@ -1060,7 +1060,7 @@ boolean buildAMachine(enum machineTypes bp,
 
             if (chooseLocation) {
                 analyzeMap(true); // Make sure the chokeMap is up to date.
-                totalFreq = 0;
+                int totalFreq = 0;
                 for(int i=0; i<DCOLS; i++) {
                     for(int j=0; j<DROWS && totalFreq < 50; j++) {
                         if ((pmap[i][j].flags & IS_GATE_SITE)
@@ -1143,7 +1143,7 @@ boolean buildAMachine(enum machineTypes bp,
                 fillGrid(distanceMap, 0);
                 calculateDistances(distanceMap, originX, originY, T_PATHING_BLOCKER, NULL, true, false);
                 qualifyingTileCount = 0; // Keeps track of how many interior cells we've added.
-                totalFreq = rand_range(blueprintCatalog[bp].roomSize[0], blueprintCatalog[bp].roomSize[1]); // Keeps track of the goal size.
+                const int totalFreq = rand_range(blueprintCatalog[bp].roomSize[0], blueprintCatalog[bp].roomSize[1]); // Keeps track of the goal size.
 
                 fillSequentialList(p->sCols, DCOLS);
                 shuffleList(p->sCols, DCOLS);
@@ -1270,7 +1270,7 @@ boolean buildAMachine(enum machineTypes bp,
         skipFeature[i] = false;
     }
     for (int j = 0; j <= 1; j++) {
-        totalFreq = 0;
+        int totalFreq = 0;
         for (int i=0; i<blueprintCatalog[bp].featureCount; i++) {
             if (blueprintCatalog[bp].feature[i].flags & alternativeFlags[j]) {
                 skipFeature[i] = true;
