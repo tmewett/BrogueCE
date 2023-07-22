@@ -58,13 +58,13 @@ void hilitePath(pos path[1000], short steps, boolean unhilite) {
         for (int i=0; i<steps; i++) {
             brogueAssert(isPosInMap(path[i]));
             pmapAt(path[i])->flags &= ~IS_IN_PATH;
-            refreshDungeonCell(path[i].x, path[i].y);
+            refreshDungeonCell(path[i]);
         }
     } else {
         for (int i=0; i<steps; i++) {
             brogueAssert(isPosInMap(path[i]));
             pmapAt(path[i])->flags |= IS_IN_PATH;
-            refreshDungeonCell(path[i].x, path[i].y);
+            refreshDungeonCell(path[i]);
         }
     }
 }
@@ -78,7 +78,7 @@ void clearCursorPath() {
             for (j=1; j<DROWS; j++) {
                 if (pmap[i][j].flags & IS_IN_PATH) {
                     pmap[i][j].flags &= ~IS_IN_PATH;
-                    refreshDungeonCell(i, j);
+                    refreshDungeonCell((pos){ i, j });
                 }
             }
         }
@@ -613,11 +613,11 @@ void mainInputLoop() {
 
             // Draw the cursor and path
             if (isPosInMap(oldTargetLoc)) {
-                refreshDungeonCell(oldTargetLoc.x, oldTargetLoc.y);               // Remove old cursor.
+                refreshDungeonCell(oldTargetLoc); // Remove old cursor.
             }
             if (!playingBack) {
                 if (isPosInMap(oldTargetLoc)) {
-                    hilitePath(path, steps, true);                                  // Unhilite old path.
+                    hilitePath(path, steps, true); // Unhilite old path.
                 }
                 if (isPosInMap(rogue.cursorLoc)) {
                     pos pathDestination;
@@ -762,7 +762,7 @@ void mainInputLoop() {
         } while (!targetConfirmed && !canceled && !doEvent && !rogue.gameHasEnded);
 
         if (isPosInMap(oldTargetLoc)) {
-            refreshDungeonCell(oldTargetLoc.x, oldTargetLoc.y);                       // Remove old rogue.cursorLoc.
+            refreshDungeonCell(oldTargetLoc); // Remove old rogue.cursorLoc.
         }
 
         restoreRNG;
@@ -915,7 +915,7 @@ void displayLevel() {
 
     for( i=0; i<DCOLS; i++ ) {
         for (j = DROWS-1; j >= 0; j--) {
-            refreshDungeonCell(i, j);
+            refreshDungeonCell((pos){ i, j });
         }
     }
 }
@@ -987,7 +987,7 @@ void shuffleTerrainColors(short percentOfCells, boolean refreshCells) {
                     }
 
                     if (refreshCells) {
-                        refreshDungeonCell(i, j);
+                        refreshDungeonCell((pos){ i, j });
                     }
                 }
         }
@@ -1518,13 +1518,13 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
     restoreRNG;
 }
 
-void refreshDungeonCell(short x, short y) {
+void refreshDungeonCell(pos loc) {
+    brogueAssert(isPosInMap(loc));
+
     enum displayGlyph cellChar;
     color foreColor, backColor;
-    brogueAssert(coordinatesAreInMap(x, y));
-
-    getCellAppearance(x, y, &cellChar, &foreColor, &backColor);
-    plotCharWithColor(cellChar, mapToWindow((pos){ x, y }), &foreColor, &backColor);
+    getCellAppearance(loc.x, loc.y, &cellChar, &foreColor, &backColor);
+    plotCharWithColor(cellChar, mapToWindow(loc), &foreColor, &backColor);
 }
 
 void applyColorMultiplier(color *baseColor, const color *multiplierColor) {
@@ -1873,7 +1873,7 @@ void dumpLevelToScreen() {
                 tmap[i][j].light[0] = 100;
                 tmap[i][j].light[1] = 100;
                 tmap[i][j].light[2] = 100;
-                refreshDungeonCell(i, j);
+                refreshDungeonCell((pos){ i, j });
                 pmap[i][j] = backup;
             } else {
                 plotCharWithColor(' ', mapToWindow((pos){ i, j }), &white, &black);
@@ -2068,7 +2068,7 @@ void flashCell(const color *theColor, short frames, short x, short y) {
         interrupted = pauseAnimation(50);
     }
 
-    refreshDungeonCell(x, y);
+    refreshDungeonCell((pos){ x, y });
 }
 
 // special effect expanding flash of light at dungeon coordinates (x, y) restricted to tiles with matching flags
@@ -3539,7 +3539,7 @@ void displayMoreSign() {
         printString("--MORE--", COLS - 8, MESSAGE_LINES, &black, &white, 0);
         waitForAcknowledgment();
         for (i=1; i<=8; i++) {
-            refreshDungeonCell(DCOLS - i, 0);
+            refreshDungeonCell((pos){ DCOLS - i, 0 });
         }
     }
 }

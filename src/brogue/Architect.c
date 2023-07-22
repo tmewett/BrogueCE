@@ -3211,7 +3211,7 @@ boolean fillSpawnMap(enum dungeonLayers layer,
                 accomplishedSomething = true;
 
                 if (refresh) {
-                    refreshDungeonCell(i, j);
+                    refreshDungeonCell((pos){ i, j });
                     if (player.loc.x == i && player.loc.y == j && !player.status[STATUS_LEVITATING] && refresh) {
                         flavorMessage(tileFlavor(player.loc.x, player.loc.y));
                     }
@@ -3349,7 +3349,7 @@ boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refr
             pmap[x][y].volume += feat->startProbability;
             pmap[x][y].layers[GAS] = feat->tile;
             if (refreshCell) {
-                refreshDungeonCell(x, y);
+                refreshDungeonCell((pos){ x, y });
             }
             succeeded = true;
         } else {

@@ -568,7 +568,7 @@ creature *cloneMonster(creature *monst, boolean announce, boolean placeClone) {
                                  T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(newMonst->info)), HAS_PLAYER,
                                  avoidedFlagsForMonster(&(newMonst->info)), (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
         pmapAt(newMonst->loc)->flags |= HAS_MONSTER;
-        refreshDungeonCell(newMonst->loc.x, newMonst->loc.y);
+        refreshDungeonCell(newMonst->loc);
         if (announce && canSeeMonster(newMonst)) {
             monsterName(monstName, newMonst, false);
             sprintf(buf, "another %s appears!", monstName);
@@ -860,7 +860,7 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
 
     pmap[x][y].flags |= HAS_MONSTER;
     if (playerCanSeeOrSense(x, y)) {
-        refreshDungeonCell(x, y);
+        refreshDungeonCell((pos){ x, y });
     }
     if (monsterCanSubmergeNow(leader)) {
         leader->bookkeepingFlags |= MB_SUBMERGED;
@@ -994,7 +994,7 @@ boolean summonMinions(creature *summoner) {
             monst->bookkeepingFlags &= ~MB_JUST_SUMMONED;
             if (canSeeMonster(monst)) {
                 seenMinionCount++;
-                refreshDungeonCell(monst->loc.x, monst->loc.y);
+                refreshDungeonCell(monst->loc);
             }
             monst->ticksUntilTurn = 101;
             monst->leader = summoner;
@@ -1019,7 +1019,7 @@ boolean summonMinions(creature *summoner) {
         if (atLeastOneMinion && host) {
             host->carriedMonster = summoner;
             demoteMonsterFromLeadership(summoner);
-            refreshDungeonCell(summoner->loc.x, summoner->loc.y);
+            refreshDungeonCell(summoner->loc);
         } else {
             pmapAt(summoner->loc)->flags |= HAS_MONSTER;
             // TODO: why move to the beginning?
@@ -1924,7 +1924,7 @@ void decrementMonsterStatus(creature *monst) {
                     && !--monst->status[i]
                     && playerCanSee(monst->loc.x, monst->loc.y)) {
 
-                    refreshDungeonCell(monst->loc.x, monst->loc.y);
+                    refreshDungeonCell(monst->loc);
                 }
                 break;
             default:
@@ -1944,7 +1944,7 @@ void decrementMonsterStatus(creature *monst) {
 
                 monst->creatureState = MONSTER_TRACKING_SCENT;
             }
-            refreshDungeonCell(monst->loc.x, monst->loc.y);
+            refreshDungeonCell(monst->loc);
         } else if (monst->info.flags & (MONST_RESTRICTED_TO_LIQUID)
                    && monst->creatureState != MONSTER_ALLY) {
             monst->creatureState = MONSTER_FLEEING;
@@ -3562,7 +3562,7 @@ boolean knownToPlayerAsPassableOrSecretDoor(short x, short y) {
 void setMonsterLocation(creature *monst, short newX, short newY) {
     unsigned long creatureFlag = (monst == &player ? HAS_PLAYER : HAS_MONSTER);
     pmapAt(monst->loc)->flags &= ~creatureFlag;
-    refreshDungeonCell(monst->loc.x, monst->loc.y);
+    refreshDungeonCell(monst->loc);
     monst->turnsSpentStationary = 0;
     monst->loc.x = newX;
     monst->loc.y = newY;
@@ -3576,7 +3576,7 @@ void setMonsterLocation(creature *monst, short newX, short newY) {
 
         discover(newX, newY); // if you see a monster use a secret door, you discover it
     }
-    refreshDungeonCell(newX, newY);
+    refreshDungeonCell((pos){ newX, newY });
     applyInstantTileEffectsToCreature(monst);
     if (monst == &player) {
         updateVision(true);
@@ -3706,10 +3706,10 @@ boolean moveMonster(creature *monst, short dx, short dy) {
 
                     // swap places
                     pmapAt(defender->loc)->flags &= ~HAS_MONSTER;
-                    refreshDungeonCell(defender->loc.x, defender->loc.y);
+                    refreshDungeonCell(defender->loc);
 
                     pmapAt(monst->loc)->flags &= ~HAS_MONSTER;
-                    refreshDungeonCell(monst->loc.x, monst->loc.y);
+                    refreshDungeonCell(monst->loc);
 
                     monst->loc.x = newX;
                     monst->loc.y = newY;
@@ -3725,8 +3725,8 @@ boolean moveMonster(creature *monst, short dx, short dy) {
                     }
                     pmapAt(defender->loc)->flags |= HAS_MONSTER;
 
-                    refreshDungeonCell(monst->loc.x, monst->loc.y);
-                    refreshDungeonCell(defender->loc.x, defender->loc.y);
+                    refreshDungeonCell(monst->loc);
+                    refreshDungeonCell(defender->loc);
 
                     monst->ticksUntilTurn = monst->movementSpeed;
                     return true;
@@ -3746,7 +3746,7 @@ boolean moveMonster(creature *monst, short dx, short dy) {
                         // Bog monsters and krakens won't surface on the turn that they seize their target.
                         monst->bookkeepingFlags &= ~MB_SUBMERGED;
                     }
-                    refreshDungeonCell(x, y);
+                    refreshDungeonCell((pos){ x, y });
 
                     buildHitList(hitList, monst, defender,
                                  (monst->info.abilityFlags & MA_ATTACKS_ALL_ADJACENT) ? true : false);
@@ -3935,7 +3935,7 @@ void makeMonsterDropItem(creature *monst) {
                              T_OBSTRUCTS_ITEMS, (HAS_PLAYER | HAS_STAIRS | HAS_ITEM), false);
     placeItem(monst->carriedItem, x, y);
     monst->carriedItem = NULL;
-    refreshDungeonCell(x, y);
+    refreshDungeonCell((pos){ x, y });
 }
 
 void checkForContinuedLeadership(creature *monst) {
