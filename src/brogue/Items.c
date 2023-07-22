@@ -6020,6 +6020,7 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
                     && theItem->kind == POTION_LIFE) {
                         itemTable potionTable = tableForItemCategory(theItem->category)[theItem->kind];
                         increaseMaxHealthAndHeal(monst, randClump(potionTable.range));
+                        autoIdentify(theItem);
                         return;
                 }
 
