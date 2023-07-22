@@ -969,7 +969,7 @@ boolean buildAMachine(enum machineTypes bp,
                       item *parentSpawnedItems[MACHINES_BUFFER_LENGTH],
                       creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]) {
 
-    short featX, featY, itemCount, monsterCount, qualifyingTileCount,
+    short itemCount, monsterCount, qualifyingTileCount,
         **distanceMap = NULL, distance25, distance75, distanceBound[2],
         personalSpace, failsafe, locationFailsafe,
         machineNumber;
@@ -1377,23 +1377,20 @@ boolean buildAMachine(enum machineTypes bp,
             while ((generateEverywhere || instance < instanceCount) && qualifyingTileCount > 0) {
 
                 // Find a location for the feature.
+                pos featCandidateLoc = INVALID_POS;
                 if (feature->flags & MF_BUILD_AT_ORIGIN) {
                     // Does the feature want to be at the origin? If so, put it there. (Just an optimization.)
-                    featX = originX;
-                    featY = originY;
+                    featCandidateLoc = (pos) { originX, originY };
                 } else {
                     // Pick our candidate location randomly, and also strike it from
                     // the candidates map so that subsequent instances of this same feature can't choose it.
-                    featX = -1;
-                    featY = -1;
                     int randIndex = rand_range(1, qualifyingTileCount);
-                    for(int i=0; i<DCOLS && featX < 0; i++) {
-                        for(int j=0; j<DROWS && featX < 0; j++) {
+                    for(int i=0; i<DCOLS && !isPosInMap(featCandidateLoc); i++) {
+                        for(int j=0; j<DROWS && !isPosInMap(featCandidateLoc); j++) {
                             if (p->candidates[i][j]) {
                                 if (randIndex == 1) {
                                     // This is the place!
-                                    featX = i;
-                                    featY = j;
+                                    featCandidateLoc = (pos) { i, j };
                                     i = DCOLS;  // break out of the loops
                                     j = DROWS;
                                 } else {
@@ -1403,15 +1400,16 @@ boolean buildAMachine(enum machineTypes bp,
                         }
                     }
                 }
+                const pos featLoc = featCandidateLoc;
                 // Don't waste time trying the same place again whether or not this attempt succeeds.
-                p->candidates[featX][featY] = false;
+                p->candidates[featLoc.x][featLoc.y] = false;
                 qualifyingTileCount--;
 
                 DFSucceeded = terrainSucceeded = true;
 
                 // Try to build the DF first, if any, since we don't want it to be disrupted by subsequently placed terrain.
                 if (feature->featureDF) {
-                    DFSucceeded = spawnDungeonFeature(featX, featY, &dungeonFeatureCatalog[feature->featureDF], false,
+                    DFSucceeded = spawnDungeonFeature(featLoc.x, featLoc.y, &dungeonFeatureCatalog[feature->featureDF], false,
                                                       !(feature->flags & MF_PERMIT_BLOCKING));
                 }
 
@@ -1423,11 +1421,11 @@ boolean buildAMachine(enum machineTypes bp,
                         // Yes, check for blocking.
 
                         zeroOutGrid(p->blockingMap);
-                        p->blockingMap[featX][featY] = true;
+                        p->blockingMap[featLoc.x][featLoc.y] = true;
                         terrainSucceeded = !levelIsDisconnectedWithBlockingMap(p->blockingMap, false);
                     }
                     if (terrainSucceeded) {
-                        pmap[featX][featY].layers[feature->layer] = feature->terrain;
+                        pmapAt(featLoc)->layers[feature->layer] = feature->terrain;
                     }
                 }
 
@@ -1435,11 +1433,11 @@ boolean buildAMachine(enum machineTypes bp,
                 // Personal space of 0 means nothing gets cleared, 1 means that only the tile itself gets cleared, and 2 means the 3x3 grid centered on it.
 
                 if (DFSucceeded && terrainSucceeded) {
-                    for (int i = featX - personalSpace + 1;
-                         i <= featX + personalSpace - 1;
+                    for (int i = featLoc.x - personalSpace + 1;
+                         i <= featLoc.x + personalSpace - 1;
                          i++) {
-                        for (int j = featY - personalSpace + 1;
-                             j <= featY + personalSpace - 1;
+                        for (int j = featLoc.y - personalSpace + 1;
+                             j <= featLoc.y + personalSpace - 1;
                              j++) {
                             if (coordinatesAreInMap(i, j)) {
                                 if (p->candidates[i][j]) {
@@ -1460,12 +1458,12 @@ boolean buildAMachine(enum machineTypes bp,
                     theItem = NULL;
 
                     // Mark the feature location as part of the machine, in case it is not already inside of it.
-                    pmap[featX][featY].flags |= ((blueprintCatalog[bp].flags & BP_ROOM) ? IS_IN_ROOM_MACHINE : IS_IN_AREA_MACHINE);
-                    pmap[featX][featY].machineNumber = machineNumber;
+                    pmapAt(featLoc)->flags |= ((blueprintCatalog[bp].flags & BP_ROOM) ? IS_IN_ROOM_MACHINE : IS_IN_AREA_MACHINE);
+                    pmapAt(featLoc)->machineNumber = machineNumber;
 
                     // Mark the feature location as impregnable if requested.
                     if (feature->flags & MF_IMPREGNABLE) {
-                        pmap[featX][featY].flags |= IMPREGNABLE;
+                        pmapAt(featLoc)->flags |= IMPREGNABLE;
                     }
 
                     // Generate an item as necessary.
@@ -1495,7 +1493,7 @@ boolean buildAMachine(enum machineTypes bp,
                         }
                         theItem->flags |= feature->itemFlags;
 
-                        addLocationToKey(theItem, featX, featY, (feature->flags & MF_KEY_DISPOSABLE) ? true : false);
+                        addLocationToKey(theItem, featLoc.x, featLoc.y, (feature->flags & MF_KEY_DISPOSABLE) ? true : false);
                         theItem->originDepth = rogue.depthLevel;
                         if (feature->flags & MF_SKELETON_KEY) {
                             addMachineNumberToKey(theItem, machineNumber, (feature->flags & MF_KEY_DISPOSABLE) ? true : false);
@@ -1503,7 +1501,7 @@ boolean buildAMachine(enum machineTypes bp,
                         if (!(feature->flags & MF_OUTSOURCE_ITEM_TO_MACHINE)
                             && !(feature->flags & MF_MONSTER_TAKE_ITEM)) {
                             // Place the item at the feature location.
-                            placeItem(theItem, featX, featY);
+                            placeItem(theItem, featLoc.x, featLoc.y);
                         }
                     }
 
@@ -1526,7 +1524,7 @@ boolean buildAMachine(enum machineTypes bp,
                                 theItem->nextItem = NULL;
                                 success = buildAMachine(-1, -1, -1, BP_ADOPT_ITEM, theItem, p->spawnedItemsSub, p->spawnedMonstersSub);
                             } else if (feature->flags & MF_BUILD_VESTIBULE) {
-                                success = buildAMachine(-1, featX, featY, BP_VESTIBULE, NULL, p->spawnedItemsSub, p->spawnedMonstersSub);
+                                success = buildAMachine(-1, featLoc.x, featLoc.y, BP_VESTIBULE, NULL, p->spawnedItemsSub, p->spawnedMonstersSub);
                             }
 
                             // Now put the item up for adoption.
@@ -1565,8 +1563,8 @@ boolean buildAMachine(enum machineTypes bp,
 
                         if (feature->flags & MF_GENERATE_HORDE) {
                             monst = spawnHorde(0,
-                                               featX,
-                                               featY,
+                                               featLoc.x,
+                                               featLoc.y,
                                                ((HORDE_IS_SUMMONED | HORDE_LEADER_CAPTIVE) & ~(feature->hordeFlags)),
                                                feature->hordeFlags);
                             if (monst) {
@@ -1575,13 +1573,13 @@ boolean buildAMachine(enum machineTypes bp,
                         }
 
                         if (feature->monsterID) {
-                            monst = monsterAtLoc((pos){ featX, featY });
+                            monst = monsterAtLoc(featLoc);
                             if (monst) {
                                 killCreature(monst, true); // If there's already a monster here, quietly bury the body.
                             }
                             monst = generateMonster(feature->monsterID, true, true);
                             if (monst) {
-                                monst->loc = (pos){ .x = featX, .y = featY };
+                                monst->loc = featLoc;
                                 pmapAt(monst->loc)->flags |= HAS_MONSTER;
                                 monst->bookkeepingFlags |= MB_JUST_SUMMONED;
                             }
