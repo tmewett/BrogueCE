@@ -143,6 +143,7 @@ typedef struct pos {
 } pos;
 
 #define INVALID_POS ((pos) { .x = -1, .y = -1 })
+#define TOP_LEFT ((pos) {.x = 0, .y = 0 })
 
 static inline boolean posEq(pos a, pos b) {
     return a.x == b.x && a.y == b.y;
@@ -156,6 +157,8 @@ typedef struct windowpos {
     short window_y;
 } windowpos;
 
+#define STAT_BAR_WIDTH          20          // number of characters in the stats bar to the left of the map
+
 // Size of the portion of the terminal window devoted to displaying the dungeon:
 #define DCOLS                   (COLS - STAT_BAR_WIDTH - 1) // n columns on the left for the sidebar;
                                                             // one column to separate the sidebar from the map.
@@ -163,7 +166,23 @@ typedef struct windowpos {
                                                             // one line at the bottom for flavor text;
                                                             // another line at the bottom for the menu bar.
 
-#define STAT_BAR_WIDTH          20          // number of characters in the stats bar to the left of the map
+inline static boolean isPosInMap(pos p) {
+    return p.x >= 0 && p.x < DCOLS && p.y >= 0 && p.y < DROWS;
+}
+
+// Returns the "next" position in the map, or returns `INVALID_POS` if it was the last one.
+static inline pos posNext(pos at) {
+    brogueAssert(isPosInMap(at));
+    at.y += 1;
+    if (at.y == DROWS) {
+        at.y = 0;
+        at.x++;
+    }
+    if (!isPosInMap(at)) {
+        return INVALID_POS;
+    }
+    return at;
+}
 
 #define LOS_SLOPE_GRANULARITY   32768       // how finely we divide up the squares when calculating slope;
                                             // higher numbers mean fewer artifacts but more memory and processing
@@ -1234,10 +1253,6 @@ boolean cellHasTerrainFlag(short x, short y, unsigned long flagMask);
                                                 && cellHasTerrainFlag((x), (y), T_OBSTRUCTS_PASSABILITY)))
 
 #define coordinatesAreInMap(x, y)           ((x) >= 0 && (x) < DCOLS    && (y) >= 0 && (y) < DROWS)
-
-inline static boolean isPosInMap(pos p) {
-    return p.x >= 0 && p.x < DCOLS && p.y >= 0 && p.y < DROWS;
-}
 
 inline static boolean locIsInWindow(windowpos w) {
     return w.window_x >= 0 && w.window_x < COLS && w.window_y >= 0 && w.window_y < ROWS;
