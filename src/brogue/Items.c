@@ -5917,6 +5917,30 @@ boolean hitMonsterWithProjectileWeapon(creature *thrower, creature *monst, item 
     }
 }
 
+static void increaseMaxHealthAndHeal(creature *monst, int maxHealthIncrease) {
+    char buf[100] = "";
+
+    int healthIncrease = (monst->info.maxHP + maxHealthIncrease) * 100 / monst->info.maxHP - 100;
+    boolean isHealed = monst->currentHP < monst->info.maxHP;
+
+    monst->info.maxHP += maxHealthIncrease;
+    heal(monst, 100, true);
+
+    if (monst == &player) {
+        snprintf(buf, 100, "%syour maximum health increases by %i%%.", isHealed ? "you heal completely and " : "", healthIncrease);
+    } else if (monst->creatureState == MONSTER_ALLY) {
+        if (isHealed) {
+            snprintf(buf, 100, "your %s ally heals completely and $HISHER maximum health increases by %i%%.", monst->info.monsterName, healthIncrease);
+            resolvePronounEscapes(buf, monst);
+        } else {
+            snprintf(buf, 100, "your %s ally's maximum health increases by %i%%.", monst->info.monsterName, healthIncrease);
+        }
+    }
+
+    messageWithColor(buf, &advancementMessageColor, 0);
+}
+
+
 void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistance) {
     short i, numCells;
     creature *monst = NULL;
@@ -5977,8 +6001,6 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
                 if ((theItem->category & POTION)
                     && monst->creatureState == MONSTER_ALLY
                     && theItem->kind == POTION_LIFE) {
-                        sprintf(buf, "your %s ally catches the potion and guzzles down the whole thing.", monst->info.monsterName);
-                        message(buf, 0);
                         itemTable potionTable = tableForItemCategory(theItem->category)[theItem->kind];
                         increaseMaxHealthAndHeal(monst, randClump(potionTable.range));
                         return;
@@ -7160,29 +7182,6 @@ void detectMagicOnItem(item *theItem) {
 
         identify(theItem);
     }
-}
-
-void increaseMaxHealthAndHeal(creature *monst, int maxHealthIncrease) {
-    char buf[1000] = "";
-
-    int healthIncrease = (monst->info.maxHP + maxHealthIncrease) * 100 / monst->info.maxHP - 100;
-    boolean isHealed = monst->currentHP < monst->info.maxHP;
-
-    monst->info.maxHP += maxHealthIncrease;
-    heal(monst, 100, true);
-
-    if (monst == &player) {
-        sprintf(buf, "%syour maximum health increases by %i%%.", isHealed ? "you heal completely and " : "", healthIncrease);
-    } else if (monst->creatureState == MONSTER_ALLY) {
-        if (isHealed) {
-            sprintf(buf, "your %s ally heals completely and $HISHER maximum health increases by %i%%.", monst->info.monsterName, healthIncrease);
-            resolvePronounEscapes(buf, monst);
-        } else {
-            sprintf(buf, "your %s ally's maximum health increases by %i%%.", monst->info.monsterName, healthIncrease);
-        }
-    }
-
-    messageWithColor(buf, &advancementMessageColor, 0);
 }
 
 void drinkPotion(item *theItem) {
