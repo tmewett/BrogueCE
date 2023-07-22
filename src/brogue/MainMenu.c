@@ -394,18 +394,18 @@ static void initializeFlyoutMenu(buttonState *menu, cellDisplayBuffer shadowBuf[
 /// @brief Displays a dialog window for the user to chose a game variant
 static void chooseGameVariant() {
     short gameVariantChoice;
+    int bufLen = COLS * ROWS;
     char textBuf[COLS * ROWS] = "", tmpBuf[COLS * ROWS] = "", goldColorEscape[5] = "", whiteColorEscape[5] = "";
 
     encodeMessageColor(goldColorEscape, 0, &yellow);
     encodeMessageColor(whiteColorEscape, 0, &white);
 
-    sprintf(tmpBuf, "%sBrogue%s\n", goldColorEscape, whiteColorEscape);
-    strcat(textBuf, tmpBuf);
-    strcat(textBuf, "Classic Brogue. The endlessly captivating masterpiece of dungeon adventuring.\n\n");
+    snprintf(textBuf, bufLen, "%sBrogue%s\n", goldColorEscape, whiteColorEscape);
+    append(textBuf, "Classic Brogue. The endlessly captivating masterpiece of dungeon adventuring.\n\n", bufLen);
 
-    sprintf(tmpBuf, "%sRapid Brogue%s\n", goldColorEscape, whiteColorEscape);
-    strcat(textBuf, tmpBuf);
-    strcat(textBuf, "Die faster and more often in this quarter-length version of the classic game!\n\n");
+    snprintf(tmpBuf, bufLen, "%sRapid Brogue%s\n", goldColorEscape, whiteColorEscape);
+    append(textBuf, tmpBuf, bufLen);
+    append(textBuf, "Die faster and more often in this quarter-length version of the classic game!\n\n", bufLen);
 
     brogueButton buttons[2];
     cellDisplayBuffer rbuf[COLS][ROWS];
@@ -428,22 +428,25 @@ static void chooseGameVariant() {
 /// on the title screen (except normal mode).
 static void chooseGameMode() {
     short gameMode;
+    int bufLen = COLS * ROWS;
     char textBuf[COLS * ROWS] = "", tmpBuf[COLS * ROWS] = "", goldColorEscape[5] = "", whiteColorEscape[5] = "";
 
     encodeMessageColor(goldColorEscape, 0, &yellow);
     encodeMessageColor(whiteColorEscape, 0, &white);
 
-    sprintf(tmpBuf, "%sNormal Mode%s\n", goldColorEscape, whiteColorEscape);
-    strcat(textBuf, tmpBuf);
-    strcat(textBuf, "Punishingly difficult. Maliciously alluring. Perfectly normal.\n\n");
+    snprintf(textBuf, bufLen, "%sNormal Mode%s\n", goldColorEscape, whiteColorEscape);
+    append(textBuf, "Punishingly difficult. Maliciously alluring. Perfectly normal.\n\n", bufLen);
 
-    sprintf(tmpBuf, "%sEasy Mode%s\n", goldColorEscape, whiteColorEscape);
-    strcat(textBuf, tmpBuf);
-    strcat(textBuf, "Succumb to demonic temptation and play as an all-powerful ampersand, taking 20%% as much damage. But great power comes at a great price -- specifically, a 90% income tax rate.\n\n");
+    snprintf(tmpBuf, bufLen, "%sEasy Mode%s\n", goldColorEscape, whiteColorEscape);
+    append(textBuf, tmpBuf, bufLen);
+    append(textBuf, "Succumb to demonic temptation and play as an all-powerful ampersand, taking 20%% as much damage. "
+                    "But great power comes at a great price -- specifically, a 90% income tax rate.\n\n", bufLen);
 
-    sprintf(tmpBuf, "%sWizard Mode%s\n", goldColorEscape, whiteColorEscape);
-    strcat(textBuf, tmpBuf);
-    strcat(textBuf, "Play as an invincible wizard that starts with legendary items and is magically reborn after every death. Summon monsters and make them friend or foe. Conjure any item out of thin air. All this and more, for the bargain basement price of forfeiting your score.");
+    snprintf(tmpBuf, bufLen, "%sWizard Mode%s\n", goldColorEscape, whiteColorEscape);
+    append(textBuf, tmpBuf, bufLen);
+    append(textBuf, "Play as an invincible wizard that starts with legendary items and is magically reborn after every "
+                    "death. Summon monsters and make them friend or foe. Conjure any item out of thin air. All this and"
+                    " more, for the bargain basement price of forfeiting your score.", bufLen);
 
     brogueButton buttons[3];
     cellDisplayBuffer rbuf[COLS][ROWS];
@@ -451,7 +454,7 @@ static void chooseGameMode() {
     initializeMainMenuButton(&(buttons[0]), "      %sW%sizard       ", 'w', 'W', NG_NOTHING);
     initializeMainMenuButton(&(buttons[1]), "       %sE%sasy        ", 'e', 'E', NG_NOTHING);
     initializeMainMenuButton(&(buttons[2]), "      %sN%sormal       ", 'n', 'N', NG_NOTHING);
-    gameMode = printTextBox(textBuf, 20, 5, 66, &white, &black, rbuf, buttons, 3);
+    gameMode = printTextBox(textBuf, 10, 5, 66, &white, &black, rbuf, buttons, 3);
     overlayDisplayBuffer(rbuf, NULL);
     if (gameMode == 0) {
         rogue.wizard = true;
