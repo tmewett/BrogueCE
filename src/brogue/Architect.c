@@ -969,7 +969,7 @@ boolean buildAMachine(enum machineTypes bp,
                       item *parentSpawnedItems[MACHINES_BUFFER_LENGTH],
                       creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]) {
 
-    short layer, feat, randIndex, totalFreq, instance, instanceCount = 0,
+    short totalFreq, instance, instanceCount = 0,
         featX, featY, itemCount, monsterCount, qualifyingTileCount,
         **distanceMap = NULL, distance25, distance75, distanceBound[2],
         personalSpace, failsafe, locationFailsafe,
@@ -1036,7 +1036,7 @@ boolean buildAMachine(enum machineTypes bp,
             }
 
             // Pick from among the suitable blueprints.
-            randIndex = rand_range(1, totalFreq);
+            int randIndex = rand_range(1, totalFreq);
             for (int i=1; i<gameConst->numberBlueprints; i++) {
                 if (blueprintQualifies(i, requiredMachineFlags)) {
                     if (randIndex <= blueprintCatalog[i].frequency) {
@@ -1077,7 +1077,7 @@ boolean buildAMachine(enum machineTypes bp,
 
                 if (totalFreq) {
                     // Choose the gate.
-                    randIndex = rand_range(0, totalFreq - 1);
+                    const int randIndex = rand_range(0, totalFreq - 1);
                     originX = p->gateCandidates[randIndex].x;
                     originY = p->gateCandidates[randIndex].y;
                 } else {
@@ -1211,7 +1211,7 @@ boolean buildAMachine(enum machineTypes bp,
                     pmap[i][j].layers[DUNGEON] = DOOR;
                 }
                 // Clear wired tiles in case we stole them from another machine.
-                for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
+                for (short layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
                     if (tileCatalog[pmap[i][j].layers[layer]].mechFlags & (TM_IS_WIRED | TM_IS_CIRCUIT_BREAKER)) {
                         pmap[i][j].layers[layer] = (layer == DUNGEON ? FLOOR : NOTHING);
                     }
@@ -1278,7 +1278,7 @@ boolean buildAMachine(enum machineTypes bp,
             }
         }
         if (totalFreq > 0) {
-            randIndex = rand_range(1, totalFreq);
+            int randIndex = rand_range(1, totalFreq);
             for (int i=0; i<blueprintCatalog[bp].featureCount; i++) {
                 if (blueprintCatalog[bp].feature[i].flags & alternativeFlags[j]) {
                     if (randIndex == 1) {
@@ -1299,7 +1299,7 @@ boolean buildAMachine(enum machineTypes bp,
     zeroOutGrid(p->occupied);
 
     // Now tick through the features and build them.
-    for (feat = 0; feat < blueprintCatalog[bp].featureCount; feat++) {
+    for (int feat = 0; feat < blueprintCatalog[bp].featureCount; feat++) {
 
         if (skipFeature[feat]) {
             continue; // Skip the alternative features that were not selected for building.
@@ -1384,7 +1384,7 @@ boolean buildAMachine(enum machineTypes bp,
                     // the candidates map so that subsequent instances of this same feature can't choose it.
                     featX = -1;
                     featY = -1;
-                    randIndex = rand_range(1, qualifyingTileCount);
+                    int randIndex = rand_range(1, qualifyingTileCount);
                     for(int i=0; i<DCOLS && featX < 0; i++) {
                         for(int j=0; j<DROWS && featX < 0; j++) {
                             if (p->candidates[i][j]) {
