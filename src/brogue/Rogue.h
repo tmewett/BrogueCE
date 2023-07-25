@@ -2857,8 +2857,8 @@ extern "C" {
                           short originX, short originY,
                           unsigned long requiredMachineFlags,
                           item *adoptiveItem,
-                          item *parentSpawnedItems[50],
-                          creature *parentSpawnedMonsters[50]);
+                          item *parentSpawnedItems[MACHINES_BUFFER_LENGTH],
+                          creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]);
     void attachRooms(short **grid, const dungeonProfile *theDP, short attempts, short maxRoomCount);
     void digDungeon();
     void updateMapToShore();
