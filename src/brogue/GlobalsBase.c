@@ -74,7 +74,7 @@ unsigned long maxLevelChanges;
 char annotationPathname[BROGUE_FILENAME_MAX];   // pathname of annotation file
 uint64_t previousGameSeed;
 
-const pos WINDOW_POSITION_DUNGEON_TOP_LEFT = { STAT_BAR_WIDTH + 3, MESSAGE_LINES + 2};
+const windowpos WINDOW_POSITION_DUNGEON_TOP_LEFT = { STAT_BAR_WIDTH + 3, MESSAGE_LINES + 2};
 
 //                                  Red     Green   Blue    RedRand GreenRand   BlueRand    Rand    Dances?
 // basic colors

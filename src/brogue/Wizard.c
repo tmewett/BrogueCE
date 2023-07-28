@@ -54,8 +54,8 @@ static short dialogSelectEntryFromList(
         buttons[i].buttonColor = interfaceBoxColor;
         buttons[i].hotkey[0] = 'a' + i;
         buttons[i].hotkey[1] = 'A' + i;
-        buttons[i].x = WINDOW_POSITION_DUNGEON_TOP_LEFT.x;
-        buttons[i].y = WINDOW_POSITION_DUNGEON_TOP_LEFT.y + 1 + i;
+        buttons[i].x = WINDOW_POSITION_DUNGEON_TOP_LEFT.window_x;
+        buttons[i].y = WINDOW_POSITION_DUNGEON_TOP_LEFT.window_y + 1 + i;
         if (KEYBOARD_LABELS) {
             sprintf(buttonText, "%c) %s", (int)buttons[i].hotkey[0], buttons[i].text);
             strcpy(buttons[i].text, buttonText);
@@ -68,8 +68,8 @@ static short dialogSelectEntryFromList(
 
     width = maxLen + 1;
     height = buttonCount + 2;
-    x = WINDOW_POSITION_DUNGEON_TOP_LEFT.x;
-    y = WINDOW_POSITION_DUNGEON_TOP_LEFT.y;
+    x = WINDOW_POSITION_DUNGEON_TOP_LEFT.window_x;
+    y = WINDOW_POSITION_DUNGEON_TOP_LEFT.window_y;
     clearDisplayBuffer(dbuf);
 
     //Dialog Title

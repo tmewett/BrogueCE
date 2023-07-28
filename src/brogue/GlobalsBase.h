@@ -123,7 +123,7 @@ extern const char monsterBehaviorFlagDescriptions[32][COLS];
 extern const char monsterAbilityFlagDescriptions[32][COLS];
 extern const char monsterBookkeepingFlagDescriptions[32][COLS];
 
-extern const pos WINDOW_POSITION_DUNGEON_TOP_LEFT;
+extern const windowpos WINDOW_POSITION_DUNGEON_TOP_LEFT;
 
 // charm constants
 #define CHARM_EFFECT_DURATION_INCREMENT_ARRAY_SIZE 50
