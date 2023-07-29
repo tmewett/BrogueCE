@@ -970,8 +970,8 @@ boolean buildAMachine(enum machineTypes bp,
                       creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]) {
 
     short totalFreq, instance, instanceCount = 0,
-        featX, featY, itemCount, monsterCount, qualifyingTileCount,
-        **distanceMap = NULL, distance25, distance75, distanceBound[2],
+        itemCount, monsterCount, qualifyingTileCount,
+        **distanceMap = NULL,
         personalSpace, locationFailsafe,
         machineNumber;
 
@@ -1243,8 +1243,8 @@ boolean buildAMachine(enum machineTypes bp,
             }
         }
     }
-    distance25 = (int) (qualifyingTileCount / 4);
-    distance75 = (int) (3 * qualifyingTileCount / 4);
+    int distance25 = (int) (qualifyingTileCount / 4);
+    int distance75 = (int) (3 * qualifyingTileCount / 4);
     for (int i=0; i<100; i++) {
         if (distance25 <= p->distances[i]) {
             distance25 = i;
@@ -1308,8 +1308,7 @@ boolean buildAMachine(enum machineTypes bp,
         feature = &(blueprintCatalog[bp].feature[feat]);
 
         // Figure out the distance bounds.
-        distanceBound[0] = 0;
-        distanceBound[1] = 10000;
+        short distanceBound[2] = { 0, 10000 };
         if (feature->flags & MF_NEAR_ORIGIN) {
             distanceBound[1] = distance25;
         }
@@ -1375,6 +1374,8 @@ boolean buildAMachine(enum machineTypes bp,
             for (instance = 0; (generateEverywhere || instance < instanceCount) && qualifyingTileCount > 0;) {
 
                 // Find a location for the feature.
+                int featX;
+                int featY;
                 if (feature->flags & MF_BUILD_AT_ORIGIN) {
                     // Does the feature want to be at the origin? If so, put it there. (Just an optimization.)
                     featX = originX;
