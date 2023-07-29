@@ -969,7 +969,7 @@ boolean buildAMachine(enum machineTypes bp,
                       item *parentSpawnedItems[MACHINES_BUFFER_LENGTH],
                       creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]) {
 
-    short k, layer, feat, randIndex, totalFreq, instance, instanceCount = 0,
+    short layer, feat, randIndex, totalFreq, instance, instanceCount = 0,
         featX, featY, itemCount, monsterCount, qualifyingTileCount,
         **distanceMap = NULL, distance25, distance75, distanceBound[2],
         personalSpace, failsafe, locationFailsafe,
@@ -1150,7 +1150,7 @@ boolean buildAMachine(enum machineTypes bp,
                 fillSequentialList(p->sRows, DROWS);
                 shuffleList(p->sRows, DROWS);
 
-                for (k=0; k<1000 && qualifyingTileCount < totalFreq; k++) {
+                for (int k=0; k<1000 && qualifyingTileCount < totalFreq; k++) {
                     for(int i=0; i<DCOLS && qualifyingTileCount < totalFreq; i++) {
                         for(int j=0; j<DROWS && qualifyingTileCount < totalFreq; j++) {
                             if (distanceMap[p->sCols[i]][p->sRows[j]] == k) {
