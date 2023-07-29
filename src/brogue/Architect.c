@@ -969,7 +969,7 @@ boolean buildAMachine(enum machineTypes bp,
                       item *parentSpawnedItems[MACHINES_BUFFER_LENGTH],
                       creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]) {
 
-    short j, k, layer, feat, randIndex, totalFreq, instance, instanceCount = 0,
+    short k, layer, feat, randIndex, totalFreq, instance, instanceCount = 0,
         featX, featY, itemCount, monsterCount, qualifyingTileCount,
         **distanceMap = NULL, distance25, distance75, distanceBound[2],
         personalSpace, failsafe, locationFailsafe,
@@ -1062,7 +1062,7 @@ boolean buildAMachine(enum machineTypes bp,
                 analyzeMap(true); // Make sure the chokeMap is up to date.
                 totalFreq = 0;
                 for(int i=0; i<DCOLS; i++) {
-                    for(j=0; j<DROWS && totalFreq < 50; j++) {
+                    for(int j=0; j<DROWS && totalFreq < 50; j++) {
                         if ((pmap[i][j].flags & IS_GATE_SITE)
                             && !(pmap[i][j].flags & IS_IN_MACHINE)
                             && chokeMap[i][j] >= blueprintCatalog[bp].roomSize[0]
@@ -1152,7 +1152,7 @@ boolean buildAMachine(enum machineTypes bp,
 
                 for (k=0; k<1000 && qualifyingTileCount < totalFreq; k++) {
                     for(int i=0; i<DCOLS && qualifyingTileCount < totalFreq; i++) {
-                        for(j=0; j<DROWS && qualifyingTileCount < totalFreq; j++) {
+                        for(int j=0; j<DROWS && qualifyingTileCount < totalFreq; j++) {
                             if (distanceMap[p->sCols[i]][p->sRows[j]] == k) {
                                 p->interior[p->sCols[i]][p->sRows[j]] = true;
                                 qualifyingTileCount++;
@@ -1202,7 +1202,7 @@ boolean buildAMachine(enum machineTypes bp,
     // If necessary, label the interior as IS_IN_AREA_MACHINE or IS_IN_ROOM_MACHINE and mark down the number.
     machineNumber = ++rogue.machineNumber; // Reserve this machine number, starting with 1.
     for(int i=0; i<DCOLS; i++) {
-        for(j=0; j<DROWS; j++) {
+        for(int j=0; j<DROWS; j++) {
             if (p->interior[i][j]) {
                 pmap[i][j].flags |= ((blueprintCatalog[bp].flags & BP_ROOM) ? IS_IN_ROOM_MACHINE : IS_IN_AREA_MACHINE);
                 pmap[i][j].machineNumber = machineNumber;
@@ -1235,7 +1235,7 @@ boolean buildAMachine(enum machineTypes bp,
         p->distances[i] = 0;
     }
     for(int i=0; i<DCOLS; i++) {
-        for(j=0; j<DROWS; j++) {
+        for(int j=0; j<DROWS; j++) {
             if (p->interior[i][j]
                 && distanceMap[i][j] < 100) {
                 p->distances[distanceMap[i][j]]++; // create a histogram of distances -- poor man's sort function
@@ -1269,7 +1269,7 @@ boolean buildAMachine(enum machineTypes bp,
     for (int i=0; i<blueprintCatalog[bp].featureCount; i++) {
         skipFeature[i] = false;
     }
-    for (j = 0; j <= 1; j++) {
+    for (int j = 0; j <= 1; j++) {
         totalFreq = 0;
         for (int i=0; i<blueprintCatalog[bp].featureCount; i++) {
             if (blueprintCatalog[bp].feature[i].flags & alternativeFlags[j]) {
@@ -1338,7 +1338,7 @@ boolean buildAMachine(enum machineTypes bp,
             // Make a master map of candidate locations for this feature.
             qualifyingTileCount = 0;
             for(int i=0; i<DCOLS; i++) {
-                for(j=0; j<DROWS; j++) {
+                for(int j=0; j<DROWS; j++) {
                     if (cellIsFeatureCandidate(i, j,
                                                originX, originY,
                                                distanceBound,
@@ -1386,7 +1386,7 @@ boolean buildAMachine(enum machineTypes bp,
                     featY = -1;
                     randIndex = rand_range(1, qualifyingTileCount);
                     for(int i=0; i<DCOLS && featX < 0; i++) {
-                        for(j=0; j<DROWS && featX < 0; j++) {
+                        for(int j=0; j<DROWS && featX < 0; j++) {
                             if (p->candidates[i][j]) {
                                 if (randIndex == 1) {
                                     // This is the place!
@@ -1436,7 +1436,7 @@ boolean buildAMachine(enum machineTypes bp,
                     for (int i = featX - personalSpace + 1;
                          i <= featX + personalSpace - 1;
                          i++) {
-                        for (j = featY - personalSpace + 1;
+                        for (int j = featY - personalSpace + 1;
                              j <= featY + personalSpace - 1;
                              j++) {
                             if (coordinatesAreInMap(i, j)) {
@@ -1531,12 +1531,12 @@ boolean buildAMachine(enum machineTypes bp,
                             if (success) {
                                 // Success! Now we have to add that machine's items and monsters to our own list, so they
                                 // all get deleted if this machine or its parent fails.
-                                for (j=0; j<MACHINES_BUFFER_LENGTH && p->spawnedItemsSub[j]; j++) {
+                                for (int j=0; j<MACHINES_BUFFER_LENGTH && p->spawnedItemsSub[j]; j++) {
                                     p->spawnedItems[itemCount] = p->spawnedItemsSub[j];
                                     itemCount++;
                                     p->spawnedItemsSub[j] = NULL;
                                 }
-                                for (j=0; j<MACHINES_BUFFER_LENGTH && p->spawnedMonstersSub[j]; j++) {
+                                for (int j=0; j<MACHINES_BUFFER_LENGTH && p->spawnedMonstersSub[j]; j++) {
                                     p->spawnedMonsters[monsterCount] = p->spawnedMonstersSub[j];
                                     monsterCount++;
                                     p->spawnedMonstersSub[j] = NULL;
@@ -1664,7 +1664,7 @@ boolean buildAMachine(enum machineTypes bp,
     // Clear out the interior flag for all non-wired cells, if requested.
     if (blueprintCatalog[bp].flags & BP_NO_INTERIOR_FLAG) {
         for(int i=0; i<DCOLS; i++) {
-            for(j=0; j<DROWS; j++) {
+            for(int j=0; j<DROWS; j++) {
                 if (pmap[i][j].machineNumber == machineNumber
                     && !cellHasTMFlag(i, j, (TM_IS_WIRED | TM_IS_CIRCUIT_BREAKER))) {
 
