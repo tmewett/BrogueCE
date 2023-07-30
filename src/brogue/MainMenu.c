@@ -437,14 +437,14 @@ static void chooseGameMode() {
 
     snprintf(tmpBuf, TEXT_MAX_LENGTH, "%sEasy Mode%s\n", goldColorEscape, whiteColorEscape);
     append(textBuf, tmpBuf, TEXT_MAX_LENGTH);
-    append(textBuf, "Succumb to demonic temptation and play as an all-powerful ampersand, taking 20%% as much damage. "
-                    "But great power comes at a great price -- specifically, a 90% income tax rate.\n\n", TEXT_MAX_LENGTH);
+    append(textBuf, "Succumb to temptation and transform into a powerful demon, taking 20% as much damage. "
+                    "But great power comes at a great price -- you keep only 10% of your score.\n\n", TEXT_MAX_LENGTH);
 
     snprintf(tmpBuf, TEXT_MAX_LENGTH, "%sWizard Mode%s\n", goldColorEscape, whiteColorEscape);
     append(textBuf, tmpBuf, TEXT_MAX_LENGTH);
     append(textBuf, "Play as an invincible wizard that starts with legendary items and is magically reborn after every "
-                    "death. Summon monsters and make them friend or foe. Conjure any item out of thin air. All this and"
-                    " more, for the bargain basement price of forfeiting your score.", TEXT_MAX_LENGTH);
+                    "death. Summon monsters and make them friend or foe. Conjure any item out of thin air. "
+                    "(Your score is not saved.)", TEXT_MAX_LENGTH);
 
     brogueButton buttons[3];
     cellDisplayBuffer rbuf[COLS][ROWS];
