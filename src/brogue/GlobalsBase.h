@@ -21,19 +21,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-extern tcell tmap[DCOLS][DROWS];                        // grids with info about the map
-extern pcell pmap[DCOLS][DROWS];                        // grids with info about the map
+extern tcell tmap[DCOLS][DROWS]; // grids with info about the map
+extern pcell pmap[DCOLS][DROWS]; // grids with info about the map
 
 // Returns a pointer to the `tcell` at the given position. The position must be in-bounds.
-static inline tcell* tmapAt(pos p) {
-  brogueAssert(p.x >= 0 && p.x < DCOLS && p.y >= 0 && p.y < DROWS);
-  return &tmap[p.x][p.y];
+static inline tcell *tmapAt(pos p) {
+    brogueAssert(p.x >= 0 && p.x < DCOLS && p.y >= 0 && p.y < DROWS);
+    return &tmap[p.x][p.y];
 }
 // Returns a pointer to the `pcell` at the given position. The position must be in-bounds.
-static inline pcell* pmapAt(pos p) {
-  brogueAssert(p.x >= 0 && p.x < DCOLS && p.y >= 0 && p.y < DROWS);
-  return &pmap[p.x][p.y];
+static inline pcell *pmapAt(pos p) {
+    brogueAssert(p.x >= 0 && p.x < DCOLS && p.y >= 0 && p.y < DROWS);
+    return &pmap[p.x][p.y];
 }
 
 extern const short nbDirs[8][2];
@@ -41,14 +40,14 @@ extern const short nbDirs[8][2];
 // Returns the `pos` which is one cell away in the provided direction.
 // The direction must not be `NO_DIRECTION`.
 static inline pos posNeighborInDirection(pos p, enum directions direction_to_step) {
-  brogueAssert(direction_to_step >= 0 && direction_to_step < 8);
-  return (pos) { .x = p.x + nbDirs[direction_to_step][0], .y = p.y + nbDirs[direction_to_step][1] };
+    brogueAssert(direction_to_step >= 0 && direction_to_step < 8);
+    return (pos){.x = p.x + nbDirs[direction_to_step][0], .y = p.y + nbDirs[direction_to_step][1]};
 }
 
 extern short **scentMap;
 extern cellDisplayBuffer displayBuffer[COLS][ROWS];
 extern short terrainRandomValues[DCOLS][DROWS][8];
-extern short **safetyMap;                                       // used to help monsters flee
+extern short **safetyMap; // used to help monsters flee
 extern short **allySafetyMap;
 extern short **chokeMap;
 
@@ -67,9 +66,9 @@ extern item *packItems;
 extern item *monsterItemsHopper;
 extern short numberOfWaypoints;
 
-extern char displayedMessage[MESSAGE_LINES][COLS*2];
+extern char displayedMessage[MESSAGE_LINES][COLS * 2];
 extern short messagesUnconfirmed;
-extern char combatText[COLS*2];
+extern char combatText[COLS * 2];
 extern short messageArchivePosition;
 extern archivedMessage messageArchive[MESSAGE_ARCHIVE_ENTRIES];
 
@@ -89,7 +88,7 @@ extern unsigned long positionInPlaybackFile;
 extern unsigned long lengthOfPlaybackFile;
 extern unsigned long recordingLocation;
 extern unsigned long maxLevelChanges;
-extern char annotationPathname[BROGUE_FILENAME_MAX];    // pathname of annotation file
+extern char annotationPathname[BROGUE_FILENAME_MAX]; // pathname of annotation file
 extern uint64_t previousGameSeed;
 
 // basic colors

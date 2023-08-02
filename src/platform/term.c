@@ -6,23 +6,20 @@
 #include "Rogue.h"
 #include <ctype.h>
 
-
 // As a rule, everything in term.c is the result of gradual evolutionary
 // change.  It's messy.
 
-#define COLORING(fg,bg) (((fg) & 0x0f) | (((bg) & 0x07) << 4))
-#define COLOR_FG(color,fg) (((fg) & 0x0f) + ((color) & 0x70))
-#define COLOR_BG(color,bg) (((color) & 0x0f) + (((bg) & 0x07) << 4))
+#define COLORING(fg, bg) (((fg)&0x0f) | (((bg)&0x07) << 4))
+#define COLOR_FG(color, fg) (((fg)&0x0f) + ((color)&0x70))
+#define COLOR_BG(color, bg) (((color)&0x0f) + (((bg)&0x07) << 4))
 #define COLOR_INDEX(color) (1 + ((color)&0x07) + (((color) >> 1) & 0x38))
 #define COLOR_ATTR(color) (COLOR_PAIR(COLOR_INDEX(color)) | (((color)&0x08) ? A_BOLD : 0))
 
+static struct { int curses, color; } videomode = {0, 0};
 
-static struct { int curses, color; } videomode = { 0, 0 };
-
-static struct { int width, height; } minsize = { 80, 24 };
+static struct { int width, height; } minsize = {80, 24};
 
 static void init_coersion();
-
 
 // 256 color mode stuff
 static void initialize_prs();
@@ -36,7 +33,6 @@ struct {
     int count, next;
 } prs[256];
 
-
 typedef struct {
     int ch, pair, shuffle;
     intcolor fore, back;
@@ -44,31 +40,21 @@ typedef struct {
 
 pairmode_cell *cell_buffer;
 
-enum {
-    coerce_16,
-    coerce_256,
-    truecolor
-} colormode;
+enum { coerce_16, coerce_256, truecolor } colormode;
 
 int is_xterm;
 
-
 //
 
-static void preparecolor ( ) {
+static void preparecolor() {
     // sixteen color mode colors (we use these in 256-color mode, too)
-    static int pairParts[8] = {
-        COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW,
-        COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN, COLOR_WHITE
-    };
+    static int pairParts[8]
+        = {COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW, COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN, COLOR_WHITE};
 
     int fg, bg;
-    for (bg=0; bg<8; bg++) {
-        for (fg=0; fg<8; fg++) {
-            init_pair(
-                COLOR_INDEX(COLORING(fg, bg)),
-                pairParts[fg], pairParts[bg]
-            );
+    for (bg = 0; bg < 8; bg++) {
+        for (fg = 0; fg < 8; fg++) {
+            init_pair(COLOR_INDEX(COLORING(fg, bg)), pairParts[fg], pairParts[bg]);
         }
     }
 
@@ -84,19 +70,19 @@ static void preparecolor ( ) {
 
 static void term_title(const char *title) {
     if (is_xterm) {
-        printf ("\033]2;%s\007", title); // ESC ]0; title BEL
+        printf("\033]2;%s\007", title); // ESC ]0; title BEL
     }
 }
 
 static void term_title_pop() {
     if (is_xterm) {
         term_title("Terminal");
-        printf ("\033[22;2t");
+        printf("\033[22;2t");
     }
 }
 static void term_title_push() {
     if (is_xterm) {
-        printf ("\033[23;2t");
+        printf("\033[23;2t");
     }
 }
 
@@ -104,13 +90,13 @@ static void term_set_size(int h, int w) {
     // works in gnome-terminal, but not xterm; causes trouble for maximized windows
     if (is_xterm) {
         // first, try resizing the height, in case only that is supported
-        printf ("\033[%dt", (h > 24 ? h : 24));
+        printf("\033[%dt", (h > 24 ? h : 24));
 
         // then try resizing both, in case we can
-        printf ("\033[8;%d;%dt", h, w);
+        printf("\033[8;%d;%dt", h, w);
 
         // then refresh so ncurses knows about it
-        refresh( );
+        refresh();
     }
 }
 
@@ -118,40 +104,41 @@ static void term_show_scrollbar(int show) {
     // works in xterm, but not gnome-terminal
     if (is_xterm) {
         if (show) {
-            printf ("\033[?30h");
+            printf("\033[?30h");
         } else {
-            printf ("\033[?30l");
+            printf("\033[?30l");
         }
     }
 }
 
-static int curses_init( ) {
-    if (videomode.curses) return 0;
+static int curses_init() {
+    if (videomode.curses)
+        return 0;
 
     // isterm?
-    initscr( );
-    if (!has_colors( )) {
-        endwin( );
-        fprintf (stderr, "Your terminal has no color support.\n");
+    initscr();
+    if (!has_colors()) {
+        endwin();
+        fprintf(stderr, "Your terminal has no color support.\n");
         return 1;
     }
 
-    start_color( );
-    clear( );
-    curs_set( 0 );
-    refresh( );
+    start_color();
+    clear();
+    curs_set(0);
+    refresh();
     leaveok(stdscr, TRUE);
-    preparecolor( );
-    raw( );
-    noecho( );
-    nonl( );
+    preparecolor();
+    raw();
+    noecho();
+    nonl();
 
     nodelay(stdscr, TRUE);
     meta(stdscr, TRUE);
     keypad(stdscr, TRUE);
 
     mousemask(BUTTON1_PRESSED | BUTTON1_RELEASED | REPORT_MOUSE_POSITION | BUTTON_SHIFT | BUTTON_CTRL, NULL);
-    mouseinterval(0); //do no click processing, thank you
+    mouseinterval(0); // do no click processing, thank you
 
     videomode.curses = 1;
 
@@ -159,7 +146,6 @@ static int curses_init( ) {
 
     return 1;
 }
-
 
 static int term_start() {
     char *term = getenv("TERM");
@@ -196,25 +182,15 @@ typedef struct Lab {
 #define HALFBRIGHT 0.5
 #define BRIGHT 0.9
 
-fcolor palette[16] = {
-    {DARK, DARK, DARK},
-    {MID, DARK, DARK},
-    {DARK, MID, DARK},
-    {MID, .8 * MID, DIM},
-    {DARK, DARK, MID},
-    {MID + DIM, DARK, MID},
-    {DARK, MID, MID},
-    {HALFBRIGHT, HALFBRIGHT, HALFBRIGHT},
+fcolor palette[16] = {{DARK, DARK, DARK},        {MID, DARK, DARK},
+                      {DARK, MID, DARK},         {MID, .8 * MID, DIM},
+                      {DARK, DARK, MID},         {MID + DIM, DARK, MID},
+                      {DARK, MID, MID},          {HALFBRIGHT, HALFBRIGHT, HALFBRIGHT},
 
-    {MID, MID, MID},
-    {BRIGHT, DARK, DARK},
-    {DARK, BRIGHT, DARK},
-    {BRIGHT, BRIGHT, DARK},
-    {HALFBRIGHT, MID, BRIGHT},
-    {BRIGHT, HALFBRIGHT, BRIGHT},
-    {DARK, BRIGHT, BRIGHT},
-    {BRIGHT, BRIGHT, BRIGHT}
-};
+                      {MID, MID, MID},           {BRIGHT, DARK, DARK},
+                      {DARK, BRIGHT, DARK},      {BRIGHT, BRIGHT, DARK},
+                      {HALFBRIGHT, MID, BRIGHT}, {BRIGHT, HALFBRIGHT, BRIGHT},
+                      {DARK, BRIGHT, BRIGHT},    {BRIGHT, BRIGHT, BRIGHT}};
 
 CIE ciePalette[16];
 Lab labPalette[16];
@@ -237,7 +213,8 @@ static CIE toCIE(fcolor c) {
     cie.Z = 0.0193 * c.r + 0.1192 * c.g + 0.9505 * c.b;
 
     float sum = cie.X + cie.Y + cie.Z;
-    if (sum == 0.0) sum = 1.0;
+    if (sum == 0.0)
+        sum = 1.0;
     cie.x = cie.X / sum;
     cie.y = cie.Y / sum;
     cie.z = 1.0 - cie.x - cie.y;
@@ -246,11 +223,13 @@ static CIE toCIE(fcolor c) {
 }
 
 static float Labf(float t) {
-    return t > ((6.0/29.0) * (6.0/29.0) * (6.0/29.0)) ? pow(t, 1.0/3.0) : ((1.0/3.0) * (29.0 / 6.0) * (29.0 / 6.0)) * t + (4.0 / 29.0);
+    return t > ((6.0 / 29.0) * (6.0 / 29.0) * (6.0 / 29.0))
+               ? pow(t, 1.0 / 3.0)
+               : ((1.0 / 3.0) * (29.0 / 6.0) * (29.0 / 6.0)) * t + (4.0 / 29.0);
 }
 
 static Lab toLab(CIE *c) {
-    CIE n = (CIE) {Labf(c->X / white.X), Labf(c->Y / white.Y), Labf(c->Z / white.Z)};
+    CIE n = (CIE){Labf(c->X / white.X), Labf(c->Y / white.Y), Labf(c->Z / white.Z)};
     Lab l;
 
     // http://en.wikipedia.org/wiki/L*a*b*#RGB_and_CMYK_conversions
@@ -261,9 +240,7 @@ static Lab toLab(CIE *c) {
     return l;
 }
 
-static float munsellSloanGodlove(float t) {
-    return sqrt(1.4742 * t - 0.004743 * t * t);
-}
+static float munsellSloanGodlove(float t) { return sqrt(1.4742 * t - 0.004743 * t * t); }
 
 static CIE adams(CIE *v) {
     CIE c;
@@ -283,7 +260,7 @@ static float CIE76(Lab *L1, Lab *L2) {
 }
 
 static void init_coersion() {
-    fcolor sRGB_white = (fcolor) {1, 1, 1};
+    fcolor sRGB_white = (fcolor){1, 1, 1};
     white = toCIE(sRGB_white);
 
     int i;
@@ -300,7 +277,7 @@ static void init_coersion() {
     cell_buffer = 0;
 }
 
-static int best (fcolor *fg, fcolor *bg) {
+static int best(fcolor *fg, fcolor *bg) {
     // analyze fg & bg for their contrast
     CIE cieFg = toCIE(*fg);
     CIE cieBg = toCIE(*bg);
@@ -309,7 +286,7 @@ static int best (fcolor *fg, fcolor *bg) {
     // CIE adamsFg = adams(&cieFg);
     // CIE adamsBg = adams(&cieBg);
 
-    float JND = 2.3; // just-noticeable-difference
+    float JND = 2.3;                                     // just-noticeable-difference
     int areTheSame = CIE76(&labFg, &labBg) <= 2.0 * JND; // a little extra fudge
 
     float big = 100000000;
@@ -324,10 +301,13 @@ static int best (fcolor *fg, fcolor *bg) {
 
         if (s < bg2_score) {
             if (s < bg1_score) {
-                bg2 = bg1; bg1 = i;
-                bg2_score = bg1_score; bg1_score = s;
+                bg2 = bg1;
+                bg1 = i;
+                bg2_score = bg1_score;
+                bg1_score = s;
             } else {
-                bg2 = i; bg2_score = s;
+                bg2 = i;
+                bg2_score = s;
             }
         }
     }
@@ -341,16 +321,19 @@ static int best (fcolor *fg, fcolor *bg) {
 
         if (s < fg2_score) {
             if (s < fg1_score) {
-                fg2 = fg1; fg1 = i;
-                fg2_score = fg1_score; fg1_score = s;
+                fg2 = fg1;
+                fg1 = i;
+                fg2_score = fg1_score;
+                fg1_score = s;
             } else {
-                fg2 = i; fg2_score = s;
+                fg2 = i;
+                fg2_score = s;
             }
         }
     }
 
     if (fg1 != bg1) {
-        return COLORING (fg1, bg1);
+        return COLORING(fg1, bg1);
     } else {
         if (fg1_score + bg2_score < fg2_score + bg1_score) {
             return COLORING(fg1, bg2);
@@ -359,9 +342,6 @@ static int best (fcolor *fg, fcolor *bg) {
         }
     }
 }
-
-
-
 
 static void initialize_prs() {
     int i;
@@ -373,20 +353,21 @@ static void initialize_prs() {
     prs[255].next = 0;
 }
 
-static void coerce_colorcube (fcolor *f, intcolor *c) {
+static void coerce_colorcube(fcolor *f, intcolor *c) {
     // 0-15 are the standard ANSI colors
     // 16-231 are a 6x6x6 RGB color cube given by ((36 * r) + (6 * g) + b + 16) with r,g,b in [0..5]
     // 232-255 are a greyscale ramp without black and white.
 
     float sat = 0.2, bright = 0.6, contrast = 6.3;
 
-    float rf = bright + f->r * contrast,
-        gf = bright + f->g * contrast,
-        bf = bright + f->b * contrast;
+    float rf = bright + f->r * contrast, gf = bright + f->g * contrast, bf = bright + f->b * contrast;
 
-    if (rf < gf && rf < bf) rf -= sat * ((gf < bf ? bf : gf) - rf);
-    else if (gf < bf && gf < rf) gf -= sat * ((rf < bf ? bf : rf) - gf);
-    else if (bf < gf && bf < rf) bf -= sat * ((gf < rf ? rf : gf) - bf);
+    if (rf < gf && rf < bf)
+        rf -= sat * ((gf < bf ? bf : gf) - rf);
+    else if (gf < bf && gf < rf)
+        gf -= sat * ((rf < bf ? bf : rf) - gf);
+    else if (bf < gf && bf < rf)
+        bf -= sat * ((gf < rf ? rf : gf) - bf);
 
     int r = rf, g = gf, b = bf;
     r = r < 0 ? 0 : r > 5 ? 5 : r;
@@ -399,14 +380,11 @@ static void coerce_colorcube (fcolor *f, intcolor *c) {
     c->idx = ((36 * r) + (6 * g) + b + 16);
 }
 
-static int intcolor_distance (intcolor *a, intcolor *b) {
-    return
-        (a->r - b->r) * (a->r - b->r)
-        + (a->g - b->g) * (a->g - b->g)
-        + (a->b - b->b) * (a->b - b->b);
+static int intcolor_distance(intcolor *a, intcolor *b) {
+    return (a->r - b->r) * (a->r - b->r) + (a->g - b->g) * (a->g - b->g) + (a->b - b->b) * (a->b - b->b);
 }
 
-static int coerce_prs (intcolor *fg, intcolor *bg) {
+static int coerce_prs(intcolor *fg, intcolor *bg) {
     // search for an exact match in the list
     int pair;
     pair = prs[1].next;
@@ -449,7 +427,8 @@ static int coerce_prs (intcolor *fg, intcolor *bg) {
         if (delta < bestscore) {
             bestscore = delta;
             bestpair = pair;
-            if (delta == 1) break; // as good as it gets without being exact!
+            if (delta == 1)
+                break; // as good as it gets without being exact!
         }
         pair = prs[pair].next;
     }
@@ -467,7 +446,6 @@ static void buffer_plot(int ch, int x, int y, fcolor *fg, fcolor *bg) {
     // pair = cube_bg.idx;
     // cube_fg = cube_bg;
 
-
     // init_pair(pair, cube_fg.idx, cube_bg.idx);
 
     // return pair;
@@ -479,28 +457,27 @@ static void buffer_plot(int ch, int x, int y, fcolor *fg, fcolor *bg) {
         coerce_colorcube(bg, &cube_bg);
         if (cube_fg.idx == cube_bg.idx) {
             // verify that the colors are really the same; otherwise, we'd better force the output apart
-            int naive_distance =
-                (fg->r - bg->r) * (fg->r - bg->r)
-                + (fg->g - bg->g) * (fg->g - bg->g)
-                + (fg->b - bg->b) * (fg->b - bg->b);
+            int naive_distance = (fg->r - bg->r) * (fg->r - bg->r) + (fg->g - bg->g) * (fg->g - bg->g)
+                                 + (fg->b - bg->b) * (fg->b - bg->b);
             if (naive_distance > 3) {
                 // very arbitrary cutoff, and an arbitrary fix, very lazy
-                if (cube_bg.r > 0) {cube_bg.r -= 1; cube_bg.idx -= 1; }
-                if (cube_bg.g > 0) {cube_bg.g -= 1; cube_bg.idx -= 6; }
-                if (cube_bg.b > 0) {cube_bg.b -= 1; cube_bg.idx -= 36; }
+                if (cube_bg.r > 0) {
+                    cube_bg.r -= 1;
+                    cube_bg.idx -= 1;
+                }
+                if (cube_bg.g > 0) {
+                    cube_bg.g -= 1;
+                    cube_bg.idx -= 6;
+                }
+                if (cube_bg.b > 0) {
+                    cube_bg.b -= 1;
+                    cube_bg.idx -= 36;
+                }
             }
         }
     } else {
-        cube_fg = (intcolor){
-            .r = round(fg->r * 255),
-            .g = round(fg->g * 255),
-            .b = round(fg->b * 255)
-        };
-        cube_bg = (intcolor){
-            .r = round(bg->r * 255),
-            .g = round(bg->g * 255),
-            .b = round(bg->b * 255)
-        };
+        cube_fg = (intcolor){.r = round(fg->r * 255), .g = round(fg->g * 255), .b = round(fg->b * 255)};
+        cube_bg = (intcolor){.r = round(bg->r * 255), .g = round(bg->g * 255), .b = round(bg->b * 255)};
     }
 
     int cell = x + y * minsize.width;
@@ -558,7 +535,8 @@ static void buffer_render_24bit() {
             pairmode_cell *c = &cell_buffer[x + y * minsize.width];
 
             // `pair` is set to -1 when a tile changes, which signals we need to print it
-            if (!c->pair && !fullRefresh) continue;
+            if (!c->pair && !fullRefresh)
+                continue;
             c->pair = 0;
 
             // change background color
@@ -576,7 +554,7 @@ static void buffer_render_24bit() {
             // move cursor if necessary
             if (cx != x || cy != y) {
                 cx = x, cy = y;
-                printf("\033[%d;%df", cy+1, cx+1);
+                printf("\033[%d;%df", cy + 1, cx + 1);
             }
 
             // print the character
@@ -590,7 +568,8 @@ static void buffer_render_24bit() {
 }
 
 static void term_mvaddch(int x, int y, int ch, fcolor *fg, fcolor *bg) {
-    if (x < 0 || y < 0 || x >= minsize.width || y >= minsize.height) return;
+    if (x < 0 || y < 0 || x >= minsize.width || y >= minsize.height)
+        return;
 
     if (colormode == coerce_16) {
         int c = best(fg, bg);
@@ -610,9 +589,12 @@ static void term_refresh() {
             short r = palette[i].r * 1000;
             short g = palette[i].g * 1000;
             short b = palette[i].b * 1000;
-            if (r < 0) r = 0;
-            if (g < 0) g = 0;
-            if (b < 0) b = 0;
+            if (r < 0)
+                r = 0;
+            if (g < 0)
+                g = 0;
+            if (b < 0)
+                b = 0;
             init_color(i + 1, r, g, b);
         }
     }
@@ -636,9 +618,9 @@ static void term_refresh() {
     }
 }
 
-static void ensure_size( );
+static void ensure_size();
 
-static int term_getkey( ) {
+static int term_getkey() {
     Term.mouse.justPressed = 0;
     Term.mouse.justReleased = 0;
     Term.mouse.justMoved = 0;
@@ -646,11 +628,11 @@ static int term_getkey( ) {
     while (1) {
         int got = getch();
         if (got == KEY_RESIZE) {
-            ensure_size( );
+            ensure_size();
             fullRefresh = 1;
         } else if (got == KEY_MOUSE) {
             MEVENT mevent;
-            getmouse (&mevent);
+            getmouse(&mevent);
             Term.mouse.x = mevent.x;
             Term.mouse.y = mevent.y;
             Term.mouse.shift = (mevent.bstate & BUTTON_SHIFT) != 0;
@@ -668,9 +650,12 @@ static int term_getkey( ) {
             }
             return TERM_MOUSE;
         } else {
-            if (got == KEY_ENTER) got = 13; // KEY_ENTER -> ^M for systems with odd values for KEY_ENTER
-            if (got == ERR) return TERM_NONE;
-            else return got;
+            if (got == KEY_ENTER)
+                got = 13; // KEY_ENTER -> ^M for systems with odd values for KEY_ENTER
+            if (got == ERR)
+                return TERM_NONE;
+            else
+                return got;
         }
     }
 }
@@ -685,7 +670,7 @@ static int term_has_key() {
     }
 }
 
-static void ensure_size( ) {
+static void ensure_size() {
     int w = minsize.width, h = minsize.height;
 
     getmaxyx(stdscr, Term.height, Term.width);
@@ -696,13 +681,13 @@ static void ensure_size( ) {
             erase();
             attrset(COLOR_ATTR(7));
 
-            mvprintw(1,0,"Brogue needs a terminal window that is at least [%d x %d]", w, h);
+            mvprintw(1, 0, "Brogue needs a terminal window that is at least [%d x %d]", w, h);
 
             attrset(COLOR_ATTR(15));
-            mvprintw(2,0,"If your terminal can be resized, resize it now.\n");
+            mvprintw(2, 0, "If your terminal can be resized, resize it now.\n");
 
             attrset(COLOR_ATTR(7));
-            mvprintw(3,0,"Press ctrl-c at any time to quit.\n");
+            mvprintw(3, 0, "Press ctrl-c at any time to quit.\n");
 
             printw("Width:  %d/%d\n", Term.width, w);
             printw("Height: %d/%d\n", Term.height, h);
@@ -729,10 +714,10 @@ static void term_resize(int w, int h) {
     // now make sure it worked, and ask the user to resize the terminal if it didn't
     ensure_size();
 
-
     // make a new cell buffer
 
-    if (cell_buffer) free(cell_buffer);
+    if (cell_buffer)
+        free(cell_buffer);
     cell_buffer = malloc(sizeof(pairmode_cell) * w * h);
     // add error checking
     int i;
@@ -746,10 +731,7 @@ static void term_resize(int w, int h) {
     }
 }
 
-static void term_wait(int ms) {
-    napms(ms);
-}
-
+static void term_wait(int ms) { napms(ms); }
 
 struct {
     char *name;
@@ -769,7 +751,7 @@ struct {
     {"SRESET", KEY_SRESET},
     {"RESET", KEY_RESET},
     {"DOWN", KEY_DOWN},
-    {"UP", KEY_UP   },
+    {"UP", KEY_UP},
     {"LEFT", KEY_LEFT},
     {"RIGHT", KEY_RIGHT},
     {"HOME", KEY_HOME},
@@ -818,13 +800,13 @@ struct {
     {"C1", KEY_C1},
     {"C3", KEY_C3},
     {"BTAB", KEY_BTAB},
-    {"BEG", KEY_BEG },
+    {"BEG", KEY_BEG},
     {"CANCEL", KEY_CANCEL},
     {"CLOSE", KEY_CLOSE},
     {"COMMAND", KEY_COMMAND},
     {"COPY", KEY_COPY},
     {"CREATE", KEY_CREATE},
-    {"END", KEY_END },
+    {"END", KEY_END},
     {"EXIT", KEY_EXIT},
     {"FIND", KEY_FIND},
     {"HELP", KEY_HELP},
@@ -847,8 +829,8 @@ struct {
     {"SCOMMAND", KEY_SCOMMAND},
     {"SCOPY", KEY_SCOPY},
     {"SCREATE", KEY_SCREATE},
-    {"SDC", KEY_SDC },
-    {"SDL", KEY_SDL },
+    {"SDC", KEY_SDC},
+    {"SDL", KEY_SDL},
     {"SELECT", KEY_SELECT},
     {"SEND", KEY_SEND},
     {"SEOL", KEY_SEOL},
@@ -856,7 +838,7 @@ struct {
     {"SFIND", KEY_SFIND},
     {"SHELP", KEY_SHELP},
     {"SHOME", KEY_SHOME},
-    {"SIC", KEY_SIC },
+    {"SIC", KEY_SIC},
     {"SLEFT", KEY_SLEFT},
     {"SMESSAGE", KEY_SMESSAGE},
     {"SMOVE", KEY_SMOVE},
@@ -890,7 +872,7 @@ int term_keycodeByName(const char *name) {
     return name[0];
 }
 
-static int term_ctrlPressed(int* key) {
+static int term_ctrlPressed(int *key) {
     // The keycode representing the enter key depends on curses initialization settings. With the
     // current settings, it's represented as 13, so return `RETURN_KEY` instead.
     if (*key == 13) {
@@ -900,7 +882,7 @@ static int term_ctrlPressed(int* key) {
     if (*key == '\t') { // Tab is represented as "^I"
         return 0;
     }
-    const char* str = keyname(*key);
+    const char *str = keyname(*key);
     if (str == NULL) {
         return 0;
     }
@@ -918,18 +900,8 @@ static int term_ctrlPressed(int* key) {
     }
 }
 
-
-struct term_t Term = {
-    term_start,
-    term_end,
-    term_mvaddch,
-    term_refresh,
-    term_getkey,
-    term_wait,
-    term_has_key,
-    term_title,
-    term_resize,
-    term_keycodeByName,
-    term_ctrlPressed,
-    {KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_BACKSPACE, KEY_DC, KEY_F(12)}
-};
+struct term_t Term
+    = {term_start,         term_end,         term_mvaddch,
+       term_refresh,       term_getkey,      term_wait,
+       term_has_key,       term_title,       term_resize,
+       term_keycodeByName, term_ctrlPressed, {KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_BACKSPACE, KEY_DC, KEY_F(12)}};

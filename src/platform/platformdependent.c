@@ -42,147 +42,270 @@ typedef struct brogueScoreEntry {
 brogueScoreEntry scoreBuffer[HIGH_SCORES_COUNT];
 
 unsigned int glyphToUnicode(enum displayGlyph glyph) {
-    if (glyph < 128) return glyph;
+    if (glyph < 128)
+        return glyph;
 
     switch (glyph) {
-        case G_UP_ARROW: return U_UP_ARROW;
-        case G_DOWN_ARROW: return U_DOWN_ARROW;
-        case G_POTION: return '!';
-        case G_GRASS: return '"';
-        case G_WALL: return '#';
-        case G_DEMON: return '&';
-        case G_OPEN_DOOR: return '\'';
-        case G_GOLD: return '*';
-        case G_CLOSED_DOOR: return '+';
-        case G_RUBBLE: return ',';
-        case G_KEY: return '-';
-        case G_BOG: return '~';
-        case G_CHAIN_TOP_LEFT:
-        case G_CHAIN_BOTTOM_RIGHT:
-            return '\\';
-        case G_CHAIN_TOP_RIGHT:
-        case G_CHAIN_BOTTOM_LEFT:
-            return '/';
-        case G_CHAIN_TOP:
-        case G_CHAIN_BOTTOM:
-            return '|';
-        case G_CHAIN_LEFT:
-        case G_CHAIN_RIGHT:
-            return '-';
-        case G_FOOD: return ';';
-        case G_UP_STAIRS: return '<';
-        case G_VENT: return '=';
-        case G_DOWN_STAIRS: return '>';
-        case G_PLAYER: return '@';
-        case G_BOG_MONSTER: return 'B';
-        case G_CENTAUR: return 'C';
-        case G_DRAGON: return 'D';
-        case G_FLAMEDANCER: return 'F';
-        case G_GOLEM: return 'G';
-        case G_TENTACLE_HORROR: return 'H';
-        case G_IFRIT: return 'I';
-        case G_JELLY: return 'J';
-        case G_KRAKEN: return 'K';
-        case G_LICH: return 'L';
-        case G_NAGA: return 'N';
-        case G_OGRE: return 'O';
-        case G_PHANTOM: return 'P';
-        case G_REVENANT: return 'R';
-        case G_SALAMANDER: return 'S';
-        case G_TROLL: return 'T';
-        case G_UNDERWORM: return 'U';
-        case G_VAMPIRE: return 'V';
-        case G_WRAITH: return 'W';
-        case G_ZOMBIE: return 'Z';
-        case G_ARMOR: return '[';
-        case G_STAFF: return '/';
-        case G_WEB: return ':';
-        case G_MOUND: return 'a';
-        case G_BLOAT: return 'b';
-        case G_CENTIPEDE: return 'c';
-        case G_DAR_BLADEMASTER: return 'd';
-        case G_EEL: return 'e';
-        case G_FURY: return 'f';
-        case G_GOBLIN: return 'g';
-        case G_IMP: return 'i';
-        case G_JACKAL: return 'j';
-        case G_KOBOLD: return 'k';
-        case G_MONKEY: return 'm';
-        case G_PIXIE: return 'p';
-        case G_RAT: return 'r';
-        case G_SPIDER: return 's';
-        case G_TOAD: return 't';
-        case G_BAT: return 'v';
-        case G_WISP: return 'w';
-        case G_PHOENIX: return 'P';
-        case G_ALTAR: return '|';
-        case G_LIQUID: return '~';
-        case G_FLOOR: return U_MIDDLE_DOT;
-        case G_CHASM: return U_FOUR_DOTS;
-        case G_TRAP: return U_DIAMOND;
-        case G_FIRE: return U_FLIPPED_V;
-        case G_FOLIAGE: return U_ARIES;
-        case G_AMULET: return U_ANKH;
-        case G_SCROLL: return U_MUSIC_NOTE;
-        case G_RING: return U_CIRCLE;
-        case G_WEAPON: return U_UP_ARROW;
-        case G_GEM: return U_FILLED_CIRCLE;
-        case G_TOTEM: return U_NEUTER;
-        case G_GOOD_MAGIC: return U_FILLED_CIRCLE_BARS;
-        case G_BAD_MAGIC: return U_CIRCLE_BARS;
-        case G_DOORWAY: return U_OMEGA;
-        case G_CHARM: return U_LIGHTNING_BOLT;
-        case G_WALL_TOP: return '#';
-        case G_DAR_PRIESTESS: return 'd';
-        case G_DAR_BATTLEMAGE: return 'd';
-        case G_GOBLIN_MAGIC: return 'g';
-        case G_GOBLIN_CHIEFTAN: return 'g';
-        case G_OGRE_MAGIC: return 'O';
-        case G_GUARDIAN: return U_ESZETT;
-        case G_WINGED_GUARDIAN: return U_ESZETT;
-        case G_EGG: return U_FILLED_CIRCLE;
-        case G_WARDEN: return 'Y';
-        case G_DEWAR: return '&';
-        case G_ANCIENT_SPIRIT: return 'M';
-        case G_LEVER: return '/';
-        case G_LEVER_PULLED: return '\\';
-        case G_BLOODWORT_STALK: return U_ARIES;
-        case G_FLOOR_ALT: return U_MIDDLE_DOT;
-        case G_UNICORN: return U_U_ACUTE;
-        case G_TURRET: return U_FILLED_CIRCLE;
-        case G_WAND: return '~';
-        case G_GRANITE: return '#';
-        case G_CARPET: return U_MIDDLE_DOT;
-        case G_CLOSED_IRON_DOOR: return '+';
-        case G_OPEN_IRON_DOOR: return '\'';
-        case G_TORCH: return '#';
-        case G_CRYSTAL: return '#';
-        case G_PORTCULLIS: return '#';
-        case G_BARRICADE: return '#';
-        case G_STATUE: return U_ESZETT;
-        case G_CRACKED_STATUE: return U_ESZETT;
-        case G_CLOSED_CAGE: return '#';
-        case G_OPEN_CAGE: return '|';
-        case G_PEDESTAL: return '|';
-        case G_CLOSED_COFFIN: return '-';
-        case G_OPEN_COFFIN: return '-';
-        case G_MAGIC_GLYPH: return U_FOUR_DOTS;
-        case G_BRIDGE: return '=';
-        case G_BONES: return ',';
-        case G_ELECTRIC_CRYSTAL: return U_CURRENCY;
-        case G_ASHES: return '\'';
-        case G_BEDROLL: return '=';
-        case G_BLOODWORT_POD: return '*';
-        case G_VINE: return ':';
-        case G_NET: return ':';
-        case G_LICHEN: return '"';
-        case G_PIPES: return '+';
-        case G_SAC_ALTAR: return '|';
-        case G_ORB_ALTAR: return '|';
+    case G_UP_ARROW:
+        return U_UP_ARROW;
+    case G_DOWN_ARROW:
+        return U_DOWN_ARROW;
+    case G_POTION:
+        return '!';
+    case G_GRASS:
+        return '"';
+    case G_WALL:
+        return '#';
+    case G_DEMON:
+        return '&';
+    case G_OPEN_DOOR:
+        return '\'';
+    case G_GOLD:
+        return '*';
+    case G_CLOSED_DOOR:
+        return '+';
+    case G_RUBBLE:
+        return ',';
+    case G_KEY:
+        return '-';
+    case G_BOG:
+        return '~';
+    case G_CHAIN_TOP_LEFT:
+    case G_CHAIN_BOTTOM_RIGHT:
+        return '\\';
+    case G_CHAIN_TOP_RIGHT:
+    case G_CHAIN_BOTTOM_LEFT:
+        return '/';
+    case G_CHAIN_TOP:
+    case G_CHAIN_BOTTOM:
+        return '|';
+    case G_CHAIN_LEFT:
+    case G_CHAIN_RIGHT:
+        return '-';
+    case G_FOOD:
+        return ';';
+    case G_UP_STAIRS:
+        return '<';
+    case G_VENT:
+        return '=';
+    case G_DOWN_STAIRS:
+        return '>';
+    case G_PLAYER:
+        return '@';
+    case G_BOG_MONSTER:
+        return 'B';
+    case G_CENTAUR:
+        return 'C';
+    case G_DRAGON:
+        return 'D';
+    case G_FLAMEDANCER:
+        return 'F';
+    case G_GOLEM:
+        return 'G';
+    case G_TENTACLE_HORROR:
+        return 'H';
+    case G_IFRIT:
+        return 'I';
+    case G_JELLY:
+        return 'J';
+    case G_KRAKEN:
+        return 'K';
+    case G_LICH:
+        return 'L';
+    case G_NAGA:
+        return 'N';
+    case G_OGRE:
+        return 'O';
+    case G_PHANTOM:
+        return 'P';
+    case G_REVENANT:
+        return 'R';
+    case G_SALAMANDER:
+        return 'S';
+    case G_TROLL:
+        return 'T';
+    case G_UNDERWORM:
+        return 'U';
+    case G_VAMPIRE:
+        return 'V';
+    case G_WRAITH:
+        return 'W';
+    case G_ZOMBIE:
+        return 'Z';
+    case G_ARMOR:
+        return '[';
+    case G_STAFF:
+        return '/';
+    case G_WEB:
+        return ':';
+    case G_MOUND:
+        return 'a';
+    case G_BLOAT:
+        return 'b';
+    case G_CENTIPEDE:
+        return 'c';
+    case G_DAR_BLADEMASTER:
+        return 'd';
+    case G_EEL:
+        return 'e';
+    case G_FURY:
+        return 'f';
+    case G_GOBLIN:
+        return 'g';
+    case G_IMP:
+        return 'i';
+    case G_JACKAL:
+        return 'j';
+    case G_KOBOLD:
+        return 'k';
+    case G_MONKEY:
+        return 'm';
+    case G_PIXIE:
+        return 'p';
+    case G_RAT:
+        return 'r';
+    case G_SPIDER:
+        return 's';
+    case G_TOAD:
+        return 't';
+    case G_BAT:
+        return 'v';
+    case G_WISP:
+        return 'w';
+    case G_PHOENIX:
+        return 'P';
+    case G_ALTAR:
+        return '|';
+    case G_LIQUID:
+        return '~';
+    case G_FLOOR:
+        return U_MIDDLE_DOT;
+    case G_CHASM:
+        return U_FOUR_DOTS;
+    case G_TRAP:
+        return U_DIAMOND;
+    case G_FIRE:
+        return U_FLIPPED_V;
+    case G_FOLIAGE:
+        return U_ARIES;
+    case G_AMULET:
+        return U_ANKH;
+    case G_SCROLL:
+        return U_MUSIC_NOTE;
+    case G_RING:
+        return U_CIRCLE;
+    case G_WEAPON:
+        return U_UP_ARROW;
+    case G_GEM:
+        return U_FILLED_CIRCLE;
+    case G_TOTEM:
+        return U_NEUTER;
+    case G_GOOD_MAGIC:
+        return U_FILLED_CIRCLE_BARS;
+    case G_BAD_MAGIC:
+        return U_CIRCLE_BARS;
+    case G_DOORWAY:
+        return U_OMEGA;
+    case G_CHARM:
+        return U_LIGHTNING_BOLT;
+    case G_WALL_TOP:
+        return '#';
+    case G_DAR_PRIESTESS:
+        return 'd';
+    case G_DAR_BATTLEMAGE:
+        return 'd';
+    case G_GOBLIN_MAGIC:
+        return 'g';
+    case G_GOBLIN_CHIEFTAN:
+        return 'g';
+    case G_OGRE_MAGIC:
+        return 'O';
+    case G_GUARDIAN:
+        return U_ESZETT;
+    case G_WINGED_GUARDIAN:
+        return U_ESZETT;
+    case G_EGG:
+        return U_FILLED_CIRCLE;
+    case G_WARDEN:
+        return 'Y';
+    case G_DEWAR:
+        return '&';
+    case G_ANCIENT_SPIRIT:
+        return 'M';
+    case G_LEVER:
+        return '/';
+    case G_LEVER_PULLED:
+        return '\\';
+    case G_BLOODWORT_STALK:
+        return U_ARIES;
+    case G_FLOOR_ALT:
+        return U_MIDDLE_DOT;
+    case G_UNICORN:
+        return U_U_ACUTE;
+    case G_TURRET:
+        return U_FILLED_CIRCLE;
+    case G_WAND:
+        return '~';
+    case G_GRANITE:
+        return '#';
+    case G_CARPET:
+        return U_MIDDLE_DOT;
+    case G_CLOSED_IRON_DOOR:
+        return '+';
+    case G_OPEN_IRON_DOOR:
+        return '\'';
+    case G_TORCH:
+        return '#';
+    case G_CRYSTAL:
+        return '#';
+    case G_PORTCULLIS:
+        return '#';
+    case G_BARRICADE:
+        return '#';
+    case G_STATUE:
+        return U_ESZETT;
+    case G_CRACKED_STATUE:
+        return U_ESZETT;
+    case G_CLOSED_CAGE:
+        return '#';
+    case G_OPEN_CAGE:
+        return '|';
+    case G_PEDESTAL:
+        return '|';
+    case G_CLOSED_COFFIN:
+        return '-';
+    case G_OPEN_COFFIN:
+        return '-';
+    case G_MAGIC_GLYPH:
+        return U_FOUR_DOTS;
+    case G_BRIDGE:
+        return '=';
+    case G_BONES:
+        return ',';
+    case G_ELECTRIC_CRYSTAL:
+        return U_CURRENCY;
+    case G_ASHES:
+        return '\'';
+    case G_BEDROLL:
+        return '=';
+    case G_BLOODWORT_POD:
+        return '*';
+    case G_VINE:
+        return ':';
+    case G_NET:
+        return ':';
+    case G_LICHEN:
+        return '"';
+    case G_PIPES:
+        return '+';
+    case G_SAC_ALTAR:
+        return '|';
+    case G_ORB_ALTAR:
+        return '|';
 
-        default:
-            brogueAssert(false);
-            return '?';
+    default:
+        brogueAssert(false);
+        return '?';
     }
 }
 
@@ -191,60 +314,100 @@ Tells if a glyph represents part of the environment (true) or an item or creatur
 */
 boolean isEnvironmentGlyph(enum displayGlyph glyph) {
     switch (glyph) {
-        // items
-        case G_AMULET: case G_ARMOR: case G_BEDROLL: case G_CHARM:
-        case G_DEWAR: case G_EGG: case G_FOOD: case G_GEM: case G_BLOODWORT_POD:
-        case G_GOLD: case G_KEY: case G_POTION: case G_RING:
-        case G_SCROLL: case G_STAFF: case G_WAND: case G_WEAPON:
-            return false;
+    // items
+    case G_AMULET:
+    case G_ARMOR:
+    case G_BEDROLL:
+    case G_CHARM:
+    case G_DEWAR:
+    case G_EGG:
+    case G_FOOD:
+    case G_GEM:
+    case G_BLOODWORT_POD:
+    case G_GOLD:
+    case G_KEY:
+    case G_POTION:
+    case G_RING:
+    case G_SCROLL:
+    case G_STAFF:
+    case G_WAND:
+    case G_WEAPON:
+        return false;
 
-        // creatures
-        case G_ANCIENT_SPIRIT: case G_BAT: case G_BLOAT: case G_BOG_MONSTER:
-        case G_CENTAUR: case G_CENTIPEDE: case G_DAR_BATTLEMAGE: case G_DAR_BLADEMASTER:
-        case G_DAR_PRIESTESS: case G_DEMON: case G_DRAGON: case G_EEL:
-        case G_FLAMEDANCER: case G_FURY: case G_GOBLIN: case G_GOBLIN_CHIEFTAN:
-        case G_GOBLIN_MAGIC: case G_GOLEM: case G_GUARDIAN: case G_IFRIT:
-        case G_IMP: case G_JACKAL: case G_JELLY: case G_KOBOLD:
-        case G_KRAKEN: case G_LICH: case G_MONKEY: case G_MOUND:
-        case G_NAGA: case G_OGRE: case G_OGRE_MAGIC: case G_PHANTOM:
-        case G_PHOENIX: case G_PIXIE: case G_PLAYER: case G_RAT:
-        case G_REVENANT: case G_SALAMANDER: case G_SPIDER: case G_TENTACLE_HORROR:
-        case G_TOAD: case G_TROLL: case G_UNDERWORM: case G_UNICORN:
-        case G_VAMPIRE: case G_WARDEN: case G_WINGED_GUARDIAN: case G_WISP:
-        case G_WRAITH: case G_ZOMBIE:
-            return false;
+    // creatures
+    case G_ANCIENT_SPIRIT:
+    case G_BAT:
+    case G_BLOAT:
+    case G_BOG_MONSTER:
+    case G_CENTAUR:
+    case G_CENTIPEDE:
+    case G_DAR_BATTLEMAGE:
+    case G_DAR_BLADEMASTER:
+    case G_DAR_PRIESTESS:
+    case G_DEMON:
+    case G_DRAGON:
+    case G_EEL:
+    case G_FLAMEDANCER:
+    case G_FURY:
+    case G_GOBLIN:
+    case G_GOBLIN_CHIEFTAN:
+    case G_GOBLIN_MAGIC:
+    case G_GOLEM:
+    case G_GUARDIAN:
+    case G_IFRIT:
+    case G_IMP:
+    case G_JACKAL:
+    case G_JELLY:
+    case G_KOBOLD:
+    case G_KRAKEN:
+    case G_LICH:
+    case G_MONKEY:
+    case G_MOUND:
+    case G_NAGA:
+    case G_OGRE:
+    case G_OGRE_MAGIC:
+    case G_PHANTOM:
+    case G_PHOENIX:
+    case G_PIXIE:
+    case G_PLAYER:
+    case G_RAT:
+    case G_REVENANT:
+    case G_SALAMANDER:
+    case G_SPIDER:
+    case G_TENTACLE_HORROR:
+    case G_TOAD:
+    case G_TROLL:
+    case G_UNDERWORM:
+    case G_UNICORN:
+    case G_VAMPIRE:
+    case G_WARDEN:
+    case G_WINGED_GUARDIAN:
+    case G_WISP:
+    case G_WRAITH:
+    case G_ZOMBIE:
+        return false;
 
-        // everything else is considered part of the environment
-        default:
-            return true;
+    // everything else is considered part of the environment
+    default:
+        return true;
     }
 }
 
-void plotChar(enum displayGlyph inputChar,
-              short xLoc, short yLoc,
-              short foreRed, short foreGreen, short foreBlue,
+void plotChar(enum displayGlyph inputChar, short xLoc, short yLoc, short foreRed, short foreGreen, short foreBlue,
               short backRed, short backGreen, short backBlue) {
     currentConsole.plotChar(inputChar, xLoc, yLoc, foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue);
 }
 
-void pausingTimerStartsNow() {
+void pausingTimerStartsNow() {}
 
-}
-
-boolean shiftKeyIsDown() {
-    return currentConsole.modifierHeld(0);
-}
-boolean controlKeyIsDown() {
-    return currentConsole.modifierHeld(1);
-}
+boolean shiftKeyIsDown() { return currentConsole.modifierHeld(0); }
+boolean controlKeyIsDown() { return currentConsole.modifierHeld(1); }
 
 void nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance) {
     currentConsole.nextKeyOrMouseEvent(returnEvent, textInput, colorsDance);
 }
 
-boolean pauseForMilliseconds(short milliseconds) {
-    return currentConsole.pauseForMilliseconds(milliseconds);
-}
+boolean pauseForMilliseconds(short milliseconds) { return currentConsole.pauseForMilliseconds(milliseconds); }
 
 void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2) {
     if (currentConsole.notifyEvent) {
@@ -277,8 +440,8 @@ void initScores() {
     setHighScoresFilename(highScoresFilename, BROGUE_FILENAME_MAX);
 
     scoresFile = fopen(highScoresFilename, "w");
-    for (i=0; i<HIGH_SCORES_COUNT; i++) {
-        fprintf(scoresFile, "%li\t%li\t%s", (long) 0, (long) 0, "(empty entry)\n");
+    for (i = 0; i < HIGH_SCORES_COUNT; i++) {
+        fprintf(scoresFile, "%li\t%li\t%s", (long)0, (long)0, "(empty entry)\n");
     }
     fclose(scoresFile);
 }
@@ -293,14 +456,14 @@ short sortScoreBuffer() {
 
     mostRecentDate = 0;
 
-    for (i=0; i<HIGH_SCORES_COUNT; i++) {
+    for (i = 0; i < HIGH_SCORES_COUNT; i++) {
         lineSorted[i] = false;
     }
 
-    for (i=0; i<HIGH_SCORES_COUNT; i++) {
+    for (i = 0; i < HIGH_SCORES_COUNT; i++) {
         highestUnsortedLine = 0;
         highestUnsortedScore = 0;
-        for (j=0; j<HIGH_SCORES_COUNT; j++) {
+        for (j = 0; j < HIGH_SCORES_COUNT; j++) {
             if (!lineSorted[j] && scoreBuffer[j].score >= highestUnsortedScore) {
                 highestUnsortedLine = j;
                 highestUnsortedScore = scoreBuffer[j].score;
@@ -311,7 +474,7 @@ short sortScoreBuffer() {
     }
 
     // copy the sorted list back into scoreBuffer, remember the most recent entry
-    for (i=0; i<HIGH_SCORES_COUNT; i++) {
+    for (i = 0; i < HIGH_SCORES_COUNT; i++) {
         scoreBuffer[i] = sortedScoreBuffer[i];
         if (scoreBuffer[i].dateNumber > mostRecentDate) {
             mostRecentDate = scoreBuffer[i].dateNumber;
@@ -333,7 +496,7 @@ short loadScoreBuffer() {
     short i;
     FILE *scoresFile;
     time_t rawtime;
-    struct tm * timeinfo;
+    struct tm *timeinfo;
 
     char highScoresFilename[BROGUE_FILENAME_MAX];
     setHighScoresFilename(highScoresFilename, BROGUE_FILENAME_MAX);
@@ -345,7 +508,7 @@ short loadScoreBuffer() {
         scoresFile = fopen(highScoresFilename, "r");
     }
 
-    for (i=0; i<HIGH_SCORES_COUNT; i++) {
+    for (i = 0; i < HIGH_SCORES_COUNT; i++) {
         // load score and also the date in seconds
         fscanf(scoresFile, "%li\t%li\t", &(scoreBuffer[i].score), &(scoreBuffer[i].dateNumber));
 
@@ -355,7 +518,7 @@ short loadScoreBuffer() {
         scoreBuffer[i].description[strlen(scoreBuffer[i].description) - 1] = '\0';
 
         // convert date to DATE_FORMAT
-        rawtime = (time_t) scoreBuffer[i].dateNumber;
+        rawtime = (time_t)scoreBuffer[i].dateNumber;
         timeinfo = localtime(&rawtime);
         strftime(scoreBuffer[i].dateText, DCOLS, DATE_FORMAT, timeinfo);
     }
@@ -381,14 +544,17 @@ void loadKeymap() {
                     mode = 1;
                 } else {
                     if (mode) {
-                        if (input_name == NULL) input_name = buffer + i;
-                        else if (output_name == NULL) output_name = buffer + i;
+                        if (input_name == NULL)
+                            input_name = buffer + i;
+                        else if (output_name == NULL)
+                            output_name = buffer + i;
                     }
                     mode = 0;
                 }
             }
             if (input_name != NULL && output_name != NULL) {
-                if (input_name[0] == '#') continue; // must be a comment
+                if (input_name[0] == '#')
+                    continue; // must be a comment
 
                 if (currentConsole.remap) {
                     currentConsole.remap(input_name, output_name);
@@ -398,7 +564,6 @@ void loadKeymap() {
         fclose(f);
     }
 }
-
 
 // saves the scoreBuffer global variable into the BrogueHighScores.txt file,
 // thus overwriting whatever is already there.
@@ -413,9 +578,10 @@ void saveScoreBuffer() {
 
     scoresFile = fopen(highScoresFilename, "w");
 
-    for (i=0; i<HIGH_SCORES_COUNT; i++) {
+    for (i = 0; i < HIGH_SCORES_COUNT; i++) {
         // save the entry
-        fprintf(scoresFile, "%li\t%li\t%s\n", scoreBuffer[i].score, scoreBuffer[i].dateNumber, scoreBuffer[i].description);
+        fprintf(scoresFile, "%li\t%li\t%s\n", scoreBuffer[i].score, scoreBuffer[i].dateNumber,
+                scoreBuffer[i].description);
     }
 
     fclose(scoresFile);
@@ -429,7 +595,7 @@ void dumpScores() {
 
     for (i = 0; i < HIGH_SCORES_COUNT; i++) {
         if (list[i].score > 0) {
-            printf("%d\t%s\t%s\n", (int) list[i].score, list[i].date, list[i].description);
+            printf("%d\t%s\t%s\n", (int)list[i].score, list[i].date, list[i].description);
         }
     }
 }
@@ -439,10 +605,10 @@ short getHighScoresList(rogueHighScoresEntry returnList[HIGH_SCORES_COUNT]) {
 
     mostRecentLineNumber = loadScoreBuffer();
 
-    for (i=0; i<HIGH_SCORES_COUNT; i++) {
-        returnList[i].score =               scoreBuffer[i].score;
-        strcpy(returnList[i].date,          scoreBuffer[i].dateText);
-        strcpy(returnList[i].description,   scoreBuffer[i].description);
+    for (i = 0; i < HIGH_SCORES_COUNT; i++) {
+        returnList[i].score = scoreBuffer[i].score;
+        strcpy(returnList[i].date, scoreBuffer[i].dateText);
+        strcpy(returnList[i].description, scoreBuffer[i].description);
     }
 
     return mostRecentLineNumber;
@@ -454,7 +620,7 @@ boolean saveHighScore(rogueHighScoresEntry theEntry) {
 
     loadScoreBuffer();
 
-    for (i=0; i<HIGH_SCORES_COUNT; i++) {
+    for (i = 0; i < HIGH_SCORES_COUNT; i++) {
         if (scoreBuffer[i].score < lowestScore || i == 0) {
             lowestScore = scoreBuffer[i].score;
             lowestScoreIndex = i;
@@ -465,9 +631,9 @@ boolean saveHighScore(rogueHighScoresEntry theEntry) {
         return false;
     }
 
-    scoreBuffer[lowestScoreIndex].score =               theEntry.score;
-    scoreBuffer[lowestScoreIndex].dateNumber =          (long) time(NULL);
-    strcpy(scoreBuffer[lowestScoreIndex].description,   theEntry.description);
+    scoreBuffer[lowestScoreIndex].score = theEntry.score;
+    scoreBuffer[lowestScoreIndex].dateNumber = (long)time(NULL);
+    strcpy(scoreBuffer[lowestScoreIndex].description, theEntry.description);
 
     saveScoreBuffer();
 
@@ -525,8 +691,10 @@ fileEntry *addfile(struct filelist *list, const char *name) {
     }
 
     // add the new file and copy the name into the buffer
-    list->files[list->nfiles].path = ((char *) NULL) + list->nextname; // don't look at them until they are transferred out
-    list->files[list->nfiles].date = (struct tm) {0}; // associate a dummy date (1899-12-31) to avoid random data, it will be correctly populated when using listFiles()
+    list->files[list->nfiles].path
+        = ((char *)NULL) + list->nextname;           // don't look at them until they are transferred out
+    list->files[list->nfiles].date = (struct tm){0}; // associate a dummy date (1899-12-31) to avoid random data, it
+                                                     // will be correctly populated when using listFiles()
 
     strncpy(list->names + list->nextname, name, len + 1);
 
@@ -537,14 +705,15 @@ fileEntry *addfile(struct filelist *list, const char *name) {
 }
 
 void freeFilelist(struct filelist *list) {
-    //if (list->names != NULL) free(list->names);
-    //if (list->files != NULL) free(list->files);
+    // if (list->names != NULL) free(list->names);
+    // if (list->files != NULL) free(list->files);
     free(list);
 }
 
 fileEntry *commitFilelist(struct filelist *list, char **namebuffer) {
     int i;
-    /*fileEntry *files = malloc(list->nfiles * sizeof(fileEntry) + list->nextname); // enough space for all the names and all the files
+    /*fileEntry *files = malloc(list->nfiles * sizeof(fileEntry) + list->nextname); // enough space for all the names
+    and all the files
 
     if (files != NULL) {
         char *names = (char *) (files + list->nfiles);
@@ -557,8 +726,8 @@ fileEntry *commitFilelist(struct filelist *list, char **namebuffer) {
         memcpy(names, list->names, list->nextname);
     }
     */
-    for (i=0; i < list->nfiles; i++) {
-        list->files[i].path = list->names + (list->files[i].path - (char *) NULL);
+    for (i = 0; i < list->nfiles; i++) {
+        list->files[i].path = list->names + (list->files[i].path - (char *)NULL);
     }
     *namebuffer = list->names;
 
@@ -569,7 +738,7 @@ fileEntry *listFiles(short *fileCount, char **namebuffer) {
     struct filelist *list = newFilelist();
 
     // windows: FindFirstFile/FindNextFile
-    DIR *dp= opendir ("./");
+    DIR *dp = opendir("./");
 
     if (dp != NULL) {
         struct dirent *ep;
@@ -588,9 +757,8 @@ fileEntry *listFiles(short *fileCount, char **namebuffer) {
             }
         }
 
-        closedir (dp);
-    }
-    else {
+        closedir(dp);
+    } else {
         *fileCount = 0;
         return NULL;
     }
@@ -598,7 +766,7 @@ fileEntry *listFiles(short *fileCount, char **namebuffer) {
     fileEntry *files = commitFilelist(list, namebuffer);
 
     if (files != NULL) {
-        *fileCount = (short) list->nfiles;
+        *fileCount = (short)list->nfiles;
     } else {
         *fileCount = 0;
     }
@@ -618,4 +786,3 @@ boolean isApplicationActive(void) {
     // FIXME: finish
     return true;
 }
-

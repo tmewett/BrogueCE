@@ -24,27 +24,31 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
-#define  CSV_HEADER_STRING "dungeon_version,seed,depth,quantity,category,kind,enchantment,runic,vault_number,opens_vault_number,carried_by_monster_name,ally_status_name,mutation_name"
-#define  NO_ENCHANTMENT_STRING ""
-#define  NO_RUNIC_STRING ""
-#define  NO_VAULT_STRING ""
-#define  NO_OPENS_VAULT_STRING ""
-#define  NO_CARRIED_BY_MONSTER_STRING ""
-#define  NO_ALLY_STATUS_STRING ""
-#define  NO_MUTATION_STRING ""
+#define CSV_HEADER_STRING                                                                                              \
+    "dungeon_version,seed,depth,quantity,category,kind,enchantment,runic,vault_number,opens_vault_number,carried_by_"  \
+    "monster_name,ally_status_name,mutation_name"
+#define NO_ENCHANTMENT_STRING ""
+#define NO_RUNIC_STRING ""
+#define NO_VAULT_STRING ""
+#define NO_OPENS_VAULT_STRING ""
+#define NO_CARRIED_BY_MONSTER_STRING ""
+#define NO_ALLY_STATUS_STRING ""
+#define NO_MUTATION_STRING ""
 
-static void printSeedCatalogCsvLine(uint64_t seed, short depth, short quantity, char categoryName[50], char kindName[50],
-                                    char enchantment[50], char runicName[50], char vaultNumber[10], char opensVaultNumber[10],
-                                    char carriedByMonsterName[50], char allyStatusName[20], char mutationName[100]){
+static void printSeedCatalogCsvLine(uint64_t seed, short depth, short quantity, char categoryName[50],
+                                    char kindName[50], char enchantment[50], char runicName[50], char vaultNumber[10],
+                                    char opensVaultNumber[10], char carriedByMonsterName[50], char allyStatusName[20],
+                                    char mutationName[100]) {
 
-    printf("%s,%llu,%i,%i,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", gameConst->dungeonVersionString, (unsigned long long) seed, depth, quantity, categoryName,
-           kindName, enchantment, runicName, vaultNumber, opensVaultNumber, carriedByMonsterName, allyStatusName,
-           mutationName);
+    printf("%s,%llu,%i,%i,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", gameConst->dungeonVersionString, (unsigned long long)seed,
+           depth, quantity, categoryName, kindName, enchantment, runicName, vaultNumber, opensVaultNumber,
+           carriedByMonsterName, allyStatusName, mutationName);
 }
 
 static void getMonsterDetailedName(creature *theMonster, char *theMonsterName) {
     if (theMonster->mutationIndex >= 0) {
-        sprintf(theMonsterName, "%s [%s]", theMonster->info.monsterName, mutationCatalog[theMonster->mutationIndex].title);
+        sprintf(theMonsterName, "%s [%s]", theMonster->info.monsterName,
+                mutationCatalog[theMonster->mutationIndex].title);
     } else {
         strcpy(theMonsterName, theMonster->info.monsterName);
     }
@@ -54,11 +58,11 @@ static void printSeedCatalogItem(item *theItem, creature *theMonster, boolean is
     char inGameItemName[500] = "", carriedByMonsterName[100] = "", vaultNumber[36] = "", opensVaultNumber[36] = "";
     char categoryName[20] = "", kindName[50] = "", enchantment[5] = "", runicName[30] = "", mutationName[100] = "";
 
-    if (isCsvFormat) {     //for csv output we need the item name components: category, kind, enchantment, & runic
+    if (isCsvFormat) { // for csv output we need the item name components: category, kind, enchantment, & runic
         strcpy(categoryName, itemCategoryNames[unflag(theItem->category)]);
         itemKindName(theItem, kindName);
         itemRunicName(theItem, runicName);
-        if (theItem->category & (ARMOR | CHARM | RING | STAFF | WAND | WEAPON)) {   //enchantable items
+        if (theItem->category & (ARMOR | CHARM | RING | STAFF | WAND | WEAPON)) { // enchantable items
             if (theItem->category == WAND) {
                 sprintf(enchantment, "%i", theItem->charges);
             } else {
@@ -66,13 +70,14 @@ static void printSeedCatalogItem(item *theItem, creature *theMonster, boolean is
             }
         }
     } else {
-        itemName(theItem, inGameItemName, true, true, NULL);   //for standard output, use the in-game item name as base
+        itemName(theItem, inGameItemName, true, true, NULL); // for standard output, use the in-game item name as base
     }
 
-    if (theMonster != NULL) {   //carried by monster
+    if (theMonster != NULL) { // carried by monster
         if (isCsvFormat) {
             sprintf(carriedByMonsterName, "%s", theMonster->info.monsterName);
-            strcpy(mutationName, theMonster->mutationIndex >= 0 ? mutationCatalog[theMonster->mutationIndex].title : "");
+            strcpy(mutationName,
+                   theMonster->mutationIndex >= 0 ? mutationCatalog[theMonster->mutationIndex].title : "");
         } else {
             getMonsterDetailedName(theMonster, carriedByMonsterName);
         }
@@ -80,12 +85,11 @@ static void printSeedCatalogItem(item *theItem, creature *theMonster, boolean is
 
     // vaultNumber
     if (pmapAt(theItem->loc)->machineNumber > 0) {
-        //not all machines are "vaults" so we need to exclude some.
+        // not all machines are "vaults" so we need to exclude some.
         if (pmapAt(theItem->loc)->layers[0] != ALTAR_SWITCH
             && pmapAt(theItem->loc)->layers[0] != ALTAR_SWITCH_RETRACTING
             && pmapAt(theItem->loc)->layers[0] != ALTAR_CAGE_RETRACTABLE
-            && pmapAt(theItem->loc)->layers[0] != ALTAR_INERT
-            && pmapAt(theItem->loc)->layers[0] != AMULET_SWITCH
+            && pmapAt(theItem->loc)->layers[0] != ALTAR_INERT && pmapAt(theItem->loc)->layers[0] != AMULET_SWITCH
             && pmapAt(theItem->loc)->layers[0] != FLOOR) {
 
             sprintf(vaultNumber, isCsvFormat ? "%i" : " (vault %i)", pmapAt(theItem->loc)->machineNumber);
@@ -118,17 +122,17 @@ static void printSeedCatalogMonster(creature *theMonster, boolean isCsvFormat) {
     strcpy(mutationName, theMonster->mutationIndex >= 0 ? mutationCatalog[theMonster->mutationIndex].title : "");
 
     if (theMonster->bookkeepingFlags & MB_CAPTIVE) {
-        strcpy(categoryName,"ally");
+        strcpy(categoryName, "ally");
         if (cellHasTMFlag(theMonster->loc.x, theMonster->loc.y, TM_PROMOTES_WITH_KEY)) {
             strcpy(allyStatusName, isCsvFormat ? "caged" : "A caged ");
         } else {
             strcpy(allyStatusName, isCsvFormat ? "shackled" : "A shackled ");
         }
     } else if (theMonster->creatureState == MONSTER_ALLY) {
-        strcpy(categoryName,"ally");
+        strcpy(categoryName, "ally");
         strcpy(allyStatusName, isCsvFormat ? "allied" : "An allied ");
     } else {
-        strcpy(categoryName,"monster");
+        strcpy(categoryName, "monster");
     }
 
     if (isCsvFormat) {
@@ -216,7 +220,7 @@ static void printSeedCatalogFloorItems(boolean isCsvFormat) {
 
 static void printSeedCatalogAltars(boolean isCsvFormat) {
     short i, j;
-    boolean c_altars[50] = {0}; //IO.displayMachines uses 50
+    boolean c_altars[50] = {0}; // IO.displayMachines uses 50
     char vaultNumber[10] = "";
 
     for (j = 0; j < DROWS; j++) {
@@ -225,8 +229,8 @@ static void printSeedCatalogAltars(boolean isCsvFormat) {
                 sprintf(vaultNumber, "%i", pmap[i][j].machineNumber);
                 if (isCsvFormat) {
                     printSeedCatalogCsvLine(rogue.seed, rogue.depthLevel, 1, "altar", "resurrection altar",
-                            NO_ENCHANTMENT_STRING, NO_RUNIC_STRING, vaultNumber, NO_OPENS_VAULT_STRING,
-                            NO_CARRIED_BY_MONSTER_STRING, NO_ALLY_STATUS_STRING, NO_MUTATION_STRING);
+                                            NO_ENCHANTMENT_STRING, NO_RUNIC_STRING, vaultNumber, NO_OPENS_VAULT_STRING,
+                                            NO_CARRIED_BY_MONSTER_STRING, NO_ALLY_STATUS_STRING, NO_MUTATION_STRING);
                 } else {
                     printf("        A resurrection altar (vault %s)\n", vaultNumber);
                 }
@@ -245,7 +249,7 @@ static void printSeedCatalogAltars(boolean isCsvFormat) {
                                         NO_ENCHANTMENT_STRING, NO_RUNIC_STRING, vaultNumber, NO_OPENS_VAULT_STRING,
                                         NO_CARRIED_BY_MONSTER_STRING, NO_ALLY_STATUS_STRING, NO_MUTATION_STRING);
             } else {
-                printf("        A commutation altar (vault %s)\n",vaultNumber);
+                printf("        A commutation altar (vault %s)\n", vaultNumber);
             }
         }
     }
@@ -259,25 +263,26 @@ void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsig
 
     initializeGameVariant();
 
-    sprintf(message, "Brogue seed catalog, seeds %llu to %llu, through depth %u.\n"
-                     "Generated with %s. Dungeons unchanged since %s.\n\n"
-                     "To play one of these seeds, press control-N from the title screen"
-                     " and enter the seed number.\n",
-            (unsigned long long) startingSeed, (unsigned long long) startingSeed + numberOfSeedsToScan - 1, scanThroughDepth, gameConst->versionString,
-            gameConst->dungeonVersionString);
+    sprintf(message,
+            "Brogue seed catalog, seeds %llu to %llu, through depth %u.\n"
+            "Generated with %s. Dungeons unchanged since %s.\n\n"
+            "To play one of these seeds, press control-N from the title screen"
+            " and enter the seed number.\n",
+            (unsigned long long)startingSeed, (unsigned long long)startingSeed + numberOfSeedsToScan - 1,
+            scanThroughDepth, gameConst->versionString, gameConst->dungeonVersionString);
 
     if (isCsvFormat) {
         fprintf(stderr, "%s", message);
-        printf("%s\n",CSV_HEADER_STRING);
+        printf("%s\n", CSV_HEADER_STRING);
     } else {
         printf("%s", message);
     }
 
     for (theSeed = startingSeed; theSeed < startingSeed + numberOfSeedsToScan; theSeed++) {
         if (!isCsvFormat) {
-            printf("Seed %llu:\n", (unsigned long long) theSeed);
+            printf("Seed %llu:\n", (unsigned long long)theSeed);
         }
-        fprintf(stderr, "Scanning seed %llu...\n", (unsigned long long) theSeed);
+        fprintf(stderr, "Scanning seed %llu...\n", (unsigned long long)theSeed);
         rogue.nextGamePath[0] = '\0';
         randomNumbersGenerated = 0;
 
@@ -297,12 +302,11 @@ void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsig
             printSeedCatalogFloorItems(isCsvFormat);
             printSeedCatalogMonsterItems(isCsvFormat);
             printSeedCatalogMonsters(isCsvFormat, false); // captives and allies only
-            if (rogue.depthLevel >= 13) { // resurrection & commutation altars can spawn starting on 13
+            if (rogue.depthLevel >= 13) {                 // resurrection & commutation altars can spawn starting on 13
                 printSeedCatalogAltars(isCsvFormat);
             }
         }
 
         freeEverything();
     }
-
 }

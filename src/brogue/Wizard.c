@@ -28,28 +28,24 @@ void initializeCreateItemButton(brogueButton *button, char *text) {
     char buttonText[COLS * 3];
 
     initializeButton(button);
-    strcpy(buttonText,text);
+    strcpy(buttonText, text);
     upperCase(buttonText);
-    strcpy(button->text,buttonText);
+    strcpy(button->text, buttonText);
 }
 
 #define DIALOG_CREATE_ITEM_MAX_BUTTONS 26
 
 // Display a dialog window for the user to select a single entry from a list
-static short dialogSelectEntryFromList(
-        brogueButton *buttons,
-        short buttonCount,
-        char *windowTitle
-) {
+static short dialogSelectEntryFromList(brogueButton *buttons, short buttonCount, char *windowTitle) {
 
-    short x=0, y=0, width=0, height=0;
+    short x = 0, y = 0, width = 0, height = 0;
     cellDisplayBuffer dbuf[COLS][ROWS], rbuf[COLS][ROWS];
     short i, selectedButton, len, maxLen;
     char buttonText[COLS];
 
     maxLen = strlen(windowTitle);
 
-    for (i=0; i < buttonCount; i++) {
+    for (i = 0; i < buttonCount; i++) {
         buttons[i].flags &= ~(B_WIDE_CLICK_AREA | B_GRADIENT);
         buttons[i].buttonColor = interfaceBoxColor;
         buttons[i].hotkey[0] = 'a' + i;
@@ -72,15 +68,15 @@ static short dialogSelectEntryFromList(
     y = WINDOW_POSITION_DUNGEON_TOP_LEFT.window_y;
     clearDisplayBuffer(dbuf);
 
-    //Dialog Title
-    printString(windowTitle, x , y - 1, &itemMessageColor, &interfaceBoxColor, dbuf);
-    //Dialog background
+    // Dialog Title
+    printString(windowTitle, x, y - 1, &itemMessageColor, &interfaceBoxColor, dbuf);
+    // Dialog background
     rectangularShading(x - 1, y - 1, width + 1, height + 1, &interfaceBoxColor, INTERFACE_OPACITY, dbuf);
-    //Display the title/background and save the prior display state
+    // Display the title/background and save the prior display state
     overlayDisplayBuffer(dbuf, rbuf);
-    //Display the buttons and wait for user selection
+    // Display the buttons and wait for user selection
     selectedButton = buttonInputLoop(buttons, buttonCount, x, y, width, height, NULL);
-    //Revert the display state
+    // Revert the display state
     overlayDisplayBuffer(rbuf, NULL);
 
     return selectedButton;
@@ -93,7 +89,7 @@ static short dialogCreateItemChooseVorpalEnemy() {
     brogueButton buttons[DIALOG_CREATE_ITEM_MAX_BUTTONS];
 
     for (i = 0; i < MONSTER_CLASS_COUNT; i++) {
-        strcpy(buttonText,monsterClassCatalog[i].name);
+        strcpy(buttonText, monsterClassCatalog[i].name);
         initializeCreateItemButton(&(buttons[i]), buttonText);
     }
 
@@ -102,9 +98,9 @@ static short dialogCreateItemChooseVorpalEnemy() {
 
 // Display a dialog window for the user to select a runic for the given armor or weapon.
 // Assigns the selected runic and vorpal enemy (if applicable) to the item. No return value.
-static void dialogCreateItemChooseRunic(item *theItem){
+static void dialogCreateItemChooseRunic(item *theItem) {
     char buttonText[COLS];
-    short i=0, runicOffset =0, noRunic, selectedRunic, selectedVorpalEnemy;
+    short i = 0, runicOffset = 0, noRunic, selectedRunic, selectedVorpalEnemy;
     brogueButton buttons[DIALOG_CREATE_ITEM_MAX_BUTTONS];
 
     if (!(theItem->category & (WEAPON | ARMOR))) {
@@ -115,15 +111,16 @@ static void dialogCreateItemChooseRunic(item *theItem){
     // is based on minimum weapon damage, but has the same net effect. Might be nice to consolidate. Perhaps add a flag
     // to the kind (itemtable).
     if (theItem->category == WEAPON) {
-        if (theItem->kind == HAMMER || theItem->kind == WAR_AXE || theItem->kind == PIKE || theItem->kind == BROADSWORD) {
-            for (i=0; i<NUMBER_WEAPON_RUNIC_KINDS - NUMBER_GOOD_WEAPON_ENCHANT_KINDS; i++) {
+        if (theItem->kind == HAMMER || theItem->kind == WAR_AXE || theItem->kind == PIKE
+            || theItem->kind == BROADSWORD) {
+            for (i = 0; i < NUMBER_WEAPON_RUNIC_KINDS - NUMBER_GOOD_WEAPON_ENCHANT_KINDS; i++) {
                 strcpy(buttonText, weaponRunicNames[i + NUMBER_GOOD_WEAPON_ENCHANT_KINDS]);
                 initializeCreateItemButton(&(buttons[i]), buttonText);
             }
             runicOffset = NUMBER_GOOD_WEAPON_ENCHANT_KINDS;
             // Other weapons (except thrown), can have any runic
         } else if (theItem->quiverNumber == 0) {
-            for (i=0; i<NUMBER_WEAPON_RUNIC_KINDS; i++) {
+            for (i = 0; i < NUMBER_WEAPON_RUNIC_KINDS; i++) {
                 strcpy(buttonText, weaponRunicNames[i]);
                 initializeCreateItemButton(&(buttons[i]), buttonText);
             }
@@ -131,14 +128,14 @@ static void dialogCreateItemChooseRunic(item *theItem){
             return;
         }
     } else if (theItem->category == ARMOR) {
-        if (theItem->kind == PLATE_MAIL) { //bad runics only
-            for (i=0; i<NUMBER_ARMOR_ENCHANT_KINDS - NUMBER_GOOD_ARMOR_ENCHANT_KINDS; i++) {
+        if (theItem->kind == PLATE_MAIL) { // bad runics only
+            for (i = 0; i < NUMBER_ARMOR_ENCHANT_KINDS - NUMBER_GOOD_ARMOR_ENCHANT_KINDS; i++) {
                 strcpy(buttonText, armorRunicNames[i + NUMBER_GOOD_ARMOR_ENCHANT_KINDS]);
                 initializeCreateItemButton(&(buttons[i]), buttonText);
             }
             runicOffset = NUMBER_GOOD_ARMOR_ENCHANT_KINDS;
         } else {
-            for (i=0; i<NUMBER_ARMOR_ENCHANT_KINDS; i++) { //any runic
+            for (i = 0; i < NUMBER_ARMOR_ENCHANT_KINDS; i++) { // any runic
                 strcpy(buttonText, armorRunicNames[i]);
                 initializeCreateItemButton(&(buttons[i]), buttonText);
             }
@@ -148,9 +145,9 @@ static void dialogCreateItemChooseRunic(item *theItem){
     initializeCreateItemButton(&(buttons[i]), "No Runic");
     noRunic = i;
 
-    selectedRunic = dialogSelectEntryFromList(buttons, i+1, "Choose a runic:");
+    selectedRunic = dialogSelectEntryFromList(buttons, i + 1, "Choose a runic:");
 
-    if (selectedRunic >=0 && selectedRunic != noRunic) {
+    if (selectedRunic >= 0 && selectedRunic != noRunic) {
         theItem->enchant2 = selectedRunic + runicOffset;
         theItem->flags |= ITEM_RUNIC;
 
@@ -158,7 +155,7 @@ static void dialogCreateItemChooseRunic(item *theItem){
             || (theItem->enchant2 == A_IMMUNITY && theItem->category == ARMOR)) {
             selectedVorpalEnemy = dialogCreateItemChooseVorpalEnemy();
 
-            if (selectedVorpalEnemy >=0) {
+            if (selectedVorpalEnemy >= 0) {
                 theItem->vorpalEnemy = selectedVorpalEnemy;
             } else { // remove the runic if no vorpal enemy chosen
                 theItem->enchant2 = 0;
@@ -183,12 +180,12 @@ static short dialogCreateItemChooseKind(enum itemCategory category) {
     kindTable = tableForItemCategory(category);
     kindCount = itemKindCount(category, 0);
 
-    for (i=0; i<kindCount; i++) {
+    for (i = 0; i < kindCount; i++) {
         strncpy(buttonText, kindTable[i].name, COLS);
         initializeCreateItemButton(&(buttons[i]), buttonText);
     }
 
-    sprintf(title,"Create %s:",itemCategoryNames[unflag(category)]);
+    sprintf(title, "Create %s:", itemCategoryNames[unflag(category)]);
     return dialogSelectEntryFromList(buttons, i, title);
 }
 
@@ -196,7 +193,7 @@ static short dialogCreateItemChooseKind(enum itemCategory category) {
 // Assigns the enchantment level to the item. Does not return a value.
 static void dialogCreateItemChooseEnchantmentLevel(item *theItem) {
     short minVal = 0, maxVal = 50, defaultVal, maxInputLength = 2;
-    char prompt[100], buf[100], inputBuf[100]="";
+    char prompt[100], buf[100], inputBuf[100] = "";
 
     defaultVal = theItem->enchant1;
 
@@ -219,11 +216,11 @@ static void dialogCreateItemChooseEnchantmentLevel(item *theItem) {
                 || (theItem->category == WEAPON && theItem->enchant2 >= NUMBER_GOOD_WEAPON_ENCHANT_KINDS)) {
                 minVal = -3;
                 maxVal = -1;
-                theItem->enchant1 = rand_range(-3,-1);
+                theItem->enchant1 = rand_range(-3, -1);
             } else { // good runics can only be positively enchanted
                 minVal = 1;
                 if (theItem->enchant1 < 1) {
-                    theItem->enchant1 = rand_range(1,3);
+                    theItem->enchant1 = rand_range(1, 3);
                 }
             }
             defaultVal = theItem->enchant1;
@@ -235,10 +232,10 @@ static void dialogCreateItemChooseEnchantmentLevel(item *theItem) {
 
     // Validate the input
     int enchants;
-    if (strlen(inputBuf)                      // we need some input
-        && sscanf(inputBuf, "%d", &enchants)  // try to convert to number
-        && sprintf(buf, "%d", enchants)       // convert back to string
-        && strcmp(buf, inputBuf) == 0) {       // compare (0 if equal)
+    if (strlen(inputBuf)                     // we need some input
+        && sscanf(inputBuf, "%d", &enchants) // try to convert to number
+        && sprintf(buf, "%d", enchants)      // convert back to string
+        && strcmp(buf, inputBuf) == 0) {     // compare (0 if equal)
         // handle out of range input
         if (enchants > maxVal) {
             enchants = maxVal;
@@ -261,14 +258,14 @@ static void dialogCreateItemChooseEnchantmentLevel(item *theItem) {
     }
 }
 
-static int creatureTypeCompareMonsterNames (const void * a, const void * b) {
+static int creatureTypeCompareMonsterNames(const void *a, const void *b) {
     creatureType *c1 = (creatureType *)a;
     creatureType *c2 = (creatureType *)b;
 
     char name1[COLS];
     char name2[COLS];
-    strncpy(name1,c1->monsterName,COLS);
-    strncpy(name2,c2->monsterName,COLS);
+    strncpy(name1, c1->monsterName, COLS);
+    strncpy(name2, c2->monsterName, COLS);
     upperCase(name1);
     upperCase(name2);
 
@@ -281,7 +278,7 @@ static void dialogCreateMonsterChooseMutation(creature *theMonster) {
     short i, j = 0, noMutation, selectedMutation;
     brogueButton buttons[DIALOG_CREATE_ITEM_MAX_BUTTONS];
 
-    for (i=0; i<NUMBER_MUTATORS; i++) {
+    for (i = 0; i < NUMBER_MUTATORS; i++) {
         if (!(theMonster->info.flags & mutationCatalog[i].forbiddenFlags)
             && !(theMonster->info.abilityFlags & mutationCatalog[i].forbiddenAbilityFlags)) {
             strncpy(buttonText, mutationCatalog[i].title, COLS);
@@ -293,7 +290,7 @@ static void dialogCreateMonsterChooseMutation(creature *theMonster) {
     initializeCreateItemButton(&(buttons[j]), "No mutation");
     noMutation = j;
 
-    selectedMutation = dialogSelectEntryFromList(buttons, j+1, "Choose a mutation:");
+    selectedMutation = dialogSelectEntryFromList(buttons, j + 1, "Choose a mutation:");
 
     if (selectedMutation != noMutation) {
         mutateMonster(theMonster, selectedMutation);
@@ -306,7 +303,7 @@ static void dialogCreateMonster() {
     char buttonText[COLS];
     pos selectedPosition;
     boolean locationIsValid = true;
-    short i, j=0, selectedMonster, monsterOffset, buttonCount=0;
+    short i, j = 0, selectedMonster, monsterOffset, buttonCount = 0;
     const short MONSTERS_PER_PAGE = 24;
     const short CREATABLE_MONSTER_KINDS = NUMBER_MONSTER_KINDS - 2;
     char theMessage[COLS] = "";
@@ -317,7 +314,7 @@ static void dialogCreateMonster() {
     // There are too many monsters to fit on a page so we break them into ranges. First we copy the monster catalog and
     // sort it alphabetically by name. Also, we exclude creation of lich and phoenix as those are summoned by phylactery
     // and phoenix egg respectively.
-    for (i=0; i < NUMBER_MONSTER_KINDS; i++) {
+    for (i = 0; i < NUMBER_MONSTER_KINDS; i++) {
         if (!(monsterCatalog[i].monsterID == MK_LICH) && !(monsterCatalog[i].monsterID == MK_PHOENIX)) {
             monsterKinds[j] = monsterCatalog[i];
             upperCase(monsterKinds[j].monsterName);
@@ -325,13 +322,15 @@ static void dialogCreateMonster() {
         }
     }
 
-    qsort(monsterKinds,CREATABLE_MONSTER_KINDS,sizeof(creatureType),&creatureTypeCompareMonsterNames);
+    qsort(monsterKinds, CREATABLE_MONSTER_KINDS, sizeof(creatureType), &creatureTypeCompareMonsterNames);
 
-    for (i=0; i < CREATABLE_MONSTER_KINDS; i+=MONSTERS_PER_PAGE) {
+    for (i = 0; i < CREATABLE_MONSTER_KINDS; i += MONSTERS_PER_PAGE) {
         if (i + MONSTERS_PER_PAGE < CREATABLE_MONSTER_KINDS) {
-            sprintf(monsterRangeText,"%s - %s",monsterKinds[i].monsterName, monsterKinds[i + MONSTERS_PER_PAGE-1].monsterName);
+            sprintf(monsterRangeText, "%s - %s", monsterKinds[i].monsterName,
+                    monsterKinds[i + MONSTERS_PER_PAGE - 1].monsterName);
         } else {
-            sprintf(monsterRangeText,"%s - %s",monsterKinds[i].monsterName, monsterKinds[CREATABLE_MONSTER_KINDS-1].monsterName);
+            sprintf(monsterRangeText, "%s - %s", monsterKinds[i].monsterName,
+                    monsterKinds[CREATABLE_MONSTER_KINDS - 1].monsterName);
         }
         initializeCreateItemButton(&(buttons[buttonCount]), monsterRangeText);
         buttonCount++;
@@ -342,11 +341,11 @@ static void dialogCreateMonster() {
     if (monsterOffset == -1) {
         return;
     }
-    monsterOffset*= MONSTERS_PER_PAGE;
+    monsterOffset *= MONSTERS_PER_PAGE;
 
     // populate menu of monsters in the selected range
     buttonCount = 0;
-    for (i=monsterOffset; i < monsterOffset + MONSTERS_PER_PAGE && i < CREATABLE_MONSTER_KINDS; i++) {
+    for (i = monsterOffset; i < monsterOffset + MONSTERS_PER_PAGE && i < CREATABLE_MONSTER_KINDS; i++) {
         strncpy(buttonText, monsterKinds[i].monsterName, COLS);
         initializeCreateItemButton(&(buttons[buttonCount]), buttonText);
         buttonCount++;
@@ -358,7 +357,7 @@ static void dialogCreateMonster() {
         return;
     }
 
-    selectedMonster+= monsterOffset;
+    selectedMonster += monsterOffset;
 
     theMonster = generateMonster(monsterKinds[selectedMonster].monsterID, false, false);
 
@@ -384,12 +383,14 @@ static void dialogCreateMonster() {
         if (theMonster->info.displayChar == G_TURRET && (!(pmapAt(selectedPosition)->layers[DUNGEON] == WALL))) {
             locationIsValid = false;
         }
-        if (!(theMonster->info.displayChar == G_TURRET) && cellHasTerrainFlag(selectedPosition.x, selectedPosition.y, T_OBSTRUCTS_PASSABILITY)) {
+        if (!(theMonster->info.displayChar == G_TURRET)
+            && cellHasTerrainFlag(selectedPosition.x, selectedPosition.y, T_OBSTRUCTS_PASSABILITY)) {
             locationIsValid = false;
         }
 
         if (!locationIsValid) {
-            sprintf(theMessage, "Invalid location. %s", KEYBOARD_LABELS ? "-- Press space or click to continue --" : "-- Touch anywhere to continue --");
+            sprintf(theMessage, "Invalid location. %s",
+                    KEYBOARD_LABELS ? "-- Press space or click to continue --" : "-- Touch anywhere to continue --");
             temporaryMessage(theMessage, REQUIRE_ACKNOWLEDGMENT);
             killCreature(theMonster, true);
             removeDeadMonsters();
@@ -411,9 +412,7 @@ static void dialogCreateMonster() {
         refreshDungeonCell(theMonster->loc.x, theMonster->loc.y);
 
         if (!(theMonster->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))
-            || theMonster->info.monsterID == MK_PHOENIX_EGG
-            || theMonster->info.monsterID == MK_PHYLACTERY
-                ) {
+            || theMonster->info.monsterID == MK_PHOENIX_EGG || theMonster->info.monsterID == MK_PHYLACTERY) {
             sprintf(theMessage, "Make the %s your ally?", theMonster->info.monsterName);
             if (confirm(theMessage, false)) {
                 becomeAllyWith(theMonster);
@@ -425,7 +424,7 @@ static void dialogCreateMonster() {
             sprintf(theMessage, "%s created.", theMonster->info.monsterName);
         }
         message(theMessage, 0);
-    } else {  // no location chosen
+    } else { // no location chosen
         confirmMessages();
         killCreature(theMonster, true);
         removeDeadMonsters();
@@ -440,14 +439,14 @@ static void dialogCreateItem() {
     short i, selectedCategory, selectedKind;
     char message[COLS] = "";
     item *theItem;
-    char theItemName[100]="";
+    char theItemName[100] = "";
 
     if (numberOfItemsInPack() == MAX_PACK_ITEMS) {
         messageWithColor("Your pack is already full.", &itemMessageColor, 0);
         return;
     }
 
-    for (i=0; i < NUMBER_ITEM_CATEGORIES; i++) {
+    for (i = 0; i < NUMBER_ITEM_CATEGORIES; i++) {
         strncpy(buttonText, itemCategoryNames[i], COLS);
         initializeCreateItemButton(&(buttons[i]), buttonText);
     }
@@ -475,7 +474,8 @@ static void dialogCreateItem() {
 
     if (Fl(selectedCategory) == GOLD) {
         rogue.gold += theItem->quantity;
-        sprintf(message, "you found %i pieces of gold.%s", theItem->quantity, rogue.featRecord[FEAT_TONE] ? ".. and strike a tone of disappointment." : "");
+        sprintf(message, "you found %i pieces of gold.%s", theItem->quantity,
+                rogue.featRecord[FEAT_TONE] ? ".. and strike a tone of disappointment." : "");
         rogue.featRecord[FEAT_TONE] = false;
         messageWithColor(message, &itemMessageColor, 0);
         deleteItem(theItem);
@@ -486,7 +486,7 @@ static void dialogCreateItem() {
         dialogCreateItemChooseRunic(theItem);
     }
 
-    if (Fl(selectedCategory) & CAN_BE_ENCHANTED  && theItem->quiverNumber == 0) {
+    if (Fl(selectedCategory) & CAN_BE_ENCHANTED && theItem->quiverNumber == 0) {
         dialogCreateItemChooseEnchantmentLevel(theItem);
     }
 
@@ -499,7 +499,7 @@ static void dialogCreateItem() {
     theItem = addItemToPack(theItem);
     itemName(theItem, theItemName, true, true, NULL);
 
-    sprintf(message,"you now have %s (%c).", theItemName, theItem->inventoryLetter);
+    sprintf(message, "you now have %s (%c).", theItemName, theItem->inventoryLetter);
     messageWithColor(message, &itemMessageColor, 0);
 }
 

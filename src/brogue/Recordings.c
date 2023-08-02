@@ -27,18 +27,15 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
-#define RECORDING_HEADER_LENGTH     36  // bytes at the start of the recording file to store global data
+#define RECORDING_HEADER_LENGTH 36 // bytes at the start of the recording file to store global data
 
-static const long keystrokeTable[] = {UP_ARROW, LEFT_ARROW, DOWN_ARROW, RIGHT_ARROW,
-    ESCAPE_KEY, RETURN_KEY, DELETE_KEY, TAB_KEY, NUMPAD_0, NUMPAD_1,
-    NUMPAD_2, NUMPAD_3, NUMPAD_4, NUMPAD_5, NUMPAD_6, NUMPAD_7, NUMPAD_8, NUMPAD_9};
+static const long keystrokeTable[]
+    = {UP_ARROW, LEFT_ARROW, DOWN_ARROW, RIGHT_ARROW, ESCAPE_KEY, RETURN_KEY, DELETE_KEY, TAB_KEY,  NUMPAD_0,
+       NUMPAD_1, NUMPAD_2,   NUMPAD_3,   NUMPAD_4,    NUMPAD_5,   NUMPAD_6,   NUMPAD_7,   NUMPAD_8, NUMPAD_9};
 
 static const int keystrokeCount = sizeof(keystrokeTable) / sizeof(*keystrokeTable);
 
-enum recordingSeekModes {
-    RECORDING_SEEK_MODE_TURN,
-    RECORDING_SEEK_MODE_DEPTH
-};
+enum recordingSeekModes { RECORDING_SEEK_MODE_TURN, RECORDING_SEEK_MODE_DEPTH };
 
 void recordChar(unsigned char c) {
     inputRecordBuffer[locationInRecordingBuffer++] = c;
@@ -57,11 +54,11 @@ unsigned char compressKeystroke(long c) {
 
     for (i = 0; i < keystrokeCount; i++) {
         if (keystrokeTable[i] == c) {
-            return (unsigned char) (128 + i);
+            return (unsigned char)(128 + i);
         }
     }
     if (c < 256) {
-        return (unsigned char) c;
+        return (unsigned char)c;
     }
     return UNKNOWN_KEY;
 }
@@ -71,7 +68,7 @@ void numberToString(uint64_t number, short numberOfBytes, unsigned char *recordT
     uint64_t n;
 
     n = number;
-    for (i=numberOfBytes - 1; i >= 0; i--) {
+    for (i = numberOfBytes - 1; i >= 0; i--) {
         recordTo[i] = n % 256;
         n /= 256;
     }
@@ -84,7 +81,7 @@ void recordNumber(unsigned long number, short numberOfBytes) {
     unsigned char c[10];
 
     numberToString(number, numberOfBytes, c);
-    for (i=0; i<numberOfBytes; i++) {
+    for (i = 0; i < numberOfBytes; i++) {
         recordChar(c[i]);
     }
 }
@@ -100,7 +97,7 @@ void recordEvent(rogueEvent *event) {
         return;
     }
 
-    recordChar((unsigned char) event->eventType);
+    recordChar((unsigned char)event->eventType);
 
     if (event->eventType == KEYSTROKE) {
         // record which key
@@ -110,8 +107,8 @@ void recordEvent(rogueEvent *event) {
         }
         recordChar(c);
     } else {
-        recordChar((unsigned char) event->param1);
-        recordChar((unsigned char) event->param2);
+        recordChar((unsigned char)event->param1);
+        recordChar((unsigned char)event->param2);
     }
 
     // record the modifier keys
@@ -149,7 +146,7 @@ void cancelKeystroke() {
 // record a series of keystrokes; string must end with a null terminator
 void recordKeystrokeSequence(unsigned char *keystrokeSequence) {
     short i;
-    for (i=0; keystrokeSequence[i] != '\0'; i++) {
+    for (i = 0; keystrokeSequence[i] != '\0'; i++) {
         recordKeystroke(keystrokeSequence[i], false, false);
     }
 }
@@ -176,7 +173,7 @@ void writeHeaderInfo(char *path) {
     FILE *recordFile;
 
     // Zero out the entire header to start.
-    for (i=0; i<RECORDING_HEADER_LENGTH; i++) {
+    for (i = 0; i < RECORDING_HEADER_LENGTH; i++) {
         c[i] = 0;
     }
 
@@ -204,7 +201,7 @@ void writeHeaderInfo(char *path) {
 
     recordFile = fopen(path, "r+b");
     rewind(recordFile);
-    for (i=0; i<RECORDING_HEADER_LENGTH; i++) {
+    for (i = 0; i < RECORDING_HEADER_LENGTH; i++) {
         putc(c[i], recordFile);
     }
     if (recordFile) {
@@ -235,7 +232,7 @@ void flushBufferToFile() {
 
         recordFile = fopen(currentFilePath, "ab");
 
-        for (i=0; i<locationInRecordingBuffer; i++) {
+        for (i = 0; i < locationInRecordingBuffer; i++) {
             putc(inputRecordBuffer[i], recordFile);
         }
 
@@ -248,13 +245,13 @@ void flushBufferToFile() {
 }
 
 void fillBufferFromFile() {
-//  short i;
+    //  short i;
     FILE *recordFile;
 
     recordFile = fopen(currentFilePath, "rb");
     fseek(recordFile, positionInPlaybackFile, SEEK_SET);
 
-    fread((void *) inputRecordBuffer, 1, INPUT_RECORD_BUFFER, recordFile);
+    fread((void *)inputRecordBuffer, 1, INPUT_RECORD_BUFFER, recordFile);
 
     positionInPlaybackFile = ftell(recordFile);
     fclose(recordFile);
@@ -288,14 +285,15 @@ uint64_t recallNumber(short numberOfBytes) {
 
     n = 0;
 
-    for (i=0; i<numberOfBytes; i++) {
+    for (i = 0; i < numberOfBytes; i++) {
         n *= 256;
-        n += (uint64_t) recallChar();
+        n += (uint64_t)recallChar();
     }
     return n;
 }
 
-#define OOS_APOLOGY "Playback of the recording has diverged from the originally recorded game.\n\n\
+#define OOS_APOLOGY                                                                                                    \
+    "Playback of the recording has diverged from the originally recorded game.\n\n\
 This could be caused by recording or playing the file on a modified version of Brogue, or it could \
 simply be the result of a bug.\n\n\
 If this is a different computer from the one on which the recording was saved, the recording \
@@ -346,39 +344,39 @@ void recallEvent(rogueEvent *event) {
         event->eventType = c;
 
         switch (c) {
-            case KEYSTROKE:
-                // record which key
-                event->param1 = uncompressKeystroke(recallChar());
-                event->param2 = 0;
-                break;
-            case SAVED_GAME_LOADED:
-                tryAgain = true;
-                flashTemporaryAlert(" Saved game loaded ", 1000);
-                break;
-            case MOUSE_UP:
-            case MOUSE_DOWN:
-            case MOUSE_ENTERED_CELL:
-            case RIGHT_MOUSE_UP:
-            case RIGHT_MOUSE_DOWN:
-                event->param1 = recallChar();
-                event->param2 = recallChar();
-                break;
-            case RNG_CHECK:
-            case END_OF_RECORDING:
-            case EVENT_ERROR:
-            default:
-                message("Unrecognized event type in playback.", REQUIRE_ACKNOWLEDGMENT);
-                printf("Unrecognized event type in playback: event ID %i", c);
-                tryAgain = true;
-                playbackPanic();
-                break;
+        case KEYSTROKE:
+            // record which key
+            event->param1 = uncompressKeystroke(recallChar());
+            event->param2 = 0;
+            break;
+        case SAVED_GAME_LOADED:
+            tryAgain = true;
+            flashTemporaryAlert(" Saved game loaded ", 1000);
+            break;
+        case MOUSE_UP:
+        case MOUSE_DOWN:
+        case MOUSE_ENTERED_CELL:
+        case RIGHT_MOUSE_UP:
+        case RIGHT_MOUSE_DOWN:
+            event->param1 = recallChar();
+            event->param2 = recallChar();
+            break;
+        case RNG_CHECK:
+        case END_OF_RECORDING:
+        case EVENT_ERROR:
+        default:
+            message("Unrecognized event type in playback.", REQUIRE_ACKNOWLEDGMENT);
+            printf("Unrecognized event type in playback: event ID %i", c);
+            tryAgain = true;
+            playbackPanic();
+            break;
         }
     } while (tryAgain && !rogue.gameHasEnded);
 
     // record the modifier keys
     c = recallChar();
     event->controlKey = (c & Fl(1)) ? true : false;
-    event->shiftKey =   (c & Fl(2)) ? true : false;
+    event->shiftKey = (c & Fl(2)) ? true : false;
 }
 
 void loadNextAnnotation() {
@@ -390,7 +388,7 @@ void loadNextAnnotation() {
         return;
     }
 
-    annotationFile =  fopen(annotationPathname, "r");
+    annotationFile = fopen(annotationPathname, "r");
     fseek(annotationFile, rogue.locationInAnnotationFile, SEEK_SET);
 
     for (;;) {
@@ -411,16 +409,15 @@ void loadNextAnnotation() {
         // load description
         fgets(rogue.nextAnnotation, 5000, annotationFile);
 
-        if (currentReadTurn > rogue.playerTurnNumber ||
-            (currentReadTurn <= 1 && rogue.playerTurnNumber <= 1 && currentReadTurn >= rogue.playerTurnNumber)) {
+        if (currentReadTurn > rogue.playerTurnNumber
+            || (currentReadTurn <= 1 && rogue.playerTurnNumber <= 1 && currentReadTurn >= rogue.playerTurnNumber)) {
             rogue.nextAnnotationTurn = currentReadTurn;
 
             // strip the newline off the end
             rogue.nextAnnotation[strlen(rogue.nextAnnotation) - 1] = '\0';
             // strip out any gremlins in the annotation
-            for (i=0; i<5000 && rogue.nextAnnotation[i]; i++) {
-                if (rogue.nextAnnotation[i] < ' '
-                    || rogue.nextAnnotation[i] > '~') {
+            for (i = 0; i < 5000 && rogue.nextAnnotation[i]; i++) {
+                if (rogue.nextAnnotation[i] < ' ' || rogue.nextAnnotation[i] > '~') {
                     rogue.nextAnnotation[i] = ' ';
                 }
             }
@@ -434,8 +431,7 @@ void loadNextAnnotation() {
 void displayAnnotation() {
     cellDisplayBuffer rbuf[COLS][ROWS];
 
-    if (rogue.playbackMode
-        && rogue.playerTurnNumber == rogue.nextAnnotationTurn) {
+    if (rogue.playbackMode && rogue.playerTurnNumber == rogue.nextAnnotationTurn) {
 
         if (!rogue.playbackFastForward) {
             refreshSideBar(-1, -1, false);
@@ -480,26 +476,26 @@ void initRecording() {
     RNGLogFile = fopen(RNG_LOG, "a");
 #endif
 
-    locationInRecordingBuffer   = 0;
-    positionInPlaybackFile      = 0;
-    recordingLocation           = 0;
-    maxLevelChanges             = 0;
-    rogue.playbackOOS           = false;
-    rogue.playbackOmniscience   = false;
-    rogue.nextAnnotationTurn    = 0;
-    rogue.nextAnnotation[0]     = '\0';
-    rogue.locationInAnnotationFile  = 0;
-    rogue.patchVersion          = 0;
+    locationInRecordingBuffer = 0;
+    positionInPlaybackFile = 0;
+    recordingLocation = 0;
+    maxLevelChanges = 0;
+    rogue.playbackOOS = false;
+    rogue.playbackOmniscience = false;
+    rogue.nextAnnotationTurn = 0;
+    rogue.nextAnnotation[0] = '\0';
+    rogue.locationInAnnotationFile = 0;
+    rogue.patchVersion = 0;
 
     if (rogue.playbackMode) {
-        lengthOfPlaybackFile        = 100000; // so recall functions don't freak out
-        rogue.playbackDelayPerTurn  = DEFAULT_PLAYBACK_DELAY;
+        lengthOfPlaybackFile = 100000; // so recall functions don't freak out
+        rogue.playbackDelayPerTurn = DEFAULT_PLAYBACK_DELAY;
         rogue.playbackDelayThisTurn = rogue.playbackDelayPerTurn;
-        rogue.playbackPaused        = false;
+        rogue.playbackPaused = false;
 
         fillBufferFromFile();
 
-        for (i=0; i<15; i++) {
+        for (i = 0; i < 15; i++) {
             versionString[i] = recallChar();
         }
         wizardMode = recallChar();
@@ -513,10 +509,12 @@ void initRecording() {
             rogue.playbackFastForward = false;
 
             if (!nonInteractivePlayback) {
-                snprintf(buf, 1000, "This file is from version %s and cannot be opened in version %s.", versionString, gameConst->versionString);
+                snprintf(buf, 1000, "This file is from version %s and cannot be opened in version %s.", versionString,
+                         gameConst->versionString);
                 dialogAlert(buf);
             } else {
-                printf("This file is from version %s and cannot be opened in version %s.", versionString, gameConst->versionString);
+                printf("This file is from version %s and cannot be opened in version %s.", versionString,
+                       gameConst->versionString);
             }
 
             rogue.playbackMode = true;
@@ -533,14 +531,16 @@ void initRecording() {
             rogue.playbackFastForward = false;
             if (wizardMode) {
                 if (!nonInteractivePlayback) {
-                    sprintf(buf, "This game was played in wizard mode. You must start Brogue in wizard mode to replay it.");
+                    sprintf(buf,
+                            "This game was played in wizard mode. You must start Brogue in wizard mode to replay it.");
                     dialogAlert(buf);
                 } else {
                     printf("This game was played in wizard mode. You must start Brogue in wizard mode to replay it.");
                 }
             } else {
                 if (!nonInteractivePlayback) {
-                    sprintf(buf, "To play this regular recording, please restart Brogue without the wizard mode option.");
+                    sprintf(buf,
+                            "To play this regular recording, please restart Brogue without the wizard mode option.");
                     dialogAlert(buf);
                 } else {
                     printf("To play this regular recording, please restart Brogue without the wizard mode option.");
@@ -555,10 +555,10 @@ void initRecording() {
             rogue.gameExitStatusCode = EXIT_STATUS_FAILURE_RECORDING_WRONG_VERSION;
         }
 
-        rogue.seed              = recallNumber(8);          // master random seed
-        rogue.howManyTurns      = recallNumber(4);          // how many turns are in this recording
-        maxLevelChanges         = recallNumber(4);          // how many times the player changes depths
-        lengthOfPlaybackFile    = recallNumber(4);
+        rogue.seed = recallNumber(8);         // master random seed
+        rogue.howManyTurns = recallNumber(4); // how many turns are in this recording
+        maxLevelChanges = recallNumber(4);    // how many times the player changes depths
+        lengthOfPlaybackFile = recallNumber(4);
         seedRandomGenerator(rogue.seed);
         previousGameSeed = rogue.seed;
 
@@ -595,7 +595,7 @@ void OOSCheck(unsigned long x, short numberOfBytes) {
                 printf("Event type mismatch in RNG check.\n");
                 playbackPanic();
             } else if (recordedNumber != x) {
-                printf("Expected RNG output of %li; got %i.\n", recordedNumber, (int) x);
+                printf("Expected RNG output of %li; got %i.\n", recordedNumber, (int)x);
                 playbackPanic();
             }
         }
@@ -614,11 +614,11 @@ void RNGCheck() {
     oldRNG = rogue.RNG;
     rogue.RNG = RNG_SUBSTANTIVE;
 
-//#ifdef AUDIT_RNG
-//reportRNGState();
-//#endif
+    //#ifdef AUDIT_RNG
+    // reportRNGState();
+    //#endif
 
-    randomNumber = (unsigned long) rand_range(0, 255);
+    randomNumber = (unsigned long)rand_range(0, 255);
     OOSCheck(randomNumber, 1);
 
     rogue.RNG = oldRNG;
@@ -634,37 +634,36 @@ boolean unpause() {
     return false;
 }
 
-#define PLAYBACK_HELP_LINE_COUNT    20
+#define PLAYBACK_HELP_LINE_COUNT 20
 
 void printPlaybackHelpScreen() {
     short i, j;
     cellDisplayBuffer dbuf[COLS][ROWS], rbuf[COLS][ROWS];
-    char helpText[PLAYBACK_HELP_LINE_COUNT][80] = {
-        "Commands:",
-        "",
-        "         <space>: ****pause or unpause playback",
-        "   k or up arrow: ****play back faster",
-        " j or down arrow: ****play back slower",
-        "               <: ****go to previous level",
-        "               >: ****go to next level",
-        "             0-9: ****skip to specified turn number",
-        "l or right arrow: ****advance one turn (shift for 5 turns; control for 20)",
-        "",
-        "           <tab>: ****enable or disable omniscience",
-        "          return: ****examine surroundings",
-        "               i: ****display inventory",
-        "               D: ****display discovered items",
-        "               V: ****view saved recording",
-        "               O: ****open and resume saved game",
-        "               N: ****begin a new game",
-        "               Q: ****quit to title screen",
-        "",
-        "        -- press any key to continue --"
-    };
+    char helpText[PLAYBACK_HELP_LINE_COUNT][80]
+        = {"Commands:",
+           "",
+           "         <space>: ****pause or unpause playback",
+           "   k or up arrow: ****play back faster",
+           " j or down arrow: ****play back slower",
+           "               <: ****go to previous level",
+           "               >: ****go to next level",
+           "             0-9: ****skip to specified turn number",
+           "l or right arrow: ****advance one turn (shift for 5 turns; control for 20)",
+           "",
+           "           <tab>: ****enable or disable omniscience",
+           "          return: ****examine surroundings",
+           "               i: ****display inventory",
+           "               D: ****display discovered items",
+           "               V: ****view saved recording",
+           "               O: ****open and resume saved game",
+           "               N: ****begin a new game",
+           "               Q: ****quit to title screen",
+           "",
+           "        -- press any key to continue --"};
 
     // Replace the "****"s with color escapes.
-    for (i=0; i<PLAYBACK_HELP_LINE_COUNT; i++) {
-        for (j=0; helpText[i][j]; j++) {
+    for (i = 0; i < PLAYBACK_HELP_LINE_COUNT; i++) {
+        for (j = 0; helpText[i][j]; j++) {
             if (helpText[i][j] == '*') {
                 j = encodeMessageColor(helpText[i], j, &white);
             }
@@ -673,12 +672,12 @@ void printPlaybackHelpScreen() {
 
     clearDisplayBuffer(dbuf);
 
-    for (i=0; i<PLAYBACK_HELP_LINE_COUNT; i++) {
+    for (i = 0; i < PLAYBACK_HELP_LINE_COUNT; i++) {
         printString(helpText[i], mapToWindowX(5), mapToWindowY(i), &itemMessageColor, &black, dbuf);
     }
 
-    for (i=0; i<COLS; i++) {
-        for (j=0; j<ROWS; j++) {
+    for (i = 0; i < COLS; i++) {
+        for (j = 0; j < ROWS; j++) {
             dbuf[i][j].opacity = (i < STAT_BAR_WIDTH ? 0 : INTERFACE_OPACITY);
         }
     }
@@ -722,27 +721,27 @@ static void seek(unsigned long seekTarget, enum recordingSeekModes seekMode) {
 
     // configure progress bar
     switch (seekMode) {
-        case RECORDING_SEEK_MODE_DEPTH :
-            if (maxLevelChanges > 0) {
-                avgTurnsPerLevel = rogue.howManyTurns / maxLevelChanges;
-            }
-            if (seekTarget <= rogue.depthLevel) {
-                startTurnNumber = 0;
-                targetTurnNumber = avgTurnsPerLevel * seekTarget;
-            } else {
-                startTurnNumber = rogue.playerTurnNumber;
-                targetTurnNumber = rogue.playerTurnNumber + avgTurnsPerLevel;
-            }
-            break;
-        case RECORDING_SEEK_MODE_TURN :
-            if (seekTarget < rogue.playerTurnNumber) {
-                startTurnNumber = 0;
-                targetTurnNumber = seekTarget;
-            } else {
-                startTurnNumber = rogue.playerTurnNumber;
-                targetTurnNumber = seekTarget;
-            }
-            break;
+    case RECORDING_SEEK_MODE_DEPTH:
+        if (maxLevelChanges > 0) {
+            avgTurnsPerLevel = rogue.howManyTurns / maxLevelChanges;
+        }
+        if (seekTarget <= rogue.depthLevel) {
+            startTurnNumber = 0;
+            targetTurnNumber = avgTurnsPerLevel * seekTarget;
+        } else {
+            startTurnNumber = rogue.playerTurnNumber;
+            targetTurnNumber = rogue.playerTurnNumber + avgTurnsPerLevel;
+        }
+        break;
+    case RECORDING_SEEK_MODE_TURN:
+        if (seekTarget < rogue.playerTurnNumber) {
+            startTurnNumber = 0;
+            targetTurnNumber = seekTarget;
+        } else {
+            startTurnNumber = rogue.playerTurnNumber;
+            targetTurnNumber = seekTarget;
+        }
+        break;
     }
 
     if (targetTurnNumber - startTurnNumber > 100) {
@@ -773,13 +772,13 @@ static void seek(unsigned long seekTarget, enum recordingSeekModes seekMode) {
         if (useProgressBar && !(rogue.playerTurnNumber % progressBarRefreshInterval)) {
             rogue.playbackFastForward = false; // so that pauseBrogue looks for inputs
             printProgressBar((COLS - 20) / 2, ROWS / 2, "[     Loading...   ]",
-                             rogue.playerTurnNumber - startTurnNumber,
-                             targetTurnNumber - startTurnNumber, &darkPurple, false);
+                             rogue.playerTurnNumber - startTurnNumber, targetTurnNumber - startTurnNumber, &darkPurple,
+                             false);
             while (pauseBrogue(0)) { // pauseBrogue(0) is necessary to flush the display to the window in SDL
                 if (rogue.gameHasEnded) {
                     return;
                 }
-                rogue.creaturesWillFlashThisTurn = false; // prevent monster flashes from showing up on screen
+                rogue.creaturesWillFlashThisTurn = false;      // prevent monster flashes from showing up on screen
                 nextBrogueEvent(&theEvent, true, false, true); // eat the input if it isn't clicking x
             }
             rogue.playbackFastForward = true;
@@ -837,16 +836,15 @@ void promptToAdvanceToLocation(short keystroke) {
 }
 
 void pausePlayback() {
-    //short oldRNG;
+    // short oldRNG;
     if (!rogue.playbackPaused) {
         rogue.playbackPaused = true;
-        messageWithColor(KEYBOARD_LABELS ? "recording paused. Press space to play." : "recording paused.",
-                         &teal, 0);
+        messageWithColor(KEYBOARD_LABELS ? "recording paused. Press space to play." : "recording paused.", &teal, 0);
         refreshSideBar(-1, -1, false);
-        //oldRNG = rogue.RNG;
-        //rogue.RNG = RNG_SUBSTANTIVE;
+        // oldRNG = rogue.RNG;
+        // rogue.RNG = RNG_SUBSTANTIVE;
         mainInputLoop();
-        //rogue.RNG = oldRNG;
+        // rogue.RNG = oldRNG;
         messageWithColor("recording unpaused.", &teal, 0);
         rogue.playbackPaused = false;
         refreshSideBar(-1, -1, false);
@@ -875,231 +873,235 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
         stripShiftFromMovementKeystroke(&key);
 
         switch (key) {
-            case UP_ARROW:
-            case UP_KEY:
-                newDelay = max(1, min(rogue.playbackDelayPerTurn * 2/3, rogue.playbackDelayPerTurn - 1));
-                if (newDelay != rogue.playbackDelayPerTurn) {
-                    flashTemporaryAlert(" Faster ", 300);
-                }
-                rogue.playbackDelayPerTurn = newDelay;
-                rogue.playbackDelayThisTurn = rogue.playbackDelayPerTurn;
-                return true;
-            case DOWN_ARROW:
-            case DOWN_KEY:
-                newDelay = min(3000, max(rogue.playbackDelayPerTurn * 3/2, rogue.playbackDelayPerTurn + 1));
-                if (newDelay != rogue.playbackDelayPerTurn) {
-                    flashTemporaryAlert(" Slower ", 300);
-                }
-                rogue.playbackDelayPerTurn = newDelay;
-                rogue.playbackDelayThisTurn = rogue.playbackDelayPerTurn;
-                return true;
-            case ACKNOWLEDGE_KEY:
-                if (rogue.playbackOOS && rogue.playbackPaused) {
-                    flashTemporaryAlert(" Out of sync ", 2000);
+        case UP_ARROW:
+        case UP_KEY:
+            newDelay = max(1, min(rogue.playbackDelayPerTurn * 2 / 3, rogue.playbackDelayPerTurn - 1));
+            if (newDelay != rogue.playbackDelayPerTurn) {
+                flashTemporaryAlert(" Faster ", 300);
+            }
+            rogue.playbackDelayPerTurn = newDelay;
+            rogue.playbackDelayThisTurn = rogue.playbackDelayPerTurn;
+            return true;
+        case DOWN_ARROW:
+        case DOWN_KEY:
+            newDelay = min(3000, max(rogue.playbackDelayPerTurn * 3 / 2, rogue.playbackDelayPerTurn + 1));
+            if (newDelay != rogue.playbackDelayPerTurn) {
+                flashTemporaryAlert(" Slower ", 300);
+            }
+            rogue.playbackDelayPerTurn = newDelay;
+            rogue.playbackDelayThisTurn = rogue.playbackDelayPerTurn;
+            return true;
+        case ACKNOWLEDGE_KEY:
+            if (rogue.playbackOOS && rogue.playbackPaused) {
+                flashTemporaryAlert(" Out of sync ", 2000);
+            } else {
+                rogue.playbackPaused = !rogue.playbackPaused;
+            }
+            return true;
+        case TAB_KEY:
+            rogue.playbackOmniscience = !rogue.playbackOmniscience;
+            displayLevel();
+            refreshSideBar(-1, -1, false);
+            if (rogue.playbackOmniscience) {
+                messageWithColor("Omniscience enabled.", &teal, 0);
+            } else {
+                messageWithColor("Omniscience disabled.", &teal, 0);
+            }
+            return true;
+        case ASCEND_KEY:
+            seek(max(rogue.depthLevel - 1, 1), RECORDING_SEEK_MODE_DEPTH);
+            return true;
+        case DESCEND_KEY:
+            if (rogue.depthLevel == maxLevelChanges) {
+                flashTemporaryAlert(" Already reached deepest depth explored ", 2000);
+                return false;
+            }
+            seek(rogue.depthLevel + 1, RECORDING_SEEK_MODE_DEPTH);
+            return true;
+        case INVENTORY_KEY:
+            rogue.playbackMode = false;
+            displayInventory(ALL_ITEMS, 0, 0, true, false);
+            rogue.playbackMode = true;
+            return true;
+        case RIGHT_KEY:
+        case RIGHT_ARROW:
+        case LEFT_KEY:
+        case LEFT_ARROW:
+            if (key == RIGHT_KEY || key == RIGHT_ARROW) {
+                frameCount = 1;
+            } else {
+                frameCount = -1;
+            }
+            if (recordingInput->shiftKey) {
+                frameCount *= 5;
+            }
+            if (recordingInput->controlKey) {
+                frameCount *= 20;
+            }
+
+            if (frameCount < 0) {
+                if ((unsigned long)(frameCount * -1) > rogue.playerTurnNumber) {
+                    destinationFrame = 0;
                 } else {
-                    rogue.playbackPaused = !rogue.playbackPaused;
+                    destinationFrame = rogue.playerTurnNumber + frameCount;
                 }
-                return true;
-            case TAB_KEY:
-                rogue.playbackOmniscience = !rogue.playbackOmniscience;
-                displayLevel();
-                refreshSideBar(-1, -1, false);
-                if (rogue.playbackOmniscience) {
-                    messageWithColor("Omniscience enabled.", &teal, 0);
-                } else {
-                    messageWithColor("Omniscience disabled.", &teal, 0);
-                }
-                return true;
-            case ASCEND_KEY:
-                seek(max(rogue.depthLevel - 1, 1), RECORDING_SEEK_MODE_DEPTH);
-                return true;
-            case DESCEND_KEY:
-                if (rogue.depthLevel == maxLevelChanges) {
-                    flashTemporaryAlert(" Already reached deepest depth explored ", 2000);
-                    return false;
-                }
-                seek(rogue.depthLevel + 1, RECORDING_SEEK_MODE_DEPTH);
-                return true;
-            case INVENTORY_KEY:
+            } else {
+                destinationFrame = min(rogue.playerTurnNumber + frameCount, rogue.howManyTurns);
+            }
+
+            if (destinationFrame == rogue.playerTurnNumber) {
+                flashTemporaryAlert(" Already at end of recording ", 1000);
+            } else if (frameCount < 0) {
                 rogue.playbackMode = false;
-                displayInventory(ALL_ITEMS, 0, 0, true, false);
+                proceed = (rogue.playerTurnNumber < 100 || confirm("Rewind?", true));
                 rogue.playbackMode = true;
-                return true;
-            case RIGHT_KEY:
-            case RIGHT_ARROW:
-            case LEFT_KEY:
-            case LEFT_ARROW:
-                if (key == RIGHT_KEY || key == RIGHT_ARROW) {
-                    frameCount = 1;
-                } else {
-                    frameCount = -1;
-                }
-                if (recordingInput->shiftKey) {
-                    frameCount *= 5;
-                }
-                if (recordingInput->controlKey) {
-                    frameCount *= 20;
-                }
-
-                if (frameCount < 0) {
-                    if ((unsigned long) (frameCount * -1) > rogue.playerTurnNumber) {
-                        destinationFrame = 0;
-                    } else {
-                        destinationFrame = rogue.playerTurnNumber + frameCount;
-                    }
-                } else {
-                    destinationFrame = min(rogue.playerTurnNumber + frameCount, rogue.howManyTurns);
-                }
-
-                if (destinationFrame == rogue.playerTurnNumber) {
-                    flashTemporaryAlert(" Already at end of recording ", 1000);
-                } else if (frameCount < 0) {
-                    rogue.playbackMode = false;
-                    proceed = (rogue.playerTurnNumber < 100 || confirm("Rewind?", true));
-                    rogue.playbackMode = true;
-                    if (proceed) {
-                        seek(destinationFrame, RECORDING_SEEK_MODE_TURN);
-                    }
-                } else {
-                    // advance by the right number of turns
+                if (proceed) {
                     seek(destinationFrame, RECORDING_SEEK_MODE_TURN);
                 }
-                return true;
-            case BROGUE_HELP_KEY:
-                printPlaybackHelpScreen();
-                return true;
-            case DISCOVERIES_KEY:
-                rogue.playbackMode = false;
-                printDiscoveriesScreen();
-                rogue.playbackMode = true;
-                return true;
-            case MESSAGE_ARCHIVE_KEY:
-                rogue.playbackMode = false;
-                displayMessageArchive();
-                rogue.playbackMode = true;
-                return true;
-            case VIEW_RECORDING_KEY:
-                confirmMessages();
-                rogue.playbackMode = false;
-                if (dialogChooseFile(path, RECORDING_SUFFIX, "View recording: ")) {
-                    if (fileExists(path)) {
-                        strcpy(rogue.nextGamePath, path);
-                        strcpy(rogue.currentGamePath, path);
-                        rogue.nextGame = NG_VIEW_RECORDING;
-                        rogue.gameHasEnded = true;
-                        rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
-                    } else {
-                        message("File not found.", 0);
-                    }
-                }
-                rogue.playbackMode = true;
-                return true;
-            case LOAD_SAVED_GAME_KEY:
-                confirmMessages();
-                rogue.playbackMode = false;
-                if (dialogChooseFile(path, GAME_SUFFIX, "Open saved game: ")) {
-                    if (fileExists(path)) {
-                        strcpy(rogue.nextGamePath, path);
-                        strcpy(rogue.currentGamePath, path);
-                        rogue.nextGame = NG_OPEN_GAME;
-                        rogue.gameHasEnded = true;
-                    } else {
-                        message("File not found.", 0);
-                    }
-                }
-                rogue.playbackMode = true;
-                return true;
-            case NEW_GAME_KEY:
-                rogue.playbackMode = false;
-                if (confirm("Close recording and begin a new game?", true)) {
-                    rogue.nextGame = NG_NEW_GAME;
+            } else {
+                // advance by the right number of turns
+                seek(destinationFrame, RECORDING_SEEK_MODE_TURN);
+            }
+            return true;
+        case BROGUE_HELP_KEY:
+            printPlaybackHelpScreen();
+            return true;
+        case DISCOVERIES_KEY:
+            rogue.playbackMode = false;
+            printDiscoveriesScreen();
+            rogue.playbackMode = true;
+            return true;
+        case MESSAGE_ARCHIVE_KEY:
+            rogue.playbackMode = false;
+            displayMessageArchive();
+            rogue.playbackMode = true;
+            return true;
+        case VIEW_RECORDING_KEY:
+            confirmMessages();
+            rogue.playbackMode = false;
+            if (dialogChooseFile(path, RECORDING_SUFFIX, "View recording: ")) {
+                if (fileExists(path)) {
+                    strcpy(rogue.nextGamePath, path);
+                    strcpy(rogue.currentGamePath, path);
+                    rogue.nextGame = NG_VIEW_RECORDING;
                     rogue.gameHasEnded = true;
+                    rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
+                } else {
+                    message("File not found.", 0);
                 }
-                rogue.playbackMode = true;
-                return true;
-            case QUIT_KEY:
-                //freeEverything();
+            }
+            rogue.playbackMode = true;
+            return true;
+        case LOAD_SAVED_GAME_KEY:
+            confirmMessages();
+            rogue.playbackMode = false;
+            if (dialogChooseFile(path, GAME_SUFFIX, "Open saved game: ")) {
+                if (fileExists(path)) {
+                    strcpy(rogue.nextGamePath, path);
+                    strcpy(rogue.currentGamePath, path);
+                    rogue.nextGame = NG_OPEN_GAME;
+                    rogue.gameHasEnded = true;
+                } else {
+                    message("File not found.", 0);
+                }
+            }
+            rogue.playbackMode = true;
+            return true;
+        case NEW_GAME_KEY:
+            rogue.playbackMode = false;
+            if (confirm("Close recording and begin a new game?", true)) {
+                rogue.nextGame = NG_NEW_GAME;
                 rogue.gameHasEnded = true;
-                rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
-                rogue.playbackOOS = false;
-                rogue.creaturesWillFlashThisTurn = false;
-                notifyEvent(GAMEOVER_RECORDING, 0, 0, "recording ended", "none");
-                return true;
-            case TRUE_COLORS_KEY:
-                rogue.trueColorMode = !rogue.trueColorMode;
-                displayLevel();
-                refreshSideBar(-1, -1, false);
-                if (rogue.trueColorMode) {
-                    messageWithColor(KEYBOARD_LABELS ? "Color effects disabled. Press '\\' again to enable." : "Color effects disabled.",
+            }
+            rogue.playbackMode = true;
+            return true;
+        case QUIT_KEY:
+            // freeEverything();
+            rogue.gameHasEnded = true;
+            rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
+            rogue.playbackOOS = false;
+            rogue.creaturesWillFlashThisTurn = false;
+            notifyEvent(GAMEOVER_RECORDING, 0, 0, "recording ended", "none");
+            return true;
+        case TRUE_COLORS_KEY:
+            rogue.trueColorMode = !rogue.trueColorMode;
+            displayLevel();
+            refreshSideBar(-1, -1, false);
+            if (rogue.trueColorMode) {
+                messageWithColor(KEYBOARD_LABELS ? "Color effects disabled. Press '\\' again to enable."
+                                                 : "Color effects disabled.",
+                                 &teal, 0);
+            } else {
+                messageWithColor(KEYBOARD_LABELS ? "Color effects enabled. Press '\\' again to disable."
+                                                 : "Color effects enabled.",
+                                 &teal, 0);
+            }
+            return true;
+        case STEALTH_RANGE_KEY:
+            rogue.displayStealthRangeMode = !rogue.displayStealthRangeMode;
+            displayLevel();
+            refreshSideBar(-1, -1, false);
+            if (rogue.displayStealthRangeMode) {
+                messageWithColor(KEYBOARD_LABELS ? "Stealth range displayed. Press ']' again to hide."
+                                                 : "Stealth range displayed.",
+                                 &teal, 0);
+            } else {
+                messageWithColor(KEYBOARD_LABELS ? "Stealth range hidden. Press ']' again to display."
+                                                 : "Stealth range hidden.",
+                                 &teal, 0);
+            }
+            return true;
+        case GRAPHICS_KEY:
+            if (hasGraphics) {
+                graphicsMode = setGraphicsMode((graphicsMode + 1) % 3);
+                switch (graphicsMode) {
+                case TEXT_GRAPHICS:
+                    messageWithColor(KEYBOARD_LABELS ? "Switched to text mode. Press 'G' again to enable tiles."
+                                                     : "Switched to text mode.",
                                      &teal, 0);
-                } else {
-                    messageWithColor(KEYBOARD_LABELS ? "Color effects enabled. Press '\\' again to disable." : "Color effects enabled.",
+                    break;
+                case TILES_GRAPHICS:
+                    messageWithColor(KEYBOARD_LABELS
+                                         ? "Switched to graphical tiles. Press 'G' again to enable hybrid mode."
+                                         : "Switched to graphical tiles.",
                                      &teal, 0);
+                    break;
+                case HYBRID_GRAPHICS:
+                    messageWithColor(KEYBOARD_LABELS ? "Switched to hybrid mode. Press 'G' again to disable tiles."
+                                                     : "Switched to hybrid mode.",
+                                     &teal, 0);
+                    break;
                 }
-                return true;
-            case STEALTH_RANGE_KEY:
-                rogue.displayStealthRangeMode = !rogue.displayStealthRangeMode;
-                displayLevel();
-                refreshSideBar(-1, -1, false);
-                if (rogue.displayStealthRangeMode) {
-                    messageWithColor(KEYBOARD_LABELS ? "Stealth range displayed. Press ']' again to hide." : "Stealth range displayed.",
-                                     &teal, 0);
-                } else {
-                    messageWithColor(KEYBOARD_LABELS ? "Stealth range hidden. Press ']' again to display." : "Stealth range hidden.",
-                                     &teal, 0);
-                }
-                return true;
-            case GRAPHICS_KEY:
-                if (hasGraphics) {
-                    graphicsMode = setGraphicsMode((graphicsMode + 1) % 3);
-                    switch (graphicsMode) {
-                        case TEXT_GRAPHICS:
-                            messageWithColor(KEYBOARD_LABELS
-                                ? "Switched to text mode. Press 'G' again to enable tiles."
-                                : "Switched to text mode.", &teal, 0);
-                            break;
-                        case TILES_GRAPHICS:
-                            messageWithColor(KEYBOARD_LABELS
-                                ? "Switched to graphical tiles. Press 'G' again to enable hybrid mode."
-                                : "Switched to graphical tiles.", &teal, 0);
-                            break;
-                        case HYBRID_GRAPHICS:
-                            messageWithColor(KEYBOARD_LABELS
-                                ? "Switched to hybrid mode. Press 'G' again to disable tiles."
-                                : "Switched to hybrid mode.", &teal, 0);
-                            break;
-                    }
-                }
-                return true;
-            case SEED_KEY:
-                //rogue.playbackMode = false;
-                //DEBUG {displayGrid(safetyMap); displayMoreSign(); displayLevel();}
-                //rogue.playbackMode = true;
-                printSeed();
-                return true;
-            case SWITCH_TO_PLAYING_KEY:
+            }
+            return true;
+        case SEED_KEY:
+            // rogue.playbackMode = false;
+            // DEBUG {displayGrid(safetyMap); displayMoreSign(); displayLevel();}
+            // rogue.playbackMode = true;
+            printSeed();
+            return true;
+        case SWITCH_TO_PLAYING_KEY:
 #ifdef ENABLE_PLAYBACK_SWITCH
-                    if (!rogue.gameHasEnded && !rogue.playbackOOS) {
-                        switchToPlaying();
-                        lengthOfPlaybackFile = recordingLocation;
-                    }
-                    return true;
+            if (!rogue.gameHasEnded && !rogue.playbackOOS) {
+                switchToPlaying();
+                lengthOfPlaybackFile = recordingLocation;
+            }
+            return true;
 #endif
-                return false;
-            case ESCAPE_KEY:
-                if (!rogue.playbackPaused) {
-                    rogue.playbackPaused = true;
-                    return true;
-                }
-                return false;
-            default:
-                if (key >= '0' && key <= '9'
-                    || key >= NUMPAD_0 && key <= NUMPAD_9) {
+            return false;
+        case ESCAPE_KEY:
+            if (!rogue.playbackPaused) {
+                rogue.playbackPaused = true;
+                return true;
+            }
+            return false;
+        default:
+            if (key >= '0' && key <= '9' || key >= NUMPAD_0 && key <= NUMPAD_9) {
 
-                    promptToAdvanceToLocation(key);
-                    return true;
-                }
-                return false;
+                promptToAdvanceToLocation(key);
+                return true;
+            }
+            return false;
         }
     } else if (recordingInput->eventType == MOUSE_UP) {
         x = recordingInput->param1;
@@ -1154,7 +1156,8 @@ void getDefaultFilePath(char *defaultPath, boolean gameOver) {
     // 32-bit numbers are printed in full
     // 64-bit numbers longer than 11 digits are shortened to e.g "184...51615"
     sprintf(seed, "%llu", (unsigned long long)rogue.seed);
-    if (strlen(seed) > 11) sprintf(seed+3, "...%05lu", (unsigned long)(rogue.seed % 100000));
+    if (strlen(seed) > 11)
+        sprintf(seed + 3, "...%05lu", (unsigned long)(rogue.seed % 100000));
 
     if (serverMode) {
         // With WebBrogue, filenames must fit into 30 bytes, including extension and terminal \0.
@@ -1199,7 +1202,8 @@ void saveGameNoPrompt() {
 }
 
 void saveGame() {
-    char filePathWithoutSuffix[BROGUE_FILENAME_MAX - sizeof(GAME_SUFFIX)], filePath[BROGUE_FILENAME_MAX], defaultPath[BROGUE_FILENAME_MAX];
+    char filePathWithoutSuffix[BROGUE_FILENAME_MAX - sizeof(GAME_SUFFIX)], filePath[BROGUE_FILENAME_MAX],
+        defaultPath[BROGUE_FILENAME_MAX];
     boolean askAgain;
 
     if (rogue.playbackMode) {
@@ -1213,8 +1217,9 @@ void saveGame() {
     deleteMessages();
     do {
         askAgain = false;
-        if (getInputTextString(filePathWithoutSuffix, "Save game as (<esc> to cancel): ",
-                               BROGUE_FILENAME_MAX - strlen(GAME_SUFFIX), filePathWithoutSuffix, GAME_SUFFIX, TEXT_INPUT_FILENAME, false)) {
+        if (getInputTextString(filePathWithoutSuffix,
+                               "Save game as (<esc> to cancel): ", BROGUE_FILENAME_MAX - strlen(GAME_SUFFIX),
+                               filePathWithoutSuffix, GAME_SUFFIX, TEXT_INPUT_FILENAME, false)) {
             snprintf(filePath, BROGUE_FILENAME_MAX, "%s%s", filePathWithoutSuffix, GAME_SUFFIX);
             if (!fileExists(filePath) || confirm("File of that name already exists. Overwrite?", true)) {
                 remove(filePath);
@@ -1261,8 +1266,9 @@ void saveRecording(char *filePathWithoutSuffix) {
     deleteMessages();
     do {
         askAgain = false;
-        if (getInputTextString(filePathWithoutSuffix, "Save recording as (<esc> to cancel): ",
-                               BROGUE_FILENAME_MAX - strlen(RECORDING_SUFFIX), filePathWithoutSuffix, RECORDING_SUFFIX, TEXT_INPUT_FILENAME, false)) {
+        if (getInputTextString(filePathWithoutSuffix,
+                               "Save recording as (<esc> to cancel): ", BROGUE_FILENAME_MAX - strlen(RECORDING_SUFFIX),
+                               filePathWithoutSuffix, RECORDING_SUFFIX, TEXT_INPUT_FILENAME, false)) {
 
             snprintf(filePath, BROGUE_FILENAME_MAX, "%s%s", filePathWithoutSuffix, RECORDING_SUFFIX);
             if (!fileExists(filePath) || confirm("File of that name already exists. Overwrite?", true)) {
@@ -1272,7 +1278,8 @@ void saveRecording(char *filePathWithoutSuffix) {
             } else {
                 askAgain = true;
             }
-        } else { // Declined to save recording; save it anyway as LastRecording, and delete LastRecording if it already exists.
+        } else { // Declined to save recording; save it anyway as LastRecording, and delete LastRecording if it already
+                 // exists.
             snprintf(filePath, BROGUE_FILENAME_MAX, "%s%s", LAST_RECORDING_NAME, RECORDING_SUFFIX);
             if (fileExists(filePath)) {
                 remove(filePath);
@@ -1291,13 +1298,13 @@ void copyFile(char *fromFilePath, char *toFilePath, unsigned long fromFileLength
 
     remove(toFilePath);
 
-    fromFile    = fopen(fromFilePath, "rb");
-    toFile      = fopen(toFilePath, "wb");
+    fromFile = fopen(fromFilePath, "rb");
+    toFile = fopen(toFilePath, "wb");
 
     for (n = 0; n < fromFileLength; n += m) {
         m = min(INPUT_RECORD_BUFFER, fromFileLength - n);
-        fread((void *) fileBuffer, 1, m, fromFile);
-        fwrite((void *) fileBuffer, 1, m, toFile);
+        fread((void *)fileBuffer, 1, m, fromFile);
+        fwrite((void *)fileBuffer, 1, m, toFile);
     }
 
     fclose(fromFile);
@@ -1311,11 +1318,11 @@ void switchToPlaying() {
     getAvailableFilePath(lastGamePath, LAST_GAME_NAME, GAME_SUFFIX);
     strcat(lastGamePath, GAME_SUFFIX);
 
-    rogue.playbackMode          = false;
-    rogue.playbackFastForward   = false;
-    rogue.playbackOmniscience   = false;
-    rogue.recording             = true;
-    locationInRecordingBuffer   = 0;
+    rogue.playbackMode = false;
+    rogue.playbackFastForward = false;
+    rogue.playbackOmniscience = false;
+    rogue.recording = true;
+    locationInRecordingBuffer = 0;
     copyFile(currentFilePath, lastGamePath, recordingLocation);
 #ifndef ENABLE_PLAYBACK_SWITCH
     if (DELETE_SAVE_FILE_AFTER_LOADING) {
@@ -1358,10 +1365,8 @@ boolean loadSavedGame() {
         overlayDisplayBuffer(dbuf, 0);
         rogue.playbackFastForward = true;
 
-        while (recordingLocation < lengthOfPlaybackFile
-               && rogue.playerTurnNumber < rogue.howManyTurns
-               && !rogue.gameHasEnded
-               && !rogue.playbackOOS) {
+        while (recordingLocation < lengthOfPlaybackFile && rogue.playerTurnNumber < rogue.howManyTurns
+               && !rogue.gameHasEnded && !rogue.playbackOOS) {
 
             rogue.RNG = RNG_COSMETIC;
             nextBrogueEvent(&theEvent, false, true, false);
@@ -1369,10 +1374,13 @@ boolean loadSavedGame() {
 
             executeEvent(&theEvent);
 
-            if (recordingLocation / progressBarInterval != previousRecordingLocation / progressBarInterval && !rogue.playbackOOS) {
+            if (recordingLocation / progressBarInterval != previousRecordingLocation / progressBarInterval
+                && !rogue.playbackOOS) {
                 rogue.playbackFastForward = false; // so that pauseBrogue looks for inputs
-                printProgressBar((COLS - 20) / 2, ROWS / 2, "[     Loading...   ]", recordingLocation, lengthOfPlaybackFile, &darkPurple, false);
-                while (pauseBrogue(0)) { // pauseBrogue(0) is necessary to flush the display to the window in SDL, as well as look for inputs
+                printProgressBar((COLS - 20) / 2, ROWS / 2, "[     Loading...   ]", recordingLocation,
+                                 lengthOfPlaybackFile, &darkPurple, false);
+                while (pauseBrogue(0)) { // pauseBrogue(0) is necessary to flush the display to the window in SDL, as
+                                         // well as look for inputs
                     rogue.creaturesWillFlashThisTurn = false; // prevent monster flashes from showing up on screen
                     nextBrogueEvent(&theEvent, true, false, true);
                     if (rogue.gameHasEnded || theEvent.eventType == KEYSTROKE && theEvent.param1 == ESCAPE_KEY) {
@@ -1397,28 +1405,26 @@ boolean loadSavedGame() {
 void describeKeystroke(unsigned char key, char *description) {
     short i;
     long c;
-    const long keyList[50] = {UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, UP_ARROW, LEFT_ARROW,
-        DOWN_ARROW, RIGHT_ARROW, UPLEFT_KEY, UPRIGHT_KEY, DOWNLEFT_KEY, DOWNRIGHT_KEY,
-        DESCEND_KEY, ASCEND_KEY, REST_KEY, AUTO_REST_KEY, SEARCH_KEY, INVENTORY_KEY,
+    const long keyList[50] = {
+        UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, UP_ARROW, LEFT_ARROW, DOWN_ARROW, RIGHT_ARROW, UPLEFT_KEY, UPRIGHT_KEY,
+        DOWNLEFT_KEY, DOWNRIGHT_KEY, DESCEND_KEY, ASCEND_KEY, REST_KEY, AUTO_REST_KEY, SEARCH_KEY, INVENTORY_KEY,
         ACKNOWLEDGE_KEY, EQUIP_KEY, UNEQUIP_KEY, APPLY_KEY, THROW_KEY, RELABEL_KEY, DROP_KEY, CALL_KEY,
-        //FIGHT_KEY, FIGHT_TO_DEATH_KEY,
-        BROGUE_HELP_KEY, DISCOVERIES_KEY, RETURN_KEY,
-        EXPLORE_KEY, AUTOPLAY_KEY, SEED_KEY, EASY_MODE_KEY, ESCAPE_KEY,
-        RETURN_KEY, DELETE_KEY, TAB_KEY, PERIOD_KEY, VIEW_RECORDING_KEY, NUMPAD_0,
-        NUMPAD_1, NUMPAD_2, NUMPAD_3, NUMPAD_4, NUMPAD_5, NUMPAD_6, NUMPAD_7, NUMPAD_8,
-        NUMPAD_9, UNKNOWN_KEY};
-    const char descList[51][30] = {"up", "down", "left", "right", "up arrow", "left arrow",
-        "down arrow", "right arrow", "upleft", "upright", "downleft", "downright",
-        "descend", "ascend", "rest", "auto rest", "search", "inventory", "acknowledge",
-        "equip", "unequip", "apply", "throw", "relabel", "drop", "call",
-        //"fight", "fight to death",
-        "help", "discoveries", "repeat travel", "explore", "autoplay", "seed",
-        "easy mode", "escape", "return", "delete", "tab", "period", "open file",
-        "numpad 0", "numpad 1", "numpad 2", "numpad 3", "numpad 4", "numpad 5", "numpad 6",
-        "numpad 7", "numpad 8", "numpad 9", "unknown", "ERROR"};
+        // FIGHT_KEY, FIGHT_TO_DEATH_KEY,
+        BROGUE_HELP_KEY, DISCOVERIES_KEY, RETURN_KEY, EXPLORE_KEY, AUTOPLAY_KEY, SEED_KEY, EASY_MODE_KEY, ESCAPE_KEY,
+        RETURN_KEY, DELETE_KEY, TAB_KEY, PERIOD_KEY, VIEW_RECORDING_KEY, NUMPAD_0, NUMPAD_1, NUMPAD_2, NUMPAD_3,
+        NUMPAD_4, NUMPAD_5, NUMPAD_6, NUMPAD_7, NUMPAD_8, NUMPAD_9, UNKNOWN_KEY};
+    const char descList[51][30]
+        = {"up", "down", "left", "right", "up arrow", "left arrow", "down arrow", "right arrow", "upleft", "upright",
+           "downleft", "downright", "descend", "ascend", "rest", "auto rest", "search", "inventory", "acknowledge",
+           "equip", "unequip", "apply", "throw", "relabel", "drop", "call",
+           //"fight", "fight to death",
+           "help", "discoveries", "repeat travel", "explore", "autoplay", "seed", "easy mode", "escape", "return",
+           "delete", "tab", "period", "open file", "numpad 0", "numpad 1", "numpad 2", "numpad 3", "numpad 4",
+           "numpad 5", "numpad 6", "numpad 7", "numpad 8", "numpad 9", "unknown", "ERROR"};
 
     c = uncompressKeystroke(key);
-    for (i=0; i < 50 && keyList[i] != c; i++);
+    for (i = 0; i < 50 && keyList[i] != c; i++)
+        ;
     if (key >= 32 && key <= 126) {
         sprintf(description, "Key: %c\t(%s)", key, descList[i]);
     } else {
@@ -1479,49 +1485,47 @@ void parseFile() {
 
         descriptionFile = fopen("Recording Description.txt", "w");
 
-        for (i=0; i<16; i++) {
+        for (i = 0; i < 16; i++) {
             versionString[i] = recallChar();
         }
 
-        seed        = recallNumber(8);
-        numTurns    = recallNumber(4);
-        numDepths   = recallNumber(4);
-        fileLength  = recallNumber(4);
+        seed = recallNumber(8);
+        numTurns = recallNumber(4);
+        numDepths = recallNumber(4);
+        fileLength = recallNumber(4);
 
-        fprintf(descriptionFile, "Parsed file \"%s\":\n\tVersion: %s\n\tSeed: %lld\n\tNumber of turns: %lu\n\tNumber of depth changes: %lu\n\tFile length: %lu\n",
-                currentFilePath,
-                versionString,
-                (unsigned long long)seed,
-                numTurns,
-                numDepths,
-                fileLength);
-        for (i=0; recordingLocation < fileLength; i++) {
+        fprintf(descriptionFile,
+                "Parsed file \"%s\":\n\tVersion: %s\n\tSeed: %lld\n\tNumber of turns: %lu\n\tNumber of depth changes: "
+                "%lu\n\tFile length: %lu\n",
+                currentFilePath, versionString, (unsigned long long)seed, numTurns, numDepths, fileLength);
+        for (i = 0; recordingLocation < fileLength; i++) {
             startLoc = recordingLocation;
             c = recallChar();
             switch (c) {
-                case KEYSTROKE:
-                    describeKeystroke(recallChar(), description);
-                    appendModifierKeyDescription(description);
-                    break;
-                case MOUSE_UP:
-                case MOUSE_DOWN:
-                case MOUSE_ENTERED_CELL:
-                    x = (short) recallChar();
-                    y = (short) recallChar();
-                    sprintf(description, "Mouse click: (%i, %i)", x, y);
-                    appendModifierKeyDescription(description);
-                    break;
-                case RNG_CHECK:
-                    sprintf(description, "\tRNG check: %i", (short) recallChar());
-                    break;
-                case SAVED_GAME_LOADED:
-                    strcpy(description, "Saved game loaded");
-                    break;
-                default:
-                    sprintf(description, "UNKNOWN EVENT TYPE: %i", (short) c);
-                    break;
+            case KEYSTROKE:
+                describeKeystroke(recallChar(), description);
+                appendModifierKeyDescription(description);
+                break;
+            case MOUSE_UP:
+            case MOUSE_DOWN:
+            case MOUSE_ENTERED_CELL:
+                x = (short)recallChar();
+                y = (short)recallChar();
+                sprintf(description, "Mouse click: (%i, %i)", x, y);
+                appendModifierKeyDescription(description);
+                break;
+            case RNG_CHECK:
+                sprintf(description, "\tRNG check: %i", (short)recallChar());
+                break;
+            case SAVED_GAME_LOADED:
+                strcpy(description, "Saved game loaded");
+                break;
+            default:
+                sprintf(description, "UNKNOWN EVENT TYPE: %i", (short)c);
+                break;
             }
-            fprintf(descriptionFile, "\nEvent %li, loc %li, length %li:%s\t%s", i, startLoc, recordingLocation - startLoc, (i < 10 ? " " : ""), description);
+            fprintf(descriptionFile, "\nEvent %li, loc %li, length %li:%s\t%s", i, startLoc,
+                    recordingLocation - startLoc, (i < 10 ? " " : ""), description);
         }
 
         fclose(descriptionFile);

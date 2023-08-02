@@ -27,17 +27,10 @@
 #define MOUSE_INPUT_SIZE 4
 #define OUTPUT_BUFFER_SIZE 1000
 
-//Custom events
+// Custom events
 #define REFRESH_SCREEN 50
 
-enum StatusTypes
-{
-    DEEPEST_LEVEL_STATUS,
-    GOLD_STATUS,
-    SEED_STATUS,
-    EASY_MODE_STATUS,
-    STATUS_TYPES_NUMBER
-};
+enum StatusTypes { DEEPEST_LEVEL_STATUS, GOLD_STATUS, SEED_STATUS, EASY_MODE_STATUS, STATUS_TYPES_NUMBER };
 
 extern playerCharacter rogue;
 static struct sockaddr_un addr_write;
@@ -72,15 +65,12 @@ static void gameLoop() {
 
 static void openLogfile() {
     logfile = fopen("brogue-web.txt", "a");
-    if (logfile == NULL)
-    {
+    if (logfile == NULL) {
         fprintf(stderr, "Logfile not created, errno = %d\n", errno);
     }
 }
 
-static void closeLogfile() {
-    fclose(logfile);
-}
+static void closeLogfile() { fclose(logfile); }
 
 static void writeToLog(const char *msg) {
     fprintf(logfile, "%s", msg);
@@ -108,15 +98,14 @@ static void setupSockets() {
     strncpy(addr_write.sun_path, CLIENT_SOCKET, sizeof(addr_write.sun_path) - 1);
 }
 
-int readFromSocket(unsigned char *buf, int size) {
-    return recvfrom(rfd, buf, size, 0, NULL, NULL);
-}
+int readFromSocket(unsigned char *buf, int size) { return recvfrom(rfd, buf, size, 0, NULL, NULL); }
 
 static void flushOutputBuffer() {
     char msg[80];
     int no_bytes_sent;
 
-    no_bytes_sent = sendto(wfd, outputBuffer, outputBufferPos, 0, (struct sockaddr *)&addr_write, sizeof(struct sockaddr_un));
+    no_bytes_sent
+        = sendto(wfd, outputBuffer, outputBufferPos, 0, (struct sockaddr *)&addr_write, sizeof(struct sockaddr_un));
     if (no_bytes_sent == -1) {
         snprintf(msg, 80, "Error: %s\n", strerror(errno));
         writeToLog(msg);
@@ -128,8 +117,7 @@ static void flushOutputBuffer() {
     outputBufferPos = 0;
 }
 
-static void writeToSocket(unsigned char *buf, int size)
-{
+static void writeToSocket(unsigned char *buf, int size) {
     if (outputBufferPos + size > OUTPUT_BUFFER_SIZE) {
         flushOutputBuffer();
     }
@@ -141,18 +129,21 @@ static void writeToSocket(unsigned char *buf, int size)
 // Map characters which are missing or rendered as emoji on some platforms
 static unsigned int fixUnicode(unsigned int code) {
     switch (code) {
-        case U_ARIES: return 0x03C8;
-        case U_CIRCLE: return 'o';
-        case U_CIRCLE_BARS: return 0x25C6;
-        case U_FILLED_CIRCLE_BARS: return 0x25C7;
-        default: return code;
+    case U_ARIES:
+        return 0x03C8;
+    case U_CIRCLE:
+        return 'o';
+    case U_CIRCLE_BARS:
+        return 0x25C6;
+    case U_FILLED_CIRCLE_BARS:
+        return 0x25C7;
+    default:
+        return code;
     }
 }
 
-static void web_plotChar(enum displayGlyph inputChar,
-                         short xLoc, short yLoc,
-                         short foreRed, short foreGreen, short foreBlue,
-                         short backRed, short backGreen, short backBlue) {
+static void web_plotChar(enum displayGlyph inputChar, short xLoc, short yLoc, short foreRed, short foreGreen,
+                         short foreBlue, short backRed, short backGreen, short backBlue) {
     unsigned char outputBuffer[OUTPUT_SIZE];
     unsigned char firstCharByte, secondCharByte;
     enum displayGlyph translatedChar;
@@ -190,7 +181,8 @@ static void sendStatusUpdate() {
     memset(statusOutputBuffer, 0, OUTPUT_SIZE);
 
     for (i = 0; i < STATUS_TYPES_NUMBER; i++) {
-        // Coordinates of (255, 255) will let the server and client know that this is a status update rather than a cell update
+        // Coordinates of (255, 255) will let the server and client know that this is a status update rather than a cell
+        // update
         statusOutputBuffer[0] = 255;
         statusOutputBuffer[1] = 255;
 
@@ -231,7 +223,8 @@ static void web_nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
     unsigned char inputBuffer[MAX_INPUT_SIZE];
     unsigned short keyCharacter;
 
-    // Because we will halt execution until we get more input, we definitely cannot have any dancing colors from the server side.
+    // Because we will halt execution until we get more input, we definitely cannot have any dancing colors from the
+    // server side.
     colorsDance = false;
 
     // Send a status update of game variables we want on the client
@@ -269,8 +262,8 @@ static void web_nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, 
         returnEvent->shiftKey = inputBuffer[4];
     } else { // Mouse event
         fread(inputBuffer, sizeof(char), MOUSE_INPUT_SIZE, stdin);
-        returnEvent->param1 = inputBuffer[1]; //x coord
-        returnEvent->param2 = inputBuffer[2]; //y coord
+        returnEvent->param1 = inputBuffer[1]; // x coord
+        returnEvent->param2 = inputBuffer[2]; // y coord
         returnEvent->controlKey = inputBuffer[3];
         returnEvent->shiftKey = inputBuffer[4];
     }
@@ -288,7 +281,8 @@ static boolean web_modifierHeld(int modifier) {
 static void web_notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2) {
     unsigned char statusOutputBuffer[EVENT_SIZE];
 
-    // Coordinates of (254, 254) will let the server and client know that this is a event notification update rather than a cell update
+    // Coordinates of (254, 254) will let the server and client know that this is a event notification update rather
+    // than a cell update
     statusOutputBuffer[0] = 254;
     statusOutputBuffer[1] = 254;
 
@@ -322,14 +316,6 @@ static void web_notifyEvent(short eventId, int data1, int data2, const char *str
     flushOutputBuffer();
 }
 
-struct brogueConsole webConsole = {
-    gameLoop,
-    web_pauseForMilliseconds,
-    web_nextKeyOrMouseEvent,
-    web_plotChar,
-    web_remap,
-    web_modifierHeld,
-    web_notifyEvent,
-    NULL,
-    NULL
-};
+struct brogueConsole webConsole = {gameLoop,  web_pauseForMilliseconds, web_nextKeyOrMouseEvent, web_plotChar,
+                                   web_remap, web_modifierHeld,         web_notifyEvent,         NULL,
+                                   NULL};

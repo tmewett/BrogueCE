@@ -30,16 +30,16 @@ void logLights() {
     short i, j;
 
     printf("    ");
-    for (i=0; i<COLS-2; i++) {
+    for (i = 0; i < COLS - 2; i++) {
         printf("%i", i % 10);
     }
     printf("\n");
-    for( j=0; j<DROWS-2; j++ ) {
+    for (j = 0; j < DROWS - 2; j++) {
         if (j < 10) {
             printf(" ");
         }
         printf("%i: ", j);
-        for( i=0; i<DCOLS-2; i++ ) {
+        for (i = 0; i < DCOLS - 2; i++) {
             if (tmap[i][j].light[0] == 0) {
                 printf(" ");
             } else {
@@ -83,17 +83,20 @@ boolean paintLight(const lightSource *theLight, short x, short y, boolean isMine
         }
     }
 
-    getFOVMask(grid, x, y, radius, T_OBSTRUCTS_VISION, (theLight->passThroughCreatures ? 0 : (HAS_MONSTER | HAS_PLAYER)),
-               (!isMinersLight));
+    getFOVMask(grid, x, y, radius, T_OBSTRUCTS_VISION,
+               (theLight->passThroughCreatures ? 0 : (HAS_MONSTER | HAS_PLAYER)), (!isMinersLight));
 
     overlappedFieldOfView = false;
 
     for (i = max(0, x - radiusRounded); i < DCOLS && i < x + radiusRounded; i++) {
         for (j = max(0, y - radiusRounded); j < DROWS && j < y + radiusRounded; j++) {
             if (grid[i][j]) {
-                lightMultiplier =   100 - (100 - fadeToPercent) * fp_sqrt(((i-x) * (i-x) + (j-y) * (j-y)) * FP_FACTOR) / radius;
-                for (k=0; k<3; k++) {
-                    tmap[i][j].light[k] += colorComponents[k] * lightMultiplier / 100;;
+                lightMultiplier
+                    = 100
+                      - (100 - fadeToPercent) * fp_sqrt(((i - x) * (i - x) + (j - y) * (j - y)) * FP_FACTOR) / radius;
+                for (k = 0; k < 3; k++) {
+                    tmap[i][j].light[k] += colorComponents[k] * lightMultiplier / 100;
+                    ;
                 }
                 if (dispelShadows) {
                     pmap[i][j].flags &= ~IS_IN_SHADOW;
@@ -116,8 +119,8 @@ boolean paintLight(const lightSource *theLight, short x, short y, boolean isMine
     return overlappedFieldOfView;
 }
 
-
-// sets miner's light strength and characteristics based on rings of illumination, scrolls of darkness and water submersion
+// sets miner's light strength and characteristics based on rings of illumination, scrolls of darkness and water
+// submersion
 void updateMinersLightRadius() {
     fixpt base_fraction, fraction, lightRadius;
 
@@ -133,7 +136,8 @@ void updateMinersLightRadius() {
     if (player.status[STATUS_DARKNESS]) {
         base_fraction = FP_FACTOR - player.status[STATUS_DARKNESS] * FP_FACTOR / player.maxStatus[STATUS_DARKNESS];
         fraction = (base_fraction * base_fraction / FP_FACTOR) * base_fraction / FP_FACTOR;
-        //fraction = (double) pow(1.0 - (((double) player.status[STATUS_DARKNESS]) / player.maxStatus[STATUS_DARKNESS]), 3);
+        // fraction = (double) pow(1.0 - (((double) player.status[STATUS_DARKNESS]) /
+        // player.maxStatus[STATUS_DARKNESS]), 3);
         if (fraction < FP_FACTOR / 20) {
             fraction = FP_FACTOR / 20;
         }
@@ -151,7 +155,8 @@ void updateMinersLightRadius() {
     }
 
     rogue.minersLight.radialFadeToPercent = 35 + (max(0, min(65, rogue.lightMultiplier * 5)) * fraction) / FP_FACTOR;
-    rogue.minersLight.lightRadius.upperBound = rogue.minersLight.lightRadius.lowerBound = clamp(lightRadius / FP_FACTOR, -30000, 30000);
+    rogue.minersLight.lightRadius.upperBound = rogue.minersLight.lightRadius.lowerBound
+        = clamp(lightRadius / FP_FACTOR, -30000, 30000);
 }
 
 void updateDisplayDetail() {
@@ -159,9 +164,7 @@ void updateDisplayDetail() {
 
     for (i = 0; i < DCOLS; i++) {
         for (j = 0; j < DROWS; j++) {
-            if (tmap[i][j].light[0] < -10
-                && tmap[i][j].light[1] < -10
-                && tmap[i][j].light[2] < -10) {
+            if (tmap[i][j].light[0] < -10 && tmap[i][j].light[1] < -10 && tmap[i][j].light[2] < -10) {
 
                 displayDetail[i][j] = DV_DARK;
             } else if (pmap[i][j].flags & IS_IN_SHADOW) {
@@ -175,9 +178,9 @@ void updateDisplayDetail() {
 
 void backUpLighting(short lights[DCOLS][DROWS][3]) {
     short i, j, k;
-    for (i=0; i<DCOLS; i++) {
-        for (j=0; j<DROWS; j++) {
-            for (k=0; k<3; k++) {
+    for (i = 0; i < DCOLS; i++) {
+        for (j = 0; j < DROWS; j++) {
+            for (k = 0; k < 3; k++) {
                 lights[i][j][k] = tmap[i][j].light[k];
             }
         }
@@ -186,9 +189,9 @@ void backUpLighting(short lights[DCOLS][DROWS][3]) {
 
 void restoreLighting(short lights[DCOLS][DROWS][3]) {
     short i, j, k;
-    for (i=0; i<DCOLS; i++) {
-        for (j=0; j<DROWS; j++) {
-            for (k=0; k<3; k++) {
+    for (i = 0; i < DCOLS; i++) {
+        for (j = 0; j < DROWS; j++) {
+            for (k = 0; k < 3; k++) {
                 tmap[i][j].light[k] = lights[i][j][k];
             }
         }
@@ -199,7 +202,7 @@ void recordOldLights() {
     short i, j, k;
     for (i = 0; i < DCOLS; i++) {
         for (j = 0; j < DROWS; j++) {
-            for (k=0; k<3; k++) {
+            for (k = 0; k < 3; k++) {
                 tmap[i][j].oldLight[k] = tmap[i][j].light[k];
             }
         }
@@ -217,7 +220,7 @@ void updateLighting() {
     // and then zero out Light.
     for (i = 0; i < DCOLS; i++) {
         for (j = 0; j < DROWS; j++) {
-            for (k=0; k<3; k++) {
+            for (k = 0; k < 3; k++) {
                 tmap[i][j].light[k] = 0;
             }
             pmap[i][j].flags |= IS_IN_SHADOW;
@@ -245,7 +248,8 @@ void updateLighting() {
             paintLight(&lightCatalog[monst->info.intrinsicLightType], monst->loc.x, monst->loc.y, false, false);
         }
         if (monst->mutationIndex >= 0 && mutationCatalog[monst->mutationIndex].light != NO_LIGHT) {
-            paintLight(&lightCatalog[mutationCatalog[monst->mutationIndex].light], monst->loc.x, monst->loc.y, false, false);
+            paintLight(&lightCatalog[mutationCatalog[monst->mutationIndex].light], monst->loc.x, monst->loc.y, false,
+                       false);
         }
 
         if (monst->status[STATUS_BURNING] && !(monst->info.flags & MONST_FIERY)) {
@@ -327,11 +331,11 @@ boolean flareIsActive(flare *theFlare) {
         active = false;
     }
     if (increasing) {
-        if ((short) (theFlare->coeff / flarePrecision) > theFlare->coeffLimit) {
+        if ((short)(theFlare->coeff / flarePrecision) > theFlare->coeffLimit) {
             active = false;
         }
     } else {
-        if ((short) (theFlare->coeff / flarePrecision) < theFlare->coeffLimit) {
+        if ((short)(theFlare->coeff / flarePrecision) < theFlare->coeffLimit) {
             active = false;
         }
     }
@@ -357,8 +361,10 @@ boolean drawFlareFrame(flare *theFlare) {
     if (!flareIsActive(theFlare)) {
         return false;
     }
-    tempLight.lightRadius.lowerBound = ((long) tempLight.lightRadius.lowerBound) * theFlare->coeff / (flarePrecision * 100);
-    tempLight.lightRadius.upperBound = ((long) tempLight.lightRadius.upperBound) * theFlare->coeff / (flarePrecision * 100);
+    tempLight.lightRadius.lowerBound
+        = ((long)tempLight.lightRadius.lowerBound) * theFlare->coeff / (flarePrecision * 100);
+    tempLight.lightRadius.upperBound
+        = ((long)tempLight.lightRadius.upperBound) * theFlare->coeff / (flarePrecision * 100);
     applyColorScalar(&tempColor, theFlare->coeff / flarePrecision);
     tempLight.lightColor = &tempColor;
     inView = paintLight(&tempLight, theFlare->loc.x, theFlare->loc.y, false, true);
@@ -406,7 +412,7 @@ void animateFlares(flare **flares, short count) {
 
 void deleteAllFlares() {
     short i;
-    for (i=0; i<rogue.flareCount; i++) {
+    for (i = 0; i < rogue.flareCount; i++) {
         free(rogue.flares[i]);
     }
     rogue.flareCount = 0;
