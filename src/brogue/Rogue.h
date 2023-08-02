@@ -123,6 +123,10 @@ typedef long long fixpt;
 #define COLS                    100
 #define ROWS                    (31 + MESSAGE_LINES)
 
+// Maximum string size supported by various functions like printTextBox, wrapText, 
+// printStringWithWrapping, and breakUpLongWordsIn
+#define TEXT_MAX_LENGTH (COLS * ROWS * 2)
+
 // Returns the sign of the input:
 // - if (x == 0)  ===> returns 0
 // - if (x >= 1)  ===> returns +1
@@ -325,7 +329,8 @@ enum displayGlyph {
     G_LICHEN,
     G_PIPES,
     G_SAC_ALTAR,
-    G_ORB_ALTAR
+    G_ORB_ALTAR,
+    G_LEFT_TRIANGLE
 };
 
 enum graphicsModes {
@@ -2297,6 +2302,11 @@ typedef struct creatureIterator {
 
 enum NGCommands {
     NG_NOTHING = 0,
+    NG_FLYOUT_PLAY,
+    NG_FLYOUT_VIEW,
+    NG_FLYOUT_OPTIONS,
+    NG_GAME_VARIANT,
+    NG_GAME_MODE,
     NG_NEW_GAME,
     NG_NEW_GAME_WITH_SEED,
     NG_OPEN_GAME,
@@ -2516,6 +2526,7 @@ typedef struct playerCharacter {
     boolean cursorMode;
 
     // What do you want to do, player -- play, play with seed, resume, recording, high scores or quit?
+    // Also used for main menu flyout navigation
     enum NGCommands nextGame;
     char nextGamePath[BROGUE_FILENAME_MAX];
     uint64_t nextGameSeed;
@@ -2735,17 +2746,21 @@ typedef struct feat {
 #define PDS_OBSTRUCTION -2
 #define PDS_CELL(map, x, y) ((map)->links + ((x) + DCOLS * (y)))
 
+#define BUTTON_TEXT_SIZE COLS*3
 typedef struct brogueButton {
-    char text[COLS*3];          // button label; can include color escapes
+    char text[BUTTON_TEXT_SIZE];// button label; can include color escapes
     short x;                    // button's leftmost cell will be drawn at (x, y)
     short y;
     signed long hotkey[10];     // up to 10 hotkeys to trigger the button
     color buttonColor;          // background of the button; further gradient-ized when displayed
+    color textColor;            // color of the button text
+    color hotkeytextColor;      // color of the portion of the button text that highlights the keyboard hotkey 
     short opacity;              // further reduced by 50% if not enabled
     enum displayGlyph symbol[COLS];         // Automatically replace the nth asterisk in the button label text with
                                 // the nth character supplied here, if one is given.
                                 // (Primarily to display magic character and item symbols in the inventory display.)
     unsigned long flags;
+    enum NGCommands command;
 } brogueButton;
 
 enum buttonDrawStates {
@@ -2822,6 +2837,7 @@ extern "C" {
     void initializeRogue(uint64_t seed);
     void gameOver(char *killedBy, boolean useCustomPhrasing);
     void victory(boolean superVictory);
+    void setPlayerDisplayChar();
     void initializeDynamicColors();
     void enableEasyMode();
     boolean tryParseUint64(char *str, uint64_t *num);
@@ -2913,6 +2929,7 @@ extern "C" {
                        const color *foreColor, const color *backColor,
                        cellDisplayBuffer rbuf[COLS][ROWS],
                        brogueButton *buttons, short buttonCount);
+    void setButtonText(brogueButton *button, const char *textWithHotkey, const char *textWithoutHotkey);
     void printMonsterDetails(creature *monst, cellDisplayBuffer rbuf[COLS][ROWS]);
     void printFloorItemDetails(item *theItem, cellDisplayBuffer rbuf[COLS][ROWS]);
     unsigned long printCarriedItemDetails(item *theItem,

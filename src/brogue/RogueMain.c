@@ -163,7 +163,7 @@ void initializeGameVariant() {
 void initializeRogue(uint64_t seed) {
     short i, j, k;
     item *theItem;
-    boolean playingback, playbackFF, playbackPaused, wizard, displayStealthRangeMode;
+    boolean playingback, playbackFF, playbackPaused, wizard, easy, displayStealthRangeMode;
     boolean trueColorMode;
     short oldRNG;
     char currentGamePath[BROGUE_FILENAME_MAX];
@@ -172,6 +172,7 @@ void initializeRogue(uint64_t seed) {
     playbackPaused = rogue.playbackPaused;
     playbackFF = rogue.playbackFastForward;
     wizard = rogue.wizard;
+    easy = rogue.easyMode;
     displayStealthRangeMode = rogue.displayStealthRangeMode;
     trueColorMode = rogue.trueColorMode;
 
@@ -186,6 +187,7 @@ void initializeRogue(uint64_t seed) {
     rogue.playbackPaused = playbackPaused;
     rogue.playbackFastForward = playbackFF;
     rogue.wizard = wizard;
+    rogue.easyMode = easy;
     rogue.displayStealthRangeMode = displayStealthRangeMode;
     rogue.trueColorMode = trueColorMode;
 
@@ -328,6 +330,7 @@ void initializeRogue(uint64_t seed) {
 
     memset(&player, '\0', sizeof(creature));
     player.info = monsterCatalog[0];
+    setPlayerDisplayChar();
     initializeGender(&player);
     player.movementSpeed = player.info.movementSpeed;
     player.attackSpeed = player.info.attackSpeed;
@@ -353,7 +356,6 @@ void initializeRogue(uint64_t seed) {
     rogue.automationActive = false;
     rogue.justRested = false;
     rogue.justSearched = false;
-    rogue.easyMode = false;
     rogue.inWater = false;
     rogue.creaturesWillFlashThisTurn = false;
     rogue.updatedSafetyMapThisTurn = false;
@@ -1319,8 +1321,8 @@ void enableEasyMode() {
     if (confirm("Succumb to demonic temptation (i.e. enable Easy Mode)?", false)) {
         recordKeystroke(EASY_MODE_KEY, false, true);
         message("An ancient and terrible evil burrows into your willing flesh!", REQUIRE_ACKNOWLEDGMENT);
-        player.info.displayChar = '&';
         rogue.easyMode = true;
+        setPlayerDisplayChar();
         refreshDungeonCell(player.loc.x, player.loc.y);
         refreshSideBar(-1, -1, false);
         message("Wracked by spasms, your body contorts into an ALL-POWERFUL AMPERSAND!!!", 0);

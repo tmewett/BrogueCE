@@ -21,6 +21,7 @@
 #define U_OMEGA  0x03A9
 #define U_CIRCLE_BARS  0x29F2
 #define U_FILLED_CIRCLE_BARS  0x29F3
+#define U_LEFT_TRIANGLE 0x1F780
 
 // #define U_UP_TRIANGLE  0x2206
 // #define U_DOWN_TRIANGLE  0x2207

@@ -369,6 +369,7 @@ static int fontIndex(enum displayGlyph glyph) {
             case U_OMEGA: return 0x96;
             case U_CIRCLE_BARS: return 0x8c;
             case U_FILLED_CIRCLE_BARS: return 0x8d;
+            case U_LEFT_TRIANGLE: return 0x8e;
 
             default:
                 brogueAssert(code < 256);

@@ -3926,7 +3926,7 @@ void printString(const char *theString, short x, short y, const color *foreColor
 // Inserts line breaks into really long words. Optionally adds a hyphen, but doesn't do anything
 // clever regarding hyphen placement. Plays nicely with color escapes.
 void breakUpLongWordsIn(char *sourceText, short width, boolean useHyphens) {
-    char buf[COLS * ROWS * 2] = "";
+    char buf[TEXT_MAX_LENGTH] = "";
     short i, m, nextChar, wordWidth;
     //const short maxLength = useHyphens ? width - 1 : width;
 
@@ -3967,7 +3967,7 @@ void breakUpLongWordsIn(char *sourceText, short width, boolean useHyphens) {
 // Puts the output in "to" only if we receive a "to" -- can make it null and just get a line count.
 short wrapText(char *to, const char *sourceText, short width) {
     short i, w, textLength, lineCount;
-    char printString[COLS * ROWS * 2];
+    char printString[TEXT_MAX_LENGTH];
     short spaceLeftOnLine, wordWidth;
 
     strcpy(printString, sourceText); // a copy we can write on
@@ -4015,7 +4015,7 @@ short wrapText(char *to, const char *sourceText, short width) {
 short printStringWithWrapping(const char *theString, short x, short y, short width, const color *foreColor,
                               const color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]) {
     color fColor;
-    char printString[COLS * ROWS * 2];
+    char printString[TEXT_MAX_LENGTH];
     short i, px, py;
 
     wrapText(printString, theString, width); // inserts newlines as necessary
@@ -4325,9 +4325,17 @@ void displayGrid(short **map) {
     //printf("\ntop: %i; bottom: %i", topRange, bottomRange);
 }
 
+/// @brief Display a message with the seed #, turn #, game mode (except normal), and game version
 void printSeed() {
     char buf[COLS];
-    snprintf(buf, COLS, "Dungeon seed #%llu; turn #%lu; version %s", (unsigned long long)rogue.seed, rogue.playerTurnNumber, gameConst->versionString);
+    char mode[14] = "";
+
+    if (rogue.easyMode) {
+        strcpy(mode,"easy mode; ");
+    } else if (rogue.wizard) {
+        strcpy(mode,"wizard mode; ");
+    }
+    snprintf(buf, COLS, "Dungeon seed #%llu; turn #%lu; %sversion %s", (unsigned long long)rogue.seed, rogue.playerTurnNumber, mode, gameConst->versionString);
     message(buf, 0);
 }
 
