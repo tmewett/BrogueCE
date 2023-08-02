@@ -686,7 +686,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                 }
             }
             if (!theItem) {
-                placeItem(generateItem(AMULET, 0), 0, 0);
+                placeItem(generateItem(AMULET, 0), INVALID_POS);
             }
         }
 

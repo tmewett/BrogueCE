@@ -3582,7 +3582,7 @@ void setMonsterLocation(creature *monst, short newX, short newY) {
         updateVision(true);
         // get any items at the destination location
         if (pmapAt(player.loc)->flags & HAS_ITEM) {
-            pickUpItemAt(player.loc.x, player.loc.y);
+            pickUpItemAt(player.loc);
         }
     }
 }
@@ -3933,7 +3933,7 @@ void makeMonsterDropItem(creature *monst) {
     getQualifyingPathLocNear(&x, &y, monst->loc.x, monst->loc.y, true,
                              (T_DIVIDES_LEVEL), 0,
                              T_OBSTRUCTS_ITEMS, (HAS_PLAYER | HAS_STAIRS | HAS_ITEM), false);
-    placeItem(monst->carriedItem, x, y);
+    placeItem(monst->carriedItem, (pos){ x, y });
     monst->carriedItem = NULL;
     refreshDungeonCell(x, y);
 }

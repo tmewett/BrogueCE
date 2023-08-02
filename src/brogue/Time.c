@@ -449,7 +449,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
     }
 
     // keys
-    if (cellHasTMFlag(*x, *y, TM_PROMOTES_WITH_KEY) && (theItem = keyOnTileAt(*x, *y))) {
+    if (cellHasTMFlag(*x, *y, TM_PROMOTES_WITH_KEY) && (theItem = keyOnTileAt((pos){ *x, *y }))) {
         useKeyAt(theItem, *x, *y);
     }
 }
@@ -1486,7 +1486,7 @@ void updateEnvironment() {
 
                 pmap[i][j].flags &= ~PRESSURE_PLATE_DEPRESSED;
             }
-            if (cellHasTMFlag(i, j, TM_PROMOTES_WITHOUT_KEY) && !keyOnTileAt(i, j)) {
+            if (cellHasTMFlag(i, j, TM_PROMOTES_WITHOUT_KEY) && !keyOnTileAt((pos){ i, j })) {
                 for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
                     if (tileCatalog[pmap[i][j].layers[layer]].mechFlags & TM_PROMOTES_WITHOUT_KEY) {
                         promoteTile(i, j, layer, false);

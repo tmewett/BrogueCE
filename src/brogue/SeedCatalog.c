@@ -95,7 +95,7 @@ static void printSeedCatalogItem(item *theItem, creature *theMonster, boolean is
     // opensVaultNumber
     if (theItem->category == KEY && theItem->kind == KEY_DOOR) {
         sprintf(opensVaultNumber, isCsvFormat ? "%i" : " (opens vault %i)",
-                pmap[theItem->keyLoc[0].x][theItem->keyLoc[0].y].machineNumber - 1);
+                pmapAt(theItem->keyLoc[0].loc)->machineNumber - 1);
     }
 
     if (isCsvFormat) {
