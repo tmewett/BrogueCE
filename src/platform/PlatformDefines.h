@@ -25,4 +25,5 @@
 // should go in here.
 
 #define BROGUE_LIBTCOD
-#define PLAY_AGAIN_STRING "Press space to play again."
+#define PLAY_AGAIN_STRING   "Press space to play again."
+
