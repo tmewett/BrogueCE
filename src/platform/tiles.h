@@ -5,9 +5,8 @@
 
 void initTiles();
 void resizeWindow(int width, int height);
-void updateTile(int row, int column, short charIndex,
-    short foreRed, short foreGreen, short foreBlue,
-    short backRed, short backGreen, short backBlue);
+void updateTile(int row, int column, short charIndex, short foreRed, short foreGreen, short foreBlue, short backRed,
+                short backGreen, short backBlue);
 void updateScreen();
 SDL_Surface *captureScreen();
 

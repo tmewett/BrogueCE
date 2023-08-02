@@ -30,7 +30,7 @@
 // Draws the smooth gradient that appears on a button when you hover over or depress it.
 // Returns the percentage by which the current tile should be averaged toward a hilite color.
 short smoothHiliteGradient(const short currentXValue, const short maxXValue) {
-    return (short) (100 * sin(3.14159265 * currentXValue / maxXValue));
+  return (short)(100 * sin(3.14159265 * currentXValue / maxXValue));
 }
 
 // Draws the button to the screen, or to a display buffer if one is given.
@@ -39,133 +39,128 @@ short smoothHiliteGradient(const short currentXValue, const short maxXValue) {
 //      Hovering highlight augments fore and back colors with buttonHoverColor by 20%.
 //      Pressed darkens the middle color (or turns it the hover color if the button is black).
 void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDisplayBuffer dbuf[COLS][ROWS]) {
-    if (!(button->flags & B_DRAW)) {
-        return;
+  if (!(button->flags & B_DRAW)) {
+    return;
+  }
+  // assureCosmeticRNG;
+  short oldRNG = rogue.RNG;
+  rogue.RNG = RNG_COSMETIC;
+
+  const int width = strLenWithoutEscapes(button->text);
+  color bColorBase = button->buttonColor;
+  color fColorBase = ((button->flags & B_ENABLED) ? white : gray);
+
+  if (highlight == BUTTON_HOVER && (button->flags & B_HOVER_ENABLED)) {
+    // applyColorAugment(&fColorBase, &buttonHoverColor, 20);
+    // applyColorAugment(&bColorBase, &buttonHoverColor, 20);
+    applyColorAverage(&fColorBase, &buttonHoverColor, 25);
+    applyColorAverage(&bColorBase, &buttonHoverColor, 25);
+  }
+
+  color bColorEdge = bColorBase;
+  color bColorMid = bColorBase;
+  applyColorAverage(&bColorEdge, &black, 50);
+
+  if (highlight == BUTTON_PRESSED) {
+    applyColorAverage(&bColorMid, &black, 75);
+    if (COLOR_DIFF(bColorMid, bColorBase) < 50) {
+      bColorMid = bColorBase;
+      applyColorAverage(&bColorMid, &buttonHoverColor, 50);
     }
-    //assureCosmeticRNG;
-    short oldRNG = rogue.RNG;
-    rogue.RNG = RNG_COSMETIC;
+  }
+  color bColor = bColorMid;
 
-    const int width = strLenWithoutEscapes(button->text);
-    color bColorBase = button->buttonColor;
-    color fColorBase = ((button->flags & B_ENABLED) ? white : gray);
+  short opacity = button->opacity;
+  if (highlight == BUTTON_HOVER || highlight == BUTTON_PRESSED) {
+    opacity = 100 - ((100 - opacity) * opacity / 100); // Apply the opacity twice.
+  }
 
-    if (highlight == BUTTON_HOVER && (button->flags & B_HOVER_ENABLED)) {
-        //applyColorAugment(&fColorBase, &buttonHoverColor, 20);
-        //applyColorAugment(&bColorBase, &buttonHoverColor, 20);
-        applyColorAverage(&fColorBase, &buttonHoverColor, 25);
-        applyColorAverage(&bColorBase, &buttonHoverColor, 25);
+  short symbolNumber = 0;
+
+  for (int i = 0, textLoc = 0; i < width && i + button->x < COLS; i++, textLoc++) {
+    while (button->text[textLoc] == COLOR_ESCAPE) {
+      textLoc = decodeMessageColor(button->text, textLoc, &fColorBase);
     }
 
-    color bColorEdge  = bColorBase;
-    color bColorMid   = bColorBase;
-    applyColorAverage(&bColorEdge, &black, 50);
+    color fColor = fColorBase;
+
+    if (button->flags & B_GRADIENT) {
+      const int midPercent = smoothHiliteGradient(i, width - 1);
+      bColor = bColorEdge;
+      applyColorAverage(&bColor, &bColorMid, midPercent);
+    }
 
     if (highlight == BUTTON_PRESSED) {
-        applyColorAverage(&bColorMid, &black, 75);
-        if (COLOR_DIFF(bColorMid, bColorBase) < 50) {
-            bColorMid   = bColorBase;
-            applyColorAverage(&bColorMid, &buttonHoverColor, 50);
-        }
-    }
-    color bColor = bColorMid;
-
-    short opacity = button->opacity;
-    if (highlight == BUTTON_HOVER || highlight == BUTTON_PRESSED) {
-        opacity = 100 - ((100 - opacity) * opacity / 100); // Apply the opacity twice.
+      applyColorAverage(&fColor, &bColor, 30);
     }
 
-    short symbolNumber = 0;
-
-    for (int i = 0, textLoc = 0; i < width && i + button->x < COLS; i++, textLoc++) {
-        while (button->text[textLoc] == COLOR_ESCAPE) {
-            textLoc = decodeMessageColor(button->text, textLoc, &fColorBase);
-        }
-
-        color fColor = fColorBase;
-
-        if (button->flags & B_GRADIENT) {
-            const int midPercent = smoothHiliteGradient(i, width - 1);
-            bColor = bColorEdge;
-            applyColorAverage(&bColor, &bColorMid, midPercent);
-        }
-
-        if (highlight == BUTTON_PRESSED) {
-            applyColorAverage(&fColor, &bColor, 30);
-        }
-
-        if (button->opacity < 100) {
-            applyColorAverage(&fColor, &bColor, 100 - opacity);
-        }
-
-        bakeColor(&fColor);
-        bakeColor(&bColor);
-        separateColors(&fColor, &bColor);
-
-        enum displayGlyph displayCharacter = button->text[textLoc];
-        if (button->text[textLoc] == '*') {
-            if (button->symbol[symbolNumber]) {
-                displayCharacter = button->symbol[symbolNumber];
-            }
-            symbolNumber++;
-        }
-
-        if (locIsInWindow((windowpos){ button->x + i, button->y })) {
-            plotCharToBuffer(displayCharacter, (windowpos){ button->x + i, button->y }, &fColor, &bColor, dbuf);
-            if (dbuf) {
-                // Only buffers can have opacity set.
-                dbuf[button->x + i][button->y].opacity = opacity;
-            }
-        }
+    if (button->opacity < 100) {
+      applyColorAverage(&fColor, &bColor, 100 - opacity);
     }
-    restoreRNG;
+
+    bakeColor(&fColor);
+    bakeColor(&bColor);
+    separateColors(&fColor, &bColor);
+
+    enum displayGlyph displayCharacter = button->text[textLoc];
+    if (button->text[textLoc] == '*') {
+      if (button->symbol[symbolNumber]) {
+        displayCharacter = button->symbol[symbolNumber];
+      }
+      symbolNumber++;
+    }
+
+    if (locIsInWindow((windowpos){button->x + i, button->y})) {
+      plotCharToBuffer(displayCharacter, (windowpos){button->x + i, button->y}, &fColor, &bColor, dbuf);
+      if (dbuf) {
+        // Only buffers can have opacity set.
+        dbuf[button->x + i][button->y].opacity = opacity;
+      }
+    }
+  }
+  restoreRNG;
 }
 
 void initializeButton(brogueButton *button) {
-    memset((void *) button, 0, sizeof( brogueButton ));
-    button->text[0] = '\0';
-    button->flags |= (B_ENABLED | B_GRADIENT | B_HOVER_ENABLED | B_DRAW | B_KEYPRESS_HIGHLIGHT);
-    button->buttonColor = interfaceButtonColor;
-    button->opacity = 100;
+  memset((void *)button, 0, sizeof(brogueButton));
+  button->text[0] = '\0';
+  button->flags |= (B_ENABLED | B_GRADIENT | B_HOVER_ENABLED | B_DRAW | B_KEYPRESS_HIGHLIGHT);
+  button->buttonColor = interfaceButtonColor;
+  button->opacity = 100;
 }
 
 void drawButtonsInState(buttonState *state) {
-    // Draw the buttons to the dbuf:
-    for (int i=0; i < state->buttonCount; i++) {
-        if (state->buttons[i].flags & B_DRAW) {
-            drawButton(&(state->buttons[i]), BUTTON_NORMAL, state->dbuf);
-        }
+  // Draw the buttons to the dbuf:
+  for (int i = 0; i < state->buttonCount; i++) {
+    if (state->buttons[i].flags & B_DRAW) {
+      drawButton(&(state->buttons[i]), BUTTON_NORMAL, state->dbuf);
     }
+  }
 }
 
-void initializeButtonState(buttonState *state,
-                           brogueButton *buttons,
-                           short buttonCount,
-                           short winX,
-                           short winY,
-                           short winWidth,
-                           short winHeight) {
-    // Initialize variables for the state struct:
-    state->buttonChosen = state->buttonFocused = state->buttonDepressed = -1;
-    state->buttonCount  = buttonCount;
-    state->winX         = winX;
-    state->winY         = winY;
-    state->winWidth     = winWidth;
-    state->winHeight    = winHeight;
-    for (int i=0; i < state->buttonCount; i++) {
-        state->buttons[i] = buttons[i];
-    }
-    copyDisplayBuffer(state->rbuf, displayBuffer);
-    clearDisplayBuffer(state->dbuf);
+void initializeButtonState(buttonState *state, brogueButton *buttons, short buttonCount, short winX, short winY,
+                           short winWidth, short winHeight) {
+  // Initialize variables for the state struct:
+  state->buttonChosen = state->buttonFocused = state->buttonDepressed = -1;
+  state->buttonCount = buttonCount;
+  state->winX = winX;
+  state->winY = winY;
+  state->winWidth = winWidth;
+  state->winHeight = winHeight;
+  for (int i = 0; i < state->buttonCount; i++) {
+    state->buttons[i] = buttons[i];
+  }
+  copyDisplayBuffer(state->rbuf, displayBuffer);
+  clearDisplayBuffer(state->dbuf);
 
-    drawButtonsInState(state);
+  drawButtonsInState(state);
 
-    // Clear the rbuf so that it resets only those parts of the screen in which buttons are drawn in the first place:
-    for (int i=0; i<COLS; i++) {
-        for (int j=0; j<ROWS; j++) {
-            state->rbuf[i][j].opacity = (state->dbuf[i][j].opacity ? 100 : 0);
-        }
+  // Clear the rbuf so that it resets only those parts of the screen in which buttons are drawn in the first place:
+  for (int i = 0; i < COLS; i++) {
+    for (int j = 0; j < ROWS; j++) {
+      state->rbuf[i][j].opacity = (state->dbuf[i][j].opacity ? 100 : 0);
     }
+  }
 }
 
 // Processes one round of user input, and bakes the necessary graphical changes into state->dbuf.
@@ -177,181 +172,173 @@ void initializeButtonState(buttonState *state,
 // Otherwise, returns -1. That can be if the user canceled (in which case *canceled is true),
 // or, more commonly, if the user's input in this particular split-second round was not decisive.
 short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *event) {
-    boolean buttonUsed = false;
+  boolean buttonUsed = false;
 
-    // Mouse event:
-    if (event->eventType == MOUSE_DOWN
-        || event->eventType == MOUSE_UP
-        || event->eventType == MOUSE_ENTERED_CELL) {
+  // Mouse event:
+  if (event->eventType == MOUSE_DOWN || event->eventType == MOUSE_UP || event->eventType == MOUSE_ENTERED_CELL) {
 
-        int x = event->param1;
-        int y = event->param2;
+    int x = event->param1;
+    int y = event->param2;
 
-        // Revert the button with old focus, if any.
-        if (state->buttonFocused >= 0) {
-            drawButton(&(state->buttons[state->buttonFocused]), BUTTON_NORMAL, state->dbuf);
-            state->buttonFocused = -1;
+    // Revert the button with old focus, if any.
+    if (state->buttonFocused >= 0) {
+      drawButton(&(state->buttons[state->buttonFocused]), BUTTON_NORMAL, state->dbuf);
+      state->buttonFocused = -1;
+    }
+
+    // Find the button with new focus, if any.
+    int focusIndex;
+    for (focusIndex = 0; focusIndex < state->buttonCount; focusIndex++) {
+      if ((state->buttons[focusIndex].flags & B_DRAW) && (state->buttons[focusIndex].flags & B_ENABLED)
+          && (state->buttons[focusIndex].y == y
+              || ((state->buttons[focusIndex].flags & B_WIDE_CLICK_AREA) && abs(state->buttons[focusIndex].y - y) <= 1))
+          && x >= state->buttons[focusIndex].x
+          && x < state->buttons[focusIndex].x + strLenWithoutEscapes(state->buttons[focusIndex].text)) {
+
+        state->buttonFocused = focusIndex;
+        if (event->eventType == MOUSE_DOWN) {
+          state->buttonDepressed = focusIndex; // Keeps track of which button is down at the moment. Cleared on mouseup.
         }
+        break;
+      }
+    }
+    if (focusIndex == state->buttonCount) { // No focus this round.
+      state->buttonFocused = -1;
+    }
 
-        // Find the button with new focus, if any.
-        int focusIndex;
-        for (focusIndex=0; focusIndex < state->buttonCount; focusIndex++) {
-            if ((state->buttons[focusIndex].flags & B_DRAW)
-                && (state->buttons[focusIndex].flags & B_ENABLED)
-                && (state->buttons[focusIndex].y == y || ((state->buttons[focusIndex].flags & B_WIDE_CLICK_AREA) && abs(state->buttons[focusIndex].y - y) <= 1))
-                && x >= state->buttons[focusIndex].x
-                && x < state->buttons[focusIndex].x + strLenWithoutEscapes(state->buttons[focusIndex].text)) {
+    if (state->buttonDepressed >= 0) {
+      if (state->buttonDepressed == state->buttonFocused) {
+        drawButton(&(state->buttons[state->buttonDepressed]), BUTTON_PRESSED, state->dbuf);
+      }
+    } else if (state->buttonFocused >= 0) {
+      // If no button is depressed, then update the appearance of the button with the new focus, if any.
+      drawButton(&(state->buttons[state->buttonFocused]), BUTTON_HOVER, state->dbuf);
+    }
 
-                state->buttonFocused = focusIndex;
-                if (event->eventType == MOUSE_DOWN) {
-                    state->buttonDepressed = focusIndex; // Keeps track of which button is down at the moment. Cleared on mouseup.
-                }
-                break;
-            }
-        }
-        if (focusIndex == state->buttonCount) { // No focus this round.
-            state->buttonFocused = -1;
-        }
-
+    // Mouseup:
+    if (event->eventType == MOUSE_UP) {
+      if (state->buttonDepressed == state->buttonFocused && state->buttonFocused >= 0) {
+        // If a button is depressed, and the mouseup happened on that button, it has been chosen and we're done.
+        buttonUsed = true;
+      } else {
+        // Otherwise, no button is depressed. If one was previously depressed, redraw it.
         if (state->buttonDepressed >= 0) {
-            if (state->buttonDepressed == state->buttonFocused) {
-                drawButton(&(state->buttons[state->buttonDepressed]), BUTTON_PRESSED, state->dbuf);
-            }
-        } else if (state->buttonFocused >= 0) {
-            // If no button is depressed, then update the appearance of the button with the new focus, if any.
-            drawButton(&(state->buttons[state->buttonFocused]), BUTTON_HOVER, state->dbuf);
+          drawButton(&(state->buttons[state->buttonDepressed]), BUTTON_NORMAL, state->dbuf);
+        } else if (!(x >= state->winX && x < state->winX + state->winWidth && y >= state->winY
+                     && y < state->winY + state->winHeight)) {
+          // Clicking outside of a button means canceling.
+          if (canceled) {
+            *canceled = true;
+          }
         }
 
-        // Mouseup:
-        if (event->eventType == MOUSE_UP) {
-            if (state->buttonDepressed == state->buttonFocused && state->buttonFocused >= 0) {
-                // If a button is depressed, and the mouseup happened on that button, it has been chosen and we're done.
-                buttonUsed = true;
-            } else {
-                // Otherwise, no button is depressed. If one was previously depressed, redraw it.
-                if (state->buttonDepressed >= 0) {
-                    drawButton(&(state->buttons[state->buttonDepressed]), BUTTON_NORMAL, state->dbuf);
-                } else if (!(x >= state->winX && x < state->winX + state->winWidth
-                             && y >= state->winY && y < state->winY + state->winHeight)) {
-                    // Clicking outside of a button means canceling.
-                    if (canceled) {
-                        *canceled = true;
-                    }
-                }
-
-                if (state->buttonFocused >= 0) {
-                    // Buttons don't hover-highlight when one is depressed, so we have to fix that when the mouse is up.
-                    drawButton(&(state->buttons[state->buttonFocused]), BUTTON_HOVER, state->dbuf);
-                }
-                state->buttonDepressed = -1;
-            }
+        if (state->buttonFocused >= 0) {
+          // Buttons don't hover-highlight when one is depressed, so we have to fix that when the mouse is up.
+          drawButton(&(state->buttons[state->buttonFocused]), BUTTON_HOVER, state->dbuf);
         }
+        state->buttonDepressed = -1;
+      }
+    }
+  }
+
+  // Keystroke:
+  if (event->eventType == KEYSTROKE) {
+
+    // Cycle through all of the hotkeys of all of the buttons.
+    for (int i = 0; i < state->buttonCount; i++) {
+      for (int k = 0; k < 10 && state->buttons[i].hotkey[k]; k++) {
+        if (event->param1 == state->buttons[i].hotkey[k]) {
+          // This button was chosen.
+
+          if (state->buttons[i].flags & B_DRAW) {
+            // Restore the depressed and focused buttons.
+            if (state->buttonDepressed >= 0) {
+              drawButton(&(state->buttons[state->buttonDepressed]), BUTTON_NORMAL, state->dbuf);
+            }
+            if (state->buttonFocused >= 0) {
+              drawButton(&(state->buttons[state->buttonFocused]), BUTTON_NORMAL, state->dbuf);
+            }
+
+            // If the button likes to flash when keypressed:
+            if (state->buttons[i].flags & B_KEYPRESS_HIGHLIGHT) {
+              // Depress the chosen button.
+              drawButton(&(state->buttons[i]), BUTTON_PRESSED, state->dbuf);
+
+              // Update the display.
+              overlayDisplayBuffer(state->rbuf, NULL);
+              overlayDisplayBuffer(state->dbuf, NULL);
+
+              if (!rogue.playbackMode || rogue.playbackPaused) {
+                // Wait for a little; then we're done.
+                pauseBrogue(50);
+              } else {
+                // Wait long enough for the viewer to see what was selected.
+                pauseAnimation(1000);
+              }
+            }
+          }
+
+          state->buttonDepressed = i;
+          buttonUsed = true;
+          break;
+        }
+      }
     }
 
-    // Keystroke:
-    if (event->eventType == KEYSTROKE) {
-
-        // Cycle through all of the hotkeys of all of the buttons.
-        for (int i=0; i < state->buttonCount; i++) {
-            for (int k = 0; k < 10 && state->buttons[i].hotkey[k]; k++) {
-                if (event->param1 == state->buttons[i].hotkey[k]) {
-                    // This button was chosen.
-
-                    if (state->buttons[i].flags & B_DRAW) {
-                        // Restore the depressed and focused buttons.
-                        if (state->buttonDepressed >= 0) {
-                            drawButton(&(state->buttons[state->buttonDepressed]), BUTTON_NORMAL, state->dbuf);
-                        }
-                        if (state->buttonFocused >= 0) {
-                            drawButton(&(state->buttons[state->buttonFocused]), BUTTON_NORMAL, state->dbuf);
-                        }
-
-                        // If the button likes to flash when keypressed:
-                        if (state->buttons[i].flags & B_KEYPRESS_HIGHLIGHT) {
-                            // Depress the chosen button.
-                            drawButton(&(state->buttons[i]), BUTTON_PRESSED, state->dbuf);
-
-                            // Update the display.
-                            overlayDisplayBuffer(state->rbuf, NULL);
-                            overlayDisplayBuffer(state->dbuf, NULL);
-
-                            if (!rogue.playbackMode || rogue.playbackPaused) {
-                                // Wait for a little; then we're done.
-                                pauseBrogue(50);
-                            } else {
-                                // Wait long enough for the viewer to see what was selected.
-                                pauseAnimation(1000);
-                            }
-                        }
-                    }
-
-                    state->buttonDepressed = i;
-                    buttonUsed = true;
-                    break;
-                }
-            }
-        }
-
-        if (!buttonUsed
-            && (event->param1 == ESCAPE_KEY || event->param1 == ACKNOWLEDGE_KEY)) {
-            // If the player pressed escape, we're done.
-            if (canceled) {
-                *canceled = true;
-            }
-        }
+    if (!buttonUsed && (event->param1 == ESCAPE_KEY || event->param1 == ACKNOWLEDGE_KEY)) {
+      // If the player pressed escape, we're done.
+      if (canceled) {
+        *canceled = true;
+      }
     }
+  }
 
-    if (buttonUsed) {
-        state->buttonChosen = state->buttonDepressed;
-        return state->buttonChosen;
-    } else {
-        return -1;
-    }
+  if (buttonUsed) {
+    state->buttonChosen = state->buttonDepressed;
+    return state->buttonChosen;
+  } else {
+    return -1;
+  }
 }
 
 // Displays a bunch of buttons and collects user input.
 // Returns the index number of the chosen button, or -1 if the user cancels.
 // A window region is described by winX, winY, winWidth and winHeight.
 // Clicking outside of that region will constitute canceling.
-short buttonInputLoop(brogueButton *buttons,
-                      short buttonCount,
-                      short winX,
-                      short winY,
-                      short winWidth,
-                      short winHeight,
+short buttonInputLoop(brogueButton *buttons, short buttonCount, short winX, short winY, short winWidth, short winHeight,
                       rogueEvent *returnEvent) {
-    short button;
-    boolean canceled;
-    rogueEvent theEvent;
-    buttonState state = {0};
+  short button;
+  boolean canceled;
+  rogueEvent theEvent;
+  buttonState state = {0};
 
-    assureCosmeticRNG;
+  assureCosmeticRNG;
 
-    canceled = false;
-    initializeButtonState(&state, buttons, buttonCount, winX, winY, winWidth, winHeight);
+  canceled = false;
+  initializeButtonState(&state, buttons, buttonCount, winX, winY, winWidth, winHeight);
 
-    do {
-        // Update the display.
-        overlayDisplayBuffer(state.dbuf, NULL);
+  do {
+    // Update the display.
+    overlayDisplayBuffer(state.dbuf, NULL);
 
-        // Get input.
-        nextBrogueEvent(&theEvent, true, false, false);
+    // Get input.
+    nextBrogueEvent(&theEvent, true, false, false);
 
-        // Process the input.
-        button = processButtonInput(&state, &canceled, &theEvent);
+    // Process the input.
+    button = processButtonInput(&state, &canceled, &theEvent);
 
-        // Revert the display.
-        overlayDisplayBuffer(state.rbuf, NULL);
+    // Revert the display.
+    overlayDisplayBuffer(state.rbuf, NULL);
 
-    } while (button == -1 && !canceled);
+  } while (button == -1 && !canceled);
 
-    if (returnEvent) {
-        *returnEvent = theEvent;
-    }
+  if (returnEvent) {
+    *returnEvent = theEvent;
+  }
 
-    //overlayDisplayBuffer(dbuf, NULL); // hangs around
+  // overlayDisplayBuffer(dbuf, NULL); // hangs around
 
-    restoreRNG;
+  restoreRNG;
 
-    return button;
+  return button;
 }
