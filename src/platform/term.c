@@ -48,8 +48,7 @@ int is_xterm;
 
 static void preparecolor() {
     // sixteen color mode colors (we use these in 256-color mode, too)
-    static int pairParts[8]
-        = {COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW, COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN, COLOR_WHITE};
+    static int pairParts[8] = {COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW, COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN, COLOR_WHITE};
 
     int fg, bg;
     for (bg = 0; bg < 8; bg++) {
@@ -181,15 +180,9 @@ typedef struct Lab {
 #define HALFBRIGHT 0.5
 #define BRIGHT 0.9
 
-fcolor palette[16] = {{DARK, DARK, DARK},        {MID, DARK, DARK},
-                      {DARK, MID, DARK},         {MID, .8 * MID, DIM},
-                      {DARK, DARK, MID},         {MID + DIM, DARK, MID},
-                      {DARK, MID, MID},          {HALFBRIGHT, HALFBRIGHT, HALFBRIGHT},
+fcolor palette[16] = {{DARK, DARK, DARK}, {MID, DARK, DARK},    {DARK, MID, DARK},    {MID, .8 * MID, DIM},   {DARK, DARK, MID},         {MID + DIM, DARK, MID},       {DARK, MID, MID},       {HALFBRIGHT, HALFBRIGHT, HALFBRIGHT},
 
-                      {MID, MID, MID},           {BRIGHT, DARK, DARK},
-                      {DARK, BRIGHT, DARK},      {BRIGHT, BRIGHT, DARK},
-                      {HALFBRIGHT, MID, BRIGHT}, {BRIGHT, HALFBRIGHT, BRIGHT},
-                      {DARK, BRIGHT, BRIGHT},    {BRIGHT, BRIGHT, BRIGHT}};
+                      {MID, MID, MID},    {BRIGHT, DARK, DARK}, {DARK, BRIGHT, DARK}, {BRIGHT, BRIGHT, DARK}, {HALFBRIGHT, MID, BRIGHT}, {BRIGHT, HALFBRIGHT, BRIGHT}, {DARK, BRIGHT, BRIGHT}, {BRIGHT, BRIGHT, BRIGHT}};
 
 CIE ciePalette[16];
 Lab labPalette[16];
@@ -220,11 +213,7 @@ static CIE toCIE(fcolor c) {
     return cie;
 }
 
-static float Labf(float t) {
-    return t > ((6.0 / 29.0) * (6.0 / 29.0) * (6.0 / 29.0))
-               ? pow(t, 1.0 / 3.0)
-               : ((1.0 / 3.0) * (29.0 / 6.0) * (29.0 / 6.0)) * t + (4.0 / 29.0);
-}
+static float Labf(float t) { return t > ((6.0 / 29.0) * (6.0 / 29.0) * (6.0 / 29.0)) ? pow(t, 1.0 / 3.0) : ((1.0 / 3.0) * (29.0 / 6.0) * (29.0 / 6.0)) * t + (4.0 / 29.0); }
 
 static Lab toLab(CIE *c) {
     CIE n = (CIE){Labf(c->X / white.X), Labf(c->Y / white.Y), Labf(c->Z / white.Z)};
@@ -378,9 +367,7 @@ static void coerce_colorcube(fcolor *f, intcolor *c) {
     c->idx = ((36 * r) + (6 * g) + b + 16);
 }
 
-static int intcolor_distance(intcolor *a, intcolor *b) {
-    return (a->r - b->r) * (a->r - b->r) + (a->g - b->g) * (a->g - b->g) + (a->b - b->b) * (a->b - b->b);
-}
+static int intcolor_distance(intcolor *a, intcolor *b) { return (a->r - b->r) * (a->r - b->r) + (a->g - b->g) * (a->g - b->g) + (a->b - b->b) * (a->b - b->b); }
 
 static int coerce_prs(intcolor *fg, intcolor *bg) {
     // search for an exact match in the list
@@ -454,8 +441,7 @@ static void buffer_plot(int ch, int x, int y, fcolor *fg, fcolor *bg) {
         coerce_colorcube(bg, &cube_bg);
         if (cube_fg.idx == cube_bg.idx) {
             // verify that the colors are really the same; otherwise, we'd better force the output apart
-            int naive_distance = (fg->r - bg->r) * (fg->r - bg->r) + (fg->g - bg->g) * (fg->g - bg->g)
-                                 + (fg->b - bg->b) * (fg->b - bg->b);
+            int naive_distance = (fg->r - bg->r) * (fg->r - bg->r) + (fg->g - bg->g) * (fg->g - bg->g) + (fg->b - bg->b) * (fg->b - bg->b);
             if (naive_distance > 3) {
                 // very arbitrary cutoff, and an arbitrary fix, very lazy
                 if (cube_bg.r > 0) {
@@ -891,7 +877,4 @@ static int term_ctrlPressed(int *key) {
 }
 
 struct term_t Term
-    = {term_start,         term_end,         term_mvaddch,
-       term_refresh,       term_getkey,      term_wait,
-       term_has_key,       term_title,       term_resize,
-       term_keycodeByName, term_ctrlPressed, {KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_BACKSPACE, KEY_DC, KEY_F(12)}};
+    = {term_start, term_end, term_mvaddch, term_refresh, term_getkey, term_wait, term_has_key, term_title, term_resize, term_keycodeByName, term_ctrlPressed, {KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_BACKSPACE, KEY_DC, KEY_F(12)}};

@@ -104,8 +104,7 @@ static void flushOutputBuffer() {
     char msg[80];
     int no_bytes_sent;
 
-    no_bytes_sent
-        = sendto(wfd, outputBuffer, outputBufferPos, 0, (struct sockaddr *)&addr_write, sizeof(struct sockaddr_un));
+    no_bytes_sent = sendto(wfd, outputBuffer, outputBufferPos, 0, (struct sockaddr *)&addr_write, sizeof(struct sockaddr_un));
     if (no_bytes_sent == -1) {
         snprintf(msg, 80, "Error: %s\n", strerror(errno));
         writeToLog(msg);
@@ -142,8 +141,7 @@ static unsigned int fixUnicode(unsigned int code) {
     }
 }
 
-static void web_plotChar(enum displayGlyph inputChar, short xLoc, short yLoc, short foreRed, short foreGreen,
-                         short foreBlue, short backRed, short backGreen, short backBlue) {
+static void web_plotChar(enum displayGlyph inputChar, short xLoc, short yLoc, short foreRed, short foreGreen, short foreBlue, short backRed, short backGreen, short backBlue) {
     unsigned char outputBuffer[OUTPUT_SIZE];
     unsigned char firstCharByte, secondCharByte;
     enum displayGlyph translatedChar;
@@ -316,6 +314,4 @@ static void web_notifyEvent(short eventId, int data1, int data2, const char *str
     flushOutputBuffer();
 }
 
-struct brogueConsole webConsole = {gameLoop,  web_pauseForMilliseconds, web_nextKeyOrMouseEvent, web_plotChar,
-                                   web_remap, web_modifierHeld,         web_notifyEvent,         NULL,
-                                   NULL};
+struct brogueConsole webConsole = {gameLoop, web_pauseForMilliseconds, web_nextKeyOrMouseEvent, web_plotChar, web_remap, web_modifierHeld, web_notifyEvent, NULL, NULL};

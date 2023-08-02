@@ -90,8 +90,7 @@ static char glyphToAscii(enum displayGlyph glyph) {
     }
 }
 
-static void curses_plotChar(enum displayGlyph ch, short xLoc, short yLoc, short foreRed, short foreGreen,
-                            short foreBlue, short backRed, short backGreen, short backBlue) {
+static void curses_plotChar(enum displayGlyph ch, short xLoc, short yLoc, short foreRed, short foreGreen, short foreBlue, short backRed, short backGreen, short backBlue) {
 
     fcolor fore;
     fcolor back;
@@ -239,12 +238,4 @@ static void curses_remap(const char *input_name, const char *output_name) {
 
 static boolean modifier_held(int modifier) { return 0; }
 
-struct brogueConsole cursesConsole = {gameLoop,
-                                      curses_pauseForMilliseconds,
-                                      curses_nextKeyOrMouseEvent,
-                                      curses_plotChar,
-                                      curses_remap,
-                                      modifier_held,
-                                      NULL,
-                                      NULL,
-                                      NULL};
+struct brogueConsole cursesConsole = {gameLoop, curses_pauseForMilliseconds, curses_nextKeyOrMouseEvent, curses_plotChar, curses_remap, modifier_held, NULL, NULL, NULL};

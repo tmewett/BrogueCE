@@ -83,17 +83,14 @@ boolean paintLight(const lightSource *theLight, short x, short y, boolean isMine
         }
     }
 
-    getFOVMask(grid, x, y, radius, T_OBSTRUCTS_VISION,
-               (theLight->passThroughCreatures ? 0 : (HAS_MONSTER | HAS_PLAYER)), (!isMinersLight));
+    getFOVMask(grid, x, y, radius, T_OBSTRUCTS_VISION, (theLight->passThroughCreatures ? 0 : (HAS_MONSTER | HAS_PLAYER)), (!isMinersLight));
 
     overlappedFieldOfView = false;
 
     for (i = max(0, x - radiusRounded); i < DCOLS && i < x + radiusRounded; i++) {
         for (j = max(0, y - radiusRounded); j < DROWS && j < y + radiusRounded; j++) {
             if (grid[i][j]) {
-                lightMultiplier
-                    = 100
-                      - (100 - fadeToPercent) * fp_sqrt(((i - x) * (i - x) + (j - y) * (j - y)) * FP_FACTOR) / radius;
+                lightMultiplier = 100 - (100 - fadeToPercent) * fp_sqrt(((i - x) * (i - x) + (j - y) * (j - y)) * FP_FACTOR) / radius;
                 for (k = 0; k < 3; k++) {
                     tmap[i][j].light[k] += colorComponents[k] * lightMultiplier / 100;
                     ;
@@ -155,8 +152,7 @@ void updateMinersLightRadius() {
     }
 
     rogue.minersLight.radialFadeToPercent = 35 + (max(0, min(65, rogue.lightMultiplier * 5)) * fraction) / FP_FACTOR;
-    rogue.minersLight.lightRadius.upperBound = rogue.minersLight.lightRadius.lowerBound
-        = clamp(lightRadius / FP_FACTOR, -30000, 30000);
+    rogue.minersLight.lightRadius.upperBound = rogue.minersLight.lightRadius.lowerBound = clamp(lightRadius / FP_FACTOR, -30000, 30000);
 }
 
 void updateDisplayDetail() {
@@ -248,8 +244,7 @@ void updateLighting() {
             paintLight(&lightCatalog[monst->info.intrinsicLightType], monst->loc.x, monst->loc.y, false, false);
         }
         if (monst->mutationIndex >= 0 && mutationCatalog[monst->mutationIndex].light != NO_LIGHT) {
-            paintLight(&lightCatalog[mutationCatalog[monst->mutationIndex].light], monst->loc.x, monst->loc.y, false,
-                       false);
+            paintLight(&lightCatalog[mutationCatalog[monst->mutationIndex].light], monst->loc.x, monst->loc.y, false, false);
         }
 
         if (monst->status[STATUS_BURNING] && !(monst->info.flags & MONST_FIERY)) {
@@ -285,11 +280,7 @@ void updateLighting() {
     }
 }
 
-boolean playerInDarkness() {
-    return (tmapAt(player.loc)->light[0] + 10 < minersLightColor.red
-            && tmapAt(player.loc)->light[1] + 10 < minersLightColor.green
-            && tmapAt(player.loc)->light[2] + 10 < minersLightColor.blue);
-}
+boolean playerInDarkness() { return (tmapAt(player.loc)->light[0] + 10 < minersLightColor.red && tmapAt(player.loc)->light[1] + 10 < minersLightColor.green && tmapAt(player.loc)->light[2] + 10 < minersLightColor.blue); }
 
 #define flarePrecision 1000
 
@@ -361,10 +352,8 @@ boolean drawFlareFrame(flare *theFlare) {
     if (!flareIsActive(theFlare)) {
         return false;
     }
-    tempLight.lightRadius.lowerBound
-        = ((long)tempLight.lightRadius.lowerBound) * theFlare->coeff / (flarePrecision * 100);
-    tempLight.lightRadius.upperBound
-        = ((long)tempLight.lightRadius.upperBound) * theFlare->coeff / (flarePrecision * 100);
+    tempLight.lightRadius.lowerBound = ((long)tempLight.lightRadius.lowerBound) * theFlare->coeff / (flarePrecision * 100);
+    tempLight.lightRadius.upperBound = ((long)tempLight.lightRadius.upperBound) * theFlare->coeff / (flarePrecision * 100);
     applyColorScalar(&tempColor, theFlare->coeff / flarePrecision);
     tempLight.lightColor = &tempColor;
     inView = paintLight(&tempLight, theFlare->loc.x, theFlare->loc.y, false, true);

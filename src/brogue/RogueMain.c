@@ -64,9 +64,7 @@ boolean fileExists(const char *pathname) {
 // Otherwise, return false.
 boolean chooseFile(char *path, char *prompt, char *defaultName, char *suffix) {
 
-    if (getInputTextString(path, prompt, min(DCOLS - 25, BROGUE_FILENAME_MAX - strlen(suffix)), defaultName, suffix,
-                           TEXT_INPUT_FILENAME, false)
-        && path[0] != '\0') {
+    if (getInputTextString(path, prompt, min(DCOLS - 25, BROGUE_FILENAME_MAX - strlen(suffix)), defaultName, suffix, TEXT_INPUT_FILENAME, false) && path[0] != '\0') {
 
         strcat(path, suffix);
         return true;
@@ -376,8 +374,7 @@ void initializeRogue(uint64_t seed) {
 
     rogue.minersLight = lightCatalog[MINERS_LIGHT];
 
-    rogue.clairvoyance = rogue.regenerationBonus = rogue.stealthBonus = rogue.transference = rogue.wisdomBonus
-        = rogue.reaping = 0;
+    rogue.clairvoyance = rogue.regenerationBonus = rogue.stealthBonus = rogue.transference = rogue.wisdomBonus = rogue.reaping = 0;
     rogue.lightMultiplier = 1;
 
     theItem = generateItem(FOOD, RATION);
@@ -502,8 +499,7 @@ void updateColors() {
 
     for (i = 0; i < NUMBER_DYNAMIC_COLORS; i++) {
         *(dynamicColors[i]) = *(dynamicColorsBounds[i][0]);
-        applyColorAverage(dynamicColors[i], dynamicColorsBounds[i][1],
-                          min(100, max(0, rogue.depthLevel * 100 / gameConst->amuletLevel)));
+        applyColorAverage(dynamicColors[i], dynamicColorsBounds[i][1], min(100, max(0, rogue.depthLevel * 100 / gameConst->amuletLevel)));
     }
 }
 
@@ -541,8 +537,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
         py = player.loc.y;
         if (cellHasTerrainFlag(player.loc.x, player.loc.y, T_AUTO_DESCENT)) {
             for (i = 0; i < 8; i++) {
-                if (!cellHasTerrainFlag(player.loc.x + nbDirs[i][0], player.loc.y + nbDirs[i][1],
-                                        (T_PATHING_BLOCKER))) {
+                if (!cellHasTerrainFlag(player.loc.x + nbDirs[i][0], player.loc.y + nbDirs[i][1], (T_PATHING_BLOCKER))) {
                     px = player.loc.x + nbDirs[i][0];
                     py = player.loc.y + nbDirs[i][1];
                     break;
@@ -553,28 +548,18 @@ void startLevel(short oldLevelNumber, short stairDirection) {
         fillGrid(mapToStairs, 0);
         for (flying = 0; flying <= 1; flying++) {
             fillGrid(mapToStairs, 0);
-            calculateDistances(mapToStairs, px, py, (flying ? T_OBSTRUCTS_PASSABILITY : T_PATHING_BLOCKER) | T_SACRED,
-                               NULL, true, true);
+            calculateDistances(mapToStairs, px, py, (flying ? T_OBSTRUCTS_PASSABILITY : T_PATHING_BLOCKER) | T_SACRED, NULL, true, true);
             for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
                 creature *monst = nextCreature(&it);
                 x = monst->loc.x;
                 y = monst->loc.y;
-                if (((monst->creatureState == MONSTER_TRACKING_SCENT
-                      && (stairDirection != 0 || monst->status[STATUS_LEVITATING]))
-                     || monst->creatureState == MONSTER_ALLY || monst == rogue.yendorWarden)
+                if (((monst->creatureState == MONSTER_TRACKING_SCENT && (stairDirection != 0 || monst->status[STATUS_LEVITATING])) || monst->creatureState == MONSTER_ALLY || monst == rogue.yendorWarden)
                     && (stairDirection != 0 || monst->currentHP > 10 || monst->status[STATUS_LEVITATING])
-                    && ((flying != 0)
-                        == ((monst->status[STATUS_LEVITATING] != 0) || cellHasTerrainFlag(x, y, T_PATHING_BLOCKER)
-                            || cellHasTerrainFlag(px, py, T_AUTO_DESCENT)))
-                    && !(monst->bookkeepingFlags & MB_CAPTIVE)
-                    && !(monst->info.flags & (MONST_WILL_NOT_USE_STAIRS | MONST_RESTRICTED_TO_LIQUID))
-                    && !(cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY)) && !monst->status[STATUS_ENTRANCED]
-                    && !monst->status[STATUS_PARALYZED]
-                    && (mapToStairs[monst->loc.x][monst->loc.y] < 30000 || monst->creatureState == MONSTER_ALLY
-                        || monst == rogue.yendorWarden)) {
+                    && ((flying != 0) == ((monst->status[STATUS_LEVITATING] != 0) || cellHasTerrainFlag(x, y, T_PATHING_BLOCKER) || cellHasTerrainFlag(px, py, T_AUTO_DESCENT))) && !(monst->bookkeepingFlags & MB_CAPTIVE)
+                    && !(monst->info.flags & (MONST_WILL_NOT_USE_STAIRS | MONST_RESTRICTED_TO_LIQUID)) && !(cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY)) && !monst->status[STATUS_ENTRANCED] && !monst->status[STATUS_PARALYZED]
+                    && (mapToStairs[monst->loc.x][monst->loc.y] < 30000 || monst->creatureState == MONSTER_ALLY || monst == rogue.yendorWarden)) {
 
-                    monst->status[STATUS_ENTERS_LEVEL_IN]
-                        = clamp(mapToStairs[monst->loc.x][monst->loc.y] * monst->movementSpeed / 100 + 1, 1, 150);
+                    monst->status[STATUS_ENTERS_LEVEL_IN] = clamp(mapToStairs[monst->loc.x][monst->loc.y] * monst->movementSpeed / 100 + 1, 1, 150);
                     switch (stairDirection) {
                     case 1:
                         monst->bookkeepingFlags |= MB_APPROACHING_DOWNSTAIRS;
@@ -619,8 +604,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             levels[oldLevelNumber - 1].mapStorage[i][j].rememberedItemCategory = pmap[i][j].rememberedItemCategory;
             levels[oldLevelNumber - 1].mapStorage[i][j].rememberedItemKind = pmap[i][j].rememberedItemKind;
             levels[oldLevelNumber - 1].mapStorage[i][j].rememberedItemQuantity = pmap[i][j].rememberedItemQuantity;
-            levels[oldLevelNumber - 1].mapStorage[i][j].rememberedItemOriginDepth
-                = pmap[i][j].rememberedItemOriginDepth;
+            levels[oldLevelNumber - 1].mapStorage[i][j].rememberedItemOriginDepth = pmap[i][j].rememberedItemOriginDepth;
             levels[oldLevelNumber - 1].mapStorage[i][j].rememberedTerrain = pmap[i][j].rememberedTerrain;
             levels[oldLevelNumber - 1].mapStorage[i][j].rememberedCellFlags = pmap[i][j].rememberedCellFlags;
             levels[oldLevelNumber - 1].mapStorage[i][j].rememberedTerrainFlags = pmap[i][j].rememberedTerrainFlags;
@@ -668,8 +652,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
         // If we somehow failed to generate the amulet altar,
         // just toss an amulet in there somewhere.
         // It'll be fiiine!
-        if (rogue.depthLevel == gameConst->amuletLevel && !numberOfMatchingPackItems(AMULET, 0, 0, false)
-            && levels[rogue.depthLevel - 1].visited == false) {
+        if (rogue.depthLevel == gameConst->amuletLevel && !numberOfMatchingPackItems(AMULET, 0, 0, false) && levels[rogue.depthLevel - 1].visited == false) {
 
             for (theItem = floorItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
                 if (theItem->category & AMULET) {
@@ -712,17 +695,13 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                 pmap[i][j].flags = (levels[rogue.depthLevel - 1].mapStorage[i][j].flags & PERMANENT_TILE_FLAGS);
                 pmap[i][j].machineNumber = levels[rogue.depthLevel - 1].mapStorage[i][j].machineNumber;
                 pmap[i][j].rememberedAppearance = levels[rogue.depthLevel - 1].mapStorage[i][j].rememberedAppearance;
-                pmap[i][j].rememberedItemCategory
-                    = levels[rogue.depthLevel - 1].mapStorage[i][j].rememberedItemCategory;
+                pmap[i][j].rememberedItemCategory = levels[rogue.depthLevel - 1].mapStorage[i][j].rememberedItemCategory;
                 pmap[i][j].rememberedItemKind = levels[rogue.depthLevel - 1].mapStorage[i][j].rememberedItemKind;
-                pmap[i][j].rememberedItemQuantity
-                    = levels[rogue.depthLevel - 1].mapStorage[i][j].rememberedItemQuantity;
-                pmap[i][j].rememberedItemOriginDepth
-                    = levels[rogue.depthLevel - 1].mapStorage[i][j].rememberedItemOriginDepth;
+                pmap[i][j].rememberedItemQuantity = levels[rogue.depthLevel - 1].mapStorage[i][j].rememberedItemQuantity;
+                pmap[i][j].rememberedItemOriginDepth = levels[rogue.depthLevel - 1].mapStorage[i][j].rememberedItemOriginDepth;
                 pmap[i][j].rememberedTerrain = levels[rogue.depthLevel - 1].mapStorage[i][j].rememberedTerrain;
                 pmap[i][j].rememberedCellFlags = levels[rogue.depthLevel - 1].mapStorage[i][j].rememberedCellFlags;
-                pmap[i][j].rememberedTerrainFlags
-                    = levels[rogue.depthLevel - 1].mapStorage[i][j].rememberedTerrainFlags;
+                pmap[i][j].rememberedTerrainFlags = levels[rogue.depthLevel - 1].mapStorage[i][j].rememberedTerrainFlags;
                 pmap[i][j].rememberedTMFlags = levels[rogue.depthLevel - 1].mapStorage[i][j].rememberedTMFlags;
             }
         }
@@ -777,17 +756,14 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     // Position the player.
     pos loc;
     if (stairDirection == 0) { // fell into the level
-        getQualifyingLocNear(&loc, player.loc.x, player.loc.y, true, 0, (T_PATHING_BLOCKER & ~T_IS_DEEP_WATER),
-                             (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false, false);
+        getQualifyingLocNear(&loc, player.loc.x, player.loc.y, true, 0, (T_PATHING_BLOCKER & ~T_IS_DEEP_WATER), (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false, false);
 
         if (cellHasTerrainFlag(loc.x, loc.y, T_IS_DEEP_WATER)) {
             // Fell into deep water... can we swim out of it?
             pos dryLoc;
-            getQualifyingLocNear(&dryLoc, player.loc.x, player.loc.y, true, 0, (T_PATHING_BLOCKER),
-                                 (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false, false);
+            getQualifyingLocNear(&dryLoc, player.loc.x, player.loc.y, true, 0, (T_PATHING_BLOCKER), (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false, false);
 
-            short swimDistance
-                = pathingDistance(loc.x, loc.y, dryLoc.x, dryLoc.y, T_PATHING_BLOCKER & ~T_IS_DEEP_WATER);
+            short swimDistance = pathingDistance(loc.x, loc.y, dryLoc.x, dryLoc.y, T_PATHING_BLOCKER & ~T_IS_DEEP_WATER);
             if (swimDistance == 30000) {
                 // Cannot swim out! This is an enclosed lake.
                 loc = dryLoc;
@@ -804,14 +780,12 @@ void startLevel(short oldLevelNumber, short stairDirection) {
         placedPlayer = false;
         for (dir = 0; dir < 4 && !placedPlayer; dir++) {
             loc = posNeighborInDirection(player.loc, dir);
-            if (!cellHasTerrainFlag(loc.x, loc.y, T_PATHING_BLOCKER)
-                && !(pmapAt(loc)->flags & (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE))) {
+            if (!cellHasTerrainFlag(loc.x, loc.y, T_PATHING_BLOCKER) && !(pmapAt(loc)->flags & (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE))) {
                 placedPlayer = true;
             }
         }
         if (!placedPlayer) {
-            getQualifyingPathLocNear(&loc.x, &loc.y, player.loc.x, player.loc.y, true, T_DIVIDES_LEVEL, 0,
-                                     T_PATHING_BLOCKER, (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false);
+            getQualifyingPathLocNear(&loc.x, &loc.y, player.loc.x, player.loc.y, true, T_DIVIDES_LEVEL, 0, T_PATHING_BLOCKER, (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false);
         }
     }
     player.loc = loc;
@@ -827,8 +801,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             }
         }
     }
-    if (cellHasTerrainFlag(player.loc.x, player.loc.y, T_IS_DEEP_WATER) && !player.status[STATUS_LEVITATING]
-        && !cellHasTerrainFlag(player.loc.x, player.loc.y, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))) {
+    if (cellHasTerrainFlag(player.loc.x, player.loc.y, T_IS_DEEP_WATER) && !player.status[STATUS_LEVITATING] && !cellHasTerrainFlag(player.loc.x, player.loc.y, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))) {
         rogue.inWater = true;
     }
 
@@ -838,8 +811,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
         fillGrid(mapToStairs, 0);
         fillGrid(mapToPit, 0);
         calculateDistances(mapToStairs, player.loc.x, player.loc.y, T_PATHING_BLOCKER, NULL, true, true);
-        calculateDistances(mapToPit, levels[rogue.depthLevel - 1].playerExitedVia.x,
-                           levels[rogue.depthLevel - 1].playerExitedVia.y, T_PATHING_BLOCKER, NULL, true, true);
+        calculateDistances(mapToPit, levels[rogue.depthLevel - 1].playerExitedVia.x, levels[rogue.depthLevel - 1].playerExitedVia.y, T_PATHING_BLOCKER, NULL, true, true);
         for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
             restoreMonster(monst, mapToStairs, mapToPit);
@@ -902,9 +874,7 @@ static void removeDeadMonstersFromList(creatureList *list) {
         next = next->nextCreature;
         if (decedent->bookkeepingFlags & MB_HAS_DIED) {
             removeCreature(list, decedent);
-            if (decedent->leader == &player && !(decedent->info.flags & MONST_INANIMATE)
-                && (decedent->bookkeepingFlags & MB_HAS_SOUL)
-                && !(decedent->bookkeepingFlags & MB_ADMINISTRATIVE_DEATH)) {
+            if (decedent->leader == &player && !(decedent->info.flags & MONST_INANIMATE) && (decedent->bookkeepingFlags & MB_HAS_SOUL) && !(decedent->bookkeepingFlags & MB_ADMINISTRATIVE_DEATH)) {
 
                 // Unset flag, since the purgatory list should be iterable.
                 decedent->bookkeepingFlags &= ~MB_HAS_DIED;
@@ -1032,8 +1002,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         do {
             if (rogue.playbackMode) break;
             nextBrogueEvent(&theEvent, false, false, false);
-            if (theEvent.eventType == KEYSTROKE && theEvent.param1 != ACKNOWLEDGE_KEY && theEvent.param1 != ESCAPE_KEY
-                && theEvent.param1 != INVENTORY_KEY) {
+            if (theEvent.eventType == KEYSTROKE && theEvent.param1 != ACKNOWLEDGE_KEY && theEvent.param1 != ESCAPE_KEY && theEvent.param1 != INVENTORY_KEY) {
 
                 flashTemporaryAlert(" -- Press space or click to continue, or press 'i' to view inventory -- ", 1500);
             } else if (theEvent.eventType == KEYSTROKE && theEvent.param1 == INVENTORY_KEY) {
@@ -1043,9 +1012,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
                 }
                 displayInventory(ALL_ITEMS, 0, 0, true, false);
             }
-        } while (
-            !(theEvent.eventType == KEYSTROKE && (theEvent.param1 == ACKNOWLEDGE_KEY || theEvent.param1 == ESCAPE_KEY)
-              || theEvent.eventType == MOUSE_UP));
+        } while (!(theEvent.eventType == KEYSTROKE && (theEvent.param1 == ACKNOWLEDGE_KEY || theEvent.param1 == ESCAPE_KEY) || theEvent.eventType == MOUSE_UP));
 
         confirmMessages();
 
@@ -1171,8 +1138,7 @@ void victory(boolean superVictory) {
         copyDisplayBuffer(dbuf, displayBuffer);
         funkyFade(dbuf, &superVictoryColor, 0, 240, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
         displayMoreSign();
-        printString("Congratulations; you have transcended the Dungeons of Doom!                 ", mapToWindowX(0),
-                    mapToWindowY(-1), &black, &white, 0);
+        printString("Congratulations; you have transcended the Dungeons of Doom!                 ", mapToWindowX(0), mapToWindowY(-1), &black, &white, 0);
         displayMoreSign();
         clearDisplayBuffer(dbuf);
         deleteMessages();
@@ -1182,8 +1148,7 @@ void victory(boolean superVictory) {
         copyDisplayBuffer(dbuf, displayBuffer);
         funkyFade(dbuf, &white, 0, 240, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
         displayMoreSign();
-        printString("Congratulations; you have escaped from the Dungeons of Doom!     ", mapToWindowX(0),
-                    mapToWindowY(-1), &black, &white, 0);
+        printString("Congratulations; you have escaped from the Dungeons of Doom!     ", mapToWindowX(0), mapToWindowY(-1), &black, &white, 0);
         displayMoreSign();
         clearDisplayBuffer(dbuf);
         deleteMessages();
@@ -1207,8 +1172,7 @@ void victory(boolean superVictory) {
         }
         if (theItem->category == AMULET && superVictory) {
             plotCharToBuffer(G_AMULET, (windowpos){mapToWindowX(2), min(ROWS - 1, i + 1)}, &yellow, &black, dbuf);
-            printString("The Birthright of Yendor", mapToWindowX(4), min(ROWS - 1, i + 1), &itemMessageColor, &black,
-                        dbuf);
+            printString("The Birthright of Yendor", mapToWindowX(4), min(ROWS - 1, i + 1), &itemMessageColor, &black, dbuf);
             sprintf(buf, "%li", max(0, itemValue(theItem) * 2));
             printString(buf, mapToWindowX(60), min(ROWS - 1, i + 1), &itemMessageColor, &black, dbuf);
             totalValue += max(0, itemValue(theItem) * 2);
@@ -1218,8 +1182,7 @@ void victory(boolean superVictory) {
             itemName(theItem, buf, true, true, &white);
             upperCase(buf);
 
-            plotCharToBuffer(theItem->displayChar, (windowpos){mapToWindowX(2), min(ROWS - 1, i + 1)}, &yellow, &black,
-                             dbuf);
+            plotCharToBuffer(theItem->displayChar, (windowpos){mapToWindowX(2), min(ROWS - 1, i + 1)}, &yellow, &black, dbuf);
             printString(buf, mapToWindowX(4), min(ROWS - 1, i + 1), &white, &black, dbuf);
 
             if (itemValue(theItem) > 0) {

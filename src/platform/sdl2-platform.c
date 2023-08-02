@@ -159,8 +159,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
             SDL_Keycode key = event.key.keysym.sym;
 
             if (key == SDLK_PAGEUP) {
-                resizeWindow(max(windowWidth * 11 / 10, windowWidth + 1),
-                             max(windowHeight * 11 / 10, windowHeight + 1));
+                resizeWindow(max(windowWidth * 11 / 10, windowWidth + 1), max(windowHeight * 11 / 10, windowHeight + 1));
                 continue;
             } else if (key == SDLK_PAGEDOWN) {
                 fullScreen = false;
@@ -189,8 +188,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
             if (!textInput) {
                 c = applyRemaps(c);
                 if (c == '=' || c == '+') {
-                    resizeWindow(max(windowWidth * 11 / 10, windowWidth + 1),
-                                 max(windowHeight * 11 / 10, windowHeight + 1));
+                    resizeWindow(max(windowWidth * 11 / 10, windowWidth + 1), max(windowHeight * 11 / 10, windowHeight + 1));
                 } else if (c == '-') {
                     fullScreen = false;
                     resizeWindow(max(windowWidth * 10 / 11, 1), max(windowHeight * 10 / 11, 1));
@@ -385,8 +383,7 @@ static int fontIndex(enum displayGlyph glyph) {
     }
 }
 
-static void _plotChar(enum displayGlyph inputChar, short x, short y, short foreRed, short foreGreen, short foreBlue,
-                      short backRed, short backGreen, short backBlue) {
+static void _plotChar(enum displayGlyph inputChar, short x, short y, short foreRed, short foreGreen, short foreBlue, short backRed, short backGreen, short backBlue) {
     updateTile(y, x, fontIndex(inputChar), foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue);
 }
 
@@ -424,6 +421,4 @@ static enum graphicsModes _setGraphicsMode(enum graphicsModes mode) {
     return mode;
 }
 
-struct brogueConsole sdlConsole
-    = {_gameLoop, _pauseForMilliseconds, _nextKeyOrMouseEvent, _plotChar, _remap, _modifierHeld,
-       NULL,      _takeScreenshot,       _setGraphicsMode};
+struct brogueConsole sdlConsole = {_gameLoop, _pauseForMilliseconds, _nextKeyOrMouseEvent, _plotChar, _remap, _modifierHeld, NULL, _takeScreenshot, _setGraphicsMode};

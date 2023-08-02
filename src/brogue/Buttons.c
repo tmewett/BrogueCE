@@ -29,9 +29,7 @@
 
 // Draws the smooth gradient that appears on a button when you hover over or depress it.
 // Returns the percentage by which the current tile should be averaged toward a hilite color.
-short smoothHiliteGradient(const short currentXValue, const short maxXValue) {
-    return (short)(100 * sin(3.14159265 * currentXValue / maxXValue));
-}
+short smoothHiliteGradient(const short currentXValue, const short maxXValue) { return (short)(100 * sin(3.14159265 * currentXValue / maxXValue)); }
 
 // Draws the button to the screen, or to a display buffer if one is given.
 // Button back color fades from -50% intensity at the edges to the back color in the middle.
@@ -138,8 +136,7 @@ void drawButtonsInState(buttonState *state) {
     }
 }
 
-void initializeButtonState(buttonState *state, brogueButton *buttons, short buttonCount, short winX, short winY,
-                           short winWidth, short winHeight) {
+void initializeButtonState(buttonState *state, brogueButton *buttons, short buttonCount, short winX, short winY, short winWidth, short winHeight) {
     // Initialize variables for the state struct:
     state->buttonChosen = state->buttonFocused = state->buttonDepressed = -1;
     state->buttonCount = buttonCount;
@@ -190,16 +187,12 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
         int focusIndex;
         for (focusIndex = 0; focusIndex < state->buttonCount; focusIndex++) {
             if ((state->buttons[focusIndex].flags & B_DRAW) && (state->buttons[focusIndex].flags & B_ENABLED)
-                && (state->buttons[focusIndex].y == y
-                    || ((state->buttons[focusIndex].flags & B_WIDE_CLICK_AREA)
-                        && abs(state->buttons[focusIndex].y - y) <= 1))
-                && x >= state->buttons[focusIndex].x
+                && (state->buttons[focusIndex].y == y || ((state->buttons[focusIndex].flags & B_WIDE_CLICK_AREA) && abs(state->buttons[focusIndex].y - y) <= 1)) && x >= state->buttons[focusIndex].x
                 && x < state->buttons[focusIndex].x + strLenWithoutEscapes(state->buttons[focusIndex].text)) {
 
                 state->buttonFocused = focusIndex;
                 if (event->eventType == MOUSE_DOWN) {
-                    state->buttonDepressed
-                        = focusIndex; // Keeps track of which button is down at the moment. Cleared on mouseup.
+                    state->buttonDepressed = focusIndex; // Keeps track of which button is down at the moment. Cleared on mouseup.
                 }
                 break;
             }
@@ -226,8 +219,7 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
                 // Otherwise, no button is depressed. If one was previously depressed, redraw it.
                 if (state->buttonDepressed >= 0) {
                     drawButton(&(state->buttons[state->buttonDepressed]), BUTTON_NORMAL, state->dbuf);
-                } else if (!(x >= state->winX && x < state->winX + state->winWidth && y >= state->winY
-                             && y < state->winY + state->winHeight)) {
+                } else if (!(x >= state->winX && x < state->winX + state->winWidth && y >= state->winY && y < state->winY + state->winHeight)) {
                     // Clicking outside of a button means canceling.
                     if (canceled) {
                         *canceled = true;
@@ -307,8 +299,7 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
 // Returns the index number of the chosen button, or -1 if the user cancels.
 // A window region is described by winX, winY, winWidth and winHeight.
 // Clicking outside of that region will constitute canceling.
-short buttonInputLoop(brogueButton *buttons, short buttonCount, short winX, short winY, short winWidth, short winHeight,
-                      rogueEvent *returnEvent) {
+short buttonInputLoop(brogueButton *buttons, short buttonCount, short winX, short winY, short winWidth, short winHeight, rogueEvent *returnEvent) {
     short button;
     boolean canceled;
     rogueEvent theEvent;

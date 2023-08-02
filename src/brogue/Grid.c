@@ -88,18 +88,12 @@ void hiliteGrid(short **grid, const color *hiliteColor, short hiliteStrength) {
                 x = mapToWindowX(i);
                 y = mapToWindowY(j);
 
-                displayBuffer[x][y].backColorComponents[0]
-                    = clamp(displayBuffer[x][y].backColorComponents[0] + hCol.red * hiliteStrength / 100, 0, 100);
-                displayBuffer[x][y].backColorComponents[1]
-                    = clamp(displayBuffer[x][y].backColorComponents[1] + hCol.green * hiliteStrength / 100, 0, 100);
-                displayBuffer[x][y].backColorComponents[2]
-                    = clamp(displayBuffer[x][y].backColorComponents[2] + hCol.blue * hiliteStrength / 100, 0, 100);
-                displayBuffer[x][y].foreColorComponents[0]
-                    = clamp(displayBuffer[x][y].foreColorComponents[0] + hCol.red * hiliteStrength / 100, 0, 100);
-                displayBuffer[x][y].foreColorComponents[1]
-                    = clamp(displayBuffer[x][y].foreColorComponents[1] + hCol.green * hiliteStrength / 100, 0, 100);
-                displayBuffer[x][y].foreColorComponents[2]
-                    = clamp(displayBuffer[x][y].foreColorComponents[2] + hCol.blue * hiliteStrength / 100, 0, 100);
+                displayBuffer[x][y].backColorComponents[0] = clamp(displayBuffer[x][y].backColorComponents[0] + hCol.red * hiliteStrength / 100, 0, 100);
+                displayBuffer[x][y].backColorComponents[1] = clamp(displayBuffer[x][y].backColorComponents[1] + hCol.green * hiliteStrength / 100, 0, 100);
+                displayBuffer[x][y].backColorComponents[2] = clamp(displayBuffer[x][y].backColorComponents[2] + hCol.blue * hiliteStrength / 100, 0, 100);
+                displayBuffer[x][y].foreColorComponents[0] = clamp(displayBuffer[x][y].foreColorComponents[0] + hCol.red * hiliteStrength / 100, 0, 100);
+                displayBuffer[x][y].foreColorComponents[1] = clamp(displayBuffer[x][y].foreColorComponents[1] + hCol.green * hiliteStrength / 100, 0, 100);
+                displayBuffer[x][y].foreColorComponents[2] = clamp(displayBuffer[x][y].foreColorComponents[2] + hCol.blue * hiliteStrength / 100, 0, 100);
             }
         }
     }
@@ -130,8 +124,7 @@ short floodFillGrid(short **grid, short x, short y, short eligibleValueMin, shor
     for (dir = 0; dir < 4; dir++) {
         newX = x + nbDirs[dir][0];
         newY = y + nbDirs[dir][1];
-        if (coordinatesAreInMap(newX, newY) && grid[newX][newY] >= eligibleValueMin
-            && grid[newX][newY] <= eligibleValueMax) {
+        if (coordinatesAreInMap(newX, newY) && grid[newX][newY] >= eligibleValueMin && grid[newX][newY] <= eligibleValueMax) {
             fillCount += floodFillGrid(grid, newX, newY, eligibleValueMin, eligibleValueMax, fillValue);
         }
     }
@@ -322,16 +315,12 @@ void randomLeastPositiveLocationInGrid(short **grid, short *x, short *y, boolean
     return;
 }
 
-boolean getQualifyingPathLocNear(short *retValX, short *retValY, short x, short y, boolean hallwaysAllowed,
-                                 unsigned long blockingTerrainFlags, unsigned long blockingMapFlags,
-                                 unsigned long forbiddenTerrainFlags, unsigned long forbiddenMapFlags,
-                                 boolean deterministic) {
+boolean getQualifyingPathLocNear(short *retValX, short *retValY, short x, short y, boolean hallwaysAllowed, unsigned long blockingTerrainFlags, unsigned long blockingMapFlags, unsigned long forbiddenTerrainFlags,
+                                 unsigned long forbiddenMapFlags, boolean deterministic) {
     short **grid, **costMap;
 
     // First check the given location to see if it works, as an optimization.
-    if (!cellHasTerrainFlag(x, y, blockingTerrainFlags | forbiddenTerrainFlags)
-        && !(pmap[x][y].flags & (blockingMapFlags | forbiddenMapFlags))
-        && (hallwaysAllowed || passableArcCount(x, y) <= 1)) {
+    if (!cellHasTerrainFlag(x, y, blockingTerrainFlags | forbiddenTerrainFlags) && !(pmap[x][y].flags & (blockingMapFlags | forbiddenMapFlags)) && (hallwaysAllowed || passableArcCount(x, y) <= 1)) {
 
         *retValX = x;
         *retValY = y;
@@ -380,8 +369,7 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY, short x, short 
     // Fall back to a pathing-agnostic alternative if there are no solutions.
     if (*retValX == -1 && *retValY == -1) {
         pos loc;
-        if (getQualifyingLocNear(&loc, x, y, hallwaysAllowed, NULL, (blockingTerrainFlags | forbiddenTerrainFlags),
-                                 (blockingMapFlags | forbiddenMapFlags), false, deterministic)) {
+        if (getQualifyingLocNear(&loc, x, y, hallwaysAllowed, NULL, (blockingTerrainFlags | forbiddenTerrainFlags), (blockingMapFlags | forbiddenMapFlags), false, deterministic)) {
             *retValX = loc.x;
             *retValY = loc.y;
             return true; // Found a fallback solution.
@@ -439,7 +427,7 @@ short fillContiguousRegion(short **grid, short x, short y, short fillValue) {
         if (!coordinatesAreInMap(newX, newY)) {
             break;
         }
-        if (grid[newX][newY] == 1) { // If the neighbor is an unmarked region cell,
+        if (grid[newX][newY] == 1) {                                            // If the neighbor is an unmarked region cell,
             numberOfCells += fillContiguousRegion(grid, newX, newY, fillValue); // then recurse.
         }
     }
@@ -447,9 +435,8 @@ short fillContiguousRegion(short **grid, short x, short y, short fillValue) {
 }
 
 // Loads up **grid with the results of a cellular automata simulation.
-void createBlobOnGrid(short **grid, short *retMinX, short *retMinY, short *retWidth, short *retHeight, short roundCount,
-                      short minBlobWidth, short minBlobHeight, short maxBlobWidth, short maxBlobHeight,
-                      short percentSeeded, char birthParameters[9], char survivalParameters[9]) {
+void createBlobOnGrid(short **grid, short *retMinX, short *retMinY, short *retWidth, short *retHeight, short roundCount, short minBlobWidth, short minBlobHeight, short maxBlobWidth, short maxBlobHeight, short percentSeeded,
+                      char birthParameters[9], char survivalParameters[9]) {
 
     short i, j, k;
     short blobNumber, blobSize, topBlobNumber, topBlobSize;

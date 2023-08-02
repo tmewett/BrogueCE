@@ -392,8 +392,7 @@ boolean isEnvironmentGlyph(enum displayGlyph glyph) {
     }
 }
 
-void plotChar(enum displayGlyph inputChar, short xLoc, short yLoc, short foreRed, short foreGreen, short foreBlue,
-              short backRed, short backGreen, short backBlue) {
+void plotChar(enum displayGlyph inputChar, short xLoc, short yLoc, short foreRed, short foreGreen, short foreBlue, short backRed, short backGreen, short backBlue) {
     currentConsole.plotChar(inputChar, xLoc, yLoc, foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue);
 }
 
@@ -402,9 +401,7 @@ void pausingTimerStartsNow() {}
 boolean shiftKeyIsDown() { return currentConsole.modifierHeld(0); }
 boolean controlKeyIsDown() { return currentConsole.modifierHeld(1); }
 
-void nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance) {
-    currentConsole.nextKeyOrMouseEvent(returnEvent, textInput, colorsDance);
-}
+void nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance) { currentConsole.nextKeyOrMouseEvent(returnEvent, textInput, colorsDance); }
 
 boolean pauseForMilliseconds(short milliseconds) { return currentConsole.pauseForMilliseconds(milliseconds); }
 
@@ -578,8 +575,7 @@ void saveScoreBuffer() {
 
     for (i = 0; i < HIGH_SCORES_COUNT; i++) {
         // save the entry
-        fprintf(scoresFile, "%li\t%li\t%s\n", scoreBuffer[i].score, scoreBuffer[i].dateNumber,
-                scoreBuffer[i].description);
+        fprintf(scoresFile, "%li\t%li\t%s\n", scoreBuffer[i].score, scoreBuffer[i].dateNumber, scoreBuffer[i].description);
     }
 
     fclose(scoresFile);
@@ -689,10 +685,9 @@ fileEntry *addfile(struct filelist *list, const char *name) {
     }
 
     // add the new file and copy the name into the buffer
-    list->files[list->nfiles].path
-        = ((char *)NULL) + list->nextname;           // don't look at them until they are transferred out
-    list->files[list->nfiles].date = (struct tm){0}; // associate a dummy date (1899-12-31) to avoid random data, it
-                                                     // will be correctly populated when using listFiles()
+    list->files[list->nfiles].path = ((char *)NULL) + list->nextname; // don't look at them until they are transferred out
+    list->files[list->nfiles].date = (struct tm){0};                  // associate a dummy date (1899-12-31) to avoid random data, it
+                                                                      // will be correctly populated when using listFiles()
 
     strncpy(list->names + list->nextname, name, len + 1);
 

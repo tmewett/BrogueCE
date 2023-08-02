@@ -111,8 +111,7 @@ static void dialogCreateItemChooseRunic(item *theItem) {
     // is based on minimum weapon damage, but has the same net effect. Might be nice to consolidate. Perhaps add a flag
     // to the kind (itemtable).
     if (theItem->category == WEAPON) {
-        if (theItem->kind == HAMMER || theItem->kind == WAR_AXE || theItem->kind == PIKE
-            || theItem->kind == BROADSWORD) {
+        if (theItem->kind == HAMMER || theItem->kind == WAR_AXE || theItem->kind == PIKE || theItem->kind == BROADSWORD) {
             for (i = 0; i < NUMBER_WEAPON_RUNIC_KINDS - NUMBER_GOOD_WEAPON_ENCHANT_KINDS; i++) {
                 strcpy(buttonText, weaponRunicNames[i + NUMBER_GOOD_WEAPON_ENCHANT_KINDS]);
                 initializeCreateItemButton(&(buttons[i]), buttonText);
@@ -151,8 +150,7 @@ static void dialogCreateItemChooseRunic(item *theItem) {
         theItem->enchant2 = selectedRunic + runicOffset;
         theItem->flags |= ITEM_RUNIC;
 
-        if ((theItem->enchant2 == W_SLAYING && theItem->category == WEAPON)
-            || (theItem->enchant2 == A_IMMUNITY && theItem->category == ARMOR)) {
+        if ((theItem->enchant2 == W_SLAYING && theItem->category == WEAPON) || (theItem->enchant2 == A_IMMUNITY && theItem->category == ARMOR)) {
             selectedVorpalEnemy = dialogCreateItemChooseVorpalEnemy();
 
             if (selectedVorpalEnemy >= 0) {
@@ -212,8 +210,7 @@ static void dialogCreateItemChooseEnchantmentLevel(item *theItem) {
         if (!(theItem->flags & ITEM_RUNIC)) {
             minVal = -3;
         } else { // bad runics can only be negatively enchanted
-            if ((theItem->category == ARMOR && theItem->enchant2 >= NUMBER_GOOD_ARMOR_ENCHANT_KINDS)
-                || (theItem->category == WEAPON && theItem->enchant2 >= NUMBER_GOOD_WEAPON_ENCHANT_KINDS)) {
+            if ((theItem->category == ARMOR && theItem->enchant2 >= NUMBER_GOOD_ARMOR_ENCHANT_KINDS) || (theItem->category == WEAPON && theItem->enchant2 >= NUMBER_GOOD_WEAPON_ENCHANT_KINDS)) {
                 minVal = -3;
                 maxVal = -1;
                 theItem->enchant1 = rand_range(-3, -1);
@@ -279,8 +276,7 @@ static void dialogCreateMonsterChooseMutation(creature *theMonster) {
     brogueButton buttons[DIALOG_CREATE_ITEM_MAX_BUTTONS];
 
     for (i = 0; i < NUMBER_MUTATORS; i++) {
-        if (!(theMonster->info.flags & mutationCatalog[i].forbiddenFlags)
-            && !(theMonster->info.abilityFlags & mutationCatalog[i].forbiddenAbilityFlags)) {
+        if (!(theMonster->info.flags & mutationCatalog[i].forbiddenFlags) && !(theMonster->info.abilityFlags & mutationCatalog[i].forbiddenAbilityFlags)) {
             strncpy(buttonText, mutationCatalog[i].title, COLS);
             initializeCreateItemButton(&(buttons[j]), buttonText);
             j++;
@@ -326,11 +322,9 @@ static void dialogCreateMonster() {
 
     for (i = 0; i < CREATABLE_MONSTER_KINDS; i += MONSTERS_PER_PAGE) {
         if (i + MONSTERS_PER_PAGE < CREATABLE_MONSTER_KINDS) {
-            sprintf(monsterRangeText, "%s - %s", monsterKinds[i].monsterName,
-                    monsterKinds[i + MONSTERS_PER_PAGE - 1].monsterName);
+            sprintf(monsterRangeText, "%s - %s", monsterKinds[i].monsterName, monsterKinds[i + MONSTERS_PER_PAGE - 1].monsterName);
         } else {
-            sprintf(monsterRangeText, "%s - %s", monsterKinds[i].monsterName,
-                    monsterKinds[CREATABLE_MONSTER_KINDS - 1].monsterName);
+            sprintf(monsterRangeText, "%s - %s", monsterKinds[i].monsterName, monsterKinds[CREATABLE_MONSTER_KINDS - 1].monsterName);
         }
         initializeCreateItemButton(&(buttons[buttonCount]), monsterRangeText);
         buttonCount++;
@@ -383,14 +377,12 @@ static void dialogCreateMonster() {
         if (theMonster->info.displayChar == G_TURRET && (!(pmapAt(selectedPosition)->layers[DUNGEON] == WALL))) {
             locationIsValid = false;
         }
-        if (!(theMonster->info.displayChar == G_TURRET)
-            && cellHasTerrainFlag(selectedPosition.x, selectedPosition.y, T_OBSTRUCTS_PASSABILITY)) {
+        if (!(theMonster->info.displayChar == G_TURRET) && cellHasTerrainFlag(selectedPosition.x, selectedPosition.y, T_OBSTRUCTS_PASSABILITY)) {
             locationIsValid = false;
         }
 
         if (!locationIsValid) {
-            sprintf(theMessage, "Invalid location. %s",
-                    KEYBOARD_LABELS ? "-- Press space or click to continue --" : "-- Touch anywhere to continue --");
+            sprintf(theMessage, "Invalid location. %s", KEYBOARD_LABELS ? "-- Press space or click to continue --" : "-- Touch anywhere to continue --");
             temporaryMessage(theMessage, REQUIRE_ACKNOWLEDGMENT);
             killCreature(theMonster, true);
             removeDeadMonsters();
@@ -411,8 +403,7 @@ static void dialogCreateMonster() {
         refreshSideBar(-1, -1, false);
         refreshDungeonCell(theMonster->loc.x, theMonster->loc.y);
 
-        if (!(theMonster->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))
-            || theMonster->info.monsterID == MK_PHOENIX_EGG || theMonster->info.monsterID == MK_PHYLACTERY) {
+        if (!(theMonster->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE)) || theMonster->info.monsterID == MK_PHOENIX_EGG || theMonster->info.monsterID == MK_PHYLACTERY) {
             sprintf(theMessage, "Make the %s your ally?", theMonster->info.monsterName);
             if (confirm(theMessage, false)) {
                 becomeAllyWith(theMonster);
@@ -474,8 +465,7 @@ static void dialogCreateItem() {
 
     if (Fl(selectedCategory) == GOLD) {
         rogue.gold += theItem->quantity;
-        sprintf(message, "you found %i pieces of gold.%s", theItem->quantity,
-                rogue.featRecord[FEAT_TONE] ? ".. and strike a tone of disappointment." : "");
+        sprintf(message, "you found %i pieces of gold.%s", theItem->quantity, rogue.featRecord[FEAT_TONE] ? ".. and strike a tone of disappointment." : "");
         rogue.featRecord[FEAT_TONE] = false;
         messageWithColor(message, &itemMessageColor, 0);
         deleteItem(theItem);

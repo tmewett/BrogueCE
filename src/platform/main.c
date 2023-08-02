@@ -197,8 +197,7 @@ int main(int argc, char *argv[]) {
                 // Use converter for the type the next size up, because it returns signed
                 unsigned int numberOfLevels = atol(argv[i + 3]);
 
-                if (tryParseUint64(argv[i + 1], &startingSeed) && tryParseUint64(argv[i + 2], &numberOfSeeds)
-                    && startingSeed > 0 && numberOfLevels <= 40) {
+                if (tryParseUint64(argv[i + 1], &startingSeed) && tryParseUint64(argv[i + 2], &numberOfSeeds) && startingSeed > 0 && numberOfLevels <= 40) {
                     printSeedCatalog(startingSeed, numberOfSeeds, numberOfLevels, isCsvFormat);
                     return 0;
                 }

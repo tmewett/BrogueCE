@@ -73,9 +73,7 @@ void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3
     }
 }
 
-void updateMenuFlames(const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)],
-                      signed short colorSources[MENU_FLAME_COLOR_SOURCE_COUNT][4],
-                      signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3]) {
+void updateMenuFlames(const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)], signed short colorSources[MENU_FLAME_COLOR_SOURCE_COUNT][4], signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3]) {
 
     short i, j, k, l, x, y;
     signed short tempFlames[COLS][3];
@@ -133,22 +131,15 @@ void updateMenuFlames(const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)]
 
                 // First, cause the color to drift a little.
                 for (k = 0; k < 4; k++) {
-                    colorSources[colorSourceNumber][k]
-                        += rand_range(-MENU_FLAME_COLOR_DRIFT_SPEED, MENU_FLAME_COLOR_DRIFT_SPEED);
+                    colorSources[colorSourceNumber][k] += rand_range(-MENU_FLAME_COLOR_DRIFT_SPEED, MENU_FLAME_COLOR_DRIFT_SPEED);
                     colorSources[colorSourceNumber][k] = clamp(colorSources[colorSourceNumber][k], 0, 1000);
                 }
 
                 // Then, add the color to this tile's flames.
                 rand = colors[i][j]->rand * colorSources[colorSourceNumber][0] / 1000;
-                flames[i][j][0]
-                    += (colors[i][j]->red + (colors[i][j]->redRand * colorSources[colorSourceNumber][1] / 1000) + rand)
-                       * MENU_FLAME_PRECISION_FACTOR;
-                flames[i][j][1] += (colors[i][j]->green
-                                    + (colors[i][j]->greenRand * colorSources[colorSourceNumber][2] / 1000) + rand)
-                                   * MENU_FLAME_PRECISION_FACTOR;
-                flames[i][j][2] += (colors[i][j]->blue
-                                    + (colors[i][j]->blueRand * colorSources[colorSourceNumber][3] / 1000) + rand)
-                                   * MENU_FLAME_PRECISION_FACTOR;
+                flames[i][j][0] += (colors[i][j]->red + (colors[i][j]->redRand * colorSources[colorSourceNumber][1] / 1000) + rand) * MENU_FLAME_PRECISION_FACTOR;
+                flames[i][j][1] += (colors[i][j]->green + (colors[i][j]->greenRand * colorSources[colorSourceNumber][2] / 1000) + rand) * MENU_FLAME_PRECISION_FACTOR;
+                flames[i][j][2] += (colors[i][j]->blue + (colors[i][j]->blueRand * colorSources[colorSourceNumber][3] / 1000) + rand) * MENU_FLAME_PRECISION_FACTOR;
 
                 colorSourceNumber++;
             }
@@ -178,10 +169,8 @@ void antiAlias(unsigned char mask[COLS][ROWS]) {
     }
 }
 
-void initializeMenuFlames(boolean includeTitle, const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)],
-                          color colorStorage[COLS], signed short colorSources[MENU_FLAME_COLOR_SOURCE_COUNT][4],
-                          signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3],
-                          unsigned char mask[COLS][ROWS]) {
+void initializeMenuFlames(boolean includeTitle, const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)], color colorStorage[COLS], signed short colorSources[MENU_FLAME_COLOR_SOURCE_COUNT][4],
+                          signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3], unsigned char mask[COLS][ROWS]) {
     short i, j, k, colorSourceCount;
 
     for (i = 0; i < COLS; i++) {
@@ -210,8 +199,7 @@ void initializeMenuFlames(boolean includeTitle, const color *colors[COLS][(ROWS 
     colorSourceCount = 0;
     for (i = 0; i < COLS; i++) {
         colorStorage[colorSourceCount] = flameSourceColor;
-        applyColorAverage(&(colorStorage[colorSourceCount]), &flameSourceColorSecondary,
-                          100 - (smoothHiliteGradient(i, COLS - 1) + 25));
+        applyColorAverage(&(colorStorage[colorSourceCount]), &flameSourceColorSecondary, 100 - (smoothHiliteGradient(i, COLS - 1) + 25));
 
         colors[i][(ROWS + MENU_FLAME_ROW_PADDING) - 1] = &(colorStorage[colorSourceCount]);
         colorSourceCount++;
@@ -222,13 +210,9 @@ void initializeMenuFlames(boolean includeTitle, const color *colors[COLS][(ROWS 
         for (i = 0; i < gameConst->mainMenuTitleWidth; i++) {
             for (j = 0; j < gameConst->mainMenuTitleHeight; j++) {
                 if (mainMenuTitle[j * gameConst->mainMenuTitleWidth + i] != ' ') {
-                    colors[(COLS - gameConst->mainMenuTitleWidth) / 2 + i + MENU_TITLE_OFFSET_X]
-                          [(ROWS - gameConst->mainMenuTitleHeight) / 2 + j + MENU_TITLE_OFFSET_Y]
-                        = &flameTitleColor;
+                    colors[(COLS - gameConst->mainMenuTitleWidth) / 2 + i + MENU_TITLE_OFFSET_X][(ROWS - gameConst->mainMenuTitleHeight) / 2 + j + MENU_TITLE_OFFSET_Y] = &flameTitleColor;
                     colorSourceCount++;
-                    mask[(COLS - gameConst->mainMenuTitleWidth) / 2 + i + MENU_TITLE_OFFSET_X]
-                        [(ROWS - gameConst->mainMenuTitleHeight) / 2 + j + MENU_TITLE_OFFSET_Y]
-                        = 100;
+                    mask[(COLS - gameConst->mainMenuTitleWidth) / 2 + i + MENU_TITLE_OFFSET_X][(ROWS - gameConst->mainMenuTitleHeight) / 2 + j + MENU_TITLE_OFFSET_Y] = 100;
                 }
             }
         }
@@ -248,7 +232,7 @@ void initializeMenuFlames(boolean includeTitle, const color *colors[COLS][(ROWS 
 void titleMenu() {
     signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3]; // red, green and blue
     signed short colorSources[MENU_FLAME_COLOR_SOURCE_COUNT][4];   // red, green, blue, and rand, one for each color
-                                                                 // source (no more than MENU_FLAME_COLOR_SOURCE_COUNT).
+                                                                   // source (no more than MENU_FLAME_COLOR_SOURCE_COUNT).
     const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)];
     color colorStorage[COLS];
     unsigned char mask[COLS][ROWS];
@@ -443,8 +427,7 @@ int fileEntryCompareDates(const void *a, const void *b) {
     return (int)diff;
 }
 
-#define FILES_ON_PAGE_MAX                                                                                              \
-    (min(26, ROWS - 7)) // Two rows (top and bottom) for flames, two rows for border, one for prompt, one for heading.
+#define FILES_ON_PAGE_MAX (min(26, ROWS - 7)) // Two rows (top and bottom) for flames, two rows for border, one for prompt, one for heading.
 #define MAX_FILENAME_DISPLAY_LENGTH 53
 boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
     short i, j, count, x, y, width, height, suffixLength, pathLength, maxPathLength, currentPageStart;
@@ -576,9 +559,7 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
             //              fileDate); printf("\n   (button name)Sanity check BEFORE: %s", buttons[j].text);
             //          }
 
-            i = buttonInputLoop(buttons,
-                                min(count - currentPageStart, FILES_ON_PAGE_MAX) + (count > FILES_ON_PAGE_MAX ? 2 : 0),
-                                x, y, width, height, NULL);
+            i = buttonInputLoop(buttons, min(count - currentPageStart, FILES_ON_PAGE_MAX) + (count > FILES_ON_PAGE_MAX ? 2 : 0), x, y, width, height, NULL);
 
             //          for (j=0; j<min(count - currentPageStart, FILES_ON_PAGE_MAX); j++) {
             //              strftime(fileDate, sizeof(fileDate), DATE_FORMAT, &files[currentPageStart+j].date);
