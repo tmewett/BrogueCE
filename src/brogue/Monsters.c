@@ -1380,6 +1380,7 @@ boolean monsterAvoids(creature *monst, pos p) {
     if (monst == &player
         && rogue.armor
         && (rogue.armor->flags & ITEM_RUNIC)
+        && (rogue.armor->flags & ITEM_RUNIC_IDENTIFIED)
         && rogue.armor->enchant2 == A_RESPIRATION) {
 
         terrainImmunities |= T_RESPIRATION_IMMUNITIES;
