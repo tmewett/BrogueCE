@@ -324,10 +324,13 @@ static int best (fcolor *fg, fcolor *bg) {
 
         if (s < bg2_score) {
             if (s < bg1_score) {
-                bg2 = bg1; bg1 = i;
-                bg2_score = bg1_score; bg1_score = s;
+                bg2 = bg1;
+                bg1 = i;
+                bg2_score = bg1_score;
+                bg1_score = s;
             } else {
-                bg2 = i; bg2_score = s;
+                bg2 = i;
+                bg2_score = s;
             }
         }
     }
@@ -341,10 +344,13 @@ static int best (fcolor *fg, fcolor *bg) {
 
         if (s < fg2_score) {
             if (s < fg1_score) {
-                fg2 = fg1; fg1 = i;
-                fg2_score = fg1_score; fg1_score = s;
+                fg2 = fg1;
+                fg1 = i;
+                fg2_score = fg1_score;
+                fg1_score = s;
             } else {
-                fg2 = i; fg2_score = s;
+                fg2 = i;
+                fg2_score = s;
             }
         }
     }
@@ -359,8 +365,6 @@ static int best (fcolor *fg, fcolor *bg) {
         }
     }
 }
-
-
 
 
 static void initialize_prs() {
@@ -381,8 +385,8 @@ static void coerce_colorcube (fcolor *f, intcolor *c) {
     float sat = 0.2, bright = 0.6, contrast = 6.3;
 
     float rf = bright + f->r * contrast,
-        gf = bright + f->g * contrast,
-        bf = bright + f->b * contrast;
+          gf = bright + f->g * contrast,
+          bf = bright + f->b * contrast;
 
     if (rf < gf && rf < bf) rf -= sat * ((gf < bf ? bf : gf) - rf);
     else if (gf < bf && gf < rf) gf -= sat * ((rf < bf ? bf : rf) - gf);
@@ -491,12 +495,12 @@ static void buffer_plot(int ch, int x, int y, fcolor *fg, fcolor *bg) {
             }
         }
     } else {
-        cube_fg = (intcolor){
+        cube_fg = (intcolor) {
             .r = round(fg->r * 255),
             .g = round(fg->g * 255),
             .b = round(fg->b * 255)
         };
-        cube_bg = (intcolor){
+        cube_bg = (intcolor) {
             .r = round(bg->r * 255),
             .g = round(bg->g * 255),
             .b = round(bg->b * 255)

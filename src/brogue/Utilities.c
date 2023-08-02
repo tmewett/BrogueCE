@@ -23,8 +23,7 @@
 #include "Rogue.h"
 
 // String Functions
-boolean endswith(const char *str, const char *ending)
-{
+boolean endswith(const char *str, const char *ending) {
     int str_len = strlen(str), ending_len = strlen(ending);
     if (str_len < ending_len) return false;
     return strcmp(str + str_len - ending_len, ending) == 0 ? true : false;

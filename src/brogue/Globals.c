@@ -70,7 +70,7 @@ const color beckonColor =           {10,    10,     10,     5,      5,          
 const color invulnerabilityColor =  {25,    0,      25,     0,      0,          66,         0,      true};
 const color fireBoltColor =         {500,   150,    0,      45,     30,         0,          0,      true};
 const color yendorLightColor =      {50,    -100,    30,     0,      0,          0,          0,      true};
-const color flamedancerCoronaColor ={500,   150,    100,    45,     30,         0,          0,      true};
+const color flamedancerCoronaColor = {500,   150,    100,    45,     30,         0,          0,      true};
 
 // tile colors
 const color undiscoveredColor =     {0,     0,      0,      0,      0,          0,          0,      false};
@@ -124,13 +124,13 @@ const color deepWaterForeColor =    {5,     8,      20,     0,      4,          
 const color deepWaterBackColorStart = {5,   10,     31,     5,      5,          5,          6,      true};
 const color deepWaterBackColorEnd = {5,     8,      20,     2,      3,          5,          5,      true};
 const color shallowWaterForeColor = {28,    28,     60,     0,      0,          10,         10,     true};
-const color shallowWaterBackColorStart ={20,20,     60,     0,      0,          10,         10,     true};
-const color shallowWaterBackColorEnd ={12,  15,     40,     0,      0,          5,          5,      true};
+const color shallowWaterBackColorStart = {20,20,     60,     0,      0,          10,         10,     true};
+const color shallowWaterBackColorEnd = {12,  15,     40,     0,      0,          5,          5,      true};
 
 const color mudForeColor =          {18,    14,     5,      5,      5,          0,          0,      false};
 const color mudBackColor =          {23,    17,     7,      5,      5,          0,          0,      false};
 const color chasmForeColor =        {7,     7,      15,     4,      4,          8,          0,      false};
-const color chasmEdgeBackColorStart ={5,    5,      25,     2,      2,          2,          0,      false};
+const color chasmEdgeBackColorStart = {5,    5,      25,     2,      2,          2,          0,      false};
 const color chasmEdgeBackColorEnd = {8,     8,      20,     2,      2,          2,          0,      false};
 const color fireForeColor =         {70,    20,     0,      15,     10,         0,          0,      true};
 const color lavaForeColor =         {20,    20,     20,     100,    10,         0,          0,      true};
@@ -193,12 +193,12 @@ const color phoenixColor =          {100,   0,      0,      0,      100,        
 
 const color torchLightColor =       {75,    38,     15,     0,      15,         7,          0,      true};
 const color hauntedTorchColor =     {75,    20,     40,     30,     10,         0,          0,      true};
-const color hauntedTorchLightColor ={67,    10,     10,     20,     4,          0,          0,      true};
+const color hauntedTorchLightColor = {67,    10,     10,     20,     4,          0,          0,      true};
 const color ifritLightColor =       {0,     10,     150,    100,    0,          100,        0,      true};
 const color unicornLightColor =     {-50,   -50,    -50,    250,    250,        250,        0,      true};
 const color wispLightColor =        {75,    100,    250,    33,     10,         0,          0,      true};
-const color summonedImageLightColor ={200,  0,      75,     0,      0,          0,          0,      true};
-const color spectralBladeLightColor ={40,   0,      230,    0,      0,          0,          0,      true};
+const color summonedImageLightColor = {200,  0,      75,     0,      0,          0,          0,      true};
+const color spectralBladeLightColor = {40,   0,      230,    0,      0,          0,          0,      true};
 const color ectoplasmLightColor =   {23,    10,     28,     13,     0,          13,         3,      false};
 const color explosionColor =        {10,    8,      2,      0,      2,          2,          0,      true};
 const color explosiveAuraColor =    {2000,  0,      -1000,  200,    200,        0,          0,      true};
@@ -208,8 +208,8 @@ const color lichLightColor =        {-50,   80,     30,     0,      0,          
 const color forceFieldLightColor =  {10,    10,     10,     0,      50,         50,         0,      true};
 const color crystalWallLightColor = {10,    10,     10,     0,      0,          50,         0,      true};
 const color sunLightColor =         {100,   100,    75,     0,      0,          0,          0,      false};
-const color fungusForestLightColor ={30,    40,     60,     0,      0,          0,          40,     true};
-const color fungusTrampledLightColor ={10,  10,     10,     0,      50,         50,         0,      true};
+const color fungusForestLightColor = {30,    40,     60,     0,      0,          0,          40,     true};
+const color fungusTrampledLightColor = {10,  10,     10,     0,      50,         50,         0,      true};
 const color redFlashColor =         {100,   10,     10,     0,      0,          0,          0,      false};
 const color darknessPatchColor =    {-10,   -10,    -10,    0,      0,          0,          0,      false};
 const color darknessCloudColor =    {-20,   -20,    -20,    0,      0,          0,          0,      false};
@@ -217,14 +217,14 @@ const color magicMapFlashColor =    {60,    20,     60,     0,      0,          
 const color sentinelLightColor =    {20,    20,     120,    10,     10,         60,         0,      true};
 const color telepathyColor =        {30,    30,     130,    0,      0,          0,          0,      false};
 const color confusionLightColor =   {10,    10,     10,     10,     10,         10,         0,      true};
-const color portalActivateLightColor ={300, 400,    500,    0,      0,          0,          0,      true};
+const color portalActivateLightColor = {300, 400,    500,    0,      0,          0,          0,      true};
 const color descentLightColor =     {20,    20,     70,     0,      0,          0,          0,      false};
 const color algaeBlueLightColor =   {20,    15,     50,     0,      0,          0,          0,      false};
 const color algaeGreenLightColor =  {15,    50,     20,     0,      0,          0,          0,      false};
 
 // flare colors
 const color scrollProtectionColor = {375,   750,    0,      0,      0,          0,          0,      true};
-const color scrollEnchantmentColor ={250,   225,    300,    0,      0,          450,        0,      true};
+const color scrollEnchantmentColor = {250,   225,    300,    0,      0,          450,        0,      true};
 const color potionStrengthColor =   {1000,  0,      400,    600,    0,          0,          0,      true};
 const color empowermentFlashColor = {500,   1000,   600,    0,      500,        0,          0,      true};
 const color genericFlashColor =     {800,   800,    800,    0,      0,          0,          0,      false};
@@ -271,15 +271,15 @@ const color playerInLightColor =    {100,   90,     30,     0,      0,          
 const color playerInShadowColor =   {60,    60,     100,    0,      0,          0,          0,      false};
 const color playerInDarknessColor = {30,    30,     65,     0,      0,          0,          0,      false};
 
-const color inLightMultiplierColor ={150,   150,    75,     150,    150,        75,         100,    true};
-const color inDarknessMultiplierColor={66,  66,     120,    66,     66,         120,        66,     true};
+const color inLightMultiplierColor = {150,   150,    75,     150,    150,        75,         100,    true};
+const color inDarknessMultiplierColor= {66,  66,     120,    66,     66,         120,        66,     true};
 
 const color goodMessageColor =      {60,    50,     100,    0,      0,          0,          0,      false};
 const color badMessageColor =       {100,   50,     60,     0,      0,          0,          0,      false};
-const color advancementMessageColor ={50,   100,    60,     0,      0,          0,          0,      false};
+const color advancementMessageColor = {50,   100,    60,     0,      0,          0,          0,      false};
 const color itemMessageColor =      {100,   100,    50,     0,      0,          0,          0,      false};
 const color flavorTextColor =       {50,    40,     90,     0,      0,          0,          0,      false};
-const color backgroundMessageColor ={60,    20,     70,     0,      0,          0,          0,      false};
+const color backgroundMessageColor = {60,    20,     70,     0,      0,          0,          0,      false};
 
 const color superVictoryColor =     {150,   100,    300,    0,      0,          0,          0,      false};
 
@@ -491,7 +491,7 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
     {G_FIRE,     &fireForeColor,         0,                      10, 0,  0,              0,          DF_OBSIDIAN,    5000,           FIRE_LIGHT,     (T_IS_FIRE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_VISUALLY_DISTINCT),                "clouds of infernal flame", "billowing infernal flames eat at the floor."},
     {G_FIRE,     &fireForeColor,         0,                      10, 0,  0,              0,          0,              8000,           FIRE_LIGHT,     (T_IS_FIRE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_VISUALLY_DISTINCT),                "a cloud of burning gas", "burning gas fills the air with flame."},
     {G_FIRE,     &yellow,                0,                      10, 0,  0,              0,          0,              10000,          EXPLOSION_LIGHT,(T_IS_FIRE | T_CAUSES_EXPLOSIVE_DAMAGE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_VISUALLY_DISTINCT), "a violent explosion", "the force of the explosion slams into you."},
-    {G_FIRE,     &white,                 0,                      10, 0,  0,              0,          0,              10000,          INCENDIARY_DART_LIGHT ,(T_IS_FIRE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_VISUALLY_DISTINCT),         "a flash of fire",      "flames burst out of the incendiary dart."},
+    {G_FIRE,     &white,                 0,                      10, 0,  0,              0,          0,              10000,          INCENDIARY_DART_LIGHT,(T_IS_FIRE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_VISUALLY_DISTINCT),         "a flash of fire",      "flames burst out of the incendiary dart."},
     {G_FIRE,     &white,                 0,                      10, 0,  0,              0,          DF_EMBERS,      3000,           FIRE_LIGHT,     (T_IS_FIRE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_VISUALLY_DISTINCT),                "crackling flames",     "crackling flames rise from the blackened item."},
     {G_FIRE,     &white,                 0,                      10, 0,  0,              0,          DF_EMBERS,      3000,           FIRE_LIGHT,     (T_IS_FIRE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_VISUALLY_DISTINCT),                "greasy flames",        "greasy flames rise from the corpse."},
 
@@ -1002,393 +1002,671 @@ const lightSource lightCatalog[NUMBER_LIGHT_KINDS] = {
 // This cannot be const, since we set monsterIDs
 creatureType monsterCatalog[NUMBER_MONSTER_KINDS] = {
     //  name            ch      color           HP      def     acc     damage          reg move    attack  blood           light isLarge     DFChance DFType         bolts       behaviorF, abilityF
-    {0, "you",  G_PLAYER,       &playerInLightColor,30, 0,      100,    {1, 2, 1},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      0,      0,              {0},
-        (MONST_MALE | MONST_FEMALE)},
+    {
+        0, "you",  G_PLAYER,       &playerInLightColor,30, 0,      100,    {1, 2, 1},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      0,      0,              {0},
+        (MONST_MALE | MONST_FEMALE)
+    },
 
     {0, "rat",          G_RAT,    &gray,          6,      0,      80,     {1, 3, 1},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      1,      DF_URINE,       {0}},
     {0, "kobold",       G_KOBOLD,    &goblinColor,   7,      0,      80,     {1, 4, 1},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      0,      0,              {0}},
     {0, "jackal",       G_JACKAL,    &jackalColor,   8,      0,      70,     {2, 4, 1},      20, 50,     100,    DF_RED_BLOOD,   0,    false,      1,      DF_URINE,              {0}},
-    {0, "eel",          G_EEL,    &eelColor,      18,     27,     100,    {3, 7, 2},      5,  50,     100,    0,              0,    false,      0,      0,              {0},
-        (MONST_RESTRICTED_TO_LIQUID | MONST_IMMUNE_TO_WATER | MONST_SUBMERGES | MONST_FLITS | MONST_NEVER_SLEEPS)},
-    {0, "monkey",       G_MONKEY,    &ogreColor,     12,     17,     100,    {1, 3, 1},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      1,      DF_URINE,       {0},
-        (0), (MA_HIT_STEAL_FLEE)},
-    {0, "bloat",        G_BLOAT,    &poisonGasColor,4,      0,      100,    {0, 0, 0},      5,  100,    100,    DF_PURPLE_BLOOD,0,    false,      0,      DF_BLOAT_DEATH, {0},
-        (MONST_FLIES | MONST_FLITS), (MA_KAMIKAZE | MA_DF_ON_DEATH)},
-    {0, "pit bloat",    G_BLOAT,    &lightBlue,     4,      0,      100,    {0, 0, 0},      5,  100,    100,    DF_PURPLE_BLOOD,0,    false,      0,      DF_HOLE_POTION, {0},
-        (MONST_FLIES | MONST_FLITS), (MA_KAMIKAZE | MA_DF_ON_DEATH)},
-    {0, "goblin",       G_GOBLIN,    &goblinColor,   15,     10,     70,     {2, 5, 1},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      0,      0,              {0},
-        (0),  (MA_ATTACKS_PENETRATE | MA_AVOID_CORRIDORS)},
-    {0, "goblin conjurer",G_GOBLIN_MAGIC,  &goblinConjurerColor, 10,10,    70,     {2, 4, 1},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      0,      0,              {0},
-        (MONST_MAINTAINS_DISTANCE | MONST_CAST_SPELLS_SLOWLY | MONST_CARRY_ITEM_25), (MA_CAST_SUMMON | MA_AVOID_CORRIDORS)},
-    {0, "goblin mystic",G_GOBLIN_MAGIC,    &goblinMysticColor, 10, 10,     70,     {2, 4, 1},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      0,      0,              {BOLT_SHIELDING},
-        (MONST_MAINTAINS_DISTANCE | MONST_CARRY_ITEM_25), (MA_AVOID_CORRIDORS)},
-    {0, "goblin totem", G_TOTEM, &orange,    30,     0,      0,      {0, 0, 0},      0,  100,    300,    DF_RUBBLE_BLOOD,IMP_LIGHT,    false,0,    0,              {BOLT_HASTE, BOLT_SPARK},
-        (MONST_IMMUNE_TO_WEBS | MONST_NEVER_SLEEPS | MONST_IMMOBILE | MONST_INANIMATE | MONST_WILL_NOT_USE_STAIRS), (0)},
-    {0, "pink jelly",   G_JELLY,    &pinkJellyColor,50,     0,      85,     {1, 3, 1},      0,  100,    100,    DF_PURPLE_BLOOD,0,    true,       0,      0,              {0},
-        (MONST_NEVER_SLEEPS), (MA_CLONE_SELF_ON_DEFEND)},
-    {0, "toad",         G_TOAD,    &toadColor,     18,     0,      90,     {1, 4, 1},      10, 100,    100,    DF_GREEN_BLOOD, 0,    false,      0,      0,              {0},
-        (0), (MA_HIT_HALLUCINATE)},
-    {0, "vampire bat",  G_BAT,    &gray,          18,     25,     100,    {2, 6, 1},      20, 50,     100,    DF_RED_BLOOD,   0,    false,      0,      0,              {0},
-        (MONST_FLIES | MONST_FLITS), (MA_TRANSFERENCE)},
-    {0, "arrow turret", G_TURRET,&black,     30,     0,      90,     {2, 6, 1},      0,  100,    250,    0,              0,    false,      0,      0,              {BOLT_DISTANCE_ATTACK},
-        (MONST_TURRET), (0)},
-    {0, "acid mound",   G_MOUND,    &acidBackColor, 15,     10,     70,     {1, 3, 1},      5,  100,    100,    DF_ACID_BLOOD,  0,    false,      0,      0,              {0},
-        (MONST_DEFEND_DEGRADE_WEAPON), (MA_HIT_DEGRADE_ARMOR)},
-    {0, "centipede",    G_CENTIPEDE,    &centipedeColor,20,     20,     80,     {4, 12, 1},     20, 100,    100,    DF_GREEN_BLOOD, 0,    false,      0,      0,              {0},
-        (0), (MA_CAUSES_WEAKNESS)},
-    {0, "ogre",         G_OGRE,    &ogreColor,     55,     60,     125,    {9, 13, 2},     20, 100,    200,    DF_RED_BLOOD,   0,    true,       0,      0,              {0},
-        (MONST_MALE | MONST_FEMALE), (MA_AVOID_CORRIDORS | MA_ATTACKS_STAGGER)},
-    {0, "bog monster",  G_BOG_MONSTER,    &krakenColor,   55,     60,     5000,   {3, 4, 1},      3,  200,    100,    0,              0,    true,       0,      0,              {0},
-        (MONST_RESTRICTED_TO_LIQUID | MONST_SUBMERGES | MONST_FLITS | MONST_FLEES_NEAR_DEATH), (MA_SEIZES)},
-    {0, "ogre totem",   G_TOTEM, &green,     70,     0,      0,      {0, 0, 0},      0,  100,    400,    DF_RUBBLE_BLOOD,LICH_LIGHT,    false,0,   0,              {BOLT_HEALING, BOLT_SLOW_2},
-        (MONST_IMMUNE_TO_WEBS | MONST_NEVER_SLEEPS | MONST_IMMOBILE | MONST_INANIMATE | MONST_WILL_NOT_USE_STAIRS), (0)},
-    {0, "spider",       G_SPIDER,    &white,         20,     70,     90,     {3, 4, 2},      20, 100,    200,    DF_GREEN_BLOOD, 0,    false,      0,      0,              {BOLT_SPIDERWEB},
-        (MONST_IMMUNE_TO_WEBS | MONST_CAST_SPELLS_SLOWLY | MONST_ALWAYS_USE_ABILITY), (MA_POISONS)},
-    {0, "spark turret", G_TURRET, &lightningColor,80,0,      100,    {0, 0, 0},      0,  100,    150,    0,              SPARK_TURRET_LIGHT,    false, 0,  0,      {BOLT_SPARK},
-        (MONST_TURRET), (0)},
-    {0, "wisp",         G_WISP,    &wispLightColor,10,     90,     100,    {0, 0, 0},      5,  100,    100,    DF_ASH_BLOOD,   WISP_LIGHT,    false, 0,  0,              {0},
-        (MONST_IMMUNE_TO_FIRE | MONST_FLIES | MONST_FLITS | MONST_NEVER_SLEEPS | MONST_FIERY | MONST_DIES_IF_NEGATED), (MA_HIT_BURN)},
-    {0, "wraith",       G_WRAITH,    &wraithColor,   50,     60,     120,    {6, 13, 2},     5,  50,     100,    DF_GREEN_BLOOD, 0,    true,       0,      0,              {0},
-        (MONST_FLEES_NEAR_DEATH)},
+    {
+        0, "eel",          G_EEL,    &eelColor,      18,     27,     100,    {3, 7, 2},      5,  50,     100,    0,              0,    false,      0,      0,              {0},
+        (MONST_RESTRICTED_TO_LIQUID | MONST_IMMUNE_TO_WATER | MONST_SUBMERGES | MONST_FLITS | MONST_NEVER_SLEEPS)
+    },
+    {
+        0, "monkey",       G_MONKEY,    &ogreColor,     12,     17,     100,    {1, 3, 1},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      1,      DF_URINE,       {0},
+        (0), (MA_HIT_STEAL_FLEE)
+    },
+    {
+        0, "bloat",        G_BLOAT,    &poisonGasColor,4,      0,      100,    {0, 0, 0},      5,  100,    100,    DF_PURPLE_BLOOD,0,    false,      0,      DF_BLOAT_DEATH, {0},
+        (MONST_FLIES | MONST_FLITS), (MA_KAMIKAZE | MA_DF_ON_DEATH)
+    },
+    {
+        0, "pit bloat",    G_BLOAT,    &lightBlue,     4,      0,      100,    {0, 0, 0},      5,  100,    100,    DF_PURPLE_BLOOD,0,    false,      0,      DF_HOLE_POTION, {0},
+        (MONST_FLIES | MONST_FLITS), (MA_KAMIKAZE | MA_DF_ON_DEATH)
+    },
+    {
+        0, "goblin",       G_GOBLIN,    &goblinColor,   15,     10,     70,     {2, 5, 1},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      0,      0,              {0},
+        (0),  (MA_ATTACKS_PENETRATE | MA_AVOID_CORRIDORS)
+    },
+    {
+        0, "goblin conjurer",G_GOBLIN_MAGIC,  &goblinConjurerColor, 10,10,    70,     {2, 4, 1},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      0,      0,              {0},
+        (MONST_MAINTAINS_DISTANCE | MONST_CAST_SPELLS_SLOWLY | MONST_CARRY_ITEM_25), (MA_CAST_SUMMON | MA_AVOID_CORRIDORS)
+    },
+    {
+        0, "goblin mystic",G_GOBLIN_MAGIC,    &goblinMysticColor, 10, 10,     70,     {2, 4, 1},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      0,      0,              {BOLT_SHIELDING},
+        (MONST_MAINTAINS_DISTANCE | MONST_CARRY_ITEM_25), (MA_AVOID_CORRIDORS)
+    },
+    {
+        0, "goblin totem", G_TOTEM, &orange,    30,     0,      0,      {0, 0, 0},      0,  100,    300,    DF_RUBBLE_BLOOD,IMP_LIGHT,    false,0,    0,              {BOLT_HASTE, BOLT_SPARK},
+        (MONST_IMMUNE_TO_WEBS | MONST_NEVER_SLEEPS | MONST_IMMOBILE | MONST_INANIMATE | MONST_WILL_NOT_USE_STAIRS), (0)
+    },
+    {
+        0, "pink jelly",   G_JELLY,    &pinkJellyColor,50,     0,      85,     {1, 3, 1},      0,  100,    100,    DF_PURPLE_BLOOD,0,    true,       0,      0,              {0},
+        (MONST_NEVER_SLEEPS), (MA_CLONE_SELF_ON_DEFEND)
+    },
+    {
+        0, "toad",         G_TOAD,    &toadColor,     18,     0,      90,     {1, 4, 1},      10, 100,    100,    DF_GREEN_BLOOD, 0,    false,      0,      0,              {0},
+        (0), (MA_HIT_HALLUCINATE)
+    },
+    {
+        0, "vampire bat",  G_BAT,    &gray,          18,     25,     100,    {2, 6, 1},      20, 50,     100,    DF_RED_BLOOD,   0,    false,      0,      0,              {0},
+        (MONST_FLIES | MONST_FLITS), (MA_TRANSFERENCE)
+    },
+    {
+        0, "arrow turret", G_TURRET,&black,     30,     0,      90,     {2, 6, 1},      0,  100,    250,    0,              0,    false,      0,      0,              {BOLT_DISTANCE_ATTACK},
+        (MONST_TURRET), (0)
+    },
+    {
+        0, "acid mound",   G_MOUND,    &acidBackColor, 15,     10,     70,     {1, 3, 1},      5,  100,    100,    DF_ACID_BLOOD,  0,    false,      0,      0,              {0},
+        (MONST_DEFEND_DEGRADE_WEAPON), (MA_HIT_DEGRADE_ARMOR)
+    },
+    {
+        0, "centipede",    G_CENTIPEDE,    &centipedeColor,20,     20,     80,     {4, 12, 1},     20, 100,    100,    DF_GREEN_BLOOD, 0,    false,      0,      0,              {0},
+        (0), (MA_CAUSES_WEAKNESS)
+    },
+    {
+        0, "ogre",         G_OGRE,    &ogreColor,     55,     60,     125,    {9, 13, 2},     20, 100,    200,    DF_RED_BLOOD,   0,    true,       0,      0,              {0},
+        (MONST_MALE | MONST_FEMALE), (MA_AVOID_CORRIDORS | MA_ATTACKS_STAGGER)
+    },
+    {
+        0, "bog monster",  G_BOG_MONSTER,    &krakenColor,   55,     60,     5000,   {3, 4, 1},      3,  200,    100,    0,              0,    true,       0,      0,              {0},
+        (MONST_RESTRICTED_TO_LIQUID | MONST_SUBMERGES | MONST_FLITS | MONST_FLEES_NEAR_DEATH), (MA_SEIZES)
+    },
+    {
+        0, "ogre totem",   G_TOTEM, &green,     70,     0,      0,      {0, 0, 0},      0,  100,    400,    DF_RUBBLE_BLOOD,LICH_LIGHT,    false,0,   0,              {BOLT_HEALING, BOLT_SLOW_2},
+        (MONST_IMMUNE_TO_WEBS | MONST_NEVER_SLEEPS | MONST_IMMOBILE | MONST_INANIMATE | MONST_WILL_NOT_USE_STAIRS), (0)
+    },
+    {
+        0, "spider",       G_SPIDER,    &white,         20,     70,     90,     {3, 4, 2},      20, 100,    200,    DF_GREEN_BLOOD, 0,    false,      0,      0,              {BOLT_SPIDERWEB},
+        (MONST_IMMUNE_TO_WEBS | MONST_CAST_SPELLS_SLOWLY | MONST_ALWAYS_USE_ABILITY), (MA_POISONS)
+    },
+    {
+        0, "spark turret", G_TURRET, &lightningColor,80,0,      100,    {0, 0, 0},      0,  100,    150,    0,              SPARK_TURRET_LIGHT,    false, 0,  0,      {BOLT_SPARK},
+        (MONST_TURRET), (0)
+    },
+    {
+        0, "wisp",         G_WISP,    &wispLightColor,10,     90,     100,    {0, 0, 0},      5,  100,    100,    DF_ASH_BLOOD,   WISP_LIGHT,    false, 0,  0,              {0},
+        (MONST_IMMUNE_TO_FIRE | MONST_FLIES | MONST_FLITS | MONST_NEVER_SLEEPS | MONST_FIERY | MONST_DIES_IF_NEGATED), (MA_HIT_BURN)
+    },
+    {
+        0, "wraith",       G_WRAITH,    &wraithColor,   50,     60,     120,    {6, 13, 2},     5,  50,     100,    DF_GREEN_BLOOD, 0,    true,       0,      0,              {0},
+        (MONST_FLEES_NEAR_DEATH)
+    },
     {0, "zombie",       G_ZOMBIE,    &vomitColor,    80,     0,      120,    {7, 12, 1},     0,  100,    100,    DF_ROT_GAS_BLOOD,0,    true,      100,    DF_ROT_GAS_PUFF, {0}},
-    {0, "troll",        G_TROLL,    &trollColor,    65,     70,     125,    {10, 15, 3},    1,  100,    100,    DF_RED_BLOOD,   0,    true,       0,      0,              {0},
-        (MONST_MALE | MONST_FEMALE)},
-    {0, "ogre shaman",  G_OGRE_MAGIC,    &green,         45,     40,     100,    {5, 9, 1},      20, 100,    200,    DF_RED_BLOOD,   0,    true,       0,      0,              {BOLT_HASTE, BOLT_SPARK},
-        (MONST_MAINTAINS_DISTANCE | MONST_CAST_SPELLS_SLOWLY | MONST_MALE | MONST_FEMALE), (MA_CAST_SUMMON | MA_AVOID_CORRIDORS)},
-    {0, "naga",         G_NAGA,    &trollColor,    75,     70,     150,    {7, 11, 4},     10, 100,    100,    DF_GREEN_BLOOD, 0,    true,       100,    DF_PUDDLE,      {0},
-        (MONST_IMMUNE_TO_WATER | MONST_SUBMERGES | MONST_NEVER_SLEEPS | MONST_FEMALE), (MA_ATTACKS_ALL_ADJACENT)},
-    {0, "salamander",   G_SALAMANDER,    &salamanderColor,60,    70,     150,    {5, 11, 3},     10, 100,    100,    DF_ASH_BLOOD,   SALAMANDER_LIGHT,    true,  100, DF_SALAMANDER_FLAME, {0},
-        (MONST_IMMUNE_TO_FIRE | MONST_SUBMERGES | MONST_NEVER_SLEEPS | MONST_FIERY | MONST_MALE), (MA_ATTACKS_EXTEND)},
-    {0, "explosive bloat",G_BLOAT,  &orange,        10,     0,      100,    {0, 0, 0},      5,  100,    100,    DF_RED_BLOOD,   EXPLOSIVE_BLOAT_LIGHT,    false,0, DF_BLOAT_EXPLOSION, {0},
-        (MONST_FLIES | MONST_FLITS), (MA_KAMIKAZE | MA_DF_ON_DEATH)},
-    {0, "dar blademaster",G_DAR_BLADEMASTER,  &purple,        35,     70,     160,    {5, 9, 2},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      0,      0,              {BOLT_BLINKING},
-        (MONST_CARRY_ITEM_25 | MONST_MALE | MONST_FEMALE), (MA_AVOID_CORRIDORS)},
-    {0, "dar priestess", G_DAR_PRIESTESS,   &darPriestessColor,20,  60,     100,    {2, 5, 1},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      0,      0,              {BOLT_NEGATION, BOLT_HEALING, BOLT_HASTE, BOLT_SPARK},
-        (MONST_MAINTAINS_DISTANCE | MONST_CARRY_ITEM_25 | MONST_FEMALE), (MA_AVOID_CORRIDORS)},
-    {0, "dar battlemage",G_DAR_BATTLEMAGE,   &darMageColor,  20,     60,     100,    {1, 3, 1},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      0,      0,              {BOLT_FIRE, BOLT_SLOW_2, BOLT_DISCORD},
-        (MONST_MAINTAINS_DISTANCE | MONST_CARRY_ITEM_25 | MONST_MALE | MONST_FEMALE), (MA_AVOID_CORRIDORS)},
-    {0, "acidic jelly", G_JELLY,    &acidBackColor, 60,     0,      115,    {2, 6, 1},      0,  100,    100,    DF_ACID_BLOOD,  0,    true,       0,      0,              {0},
-        (MONST_DEFEND_DEGRADE_WEAPON), (MA_HIT_DEGRADE_ARMOR | MA_CLONE_SELF_ON_DEFEND)},
-    {0, "centaur",      G_CENTAUR,    &tanColor,      35,     50,     175,    {4, 8, 2},      20, 50,     100,    DF_RED_BLOOD,   0,    true,       0,      0,              {BOLT_DISTANCE_ATTACK},
-        (MONST_MAINTAINS_DISTANCE | MONST_MALE), (0)},
-    {0, "underworm",    G_UNDERWORM,    &wormColor,     80,     40,     160,    {18, 22, 2},    3,  150,    200,    DF_WORM_BLOOD,  0,    true,       0,      0,              {0},
-        (MONST_NEVER_SLEEPS)},
-    {0, "sentinel",     G_GUARDIAN, &sentinelColor, 50,0,      0,      {0, 0, 0},      0,  100,    175,    DF_RUBBLE_BLOOD,SENTINEL_LIGHT,    false,0,0,             {BOLT_HEALING, BOLT_SPARK},
-        (MONST_TURRET | MONST_CAST_SPELLS_SLOWLY | MONST_DIES_IF_NEGATED), (0)},
-    {0, "dart turret", G_TURRET, &centipedeColor,20, 0,      140,    {1, 2, 1},      0,  100,    250,    0,              0,    false,      0,      0,              {BOLT_POISON_DART},
-        (MONST_TURRET), (MA_CAUSES_WEAKNESS)},
-    {0, "kraken",       G_KRAKEN,    &krakenColor,   120,    0,      150,    {15, 20, 3},    1,  50,     100,    0,              0,    true,       0,      0,              {0},
-        (MONST_RESTRICTED_TO_LIQUID | MONST_IMMUNE_TO_WATER | MONST_SUBMERGES | MONST_FLITS | MONST_NEVER_SLEEPS | MONST_FLEES_NEAR_DEATH), (MA_SEIZES)},
-    {0, "lich",         G_LICH,    &white,         35,     80,     175,    {2, 6, 1},      0,  100,    100,    DF_ASH_BLOOD,   LICH_LIGHT,    true,  0,  0,              {BOLT_FIRE},
-        (MONST_MAINTAINS_DISTANCE | MONST_CARRY_ITEM_25 | MONST_NO_POLYMORPH), (MA_CAST_SUMMON)},
-    {0, "phylactery",   G_EGG,&lichLightColor,30,    0,      0,      {0, 0, 0},      0,  100,    150,    DF_RUBBLE_BLOOD,LICH_LIGHT,    false, 0,  0,              {0},
-        (MONST_IMMUNE_TO_WEBS | MONST_NEVER_SLEEPS | MONST_IMMOBILE | MONST_INANIMATE | MONST_ALWAYS_HUNTING | MONST_WILL_NOT_USE_STAIRS | MONST_DIES_IF_NEGATED), (MA_CAST_SUMMON | MA_ENTER_SUMMONS)},
-    {0, "pixie",        G_PIXIE,    &pixieColor,    10,     90,     100,    {1, 3, 1},      20, 50,     100,    DF_GREEN_BLOOD, PIXIE_LIGHT,    false, 0, 0,              {BOLT_NEGATION, BOLT_SLOW_2, BOLT_DISCORD, BOLT_SPARK},
-        (MONST_MAINTAINS_DISTANCE | MONST_FLIES | MONST_FLITS | MONST_MALE | MONST_FEMALE), (0)},
-    {0, "phantom",      G_PHANTOM,    &ectoplasmColor,35,     70,     160,    {12, 18, 4},    0,  50,     200,    DF_ECTOPLASM_BLOOD, 0,    true,   2,      DF_ECTOPLASM_DROPLET, {0},
-        (MONST_INVISIBLE | MONST_FLITS | MONST_FLIES | MONST_IMMUNE_TO_WEBS)},
-    {0, "flame turret", G_TURRET, &lavaForeColor,40, 0,      150,    {1, 2, 1},      0,  100,    250,    0,              LAVA_LIGHT,    false, 0,  0,              {BOLT_FIRE},
-        (MONST_TURRET), (0)},
-    {0, "imp",          G_IMP,    &pink,          35,     90,     225,    {4, 9, 2},      10, 100,    100,    DF_GREEN_BLOOD, IMP_LIGHT,    false,  0,  0,              {BOLT_BLINKING},
-        (0), (MA_HIT_STEAL_FLEE)},
-    {0, "fury",         G_FURY,    &darkRed,       19,     90,     200,    {6, 11, 4},     20, 50,     100,    DF_RED_BLOOD,   0,    false,      0,      0,              {0},
-        (MONST_NEVER_SLEEPS | MONST_FLIES)},
-    {0, "revenant",     G_REVENANT,    &ectoplasmColor,30,     0,      200,    {15, 20, 5},    0,  100,    100,    DF_ECTOPLASM_BLOOD, 0,    true,   0,      0,              {0},
-        (MONST_IMMUNE_TO_WEAPONS)},
+    {
+        0, "troll",        G_TROLL,    &trollColor,    65,     70,     125,    {10, 15, 3},    1,  100,    100,    DF_RED_BLOOD,   0,    true,       0,      0,              {0},
+        (MONST_MALE | MONST_FEMALE)
+    },
+    {
+        0, "ogre shaman",  G_OGRE_MAGIC,    &green,         45,     40,     100,    {5, 9, 1},      20, 100,    200,    DF_RED_BLOOD,   0,    true,       0,      0,              {BOLT_HASTE, BOLT_SPARK},
+        (MONST_MAINTAINS_DISTANCE | MONST_CAST_SPELLS_SLOWLY | MONST_MALE | MONST_FEMALE), (MA_CAST_SUMMON | MA_AVOID_CORRIDORS)
+    },
+    {
+        0, "naga",         G_NAGA,    &trollColor,    75,     70,     150,    {7, 11, 4},     10, 100,    100,    DF_GREEN_BLOOD, 0,    true,       100,    DF_PUDDLE,      {0},
+        (MONST_IMMUNE_TO_WATER | MONST_SUBMERGES | MONST_NEVER_SLEEPS | MONST_FEMALE), (MA_ATTACKS_ALL_ADJACENT)
+    },
+    {
+        0, "salamander",   G_SALAMANDER,    &salamanderColor,60,    70,     150,    {5, 11, 3},     10, 100,    100,    DF_ASH_BLOOD,   SALAMANDER_LIGHT,    true,  100, DF_SALAMANDER_FLAME, {0},
+        (MONST_IMMUNE_TO_FIRE | MONST_SUBMERGES | MONST_NEVER_SLEEPS | MONST_FIERY | MONST_MALE), (MA_ATTACKS_EXTEND)
+    },
+    {
+        0, "explosive bloat",G_BLOAT,  &orange,        10,     0,      100,    {0, 0, 0},      5,  100,    100,    DF_RED_BLOOD,   EXPLOSIVE_BLOAT_LIGHT,    false,0, DF_BLOAT_EXPLOSION, {0},
+        (MONST_FLIES | MONST_FLITS), (MA_KAMIKAZE | MA_DF_ON_DEATH)
+    },
+    {
+        0, "dar blademaster",G_DAR_BLADEMASTER,  &purple,        35,     70,     160,    {5, 9, 2},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      0,      0,              {BOLT_BLINKING},
+        (MONST_CARRY_ITEM_25 | MONST_MALE | MONST_FEMALE), (MA_AVOID_CORRIDORS)
+    },
+    {
+        0, "dar priestess", G_DAR_PRIESTESS,   &darPriestessColor,20,  60,     100,    {2, 5, 1},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      0,      0,              {BOLT_NEGATION, BOLT_HEALING, BOLT_HASTE, BOLT_SPARK},
+        (MONST_MAINTAINS_DISTANCE | MONST_CARRY_ITEM_25 | MONST_FEMALE), (MA_AVOID_CORRIDORS)
+    },
+    {
+        0, "dar battlemage",G_DAR_BATTLEMAGE,   &darMageColor,  20,     60,     100,    {1, 3, 1},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      0,      0,              {BOLT_FIRE, BOLT_SLOW_2, BOLT_DISCORD},
+        (MONST_MAINTAINS_DISTANCE | MONST_CARRY_ITEM_25 | MONST_MALE | MONST_FEMALE), (MA_AVOID_CORRIDORS)
+    },
+    {
+        0, "acidic jelly", G_JELLY,    &acidBackColor, 60,     0,      115,    {2, 6, 1},      0,  100,    100,    DF_ACID_BLOOD,  0,    true,       0,      0,              {0},
+        (MONST_DEFEND_DEGRADE_WEAPON), (MA_HIT_DEGRADE_ARMOR | MA_CLONE_SELF_ON_DEFEND)
+    },
+    {
+        0, "centaur",      G_CENTAUR,    &tanColor,      35,     50,     175,    {4, 8, 2},      20, 50,     100,    DF_RED_BLOOD,   0,    true,       0,      0,              {BOLT_DISTANCE_ATTACK},
+        (MONST_MAINTAINS_DISTANCE | MONST_MALE), (0)
+    },
+    {
+        0, "underworm",    G_UNDERWORM,    &wormColor,     80,     40,     160,    {18, 22, 2},    3,  150,    200,    DF_WORM_BLOOD,  0,    true,       0,      0,              {0},
+        (MONST_NEVER_SLEEPS)
+    },
+    {
+        0, "sentinel",     G_GUARDIAN, &sentinelColor, 50,0,      0,      {0, 0, 0},      0,  100,    175,    DF_RUBBLE_BLOOD,SENTINEL_LIGHT,    false,0,0,             {BOLT_HEALING, BOLT_SPARK},
+        (MONST_TURRET | MONST_CAST_SPELLS_SLOWLY | MONST_DIES_IF_NEGATED), (0)
+    },
+    {
+        0, "dart turret", G_TURRET, &centipedeColor,20, 0,      140,    {1, 2, 1},      0,  100,    250,    0,              0,    false,      0,      0,              {BOLT_POISON_DART},
+        (MONST_TURRET), (MA_CAUSES_WEAKNESS)
+    },
+    {
+        0, "kraken",       G_KRAKEN,    &krakenColor,   120,    0,      150,    {15, 20, 3},    1,  50,     100,    0,              0,    true,       0,      0,              {0},
+        (MONST_RESTRICTED_TO_LIQUID | MONST_IMMUNE_TO_WATER | MONST_SUBMERGES | MONST_FLITS | MONST_NEVER_SLEEPS | MONST_FLEES_NEAR_DEATH), (MA_SEIZES)
+    },
+    {
+        0, "lich",         G_LICH,    &white,         35,     80,     175,    {2, 6, 1},      0,  100,    100,    DF_ASH_BLOOD,   LICH_LIGHT,    true,  0,  0,              {BOLT_FIRE},
+        (MONST_MAINTAINS_DISTANCE | MONST_CARRY_ITEM_25 | MONST_NO_POLYMORPH), (MA_CAST_SUMMON)
+    },
+    {
+        0, "phylactery",   G_EGG,&lichLightColor,30,    0,      0,      {0, 0, 0},      0,  100,    150,    DF_RUBBLE_BLOOD,LICH_LIGHT,    false, 0,  0,              {0},
+        (MONST_IMMUNE_TO_WEBS | MONST_NEVER_SLEEPS | MONST_IMMOBILE | MONST_INANIMATE | MONST_ALWAYS_HUNTING | MONST_WILL_NOT_USE_STAIRS | MONST_DIES_IF_NEGATED), (MA_CAST_SUMMON | MA_ENTER_SUMMONS)
+    },
+    {
+        0, "pixie",        G_PIXIE,    &pixieColor,    10,     90,     100,    {1, 3, 1},      20, 50,     100,    DF_GREEN_BLOOD, PIXIE_LIGHT,    false, 0, 0,              {BOLT_NEGATION, BOLT_SLOW_2, BOLT_DISCORD, BOLT_SPARK},
+        (MONST_MAINTAINS_DISTANCE | MONST_FLIES | MONST_FLITS | MONST_MALE | MONST_FEMALE), (0)
+    },
+    {
+        0, "phantom",      G_PHANTOM,    &ectoplasmColor,35,     70,     160,    {12, 18, 4},    0,  50,     200,    DF_ECTOPLASM_BLOOD, 0,    true,   2,      DF_ECTOPLASM_DROPLET, {0},
+        (MONST_INVISIBLE | MONST_FLITS | MONST_FLIES | MONST_IMMUNE_TO_WEBS)
+    },
+    {
+        0, "flame turret", G_TURRET, &lavaForeColor,40, 0,      150,    {1, 2, 1},      0,  100,    250,    0,              LAVA_LIGHT,    false, 0,  0,              {BOLT_FIRE},
+        (MONST_TURRET), (0)
+    },
+    {
+        0, "imp",          G_IMP,    &pink,          35,     90,     225,    {4, 9, 2},      10, 100,    100,    DF_GREEN_BLOOD, IMP_LIGHT,    false,  0,  0,              {BOLT_BLINKING},
+        (0), (MA_HIT_STEAL_FLEE)
+    },
+    {
+        0, "fury",         G_FURY,    &darkRed,       19,     90,     200,    {6, 11, 4},     20, 50,     100,    DF_RED_BLOOD,   0,    false,      0,      0,              {0},
+        (MONST_NEVER_SLEEPS | MONST_FLIES)
+    },
+    {
+        0, "revenant",     G_REVENANT,    &ectoplasmColor,30,     0,      200,    {15, 20, 5},    0,  100,    100,    DF_ECTOPLASM_BLOOD, 0,    true,   0,      0,              {0},
+        (MONST_IMMUNE_TO_WEAPONS)
+    },
     {0, "tentacle horror",G_TENTACLE_HORROR,  &centipedeColor,120,    95,     225,    {25, 35, 3},    1,  100,    100,    DF_PURPLE_BLOOD,0,    true,       0,      0,              {0}},
-    {0, "golem",        G_GOLEM,    &gray,          400,    70,     225,    {4, 8, 1},      0,  100,    100,    DF_RUBBLE_BLOOD,0,    true,       0,      0,              {0},
-        (MONST_REFLECT_4 | MONST_DIES_IF_NEGATED)},
-    {0, "dragon",       G_DRAGON,    &dragonColor,   150,    90,     250,    {25, 50, 4},    20, 50,     200,    DF_GREEN_BLOOD, 0,    true,       0,      0,              {BOLT_DRAGONFIRE},
-        (MONST_IMMUNE_TO_FIRE | MONST_CARRY_ITEM_100), (MA_ATTACKS_ALL_ADJACENT)},
+    {
+        0, "golem",        G_GOLEM,    &gray,          400,    70,     225,    {4, 8, 1},      0,  100,    100,    DF_RUBBLE_BLOOD,0,    true,       0,      0,              {0},
+        (MONST_REFLECT_4 | MONST_DIES_IF_NEGATED)
+    },
+    {
+        0, "dragon",       G_DRAGON,    &dragonColor,   150,    90,     250,    {25, 50, 4},    20, 50,     200,    DF_GREEN_BLOOD, 0,    true,       0,      0,              {BOLT_DRAGONFIRE},
+        (MONST_IMMUNE_TO_FIRE | MONST_CARRY_ITEM_100), (MA_ATTACKS_ALL_ADJACENT)
+    },
 
     // bosses
-    {0, "goblin warlord",G_GOBLIN_CHIEFTAN,   &blue,          30,     17,     100,    {3, 6, 1},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      0,      0,              {0},
-        (MONST_MAINTAINS_DISTANCE | MONST_CARRY_ITEM_25), (MA_CAST_SUMMON | MA_ATTACKS_PENETRATE | MA_AVOID_CORRIDORS)},
-    {0, "black jelly",  G_JELLY,    &black,         120,    0,      130,    {3, 8, 1},      0,  100,    100,    DF_PURPLE_BLOOD,0,    true,       0,      0,              {0},
-        (0), (MA_CLONE_SELF_ON_DEFEND)},
-    {0, "vampire",      G_VAMPIRE,    &white,         75,     60,     120,    {4, 15, 2},     6,  50,     100,    DF_RED_BLOOD,   0,    true,       0,      DF_BLOOD_EXPLOSION, {BOLT_BLINKING, BOLT_DISCORD},
-        (MONST_FLEES_NEAR_DEATH | MONST_MALE), (MA_TRANSFERENCE | MA_DF_ON_DEATH | MA_CAST_SUMMON | MA_ENTER_SUMMONS)},
-    {0, "flamedancer",  G_FLAMEDANCER,    &white,         65,     80,     120,    {3, 8, 2},      0,  100,    100,    DF_EMBER_BLOOD, FLAMEDANCER_LIGHT,    true, 100,DF_FLAMEDANCER_CORONA, {BOLT_FIRE},
-        (MONST_MAINTAINS_DISTANCE | MONST_IMMUNE_TO_FIRE | MONST_FIERY), (MA_HIT_BURN)},
+    {
+        0, "goblin warlord",G_GOBLIN_CHIEFTAN,   &blue,          30,     17,     100,    {3, 6, 1},      20, 100,    100,    DF_RED_BLOOD,   0,    false,      0,      0,              {0},
+        (MONST_MAINTAINS_DISTANCE | MONST_CARRY_ITEM_25), (MA_CAST_SUMMON | MA_ATTACKS_PENETRATE | MA_AVOID_CORRIDORS)
+    },
+    {
+        0, "black jelly",  G_JELLY,    &black,         120,    0,      130,    {3, 8, 1},      0,  100,    100,    DF_PURPLE_BLOOD,0,    true,       0,      0,              {0},
+        (0), (MA_CLONE_SELF_ON_DEFEND)
+    },
+    {
+        0, "vampire",      G_VAMPIRE,    &white,         75,     60,     120,    {4, 15, 2},     6,  50,     100,    DF_RED_BLOOD,   0,    true,       0,      DF_BLOOD_EXPLOSION, {BOLT_BLINKING, BOLT_DISCORD},
+        (MONST_FLEES_NEAR_DEATH | MONST_MALE), (MA_TRANSFERENCE | MA_DF_ON_DEATH | MA_CAST_SUMMON | MA_ENTER_SUMMONS)
+    },
+    {
+        0, "flamedancer",  G_FLAMEDANCER,    &white,         65,     80,     120,    {3, 8, 2},      0,  100,    100,    DF_EMBER_BLOOD, FLAMEDANCER_LIGHT,    true, 100,DF_FLAMEDANCER_CORONA, {BOLT_FIRE},
+        (MONST_MAINTAINS_DISTANCE | MONST_IMMUNE_TO_FIRE | MONST_FIERY), (MA_HIT_BURN)
+    },
 
     // special effect monsters
-    {0, "spectral blade",G_WEAPON, &spectralBladeColor,1, 0, 150,    {1, 1, 1},      0,  50,     100,    0,              SPECTRAL_BLADE_LIGHT,    false,0,0,       {0},
-        (MONST_INANIMATE | MONST_NEVER_SLEEPS | MONST_FLIES | MONST_WILL_NOT_USE_STAIRS | MONST_DIES_IF_NEGATED | MONST_IMMUNE_TO_WEBS | MONST_NOT_LISTED_IN_SIDEBAR)},
-    {0, "spectral sword",G_WEAPON, &spectralImageColor, 1,0, 150,    {1, 1, 1},      0,  50,     100,    0,              SPECTRAL_IMAGE_LIGHT,    false,0,0,       {0},
-        (MONST_INANIMATE | MONST_NEVER_SLEEPS | MONST_FLIES | MONST_WILL_NOT_USE_STAIRS | MONST_DIES_IF_NEGATED | MONST_IMMUNE_TO_WEBS)},
-    {0, "stone guardian",G_GUARDIAN, &white,   1000,   0,      200,    {12, 17, 2},    0,  100,    100,    DF_RUBBLE,      0,    false,      100,      DF_GUARDIAN_STEP, {0},
-        (MONST_INANIMATE | MONST_NEVER_SLEEPS | MONST_ALWAYS_HUNTING | MONST_IMMUNE_TO_FIRE | MONST_IMMUNE_TO_WEAPONS | MONST_WILL_NOT_USE_STAIRS | MONST_DIES_IF_NEGATED | MONST_REFLECT_4 | MONST_ALWAYS_USE_ABILITY | MONST_GETS_TURN_ON_ACTIVATION)},
-    {0, "winged guardian",G_WINGED_GUARDIAN, &blue,   1000,   0,      200,    {12, 17, 2},    0,  100,    100,    DF_RUBBLE,      0,    false,      100,      DF_SILENT_GLYPH_GLOW, {BOLT_BLINKING},
-        (MONST_INANIMATE | MONST_NEVER_SLEEPS | MONST_ALWAYS_HUNTING | MONST_IMMUNE_TO_FIRE | MONST_IMMUNE_TO_WEAPONS | MONST_WILL_NOT_USE_STAIRS | MONST_DIES_IF_NEGATED | MONST_REFLECT_4 | MONST_GETS_TURN_ON_ACTIVATION | MONST_ALWAYS_USE_ABILITY), (0)},
-    {0, "guardian spirit",G_GUARDIAN, &spectralImageColor,1000,0,200,  {5, 12, 2},     0,  100,    100,    0,              SPECTRAL_IMAGE_LIGHT,    false,100,0,     {0},
-        (MONST_INANIMATE | MONST_NEVER_SLEEPS | MONST_IMMUNE_TO_FIRE | MONST_IMMUNE_TO_WEAPONS | MONST_DIES_IF_NEGATED | MONST_REFLECT_4 | MONST_ALWAYS_USE_ABILITY)},
-    {0, "Warden of Yendor",G_WARDEN, &yendorLightColor,1000,   0,    300,    {12, 17, 2},    0,  200,    200,    DF_RUBBLE,      YENDOR_LIGHT,    true,  100, 0,           {0},
-        (MONST_NEVER_SLEEPS | MONST_ALWAYS_HUNTING | MONST_INVULNERABLE | MONST_NO_POLYMORPH)},
-    {0, "eldritch totem",G_TOTEM, &glyphColor,80,    0,      0,      {0, 0, 0},      0,  100,    100,    DF_RUBBLE_BLOOD,0,    false,      0,      0,              {0},
-        (MONST_IMMUNE_TO_WEBS | MONST_NEVER_SLEEPS | MONST_IMMOBILE | MONST_INANIMATE | MONST_ALWAYS_HUNTING | MONST_WILL_NOT_USE_STAIRS | MONST_GETS_TURN_ON_ACTIVATION | MONST_ALWAYS_USE_ABILITY), (MA_CAST_SUMMON)},
-    {0, "mirrored totem",G_TOTEM, &beckonColor,80,   0,      0,      {0, 0, 0},      0,  100,    100,    DF_RUBBLE_BLOOD,0,    false,      100,    DF_MIRROR_TOTEM_STEP, {BOLT_BECKONING},
-        (MONST_IMMUNE_TO_WEBS | MONST_NEVER_SLEEPS | MONST_IMMOBILE | MONST_INANIMATE | MONST_ALWAYS_HUNTING | MONST_WILL_NOT_USE_STAIRS | MONST_GETS_TURN_ON_ACTIVATION | MONST_ALWAYS_USE_ABILITY | MONST_REFLECT_4 | MONST_IMMUNE_TO_WEAPONS | MONST_IMMUNE_TO_FIRE), (0)},
+    {
+        0, "spectral blade",G_WEAPON, &spectralBladeColor,1, 0, 150,    {1, 1, 1},      0,  50,     100,    0,              SPECTRAL_BLADE_LIGHT,    false,0,0,       {0},
+        (MONST_INANIMATE | MONST_NEVER_SLEEPS | MONST_FLIES | MONST_WILL_NOT_USE_STAIRS | MONST_DIES_IF_NEGATED | MONST_IMMUNE_TO_WEBS | MONST_NOT_LISTED_IN_SIDEBAR)
+    },
+    {
+        0, "spectral sword",G_WEAPON, &spectralImageColor, 1,0, 150,    {1, 1, 1},      0,  50,     100,    0,              SPECTRAL_IMAGE_LIGHT,    false,0,0,       {0},
+        (MONST_INANIMATE | MONST_NEVER_SLEEPS | MONST_FLIES | MONST_WILL_NOT_USE_STAIRS | MONST_DIES_IF_NEGATED | MONST_IMMUNE_TO_WEBS)
+    },
+    {
+        0, "stone guardian",G_GUARDIAN, &white,   1000,   0,      200,    {12, 17, 2},    0,  100,    100,    DF_RUBBLE,      0,    false,      100,      DF_GUARDIAN_STEP, {0},
+        (MONST_INANIMATE | MONST_NEVER_SLEEPS | MONST_ALWAYS_HUNTING | MONST_IMMUNE_TO_FIRE | MONST_IMMUNE_TO_WEAPONS | MONST_WILL_NOT_USE_STAIRS | MONST_DIES_IF_NEGATED | MONST_REFLECT_4 | MONST_ALWAYS_USE_ABILITY | MONST_GETS_TURN_ON_ACTIVATION)
+    },
+    {
+        0, "winged guardian",G_WINGED_GUARDIAN, &blue,   1000,   0,      200,    {12, 17, 2},    0,  100,    100,    DF_RUBBLE,      0,    false,      100,      DF_SILENT_GLYPH_GLOW, {BOLT_BLINKING},
+        (MONST_INANIMATE | MONST_NEVER_SLEEPS | MONST_ALWAYS_HUNTING | MONST_IMMUNE_TO_FIRE | MONST_IMMUNE_TO_WEAPONS | MONST_WILL_NOT_USE_STAIRS | MONST_DIES_IF_NEGATED | MONST_REFLECT_4 | MONST_GETS_TURN_ON_ACTIVATION | MONST_ALWAYS_USE_ABILITY), (0)
+    },
+    {
+        0, "guardian spirit",G_GUARDIAN, &spectralImageColor,1000,0,200,  {5, 12, 2},     0,  100,    100,    0,              SPECTRAL_IMAGE_LIGHT,    false,100,0,     {0},
+        (MONST_INANIMATE | MONST_NEVER_SLEEPS | MONST_IMMUNE_TO_FIRE | MONST_IMMUNE_TO_WEAPONS | MONST_DIES_IF_NEGATED | MONST_REFLECT_4 | MONST_ALWAYS_USE_ABILITY)
+    },
+    {
+        0, "Warden of Yendor",G_WARDEN, &yendorLightColor,1000,   0,    300,    {12, 17, 2},    0,  200,    200,    DF_RUBBLE,      YENDOR_LIGHT,    true,  100, 0,           {0},
+        (MONST_NEVER_SLEEPS | MONST_ALWAYS_HUNTING | MONST_INVULNERABLE | MONST_NO_POLYMORPH)
+    },
+    {
+        0, "eldritch totem",G_TOTEM, &glyphColor,80,    0,      0,      {0, 0, 0},      0,  100,    100,    DF_RUBBLE_BLOOD,0,    false,      0,      0,              {0},
+        (MONST_IMMUNE_TO_WEBS | MONST_NEVER_SLEEPS | MONST_IMMOBILE | MONST_INANIMATE | MONST_ALWAYS_HUNTING | MONST_WILL_NOT_USE_STAIRS | MONST_GETS_TURN_ON_ACTIVATION | MONST_ALWAYS_USE_ABILITY), (MA_CAST_SUMMON)
+    },
+    {
+        0, "mirrored totem",G_TOTEM, &beckonColor,80,   0,      0,      {0, 0, 0},      0,  100,    100,    DF_RUBBLE_BLOOD,0,    false,      100,    DF_MIRROR_TOTEM_STEP, {BOLT_BECKONING},
+        (MONST_IMMUNE_TO_WEBS | MONST_NEVER_SLEEPS | MONST_IMMOBILE | MONST_INANIMATE | MONST_ALWAYS_HUNTING | MONST_WILL_NOT_USE_STAIRS | MONST_GETS_TURN_ON_ACTIVATION | MONST_ALWAYS_USE_ABILITY | MONST_REFLECT_4 | MONST_IMMUNE_TO_WEAPONS | MONST_IMMUNE_TO_FIRE), (0)
+    },
 
     // legendary allies
-    {0, "unicorn",      G_UNICORN, &white,   40,     60,     175,    {2, 10, 2},     20, 50,     100,    DF_RED_BLOOD,   UNICORN_LIGHT,    true, 1,DF_UNICORN_POOP, {BOLT_HEALING, BOLT_SHIELDING},
-        (MONST_MAINTAINS_DISTANCE | MONST_MALE | MONST_FEMALE), (0)},
-    {0, "ifrit",        G_IFRIT,    &ifritColor,    40,     75,     175,    {5, 13, 2},     1,  50,     100,    DF_ASH_BLOOD,   IFRIT_LIGHT,    true, 0,  0,              {BOLT_DISCORD},
-        (MONST_IMMUNE_TO_FIRE | MONST_FLIES | MONST_MALE), (0)},
-    {0, "phoenix",      G_PHOENIX,    &phoenixColor,  30,     70,     175,    {4, 10, 2},     0,  50,     100,    DF_ASH_BLOOD,   PHOENIX_LIGHT,    true, 0,0,              {0},
-        (MONST_IMMUNE_TO_FIRE| MONST_FLIES | MONST_NO_POLYMORPH)},
-    {0, "phoenix egg",  G_EGG,&phoenixColor, 50,     0,      0,      {0, 0, 0},      0,  100,    150,    DF_ASH_BLOOD,   PHOENIX_EGG_LIGHT,    false,  0,  0,      {0},
-        (MONST_IMMUNE_TO_FIRE| MONST_IMMUNE_TO_WEBS | MONST_NEVER_SLEEPS | MONST_IMMOBILE | MONST_INANIMATE | MONST_WILL_NOT_USE_STAIRS | MONST_NO_POLYMORPH | MONST_ALWAYS_HUNTING | MONST_IMMUNE_TO_WEAPONS), (MA_CAST_SUMMON | MA_ENTER_SUMMONS)},
-    {0, "mangrove dryad",G_ANCIENT_SPIRIT,   &tanColor,      70,     60,     175,    {2, 8, 2},      6,  100,    100,    DF_ASH_BLOOD,   0,    true,       0,      0,              {BOLT_ANCIENT_SPIRIT_VINES},
-        (MONST_IMMUNE_TO_WEBS | MONST_ALWAYS_USE_ABILITY | MONST_MAINTAINS_DISTANCE | MONST_NO_POLYMORPH | MONST_MALE | MONST_FEMALE), (0)},
+    {
+        0, "unicorn",      G_UNICORN, &white,   40,     60,     175,    {2, 10, 2},     20, 50,     100,    DF_RED_BLOOD,   UNICORN_LIGHT,    true, 1,DF_UNICORN_POOP, {BOLT_HEALING, BOLT_SHIELDING},
+        (MONST_MAINTAINS_DISTANCE | MONST_MALE | MONST_FEMALE), (0)
+    },
+    {
+        0, "ifrit",        G_IFRIT,    &ifritColor,    40,     75,     175,    {5, 13, 2},     1,  50,     100,    DF_ASH_BLOOD,   IFRIT_LIGHT,    true, 0,  0,              {BOLT_DISCORD},
+        (MONST_IMMUNE_TO_FIRE | MONST_FLIES | MONST_MALE), (0)
+    },
+    {
+        0, "phoenix",      G_PHOENIX,    &phoenixColor,  30,     70,     175,    {4, 10, 2},     0,  50,     100,    DF_ASH_BLOOD,   PHOENIX_LIGHT,    true, 0,0,              {0},
+        (MONST_IMMUNE_TO_FIRE| MONST_FLIES | MONST_NO_POLYMORPH)
+    },
+    {
+        0, "phoenix egg",  G_EGG,&phoenixColor, 50,     0,      0,      {0, 0, 0},      0,  100,    150,    DF_ASH_BLOOD,   PHOENIX_EGG_LIGHT,    false,  0,  0,      {0},
+        (MONST_IMMUNE_TO_FIRE| MONST_IMMUNE_TO_WEBS | MONST_NEVER_SLEEPS | MONST_IMMOBILE | MONST_INANIMATE | MONST_WILL_NOT_USE_STAIRS | MONST_NO_POLYMORPH | MONST_ALWAYS_HUNTING | MONST_IMMUNE_TO_WEAPONS), (MA_CAST_SUMMON | MA_ENTER_SUMMONS)
+    },
+    {
+        0, "mangrove dryad",G_ANCIENT_SPIRIT,   &tanColor,      70,     60,     175,    {2, 8, 2},      6,  100,    100,    DF_ASH_BLOOD,   0,    true,       0,      0,              {BOLT_ANCIENT_SPIRIT_VINES},
+        (MONST_IMMUNE_TO_WEBS | MONST_ALWAYS_USE_ABILITY | MONST_MAINTAINS_DISTANCE | MONST_NO_POLYMORPH | MONST_MALE | MONST_FEMALE), (0)
+    },
 };
 
 const monsterWords monsterText[NUMBER_MONSTER_KINDS] = {
-    {"A naked adventurer in an unforgiving place, bereft of equipment and confused about the circumstances.",
+    {
+        "A naked adventurer in an unforgiving place, bereft of equipment and confused about the circumstances.",
         "studying", "Studying",
-        {"hit", {0}}},
-    {"The rat is a scavenger of the shallows, perpetually in search of decaying animal matter.",
+        {"hit", {0}}
+    },
+    {
+        "The rat is a scavenger of the shallows, perpetually in search of decaying animal matter.",
         "gnawing at", "Eating",
-        {"scratches", "bites", {0}}},
-    {"The kobold is a lizardlike humanoid of the upper dungeon.",
+        {"scratches", "bites", {0}}
+    },
+    {
+        "The kobold is a lizardlike humanoid of the upper dungeon.",
         "poking at", "Examining",
-        {"clubs", "bashes", {0}}},
-    {"The jackal prowls the caverns for intruders to rend with $HISHER powerful jaws.",
+        {"clubs", "bashes", {0}}
+    },
+    {
+        "The jackal prowls the caverns for intruders to rend with $HISHER powerful jaws.",
         "tearing at", "Eating",
-        {"claws", "bites", "mauls", {0}}},
-    {"The eel slips silently through the subterranean lake, waiting for unsuspecting prey to set foot in $HISHER dark waters.",
+        {"claws", "bites", "mauls", {0}}
+    },
+    {
+        "The eel slips silently through the subterranean lake, waiting for unsuspecting prey to set foot in $HISHER dark waters.",
         "eating", "Eating",
-        {"shocks", "bites", {0}}},
-    {"Mischievous trickster that $HESHE is, the monkey lives to steal shiny trinkets from passing adventurers.",
+        {"shocks", "bites", {0}}
+    },
+    {
+        "Mischievous trickster that $HESHE is, the monkey lives to steal shiny trinkets from passing adventurers.",
         "examining", "Examining",
-        {"tweaks", "bites", "punches", {0}}},
-    {"A bladder of deadly gas buoys the bloat through the air, $HISHER thin veinous membrane ready to rupture at the slightest stress.",
+        {"tweaks", "bites", "punches", {0}}
+    },
+    {
+        "A bladder of deadly gas buoys the bloat through the air, $HISHER thin veinous membrane ready to rupture at the slightest stress.",
         "gazing at", "Gazing",
         {"bumps", {0}},
-        "bursts, leaving behind an expanding cloud of caustic gas!"},
-    {"This rare subspecies of bloat is filled with a peculiar vapor that, if released, will cause the floor to vanish out from underneath $HIMHER.",
+        "bursts, leaving behind an expanding cloud of caustic gas!"
+    },
+    {
+        "This rare subspecies of bloat is filled with a peculiar vapor that, if released, will cause the floor to vanish out from underneath $HIMHER.",
         "gazing at", "Gazing",
         {"bumps", {0}},
-        "bursts, causing the floor underneath $HIMHER to disappear!"},
-    {"A filthy little primate, the tribalistic goblin often travels in packs and carries a makeshift stone spear.",
+        "bursts, causing the floor underneath $HIMHER to disappear!"
+    },
+    {
+        "A filthy little primate, the tribalistic goblin often travels in packs and carries a makeshift stone spear.",
         "chanting over", "Chanting",
-        {"cuts", "stabs", "skewers", {0}}},
-    {"This goblin is covered with glowing sigils that pulse with power. $HESHE can call into existence phantom blades to attack $HISHER foes.",
+        {"cuts", "stabs", "skewers", {0}}
+    },
+    {
+        "This goblin is covered with glowing sigils that pulse with power. $HESHE can call into existence phantom blades to attack $HISHER foes.",
         "performing a ritual on", "Performing ritual",
         {"thumps", "whacks", "wallops", {0}},
         {0},
-        "gestures ominously!"},
-    {"This goblin carries no weapon, and $HISHER eyes sparkle with golden light. $HESHE can invoke a powerful shielding magic to protect $HISHER escorts from harm.",
+        "gestures ominously!"
+    },
+    {
+        "This goblin carries no weapon, and $HISHER eyes sparkle with golden light. $HESHE can invoke a powerful shielding magic to protect $HISHER escorts from harm.",
         "performing a ritual on", "Performing ritual",
-        {"slaps", "punches", "kicks", {0}}},
-    {"Goblins have created this makeshift totem and imbued $HIMHER with a shamanistic power.",
+        {"slaps", "punches", "kicks", {0}}
+    },
+    {
+        "Goblins have created this makeshift totem and imbued $HIMHER with a shamanistic power.",
         "gazing at", "Gazing",
-        {"hits", {0}}},
-    {"This mass of caustic pink goo slips across the ground in search of a warm meal.",
+        {"hits", {0}}
+    },
+    {
+        "This mass of caustic pink goo slips across the ground in search of a warm meal.",
         "absorbing", "Feeding",
-        {"smears", "slimes", "drenches"}},
-    {"The enormous, warty toad secretes a powerful hallucinogenic slime to befuddle the senses of any creatures that come in contact with $HIMHER.",
+        {"smears", "slimes", "drenches"}
+    },
+    {
+        "The enormous, warty toad secretes a powerful hallucinogenic slime to befuddle the senses of any creatures that come in contact with $HIMHER.",
         "eating", "Eating",
-        {"slimes", "slams", {0}}},
-    {"Often hunting in packs, leathery wings and keen senses guide the vampire bat unerringly to $HISHER prey.",
+        {"slimes", "slams", {0}}
+    },
+    {
+        "Often hunting in packs, leathery wings and keen senses guide the vampire bat unerringly to $HISHER prey.",
         "draining", "Feeding",
-        {"nips", "bites", {0}}},
-    {"A mechanical contraption embedded in the wall, the spring-loaded arrow turret will fire volley after volley of arrows at intruders.",
+        {"nips", "bites", {0}}
+    },
+    {
+        "A mechanical contraption embedded in the wall, the spring-loaded arrow turret will fire volley after volley of arrows at intruders.",
         "gazing at", "Gazing",
-        {"shoots", {0}}},
-    {"The acid mound squelches softly across the ground, leaving a trail of hissing goo in $HISHER path.",
+        {"shoots", {0}}
+    },
+    {
+        "The acid mound squelches softly across the ground, leaving a trail of hissing goo in $HISHER path.",
         "liquefying", "Feeding",
-        {"slimes", "douses", "drenches", {0}}},
-    {"This monstrous centipede's incisors are imbued with a horrible venom that will slowly kill $HISHER prey.",
+        {"slimes", "douses", "drenches", {0}}
+    },
+    {
+        "This monstrous centipede's incisors are imbued with a horrible venom that will slowly kill $HISHER prey.",
         "eating", "Eating",
-        {"pricks", "stings", {0}}},
-    {"This lumbering creature carries an enormous club that $HESHE can swing with incredible force.",
+        {"pricks", "stings", {0}}
+    },
+    {
+        "This lumbering creature carries an enormous club that $HESHE can swing with incredible force.",
         "examining", "Studying",
-        {"cudgels", "clubs", "batters", {0}}},
-    {"The horrifying bog monster dwells beneath the surface of mud-filled swamps. When $HISHER prey ventures into the mud, the bog monster will ensnare the unsuspecting victim in $HISHER pale tentacles and squeeze its life away.",
+        {"cudgels", "clubs", "batters", {0}}
+    },
+    {
+        "The horrifying bog monster dwells beneath the surface of mud-filled swamps. When $HISHER prey ventures into the mud, the bog monster will ensnare the unsuspecting victim in $HISHER pale tentacles and squeeze its life away.",
         "draining", "Feeding",
-        {"squeezes", "strangles", "crushes", {0}}},
-    {"Ancient ogres versed in the eldritch arts have assembled this totem and imbued $HIMHER with occult power.",
+        {"squeezes", "strangles", "crushes", {0}}
+    },
+    {
+        "Ancient ogres versed in the eldritch arts have assembled this totem and imbued $HIMHER with occult power.",
         "gazing at", "Gazing",
-        {"hits", {0}}},
-    {"The spider's red eyes pierce the darkness in search of enemies to ensnare with $HISHER projectile webs and dissolve with deadly poison.",
+        {"hits", {0}}
+    },
+    {
+        "The spider's red eyes pierce the darkness in search of enemies to ensnare with $HISHER projectile webs and dissolve with deadly poison.",
         "draining", "Feeding",
-        {"bites", "stings", {0}}},
-    {"This contraption hums with electrical charge that $HISHER embedded crystals and magical sigils can direct at intruders in deadly arcs.",
+        {"bites", "stings", {0}}
+    },
+    {
+        "This contraption hums with electrical charge that $HISHER embedded crystals and magical sigils can direct at intruders in deadly arcs.",
         "gazing at", "Gazing",
-        {"shocks", {0}}},
-    {"An ethereal blue flame dances through the air, flickering and pulsing in time to an otherworldly rhythm.",
+        {"shocks", {0}}
+    },
+    {
+        "An ethereal blue flame dances through the air, flickering and pulsing in time to an otherworldly rhythm.",
         "consuming", "Feeding",
-        {"scorches", "burns", {0}}},
-    {"The wraith's hollow eye sockets stare hungrily at the world from $HISHER emaciated frame, and $HISHER long, bloodstained nails grope ceaselessly at the air for a fresh victim.",
+        {"scorches", "burns", {0}}
+    },
+    {
+        "The wraith's hollow eye sockets stare hungrily at the world from $HISHER emaciated frame, and $HISHER long, bloodstained nails grope ceaselessly at the air for a fresh victim.",
         "devouring", "Feeding",
-        {"clutches", "claws", "bites", {0}}},
-    {"The zombie is the accursed product of a long-forgotten ritual. Perpetually decaying flesh hangs from $HISHER bones in shreds and releases a flammable stench that will induce violent nausea with one whiff.",
+        {"clutches", "claws", "bites", {0}}
+    },
+    {
+        "The zombie is the accursed product of a long-forgotten ritual. Perpetually decaying flesh hangs from $HISHER bones in shreds and releases a flammable stench that will induce violent nausea with one whiff.",
         "rending", "Eating",
-        {"hits", "bites", {0}}},
-    {"An enormous, disfigured creature covered in phlegm and warts, the troll regenerates very quickly and attacks with astonishing strength. Many adventures have ended at $HISHER misshapen hands.",
+        {"hits", "bites", {0}}
+    },
+    {
+        "An enormous, disfigured creature covered in phlegm and warts, the troll regenerates very quickly and attacks with astonishing strength. Many adventures have ended at $HISHER misshapen hands.",
         "eating", "Eating",
-        {"cudgels", "clubs", "bludgeons", "pummels", "batters"}},
-    {"This ogre is bent with age, but what $HESHE has lost in physical strength, $HESHE has more than gained in occult power.",
+        {"cudgels", "clubs", "bludgeons", "pummels", "batters"}
+    },
+    {
+        "This ogre is bent with age, but what $HESHE has lost in physical strength, $HESHE has more than gained in occult power.",
         "performing a ritual on", "Performing ritual",
         {"cudgels", "clubs", {0}},
         {0},
-        "chants in a harsh, guttural tongue!"},
-    {"The serpentine naga live beneath the subterranean waters and emerge to attack unsuspecting adventurers.",
+        "chants in a harsh, guttural tongue!"
+    },
+    {
+        "The serpentine naga live beneath the subterranean waters and emerge to attack unsuspecting adventurers.",
         "studying", "Studying",
-        {"claws", "bites", "tail-whips", {0}}},
-    {"A serpent wreathed in flames and carrying a burning lash, salamanders dwell in lakes of fire and emerge when they sense a nearby victim, leaving behind a trail of glowing embers.",
+        {"claws", "bites", "tail-whips", {0}}
+    },
+    {
+        "A serpent wreathed in flames and carrying a burning lash, salamanders dwell in lakes of fire and emerge when they sense a nearby victim, leaving behind a trail of glowing embers.",
         "studying", "Studying",
-        {"whips", "lashes", {0}}},
-    {"This rare subspecies of bloat is little more than a thin membrane surrounding a bladder of highly explosive gases. The slightest stress will cause $HIMHER to rupture in spectacular and deadly fashion.",
+        {"whips", "lashes", {0}}
+    },
+    {
+        "This rare subspecies of bloat is little more than a thin membrane surrounding a bladder of highly explosive gases. The slightest stress will cause $HIMHER to rupture in spectacular and deadly fashion.",
         "gazing at", "Gazing",
         {"bumps", {0}},
-        "detonates with terrifying force!"},
-    {"An elf of the deep, the dar blademaster leaps toward $HISHER enemies with frightening speed to engage in deadly swordplay.",
+        "detonates with terrifying force!"
+    },
+    {
+        "An elf of the deep, the dar blademaster leaps toward $HISHER enemies with frightening speed to engage in deadly swordplay.",
         "studying", "Studying",
-        {"grazes", "cuts", "slices", "slashes", "stabs"}},
-    {"The dar priestess carries a host of religious relics that jangle as $HESHE walks.",
+        {"grazes", "cuts", "slices", "slashes", "stabs"}
+    },
+    {
+        "The dar priestess carries a host of religious relics that jangle as $HESHE walks.",
         "praying over", "Praying",
-        {"cuts", "slices", {0}}},
-    {"The dar battlemage's eyes glow like embers and $HISHER hands radiate an occult heat.",
+        {"cuts", "slices", {0}}
+    },
+    {
+        "The dar battlemage's eyes glow like embers and $HISHER hands radiate an occult heat.",
         "transmuting", "Transmuting",
-        {"cuts", {0}}},
-    {"A jelly subsisting on a diet of acid mounds will eventually express the characteristics of $HISHER prey, corroding any unprotected weapons or armor that come in contact with $HIMHER.",
+        {"cuts", {0}}
+    },
+    {
+        "A jelly subsisting on a diet of acid mounds will eventually express the characteristics of $HISHER prey, corroding any unprotected weapons or armor that come in contact with $HIMHER.",
         "transmuting", "Transmuting",
-        {"burns", {0}}},
-    {"Half man and half horse, the centaur is an expert with the bow and arrow -- hunter and steed fused into a single creature.",
+        {"burns", {0}}
+    },
+    {
+        "Half man and half horse, the centaur is an expert with the bow and arrow -- hunter and steed fused into a single creature.",
         "studying", "Studying",
-        {"shoots", {0}}},
-    {"A strange and horrifying creature of the earth's deepest places, larger than an ogre but capable of squeezing through tiny openings. When hungry, the underworm will burrow behind the walls of a cavern and lurk dormant and motionless -- often for months -- until $HESHE can feel the telltale vibrations of nearby prey.",
+        {"shoots", {0}}
+    },
+    {
+        "A strange and horrifying creature of the earth's deepest places, larger than an ogre but capable of squeezing through tiny openings. When hungry, the underworm will burrow behind the walls of a cavern and lurk dormant and motionless -- often for months -- until $HESHE can feel the telltale vibrations of nearby prey.",
         "consuming", "Consuming",
-        {"slams", "bites", "tail-whips", {0}}},
-    {"An ancient statue of an unrecognizable humanoid figure, the sentinel holds aloft a crystal that gleams with ancient warding magic. Sentinels are always found in groups, and each will attempt to repair any damage done to the others.",
+        {"slams", "bites", "tail-whips", {0}}
+    },
+    {
+        "An ancient statue of an unrecognizable humanoid figure, the sentinel holds aloft a crystal that gleams with ancient warding magic. Sentinels are always found in groups, and each will attempt to repair any damage done to the others.",
         "focusing on", "Focusing",
-        {"hits", {0}}},
-    {"This spring-loaded contraption fires darts that are imbued with a strength-sapping poison.",
+        {"hits", {0}}
+    },
+    {
+        "This spring-loaded contraption fires darts that are imbued with a strength-sapping poison.",
         "gazing at", "Gazing",
-        {"pricks", {0}}},
-    {"This tentacled nightmare will emerge from the subterranean waters to ensnare and devour any creature foolish enough to set foot into $HISHER lake.",
+        {"pricks", {0}}
+    },
+    {
+        "This tentacled nightmare will emerge from the subterranean waters to ensnare and devour any creature foolish enough to set foot into $HISHER lake.",
         "devouring", "Feeding",
-        {"slaps", "smites", "batters", {0}}},
-    {"The desiccated form of an ancient sorcerer, animated by dark arts and lust for power, commands the obedience of the infernal planes. $HISHER essence is anchored to reality by a phylactery that is always in $HISHER possession, and the lich cannot die unless $HISHER phylactery is destroyed.",
+        {"slaps", "smites", "batters", {0}}
+    },
+    {
+        "The desiccated form of an ancient sorcerer, animated by dark arts and lust for power, commands the obedience of the infernal planes. $HISHER essence is anchored to reality by a phylactery that is always in $HISHER possession, and the lich cannot die unless $HISHER phylactery is destroyed.",
         "enchanting", "Enchanting",
         {"touches", {0}},
         {0},
-        "rasps a terrifying incantation!"},
-    {"This gem was the fulcrum of a dark rite, performed centuries ago, that bound the soul of an ancient and terrible sorcerer. Hurry and destroy the gem, before the lich can gather its power and regenerate its corporeal form!",
+        "rasps a terrifying incantation!"
+    },
+    {
+        "This gem was the fulcrum of a dark rite, performed centuries ago, that bound the soul of an ancient and terrible sorcerer. Hurry and destroy the gem, before the lich can gather its power and regenerate its corporeal form!",
         "enchanting", "Enchanting",
         {"touches", {0}},
         {0},
-        "swirls with dark sorcery as the lich regenerates its form!"},
-    {"A tiny humanoid sparkles in the gloom, the hum of $HISHER beating wings punctuated by intermittent peals of high-pitched laughter. What $HESHE lacks in physical endurance, $HESHE makes up for with $HISHER wealth of mischievous magical abilities.",
+        "swirls with dark sorcery as the lich regenerates its form!"
+    },
+    {
+        "A tiny humanoid sparkles in the gloom, the hum of $HISHER beating wings punctuated by intermittent peals of high-pitched laughter. What $HESHE lacks in physical endurance, $HESHE makes up for with $HISHER wealth of mischievous magical abilities.",
         "sprinkling dust on", "Dusting",
-        {"pokes", {0}}},
-    {"A silhouette of mournful rage against an empty backdrop, the phantom slips through the dungeon invisibly in clear air, leaving behind glowing droplets of ectoplasm and the cries of $HISHER unsuspecting victims.",
+        {"pokes", {0}}
+    },
+    {
+        "A silhouette of mournful rage against an empty backdrop, the phantom slips through the dungeon invisibly in clear air, leaving behind glowing droplets of ectoplasm and the cries of $HISHER unsuspecting victims.",
         "permeating", "Permeating",
-        {"hits", {0}}},
-    {"This infernal contraption spits blasts of flame at intruders.",
+        {"hits", {0}}
+    },
+    {
+        "This infernal contraption spits blasts of flame at intruders.",
         "incinerating", "Incinerating",
-        {"pricks", {0}}},
-    {"This trickster demon moves with astonishing speed and delights in stealing from $HISHER enemies and blinking away.",
+        {"pricks", {0}}
+    },
+    {
+        "This trickster demon moves with astonishing speed and delights in stealing from $HISHER enemies and blinking away.",
         "dissecting", "Dissecting",
-        {"slices", "cuts", {0}}},
-    {"A creature of inchoate rage made flesh, the fury's moist wings beat loudly in the darkness.",
+        {"slices", "cuts", {0}}
+    },
+    {
+        "A creature of inchoate rage made flesh, the fury's moist wings beat loudly in the darkness.",
         "flagellating", "Flagellating",
-        {"drubs", "fustigates", "castigates", {0}}},
-    {"This unholy specter stalks the deep places of the earth without fear, impervious to conventional attacks.",
+        {"drubs", "fustigates", "castigates", {0}}
+    },
+    {
+        "This unholy specter stalks the deep places of the earth without fear, impervious to conventional attacks.",
         "desecrating", "Desecrating",
-        {"hits", {0}}},
-    {"This seething, towering nightmare of fleshy tentacles slinks through the bowels of the world. The tentacle horror's incredible strength and regeneration make $HIMHER one of the most fearsome creatures of the dungeon.",
+        {"hits", {0}}
+    },
+    {
+        "This seething, towering nightmare of fleshy tentacles slinks through the bowels of the world. The tentacle horror's incredible strength and regeneration make $HIMHER one of the most fearsome creatures of the dungeon.",
         "sucking on", "Consuming",
-        {"slaps", "batters", "crushes", {0}}},
-    {"A statue animated by an ancient and tireless magic, the golem does not regenerate and attacks with only moderate strength, but $HISHER stone form can withstand incredible damage before collapsing into rubble.",
+        {"slaps", "batters", "crushes", {0}}
+    },
+    {
+        "A statue animated by an ancient and tireless magic, the golem does not regenerate and attacks with only moderate strength, but $HISHER stone form can withstand incredible damage before collapsing into rubble.",
         "cradling", "Cradling",
-        {"backhands", "punches", "kicks", {0}}},
-    {"An ancient serpent of the world's deepest places, the dragon's immense form belies its lightning-quick speed and testifies to $HISHER breathtaking strength. An undying furnace of white-hot flames burns within $HISHER scaly hide, and few could withstand a single moment under $HISHER infernal lash.",
+        {"backhands", "punches", "kicks", {0}}
+    },
+    {
+        "An ancient serpent of the world's deepest places, the dragon's immense form belies its lightning-quick speed and testifies to $HISHER breathtaking strength. An undying furnace of white-hot flames burns within $HISHER scaly hide, and few could withstand a single moment under $HISHER infernal lash.",
         "consuming", "Consuming",
-        {"claws", "tail-whips", "bites", {0}}},
+        {"claws", "tail-whips", "bites", {0}}
+    },
 
-    {"Taller, stronger and smarter than other goblins, the warlord commands the loyalty of $HISHER kind and can summon them into battle.",
+    {
+        "Taller, stronger and smarter than other goblins, the warlord commands the loyalty of $HISHER kind and can summon them into battle.",
         "chanting over", "Chanting",
         {"slashes", "cuts", "stabs", "skewers", {0}},
         {0},
-        "lets loose a deafening war cry!"},
-    {"This blob of jet-black goo is as rare as $HESHE is deadly. Few creatures of the dungeon can withstand $HISHER caustic assault. Beware.",
+        "lets loose a deafening war cry!"
+    },
+    {
+        "This blob of jet-black goo is as rare as $HESHE is deadly. Few creatures of the dungeon can withstand $HISHER caustic assault. Beware.",
         "absorbing", "Feeding",
-        {"smears", "slimes", "drenches"}},
-    {"This vampire lives a solitary life deep underground, consuming any warm-blooded creature unfortunate enough to venture near $HISHER lair.",
+        {"smears", "slimes", "drenches"}
+    },
+    {
+        "This vampire lives a solitary life deep underground, consuming any warm-blooded creature unfortunate enough to venture near $HISHER lair.",
         "draining", "Drinking",
         {"grazes", "bites", "buries $HISHER fangs in", {0}},
         {0},
-        "spreads his cloak and bursts into a cloud of bats!"},
-    {"An elemental creature from another plane of existence, the infernal flamedancer burns with such intensity that $HESHE is painful to behold.",
+        "spreads his cloak and bursts into a cloud of bats!"
+    },
+    {
+        "An elemental creature from another plane of existence, the infernal flamedancer burns with such intensity that $HESHE is painful to behold.",
         "immolating", "Consuming",
-        {"singes", "burns", "immolates", {0}}},
+        {"singes", "burns", "immolates", {0}}
+    },
 
-    {"Eldritch forces have coalesced to form this flickering, ethereal weapon.",
+    {
+        "Eldritch forces have coalesced to form this flickering, ethereal weapon.",
         "gazing at", "Gazing",
-        {"nicks",  {0}}},
-    {"Eldritch energies bound up in your equipment have leapt forth to project this spectral image.",
+        {"nicks",  {0}}
+    },
+    {
+        "Eldritch energies bound up in your equipment have leapt forth to project this spectral image.",
         "gazing at", "Gazing",
-        {"hits",  {0}}},
-    {"Guarding the room is a weathered stone statue of a knight carrying a battleaxe, connected to the glowing glyphs on the floor by invisible strands of enchantment.",
+        {"hits",  {0}}
+    },
+    {
+        "Guarding the room is a weathered stone statue of a knight carrying a battleaxe, connected to the glowing glyphs on the floor by invisible strands of enchantment.",
         "gazing at", "Gazing",
-        {"strikes",  {0}}},
-    {"A statue of a sword-wielding angel surveys the room, connected to the glowing glyphs on the floor by invisible strands of enchantment.",
+        {"strikes",  {0}}
+    },
+    {
+        "A statue of a sword-wielding angel surveys the room, connected to the glowing glyphs on the floor by invisible strands of enchantment.",
         "gazing at", "Gazing",
-        {"strikes",  {0}}},
-    {"A spectral outline of a knight carrying a battleaxe casts an ethereal light on $HISHER surroundings.",
+        {"strikes",  {0}}
+    },
+    {
+        "A spectral outline of a knight carrying a battleaxe casts an ethereal light on $HISHER surroundings.",
         "gazing at", "Gazing",
-        {"strikes",  {0}}},
-    {"An immortal presence stalks through the dungeon, implacably hunting that which was taken... and the one who took it.",
+        {"strikes",  {0}}
+    },
+    {
+        "An immortal presence stalks through the dungeon, implacably hunting that which was taken... and the one who took it.",
         "gazing at", "Gazing",
-        {"strikes",  {0}}},
-    {"This totem sits at the center of a summoning circle that radiates a strange energy.",
+        {"strikes",  {0}}
+    },
+    {
+        "This totem sits at the center of a summoning circle that radiates a strange energy.",
         "gazing at", "Gazing",
         {"strikes",  {0}},
         {0},
-        "crackles with energy as you touch the glyph!"},
-    {"A prism of shoulder-high mirrored surfaces gleams in the darkness.",
+        "crackles with energy as you touch the glyph!"
+    },
+    {
+        "A prism of shoulder-high mirrored surfaces gleams in the darkness.",
         "gazing at", "Gazing",
-        {"strikes",  {0}}},
+        {"strikes",  {0}}
+    },
 
-    {"The unicorn's flowing mane and tail shine with rainbow light, $HISHER horn glows with healing and protective magic, and $HISHER eyes implore you to always chase your dreams. Unicorns are rumored to be attracted to virgins -- is there a hint of accusation in $HISHER gaze?",
+    {
+        "The unicorn's flowing mane and tail shine with rainbow light, $HISHER horn glows with healing and protective magic, and $HISHER eyes implore you to always chase your dreams. Unicorns are rumored to be attracted to virgins -- is there a hint of accusation in $HISHER gaze?",
         "consecrating", "Consecrating",
-        {"pokes", "stabs", "gores", {0}}},
-    {"A whirling desert storm given human shape, the ifrit's twin scimitars flicker in the darkness and $HISHER eyes burn with otherworldly zeal.",
+        {"pokes", "stabs", "gores", {0}}
+    },
+    {
+        "A whirling desert storm given human shape, the ifrit's twin scimitars flicker in the darkness and $HISHER eyes burn with otherworldly zeal.",
         "absorbing", "Absorbing",
-        {"cuts", "slashes", "lacerates", {0}}},
-    {"This legendary bird shines with a brilliant light, and $HISHER wings crackle and pop like embers as they beat the air. When $HESHE dies, legend has it that an egg will form and a newborn phoenix will rise from its ashes.",
+        {"cuts", "slashes", "lacerates", {0}}
+    },
+    {
+        "This legendary bird shines with a brilliant light, and $HISHER wings crackle and pop like embers as they beat the air. When $HESHE dies, legend has it that an egg will form and a newborn phoenix will rise from its ashes.",
         "cremating", "Cremating",
-        {"pecks", "scratches", "claws", {0}}},
-    {"Cradled in a nest of cooling ashes, the translucent membrane of the phoenix egg reveals a yolk that glows brighter by the second.",
+        {"pecks", "scratches", "claws", {0}}
+    },
+    {
+        "Cradled in a nest of cooling ashes, the translucent membrane of the phoenix egg reveals a yolk that glows brighter by the second.",
         "cremating", "Cremating",
         {"touches", {0}},
         {0},
-        "bursts as a newborn phoenix rises from the ashes!"},
-    {"This mangrove dryad is as old as the earth, and $HISHER gnarled figure houses an ancient power. When angered, $HESHE can call upon the forces of nature to bind $HISHER foes and tear them to shreds.",
+        "bursts as a newborn phoenix rises from the ashes!"
+    },
+    {
+        "This mangrove dryad is as old as the earth, and $HISHER gnarled figure houses an ancient power. When angered, $HESHE can call upon the forces of nature to bind $HISHER foes and tear them to shreds.",
         "absorbing", "Absorbing",
-        {"whips", "lashes", "thrashes", "lacerates", {0}}},
+        {"whips", "lashes", "thrashes", "lacerates", {0}}
+    },
 };
 
 const mutation mutationCatalog[NUMBER_MUTATORS] = {
     //Title         textColor       healthFactor    moveSpdMult attackSpdMult   defMult damMult DF% DFtype  light   monstFlags  abilityFlags    forbiddenFlags      forbiddenAbilities      canBeNegated
-    {"explosive",   &orange,        50,             100,        100,            50,     100,    0,  DF_MUTATION_EXPLOSION, EXPLOSIVE_BLOAT_LIGHT, 0, MA_DF_ON_DEATH, MONST_SUBMERGES, 0,
-        "A rare mutation will cause $HIMHER to explode violently when $HESHE dies.",    true},
-    {"infested",    &lichenColor,   50,             100,        100,            50,     100,    0,  DF_MUTATION_LICHEN, 0, 0,   MA_DF_ON_DEATH, 0,               0,
-        "$HESHE has been infested by deadly lichen spores; poisonous fungus will spread from $HISHER corpse when $HESHE dies.", true},
-    {"agile",       &lightBlue,     100,            50,         100,            150,    100,    -1, 0,      0,      MONST_FLEES_NEAR_DEATH, 0, MONST_FLEES_NEAR_DEATH, 0,
-        "A rare mutation greatly enhances $HISHER mobility.",   false},
-    {"juggernaut",  &brown,         300,            200,        200,            75,     200,    -1, 0,      0,      0,          MA_ATTACKS_STAGGER, MONST_MAINTAINS_DISTANCE, 0,
-        "A rare mutation has hardened $HISHER flesh, increasing $HISHER health and power but compromising $HISHER speed.",  false},
-    {"grappling",   &tanColor,      150,            100,        100,            50,     100,    -1, 0,      0,      0,          MA_SEIZES,      MONST_MAINTAINS_DISTANCE, MA_SEIZES,
-        "A rare mutation has caused suckered tentacles to sprout from $HISHER frame, increasing $HISHER health and allowing $HIMHER to grapple with $HISHER prey.", true},
-    {"vampiric",    &red,           100,            100,        100,            100,    100,    -1, 0,      0,      0,          MA_TRANSFERENCE, MONST_MAINTAINS_DISTANCE, MA_TRANSFERENCE,
-        "A rare mutation allows $HIMHER to heal $HIMSELFHERSELF with every attack.",    true},
-    {"toxic",       &green,         100,            100,        200,            100,    20,     -1, 0,      0,      0,          (MA_CAUSES_WEAKNESS | MA_POISONS), MONST_MAINTAINS_DISTANCE, (MA_CAUSES_WEAKNESS | MA_POISONS),
-        "A rare mutation causes $HIMHER to poison $HISHER victims and sap their strength with every attack.",   true},
-    {"reflective",  &darkTurquoise, 100,            100,        100,            100,    100,    -1, 0,      0,      MONST_REFLECT_4, 0,         (MONST_REFLECT_4 | MONST_ALWAYS_USE_ABILITY), 0,
-        "A rare mutation has coated $HISHER flesh with reflective scales.",     true},
+    {
+        "explosive",   &orange,        50,             100,        100,            50,     100,    0,  DF_MUTATION_EXPLOSION, EXPLOSIVE_BLOAT_LIGHT, 0, MA_DF_ON_DEATH, MONST_SUBMERGES, 0,
+        "A rare mutation will cause $HIMHER to explode violently when $HESHE dies.",    true
+    },
+    {
+        "infested",    &lichenColor,   50,             100,        100,            50,     100,    0,  DF_MUTATION_LICHEN, 0, 0,   MA_DF_ON_DEATH, 0,               0,
+        "$HESHE has been infested by deadly lichen spores; poisonous fungus will spread from $HISHER corpse when $HESHE dies.", true
+    },
+    {
+        "agile",       &lightBlue,     100,            50,         100,            150,    100,    -1, 0,      0,      MONST_FLEES_NEAR_DEATH, 0, MONST_FLEES_NEAR_DEATH, 0,
+        "A rare mutation greatly enhances $HISHER mobility.",   false
+    },
+    {
+        "juggernaut",  &brown,         300,            200,        200,            75,     200,    -1, 0,      0,      0,          MA_ATTACKS_STAGGER, MONST_MAINTAINS_DISTANCE, 0,
+        "A rare mutation has hardened $HISHER flesh, increasing $HISHER health and power but compromising $HISHER speed.",  false
+    },
+    {
+        "grappling",   &tanColor,      150,            100,        100,            50,     100,    -1, 0,      0,      0,          MA_SEIZES,      MONST_MAINTAINS_DISTANCE, MA_SEIZES,
+        "A rare mutation has caused suckered tentacles to sprout from $HISHER frame, increasing $HISHER health and allowing $HIMHER to grapple with $HISHER prey.", true
+    },
+    {
+        "vampiric",    &red,           100,            100,        100,            100,    100,    -1, 0,      0,      0,          MA_TRANSFERENCE, MONST_MAINTAINS_DISTANCE, MA_TRANSFERENCE,
+        "A rare mutation allows $HIMHER to heal $HIMSELFHERSELF with every attack.",    true
+    },
+    {
+        "toxic",       &green,         100,            100,        200,            100,    20,     -1, 0,      0,      0,          (MA_CAUSES_WEAKNESS | MA_POISONS), MONST_MAINTAINS_DISTANCE, (MA_CAUSES_WEAKNESS | MA_POISONS),
+        "A rare mutation causes $HIMHER to poison $HISHER victims and sap their strength with every attack.",   true
+    },
+    {
+        "reflective",  &darkTurquoise, 100,            100,        100,            100,    100,    -1, 0,      0,      MONST_REFLECT_4, 0,         (MONST_REFLECT_4 | MONST_ALWAYS_USE_ABILITY), 0,
+        "A rare mutation has coated $HISHER flesh with reflective scales.",     true
+    },
 };
 
 const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT] = {
@@ -1415,19 +1693,19 @@ const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT] = {
 char itemTitles[NUMBER_ITEM_TITLES][30];
 
 const char itemCategoryNames[NUMBER_ITEM_CATEGORIES][11] = {
-        "food",
-        "weapon",
-        "armor",
-        "potion",
-        "scroll",
-        "staff",
-        "wand",
-        "ring",
-        "charm",
-        "gold",
-        "amulet",
-        "lumenstone",
-        "key"
+    "food",
+    "weapon",
+    "armor",
+    "potion",
+    "scroll",
+    "staff",
+    "wand",
+    "ring",
+    "charm",
+    "gold",
+    "amulet",
+    "lumenstone",
+    "key"
 };
 
 const char titlePhonemes[NUMBER_TITLE_PHONEMES][30] = {

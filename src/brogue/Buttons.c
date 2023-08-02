@@ -110,8 +110,8 @@ void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDispl
             symbolNumber++;
         }
 
-        if (locIsInWindow((windowpos){ button->x + i, button->y })) {
-            plotCharToBuffer(displayCharacter, (windowpos){ button->x + i, button->y }, &fColor, &bColor, dbuf);
+        if (locIsInWindow((windowpos) { button->x + i, button->y })) {
+            plotCharToBuffer(displayCharacter, (windowpos) { button->x + i, button->y }, &fColor, &bColor, dbuf);
             if (dbuf) {
                 // Only buffers can have opacity set.
                 dbuf[button->x + i][button->y].opacity = opacity;
@@ -139,12 +139,12 @@ void drawButtonsInState(buttonState *state) {
 }
 
 void initializeButtonState(buttonState *state,
-                           brogueButton *buttons,
-                           short buttonCount,
-                           short winX,
-                           short winY,
-                           short winWidth,
-                           short winHeight) {
+    brogueButton *buttons,
+    short buttonCount,
+    short winX,
+    short winY,
+    short winWidth,
+    short winHeight) {
     // Initialize variables for the state struct:
     state->buttonChosen = state->buttonFocused = state->buttonDepressed = -1;
     state->buttonCount  = buttonCount;
@@ -232,7 +232,7 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
                 if (state->buttonDepressed >= 0) {
                     drawButton(&(state->buttons[state->buttonDepressed]), BUTTON_NORMAL, state->dbuf);
                 } else if (!(x >= state->winX && x < state->winX + state->winWidth
-                             && y >= state->winY && y < state->winY + state->winHeight)) {
+                        && y >= state->winY && y < state->winY + state->winHeight)) {
                     // Clicking outside of a button means canceling.
                     if (canceled) {
                         *canceled = true;
@@ -314,12 +314,12 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
 // A window region is described by winX, winY, winWidth and winHeight.
 // Clicking outside of that region will constitute canceling.
 short buttonInputLoop(brogueButton *buttons,
-                      short buttonCount,
-                      short winX,
-                      short winY,
-                      short winWidth,
-                      short winHeight,
-                      rogueEvent *returnEvent) {
+    short buttonCount,
+    short winX,
+    short winY,
+    short winWidth,
+    short winHeight,
+    rogueEvent *returnEvent) {
     short button;
     boolean canceled;
     rogueEvent theEvent;

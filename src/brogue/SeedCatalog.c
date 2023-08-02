@@ -34,12 +34,12 @@
 #define  NO_MUTATION_STRING ""
 
 static void printSeedCatalogCsvLine(uint64_t seed, short depth, short quantity, char categoryName[50], char kindName[50],
-                                    char enchantment[50], char runicName[50], char vaultNumber[10], char opensVaultNumber[10],
-                                    char carriedByMonsterName[50], char allyStatusName[20], char mutationName[100]){
+    char enchantment[50], char runicName[50], char vaultNumber[10], char opensVaultNumber[10],
+    char carriedByMonsterName[50], char allyStatusName[20], char mutationName[100]) {
 
     printf("%s,%llu,%i,%i,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", gameConst->dungeonVersionString, (unsigned long long) seed, depth, quantity, categoryName,
-           kindName, enchantment, runicName, vaultNumber, opensVaultNumber, carriedByMonsterName, allyStatusName,
-           mutationName);
+        kindName, enchantment, runicName, vaultNumber, opensVaultNumber, carriedByMonsterName, allyStatusName,
+        mutationName);
 }
 
 static void getMonsterDetailedName(creature *theMonster, char *theMonsterName) {
@@ -95,13 +95,13 @@ static void printSeedCatalogItem(item *theItem, creature *theMonster, boolean is
     // opensVaultNumber
     if (theItem->category == KEY && theItem->kind == KEY_DOOR) {
         sprintf(opensVaultNumber, isCsvFormat ? "%i" : " (opens vault %i)",
-                pmap[theItem->keyLoc[0].x][theItem->keyLoc[0].y].machineNumber - 1);
+            pmap[theItem->keyLoc[0].x][theItem->keyLoc[0].y].machineNumber - 1);
     }
 
     if (isCsvFormat) {
         printSeedCatalogCsvLine(rogue.seed, rogue.depthLevel, theItem->quantity, categoryName, kindName, enchantment,
-                                runicName, vaultNumber, opensVaultNumber, carriedByMonsterName, NO_ALLY_STATUS_STRING,
-                                mutationName);
+            runicName, vaultNumber, opensVaultNumber, carriedByMonsterName, NO_ALLY_STATUS_STRING,
+            mutationName);
     } else {
         upperCase(inGameItemName);
         if (theMonster != NULL) {
@@ -133,8 +133,8 @@ static void printSeedCatalogMonster(creature *theMonster, boolean isCsvFormat) {
 
     if (isCsvFormat) {
         printSeedCatalogCsvLine(rogue.seed, rogue.depthLevel, 1, categoryName, theMonster->info.monsterName,
-                                NO_ENCHANTMENT_STRING, NO_RUNIC_STRING, NO_VAULT_STRING, NO_OPENS_VAULT_STRING,
-                                NO_CARRIED_BY_MONSTER_STRING, allyStatusName, mutationName);
+            NO_ENCHANTMENT_STRING, NO_RUNIC_STRING, NO_VAULT_STRING, NO_OPENS_VAULT_STRING,
+            NO_CARRIED_BY_MONSTER_STRING, allyStatusName, mutationName);
     } else {
         getMonsterDetailedName(theMonster, theMonsterName);
         printf("        %s%s\n", allyStatusName, theMonsterName);
@@ -183,8 +183,8 @@ static void printSeedCatalogFloorGold(int gold, short piles, boolean isCsvFormat
             sprintf(kindName, "gold pieces (%i piles)", piles);
         }
         printSeedCatalogCsvLine(rogue.seed, rogue.depthLevel, gold, "gold", kindName, NO_ENCHANTMENT_STRING,
-                                NO_RUNIC_STRING, NO_VAULT_STRING, NO_OPENS_VAULT_STRING, NO_CARRIED_BY_MONSTER_STRING,
-                                NO_ALLY_STATUS_STRING, NO_MUTATION_STRING);
+            NO_RUNIC_STRING, NO_VAULT_STRING, NO_OPENS_VAULT_STRING, NO_CARRIED_BY_MONSTER_STRING,
+            NO_ALLY_STATUS_STRING, NO_MUTATION_STRING);
     } else {
         if (piles == 1) {
             printf("        %i gold pieces\n", gold);
@@ -225,8 +225,8 @@ static void printSeedCatalogAltars(boolean isCsvFormat) {
                 sprintf(vaultNumber, "%i", pmap[i][j].machineNumber);
                 if (isCsvFormat) {
                     printSeedCatalogCsvLine(rogue.seed, rogue.depthLevel, 1, "altar", "resurrection altar",
-                            NO_ENCHANTMENT_STRING, NO_RUNIC_STRING, vaultNumber, NO_OPENS_VAULT_STRING,
-                            NO_CARRIED_BY_MONSTER_STRING, NO_ALLY_STATUS_STRING, NO_MUTATION_STRING);
+                        NO_ENCHANTMENT_STRING, NO_RUNIC_STRING, vaultNumber, NO_OPENS_VAULT_STRING,
+                        NO_CARRIED_BY_MONSTER_STRING, NO_ALLY_STATUS_STRING, NO_MUTATION_STRING);
                 } else {
                     printf("        A resurrection altar (vault %s)\n", vaultNumber);
                 }
@@ -242,8 +242,8 @@ static void printSeedCatalogAltars(boolean isCsvFormat) {
             sprintf(vaultNumber, "%i", i);
             if (isCsvFormat) {
                 printSeedCatalogCsvLine(rogue.seed, rogue.depthLevel, 1, "altar", "commutation altar",
-                                        NO_ENCHANTMENT_STRING, NO_RUNIC_STRING, vaultNumber, NO_OPENS_VAULT_STRING,
-                                        NO_CARRIED_BY_MONSTER_STRING, NO_ALLY_STATUS_STRING, NO_MUTATION_STRING);
+                    NO_ENCHANTMENT_STRING, NO_RUNIC_STRING, vaultNumber, NO_OPENS_VAULT_STRING,
+                    NO_CARRIED_BY_MONSTER_STRING, NO_ALLY_STATUS_STRING, NO_MUTATION_STRING);
             } else {
                 printf("        A commutation altar (vault %s)\n",vaultNumber);
             }
@@ -252,7 +252,7 @@ static void printSeedCatalogAltars(boolean isCsvFormat) {
 }
 
 void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsigned int scanThroughDepth,
-                      boolean isCsvFormat) {
+    boolean isCsvFormat) {
     uint64_t theSeed;
     char message[1000] = "";
     rogue.nextGame = NG_NOTHING;
@@ -260,11 +260,11 @@ void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsig
     initializeGameVariant();
 
     sprintf(message, "Brogue seed catalog, seeds %llu to %llu, through depth %u.\n"
-                     "Generated with %s. Dungeons unchanged since %s.\n\n"
-                     "To play one of these seeds, press control-N from the title screen"
-                     " and enter the seed number.\n",
-            (unsigned long long) startingSeed, (unsigned long long) startingSeed + numberOfSeedsToScan - 1, scanThroughDepth, gameConst->versionString,
-            gameConst->dungeonVersionString);
+        "Generated with %s. Dungeons unchanged since %s.\n\n"
+        "To play one of these seeds, press control-N from the title screen"
+        " and enter the seed number.\n",
+        (unsigned long long) startingSeed, (unsigned long long) startingSeed + numberOfSeedsToScan - 1, scanThroughDepth, gameConst->versionString,
+        gameConst->dungeonVersionString);
 
     if (isCsvFormat) {
         fprintf(stderr, "%s", message);

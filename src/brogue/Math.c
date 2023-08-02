@@ -29,7 +29,7 @@
 #include "GlobalsBase.h"
 
 
-    // Random number generation
+// Random number generation
 
 short randClump(randomRange theRange) {
     return randClumpedRange(theRange.lowerBound, theRange.upperBound, theRange.clumpFactor);
@@ -191,7 +191,7 @@ uint64_t seedRandomGenerator(uint64_t seed) {
 }
 
 
-    // Fixed-point arithmetic
+// Fixed-point arithmetic
 
 fixpt fp_round(fixpt x) {
     long long div = x / FP_FACTOR, rem = x % FP_FACTOR;

@@ -18,36 +18,36 @@ boolean isCsvFormat = false;
 
 static void printCommandlineHelp() {
     printf("%s",
-    "--help         -h          print this help message and exit \n"
-    "--version      -V          print the version and exit\n"
-    "--scores                   dump scores to output and exit\n"
-    "-n                         start a new game, skipping the menu\n"
-    "-s seed                    start a new game with the specified numerical seed\n"
-    "-o filename[.broguesave]   open a save file (extension optional)\n"
-    "-v recording[.broguerec]   view a recording (extension optional)\n"
-    "-vn recording[.broguerec]  view a recording non-interactively (extension optional)\n"
+        "--help         -h          print this help message and exit \n"
+        "--version      -V          print the version and exit\n"
+        "--scores                   dump scores to output and exit\n"
+        "-n                         start a new game, skipping the menu\n"
+        "-s seed                    start a new game with the specified numerical seed\n"
+        "-o filename[.broguesave]   open a save file (extension optional)\n"
+        "-v recording[.broguerec]   view a recording (extension optional)\n"
+        "-vn recording[.broguerec]  view a recording non-interactively (extension optional)\n"
 #ifdef BROGUE_WEB
-    "--server-mode              run the game in web-brogue server mode\n"
+        "--server-mode              run the game in web-brogue server mode\n"
 #endif
 #ifdef BROGUE_SDL
-    "--size N                   starts the game at font size N (1 to 20)\n"
-    "--graphics     -G          enable graphical tiles\n"
-    "--hybrid       -H          enable hybrid graphics\n"
-    "--full-screen  -F          enable full screen\n"
-    "--no-gpu                   disable hardware-accelerated graphics and HiDPI\n"
+        "--size N                   starts the game at font size N (1 to 20)\n"
+        "--graphics     -G          enable graphical tiles\n"
+        "--hybrid       -H          enable hybrid graphics\n"
+        "--full-screen  -F          enable full screen\n"
+        "--no-gpu                   disable hardware-accelerated graphics and HiDPI\n"
 #endif
 #ifdef BROGUE_CURSES
-    "--term         -t          run in ncurses-based terminal mode\n"
+        "--term         -t          run in ncurses-based terminal mode\n"
 #endif
-    "--variant variant_name     run a variant game (options: rapid_brogue)\n"
-    "--stealth      -S          display stealth range\n"
-    "--no-effects   -E          disable color effects\n"
-    "--wizard       -W          run in wizard mode, invincible with powerful items\n"
-    "[--csv] --print-seed-catalog [START NUM LEVELS]\n"
-    "                           (optional csv format)\n"
-    "                           prints a catalog of the first LEVELS levels of NUM\n"
-    "                           seeds from seed START (defaults: 1 1000 5)\n"
-    "--data-dir DIRECTORY       specify directory containing game resources (experimental)\n"
+        "--variant variant_name     run a variant game (options: rapid_brogue)\n"
+        "--stealth      -S          display stealth range\n"
+        "--no-effects   -E          disable color effects\n"
+        "--wizard       -W          run in wizard mode, invincible with powerful items\n"
+        "[--csv] --print-seed-catalog [START NUM LEVELS]\n"
+        "                           (optional csv format)\n"
+        "                           prints a catalog of the first LEVELS levels of NUM\n"
+        "                           seeds from seed START (defaults: 1 1000 5)\n"
+        "--data-dir DIRECTORY       specify directory containing game resources (experimental)\n"
     );
     return;
 }
@@ -71,14 +71,14 @@ boolean tryParseUint64(char *str, uint64_t *num) {
     }
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 
 #if 0
 #define TOD(x)  ((double) (x) / FP_FACTOR)
     fixpt y, x1 = 1, x2 = FP_FACTOR * 70 / 100;
     for (int i=0; i < 10; i++) {
-        y = fp_pow(x2, x1); printf("%.5f ^ %i = %.5f  (%lli)\n", TOD(x2), x1, TOD(y), y);
+        y = fp_pow(x2, x1);
+        printf("%.5f ^ %i = %.5f  (%lli)\n", TOD(x2), x1, TOD(y), y);
         // y = fp_sqrt(x1); printf("sqrt(%.5f) = %.5f  (%lli)\n", TOD(x1), TOD(y), y);
         x1 += 1;
     }
@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
                 continue;
             }
         }
-        
+
         if (strcmp(argv[i], "-vn") == 0) {
             if (i + 1 < argc) {
                 strncpy(rogue.nextGamePath, argv[i + 1], BROGUE_FILENAME_MAX);
@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
                 unsigned int numberOfLevels = atol(argv[i + 3]);
 
                 if (tryParseUint64(argv[i+1], &startingSeed) && tryParseUint64(argv[i+2], &numberOfSeeds)
-                        && startingSeed > 0 && numberOfLevels <= 40) {
+                    && startingSeed > 0 && numberOfLevels <= 40) {
                     printSeedCatalog(startingSeed, numberOfSeeds, numberOfLevels, isCsvFormat);
                     return 0;
                 }

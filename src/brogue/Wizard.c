@@ -37,9 +37,9 @@ void initializeCreateItemButton(brogueButton *button, char *text) {
 
 // Display a dialog window for the user to select a single entry from a list
 static short dialogSelectEntryFromList(
-        brogueButton *buttons,
-        short buttonCount,
-        char *windowTitle
+    brogueButton *buttons,
+    short buttonCount,
+    char *windowTitle
 ) {
 
     short x=0, y=0, width=0, height=0;
@@ -73,7 +73,7 @@ static short dialogSelectEntryFromList(
     clearDisplayBuffer(dbuf);
 
     //Dialog Title
-    printString(windowTitle, x , y - 1, &itemMessageColor, &interfaceBoxColor, dbuf);
+    printString(windowTitle, x, y - 1, &itemMessageColor, &interfaceBoxColor, dbuf);
     //Dialog background
     rectangularShading(x - 1, y - 1, width + 1, height + 1, &interfaceBoxColor, INTERFACE_OPACITY, dbuf);
     //Display the title/background and save the prior display state
@@ -102,7 +102,7 @@ static short dialogCreateItemChooseVorpalEnemy() {
 
 // Display a dialog window for the user to select a runic for the given armor or weapon.
 // Assigns the selected runic and vorpal enemy (if applicable) to the item. No return value.
-static void dialogCreateItemChooseRunic(item *theItem){
+static void dialogCreateItemChooseRunic(item *theItem) {
     char buttonText[COLS];
     short i=0, runicOffset =0, noRunic, selectedRunic, selectedVorpalEnemy;
     brogueButton buttons[DIALOG_CREATE_ITEM_MAX_BUTTONS];
@@ -413,7 +413,7 @@ static void dialogCreateMonster() {
         if (!(theMonster->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))
             || theMonster->info.monsterID == MK_PHOENIX_EGG
             || theMonster->info.monsterID == MK_PHYLACTERY
-                ) {
+        ) {
             sprintf(theMessage, "Make the %s your ally?", theMonster->info.monsterName);
             if (confirm(theMessage, false)) {
                 becomeAllyWith(theMonster);

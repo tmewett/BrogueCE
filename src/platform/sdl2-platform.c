@@ -174,7 +174,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
                 resizeWindow(max(windowWidth * 10/11, 1), max(windowHeight * 10/11, 1));
                 continue;
             } else if (key == SDLK_F11 || key == SDLK_F12
-                    || key == SDLK_RETURN && (SDL_GetModState() & KMOD_ALT)) {
+                || key == SDLK_RETURN && (SDL_GetModState() & KMOD_ALT)) {
                 fullScreen = !fullScreen;
                 resizeWindow(-1, -1);  // Reset to starting resolution
                 continue;
@@ -348,27 +348,48 @@ static int fontIndex(enum displayGlyph glyph) {
     } else {
         unsigned int code = glyphToUnicode(glyph);
         switch (code) {
-            case U_MIDDLE_DOT: return 0x80;
-            case U_FOUR_DOTS: return 0x81;
-            case U_DIAMOND: return 0x82;
-            case U_FLIPPED_V: return 0x83;
-            case U_ARIES: return 0x84;
-            case U_ESZETT: return 0xdf;
-            case U_ANKH: return 0x85;
-            case U_MUSIC_NOTE: return 0x86;
-            case U_CIRCLE: return 0x87;
-            case U_LIGHTNING_BOLT: return 0x99;
-            case U_FILLED_CIRCLE: return 0x89;
-            case U_NEUTER: return 0x8a;
-            case U_U_ACUTE: return 0xda;
-            case U_CURRENCY: return 0xa4;
-            case U_UP_ARROW: return 0x90;
-            case U_DOWN_ARROW: return 0x91;
-            case U_LEFT_ARROW: return 0x92;
-            case U_RIGHT_ARROW: return 0x93;
-            case U_OMEGA: return 0x96;
-            case U_CIRCLE_BARS: return 0x8c;
-            case U_FILLED_CIRCLE_BARS: return 0x8d;
+            case U_MIDDLE_DOT:
+                return 0x80;
+            case U_FOUR_DOTS:
+                return 0x81;
+            case U_DIAMOND:
+                return 0x82;
+            case U_FLIPPED_V:
+                return 0x83;
+            case U_ARIES:
+                return 0x84;
+            case U_ESZETT:
+                return 0xdf;
+            case U_ANKH:
+                return 0x85;
+            case U_MUSIC_NOTE:
+                return 0x86;
+            case U_CIRCLE:
+                return 0x87;
+            case U_LIGHTNING_BOLT:
+                return 0x99;
+            case U_FILLED_CIRCLE:
+                return 0x89;
+            case U_NEUTER:
+                return 0x8a;
+            case U_U_ACUTE:
+                return 0xda;
+            case U_CURRENCY:
+                return 0xa4;
+            case U_UP_ARROW:
+                return 0x90;
+            case U_DOWN_ARROW:
+                return 0x91;
+            case U_LEFT_ARROW:
+                return 0x92;
+            case U_RIGHT_ARROW:
+                return 0x93;
+            case U_OMEGA:
+                return 0x96;
+            case U_CIRCLE_BARS:
+                return 0x8c;
+            case U_FILLED_CIRCLE_BARS:
+                return 0x8d;
 
             default:
                 brogueAssert(code < 256);

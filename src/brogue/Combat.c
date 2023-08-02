@@ -156,7 +156,7 @@ void addMonsterToContiguousMonsterGrid(short x, short y, creature *monst, char g
         newY = y + nbDirs[dir][1];
 
         if (coordinatesAreInMap(newX, newY) && !grid[newX][newY]) {
-            tempMonst = monsterAtLoc((pos){ newX, newY });
+            tempMonst = monsterAtLoc((pos) { newX, newY });
             if (tempMonst && monstersAreTeammates(monst, tempMonst)) {
                 addMonsterToContiguousMonsterGrid(newX, newY, monst, grid);
             }
@@ -198,7 +198,7 @@ void splitMonster(creature *monst, pos loc) {
                         && !eligibleGrid[newX][newY]
                         && !monsterGrid[newX][newY]
                         && !(pmap[newX][newY].flags & (HAS_PLAYER | HAS_MONSTER))
-                        && !monsterAvoids(monst, (pos){ newX, newY })) {
+                    && !monsterAvoids(monst, (pos) { newX, newY })) {
 
                         eligibleGrid[newX][newY] = true;
                         eligibleLocationCount++;
@@ -246,7 +246,7 @@ void splitMonster(creature *monst, pos loc) {
                         clone->status[STATUS_LEVITATING] = 0;
                     }
 
-                    clone->loc = (pos){.x = i, .y = j};
+                    clone->loc = (pos) {.x = i, .y = j};
                     pmap[i][j].flags |= HAS_MONSTER;
                     clone->ticksUntilTurn = max(clone->ticksUntilTurn, 101);
                     fadeInMonster(clone);
@@ -316,7 +316,7 @@ void moralAttack(creature *attacker, creature *defender) {
 
         if (defender->status[STATUS_PARALYZED]) {
             defender->status[STATUS_PARALYZED] = 0;
-             // Paralyzed creature gets a turn to react before the attacker moves again.
+            // Paralyzed creature gets a turn to react before the attacker moves again.
             defender->ticksUntilTurn = min(attacker->attackSpeed, 100) - 1;
         }
         if (defender->status[STATUS_MAGICAL_FEAR]) {
@@ -406,7 +406,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
             player.maxStatus[STATUS_HALLUCINATING] = max(player.maxStatus[STATUS_HALLUCINATING], player.status[STATUS_HALLUCINATING]);
         }
         if (attacker->info.abilityFlags & MA_HIT_BURN
-             && !defender->status[STATUS_IMMUNE_TO_FIRE]) {
+            && !defender->status[STATUS_IMMUNE_TO_FIRE]) {
 
             exposeCreatureToFire(defender);
         }
@@ -493,7 +493,7 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
     monsterName(monstName, defender, true);
 
     pos oldLoc = defender->loc;
-    pos newLoc = (pos){
+    pos newLoc = (pos) {
         .x = defender->loc.x + clamp(defender->loc.x - player.loc.x, -1, 1),
         .y = defender->loc.y + clamp(defender->loc.y - player.loc.y, -1, 1)
     };
@@ -513,7 +513,7 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
         && distanceBetween(oldLoc, defender->loc) < weaponForceDistance(netEnchant(theItem))) {
 
         if (pmap[defender->loc.x + newLoc.x - oldLoc.x][defender->loc.y + newLoc.y - oldLoc.y].flags & (HAS_MONSTER | HAS_PLAYER)) {
-            otherMonster = monsterAtLoc((pos){ defender->loc.x + newLoc.x - oldLoc.x, defender->loc.y + newLoc.y - oldLoc.y });
+            otherMonster = monsterAtLoc((pos) { defender->loc.x + newLoc.x - oldLoc.x, defender->loc.y + newLoc.y - oldLoc.y });
             monsterName(buf2, otherMonster, true);
         } else {
             otherMonster = NULL;
@@ -528,9 +528,9 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
             if (canDirectlySeeMonster(defender)) {
                 knowFirstMonsterDied = true;
                 sprintf(buf, "%s %s on impact with %s",
-                        monstName,
-                        (defender->info.flags & MONST_INANIMATE) ? "is destroyed" : "dies",
-                        buf2);
+                    monstName,
+                    (defender->info.flags & MONST_INANIMATE) ? "is destroyed" : "dies",
+                    buf2);
                 buf[DCOLS] = '\0';
                 combatMessage(buf, messageColorFromVictim(defender));
                 autoID = true;
@@ -539,8 +539,8 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
         } else {
             if (canDirectlySeeMonster(defender)) {
                 sprintf(buf, "%s slams against %s",
-                        monstName,
-                        buf2);
+                    monstName,
+                    buf2);
                 buf[DCOLS] = '\0';
                 combatMessage(buf, messageColorFromVictim(defender));
                 autoID = true;
@@ -554,10 +554,10 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
             if (inflictDamage(NULL, otherMonster, forceDamage, &white, false)) {
                 if (canDirectlySeeMonster(otherMonster)) {
                     sprintf(buf, "%s %s%s when %s slams into $HIMHER",
-                            buf2,
-                            (knowFirstMonsterDied ? "also " : ""),
-                            (defender->info.flags & MONST_INANIMATE) ? "is destroyed" : "dies",
-                            monstName);
+                        buf2,
+                        (knowFirstMonsterDied ? "also " : ""),
+                        (defender->info.flags & MONST_INANIMATE) ? "is destroyed" : "dies",
+                        monstName);
                     resolvePronounEscapes(buf, otherMonster);
                     buf[DCOLS] = '\0';
                     combatMessage(buf, messageColorFromVictim(otherMonster));
@@ -578,7 +578,8 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
     char buf[DCOLS*3], monstName[DCOLS], theItemName[DCOLS];
 
     const color *effectColors[NUMBER_WEAPON_RUNIC_KINDS] = {&white, &black,
-        &yellow, &pink, &green, &confusionGasColor, NULL, NULL, &darkRed, &rainbow};
+            &yellow, &pink, &green, &confusionGasColor, NULL, NULL, &darkRed, &rainbow
+        };
     //  W_SPEED, W_QUIETUS, W_PARALYSIS, W_MULTIPLICITY, W_SLOWING, W_CONFUSION, W_FORCE, W_SLAYING, W_MERCY, W_PLENTY
     short chance, i;
     fixpt enchant;
@@ -642,8 +643,8 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
             case W_QUIETUS:
                 inflictLethalDamage(&player, defender);
                 sprintf(buf, "%s suddenly %s",
-                        monstName,
-                        (defender->info.flags & MONST_INANIMATE) ? "shatters" : "dies");
+                    monstName,
+                    (defender->info.flags & MONST_INANIMATE) ? "shatters" : "dies");
                 buf[DCOLS] = '\0';
                 combatMessage(buf, messageColorFromVictim(defender));
                 killCreature(defender, false);
@@ -661,17 +662,17 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
                 break;
             case W_MULTIPLICITY:
                 sprintf(buf, "Your %s emits a flash of light, and %sspectral duplicate%s appear%s!",
-                        theItemName,
-                        (weaponImageCount(enchant) == 1 ? "a " : ""),
-                        (weaponImageCount(enchant) == 1 ? "" : "s"),
-                        (weaponImageCount(enchant) == 1 ? "s" : ""));
+                    theItemName,
+                    (weaponImageCount(enchant) == 1 ? "a " : ""),
+                    (weaponImageCount(enchant) == 1 ? "" : "s"),
+                    (weaponImageCount(enchant) == 1 ? "s" : ""));
                 buf[DCOLS] = '\0';
 
                 for (i = 0; i < (weaponImageCount(enchant)); i++) {
                     newMonst = generateMonster(MK_SPECTRAL_IMAGE, true, false);
                     getQualifyingPathLocNear(&(newMonst->loc.x), &(newMonst->loc.y), defender->loc.x, defender->loc.y, true,
-                                             T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(newMonst->info)), HAS_PLAYER,
-                                             avoidedFlagsForMonster(&(newMonst->info)), (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
+                        T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(newMonst->info)), HAS_PLAYER,
+                        avoidedFlagsForMonster(&(newMonst->info)), (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
                     newMonst->bookkeepingFlags |= (MB_FOLLOWER | MB_BOUND_TO_LEADER | MB_DOES_NOT_TRACK_LEADER | MB_TELEPATHICALLY_REVEALED);
                     newMonst->bookkeepingFlags &= ~MB_JUST_SUMMONED;
                     newMonst->leader = &player;
@@ -823,7 +824,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
                     monst->info.flags |= MONST_DIES_IF_NEGATED;
                     monst->bookkeepingFlags &= ~(MB_JUST_SUMMONED | MB_SEIZED | MB_SEIZING);
                     monst->info.abilityFlags &= ~(MA_CAST_SUMMON | MA_DF_ON_DEATH); // No summoning by spectral images. Gotta draw the line!
-                                                                                    // Also no exploding or infecting by spectral clones.
+                    // Also no exploding or infecting by spectral clones.
                     monst->leader = &player;
                     monst->creatureState = MONSTER_ALLY;
                     monst->status[STATUS_DISCORDANT] = 0; // Otherwise things can get out of control...
@@ -866,7 +867,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
                     newX = player.loc.x + nbDirs[dir][0];
                     newY = player.loc.y + nbDirs[dir][1];
                     if (coordinatesAreInMap(newX, newY) && (pmap[newX][newY].flags & HAS_MONSTER)) {
-                        monst = monsterAtLoc((pos){ newX, newY });
+                        monst = monsterAtLoc((pos) { newX, newY });
                         if (monst
                             && monst != attacker
                             && monstersAreEnemies(&player, monst)
@@ -894,8 +895,8 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
                     runicDiscovered = true;
                     if (!runicKnown) {
                         sprintf(returnString, "Your %s pulses, and the damage is shared with %s!",
-                                armorName,
-                                (count == 1 ? monstName : "the other adjacent enemies"));
+                            armorName,
+                            (count == 1 ? monstName : "the other adjacent enemies"));
                     }
                     *damage = (*damage + count) / (count + 1);
                 }
@@ -1075,7 +1076,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
     if (sneakAttack || defenderWasAsleep || defenderWasParalyzed || lungeAttack || attackHit(attacker, defender)) {
         // If the attack hit:
         damage = (defender->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE)
-                  ? 0 : randClump(attacker->info.damage) * monsterDamageAdjustmentAmount(attacker) / FP_FACTOR);
+                ? 0 : randClump(attacker->info.damage) * monsterDamageAdjustmentAmount(attacker) / FP_FACTOR);
 
         if (sneakAttack || defenderWasAsleep || defenderWasParalyzed) {
             if (defender != &player) {
@@ -1131,8 +1132,8 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
             strcpy(explicationClause, ", catching $HIMHER unaware");
         } else if (defender->status[STATUS_STUCK] || defender->bookkeepingFlags & MB_CAPTIVE) {
             sprintf(explicationClause, " while %s dangle%s helplessly",
-                    (canSeeMonster(defender) ? "$HESHE" : "it"),
-                    (defender == &player ? "" : "s"));
+                (canSeeMonster(defender) ? "$HESHE" : "it"),
+                (defender == &player ? "" : "s"));
         }
         resolvePronounEscapes(explicationClause, defender);
 
@@ -1144,15 +1145,15 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
         if (inflictDamage(attacker, defender, damage, &red, false)) { // if the attack killed the defender
             if (defenderWasAsleep || sneakAttack || defenderWasParalyzed || lungeAttack) {
                 sprintf(buf, "%s %s %s%s", attackerName,
-                        ((defender->info.flags & MONST_INANIMATE) ? "destroyed" : "dispatched"),
-                        defenderName,
-                        explicationClause);
+                    ((defender->info.flags & MONST_INANIMATE) ? "destroyed" : "dispatched"),
+                    defenderName,
+                    explicationClause);
             } else {
                 sprintf(buf, "%s %s %s%s",
-                        attackerName,
-                        ((defender->info.flags & MONST_INANIMATE) ? "destroyed" : "defeated"),
-                        defenderName,
-                        explicationClause);
+                    attackerName,
+                    ((defender->info.flags & MONST_INANIMATE) ? "destroyed" : "defeated"),
+                    defenderName,
+                    explicationClause);
             }
             if (sightUnseen) {
                 if (defender->info.flags & MONST_INANIMATE) {
@@ -1168,14 +1169,14 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
                 gameOver(attacker->info.monsterName, false);
                 return true;
             } else if (&player == attacker
-                       && defender->info.monsterID == MK_DRAGON) {
+                && defender->info.monsterID == MK_DRAGON) {
 
                 rogue.featRecord[FEAT_DRAGONSLAYER] = true;
             }
         } else { // if the defender survived
             if (!rogue.blockCombatText && (canSeeMonster(attacker) || canSeeMonster(defender))) {
                 attackVerb(verb, attacker, max(damage - (attacker->info.damage.lowerBound * monsterDamageAdjustmentAmount(attacker) / FP_FACTOR), 0) * 100
-                           / max(1, (attacker->info.damage.upperBound - attacker->info.damage.lowerBound) * monsterDamageAdjustmentAmount(attacker) / FP_FACTOR));
+                    / max(1, (attacker->info.damage.upperBound - attacker->info.damage.lowerBound) * monsterDamageAdjustmentAmount(attacker) / FP_FACTOR));
                 sprintf(buf, "%s %s %s%s", attackerName, verb, defenderName, explicationClause);
                 if (sightUnseen) {
                     if (!rogue.heardCombatThisTurn) {
@@ -1217,7 +1218,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
             && attacker == &player
             && rogue.weapon
             && !(rogue.weapon->flags & ITEM_PROTECTED)
-                // Can't damage a Weapon of Acid Mound Slaying by attacking an acid mound... just ain't right!
+            // Can't damage a Weapon of Acid Mound Slaying by attacking an acid mound... just ain't right!
             && !((rogue.weapon->flags & ITEM_RUNIC) && rogue.weapon->enchant2 == W_SLAYING && monsterIsInClass(defender, rogue.weapon->vorpalEnemy))
             && rogue.weapon->enchant1 >= -10) {
 
@@ -1380,13 +1381,13 @@ boolean anyoneWantABite(creature *decedent) {
     short **grid;
     boolean success = false;
     boolean *ourBolts;
-    
+
     ourBolts = (boolean *)calloc(gameConst->numberBoltKinds, sizeof(boolean));
 
     candidates = 0;
     if ((!(decedent->info.abilityFlags & LEARNABLE_ABILITIES)
-         && !(decedent->info.flags & LEARNABLE_BEHAVIORS)
-         && decedent->info.bolts[0] == BOLT_NONE)
+            && !(decedent->info.flags & LEARNABLE_BEHAVIORS)
+            && decedent->info.bolts[0] == BOLT_NONE)
         || (cellHasTerrainFlag(decedent->loc.x, decedent->loc.y, T_PATHING_BLOCKER))
         || decedent->info.monsterID == MK_SPECTRAL_IMAGE
         || (decedent->info.flags & (MONST_INANIMATE | MONST_IMMOBILE))) {
@@ -1494,7 +1495,7 @@ void inflictLethalDamage(creature *attacker, creature *defender) {
 // returns true if this was a killing stroke; does NOT call killCreature
 // flashColor indicates the color that the damage will cause the creature to flash
 boolean inflictDamage(creature *attacker, creature *defender,
-                      short damage, const color *flashColor, boolean ignoresProtectionShield) {
+    short damage, const color *flashColor, boolean ignoresProtectionShield) {
     dungeonFeature theBlood;
     short transferenceAmount;
 
@@ -1745,7 +1746,7 @@ void buildHitList(creature **hitList, const creature *attacker, creature *defend
             newestX = x + cDirs[newDir][0];
             newestY = y + cDirs[newDir][1];
             if (coordinatesAreInMap(newestX, newestY) && (pmap[newestX][newestY].flags & (HAS_MONSTER | HAS_PLAYER))) {
-                defender = monsterAtLoc((pos){ newestX, newestY });
+                defender = monsterAtLoc((pos) { newestX, newestY });
                 if (defender
                     && monsterWillAttackTarget(attacker, defender)
                     && (!cellHasTerrainFlag(defender->loc.x, defender->loc.y, T_OBSTRUCTS_PASSABILITY) || (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS))) {

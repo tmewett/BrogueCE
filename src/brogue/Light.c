@@ -84,7 +84,7 @@ boolean paintLight(const lightSource *theLight, short x, short y, boolean isMine
     }
 
     getFOVMask(grid, x, y, radius, T_OBSTRUCTS_VISION, (theLight->passThroughCreatures ? 0 : (HAS_MONSTER | HAS_PLAYER)),
-               (!isMinersLight));
+        (!isMinersLight));
 
     overlappedFieldOfView = false;
 

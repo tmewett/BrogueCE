@@ -59,7 +59,7 @@ void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3
             }
 
             if (mask[i][j] == 100) {
-                plotCharWithColor(dchar, (windowpos){ i, j }, &veryDarkGray, maskColor);
+                plotCharWithColor(dchar, (windowpos) { i, j }, &veryDarkGray, maskColor);
             } else {
                 tempColor = black;
                 tempColor.red   = flames[i][j][0] / MENU_FLAME_PRECISION_FACTOR;
@@ -68,15 +68,15 @@ void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3
                 if (mask[i][j] > 0) {
                     applyColorAverage(&tempColor, maskColor, mask[i][j]);
                 }
-                plotCharWithColor(dchar, (windowpos){ i, j }, &veryDarkGray, &tempColor);
+                plotCharWithColor(dchar, (windowpos) { i, j }, &veryDarkGray, &tempColor);
             }
         }
     }
 }
 
 void updateMenuFlames(const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)],
-                      signed short colorSources[MENU_FLAME_COLOR_SOURCE_COUNT][4],
-                      signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3]) {
+    signed short colorSources[MENU_FLAME_COLOR_SOURCE_COUNT][4],
+    signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3]) {
 
     short i, j, k, l, x, y;
     signed short tempFlames[COLS][3];
@@ -162,7 +162,7 @@ void antiAlias(unsigned char mask[COLS][ROWS]) {
                 for (dir=0; dir<4; dir++) {
                     x = i + nbDirs[dir][0];
                     y = j + nbDirs[dir][1];
-                    if (locIsInWindow((windowpos){ x, y }) && mask[x][y] == 100) {
+                    if (locIsInWindow((windowpos) { x, y }) && mask[x][y] == 100) {
                         nbCount++;
                     }
                 }
@@ -173,11 +173,11 @@ void antiAlias(unsigned char mask[COLS][ROWS]) {
 }
 
 void initializeMenuFlames(boolean includeTitle,
-                          const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)],
-                          color colorStorage[COLS],
-                          signed short colorSources[MENU_FLAME_COLOR_SOURCE_COUNT][4],
-                          signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3],
-                          unsigned char mask[COLS][ROWS]) {
+    const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)],
+    color colorStorage[COLS],
+    signed short colorSources[MENU_FLAME_COLOR_SOURCE_COUNT][4],
+    signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3],
+    unsigned char mask[COLS][ROWS]) {
     short i, j, k, colorSourceCount;
 
     for (i=0; i<COLS; i++) {
@@ -567,12 +567,12 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
 //          }
 
             i = buttonInputLoop(buttons,
-                                min(count - currentPageStart, FILES_ON_PAGE_MAX) + (count > FILES_ON_PAGE_MAX ? 2 : 0),
-                                x,
-                                y,
-                                width,
-                                height,
-                                NULL);
+                    min(count - currentPageStart, FILES_ON_PAGE_MAX) + (count > FILES_ON_PAGE_MAX ? 2 : 0),
+                    x,
+                    y,
+                    width,
+                    height,
+                    NULL);
 
 //          for (j=0; j<min(count - currentPageStart, FILES_ON_PAGE_MAX); j++) {
 //              strftime(fileDate, sizeof(fileDate), DATE_FORMAT, &files[currentPageStart+j].date);
@@ -634,7 +634,7 @@ void mainBrogueJunction() {
                 displayBuffer[i][j].foreColorComponents[k] = 0;
                 displayBuffer[i][j].backColorComponents[k] = 0;
             }
-            plotCharWithColor(' ', (windowpos){ i, j }, &black, &black);
+            plotCharWithColor(' ', (windowpos) { i, j }, &black, &black);
         }
     }
 
@@ -672,11 +672,11 @@ void mainBrogueJunction() {
                             sprintf(seedDefault, "%llu", (unsigned long long)previousGameSeed);
                         }
                         if (getInputTextString(buf, "Generate dungeon with seed number:",
-                                               20, // length of "18446744073709551615" (2^64 - 1)
-                                               seedDefault,
-                                               "",
-                                               TEXT_INPUT_NUMBERS,
-                                               true)
+                                20, // length of "18446744073709551615" (2^64 - 1)
+                                seedDefault,
+                                "",
+                                TEXT_INPUT_NUMBERS,
+                                true)
                             && buf[0] != '\0') {
                             if (!tryParseUint64(buf, &rogue.nextGameSeed)) {
                                 // seed is too large, default to the largest possible seed

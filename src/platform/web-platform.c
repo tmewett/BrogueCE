@@ -30,8 +30,7 @@
 //Custom events
 #define REFRESH_SCREEN 50
 
-enum StatusTypes
-{
+enum StatusTypes {
     DEEPEST_LEVEL_STATUS,
     GOLD_STATUS,
     SEED_STATUS,
@@ -72,8 +71,7 @@ static void gameLoop() {
 
 static void openLogfile() {
     logfile = fopen("brogue-web.txt", "a");
-    if (logfile == NULL)
-    {
+    if (logfile == NULL) {
         fprintf(stderr, "Logfile not created, errno = %d\n", errno);
     }
 }
@@ -128,8 +126,7 @@ static void flushOutputBuffer() {
     outputBufferPos = 0;
 }
 
-static void writeToSocket(unsigned char *buf, int size)
-{
+static void writeToSocket(unsigned char *buf, int size) {
     if (outputBufferPos + size > OUTPUT_BUFFER_SIZE) {
         flushOutputBuffer();
     }
@@ -141,18 +138,23 @@ static void writeToSocket(unsigned char *buf, int size)
 // Map characters which are missing or rendered as emoji on some platforms
 static unsigned int fixUnicode(unsigned int code) {
     switch (code) {
-        case U_ARIES: return 0x03C8;
-        case U_CIRCLE: return 'o';
-        case U_CIRCLE_BARS: return 0x25C6;
-        case U_FILLED_CIRCLE_BARS: return 0x25C7;
-        default: return code;
+        case U_ARIES:
+            return 0x03C8;
+        case U_CIRCLE:
+            return 'o';
+        case U_CIRCLE_BARS:
+            return 0x25C6;
+        case U_FILLED_CIRCLE_BARS:
+            return 0x25C7;
+        default:
+            return code;
     }
 }
 
 static void web_plotChar(enum displayGlyph inputChar,
-                         short xLoc, short yLoc,
-                         short foreRed, short foreGreen, short foreBlue,
-                         short backRed, short backGreen, short backBlue) {
+    short xLoc, short yLoc,
+    short foreRed, short foreGreen, short foreBlue,
+    short backRed, short backGreen, short backBlue) {
     unsigned char outputBuffer[OUTPUT_SIZE];
     unsigned char firstCharByte, secondCharByte;
     enum displayGlyph translatedChar;

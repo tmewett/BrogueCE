@@ -318,13 +318,13 @@ void randomLeastPositiveLocationInGrid(short **grid, short *x, short *y, boolean
 }
 
 boolean getQualifyingPathLocNear(short *retValX, short *retValY,
-                                 short x, short y,
-                                 boolean hallwaysAllowed,
-                                 unsigned long blockingTerrainFlags,
-                                 unsigned long blockingMapFlags,
-                                 unsigned long forbiddenTerrainFlags,
-                                 unsigned long forbiddenMapFlags,
-                                 boolean deterministic) {
+    short x, short y,
+    boolean hallwaysAllowed,
+    unsigned long blockingTerrainFlags,
+    unsigned long blockingMapFlags,
+    unsigned long forbiddenTerrainFlags,
+    unsigned long forbiddenMapFlags,
+    boolean deterministic) {
     short **grid, **costMap;
 
     // First check the given location to see if it works, as an optimization.
@@ -380,9 +380,9 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
     if (*retValX == -1 && *retValY == -1) {
         pos loc;
         if (getQualifyingLocNear(&loc, x, y, hallwaysAllowed, NULL,
-                                 (blockingTerrainFlags | forbiddenTerrainFlags),
-                                 (blockingMapFlags | forbiddenMapFlags),
-                                 false, deterministic)) {
+                (blockingTerrainFlags | forbiddenTerrainFlags),
+                (blockingMapFlags | forbiddenMapFlags),
+                false, deterministic)) {
             *retValX = loc.x;
             *retValY = loc.y;
             return true; // Found a fallback solution.
@@ -450,11 +450,11 @@ short fillContiguousRegion(short **grid, short x, short y, short fillValue) {
 
 // Loads up **grid with the results of a cellular automata simulation.
 void createBlobOnGrid(short **grid,
-                      short *retMinX, short *retMinY, short *retWidth, short *retHeight,
-                      short roundCount,
-                      short minBlobWidth, short minBlobHeight,
-                      short maxBlobWidth, short maxBlobHeight, short percentSeeded,
-                      char birthParameters[9], char survivalParameters[9]) {
+    short *retMinX, short *retMinY, short *retWidth, short *retHeight,
+    short roundCount,
+    short minBlobWidth, short minBlobHeight,
+    short maxBlobWidth, short maxBlobHeight, short percentSeeded,
+    char birthParameters[9], char survivalParameters[9]) {
 
     short i, j, k;
     short blobNumber, blobSize, topBlobNumber, topBlobSize;
@@ -560,8 +560,8 @@ void createBlobOnGrid(short **grid,
         blobHeight =    (topBlobMaxY - topBlobMinY) + 1;
 
     } while (blobWidth < minBlobWidth
-             || blobHeight < minBlobHeight
-             || topBlobNumber == 0);
+        || blobHeight < minBlobHeight
+        || topBlobNumber == 0);
 
     // Replace the winning blob with 1's, and everything else with 0's:
     for(i=0; i<DCOLS; i++) {
