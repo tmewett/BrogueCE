@@ -1,0 +1,7 @@
+indent=spaces=4
+style=attach
+keep-one-line-blocks
+min-conditional-indent=2
+indent-after-parens
+squeeze-lines=2
+indent-switches

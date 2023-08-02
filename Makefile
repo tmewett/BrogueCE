@@ -78,6 +78,9 @@ include make/*.mk
 clean:
 	$(warning 'make clean' is no longer needed in many situations, so is not supported. Use 'make -B' to force rebuild something.)
 
+format:
+	astyle -n --project -r 'src/*.c' 'src/*.h'
+
 escape = $(subst ','\'',$(1))
 vars:
 	mkdir -p vars
