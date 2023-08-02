@@ -2358,14 +2358,10 @@ void attachRooms(short **grid, const dungeonProfile *theDP, short attempts, shor
         if (D_INSPECT_LEVELGEN) {
             colorOverDungeon(&darkGray);
             hiliteGrid(roomMap, &blue, 100);
-            if (doorSites[0].x != -1)
-                plotCharWithColor('^', mapToWindow(doorSites[0]), &black, &green);
-            if (doorSites[1].x != -1)
-                plotCharWithColor('v', mapToWindow(doorSites[1]), &black, &green);
-            if (doorSites[2].x != -1)
-                plotCharWithColor('<', mapToWindow(doorSites[2]), &black, &green);
-            if (doorSites[3].x != -1)
-                plotCharWithColor('>', mapToWindow(doorSites[3]), &black, &green);
+            if (doorSites[0].x != -1) plotCharWithColor('^', mapToWindow(doorSites[0]), &black, &green);
+            if (doorSites[1].x != -1) plotCharWithColor('v', mapToWindow(doorSites[1]), &black, &green);
+            if (doorSites[2].x != -1) plotCharWithColor('<', mapToWindow(doorSites[2]), &black, &green);
+            if (doorSites[3].x != -1) plotCharWithColor('>', mapToWindow(doorSites[3]), &black, &green);
             temporaryMessage("Generating this room:", REQUIRE_ACKNOWLEDGMENT);
         }
 

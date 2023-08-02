@@ -208,8 +208,7 @@ fixpt fp_round(fixpt x) {
 // Returns the bit position of the most significant bit of x, where the unit
 // bit has position 1. Returns 0 if x=0.
 static int msbpos(unsigned long long x) {
-    if (x == 0)
-        return 0;
+    if (x == 0) return 0;
     int n = 0;
     do {
         n += 1;
@@ -236,8 +235,7 @@ fixpt fp_sqrt(fixpt u) {
            668339, 671545, 674735, 677909, 681071, 684215, 687347, 690465, 693567, 696657, 699733, 702795, 705845,
            708881, 711903, 714913, 717911, 720896, 723869, 726829, 729779, 732715, 735639, 738553};
 
-    if (u < 0)
-        return -fp_sqrt(-u);
+    if (u < 0) return -fp_sqrt(-u);
 
     if ((u & (127LL << FP_BASE)) == u) {
         // u is an integer between 0 and 127
@@ -273,8 +271,7 @@ fixpt fp_sqrt(fixpt u) {
 
 // Returns base to the power of expn
 fixpt fp_pow(fixpt base, int expn) {
-    if (base == 0)
-        return 0;
+    if (base == 0) return 0;
 
     if (expn < 0) {
         base = FP_DIV(FP_FACTOR, base);

@@ -105,8 +105,7 @@ static void curses_plotChar(enum displayGlyph ch, short xLoc, short yLoc, short 
 
     ch = glyphToAscii(ch);
 
-    if (ch < ' ' || ch > 127)
-        ch = ' ';
+    if (ch < ' ' || ch > 127) ch = ' ';
     Term.put(xLoc, yLoc, ch, &fore, &back);
 }
 
@@ -118,8 +117,7 @@ struct mapsymbol {
 static struct mapsymbol *keymap = NULL;
 
 static int rewriteKey(int key, boolean text) {
-    if (text)
-        return key;
+    if (text) return key;
 
     struct mapsymbol *s = keymap;
     while (s != NULL) {
@@ -177,16 +175,12 @@ static void curses_nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInpu
                 returnEvent->param1 = Term.mouse.x;
                 returnEvent->param2 = Term.mouse.y;
                 returnEvent->eventType = KEYSTROKE;
-                if (Term.mouse.justReleased)
-                    returnEvent->eventType = MOUSE_UP;
-                if (Term.mouse.justPressed)
-                    returnEvent->eventType = MOUSE_DOWN;
-                if (Term.mouse.justMoved)
-                    returnEvent->eventType = MOUSE_ENTERED_CELL;
+                if (Term.mouse.justReleased) returnEvent->eventType = MOUSE_UP;
+                if (Term.mouse.justPressed) returnEvent->eventType = MOUSE_DOWN;
+                if (Term.mouse.justMoved) returnEvent->eventType = MOUSE_ENTERED_CELL;
                 returnEvent->controlKey = Term.mouse.control;
                 returnEvent->shiftKey = Term.mouse.shift;
-                if (returnEvent->eventType != KEYSTROKE)
-                    return;
+                if (returnEvent->eventType != KEYSTROKE) return;
             }
         } else if (key != TERM_NONE) {
             key = rewriteKey(key, textInput);
@@ -234,8 +228,7 @@ static void curses_nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInpu
 static void curses_remap(const char *input_name, const char *output_name) {
     struct mapsymbol *sym = malloc(sizeof(*sym));
 
-    if (sym == NULL)
-        return; // out of memory?  seriously?
+    if (sym == NULL) return; // out of memory?  seriously?
 
     sym->in_c = Term.keycodeByName(input_name);
     sym->out_c = Term.keycodeByName(output_name);

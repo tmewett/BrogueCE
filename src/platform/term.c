@@ -112,8 +112,7 @@ static void term_show_scrollbar(int show) {
 }
 
 static int curses_init() {
-    if (videomode.curses)
-        return 0;
+    if (videomode.curses) return 0;
 
     // isterm?
     initscr();
@@ -213,8 +212,7 @@ static CIE toCIE(fcolor c) {
     cie.Z = 0.0193 * c.r + 0.1192 * c.g + 0.9505 * c.b;
 
     float sum = cie.X + cie.Y + cie.Z;
-    if (sum == 0.0)
-        sum = 1.0;
+    if (sum == 0.0) sum = 1.0;
     cie.x = cie.X / sum;
     cie.y = cie.Y / sum;
     cie.z = 1.0 - cie.x - cie.y;
@@ -427,8 +425,7 @@ static int coerce_prs(intcolor *fg, intcolor *bg) {
         if (delta < bestscore) {
             bestscore = delta;
             bestpair = pair;
-            if (delta == 1)
-                break; // as good as it gets without being exact!
+            if (delta == 1) break; // as good as it gets without being exact!
         }
         pair = prs[pair].next;
     }
@@ -535,8 +532,7 @@ static void buffer_render_24bit() {
             pairmode_cell *c = &cell_buffer[x + y * minsize.width];
 
             // `pair` is set to -1 when a tile changes, which signals we need to print it
-            if (!c->pair && !fullRefresh)
-                continue;
+            if (!c->pair && !fullRefresh) continue;
             c->pair = 0;
 
             // change background color
@@ -568,8 +564,7 @@ static void buffer_render_24bit() {
 }
 
 static void term_mvaddch(int x, int y, int ch, fcolor *fg, fcolor *bg) {
-    if (x < 0 || y < 0 || x >= minsize.width || y >= minsize.height)
-        return;
+    if (x < 0 || y < 0 || x >= minsize.width || y >= minsize.height) return;
 
     if (colormode == coerce_16) {
         int c = best(fg, bg);
@@ -589,12 +584,9 @@ static void term_refresh() {
             short r = palette[i].r * 1000;
             short g = palette[i].g * 1000;
             short b = palette[i].b * 1000;
-            if (r < 0)
-                r = 0;
-            if (g < 0)
-                g = 0;
-            if (b < 0)
-                b = 0;
+            if (r < 0) r = 0;
+            if (g < 0) g = 0;
+            if (b < 0) b = 0;
             init_color(i + 1, r, g, b);
         }
     }
@@ -650,8 +642,7 @@ static int term_getkey() {
             }
             return TERM_MOUSE;
         } else {
-            if (got == KEY_ENTER)
-                got = 13; // KEY_ENTER -> ^M for systems with odd values for KEY_ENTER
+            if (got == KEY_ENTER) got = 13; // KEY_ENTER -> ^M for systems with odd values for KEY_ENTER
             if (got == ERR)
                 return TERM_NONE;
             else
@@ -716,8 +707,7 @@ static void term_resize(int w, int h) {
 
     // make a new cell buffer
 
-    if (cell_buffer)
-        free(cell_buffer);
+    if (cell_buffer) free(cell_buffer);
     cell_buffer = malloc(sizeof(pairmode_cell) * w * h);
     // add error checking
     int i;

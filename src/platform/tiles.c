@@ -76,8 +76,7 @@ static void imgfatal(char *file, int line) {
 
 SDL_Surface *SDL_CreateRGBSurfaceWithFormat(Uint32 flags, int width, int height, int depth, Uint32 format) {
     Uint32 r, g, b, a;
-    if (!SDL_PixelFormatEnumToMasks(format, &depth, &r, &g, &b, &a))
-        sdlfatal(__FILE__, __LINE__);
+    if (!SDL_PixelFormatEnumToMasks(format, &depth, &r, &g, &b, &a)) sdlfatal(__FILE__, __LINE__);
     return SDL_CreateRGBSurface(flags, width, height, depth, r, g, b, a);
 }
 
@@ -179,8 +178,7 @@ static double downscaleTile(SDL_Surface *surface, int tileWidth, int tileHeight,
     double blur = 0;
 
     // if the tile is empty, we can skip the downscaling
-    if (tileEmpty[row][column])
-        goto downscaled;
+    if (tileEmpty[row][column]) goto downscaled;
 
     // decide how large we can draw the glyph
     if (processing == 's' || optimizing) {
@@ -291,8 +289,7 @@ static double downscaleTile(SDL_Surface *surface, int tileWidth, int tileHeight,
     // downscale source tile to accumulator
     for (int y0 = 0; y0 < TILE_HEIGHT; y0++) {
         int y1 = scaledY[y0];
-        if (y1 < 0 || y1 >= tileHeight)
-            continue;
+        if (y1 < 0 || y1 >= tileHeight) continue;
         uint64_t *dst = &values[y1 * tileWidth];
         Uint32 *src = TilesPNG->pixels; // each pixel is encoded as 0xffRRGGBB
         src += (column * TILE_WIDTH) + (row * TILE_HEIGHT + y0) * PNG_WIDTH;
@@ -312,8 +309,7 @@ downscaled:
     // procedural wall tops: diagonal sine waves
     if ((row == 16 && column == 2 || row == 21 && column == 1 || row == 22 && column == 4) && !optimizing) {
         for (int y = 0; y < tileHeight; y++) {
-            if (row != 21 && (y > tileHeight / 2 || (values[y * tileWidth] & 0xffffffffU)))
-                break;
+            if (row != 21 && (y > tileHeight / 2 || (values[y * tileWidth] & 0xffffffffU))) break;
             for (int x = 0; x < tileWidth; x++) {
                 double value
                     = sin(2. * PI * ((double)x / tileWidth * numHorizWaves + (double)y / tileHeight * numVertWaves))
@@ -335,8 +331,7 @@ downscaled:
             value = ((value >> 32) ? (value & 0xffffffffU) / (value >> 32) : 0);
 
             // metric for "blurriness": black (0) and white (255*255) pixels count for 0, gray pixels for 1
-            if (optimizing)
-                blur += sin(PI / (255 * 255) * value);
+            if (optimizing) blur += sin(PI / (255 * 255) * value);
 
             // make text look less bold, at the cost of accuracy
             if (processing == 't' || processing == '#') {
@@ -364,8 +359,7 @@ static void optimizeTiles() {
 
     for (int row = 0; row < TILE_ROWS; row++) {
         for (int column = 0; column < TILE_COLS; column++) {
-            if (tileEmpty[row][column])
-                continue;
+            if (tileEmpty[row][column]) continue;
             char processing = TileProcessing[row][column];
 
             // show what we are doing
@@ -374,16 +368,14 @@ static void optimizeTiles() {
                     TILE_ROWS * TILE_COLS);
             SDL_SetWindowTitle(window, title);
             SDL_Surface *winSurface = SDL_GetWindowSurface(window);
-            if (!winSurface)
-                sdlfatal(__FILE__, __LINE__);
+            if (!winSurface) sdlfatal(__FILE__, __LINE__);
             if (SDL_BlitSurface(
                     TilesPNG,
                     &(SDL_Rect){.x = column * TILE_WIDTH, .y = row * TILE_HEIGHT, .w = TILE_WIDTH, .h = TILE_HEIGHT},
                     winSurface, &(SDL_Rect){.x = 0, .y = 0, .w = TILE_WIDTH, .h = TILE_HEIGHT})
                 < 0)
                 sdlfatal(__FILE__, __LINE__);
-            if (SDL_UpdateWindowSurface(window) < 0)
-                sdlfatal(__FILE__, __LINE__);
+            if (SDL_UpdateWindowSurface(window) < 0) sdlfatal(__FILE__, __LINE__);
 
             // detect closing the window
             SDL_Event event;
@@ -401,8 +393,7 @@ static void optimizeTiles() {
                 int8_t *shifts = tileShifts[row][column][0][baseTileWidth - 1];
                 SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormat(
                     0, baseTileWidth * TILE_COLS, baseTileHeight * TILE_ROWS, 32, SDL_PIXELFORMAT_ARGB8888);
-                if (!surface)
-                    sdlfatal(__FILE__, __LINE__);
+                if (!surface) sdlfatal(__FILE__, __LINE__);
 
                 for (int i = 0; i < 3; i++) {
                     for (int idx = 0; idx < (processing == 't' || processing == '#' ? 2 : 3); idx++) {
@@ -436,8 +427,7 @@ static void optimizeTiles() {
                 int8_t *shifts = tileShifts[row][column][1][baseTileHeight - 1];
                 SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormat(
                     0, baseTileWidth * TILE_COLS, baseTileHeight * TILE_ROWS, 32, SDL_PIXELFORMAT_ARGB8888);
-                if (!surface)
-                    sdlfatal(__FILE__, __LINE__);
+                if (!surface) sdlfatal(__FILE__, __LINE__);
 
                 for (int i = 0; i < 3; i++) {
                     for (int idx = 0; idx < (processing == 't' ? 1 : 3); idx++) {
@@ -476,11 +466,9 @@ void initTiles() {
 
     // load the large PNG
     SDL_Surface *image = IMG_Load(filename);
-    if (!image)
-        imgfatal(__FILE__, __LINE__);
+    if (!image) imgfatal(__FILE__, __LINE__);
     TilesPNG = SDL_ConvertSurfaceFormat(image, SDL_PIXELFORMAT_ARGB8888, 0);
-    if (!TilesPNG)
-        sdlfatal(__FILE__, __LINE__);
+    if (!TilesPNG) sdlfatal(__FILE__, __LINE__);
     SDL_FreeSurface(image);
 
     // measure padding
@@ -551,8 +539,7 @@ static void createTextures(SDL_Renderer *renderer, int outputWidth, int outputHe
 
     // destroy the old textures
     for (int i = 0; i < 4; i++) {
-        if (Textures[i])
-            SDL_DestroyTexture(Textures[i]);
+        if (Textures[i]) SDL_DestroyTexture(Textures[i]);
         Textures[i] = NULL;
     }
 
@@ -585,8 +572,7 @@ static void createTextures(SDL_Renderer *renderer, int outputWidth, int outputHe
         // downscale the tiles
         SDL_Surface *surface
             = SDL_CreateRGBSurfaceWithFormat(0, surfaceWidth, surfaceHeight, 32, SDL_PIXELFORMAT_ARGB8888);
-        if (!surface)
-            sdlfatal(__FILE__, __LINE__);
+        if (!surface) sdlfatal(__FILE__, __LINE__);
         for (int row = 0; row < TILE_ROWS; row++) {
             for (int column = 0; column < TILE_COLS; column++) {
                 downscaleTile(surface, tileWidth, tileHeight, row, column, false);
@@ -595,10 +581,8 @@ static void createTextures(SDL_Renderer *renderer, int outputWidth, int outputHe
 
         // convert to texture
         Textures[i] = SDL_CreateTextureFromSurface(renderer, surface);
-        if (!Textures[i])
-            sdlfatal(__FILE__, __LINE__);
-        if (SDL_SetTextureBlendMode(Textures[i], SDL_BLENDMODE_BLEND) < 0)
-            sdlfatal(__FILE__, __LINE__);
+        if (!Textures[i]) sdlfatal(__FILE__, __LINE__);
+        if (SDL_SetTextureBlendMode(Textures[i], SDL_BLENDMODE_BLEND) < 0) sdlfatal(__FILE__, __LINE__);
         SDL_FreeSurface(surface);
     }
 }
@@ -642,39 +626,31 @@ void updateTile(int row, int column, short charIndex, short foreRed, short foreG
 /// single surface and doesn't do double-buffering.
 ///
 void updateScreen() {
-    if (!Win)
-        return;
+    if (!Win) return;
 
     SDL_Renderer *renderer = SDL_GetRenderer(Win);
     if (!renderer) {
         renderer = SDL_CreateRenderer(Win, -1, (softwareRendering ? SDL_RENDERER_SOFTWARE : 0));
-        if (!renderer)
-            sdlfatal(__FILE__, __LINE__);
+        if (!renderer) sdlfatal(__FILE__, __LINE__);
 
-        if (SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE) < 0)
-            sdlfatal(__FILE__, __LINE__);
+        if (SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE) < 0) sdlfatal(__FILE__, __LINE__);
 
         // see if we ended up using the software renderer or not
         SDL_RendererInfo info;
-        if (SDL_GetRendererInfo(renderer, &info) < 0)
-            sdlfatal(__FILE__, __LINE__);
+        if (SDL_GetRendererInfo(renderer, &info) < 0) sdlfatal(__FILE__, __LINE__);
         softwareRendering = (strcmp(info.name, "software") == 0);
     }
 
     int outputWidth, outputHeight;
-    if (SDL_GetRendererOutputSize(renderer, &outputWidth, &outputHeight) < 0)
-        sdlfatal(__FILE__, __LINE__);
-    if (outputWidth == 0 || outputHeight == 0)
-        return;
+    if (SDL_GetRendererOutputSize(renderer, &outputWidth, &outputHeight) < 0) sdlfatal(__FILE__, __LINE__);
+    if (outputWidth == 0 || outputHeight == 0) return;
 
     createTextures(renderer, outputWidth, outputHeight);
 
     if (!softwareRendering) {
         // black out the frame (double-buffering invalidated it)
-        if (SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0) < 0)
-            sdlfatal(__FILE__, __LINE__);
-        if (SDL_RenderClear(renderer) < 0)
-            sdlfatal(__FILE__, __LINE__);
+        if (SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0) < 0) sdlfatal(__FILE__, __LINE__);
+        if (SDL_RenderClear(renderer) < 0) sdlfatal(__FILE__, __LINE__);
     }
 
     // To please the OpenGL renderer, we'll proceed in 5 steps:
@@ -688,13 +664,11 @@ void updateScreen() {
 
         for (int x = 0; x < COLS; x++) {
             int tileWidth = ((x + 1) * outputWidth / COLS) - (x * outputWidth / COLS);
-            if (tileWidth == 0)
-                continue;
+            if (tileWidth == 0) continue;
 
             for (int y = 0; y < ROWS; y++) {
                 int tileHeight = ((y + 1) * outputHeight / ROWS) - (y * outputHeight / ROWS);
-                if (tileHeight == 0)
-                    continue;
+                if (tileHeight == 0) continue;
 
                 ScreenTile *tile = &screenTiles[y][x];
                 if (softwareRendering && !tile->needsRefresh) {
@@ -717,8 +691,7 @@ void updateScreen() {
                                                round(2.55 * tile->backBlue), 255)
                         < 0)
                         sdlfatal(__FILE__, __LINE__);
-                    if (SDL_RenderFillRect(renderer, &dest) < 0)
-                        sdlfatal(__FILE__, __LINE__);
+                    if (SDL_RenderFillRect(renderer, &dest) < 0) sdlfatal(__FILE__, __LINE__);
 
                 } else {
                     int textureIndex = (numTextures < 4 ? 0
@@ -753,8 +726,7 @@ void updateScreen() {
                                                round(2.55 * tile->foreGreen), round(2.55 * tile->foreBlue))
                         < 0)
                         sdlfatal(__FILE__, __LINE__);
-                    if (SDL_RenderCopy(renderer, Textures[step], &src, &dest) < 0)
-                        sdlfatal(__FILE__, __LINE__);
+                    if (SDL_RenderCopy(renderer, Textures[step], &src, &dest) < 0) sdlfatal(__FILE__, __LINE__);
                 }
             }
         }
@@ -776,34 +748,28 @@ Creates or resizes the game window with the currently loaded font.
 void resizeWindow(int width, int height) {
 
     SDL_DisplayMode mode;
-    if (SDL_GetCurrentDisplayMode(0, &mode) < 0)
-        sdlfatal(__FILE__, __LINE__);
+    if (SDL_GetCurrentDisplayMode(0, &mode) < 0) sdlfatal(__FILE__, __LINE__);
 
     // By default the window will have an aspect ratio of 16:10
     // and either 80% of monitor width or 80% of monitor height, whichever is smaller
-    if (width < 0)
-        width = min(mode.w * 8 / 10, mode.h * 8 * 16 / (10 * 10));
-    if (height < 0)
-        height = width * 10 / 16;
+    if (width < 0) width = min(mode.w * 8 / 10, mode.h * 8 * 16 / (10 * 10));
+    if (height < 0) height = width * 10 / 16;
 
     // go to fullscreen mode if the window is as big as the screen
-    if (width >= mode.w && height >= mode.h)
-        fullScreen = true;
+    if (width >= mode.w && height >= mode.h) fullScreen = true;
 
     if (Win == NULL) {
         // create the window
         Win = SDL_CreateWindow("Brogue", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height,
                                SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI
                                    | (fullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
-        if (!Win)
-            sdlfatal(__FILE__, __LINE__);
+        if (!Win) sdlfatal(__FILE__, __LINE__);
 
         // set its icon
         char filename[BROGUE_FILENAME_MAX];
         sprintf(filename, "%s/assets/icon.png", dataDirectory);
         SDL_Surface *icon = IMG_Load(filename);
-        if (!icon)
-            imgfatal(__FILE__, __LINE__);
+        if (!icon) imgfatal(__FILE__, __LINE__);
         SDL_SetWindowIcon(Win, icon);
         SDL_FreeSurface(icon);
     }
@@ -811,14 +777,12 @@ void resizeWindow(int width, int height) {
     if (fullScreen) {
         if (!(SDL_GetWindowFlags(Win) & SDL_WINDOW_FULLSCREEN_DESKTOP)) {
             // switch to fullscreen mode
-            if (SDL_SetWindowFullscreen(Win, SDL_WINDOW_FULLSCREEN_DESKTOP) < 0)
-                sdlfatal(__FILE__, __LINE__);
+            if (SDL_SetWindowFullscreen(Win, SDL_WINDOW_FULLSCREEN_DESKTOP) < 0) sdlfatal(__FILE__, __LINE__);
         }
     } else {
         if (SDL_GetWindowFlags(Win) & SDL_WINDOW_FULLSCREEN_DESKTOP) {
             // switch to windowed mode
-            if (SDL_SetWindowFullscreen(Win, 0) < 0)
-                sdlfatal(__FILE__, __LINE__);
+            if (SDL_SetWindowFullscreen(Win, 0) < 0) sdlfatal(__FILE__, __LINE__);
         } else {
             // what is the current size?
             SDL_GetWindowSize(Win, &windowWidth, &windowHeight);
@@ -836,26 +800,21 @@ void resizeWindow(int width, int height) {
 }
 
 SDL_Surface *captureScreen() {
-    if (!Win)
-        return NULL;
+    if (!Win) return NULL;
 
     // get the renderer
     SDL_Renderer *renderer = SDL_GetRenderer(Win);
-    if (!renderer)
-        return NULL;
+    if (!renderer) return NULL;
 
     // get its size
     int outputWidth, outputHeight;
-    if (SDL_GetRendererOutputSize(renderer, &outputWidth, &outputHeight) < 0)
-        sdlfatal(__FILE__, __LINE__);
-    if (outputWidth == 0 || outputHeight == 0)
-        return NULL;
+    if (SDL_GetRendererOutputSize(renderer, &outputWidth, &outputHeight) < 0) sdlfatal(__FILE__, __LINE__);
+    if (outputWidth == 0 || outputHeight == 0) return NULL;
 
     // take a screenshot
     SDL_Surface *screenshot
         = SDL_CreateRGBSurfaceWithFormat(0, outputWidth, outputHeight, 32, SDL_PIXELFORMAT_ARGB8888);
-    if (!screenshot)
-        sdlfatal(__FILE__, __LINE__);
+    if (!screenshot) sdlfatal(__FILE__, __LINE__);
     if (SDL_RenderReadPixels(renderer, NULL, SDL_PIXELFORMAT_ARGB8888, screenshot->pixels, outputWidth * 4) < 0)
         sdlfatal(__FILE__, __LINE__);
     return screenshot;

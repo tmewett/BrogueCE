@@ -42,8 +42,7 @@ typedef struct brogueScoreEntry {
 brogueScoreEntry scoreBuffer[HIGH_SCORES_COUNT];
 
 unsigned int glyphToUnicode(enum displayGlyph glyph) {
-    if (glyph < 128)
-        return glyph;
+    if (glyph < 128) return glyph;
 
     switch (glyph) {
     case G_UP_ARROW:
@@ -553,8 +552,7 @@ void loadKeymap() {
                 }
             }
             if (input_name != NULL && output_name != NULL) {
-                if (input_name[0] == '#')
-                    continue; // must be a comment
+                if (input_name[0] == '#') continue; // must be a comment
 
                 if (currentConsole.remap) {
                     currentConsole.remap(input_name, output_name);

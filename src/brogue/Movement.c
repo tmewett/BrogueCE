@@ -2319,8 +2319,7 @@ void scanOctantFOV(char grid[DCOLS][DROWS], short xLoc, short yLoc, short octant
                    unsigned long forbiddenFlags, boolean cautiousOnWalls) {
     const pos loc = {xLoc, yLoc};
 
-    if (columnsRightFromOrigin * FP_FACTOR >= maxRadius)
-        return;
+    if (columnsRightFromOrigin * FP_FACTOR >= maxRadius) return;
 
     short i, a, b, iStart, iEnd, x, y, x2, y2; // x and y are temporary variables on which we do the octant transform
     long newStartSlope, newEndSlope;

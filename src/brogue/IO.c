@@ -1300,8 +1300,7 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
             *returnForeColor = black;
             *returnBackColor = undiscoveredColor;
 
-            if (D_DISABLE_BACKGROUND_COLORS)
-                *returnBackColor = black;
+            if (D_DISABLE_BACKGROUND_COLORS) *returnBackColor = black;
 
             restoreRNG;
             return;
@@ -1501,8 +1500,7 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
     *returnForeColor = cellForeColor;
     *returnBackColor = cellBackColor;
 
-    if (D_DISABLE_BACKGROUND_COLORS)
-        *returnBackColor = black;
+    if (D_DISABLE_BACKGROUND_COLORS) *returnBackColor = black;
     restoreRNG;
 }
 
@@ -2380,8 +2378,7 @@ boolean pauseBrogue(short milliseconds) {
     }
     // For long delays, let's pause in small increments so that we can immediately react to user interruptions.
     while (milliseconds > 100) {
-        if (pauseForMilliseconds(50))
-            return true;
+        if (pauseForMilliseconds(50)) return true;
         milliseconds -= 50;
     }
     return pauseForMilliseconds(milliseconds);
@@ -2391,8 +2388,7 @@ boolean pauseBrogue(short milliseconds) {
 boolean pauseAnimation(short milliseconds) {
     if (rogue.playbackMode && !rogue.playbackPaused && milliseconds > 0) {
         double factor = rogue.playbackDelayPerTurn / (double)DEFAULT_PLAYBACK_DELAY;
-        if (factor > 1.)
-            factor = sqrt(factor); // so that animations don't slow down too much
+        if (factor > 1.) factor = sqrt(factor); // so that animations don't slow down too much
         milliseconds = max(1, lround(milliseconds * factor));
     }
     return pauseBrogue(milliseconds);
@@ -3831,8 +3827,7 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
                 // need to be stepped through, but others can be jumped over.
                 short step = (i == px - k || i == px + k) ? 1 : 2 * k;
                 for (j = py - k; j <= py + k; j += step) {
-                    if (displayEntityCount >= ROWS - 1)
-                        goto no_space_for_more_entities;
+                    if (displayEntityCount >= ROWS - 1) goto no_space_for_more_entities;
                     if (coordinatesAreInMap(i, j) && !addedEntity[i][j] && cellHasTMFlag(i, j, TM_LIST_IN_SIDEBAR)
                         && (playerCanDirectlySee(i, j)
                             || (indirectVision && (playerCanSeeOrSense(i, j) || rogue.playbackOmniscience)))) {

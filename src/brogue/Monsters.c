@@ -3846,8 +3846,7 @@ void demoteMonsterFromLeadership(creature *monst) {
         creatureList *nearbyList = (level == 0 ? monsters : &levels[level - 1].monsters);
         for (creatureIterator it = iterateCreatures(nearbyList); hasNextCreature(it);) {
             creature *follower = nextCreature(&it);
-            if (follower == monst || follower->leader != monst)
-                continue;
+            if (follower == monst || follower->leader != monst) continue;
             if (follower->bookkeepingFlags & MB_BOUND_TO_LEADER) {
                 // gonna die in playerTurnEnded().
                 follower->leader = NULL;
@@ -3876,8 +3875,7 @@ void demoteMonsterFromLeadership(creature *monst) {
         creatureList *candidateList = (level == 0 ? dormantMonsters : &levels[level - 1].dormantMonsters);
         for (creatureIterator it = iterateCreatures(candidateList); hasNextCreature(it);) {
             creature *follower = nextCreature(&it);
-            if (follower == monst || follower->leader != monst)
-                continue;
+            if (follower == monst || follower->leader != monst) continue;
             follower->leader = NULL;
             follower->bookkeepingFlags &= ~MB_FOLLOWER;
         }

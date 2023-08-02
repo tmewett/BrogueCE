@@ -674,8 +674,7 @@ void populateItems(short upstairsX, short upstairsY) {
 
         if (theItem->category & FOOD) {
             rogue.foodSpawned += foodTable[theItem->kind].power;
-            if (D_MESSAGE_ITEM_GENERATION)
-                printf("\n(:)  Depth %i: generated food", rogue.depthLevel);
+            if (D_MESSAGE_ITEM_GENERATION) printf("\n(:)  Depth %i: generated food", rogue.depthLevel);
         }
 
         // Choose a placement location.
@@ -3347,18 +3346,15 @@ short getLineCoordinates(pos listOfCoordinates[], const pos originLoc, const pos
             point[1] += step[1];
             listOfCoordinates[listLength] = (pos){.x = (point[0] < 0 ? -1 : point[0] / FP_FACTOR),
                                                   .y = (point[1] < 0 ? -1 : point[1] / FP_FACTOR)};
-            if (!isPosInMap(listOfCoordinates[listLength]))
-                break;
+            if (!isPosInMap(listOfCoordinates[listLength])) break;
             listLength++;
         };
 
         // last iteration does not need evaluation, we are returning it anyway
-        if (offset == numOffsets)
-            break;
+        if (offset == numOffsets) break;
 
         // No bolt means we don't want any tuning. Returning first path (using center of target)
-        if (theBolt == NULL)
-            break;
+        if (theBolt == NULL) break;
 
         // evaluate this path; we will return the path with the highest score
         score = 0;
@@ -3434,10 +3430,8 @@ short getLineCoordinates(pos listOfCoordinates[], const pos originLoc, const pos
             }
 
             // check for obstruction
-            if (isMonster && (theBolt->flags & BF_PASSES_THRU_CREATURES))
-                continue;
-            if (isMonster || isImpassable || (isOpaque && !burningThrough))
-                break;
+            if (isMonster && (theBolt->flags & BF_PASSES_THRU_CREATURES)) continue;
+            if (isMonster || isImpassable || (isOpaque && !burningThrough)) break;
         }
 
         if (score > bestScore) {

@@ -1156,8 +1156,7 @@ void getDefaultFilePath(char *defaultPath, boolean gameOver) {
     // 32-bit numbers are printed in full
     // 64-bit numbers longer than 11 digits are shortened to e.g "184...51615"
     sprintf(seed, "%llu", (unsigned long long)rogue.seed);
-    if (strlen(seed) > 11)
-        sprintf(seed + 3, "...%05lu", (unsigned long)(rogue.seed % 100000));
+    if (strlen(seed) > 11) sprintf(seed + 3, "...%05lu", (unsigned long)(rogue.seed % 100000));
 
     if (serverMode) {
         // With WebBrogue, filenames must fit into 30 bytes, including extension and terminal \0.

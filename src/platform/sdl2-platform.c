@@ -112,8 +112,7 @@ static boolean eventFromKey(rogueEvent *event, SDL_Keycode key) {
     // Ctrl+letter doesn't give a TextInputEvent
     if (event->controlKey && key >= SDLK_a && key <= SDLK_z) {
         event->param1 = 'a' + (key - SDLK_a);
-        if (event->shiftKey)
-            event->param1 -= 'a' - 'A';
+        if (event->shiftKey) event->param1 -= 'a' - 'A';
         return true;
     }
 
@@ -127,8 +126,7 @@ static boolean _modifierHeld(int mod) {
 
 static char applyRemaps(char c) {
     for (size_t i = 0; i < nremaps; i++) {
-        if (remapping[i].from == c)
-            return remapping[i].to;
+        if (remapping[i].from == c) return remapping[i].to;
     }
     return c;
 }
@@ -258,11 +256,9 @@ static void _gameLoop() {
     free(path);
 #endif
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
-        sdlfatal(__FILE__, __LINE__);
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) sdlfatal(__FILE__, __LINE__);
 
-    if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG))
-        imgfatal(__FILE__, __LINE__);
+    if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) imgfatal(__FILE__, __LINE__);
 
     initTiles();
 
@@ -311,8 +307,7 @@ static void _nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boo
 
         updateScreen();
 
-        if (pollBrogueEvent(returnEvent, textInput))
-            break;
+        if (pollBrogueEvent(returnEvent, textInput)) break;
 
         dt = PAUSE_BETWEEN_EVENT_POLLING - (SDL_GetTicks() - tstart);
         if (dt > 0) {
@@ -327,10 +322,8 @@ from the text font sheet, 256+ are from the tiles sheet.
 */
 static int fontIndex(enum displayGlyph glyph) {
     // These are the only non-ASCII glyphs which always come from the font sheet
-    if (glyph == G_UP_ARROW)
-        return 0x90;
-    if (glyph == G_DOWN_ARROW)
-        return 0x91;
+    if (glyph == G_UP_ARROW) return 0x90;
+    if (glyph == G_DOWN_ARROW) return 0x91;
 
     if (glyph < 128) {
         // ASCII characters map directly
@@ -410,8 +403,7 @@ static void _remap(const char *from, const char *to) {
  */
 static boolean _takeScreenshot() {
     SDL_Surface *screenshot = captureScreen();
-    if (!screenshot)
-        return false;
+    if (!screenshot) return false;
 
     // choose filename
     char screenshotFilepath[BROGUE_FILENAME_MAX];

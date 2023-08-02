@@ -48,17 +48,14 @@ static void pdsUpdate(pdsMap *map, boolean useDiagonals) {
     while (head != NULL) {
         for (short dir = 0; dir < dirs; dir++) {
             pdsLink *link = head + (nbDirs[dir][0] + DCOLS * nbDirs[dir][1]);
-            if (link < map->links || link >= map->links + DCOLS * DROWS)
-                continue;
+            if (link < map->links || link >= map->links + DCOLS * DROWS) continue;
 
             // verify passability
-            if (link->cost < 0)
-                continue;
+            if (link->cost < 0) continue;
             if (dir >= 4) {
                 pdsLink *way1 = head + nbDirs[dir][0];
                 pdsLink *way2 = head + DCOLS * nbDirs[dir][1];
-                if (way1->cost == PDS_OBSTRUCTION || way2->cost == PDS_OBSTRUCTION)
-                    continue;
+                if (way1->cost == PDS_OBSTRUCTION || way2->cost == PDS_OBSTRUCTION) continue;
             }
 
             if (head->distance + link->cost < link->distance) {
@@ -67,10 +64,8 @@ static void pdsUpdate(pdsMap *map, boolean useDiagonals) {
                 // reinsert the touched cell; it'll be close to the beginning of the list now, so
                 // this will be very fast.  start by removing it.
 
-                if (link->right != NULL)
-                    link->right->left = link->left;
-                if (link->left != NULL)
-                    link->left->right = link->right;
+                if (link->right != NULL) link->right->left = link->left;
+                if (link->left != NULL) link->left->right = link->right;
 
                 pdsLink *left = head;
                 pdsLink *right = head->right;
@@ -78,12 +73,10 @@ static void pdsUpdate(pdsMap *map, boolean useDiagonals) {
                     left = right;
                     right = right->right;
                 }
-                if (left != NULL)
-                    left->right = link;
+                if (left != NULL) left->right = link;
                 link->right = right;
                 link->left = left;
-                if (right != NULL)
-                    right->left = link;
+                if (right != NULL) right->left = link;
             }
         }
 
@@ -112,10 +105,8 @@ static void pdsSetDistance(pdsMap *map, short x, short y, short distance) {
         if (link->distance > distance) {
             link->distance = distance;
 
-            if (link->right != NULL)
-                link->right->left = link->left;
-            if (link->left != NULL)
-                link->left->right = link->right;
+            if (link->right != NULL) link->right->left = link->left;
+            if (link->left != NULL) link->left->right = link->right;
 
             pdsLink *left = &map->front;
             pdsLink *right = map->front.right;
@@ -128,8 +119,7 @@ static void pdsSetDistance(pdsMap *map, short x, short y, short distance) {
             link->right = right;
             link->left = left;
             left->right = link;
-            if (right != NULL)
-                right->left = link;
+            if (right != NULL) right->left = link;
         }
     }
 }
@@ -187,8 +177,7 @@ static void pdsBatchInput(pdsMap *map, short **distanceMap, short **costMap, sho
                     link->right = right;
                     link->left = left;
                     left->right = link;
-                    if (right != NULL)
-                        right->left = link;
+                    if (right != NULL) right->left = link;
 
                     left = link;
                 } else {
