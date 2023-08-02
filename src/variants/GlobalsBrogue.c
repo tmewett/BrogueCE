@@ -984,7 +984,7 @@ strings, but they are equal (rogue.patchLevel is set to 0).
 
 // Dungeon version - the earliest version where each seed creates a dungeon identical
 // to that in the current version. Used in seed catalog output.
-#define BROGUE_DUNGEON_VERSION_STRING "CE 1.9"
+#define BROGUE_DUNGEON_VERSION_STRING "CE 1.11"
 
 // Version shown in ./brogue --version
 const char *brogueVersion = BROGUE_VERSION_STRING;
