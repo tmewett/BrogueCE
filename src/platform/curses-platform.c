@@ -24,69 +24,69 @@ static char glyphToAscii(enum displayGlyph glyph) {
     unsigned int ch;
 
     switch (glyph) {
-    case G_UP_ARROW:
-        return '^';
-    case G_DOWN_ARROW:
-        return 'v';
-    case G_FLOOR:
-        return '.';
-    case G_CHASM:
-        return ':';
-    case G_TRAP:
-        return '%';
-    case G_FIRE:
-        return '^';
-    case G_FOLIAGE:
-        return '&';
-    case G_AMULET:
-        return ',';
-    case G_SCROLL:
-        return '?';
-    case G_RING:
-        return '=';
-    case G_WEAPON:
-        return '(';
-    case G_GEM:
-        return '+';
-    case G_TOTEM:
-        return '0'; // zero
-    case G_GOOD_MAGIC:
-        return '$';
-    case G_BAD_MAGIC:
-        return '+';
-    case G_DOORWAY:
-        return '<';
-    case G_CHARM:
-        return '7';
-    case G_GUARDIAN:
-        return '5';
-    case G_WINGED_GUARDIAN:
-        return '5';
-    case G_EGG:
-        return 'o';
-    case G_BLOODWORT_STALK:
-        return '&';
-    case G_FLOOR_ALT:
-        return '.';
-    case G_UNICORN:
-        return 'U';
-    case G_TURRET:
-        return '*';
-    case G_CARPET:
-        return '.';
-    case G_STATUE:
-        return '5';
-    case G_CRACKED_STATUE:
-        return '5';
-    case G_MAGIC_GLYPH:
-        return ':';
-    case G_ELECTRIC_CRYSTAL:
-        return '$';
+        case G_UP_ARROW:
+            return '^';
+        case G_DOWN_ARROW:
+            return 'v';
+        case G_FLOOR:
+            return '.';
+        case G_CHASM:
+            return ':';
+        case G_TRAP:
+            return '%';
+        case G_FIRE:
+            return '^';
+        case G_FOLIAGE:
+            return '&';
+        case G_AMULET:
+            return ',';
+        case G_SCROLL:
+            return '?';
+        case G_RING:
+            return '=';
+        case G_WEAPON:
+            return '(';
+        case G_GEM:
+            return '+';
+        case G_TOTEM:
+            return '0'; // zero
+        case G_GOOD_MAGIC:
+            return '$';
+        case G_BAD_MAGIC:
+            return '+';
+        case G_DOORWAY:
+            return '<';
+        case G_CHARM:
+            return '7';
+        case G_GUARDIAN:
+            return '5';
+        case G_WINGED_GUARDIAN:
+            return '5';
+        case G_EGG:
+            return 'o';
+        case G_BLOODWORT_STALK:
+            return '&';
+        case G_FLOOR_ALT:
+            return '.';
+        case G_UNICORN:
+            return 'U';
+        case G_TURRET:
+            return '*';
+        case G_CARPET:
+            return '.';
+        case G_STATUE:
+            return '5';
+        case G_CRACKED_STATUE:
+            return '5';
+        case G_MAGIC_GLYPH:
+            return ':';
+        case G_ELECTRIC_CRYSTAL:
+            return '$';
 
-    default:
-        ch = glyphToUnicode(glyph);
-        brogueAssert(ch < 0x80); // assert ascii
-        return ch;
+        default:
+            ch = glyphToUnicode(glyph);
+            brogueAssert(ch < 0x80); // assert ascii
+            return ch;
     }
 }
 

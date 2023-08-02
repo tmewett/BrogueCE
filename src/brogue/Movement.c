@@ -170,15 +170,15 @@ void describeLocation(char *buf, short x, short y) {
     }
     if (magicItem && !(pmap[x][y].flags & DISCOVERED)) {
         switch (itemMagicPolarity(magicItem)) {
-        case 1:
-            strcpy(object, magicItem->category == AMULET ? "the Amulet of Yendor" : "benevolent magic");
-            break;
-        case -1:
-            strcpy(object, "malevolent magic");
-            break;
-        default:
-            strcpy(object, "mysterious magic");
-            break;
+            case 1:
+                strcpy(object, magicItem->category == AMULET ? "the Amulet of Yendor" : "benevolent magic");
+                break;
+            case -1:
+                strcpy(object, "malevolent magic");
+                break;
+            default:
+                strcpy(object, "mysterious magic");
+                break;
         }
         sprintf(buf, "you can detect the aura of %s here.", object);
         restoreRNG;
@@ -286,25 +286,25 @@ void describeLocation(char *buf, short x, short y) {
             strcpy(verb, "is resting");
         } else {
             switch (monst->creatureState) {
-            case MONSTER_SLEEPING:
-                strcpy(verb, "is sleeping");
-                subjectMoving = false;
-                break;
-            case MONSTER_WANDERING:
-                strcpy(verb, subjectMoving ? "is wandering" : "is standing");
-                break;
-            case MONSTER_FLEEING:
-                strcpy(verb, subjectMoving ? "is fleeing" : "is standing");
-                break;
-            case MONSTER_TRACKING_SCENT:
-                strcpy(verb, subjectMoving ? "is charging" : "is standing");
-                break;
-            case MONSTER_ALLY:
-                strcpy(verb, subjectMoving ? "is following you" : "is standing");
-                break;
-            default:
-                strcpy(verb, "is standing");
-                break;
+                case MONSTER_SLEEPING:
+                    strcpy(verb, "is sleeping");
+                    subjectMoving = false;
+                    break;
+                case MONSTER_WANDERING:
+                    strcpy(verb, subjectMoving ? "is wandering" : "is standing");
+                    break;
+                case MONSTER_FLEEING:
+                    strcpy(verb, subjectMoving ? "is fleeing" : "is standing");
+                    break;
+                case MONSTER_TRACKING_SCENT:
+                    strcpy(verb, subjectMoving ? "is charging" : "is standing");
+                    break;
+                case MONSTER_ALLY:
+                    strcpy(verb, subjectMoving ? "is following you" : "is standing");
+                    break;
+                default:
+                    strcpy(verb, "is standing");
+                    break;
             }
         }
         if (monst->status[STATUS_BURNING] && !(monst->info.flags & MONST_FIERY)) {
@@ -1823,36 +1823,36 @@ void autoPlayLevel(boolean fastForward) {
 
 short directionOfKeypress(unsigned short ch) {
     switch (ch) {
-    case LEFT_KEY:
-    case LEFT_ARROW:
-    case NUMPAD_4:
-        return LEFT;
-    case RIGHT_KEY:
-    case RIGHT_ARROW:
-    case NUMPAD_6:
-        return RIGHT;
-    case UP_KEY:
-    case UP_ARROW:
-    case NUMPAD_8:
-        return UP;
-    case DOWN_KEY:
-    case DOWN_ARROW:
-    case NUMPAD_2:
-        return DOWN;
-    case UPLEFT_KEY:
-    case NUMPAD_7:
-        return UPLEFT;
-    case UPRIGHT_KEY:
-    case NUMPAD_9:
-        return UPRIGHT;
-    case DOWNLEFT_KEY:
-    case NUMPAD_1:
-        return DOWNLEFT;
-    case DOWNRIGHT_KEY:
-    case NUMPAD_3:
-        return DOWNRIGHT;
-    default:
-        return -1;
+        case LEFT_KEY:
+        case LEFT_ARROW:
+        case NUMPAD_4:
+            return LEFT;
+        case RIGHT_KEY:
+        case RIGHT_ARROW:
+        case NUMPAD_6:
+            return RIGHT;
+        case UP_KEY:
+        case UP_ARROW:
+        case NUMPAD_8:
+            return UP;
+        case DOWN_KEY:
+        case DOWN_ARROW:
+        case NUMPAD_2:
+            return DOWN;
+        case UPLEFT_KEY:
+        case NUMPAD_7:
+            return UPLEFT;
+        case UPRIGHT_KEY:
+        case NUMPAD_9:
+            return UPRIGHT;
+        case DOWNLEFT_KEY:
+        case NUMPAD_1:
+            return DOWNLEFT;
+        case DOWNRIGHT_KEY:
+        case NUMPAD_3:
+            return DOWNRIGHT;
+        default:
+            return -1;
     }
 }
 
@@ -2130,34 +2130,34 @@ void betweenOctant1andN(short *x, short *y, short x0, short y0, short n) {
     short x1 = *x, y1 = *y;
     short dx = x1 - x0, dy = y1 - y0;
     switch (n) {
-    case 1:
-        return;
-    case 2:
-        *y = y0 - dy;
-        return;
-    case 5:
-        *x = x0 - dx;
-        *y = y0 - dy;
-        return;
-    case 6:
-        *x = x0 - dx;
-        return;
-    case 8:
-        *x = x0 - dy;
-        *y = y0 - dx;
-        return;
-    case 3:
-        *x = x0 - dy;
-        *y = y0 + dx;
-        return;
-    case 7:
-        *x = x0 + dy;
-        *y = y0 - dx;
-        return;
-    case 4:
-        *x = x0 + dy;
-        *y = y0 + dx;
-        return;
+        case 1:
+            return;
+        case 2:
+            *y = y0 - dy;
+            return;
+        case 5:
+            *x = x0 - dx;
+            *y = y0 - dy;
+            return;
+        case 6:
+            *x = x0 - dx;
+            return;
+        case 8:
+            *x = x0 - dy;
+            *y = y0 - dx;
+            return;
+        case 3:
+            *x = x0 - dy;
+            *y = y0 + dx;
+            return;
+        case 7:
+            *x = x0 + dy;
+            *y = y0 - dx;
+            return;
+        case 4:
+            *x = x0 + dy;
+            *y = y0 + dx;
+            return;
     }
 }
 

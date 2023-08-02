@@ -549,18 +549,18 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
     if (chance > 0 && rand_percent(chance)) {
         if (!(defender->bookkeepingFlags & MB_SUBMERGED)) {
             switch (enchantType) {
-            case W_SPEED:
-                createFlare(player.loc.x, player.loc.y, SCROLL_ENCHANTMENT_LIGHT);
-                break;
-            case W_QUIETUS:
-                createFlare(defender->loc.x, defender->loc.y, QUIETUS_FLARE_LIGHT);
-                break;
-            case W_SLAYING:
-                createFlare(defender->loc.x, defender->loc.y, SLAYING_FLARE_LIGHT);
-                break;
-            default:
-                flashMonster(defender, effectColors[enchantType], 100);
-                break;
+                case W_SPEED:
+                    createFlare(player.loc.x, player.loc.y, SCROLL_ENCHANTMENT_LIGHT);
+                    break;
+                case W_QUIETUS:
+                    createFlare(defender->loc.x, defender->loc.y, QUIETUS_FLARE_LIGHT);
+                    break;
+                case W_SLAYING:
+                    createFlare(defender->loc.x, defender->loc.y, SLAYING_FLARE_LIGHT);
+                    break;
+                default:
+                    flashMonster(defender, effectColors[enchantType], 100);
+                    break;
             }
             autoID = true;
         }
@@ -569,135 +569,135 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
         itemName(theItem, theItemName, false, false, NULL);
 
         switch (enchantType) {
-        case W_SPEED:
-            if (player.ticksUntilTurn != -1) {
-                sprintf(buf, "your %s trembles and time freezes for a moment", theItemName);
-                buf[DCOLS] = '\0';
-                combatMessage(buf, 0);
-                player.ticksUntilTurn = -1; // free turn!
-                autoID = true;
-            }
-            break;
-        case W_SLAYING:
-        case W_QUIETUS:
-            inflictLethalDamage(&player, defender);
-            sprintf(buf, "%s suddenly %s", monstName, (defender->info.flags & MONST_INANIMATE) ? "shatters" : "dies");
-            buf[DCOLS] = '\0';
-            combatMessage(buf, messageColorFromVictim(defender));
-            killCreature(defender, false);
-            autoID = true;
-            break;
-        case W_PARALYSIS:
-            defender->status[STATUS_PARALYZED] = max(defender->status[STATUS_PARALYZED], weaponParalysisDuration(enchant));
-            defender->maxStatus[STATUS_PARALYZED] = defender->status[STATUS_PARALYZED];
-            if (canDirectlySeeMonster(defender)) {
-                sprintf(buf, "%s is frozen in place", monstName);
-                buf[DCOLS] = '\0';
-                combatMessage(buf, messageColorFromVictim(defender));
-                autoID = true;
-            }
-            break;
-        case W_MULTIPLICITY:
-            sprintf(buf, "Your %s emits a flash of light, and %sspectral duplicate%s appear%s!", theItemName, (weaponImageCount(enchant) == 1 ? "a " : ""), (weaponImageCount(enchant) == 1 ? "" : "s"),
-                    (weaponImageCount(enchant) == 1 ? "s" : ""));
-            buf[DCOLS] = '\0';
-
-            for (i = 0; i < (weaponImageCount(enchant)); i++) {
-                newMonst = generateMonster(MK_SPECTRAL_IMAGE, true, false);
-                getQualifyingPathLocNear(&(newMonst->loc.x), &(newMonst->loc.y), defender->loc.x, defender->loc.y, true, T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(newMonst->info)), HAS_PLAYER, avoidedFlagsForMonster(&(newMonst->info)),
-                                         (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
-                newMonst->bookkeepingFlags |= (MB_FOLLOWER | MB_BOUND_TO_LEADER | MB_DOES_NOT_TRACK_LEADER | MB_TELEPATHICALLY_REVEALED);
-                newMonst->bookkeepingFlags &= ~MB_JUST_SUMMONED;
-                newMonst->leader = &player;
-                newMonst->creatureState = MONSTER_ALLY;
-                if (theItem->flags & ITEM_ATTACKS_STAGGER) {
-                    newMonst->info.attackSpeed *= 2;
-                    newMonst->info.abilityFlags |= MA_ATTACKS_STAGGER;
-                }
-                if (theItem->flags & ITEM_ATTACKS_QUICKLY) {
-                    newMonst->info.attackSpeed /= 2;
-                }
-                if (theItem->flags & ITEM_ATTACKS_PENETRATE) {
-                    newMonst->info.abilityFlags |= MA_ATTACKS_PENETRATE;
-                }
-                if (theItem->flags & ITEM_ATTACKS_ALL_ADJACENT) {
-                    newMonst->info.abilityFlags |= MA_ATTACKS_ALL_ADJACENT;
-                }
-                if (theItem->flags & ITEM_ATTACKS_EXTEND) {
-                    newMonst->info.abilityFlags |= MA_ATTACKS_EXTEND;
-                }
-                newMonst->ticksUntilTurn = 100;
-                newMonst->info.accuracy = player.info.accuracy + (5 * netEnchant(theItem) / FP_FACTOR);
-                newMonst->info.damage = player.info.damage;
-                newMonst->status[STATUS_LIFESPAN_REMAINING] = newMonst->maxStatus[STATUS_LIFESPAN_REMAINING] = weaponImageDuration(enchant);
-                if (strLenWithoutEscapes(theItemName) <= 8) {
-                    sprintf(newMonst->info.monsterName, "spectral %s", theItemName);
-                } else {
-                    switch (rogue.weapon->kind) {
-                    case BROADSWORD:
-                        strcpy(newMonst->info.monsterName, "spectral sword");
-                        break;
-                    case HAMMER:
-                        strcpy(newMonst->info.monsterName, "spectral hammer");
-                        break;
-                    case PIKE:
-                        strcpy(newMonst->info.monsterName, "spectral pike");
-                        break;
-                    case WAR_AXE:
-                        strcpy(newMonst->info.monsterName, "spectral axe");
-                        break;
-                    default:
-                        strcpy(newMonst->info.monsterName, "spectral weapon");
-                        break;
-                    }
-                }
-                pmapAt(newMonst->loc)->flags |= HAS_MONSTER;
-                fadeInMonster(newMonst);
-            }
-            updateVision(true);
-
-            message(buf, 0);
-            autoID = true;
-            break;
-        case W_SLOWING:
-            slow(defender, weaponSlowDuration(enchant));
-            if (canDirectlySeeMonster(defender)) {
-                sprintf(buf, "%s slows down", monstName);
-                buf[DCOLS] = '\0';
-                combatMessage(buf, messageColorFromVictim(defender));
-                autoID = true;
-            }
-            break;
-        case W_CONFUSION:
-            defender->status[STATUS_CONFUSED] = max(defender->status[STATUS_CONFUSED], weaponConfusionDuration(enchant));
-            defender->maxStatus[STATUS_CONFUSED] = defender->status[STATUS_CONFUSED];
-            if (canDirectlySeeMonster(defender)) {
-                sprintf(buf, "%s looks very confused", monstName);
-                buf[DCOLS] = '\0';
-                combatMessage(buf, messageColorFromVictim(defender));
-                autoID = true;
-            }
-            break;
-        case W_FORCE:
-            autoID = forceWeaponHit(defender, theItem);
-            break;
-        case W_MERCY:
-            heal(defender, gameConst->onHitMercyHealPercent, false);
-            if (canSeeMonster(defender)) {
-                autoID = true;
-            }
-            break;
-        case W_PLENTY:
-            newMonst = cloneMonster(defender, true, true);
-            if (newMonst) {
-                flashMonster(newMonst, effectColors[enchantType], 100);
-                if (canSeeMonster(newMonst)) {
+            case W_SPEED:
+                if (player.ticksUntilTurn != -1) {
+                    sprintf(buf, "your %s trembles and time freezes for a moment", theItemName);
+                    buf[DCOLS] = '\0';
+                    combatMessage(buf, 0);
+                    player.ticksUntilTurn = -1; // free turn!
                     autoID = true;
                 }
-            }
-            break;
-        default:
-            break;
+                break;
+            case W_SLAYING:
+            case W_QUIETUS:
+                inflictLethalDamage(&player, defender);
+                sprintf(buf, "%s suddenly %s", monstName, (defender->info.flags & MONST_INANIMATE) ? "shatters" : "dies");
+                buf[DCOLS] = '\0';
+                combatMessage(buf, messageColorFromVictim(defender));
+                killCreature(defender, false);
+                autoID = true;
+                break;
+            case W_PARALYSIS:
+                defender->status[STATUS_PARALYZED] = max(defender->status[STATUS_PARALYZED], weaponParalysisDuration(enchant));
+                defender->maxStatus[STATUS_PARALYZED] = defender->status[STATUS_PARALYZED];
+                if (canDirectlySeeMonster(defender)) {
+                    sprintf(buf, "%s is frozen in place", monstName);
+                    buf[DCOLS] = '\0';
+                    combatMessage(buf, messageColorFromVictim(defender));
+                    autoID = true;
+                }
+                break;
+            case W_MULTIPLICITY:
+                sprintf(buf, "Your %s emits a flash of light, and %sspectral duplicate%s appear%s!", theItemName, (weaponImageCount(enchant) == 1 ? "a " : ""), (weaponImageCount(enchant) == 1 ? "" : "s"),
+                        (weaponImageCount(enchant) == 1 ? "s" : ""));
+                buf[DCOLS] = '\0';
+
+                for (i = 0; i < (weaponImageCount(enchant)); i++) {
+                    newMonst = generateMonster(MK_SPECTRAL_IMAGE, true, false);
+                    getQualifyingPathLocNear(&(newMonst->loc.x), &(newMonst->loc.y), defender->loc.x, defender->loc.y, true, T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(newMonst->info)), HAS_PLAYER, avoidedFlagsForMonster(&(newMonst->info)),
+                                             (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
+                    newMonst->bookkeepingFlags |= (MB_FOLLOWER | MB_BOUND_TO_LEADER | MB_DOES_NOT_TRACK_LEADER | MB_TELEPATHICALLY_REVEALED);
+                    newMonst->bookkeepingFlags &= ~MB_JUST_SUMMONED;
+                    newMonst->leader = &player;
+                    newMonst->creatureState = MONSTER_ALLY;
+                    if (theItem->flags & ITEM_ATTACKS_STAGGER) {
+                        newMonst->info.attackSpeed *= 2;
+                        newMonst->info.abilityFlags |= MA_ATTACKS_STAGGER;
+                    }
+                    if (theItem->flags & ITEM_ATTACKS_QUICKLY) {
+                        newMonst->info.attackSpeed /= 2;
+                    }
+                    if (theItem->flags & ITEM_ATTACKS_PENETRATE) {
+                        newMonst->info.abilityFlags |= MA_ATTACKS_PENETRATE;
+                    }
+                    if (theItem->flags & ITEM_ATTACKS_ALL_ADJACENT) {
+                        newMonst->info.abilityFlags |= MA_ATTACKS_ALL_ADJACENT;
+                    }
+                    if (theItem->flags & ITEM_ATTACKS_EXTEND) {
+                        newMonst->info.abilityFlags |= MA_ATTACKS_EXTEND;
+                    }
+                    newMonst->ticksUntilTurn = 100;
+                    newMonst->info.accuracy = player.info.accuracy + (5 * netEnchant(theItem) / FP_FACTOR);
+                    newMonst->info.damage = player.info.damage;
+                    newMonst->status[STATUS_LIFESPAN_REMAINING] = newMonst->maxStatus[STATUS_LIFESPAN_REMAINING] = weaponImageDuration(enchant);
+                    if (strLenWithoutEscapes(theItemName) <= 8) {
+                        sprintf(newMonst->info.monsterName, "spectral %s", theItemName);
+                    } else {
+                        switch (rogue.weapon->kind) {
+                            case BROADSWORD:
+                                strcpy(newMonst->info.monsterName, "spectral sword");
+                                break;
+                            case HAMMER:
+                                strcpy(newMonst->info.monsterName, "spectral hammer");
+                                break;
+                            case PIKE:
+                                strcpy(newMonst->info.monsterName, "spectral pike");
+                                break;
+                            case WAR_AXE:
+                                strcpy(newMonst->info.monsterName, "spectral axe");
+                                break;
+                            default:
+                                strcpy(newMonst->info.monsterName, "spectral weapon");
+                                break;
+                        }
+                    }
+                    pmapAt(newMonst->loc)->flags |= HAS_MONSTER;
+                    fadeInMonster(newMonst);
+                }
+                updateVision(true);
+
+                message(buf, 0);
+                autoID = true;
+                break;
+            case W_SLOWING:
+                slow(defender, weaponSlowDuration(enchant));
+                if (canDirectlySeeMonster(defender)) {
+                    sprintf(buf, "%s slows down", monstName);
+                    buf[DCOLS] = '\0';
+                    combatMessage(buf, messageColorFromVictim(defender));
+                    autoID = true;
+                }
+                break;
+            case W_CONFUSION:
+                defender->status[STATUS_CONFUSED] = max(defender->status[STATUS_CONFUSED], weaponConfusionDuration(enchant));
+                defender->maxStatus[STATUS_CONFUSED] = defender->status[STATUS_CONFUSED];
+                if (canDirectlySeeMonster(defender)) {
+                    sprintf(buf, "%s looks very confused", monstName);
+                    buf[DCOLS] = '\0';
+                    combatMessage(buf, messageColorFromVictim(defender));
+                    autoID = true;
+                }
+                break;
+            case W_FORCE:
+                autoID = forceWeaponHit(defender, theItem);
+                break;
+            case W_MERCY:
+                heal(defender, gameConst->onHitMercyHealPercent, false);
+                if (canSeeMonster(defender)) {
+                    autoID = true;
+                }
+                break;
+            case W_PLENTY:
+                newMonst = cloneMonster(defender, true, true);
+                if (newMonst) {
+                    flashMonster(newMonst, effectColors[enchantType], 100);
+                    if (canSeeMonster(newMonst)) {
+                        autoID = true;
+                    }
+                }
+                break;
+            default:
+                break;
         }
     }
     if (autoID) {
@@ -750,144 +750,144 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
     monsterName(attackerName, attacker, true);
 
     switch (rogue.armor->enchant2) {
-    case A_MULTIPLICITY:
-        if (melee && !(attacker->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE)) && rand_percent(33)) {
-            for (i = 0; i < armorImageCount(enchant); i++) {
-                monst = cloneMonster(attacker, false, true);
-                monst->bookkeepingFlags |= (MB_FOLLOWER | MB_BOUND_TO_LEADER | MB_DOES_NOT_TRACK_LEADER | MB_TELEPATHICALLY_REVEALED);
-                monst->info.flags |= MONST_DIES_IF_NEGATED;
-                monst->bookkeepingFlags &= ~(MB_JUST_SUMMONED | MB_SEIZED | MB_SEIZING);
-                monst->info.abilityFlags &= ~(MA_CAST_SUMMON | MA_DF_ON_DEATH); // No summoning by spectral images. Gotta draw the line!
-                                                                                // Also no exploding or infecting by spectral clones.
-                monst->leader = &player;
-                monst->creatureState = MONSTER_ALLY;
-                monst->status[STATUS_DISCORDANT] = 0; // Otherwise things can get out of control...
-                monst->ticksUntilTurn = 100;
-                monst->info.monsterID = MK_SPECTRAL_IMAGE;
-                if (monst->carriedMonster) {
-                    creature *carried = monst->carriedMonster;
-                    monst->carriedMonster = NULL;
-                    killCreature(carried, true); // Otherwise you can get infinite phoenices from a discordant phoenix.
-                }
-
-                // Give it the glowy red light and color.
-                monst->info.intrinsicLightType = SPECTRAL_IMAGE_LIGHT;
-                monst->info.foreColor = &spectralImageColor;
-
-                // Temporary guest!
-                monst->status[STATUS_LIFESPAN_REMAINING] = monst->maxStatus[STATUS_LIFESPAN_REMAINING] = 3;
-                monst->currentHP = monst->info.maxHP = 1;
-                monst->info.defense = 0;
-
-                if (strLenWithoutEscapes(attacker->info.monsterName) <= 6) {
-                    sprintf(monst->info.monsterName, "spectral %s", attacker->info.monsterName);
-                } else {
-                    strcpy(monst->info.monsterName, "spectral clone");
-                }
-                fadeInMonster(monst);
-            }
-            updateVision(true);
-
-            runicDiscovered = true;
-            sprintf(returnString, "Your %s flashes, and spectral images of %s appear!", armorName, attackerName);
-        }
-        break;
-    case A_MUTUALITY:
-        if (*damage > 0) {
-            count = 0;
-            for (i = 0; i < 8; i++) {
-                hitList[i] = NULL;
-                dir = i % 8;
-                newX = player.loc.x + nbDirs[dir][0];
-                newY = player.loc.y + nbDirs[dir][1];
-                if (coordinatesAreInMap(newX, newY) && (pmap[newX][newY].flags & HAS_MONSTER)) {
-                    monst = monsterAtLoc((pos){newX, newY});
-                    if (monst && monst != attacker && monstersAreEnemies(&player, monst) && !(monst->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE)) && !(monst->bookkeepingFlags & MB_IS_DYING)) {
-
-                        hitList[i] = monst;
-                        count++;
+        case A_MULTIPLICITY:
+            if (melee && !(attacker->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE)) && rand_percent(33)) {
+                for (i = 0; i < armorImageCount(enchant); i++) {
+                    monst = cloneMonster(attacker, false, true);
+                    monst->bookkeepingFlags |= (MB_FOLLOWER | MB_BOUND_TO_LEADER | MB_DOES_NOT_TRACK_LEADER | MB_TELEPATHICALLY_REVEALED);
+                    monst->info.flags |= MONST_DIES_IF_NEGATED;
+                    monst->bookkeepingFlags &= ~(MB_JUST_SUMMONED | MB_SEIZED | MB_SEIZING);
+                    monst->info.abilityFlags &= ~(MA_CAST_SUMMON | MA_DF_ON_DEATH); // No summoning by spectral images. Gotta draw the line!
+                                                                                    // Also no exploding or infecting by spectral clones.
+                    monst->leader = &player;
+                    monst->creatureState = MONSTER_ALLY;
+                    monst->status[STATUS_DISCORDANT] = 0; // Otherwise things can get out of control...
+                    monst->ticksUntilTurn = 100;
+                    monst->info.monsterID = MK_SPECTRAL_IMAGE;
+                    if (monst->carriedMonster) {
+                        creature *carried = monst->carriedMonster;
+                        monst->carriedMonster = NULL;
+                        killCreature(carried, true); // Otherwise you can get infinite phoenices from a discordant phoenix.
                     }
+
+                    // Give it the glowy red light and color.
+                    monst->info.intrinsicLightType = SPECTRAL_IMAGE_LIGHT;
+                    monst->info.foreColor = &spectralImageColor;
+
+                    // Temporary guest!
+                    monst->status[STATUS_LIFESPAN_REMAINING] = monst->maxStatus[STATUS_LIFESPAN_REMAINING] = 3;
+                    monst->currentHP = monst->info.maxHP = 1;
+                    monst->info.defense = 0;
+
+                    if (strLenWithoutEscapes(attacker->info.monsterName) <= 6) {
+                        sprintf(monst->info.monsterName, "spectral %s", attacker->info.monsterName);
+                    } else {
+                        strcpy(monst->info.monsterName, "spectral clone");
+                    }
+                    fadeInMonster(monst);
                 }
+                updateVision(true);
+
+                runicDiscovered = true;
+                sprintf(returnString, "Your %s flashes, and spectral images of %s appear!", armorName, attackerName);
             }
-            if (count) {
+            break;
+        case A_MUTUALITY:
+            if (*damage > 0) {
+                count = 0;
                 for (i = 0; i < 8; i++) {
-                    if (hitList[i] && !(hitList[i]->bookkeepingFlags & MB_IS_DYING)) {
-                        monsterName(monstName, hitList[i], true);
-                        if (inflictDamage(&player, hitList[i], (*damage + count) / (count + 1), &blue, true)) {
-                            if (canSeeMonster(hitList[i])) {
-                                sprintf(buf, "%s %s", monstName, ((hitList[i]->info.flags & MONST_INANIMATE) ? "is destroyed" : "dies"));
-                                combatMessage(buf, messageColorFromVictim(hitList[i]));
-                            }
-                            killCreature(hitList[i], false);
+                    hitList[i] = NULL;
+                    dir = i % 8;
+                    newX = player.loc.x + nbDirs[dir][0];
+                    newY = player.loc.y + nbDirs[dir][1];
+                    if (coordinatesAreInMap(newX, newY) && (pmap[newX][newY].flags & HAS_MONSTER)) {
+                        monst = monsterAtLoc((pos){newX, newY});
+                        if (monst && monst != attacker && monstersAreEnemies(&player, monst) && !(monst->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE)) && !(monst->bookkeepingFlags & MB_IS_DYING)) {
+
+                            hitList[i] = monst;
+                            count++;
                         }
                     }
                 }
+                if (count) {
+                    for (i = 0; i < 8; i++) {
+                        if (hitList[i] && !(hitList[i]->bookkeepingFlags & MB_IS_DYING)) {
+                            monsterName(monstName, hitList[i], true);
+                            if (inflictDamage(&player, hitList[i], (*damage + count) / (count + 1), &blue, true)) {
+                                if (canSeeMonster(hitList[i])) {
+                                    sprintf(buf, "%s %s", monstName, ((hitList[i]->info.flags & MONST_INANIMATE) ? "is destroyed" : "dies"));
+                                    combatMessage(buf, messageColorFromVictim(hitList[i]));
+                                }
+                                killCreature(hitList[i], false);
+                            }
+                        }
+                    }
+                    runicDiscovered = true;
+                    if (!runicKnown) {
+                        sprintf(returnString, "Your %s pulses, and the damage is shared with %s!", armorName, (count == 1 ? monstName : "the other adjacent enemies"));
+                    }
+                    *damage = (*damage + count) / (count + 1);
+                }
+            }
+            break;
+        case A_ABSORPTION:
+            *damage -= rand_range(1, armorAbsorptionMax(enchant));
+            if (*damage <= 0) {
+                *damage = 0;
                 runicDiscovered = true;
                 if (!runicKnown) {
-                    sprintf(returnString, "Your %s pulses, and the damage is shared with %s!", armorName, (count == 1 ? monstName : "the other adjacent enemies"));
+                    sprintf(returnString, "your %s pulses and absorbs the blow!", armorName);
                 }
-                *damage = (*damage + count) / (count + 1);
             }
-        }
-        break;
-    case A_ABSORPTION:
-        *damage -= rand_range(1, armorAbsorptionMax(enchant));
-        if (*damage <= 0) {
-            *damage = 0;
-            runicDiscovered = true;
+            break;
+        case A_REPRISAL:
+            if (melee && !(attacker->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
+                newDamage = max(1, armorReprisalPercent(enchant) * (*damage) / 100); // 5% reprisal per armor level
+                if (inflictDamage(&player, attacker, newDamage, &blue, true)) {
+                    if (canSeeMonster(attacker)) {
+                        sprintf(returnString, "your %s pulses and %s drops dead!", armorName, attackerName);
+                        runicDiscovered = true;
+                    }
+                    killCreature(attacker, false);
+                } else if (!runicKnown) {
+                    if (canSeeMonster(attacker)) {
+                        sprintf(returnString, "your %s pulses and %s shudders in pain!", armorName, attackerName);
+                        runicDiscovered = true;
+                    }
+                }
+            }
+            break;
+        case A_IMMUNITY:
+            if (monsterIsInClass(attacker, rogue.armor->vorpalEnemy)) {
+                *damage = 0;
+                runicDiscovered = true;
+            }
+            break;
+        case A_BURDEN:
+            if (rand_percent(10)) {
+                rogue.armor->strengthRequired++;
+                sprintf(returnString, "your %s suddenly feels heavier!", armorName);
+                equipItem(rogue.armor, true, NULL);
+                runicDiscovered = true;
+            }
+            break;
+        case A_VULNERABILITY:
+            *damage *= 2;
             if (!runicKnown) {
-                sprintf(returnString, "your %s pulses and absorbs the blow!", armorName);
+                sprintf(returnString, "your %s pulses and you are wracked with pain!", armorName);
+                runicDiscovered = true;
             }
-        }
-        break;
-    case A_REPRISAL:
-        if (melee && !(attacker->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
-            newDamage = max(1, armorReprisalPercent(enchant) * (*damage) / 100); // 5% reprisal per armor level
-            if (inflictDamage(&player, attacker, newDamage, &blue, true)) {
-                if (canSeeMonster(attacker)) {
-                    sprintf(returnString, "your %s pulses and %s drops dead!", armorName, attackerName);
-                    runicDiscovered = true;
-                }
-                killCreature(attacker, false);
-            } else if (!runicKnown) {
-                if (canSeeMonster(attacker)) {
-                    sprintf(returnString, "your %s pulses and %s shudders in pain!", armorName, attackerName);
-                    runicDiscovered = true;
-                }
+            break;
+        case A_IMMOLATION:
+            if (rand_percent(10)) {
+                sprintf(returnString, "flames suddenly explode out of your %s!", armorName);
+                message(returnString, runicKnown ? 0 : REQUIRE_ACKNOWLEDGMENT);
+                returnString[0] = '\0';
+                spawnDungeonFeature(player.loc.x, player.loc.y, &(dungeonFeatureCatalog[DF_ARMOR_IMMOLATION]), true, false);
+                runicDiscovered = true;
             }
-        }
-        break;
-    case A_IMMUNITY:
-        if (monsterIsInClass(attacker, rogue.armor->vorpalEnemy)) {
-            *damage = 0;
-            runicDiscovered = true;
-        }
-        break;
-    case A_BURDEN:
-        if (rand_percent(10)) {
-            rogue.armor->strengthRequired++;
-            sprintf(returnString, "your %s suddenly feels heavier!", armorName);
-            equipItem(rogue.armor, true, NULL);
-            runicDiscovered = true;
-        }
-        break;
-    case A_VULNERABILITY:
-        *damage *= 2;
-        if (!runicKnown) {
-            sprintf(returnString, "your %s pulses and you are wracked with pain!", armorName);
-            runicDiscovered = true;
-        }
-        break;
-    case A_IMMOLATION:
-        if (rand_percent(10)) {
-            sprintf(returnString, "flames suddenly explode out of your %s!", armorName);
-            message(returnString, runicKnown ? 0 : REQUIRE_ACKNOWLEDGMENT);
-            returnString[0] = '\0';
-            spawnDungeonFeature(player.loc.x, player.loc.y, &(dungeonFeatureCatalog[DF_ARMOR_IMMOLATION]), true, false);
-            runicDiscovered = true;
-        }
-    default:
-        break;
+        default:
+            break;
     }
 
     if (runicDiscovered && !runicKnown) {

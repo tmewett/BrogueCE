@@ -40,34 +40,34 @@ static boolean eventFromKey(rogueEvent *event, SDL_Keycode key) {
     event->param1 = -1;
 
     switch (key) {
-    case SDLK_ESCAPE:
-        event->param1 = ESCAPE_KEY;
-        return true;
-    case SDLK_UP:
-        event->param1 = UP_ARROW;
-        return true;
-    case SDLK_DOWN:
-        event->param1 = DOWN_ARROW;
-        return true;
-    case SDLK_RIGHT:
-        event->param1 = RIGHT_ARROW;
-        return true;
-    case SDLK_LEFT:
-        event->param1 = LEFT_ARROW;
-        return true;
-    case SDLK_RETURN:
-    case SDLK_KP_ENTER:
-        event->param1 = RETURN_KEY;
-        return true;
-    case SDLK_BACKSPACE:
-        event->param1 = DELETE_KEY;
-        return true;
-    case SDLK_TAB:
-        event->param1 = TAB_KEY;
-        return true;
-    case SDLK_PRINTSCREEN:
-        event->param1 = PRINTSCREEN_KEY;
-        return true;
+        case SDLK_ESCAPE:
+            event->param1 = ESCAPE_KEY;
+            return true;
+        case SDLK_UP:
+            event->param1 = UP_ARROW;
+            return true;
+        case SDLK_DOWN:
+            event->param1 = DOWN_ARROW;
+            return true;
+        case SDLK_RIGHT:
+            event->param1 = RIGHT_ARROW;
+            return true;
+        case SDLK_LEFT:
+            event->param1 = LEFT_ARROW;
+            return true;
+        case SDLK_RETURN:
+        case SDLK_KP_ENTER:
+            event->param1 = RETURN_KEY;
+            return true;
+        case SDLK_BACKSPACE:
+            event->param1 = DELETE_KEY;
+            return true;
+        case SDLK_TAB:
+            event->param1 = TAB_KEY;
+            return true;
+        case SDLK_PRINTSCREEN:
+            event->param1 = PRINTSCREEN_KEY;
+            return true;
     }
 
     /*
@@ -76,36 +76,36 @@ static boolean eventFromKey(rogueEvent *event, SDL_Keycode key) {
     */
     if (event->shiftKey || event->controlKey) {
         switch (key) {
-        case SDLK_KP_0:
-            event->param1 = NUMPAD_0;
-            return true;
-        case SDLK_KP_1:
-            event->param1 = NUMPAD_1;
-            return true;
-        case SDLK_KP_2:
-            event->param1 = NUMPAD_2;
-            return true;
-        case SDLK_KP_3:
-            event->param1 = NUMPAD_3;
-            return true;
-        case SDLK_KP_4:
-            event->param1 = NUMPAD_4;
-            return true;
-        case SDLK_KP_5:
-            event->param1 = NUMPAD_5;
-            return true;
-        case SDLK_KP_6:
-            event->param1 = NUMPAD_6;
-            return true;
-        case SDLK_KP_7:
-            event->param1 = NUMPAD_7;
-            return true;
-        case SDLK_KP_8:
-            event->param1 = NUMPAD_8;
-            return true;
-        case SDLK_KP_9:
-            event->param1 = NUMPAD_9;
-            return true;
+            case SDLK_KP_0:
+                event->param1 = NUMPAD_0;
+                return true;
+            case SDLK_KP_1:
+                event->param1 = NUMPAD_1;
+                return true;
+            case SDLK_KP_2:
+                event->param1 = NUMPAD_2;
+                return true;
+            case SDLK_KP_3:
+                event->param1 = NUMPAD_3;
+                return true;
+            case SDLK_KP_4:
+                event->param1 = NUMPAD_4;
+                return true;
+            case SDLK_KP_5:
+                event->param1 = NUMPAD_5;
+                return true;
+            case SDLK_KP_6:
+                event->param1 = NUMPAD_6;
+                return true;
+            case SDLK_KP_7:
+                event->param1 = NUMPAD_7;
+                return true;
+            case SDLK_KP_8:
+                event->param1 = NUMPAD_8;
+                return true;
+            case SDLK_KP_9:
+                event->param1 = NUMPAD_9;
+                return true;
         }
     }
 
@@ -333,52 +333,52 @@ static int fontIndex(enum displayGlyph glyph) {
     } else {
         unsigned int code = glyphToUnicode(glyph);
         switch (code) {
-        case U_MIDDLE_DOT:
-            return 0x80;
-        case U_FOUR_DOTS:
-            return 0x81;
-        case U_DIAMOND:
-            return 0x82;
-        case U_FLIPPED_V:
-            return 0x83;
-        case U_ARIES:
-            return 0x84;
-        case U_ESZETT:
-            return 0xdf;
-        case U_ANKH:
-            return 0x85;
-        case U_MUSIC_NOTE:
-            return 0x86;
-        case U_CIRCLE:
-            return 0x87;
-        case U_LIGHTNING_BOLT:
-            return 0x99;
-        case U_FILLED_CIRCLE:
-            return 0x89;
-        case U_NEUTER:
-            return 0x8a;
-        case U_U_ACUTE:
-            return 0xda;
-        case U_CURRENCY:
-            return 0xa4;
-        case U_UP_ARROW:
-            return 0x90;
-        case U_DOWN_ARROW:
-            return 0x91;
-        case U_LEFT_ARROW:
-            return 0x92;
-        case U_RIGHT_ARROW:
-            return 0x93;
-        case U_OMEGA:
-            return 0x96;
-        case U_CIRCLE_BARS:
-            return 0x8c;
-        case U_FILLED_CIRCLE_BARS:
-            return 0x8d;
+            case U_MIDDLE_DOT:
+                return 0x80;
+            case U_FOUR_DOTS:
+                return 0x81;
+            case U_DIAMOND:
+                return 0x82;
+            case U_FLIPPED_V:
+                return 0x83;
+            case U_ARIES:
+                return 0x84;
+            case U_ESZETT:
+                return 0xdf;
+            case U_ANKH:
+                return 0x85;
+            case U_MUSIC_NOTE:
+                return 0x86;
+            case U_CIRCLE:
+                return 0x87;
+            case U_LIGHTNING_BOLT:
+                return 0x99;
+            case U_FILLED_CIRCLE:
+                return 0x89;
+            case U_NEUTER:
+                return 0x8a;
+            case U_U_ACUTE:
+                return 0xda;
+            case U_CURRENCY:
+                return 0xa4;
+            case U_UP_ARROW:
+                return 0x90;
+            case U_DOWN_ARROW:
+                return 0x91;
+            case U_LEFT_ARROW:
+                return 0x92;
+            case U_RIGHT_ARROW:
+                return 0x93;
+            case U_OMEGA:
+                return 0x96;
+            case U_CIRCLE_BARS:
+                return 0x8c;
+            case U_FILLED_CIRCLE_BARS:
+                return 0x8d;
 
-        default:
-            brogueAssert(code < 256);
-            return code;
+            default:
+                brogueAssert(code < 256);
+                return code;
         }
     }
 }

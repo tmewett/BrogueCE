@@ -1159,17 +1159,17 @@ unsigned long successorTerrainFlags(enum tileType tile, enum subseqDFTypes promo
     enum dungeonFeatureTypes DF = 0;
 
     switch (promotionType) {
-    case SUBSEQ_PROMOTE:
-        DF = tileCatalog[tile].promoteType;
-        break;
-    case SUBSEQ_BURN:
-        DF = tileCatalog[tile].fireType;
-        break;
-    case SUBSEQ_DISCOVER:
-        DF = tileCatalog[tile].discoverType;
-        break;
-    default:
-        break;
+        case SUBSEQ_PROMOTE:
+            DF = tileCatalog[tile].promoteType;
+            break;
+        case SUBSEQ_BURN:
+            DF = tileCatalog[tile].fireType;
+            break;
+        case SUBSEQ_DISCOVER:
+            DF = tileCatalog[tile].discoverType;
+            break;
+        default:
+            break;
     }
 
     if (DF) {
@@ -1670,127 +1670,127 @@ void decrementMonsterStatus(creature *monst) {
 
     for (i = 0; i < NUMBER_OF_STATUS_EFFECTS; i++) {
         switch (i) {
-        case STATUS_LEVITATING:
-            if (monst->status[i] && !(monst->info.flags & MONST_FLIES)) {
-                monst->status[i]--;
-            }
-            break;
-        case STATUS_SLOWED:
-            if (monst->status[i] && !--monst->status[i]) {
-                monst->movementSpeed = monst->info.movementSpeed;
-                monst->attackSpeed = monst->info.attackSpeed;
-            }
-            break;
-        case STATUS_WEAKENED:
-            if (monst->status[i] && !--monst->status[i]) {
-                monst->weaknessAmount = 0;
-            }
-            break;
-        case STATUS_HASTED:
-            if (monst->status[i]) {
-                if (!--monst->status[i]) {
+            case STATUS_LEVITATING:
+                if (monst->status[i] && !(monst->info.flags & MONST_FLIES)) {
+                    monst->status[i]--;
+                }
+                break;
+            case STATUS_SLOWED:
+                if (monst->status[i] && !--monst->status[i]) {
                     monst->movementSpeed = monst->info.movementSpeed;
                     monst->attackSpeed = monst->info.attackSpeed;
                 }
-            }
-            break;
-        case STATUS_BURNING:
-            if (monst->status[i]) {
-                if (!(monst->info.flags & MONST_FIERY)) {
+                break;
+            case STATUS_WEAKENED:
+                if (monst->status[i] && !--monst->status[i]) {
+                    monst->weaknessAmount = 0;
+                }
+                break;
+            case STATUS_HASTED:
+                if (monst->status[i]) {
+                    if (!--monst->status[i]) {
+                        monst->movementSpeed = monst->info.movementSpeed;
+                        monst->attackSpeed = monst->info.attackSpeed;
+                    }
+                }
+                break;
+            case STATUS_BURNING:
+                if (monst->status[i]) {
+                    if (!(monst->info.flags & MONST_FIERY)) {
+                        monst->status[i]--;
+                    }
+                    damage = rand_range(1, 3);
+                    if (!(monst->status[STATUS_IMMUNE_TO_FIRE]) && !(monst->info.flags & MONST_INVULNERABLE) && inflictDamage(NULL, monst, damage, &orange, true)) {
+
+                        if (canSeeMonster(monst)) {
+                            monsterName(buf, monst, true);
+                            sprintf(buf2, "%s burns %s.", buf, (monst->info.flags & MONST_INANIMATE) ? "up" : "to death");
+                            messageWithColor(buf2, messageColorFromVictim(monst), 0);
+                        }
+                        killCreature(monst, false);
+                        return;
+                    }
+                    if (monst->status[i] <= 0) {
+                        extinguishFireOnCreature(monst);
+                    }
+                }
+                break;
+            case STATUS_LIFESPAN_REMAINING:
+                if (monst->status[i]) {
+                    monst->status[i]--;
+                    if (monst->status[i] <= 0) {
+                        killCreature(monst, false);
+                        if (canSeeMonster(monst)) {
+                            monsterName(buf, monst, true);
+                            sprintf(buf2, "%s dissipates into thin air.", buf);
+                            messageWithColor(buf2, &white, 0);
+                        }
+                        return;
+                    }
+                }
+                break;
+            case STATUS_POISONED:
+                if (monst->status[i]) {
+                    monst->status[i]--;
+                    if (inflictDamage(NULL, monst, monst->poisonAmount, &green, true)) {
+                        if (canSeeMonster(monst)) {
+                            monsterName(buf, monst, true);
+                            sprintf(buf2, "%s dies of poison.", buf);
+                            messageWithColor(buf2, messageColorFromVictim(monst), 0);
+                        }
+                        killCreature(monst, false);
+                        return;
+                    }
+                    if (!monst->status[i]) {
+                        monst->poisonAmount = 0;
+                    }
+                }
+                break;
+            case STATUS_STUCK:
+                if (monst->status[i] && !cellHasTerrainFlag(monst->loc.x, monst->loc.y, T_ENTANGLES)) {
+                    monst->status[i] = 0;
+                }
+                break;
+            case STATUS_DISCORDANT:
+                if (monst->status[i] && !--monst->status[i]) {
+                    if (monst->creatureState == MONSTER_FLEEING && !monst->status[STATUS_MAGICAL_FEAR] && monst->leader == &player) {
+
+                        monst->creatureState = MONSTER_ALLY;
+                        if (monst->carriedItem) {
+                            makeMonsterDropItem(monst);
+                        }
+                    }
+                }
+                break;
+            case STATUS_MAGICAL_FEAR:
+                if (monst->status[i]) {
+                    if (!--monst->status[i]) {
+                        monst->creatureState = (monst->leader == &player ? MONSTER_ALLY : MONSTER_TRACKING_SCENT);
+                    }
+                }
+                break;
+            case STATUS_SHIELDED:
+                monst->status[i] -= monst->maxStatus[i] / 20;
+                if (monst->status[i] <= 0) {
+                    monst->status[i] = monst->maxStatus[i] = 0;
+                }
+                break;
+            case STATUS_IMMUNE_TO_FIRE:
+                if (monst->status[i] && !(monst->info.flags & MONST_IMMUNE_TO_FIRE)) {
                     monst->status[i]--;
                 }
-                damage = rand_range(1, 3);
-                if (!(monst->status[STATUS_IMMUNE_TO_FIRE]) && !(monst->info.flags & MONST_INVULNERABLE) && inflictDamage(NULL, monst, damage, &orange, true)) {
+                break;
+            case STATUS_INVISIBLE:
+                if (monst->status[i] && !(monst->info.flags & MONST_INVISIBLE) && !--monst->status[i] && playerCanSee(monst->loc.x, monst->loc.y)) {
 
-                    if (canSeeMonster(monst)) {
-                        monsterName(buf, monst, true);
-                        sprintf(buf2, "%s burns %s.", buf, (monst->info.flags & MONST_INANIMATE) ? "up" : "to death");
-                        messageWithColor(buf2, messageColorFromVictim(monst), 0);
-                    }
-                    killCreature(monst, false);
-                    return;
+                    refreshDungeonCell(monst->loc.x, monst->loc.y);
                 }
-                if (monst->status[i] <= 0) {
-                    extinguishFireOnCreature(monst);
+                break;
+            default:
+                if (monst->status[i]) {
+                    monst->status[i]--;
                 }
-            }
-            break;
-        case STATUS_LIFESPAN_REMAINING:
-            if (monst->status[i]) {
-                monst->status[i]--;
-                if (monst->status[i] <= 0) {
-                    killCreature(monst, false);
-                    if (canSeeMonster(monst)) {
-                        monsterName(buf, monst, true);
-                        sprintf(buf2, "%s dissipates into thin air.", buf);
-                        messageWithColor(buf2, &white, 0);
-                    }
-                    return;
-                }
-            }
-            break;
-        case STATUS_POISONED:
-            if (monst->status[i]) {
-                monst->status[i]--;
-                if (inflictDamage(NULL, monst, monst->poisonAmount, &green, true)) {
-                    if (canSeeMonster(monst)) {
-                        monsterName(buf, monst, true);
-                        sprintf(buf2, "%s dies of poison.", buf);
-                        messageWithColor(buf2, messageColorFromVictim(monst), 0);
-                    }
-                    killCreature(monst, false);
-                    return;
-                }
-                if (!monst->status[i]) {
-                    monst->poisonAmount = 0;
-                }
-            }
-            break;
-        case STATUS_STUCK:
-            if (monst->status[i] && !cellHasTerrainFlag(monst->loc.x, monst->loc.y, T_ENTANGLES)) {
-                monst->status[i] = 0;
-            }
-            break;
-        case STATUS_DISCORDANT:
-            if (monst->status[i] && !--monst->status[i]) {
-                if (monst->creatureState == MONSTER_FLEEING && !monst->status[STATUS_MAGICAL_FEAR] && monst->leader == &player) {
-
-                    monst->creatureState = MONSTER_ALLY;
-                    if (monst->carriedItem) {
-                        makeMonsterDropItem(monst);
-                    }
-                }
-            }
-            break;
-        case STATUS_MAGICAL_FEAR:
-            if (monst->status[i]) {
-                if (!--monst->status[i]) {
-                    monst->creatureState = (monst->leader == &player ? MONSTER_ALLY : MONSTER_TRACKING_SCENT);
-                }
-            }
-            break;
-        case STATUS_SHIELDED:
-            monst->status[i] -= monst->maxStatus[i] / 20;
-            if (monst->status[i] <= 0) {
-                monst->status[i] = monst->maxStatus[i] = 0;
-            }
-            break;
-        case STATUS_IMMUNE_TO_FIRE:
-            if (monst->status[i] && !(monst->info.flags & MONST_IMMUNE_TO_FIRE)) {
-                monst->status[i]--;
-            }
-            break;
-        case STATUS_INVISIBLE:
-            if (monst->status[i] && !(monst->info.flags & MONST_INVISIBLE) && !--monst->status[i] && playerCanSee(monst->loc.x, monst->loc.y)) {
-
-                refreshDungeonCell(monst->loc.x, monst->loc.y);
-            }
-            break;
-        default:
-            if (monst->status[i]) {
-                monst->status[i]--;
-            }
-            break;
+                break;
         }
     }
 
@@ -2314,118 +2314,118 @@ boolean specificallyValidBoltTarget(creature *caster, creature *target, enum bol
 
     // Rules specific to bolt effects:
     switch (boltCatalog[theBoltType].boltEffect) {
-    case BE_BECKONING:
-        if (distanceBetween(caster->loc, target->loc) <= 1) {
-            return false;
-        }
-        break;
-    case BE_ATTACK:
-        if (cellHasTerrainFlag(target->loc.x, target->loc.y, T_OBSTRUCTS_PASSABILITY) && !(target->info.flags & MONST_ATTACKABLE_THRU_WALLS)) {
-            // Don't shoot an arrow at an embedded creature.
-            return false;
-        }
-        // continue to BE_DAMAGE below
-    case BE_DAMAGE:
-        if (target->status[STATUS_ENTRANCED] && monstersAreEnemies(caster, target)) {
-            // Don't break your enemies' entrancement.
-            return false;
-        }
-        break;
-    case BE_NONE:
-        // BE_NONE bolts are always going to be all about the terrain effects,
-        // so our logic has to follow from the terrain parameters of the bolt's target DF.
-        if (boltCatalog[theBoltType].targetDF) {
-            const unsigned long terrainFlags = tileCatalog[dungeonFeatureCatalog[boltCatalog[theBoltType].targetDF].tile].flags;
-            if ((terrainFlags & T_ENTANGLES) && target->status[STATUS_STUCK]) {
-                // Don't try to entangle a creature that is already entangled.
+        case BE_BECKONING:
+            if (distanceBetween(caster->loc, target->loc) <= 1) {
                 return false;
             }
-            if ((boltCatalog[theBoltType].flags & BF_TARGET_ENEMIES) && !(terrainFlags & avoidedFlagsForMonster(&(target->info))) && (!(terrainFlags & T_ENTANGLES) || (target->info.flags & MONST_IMMUNE_TO_WEBS))) {
+            break;
+        case BE_ATTACK:
+            if (cellHasTerrainFlag(target->loc.x, target->loc.y, T_OBSTRUCTS_PASSABILITY) && !(target->info.flags & MONST_ATTACKABLE_THRU_WALLS)) {
+                // Don't shoot an arrow at an embedded creature.
+                return false;
+            }
+            // continue to BE_DAMAGE below
+        case BE_DAMAGE:
+            if (target->status[STATUS_ENTRANCED] && monstersAreEnemies(caster, target)) {
+                // Don't break your enemies' entrancement.
+                return false;
+            }
+            break;
+        case BE_NONE:
+            // BE_NONE bolts are always going to be all about the terrain effects,
+            // so our logic has to follow from the terrain parameters of the bolt's target DF.
+            if (boltCatalog[theBoltType].targetDF) {
+                const unsigned long terrainFlags = tileCatalog[dungeonFeatureCatalog[boltCatalog[theBoltType].targetDF].tile].flags;
+                if ((terrainFlags & T_ENTANGLES) && target->status[STATUS_STUCK]) {
+                    // Don't try to entangle a creature that is already entangled.
+                    return false;
+                }
+                if ((boltCatalog[theBoltType].flags & BF_TARGET_ENEMIES) && !(terrainFlags & avoidedFlagsForMonster(&(target->info))) && (!(terrainFlags & T_ENTANGLES) || (target->info.flags & MONST_IMMUNE_TO_WEBS))) {
 
+                    return false;
+                }
+            }
+            break;
+        case BE_DISCORD:
+            if (target->status[STATUS_DISCORDANT] || target == &player) {
+                // Don't cast discord if the target is already discordant, or if it is the player.
+                // (Players should never be intentionally targeted by discord. It's just a fact of monster psychology.)
                 return false;
             }
-        }
-        break;
-    case BE_DISCORD:
-        if (target->status[STATUS_DISCORDANT] || target == &player) {
-            // Don't cast discord if the target is already discordant, or if it is the player.
-            // (Players should never be intentionally targeted by discord. It's just a fact of monster psychology.)
-            return false;
-        }
-        break;
-    case BE_NEGATION:
-        if (monstersAreEnemies(caster, target)) {
-            if (target->status[STATUS_HASTED] || target->status[STATUS_TELEPATHIC] || target->status[STATUS_SHIELDED]) {
-                // Dispel haste, telepathy, protection.
-                return true;
+            break;
+        case BE_NEGATION:
+            if (monstersAreEnemies(caster, target)) {
+                if (target->status[STATUS_HASTED] || target->status[STATUS_TELEPATHIC] || target->status[STATUS_SHIELDED]) {
+                    // Dispel haste, telepathy, protection.
+                    return true;
+                }
+                if (target->info.flags & (MONST_DIES_IF_NEGATED | MONST_IMMUNE_TO_WEAPONS)) {
+                    // Dispel magic creatures; strip weapon invulnerability from revenants.
+                    return true;
+                }
+                if ((target->status[STATUS_IMMUNE_TO_FIRE] || target->status[STATUS_LEVITATING]) && cellHasTerrainFlag(target->loc.x, target->loc.y, (T_LAVA_INSTA_DEATH | T_IS_DEEP_WATER | T_AUTO_DESCENT))) {
+                    // Drop the target into lava or a chasm if opportunity knocks.
+                    return true;
+                }
+                if (monstersAreTeammates(caster, target) && target->status[STATUS_DISCORDANT] && !(target->info.flags & MONST_DIES_IF_NEGATED)) {
+                    // Dispel discord from allies unless it would destroy them.
+                    return true;
+                }
+            } else if (monstersAreTeammates(caster, target)) {
+                if (target == &player && rogue.armor && (rogue.armor->flags & ITEM_RUNIC) && (rogue.armor->flags & ITEM_RUNIC_IDENTIFIED) && rogue.armor->enchant2 == A_REFLECTION && netEnchant(rogue.armor) > 0) {
+                    // Allies shouldn't cast negation on the player if she's knowingly wearing armor of reflection.
+                    // Too much risk of negating themselves in the process.
+                    return false;
+                }
+                if (target->info.flags & MONST_DIES_IF_NEGATED) {
+                    // Never cast negation if it would destroy an allied creature.
+                    return false;
+                }
+                if (target->status[STATUS_ENTRANCED] && caster->creatureState != MONSTER_ALLY) {
+                    // Non-allied monsters will dispel entrancement on their own kind.
+                    return true;
+                }
+                if (target->status[STATUS_MAGICAL_FEAR]) {
+                    // Dispel magical fear.
+                    return true;
+                }
             }
-            if (target->info.flags & (MONST_DIES_IF_NEGATED | MONST_IMMUNE_TO_WEAPONS)) {
-                // Dispel magic creatures; strip weapon invulnerability from revenants.
-                return true;
-            }
-            if ((target->status[STATUS_IMMUNE_TO_FIRE] || target->status[STATUS_LEVITATING]) && cellHasTerrainFlag(target->loc.x, target->loc.y, (T_LAVA_INSTA_DEATH | T_IS_DEEP_WATER | T_AUTO_DESCENT))) {
-                // Drop the target into lava or a chasm if opportunity knocks.
-                return true;
-            }
-            if (monstersAreTeammates(caster, target) && target->status[STATUS_DISCORDANT] && !(target->info.flags & MONST_DIES_IF_NEGATED)) {
-                // Dispel discord from allies unless it would destroy them.
-                return true;
-            }
-        } else if (monstersAreTeammates(caster, target)) {
-            if (target == &player && rogue.armor && (rogue.armor->flags & ITEM_RUNIC) && (rogue.armor->flags & ITEM_RUNIC_IDENTIFIED) && rogue.armor->enchant2 == A_REFLECTION && netEnchant(rogue.armor) > 0) {
-                // Allies shouldn't cast negation on the player if she's knowingly wearing armor of reflection.
-                // Too much risk of negating themselves in the process.
+            return false; // Don't cast negation unless there's a good reason.
+            break;
+        case BE_SLOW:
+            if (target->status[STATUS_SLOWED]) {
                 return false;
             }
-            if (target->info.flags & MONST_DIES_IF_NEGATED) {
-                // Never cast negation if it would destroy an allied creature.
+            break;
+        case BE_HASTE:
+            if (target->status[STATUS_HASTED]) {
                 return false;
             }
-            if (target->status[STATUS_ENTRANCED] && caster->creatureState != MONSTER_ALLY) {
-                // Non-allied monsters will dispel entrancement on their own kind.
-                return true;
+            if (!targetEligibleForCombatBuff(caster, target)) {
+                return false;
             }
-            if (target->status[STATUS_MAGICAL_FEAR]) {
-                // Dispel magical fear.
-                return true;
+            break;
+        case BE_SHIELDING:
+            if (target->status[STATUS_SHIELDED]) {
+                return false;
             }
-        }
-        return false; // Don't cast negation unless there's a good reason.
-        break;
-    case BE_SLOW:
-        if (target->status[STATUS_SLOWED]) {
+            if (!targetEligibleForCombatBuff(caster, target)) {
+                return false;
+            }
+            break;
+        case BE_HEALING:
+            if (target->currentHP >= target->info.maxHP) {
+                // Don't heal a creature already at full health.
+                return false;
+            }
+            break;
+        case BE_TUNNELING:
+        case BE_OBSTRUCTION:
+            // Monsters will never cast these.
             return false;
-        }
-        break;
-    case BE_HASTE:
-        if (target->status[STATUS_HASTED]) {
-            return false;
-        }
-        if (!targetEligibleForCombatBuff(caster, target)) {
-            return false;
-        }
-        break;
-    case BE_SHIELDING:
-        if (target->status[STATUS_SHIELDED]) {
-            return false;
-        }
-        if (!targetEligibleForCombatBuff(caster, target)) {
-            return false;
-        }
-        break;
-    case BE_HEALING:
-        if (target->currentHP >= target->info.maxHP) {
-            // Don't heal a creature already at full health.
-            return false;
-        }
-        break;
-    case BE_TUNNELING:
-    case BE_OBSTRUCTION:
-        // Monsters will never cast these.
-        return false;
-        break;
-    default:
-        break;
+            break;
+        default:
+            break;
     }
     return true;
 }
@@ -3705,48 +3705,48 @@ boolean staffOrWandEffectOnMonsterDescription(char *newText, item *theItem, crea
         itemName(theItem, theItemName, false, false, NULL);
 
         switch (boltEffectForItem(theItem)) {
-        case BE_DAMAGE:
-            if ((boltCatalog[boltForItem(theItem)].flags & BF_FIERY) && (monst->status[STATUS_IMMUNE_TO_FIRE]) || (monst->info.flags & MONST_INVULNERABLE)) {
+            case BE_DAMAGE:
+                if ((boltCatalog[boltForItem(theItem)].flags & BF_FIERY) && (monst->status[STATUS_IMMUNE_TO_FIRE]) || (monst->info.flags & MONST_INVULNERABLE)) {
 
-                sprintf(newText, "\n     Your %s (%c) will not harm %s.", theItemName, theItem->inventoryLetter, monstName);
-                successfulDescription = true;
-            } else if (theItem->flags & (ITEM_MAX_CHARGES_KNOWN | ITEM_IDENTIFIED)) {
-                if (staffDamageLow(enchant) >= monst->currentHP) {
-                    sprintf(newText, "\n     Your %s (%c) will %s %s in one hit.", theItemName, theItem->inventoryLetter, (monst->info.flags & MONST_INANIMATE) ? "destroy" : "kill", monstName);
+                    sprintf(newText, "\n     Your %s (%c) will not harm %s.", theItemName, theItem->inventoryLetter, monstName);
+                    successfulDescription = true;
+                } else if (theItem->flags & (ITEM_MAX_CHARGES_KNOWN | ITEM_IDENTIFIED)) {
+                    if (staffDamageLow(enchant) >= monst->currentHP) {
+                        sprintf(newText, "\n     Your %s (%c) will %s %s in one hit.", theItemName, theItem->inventoryLetter, (monst->info.flags & MONST_INANIMATE) ? "destroy" : "kill", monstName);
+                    } else {
+                        sprintf(newText, "\n     Your %s (%c) will hit %s for between %i%% and %i%% of $HISHER current health.", theItemName, theItem->inventoryLetter, monstName, 100 * staffDamageLow(enchant) / monst->currentHP,
+                                100 * staffDamageHigh(enchant) / monst->currentHP);
+                    }
+                    successfulDescription = true;
+                }
+                break;
+            case BE_POISON:
+                if (monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE)) {
+                    sprintf(newText, "\n     Your %s (%c) will not affect %s.", theItemName, theItem->inventoryLetter, monstName);
                 } else {
-                    sprintf(newText, "\n     Your %s (%c) will hit %s for between %i%% and %i%% of $HISHER current health.", theItemName, theItem->inventoryLetter, monstName, 100 * staffDamageLow(enchant) / monst->currentHP,
-                            100 * staffDamageHigh(enchant) / monst->currentHP);
+                    sprintf(newText, "\n     Your %s (%c) will poison %s for %i%% of $HISHER current health.", theItemName, theItem->inventoryLetter, monstName, 100 * staffPoison(enchant) / monst->currentHP);
                 }
                 successfulDescription = true;
-            }
-            break;
-        case BE_POISON:
-            if (monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE)) {
-                sprintf(newText, "\n     Your %s (%c) will not affect %s.", theItemName, theItem->inventoryLetter, monstName);
-            } else {
-                sprintf(newText, "\n     Your %s (%c) will poison %s for %i%% of $HISHER current health.", theItemName, theItem->inventoryLetter, monstName, 100 * staffPoison(enchant) / monst->currentHP);
-            }
-            successfulDescription = true;
-            break;
-        case BE_DOMINATION:
-            if (monst->creatureState != MONSTER_ALLY) {
-                if (monst->info.flags & MONST_INANIMATE) {
-                    sprintf(newText, "\n     A wand of domination will have no effect on objects like %s.", monstName);
-                } else if (monst->info.flags & MONST_INVULNERABLE) {
-                    sprintf(newText, "\n     A wand of domination will not affect %s.", monstName);
-                } else if (wandDominate(monst) <= 0) {
-                    sprintf(newText, "\n     A wand of domination will fail at %s's current health level.", monstName);
-                } else if (wandDominate(monst) >= 100) {
-                    sprintf(newText, "\n     A wand of domination will always succeed at %s's current health level.", monstName);
-                } else {
-                    sprintf(newText, "\n     A wand of domination will have a %i%% chance of success at %s's current health level.", wandDominate(monst), monstName);
+                break;
+            case BE_DOMINATION:
+                if (monst->creatureState != MONSTER_ALLY) {
+                    if (monst->info.flags & MONST_INANIMATE) {
+                        sprintf(newText, "\n     A wand of domination will have no effect on objects like %s.", monstName);
+                    } else if (monst->info.flags & MONST_INVULNERABLE) {
+                        sprintf(newText, "\n     A wand of domination will not affect %s.", monstName);
+                    } else if (wandDominate(monst) <= 0) {
+                        sprintf(newText, "\n     A wand of domination will fail at %s's current health level.", monstName);
+                    } else if (wandDominate(monst) >= 100) {
+                        sprintf(newText, "\n     A wand of domination will always succeed at %s's current health level.", monstName);
+                    } else {
+                        sprintf(newText, "\n     A wand of domination will have a %i%% chance of success at %s's current health level.", wandDominate(monst), monstName);
+                    }
+                    successfulDescription = true;
                 }
-                successfulDescription = true;
-            }
-            break;
-        default:
-            strcpy(newText, "");
-            break;
+                break;
+            default:
+                strcpy(newText, "");
+                break;
         }
     }
     return successfulDescription;

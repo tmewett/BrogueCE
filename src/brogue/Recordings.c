@@ -342,32 +342,32 @@ void recallEvent(rogueEvent *event) {
         event->eventType = c;
 
         switch (c) {
-        case KEYSTROKE:
-            // record which key
-            event->param1 = uncompressKeystroke(recallChar());
-            event->param2 = 0;
-            break;
-        case SAVED_GAME_LOADED:
-            tryAgain = true;
-            flashTemporaryAlert(" Saved game loaded ", 1000);
-            break;
-        case MOUSE_UP:
-        case MOUSE_DOWN:
-        case MOUSE_ENTERED_CELL:
-        case RIGHT_MOUSE_UP:
-        case RIGHT_MOUSE_DOWN:
-            event->param1 = recallChar();
-            event->param2 = recallChar();
-            break;
-        case RNG_CHECK:
-        case END_OF_RECORDING:
-        case EVENT_ERROR:
-        default:
-            message("Unrecognized event type in playback.", REQUIRE_ACKNOWLEDGMENT);
-            printf("Unrecognized event type in playback: event ID %i", c);
-            tryAgain = true;
-            playbackPanic();
-            break;
+            case KEYSTROKE:
+                // record which key
+                event->param1 = uncompressKeystroke(recallChar());
+                event->param2 = 0;
+                break;
+            case SAVED_GAME_LOADED:
+                tryAgain = true;
+                flashTemporaryAlert(" Saved game loaded ", 1000);
+                break;
+            case MOUSE_UP:
+            case MOUSE_DOWN:
+            case MOUSE_ENTERED_CELL:
+            case RIGHT_MOUSE_UP:
+            case RIGHT_MOUSE_DOWN:
+                event->param1 = recallChar();
+                event->param2 = recallChar();
+                break;
+            case RNG_CHECK:
+            case END_OF_RECORDING:
+            case EVENT_ERROR:
+            default:
+                message("Unrecognized event type in playback.", REQUIRE_ACKNOWLEDGMENT);
+                printf("Unrecognized event type in playback: event ID %i", c);
+                tryAgain = true;
+                playbackPanic();
+                break;
         }
     } while (tryAgain && !rogue.gameHasEnded);
 
@@ -711,27 +711,27 @@ static void seek(unsigned long seekTarget, enum recordingSeekModes seekMode) {
 
     // configure progress bar
     switch (seekMode) {
-    case RECORDING_SEEK_MODE_DEPTH:
-        if (maxLevelChanges > 0) {
-            avgTurnsPerLevel = rogue.howManyTurns / maxLevelChanges;
-        }
-        if (seekTarget <= rogue.depthLevel) {
-            startTurnNumber = 0;
-            targetTurnNumber = avgTurnsPerLevel * seekTarget;
-        } else {
-            startTurnNumber = rogue.playerTurnNumber;
-            targetTurnNumber = rogue.playerTurnNumber + avgTurnsPerLevel;
-        }
-        break;
-    case RECORDING_SEEK_MODE_TURN:
-        if (seekTarget < rogue.playerTurnNumber) {
-            startTurnNumber = 0;
-            targetTurnNumber = seekTarget;
-        } else {
-            startTurnNumber = rogue.playerTurnNumber;
-            targetTurnNumber = seekTarget;
-        }
-        break;
+        case RECORDING_SEEK_MODE_DEPTH:
+            if (maxLevelChanges > 0) {
+                avgTurnsPerLevel = rogue.howManyTurns / maxLevelChanges;
+            }
+            if (seekTarget <= rogue.depthLevel) {
+                startTurnNumber = 0;
+                targetTurnNumber = avgTurnsPerLevel * seekTarget;
+            } else {
+                startTurnNumber = rogue.playerTurnNumber;
+                targetTurnNumber = rogue.playerTurnNumber + avgTurnsPerLevel;
+            }
+            break;
+        case RECORDING_SEEK_MODE_TURN:
+            if (seekTarget < rogue.playerTurnNumber) {
+                startTurnNumber = 0;
+                targetTurnNumber = seekTarget;
+            } else {
+                startTurnNumber = rogue.playerTurnNumber;
+                targetTurnNumber = seekTarget;
+            }
+            break;
     }
 
     if (targetTurnNumber - startTurnNumber > 100) {
@@ -858,220 +858,220 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
         stripShiftFromMovementKeystroke(&key);
 
         switch (key) {
-        case UP_ARROW:
-        case UP_KEY:
-            newDelay = max(1, min(rogue.playbackDelayPerTurn * 2 / 3, rogue.playbackDelayPerTurn - 1));
-            if (newDelay != rogue.playbackDelayPerTurn) {
-                flashTemporaryAlert(" Faster ", 300);
-            }
-            rogue.playbackDelayPerTurn = newDelay;
-            rogue.playbackDelayThisTurn = rogue.playbackDelayPerTurn;
-            return true;
-        case DOWN_ARROW:
-        case DOWN_KEY:
-            newDelay = min(3000, max(rogue.playbackDelayPerTurn * 3 / 2, rogue.playbackDelayPerTurn + 1));
-            if (newDelay != rogue.playbackDelayPerTurn) {
-                flashTemporaryAlert(" Slower ", 300);
-            }
-            rogue.playbackDelayPerTurn = newDelay;
-            rogue.playbackDelayThisTurn = rogue.playbackDelayPerTurn;
-            return true;
-        case ACKNOWLEDGE_KEY:
-            if (rogue.playbackOOS && rogue.playbackPaused) {
-                flashTemporaryAlert(" Out of sync ", 2000);
-            } else {
-                rogue.playbackPaused = !rogue.playbackPaused;
-            }
-            return true;
-        case TAB_KEY:
-            rogue.playbackOmniscience = !rogue.playbackOmniscience;
-            displayLevel();
-            refreshSideBar(-1, -1, false);
-            if (rogue.playbackOmniscience) {
-                messageWithColor("Omniscience enabled.", &teal, 0);
-            } else {
-                messageWithColor("Omniscience disabled.", &teal, 0);
-            }
-            return true;
-        case ASCEND_KEY:
-            seek(max(rogue.depthLevel - 1, 1), RECORDING_SEEK_MODE_DEPTH);
-            return true;
-        case DESCEND_KEY:
-            if (rogue.depthLevel == maxLevelChanges) {
-                flashTemporaryAlert(" Already reached deepest depth explored ", 2000);
-                return false;
-            }
-            seek(rogue.depthLevel + 1, RECORDING_SEEK_MODE_DEPTH);
-            return true;
-        case INVENTORY_KEY:
-            rogue.playbackMode = false;
-            displayInventory(ALL_ITEMS, 0, 0, true, false);
-            rogue.playbackMode = true;
-            return true;
-        case RIGHT_KEY:
-        case RIGHT_ARROW:
-        case LEFT_KEY:
-        case LEFT_ARROW:
-            if (key == RIGHT_KEY || key == RIGHT_ARROW) {
-                frameCount = 1;
-            } else {
-                frameCount = -1;
-            }
-            if (recordingInput->shiftKey) {
-                frameCount *= 5;
-            }
-            if (recordingInput->controlKey) {
-                frameCount *= 20;
-            }
-
-            if (frameCount < 0) {
-                if ((unsigned long)(frameCount * -1) > rogue.playerTurnNumber) {
-                    destinationFrame = 0;
-                } else {
-                    destinationFrame = rogue.playerTurnNumber + frameCount;
+            case UP_ARROW:
+            case UP_KEY:
+                newDelay = max(1, min(rogue.playbackDelayPerTurn * 2 / 3, rogue.playbackDelayPerTurn - 1));
+                if (newDelay != rogue.playbackDelayPerTurn) {
+                    flashTemporaryAlert(" Faster ", 300);
                 }
-            } else {
-                destinationFrame = min(rogue.playerTurnNumber + frameCount, rogue.howManyTurns);
-            }
-
-            if (destinationFrame == rogue.playerTurnNumber) {
-                flashTemporaryAlert(" Already at end of recording ", 1000);
-            } else if (frameCount < 0) {
+                rogue.playbackDelayPerTurn = newDelay;
+                rogue.playbackDelayThisTurn = rogue.playbackDelayPerTurn;
+                return true;
+            case DOWN_ARROW:
+            case DOWN_KEY:
+                newDelay = min(3000, max(rogue.playbackDelayPerTurn * 3 / 2, rogue.playbackDelayPerTurn + 1));
+                if (newDelay != rogue.playbackDelayPerTurn) {
+                    flashTemporaryAlert(" Slower ", 300);
+                }
+                rogue.playbackDelayPerTurn = newDelay;
+                rogue.playbackDelayThisTurn = rogue.playbackDelayPerTurn;
+                return true;
+            case ACKNOWLEDGE_KEY:
+                if (rogue.playbackOOS && rogue.playbackPaused) {
+                    flashTemporaryAlert(" Out of sync ", 2000);
+                } else {
+                    rogue.playbackPaused = !rogue.playbackPaused;
+                }
+                return true;
+            case TAB_KEY:
+                rogue.playbackOmniscience = !rogue.playbackOmniscience;
+                displayLevel();
+                refreshSideBar(-1, -1, false);
+                if (rogue.playbackOmniscience) {
+                    messageWithColor("Omniscience enabled.", &teal, 0);
+                } else {
+                    messageWithColor("Omniscience disabled.", &teal, 0);
+                }
+                return true;
+            case ASCEND_KEY:
+                seek(max(rogue.depthLevel - 1, 1), RECORDING_SEEK_MODE_DEPTH);
+                return true;
+            case DESCEND_KEY:
+                if (rogue.depthLevel == maxLevelChanges) {
+                    flashTemporaryAlert(" Already reached deepest depth explored ", 2000);
+                    return false;
+                }
+                seek(rogue.depthLevel + 1, RECORDING_SEEK_MODE_DEPTH);
+                return true;
+            case INVENTORY_KEY:
                 rogue.playbackMode = false;
-                proceed = (rogue.playerTurnNumber < 100 || confirm("Rewind?", true));
+                displayInventory(ALL_ITEMS, 0, 0, true, false);
                 rogue.playbackMode = true;
-                if (proceed) {
+                return true;
+            case RIGHT_KEY:
+            case RIGHT_ARROW:
+            case LEFT_KEY:
+            case LEFT_ARROW:
+                if (key == RIGHT_KEY || key == RIGHT_ARROW) {
+                    frameCount = 1;
+                } else {
+                    frameCount = -1;
+                }
+                if (recordingInput->shiftKey) {
+                    frameCount *= 5;
+                }
+                if (recordingInput->controlKey) {
+                    frameCount *= 20;
+                }
+
+                if (frameCount < 0) {
+                    if ((unsigned long)(frameCount * -1) > rogue.playerTurnNumber) {
+                        destinationFrame = 0;
+                    } else {
+                        destinationFrame = rogue.playerTurnNumber + frameCount;
+                    }
+                } else {
+                    destinationFrame = min(rogue.playerTurnNumber + frameCount, rogue.howManyTurns);
+                }
+
+                if (destinationFrame == rogue.playerTurnNumber) {
+                    flashTemporaryAlert(" Already at end of recording ", 1000);
+                } else if (frameCount < 0) {
+                    rogue.playbackMode = false;
+                    proceed = (rogue.playerTurnNumber < 100 || confirm("Rewind?", true));
+                    rogue.playbackMode = true;
+                    if (proceed) {
+                        seek(destinationFrame, RECORDING_SEEK_MODE_TURN);
+                    }
+                } else {
+                    // advance by the right number of turns
                     seek(destinationFrame, RECORDING_SEEK_MODE_TURN);
                 }
-            } else {
-                // advance by the right number of turns
-                seek(destinationFrame, RECORDING_SEEK_MODE_TURN);
-            }
-            return true;
-        case BROGUE_HELP_KEY:
-            printPlaybackHelpScreen();
-            return true;
-        case DISCOVERIES_KEY:
-            rogue.playbackMode = false;
-            printDiscoveriesScreen();
-            rogue.playbackMode = true;
-            return true;
-        case MESSAGE_ARCHIVE_KEY:
-            rogue.playbackMode = false;
-            displayMessageArchive();
-            rogue.playbackMode = true;
-            return true;
-        case VIEW_RECORDING_KEY:
-            confirmMessages();
-            rogue.playbackMode = false;
-            if (dialogChooseFile(path, RECORDING_SUFFIX, "View recording: ")) {
-                if (fileExists(path)) {
-                    strcpy(rogue.nextGamePath, path);
-                    strcpy(rogue.currentGamePath, path);
-                    rogue.nextGame = NG_VIEW_RECORDING;
-                    rogue.gameHasEnded = true;
-                    rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
-                } else {
-                    message("File not found.", 0);
+                return true;
+            case BROGUE_HELP_KEY:
+                printPlaybackHelpScreen();
+                return true;
+            case DISCOVERIES_KEY:
+                rogue.playbackMode = false;
+                printDiscoveriesScreen();
+                rogue.playbackMode = true;
+                return true;
+            case MESSAGE_ARCHIVE_KEY:
+                rogue.playbackMode = false;
+                displayMessageArchive();
+                rogue.playbackMode = true;
+                return true;
+            case VIEW_RECORDING_KEY:
+                confirmMessages();
+                rogue.playbackMode = false;
+                if (dialogChooseFile(path, RECORDING_SUFFIX, "View recording: ")) {
+                    if (fileExists(path)) {
+                        strcpy(rogue.nextGamePath, path);
+                        strcpy(rogue.currentGamePath, path);
+                        rogue.nextGame = NG_VIEW_RECORDING;
+                        rogue.gameHasEnded = true;
+                        rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
+                    } else {
+                        message("File not found.", 0);
+                    }
                 }
-            }
-            rogue.playbackMode = true;
-            return true;
-        case LOAD_SAVED_GAME_KEY:
-            confirmMessages();
-            rogue.playbackMode = false;
-            if (dialogChooseFile(path, GAME_SUFFIX, "Open saved game: ")) {
-                if (fileExists(path)) {
-                    strcpy(rogue.nextGamePath, path);
-                    strcpy(rogue.currentGamePath, path);
-                    rogue.nextGame = NG_OPEN_GAME;
-                    rogue.gameHasEnded = true;
-                } else {
-                    message("File not found.", 0);
+                rogue.playbackMode = true;
+                return true;
+            case LOAD_SAVED_GAME_KEY:
+                confirmMessages();
+                rogue.playbackMode = false;
+                if (dialogChooseFile(path, GAME_SUFFIX, "Open saved game: ")) {
+                    if (fileExists(path)) {
+                        strcpy(rogue.nextGamePath, path);
+                        strcpy(rogue.currentGamePath, path);
+                        rogue.nextGame = NG_OPEN_GAME;
+                        rogue.gameHasEnded = true;
+                    } else {
+                        message("File not found.", 0);
+                    }
                 }
-            }
-            rogue.playbackMode = true;
-            return true;
-        case NEW_GAME_KEY:
-            rogue.playbackMode = false;
-            if (confirm("Close recording and begin a new game?", true)) {
-                rogue.nextGame = NG_NEW_GAME;
+                rogue.playbackMode = true;
+                return true;
+            case NEW_GAME_KEY:
+                rogue.playbackMode = false;
+                if (confirm("Close recording and begin a new game?", true)) {
+                    rogue.nextGame = NG_NEW_GAME;
+                    rogue.gameHasEnded = true;
+                }
+                rogue.playbackMode = true;
+                return true;
+            case QUIT_KEY:
+                // freeEverything();
                 rogue.gameHasEnded = true;
-            }
-            rogue.playbackMode = true;
-            return true;
-        case QUIT_KEY:
-            // freeEverything();
-            rogue.gameHasEnded = true;
-            rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
-            rogue.playbackOOS = false;
-            rogue.creaturesWillFlashThisTurn = false;
-            notifyEvent(GAMEOVER_RECORDING, 0, 0, "recording ended", "none");
-            return true;
-        case TRUE_COLORS_KEY:
-            rogue.trueColorMode = !rogue.trueColorMode;
-            displayLevel();
-            refreshSideBar(-1, -1, false);
-            if (rogue.trueColorMode) {
-                messageWithColor(KEYBOARD_LABELS ? "Color effects disabled. Press '\\' again to enable." : "Color effects disabled.", &teal, 0);
-            } else {
-                messageWithColor(KEYBOARD_LABELS ? "Color effects enabled. Press '\\' again to disable." : "Color effects enabled.", &teal, 0);
-            }
-            return true;
-        case STEALTH_RANGE_KEY:
-            rogue.displayStealthRangeMode = !rogue.displayStealthRangeMode;
-            displayLevel();
-            refreshSideBar(-1, -1, false);
-            if (rogue.displayStealthRangeMode) {
-                messageWithColor(KEYBOARD_LABELS ? "Stealth range displayed. Press ']' again to hide." : "Stealth range displayed.", &teal, 0);
-            } else {
-                messageWithColor(KEYBOARD_LABELS ? "Stealth range hidden. Press ']' again to display." : "Stealth range hidden.", &teal, 0);
-            }
-            return true;
-        case GRAPHICS_KEY:
-            if (hasGraphics) {
-                graphicsMode = setGraphicsMode((graphicsMode + 1) % 3);
-                switch (graphicsMode) {
-                case TEXT_GRAPHICS:
-                    messageWithColor(KEYBOARD_LABELS ? "Switched to text mode. Press 'G' again to enable tiles." : "Switched to text mode.", &teal, 0);
-                    break;
-                case TILES_GRAPHICS:
-                    messageWithColor(KEYBOARD_LABELS ? "Switched to graphical tiles. Press 'G' again to enable hybrid mode." : "Switched to graphical tiles.", &teal, 0);
-                    break;
-                case HYBRID_GRAPHICS:
-                    messageWithColor(KEYBOARD_LABELS ? "Switched to hybrid mode. Press 'G' again to disable tiles." : "Switched to hybrid mode.", &teal, 0);
-                    break;
+                rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
+                rogue.playbackOOS = false;
+                rogue.creaturesWillFlashThisTurn = false;
+                notifyEvent(GAMEOVER_RECORDING, 0, 0, "recording ended", "none");
+                return true;
+            case TRUE_COLORS_KEY:
+                rogue.trueColorMode = !rogue.trueColorMode;
+                displayLevel();
+                refreshSideBar(-1, -1, false);
+                if (rogue.trueColorMode) {
+                    messageWithColor(KEYBOARD_LABELS ? "Color effects disabled. Press '\\' again to enable." : "Color effects disabled.", &teal, 0);
+                } else {
+                    messageWithColor(KEYBOARD_LABELS ? "Color effects enabled. Press '\\' again to disable." : "Color effects enabled.", &teal, 0);
                 }
-            }
-            return true;
-        case SEED_KEY:
-            // rogue.playbackMode = false;
-            // DEBUG {displayGrid(safetyMap); displayMoreSign(); displayLevel();}
-            // rogue.playbackMode = true;
-            printSeed();
-            return true;
-        case SWITCH_TO_PLAYING_KEY:
+                return true;
+            case STEALTH_RANGE_KEY:
+                rogue.displayStealthRangeMode = !rogue.displayStealthRangeMode;
+                displayLevel();
+                refreshSideBar(-1, -1, false);
+                if (rogue.displayStealthRangeMode) {
+                    messageWithColor(KEYBOARD_LABELS ? "Stealth range displayed. Press ']' again to hide." : "Stealth range displayed.", &teal, 0);
+                } else {
+                    messageWithColor(KEYBOARD_LABELS ? "Stealth range hidden. Press ']' again to display." : "Stealth range hidden.", &teal, 0);
+                }
+                return true;
+            case GRAPHICS_KEY:
+                if (hasGraphics) {
+                    graphicsMode = setGraphicsMode((graphicsMode + 1) % 3);
+                    switch (graphicsMode) {
+                        case TEXT_GRAPHICS:
+                            messageWithColor(KEYBOARD_LABELS ? "Switched to text mode. Press 'G' again to enable tiles." : "Switched to text mode.", &teal, 0);
+                            break;
+                        case TILES_GRAPHICS:
+                            messageWithColor(KEYBOARD_LABELS ? "Switched to graphical tiles. Press 'G' again to enable hybrid mode." : "Switched to graphical tiles.", &teal, 0);
+                            break;
+                        case HYBRID_GRAPHICS:
+                            messageWithColor(KEYBOARD_LABELS ? "Switched to hybrid mode. Press 'G' again to disable tiles." : "Switched to hybrid mode.", &teal, 0);
+                            break;
+                    }
+                }
+                return true;
+            case SEED_KEY:
+                // rogue.playbackMode = false;
+                // DEBUG {displayGrid(safetyMap); displayMoreSign(); displayLevel();}
+                // rogue.playbackMode = true;
+                printSeed();
+                return true;
+            case SWITCH_TO_PLAYING_KEY:
 #ifdef ENABLE_PLAYBACK_SWITCH
-            if (!rogue.gameHasEnded && !rogue.playbackOOS) {
-                switchToPlaying();
-                lengthOfPlaybackFile = recordingLocation;
-            }
-            return true;
+                if (!rogue.gameHasEnded && !rogue.playbackOOS) {
+                    switchToPlaying();
+                    lengthOfPlaybackFile = recordingLocation;
+                }
+                return true;
 #endif
-            return false;
-        case ESCAPE_KEY:
-            if (!rogue.playbackPaused) {
-                rogue.playbackPaused = true;
-                return true;
-            }
-            return false;
-        default:
-            if (key >= '0' && key <= '9' || key >= NUMPAD_0 && key <= NUMPAD_9) {
+                return false;
+            case ESCAPE_KEY:
+                if (!rogue.playbackPaused) {
+                    rogue.playbackPaused = true;
+                    return true;
+                }
+                return false;
+            default:
+                if (key >= '0' && key <= '9' || key >= NUMPAD_0 && key <= NUMPAD_9) {
 
-                promptToAdvanceToLocation(key);
-                return true;
-            }
-            return false;
+                    promptToAdvanceToLocation(key);
+                    return true;
+                }
+                return false;
         }
     } else if (recordingInput->eventType == MOUSE_UP) {
         x = recordingInput->param1;
@@ -1457,27 +1457,27 @@ void parseFile() {
             startLoc = recordingLocation;
             c = recallChar();
             switch (c) {
-            case KEYSTROKE:
-                describeKeystroke(recallChar(), description);
-                appendModifierKeyDescription(description);
-                break;
-            case MOUSE_UP:
-            case MOUSE_DOWN:
-            case MOUSE_ENTERED_CELL:
-                x = (short)recallChar();
-                y = (short)recallChar();
-                sprintf(description, "Mouse click: (%i, %i)", x, y);
-                appendModifierKeyDescription(description);
-                break;
-            case RNG_CHECK:
-                sprintf(description, "\tRNG check: %i", (short)recallChar());
-                break;
-            case SAVED_GAME_LOADED:
-                strcpy(description, "Saved game loaded");
-                break;
-            default:
-                sprintf(description, "UNKNOWN EVENT TYPE: %i", (short)c);
-                break;
+                case KEYSTROKE:
+                    describeKeystroke(recallChar(), description);
+                    appendModifierKeyDescription(description);
+                    break;
+                case MOUSE_UP:
+                case MOUSE_DOWN:
+                case MOUSE_ENTERED_CELL:
+                    x = (short)recallChar();
+                    y = (short)recallChar();
+                    sprintf(description, "Mouse click: (%i, %i)", x, y);
+                    appendModifierKeyDescription(description);
+                    break;
+                case RNG_CHECK:
+                    sprintf(description, "\tRNG check: %i", (short)recallChar());
+                    break;
+                case SAVED_GAME_LOADED:
+                    strcpy(description, "Saved game loaded");
+                    break;
+                default:
+                    sprintf(description, "UNKNOWN EVENT TYPE: %i", (short)c);
+                    break;
             }
             fprintf(descriptionFile, "\nEvent %li, loc %li, length %li:%s\t%s", i, startLoc, recordingLocation - startLoc, (i < 10 ? " " : ""), description);
         }

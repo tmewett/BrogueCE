@@ -128,16 +128,16 @@ static void writeToSocket(unsigned char *buf, int size) {
 // Map characters which are missing or rendered as emoji on some platforms
 static unsigned int fixUnicode(unsigned int code) {
     switch (code) {
-    case U_ARIES:
-        return 0x03C8;
-    case U_CIRCLE:
-        return 'o';
-    case U_CIRCLE_BARS:
-        return 0x25C6;
-    case U_FILLED_CIRCLE_BARS:
-        return 0x25C7;
-    default:
-        return code;
+        case U_ARIES:
+            return 0x03C8;
+        case U_CIRCLE:
+            return 'o';
+        case U_CIRCLE_BARS:
+            return 0x25C6;
+        case U_FILLED_CIRCLE_BARS:
+            return 0x25C7;
+        default:
+            return code;
     }
 }
 

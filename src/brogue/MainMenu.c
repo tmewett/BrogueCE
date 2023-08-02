@@ -634,151 +634,151 @@ void mainBrogueJunction() {
         rogue.playbackFastForward = false;
         rogue.playbackMode = false;
         switch (rogue.nextGame) {
-        case NG_NOTHING:
-            // Run the main menu to get a decision out of the player.
-            titleMenu();
-            break;
-        case NG_NEW_GAME:
-        case NG_NEW_GAME_WITH_SEED:
-            rogue.nextGamePath[0] = '\0';
-            randomNumbersGenerated = 0;
-
-            rogue.playbackMode = false;
-            rogue.playbackFastForward = false;
-            rogue.playbackBetweenTurns = false;
-
-            getAvailableFilePath(path, LAST_GAME_NAME, GAME_SUFFIX);
-            strcat(path, GAME_SUFFIX);
-            strcpy(currentFilePath, path);
-
-            if (rogue.nextGame == NG_NEW_GAME_WITH_SEED) {
-                if (rogue.nextGameSeed == 0) { // Prompt for seed; default is the previous game's seed.
-                    if (previousGameSeed == 0) {
-                        seedDefault[0] = '\0';
-                    } else {
-                        sprintf(seedDefault, "%llu", (unsigned long long)previousGameSeed);
-                    }
-                    if (getInputTextString(buf, "Generate dungeon with seed number:",
-                                           20, // length of "18446744073709551615" (2^64 - 1)
-                                           seedDefault, "", TEXT_INPUT_NUMBERS, true)
-                        && buf[0] != '\0') {
-                        if (!tryParseUint64(buf, &rogue.nextGameSeed)) {
-                            // seed is too large, default to the largest possible seed
-                            rogue.nextGameSeed = 18446744073709551615ULL;
-                        }
-                    } else {
-                        rogue.nextGame = NG_NOTHING;
-                        break; // Don't start a new game after all.
-                    }
-                }
-            } else {
-                rogue.nextGameSeed = 0; // Seed based on clock.
-            }
-
-            rogue.nextGame = NG_NOTHING;
-            initializeRogue(rogue.nextGameSeed);
-            startLevel(rogue.depthLevel, 1); // descending into level 1
-
-            mainInputLoop();
-            if (serverMode) {
-                rogue.nextGame = NG_QUIT;
-            }
-            freeEverything();
-            break;
-        case NG_OPEN_GAME:
-            rogue.nextGame = NG_NOTHING;
-            path[0] = '\0';
-            if (rogue.nextGamePath[0]) {
-                strcpy(path, rogue.nextGamePath);
-                strcpy(rogue.currentGamePath, rogue.nextGamePath);
+            case NG_NOTHING:
+                // Run the main menu to get a decision out of the player.
+                titleMenu();
+                break;
+            case NG_NEW_GAME:
+            case NG_NEW_GAME_WITH_SEED:
                 rogue.nextGamePath[0] = '\0';
-            } else {
-                dialogChooseFile(path, GAME_SUFFIX, "Open saved game:");
-                // chooseFile(path, "Open saved game: ", "Saved game", GAME_SUFFIX);
-            }
-
-            if (openFile(path)) {
-                if (loadSavedGame()) {
-                    mainInputLoop();
-                }
-                freeEverything();
-            } else {
-                // dialogAlert("File not found.");
-            }
-            rogue.playbackMode = false;
-            rogue.playbackOOS = false;
-
-            if (serverMode) {
-                rogue.nextGame = NG_QUIT;
-            }
-            break;
-        case NG_VIEW_RECORDING:
-            rogue.nextGame = NG_NOTHING;
-
-            path[0] = '\0';
-            if (rogue.nextGamePath[0]) {
-                strcpy(path, rogue.nextGamePath);
-                strcpy(rogue.currentGamePath, rogue.nextGamePath);
-                rogue.nextGamePath[0] = '\0';
-            } else {
-                dialogChooseFile(path, RECORDING_SUFFIX, "View recording:");
-                // chooseFile(path, "View recording: ", "Recording", RECORDING_SUFFIX);
-            }
-
-            if (openFile(path)) {
                 randomNumbersGenerated = 0;
-                rogue.playbackMode = true;
-                initializeRogue(0); // Seed argument is ignored because we're in playback.
-                if (!rogue.gameHasEnded) {
-                    startLevel(rogue.depthLevel, 1);
-                    if (nonInteractivePlayback) {
-                        rogue.playbackPaused = false;
-                    } else {
-                        rogue.playbackPaused = true;
+
+                rogue.playbackMode = false;
+                rogue.playbackFastForward = false;
+                rogue.playbackBetweenTurns = false;
+
+                getAvailableFilePath(path, LAST_GAME_NAME, GAME_SUFFIX);
+                strcat(path, GAME_SUFFIX);
+                strcpy(currentFilePath, path);
+
+                if (rogue.nextGame == NG_NEW_GAME_WITH_SEED) {
+                    if (rogue.nextGameSeed == 0) { // Prompt for seed; default is the previous game's seed.
+                        if (previousGameSeed == 0) {
+                            seedDefault[0] = '\0';
+                        } else {
+                            sprintf(seedDefault, "%llu", (unsigned long long)previousGameSeed);
+                        }
+                        if (getInputTextString(buf, "Generate dungeon with seed number:",
+                                               20, // length of "18446744073709551615" (2^64 - 1)
+                                               seedDefault, "", TEXT_INPUT_NUMBERS, true)
+                            && buf[0] != '\0') {
+                            if (!tryParseUint64(buf, &rogue.nextGameSeed)) {
+                                // seed is too large, default to the largest possible seed
+                                rogue.nextGameSeed = 18446744073709551615ULL;
+                            }
+                        } else {
+                            rogue.nextGame = NG_NOTHING;
+                            break; // Don't start a new game after all.
+                        }
                     }
-                    displayAnnotation(); // in case there's an annotation for turn 0
+                } else {
+                    rogue.nextGameSeed = 0; // Seed based on clock.
                 }
 
-                while (!rogue.gameHasEnded && rogue.playbackMode) {
-                    if (rogue.playbackPaused) {
-                        rogue.playbackPaused = false;
-                        pausePlayback();
-                    }
-#ifdef ENABLE_PLAYBACK_SWITCH
-                    // We are coming from the end of a recording the user has taken over.
-                    // No more event checks, that has already been handled
-                    if (rogue.gameHasEnded) {
-                        break;
-                    }
-#endif
-                    rogue.RNG = RNG_COSMETIC; // dancing terrain colors can't influence recordings
-                    rogue.playbackBetweenTurns = true;
-                    nextBrogueEvent(&theEvent, false, true, false);
-                    rogue.RNG = RNG_SUBSTANTIVE;
+                rogue.nextGame = NG_NOTHING;
+                initializeRogue(rogue.nextGameSeed);
+                startLevel(rogue.depthLevel, 1); // descending into level 1
 
-                    executeEvent(&theEvent);
+                mainInputLoop();
+                if (serverMode) {
+                    rogue.nextGame = NG_QUIT;
                 }
-
                 freeEverything();
-            } else {
-                // announce file not found
-            }
-            rogue.playbackMode = false;
-            rogue.playbackOOS = false;
+                break;
+            case NG_OPEN_GAME:
+                rogue.nextGame = NG_NOTHING;
+                path[0] = '\0';
+                if (rogue.nextGamePath[0]) {
+                    strcpy(path, rogue.nextGamePath);
+                    strcpy(rogue.currentGamePath, rogue.nextGamePath);
+                    rogue.nextGamePath[0] = '\0';
+                } else {
+                    dialogChooseFile(path, GAME_SUFFIX, "Open saved game:");
+                    // chooseFile(path, "Open saved game: ", "Saved game", GAME_SUFFIX);
+                }
 
-            if (serverMode || nonInteractivePlayback) {
-                rogue.nextGame = NG_QUIT;
-            }
-            break;
-        case NG_HIGH_SCORES:
-            rogue.nextGame = NG_NOTHING;
-            printHighScores(false);
-            break;
-        case NG_QUIT:
-            // No need to do anything.
-            break;
-        default:
-            break;
+                if (openFile(path)) {
+                    if (loadSavedGame()) {
+                        mainInputLoop();
+                    }
+                    freeEverything();
+                } else {
+                    // dialogAlert("File not found.");
+                }
+                rogue.playbackMode = false;
+                rogue.playbackOOS = false;
+
+                if (serverMode) {
+                    rogue.nextGame = NG_QUIT;
+                }
+                break;
+            case NG_VIEW_RECORDING:
+                rogue.nextGame = NG_NOTHING;
+
+                path[0] = '\0';
+                if (rogue.nextGamePath[0]) {
+                    strcpy(path, rogue.nextGamePath);
+                    strcpy(rogue.currentGamePath, rogue.nextGamePath);
+                    rogue.nextGamePath[0] = '\0';
+                } else {
+                    dialogChooseFile(path, RECORDING_SUFFIX, "View recording:");
+                    // chooseFile(path, "View recording: ", "Recording", RECORDING_SUFFIX);
+                }
+
+                if (openFile(path)) {
+                    randomNumbersGenerated = 0;
+                    rogue.playbackMode = true;
+                    initializeRogue(0); // Seed argument is ignored because we're in playback.
+                    if (!rogue.gameHasEnded) {
+                        startLevel(rogue.depthLevel, 1);
+                        if (nonInteractivePlayback) {
+                            rogue.playbackPaused = false;
+                        } else {
+                            rogue.playbackPaused = true;
+                        }
+                        displayAnnotation(); // in case there's an annotation for turn 0
+                    }
+
+                    while (!rogue.gameHasEnded && rogue.playbackMode) {
+                        if (rogue.playbackPaused) {
+                            rogue.playbackPaused = false;
+                            pausePlayback();
+                        }
+#ifdef ENABLE_PLAYBACK_SWITCH
+                        // We are coming from the end of a recording the user has taken over.
+                        // No more event checks, that has already been handled
+                        if (rogue.gameHasEnded) {
+                            break;
+                        }
+#endif
+                        rogue.RNG = RNG_COSMETIC; // dancing terrain colors can't influence recordings
+                        rogue.playbackBetweenTurns = true;
+                        nextBrogueEvent(&theEvent, false, true, false);
+                        rogue.RNG = RNG_SUBSTANTIVE;
+
+                        executeEvent(&theEvent);
+                    }
+
+                    freeEverything();
+                } else {
+                    // announce file not found
+                }
+                rogue.playbackMode = false;
+                rogue.playbackOOS = false;
+
+                if (serverMode || nonInteractivePlayback) {
+                    rogue.nextGame = NG_QUIT;
+                }
+                break;
+            case NG_HIGH_SCORES:
+                rogue.nextGame = NG_NOTHING;
+                printHighScores(false);
+                break;
+            case NG_QUIT:
+                // No need to do anything.
+                break;
+            default:
+                break;
         }
     } while (rogue.nextGame != NG_QUIT);
 }

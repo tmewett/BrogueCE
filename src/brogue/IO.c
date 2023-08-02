@@ -1010,24 +1010,24 @@ void normColor(color *baseColor, const short aggregateMultiplier, const short co
 // Used to determine whether to draw a wall top glyph above
 static boolean glyphIsWallish(enum displayGlyph glyph) {
     switch (glyph) {
-    case G_WALL:
-    case G_OPEN_DOOR:
-    case G_CLOSED_DOOR:
-    case G_UP_STAIRS:
-    case G_DOORWAY:
-    case G_WALL_TOP:
-    case G_LEVER:
-    case G_LEVER_PULLED:
-    case G_CLOSED_IRON_DOOR:
-    case G_OPEN_IRON_DOOR:
-    case G_TURRET:
-    case G_GRANITE:
-    case G_TORCH:
-    case G_PORTCULLIS:
-        return true;
+        case G_WALL:
+        case G_OPEN_DOOR:
+        case G_CLOSED_DOOR:
+        case G_UP_STAIRS:
+        case G_DOORWAY:
+        case G_WALL_TOP:
+        case G_LEVER:
+        case G_LEVER_PULLED:
+        case G_CLOSED_IRON_DOOR:
+        case G_OPEN_IRON_DOOR:
+        case G_TURRET:
+        case G_GRANITE:
+        case G_TORCH:
+        case G_PORTCULLIS:
+            return true;
 
-    default:
-        return false;
+        default:
+            return false;
     }
 }
 
@@ -2373,228 +2373,228 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
     stripShiftFromMovementKeystroke(&keystroke);
 
     switch (keystroke) {
-    case UP_KEY:
-    case UP_ARROW:
-    case NUMPAD_8:
-        direction = UP;
-        break;
-    case DOWN_KEY:
-    case DOWN_ARROW:
-    case NUMPAD_2:
-        direction = DOWN;
-        break;
-    case LEFT_KEY:
-    case LEFT_ARROW:
-    case NUMPAD_4:
-        direction = LEFT;
-        break;
-    case RIGHT_KEY:
-    case RIGHT_ARROW:
-    case NUMPAD_6:
-        direction = RIGHT;
-        break;
-    case NUMPAD_7:
-    case UPLEFT_KEY:
-        direction = UPLEFT;
-        break;
-    case UPRIGHT_KEY:
-    case NUMPAD_9:
-        direction = UPRIGHT;
-        break;
-    case DOWNLEFT_KEY:
-    case NUMPAD_1:
-        direction = DOWNLEFT;
-        break;
-    case DOWNRIGHT_KEY:
-    case NUMPAD_3:
-        direction = DOWNRIGHT;
-        break;
-    case DESCEND_KEY:
-        considerCautiousMode();
-        if (D_WORMHOLING) {
-            recordKeystroke(DESCEND_KEY, false, false);
-            useStairs(1);
-        } else if (proposeOrConfirmLocation(rogue.downLoc.x, rogue.downLoc.y, "I see no way down.")) {
-            travel(rogue.downLoc.x, rogue.downLoc.y, true);
-        }
-        break;
-    case ASCEND_KEY:
-        considerCautiousMode();
-        if (D_WORMHOLING) {
-            recordKeystroke(ASCEND_KEY, false, false);
-            useStairs(-1);
-        } else if (proposeOrConfirmLocation(rogue.upLoc.x, rogue.upLoc.y, "I see no way up.")) {
-            travel(rogue.upLoc.x, rogue.upLoc.y, true);
-        }
-        break;
-    case RETURN_KEY:
-        showCursor();
-        break;
-    case REST_KEY:
-    case PERIOD_KEY:
-    case NUMPAD_5:
-        considerCautiousMode();
-        rogue.justRested = true;
-        recordKeystroke(REST_KEY, false, false);
-        playerTurnEnded();
-        break;
-    case AUTO_REST_KEY:
-        rogue.justRested = true;
-        autoRest();
-        break;
-    case SEARCH_KEY:
-        if (controlKey) {
-            rogue.disturbed = false;
-            rogue.automationActive = true;
-            do {
-                manualSearch();
-                if (pauseAnimation(80)) {
-                    rogue.disturbed = true;
-                }
-            } while (player.status[STATUS_SEARCHING] < 5 && !rogue.disturbed);
-            rogue.automationActive = false;
-        } else {
-            manualSearch();
-        }
-        break;
-    case INVENTORY_KEY:
-        displayInventory(ALL_ITEMS, 0, 0, true, true);
-        break;
-    case EQUIP_KEY:
-        equip(NULL);
-        break;
-    case UNEQUIP_KEY:
-        unequip(NULL);
-        break;
-    case DROP_KEY:
-        drop(NULL);
-        break;
-    case APPLY_KEY:
-        apply(NULL, true);
-        break;
-    case THROW_KEY:
-        throwCommand(NULL, false);
-        break;
-    case RETHROW_KEY:
-        if (rogue.lastItemThrown != NULL && itemIsCarried(rogue.lastItemThrown)) {
-            throwCommand(rogue.lastItemThrown, true);
-        }
-        break;
-    case RELABEL_KEY:
-        relabel(NULL);
-        break;
-    case SWAP_KEY:
-        swapLastEquipment();
-        break;
-    case TRUE_COLORS_KEY:
-        rogue.trueColorMode = !rogue.trueColorMode;
-        displayLevel();
-        refreshSideBar(-1, -1, false);
-        if (rogue.trueColorMode) {
-            messageWithColor(KEYBOARD_LABELS ? "Color effects disabled. Press '\\' again to enable." : "Color effects disabled.", &teal, 0);
-        } else {
-            messageWithColor(KEYBOARD_LABELS ? "Color effects enabled. Press '\\' again to disable." : "Color effects enabled.", &teal, 0);
-        }
-        break;
-    case STEALTH_RANGE_KEY:
-        rogue.displayStealthRangeMode = !rogue.displayStealthRangeMode;
-        displayLevel();
-        refreshSideBar(-1, -1, false);
-        if (rogue.displayStealthRangeMode) {
-            messageWithColor(KEYBOARD_LABELS ? "Stealth range displayed. Press ']' again to hide." : "Stealth range displayed.", &teal, 0);
-        } else {
-            messageWithColor(KEYBOARD_LABELS ? "Stealth range hidden. Press ']' again to display." : "Stealth range hidden.", &teal, 0);
-        }
-        break;
-    case CALL_KEY:
-        call(NULL);
-        break;
-    case EXPLORE_KEY:
-        considerCautiousMode();
-        exploreKey(controlKey);
-        break;
-    case AUTOPLAY_KEY:
-        if (confirm("Turn on autopilot?", false)) {
-            autoPlayLevel(controlKey);
-        }
-        break;
-    case MESSAGE_ARCHIVE_KEY:
-        displayMessageArchive();
-        break;
-    case BROGUE_HELP_KEY:
-        printHelpScreen();
-        break;
-    case DISCOVERIES_KEY:
-        printDiscoveriesScreen();
-        break;
-    case CREATE_ITEM_MONSTER_KEY:
-        DEBUG { dialogCreateItemOrMonster(); }
-        break;
-    case SAVE_GAME_KEY:
-        if (rogue.playbackMode || serverMode) {
-            return;
-        }
-        if (confirm("Save this game and exit?", false)) {
-            saveGame();
-        }
-        break;
-    case NEW_GAME_KEY:
-        if (rogue.playerTurnNumber < 50 || confirm("End this game and begin a new game?", false)) {
-            rogue.nextGame = NG_NEW_GAME;
-            rogue.gameHasEnded = true;
-        }
-        break;
-    case QUIT_KEY:
-        if (confirm("Quit and abandon this game? (The save will be deleted.)", false)) {
-            recordKeystroke(QUIT_KEY, false, false);
-            rogue.quit = true;
-            gameOver("Quit", true);
-        }
-        break;
-    case GRAPHICS_KEY:
-        if (hasGraphics) {
-            graphicsMode = setGraphicsMode((graphicsMode + 1) % 3);
-            switch (graphicsMode) {
-            case TEXT_GRAPHICS:
-                messageWithColor(KEYBOARD_LABELS ? "Switched to text mode. Press 'G' again to enable tiles." : "Switched to text mode.", &teal, 0);
-                break;
-            case TILES_GRAPHICS:
-                messageWithColor(KEYBOARD_LABELS ? "Switched to graphical tiles. Press 'G' again to enable hybrid mode." : "Switched to graphical tiles.", &teal, 0);
-                break;
-            case HYBRID_GRAPHICS:
-                messageWithColor(KEYBOARD_LABELS ? "Switched to hybrid mode. Press 'G' again to disable tiles." : "Switched to hybrid mode.", &teal, 0);
-                break;
+        case UP_KEY:
+        case UP_ARROW:
+        case NUMPAD_8:
+            direction = UP;
+            break;
+        case DOWN_KEY:
+        case DOWN_ARROW:
+        case NUMPAD_2:
+            direction = DOWN;
+            break;
+        case LEFT_KEY:
+        case LEFT_ARROW:
+        case NUMPAD_4:
+            direction = LEFT;
+            break;
+        case RIGHT_KEY:
+        case RIGHT_ARROW:
+        case NUMPAD_6:
+            direction = RIGHT;
+            break;
+        case NUMPAD_7:
+        case UPLEFT_KEY:
+            direction = UPLEFT;
+            break;
+        case UPRIGHT_KEY:
+        case NUMPAD_9:
+            direction = UPRIGHT;
+            break;
+        case DOWNLEFT_KEY:
+        case NUMPAD_1:
+            direction = DOWNLEFT;
+            break;
+        case DOWNRIGHT_KEY:
+        case NUMPAD_3:
+            direction = DOWNRIGHT;
+            break;
+        case DESCEND_KEY:
+            considerCautiousMode();
+            if (D_WORMHOLING) {
+                recordKeystroke(DESCEND_KEY, false, false);
+                useStairs(1);
+            } else if (proposeOrConfirmLocation(rogue.downLoc.x, rogue.downLoc.y, "I see no way down.")) {
+                travel(rogue.downLoc.x, rogue.downLoc.y, true);
             }
-        }
-        break;
-    case SEED_KEY:
-        /*DEBUG {
-            cellDisplayBuffer dbuf[COLS][ROWS];
-            copyDisplayBuffer(dbuf, displayBuffer);
-            funkyFade(dbuf, &white, 0, 100, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
-        }*/
-        // DEBUG displayLoops();
-        // DEBUG displayChokeMap();
-        DEBUG displayMachines();
-        // DEBUG displayWaypoints();
-        // DEBUG {displayGrid(safetyMap); displayMoreSign(); displayLevel();}
-        // parseFile();
-        // DEBUG spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_METHANE_GAS_ARMAGEDDON],
-        // true, false);
-        printSeed();
-        break;
-    case EASY_MODE_KEY:
-        // if (shiftKey) {
-        enableEasyMode();
-        //}
-        break;
-    case PRINTSCREEN_KEY:
-        if (takeScreenshot()) {
-            flashTemporaryAlert(" Screenshot saved in save directory ", 2000);
-        }
-        break;
-    default:
-        break;
+            break;
+        case ASCEND_KEY:
+            considerCautiousMode();
+            if (D_WORMHOLING) {
+                recordKeystroke(ASCEND_KEY, false, false);
+                useStairs(-1);
+            } else if (proposeOrConfirmLocation(rogue.upLoc.x, rogue.upLoc.y, "I see no way up.")) {
+                travel(rogue.upLoc.x, rogue.upLoc.y, true);
+            }
+            break;
+        case RETURN_KEY:
+            showCursor();
+            break;
+        case REST_KEY:
+        case PERIOD_KEY:
+        case NUMPAD_5:
+            considerCautiousMode();
+            rogue.justRested = true;
+            recordKeystroke(REST_KEY, false, false);
+            playerTurnEnded();
+            break;
+        case AUTO_REST_KEY:
+            rogue.justRested = true;
+            autoRest();
+            break;
+        case SEARCH_KEY:
+            if (controlKey) {
+                rogue.disturbed = false;
+                rogue.automationActive = true;
+                do {
+                    manualSearch();
+                    if (pauseAnimation(80)) {
+                        rogue.disturbed = true;
+                    }
+                } while (player.status[STATUS_SEARCHING] < 5 && !rogue.disturbed);
+                rogue.automationActive = false;
+            } else {
+                manualSearch();
+            }
+            break;
+        case INVENTORY_KEY:
+            displayInventory(ALL_ITEMS, 0, 0, true, true);
+            break;
+        case EQUIP_KEY:
+            equip(NULL);
+            break;
+        case UNEQUIP_KEY:
+            unequip(NULL);
+            break;
+        case DROP_KEY:
+            drop(NULL);
+            break;
+        case APPLY_KEY:
+            apply(NULL, true);
+            break;
+        case THROW_KEY:
+            throwCommand(NULL, false);
+            break;
+        case RETHROW_KEY:
+            if (rogue.lastItemThrown != NULL && itemIsCarried(rogue.lastItemThrown)) {
+                throwCommand(rogue.lastItemThrown, true);
+            }
+            break;
+        case RELABEL_KEY:
+            relabel(NULL);
+            break;
+        case SWAP_KEY:
+            swapLastEquipment();
+            break;
+        case TRUE_COLORS_KEY:
+            rogue.trueColorMode = !rogue.trueColorMode;
+            displayLevel();
+            refreshSideBar(-1, -1, false);
+            if (rogue.trueColorMode) {
+                messageWithColor(KEYBOARD_LABELS ? "Color effects disabled. Press '\\' again to enable." : "Color effects disabled.", &teal, 0);
+            } else {
+                messageWithColor(KEYBOARD_LABELS ? "Color effects enabled. Press '\\' again to disable." : "Color effects enabled.", &teal, 0);
+            }
+            break;
+        case STEALTH_RANGE_KEY:
+            rogue.displayStealthRangeMode = !rogue.displayStealthRangeMode;
+            displayLevel();
+            refreshSideBar(-1, -1, false);
+            if (rogue.displayStealthRangeMode) {
+                messageWithColor(KEYBOARD_LABELS ? "Stealth range displayed. Press ']' again to hide." : "Stealth range displayed.", &teal, 0);
+            } else {
+                messageWithColor(KEYBOARD_LABELS ? "Stealth range hidden. Press ']' again to display." : "Stealth range hidden.", &teal, 0);
+            }
+            break;
+        case CALL_KEY:
+            call(NULL);
+            break;
+        case EXPLORE_KEY:
+            considerCautiousMode();
+            exploreKey(controlKey);
+            break;
+        case AUTOPLAY_KEY:
+            if (confirm("Turn on autopilot?", false)) {
+                autoPlayLevel(controlKey);
+            }
+            break;
+        case MESSAGE_ARCHIVE_KEY:
+            displayMessageArchive();
+            break;
+        case BROGUE_HELP_KEY:
+            printHelpScreen();
+            break;
+        case DISCOVERIES_KEY:
+            printDiscoveriesScreen();
+            break;
+        case CREATE_ITEM_MONSTER_KEY:
+            DEBUG { dialogCreateItemOrMonster(); }
+            break;
+        case SAVE_GAME_KEY:
+            if (rogue.playbackMode || serverMode) {
+                return;
+            }
+            if (confirm("Save this game and exit?", false)) {
+                saveGame();
+            }
+            break;
+        case NEW_GAME_KEY:
+            if (rogue.playerTurnNumber < 50 || confirm("End this game and begin a new game?", false)) {
+                rogue.nextGame = NG_NEW_GAME;
+                rogue.gameHasEnded = true;
+            }
+            break;
+        case QUIT_KEY:
+            if (confirm("Quit and abandon this game? (The save will be deleted.)", false)) {
+                recordKeystroke(QUIT_KEY, false, false);
+                rogue.quit = true;
+                gameOver("Quit", true);
+            }
+            break;
+        case GRAPHICS_KEY:
+            if (hasGraphics) {
+                graphicsMode = setGraphicsMode((graphicsMode + 1) % 3);
+                switch (graphicsMode) {
+                    case TEXT_GRAPHICS:
+                        messageWithColor(KEYBOARD_LABELS ? "Switched to text mode. Press 'G' again to enable tiles." : "Switched to text mode.", &teal, 0);
+                        break;
+                    case TILES_GRAPHICS:
+                        messageWithColor(KEYBOARD_LABELS ? "Switched to graphical tiles. Press 'G' again to enable hybrid mode." : "Switched to graphical tiles.", &teal, 0);
+                        break;
+                    case HYBRID_GRAPHICS:
+                        messageWithColor(KEYBOARD_LABELS ? "Switched to hybrid mode. Press 'G' again to disable tiles." : "Switched to hybrid mode.", &teal, 0);
+                        break;
+                }
+            }
+            break;
+        case SEED_KEY:
+            /*DEBUG {
+                cellDisplayBuffer dbuf[COLS][ROWS];
+                copyDisplayBuffer(dbuf, displayBuffer);
+                funkyFade(dbuf, &white, 0, 100, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
+            }*/
+            // DEBUG displayLoops();
+            // DEBUG displayChokeMap();
+            DEBUG displayMachines();
+            // DEBUG displayWaypoints();
+            // DEBUG {displayGrid(safetyMap); displayMoreSign(); displayLevel();}
+            // parseFile();
+            // DEBUG spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_METHANE_GAS_ARMAGEDDON],
+            // true, false);
+            printSeed();
+            break;
+        case EASY_MODE_KEY:
+            // if (shiftKey) {
+            enableEasyMode();
+            //}
+            break;
+        case PRINTSCREEN_KEY:
+            if (takeScreenshot()) {
+                flashTemporaryAlert(" Screenshot saved in save directory ", 2000);
+            }
+            break;
+        default:
+            break;
     }
     if (direction >= 0) { // if it was a movement command
         hideCursor();
@@ -3171,34 +3171,34 @@ short scrollMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS * 2], short
             stripShiftFromMovementKeystroke(&keystroke);
 
             switch (keystroke) {
-            case UP_KEY:
-            case UP_ARROW:
-            case NUMPAD_8:
-                if (theEvent.controlKey) {
-                    offset = length;
-                } else if (theEvent.shiftKey) {
-                    offset++;
-                } else {
-                    offset += MESSAGE_ARCHIVE_VIEW_LINES / 3;
-                }
-                break;
-            case DOWN_KEY:
-            case DOWN_ARROW:
-            case NUMPAD_2:
-                if (theEvent.controlKey) {
-                    offset = height;
-                } else if (theEvent.shiftKey) {
-                    offset--;
-                } else {
-                    offset -= MESSAGE_ARCHIVE_VIEW_LINES / 3;
-                }
-                break;
-            case ACKNOWLEDGE_KEY:
-            case ESCAPE_KEY:
-                exit = true;
-                break;
-            default:
-                flashTemporaryAlert(" -- Press space or click to continue -- ", 500);
+                case UP_KEY:
+                case UP_ARROW:
+                case NUMPAD_8:
+                    if (theEvent.controlKey) {
+                        offset = length;
+                    } else if (theEvent.shiftKey) {
+                        offset++;
+                    } else {
+                        offset += MESSAGE_ARCHIVE_VIEW_LINES / 3;
+                    }
+                    break;
+                case DOWN_KEY:
+                case DOWN_ARROW:
+                case NUMPAD_2:
+                    if (theEvent.controlKey) {
+                        offset = height;
+                    } else if (theEvent.shiftKey) {
+                        offset--;
+                    } else {
+                        offset -= MESSAGE_ARCHIVE_VIEW_LINES / 3;
+                    }
+                    break;
+                case ACKNOWLEDGE_KEY:
+                case ESCAPE_KEY:
+                    exit = true;
+                    break;
+                default:
+                    flashTemporaryAlert(" -- Press space or click to continue -- ", 500);
             }
         }
 

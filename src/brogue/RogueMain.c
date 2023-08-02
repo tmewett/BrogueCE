@@ -141,11 +141,11 @@ void welcome() {
 void initializeGameVariant() {
 
     switch (gameVariant) {
-    case VARIANT_RAPID_BROGUE:
-        initializeGameVariantRapidBrogue();
-        break;
-    default:
-        initializeGameVariantBrogue();
+        case VARIANT_RAPID_BROGUE:
+            initializeGameVariantRapidBrogue();
+            break;
+        default:
+            initializeGameVariantBrogue();
     }
 }
 
@@ -561,17 +561,17 @@ void startLevel(short oldLevelNumber, short stairDirection) {
 
                     monst->status[STATUS_ENTERS_LEVEL_IN] = clamp(mapToStairs[monst->loc.x][monst->loc.y] * monst->movementSpeed / 100 + 1, 1, 150);
                     switch (stairDirection) {
-                    case 1:
-                        monst->bookkeepingFlags |= MB_APPROACHING_DOWNSTAIRS;
-                        break;
-                    case -1:
-                        monst->bookkeepingFlags |= MB_APPROACHING_UPSTAIRS;
-                        break;
-                    case 0:
-                        monst->bookkeepingFlags |= MB_APPROACHING_PIT;
-                        break;
-                    default:
-                        break;
+                        case 1:
+                            monst->bookkeepingFlags |= MB_APPROACHING_DOWNSTAIRS;
+                            break;
+                        case -1:
+                            monst->bookkeepingFlags |= MB_APPROACHING_UPSTAIRS;
+                            break;
+                        case 0:
+                            monst->bookkeepingFlags |= MB_APPROACHING_PIT;
+                            break;
+                        default:
+                            break;
                     }
                 }
             }

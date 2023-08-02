@@ -120,219 +120,219 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
 
     switch (itemCategory) {
 
-    case FOOD:
-        if (itemKind < 0) {
-            itemKind = chooseKind(foodTable, NUMBER_FOOD_KINDS);
-        }
-        theEntry = &foodTable[itemKind];
-        theItem->displayChar = G_FOOD;
-        theItem->flags |= ITEM_IDENTIFIED;
-        break;
+        case FOOD:
+            if (itemKind < 0) {
+                itemKind = chooseKind(foodTable, NUMBER_FOOD_KINDS);
+            }
+            theEntry = &foodTable[itemKind];
+            theItem->displayChar = G_FOOD;
+            theItem->flags |= ITEM_IDENTIFIED;
+            break;
 
-    case WEAPON:
-        if (itemKind < 0) {
-            itemKind = chooseKind(weaponTable, NUMBER_WEAPON_KINDS);
-        }
-        theEntry = &weaponTable[itemKind];
-        theItem->damage = weaponTable[itemKind].range;
-        theItem->strengthRequired = weaponTable[itemKind].strengthRequired;
-        theItem->displayChar = G_WEAPON;
+        case WEAPON:
+            if (itemKind < 0) {
+                itemKind = chooseKind(weaponTable, NUMBER_WEAPON_KINDS);
+            }
+            theEntry = &weaponTable[itemKind];
+            theItem->damage = weaponTable[itemKind].range;
+            theItem->strengthRequired = weaponTable[itemKind].strengthRequired;
+            theItem->displayChar = G_WEAPON;
 
-        switch (itemKind) {
-        case DAGGER:
-            theItem->flags |= ITEM_SNEAK_ATTACK_BONUS;
-            break;
-        case MACE:
-        case HAMMER:
-            theItem->flags |= ITEM_ATTACKS_STAGGER;
-            break;
-        case WHIP:
-            theItem->flags |= ITEM_ATTACKS_EXTEND;
-            break;
-        case RAPIER:
-            theItem->flags |= (ITEM_ATTACKS_QUICKLY | ITEM_LUNGE_ATTACKS);
-            break;
-        case FLAIL:
-            theItem->flags |= ITEM_PASS_ATTACKS;
-            break;
-        case SPEAR:
-        case PIKE:
-            theItem->flags |= ITEM_ATTACKS_PENETRATE;
-            break;
-        case AXE:
-        case WAR_AXE:
-            theItem->flags |= ITEM_ATTACKS_ALL_ADJACENT;
-            break;
-        default:
-            break;
-        }
+            switch (itemKind) {
+                case DAGGER:
+                    theItem->flags |= ITEM_SNEAK_ATTACK_BONUS;
+                    break;
+                case MACE:
+                case HAMMER:
+                    theItem->flags |= ITEM_ATTACKS_STAGGER;
+                    break;
+                case WHIP:
+                    theItem->flags |= ITEM_ATTACKS_EXTEND;
+                    break;
+                case RAPIER:
+                    theItem->flags |= (ITEM_ATTACKS_QUICKLY | ITEM_LUNGE_ATTACKS);
+                    break;
+                case FLAIL:
+                    theItem->flags |= ITEM_PASS_ATTACKS;
+                    break;
+                case SPEAR:
+                case PIKE:
+                    theItem->flags |= ITEM_ATTACKS_PENETRATE;
+                    break;
+                case AXE:
+                case WAR_AXE:
+                    theItem->flags |= ITEM_ATTACKS_ALL_ADJACENT;
+                    break;
+                default:
+                    break;
+            }
 
-        if (rand_percent(40)) {
-            theItem->enchant1 += rand_range(1, 3);
-            if (rand_percent(50)) {
-                // cursed
-                theItem->enchant1 *= -1;
-                theItem->flags |= ITEM_CURSED;
-                if (rand_percent(33)) { // give it a bad runic
-                    theItem->enchant2 = rand_range(NUMBER_GOOD_WEAPON_ENCHANT_KINDS, NUMBER_WEAPON_RUNIC_KINDS - 1);
+            if (rand_percent(40)) {
+                theItem->enchant1 += rand_range(1, 3);
+                if (rand_percent(50)) {
+                    // cursed
+                    theItem->enchant1 *= -1;
+                    theItem->flags |= ITEM_CURSED;
+                    if (rand_percent(33)) { // give it a bad runic
+                        theItem->enchant2 = rand_range(NUMBER_GOOD_WEAPON_ENCHANT_KINDS, NUMBER_WEAPON_RUNIC_KINDS - 1);
+                        theItem->flags |= ITEM_RUNIC;
+                    }
+                } else if (rand_range(3, 10) * ((theItem->flags & ITEM_ATTACKS_STAGGER) ? 2 : 1) / ((theItem->flags & ITEM_ATTACKS_QUICKLY) ? 2 : 1) / ((theItem->flags & ITEM_ATTACKS_EXTEND) ? 2 : 1) > theItem->damage.lowerBound) {
+                    // give it a good runic; lower damage items are more likely to be runic
+                    theItem->enchant2 = rand_range(0, NUMBER_GOOD_WEAPON_ENCHANT_KINDS - 1);
                     theItem->flags |= ITEM_RUNIC;
-                }
-            } else if (rand_range(3, 10) * ((theItem->flags & ITEM_ATTACKS_STAGGER) ? 2 : 1) / ((theItem->flags & ITEM_ATTACKS_QUICKLY) ? 2 : 1) / ((theItem->flags & ITEM_ATTACKS_EXTEND) ? 2 : 1) > theItem->damage.lowerBound) {
-                // give it a good runic; lower damage items are more likely to be runic
-                theItem->enchant2 = rand_range(0, NUMBER_GOOD_WEAPON_ENCHANT_KINDS - 1);
-                theItem->flags |= ITEM_RUNIC;
-                if (theItem->enchant2 == W_SLAYING) {
-                    theItem->vorpalEnemy = chooseVorpalEnemy();
-                }
-            } else {
-                while (rand_percent(10)) {
-                    theItem->enchant1++;
+                    if (theItem->enchant2 == W_SLAYING) {
+                        theItem->vorpalEnemy = chooseVorpalEnemy();
+                    }
+                } else {
+                    while (rand_percent(10)) {
+                        theItem->enchant1++;
+                    }
                 }
             }
-        }
-        if (itemKind == DART || itemKind == INCENDIARY_DART || itemKind == JAVELIN) {
-            if (itemKind == INCENDIARY_DART) {
-                theItem->quantity = rand_range(3, 6);
-            } else {
-                theItem->quantity = rand_range(5, 18);
+            if (itemKind == DART || itemKind == INCENDIARY_DART || itemKind == JAVELIN) {
+                if (itemKind == INCENDIARY_DART) {
+                    theItem->quantity = rand_range(3, 6);
+                } else {
+                    theItem->quantity = rand_range(5, 18);
+                }
+                theItem->quiverNumber = rand_range(1, 60000);
+                theItem->flags &= ~(ITEM_CURSED | ITEM_RUNIC); // throwing weapons can't be cursed or runic
+                theItem->enchant1 = 0;                         // throwing weapons can't be magical
             }
-            theItem->quiverNumber = rand_range(1, 60000);
-            theItem->flags &= ~(ITEM_CURSED | ITEM_RUNIC); // throwing weapons can't be cursed or runic
-            theItem->enchant1 = 0;                         // throwing weapons can't be magical
-        }
-        theItem->charges = gameConst->weaponKillsToAutoID; // kill 20 enemies to auto-identify
-        break;
+            theItem->charges = gameConst->weaponKillsToAutoID; // kill 20 enemies to auto-identify
+            break;
 
-    case ARMOR:
-        if (itemKind < 0) {
-            itemKind = chooseKind(armorTable, NUMBER_ARMOR_KINDS);
-        }
-        theEntry = &armorTable[itemKind];
-        theItem->armor = randClump(armorTable[itemKind].range);
-        theItem->strengthRequired = armorTable[itemKind].strengthRequired;
-        theItem->displayChar = G_ARMOR;
-        theItem->charges = gameConst->armorDelayToAutoID; // this many turns until it reveals its enchants and whether runic
-        if (rand_percent(40)) {
-            theItem->enchant1 += rand_range(1, 3);
-            if (rand_percent(50)) {
-                // cursed
-                theItem->enchant1 *= -1;
-                theItem->flags |= ITEM_CURSED;
-                if (rand_percent(33)) { // give it a bad runic
-                    theItem->enchant2 = rand_range(NUMBER_GOOD_ARMOR_ENCHANT_KINDS, NUMBER_ARMOR_ENCHANT_KINDS - 1);
+        case ARMOR:
+            if (itemKind < 0) {
+                itemKind = chooseKind(armorTable, NUMBER_ARMOR_KINDS);
+            }
+            theEntry = &armorTable[itemKind];
+            theItem->armor = randClump(armorTable[itemKind].range);
+            theItem->strengthRequired = armorTable[itemKind].strengthRequired;
+            theItem->displayChar = G_ARMOR;
+            theItem->charges = gameConst->armorDelayToAutoID; // this many turns until it reveals its enchants and whether runic
+            if (rand_percent(40)) {
+                theItem->enchant1 += rand_range(1, 3);
+                if (rand_percent(50)) {
+                    // cursed
+                    theItem->enchant1 *= -1;
+                    theItem->flags |= ITEM_CURSED;
+                    if (rand_percent(33)) { // give it a bad runic
+                        theItem->enchant2 = rand_range(NUMBER_GOOD_ARMOR_ENCHANT_KINDS, NUMBER_ARMOR_ENCHANT_KINDS - 1);
+                        theItem->flags |= ITEM_RUNIC;
+                    }
+                } else if (rand_range(0, 95) > theItem->armor) { // give it a good runic
+                    theItem->enchant2 = rand_range(0, NUMBER_GOOD_ARMOR_ENCHANT_KINDS - 1);
                     theItem->flags |= ITEM_RUNIC;
-                }
-            } else if (rand_range(0, 95) > theItem->armor) { // give it a good runic
-                theItem->enchant2 = rand_range(0, NUMBER_GOOD_ARMOR_ENCHANT_KINDS - 1);
-                theItem->flags |= ITEM_RUNIC;
-                if (theItem->enchant2 == A_IMMUNITY) {
-                    theItem->vorpalEnemy = chooseVorpalEnemy();
-                }
-            } else {
-                while (rand_percent(10)) {
-                    theItem->enchant1++;
+                    if (theItem->enchant2 == A_IMMUNITY) {
+                        theItem->vorpalEnemy = chooseVorpalEnemy();
+                    }
+                } else {
+                    while (rand_percent(10)) {
+                        theItem->enchant1++;
+                    }
                 }
             }
-        }
-        break;
-    case SCROLL:
-        if (itemKind < 0) {
-            itemKind = chooseKind(scrollTable, gameConst->numberScrollKinds);
-        }
-        theEntry = &scrollTable[itemKind];
-        theItem->displayChar = G_SCROLL;
-        theItem->flags |= ITEM_FLAMMABLE;
-        break;
-    case POTION:
-        if (itemKind < 0) {
-            itemKind = chooseKind(potionTable, gameConst->numberPotionKinds);
-        }
-        theEntry = &potionTable[itemKind];
-        theItem->displayChar = G_POTION;
-        break;
-    case STAFF:
-        if (itemKind < 0) {
-            itemKind = chooseKind(staffTable, NUMBER_STAFF_KINDS);
-        }
-        theEntry = &staffTable[itemKind];
-        theItem->displayChar = G_STAFF;
-        theItem->charges = 2;
-        if (rand_percent(50)) {
-            theItem->charges++;
-            if (rand_percent(15)) {
+            break;
+        case SCROLL:
+            if (itemKind < 0) {
+                itemKind = chooseKind(scrollTable, gameConst->numberScrollKinds);
+            }
+            theEntry = &scrollTable[itemKind];
+            theItem->displayChar = G_SCROLL;
+            theItem->flags |= ITEM_FLAMMABLE;
+            break;
+        case POTION:
+            if (itemKind < 0) {
+                itemKind = chooseKind(potionTable, gameConst->numberPotionKinds);
+            }
+            theEntry = &potionTable[itemKind];
+            theItem->displayChar = G_POTION;
+            break;
+        case STAFF:
+            if (itemKind < 0) {
+                itemKind = chooseKind(staffTable, NUMBER_STAFF_KINDS);
+            }
+            theEntry = &staffTable[itemKind];
+            theItem->displayChar = G_STAFF;
+            theItem->charges = 2;
+            if (rand_percent(50)) {
                 theItem->charges++;
-                while (rand_percent(10)) {
+                if (rand_percent(15)) {
                     theItem->charges++;
+                    while (rand_percent(10)) {
+                        theItem->charges++;
+                    }
                 }
             }
-        }
-        theItem->enchant1 = theItem->charges;
-        theItem->enchant2 = (itemKind == STAFF_BLINKING || itemKind == STAFF_OBSTRUCTION ? 1000 : 500); // start with no recharging mojo
-        break;
-    case WAND:
-        if (itemKind < 0) {
-            itemKind = chooseKind(wandTable, gameConst->numberWandKinds);
-        }
-        theEntry = &(wandTable[itemKind]);
-        theItem->displayChar = G_WAND;
-        theItem->charges = randClump(wandTable[itemKind].range);
-        break;
-    case RING:
-        if (itemKind < 0) {
-            itemKind = chooseKind(ringTable, NUMBER_RING_KINDS);
-        }
-        theEntry = &ringTable[itemKind];
-        theItem->displayChar = G_RING;
-        theItem->enchant1 = randClump(ringTable[itemKind].range);
-        theItem->charges = gameConst->ringDelayToAutoID; // how many turns of being worn until it auto-identifies
-        if (rand_percent(16)) {
-            // cursed
-            theItem->enchant1 *= -1;
-            theItem->flags |= ITEM_CURSED;
-        } else {
-            while (rand_percent(10)) {
+            theItem->enchant1 = theItem->charges;
+            theItem->enchant2 = (itemKind == STAFF_BLINKING || itemKind == STAFF_OBSTRUCTION ? 1000 : 500); // start with no recharging mojo
+            break;
+        case WAND:
+            if (itemKind < 0) {
+                itemKind = chooseKind(wandTable, gameConst->numberWandKinds);
+            }
+            theEntry = &(wandTable[itemKind]);
+            theItem->displayChar = G_WAND;
+            theItem->charges = randClump(wandTable[itemKind].range);
+            break;
+        case RING:
+            if (itemKind < 0) {
+                itemKind = chooseKind(ringTable, NUMBER_RING_KINDS);
+            }
+            theEntry = &ringTable[itemKind];
+            theItem->displayChar = G_RING;
+            theItem->enchant1 = randClump(ringTable[itemKind].range);
+            theItem->charges = gameConst->ringDelayToAutoID; // how many turns of being worn until it auto-identifies
+            if (rand_percent(16)) {
+                // cursed
+                theItem->enchant1 *= -1;
+                theItem->flags |= ITEM_CURSED;
+            } else {
+                while (rand_percent(10)) {
+                    theItem->enchant1++;
+                }
+            }
+            break;
+        case CHARM:
+            if (itemKind < 0) {
+                itemKind = chooseKind(charmTable, gameConst->numberCharmKinds);
+            }
+            theItem->displayChar = G_CHARM;
+            theItem->charges = 0; // Charms are initially ready for use.
+            theItem->enchant1 = randClump(charmTable[itemKind].range);
+            while (rand_percent(7)) {
                 theItem->enchant1++;
             }
-        }
-        break;
-    case CHARM:
-        if (itemKind < 0) {
-            itemKind = chooseKind(charmTable, gameConst->numberCharmKinds);
-        }
-        theItem->displayChar = G_CHARM;
-        theItem->charges = 0; // Charms are initially ready for use.
-        theItem->enchant1 = randClump(charmTable[itemKind].range);
-        while (rand_percent(7)) {
-            theItem->enchant1++;
-        }
-        theItem->flags |= ITEM_IDENTIFIED;
-        break;
-    case GOLD:
-        theEntry = NULL;
-        theItem->displayChar = G_GOLD;
-        theItem->quantity = rand_range(50 + rogue.depthLevel * 10 * gameConst->depthAccelerator, 100 + rogue.depthLevel * 15 * gameConst->depthAccelerator);
-        break;
-    case AMULET:
-        theEntry = NULL;
-        theItem->displayChar = G_AMULET;
-        itemKind = 0;
-        theItem->flags |= ITEM_IDENTIFIED;
-        break;
-    case GEM:
-        theEntry = NULL;
-        theItem->displayChar = G_GEM;
-        itemKind = 0;
-        theItem->flags |= ITEM_IDENTIFIED;
-        break;
-    case KEY:
-        theEntry = NULL;
-        theItem->displayChar = G_KEY;
-        theItem->flags |= ITEM_IDENTIFIED;
-        break;
-    default:
-        theEntry = NULL;
-        message("something has gone terribly wrong!", REQUIRE_ACKNOWLEDGMENT);
-        break;
+            theItem->flags |= ITEM_IDENTIFIED;
+            break;
+        case GOLD:
+            theEntry = NULL;
+            theItem->displayChar = G_GOLD;
+            theItem->quantity = rand_range(50 + rogue.depthLevel * 10 * gameConst->depthAccelerator, 100 + rogue.depthLevel * 15 * gameConst->depthAccelerator);
+            break;
+        case AMULET:
+            theEntry = NULL;
+            theItem->displayChar = G_AMULET;
+            itemKind = 0;
+            theItem->flags |= ITEM_IDENTIFIED;
+            break;
+        case GEM:
+            theEntry = NULL;
+            theItem->displayChar = G_GEM;
+            itemKind = 0;
+            theItem->flags |= ITEM_IDENTIFIED;
+            break;
+        case KEY:
+            theEntry = NULL;
+            theItem->displayChar = G_KEY;
+            theItem->flags |= ITEM_IDENTIFIED;
+            break;
+        default:
+            theEntry = NULL;
+            message("something has gone terribly wrong!", REQUIRE_ACKNOWLEDGMENT);
+            break;
     }
     if (theItem && !(theItem->flags & ITEM_IDENTIFIED) && (!(theItem->category & (POTION | SCROLL)) || (theEntry && !theEntry->identified))) {
 
@@ -1336,170 +1336,170 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
     }
 
     switch (theItem->category) {
-    case FOOD:
-        if (theItem->kind == FRUIT) {
-            sprintf(root, "mango%s", pluralization);
-        } else {
-            if (theItem->quantity == 1) {
-                sprintf(article, "some ");
-                sprintf(root, "food");
+        case FOOD:
+            if (theItem->kind == FRUIT) {
+                sprintf(root, "mango%s", pluralization);
             } else {
-                sprintf(root, "ration%s of food", pluralization);
-            }
-        }
-        break;
-    case WEAPON:
-        sprintf(root, "%s%s", weaponTable[theItem->kind].name, pluralization);
-        if (includeDetails) {
-            if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                sprintf(buf, "%s%i %s", (theItem->enchant1 < 0 ? "" : "+"), theItem->enchant1, root);
-                strcpy(root, buf);
-            }
-
-            if (theItem->flags & ITEM_RUNIC) {
-                if ((theItem->flags & ITEM_RUNIC_IDENTIFIED) || rogue.playbackOmniscience) {
-                    itemRunicName(theItem, runicName);
-                    sprintf(buf, "%s of %s%s", root, runicName, grayEscapeSequence);
-                    strcpy(root, buf);
-                } else if (theItem->flags & (ITEM_IDENTIFIED | ITEM_RUNIC_HINTED)) {
-                    if (grayEscapeSequence[0]) {
-                        strcat(root, grayEscapeSequence);
-                    }
-                    strcat(root, " (unknown runic)");
+                if (theItem->quantity == 1) {
+                    sprintf(article, "some ");
+                    sprintf(root, "food");
+                } else {
+                    sprintf(root, "ration%s of food", pluralization);
                 }
             }
-            sprintf(buf, "%s%s <%i>", root, grayEscapeSequence, theItem->strengthRequired);
-            strcpy(root, buf);
-        }
-        break;
-    case ARMOR:
-        sprintf(root, "%s", armorTable[theItem->kind].name);
-        if (includeDetails) {
+            break;
+        case WEAPON:
+            sprintf(root, "%s%s", weaponTable[theItem->kind].name, pluralization);
+            if (includeDetails) {
+                if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
+                    sprintf(buf, "%s%i %s", (theItem->enchant1 < 0 ? "" : "+"), theItem->enchant1, root);
+                    strcpy(root, buf);
+                }
 
-            if ((theItem->flags & ITEM_RUNIC) && ((theItem->flags & ITEM_RUNIC_IDENTIFIED) || rogue.playbackOmniscience)) {
-                itemRunicName(theItem, runicName);
-                sprintf(buf, "%s of %s%s", root, runicName, grayEscapeSequence);
-                strcpy(root, buf);
-            }
-
-            if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                sprintf(buf, "%s%i %s%s [%i]<%i>", (theItem->enchant1 < 0 ? "" : "+"), theItem->enchant1, root, grayEscapeSequence, theItem->armor / 10 + theItem->enchant1, theItem->strengthRequired);
-                strcpy(root, buf);
-            } else {
+                if (theItem->flags & ITEM_RUNIC) {
+                    if ((theItem->flags & ITEM_RUNIC_IDENTIFIED) || rogue.playbackOmniscience) {
+                        itemRunicName(theItem, runicName);
+                        sprintf(buf, "%s of %s%s", root, runicName, grayEscapeSequence);
+                        strcpy(root, buf);
+                    } else if (theItem->flags & (ITEM_IDENTIFIED | ITEM_RUNIC_HINTED)) {
+                        if (grayEscapeSequence[0]) {
+                            strcat(root, grayEscapeSequence);
+                        }
+                        strcat(root, " (unknown runic)");
+                    }
+                }
                 sprintf(buf, "%s%s <%i>", root, grayEscapeSequence, theItem->strengthRequired);
                 strcpy(root, buf);
             }
+            break;
+        case ARMOR:
+            sprintf(root, "%s", armorTable[theItem->kind].name);
+            if (includeDetails) {
 
-            if ((theItem->flags & ITEM_RUNIC) && (theItem->flags & (ITEM_IDENTIFIED | ITEM_RUNIC_HINTED)) && !(theItem->flags & ITEM_RUNIC_IDENTIFIED) && !rogue.playbackOmniscience) {
-                strcat(root, " (unknown runic)");
-            }
-        }
-        break;
-    case SCROLL:
-        if (scrollTable[theItem->kind].identified || rogue.playbackOmniscience) {
-            sprintf(root, "scroll%s of %s", pluralization, scrollTable[theItem->kind].name);
-        } else if (scrollTable[theItem->kind].called) {
-            sprintf(root, "scroll%s called %s%s%s", pluralization, purpleEscapeSequence, scrollTable[theItem->kind].callTitle, baseEscapeSequence);
-        } else {
-            sprintf(root, "scroll%s entitled %s\"%s\"%s", pluralization, purpleEscapeSequence, scrollTable[theItem->kind].flavor, baseEscapeSequence);
-        }
-        break;
-    case POTION:
-        if (potionTable[theItem->kind].identified || rogue.playbackOmniscience) {
-            sprintf(root, "potion%s of %s", pluralization, potionTable[theItem->kind].name);
-        } else if (potionTable[theItem->kind].called) {
-            sprintf(root, "potion%s called %s%s%s", pluralization, purpleEscapeSequence, potionTable[theItem->kind].callTitle, baseEscapeSequence);
-        } else {
-            sprintf(root, "%s%s%s potion%s", purpleEscapeSequence, potionTable[theItem->kind].flavor, baseEscapeSequence, pluralization);
-        }
-        break;
-    case WAND:
-        if (wandTable[theItem->kind].identified || rogue.playbackOmniscience) {
-            sprintf(root, "wand%s of %s", pluralization, wandTable[theItem->kind].name);
-        } else if (wandTable[theItem->kind].called) {
-            sprintf(root, "wand%s called %s%s%s", pluralization, purpleEscapeSequence, wandTable[theItem->kind].callTitle, baseEscapeSequence);
-        } else {
-            sprintf(root, "%s%s%s wand%s", purpleEscapeSequence, wandTable[theItem->kind].flavor, baseEscapeSequence, pluralization);
-        }
-        if (includeDetails) {
-            if (theItem->flags & (ITEM_IDENTIFIED | ITEM_MAX_CHARGES_KNOWN) || rogue.playbackOmniscience) {
-                sprintf(buf, "%s%s [%i]", root, grayEscapeSequence, theItem->charges);
-                strcpy(root, buf);
-            } else if (theItem->enchant2 > 2) {
-                sprintf(buf, "%s%s (used %i times)", root, grayEscapeSequence, theItem->enchant2);
-                strcpy(root, buf);
-            } else if (theItem->enchant2) {
-                sprintf(buf, "%s%s (used %s)", root, grayEscapeSequence, (theItem->enchant2 == 2 ? "twice" : "once"));
-                strcpy(root, buf);
-            }
-        }
-        break;
-    case STAFF:
-        if (staffTable[theItem->kind].identified || rogue.playbackOmniscience) {
-            sprintf(root, "staff%s of %s", pluralization, staffTable[theItem->kind].name);
-        } else if (staffTable[theItem->kind].called) {
-            sprintf(root, "staff%s called %s%s%s", pluralization, purpleEscapeSequence, staffTable[theItem->kind].callTitle, baseEscapeSequence);
-        } else {
-            sprintf(root, "%s%s%s staff%s", purpleEscapeSequence, staffTable[theItem->kind].flavor, baseEscapeSequence, pluralization);
-        }
-        if (includeDetails) {
-            if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                sprintf(buf, "%s%s [%i/%i]", root, grayEscapeSequence, theItem->charges, theItem->enchant1);
-                strcpy(root, buf);
-            } else if (theItem->flags & ITEM_MAX_CHARGES_KNOWN) {
-                sprintf(buf, "%s%s [?/%i]", root, grayEscapeSequence, theItem->enchant1);
-                strcpy(root, buf);
-            }
-        }
-        break;
-    case RING:
-        if (ringTable[theItem->kind].identified || rogue.playbackOmniscience) {
-            sprintf(root, "ring%s of %s", pluralization, ringTable[theItem->kind].name);
-        } else if (ringTable[theItem->kind].called) {
-            sprintf(root, "ring%s called %s%s%s", pluralization, purpleEscapeSequence, ringTable[theItem->kind].callTitle, baseEscapeSequence);
-        } else {
-            sprintf(root, "%s%s%s ring%s", purpleEscapeSequence, ringTable[theItem->kind].flavor, baseEscapeSequence, pluralization);
-        }
-        if (includeDetails && ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience)) {
-            sprintf(buf, "%s%i %s", (theItem->enchant1 < 0 ? "" : "+"), theItem->enchant1, root);
-            strcpy(root, buf);
-        }
-        break;
-    case CHARM:
-        sprintf(root, "%s charm%s", charmTable[theItem->kind].name, pluralization);
+                if ((theItem->flags & ITEM_RUNIC) && ((theItem->flags & ITEM_RUNIC_IDENTIFIED) || rogue.playbackOmniscience)) {
+                    itemRunicName(theItem, runicName);
+                    sprintf(buf, "%s of %s%s", root, runicName, grayEscapeSequence);
+                    strcpy(root, buf);
+                }
 
-        if (includeDetails) {
-            sprintf(buf, "%s%i %s", (theItem->enchant1 < 0 ? "" : "+"), theItem->enchant1, root);
-            strcpy(root, buf);
+                if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
+                    sprintf(buf, "%s%i %s%s [%i]<%i>", (theItem->enchant1 < 0 ? "" : "+"), theItem->enchant1, root, grayEscapeSequence, theItem->armor / 10 + theItem->enchant1, theItem->strengthRequired);
+                    strcpy(root, buf);
+                } else {
+                    sprintf(buf, "%s%s <%i>", root, grayEscapeSequence, theItem->strengthRequired);
+                    strcpy(root, buf);
+                }
 
-            if (theItem->charges) {
-                sprintf(buf, "%s %s(%i%%)", root, grayEscapeSequence, (charmRechargeDelay(theItem->kind, theItem->enchant1) - theItem->charges) * 100 / charmRechargeDelay(theItem->kind, theItem->enchant1));
-                strcpy(root, buf);
+                if ((theItem->flags & ITEM_RUNIC) && (theItem->flags & (ITEM_IDENTIFIED | ITEM_RUNIC_HINTED)) && !(theItem->flags & ITEM_RUNIC_IDENTIFIED) && !rogue.playbackOmniscience) {
+                    strcat(root, " (unknown runic)");
+                }
+            }
+            break;
+        case SCROLL:
+            if (scrollTable[theItem->kind].identified || rogue.playbackOmniscience) {
+                sprintf(root, "scroll%s of %s", pluralization, scrollTable[theItem->kind].name);
+            } else if (scrollTable[theItem->kind].called) {
+                sprintf(root, "scroll%s called %s%s%s", pluralization, purpleEscapeSequence, scrollTable[theItem->kind].callTitle, baseEscapeSequence);
             } else {
-                strcat(root, grayEscapeSequence);
-                strcat(root, " (ready)");
+                sprintf(root, "scroll%s entitled %s\"%s\"%s", pluralization, purpleEscapeSequence, scrollTable[theItem->kind].flavor, baseEscapeSequence);
             }
-        }
-        break;
-    case GOLD:
-        sprintf(root, "gold piece%s", pluralization);
-        break;
-    case AMULET:
-        sprintf(root, "%sAmulet%s of Yendor%s", yellowEscapeSequence, pluralization, baseEscapeSequence);
-        break;
-    case GEM:
-        sprintf(root, "%slumenstone%s%s from depth %i", yellowEscapeSequence, pluralization, baseEscapeSequence, theItem->originDepth);
-        break;
-    case KEY:
-        if (includeDetails && theItem->originDepth > 0 && theItem->originDepth != rogue.depthLevel) {
-            sprintf(root, "%s%s%s from depth %i", keyTable[theItem->kind].name, pluralization, grayEscapeSequence, theItem->originDepth);
-        } else {
-            sprintf(root, keyTable[theItem->kind].name, "%s%s", pluralization);
-        }
-        break;
-    default:
-        sprintf(root, "unknown item%s", pluralization);
-        break;
+            break;
+        case POTION:
+            if (potionTable[theItem->kind].identified || rogue.playbackOmniscience) {
+                sprintf(root, "potion%s of %s", pluralization, potionTable[theItem->kind].name);
+            } else if (potionTable[theItem->kind].called) {
+                sprintf(root, "potion%s called %s%s%s", pluralization, purpleEscapeSequence, potionTable[theItem->kind].callTitle, baseEscapeSequence);
+            } else {
+                sprintf(root, "%s%s%s potion%s", purpleEscapeSequence, potionTable[theItem->kind].flavor, baseEscapeSequence, pluralization);
+            }
+            break;
+        case WAND:
+            if (wandTable[theItem->kind].identified || rogue.playbackOmniscience) {
+                sprintf(root, "wand%s of %s", pluralization, wandTable[theItem->kind].name);
+            } else if (wandTable[theItem->kind].called) {
+                sprintf(root, "wand%s called %s%s%s", pluralization, purpleEscapeSequence, wandTable[theItem->kind].callTitle, baseEscapeSequence);
+            } else {
+                sprintf(root, "%s%s%s wand%s", purpleEscapeSequence, wandTable[theItem->kind].flavor, baseEscapeSequence, pluralization);
+            }
+            if (includeDetails) {
+                if (theItem->flags & (ITEM_IDENTIFIED | ITEM_MAX_CHARGES_KNOWN) || rogue.playbackOmniscience) {
+                    sprintf(buf, "%s%s [%i]", root, grayEscapeSequence, theItem->charges);
+                    strcpy(root, buf);
+                } else if (theItem->enchant2 > 2) {
+                    sprintf(buf, "%s%s (used %i times)", root, grayEscapeSequence, theItem->enchant2);
+                    strcpy(root, buf);
+                } else if (theItem->enchant2) {
+                    sprintf(buf, "%s%s (used %s)", root, grayEscapeSequence, (theItem->enchant2 == 2 ? "twice" : "once"));
+                    strcpy(root, buf);
+                }
+            }
+            break;
+        case STAFF:
+            if (staffTable[theItem->kind].identified || rogue.playbackOmniscience) {
+                sprintf(root, "staff%s of %s", pluralization, staffTable[theItem->kind].name);
+            } else if (staffTable[theItem->kind].called) {
+                sprintf(root, "staff%s called %s%s%s", pluralization, purpleEscapeSequence, staffTable[theItem->kind].callTitle, baseEscapeSequence);
+            } else {
+                sprintf(root, "%s%s%s staff%s", purpleEscapeSequence, staffTable[theItem->kind].flavor, baseEscapeSequence, pluralization);
+            }
+            if (includeDetails) {
+                if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
+                    sprintf(buf, "%s%s [%i/%i]", root, grayEscapeSequence, theItem->charges, theItem->enchant1);
+                    strcpy(root, buf);
+                } else if (theItem->flags & ITEM_MAX_CHARGES_KNOWN) {
+                    sprintf(buf, "%s%s [?/%i]", root, grayEscapeSequence, theItem->enchant1);
+                    strcpy(root, buf);
+                }
+            }
+            break;
+        case RING:
+            if (ringTable[theItem->kind].identified || rogue.playbackOmniscience) {
+                sprintf(root, "ring%s of %s", pluralization, ringTable[theItem->kind].name);
+            } else if (ringTable[theItem->kind].called) {
+                sprintf(root, "ring%s called %s%s%s", pluralization, purpleEscapeSequence, ringTable[theItem->kind].callTitle, baseEscapeSequence);
+            } else {
+                sprintf(root, "%s%s%s ring%s", purpleEscapeSequence, ringTable[theItem->kind].flavor, baseEscapeSequence, pluralization);
+            }
+            if (includeDetails && ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience)) {
+                sprintf(buf, "%s%i %s", (theItem->enchant1 < 0 ? "" : "+"), theItem->enchant1, root);
+                strcpy(root, buf);
+            }
+            break;
+        case CHARM:
+            sprintf(root, "%s charm%s", charmTable[theItem->kind].name, pluralization);
+
+            if (includeDetails) {
+                sprintf(buf, "%s%i %s", (theItem->enchant1 < 0 ? "" : "+"), theItem->enchant1, root);
+                strcpy(root, buf);
+
+                if (theItem->charges) {
+                    sprintf(buf, "%s %s(%i%%)", root, grayEscapeSequence, (charmRechargeDelay(theItem->kind, theItem->enchant1) - theItem->charges) * 100 / charmRechargeDelay(theItem->kind, theItem->enchant1));
+                    strcpy(root, buf);
+                } else {
+                    strcat(root, grayEscapeSequence);
+                    strcat(root, " (ready)");
+                }
+            }
+            break;
+        case GOLD:
+            sprintf(root, "gold piece%s", pluralization);
+            break;
+        case AMULET:
+            sprintf(root, "%sAmulet%s of Yendor%s", yellowEscapeSequence, pluralization, baseEscapeSequence);
+            break;
+        case GEM:
+            sprintf(root, "%slumenstone%s%s from depth %i", yellowEscapeSequence, pluralization, baseEscapeSequence, theItem->originDepth);
+            break;
+        case KEY:
+            if (includeDetails && theItem->originDepth > 0 && theItem->originDepth != rogue.depthLevel) {
+                sprintf(root, "%s%s%s from depth %i", keyTable[theItem->kind].name, pluralization, grayEscapeSequence, theItem->originDepth);
+            } else {
+                sprintf(root, keyTable[theItem->kind].name, "%s%s", pluralization);
+            }
+            break;
+        default:
+            sprintf(root, "unknown item%s", pluralization);
+            break;
     }
 
     if (includeArticle) {
@@ -1534,22 +1534,22 @@ void itemKindName(item *theItem, char *kindName) {
         strcpy(kindName, tableForItemCategory(theItem->category)[theItem->kind].name);
     } else {
         switch (theItem->category) {
-        case KEY:
-            strcpy(kindName, keyTable[theItem->kind].name); // keys are not randomly generated but have a lookup table
-            break;
-        // these items have only one kind per category and no lookup table
-        case GOLD:
-            strcpy(kindName, "gold pieces");
-            break;
-        case AMULET:
-            strcpy(kindName, "amulet of yendor");
-            break;
-        case GEM:
-            strcpy(kindName, "lumenstone");
-            break;
-        default:
-            strcpy(kindName, "unknown");
-            break;
+            case KEY:
+                strcpy(kindName, keyTable[theItem->kind].name); // keys are not randomly generated but have a lookup table
+                break;
+            // these items have only one kind per category and no lookup table
+            case GOLD:
+                strcpy(kindName, "gold pieces");
+                break;
+            case AMULET:
+                strcpy(kindName, "amulet of yendor");
+                break;
+            case GEM:
+                strcpy(kindName, "lumenstone");
+                break;
+            default:
+                strcpy(kindName, "unknown");
+                break;
         }
     }
 }
@@ -1573,26 +1573,26 @@ static int enchantMagnitude() { return tableForItemCategory(SCROLL)[SCROLL_ENCHA
 
 itemTable *tableForItemCategory(enum itemCategory theCat) {
     switch (theCat) {
-    case FOOD:
-        return foodTable;
-    case WEAPON:
-        return weaponTable;
-    case ARMOR:
-        return armorTable;
-    case POTION:
-        return potionTable;
-    case SCROLL:
-        return scrollTable;
-    case RING:
-        return ringTable;
-    case WAND:
-        return wandTable;
-    case STAFF:
-        return staffTable;
-    case CHARM:
-        return charmTable;
-    default:
-        return NULL;
+        case FOOD:
+            return foodTable;
+        case WEAPON:
+            return weaponTable;
+        case ARMOR:
+            return armorTable;
+        case POTION:
+            return potionTable;
+        case SCROLL:
+            return scrollTable;
+        case RING:
+            return ringTable;
+        case WAND:
+            return wandTable;
+        case STAFF:
+            return staffTable;
+        case CHARM:
+            return charmTable;
+        default:
+            return NULL;
     }
 }
 
@@ -1724,50 +1724,50 @@ void itemDetails(char *buf, item *theItem) {
         }
     } else {
         switch (theItem->category) {
-        case POTION:
-            sprintf(buf2, "%s flask%s contain%s a swirling %s liquid. Who knows what %s will do when drunk or thrown?", (singular ? "This" : "These"), (singular ? "" : "s"), (singular ? "s" : ""),
-                    tableForItemCategory(theItem->category)[theItem->kind].flavor, (singular ? "it" : "they"));
-            break;
-        case SCROLL:
-            sprintf(buf2,
-                    "%s parchment%s %s covered with indecipherable writing, and bear%s a title of \"%s.\" Who knows "
-                    "what %s will do when read aloud?",
-                    (singular ? "This" : "These"), (singular ? "" : "s"), (singular ? "is" : "are"), (singular ? "s" : ""), tableForItemCategory(theItem->category)[theItem->kind].flavor, (singular ? "it" : "they"));
-            break;
-        case STAFF:
-            sprintf(buf2, "This gnarled %s staff is warm to the touch. Who knows what it will do when used?", tableForItemCategory(theItem->category)[theItem->kind].flavor);
-            break;
-        case WAND:
-            sprintf(buf2, "This thin %s wand is warm to the touch. Who knows what it will do when used?", tableForItemCategory(theItem->category)[theItem->kind].flavor);
-            break;
-        case RING:
-            sprintf(buf2,
-                    "This metal band is adorned with a%s %s gem that glitters in the darkness. Who knows what effect "
-                    "it has when worn? ",
-                    isVowelish(tableForItemCategory(theItem->category)[theItem->kind].flavor) ? "n" : "", tableForItemCategory(theItem->category)[theItem->kind].flavor);
-            break;
-        case CHARM: // Should never be displayed.
-            strcat(buf2, "What a perplexing charm!");
-            break;
-        case AMULET:
-            strcpy(buf2, "Legends are told about this mysterious golden amulet, and legions of adventurers have "
-                         "perished in its pursuit. Unfathomable riches await anyone with the skill and ambition to "
-                         "carry it into the light of day.");
-            break;
-        case GEM:
-            sprintf(buf2,
-                    "Faint golden lights swirl and fluoresce beneath the stone%s surface. Lumenstones are said to "
-                    "contain mysterious properties of untold power, but for you, they mean one thing: riches.",
-                    (singular ? "'s" : "s'"));
-            break;
-        case KEY:
-            strcpy(buf2, keyTable[theItem->kind].description);
-            break;
-        case GOLD:
-            sprintf(buf2, "A pile of %i shining gold coins.", theItem->quantity);
-            break;
-        default:
-            break;
+            case POTION:
+                sprintf(buf2, "%s flask%s contain%s a swirling %s liquid. Who knows what %s will do when drunk or thrown?", (singular ? "This" : "These"), (singular ? "" : "s"), (singular ? "s" : ""),
+                        tableForItemCategory(theItem->category)[theItem->kind].flavor, (singular ? "it" : "they"));
+                break;
+            case SCROLL:
+                sprintf(buf2,
+                        "%s parchment%s %s covered with indecipherable writing, and bear%s a title of \"%s.\" Who knows "
+                        "what %s will do when read aloud?",
+                        (singular ? "This" : "These"), (singular ? "" : "s"), (singular ? "is" : "are"), (singular ? "s" : ""), tableForItemCategory(theItem->category)[theItem->kind].flavor, (singular ? "it" : "they"));
+                break;
+            case STAFF:
+                sprintf(buf2, "This gnarled %s staff is warm to the touch. Who knows what it will do when used?", tableForItemCategory(theItem->category)[theItem->kind].flavor);
+                break;
+            case WAND:
+                sprintf(buf2, "This thin %s wand is warm to the touch. Who knows what it will do when used?", tableForItemCategory(theItem->category)[theItem->kind].flavor);
+                break;
+            case RING:
+                sprintf(buf2,
+                        "This metal band is adorned with a%s %s gem that glitters in the darkness. Who knows what effect "
+                        "it has when worn? ",
+                        isVowelish(tableForItemCategory(theItem->category)[theItem->kind].flavor) ? "n" : "", tableForItemCategory(theItem->category)[theItem->kind].flavor);
+                break;
+            case CHARM: // Should never be displayed.
+                strcat(buf2, "What a perplexing charm!");
+                break;
+            case AMULET:
+                strcpy(buf2, "Legends are told about this mysterious golden amulet, and legions of adventurers have "
+                             "perished in its pursuit. Unfathomable riches await anyone with the skill and ambition to "
+                             "carry it into the light of day.");
+                break;
+            case GEM:
+                sprintf(buf2,
+                        "Faint golden lights swirl and fluoresce beneath the stone%s surface. Lumenstones are said to "
+                        "contain mysterious properties of untold power, but for you, they mean one thing: riches.",
+                        (singular ? "'s" : "s'"));
+                break;
+            case KEY:
+                strcpy(buf2, keyTable[theItem->kind].description);
+                break;
+            case GOLD:
+                sprintf(buf2, "A pile of %i shining gold coins.", theItem->quantity);
+                break;
+            default:
+                break;
         }
         strcat(buf, buf2);
     }
@@ -1783,665 +1783,667 @@ void itemDetails(char *buf, item *theItem) {
     // detailed description
     switch (theItem->category) {
 
-    case FOOD:
-        sprintf(buf2, "\n\nYou are %shungry enough to fully enjoy a %s.", ((STOMACH_SIZE - player.status[STATUS_NUTRITION]) >= foodTable[theItem->kind].power ? "" : "not yet "), foodTable[theItem->kind].name);
-        strcat(buf, buf2);
-        break;
-
-    case WEAPON:
-    case ARMOR:
-        // enchanted? strength modifier?
-        if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-            if (theItem->enchant1) {
-                if (theItem->enchant1 > 0) {
-                    sprintf(buf2, "\n\nThe %s bear%s an intrinsic enchantment of %s+%i%s", theName, (singular ? "s" : ""), goodColorEscape, theItem->enchant1, whiteColorEscape);
-                } else {
-                    sprintf(buf2, "\n\nThe %s bear%s an intrinsic penalty of %s%i%s", theName, (singular ? "s" : ""), badColorEscape, theItem->enchant1, whiteColorEscape);
-                }
-            } else {
-                sprintf(buf2, "\n\nThe %s bear%s no intrinsic enchantment", theName, (singular ? "s" : ""));
-            }
+        case FOOD:
+            sprintf(buf2, "\n\nYou are %shungry enough to fully enjoy a %s.", ((STOMACH_SIZE - player.status[STATUS_NUTRITION]) >= foodTable[theItem->kind].power ? "" : "not yet "), foodTable[theItem->kind].name);
             strcat(buf, buf2);
-            if (strengthModifier(theItem)) {
-                sprintf(buf2, ", %s %s %s %s%s%+.2f%s because of your %s strength. ", (theItem->enchant1 ? "and" : "but"), (singular ? "carries" : "carry"),
-                        (theItem->enchant1 && (theItem->enchant1 > 0) == (strengthModifier(theItem) > 0) ? "an additional" : "a"), (strengthModifier(theItem) > 0 ? "bonus of " : "penalty of "),
-                        (strengthModifier(theItem) > 0 ? goodColorEscape : badColorEscape), strengthModifier(theItem) / (double)FP_FACTOR, whiteColorEscape, (strengthModifier(theItem) > 0 ? "excess" : "inadequate"));
-                strcat(buf, buf2);
-            } else {
-                strcat(buf, ". ");
-            }
-        } else {
-            if ((theItem->enchant1 > 0) && (theItem->flags & ITEM_MAGIC_DETECTED)) {
-                sprintf(buf2, "\n\nYou can feel an %saura of benevolent magic%s radiating from the %s. ", goodColorEscape, whiteColorEscape, theName);
-                strcat(buf, buf2);
-            }
-            if (strengthModifier(theItem)) {
-                sprintf(buf2, "\n\nThe %s %s%s a %s%s%+.2f%s because of your %s strength. ", theName, ((theItem->enchant1 > 0) && (theItem->flags & ITEM_MAGIC_DETECTED) ? "also " : ""), (singular ? "carries" : "carry"),
-                        (strengthModifier(theItem) > 0 ? "bonus of " : "penalty of "), (strengthModifier(theItem) > 0 ? goodColorEscape : badColorEscape), strengthModifier(theItem) / (double)FP_FACTOR, whiteColorEscape,
-                        (strengthModifier(theItem) > 0 ? "excess" : "inadequate"));
-                strcat(buf, buf2);
-            }
+            break;
 
-            if (theItem->category & WEAPON) {
-                sprintf(buf2, "It will reveal its secrets if you defeat %i%s %s with it. ", theItem->charges, (theItem->charges == gameConst->weaponKillsToAutoID ? "" : " more"), (theItem->charges == 1 ? "enemy" : "enemies"));
-            } else {
-                sprintf(buf2, "It will reveal its secrets if worn for %i%s turn%s. ", theItem->charges, (theItem->charges == gameConst->armorDelayToAutoID ? "" : " more"), (theItem->charges == 1 ? "" : "s"));
-            }
-            strcat(buf, buf2);
-        }
-
-        // Display the known percentage by which the armor/weapon will increase/decrease accuracy/damage/defense if not
-        // already equipped.
-        if (!(theItem->flags & ITEM_EQUIPPED)) {
-            if (theItem->category & WEAPON) {
-                current = player.info.accuracy;
-                if (rogue.weapon) {
-                    currentDamage = (rogue.weapon->damage.lowerBound + rogue.weapon->damage.upperBound) * FP_FACTOR / 2;
-                    if ((rogue.weapon->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                        current = current * accuracyFraction(netEnchant(rogue.weapon)) / FP_FACTOR;
-                        currentDamage = currentDamage * damageFraction(netEnchant(rogue.weapon)) / FP_FACTOR;
+        case WEAPON:
+        case ARMOR:
+            // enchanted? strength modifier?
+            if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
+                if (theItem->enchant1) {
+                    if (theItem->enchant1 > 0) {
+                        sprintf(buf2, "\n\nThe %s bear%s an intrinsic enchantment of %s+%i%s", theName, (singular ? "s" : ""), goodColorEscape, theItem->enchant1, whiteColorEscape);
                     } else {
-                        current = current * accuracyFraction(strengthModifier(rogue.weapon)) / FP_FACTOR;
-                        currentDamage = currentDamage * damageFraction(strengthModifier(rogue.weapon)) / FP_FACTOR;
+                        sprintf(buf2, "\n\nThe %s bear%s an intrinsic penalty of %s%i%s", theName, (singular ? "s" : ""), badColorEscape, theItem->enchant1, whiteColorEscape);
                     }
                 } else {
-                    currentDamage = (player.info.damage.lowerBound + player.info.damage.upperBound) * FP_FACTOR / 2;
+                    sprintf(buf2, "\n\nThe %s bear%s no intrinsic enchantment", theName, (singular ? "s" : ""));
                 }
-
-                new = player.info.accuracy;
-                newDamage = (theItem->damage.lowerBound + theItem->damage.upperBound) * FP_FACTOR / 2;
-                if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                    new = new *accuracyFraction(netEnchant(theItem)) / FP_FACTOR;
-                    newDamage = newDamage * damageFraction(netEnchant(theItem)) / FP_FACTOR;
-                } else {
-                    new = new *accuracyFraction(strengthModifier(theItem)) / FP_FACTOR;
-                    newDamage = newDamage * damageFraction(strengthModifier(theItem)) / FP_FACTOR;
-                }
-                accuracyChange = (new * 100 / current) - 100;
-                damageChange = (newDamage * 100 / currentDamage) - 100;
-                sprintf(buf2,
-                        "Wielding the %s%s will %s your current accuracy by %s%i%%%s, and will %s your current damage "
-                        "by %s%i%%%s. ",
-                        theName, ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) ? "" : ", assuming it has no hidden properties,", (((short)accuracyChange) < 0) ? "decrease" : "increase",
-                        (((short)accuracyChange) < 0) ? badColorEscape : (accuracyChange > 0 ? goodColorEscape : ""), abs((short)accuracyChange), whiteColorEscape, (((short)damageChange) < 0) ? "decrease" : "increase",
-                        (((short)damageChange) < 0) ? badColorEscape : (damageChange > 0 ? goodColorEscape : ""), abs((short)damageChange), whiteColorEscape);
-            } else {
-                new = 0;
-
-                if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                    new = theItem->armor;
-                    new += 10 * netEnchant(theItem) / FP_FACTOR;
-                    new /= 10;
-                } else {
-                    new = armorValueIfUnenchanted(theItem);
-                }
-
-                new = max(0, new);
-
-                sprintf(buf2, "Wearing the %s%s will result in an armor rating of %s%i%s. ", theName, ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) ? "" : ", assuming it has no hidden properties,",
-                        (new > displayedArmorValue() ? goodColorEscape : (new < displayedArmorValue() ? badColorEscape : whiteColorEscape)), new, whiteColorEscape);
-            }
-            strcat(buf, buf2);
-        }
-
-        // protected?
-        if (theItem->flags & ITEM_PROTECTED) {
-            sprintf(buf2, "%sThe %s cannot be corroded by acid.%s ", goodColorEscape, theName, whiteColorEscape);
-            strcat(buf, buf2);
-        }
-
-        // heavy armor?
-        current = armorStealthAdjustment(rogue.armor);
-        if ((theItem->category & ARMOR) && !(theItem->flags & ITEM_EQUIPPED) && (current != armorStealthAdjustment(theItem))) {
-
-            new = armorStealthAdjustment(theItem);
-            if (rogue.armor) {
-                new -= armorStealthAdjustment(rogue.armor);
-            }
-            sprintf(buf2, "Equipping the %s will %s%s your stealth range by %i%s. ", theName, new > 0 ? badColorEscape : goodColorEscape, new > 0 ? "increase" : "decrease", abs(new), whiteColorEscape);
-            strcat(buf, buf2);
-        }
-
-        if (theItem->category & WEAPON) {
-
-            // runic?
-            if (theItem->flags & ITEM_RUNIC) {
-                if ((theItem->flags & ITEM_RUNIC_IDENTIFIED) || rogue.playbackOmniscience) {
-                    sprintf(buf2, "\n\nGlowing runes of %s adorn the %s. ", weaponRunicNames[theItem->enchant2], theName);
+                strcat(buf, buf2);
+                if (strengthModifier(theItem)) {
+                    sprintf(buf2, ", %s %s %s %s%s%+.2f%s because of your %s strength. ", (theItem->enchant1 ? "and" : "but"), (singular ? "carries" : "carry"),
+                            (theItem->enchant1 && (theItem->enchant1 > 0) == (strengthModifier(theItem) > 0) ? "an additional" : "a"), (strengthModifier(theItem) > 0 ? "bonus of " : "penalty of "),
+                            (strengthModifier(theItem) > 0 ? goodColorEscape : badColorEscape), strengthModifier(theItem) / (double)FP_FACTOR, whiteColorEscape, (strengthModifier(theItem) > 0 ? "excess" : "inadequate"));
                     strcat(buf, buf2);
-                    if (theItem->enchant2 == W_SLAYING) {
-                        describeMonsterClass(buf3, theItem->vorpalEnemy, false);
-                        sprintf(buf2, "It will never fail to slay a%s %s in a single stroke. ", (isVowelish(buf3) ? "n" : ""), buf3);
-                        strcat(buf, buf2);
-                    } else if (theItem->enchant2 == W_MULTIPLICITY) {
-                        if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                            sprintf(buf2,
-                                    "%i%% of the time that it hits an enemy, %i spectral %s%s will spring into being "
-                                    "with accuracy and attack power equal to your own, and will dissipate %i turns "
-                                    "later. (If the %s is enchanted, %i image%s will appear %i%% of the time, and will "
-                                    "last %i turns.)",
-                                    runicWeaponChance(theItem, false, 0), weaponImageCount(enchant), theName, (weaponImageCount(enchant) > 1 ? "s" : ""), weaponImageDuration(enchant), theName,
-                                    weaponImageCount(enchant + enchantMagnitude() * enchantIncrement(theItem)), (weaponImageCount(enchant + enchantMagnitude() * enchantIncrement(theItem)) > 1 ? "s" : ""),
-                                    runicWeaponChance(theItem, true, enchant + enchantMagnitude() * enchantIncrement(theItem)), weaponImageDuration(enchant + enchantMagnitude() * enchantIncrement(theItem)));
-                        } else {
-                            sprintf(buf2,
-                                    "Sometimes, when it hits an enemy, spectral %ss will spring into being with accuracy "
-                                    "and attack power equal to your own, and will dissipate shortly thereafter.",
-                                    theName);
-                        }
-                        strcat(buf, buf2);
-                    } else {
-                        if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                            if (runicWeaponChance(theItem, false, 0) < 2 && rogue.strength - player.weaknessAmount < theItem->strengthRequired) {
+                } else {
+                    strcat(buf, ". ");
+                }
+            } else {
+                if ((theItem->enchant1 > 0) && (theItem->flags & ITEM_MAGIC_DETECTED)) {
+                    sprintf(buf2, "\n\nYou can feel an %saura of benevolent magic%s radiating from the %s. ", goodColorEscape, whiteColorEscape, theName);
+                    strcat(buf, buf2);
+                }
+                if (strengthModifier(theItem)) {
+                    sprintf(buf2, "\n\nThe %s %s%s a %s%s%+.2f%s because of your %s strength. ", theName, ((theItem->enchant1 > 0) && (theItem->flags & ITEM_MAGIC_DETECTED) ? "also " : ""), (singular ? "carries" : "carry"),
+                            (strengthModifier(theItem) > 0 ? "bonus of " : "penalty of "), (strengthModifier(theItem) > 0 ? goodColorEscape : badColorEscape), strengthModifier(theItem) / (double)FP_FACTOR, whiteColorEscape,
+                            (strengthModifier(theItem) > 0 ? "excess" : "inadequate"));
+                    strcat(buf, buf2);
+                }
 
-                                strcpy(buf2, "Its runic effect will almost never activate because of your inadequate "
-                                             "strength, but sometimes, when");
+                if (theItem->category & WEAPON) {
+                    sprintf(buf2, "It will reveal its secrets if you defeat %i%s %s with it. ", theItem->charges, (theItem->charges == gameConst->weaponKillsToAutoID ? "" : " more"), (theItem->charges == 1 ? "enemy" : "enemies"));
+                } else {
+                    sprintf(buf2, "It will reveal its secrets if worn for %i%s turn%s. ", theItem->charges, (theItem->charges == gameConst->armorDelayToAutoID ? "" : " more"), (theItem->charges == 1 ? "" : "s"));
+                }
+                strcat(buf, buf2);
+            }
+
+            // Display the known percentage by which the armor/weapon will increase/decrease accuracy/damage/defense if not
+            // already equipped.
+            if (!(theItem->flags & ITEM_EQUIPPED)) {
+                if (theItem->category & WEAPON) {
+                    current = player.info.accuracy;
+                    if (rogue.weapon) {
+                        currentDamage = (rogue.weapon->damage.lowerBound + rogue.weapon->damage.upperBound) * FP_FACTOR / 2;
+                        if ((rogue.weapon->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
+                            current = current * accuracyFraction(netEnchant(rogue.weapon)) / FP_FACTOR;
+                            currentDamage = currentDamage * damageFraction(netEnchant(rogue.weapon)) / FP_FACTOR;
+                        } else {
+                            current = current * accuracyFraction(strengthModifier(rogue.weapon)) / FP_FACTOR;
+                            currentDamage = currentDamage * damageFraction(strengthModifier(rogue.weapon)) / FP_FACTOR;
+                        }
+                    } else {
+                        currentDamage = (player.info.damage.lowerBound + player.info.damage.upperBound) * FP_FACTOR / 2;
+                    }
+
+                    new = player.info.accuracy;
+                    newDamage = (theItem->damage.lowerBound + theItem->damage.upperBound) * FP_FACTOR / 2;
+                    if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
+                        new = new *accuracyFraction(netEnchant(theItem)) / FP_FACTOR;
+                        newDamage = newDamage * damageFraction(netEnchant(theItem)) / FP_FACTOR;
+                    } else {
+                        new = new *accuracyFraction(strengthModifier(theItem)) / FP_FACTOR;
+                        newDamage = newDamage * damageFraction(strengthModifier(theItem)) / FP_FACTOR;
+                    }
+                    accuracyChange = (new * 100 / current) - 100;
+                    damageChange = (newDamage * 100 / currentDamage) - 100;
+                    sprintf(buf2,
+                            "Wielding the %s%s will %s your current accuracy by %s%i%%%s, and will %s your current damage "
+                            "by %s%i%%%s. ",
+                            theName, ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) ? "" : ", assuming it has no hidden properties,", (((short)accuracyChange) < 0) ? "decrease" : "increase",
+                            (((short)accuracyChange) < 0) ? badColorEscape : (accuracyChange > 0 ? goodColorEscape : ""), abs((short)accuracyChange), whiteColorEscape, (((short)damageChange) < 0) ? "decrease" : "increase",
+                            (((short)damageChange) < 0) ? badColorEscape : (damageChange > 0 ? goodColorEscape : ""), abs((short)damageChange), whiteColorEscape);
+                } else {
+                    new = 0;
+
+                    if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
+                        new = theItem->armor;
+                        new += 10 * netEnchant(theItem) / FP_FACTOR;
+                        new /= 10;
+                    } else {
+                        new = armorValueIfUnenchanted(theItem);
+                    }
+
+                    new = max(0, new);
+
+                    sprintf(buf2, "Wearing the %s%s will result in an armor rating of %s%i%s. ", theName, ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) ? "" : ", assuming it has no hidden properties,",
+                            (new > displayedArmorValue() ? goodColorEscape : (new < displayedArmorValue() ? badColorEscape : whiteColorEscape)), new, whiteColorEscape);
+                }
+                strcat(buf, buf2);
+            }
+
+            // protected?
+            if (theItem->flags & ITEM_PROTECTED) {
+                sprintf(buf2, "%sThe %s cannot be corroded by acid.%s ", goodColorEscape, theName, whiteColorEscape);
+                strcat(buf, buf2);
+            }
+
+            // heavy armor?
+            current = armorStealthAdjustment(rogue.armor);
+            if ((theItem->category & ARMOR) && !(theItem->flags & ITEM_EQUIPPED) && (current != armorStealthAdjustment(theItem))) {
+
+                new = armorStealthAdjustment(theItem);
+                if (rogue.armor) {
+                    new -= armorStealthAdjustment(rogue.armor);
+                }
+                sprintf(buf2, "Equipping the %s will %s%s your stealth range by %i%s. ", theName, new > 0 ? badColorEscape : goodColorEscape, new > 0 ? "increase" : "decrease", abs(new), whiteColorEscape);
+                strcat(buf, buf2);
+            }
+
+            if (theItem->category & WEAPON) {
+
+                // runic?
+                if (theItem->flags & ITEM_RUNIC) {
+                    if ((theItem->flags & ITEM_RUNIC_IDENTIFIED) || rogue.playbackOmniscience) {
+                        sprintf(buf2, "\n\nGlowing runes of %s adorn the %s. ", weaponRunicNames[theItem->enchant2], theName);
+                        strcat(buf, buf2);
+                        if (theItem->enchant2 == W_SLAYING) {
+                            describeMonsterClass(buf3, theItem->vorpalEnemy, false);
+                            sprintf(buf2, "It will never fail to slay a%s %s in a single stroke. ", (isVowelish(buf3) ? "n" : ""), buf3);
+                            strcat(buf, buf2);
+                        } else if (theItem->enchant2 == W_MULTIPLICITY) {
+                            if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
+                                sprintf(buf2,
+                                        "%i%% of the time that it hits an enemy, %i spectral %s%s will spring into being "
+                                        "with accuracy and attack power equal to your own, and will dissipate %i turns "
+                                        "later. (If the %s is enchanted, %i image%s will appear %i%% of the time, and will "
+                                        "last %i turns.)",
+                                        runicWeaponChance(theItem, false, 0), weaponImageCount(enchant), theName, (weaponImageCount(enchant) > 1 ? "s" : ""), weaponImageDuration(enchant), theName,
+                                        weaponImageCount(enchant + enchantMagnitude() * enchantIncrement(theItem)), (weaponImageCount(enchant + enchantMagnitude() * enchantIncrement(theItem)) > 1 ? "s" : ""),
+                                        runicWeaponChance(theItem, true, enchant + enchantMagnitude() * enchantIncrement(theItem)), weaponImageDuration(enchant + enchantMagnitude() * enchantIncrement(theItem)));
                             } else {
-                                sprintf(buf2, "%i%% of the time that", runicWeaponChance(theItem, false, 0));
+                                sprintf(buf2,
+                                        "Sometimes, when it hits an enemy, spectral %ss will spring into being with accuracy "
+                                        "and attack power equal to your own, and will dissipate shortly thereafter.",
+                                        theName);
                             }
                             strcat(buf, buf2);
                         } else {
-                            strcat(buf, "Sometimes, when");
-                        }
-                        sprintf(buf2, " it hits an enemy, %s", weaponRunicEffectDescriptions[theItem->enchant2]);
-                        strcat(buf, buf2);
+                            if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
+                                if (runicWeaponChance(theItem, false, 0) < 2 && rogue.strength - player.weaknessAmount < theItem->strengthRequired) {
 
-                        if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                            switch (theItem->enchant2) {
-                            case W_SPEED:
-                                strcat(buf, ". ");
-                                break;
-                            case W_PARALYSIS:
-                                sprintf(buf2, " for %i turns. ", (int)(weaponParalysisDuration(enchant)));
-                                strcat(buf, buf2);
-                                nextLevelState = (int)(weaponParalysisDuration(enchant + enchantMagnitude() * enchantIncrement(theItem)));
-                                break;
-                            case W_SLOWING:
-                                sprintf(buf2, " for %i turns. ", weaponSlowDuration(enchant));
-                                strcat(buf, buf2);
-                                nextLevelState = weaponSlowDuration(enchant + enchantMagnitude() * enchantIncrement(theItem));
-                                break;
-                            case W_CONFUSION:
-                                sprintf(buf2, " for %i turns. ", weaponConfusionDuration(enchant));
-                                strcat(buf, buf2);
-                                nextLevelState = weaponConfusionDuration(enchant + enchantMagnitude() * enchantIncrement(theItem));
-                                break;
-                            case W_FORCE:
-                                sprintf(buf2,
-                                        " up to %i spaces backward. If the enemy hits an obstruction, it (and any "
-                                        "monster it hits) will take damage in proportion to the distance it flew. ",
-                                        weaponForceDistance(enchant));
-                                strcat(buf, buf2);
-                                nextLevelState = weaponForceDistance(enchant + enchantMagnitude() * enchantIncrement(theItem));
-                                break;
-                            case W_MERCY:
-                                strcpy(buf2, " by 50% of its maximum health. ");
-                                strcat(buf, buf2);
-                                break;
-                            default:
-                                strcpy(buf2, ". ");
-                                strcat(buf, buf2);
-                                break;
-                            }
-
-                            if (((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) && runicWeaponChance(theItem, false, 0) < runicWeaponChance(theItem, true, enchant + enchantMagnitude() * enchantIncrement(theItem))) {
-                                sprintf(buf2, "(If the %s is enchanted, the chance will increase to %i%%", theName, runicWeaponChance(theItem, true, enchant + enchantMagnitude() * enchantIncrement(theItem)));
-                                strcat(buf, buf2);
-                                if (nextLevelState) {
-                                    if (theItem->enchant2 == W_FORCE) {
-                                        sprintf(buf2, " and the distance will increase to %i.)", nextLevelState);
-                                    } else {
-                                        sprintf(buf2, " and the duration will increase to %i turns.)", nextLevelState);
-                                    }
+                                    strcpy(buf2, "Its runic effect will almost never activate because of your inadequate "
+                                                 "strength, but sometimes, when");
                                 } else {
-                                    strcpy(buf2, ".)");
+                                    sprintf(buf2, "%i%% of the time that", runicWeaponChance(theItem, false, 0));
                                 }
                                 strcat(buf, buf2);
+                            } else {
+                                strcat(buf, "Sometimes, when");
                             }
-                        } else {
-                            strcat(buf, ". ");
-                        }
-                    }
+                            sprintf(buf2, " it hits an enemy, %s", weaponRunicEffectDescriptions[theItem->enchant2]);
+                            strcat(buf, buf2);
 
-                } else if (theItem->flags & ITEM_IDENTIFIED) {
-                    sprintf(buf2, "\n\nGlowing runes of an indecipherable language run down the length of the %s. ", theName);
+                            if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
+                                switch (theItem->enchant2) {
+                                    case W_SPEED:
+                                        strcat(buf, ". ");
+                                        break;
+                                    case W_PARALYSIS:
+                                        sprintf(buf2, " for %i turns. ", (int)(weaponParalysisDuration(enchant)));
+                                        strcat(buf, buf2);
+                                        nextLevelState = (int)(weaponParalysisDuration(enchant + enchantMagnitude() * enchantIncrement(theItem)));
+                                        break;
+                                    case W_SLOWING:
+                                        sprintf(buf2, " for %i turns. ", weaponSlowDuration(enchant));
+                                        strcat(buf, buf2);
+                                        nextLevelState = weaponSlowDuration(enchant + enchantMagnitude() * enchantIncrement(theItem));
+                                        break;
+                                    case W_CONFUSION:
+                                        sprintf(buf2, " for %i turns. ", weaponConfusionDuration(enchant));
+                                        strcat(buf, buf2);
+                                        nextLevelState = weaponConfusionDuration(enchant + enchantMagnitude() * enchantIncrement(theItem));
+                                        break;
+                                    case W_FORCE:
+                                        sprintf(buf2,
+                                                " up to %i spaces backward. If the enemy hits an obstruction, it (and any "
+                                                "monster it hits) will take damage in proportion to the distance it flew. ",
+                                                weaponForceDistance(enchant));
+                                        strcat(buf, buf2);
+                                        nextLevelState = weaponForceDistance(enchant + enchantMagnitude() * enchantIncrement(theItem));
+                                        break;
+                                    case W_MERCY:
+                                        strcpy(buf2, " by 50% of its maximum health. ");
+                                        strcat(buf, buf2);
+                                        break;
+                                    default:
+                                        strcpy(buf2, ". ");
+                                        strcat(buf, buf2);
+                                        break;
+                                }
+
+                                if (((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) && runicWeaponChance(theItem, false, 0) < runicWeaponChance(theItem, true, enchant + enchantMagnitude() * enchantIncrement(theItem))) {
+                                    sprintf(buf2, "(If the %s is enchanted, the chance will increase to %i%%", theName, runicWeaponChance(theItem, true, enchant + enchantMagnitude() * enchantIncrement(theItem)));
+                                    strcat(buf, buf2);
+                                    if (nextLevelState) {
+                                        if (theItem->enchant2 == W_FORCE) {
+                                            sprintf(buf2, " and the distance will increase to %i.)", nextLevelState);
+                                        } else {
+                                            sprintf(buf2, " and the duration will increase to %i turns.)", nextLevelState);
+                                        }
+                                    } else {
+                                        strcpy(buf2, ".)");
+                                    }
+                                    strcat(buf, buf2);
+                                }
+                            } else {
+                                strcat(buf, ". ");
+                            }
+                        }
+
+                    } else if (theItem->flags & ITEM_IDENTIFIED) {
+                        sprintf(buf2, "\n\nGlowing runes of an indecipherable language run down the length of the %s. ", theName);
+                        strcat(buf, buf2);
+                    }
+                }
+
+                // equipped? cursed?
+                if (theItem->flags & ITEM_EQUIPPED) {
+                    sprintf(buf2, "\n\nYou hold the %s at the ready%s. ", theName, ((theItem->flags & ITEM_CURSED) ? ", and because it is cursed, you are powerless to let go" : ""));
+                    strcat(buf, buf2);
+                } else if (((theItem->flags & (ITEM_IDENTIFIED | ITEM_MAGIC_DETECTED)) || rogue.playbackOmniscience) && (theItem->flags & ITEM_CURSED)) {
+                    sprintf(buf2, "\n\n%sYou can feel a malevolent magic lurking within the %s.%s ", badColorEscape, theName, whiteColorEscape);
+                    strcat(buf, buf2);
+                }
+
+            } else if (theItem->category & ARMOR) {
+
+                // runic?
+                if (theItem->flags & ITEM_RUNIC) {
+                    if ((theItem->flags & ITEM_RUNIC_IDENTIFIED) || rogue.playbackOmniscience) {
+                        sprintf(buf2, "\n\nGlowing runes of %s adorn the %s. ", armorRunicNames[theItem->enchant2], theName);
+                        strcat(buf, buf2);
+
+                        // A_MULTIPLICITY, A_MUTUALITY, A_ABSORPTION, A_REPRISAL, A_IMMUNITY, A_REFLECTION, A_BURDEN,
+                        // A_VULNERABILITY, A_IMMOLATION
+                        switch (theItem->enchant2) {
+                            case A_MULTIPLICITY:
+                                sprintf(buf2,
+                                        "When worn, 33%% of the time that an enemy's attack connects, %i allied spectral "
+                                        "duplicate%s of your attacker will appear for 3 turns. ",
+                                        armorImageCount(enchant), (armorImageCount(enchant) == 1 ? "" : "s"));
+                                if (armorImageCount(enchant + enchantMagnitude() * enchantIncrement(theItem)) > armorImageCount(enchant)) {
+                                    sprintf(buf3, "(If the %s is enchanted, the number of duplicates will increase to %i.) ", theName, (armorImageCount(enchant + enchantMagnitude() * enchantIncrement(theItem))));
+                                    strcat(buf2, buf3);
+                                }
+                                break;
+                            case A_MUTUALITY:
+                                strcpy(buf2, "When worn, the damage that you incur from physical attacks will be split evenly "
+                                             "among yourself and all other adjacent enemies. ");
+                                break;
+                            case A_ABSORPTION:
+                                if (theItem->flags & ITEM_IDENTIFIED) {
+                                    sprintf(buf2,
+                                            "It will reduce the damage of inbound attacks by a random amount between 1 and %i, "
+                                            "which is %i%% of your current maximum health. (If the %s is enchanted, this maximum "
+                                            "amount will %s %i.) ",
+                                            (int)armorAbsorptionMax(enchant), (int)(100 * armorAbsorptionMax(enchant) / player.info.maxHP), theName,
+                                            (armorAbsorptionMax(enchant) == armorAbsorptionMax(enchant + enchantIncrement(theItem)) ? "remain at" : "increase to"),
+                                            (int)armorAbsorptionMax(enchant + enchantMagnitude() * enchantIncrement(theItem)));
+                                } else {
+                                    strcpy(buf2, "It will reduce the damage of inbound attacks by a random amount determined "
+                                                 "by its enchantment level. ");
+                                }
+                                break;
+                            case A_REPRISAL:
+                                if (theItem->flags & ITEM_IDENTIFIED) {
+                                    sprintf(buf2,
+                                            "Any enemy that attacks you will itself be wounded by %i%% of the damage that it "
+                                            "inflicts. (If the %s is enchanted, this percentage will increase to %i%%.) ",
+                                            armorReprisalPercent(enchant), theName, armorReprisalPercent(enchant + enchantMagnitude() * enchantIncrement(theItem)));
+                                } else {
+                                    strcpy(buf2, "Any enemy that attacks you will itself be wounded by a percentage "
+                                                 "(determined by enchantment level) of the damage that it inflicts. ");
+                                }
+                                break;
+                            case A_IMMUNITY:
+                                describeMonsterClass(buf3, theItem->vorpalEnemy, false);
+                                sprintf(buf2, "It offers complete protection from any attacking %s. ", buf3);
+                                break;
+                            case A_REFLECTION:
+                                if (theItem->flags & ITEM_IDENTIFIED) {
+                                    if (theItem->enchant1 > 0) {
+                                        short reflectChance = reflectionChance(enchant);
+                                        short reflectChance2 = reflectionChance(enchant + enchantMagnitude() * enchantIncrement(theItem));
+                                        sprintf(buf2,
+                                                "When worn, you will deflect %i%% of incoming spells -- including directly "
+                                                "back at their source %i%% of the time. (If the armor is enchanted, these will "
+                                                "increase to %i%% and %i%%.) ",
+                                                reflectChance, reflectChance * reflectChance / 100, reflectChance2, reflectChance2 * reflectChance2 / 100);
+                                    } else if (theItem->enchant1 < 0) {
+                                        short reflectChance = reflectionChance(enchant);
+                                        short reflectChance2 = reflectionChance(enchant + enchantMagnitude() * enchantIncrement(theItem));
+                                        sprintf(buf2,
+                                                "When worn, %i%% of your own spells will deflect from their target -- "
+                                                "including directly back at you %i%% of the time. (If the armor is enchanted, "
+                                                "these will decrease to %i%% and %i%%.) ",
+                                                reflectChance, reflectChance * reflectChance / 100, reflectChance2, reflectChance2 * reflectChance2 / 100);
+                                    }
+                                } else {
+                                    strcpy(buf2, "When worn, you will deflect some percentage of incoming spells, determined "
+                                                 "by enchantment level. ");
+                                }
+                                break;
+                            case A_RESPIRATION:
+                                strcpy(buf2, "When worn, it will maintain a pocket of fresh air around you, rendering you "
+                                             "immune to the effects of steam and all toxic gases. ");
+                                break;
+                            case A_DAMPENING:
+                                strcpy(buf2, "When worn, it will safely absorb the concussive impact of any explosions (though "
+                                             "you may still be burned). ");
+                                break;
+                            case A_BURDEN:
+                                strcpy(buf2, "10% of the time it absorbs a blow, its strength requirement will permanently increase. ");
+                                break;
+                            case A_VULNERABILITY:
+                                strcpy(buf2, "While it is worn, inbound attacks will inflict twice as much damage. ");
+                                break;
+                            case A_IMMOLATION:
+                                strcpy(buf2, "10% of the time it absorbs a blow, it will explode in flames. ");
+                                break;
+                            default:
+                                break;
+                        }
+                        strcat(buf, buf2);
+                    } else if (theItem->flags & ITEM_IDENTIFIED) {
+                        sprintf(buf2, "\n\nGlowing runes of an indecipherable language spiral around the %s. ", theName);
+                        strcat(buf, buf2);
+                    }
+                }
+
+                // equipped? cursed?
+                if (theItem->flags & ITEM_EQUIPPED) {
+                    sprintf(buf2, "\n\nYou are wearing the %s%s. ", theName, ((theItem->flags & ITEM_CURSED) ? ", and because it is cursed, you are powerless to remove it" : ""));
+                    strcat(buf, buf2);
+                } else if (((theItem->flags & (ITEM_IDENTIFIED | ITEM_MAGIC_DETECTED)) || rogue.playbackOmniscience) && (theItem->flags & ITEM_CURSED)) {
+                    sprintf(buf2, "\n\n%sYou can feel a malevolent magic lurking within the %s.%s ", badColorEscape, theName, whiteColorEscape);
                     strcat(buf, buf2);
                 }
             }
+            break;
 
-            // equipped? cursed?
-            if (theItem->flags & ITEM_EQUIPPED) {
-                sprintf(buf2, "\n\nYou hold the %s at the ready%s. ", theName, ((theItem->flags & ITEM_CURSED) ? ", and because it is cursed, you are powerless to let go" : ""));
+        case STAFF:
+
+            // charges
+            new = apparentRingBonus(RING_WISDOM);
+            if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
+                sprintf(buf2,
+                        "\n\nThe %s has %i charges remaining out of a maximum of %i charges, and%s recovers a charge in "
+                        "approximately %lli turns. ",
+                        theName, theItem->charges, theItem->enchant1, new == 0 ? "" : ", with your current rings,", FP_DIV(staffChargeDuration(theItem), 10 * ringWisdomMultiplier(new *FP_FACTOR)));
                 strcat(buf, buf2);
-            } else if (((theItem->flags & (ITEM_IDENTIFIED | ITEM_MAGIC_DETECTED)) || rogue.playbackOmniscience) && (theItem->flags & ITEM_CURSED)) {
-                sprintf(buf2, "\n\n%sYou can feel a malevolent magic lurking within the %s.%s ", badColorEscape, theName, whiteColorEscape);
+            } else if (theItem->flags & ITEM_MAX_CHARGES_KNOWN) {
+                sprintf(buf2, "\n\nThe %s has a maximum of %i charges, and%s recovers a charge in approximately %lli turns. ", theName, theItem->enchant1, new == 0 ? "" : ", with your current rings,",
+                        FP_DIV(staffChargeDuration(theItem), 10 * ringWisdomMultiplier(new *FP_FACTOR)));
                 strcat(buf, buf2);
             }
 
-        } else if (theItem->category & ARMOR) {
+            if (theItem->lastUsed[0] > 0 && theItem->lastUsed[1] > 0 && theItem->lastUsed[2] > 0) {
+                sprintf(buf2, "You last used it %li, %li and %li turns ago. ", rogue.absoluteTurnNumber - theItem->lastUsed[0], rogue.absoluteTurnNumber - theItem->lastUsed[1], rogue.absoluteTurnNumber - theItem->lastUsed[2]);
+                strcat(buf, buf2);
+            } else if (theItem->lastUsed[0] > 0 && theItem->lastUsed[1] > 0) {
+                sprintf(buf2, "You last used it %li and %li turns ago. ", rogue.absoluteTurnNumber - theItem->lastUsed[0], rogue.absoluteTurnNumber - theItem->lastUsed[1]);
+                strcat(buf, buf2);
+            } else if (theItem->lastUsed[0] > 0) {
+                turnsSinceLatestUse = rogue.absoluteTurnNumber - theItem->lastUsed[0];
+                sprintf(buf2, "You last used it %li turn%s ago. ", turnsSinceLatestUse, turnsSinceLatestUse == 1 ? "" : "s");
+                strcat(buf, buf2);
+            }
 
-            // runic?
-            if (theItem->flags & ITEM_RUNIC) {
-                if ((theItem->flags & ITEM_RUNIC_IDENTIFIED) || rogue.playbackOmniscience) {
-                    sprintf(buf2, "\n\nGlowing runes of %s adorn the %s. ", armorRunicNames[theItem->enchant2], theName);
-                    strcat(buf, buf2);
-
-                    // A_MULTIPLICITY, A_MUTUALITY, A_ABSORPTION, A_REPRISAL, A_IMMUNITY, A_REFLECTION, A_BURDEN,
-                    // A_VULNERABILITY, A_IMMOLATION
-                    switch (theItem->enchant2) {
-                    case A_MULTIPLICITY:
+            // effect description
+            if (((theItem->flags & (ITEM_IDENTIFIED | ITEM_MAX_CHARGES_KNOWN)) && staffTable[theItem->kind].identified) || rogue.playbackOmniscience) {
+                switch (theItem->kind) {
+                    case STAFF_LIGHTNING:
                         sprintf(buf2,
-                                "When worn, 33%% of the time that an enemy's attack connects, %i allied spectral "
-                                "duplicate%s of your attacker will appear for 3 turns. ",
-                                armorImageCount(enchant), (armorImageCount(enchant) == 1 ? "" : "s"));
-                        if (armorImageCount(enchant + enchantMagnitude() * enchantIncrement(theItem)) > armorImageCount(enchant)) {
-                            sprintf(buf3, "(If the %s is enchanted, the number of duplicates will increase to %i.) ", theName, (armorImageCount(enchant + enchantMagnitude() * enchantIncrement(theItem))));
-                            strcat(buf2, buf3);
-                        }
+                                "This staff deals damage to every creature in its line of fire; nothing is immune. (If the "
+                                "staff is enchanted, its average damage will increase by %i%%.)",
+                                (int)(100 * (staffDamageLow(enchant + enchantMagnitude() * FP_FACTOR) + staffDamageHigh(enchant + enchantMagnitude() * FP_FACTOR)) / (staffDamageLow(enchant) + staffDamageHigh(enchant)) - 100));
                         break;
-                    case A_MUTUALITY:
-                        strcpy(buf2, "When worn, the damage that you incur from physical attacks will be split evenly "
-                                     "among yourself and all other adjacent enemies. ");
+                    case STAFF_FIRE:
+                        sprintf(buf2,
+                                "This staff deals damage to any creature that it hits, unless the creature is immune to fire. "
+                                "(If the staff is enchanted, its average damage will increase by %i%%.) It also sets creatures "
+                                "and flammable terrain on fire.",
+                                (int)(100 * (staffDamageLow(enchant + enchantMagnitude() * FP_FACTOR) + staffDamageHigh(enchant + enchantMagnitude() * FP_FACTOR)) / (staffDamageLow(enchant) + staffDamageHigh(enchant)) - 100));
                         break;
-                    case A_ABSORPTION:
-                        if (theItem->flags & ITEM_IDENTIFIED) {
+                    case STAFF_POISON:
+                        sprintf(buf2,
+                                "The bolt from this staff will poison any creature that it hits for %i turns. (If the staff is "
+                                "enchanted, this will increase to %i turns.)",
+                                staffPoison(enchant), staffPoison(enchant + enchantMagnitude() * FP_FACTOR));
+                        break;
+                    case STAFF_TUNNELING:
+                        sprintf(buf2,
+                                "The bolt from this staff will dissolve %i layers of obstruction. (If the staff is enchanted, "
+                                "this will increase to %i layers.)",
+                                theItem->enchant1, theItem->enchant1 + enchantMagnitude());
+                        break;
+                    case STAFF_BLINKING:
+                        sprintf(buf2,
+                                "This staff enables you to teleport up to %i spaces. (If the staff is enchanted, this will "
+                                "increase to %i spaces.)",
+                                staffBlinkDistance(enchant), staffBlinkDistance(enchant + enchantMagnitude() * FP_FACTOR));
+                        break;
+                    case STAFF_ENTRANCEMENT:
+                        sprintf(buf2,
+                                "This staff will compel its target to mirror your movements for %i turns. (If the staff is "
+                                "enchanted, this will increase to %i turns.)",
+                                staffEntrancementDuration(enchant), staffEntrancementDuration(enchant + enchantMagnitude() * FP_FACTOR));
+                        break;
+                    case STAFF_HEALING:
+                        if (enchant / FP_FACTOR < 10) {
                             sprintf(buf2,
-                                    "It will reduce the damage of inbound attacks by a random amount between 1 and %i, "
-                                    "which is %i%% of your current maximum health. (If the %s is enchanted, this maximum "
-                                    "amount will %s %i.) ",
-                                    (int)armorAbsorptionMax(enchant), (int)(100 * armorAbsorptionMax(enchant) / player.info.maxHP), theName,
-                                    (armorAbsorptionMax(enchant) == armorAbsorptionMax(enchant + enchantIncrement(theItem)) ? "remain at" : "increase to"), (int)armorAbsorptionMax(enchant + enchantMagnitude() * enchantIncrement(theItem)));
+                                    "This staff will heal its target by %i%% of its maximum health. (If the staff is "
+                                    "enchanted, this will increase to %i%%.)",
+                                    theItem->enchant1 * 10, (theItem->enchant1 + enchantMagnitude()) * 10);
                         } else {
-                            strcpy(buf2, "It will reduce the damage of inbound attacks by a random amount determined "
-                                         "by its enchantment level. ");
+                            strcpy(buf2, "This staff will completely heal its target.");
                         }
                         break;
-                    case A_REPRISAL:
-                        if (theItem->flags & ITEM_IDENTIFIED) {
-                            sprintf(buf2,
-                                    "Any enemy that attacks you will itself be wounded by %i%% of the damage that it "
-                                    "inflicts. (If the %s is enchanted, this percentage will increase to %i%%.) ",
-                                    armorReprisalPercent(enchant), theName, armorReprisalPercent(enchant + enchantMagnitude() * enchantIncrement(theItem)));
-                        } else {
-                            strcpy(buf2, "Any enemy that attacks you will itself be wounded by a percentage "
-                                         "(determined by enchantment level) of the damage that it inflicts. ");
-                        }
+                    case STAFF_HASTE:
+                        sprintf(buf2,
+                                "This staff will cause its target to move twice as fast for %i turns. (If the staff is "
+                                "enchanted, this will increase to %i turns.)",
+                                staffHasteDuration(enchant), staffHasteDuration(enchant + enchantMagnitude() * FP_FACTOR));
                         break;
-                    case A_IMMUNITY:
-                        describeMonsterClass(buf3, theItem->vorpalEnemy, false);
-                        sprintf(buf2, "It offers complete protection from any attacking %s. ", buf3);
+                    case STAFF_OBSTRUCTION:
+                        strcpy(buf2, "");
                         break;
-                    case A_REFLECTION:
-                        if (theItem->flags & ITEM_IDENTIFIED) {
-                            if (theItem->enchant1 > 0) {
-                                short reflectChance = reflectionChance(enchant);
-                                short reflectChance2 = reflectionChance(enchant + enchantMagnitude() * enchantIncrement(theItem));
-                                sprintf(buf2,
-                                        "When worn, you will deflect %i%% of incoming spells -- including directly "
-                                        "back at their source %i%% of the time. (If the armor is enchanted, these will "
-                                        "increase to %i%% and %i%%.) ",
-                                        reflectChance, reflectChance * reflectChance / 100, reflectChance2, reflectChance2 * reflectChance2 / 100);
-                            } else if (theItem->enchant1 < 0) {
-                                short reflectChance = reflectionChance(enchant);
-                                short reflectChance2 = reflectionChance(enchant + enchantMagnitude() * enchantIncrement(theItem));
-                                sprintf(buf2,
-                                        "When worn, %i%% of your own spells will deflect from their target -- "
-                                        "including directly back at you %i%% of the time. (If the armor is enchanted, "
-                                        "these will decrease to %i%% and %i%%.) ",
-                                        reflectChance, reflectChance * reflectChance / 100, reflectChance2, reflectChance2 * reflectChance2 / 100);
-                            }
-                        } else {
-                            strcpy(buf2, "When worn, you will deflect some percentage of incoming spells, determined "
-                                         "by enchantment level. ");
-                        }
+                    case STAFF_DISCORD:
+                        sprintf(buf2,
+                                "This staff will cause discord for %i turns. (If the staff is enchanted, this will increase to "
+                                "%i turns.)",
+                                staffDiscordDuration(enchant), staffDiscordDuration(enchant + enchantMagnitude() * FP_FACTOR));
                         break;
-                    case A_RESPIRATION:
-                        strcpy(buf2, "When worn, it will maintain a pocket of fresh air around you, rendering you "
-                                     "immune to the effects of steam and all toxic gases. ");
+                    case STAFF_CONJURATION:
+                        sprintf(buf2,
+                                "%i phantom blades will be called into service. (If the staff is enchanted, this will increase "
+                                "to %i blades.)",
+                                staffBladeCount(enchant), staffBladeCount(enchant + enchantMagnitude() * FP_FACTOR));
                         break;
-                    case A_DAMPENING:
-                        strcpy(buf2, "When worn, it will safely absorb the concussive impact of any explosions (though "
-                                     "you may still be burned). ");
-                        break;
-                    case A_BURDEN:
-                        strcpy(buf2, "10% of the time it absorbs a blow, its strength requirement will permanently increase. ");
-                        break;
-                    case A_VULNERABILITY:
-                        strcpy(buf2, "While it is worn, inbound attacks will inflict twice as much damage. ");
-                        break;
-                    case A_IMMOLATION:
-                        strcpy(buf2, "10% of the time it absorbs a blow, it will explode in flames. ");
+                    case STAFF_PROTECTION:
+                        sprintf(buf2,
+                                "This staff will shield a creature for up to 20 turns against up to %i damage. (If the staff "
+                                "is enchanted, this will increase to %i damage.)",
+                                staffProtection(enchant) / 10, staffProtection(enchant + enchantMagnitude() * FP_FACTOR) / 10);
                         break;
                     default:
+                        strcpy(buf2, "No one knows what this staff does.");
                         break;
+                }
+                if (buf2[0]) {
+                    strcat(buf, "\n\n");
+                    strcat(buf, buf2);
+                }
+            }
+            break;
+
+        case WAND:
+            strcat(buf, "\n\n");
+            if ((theItem->flags & (ITEM_IDENTIFIED | ITEM_MAX_CHARGES_KNOWN)) || rogue.playbackOmniscience) {
+                if (theItem->charges) {
+                    sprintf(buf2, "%i charge%s remain%s. Enchanting this wand will add %i charge%s.", theItem->charges, (theItem->charges == 1 ? "" : "s"), (theItem->charges == 1 ? "s" : ""),
+                            wandTable[theItem->kind].range.lowerBound * enchantMagnitude(), (wandTable[theItem->kind].range.lowerBound * enchantMagnitude() == 1 ? "" : "s"));
+                } else {
+                    sprintf(buf2, "No charges remain.  Enchanting this wand will add %i charge%s.", wandTable[theItem->kind].range.lowerBound * enchantMagnitude(),
+                            (wandTable[theItem->kind].range.lowerBound * enchantMagnitude() == 1 ? "" : "s"));
+                }
+            } else {
+                if (theItem->enchant2) {
+                    sprintf(buf2, "You have used this wand %i time%s, but do not know how many charges, if any, remain.", theItem->enchant2, (theItem->enchant2 == 1 ? "" : "s"));
+                } else {
+                    strcpy(buf2, "You have not yet used this wand.");
+                }
+
+                if (wandTable[theItem->kind].identified) {
+                    strcat(buf, buf2);
+                    sprintf(buf2,
+                            " Wands of this type can be found with %i to %i charges. Enchanting this wand will add %i "
+                            "charge%s.",
+                            wandTable[theItem->kind].range.lowerBound, wandTable[theItem->kind].range.upperBound, wandTable[theItem->kind].range.lowerBound * enchantMagnitude(),
+                            (wandTable[theItem->kind].range.lowerBound * enchantMagnitude() == 1 ? "" : "s"));
+                }
+            }
+            strcat(buf, buf2);
+            break;
+
+        case RING:
+            if (((theItem->flags & ITEM_IDENTIFIED) && ringTable[theItem->kind].identified) || rogue.playbackOmniscience) {
+                if (theItem->enchant1) {
+                    switch (theItem->kind) {
+                        case RING_CLAIRVOYANCE:
+                            if (theItem->enchant1 > 0) {
+                                sprintf(buf2,
+                                        "\n\nThis ring provides magical sight with a radius of %i. (If the ring is enchanted, "
+                                        "this will increase to %i.)",
+                                        theItem->enchant1 + 1, theItem->enchant1 + 1 + enchantMagnitude());
+                            } else {
+                                sprintf(buf2,
+                                        "\n\nThis ring magically blinds you to a radius of %i. (If the ring is enchanted, this "
+                                        "will decrease to %i.)",
+                                        (theItem->enchant1 * -1) + 1, (theItem->enchant1 * -1) + 1 - enchantMagnitude());
+                            }
+                            strcat(buf, buf2);
+                            break;
+                        case RING_REGENERATION:
+                            sprintf(buf2,
+                                    "\n\nWith this ring equipped, you will regenerate all of your health in %li turns (instead "
+                                    "of %li). (If the ring is enchanted, this will decrease to %li turns.)",
+                                    (long)(turnsForFullRegenInThousandths(enchant) / 1000), (long)TURNS_FOR_FULL_REGEN, (long)(turnsForFullRegenInThousandths(enchant + enchantMagnitude() * FP_FACTOR) / 1000));
+                            strcat(buf, buf2);
+                            break;
+                        case RING_TRANSFERENCE:
+                            sprintf(buf2,
+                                    "\n\nDealing direct damage to a creature (whether in melee or otherwise) will %s you by "
+                                    "%i%% of the damage dealt. (If the ring is enchanted, this will %s to %i%%.)",
+                                    (theItem->enchant1 >= 0 ? "heal" : "harm"), abs(theItem->enchant1) * 5, (theItem->enchant1 >= 0 ? "increase" : "decrease"), abs(theItem->enchant1 + enchantMagnitude()) * 5);
+                            strcat(buf, buf2);
+                            break;
+                        case RING_WISDOM:
+                            sprintf(buf2,
+                                    "\n\nWhen worn, your staffs will recharge at %i%% of their normal rate. (If the ring is "
+                                    "enchanted, the rate will increase to %i%% of the normal rate.)",
+                                    (int)(100 * ringWisdomMultiplier(enchant) / FP_FACTOR), (int)(100 * ringWisdomMultiplier(enchant + enchantMagnitude() * FP_FACTOR) / FP_FACTOR));
+                            strcat(buf, buf2);
+                            break;
+                        case RING_REAPING:
+                            sprintf(buf2,
+                                    "\n\nEach blow that you land with a weapon will %s your staffs and charms by 0-%i turns "
+                                    "per point of damage dealt. (If the ring is enchanted, this will %s to 0-%i turns per "
+                                    "point of damage.)",
+                                    (theItem->enchant1 >= 0 ? "recharge" : "drain"), abs(theItem->enchant1), (theItem->enchant1 >= 0 ? "increase" : "decrease"), abs(theItem->enchant1 + enchantMagnitude()));
+                            strcat(buf, buf2);
+                            break;
+                        default:
+                            break;
                     }
+                }
+            } else {
+                sprintf(buf2, "\n\nIt will reveal its secrets if worn for %i%s turn%s", theItem->charges, (theItem->charges == gameConst->ringDelayToAutoID ? "" : " more"), (theItem->charges == 1 ? "" : "s"));
+                strcat(buf, buf2);
+
+                if (!(theItem->flags & ITEM_IDENTIFIED) && (theItem->charges < gameConst->ringDelayToAutoID || (theItem->flags & ITEM_MAGIC_DETECTED))) {
+                    sprintf(buf2, ", and until then it will function, at best, as a +%i ring.", theItem->timesEnchanted + 1);
                     strcat(buf, buf2);
-                } else if (theItem->flags & ITEM_IDENTIFIED) {
-                    sprintf(buf2, "\n\nGlowing runes of an indecipherable language spiral around the %s. ", theName);
-                    strcat(buf, buf2);
+                } else {
+                    strcat(buf, ".");
                 }
             }
 
             // equipped? cursed?
             if (theItem->flags & ITEM_EQUIPPED) {
-                sprintf(buf2, "\n\nYou are wearing the %s%s. ", theName, ((theItem->flags & ITEM_CURSED) ? ", and because it is cursed, you are powerless to remove it" : ""));
+                sprintf(buf2, "\n\nThe %s is on your finger%s. ", theName, ((theItem->flags & ITEM_CURSED) ? ", and because it is cursed, you are powerless to remove it" : ""));
                 strcat(buf, buf2);
             } else if (((theItem->flags & (ITEM_IDENTIFIED | ITEM_MAGIC_DETECTED)) || rogue.playbackOmniscience) && (theItem->flags & ITEM_CURSED)) {
                 sprintf(buf2, "\n\n%sYou can feel a malevolent magic lurking within the %s.%s ", badColorEscape, theName, whiteColorEscape);
                 strcat(buf, buf2);
             }
-        }
-        break;
-
-    case STAFF:
-
-        // charges
-        new = apparentRingBonus(RING_WISDOM);
-        if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-            sprintf(buf2,
-                    "\n\nThe %s has %i charges remaining out of a maximum of %i charges, and%s recovers a charge in "
-                    "approximately %lli turns. ",
-                    theName, theItem->charges, theItem->enchant1, new == 0 ? "" : ", with your current rings,", FP_DIV(staffChargeDuration(theItem), 10 * ringWisdomMultiplier(new *FP_FACTOR)));
-            strcat(buf, buf2);
-        } else if (theItem->flags & ITEM_MAX_CHARGES_KNOWN) {
-            sprintf(buf2, "\n\nThe %s has a maximum of %i charges, and%s recovers a charge in approximately %lli turns. ", theName, theItem->enchant1, new == 0 ? "" : ", with your current rings,",
-                    FP_DIV(staffChargeDuration(theItem), 10 * ringWisdomMultiplier(new *FP_FACTOR)));
-            strcat(buf, buf2);
-        }
-
-        if (theItem->lastUsed[0] > 0 && theItem->lastUsed[1] > 0 && theItem->lastUsed[2] > 0) {
-            sprintf(buf2, "You last used it %li, %li and %li turns ago. ", rogue.absoluteTurnNumber - theItem->lastUsed[0], rogue.absoluteTurnNumber - theItem->lastUsed[1], rogue.absoluteTurnNumber - theItem->lastUsed[2]);
-            strcat(buf, buf2);
-        } else if (theItem->lastUsed[0] > 0 && theItem->lastUsed[1] > 0) {
-            sprintf(buf2, "You last used it %li and %li turns ago. ", rogue.absoluteTurnNumber - theItem->lastUsed[0], rogue.absoluteTurnNumber - theItem->lastUsed[1]);
-            strcat(buf, buf2);
-        } else if (theItem->lastUsed[0] > 0) {
-            turnsSinceLatestUse = rogue.absoluteTurnNumber - theItem->lastUsed[0];
-            sprintf(buf2, "You last used it %li turn%s ago. ", turnsSinceLatestUse, turnsSinceLatestUse == 1 ? "" : "s");
-            strcat(buf, buf2);
-        }
-
-        // effect description
-        if (((theItem->flags & (ITEM_IDENTIFIED | ITEM_MAX_CHARGES_KNOWN)) && staffTable[theItem->kind].identified) || rogue.playbackOmniscience) {
+            break;
+        case CHARM:
             switch (theItem->kind) {
-            case STAFF_LIGHTNING:
-                sprintf(buf2,
-                        "This staff deals damage to every creature in its line of fire; nothing is immune. (If the "
-                        "staff is enchanted, its average damage will increase by %i%%.)",
-                        (int)(100 * (staffDamageLow(enchant + enchantMagnitude() * FP_FACTOR) + staffDamageHigh(enchant + enchantMagnitude() * FP_FACTOR)) / (staffDamageLow(enchant) + staffDamageHigh(enchant)) - 100));
-                break;
-            case STAFF_FIRE:
-                sprintf(buf2,
-                        "This staff deals damage to any creature that it hits, unless the creature is immune to fire. "
-                        "(If the staff is enchanted, its average damage will increase by %i%%.) It also sets creatures "
-                        "and flammable terrain on fire.",
-                        (int)(100 * (staffDamageLow(enchant + enchantMagnitude() * FP_FACTOR) + staffDamageHigh(enchant + enchantMagnitude() * FP_FACTOR)) / (staffDamageLow(enchant) + staffDamageHigh(enchant)) - 100));
-                break;
-            case STAFF_POISON:
-                sprintf(buf2,
-                        "The bolt from this staff will poison any creature that it hits for %i turns. (If the staff is "
-                        "enchanted, this will increase to %i turns.)",
-                        staffPoison(enchant), staffPoison(enchant + enchantMagnitude() * FP_FACTOR));
-                break;
-            case STAFF_TUNNELING:
-                sprintf(buf2,
-                        "The bolt from this staff will dissolve %i layers of obstruction. (If the staff is enchanted, "
-                        "this will increase to %i layers.)",
-                        theItem->enchant1, theItem->enchant1 + enchantMagnitude());
-                break;
-            case STAFF_BLINKING:
-                sprintf(buf2,
-                        "This staff enables you to teleport up to %i spaces. (If the staff is enchanted, this will "
-                        "increase to %i spaces.)",
-                        staffBlinkDistance(enchant), staffBlinkDistance(enchant + enchantMagnitude() * FP_FACTOR));
-                break;
-            case STAFF_ENTRANCEMENT:
-                sprintf(buf2,
-                        "This staff will compel its target to mirror your movements for %i turns. (If the staff is "
-                        "enchanted, this will increase to %i turns.)",
-                        staffEntrancementDuration(enchant), staffEntrancementDuration(enchant + enchantMagnitude() * FP_FACTOR));
-                break;
-            case STAFF_HEALING:
-                if (enchant / FP_FACTOR < 10) {
+                case CHARM_HEALTH:
                     sprintf(buf2,
-                            "This staff will heal its target by %i%% of its maximum health. (If the staff is "
-                            "enchanted, this will increase to %i%%.)",
-                            theItem->enchant1 * 10, (theItem->enchant1 + enchantMagnitude()) * 10);
-                } else {
-                    strcpy(buf2, "This staff will completely heal its target.");
-                }
-                break;
-            case STAFF_HASTE:
-                sprintf(buf2,
-                        "This staff will cause its target to move twice as fast for %i turns. (If the staff is "
-                        "enchanted, this will increase to %i turns.)",
-                        staffHasteDuration(enchant), staffHasteDuration(enchant + enchantMagnitude() * FP_FACTOR));
-                break;
-            case STAFF_OBSTRUCTION:
-                strcpy(buf2, "");
-                break;
-            case STAFF_DISCORD:
-                sprintf(buf2,
-                        "This staff will cause discord for %i turns. (If the staff is enchanted, this will increase to "
-                        "%i turns.)",
-                        staffDiscordDuration(enchant), staffDiscordDuration(enchant + enchantMagnitude() * FP_FACTOR));
-                break;
-            case STAFF_CONJURATION:
-                sprintf(buf2,
-                        "%i phantom blades will be called into service. (If the staff is enchanted, this will increase "
-                        "to %i blades.)",
-                        staffBladeCount(enchant), staffBladeCount(enchant + enchantMagnitude() * FP_FACTOR));
-                break;
-            case STAFF_PROTECTION:
-                sprintf(buf2,
-                        "This staff will shield a creature for up to 20 turns against up to %i damage. (If the staff "
-                        "is enchanted, this will increase to %i damage.)",
-                        staffProtection(enchant) / 10, staffProtection(enchant + enchantMagnitude() * FP_FACTOR) / 10);
-                break;
-            default:
-                strcpy(buf2, "No one knows what this staff does.");
-                break;
-            }
-            if (buf2[0]) {
-                strcat(buf, "\n\n");
-                strcat(buf, buf2);
-            }
-        }
-        break;
-
-    case WAND:
-        strcat(buf, "\n\n");
-        if ((theItem->flags & (ITEM_IDENTIFIED | ITEM_MAX_CHARGES_KNOWN)) || rogue.playbackOmniscience) {
-            if (theItem->charges) {
-                sprintf(buf2, "%i charge%s remain%s. Enchanting this wand will add %i charge%s.", theItem->charges, (theItem->charges == 1 ? "" : "s"), (theItem->charges == 1 ? "s" : ""),
-                        wandTable[theItem->kind].range.lowerBound * enchantMagnitude(), (wandTable[theItem->kind].range.lowerBound * enchantMagnitude() == 1 ? "" : "s"));
-            } else {
-                sprintf(buf2, "No charges remain.  Enchanting this wand will add %i charge%s.", wandTable[theItem->kind].range.lowerBound * enchantMagnitude(),
-                        (wandTable[theItem->kind].range.lowerBound * enchantMagnitude() == 1 ? "" : "s"));
-            }
-        } else {
-            if (theItem->enchant2) {
-                sprintf(buf2, "You have used this wand %i time%s, but do not know how many charges, if any, remain.", theItem->enchant2, (theItem->enchant2 == 1 ? "" : "s"));
-            } else {
-                strcpy(buf2, "You have not yet used this wand.");
-            }
-
-            if (wandTable[theItem->kind].identified) {
-                strcat(buf, buf2);
-                sprintf(buf2,
-                        " Wands of this type can be found with %i to %i charges. Enchanting this wand will add %i "
-                        "charge%s.",
-                        wandTable[theItem->kind].range.lowerBound, wandTable[theItem->kind].range.upperBound, wandTable[theItem->kind].range.lowerBound * enchantMagnitude(),
-                        (wandTable[theItem->kind].range.lowerBound * enchantMagnitude() == 1 ? "" : "s"));
-            }
-        }
-        strcat(buf, buf2);
-        break;
-
-    case RING:
-        if (((theItem->flags & ITEM_IDENTIFIED) && ringTable[theItem->kind].identified) || rogue.playbackOmniscience) {
-            if (theItem->enchant1) {
-                switch (theItem->kind) {
-                case RING_CLAIRVOYANCE:
-                    if (theItem->enchant1 > 0) {
-                        sprintf(buf2,
-                                "\n\nThis ring provides magical sight with a radius of %i. (If the ring is enchanted, "
-                                "this will increase to %i.)",
-                                theItem->enchant1 + 1, theItem->enchant1 + 1 + enchantMagnitude());
-                    } else {
-                        sprintf(buf2,
-                                "\n\nThis ring magically blinds you to a radius of %i. (If the ring is enchanted, this "
-                                "will decrease to %i.)",
-                                (theItem->enchant1 * -1) + 1, (theItem->enchant1 * -1) + 1 - enchantMagnitude());
-                    }
-                    strcat(buf, buf2);
+                            "\n\nWhen used, the charm will heal %i%% of your health and recharge in %i turns. (If the charm is "
+                            "enchanted, it will heal %i%% of your health and recharge in %i turns.)",
+                            charmHealing(enchant), charmRechargeDelay(theItem->kind, theItem->enchant1), charmHealing(enchant + enchantMagnitude() * FP_FACTOR), charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
                     break;
-                case RING_REGENERATION:
+                case CHARM_PROTECTION:
                     sprintf(buf2,
-                            "\n\nWith this ring equipped, you will regenerate all of your health in %li turns (instead "
-                            "of %li). (If the ring is enchanted, this will decrease to %li turns.)",
-                            (long)(turnsForFullRegenInThousandths(enchant) / 1000), (long)TURNS_FOR_FULL_REGEN, (long)(turnsForFullRegenInThousandths(enchant + enchantMagnitude() * FP_FACTOR) / 1000));
-                    strcat(buf, buf2);
+                            "\n\nWhen used, the charm will shield you for up to 20 turns for up to %i%% of your total health "
+                            "and recharge in %i turns. (If the charm is enchanted, it will shield up to %i%% of your total "
+                            "health and recharge in %i turns.)",
+                            100 * charmProtection(enchant) / 10 / player.info.maxHP, charmRechargeDelay(theItem->kind, theItem->enchant1), 100 * charmProtection(enchant + enchantMagnitude() * FP_FACTOR) / 10 / player.info.maxHP,
+                            charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
                     break;
-                case RING_TRANSFERENCE:
+                case CHARM_HASTE:
                     sprintf(buf2,
-                            "\n\nDealing direct damage to a creature (whether in melee or otherwise) will %s you by "
-                            "%i%% of the damage dealt. (If the ring is enchanted, this will %s to %i%%.)",
-                            (theItem->enchant1 >= 0 ? "heal" : "harm"), abs(theItem->enchant1) * 5, (theItem->enchant1 >= 0 ? "increase" : "decrease"), abs(theItem->enchant1 + enchantMagnitude()) * 5);
-                    strcat(buf, buf2);
+                            "\n\nWhen used, the charm will haste you for %i turns and recharge in %i turns. (If the charm is "
+                            "enchanted, the haste will last %i turns and it will recharge in %i turns.)",
+                            charmEffectDuration(theItem->kind, theItem->enchant1), charmRechargeDelay(theItem->kind, theItem->enchant1), charmEffectDuration(theItem->kind, theItem->enchant1 + enchantMagnitude()),
+                            charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
                     break;
-                case RING_WISDOM:
+                case CHARM_FIRE_IMMUNITY:
                     sprintf(buf2,
-                            "\n\nWhen worn, your staffs will recharge at %i%% of their normal rate. (If the ring is "
-                            "enchanted, the rate will increase to %i%% of the normal rate.)",
-                            (int)(100 * ringWisdomMultiplier(enchant) / FP_FACTOR), (int)(100 * ringWisdomMultiplier(enchant + enchantMagnitude() * FP_FACTOR) / FP_FACTOR));
-                    strcat(buf, buf2);
+                            "\n\nWhen used, the charm will grant you immunity to fire for %i turns and recharge in %i turns. "
+                            "(If the charm is enchanted, the immunity will last %i turns and it will recharge in %i turns.)",
+                            charmEffectDuration(theItem->kind, theItem->enchant1), charmRechargeDelay(theItem->kind, theItem->enchant1), charmEffectDuration(theItem->kind, theItem->enchant1 + enchantMagnitude()),
+                            charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
                     break;
-                case RING_REAPING:
+                case CHARM_INVISIBILITY:
                     sprintf(buf2,
-                            "\n\nEach blow that you land with a weapon will %s your staffs and charms by 0-%i turns "
-                            "per point of damage dealt. (If the ring is enchanted, this will %s to 0-%i turns per "
-                            "point of damage.)",
-                            (theItem->enchant1 >= 0 ? "recharge" : "drain"), abs(theItem->enchant1), (theItem->enchant1 >= 0 ? "increase" : "decrease"), abs(theItem->enchant1 + enchantMagnitude()));
-                    strcat(buf, buf2);
+                            "\n\nWhen used, the charm will turn you invisible for %i turns and recharge in %i turns. While "
+                            "invisible, monsters more than two spaces away cannot track you. (If the charm is enchanted, the "
+                            "invisibility will last %i turns and it will recharge in %i turns.)",
+                            charmEffectDuration(theItem->kind, theItem->enchant1), charmRechargeDelay(theItem->kind, theItem->enchant1), charmEffectDuration(theItem->kind, theItem->enchant1 + enchantMagnitude()),
+                            charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
+                    break;
+                case CHARM_TELEPATHY:
+                    sprintf(buf2,
+                            "\n\nWhen used, the charm will grant you telepathy for %i turns and recharge in %i turns. (If the "
+                            "charm is enchanted, the telepathy will last %i turns and it will recharge in %i turns.)",
+                            charmEffectDuration(theItem->kind, theItem->enchant1), charmRechargeDelay(theItem->kind, theItem->enchant1), charmEffectDuration(theItem->kind, theItem->enchant1 + enchantMagnitude()),
+                            charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
+                    break;
+                case CHARM_LEVITATION:
+                    sprintf(buf2,
+                            "\n\nWhen used, the charm will lift you off the ground for %i turns and recharge in %i turns. (If "
+                            "the charm is enchanted, the levitation will last %i turns and it will recharge in %i turns.)",
+                            charmEffectDuration(theItem->kind, theItem->enchant1), charmRechargeDelay(theItem->kind, theItem->enchant1), charmEffectDuration(theItem->kind, theItem->enchant1 + enchantMagnitude()),
+                            charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
+                    break;
+                case CHARM_SHATTERING:
+                    sprintf(buf2,
+                            "\n\nWhen used, the charm will dissolve the nearby walls up to %i spaces away, and recharge in %i "
+                            "turns. (If the charm is enchanted, it will reach up to %i spaces and recharge in %i turns.)",
+                            charmShattering(enchant), charmRechargeDelay(theItem->kind, theItem->enchant1), charmShattering(enchant + enchantMagnitude() * FP_FACTOR),
+                            charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
+                    break;
+                case CHARM_GUARDIAN:
+                    sprintf(buf2,
+                            "\n\nWhen used, a guardian will materialize for %i turns, and the charm will recharge in %i turns. (If "
+                            "the charm is enchanted, the guardian will last for %i turns and the charm will recharge in %i turns.)",
+                            charmGuardianLifespan(enchant), charmRechargeDelay(theItem->kind, theItem->enchant1), charmGuardianLifespan(enchant + enchantMagnitude() * FP_FACTOR),
+                            charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
+                    break;
+                case CHARM_TELEPORTATION:
+                    sprintf(buf2,
+                            "\n\nWhen used, the charm will teleport you elsewhere in the dungeon and recharge in %i turns. (If "
+                            "the charm is enchanted, it will recharge in %i turns.)",
+                            charmRechargeDelay(theItem->kind, theItem->enchant1), charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
+                    break;
+                case CHARM_RECHARGING:
+                    sprintf(buf2,
+                            "\n\nWhen used, the charm will recharge your staffs (though not your wands or charms), after which "
+                            "it will recharge in %i turns. (If the charm is enchanted, it will recharge in %i turns.)",
+                            charmRechargeDelay(theItem->kind, theItem->enchant1), charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
+                    break;
+                case CHARM_NEGATION:
+                    sprintf(buf2,
+                            "\n\nWhen used, the charm will emit a wave of anti-magic up to %i spaces away, negating all "
+                            "magical effects on you and on creatures and dropped items in your field of view. It will recharge "
+                            "in %i turns. (If the charm is enchanted, it will reach up to %i spaces and recharge in %i turns.)",
+                            charmNegationRadius(enchant), charmRechargeDelay(theItem->kind, theItem->enchant1), charmNegationRadius(enchant + enchantMagnitude() * FP_FACTOR),
+                            charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
                     break;
                 default:
                     break;
-                }
             }
-        } else {
-            sprintf(buf2, "\n\nIt will reveal its secrets if worn for %i%s turn%s", theItem->charges, (theItem->charges == gameConst->ringDelayToAutoID ? "" : " more"), (theItem->charges == 1 ? "" : "s"));
             strcat(buf, buf2);
-
-            if (!(theItem->flags & ITEM_IDENTIFIED) && (theItem->charges < gameConst->ringDelayToAutoID || (theItem->flags & ITEM_MAGIC_DETECTED))) {
-                sprintf(buf2, ", and until then it will function, at best, as a +%i ring.", theItem->timesEnchanted + 1);
-                strcat(buf, buf2);
-            } else {
-                strcat(buf, ".");
-            }
-        }
-
-        // equipped? cursed?
-        if (theItem->flags & ITEM_EQUIPPED) {
-            sprintf(buf2, "\n\nThe %s is on your finger%s. ", theName, ((theItem->flags & ITEM_CURSED) ? ", and because it is cursed, you are powerless to remove it" : ""));
-            strcat(buf, buf2);
-        } else if (((theItem->flags & (ITEM_IDENTIFIED | ITEM_MAGIC_DETECTED)) || rogue.playbackOmniscience) && (theItem->flags & ITEM_CURSED)) {
-            sprintf(buf2, "\n\n%sYou can feel a malevolent magic lurking within the %s.%s ", badColorEscape, theName, whiteColorEscape);
-            strcat(buf, buf2);
-        }
-        break;
-    case CHARM:
-        switch (theItem->kind) {
-        case CHARM_HEALTH:
-            sprintf(buf2,
-                    "\n\nWhen used, the charm will heal %i%% of your health and recharge in %i turns. (If the charm is "
-                    "enchanted, it will heal %i%% of your health and recharge in %i turns.)",
-                    charmHealing(enchant), charmRechargeDelay(theItem->kind, theItem->enchant1), charmHealing(enchant + enchantMagnitude() * FP_FACTOR), charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
-            break;
-        case CHARM_PROTECTION:
-            sprintf(buf2,
-                    "\n\nWhen used, the charm will shield you for up to 20 turns for up to %i%% of your total health "
-                    "and recharge in %i turns. (If the charm is enchanted, it will shield up to %i%% of your total "
-                    "health and recharge in %i turns.)",
-                    100 * charmProtection(enchant) / 10 / player.info.maxHP, charmRechargeDelay(theItem->kind, theItem->enchant1), 100 * charmProtection(enchant + enchantMagnitude() * FP_FACTOR) / 10 / player.info.maxHP,
-                    charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
-            break;
-        case CHARM_HASTE:
-            sprintf(buf2,
-                    "\n\nWhen used, the charm will haste you for %i turns and recharge in %i turns. (If the charm is "
-                    "enchanted, the haste will last %i turns and it will recharge in %i turns.)",
-                    charmEffectDuration(theItem->kind, theItem->enchant1), charmRechargeDelay(theItem->kind, theItem->enchant1), charmEffectDuration(theItem->kind, theItem->enchant1 + enchantMagnitude()),
-                    charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
-            break;
-        case CHARM_FIRE_IMMUNITY:
-            sprintf(buf2,
-                    "\n\nWhen used, the charm will grant you immunity to fire for %i turns and recharge in %i turns. "
-                    "(If the charm is enchanted, the immunity will last %i turns and it will recharge in %i turns.)",
-                    charmEffectDuration(theItem->kind, theItem->enchant1), charmRechargeDelay(theItem->kind, theItem->enchant1), charmEffectDuration(theItem->kind, theItem->enchant1 + enchantMagnitude()),
-                    charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
-            break;
-        case CHARM_INVISIBILITY:
-            sprintf(buf2,
-                    "\n\nWhen used, the charm will turn you invisible for %i turns and recharge in %i turns. While "
-                    "invisible, monsters more than two spaces away cannot track you. (If the charm is enchanted, the "
-                    "invisibility will last %i turns and it will recharge in %i turns.)",
-                    charmEffectDuration(theItem->kind, theItem->enchant1), charmRechargeDelay(theItem->kind, theItem->enchant1), charmEffectDuration(theItem->kind, theItem->enchant1 + enchantMagnitude()),
-                    charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
-            break;
-        case CHARM_TELEPATHY:
-            sprintf(buf2,
-                    "\n\nWhen used, the charm will grant you telepathy for %i turns and recharge in %i turns. (If the "
-                    "charm is enchanted, the telepathy will last %i turns and it will recharge in %i turns.)",
-                    charmEffectDuration(theItem->kind, theItem->enchant1), charmRechargeDelay(theItem->kind, theItem->enchant1), charmEffectDuration(theItem->kind, theItem->enchant1 + enchantMagnitude()),
-                    charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
-            break;
-        case CHARM_LEVITATION:
-            sprintf(buf2,
-                    "\n\nWhen used, the charm will lift you off the ground for %i turns and recharge in %i turns. (If "
-                    "the charm is enchanted, the levitation will last %i turns and it will recharge in %i turns.)",
-                    charmEffectDuration(theItem->kind, theItem->enchant1), charmRechargeDelay(theItem->kind, theItem->enchant1), charmEffectDuration(theItem->kind, theItem->enchant1 + enchantMagnitude()),
-                    charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
-            break;
-        case CHARM_SHATTERING:
-            sprintf(buf2,
-                    "\n\nWhen used, the charm will dissolve the nearby walls up to %i spaces away, and recharge in %i "
-                    "turns. (If the charm is enchanted, it will reach up to %i spaces and recharge in %i turns.)",
-                    charmShattering(enchant), charmRechargeDelay(theItem->kind, theItem->enchant1), charmShattering(enchant + enchantMagnitude() * FP_FACTOR), charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
-            break;
-        case CHARM_GUARDIAN:
-            sprintf(buf2,
-                    "\n\nWhen used, a guardian will materialize for %i turns, and the charm will recharge in %i turns. (If "
-                    "the charm is enchanted, the guardian will last for %i turns and the charm will recharge in %i turns.)",
-                    charmGuardianLifespan(enchant), charmRechargeDelay(theItem->kind, theItem->enchant1), charmGuardianLifespan(enchant + enchantMagnitude() * FP_FACTOR),
-                    charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
-            break;
-        case CHARM_TELEPORTATION:
-            sprintf(buf2,
-                    "\n\nWhen used, the charm will teleport you elsewhere in the dungeon and recharge in %i turns. (If "
-                    "the charm is enchanted, it will recharge in %i turns.)",
-                    charmRechargeDelay(theItem->kind, theItem->enchant1), charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
-            break;
-        case CHARM_RECHARGING:
-            sprintf(buf2,
-                    "\n\nWhen used, the charm will recharge your staffs (though not your wands or charms), after which "
-                    "it will recharge in %i turns. (If the charm is enchanted, it will recharge in %i turns.)",
-                    charmRechargeDelay(theItem->kind, theItem->enchant1), charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
-            break;
-        case CHARM_NEGATION:
-            sprintf(buf2,
-                    "\n\nWhen used, the charm will emit a wave of anti-magic up to %i spaces away, negating all "
-                    "magical effects on you and on creatures and dropped items in your field of view. It will recharge "
-                    "in %i turns. (If the charm is enchanted, it will reach up to %i spaces and recharge in %i turns.)",
-                    charmNegationRadius(enchant), charmRechargeDelay(theItem->kind, theItem->enchant1), charmNegationRadius(enchant + enchantMagnitude() * FP_FACTOR),
-                    charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
             break;
         default:
             break;
-        }
-        strcat(buf, buf2);
-        break;
-    default:
-        break;
     }
 }
 
@@ -2720,41 +2722,41 @@ char displayInventory(unsigned short categoryMask, unsigned long requiredFlags, 
                     }
 
                     switch (actionKey) {
-                    case APPLY_KEY:
-                        apply(theItem, true);
-                        break;
-                    case EQUIP_KEY:
-                        equip(theItem);
-                        break;
-                    case UNEQUIP_KEY:
-                        unequip(theItem);
-                        break;
-                    case DROP_KEY:
-                        drop(theItem);
-                        break;
-                    case THROW_KEY:
-                        throwCommand(theItem, false);
-                        break;
-                    case RELABEL_KEY:
-                        relabel(theItem);
-                        break;
-                    case CALL_KEY:
-                        call(theItem);
-                        break;
-                    case UP_KEY:
-                        highlightItemLine = highlightItemLine - 1;
-                        if (highlightItemLine < 0) {
-                            highlightItemLine = itemNumber - 1;
-                        }
-                        break;
-                    case DOWN_KEY:
-                        highlightItemLine = highlightItemLine + 1;
-                        if (highlightItemLine >= itemNumber) {
-                            highlightItemLine = 0;
-                        }
-                        break;
-                    default:
-                        break;
+                        case APPLY_KEY:
+                            apply(theItem, true);
+                            break;
+                        case EQUIP_KEY:
+                            equip(theItem);
+                            break;
+                        case UNEQUIP_KEY:
+                            unequip(theItem);
+                            break;
+                        case DROP_KEY:
+                            drop(theItem);
+                            break;
+                        case THROW_KEY:
+                            throwCommand(theItem, false);
+                            break;
+                        case RELABEL_KEY:
+                            relabel(theItem);
+                            break;
+                        case CALL_KEY:
+                            call(theItem);
+                            break;
+                        case UP_KEY:
+                            highlightItemLine = highlightItemLine - 1;
+                            if (highlightItemLine < 0) {
+                                highlightItemLine = itemNumber - 1;
+                            }
+                            break;
+                        case DOWN_KEY:
+                            highlightItemLine = highlightItemLine + 1;
+                            if (highlightItemLine >= itemNumber) {
+                                highlightItemLine = 0;
+                            }
+                            break;
+                        default:
+                            break;
                     }
 
                     if (actionKey == UP_KEY || actionKey == DOWN_KEY) {
@@ -3740,31 +3742,31 @@ void negationBlast(const char *emitterName, const short distance) {
 
             theItem->flags &= ~(ITEM_MAGIC_DETECTED | ITEM_CURSED);
             switch (theItem->category) {
-            case WEAPON:
-            case ARMOR:
-                theItem->enchant1 = theItem->enchant2 = theItem->charges = 0;
-                theItem->flags &= ~(ITEM_RUNIC | ITEM_RUNIC_HINTED | ITEM_RUNIC_IDENTIFIED | ITEM_PROTECTED);
-                identify(theItem);
-                pmapAt(theItem->loc)->flags &= ~ITEM_DETECTED;
-                refreshDungeonCell(theItem->loc.x, theItem->loc.y);
-                break;
-            case STAFF:
-                theItem->charges = 0;
-                break;
-            case WAND:
-                theItem->charges = 0;
-                theItem->flags |= ITEM_MAX_CHARGES_KNOWN;
-                break;
-            case RING:
-                theItem->enchant1 = 0;
-                theItem->flags |= ITEM_IDENTIFIED; // Reveal that it is (now) +0, but not necessarily which kind of ring it is.
-                updateIdentifiableItems();
-                break;
-            case CHARM:
-                theItem->charges = charmRechargeDelay(theItem->kind, theItem->enchant1);
-                break;
-            default:
-                break;
+                case WEAPON:
+                case ARMOR:
+                    theItem->enchant1 = theItem->enchant2 = theItem->charges = 0;
+                    theItem->flags &= ~(ITEM_RUNIC | ITEM_RUNIC_HINTED | ITEM_RUNIC_IDENTIFIED | ITEM_PROTECTED);
+                    identify(theItem);
+                    pmapAt(theItem->loc)->flags &= ~ITEM_DETECTED;
+                    refreshDungeonCell(theItem->loc.x, theItem->loc.y);
+                    break;
+                case STAFF:
+                    theItem->charges = 0;
+                    break;
+                case WAND:
+                    theItem->charges = 0;
+                    theItem->flags |= ITEM_MAX_CHARGES_KNOWN;
+                    break;
+                case RING:
+                    theItem->enchant1 = 0;
+                    theItem->flags |= ITEM_IDENTIFIED; // Reveal that it is (now) +0, but not necessarily which kind of ring it is.
+                    updateIdentifiableItems();
+                    break;
+                case CHARM:
+                    theItem->charges = charmRechargeDelay(theItem->kind, theItem->enchant1);
+                    break;
+                default:
+                    break;
             }
         }
     }
@@ -4010,258 +4012,258 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y, boolean bo
         monsterName(monstName, monst, true);
 
         switch (theBolt->boltEffect) {
-        case BE_ATTACK:
-            if (!cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY) || (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS)) {
+            case BE_ATTACK:
+                if (!cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY) || (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS)) {
 
-                attack(caster, monst, false);
-                if (autoID) {
-                    *autoID = true;
-                }
-            }
-            break;
-        case BE_DAMAGE:
-            if (autoID) {
-                *autoID = true;
-            }
-            if (((theBolt->flags & BF_FIERY) && monst->status[STATUS_IMMUNE_TO_FIRE] > 0) || (monst->info.flags & MONST_INVULNERABLE)) {
-
-                if (canSeeMonster(monst)) {
-                    sprintf(buf, "%s ignore%s %s %s", monstName, (monst == &player ? "" : "s"), canSeeMonster(caster) ? "the" : "a", theBolt->name);
-                    combatMessage(buf, 0);
-                }
-            } else if (inflictDamage(caster, monst, staffDamage(theBolt->magnitude * FP_FACTOR), theBolt->backColor, false)) {
-                // killed monster
-                if (player.currentHP <= 0) {
-                    killCreature(monst, false);
-                    if (caster == &player) {
-                        sprintf(buf, "Killed by a reflected %s", theBolt->name);
-                        gameOver(buf, true);
-                    }
-                    terminateBolt = true;
-                    return true;
-                }
-                if (boltInView || canSeeMonster(monst)) {
-                    sprintf(buf, "%s %s %s %s", canSeeMonster(caster) ? "the" : "a", theBolt->name, ((monst->info.flags & MONST_INANIMATE) ? "destroys" : "kills"), monstName);
-                    combatMessage(buf, messageColorFromVictim(monst));
-                } else {
-                    sprintf(buf, "you hear %s %s", monstName, ((monst->info.flags & MONST_INANIMATE) ? "get destroyed" : "die"));
-                    combatMessage(buf, 0);
-                }
-                killCreature(monst, false);
-            } else {
-                // monster lives
-                if (monst->creatureMode != MODE_PERM_FLEEING && monst->creatureState != MONSTER_ALLY && (monst->creatureState != MONSTER_FLEEING || monst->status[STATUS_MAGICAL_FEAR])) {
-
-                    monst->creatureState = MONSTER_TRACKING_SCENT;
-                    monst->status[STATUS_MAGICAL_FEAR] = 0;
-                }
-                if (boltInView) {
-                    sprintf(buf, "%s %s hits %s", canSeeMonster(caster) ? "the" : "a", theBolt->name, monstName);
-                    combatMessage(buf, messageColorFromVictim(monst));
-                }
-                if (theBolt->flags & BF_FIERY) {
-                    exposeCreatureToFire(monst);
-                }
-                if (!alreadyReflected || caster != &player) {
-                    moralAttack(caster, monst);
-                }
-            }
-            if (theBolt->flags & BF_FIERY) {
-                exposeTileToFire(x, y, true); // burninate
-            }
-            break;
-        case BE_TELEPORT:
-            if (!(monst->info.flags & MONST_IMMOBILE)) {
-                if (monst->bookkeepingFlags & MB_CAPTIVE) {
-                    freeCaptive(monst);
-                }
-                teleport(monst, -1, -1, false);
-            }
-            break;
-        case BE_BECKONING:
-            if (!(monst->info.flags & MONST_IMMOBILE) && caster && distanceBetween(caster->loc, monst->loc) > 1) {
-
-                if (canSeeMonster(monst) && autoID) {
-                    *autoID = true;
-                }
-                beckonMonster(monst, caster->loc.x, caster->loc.y);
-                if (canSeeMonster(monst) && autoID) {
-                    *autoID = true;
-                }
-            }
-            break;
-        case BE_SLOW:
-            slow(monst, theBolt->magnitude * 5);
-            if (boltCatalog[BOLT_SLOW].backColor) {
-                flashMonster(monst, boltCatalog[BOLT_SLOW].backColor, 100);
-            }
-            if (autoID) {
-                *autoID = true;
-            }
-            break;
-        case BE_HASTE:
-            haste(monst, staffHasteDuration(theBolt->magnitude * FP_FACTOR));
-            if (boltCatalog[BOLT_HASTE].backColor) {
-                flashMonster(monst, boltCatalog[BOLT_HASTE].backColor, 100);
-            }
-            if (autoID) {
-                *autoID = true;
-            }
-            break;
-        case BE_POLYMORPH:
-            if (polymorph(monst)) {
-                if (!monst->status[STATUS_INVISIBLE]) {
+                    attack(caster, monst, false);
                     if (autoID) {
                         *autoID = true;
                     }
                 }
-            }
-            break;
-        case BE_INVISIBILITY:
-            if (imbueInvisibility(monst, theBolt->magnitude * 15) && autoID) {
-                *autoID = true;
-            }
-            break;
-        case BE_DOMINATION:
-            if (monst != &player && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
-                if (rand_percent(wandDominate(monst))) {
-                    // domination succeeded
-                    monst->status[STATUS_DISCORDANT] = 0;
-                    becomeAllyWith(monst);
-                    // refreshSideBar(-1, -1, false);
-                    refreshDungeonCell(monst->loc.x, monst->loc.y);
+                break;
+            case BE_DAMAGE:
+                if (autoID) {
+                    *autoID = true;
+                }
+                if (((theBolt->flags & BF_FIERY) && monst->status[STATUS_IMMUNE_TO_FIRE] > 0) || (monst->info.flags & MONST_INVULNERABLE)) {
+
                     if (canSeeMonster(monst)) {
+                        sprintf(buf, "%s ignore%s %s %s", monstName, (monst == &player ? "" : "s"), canSeeMonster(caster) ? "the" : "a", theBolt->name);
+                        combatMessage(buf, 0);
+                    }
+                } else if (inflictDamage(caster, monst, staffDamage(theBolt->magnitude * FP_FACTOR), theBolt->backColor, false)) {
+                    // killed monster
+                    if (player.currentHP <= 0) {
+                        killCreature(monst, false);
+                        if (caster == &player) {
+                            sprintf(buf, "Killed by a reflected %s", theBolt->name);
+                            gameOver(buf, true);
+                        }
+                        terminateBolt = true;
+                        return true;
+                    }
+                    if (boltInView || canSeeMonster(monst)) {
+                        sprintf(buf, "%s %s %s %s", canSeeMonster(caster) ? "the" : "a", theBolt->name, ((monst->info.flags & MONST_INANIMATE) ? "destroys" : "kills"), monstName);
+                        combatMessage(buf, messageColorFromVictim(monst));
+                    } else {
+                        sprintf(buf, "you hear %s %s", monstName, ((monst->info.flags & MONST_INANIMATE) ? "get destroyed" : "die"));
+                        combatMessage(buf, 0);
+                    }
+                    killCreature(monst, false);
+                } else {
+                    // monster lives
+                    if (monst->creatureMode != MODE_PERM_FLEEING && monst->creatureState != MONSTER_ALLY && (monst->creatureState != MONSTER_FLEEING || monst->status[STATUS_MAGICAL_FEAR])) {
+
+                        monst->creatureState = MONSTER_TRACKING_SCENT;
+                        monst->status[STATUS_MAGICAL_FEAR] = 0;
+                    }
+                    if (boltInView) {
+                        sprintf(buf, "%s %s hits %s", canSeeMonster(caster) ? "the" : "a", theBolt->name, monstName);
+                        combatMessage(buf, messageColorFromVictim(monst));
+                    }
+                    if (theBolt->flags & BF_FIERY) {
+                        exposeCreatureToFire(monst);
+                    }
+                    if (!alreadyReflected || caster != &player) {
+                        moralAttack(caster, monst);
+                    }
+                }
+                if (theBolt->flags & BF_FIERY) {
+                    exposeTileToFire(x, y, true); // burninate
+                }
+                break;
+            case BE_TELEPORT:
+                if (!(monst->info.flags & MONST_IMMOBILE)) {
+                    if (monst->bookkeepingFlags & MB_CAPTIVE) {
+                        freeCaptive(monst);
+                    }
+                    teleport(monst, -1, -1, false);
+                }
+                break;
+            case BE_BECKONING:
+                if (!(monst->info.flags & MONST_IMMOBILE) && caster && distanceBetween(caster->loc, monst->loc) > 1) {
+
+                    if (canSeeMonster(monst) && autoID) {
+                        *autoID = true;
+                    }
+                    beckonMonster(monst, caster->loc.x, caster->loc.y);
+                    if (canSeeMonster(monst) && autoID) {
+                        *autoID = true;
+                    }
+                }
+                break;
+            case BE_SLOW:
+                slow(monst, theBolt->magnitude * 5);
+                if (boltCatalog[BOLT_SLOW].backColor) {
+                    flashMonster(monst, boltCatalog[BOLT_SLOW].backColor, 100);
+                }
+                if (autoID) {
+                    *autoID = true;
+                }
+                break;
+            case BE_HASTE:
+                haste(monst, staffHasteDuration(theBolt->magnitude * FP_FACTOR));
+                if (boltCatalog[BOLT_HASTE].backColor) {
+                    flashMonster(monst, boltCatalog[BOLT_HASTE].backColor, 100);
+                }
+                if (autoID) {
+                    *autoID = true;
+                }
+                break;
+            case BE_POLYMORPH:
+                if (polymorph(monst)) {
+                    if (!monst->status[STATUS_INVISIBLE]) {
                         if (autoID) {
                             *autoID = true;
                         }
-                        sprintf(buf, "%s is bound to your will!", monstName);
+                    }
+                }
+                break;
+            case BE_INVISIBILITY:
+                if (imbueInvisibility(monst, theBolt->magnitude * 15) && autoID) {
+                    *autoID = true;
+                }
+                break;
+            case BE_DOMINATION:
+                if (monst != &player && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
+                    if (rand_percent(wandDominate(monst))) {
+                        // domination succeeded
+                        monst->status[STATUS_DISCORDANT] = 0;
+                        becomeAllyWith(monst);
+                        // refreshSideBar(-1, -1, false);
+                        refreshDungeonCell(monst->loc.x, monst->loc.y);
+                        if (canSeeMonster(monst)) {
+                            if (autoID) {
+                                *autoID = true;
+                            }
+                            sprintf(buf, "%s is bound to your will!", monstName);
+                            message(buf, 0);
+                            if (boltCatalog[BOLT_DOMINATION].backColor) {
+                                flashMonster(monst, boltCatalog[BOLT_DOMINATION].backColor, 100);
+                            }
+                        }
+                    } else if (canSeeMonster(monst)) {
+                        if (autoID) {
+                            *autoID = true;
+                        }
+                        sprintf(buf, "%s resists the bolt of domination.", monstName);
                         message(buf, 0);
-                        if (boltCatalog[BOLT_DOMINATION].backColor) {
-                            flashMonster(monst, boltCatalog[BOLT_DOMINATION].backColor, 100);
+                    }
+                }
+                break;
+            case BE_NEGATION:
+                negated = negate(monst);
+                if (boltCatalog[BOLT_NEGATION].backColor) {
+                    flashMonster(monst, boltCatalog[BOLT_NEGATION].backColor, 100);
+                }
+                if (negated && autoID && canSeeMonster(monst)) {
+                    *autoID = true;
+                }
+
+                break;
+            case BE_EMPOWERMENT:
+                if (monst != &player && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
+
+                    empowerMonster(monst);
+                    createFlare(monst->loc.x, monst->loc.y, EMPOWERMENT_LIGHT);
+                    if (canSeeMonster(monst) && autoID) {
+                        *autoID = true;
+                    }
+                }
+                break;
+            case BE_POISON:
+                if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
+                    addPoison(monst, staffPoison(theBolt->magnitude * FP_FACTOR), 1);
+                    if (canSeeMonster(monst)) {
+                        if (boltCatalog[BOLT_POISON].backColor) {
+                            flashMonster(monst, boltCatalog[BOLT_POISON].backColor, 100);
+                        }
+                        if (autoID) {
+                            *autoID = true;
+                        }
+                        if (monst != &player) {
+                            sprintf(buf, "%s %s %s sick", monstName, (monst == &player ? "feel" : "looks"),
+                                    (monst->status[STATUS_POISONED] * monst->poisonAmount >= monst->currentHP && !player.status[STATUS_HALLUCINATING] ? "fatally" : "very"));
+                            combatMessage(buf, messageColorFromVictim(monst));
                         }
                     }
-                } else if (canSeeMonster(monst)) {
+                }
+                break;
+            case BE_ENTRANCEMENT:
+                if (monst == &player) {
+                    flashMonster(monst, &confusionGasColor, 100);
+                    monst->status[STATUS_CONFUSED] = staffEntrancementDuration(theBolt->magnitude * FP_FACTOR);
+                    monst->maxStatus[STATUS_CONFUSED] = max(monst->status[STATUS_CONFUSED], monst->maxStatus[STATUS_CONFUSED]);
+                    message("the bolt hits you and you suddenly feel disoriented.", REQUIRE_ACKNOWLEDGMENT);
                     if (autoID) {
                         *autoID = true;
                     }
-                    sprintf(buf, "%s resists the bolt of domination.", monstName);
-                    message(buf, 0);
+                } else if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
+                    monst->status[STATUS_ENTRANCED] = monst->maxStatus[STATUS_ENTRANCED] = staffEntrancementDuration(theBolt->magnitude * FP_FACTOR);
+                    wakeUp(monst);
+                    if (canSeeMonster(monst)) {
+                        if (boltCatalog[BOLT_ENTRANCEMENT].backColor) {
+                            flashMonster(monst, boltCatalog[BOLT_ENTRANCEMENT].backColor, 100);
+                        }
+                        if (autoID) {
+                            *autoID = true;
+                        }
+                        sprintf(buf, "%s is entranced!", monstName);
+                        message(buf, 0);
+                    }
                 }
-            }
-            break;
-        case BE_NEGATION:
-            negated = negate(monst);
-            if (boltCatalog[BOLT_NEGATION].backColor) {
-                flashMonster(monst, boltCatalog[BOLT_NEGATION].backColor, 100);
-            }
-            if (negated && autoID && canSeeMonster(monst)) {
-                *autoID = true;
-            }
-
-            break;
-        case BE_EMPOWERMENT:
-            if (monst != &player && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
-
-                empowerMonster(monst);
-                createFlare(monst->loc.x, monst->loc.y, EMPOWERMENT_LIGHT);
-                if (canSeeMonster(monst) && autoID) {
-                    *autoID = true;
-                }
-            }
-            break;
-        case BE_POISON:
-            if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
-                addPoison(monst, staffPoison(theBolt->magnitude * FP_FACTOR), 1);
+                break;
+            case BE_HEALING:
+                heal(monst, theBolt->magnitude * 10, false);
                 if (canSeeMonster(monst)) {
-                    if (boltCatalog[BOLT_POISON].backColor) {
-                        flashMonster(monst, boltCatalog[BOLT_POISON].backColor, 100);
-                    }
                     if (autoID) {
                         *autoID = true;
                     }
-                    if (monst != &player) {
-                        sprintf(buf, "%s %s %s sick", monstName, (monst == &player ? "feel" : "looks"),
-                                (monst->status[STATUS_POISONED] * monst->poisonAmount >= monst->currentHP && !player.status[STATUS_HALLUCINATING] ? "fatally" : "very"));
-                        combatMessage(buf, messageColorFromVictim(monst));
+                }
+                break;
+            case BE_PLENTY:
+                if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
+                    newMonst = cloneMonster(monst, true, true);
+                    if (newMonst) {
+                        monst->currentHP = (monst->currentHP + 1) / 2;
+                        newMonst->currentHP = (newMonst->currentHP + 1) / 2;
+                        if (boltCatalog[BOLT_PLENTY].backColor) {
+                            flashMonster(monst, boltCatalog[BOLT_PLENTY].backColor, 100);
+                            flashMonster(newMonst, boltCatalog[BOLT_PLENTY].backColor, 100);
+                        }
+                        if (autoID) {
+                            *autoID = true;
+                        }
                     }
                 }
-            }
-            break;
-        case BE_ENTRANCEMENT:
-            if (monst == &player) {
-                flashMonster(monst, &confusionGasColor, 100);
-                monst->status[STATUS_CONFUSED] = staffEntrancementDuration(theBolt->magnitude * FP_FACTOR);
-                monst->maxStatus[STATUS_CONFUSED] = max(monst->status[STATUS_CONFUSED], monst->maxStatus[STATUS_CONFUSED]);
-                message("the bolt hits you and you suddenly feel disoriented.", REQUIRE_ACKNOWLEDGMENT);
+                break;
+            case BE_DISCORD:
+                if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
+                    monst->status[STATUS_DISCORDANT] = monst->maxStatus[STATUS_DISCORDANT] = max(staffDiscordDuration(theBolt->magnitude * FP_FACTOR), monst->status[STATUS_DISCORDANT]);
+                    if (canSeeMonster(monst)) {
+                        if (boltCatalog[BOLT_DISCORD].backColor) {
+                            flashMonster(monst, boltCatalog[BOLT_DISCORD].backColor, 100);
+                        }
+                        if (autoID) {
+                            *autoID = true;
+                        }
+                    }
+                }
+                break;
+            case BE_SHIELDING:
+                if (staffProtection(theBolt->magnitude * FP_FACTOR) > monst->status[STATUS_SHIELDED]) {
+                    monst->status[STATUS_SHIELDED] = staffProtection(theBolt->magnitude * FP_FACTOR);
+                }
+                monst->maxStatus[STATUS_SHIELDED] = monst->status[STATUS_SHIELDED];
+                if (boltCatalog[BOLT_SHIELDING].backColor) {
+                    flashMonster(monst, boltCatalog[BOLT_SHIELDING].backColor, 100);
+                }
                 if (autoID) {
                     *autoID = true;
                 }
-            } else if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
-                monst->status[STATUS_ENTRANCED] = monst->maxStatus[STATUS_ENTRANCED] = staffEntrancementDuration(theBolt->magnitude * FP_FACTOR);
-                wakeUp(monst);
-                if (canSeeMonster(monst)) {
-                    if (boltCatalog[BOLT_ENTRANCEMENT].backColor) {
-                        flashMonster(monst, boltCatalog[BOLT_ENTRANCEMENT].backColor, 100);
-                    }
-                    if (autoID) {
-                        *autoID = true;
-                    }
-                    sprintf(buf, "%s is entranced!", monstName);
-                    message(buf, 0);
-                }
-            }
-            break;
-        case BE_HEALING:
-            heal(monst, theBolt->magnitude * 10, false);
-            if (canSeeMonster(monst)) {
-                if (autoID) {
-                    *autoID = true;
-                }
-            }
-            break;
-        case BE_PLENTY:
-            if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
-                newMonst = cloneMonster(monst, true, true);
-                if (newMonst) {
-                    monst->currentHP = (monst->currentHP + 1) / 2;
-                    newMonst->currentHP = (newMonst->currentHP + 1) / 2;
-                    if (boltCatalog[BOLT_PLENTY].backColor) {
-                        flashMonster(monst, boltCatalog[BOLT_PLENTY].backColor, 100);
-                        flashMonster(newMonst, boltCatalog[BOLT_PLENTY].backColor, 100);
-                    }
-                    if (autoID) {
-                        *autoID = true;
-                    }
-                }
-            }
-            break;
-        case BE_DISCORD:
-            if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
-                monst->status[STATUS_DISCORDANT] = monst->maxStatus[STATUS_DISCORDANT] = max(staffDiscordDuration(theBolt->magnitude * FP_FACTOR), monst->status[STATUS_DISCORDANT]);
-                if (canSeeMonster(monst)) {
-                    if (boltCatalog[BOLT_DISCORD].backColor) {
-                        flashMonster(monst, boltCatalog[BOLT_DISCORD].backColor, 100);
-                    }
-                    if (autoID) {
-                        *autoID = true;
-                    }
-                }
-            }
-            break;
-        case BE_SHIELDING:
-            if (staffProtection(theBolt->magnitude * FP_FACTOR) > monst->status[STATUS_SHIELDED]) {
-                monst->status[STATUS_SHIELDED] = staffProtection(theBolt->magnitude * FP_FACTOR);
-            }
-            monst->maxStatus[STATUS_SHIELDED] = monst->status[STATUS_SHIELDED];
-            if (boltCatalog[BOLT_SHIELDING].backColor) {
-                flashMonster(monst, boltCatalog[BOLT_SHIELDING].backColor, 100);
-            }
-            if (autoID) {
-                *autoID = true;
-            }
-            break;
-        default:
-            break;
+                break;
+            default:
+                break;
         }
 
         if (!(theBolt->flags & BF_PASSES_THRU_CREATURES)) {
@@ -4271,17 +4273,17 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y, boolean bo
 
     // Handle ordinary bolt updates that aren't dependent on hitting a creature.
     switch (theBolt->boltEffect) {
-    case BE_BLINKING:
-        if (caster == &player) {
-            player.loc.x = x;
-            player.loc.y = y;
-            if (lightingChanged) {
-                *lightingChanged = true;
+        case BE_BLINKING:
+            if (caster == &player) {
+                player.loc.x = x;
+                player.loc.y = y;
+                if (lightingChanged) {
+                    *lightingChanged = true;
+                }
             }
-        }
-        break;
-    default:
-        break;
+            break;
+        default:
+            break;
     }
 
     if (theBolt->pathDF) {
@@ -4326,79 +4328,79 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
            41943, 33554, 26843, 21474, 17179, 13743, 10995, 8796, 7036, 5629, 4503, 3602, 2882, 2305, 1844, 1475, 1180, 944, 755, 604, 483, 386, 309, 247, 198, 158, 126, 101, 81, 64, 51, 41, 33, 26, 21, 17, 13, 10, 8, 6, 5};
 
     switch (theBolt->boltEffect) {
-    case BE_OBSTRUCTION:
-        feat = dungeonFeatureCatalog[DF_FORCEFIELD];
-        feat.probabilityDecrement = max(1, 75 * POW_OBSTRUCTION[min(40, theBolt->magnitude) - 2] / FP_FACTOR);
-        spawnDungeonFeature(x, y, &feat, true, false);
-        if (autoID) {
-            *autoID = true;
-        }
-        break;
-    case BE_CONJURATION:
-        for (i = 0; i < (staffBladeCount(theBolt->magnitude * FP_FACTOR)); i++) {
-            monst = generateMonster(MK_SPECTRAL_BLADE, true, false);
-            getQualifyingPathLocNear(&(monst->loc.x), &(monst->loc.y), x, y, true, T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)) & ~T_SPONTANEOUSLY_IGNITES, HAS_PLAYER,
-                                     avoidedFlagsForMonster(&(monst->info)) & ~T_SPONTANEOUSLY_IGNITES, (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
-            monst->bookkeepingFlags |= (MB_FOLLOWER | MB_BOUND_TO_LEADER | MB_DOES_NOT_TRACK_LEADER);
-            monst->bookkeepingFlags &= ~MB_JUST_SUMMONED;
-            monst->leader = &player;
-            monst->creatureState = MONSTER_ALLY;
-            monst->ticksUntilTurn = monst->info.attackSpeed + 1; // So they don't move before the player's next turn.
-            pmapAt(monst->loc)->flags |= HAS_MONSTER;
-            // refreshDungeonCell(monst->loc.x, monst->loc.y);
-            fadeInMonster(monst);
-        }
-        updateVision(true);
-        // refreshSideBar(-1, -1, false);
-        monst = NULL;
-        if (autoID) {
-            *autoID = true;
-        }
-        break;
-    case BE_BLINKING:
-        if (pmap[x][y].flags & HAS_MONSTER) {
-            // We're blinking onto an area already occupied by a submerged monster.
-            // Make sure we don't get the shooting monster by accident.
-            caster->loc = INVALID_POS; // Will be set back to the destination in a moment.
-            monst = monsterAtLoc((pos){x, y});
-            findAlternativeHomeFor(monst, &x2, &y2, true);
-            if (x2 >= 0) {
-                // Found an alternative location.
-                monst->loc.x = x2;
-                monst->loc.y = y2;
-                pmap[x][y].flags &= ~HAS_MONSTER;
-                pmap[x2][y2].flags |= HAS_MONSTER;
-            } else {
-                // No alternative location?? Hard to imagine how this could happen.
-                // Just bury the monster and never speak of this incident again.
-                killCreature(monst, true);
-                pmap[x][y].flags &= ~HAS_MONSTER;
-                monst = NULL;
+        case BE_OBSTRUCTION:
+            feat = dungeonFeatureCatalog[DF_FORCEFIELD];
+            feat.probabilityDecrement = max(1, 75 * POW_OBSTRUCTION[min(40, theBolt->magnitude) - 2] / FP_FACTOR);
+            spawnDungeonFeature(x, y, &feat, true, false);
+            if (autoID) {
+                *autoID = true;
             }
-        }
-        caster->bookkeepingFlags &= ~MB_SUBMERGED;
-        pmap[x][y].flags |= (caster == &player ? HAS_PLAYER : HAS_MONSTER);
-        caster->loc.x = x;
-        caster->loc.y = y;
-        // Always break free on blink
-        disentangle(caster);
-        applyInstantTileEffectsToCreature(caster);
-        if (caster == &player) {
-            // increase scent turn number so monsters don't sniff around at the old cell like idiots
-            rogue.scentTurnNumber += 30;
-            // get any items at the destination location
-            if (pmapAt(player.loc)->flags & HAS_ITEM) {
-                pickUpItemAt(player.loc.x, player.loc.y);
+            break;
+        case BE_CONJURATION:
+            for (i = 0; i < (staffBladeCount(theBolt->magnitude * FP_FACTOR)); i++) {
+                monst = generateMonster(MK_SPECTRAL_BLADE, true, false);
+                getQualifyingPathLocNear(&(monst->loc.x), &(monst->loc.y), x, y, true, T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)) & ~T_SPONTANEOUSLY_IGNITES, HAS_PLAYER,
+                                         avoidedFlagsForMonster(&(monst->info)) & ~T_SPONTANEOUSLY_IGNITES, (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
+                monst->bookkeepingFlags |= (MB_FOLLOWER | MB_BOUND_TO_LEADER | MB_DOES_NOT_TRACK_LEADER);
+                monst->bookkeepingFlags &= ~MB_JUST_SUMMONED;
+                monst->leader = &player;
+                monst->creatureState = MONSTER_ALLY;
+                monst->ticksUntilTurn = monst->info.attackSpeed + 1; // So they don't move before the player's next turn.
+                pmapAt(monst->loc)->flags |= HAS_MONSTER;
+                // refreshDungeonCell(monst->loc.x, monst->loc.y);
+                fadeInMonster(monst);
             }
             updateVision(true);
-        }
-        if (autoID) {
-            *autoID = true;
-        }
-        break;
-    case BE_TUNNELING:
-        setUpWaypoints(); // Recompute waypoints based on the new situation.
-        break;
+            // refreshSideBar(-1, -1, false);
+            monst = NULL;
+            if (autoID) {
+                *autoID = true;
+            }
+            break;
+        case BE_BLINKING:
+            if (pmap[x][y].flags & HAS_MONSTER) {
+                // We're blinking onto an area already occupied by a submerged monster.
+                // Make sure we don't get the shooting monster by accident.
+                caster->loc = INVALID_POS; // Will be set back to the destination in a moment.
+                monst = monsterAtLoc((pos){x, y});
+                findAlternativeHomeFor(monst, &x2, &y2, true);
+                if (x2 >= 0) {
+                    // Found an alternative location.
+                    monst->loc.x = x2;
+                    monst->loc.y = y2;
+                    pmap[x][y].flags &= ~HAS_MONSTER;
+                    pmap[x2][y2].flags |= HAS_MONSTER;
+                } else {
+                    // No alternative location?? Hard to imagine how this could happen.
+                    // Just bury the monster and never speak of this incident again.
+                    killCreature(monst, true);
+                    pmap[x][y].flags &= ~HAS_MONSTER;
+                    monst = NULL;
+                }
+            }
+            caster->bookkeepingFlags &= ~MB_SUBMERGED;
+            pmap[x][y].flags |= (caster == &player ? HAS_PLAYER : HAS_MONSTER);
+            caster->loc.x = x;
+            caster->loc.y = y;
+            // Always break free on blink
+            disentangle(caster);
+            applyInstantTileEffectsToCreature(caster);
+            if (caster == &player) {
+                // increase scent turn number so monsters don't sniff around at the old cell like idiots
+                rogue.scentTurnNumber += 30;
+                // get any items at the destination location
+                if (pmapAt(player.loc)->flags & HAS_ITEM) {
+                    pickUpItemAt(player.loc.x, player.loc.y);
+                }
+                updateVision(true);
+            }
+            if (autoID) {
+                *autoID = true;
+            }
+            break;
+        case BE_TUNNELING:
+            setUpWaypoints(); // Recompute waypoints based on the new situation.
+            break;
     }
 
     if (theBolt->targetDF) {
@@ -4928,84 +4930,84 @@ boolean moveCursor(boolean *targetConfirmed, boolean *canceled, boolean *tabKey,
             moveIncrement = ((theEvent.controlKey || theEvent.shiftKey) ? 5 : 1);
             stripShiftFromMovementKeystroke(&keystroke);
             switch (keystroke) {
-            case LEFT_ARROW:
-            case LEFT_KEY:
-            case NUMPAD_4:
-                if (keysMoveCursor && rogue.cursorLoc.x > 0) {
-                    rogue.cursorLoc.x -= moveIncrement;
-                }
-                cursorMovementCommand = movementKeystroke = keysMoveCursor;
-                break;
-            case RIGHT_ARROW:
-            case RIGHT_KEY:
-            case NUMPAD_6:
-                if (keysMoveCursor && rogue.cursorLoc.x < DCOLS - 1) {
-                    rogue.cursorLoc.x += moveIncrement;
-                }
-                cursorMovementCommand = movementKeystroke = keysMoveCursor;
-                break;
-            case UP_ARROW:
-            case UP_KEY:
-            case NUMPAD_8:
-                if (keysMoveCursor && rogue.cursorLoc.y > 0) {
-                    rogue.cursorLoc.y -= moveIncrement;
-                }
-                cursorMovementCommand = movementKeystroke = keysMoveCursor;
-                break;
-            case DOWN_ARROW:
-            case DOWN_KEY:
-            case NUMPAD_2:
-                if (keysMoveCursor && rogue.cursorLoc.y < DROWS - 1) {
-                    rogue.cursorLoc.y += moveIncrement;
-                }
-                cursorMovementCommand = movementKeystroke = keysMoveCursor;
-                break;
-            case UPLEFT_KEY:
-            case NUMPAD_7:
-                if (keysMoveCursor && rogue.cursorLoc.x > 0 && rogue.cursorLoc.y > 0) {
-                    rogue.cursorLoc.x -= moveIncrement;
-                    rogue.cursorLoc.y -= moveIncrement;
-                }
-                cursorMovementCommand = movementKeystroke = keysMoveCursor;
-                break;
-            case UPRIGHT_KEY:
-            case NUMPAD_9:
-                if (keysMoveCursor && rogue.cursorLoc.x < DCOLS - 1 && rogue.cursorLoc.y > 0) {
-                    rogue.cursorLoc.x += moveIncrement;
-                    rogue.cursorLoc.y -= moveIncrement;
-                }
-                cursorMovementCommand = movementKeystroke = keysMoveCursor;
-                break;
-            case DOWNLEFT_KEY:
-            case NUMPAD_1:
-                if (keysMoveCursor && rogue.cursorLoc.x > 0 && rogue.cursorLoc.y < DROWS - 1) {
-                    rogue.cursorLoc.x -= moveIncrement;
-                    rogue.cursorLoc.y += moveIncrement;
-                }
-                cursorMovementCommand = movementKeystroke = keysMoveCursor;
-                break;
-            case DOWNRIGHT_KEY:
-            case NUMPAD_3:
-                if (keysMoveCursor && rogue.cursorLoc.x < DCOLS - 1 && rogue.cursorLoc.y < DROWS - 1) {
-                    rogue.cursorLoc.x += moveIncrement;
-                    rogue.cursorLoc.y += moveIncrement;
-                }
-                cursorMovementCommand = movementKeystroke = keysMoveCursor;
-                break;
-            case TAB_KEY:
-            case SHIFT_TAB_KEY:
-            case NUMPAD_0:
-                *tabKey = true;
-                break;
-            case RETURN_KEY:
-                *targetConfirmed = true;
-                break;
-            case ESCAPE_KEY:
-            case ACKNOWLEDGE_KEY:
-                *canceled = true;
-                break;
-            default:
-                break;
+                case LEFT_ARROW:
+                case LEFT_KEY:
+                case NUMPAD_4:
+                    if (keysMoveCursor && rogue.cursorLoc.x > 0) {
+                        rogue.cursorLoc.x -= moveIncrement;
+                    }
+                    cursorMovementCommand = movementKeystroke = keysMoveCursor;
+                    break;
+                case RIGHT_ARROW:
+                case RIGHT_KEY:
+                case NUMPAD_6:
+                    if (keysMoveCursor && rogue.cursorLoc.x < DCOLS - 1) {
+                        rogue.cursorLoc.x += moveIncrement;
+                    }
+                    cursorMovementCommand = movementKeystroke = keysMoveCursor;
+                    break;
+                case UP_ARROW:
+                case UP_KEY:
+                case NUMPAD_8:
+                    if (keysMoveCursor && rogue.cursorLoc.y > 0) {
+                        rogue.cursorLoc.y -= moveIncrement;
+                    }
+                    cursorMovementCommand = movementKeystroke = keysMoveCursor;
+                    break;
+                case DOWN_ARROW:
+                case DOWN_KEY:
+                case NUMPAD_2:
+                    if (keysMoveCursor && rogue.cursorLoc.y < DROWS - 1) {
+                        rogue.cursorLoc.y += moveIncrement;
+                    }
+                    cursorMovementCommand = movementKeystroke = keysMoveCursor;
+                    break;
+                case UPLEFT_KEY:
+                case NUMPAD_7:
+                    if (keysMoveCursor && rogue.cursorLoc.x > 0 && rogue.cursorLoc.y > 0) {
+                        rogue.cursorLoc.x -= moveIncrement;
+                        rogue.cursorLoc.y -= moveIncrement;
+                    }
+                    cursorMovementCommand = movementKeystroke = keysMoveCursor;
+                    break;
+                case UPRIGHT_KEY:
+                case NUMPAD_9:
+                    if (keysMoveCursor && rogue.cursorLoc.x < DCOLS - 1 && rogue.cursorLoc.y > 0) {
+                        rogue.cursorLoc.x += moveIncrement;
+                        rogue.cursorLoc.y -= moveIncrement;
+                    }
+                    cursorMovementCommand = movementKeystroke = keysMoveCursor;
+                    break;
+                case DOWNLEFT_KEY:
+                case NUMPAD_1:
+                    if (keysMoveCursor && rogue.cursorLoc.x > 0 && rogue.cursorLoc.y < DROWS - 1) {
+                        rogue.cursorLoc.x -= moveIncrement;
+                        rogue.cursorLoc.y += moveIncrement;
+                    }
+                    cursorMovementCommand = movementKeystroke = keysMoveCursor;
+                    break;
+                case DOWNRIGHT_KEY:
+                case NUMPAD_3:
+                    if (keysMoveCursor && rogue.cursorLoc.x < DCOLS - 1 && rogue.cursorLoc.y < DROWS - 1) {
+                        rogue.cursorLoc.x += moveIncrement;
+                        rogue.cursorLoc.y += moveIncrement;
+                    }
+                    cursorMovementCommand = movementKeystroke = keysMoveCursor;
+                    break;
+                case TAB_KEY:
+                case SHIFT_TAB_KEY:
+                case NUMPAD_0:
+                    *tabKey = true;
+                    break;
+                case RETURN_KEY:
+                    *targetConfirmed = true;
+                    break;
+                case ESCAPE_KEY:
+                case ACKNOWLEDGE_KEY:
+                    *canceled = true;
+                    break;
+                default:
+                    break;
             }
         } else if (theEvent.eventType == RIGHT_MOUSE_UP) {
             // do nothing
@@ -5206,62 +5208,62 @@ int itemKindCount(enum itemCategory category, int polarityConstraint) {
     int kindCount = -1, totalKinds, goodKinds;
 
     switch (category) {
-    case SCROLL:
-        totalKinds = gameConst->numberScrollKinds;
-        goodKinds = gameConst->numberGoodScrollKinds;
-        break;
-    case POTION:
-        totalKinds = gameConst->numberPotionKinds;
-        goodKinds = gameConst->numberGoodPotionKinds;
-        break;
-    case WAND:
-        totalKinds = gameConst->numberWandKinds;
-        goodKinds = gameConst->numberGoodWandKinds;
-        break;
-    case STAFF:
-        totalKinds = NUMBER_STAFF_KINDS;
-        goodKinds = NUMBER_GOOD_STAFF_KINDS;
-        break;
-    case FOOD:
-        totalKinds = NUMBER_FOOD_KINDS;
-        goodKinds = 0;
-        break;
-    case WEAPON:
-        totalKinds = NUMBER_WEAPON_KINDS;
-        goodKinds = 0;
-        break;
-    case ARMOR:
-        totalKinds = NUMBER_ARMOR_KINDS;
-        goodKinds = 0;
-        break;
-    case RING:
-        totalKinds = NUMBER_RING_KINDS;
-        goodKinds = NUMBER_RING_KINDS;
-        break;
-    case CHARM:
-        totalKinds = gameConst->numberCharmKinds;
-        goodKinds = gameConst->numberCharmKinds;
-        break;
-    default:
-        totalKinds = 0;
-        goodKinds = 0;
-        break;
+        case SCROLL:
+            totalKinds = gameConst->numberScrollKinds;
+            goodKinds = gameConst->numberGoodScrollKinds;
+            break;
+        case POTION:
+            totalKinds = gameConst->numberPotionKinds;
+            goodKinds = gameConst->numberGoodPotionKinds;
+            break;
+        case WAND:
+            totalKinds = gameConst->numberWandKinds;
+            goodKinds = gameConst->numberGoodWandKinds;
+            break;
+        case STAFF:
+            totalKinds = NUMBER_STAFF_KINDS;
+            goodKinds = NUMBER_GOOD_STAFF_KINDS;
+            break;
+        case FOOD:
+            totalKinds = NUMBER_FOOD_KINDS;
+            goodKinds = 0;
+            break;
+        case WEAPON:
+            totalKinds = NUMBER_WEAPON_KINDS;
+            goodKinds = 0;
+            break;
+        case ARMOR:
+            totalKinds = NUMBER_ARMOR_KINDS;
+            goodKinds = 0;
+            break;
+        case RING:
+            totalKinds = NUMBER_RING_KINDS;
+            goodKinds = NUMBER_RING_KINDS;
+            break;
+        case CHARM:
+            totalKinds = gameConst->numberCharmKinds;
+            goodKinds = gameConst->numberCharmKinds;
+            break;
+        default:
+            totalKinds = 0;
+            goodKinds = 0;
+            break;
     }
 
     switch (polarityConstraint) {
-    case MAGIC_POLARITY_MALEVOLENT:
-        if (goodKinds == 0) {
-            kindCount = 0;
-        } else {
-            kindCount = totalKinds - goodKinds;
-        }
-        break;
-    case MAGIC_POLARITY_BENEVOLENT:
-        kindCount = goodKinds;
-        break;
-    default:
-        kindCount = totalKinds;
-        break;
+        case MAGIC_POLARITY_MALEVOLENT:
+            if (goodKinds == 0) {
+                kindCount = 0;
+            } else {
+                kindCount = totalKinds - goodKinds;
+            }
+            break;
+        case MAGIC_POLARITY_BENEVOLENT:
+            kindCount = goodKinds;
+            break;
+        default:
+            kindCount = totalKinds;
+            break;
     }
     return kindCount;
 }
@@ -5364,23 +5366,23 @@ void identifyItemKind(item *theItem) {
         tableCount = 0;
 
         switch (theItem->category) {
-        case SCROLL:
-            tableCount = gameConst->numberScrollKinds;
-            break;
-        case POTION:
-            tableCount = gameConst->numberPotionKinds;
-            break;
-        case WAND:
-            tableCount = gameConst->numberWandKinds;
-            break;
-        case STAFF:
-            tableCount = NUMBER_STAFF_KINDS;
-            break;
-        case RING:
-            tableCount = NUMBER_RING_KINDS;
-            break;
-        default:
-            break;
+            case SCROLL:
+                tableCount = gameConst->numberScrollKinds;
+                break;
+            case POTION:
+                tableCount = gameConst->numberPotionKinds;
+                break;
+            case WAND:
+                tableCount = gameConst->numberWandKinds;
+                break;
+            case STAFF:
+                tableCount = NUMBER_STAFF_KINDS;
+                break;
+            case RING:
+                tableCount = NUMBER_RING_KINDS;
+                break;
+            default:
+                break;
         }
         if ((theItem->category & RING) && theItem->enchant1 <= 0) {
 
@@ -5606,41 +5608,41 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
         if (theItem->kind == POTION_CONFUSION || theItem->kind == POTION_POISON || theItem->kind == POTION_PARALYSIS || theItem->kind == POTION_INCINERATION || theItem->kind == POTION_DARKNESS || theItem->kind == POTION_LICHEN
             || theItem->kind == POTION_DESCENT) {
             switch (theItem->kind) {
-            case POTION_POISON:
-                strcpy(buf, "the flask shatters and a deadly purple cloud billows out!");
-                spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_POISON_GAS_CLOUD_POTION], true, false);
-                message(buf, 0);
-                break;
-            case POTION_CONFUSION:
-                strcpy(buf, "the flask shatters and a multi-hued cloud billows out!");
-                spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_CONFUSION_GAS_CLOUD_POTION], true, false);
-                message(buf, 0);
-                break;
-            case POTION_PARALYSIS:
-                strcpy(buf, "the flask shatters and a cloud of pink gas billows out!");
-                spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_PARALYSIS_GAS_CLOUD_POTION], true, false);
-                message(buf, 0);
-                break;
-            case POTION_INCINERATION:
-                strcpy(buf, "the flask shatters and its contents burst violently into flame!");
-                message(buf, 0);
-                spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_INCINERATION_POTION], true, false);
-                break;
-            case POTION_DARKNESS:
-                strcpy(buf, "the flask shatters and the lights in the area start fading.");
-                spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_DARKNESS_POTION], true, false);
-                message(buf, 0);
-                break;
-            case POTION_DESCENT:
-                strcpy(buf, "as the flask shatters, the ground vanishes!");
-                message(buf, 0);
-                spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_HOLE_POTION], true, false);
-                break;
-            case POTION_LICHEN:
-                strcpy(buf, "the flask shatters and deadly spores spill out!");
-                message(buf, 0);
-                spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_LICHEN_PLANTED], true, false);
-                break;
+                case POTION_POISON:
+                    strcpy(buf, "the flask shatters and a deadly purple cloud billows out!");
+                    spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_POISON_GAS_CLOUD_POTION], true, false);
+                    message(buf, 0);
+                    break;
+                case POTION_CONFUSION:
+                    strcpy(buf, "the flask shatters and a multi-hued cloud billows out!");
+                    spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_CONFUSION_GAS_CLOUD_POTION], true, false);
+                    message(buf, 0);
+                    break;
+                case POTION_PARALYSIS:
+                    strcpy(buf, "the flask shatters and a cloud of pink gas billows out!");
+                    spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_PARALYSIS_GAS_CLOUD_POTION], true, false);
+                    message(buf, 0);
+                    break;
+                case POTION_INCINERATION:
+                    strcpy(buf, "the flask shatters and its contents burst violently into flame!");
+                    message(buf, 0);
+                    spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_INCINERATION_POTION], true, false);
+                    break;
+                case POTION_DARKNESS:
+                    strcpy(buf, "the flask shatters and the lights in the area start fading.");
+                    spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_DARKNESS_POTION], true, false);
+                    message(buf, 0);
+                    break;
+                case POTION_DESCENT:
+                    strcpy(buf, "as the flask shatters, the ground vanishes!");
+                    message(buf, 0);
+                    spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_HOLE_POTION], true, false);
+                    break;
+                case POTION_LICHEN:
+                    strcpy(buf, "the flask shatters and deadly spores spill out!");
+                    message(buf, 0);
+                    spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_LICHEN_PLANTED], true, false);
+                    break;
             }
 
             autoIdentify(theItem);
@@ -5746,18 +5748,18 @@ void throwCommand(item *theItem, boolean autoThrow) {
     // Automatically pick a target for known bad potions and throwing weapons
     boolean autoTarget = false;
     switch (theItem->category) {
-    case WEAPON:
-        if (theItem->kind == DART || theItem->kind == INCENDIARY_DART || theItem->kind == JAVELIN) {
-            autoTarget = true;
-        }
-        break;
-    case POTION:
-        if ((theItem->flags & ITEM_MAGIC_DETECTED || potionTable[theItem->kind].identified) && itemMagicPolarity(theItem) == -1) {
-            autoTarget = true;
-        }
-        break;
-    default:
-        break;
+        case WEAPON:
+            if (theItem->kind == DART || theItem->kind == INCENDIARY_DART || theItem->kind == JAVELIN) {
+                autoTarget = true;
+            }
+            break;
+        case POTION:
+            if ((theItem->flags & ITEM_MAGIC_DETECTED || potionTable[theItem->kind].identified) && itemMagicPolarity(theItem) == -1) {
+                autoTarget = true;
+            }
+            break;
+        default:
+            break;
     }
 
     pos zapTarget;
@@ -6071,61 +6073,61 @@ void useCharm(item *theItem) {
     rogue.featRecord[FEAT_PURE_WARRIOR] = false;
 
     switch (theItem->kind) {
-    case CHARM_HEALTH:
-        heal(&player, charmHealing(enchant), false);
-        message("You feel much healthier.", 0);
-        break;
-    case CHARM_PROTECTION:
-        if (charmProtection(enchant) > player.status[STATUS_SHIELDED]) {
-            player.status[STATUS_SHIELDED] = charmProtection(enchant);
-        }
-        player.maxStatus[STATUS_SHIELDED] = player.status[STATUS_SHIELDED];
-        if (boltCatalog[BOLT_SHIELDING].backColor) {
-            flashMonster(&player, boltCatalog[BOLT_SHIELDING].backColor, 100);
-        }
-        message("A shimmering shield coalesces around you.", 0);
-        break;
-    case CHARM_HASTE:
-        haste(&player, charmEffectDuration(theItem->kind, theItem->enchant1));
-        break;
-    case CHARM_FIRE_IMMUNITY:
-        player.status[STATUS_IMMUNE_TO_FIRE] = player.maxStatus[STATUS_IMMUNE_TO_FIRE] = charmEffectDuration(theItem->kind, theItem->enchant1);
-        if (player.status[STATUS_BURNING]) {
-            extinguishFireOnCreature(&player);
-        }
-        message("you no longer fear fire.", 0);
-        break;
-    case CHARM_INVISIBILITY:
-        imbueInvisibility(&player, charmEffectDuration(theItem->kind, theItem->enchant1));
-        message("You shiver as a chill runs up your spine.", 0);
-        break;
-    case CHARM_TELEPATHY:
-        makePlayerTelepathic(charmEffectDuration(theItem->kind, theItem->enchant1));
-        break;
-    case CHARM_LEVITATION:
-        player.status[STATUS_LEVITATING] = player.maxStatus[STATUS_LEVITATING] = charmEffectDuration(theItem->kind, theItem->enchant1);
-        player.bookkeepingFlags &= ~MB_SEIZED; // break free of holding monsters
-        message("you float into the air!", 0);
-        break;
-    case CHARM_SHATTERING:
-        messageWithColor("your charm emits a wave of turquoise light that pierces the nearby walls!", &itemMessageColor, 0);
-        crystalize(charmShattering(enchant));
-        break;
-    case CHARM_GUARDIAN:
-        messageWithColor("your charm flashes and the form of a mythical guardian coalesces!", &itemMessageColor, 0);
-        summonGuardian(theItem);
-        break;
-    case CHARM_TELEPORTATION:
-        teleport(&player, -1, -1, true);
-        break;
-    case CHARM_RECHARGING:
-        rechargeItems(STAFF);
-        break;
-    case CHARM_NEGATION:
-        negationBlast("your charm", charmNegationRadius(enchant) + 1); // Add 1 because otherwise radius 1 would affect only the player.
-        break;
-    default:
-        break;
+        case CHARM_HEALTH:
+            heal(&player, charmHealing(enchant), false);
+            message("You feel much healthier.", 0);
+            break;
+        case CHARM_PROTECTION:
+            if (charmProtection(enchant) > player.status[STATUS_SHIELDED]) {
+                player.status[STATUS_SHIELDED] = charmProtection(enchant);
+            }
+            player.maxStatus[STATUS_SHIELDED] = player.status[STATUS_SHIELDED];
+            if (boltCatalog[BOLT_SHIELDING].backColor) {
+                flashMonster(&player, boltCatalog[BOLT_SHIELDING].backColor, 100);
+            }
+            message("A shimmering shield coalesces around you.", 0);
+            break;
+        case CHARM_HASTE:
+            haste(&player, charmEffectDuration(theItem->kind, theItem->enchant1));
+            break;
+        case CHARM_FIRE_IMMUNITY:
+            player.status[STATUS_IMMUNE_TO_FIRE] = player.maxStatus[STATUS_IMMUNE_TO_FIRE] = charmEffectDuration(theItem->kind, theItem->enchant1);
+            if (player.status[STATUS_BURNING]) {
+                extinguishFireOnCreature(&player);
+            }
+            message("you no longer fear fire.", 0);
+            break;
+        case CHARM_INVISIBILITY:
+            imbueInvisibility(&player, charmEffectDuration(theItem->kind, theItem->enchant1));
+            message("You shiver as a chill runs up your spine.", 0);
+            break;
+        case CHARM_TELEPATHY:
+            makePlayerTelepathic(charmEffectDuration(theItem->kind, theItem->enchant1));
+            break;
+        case CHARM_LEVITATION:
+            player.status[STATUS_LEVITATING] = player.maxStatus[STATUS_LEVITATING] = charmEffectDuration(theItem->kind, theItem->enchant1);
+            player.bookkeepingFlags &= ~MB_SEIZED; // break free of holding monsters
+            message("you float into the air!", 0);
+            break;
+        case CHARM_SHATTERING:
+            messageWithColor("your charm emits a wave of turquoise light that pierces the nearby walls!", &itemMessageColor, 0);
+            crystalize(charmShattering(enchant));
+            break;
+        case CHARM_GUARDIAN:
+            messageWithColor("your charm flashes and the form of a mythical guardian coalesces!", &itemMessageColor, 0);
+            summonGuardian(theItem);
+            break;
+        case CHARM_TELEPORTATION:
+            teleport(&player, -1, -1, true);
+            break;
+        case CHARM_RECHARGING:
+            rechargeItems(STAFF);
+            break;
+        case CHARM_NEGATION:
+            negationBlast("your charm", charmNegationRadius(enchant) + 1); // Add 1 because otherwise radius 1 would affect only the player.
+            break;
+        default:
+            break;
     }
 }
 
@@ -6165,69 +6167,69 @@ void apply(item *theItem, boolean recordCommands) {
     command[c++] = theItem->inventoryLetter;
     confirmMessages();
     switch (theItem->category) {
-    case FOOD:
-        if (STOMACH_SIZE - player.status[STATUS_NUTRITION] < foodTable[theItem->kind].power) { // Not hungry enough.
-            sprintf(buf, "You're not hungry enough to fully enjoy the %s. Eat it anyway?", (theItem->kind == RATION ? "food" : "mango"));
-            if (!confirm(buf, false)) {
+        case FOOD:
+            if (STOMACH_SIZE - player.status[STATUS_NUTRITION] < foodTable[theItem->kind].power) { // Not hungry enough.
+                sprintf(buf, "You're not hungry enough to fully enjoy the %s. Eat it anyway?", (theItem->kind == RATION ? "food" : "mango"));
+                if (!confirm(buf, false)) {
+                    return;
+                }
+            }
+            player.status[STATUS_NUTRITION] = min(foodTable[theItem->kind].power + player.status[STATUS_NUTRITION], STOMACH_SIZE);
+            if (theItem->kind == RATION) {
+                messageWithColor("That food tasted delicious!", &itemMessageColor, 0);
+            } else {
+                messageWithColor("My, what a yummy mango!", &itemMessageColor, 0);
+            }
+            rogue.featRecord[FEAT_ASCETIC] = false;
+            break;
+        case POTION:
+            command[c] = '\0';
+            if (!commandsRecorded) {
+                recordKeystrokeSequence(command);
+                commandsRecorded = true;
+            }
+            if (!potionTable[theItem->kind].identified) {
+                revealItemType = true;
+            }
+            drinkPotion(theItem);
+            break;
+        case SCROLL:
+            command[c] = '\0';
+            if (!commandsRecorded) {
+                recordKeystrokeSequence(command);
+                commandsRecorded = true; // have to record in case further keystrokes are necessary (e.g. enchant scroll)
+            }
+            if (!scrollTable[theItem->kind].identified && theItem->kind != SCROLL_ENCHANTING && theItem->kind != SCROLL_IDENTIFY) {
+
+                revealItemType = true;
+            }
+            readScroll(theItem);
+            break;
+        case STAFF:
+        case WAND:
+            if (!useStaffOrWand(theItem, &commandsRecorded)) {
                 return;
             }
-        }
-        player.status[STATUS_NUTRITION] = min(foodTable[theItem->kind].power + player.status[STATUS_NUTRITION], STOMACH_SIZE);
-        if (theItem->kind == RATION) {
-            messageWithColor("That food tasted delicious!", &itemMessageColor, 0);
-        } else {
-            messageWithColor("My, what a yummy mango!", &itemMessageColor, 0);
-        }
-        rogue.featRecord[FEAT_ASCETIC] = false;
-        break;
-    case POTION:
-        command[c] = '\0';
-        if (!commandsRecorded) {
-            recordKeystrokeSequence(command);
-            commandsRecorded = true;
-        }
-        if (!potionTable[theItem->kind].identified) {
-            revealItemType = true;
-        }
-        drinkPotion(theItem);
-        break;
-    case SCROLL:
-        command[c] = '\0';
-        if (!commandsRecorded) {
-            recordKeystrokeSequence(command);
-            commandsRecorded = true; // have to record in case further keystrokes are necessary (e.g. enchant scroll)
-        }
-        if (!scrollTable[theItem->kind].identified && theItem->kind != SCROLL_ENCHANTING && theItem->kind != SCROLL_IDENTIFY) {
-
-            revealItemType = true;
-        }
-        readScroll(theItem);
-        break;
-    case STAFF:
-    case WAND:
-        if (!useStaffOrWand(theItem, &commandsRecorded)) {
+            break;
+        case CHARM:
+            if (theItem->charges > 0) {
+                itemName(theItem, buf2, false, false, NULL);
+                sprintf(buf, "Your %s hasn't finished recharging.", buf2);
+                messageWithColor(buf, &itemMessageColor, 0);
+                return;
+            }
+            if (!commandsRecorded) {
+                command[c] = '\0';
+                recordKeystrokeSequence(command);
+                commandsRecorded = true;
+            }
+            useCharm(theItem);
+            break;
+        default:
+            itemName(theItem, buf2, false, true, NULL);
+            sprintf(buf, "you can't apply %s.", buf2);
+            message(buf, 0);
             return;
-        }
-        break;
-    case CHARM:
-        if (theItem->charges > 0) {
-            itemName(theItem, buf2, false, false, NULL);
-            sprintf(buf, "Your %s hasn't finished recharging.", buf2);
-            messageWithColor(buf, &itemMessageColor, 0);
-            return;
-        }
-        if (!commandsRecorded) {
-            command[c] = '\0';
-            recordKeystrokeSequence(command);
-            commandsRecorded = true;
-        }
-        useCharm(theItem);
-        break;
-    default:
-        itemName(theItem, buf2, false, true, NULL);
-        sprintf(buf, "you can't apply %s.", buf2);
-        message(buf, 0);
-        return;
     }
 
     if (!commandsRecorded) { // to make sure we didn't already record the keystrokes above with staff/wand targeting
@@ -6370,238 +6372,238 @@ void readScroll(item *theItem) {
     rogue.featRecord[FEAT_ARCHIVIST] = false;
 
     switch (theItem->kind) {
-    case SCROLL_IDENTIFY:
-        identify(theItem);
-        updateIdentifiableItems();
-        messageWithColor("this is a scroll of identify.", &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
-        if (numberOfMatchingPackItems(ALL_ITEMS, ITEM_CAN_BE_IDENTIFIED, 0, false) == 0) {
-            message("everything in your pack is already identified.", 0);
-            break;
-        }
-        do {
-            theItem = promptForItemOfType((ALL_ITEMS), ITEM_CAN_BE_IDENTIFIED, 0, KEYBOARD_LABELS ? "Identify what? (a-z; shift for more info)" : "Identify what?", false);
-            if (rogue.gameHasEnded) {
-                return;
+        case SCROLL_IDENTIFY:
+            identify(theItem);
+            updateIdentifiableItems();
+            messageWithColor("this is a scroll of identify.", &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
+            if (numberOfMatchingPackItems(ALL_ITEMS, ITEM_CAN_BE_IDENTIFIED, 0, false) == 0) {
+                message("everything in your pack is already identified.", 0);
+                break;
             }
-            if (theItem && !(theItem->flags & ITEM_CAN_BE_IDENTIFIED)) {
-                confirmMessages();
-                itemName(theItem, buf2, true, true, NULL);
-                sprintf(buf, "you already know %s %s.", (theItem->quantity > 1 ? "they're" : "it's"), buf2);
-                messageWithColor(buf, &itemMessageColor, 0);
-            }
-        } while (theItem == NULL || !(theItem->flags & ITEM_CAN_BE_IDENTIFIED));
-        recordKeystroke(theItem->inventoryLetter, false, false);
-        confirmMessages();
-        identify(theItem);
-        itemName(theItem, buf, true, true, NULL);
-        sprintf(buf2, "%s %s.", (theItem->quantity == 1 ? "this is" : "these are"), buf);
-        messageWithColor(buf2, &itemMessageColor, 0);
-        break;
-    case SCROLL_TELEPORT:
-        teleport(&player, -1, -1, true);
-        break;
-    case SCROLL_REMOVE_CURSE:
-        for (tempItem = packItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
-            if (tempItem->flags & ITEM_CURSED) {
-                hadEffect = true;
-                tempItem->flags &= ~ITEM_CURSED;
-            }
-        }
-        if (hadEffect) {
-            message("your pack glows with a cleansing light, and a malevolent energy disperses.", 0);
-        } else {
-            message("your pack glows with a cleansing light, but nothing happens.", 0);
-        }
-        break;
-    case SCROLL_ENCHANTING:
-        identify(theItem);
-        messageWithColor("this is a scroll of enchanting.", &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
-        if (!numberOfMatchingPackItems((WEAPON | ARMOR | RING | STAFF | WAND | CHARM), 0, 0, false)) {
+            do {
+                theItem = promptForItemOfType((ALL_ITEMS), ITEM_CAN_BE_IDENTIFIED, 0, KEYBOARD_LABELS ? "Identify what? (a-z; shift for more info)" : "Identify what?", false);
+                if (rogue.gameHasEnded) {
+                    return;
+                }
+                if (theItem && !(theItem->flags & ITEM_CAN_BE_IDENTIFIED)) {
+                    confirmMessages();
+                    itemName(theItem, buf2, true, true, NULL);
+                    sprintf(buf, "you already know %s %s.", (theItem->quantity > 1 ? "they're" : "it's"), buf2);
+                    messageWithColor(buf, &itemMessageColor, 0);
+                }
+            } while (theItem == NULL || !(theItem->flags & ITEM_CAN_BE_IDENTIFIED));
+            recordKeystroke(theItem->inventoryLetter, false, false);
             confirmMessages();
-            message("you have nothing that can be enchanted.", 0);
-            break;
-        }
-        do {
-            theItem = promptForItemOfType((WEAPON | ARMOR | RING | STAFF | WAND | CHARM), 0, 0, KEYBOARD_LABELS ? "Enchant what? (a-z; shift for more info)" : "Enchant what?", false);
-            confirmMessages();
-            if (theItem == NULL || !(theItem->category & (WEAPON | ARMOR | RING | STAFF | WAND | CHARM))) {
-                message("Can't enchant that.", REQUIRE_ACKNOWLEDGMENT);
-            }
-            if (rogue.gameHasEnded) {
-                return;
-            }
-        } while (theItem == NULL || !(theItem->category & (WEAPON | ARMOR | RING | STAFF | WAND | CHARM)));
-        recordKeystroke(theItem->inventoryLetter, false, false);
-        confirmMessages();
-        switch (theItem->category) {
-        case WEAPON:
-            theItem->strengthRequired = max(0, theItem->strengthRequired - enchantMagnitude());
-            theItem->enchant1 += enchantMagnitude();
-            if (theItem->quiverNumber) {
-                theItem->quiverNumber = rand_range(1, 60000);
-            }
-            break;
-        case ARMOR:
-            theItem->strengthRequired = max(0, theItem->strengthRequired - enchantMagnitude());
-            theItem->enchant1 += enchantMagnitude();
-            break;
-        case RING:
-            theItem->enchant1 += enchantMagnitude();
-            updateRingBonuses();
-            if (theItem->kind == RING_CLAIRVOYANCE) {
-                updateClairvoyance();
-                displayLevel();
-            }
-            break;
-        case STAFF:
-            theItem->enchant1 += enchantMagnitude();
-            theItem->charges += enchantMagnitude();
-            theItem->enchant2 = 500 / theItem->enchant1;
-            break;
-        case WAND:
-            theItem->charges += wandTable[theItem->kind].range.lowerBound * enchantMagnitude();
-            break;
-        case CHARM:
-            theItem->enchant1 += enchantMagnitude();
-            theItem->charges = min(0, theItem->charges); // Enchanting instantly recharges charms.
-                                                         //                    theItem->charges = theItem->charges
-                                                         //                    * charmRechargeDelay(theItem->kind, theItem->enchant1)
-                                                         //                    / charmRechargeDelay(theItem->kind, theItem->enchant1 - 1);
-
-            break;
-        default:
-            break;
-        }
-        theItem->timesEnchanted += enchantMagnitude();
-        if ((theItem->category & (WEAPON | ARMOR | STAFF | RING | CHARM)) && theItem->enchant1 >= 16) {
-
-            rogue.featRecord[FEAT_SPECIALIST] = true;
-        }
-        if (theItem->flags & ITEM_EQUIPPED) {
-            equipItem(theItem, true, NULL);
-        }
-        itemName(theItem, buf, false, false, NULL);
-        sprintf(buf2, "your %s gleam%s briefly in the darkness.", buf, (theItem->quantity == 1 ? "s" : ""));
-        messageWithColor(buf2, &itemMessageColor, 0);
-        if (theItem->flags & ITEM_CURSED) {
-            sprintf(buf2, "a malevolent force leaves your %s.", buf);
+            identify(theItem);
+            itemName(theItem, buf, true, true, NULL);
+            sprintf(buf2, "%s %s.", (theItem->quantity == 1 ? "this is" : "these are"), buf);
             messageWithColor(buf2, &itemMessageColor, 0);
-            theItem->flags &= ~ITEM_CURSED;
-        }
-        createFlare(player.loc.x, player.loc.y, SCROLL_ENCHANTMENT_LIGHT);
-        break;
-    case SCROLL_RECHARGING:
-        rechargeItems(STAFF | CHARM);
-        break;
-    case SCROLL_PROTECT_ARMOR:
-        if (rogue.armor) {
-            tempItem = rogue.armor;
-            tempItem->flags |= ITEM_PROTECTED;
-            itemName(tempItem, buf2, false, false, NULL);
-            sprintf(buf, "a protective golden light covers your %s.", buf2);
-            messageWithColor(buf, &itemMessageColor, 0);
-            if (tempItem->flags & ITEM_CURSED) {
-                sprintf(buf, "a malevolent force leaves your %s.", buf2);
+            break;
+        case SCROLL_TELEPORT:
+            teleport(&player, -1, -1, true);
+            break;
+        case SCROLL_REMOVE_CURSE:
+            for (tempItem = packItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
+                if (tempItem->flags & ITEM_CURSED) {
+                    hadEffect = true;
+                    tempItem->flags &= ~ITEM_CURSED;
+                }
+            }
+            if (hadEffect) {
+                message("your pack glows with a cleansing light, and a malevolent energy disperses.", 0);
+            } else {
+                message("your pack glows with a cleansing light, but nothing happens.", 0);
+            }
+            break;
+        case SCROLL_ENCHANTING:
+            identify(theItem);
+            messageWithColor("this is a scroll of enchanting.", &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
+            if (!numberOfMatchingPackItems((WEAPON | ARMOR | RING | STAFF | WAND | CHARM), 0, 0, false)) {
+                confirmMessages();
+                message("you have nothing that can be enchanted.", 0);
+                break;
+            }
+            do {
+                theItem = promptForItemOfType((WEAPON | ARMOR | RING | STAFF | WAND | CHARM), 0, 0, KEYBOARD_LABELS ? "Enchant what? (a-z; shift for more info)" : "Enchant what?", false);
+                confirmMessages();
+                if (theItem == NULL || !(theItem->category & (WEAPON | ARMOR | RING | STAFF | WAND | CHARM))) {
+                    message("Can't enchant that.", REQUIRE_ACKNOWLEDGMENT);
+                }
+                if (rogue.gameHasEnded) {
+                    return;
+                }
+            } while (theItem == NULL || !(theItem->category & (WEAPON | ARMOR | RING | STAFF | WAND | CHARM)));
+            recordKeystroke(theItem->inventoryLetter, false, false);
+            confirmMessages();
+            switch (theItem->category) {
+                case WEAPON:
+                    theItem->strengthRequired = max(0, theItem->strengthRequired - enchantMagnitude());
+                    theItem->enchant1 += enchantMagnitude();
+                    if (theItem->quiverNumber) {
+                        theItem->quiverNumber = rand_range(1, 60000);
+                    }
+                    break;
+                case ARMOR:
+                    theItem->strengthRequired = max(0, theItem->strengthRequired - enchantMagnitude());
+                    theItem->enchant1 += enchantMagnitude();
+                    break;
+                case RING:
+                    theItem->enchant1 += enchantMagnitude();
+                    updateRingBonuses();
+                    if (theItem->kind == RING_CLAIRVOYANCE) {
+                        updateClairvoyance();
+                        displayLevel();
+                    }
+                    break;
+                case STAFF:
+                    theItem->enchant1 += enchantMagnitude();
+                    theItem->charges += enchantMagnitude();
+                    theItem->enchant2 = 500 / theItem->enchant1;
+                    break;
+                case WAND:
+                    theItem->charges += wandTable[theItem->kind].range.lowerBound * enchantMagnitude();
+                    break;
+                case CHARM:
+                    theItem->enchant1 += enchantMagnitude();
+                    theItem->charges = min(0, theItem->charges); // Enchanting instantly recharges charms.
+                                                                 //                    theItem->charges = theItem->charges
+                                                                 //                    * charmRechargeDelay(theItem->kind, theItem->enchant1)
+                                                                 //                    / charmRechargeDelay(theItem->kind, theItem->enchant1 - 1);
+
+                    break;
+                default:
+                    break;
+            }
+            theItem->timesEnchanted += enchantMagnitude();
+            if ((theItem->category & (WEAPON | ARMOR | STAFF | RING | CHARM)) && theItem->enchant1 >= 16) {
+
+                rogue.featRecord[FEAT_SPECIALIST] = true;
+            }
+            if (theItem->flags & ITEM_EQUIPPED) {
+                equipItem(theItem, true, NULL);
+            }
+            itemName(theItem, buf, false, false, NULL);
+            sprintf(buf2, "your %s gleam%s briefly in the darkness.", buf, (theItem->quantity == 1 ? "s" : ""));
+            messageWithColor(buf2, &itemMessageColor, 0);
+            if (theItem->flags & ITEM_CURSED) {
+                sprintf(buf2, "a malevolent force leaves your %s.", buf);
+                messageWithColor(buf2, &itemMessageColor, 0);
+                theItem->flags &= ~ITEM_CURSED;
+            }
+            createFlare(player.loc.x, player.loc.y, SCROLL_ENCHANTMENT_LIGHT);
+            break;
+        case SCROLL_RECHARGING:
+            rechargeItems(STAFF | CHARM);
+            break;
+        case SCROLL_PROTECT_ARMOR:
+            if (rogue.armor) {
+                tempItem = rogue.armor;
+                tempItem->flags |= ITEM_PROTECTED;
+                itemName(tempItem, buf2, false, false, NULL);
+                sprintf(buf, "a protective golden light covers your %s.", buf2);
                 messageWithColor(buf, &itemMessageColor, 0);
-                tempItem->flags &= ~ITEM_CURSED;
+                if (tempItem->flags & ITEM_CURSED) {
+                    sprintf(buf, "a malevolent force leaves your %s.", buf2);
+                    messageWithColor(buf, &itemMessageColor, 0);
+                    tempItem->flags &= ~ITEM_CURSED;
+                }
+            } else {
+                message("a protective golden light surrounds you, but it quickly disperses.", 0);
             }
-        } else {
-            message("a protective golden light surrounds you, but it quickly disperses.", 0);
-        }
-        createFlare(player.loc.x, player.loc.y, SCROLL_PROTECTION_LIGHT);
-        break;
-    case SCROLL_PROTECT_WEAPON:
-        if (rogue.weapon) {
-            tempItem = rogue.weapon;
-            tempItem->flags |= ITEM_PROTECTED;
-            itemName(tempItem, buf2, false, false, NULL);
-            sprintf(buf, "a protective golden light covers your %s.", buf2);
-            messageWithColor(buf, &itemMessageColor, 0);
-            if (tempItem->flags & ITEM_CURSED) {
-                sprintf(buf, "a malevolent force leaves your %s.", buf2);
+            createFlare(player.loc.x, player.loc.y, SCROLL_PROTECTION_LIGHT);
+            break;
+        case SCROLL_PROTECT_WEAPON:
+            if (rogue.weapon) {
+                tempItem = rogue.weapon;
+                tempItem->flags |= ITEM_PROTECTED;
+                itemName(tempItem, buf2, false, false, NULL);
+                sprintf(buf, "a protective golden light covers your %s.", buf2);
                 messageWithColor(buf, &itemMessageColor, 0);
-                tempItem->flags &= ~ITEM_CURSED;
-            }
-            if (rogue.weapon->quiverNumber) {
-                rogue.weapon->quiverNumber = rand_range(1, 60000);
-            }
-        } else {
-            message("a protective golden light covers your empty hands, but it quickly disperses.", 0);
-        }
-        createFlare(player.loc.x, player.loc.y, SCROLL_PROTECTION_LIGHT);
-        break;
-    case SCROLL_SANCTUARY:
-        spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_SACRED_GLYPHS], true, false);
-        messageWithColor("sprays of color arc to the ground, forming glyphs where they alight.", &itemMessageColor, 0);
-        break;
-    case SCROLL_MAGIC_MAPPING:
-        confirmMessages();
-        messageWithColor("this scroll has a map on it!", &itemMessageColor, 0);
-        for (i = 0; i < DCOLS; i++) {
-            for (j = 0; j < DROWS; j++) {
-                if (cellHasTMFlag(i, j, TM_IS_SECRET)) {
-                    discover(i, j);
-                    magicMapCell(i, j);
-                    pmap[i][j].flags &= ~(STABLE_MEMORY | DISCOVERED);
+                if (tempItem->flags & ITEM_CURSED) {
+                    sprintf(buf, "a malevolent force leaves your %s.", buf2);
+                    messageWithColor(buf, &itemMessageColor, 0);
+                    tempItem->flags &= ~ITEM_CURSED;
                 }
-            }
-        }
-        for (i = 0; i < DCOLS; i++) {
-            for (j = 0; j < DROWS; j++) {
-                if (!(pmap[i][j].flags & DISCOVERED) && pmap[i][j].layers[DUNGEON] != GRANITE) {
-                    magicMapCell(i, j);
+                if (rogue.weapon->quiverNumber) {
+                    rogue.weapon->quiverNumber = rand_range(1, 60000);
                 }
+            } else {
+                message("a protective golden light covers your empty hands, but it quickly disperses.", 0);
             }
-        }
-        for (i = 0; i < DCOLS; i++) {
-            for (j = 0; j < DROWS; j++) {
-                if (!(cellHasTerrainFlag(i, j, T_IS_DF_TRAP))) {
-                    pmap[i][j].flags |= KNOWN_TO_BE_TRAP_FREE;
-                }
-            }
-        }
-        colorFlash(&magicMapFlashColor, 0, MAGIC_MAPPED, 15, DCOLS + DROWS, player.loc.x, player.loc.y);
-        break;
-    case SCROLL_AGGRAVATE_MONSTER:
-        aggravateMonsters(DCOLS + DROWS, player.loc.x, player.loc.y, &gray);
-        message("the scroll emits a piercing shriek that echoes throughout the dungeon!", 0);
-        break;
-    case SCROLL_SUMMON_MONSTER:
-        for (j = 0; j < 25 && numberOfMonsters < 3; j++) {
-            for (i = 0; i < 8; i++) {
-                x = player.loc.x + nbDirs[i][0];
-                y = player.loc.y + nbDirs[i][1];
-                if (!cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY) && !(pmap[x][y].flags & HAS_MONSTER) && rand_percent(10) && (numberOfMonsters < 3)) {
-                    monst = spawnHorde(0, x, y, (HORDE_LEADER_CAPTIVE | HORDE_NO_PERIODIC_SPAWN | HORDE_IS_SUMMONED | HORDE_MACHINE_ONLY), 0);
-                    if (monst) {
-                        // refreshDungeonCell(x, y);
-                        // monst->creatureState = MONSTER_TRACKING_SCENT;
-                        // monst->ticksUntilTurn = player.movementSpeed;
-                        wakeUp(monst);
-                        fadeInMonster(monst);
-                        numberOfMonsters++;
+            createFlare(player.loc.x, player.loc.y, SCROLL_PROTECTION_LIGHT);
+            break;
+        case SCROLL_SANCTUARY:
+            spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_SACRED_GLYPHS], true, false);
+            messageWithColor("sprays of color arc to the ground, forming glyphs where they alight.", &itemMessageColor, 0);
+            break;
+        case SCROLL_MAGIC_MAPPING:
+            confirmMessages();
+            messageWithColor("this scroll has a map on it!", &itemMessageColor, 0);
+            for (i = 0; i < DCOLS; i++) {
+                for (j = 0; j < DROWS; j++) {
+                    if (cellHasTMFlag(i, j, TM_IS_SECRET)) {
+                        discover(i, j);
+                        magicMapCell(i, j);
+                        pmap[i][j].flags &= ~(STABLE_MEMORY | DISCOVERED);
                     }
                 }
             }
-        }
-        if (numberOfMonsters > 1) {
-            message("the fabric of space ripples, and monsters appear!", 0);
-        } else if (numberOfMonsters == 1) {
-            message("the fabric of space ripples, and a monster appears!", 0);
-        } else {
-            message("the fabric of space boils violently around you, but nothing happens.", 0);
-        }
-        break;
-    case SCROLL_NEGATION:
-        negationBlast("the scroll", DCOLS);
-        break;
-    case SCROLL_SHATTERING:
-        messageWithColor("the scroll emits a wave of turquoise light that pierces the nearby walls!", &itemMessageColor, 0);
-        crystalize(9);
-        break;
-    case SCROLL_DISCORD:
-        discordBlast("the scroll", DCOLS);
-        break;
+            for (i = 0; i < DCOLS; i++) {
+                for (j = 0; j < DROWS; j++) {
+                    if (!(pmap[i][j].flags & DISCOVERED) && pmap[i][j].layers[DUNGEON] != GRANITE) {
+                        magicMapCell(i, j);
+                    }
+                }
+            }
+            for (i = 0; i < DCOLS; i++) {
+                for (j = 0; j < DROWS; j++) {
+                    if (!(cellHasTerrainFlag(i, j, T_IS_DF_TRAP))) {
+                        pmap[i][j].flags |= KNOWN_TO_BE_TRAP_FREE;
+                    }
+                }
+            }
+            colorFlash(&magicMapFlashColor, 0, MAGIC_MAPPED, 15, DCOLS + DROWS, player.loc.x, player.loc.y);
+            break;
+        case SCROLL_AGGRAVATE_MONSTER:
+            aggravateMonsters(DCOLS + DROWS, player.loc.x, player.loc.y, &gray);
+            message("the scroll emits a piercing shriek that echoes throughout the dungeon!", 0);
+            break;
+        case SCROLL_SUMMON_MONSTER:
+            for (j = 0; j < 25 && numberOfMonsters < 3; j++) {
+                for (i = 0; i < 8; i++) {
+                    x = player.loc.x + nbDirs[i][0];
+                    y = player.loc.y + nbDirs[i][1];
+                    if (!cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY) && !(pmap[x][y].flags & HAS_MONSTER) && rand_percent(10) && (numberOfMonsters < 3)) {
+                        monst = spawnHorde(0, x, y, (HORDE_LEADER_CAPTIVE | HORDE_NO_PERIODIC_SPAWN | HORDE_IS_SUMMONED | HORDE_MACHINE_ONLY), 0);
+                        if (monst) {
+                            // refreshDungeonCell(x, y);
+                            // monst->creatureState = MONSTER_TRACKING_SCENT;
+                            // monst->ticksUntilTurn = player.movementSpeed;
+                            wakeUp(monst);
+                            fadeInMonster(monst);
+                            numberOfMonsters++;
+                        }
+                    }
+                }
+            }
+            if (numberOfMonsters > 1) {
+                message("the fabric of space ripples, and monsters appear!", 0);
+            } else if (numberOfMonsters == 1) {
+                message("the fabric of space ripples, and a monster appears!", 0);
+            } else {
+                message("the fabric of space boils violently around you, but nothing happens.", 0);
+            }
+            break;
+        case SCROLL_NEGATION:
+            negationBlast("the scroll", DCOLS);
+            break;
+        case SCROLL_SHATTERING:
+            messageWithColor("the scroll emits a wave of turquoise light that pierces the nearby walls!", &itemMessageColor, 0);
+            crystalize(9);
+            break;
+        case SCROLL_DISCORD:
+            discordBlast("the scroll", DCOLS);
+            break;
     }
 }
 
@@ -6631,143 +6633,143 @@ void drinkPotion(item *theItem) {
     itemTable potionTable = tableForItemCategory(theItem->category)[theItem->kind];
 
     switch (theItem->kind) {
-    case POTION_LIFE:
-        magnitude = randClump(potionTable.range);
-        sprintf(buf, "%syour maximum health increases by %i%%.", ((player.currentHP < player.info.maxHP) ? "you heal completely and " : ""), (player.info.maxHP + magnitude) * 100 / player.info.maxHP - 100);
+        case POTION_LIFE:
+            magnitude = randClump(potionTable.range);
+            sprintf(buf, "%syour maximum health increases by %i%%.", ((player.currentHP < player.info.maxHP) ? "you heal completely and " : ""), (player.info.maxHP + magnitude) * 100 / player.info.maxHP - 100);
 
-        player.info.maxHP += magnitude;
-        heal(&player, 100, true);
-        updatePlayerRegenerationDelay();
-        messageWithColor(buf, &advancementMessageColor, 0);
-        break;
-    case POTION_HALLUCINATION:
-        magnitude = randClump(potionTable.range);
-        player.status[STATUS_HALLUCINATING] = player.maxStatus[STATUS_HALLUCINATING] = magnitude;
-        message("colors are everywhere! The walls are singing!", 0);
-        break;
-    case POTION_INCINERATION:
-        // colorFlash(&darkOrange, 0, IN_FIELD_OF_VIEW, 4, 4, player.loc.x, player.loc.y);
-        message("as you uncork the flask, it explodes in flame!", 0);
-        spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_INCINERATION_POTION], true, false);
-        exposeCreatureToFire(&player);
-        break;
-    case POTION_DARKNESS:
-        magnitude = randClump(potionTable.range);
-        player.status[STATUS_DARKNESS] = max(magnitude, player.status[STATUS_DARKNESS]);
-        player.maxStatus[STATUS_DARKNESS] = max(magnitude, player.maxStatus[STATUS_DARKNESS]);
-        updateMinersLightRadius();
-        updateVision(true);
-        message("your vision flickers as a cloak of darkness settles around you!", 0);
-        break;
-    case POTION_DESCENT:
-        colorFlash(&darkBlue, 0, IN_FIELD_OF_VIEW, 3, 3, player.loc.x, player.loc.y);
-        message("vapor pours out of the flask and causes the floor to disappear!", 0);
-        spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_HOLE_POTION], true, false);
-        if (!player.status[STATUS_LEVITATING]) {
-            player.bookkeepingFlags |= MB_IS_FALLING;
-        }
-        break;
-    case POTION_STRENGTH:
-        magnitude = randClump(potionTable.range);
-        rogue.strength += magnitude;
-        if (player.status[STATUS_WEAKENED]) {
-            player.status[STATUS_WEAKENED] = 1;
-        }
-        updateEncumbrance();
-        messageWithColor("newfound strength surges through your body.", &advancementMessageColor, 0);
-        createFlare(player.loc.x, player.loc.y, POTION_STRENGTH_LIGHT);
-        break;
-    case POTION_POISON:
-        spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_POISON_GAS_CLOUD_POTION], true, false);
-        message("caustic gas billows out of the open flask!", 0);
-        break;
-    case POTION_PARALYSIS:
-        spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_PARALYSIS_GAS_CLOUD_POTION], true, false);
-        message("your muscles stiffen as a cloud of pink gas bursts from the open flask!", 0);
-        break;
-    case POTION_TELEPATHY:
-        magnitude = randClump(potionTable.range);
-        makePlayerTelepathic(magnitude);
-        break;
-    case POTION_LEVITATION:
-        magnitude = randClump(potionTable.range);
-        player.status[STATUS_LEVITATING] = player.maxStatus[STATUS_LEVITATING] = magnitude;
-        player.bookkeepingFlags &= ~MB_SEIZED; // break free of holding monsters
-        message("you float into the air!", 0);
-        break;
-    case POTION_CONFUSION:
-        spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_CONFUSION_GAS_CLOUD_POTION], true, false);
-        message("a shimmering cloud of rainbow-colored gas billows out of the open flask!", 0);
-        break;
-    case POTION_LICHEN:
-        message("a handful of tiny spores burst out of the open flask!", 0);
-        spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_LICHEN_PLANTED], true, false);
-        break;
-    case POTION_DETECT_MAGIC:
-        hadEffect = false;
-        hadEffect2 = false;
-        for (tempItem = floorItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
-            if (tempItem->category & CAN_BE_DETECTED) {
-                detectMagicOnItem(tempItem);
-                if (itemMagicPolarity(tempItem)) {
-                    pmapAt(tempItem->loc)->flags |= ITEM_DETECTED;
-                    hadEffect = true;
-                    refreshDungeonCell(tempItem->loc.x, tempItem->loc.y);
-                }
+            player.info.maxHP += magnitude;
+            heal(&player, 100, true);
+            updatePlayerRegenerationDelay();
+            messageWithColor(buf, &advancementMessageColor, 0);
+            break;
+        case POTION_HALLUCINATION:
+            magnitude = randClump(potionTable.range);
+            player.status[STATUS_HALLUCINATING] = player.maxStatus[STATUS_HALLUCINATING] = magnitude;
+            message("colors are everywhere! The walls are singing!", 0);
+            break;
+        case POTION_INCINERATION:
+            // colorFlash(&darkOrange, 0, IN_FIELD_OF_VIEW, 4, 4, player.loc.x, player.loc.y);
+            message("as you uncork the flask, it explodes in flame!", 0);
+            spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_INCINERATION_POTION], true, false);
+            exposeCreatureToFire(&player);
+            break;
+        case POTION_DARKNESS:
+            magnitude = randClump(potionTable.range);
+            player.status[STATUS_DARKNESS] = max(magnitude, player.status[STATUS_DARKNESS]);
+            player.maxStatus[STATUS_DARKNESS] = max(magnitude, player.maxStatus[STATUS_DARKNESS]);
+            updateMinersLightRadius();
+            updateVision(true);
+            message("your vision flickers as a cloak of darkness settles around you!", 0);
+            break;
+        case POTION_DESCENT:
+            colorFlash(&darkBlue, 0, IN_FIELD_OF_VIEW, 3, 3, player.loc.x, player.loc.y);
+            message("vapor pours out of the flask and causes the floor to disappear!", 0);
+            spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_HOLE_POTION], true, false);
+            if (!player.status[STATUS_LEVITATING]) {
+                player.bookkeepingFlags |= MB_IS_FALLING;
             }
-        }
-        for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
-            creature *monst = nextCreature(&it);
-            if (monst->carriedItem && (monst->carriedItem->category & CAN_BE_DETECTED)) {
-                detectMagicOnItem(monst->carriedItem);
-                if (itemMagicPolarity(monst->carriedItem)) {
-                    hadEffect = true;
-                    refreshDungeonCell(monst->loc.x, monst->loc.y);
-                }
+            break;
+        case POTION_STRENGTH:
+            magnitude = randClump(potionTable.range);
+            rogue.strength += magnitude;
+            if (player.status[STATUS_WEAKENED]) {
+                player.status[STATUS_WEAKENED] = 1;
             }
-        }
-        for (tempItem = packItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
-            if (tempItem->category & CAN_BE_DETECTED) {
-                detectMagicOnItem(tempItem);
-                if (itemMagicPolarity(tempItem)) {
-                    if (tempItem->flags & ITEM_MAGIC_DETECTED) {
-                        hadEffect2 = true;
+            updateEncumbrance();
+            messageWithColor("newfound strength surges through your body.", &advancementMessageColor, 0);
+            createFlare(player.loc.x, player.loc.y, POTION_STRENGTH_LIGHT);
+            break;
+        case POTION_POISON:
+            spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_POISON_GAS_CLOUD_POTION], true, false);
+            message("caustic gas billows out of the open flask!", 0);
+            break;
+        case POTION_PARALYSIS:
+            spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_PARALYSIS_GAS_CLOUD_POTION], true, false);
+            message("your muscles stiffen as a cloud of pink gas bursts from the open flask!", 0);
+            break;
+        case POTION_TELEPATHY:
+            magnitude = randClump(potionTable.range);
+            makePlayerTelepathic(magnitude);
+            break;
+        case POTION_LEVITATION:
+            magnitude = randClump(potionTable.range);
+            player.status[STATUS_LEVITATING] = player.maxStatus[STATUS_LEVITATING] = magnitude;
+            player.bookkeepingFlags &= ~MB_SEIZED; // break free of holding monsters
+            message("you float into the air!", 0);
+            break;
+        case POTION_CONFUSION:
+            spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_CONFUSION_GAS_CLOUD_POTION], true, false);
+            message("a shimmering cloud of rainbow-colored gas billows out of the open flask!", 0);
+            break;
+        case POTION_LICHEN:
+            message("a handful of tiny spores burst out of the open flask!", 0);
+            spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_LICHEN_PLANTED], true, false);
+            break;
+        case POTION_DETECT_MAGIC:
+            hadEffect = false;
+            hadEffect2 = false;
+            for (tempItem = floorItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
+                if (tempItem->category & CAN_BE_DETECTED) {
+                    detectMagicOnItem(tempItem);
+                    if (itemMagicPolarity(tempItem)) {
+                        pmapAt(tempItem->loc)->flags |= ITEM_DETECTED;
+                        hadEffect = true;
+                        refreshDungeonCell(tempItem->loc.x, tempItem->loc.y);
                     }
                 }
             }
-        }
-        if (hadEffect || hadEffect2) {
-            tryIdentifyLastItemKinds(HAS_INTRINSIC_POLARITY);
-            if (hadEffect && hadEffect2) {
-                message("you can somehow feel the presence of magic on the level and in your pack.", 0);
-            } else if (hadEffect) {
-                message("you can somehow feel the presence of magic on the level.", 0);
-            } else {
-                message("you can somehow feel the presence of magic in your pack.", 0);
+            for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
+                creature *monst = nextCreature(&it);
+                if (monst->carriedItem && (monst->carriedItem->category & CAN_BE_DETECTED)) {
+                    detectMagicOnItem(monst->carriedItem);
+                    if (itemMagicPolarity(monst->carriedItem)) {
+                        hadEffect = true;
+                        refreshDungeonCell(monst->loc.x, monst->loc.y);
+                    }
+                }
             }
-        } else {
-            message("you can somehow feel the absence of magic on the level and in your pack.", 0);
-        }
-        break;
-    case POTION_HASTE_SELF:
-        magnitude = randClump(potionTable.range);
-        haste(&player, magnitude);
-        break;
-    case POTION_FIRE_IMMUNITY:
-        magnitude = randClump(potionTable.range);
-        player.status[STATUS_IMMUNE_TO_FIRE] = player.maxStatus[STATUS_IMMUNE_TO_FIRE] = magnitude;
-        if (player.status[STATUS_BURNING]) {
-            extinguishFireOnCreature(&player);
-        }
-        message("a comforting breeze envelops you, and you no longer fear fire.", 0);
-        break;
-    case POTION_INVISIBILITY:
-        magnitude = randClump(potionTable.range);
-        player.status[STATUS_INVISIBLE] = player.maxStatus[STATUS_INVISIBLE] = magnitude;
-        message("you shiver as a chill runs up your spine.", 0);
-        break;
-    default:
-        message("you feel very strange, as though your body doesn't know how to react!", REQUIRE_ACKNOWLEDGMENT);
+            for (tempItem = packItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
+                if (tempItem->category & CAN_BE_DETECTED) {
+                    detectMagicOnItem(tempItem);
+                    if (itemMagicPolarity(tempItem)) {
+                        if (tempItem->flags & ITEM_MAGIC_DETECTED) {
+                            hadEffect2 = true;
+                        }
+                    }
+                }
+            }
+            if (hadEffect || hadEffect2) {
+                tryIdentifyLastItemKinds(HAS_INTRINSIC_POLARITY);
+                if (hadEffect && hadEffect2) {
+                    message("you can somehow feel the presence of magic on the level and in your pack.", 0);
+                } else if (hadEffect) {
+                    message("you can somehow feel the presence of magic on the level.", 0);
+                } else {
+                    message("you can somehow feel the presence of magic in your pack.", 0);
+                }
+            } else {
+                message("you can somehow feel the absence of magic on the level and in your pack.", 0);
+            }
+            break;
+        case POTION_HASTE_SELF:
+            magnitude = randClump(potionTable.range);
+            haste(&player, magnitude);
+            break;
+        case POTION_FIRE_IMMUNITY:
+            magnitude = randClump(potionTable.range);
+            player.status[STATUS_IMMUNE_TO_FIRE] = player.maxStatus[STATUS_IMMUNE_TO_FIRE] = magnitude;
+            if (player.status[STATUS_BURNING]) {
+                extinguishFireOnCreature(&player);
+            }
+            message("a comforting breeze envelops you, and you no longer fear fire.", 0);
+            break;
+        case POTION_INVISIBILITY:
+            magnitude = randClump(potionTable.range);
+            player.status[STATUS_INVISIBLE] = player.maxStatus[STATUS_INVISIBLE] = magnitude;
+            message("you shiver as a chill runs up your spine.", 0);
+            break;
+        default:
+            message("you feel very strange, as though your body doesn't know how to react!", REQUIRE_ACKNOWLEDGMENT);
     }
 }
 
@@ -6776,48 +6778,48 @@ short magicCharDiscoverySuffix(short category, short kind) {
     short result = 0;
 
     switch (category) {
-    case SCROLL:
-        switch (kind) {
-        case SCROLL_AGGRAVATE_MONSTER:
-        case SCROLL_SUMMON_MONSTER:
-            result = -1;
+        case SCROLL:
+            switch (kind) {
+                case SCROLL_AGGRAVATE_MONSTER:
+                case SCROLL_SUMMON_MONSTER:
+                    result = -1;
+                    break;
+                default:
+                    result = 1;
+                    break;
+            }
             break;
-        default:
+        case POTION:
+            switch (kind) {
+                case POTION_HALLUCINATION:
+                case POTION_INCINERATION:
+                case POTION_DESCENT:
+                case POTION_POISON:
+                case POTION_PARALYSIS:
+                case POTION_CONFUSION:
+                case POTION_LICHEN:
+                case POTION_DARKNESS:
+                    result = -1;
+                    break;
+                default:
+                    result = 1;
+                    break;
+            }
+            break;
+        case WAND:
+        case STAFF:
+            if (boltCatalog[tableForItemCategory(category)[kind].strengthRequired].flags & (BF_TARGET_ALLIES)) {
+                result = -1;
+            } else {
+                result = 1;
+            }
+            break;
+        case RING:
+            result = 0;
+            break;
+        case CHARM:
             result = 1;
             break;
-        }
-        break;
-    case POTION:
-        switch (kind) {
-        case POTION_HALLUCINATION:
-        case POTION_INCINERATION:
-        case POTION_DESCENT:
-        case POTION_POISON:
-        case POTION_PARALYSIS:
-        case POTION_CONFUSION:
-        case POTION_LICHEN:
-        case POTION_DARKNESS:
-            result = -1;
-            break;
-        default:
-            result = 1;
-            break;
-        }
-        break;
-    case WAND:
-    case STAFF:
-        if (boltCatalog[tableForItemCategory(category)[kind].strengthRequired].flags & (BF_TARGET_ALLIES)) {
-            result = -1;
-        } else {
-            result = 1;
-        }
-        break;
-    case RING:
-        result = 0;
-        break;
-    case CHARM:
-        result = 1;
-        break;
     }
     return result;
 }
@@ -6829,35 +6831,35 @@ short magicCharDiscoverySuffix(short category, short kind) {
 int itemMagicPolarity(item *theItem) {
     itemTable *theItemTable = tableForItemCategory(theItem->category);
     switch (theItem->category) {
-    case WEAPON:
-    case ARMOR:
-        if ((theItem->flags & ITEM_CURSED) || theItem->enchant1 < 0) {
-            return MAGIC_POLARITY_MALEVOLENT;
-        } else if (theItem->enchant1 > 0) {
-            return MAGIC_POLARITY_BENEVOLENT;
-        }
-        return MAGIC_POLARITY_NEUTRAL;
-    case WAND:
-        if (theItem->charges == 0) {
+        case WEAPON:
+        case ARMOR:
+            if ((theItem->flags & ITEM_CURSED) || theItem->enchant1 < 0) {
+                return MAGIC_POLARITY_MALEVOLENT;
+            } else if (theItem->enchant1 > 0) {
+                return MAGIC_POLARITY_BENEVOLENT;
+            }
             return MAGIC_POLARITY_NEUTRAL;
-        }
-    case SCROLL:
-    case POTION:
-    case CHARM:
-    case STAFF:
-        return theItemTable[theItem->kind].magicPolarity;
-    case RING:
-        if (theItem->flags & ITEM_CURSED || theItem->enchant1 < 0) {
-            return MAGIC_POLARITY_MALEVOLENT;
-        } else if (theItem->enchant1 > 0) {
+        case WAND:
+            if (theItem->charges == 0) {
+                return MAGIC_POLARITY_NEUTRAL;
+            }
+        case SCROLL:
+        case POTION:
+        case CHARM:
+        case STAFF:
+            return theItemTable[theItem->kind].magicPolarity;
+        case RING:
+            if (theItem->flags & ITEM_CURSED || theItem->enchant1 < 0) {
+                return MAGIC_POLARITY_MALEVOLENT;
+            } else if (theItem->enchant1 > 0) {
+                return MAGIC_POLARITY_BENEVOLENT;
+            } else {
+                return MAGIC_POLARITY_NEUTRAL;
+            }
+        case AMULET:
             return MAGIC_POLARITY_BENEVOLENT;
-        } else {
+        default:
             return MAGIC_POLARITY_NEUTRAL;
-        }
-    case AMULET:
-        return MAGIC_POLARITY_BENEVOLENT;
-    default:
-        return MAGIC_POLARITY_NEUTRAL;
     }
 }
 
@@ -7135,18 +7137,18 @@ boolean equipItem(item *theItem, boolean force, item *unequipHint) {
         if (theItem->flags & ITEM_CURSED) {
             itemName(theItem, buf2, false, false, NULL);
             switch (theItem->category) {
-            case WEAPON:
-                sprintf(buf1, "you wince as your grip involuntarily tightens around your %s.", buf2);
-                break;
-            case ARMOR:
-                sprintf(buf1, "your %s constricts around you painfully.", buf2);
-                break;
-            case RING:
-                sprintf(buf1, "your %s tightens around your finger painfully.", buf2);
-                break;
-            default:
-                sprintf(buf1, "your %s seizes you with a malevolent force.", buf2);
-                break;
+                case WEAPON:
+                    sprintf(buf1, "you wince as your grip involuntarily tightens around your %s.", buf2);
+                    break;
+                case ARMOR:
+                    sprintf(buf1, "your %s constricts around you painfully.", buf2);
+                    break;
+                case RING:
+                    sprintf(buf1, "your %s tightens around your finger painfully.", buf2);
+                    break;
+                default:
+                    sprintf(buf1, "your %s seizes you with a malevolent force.", buf2);
+                    break;
             }
             messageWithColor(buf1, &itemMessageColor, 0);
         }
@@ -7209,30 +7211,30 @@ void updateRingBonuses() {
     for (i = 0; i <= 1; i++) {
         if (rings[i]) {
             switch (rings[i]->kind) {
-            case RING_CLAIRVOYANCE:
-                rogue.clairvoyance += effectiveRingEnchant(rings[i]);
-                break;
-            case RING_STEALTH:
-                rogue.stealthBonus += effectiveRingEnchant(rings[i]);
-                break;
-            case RING_REGENERATION:
-                rogue.regenerationBonus += effectiveRingEnchant(rings[i]);
-                break;
-            case RING_TRANSFERENCE:
-                rogue.transference += effectiveRingEnchant(rings[i]);
-                break;
-            case RING_LIGHT:
-                rogue.lightMultiplier += effectiveRingEnchant(rings[i]);
-                break;
-            case RING_AWARENESS:
-                rogue.awarenessBonus += 20 * effectiveRingEnchant(rings[i]);
-                break;
-            case RING_WISDOM:
-                rogue.wisdomBonus += effectiveRingEnchant(rings[i]);
-                break;
-            case RING_REAPING:
-                rogue.reaping += effectiveRingEnchant(rings[i]);
-                break;
+                case RING_CLAIRVOYANCE:
+                    rogue.clairvoyance += effectiveRingEnchant(rings[i]);
+                    break;
+                case RING_STEALTH:
+                    rogue.stealthBonus += effectiveRingEnchant(rings[i]);
+                    break;
+                case RING_REGENERATION:
+                    rogue.regenerationBonus += effectiveRingEnchant(rings[i]);
+                    break;
+                case RING_TRANSFERENCE:
+                    rogue.transference += effectiveRingEnchant(rings[i]);
+                    break;
+                case RING_LIGHT:
+                    rogue.lightMultiplier += effectiveRingEnchant(rings[i]);
+                    break;
+                case RING_AWARENESS:
+                    rogue.awarenessBonus += 20 * effectiveRingEnchant(rings[i]);
+                    break;
+                case RING_WISDOM:
+                    rogue.wisdomBonus += effectiveRingEnchant(rings[i]);
+                    break;
+                case RING_REAPING:
+                    rogue.reaping += effectiveRingEnchant(rings[i]);
+                    break;
             }
         }
     }
@@ -7373,14 +7375,14 @@ void shuffleFlavors() {
 
 unsigned long itemValue(item *theItem) {
     switch (theItem->category) {
-    case AMULET:
-        return 35000;
-        break;
-    case GEM:
-        return 5000 * theItem->quantity;
-        break;
-    default:
-        return 0;
-        break;
+        case AMULET:
+            return 35000;
+            break;
+        case GEM:
+            return 5000 * theItem->quantity;
+            break;
+        default:
+            return 0;
+            break;
     }
 }

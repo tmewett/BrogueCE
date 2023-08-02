@@ -2169,44 +2169,44 @@ void designRandomRoom(short **grid, boolean attachHallway, pos doorSites[4], con
         }
     }
     switch (i) {
-    case 0:
-        designCrossRoom(grid);
-        break;
-    case 1:
-        designSymmetricalCrossRoom(grid);
-        break;
-    case 2:
-        designSmallRoom(grid);
-        break;
-    case 3:
-        designCircularRoom(grid);
-        break;
-    case 4:
-        designChunkyRoom(grid);
-        break;
-    case 5:
-        switch (rand_range(0, 2)) {
         case 0:
-            designCavern(grid, 3, 12, 4, 8); // Compact cave room.
+            designCrossRoom(grid);
             break;
         case 1:
-            designCavern(grid, 3, 12, 15, DROWS - 2); // Large north-south cave room.
+            designSymmetricalCrossRoom(grid);
             break;
         case 2:
-            designCavern(grid, 20, DROWS - 2, 4, 8); // Large east-west cave room.
+            designSmallRoom(grid);
+            break;
+        case 3:
+            designCircularRoom(grid);
+            break;
+        case 4:
+            designChunkyRoom(grid);
+            break;
+        case 5:
+            switch (rand_range(0, 2)) {
+                case 0:
+                    designCavern(grid, 3, 12, 4, 8); // Compact cave room.
+                    break;
+                case 1:
+                    designCavern(grid, 3, 12, 15, DROWS - 2); // Large north-south cave room.
+                    break;
+                case 2:
+                    designCavern(grid, 20, DROWS - 2, 4, 8); // Large east-west cave room.
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case 6:
+            designCavern(grid, CAVE_MIN_WIDTH, DCOLS - 2, CAVE_MIN_HEIGHT, DROWS - 2);
+            break;
+        case 7:
+            designEntranceRoom(grid);
             break;
         default:
             break;
-        }
-        break;
-    case 6:
-        designCavern(grid, CAVE_MIN_WIDTH, DCOLS - 2, CAVE_MIN_HEIGHT, DROWS - 2);
-        break;
-    case 7:
-        designEntranceRoom(grid);
-        break;
-    default:
-        break;
     }
 
     if (doorSites) {
@@ -2401,26 +2401,26 @@ void liquidType(short *deep, short *shallow, short *shallowWidth) {
     }
 
     switch (rand) {
-    case 0:
-        *deep = LAVA;
-        *shallow = NOTHING;
-        *shallowWidth = 0;
-        break;
-    case 1:
-        *deep = DEEP_WATER;
-        *shallow = SHALLOW_WATER;
-        *shallowWidth = 2;
-        break;
-    case 2:
-        *deep = CHASM;
-        *shallow = CHASM_EDGE;
-        *shallowWidth = 1;
-        break;
-    case 3:
-        *deep = INERT_BRIMSTONE;
-        *shallow = OBSIDIAN;
-        *shallowWidth = 2;
-        break;
+        case 0:
+            *deep = LAVA;
+            *shallow = NOTHING;
+            *shallowWidth = 0;
+            break;
+        case 1:
+            *deep = DEEP_WATER;
+            *shallow = SHALLOW_WATER;
+            *shallowWidth = 2;
+            break;
+        case 2:
+            *deep = CHASM;
+            *shallow = CHASM_EDGE;
+            *shallowWidth = 1;
+            break;
+        case 3:
+            *deep = INERT_BRIMSTONE;
+            *shallow = OBSIDIAN;
+            *shallowWidth = 2;
+            break;
     }
 }
 
@@ -2931,26 +2931,26 @@ void zeroOutGrid(char grid[DCOLS][DROWS]) {
 
 short oppositeDirection(short theDir) {
     switch (theDir) {
-    case UP:
-        return DOWN;
-    case DOWN:
-        return UP;
-    case LEFT:
-        return RIGHT;
-    case RIGHT:
-        return LEFT;
-    case UPRIGHT:
-        return DOWNLEFT;
-    case DOWNLEFT:
-        return UPRIGHT;
-    case UPLEFT:
-        return DOWNRIGHT;
-    case DOWNRIGHT:
-        return UPLEFT;
-    case NO_DIRECTION:
-        return NO_DIRECTION;
-    default:
-        return -1;
+        case UP:
+            return DOWN;
+        case DOWN:
+            return UP;
+        case LEFT:
+            return RIGHT;
+        case RIGHT:
+            return LEFT;
+        case UPRIGHT:
+            return DOWNLEFT;
+        case DOWNLEFT:
+            return UPRIGHT;
+        case UPLEFT:
+            return DOWNRIGHT;
+        case DOWNRIGHT:
+            return UPLEFT;
+        case NO_DIRECTION:
+            return NO_DIRECTION;
+        default:
+            return -1;
     }
 }
 
