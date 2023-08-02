@@ -1,5 +1,7 @@
 include config.mk
 
+FORMATTER_EXCLUSION_LIST := "src/brogue/Globals.c" "src/variants/GlobalsRapidBrogue.c" "src/variants/GlobalsBrogue.c"
+
 cflags := -Isrc/brogue -Isrc/platform -Isrc/variants -std=c99 \
 	-Wall -Wpedantic -Werror=implicit -Wno-parentheses -Wno-unused-result \
 	-Wformat -Werror=format-security -Wformat-overflow=0
@@ -78,6 +80,9 @@ include make/*.mk
 clean:
 	$(warning 'make clean' is no longer needed in many situations, so is not supported. Use 'make -B' to force rebuild something.)
 
+format:
+	@./formatter.sh src $(FORMATTER_EXCLUSION_LIST)
+
 escape = $(subst ','\'',$(1))
 vars:
 	mkdir -p vars
@@ -86,5 +91,6 @@ vars/%: vars FORCE
 	@echo '$(call escape,$($*))' > vars/$*.tmp
 	@if cmp --quiet vars/$*.tmp vars/$*; then :; else cp vars/$*.tmp vars/$*; fi
 
+.PHONY: format
 
 FORCE:
