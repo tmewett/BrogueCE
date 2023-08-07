@@ -62,8 +62,7 @@ item *initializeItem() {
     theItem->nextItem = NULL;
 
     for (i=0; i < KEY_ID_MAXIMUM; i++) {
-        theItem->keyLoc[i].x = 0;
-        theItem->keyLoc[i].y = 0;
+        theItem->keyLoc[i].loc = (pos){ 0, 0 };
         theItem->keyLoc[i].machine = 0;
         theItem->keyLoc[i].disposableHere = false;
     }
@@ -363,16 +362,14 @@ short chooseKind(const itemTable *theTable, short numKinds) {
 }
 
 // Places an item at (x,y) if provided or else a random location if they're 0. Inserts item into the floor list.
-item *placeItem(item *theItem, short x, short y) {
+item *placeItemAt(item *theItem, pos dest) {
     enum dungeonLayers layer;
     char theItemName[DCOLS], buf[DCOLS];
-    if (x <= 0 || y <= 0) {
-        pos loc;
-        randomMatchingLocation(&loc.x, &loc.y, FLOOR, NOTHING, -1);
-        theItem->loc = loc;
+    if (!isPosInMap(dest)) {
+        randomMatchingLocation(&dest.x, &dest.y, FLOOR, NOTHING, -1);
+        theItem->loc = dest;
     } else {
-        theItem->loc.x = x;
-        theItem->loc.y = y;
+        theItem->loc = dest;
     }
 
     removeItemFromChain(theItem, floorItems); // just in case; double-placing an item will result in game-crashing loops in the item list
@@ -381,72 +378,68 @@ item *placeItem(item *theItem, short x, short y) {
     if ((theItem->flags & ITEM_MAGIC_DETECTED) && itemMagicPolarity(theItem)) {
         pmapAt(theItem->loc)->flags |= ITEM_DETECTED;
     }
-    if (cellHasTerrainFlag(x, y, T_IS_DF_TRAP)
-        && !cellHasTerrainFlag(x, y, T_MOVES_ITEMS)
-        && !(pmap[x][y].flags & PRESSURE_PLATE_DEPRESSED)) {
+    if (cellHasTerrainFlag(dest.x, dest.y, T_IS_DF_TRAP)
+        && !cellHasTerrainFlag(dest.x, dest.y, T_MOVES_ITEMS)
+        && !(pmapAt(dest)->flags & PRESSURE_PLATE_DEPRESSED)) {
 
-        pmap[x][y].flags |= PRESSURE_PLATE_DEPRESSED;
-        if (playerCanSee(x, y)) {
-            if (cellHasTMFlag(x, y, TM_IS_SECRET)) {
-                discover(x, y);
-                refreshDungeonCell(x, y);
+        pmapAt(dest)->flags |= PRESSURE_PLATE_DEPRESSED;
+        if (playerCanSee(dest.x, dest.y)) {
+            if (cellHasTMFlag(dest.x, dest.y, TM_IS_SECRET)) {
+                discover(dest.x, dest.y);
+                refreshDungeonCell(dest.x, dest.y);
             }
             itemName(theItem, theItemName, false, false, NULL);
             sprintf(buf, "a pressure plate clicks underneath the %s!", theItemName);
             message(buf, REQUIRE_ACKNOWLEDGMENT);
         }
         for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
-            if (tileCatalog[pmap[x][y].layers[layer]].flags & T_IS_DF_TRAP) {
-                spawnDungeonFeature(x, y, &(dungeonFeatureCatalog[tileCatalog[pmap[x][y].layers[layer]].fireType]), true, false);
-                promoteTile(x, y, layer, false);
+            if (tileCatalog[pmapAt(dest)->layers[layer]].flags & T_IS_DF_TRAP) {
+                spawnDungeonFeature(dest.x, dest.y, &(dungeonFeatureCatalog[tileCatalog[pmapAt(dest)->layers[layer]].fireType]), true, false);
+                promoteTile(dest.x, dest.y, layer, false);
             }
         }
     }
     return theItem;
 }
 
-void fillItemSpawnHeatMap(unsigned short heatMap[DCOLS][DROWS], unsigned short heatLevel, short x, short y) {
-    enum directions dir;
-    short newX, newY;
-
-    if (pmap[x][y].layers[DUNGEON] == DOOR) {
+void fillItemSpawnHeatMap(unsigned short heatMap[DCOLS][DROWS], unsigned short heatLevel, pos loc) {
+    if (pmapAt(loc)->layers[DUNGEON] == DOOR) {
         heatLevel += 10;
-    } else if (pmap[x][y].layers[DUNGEON] == SECRET_DOOR) {
+    } else if (pmapAt(loc)->layers[DUNGEON] == SECRET_DOOR) {
         heatLevel += 3000;
     }
-    if (heatMap[x][y] > heatLevel) {
-        heatMap[x][y] = heatLevel;
+    if (heatMap[loc.x][loc.y] > heatLevel) {
+        heatMap[loc.x][loc.y] = heatLevel;
     }
-    for (dir = 0; dir < 4; dir++) {
-        newX = x + nbDirs[dir][0];
-        newY = y + nbDirs[dir][1];
-        if (coordinatesAreInMap(newX, newY)
-            && !cellHasTerrainFlag(newX, newY, T_IS_DEEP_WATER | T_LAVA_INSTA_DEATH | T_AUTO_DESCENT)
-            && isPassableOrSecretDoor(newX, newY)
-            && heatLevel < heatMap[newX][newY]) {
+    for (enum directions dir = 0; dir < 4; dir++) {
+        pos neighbor = posNeighborInDirection(loc, dir);
+        if (isPosInMap(neighbor)
+            && !cellHasTerrainFlag(neighbor.x, neighbor.y, T_IS_DEEP_WATER | T_LAVA_INSTA_DEATH | T_AUTO_DESCENT)
+            && isPassableOrSecretDoor(neighbor.x, neighbor.y)
+            && heatLevel < heatMap[neighbor.x][neighbor.y]) {
 
-            fillItemSpawnHeatMap(heatMap, heatLevel, newX, newY);
+            fillItemSpawnHeatMap(heatMap, heatLevel, neighbor);
         }
     }
 }
 
-void coolHeatMapAt(unsigned short heatMap[DCOLS][DROWS], short x, short y, unsigned long *totalHeat) {
+void coolHeatMapAt(unsigned short heatMap[DCOLS][DROWS], pos loc, unsigned long *totalHeat) {
     short k, l;
     unsigned short currentHeat;
 
-    currentHeat = heatMap[x][y];
+    currentHeat = heatMap[loc.x][loc.y];
     if (currentHeat == 0) {
         return;
     }
-    *totalHeat -= heatMap[x][y];
-    heatMap[x][y] = 0;
+    *totalHeat -= heatMap[loc.x][loc.y];
+    heatMap[loc.x][loc.y] = 0;
 
     // lower the heat near the chosen location
     for (k = -5; k <= 5; k++) {
         for (l = -5; l <= 5; l++) {
-            if (coordinatesAreInMap(x+k, y+l) && heatMap[x+k][y+l] == currentHeat) {
-                heatMap[x+k][y+l] = max(1, heatMap[x+k][y+l]/10);
-                *totalHeat -= (currentHeat - heatMap[x+k][y+l]);
+            if (coordinatesAreInMap(loc.x+k, loc.y+l) && heatMap[loc.x+k][loc.y+l] == currentHeat) {
+                heatMap[loc.x+k][loc.y+l] = max(1, heatMap[loc.x+k][loc.y+l]/10);
+                *totalHeat -= (currentHeat - heatMap[loc.x+k][loc.y+l]);
             }
         }
     }
@@ -483,16 +476,13 @@ boolean getItemSpawnLoc(unsigned short heatMap[DCOLS][DROWS], short *x, short *y
 }
 
 // Generates and places items for the level. Must pass the location of the up-stairway on the level.
-void populateItems(short upstairsX, short upstairsY) {
+void populateItems(pos upstairs) {
     if (!ITEMS_ENABLED) {
         return;
     }
-    item *theItem;
     unsigned short itemSpawnHeatMap[DCOLS][DROWS];
-    short i, j, numberOfItems, numberOfGoldPiles, goldBonusProbability, x = 0, y = 0;
+    short numberOfItems, numberOfGoldPiles, goldBonusProbability;
     unsigned long totalHeat;
-    short theCategory, theKind, randomDepthOffset = 0;
-    itemTable *potionTableCopy, *scrollTableCopy;
 
     const int POW_GOLD[] = {
         // b^3.05, with b from 0 to 25:
@@ -515,8 +505,8 @@ void populateItems(short upstairsX, short upstairsY) {
 #endif
 
     // Store copy of potion and scroll tables, since they are modified during level item generation.
-    potionTableCopy = calloc(gameConst->numberPotionKinds, sizeof(itemTable));
-    scrollTableCopy = calloc(gameConst->numberScrollKinds, sizeof(itemTable));
+    itemTable *potionTableCopy = calloc(gameConst->numberPotionKinds, sizeof(itemTable));
+    itemTable *scrollTableCopy = calloc(gameConst->numberScrollKinds, sizeof(itemTable));
 
     memcpy(potionTableCopy, potionTable, gameConst->numberPotionKinds * sizeof(itemTable));
     memcpy(scrollTableCopy, scrollTable, gameConst->numberScrollKinds * sizeof(itemTable));
@@ -526,7 +516,7 @@ void populateItems(short upstairsX, short upstairsY) {
         numberOfGoldPiles = 0;
     } else {
         // Add frequency to metered items memory
-        for (i = 0; i < gameConst->numberMeteredItems; i++) {
+        for (int i = 0; i < gameConst->numberMeteredItems; i++) {
             rogue.meteredItems[i].frequency += meteredItemsGenerationTable[i].incrementFrequency;
         }
         numberOfItems = 3;
@@ -564,12 +554,12 @@ void populateItems(short upstairsX, short upstairsY) {
     // passed to reach the area when pathing to it from the upward staircase.
     // This is why there are often several items in well hidden secret rooms. Otherwise,
     // those rooms are usually empty, which is demoralizing after you take the trouble to find them.
-    for (i=0; i<DCOLS; i++) {
-        for (j=0; j<DROWS; j++) {
+    for (int i=0; i<DCOLS; i++) {
+        for (int j=0; j<DROWS; j++) {
             itemSpawnHeatMap[i][j] = 50000;
         }
     }
-    fillItemSpawnHeatMap(itemSpawnHeatMap, 5, upstairsX, upstairsY);
+    fillItemSpawnHeatMap(itemSpawnHeatMap, 5, upstairs);
     totalHeat = 0;
 
 #ifdef AUDIT_RNG
@@ -577,8 +567,8 @@ void populateItems(short upstairsX, short upstairsY) {
     RNGLog(RNGmessage);
 #endif
 
-    for (j=0; j<DROWS; j++) {
-        for (i=0; i<DCOLS; i++) {
+    for (int j=0; j<DROWS; j++) {
+        for (int i=0; i<DCOLS; i++) {
             if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_ITEMS | T_PATHING_BLOCKER)
                 || (pmap[i][j].flags & (IS_CHOKEPOINT | IN_LOOP | IS_IN_MACHINE))
                 || passableArcCount(i, j) > 1) { // Not in walls, hallways, quest rooms, loops or chokepoints, please.
@@ -603,8 +593,8 @@ void populateItems(short upstairsX, short upstairsY) {
 
     if (D_INSPECT_LEVELGEN) {
         short **map = allocGrid();
-        for (i=0; i<DCOLS; i++) {
-            for (j=0; j<DROWS; j++) {
+        for (int i=0; i<DCOLS; i++) {
+            for (int j=0; j<DROWS; j++) {
                 map[i][j] = itemSpawnHeatMap[i][j] * -1;
             }
         }
@@ -614,18 +604,19 @@ void populateItems(short upstairsX, short upstairsY) {
         temporaryMessage("Item spawn heat map:", REQUIRE_ACKNOWLEDGMENT);
     }
 
+    int randomDepthOffset = 0;
     if (rogue.depthLevel > 2) {
         // Include a random factor in food and potion of life generation to make things slightly less predictable.
         randomDepthOffset = rand_range(-1, 1);
         randomDepthOffset += rand_range(-1, 1);
     }
 
-    for (i=0; i<numberOfItems; i++) {
-        theCategory = ALL_ITEMS & ~GOLD; // gold is placed separately, below, so it's not a punishment
-        theKind = -1;
+    for (int i=0; i<numberOfItems; i++) {
+        short theCategory = ALL_ITEMS & ~GOLD; // gold is placed separately, below, so it's not a punishment
+        short theKind = -1;
 
         // Set metered item itemTable frequency to memory.
-        for (j = 0; j < gameConst->numberMeteredItems; j++) {
+        for (int j = 0; j < gameConst->numberMeteredItems; j++) {
             if (meteredItemsGenerationTable[j].incrementFrequency != 0) {
                 if (j >= gameConst->numberScrollKinds) {
                     potionTable[j - gameConst->numberScrollKinds].frequency = rogue.meteredItems[j].frequency;
@@ -648,7 +639,7 @@ void populateItems(short upstairsX, short upstairsY) {
             theCategory = GEM;
         } else {
             
-            for (j = 0; j < gameConst->numberMeteredItems; j++) {
+            for (int j = 0; j < gameConst->numberMeteredItems; j++) {
                 // Create any metered items that reach generation thresholds
                 if (meteredItemsGenerationTable[j].levelScaling != 0 &&
                     rogue.meteredItems[j].numberSpawned * meteredItemsGenerationTable[j].genMultiplier + meteredItemsGenerationTable[j].genIncrement <
@@ -668,7 +659,7 @@ void populateItems(short upstairsX, short upstairsY) {
         }
 
         // Generate the item.
-        theItem = generateItem(theCategory, theKind);
+        item *theItem = generateItem(theCategory, theKind);
         theItem->originDepth = rogue.depthLevel;
 
         if (theItem->category & FOOD) {
@@ -677,19 +668,20 @@ void populateItems(short upstairsX, short upstairsY) {
         }
 
         // Choose a placement location.
+        pos itemPlacementLoc = INVALID_POS;
         if ((theItem->category & FOOD) || ((theItem->category & POTION) && theItem->kind == POTION_STRENGTH)) {
             do {
-                randomMatchingLocation(&x, &y, FLOOR, NOTHING, -1); // Food and gain strength don't follow the heat map.
-            } while (passableArcCount(x, y) > 1); // Not in a hallway.
+                randomMatchingLocation(&itemPlacementLoc.x, &itemPlacementLoc.y, FLOOR, NOTHING, -1); // Food and gain strength don't follow the heat map.
+            } while (passableArcCount(itemPlacementLoc.x, itemPlacementLoc.y) > 1); // Not in a hallway.
         } else {
-            getItemSpawnLoc(itemSpawnHeatMap, &x, &y, &totalHeat);
+            getItemSpawnLoc(itemSpawnHeatMap, &itemPlacementLoc.x, &itemPlacementLoc.y, &totalHeat);
         }
-        brogueAssert(coordinatesAreInMap(x, y));
+        brogueAssert(isPosInMap(itemPlacementLoc));
         // Cool off the item spawning heat map at the chosen location:
-        coolHeatMapAt(itemSpawnHeatMap, x, y, &totalHeat);
+        coolHeatMapAt(itemSpawnHeatMap, itemPlacementLoc, &totalHeat);
 
         // Remove frequency from spawned metered items memory.
-        for (j = 0; j < gameConst->numberMeteredItems; j++) {
+        for (int j = 0; j < gameConst->numberMeteredItems; j++) {
             if ((theItem->category & meteredItemsGenerationTable[j].category) && theItem->kind == meteredItemsGenerationTable[j].kind) {
                 if (j >= gameConst->numberScrollKinds) {
                     if (D_MESSAGE_ITEM_GENERATION) printf("\n(!)  Depth %i: generated an %s potion at %i frequency", rogue.depthLevel, potionTable[j - gameConst->numberScrollKinds].name, rogue.meteredItems[j].frequency);
@@ -702,8 +694,8 @@ void populateItems(short upstairsX, short upstairsY) {
         }
 
         // Place the item.
-        placeItem(theItem, x, y); // Random valid location already obtained according to heat map.
-        brogueAssert(!cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY));
+        placeItemAt(theItem, itemPlacementLoc); // Random valid location already obtained according to heat map.
+        brogueAssert(!cellHasTerrainFlag(itemPlacementLoc.x, itemPlacementLoc.y, T_OBSTRUCTS_PASSABILITY));
 
         if (D_INSPECT_LEVELGEN) {
             short **map = allocGrid();
@@ -716,17 +708,18 @@ void populateItems(short upstairsX, short upstairsY) {
             dumpLevelToScreen();
             displayGrid(map);
             freeGrid(map);
-            plotCharWithColor(theItem->displayChar, mapToWindow((pos){ x, y }), &black, &purple);
+            plotCharWithColor(theItem->displayChar, mapToWindow(itemPlacementLoc), &black, &purple);
             temporaryMessage("Added an item.", REQUIRE_ACKNOWLEDGMENT);
         }
     }
 
     // Now generate gold.
-    for (i=0; i<numberOfGoldPiles; i++) {
-        theItem = generateItem(GOLD, -1);
-        getItemSpawnLoc(itemSpawnHeatMap, &x, &y, &totalHeat);
-        coolHeatMapAt(itemSpawnHeatMap, x, y, &totalHeat);
-        placeItem(theItem, x, y);
+    for (int i=0; i<numberOfGoldPiles; i++) {
+        item *theItem = generateItem(GOLD, -1);
+        pos itemPlacementLoc = INVALID_POS;
+        getItemSpawnLoc(itemSpawnHeatMap, &itemPlacementLoc.x, &itemPlacementLoc.y, &totalHeat);
+        coolHeatMapAt(itemSpawnHeatMap, itemPlacementLoc, &totalHeat);
+        placeItemAt(theItem, itemPlacementLoc);
         rogue.goldGenerated += theItem->quantity;
     }
 
@@ -769,22 +762,20 @@ boolean itemWillStackWithPack(item *theItem) {
     }
 }
 
-void removeItemFrom(short x, short y) {
-    short layer;
+void removeItemAt(pos loc) {
+    pmapAt(loc)->flags &= ~HAS_ITEM;
 
-    pmap[x][y].flags &= ~HAS_ITEM;
-
-    if (cellHasTMFlag(x, y, TM_PROMOTES_ON_ITEM_PICKUP)) {
-        for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
-            if (tileCatalog[pmap[x][y].layers[layer]].mechFlags & TM_PROMOTES_ON_ITEM_PICKUP) {
-                promoteTile(x, y, layer, false);
+    if (cellHasTMFlag(loc.x, loc.y, TM_PROMOTES_ON_ITEM_PICKUP)) {
+        for (int layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
+            if (tileCatalog[pmapAt(loc)->layers[layer]].mechFlags & TM_PROMOTES_ON_ITEM_PICKUP) {
+                promoteTile(loc.x, loc.y, layer, false);
             }
         }
     }
 }
 
 // adds the item at (x,y) to the pack
-void pickUpItemAt(short x, short y) {
+void pickUpItemAt(pos loc) {
     item *theItem;
     creature *monst;
     char buf[COLS * 3], buf2[COLS * 3];
@@ -793,7 +784,7 @@ void pickUpItemAt(short x, short y) {
     rogue.disturbed = true;
 
     // find the item
-    theItem = itemAtLoc(x, y);
+    theItem = itemAtLoc(loc);
 
     if (!theItem) {
         message("Error: Expected item; item not found.", REQUIRE_ACKNOWLEDGMENT);
@@ -816,7 +807,7 @@ void pickUpItemAt(short x, short y) {
 
     if (numberOfItemsInPack() < MAX_PACK_ITEMS || (theItem->category & GOLD) || itemWillStackWithPack(theItem)) {
         // remove from floor chain
-        pmap[x][y].flags &= ~ITEM_DETECTED;
+        pmapAt(loc)->flags &= ~ITEM_DETECTED;
 
         if (!removeItemFromChain(theItem, floorItems)) {
             brogueAssert(false);
@@ -828,7 +819,7 @@ void pickUpItemAt(short x, short y) {
             sprintf(buf, "you found %i pieces of gold.", theItem->quantity);
             messageWithColor(buf, &itemMessageColor, 0);
             deleteItem(theItem);
-            removeItemFrom(x, y); // triggers tiles with T_PROMOTES_ON_ITEM_PICKUP
+            removeItemAt(loc); // triggers tiles with T_PROMOTES_ON_ITEM_PICKUP
             return;
         }
 
@@ -845,7 +836,7 @@ void pickUpItemAt(short x, short y) {
         sprintf(buf, "you now have %s (%c).", buf2, theItem->inventoryLetter);
         messageWithColor(buf, &itemMessageColor, 0);
 
-        removeItemFrom(x, y); // triggers tiles with T_PROMOTES_ON_ITEM_PICKUP
+        removeItemAt(loc); // triggers tiles with T_PROMOTES_ON_ITEM_PICKUP
 
         if ((theItem->category & AMULET)
             && !(rogue.yendorWarden)) {
@@ -1116,7 +1107,7 @@ boolean swapItemEnchants(const short machineNumber) {
     lockedItem = NULL;
     for (i = 0; i < DCOLS; i++) {
         for (j = 0; j < DROWS; j++) {
-            tempItem = itemAtLoc(i, j);
+            tempItem = itemAtLoc((pos){ i, j });
             if (tempItem
                 && pmap[i][j].machineNumber == machineNumber
                 && cellHasTMFlag(i, j, TM_SWAP_ENCHANTS_ACTIVATION)
@@ -1191,7 +1182,7 @@ void updateFloorItems() {
         if (cellHasTerrainFlag(x, y, T_MOVES_ITEMS)) {
             pos loc;
             getQualifyingLocNear(&loc, x, y, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM), false, false);
-            removeItemFrom(x, y);
+            removeItemAt((pos){ x, y });
             pmapAt(loc)->flags |= HAS_ITEM;
             if (pmap[x][y].flags & ITEM_DETECTED) {
                 pmap[x][y].flags &= ~ITEM_DETECTED;
@@ -3230,16 +3221,14 @@ void equip(item *theItem) {
 // (1) it's a key (has ITEM_IS_KEY flag),
 // (2) its originDepth matches the depth, and
 // (3) either its key (x, y) location matches (x, y), or its machine number matches the machine number at (x, y).
-boolean keyMatchesLocation(item *theItem, short x, short y) {
-    short i;
-
+boolean keyMatchesLocation(item *theItem, pos loc) {
     if ((theItem->flags & ITEM_IS_KEY)
         && theItem->originDepth == rogue.depthLevel) {
 
-        for (i=0; i < KEY_ID_MAXIMUM && (theItem->keyLoc[i].x || theItem->keyLoc[i].machine); i++) {
-            if (theItem->keyLoc[i].x == x && theItem->keyLoc[i].y == y) {
+        for (int i=0; i < KEY_ID_MAXIMUM && (theItem->keyLoc[i].loc.x || theItem->keyLoc[i].machine); i++) {
+            if (posEq(theItem->keyLoc[i].loc, loc)) {
                 return true;
-            } else if (theItem->keyLoc[i].machine == pmap[x][y].machineNumber) {
+            } else if (theItem->keyLoc[i].machine == pmapAt(loc)->machineNumber) {
                 return true;
             }
         }
@@ -3247,39 +3236,36 @@ boolean keyMatchesLocation(item *theItem, short x, short y) {
     return false;
 }
 
-item *keyInPackFor(short x, short y) {
+item *keyInPackFor(pos loc) {
     item *theItem;
 
     for (theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
-        if (keyMatchesLocation(theItem, x, y)) {
+        if (keyMatchesLocation(theItem, loc)) {
             return theItem;
         }
     }
     return NULL;
 }
 
-item *keyOnTileAt(short x, short y) {
+item *keyOnTileAt(pos loc) {
     item *theItem;
     creature *monst;
 
-    if ((pmap[x][y].flags & HAS_PLAYER)
-        && player.loc.x == x
-        && player.loc.y == y
-        && keyInPackFor(x, y)) {
+    if ((pmapAt(loc)->flags & HAS_PLAYER) && posEq(player.loc, loc) && keyInPackFor(loc)) {
 
-        return keyInPackFor(x, y);
+        return keyInPackFor(loc);
     }
-    if (pmap[x][y].flags & HAS_ITEM) {
-        theItem = itemAtLoc(x, y);
-        if (keyMatchesLocation(theItem, x, y)) {
+    if (pmapAt(loc)->flags & HAS_ITEM) {
+        theItem = itemAtLoc(loc);
+        if (keyMatchesLocation(theItem, loc)) {
             return theItem;
         }
     }
-    if (pmap[x][y].flags & HAS_MONSTER) {
-        monst = monsterAtLoc((pos){ x, y });
+    if (pmapAt(loc)->flags & HAS_MONSTER) {
+        monst = monsterAtLoc(loc);
         if (monst->carriedItem) {
             theItem = monst->carriedItem;
-            if (keyMatchesLocation(theItem, x, y)) {
+            if (keyMatchesLocation(theItem, loc)) {
                 return theItem;
             }
         }
@@ -4271,7 +4257,7 @@ short reflectBolt(short targetX, short targetY, pos listOfCoordinates[], short k
 void checkForMissingKeys(short x, short y) {
     short layer;
 
-    if (cellHasTMFlag(x, y, TM_PROMOTES_WITHOUT_KEY) && !keyOnTileAt(x, y)) {
+    if (cellHasTMFlag(x, y, TM_PROMOTES_WITHOUT_KEY) && !keyOnTileAt((pos){ x, y })) {
         for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
             if (tileCatalog[pmap[x][y].layers[layer]].mechFlags & TM_PROMOTES_WITHOUT_KEY) {
                 promoteTile(x, y, layer, false);
@@ -4745,7 +4731,7 @@ void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *au
                 rogue.scentTurnNumber += 30;
                 // get any items at the destination location
                 if (pmapAt(player.loc)->flags & HAS_ITEM) {
-                    pickUpItemAt(player.loc.x, player.loc.y);
+                    pickUpItemAt(player.loc);
                 }
                 updateVision(true);
             }
@@ -5180,7 +5166,7 @@ boolean nextTargetAfter(short *returnX,
                     }
                 }
             }
-            item *const theItem = itemAtLoc(newX, newY);
+            item *const theItem = itemAtLoc((pos){ newX, newY });
             if (!monst && theItem && targetItems) {
                 *returnX = newX;
                 *returnY = newY;
@@ -6124,7 +6110,7 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
     }
     pos dropLoc;
     getQualifyingLocNear(&dropLoc, x, y, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM), false, false);
-    placeItem(theItem, dropLoc.x, dropLoc.y);
+    placeItemAt(theItem, dropLoc);
     refreshDungeonCell(dropLoc.x, dropLoc.y);
 }
 
@@ -7491,19 +7477,19 @@ item *itemOfPackLetter(char letter) {
     return NULL;
 }
 
-item *itemAtLoc(short x, short y) {
+item *itemAtLoc(pos loc) {
     item *theItem;
 
-    if (!(pmap[x][y].flags & HAS_ITEM)) {
+    if (!(pmapAt(loc)->flags & HAS_ITEM)) {
         return NULL; // easy optimization
     }
-    for (theItem = floorItems->nextItem; theItem != NULL && (theItem->loc.x != x || theItem->loc.y != y); theItem = theItem->nextItem);
+    for (theItem = floorItems->nextItem; theItem != NULL && !posEq(theItem->loc, loc); theItem = theItem->nextItem);
     if (theItem == NULL) {
-        pmap[x][y].flags &= ~HAS_ITEM;
-        hiliteCell(x, y, &white, 75, true);
+        pmapAt(loc)->flags &= ~HAS_ITEM;
+        hiliteCell(loc.x, loc.y, &white, 75, true);
         rogue.automationActive = false;
         message("ERROR: An item was supposed to be here, but I couldn't find it.", REQUIRE_ACKNOWLEDGMENT);
-        refreshDungeonCell(x, y);
+        refreshDungeonCell(loc.x, loc.y);
     }
     return theItem;
 }
@@ -7515,7 +7501,7 @@ item *dropItem(item *theItem) {
         return NULL;
     }
 
-    itemOnFloor = itemAtLoc(player.loc.x, player.loc.y);
+    itemOnFloor = itemAtLoc(player.loc);
 
     if (theItem->quantity > 1 && !(theItem->category & (WEAPON | GEM))) { // peel off the top item and drop it
         itemFromTopOfStack = generateItem(ALL_ITEMS, -1);
@@ -7524,9 +7510,9 @@ item *dropItem(item *theItem) {
         itemFromTopOfStack->quantity = 1;
         if (itemOnFloor) {
             itemOnFloor->inventoryLetter = theItem->inventoryLetter; // just in case all letters are taken
-            pickUpItemAt(player.loc.x, player.loc.y);
+            pickUpItemAt(player.loc);
         }
-        placeItem(itemFromTopOfStack, player.loc.x, player.loc.y);
+        placeItemAt(itemFromTopOfStack, player.loc);
         return itemFromTopOfStack;
     } else { // drop the entire item
         if (rogue.swappedIn == theItem || rogue.swappedOut == theItem) {
@@ -7536,9 +7522,9 @@ item *dropItem(item *theItem) {
         removeItemFromChain(theItem, packItems);
         if (itemOnFloor) {
             itemOnFloor->inventoryLetter = theItem->inventoryLetter;
-            pickUpItemAt(player.loc.x, player.loc.y);
+            pickUpItemAt(player.loc);
         }
-        placeItem(theItem, player.loc.x, player.loc.y);
+        placeItemAt(theItem, player.loc);
         return theItem;
     }
 }

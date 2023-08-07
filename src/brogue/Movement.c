@@ -157,7 +157,7 @@ void describeLocation(char *buf, short x, short y) {
 
     monst = NULL;
     standsInTerrain = ((tileCatalog[pmap[x][y].layers[highestPriorityLayer(x, y, false)]].mechFlags & TM_STAND_IN_TILE) ? true : false);
-    theItem = itemAtLoc(x, y);
+    theItem = itemAtLoc((pos){ x, y });
     monsterDormant = false;
     if (pmap[x][y].flags & HAS_MONSTER) {
         monst = monsterAtLoc((pos){ x, y });
@@ -403,8 +403,8 @@ void useKeyAt(item *theItem, short x, short y) {
     }
 
     disposable = false;
-    for (i=0; i < KEY_ID_MAXIMUM && (theItem->keyLoc[i].x || theItem->keyLoc[i].machine); i++) {
-        if (theItem->keyLoc[i].x == x && theItem->keyLoc[i].y == y && theItem->keyLoc[i].disposableHere) {
+    for (i=0; i < KEY_ID_MAXIMUM && (theItem->keyLoc[i].loc.x || theItem->keyLoc[i].machine); i++) {
+        if (posEq(theItem->keyLoc[i].loc, (pos){ x, y }) && theItem->keyLoc[i].disposableHere) {
             disposable = true;
         } else if (theItem->keyLoc[i].machine == pmap[x][y].machineNumber && theItem->keyLoc[i].disposableHere) {
             disposable = true;
@@ -841,9 +841,9 @@ boolean playerMoves(short direction) {
 
     }
 
-    if (((!cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY) || (cellHasTMFlag(newX, newY, TM_PROMOTES_WITH_KEY) && keyInPackFor(newX, newY)))
+    if (((!cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY) || (cellHasTMFlag(newX, newY, TM_PROMOTES_WITH_KEY) && keyInPackFor((pos){ newX, newY })))
          && !diagonalBlocked(x, y, newX, newY, false)
-         && (!cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY) || (cellHasTMFlag(x, y, TM_PROMOTES_WITH_KEY) && keyInPackFor(x, y))))
+         && (!cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY) || (cellHasTMFlag(x, y, TM_PROMOTES_WITH_KEY) && keyInPackFor((pos){ x, y }))))
         || (defender && defender->info.flags & MONST_ATTACKABLE_THRU_WALLS)) {
         // if the move is not blocked
 
@@ -870,8 +870,8 @@ boolean playerMoves(short direction) {
                 sprintf(buf, "Free the captive %s?", monstName);
                 if (committed || confirm(buf, false)) {
                     committed = true;
-                    if (cellHasTMFlag(newX, newY, TM_PROMOTES_WITH_KEY) && keyInPackFor(newX, newY)) {
-                        useKeyAt(keyInPackFor(newX, newY), newX, newY);
+                    if (cellHasTMFlag(newX, newY, TM_PROMOTES_WITH_KEY) && keyInPackFor((pos){ newX, newY })) {
+                        useKeyAt(keyInPackFor((pos){ newX, newY }), newX, newY);
                     }
                     freeCaptive(defender);
                     player.ticksUntilTurn += player.attackSpeed;
@@ -1113,7 +1113,7 @@ boolean playerMoves(short direction) {
             }
 
             if (pmapAt(player.loc)->flags & HAS_ITEM) {
-                pickUpItemAt(player.loc.x, player.loc.y);
+                pickUpItemAt(player.loc);
                 rogue.disturbed = true;
             }
             refreshDungeonCell(x, y);
@@ -1775,7 +1775,7 @@ void populateCreatureCostMap(short **costMap, creature *monst) {
             }
 
             if (monst == &player) {
-                theItem = itemAtLoc(i, j);
+                theItem = itemAtLoc((pos){ i, j });
                 if (theItem && (theItem->flags & ITEM_PLAYER_AVOIDS)) {
                     costMap[i][j] += 10;
                 }
@@ -1816,7 +1816,7 @@ void getExploreMap(short **map, boolean headingToStairs) {// calculate explore m
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
             map[i][j] = 30000; // Can be overridden later.
-            theItem = itemAtLoc(i, j);
+            theItem = itemAtLoc((pos){ i, j });
             if (!(pmap[i][j].flags & DISCOVERED)) {
                 if ((pmap[i][j].flags & MAGIC_MAPPED)
                     && (tileCatalog[pmap[i][j].layers[DUNGEON]].flags | tileCatalog[pmap[i][j].layers[LIQUID]].flags) & T_PATHING_BLOCKER) {
@@ -2207,7 +2207,7 @@ void updateFieldOfViewDisplay(boolean updateDancingTerrain, boolean refreshDispl
             if ((pmap[i][j].flags & VISIBLE) && !(pmap[i][j].flags & WAS_VISIBLE)) { // if the cell became visible this move
                 if (!(pmap[i][j].flags & DISCOVERED) && rogue.automationActive) {
                     if (pmap[i][j].flags & HAS_ITEM) {
-                        theItem = itemAtLoc(i, j);
+                        theItem = itemAtLoc((pos){ i, j });
                         if (theItem && (theItem->category & KEY)) {
                             itemName(theItem, name, false, true, NULL);
                             sprintf(buf, "you see %s.", name);

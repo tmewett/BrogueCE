@@ -1383,8 +1383,7 @@ enum itemFlags {
 #define KEY_ID_MAXIMUM  20
 
 typedef struct keyLocationProfile {
-    short x;
-    short y;
+    pos loc;
     short machine;
     boolean disposableHere;
 } keyLocationProfile;
@@ -3189,10 +3188,10 @@ extern "C" {
     void killCreature(creature *decedent, boolean administrativeDeath);
     void buildHitList(creature **hitList, const creature *attacker, creature *defender, const boolean sweep);
     void addScentToCell(short x, short y, short distance);
-    void populateItems(short upstairsX, short upstairsY);
-    item *placeItem(item *theItem, short x, short y);
-    void removeItemFrom(short x, short y);
-    void pickUpItemAt(short x, short y);
+    void populateItems(pos upstairs);
+    item *placeItemAt(item *theItem, pos dest);
+    void removeItemAt(pos loc);
+    void pickUpItemAt(pos loc);
     item *addItemToPack(item *theItem);
     void aggravateMonsters(short distance, short x, short y, const color *flashColor);
     short getLineCoordinates(pos listOfCoordinates[], const pos originLoc, const pos targetLoc, const bolt *theBolt);
@@ -3261,8 +3260,8 @@ extern "C" {
     void recalculateEquipmentBonuses();
     boolean equipItem(item *theItem, boolean force, item *unequipHint);
     void equip(item *theItem);
-    item *keyInPackFor(short x, short y);
-    item *keyOnTileAt(short x, short y);
+    item *keyInPackFor(pos loc);
+    item *keyOnTileAt(pos loc);
     void unequip(item *theItem);
     void drop(item *theItem);
     void findAlternativeHomeFor(creature *monst, short *x, short *y, boolean chooseRandomly);
@@ -3339,7 +3338,7 @@ extern "C" {
     boolean unequipItem(item *theItem, boolean force);
     short magicCharDiscoverySuffix(short category, short kind);
     int itemMagicPolarity(item *theItem);
-    item *itemAtLoc(short x, short y);
+    item *itemAtLoc(pos loc);
     item *dropItem(item *theItem);
     itemTable *tableForItemCategory(enum itemCategory theCat);
     boolean isVowelish(char *theChar);

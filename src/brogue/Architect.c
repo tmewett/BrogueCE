@@ -571,16 +571,15 @@ boolean cellIsFeatureCandidate(short x, short y,
 void addLocationToKey(item *theItem, short x, short y, boolean disposableHere) {
     short i;
 
-    for (i=0; i < KEY_ID_MAXIMUM && (theItem->keyLoc[i].x || theItem->keyLoc[i].machine); i++);
-    theItem->keyLoc[i].x = x;
-    theItem->keyLoc[i].y = y;
+    for (i=0; i < KEY_ID_MAXIMUM && (theItem->keyLoc[i].loc.x || theItem->keyLoc[i].machine); i++);
+    theItem->keyLoc[i].loc = (pos){ x, y };
     theItem->keyLoc[i].disposableHere = disposableHere;
 }
 
 void addMachineNumberToKey(item *theItem, short machineNumber, boolean disposableHere) {
     short i;
 
-    for (i=0; i < KEY_ID_MAXIMUM && (theItem->keyLoc[i].x || theItem->keyLoc[i].machine); i++);
+    for (i=0; i < KEY_ID_MAXIMUM && (theItem->keyLoc[i].loc.x || theItem->keyLoc[i].machine); i++);
     theItem->keyLoc[i].machine = machineNumber;
     theItem->keyLoc[i].disposableHere = disposableHere;
 }
@@ -1501,7 +1500,7 @@ boolean buildAMachine(enum machineTypes bp,
                         if (!(feature->flags & MF_OUTSOURCE_ITEM_TO_MACHINE)
                             && !(feature->flags & MF_MONSTER_TAKE_ITEM)) {
                             // Place the item at the feature location.
-                            placeItem(theItem, featX, featY);
+                            placeItemAt(theItem, (pos){ featX, featY });
                         }
                     }
 
@@ -3224,7 +3223,7 @@ boolean fillSpawnMap(enum dungeonLayers layer,
                     }
                     if (tileCatalog[surfaceTileType].flags & T_IS_FIRE) {
                         if (pmap[i][j].flags & HAS_ITEM) {
-                            theItem = itemAtLoc(i, j);
+                            theItem = itemAtLoc((pos){ i, j });
                             if (theItem->flags & ITEM_FLAMMABLE) {
                                 burnItem(theItem);
                             }
@@ -3719,7 +3718,7 @@ void initializeLevel() {
                 }
             }
         }
-        populateItems(upLoc.x, upLoc.y);
+        populateItems(upLoc);
         populateMonsters();
     }
 

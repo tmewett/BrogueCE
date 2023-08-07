@@ -665,7 +665,7 @@ void mainInputLoop() {
                 oldTargetLoc = rogue.cursorLoc;
 
                 monst = monsterAtLoc(rogue.cursorLoc);
-                theItem = itemAtLoc(rogue.cursorLoc.x, rogue.cursorLoc.y);
+                theItem = itemAtLoc(rogue.cursorLoc);
                 if (monst != NULL && (canSeeMonster(monst) || rogue.playbackOmniscience)) {
                     rogue.playbackMode = playingBack;
                     refreshSideBar(rogue.cursorLoc.x, rogue.cursorLoc.y, false);
@@ -1125,7 +1125,7 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
     if (monsterWithDetectedItem) {
         theItem = monst->carriedItem;
     } else {
-        theItem = itemAtLoc(x, y);
+        theItem = itemAtLoc((pos){ x, y });
     }
 
     if (!playerCanSeeOrSense(x, y)
@@ -1287,7 +1287,7 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
                 cellChar = itemChars[rand_range(0, 9)];
                 cellForeColor = itemColor;
             } else {
-                theItem = itemAtLoc(x, y);
+                theItem = itemAtLoc((pos){ x, y });
                 cellChar = theItem->displayChar;
                 cellForeColor = *(theItem->foreColor);
                 // Remember the item was here
@@ -3725,7 +3725,7 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
             }
         }
         if (!focusEntity && (pmap[focusX][focusY].flags & HAS_ITEM)) {
-            theItem = itemAtLoc(focusX, focusY);
+            theItem = itemAtLoc((pos){ focusX, focusY });
             if (playerCanSeeOrSense(focusX, focusY)) {
                 focusEntity = theItem;
                 focusEntityType = EDT_ITEM;
