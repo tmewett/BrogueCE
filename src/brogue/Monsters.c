@@ -3933,7 +3933,7 @@ void makeMonsterDropItem(creature *monst) {
     getQualifyingPathLocNear(&x, &y, monst->loc.x, monst->loc.y, true,
                              (T_DIVIDES_LEVEL), 0,
                              T_OBSTRUCTS_ITEMS, (HAS_PLAYER | HAS_STAIRS | HAS_ITEM), false);
-    placeItem(monst->carriedItem, (pos){ x, y });
+    placeItemAt(monst->carriedItem, (pos){ x, y });
     monst->carriedItem = NULL;
     refreshDungeonCell(x, y);
 }

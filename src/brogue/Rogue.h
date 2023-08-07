@@ -3172,8 +3172,8 @@ extern "C" {
     void buildHitList(creature **hitList, const creature *attacker, creature *defender, const boolean sweep);
     void addScentToCell(short x, short y, short distance);
     void populateItems(pos upstairs);
-    item *placeItem(item *theItem, pos dest);
-    void removeItemFrom(pos loc);
+    item *placeItemAt(item *theItem, pos dest);
+    void removeItemAt(pos loc);
     void pickUpItemAt(pos loc);
     item *addItemToPack(item *theItem);
     void aggravateMonsters(short distance, short x, short y, const color *flashColor);

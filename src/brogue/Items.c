@@ -362,7 +362,7 @@ short chooseKind(const itemTable *theTable, short numKinds) {
 }
 
 // Places an item at (x,y) if provided or else a random location if they're 0. Inserts item into the floor list.
-item *placeItem(item *theItem, pos dest) {
+item *placeItemAt(item *theItem, pos dest) {
     enum dungeonLayers layer;
     char theItemName[DCOLS], buf[DCOLS];
     if (!isPosInMap(dest)) {
@@ -668,17 +668,17 @@ void populateItems(pos upstairs) {
         }
 
         // Choose a placement location.
-        pos placeAt = INVALID_POS;
+        pos itemPlacementLoc = INVALID_POS;
         if ((theItem->category & FOOD) || ((theItem->category & POTION) && theItem->kind == POTION_STRENGTH)) {
             do {
-                randomMatchingLocation(&placeAt.x, &placeAt.y, FLOOR, NOTHING, -1); // Food and gain strength don't follow the heat map.
-            } while (passableArcCount(placeAt.x, placeAt.y) > 1); // Not in a hallway.
+                randomMatchingLocation(&itemPlacementLoc.x, &itemPlacementLoc.y, FLOOR, NOTHING, -1); // Food and gain strength don't follow the heat map.
+            } while (passableArcCount(itemPlacementLoc.x, itemPlacementLoc.y) > 1); // Not in a hallway.
         } else {
-            getItemSpawnLoc(itemSpawnHeatMap, &placeAt.x, &placeAt.y, &totalHeat);
+            getItemSpawnLoc(itemSpawnHeatMap, &itemPlacementLoc.x, &itemPlacementLoc.y, &totalHeat);
         }
-        brogueAssert(isPosInMap(placeAt));
+        brogueAssert(isPosInMap(itemPlacementLoc));
         // Cool off the item spawning heat map at the chosen location:
-        coolHeatMapAt(itemSpawnHeatMap, placeAt, &totalHeat);
+        coolHeatMapAt(itemSpawnHeatMap, itemPlacementLoc, &totalHeat);
 
         // Remove frequency from spawned metered items memory.
         for (int j = 0; j < gameConst->numberMeteredItems; j++) {
@@ -694,8 +694,8 @@ void populateItems(pos upstairs) {
         }
 
         // Place the item.
-        placeItem(theItem, placeAt); // Random valid location already obtained according to heat map.
-        brogueAssert(!cellHasTerrainFlag(placeAt.x, placeAt.y, T_OBSTRUCTS_PASSABILITY));
+        placeItemAt(theItem, itemPlacementLoc); // Random valid location already obtained according to heat map.
+        brogueAssert(!cellHasTerrainFlag(itemPlacementLoc.x, itemPlacementLoc.y, T_OBSTRUCTS_PASSABILITY));
 
         if (D_INSPECT_LEVELGEN) {
             short **map = allocGrid();
@@ -708,7 +708,7 @@ void populateItems(pos upstairs) {
             dumpLevelToScreen();
             displayGrid(map);
             freeGrid(map);
-            plotCharWithColor(theItem->displayChar, mapToWindow(placeAt), &black, &purple);
+            plotCharWithColor(theItem->displayChar, mapToWindow(itemPlacementLoc), &black, &purple);
             temporaryMessage("Added an item.", REQUIRE_ACKNOWLEDGMENT);
         }
     }
@@ -716,10 +716,10 @@ void populateItems(pos upstairs) {
     // Now generate gold.
     for (int i=0; i<numberOfGoldPiles; i++) {
         item *theItem = generateItem(GOLD, -1);
-        pos placeAt = INVALID_POS;
-        getItemSpawnLoc(itemSpawnHeatMap, &placeAt.x, &placeAt.y, &totalHeat);
-        coolHeatMapAt(itemSpawnHeatMap, placeAt, &totalHeat);
-        placeItem(theItem, placeAt);
+        pos itemPlacementLoc = INVALID_POS;
+        getItemSpawnLoc(itemSpawnHeatMap, &itemPlacementLoc.x, &itemPlacementLoc.y, &totalHeat);
+        coolHeatMapAt(itemSpawnHeatMap, itemPlacementLoc, &totalHeat);
+        placeItemAt(theItem, itemPlacementLoc);
         rogue.goldGenerated += theItem->quantity;
     }
 
@@ -762,7 +762,7 @@ boolean itemWillStackWithPack(item *theItem) {
     }
 }
 
-void removeItemFrom(pos loc) {
+void removeItemAt(pos loc) {
     pmapAt(loc)->flags &= ~HAS_ITEM;
 
     if (cellHasTMFlag(loc.x, loc.y, TM_PROMOTES_ON_ITEM_PICKUP)) {
@@ -819,7 +819,7 @@ void pickUpItemAt(pos loc) {
             sprintf(buf, "you found %i pieces of gold.", theItem->quantity);
             messageWithColor(buf, &itemMessageColor, 0);
             deleteItem(theItem);
-            removeItemFrom(loc); // triggers tiles with T_PROMOTES_ON_ITEM_PICKUP
+            removeItemAt(loc); // triggers tiles with T_PROMOTES_ON_ITEM_PICKUP
             return;
         }
 
@@ -836,7 +836,7 @@ void pickUpItemAt(pos loc) {
         sprintf(buf, "you now have %s (%c).", buf2, theItem->inventoryLetter);
         messageWithColor(buf, &itemMessageColor, 0);
 
-        removeItemFrom(loc); // triggers tiles with T_PROMOTES_ON_ITEM_PICKUP
+        removeItemAt(loc); // triggers tiles with T_PROMOTES_ON_ITEM_PICKUP
 
         if ((theItem->category & AMULET)
             && !(rogue.yendorWarden)) {
@@ -1182,7 +1182,7 @@ void updateFloorItems() {
         if (cellHasTerrainFlag(x, y, T_MOVES_ITEMS)) {
             pos loc;
             getQualifyingLocNear(&loc, x, y, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM), false, false);
-            removeItemFrom((pos){ x, y });
+            removeItemAt((pos){ x, y });
             pmapAt(loc)->flags |= HAS_ITEM;
             if (pmap[x][y].flags & ITEM_DETECTED) {
                 pmap[x][y].flags &= ~ITEM_DETECTED;
@@ -6110,7 +6110,7 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
     }
     pos dropLoc;
     getQualifyingLocNear(&dropLoc, x, y, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM), false, false);
-    placeItem(theItem, dropLoc);
+    placeItemAt(theItem, dropLoc);
     refreshDungeonCell(dropLoc.x, dropLoc.y);
 }
 
@@ -7512,7 +7512,7 @@ item *dropItem(item *theItem) {
             itemOnFloor->inventoryLetter = theItem->inventoryLetter; // just in case all letters are taken
             pickUpItemAt(player.loc);
         }
-        placeItem(itemFromTopOfStack, player.loc);
+        placeItemAt(itemFromTopOfStack, player.loc);
         return itemFromTopOfStack;
     } else { // drop the entire item
         if (rogue.swappedIn == theItem || rogue.swappedOut == theItem) {
@@ -7524,7 +7524,7 @@ item *dropItem(item *theItem) {
             itemOnFloor->inventoryLetter = theItem->inventoryLetter;
             pickUpItemAt(player.loc);
         }
-        placeItem(theItem, player.loc);
+        placeItemAt(theItem, player.loc);
         return theItem;
     }
 }

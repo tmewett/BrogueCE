@@ -1500,7 +1500,7 @@ boolean buildAMachine(enum machineTypes bp,
                         if (!(feature->flags & MF_OUTSOURCE_ITEM_TO_MACHINE)
                             && !(feature->flags & MF_MONSTER_TAKE_ITEM)) {
                             // Place the item at the feature location.
-                            placeItem(theItem, (pos){ featX, featY });
+                            placeItemAt(theItem, (pos){ featX, featY });
                         }
                     }
 
