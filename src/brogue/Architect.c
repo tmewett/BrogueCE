@@ -1133,7 +1133,10 @@ boolean buildAMachine(enum machineTypes bp,
 
                 if (chooseLocation) {
                     // Pick a random origin location.
-                    randomMatchingLocation(&originX, &originY, FLOOR, NOTHING, -1);
+                    pos originLoc = { originX, originY };
+                    randomMatchingLocation(&originLoc, FLOOR, NOTHING, -1);
+                    originX = originLoc.x;
+                    originY = originLoc.y;
                 }
 
                 if (!distanceMap) {
@@ -1743,7 +1746,7 @@ void addMachines() {
 // If buildAreaMachines is true, build ONLY the autogenerators that include machines.
 // If false, build all EXCEPT the autogenerators that include machines.
 void runAutogenerators(boolean buildAreaMachines) {
-    short AG, count, x, y, i;
+    short AG, count, i;
     const autoGenerator *gen;
     char grid[DCOLS][DROWS];
 
@@ -1772,35 +1775,35 @@ void runAutogenerators(boolean buildAreaMachines) {
                 // Find a location for DFs and terrain generations.
                 //if (randomMatchingLocation(&x, &y, gen->requiredDungeonFoundationType, NOTHING, -1)) {
                 //if (randomMatchingLocation(&x, &y, -1, -1, gen->requiredDungeonFoundationType)) {
-                if (randomMatchingLocation(&x, &y, gen->requiredDungeonFoundationType, gen->requiredLiquidFoundationType, -1)) {
-
+                pos foundationLoc;
+                if (randomMatchingLocation(&foundationLoc, gen->requiredDungeonFoundationType, gen->requiredLiquidFoundationType, -1)) {
                     // Spawn the DF.
                     if (gen->DFType) {
-                        spawnDungeonFeature(x, y, &(dungeonFeatureCatalog[gen->DFType]), false, true);
+                        spawnDungeonFeature(foundationLoc.x, foundationLoc.y, &(dungeonFeatureCatalog[gen->DFType]), false, true);
 
                         if (D_INSPECT_LEVELGEN) {
                             dumpLevelToScreen();
-                            hiliteCell(x, y, &yellow, 50, true);
+                            hiliteCell(foundationLoc.x, foundationLoc.y, &yellow, 50, true);
                             temporaryMessage("Dungeon feature added.", REQUIRE_ACKNOWLEDGMENT);
                         }
                     }
 
                     // Spawn the terrain if it's got the priority to spawn there and won't disrupt connectivity.
                     if (gen->terrain
-                        && tileCatalog[pmap[x][y].layers[gen->layer]].drawPriority >= tileCatalog[gen->terrain].drawPriority) {
+                        && tileCatalog[pmapAt(foundationLoc)->layers[gen->layer]].drawPriority >= tileCatalog[gen->terrain].drawPriority) {
 
                         // Check connectivity.
                         zeroOutGrid(grid);
-                        grid[x][y] = true;
+                        grid[foundationLoc.x][foundationLoc.y] = true;
                         if (!(tileCatalog[gen->terrain].flags & T_PATHING_BLOCKER)
                             || !levelIsDisconnectedWithBlockingMap(grid, false)) {
 
                             // Build!
-                            pmap[x][y].layers[gen->layer] = gen->terrain;
+                            pmapAt(foundationLoc)->layers[gen->layer] = gen->terrain;
 
                             if (D_INSPECT_LEVELGEN) {
                                 dumpLevelToScreen();
-                                hiliteCell(x, y, &yellow, 50, true);
+                                hiliteCell(foundationLoc.x, foundationLoc.y, &yellow, 50, true);
                                 temporaryMessage("Terrain added.", REQUIRE_ACKNOWLEDGMENT);
                             }
                         }
@@ -3754,17 +3757,17 @@ void initializeLevel() {
 // no creatures, items or stairs and with either a matching liquid and dungeon type
 // or at least one layer of type terrainType.
 // A dungeon, liquid type of -1 will match anything.
-boolean randomMatchingLocation(short *x, short *y, short dungeonType, short liquidType, short terrainType) {
+boolean randomMatchingLocation(pos* loc, short dungeonType, short liquidType, short terrainType) {
     short failsafeCount = 0;
     do {
         failsafeCount++;
-        *x = rand_range(0, DCOLS - 1);
-        *y = rand_range(0, DROWS - 1);
-    } while (failsafeCount < 500 && ((terrainType >= 0 && !cellHasTerrainType(*x, *y, terrainType))
-                                     || (((dungeonType >= 0 && pmap[*x][*y].layers[DUNGEON] != dungeonType) || (liquidType >= 0 && pmap[*x][*y].layers[LIQUID] != liquidType)) && terrainType < 0)
-                                     || (pmap[*x][*y].flags & (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | HAS_ITEM | IS_IN_MACHINE))
+        loc->x = rand_range(0, DCOLS - 1);
+        loc->y = rand_range(0, DROWS - 1);
+    } while (failsafeCount < 500 && ((terrainType >= 0 && !cellHasTerrainType(loc->x, loc->y, terrainType))
+                                     || (((dungeonType >= 0 && pmapAt(*loc)->layers[DUNGEON] != dungeonType) || (liquidType >= 0 && pmapAt(*loc)->layers[LIQUID] != liquidType)) && terrainType < 0)
+                                     || (pmapAt(*loc)->flags & (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | HAS_ITEM | IS_IN_MACHINE))
                                      || (terrainType < 0 && !(tileCatalog[dungeonType].flags & T_OBSTRUCTS_ITEMS)
-                                         && cellHasTerrainFlag(*x, *y, T_OBSTRUCTS_ITEMS))));
+                                         && cellHasTerrainFlag(loc->x, loc->y, T_OBSTRUCTS_ITEMS))));
     if (failsafeCount >= 500) {
         return false;
     }

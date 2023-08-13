@@ -365,12 +365,13 @@ short chooseKind(const itemTable *theTable, short numKinds) {
 item *placeItemAt(item *theItem, pos dest) {
     enum dungeonLayers layer;
     char theItemName[DCOLS], buf[DCOLS];
+
+    // If no valid position is supplied by the caller, choose a random one instead.
     if (!isPosInMap(dest)) {
-        randomMatchingLocation(&dest.x, &dest.y, FLOOR, NOTHING, -1);
-        theItem->loc = dest;
-    } else {
-        theItem->loc = dest;
+        randomMatchingLocation(&dest, FLOOR, NOTHING, -1);
     }
+
+    theItem->loc = dest;
 
     removeItemFromChain(theItem, floorItems); // just in case; double-placing an item will result in game-crashing loops in the item list
     addItemToChain(theItem, floorItems);
@@ -671,7 +672,7 @@ void populateItems(pos upstairs) {
         pos itemPlacementLoc = INVALID_POS;
         if ((theItem->category & FOOD) || ((theItem->category & POTION) && theItem->kind == POTION_STRENGTH)) {
             do {
-                randomMatchingLocation(&itemPlacementLoc.x, &itemPlacementLoc.y, FLOOR, NOTHING, -1); // Food and gain strength don't follow the heat map.
+                randomMatchingLocation(&itemPlacementLoc, FLOOR, NOTHING, -1); // Food and gain strength don't follow the heat map.
             } while (passableArcCount(itemPlacementLoc.x, itemPlacementLoc.y) > 1); // Not in a hallway.
         } else {
             getItemSpawnLoc(itemSpawnHeatMap, &itemPlacementLoc.x, &itemPlacementLoc.y, &totalHeat);
