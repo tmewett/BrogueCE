@@ -274,9 +274,9 @@ static void initializeMainMenuButton(brogueButton *button, char *textWithHotkey,
 /// @param buttons An array of buttons to initialize
 static void initializeMainMenuButtons(brogueButton *buttons) {
 
-    initializeMainMenuButton(&(buttons[0]), " *     %sP%slay       ", 'p', 'P', NG_FLYOUT_PLAY);
-    initializeMainMenuButton(&(buttons[1]), " *     %sV%siew       ", 'v', 'V', NG_FLYOUT_VIEW);
-    initializeMainMenuButton(&(buttons[2]), " *   %sO%sptions      ", 'o', 'O', NG_FLYOUT_OPTIONS);
+    initializeMainMenuButton(&(buttons[0]), "     %sN%sew Game     ", 'n', 'N', NG_NEW_GAME);
+    initializeMainMenuButton(&(buttons[1]), " *     %sP%slay       ", 'p', 'P', NG_FLYOUT_PLAY);
+    initializeMainMenuButton(&(buttons[2]), " *     %sV%siew       ", 'v', 'V', NG_FLYOUT_VIEW);
     initializeMainMenuButton(&(buttons[3]), "       %sQ%suit       ", 'q', 'Q', NG_QUIT);
 
     // Add a left-facing triangle to all the buttons except quit
@@ -366,22 +366,17 @@ static void initializeFlyoutMenu(buttonState *menu, cellDisplayBuffer shadowBuf[
 
     if (rogue.nextGame == NG_FLYOUT_PLAY) {
 
-        buttonCount = 3;
-        initializeMainMenuButton(&(buttons[0]), "      %sN%sew Game     ", 'n', 'N', NG_NEW_GAME);
-        initializeMainMenuButton(&(buttons[1]), "  New %sS%seeded Game  ", 's', 'S', NG_NEW_GAME_WITH_SEED);
-        initializeMainMenuButton(&(buttons[2]), "     %sL%soad Game     ", 'l', 'L', NG_OPEN_GAME);
+        buttonCount = 4;
+        initializeMainMenuButton(&(buttons[0]), "  New %sS%seeded Game  ", 's', 'S', NG_NEW_GAME_WITH_SEED);
+        initializeMainMenuButton(&(buttons[1]), "     %sL%soad Game     ", 'l', 'L', NG_OPEN_GAME);
+        initializeMainMenuButton(&(buttons[2]), "  Change V%sa%sriant   ", 'a', 'A', NG_GAME_VARIANT);
+        initializeMainMenuButton(&(buttons[3]), "   Change %sM%sode     ", 'm', 'M', NG_GAME_MODE);
 
     } else if (rogue.nextGame == NG_FLYOUT_VIEW) {
 
         buttonCount = 2;
         initializeMainMenuButton(&(buttons[0]), "   View %sR%secording  ", 'r', 'R', NG_VIEW_RECORDING);
         initializeMainMenuButton(&(buttons[1]), "    %sH%sigh Scores    ", 'h', 'H', NG_HIGH_SCORES);
-
-    } else if (rogue.nextGame == NG_FLYOUT_OPTIONS) {
-
-        buttonCount = 2;
-        initializeMainMenuButton(&(buttons[0]), "    Game V%sa%sriant   ", 'a', 'A', NG_GAME_VARIANT);
-        initializeMainMenuButton(&(buttons[1]), "     Game %sM%sode     ", 'm', 'M', NG_GAME_MODE);
 
     } else {
         return;
