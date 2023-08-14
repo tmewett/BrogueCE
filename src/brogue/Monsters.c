@@ -799,7 +799,7 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
         i = 0;
         do {
             pos loc;
-            while (!randomMatchingLocation(&loc.x, &loc.y, FLOOR, NOTHING, (hordeCatalog[hordeID].spawnsIn ? hordeCatalog[hordeID].spawnsIn : -1))
+            while (!randomMatchingLocation(&loc, FLOOR, NOTHING, (hordeCatalog[hordeID].spawnsIn ? hordeCatalog[hordeID].spawnsIn : -1))
                    || passableArcCount(loc.x, loc.y) > 1) {
                 if (!--failsafe) {
                     return NULL;
