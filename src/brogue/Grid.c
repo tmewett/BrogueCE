@@ -379,7 +379,7 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
     // Fall back to a pathing-agnostic alternative if there are no solutions.
     if (*retValX == -1 && *retValY == -1) {
         pos loc;
-        if (getQualifyingLocNear(&loc, x, y, hallwaysAllowed, NULL,
+        if (getQualifyingLocNear(&loc, (pos){ x, y }, hallwaysAllowed, NULL,
                                  (blockingTerrainFlags | forbiddenTerrainFlags),
                                  (blockingMapFlags | forbiddenMapFlags),
                                  false, deterministic)) {

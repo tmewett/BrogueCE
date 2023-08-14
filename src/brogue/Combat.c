@@ -995,7 +995,7 @@ void processStaggerHit(creature *attacker, creature *defender) {
         && !cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)
         && !(pmap[newX][newY].flags & (HAS_MONSTER | HAS_PLAYER))) {
 
-        setMonsterLocation(defender, newX, newY);
+        setMonsterLocation(defender, (pos){ newX, newY });
     }
 }
 

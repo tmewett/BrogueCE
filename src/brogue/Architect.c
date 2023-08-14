@@ -1566,8 +1566,7 @@ boolean buildAMachine(enum machineTypes bp,
 
                         if (feature->flags & MF_GENERATE_HORDE) {
                             monst = spawnHorde(0,
-                                               featX,
-                                               featY,
+                                               (pos){ featX, featY },
                                                ((HORDE_IS_SUMMONED | HORDE_LEADER_CAPTIVE) & ~(feature->hordeFlags)),
                                                feature->hordeFlags);
                             if (monst) {
@@ -3308,7 +3307,7 @@ void evacuateCreatures(char blockingMap[DCOLS][DROWS]) {
                 monst = monsterAtLoc((pos) { i, j });
                 pos newLoc;
                 getQualifyingLocNear(&newLoc,
-                                     i, j,
+                                     (pos){ i, j },
                                      true,
                                      blockingMap,
                                      forbiddenFlagsForMonster(&(monst->info)),
@@ -3331,7 +3330,7 @@ boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refr
     boolean succeeded;
 
     if ((feat->flags & DFF_RESURRECT_ALLY)
-        && !resurrectAlly(x, y)) {
+        && !resurrectAlly((pos){ x, y })) {
         return false;
     }
 
@@ -3536,7 +3535,7 @@ void restoreItem(item *theItem) {
 
         pos loc;
         // Items can fall into deep water, enclaved lakes, another chasm, even lava!
-        getQualifyingLocNear(&loc, theItem->loc.x, theItem->loc.y, true, 0,
+        getQualifyingLocNear(&loc, theItem->loc, true, 0,
                             (T_OBSTRUCTS_ITEMS),
                             (HAS_MONSTER | HAS_ITEM | HAS_STAIRS), false, false);
 
@@ -3659,10 +3658,10 @@ void initializeLevel() {
     }
 
     pos downLoc;
-    if (getQualifyingGridLocNear(&downLoc, levels[n].downStairsLoc.x, levels[n].downStairsLoc.y, grid, false)) {
+    if (getQualifyingGridLocNear(&downLoc, levels[n].downStairsLoc, grid, false)) {
         prepareForStairs(downLoc.x, downLoc.y, grid);
     } else {
-        getQualifyingLocNear(&downLoc, levels[n].downStairsLoc.x, levels[n].downStairsLoc.y, false, 0,
+        getQualifyingLocNear(&downLoc, levels[n].downStairsLoc, false, 0,
                              (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_ITEMS | T_AUTO_DESCENT | T_IS_DEEP_WATER | T_LAVA_INSTA_DEATH | T_IS_DF_TRAP),
                              (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), true, false);
     }
@@ -3681,10 +3680,10 @@ void initializeLevel() {
     levels[n].downStairsLoc = downLoc;
 
     pos upLoc;
-    if (getQualifyingGridLocNear(&upLoc, levels[n].upStairsLoc.x, levels[n].upStairsLoc.y, grid, false)) {
+    if (getQualifyingGridLocNear(&upLoc, levels[n].upStairsLoc, grid, false)) {
         prepareForStairs(upLoc.x, upLoc.y, grid);
     } else { // Hopefully this never happens.
-        getQualifyingLocNear(&upLoc, levels[n].upStairsLoc.x, levels[n].upStairsLoc.y, false, 0,
+        getQualifyingLocNear(&upLoc, levels[n].upStairsLoc, false, 0,
                              (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_ITEMS | T_AUTO_DESCENT | T_IS_DEEP_WATER | T_LAVA_INSTA_DEATH | T_IS_DF_TRAP),
                              (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), true, false);
     }

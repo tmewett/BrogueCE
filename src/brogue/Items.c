@@ -416,7 +416,7 @@ void fillItemSpawnHeatMap(unsigned short heatMap[DCOLS][DROWS], unsigned short h
         pos neighbor = posNeighborInDirection(loc, dir);
         if (isPosInMap(neighbor)
             && !cellHasTerrainFlag(neighbor.x, neighbor.y, T_IS_DEEP_WATER | T_LAVA_INSTA_DEATH | T_AUTO_DESCENT)
-            && isPassableOrSecretDoor(neighbor.x, neighbor.y)
+            && isPassableOrSecretDoor(neighbor)
             && heatLevel < heatMap[neighbor.x][neighbor.y]) {
 
             fillItemSpawnHeatMap(heatMap, heatLevel, neighbor);
@@ -1182,7 +1182,7 @@ void updateFloorItems() {
         }
         if (cellHasTerrainFlag(x, y, T_MOVES_ITEMS)) {
             pos loc;
-            getQualifyingLocNear(&loc, x, y, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM), false, false);
+            getQualifyingLocNear(&loc, (pos){ x, y }, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM), false, false);
             removeItemAt((pos){ x, y });
             pmapAt(loc)->flags |= HAS_ITEM;
             if (pmap[x][y].flags & ITEM_DETECTED) {
@@ -4408,7 +4408,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                     if (monst->bookkeepingFlags & MB_CAPTIVE) {
                         freeCaptive(monst);
                     }
-                    teleport(monst, -1, -1, false);
+                    teleport(monst, INVALID_POS, false);
                 }
                 break;
             case BE_BECKONING:
@@ -6110,7 +6110,7 @@ void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistanc
         return;
     }
     pos dropLoc;
-    getQualifyingLocNear(&dropLoc, x, y, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM), false, false);
+    getQualifyingLocNear(&dropLoc, (pos){ x, y }, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM), false, false);
     placeItemAt(theItem, dropLoc);
     refreshDungeonCell(dropLoc.x, dropLoc.y);
 }
@@ -6570,7 +6570,7 @@ void useCharm(item *theItem) {
             summonGuardian(theItem);
             break;
         case CHARM_TELEPORTATION:
-            teleport(&player, -1, -1, true);
+            teleport(&player, INVALID_POS, true);
             break;
         case CHARM_RECHARGING:
             rechargeItems(STAFF);
@@ -6872,7 +6872,7 @@ void readScroll(item *theItem) {
             messageWithColor(buf2, &itemMessageColor, 0);
             break;
         case SCROLL_TELEPORT:
-            teleport(&player, -1, -1, true);
+            teleport(&player, INVALID_POS, true);
             break;
         case SCROLL_REMOVE_CURSE:
             for (tempItem = packItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
@@ -7050,7 +7050,7 @@ void readScroll(item *theItem) {
                     y = player.loc.y + nbDirs[i][1];
                     if (!cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY) && !(pmap[x][y].flags & HAS_MONSTER)
                         && rand_percent(10) && (numberOfMonsters < 3)) {
-                        monst = spawnHorde(0, x, y, (HORDE_LEADER_CAPTIVE | HORDE_NO_PERIODIC_SPAWN | HORDE_IS_SUMMONED | HORDE_MACHINE_ONLY), 0);
+                        monst = spawnHorde(0, (pos){ x, y }, (HORDE_LEADER_CAPTIVE | HORDE_NO_PERIODIC_SPAWN | HORDE_IS_SUMMONED | HORDE_MACHINE_ONLY), 0);
                         if (monst) {
                             // refreshDungeonCell(x, y);
                             // monst->creatureState = MONSTER_TRACKING_SCENT;
