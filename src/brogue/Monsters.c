@@ -729,32 +729,31 @@ boolean spawnMinions(short hordeID, creature *leader, boolean summoned, boolean 
     return atLeastOneMinion;
 }
 
-boolean drawManacle(short x, short y, enum directions dir) {
+boolean drawManacle(pos loc, enum directions dir) {
     enum tileType manacles[8] = {MANACLE_T, MANACLE_B, MANACLE_L, MANACLE_R, MANACLE_TL, MANACLE_BL, MANACLE_TR, MANACLE_BR};
-    short newX = x + nbDirs[dir][0];
-    short newY = y + nbDirs[dir][1];
-    if (coordinatesAreInMap(newX, newY)
-        && pmap[newX][newY].layers[DUNGEON] == FLOOR
-        && pmap[newX][newY].layers[LIQUID] == NOTHING) {
+    pos newLoc = posNeighborInDirection(loc, dir);
+    if (isPosInMap(newLoc)
+        && pmapAt(newLoc)->layers[DUNGEON] == FLOOR
+        && pmapAt(newLoc)->layers[LIQUID] == NOTHING) {
 
-        pmap[x + nbDirs[dir][0]][y + nbDirs[dir][1]].layers[SURFACE] = manacles[dir];
+        pmapAt(newLoc)->layers[SURFACE] = manacles[dir];
         return true;
     }
     return false;
 }
 
-void drawManacles(short x, short y) {
+void drawManacles(pos loc) {
     enum directions fallback[4][3] = {{UPLEFT, UP, LEFT}, {DOWNLEFT, DOWN, LEFT}, {UPRIGHT, UP, RIGHT}, {DOWNRIGHT, DOWN, RIGHT}};
     short i, j;
     for (i = 0; i < 4; i++) {
-        for (j = 0; j < 3 && !drawManacle(x, y, fallback[i][j]); j++);
+        for (j = 0; j < 3 && !drawManacle(loc, fallback[i][j]); j++);
     }
 }
 
 // If hordeID is 0, it's randomly assigned based on the depth, with a 10% chance of an out-of-depth spawn from 1-5 levels deeper.
 // If x is negative, location is random.
 // Returns a pointer to the leader.
-creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFlags, unsigned long requiredFlags) {
+creature *spawnHorde(short hordeID, pos loc, unsigned long forbiddenFlags, unsigned long requiredFlags) {
     short i, failsafe, depth;
     const hordeType *theHorde;
     creature *leader, *preexistingMonst;
@@ -778,14 +777,14 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
             if (hordeID < 0) {
                 return NULL;
             }
-            if (x >= 0 && y >= 0) {
-                if (cellHasTerrainFlag(x, y, T_PATHING_BLOCKER)
-                    && (!hordeCatalog[hordeID].spawnsIn || !cellHasTerrainType(x, y, hordeCatalog[hordeID].spawnsIn))) {
+            if (isPosInMap(loc)) {
+                if (cellHasTerrainFlag(loc.x, loc.y, T_PATHING_BLOCKER)
+                    && (!hordeCatalog[hordeID].spawnsIn || !cellHasTerrainType(loc.x, loc.y, hordeCatalog[hordeID].spawnsIn))) {
 
                     // don't spawn a horde in special terrain unless it's meant to spawn there
                     tryAgain = true;
                 }
-                if (hordeCatalog[hordeID].spawnsIn && !cellHasTerrainType(x, y, hordeCatalog[hordeID].spawnsIn)) {
+                if (hordeCatalog[hordeID].spawnsIn && !cellHasTerrainType(loc.x, loc.y, hordeCatalog[hordeID].spawnsIn)) {
                     // don't spawn a horde on normal terrain if it's meant for special terrain
                     tryAgain = true;
                 }
@@ -795,10 +794,9 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
 
     failsafe = 50;
 
-    if (x < 0 || y < 0) {
+    if (!isPosInMap(loc)) {
         i = 0;
         do {
-            pos loc;
             while (!randomMatchingLocation(&loc, FLOOR, NOTHING, (hordeCatalog[hordeID].spawnsIn ? hordeCatalog[hordeID].spawnsIn : -1))
                    || passableArcCount(loc.x, loc.y) > 1) {
                 if (!--failsafe) {
@@ -810,14 +808,12 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
                     return NULL;
                 }
             }
-            x = loc.x;
-            y = loc.y;
             i++;
 
             // This "while" condition should contain IN_FIELD_OF_VIEW, since that is specifically
             // calculated from the entry stairs when the level is generated, and will prevent monsters
             // from spawning within FOV of the entry stairs.
-        } while (i < 25 && (pmap[x][y].flags & (ANY_KIND_OF_VISIBLE | IN_FIELD_OF_VIEW)));
+        } while (i < 25 && (pmapAt(loc)->flags & (ANY_KIND_OF_VISIBLE | IN_FIELD_OF_VIEW)));
     }
 
 //  if (hordeCatalog[hordeID].spawnsIn == DEEP_WATER && pmap[x][y].layers[LIQUID] != DEEP_WATER) {
@@ -828,12 +824,11 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
 
     if (theHorde->machine > 0) {
         // Build the accompanying machine (e.g. a goblin encampment)
-        buildAMachine(theHorde->machine, x, y, 0, NULL, NULL, NULL);
+        buildAMachine(theHorde->machine, loc.x, loc.y, 0, NULL, NULL, NULL);
     }
 
     leader = generateMonster(theHorde->leaderType, true, true);
-    leader->loc.x = x;
-    leader->loc.y = y;
+    leader->loc = loc;
 
     if (hordeCatalog[hordeID].flags & HORDE_LEADER_CAPTIVE) {
         leader->bookkeepingFlags |= MB_CAPTIVE;
@@ -844,7 +839,7 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
 
         // Draw the manacles unless the horde spawns in weird terrain (e.g. cages).
         if (!hordeCatalog[hordeID].spawnsIn) {
-            drawManacles(x, y);
+            drawManacles(loc);
         }
     } else if (hordeCatalog[hordeID].flags & HORDE_ALLIED_WITH_PLAYER) {
         becomeAllyWith(leader);
@@ -860,16 +855,16 @@ creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFla
         fillGrid(leader->safetyMap, 0);
     }
 
-    preexistingMonst = monsterAtLoc((pos){ x, y });
+    preexistingMonst = monsterAtLoc(loc);
     if (preexistingMonst) {
         killCreature(preexistingMonst, true); // If there's already a monster here, quietly bury the body.
     }
 
-    brogueAssert(!(pmap[x][y].flags & HAS_MONSTER));
+    brogueAssert(!(pmapAt(loc)->flags & HAS_MONSTER));
 
-    pmap[x][y].flags |= HAS_MONSTER;
-    if (playerCanSeeOrSense(x, y)) {
-        refreshDungeonCell(x, y);
+    pmapAt(loc)->flags |= HAS_MONSTER;
+    if (playerCanSeeOrSense(loc.x, loc.y)) {
+        refreshDungeonCell(loc.x, loc.y);
     }
     if (monsterCanSubmergeNow(leader)) {
         leader->bookkeepingFlags |= MB_SUBMERGED;
@@ -994,7 +989,7 @@ boolean summonMinions(creature *summoner) {
             if (hordeCatalog[hordeID].flags & HORDE_SUMMONED_AT_DISTANCE) {
                 x = y = -1;
                 randomLocationInGrid(grid, &x, &y, 1);
-                teleport(monst, x, y, true);
+                teleport(monst, (pos){ x, y }, true);
                 if (x != -1 && y != -1 && grid != NULL) {
                     grid[x][y] = 0;
                 }
@@ -1058,7 +1053,7 @@ void populateMonsters() {
         numberOfMonsters++;
     }
     for (i=0; i<numberOfMonsters; i++) {
-        spawnHorde(0, -1, -1, (HORDE_IS_SUMMONED | HORDE_MACHINE_ONLY), 0); // random horde type, random location
+        spawnHorde(0, INVALID_POS, (HORDE_IS_SUMMONED | HORDE_MACHINE_ONLY), 0); // random horde type, random location
     }
 }
 
@@ -1100,7 +1095,7 @@ void spawnPeriodicHorde() {
     }
 
     if (getRandomMonsterSpawnLocation(&x, &y)) {
-        monst = spawnHorde(0, x, y, (HORDE_IS_SUMMONED | HORDE_LEADER_CAPTIVE | HORDE_NO_PERIODIC_SPAWN | HORDE_MACHINE_ONLY), 0);
+        monst = spawnHorde(0, (pos){ x, y }, (HORDE_IS_SUMMONED | HORDE_LEADER_CAPTIVE | HORDE_NO_PERIODIC_SPAWN | HORDE_MACHINE_ONLY), 0);
         if (monst) {
             monst->creatureState = MONSTER_WANDERING;
             for (creatureIterator it2 = iterateCreatures(monsters); hasNextCreature(it2);) {
@@ -1122,11 +1117,11 @@ void disentangle(creature *monst) {
 }
 
 // x and y are optional.
-void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidancePreferences) {
+void teleport(creature *monst, pos destination, boolean respectTerrainAvoidancePreferences) {
     short **grid, i, j;
     char monstFOV[DCOLS][DROWS];
 
-    if (!coordinatesAreInMap(x, y)) {
+    if (!isPosInMap(destination)) {
         zeroOutGrid(monstFOV);
         getFOVMask(monstFOV, monst->loc.x, monst->loc.y, DCOLS * FP_FACTOR, T_OBSTRUCTS_VISION, 0, false);
         grid = allocGrid();
@@ -1153,7 +1148,7 @@ void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidance
                 }
             }
         }
-        randomLocationInGrid(grid, &x, &y, 1);
+        randomLocationInGrid(grid, &destination.x, &destination.y, 1);
 //        DEBUG {
 //            dumpLevelToScreen();
 //            hiliteGrid(grid, &orange, 50);
@@ -1161,13 +1156,13 @@ void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidance
 //            temporaryMessage("Teleport candidate locations:", REQUIRE_ACKNOWLEDGMENT);
 //        }
         freeGrid(grid);
-        if (x < 0 || y < 0) {
+        if (!isPosInMap(destination)) {
             return; // Failure!
         }
     }
     // Always break free on teleport
     disentangle(monst);
-    setMonsterLocation(monst, x, y);
+    setMonsterLocation(monst, destination);
     if (monst != &player) {
         chooseNewWanderDestination(monst);
     }
@@ -1251,15 +1246,15 @@ unsigned long successorTerrainFlags(enum tileType tile, enum subseqDFTypes promo
     }
 }
 
-unsigned long burnedTerrainFlagsAtLoc(short x, short y) {
+unsigned long burnedTerrainFlagsAtLoc(pos loc) {
     short layer;
     unsigned long flags = 0;
 
     for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
-        if (tileCatalog[pmap[x][y].layers[layer]].flags & T_IS_FLAMMABLE) {
-            flags |= successorTerrainFlags(pmap[x][y].layers[layer], SUBSEQ_BURN);
-            if (tileCatalog[pmap[x][y].layers[layer]].mechFlags & TM_EXPLOSIVE_PROMOTE) {
-                flags |= successorTerrainFlags(pmap[x][y].layers[layer], SUBSEQ_PROMOTE);
+        if (tileCatalog[pmapAt(loc)->layers[layer]].flags & T_IS_FLAMMABLE) {
+            flags |= successorTerrainFlags(pmapAt(loc)->layers[layer], SUBSEQ_BURN);
+            if (tileCatalog[pmapAt(loc)->layers[layer]].mechFlags & TM_EXPLOSIVE_PROMOTE) {
+                flags |= successorTerrainFlags(pmapAt(loc)->layers[layer], SUBSEQ_PROMOTE);
             }
         }
     }
@@ -1267,13 +1262,13 @@ unsigned long burnedTerrainFlagsAtLoc(short x, short y) {
     return flags;
 }
 
-unsigned long discoveredTerrainFlagsAtLoc(short x, short y) {
+unsigned long discoveredTerrainFlagsAtLoc(pos loc) {
     short layer;
     unsigned long flags = 0;
 
     for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
-        if (tileCatalog[pmap[x][y].layers[layer]].mechFlags & TM_IS_SECRET) {
-            flags |= successorTerrainFlags(pmap[x][y].layers[layer], SUBSEQ_DISCOVER);
+        if (tileCatalog[pmapAt(loc)->layers[layer]].mechFlags & TM_IS_SECRET) {
+            flags |= successorTerrainFlags(pmapAt(loc)->layers[layer], SUBSEQ_DISCOVER);
         }
     }
 
@@ -1309,7 +1304,7 @@ boolean monsterAvoids(creature *monst, pos p) {
     if (tFlags & T_OBSTRUCTS_PASSABILITY) {
         if (monst != &player
             && cellHasTMFlag(p.x, p.y, TM_IS_SECRET)
-            && !(discoveredTerrainFlagsAtLoc(p.x, p.y) & avoidedFlagsForMonster(&(monst->info)))) {
+            && !(discoveredTerrainFlagsAtLoc(p) & avoidedFlagsForMonster(&(monst->info)))) {
             // This is so monsters can use secret doors but won't embed themselves in secret levers.
             return false;
         }
@@ -1413,7 +1408,7 @@ boolean monsterAvoids(creature *monst, pos p) {
     // burning monsters avoid explosive terrain and steam-emitting terrain
     if (monst != &player
         && monst->status[STATUS_BURNING]
-        && (burnedTerrainFlagsAtLoc(p.x, p.y) & (T_CAUSES_EXPLOSIVE_DAMAGE | T_CAUSES_DAMAGE | T_AUTO_DESCENT) & ~terrainImmunities)) {
+        && (burnedTerrainFlagsAtLoc(p) & (T_CAUSES_EXPLOSIVE_DAMAGE | T_CAUSES_DAMAGE | T_AUTO_DESCENT) & ~terrainImmunities)) {
 
         return true;
     }
@@ -2520,7 +2515,7 @@ boolean specificallyValidBoltTarget(creature *caster, creature *target, enum bol
         return false;
     }
     if ((boltCatalog[theBoltType].flags & BF_FIERY)
-        && burnedTerrainFlagsAtLoc(caster->loc.x, caster->loc.y) & avoidedFlagsForMonster(&(caster->info))) {
+        && burnedTerrainFlagsAtLoc(caster->loc) & avoidedFlagsForMonster(&(caster->info))) {
         // Don't shoot fireballs if you're standing on a tile that could combust into something that harms you.
         return false;
     }
@@ -2716,19 +2711,14 @@ boolean monstUseMagic(creature *monst) {
     return false;
 }
 
-boolean isLocalScentMaximum(short x, short y) {
-    enum directions dir;
-    short newX, newY;
-
-    const short baselineScent = scentMap[x][y];
-
-    for (dir=0; dir< DIRECTION_COUNT; dir++) {
-        newX = x + nbDirs[dir][0];
-        newY = y + nbDirs[dir][1];
-        if (coordinatesAreInMap(newX, newY)
-            && (scentMap[newX][newY] > baselineScent)
-            && !cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)
-            && !diagonalBlocked(x, y, newX, newY, false)) {
+boolean isLocalScentMaximum(pos loc) {
+    const short baselineScent = scentMap[loc.x][loc.y];
+    for (enum directions dir=0; dir< DIRECTION_COUNT; dir++) {
+        pos newLoc = posNeighborInDirection(loc, dir);
+        if (isPosInMap(newLoc)
+            && (scentMap[newLoc.x][newLoc.y] > baselineScent)
+            && !cellHasTerrainFlag(newLoc.x, newLoc.y, T_OBSTRUCTS_PASSABILITY)
+            && !diagonalBlocked(loc.x, loc.y, newLoc.x, newLoc.y, false)) {
 
             return false;
         }
@@ -2793,7 +2783,7 @@ enum directions scentDirection(creature *monst) {
 }
 
 // returns true if the resurrection was successful.
-boolean resurrectAlly(const short x, const short y) {
+boolean resurrectAlly(const pos loc) {
     creatureIterator allyIterator = iterateCreatures(&purgatory);
 
     // Prefer most empowered ally.  In case of tie, prefer ally with greatest monsterID (thus
@@ -2815,7 +2805,7 @@ boolean resurrectAlly(const short x, const short y) {
         removeCreature(&purgatory, monToRaise);
         prependCreature(monsters, monToRaise);
 
-        getQualifyingPathLocNear(&monToRaise->loc.x, &monToRaise->loc.y, x, y, true,
+        getQualifyingPathLocNear(&monToRaise->loc.x, &monToRaise->loc.y, loc.x, loc.y, true,
                                  (T_PATHING_BLOCKER | T_HARMFUL_TERRAIN), 0,
                                  0, (HAS_PLAYER | HAS_MONSTER), false);
         pmapAt(monToRaise->loc)->flags |= HAS_MONSTER;
@@ -3360,7 +3350,7 @@ void monstersTurn(creature *monst) {
 
         dir = scentDirection(monst);
         if (dir == NO_DIRECTION) {
-            alreadyAtBestScent = isLocalScentMaximum(x, y);
+            alreadyAtBestScent = isLocalScentMaximum((pos){ x, y });
             if (alreadyAtBestScent && monst->creatureState != MONSTER_ALLY && !(pmap[x][y].flags & IN_FIELD_OF_VIEW)) {
                 if (monst->info.flags & MONST_ALWAYS_HUNTING) {
                     pathTowardCreature(monst, &player);
@@ -3557,36 +3547,35 @@ boolean canPass(creature *mover, creature *blocker) {
             && blocker->currentHP < mover->currentHP);
 }
 
-boolean isPassableOrSecretDoor(short x, short y) {
-    return (!cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY)
-            || (cellHasTMFlag(x, y, TM_IS_SECRET) && !(discoveredTerrainFlagsAtLoc(x, y) & T_OBSTRUCTS_PASSABILITY)));
+boolean isPassableOrSecretDoor(pos loc) {
+    return (!cellHasTerrainFlag(loc.x, loc.y, T_OBSTRUCTS_PASSABILITY)
+            || (cellHasTMFlag(loc.x, loc.y, TM_IS_SECRET) && !(discoveredTerrainFlagsAtLoc(loc) & T_OBSTRUCTS_PASSABILITY)));
 }
 
-boolean knownToPlayerAsPassableOrSecretDoor(short x, short y) {
+boolean knownToPlayerAsPassableOrSecretDoor(pos loc) {
     unsigned long tFlags, TMFlags;
-    getLocationFlags(x, y, &tFlags, &TMFlags, NULL, true);
+    getLocationFlags(loc.x, loc.y, &tFlags, &TMFlags, NULL, true);
     return (!(tFlags & T_OBSTRUCTS_PASSABILITY)
-            || ((TMFlags & TM_IS_SECRET) && !(discoveredTerrainFlagsAtLoc(x, y) & T_OBSTRUCTS_PASSABILITY)));
+            || ((TMFlags & TM_IS_SECRET) && !(discoveredTerrainFlagsAtLoc(loc) & T_OBSTRUCTS_PASSABILITY)));
 }
 
-void setMonsterLocation(creature *monst, short newX, short newY) {
+void setMonsterLocation(creature *monst, pos newLoc) {
     unsigned long creatureFlag = (monst == &player ? HAS_PLAYER : HAS_MONSTER);
     pmapAt(monst->loc)->flags &= ~creatureFlag;
     refreshDungeonCell(monst->loc.x, monst->loc.y);
     monst->turnsSpentStationary = 0;
-    monst->loc.x = newX;
-    monst->loc.y = newY;
-    pmap[newX][newY].flags |= creatureFlag;
-    if ((monst->bookkeepingFlags & MB_SUBMERGED) && !cellHasTMFlag(newX, newY, TM_ALLOWS_SUBMERGING)) {
+    monst->loc = newLoc;
+    pmapAt(newLoc)->flags |= creatureFlag;
+    if ((monst->bookkeepingFlags & MB_SUBMERGED) && !cellHasTMFlag(newLoc.x, newLoc.y, TM_ALLOWS_SUBMERGING)) {
         monst->bookkeepingFlags &= ~MB_SUBMERGED;
     }
-    if (playerCanSee(newX, newY)
-        && cellHasTMFlag(newX, newY, TM_IS_SECRET)
-        && cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)) {
+    if (playerCanSee(newLoc.x, newLoc.y)
+        && cellHasTMFlag(newLoc.x, newLoc.y, TM_IS_SECRET)
+        && cellHasTerrainFlag(newLoc.x, newLoc.y, T_OBSTRUCTS_PASSABILITY)) {
 
-        discover(newX, newY); // if you see a monster use a secret door, you discover it
+        discover(newLoc.x, newLoc.y); // if you see a monster use a secret door, you discover it
     }
-    refreshDungeonCell(newX, newY);
+    refreshDungeonCell(newLoc.x, newLoc.y);
     applyInstantTileEffectsToCreature(monst);
     if (monst == &player) {
         updateVision(true);
@@ -3705,9 +3694,9 @@ boolean moveMonster(creature *monst, short dx, short dy) {
     }
 
     if (((defender && (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS))
-         || (isPassableOrSecretDoor(newX, newY)
+         || (isPassableOrSecretDoor((pos){ newX, newY })
              && !diagonalBlocked(x, y, newX, newY, false)
-             && isPassableOrSecretDoor(x, y)))
+             && isPassableOrSecretDoor((pos){ x, y })))
         && (!defender || canPass(monst, defender) || monsterWillAttackTarget(monst, defender))) {
             // if it's a legal move
 
@@ -3746,7 +3735,7 @@ boolean moveMonster(creature *monst, short dx, short dy) {
                 swarmDirection = monsterSwarmDirection(monst, defender);
                 if (swarmDirection != NO_DIRECTION) {
                     const pos newLoc = posNeighborInDirection(monst->loc, swarmDirection);
-                    setMonsterLocation(monst, newLoc.x, newLoc.y);
+                    setMonsterLocation(monst, newLoc);
                     monst->ticksUntilTurn = monst->movementSpeed;
                     return true;
                 } else {
@@ -3774,7 +3763,7 @@ boolean moveMonster(creature *monst, short dx, short dy) {
                 return true;
             } else {
                 // okay we're moving!
-                setMonsterLocation(monst, newX, newY);
+                setMonsterLocation(monst, (pos){ newX, newY });
                 monst->ticksUntilTurn = monst->movementSpeed;
                 return true;
             }
@@ -3825,7 +3814,7 @@ void findAlternativeHomeFor(creature *monst, short *x, short *y, boolean chooseR
 
 // blockingMap is optional
 boolean getQualifyingLocNear(pos *loc,
-                             short x, short y,
+                             pos target,
                              boolean hallwaysAllowed,
                              char blockingMap[DCOLS][DROWS],
                              unsigned long forbiddenTerrainFlags,
@@ -3836,10 +3825,10 @@ boolean getQualifyingLocNear(pos *loc,
 
     // count up the number of candidate locations
     for (int k=0; k<max(DROWS, DCOLS) && !candidateLocs; k++) {
-        for (int i = x-k; i <= x+k; i++) {
-            for (int j = y-k; j <= y+k; j++) {
+        for (int i = target.x-k; i <= target.x+k; i++) {
+            for (int j = target.y-k; j <= target.y+k; j++) {
                 if (coordinatesAreInMap(i, j)
-                    && (i == x-k || i == x+k || j == y-k || j == y+k)
+                    && (i == target.x-k || i == target.x+k || j == target.y-k || j == target.y+k)
                     && (!blockingMap || !blockingMap[i][j])
                     && !cellHasTerrainFlag(i, j, forbiddenTerrainFlags)
                     && !(pmap[i][j].flags & forbiddenMapFlags)
@@ -3864,10 +3853,10 @@ boolean getQualifyingLocNear(pos *loc,
     }
 
     for (int k=0; k<max(DROWS, DCOLS); k++) {
-        for (int i = x-k; i <= x+k; i++) {
-            for (int j = y-k; j <= y+k; j++) {
+        for (int i = target.x-k; i <= target.x+k; i++) {
+            for (int j = target.y-k; j <= target.y+k; j++) {
                 if (coordinatesAreInMap(i, j)
-                    && (i == x-k || i == x+k || j == y-k || j == y+k)
+                    && (i == target.x-k || i == target.x+k || j == target.y-k || j == target.y+k)
                     && (!blockingMap || !blockingMap[i][j])
                     && !cellHasTerrainFlag(i, j, forbiddenTerrainFlags)
                     && !(pmap[i][j].flags & forbiddenMapFlags)
@@ -3887,17 +3876,17 @@ boolean getQualifyingLocNear(pos *loc,
 }
 
 boolean getQualifyingGridLocNear(pos *loc,
-                                 short x, short y,
+                                 pos target,
                                  boolean grid[DCOLS][DROWS],
                                  boolean deterministic) {
     short candidateLocs = 0;
 
     // count up the number of candidate locations
     for (int k=0; k<max(DROWS, DCOLS) && !candidateLocs; k++) {
-        for (int i = x-k; i <= x+k; i++) {
-            for (int j = y-k; j <= y+k; j++) {
+        for (int i = target.x-k; i <= target.x+k; i++) {
+            for (int j = target.y-k; j <= target.y+k; j++) {
                 if (coordinatesAreInMap(i, j)
-                    && (i == x-k || i == x+k || j == y-k || j == y+k)
+                    && (i == target.x-k || i == target.x+k || j == target.y-k || j == target.y+k)
                     && grid[i][j]) {
 
                     candidateLocs++;
@@ -3919,10 +3908,10 @@ boolean getQualifyingGridLocNear(pos *loc,
     }
 
     for (int k=0; k<max(DROWS, DCOLS); k++) {
-        for (int i = x-k; i <= x+k; i++) {
-            for (int j = y-k; j <= y+k; j++) {
+        for (int i = target.x-k; i <= target.x+k; i++) {
+            for (int j = target.y-k; j <= target.y+k; j++) {
                 if (coordinatesAreInMap(i, j)
-                    && (i == x-k || i == x+k || j == y-k || j == y+k)
+                    && (i == target.x-k || i == target.x+k || j == target.y-k || j == target.y+k)
                     && grid[i][j]) {
 
                     if (--randIndex == 0) {

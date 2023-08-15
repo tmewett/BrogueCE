@@ -777,14 +777,14 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     // Position the player.
     pos loc;
     if (stairDirection == 0) { // fell into the level
-        getQualifyingLocNear(&loc, player.loc.x, player.loc.y, true, 0,
+        getQualifyingLocNear(&loc, player.loc, true, 0,
                              (T_PATHING_BLOCKER & ~T_IS_DEEP_WATER),
                              (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false, false);
 
         if (cellHasTerrainFlag(loc.x, loc.y, T_IS_DEEP_WATER)) {
             // Fell into deep water... can we swim out of it?
             pos dryLoc;
-            getQualifyingLocNear(&dryLoc, player.loc.x, player.loc.y, true, 0,
+            getQualifyingLocNear(&dryLoc, player.loc, true, 0,
                                 (T_PATHING_BLOCKER),
                                 (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false, false);
 

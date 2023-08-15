@@ -227,7 +227,7 @@ void calculateDistances(short **distanceMap,
             } else if (canUseSecretDoors
                 && cellHasTMFlag(i, j, TM_IS_SECRET)
                 && cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)
-                && !(discoveredTerrainFlagsAtLoc(i, j) & T_OBSTRUCTS_PASSABILITY)) {
+                && !(discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY)) {
 
                 cost = 1;
             } else if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)

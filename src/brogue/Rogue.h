@@ -3106,7 +3106,7 @@ extern "C" {
     creature *generateMonster(short monsterID, boolean itemPossible, boolean mutationPossible);
     void mutateMonster(creature *monst, short mutationIndex);
     short chooseMonster(short forLevel);
-    creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFlags, unsigned long requiredFlags);
+    creature *spawnHorde(short hordeID, pos loc, unsigned long forbiddenFlags, unsigned long requiredFlags);
     void fadeInMonster(creature *monst);
 
     creatureList createCreatureList();
@@ -3141,7 +3141,7 @@ extern "C" {
     pos perimeterCoords(short n);
     boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, boolean blinkUphill);
     boolean monsterSummons(creature *monst, boolean alwaysUse);
-    boolean resurrectAlly(const short x, const short y);
+    boolean resurrectAlly(const pos loc);
     void unAlly(creature *monst);
     boolean monsterFleesFrom(creature *monst, creature *defender);
     void monstersTurn(creature *monst);
@@ -3152,15 +3152,15 @@ extern "C" {
     short runicWeaponChance(item *theItem, boolean customEnchantLevel, fixpt enchantLevel);
     void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed);
     void disentangle(creature *monst);
-    void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidancePreferences);
+    void teleport(creature *monst, pos destination, boolean respectTerrainAvoidancePreferences);
     void chooseNewWanderDestination(creature *monst);
     boolean canPass(creature *mover, creature *blocker);
-    boolean isPassableOrSecretDoor(short x, short y);
-    boolean knownToPlayerAsPassableOrSecretDoor(short x, short y);
-    void setMonsterLocation(creature *monst, short newX, short newY);
+    boolean isPassableOrSecretDoor(pos loc);
+    boolean knownToPlayerAsPassableOrSecretDoor(pos loc);
+    void setMonsterLocation(creature *monst, pos newLoc);
     boolean moveMonster(creature *monst, short dx, short dy);
-    unsigned long burnedTerrainFlagsAtLoc(short x, short y);
-    unsigned long discoveredTerrainFlagsAtLoc(short x, short y);
+    unsigned long burnedTerrainFlagsAtLoc(pos loc);
+    unsigned long discoveredTerrainFlagsAtLoc(pos loc);
     boolean monsterAvoids(creature *monst, pos p);
     short distanceBetween(pos loc1, pos loc2);
     void alertMonster(creature *monst);
@@ -3266,7 +3266,7 @@ extern "C" {
     void drop(item *theItem);
     void findAlternativeHomeFor(creature *monst, short *x, short *y, boolean chooseRandomly);
     boolean getQualifyingLocNear(pos *loc,
-                                 short x, short y,
+                                 pos target,
                                  boolean hallwaysAllowed,
                                  char blockingMap[DCOLS][DROWS],
                                  unsigned long forbiddenTerrainFlags,
@@ -3274,7 +3274,7 @@ extern "C" {
                                  boolean forbidLiquid,
                                  boolean deterministic);
     boolean getQualifyingGridLocNear(pos *loc,
-                                     short x, short y,
+                                     pos target,
                                      boolean grid[DCOLS][DROWS],
                                      boolean deterministic);
 
