@@ -2107,7 +2107,7 @@ boolean search(short searchStrength) {
     for (i = x - radius; i <= x + radius; i++) {
         for (j = y - radius; j <= y + radius; j++) {
             if (coordinatesAreInMap(i, j)
-                && playerCanDirectlySee(i, j)) {
+                && (playerCanDirectlySee(i, j) || (pmap[i][j].flags & CLAIRVOYANT_VISIBLE))) {
 
                 percent = searchStrength - distanceBetween(x, y, i, j) * 10;
                 if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)) {
