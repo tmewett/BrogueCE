@@ -261,8 +261,7 @@ void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsig
 
     sprintf(message, "Brogue seed catalog, seeds %llu to %llu, through depth %u.\n"
                      "Generated with %s. Dungeons unchanged since %s.\n\n"
-                     "To play one of these seeds, press control-N from the title screen"
-                     " and enter the seed number.\n",
+                     "To play one of these seeds, select Play>New Seeded Game from the title screen.\n",
             (unsigned long long) startingSeed, (unsigned long long) startingSeed + numberOfSeedsToScan - 1, scanThroughDepth, gameConst->versionString,
             gameConst->dungeonVersionString);
 
