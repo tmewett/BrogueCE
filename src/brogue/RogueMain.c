@@ -1323,7 +1323,7 @@ void enableEasyMode() {
         message("An ancient and terrible evil burrows into your willing flesh!", REQUIRE_ACKNOWLEDGMENT);
         rogue.easyMode = true;
         setPlayerDisplayChar();
-        refreshDungeonCell(player.loc.x, player.loc.y);
+        refreshDungeonCell(player.loc);
         refreshSideBar(-1, -1, false);
         message("Wracked by spasms, your body contorts into an ALL-POWERFUL AMPERSAND!!!", 0);
         message("You have a feeling that you will take 20% as much damage from now on.", 0);

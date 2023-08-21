@@ -408,7 +408,7 @@ static void dialogCreateMonster() {
         theMonster->creatureState = MONSTER_WANDERING;
         fadeInMonster(theMonster);
         refreshSideBar(-1, -1, false);
-        refreshDungeonCell(theMonster->loc.x, theMonster->loc.y);
+        refreshDungeonCell(theMonster->loc);
 
         if (!(theMonster->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))
             || theMonster->info.monsterID == MK_PHOENIX_EGG

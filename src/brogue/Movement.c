@@ -498,7 +498,7 @@ void becomeAllyWith(creature *monst) {
     monst->bookkeepingFlags |= MB_FOLLOWER;
     monst->leader = &player;
     monst->bookkeepingFlags &= ~(MB_CAPTIVE | MB_SEIZED);
-    refreshDungeonCell(monst->loc.x, monst->loc.y);
+    refreshDungeonCell(monst->loc);
 }
 
 void freeCaptive(creature *monst) {
@@ -703,7 +703,7 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
                     attacker->loc.y + (1 + i) * nbDirs[dir][1]
                 };
                 if (isPosInMap(targetLoc)) {
-                    refreshDungeonCell(targetLoc.x, targetLoc.y);
+                    refreshDungeonCell(targetLoc);
                 }
             }
         }
@@ -1116,8 +1116,8 @@ boolean playerMoves(short direction) {
                 pickUpItemAt(player.loc);
                 rogue.disturbed = true;
             }
-            refreshDungeonCell(x, y);
-            refreshDungeonCell(player.loc.x, player.loc.y);
+            refreshDungeonCell((pos){ x, y });
+            refreshDungeonCell(player.loc);
             playerMoved = true;
 
             checkForMissingKeys(x, y);
@@ -1148,7 +1148,7 @@ boolean playerMoves(short direction) {
             if (!(pmap[newX][newY].flags & DISCOVERED)) {
                 committed = true;
                 discoverCell(newX, newY);
-                refreshDungeonCell(newX, newY);
+                refreshDungeonCell((pos){ newX, newY });
             }
 
             messageWithColor(tileCatalog[i].flavorText, &backgroundMessageColor, 0);
@@ -1455,7 +1455,7 @@ void displayRoute(short **distanceMap, boolean removeRoute) {
     }
     do {
         if (removeRoute) {
-            refreshDungeonCell(currentX, currentY);
+            refreshDungeonCell((pos){ currentX, currentY });
         } else {
             hiliteCell(currentX, currentY, &hiliteColor, 50, true);
         }
@@ -1569,12 +1569,12 @@ void travel(short x, short y, boolean autoConfirm) {
     if (D_WORMHOLING) {
         recordMouseClick(mapToWindowX(x), mapToWindowY(y), true, false);
         pmapAt(player.loc)->flags &= ~HAS_PLAYER;
-        refreshDungeonCell(player.loc.x, player.loc.y);
+        refreshDungeonCell(player.loc);
         player.loc.x = x;
         player.loc.y = y;
         pmap[x][y].flags |= HAS_PLAYER;
         updatePlayerUnderwaterness();
-        refreshDungeonCell(x, y);
+        refreshDungeonCell((pos){ x, y });
         updateVision(true);
         return;
     }
@@ -2068,7 +2068,7 @@ void discover(short x, short y) {
                 spawnDungeonFeature(x, y, feat, true, false);
             }
         }
-        refreshDungeonCell(x, y);
+        refreshDungeonCell((pos){ x, y });
 
         if (playerCanSee(x, y)) {
             rogue.disturbed = true;
@@ -2224,27 +2224,27 @@ void updateFieldOfViewDisplay(boolean updateDancingTerrain, boolean refreshDispl
                 }
                 discoverCell(i, j);
                 if (refreshDisplay) {
-                    refreshDungeonCell(i, j);
+                    refreshDungeonCell((pos){ i, j });
                 }
             } else if (!(pmap[i][j].flags & VISIBLE) && (pmap[i][j].flags & WAS_VISIBLE)) { // if the cell ceased being visible this move
                 storeMemories(i, j);
                 if (refreshDisplay) {
-                    refreshDungeonCell(i, j);
+                    refreshDungeonCell((pos){ i, j });
                 }
             } else if (!(pmap[i][j].flags & CLAIRVOYANT_VISIBLE) && (pmap[i][j].flags & WAS_CLAIRVOYANT_VISIBLE)) { // ceased being clairvoyantly visible
                 storeMemories(i, j);
                 if (refreshDisplay) {
-                    refreshDungeonCell(i, j);
+                    refreshDungeonCell((pos){ i, j });
                 }
             } else if (!(pmap[i][j].flags & WAS_CLAIRVOYANT_VISIBLE) && (pmap[i][j].flags & CLAIRVOYANT_VISIBLE)) { // became clairvoyantly visible
                 pmap[i][j].flags &= ~STABLE_MEMORY;
                 if (refreshDisplay) {
-                    refreshDungeonCell(i, j);
+                    refreshDungeonCell((pos){ i, j });
                 }
             } else if (!(pmap[i][j].flags & TELEPATHIC_VISIBLE) && (pmap[i][j].flags & WAS_TELEPATHIC_VISIBLE)) { // ceased being telepathically visible
                 storeMemories(i, j);
                 if (refreshDisplay) {
-                    refreshDungeonCell(i, j);
+                    refreshDungeonCell((pos){ i, j });
                 }
             } else if (!(pmap[i][j].flags & WAS_TELEPATHIC_VISIBLE) && (pmap[i][j].flags & TELEPATHIC_VISIBLE)) { // became telepathically visible
                 if (!(pmap[i][j].flags & DISCOVERED)
@@ -2254,7 +2254,7 @@ void updateFieldOfViewDisplay(boolean updateDancingTerrain, boolean refreshDispl
 
                 pmap[i][j].flags &= ~STABLE_MEMORY;
                 if (refreshDisplay) {
-                    refreshDungeonCell(i, j);
+                    refreshDungeonCell((pos){ i, j });
                 }
             } else if (playerCanSeeOrSense(i, j)
                        && (tmap[i][j].light[0] != tmap[i][j].oldLight[0] ||
@@ -2262,7 +2262,7 @@ void updateFieldOfViewDisplay(boolean updateDancingTerrain, boolean refreshDispl
                            tmap[i][j].light[2] != tmap[i][j].oldLight[2])) { // if the cell's light color changed this move
 
                            if (refreshDisplay) {
-                               refreshDungeonCell(i, j);
+                               refreshDungeonCell((pos){ i, j });
                            }
                        } else if (updateDancingTerrain
                                   && playerCanSee(i, j)
@@ -2279,7 +2279,7 @@ void updateFieldOfViewDisplay(boolean updateDancingTerrain, boolean refreshDispl
 
                                       pmap[i][j].flags &= ~STABLE_MEMORY;
                                       if (refreshDisplay) {
-                                          refreshDungeonCell(i, j);
+                                          refreshDungeonCell((pos){ i, j });
                                       }
                                   }
         }

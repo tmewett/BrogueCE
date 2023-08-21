@@ -2943,7 +2943,7 @@ extern "C" {
     void waitForAcknowledgment();
     void waitForKeystrokeOrMouseClick();
     boolean confirm(char *prompt, boolean alsoDuringPlayback);
-    void refreshDungeonCell(short x, short y);
+    void refreshDungeonCell(pos loc);
     void applyColorMultiplier(color *baseColor, const color *multiplierColor);
     void applyColorAverage(color *baseColor, const color *newColor, short averageWeight);
     void applyColorAugment(color *baseColor, const color *augmentingColor, short augmentWeight);
