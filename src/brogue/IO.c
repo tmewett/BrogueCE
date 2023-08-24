@@ -2975,10 +2975,6 @@ boolean confirm(char *prompt, boolean alsoDuringPlayback) {
     return retVal;
 }
 
-static void clearMonsterFlashes() {
-
-}
-
 void displayMonsterFlashes(boolean flashingEnabled) {
     short x[100], y[100], strength[100], count = 0;
     const color *flashColor[100];

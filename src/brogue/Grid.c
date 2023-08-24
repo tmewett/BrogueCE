@@ -155,39 +155,6 @@ void drawCircleOnGrid(short **grid, short x, short y, short radius, short value)
     }
 }
 
-static void intersectGrids(short **onto, short **from) {
-    short i, j;
-    for(i = 0; i < DCOLS; i++) {
-        for(j = 0; j < DROWS; j++) {
-            if (onto[i][j] && from[i][j]) {
-                onto[i][j] = true;
-            } else {
-                onto[i][j] = false;
-            }
-        }
-    }
-}
-
-static void uniteGrids(short **onto, short **from) {
-    short i, j;
-    for(i = 0; i < DCOLS; i++) {
-        for(j = 0; j < DROWS; j++) {
-            if (!onto[i][j] && from[i][j]) {
-                onto[i][j] = from[i][j];
-            }
-        }
-    }
-}
-
-static void invertGrid(short **grid) {
-    short i, j;
-    for(i = 0; i < DCOLS; i++) {
-        for(j = 0; j < DROWS; j++) {
-            grid[i][j] = !grid[i][j];
-        }
-    }
-}
-
 // Fills grid locations with the given value if they match any terrain flags or map flags.
 // Otherwise does not change the grid location.
 void getTerrainGrid(short **grid, short value, unsigned long terrainFlags, unsigned long mapFlags) {

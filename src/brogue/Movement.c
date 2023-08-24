@@ -1976,41 +1976,6 @@ void autoPlayLevel(boolean fastForward) {
     rogue.autoPlayingLevel = false;
 }
 
-static short directionOfKeypress(unsigned short ch) {
-    switch (ch) {
-        case LEFT_KEY:
-        case LEFT_ARROW:
-        case NUMPAD_4:
-            return LEFT;
-        case RIGHT_KEY:
-        case RIGHT_ARROW:
-        case NUMPAD_6:
-            return RIGHT;
-        case UP_KEY:
-        case UP_ARROW:
-        case NUMPAD_8:
-            return UP;
-        case DOWN_KEY:
-        case DOWN_ARROW:
-        case NUMPAD_2:
-            return DOWN;
-        case UPLEFT_KEY:
-        case NUMPAD_7:
-            return UPLEFT;
-        case UPRIGHT_KEY:
-        case NUMPAD_9:
-            return UPRIGHT;
-        case DOWNLEFT_KEY:
-        case NUMPAD_1:
-            return DOWNLEFT;
-        case DOWNRIGHT_KEY:
-        case NUMPAD_3:
-            return DOWNRIGHT;
-        default:
-            return -1;
-    }
-}
-
 boolean startFighting(enum directions dir, boolean tillDeath) {
     const pos neighborLoc = posNeighborInDirection(player.loc, dir);
     creature * const monst = monsterAtLoc(neighborLoc);

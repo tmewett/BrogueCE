@@ -228,10 +228,6 @@ void plotChar(enum displayGlyph inputChar,
     currentConsole.plotChar(inputChar, xLoc, yLoc, foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue);
 }
 
-static void pausingTimerStartsNow() {
-
-}
-
 boolean shiftKeyIsDown() {
     return currentConsole.modifierHeld(0);
 }
