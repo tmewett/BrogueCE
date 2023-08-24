@@ -273,7 +273,7 @@ boolean monsterIsInClass(const creature *monst, const short monsterClass) {
 // Don't attack a revenant if you're not magical.
 // Don't attack a monster embedded in obstruction crystal.
 // Etc.
-boolean attackWouldBeFutile(const creature *attacker, const creature *defender) {
+static boolean attackWouldBeFutile(const creature *attacker, const creature *defender) {
     if (cellHasTerrainFlag(defender->loc.x, defender->loc.y, T_OBSTRUCTS_PASSABILITY)
         && !(defender->info.flags & MONST_ATTACKABLE_THRU_WALLS)) {
         return true;
@@ -668,7 +668,7 @@ boolean monsterCanSubmergeNow(creature *monst) {
 }
 
 // Returns true if at least one minion spawned.
-boolean spawnMinions(short hordeID, creature *leader, boolean summoned, boolean itemPossible) {
+static boolean spawnMinions(short hordeID, creature *leader, boolean summoned, boolean itemPossible) {
     short iSpecies, iMember, count;
     unsigned long forbiddenTerrainFlags;
     const hordeType *theHorde;
@@ -729,7 +729,7 @@ boolean spawnMinions(short hordeID, creature *leader, boolean summoned, boolean 
     return atLeastOneMinion;
 }
 
-boolean drawManacle(pos loc, enum directions dir) {
+static boolean drawManacle(pos loc, enum directions dir) {
     enum tileType manacles[8] = {MANACLE_T, MANACLE_B, MANACLE_L, MANACLE_R, MANACLE_TL, MANACLE_BL, MANACLE_TR, MANACLE_BR};
     pos newLoc = posNeighborInDirection(loc, dir);
     if (isPosInMap(newLoc)
@@ -742,7 +742,7 @@ boolean drawManacle(pos loc, enum directions dir) {
     return false;
 }
 
-void drawManacles(pos loc) {
+static void drawManacles(pos loc) {
     enum directions fallback[4][3] = {{UPLEFT, UP, LEFT}, {DOWNLEFT, DOWN, LEFT}, {UPRIGHT, UP, RIGHT}, {DOWNRIGHT, DOWN, RIGHT}};
     short i, j;
     for (i = 0; i < 4; i++) {
@@ -947,7 +947,7 @@ void freeCreatureList(creatureList *list) {
     list->head = NULL;
 }
 
-boolean summonMinions(creature *summoner) {
+static boolean summonMinions(creature *summoner) {
     enum monsterTypes summonerType = summoner->info.monsterID;
     const short hordeID = pickHordeType(0, summonerType, 0, 0);
     short seenMinionCount = 0, x, y;
@@ -1168,7 +1168,7 @@ void teleport(creature *monst, pos destination, boolean respectTerrainAvoidanceP
     }
 }
 
-boolean isValidWanderDestination(creature *monst, short wpIndex) {
+static boolean isValidWanderDestination(creature *monst, short wpIndex) {
     return (wpIndex >= 0
             && wpIndex < rogue.wpCount
             && !monst->waypointAlreadyVisited[wpIndex]
@@ -1176,7 +1176,7 @@ boolean isValidWanderDestination(creature *monst, short wpIndex) {
             && nextStep(rogue.wpDistance[wpIndex], monst->loc.x, monst->loc.y, monst, false) != NO_DIRECTION);
 }
 
-short closestWaypointIndex(creature *monst) {
+static short closestWaypointIndex(creature *monst) {
     short i, closestDistance, closestIndex;
 
     closestDistance = DCOLS/2;
@@ -1222,7 +1222,7 @@ enum subseqDFTypes {
 };
 
 // Returns the terrain flags of this tile after it's promoted according to the event corresponding to subseqDFTypes.
-unsigned long successorTerrainFlags(enum tileType tile, enum subseqDFTypes promotionType) {
+static unsigned long successorTerrainFlags(enum tileType tile, enum subseqDFTypes promotionType) {
     enum dungeonFeatureTypes DF = 0;
 
     switch (promotionType) {
@@ -1478,7 +1478,7 @@ boolean monsterAvoids(creature *monst, pos p) {
     return false;
 }
 
-boolean moveMonsterPassivelyTowards(creature *monst, pos targetLoc, boolean willingToAttackPlayer) {
+static boolean moveMonsterPassivelyTowards(creature *monst, pos targetLoc, boolean willingToAttackPlayer) {
     const int x = monst->loc.x;
     const int y = monst->loc.y;
 
@@ -1571,7 +1571,7 @@ void wakeUp(creature *monst) {
     }
 }
 
-boolean monsterCanShootWebs(creature *monst) {
+static boolean monsterCanShootWebs(creature *monst) {
     short i;
     for (i=0; monst->info.bolts[i] != 0; i++) {
         const bolt *theBolt = &boltCatalog[monst->info.bolts[i]];
@@ -1584,7 +1584,7 @@ boolean monsterCanShootWebs(creature *monst) {
 
 // Assumes that observer is not the player.
 // Returns approximately double the actual (quasi-euclidian) distance.
-short awarenessDistance(creature *observer, creature *target) {
+static short awarenessDistance(creature *observer, creature *target) {
     long perceivedDistance;
 
     // When determining distance from the player for purposes of monster state changes
@@ -1612,7 +1612,7 @@ short awarenessDistance(creature *observer, creature *target) {
 
 // yes or no -- observer is aware of the target as of this new turn.
 // takes into account whether it is ALREADY aware of the target.
-boolean awareOfTarget(creature *observer, creature *target) {
+static boolean awareOfTarget(creature *observer, creature *target) {
     short perceivedDistance = awarenessDistance(observer, target);
     short awareness = rogue.stealthRange * 2;
     boolean retval;
@@ -1648,7 +1648,7 @@ boolean awareOfTarget(creature *observer, creature *target) {
     return retval;
 }
 
-short closestWaypointIndexTo(pos p) {
+static short closestWaypointIndexTo(pos p) {
     short i, closestDistance, closestIndex;
 
     closestDistance = 1000;
@@ -1662,7 +1662,7 @@ short closestWaypointIndexTo(pos p) {
     return closestIndex;
 }
 
-void wanderToward(creature *monst, pos destination) {
+static void wanderToward(creature *monst, pos destination) {
     if (isPosInMap(destination)) {
         const short theWaypointIndex = closestWaypointIndexTo(destination);
         if (theWaypointIndex != -1) {
@@ -2047,7 +2047,7 @@ creature *dormantMonsterAtLoc(pos p) {
     return NULL;
 }
 
-enum boltType monsterHasBoltEffect(creature *monst, enum boltEffects boltEffectIndex) {
+static enum boltType monsterHasBoltEffect(creature *monst, enum boltEffects boltEffectIndex) {
     short i;
     for (i=0; monst->info.bolts[i] != 0; i++) {
         if (boltCatalog[monst->info.bolts[i]].boltEffect == boltEffectIndex) {
@@ -2057,7 +2057,7 @@ enum boltType monsterHasBoltEffect(creature *monst, enum boltEffects boltEffectI
     return BOLT_NONE;
 }
 
-void pathTowardCreature(creature *monst, creature *target) {
+static void pathTowardCreature(creature *monst, creature *target) {
     if (traversiblePathBetween(monst, target->loc.x, target->loc.y)) {
         if (distanceBetween(monst->loc, target->loc) <= 2) {
             monst->bookkeepingFlags &= ~MB_GIVEN_UP_ON_SCENT;
@@ -2102,7 +2102,7 @@ void pathTowardCreature(creature *monst, creature *target) {
     moveMonsterPassivelyTowards(monst, targetLoc, (monst->creatureState != MONSTER_ALLY));
 }
 
-boolean creatureEligibleForSwarming(creature *monst) {
+static boolean creatureEligibleForSwarming(creature *monst) {
     if ((monst->info.flags & (MONST_IMMOBILE | MONST_GETS_TURN_ON_ACTIVATION | MONST_MAINTAINS_DISTANCE))
         || monst->status[STATUS_ENTRANCED]
         || monst->status[STATUS_CONFUSED]
@@ -2128,7 +2128,7 @@ boolean creatureEligibleForSwarming(creature *monst) {
 // who is not adjacent to another enemy, and there is no empty space adjacent to the tribemate AND the enemy,
 // and there is an empty space adjacent to you AND the enemy, then move into that last space.
 // (In each case, "adjacent" excludes diagonal tiles obstructed by corner walls.)
-enum directions monsterSwarmDirection(creature *monst, creature *enemy) {
+static enum directions monsterSwarmDirection(creature *monst, creature *enemy) {
     enum directions dir, targetDir;
     short dirList[8] = {0, 1, 2, 3, 4, 5, 6, 7};
     boolean alternateDirectionExists;
@@ -2331,7 +2331,7 @@ boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, bool
     return false;
 }
 
-boolean fleeingMonsterAwareOfPlayer(creature *monst) {
+static boolean fleeingMonsterAwareOfPlayer(creature *monst) {
     if (player.status[STATUS_INVISIBLE]) {
         return (distanceBetween(monst->loc, player.loc) <= 1);
     } else {
@@ -2362,7 +2362,7 @@ static short **getSafetyMap(creature *monst) {
 }
 
 // returns whether the monster did something (and therefore ended its turn)
-boolean monsterBlinkToSafety(creature *monst) {
+static boolean monsterBlinkToSafety(creature *monst) {
     short **blinkSafetyMap;
 
     if (monst->creatureState == MONSTER_ALLY) {
@@ -2430,7 +2430,7 @@ boolean monsterSummons(creature *monst, boolean alwaysUse) {
 
 // Some monsters never make good targets irrespective of what bolt we're contemplating.
 // Return false for those. Otherwise, return true.
-boolean generallyValidBoltTarget(creature *caster, creature *target) {
+static boolean generallyValidBoltTarget(creature *caster, creature *target) {
     if (caster == target) {
         // Can't target yourself; that's the fundamental theorem of Brogue bolts.
         return false;
@@ -2459,7 +2459,7 @@ boolean generallyValidBoltTarget(creature *caster, creature *target) {
     return openPathBetween(caster->loc.x, caster->loc.y, target->loc.x, target->loc.y);
 }
 
-boolean targetEligibleForCombatBuff(creature *caster, creature *target) {
+static boolean targetEligibleForCombatBuff(creature *caster, creature *target) {
     if (caster->creatureState == MONSTER_ALLY) {
         if (canDirectlySeeMonster(caster)) {
             boolean handledPlayer = false;
@@ -2482,7 +2482,7 @@ boolean targetEligibleForCombatBuff(creature *caster, creature *target) {
 
 // Make a decision as to whether the given caster should fire the given bolt at the given target.
 // Assumes that the conditions in generallyValidBoltTarget have already been satisfied.
-boolean specificallyValidBoltTarget(creature *caster, creature *target, enum boltType theBoltType) {
+static boolean specificallyValidBoltTarget(creature *caster, creature *target, enum boltType theBoltType) {
 
     if ((boltCatalog[theBoltType].flags & BF_TARGET_ALLIES)
         && (!monstersAreTeammates(caster, target) || monstersAreEnemies(caster, target))) {
@@ -2649,7 +2649,7 @@ boolean specificallyValidBoltTarget(creature *caster, creature *target, enum bol
     return true;
 }
 
-void monsterCastSpell(creature *caster, creature *target, enum boltType boltIndex) {
+static void monsterCastSpell(creature *caster, creature *target, enum boltType boltIndex) {
     bolt theBolt;
     char buf[200], monstName[100];
 
@@ -2671,7 +2671,7 @@ void monsterCastSpell(creature *caster, creature *target, enum boltType boltInde
 }
 
 // returns whether the monster cast a bolt.
-boolean monstUseBolt(creature *monst) {
+static boolean monstUseBolt(creature *monst) {
     short i;
 
     if (!monst->info.bolts[0]) {
@@ -2702,7 +2702,7 @@ boolean monstUseBolt(creature *monst) {
 }
 
 // returns whether the monster did something (and therefore ended its turn)
-boolean monstUseMagic(creature *monst) {
+static boolean monstUseMagic(creature *monst) {
     if (monsterSummons(monst, (monst->info.flags & MONST_ALWAYS_USE_ABILITY))) {
         return true;
     } else if (monstUseBolt(monst)) {
@@ -2711,7 +2711,7 @@ boolean monstUseMagic(creature *monst) {
     return false;
 }
 
-boolean isLocalScentMaximum(pos loc) {
+static boolean isLocalScentMaximum(pos loc) {
     const short baselineScent = scentMap[loc.x][loc.y];
     for (enum directions dir=0; dir< DIRECTION_COUNT; dir++) {
         pos newLoc = posNeighborInDirection(loc, dir);
@@ -2727,7 +2727,7 @@ boolean isLocalScentMaximum(pos loc) {
 }
 
 // Returns the direction the player's scent points to from a given cell. Returns -1 if the nose comes up blank.
-enum directions scentDirection(creature *monst) {
+static enum directions scentDirection(creature *monst) {
     short newX, newY, x, y, newestX, newestY;
     enum directions bestDirection = NO_DIRECTION, dir, dir2;
     unsigned short bestNearbyScent = 0;
@@ -2875,7 +2875,7 @@ boolean monsterFleesFrom(creature *monst, creature *defender) {
     return false;
 }
 
-boolean allyFlees(creature *ally, creature *closestEnemy) {
+static boolean allyFlees(creature *ally, creature *closestEnemy) {
     const short x = ally->loc.x;
     const short y = ally->loc.y;
 
@@ -2906,7 +2906,7 @@ boolean allyFlees(creature *ally, creature *closestEnemy) {
     return false;
 }
 
-void monsterMillAbout(creature *monst, short movementChance) {
+static void monsterMillAbout(creature *monst, short movementChance) {
     enum directions dir;
 
     const short x = monst->loc.x;
@@ -2924,7 +2924,7 @@ void monsterMillAbout(creature *monst, short movementChance) {
     }
 }
 
-void moveAlly(creature *monst) {
+static void moveAlly(creature *monst) {
     creature *closestMonster = NULL;
     short i, j, x, y, dir, shortestDistance, leashLength;
     short **enemyMap, **costMap;
@@ -3134,7 +3134,7 @@ void moveAlly(creature *monst) {
 }
 
 // Returns whether to abort the turn.
-boolean updateMonsterCorpseAbsorption(creature *monst) {
+static boolean updateMonsterCorpseAbsorption(creature *monst) {
     short i;
     char buf[COLS], buf2[COLS];
 
@@ -4066,7 +4066,7 @@ void toggleMonsterDormancy(creature *monst) {
     }
 }
 
-boolean staffOrWandEffectOnMonsterDescription(char *newText, item *theItem, creature *monst) {
+static boolean staffOrWandEffectOnMonsterDescription(char *newText, item *theItem, creature *monst) {
     char theItemName[COLS], monstName[COLS];
     boolean successfulDescription = false;
     fixpt enchant = netEnchant(theItem);

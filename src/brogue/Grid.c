@@ -155,7 +155,7 @@ void drawCircleOnGrid(short **grid, short x, short y, short radius, short value)
     }
 }
 
-void intersectGrids(short **onto, short **from) {
+static void intersectGrids(short **onto, short **from) {
     short i, j;
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
@@ -168,7 +168,7 @@ void intersectGrids(short **onto, short **from) {
     }
 }
 
-void uniteGrids(short **onto, short **from) {
+static void uniteGrids(short **onto, short **from) {
     short i, j;
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
@@ -179,7 +179,7 @@ void uniteGrids(short **onto, short **from) {
     }
 }
 
-void invertGrid(short **grid) {
+static void invertGrid(short **grid) {
     short i, j;
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
@@ -212,7 +212,7 @@ void getTMGrid(short **grid, short value, unsigned long TMflags) {
     }
 }
 
-void getPassableArcGrid(short **grid, short minPassableArc, short maxPassableArc, short value) {
+static void getPassableArcGrid(short **grid, short minPassableArc, short maxPassableArc, short value) {
     short i, j, count;
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
@@ -239,7 +239,7 @@ short validLocationCount(short **grid, short validValue) {
     return count;
 }
 
-short leastPositiveValueInGrid(short **grid) {
+static short leastPositiveValueInGrid(short **grid) {
     short i, j, leastPositiveValue = 0;
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
@@ -278,7 +278,7 @@ void randomLocationInGrid(short **grid, short *x, short *y, short validValue) {
 
 // Finds the lowest positive number in a grid, chooses one location with that number randomly and returns it as (x, y).
 // If there are no valid locations, returns (-1, -1).
-void randomLeastPositiveLocationInGrid(short **grid, short *x, short *y, boolean deterministic) {
+static void randomLeastPositiveLocationInGrid(short **grid, short *x, short *y, boolean deterministic) {
     const short targetValue = leastPositiveValueInGrid(grid);
     short locationCount;
     short i, j, index;
@@ -394,7 +394,7 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
     }
 }
 
-void cellularAutomataRound(short **grid, char birthParameters[9], char survivalParameters[9]) {
+static void cellularAutomataRound(short **grid, char birthParameters[9], char survivalParameters[9]) {
     short i, j, nbCount, newX, newY;
     enum directions dir;
     short **buffer2;
@@ -428,7 +428,7 @@ void cellularAutomataRound(short **grid, char birthParameters[9], char survivalP
 }
 
 // Marks a cell as being a member of blobNumber, then recursively iterates through the rest of the blob
-short fillContiguousRegion(short **grid, short x, short y, short fillValue) {
+static short fillContiguousRegion(short **grid, short x, short y, short fillValue) {
     enum directions dir;
     short newX, newY, numberOfCells = 1;
 

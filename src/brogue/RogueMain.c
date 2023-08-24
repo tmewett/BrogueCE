@@ -112,7 +112,7 @@ boolean openFile(const char *path) {
     return retval;
 }
 
-void benchmark() {
+static void benchmark() {
     short i, j, k;
     const color sparklesauce = {10, 0, 20,  60, 40, 100, 30, true};
     enum displayGlyph theChar;
@@ -130,7 +130,7 @@ void benchmark() {
     printf("\n\nBenchmark took a total of %lu seconds.", ((unsigned long) time(NULL)) - initialTime);
 }
 
-void welcome() {
+static void welcome() {
     char buf[DCOLS*3], buf2[DCOLS*3];
     message("Hello and welcome, adventurer, to the Dungeons of Doom!", 0);
     strcpy(buf, "Retrieve the ");
@@ -504,7 +504,7 @@ void initializeRogue(uint64_t seed) {
 }
 
 // call this once per level to set all the dynamic colors as a function of depth
-void updateColors() {
+static void updateColors() {
     short i;
 
     for (i=0; i<NUMBER_DYNAMIC_COLORS; i++) {
@@ -876,7 +876,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     hideCursor();
 }
 
-void freeGlobalDynamicGrid(short ***grid) {
+static void freeGlobalDynamicGrid(short ***grid) {
     if (*grid) {
         freeGrid(*grid);
         *grid = NULL;

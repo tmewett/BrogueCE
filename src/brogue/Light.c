@@ -25,7 +25,7 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
-void logLights() {
+static void logLights() {
 
     short i, j;
 
@@ -154,7 +154,7 @@ void updateMinersLightRadius() {
     rogue.minersLight.lightRadius.upperBound = rogue.minersLight.lightRadius.lowerBound = clamp(lightRadius / FP_FACTOR, -30000, 30000);
 }
 
-void updateDisplayDetail() {
+static void updateDisplayDetail() {
     short i, j;
 
     for (i = 0; i < DCOLS; i++) {
@@ -195,7 +195,7 @@ void restoreLighting(short lights[DCOLS][DROWS][3]) {
     }
 }
 
-void recordOldLights() {
+static void recordOldLights() {
     short i, j, k;
     for (i = 0; i < DCOLS; i++) {
         for (j = 0; j < DROWS; j++) {
@@ -319,7 +319,7 @@ void createFlare(short x, short y, enum lightType lightIndex) {
     rogue.flareCount++;
 }
 
-boolean flareIsActive(flare *theFlare) {
+static boolean flareIsActive(flare *theFlare) {
     const boolean increasing = (theFlare->coeffChangeAmount > 0);
     boolean active = true;
 
@@ -339,7 +339,7 @@ boolean flareIsActive(flare *theFlare) {
 }
 
 // Returns true if the flare is still active; false if it's not.
-boolean updateFlare(flare *theFlare) {
+static boolean updateFlare(flare *theFlare) {
     if (!flareIsActive(theFlare)) {
         return false;
     }
@@ -349,7 +349,7 @@ boolean updateFlare(flare *theFlare) {
 }
 
 // Returns whether it overlaps with the field of view.
-boolean drawFlareFrame(flare *theFlare) {
+static boolean drawFlareFrame(flare *theFlare) {
     boolean inView;
     lightSource tempLight = *(theFlare->light);
     color tempColor = *(tempLight.lightColor);

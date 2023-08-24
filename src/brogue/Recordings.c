@@ -40,19 +40,19 @@ enum recordingSeekModes {
     RECORDING_SEEK_MODE_DEPTH
 };
 
-void recordChar(unsigned char c) {
+static void recordChar(unsigned char c) {
     inputRecordBuffer[locationInRecordingBuffer++] = c;
     recordingLocation++;
 }
 
-void considerFlushingBufferToFile() {
+static void considerFlushingBufferToFile() {
     if (locationInRecordingBuffer >= INPUT_RECORD_BUFFER) {
         flushBufferToFile();
     }
 }
 
 // compresses a int into a char, discarding stuff we don't need
-unsigned char compressKeystroke(long c) {
+static unsigned char compressKeystroke(long c) {
     short i;
 
     for (i = 0; i < keystrokeCount; i++) {
@@ -66,7 +66,7 @@ unsigned char compressKeystroke(long c) {
     return UNKNOWN_KEY;
 }
 
-void numberToString(uint64_t number, short numberOfBytes, unsigned char *recordTo) {
+static void numberToString(uint64_t number, short numberOfBytes, unsigned char *recordTo) {
     short i;
     uint64_t n;
 
@@ -79,7 +79,7 @@ void numberToString(uint64_t number, short numberOfBytes, unsigned char *recordT
 }
 
 // numberOfBytes can't be greater than 10
-void recordNumber(unsigned long number, short numberOfBytes) {
+static void recordNumber(unsigned long number, short numberOfBytes) {
     short i;
     unsigned char c[10];
 
@@ -170,7 +170,7 @@ void recordMouseClick(short x, short y, boolean controlKey, boolean shiftKey) {
     recordEvent(&theEvent);
 }
 
-void writeHeaderInfo(char *path) {
+static void writeHeaderInfo(char *path) {
     unsigned char c[RECORDING_HEADER_LENGTH];
     short i;
     FILE *recordFile;
@@ -262,7 +262,7 @@ void fillBufferFromFile() {
     locationInRecordingBuffer = 0;
 }
 
-unsigned char recallChar() {
+static unsigned char recallChar() {
     unsigned char c;
     if (recordingLocation > lengthOfPlaybackFile) {
         return END_OF_RECORDING;
@@ -275,14 +275,14 @@ unsigned char recallChar() {
     return c;
 }
 
-long uncompressKeystroke(unsigned char c) {
+static long uncompressKeystroke(unsigned char c) {
     if (c >= 128 && (c - 128) < keystrokeCount) {
         return keystrokeTable[c - 128];
     }
     return (long)c;
 }
 
-uint64_t recallNumber(short numberOfBytes) {
+static uint64_t recallNumber(short numberOfBytes) {
     short i;
     uint64_t n;
 
@@ -301,7 +301,7 @@ simply be the result of a bug.\n\n\
 If this is a different computer from the one on which the recording was saved, the recording \
 might succeed on the original computer."
 
-void playbackPanic() {
+static void playbackPanic() {
     cellDisplayBuffer rbuf[COLS][ROWS];
 
     if (!rogue.playbackOOS) {
@@ -381,7 +381,7 @@ void recallEvent(rogueEvent *event) {
     event->shiftKey =   (c & Fl(2)) ? true : false;
 }
 
-void loadNextAnnotation() {
+static void loadNextAnnotation() {
     unsigned long currentReadTurn;
     short i;
     FILE *annotationFile;
@@ -624,7 +624,7 @@ void RNGCheck() {
     rogue.RNG = oldRNG;
 }
 
-boolean unpause() {
+static boolean unpause() {
     if (rogue.playbackOOS) {
         flashTemporaryAlert(" Out of sync ", 2000);
     } else if (rogue.playbackPaused) {
@@ -636,7 +636,7 @@ boolean unpause() {
 
 #define PLAYBACK_HELP_LINE_COUNT    20
 
-void printPlaybackHelpScreen() {
+static void printPlaybackHelpScreen() {
     short i, j;
     cellDisplayBuffer dbuf[COLS][ROWS], rbuf[COLS][ROWS];
     char helpText[PLAYBACK_HELP_LINE_COUNT][80] = {
@@ -806,7 +806,7 @@ static void seek(unsigned long seekTarget, enum recordingSeekModes seekMode) {
     displayLevel();
 }
 
-void promptToAdvanceToLocation(short keystroke) {
+static void promptToAdvanceToLocation(short keystroke) {
     char entryText[30], buf[max(30, DCOLS)];
     unsigned long destinationFrame;
     boolean enteredText;
@@ -1148,7 +1148,7 @@ boolean characterForbiddenInFilename(const char theChar) {
     }
 }
 
-void getDefaultFilePath(char *defaultPath, boolean gameOver) {
+static void getDefaultFilePath(char *defaultPath, boolean gameOver) {
     char seed[21];
 
     // 32-bit numbers are printed in full
@@ -1284,7 +1284,7 @@ void saveRecording(char *filePathWithoutSuffix) {
     deleteMessages();
 }
 
-void copyFile(char *fromFilePath, char *toFilePath, unsigned long fromFileLength) {
+static void copyFile(char *fromFilePath, char *toFilePath, unsigned long fromFileLength) {
     unsigned long m, n;
     unsigned char fileBuffer[INPUT_RECORD_BUFFER];
     FILE *fromFile, *toFile;
@@ -1394,7 +1394,7 @@ boolean loadSavedGame() {
 
 // the following functions are used to create human-readable descriptions of playback files for debugging purposes
 
-void describeKeystroke(unsigned char key, char *description) {
+static void describeKeystroke(unsigned char key, char *description) {
     short i;
     long c;
     const long keyList[50] = {UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, UP_ARROW, LEFT_ARROW,
@@ -1426,7 +1426,7 @@ void describeKeystroke(unsigned char key, char *description) {
     }
 }
 
-void appendModifierKeyDescription(char *description) {
+static void appendModifierKeyDescription(char *description) {
     unsigned char c = recallChar();
 
     if (c & Fl(1)) {
@@ -1438,7 +1438,7 @@ void appendModifierKeyDescription(char *description) {
 }
 
 // Deprecated! Only used to parse recordings, a debugging feature.
-boolean selectFile(char *prompt, char *defaultName, char *suffix) {
+static boolean selectFile(char *prompt, char *defaultName, char *suffix) {
     boolean retval;
     char newFilePath[BROGUE_FILENAME_MAX];
 

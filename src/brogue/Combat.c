@@ -145,7 +145,7 @@ boolean attackHit(creature *attacker, creature *defender) {
     return rand_percent(hitProbability(attacker, defender));
 }
 
-void addMonsterToContiguousMonsterGrid(short x, short y, creature *monst, char grid[DCOLS][DROWS]) {
+static void addMonsterToContiguousMonsterGrid(short x, short y, creature *monst, char grid[DCOLS][DROWS]) {
     short newX, newY;
     enum directions dir;
     creature *tempMonst;
@@ -169,7 +169,7 @@ void addMonsterToContiguousMonsterGrid(short x, short y, creature *monst, char g
 // group of monsters that the monster would not avoid.
 // The contiguous group is supplemented with the given (x, y) coordinates, if any;
 // this is so that jellies et al. can spawn behind the player in a hallway.
-void splitMonster(creature *monst, pos loc) {
+static void splitMonster(creature *monst, pos loc) {
     char buf[DCOLS * 3];
     char monstName[DCOLS];
     char monsterGrid[DCOLS][DROWS], eligibleGrid[DCOLS][DROWS];
@@ -264,7 +264,7 @@ void splitMonster(creature *monst, pos loc) {
     }
 }
 
-short alliedCloneCount(creature *monst) {
+static short alliedCloneCount(creature *monst) {
     short count = 0;
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *temp = nextCreature(&it);
@@ -354,7 +354,7 @@ void moralAttack(creature *attacker, creature *defender) {
     }
 }
 
-boolean playerImmuneToMonster(creature *monst) {
+static boolean playerImmuneToMonster(creature *monst) {
     if (monst != &player
         && rogue.armor
         && (rogue.armor->flags & ITEM_RUNIC)
@@ -367,7 +367,7 @@ boolean playerImmuneToMonster(creature *monst) {
     }
 }
 
-void specialHit(creature *attacker, creature *defender, short damage) {
+static void specialHit(creature *attacker, creature *defender, short damage) {
     short itemCandidates, randItemIndex, stolenQuantity;
     item *theItem = NULL, *itemFromTopOfStack;
     char buf[COLS], buf2[COLS], buf3[COLS];
@@ -483,7 +483,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
     }
 }
 
-boolean forceWeaponHit(creature *defender, item *theItem) {
+static boolean forceWeaponHit(creature *defender, item *theItem) {
     short forceDamage;
     char buf[DCOLS*3], buf2[COLS], monstName[DCOLS];
     creature *otherMonster = NULL;
@@ -771,7 +771,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
     }
 }
 
-void attackVerb(char returnString[DCOLS], creature *attacker, short hitPercentile) {
+static void attackVerb(char returnString[DCOLS], creature *attacker, short hitPercentile) {
     short verbCount, increment;
 
     if (attacker != &player && (player.status[STATUS_HALLUCINATING] || !canSeeMonster(attacker))) {
@@ -966,7 +966,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
     }
 }
 
-void decrementWeaponAutoIDTimer() {
+static void decrementWeaponAutoIDTimer() {
     char buf[COLS*3], buf2[COLS*3];
 
     if (rogue.weapon
@@ -1341,7 +1341,7 @@ void flashMonster(creature *monst, const color *theColor, short strength) {
     }
 }
 
-boolean canAbsorb(creature *ally, boolean ourBolts[], creature *prey, short **grid) {
+static boolean canAbsorb(creature *ally, boolean ourBolts[], creature *prey, short **grid) {
     short i;
 
     if (ally->creatureState == MONSTER_ALLY
@@ -1375,7 +1375,7 @@ boolean canAbsorb(creature *ally, boolean ourBolts[], creature *prey, short **gr
     return false;
 }
 
-boolean anyoneWantABite(creature *decedent) {
+static boolean anyoneWantABite(creature *decedent) {
     short candidates, randIndex, i;
     short **grid;
     boolean success = false;

@@ -38,6 +38,7 @@
 #include "Rogue.h"
 #include "GlobalsBase.h"
 #include "Globals.h"
+#include "GlobalsBrogue.h"
 
 #define AMULET_LEVEL            26          
 #define DEEPEST_LEVEL           40          
