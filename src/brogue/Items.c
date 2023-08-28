@@ -862,7 +862,7 @@ void pickUpItemAt(pos loc) {
         theItem->flags |= ITEM_PLAYER_AVOIDS; // explore shouldn't try to pick it up more than once.
         itemName(theItem, buf2, false, true, NULL); // include article
         sprintf(buf, "Your pack is too full to pick up %s.", buf2);
-        message(buf, 0);
+        messageWithColor(buf, &itemMessageColor, 0);
     }
 }
 
