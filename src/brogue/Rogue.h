@@ -3181,8 +3181,8 @@ extern "C" {
     short chooseKind(itemTable *theTable, short numKinds);
     item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind);
     void updateEncumbrance();
-    short displayedArmorValue();
-    short armorValueIfUnenchanted(item *theItem);
+    float displayedArmorValue();
+    float armorValueIfUnenchanted(item *theItem);
     void strengthCheck(item *theItem, boolean noisy);
     void recalculateEquipmentBonuses();
     boolean equipItem(item *theItem, boolean force, item *unequipHint);

@@ -4522,8 +4522,8 @@ void highlightScreenCell(short x, short y, color *highlightColor, short strength
 
 // Like `armorValueIfUnenchanted` for the currently-equipped armor, but takes the penalty from
 // donning into account.
-static short estimatedArmorValue() {
-    short retVal = armorValueIfUnenchanted(rogue.armor) - player.status[STATUS_DONNING];
+static float estimatedArmorValue() {
+    float retVal = armorValueIfUnenchanted(rogue.armor) - player.status[STATUS_DONNING];
     return max(0, retVal);
 }
 
@@ -4799,13 +4799,13 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
 
                 if (!rogue.armor || rogue.armor->flags & ITEM_IDENTIFIED || rogue.playbackOmniscience) {
 
-                    sprintf(buf, "Str: %s%i%s  Armor: %i",
+                    sprintf(buf, "Str: %s%i%s  Armor: %g",
                             tempColorEscape,
                             rogue.strength - player.weaknessAmount,
                             grayColorEscape,
                             displayedArmorValue());
                 } else {
-                    sprintf(buf, "Str: %s%i%s  Armor: %i?",
+                    sprintf(buf, "Str: %s%i%s  Armor: %g?",
                             tempColorEscape,
                             rogue.strength - player.weaknessAmount,
                             grayColorEscape,

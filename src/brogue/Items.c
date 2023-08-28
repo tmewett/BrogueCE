@@ -2047,23 +2047,23 @@ void itemDetails(char *buf, item *theItem) {
                             abs((short) damageChange),
                             whiteColorEscape);
                 } else {
-                    new = 0;
+                    float armorValue;
 
                     if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                        new = theItem->armor;
-                        new += 10 * netEnchant(theItem) / FP_FACTOR;
-                        new /= 10;
+                        armorValue = theItem->armor;
+                        armorValue += 10 * netEnchant(theItem) / FP_FACTOR;
+                        armorValue /= 10;
                     } else {
-                        new = armorValueIfUnenchanted(theItem);
+                        armorValue = armorValueIfUnenchanted(theItem);
                     }
 
-                    new = max(0, new);
+                    armorValue = max(0, armorValue);
 
-                    sprintf(buf2, "Wearing the %s%s will result in an armor rating of %s%i%s. ",
+                    sprintf(buf2, "Wearing the %s%s will result in an armor rating of %s%g%s. ",
                             theName,
                             ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) ? "" : ", assuming it has no hidden properties,",
-                            (new > displayedArmorValue() ? goodColorEscape : (new < displayedArmorValue() ? badColorEscape : whiteColorEscape)),
-                            new, whiteColorEscape);
+                            (armorValue > displayedArmorValue() ? goodColorEscape : (armorValue < displayedArmorValue() ? badColorEscape : whiteColorEscape)),
+                            armorValue, whiteColorEscape);
                 }
                 strcat(buf, buf2);
             }
@@ -3099,16 +3099,16 @@ void updateEncumbrance() {
 }
 
 // Estimates the armor value of the given item, assuming the item is unenchanted.
-short armorValueIfUnenchanted(item *theItem) {
-    short averageValue = (armorTable[theItem->kind].range.upperBound + armorTable[theItem->kind].range.lowerBound) / 2;
-    short strengthAdjusted = averageValue + 10 * strengthModifier(theItem) / FP_FACTOR;
+float armorValueIfUnenchanted(item *theItem) {
+    float averageValue = (armorTable[theItem->kind].range.upperBound + armorTable[theItem->kind].range.lowerBound) / 2;
+    float strengthAdjusted = averageValue + 10 * strengthModifier(theItem) / FP_FACTOR;
     return max(0, strengthAdjusted / 10);
 }
 
 // Calculates the armor value to display to the player (estimated if the item is unidentified).
-short displayedArmorValue() {
+float displayedArmorValue() {
     if (!rogue.armor || (rogue.armor->flags & ITEM_IDENTIFIED)) {
-        return player.info.defense / 10;
+        return ((float) player.info.defense) / 10;
     } else {
         return armorValueIfUnenchanted(rogue.armor);
     }
