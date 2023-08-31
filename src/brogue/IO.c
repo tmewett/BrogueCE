@@ -3919,7 +3919,7 @@ void printString(const char *theString, short x, short y, const color *foreColor
             }
         }
 
-        plotCharToBuffer(theString[i], (windowpos){ x, y }, foreColor, backColor, dbuf);
+        plotCharToBuffer(theString[i], (windowpos){ x, y }, &fColor, backColor, dbuf);
     }
 }
 
