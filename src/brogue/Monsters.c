@@ -385,9 +385,9 @@ void initializeGender(creature *monst) {
 /// @brief Sets the character used to represent the player in the game, based on the game mode
 void setPlayerDisplayChar() {
     if (rogue.easyMode) {
-        player.info.displayChar = '&';
+        player.info.displayChar = G_DEMON;
     } else {
-        player.info.displayChar = '@';
+        player.info.displayChar = G_PLAYER;
     }
 }
 
