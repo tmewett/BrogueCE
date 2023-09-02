@@ -1774,12 +1774,11 @@ short effectiveRingEnchant(item *theItem) {
     if (theItem->category != RING) {
         return 0;
     }
-    if (!(theItem->flags & ITEM_IDENTIFIED)
-        && theItem->enchant1 > 0) {
-
-        return theItem->timesEnchanted + 1; // Unidentified positive rings act as +1 until identified.
+    if (theItem->flags & ITEM_IDENTIFIED) {
+	    return theItem->enchant1;
+    } else {
+        return min(theItem->enchant1, theItem->timesEnchanted + 1);
     }
-    return theItem->enchant1;
 }
 
 short apparentRingBonus(const enum ringKind kind) {
@@ -6966,6 +6965,8 @@ void readScroll(item *theItem) {
             } while (theItem == NULL || !(theItem->category & (WEAPON | ARMOR | RING | STAFF | WAND | CHARM)));
             recordKeystroke(theItem->inventoryLetter, false, false);
             confirmMessages();
+
+            theItem->timesEnchanted += enchantMagnitude();
             switch (theItem->category) {
                 case WEAPON:
                     theItem->strengthRequired = max(0, theItem->strengthRequired - enchantMagnitude());
@@ -7005,7 +7006,6 @@ void readScroll(item *theItem) {
                 default:
                     break;
             }
-            theItem->timesEnchanted += enchantMagnitude();
             if ((theItem->category & (WEAPON | ARMOR | STAFF | RING | CHARM))
                 && theItem->enchant1 >= 16) {
 
