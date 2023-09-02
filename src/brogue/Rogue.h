@@ -198,6 +198,7 @@ typedef struct windowpos {
 enum gameVariant {
     VARIANT_BROGUE,
     VARIANT_RAPID_BROGUE,
+    VARIANT_BULLET_BROGUE,
     NUMBER_VARIANTS
 };
 
@@ -2379,7 +2380,8 @@ typedef struct gameConstants {
     const int minimumAltarLevel;                    // how deep before resurrection and commutation altars can be generated
     const int minimumLavaLevel;                     // how deep before lava can be generated
     const int minimumBrimstoneLevel;                // how deep before brimstone can be generated
-    const int mutationsOccurAboveLevel;                // how deep before monster mutations can be generated
+    const int mutationsOccurAboveLevel;             // how deep before monster mutations can be generated
+    const int monsterOutOfDepthChance;              // the percentage chance to use a deeper depth when generating monster hordes
 
     const int extraItemsPerLevel;                   // how many extra items generated per level above vanilla
     const int goldAdjustmentStartDepth;             // depth from which gold is adjusted based on generation so far
@@ -2388,6 +2390,7 @@ typedef struct gameConstants {
     const int machinesPerLevelSuppressionOffset;     // offset for limiting number of machines generated so far against depth
     const int machinesPerLevelIncreaseFactor;        // scale factor for increasing number of machines generated so far against depth
     const int maxLevelForBonusMachines;              // deepest level that gets bonus machine generation chance
+    const int deepestLevelForMachines;               // deepest level where can machines be generated
 
     const int playerTransferenceRatio;              // player transference heal is (enchant / gameConst->playerTransferenceRatio)
     const int onHitHallucinateDuration;             // duration of on-hit hallucination effect on player
@@ -2521,7 +2524,7 @@ typedef struct playerCharacter {
     int gameExitStatusCode;             // exit status code indicating if brogue exited successfully or with an error
 
     // metered items
-    long long foodSpawned;                    // amount of nutrition units spawned so far this game
+    long long foodSpawned;              // amount of nutrition units spawned so far this game
     meteredItem *meteredItems;
 
     // ring bonuses:
@@ -2593,7 +2596,7 @@ enum machineFeatureFlags {
     MF_ALTERNATIVE_2                = Fl(17),   // same as MF_ALTERNATIVE, but provides for a second set of alternatives of which only one will be chosen
     MF_REQUIRE_GOOD_RUNIC           = Fl(18),   // generated item must be uncursed runic
     MF_MONSTERS_DORMANT             = Fl(19),   // monsters are dormant, and appear when a dungeon feature with DFF_ACTIVATE_DORMANT_MONSTER spawns on their tile
-    // unused                       = Fl(20),   //
+    MF_REQUIRE_HEAVY_WEAPON         = Fl(20),   // requires a positively-enchanted heavy weapon
     MF_BUILD_IN_WALLS               = Fl(21),   // build in an impassable tile that is adjacent to the interior
     MF_BUILD_ANYWHERE_ON_LEVEL      = Fl(22),   // build anywhere on the level that is not inside the machine
     MF_REPEAT_UNTIL_NO_PROGRESS     = Fl(23),   // keep trying to build this feature set until no changes are made
@@ -2736,7 +2739,10 @@ enum machineTypes {
     MT_PARALYSIS_TRAP_HIDDEN_AREA,
     MT_TRICK_STATUE_AREA,
     MT_WORM_AREA,
-    MT_SENTINEL_AREA
+    MT_SENTINEL_AREA,
+
+    // Variant-specific machines
+    MT_REWARD_HEAVY_OR_RUNIC_WEAPON
 };
 
 typedef struct autoGenerator {
@@ -3305,6 +3311,8 @@ extern "C" {
     item *generateItem(unsigned short theCategory, short theKind);
     short chooseKind(const itemTable *theTable, short numKinds);
     item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind);
+    boolean itemIsHeavyWeapon(const item *theItem);
+    boolean itemIsPositivelyEnchanted(const item *theItem);
     void updateEncumbrance(void);
     short displayedArmorValue(void);
     short armorValueIfUnenchanted(item *theItem);
