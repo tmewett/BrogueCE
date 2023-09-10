@@ -21,7 +21,8 @@
  */
 
 #include "Rogue.h"
-#include "IncludeGlobals.h"
+#include "GlobalsBase.h"
+#include "Globals.h"
 
 #define  CSV_HEADER_STRING "dungeon_version,seed,depth,quantity,category,kind,enchantment,runic,vault_number,opens_vault_number,carried_by_monster_name,ally_status_name,mutation_name"
 #define  NO_ENCHANTMENT_STRING ""
@@ -36,7 +37,7 @@ static void printSeedCatalogCsvLine(uint64_t seed, short depth, short quantity, 
                                     char enchantment[50], char runicName[50], char vaultNumber[10], char opensVaultNumber[10],
                                     char carriedByMonsterName[50], char allyStatusName[20], char mutationName[100]){
 
-    printf("%s,%llu,%i,%i,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", BROGUE_DUNGEON_VERSION_STRING, (unsigned long long) seed, depth, quantity, categoryName,
+    printf("%s,%llu,%i,%i,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", gameConst->dungeonVersionString, (unsigned long long) seed, depth, quantity, categoryName,
            kindName, enchantment, runicName, vaultNumber, opensVaultNumber, carriedByMonsterName, allyStatusName,
            mutationName);
 }
@@ -94,7 +95,7 @@ static void printSeedCatalogItem(item *theItem, creature *theMonster, boolean is
     // opensVaultNumber
     if (theItem->category == KEY && theItem->kind == KEY_DOOR) {
         sprintf(opensVaultNumber, isCsvFormat ? "%i" : " (opens vault %i)",
-                pmap[theItem->keyLoc[0].x][theItem->keyLoc[0].y].machineNumber - 1);
+                pmapAt(theItem->keyLoc[0].loc)->machineNumber - 1);
     }
 
     if (isCsvFormat) {
@@ -256,12 +257,13 @@ void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsig
     char message[1000] = "";
     rogue.nextGame = NG_NOTHING;
 
+    initializeGameVariant();
+
     sprintf(message, "Brogue seed catalog, seeds %llu to %llu, through depth %u.\n"
                      "Generated with %s. Dungeons unchanged since %s.\n\n"
-                     "To play one of these seeds, press control-N from the title screen"
-                     " and enter the seed number.\n",
-            (unsigned long long) startingSeed, (unsigned long long) startingSeed + numberOfSeedsToScan - 1, scanThroughDepth, BROGUE_VERSION_STRING,
-            BROGUE_DUNGEON_VERSION_STRING);
+                     "To play one of these seeds, select Play>New Seeded Game from the title screen.\n",
+            (unsigned long long) startingSeed, (unsigned long long) startingSeed + numberOfSeedsToScan - 1, scanThroughDepth, gameConst->versionString,
+            gameConst->dungeonVersionString);
 
     if (isCsvFormat) {
         fprintf(stderr, "%s", message);

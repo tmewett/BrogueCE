@@ -1,12 +1,12 @@
 include config.mk
 
-cflags := -Isrc/brogue -Isrc/platform -std=c99 \
+cflags := -Isrc/brogue -Isrc/platform -Isrc/variants -std=c99 \
 	-Wall -Wpedantic -Werror=implicit -Wno-parentheses -Wno-unused-result \
 	-Wformat -Werror=format-security -Wformat-overflow=0
 libs := -lm
 cppflags := -DDATADIR=$(DATADIR)
 
-sources := $(wildcard src/brogue/*.c) $(addprefix src/platform/,main.c platformdependent.c null-platform.c)
+sources := $(wildcard src/brogue/*.c) $(wildcard src/variants/*.c) $(addprefix src/platform/,main.c platformdependent.c null-platform.c)
 objects :=
 
 ifeq ($(SYSTEM),WINDOWS)
@@ -50,6 +50,10 @@ sources += $(addprefix src/platform/,web-platform.c)
 cppflags += -DBROGUE_WEB
 endif
 
+ifeq ($(RAPIDBROGUE),YES)
+cppflags += -DRAPID_BROGUE
+endif
+
 ifeq ($(MAC_APP),YES)
 cppflags += -DSDL_PATHS
 endif
@@ -76,7 +80,7 @@ clean:
 
 escape = $(subst ','\'',$(1))
 vars:
-	mkdir vars
+	mkdir -p vars
 # Write the value to a temporary file and only overwrite if it's different.
 vars/%: vars FORCE
 	@echo '$(call escape,$($*))' > vars/$*.tmp

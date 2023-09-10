@@ -24,7 +24,8 @@
 #include <math.h>
 #include <limits.h>
 #include "Rogue.h"
-#include "IncludeGlobals.h"
+#include "GlobalsBase.h"
+#include "Globals.h"
 
 #define RECORDING_HEADER_LENGTH     36  // bytes at the start of the recording file to store global data
 
@@ -326,6 +327,7 @@ void playbackPanic() {
         if (nonInteractivePlayback) {
             rogue.gameHasEnded = true;
         }
+        rogue.gameExitStatusCode = EXIT_STATUS_FAILURE_RECORDING_OOS;
 
         printf("Playback panic at location %li! Turn number %li.\n", recordingLocation - 1, rogue.playerTurnNumber);
         overlayDisplayBuffer(rbuf, 0);
@@ -455,7 +457,7 @@ void displayAnnotation() {
 // according to the global pattern. The Major and Minor versions must match ours.
 // Returns true if successful.
 static boolean getPatchVersion(char *versionString, unsigned short *patchVersion) {
-    return sscanf(versionString, BROGUE_PATCH_VERSION_PATTERN, patchVersion) == 1;
+    return sscanf(versionString, gameConst->patchVersionPattern, patchVersion) == 1;
 }
 
 // creates a game recording file, or if in playback mode,
@@ -468,7 +470,7 @@ void initRecording() {
     short i;
     boolean wizardMode;
     unsigned short recPatch;
-    char buf[100], *versionString = rogue.versionString;
+    char buf[1000], *versionString = rogue.versionString;
     FILE *recordFile;
 
 #ifdef AUDIT_RNG
@@ -502,24 +504,27 @@ void initRecording() {
         }
         wizardMode = recallChar();
 
-        if (getPatchVersion(versionString, &recPatch) && recPatch <= BROGUE_PATCH) {
+        if (getPatchVersion(versionString, &recPatch) && recPatch <= gameConst->patchVersion) {
             // Major and Minor match ours, Patch is less than or equal to ours: we are compatible.
             rogue.patchVersion = recPatch;
-        } else if (strcmp(versionString, BROGUE_RECORDING_VERSION_STRING) != 0) {
+        } else if (strcmp(versionString, gameConst->recordingVersionString) != 0) {
             // We have neither a compatible pattern match nor an exact match: we cannot load it.
             rogue.playbackMode = false;
             rogue.playbackFastForward = false;
+
             if (!nonInteractivePlayback) {
-                sprintf(buf, "This file is from version %s and cannot be opened in version %s.", versionString, BROGUE_VERSION_STRING);
+                snprintf(buf, 1000, "This file is from version %s and cannot be opened in version %s.", versionString, gameConst->versionString);
                 dialogAlert(buf);
             } else {
-                printf("This file is from version %s and cannot be opened in version %s.", versionString, BROGUE_VERSION_STRING);
+                printf("This file is from version %s and cannot be opened in version %s.", versionString, gameConst->versionString);
             }
+
             rogue.playbackMode = true;
             rogue.playbackPaused = true;
             rogue.playbackFastForward = false;
             rogue.playbackOOS = false;
             rogue.gameHasEnded = true;
+            rogue.gameExitStatusCode = EXIT_STATUS_FAILURE_RECORDING_WRONG_VERSION;
         }
 
         if (wizardMode != rogue.wizard) {
@@ -547,6 +552,7 @@ void initRecording() {
             rogue.playbackFastForward = false;
             rogue.playbackOOS = false;
             rogue.gameHasEnded = true;
+            rogue.gameExitStatusCode = EXIT_STATUS_FAILURE_RECORDING_WRONG_VERSION;
         }
 
         rogue.seed              = recallNumber(8);          // master random seed
@@ -564,7 +570,7 @@ void initRecording() {
     } else {
         // If present, set the patch version for playing the game.
         rogue.patchVersion = BROGUE_PATCH;
-        strcpy(versionString, BROGUE_RECORDING_VERSION_STRING);
+        strcpy(versionString, gameConst->recordingVersionString);
 
         lengthOfPlaybackFile = 1;
         remove(currentFilePath);
@@ -981,6 +987,7 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                         strcpy(rogue.currentGamePath, path);
                         rogue.nextGame = NG_VIEW_RECORDING;
                         rogue.gameHasEnded = true;
+                        rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
                     } else {
                         message("File not found.", 0);
                     }
@@ -1013,6 +1020,7 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
             case QUIT_KEY:
                 //freeEverything();
                 rogue.gameHasEnded = true;
+                rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
                 rogue.playbackOOS = false;
                 rogue.creaturesWillFlashThisTurn = false;
                 notifyEvent(GAMEOVER_RECORDING, 0, 0, "recording ended", "none");
@@ -1157,15 +1165,15 @@ void getDefaultFilePath(char *defaultPath, boolean gameOver) {
     }
 
     if (!gameOver) {
-        sprintf(defaultPath, "Saved #%s at depth %d", seed, rogue.depthLevel);
+        sprintf(defaultPath, "Saved %s #%s at depth %d", gameConst->versionString, seed, rogue.depthLevel);
     } else if (rogue.quit) {
-        sprintf(defaultPath, "#%s Quit at depth %d", seed, rogue.depthLevel);
+        sprintf(defaultPath, "%s #%s Quit at depth %d", gameConst->versionString, seed, rogue.depthLevel);
     } else if (player.bookkeepingFlags & MB_IS_DYING) {
-        sprintf(defaultPath, "#%s Died at depth %d", seed, rogue.depthLevel);
+        sprintf(defaultPath, "%s #%s Died at depth %d", gameConst->versionString, seed, rogue.depthLevel);
     } else if (rogue.depthLevel > 26) {
-        sprintf(defaultPath, "#%s Mastered the dungeons", seed);
+        sprintf(defaultPath, "%s #%s Mastered the dungeons", gameConst->versionString, seed);
     } else {
-        sprintf(defaultPath, "#%s Escaped the dungeons", seed);
+        sprintf(defaultPath, "%s #%s Escaped the dungeons", gameConst->versionString, seed);
     }
     if (rogue.wizard) {
         strcat(defaultPath, " (wizard)");
@@ -1186,6 +1194,7 @@ void saveGameNoPrompt() {
     rename(currentFilePath, filePath);
     strcpy(currentFilePath, filePath);
     rogue.gameHasEnded = true;
+    rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
     rogue.recording = false;
 }
 
@@ -1215,6 +1224,7 @@ void saveGame() {
                 rogue.recording = false;
                 message("Saved.", REQUIRE_ACKNOWLEDGMENT);
                 rogue.gameHasEnded = true;
+                rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
             } else {
                 askAgain = true;
             }

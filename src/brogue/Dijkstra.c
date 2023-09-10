@@ -24,7 +24,8 @@
 // Thanks very much, Joshua.
 
 #include "Rogue.h"
-#include "IncludeGlobals.h"
+#include "GlobalsBase.h"
+#include "Globals.h"
 
 typedef struct pdsLink {
     short distance;
@@ -216,7 +217,7 @@ void calculateDistances(short **distanceMap,
     for (int i=0; i<DCOLS; i++) {
         for (int j=0; j<DROWS; j++) {
             signed char cost;
-            creature *monst = monsterAtLoc(i, j);
+            creature *monst = monsterAtLoc((pos){ i, j });
             if (monst
                 && (monst->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE))
                 && (monst->info.flags & (MONST_IMMOBILE | MONST_GETS_TURN_ON_ACTIVATION))) {
@@ -226,14 +227,14 @@ void calculateDistances(short **distanceMap,
             } else if (canUseSecretDoors
                 && cellHasTMFlag(i, j, TM_IS_SECRET)
                 && cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)
-                && !(discoveredTerrainFlagsAtLoc(i, j) & T_OBSTRUCTS_PASSABILITY)) {
+                && !(discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY)) {
 
                 cost = 1;
             } else if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)
                        || (traveler && traveler == &player && !(pmap[i][j].flags & (DISCOVERED | MAGIC_MAPPED)))) {
 
                 cost = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
-            } else if ((traveler && monsterAvoids(traveler, i, j)) || cellHasTerrainFlag(i, j, blockingTerrainFlags)) {
+            } else if ((traveler && monsterAvoids(traveler, (pos){i, j})) || cellHasTerrainFlag(i, j, blockingTerrainFlags)) {
                 cost = PDS_FORBIDDEN;
             } else {
                 cost = 1;

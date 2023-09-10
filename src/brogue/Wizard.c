@@ -21,7 +21,8 @@
  */
 
 #include "Rogue.h"
-#include "IncludeGlobals.h"
+#include "GlobalsBase.h"
+#include "Globals.h"
 
 void initializeCreateItemButton(brogueButton *button, char *text) {
     char buttonText[COLS * 3];
@@ -53,8 +54,8 @@ static short dialogSelectEntryFromList(
         buttons[i].buttonColor = interfaceBoxColor;
         buttons[i].hotkey[0] = 'a' + i;
         buttons[i].hotkey[1] = 'A' + i;
-        buttons[i].x = WINDOW_POSITION_DUNGEON_TOP_LEFT.x;
-        buttons[i].y = WINDOW_POSITION_DUNGEON_TOP_LEFT.y + 1 + i;
+        buttons[i].x = WINDOW_POSITION_DUNGEON_TOP_LEFT.window_x;
+        buttons[i].y = WINDOW_POSITION_DUNGEON_TOP_LEFT.window_y + 1 + i;
         if (KEYBOARD_LABELS) {
             sprintf(buttonText, "%c) %s", (int)buttons[i].hotkey[0], buttons[i].text);
             strcpy(buttons[i].text, buttonText);
@@ -67,8 +68,8 @@ static short dialogSelectEntryFromList(
 
     width = maxLen + 1;
     height = buttonCount + 2;
-    x = WINDOW_POSITION_DUNGEON_TOP_LEFT.x;
-    y = WINDOW_POSITION_DUNGEON_TOP_LEFT.y;
+    x = WINDOW_POSITION_DUNGEON_TOP_LEFT.window_x;
+    y = WINDOW_POSITION_DUNGEON_TOP_LEFT.window_y;
     clearDisplayBuffer(dbuf);
 
     //Dialog Title
@@ -196,7 +197,6 @@ static short dialogCreateItemChooseKind(enum itemCategory category) {
 static void dialogCreateItemChooseEnchantmentLevel(item *theItem) {
     short minVal = 0, maxVal = 50, defaultVal, maxInputLength = 2;
     char prompt[100], buf[100], inputBuf[100]="";
-    int enchants;
 
     defaultVal = theItem->enchant1;
 
@@ -234,6 +234,7 @@ static void dialogCreateItemChooseEnchantmentLevel(item *theItem) {
     getInputTextString(inputBuf, prompt, maxInputLength, "", "", TEXT_INPUT_NORMAL, true);
 
     // Validate the input
+    int enchants;
     if (strlen(inputBuf)                      // we need some input
         && sscanf(inputBuf, "%d", &enchants)  // try to convert to number
         && sprintf(buf, "%d", enchants)       // convert back to string
@@ -244,15 +245,15 @@ static void dialogCreateItemChooseEnchantmentLevel(item *theItem) {
         } else if (enchants < minVal) {
             enchants = defaultVal;
         }
-    }
 
-    // set enchantment level based on item category
-    if (theItem->category == WAND) {
-        theItem->charges = enchants;
-    } else if (theItem->category == STAFF) {
-        theItem->charges = theItem->enchant1 = enchants;
-    } else {
-        theItem->enchant1 = enchants;
+        // set enchantment level based on item category
+        if (theItem->category == WAND) {
+            theItem->charges = enchants;
+        } else if (theItem->category == STAFF) {
+            theItem->charges = theItem->enchant1 = enchants;
+        } else {
+            theItem->enchant1 = enchants;
+        }
     }
 
     if (theItem->enchant1 < 0) {
@@ -396,7 +397,7 @@ static void dialogCreateMonster() {
         }
 
         // If there's already a monster here, quietly bury the body.
-        oldMonster = monsterAtLoc(selectedPosition.x, selectedPosition.y);
+        oldMonster = monsterAtLoc(selectedPosition);
         if (oldMonster) {
             killCreature(oldMonster, true);
             removeDeadMonsters();

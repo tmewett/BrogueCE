@@ -1,7 +1,7 @@
 #include "platform.h"
 
 static void null_gameLoop() {
-    rogueMain();
+    exit(rogueMain());
 }
 
 static boolean null_pauseForMilliseconds(short milliseconds) {
