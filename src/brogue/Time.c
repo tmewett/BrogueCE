@@ -537,10 +537,14 @@ void applyGradualTileEffectsToCreature(creature *monst, short ticks) {
         && !(monst->info.flags & MONST_INANIMATE)
         && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
 
-        if (monst == &player && monst->currentHP < monst->info.maxHP) {
-            messageWithColor("you feel much better.", &goodMessageColor, 0);
+        damage = (monst->info.maxHP / 15) * ticks / 100;
+        damage = max(1, damage);
+        if (monst->currentHP < monst->info.maxHP) {
+            monst->currentHP = min(monst->currentHP + damage, monst->info.maxHP);
+            if (monst == &player) {
+                messageWithColor("you feel much better.", &goodMessageColor, 0);
+            }
         }
-        heal(monst, ticks / 15, true);
     }
 }
 

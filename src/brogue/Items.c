@@ -3880,31 +3880,37 @@ void haste(creature *monst, short turns) {
     }
 }
 
-void healStatus(creature *monst, short status, short minStatus, short percent) {
-    short amount = max(1, percent * player.maxStatus[status] / 100);
-    short newStatus = monst->status[status] - amount;
-    monst->status[status] = min( monst->status[status], max( minStatus, newStatus ));
-}
-
 void heal(creature *monst, short percent, boolean panacea) {
     char buf[COLS], monstName[COLS];
-    short amount = max(1, percent * monst->info.maxHP / 100);
-    monst->currentHP = min(monst->info.maxHP, monst->currentHP + amount);
+    monst->currentHP = min(monst->info.maxHP, monst->currentHP + percent * monst->info.maxHP / 100);
     if (panacea) {
-        healStatus( monst, STATUS_HALLUCINATING, 1, percent );
-        healStatus( monst, STATUS_CONFUSED,      1, percent );
-        healStatus( monst, STATUS_NAUSEOUS,      1, percent );
-        healStatus( monst, STATUS_SLOWED,        1, percent );
-        healStatus( monst, STATUS_WEAKENED,      0, percent );
-        healStatus( monst, STATUS_POISONED,      0, percent );
-        healStatus( monst, STATUS_DARKNESS,      0, percent );
-
-        monst->poisonAmount   = monst->status[STATUS_POISONED] > 0 ? monst->poisonAmount   : 0;
-        monst->weaknessAmount = monst->status[STATUS_WEAKENED] > 0 ? monst->weaknessAmount : 0;
-        updateEncumbrance();
-        if (monst == &player) {
-            updateMinersLightRadius();
-            updateVision(true);
+        if (monst->status[STATUS_HALLUCINATING] > 1) {
+            monst->status[STATUS_HALLUCINATING] = 1;
+        }
+        if (monst->status[STATUS_CONFUSED] > 1) {
+            monst->status[STATUS_CONFUSED] = 1;
+        }
+        if (monst->status[STATUS_NAUSEOUS] > 1) {
+            monst->status[STATUS_NAUSEOUS] = 1;
+        }
+        if (monst->status[STATUS_SLOWED] > 1) {
+            monst->status[STATUS_SLOWED] = 1;
+        }
+        if (monst->status[STATUS_WEAKENED] > 1) {
+            monst->weaknessAmount = 0;
+            monst->status[STATUS_WEAKENED] = 0;
+            updateEncumbrance();
+        }
+        if (monst->status[STATUS_POISONED]) {
+            monst->poisonAmount = 0;
+            monst->status[STATUS_POISONED] = 0;
+        }
+        if (monst->status[STATUS_DARKNESS] > 0) {
+            monst->status[STATUS_DARKNESS] = 0;
+            if (monst == &player) {
+                updateMinersLightRadius();
+                updateVision(true);
+            }
         }
     }
     if (canDirectlySeeMonster(monst)
