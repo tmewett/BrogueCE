@@ -132,12 +132,12 @@ void initializeButton(brogueButton *button) {
 }
 
 /// @brief Sets the text of a button intialized via initializeButton() or otherwise. Relies on
-/// the button's textColor and hotkeyTextColor having been set appropriately. 
+/// the button's textColor and hotkeyTextColor having been set appropriately.
 /// @param button The button
-/// @param textWithHotkey The button text for platforms with a keyboard. A string with 2 format specifiers 
+/// @param textWithHotkey The button text for platforms with a keyboard. A string with 2 format specifiers
 /// for color escapes, denoting the start and end of the hotkey text (e.g. "%sN%sew Game").
 /// @param textWithoutHotkey The button text for platforms without a keyboard
-void setButtonText(brogueButton *button, const char *textWithHotkey, const char *textWithoutHotkey) { 
+void setButtonText(brogueButton *button, const char *textWithHotkey, const char *textWithoutHotkey) {
     char textColorEscape[5] = "";
     char hotkeyColorEscape[5] = "";
     char textBuf[BUTTON_TEXT_SIZE];

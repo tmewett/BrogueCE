@@ -39,8 +39,8 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
-#define AMULET_LEVEL            26          
-#define DEEPEST_LEVEL           40          
+#define AMULET_LEVEL            26
+#define DEEPEST_LEVEL           40
 
 const color dominationColor_Brogue =       {0,     0,      100,    80,     25,         0,          0,      true};
 const color beckonColor_Brogue =           {10,    10,     10,     5,      5,          5,          50,     true};
@@ -1055,7 +1055,7 @@ void initializeGameVariantBrogue() {
     autoGeneratorCatalog = autoGeneratorCatalog_Brogue;
     lumenstoneDistribution = lumenstoneDistribution_Brogue;
     itemGenerationProbabilities = itemGenerationProbabilities_Brogue;
-    
+
     meteredItemsGenerationTable = meteredItemsGenerationTable_Brogue;
 
     potionTable = potionTable_Brogue;
@@ -1064,7 +1064,7 @@ void initializeGameVariantBrogue() {
     charmTable = charmTable_Brogue;
 
     charmEffectTable = charmEffectTable_Brogue;
-    
+
     boltCatalog = boltCatalog_Brogue;
     hordeCatalog = hordeCatalog_Brogue;
     blueprintCatalog = blueprintCatalog_Brogue;

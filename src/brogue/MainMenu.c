@@ -249,7 +249,7 @@ void initializeMenuFlames(boolean includeTitle,
 
 /// @brief Inititializes a main menu button. Does not position the button.
 /// @param button The button to initialize
-/// @param textWithHotkey The button text. A string with 2 format specifiers for color escapes,  
+/// @param textWithHotkey The button text. A string with 2 format specifiers for color escapes,
 /// denoting the start and end of the hotkey text (e.g. "%sN%sew Game").
 /// @param hotkey1 Keyboard hotkey #1
 /// @param hotkey2 Keyboard hotkey #2
@@ -291,7 +291,7 @@ static void initializeMainMenuButtons(brogueButton *buttons) {
 /// @param buttonCount The number of buttons in the array
 /// @param startPosition The position of the first button to place
 /// @param spacing The number of rows between buttons
-/// @param topToBottomFlag If true, @position is the top of the stack. Otherwise it's the bottom and the array is processed in reverse order.  
+/// @param topToBottomFlag If true, @position is the top of the stack. Otherwise it's the bottom and the array is processed in reverse order.
 static void stackButtons(brogueButton *buttons, short buttonCount, windowpos startPosition, short spacing, boolean topToBottomFlag) {
     short y = startPosition.window_y;
 
@@ -300,13 +300,13 @@ static void stackButtons(brogueButton *buttons, short buttonCount, windowpos sta
             buttons[i].x = startPosition.window_x;
             buttons[i].y = y;
             y += spacing;
-        }    
+        }
     } else {
         for (int i = buttonCount - 1; i >= 0; i--) {
             buttons[i].x = startPosition.window_x;
             buttons[i].y = y;
             y -= spacing;
-        }    
+        }
     }
 }
 
@@ -322,7 +322,7 @@ static void initializeMenu(buttonState *menu, brogueButton *buttons, short butto
     minX = COLS;
     minY = ROWS;
     maxX = maxY = 0;
- 
+
     // determine the button frame size and position (upper-left)
     for (int i = 0; i < buttonCount; i++) {
         minX = min(minX, buttons[i].x);
@@ -360,7 +360,7 @@ static void initializeMainMenu(buttonState *menu, brogueButton *buttons, windowp
 /// @param menu The menu to initialize
 /// @param shadowBuf The display buffer for the menu background/shadow
 /// @param buttons The buttons to add to the menu
-/// @param position The window position of the anchor button. All buttons are positioned relative to this location. 
+/// @param position The window position of the anchor button. All buttons are positioned relative to this location.
 static void initializeFlyoutMenu(buttonState *menu, cellDisplayBuffer shadowBuf[COLS][ROWS], brogueButton *buttons, windowpos position) {
     short buttonCount = 0;
 
@@ -464,7 +464,7 @@ static void chooseGameMode() {
 }
 
 /// @brief Used on the title screen for showing/hiding the flyout menus
-/// @return True if rogue.nextGame is a flyout command 
+/// @return True if rogue.nextGame is a flyout command
 static boolean isFlyoutActive() {
     return ((int)rogue.nextGame >= (int)NG_FLYOUT_PLAY && rogue.nextGame <= (int)NG_FLYOUT_OPTIONS);
 }
@@ -593,7 +593,7 @@ void titleMenu() {
 
                     // Process the main menu input
                     mainIndex = processButtonInput(&mainMenu, NULL, &theEvent);
-                    if (theEvent.eventType == MOUSE_UP || theEvent.eventType == KEYSTROKE) {   
+                    if (theEvent.eventType == MOUSE_UP || theEvent.eventType == KEYSTROKE) {
                         if (mainIndex != - 1 && rogue.nextGame != mainButtons[mainIndex].command) {
                             rogue.nextGame = mainButtons[mainIndex].command;
                         } else if (flyoutIndex == -1) {

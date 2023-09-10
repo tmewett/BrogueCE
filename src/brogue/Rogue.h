@@ -123,7 +123,7 @@ typedef long long fixpt;
 #define COLS                    100
 #define ROWS                    (31 + MESSAGE_LINES)
 
-// Maximum string size supported by various functions like printTextBox, wrapText, 
+// Maximum string size supported by various functions like printTextBox, wrapText,
 // printStringWithWrapping, and breakUpLongWordsIn
 #define TEXT_MAX_LENGTH (COLS * ROWS * 2)
 
@@ -180,7 +180,7 @@ typedef struct windowpos {
 #define VISIBILITY_THRESHOLD    50          // how bright cumulative light has to be before the cell is marked visible
 
 #define MACHINES_BUFFER_LENGTH  200
-    
+
 #define INPUT_RECORD_BUFFER     1000        // how many bytes of input data to keep in memory before saving it to disk
 #define DEFAULT_PLAYBACK_DELAY  50
 
@@ -2753,7 +2753,7 @@ typedef struct brogueButton {
     signed long hotkey[10];     // up to 10 hotkeys to trigger the button
     color buttonColor;          // background of the button; further gradient-ized when displayed
     color textColor;            // color of the button text
-    color hotkeytextColor;      // color of the portion of the button text that highlights the keyboard hotkey 
+    color hotkeytextColor;      // color of the portion of the button text that highlights the keyboard hotkey
     short opacity;              // further reduced by 50% if not enabled
     enum displayGlyph symbol[COLS];         // Automatically replace the nth asterisk in the button label text with
                                 // the nth character supplied here, if one is given.

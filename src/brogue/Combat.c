@@ -1380,7 +1380,7 @@ boolean anyoneWantABite(creature *decedent) {
     short **grid;
     boolean success = false;
     boolean *ourBolts;
-    
+
     ourBolts = (boolean *)calloc(gameConst->numberBoltKinds, sizeof(boolean));
 
     candidates = 0;

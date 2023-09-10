@@ -639,7 +639,7 @@ void populateItems(pos upstairs) {
         } else if (rogue.depthLevel > gameConst->amuletLevel) {
             theCategory = GEM;
         } else {
-            
+
             for (int j = 0; j < gameConst->numberMeteredItems; j++) {
                 // Create any metered items that reach generation thresholds
                 if (meteredItemsGenerationTable[j].levelScaling != 0 &&

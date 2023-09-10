@@ -935,7 +935,7 @@ const charmEffectTableEntry charmEffectTable_RapidBrogue[] = {
     { .kind = CHARM_NEGATION, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 2500, .rechargeDelayBase = FP_FACTOR * 60 / 100, .rechargeDelayMinTurns = 1, .effectMagnitudeConstant = 1, .effectMagnitudeMultiplier = 3 }
 };
 
-const char *mainMenuTitle_RapidBrogue = 
+const char *mainMenuTitle_RapidBrogue =
 "                ######   #####  ######  ## ######                   \
                 ##   ## ##   ## ##   ## ## ##   ##                  \
                 ######  ####### ######  ## ##   ##                  \
@@ -1044,7 +1044,7 @@ const gameConstants rapidBrogueGameConst = {
     .numberCharmKinds = sizeof(charmTable_RapidBrogue) / sizeof(itemTable),
     .numberMeteredItems = sizeof(meteredItemsGenerationTable_RapidBrogue) / sizeof(meteredItemGenerationTable),
     .numberHordes = sizeof(hordeCatalog_RapidBrogue) / sizeof(hordeType),
-    
+
     .mainMenuTitleHeight = MENU_TITLE_HEIGHT,
     .mainMenuTitleWidth = MENU_TITLE_WIDTH
 };
@@ -1053,7 +1053,7 @@ void initializeGameVariantRapidBrogue() {
 
     // Game constants
     gameConst = &rapidBrogueGameConst;
-        
+
     // Global variables
     autoGeneratorCatalog = autoGeneratorCatalog_RapidBrogue;
     lumenstoneDistribution = lumenstoneDistribution_RapidBrogue;
@@ -1067,7 +1067,7 @@ void initializeGameVariantRapidBrogue() {
     charmTable = charmTable_RapidBrogue;
 
     charmEffectTable = charmEffectTable_RapidBrogue;
-    
+
     boltCatalog = boltCatalog_RapidBrogue;
     hordeCatalog = hordeCatalog_RapidBrogue;
     blueprintCatalog = blueprintCatalog_RapidBrogue;
