@@ -2102,7 +2102,6 @@ void autoRest() {
          || player.status[STATUS_NAUSEOUS]
          || player.status[STATUS_POISONED]
          || player.status[STATUS_DARKNESS]
-         || player.status[STATUS_CURSED]
          || initiallyEmbedded)
         && !rogue.disturbed) {
         while (i++ < TURNS_FOR_FULL_REGEN
@@ -2112,7 +2111,6 @@ void autoRest() {
                    || player.status[STATUS_NAUSEOUS]
                    || player.status[STATUS_POISONED]
                    || player.status[STATUS_DARKNESS]
-                   || player.status[STATUS_CURSED]
                    || cellHasTerrainFlag(player.loc.x, player.loc.y, T_OBSTRUCTS_PASSABILITY))
                && !rogue.disturbed
                && (!initiallyEmbedded || cellHasTerrainFlag(player.loc.x, player.loc.y, T_OBSTRUCTS_PASSABILITY))) {
@@ -2317,18 +2315,6 @@ void playerTurnEnded() {
             }
             if (!--player.status[STATUS_BURNING]) {
                 extinguishFireOnCreature(&player);
-            }
-        }
-
-        // Countdown curse
-        if (player.status[STATUS_CURSED] > 0) {
-            player.status[STATUS_CURSED]--;
-            if (player.status[STATUS_CURSED] == 0) {
-                // When curse debuf ends, uncurse all equipment
-                if (rogue.weapon    != NULL) rogue.weapon->flags    &= ~ITEM_CURSED;
-                if (rogue.armor     != NULL) rogue.armor->flags     &= ~ITEM_CURSED;
-                if (rogue.ringLeft  != NULL) rogue.ringLeft->flags  &= ~ITEM_CURSED;
-                if (rogue.ringRight != NULL) rogue.ringRight->flags &= ~ITEM_CURSED;
             }
         }
 
