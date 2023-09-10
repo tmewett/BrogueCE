@@ -678,7 +678,7 @@ void populateItems(short upstairsX, short upstairsY) {
 
         // Remove frequency from spawned metered items memory.
         for (j = 0; j < NUMBER_METERED_ITEMS; j++) {
-            if (meteredItemsGenerationTable[j].incrementFrequency != 0 && 
+            if (meteredItemsGenerationTable[j].incrementFrequency != 0 &&
                 (theItem->category & meteredItemsGenerationTable[j].category) && theItem->kind == meteredItemsGenerationTable[j].kind) {
                 if (j >= NUMBER_SCROLL_KINDS) {
                     if (D_MESSAGE_ITEM_GENERATION) printf("\n(!)  Depth %i: generated an %s potion at %i frequency", rogue.depthLevel, potionTable[j - NUMBER_SCROLL_KINDS].name, rogue.meteredItems[j].frequency);
