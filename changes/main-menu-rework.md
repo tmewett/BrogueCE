@@ -1,4 +1,0 @@
-- Redesign the main menu to use flyouts
-- Update tiles to include a left-facing triangle glyph used in the main menu
-- Add a placeholder menu option for choosing the game variant
-- Add a menu option for selecting the game mode (easy/normal/wizard)

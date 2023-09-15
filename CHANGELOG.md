@@ -1,3 +1,34 @@
+1.13
+====
+
+Thanks to great work by flend and zenzombie, we now have support for multiple game variants in CE, and have added Rapid Brogue!
+
+-
+  Rapid Brogue is now part of Brogue CE!
+-
+  Redesigned the main menu to support the new variant-selection options.
+-
+  Lumenstones are worth 500 gold on death, instead of 0.
+-
+  The rapier lunge attack works against invisible enemies when you are telepathic.
+-
+  Levers are now indestructible via shattering and tunneling, which would leave some vaults impossible to open.
+-
+  Autoexplore no longer walks through dangerous gases when wearing unidentified respiration armor.
+-
+  Items falling from the previous level will now trigger any traps they land on.
+-
+  Items and monsters falling from the previous level will no longer fall into reward rooms.
+-
+  Update rapier description to use 'triple damage' instead of 'treble damage'.
+-
+  Added a `-vn` command-line option to play a replay headlessly.
+-
+  Fix the default enchantment value being ignored in wizard mode.
+-
+  Fixed the dungeon version number in the seed catalog.
+
+
 1.12
 ====
 
