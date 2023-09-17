@@ -1,1 +1,1 @@
-When the game is running slowly, autoexplore and similar actions don't delay as much, to try to compensate.
+Animations such as autoexplore and using a staff now run at the same speed regardless of game performance (up to a limit).
