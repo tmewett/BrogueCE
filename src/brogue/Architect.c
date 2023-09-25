@@ -3554,7 +3554,7 @@ void restoreItems() {
         getQualifyingLocNear(&loc, theItem->loc, true, 0,
                             (T_OBSTRUCTS_ITEMS),
                             (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false, false);
-        placeItem(theItem, loc.x, loc.y);
+        placeItemAt(theItem, loc);
     }
 }
 
