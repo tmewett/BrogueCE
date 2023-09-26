@@ -243,12 +243,12 @@ boolean canAttack( creature *attacker, creature *defender ) {
                     || (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS);
 
     // Must be able to detect the defender
-    boolean locationKnown = !monsterIsHidden(defender, attacker);
-
-    // If the player is the attacker, also check vision and telepathy
+    boolean locationKnown;
     if (attacker == &player) {
-        locationKnown = (locationKnown && playerCanSee(defender->loc.x, defender->loc.y))
-                        || monsterRevealed(defender);
+        locationKnown = canSeeMonster(defender) || monsterRevealed(defender);
+    } else {
+        // Monsters don't understand revealing.
+        locationKnown = !monsterIsHidden(defender, attacker);
     }
 
     // All three requirements must be met
