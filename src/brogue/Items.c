@@ -1775,7 +1775,7 @@ short effectiveRingEnchant(item *theItem) {
         return 0;
     }
     if (theItem->flags & ITEM_IDENTIFIED) {
-	    return theItem->enchant1;
+        return theItem->enchant1;
     } else {
         return min(theItem->enchant1, theItem->timesEnchanted + 1);
     }
