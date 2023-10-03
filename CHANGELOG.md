@@ -1,24 +1,38 @@
 1.13
 ====
 
-Thanks to great work by flend and zenzombie, we now have support for multiple game variants in CE, and have added Rapid Brogue!
+Thanks to great work by flend and zenzombie, we now have support for multiple
+game variants in CE, and have added Rapid Brogue! Select it in *Play > Change
+Variant* in the main menu.
+
+Thanks to other contributors andkem, brturn, nathanf, nstoddard, and omar-polo.
 
 -
   Rapid Brogue is now part of Brogue CE!
 -
-  Redesigned the main menu to support the new variant-selection options.
+  Re-designed the main menu.
 -
   Lumenstones are worth 500 gold on death, instead of 0.
 -
-  The rapier lunge attack works against invisible enemies when you are telepathic.
+  The rapier lunge attack works against invisible enemies when you are
+  telepathic.
 -
-  Levers are now indestructible via shattering and tunneling, which would leave some vaults impossible to open.
+  Levers are now indestructible via shattering and tunneling, which would leave
+  some vaults impossible to open.
 -
-  Autoexplore no longer walks through dangerous gases when wearing unidentified respiration armor.
+  Autoexplore no longer walks through dangerous gases when wearing unidentified
+  respiration armor.
 -
   Items falling from the previous level will now trigger any traps they land on.
 -
-  Items and monsters falling from the previous level will no longer fall into reward rooms.
+  Items and monsters falling from the previous level will no longer fall into
+  reward rooms.
+-
+  Fixed an issue where unidentified rings could have higher bonuses than they
+  would have once identified.
+-
+  Fixed an issue where unidentified positive rings would be 1 enchant lower than
+  they should.
 -
   Update rapier description to use 'triple damage' instead of 'treble damage'.
 -
