@@ -10,15 +10,15 @@ define make_release_base
 endef
 
 # Flatten bin/ in the Windows archive
-BrogueCE-windows: bin/brogue.exe
+BrogueCE-windows:
 	$(make_release_base)
 	cp -r $(common_bin) bin/{brogue.exe,brogue-cmd.bat} $@
 
-BrogueCE-macos: Brogue.app
+BrogueCE-macos:
 	$(make_release_base)
 	cp -r Brogue.app $@/"Brogue CE.app"
 
-BrogueCE-linux: bin/brogue
+BrogueCE-linux:
 	$(make_release_base)
 	cp brogue $@
 	cp -r --parents $(common_bin) bin/brogue $@
