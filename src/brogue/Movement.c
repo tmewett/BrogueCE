@@ -1028,7 +1028,7 @@ boolean playerMoves(short direction) {
             if (coordinatesAreInMap(newestX, newestY) && (pmap[newestX][newestY].flags & HAS_MONSTER)) {
                 tempMonst = monsterAtLoc((pos){ newestX, newestY });
                 if (tempMonst
-                    && canSeeMonster(tempMonst)
+                    && (canSeeMonster(tempMonst) || monsterRevealed(tempMonst))
                     && monstersAreEnemies(&player, tempMonst)
                     && tempMonst->creatureState != MONSTER_ALLY
                     && !(tempMonst->bookkeepingFlags & MB_IS_DYING)

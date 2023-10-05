@@ -1780,12 +1780,11 @@ short effectiveRingEnchant(item *theItem) {
     if (theItem->category != RING) {
         return 0;
     }
-    if (!(theItem->flags & ITEM_IDENTIFIED)
-        && theItem->enchant1 > 0) {
-
-        return theItem->timesEnchanted + 1; // Unidentified positive rings act as +1 until identified.
+    if (theItem->flags & ITEM_IDENTIFIED) {
+        return theItem->enchant1;
+    } else {
+        return min(theItem->enchant1, theItem->timesEnchanted + 1);
     }
-    return theItem->enchant1;
 }
 
 short apparentRingBonus(const enum ringKind kind) {
@@ -6832,6 +6831,14 @@ void magicMapCell(short x, short y) {
     }
 }
 
+boolean uncurse( item *theItem ) {
+    if (theItem->flags & ITEM_CURSED) {
+        theItem->flags &= ~ITEM_CURSED;
+        return true;
+    }
+    return false;
+}
+
 void readScroll(item *theItem) {
     short i, j, x, y, numberOfMonsters = 0;
     item *tempItem;
@@ -6876,10 +6883,7 @@ void readScroll(item *theItem) {
             break;
         case SCROLL_REMOVE_CURSE:
             for (tempItem = packItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
-                if (tempItem->flags & ITEM_CURSED) {
-                    hadEffect = true;
-                    tempItem->flags &= ~ITEM_CURSED;
-                }
+                hadEffect |= uncurse(tempItem);
             }
             if (hadEffect) {
                 message("your pack glows with a cleansing light, and a malevolent energy disperses.", 0);
@@ -6909,6 +6913,8 @@ void readScroll(item *theItem) {
             } while (theItem == NULL || !(theItem->category & (WEAPON | ARMOR | RING | STAFF | WAND | CHARM)));
             recordKeystroke(theItem->inventoryLetter, false, false);
             confirmMessages();
+
+            theItem->timesEnchanted += enchantMagnitude();
             switch (theItem->category) {
                 case WEAPON:
                     theItem->strengthRequired = max(0, theItem->strengthRequired - enchantMagnitude());
@@ -6948,7 +6954,6 @@ void readScroll(item *theItem) {
                 default:
                     break;
             }
-            theItem->timesEnchanted += enchantMagnitude();
             if ((theItem->category & (WEAPON | ARMOR | STAFF | RING | CHARM))
                 && theItem->enchant1 >= 16) {
 
@@ -6960,10 +6965,9 @@ void readScroll(item *theItem) {
             itemName(theItem, buf, false, false, NULL);
             sprintf(buf2, "your %s gleam%s briefly in the darkness.", buf, (theItem->quantity == 1 ? "s" : ""));
             messageWithColor(buf2, &itemMessageColor, 0);
-            if (theItem->flags & ITEM_CURSED) {
+            if (uncurse(theItem)) {
                 sprintf(buf2, "a malevolent force leaves your %s.", buf);
                 messageWithColor(buf2, &itemMessageColor, 0);
-                theItem->flags &= ~ITEM_CURSED;
             }
             createFlare(player.loc.x, player.loc.y, SCROLL_ENCHANTMENT_LIGHT);
             break;
@@ -6977,10 +6981,9 @@ void readScroll(item *theItem) {
                 itemName(tempItem, buf2, false, false, NULL);
                 sprintf(buf, "a protective golden light covers your %s.", buf2);
                 messageWithColor(buf, &itemMessageColor, 0);
-                if (tempItem->flags & ITEM_CURSED) {
+                if (uncurse(tempItem)) {
                     sprintf(buf, "a malevolent force leaves your %s.", buf2);
                     messageWithColor(buf, &itemMessageColor, 0);
-                    tempItem->flags &= ~ITEM_CURSED;
                 }
             } else {
                 message("a protective golden light surrounds you, but it quickly disperses.", 0);
@@ -6994,10 +6997,9 @@ void readScroll(item *theItem) {
                 itemName(tempItem, buf2, false, false, NULL);
                 sprintf(buf, "a protective golden light covers your %s.", buf2);
                 messageWithColor(buf, &itemMessageColor, 0);
-                if (tempItem->flags & ITEM_CURSED) {
+                if (uncurse(tempItem)) {
                     sprintf(buf, "a malevolent force leaves your %s.", buf2);
                     messageWithColor(buf, &itemMessageColor, 0);
-                    tempItem->flags &= ~ITEM_CURSED;
                 }
                 if (rogue.weapon->quiverNumber) {
                     rogue.weapon->quiverNumber = rand_range(1, 60000);

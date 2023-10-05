@@ -40,7 +40,7 @@
 
 // Brogue version number (for main engine)
 #define BROGUE_MAJOR 1
-#define BROGUE_MINOR 12
+#define BROGUE_MINOR 13
 #define BROGUE_PATCH 0
 
 // Expanding a macro as a string constant requires two levels of macros
@@ -2887,7 +2887,7 @@ extern "C" {
                          boolean superpriority);
     boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refreshCell, boolean abortIfBlocking);
     void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit);
-    void restoreItem(item *theItem);
+    void restoreItems();
     void refreshWaypoint(short wpIndex);
     void setUpWaypoints();
     void zeroOutGrid(char grid[DCOLS][DROWS]);

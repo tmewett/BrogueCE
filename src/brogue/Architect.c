@@ -3501,7 +3501,7 @@ void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
             pmap[*x][*y].flags &= ~HAS_MONSTER;
         }
         getQualifyingPathLocNear(x, y, *x, *y, true, T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)), 0,
-                                 avoidedFlagsForMonster(&(monst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_STAIRS), true);
+                                 avoidedFlagsForMonster(&(monst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_STAIRS | IS_IN_MACHINE), true);
     }
     pmap[*x][*y].flags |= HAS_MONSTER;
     monst->bookkeepingFlags &= ~(MB_PREPLACED | MB_APPROACHING_DOWNSTAIRS | MB_APPROACHING_UPSTAIRS | MB_APPROACHING_PIT | MB_ABSORBING);
@@ -3529,21 +3529,32 @@ void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
     }
 }
 
-void restoreItem(item *theItem) {
-    if (theItem->flags & ITEM_PREPLACED) {
-        theItem->flags &= ~ITEM_PREPLACED;
+void restoreItems() {
+    item *theItem, *nextItem;
+    pos loc;
+    item preplaced;
+    preplaced.nextItem = NULL;
 
-        pos loc;
+    // Remove preplaced items from the floor chain
+    for (theItem = floorItems->nextItem; theItem != NULL; theItem = nextItem) {
+        nextItem = theItem->nextItem;
+
+        if (theItem->flags & ITEM_PREPLACED) {
+            theItem->flags &= ~ITEM_PREPLACED;
+            removeItemFromChain(theItem, floorItems);
+            addItemToChain(theItem, &preplaced);
+        }
+    }
+
+    // Place items properly
+    for (theItem = preplaced.nextItem; theItem != NULL; theItem = nextItem) {
+        nextItem = theItem->nextItem;
+
         // Items can fall into deep water, enclaved lakes, another chasm, even lava!
         getQualifyingLocNear(&loc, theItem->loc, true, 0,
                             (T_OBSTRUCTS_ITEMS),
-                            (HAS_MONSTER | HAS_ITEM | HAS_STAIRS), false, false);
-
-        theItem->loc = loc;
-    }
-    pmapAt(theItem->loc)->flags |= HAS_ITEM;
-    if (theItem->flags & ITEM_MAGIC_DETECTED && itemMagicPolarity(theItem)) {
-        pmapAt(theItem->loc)->flags |= ITEM_DETECTED;
+                            (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false, false);
+        placeItemAt(theItem, loc);
     }
 }
 
@@ -3639,7 +3650,6 @@ void prepareForStairs(short x, short y, char grid[DCOLS][DROWS]) {
 void initializeLevel() {
     short i, j, dir;
     short **mapToStairs, **mapToPit;
-    item *theItem;
     char grid[DCOLS][DROWS];
     short n = rogue.depthLevel - 1;
 
@@ -3727,9 +3737,7 @@ void initializeLevel() {
     }
 
     // Restore items that fell from the previous depth.
-    for (theItem = floorItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
-        restoreItem(theItem);
-    }
+    restoreItems();
 
     // Restore creatures that fell from the previous depth or that have been pathing toward the stairs.
     mapToStairs = allocGrid();

@@ -737,9 +737,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
 
         levels[rogue.depthLevel-1].items           = NULL;
 
-        for (theItem = floorItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
-            restoreItem(theItem);
-        }
+        restoreItems();
 
     }
 
@@ -1089,13 +1087,18 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         sprintf(buf, "Killed by a%s %s on depth %i", (isVowelish(killedBy) ? "n" : ""), killedBy,
                 rogue.depthLevel);
     }
+
+    // Count gems as 500 gold each
+    short numGems = numberOfMatchingPackItems(GEM, 0, 0, false);
+    rogue.gold += 500 * numGems;
     theEntry.score = rogue.gold;
+
     if (rogue.easyMode) {
         theEntry.score /= 10;
     }
     strcpy(highScoreText, buf);
     if (theEntry.score > 0) {
-        sprintf(buf2, " with %li gold", theEntry.score);
+        sprintf(buf2, (numGems > 0) ? " with treasure worth %li gold" : " with %li gold", theEntry.score);
         strcat(buf, buf2);
     }
     if (numberOfMatchingPackItems(AMULET, 0, 0, false) > 0) {
