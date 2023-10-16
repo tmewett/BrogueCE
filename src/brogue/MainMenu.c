@@ -39,7 +39,7 @@
 #define MENU_FLAME_DENOMINATOR          (100 + MENU_FLAME_RISE_SPEED + MENU_FLAME_SPREAD_SPEED)
 
 
-void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3], unsigned char mask[COLS][ROWS]) {
+static void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3], unsigned char mask[COLS][ROWS]) {
     short i, j, versionStringLength, gameModeStringLength;
     color tempColor = {0};
     const color *maskColor = &black;
@@ -81,7 +81,7 @@ void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3
     }
 }
 
-void updateMenuFlames(const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)],
+static void updateMenuFlames(const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)],
                       signed short colorSources[MENU_FLAME_COLOR_SOURCE_COUNT][4],
                       signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3]) {
 
@@ -158,7 +158,7 @@ void updateMenuFlames(const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)]
 }
 
 // Takes a grid of values, each of which is 0 or 100, and fills in some middle values in the interstices.
-void antiAlias(unsigned char mask[COLS][ROWS]) {
+static void antiAlias(unsigned char mask[COLS][ROWS]) {
     short i, j, x, y, dir, nbCount;
     const short intensity[5] = {0, 0, 35, 50, 60};
 
@@ -182,7 +182,7 @@ void antiAlias(unsigned char mask[COLS][ROWS]) {
 #define MENU_TITLE_OFFSET_X (-7)
 #define MENU_TITLE_OFFSET_Y (-2)
 
-void initializeMenuFlames(boolean includeTitle,
+static void initializeMenuFlames(boolean includeTitle,
                           const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)],
                           color colorStorage[COLS],
                           signed short colorSources[MENU_FLAME_COLOR_SOURCE_COUNT][4],
@@ -501,7 +501,7 @@ static void redrawMainMenuButtons(buttonState *menu) {
 
 #define FLYOUT_X 59
 
-void titleMenu() {
+static void titleMenu() {
     signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3]; // red, green and blue
     signed short colorSources[MENU_FLAME_COLOR_SOURCE_COUNT][4]; // red, green, blue, and rand, one for each color source (no more than MENU_FLAME_COLOR_SOURCE_COUNT).
     const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)];
@@ -640,7 +640,7 @@ void dialogAlert(char *message) {
     overlayDisplayBuffer(rbuf, NULL);
 }
 
-boolean stringsExactlyMatch(const char *string1, const char *string2) {
+static boolean stringsExactlyMatch(const char *string1, const char *string2) {
     short i;
     for (i=0; string1[i] && string2[i]; i++) {
         if (string1[i] != string2[i]) {
@@ -655,7 +655,7 @@ boolean stringsExactlyMatch(const char *string1, const char *string2) {
 //      < 0 if 'b' date is lesser than 'a' date
 //      = 0 if 'b' date is equal to 'a' date,
 //      > 0 if 'b' date is greater than 'a' date
-int fileEntryCompareDates(const void *a, const void *b) {
+static int fileEntryCompareDates(const void *a, const void *b) {
     fileEntry *f1 = (fileEntry *)a;
     fileEntry *f2 = (fileEntry *)b;
     time_t t1, t2;

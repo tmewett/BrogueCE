@@ -78,7 +78,7 @@ item *generateItem(unsigned short theCategory, short theKind) {
     return theItem;
 }
 
-unsigned long pickItemCategory(unsigned long theCategory) {
+static unsigned long pickItemCategory(unsigned long theCategory) {
     short i, sum, randIndex;
     unsigned short correspondingCategories[13] =    {GOLD,  SCROLL, POTION, STAFF,  WAND,   WEAPON, ARMOR,  FOOD,   RING,   CHARM,    AMULET,   GEM,    KEY};
 
@@ -403,7 +403,7 @@ item *placeItemAt(item *theItem, pos dest) {
     return theItem;
 }
 
-void fillItemSpawnHeatMap(unsigned short heatMap[DCOLS][DROWS], unsigned short heatLevel, pos loc) {
+static void fillItemSpawnHeatMap(unsigned short heatMap[DCOLS][DROWS], unsigned short heatLevel, pos loc) {
     if (pmapAt(loc)->layers[DUNGEON] == DOOR) {
         heatLevel += 10;
     } else if (pmapAt(loc)->layers[DUNGEON] == SECRET_DOOR) {
@@ -424,7 +424,7 @@ void fillItemSpawnHeatMap(unsigned short heatMap[DCOLS][DROWS], unsigned short h
     }
 }
 
-void coolHeatMapAt(unsigned short heatMap[DCOLS][DROWS], pos loc, unsigned long *totalHeat) {
+static void coolHeatMapAt(unsigned short heatMap[DCOLS][DROWS], pos loc, unsigned long *totalHeat) {
     short k, l;
     unsigned short currentHeat;
 
@@ -448,7 +448,7 @@ void coolHeatMapAt(unsigned short heatMap[DCOLS][DROWS], pos loc, unsigned long 
 
 // Returns false if no place could be found.
 // That should happen only if the total heat is zero.
-boolean getItemSpawnLoc(unsigned short heatMap[DCOLS][DROWS], short *x, short *y, unsigned long *totalHeat) {
+static boolean getItemSpawnLoc(unsigned short heatMap[DCOLS][DROWS], short *x, short *y, unsigned long *totalHeat) {
     unsigned long randIndex;
     unsigned short currentHeat;
     short i, j;
@@ -746,7 +746,7 @@ void populateItems(pos upstairs) {
 
 // Name of this function is a bit misleading -- basically returns true iff the item will stack without consuming an extra slot
 // i.e. if it's a throwing weapon with a sibling already in your pack. False for potions and scrolls.
-boolean itemWillStackWithPack(item *theItem) {
+static boolean itemWillStackWithPack(item *theItem) {
     item *tempItem;
     if (theItem->category & GEM) {
         for (tempItem = packItems->nextItem;
@@ -866,7 +866,7 @@ void pickUpItemAt(pos loc) {
     }
 }
 
-void conflateItemCharacteristics(item *newItem, item *oldItem) {
+static void conflateItemCharacteristics(item *newItem, item *oldItem) {
 
     // let magic detection and other flags propagate to the new stack...
     newItem->flags |= (oldItem->flags & (ITEM_MAGIC_DETECTED | ITEM_IDENTIFIED | ITEM_PROTECTED | ITEM_RUNIC
@@ -885,7 +885,7 @@ void conflateItemCharacteristics(item *newItem, item *oldItem) {
     }
 }
 
-void stackItems(item *newItem, item *oldItem) {
+static void stackItems(item *newItem, item *oldItem) {
     //Increment the quantity of the old item...
     newItem->quantity += oldItem->quantity;
 
@@ -896,7 +896,7 @@ void stackItems(item *newItem, item *oldItem) {
     deleteItem(oldItem);
 }
 
-boolean inventoryLetterAvailable(char proposedLetter) {
+static boolean inventoryLetterAvailable(char proposedLetter) {
     item *theItem;
     if (proposedLetter >= 'a'
         && proposedLetter <= 'z') {
@@ -1015,7 +1015,7 @@ void checkForDisenchantment(item *theItem) {
     }
 }
 
-boolean itemIsSwappable(const item *theItem) {
+static boolean itemIsSwappable(const item *theItem) {
     if ((theItem->category & CAN_BE_SWAPPED)
         && theItem->quiverNumber == 0) {
 
@@ -1025,7 +1025,7 @@ boolean itemIsSwappable(const item *theItem) {
     }
 }
 
-void swapItemToEnchantLevel(item *theItem, short newEnchant, boolean enchantmentKnown) {
+static void swapItemToEnchantLevel(item *theItem, short newEnchant, boolean enchantmentKnown) {
     short x, y, charmPercent;
     char buf1[COLS * 3], buf2[COLS * 3];
 
@@ -1082,7 +1082,7 @@ void swapItemToEnchantLevel(item *theItem, short newEnchant, boolean enchantment
     }
 }
 
-boolean enchantLevelKnown(const item *theItem) {
+static boolean enchantLevelKnown(const item *theItem) {
     if ((theItem->category & STAFF)
         && (theItem->flags & ITEM_MAX_CHARGES_KNOWN)) {
 
@@ -1092,7 +1092,7 @@ boolean enchantLevelKnown(const item *theItem) {
     }
 }
 
-short effectiveEnchantLevel(const item *theItem) {
+static short effectiveEnchantLevel(const item *theItem) {
     if (theItem->category & WAND) {
         return theItem->charges;
     } else {
@@ -1100,7 +1100,7 @@ short effectiveEnchantLevel(const item *theItem) {
     }
 }
 
-boolean swapItemEnchants(const short machineNumber) {
+static boolean swapItemEnchants(const short machineNumber) {
     item *lockedItem, *tempItem;
     short i, j, oldEnchant;
     boolean enchantmentKnown;
@@ -1229,7 +1229,7 @@ void updateFloorItems() {
     }
 }
 
-boolean inscribeItem(item *theItem) {
+static boolean inscribeItem(item *theItem) {
     char itemText[30], buf[COLS * 3], nameOfItem[COLS * 3], oldInscription[COLS];
 
     strcpy(oldInscription, theItem->inscription);
@@ -1751,7 +1751,7 @@ boolean isVowelish(char *theChar) {
     }
 }
 
-fixpt enchantIncrement(item *theItem) {
+static fixpt enchantIncrement(item *theItem) {
     if (theItem->category & (WEAPON | ARMOR)) {
         if (theItem->strengthRequired == 0) {
             return FP_FACTOR;
@@ -1776,7 +1776,7 @@ boolean itemIsCarried(item *theItem) {
     return false;
 }
 
-short effectiveRingEnchant(item *theItem) {
+static short effectiveRingEnchant(item *theItem) {
     if (theItem->category != RING) {
         return 0;
     }
@@ -1787,7 +1787,7 @@ short effectiveRingEnchant(item *theItem) {
     }
 }
 
-short apparentRingBonus(const enum ringKind kind) {
+static short apparentRingBonus(const enum ringKind kind) {
     item *rings[2] = {rogue.ringLeft, rogue.ringRight}, *ring;
     short retval = 0;
     short i;
@@ -2679,7 +2679,7 @@ void itemDetails(char *buf, item *theItem) {
     }
 }
 
-boolean displayMagicCharForItem(item *theItem) {
+static boolean displayMagicCharForItem(item *theItem) {
     if (!(theItem->flags & ITEM_MAGIC_DETECTED)
         || (theItem->category & PRENAMED_CATEGORY)) {
         return false;
@@ -3221,7 +3221,7 @@ void equip(item *theItem) {
 // (1) it's a key (has ITEM_IS_KEY flag),
 // (2) its originDepth matches the depth, and
 // (3) either its key (x, y) location matches (x, y), or its machine number matches the machine number at (x, y).
-boolean keyMatchesLocation(item *theItem, pos loc) {
+static boolean keyMatchesLocation(item *theItem, pos loc) {
     if ((theItem->flags & ITEM_IS_KEY)
         && theItem->originDepth == rogue.depthLevel) {
 
@@ -3521,7 +3521,7 @@ void getImpactLoc(pos *returnLoc, const pos originLoc, const pos targetLoc,
 
 // Returns true if the two coordinates are unobstructed and diagonally adjacent,
 // but their two common neighbors are obstructed and at least one blocks diagonal movement.
-boolean impermissibleKinkBetween(short x1, short y1, short x2, short y2) {
+static boolean impermissibleKinkBetween(short x1, short y1, short x2, short y2) {
     brogueAssert(coordinatesAreInMap(x1, y1));
     brogueAssert(coordinatesAreInMap(x2, y2));
     if (cellHasTerrainFlag(x1, y1, T_OBSTRUCTS_PASSABILITY)
@@ -3547,7 +3547,7 @@ boolean impermissibleKinkBetween(short x1, short y1, short x2, short y2) {
     return true;
 }
 
-boolean tunnelize(short x, short y) {
+static boolean tunnelize(short x, short y) {
     enum dungeonLayers layer;
     boolean didSomething = false;
     creature *monst;
@@ -3773,7 +3773,7 @@ void weaken(creature *monst, short maxDuration) {
 }
 
 // True if the creature polymorphed; false if not.
-boolean polymorph(creature *monst) {
+static boolean polymorph(creature *monst) {
     short previousDamageTaken, healthFraction, newMonsterIndex;
 
     if (monst == &player || (monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
@@ -3922,7 +3922,7 @@ void heal(creature *monst, short percent, boolean panacea) {
     }
 }
 
-void makePlayerTelepathic(short duration) {
+static void makePlayerTelepathic(short duration) {
     player.status[STATUS_TELEPATHIC] = player.maxStatus[STATUS_TELEPATHIC] = duration;
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
@@ -3935,7 +3935,7 @@ void makePlayerTelepathic(short duration) {
     }
 }
 
-void rechargeItems(unsigned long categories) {
+static void rechargeItems(unsigned long categories) {
     item *tempItem;
     short x, y, z, i, categoryCount;
     char buf[DCOLS * 3];
@@ -4019,7 +4019,7 @@ void rechargeItems(unsigned long categories) {
 //    colorFlash(&redFlashColor, 0, IN_FIELD_OF_VIEW, 15, DCOLS, player.loc.x, player.loc.y);
 //}
 
-void negationBlast(const char *emitterName, const short distance) {
+static void negationBlast(const char *emitterName, const short distance) {
     item *theItem;
     char buf[DCOLS];
 
@@ -4075,7 +4075,7 @@ void negationBlast(const char *emitterName, const short distance) {
     }
 }
 
-void discordBlast(const char *emitterName, const short distance) {
+static void discordBlast(const char *emitterName, const short distance) {
     char buf[DCOLS];
 
     sprintf(buf, "%s emits a wave of unsettling purple radiation!", emitterName);
@@ -4096,7 +4096,7 @@ void discordBlast(const char *emitterName, const short distance) {
     }
 }
 
-void crystalize(short radius) {
+static void crystalize(short radius) {
     extern color forceFieldColor;
     short i, j;
     creature *monst;
@@ -4132,7 +4132,7 @@ void crystalize(short radius) {
     refreshSideBar(-1, -1, false);
 }
 
-boolean imbueInvisibility(creature *monst, short duration) {
+static boolean imbueInvisibility(creature *monst, short duration) {
     boolean autoID = false;
 
     if (monst && !(monst->info.flags & (MONST_INANIMATE | MONST_INVISIBLE | MONST_INVULNERABLE))) {
@@ -4266,7 +4266,7 @@ void checkForMissingKeys(short x, short y) {
     }
 }
 
-void beckonMonster(creature *monst, short x, short y) {
+static void beckonMonster(creature *monst, short x, short y) {
     bolt theBolt = boltCatalog[BOLT_BLINKING];
 
     if (monst->bookkeepingFlags & MB_CAPTIVE) {
@@ -4306,7 +4306,7 @@ enum boltType boltForItem(item *theItem) {
 // *autoID will be set to true. (AutoID can be null.)
 // If the effect causes the level's lighting or vision to change, *lightingChanged
 // will be set to true. (LightingChanged can be null.)
-boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
+static boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                    boolean boltInView, boolean alreadyReflected,
                    boolean *autoID, boolean *lightingChanged) {
     char buf[COLS], monstName[COLS];
@@ -4656,7 +4656,7 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
 // Pass in true for alreadyReflected if the bolt has already reflected off of something.
 // If the effect is visible enough for the player to identify the shooting item,
 // *autoID will be set to true. (AutoID can be null.)
-void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *autoID) {
+static void detonateBolt(bolt *theBolt, creature *caster, short x, short y, boolean *autoID) {
     dungeonFeature feat;
     short i, x2, y2;
     creature *monst;
@@ -5183,7 +5183,7 @@ boolean nextTargetAfter(short *returnX,
 }
 
 // Returns how far it went before hitting something.
-short hiliteTrajectory(const pos coordinateList[DCOLS], short numCells, boolean eraseHiliting, const bolt *theBolt, const color *hiliteColor) {
+static short hiliteTrajectory(const pos coordinateList[DCOLS], short numCells, boolean eraseHiliting, const bolt *theBolt, const color *hiliteColor) {
     short x, y, i;
     creature *monst;
 
@@ -5439,7 +5439,7 @@ boolean moveCursor(boolean *targetConfirmed,
     return !cursorMovementCommand;
 }
 
-pos pullMouseClickDuringPlayback(void) {
+static pos pullMouseClickDuringPlayback(void) {
     rogueEvent theEvent;
 
     brogueAssert(rogue.playbackMode);
@@ -5838,7 +5838,7 @@ void autoIdentify(item *theItem) {
 }
 
 // returns whether the item disappeared
-boolean hitMonsterWithProjectileWeapon(creature *thrower, creature *monst, item *theItem) {
+static boolean hitMonsterWithProjectileWeapon(creature *thrower, creature *monst, item *theItem) {
     char buf[DCOLS], theItemName[DCOLS], targetName[DCOLS], armorRunicString[DCOLS];
     boolean thrownWeaponHit;
     item *equippedWeapon;
@@ -5915,7 +5915,7 @@ boolean hitMonsterWithProjectileWeapon(creature *thrower, creature *monst, item 
     }
 }
 
-void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistance) {
+static void throwItem(item *theItem, creature *thrower, pos targetLoc, short maxDistance) {
     short i, numCells;
     creature *monst = NULL;
     char buf[COLS*3], buf2[COLS*3], buf3[COLS*3];
@@ -6323,7 +6323,7 @@ void swapLastEquipment() {
 // If the blink trajectory lands in lava based on the player's knowledge, abort.
 // If the blink trajectory might land in lava based on the player's knowledge,
 // prompt for confirmation.
-boolean playerCancelsBlinking(const pos originLoc, const pos targetLoc, const short maxDistance) {
+static boolean playerCancelsBlinking(const pos originLoc, const pos targetLoc, const short maxDistance) {
     short numCells, i, x, y;
     boolean certainDeath = false;
     boolean possibleDeath = false;
@@ -6384,7 +6384,7 @@ boolean playerCancelsBlinking(const pos originLoc, const pos targetLoc, const sh
     return false;
 }
 
-boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
+static boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
     char buf[COLS], buf2[COLS];
     unsigned char command[10];
     short maxDistance, c;
@@ -6500,7 +6500,7 @@ boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
     return true;
 }
 
-void summonGuardian(item *theItem) {
+static void summonGuardian(item *theItem) {
     short x = player.loc.x, y = player.loc.y;
     creature *monst;
 
@@ -6518,7 +6518,7 @@ void summonGuardian(item *theItem) {
     fadeInMonster(monst);
 }
 
-void useCharm(item *theItem) {
+static void useCharm(item *theItem) {
     fixpt enchant = netEnchant(theItem);
 
     rogue.featRecord[FEAT_PURE_WARRIOR] = false;
@@ -6739,7 +6739,7 @@ void identify(item *theItem) {
     identifyItemKind(theItem);
 }
 
-short lotteryDraw(short *frequencies, short itemCount) {
+static short lotteryDraw(short *frequencies, short itemCount) {
     short i, maxFreq, randIndex;
     maxFreq = 0;
     for (i = 0; i < itemCount; i++) {
@@ -6820,7 +6820,7 @@ void updateIdentifiableItems() {
     }
 }
 
-void magicMapCell(short x, short y) {
+static void magicMapCell(short x, short y) {
     pmap[x][y].flags |= MAGIC_MAPPED;
     pmap[x][y].rememberedTerrainFlags = tileCatalog[pmap[x][y].layers[DUNGEON]].flags | tileCatalog[pmap[x][y].layers[LIQUID]].flags;
     pmap[x][y].rememberedTMFlags = tileCatalog[pmap[x][y].layers[DUNGEON]].mechFlags | tileCatalog[pmap[x][y].layers[LIQUID]].mechFlags;
@@ -7085,7 +7085,7 @@ void readScroll(item *theItem) {
     }
 }
 
-void detectMagicOnItem(item *theItem) {
+static void detectMagicOnItem(item *theItem) {
     if (theItem->category & HAS_INTRINSIC_POLARITY) {
         itemTable *theItemTable = tableForItemCategory(theItem->category);
         theItemTable[theItem->kind].magicPolarityRevealed = true;
@@ -7386,7 +7386,7 @@ void unequip(item *theItem) {
     playerTurnEnded();
 }
 
-boolean canDrop() {
+static boolean canDrop() {
     if (cellHasTerrainFlag(player.loc.x, player.loc.y, T_OBSTRUCTS_ITEMS)) {
         return false;
     }
@@ -7787,7 +7787,7 @@ void deleteItem(item *theItem) {
     free(theItem);
 }
 
-void resetItemTableEntry(itemTable *theEntry) {
+static void resetItemTableEntry(itemTable *theEntry) {
     theEntry->identified = false;
     theEntry->magicPolarityRevealed = false;
     theEntry->called = false;

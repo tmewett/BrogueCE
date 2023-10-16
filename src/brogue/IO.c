@@ -104,7 +104,7 @@ void showCursor() {
     }
 }
 
-pos getClosestValidLocationOnMap(short **map, short x, short y) {
+static pos getClosestValidLocationOnMap(short **map, short x, short y) {
     pos answer = INVALID_POS;
 
     int closestDistance = 10000;
@@ -129,7 +129,7 @@ pos getClosestValidLocationOnMap(short **map, short x, short y) {
     return answer;
 }
 
-void processSnapMap(short **map) {
+static void processSnapMap(short **map) {
     short **costMap;
     enum directions dir;
     short i, j, newX, newY;
@@ -165,7 +165,7 @@ void processSnapMap(short **map) {
 // Returns the keystroke to effect the button's command, or -1 if canceled.
 // Some buttons take effect in this function instead of returning a value,
 // i.e. true colors mode and display stealth mode.
-short actionMenu(short x, boolean playingBack) {
+static short actionMenu(short x, boolean playingBack) {
     short buttonCount;
     short y;
     boolean takeActionOurselves[ROWS] = {false};
@@ -430,7 +430,7 @@ short actionMenu(short x, boolean playingBack) {
 
 #define MAX_MENU_BUTTON_COUNT 5
 
-void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
+static void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
     short i, x, buttonCount;
     char goldTextEscape[MAX_MENU_BUTTON_COUNT] = "";
     char whiteTextEscape[MAX_MENU_BUTTON_COUNT] = "";
@@ -928,7 +928,7 @@ void storeColorComponents(char components[3], const color *theColor) {
     components[2] = max(0, min(100, theColor->blue + rand_range(0, theColor->blueRand) + rand));
 }
 
-void bakeTerrainColors(color *foreColor, color *backColor, short x, short y) {
+static void bakeTerrainColors(color *foreColor, color *backColor, short x, short y) {
     const short *vals;
     const short neutralColors[8] = {1000, 1000, 1000, 1000, 0, 0, 0, 0};
     if (rogue.trueColorMode) {
@@ -1598,7 +1598,7 @@ void desaturate(color *baseColor, short weight) {
     baseColor->rand += avg * weight / 3 / 100;
 }
 
-short randomizeByPercent(short input, short percent) {
+static short randomizeByPercent(short input, short percent) {
     return (rand_range(input * (100 - percent) / 100, input * (100 + percent) / 100));
 }
 
@@ -1615,7 +1615,7 @@ void swapColors(color *color1, color *color2) {
 }
 
 // Assumes colors are pre-baked.
-void blendAppearances(const color *fromForeColor, const color *fromBackColor, const enum displayGlyph fromChar,
+static void blendAppearances(const color *fromForeColor, const color *fromBackColor, const enum displayGlyph fromChar,
                       const color *toForeColor, const color *toBackColor, const enum displayGlyph toChar,
                       color *retForeColor, color *retBackColor, enum displayGlyph *retChar,
                       const short percent) {
@@ -1742,7 +1742,7 @@ void hiliteCell(short x, short y, const color *hiliteColor, short hiliteStrength
     restoreRNG;
 }
 
-short adjustedLightValue(short x) {
+static short adjustedLightValue(short x) {
     if (x <= LIGHT_SMOOTHING_THRESHOLD) {
         return x;
     } else {
@@ -2220,7 +2220,7 @@ void funkyFade(cellDisplayBuffer displayBuf[COLS][ROWS], const color *colorStart
     restoreRNG;
 }
 
-void displayWaypoints() {
+static void displayWaypoints() {
     short i, j, w, lowestDistance;
 
     for (i=0; i<DCOLS; i++) {
@@ -2239,7 +2239,7 @@ void displayWaypoints() {
     temporaryMessage("Waypoints:", REQUIRE_ACKNOWLEDGMENT);
 }
 
-void displayMachines() {
+static void displayMachines() {
     short i, j;
     color foreColor, backColor, machineColors[50];
     enum displayGlyph dchar;
@@ -2325,7 +2325,7 @@ void displayLoops() {
     waitForAcknowledgment();
 }
 
-void exploreKey(const boolean controlKey) {
+static void exploreKey(const boolean controlKey) {
     short x, y, finalX = 0, finalY = 0;
     short **exploreMap;
     enum directions dir;
@@ -2975,10 +2975,6 @@ boolean confirm(char *prompt, boolean alsoDuringPlayback) {
     return retVal;
 }
 
-void clearMonsterFlashes() {
-
-}
-
 void displayMonsterFlashes(boolean flashingEnabled) {
     short x[100], y[100], strength[100], count = 0;
     const color *flashColor[100];
@@ -3012,7 +3008,7 @@ void displayMonsterFlashes(boolean flashingEnabled) {
     restoreRNG;
 }
 
-void dequeueEvent() {
+static void dequeueEvent() {
     rogueEvent returnEvent;
     nextBrogueEvent(&returnEvent, false, false, true);
 }
@@ -3024,11 +3020,11 @@ void clearMessageArchive() {
 
 // Get a pointer to the archivedMessage the given number of entries back in history.
 // Pass zero to get the entry under messageArchivePosition.
-archivedMessage *getArchivedMessage(short back) {
+static archivedMessage *getArchivedMessage(short back) {
     return &messageArchive[(messageArchivePosition + MESSAGE_ARCHIVE_ENTRIES - back) % MESSAGE_ARCHIVE_ENTRIES];
 }
 
-int formatCountedMessage(char *buffer, size_t size, archivedMessage *m) {
+static int formatCountedMessage(char *buffer, size_t size, archivedMessage *m) {
     int length;
 
     if (m->count <= 1) {
@@ -3047,7 +3043,7 @@ int formatCountedMessage(char *buffer, size_t size, archivedMessage *m) {
 // only one message is taken.
 // If turnOutput is not null, it is filled with the player turn number shared
 // by the chosen messages.
-short foldMessages(char buffer[COLS*20], short offset, unsigned long *turnOutput) {
+static short foldMessages(char buffer[COLS*20], short offset, unsigned long *turnOutput) {
     short i, folded, messageLength, lineLength, length;
     unsigned long turn;
     char counted[COLS*2];
@@ -3103,7 +3099,7 @@ short foldMessages(char buffer[COLS*20], short offset, unsigned long *turnOutput
 }
 
 // Change the given newline-delimited sentences in-place to ensure proper writing.
-void capitalizeAndPunctuateSentences(char *text, short length) {
+static void capitalizeAndPunctuateSentences(char *text, short length) {
     short i;
     boolean newSentence;
 
@@ -3127,7 +3123,7 @@ void capitalizeAndPunctuateSentences(char *text, short length) {
 }
 
 // Copy \n-delimited lines to the given buffer.  Carry colors across line breaks.
-void splitLines(short lines, char wrapped[COLS*20], char buffer[][COLS*2], short bufferCursor) {
+static void splitLines(short lines, char wrapped[COLS*20], char buffer[][COLS*2], short bufferCursor) {
     short linesSeen;
     char color[5], line[COLS*2];
     char *start, *end;
@@ -3228,7 +3224,7 @@ void displayRecentMessages() {
 // offset: index of oldest (visually highest) message to draw
 // height: height in rows of the message archive display area
 // rbuf: background display buffer to draw against
-void drawMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height, cellDisplayBuffer rbuf[COLS][ROWS]) {
+static void drawMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height, cellDisplayBuffer rbuf[COLS][ROWS]) {
     int i, j, k, fadePercent;
     cellDisplayBuffer dbuf[COLS][ROWS];
 
@@ -3260,7 +3256,7 @@ void drawMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short leng
 // offset: index of oldest (visually highest) message to draw in the fully expanded state
 // height: height in rows of the message archive display area in the fully expanded state
 // rbuf: background display buffer to draw against
-void animateMessageArchive(boolean opening, char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height, cellDisplayBuffer rbuf[COLS][ROWS]) {
+static void animateMessageArchive(boolean opening, char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height, cellDisplayBuffer rbuf[COLS][ROWS]) {
     short i;
     boolean fastForward;
 
@@ -3288,7 +3284,7 @@ void animateMessageArchive(boolean opening, char messages[MESSAGE_ARCHIVE_LINES]
 // rbuf: background display buffer to draw against
 //
 // returns the new offset, which can change if the player scrolled around before closing
-short scrollMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height, cellDisplayBuffer rbuf[COLS][ROWS]) {
+static short scrollMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height, cellDisplayBuffer rbuf[COLS][ROWS]) {
     short lastOffset;
     boolean exit;
     rogueEvent theEvent;
@@ -3925,7 +3921,7 @@ void printString(const char *theString, short x, short y, const color *foreColor
 
 // Inserts line breaks into really long words. Optionally adds a hyphen, but doesn't do anything
 // clever regarding hyphen placement. Plays nicely with color escapes.
-void breakUpLongWordsIn(char *sourceText, short width, boolean useHyphens) {
+static void breakUpLongWordsIn(char *sourceText, short width, boolean useHyphens) {
     char buf[TEXT_MAX_LENGTH] = "";
     short i, m, nextChar, wordWidth;
     //const short maxLength = useHyphens ? width - 1 : width;
@@ -4129,7 +4125,7 @@ void printHelpScreen() {
     updateMessageDisplay();
 }
 
-void printDiscoveries(short category, short count, unsigned short itemCharacter, short x, short y, cellDisplayBuffer dbuf[COLS][ROWS]) {
+static void printDiscoveries(short category, short count, unsigned short itemCharacter, short x, short y, cellDisplayBuffer dbuf[COLS][ROWS]) {
     color goodColor, badColor;
     const color *theColor;
     char buf[COLS], buf2[COLS];
@@ -4410,7 +4406,7 @@ static short estimatedArmorValue() {
     return max(0, retVal);
 }
 
-short creatureHealthChangePercent(creature *monst) {
+static short creatureHealthChangePercent(creature *monst) {
     if (monst->previousHealthPoints <= 0) {
         return 0;
     }

@@ -24,7 +24,7 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
-void initializeCreateItemButton(brogueButton *button, char *text) {
+static void initializeCreateItemButton(brogueButton *button, char *text) {
     char buttonText[COLS * 3];
 
     initializeButton(button);

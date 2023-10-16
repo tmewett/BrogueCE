@@ -121,7 +121,7 @@ void describedItemBasedOnParameters(short theCategory, short theKind, short theQ
 
 // Describes the item in question either by naming it if the player has already seen its name,
 // or by tersely identifying its category otherwise.
-void describedItemName(item *theItem, char *buf) {
+static void describedItemName(item *theItem, char *buf) {
     if (rogue.playbackOmniscience || (!player.status[STATUS_HALLUCINATING])) {
         itemName(theItem, buf, (theItem->category & (WEAPON | ARMOR) ? false : true), true, NULL);
     } else {
@@ -469,7 +469,7 @@ void vomit(creature *monst) {
     }
 }
 
-void moveEntrancedMonsters(enum directions dir) {
+static void moveEntrancedMonsters(enum directions dir) {
     dir = oppositeDirection(dir);
 
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
@@ -527,7 +527,7 @@ boolean freeCaptivesEmbeddedAt(short x, short y) {
 }
 
 // Do we need confirmation so we don't accidently hit an acid mound?
-boolean abortAttackAgainstAcidicTarget(creature *hitList[8]) {
+static boolean abortAttackAgainstAcidicTarget(creature *hitList[8]) {
     short i;
     char monstName[COLS], weaponName[COLS];
     char buf[COLS*3];
@@ -712,7 +712,7 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
     return false;
 }
 
-void buildFlailHitList(const short x, const short y, const short newX, const short newY, creature *hitList[16]) {
+static void buildFlailHitList(const short x, const short y, const short newX, const short newY, creature *hitList[16]) {
     short mx, my;
     short i = 0;
 
@@ -1446,7 +1446,7 @@ short nextStep(short **distanceMap, short x, short y, creature *monst, boolean p
     return bestDir;
 }
 
-void displayRoute(short **distanceMap, boolean removeRoute) {
+static void displayRoute(short **distanceMap, boolean removeRoute) {
     short currentX = player.loc.x, currentY = player.loc.y, dir, newX, newY;
     boolean advanced;
 
@@ -1521,7 +1521,7 @@ void travelRoute(pos path[1000], short steps) {
     updateFlavorText();
 }
 
-void travelMap(short **distanceMap) {
+static void travelMap(short **distanceMap) {
     short currentX = player.loc.x, currentY = player.loc.y, dir, newX, newY;
     boolean advanced;
 
@@ -1974,41 +1974,6 @@ void autoPlayLevel(boolean fastForward) {
     confirmMessages();
 
     rogue.autoPlayingLevel = false;
-}
-
-short directionOfKeypress(unsigned short ch) {
-    switch (ch) {
-        case LEFT_KEY:
-        case LEFT_ARROW:
-        case NUMPAD_4:
-            return LEFT;
-        case RIGHT_KEY:
-        case RIGHT_ARROW:
-        case NUMPAD_6:
-            return RIGHT;
-        case UP_KEY:
-        case UP_ARROW:
-        case NUMPAD_8:
-            return UP;
-        case DOWN_KEY:
-        case DOWN_ARROW:
-        case NUMPAD_2:
-            return DOWN;
-        case UPLEFT_KEY:
-        case NUMPAD_7:
-            return UPLEFT;
-        case UPRIGHT_KEY:
-        case NUMPAD_9:
-            return UPRIGHT;
-        case DOWNLEFT_KEY:
-        case NUMPAD_1:
-            return DOWNLEFT;
-        case DOWNRIGHT_KEY:
-        case NUMPAD_3:
-            return DOWNRIGHT;
-        default:
-            return -1;
-    }
 }
 
 boolean startFighting(enum directions dir, boolean tillDeath) {

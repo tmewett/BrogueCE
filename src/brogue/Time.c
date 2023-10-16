@@ -454,7 +454,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
     }
 }
 
-void applyGradualTileEffectsToCreature(creature *monst, short ticks) {
+static void applyGradualTileEffectsToCreature(creature *monst, short ticks) {
     short itemCandidates, randItemIndex;
     short x = monst->loc.x, y = monst->loc.y, damage;
     char buf[COLS * 5], buf2[COLS * 3];
@@ -597,7 +597,7 @@ void updateClairvoyance() {
     }
 }
 
-void updateTelepathy() {
+static void updateTelepathy() {
     short i, j;
     boolean grid[DCOLS][DROWS];
 
@@ -646,7 +646,7 @@ short scentDistance(short x1, short y1, short x2, short y2) {
     }
 }
 
-void updateScent() {
+static void updateScent() {
     short i, j;
     char grid[DCOLS][DROWS];
 
@@ -801,7 +801,7 @@ void updateVision(boolean refreshDisplay) {
     }
 }
 
-void checkNutrition() {
+static void checkNutrition() {
     item *theItem;
     char buf[DCOLS*3], foodWarning[DCOLS*3];
 
@@ -862,7 +862,7 @@ void burnItem(item *theItem) {
     spawnDungeonFeature(x, y, &(dungeonFeatureCatalog[DF_ITEM_FIRE]), true, false);
 }
 
-void flashCreatureAlert(creature *monst, char msg[200], const color *foreColor, const color *backColor) {
+static void flashCreatureAlert(creature *monst, char msg[200], const color *foreColor, const color *backColor) {
     short x, y;
     if (monst->loc.y > DROWS / 2) {
         y = mapToWindowY(monst->loc.y - 2);
@@ -878,7 +878,7 @@ void flashCreatureAlert(creature *monst, char msg[200], const color *foreColor, 
     rogue.autoPlayingLevel = false;
 }
 
-void handleHealthAlerts() {
+static void handleHealthAlerts() {
     short i, currentPercent, previousPercent,
     thresholds[] = {5, 10, 25, 40},
     pThresholds[] = {100, 90, 50};
@@ -924,7 +924,7 @@ void handleHealthAlerts() {
     restoreRNG;
 }
 
-void addXPXPToAlly(short XPXP, creature *monst) {
+static void addXPXPToAlly(short XPXP, creature *monst) {
     char theMonsterName[100], buf[200];
     if (!(monst->info.flags & (MONST_INANIMATE | MONST_IMMOBILE))
         && !(monst->bookkeepingFlags & MB_TELEPATHICALLY_REVEALED)
@@ -949,7 +949,7 @@ void addXPXPToAlly(short XPXP, creature *monst) {
     }
 }
 
-void handleXPXP() {
+static void handleXPXP() {
     //char buf[DCOLS*2], theMonsterName[50];
 
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
@@ -971,7 +971,7 @@ void handleXPXP() {
     rogue.xpxpThisTurn = 0;
 }
 
-void playerFalls() {
+static void playerFalls() {
     short damage;
     short layer;
 
@@ -1218,7 +1218,7 @@ boolean exposeTileToFire(short x, short y, boolean alwaysIgnite) {
 }
 
 // Only the gas layer can be volumetric.
-void updateVolumetricMedia() {
+static void updateVolumetricMedia() {
     short i, j, newX, newY, numSpaces;
     unsigned long highestNeighborVolume;
     unsigned long sum;
@@ -1318,7 +1318,7 @@ void updateVolumetricMedia() {
     }
 }
 
-void updateYendorWardenTracking() {
+static void updateYendorWardenTracking() {
     short n;
 
     if (!rogue.yendorWarden) {
@@ -1578,7 +1578,7 @@ void updateAllySafetyMap() {
     freeGrid(monsterCostMap);
 }
 
-void resetDistanceCellInGrid(short **grid, short x, short y) {
+static void resetDistanceCellInGrid(short **grid, short x, short y) {
     enum directions dir;
     short newX, newY;
     for (dir = 0; dir < 4; dir++) {
@@ -1766,7 +1766,7 @@ void updateSafeTerrainMap() {
     freeGrid(costMap);
 }
 
-void processIncrementalAutoID() {
+static void processIncrementalAutoID() {
     item *theItem, *autoIdentifyItems[3] = {rogue.armor, rogue.ringLeft, rogue.ringRight};
     char buf[DCOLS*3], theItemName[DCOLS*3];
     short i;
@@ -1865,7 +1865,7 @@ void extinguishFireOnCreature(creature *monst) {
 }
 
 // n is the monster's depthLevel - 1.
-void monsterEntersLevel(creature *monst, short n) {
+static void monsterEntersLevel(creature *monst, short n) {
     char monstName[COLS], buf[COLS];
     boolean pit = false;
 
@@ -1940,7 +1940,7 @@ void monsterEntersLevel(creature *monst, short n) {
     }
 }
 
-void monstersApproachStairs() {
+static void monstersApproachStairs() {
     short n;
 
     for (n = rogue.depthLevel - 2; n <= rogue.depthLevel; n += 2) { // cycle through previous and next level
@@ -1963,7 +1963,7 @@ void monstersApproachStairs() {
     }
 }
 
-void decrementPlayerStatus() {
+static void decrementPlayerStatus() {
     // Handle hunger.
     if (!player.status[STATUS_PARALYZED]) {
         // No nutrition is expended while paralyzed.
@@ -2071,7 +2071,7 @@ void decrementPlayerStatus() {
     }
 }
 
-boolean dangerChanged(boolean danger[4]) {
+static boolean dangerChanged(boolean danger[4]) {
     for (enum directions dir = 0; dir < 4; dir++) {
         const pos newLoc = posNeighborInDirection(player.loc, dir);
         if (danger[dir] != monsterAvoids(&player, newLoc)) {

@@ -87,8 +87,8 @@ struct brogueConsole {
 };
 
 // defined in platform
-void loadKeymap();
-void dumpScores();
+void loadKeymap(void);
+void dumpScores(void);
 unsigned int glyphToUnicode(enum displayGlyph glyph);
 boolean isEnvironmentGlyph(enum displayGlyph glyph);
 void setHighScoresFilename(char *buffer, int bufferMaxLength);
