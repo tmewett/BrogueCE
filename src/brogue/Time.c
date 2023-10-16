@@ -38,7 +38,7 @@ void exposeCreatureToFire(creature *monst) {
         if (monst == &player) {
             rogue.minersLight.lightColor = &fireForeColor;
             player.info.foreColor = &torchLightColor;
-            refreshDungeonCell(player.loc.x, player.loc.y);
+            refreshDungeonCell(player.loc);
             //updateVision(); // this screws up the firebolt visual effect by erasing it while a message is displayed
             combatMessage("you catch fire", &badMessageColor);
         } else if (canDirectlySeeMonster(monst)) {
@@ -191,7 +191,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
             }
             killCreature(monst, false);
             spawnDungeonFeature(*x, *y, &(dungeonFeatureCatalog[DF_CREATURE_FIRE]), true, false);
-            refreshDungeonCell(*x, *y);
+            refreshDungeonCell((pos){ *x, *y });
             return;
         }
     }
@@ -222,7 +222,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
         pmap[*x][*y].flags |= PRESSURE_PLATE_DEPRESSED;
         if (playerCanSee(*x, *y) && cellHasTMFlag(*x, *y, TM_IS_SECRET)) {
             discover(*x, *y);
-            refreshDungeonCell(*x, *y);
+            refreshDungeonCell((pos){ *x, *y });
         }
         if (canSeeMonster(monst)) {
             monsterName(buf, monst, true);
@@ -334,7 +334,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
                         buf3);
                 messageWithColor(buf2, messageColorFromVictim(monst), 0);
                 killCreature(monst, false);
-                refreshDungeonCell(*x, *y);
+                refreshDungeonCell((pos){ *x, *y });
                 return;
             } else {
                 // if survived
@@ -528,7 +528,7 @@ static void applyGradualTileEffectsToCreature(creature *monst, short ticks) {
                     messageWithColor(buf2, messageColorFromVictim(monst), 0);
                 }
                 killCreature(monst, false);
-                refreshDungeonCell(x, y);
+                refreshDungeonCell((pos){ x, y });
                 return;
             }
         }
@@ -789,13 +789,13 @@ void updateVision(boolean refreshDisplay) {
     if (player.status[STATUS_HALLUCINATING] > 0) {
         for (theItem = floorItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
             if ((pmapAt(theItem->loc)->flags & DISCOVERED) && refreshDisplay) {
-                refreshDungeonCell(theItem->loc.x, theItem->loc.y);
+                refreshDungeonCell(theItem->loc);
             }
         }
         for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
             if ((pmapAt(monst->loc)->flags & DISCOVERED) && refreshDisplay) {
-                refreshDungeonCell(monst->loc.x, monst->loc.y);
+                refreshDungeonCell(monst->loc);
             }
         }
     }
@@ -854,7 +854,7 @@ void burnItem(item *theItem) {
     deleteItem(theItem);
     pmap[x][y].flags &= ~(HAS_ITEM | ITEM_DETECTED);
     if (pmap[x][y].flags & (ANY_KIND_OF_VISIBLE | DISCOVERED | ITEM_DETECTED)) {
-        refreshDungeonCell(x, y);
+        refreshDungeonCell((pos){ x, y });
     }
     if (playerCanSee(x, y)) {
         messageWithColor(buf2, &itemMessageColor, 0);
@@ -1112,7 +1112,7 @@ void promoteTile(short x, short y, enum dungeonLayers layer, boolean useFireDF) 
         if (layer == GAS) {
             pmap[x][y].volume = 0;
         }
-        refreshDungeonCell(x, y);
+        refreshDungeonCell((pos){ x, y });
     }
     if (DFType) {
         spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DFType], true, false);
@@ -1212,7 +1212,7 @@ boolean exposeTileToFire(short x, short y, boolean alwaysIgnite) {
                 promoteTile(x, y, layer, !explosivePromotion);
             }
         }
-        refreshDungeonCell(x, y);
+        refreshDungeonCell((pos){ x, y });
     }
     return fireIgnited;
 }
@@ -1267,7 +1267,7 @@ static void updateVolumetricMedia() {
                     pmap[i][j].layers[GAS] = gasType;
                 } else if (pmap[i][j].layers[GAS] && newGasVolume[i][j] < 1) {
                     pmap[i][j].layers[GAS] = NOTHING;
-                    refreshDungeonCell(i, j);
+                    refreshDungeonCell((pos){ i, j });
                 }
                 if (pmap[i][j].volume > 0) {
                     if (tileCatalog[pmap[i][j].layers[GAS]].mechFlags & TM_GAS_DISSIPATES_QUICKLY) {
@@ -1312,7 +1312,7 @@ static void updateVolumetricMedia() {
         for (j=0; j<DROWS; j++) {
             if (pmap[i][j].volume != newGasVolume[i][j]) {
                 pmap[i][j].volume = newGasVolume[i][j];
-                refreshDungeonCell(i, j);
+                refreshDungeonCell((pos){ i, j });
             }
         }
     }
@@ -1401,7 +1401,7 @@ void monstersFall() {
             }
 
             pmap[x][y].flags &= ~HAS_MONSTER;
-            refreshDungeonCell(x, y);
+            refreshDungeonCell((pos){ x, y });
         }
     }
 }
@@ -1858,7 +1858,7 @@ void extinguishFireOnCreature(creature *monst) {
     if (monst == &player) {
         player.info.foreColor = &white;
         rogue.minersLight.lightColor = &minersLightColor;
-        refreshDungeonCell(player.loc.x, player.loc.y);
+        refreshDungeonCell(player.loc);
         updateVision(true);
         message("you are no longer on fire.", 0);
     }
@@ -1901,7 +1901,7 @@ static void monsterEntersLevel(creature *monst, short n) {
                                  avoidedFlagsForMonster(&(prevMonst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_STAIRS), false);
         pmapAt(monst->loc)->flags &= ~(HAS_PLAYER | HAS_MONSTER);
         pmapAt(prevMonst->loc)->flags |= (prevMonst == &player ? HAS_PLAYER : HAS_MONSTER);
-        refreshDungeonCell(prevMonst->loc.x, prevMonst->loc.y);
+        refreshDungeonCell(prevMonst->loc);
         //DEBUG printf("\nBumped a creature (%s) from (%i, %i) to (%i, %i).", prevMonst->info.monsterName, monst->loc.x, monst->loc.y, prevMonst->loc.x, prevMonst->loc.y);
     }
 
@@ -1916,7 +1916,7 @@ static void monsterEntersLevel(creature *monst, short n) {
     restoreMonster(monst, NULL, NULL);
     //DEBUG printf("\nPlaced a creature (%s) at (%i, %i).", monst->info.monsterName, monst->loc.x, monst->loc.y);
     monst->ticksUntilTurn = monst->movementSpeed;
-    refreshDungeonCell(monst->loc.x, monst->loc.y);
+    refreshDungeonCell(monst->loc);
 
     if (pit) {
         monsterName(monstName, monst, true);

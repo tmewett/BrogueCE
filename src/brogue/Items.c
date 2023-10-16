@@ -387,7 +387,7 @@ item *placeItemAt(item *theItem, pos dest) {
         if (playerCanSee(dest.x, dest.y)) {
             if (cellHasTMFlag(dest.x, dest.y, TM_IS_SECRET)) {
                 discover(dest.x, dest.y);
-                refreshDungeonCell(dest.x, dest.y);
+                refreshDungeonCell(dest);
             }
             itemName(theItem, theItemName, false, false, NULL);
             sprintf(buf, "a pressure plate clicks underneath the %s!", theItemName);
@@ -1042,7 +1042,7 @@ static void swapItemToEnchantLevel(item *theItem, short newEnchant, boolean ench
         removeItemFromChain(theItem, floorItems);
         pmap[x][y].flags &= ~(HAS_ITEM | ITEM_DETECTED);
         if (pmap[x][y].flags & (ANY_KIND_OF_VISIBLE | DISCOVERED | ITEM_DETECTED)) {
-            refreshDungeonCell(x, y);
+            refreshDungeonCell((pos){ x, y });
         }
         if (playerCanSee(x, y)) {
             messageWithColor(buf2, &itemMessageColor, 0);
@@ -1171,7 +1171,7 @@ void updateFloorItems() {
                 theItem->nextItem = levels[rogue.depthLevel-1 + 1].items;
                 levels[rogue.depthLevel-1 + 1].items = theItem;
             }
-            refreshDungeonCell(x, y);
+            refreshDungeonCell((pos){ x, y });
             continue;
         }
         if ((cellHasTerrainFlag(x, y, T_IS_FIRE) && (theItem->flags & ITEM_FLAMMABLE))
@@ -1190,8 +1190,8 @@ void updateFloorItems() {
                 pmapAt(loc)->flags |= ITEM_DETECTED;
             }
             theItem->loc = loc;
-            refreshDungeonCell(x, y);
-            refreshDungeonCell(loc.x, loc.y);
+            refreshDungeonCell((pos){ x, y });
+            refreshDungeonCell(loc);
             continue;
         }
         if (cellHasTMFlag(x, y, TM_PROMOTES_ON_ITEM)) {
@@ -3729,7 +3729,7 @@ boolean negate(creature *monst) {
             monst->info.flags &= ~NEGATABLE_TRAITS;
             negated = true;
             monst->wasNegated = true;
-            refreshDungeonCell(monst->loc.x, monst->loc.y);
+            refreshDungeonCell(monst->loc);
             refreshSideBar(-1, -1, false);
         }
         for (i = 0; i < 20; i++) {
@@ -3844,7 +3844,7 @@ static boolean polymorph(creature *monst) {
 
     monst->ticksUntilTurn = max(monst->ticksUntilTurn, 101);
 
-    refreshDungeonCell(monst->loc.x, monst->loc.y);
+    refreshDungeonCell(monst->loc);
     if (boltCatalog[BOLT_POLYMORPH].backColor) {
         flashMonster(monst, boltCatalog[BOLT_POLYMORPH].backColor, 100);
     }
@@ -3926,7 +3926,7 @@ static void makePlayerTelepathic(short duration) {
     player.status[STATUS_TELEPATHIC] = player.maxStatus[STATUS_TELEPATHIC] = duration;
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
-        refreshDungeonCell(monst->loc.x, monst->loc.y);
+        refreshDungeonCell(monst->loc);
     }
     if (!hasNextCreature(iterateCreatures(monsters))) {
         message("you can somehow tell that you are alone on this depth at the moment.", 0);
@@ -4051,7 +4051,7 @@ static void negationBlast(const char *emitterName, const short distance) {
                     theItem->flags &= ~(ITEM_RUNIC | ITEM_RUNIC_HINTED | ITEM_RUNIC_IDENTIFIED | ITEM_PROTECTED);
                     identify(theItem);
                     pmapAt(theItem->loc)->flags &= ~ITEM_DETECTED;
-                    refreshDungeonCell(theItem->loc.x, theItem->loc.y);
+                    refreshDungeonCell(theItem->loc);
                     break;
                 case STAFF:
                     theItem->charges = 0;
@@ -4142,7 +4142,7 @@ static boolean imbueInvisibility(creature *monst, short duration) {
             autoID = true;
         }
         monst->status[STATUS_INVISIBLE] = monst->maxStatus[STATUS_INVISIBLE] = duration;
-        refreshDungeonCell(monst->loc.x, monst->loc.y);
+        refreshDungeonCell(monst->loc);
         refreshSideBar(-1, -1, false);
         if (boltCatalog[BOLT_POLYMORPH].backColor) {
             flashMonster(monst, boltCatalog[BOLT_INVISIBILITY].backColor, 100);
@@ -4463,7 +4463,7 @@ static boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                         monst->status[STATUS_DISCORDANT] = 0;
                         becomeAllyWith(monst);
                         //refreshSideBar(-1, -1, false);
-                        refreshDungeonCell(monst->loc.x, monst->loc.y);
+                        refreshDungeonCell(monst->loc);
                         if (canSeeMonster(monst)) {
                             if (autoID) {
                                 *autoID = true;
@@ -4688,7 +4688,7 @@ static void detonateBolt(bolt *theBolt, creature *caster, short x, short y, bool
                 monst->creatureState = MONSTER_ALLY;
                 monst->ticksUntilTurn = monst->info.attackSpeed + 1; // So they don't move before the player's next turn.
                 pmapAt(monst->loc)->flags |= HAS_MONSTER;
-                //refreshDungeonCell(monst->loc.x, monst->loc.y);
+                //refreshDungeonCell(monst->loc);
                 fadeInMonster(monst);
             }
             updateVision(true);
@@ -4827,7 +4827,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
         theBolt->foreColor = &black;
         theBolt->theChar = shootingMonst->info.displayChar;
         pmapAt(originLoc)->flags &= ~(HAS_PLAYER | HAS_MONSTER);
-        refreshDungeonCell(originLoc.x, originLoc.y);
+        refreshDungeonCell(originLoc);
         blinkDistance = theBolt->magnitude * 2 + 1;
         checkForMissingKeys(originLoc.x, originLoc.y);
     }
@@ -4944,7 +4944,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
                                && theBolt->foreColor
                                && theBolt->theChar) {
 
-                        refreshDungeonCell(x2, y2); // Clean up the contrail so it doesn't leave a trail of characters.
+                        refreshDungeonCell((pos){ x2, y2 }); // Clean up the contrail so it doesn't leave a trail of characters.
                     }
                 }
                 if (playerCanSee(x2, y2)) {
@@ -4961,7 +4961,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
             theBolt->magnitude = (blinkDistance - i) / 2 + 1;
             boltLength = theBolt->magnitude * 5;
             for (j=0; j<i; j++) {
-                refreshDungeonCell(listOfCoordinates[j].x, listOfCoordinates[j].y);
+                refreshDungeonCell(listOfCoordinates[j]);
             }
             if (i >= blinkDistance) {
                 break;
@@ -4998,11 +4998,11 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
             theBolt->magnitude--;
             boltLength = theBolt->magnitude * 5;
             for (j=0; j<i; j++) {
-                refreshDungeonCell(listOfCoordinates[j].x, listOfCoordinates[j].y);
+                refreshDungeonCell(listOfCoordinates[j]);
             }
             if (theBolt->magnitude <= 0) {
-                refreshDungeonCell(listOfCoordinates[i-1].x, listOfCoordinates[i-1].y);
-                refreshDungeonCell(x, y);
+                refreshDungeonCell(listOfCoordinates[i-1]);
+                refreshDungeonCell((pos){ x, y });
                 break;
             }
         }
@@ -5041,9 +5041,9 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
     }
 
     if (!fastForward) {
-        refreshDungeonCell(x, y);
+        refreshDungeonCell((pos){ x, y });
         if (i > 0) {
-            refreshDungeonCell(listOfCoordinates[i-1].x, listOfCoordinates[i-1].y);
+            refreshDungeonCell(listOfCoordinates[i-1]);
         }
     }
 
@@ -5105,7 +5105,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
                 x2 = listOfCoordinates[j].x;
                 y2 = listOfCoordinates[j].y;
                 if (playerCanSeeOrSense(x2, y2)) {
-                    refreshDungeonCell(x2, y2);
+                    refreshDungeonCell((pos){ x2, y2 });
                 }
             }
         }
@@ -5195,7 +5195,7 @@ static short hiliteTrajectory(const pos coordinateList[DCOLS], short numCells, b
         x = coordinateList[i].x;
         y = coordinateList[i].y;
         if (eraseHiliting) {
-            refreshDungeonCell(x, y);
+            refreshDungeonCell((pos){ x, y });
         } else {
             hiliteCell(x, y, hiliteColor, 20, true);
         }
@@ -5524,7 +5524,7 @@ boolean chooseTarget(pos *returnLoc,
         printLocationDescription(targetLoc.x, targetLoc.y);
 
         if (canceled) {
-            refreshDungeonCell(oldTargetLoc.x, oldTargetLoc.y);
+            refreshDungeonCell(oldTargetLoc);
             hiliteTrajectory(coordinates, numCells, true, theBolt, trajectoryColor);
             confirmMessages();
             rogue.cursorLoc = INVALID_POS;
@@ -5552,7 +5552,7 @@ boolean chooseTarget(pos *returnLoc,
             refreshSideBar(targetLoc.x, targetLoc.y, false);
         }
 
-        refreshDungeonCell(oldTargetLoc.x, oldTargetLoc.y);
+        refreshDungeonCell(oldTargetLoc);
         hiliteTrajectory(coordinates, numCells, true, theBolt, &trajColor);
 
         if (!targetConfirmed) {
@@ -5585,7 +5585,7 @@ boolean chooseTarget(pos *returnLoc,
         numCells = min(numCells, maxDistance);
     }
     hiliteTrajectory(coordinates, numCells, true, theBolt, trajectoryColor);
-    refreshDungeonCell(oldTargetLoc.x, oldTargetLoc.y);
+    refreshDungeonCell(oldTargetLoc);
 
     if (originLoc.x == targetLoc.x && originLoc.y == targetLoc.y) {
         confirmMessages();
@@ -6019,7 +6019,7 @@ static void throwItem(item *theItem, creature *thrower, pos targetLoc, short max
                 fastForward = rogue.playbackFastForward || pauseAnimation(25);
             }
 
-            refreshDungeonCell(x, y);
+            refreshDungeonCell((pos){ x, y });
         }
 
         if (x == targetLoc.x && y == targetLoc.y) { // reached its target
@@ -6072,7 +6072,7 @@ static void throwItem(item *theItem, creature *thrower, pos targetLoc, short max
 
             autoIdentify(theItem);
 
-            refreshDungeonCell(x, y);
+            refreshDungeonCell((pos){ x, y });
 
             //if (pmap[x][y].flags & (HAS_MONSTER | HAS_PLAYER)) {
             //  monst = monsterAtLoc((pos){ x, y });
@@ -6111,7 +6111,7 @@ static void throwItem(item *theItem, creature *thrower, pos targetLoc, short max
     pos dropLoc;
     getQualifyingLocNear(&dropLoc, (pos){ x, y }, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM), false, false);
     placeItemAt(theItem, dropLoc);
-    refreshDungeonCell(dropLoc.x, dropLoc.y);
+    refreshDungeonCell(dropLoc);
 }
 
 /*
@@ -7054,7 +7054,7 @@ void readScroll(item *theItem) {
                         && rand_percent(10) && (numberOfMonsters < 3)) {
                         monst = spawnHorde(0, (pos){ x, y }, (HORDE_LEADER_CAPTIVE | HORDE_NO_PERIODIC_SPAWN | HORDE_IS_SUMMONED | HORDE_MACHINE_ONLY), 0);
                         if (monst) {
-                            // refreshDungeonCell(x, y);
+                            // refreshDungeonCell((pos){ x, y });
                             // monst->creatureState = MONSTER_TRACKING_SCENT;
                             // monst->ticksUntilTurn = player.movementSpeed;
                             wakeUp(monst);
@@ -7196,7 +7196,7 @@ void drinkPotion(item *theItem) {
                     if (itemMagicPolarity(tempItem)) {
                         pmapAt(tempItem->loc)->flags |= ITEM_DETECTED;
                         hadEffect = true;
-                        refreshDungeonCell(tempItem->loc.x, tempItem->loc.y);
+                        refreshDungeonCell(tempItem->loc);
                     }
                 }
             }
@@ -7206,7 +7206,7 @@ void drinkPotion(item *theItem) {
                     detectMagicOnItem(monst->carriedItem);
                     if (itemMagicPolarity(monst->carriedItem)) {
                         hadEffect = true;
-                        refreshDungeonCell(monst->loc.x, monst->loc.y);
+                        refreshDungeonCell(monst->loc);
                     }
                 }
             }
@@ -7492,7 +7492,7 @@ item *itemAtLoc(pos loc) {
         hiliteCell(loc.x, loc.y, &white, 75, true);
         rogue.automationActive = false;
         message("ERROR: An item was supposed to be here, but I couldn't find it.", REQUIRE_ACKNOWLEDGMENT);
-        refreshDungeonCell(loc.x, loc.y);
+        refreshDungeonCell(loc);
     }
     return theItem;
 }

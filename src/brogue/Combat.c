@@ -1707,7 +1707,7 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
                 applyInstantTileEffectsToCreature(carriedMonster);
             }
             anyoneWantABite(decedent);
-            refreshDungeonCell(x, y);
+            refreshDungeonCell((pos){ x, y });
         }
     }
     decedent->currentHP = 0;
