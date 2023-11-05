@@ -7101,8 +7101,6 @@ static void detectMagicOnItem(item *theItem) {
 
 void drinkPotion(item *theItem) {
     item *tempItem = NULL;
-    boolean hadEffect = false;
-    boolean hadEffect2 = false;
     char buf[1000] = "";
     int magnitude;
 
@@ -7187,15 +7185,15 @@ void drinkPotion(item *theItem) {
             message("a handful of tiny spores burst out of the open flask!", 0);
             spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_LICHEN_PLANTED], true, false);
             break;
-        case POTION_DETECT_MAGIC:
-            hadEffect = false;
-            hadEffect2 = false;
+        case POTION_DETECT_MAGIC: {
+            boolean hadEffectOnLevel = false;
+            boolean hadEffectOnPack = false;
             for (tempItem = floorItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
                 if (tempItem->category & CAN_BE_DETECTED) {
                     detectMagicOnItem(tempItem);
                     if (itemMagicPolarity(tempItem)) {
                         pmapAt(tempItem->loc)->flags |= ITEM_DETECTED;
-                        hadEffect = true;
+                        hadEffectOnLevel = true;
                         refreshDungeonCell(tempItem->loc);
                     }
                 }
@@ -7205,7 +7203,7 @@ void drinkPotion(item *theItem) {
                 if (monst->carriedItem && (monst->carriedItem->category & CAN_BE_DETECTED)) {
                     detectMagicOnItem(monst->carriedItem);
                     if (itemMagicPolarity(monst->carriedItem)) {
-                        hadEffect = true;
+                        hadEffectOnLevel = true;
                         refreshDungeonCell(monst->loc);
                     }
                 }
@@ -7214,17 +7212,18 @@ void drinkPotion(item *theItem) {
                 if (tempItem->category & CAN_BE_DETECTED) {
                     detectMagicOnItem(tempItem);
                     if (itemMagicPolarity(tempItem)) {
-                        if (tempItem->flags & ITEM_MAGIC_DETECTED) {
-                            hadEffect2 = true;
+                        if (tempItem != theItem && (tempItem->flags & ITEM_MAGIC_DETECTED)) {
+                            // Don't allow the potion of detect magic to detect itself.
+                            hadEffectOnPack = true;
                         }
                     }
                 }
             }
-            if (hadEffect || hadEffect2) {
+            if (hadEffectOnLevel || hadEffectOnPack) {
                 tryIdentifyLastItemKinds(HAS_INTRINSIC_POLARITY);
-                if (hadEffect && hadEffect2) {
+                if (hadEffectOnLevel && hadEffectOnPack) {
                     message("you can somehow feel the presence of magic on the level and in your pack.", 0);
-                } else if (hadEffect) {
+                } else if (hadEffectOnLevel) {
                     message("you can somehow feel the presence of magic on the level.", 0);
                 } else {
                     message("you can somehow feel the presence of magic in your pack.", 0);
@@ -7233,6 +7232,7 @@ void drinkPotion(item *theItem) {
                 message("you can somehow feel the absence of magic on the level and in your pack.", 0);
             }
             break;
+        }
         case POTION_HASTE_SELF:
             magnitude = randClump(potionTable.range);
             haste(&player, magnitude);
