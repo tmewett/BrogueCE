@@ -1210,35 +1210,17 @@ enum tileFlags {
 #define max(x, y)       (((x) > (y)) ? (x) : (y))
 #define clamp(x, low, hi)   (min(hi, max(x, low))) // pins x to the [y, z] interval
 
-#define terrainFlags(x, y)                  (tileCatalog[pmap[x][y].layers[DUNGEON]].flags \
-                                            | tileCatalog[pmap[x][y].layers[LIQUID]].flags \
-                                            | tileCatalog[pmap[x][y].layers[SURFACE]].flags \
-                                            | tileCatalog[pmap[x][y].layers[GAS]].flags)
+unsigned long terrainFlags(short x, short y);
+unsigned long terrainMechFlags(short x, short y);
 
-#define terrainMechFlags(x, y)              (tileCatalog[pmap[x][y].layers[DUNGEON]].mechFlags \
-                                            | tileCatalog[pmap[x][y].layers[LIQUID]].mechFlags \
-                                            | tileCatalog[pmap[x][y].layers[SURFACE]].mechFlags \
-                                            | tileCatalog[pmap[x][y].layers[GAS]].mechFlags)
-
-#ifdef BROGUE_ASSERTS
 boolean cellHasTerrainFlag(short x, short y, unsigned long flagMask);
-#else
-#define cellHasTerrainFlag(x, y, flagMask)  ((flagMask) & terrainFlags((x), (y)) ? true : false)
-#endif
-#define cellHasTMFlag(x, y, flagMask)       ((flagMask) & terrainMechFlags((x), (y)) ? true : false)
+boolean cellHasTMFlag(short x, short y, unsigned long flagMask);
 
-#define cellHasTerrainType(x, y, terrain)   ((pmap[x][y].layers[DUNGEON] == (terrain) \
-                                            || pmap[x][y].layers[LIQUID] == (terrain) \
-                                            || pmap[x][y].layers[SURFACE] == (terrain) \
-                                            || pmap[x][y].layers[GAS] == (terrain)) ? true : false)
+boolean cellHasTerrainType(short x, short y, enum tileType terrain);
 
-#define cellHasKnownTerrainFlag(x, y, flagMask) ((flagMask) & pmap[(x)][(y)].rememberedTerrainFlags ? true : false)
-
-#define cellIsPassableOrDoor(x, y)          (!cellHasTerrainFlag((x), (y), T_PATHING_BLOCKER) \
-                                            || (cellHasTMFlag((x), (y), (TM_IS_SECRET | TM_PROMOTES_WITH_KEY | TM_CONNECTS_LEVEL)) \
-                                                && cellHasTerrainFlag((x), (y), T_OBSTRUCTS_PASSABILITY)))
-
-#define coordinatesAreInMap(x, y)           ((x) >= 0 && (x) < DCOLS    && (y) >= 0 && (y) < DROWS)
+static inline boolean coordinatesAreInMap(short x, short y) {
+    return (x >= 0 && x < DCOLS && y >= 0 && y < DROWS);
+}
 
 inline static boolean isPosInMap(pos p) {
     return p.x >= 0 && p.x < DCOLS && p.y >= 0 && p.y < DROWS;
