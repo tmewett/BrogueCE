@@ -1005,8 +1005,8 @@ boolean buildAMachine(enum machineTypes bp,
                     printf("\nDepth %i: Failed to build a machine; gave up after 10 unsuccessful attempts to find a suitable blueprint and/or location.",
                            rogue.depthLevel);
                 } else {
-                    printf("\nDepth %i: Failed to build a machine; requested blueprint and location did not work.",
-                           rogue.depthLevel);
+                    printf("\nDepth %i: Failed to build a machine; requested blueprint %i:%s and location did not work.",
+                           rogue.depthLevel, bp, blueprintCatalog[bp].name);
                 }
             }
             free(p);
@@ -1084,9 +1084,10 @@ boolean buildAMachine(enum machineTypes bp,
                     if (distanceMap) {
                         freeGrid(distanceMap);
                     }
-                    if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to build a machine; there was no eligible door candidate for the chosen room machine from blueprint %i.",
+                    if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to build a machine; there was no eligible door candidate for the chosen room machine from blueprint %i:%s.",
                                  rogue.depthLevel,
-                                 bp);
+                                 bp,
+                                 blueprintCatalog[bp].name);
                     free(p);
                     return false;
                 }
@@ -1103,9 +1104,10 @@ boolean buildAMachine(enum machineTypes bp,
                 if (distanceMap) {
                     freeGrid(distanceMap);
                 }
-                if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: ERROR: Attempted to build a door machine from blueprint %i without a location being provided.",
+                if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: ERROR: Attempted to build a door machine from blueprint %i:%s without a location being provided.",
                              rogue.depthLevel,
-                             bp);
+                             bp,
+                             blueprintCatalog[bp].name);
                 free(p);
                 return false;
             }
@@ -1113,9 +1115,10 @@ boolean buildAMachine(enum machineTypes bp,
                 if (distanceMap) {
                     freeGrid(distanceMap);
                 }
-                if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to build a door machine from blueprint %i; not enough room.",
+                if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to build a door machine from blueprint %i:%s; not enough room.",
                              rogue.depthLevel,
-                             bp);
+                             bp,
+                             blueprintCatalog[bp].name);
                 free(p);
                 return false;
             }
@@ -1549,7 +1552,7 @@ boolean buildAMachine(enum machineTypes bp,
                         }
 
                         if (!i) {
-                            if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to place blueprint %i because it requires an adoptive machine and we couldn't place one.", rogue.depthLevel, bp);
+                            if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to place blueprint %i:%s because it requires an adoptive machine and we couldn't place one.", rogue.depthLevel, bp, blueprintCatalog[bp].name);
                             // failure! abort!
                             copyMap(p->levelBackup, pmap);
                             abortItemsAndMonsters(p->spawnedItems, p->spawnedMonsters);
@@ -1651,8 +1654,8 @@ boolean buildAMachine(enum machineTypes bp,
         if (instance < feature->minimumInstanceCount && !(feature->flags & MF_REPEAT_UNTIL_NO_PROGRESS)) {
             // failure! abort!
 
-            if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to place blueprint %i because of feature %i; needed %i instances but got only %i.",
-                         rogue.depthLevel, bp, feat, feature->minimumInstanceCount, instance);
+            if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to place blueprint %i:%s because of feature %i; needed %i instances but got only %i.",
+                         rogue.depthLevel, bp, blueprintCatalog[bp].name, feat, feature->minimumInstanceCount, instance);
 
             // Restore the map to how it was before we touched it.
             copyMap(p->levelBackup, pmap);
@@ -1686,7 +1689,7 @@ boolean buildAMachine(enum machineTypes bp,
     }
 
     freeGrid(distanceMap);
-    if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Built a machine from blueprint %i with an origin at (%i, %i).", rogue.depthLevel, bp, originX, originY);
+    if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Built a machine from blueprint %i:%s with an origin at (%i, %i).", rogue.depthLevel, bp, blueprintCatalog[bp].name, originX, originY);
 
     //Pass created items and monsters to parent where they will be deleted on failure to place parent machine
     if (parentSpawnedItems) {

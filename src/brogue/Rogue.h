@@ -2623,6 +2623,7 @@ enum blueprintFlags {
 };
 
 typedef struct blueprint {
+    const char *name;                   // machine name
     short depthRange[2];                // machine must be built between these dungeon depths
     short roomSize[2];                  // machine must be generated in a room of this size
     short frequency;                    // frequency (number of tickets this blueprint enters in the blueprint selection raffle)
