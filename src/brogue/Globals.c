@@ -575,6 +575,25 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
     {G_DOORWAY,    &mudWallForeColor,      &refuseBackColor,       25, 50, DF_EMBERS,      0,          0,              0,              NO_LIGHT,       (T_OBSTRUCTS_VISION | T_OBSTRUCTS_GAS | T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VISUALLY_DISTINCT), "hanging animal skins", "you push through the animal skins that hang across the threshold."},
 };
 
+unsigned long terrainFlags(short x, short y) {
+    return (
+        tileCatalog[pmap[x][y].layers[DUNGEON]].flags
+        | tileCatalog[pmap[x][y].layers[LIQUID]].flags 
+        | tileCatalog[pmap[x][y].layers[SURFACE]].flags 
+        | tileCatalog[pmap[x][y].layers[GAS]].flags
+    );
+}
+
+unsigned long terrainMechFlags(short x, short y) {
+    return (
+        tileCatalog[pmap[x][y].layers[DUNGEON]].mechFlags
+        | tileCatalog[pmap[x][y].layers[LIQUID]].mechFlags
+        | tileCatalog[pmap[x][y].layers[SURFACE]].mechFlags
+        | tileCatalog[pmap[x][y].layers[GAS]].mechFlags
+    );
+}
+
+
 // Features in the gas layer use the startprob as volume, ignore probdecr, and spawn in only a single point.
 // Intercepts and slopes are in units of 0.01.
 // This cannot be const, since messageDisplayed is set

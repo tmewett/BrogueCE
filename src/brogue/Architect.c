@@ -27,12 +27,32 @@
 
 short topBlobMinX, topBlobMinY, blobWidth, blobHeight;
 
-#ifdef BROGUE_ASSERTS // otherwise handled as a macro in rogue.h
 boolean cellHasTerrainFlag(short x, short y, unsigned long flagMask) {
-    assert(coordinatesAreInMap(x, y));
-    return ((flagMask) & terrainFlags((x), (y)) ? true : false);
+    brogueAssert(coordinatesAreInMap(x, y));
+    return ((flagMask) & terrainFlags(x, y) ? true : false);
 }
-#endif
+
+boolean cellHasTMFlag(short x, short y, unsigned long flagMask) {
+    return (flagMask & terrainMechFlags(x, y)) ? true : false;
+}
+
+boolean cellHasTerrainType(short x, short y, enum tileType terrain) {
+    return (
+        pmap[x][y].layers[DUNGEON] == terrain
+        || pmap[x][y].layers[LIQUID] == terrain
+        || pmap[x][y].layers[SURFACE] == terrain
+        || pmap[x][y].layers[GAS] == terrain
+    ) ? true : false;
+}
+
+static inline boolean cellIsPassableOrDoor(short x, short y) {
+    if (!cellHasTerrainFlag(x, y, T_PATHING_BLOCKER)) {
+        return true;
+    }
+    return (
+        (cellHasTMFlag(x, y, (TM_IS_SECRET | TM_PROMOTES_WITH_KEY | TM_CONNECTS_LEVEL)) && cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY))
+    );
+}
 
 static boolean checkLoopiness(short x, short y) {
     short newX, newY, dir, sdir;
