@@ -1210,10 +1210,10 @@ enum tileFlags {
 #define max(x, y)       (((x) > (y)) ? (x) : (y))
 #define clamp(x, low, hi)   (min(hi, max(x, low))) // pins x to the [y, z] interval
 
-unsigned long terrainFlags(short x, short y);
-unsigned long terrainMechFlags(short x, short y);
+unsigned long terrainFlags(pos loc);
+unsigned long terrainMechFlags(pos loc);
 
-boolean cellHasTerrainFlag(short x, short y, unsigned long flagMask);
+boolean cellHasTerrainFlag(pos loc, unsigned long flagMask);
 boolean cellHasTMFlag(short x, short y, unsigned long flagMask);
 
 boolean cellHasTerrainType(short x, short y, enum tileType terrain);
@@ -3142,8 +3142,8 @@ extern "C" {
     boolean knownToPlayerAsPassableOrSecretDoor(pos loc);
     void setMonsterLocation(creature *monst, pos newLoc);
     boolean moveMonster(creature *monst, short dx, short dy);
-    unsigned long burnedTerrainFlagsAtLoc(pos loc);
-    unsigned long discoveredTerrainFlagsAtLoc(pos loc);
+    unsigned long burnedterrainFlagsLoc(pos loc);
+    unsigned long discoveredterrainFlagsLoc(pos loc);
     boolean monsterAvoids(creature *monst, pos p);
     short distanceBetween(pos loc1, pos loc2);
     void alertMonster(creature *monst);

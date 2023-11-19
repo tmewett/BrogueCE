@@ -545,9 +545,9 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     if (oldLevelNumber != rogue.depthLevel) {
         px = player.loc.x;
         py = player.loc.y;
-        if (cellHasTerrainFlag(player.loc.x, player.loc.y, T_AUTO_DESCENT)) {
+        if (cellHasTerrainFlag(player.loc, T_AUTO_DESCENT)) {
             for (i=0; i<8; i++) {
-                if (!cellHasTerrainFlag(player.loc.x+nbDirs[i][0], player.loc.y+nbDirs[i][1], (T_PATHING_BLOCKER))) {
+                if (!cellHasTerrainFlag((pos){ player.loc.x+nbDirs[i][0], player.loc.y+nbDirs[i][1] }, (T_PATHING_BLOCKER))) {
                     px = player.loc.x+nbDirs[i][0];
                     py = player.loc.y+nbDirs[i][1];
                     break;
@@ -567,11 +567,11 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                      || monst->creatureState == MONSTER_ALLY || monst == rogue.yendorWarden)
                     && (stairDirection != 0 || monst->currentHP > 10 || monst->status[STATUS_LEVITATING])
                     && ((flying != 0) == ((monst->status[STATUS_LEVITATING] != 0)
-                                          || cellHasTerrainFlag(x, y, T_PATHING_BLOCKER)
-                                          || cellHasTerrainFlag(px, py, T_AUTO_DESCENT)))
+                                          || cellHasTerrainFlag((pos){ x, y }, T_PATHING_BLOCKER)
+                                          || cellHasTerrainFlag((pos){ px, py }, T_AUTO_DESCENT)))
                     && !(monst->bookkeepingFlags & MB_CAPTIVE)
                     && !(monst->info.flags & (MONST_WILL_NOT_USE_STAIRS | MONST_RESTRICTED_TO_LIQUID))
-                    && !(cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY))
+                    && !(cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_PASSABILITY))
                     && !monst->status[STATUS_ENTRANCED]
                     && !monst->status[STATUS_PARALYZED]
                     && (mapToStairs[monst->loc.x][monst->loc.y] < 30000 || monst->creatureState == MONSTER_ALLY || monst == rogue.yendorWarden)) {
@@ -779,7 +779,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                              (T_PATHING_BLOCKER & ~T_IS_DEEP_WATER),
                              (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false, false);
 
-        if (cellHasTerrainFlag(loc.x, loc.y, T_IS_DEEP_WATER)) {
+        if (cellHasTerrainFlag(loc, T_IS_DEEP_WATER)) {
             // Fell into deep water... can we swim out of it?
             pos dryLoc;
             getQualifyingLocNear(&dryLoc, player.loc, true, 0,
@@ -803,7 +803,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
         placedPlayer = false;
         for (dir=0; dir<4 && !placedPlayer; dir++) {
             loc = posNeighborInDirection(player.loc, dir);
-            if (!cellHasTerrainFlag(loc.x, loc.y, T_PATHING_BLOCKER)
+            if (!cellHasTerrainFlag(loc, T_PATHING_BLOCKER)
                 && !(pmapAt(loc)->flags & (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE))) {
                 placedPlayer = true;
             }
@@ -830,8 +830,8 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             }
         }
     }
-    if (cellHasTerrainFlag(player.loc.x, player.loc.y, T_IS_DEEP_WATER) && !player.status[STATUS_LEVITATING]
-        && !cellHasTerrainFlag(player.loc.x, player.loc.y, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))) {
+    if (cellHasTerrainFlag(player.loc, T_IS_DEEP_WATER) && !player.status[STATUS_LEVITATING]
+        && !cellHasTerrainFlag(player.loc, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))) {
         rogue.inWater = true;
     }
 

@@ -161,7 +161,7 @@ void getTerrainGrid(short **grid, short value, unsigned long terrainFlags, unsig
     short i, j;
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
-            if (grid[i][j] != value && cellHasTerrainFlag(i, j, terrainFlags) || (pmap[i][j].flags & mapFlags)) {
+            if (grid[i][j] != value && cellHasTerrainFlag((pos){ i, j }, terrainFlags) || (pmap[i][j].flags & mapFlags)) {
                 grid[i][j] = value;
             }
         }
@@ -295,7 +295,7 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
     short **grid, **costMap;
 
     // First check the given location to see if it works, as an optimization.
-    if (!cellHasTerrainFlag(x, y, blockingTerrainFlags | forbiddenTerrainFlags)
+    if (!cellHasTerrainFlag((pos){ x, y }, blockingTerrainFlags | forbiddenTerrainFlags)
         && !(pmap[x][y].flags & (blockingMapFlags | forbiddenMapFlags))
         && (hallwaysAllowed || passableArcCount(x, y) <= 1)) {
 

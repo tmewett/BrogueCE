@@ -147,7 +147,7 @@ static void pdsBatchInput(pdsMap *map, short **distanceMap, short **costMap, sho
             if (i == 0 || j == 0 || i == DCOLS - 1 || j == DROWS - 1) {
                 cost = PDS_OBSTRUCTION;
             } else if (costMap == NULL) {
-                if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY) && cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT)) cost = PDS_OBSTRUCTION;
+                if (cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_PASSABILITY) && cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_DIAGONAL_MOVEMENT)) cost = PDS_OBSTRUCTION;
                 else cost = PDS_FORBIDDEN;
             } else {
                 cost = costMap[i][j];
@@ -226,15 +226,15 @@ void calculateDistances(short **distanceMap,
                 cost = PDS_FORBIDDEN;
             } else if (canUseSecretDoors
                 && cellHasTMFlag(i, j, TM_IS_SECRET)
-                && cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)
-                && !(discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY)) {
+                && cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_PASSABILITY)
+                && !(discoveredterrainFlagsLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY)) {
 
                 cost = 1;
-            } else if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)
+            } else if (cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_PASSABILITY)
                        || (traveler && traveler == &player && !(pmap[i][j].flags & (DISCOVERED | MAGIC_MAPPED)))) {
 
-                cost = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
-            } else if ((traveler && monsterAvoids(traveler, (pos){i, j})) || cellHasTerrainFlag(i, j, blockingTerrainFlags)) {
+                cost = cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
+            } else if ((traveler && monsterAvoids(traveler, (pos){i, j})) || cellHasTerrainFlag((pos){ i, j }, blockingTerrainFlags)) {
                 cost = PDS_FORBIDDEN;
             } else {
                 cost = 1;
