@@ -2237,6 +2237,7 @@ static void displayWaypoints() {
         }
     }
     temporaryMessage("Waypoints:", REQUIRE_ACKNOWLEDGMENT);
+    displayLevel();
 }
 
 static void displayMachines() {
@@ -2270,14 +2271,14 @@ static void displayMachines() {
             }
         }
     }
-    displayMoreSign();
+    temporaryMessage("Machines:", REQUIRE_ACKNOWLEDGMENT);
     displayLevel();
 
     restoreRNG;
 }
 
 #define CHOKEMAP_DISPLAY_CUTOFF 160
-void displayChokeMap() {
+static void displayChokeMap() {
     short i, j;
     color foreColor, backColor;
     enum displayGlyph dchar;
@@ -2298,11 +2299,11 @@ void displayChokeMap() {
             }
         }
     }
-    displayMoreSign();
+    temporaryMessage("Choke map:", REQUIRE_ACKNOWLEDGMENT);
     displayLevel();
 }
 
-void displayLoops() {
+static void displayLoops() {
     short i, j;
     color foreColor, backColor;
     enum displayGlyph dchar;
@@ -2322,7 +2323,8 @@ void displayLoops() {
             }
         }
     }
-    waitForAcknowledgment();
+    temporaryMessage("Loops:", REQUIRE_ACKNOWLEDGMENT);
+    displayLevel();
 }
 
 static void exploreKey(const boolean controlKey) {
@@ -2686,10 +2688,14 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                 copyDisplayBuffer(dbuf, displayBuffer);
                 funkyFade(dbuf, &white, 0, 100, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
             }*/
-            // DEBUG displayLoops();
-            // DEBUG displayChokeMap();
+            DEBUG displayLoops();
+            DEBUG displayChokeMap();
             DEBUG displayMachines();
-            //DEBUG displayWaypoints();
+            DEBUG displayWaypoints();
+            
+#ifdef LOG_LIGHTS
+            logLights();
+#endif
             // DEBUG {displayGrid(safetyMap); displayMoreSign(); displayLevel();}
             // parseFile();
             // DEBUG spawnDungeonFeature(player.loc.x, player.loc.y, &dungeonFeatureCatalog[DF_METHANE_GAS_ARMAGEDDON], true, false);

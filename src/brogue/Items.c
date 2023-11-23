@@ -6831,7 +6831,7 @@ static void magicMapCell(short x, short y) {
     }
 }
 
-boolean uncurse( item *theItem ) {
+static boolean uncurse( item *theItem ) {
     if (theItem->flags & ITEM_CURSED) {
         theItem->flags &= ~ITEM_CURSED;
         return true;
