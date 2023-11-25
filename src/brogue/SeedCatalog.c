@@ -251,13 +251,23 @@ static void printSeedCatalogAltars(boolean isCsvFormat) {
     }
 }
 
-void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsigned int scanThroughDepth,
-                      boolean isCsvFormat) {
+int printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsigned int scanThroughDepth,
+                     boolean isCsvFormat, char *errorMessage) {
     uint64_t theSeed;
     char message[1000] = "";
     rogue.nextGame = NG_NOTHING;
 
     initializeGameVariant();
+
+    if (startingSeed == 0) {
+        strncpy(errorMessage, "Starting seed must be 1+", ERROR_MESSAGE_LENGTH);
+        return 1;
+    }
+
+    if (scanThroughDepth == 0 || scanThroughDepth > gameConst->deepestLevel) {
+        snprintf(errorMessage, ERROR_MESSAGE_LENGTH, "Depth must be between 1 and %d", gameConst->deepestLevel);
+        return 1;
+    }
 
     sprintf(message, "Brogue seed catalog, seeds %llu to %llu, through depth %u.\n"
                      "Generated with %s. Dungeons unchanged since %s.\n\n"
@@ -303,5 +313,5 @@ void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsig
 
         freeEverything();
     }
-
+    return 0;
 }
