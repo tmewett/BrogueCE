@@ -1651,7 +1651,7 @@ void populateGenericCostMap(short **costMap) {
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
             if (cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_PASSABILITY)
-                && (!cellHasTMFlag(i, j, TM_IS_SECRET) || (discoveredterrainFlagsLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY))) {
+                && (!cellHasTMFlag(i, j, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY))) {
 
                 costMap[i][j] = cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
             } else if (cellHasTerrainFlag((pos){ i, j }, T_PATHING_BLOCKER & ~T_OBSTRUCTS_PASSABILITY)) {
@@ -1710,7 +1710,7 @@ void populateCreatureCostMap(short **costMap, creature *monst) {
             getLocationFlags(i, j, &tFlags, NULL, &cFlags, monst == &player);
 
             if ((tFlags & T_OBSTRUCTS_PASSABILITY)
-                 && (!cellHasTMFlag(i, j, TM_IS_SECRET) || (discoveredterrainFlagsLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY) || monst == &player)) {
+                 && (!cellHasTMFlag(i, j, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY) || monst == &player)) {
 
                 costMap[i][j] = (tFlags & T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
                 continue;

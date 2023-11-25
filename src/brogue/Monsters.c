@@ -1246,7 +1246,7 @@ static unsigned long successorTerrainFlags(enum tileType tile, enum subseqDFType
     }
 }
 
-unsigned long burnedterrainFlagsLoc(pos loc) {
+unsigned long burnedTerrainFlagsAtLoc(pos loc) {
     short layer;
     unsigned long flags = 0;
 
@@ -1262,7 +1262,7 @@ unsigned long burnedterrainFlagsLoc(pos loc) {
     return flags;
 }
 
-unsigned long discoveredterrainFlagsLoc(pos loc) {
+unsigned long discoveredTerrainFlagsAtLoc(pos loc) {
     short layer;
     unsigned long flags = 0;
 
@@ -1304,7 +1304,7 @@ boolean monsterAvoids(creature *monst, pos p) {
     if (tFlags & T_OBSTRUCTS_PASSABILITY) {
         if (monst != &player
             && cellHasTMFlag(p.x, p.y, TM_IS_SECRET)
-            && !(discoveredterrainFlagsLoc(p) & avoidedFlagsForMonster(&(monst->info)))) {
+            && !(discoveredTerrainFlagsAtLoc(p) & avoidedFlagsForMonster(&(monst->info)))) {
             // This is so monsters can use secret doors but won't embed themselves in secret levers.
             return false;
         }
@@ -1408,7 +1408,7 @@ boolean monsterAvoids(creature *monst, pos p) {
     // burning monsters avoid explosive terrain and steam-emitting terrain
     if (monst != &player
         && monst->status[STATUS_BURNING]
-        && (burnedterrainFlagsLoc(p) & (T_CAUSES_EXPLOSIVE_DAMAGE | T_CAUSES_DAMAGE | T_AUTO_DESCENT) & ~terrainImmunities)) {
+        && (burnedTerrainFlagsAtLoc(p) & (T_CAUSES_EXPLOSIVE_DAMAGE | T_CAUSES_DAMAGE | T_AUTO_DESCENT) & ~terrainImmunities)) {
 
         return true;
     }
@@ -2515,7 +2515,7 @@ static boolean specificallyValidBoltTarget(creature *caster, creature *target, e
         return false;
     }
     if ((boltCatalog[theBoltType].flags & BF_FIERY)
-        && burnedterrainFlagsLoc(caster->loc) & avoidedFlagsForMonster(&(caster->info))) {
+        && burnedTerrainFlagsAtLoc(caster->loc) & avoidedFlagsForMonster(&(caster->info))) {
         // Don't shoot fireballs if you're standing on a tile that could combust into something that harms you.
         return false;
     }
@@ -3549,14 +3549,14 @@ boolean canPass(creature *mover, creature *blocker) {
 
 boolean isPassableOrSecretDoor(pos loc) {
     return (!cellHasTerrainFlag(loc, T_OBSTRUCTS_PASSABILITY)
-            || (cellHasTMFlag(loc.x, loc.y, TM_IS_SECRET) && !(discoveredterrainFlagsLoc(loc) & T_OBSTRUCTS_PASSABILITY)));
+            || (cellHasTMFlag(loc.x, loc.y, TM_IS_SECRET) && !(discoveredTerrainFlagsAtLoc(loc) & T_OBSTRUCTS_PASSABILITY)));
 }
 
 boolean knownToPlayerAsPassableOrSecretDoor(pos loc) {
     unsigned long tFlags, TMFlags;
     getLocationFlags(loc.x, loc.y, &tFlags, &TMFlags, NULL, true);
     return (!(tFlags & T_OBSTRUCTS_PASSABILITY)
-            || ((TMFlags & TM_IS_SECRET) && !(discoveredterrainFlagsLoc(loc) & T_OBSTRUCTS_PASSABILITY)));
+            || ((TMFlags & TM_IS_SECRET) && !(discoveredTerrainFlagsAtLoc(loc) & T_OBSTRUCTS_PASSABILITY)));
 }
 
 void setMonsterLocation(creature *monst, pos newLoc) {

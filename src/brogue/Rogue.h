@@ -3142,8 +3142,8 @@ extern "C" {
     boolean knownToPlayerAsPassableOrSecretDoor(pos loc);
     void setMonsterLocation(creature *monst, pos newLoc);
     boolean moveMonster(creature *monst, short dx, short dy);
-    unsigned long burnedterrainFlagsLoc(pos loc);
-    unsigned long discoveredterrainFlagsLoc(pos loc);
+    unsigned long burnedTerrainFlagsAtLoc(pos loc);
+    unsigned long discoveredTerrainFlagsAtLoc(pos loc);
     boolean monsterAvoids(creature *monst, pos p);
     short distanceBetween(pos loc1, pos loc2);
     void alertMonster(creature *monst);
