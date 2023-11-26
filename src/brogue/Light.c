@@ -25,8 +25,7 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
-static void logLights() {
-
+void logLights() {
     short i, j;
 
     printf("    ");

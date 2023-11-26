@@ -112,7 +112,8 @@ boolean openFile(const char *path) {
     return retval;
 }
 
-static void benchmark() {
+#ifdef SCREEN_UPDATE_BENCHMARK
+static void screen_update_benchmark() {
     short i, j, k;
     const color sparklesauce = {10, 0, 20,  60, 40, 100, 30, true};
     enum displayGlyph theChar;
@@ -127,8 +128,9 @@ static void benchmark() {
         }
         pauseBrogue(1);
     }
-    printf("\n\nBenchmark took a total of %lu seconds.", ((unsigned long) time(NULL)) - initialTime);
+    printf("\n\nBenchmark took a total of %lu seconds.\n", ((unsigned long) time(NULL)) - initialTime);
 }
+#endif
 
 static void welcome() {
     char buf[DCOLS*3], buf2[DCOLS*3];
@@ -206,7 +208,9 @@ void initializeRogue(uint64_t seed) {
         previousGameSeed = rogue.seed;
     }
 
-    //benchmark();
+#ifdef SCREEN_UPDATE_BENCHMARK
+    screen_update_benchmark();
+#endif
 
     initRecording();
 

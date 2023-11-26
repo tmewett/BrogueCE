@@ -69,6 +69,12 @@
 #define D_MESSAGE_ITEM_GENERATION       (rogue.wizard && 0)
 #define D_MESSAGE_MACHINE_GENERATION    (rogue.wizard && 0)
 
+// If enabled, runs a benchmark for the performance of repeatedly updating the screen at the start of the game.
+// #define SCREEN_UPDATE_BENCHMARK
+
+// If enabled, logs the light values when '~' is pressed.
+// #define LOG_LIGHTS
+
 // set to false to allow multiple loads from the same saved file:
 #define DELETE_SAVE_FILE_AFTER_LOADING  true
 
@@ -2870,7 +2876,7 @@ extern "C" {
                          boolean superpriority);
     boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refreshCell, boolean abortIfBlocking);
     void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit);
-    void restoreItems();
+    void restoreItems(void);
     void refreshWaypoint(short wpIndex);
     void setUpWaypoints(void);
     void zeroOutGrid(char grid[DCOLS][DROWS]);
@@ -2969,8 +2975,6 @@ extern "C" {
                                const char *promptSuffix,
                                short textEntryType,
                                boolean useDialogBox);
-    void displayChokeMap(void);
-    void displayLoops(void);
     boolean pauseBrogue(short milliseconds);
     boolean pauseAnimation(short milliseconds);
     void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance, boolean realInputEvenInPlayback);
@@ -3337,6 +3341,7 @@ extern "C" {
     void displayCombatText(void);
     void flashMonster(creature *monst, const color *theColor, short strength);
 
+    void logLights(void);
     boolean paintLight(const lightSource *theLight, short x, short y, boolean isMinersLight, boolean maintainShadows);
     void backUpLighting(short lights[DCOLS][DROWS][3]);
     void restoreLighting(short lights[DCOLS][DROWS][3]);
