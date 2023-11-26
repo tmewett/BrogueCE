@@ -1392,6 +1392,15 @@ typedef struct keyLocationProfile {
     boolean disposableHere;
 } keyLocationProfile;
 
+typedef struct machineInfo {
+    int type;
+    int level;
+    int id;
+    // Child machines are deleted when the parent is deleted, so should only be in the childMachineInfo chain
+    struct machineInfo *childMachineInfo;
+    struct machineInfo *nextMachineInfo;
+} machineInfo;
+
 typedef struct item {
     unsigned short category;
     short kind;
@@ -2376,7 +2385,6 @@ typedef struct gameConstants {
     const int amuletLevel;                          // level on which the amulet appears (used in signed arithmetic)
 
     const int depthAccelerator;                     // factor for how fast depth-dependent features scale compared to usual 26-level dungeon
-    const int minimumAltarLevel;                    // how deep before resurrection and commutation altars can be generated
     const int minimumLavaLevel;                     // how deep before lava can be generated
     const int minimumBrimstoneLevel;                // how deep before brimstone can be generated
     const int mutationsOccurAboveLevel;                // how deep before monster mutations can be generated
@@ -2901,11 +2909,10 @@ extern "C" {
     void analyzeMap(boolean calculateChokeMap);
     boolean buildAMachine(enum machineTypes bp,
                           short originX, short originY,
-                          unsigned long requiredMachineFlags,
-                          item *adoptiveItem,
-                          item *parentSpawnedItems[MACHINES_BUFFER_LENGTH],
-                          creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]);
+                          unsigned long requiredMachineFlags);
     void attachRooms(short **grid, const dungeonProfile *theDP, short attempts, short maxRoomCount);
+    machineInfo *createMachineInfo(int level, int id, int type);
+    void deleteAllMachineInfo(machineInfo *theChain);
     void digDungeon(void);
     void updateMapToShore(void);
     short levelIsDisconnectedWithBlockingMap(char blockingMap[DCOLS][DROWS], boolean countRegionSize);
@@ -3496,7 +3503,7 @@ extern "C" {
     int quitImmediately(void);
     void dialogAlert(char *message);
     void mainBrogueJunction(void);
-    int printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsigned int scanThroughDepth, boolean isCsvFormat, char *errorMessage);
+    int printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsigned int scanThroughDepth, boolean isCsvFormat, boolean includeVaults, char *errorMessage);
 
     void initializeButton(brogueButton *button);
     void drawButtonsInState(buttonState *state, screenDisplayBuffer *button_dbuf);
@@ -3519,6 +3526,10 @@ extern "C" {
                           rogueEvent *returnEvent);
 
     void dijkstraScan(short **distanceMap, short **costMap, boolean useDiagonals);
+    void deleteAllMachineInfo(machineInfo *theChain);
+    void addMachineInfoAndChainToChain(machineInfo *theInfo, machineInfo *theChain);
+    void addMachineInfoToChain(machineInfo *theInfo, machineInfo *theChain);
+    machineInfo *reverseAllMachineInfo(machineInfo *reverseList);
 
 #if defined __cplusplus
 }

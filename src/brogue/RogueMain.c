@@ -331,6 +331,8 @@ void initializeRogue(uint64_t seed) {
     memset(monsterItemsHopper, '\0', sizeof(item));
     monsterItemsHopper->nextItem = NULL;
 
+    allMachineInfo = createMachineInfo(0, 0, 0);
+
     for (i = 0; i < MAX_ITEMS_IN_MONSTER_ITEMS_HOPPER; i++) {
         theItem = generateItem(ALL_ITEMS & ~FOOD, -1); // Monsters can't carry food: the food clock cannot be cheated!
         theItem->nextItem = monsterItemsHopper->nextItem;
@@ -687,6 +689,9 @@ void startLevel(short oldLevelNumber, short stairDirection) {
 
         levels[rogue.depthLevel-1].items = NULL;
 
+        // Initialize a chain for the level only
+        levelMachineInfo = createMachineInfo(0, 0, 0);
+
         pos upStairLocation;
         int failsafe;
         for (failsafe = 50; failsafe; failsafe--) {
@@ -728,6 +733,15 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             if (!theItem) {
                 placeItemAt(generateItem(AMULET, 0), INVALID_POS);
             }
+        }
+
+        machineInfo *firstRealNode = levelMachineInfo->nextMachineInfo;
+        levelMachineInfo->nextMachineInfo = NULL;
+        free(levelMachineInfo);
+
+        if (firstRealNode != NULL) {
+            machineInfo *reversed = reverseAllMachineInfo(firstRealNode);
+            addMachineInfoAndChainToChain(reversed, allMachineInfo);
         }
 
         // re-seed the RNG
@@ -863,7 +877,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     if (itemAtLoc(player.loc)) {
         item *theItem = itemAtLoc(player.loc);
         char msg[COLS * 3], itemDescription[COLS * 3] = "";
-        
+
         // the message pane wraps so we don't need to limit the description
         describedItemName(theItem, itemDescription, COLS * 3);
         sprintf(msg, "Below you lies %s.", itemDescription);
@@ -955,7 +969,7 @@ static void removeDeadMonstersFromList(creatureList *list) {
             removeCreature(list, decedent);
             if (decedent->leader == &player
                 && !(decedent->bookkeepingFlags & MB_DOES_NOT_RESURRECT)
-                && (!(decedent->info.flags & MONST_INANIMATE) 
+                && (!(decedent->info.flags & MONST_INANIMATE)
                     || (monsterCatalog[decedent->info.monsterID].abilityFlags & MA_ENTER_SUMMONS))
                 && (decedent->bookkeepingFlags & MB_WEAPON_AUTO_ID)
                 && !(decedent->bookkeepingFlags & MB_ADMINISTRATIVE_DEATH)) {
@@ -1026,6 +1040,8 @@ void freeEverything() {
     for (i=0; i<MAX_WAYPOINT_COUNT; i++) {
         freeGrid(rogue.wpDistance[i]);
     }
+
+    deleteAllMachineInfo(allMachineInfo);
 
     deleteAllFlares();
     if (rogue.flares) {
@@ -1218,7 +1234,7 @@ void victory(boolean superVictory) {
     unsigned long totalValue = 0;
     rogueHighScoresEntry theEntry;
     boolean qualified, isPlayback;
-    
+
     char recordingFilename[BROGUE_FILENAME_MAX] = {0};
 
     rogue.gameInProgress = false;

@@ -65,6 +65,8 @@ extern creatureList purgatory;
 extern item *floorItems;
 extern item *packItems;
 extern item *monsterItemsHopper;
+extern machineInfo *allMachineInfo;
+extern machineInfo *levelMachineInfo;
 extern short numberOfWaypoints;
 
 extern char displayedMessage[MESSAGE_LINES][COLS*2];
