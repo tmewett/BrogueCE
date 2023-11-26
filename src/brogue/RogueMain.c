@@ -132,6 +132,26 @@ static void screen_update_benchmark() {
 }
 #endif
 
+static const char *getOrdinalSuffix(int number) {
+    // Handle special cases for 11, 12, and 13
+    if (number == 11 || number == 12 || number == 13) {
+        return "th";
+    }
+
+    // Determine the suffix based on the last digit
+    int lastDigit = number % 10;
+    switch (lastDigit) {
+        case 1:
+            return "st";
+        case 2:
+            return "nd";
+        case 3:
+            return "rd";
+        default:
+            return "th";
+    }
+}
+
 static void welcome() {
     char buf[DCOLS*3], buf2[DCOLS*3];
     message("Hello and welcome, adventurer, to the Dungeons of Doom!", 0);
@@ -139,7 +159,7 @@ static void welcome() {
     encodeMessageColor(buf, strlen(buf), &itemMessageColor);
     strcat(buf, "Amulet of Yendor");
     encodeMessageColor(buf, strlen(buf), &white);
-    sprintf(buf2, " from the %ith floor and escape with it!", gameConst->amuletLevel);
+    sprintf(buf2, " from the %i%s floor and escape with it!", gameConst->amuletLevel, getOrdinalSuffix(gameConst->amuletLevel));
     strcat(buf, buf2);
     message(buf, 0);
     if (KEYBOARD_LABELS) {
