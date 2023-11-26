@@ -7290,7 +7290,7 @@ short magicCharDiscoverySuffix(short category, short kind) {
             break;
         case WAND:
         case STAFF:
-            if (boltCatalog[tableForItemCategory(category)[kind].strengthRequired].flags & (BF_TARGET_ALLIES)) {
+            if (boltCatalog[tableForItemCategory(category)[kind].power].flags & (BF_TARGET_ALLIES)) {
                 result = -1;
             } else {
                 result = 1;
