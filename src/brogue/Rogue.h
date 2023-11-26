@@ -115,6 +115,7 @@ typedef long long fixpt;
 #define SCREENSHOT_SUFFIX       ".png"
 
 #define BROGUE_FILENAME_MAX     (min(1024*4, FILENAME_MAX))
+#define ERROR_MESSAGE_LENGTH    100
 
 // Date format used when listing recordings and high scores
 #define DATE_FORMAT             "%Y-%m-%d" // see strftime() documentation
@@ -2822,6 +2823,7 @@ extern "C" {
     boolean chooseFile(char *path, char *prompt, char *defaultName, char *suffix);
     boolean openFile(const char *path);
     void initializeGameVariant(void);
+    int deepestLevelForGameVariant(void);
     void initializeRogue(uint64_t seed);
     void gameOver(char *killedBy, boolean useCustomPhrasing);
     void victory(boolean superVictory);
@@ -3428,7 +3430,7 @@ extern "C" {
     int quitImmediately(void);
     void dialogAlert(char *message);
     void mainBrogueJunction(void);
-    void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsigned int scanThroughDepth, boolean isCsvFormat);
+    int printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsigned int scanThroughDepth, boolean isCsvFormat, char *errorMessage);
 
     void initializeButton(brogueButton *button);
     void drawButtonsInState(buttonState *state);
