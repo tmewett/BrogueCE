@@ -575,21 +575,21 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
     {G_DOORWAY,    &mudWallForeColor,      &refuseBackColor,       25, 50, DF_EMBERS,      0,          0,              0,              NO_LIGHT,       (T_OBSTRUCTS_VISION | T_OBSTRUCTS_GAS | T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VISUALLY_DISTINCT), "hanging animal skins", "you push through the animal skins that hang across the threshold."},
 };
 
-unsigned long terrainFlags(short x, short y) {
+unsigned long terrainFlags(pos p) {
     return (
-        tileCatalog[pmap[x][y].layers[DUNGEON]].flags
-        | tileCatalog[pmap[x][y].layers[LIQUID]].flags 
-        | tileCatalog[pmap[x][y].layers[SURFACE]].flags 
-        | tileCatalog[pmap[x][y].layers[GAS]].flags
+        tileCatalog[pmapAt(p)->layers[DUNGEON]].flags
+        | tileCatalog[pmapAt(p)->layers[LIQUID]].flags 
+        | tileCatalog[pmapAt(p)->layers[SURFACE]].flags 
+        | tileCatalog[pmapAt(p)->layers[GAS]].flags
     );
 }
 
-unsigned long terrainMechFlags(short x, short y) {
+unsigned long terrainMechFlags(pos loc) {
     return (
-        tileCatalog[pmap[x][y].layers[DUNGEON]].mechFlags
-        | tileCatalog[pmap[x][y].layers[LIQUID]].mechFlags
-        | tileCatalog[pmap[x][y].layers[SURFACE]].mechFlags
-        | tileCatalog[pmap[x][y].layers[GAS]].mechFlags
+        tileCatalog[pmapAt(loc)->layers[DUNGEON]].mechFlags
+        | tileCatalog[pmapAt(loc)->layers[LIQUID]].mechFlags
+        | tileCatalog[pmapAt(loc)->layers[SURFACE]].mechFlags
+        | tileCatalog[pmapAt(loc)->layers[GAS]].mechFlags
     );
 }
 

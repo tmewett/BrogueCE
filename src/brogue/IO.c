@@ -789,7 +789,7 @@ void mainInputLoop() {
                            || (distanceBetween(player.loc, rogue.cursorLoc) == 1 // includes diagonals
                                && (!diagonalBlocked(player.loc.x, player.loc.y, rogue.cursorLoc.x, rogue.cursorLoc.y, !rogue.playbackOmniscience)
                                    || ((pmapAt(rogue.cursorLoc)->flags & HAS_MONSTER) && (monsterAtLoc(rogue.cursorLoc)->info.flags & MONST_ATTACKABLE_THRU_WALLS)) // there's a turret there
-                                   || ((terrainFlags(rogue.cursorLoc.x, rogue.cursorLoc.y) & T_OBSTRUCTS_PASSABILITY) && (terrainMechFlags(rogue.cursorLoc.x, rogue.cursorLoc.y) & TM_PROMOTES_ON_PLAYER_ENTRY))))) { // there's a lever there
+                                   || ((terrainFlags(rogue.cursorLoc) & T_OBSTRUCTS_PASSABILITY) && (terrainMechFlags(rogue.cursorLoc) & TM_PROMOTES_ON_PLAYER_ENTRY))))) { // there's a lever there
                                                                                                                                                                                       // Clicking one space away will cause the player to try to move there directly irrespective of path.
                                    for (dir=0;
                                         dir < DIRECTION_COUNT && (player.loc.x + nbDirs[dir][0] != rogue.cursorLoc.x || player.loc.y + nbDirs[dir][1] != rogue.cursorLoc.y);
@@ -1280,8 +1280,8 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
                 cellBackColor = black;
                 gasAugmentColor = black;
             }
-        } else if ((pmap[x][y].flags & HAS_ITEM) && !cellHasTerrainFlag(x, y, T_OBSTRUCTS_ITEMS)
-                   && (playerCanSeeOrSense(x, y) || ((pmap[x][y].flags & DISCOVERED) && !cellHasTerrainFlag(x, y, T_MOVES_ITEMS)))) {
+        } else if ((pmap[x][y].flags & HAS_ITEM) && !cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_ITEMS)
+                   && (playerCanSeeOrSense(x, y) || ((pmap[x][y].flags & DISCOVERED) && !cellHasTerrainFlag((pos){ x, y }, T_MOVES_ITEMS)))) {
             needDistinctness = true;
             if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience) {
                 cellChar = itemChars[rand_range(0, 9)];
@@ -1449,7 +1449,7 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
     }
 //   DEBUG cellBackColor.red = max(0,((scentMap[x][y] - rogue.scentTurnNumber) * 2) + 100);
 //   DEBUG if (pmap[x][y].flags & KNOWN_TO_BE_TRAP_FREE) cellBackColor.red += 20;
-//   DEBUG if (cellHasTerrainFlag(x, y, T_IS_FLAMMABLE)) cellBackColor.red += 50;
+//   DEBUG if (cellHasTerrainFlag((pos){ x, y }, T_IS_FLAMMABLE)) cellBackColor.red += 50;
 
     if (pmap[x][y].flags & IS_IN_PATH) {
         if (cellHasTMFlag(x, y, TM_INVERT_WHEN_HIGHLIGHTED)) {
@@ -2083,7 +2083,7 @@ void colorFlash(const color *theColor, unsigned long reqTerrainFlags,
 
     for (i = max(x - maxRadius, 0); i <= min(x + maxRadius, DCOLS - 1); i++) {
         for (j = max(y - maxRadius, 0); j <= min(y + maxRadius, DROWS - 1); j++) {
-            if ((!reqTerrainFlags || cellHasTerrainFlag(reqTerrainFlags, i, j))
+            if ((!reqTerrainFlags || cellHasTerrainFlag((pos){ reqTerrainFlags, i }, j))
                 && (!reqTileFlags || (pmap[i][j].flags & reqTileFlags))
                 && (i-x) * (i-x) + (j-y) * (j-y) <= maxRadius * maxRadius) {
 
@@ -4291,7 +4291,7 @@ void displayGrid(short **map) {
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (cellHasTerrainFlag(i, j, T_WAYPOINT_BLOCKER) || (map[i][j] == map[0][0]) || (i == player.loc.x && j == player.loc.y)) {
+            if (cellHasTerrainFlag((pos){ i, j }, T_WAYPOINT_BLOCKER) || (map[i][j] == map[0][0]) || (i == player.loc.x && j == player.loc.y)) {
                 continue;
             }
             if (map[i][j] > topRange) {
@@ -4308,7 +4308,7 @@ void displayGrid(short **map) {
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY | T_LAVA_INSTA_DEATH)
+            if (cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_PASSABILITY | T_LAVA_INSTA_DEATH)
                 || (map[i][j] == map[0][0])
                 || (i == player.loc.x && j == player.loc.y)) {
                 continue;

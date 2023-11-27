@@ -379,8 +379,8 @@ item *placeItemAt(item *theItem, pos dest) {
     if ((theItem->flags & ITEM_MAGIC_DETECTED) && itemMagicPolarity(theItem)) {
         pmapAt(theItem->loc)->flags |= ITEM_DETECTED;
     }
-    if (cellHasTerrainFlag(dest.x, dest.y, T_IS_DF_TRAP)
-        && !cellHasTerrainFlag(dest.x, dest.y, T_MOVES_ITEMS)
+    if (cellHasTerrainFlag(dest, T_IS_DF_TRAP)
+        && !cellHasTerrainFlag(dest, T_MOVES_ITEMS)
         && !(pmapAt(dest)->flags & PRESSURE_PLATE_DEPRESSED)) {
 
         pmapAt(dest)->flags |= PRESSURE_PLATE_DEPRESSED;
@@ -415,7 +415,7 @@ static void fillItemSpawnHeatMap(unsigned short heatMap[DCOLS][DROWS], unsigned 
     for (enum directions dir = 0; dir < 4; dir++) {
         pos neighbor = posNeighborInDirection(loc, dir);
         if (isPosInMap(neighbor)
-            && !cellHasTerrainFlag(neighbor.x, neighbor.y, T_IS_DEEP_WATER | T_LAVA_INSTA_DEATH | T_AUTO_DESCENT)
+            && !cellHasTerrainFlag(neighbor, T_IS_DEEP_WATER | T_LAVA_INSTA_DEATH | T_AUTO_DESCENT)
             && isPassableOrSecretDoor(neighbor)
             && heatLevel < heatMap[neighbor.x][neighbor.y]) {
 
@@ -570,7 +570,7 @@ void populateItems(pos upstairs) {
 
     for (int j=0; j<DROWS; j++) {
         for (int i=0; i<DCOLS; i++) {
-            if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_ITEMS | T_PATHING_BLOCKER)
+            if (cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_ITEMS | T_PATHING_BLOCKER)
                 || (pmap[i][j].flags & (IS_CHOKEPOINT | IN_LOOP | IS_IN_MACHINE))
                 || passableArcCount(i, j) > 1) { // Not in walls, hallways, quest rooms, loops or chokepoints, please.
 
@@ -696,7 +696,7 @@ void populateItems(pos upstairs) {
 
         // Place the item.
         placeItemAt(theItem, itemPlacementLoc); // Random valid location already obtained according to heat map.
-        brogueAssert(!cellHasTerrainFlag(itemPlacementLoc.x, itemPlacementLoc.y, T_OBSTRUCTS_PASSABILITY));
+        brogueAssert(!cellHasTerrainFlag(itemPlacementLoc, T_OBSTRUCTS_PASSABILITY));
 
         if (D_INSPECT_LEVELGEN) {
             short **map = allocGrid();
@@ -1146,7 +1146,7 @@ void updateFloorItems() {
             // we are simulating an earlier turn than when the item fell into this level... let's not touch it yet
             continue;
         }
-        if (cellHasTerrainFlag(x, y, T_AUTO_DESCENT)) {
+        if (cellHasTerrainFlag((pos){ x, y }, T_AUTO_DESCENT)) {
             if (playerCanSeeOrSense(x, y)) {
                 itemName(theItem, buf, false, false, NULL);
                 sprintf(buf2, "The %s plunge%s out of sight!", buf, (theItem->quantity > 1 ? "" : "s"));
@@ -1174,13 +1174,13 @@ void updateFloorItems() {
             refreshDungeonCell((pos){ x, y });
             continue;
         }
-        if ((cellHasTerrainFlag(x, y, T_IS_FIRE) && (theItem->flags & ITEM_FLAMMABLE))
-            || (cellHasTerrainFlag(x, y, T_LAVA_INSTA_DEATH) && !(theItem->category & AMULET))) {
+        if ((cellHasTerrainFlag((pos){ x, y }, T_IS_FIRE) && (theItem->flags & ITEM_FLAMMABLE))
+            || (cellHasTerrainFlag((pos){ x, y }, T_LAVA_INSTA_DEATH) && !(theItem->category & AMULET))) {
 
             burnItem(theItem);
             continue;
         }
-        if (cellHasTerrainFlag(x, y, T_MOVES_ITEMS)) {
+        if (cellHasTerrainFlag((pos){ x, y }, T_MOVES_ITEMS)) {
             pos loc;
             getQualifyingLocNear(&loc, (pos){ x, y }, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM), false, false);
             removeItemAt((pos){ x, y });
@@ -3396,11 +3396,11 @@ short getLineCoordinates(pos listOfCoordinates[], const pos originLoc, const pos
             short x = listOfCoordinates[i].x;
             short y = listOfCoordinates[i].y;
 
-            boolean isImpassable = cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY);
-            boolean isOpaque = cellHasTerrainFlag(x, y, T_OBSTRUCTS_VISION);
+            boolean isImpassable = cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_PASSABILITY);
+            boolean isOpaque = cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_VISION);
             boolean targetsEnemies = theBolt->flags & BF_TARGET_ENEMIES;
             boolean targetsAllies = theBolt->flags & BF_TARGET_ALLIES;
-            boolean burningThrough = (theBolt->flags & BF_FIERY) && cellHasTerrainFlag(x, y, T_IS_FLAMMABLE);
+            boolean burningThrough = (theBolt->flags & BF_FIERY) && cellHasTerrainFlag((pos){ x, y }, T_IS_FLAMMABLE);
             boolean isCastByPlayer = (originLoc.x == player.loc.x && originLoc.y == player.loc.y);
 
             creature *caster = monsterAtLoc(originLoc);
@@ -3501,7 +3501,7 @@ void getImpactLoc(pos *returnLoc, const pos originLoc, const pos targetLoc,
             // Imaginary bolt hit the player or a monster.
             break;
         }
-        if (cellHasTerrainFlag(coords[i].x, coords[i].y, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
+        if (cellHasTerrainFlag(coords[i], (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
             break;
         }
     }
@@ -3524,8 +3524,8 @@ void getImpactLoc(pos *returnLoc, const pos originLoc, const pos targetLoc,
 static boolean impermissibleKinkBetween(short x1, short y1, short x2, short y2) {
     brogueAssert(coordinatesAreInMap(x1, y1));
     brogueAssert(coordinatesAreInMap(x2, y2));
-    if (cellHasTerrainFlag(x1, y1, T_OBSTRUCTS_PASSABILITY)
-        || cellHasTerrainFlag(x2, y2, T_OBSTRUCTS_PASSABILITY)) {
+    if (cellHasTerrainFlag((pos){ x1, y1 }, T_OBSTRUCTS_PASSABILITY)
+        || cellHasTerrainFlag((pos){ x2, y2 }, T_OBSTRUCTS_PASSABILITY)) {
         // One of the two locations is obstructed.
         return false;
     }
@@ -3534,13 +3534,13 @@ static boolean impermissibleKinkBetween(short x1, short y1, short x2, short y2) 
         // Not diagonally adjacent.
         return false;
     }
-    if (!cellHasTerrainFlag(x2, y1, T_OBSTRUCTS_PASSABILITY)
-        || !cellHasTerrainFlag(x1, y2, T_OBSTRUCTS_PASSABILITY)) {
+    if (!cellHasTerrainFlag((pos){ x2, y1 }, T_OBSTRUCTS_PASSABILITY)
+        || !cellHasTerrainFlag((pos){ x1, y2 }, T_OBSTRUCTS_PASSABILITY)) {
         // At least one of the common neighbors isn't obstructed.
         return false;
     }
-    if (!cellHasTerrainFlag(x2, y1, T_OBSTRUCTS_DIAGONAL_MOVEMENT)
-        && !cellHasTerrainFlag(x1, y2, T_OBSTRUCTS_DIAGONAL_MOVEMENT)) {
+    if (!cellHasTerrainFlag((pos){ x2, y1 }, T_OBSTRUCTS_DIAGONAL_MOVEMENT)
+        && !cellHasTerrainFlag((pos){ x1, y2 }, T_OBSTRUCTS_DIAGONAL_MOVEMENT)) {
         // Neither of the common neighbors obstructs diagonal movement.
         return false;
     }
@@ -3580,7 +3580,7 @@ static boolean tunnelize(short x, short y) {
             }
         }
     }
-    if (!cellHasTerrainFlag(x, y, T_OBSTRUCTS_DIAGONAL_MOVEMENT)
+    if (!cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_DIAGONAL_MOVEMENT)
         && didSomething) {
         // Tunnel out any diagonal kinks between walls.
         for (dir = 0; dir < DIRECTION_COUNT; dir++) {
@@ -4236,7 +4236,7 @@ short reflectBolt(short targetX, short targetY, pos listOfCoordinates[], short k
             }
             newPathLength = getLineCoordinates(newPath, listOfCoordinates[kinkCell], target, NULL);
             if (newPathLength > 0
-                && !cellHasTerrainFlag(newPath[0].x, newPath[0].y, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
+                && !cellHasTerrainFlag(newPath[0], (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
 
                 needRandomTarget = false;
             }
@@ -4327,7 +4327,7 @@ static boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
 
         switch(theBolt->boltEffect) {
             case BE_ATTACK:
-                if (!cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY)
+                if (!cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_PASSABILITY)
                     || (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS)) {
 
                     attack(caster, monst, false);
@@ -4818,7 +4818,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
     displayCombatText(); // To announce who fired the bolt while the animation plays.
 
     if (theBolt->boltEffect == BE_BLINKING) {
-        if (cellHasTerrainFlag(listOfCoordinates[0].x, listOfCoordinates[0].y, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION))
+        if (cellHasTerrainFlag(listOfCoordinates[0], (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION))
             || ((pmapAt(listOfCoordinates[0])->flags & (HAS_PLAYER | HAS_MONSTER))
                 && !(monsterAtLoc(listOfCoordinates[0])->bookkeepingFlags & MB_SUBMERGED))) {
                 // shooting blink point-blank into an obstruction does nothing.
@@ -4975,7 +4975,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
             x2 = listOfCoordinates[i+1].x;
             y2 = listOfCoordinates[i+1].y;
 
-            if (cellHasTerrainFlag(x2, y2, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
+            if (cellHasTerrainFlag((pos){ x2, y2 }, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
                 break;
             }
 
@@ -4988,7 +4988,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
         }
 
         // Tunnel if we hit a wall.
-        if (cellHasTerrainFlag(x, y, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION))
+        if (cellHasTerrainFlag((pos){ x, y }, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION))
             && theBolt->boltEffect == BE_TUNNELING
             && tunnelize(x, y)) {
 
@@ -5008,7 +5008,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
         }
 
         // Stop when we hit a wall.
-        if (cellHasTerrainFlag(x, y, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION))) {
+        if (cellHasTerrainFlag((pos){ x, y }, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION))) {
             break;
         }
 
@@ -5019,7 +5019,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
 
             x2 = listOfCoordinates[i+1].x;
             y2 = listOfCoordinates[i+1].y;
-            if (cellHasTerrainFlag(x2, y2, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))
+            if (cellHasTerrainFlag((pos){ x2, y2 }, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))
                 && (projectileReflects(shootingMonst, NULL)
                     || cellHasTMFlag(x2, y2, TM_REFLECTS_BOLTS)
                     || (theBolt->boltEffect == BE_TUNNELING && (pmap[x2][y2].flags & IMPREGNABLE)))
@@ -5215,10 +5215,10 @@ static short hiliteTrajectory(const pos coordinateList[DCOLS], short numCells, b
                 i++;
                 break;
             }
-        } else if (cellHasTerrainFlag(x, y, T_IS_FLAMMABLE) && isFiery) {
+        } else if (cellHasTerrainFlag((pos){ x, y }, T_IS_FLAMMABLE) && isFiery) {
             continue;
-        } else if (isTunneling && cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY) && (pmap[x][y].flags & IMPREGNABLE)
-                || !isTunneling && cellHasTerrainFlag(x, y, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
+        } else if (isTunneling && cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_PASSABILITY) && (pmap[x][y].flags & IMPREGNABLE)
+                || !isTunneling && cellHasTerrainFlag((pos){ x, y }, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))) {
             i++;
             break;
         }
@@ -5976,13 +5976,13 @@ static void throwItem(item *theItem, creature *thrower, pos targetLoc, short max
         }
 
         // We hit something!
-        if (cellHasTerrainFlag(x, y, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION))) {
+        if (cellHasTerrainFlag((pos){ x, y }, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION))) {
             if ((theItem->category & WEAPON)
                 && (theItem->kind == INCENDIARY_DART)
-                && (cellHasTerrainFlag(x, y, T_IS_FLAMMABLE) || (pmap[x][y].flags & (HAS_MONSTER | HAS_PLAYER)))) {
+                && (cellHasTerrainFlag((pos){ x, y }, T_IS_FLAMMABLE) || (pmap[x][y].flags & (HAS_MONSTER | HAS_PLAYER)))) {
                 // Incendiary darts thrown at flammable obstructions (foliage, wooden barricades, doors) will hit the obstruction
                 // instead of bursting a cell earlier.
-            } else if (cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY)
+            } else if (cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_PASSABILITY)
                        && cellHasTMFlag(x, y, TM_PROMOTES_ON_PLAYER_ENTRY)
                        && tileCatalog[pmap[x][y].layers[layerWithTMFlag(x, y, TM_PROMOTES_ON_PLAYER_ENTRY)]].flags & T_OBSTRUCTS_PASSABILITY) {
                 layer = layerWithTMFlag(x, y, TM_PROMOTES_ON_PLAYER_ENTRY);
@@ -6027,7 +6027,7 @@ static void throwItem(item *theItem, creature *thrower, pos targetLoc, short max
         }
     }
 
-    if ((theItem->category & POTION) && (hitSomethingSolid || !cellHasTerrainFlag(x, y, T_AUTO_DESCENT))) {
+    if ((theItem->category & POTION) && (hitSomethingSolid || !cellHasTerrainFlag((pos){ x, y }, T_AUTO_DESCENT))) {
         if (theItem->kind == POTION_CONFUSION || theItem->kind == POTION_POISON
             || theItem->kind == POTION_PARALYSIS || theItem->kind == POTION_INCINERATION
             || theItem->kind == POTION_DARKNESS || theItem->kind == POTION_LICHEN
@@ -6079,7 +6079,7 @@ static void throwItem(item *theItem, creature *thrower, pos targetLoc, short max
             //  applyInstantTileEffectsToCreature(monst);
             //}
         } else {
-            if (cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY)) {
+            if (cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_PASSABILITY)) {
                 strcpy(buf2, "against");
             } else if (tileCatalog[pmap[x][y].layers[highestPriorityLayer(x, y, false)]].mechFlags & TM_STAND_IN_TILE) {
                 strcpy(buf2, "into");
@@ -7034,7 +7034,7 @@ void readScroll(item *theItem) {
             }
             for (i=0; i<DCOLS; i++) {
                 for (j=0; j<DROWS; j++) {
-                    if (!(cellHasTerrainFlag(i, j, T_IS_DF_TRAP))) {
+                    if (!(cellHasTerrainFlag((pos){ i, j }, T_IS_DF_TRAP))) {
                         pmap[i][j].flags |= KNOWN_TO_BE_TRAP_FREE;
                     }
                 }
@@ -7050,7 +7050,7 @@ void readScroll(item *theItem) {
                 for (i=0; i<8; i++) {
                     x = player.loc.x + nbDirs[i][0];
                     y = player.loc.y + nbDirs[i][1];
-                    if (!cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY) && !(pmap[x][y].flags & HAS_MONSTER)
+                    if (!cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_PASSABILITY) && !(pmap[x][y].flags & HAS_MONSTER)
                         && rand_percent(10) && (numberOfMonsters < 3)) {
                         monst = spawnHorde(0, (pos){ x, y }, (HORDE_LEADER_CAPTIVE | HORDE_NO_PERIODIC_SPAWN | HORDE_IS_SUMMONED | HORDE_MACHINE_ONLY), 0);
                         if (monst) {
@@ -7387,7 +7387,7 @@ void unequip(item *theItem) {
 }
 
 static boolean canDrop() {
-    if (cellHasTerrainFlag(player.loc.x, player.loc.y, T_OBSTRUCTS_ITEMS)) {
+    if (cellHasTerrainFlag(player.loc, T_OBSTRUCTS_ITEMS)) {
         return false;
     }
     return true;
@@ -7500,7 +7500,7 @@ item *itemAtLoc(pos loc) {
 item *dropItem(item *theItem) {
     item *itemFromTopOfStack, *itemOnFloor;
 
-    if (cellHasTerrainFlag(player.loc.x, player.loc.y, T_OBSTRUCTS_ITEMS)) {
+    if (cellHasTerrainFlag(player.loc, T_OBSTRUCTS_ITEMS)) {
         return NULL;
     }
 

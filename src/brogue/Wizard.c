@@ -384,7 +384,7 @@ static void dialogCreateMonster() {
         if (theMonster->info.displayChar == G_TURRET && (!(pmapAt(selectedPosition)->layers[DUNGEON] == WALL))) {
             locationIsValid = false;
         }
-        if (!(theMonster->info.displayChar == G_TURRET) && cellHasTerrainFlag(selectedPosition.x, selectedPosition.y, T_OBSTRUCTS_PASSABILITY)) {
+        if (!(theMonster->info.displayChar == G_TURRET) && cellHasTerrainFlag(selectedPosition, T_OBSTRUCTS_PASSABILITY)) {
             locationIsValid = false;
         }
 

@@ -498,7 +498,7 @@ static boolean forceWeaponHit(creature *defender, item *theItem) {
         .y = defender->loc.y + clamp(defender->loc.y - player.loc.y, -1, 1)
     };
     if (canDirectlySeeMonster(defender)
-        && !cellHasTerrainFlag(newLoc.x, newLoc.y, T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION)
+        && !cellHasTerrainFlag(newLoc, T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION)
         && !(pmapAt(newLoc)->flags & (HAS_MONSTER | HAS_PLAYER))) {
         sprintf(buf, "you launch %s backward with the force of your blow", monstName);
         buf[DCOLS] = '\0';
@@ -985,14 +985,14 @@ static void decrementWeaponAutoIDTimer() {
 void processStaggerHit(creature *attacker, creature *defender) {
     if ((defender->info.flags & (MONST_INVULNERABLE | MONST_IMMOBILE | MONST_INANIMATE))
         || (defender->bookkeepingFlags & MB_CAPTIVE)
-        || cellHasTerrainFlag(defender->loc.x, defender->loc.y, T_OBSTRUCTS_PASSABILITY)) {
+        || cellHasTerrainFlag(defender->loc, T_OBSTRUCTS_PASSABILITY)) {
 
         return;
     }
     short newX = clamp(defender->loc.x - attacker->loc.x, -1, 1) + defender->loc.x;
     short newY = clamp(defender->loc.y - attacker->loc.y, -1, 1) + defender->loc.y;
     if (coordinatesAreInMap(newX, newY)
-        && !cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)
+        && !cellHasTerrainFlag((pos){ newX, newY }, T_OBSTRUCTS_PASSABILITY)
         && !(pmap[newX][newY].flags & (HAS_MONSTER | HAS_PLAYER))) {
 
         setMonsterLocation(defender, (pos){ newX, newY });
@@ -1387,7 +1387,7 @@ static boolean anyoneWantABite(creature *decedent) {
     if ((!(decedent->info.abilityFlags & LEARNABLE_ABILITIES)
          && !(decedent->info.flags & LEARNABLE_BEHAVIORS)
          && decedent->info.bolts[0] == BOLT_NONE)
-        || (cellHasTerrainFlag(decedent->loc.x, decedent->loc.y, T_PATHING_BLOCKER))
+        || (cellHasTerrainFlag(decedent->loc, T_PATHING_BLOCKER))
         || decedent->info.monsterID == MK_SPECTRAL_IMAGE
         || (decedent->info.flags & (MONST_INANIMATE | MONST_IMMOBILE))) {
 
@@ -1748,7 +1748,7 @@ void buildHitList(creature **hitList, const creature *attacker, creature *defend
                 defender = monsterAtLoc((pos){ newestX, newestY });
                 if (defender
                     && monsterWillAttackTarget(attacker, defender)
-                    && (!cellHasTerrainFlag(defender->loc.x, defender->loc.y, T_OBSTRUCTS_PASSABILITY) || (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS))) {
+                    && (!cellHasTerrainFlag(defender->loc, T_OBSTRUCTS_PASSABILITY) || (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS))) {
 
                     hitList[i] = defender;
                 }

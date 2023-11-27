@@ -70,8 +70,8 @@ void updateFlavorText() {
 
 void updatePlayerUnderwaterness() {
     if (rogue.inWater) {
-        if (!cellHasTerrainFlag(player.loc.x, player.loc.y, T_IS_DEEP_WATER) || player.status[STATUS_LEVITATING]
-            || cellHasTerrainFlag(player.loc.x, player.loc.y, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))) {
+        if (!cellHasTerrainFlag(player.loc, T_IS_DEEP_WATER) || player.status[STATUS_LEVITATING]
+            || cellHasTerrainFlag(player.loc, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))) {
 
             rogue.inWater = false;
             updateMinersLightRadius();
@@ -79,8 +79,8 @@ void updatePlayerUnderwaterness() {
             displayLevel();
         }
     } else {
-        if (cellHasTerrainFlag(player.loc.x, player.loc.y, T_IS_DEEP_WATER) && !player.status[STATUS_LEVITATING]
-            && !cellHasTerrainFlag(player.loc.x, player.loc.y, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))) {
+        if (cellHasTerrainFlag(player.loc, T_IS_DEEP_WATER) && !player.status[STATUS_LEVITATING]
+            && !cellHasTerrainFlag(player.loc, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))) {
 
             rogue.inWater = true;
             updateMinersLightRadius();
@@ -92,8 +92,8 @@ void updatePlayerUnderwaterness() {
 
 boolean monsterShouldFall(creature *monst) {
     return (!(monst->status[STATUS_LEVITATING])
-            && cellHasTerrainFlag(monst->loc.x, monst->loc.y, T_AUTO_DESCENT)
-            && !cellHasTerrainFlag(monst->loc.x, monst->loc.y, T_ENTANGLES | T_OBSTRUCTS_PASSABILITY)
+            && cellHasTerrainFlag(monst->loc, T_AUTO_DESCENT)
+            && !cellHasTerrainFlag(monst->loc, T_ENTANGLES | T_OBSTRUCTS_PASSABILITY)
             && !(monst->bookkeepingFlags & MB_PREPLACED));
 }
 
@@ -116,7 +116,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
     } else if (!player.status[STATUS_HALLUCINATING]
                && !monst->status[STATUS_LEVITATING]
                && canSeeMonster(monst)
-               && !(cellHasTerrainFlag(*x, *y, T_IS_DF_TRAP))) {
+               && !(cellHasTerrainFlag((pos){ *x, *y }, T_IS_DF_TRAP))) {
         pmap[*x][*y].flags |= KNOWN_TO_BE_TRAP_FREE;
     }
 
@@ -141,7 +141,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
 
     // Obstructed krakens can't seize their prey.
     if ((monst->bookkeepingFlags & MB_SEIZING)
-        && (cellHasTerrainFlag(*x, *y, T_OBSTRUCTS_PASSABILITY))
+        && (cellHasTerrainFlag((pos){ *x, *y }, T_OBSTRUCTS_PASSABILITY))
         && !(monst->info.flags & MONST_ATTACKABLE_THRU_WALLS)) {
 
         monst->bookkeepingFlags &= ~MB_SEIZING;
@@ -164,9 +164,9 @@ void applyInstantTileEffectsToCreature(creature *monst) {
     if (!(monst->status[STATUS_LEVITATING])
         && !(monst->status[STATUS_IMMUNE_TO_FIRE])
         && !(monst->info.flags & MONST_INVULNERABLE)
-        && !cellHasTerrainFlag(*x, *y, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))
+        && !cellHasTerrainFlag((pos){ *x, *y }, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))
         && !cellHasTMFlag(*x, *y, TM_EXTINGUISHES_FIRE)
-        && cellHasTerrainFlag(*x, *y, T_LAVA_INSTA_DEATH)) {
+        && cellHasTerrainFlag((pos){ *x, *y }, T_LAVA_INSTA_DEATH)) {
 
         if (monst == &player) {
             sprintf(buf, "you plunge into %s!",
@@ -208,7 +208,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
     // If you see a monster use a secret door, you discover it.
     if (playerCanSee(*x, *y)
         && cellHasTMFlag(*x, *y, TM_IS_SECRET)
-        && (cellHasTerrainFlag(*x, *y, T_OBSTRUCTS_PASSABILITY))) {
+        && (cellHasTerrainFlag((pos){ *x, *y }, T_OBSTRUCTS_PASSABILITY))) {
         discover(*x, *y);
     }
 
@@ -216,7 +216,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
     if (!(monst->status[STATUS_LEVITATING])
         && !(monst->bookkeepingFlags & MB_SUBMERGED)
         && (!cellHasTMFlag(*x, *y, TM_ALLOWS_SUBMERGING) || !(monst->info.flags & MONST_SUBMERGES))
-        && cellHasTerrainFlag(*x, *y, T_IS_DF_TRAP)
+        && cellHasTerrainFlag((pos){ *x, *y }, T_IS_DF_TRAP)
         && !(pmap[*x][*y].flags & PRESSURE_PLATE_DEPRESSED)) {
 
         pmap[*x][*y].flags |= PRESSURE_PLATE_DEPRESSED;
@@ -275,7 +275,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
     }
 
     // spiderwebs
-    if (cellHasTerrainFlag(*x, *y, T_ENTANGLES) && !monst->status[STATUS_STUCK]
+    if (cellHasTerrainFlag((pos){ *x, *y }, T_ENTANGLES) && !monst->status[STATUS_STUCK]
         && !(monst->info.flags & (MONST_IMMUNE_TO_WEBS | MONST_INVULNERABLE))
         && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
 
@@ -298,7 +298,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
     }
 
     // explosions
-    if (cellHasTerrainFlag(*x, *y, T_CAUSES_EXPLOSIVE_DAMAGE) && !monst->status[STATUS_EXPLOSION_IMMUNITY]
+    if (cellHasTerrainFlag((pos){ *x, *y }, T_CAUSES_EXPLOSIVE_DAMAGE) && !monst->status[STATUS_EXPLOSION_IMMUNITY]
         && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
         damage = rand_range(15, 20);
         damage = max(damage, monst->info.maxHP / 2);
@@ -348,7 +348,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
     // Toxic gases!
     // If it's the player, and he's wearing armor of respiration, then no effect from toxic gases.
     if (monst == &player
-        && cellHasTerrainFlag(*x, *y, T_RESPIRATION_IMMUNITIES)
+        && cellHasTerrainFlag((pos){ *x, *y }, T_RESPIRATION_IMMUNITIES)
         && rogue.armor
         && (rogue.armor->flags & ITEM_RUNIC)
         && rogue.armor->enchant2 == A_RESPIRATION) {
@@ -359,7 +359,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
     } else {
 
         // zombie gas
-        if (cellHasTerrainFlag(*x, *y, T_CAUSES_NAUSEA)
+        if (cellHasTerrainFlag((pos){ *x, *y }, T_CAUSES_NAUSEA)
             && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))
             && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
             if (monst == &player) {
@@ -379,7 +379,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
         }
 
         // confusion gas
-        if (cellHasTerrainFlag(*x, *y, T_CAUSES_CONFUSION) && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
+        if (cellHasTerrainFlag((pos){ *x, *y }, T_CAUSES_CONFUSION) && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
             if (monst == &player) {
                 rogue.disturbed = true;
             }
@@ -396,7 +396,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
         }
 
         // paralysis gas
-        if (cellHasTerrainFlag(*x, *y, T_CAUSES_PARALYSIS)
+        if (cellHasTerrainFlag((pos){ *x, *y }, T_CAUSES_PARALYSIS)
             && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))
             && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
 
@@ -414,7 +414,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
     }
 
     // poisonous lichen
-    if (cellHasTerrainFlag(*x, *y, T_CAUSES_POISON)
+    if (cellHasTerrainFlag((pos){ *x, *y }, T_CAUSES_POISON)
         && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))
         && !monst->status[STATUS_LEVITATING]) {
 
@@ -435,14 +435,14 @@ void applyInstantTileEffectsToCreature(creature *monst) {
     }
 
     // fire
-    if (cellHasTerrainFlag(*x, *y, T_IS_FIRE)) {
+    if (cellHasTerrainFlag((pos){ *x, *y }, T_IS_FIRE)) {
         exposeCreatureToFire(monst);
-    } else if (cellHasTerrainFlag(*x, *y, T_IS_FLAMMABLE)
+    } else if (cellHasTerrainFlag((pos){ *x, *y }, T_IS_FLAMMABLE)
             // We should only expose to fire if it is flammable and not on fire. However, when
             // gas burns, it only sets the volume to 0 and doesn't clear the layer (for visual
             // reasons). This can cause crashes if the fire tile fails to spawn, so we also exclude it.
                && !(pmap[*x][*y].layers[GAS] != NOTHING && pmap[*x][*y].volume == 0)
-               && !cellHasTerrainFlag(*x, *y, T_IS_FIRE)
+               && !cellHasTerrainFlag((pos){ *x, *y }, T_IS_FIRE)
                && monst->status[STATUS_BURNING]
                && !(monst->bookkeepingFlags & (MB_SUBMERGED | MB_IS_FALLING))) {
         exposeTileToFire(*x, *y, true);
@@ -462,8 +462,8 @@ static void applyGradualTileEffectsToCreature(creature *monst, short ticks) {
     enum dungeonLayers layer;
 
     if (!(monst->status[STATUS_LEVITATING])
-        && cellHasTerrainFlag(x, y, T_IS_DEEP_WATER)
-        && !cellHasTerrainFlag(x, y, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))
+        && cellHasTerrainFlag((pos){ x, y }, T_IS_DEEP_WATER)
+        && !cellHasTerrainFlag((pos){ x, y }, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))
         && !(monst->info.flags & MONST_IMMUNE_TO_WATER)) {
         if (monst == &player) {
             if (!(pmap[x][y].flags & HAS_ITEM) && rand_percent(ticks * 50 / 100)) {
@@ -494,7 +494,7 @@ static void applyGradualTileEffectsToCreature(creature *monst, short ticks) {
         }
     }
 
-    if (cellHasTerrainFlag(x, y, T_CAUSES_DAMAGE)
+    if (cellHasTerrainFlag((pos){ x, y }, T_CAUSES_DAMAGE)
         && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))
         && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
 
@@ -534,7 +534,7 @@ static void applyGradualTileEffectsToCreature(creature *monst, short ticks) {
         }
     }
 
-    if (cellHasTerrainFlag(x, y, T_CAUSES_HEALING)
+    if (cellHasTerrainFlag((pos){ x, y }, T_CAUSES_HEALING)
         && !(monst->info.flags & MONST_INANIMATE)
         && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
 
@@ -733,7 +733,7 @@ void discoverCell(const short x, const short y) {
     pmap[x][y].flags &= ~STABLE_MEMORY;
     if (!(pmap[x][y].flags & DISCOVERED)) {
         pmap[x][y].flags |= DISCOVERED;
-        if (!cellHasTerrainFlag(x, y, T_PATHING_BLOCKER)) {
+        if (!cellHasTerrainFlag((pos){ x, y }, T_PATHING_BLOCKER)) {
             rogue.xpxpThisTurn++;
         }
     }
@@ -999,7 +999,7 @@ static void playerFalls() {
         startLevel(rogue.depthLevel - 1, 0);
         damage = randClumpedRange(gameConst->fallDamageMin, gameConst->fallDamageMax, 2);
         boolean killed = false;
-        if (terrainFlags(player.loc.x, player.loc.y) & T_IS_DEEP_WATER) {
+        if (terrainFlags(player.loc) & T_IS_DEEP_WATER) {
             messageWithColor("You fall into deep water, unharmed.", &badMessageColor, 0);
         } else {
             if (cellHasTMFlag(player.loc.x, player.loc.y, TM_ALLOWS_SUBMERGING)) {
@@ -1159,7 +1159,7 @@ boolean exposeTileToFire(short x, short y, boolean alwaysIgnite) {
     enum directions dir;
     boolean fireIgnited = false, explosivePromotion = false;
 
-    if (!cellHasTerrainFlag(x, y, T_IS_FLAMMABLE) || pmap[x][y].exposedToFire >= 12) {
+    if (!cellHasTerrainFlag((pos){ x, y }, T_IS_FLAMMABLE) || pmap[x][y].exposedToFire >= 12) {
         return false;
     }
 
@@ -1191,7 +1191,7 @@ boolean exposeTileToFire(short x, short y, boolean alwaysIgnite) {
                 newX = x + nbDirs[dir][0];
                 newY = y + nbDirs[dir][1];
                 if (coordinatesAreInMap(newX, newY)
-                    && (cellHasTerrainFlag(newX, newY, T_IS_FIRE | T_OBSTRUCTS_GAS) || cellHasTMFlag(newX, newY, TM_EXPLOSIVE_PROMOTE))) {
+                    && (cellHasTerrainFlag((pos){ newX, newY }, T_IS_FIRE | T_OBSTRUCTS_GAS) || cellHasTMFlag(newX, newY, TM_EXPLOSIVE_PROMOTE))) {
 
                     explosiveNeighborCount++;
                 }
@@ -1234,7 +1234,7 @@ static void updateVolumetricMedia() {
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (!cellHasTerrainFlag(i, j, T_OBSTRUCTS_GAS)) {
+            if (!cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_GAS)) {
                 sum = pmap[i][j].volume;
                 numSpaces = 1;
                 highestNeighborVolume = pmap[i][j].volume;
@@ -1243,7 +1243,7 @@ static void updateVolumetricMedia() {
                     newX = i + nbDirs[dir][0];
                     newY = j + nbDirs[dir][1];
                     if (coordinatesAreInMap(newX, newY)
-                        && !cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_GAS)) {
+                        && !cellHasTerrainFlag((pos){ newX, newY }, T_OBSTRUCTS_GAS)) {
 
                         sum += pmap[newX][newY].volume;
                         numSpaces++;
@@ -1253,7 +1253,7 @@ static void updateVolumetricMedia() {
                         }
                     }
                 }
-                if (cellHasTerrainFlag(i, j, T_AUTO_DESCENT)) { // if it's a chasm tile or trap door,
+                if (cellHasTerrainFlag((pos){ i, j }, T_AUTO_DESCENT)) { // if it's a chasm tile or trap door,
                     numSpaces++; // this will allow gas to escape from the level entirely
                 }
                 newGasVolume[i][j] += sum / max(1, numSpaces);
@@ -1283,7 +1283,7 @@ static void updateVolumetricMedia() {
                     newX = i + nbDirs[dir][0];
                     newY = j + nbDirs[dir][1];
                     if (coordinatesAreInMap(newX, newY)
-                        && !cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_GAS)) {
+                        && !cellHasTerrainFlag((pos){ newX, newY }, T_OBSTRUCTS_GAS)) {
 
                         numSpaces++;
                     }
@@ -1293,7 +1293,7 @@ static void updateVolumetricMedia() {
                         newX = i + nbDirs[dir][0];
                         newY = j + nbDirs[dir][1];
                         if (coordinatesAreInMap(newX, newY)
-                            && !cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_GAS)) {
+                            && !cellHasTerrainFlag((pos){ newX, newY }, T_OBSTRUCTS_GAS)) {
 
                             newGasVolume[newX][newY] += (pmap[i][j].volume / numSpaces);
                             if (pmap[i][j].volume / numSpaces) {
@@ -1446,7 +1446,7 @@ void updateEnvironment() {
                     promoteChance = 0;
                     for (direction = 0; direction < 4; direction++) {
                         if (coordinatesAreInMap(i + nbDirs[direction][0], j + nbDirs[direction][1])
-                            && !cellHasTerrainFlag(i + nbDirs[direction][0], j + nbDirs[direction][1], T_OBSTRUCTS_PASSABILITY)
+                            && !cellHasTerrainFlag((pos){ i + nbDirs[direction][0], j + nbDirs[direction][1] }, T_OBSTRUCTS_PASSABILITY)
                             && pmap[i + nbDirs[direction][0]][j + nbDirs[direction][1]].layers[layer] != pmap[i][j].layers[layer]
                             && !(pmap[i][j].flags & CAUGHT_FIRE_THIS_TURN)) {
                             promoteChance += -1 * tile->promoteChance;
@@ -1499,7 +1499,7 @@ void updateEnvironment() {
     // Update fire.
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (cellHasTerrainFlag(i, j, T_IS_FIRE) && !(pmap[i][j].flags & CAUGHT_FIRE_THIS_TURN)) {
+            if (cellHasTerrainFlag((pos){ i, j }, T_IS_FIRE) && !(pmap[i][j].flags & CAUGHT_FIRE_THIS_TURN)) {
                 exposeTileToFire(i, j, false);
                 for (direction=0; direction<4; direction++) {
                     newX = i + nbDirs[direction][0];
@@ -1531,13 +1531,13 @@ void updateAllySafetyMap() {
 
             playerCostMap[i][j] = monsterCostMap[i][j] = 1;
 
-            if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)
+            if (cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_PASSABILITY)
                 && (!cellHasTMFlag(i, j, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY))) {
 
-                playerCostMap[i][j] = monsterCostMap[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
-            } else if (cellHasTerrainFlag(i, j, T_PATHING_BLOCKER & ~T_OBSTRUCTS_PASSABILITY)) {
+                playerCostMap[i][j] = monsterCostMap[i][j] = cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
+            } else if (cellHasTerrainFlag((pos){ i, j }, T_PATHING_BLOCKER & ~T_OBSTRUCTS_PASSABILITY)) {
                 playerCostMap[i][j] = monsterCostMap[i][j] = PDS_FORBIDDEN;
-            } else if (cellHasTerrainFlag(i, j, T_SACRED)) {
+            } else if (cellHasTerrainFlag((pos){ i, j }, T_SACRED)) {
                 playerCostMap[i][j] = 1;
                 monsterCostMap[i][j] = PDS_FORBIDDEN;
             } else if ((pmap[i][j].flags & HAS_MONSTER) && monstersAreEnemies(&player, monsterAtLoc((pos){ i, j }))) {
@@ -1608,14 +1608,14 @@ void updateSafetyMap() {
 
             playerCostMap[i][j] = monsterCostMap[i][j] = 1; // prophylactic
 
-            if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)
+            if (cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_PASSABILITY)
                 && (!cellHasTMFlag(i, j, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY))) {
 
-                playerCostMap[i][j] = monsterCostMap[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
-            } else if (cellHasTerrainFlag(i, j, T_SACRED)) {
+                playerCostMap[i][j] = monsterCostMap[i][j] = cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
+            } else if (cellHasTerrainFlag((pos){ i, j }, T_SACRED)) {
                 playerCostMap[i][j] = 1;
                 monsterCostMap[i][j] = PDS_FORBIDDEN;
-            } else if (cellHasTerrainFlag(i, j, T_LAVA_INSTA_DEATH)) {
+            } else if (cellHasTerrainFlag((pos){ i, j }, T_LAVA_INSTA_DEATH)) {
                 monsterCostMap[i][j] = PDS_FORBIDDEN;
                 if (player.status[STATUS_LEVITATING] || !player.status[STATUS_IMMUNE_TO_FIRE]) {
                     playerCostMap[i][j] = 1;
@@ -1637,28 +1637,28 @@ void updateSafetyMap() {
                     }
                 }
 
-                if (cellHasTerrainFlag(i, j, (T_AUTO_DESCENT | T_IS_DF_TRAP))) {
+                if (cellHasTerrainFlag((pos){ i, j }, (T_AUTO_DESCENT | T_IS_DF_TRAP))) {
                     monsterCostMap[i][j] = PDS_FORBIDDEN;
                     if (player.status[STATUS_LEVITATING]) {
                         playerCostMap[i][j] = 1;
                     } else {
                         playerCostMap[i][j] = PDS_FORBIDDEN;
                     }
-                } else if (cellHasTerrainFlag(i, j, T_IS_FIRE)) {
+                } else if (cellHasTerrainFlag((pos){ i, j }, T_IS_FIRE)) {
                     monsterCostMap[i][j] = PDS_FORBIDDEN;
                     if (player.status[STATUS_IMMUNE_TO_FIRE]) {
                         playerCostMap[i][j] = 1;
                     } else {
                         playerCostMap[i][j] = PDS_FORBIDDEN;
                     }
-                } else if (cellHasTerrainFlag(i, j, (T_IS_DEEP_WATER | T_SPONTANEOUSLY_IGNITES))) {
+                } else if (cellHasTerrainFlag((pos){ i, j }, (T_IS_DEEP_WATER | T_SPONTANEOUSLY_IGNITES))) {
                     if (player.status[STATUS_LEVITATING]) {
                         playerCostMap[i][j] = 1;
                     } else {
                         playerCostMap[i][j] = 5;
                     }
                     monsterCostMap[i][j] = 5;
-                } else if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)
+                } else if (cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_PASSABILITY)
                            && cellHasTMFlag(i, j, TM_IS_SECRET) && !(discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY)
                            && !(pmap[i][j].flags & IN_FIELD_OF_VIEW)) {
                     // Secret door that the player can't currently see
@@ -1684,7 +1684,7 @@ void updateSafetyMap() {
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)
+            if (cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_PASSABILITY)
                 && cellHasTMFlag(i, j, TM_IS_SECRET) && !(discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY)
                 && !(pmap[i][j].flags & IN_FIELD_OF_VIEW)) {
 
@@ -1737,17 +1737,17 @@ void updateSafeTerrainMap() {
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
             monst = monsterAtLoc((pos){ i, j });
-            if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)
+            if (cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_PASSABILITY)
                 && (!cellHasTMFlag(i, j, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY))) {
 
-                costMap[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
+                costMap[i][j] = cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
                 rogue.mapToSafeTerrain[i][j] = 30000; // OOS prophylactic
             } else if ((monst && (monst->turnsSpentStationary > 1 || (monst->info.flags & MONST_GETS_TURN_ON_ACTIVATION)))
-                       || (cellHasTerrainFlag(i, j, T_PATHING_BLOCKER & ~T_HARMFUL_TERRAIN) && !cellHasTMFlag(i, j, TM_IS_SECRET))) {
+                       || (cellHasTerrainFlag((pos){ i, j }, T_PATHING_BLOCKER & ~T_HARMFUL_TERRAIN) && !cellHasTMFlag(i, j, TM_IS_SECRET))) {
 
                 costMap[i][j] = PDS_FORBIDDEN;
                 rogue.mapToSafeTerrain[i][j] = 30000;
-            } else if (cellHasTerrainFlag(i, j, T_HARMFUL_TERRAIN) || pmap[i][j].layers[DUNGEON] == DOOR) {
+            } else if (cellHasTerrainFlag((pos){ i, j }, T_HARMFUL_TERRAIN) || pmap[i][j].layers[DUNGEON] == DOOR) {
                 // The door thing is an aesthetically offensive but necessary hack to make sure
                 // that monsters trying to find their way out of caustic gas do not sprint for
                 // the doors. Doors are superficially free of gas, but as soon as they are opened,
@@ -1892,7 +1892,7 @@ static void monsterEntersLevel(creature *monst, short n) {
     }
     if (!pit
         && (pmapAt(monst->loc)->flags & (HAS_PLAYER | HAS_MONSTER))
-        && !(terrainFlags(monst->loc.x, monst->loc.y) & avoidedFlagsForMonster(&(monst->info)))) {
+        && !(terrainFlags(monst->loc) & avoidedFlagsForMonster(&(monst->info)))) {
         // Monsters using the stairs will displace any creatures already located there, to thwart stair-dancing.
         creature *prevMonst = monsterAtLoc(monst->loc);
         brogueAssert(prevMonst);
@@ -2038,7 +2038,7 @@ static void decrementPlayerStatus() {
         message("you no longer feel immune to fire.", 0);
     }
 
-    if (player.status[STATUS_STUCK] && !cellHasTerrainFlag(player.loc.x, player.loc.y, T_ENTANGLES)) {
+    if (player.status[STATUS_STUCK] && !cellHasTerrainFlag(player.loc, T_ENTANGLES)) {
         player.status[STATUS_STUCK] = 0;
     }
 
@@ -2091,7 +2091,7 @@ void autoRest() {
     rogue.disturbed = false;
     rogue.automationActive = true;
     // Stop as soon as we're free from crystal.
-    const boolean initiallyEmbedded = cellHasTerrainFlag(player.loc.x, player.loc.y, T_OBSTRUCTS_PASSABILITY);
+    const boolean initiallyEmbedded = cellHasTerrainFlag(player.loc, T_OBSTRUCTS_PASSABILITY);
 
     if ((player.currentHP < player.info.maxHP
          || player.status[STATUS_HALLUCINATING]
@@ -2110,9 +2110,9 @@ void autoRest() {
                    || player.status[STATUS_NAUSEOUS]
                    || player.status[STATUS_POISONED]
                    || player.status[STATUS_DARKNESS]
-                   || cellHasTerrainFlag(player.loc.x, player.loc.y, T_OBSTRUCTS_PASSABILITY))
+                   || cellHasTerrainFlag(player.loc, T_OBSTRUCTS_PASSABILITY))
                && !rogue.disturbed
-               && (!initiallyEmbedded || cellHasTerrainFlag(player.loc.x, player.loc.y, T_OBSTRUCTS_PASSABILITY))) {
+               && (!initiallyEmbedded || cellHasTerrainFlag(player.loc, T_OBSTRUCTS_PASSABILITY))) {
 
             recordKeystroke(REST_KEY, false, false);
             rogue.justRested = true;
@@ -2497,7 +2497,7 @@ void playerTurnEnded() {
 
             if (canSeeMonster(monst)) {
                 monst->bookkeepingFlags |= MB_WAS_VISIBLE;
-                if (cellHasTerrainFlag(monst->loc.x, monst->loc.y, T_OBSTRUCTS_PASSABILITY)
+                if (cellHasTerrainFlag(monst->loc, T_OBSTRUCTS_PASSABILITY)
                     && cellHasTMFlag(monst->loc.x, monst->loc.y, TM_IS_SECRET)) {
 
                     discover(monst->loc.x, monst->loc.y);
@@ -2579,11 +2579,11 @@ void playerTurnEnded() {
     }
 
     // "point of no return" check
-    if ((player.status[STATUS_LEVITATING] && cellHasTerrainFlag(player.loc.x, player.loc.y, T_LAVA_INSTA_DEATH | T_IS_DEEP_WATER | T_AUTO_DESCENT))
-        || (player.status[STATUS_IMMUNE_TO_FIRE] && cellHasTerrainFlag(player.loc.x, player.loc.y, T_LAVA_INSTA_DEATH))) {
+    if ((player.status[STATUS_LEVITATING] && cellHasTerrainFlag(player.loc, T_LAVA_INSTA_DEATH | T_IS_DEEP_WATER | T_AUTO_DESCENT))
+        || (player.status[STATUS_IMMUNE_TO_FIRE] && cellHasTerrainFlag(player.loc, T_LAVA_INSTA_DEATH))) {
         if (!rogue.receivedLevitationWarning) {
             turnsRequiredToShore = rogue.mapToShore[player.loc.x][player.loc.y] * player.movementSpeed / 100;
-            if (cellHasTerrainFlag(player.loc.x, player.loc.y, T_LAVA_INSTA_DEATH)) {
+            if (cellHasTerrainFlag(player.loc, T_LAVA_INSTA_DEATH)) {
                 turnsToShore = max(player.status[STATUS_LEVITATING], player.status[STATUS_IMMUNE_TO_FIRE]) * 100 / player.movementSpeed;
             } else {
                 turnsToShore = player.status[STATUS_LEVITATING] * 100 / player.movementSpeed;
