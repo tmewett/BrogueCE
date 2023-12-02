@@ -2702,8 +2702,8 @@ char displayInventory(unsigned short categoryMask,
     rogueEvent theEvent;
     boolean magicDetected, repeatDisplay;
     short highlightItemLine, itemSpaceRemaining;
-    cellDisplayBuffer dbuf[COLS][ROWS];
-    cellDisplayBuffer rbuf[COLS][ROWS];
+    screenDisplayBuffer dbuf;
+    screenDisplayBuffer rbuf;
     brogueButton buttons[50] = {{{0}}};
     short actionKey = -1;
     color darkItemColor;
@@ -2719,7 +2719,7 @@ char displayInventory(unsigned short categoryMask,
     assureCosmeticRNG;
 
     clearCursorPath();
-    clearDisplayBuffer(dbuf);
+    clearDisplayBuffer(&dbuf);
 
     whiteColorEscapeSequence[0] = '\0';
     encodeMessageColor(whiteColorEscapeSequence, 0, &white);
@@ -2917,7 +2917,7 @@ char displayInventory(unsigned short categoryMask,
 
         // Display the button. This would be redundant with the button loop,
         // except that we want the display to stick around until we get rid of it.
-        drawButton(&(buttons[i]), BUTTON_NORMAL, dbuf);
+        drawButton(&(buttons[i]), BUTTON_NORMAL, &dbuf);
     }
 
     // Add invisible previous and next buttons, so up and down arrows can select items.
@@ -2930,14 +2930,14 @@ char displayInventory(unsigned short categoryMask,
     buttons[itemNumber + extraLineCount + 1].hotkey[0] = NUMPAD_2;
     buttons[itemNumber + extraLineCount + 1].hotkey[1] = DOWN_ARROW;
 
-    overlayDisplayBuffer(dbuf, rbuf);
+    overlayDisplayBuffer(&dbuf, &rbuf);
 
     do {
         repeatDisplay = false;
 
         // Do the button loop.
         highlightItemLine = -1;
-        overlayDisplayBuffer(rbuf, NULL);   // Remove the inventory display while the buttons are active,
+        overlayDisplayBuffer(&rbuf, NULL);   // Remove the inventory display while the buttons are active,
                                             // since they look the same and we don't want their opacities to stack.
 
         highlightItemLine = buttonInputLoop(buttons,
@@ -2970,7 +2970,7 @@ char displayInventory(unsigned short categoryMask,
             do {
                 // Yes. Highlight the selected item. Do this by changing the button color and re-displaying it.
 
-                overlayDisplayBuffer(dbuf, NULL);
+                overlayDisplayBuffer(&dbuf, NULL);
 
                 //buttons[highlightItemLine].buttonColor = interfaceBoxColor;
                 drawButton(&(buttons[highlightItemLine]), BUTTON_PRESSED, NULL);
@@ -2980,15 +2980,15 @@ char displayInventory(unsigned short categoryMask,
                     // Display an information window about the item.
                     actionKey = printCarriedItemDetails(theItem, max(2, mapToWindowX(DCOLS - maxLength - 42)), mapToWindowY(2), 40, includeButtons, NULL);
 
-                    overlayDisplayBuffer(rbuf, NULL); // remove the item info window
+                    overlayDisplayBuffer(&rbuf, NULL); // remove the item info window
 
                     if (actionKey == -1) {
                         repeatDisplay = true;
-                        overlayDisplayBuffer(dbuf, NULL); // redisplay the inventory
+                        overlayDisplayBuffer(&dbuf, NULL); // redisplay the inventory
                     } else {
                         restoreRNG;
                         repeatDisplay = false;
-                        overlayDisplayBuffer(rbuf, NULL); // restore the original screen
+                        overlayDisplayBuffer(&rbuf, NULL); // restore the original screen
                     }
 
                     switch (actionKey) {
@@ -3042,7 +3042,7 @@ char displayInventory(unsigned short categoryMask,
         }
     } while (repeatDisplay); // so you can get info on multiple items sequentially
 
-    overlayDisplayBuffer(rbuf, NULL); // restore the original screen
+    overlayDisplayBuffer(&rbuf, NULL); // restore the original screen
 
     restoreRNG;
     return theKey;
@@ -5260,7 +5260,7 @@ boolean moveCursor(boolean *targetConfirmed,
         if (state) { // Also running a button loop.
 
             // Update the display.
-            overlayDisplayBuffer(state->dbuf, NULL);
+            overlayDisplayBuffer(&state->dbuf, NULL);
 
             // Get input.
             nextBrogueEvent(&theEvent, false, colorsDance, true);
@@ -5274,7 +5274,7 @@ boolean moveCursor(boolean *targetConfirmed,
             }
 
             // Revert the display.
-            overlayDisplayBuffer(state->rbuf, NULL);
+            overlayDisplayBuffer(&state->rbuf, NULL);
 
         } else { // No buttons to worry about.
             nextBrogueEvent(&theEvent, false, colorsDance, true);

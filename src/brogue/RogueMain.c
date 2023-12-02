@@ -1014,7 +1014,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     short i, y;
     char buf[200], highScoreText[200], buf2[200];
     rogueHighScoresEntry theEntry;
-    cellDisplayBuffer dbuf[COLS][ROWS];
+    screenDisplayBuffer dbuf;
     boolean playback;
     rogueEvent theEvent;
     item *theItem;
@@ -1101,8 +1101,8 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     if (rogue.quit) {
         blackOutScreen();
     } else {
-        copyDisplayBuffer(dbuf, displayBuffer);
-        funkyFade(dbuf, &black, 0, 120, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
+        copyDisplayBuffer(&dbuf, &displayBuffer);
+        funkyFade(&dbuf, &black, 0, 120, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
     }
 
     if (useCustomPhrasing) {
@@ -1187,7 +1187,7 @@ void victory(boolean superVictory) {
     unsigned long totalValue = 0;
     rogueHighScoresEntry theEntry;
     boolean qualified, isPlayback;
-    cellDisplayBuffer dbuf[COLS][ROWS];
+    screenDisplayBuffer dbuf;
     char recordingFilename[BROGUE_FILENAME_MAX] = {0};
 
     rogue.gameInProgress = false;
@@ -1203,22 +1203,22 @@ void victory(boolean superVictory) {
     //
     if (superVictory) {
         message(    "Light streams through the portal, and you are teleported out of the dungeon.", 0);
-        copyDisplayBuffer(dbuf, displayBuffer);
-        funkyFade(dbuf, &superVictoryColor, 0, 240, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
+        copyDisplayBuffer(&dbuf, &displayBuffer);
+        funkyFade(&dbuf, &superVictoryColor, 0, 240, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
         displayMoreSign();
         printString("Congratulations; you have transcended the Dungeons of Doom!                 ", mapToWindowX(0), mapToWindowY(-1), &black, &white, 0);
         displayMoreSign();
-        clearDisplayBuffer(dbuf);
+        clearDisplayBuffer(&dbuf);
         deleteMessages();
         strcpy(displayedMessage[0], "You retire in splendor, forever renowned for your remarkable triumph.     ");
     } else {
         message(    "You are bathed in sunlight as you throw open the heavy doors.", 0);
-        copyDisplayBuffer(dbuf, displayBuffer);
-        funkyFade(dbuf, &white, 0, 240, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
+        copyDisplayBuffer(&dbuf, &displayBuffer);
+        funkyFade(&dbuf, &white, 0, 240, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
         displayMoreSign();
         printString("Congratulations; you have escaped from the Dungeons of Doom!     ", mapToWindowX(0), mapToWindowY(-1), &black, &white, 0);
         displayMoreSign();
-        clearDisplayBuffer(dbuf);
+        clearDisplayBuffer(&dbuf);
         deleteMessages();
         strcpy(displayedMessage[0], "You sell your treasures and live out your days in fame and glory.");
     }
@@ -1226,12 +1226,12 @@ void victory(boolean superVictory) {
     //
     // Second screen - Show inventory and item's value
     //
-    printString(displayedMessage[0], mapToWindowX(0), mapToWindowY(-1), &white, &black, dbuf);
+    printString(displayedMessage[0], mapToWindowX(0), mapToWindowY(-1), &white, &black, &dbuf);
 
-    plotCharToBuffer(G_GOLD, mapToWindow((pos){ 2, 1 }), &yellow, &black, dbuf);
-    printString("Gold", mapToWindowX(4), mapToWindowY(1), &white, &black, dbuf);
+    plotCharToBuffer(G_GOLD, mapToWindow((pos){ 2, 1 }), &yellow, &black, &dbuf);
+    printString("Gold", mapToWindowX(4), mapToWindowY(1), &white, &black, &dbuf);
     sprintf(buf, "%li", rogue.gold);
-    printString(buf, mapToWindowX(60), mapToWindowY(1), &itemMessageColor, &black, dbuf);
+    printString(buf, mapToWindowX(60), mapToWindowY(1), &itemMessageColor, &black, &dbuf);
     totalValue += rogue.gold;
 
     for (i = 4, theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
@@ -1239,10 +1239,10 @@ void victory(boolean superVictory) {
             gemCount += theItem->quantity;
         }
         if (theItem->category == AMULET && superVictory) {
-            plotCharToBuffer(G_AMULET, (windowpos){ mapToWindowX(2), min(ROWS-1, i + 1) }, &yellow, &black, dbuf);
-            printString("The Birthright of Yendor", mapToWindowX(4), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
+            plotCharToBuffer(G_AMULET, (windowpos){ mapToWindowX(2), min(ROWS-1, i + 1) }, &yellow, &black, &dbuf);
+            printString("The Birthright of Yendor", mapToWindowX(4), min(ROWS-1, i + 1), &itemMessageColor, &black, &dbuf);
             sprintf(buf, "%li", max(0, itemValue(theItem) * 2));
-            printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
+            printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &itemMessageColor, &black, &dbuf);
             totalValue += max(0, itemValue(theItem) * 2);
             i++;
         } else {
@@ -1250,12 +1250,12 @@ void victory(boolean superVictory) {
             itemName(theItem, buf, true, true, &white);
             upperCase(buf);
 
-            plotCharToBuffer(theItem->displayChar, (windowpos){ mapToWindowX(2), min(ROWS-1, i + 1) }, &yellow, &black, dbuf);
-            printString(buf, mapToWindowX(4), min(ROWS-1, i + 1), &white, &black, dbuf);
+            plotCharToBuffer(theItem->displayChar, (windowpos){ mapToWindowX(2), min(ROWS-1, i + 1) }, &yellow, &black, &dbuf);
+            printString(buf, mapToWindowX(4), min(ROWS-1, i + 1), &white, &black, &dbuf);
 
             if (itemValue(theItem) > 0) {
                 sprintf(buf, "%li", max(0, itemValue(theItem)));
-                printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
+                printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &itemMessageColor, &black, &dbuf);
             }
 
             totalValue += max(0, itemValue(theItem));
@@ -1263,11 +1263,11 @@ void victory(boolean superVictory) {
         }
     }
     i++;
-    printString("TOTAL:", mapToWindowX(2), min(ROWS-1, i + 1), &lightBlue, &black, dbuf);
+    printString("TOTAL:", mapToWindowX(2), min(ROWS-1, i + 1), &lightBlue, &black, &dbuf);
     sprintf(buf, "%li", totalValue);
-    printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &lightBlue, &black, dbuf);
+    printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &lightBlue, &black, &dbuf);
 
-    funkyFade(dbuf, &white, 0, 120, COLS/2, ROWS/2, true);
+    funkyFade(&dbuf, &white, 0, 120, COLS/2, ROWS/2, true);
     displayMoreSign();
 
     //

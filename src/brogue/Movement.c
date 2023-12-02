@@ -2094,7 +2094,7 @@ boolean proposeOrConfirmLocation(short x, short y, char *failureMessage) {
 
 boolean useStairs(short stairDirection) {
     boolean succeeded = false;
-    //cellDisplayBuffer fromBuf[COLS][ROWS], toBuf[COLS][ROWS];
+    //screenDisplayBuffer fromBuf, toBuf;
 
     if (stairDirection == 1) {
         if (rogue.depthLevel < gameConst->deepestLevel) {

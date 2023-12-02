@@ -30,7 +30,7 @@
 tcell tmap[DCOLS][DROWS];                       // grids with info about the map
 pcell pmap[DCOLS][DROWS];
 short **scentMap;
-cellDisplayBuffer displayBuffer[COLS][ROWS];    // used to optimize plotCharWithColor
+screenDisplayBuffer displayBuffer;    // used to optimize plotCharWithColor
 short terrainRandomValues[DCOLS][DROWS][8];
 short **safetyMap;                              // used to help monsters flee
 short **allySafetyMap;                          // used to help allies flee

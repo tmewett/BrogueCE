@@ -1294,6 +1294,10 @@ typedef struct cellDisplayBuffer {
     char opacity;
 } cellDisplayBuffer;
 
+typedef struct screenDisplayBuffer {
+    cellDisplayBuffer cells[COLS][ROWS];
+} screenDisplayBuffer;
+
 typedef struct pcell {                              // permanent cell; have to remember this stuff to save levels
     enum tileType layers[NUMBER_TERRAIN_LAYERS];    // terrain
     unsigned long flags;                            // non-terrain cell flags
@@ -2786,8 +2790,8 @@ typedef struct buttonState {
     short winHeight;
 
     // Graphical buffers:
-    cellDisplayBuffer dbuf[COLS][ROWS]; // Where buttons are drawn.
-    cellDisplayBuffer rbuf[COLS][ROWS]; // Reversion screen state.
+    screenDisplayBuffer dbuf; // Where buttons are drawn.
+    screenDisplayBuffer rbuf; // Reversion screen state.
 } buttonState;
 
 enum messageFlags {
@@ -2914,19 +2918,19 @@ extern "C" {
     short printItemInfo(item *theItem, short y, boolean dim, boolean highlight);
     short printTerrainInfo(short x, short y, short py, const char *description, boolean dim, boolean highlight);
     void rectangularShading(short x, short y, short width, short height,
-                            const color *backColor, short opacity, cellDisplayBuffer dbuf[COLS][ROWS]);
+                            const color *backColor, short opacity, screenDisplayBuffer *dbuf);
     short printTextBox(char *textBuf, short x, short y, short width,
                        const color *foreColor, const color *backColor,
-                       cellDisplayBuffer rbuf[COLS][ROWS],
+                       screenDisplayBuffer *rbuf,
                        brogueButton *buttons, short buttonCount);
     void setButtonText(brogueButton *button, const char *textWithHotkey, const char *textWithoutHotkey);
-    void printMonsterDetails(creature *monst, cellDisplayBuffer rbuf[COLS][ROWS]);
-    void printFloorItemDetails(item *theItem, cellDisplayBuffer rbuf[COLS][ROWS]);
+    void printMonsterDetails(creature *monst, screenDisplayBuffer* rbuf);
+    void printFloorItemDetails(item *theItem, screenDisplayBuffer* rbuf);
     unsigned long printCarriedItemDetails(item *theItem,
                                           short x, short y, short width,
                                           boolean includeButtons,
-                                          cellDisplayBuffer rbuf[COLS][ROWS]);
-    void funkyFade(cellDisplayBuffer displayBuf[COLS][ROWS], const color *colorStart, const color *colorEnd, short stepCount, short x, short y, boolean invert);
+                                          screenDisplayBuffer* rbuf);
+    void funkyFade(screenDisplayBuffer *displayBuf, const color *colorStart, const color *colorEnd, short stepCount, short x, short y, boolean invert);
     void displayCenteredAlert(char *message);
     void flashMessage(char *message, short x, short y, int time, const color *fColor, const color *bColor);
     void flashTemporaryAlert(char *message, int time);
@@ -2943,8 +2947,8 @@ extern "C" {
     void desaturate(color *baseColor, short weight);
     void randomizeColor(color *baseColor, short randomizePercent);
     void swapColors(color *color1, color *color2);
-    void irisFadeBetweenBuffers(cellDisplayBuffer fromBuf[COLS][ROWS],
-                                cellDisplayBuffer toBuf[COLS][ROWS],
+    void irisFadeBetweenBuffers(screenDisplayBuffer *fromBuf,
+                                screenDisplayBuffer *toBuf,
                                 short x, short y,
                                 short frameCount,
                                 boolean outsideIn);
@@ -2952,24 +2956,24 @@ extern "C" {
     void hiliteCell(short x, short y, const color *hiliteColor, short hiliteStrength, boolean distinctColors);
     void colorMultiplierFromDungeonLight(short x, short y, color *editColor);
     void plotCharWithColor(enum displayGlyph inputChar, windowpos loc, const color *cellForeColor, const color *cellBackColor);
-    void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, const color *foreColor, const color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
+    void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, const color *foreColor, const color *backColor, screenDisplayBuffer *dbuf);
     void plotForegroundChar(enum displayGlyph inputChar, short x, short y, const color *foreColor, boolean affectedByLighting);
     void commitDraws(void);
     void dumpLevelToScreen(void);
     void hiliteCharGrid(char hiliteCharGrid[DCOLS][DROWS], const color *hiliteColor, short hiliteStrength);
     void blackOutScreen(void);
     void colorOverDungeon(const color *color);
-    void copyDisplayBuffer(cellDisplayBuffer toBuf[COLS][ROWS], cellDisplayBuffer fromBuf[COLS][ROWS]);
-    void clearDisplayBuffer(cellDisplayBuffer dbuf[COLS][ROWS]);
+    void copyDisplayBuffer(screenDisplayBuffer *toBuf, screenDisplayBuffer *fromBuf);
+    void clearDisplayBuffer(screenDisplayBuffer *dbuf);
     color colorFromComponents(char rgb[3]);
-    void overlayDisplayBuffer(cellDisplayBuffer overBuf[COLS][ROWS], cellDisplayBuffer previousBuf[COLS][ROWS]);
+    void overlayDisplayBuffer(screenDisplayBuffer *overBuf, screenDisplayBuffer *previousBuf);
     void flashForeground(short *x, short *y, const color **flashColor, short *flashStrength, short count, short frames);
     void flashCell(const color *theColor, short frames, short x, short y);
     void colorFlash(const color *theColor, unsigned long reqTerrainFlags, unsigned long reqTileFlags, short frames, short maxRadius, short x, short y);
-    void printString(const char *theString, short x, short y, const color *foreColor, const color* backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
+    void printString(const char *theString, short x, short y, const color *foreColor, const color* backColor, screenDisplayBuffer *dbuf);
     short wrapText(char *to, const char *sourceText, short width);
     short printStringWithWrapping(const char *theString, short x, short y, short width, const color *foreColor,
-                                  const color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
+                                  const color *backColor, screenDisplayBuffer *dbuf);
     boolean getInputTextString(char *inputText,
                                const char *prompt,
                                short maxLength,
@@ -3443,7 +3447,7 @@ extern "C" {
                                short winHeight);
     short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *event);
     short smoothHiliteGradient(const short currentXValue, const short maxXValue);
-    void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDisplayBuffer dbuf[COLS][ROWS]);
+    void drawButton(brogueButton *button, enum buttonDrawStates highlight, screenDisplayBuffer* dbuf);
     short buttonInputLoop(brogueButton *buttons,
                           short buttonCount,
                           short winX,
