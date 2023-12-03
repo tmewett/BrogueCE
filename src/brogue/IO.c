@@ -174,7 +174,7 @@ static short actionMenu(short x, boolean playingBack) {
     brogueButton buttons[ROWS] = {{{0}}};
     char yellowColorEscape[5] = "", whiteColorEscape[5] = "", darkGrayColorEscape[5] = "";
     short i, j, longestName = 0, buttonChosen;
-    screenDisplayBuffer dbuf, rbuf;
+    screenDisplayBuffer dbuf;
 
     encodeMessageColor(yellowColorEscape, 0, &itemMessageColor);
     encodeMessageColor(whiteColorEscape, 0, &white);
@@ -408,9 +408,12 @@ static short actionMenu(short x, boolean playingBack) {
 
         clearDisplayBuffer(&dbuf);
         rectangularShading(x - 1, y, longestName + 2, buttonCount, &black, INTERFACE_OPACITY / 2, &dbuf);
-        overlayDisplayBuffer(&dbuf, &rbuf);
+        ScreenLayerHandle layer = pushNewScreenLayer((ScreenLayerOptions) {
+            .name = "action menu",
+        });
+        overlayDisplayBuffer(&dbuf);
         buttonChosen = buttonInputLoop(buttons, buttonCount, x - 1, y, longestName + 2, buttonCount, NULL);
-        overlayDisplayBuffer(&rbuf, NULL);
+        popScreenLayer(layer);
         if (buttonChosen == -1) {
             return -1;
         } else if (takeActionOurselves[buttonChosen]) {
@@ -545,10 +548,9 @@ void mainInputLoop() {
     pos path[1000];
     creature *monst;
     item *theItem;
-    screenDisplayBuffer rbuf;
 
     boolean canceled, targetConfirmed, tabKey, focusedOnMonster, focusedOnItem, focusedOnTerrain,
-    playingBack, doEvent, textDisplayed;
+    playingBack, doEvent;
 
     rogueEvent theEvent;
     short **costMap, **playerPathingMap, **cursorSnapMap;
@@ -609,7 +611,10 @@ void mainInputLoop() {
         processSnapMap(cursorSnapMap);
 
         do {
-            textDisplayed = false;
+            // If text gets displayed, the layer will be stored in the handle provided,
+            // which must be popped from the screen before exiting this loop.
+            boolean textDisplayed = false;
+            ScreenLayerHandle textDisplayLayer = {0};
 
             // Draw the cursor and path
             if (isPosInMap(oldTargetLoc)) {
@@ -673,7 +678,11 @@ void mainInputLoop() {
 
                     focusedOnMonster = true;
                     if (monst != &player && (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience || player.status[STATUS_TELEPATHIC])) {
-                        printMonsterDetails(monst, &rbuf);
+
+                        textDisplayLayer = pushNewScreenLayer((ScreenLayerOptions) {
+                            .name = "monster text",
+                        });
+                        printMonsterDetails(monst);
                         textDisplayed = true;
                     }
                 } else if (theItem != NULL && playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
@@ -683,7 +692,10 @@ void mainInputLoop() {
 
                     focusedOnItem = true;
                     if (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience) {
-                        printFloorItemDetails(theItem, &rbuf);
+                        textDisplayLayer = pushNewScreenLayer((ScreenLayerOptions) {
+                            .name = "item text",
+                        });
+                        printFloorItemDetails(theItem);
                         textDisplayed = true;
                     }
                 } else if (cellHasTMFlag(rogue.cursorLoc.x, rogue.cursorLoc.y, TM_LIST_IN_SIDEBAR) && playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
@@ -738,7 +750,7 @@ void mainInputLoop() {
                 focusedOnItem = false;
                 focusedOnTerrain = false;
                 if (textDisplayed) {
-                    overlayDisplayBuffer(&rbuf, NULL); // Erase the monster info window.
+                    popScreenLayer(textDisplayLayer);
                 }
                 rogue.playbackMode = playingBack;
                 refreshSideBar(-1, -1, false);
@@ -1710,7 +1722,7 @@ void irisFadeBetweenBuffers(screenDisplayBuffer* fromBuf,
         fastForward = pauseAnimation(16);
         frame++;
     } while (frame <= frameCount && !fastForward);
-    overlayDisplayBuffer(toBuf, NULL);
+    overlayDisplayBuffer(toBuf);
 }
 
 // takes dungeon coordinates
@@ -1972,14 +1984,10 @@ color colorFromComponents(char rgb[3]) {
 
 // draws overBuf over the current display with per-cell pseudotransparency as specified in overBuf.
 // If previousBuf is not null, it gets filled with the preexisting display for reversion purposes.
-void overlayDisplayBuffer(screenDisplayBuffer *overBuf, screenDisplayBuffer *previousBuf) {
+void overlayDisplayBuffer(screenDisplayBuffer *overBuf) {
     short i, j;
     color foreColor, backColor, tempColor;
     enum displayGlyph character;
-
-    if (previousBuf) {
-        copyDisplayBuffer(previousBuf, &displayBuffer);
-    }
 
     for (i=0; i<COLS; i++) {
         for (j=0; j<ROWS; j++) {
@@ -2005,6 +2013,48 @@ void overlayDisplayBuffer(screenDisplayBuffer *overBuf, screenDisplayBuffer *pre
             }
         }
     }
+}
+
+#define MAXIMUM_SCREEN_LAYER_COUNT 10
+
+static int currentScreenLayerIndex = 0;
+static uint64_t currentScreenLayerUniqueCounter = 7;
+static screenDisplayBuffer screenLayerResetBuffers[MAXIMUM_SCREEN_LAYER_COUNT];
+static uint64_t screenLayerResetUniqueCounters[MAXIMUM_SCREEN_LAYER_COUNT];
+
+static ScreenLayerOptions screenLayerOptions[MAXIMUM_SCREEN_LAYER_COUNT];
+
+__attribute__((unused)) static inline void debugPrintScreenLayerState(void)  {
+    printf("SCREEN LAYERS\n");
+    for (int i = 1; i <= currentScreenLayerIndex; i++) {
+        printf(" -- %s\n", screenLayerOptions[i].name);
+    }
+    printf("END LAYERS\n");
+}
+
+ScreenLayerHandle pushNewScreenLayer(ScreenLayerOptions options) {
+    brogueAssert(currentScreenLayerIndex + 1 < MAXIMUM_SCREEN_LAYER_COUNT);
+    currentScreenLayerUniqueCounter++;
+    screenLayerResetBuffers[currentScreenLayerIndex] = displayBuffer;
+    screenLayerResetUniqueCounters[currentScreenLayerIndex] = currentScreenLayerUniqueCounter;
+    currentScreenLayerIndex++;
+    // Record the options so that the platform can inspect them later, and
+    // they can be used to apply effects.
+    screenLayerOptions[currentScreenLayerIndex] = options;
+
+    // debugPrintScreenLayerState();
+    return (ScreenLayerHandle){
+        .index = currentScreenLayerIndex,
+        .uniqueId = currentScreenLayerUniqueCounter
+    };
+}
+void popScreenLayer(ScreenLayerHandle handle) {
+    brogueAssert(handle.index == currentScreenLayerIndex);
+    currentScreenLayerIndex--;
+    brogueAssert(handle.uniqueId == screenLayerResetUniqueCounters[currentScreenLayerIndex]);
+    displayBuffer = screenLayerResetBuffers[currentScreenLayerIndex];
+
+    // debugPrintScreenLayerState();
 }
 
 // Takes a list of locations, a color and a list of strengths and flashes the foregrounds of those locations.
@@ -2741,7 +2791,7 @@ boolean getInputTextString(char *inputText,
     char keystroke, suffix[100];
     const short textEntryBounds[TEXT_INPUT_TYPES][2] = {{' ', '~'}, {' ', '~'}, {'0', '9'}};
     screenDisplayBuffer dbuf;
-    screenDisplayBuffer rbuf;
+    ScreenLayerHandle dialogBoxLayer = {0};
 
     // x and y mark the origin for text entry.
     if (useDialogBox) {
@@ -2750,7 +2800,11 @@ boolean getInputTextString(char *inputText,
         clearDisplayBuffer(&dbuf);
         rectangularShading(x - 1, y - 2, max(maxLength, strLenWithoutEscapes(prompt)) + 2,
                            4, &interfaceBoxColor, INTERFACE_OPACITY, &dbuf);
-        overlayDisplayBuffer(&dbuf, &rbuf);
+        
+        dialogBoxLayer = pushNewScreenLayer((ScreenLayerOptions) {
+            .name = "input text box",
+        });
+        overlayDisplayBuffer(&dbuf);
         printString(prompt, x, y - 1, &white, &interfaceBoxColor, NULL);
         for (i=0; i<maxLength; i++) {
             plotCharWithColor(' ', (windowpos){ x + i, y }, &black, &black);
@@ -2830,7 +2884,7 @@ boolean getInputTextString(char *inputText,
     } while (keystroke != RETURN_KEY && keystroke != ESCAPE_KEY);
 
     if (useDialogBox) {
-        overlayDisplayBuffer(&rbuf, NULL);
+        popScreenLayer(dialogBoxLayer);
     }
 
     inputText[charNum] = '\0';
@@ -2938,7 +2992,6 @@ void waitForKeystrokeOrMouseClick() {
 boolean confirm(char *prompt, boolean alsoDuringPlayback) {
     short retVal;
     brogueButton buttons[2] = {{{0}}};
-    screenDisplayBuffer rbuf;
     char whiteColorEscape[20] = "";
     char yellowColorEscape[20] = "";
 
@@ -2964,8 +3017,11 @@ boolean confirm(char *prompt, boolean alsoDuringPlayback) {
     buttons[1].hotkey[3] = ESCAPE_KEY;
     buttons[1].flags |= (B_WIDE_CLICK_AREA | B_KEYPRESS_HIGHLIGHT);
 
-    retVal = printTextBox(prompt, COLS/3, ROWS/3, COLS/3, &white, &interfaceBoxColor, &rbuf, buttons, 2);
-    overlayDisplayBuffer(&rbuf, NULL);
+    ScreenLayerHandle confirmLayer = pushNewScreenLayer((ScreenLayerOptions) {
+        .name = "confirm",
+    });
+    retVal = printTextBox(prompt, COLS/3, ROWS/3, COLS/3, &white, &interfaceBoxColor, buttons, 2);
+    popScreenLayer(confirmLayer);
 
     if (retVal == -1 || retVal == 1) { // If they canceled or pressed no.
         return false;
@@ -3247,8 +3303,8 @@ static void drawMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], sho
         }
     }
 
-    overlayDisplayBuffer(rbuf, NULL);
-    overlayDisplayBuffer(&dbuf, NULL);
+    overlayDisplayBuffer(rbuf);
+    overlayDisplayBuffer(&dbuf);
 }
 
 // Pull-down/pull-up animation.
@@ -3370,7 +3426,7 @@ void displayMessageArchive() {
     offset = scrollMessageArchive(messageBuffer, length, offset, height, &rbuf);
     animateMessageArchive(false, messageBuffer, length, offset, height, &rbuf);
 
-    overlayDisplayBuffer(&rbuf, NULL);
+    overlayDisplayBuffer(&rbuf);
     updateFlavorText();
     confirmMessages();
     updateMessageDisplay();
@@ -4058,8 +4114,7 @@ char nextKeyPress(boolean textInput) {
 
 void printHelpScreen() {
     short i, j;
-    screenDisplayBuffer dbuf;
-    screenDisplayBuffer rbuf;
+    
     char helpText[BROGUE_HELP_LINE_COUNT][DCOLS*3] = {
         "",
         "",
@@ -4105,6 +4160,7 @@ void printHelpScreen() {
         }
     }
 
+    screenDisplayBuffer dbuf;
     clearDisplayBuffer(&dbuf);
 
     // Print the text to the dbuf.
@@ -4121,9 +4177,13 @@ void printHelpScreen() {
     }
 
     // Display.
-    overlayDisplayBuffer(&dbuf, &rbuf);
+
+    ScreenLayerHandle ackLayer = pushNewScreenLayer((ScreenLayerOptions) {
+        .name = "help screen",
+    });
+    overlayDisplayBuffer(&dbuf);
     waitForAcknowledgment();
-    overlayDisplayBuffer(&rbuf, NULL);
+    popScreenLayer(ackLayer);
     updateFlavorText();
     updateMessageDisplay();
 }
@@ -4179,7 +4239,7 @@ static void printDiscoveries(short category, short count, unsigned short itemCha
 void printDiscoveriesScreen() {
     short i, j, y;
     screenDisplayBuffer dbuf;
-    screenDisplayBuffer rbuf;
+    
 
     clearDisplayBuffer(&dbuf);
 
@@ -4206,11 +4266,15 @@ void printDiscoveriesScreen() {
             dbuf.cells[i][j].opacity = (i < STAT_BAR_WIDTH ? 0 : INTERFACE_OPACITY);
         }
     }
-    overlayDisplayBuffer(&dbuf, &rbuf);
+
+    ScreenLayerHandle discoveriesLayer = pushNewScreenLayer((ScreenLayerOptions) {
+        .name = "discoveries",
+    });
+    overlayDisplayBuffer(&dbuf);
 
     waitForKeystrokeOrMouseClick();
 
-    overlayDisplayBuffer(&rbuf, NULL);
+    popScreenLayer(discoveriesLayer);
 }
 
 void printHighScores(boolean hiliteMostRecent) {
@@ -4924,7 +4988,6 @@ void rectangularShading(short x, short y, short width, short height,
 // (Returns -1 for canceled; otherwise the button index number.)
 short printTextBox(char *textBuf, short x, short y, short width,
                    const color *foreColor, const color *backColor,
-                   screenDisplayBuffer *rbuf,
                    brogueButton *buttons, short buttonCount) {
     screenDisplayBuffer dbuf;
 
@@ -4986,7 +5049,7 @@ short printTextBox(char *textBuf, short x, short y, short width,
     clearDisplayBuffer(&dbuf);
     printStringWithWrapping(textBuf, x2, y2, width, foreColor, backColor, &dbuf);
     rectangularShading(x2, y2, width, lineCount + padLines, backColor, INTERFACE_OPACITY, &dbuf);
-    overlayDisplayBuffer(&dbuf, rbuf);
+    overlayDisplayBuffer(&dbuf);
 
     if (buttonCount > 0) {
         return buttonInputLoop(buttons, buttonCount, x2, y2, width, by - y2 + 1 + padLines, NULL);
@@ -4995,20 +5058,22 @@ short printTextBox(char *textBuf, short x, short y, short width,
     }
 }
 
-void printMonsterDetails(creature *monst, screenDisplayBuffer *rbuf) {
+void printMonsterDetails(creature *monst) {
     char textBuf[COLS * 100];
 
     monsterDetails(textBuf, monst);
-    printTextBox(textBuf, monst->loc.x, 0, 0, &white, &black, rbuf, NULL, 0);
+    printTextBox(textBuf, monst->loc.x, 0, 0, &white, &black, NULL, 0);
 }
 
 // Displays the item info box with the dark blue background.
 // If includeButtons is true, we include buttons for item actions.
 // Returns the key of an action to take, if any; otherwise -1.
-unsigned long printCarriedItemDetails(item *theItem,
-                                      short x, short y, short width,
-                                      boolean includeButtons,
-                                      screenDisplayBuffer *rbuf) {
+unsigned long printCarriedItemDetails(
+    item *theItem,
+    short x, short y,
+    short width,
+    boolean includeButtons
+) {
     char textBuf[COLS * 100], goldColorEscape[5] = "", whiteColorEscape[5] = "";
     brogueButton buttons[20] = {{{0}}};
     short b;
@@ -5075,7 +5140,7 @@ unsigned long printCarriedItemDetails(item *theItem,
         buttons[b].hotkey[2] = DOWN_ARROW;
         b++;
     }
-    b = printTextBox(textBuf, x, y, width, &white, &interfaceBoxColor, rbuf, buttons, b);
+    b = printTextBox(textBuf, x, y, width, &white, &interfaceBoxColor, buttons, b);
 
     if (!includeButtons) {
         waitForKeystrokeOrMouseClick();
@@ -5090,9 +5155,9 @@ unsigned long printCarriedItemDetails(item *theItem,
 }
 
 // Returns true if an action was taken.
-void printFloorItemDetails(item *theItem, screenDisplayBuffer *rbuf) {
+void printFloorItemDetails(item *theItem) {
     char textBuf[COLS * 100];
 
     itemDetails(textBuf, theItem);
-    printTextBox(textBuf, theItem->loc.x, 0, 0, &white, &black, rbuf, NULL, 0);
+    printTextBox(textBuf, theItem->loc.x, 0, 0, &white, &black, NULL, 0);
 }

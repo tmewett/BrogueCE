@@ -44,7 +44,6 @@ static short dialogSelectEntryFromList(
 
     short x=0, y=0, width=0, height=0;
     screenDisplayBuffer dbuf;
-    screenDisplayBuffer rbuf;
     short i, selectedButton, len, maxLen;
     char buttonText[COLS];
 
@@ -78,11 +77,14 @@ static short dialogSelectEntryFromList(
     //Dialog background
     rectangularShading(x - 1, y - 1, width + 1, height + 1, &interfaceBoxColor, INTERFACE_OPACITY, &dbuf);
     //Display the title/background and save the prior display state
-    overlayDisplayBuffer(&dbuf, &rbuf);
+    ScreenLayerHandle buttonLayer = pushNewScreenLayer((ScreenLayerOptions) {
+        .name = "dialog select",
+    });
+    overlayDisplayBuffer(&dbuf);
     //Display the buttons and wait for user selection
     selectedButton = buttonInputLoop(buttons, buttonCount, x, y, width, height, NULL);
     //Revert the display state
-    overlayDisplayBuffer(&rbuf, NULL);
+    popScreenLayer(buttonLayer);
 
     return selectedButton;
 }

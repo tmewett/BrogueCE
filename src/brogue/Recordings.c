@@ -302,8 +302,6 @@ If this is a different computer from the one on which the recording was saved, t
 might succeed on the original computer."
 
 static void playbackPanic() {
-    screenDisplayBuffer rbuf;
-
     if (!rogue.playbackOOS) {
         rogue.playbackFastForward = false;
         rogue.playbackPaused = true;
@@ -316,13 +314,25 @@ static void playbackPanic() {
         confirmMessages();
         message("Playback is out of sync.", 0);
 
-        printTextBox(OOS_APOLOGY, 0, 0, 0, &white, &black, &rbuf, NULL, 0);
+        // If the platform shows the output directly in the console,
+        // then a simple 'printf' will paint over the screen.
+        // Therefore, we push an additional layer in order to fix the screen
+        // after the printf statement:
+
+        ScreenLayerHandle panicLayer1 = pushNewScreenLayer((ScreenLayerOptions) {
+            .name = "panic1",
+        });
+        ScreenLayerHandle panicLayer2 = pushNewScreenLayer((ScreenLayerOptions) {
+            .name = "panic2",
+        });
+
+        printTextBox(OOS_APOLOGY, 0, 0, 0, &white, &black, NULL, 0);
 
         rogue.playbackMode = false;
         displayMoreSign();
         rogue.playbackMode = true;
 
-        overlayDisplayBuffer(&rbuf, NULL);
+        popScreenLayer(panicLayer2);
 
         if (nonInteractivePlayback) {
             rogue.gameHasEnded = true;
@@ -330,7 +340,8 @@ static void playbackPanic() {
         rogue.gameExitStatusCode = EXIT_STATUS_FAILURE_RECORDING_OOS;
 
         printf("Playback panic at location %li! Turn number %li.\n", recordingLocation - 1, rogue.playerTurnNumber);
-        overlayDisplayBuffer(&rbuf, NULL);
+
+        popScreenLayer(panicLayer1);
 
         mainInputLoop();
     }
@@ -432,7 +443,6 @@ static void loadNextAnnotation() {
 }
 
 void displayAnnotation() {
-    screenDisplayBuffer rbuf;
 
     if (rogue.playbackMode
         && rogue.playerTurnNumber == rogue.nextAnnotationTurn) {
@@ -440,13 +450,16 @@ void displayAnnotation() {
         if (!rogue.playbackFastForward) {
             refreshSideBar(-1, -1, false);
 
-            printTextBox(rogue.nextAnnotation, player.loc.x, 0, 0, &black, &white, &rbuf, NULL, 0);
+            ScreenLayerHandle annotationLayer = pushNewScreenLayer((ScreenLayerOptions) {
+                .name = "annotation",
+            });
+            printTextBox(rogue.nextAnnotation, player.loc.x, 0, 0, &black, &white, NULL, 0);
 
             rogue.playbackMode = false;
             displayMoreSign();
             rogue.playbackMode = true;
 
-            overlayDisplayBuffer(&rbuf, NULL);
+            popScreenLayer(annotationLayer);
         }
 
         loadNextAnnotation();
@@ -639,7 +652,6 @@ static boolean unpause() {
 static void printPlaybackHelpScreen() {
     short i, j;
     screenDisplayBuffer dbuf;
-    screenDisplayBuffer rbuf;
     char helpText[PLAYBACK_HELP_LINE_COUNT][80] = {
         "Commands:",
         "",
@@ -683,12 +695,16 @@ static void printPlaybackHelpScreen() {
             dbuf.cells[i][j].opacity = (i < STAT_BAR_WIDTH ? 0 : INTERFACE_OPACITY);
         }
     }
-    overlayDisplayBuffer(&dbuf, &rbuf);
+
+    ScreenLayerHandle ackLayer = pushNewScreenLayer((ScreenLayerOptions) {
+        .name = "playback help acknowledge",
+    });
+    overlayDisplayBuffer(&dbuf);
 
     rogue.playbackMode = false;
     waitForAcknowledgment();
     rogue.playbackMode = true;
-    overlayDisplayBuffer(&rbuf, NULL);
+    popScreenLayer(ackLayer);
 }
 
 static void resetPlayback() {
@@ -765,7 +781,7 @@ static void seek(unsigned long seekTarget, enum recordingSeekModes seekMode) {
     if (useProgressBar) {
         clearDisplayBuffer(&dbuf);
         rectangularShading((COLS - 20) / 2, ROWS / 2, 20, 1, &black, INTERFACE_OPACITY, &dbuf);
-        overlayDisplayBuffer(&dbuf, NULL);
+        overlayDisplayBuffer(&dbuf);
         commitDraws();
     }
     rogue.playbackFastForward = true;
@@ -1356,7 +1372,7 @@ boolean loadSavedGame() {
         clearDisplayBuffer(&dbuf);
         rectangularShading((COLS - 20) / 2, ROWS / 2, 20, 1, &black, INTERFACE_OPACITY, &dbuf);
         rogue.playbackFastForward = false;
-        overlayDisplayBuffer(&dbuf, NULL);
+        overlayDisplayBuffer(&dbuf);
         rogue.playbackFastForward = true;
 
         while (recordingLocation < lengthOfPlaybackFile

@@ -2703,7 +2703,6 @@ char displayInventory(unsigned short categoryMask,
     boolean magicDetected, repeatDisplay;
     short highlightItemLine, itemSpaceRemaining;
     screenDisplayBuffer dbuf;
-    screenDisplayBuffer rbuf;
     brogueButton buttons[50] = {{{0}}};
     short actionKey = -1;
     color darkItemColor;
@@ -2930,15 +2929,23 @@ char displayInventory(unsigned short categoryMask,
     buttons[itemNumber + extraLineCount + 1].hotkey[0] = NUMPAD_2;
     buttons[itemNumber + extraLineCount + 1].hotkey[1] = DOWN_ARROW;
 
-    overlayDisplayBuffer(&dbuf, &rbuf);
+    ScreenLayerHandle inventoryLayer = pushNewScreenLayer((ScreenLayerOptions) {
+        .name = "inventory",
+    });
+    overlayDisplayBuffer(&dbuf);
 
     do {
         repeatDisplay = false;
 
         // Do the button loop.
         highlightItemLine = -1;
-        overlayDisplayBuffer(&rbuf, NULL);   // Remove the inventory display while the buttons are active,
-                                            // since they look the same and we don't want their opacities to stack.
+
+        // Remove the inventory display while the buttons are active,
+        // since they look the same and we don't want their opacities to stack.
+        popScreenLayer(inventoryLayer);
+        inventoryLayer = pushNewScreenLayer((ScreenLayerOptions) {
+            .name = "inventory",
+        });
 
         highlightItemLine = buttonInputLoop(buttons,
                                             itemCount + extraLineCount + 2, // the 2 is for up/down hotkeys
@@ -2970,7 +2977,7 @@ char displayInventory(unsigned short categoryMask,
             do {
                 // Yes. Highlight the selected item. Do this by changing the button color and re-displaying it.
 
-                overlayDisplayBuffer(&dbuf, NULL);
+                overlayDisplayBuffer(&dbuf);
 
                 //buttons[highlightItemLine].buttonColor = interfaceBoxColor;
                 drawButton(&(buttons[highlightItemLine]), BUTTON_PRESSED, NULL);
@@ -2978,17 +2985,24 @@ char displayInventory(unsigned short categoryMask,
 
                 if (theEvent.shiftKey || theEvent.controlKey || waitForAcknowledge) {
                     // Display an information window about the item.
-                    actionKey = printCarriedItemDetails(theItem, max(2, mapToWindowX(DCOLS - maxLength - 42)), mapToWindowY(2), 40, includeButtons, NULL);
+                    actionKey = printCarriedItemDetails(theItem, max(2, mapToWindowX(DCOLS - maxLength - 42)), mapToWindowY(2), 40, includeButtons);
 
-                    overlayDisplayBuffer(&rbuf, NULL); // remove the item info window
+                    // remove the item info window
+                    popScreenLayer(inventoryLayer);
+                    inventoryLayer = pushNewScreenLayer((ScreenLayerOptions) {
+                        .name = "inventory",
+                    });
 
                     if (actionKey == -1) {
                         repeatDisplay = true;
-                        overlayDisplayBuffer(&dbuf, NULL); // redisplay the inventory
+                        overlayDisplayBuffer(&dbuf); // redisplay the inventory
                     } else {
                         restoreRNG;
                         repeatDisplay = false;
-                        overlayDisplayBuffer(&rbuf, NULL); // restore the original screen
+                        popScreenLayer(inventoryLayer);
+                        inventoryLayer = pushNewScreenLayer((ScreenLayerOptions) {
+                            .name = "inventory",
+                        }); // restore the original screen
                     }
 
                     switch (actionKey) {
@@ -3035,6 +3049,7 @@ char displayInventory(unsigned short categoryMask,
                     } else if (actionKey > -1) {
                         // Player took an action directly from the item screen; we're done here.
                         restoreRNG;
+                        popScreenLayer(inventoryLayer);
                         return 0;
                     }
                 }
@@ -3042,7 +3057,8 @@ char displayInventory(unsigned short categoryMask,
         }
     } while (repeatDisplay); // so you can get info on multiple items sequentially
 
-    overlayDisplayBuffer(&rbuf, NULL); // restore the original screen
+    // restore the original screen
+    popScreenLayer(inventoryLayer);
 
     restoreRNG;
     return theKey;
@@ -5260,7 +5276,7 @@ boolean moveCursor(boolean *targetConfirmed,
         if (state) { // Also running a button loop.
 
             // Update the display.
-            overlayDisplayBuffer(&state->dbuf, NULL);
+            overlayDisplayBuffer(&state->dbuf);
 
             // Get input.
             nextBrogueEvent(&theEvent, false, colorsDance, true);
@@ -5274,7 +5290,7 @@ boolean moveCursor(boolean *targetConfirmed,
             }
 
             // Revert the display.
-            overlayDisplayBuffer(&state->rbuf, NULL);
+            overlayDisplayBuffer(&state->rbuf);
 
         } else { // No buttons to worry about.
             nextBrogueEvent(&theEvent, false, colorsDance, true);

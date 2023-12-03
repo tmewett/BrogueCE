@@ -299,8 +299,8 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
                             drawButton(&(state->buttons[i]), BUTTON_PRESSED, &state->dbuf);
 
                             // Update the display.
-                            overlayDisplayBuffer(&state->rbuf, NULL);
-                            overlayDisplayBuffer(&state->dbuf, NULL);
+                            overlayDisplayBuffer(&state->rbuf);
+                            overlayDisplayBuffer(&state->dbuf);
 
                             if (!rogue.playbackMode || rogue.playbackPaused) {
                                 // Wait for a little; then we're done.
@@ -359,7 +359,7 @@ short buttonInputLoop(brogueButton *buttons,
 
     do {
         // Update the display.
-        overlayDisplayBuffer(&state.dbuf, NULL);
+        overlayDisplayBuffer(&state.dbuf);
 
         // Get input.
         nextBrogueEvent(&theEvent, true, false, false);
@@ -368,7 +368,7 @@ short buttonInputLoop(brogueButton *buttons,
         button = processButtonInput(&state, &canceled, &theEvent);
 
         // Revert the display.
-        overlayDisplayBuffer(&state.rbuf, NULL);
+        overlayDisplayBuffer(&state.rbuf);
 
     } while (button == -1 && !canceled);
 
@@ -376,7 +376,7 @@ short buttonInputLoop(brogueButton *buttons,
         *returnEvent = theEvent;
     }
 
-    //overlayDisplayBuffer(dbuf, NULL); // hangs around
+    //overlayDisplayBuffer(dbuf); // hangs around
 
     restoreRNG;
 
