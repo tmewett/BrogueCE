@@ -188,7 +188,8 @@ typedef struct windowpos {
 
 #define MACHINES_BUFFER_LENGTH  200
 
-#define INPUT_RECORD_BUFFER     1000        // how many bytes of input data to keep in memory before saving it to disk
+#define INPUT_RECORD_BUFFER     1000        // the threshold size before flushing the record buffer to disk
+#define INPUT_RECORD_BUFFER_MAX_SIZE 1100   // the maximum size of the record buffer 
 #define DEFAULT_PLAYBACK_DELAY  50
 
 #define HIGH_SCORES_COUNT       30
