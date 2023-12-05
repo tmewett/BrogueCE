@@ -27,7 +27,6 @@ extra_version :=
 else
 extra_version := $(shell bash tools/git-extra-version)
 endif
-cppflags += -DBROGUE_EXTRA_VERSION='"$(extra_version)"'
 
 ifeq ($(TERMINAL),YES)
 sources += $(addprefix src/platform/,curses-platform.c term.c)

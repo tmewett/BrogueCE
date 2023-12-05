@@ -31,10 +31,6 @@
 #include <time.h>
 #include "PlatformDefines.h"
 
-#ifndef BROGUE_EXTRA_VERSION
-#error "The BROGUE_EXTRA_VERSION macro is undefined."
-#endif
-
 // unicode: comment this line to revert to ASCII
 #define USE_UNICODE
 
