@@ -64,7 +64,7 @@ char displayDetail[DCOLS][DROWS];       // used to make certain per-cell data ac
 FILE *RNGLogFile;
 #endif
 
-unsigned char inputRecordBuffer[INPUT_RECORD_BUFFER + 100];
+unsigned char inputRecordBuffer[INPUT_RECORD_BUFFER_MAX_SIZE];
 unsigned short locationInRecordingBuffer;
 unsigned long randomNumbersGenerated;
 unsigned long positionInPlaybackFile;

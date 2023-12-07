@@ -41,8 +41,12 @@ enum recordingSeekModes {
 };
 
 static void recordChar(unsigned char c) {
-    inputRecordBuffer[locationInRecordingBuffer++] = c;
-    recordingLocation++;
+    if (locationInRecordingBuffer < INPUT_RECORD_BUFFER_MAX_SIZE) {
+        inputRecordBuffer[locationInRecordingBuffer++] = c;
+        recordingLocation++;
+    } else {
+        printf("Recording buffer length exceeded at location %li! Turn number %li.\n", recordingLocation - 1, rogue.playerTurnNumber);
+    }
 }
 
 static void considerFlushingBufferToFile() {
@@ -217,34 +221,31 @@ static void writeHeaderInfo(char *path) {
 }
 
 void flushBufferToFile() {
-    if (currentFilePath[0] == '\0') {
-        return;
-    }
-
-    short i;
-    FILE *recordFile;
-
     if (rogue.playbackMode) {
         return;
     }
 
-    lengthOfPlaybackFile += locationInRecordingBuffer;
-    writeHeaderInfo(currentFilePath);
+    if (!currentFilePath[0] == '\0') {
+        short i;
+        FILE *recordFile;
 
-    if (locationInRecordingBuffer != 0) {
+        lengthOfPlaybackFile += locationInRecordingBuffer;
+        writeHeaderInfo(currentFilePath);
 
-        recordFile = fopen(currentFilePath, "ab");
+        if (locationInRecordingBuffer != 0) {
 
-        for (i=0; i<locationInRecordingBuffer; i++) {
-            putc(inputRecordBuffer[i], recordFile);
+            recordFile = fopen(currentFilePath, "ab");
+
+            for (i=0; i<locationInRecordingBuffer; i++) {
+                putc(inputRecordBuffer[i], recordFile);
+            }
+
+            if (recordFile) {
+                fclose(recordFile);
+            }
         }
-
-        if (recordFile) {
-            fclose(recordFile);
-        }
-
-        locationInRecordingBuffer = 0;
     }
+    locationInRecordingBuffer = 0;
 }
 
 void fillBufferFromFile() {
