@@ -2982,7 +2982,8 @@ extern "C" {
     void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance, boolean realInputEvenInPlayback);
     void executeMouseClick(rogueEvent *theEvent);
     void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKey);
-    void initializeLevel(void);
+    boolean placeStairs(pos *upStairsLoc);
+    void initializeLevel(pos upStairsLoc);
     void startLevel (short oldLevelNumber, short stairDirection);
     void updateMinersLightRadius(void);
     void freeCreature(creature *monst);
