@@ -1774,6 +1774,9 @@ void plotCharWithColor(enum displayGlyph inputChar, windowpos loc, const color *
     foreRand, backRand;
 
     brogueAssert(locIsInWindow(loc));
+    if (!locIsInWindow(loc)) {
+        return;
+    }
 
     if (rogue.gameHasEnded || rogue.playbackFastForward) {
         return;
@@ -1828,6 +1831,9 @@ void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, const color *f
     }
 
     brogueAssert(locIsInWindow(loc));
+    if (!locIsInWindow(loc)) {
+        return;
+    }
 
     oldRNG = rogue.RNG;
     rogue.RNG = RNG_COSMETIC;
