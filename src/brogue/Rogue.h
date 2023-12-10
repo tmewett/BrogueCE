@@ -3455,6 +3455,8 @@ extern "C" {
 
     void dijkstraScan(short **distanceMap, short **costMap, boolean useDiagonals);
 
+    void readFromConfig(playerCharacter* rogue, short* initialGraphics);
+
 #if defined __cplusplus
 }
 #endif

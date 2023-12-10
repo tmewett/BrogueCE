@@ -102,12 +102,11 @@ int main(int argc, char *argv[])
     rogue.nextGame = NG_NOTHING;
     rogue.nextGamePath[0] = '\0';
     rogue.nextGameSeed = 0;
-    rogue.wizard = false;
-    rogue.displayStealthRangeMode = false;
-    rogue.trueColorMode = false;
 
-    enum graphicsModes initialGraphics = TEXT_GRAPHICS;
+    enum graphicsModes initialGraphics;
 
+    readFromConfig(&rogue, &initialGraphics);
+    
     int i;
     for (i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--scores") == 0) {
