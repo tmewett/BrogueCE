@@ -41,7 +41,7 @@ const char* graphicsModeMappings[] = {
     NULL
 };
 
-configParams createDefaultConfig() {
+static configParams createDefaultConfig() {
     configParams config;
 
     config.playbackDelayPerTurn = DEFAULT_PLAYBACK_DELAY;
@@ -55,7 +55,7 @@ configParams createDefaultConfig() {
     return config;
 }
 
-char* loadConfigFile() {
+static char* loadConfigFile() {
     FILE* jsonFile = fopen(JSON_FILENAME, "r");
 
     if (!jsonFile) {
@@ -81,7 +81,7 @@ char* loadConfigFile() {
     return buffer;
 }
 
-configEntry* getFieldEntries(configParams* config) {
+static configEntry* getFieldEntries(configParams* config) {
     int numFields = 7;
 
     configEntry* entries = calloc(numFields + 1, sizeof(configEntry));
@@ -98,7 +98,7 @@ configEntry* getFieldEntries(configParams* config) {
     return entries;
 }
 
-short mapStringToEnum(const char* inputString, const char** mappings) {
+static short mapStringToEnum(const char* inputString, const char** mappings) {
     for (short i = 0; mappings[i]; i++) {
         if (strcmp(inputString, mappings[i]) == 0) {
             return i;
@@ -107,7 +107,7 @@ short mapStringToEnum(const char* inputString, const char** mappings) {
     return -1;
 }
 
-void parseConfigValues(const char* jsonString, configParams* config) {
+static void parseConfigValues(const char* jsonString, configParams* config) {
     if (!jsonString || !config) {
         return; // Invalid input
     }
@@ -155,7 +155,7 @@ void parseConfigValues(const char* jsonString, configParams* config) {
     cJSON_Delete(root);
 }
 
-char* createJsonString(configParams* config) {
+static char* createJsonString(configParams* config) {
     cJSON* root = cJSON_CreateObject();
 
     configEntry* entries = getFieldEntries(config);
