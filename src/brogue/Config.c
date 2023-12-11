@@ -126,24 +126,31 @@ static void parseConfigValues(const char* jsonString, configParams* config) {
         if (jsonField) {
             switch (entries[i].fieldType) {
                 case INT_TYPE:
-                    *((short*)entries[i].fieldPointer) = jsonField->valueint;
-                    break;
+                    if (cJSON_IsNumber(jsonField))
+                    {
+                        *((short*)entries[i].fieldPointer) = jsonField->valueint;
+                        break;
+                    }
 
                 case BOOLEAN_TYPE:
-                    *((boolean*)entries[i].fieldPointer) = jsonField->valueint;
-                    break;
+                    if (cJSON_IsBool(jsonField))
+                    {
+                        *((boolean*)entries[i].fieldPointer) = jsonField->valueint;
+                        break;
+                    }
 
                 case GAME_VARIANT:
                 case GRAPHICS_MODE:
-                {
-                    const char* modeString = jsonField->valuestring;
-                    short mode = mapStringToEnum(modeString, entries[i].stringMapping);
+                    if (cJSON_IsString(jsonField))
+                    {
+                        const char* modeString = jsonField->valuestring;
+                        short mode = mapStringToEnum(modeString, entries[i].stringMapping);
 
-                    if (mode != -1) {
-                        *((short*)entries[i].fieldPointer) = mode;
+                        if (mode != -1) {
+                            *((short*)entries[i].fieldPointer) = mode;
+                        }
+                        break;
                     }
-                    break;
-                }
 
                 default:
                     break;
