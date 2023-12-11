@@ -155,6 +155,46 @@ void parseConfigValues(const char* jsonString, configParams* config) {
     cJSON_Delete(root);
 }
 
+char* createJsonString(configParams* config) {
+    cJSON* root = cJSON_CreateObject();
+
+    configEntry* entries = getFieldEntries(config);
+
+    for (int i = 0; entries[i].fieldName; i++) {
+        switch (entries[i].fieldType) {
+            case INT_TYPE: {
+                short short_value = *((short*)entries[i].fieldPointer);
+                cJSON_AddNumberToObject(root, entries[i].fieldName, short_value);
+                break;
+            }
+            case BOOLEAN_TYPE: {
+                boolean bool_value = *((boolean*)entries[i].fieldPointer);
+                cJSON_AddBoolToObject(root, entries[i].fieldName, bool_value);
+                break;
+            }
+            case GAME_VARIANT:
+            case GRAPHICS_MODE:
+            {
+                short enum_value = *((short*)entries[i].fieldPointer);
+                const char* string_value = entries[i].stringMapping[enum_value];
+                cJSON_AddStringToObject(root, entries[i].fieldName, string_value);
+                break;
+            }
+
+            default:
+                break;
+        }
+
+    }
+
+    char* jsonString = cJSON_Print(root);
+
+    free(entries);
+    cJSON_Delete(root);
+
+    return jsonString;
+}
+
 void readFromConfig(playerCharacter* rogue, enum graphicsModes* initialGraphics) {
     char* jsonString = loadConfigFile();
 
@@ -171,5 +211,31 @@ void readFromConfig(playerCharacter* rogue, enum graphicsModes* initialGraphics)
     gameVariant = config.gameVariant;
     *initialGraphics = config.graphicsMode;
 
+    free(jsonString);
+}
+
+void writeIntoConfig() {
+    configParams config;
+
+    FILE* file = fopen(JSON_FILENAME, "w");
+
+    if (!file) {
+        return;
+    }
+
+    config.wizard = rogue.wizard;
+    config.easyMode = rogue.easyMode;
+    config.displayStealthRangeMode = rogue.displayStealthRangeMode;
+    config.trueColorMode = rogue.trueColorMode;
+    config.playbackDelayPerTurn = rogue.playbackDelayPerTurn;
+
+    config.gameVariant = gameVariant;
+    config.graphicsMode = graphicsMode;
+
+    char* jsonString = createJsonString(&config);
+
+    fprintf(file, "%s", jsonString);
+
+    fclose(file);
     free(jsonString);
 }

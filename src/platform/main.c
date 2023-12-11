@@ -106,6 +106,7 @@ int main(int argc, char *argv[])
     enum graphicsModes initialGraphics;
 
     readFromConfig(&rogue, &initialGraphics);
+    atexit(writeIntoConfig);
     
     int i;
     for (i = 1; i < argc; i++) {
