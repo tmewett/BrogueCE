@@ -195,18 +195,18 @@ static char* createJsonString(configParams* config) {
     return jsonString;
 }
 
-void readFromConfig(playerCharacter* rogue, enum graphicsModes* initialGraphics) {
+void readFromConfig(enum graphicsModes* initialGraphics) {
     char* jsonString = loadConfigFile();
 
     configParams config = createDefaultConfig();
 
     parseConfigValues(jsonString, &config);
 
-    rogue->wizard = config.wizard;
-    rogue->easyMode = config.easyMode;
-    rogue->displayStealthRangeMode = config.displayStealthRangeMode;
-    rogue->trueColorMode = config.trueColorMode;
-    rogue->playbackDelayPerTurn = config.playbackDelayPerTurn;
+    rogue.wizard = config.wizard;
+    rogue.easyMode = config.easyMode;
+    rogue.displayStealthRangeMode = config.displayStealthRangeMode;
+    rogue.trueColorMode = config.trueColorMode;
+    rogue.playbackDelayPerTurn = config.playbackDelayPerTurn;
 
     gameVariant = config.gameVariant;
     *initialGraphics = config.graphicsMode;
