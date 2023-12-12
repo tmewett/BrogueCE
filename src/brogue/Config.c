@@ -2,6 +2,8 @@
 #include "Rogue.h"
 #include "GlobalsBase.h"
 
+short loadedPlaybackDelay; // base playback speed as loaded from the config file
+
 const char* JSON_FILENAME = "brogue_config.json";
 
 typedef struct configParams {
@@ -213,7 +215,7 @@ void readFromConfig(enum graphicsModes* initialGraphics) {
     rogue.easyMode = config.easyMode;
     rogue.displayStealthRangeMode = config.displayStealthRangeMode;
     rogue.trueColorMode = config.trueColorMode;
-    rogue.playbackDelayPerTurn = config.playbackDelayPerTurn;
+    loadedPlaybackDelay = config.playbackDelayPerTurn;
 
     gameVariant = config.gameVariant;
     *initialGraphics = config.graphicsMode;
@@ -234,7 +236,14 @@ void writeIntoConfig() {
     config.easyMode = rogue.easyMode;
     config.displayStealthRangeMode = rogue.displayStealthRangeMode;
     config.trueColorMode = rogue.trueColorMode;
-    config.playbackDelayPerTurn = rogue.playbackDelayPerTurn;
+
+    if (rogue.playbackDelayPerTurn)
+    {
+        config.playbackDelayPerTurn = rogue.playbackDelayPerTurn;
+    }
+    else {
+        config.playbackDelayPerTurn = loadedPlaybackDelay;
+    }
 
     config.gameVariant = gameVariant;
     config.graphicsMode = graphicsMode;
