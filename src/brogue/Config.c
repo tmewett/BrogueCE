@@ -19,8 +19,7 @@ typedef struct configParams {
 typedef enum {
     INT_TYPE,
     BOOLEAN_TYPE,
-    GAME_VARIANT,
-    GRAPHICS_MODE,
+    ENUM_STRING // a json string that needs to be mapped to an Enum
 } fieldType;
 
 typedef struct {
@@ -30,13 +29,13 @@ typedef struct {
     const char** stringMapping;
 } configEntry;
 
-const char* variantMappings[] = {
+const char* variantMappings[] = { // maps json strings to the gameVariant Enum
     "brogue",
     "rapid",
     NULL
 };
 
-const char* graphicsModeMappings[] = {
+const char* graphicsModeMappings[] = { // maps json strings to the graphicsModes Enum
     "text",
     "tiles",
     "hybrid",
@@ -88,8 +87,8 @@ static configEntry* getFieldEntries(configParams* config) {
 
     configEntry* entries = calloc(numFields + 1, sizeof(configEntry));
 
-    entries[0] = (configEntry){ "gameVariant", &(config->gameVariant), GAME_VARIANT, variantMappings };
-    entries[1] = (configEntry){ "graphicsMode", &(config->graphicsMode), GRAPHICS_MODE, graphicsModeMappings };
+    entries[0] = (configEntry){ "gameVariant", &(config->gameVariant), ENUM_STRING, variantMappings };
+    entries[1] = (configEntry){ "graphicsMode", &(config->graphicsMode), ENUM_STRING, graphicsModeMappings };
     entries[2] = (configEntry){ "playbackDelayPerTurn", &(config->playbackDelayPerTurn), INT_TYPE };
     entries[3] = (configEntry){ "displayStealthRangeMode", &(config->displayStealthRangeMode), BOOLEAN_TYPE };
     entries[4] = (configEntry){ "trueColorMode", &(config->trueColorMode), BOOLEAN_TYPE };
@@ -141,8 +140,7 @@ static void parseConfigValues(const char* jsonString, configParams* config) {
                         break;
                     }
 
-                case GAME_VARIANT:
-                case GRAPHICS_MODE:
+                case ENUM_STRING:
                     if (cJSON_IsString(jsonField))
                     {
                         const char* modeString = jsonField->valuestring;
@@ -181,8 +179,7 @@ static char* createJsonString(configParams* config) {
                 cJSON_AddBoolToObject(root, entries[i].fieldName, bool_value);
                 break;
             }
-            case GAME_VARIANT:
-            case GRAPHICS_MODE:
+            case ENUM_STRING:
             {
                 short enum_value = *((short*)entries[i].fieldPointer);
                 const char* string_value = entries[i].stringMapping[enum_value];
