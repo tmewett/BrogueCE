@@ -3669,14 +3669,9 @@ static void prepareForStairs(short x, short y, char grid[DCOLS][DROWS]) {
     }
 }
 
-// Places the player, monsters, items and stairs.
-void initializeLevel() {
-    short i, j, dir;
-    short **mapToStairs, **mapToPit;
+boolean placeStairs(pos *upStairsLoc) {
     char grid[DCOLS][DROWS];
     short n = rogue.depthLevel - 1;
-
-    // Place the stairs.
 
     for (int i=0; i < DCOLS; i++) {
         for (int j=0; j < DROWS; j++) {
@@ -3694,9 +3689,12 @@ void initializeLevel() {
     if (getQualifyingGridLocNear(&downLoc, levels[n].downStairsLoc, grid, false)) {
         prepareForStairs(downLoc.x, downLoc.y, grid);
     } else {
-        getQualifyingLocNear(&downLoc, levels[n].downStairsLoc, false, 0,
-                             (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_ITEMS | T_AUTO_DESCENT | T_IS_DEEP_WATER | T_LAVA_INSTA_DEATH | T_IS_DF_TRAP),
-                             (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), true, false);
+        boolean hasQualifyingLoc = getQualifyingLocNear(&downLoc, levels[n].downStairsLoc, false, 0,
+                                                        (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_ITEMS | T_AUTO_DESCENT | T_IS_DEEP_WATER | T_LAVA_INSTA_DEATH | T_IS_DF_TRAP),
+                                                        (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), true, false);
+        if (!hasQualifyingLoc) {
+            return false;
+        }
     }
 
     if (rogue.depthLevel == gameConst->deepestLevel) {
@@ -3716,9 +3714,13 @@ void initializeLevel() {
     if (getQualifyingGridLocNear(&upLoc, levels[n].upStairsLoc, grid, false)) {
         prepareForStairs(upLoc.x, upLoc.y, grid);
     } else { // Hopefully this never happens.
-        getQualifyingLocNear(&upLoc, levels[n].upStairsLoc, false, 0,
+        boolean hasQualifyingLoc;
+        hasQualifyingLoc = getQualifyingLocNear(&upLoc, levels[n].upStairsLoc, false, 0,
                              (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_ITEMS | T_AUTO_DESCENT | T_IS_DEEP_WATER | T_LAVA_INSTA_DEATH | T_IS_DF_TRAP),
                              (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), true, false);
+        if (!hasQualifyingLoc) {
+            return false;
+        }
     }
 
     levels[n].upStairsLoc = upLoc;
@@ -3735,6 +3737,18 @@ void initializeLevel() {
     pmapAt(downLoc)->flags |= HAS_STAIRS;
     rogue.upLoc = upLoc;
     pmapAt(upLoc)->flags |= HAS_STAIRS;
+
+    *upStairsLoc = upLoc;
+    return true;
+}
+
+// Places the player, monsters, items and stairs.
+void initializeLevel(pos upStairsLoc) {
+    short i, j, dir;
+    short **mapToStairs, **mapToPit;
+    char grid[DCOLS][DROWS];
+
+    pos upLoc = upStairsLoc;
 
     if (!levels[rogue.depthLevel-1].visited) {
 

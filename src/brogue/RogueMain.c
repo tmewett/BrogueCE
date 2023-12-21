@@ -684,8 +684,19 @@ void startLevel(short oldLevelNumber, short stairDirection) {
 
         levels[rogue.depthLevel-1].items = NULL;
 
-        digDungeon();
-        initializeLevel();
+        pos upStairLocation;
+        int failsafe;
+        for (failsafe = 50; failsafe; failsafe--) {
+            digDungeon();
+            if (placeStairs(&upStairLocation)) {
+                break;
+            }
+        }
+        if (!failsafe) {
+            printf("\nFailed to place stairs for level %d! Please report this error\n", rogue.depthLevel);
+            exit(1);
+        }
+        initializeLevel(upStairLocation);
         setUpWaypoints();
 
         shuffleTerrainColors(100, false);
