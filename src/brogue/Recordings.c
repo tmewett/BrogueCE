@@ -879,7 +879,7 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
         switch (key) {
             case UP_ARROW:
             case UP_KEY:
-                newDelay = max(1, min(rogue.playbackDelayPerTurn * 2/3, rogue.playbackDelayPerTurn - 1));
+                newDelay = max(MIN_PLAYBACK_DELAY, min(rogue.playbackDelayPerTurn * 2/3, rogue.playbackDelayPerTurn - 1));
                 if (newDelay != rogue.playbackDelayPerTurn) {
                     flashTemporaryAlert(" Faster ", 300);
                 }
@@ -888,7 +888,7 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
                 return true;
             case DOWN_ARROW:
             case DOWN_KEY:
-                newDelay = min(3000, max(rogue.playbackDelayPerTurn * 3/2, rogue.playbackDelayPerTurn + 1));
+                newDelay = min(MAX_PLAYBACK_DELAY, max(rogue.playbackDelayPerTurn * 3/2, rogue.playbackDelayPerTurn + 1));
                 if (newDelay != rogue.playbackDelayPerTurn) {
                     flashTemporaryAlert(" Slower ", 300);
                 }
