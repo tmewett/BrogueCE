@@ -144,15 +144,14 @@ static void parseConfigValues(const char* jsonString, configParams* config) {
                     if (value >= valueRange.min && value <= valueRange.max) {
                         *((short*)entries[i].fieldPointer) = value;
                     }
-
-                    break;
                 }
+                break;
 
             case BOOLEAN_TYPE:
                 if (cJSON_IsBool(jsonField)) {
                     *((boolean*)entries[i].fieldPointer) = jsonField->valueint;
-                    break;
                 }
+                break;
 
             case ENUM_STRING:
                 if (cJSON_IsString(jsonField)) {
@@ -162,8 +161,8 @@ static void parseConfigValues(const char* jsonString, configParams* config) {
                     if (mode != -1) {
                         *((short*)entries[i].fieldPointer) = mode;
                     }
-                    break;
                 }
+                break;
 
             default:
                 break;
