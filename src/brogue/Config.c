@@ -33,11 +33,11 @@ typedef union {
 } fieldValidator;
 
 typedef struct {
-    const char* fieldName;
-    void* fieldPointer;
-    fieldType fieldType;
-    fieldValidator fieldValidator;
-} configEntry;
+    const char* name;
+    void* paramPointer; // a pointer to a field of configParams struct
+    fieldType type;
+    fieldValidator validator;
+} configField;
 
 // maps json strings to the gameVariant Enum
 const char* variantMappings[] = {"brogue", "rapid", NULL};
@@ -87,10 +87,10 @@ static char* loadConfigFile() {
     return buffer;
 }
 
-static configEntry* getFieldEntries(configParams* config) {
+static configField* getFieldEntries(configParams* config) {
     int numFields = 7;
 
-    configEntry fieldDescriptors[] = {
+    configField fieldDescriptors[] = {
         {"gameVariant", &(config->gameVariant), ENUM_STRING, {.enumMappings = variantMappings}},
         {"graphicsMode", &(config->graphicsMode), ENUM_STRING, {.enumMappings = graphicsModeMappings}},
         {"playbackDelayPerTurn", &(config->playbackDelayPerTurn), INT_TYPE, {.intRange = playbackDelayRange}},
@@ -100,7 +100,7 @@ static configEntry* getFieldEntries(configParams* config) {
         {"easyMode", &(config->easyMode), BOOLEAN_TYPE},
         {NULL}};
 
-    configEntry* entries = calloc(numFields + 1, sizeof(configEntry));
+    configField* entries = calloc(numFields + 1, sizeof(configField));
 
     for (int i = 0; i < numFields; i++) {
         entries[i] = fieldDescriptors[i];
@@ -129,37 +129,37 @@ static void parseConfigValues(const char* jsonString, configParams* config) {
         return; // JSON parsing error
     }
 
-    configEntry* entries = getFieldEntries(config);
+    configField* entries = getFieldEntries(config);
 
-    for (int i = 0; entries[i].fieldName; i++) {
-        cJSON* jsonField = cJSON_GetObjectItem(root, entries[i].fieldName);
+    for (int i = 0; entries[i].name; i++) {
+        cJSON* jsonField = cJSON_GetObjectItem(root, entries[i].name);
 
         if (jsonField) {
-            switch (entries[i].fieldType) {
+            switch (entries[i].type) {
             case INT_TYPE:
                 if (cJSON_IsNumber(jsonField)) {
                     short value = jsonField->valueint;
-                    intRange valueRange = entries[i].fieldValidator.intRange;
+                    intRange valueRange = entries[i].validator.intRange;
 
                     if (value >= valueRange.min && value <= valueRange.max) {
-                        *((short*)entries[i].fieldPointer) = value;
+                        *((short*)entries[i].paramPointer) = value;
                     }
                 }
                 break;
 
             case BOOLEAN_TYPE:
                 if (cJSON_IsBool(jsonField)) {
-                    *((boolean*)entries[i].fieldPointer) = jsonField->valueint;
+                    *((boolean*)entries[i].paramPointer) = jsonField->valueint;
                 }
                 break;
 
             case ENUM_STRING:
                 if (cJSON_IsString(jsonField)) {
                     const char* modeString = jsonField->valuestring;
-                    short mode = mapStringToEnum(modeString, entries[i].fieldValidator.enumMappings);
+                    short mode = mapStringToEnum(modeString, entries[i].validator.enumMappings);
 
                     if (mode != -1) {
-                        *((short*)entries[i].fieldPointer) = mode;
+                        *((short*)entries[i].paramPointer) = mode;
                     }
                 }
                 break;
@@ -177,24 +177,24 @@ static void parseConfigValues(const char* jsonString, configParams* config) {
 static char* createJsonString(configParams* config) {
     cJSON* root = cJSON_CreateObject();
 
-    configEntry* entries = getFieldEntries(config);
+    configField* entries = getFieldEntries(config);
 
-    for (int i = 0; entries[i].fieldName; i++) {
-        switch (entries[i].fieldType) {
+    for (int i = 0; entries[i].name; i++) {
+        switch (entries[i].type) {
         case INT_TYPE: {
-            short short_value = *((short*)entries[i].fieldPointer);
-            cJSON_AddNumberToObject(root, entries[i].fieldName, short_value);
+            short short_value = *((short*)entries[i].paramPointer);
+            cJSON_AddNumberToObject(root, entries[i].name, short_value);
             break;
         }
         case BOOLEAN_TYPE: {
-            boolean bool_value = *((boolean*)entries[i].fieldPointer);
-            cJSON_AddBoolToObject(root, entries[i].fieldName, bool_value);
+            boolean bool_value = *((boolean*)entries[i].paramPointer);
+            cJSON_AddBoolToObject(root, entries[i].name, bool_value);
             break;
         }
         case ENUM_STRING: {
-            short enum_value = *((short*)entries[i].fieldPointer);
-            const char* string_value = entries[i].fieldValidator.enumMappings[enum_value];
-            cJSON_AddStringToObject(root, entries[i].fieldName, string_value);
+            short enum_value = *((short*)entries[i].paramPointer);
+            const char* string_value = entries[i].validator.enumMappings[enum_value];
+            cJSON_AddStringToObject(root, entries[i].name, string_value);
             break;
         }
 
