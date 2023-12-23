@@ -2739,15 +2739,22 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
 boolean getInputTextString(char *inputText,
                            const char *prompt,
                            short maxLength,
-                           const char *defaultEntry,
+                           char *defaultEntry,
                            const char *promptSuffix,
                            short textEntryType,
                            boolean useDialogBox) {
-    short charNum, i, x, y;
+    short charNum, i, x, y, promptSuffixLen, defaultEntrylengthOverflow;
     char keystroke, suffix[100];
     const short textEntryBounds[TEXT_INPUT_TYPES][2] = {{' ', '~'}, {' ', '~'}, {'0', '9'}};
     screenDisplayBuffer dbuf;
     screenDisplayBuffer rbuf;
+
+    // handle defaultEntry values exceeding maxLength
+    promptSuffixLen = strlen(promptSuffix);
+    defaultEntrylengthOverflow = strlen(defaultEntry) + promptSuffixLen - maxLength;
+    if(defaultEntrylengthOverflow > 0) {
+        defaultEntry[strlen(defaultEntry) - defaultEntrylengthOverflow] = '\0';
+    }
 
     // x and y mark the origin for text entry.
     if (useDialogBox) {
@@ -2807,8 +2814,8 @@ boolean getInputTextString(char *inputText,
 
             inputText[charNum] = keystroke;
             plotCharWithColor(keystroke, (windowpos){ x + charNum, y }, &white, &black);
-            printString(suffix, charNum + x + 1, y, &gray, &black, 0);
-            if (charNum < maxLength) {
+            if (charNum < maxLength - promptSuffixLen) {
+                printString(suffix, charNum + x + 1, y, &gray, &black, 0);
                 charNum++;
             }
         }
