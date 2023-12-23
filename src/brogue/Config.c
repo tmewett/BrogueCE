@@ -28,7 +28,7 @@ typedef struct {
 } intRange;
 
 typedef union {
-    const char** stringMapping;
+    const char** enumMappings;
     intRange intRange;
 } fieldValidator;
 
@@ -90,17 +90,21 @@ static char* loadConfigFile() {
 static configEntry* getFieldEntries(configParams* config) {
     int numFields = 7;
 
+    configEntry fieldDescriptors[] = {
+        {"gameVariant", &(config->gameVariant), ENUM_STRING, {.enumMappings = variantMappings}},
+        {"graphicsMode", &(config->graphicsMode), ENUM_STRING, {.enumMappings = graphicsModeMappings}},
+        {"playbackDelayPerTurn", &(config->playbackDelayPerTurn), INT_TYPE, {.intRange = playbackDelayRange}},
+        {"displayStealthRangeMode", &(config->displayStealthRangeMode), BOOLEAN_TYPE},
+        {"trueColorMode", &(config->trueColorMode), BOOLEAN_TYPE},
+        {"wizard", &(config->wizard), BOOLEAN_TYPE},
+        {"easyMode", &(config->easyMode), BOOLEAN_TYPE},
+        {NULL}};
+
     configEntry* entries = calloc(numFields + 1, sizeof(configEntry));
 
-    entries[0] = (configEntry){"gameVariant", &(config->gameVariant), ENUM_STRING, {variantMappings}};
-    entries[1] = (configEntry){"graphicsMode", &(config->graphicsMode), ENUM_STRING, {graphicsModeMappings}};
-    entries[2] = (configEntry){
-        "playbackDelayPerTurn", &(config->playbackDelayPerTurn), INT_TYPE, {.intRange = playbackDelayRange}};
-    entries[3] = (configEntry){"displayStealthRangeMode", &(config->displayStealthRangeMode), BOOLEAN_TYPE};
-    entries[4] = (configEntry){"trueColorMode", &(config->trueColorMode), BOOLEAN_TYPE};
-    entries[5] = (configEntry){"wizard", &(config->wizard), BOOLEAN_TYPE};
-    entries[6] = (configEntry){"easyMode", &(config->easyMode), BOOLEAN_TYPE};
-    entries[numFields] = (configEntry){NULL};
+    for (int i = 0; i < numFields; i++) {
+        entries[i] = fieldDescriptors[i];
+    }
 
     return entries;
 }
@@ -153,7 +157,7 @@ static void parseConfigValues(const char* jsonString, configParams* config) {
             case ENUM_STRING:
                 if (cJSON_IsString(jsonField)) {
                     const char* modeString = jsonField->valuestring;
-                    short mode = mapStringToEnum(modeString, entries[i].fieldValidator.stringMapping);
+                    short mode = mapStringToEnum(modeString, entries[i].fieldValidator.enumMappings);
 
                     if (mode != -1) {
                         *((short*)entries[i].fieldPointer) = mode;
@@ -190,7 +194,7 @@ static char* createJsonString(configParams* config) {
         }
         case ENUM_STRING: {
             short enum_value = *((short*)entries[i].fieldPointer);
-            const char* string_value = entries[i].fieldValidator.stringMapping[enum_value];
+            const char* string_value = entries[i].fieldValidator.enumMappings[enum_value];
             cJSON_AddStringToObject(root, entries[i].fieldName, string_value);
             break;
         }
