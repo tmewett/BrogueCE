@@ -494,7 +494,6 @@ void initRecording() {
 
     if (rogue.playbackMode) {
         lengthOfPlaybackFile        = 100000; // so recall functions don't freak out
-        rogue.playbackDelayPerTurn  = loadedPlaybackDelay;
         rogue.playbackDelayThisTurn = rogue.playbackDelayPerTurn;
         rogue.playbackPaused        = false;
 

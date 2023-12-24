@@ -66,7 +66,6 @@ extern item *floorItems;
 extern item *packItems;
 extern item *monsterItemsHopper;
 extern short numberOfWaypoints;
-extern short loadedPlaybackDelay;
 
 extern char displayedMessage[MESSAGE_LINES][COLS*2];
 extern short messagesUnconfirmed;
