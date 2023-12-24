@@ -2,8 +2,6 @@
 #include "Rogue.h"
 #include "GlobalsBase.h"
 
-const char* JSON_FILENAME = "brogue_config.json";
-
 typedef struct configParams {
     short playbackDelayPerTurn;
     short gameVariant;
@@ -37,13 +35,15 @@ typedef struct {
     fieldValidator validator;
 } configField;
 
+static const char* JSON_FILENAME = "brogue_config.json";
+
 // maps json strings to the gameVariant Enum
-const char* variantMappings[] = {"brogue", "rapid", NULL};
+static const char* variantMappings[] = {"brogue", "rapid", NULL};
 
 // maps json strings to the graphicsModes Enum
-const char* graphicsModeMappings[] = {"text", "tiles", "hybrid", NULL};
+static const char* graphicsModeMappings[] = {"text", "tiles", "hybrid", NULL};
 
-intRange playbackDelayRange = {MIN_PLAYBACK_DELAY, MAX_PLAYBACK_DELAY};
+static intRange playbackDelayRange = {MIN_PLAYBACK_DELAY, MAX_PLAYBACK_DELAY};
 
 static configParams createDefaultConfig() {
     configParams config;
