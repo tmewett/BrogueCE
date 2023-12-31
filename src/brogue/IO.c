@@ -430,7 +430,7 @@ static short actionMenu(short x, boolean playingBack) {
 
 #define MAX_MENU_BUTTON_COUNT 5
 
-static void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
+static void initializeMenuButtons(buttonState *state, screenDisplayBuffer *button_dbuf, brogueButton buttons[5]) {
     short i, x, buttonCount;
     char goldTextEscape[MAX_MENU_BUTTON_COUNT] = "";
     char whiteTextEscape[MAX_MENU_BUTTON_COUNT] = "";
@@ -520,7 +520,8 @@ static void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
                           mapToWindowX(0),
                           ROWS - 1,
                           COLS - mapToWindowX(0),
-                          1);
+                          1,
+                          button_dbuf);
 
     for (i=0; i < 5; i++) {
         drawButton(&(state->buttons[i]), BUTTON_NORMAL, &state->button_rbuf);
@@ -554,6 +555,7 @@ void mainInputLoop() {
     short **costMap, **playerPathingMap, **cursorSnapMap;
     brogueButton buttons[5] = {{{0}}};
     buttonState state;
+    screenDisplayBuffer button_dbuf;
     short buttonInput;
     short backupCost;
 
@@ -564,7 +566,7 @@ void mainInputLoop() {
     rogue.cursorPathIntensity = (rogue.cursorMode ? 50 : 20);
 
     // Initialize buttons.
-    initializeMenuButtons(&state, buttons);
+    initializeMenuButtons(&state, &button_dbuf, buttons);
 
     playingBack = rogue.playbackMode;
     rogue.playbackMode = false;
@@ -698,7 +700,7 @@ void mainInputLoop() {
 
             // Get the input!
             rogue.playbackMode = playingBack;
-            doEvent = moveCursor(&targetConfirmed, &canceled, &tabKey, &rogue.cursorLoc, &theEvent, &state, !textDisplayed, rogue.cursorMode, true);
+            doEvent = moveCursor(&targetConfirmed, &canceled, &tabKey, &rogue.cursorLoc, &theEvent, &state, &button_dbuf, !textDisplayed, rogue.cursorMode, true);
             rogue.playbackMode = false;
 
             if (state.buttonChosen == 3) { // Actions menu button.
@@ -811,7 +813,7 @@ void mainInputLoop() {
                 if (!rogue.playbackMode) {
                     // Playback mode is off, user must have taken control
                     // Redraw buttons to reflect that
-                    initializeMenuButtons(&state, buttons);
+                    initializeMenuButtons(&state, &button_dbuf, buttons);
                 }
 #endif
                 playingBack = rogue.playbackMode;

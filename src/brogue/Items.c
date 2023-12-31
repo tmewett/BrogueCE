@@ -5233,6 +5233,7 @@ boolean moveCursor(boolean *targetConfirmed,
                    pos *targetLoc,
                    rogueEvent *event,
                    buttonState *state,
+                   screenDisplayBuffer *button_dbuf,
                    boolean colorsDance,
                    boolean keysMoveCursor,
                    boolean targetCanLeaveMap) {
@@ -5260,17 +5261,17 @@ boolean moveCursor(boolean *targetConfirmed,
         if (state) { // Also running a button loop.
 
             // Update the display.
-            overlayDisplayBuffer(&state->button_dbuf, NULL);
+            overlayDisplayBuffer(button_dbuf, NULL);
 
             // Get input.
             nextBrogueEvent(&theEvent, false, colorsDance, true);
 
             // Process the input.
-            buttonInput = processButtonInput(state, NULL, &theEvent);
+            buttonInput = processButtonInput(state, NULL, &theEvent, button_dbuf);
 
             if (buttonInput != -1) {
                 state->buttonDepressed = state->buttonFocused = -1;
-                drawButtonsInState(state);
+                drawButtonsInState(state, button_dbuf);
             }
 
             // Revert the display.
@@ -5576,7 +5577,7 @@ boolean chooseTarget(pos *returnLoc,
         }
 
         oldTargetLoc = targetLoc;
-        moveCursor(&targetConfirmed, &canceled, &tabKey, &targetLoc, &event, NULL, false, true, false);
+        moveCursor(&targetConfirmed, &canceled, &tabKey, &targetLoc, &event, NULL, NULL, false, true, false);
         if (event.eventType == RIGHT_MOUSE_UP) { // Right mouse cancels.
             canceled = true;
         }

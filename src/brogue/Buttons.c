@@ -156,11 +156,11 @@ void setButtonText(brogueButton *button, const char *textWithHotkey, const char 
     strncpy(button->text, textBuf, BUTTON_TEXT_SIZE - 1);
 }
 
-void drawButtonsInState(buttonState *state) {
+void drawButtonsInState(buttonState *state, screenDisplayBuffer *button_dbuf) {
     // Draw the buttons to the button_dbuf:
     for (int i=0; i < state->buttonCount; i++) {
         if (state->buttons[i].flags & B_DRAW) {
-            drawButton(&(state->buttons[i]), BUTTON_NORMAL, &state->button_dbuf);
+            drawButton(&(state->buttons[i]), BUTTON_NORMAL, button_dbuf);
         }
     }
 }
@@ -171,7 +171,8 @@ void initializeButtonState(buttonState *state,
                            short winX,
                            short winY,
                            short winWidth,
-                           short winHeight) {
+                           short winHeight,
+                           screenDisplayBuffer *button_dbuf) {
     // Initialize variables for the state struct:
     state->buttonChosen = state->buttonFocused = state->buttonDepressed = -1;
     state->buttonCount  = buttonCount;
@@ -183,14 +184,14 @@ void initializeButtonState(buttonState *state,
         state->buttons[i] = buttons[i];
     }
     overlayDisplayBuffer(NULL, &state->button_rbuf);
-    clearDisplayBuffer(&state->button_dbuf);
 
-    drawButtonsInState(state);
+    clearDisplayBuffer(button_dbuf);
+    drawButtonsInState(state, button_dbuf);
 
     // Clear the button_rbuf so that it resets only those parts of the screen in which buttons are drawn in the first place:
     for (int i=0; i<COLS; i++) {
         for (int j=0; j<ROWS; j++) {
-            state->button_rbuf.cells[i][j].opacity = (state->button_dbuf.cells[i][j].opacity ? 100 : 0);
+            state->button_rbuf.cells[i][j].opacity = (button_dbuf->cells[i][j].opacity ? 100 : 0);
         }
     }
 }
@@ -203,7 +204,7 @@ void initializeButtonState(buttonState *state,
 // Returns the index of a button if one is chosen.
 // Otherwise, returns -1. That can be if the user canceled (in which case *canceled is true),
 // or, more commonly, if the user's input in this particular split-second round was not decisive.
-short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *event) {
+short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *event, screenDisplayBuffer *button_dbuf) {
     boolean buttonUsed = false;
 
     // Mouse event:
@@ -216,7 +217,7 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
 
         // Revert the button with old focus, if any.
         if (state->buttonFocused >= 0) {
-            drawButton(&(state->buttons[state->buttonFocused]), BUTTON_NORMAL, &state->button_dbuf);
+            drawButton(&(state->buttons[state->buttonFocused]), BUTTON_NORMAL, button_dbuf);
             state->buttonFocused = -1;
         }
 
@@ -242,11 +243,11 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
 
         if (state->buttonDepressed >= 0) {
             if (state->buttonDepressed == state->buttonFocused) {
-                drawButton(&(state->buttons[state->buttonDepressed]), BUTTON_PRESSED, &state->button_dbuf);
+                drawButton(&(state->buttons[state->buttonDepressed]), BUTTON_PRESSED, button_dbuf);
             }
         } else if (state->buttonFocused >= 0) {
             // If no button is depressed, then update the appearance of the button with the new focus, if any.
-            drawButton(&(state->buttons[state->buttonFocused]), BUTTON_HOVER, &state->button_dbuf);
+            drawButton(&(state->buttons[state->buttonFocused]), BUTTON_HOVER, button_dbuf);
         }
 
         // Mouseup:
@@ -257,7 +258,7 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
             } else {
                 // Otherwise, no button is depressed. If one was previously depressed, redraw it.
                 if (state->buttonDepressed >= 0) {
-                    drawButton(&(state->buttons[state->buttonDepressed]), BUTTON_NORMAL, &state->button_dbuf);
+                    drawButton(&(state->buttons[state->buttonDepressed]), BUTTON_NORMAL, button_dbuf);
                 } else if (!(x >= state->winX && x < state->winX + state->winWidth
                              && y >= state->winY && y < state->winY + state->winHeight)) {
                     // Clicking outside of a button means canceling.
@@ -268,7 +269,7 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
 
                 if (state->buttonFocused >= 0) {
                     // Buttons don't hover-highlight when one is depressed, so we have to fix that when the mouse is up.
-                    drawButton(&(state->buttons[state->buttonFocused]), BUTTON_HOVER, &state->button_dbuf);
+                    drawButton(&(state->buttons[state->buttonFocused]), BUTTON_HOVER, button_dbuf);
                 }
                 state->buttonDepressed = -1;
             }
@@ -287,20 +288,20 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
                     if (state->buttons[i].flags & B_DRAW) {
                         // Restore the depressed and focused buttons.
                         if (state->buttonDepressed >= 0) {
-                            drawButton(&(state->buttons[state->buttonDepressed]), BUTTON_NORMAL, &state->button_dbuf);
+                            drawButton(&(state->buttons[state->buttonDepressed]), BUTTON_NORMAL, button_dbuf);
                         }
                         if (state->buttonFocused >= 0) {
-                            drawButton(&(state->buttons[state->buttonFocused]), BUTTON_NORMAL, &state->button_dbuf);
+                            drawButton(&(state->buttons[state->buttonFocused]), BUTTON_NORMAL, button_dbuf);
                         }
 
                         // If the button likes to flash when keypressed:
                         if (state->buttons[i].flags & B_KEYPRESS_HIGHLIGHT) {
                             // Depress the chosen button.
-                            drawButton(&(state->buttons[i]), BUTTON_PRESSED, &state->button_dbuf);
+                            drawButton(&(state->buttons[i]), BUTTON_PRESSED, button_dbuf);
 
                             // Update the display.
                             overlayDisplayBuffer(&state->button_rbuf, NULL);
-                            overlayDisplayBuffer(&state->button_dbuf, NULL);
+                            overlayDisplayBuffer(button_dbuf, NULL);
 
                             if (!rogue.playbackMode || rogue.playbackPaused) {
                                 // Wait for a little; then we're done.
@@ -351,21 +352,22 @@ short buttonInputLoop(brogueButton *buttons,
     boolean canceled;
     rogueEvent theEvent;
     buttonState state = {0};
+    screenDisplayBuffer button_dbuf;
 
     assureCosmeticRNG;
 
     canceled = false;
-    initializeButtonState(&state, buttons, buttonCount, winX, winY, winWidth, winHeight);
+    initializeButtonState(&state, buttons, buttonCount, winX, winY, winWidth, winHeight, &button_dbuf);
 
     do {
         // Update the display.
-        overlayDisplayBuffer(&state.button_dbuf, NULL);
+        overlayDisplayBuffer(&button_dbuf, NULL);
 
         // Get input.
         nextBrogueEvent(&theEvent, true, false, false);
 
         // Process the input.
-        button = processButtonInput(&state, &canceled, &theEvent);
+        button = processButtonInput(&state, &canceled, &theEvent, &button_dbuf);
 
         // Revert the display.
         overlayDisplayBuffer(&state.button_rbuf, NULL);
