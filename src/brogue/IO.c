@@ -514,15 +514,17 @@ static void initializeMenuButtons(buttonState *state, screenDisplayBuffer *butto
         x += strLenWithoutEscapes(buttons[i].text) + 2; // Gap between buttons.
     }
 
+    overlayDisplayBuffer(NULL, button_rbuf);
+    clearDisplayBuffer(button_dbuf);
     initializeButtonState(state,
                           buttons,
                           5,
                           mapToWindowX(0),
                           ROWS - 1,
                           COLS - mapToWindowX(0),
-                          1,
-                          button_dbuf,
-                          button_rbuf);
+                          1);
+    drawButtonsInState(state, button_dbuf);
+    maskOutBufferAlpha(button_rbuf, button_dbuf);
 
     for (i=0; i < 5; i++) {
         drawButton(&(state->buttons[i]), BUTTON_NORMAL, button_rbuf);

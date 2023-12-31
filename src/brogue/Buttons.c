@@ -171,9 +171,7 @@ void initializeButtonState(buttonState *state,
                            short winX,
                            short winY,
                            short winWidth,
-                           short winHeight,
-                           screenDisplayBuffer *button_dbuf,
-                           screenDisplayBuffer *button_rbuf) {
+                           short winHeight) {
     // Initialize variables for the state struct:
     state->buttonChosen = state->buttonFocused = state->buttonDepressed = -1;
     state->buttonCount  = buttonCount;
@@ -184,15 +182,12 @@ void initializeButtonState(buttonState *state,
     for (int i=0; i < state->buttonCount; i++) {
         state->buttons[i] = buttons[i];
     }
-    overlayDisplayBuffer(NULL, button_rbuf);
+}
 
-    clearDisplayBuffer(button_dbuf);
-    drawButtonsInState(state, button_dbuf);
-
-    // Clear the button_rbuf so that it resets only those parts of the screen in which buttons are drawn in the first place:
+void maskOutBufferAlpha(screenDisplayBuffer *rbuf, const screenDisplayBuffer *dbuf) {
     for (int i=0; i<COLS; i++) {
         for (int j=0; j<ROWS; j++) {
-            button_rbuf->cells[i][j].opacity = (button_dbuf->cells[i][j].opacity ? 100 : 0);
+            rbuf->cells[i][j].opacity = (dbuf->cells[i][j].opacity ? 100 : 0);
         }
     }
 }
@@ -358,9 +353,17 @@ short buttonInputLoop(brogueButton *buttons,
 
     canceled = false;
     
-    screenDisplayBuffer button_dbuf;
+    
+    initializeButtonState(&state, buttons, buttonCount, winX, winY, winWidth, winHeight);
+    
     screenDisplayBuffer button_rbuf;
-    initializeButtonState(&state, buttons, buttonCount, winX, winY, winWidth, winHeight, &button_dbuf, &button_rbuf);
+    overlayDisplayBuffer(NULL, &button_rbuf);
+    
+    screenDisplayBuffer button_dbuf;
+    clearDisplayBuffer(&button_dbuf);
+    drawButtonsInState(&state, &button_dbuf);
+    
+    maskOutBufferAlpha(&button_rbuf, &button_dbuf); // TODO: Why are we doing this?
 
     do {
         // Update the display.

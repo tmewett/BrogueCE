@@ -317,6 +317,9 @@ static void stackButtons(brogueButton *buttons, short buttonCount, windowpos sta
 /// @param buttonCount The number of buttons in the array
 /// @param shadowBuf The display buffer object for the background/shadow
 static void initializeMenu(buttonState *menu, screenDisplayBuffer *button_dbuf, screenDisplayBuffer *button_rbuf, brogueButton *buttons, short buttonCount, screenDisplayBuffer *shadowBuf) {
+    // copies the current display to a reversion buffer. draws the buttons on the button state display buffer.
+    overlayDisplayBuffer(NULL, button_rbuf);
+    
     memset((void *) menu, 0, sizeof( buttonState ));
     short minX, maxX, minY, maxY;
     minX = COLS;
@@ -334,13 +337,16 @@ static void initializeMenu(buttonState *menu, screenDisplayBuffer *button_dbuf, 
     short width = maxX - minX;
     short height = maxY - minY;
 
-    clearDisplayBuffer(shadowBuf);
-    // copies the current display to a reversion buffer. draws the buttons on the button state display buffer.
-    initializeButtonState(menu, buttons, buttonCount, minX, minY, width, height, button_dbuf, button_rbuf);
+    initializeButtonState(menu, buttons, buttonCount, minX, minY, width, height);
+
+    clearDisplayBuffer(button_dbuf);
+    drawButtonsInState(menu, button_dbuf);
+    maskOutBufferAlpha(button_rbuf, button_dbuf);
 
     // Draws a rectangular shaded area of the specified color and opacity to a buffer. Position x, y is the upper/left.
     // The shading effect outside the rectangle decreases with distance.
     // Warning: shading of neighboring rectangles stacks
+    clearDisplayBuffer(shadowBuf);
     rectangularShading(minX, minY, width, height + 1, &black, INTERFACE_OPACITY, shadowBuf);
 }
 

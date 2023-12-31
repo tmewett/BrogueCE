@@ -3440,9 +3440,8 @@ extern "C" {
                                short winX,
                                short winY,
                                short winWidth,
-                               short winHeight,
-                               screenDisplayBuffer *button_dbuf,
-                               screenDisplayBuffer *button_rbuf);
+                               short winHeight);
+    void maskOutBufferAlpha(screenDisplayBuffer *rbuf, const screenDisplayBuffer *dbuf);
     short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *event, screenDisplayBuffer *button_dbuf, screenDisplayBuffer *button_rbuf);
     short smoothHiliteGradient(const short currentXValue, const short maxXValue);
     void drawButton(brogueButton *button, enum buttonDrawStates highlight, screenDisplayBuffer* dbuf);
