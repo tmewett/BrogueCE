@@ -2787,8 +2787,8 @@ typedef struct buttonState {
     short winHeight;
 
     // Graphical buffers:
-    screenDisplayBuffer dbuf; // Where buttons are drawn.
-    screenDisplayBuffer rbuf; // Reversion screen state.
+    screenDisplayBuffer button_dbuf; // Where buttons are drawn.
+    screenDisplayBuffer button_rbuf; // Reversion screen state.
 } buttonState;
 
 enum messageFlags {

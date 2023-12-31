@@ -523,17 +523,17 @@ static void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
                           1);
 
     for (i=0; i < 5; i++) {
-        drawButton(&(state->buttons[i]), BUTTON_NORMAL, &state->rbuf);
+        drawButton(&(state->buttons[i]), BUTTON_NORMAL, &state->button_rbuf);
     }
     for (i=0; i<COLS; i++) { // So the buttons stay (but are dimmed and desaturated) when inactive.
-        tempColor = colorFromComponents(state->rbuf.cells[i][ROWS - 1].backColorComponents);
+        tempColor = colorFromComponents(state->button_rbuf.cells[i][ROWS - 1].backColorComponents);
         desaturate(&tempColor, 60);
         applyColorAverage(&tempColor, &black, 50);
-        storeColorComponents(state->rbuf.cells[i][ROWS - 1].backColorComponents, &tempColor);
-        tempColor = colorFromComponents(state->rbuf.cells[i][ROWS - 1].foreColorComponents);
+        storeColorComponents(state->button_rbuf.cells[i][ROWS - 1].backColorComponents, &tempColor);
+        tempColor = colorFromComponents(state->button_rbuf.cells[i][ROWS - 1].foreColorComponents);
         desaturate(&tempColor, 60);
         applyColorAverage(&tempColor, &black, 50);
-        storeColorComponents(state->rbuf.cells[i][ROWS - 1].foreColorComponents, &tempColor);
+        storeColorComponents(state->button_rbuf.cells[i][ROWS - 1].foreColorComponents, &tempColor);
     }
 }
 
@@ -1979,18 +1979,19 @@ color colorFromComponents(char rgb[3]) {
 // draws overBuf over the current display with per-cell pseudotransparency as specified in overBuf.
 // If previousBuf is not null, it gets filled with the preexisting display for reversion purposes.
 void overlayDisplayBuffer(screenDisplayBuffer *overBuf, screenDisplayBuffer *previousBuf) {
-    short i, j;
-    color foreColor, backColor, tempColor;
-    enum displayGlyph character;
-
     if (previousBuf) {
         copyDisplayBuffer(previousBuf, &displayBuffer);
     }
 
-    for (i=0; i<COLS; i++) {
-        for (j=0; j<ROWS; j++) {
+    if (overBuf == NULL) {
+        return;
+    }
 
+    for (int i=0; i<COLS; i++) {
+        for (int j=0; j<ROWS; j++) {
             if (overBuf->cells[i][j].opacity != 0) {
+                color foreColor, backColor, tempColor;
+                enum displayGlyph character;
                 backColor = colorFromComponents(overBuf->cells[i][j].backColorComponents);
 
                 // character and fore color:

@@ -5260,7 +5260,7 @@ boolean moveCursor(boolean *targetConfirmed,
         if (state) { // Also running a button loop.
 
             // Update the display.
-            overlayDisplayBuffer(&state->dbuf, NULL);
+            overlayDisplayBuffer(&state->button_dbuf, NULL);
 
             // Get input.
             nextBrogueEvent(&theEvent, false, colorsDance, true);
@@ -5274,7 +5274,7 @@ boolean moveCursor(boolean *targetConfirmed,
             }
 
             // Revert the display.
-            overlayDisplayBuffer(&state->rbuf, NULL);
+            overlayDisplayBuffer(&state->button_rbuf, NULL);
 
         } else { // No buttons to worry about.
             nextBrogueEvent(&theEvent, false, colorsDance, true);

@@ -494,7 +494,7 @@ static void redrawMainMenuButtons(buttonState *menu) {
         //darken the main menu buttons not selected
         for (int i = 0; i < MAIN_MENU_BUTTON_COUNT; i++) {
             drawState = (menu->buttons[i].command == rogue.nextGame) ? BUTTON_NORMAL : BUTTON_PRESSED;
-            drawButton(&(menu->buttons[i]), drawState, &menu->dbuf);
+            drawButton(&(menu->buttons[i]), drawState, &menu->button_dbuf);
         }
     }
 }
@@ -554,18 +554,18 @@ static void titleMenu() {
         do {
             if (isApplicationActive()) {
                 // Revert the display.
-                overlayDisplayBuffer(&mainMenu.rbuf, NULL);
+                overlayDisplayBuffer(&mainMenu.button_rbuf, NULL);
 
                 // Update the display.
                 updateMenuFlames(colors, colorSources, flames);
                 drawMenuFlames(flames, mask);
                 overlayDisplayBuffer(&mainShadowBuf, NULL);
-                overlayDisplayBuffer(&mainMenu.dbuf, NULL);
+                overlayDisplayBuffer(&mainMenu.button_dbuf, NULL);
 
                 //Show flyout if selected
                 if (isFlyoutActive()) {
                     overlayDisplayBuffer(&flyoutShadowBuf, NULL);
-                    overlayDisplayBuffer(&flyoutMenu.dbuf, NULL);
+                    overlayDisplayBuffer(&flyoutMenu.button_dbuf, NULL);
                 }
                 // Pause briefly.
                 if (pauseBrogue(MENU_FLAME_UPDATE_DELAY)) {
