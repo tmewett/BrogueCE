@@ -3371,7 +3371,7 @@ void displayMessageArchive() {
     height = min(length, MESSAGE_ARCHIVE_VIEW_LINES);
     offset = height;
 
-    copyDisplayBuffer(&rbuf, &displayBuffer);
+    overlayDisplayBuffer(NULL, &rbuf);
 
     animateMessageArchive(true, messageBuffer, length, offset, height, &rbuf);
     offset = scrollMessageArchive(messageBuffer, length, offset, height, &rbuf);

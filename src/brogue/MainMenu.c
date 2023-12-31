@@ -403,7 +403,7 @@ static void chooseGameVariant() {
 
     brogueButton buttons[2];
     screenDisplayBuffer rbuf;
-    copyDisplayBuffer(&rbuf, &displayBuffer);
+    overlayDisplayBuffer(NULL, &rbuf);
     initializeMainMenuButton(&(buttons[0]), "  %sR%sapid Brogue     ", 'r', 'R', NG_NOTHING);
     initializeMainMenuButton(&(buttons[1]), "     %sB%srogue        ", 'b', 'B', NG_NOTHING);
     gameVariantChoice = printTextBox(textBuf, 20, 7, 45, &white, &black, &rbuf, buttons, 2);
@@ -443,7 +443,7 @@ static void chooseGameMode() {
 
     brogueButton buttons[3];
     screenDisplayBuffer rbuf;
-    copyDisplayBuffer(&rbuf, &displayBuffer);
+    overlayDisplayBuffer(NULL, &rbuf);
     initializeMainMenuButton(&(buttons[0]), "      %sW%sizard       ", 'w', 'W', NG_NOTHING);
     initializeMainMenuButton(&(buttons[1]), "       %sE%sasy        ", 'e', 'E', NG_NOTHING);
     initializeMainMenuButton(&(buttons[2]), "      %sN%sormal       ", 'n', 'N', NG_NOTHING);
@@ -691,7 +691,7 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
 
     suffixLength = strlen(suffix);
     files = listFiles(&count, &membuf);
-    copyDisplayBuffer(&rbuf, &displayBuffer);
+    overlayDisplayBuffer(NULL, &rbuf);
     maxPathLength = strLenWithoutEscapes(prompt);
 
     // First, we want to filter the list by stripping out any filenames that do not end with suffix.
