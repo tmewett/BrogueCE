@@ -2785,9 +2785,6 @@ typedef struct buttonState {
     short winY;
     short winWidth;
     short winHeight;
-
-    // Graphical buffers:
-    screenDisplayBuffer button_rbuf; // Reversion screen state.
 } buttonState;
 
 enum messageFlags {
@@ -3218,6 +3215,7 @@ extern "C" {
                        rogueEvent *event,
                        buttonState *state,
                        screenDisplayBuffer *button_dbuf,
+                       screenDisplayBuffer *button_rbuf,
                        boolean colorsDance,
                        boolean keysMoveCursor,
                        boolean targetCanLeaveMap);
@@ -3443,8 +3441,9 @@ extern "C" {
                                short winY,
                                short winWidth,
                                short winHeight,
-                               screenDisplayBuffer *button_dbuf);
-    short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *event, screenDisplayBuffer *button_dbuf);
+                               screenDisplayBuffer *button_dbuf,
+                               screenDisplayBuffer *button_rbuf);
+    short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *event, screenDisplayBuffer *button_dbuf, screenDisplayBuffer *button_rbuf);
     short smoothHiliteGradient(const short currentXValue, const short maxXValue);
     void drawButton(brogueButton *button, enum buttonDrawStates highlight, screenDisplayBuffer* dbuf);
     short buttonInputLoop(brogueButton *buttons,

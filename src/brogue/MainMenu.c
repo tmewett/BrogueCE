@@ -316,7 +316,7 @@ static void stackButtons(brogueButton *buttons, short buttonCount, windowpos sta
 /// @param buttons An array of initialized, positioned buttons, with text
 /// @param buttonCount The number of buttons in the array
 /// @param shadowBuf The display buffer object for the background/shadow
-static void initializeMenu(buttonState *menu, screenDisplayBuffer *button_dbuf, brogueButton *buttons, short buttonCount, screenDisplayBuffer *shadowBuf) {
+static void initializeMenu(buttonState *menu, screenDisplayBuffer *button_dbuf, screenDisplayBuffer *button_rbuf, brogueButton *buttons, short buttonCount, screenDisplayBuffer *shadowBuf) {
     memset((void *) menu, 0, sizeof( buttonState ));
     short minX, maxX, minY, maxY;
     minX = COLS;
@@ -336,7 +336,7 @@ static void initializeMenu(buttonState *menu, screenDisplayBuffer *button_dbuf, 
 
     clearDisplayBuffer(shadowBuf);
     // copies the current display to a reversion buffer. draws the buttons on the button state display buffer.
-    initializeButtonState(menu, buttons, buttonCount, minX, minY, width, height, button_dbuf);
+    initializeButtonState(menu, buttons, buttonCount, minX, minY, width, height, button_dbuf, button_rbuf);
 
     // Draws a rectangular shaded area of the specified color and opacity to a buffer. Position x, y is the upper/left.
     // The shading effect outside the rectangle decreases with distance.
@@ -349,11 +349,11 @@ static void initializeMenu(buttonState *menu, screenDisplayBuffer *button_dbuf, 
 /// @param buttons The main menu buttons
 /// @param position The window position of the quit button
 /// @param shadowBuf The display buffer object for the background/shadow
-static void initializeMainMenu(buttonState *menu, screenDisplayBuffer *button_dbuf, brogueButton *buttons, windowpos position, screenDisplayBuffer *shadowBuf) {
+static void initializeMainMenu(buttonState *menu, screenDisplayBuffer *button_dbuf, screenDisplayBuffer *button_rbuf, brogueButton *buttons, windowpos position, screenDisplayBuffer *shadowBuf) {
     initializeMainMenuButtons(buttons);
     stackButtons(buttons, MAIN_MENU_BUTTON_COUNT, position, 2, false);
 
-    initializeMenu(menu, button_dbuf, buttons, MAIN_MENU_BUTTON_COUNT, shadowBuf);
+    initializeMenu(menu, button_dbuf, button_rbuf, buttons, MAIN_MENU_BUTTON_COUNT, shadowBuf);
 }
 
 /// @brief Initialize a flyout menu and position the buttons
@@ -361,7 +361,7 @@ static void initializeMainMenu(buttonState *menu, screenDisplayBuffer *button_db
 /// @param shadowBuf The display buffer for the menu background/shadow
 /// @param buttons The buttons to add to the menu
 /// @param position The window position of the anchor button. All buttons are positioned relative to this location.
-static void initializeFlyoutMenu(buttonState *menu, screenDisplayBuffer *button_dbuf, screenDisplayBuffer *shadowBuf, brogueButton *buttons, windowpos position) {
+static void initializeFlyoutMenu(buttonState *menu, screenDisplayBuffer *button_dbuf, screenDisplayBuffer *button_rbuf, screenDisplayBuffer *shadowBuf, brogueButton *buttons, windowpos position) {
     short buttonCount = 0;
 
     if (rogue.nextGame == NG_FLYOUT_PLAY) {
@@ -383,7 +383,7 @@ static void initializeFlyoutMenu(buttonState *menu, screenDisplayBuffer *button_
     }
 
     stackButtons(buttons, buttonCount, position, 2, false);
-    initializeMenu(menu, button_dbuf, buttons, buttonCount, shadowBuf);
+    initializeMenu(menu, button_dbuf, button_rbuf, buttons, buttonCount, shadowBuf);
 }
 
 /// @brief Displays a dialog window for the user to chose a game variant
@@ -511,12 +511,14 @@ static void titleMenu() {
     // Main menu
     buttonState mainMenu;
     screenDisplayBuffer mainMenu_button_dbuf;
+    screenDisplayBuffer mainMenu_button_rbuf;
     brogueButton mainButtons[MAIN_MENU_BUTTON_COUNT];
     screenDisplayBuffer mainShadowBuf;
 
     // Flyout menu
     buttonState flyoutMenu;
     screenDisplayBuffer flyoutMenu_button_dbuf;
+    screenDisplayBuffer flyoutMenu_button_rbuf;
     brogueButton flyoutButtons[10];
     screenDisplayBuffer flyoutShadowBuf;
 
@@ -531,7 +533,7 @@ static void titleMenu() {
 
     // Initialize the main menu with buttons stacked on top of the quit button
     windowpos quitButtonPosition = {COLS - 20, ROWS - 3};
-    initializeMainMenu(&mainMenu, &mainMenu_button_dbuf, mainButtons, quitButtonPosition, &mainShadowBuf);
+    initializeMainMenu(&mainMenu, &mainMenu_button_dbuf, &mainMenu_button_rbuf, mainButtons, quitButtonPosition, &mainShadowBuf);
 
     // Display the title and flames
     initializeMenuFlames(true, colors, colorStorage, colorSources, flames, mask);
@@ -547,7 +549,7 @@ static void titleMenu() {
     do {
         if (isFlyoutActive()) {
             bPos = getNextGameButtonPos(mainButtons);
-            initializeFlyoutMenu(&flyoutMenu, &flyoutMenu_button_dbuf, &flyoutShadowBuf, flyoutButtons, (windowpos){FLYOUT_X, bPos.window_y});
+            initializeFlyoutMenu(&flyoutMenu, &flyoutMenu_button_dbuf, &flyoutMenu_button_rbuf, &flyoutShadowBuf, flyoutButtons, (windowpos){FLYOUT_X, bPos.window_y});
         }
         redrawMainMenuButtons(&mainMenu, &mainMenu_button_dbuf);
 
@@ -556,7 +558,7 @@ static void titleMenu() {
         do {
             if (isApplicationActive()) {
                 // Revert the display.
-                overlayDisplayBuffer(&mainMenu.button_rbuf, NULL);
+                overlayDisplayBuffer(&mainMenu_button_rbuf, NULL);
 
                 // Update the display.
                 updateMenuFlames(colors, colorSources, flames);
@@ -582,7 +584,7 @@ static void titleMenu() {
 
                     // Process the flyout menu input as needed
                     if (isFlyoutActive()) {
-                        flyoutIndex = processButtonInput(&flyoutMenu, NULL, &theEvent, &flyoutMenu_button_dbuf);
+                        flyoutIndex = processButtonInput(&flyoutMenu, NULL, &theEvent, &flyoutMenu_button_dbuf, &flyoutMenu_button_rbuf);
                         if (flyoutIndex != -1 && (theEvent.eventType == MOUSE_UP || theEvent.eventType == KEYSTROKE)) {
                             rogue.nextGame = flyoutButtons[flyoutIndex].command;
                         }
@@ -594,7 +596,7 @@ static void titleMenu() {
                     }
 
                     // Process the main menu input
-                    mainIndex = processButtonInput(&mainMenu, NULL, &theEvent, &mainMenu_button_dbuf);
+                    mainIndex = processButtonInput(&mainMenu, NULL, &theEvent, &mainMenu_button_dbuf, &mainMenu_button_rbuf);
                     if (theEvent.eventType == MOUSE_UP || theEvent.eventType == KEYSTROKE) {
                         if (mainIndex != - 1 && rogue.nextGame != mainButtons[mainIndex].command) {
                             rogue.nextGame = mainButtons[mainIndex].command;

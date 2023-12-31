@@ -430,7 +430,7 @@ static short actionMenu(short x, boolean playingBack) {
 
 #define MAX_MENU_BUTTON_COUNT 5
 
-static void initializeMenuButtons(buttonState *state, screenDisplayBuffer *button_dbuf, brogueButton buttons[5]) {
+static void initializeMenuButtons(buttonState *state, screenDisplayBuffer *button_dbuf, screenDisplayBuffer *button_rbuf, brogueButton buttons[5]) {
     short i, x, buttonCount;
     char goldTextEscape[MAX_MENU_BUTTON_COUNT] = "";
     char whiteTextEscape[MAX_MENU_BUTTON_COUNT] = "";
@@ -521,20 +521,21 @@ static void initializeMenuButtons(buttonState *state, screenDisplayBuffer *butto
                           ROWS - 1,
                           COLS - mapToWindowX(0),
                           1,
-                          button_dbuf);
+                          button_dbuf,
+                          button_rbuf);
 
     for (i=0; i < 5; i++) {
-        drawButton(&(state->buttons[i]), BUTTON_NORMAL, &state->button_rbuf);
+        drawButton(&(state->buttons[i]), BUTTON_NORMAL, button_rbuf);
     }
     for (i=0; i<COLS; i++) { // So the buttons stay (but are dimmed and desaturated) when inactive.
-        tempColor = colorFromComponents(state->button_rbuf.cells[i][ROWS - 1].backColorComponents);
+        tempColor = colorFromComponents(button_rbuf->cells[i][ROWS - 1].backColorComponents);
         desaturate(&tempColor, 60);
         applyColorAverage(&tempColor, &black, 50);
-        storeColorComponents(state->button_rbuf.cells[i][ROWS - 1].backColorComponents, &tempColor);
-        tempColor = colorFromComponents(state->button_rbuf.cells[i][ROWS - 1].foreColorComponents);
+        storeColorComponents(button_rbuf->cells[i][ROWS - 1].backColorComponents, &tempColor);
+        tempColor = colorFromComponents(button_rbuf->cells[i][ROWS - 1].foreColorComponents);
         desaturate(&tempColor, 60);
         applyColorAverage(&tempColor, &black, 50);
-        storeColorComponents(state->button_rbuf.cells[i][ROWS - 1].foreColorComponents, &tempColor);
+        storeColorComponents(button_rbuf->cells[i][ROWS - 1].foreColorComponents, &tempColor);
     }
 }
 
@@ -556,6 +557,7 @@ void mainInputLoop() {
     brogueButton buttons[5] = {{{0}}};
     buttonState state;
     screenDisplayBuffer button_dbuf;
+    screenDisplayBuffer button_rbuf;
     short buttonInput;
     short backupCost;
 
@@ -566,7 +568,7 @@ void mainInputLoop() {
     rogue.cursorPathIntensity = (rogue.cursorMode ? 50 : 20);
 
     // Initialize buttons.
-    initializeMenuButtons(&state, &button_dbuf, buttons);
+    initializeMenuButtons(&state, &button_dbuf, &button_rbuf, buttons);
 
     playingBack = rogue.playbackMode;
     rogue.playbackMode = false;
@@ -700,7 +702,7 @@ void mainInputLoop() {
 
             // Get the input!
             rogue.playbackMode = playingBack;
-            doEvent = moveCursor(&targetConfirmed, &canceled, &tabKey, &rogue.cursorLoc, &theEvent, &state, &button_dbuf, !textDisplayed, rogue.cursorMode, true);
+            doEvent = moveCursor(&targetConfirmed, &canceled, &tabKey, &rogue.cursorLoc, &theEvent, &state, &button_dbuf, &button_rbuf, !textDisplayed, rogue.cursorMode, true);
             rogue.playbackMode = false;
 
             if (state.buttonChosen == 3) { // Actions menu button.

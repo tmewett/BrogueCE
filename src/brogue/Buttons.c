@@ -156,11 +156,11 @@ void setButtonText(brogueButton *button, const char *textWithHotkey, const char 
     strncpy(button->text, textBuf, BUTTON_TEXT_SIZE - 1);
 }
 
-void drawButtonsInState(buttonState *state, screenDisplayBuffer *button_dbuf) {
-    // Draw the buttons to the button_dbuf:
+void drawButtonsInState(buttonState *state, screenDisplayBuffer *dbuf) {
+    // Draw the buttons to the dbuf:
     for (int i=0; i < state->buttonCount; i++) {
         if (state->buttons[i].flags & B_DRAW) {
-            drawButton(&(state->buttons[i]), BUTTON_NORMAL, button_dbuf);
+            drawButton(&(state->buttons[i]), BUTTON_NORMAL, dbuf);
         }
     }
 }
@@ -172,7 +172,8 @@ void initializeButtonState(buttonState *state,
                            short winY,
                            short winWidth,
                            short winHeight,
-                           screenDisplayBuffer *button_dbuf) {
+                           screenDisplayBuffer *button_dbuf,
+                           screenDisplayBuffer *button_rbuf) {
     // Initialize variables for the state struct:
     state->buttonChosen = state->buttonFocused = state->buttonDepressed = -1;
     state->buttonCount  = buttonCount;
@@ -183,7 +184,7 @@ void initializeButtonState(buttonState *state,
     for (int i=0; i < state->buttonCount; i++) {
         state->buttons[i] = buttons[i];
     }
-    overlayDisplayBuffer(NULL, &state->button_rbuf);
+    overlayDisplayBuffer(NULL, button_rbuf);
 
     clearDisplayBuffer(button_dbuf);
     drawButtonsInState(state, button_dbuf);
@@ -191,7 +192,7 @@ void initializeButtonState(buttonState *state,
     // Clear the button_rbuf so that it resets only those parts of the screen in which buttons are drawn in the first place:
     for (int i=0; i<COLS; i++) {
         for (int j=0; j<ROWS; j++) {
-            state->button_rbuf.cells[i][j].opacity = (button_dbuf->cells[i][j].opacity ? 100 : 0);
+            button_rbuf->cells[i][j].opacity = (button_dbuf->cells[i][j].opacity ? 100 : 0);
         }
     }
 }
@@ -204,7 +205,7 @@ void initializeButtonState(buttonState *state,
 // Returns the index of a button if one is chosen.
 // Otherwise, returns -1. That can be if the user canceled (in which case *canceled is true),
 // or, more commonly, if the user's input in this particular split-second round was not decisive.
-short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *event, screenDisplayBuffer *button_dbuf) {
+short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *event, screenDisplayBuffer *button_dbuf, screenDisplayBuffer *button_rbuf) {
     boolean buttonUsed = false;
 
     // Mouse event:
@@ -300,7 +301,7 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
                             drawButton(&(state->buttons[i]), BUTTON_PRESSED, button_dbuf);
 
                             // Update the display.
-                            overlayDisplayBuffer(&state->button_rbuf, NULL);
+                            overlayDisplayBuffer(button_rbuf, NULL);
                             overlayDisplayBuffer(button_dbuf, NULL);
 
                             if (!rogue.playbackMode || rogue.playbackPaused) {
@@ -352,12 +353,14 @@ short buttonInputLoop(brogueButton *buttons,
     boolean canceled;
     rogueEvent theEvent;
     buttonState state = {0};
-    screenDisplayBuffer button_dbuf;
 
     assureCosmeticRNG;
 
     canceled = false;
-    initializeButtonState(&state, buttons, buttonCount, winX, winY, winWidth, winHeight, &button_dbuf);
+    
+    screenDisplayBuffer button_dbuf;
+    screenDisplayBuffer button_rbuf;
+    initializeButtonState(&state, buttons, buttonCount, winX, winY, winWidth, winHeight, &button_dbuf, &button_rbuf);
 
     do {
         // Update the display.
@@ -367,10 +370,10 @@ short buttonInputLoop(brogueButton *buttons,
         nextBrogueEvent(&theEvent, true, false, false);
 
         // Process the input.
-        button = processButtonInput(&state, &canceled, &theEvent, &button_dbuf);
+        button = processButtonInput(&state, &canceled, &theEvent, &button_dbuf, &button_rbuf);
 
         // Revert the display.
-        overlayDisplayBuffer(&state.button_rbuf, NULL);
+        overlayDisplayBuffer(&button_rbuf, NULL);
 
     } while (button == -1 && !canceled);
 
