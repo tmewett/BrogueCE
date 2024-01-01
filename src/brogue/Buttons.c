@@ -294,10 +294,10 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
 
                             if (!rogue.playbackMode || rogue.playbackPaused) {
                                 // Wait for a little; then we're done.
-                                pauseBrogue(50);
+                                pauseBrogue(50, PAUSE_BEHAVIOR_DEFAULT);
                             } else {
                                 // Wait long enough for the viewer to see what was selected.
-                                pauseAnimation(1000);
+                                pauseAnimation(1000, PAUSE_BEHAVIOR_DEFAULT);
                             }
 
                             // Revert the display to its appearance before the button-press.

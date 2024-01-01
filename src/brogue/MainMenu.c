@@ -316,10 +316,7 @@ static void stackButtons(brogueButton *buttons, short buttonCount, windowpos sta
 /// @param buttons An array of initialized, positioned buttons, with text
 /// @param buttonCount The number of buttons in the array
 /// @param shadowBuf The display buffer object for the background/shadow
-static void initializeMenu(buttonState *menu, screenDisplayBuffer *button_dbuf, screenDisplayBuffer *button_rbuf, brogueButton *buttons, short buttonCount, screenDisplayBuffer *shadowBuf) {
-    // copies the current display to a reversion buffer. draws the buttons on the button state display buffer.
-    overlayDisplayBuffer(NULL, button_rbuf);
-    
+static void initializeMenu(buttonState *menu, brogueButton *buttons, short buttonCount, screenDisplayBuffer *shadowBuf) {
     memset((void *) menu, 0, sizeof( buttonState ));
     short minX, maxX, minY, maxY;
     minX = COLS;
@@ -339,10 +336,6 @@ static void initializeMenu(buttonState *menu, screenDisplayBuffer *button_dbuf, 
 
     initializeButtonState(menu, buttons, buttonCount, minX, minY, width, height);
 
-    clearDisplayBuffer(button_dbuf);
-    drawButtonsInState(menu, button_dbuf);
-    maskOutBufferAlpha(button_rbuf, button_dbuf);
-
     // Draws a rectangular shaded area of the specified color and opacity to a buffer. Position x, y is the upper/left.
     // The shading effect outside the rectangle decreases with distance.
     // Warning: shading of neighboring rectangles stacks
@@ -355,11 +348,11 @@ static void initializeMenu(buttonState *menu, screenDisplayBuffer *button_dbuf, 
 /// @param buttons The main menu buttons
 /// @param position The window position of the quit button
 /// @param shadowBuf The display buffer object for the background/shadow
-static void initializeMainMenu(buttonState *menu, screenDisplayBuffer *button_dbuf, screenDisplayBuffer *button_rbuf, brogueButton *buttons, windowpos position, screenDisplayBuffer *shadowBuf) {
+static void initializeMainMenu(buttonState *menu, brogueButton *buttons, windowpos position, screenDisplayBuffer *shadowBuf) {
     initializeMainMenuButtons(buttons);
     stackButtons(buttons, MAIN_MENU_BUTTON_COUNT, position, 2, false);
 
-    initializeMenu(menu, button_dbuf, button_rbuf, buttons, MAIN_MENU_BUTTON_COUNT, shadowBuf);
+    initializeMenu(menu, buttons, MAIN_MENU_BUTTON_COUNT, shadowBuf);
 }
 
 /// @brief Initialize a flyout menu and position the buttons
@@ -367,7 +360,7 @@ static void initializeMainMenu(buttonState *menu, screenDisplayBuffer *button_db
 /// @param shadowBuf The display buffer for the menu background/shadow
 /// @param buttons The buttons to add to the menu
 /// @param position The window position of the anchor button. All buttons are positioned relative to this location.
-static void initializeFlyoutMenu(buttonState *menu, screenDisplayBuffer *button_dbuf, screenDisplayBuffer *button_rbuf, screenDisplayBuffer *shadowBuf, brogueButton *buttons, windowpos position) {
+static void initializeFlyoutMenu(buttonState *menu, screenDisplayBuffer *shadowBuf, brogueButton *buttons, windowpos position) {
     short buttonCount = 0;
 
     if (rogue.nextGame == NG_FLYOUT_PLAY) {
@@ -389,7 +382,7 @@ static void initializeFlyoutMenu(buttonState *menu, screenDisplayBuffer *button_
     }
 
     stackButtons(buttons, buttonCount, position, 2, false);
-    initializeMenu(menu, button_dbuf, button_rbuf, buttons, buttonCount, shadowBuf);
+    initializeMenu(menu, buttons, buttonCount, shadowBuf);
 }
 
 /// @brief Displays a dialog window for the user to chose a game variant
@@ -516,15 +509,11 @@ static void titleMenu() {
 
     // Main menu
     buttonState mainMenu;
-    screenDisplayBuffer mainMenu_button_dbuf;
-    screenDisplayBuffer mainMenu_button_rbuf;
     brogueButton mainButtons[MAIN_MENU_BUTTON_COUNT];
     screenDisplayBuffer mainShadowBuf;
 
     // Flyout menu
     buttonState flyoutMenu;
-    screenDisplayBuffer flyoutMenu_button_dbuf;
-    screenDisplayBuffer flyoutMenu_button_rbuf;
     brogueButton flyoutButtons[10];
     screenDisplayBuffer flyoutShadowBuf;
 
@@ -539,7 +528,7 @@ static void titleMenu() {
 
     // Initialize the main menu with buttons stacked on top of the quit button
     windowpos quitButtonPosition = {COLS - 20, ROWS - 3};
-    initializeMainMenu(&mainMenu, &mainMenu_button_dbuf, &mainMenu_button_rbuf, mainButtons, quitButtonPosition, &mainShadowBuf);
+    initializeMainMenu(&mainMenu, mainButtons, quitButtonPosition, &mainShadowBuf);
 
     // Display the title and flames
     initializeMenuFlames(true, colors, colorStorage, colorSources, flames, mask);
@@ -555,35 +544,41 @@ static void titleMenu() {
     do {
         if (isFlyoutActive()) {
             bPos = getNextGameButtonPos(mainButtons);
-            initializeFlyoutMenu(&flyoutMenu, &flyoutMenu_button_dbuf, &flyoutMenu_button_rbuf, &flyoutShadowBuf, flyoutButtons, (windowpos){FLYOUT_X, bPos.window_y});
+            initializeFlyoutMenu(&flyoutMenu, &flyoutShadowBuf, flyoutButtons, (windowpos){FLYOUT_X, bPos.window_y});
         }
-        redrawMainMenuButtons(&mainMenu, &mainMenu_button_dbuf);
 
         // Inner input loop until the user selects a button or presses a key. For mouse input, a button
         // is considered selected only on the MOUSE_UP event.
         do {
             if (isApplicationActive()) {
-                // Revert the display.
-                overlayDisplayBuffer(&mainMenu_button_rbuf, NULL);
-
                 // Update the display.
                 updateMenuFlames(colors, colorSources, flames);
                 drawMenuFlames(flames, mask);
                 overlayDisplayBuffer(&mainShadowBuf, NULL);
-                overlayDisplayBuffer(&mainMenu_button_dbuf, NULL);
+
+                // Draw the main menu buttons
+                screenDisplayBuffer dbuf;
+                clearDisplayBuffer(&dbuf);
+                redrawMainMenuButtons(&mainMenu, &dbuf);
+                overlayDisplayBuffer(&dbuf, NULL);
 
                 //Show flyout if selected
                 if (isFlyoutActive()) {
                     overlayDisplayBuffer(&flyoutShadowBuf, NULL);
-                    overlayDisplayBuffer(&flyoutMenu_button_dbuf, NULL);
+                    screenDisplayBuffer flyout_dbuf;
+                    clearDisplayBuffer(&flyout_dbuf);
+                    drawButtonsInState(&flyoutMenu, &flyout_dbuf);
+                    overlayDisplayBuffer(&flyout_dbuf, NULL);
+                    mainMenu.buttonDepressed = -1;
+                    mainMenu.buttonFocused = -1;
                 }
                 // Pause briefly.
-                if (pauseBrogue(MENU_FLAME_UPDATE_DELAY)) {
+                if (pauseBrogue(MENU_FLAME_UPDATE_DELAY, (PauseBehavior){.interuptForMouseMove = true})) {
                     // There was input during the pause! Get the input.
                     nextBrogueEvent(&theEvent, true, false, true);
 
                     // quickstart a new game
-                    if (theEvent.param1 == 'n' || theEvent.param1 == 'N') {
+                    if (theEvent.eventType == KEYSTROKE && (theEvent.param1 == 'n' || theEvent.param1 == 'N')) {
                         rogue.nextGame = NG_NEW_GAME;
                         break;
                     }
@@ -600,9 +595,9 @@ static void titleMenu() {
                             chooseGameVariant();
                         }
                     }
-
                     // Process the main menu input
                     mainIndex = processButtonInput(&mainMenu, NULL, &theEvent);
+
                     if (theEvent.eventType == MOUSE_UP || theEvent.eventType == KEYSTROKE) {
                         if (mainIndex != - 1 && rogue.nextGame != mainButtons[mainIndex].command) {
                             rogue.nextGame = mainButtons[mainIndex].command;
@@ -614,7 +609,7 @@ static void titleMenu() {
                     }
                 }
             } else {
-                pauseBrogue(64);
+                pauseBrogue(64, PAUSE_BEHAVIOR_DEFAULT);
             }
         } while (theEvent.eventType != MOUSE_UP && theEvent.eventType != KEYSTROKE && (isFlyoutActive() || rogue.nextGame == NG_NOTHING));
     } while (isFlyoutActive() || rogue.nextGame == NG_NOTHING);

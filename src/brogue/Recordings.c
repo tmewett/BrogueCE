@@ -777,7 +777,7 @@ static void seek(unsigned long seekTarget, enum recordingSeekModes seekMode) {
             printProgressBar((COLS - 20) / 2, ROWS / 2, "[     Loading...   ]",
                              rogue.playerTurnNumber - startTurnNumber,
                              targetTurnNumber - startTurnNumber, &darkPurple, false);
-            while (pauseBrogue(0)) { // pauseBrogue(0) is necessary to flush the display to the window in SDL
+            while (pauseBrogue(0, PAUSE_BEHAVIOR_DEFAULT)) { // pauseBrogue(0) is necessary to flush the display to the window in SDL
                 if (rogue.gameHasEnded) {
                     return;
                 }
@@ -1374,7 +1374,7 @@ boolean loadSavedGame() {
             if (recordingLocation / progressBarInterval != previousRecordingLocation / progressBarInterval && !rogue.playbackOOS) {
                 rogue.playbackFastForward = false; // so that pauseBrogue looks for inputs
                 printProgressBar((COLS - 20) / 2, ROWS / 2, "[     Loading...   ]", recordingLocation, lengthOfPlaybackFile, &darkPurple, false);
-                while (pauseBrogue(0)) { // pauseBrogue(0) is necessary to flush the display to the window in SDL, as well as look for inputs
+                while (pauseBrogue(0, PAUSE_BEHAVIOR_DEFAULT)) { // pauseBrogue(0) is necessary to flush the display to the window in SDL, as well as look for inputs
                     rogue.creaturesWillFlashThisTurn = false; // prevent monster flashes from showing up on screen
                     nextBrogueEvent(&theEvent, true, false, true);
                     if (rogue.gameHasEnded || theEvent.eventType == KEYSTROKE && theEvent.param1 == ESCAPE_KEY) {

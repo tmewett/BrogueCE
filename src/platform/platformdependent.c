@@ -239,8 +239,8 @@ void nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean col
     currentConsole.nextKeyOrMouseEvent(returnEvent, textInput, colorsDance);
 }
 
-boolean pauseForMilliseconds(short milliseconds) {
-    return currentConsole.pauseForMilliseconds(milliseconds);
+boolean pauseForMilliseconds(short milliseconds, PauseBehavior behavior) {
+    return currentConsole.pauseForMilliseconds(milliseconds, behavior);
 }
 
 void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2) {

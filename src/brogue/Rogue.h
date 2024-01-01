@@ -2885,7 +2885,16 @@ extern "C" {
                   short xLoc, short yLoc,
                   short backRed, short backGreen, short backBlue,
                   short foreRed, short foreGreen, short foreBlue);
-    boolean pauseForMilliseconds(short milliseconds);
+
+    typedef struct PauseBehavior {
+        /// If `interuptForMouseMove` is true, then the pause function will return `true`
+        /// if a mouse move occurs during the pause.
+        /// Otherwise, mouse movements will be ignored.
+        boolean interuptForMouseMove;
+    } PauseBehavior;
+#define PAUSE_BEHAVIOR_DEFAULT ((PauseBehavior) { .interuptForMouseMove = false })
+
+    boolean pauseForMilliseconds(short milliseconds, PauseBehavior behavior);
     boolean isApplicationActive(void);
     void nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance);
     void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2);
@@ -2974,8 +2983,8 @@ extern "C" {
                                const char *promptSuffix,
                                short textEntryType,
                                boolean useDialogBox);
-    boolean pauseBrogue(short milliseconds);
-    boolean pauseAnimation(short milliseconds);
+    boolean pauseBrogue(short milliseconds, PauseBehavior behavior);
+    boolean pauseAnimation(short milliseconds, PauseBehavior behavior);
     void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance, boolean realInputEvenInPlayback);
     void executeMouseClick(rogueEvent *theEvent);
     void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKey);

@@ -126,7 +126,7 @@ static void screen_update_benchmark() {
                 plotCharWithColor(theChar, (windowpos){ i, j }, &sparklesauce, &sparklesauce);
             }
         }
-        pauseBrogue(1);
+        pauseBrogue(1, PAUSE_BEHAVIOR_DEFAULT);
     }
     printf("\n\nBenchmark took a total of %lu seconds.\n", ((unsigned long) time(NULL)) - initialTime);
 }
