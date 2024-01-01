@@ -191,14 +191,6 @@ void initializeButtonState(buttonState *state,
     }
 }
 
-void maskOutBufferAlpha(screenDisplayBuffer *rbuf, const screenDisplayBuffer *dbuf) {
-    for (int i=0; i<COLS; i++) {
-        for (int j=0; j<ROWS; j++) {
-            rbuf->cells[i][j].opacity = (dbuf->cells[i][j].opacity ? 100 : 0);
-        }
-    }
-}
-
 // Processes one round of user input, and updates `state` accordingly.
 // If a button is pressed, draws to the screen and briefly pauses, but then
 // immediately reverts the screen state to beforce `processButtonInput` was caled.
@@ -251,9 +243,7 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
                 buttonUsed = true;
             } else {
                 // Otherwise, no button is depressed. If one was previously depressed, redraw it.
-                if (state->buttonDepressed >= 0) {
-                    // ...
-                } else if (!(x >= state->winX && x < state->winX + state->winWidth
+                if (state->buttonDepressed < 0 && !(x >= state->winX && x < state->winX + state->winWidth
                              && y >= state->winY && y < state->winY + state->winHeight)) {
                     // Clicking outside of a button means canceling.
                     if (canceled) {

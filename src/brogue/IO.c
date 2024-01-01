@@ -434,7 +434,6 @@ static void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
     short i, x, buttonCount;
     char goldTextEscape[MAX_MENU_BUTTON_COUNT] = "";
     char whiteTextEscape[MAX_MENU_BUTTON_COUNT] = "";
-    color tempColor;
 
     encodeMessageColor(goldTextEscape, 0, KEYBOARD_LABELS ? &yellow : &white);
     encodeMessageColor(whiteTextEscape, 0, &white);
@@ -514,8 +513,6 @@ static void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
         x += strLenWithoutEscapes(buttons[i].text) + 2; // Gap between buttons.
     }
 
-    // overlayDisplayBuffer(NULL, button_rbuf);
-    // clearDisplayBuffer(button_dbuf);
     initializeButtonState(state,
                           buttons,
                           5,
@@ -523,22 +520,6 @@ static void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
                           ROWS - 1,
                           COLS - mapToWindowX(0),
                           1);
-    // drawButtonsInState(state, button_dbuf);
-    // maskOutBufferAlpha(button_rbuf, button_dbuf);
-
-    // for (i=0; i < 5; i++) {
-    //     drawButton(&(state->buttons[i]), BUTTON_NORMAL, button_rbuf);
-    // }
-    // for (i=0; i<COLS; i++) { // So the buttons stay (but are dimmed and desaturated) when inactive.
-    //     tempColor = colorFromComponents(button_rbuf->cells[i][ROWS - 1].backColorComponents);
-    //     desaturate(&tempColor, 60);
-    //     applyColorAverage(&tempColor, &black, 50);
-    //     storeColorComponents(button_rbuf->cells[i][ROWS - 1].backColorComponents, &tempColor);
-    //     tempColor = colorFromComponents(button_rbuf->cells[i][ROWS - 1].foreColorComponents);
-    //     desaturate(&tempColor, 60);
-    //     applyColorAverage(&tempColor, &black, 50);
-    //     storeColorComponents(button_rbuf->cells[i][ROWS - 1].foreColorComponents, &tempColor);
-    // }
 }
 
 
@@ -1982,12 +1963,16 @@ color colorFromComponents(char rgb[3]) {
 
 // draws overBuf over the current display with per-cell pseudotransparency as specified in overBuf.
 // If previousBuf is not null, it gets filled with the preexisting display for reversion purposes.
+// 
+// If `overBuf` is null, then nothing is drawn to the screen. This can be used to save
+// `previousBuf` without drawing anything new.
 void overlayDisplayBuffer(screenDisplayBuffer *overBuf, screenDisplayBuffer *previousBuf) {
     if (previousBuf) {
         copyDisplayBuffer(previousBuf, &displayBuffer);
     }
 
     if (overBuf == NULL) {
+        // If `overBuf` is NULL, then save `previousBuf` but draw nothing.
         return;
     }
 
