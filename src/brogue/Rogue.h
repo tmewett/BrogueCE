@@ -3214,8 +3214,6 @@ extern "C" {
                        pos *targetLoc,
                        rogueEvent *event,
                        buttonState *state,
-                       screenDisplayBuffer *button_dbuf,
-                       screenDisplayBuffer *button_rbuf,
                        boolean colorsDance,
                        boolean keysMoveCursor,
                        boolean targetCanLeaveMap);
@@ -3442,7 +3440,7 @@ extern "C" {
                                short winWidth,
                                short winHeight);
     void maskOutBufferAlpha(screenDisplayBuffer *rbuf, const screenDisplayBuffer *dbuf);
-    short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *event, screenDisplayBuffer *button_dbuf, screenDisplayBuffer *button_rbuf);
+    short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *event);
     short smoothHiliteGradient(const short currentXValue, const short maxXValue);
     void drawButton(brogueButton *button, enum buttonDrawStates highlight, screenDisplayBuffer* dbuf);
     short buttonInputLoop(brogueButton *buttons,

@@ -5233,8 +5233,6 @@ boolean moveCursor(boolean *targetConfirmed,
                    pos *targetLoc,
                    rogueEvent *event,
                    buttonState *state,
-                   screenDisplayBuffer *button_dbuf,
-                   screenDisplayBuffer *button_rbuf,
                    boolean colorsDance,
                    boolean keysMoveCursor,
                    boolean targetCanLeaveMap) {
@@ -5260,23 +5258,26 @@ boolean moveCursor(boolean *targetConfirmed,
         //assureCosmeticRNG;
 
         if (state) { // Also running a button loop.
+            screenDisplayBuffer dbuf;
+            clearDisplayBuffer(&dbuf);
+            drawButtonsInState(state, &dbuf);
 
+            screenDisplayBuffer rbuf;
             // Update the display.
-            overlayDisplayBuffer(button_dbuf, NULL);
+            overlayDisplayBuffer(&dbuf, &rbuf);
 
             // Get input.
             nextBrogueEvent(&theEvent, false, colorsDance, true);
 
             // Process the input.
-            buttonInput = processButtonInput(state, NULL, &theEvent, button_dbuf, button_rbuf);
+            buttonInput = processButtonInput(state, NULL, &theEvent);
 
             if (buttonInput != -1) {
                 state->buttonDepressed = state->buttonFocused = -1;
-                drawButtonsInState(state, button_dbuf);
             }
 
             // Revert the display.
-            overlayDisplayBuffer(button_rbuf, NULL);
+            overlayDisplayBuffer(&rbuf, NULL);
 
         } else { // No buttons to worry about.
             nextBrogueEvent(&theEvent, false, colorsDance, true);
@@ -5578,7 +5579,7 @@ boolean chooseTarget(pos *returnLoc,
         }
 
         oldTargetLoc = targetLoc;
-        moveCursor(&targetConfirmed, &canceled, &tabKey, &targetLoc, &event, NULL, NULL, NULL, false, true, false);
+        moveCursor(&targetConfirmed, &canceled, &tabKey, &targetLoc, &event, NULL, false, true, false);
         if (event.eventType == RIGHT_MOUSE_UP) { // Right mouse cancels.
             canceled = true;
         }

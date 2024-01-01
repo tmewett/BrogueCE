@@ -590,7 +590,7 @@ static void titleMenu() {
 
                     // Process the flyout menu input as needed
                     if (isFlyoutActive()) {
-                        flyoutIndex = processButtonInput(&flyoutMenu, NULL, &theEvent, &flyoutMenu_button_dbuf, &flyoutMenu_button_rbuf);
+                        flyoutIndex = processButtonInput(&flyoutMenu, NULL, &theEvent);
                         if (flyoutIndex != -1 && (theEvent.eventType == MOUSE_UP || theEvent.eventType == KEYSTROKE)) {
                             rogue.nextGame = flyoutButtons[flyoutIndex].command;
                         }
@@ -602,7 +602,7 @@ static void titleMenu() {
                     }
 
                     // Process the main menu input
-                    mainIndex = processButtonInput(&mainMenu, NULL, &theEvent, &mainMenu_button_dbuf, &mainMenu_button_rbuf);
+                    mainIndex = processButtonInput(&mainMenu, NULL, &theEvent);
                     if (theEvent.eventType == MOUSE_UP || theEvent.eventType == KEYSTROKE) {
                         if (mainIndex != - 1 && rogue.nextGame != mainButtons[mainIndex].command) {
                             rogue.nextGame = mainButtons[mainIndex].command;

@@ -430,7 +430,7 @@ static short actionMenu(short x, boolean playingBack) {
 
 #define MAX_MENU_BUTTON_COUNT 5
 
-static void initializeMenuButtons(buttonState *state, screenDisplayBuffer *button_dbuf, screenDisplayBuffer *button_rbuf, brogueButton buttons[5]) {
+static void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
     short i, x, buttonCount;
     char goldTextEscape[MAX_MENU_BUTTON_COUNT] = "";
     char whiteTextEscape[MAX_MENU_BUTTON_COUNT] = "";
@@ -514,8 +514,8 @@ static void initializeMenuButtons(buttonState *state, screenDisplayBuffer *butto
         x += strLenWithoutEscapes(buttons[i].text) + 2; // Gap between buttons.
     }
 
-    overlayDisplayBuffer(NULL, button_rbuf);
-    clearDisplayBuffer(button_dbuf);
+    // overlayDisplayBuffer(NULL, button_rbuf);
+    // clearDisplayBuffer(button_dbuf);
     initializeButtonState(state,
                           buttons,
                           5,
@@ -523,22 +523,22 @@ static void initializeMenuButtons(buttonState *state, screenDisplayBuffer *butto
                           ROWS - 1,
                           COLS - mapToWindowX(0),
                           1);
-    drawButtonsInState(state, button_dbuf);
-    maskOutBufferAlpha(button_rbuf, button_dbuf);
+    // drawButtonsInState(state, button_dbuf);
+    // maskOutBufferAlpha(button_rbuf, button_dbuf);
 
-    for (i=0; i < 5; i++) {
-        drawButton(&(state->buttons[i]), BUTTON_NORMAL, button_rbuf);
-    }
-    for (i=0; i<COLS; i++) { // So the buttons stay (but are dimmed and desaturated) when inactive.
-        tempColor = colorFromComponents(button_rbuf->cells[i][ROWS - 1].backColorComponents);
-        desaturate(&tempColor, 60);
-        applyColorAverage(&tempColor, &black, 50);
-        storeColorComponents(button_rbuf->cells[i][ROWS - 1].backColorComponents, &tempColor);
-        tempColor = colorFromComponents(button_rbuf->cells[i][ROWS - 1].foreColorComponents);
-        desaturate(&tempColor, 60);
-        applyColorAverage(&tempColor, &black, 50);
-        storeColorComponents(button_rbuf->cells[i][ROWS - 1].foreColorComponents, &tempColor);
-    }
+    // for (i=0; i < 5; i++) {
+    //     drawButton(&(state->buttons[i]), BUTTON_NORMAL, button_rbuf);
+    // }
+    // for (i=0; i<COLS; i++) { // So the buttons stay (but are dimmed and desaturated) when inactive.
+    //     tempColor = colorFromComponents(button_rbuf->cells[i][ROWS - 1].backColorComponents);
+    //     desaturate(&tempColor, 60);
+    //     applyColorAverage(&tempColor, &black, 50);
+    //     storeColorComponents(button_rbuf->cells[i][ROWS - 1].backColorComponents, &tempColor);
+    //     tempColor = colorFromComponents(button_rbuf->cells[i][ROWS - 1].foreColorComponents);
+    //     desaturate(&tempColor, 60);
+    //     applyColorAverage(&tempColor, &black, 50);
+    //     storeColorComponents(button_rbuf->cells[i][ROWS - 1].foreColorComponents, &tempColor);
+    // }
 }
 
 
@@ -558,8 +558,6 @@ void mainInputLoop() {
     short **costMap, **playerPathingMap, **cursorSnapMap;
     brogueButton buttons[5] = {{{0}}};
     buttonState state;
-    screenDisplayBuffer button_dbuf;
-    screenDisplayBuffer button_rbuf;
     short buttonInput;
     short backupCost;
 
@@ -570,7 +568,7 @@ void mainInputLoop() {
     rogue.cursorPathIntensity = (rogue.cursorMode ? 50 : 20);
 
     // Initialize buttons.
-    initializeMenuButtons(&state, &button_dbuf, &button_rbuf, buttons);
+    initializeMenuButtons(&state, buttons);
 
     playingBack = rogue.playbackMode;
     rogue.playbackMode = false;
@@ -704,7 +702,7 @@ void mainInputLoop() {
 
             // Get the input!
             rogue.playbackMode = playingBack;
-            doEvent = moveCursor(&targetConfirmed, &canceled, &tabKey, &rogue.cursorLoc, &theEvent, &state, &button_dbuf, &button_rbuf, !textDisplayed, rogue.cursorMode, true);
+            doEvent = moveCursor(&targetConfirmed, &canceled, &tabKey, &rogue.cursorLoc, &theEvent, &state, !textDisplayed, rogue.cursorMode, true);
             rogue.playbackMode = false;
 
             if (state.buttonChosen == 3) { // Actions menu button.
@@ -817,7 +815,7 @@ void mainInputLoop() {
                 if (!rogue.playbackMode) {
                     // Playback mode is off, user must have taken control
                     // Redraw buttons to reflect that
-                    initializeMenuButtons(&state, &button_dbuf, buttons);
+                    initializeMenuButtons(&state, buttons);
                 }
 #endif
                 playingBack = rogue.playbackMode;
