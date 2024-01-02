@@ -1200,11 +1200,11 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
             }
         }
 
-        moralAttack(attacker, defender);
-
         if (attacker == &player && rogue.weapon && (rogue.weapon->flags & ITEM_RUNIC)) {
             magicWeaponHit(defender, rogue.weapon, sneakAttack || defenderWasAsleep || defenderWasParalyzed);
         }
+
+        moralAttack(attacker, defender);
 
         if (attacker == &player
             && (defender->bookkeepingFlags & MB_IS_DYING)
