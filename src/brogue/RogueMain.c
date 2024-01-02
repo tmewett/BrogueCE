@@ -334,9 +334,8 @@ void initializeRogue(uint64_t seed) {
     initializeGender(&player);
     player.movementSpeed = player.info.movementSpeed;
     player.attackSpeed = player.info.attackSpeed;
-    clearStatus(&player);
+    initializeStatus(&player);
     player.carriedItem = NULL;
-    player.status[STATUS_NUTRITION] = player.maxStatus[STATUS_NUTRITION] = STOMACH_SIZE;
     player.currentHP = player.info.maxHP;
     player.creatureState = MONSTER_ALLY;
     player.ticksUntilTurn = 0;
@@ -905,13 +904,15 @@ static void removeDeadMonstersFromList(creatureList *list) {
         if (decedent->bookkeepingFlags & MB_HAS_DIED) {
             removeCreature(list, decedent);
             if (decedent->leader == &player
-                && !(decedent->info.flags & MONST_INANIMATE)
-                && (decedent->bookkeepingFlags & MB_HAS_SOUL)
+                && !(decedent->bookkeepingFlags & MB_DOES_NOT_RESURRECT)
+                && (!(decedent->info.flags & MONST_INANIMATE) 
+                    || (monsterCatalog[decedent->info.monsterID].abilityFlags & MA_ENTER_SUMMONS))
+                && (decedent->bookkeepingFlags & MB_WEAPON_AUTO_ID)
                 && !(decedent->bookkeepingFlags & MB_ADMINISTRATIVE_DEATH)) {
 
                 // Unset flag, since the purgatory list should be iterable.
                 decedent->bookkeepingFlags &= ~MB_HAS_DIED;
-                prependCreature(&purgatory, decedent);
+                prependCreature(&purgatory, decedent); // add for possible future resurrection
             } else {
                 freeCreature(decedent);
             }

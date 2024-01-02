@@ -62,8 +62,8 @@ creature *generateMonster(short monsterID, boolean itemPossible, boolean mutatio
     const int POW_DEEP_MUTATION[] = {11, 13, 16, 18, 21, 25, 30, 35, 41, 48, 56, 65, 76};
 
     creature *monst = calloc(1, sizeof(creature));
-    clearStatus(monst);
     monst->info = monsterCatalog[monsterID];
+    initializeStatus(monst);
 
     monst->mutationIndex = -1;
     if (mutationPossible
@@ -118,20 +118,6 @@ creature *generateMonster(short monsterID, boolean itemPossible, boolean mutatio
         monst->waypointAlreadyVisited[i] = rand_range(0, 1);
     }
 
-    if (monst->info.flags & MONST_FIERY) {
-        monst->status[STATUS_BURNING] = monst->maxStatus[STATUS_BURNING] = 1000; // won't decrease
-    }
-    if (monst->info.flags & MONST_FLIES) {
-        monst->status[STATUS_LEVITATING] = monst->maxStatus[STATUS_LEVITATING] = 1000; // won't decrease
-    }
-    if (monst->info.flags & MONST_IMMUNE_TO_FIRE) {
-        monst->status[STATUS_IMMUNE_TO_FIRE] = monst->maxStatus[STATUS_IMMUNE_TO_FIRE] = 1000; // won't decrease
-    }
-    if (monst->info.flags & MONST_INVISIBLE) {
-        monst->status[STATUS_INVISIBLE] = monst->maxStatus[STATUS_INVISIBLE] = 1000; // won't decrease
-    }
-    monst->status[STATUS_NUTRITION] = monst->maxStatus[STATUS_NUTRITION] = 1000;
-
     if (monst->info.flags & MONST_CARRY_ITEM_100) {
         itemChance = 100;
     } else if (monst->info.flags & MONST_CARRY_ITEM_25) {
@@ -156,8 +142,8 @@ creature *generateMonster(short monsterID, boolean itemPossible, boolean mutatio
 
     initializeGender(monst);
 
-    if (!(monst->info.flags & MONST_INANIMATE) && !monst->status[STATUS_LIFESPAN_REMAINING]) {
-        monst->bookkeepingFlags |= MB_HAS_SOUL;
+    if (!(monst->info.flags & MONST_INANIMATE) || (monst->info.abilityFlags & MA_ENTER_SUMMONS)) {
+        monst->bookkeepingFlags |= MB_WEAPON_AUTO_ID;
     }
 
     return monst;
@@ -543,7 +529,7 @@ creature *cloneMonster(creature *monst, boolean announce, boolean placeClone) {
     newMonst->carriedMonster = NULL; // Temporarily remove anything it's carrying.
 
     initializeGender(newMonst);
-    newMonst->bookkeepingFlags &= ~(MB_LEADER | MB_CAPTIVE | MB_HAS_SOUL);
+    newMonst->bookkeepingFlags &= ~(MB_LEADER | MB_CAPTIVE | MB_WEAPON_AUTO_ID);
     newMonst->bookkeepingFlags |= MB_FOLLOWER;
     newMonst->mapToMe = NULL;
     newMonst->safetyMap = NULL;
@@ -711,6 +697,9 @@ boolean spawnMinions(short hordeID, creature *leader, boolean summoned, boolean 
             monst->bookkeepingFlags |= (MB_FOLLOWER | MB_JUST_SUMMONED);
             monst->leader = leader;
             monst->creatureState = leader->creatureState;
+            if (monst->creatureState == MONSTER_ALLY) {
+                monst->bookkeepingFlags |= MB_DOES_NOT_RESURRECT;
+            }
             monst->mapToMe = NULL;
             if (theHorde->flags & HORDE_DIES_ON_LEADER_DEATH) {
                 monst->bookkeepingFlags |= MB_BOUND_TO_LEADER;
@@ -2820,6 +2809,13 @@ boolean resurrectAlly(const pos loc) {
         monToRaise->status[STATUS_DISCORDANT] = 0;
         heal(monToRaise, 100, true);
 
+        // put humpty dumpty back together again. special handling for phoenix egg, phylactery, vampire
+        if (monsterCatalog[monToRaise->info.monsterID].abilityFlags & MA_ENTER_SUMMONS) {
+            monToRaise->info = monsterCatalog[monToRaise->info.monsterID];
+            initializeStatus(monToRaise);
+            monToRaise->wasNegated = false;
+        }
+
         return true;
     } else {
         return false;
@@ -3771,12 +3767,28 @@ boolean moveMonster(creature *monst, short dx, short dy) {
     return false;
 }
 
-void clearStatus(creature *monst) {
+/// @brief initialize a creature's status effects to the default values
+/// @param monst the creature
+void initializeStatus(creature *monst) {
     short i;
 
     for (i=0; i<NUMBER_OF_STATUS_EFFECTS; i++) {
         monst->status[i] = monst->maxStatus[i] = 0;
     }
+
+    if (monst->info.flags & MONST_FIERY) {
+        monst->status[STATUS_BURNING] = monst->maxStatus[STATUS_BURNING] = 1000; // won't decrease
+    }
+    if (monst->info.flags & MONST_FLIES) {
+        monst->status[STATUS_LEVITATING] = monst->maxStatus[STATUS_LEVITATING] = 1000; // won't decrease
+    }
+    if (monst->info.flags & MONST_IMMUNE_TO_FIRE) {
+        monst->status[STATUS_IMMUNE_TO_FIRE] = monst->maxStatus[STATUS_IMMUNE_TO_FIRE] = 1000; // won't decrease
+    }
+    if (monst->info.flags & MONST_INVISIBLE) {
+        monst->status[STATUS_INVISIBLE] = monst->maxStatus[STATUS_INVISIBLE] = 1000; // won't decrease
+    }
+    monst->status[STATUS_NUTRITION] = monst->maxStatus[STATUS_NUTRITION] = (monst == &player ? STOMACH_SIZE : 1000);
 }
 
 // Bumps a creature to a random nearby hospitable cell.
