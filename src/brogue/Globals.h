@@ -46,6 +46,7 @@ extern const color clairvoyanceColor;
 extern const color telepathyMultiplier;
 extern const color omniscienceColor;
 
+extern const color sidebarBackColor;
 extern const color itemColor;
 extern const color blueBar;
 extern const color redBar;
