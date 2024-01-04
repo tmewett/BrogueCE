@@ -613,9 +613,9 @@ const blueprint blueprintCatalog_Brogue[] = {
 // .levelScaling != 0 for thresholding
 const meteredItemGenerationTable meteredItemsGenerationTable_Brogue[] = {
     { .category = SCROLL, .kind = SCROLL_ENCHANTING, .initialFrequency = 60, .incrementFrequency = 30, .decrementFrequency = 50 },
-    { .category = SCROLL, .kind = SCROLL_IDENTIFY },
+    //{ .category = SCROLL, .kind = SCROLL_IDENTIFY }, // Brogue Lite note: redundant scroll kind removed
     { .category = SCROLL, .kind = SCROLL_TELEPORT },
-    { .category = SCROLL, .kind = SCROLL_REMOVE_CURSE },
+    //{ .category = SCROLL, .kind = SCROLL_REMOVE_CURSE }, // Brogue Lite note: redundant scroll kind removed
     { .category = SCROLL, .kind = SCROLL_RECHARGING },
     { .category = SCROLL, .kind = SCROLL_PROTECT_ARMOR },
     { .category = SCROLL, .kind = SCROLL_PROTECT_WEAPON },
@@ -636,7 +636,7 @@ const meteredItemGenerationTable meteredItemsGenerationTable_Brogue[] = {
     { .category = POTION, .kind = POTION_INVISIBILITY },
     { .category = POTION, .kind = POTION_POISON },
     { .category = POTION, .kind = POTION_PARALYSIS },
-    { .category = POTION, .kind = POTION_HALLUCINATION },
+    //{ .category = POTION, .kind = POTION_HALLUCINATION }, // Brogue Lite note: harmful potion kind removed
     { .category = POTION, .kind = POTION_CONFUSION },
     { .category = POTION, .kind = POTION_INCINERATION },
     { .category = POTION, .kind = POTION_DARKNESS },
