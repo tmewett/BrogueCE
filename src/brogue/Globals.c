@@ -316,9 +316,6 @@ color *dynamicColors[NUMBER_DYNAMIC_COLORS] = {
     &chasmEdgeBackColor
 };
 
-// Brogue Lite note:
-// Door keys are now fungible. Changed the message when you have no key(s) to reflect this.
-
 const floorTileType tileCatalog[NUMBER_TILETYPES] = {
 
     // promoteChance is in hundredths of a percent per turn
@@ -336,7 +333,7 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
     {G_CLOSED_DOOR, &doorForeColor,         &doorBackColor,         25, 50, DF_EMBERS,      0,          DF_OPEN_DOOR,   0,              NO_LIGHT,       (T_OBSTRUCTS_VISION | T_OBSTRUCTS_GAS | T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_PROMOTES_ON_STEP | TM_VISUALLY_DISTINCT), "a wooden door", "you pass through the doorway."},
     {G_OPEN_DOOR,   &doorForeColor,         &doorBackColor,         25, 50, DF_EMBERS,      0,          DF_CLOSED_DOOR, 10000,          NO_LIGHT,       (T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_VISUALLY_DISTINCT),           "an open door",         "you pass through the doorway."},
     {G_WALL,        &wallForeColor,         &wallBackColor,         0,  50, DF_EMBERS,      DF_SHOW_DOOR,0,             0,              NO_LIGHT,       (T_OBSTRUCTS_EVERYTHING | T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_IS_SECRET),  "a stone wall",     "The rough stone wall is firm and unyielding."},
-    {G_CLOSED_IRON_DOOR,&ironDoorForeColor, &ironDoorBackColor,     15, 50, DF_EMBERS,      0,          DF_OPEN_IRON_DOOR_INERT,0,      NO_LIGHT,       (T_OBSTRUCTS_EVERYTHING), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_PROMOTES_WITH_KEY | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT | TM_BRIGHT_MEMORY | TM_INTERRUPT_EXPLORATION_WHEN_SEEN | TM_INVERT_WHEN_HIGHLIGHTED | TM_ACCEPTS_FUNGIBLE_KEY),  "a locked iron door",   "you search your pack but do not have an iron key."},
+    {G_CLOSED_IRON_DOOR,&ironDoorForeColor, &ironDoorBackColor,     15, 50, DF_EMBERS,      0,          DF_OPEN_IRON_DOOR_INERT,0,      NO_LIGHT,       (T_OBSTRUCTS_EVERYTHING), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_PROMOTES_WITH_KEY | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT | TM_BRIGHT_MEMORY | TM_INTERRUPT_EXPLORATION_WHEN_SEEN | TM_INVERT_WHEN_HIGHLIGHTED),  "a locked iron door",   "you search your pack but do not have a matching key."},
     {G_OPEN_IRON_DOOR,&white,               &ironDoorBackColor,     90, 50, DF_EMBERS,      0,          0,              0,              NO_LIGHT,       (T_OBSTRUCTS_SURFACE_EFFECTS), (TM_STAND_IN_TILE | TM_VISUALLY_DISTINCT),                           "an open iron door",    "you pass through the doorway."},
     {G_DOWN_STAIRS, &itemColor,             &stairsBackColor,       30, 0,  DF_PLAIN_FIRE,  0,          DF_REPEL_CREATURES, 0,          NO_LIGHT,       (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_SURFACE_EFFECTS), (TM_PROMOTES_ON_STEP | TM_STAND_IN_TILE | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT | TM_BRIGHT_MEMORY | TM_INTERRUPT_EXPLORATION_WHEN_SEEN | TM_INVERT_WHEN_HIGHLIGHTED), "a downward staircase",   "stairs spiral downward into the depths."},
     {G_UP_STAIRS,   &itemColor,             &stairsBackColor,       30, 0,  DF_PLAIN_FIRE,  0,          DF_REPEL_CREATURES, 0,          NO_LIGHT,       (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_SURFACE_EFFECTS), (TM_PROMOTES_ON_STEP | TM_STAND_IN_TILE | TM_LIST_IN_SIDEBAR | TM_VISUALLY_DISTINCT | TM_BRIGHT_MEMORY | TM_INTERRUPT_EXPLORATION_WHEN_SEEN | TM_INVERT_WHEN_HIGHLIGHTED), "an upward staircase",    "stairs spiral upward."},
@@ -1554,12 +1551,8 @@ const char itemGemsRef[NUMBER_ITEM_GEMS][30] = {
     "jasper"
 };
 
-// Brogue Lite note:
-// Keys now stack in the inventory, and are fungible.
-// See: https://github.com/HomebrewHomunculus/BrogueLite/pull/27
-
 itemTable keyTable[NUMBER_KEY_TYPES] = {
-    {"iron key",            "", "", 1, 0,   0, 0, {0,0,0}, true, false, 0, false, "The notches on these ancient iron keys are well worn; their leather lanyards battered by age. Perhaps there are iron doors somewhere?"},
+    {"door key",            "", "", 1, 0,   0, 0, {0,0,0}, true, false, 0, false, "The notches on this ancient iron key are well worn; its leather lanyard is battered by age. What door might it open?"},
     {"cage key",            "", "", 1, 0,   0, 0, {0,0,0}, true, false, 0, false, "The rust accreted on this iron key has been stained with flecks of blood; it must have been used recently. What cage might it open?"},
     {"crystal orb",         "", "", 1, 0,   0, 0, {0,0,0}, true, false, 0, false, "A faceted orb, seemingly cut from a single crystal, sparkling and perpetually warm to the touch. What manner of device might such an object activate?"},
 };
@@ -1613,6 +1606,8 @@ const char weaponRunicNames[NUMBER_WEAPON_RUNIC_KINDS][30] = {
     "confusion",
     "force",
     "slaying",
+    //"mercy",
+    //"plenty"
 };
 
 // Brogue Lite note:
@@ -1627,6 +1622,9 @@ const char armorRunicNames[NUMBER_ARMOR_ENCHANT_KINDS][30] = {
     "reflection",
     "respiration",
     "dampening",
+    //"burden",
+    //"vulnerability",
+    //"immolation",
 };
 
 // Brogue Lite note:

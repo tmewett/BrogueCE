@@ -417,16 +417,6 @@ void initializeRogue(uint64_t seed) {
     equipItem(theItem, false, NULL);
     player.status[STATUS_DONNING] = 0;
 
-    // Brogue lite: grant starting keys
-    theItem = generateItem(KEY, 0);
-    theItem->flags |= (ITEM_IS_KEY | ITEM_IS_FUNGIBLE_KEY);
-    theItem = addItemToPack(theItem);
-
-    theItem = generateItem(KEY, 0);
-    theItem->flags |= (ITEM_IS_KEY | ITEM_IS_FUNGIBLE_KEY);
-    theItem = addItemToPack(theItem);
-
-
     recalculateEquipmentBonuses();
 
     if (D_OMNISCENCE) {

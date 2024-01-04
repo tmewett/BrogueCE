@@ -976,25 +976,7 @@ item *addItemToPack(item *theItem) {
                 return tempItem;
             }
         }
-    } else if (theItem->category & KEY) {
-      // Brogue lite: stack fungible keys
-      if ((theItem->flags & ITEM_IS_KEY)
-          && (theItem->flags & ITEM_IS_FUNGIBLE_KEY)) {
-            for (tempItem = packItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
-                if ((tempItem->flags & ITEM_IS_KEY)
-                    && (tempItem->flags & ITEM_IS_FUNGIBLE_KEY)) {
-
-                    // We found a match!
-                    stackItems(tempItem, theItem);
-
-                    // Pass back the incremented (old) item. No need to add it to the pack since it's already there.
-                    return tempItem;
-                }
-            }
-
-          }
-    }
-    else if (theItem->category & WEAPON && theItem->quiverNumber > 0) {
+    } else if (theItem->category & WEAPON && theItem->quiverNumber > 0) {
         for (tempItem = packItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
             if (theItem->category == tempItem->category && theItem->kind == tempItem->kind
                 && theItem->quiverNumber == tempItem->quiverNumber) {
@@ -1709,18 +1691,17 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
             sprintf(root, "%slumenstone%s%s from depth %i", yellowEscapeSequence, pluralization, baseEscapeSequence, theItem->originDepth);
             break;
         case KEY:
-            if (includeDetails && theItem->originDepth > 0 && theItem->originDepth != rogue.depthLevel
-              && (!(theItem->flags & ITEM_IS_FUNGIBLE_KEY))) { // Brogue Lite: fungible keys' depth doesn't matter
+            if (includeDetails && theItem->originDepth > 0 && theItem->originDepth != rogue.depthLevel) {
                 sprintf(root, "%s%s%s from depth %i",
                         keyTable[theItem->kind].name,
                         pluralization,
                         grayEscapeSequence,
                         theItem->originDepth);
             } else {
-                  sprintf(root,
-                          "%s%s",
-                          keyTable[theItem->kind].name,
-                          pluralization);
+                sprintf(root,
+                        keyTable[theItem->kind].name,
+                        "%s%s",
+                        pluralization);
             }
             break;
         default:
@@ -3331,14 +3312,6 @@ void equip(item *theItem) {
 // (2) its originDepth matches the depth, and
 // (3) either its key (x, y) location matches (x, y), or its machine number matches the machine number at (x, y).
 boolean keyMatchesLocation(item *theItem, pos loc) {
-
-    // Brogue Lite: any key can be used in iron doors
-    if ((theItem->flags & ITEM_IS_KEY)
-        && (theItem->flags & ITEM_IS_FUNGIBLE_KEY)
-        && (tileCatalog[pmap[x][y].layers[DUNGEON]].mechFlags & TM_ACCEPTS_FUNGIBLE_KEY)) {
-      return true;
-    }
-
     if ((theItem->flags & ITEM_IS_KEY)
         && theItem->originDepth == rogue.depthLevel) {
 
