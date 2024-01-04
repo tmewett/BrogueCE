@@ -2480,8 +2480,8 @@ void finishWalls(boolean includingDiagonals) {
 void liquidType(short *deep, short *shallow, short *shallowWidth) {
     short randMin, randMax, rand;
 
-    randMin = (rogue.depthLevel < 4 ? 1 : 0); // no lava before level 4
-    randMax = (rogue.depthLevel < 17 ? 2 : 3); // no brimstone before level 18
+    randMin = (rogue.depthLevel < MINIMUM_LAVA_LEVEL ? 1 : 0);
+    randMax = (rogue.depthLevel < MINIMUM_BRIMSTONE_LEVEL ? 2 : 3);
     rand = rand_range(randMin, randMax);
     if (rogue.depthLevel == DEEPEST_LEVEL) {
         rand = 1;
@@ -2694,7 +2694,7 @@ void fillLakes(short **lakeMap) {
 
 void finishDoors() {
     short i, j;
-    const short secretDoorChance = clamp((rogue.depthLevel - 1) * 67 / 25, 0, 67);
+    const short secretDoorChance = clamp((rogue.depthLevel - 1) * 67 / (AMULET_LEVEL - 1), 0, 67);
     for (i=1; i<DCOLS-1; i++) {
         for (j=1; j<DROWS-1; j++) {
             if (pmap[i][j].layers[DUNGEON] == DOOR
@@ -2750,8 +2750,8 @@ boolean buildABridge() {
     short bridgeRatioX, bridgeRatioY;
     boolean foundExposure;
 
-    bridgeRatioX = (short) (100 + (100 + 100 * rogue.depthLevel / 9) * rand_range(10, 20) / 10);
-    bridgeRatioY = (short) (100 + (400 + 100 * rogue.depthLevel / 18) * rand_range(10, 20) / 10);
+    bridgeRatioX = (short) (100 + (100 + 100 * rogue.depthLevel * DEPTH_ACCELERATOR / 9) * rand_range(10, 20) / 10);
+    bridgeRatioY = (short) (100 + (400 + 100 * rogue.depthLevel * DEPTH_ACCELERATOR / 18) * rand_range(10, 20) / 10);
 
     fillSequentialList(nCols, DCOLS);
     shuffleList(nCols, DCOLS);
