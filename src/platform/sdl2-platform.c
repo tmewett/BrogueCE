@@ -24,13 +24,13 @@ static rogueEvent lastEvent;
 
 static void sdlfatal(char *file, int line) {
     fprintf(stderr, "Fatal SDL error (%s:%d): %s\n", file, line, SDL_GetError());
-    exit(1);
+    exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
 }
 
 
 static void imgfatal(char *file, int line) {
     fprintf(stderr, "Fatal SDL_image error (%s:%d): %s\n", file, line, IMG_GetError());
-    exit(1);
+    exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
 }
 
 
@@ -159,7 +159,8 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
         if (event.type == SDL_QUIT) {
             // the player clicked the X button!
             SDL_Quit();
-            quitImmediately();
+            int statusCode = quitImmediately();
+            exit(statusCode);
         } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
             resizeWindow(event.window.data1, event.window.data2);
         } else if (event.type == SDL_KEYDOWN) {
@@ -246,19 +247,21 @@ static void _gameLoop() {
 #ifdef SDL_PATHS
     char *path = SDL_GetBasePath();
     if (path) {
+        fprintf(stderr, "Base path: %s\n", path);
         path[strlen(path) - 1] = '\0';  // remove trailing separator
         strcpy(dataDirectory, path);
     } else {
         fprintf(stderr, "Failed to find the path to the application\n");
-        exit(1);
+        exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
     }
     free(path);
 
     path = SDL_GetPrefPath("Brogue", "Brogue CE");
     if (!path || chdir(path) != 0) {
         fprintf(stderr, "Failed to find or change to the save directory\n");
-        exit(1);
+        exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
     }
+    fprintf(stderr, "Save path: %s\n", path);
     free(path);
 #endif
 
@@ -272,9 +275,11 @@ static void _gameLoop() {
 
     resizeWindow(windowWidth, windowHeight);
 
-    rogueMain();
+    int statusCode = rogueMain();
 
     SDL_Quit();
+
+    exit(statusCode);
 }
 
 
@@ -364,6 +369,7 @@ static int fontIndex(enum displayGlyph glyph) {
             case U_OMEGA: return 0x96;
             case U_CIRCLE_BARS: return 0x8c;
             case U_FILLED_CIRCLE_BARS: return 0x8d;
+            case U_LEFT_TRIANGLE: return 0x8e;
 
             default:
                 brogueAssert(code < 256);

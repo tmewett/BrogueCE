@@ -22,7 +22,8 @@
  */
 
 #include "Rogue.h"
-#include "IncludeGlobals.h"
+#include "Globals.h"
+#include "GlobalsBase.h"
 
 
 // mallocing two-dimensional arrays! dun dun DUN!
@@ -63,7 +64,7 @@ void fillGrid(short **grid, short fillValue) {
 }
 
 // Highlight the portion indicated by hiliteCharGrid with the hiliteColor at the hiliteStrength -- both latter arguments are optional.
-void hiliteGrid(short **grid, color *hiliteColor, short hiliteStrength) {
+void hiliteGrid(short **grid, const color *hiliteColor, short hiliteStrength) {
     short i, j, x, y;
     color hCol;
 
@@ -378,7 +379,7 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
     // Fall back to a pathing-agnostic alternative if there are no solutions.
     if (*retValX == -1 && *retValY == -1) {
         pos loc;
-        if (getQualifyingLocNear(&loc, x, y, hallwaysAllowed, NULL,
+        if (getQualifyingLocNear(&loc, (pos){ x, y }, hallwaysAllowed, NULL,
                                  (blockingTerrainFlags | forbiddenTerrainFlags),
                                  (blockingMapFlags | forbiddenMapFlags),
                                  false, deterministic)) {

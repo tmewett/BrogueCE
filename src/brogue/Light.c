@@ -22,7 +22,8 @@
  */
 
 #include "Rogue.h"
-#include "IncludeGlobals.h"
+#include "GlobalsBase.h"
+#include "Globals.h"
 
 void logLights() {
 
@@ -51,7 +52,7 @@ void logLights() {
 }
 
 // Returns true if any part of the light hit cells that are in the player's field of view.
-boolean paintLight(lightSource *theLight, short x, short y, boolean isMinersLight, boolean maintainShadows) {
+boolean paintLight(const lightSource *theLight, short x, short y, boolean isMinersLight, boolean maintainShadows) {
     short i, j, k;
     short colorComponents[3], randComponent, lightMultiplier;
     short fadeToPercent, radiusRounded;
@@ -273,7 +274,7 @@ void updateLighting() {
         player.info.foreColor = &playerInvisibleColor;
     } else if (playerInDarkness()) {
         player.info.foreColor = &playerInDarknessColor;
-    } else if (pmap[player.loc.x][player.loc.y].flags & IS_IN_SHADOW) {
+    } else if (pmapAt(player.loc)->flags & IS_IN_SHADOW) {
         player.info.foreColor = &playerInShadowColor;
     } else {
         player.info.foreColor = &playerInLightColor;
@@ -281,14 +282,14 @@ void updateLighting() {
 }
 
 boolean playerInDarkness() {
-    return (tmap[player.loc.x][player.loc.y].light[0] + 10 < minersLightColor.red
-            && tmap[player.loc.x][player.loc.y].light[1] + 10 < minersLightColor.green
-            && tmap[player.loc.x][player.loc.y].light[2] + 10 < minersLightColor.blue);
+    return (tmapAt(player.loc)->light[0] + 10 < minersLightColor.red
+            && tmapAt(player.loc)->light[1] + 10 < minersLightColor.green
+            && tmapAt(player.loc)->light[2] + 10 < minersLightColor.blue);
 }
 
 #define flarePrecision 1000
 
-flare *newFlare(lightSource *light, short x, short y, short changePerFrame, short limit) {
+flare *newFlare(const lightSource *light, short x, short y, short changePerFrame, short limit) {
     flare *theFlare = malloc(sizeof(flare));
     memset(theFlare, '\0', sizeof(flare));
     theFlare->light = light;

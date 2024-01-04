@@ -1,6 +1,7 @@
 #include <math.h>
 #include <limits.h>
 #include "platform.h"
+#include "GlobalsBase.h"
 
 #ifndef DATADIR
 #error "The DATADIR macro is undefined."
@@ -10,19 +11,21 @@ struct brogueConsole currentConsole;
 
 char dataDirectory[BROGUE_FILENAME_MAX] = STRINGIFY(DATADIR);
 boolean serverMode = false;
+boolean nonInteractivePlayback = false;
 boolean hasGraphics = false;
 enum graphicsModes graphicsMode = TEXT_GRAPHICS;
 boolean isCsvFormat = false;
 
 static void printCommandlineHelp() {
     printf("%s",
-    "--help         -h          print this help message\n"
-    "--version      -V          print the version (i.e., " BROGUE_VERSION_STRING ")\n"
-    "--scores                   dump scores to output and exit immediately\n"
+    "--help         -h          print this help message and exit \n"
+    "--version      -V          print the version and exit\n"
+    "--scores                   dump scores to output and exit\n"
     "-n                         start a new game, skipping the menu\n"
     "-s seed                    start a new game with the specified numerical seed\n"
     "-o filename[.broguesave]   open a save file (extension optional)\n"
     "-v recording[.broguerec]   view a recording (extension optional)\n"
+    "-vn recording[.broguerec]  view a recording non-interactively (extension optional)\n"
 #ifdef BROGUE_WEB
     "--server-mode              run the game in web-brogue server mode\n"
 #endif
@@ -36,6 +39,7 @@ static void printCommandlineHelp() {
 #ifdef BROGUE_CURSES
     "--term         -t          run in ncurses-based terminal mode\n"
 #endif
+    "--variant variant_name     run a variant game (options: rapid_brogue)\n"
     "--stealth      -S          display stealth range\n"
     "--no-effects   -E          disable color effects\n"
     "--wizard       -W          run in wizard mode, invincible with powerful items\n"
@@ -87,6 +91,8 @@ int main(int argc, char *argv[])
     currentConsole = webConsole;
 #elif BROGUE_CURSES
     currentConsole = cursesConsole;
+#else
+    currentConsole = nullConsole;
 #endif
 
     rogue.nextGame = NG_NOTHING;
@@ -160,6 +166,34 @@ int main(int argc, char *argv[])
             }
         }
 
+        if (strcmp(argv[i], "--variant") == 0) {
+            if (i + 1 < argc) {
+                if (!strcmp("rapid_brogue", argv[i + 1])) {
+                    gameVariant = VARIANT_RAPID_BROGUE;
+                }
+                i++;
+                continue;
+            }
+        }
+        
+        if (strcmp(argv[i], "-vn") == 0) {
+            if (i + 1 < argc) {
+                strncpy(rogue.nextGamePath, argv[i + 1], BROGUE_FILENAME_MAX);
+                rogue.nextGamePath[BROGUE_FILENAME_MAX - 1] = '\0';
+                rogue.nextGame = NG_VIEW_RECORDING;
+
+                if (!endswith(rogue.nextGamePath, RECORDING_SUFFIX)) {
+                    append(rogue.nextGamePath, RECORDING_SUFFIX, BROGUE_FILENAME_MAX);
+                }
+
+                currentConsole = nullConsole;
+                nonInteractivePlayback = true;
+
+                i++;
+                continue;
+            }
+        }
+
         if (strcmp(argv[i], "--print-seed-catalog") == 0) {
             if (i + 3 < argc) {
                 uint64_t startingSeed, numberOfSeeds;
@@ -178,7 +212,7 @@ int main(int argc, char *argv[])
         }
 
         if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) {
-            printf("%s\n", BROGUE_VERSION_STRING);
+            printBrogueVersion();
             return 0;
         }
 

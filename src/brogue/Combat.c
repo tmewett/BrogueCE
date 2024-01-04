@@ -22,7 +22,8 @@
  */
 
 #include "Rogue.h"
-#include "IncludeGlobals.h"
+#include "GlobalsBase.h"
+#include "Globals.h"
 
 
 /* Combat rules:
@@ -37,7 +38,7 @@
  * The hit is then randomly determined according to this final percentage.
  *
  * Some environmental factors can modify these numbers. An unaware, sleeping, stuck or paralyzed
- * combatant is always hit. An unaware, sleeping or paralyzed combatant also takes treble damage.
+ * combatant is always hit. An unaware, sleeping or paralyzed combatant also takes triple damage.
  *
  * If the hit lands, damage is calculated in the range provided. However, the clumping factor affects the
  * probability distribution. If the range is 0-10 with a clumping factor of 1, it's a uniform distribution.
@@ -155,7 +156,7 @@ void addMonsterToContiguousMonsterGrid(short x, short y, creature *monst, char g
         newY = y + nbDirs[dir][1];
 
         if (coordinatesAreInMap(newX, newY) && !grid[newX][newY]) {
-            tempMonst = monsterAtLoc(newX, newY);
+            tempMonst = monsterAtLoc((pos){ newX, newY });
             if (tempMonst && monstersAreTeammates(monst, tempMonst)) {
                 addMonsterToContiguousMonsterGrid(newX, newY, monst, grid);
             }
@@ -168,8 +169,7 @@ void addMonsterToContiguousMonsterGrid(short x, short y, creature *monst, char g
 // group of monsters that the monster would not avoid.
 // The contiguous group is supplemented with the given (x, y) coordinates, if any;
 // this is so that jellies et al. can spawn behind the player in a hallway.
-void splitMonster(creature *monst, short x, short y) {
-    short i, j, b, dir, newX, newY, eligibleLocationCount, randIndex;
+void splitMonster(creature *monst, pos loc) {
     char buf[DCOLS * 3];
     char monstName[DCOLS];
     char monsterGrid[DCOLS][DROWS], eligibleGrid[DCOLS][DROWS];
@@ -177,28 +177,28 @@ void splitMonster(creature *monst, short x, short y) {
 
     zeroOutGrid(monsterGrid);
     zeroOutGrid(eligibleGrid);
-    eligibleLocationCount = 0;
+    int eligibleLocationCount = 0;
 
     // Add the (x, y) location to the contiguous group, if any.
-    if (x > 0 && y > 0) {
-        monsterGrid[x][y] = true;
+    if (isPosInMap(loc)) {
+        monsterGrid[loc.x][loc.y] = true;
     }
 
     // Find the contiguous group of monsters.
     addMonsterToContiguousMonsterGrid(monst->loc.x, monst->loc.y, monst, monsterGrid);
 
     // Find the eligible edges around the group of monsters.
-    for (i=0; i<DCOLS; i++) {
-        for (j=0; j<DROWS; j++) {
+    for (int i=0; i<DCOLS; i++) {
+        for (int j=0; j<DROWS; j++) {
             if (monsterGrid[i][j]) {
-                for (dir=0; dir<4; dir++) {
-                    newX = i + nbDirs[dir][0];
-                    newY = j + nbDirs[dir][1];
+                for (int dir=0; dir<4; dir++) {
+                    const int newX = i + nbDirs[dir][0];
+                    const int newY = j + nbDirs[dir][1];
                     if (coordinatesAreInMap(newX, newY)
                         && !eligibleGrid[newX][newY]
                         && !monsterGrid[newX][newY]
                         && !(pmap[newX][newY].flags & (HAS_PLAYER | HAS_MONSTER))
-                        && !monsterAvoids(monst, newX, newY)) {
+                        && !monsterAvoids(monst, (pos){ newX, newY })) {
 
                         eligibleGrid[newX][newY] = true;
                         eligibleLocationCount++;
@@ -216,9 +216,9 @@ void splitMonster(creature *monst, short x, short y) {
 
     // Pick a random location on the eligibleGrid and add the clone there.
     if (eligibleLocationCount) {
-        randIndex = rand_range(1, eligibleLocationCount);
-        for (i=0; i<DCOLS; i++) {
-            for (j=0; j<DROWS; j++) {
+        int randIndex = rand_range(1, eligibleLocationCount);
+        for (int i=0; i<DCOLS; i++) {
+            for (int j=0; j<DROWS; j++) {
                 if (eligibleGrid[i][j] && !--randIndex) {
                     // Found the spot!
 
@@ -236,7 +236,7 @@ void splitMonster(creature *monst, short x, short y) {
                         clone->info.flags           &= monsterCatalog[clone->info.monsterID].flags;
                         clone->info.abilityFlags    &= monsterCatalog[clone->info.monsterID].abilityFlags;
                     }
-                    for (b = 0; b < 20; b++) {
+                    for (int b = 0; b < 20; b++) {
                         clone->info.bolts[b] = monsterCatalog[clone->info.monsterID].bolts[b];
                     }
 
@@ -246,8 +246,7 @@ void splitMonster(creature *monst, short x, short y) {
                         clone->status[STATUS_LEVITATING] = 0;
                     }
 
-                    clone->loc.x = i;
-                    clone->loc.y = j;
+                    clone->loc = (pos){.x = i, .y = j};
                     pmap[i][j].flags |= HAS_MONSTER;
                     clone->ticksUntilTurn = max(clone->ticksUntilTurn, 101);
                     fadeInMonster(clone);
@@ -287,7 +286,7 @@ short alliedCloneCount(creature *monst) {
             }
         }
     }
-    if (rogue.depthLevel < DEEPEST_LEVEL) {
+    if (rogue.depthLevel < gameConst->deepestLevel) {
         for (creatureIterator it = iterateCreatures(&levels[rogue.depthLevel].monsters); hasNextCreature(it);) {
             creature *temp = nextCreature(&it);
             if (temp != monst
@@ -346,10 +345,10 @@ void moralAttack(creature *attacker, creature *defender) {
         }
 
         if ((defender->info.abilityFlags & MA_CLONE_SELF_ON_DEFEND) && alliedCloneCount(defender) < 100) {
-            if (distanceBetween(defender->loc.x, defender->loc.y, attacker->loc.x, attacker->loc.y) <= 1) {
-                splitMonster(defender, attacker->loc.x, attacker->loc.y);
+            if (distanceBetween(defender->loc, attacker->loc) <= 1) {
+                splitMonster(defender, attacker->loc);
             } else {
-                splitMonster(defender, 0, 0);
+                splitMonster(defender, INVALID_POS);
             }
         }
     }
@@ -403,7 +402,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
             if (!player.status[STATUS_HALLUCINATING]) {
                 player.maxStatus[STATUS_HALLUCINATING] = 0;
             }
-            player.status[STATUS_HALLUCINATING] += ON_HIT_HALLUCINATE_DURATION;
+            player.status[STATUS_HALLUCINATING] += gameConst->onHitHallucinateDuration;
             player.maxStatus[STATUS_HALLUCINATING] = max(player.maxStatus[STATUS_HALLUCINATING], player.status[STATUS_HALLUCINATING]);
         }
         if (attacker->info.abilityFlags & MA_HIT_BURN
@@ -477,7 +476,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
         && damage > 0
         && !(defender->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
 
-        weaken(defender, ON_HIT_WEAKEN_DURATION);
+        weaken(defender, gameConst->onHitWeakenDuration);
     }
     if (attacker->info.abilityFlags & MA_ATTACKS_STAGGER) {
         processStaggerHit(attacker, defender);
@@ -500,7 +499,7 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
     };
     if (canDirectlySeeMonster(defender)
         && !cellHasTerrainFlag(newLoc.x, newLoc.y, T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION)
-        && !(pmap[newLoc.x][newLoc.y].flags & (HAS_MONSTER | HAS_PLAYER))) {
+        && !(pmapAt(newLoc)->flags & (HAS_MONSTER | HAS_PLAYER))) {
         sprintf(buf, "you launch %s backward with the force of your blow", monstName);
         buf[DCOLS] = '\0';
         combatMessage(buf, messageColorFromVictim(defender));
@@ -510,18 +509,18 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
     theBolt.magnitude = max(1, netEnchant(theItem) / FP_FACTOR);
     zap(oldLoc, newLoc, &theBolt, false, false);
     if (!(defender->bookkeepingFlags & MB_IS_DYING)
-        && distanceBetween(oldLoc.x, oldLoc.y, defender->loc.x, defender->loc.y) > 0
-        && distanceBetween(oldLoc.x, oldLoc.y, defender->loc.x, defender->loc.y) < weaponForceDistance(netEnchant(theItem))) {
+        && distanceBetween(oldLoc, defender->loc) > 0
+        && distanceBetween(oldLoc, defender->loc) < weaponForceDistance(netEnchant(theItem))) {
 
         if (pmap[defender->loc.x + newLoc.x - oldLoc.x][defender->loc.y + newLoc.y - oldLoc.y].flags & (HAS_MONSTER | HAS_PLAYER)) {
-            otherMonster = monsterAtLoc(defender->loc.x + newLoc.x - oldLoc.x, defender->loc.y + newLoc.y - oldLoc.y);
+            otherMonster = monsterAtLoc((pos){ defender->loc.x + newLoc.x - oldLoc.x, defender->loc.y + newLoc.y - oldLoc.y });
             monsterName(buf2, otherMonster, true);
         } else {
             otherMonster = NULL;
             strcpy(buf2, tileCatalog[pmap[defender->loc.x + newLoc.x - oldLoc.x][defender->loc.y + newLoc.y - oldLoc.y].layers[highestPriorityLayer(defender->loc.x + newLoc.x - oldLoc.x, defender->loc.y + newLoc.y - oldLoc.y, true)]].description);
         }
 
-        forceDamage = distanceBetween(oldLoc.x, oldLoc.y, defender->loc.x, defender->loc.y);
+        forceDamage = distanceBetween(oldLoc, defender->loc);
 
         if (!(defender->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE))
             && inflictDamage(NULL, defender, forceDamage, &white, false)) {
@@ -578,9 +577,9 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
 void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
     char buf[DCOLS*3], monstName[DCOLS], theItemName[DCOLS];
 
-    color *effectColors[NUMBER_WEAPON_RUNIC_KINDS] = {&white, &black,
-        &yellow, &pink, &green, &confusionGasColor, NULL, NULL};
-    //  W_SPEED, W_QUIETUS, W_PARALYSIS, W_MULTIPLICITY, W_SLOWING, W_CONFUSION, W_FORCE, W_SLAYING
+    const color *effectColors[NUMBER_WEAPON_RUNIC_KINDS] = {&white, &black,
+        &yellow, &pink, &green, &confusionGasColor, NULL, NULL, NULL, NULL};
+    //  W_SPEED, W_QUIETUS, W_PARALYSIS, W_MULTIPLICITY, W_SLOWING, W_CONFUSION, W_FORCE, W_SLAYING, W_MERCY, W_PLENTY
     short chance, i;
     fixpt enchant;
     enum weaponEnchants enchantType = theItem->enchant2;
@@ -718,7 +717,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
                                 break;
                         }
                     }
-                    pmap[newMonst->loc.x][newMonst->loc.y].flags |= HAS_MONSTER;
+                    pmapAt(newMonst->loc)->flags |= HAS_MONSTER;
                     fadeInMonster(newMonst);
                 }
                 updateVision(true);
@@ -749,7 +748,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
                 autoID = forceWeaponHit(defender, theItem);
                 break;
             /*case W_MERCY:
-                heal(defender, ON_HIT_MERCY_HEAL_PERCENT, false);
+                heal(defender, gameConst->onHitMercyHealPercent, false);
                 if (canSeeMonster(defender)) {
                     autoID = true;
                 }
@@ -867,7 +866,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
                     newX = player.loc.x + nbDirs[dir][0];
                     newY = player.loc.y + nbDirs[dir][1];
                     if (coordinatesAreInMap(newX, newY) && (pmap[newX][newY].flags & HAS_MONSTER)) {
-                        monst = monsterAtLoc(newX, newY);
+                        monst = monsterAtLoc((pos){ newX, newY });
                         if (monst
                             && monst != attacker
                             && monstersAreEnemies(&player, monst)
@@ -996,7 +995,7 @@ void processStaggerHit(creature *attacker, creature *defender) {
         && !cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)
         && !(pmap[newX][newY].flags & (HAS_MONSTER | HAS_PLAYER))) {
 
-        setMonsterLocation(defender, newX, newY);
+        setMonsterLocation(defender, (pos){ newX, newY });
     }
 }
 
@@ -1061,7 +1060,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
 
     if ((attacker->info.abilityFlags & MA_SEIZES)
         && (!(attacker->bookkeepingFlags & MB_SEIZING) || !(defender->bookkeepingFlags & MB_SEIZED))
-        && (distanceBetween(attacker->loc.x, attacker->loc.y, defender->loc.x, defender->loc.y) == 1
+        && (distanceBetween(attacker->loc, defender->loc) == 1
             && !diagonalBlocked(attacker->loc.x, attacker->loc.y, defender->loc.x, defender->loc.y, false))) {
 
         attacker->bookkeepingFlags |= MB_SEIZING;
@@ -1094,7 +1093,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
 
                 damage *= 5; // 5x damage for dagger sneak attacks.
             } else {
-                damage *= 3; // Treble damage for general sneak attacks.
+                damage *= 3; // Triple damage for general sneak attacks.
             }
         }
 
@@ -1265,7 +1264,7 @@ short strLenWithoutEscapes(const char *str) {
 
 // Buffer messages generated by combat until flushed by displayCombatText().
 // Messages in the buffer are delimited by newlines.
-void combatMessage(char *theMsg, color *theColor) {
+void combatMessage(char *theMsg, const color *theColor) {
     short length;
     char newMsg[COLS * 2 - 1]; // -1 for the newline when appending later
 
@@ -1339,14 +1338,14 @@ void flashMonster(creature *monst, const color *theColor, short strength) {
     }
 }
 
-boolean canAbsorb(creature *ally, boolean ourBolts[NUMBER_BOLT_KINDS], creature *prey, short **grid) {
+boolean canAbsorb(creature *ally, boolean ourBolts[], creature *prey, short **grid) {
     short i;
 
     if (ally->creatureState == MONSTER_ALLY
         && ally->newPowerCount > 0
-        && (ally->targetCorpseLoc[0] <= 0)
+        && (!isPosInMap(ally->targetCorpseLoc))
         && !((ally->info.flags | prey->info.flags) & (MONST_INANIMATE | MONST_IMMOBILE))
-        && !monsterAvoids(ally, prey->loc.x, prey->loc.y)
+        && !monsterAvoids(ally, prey->loc)
         && grid[ally->loc.x][ally->loc.y] <= 10) {
 
         if (~(ally->info.abilityFlags) & prey->info.abilityFlags & LEARNABLE_ABILITIES) {
@@ -1354,7 +1353,7 @@ boolean canAbsorb(creature *ally, boolean ourBolts[NUMBER_BOLT_KINDS], creature 
         } else if (~(ally->info.flags) & prey->info.flags & LEARNABLE_BEHAVIORS) {
             return true;
         } else {
-            for (i = 0; i < NUMBER_BOLT_KINDS; i++) {
+            for (i = 0; i < gameConst->numberBoltKinds; i++) {
                 ourBolts[i] = false;
             }
             for (i = 0; ally->info.bolts[i] != BOLT_NONE; i++) {
@@ -1377,7 +1376,9 @@ boolean anyoneWantABite(creature *decedent) {
     short candidates, randIndex, i;
     short **grid;
     boolean success = false;
-    boolean ourBolts[NUMBER_BOLT_KINDS] = {false};
+    boolean *ourBolts;
+
+    ourBolts = (boolean *)calloc(gameConst->numberBoltKinds, sizeof(boolean));
 
     candidates = 0;
     if ((!(decedent->info.abilityFlags & LEARNABLE_ABILITIES)
@@ -1411,8 +1412,7 @@ boolean anyoneWantABite(creature *decedent) {
             }
         }
         if (firstAlly) {
-            firstAlly->targetCorpseLoc[0] = decedent->loc.x;
-            firstAlly->targetCorpseLoc[1] = decedent->loc.y;
+            firstAlly->targetCorpseLoc = decedent->loc;
             strcpy(firstAlly->targetCorpseName, decedent->info.monsterName);
             firstAlly->corpseAbsorptionCounter = 20; // 20 turns to get there and start eating before he loses interest
 
@@ -1478,6 +1478,7 @@ boolean anyoneWantABite(creature *decedent) {
         }
     }
     freeGrid(grid);
+    free(ourBolts);
     return success;
 }
 
@@ -1541,7 +1542,7 @@ boolean inflictDamage(creature *attacker, creature *defender,
         transferenceAmount = min(damage, defender->currentHP); // Maximum transferred damage can't exceed the victim's remaining health.
 
         if (attacker == &player) {
-            transferenceAmount = transferenceAmount * rogue.transference / PLAYER_TRANSFERENCE_RATIO;
+            transferenceAmount = transferenceAmount * rogue.transference / gameConst->playerTransferenceRatio;
             if (transferenceAmount == 0) {
                 transferenceAmount = ((rogue.transference > 0) ? 1 : -1);
             }
@@ -1742,7 +1743,7 @@ void buildHitList(creature **hitList, const creature *attacker, creature *defend
             newestX = x + cDirs[newDir][0];
             newestY = y + cDirs[newDir][1];
             if (coordinatesAreInMap(newestX, newestY) && (pmap[newestX][newestY].flags & (HAS_MONSTER | HAS_PLAYER))) {
-                defender = monsterAtLoc(newestX, newestY);
+                defender = monsterAtLoc((pos){ newestX, newestY });
                 if (defender
                     && monsterWillAttackTarget(attacker, defender)
                     && (!cellHasTerrainFlag(defender->loc.x, defender->loc.y, T_OBSTRUCTS_PASSABILITY) || (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS))) {

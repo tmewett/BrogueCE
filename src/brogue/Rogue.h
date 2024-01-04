@@ -21,6 +21,9 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#ifndef ROGUE_H
+#define ROGUE_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,36 +38,14 @@
 // unicode: comment this line to revert to ASCII
 #define USE_UNICODE
 
-// Brogue version number
+// Brogue version number (for main engine)
 #define BROGUE_MAJOR 1
-#define BROGUE_MINOR 12
+#define BROGUE_MINOR 13
 #define BROGUE_PATCH 0
 
 // Expanding a macro as a string constant requires two levels of macros
 #define _str(x) #x
 #define STRINGIFY(x) _str(x)
-
-// Brogue version: what the user sees in the menu and title
-#define BROGUE_VERSION_STRING "Brogue Lite " STRINGIFY(BROGUE_MAJOR) "." STRINGIFY(BROGUE_MINOR) "." STRINGIFY(BROGUE_PATCH) BROGUE_EXTRA_VERSION
-
-// Recording version. Saved into recordings and save files made by this version.
-// Cannot be longer than 16 chars
-#define BROGUE_RECORDING_VERSION_STRING "BrogueLt " STRINGIFY(BROGUE_MAJOR) "." STRINGIFY(BROGUE_MINOR) "." STRINGIFY(BROGUE_PATCH)
-
-/* Patch pattern. A scanf format string which matches an unsigned short. If this
-matches against a recording version string, it defines a "patch version." During
-normal play, rogue.patchVersion is set to the match of the game's recording
-version above, or 0 if it doesn't match.
-
-The game will only load a recording/save if either a) it has a patch version
-which is equal or less than the patch version of the current game
-(rogue.patchLevel is set to the recording's); or b) it doesn't match the version
-strings, but they are equal (rogue.patchLevel is set to 0).
-*/
-#define BROGUE_PATCH_VERSION_PATTERN "BrogueLt" STRINGIFY(BROGUE_MAJOR) "." STRINGIFY(BROGUE_MINOR) ".%hu"
-
-// Dungeon version. Used in seed catalog output.
-#define BROGUE_DUNGEON_VERSION_STRING "Brogue Lite 1.9"
 
 // Macro to compare BROGUE_MAJOR.BROGUE_MINOR.patchVersion to a.b.c
 #define BROGUE_VERSION_ATLEAST(a,b,c) (BROGUE_MAJOR != (a) ? BROGUE_MAJOR > (a) : BROGUE_MINOR != (b) ? BROGUE_MINOR > (b) : rogue.patchVersion >= (c))
@@ -142,10 +123,42 @@ typedef long long fixpt;
 #define COLS                    100
 #define ROWS                    (31 + MESSAGE_LINES)
 
+// Maximum string size supported by various functions like printTextBox, wrapText,
+// printStringWithWrapping, and breakUpLongWordsIn
+#define TEXT_MAX_LENGTH (COLS * ROWS * 2)
+
+// Returns the sign of the input:
+// - if (x == 0)  ===> returns 0
+// - if (x >= 1)  ===> returns +1
+// - if (x <= -1) ===> returns -1
+static inline int signum(int x) {
+    if (x == 0) {
+        return 0;
+    }
+    return x > 0 ? 1 : -1;
+}
+
+// A location within the dungeon.
+// Typically, 0 <= x < DCOLS and 0 <= y < DROWS,
+// but occasionally coordinates are used which point outside of this region.
 typedef struct pos {
     short x;
     short y;
 } pos;
+
+#define INVALID_POS ((pos) { .x = -1, .y = -1 })
+
+static inline boolean posEq(pos a, pos b) {
+    return a.x == b.x && a.y == b.y;
+}
+
+// A location within the window.
+// Convert between `windowpos` and `pos` with `mapToWindow` and
+// `windowToMap`
+typedef struct windowpos {
+    short window_x;
+    short window_y;
+} windowpos;
 
 // Size of the portion of the terminal window devoted to displaying the dungeon:
 #define DCOLS                   (COLS - STAT_BAR_WIDTH - 1) // n columns on the left for the sidebar;
@@ -166,31 +179,7 @@ typedef struct pos {
 
 #define VISIBILITY_THRESHOLD    50          // how bright cumulative light has to be before the cell is marked visible
 
-#define AMULET_LEVEL            26          // how deep before the amulet appears
-#define DEEPEST_LEVEL           40          // how deep the universe goes
-#define DEPTH_ACCELERATOR       1           // factor for how fast depth-dependent features scale compared to usual 26-level dungeon
-
-#define MUTATIONS_OCCUR_ABOVE_LEVEL 10      // how deep before mutations can occur
-
-#define MINIMUM_LAVA_LEVEL      4           // how deep before lava can be generated
-#define MINIMUM_BRIMSTONE_LEVEL 17          // how deep before brimstone can be generated
-
-#define MACHINES_FACTOR         FP_FACTOR   // use this to adjust machine frequency
-
 #define MACHINES_BUFFER_LENGTH  200
-
-#define WEAPON_KILLS_TO_AUTO_ID 20
-#define ARMOR_DELAY_TO_AUTO_ID  1000
-#define RING_DELAY_TO_AUTO_ID   1500
-
-#define FALL_DAMAGE_MIN         8
-#define FALL_DAMAGE_MAX         10
-
-#define PLAYER_TRANSFERENCE_RATIO 20        // player transference heal is (enchant / PLAYER_TRANSFERENCE_RATIO)
-
-#define ON_HIT_HALLUCINATE_DURATION 20      // duration of on-hit hallucination effect on player
-#define ON_HIT_WEAKEN_DURATION  300         // duration of on-hit weaken effect
-#define ON_HIT_MERCY_HEAL_PERCENT 50        // percentage of damage healed on-hit by mercy weapon effect
 
 #define INPUT_RECORD_BUFFER     1000        // how many bytes of input data to keep in memory before saving it to disk
 #define DEFAULT_PLAYBACK_DELAY  50
@@ -200,6 +189,13 @@ typedef struct pos {
 // color escapes
 #define COLOR_ESCAPE            25
 #define COLOR_VALUE_INTERCEPT   25
+
+// variants supported in this code base
+enum gameVariant {
+    VARIANT_BROGUE,
+    VARIANT_RAPID_BROGUE,
+    NUMBER_VARIANTS
+};
 
 // display characters:
 
@@ -333,7 +329,8 @@ enum displayGlyph {
     G_LICHEN,
     G_PIPES,
     G_SAC_ALTAR,
-    G_ORB_ALTAR
+    G_ORB_ALTAR,
+    G_LEFT_TRIANGLE
 };
 
 enum graphicsModes {
@@ -772,7 +769,7 @@ enum foodKind {
     NUMBER_FOOD_KINDS
 };
 
-// Brogue Lite:
+// Brogue Lite note:
 // Removed negative potion kind POTION_HALLUCINATION
 
 enum potionKind {
@@ -785,14 +782,13 @@ enum potionKind {
     POTION_FIRE_IMMUNITY,
     POTION_INVISIBILITY,
     POTION_POISON,
-    NUMBER_GOOD_POTION_KINDS = POTION_POISON,
     POTION_PARALYSIS,
+    //POTION_HALLUCINATION,
     POTION_CONFUSION,
     POTION_INCINERATION,
     POTION_DARKNESS,
     POTION_DESCENT,
     POTION_LICHEN,
-    NUMBER_POTION_KINDS
 };
 
 enum weaponKind {
@@ -819,7 +815,7 @@ enum weaponKind {
     NUMBER_WEAPON_KINDS
 };
 
-// Brogue Lite:
+// Brogue Lite note:
 // Removed negative weapon runics
 
 enum weaponEnchants {
@@ -831,6 +827,9 @@ enum weaponEnchants {
     W_CONFUSION,
     W_FORCE,
     W_SLAYING,
+    //W_MERCY,
+    //NUMBER_GOOD_WEAPON_ENCHANT_KINDS = W_MERCY,
+    //W_PLENTY,
     NUMBER_WEAPON_RUNIC_KINDS
 };
 
@@ -844,7 +843,7 @@ enum armorKind {
     NUMBER_ARMOR_KINDS
 };
 
-// Brogue Lite:
+// Brogue Lite note:
 // Removed negative armor runics
 
 enum armorEnchants {
@@ -856,7 +855,11 @@ enum armorEnchants {
     A_REFLECTION,
     A_RESPIRATION,
     A_DAMPENING,
-    NUMBER_ARMOR_ENCHANT_KINDS
+    //A_BURDEN,
+    //NUMBER_GOOD_ARMOR_ENCHANT_KINDS = A_BURDEN,
+    //A_VULNERABILITY,
+    //A_IMMOLATION,
+    NUMBER_ARMOR_ENCHANT_KINDS,
 };
 
 enum wandKind {
@@ -867,10 +870,8 @@ enum wandKind {
     WAND_DOMINATION,
     WAND_BECKONING,
     WAND_PLENTY,
-    NUMBER_GOOD_WAND_KINDS = WAND_PLENTY,
     WAND_INVISIBILITY,
-    WAND_EMPOWERMENT,
-    NUMBER_WAND_KINDS
+    WAND_EMPOWERMENT
 };
 
 enum staffKind {
@@ -921,8 +922,7 @@ enum boltType {
     BOLT_DISTANCE_ATTACK,
     BOLT_POISON_DART,
     BOLT_ANCIENT_SPIRIT_VINES,
-    BOLT_WHIP,
-    NUMBER_BOLT_KINDS
+    BOLT_WHIP
 };
 
 enum ringKind {
@@ -949,15 +949,15 @@ enum charmKind {
     CHARM_GUARDIAN,
     CHARM_TELEPORTATION,
     CHARM_RECHARGING,
-    CHARM_NEGATION,
-    NUMBER_CHARM_KINDS
+    CHARM_NEGATION
 };
 
 // Brogue Lite:
-// Removed obsolete & negative scroll kinds
+// Removed obsolete scroll kinds
 
 enum scrollKind {
     SCROLL_ENCHANTING,
+    //SCROLL_IDENTIFY,
     SCROLL_TELEPORT,
     //SCROLL_REMOVE_CURSE,
     SCROLL_RECHARGING,
@@ -969,10 +969,13 @@ enum scrollKind {
     SCROLL_SHATTERING,
     SCROLL_DISCORD,
     SCROLL_AGGRAVATE_MONSTER,
-    NUMBER_GOOD_SCROLL_KINDS = SCROLL_AGGRAVATE_MONSTER,
     SCROLL_SUMMON_MONSTER,
-    NUMBER_SCROLL_KINDS
 };
+
+typedef struct meteredItem {
+    int frequency;
+    int numberSpawned;
+} meteredItem;
 
 #define MAX_PACK_ITEMS              26
 
@@ -1054,12 +1057,11 @@ enum monsterTypes {
 
 #define NUMBER_MUTATORS             8
 
-#define NUMBER_HORDES               177
-
 #define MONSTER_CLASS_COUNT         15
 
 // flavors
 
+#define NUMBER_ITEM_TITLES          14
 #define NUMBER_ITEM_COLORS          21
 #define NUMBER_TITLE_PHONEMES       21
 #define NUMBER_ITEM_WOODS           21
@@ -1249,10 +1251,36 @@ boolean cellHasTerrainFlag(short x, short y, unsigned long flagMask);
                                                 && cellHasTerrainFlag((x), (y), T_OBSTRUCTS_PASSABILITY)))
 
 #define coordinatesAreInMap(x, y)           ((x) >= 0 && (x) < DCOLS    && (y) >= 0 && (y) < DROWS)
-#define coordinatesAreInWindow(x, y)        ((x) >= 0 && (x) < COLS     && (y) >= 0 && (y) < ROWS)
+
+inline static boolean isPosInMap(pos p) {
+    return p.x >= 0 && p.x < DCOLS && p.y >= 0 && p.y < DROWS;
+}
+
+inline static boolean locIsInWindow(windowpos w) {
+    return w.window_x >= 0 && w.window_x < COLS && w.window_y >= 0 && w.window_y < ROWS;
+}
+
+inline static pos windowToMap(windowpos w) {
+    return (pos) {
+        .x = w.window_x - STAT_BAR_WIDTH - 1,
+        .y = w.window_y - MESSAGE_LINES,
+    };
+}
+
+inline static windowpos mapToWindow(pos p) {
+    return (windowpos) {
+        .window_x = p.x + STAT_BAR_WIDTH + 1,
+        .window_y = p.y + MESSAGE_LINES,
+    };
+}
+
+// Prefer using `mapToWindow` to combine both coordinates together.
 #define mapToWindowX(x)                     ((x) + STAT_BAR_WIDTH + 1)
+// Prefer using `mapToWindow` to combine both coordinates together.
 #define mapToWindowY(y)                     ((y) + MESSAGE_LINES)
+// Prefer using `windowToMap` to combine both coordinates together.
 #define windowToMapX(x)                     ((x) - STAT_BAR_WIDTH - 1)
+// Prefer using `windowToMap` to combine both coordinates together.
 #define windowToMapY(y)                     ((y) - MESSAGE_LINES)
 
 #define playerCanDirectlySee(x, y)          (pmap[x][y].flags & VISIBLE)
@@ -1362,15 +1390,12 @@ enum itemFlags {
 
     ITEM_KIND_AUTO_ID       = Fl(22),   // the item type will become known when the item is picked up.
     ITEM_PLAYER_AVOIDS      = Fl(23),   // explore and travel will try to avoid picking the item up
-
-    ITEM_IS_FUNGIBLE_KEY    = Fl(24),   // Brogue Lite: only fungible keys should be consumed by iron doors
 };
 
 #define KEY_ID_MAXIMUM  20
 
 typedef struct keyLocationProfile {
-    short x;
-    short y;
+    pos loc;
     short machine;
     boolean disposableHere;
 } keyLocationProfile;
@@ -1389,8 +1414,8 @@ typedef struct item {
     short strengthRequired;
     unsigned short quiverNumber;
     enum displayGlyph displayChar;
-    color *foreColor;
-    color *inventoryColor;
+    const color *foreColor;
+    const color *inventoryColor;
     short quantity;
     char inventoryLetter;
     char inscription[DCOLS];
@@ -1409,6 +1434,7 @@ typedef struct itemTable {
     short frequency;
     short marketValue;
     short strengthRequired;
+    int power;
     randomRange range;
     boolean identified;
     boolean called;
@@ -1416,6 +1442,35 @@ typedef struct itemTable {
     boolean magicPolarityRevealed;
     char description[1500];
 } itemTable;
+
+typedef struct charmEffectTableEntry {
+    const short kind;
+    const int effectDurationBase;
+    const fixpt *effectDurationIncrement;
+    const int rechargeDelayDuration;
+    const int rechargeDelayBase;
+    const int rechargeDelayMinTurns;
+    const int effectMagnitudeConstant;
+    const int effectMagnitudeMultiplier;
+} charmEffectTableEntry;
+
+typedef struct meteredItemGenerationTable {
+    unsigned short category;
+    short kind;
+    int initialFrequency;
+    int incrementFrequency;
+    int decrementFrequency;
+    int genMultiplier;
+    int genIncrement;
+    int levelScaling;
+    int levelGuarantee;
+    int itemNumberGuarantee;
+} meteredItemGenerationTable;
+
+typedef struct levelFeeling {
+    const char *message;
+    const color *color;
+} levelFeeling;
 
 enum dungeonFeatureTypes {
     DF_GRANITE_COLUMN = 1,
@@ -1750,7 +1805,7 @@ typedef struct lightSource {
 } lightSource;
 
 typedef struct flare {
-    lightSource *light;                 // Flare light
+    const lightSource *light;           // Flare light
     short coeffChangeAmount;            // The constant amount by which the coefficient changes per frame, e.g. -25 means it gets 25% dimmer per frame.
     short coeffLimit;                   // Flare ends if the coefficient passes this percentage (whether going up or down).
     pos loc;                            // Current flare location.
@@ -1933,7 +1988,6 @@ enum terrainMechanicalFlagCatalog {
     TM_INTERRUPT_EXPLORATION_WHEN_SEEN = Fl(23),    // will generate a message when discovered during exploration to interrupt exploration
     TM_INVERT_WHEN_HIGHLIGHTED      = Fl(24),       // will flip fore and back colors when highlighted with pathing
     TM_SWAP_ENCHANTS_ACTIVATION     = Fl(25),       // in machine, swap item enchantments when two suitable items are on this terrain, and activate the machine when that happens
-    TM_ACCEPTS_FUNGIBLE_KEY         = Fl(26),       // Brogue Lite: any key can be used and consumed here (for iron doors)
 
     TM_PROMOTES_ON_STEP             = (TM_PROMOTES_ON_CREATURE | TM_PROMOTES_ON_ITEM),
 };
@@ -2207,9 +2261,9 @@ typedef struct creature {
     // Waypoints:
     short targetWaypointIndex;          // the index number of the waypoint we're pathing toward
     boolean waypointAlreadyVisited[MAX_WAYPOINT_COUNT]; // checklist of waypoints
-    short lastSeenPlayerAt[2];          // last location at which the monster hunted the player
+    pos lastSeenPlayerAt;          // last location at which the monster hunted the player
 
-    short targetCorpseLoc[2];           // location of the corpse that the monster is approaching to gain its abilities
+    pos targetCorpseLoc;           // location of the corpse that the monster is approaching to gain its abilities
     char targetCorpseName[30];          // name of the deceased monster that we're approaching to gain its abilities
     unsigned long absorptionFlags;      // ability/behavior flags that the monster will gain when absorption is complete
     boolean absorbBehavior;             // above flag is behavior instead of ability (ignored if absorptionBolt is set)
@@ -2259,6 +2313,11 @@ typedef struct creatureIterator {
 
 enum NGCommands {
     NG_NOTHING = 0,
+    NG_FLYOUT_PLAY,
+    NG_FLYOUT_VIEW,
+    NG_FLYOUT_OPTIONS,
+    NG_GAME_VARIANT,
+    NG_GAME_MODE,
     NG_NEW_GAME,
     NG_NEW_GAME_WITH_SEED,
     NG_OPEN_GAME,
@@ -2283,6 +2342,75 @@ enum featTypes {
 
     FEAT_COUNT,
 };
+
+enum exitStatus {
+    EXIT_STATUS_SUCCESS,
+    EXIT_STATUS_FAILURE_RECORDING_WRONG_VERSION,
+    EXIT_STATUS_FAILURE_RECORDING_OOS,
+    EXIT_STATUS_FAILURE_PLATFORM_ERROR
+};
+
+// Constants for the selected game variant, set in Globals{variant}.c
+// Many of these constants were migrated from #defines prior to variant support
+typedef struct gameConstants {
+
+    const int majorVersion;                         // variant major version x._._
+    const int minorVersion;                         // variant minor version _.y._
+    const int patchVersion;                         // variant patch version _._.z
+
+    const char *variantName;                        // variant name in no-spaces, lower-case form (e.g. "brogue")
+
+    const char *versionString;                      // version string <codename> <major>.<minor>.<patch>
+    const char *dungeonVersionString;               // earliest version that has identical dungeons to this version
+    const char *patchVersionPattern;                // scanf format string for patches that match this release
+    const char *recordingVersionString;             // version string used in recordings / saves. Cannot be longer than 16 chars.
+
+    const int deepestLevel;                         // deepest level in the dungeon
+    const int amuletLevel;                          // level on which the amulet appears (used in signed arithmetic)
+
+    const int depthAccelerator;                     // factor for how fast depth-dependent features scale compared to usual 26-level dungeon
+    const int minimumLavaLevel;                     // how deep before lava can be generated
+    const int minimumBrimstoneLevel;                // how deep before brimstone can be generated
+    const int mutationsOccurAboveLevel;                // how deep before monster mutations can be generated
+
+    const int extraItemsPerLevel;                   // how many extra items generated per level above vanilla
+    const int goldAdjustmentStartDepth;             // depth from which gold is adjusted based on generation so far
+
+    const int machinesPerLevelSuppressionMultiplier; // scale factor for limiting number of machines generated so far against depth
+    const int machinesPerLevelSuppressionOffset;     // offset for limiting number of machines generated so far against depth
+    const int machinesPerLevelIncreaseFactor;        // scale factor for increasing number of machines generated so far against depth
+    const int maxLevelForBonusMachines;              // deepest level that gets bonus machine generation chance
+
+    const int playerTransferenceRatio;              // player transference heal is (enchant / gameConst->playerTransferenceRatio)
+    const int onHitHallucinateDuration;             // duration of on-hit hallucination effect on player
+    const int onHitWeakenDuration;                  // duration of on-hit weaken effect
+    const int onHitMercyHealPercent;                // percentage of damage healed on-hit by mercy weapon effect
+
+    const int fallDamageMin;                        // minimum for fall damage range
+    const int fallDamageMax;                        // maximum for fall damage range
+
+    const int weaponKillsToAutoID;                  // number of kills until unknown weapon is IDed
+    const int armorDelayToAutoID;                   // number of turns until unknown armor is IDed
+    const int ringDelayToAutoID;                    // number of turns until unknown ring is IDed
+
+    const int numberAutogenerators;                 // size of autoGeneratorCatalog table
+    const int numberBoltKinds;                      // size of boltKinds table
+    const int numberBlueprints;                     // size of blueprintCatalog table
+    const int numberHordes;                         // size of the horde table
+
+    const int numberMeteredItems;                   // size of the metered items table
+    const int numberCharmKinds;                     // size of the charms table
+    const int numberPotionKinds;                    // size of the potion table
+    const int numberGoodPotionKinds;                // number of good potions in the game (ordered first in the table)
+    const int numberScrollKinds;                    // size of the scroll table
+    const int numberGoodScrollKinds;                // number of good scrolls in the game (ordered first in the table)
+    const int numberWandKinds;                      // size of the wands table
+    const int numberGoodWandKinds;                  // number of good wands in the game (ordered first in the table)
+
+    const int mainMenuTitleHeight;                  // height of the title screen in characters
+    const int mainMenuTitleWidth;                   // width of the title screen in characters
+} gameConstants;
+
 
 // these are basically global variables pertaining to the game state and player's unique variables:
 typedef struct playerCharacter {
@@ -2355,7 +2483,7 @@ typedef struct playerCharacter {
     item *lastItemThrown;
     short rewardRoomsGenerated;         // to meter the number of reward machines
     short machineNumber;                // so each machine on a level gets a unique number
-    short sidebarLocationList[ROWS*2][2];   // to keep track of which location each line of the sidebar references
+    pos sidebarLocationList[ROWS*2];    // to keep track of which location each line of the sidebar references
 
     // maps
     short **mapToShore;                 // how many steps to get back to shore
@@ -2379,13 +2507,11 @@ typedef struct playerCharacter {
     unsigned long nextAnnotationTurn;   // the turn number during which to display the next annotation
     char nextAnnotation[5000];          // the next annotation
     unsigned long locationInAnnotationFile; // how far we've read in the annotations file
+    int gameExitStatusCode;             // exit status code indicating if brogue exited successfully or with an error
 
     // metered items
     long long foodSpawned;                    // amount of nutrition units spawned so far this game
-    short lifePotionFrequency;
-    short lifePotionsSpawned;
-    short strengthPotionFrequency;
-    short enchantScrollFrequency;
+    meteredItem *meteredItems;
 
     // ring bonuses:
     short clairvoyance;
@@ -2403,7 +2529,7 @@ typedef struct playerCharacter {
     // waypoints:
     short **wpDistance[MAX_WAYPOINT_COUNT];
     short wpCount;
-    short wpCoordinates[MAX_WAYPOINT_COUNT][2];
+    pos wpCoordinates[MAX_WAYPOINT_COUNT];
     short wpRefreshTicker;
 
     // cursor trail:
@@ -2411,9 +2537,13 @@ typedef struct playerCharacter {
     boolean cursorMode;
 
     // What do you want to do, player -- play, play with seed, resume, recording, high scores or quit?
+    // Also used for main menu flyout navigation
     enum NGCommands nextGame;
     char nextGamePath[BROGUE_FILENAME_MAX];
     uint64_t nextGameSeed;
+
+    // Path of the current save game or recording, NULL for a new game
+    char currentGamePath[BROGUE_FILENAME_MAX];
 } playerCharacter;
 
 // Stores the necessary info about a level so it can be regenerated:
@@ -2594,9 +2724,7 @@ enum machineTypes {
     MT_PARALYSIS_TRAP_HIDDEN_AREA,
     MT_TRICK_STATUE_AREA,
     MT_WORM_AREA,
-    MT_SENTINEL_AREA,
-
-    NUMBER_BLUEPRINTS,
+    MT_SENTINEL_AREA
 };
 
 typedef struct autoGenerator {
@@ -2619,8 +2747,6 @@ typedef struct autoGenerator {
     short maxNumber;
 } autoGenerator;
 
-#define NUMBER_AUTOGENERATORS 49
-
 typedef struct feat {
     char name[100];
     char description[200];
@@ -2631,17 +2757,21 @@ typedef struct feat {
 #define PDS_OBSTRUCTION -2
 #define PDS_CELL(map, x, y) ((map)->links + ((x) + DCOLS * (y)))
 
+#define BUTTON_TEXT_SIZE COLS*3
 typedef struct brogueButton {
-    char text[COLS*3];          // button label; can include color escapes
+    char text[BUTTON_TEXT_SIZE];// button label; can include color escapes
     short x;                    // button's leftmost cell will be drawn at (x, y)
     short y;
     signed long hotkey[10];     // up to 10 hotkeys to trigger the button
     color buttonColor;          // background of the button; further gradient-ized when displayed
+    color textColor;            // color of the button text
+    color hotkeytextColor;      // color of the portion of the button text that highlights the keyboard hotkey
     short opacity;              // further reduced by 50% if not enabled
     enum displayGlyph symbol[COLS];         // Automatically replace the nth asterisk in the button label text with
                                 // the nth character supplied here, if one is given.
                                 // (Primarily to display magic character and item symbols in the inventory display.)
     unsigned long flags;
+    enum NGCommands command;
 } brogueButton;
 
 enum buttonDrawStates {
@@ -2696,6 +2826,7 @@ typedef struct archivedMessage {
 } archivedMessage;
 
 extern boolean serverMode;
+extern boolean nonInteractivePlayback;
 extern boolean hasGraphics;
 extern enum graphicsModes graphicsMode;
 
@@ -2707,14 +2838,18 @@ extern "C" {
     boolean endswith(const char *str, const char *ending);
     void append(char *str, char *ending, int bufsize);
 
-    void rogueMain();
+    int rogueMain();
+    void printBrogueVersion();
     void executeEvent(rogueEvent *theEvent);
     boolean fileExists(const char *pathname);
     boolean chooseFile(char *path, char *prompt, char *defaultName, char *suffix);
     boolean openFile(const char *path);
+    void initializeGameVariant();
     void initializeRogue(uint64_t seed);
     void gameOver(char *killedBy, boolean useCustomPhrasing);
     void victory(boolean superVictory);
+    void setPlayerDisplayChar();
+    void initializeDynamicColors();
     void enableEasyMode();
     boolean tryParseUint64(char *str, uint64_t *num);
     uint64_t rand_64bits();
@@ -2733,7 +2868,7 @@ extern "C" {
     void refreshScreen();
     void displayLevel();
     void storeColorComponents(char components[3], const color *theColor);
-    boolean separateColors(color *fore, color *back);
+    boolean separateColors(color *fore, const color *back);
     void bakeColor(color *theColor);
     void shuffleTerrainColors(short percentOfCells, boolean refreshCells);
     void normColor(color *baseColor, const short aggregateMultiplier, const short colorTranslation);
@@ -2768,7 +2903,7 @@ extern "C" {
                          boolean superpriority);
     boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refreshCell, boolean abortIfBlocking);
     void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit);
-    void restoreItem(item *theItem);
+    void restoreItems();
     void refreshWaypoint(short wpIndex);
     void setUpWaypoints();
     void zeroOutGrid(char grid[DCOLS][DROWS]);
@@ -2798,7 +2933,7 @@ extern "C" {
     void printHighScores(boolean hiliteMostRecent);
     void displayGrid(short **map);
     void printSeed();
-    void printProgressBar(short x, short y, const char barLabel[COLS], long amtFilled, long amtMax, color *fillColor, boolean dim);
+    void printProgressBar(short x, short y, const char barLabel[COLS], long amtFilled, long amtMax, const color *fillColor, boolean dim);
     short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight);
     void describeHallucinatedItem(char *buf);
     short printItemInfo(item *theItem, short y, boolean dim, boolean highlight);
@@ -2806,9 +2941,10 @@ extern "C" {
     void rectangularShading(short x, short y, short width, short height,
                             const color *backColor, short opacity, cellDisplayBuffer dbuf[COLS][ROWS]);
     short printTextBox(char *textBuf, short x, short y, short width,
-                       color *foreColor, color *backColor,
+                       const color *foreColor, const color *backColor,
                        cellDisplayBuffer rbuf[COLS][ROWS],
                        brogueButton *buttons, short buttonCount);
+    void setButtonText(brogueButton *button, const char *textWithHotkey, const char *textWithoutHotkey);
     void printMonsterDetails(creature *monst, cellDisplayBuffer rbuf[COLS][ROWS]);
     void printFloorItemDetails(item *theItem, cellDisplayBuffer rbuf[COLS][ROWS]);
     unsigned long printCarriedItemDetails(item *theItem,
@@ -2817,8 +2953,9 @@ extern "C" {
                                           cellDisplayBuffer rbuf[COLS][ROWS]);
     void funkyFade(cellDisplayBuffer displayBuf[COLS][ROWS], const color *colorStart, const color *colorEnd, short stepCount, short x, short y, boolean invert);
     void displayCenteredAlert(char *message);
-    void flashMessage(char *message, short x, short y, int time, color *fColor, color *bColor);
+    void flashMessage(char *message, short x, short y, int time, const color *fColor, const color *bColor);
     void flashTemporaryAlert(char *message, int time);
+    void highlightScreenCell(short x, short y, const color *highlightColor, short strength);
     void waitForAcknowledgment();
     void waitForKeystrokeOrMouseClick();
     boolean confirm(char *prompt, boolean alsoDuringPlayback);
@@ -2836,28 +2973,28 @@ extern "C" {
                                 short x, short y,
                                 short frameCount,
                                 boolean outsideIn);
-    void colorBlendCell(short x, short y, color *hiliteColor, short hiliteStrength);
+    void colorBlendCell(short x, short y, const color *hiliteColor, short hiliteStrength);
     void hiliteCell(short x, short y, const color *hiliteColor, short hiliteStrength, boolean distinctColors);
     void colorMultiplierFromDungeonLight(short x, short y, color *editColor);
-    void plotCharWithColor(enum displayGlyph inputChar, short xLoc, short yLoc, const color *cellForeColor, const color *cellBackColor);
-    void plotCharToBuffer(enum displayGlyph inputChar, short x, short y, color *foreColor, color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
-    void plotForegroundChar(enum displayGlyph inputChar, short x, short y, color *foreColor, boolean affectedByLighting);
+    void plotCharWithColor(enum displayGlyph inputChar, windowpos loc, const color *cellForeColor, const color *cellBackColor);
+    void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, const color *foreColor, const color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
+    void plotForegroundChar(enum displayGlyph inputChar, short x, short y, const color *foreColor, boolean affectedByLighting);
     void commitDraws();
     void dumpLevelToScreen();
-    void hiliteCharGrid(char hiliteCharGrid[DCOLS][DROWS], color *hiliteColor, short hiliteStrength);
+    void hiliteCharGrid(char hiliteCharGrid[DCOLS][DROWS], const color *hiliteColor, short hiliteStrength);
     void blackOutScreen();
     void colorOverDungeon(const color *color);
     void copyDisplayBuffer(cellDisplayBuffer toBuf[COLS][ROWS], cellDisplayBuffer fromBuf[COLS][ROWS]);
     void clearDisplayBuffer(cellDisplayBuffer dbuf[COLS][ROWS]);
     color colorFromComponents(char rgb[3]);
     void overlayDisplayBuffer(cellDisplayBuffer overBuf[COLS][ROWS], cellDisplayBuffer previousBuf[COLS][ROWS]);
-    void flashForeground(short *x, short *y, color **flashColor, short *flashStrength, short count, short frames);
-    void flashCell(color *theColor, short frames, short x, short y);
+    void flashForeground(short *x, short *y, const color **flashColor, short *flashStrength, short count, short frames);
+    void flashCell(const color *theColor, short frames, short x, short y);
     void colorFlash(const color *theColor, unsigned long reqTerrainFlags, unsigned long reqTileFlags, short frames, short maxRadius, short x, short y);
-    void printString(const char *theString, short x, short y, color *foreColor, color*backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
+    void printString(const char *theString, short x, short y, const color *foreColor, const color* backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
     short wrapText(char *to, const char *sourceText, short width);
-    short printStringWithWrapping(char *theString, short x, short y, short width, color *foreColor,
-                                  color*backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
+    short printStringWithWrapping(const char *theString, short x, short y, short width, const color *foreColor,
+                                  const color *backColor, cellDisplayBuffer dbuf[COLS][ROWS]);
     boolean getInputTextString(char *inputText,
                                const char *prompt,
                                short maxLength,
@@ -2879,12 +3016,12 @@ extern "C" {
     void freeCreatureList(creatureList *list);
     void removeDeadMonsters();
     void freeEverything();
-    boolean randomMatchingLocation(short *x, short *y, short dungeonType, short liquidType, short terrainType);
+    boolean randomMatchingLocation(pos *loc, short dungeonType, short liquidType, short terrainType);
     enum dungeonLayers highestPriorityLayer(short x, short y, boolean skipGas);
     enum dungeonLayers layerWithTMFlag(short x, short y, unsigned long flag);
     enum dungeonLayers layerWithFlag(short x, short y, unsigned long flag);
-    char *tileFlavor(short x, short y);
-    char *tileText(short x, short y);
+    const char *tileFlavor(short x, short y);
+    const char *tileText(short x, short y);
     void describedItemBasedOnParameters(short theCategory, short theKind, short theQuantity, short theItemOriginDepth, char *buf);
     void describeLocation(char buf[DCOLS], short x, short y);
     void printLocationDescription(short x, short y);
@@ -2911,7 +3048,7 @@ extern "C" {
                             boolean eightWays);
     short pathingDistance(short x1, short y1, short x2, short y2, unsigned long blockingTerrainFlags);
     short nextStep(short **distanceMap, short x, short y, creature *monst, boolean reverseDirections);
-    void travelRoute(short path[1000][2], short steps);
+    void travelRoute(pos path[1000], short steps);
     void travel(short x, short y, boolean autoConfirm);
     void populateGenericCostMap(short **costMap);
     void getLocationFlags(const short x, const short y,
@@ -2921,9 +3058,9 @@ extern "C" {
     enum directions adjacentFightingDir();
     void getExploreMap(short **map, boolean headingToStairs);
     boolean explore(short frameDelay);
-    short getPlayerPathOnMap(short path[1000][2], short **map, short originX, short originY);
-    void reversePath(short path[1000][2], short steps);
-    void hilitePath(short path[1000][2], short steps, boolean unhilite);
+    short getPlayerPathOnMap(pos path[1000], short **map, pos origin);
+    void reversePath(pos path[1000], short steps);
+    void hilitePath(pos path[1000], short steps, boolean unhilite);
     void clearCursorPath();
     void hideCursor();
     void showCursor();
@@ -2956,14 +3093,14 @@ extern "C" {
     void displayRecentMessages();
     void displayMessageArchive();
     void temporaryMessage(const char *msg1, unsigned long flags);
-    void messageWithColor(char *msg, color *theColor, unsigned long flags);
-    void flavorMessage(char *msg);
+    void messageWithColor(const char *msg, const color *theColor, unsigned long flags);
+    void flavorMessage(const char *msg);
     void message(const char *msg, unsigned long flags);
     void displayMoreSignWithoutWaitingForAcknowledgment();
     void displayMoreSign();
     short encodeMessageColor(char *msg, short i, const color *theColor);
     short decodeMessageColor(const char *msg, short i, color *returnColor);
-    color *messageColorFromVictim(creature *monst);
+    const color *messageColorFromVictim(creature *monst);
     void upperCase(char *theChar);
     void updateMessageDisplay();
     void deleteMessages();
@@ -2985,7 +3122,7 @@ extern "C" {
     creature *generateMonster(short monsterID, boolean itemPossible, boolean mutationPossible);
     void mutateMonster(creature *monst, short mutationIndex);
     short chooseMonster(short forLevel);
-    creature *spawnHorde(short hordeID, short x, short y, unsigned long forbiddenFlags, unsigned long requiredFlags);
+    creature *spawnHorde(short hordeID, pos loc, unsigned long forbiddenFlags, unsigned long requiredFlags);
     void fadeInMonster(creature *monst);
 
     creatureList createCreatureList();
@@ -3015,12 +3152,12 @@ extern "C" {
                                  unsigned long blockingTerrain, unsigned long blockingFlags);
     boolean traversiblePathBetween(creature *monst, short x2, short y2);
     boolean openPathBetween(short x1, short y1, short x2, short y2);
-    creature *monsterAtLoc(short x, short y);
-    creature *dormantMonsterAtLoc(short x, short y);
+    creature *monsterAtLoc(pos p);
+    creature *dormantMonsterAtLoc(pos p);
     pos perimeterCoords(short n);
     boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, boolean blinkUphill);
     boolean monsterSummons(creature *monst, boolean alwaysUse);
-    boolean resurrectAlly(const short x, const short y);
+    boolean resurrectAlly(const pos loc);
     void unAlly(creature *monst);
     boolean monsterFleesFrom(creature *monst, creature *defender);
     void monstersTurn(creature *monst);
@@ -3031,17 +3168,17 @@ extern "C" {
     short runicWeaponChance(item *theItem, boolean customEnchantLevel, fixpt enchantLevel);
     void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed);
     void disentangle(creature *monst);
-    void teleport(creature *monst, short x, short y, boolean respectTerrainAvoidancePreferences);
+    void teleport(creature *monst, pos destination, boolean respectTerrainAvoidancePreferences);
     void chooseNewWanderDestination(creature *monst);
     boolean canPass(creature *mover, creature *blocker);
-    boolean isPassableOrSecretDoor(short x, short y);
-    boolean knownToPlayerAsPassableOrSecretDoor(short x, short y);
-    void setMonsterLocation(creature *monst, short newX, short newY);
+    boolean isPassableOrSecretDoor(pos loc);
+    boolean knownToPlayerAsPassableOrSecretDoor(pos loc);
+    void setMonsterLocation(creature *monst, pos newLoc);
     boolean moveMonster(creature *monst, short dx, short dy);
-    unsigned long burnedTerrainFlagsAtLoc(short x, short y);
-    unsigned long discoveredTerrainFlagsAtLoc(short x, short y);
-    boolean monsterAvoids(creature *monst, short x, short y);
-    short distanceBetween(short x1, short y1, short x2, short y2);
+    unsigned long burnedTerrainFlagsAtLoc(pos loc);
+    unsigned long discoveredTerrainFlagsAtLoc(pos loc);
+    boolean monsterAvoids(creature *monst, pos p);
+    short distanceBetween(pos loc1, pos loc2);
     void alertMonster(creature *monst);
     void wakeUp(creature *monst);
     boolean monsterRevealed(creature *monst);
@@ -3067,10 +3204,10 @@ extern "C" {
     void killCreature(creature *decedent, boolean administrativeDeath);
     void buildHitList(creature **hitList, const creature *attacker, creature *defender, const boolean sweep);
     void addScentToCell(short x, short y, short distance);
-    void populateItems(short upstairsX, short upstairsY);
-    item *placeItem(item *theItem, short x, short y);
-    void removeItemFrom(short x, short y);
-    void pickUpItemAt(short x, short y);
+    void populateItems(pos upstairs);
+    item *placeItemAt(item *theItem, pos dest);
+    void removeItemAt(pos loc);
+    void pickUpItemAt(pos loc);
     item *addItemToPack(item *theItem);
     void aggravateMonsters(short distance, short x, short y, const color *flashColor);
     short getLineCoordinates(pos listOfCoordinates[], const pos originLoc, const pos targetLoc, const bolt *theBolt);
@@ -3117,7 +3254,7 @@ extern "C" {
     void updateFloorItems();
     void itemKindName(item *theItem, char *kindName);
     void itemRunicName(item *theItem, char *runicName);
-    void itemName(item *theItem, char *root, boolean includeDetails, boolean includeArticle, color *baseColor);
+    void itemName(item *theItem, char *root, boolean includeDetails, boolean includeArticle, const color *baseColor);
     int itemKindCount(enum itemCategory category, int magicPolarity);
     char displayInventory(unsigned short categoryMask,
                           unsigned long requiredFlags,
@@ -3130,22 +3267,22 @@ extern "C" {
     void clearInventory(char keystroke);
     item *initializeItem();
     item *generateItem(unsigned short theCategory, short theKind);
-    short chooseKind(itemTable *theTable, short numKinds);
+    short chooseKind(const itemTable *theTable, short numKinds);
     item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind);
     void updateEncumbrance();
     short displayedArmorValue();
-    short armorValueIfUnenchanted();
+    short armorValueIfUnenchanted(item *theItem);
     void strengthCheck(item *theItem, boolean noisy);
     void recalculateEquipmentBonuses();
     boolean equipItem(item *theItem, boolean force, item *unequipHint);
     void equip(item *theItem);
-    item *keyInPackFor(short x, short y);
-    item *keyOnTileAt(short x, short y);
+    item *keyInPackFor(pos loc);
+    item *keyOnTileAt(pos loc);
     void unequip(item *theItem);
     void drop(item *theItem);
     void findAlternativeHomeFor(creature *monst, short *x, short *y, boolean chooseRandomly);
     boolean getQualifyingLocNear(pos *loc,
-                                 short x, short y,
+                                 pos target,
                                  boolean hallwaysAllowed,
                                  char blockingMap[DCOLS][DROWS],
                                  unsigned long forbiddenTerrainFlags,
@@ -3153,7 +3290,7 @@ extern "C" {
                                  boolean forbidLiquid,
                                  boolean deterministic);
     boolean getQualifyingGridLocNear(pos *loc,
-                                     short x, short y,
+                                     pos target,
                                      boolean grid[DCOLS][DROWS],
                                      boolean deterministic);
 
@@ -3162,7 +3299,7 @@ extern "C" {
     void freeGrid(short **array);
     void copyGrid(short **to, short **from);
     void fillGrid(short **grid, short fillValue);
-    void hiliteGrid(short **grid, color *hiliteColor, short hiliteStrength);
+    void hiliteGrid(short **grid, const color *hiliteColor, short hiliteStrength);
     void findReplaceGrid(short **grid, short findValueMin, short findValueMax, short fillValue);
     short floodFillGrid(short **grid, short x, short y, short eligibleValueMin, short eligibleValueMax, short fillValue);
     void drawRectangleOnGrid(short **grid, short x, short y, short width, short height, short value);
@@ -3217,7 +3354,7 @@ extern "C" {
     boolean unequipItem(item *theItem, boolean force);
     short magicCharDiscoverySuffix(short category, short kind);
     int itemMagicPolarity(item *theItem);
-    item *itemAtLoc(short x, short y);
+    item *itemAtLoc(pos loc);
     item *dropItem(item *theItem);
     itemTable *tableForItemCategory(enum itemCategory theCat);
     boolean isVowelish(char *theChar);
@@ -3229,16 +3366,16 @@ extern "C" {
     void shuffleFlavors();
     unsigned long itemValue(item *theItem);
     short strLenWithoutEscapes(const char *str);
-    void combatMessage(char *theMsg, color *theColor);
+    void combatMessage(char *theMsg, const color *theColor);
     void displayCombatText();
     void flashMonster(creature *monst, const color *theColor, short strength);
 
-    boolean paintLight(lightSource *theLight, short x, short y, boolean isMinersLight, boolean maintainShadows);
+    boolean paintLight(const lightSource *theLight, short x, short y, boolean isMinersLight, boolean maintainShadows);
     void backUpLighting(short lights[DCOLS][DROWS][3]);
     void restoreLighting(short lights[DCOLS][DROWS][3]);
     void updateLighting();
     boolean playerInDarkness();
-    flare *newFlare(lightSource *light, short x, short y, short changePerFrame, short limit);
+    flare *newFlare(const lightSource *light, short x, short y, short changePerFrame, short limit);
     void createFlare(short x, short y, enum lightType lightIndex);
     void animateFlares(flare **flares, short count);
     void deleteAllFlares();
@@ -3316,7 +3453,7 @@ extern "C" {
 
     boolean dialogChooseFile(char *path, const char *suffix, const char *prompt);
     void dialogCreateItemOrMonster();
-    void quitImmediately();
+    int quitImmediately();
     void dialogAlert(char *message);
     void mainBrogueJunction();
     void printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsigned int scanThroughDepth, boolean isCsvFormat);
@@ -3345,4 +3482,6 @@ extern "C" {
 
 #if defined __cplusplus
 }
+#endif
+
 #endif

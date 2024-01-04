@@ -22,7 +22,8 @@
  */
 
 #include "Rogue.h"
-#include "IncludeGlobals.h"
+#include "GlobalsBase.h"
+#include "Globals.h"
 #include <math.h>
 #include <time.h>
 
@@ -109,12 +110,11 @@ void drawButton(brogueButton *button, enum buttonDrawStates highlight, cellDispl
             symbolNumber++;
         }
 
-        if (coordinatesAreInWindow(button->x + i, button->y)) {
+        if (locIsInWindow((windowpos){ button->x + i, button->y })) {
+            plotCharToBuffer(displayCharacter, (windowpos){ button->x + i, button->y }, &fColor, &bColor, dbuf);
             if (dbuf) {
-                plotCharToBuffer(displayCharacter, button->x + i, button->y, &fColor, &bColor, dbuf);
+                // Only buffers can have opacity set.
                 dbuf[button->x + i][button->y].opacity = opacity;
-            } else {
-                plotCharWithColor(displayCharacter, button->x + i, button->y, &fColor, &bColor);
             }
         }
     }
@@ -127,6 +127,33 @@ void initializeButton(brogueButton *button) {
     button->flags |= (B_ENABLED | B_GRADIENT | B_HOVER_ENABLED | B_DRAW | B_KEYPRESS_HIGHLIGHT);
     button->buttonColor = interfaceButtonColor;
     button->opacity = 100;
+    button->textColor = white;
+    button->hotkeytextColor = KEYBOARD_LABELS ? itemMessageColor : white;
+}
+
+/// @brief Sets the text of a button intialized via initializeButton() or otherwise. Relies on
+/// the button's textColor and hotkeyTextColor having been set appropriately. 
+/// @param button The button
+/// @param textWithHotkey The button text for platforms with a keyboard. A string with 2 format specifiers 
+/// for color escapes, denoting the start and end of the hotkey text (e.g. "%sN%sew Game").
+/// @param textWithoutHotkey The button text for platforms without a keyboard
+void setButtonText(brogueButton *button, const char *textWithHotkey, const char *textWithoutHotkey) { 
+    char textColorEscape[5] = "";
+    char hotkeyColorEscape[5] = "";
+    char textBuf[BUTTON_TEXT_SIZE];
+    char textBuf2[BUTTON_TEXT_SIZE];
+
+    encodeMessageColor(textColorEscape, 0, &button->textColor);
+    encodeMessageColor(hotkeyColorEscape, 0, &button->hotkeytextColor);
+
+    strcpy(textBuf, textColorEscape);
+    if (KEYBOARD_LABELS) {
+        snprintf(textBuf2, BUTTON_TEXT_SIZE - sizeof(textColorEscape) - 1, textWithHotkey, hotkeyColorEscape, textColorEscape);
+    } else {
+        strncpy(textBuf2, textWithoutHotkey, BUTTON_TEXT_SIZE - 1);
+    }
+    strcat(textBuf, textBuf2);
+    strncpy(button->text, textBuf, BUTTON_TEXT_SIZE - 1);
 }
 
 void drawButtonsInState(buttonState *state) {

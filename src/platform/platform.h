@@ -21,6 +21,7 @@
 #define U_OMEGA  0x03A9
 #define U_CIRCLE_BARS  0x29F2
 #define U_FILLED_CIRCLE_BARS  0x29F3
+#define U_LEFT_TRIANGLE 0x1F780
 
 // #define U_UP_TRIANGLE  0x2206
 // #define U_DOWN_TRIANGLE  0x2207
@@ -90,6 +91,7 @@ void loadKeymap();
 void dumpScores();
 unsigned int glyphToUnicode(enum displayGlyph glyph);
 boolean isEnvironmentGlyph(enum displayGlyph glyph);
+void setHighScoresFilename(char *buffer, int bufferMaxLength);
 
 #ifdef BROGUE_SDL
 extern struct brogueConsole sdlConsole;
@@ -106,6 +108,8 @@ extern struct brogueConsole cursesConsole;
 #ifdef BROGUE_WEB
 extern struct brogueConsole webConsole;
 #endif
+
+extern struct brogueConsole nullConsole;
 
 extern struct brogueConsole currentConsole;
 extern boolean noMenu;
