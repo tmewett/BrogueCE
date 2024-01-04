@@ -115,6 +115,9 @@ static void dialogCreateItemChooseRunic(item *theItem){
     // is based on minimum weapon damage, but has the same net effect. Might be nice to consolidate. Perhaps add a flag
     // to the kind (itemtable).
     if (theItem->category == WEAPON) {
+
+        // Brogue Lite note: removed bad runics, which means heavy weapons get NO runics.
+        /*
         if (theItem->kind == HAMMER || theItem->kind == WAR_AXE || theItem->kind == PIKE || theItem->kind == BROADSWORD) {
             for (i=0; i<NUMBER_WEAPON_RUNIC_KINDS - NUMBER_GOOD_WEAPON_ENCHANT_KINDS; i++) {
                 strcpy(buttonText, weaponRunicNames[i + NUMBER_GOOD_WEAPON_ENCHANT_KINDS]);
@@ -123,6 +126,8 @@ static void dialogCreateItemChooseRunic(item *theItem){
             runicOffset = NUMBER_GOOD_WEAPON_ENCHANT_KINDS;
             // Other weapons (except thrown), can have any runic
         } else if (theItem->quiverNumber == 0) {
+        */
+        if (theItem->quiverNumber == 0) {
             for (i=0; i<NUMBER_WEAPON_RUNIC_KINDS; i++) {
                 strcpy(buttonText, weaponRunicNames[i]);
                 initializeCreateItemButton(&(buttons[i]), buttonText);
@@ -131,13 +136,16 @@ static void dialogCreateItemChooseRunic(item *theItem){
             return;
         }
     } else if (theItem->category == ARMOR) {
+
+        // Brogue Lite note: removed bad runics, which means plate mail gets NO runics.
+        /*
         if (theItem->kind == PLATE_MAIL) { //bad runics only
             for (i=0; i<NUMBER_ARMOR_ENCHANT_KINDS - NUMBER_GOOD_ARMOR_ENCHANT_KINDS; i++) {
                 strcpy(buttonText, armorRunicNames[i + NUMBER_GOOD_ARMOR_ENCHANT_KINDS]);
                 initializeCreateItemButton(&(buttons[i]), buttonText);
             }
             runicOffset = NUMBER_GOOD_ARMOR_ENCHANT_KINDS;
-        } else {
+        } else */{
             for (i=0; i<NUMBER_ARMOR_ENCHANT_KINDS; i++) { //any runic
                 strcpy(buttonText, armorRunicNames[i]);
                 initializeCreateItemButton(&(buttons[i]), buttonText);
@@ -214,13 +222,16 @@ static void dialogCreateItemChooseEnchantmentLevel(item *theItem) {
     } else if (theItem->category & (WEAPON | ARMOR)) {
         if (!(theItem->flags & ITEM_RUNIC)) {
             minVal = -3;
-        } else { // bad runics can only be negatively enchanted
+        } else {
+        // Brogue Lite note: removed bad runics
+        /*
+        // bad runics can only be negatively enchanted
             if ((theItem->category == ARMOR && theItem->enchant2 >= NUMBER_GOOD_ARMOR_ENCHANT_KINDS)
                 || (theItem->category == WEAPON && theItem->enchant2 >= NUMBER_GOOD_WEAPON_ENCHANT_KINDS)) {
                 minVal = -3;
                 maxVal = -1;
                 theItem->enchant1 = rand_range(-3,-1);
-            } else { // good runics can only be positively enchanted
+            } else */ { // good runics can only be positively enchanted
                 minVal = 1;
                 if (theItem->enchant1 < 1) {
                     theItem->enchant1 = rand_range(1,3);
