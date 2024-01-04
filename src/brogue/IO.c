@@ -4523,7 +4523,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
         }
         plotCharWithColor(monstChar, (windowpos){ 0, y }, &monstForeColor, &monstBackColor);
         if(monst->carriedItem) {
-            plotCharWithColor(monst->carriedItem->displayChar, (windowpos) { 1, y }, &itemColor, &backgroundColor});
+            plotCharWithColor(monst->carriedItem->displayChar, (windowpos) { 1, y }, &itemColor, &backgroundColor);
         }
         monsterName(monstName, monst, false);
         upperCase(monstName);
