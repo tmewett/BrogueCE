@@ -696,7 +696,7 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
             attack(attacker, hitList[i], false);
         }
         if (visualEffect) {
-            pauseAnimation(16);
+            pauseAnimation(16, PAUSE_BEHAVIOR_DEFAULT);
             for (i = 0; i < range; i++) {
                 const pos targetLoc = (pos) {
                     attacker->loc.x + (1 + i) * nbDirs[dir][0],
@@ -1509,7 +1509,7 @@ void travelRoute(pos path[1000], short steps) {
                 if (!playerMoves(dir)) {
                     rogue.disturbed = true;
                 }
-                if (pauseAnimation(25)) {
+                if (pauseAnimation(25, PAUSE_BEHAVIOR_DEFAULT)) {
                     rogue.disturbed = true;
                 }
                 break;
@@ -1544,7 +1544,7 @@ static void travelMap(short **distanceMap) {
                 if (!playerMoves(dir)) {
                     rogue.disturbed = true;
                 }
-                if (pauseAnimation(500)) {
+                if (pauseAnimation(500, PAUSE_BEHAVIOR_DEFAULT)) {
                     rogue.disturbed = true;
                 }
                 currentX = newX;
@@ -1938,7 +1938,8 @@ boolean explore(short frameDelay) {
             rogue.disturbed = true;
         } else {
             madeProgress = true;
-            if (pauseAnimation(frameDelay)) {
+            if (pauseAnimation(frameDelay, PAUSE_BEHAVIOR_DEFAULT)) {
+                
                 rogue.disturbed = true;
                 rogue.autoPlayingLevel = false;
             }
@@ -1992,7 +1993,7 @@ boolean startFighting(enum directions dir, boolean tillDeath) {
         if (!playerMoves(dir)) {
             break;
         }
-        if (pauseAnimation(1)) {
+        if (pauseAnimation(1, PAUSE_BEHAVIOR_DEFAULT)) {
             break;
         }
     } while (!rogue.disturbed && !rogue.gameHasEnded && (tillDeath || player.currentHP > expectedDamage)
@@ -2098,7 +2099,7 @@ boolean useStairs(short stairDirection) {
 
     if (stairDirection == 1) {
         if (rogue.depthLevel < gameConst->deepestLevel) {
-            //copyDisplayBuffer(fromBuf, displayBuffer);
+            //overlayDisplayBuffer(NULL, fromBuf);
             rogue.cursorLoc = INVALID_POS;
             rogue.depthLevel++;
             message("You descend.", 0);
@@ -2106,7 +2107,7 @@ boolean useStairs(short stairDirection) {
             if (rogue.depthLevel > rogue.deepestLevel) {
                 rogue.deepestLevel = rogue.depthLevel;
             }
-            //copyDisplayBuffer(toBuf, displayBuffer);
+            //overlayDisplayBuffer(NULL, toBuf);
             //irisFadeBetweenBuffers(fromBuf, toBuf, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), 20, false);
         } else if (numberOfMatchingPackItems(AMULET, 0, 0, false)) {
             victory(true);
@@ -2123,10 +2124,10 @@ boolean useStairs(short stairDirection) {
             if (rogue.depthLevel == 0) {
                 victory(false);
             } else {
-                //copyDisplayBuffer(fromBuf, displayBuffer);
+                //overlayDisplayBuffer(NULL, fromBuf);
                 message("You ascend.", 0);
                 startLevel(rogue.depthLevel + 1, stairDirection);
-                //copyDisplayBuffer(toBuf, displayBuffer);
+                //overlayDisplayBuffer(NULL, toBuf);
                 //irisFadeBetweenBuffers(fromBuf, toBuf, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), 20, true);
             }
             succeeded = true;

@@ -2117,7 +2117,7 @@ void autoRest() {
             recordKeystroke(REST_KEY, false, false);
             rogue.justRested = true;
             playerTurnEnded();
-            if (dangerChanged(danger) || pauseAnimation(1)) {
+            if (dangerChanged(danger) || pauseAnimation(1, PAUSE_BEHAVIOR_DEFAULT)) {
                 rogue.disturbed = true;
             }
         }
@@ -2126,7 +2126,7 @@ void autoRest() {
             recordKeystroke(REST_KEY, false, false);
             rogue.justRested = true;
             playerTurnEnded();
-            if (dangerChanged(danger) || pauseAnimation(1)) {
+            if (dangerChanged(danger) || pauseAnimation(1, PAUSE_BEHAVIOR_DEFAULT)) {
                 rogue.disturbed = true;
             }
         }
@@ -2416,7 +2416,7 @@ void playerTurnEnded() {
                 monstersApproachStairs();
 
                 if (player.ticksUntilTurn > 100 && !fastForward) {
-                    fastForward = rogue.playbackFastForward || pauseAnimation(25);
+                    fastForward = rogue.playbackFastForward || pauseAnimation(25, PAUSE_BEHAVIOR_DEFAULT);
                 }
 
                 // Rolling waypoint refresh:
@@ -2540,7 +2540,7 @@ void playerTurnEnded() {
 
         if (player.status[STATUS_PARALYZED]) {
             if (!fastForward) {
-                fastForward = rogue.playbackFastForward || pauseAnimation(25);
+                fastForward = rogue.playbackFastForward || pauseAnimation(25, PAUSE_BEHAVIOR_DEFAULT);
             }
         }
 

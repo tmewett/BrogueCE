@@ -4954,7 +4954,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
             }
         }
         if (!fastForward && (boltInView || rogue.playbackOmniscience)) {
-            fastForward = rogue.playbackFastForward || pauseAnimation(16);
+            fastForward = rogue.playbackFastForward || pauseAnimation(16, PAUSE_BEHAVIOR_DEFAULT);
         }
 
         if (theBolt->boltEffect == BE_BLINKING) {
@@ -5097,7 +5097,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
                 }
 
                 if (!fastForward && boltInView) {
-                    fastForward = rogue.playbackFastForward || pauseAnimation(16);
+                    fastForward = rogue.playbackFastForward || pauseAnimation(16, PAUSE_BEHAVIOR_DEFAULT);
                 }
             }
         } else if (theBolt->flags & BF_DISPLAY_CHAR_ALONG_LENGTH) {
@@ -5258,9 +5258,13 @@ boolean moveCursor(boolean *targetConfirmed,
         //assureCosmeticRNG;
 
         if (state) { // Also running a button loop.
+            screenDisplayBuffer dbuf;
+            clearDisplayBuffer(&dbuf);
+            drawButtonsInState(state, &dbuf);
 
+            screenDisplayBuffer rbuf;
             // Update the display.
-            overlayDisplayBuffer(&state->dbuf, NULL);
+            overlayDisplayBuffer(&dbuf, &rbuf);
 
             // Get input.
             nextBrogueEvent(&theEvent, false, colorsDance, true);
@@ -5270,11 +5274,10 @@ boolean moveCursor(boolean *targetConfirmed,
 
             if (buttonInput != -1) {
                 state->buttonDepressed = state->buttonFocused = -1;
-                drawButtonsInState(state);
             }
 
             // Revert the display.
-            overlayDisplayBuffer(&state->rbuf, NULL);
+            overlayDisplayBuffer(&rbuf, NULL);
 
         } else { // No buttons to worry about.
             nextBrogueEvent(&theEvent, false, colorsDance, true);
@@ -6016,7 +6019,7 @@ static void throwItem(item *theItem, creature *thrower, pos targetLoc, short max
             plotCharWithColor(theItem->displayChar, mapToWindow((pos){ x, y }), &foreColor, &backColor);
 
             if (!fastForward) {
-                fastForward = rogue.playbackFastForward || pauseAnimation(25);
+                fastForward = rogue.playbackFastForward || pauseAnimation(25, PAUSE_BEHAVIOR_DEFAULT);
             }
 
             refreshDungeonCell((pos){ x, y });

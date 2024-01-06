@@ -297,18 +297,18 @@ static void _delayUpTo(short ms) {
     lastDelayTime = SDL_GetTicks();
 }
 
-static boolean _pauseForMilliseconds(short ms) {
+static boolean _pauseForMilliseconds(short ms, PauseBehavior behavior) {
     updateScreen();
     _delayUpTo(ms);
 
     if (lastEvent.eventType != EVENT_ERROR
-        && lastEvent.eventType != MOUSE_ENTERED_CELL) {
+        && (lastEvent.eventType != MOUSE_ENTERED_CELL || behavior.interuptForMouseMove)) {
         return true; // SDL already gave us an interrupting event to process
     }
 
     return pollBrogueEvent(&lastEvent, false) // ask SDL for a new event if one is available
         && lastEvent.eventType != EVENT_ERROR // and check if it is interrupting
-        && lastEvent.eventType != MOUSE_ENTERED_CELL;
+        && (lastEvent.eventType != MOUSE_ENTERED_CELL || behavior.interuptForMouseMove);
 }
 
 
