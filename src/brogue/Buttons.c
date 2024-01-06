@@ -273,14 +273,11 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
                             // Depress the chosen button.
 
                             // Update the display.
-                            screenDisplayBuffer rbuf;
+                            const SavedDisplayBuffer rbuf = saveDisplayBuffer();
                             screenDisplayBuffer dbuf;
                             clearDisplayBuffer(&dbuf);
                             drawButtonsInState(state, &dbuf);
-                            overlayDisplayBuffer(&dbuf, &rbuf);
-
-                            // overlayDisplayBuffer(button_rbuf, NULL);
-                            // overlayDisplayBuffer(button_dbuf, NULL);
+                            overlayDisplayBuffer(&dbuf);
 
                             if (!rogue.playbackMode || rogue.playbackPaused) {
                                 // Wait for a little; then we're done.
@@ -291,7 +288,7 @@ short processButtonInput(buttonState *state, boolean *canceled, rogueEvent *even
                             }
 
                             // Revert the display to its appearance before the button-press.
-                            overlayDisplayBuffer(&rbuf, NULL);
+                            restoreDisplayBuffer(&rbuf);
                         }
                     }
 
@@ -346,9 +343,9 @@ short buttonInputLoop(brogueButton *buttons,
         clearDisplayBuffer(&dbuf);
         drawButtonsInState(&state, &dbuf);
 
-        screenDisplayBuffer rbuf;
+        const SavedDisplayBuffer rbuf = saveDisplayBuffer();
         // Update the display.
-        overlayDisplayBuffer(&dbuf, &rbuf);
+        overlayDisplayBuffer(&dbuf);
 
         // Get input.
         nextBrogueEvent(&theEvent, true, false, false);
@@ -357,15 +354,13 @@ short buttonInputLoop(brogueButton *buttons,
         button = processButtonInput(&state, &canceled, &theEvent);
 
         // Revert the display.
-        overlayDisplayBuffer(&rbuf, NULL);
+        restoreDisplayBuffer(&rbuf);
 
     } while (button == -1 && !canceled);
 
     if (returnEvent) {
         *returnEvent = theEvent;
     }
-
-    //overlayDisplayBuffer(dbuf, NULL); // hangs around
 
     restoreRNG;
 

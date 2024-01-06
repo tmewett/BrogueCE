@@ -1025,7 +1025,6 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     short i, y;
     char buf[200], highScoreText[200], buf2[200];
     rogueHighScoresEntry theEntry;
-    screenDisplayBuffer dbuf;
     boolean playback;
     rogueEvent theEvent;
     item *theItem;
@@ -1112,7 +1111,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     if (rogue.quit) {
         blackOutScreen();
     } else {
-        overlayDisplayBuffer(NULL, &dbuf);
+        screenDisplayBuffer dbuf = displayBuffer;
         funkyFade(&dbuf, &black, 0, 120, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
     }
 
@@ -1198,7 +1197,7 @@ void victory(boolean superVictory) {
     unsigned long totalValue = 0;
     rogueHighScoresEntry theEntry;
     boolean qualified, isPlayback;
-    screenDisplayBuffer dbuf;
+    
     char recordingFilename[BROGUE_FILENAME_MAX] = {0};
 
     rogue.gameInProgress = false;
@@ -1214,7 +1213,7 @@ void victory(boolean superVictory) {
     //
     if (superVictory) {
         message(    "Light streams through the portal, and you are teleported out of the dungeon.", 0);
-        overlayDisplayBuffer(NULL, &dbuf);
+        screenDisplayBuffer dbuf = displayBuffer;
         funkyFade(&dbuf, &superVictoryColor, 0, 240, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
         displayMoreSign();
         printString("Congratulations; you have transcended the Dungeons of Doom!                 ", mapToWindowX(0), mapToWindowY(-1), &black, &white, 0);
@@ -1224,15 +1223,17 @@ void victory(boolean superVictory) {
         strcpy(displayedMessage[0], "You retire in splendor, forever renowned for your remarkable triumph.     ");
     } else {
         message(    "You are bathed in sunlight as you throw open the heavy doors.", 0);
-        overlayDisplayBuffer(NULL, &dbuf);
+        screenDisplayBuffer dbuf = displayBuffer;
         funkyFade(&dbuf, &white, 0, 240, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
         displayMoreSign();
         printString("Congratulations; you have escaped from the Dungeons of Doom!     ", mapToWindowX(0), mapToWindowY(-1), &black, &white, 0);
         displayMoreSign();
-        clearDisplayBuffer(&dbuf);
         deleteMessages();
         strcpy(displayedMessage[0], "You sell your treasures and live out your days in fame and glory.");
     }
+
+    screenDisplayBuffer dbuf;
+    clearDisplayBuffer(&dbuf);
 
     //
     // Second screen - Show inventory and item's value

@@ -404,10 +404,9 @@ static void chooseGameVariant() {
     initializeMainMenuButton(&(buttons[0]), "  %sR%sapid Brogue     ", 'r', 'R', NG_NOTHING);
     initializeMainMenuButton(&(buttons[1]), "     %sB%srogue        ", 'b', 'B', NG_NOTHING);
     
-    screenDisplayBuffer rbuf;
-    overlayDisplayBuffer(NULL, &rbuf);
+    const SavedDisplayBuffer rbuf = saveDisplayBuffer();
     gameVariantChoice = printTextBox(textBuf, 20, 7, 45, &white, &black, buttons, 2);
-    overlayDisplayBuffer(&rbuf, NULL);
+    restoreDisplayBuffer(&rbuf);
 
     if (gameVariantChoice == 1) {
         gameVariant = VARIANT_BROGUE;
@@ -445,10 +444,9 @@ static void chooseGameMode() {
     initializeMainMenuButton(&(buttons[0]), "      %sW%sizard       ", 'w', 'W', NG_NOTHING);
     initializeMainMenuButton(&(buttons[1]), "       %sE%sasy        ", 'e', 'E', NG_NOTHING);
     initializeMainMenuButton(&(buttons[2]), "      %sN%sormal       ", 'n', 'N', NG_NOTHING);
-    screenDisplayBuffer rbuf;
-    overlayDisplayBuffer(NULL, &rbuf);
+    const SavedDisplayBuffer rbuf = saveDisplayBuffer();
     gameMode = printTextBox(textBuf, 10, 5, 66, &white, &black, buttons, 3);
-    overlayDisplayBuffer(&rbuf, NULL);
+    restoreDisplayBuffer(&rbuf);
     if (gameMode == 0) {
         rogue.wizard = true;
         rogue.easyMode = false;
@@ -555,21 +553,21 @@ static void titleMenu() {
                 // Update the display.
                 updateMenuFlames(colors, colorSources, flames);
                 drawMenuFlames(flames, mask);
-                overlayDisplayBuffer(&mainShadowBuf, NULL);
+                overlayDisplayBuffer(&mainShadowBuf);
 
                 // Draw the main menu buttons
                 screenDisplayBuffer dbuf;
                 clearDisplayBuffer(&dbuf);
                 redrawMainMenuButtons(&mainMenu, &dbuf);
-                overlayDisplayBuffer(&dbuf, NULL);
+                overlayDisplayBuffer(&dbuf);
 
                 //Show flyout if selected
                 if (isFlyoutActive()) {
-                    overlayDisplayBuffer(&flyoutShadowBuf, NULL);
+                    overlayDisplayBuffer(&flyoutShadowBuf);
                     screenDisplayBuffer flyout_dbuf;
                     clearDisplayBuffer(&flyout_dbuf);
                     drawButtonsInState(&flyoutMenu, &flyout_dbuf);
-                    overlayDisplayBuffer(&flyout_dbuf, NULL);
+                    overlayDisplayBuffer(&flyout_dbuf);
                     mainMenu.buttonDepressed = -1;
                     mainMenu.buttonFocused = -1;
                 }
@@ -641,10 +639,9 @@ void dialogAlert(char *message) {
     strcpy(OKButton.text, "     OK     ");
     OKButton.hotkey[0] = RETURN_KEY;
     OKButton.hotkey[1] = ACKNOWLEDGE_KEY;
-    screenDisplayBuffer rbuf;
-    overlayDisplayBuffer(NULL, &rbuf);
+    const SavedDisplayBuffer rbuf = saveDisplayBuffer();
     printTextBox(message, COLS/3, ROWS/3, COLS/3, &white, &interfaceBoxColor, &OKButton, 1);
-    overlayDisplayBuffer(&rbuf, NULL);
+    restoreDisplayBuffer(&rbuf);
 }
 
 static boolean stringsExactlyMatch(const char *string1, const char *string2) {
@@ -691,14 +688,14 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
     fileEntry *files;
     boolean retval = false, again;
     screenDisplayBuffer dbuf;
-    screenDisplayBuffer rbuf;
+    
     const color *dialogColor = &interfaceBoxColor;
     char *membuf;
     char fileDate [11];
 
     suffixLength = strlen(suffix);
     files = listFiles(&count, &membuf);
-    overlayDisplayBuffer(NULL, &rbuf);
+    const SavedDisplayBuffer rbuf = saveDisplayBuffer();
     maxPathLength = strLenWithoutEscapes(prompt);
 
     // First, we want to filter the list by stripping out any filenames that do not end with suffix.
@@ -808,7 +805,7 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
             clearDisplayBuffer(&dbuf);
             printString(prompt, x, y - 1, &itemMessageColor, dialogColor, &dbuf);
             rectangularShading(x - 1, y - 1, width + 1, height + 1, dialogColor, INTERFACE_OPACITY, &dbuf);
-            overlayDisplayBuffer(&dbuf, NULL);
+            overlayDisplayBuffer(&dbuf);
 
 //          for (j=0; j<min(count - currentPageStart, FILES_ON_PAGE_MAX); j++) {
 //              strftime(fileDate, sizeof(fileDate), DATE_FORMAT, &files[currentPageStart+j].date);
@@ -830,7 +827,7 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
 //              printf("\n   (button name)Sanity check AFTER: %s", buttons[j].text);
 //          }
 
-            overlayDisplayBuffer(&rbuf, NULL);
+            restoreDisplayBuffer(&rbuf);
 
             if (i < min(count - currentPageStart, FILES_ON_PAGE_MAX)) {
                 if (i >= 0) {
