@@ -401,11 +401,12 @@ static void chooseGameVariant() {
     append(textBuf, "Die faster and more often in this quarter-length version of the classic game!\n\n", TEXT_MAX_LENGTH);
 
     brogueButton buttons[2];
-    screenDisplayBuffer rbuf;
-    overlayDisplayBuffer(NULL, &rbuf);
     initializeMainMenuButton(&(buttons[0]), "  %sR%sapid Brogue     ", 'r', 'R', NG_NOTHING);
     initializeMainMenuButton(&(buttons[1]), "     %sB%srogue        ", 'b', 'B', NG_NOTHING);
-    gameVariantChoice = printTextBox(textBuf, 20, 7, 45, &white, &black, &rbuf, buttons, 2);
+    
+    screenDisplayBuffer rbuf;
+    overlayDisplayBuffer(NULL, &rbuf);
+    gameVariantChoice = printTextBox(textBuf, 20, 7, 45, &white, &black, buttons, 2);
     overlayDisplayBuffer(&rbuf, NULL);
 
     if (gameVariantChoice == 1) {
@@ -441,12 +442,12 @@ static void chooseGameMode() {
                     "(Your score is not saved.)", TEXT_MAX_LENGTH);
 
     brogueButton buttons[3];
-    screenDisplayBuffer rbuf;
-    overlayDisplayBuffer(NULL, &rbuf);
     initializeMainMenuButton(&(buttons[0]), "      %sW%sizard       ", 'w', 'W', NG_NOTHING);
     initializeMainMenuButton(&(buttons[1]), "       %sE%sasy        ", 'e', 'E', NG_NOTHING);
     initializeMainMenuButton(&(buttons[2]), "      %sN%sormal       ", 'n', 'N', NG_NOTHING);
-    gameMode = printTextBox(textBuf, 10, 5, 66, &white, &black, &rbuf, buttons, 3);
+    screenDisplayBuffer rbuf;
+    overlayDisplayBuffer(NULL, &rbuf);
+    gameMode = printTextBox(textBuf, 10, 5, 66, &white, &black, buttons, 3);
     overlayDisplayBuffer(&rbuf, NULL);
     if (gameMode == 0) {
         rogue.wizard = true;
@@ -634,14 +635,15 @@ int quitImmediately() {
 }
 
 void dialogAlert(char *message) {
-    screenDisplayBuffer rbuf;
 
     brogueButton OKButton;
     initializeButton(&OKButton);
     strcpy(OKButton.text, "     OK     ");
     OKButton.hotkey[0] = RETURN_KEY;
     OKButton.hotkey[1] = ACKNOWLEDGE_KEY;
-    printTextBox(message, COLS/3, ROWS/3, COLS/3, &white, &interfaceBoxColor, &rbuf, &OKButton, 1);
+    screenDisplayBuffer rbuf;
+    overlayDisplayBuffer(NULL, &rbuf);
+    printTextBox(message, COLS/3, ROWS/3, COLS/3, &white, &interfaceBoxColor, &OKButton, 1);
     overlayDisplayBuffer(&rbuf, NULL);
 }
 

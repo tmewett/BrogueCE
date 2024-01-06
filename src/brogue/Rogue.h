@@ -2923,15 +2923,13 @@ extern "C" {
                             const color *backColor, short opacity, screenDisplayBuffer *dbuf);
     short printTextBox(char *textBuf, short x, short y, short width,
                        const color *foreColor, const color *backColor,
-                       screenDisplayBuffer *rbuf,
                        brogueButton *buttons, short buttonCount);
     void setButtonText(brogueButton *button, const char *textWithHotkey, const char *textWithoutHotkey);
-    void printMonsterDetails(creature *monst, screenDisplayBuffer* rbuf);
-    void printFloorItemDetails(item *theItem, screenDisplayBuffer* rbuf);
+    void printMonsterDetails(creature *monst);
+    void printFloorItemDetails(item *theItem);
     unsigned long printCarriedItemDetails(item *theItem,
                                           short x, short y, short width,
-                                          boolean includeButtons,
-                                          screenDisplayBuffer* rbuf);
+                                          boolean includeButtons);
     void funkyFade(screenDisplayBuffer *displayBuf, const color *colorStart, const color *colorEnd, short stepCount, short x, short y, boolean invert);
     void displayCenteredAlert(char *message);
     void flashMessage(char *message, short x, short y, int time, const color *fColor, const color *bColor);

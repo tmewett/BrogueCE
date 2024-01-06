@@ -2978,7 +2978,7 @@ char displayInventory(unsigned short categoryMask,
 
                 if (theEvent.shiftKey || theEvent.controlKey || waitForAcknowledge) {
                     // Display an information window about the item.
-                    actionKey = printCarriedItemDetails(theItem, max(2, mapToWindowX(DCOLS - maxLength - 42)), mapToWindowY(2), 40, includeButtons, NULL);
+                    actionKey = printCarriedItemDetails(theItem, max(2, mapToWindowX(DCOLS - maxLength - 42)), mapToWindowY(2), 40, includeButtons);
 
                     overlayDisplayBuffer(&rbuf, NULL); // remove the item info window
 

@@ -303,7 +303,6 @@ If this is a different computer from the one on which the recording was saved, t
 might succeed on the original computer."
 
 static void playbackPanic() {
-    screenDisplayBuffer rbuf;
 
     if (!rogue.playbackOOS) {
         rogue.playbackFastForward = false;
@@ -317,7 +316,9 @@ static void playbackPanic() {
         confirmMessages();
         message("Playback is out of sync.", 0);
 
-        printTextBox(OOS_APOLOGY, 0, 0, 0, &white, &black, &rbuf, NULL, 0);
+        screenDisplayBuffer rbuf;
+        overlayDisplayBuffer(NULL, &rbuf);
+        printTextBox(OOS_APOLOGY, 0, 0, 0, &white, &black, NULL, 0);
 
         rogue.playbackMode = false;
         displayMoreSign();
@@ -433,15 +434,15 @@ static void loadNextAnnotation() {
 }
 
 void displayAnnotation() {
-    screenDisplayBuffer rbuf;
-
     if (rogue.playbackMode
         && rogue.playerTurnNumber == rogue.nextAnnotationTurn) {
 
         if (!rogue.playbackFastForward) {
             refreshSideBar(-1, -1, false);
 
-            printTextBox(rogue.nextAnnotation, player.loc.x, 0, 0, &black, &white, &rbuf, NULL, 0);
+            screenDisplayBuffer rbuf;
+            overlayDisplayBuffer(NULL, &rbuf);
+            printTextBox(rogue.nextAnnotation, player.loc.x, 0, 0, &black, &white, NULL, 0);
 
             rogue.playbackMode = false;
             displayMoreSign();
