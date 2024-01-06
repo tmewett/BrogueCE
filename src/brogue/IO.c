@@ -3226,7 +3226,7 @@ void displayRecentMessages() {
 // offset: index of oldest (visually highest) message to draw
 // height: height in rows of the message archive display area
 // rbuf: background display buffer to draw against
-static void drawMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height, screenDisplayBuffer *rbuf) {
+static void drawMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height) {
     int i, j, k, fadePercent;
     screenDisplayBuffer dbuf;
 
@@ -3247,7 +3247,7 @@ static void drawMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], sho
         }
     }
 
-    overlayDisplayBuffer(rbuf, NULL);
+    
     overlayDisplayBuffer(&dbuf, NULL);
 }
 
@@ -3258,7 +3258,7 @@ static void drawMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], sho
 // offset: index of oldest (visually highest) message to draw in the fully expanded state
 // height: height in rows of the message archive display area in the fully expanded state
 // rbuf: background display buffer to draw against
-static void animateMessageArchive(boolean opening, char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height, screenDisplayBuffer *rbuf) {
+static void animateMessageArchive(boolean opening, char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height) {
     short i;
     boolean fastForward;
 
@@ -3268,13 +3268,17 @@ static void animateMessageArchive(boolean opening, char messages[MESSAGE_ARCHIVE
          (opening ? i <= height : i >= MESSAGE_LINES);
          i += (opening ? 1 : -1)) {
 
-        drawMessageArchive(messages, length, offset - height + i, i, rbuf);
+        screenDisplayBuffer rbuf;
+        overlayDisplayBuffer(NULL, &rbuf);
+
+        drawMessageArchive(messages, length, offset - height + i, i);
 
         if (!fastForward && pauseBrogue(opening ? 2 : 1, PAUSE_BEHAVIOR_DEFAULT)) {
             fastForward = true;
             dequeueEvent();
             i = (opening ? height - 1 : MESSAGE_LINES + 1); // skip to the end
         }
+        overlayDisplayBuffer(&rbuf, NULL);
     }
 }
 
@@ -3286,8 +3290,9 @@ static void animateMessageArchive(boolean opening, char messages[MESSAGE_ARCHIVE
 // rbuf: background display buffer to draw against
 //
 // returns the new offset, which can change if the player scrolled around before closing
-static short scrollMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height, screenDisplayBuffer *rbuf) {
-    short lastOffset;
+static short scrollMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height) {
+    // Set `lastOffset` to a value different from `offset`, so that we always re-render the first time.
+    short lastOffset = offset-1;
     boolean exit;
     rogueEvent theEvent;
     signed long keystroke;
@@ -3296,8 +3301,15 @@ static short scrollMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], 
         return offset;
     }
 
+    screenDisplayBuffer rbuf;
+    overlayDisplayBuffer(NULL, &rbuf);
+
     exit = false;
     do {
+        if (offset != lastOffset) {
+            overlayDisplayBuffer(&rbuf, NULL);
+            drawMessageArchive(messages, length, offset, height);
+        }
         lastOffset = offset;
         nextBrogueEvent(&theEvent, false, false, false);
 
@@ -3342,17 +3354,14 @@ static short scrollMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], 
         }
 
         offset = max(height, min(offset, length));
-        if (offset != lastOffset) {
-            drawMessageArchive(messages, length, offset, height, rbuf);
-        }
     } while (!exit);
 
+    overlayDisplayBuffer(&rbuf, NULL);
     return offset;
 }
 
 void displayMessageArchive() {
     short length, offset, height;
-    screenDisplayBuffer rbuf;
     char messageBuffer[MESSAGE_ARCHIVE_LINES][COLS*2];
 
     formatRecentMessages(messageBuffer, MESSAGE_ARCHIVE_LINES, &length, 0);
@@ -3364,13 +3373,11 @@ void displayMessageArchive() {
     height = min(length, MESSAGE_ARCHIVE_VIEW_LINES);
     offset = height;
 
-    overlayDisplayBuffer(NULL, &rbuf);
 
-    animateMessageArchive(true, messageBuffer, length, offset, height, &rbuf);
-    offset = scrollMessageArchive(messageBuffer, length, offset, height, &rbuf);
-    animateMessageArchive(false, messageBuffer, length, offset, height, &rbuf);
+    animateMessageArchive(true, messageBuffer, length, offset, height);
+    offset = scrollMessageArchive(messageBuffer, length, offset, height);
+    animateMessageArchive(false, messageBuffer, length, offset, height);
 
-    overlayDisplayBuffer(&rbuf, NULL);
     updateFlavorText();
     confirmMessages();
     updateMessageDisplay();
