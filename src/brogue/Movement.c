@@ -582,6 +582,13 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
     }
     pos originLoc = attacker->loc;
     pos targetLoc = posNeighborInDirection(attacker->loc, dir);
+
+    // The neighboring position in the attack direction must not be diagonally blocked.
+    // Generally speaking, the attacker must be able to move one tile in the attack direction.
+    if (diagonalBlocked(originLoc.x, originLoc.y, targetLoc.x, targetLoc.y, attacker == &player)) {
+        return false;
+    }
+
     pos strikeLoc;
     getImpactLoc(&strikeLoc, originLoc, targetLoc, 5, false, &boltCatalog[BOLT_WHIP]);
 
@@ -628,6 +635,13 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
             return false;
         }
     } else if (!(attacker->info.abilityFlags & MA_ATTACKS_PENETRATE)) {
+        return false;
+    }
+
+    // The neighboring position in the attack direction must not be diagonally blocked
+    // Generally speaking, the attacker must be able to move one tile in the attack direction.
+    pos neighborLoc = posNeighborInDirection(attacker->loc, dir);
+    if (diagonalBlocked(attacker->loc.x, attacker->loc.y, neighborLoc.x, neighborLoc.y, attacker == &player)) {
         return false;
     }
 
