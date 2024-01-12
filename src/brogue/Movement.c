@@ -2099,7 +2099,6 @@ boolean useStairs(short stairDirection) {
 
     if (stairDirection == 1) {
         if (rogue.depthLevel < gameConst->deepestLevel) {
-            //overlayDisplayBuffer(NULL, fromBuf);
             rogue.cursorLoc = INVALID_POS;
             rogue.depthLevel++;
             message("You descend.", 0);
@@ -2124,10 +2123,8 @@ boolean useStairs(short stairDirection) {
             if (rogue.depthLevel == 0) {
                 victory(false);
             } else {
-                //overlayDisplayBuffer(NULL, fromBuf);
                 message("You ascend.", 0);
                 startLevel(rogue.depthLevel + 1, stairDirection);
-                //overlayDisplayBuffer(NULL, toBuf);
                 //irisFadeBetweenBuffers(fromBuf, toBuf, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), 20, true);
             }
             succeeded = true;

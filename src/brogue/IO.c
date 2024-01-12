@@ -174,7 +174,6 @@ static short actionMenu(short x, boolean playingBack) {
     brogueButton buttons[ROWS] = {{{0}}};
     char yellowColorEscape[5] = "", whiteColorEscape[5] = "", darkGrayColorEscape[5] = "";
     short i, j, longestName = 0, buttonChosen;
-    screenDisplayBuffer dbuf, rbuf;
 
     encodeMessageColor(yellowColorEscape, 0, &itemMessageColor);
     encodeMessageColor(whiteColorEscape, 0, &white);
@@ -406,11 +405,13 @@ static short actionMenu(short x, boolean playingBack) {
             }
         }
 
+        const SavedDisplayBuffer rbuf = saveDisplayBuffer();
+        screenDisplayBuffer dbuf;
         clearDisplayBuffer(&dbuf);
         rectangularShading(x - 1, y, longestName + 2, buttonCount, &black, INTERFACE_OPACITY / 2, &dbuf);
-        overlayDisplayBuffer(&dbuf, &rbuf);
+        overlayDisplayBuffer(&dbuf);
         buttonChosen = buttonInputLoop(buttons, buttonCount, x - 1, y, longestName + 2, buttonCount, NULL);
-        overlayDisplayBuffer(&rbuf, NULL);
+        restoreDisplayBuffer(&rbuf);
         if (buttonChosen == -1) {
             return -1;
         } else if (takeActionOurselves[buttonChosen]) {
@@ -530,7 +531,7 @@ void mainInputLoop() {
     pos path[1000];
     creature *monst;
     item *theItem;
-    screenDisplayBuffer rbuf;
+    SavedDisplayBuffer rbuf;
 
     boolean canceled, targetConfirmed, tabKey, focusedOnMonster, focusedOnItem, focusedOnTerrain,
     playingBack, doEvent, textDisplayed;
@@ -658,7 +659,8 @@ void mainInputLoop() {
 
                     focusedOnMonster = true;
                     if (monst != &player && (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience || player.status[STATUS_TELEPATHIC])) {
-                        printMonsterDetails(monst, &rbuf);
+                        rbuf = saveDisplayBuffer();
+                        printMonsterDetails(monst);
                         textDisplayed = true;
                     }
                 } else if (theItem != NULL && playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
@@ -668,7 +670,8 @@ void mainInputLoop() {
 
                     focusedOnItem = true;
                     if (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience) {
-                        printFloorItemDetails(theItem, &rbuf);
+                        rbuf = saveDisplayBuffer();
+                        printFloorItemDetails(theItem);
                         textDisplayed = true;
                     }
                 } else if (cellHasTMFlag(rogue.cursorLoc.x, rogue.cursorLoc.y, TM_LIST_IN_SIDEBAR) && playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
@@ -723,7 +726,7 @@ void mainInputLoop() {
                 focusedOnItem = false;
                 focusedOnTerrain = false;
                 if (textDisplayed) {
-                    overlayDisplayBuffer(&rbuf, NULL); // Erase the monster info window.
+                    restoreDisplayBuffer(&rbuf); // Erase the monster info window.
                 }
                 rogue.playbackMode = playingBack;
                 refreshSideBar(-1, -1, false);
@@ -1695,7 +1698,7 @@ void irisFadeBetweenBuffers(screenDisplayBuffer* fromBuf,
         fastForward = pauseAnimation(16, PAUSE_BEHAVIOR_DEFAULT);
         frame++;
     } while (frame <= frameCount && !fastForward);
-    overlayDisplayBuffer(toBuf, NULL);
+    overlayDisplayBuffer(toBuf);
 }
 
 // takes dungeon coordinates
@@ -1953,7 +1956,7 @@ void clearDisplayBuffer(screenDisplayBuffer *dbuf) {
     }
 }
 
-color colorFromComponents(char rgb[3]) {
+color colorFromComponents(const char rgb[3]) {
     color theColor = black;
     theColor.red    = rgb[0];
     theColor.green  = rgb[1];
@@ -1961,21 +1964,15 @@ color colorFromComponents(char rgb[3]) {
     return theColor;
 }
 
+SavedDisplayBuffer saveDisplayBuffer(void) {
+    return (SavedDisplayBuffer) { .savedScreen = displayBuffer };
+}
+void restoreDisplayBuffer(const SavedDisplayBuffer *savedBuf) {
+    displayBuffer = savedBuf->savedScreen;
+}
+
 // draws overBuf over the current display with per-cell pseudotransparency as specified in overBuf.
-// If previousBuf is not null, it gets filled with the preexisting display for reversion purposes.
-// 
-// If `overBuf` is null, then nothing is drawn to the screen. This can be used to save
-// `previousBuf` without drawing anything new.
-void overlayDisplayBuffer(screenDisplayBuffer *overBuf, screenDisplayBuffer *previousBuf) {
-    if (previousBuf) {
-        copyDisplayBuffer(previousBuf, &displayBuffer);
-    }
-
-    if (overBuf == NULL) {
-        // If `overBuf` is NULL, then save `previousBuf` but draw nothing.
-        return;
-    }
-
+void overlayDisplayBuffer(const screenDisplayBuffer *overBuf) {
     for (int i=0; i<COLS; i++) {
         for (int j=0; j<ROWS; j++) {
             if (overBuf->cells[i][j].opacity != 0) {
@@ -2737,7 +2734,7 @@ boolean getInputTextString(char *inputText,
     char keystroke, suffix[100];
     const short textEntryBounds[TEXT_INPUT_TYPES][2] = {{' ', '~'}, {' ', '~'}, {'0', '9'}};
     screenDisplayBuffer dbuf;
-    screenDisplayBuffer rbuf;
+    SavedDisplayBuffer rbuf;
 
     // x and y mark the origin for text entry.
     if (useDialogBox) {
@@ -2746,7 +2743,8 @@ boolean getInputTextString(char *inputText,
         clearDisplayBuffer(&dbuf);
         rectangularShading(x - 1, y - 2, max(maxLength, strLenWithoutEscapes(prompt)) + 2,
                            4, &interfaceBoxColor, INTERFACE_OPACITY, &dbuf);
-        overlayDisplayBuffer(&dbuf, &rbuf);
+        rbuf = saveDisplayBuffer();
+        overlayDisplayBuffer(&dbuf);
         printString(prompt, x, y - 1, &white, &interfaceBoxColor, NULL);
         for (i=0; i<maxLength; i++) {
             plotCharWithColor(' ', (windowpos){ x + i, y }, &black, &black);
@@ -2826,7 +2824,7 @@ boolean getInputTextString(char *inputText,
     } while (keystroke != RETURN_KEY && keystroke != ESCAPE_KEY);
 
     if (useDialogBox) {
-        overlayDisplayBuffer(&rbuf, NULL);
+        restoreDisplayBuffer(&rbuf);
     }
 
     inputText[charNum] = '\0';
@@ -2934,7 +2932,7 @@ void waitForKeystrokeOrMouseClick() {
 boolean confirm(char *prompt, boolean alsoDuringPlayback) {
     short retVal;
     brogueButton buttons[2] = {{{0}}};
-    screenDisplayBuffer rbuf;
+    
     char whiteColorEscape[20] = "";
     char yellowColorEscape[20] = "";
 
@@ -2960,8 +2958,9 @@ boolean confirm(char *prompt, boolean alsoDuringPlayback) {
     buttons[1].hotkey[3] = ESCAPE_KEY;
     buttons[1].flags |= (B_WIDE_CLICK_AREA | B_KEYPRESS_HIGHLIGHT);
 
-    retVal = printTextBox(prompt, COLS/3, ROWS/3, COLS/3, &white, &interfaceBoxColor, &rbuf, buttons, 2);
-    overlayDisplayBuffer(&rbuf, NULL);
+    const SavedDisplayBuffer rbuf = saveDisplayBuffer();
+    retVal = printTextBox(prompt, COLS/3, ROWS/3, COLS/3, &white, &interfaceBoxColor, buttons, 2);
+    restoreDisplayBuffer(&rbuf);
 
     if (retVal == -1 || retVal == 1) { // If they canceled or pressed no.
         return false;
@@ -3222,7 +3221,7 @@ void displayRecentMessages() {
 // offset: index of oldest (visually highest) message to draw
 // height: height in rows of the message archive display area
 // rbuf: background display buffer to draw against
-static void drawMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height, screenDisplayBuffer *rbuf) {
+static void drawMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height) {
     int i, j, k, fadePercent;
     screenDisplayBuffer dbuf;
 
@@ -3243,8 +3242,8 @@ static void drawMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], sho
         }
     }
 
-    overlayDisplayBuffer(rbuf, NULL);
-    overlayDisplayBuffer(&dbuf, NULL);
+    
+    overlayDisplayBuffer(&dbuf);
 }
 
 // Pull-down/pull-up animation.
@@ -3253,8 +3252,7 @@ static void drawMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], sho
 // length: the number of rows in messages, filled from the "bottom", (unused rows have lower indexes)
 // offset: index of oldest (visually highest) message to draw in the fully expanded state
 // height: height in rows of the message archive display area in the fully expanded state
-// rbuf: background display buffer to draw against
-static void animateMessageArchive(boolean opening, char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height, screenDisplayBuffer *rbuf) {
+static void animateMessageArchive(boolean opening, char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height) {
     short i;
     boolean fastForward;
 
@@ -3264,13 +3262,16 @@ static void animateMessageArchive(boolean opening, char messages[MESSAGE_ARCHIVE
          (opening ? i <= height : i >= MESSAGE_LINES);
          i += (opening ? 1 : -1)) {
 
-        drawMessageArchive(messages, length, offset - height + i, i, rbuf);
+        const SavedDisplayBuffer rbuf = saveDisplayBuffer();
+
+        drawMessageArchive(messages, length, offset - height + i, i);
 
         if (!fastForward && pauseBrogue(opening ? 2 : 1, PAUSE_BEHAVIOR_DEFAULT)) {
             fastForward = true;
             dequeueEvent();
             i = (opening ? height - 1 : MESSAGE_LINES + 1); // skip to the end
         }
+        restoreDisplayBuffer(&rbuf);
     }
 }
 
@@ -3282,8 +3283,9 @@ static void animateMessageArchive(boolean opening, char messages[MESSAGE_ARCHIVE
 // rbuf: background display buffer to draw against
 //
 // returns the new offset, which can change if the player scrolled around before closing
-static short scrollMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height, screenDisplayBuffer *rbuf) {
-    short lastOffset;
+static short scrollMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], short length, short offset, short height) {
+    // Set `lastOffset` to a value different from `offset`, so that we always re-render the first time.
+    short lastOffset = offset-1;
     boolean exit;
     rogueEvent theEvent;
     signed long keystroke;
@@ -3292,8 +3294,14 @@ static short scrollMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], 
         return offset;
     }
 
+    const SavedDisplayBuffer rbuf = saveDisplayBuffer();
+
     exit = false;
     do {
+        if (offset != lastOffset) {
+            restoreDisplayBuffer(&rbuf);
+            drawMessageArchive(messages, length, offset, height);
+        }
         lastOffset = offset;
         nextBrogueEvent(&theEvent, false, false, false);
 
@@ -3338,17 +3346,14 @@ static short scrollMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], 
         }
 
         offset = max(height, min(offset, length));
-        if (offset != lastOffset) {
-            drawMessageArchive(messages, length, offset, height, rbuf);
-        }
     } while (!exit);
 
+    restoreDisplayBuffer(&rbuf);
     return offset;
 }
 
 void displayMessageArchive() {
     short length, offset, height;
-    screenDisplayBuffer rbuf;
     char messageBuffer[MESSAGE_ARCHIVE_LINES][COLS*2];
 
     formatRecentMessages(messageBuffer, MESSAGE_ARCHIVE_LINES, &length, 0);
@@ -3360,13 +3365,11 @@ void displayMessageArchive() {
     height = min(length, MESSAGE_ARCHIVE_VIEW_LINES);
     offset = height;
 
-    overlayDisplayBuffer(NULL, &rbuf);
 
-    animateMessageArchive(true, messageBuffer, length, offset, height, &rbuf);
-    offset = scrollMessageArchive(messageBuffer, length, offset, height, &rbuf);
-    animateMessageArchive(false, messageBuffer, length, offset, height, &rbuf);
+    animateMessageArchive(true, messageBuffer, length, offset, height);
+    offset = scrollMessageArchive(messageBuffer, length, offset, height);
+    animateMessageArchive(false, messageBuffer, length, offset, height);
 
-    overlayDisplayBuffer(&rbuf, NULL);
     updateFlavorText();
     confirmMessages();
     updateMessageDisplay();
@@ -4054,8 +4057,6 @@ char nextKeyPress(boolean textInput) {
 
 void printHelpScreen() {
     short i, j;
-    screenDisplayBuffer dbuf;
-    screenDisplayBuffer rbuf;
     char helpText[BROGUE_HELP_LINE_COUNT][DCOLS*3] = {
         "",
         "",
@@ -4101,6 +4102,9 @@ void printHelpScreen() {
         }
     }
 
+    const SavedDisplayBuffer rbuf = saveDisplayBuffer();
+
+    screenDisplayBuffer dbuf;
     clearDisplayBuffer(&dbuf);
 
     // Print the text to the dbuf.
@@ -4117,9 +4121,9 @@ void printHelpScreen() {
     }
 
     // Display.
-    overlayDisplayBuffer(&dbuf, &rbuf);
+    overlayDisplayBuffer(&dbuf);
     waitForAcknowledgment();
-    overlayDisplayBuffer(&rbuf, NULL);
+    restoreDisplayBuffer(&rbuf);
     updateFlavorText();
     updateMessageDisplay();
 }
@@ -4174,8 +4178,9 @@ static void printDiscoveries(short category, short count, unsigned short itemCha
 
 void printDiscoveriesScreen() {
     short i, j, y;
+    const SavedDisplayBuffer rbuf = saveDisplayBuffer();
+
     screenDisplayBuffer dbuf;
-    screenDisplayBuffer rbuf;
 
     clearDisplayBuffer(&dbuf);
 
@@ -4202,11 +4207,11 @@ void printDiscoveriesScreen() {
             dbuf.cells[i][j].opacity = (i < STAT_BAR_WIDTH ? 0 : INTERFACE_OPACITY);
         }
     }
-    overlayDisplayBuffer(&dbuf, &rbuf);
+    overlayDisplayBuffer(&dbuf);
 
     waitForKeystrokeOrMouseClick();
 
-    overlayDisplayBuffer(&rbuf, NULL);
+    restoreDisplayBuffer(&rbuf);
 }
 
 void printHighScores(boolean hiliteMostRecent) {
@@ -4920,10 +4925,7 @@ void rectangularShading(short x, short y, short width, short height,
 // (Returns -1 for canceled; otherwise the button index number.)
 short printTextBox(char *textBuf, short x, short y, short width,
                    const color *foreColor, const color *backColor,
-                   screenDisplayBuffer *rbuf,
                    brogueButton *buttons, short buttonCount) {
-    screenDisplayBuffer dbuf;
-
     short x2, y2, lineCount, i, bx, by, padLines;
 
     if (width <= 0) {
@@ -4979,10 +4981,11 @@ short printTextBox(char *textBuf, short x, short y, short width,
         padLines = 0;
     }
 
+    screenDisplayBuffer dbuf;
     clearDisplayBuffer(&dbuf);
     printStringWithWrapping(textBuf, x2, y2, width, foreColor, backColor, &dbuf);
     rectangularShading(x2, y2, width, lineCount + padLines, backColor, INTERFACE_OPACITY, &dbuf);
-    overlayDisplayBuffer(&dbuf, rbuf);
+    overlayDisplayBuffer(&dbuf);
 
     if (buttonCount > 0) {
         return buttonInputLoop(buttons, buttonCount, x2, y2, width, by - y2 + 1 + padLines, NULL);
@@ -4991,11 +4994,10 @@ short printTextBox(char *textBuf, short x, short y, short width,
     }
 }
 
-void printMonsterDetails(creature *monst, screenDisplayBuffer *rbuf) {
+void printMonsterDetails(creature *monst) {
     char textBuf[COLS * 100];
-
     monsterDetails(textBuf, monst);
-    printTextBox(textBuf, monst->loc.x, 0, 0, &white, &black, rbuf, NULL, 0);
+    printTextBox(textBuf, monst->loc.x, 0, 0, &white, &black, NULL, 0);
 }
 
 // Displays the item info box with the dark blue background.
@@ -5003,8 +5005,7 @@ void printMonsterDetails(creature *monst, screenDisplayBuffer *rbuf) {
 // Returns the key of an action to take, if any; otherwise -1.
 unsigned long printCarriedItemDetails(item *theItem,
                                       short x, short y, short width,
-                                      boolean includeButtons,
-                                      screenDisplayBuffer *rbuf) {
+                                      boolean includeButtons) {
     char textBuf[COLS * 100], goldColorEscape[5] = "", whiteColorEscape[5] = "";
     brogueButton buttons[20] = {{{0}}};
     short b;
@@ -5071,7 +5072,7 @@ unsigned long printCarriedItemDetails(item *theItem,
         buttons[b].hotkey[2] = DOWN_ARROW;
         b++;
     }
-    b = printTextBox(textBuf, x, y, width, &white, &interfaceBoxColor, rbuf, buttons, b);
+    b = printTextBox(textBuf, x, y, width, &white, &interfaceBoxColor, buttons, b);
 
     if (!includeButtons) {
         waitForKeystrokeOrMouseClick();
@@ -5086,9 +5087,9 @@ unsigned long printCarriedItemDetails(item *theItem,
 }
 
 // Returns true if an action was taken.
-void printFloorItemDetails(item *theItem, screenDisplayBuffer *rbuf) {
+void printFloorItemDetails(item *theItem) {
     char textBuf[COLS * 100];
-
     itemDetails(textBuf, theItem);
-    printTextBox(textBuf, theItem->loc.x, 0, 0, &white, &black, rbuf, NULL, 0);
+
+    printTextBox(textBuf, theItem->loc.x, 0, 0, &white, &black, NULL, 0);
 }

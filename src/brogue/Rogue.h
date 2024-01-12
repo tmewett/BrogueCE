@@ -2923,15 +2923,13 @@ extern "C" {
                             const color *backColor, short opacity, screenDisplayBuffer *dbuf);
     short printTextBox(char *textBuf, short x, short y, short width,
                        const color *foreColor, const color *backColor,
-                       screenDisplayBuffer *rbuf,
                        brogueButton *buttons, short buttonCount);
     void setButtonText(brogueButton *button, const char *textWithHotkey, const char *textWithoutHotkey);
-    void printMonsterDetails(creature *monst, screenDisplayBuffer* rbuf);
-    void printFloorItemDetails(item *theItem, screenDisplayBuffer* rbuf);
+    void printMonsterDetails(creature *monst);
+    void printFloorItemDetails(item *theItem);
     unsigned long printCarriedItemDetails(item *theItem,
                                           short x, short y, short width,
-                                          boolean includeButtons,
-                                          screenDisplayBuffer* rbuf);
+                                          boolean includeButtons);
     void funkyFade(screenDisplayBuffer *displayBuf, const color *colorStart, const color *colorEnd, short stepCount, short x, short y, boolean invert);
     void displayCenteredAlert(char *message);
     void flashMessage(char *message, short x, short y, int time, const color *fColor, const color *bColor);
@@ -2967,8 +2965,16 @@ extern "C" {
     void colorOverDungeon(const color *color);
     void copyDisplayBuffer(screenDisplayBuffer *toBuf, screenDisplayBuffer *fromBuf);
     void clearDisplayBuffer(screenDisplayBuffer *dbuf);
-    color colorFromComponents(char rgb[3]);
-    void overlayDisplayBuffer(screenDisplayBuffer *overBuf, screenDisplayBuffer *previousBuf);
+    color colorFromComponents(const char rgb[3]);
+    // A `SavedDisplayBuffer` holds a previous version of the screen. It can be
+    // Obtain one by calling `saveDisplayBuffer()` and restore it to the screen
+    // by calling `restoreDisplayBuffer()`.
+    typedef struct SavedDisplayBuffer {
+        screenDisplayBuffer savedScreen;
+    } SavedDisplayBuffer;
+    SavedDisplayBuffer saveDisplayBuffer(void);
+    void restoreDisplayBuffer(const SavedDisplayBuffer *savedBuf);
+    void overlayDisplayBuffer(const screenDisplayBuffer *overBuf);
     void flashForeground(short *x, short *y, const color **flashColor, short *flashStrength, short count, short frames);
     void flashCell(const color *theColor, short frames, short x, short y);
     void colorFlash(const color *theColor, unsigned long reqTerrainFlags, unsigned long reqTileFlags, short frames, short maxRadius, short x, short y);
