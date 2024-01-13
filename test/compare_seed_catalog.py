@@ -31,7 +31,7 @@ def run_brogue_tests(seed_catalog_file, extra_args, max_level):
         sys.exit(1)
 
     if diff_result.returncode:
-        print("Test run failure, seed catalog has changed. Output:")
+        print("Test run failure, seed catalog has changed.\nIf this was intentional, update the seed catalogs by running update_seed_catalogs.py.\nOutput:")
         print(diff_result.stdout)
         sys.exit(1)
 
