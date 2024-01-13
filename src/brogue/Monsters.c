@@ -1478,6 +1478,14 @@ boolean monsterAvoids(creature *monst, pos p) {
     return false;
 }
 
+/// @brief Attempts to utilize a monster's turn by either initiating movement or launching an attack. 
+/// Aims to shift the monster one space closer to the destination by evaluating the feasibility 
+/// of moves in different directions. If the destination is occupied by an accessible enemy within
+/// melee range (including whip/spear), the monster will attack instead of moving. 
+/// @param monst the monster
+/// @param targetLoc the destination
+/// @param willingToAttackPlayer
+/// @return true if a turn-consuming action was performed
 boolean moveMonsterPassivelyTowards(creature *monst, pos targetLoc, boolean willingToAttackPlayer) {
     const int x = monst->loc.x;
     const int y = monst->loc.y;
@@ -2924,6 +2932,9 @@ void monsterMillAbout(creature *monst, short movementChance) {
     }
 }
 
+/// @brief Handles the given allied monster's turn under normal circumstances 
+/// e.g. not discordant, fleeing, paralyzed or entranced 
+/// @param monst the allied monster
 void moveAlly(creature *monst) {
     creature *closestMonster = NULL;
     short i, j, x, y, dir, shortestDistance, leashLength;
@@ -3091,7 +3102,7 @@ void moveAlly(creature *monst) {
         }
 
         targetLoc = closestMonster->loc;
-        moveMonsterPassivelyTowards(monst, targetLoc, false);
+        moveMonsterPassivelyTowards(monst, targetLoc, true);
     } else if (isPosInMap(monst->targetCorpseLoc)
                && !monst->status[STATUS_POISONED]
                && (!monst->status[STATUS_BURNING] || monst->status[STATUS_IMMUNE_TO_FIRE])) { // Going to start eating a corpse.
@@ -3586,9 +3597,15 @@ void setMonsterLocation(creature *monst, pos newLoc) {
     }
 }
 
-// Tries to move the given monster in the given vector; returns true if the move was legal
-// (including attacking player, vomiting or struggling in vain)
-// Be sure that dx, dy are both in the range [-1, 1] or the move will sometimes fail due to the diagonal check.
+/// @brief Tries to move a monster one space or perform a melee attack in the given direction. 
+/// Handles confused movement, turn-consuming non-movement actions like vomiting, and unique 
+/// attack patterns (axe-like, whip, spear). Fast-moving monsters get 2 turns, moving one
+/// space each time.
+/// @param monst the monster
+/// @param dx the x axis component of the direction [-1, 0, 1]
+/// @param dy the y axis component of the direction [-1, 0, 1]
+/// @return true if a turn-consuming action was performed. otherwise false (e.g. monster is 
+/// unwilling to attack or blocked by terrain)
 boolean moveMonster(creature *monst, short dx, short dy) {
     short x = monst->loc.x, y = monst->loc.y;
     short newX, newY;
