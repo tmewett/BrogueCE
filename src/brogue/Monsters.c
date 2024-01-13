@@ -878,7 +878,7 @@ creature *spawnHorde(short hordeID, pos loc, unsigned long forbiddenFlags, unsig
 void fadeInMonster(creature *monst) {
     color fColor, bColor;
     enum displayGlyph displayChar;
-    getCellAppearance(monst->loc.x, monst->loc.y, &displayChar, &fColor, &bColor);
+    getCellAppearance(monst->loc, &displayChar, &fColor, &bColor);
     flashMonster(monst, &bColor, 100);
 }
 

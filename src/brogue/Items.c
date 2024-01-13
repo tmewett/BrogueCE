@@ -4919,7 +4919,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
             y2 = listOfCoordinates[i-k].y;
             if (playerCanSeeOrSense(x2, y2)) {
                 if (!fastForward) {
-                    getCellAppearance(x2, y2, &theChar, &foreColor, &backColor);
+                    getCellAppearance((pos){ x2, y2 }, &theChar, &foreColor, &backColor);
                     if (boltColor) {
                         applyColorAugment(&foreColor, boltColor, max(0, 100 - k * 100 / (boltLength)));
                         applyColorAugment(&backColor, boltColor, max(0, 100 - k * 100 / (boltLength)));
@@ -6010,7 +6010,7 @@ static void throwItem(item *theItem, creature *thrower, pos targetLoc, short max
         }
 
         if (playerCanSee(x, y)) { // show the graphic
-            getCellAppearance(x, y, &displayChar, &foreColor, &backColor);
+            getCellAppearance((pos){ x, y }, &displayChar, &foreColor, &backColor);
             foreColor = *(theItem->foreColor);
             if (playerCanDirectlySee(x, y)) {
                 colorMultiplierFromDungeonLight(x, y, &multColor);
