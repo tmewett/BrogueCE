@@ -1,0 +1,1 @@
+Prevent monsters with a spear or whip attack from attacking around corners
