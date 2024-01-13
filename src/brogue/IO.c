@@ -142,7 +142,7 @@ static void processSnapMap(short **map) {
     dijkstraScan(map, costMap, true);
     for (i = 0; i < DCOLS; i++) {
         for (j = 0; j < DROWS; j++) {
-            if (cellHasTMFlag(i, j, TM_INVERT_WHEN_HIGHLIGHTED)) {
+            if (cellHasTMFlag((pos){ i, j }, TM_INVERT_WHEN_HIGHLIGHTED)) {
                 for (dir = 0; dir < 4; dir++) {
                     newX = i + nbDirs[dir][0];
                     newY = j + nbDirs[dir][1];
@@ -674,7 +674,7 @@ void mainInputLoop() {
                         printFloorItemDetails(theItem);
                         textDisplayed = true;
                     }
-                } else if (cellHasTMFlag(rogue.cursorLoc.x, rogue.cursorLoc.y, TM_LIST_IN_SIDEBAR) && playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
+                } else if (cellHasTMFlag(rogue.cursorLoc, TM_LIST_IN_SIDEBAR) && playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y)) {
                     rogue.playbackMode = playingBack;
                     refreshSideBar(rogue.cursorLoc.x, rogue.cursorLoc.y, false);
                     rogue.playbackMode = false;
@@ -1402,7 +1402,7 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
             applyColorAverage(&cellForeColor, &black, 80);
             applyColorAverage(&cellBackColor, &black, 80);
         } else {
-            if (!cellHasTMFlag(x, y, TM_BRIGHT_MEMORY)
+            if (!cellHasTMFlag((pos){ x, y }, TM_BRIGHT_MEMORY)
                 && (!rogue.trueColorMode || !needDistinctness)) {
 
                 applyColorMultiplier(&cellForeColor, &memoryColor);
@@ -1440,7 +1440,7 @@ void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *r
 //   DEBUG if (cellHasTerrainFlag((pos){ x, y }, T_IS_FLAMMABLE)) cellBackColor.red += 50;
 
     if (pmap[x][y].flags & IS_IN_PATH) {
-        if (cellHasTMFlag(x, y, TM_INVERT_WHEN_HIGHLIGHTED)) {
+        if (cellHasTMFlag((pos){ x, y }, TM_INVERT_WHEN_HIGHLIGHTED)) {
             swapColors(&cellForeColor, &cellBackColor);
         } else {
             if (!rogue.trueColorMode || !needDistinctness) {
@@ -3729,7 +3729,7 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
             }
         }
         if (!focusEntity
-            && cellHasTMFlag(focusX, focusY, TM_LIST_IN_SIDEBAR)
+            && cellHasTMFlag((pos){ focusX, focusY }, TM_LIST_IN_SIDEBAR)
             && playerCanSeeOrSense(focusX, focusY)) {
 
             focusEntity = tileCatalog[pmap[focusX][focusY].layers[layerWithTMFlag(focusX, focusY, TM_LIST_IN_SIDEBAR)]].description;
@@ -3837,7 +3837,7 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
                     if (displayEntityCount >= ROWS - 1) goto no_space_for_more_entities;
                     if (coordinatesAreInMap(i, j)
                         && !addedEntity[i][j]
-                        && cellHasTMFlag(i, j, TM_LIST_IN_SIDEBAR)
+                        && cellHasTMFlag((pos){ i, j }, TM_LIST_IN_SIDEBAR)
                         && (playerCanDirectlySee(i, j) || (indirectVision && (playerCanSeeOrSense(i, j) || rogue.playbackOmniscience)))) {
 
                         addedEntity[i][j] = true;
@@ -4642,7 +4642,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                 } else if (monst->bookkeepingFlags & MB_CAPTIVE && y < ROWS - 1) {
                     printString("     (Captive)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID)
-                           && !cellHasTMFlag(monst->loc.x, monst->loc.y, TM_ALLOWS_SUBMERGING)) {
+                           && !cellHasTMFlag(monst->loc, TM_ALLOWS_SUBMERGING)) {
                     printString("     (Helpless)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if (monst->creatureState == MONSTER_SLEEPING && y < ROWS - 1) {
                     printString("     (Sleeping)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);

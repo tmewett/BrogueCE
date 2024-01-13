@@ -298,7 +298,7 @@ void describeLocation(char *buf, short x, short y) {
         } else if (monst->status[STATUS_CONFUSED]) {
             strcpy(verb, "is staggering");
         } else if ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID)
-                   && !cellHasTMFlag(monst->loc.x, monst->loc.y, TM_ALLOWS_SUBMERGING)) {
+                   && !cellHasTMFlag(monst->loc, TM_ALLOWS_SUBMERGING)) {
             strcpy(verb, "is lying");
             subjectMoving = false;
         } else if (monst->info.flags & MONST_IMMOBILE) {
@@ -828,7 +828,7 @@ boolean playerMoves(short direction) {
         || (!canSeeMonster(defender) && !monsterRevealed(defender))
         || !monstersAreEnemies(&player, defender)) {
 
-        if (cellHasTerrainFlag((pos){ newX, newY }, T_OBSTRUCTS_PASSABILITY) && cellHasTMFlag(newX, newY, TM_PROMOTES_ON_PLAYER_ENTRY)) {
+        if (cellHasTerrainFlag((pos){ newX, newY }, T_OBSTRUCTS_PASSABILITY) && cellHasTMFlag((pos){ newX, newY }, TM_PROMOTES_ON_PLAYER_ENTRY)) {
             layer = layerWithTMFlag(newX, newY, TM_PROMOTES_ON_PLAYER_ENTRY);
             if (tileCatalog[pmap[newX][newY].layers[layer]].flags & T_OBSTRUCTS_PASSABILITY) {
                 committed = true;
@@ -841,9 +841,9 @@ boolean playerMoves(short direction) {
 
     }
 
-    if (((!cellHasTerrainFlag((pos){ newX, newY }, T_OBSTRUCTS_PASSABILITY) || (cellHasTMFlag(newX, newY, TM_PROMOTES_WITH_KEY) && keyInPackFor((pos){ newX, newY })))
+    if (((!cellHasTerrainFlag((pos){ newX, newY }, T_OBSTRUCTS_PASSABILITY) || (cellHasTMFlag((pos){ newX, newY }, TM_PROMOTES_WITH_KEY) && keyInPackFor((pos){ newX, newY })))
          && !diagonalBlocked(x, y, newX, newY, false)
-         && (!cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_PASSABILITY) || (cellHasTMFlag(x, y, TM_PROMOTES_WITH_KEY) && keyInPackFor((pos){ x, y }))))
+         && (!cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_PASSABILITY) || (cellHasTMFlag((pos){ x, y }, TM_PROMOTES_WITH_KEY) && keyInPackFor((pos){ x, y }))))
         || (defender && defender->info.flags & MONST_ATTACKABLE_THRU_WALLS)) {
         // if the move is not blocked
 
@@ -870,7 +870,7 @@ boolean playerMoves(short direction) {
                 sprintf(buf, "Free the captive %s?", monstName);
                 if (committed || confirm(buf, false)) {
                     committed = true;
-                    if (cellHasTMFlag(newX, newY, TM_PROMOTES_WITH_KEY) && keyInPackFor((pos){ newX, newY })) {
+                    if (cellHasTMFlag((pos){ newX, newY }, TM_PROMOTES_WITH_KEY) && keyInPackFor((pos){ newX, newY })) {
                         useKeyAt(keyInPackFor((pos){ newX, newY }), newX, newY);
                     }
                     freeCaptive(defender);
@@ -964,7 +964,7 @@ boolean playerMoves(short direction) {
             && cellHasTerrainFlag((pos){ newX, newY }, T_LAVA_INSTA_DEATH)
             && player.status[STATUS_IMMUNE_TO_FIRE] <= 1
             && !cellHasTerrainFlag((pos){ newX, newY }, T_ENTANGLES)
-            && !cellHasTMFlag(newX, newY, TM_IS_SECRET)) {
+            && !cellHasTMFlag((pos){ newX, newY }, TM_IS_SECRET)) {
             message("that would be certain death!", 0);
             brogueAssert(!committed);
             cancelKeystroke();
@@ -974,8 +974,8 @@ boolean playerMoves(short direction) {
                    && player.status[STATUS_LEVITATING] <= 1
                    && !player.status[STATUS_CONFUSED]
                    && cellHasTerrainFlag((pos){ newX, newY }, T_AUTO_DESCENT)
-                   && (!cellHasTerrainFlag((pos){ newX, newY }, T_ENTANGLES) || cellHasTMFlag(newX, newY, TM_PROMOTES_ON_PLAYER_ENTRY))
-                   && !cellHasTMFlag(newX, newY, TM_IS_SECRET)
+                   && (!cellHasTerrainFlag((pos){ newX, newY }, T_ENTANGLES) || cellHasTMFlag((pos){ newX, newY }, TM_PROMOTES_ON_PLAYER_ENTRY))
+                   && !cellHasTMFlag((pos){ newX, newY }, TM_IS_SECRET)
                    && !confirm("Dive into the depths?", false)) {
 
             brogueAssert(!committed);
@@ -987,7 +987,7 @@ boolean playerMoves(short direction) {
                    && !player.status[STATUS_BURNING]
                    && player.status[STATUS_IMMUNE_TO_FIRE] <= 1
                    && cellHasTerrainFlag((pos){ newX, newY }, T_IS_FIRE)
-                   && !cellHasTMFlag(newX, newY, TM_EXTINGUISHES_FIRE)
+                   && !cellHasTMFlag((pos){ newX, newY }, TM_EXTINGUISHES_FIRE)
                    && !confirm("Venture into flame?", false)) {
 
             brogueAssert(!committed);
@@ -1010,7 +1010,7 @@ boolean playerMoves(short direction) {
                    && !player.status[STATUS_CONFUSED]
                    && cellHasTerrainFlag((pos){ newX, newY }, T_IS_DF_TRAP)
                    && !(pmap[newX][newY].flags & PRESSURE_PLATE_DEPRESSED)
-                   && !cellHasTMFlag(newX, newY, TM_IS_SECRET)
+                   && !cellHasTMFlag((pos){ newX, newY }, TM_IS_SECRET)
                    && (!rogue.armor || !(rogue.armor->flags & ITEM_RUNIC) || !(rogue.armor->flags & ITEM_RUNIC_IDENTIFIED) || rogue.armor->enchant2 != A_RESPIRATION ||
                         (!cellHasTerrainType(newX, newY, GAS_TRAP_POISON)
                          && !cellHasTerrainType(newX, newY, GAS_TRAP_PARALYSIS)
@@ -1143,7 +1143,7 @@ boolean playerMoves(short direction) {
     } else if (cellHasTerrainFlag((pos){ newX, newY }, T_OBSTRUCTS_PASSABILITY)) {
         i = pmap[newX][newY].layers[layerWithFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)];
         if ((tileCatalog[i].flags & T_OBSTRUCTS_PASSABILITY)
-            && (!diagonalBlocked(x, y, newX, newY, false) || !cellHasTMFlag(newX, newY, TM_PROMOTES_WITH_KEY))) {
+            && (!diagonalBlocked(x, y, newX, newY, false) || !cellHasTMFlag((pos){ newX, newY }, TM_PROMOTES_WITH_KEY))) {
 
             if (!(pmap[newX][newY].flags & DISCOVERED)) {
                 committed = true;
@@ -1651,7 +1651,7 @@ void populateGenericCostMap(short **costMap) {
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
             if (cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_PASSABILITY)
-                && (!cellHasTMFlag(i, j, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY))) {
+                && (!cellHasTMFlag((pos){ i, j }, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY))) {
 
                 costMap[i][j] = cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
             } else if (cellHasTerrainFlag((pos){ i, j }, T_PATHING_BLOCKER & ~T_OBSTRUCTS_PASSABILITY)) {
@@ -1710,7 +1710,7 @@ void populateCreatureCostMap(short **costMap, creature *monst) {
             getLocationFlags(i, j, &tFlags, NULL, &cFlags, monst == &player);
 
             if ((tFlags & T_OBSTRUCTS_PASSABILITY)
-                 && (!cellHasTMFlag(i, j, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY) || monst == &player)) {
+                 && (!cellHasTMFlag((pos){ i, j }, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY) || monst == &player)) {
 
                 costMap[i][j] = (tFlags & T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
                 continue;
@@ -1767,7 +1767,7 @@ void populateCreatureCostMap(short **costMap, creature *monst) {
 
             if (!(monst->info.flags & MONST_INVULNERABLE)) {
                 if ((tFlags & T_CAUSES_NAUSEA)
-                    || cellHasTMFlag(i, j, TM_PROMOTES_ON_ITEM_PICKUP)
+                    || cellHasTMFlag((pos){ i, j }, TM_PROMOTES_ON_ITEM_PICKUP)
                     || (tFlags & T_ENTANGLES) && !(monst->info.flags & MONST_IMMUNE_TO_WEBS)) {
 
                     costMap[i][j] += 20;
@@ -2025,7 +2025,7 @@ boolean isDisturbed(short x, short y) {
 void discover(short x, short y) {
     enum dungeonLayers layer;
     dungeonFeature *feat;
-    if (cellHasTMFlag(x, y, TM_IS_SECRET)) {
+    if (cellHasTMFlag((pos){ x, y }, TM_IS_SECRET)) {
 
         for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
             if (tileCatalog[pmap[x][y].layers[layer]].mechFlags & TM_IS_SECRET) {
@@ -2064,7 +2064,7 @@ boolean search(short searchStrength) {
                     pmap[i][j].flags |= KNOWN_TO_BE_TRAP_FREE;
                 }
                 percent = min(percent, 100);
-                if (cellHasTMFlag(i, j, TM_IS_SECRET)) {
+                if (cellHasTMFlag((pos){ i, j }, TM_IS_SECRET)) {
                     if (rand_percent(percent)) {
                         discover(i, j);
                         foundSomething = true;
@@ -2178,7 +2178,7 @@ void updateFieldOfViewDisplay(boolean updateDancingTerrain, boolean refreshDispl
                         }
                     }
                     if (!(pmap[i][j].flags & MAGIC_MAPPED)
-                        && cellHasTMFlag(i, j, TM_INTERRUPT_EXPLORATION_WHEN_SEEN)) {
+                        && cellHasTMFlag((pos){ i, j }, TM_INTERRUPT_EXPLORATION_WHEN_SEEN)) {
 
                         strcpy(name, tileCatalog[pmap[i][j].layers[layerWithTMFlag(i, j, TM_INTERRUPT_EXPLORATION_WHEN_SEEN)]].description);
                         sprintf(buf, "you see %s.", name);

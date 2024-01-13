@@ -385,7 +385,7 @@ item *placeItemAt(item *theItem, pos dest) {
 
         pmapAt(dest)->flags |= PRESSURE_PLATE_DEPRESSED;
         if (playerCanSee(dest.x, dest.y)) {
-            if (cellHasTMFlag(dest.x, dest.y, TM_IS_SECRET)) {
+            if (cellHasTMFlag(dest, TM_IS_SECRET)) {
                 discover(dest.x, dest.y);
                 refreshDungeonCell(dest);
             }
@@ -766,7 +766,7 @@ static boolean itemWillStackWithPack(item *theItem) {
 void removeItemAt(pos loc) {
     pmapAt(loc)->flags &= ~HAS_ITEM;
 
-    if (cellHasTMFlag(loc.x, loc.y, TM_PROMOTES_ON_ITEM_PICKUP)) {
+    if (cellHasTMFlag(loc, TM_PROMOTES_ON_ITEM_PICKUP)) {
         for (int layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
             if (tileCatalog[pmapAt(loc)->layers[layer]].mechFlags & TM_PROMOTES_ON_ITEM_PICKUP) {
                 promoteTile(loc.x, loc.y, layer, false);
@@ -1111,7 +1111,7 @@ static boolean swapItemEnchants(const short machineNumber) {
             tempItem = itemAtLoc((pos){ i, j });
             if (tempItem
                 && pmap[i][j].machineNumber == machineNumber
-                && cellHasTMFlag(i, j, TM_SWAP_ENCHANTS_ACTIVATION)
+                && cellHasTMFlag((pos){ i, j }, TM_SWAP_ENCHANTS_ACTIVATION)
                 && itemIsSwappable(tempItem)) {
 
                 if (lockedItem) {
@@ -1194,7 +1194,7 @@ void updateFloorItems() {
             refreshDungeonCell(loc);
             continue;
         }
-        if (cellHasTMFlag(x, y, TM_PROMOTES_ON_ITEM)) {
+        if (cellHasTMFlag((pos){ x, y }, TM_PROMOTES_ON_ITEM)) {
             for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
                 if (tileCatalog[pmap[x][y].layers[layer]].mechFlags & TM_PROMOTES_ON_ITEM) {
                     promoteTile(x, y, layer, false);
@@ -1208,12 +1208,12 @@ void updateFloorItems() {
 
             identifyItemKind(theItem);
         }
-        if (cellHasTMFlag(x, y, TM_SWAP_ENCHANTS_ACTIVATION)
+        if (cellHasTMFlag((pos){ x, y }, TM_SWAP_ENCHANTS_ACTIVATION)
             && pmap[x][y].machineNumber) {
 
             while (nextItem != NULL
                    && pmap[x][y].machineNumber == pmapAt(nextItem->loc)->machineNumber
-                   && cellHasTMFlag(nextItem->loc.x, nextItem->loc.y, TM_SWAP_ENCHANTS_ACTIVATION)) {
+                   && cellHasTMFlag(nextItem->loc, TM_SWAP_ENCHANTS_ACTIVATION)) {
 
                 // Skip future items that are also swappable, so that we don't inadvertently
                 // destroy the next item and then try to update it.
@@ -4259,7 +4259,7 @@ short reflectBolt(short targetX, short targetY, pos listOfCoordinates[], short k
 void checkForMissingKeys(short x, short y) {
     short layer;
 
-    if (cellHasTMFlag(x, y, TM_PROMOTES_WITHOUT_KEY) && !keyOnTileAt((pos){ x, y })) {
+    if (cellHasTMFlag((pos){ x, y }, TM_PROMOTES_WITHOUT_KEY) && !keyOnTileAt((pos){ x, y })) {
         for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
             if (tileCatalog[pmap[x][y].layers[layer]].mechFlags & TM_PROMOTES_WITHOUT_KEY) {
                 promoteTile(x, y, layer, false);
@@ -5023,7 +5023,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
             y2 = listOfCoordinates[i+1].y;
             if (cellHasTerrainFlag((pos){ x2, y2 }, (T_OBSTRUCTS_VISION | T_OBSTRUCTS_PASSABILITY))
                 && (projectileReflects(shootingMonst, NULL)
-                    || cellHasTMFlag(x2, y2, TM_REFLECTS_BOLTS)
+                    || cellHasTMFlag((pos){ x2, y2 }, TM_REFLECTS_BOLTS)
                     || (theBolt->boltEffect == BE_TUNNELING && (pmap[x2][y2].flags & IMPREGNABLE)))
                 && i < MAX_BOLT_LENGTH - max(DCOLS, DROWS)) {
 
@@ -5412,7 +5412,7 @@ boolean moveCursor(boolean *targetConfirmed,
             && (!(pmapAt(rogue.cursorLoc)->flags & (HAS_PLAYER | HAS_MONSTER))
                 || !canSeeMonster(monsterAtLoc(rogue.cursorLoc)))
             && (!(pmapAt(rogue.cursorLoc)->flags & HAS_ITEM) || !playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y))
-            && (!cellHasTMFlag(rogue.cursorLoc.x, rogue.cursorLoc.y, TM_LIST_IN_SIDEBAR) || !playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y))) {
+            && (!cellHasTMFlag(rogue.cursorLoc, TM_LIST_IN_SIDEBAR) || !playerCanSeeOrSense(rogue.cursorLoc.x, rogue.cursorLoc.y))) {
 
             // The sidebar is highlighted but the cursor is not on a visible item, monster or terrain. Un-highlight the sidebar.
             refreshSideBar(-1, -1, false);
@@ -5547,7 +5547,7 @@ boolean chooseTarget(pos *returnLoc,
         if (monst != NULL && monst != &player && canSeeMonster(monst)) {
             focusedOnSomething = true;
         } else if (playerCanSeeOrSense(targetLoc.x, targetLoc.y)
-                   && (pmapAt(targetLoc)->flags & HAS_ITEM) || cellHasTMFlag(targetLoc.x, targetLoc.y, TM_LIST_IN_SIDEBAR)) {
+                   && (pmapAt(targetLoc)->flags & HAS_ITEM) || cellHasTMFlag(targetLoc, TM_LIST_IN_SIDEBAR)) {
             focusedOnSomething = true;
         } else if (focusedOnSomething) {
             refreshSideBar(-1, -1, false);
@@ -5988,7 +5988,7 @@ static void throwItem(item *theItem, creature *thrower, pos targetLoc, short max
                 // Incendiary darts thrown at flammable obstructions (foliage, wooden barricades, doors) will hit the obstruction
                 // instead of bursting a cell earlier.
             } else if (cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_PASSABILITY)
-                       && cellHasTMFlag(x, y, TM_PROMOTES_ON_PLAYER_ENTRY)
+                       && cellHasTMFlag((pos){ x, y }, TM_PROMOTES_ON_PLAYER_ENTRY)
                        && tileCatalog[pmap[x][y].layers[layerWithTMFlag(x, y, TM_PROMOTES_ON_PLAYER_ENTRY)]].flags & T_OBSTRUCTS_PASSABILITY) {
                 layer = layerWithTMFlag(x, y, TM_PROMOTES_ON_PLAYER_ENTRY);
                 if (tileCatalog[pmap[x][y].layers[layer]].flags & T_OBSTRUCTS_PASSABILITY) {
@@ -7023,7 +7023,7 @@ void readScroll(item *theItem) {
             messageWithColor("this scroll has a map on it!", &itemMessageColor, 0);
             for (i=0; i<DCOLS; i++) {
                 for (j=0; j<DROWS; j++) {
-                    if (cellHasTMFlag(i, j, TM_IS_SECRET)) {
+                    if (cellHasTMFlag((pos){ i, j }, TM_IS_SECRET)) {
                         discover(i, j);
                         magicMapCell(i, j);
                         pmap[i][j].flags &= ~(STABLE_MEMORY | DISCOVERED);
