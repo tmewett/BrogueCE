@@ -1220,7 +1220,7 @@ unsigned long terrainMechFlags(pos loc);
 boolean cellHasTerrainFlag(pos loc, unsigned long flagMask);
 boolean cellHasTMFlag(pos loc, unsigned long flagMask);
 
-boolean cellHasTerrainType(short x, short y, enum tileType terrain);
+boolean cellHasTerrainType(pos loc, enum tileType terrain);
 
 static inline boolean coordinatesAreInMap(short x, short y) {
     return (x >= 0 && x < DCOLS && y >= 0 && y < DROWS);

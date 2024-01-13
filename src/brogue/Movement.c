@@ -1012,9 +1012,9 @@ boolean playerMoves(short direction) {
                    && !(pmap[newX][newY].flags & PRESSURE_PLATE_DEPRESSED)
                    && !cellHasTMFlag((pos){ newX, newY }, TM_IS_SECRET)
                    && (!rogue.armor || !(rogue.armor->flags & ITEM_RUNIC) || !(rogue.armor->flags & ITEM_RUNIC_IDENTIFIED) || rogue.armor->enchant2 != A_RESPIRATION ||
-                        (!cellHasTerrainType(newX, newY, GAS_TRAP_POISON)
-                         && !cellHasTerrainType(newX, newY, GAS_TRAP_PARALYSIS)
-                         && !cellHasTerrainType(newX, newY, GAS_TRAP_CONFUSION)))
+                        (!cellHasTerrainType((pos){ newX, newY }, GAS_TRAP_POISON)
+                         && !cellHasTerrainType((pos){ newX, newY }, GAS_TRAP_PARALYSIS)
+                         && !cellHasTerrainType((pos){ newX, newY }, GAS_TRAP_CONFUSION)))
                    && !confirm("Step onto the pressure plate?", false)) {
 
             brogueAssert(!committed);

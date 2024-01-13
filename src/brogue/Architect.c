@@ -36,12 +36,12 @@ boolean cellHasTMFlag(pos loc, unsigned long flagMask) {
     return (flagMask & terrainMechFlags(loc)) ? true : false;
 }
 
-boolean cellHasTerrainType(short x, short y, enum tileType terrain) {
+boolean cellHasTerrainType(pos p, enum tileType terrain) {
     return (
-        pmap[x][y].layers[DUNGEON] == terrain
-        || pmap[x][y].layers[LIQUID] == terrain
-        || pmap[x][y].layers[SURFACE] == terrain
-        || pmap[x][y].layers[GAS] == terrain
+        pmapAt(p)->layers[DUNGEON] == terrain
+        || pmapAt(p)->layers[LIQUID] == terrain
+        || pmapAt(p)->layers[SURFACE] == terrain
+        || pmapAt(p)->layers[GAS] == terrain
     ) ? true : false;
 }
 
@@ -3289,8 +3289,8 @@ static void spawnMapDF(short x, short y,
                         x2 = i + nbDirs[dir][0];
                         y2 = j + nbDirs[dir][1];
                         if (coordinatesAreInMap(x2, y2)
-                            && (!requirePropTerrain || (propagationTerrain > 0 && cellHasTerrainType(x2, y2, propagationTerrain)))
-                            && (!cellHasTerrainFlag((pos){ x2, y2 }, T_OBSTRUCTS_SURFACE_EFFECTS) || (propagationTerrain > 0 && cellHasTerrainType(x2, y2, propagationTerrain)))
+                            && (!requirePropTerrain || (propagationTerrain > 0 && cellHasTerrainType((pos){ x2, y2 }, propagationTerrain)))
+                            && (!cellHasTerrainFlag((pos){ x2, y2 }, T_OBSTRUCTS_SURFACE_EFFECTS) || (propagationTerrain > 0 && cellHasTerrainType((pos){ x2, y2 }, propagationTerrain)))
                             && rand_percent(startProb)) {
 
                             spawnMap[x2][y2] = t;
@@ -3314,7 +3314,7 @@ static void spawnMapDF(short x, short y,
             t = 2;
         }
     }
-    if (requirePropTerrain && !cellHasTerrainType(x, y, propagationTerrain)) {
+    if (requirePropTerrain && !cellHasTerrainType((pos){ x, y }, propagationTerrain)) {
         spawnMap[x][y] = 0;
     }
 }
@@ -3807,7 +3807,7 @@ boolean randomMatchingLocation(pos* loc, short dungeonType, short liquidType, sh
         failsafeCount++;
         loc->x = rand_range(0, DCOLS - 1);
         loc->y = rand_range(0, DROWS - 1);
-    } while (failsafeCount < 500 && ((terrainType >= 0 && !cellHasTerrainType(loc->x, loc->y, terrainType))
+    } while (failsafeCount < 500 && ((terrainType >= 0 && !cellHasTerrainType(*loc, terrainType))
                                      || (((dungeonType >= 0 && pmapAt(*loc)->layers[DUNGEON] != dungeonType) || (liquidType >= 0 && pmapAt(*loc)->layers[LIQUID] != liquidType)) && terrainType < 0)
                                      || (pmapAt(*loc)->flags & (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | HAS_ITEM | IS_IN_MACHINE))
                                      || (terrainType < 0 && !(tileCatalog[dungeonType].flags & T_OBSTRUCTS_ITEMS)

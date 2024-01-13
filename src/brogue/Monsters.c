@@ -697,7 +697,7 @@ static boolean spawnMinions(short hordeID, creature *leader, boolean summoned, b
                 getQualifyingPathLocNear(&(monst->loc.x), &(monst->loc.y), x, y, summoned,
                                          T_DIVIDES_LEVEL & forbiddenTerrainFlags, (HAS_PLAYER | HAS_STAIRS),
                                          forbiddenTerrainFlags, HAS_MONSTER, false);
-            } while (theHorde->spawnsIn && !cellHasTerrainType(monst->loc.x, monst->loc.y, theHorde->spawnsIn) && failsafe++ < 20);
+            } while (theHorde->spawnsIn && !cellHasTerrainType(monst->loc, theHorde->spawnsIn) && failsafe++ < 20);
             if (failsafe >= 20) {
                 // abort
                 killCreature(monst, true);
@@ -779,12 +779,12 @@ creature *spawnHorde(short hordeID, pos loc, unsigned long forbiddenFlags, unsig
             }
             if (isPosInMap(loc)) {
                 if (cellHasTerrainFlag(loc, T_PATHING_BLOCKER)
-                    && (!hordeCatalog[hordeID].spawnsIn || !cellHasTerrainType(loc.x, loc.y, hordeCatalog[hordeID].spawnsIn))) {
+                    && (!hordeCatalog[hordeID].spawnsIn || !cellHasTerrainType(loc, hordeCatalog[hordeID].spawnsIn))) {
 
                     // don't spawn a horde in special terrain unless it's meant to spawn there
                     tryAgain = true;
                 }
-                if (hordeCatalog[hordeID].spawnsIn && !cellHasTerrainType(loc.x, loc.y, hordeCatalog[hordeID].spawnsIn)) {
+                if (hordeCatalog[hordeID].spawnsIn && !cellHasTerrainType(loc, hordeCatalog[hordeID].spawnsIn)) {
                     // don't spawn a horde on normal terrain if it's meant for special terrain
                     tryAgain = true;
                 }
