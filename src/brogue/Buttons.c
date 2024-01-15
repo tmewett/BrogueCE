@@ -115,6 +115,9 @@ void drawButton(brogueButton *button, enum buttonDrawStates highlight, screenDis
             if (dbuf) {
                 // Only buffers can have opacity set.
                 dbuf->cells[button->x + i][button->y].opacity = opacity;
+                dbuf->cells[button->x + i][button->y].textInfo = (CellTextInfo) { .mode = 1, .firstColumn = button->x };
+            } else {
+                displayBuffer.cells[button->x + i][button->y].textInfo = (CellTextInfo) { .mode = 1, .firstColumn = button->x };
             }
         }
     }

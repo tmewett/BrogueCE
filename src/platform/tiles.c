@@ -696,9 +696,10 @@ void updateScreen() {
                     }
 
                     int textMode = tile->textInfo.mode;
+                    int charIndex = tile->charIndex;
 
-                    int tileRow    = tile->charIndex / 16;
-                    int tileColumn = tile->charIndex % 16;
+                    int tileRow    = charIndex / 16;
+                    int tileColumn = charIndex % 16;
 
                     if (tileEmpty[tileRow][tileColumn]
                             && !(tileRow == 21 && tileColumn == 1)) {  // wall top (procedural)
@@ -721,8 +722,27 @@ void updateScreen() {
                         // If it's text, then we want to compress the letters
                         // so the spacing between consecutive letters is more
                         // natural and readable.
-                        dest.x -= outputWidth * (x - tile->textInfo.startColumn) / 5 / COLS;
+                        dest.x -= outputWidth * (x - tile->textInfo.firstColumn) / 5 / COLS;
                     }
+                    if (textMode == 2) {
+                        int offsetForLetter = outputWidth * (x - tile->textInfo.firstColumn) / 5 / COLS;
+                        int offsetForEnd = outputWidth * (tile->textInfo.lastColumn - tile->textInfo.firstColumn) / 5 / COLS;
+                        // `offsetForLetter` is zero for the first letter, and increases for each
+                        // subsequent letter in the line.
+                        dest.x -= offsetForLetter;
+                        // `offsetForEnd` is a constant for all text in the same contiguous span.
+                        // By adding half its value back, we shift the text over so that the first
+                        // letter and the last letter in the span are shifted equally for kerning,
+                        // so that spacing on both sides is uniform.
+                        dest.x += offsetForEnd / 2;
+                    }
+
+                    // int diff = abs(tile->foreRed - tile->backRed) + abs(tile->foreGreen - tile->backGreen) + abs(tile->foreBlue - tile->backBlue);
+                    // if (diff < 100) {
+                    //     tile->foreRed = 100;
+                    //     tile->foreGreen = 100;
+                    //     tile->foreBlue = 100;
+                    // }
 
                     // blend the foreground
                     if (SDL_SetTextureColorMod(Textures[step],

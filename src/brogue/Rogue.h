@@ -1284,8 +1284,12 @@ enum dungeonLayers {
 };
 
 typedef struct CellTextInfo {
-    int mode;
-    int startColumn;
+    /// 0 : Normal terminal output
+    /// 1 : Left-aligned text [startColumn must be set]
+    /// 2 : Middle-aligned text [startColumn and endColumn must be set]
+    int8_t mode;
+    int8_t firstColumn; // first column (x coordinate) of text (inclusive)
+    int8_t lastColumn; // last column (x coordinate) of text (inclusive)
 } CellTextInfo;
 
 // keeps track of graphics so we only redraw if the cell has changed:
@@ -2965,6 +2969,7 @@ extern "C" {
     void plotCharWithColor(enum displayGlyph inputChar, windowpos loc, const color *cellForeColor, const color *cellBackColor);
     void plotCharWithColorAndTextInfo(enum displayGlyph inputChar, windowpos loc, const color *cellForeColor, const color *cellBackColor, CellTextInfo textInfo);
     void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, const color *foreColor, const color *backColor, screenDisplayBuffer *dbuf);
+    void plotCharToBufferWithTextInfo(enum displayGlyph inputChar, windowpos loc, const color *foreColor, const color *backColor, CellTextInfo textInfo, screenDisplayBuffer *dbuf);
     void plotForegroundChar(enum displayGlyph inputChar, short x, short y, const color *foreColor, boolean affectedByLighting);
     void commitDraws(void);
     void dumpLevelToScreen(void);

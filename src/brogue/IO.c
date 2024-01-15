@@ -859,7 +859,7 @@ void commitDraws() {
                 || lastPlotted->backColorComponents[1] != curr->backColorComponents[1]
                 || lastPlotted->backColorComponents[2] != curr->backColorComponents[2]
                 || lastPlotted->textInfo.mode != curr->textInfo.mode
-                || lastPlotted->textInfo.startColumn != curr->textInfo.startColumn;
+                || lastPlotted->textInfo.firstColumn != curr->textInfo.firstColumn;
 
             if (!needsUpdate) {
                 continue;
@@ -1818,6 +1818,37 @@ void plotCharWithColorAndTextInfo(enum displayGlyph inputChar, windowpos loc, co
         target->textInfo = textInfo;
     }
 
+    restoreRNG;
+}
+
+void plotCharToBufferWithTextInfo(enum displayGlyph inputChar, windowpos loc, const color *foreColor, const color *backColor, CellTextInfo textInfo, screenDisplayBuffer *dbuf) {
+    short oldRNG;
+
+    if (!dbuf) {
+        plotCharWithColorAndTextInfo(inputChar, loc, foreColor, backColor, textInfo);
+        return;
+    }
+
+    brogueAssert(locIsInWindow(loc));
+    if (!locIsInWindow(loc)) {
+        return;
+    }
+
+    oldRNG = rogue.RNG;
+    rogue.RNG = RNG_COSMETIC;
+    //assureCosmeticRNG;
+
+    cellDisplayBuffer* cell = &dbuf->cells[loc.window_x][loc.window_y];
+    cell->foreColorComponents[0] = foreColor->red + rand_range(0, foreColor->redRand) + rand_range(0, foreColor->rand);
+    cell->foreColorComponents[1] = foreColor->green + rand_range(0, foreColor->greenRand) + rand_range(0, foreColor->rand);
+    cell->foreColorComponents[2] = foreColor->blue + rand_range(0, foreColor->blueRand) + rand_range(0, foreColor->rand);
+    cell->backColorComponents[0] = backColor->red + rand_range(0, backColor->redRand) + rand_range(0, backColor->rand);
+    cell->backColorComponents[1] = backColor->green + rand_range(0, backColor->greenRand) + rand_range(0, backColor->rand);
+    cell->backColorComponents[2] = backColor->blue + rand_range(0, backColor->blueRand) + rand_range(0, backColor->rand);
+    cell->character = inputChar;
+    if (textInfo.mode != 0) {
+        cell->textInfo = textInfo;
+    }
     restoreRNG;
 }
 
@@ -3250,7 +3281,7 @@ static void drawMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], sho
             }
             dbuf.cells[mapToWindowX(j)][i].textInfo = (CellTextInfo) {
                 .mode = 1, // text
-                .startColumn = mapToWindowX(0),
+                .firstColumn = mapToWindowX(0),
             };
         }
     }
@@ -3647,7 +3678,7 @@ void updateMessageDisplay() {
                 displayedMessage[i][m], (windowpos){ mapToWindowX(j), MESSAGE_LINES - i - 1 },
                 &messageColor,
                 &black,
-                (CellTextInfo) { .mode = 1, .startColumn = mapToWindowX(0) }
+                (CellTextInfo) { .mode = 1, .firstColumn = mapToWindowX(0) }
             );
         }
         for (; j < DCOLS; j++) {
@@ -4054,6 +4085,16 @@ short printStringWithWrapping(const char *theString, short x, short y, short wid
 
         if (locIsInWindow((windowpos){ px, py })) {
             plotCharToBuffer(printString[i], (windowpos){ px, py }, &fColor, backColor, dbuf);
+            CellTextInfo textInfo = (CellTextInfo) {
+                .mode = 2, // TEXT_CENTER
+                .firstColumn = x + 1,
+                .lastColumn = x + width-1,
+            };
+            if (dbuf) {
+                dbuf->cells[px][py].textInfo = textInfo;
+            } else {
+                displayBuffer.cells[px][py].textInfo = textInfo;
+            }
         }
 
         px++;

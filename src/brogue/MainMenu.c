@@ -890,14 +890,23 @@ void mainBrogueJunction() {
     initializeLaunchArguments(&rogue.nextGame, rogue.nextGamePath, &rogue.nextGameSeed);
 
     do {
+        // In between menus and games, zero out the textinfo.
+        for (int x = 0; x < COLS; x++) {
+            for (int y = 0; y < ROWS; y++) {
+                displayBuffer.cells[x][y].textInfo = (CellTextInfo) { .mode = 0 };
+            }
+        }
         rogue.gameHasEnded = false;
         rogue.playbackFastForward = false;
         rogue.playbackMode = false;
         switch (rogue.nextGame) {
-            case NG_NOTHING:
+            case NG_NOTHING: {
                 // Run the main menu to get a decision out of the player.
+                const SavedDisplayBuffer rbuf = saveDisplayBuffer();
                 titleMenu();
+                restoreDisplayBuffer(&rbuf);
                 break;
+            }
             case NG_GAME_VARIANT:
                 rogue.nextGame = NG_NOTHING;
                 initializeGameVariant();
