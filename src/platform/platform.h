@@ -58,7 +58,8 @@ struct brogueConsole {
         enum displayGlyph inputChar,
         short x, short y,
         short foreRed, short foreGreen, short foreBlue,
-        short backRed, short backGreen, short backBlue
+        short backRed, short backGreen, short backBlue,
+        CellTextInfo textInfo
     );
 
     void (*remap)(const char *, const char *);

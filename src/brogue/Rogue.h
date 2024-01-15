@@ -1283,12 +1283,18 @@ enum dungeonLayers {
     NUMBER_TERRAIN_LAYERS
 };
 
+typedef struct CellTextInfo {
+    int mode;
+    int startColumn;
+} CellTextInfo;
+
 // keeps track of graphics so we only redraw if the cell has changed:
 typedef struct cellDisplayBuffer {
     enum displayGlyph character;
     char foreColorComponents[3];
     char backColorComponents[3];
     char opacity;
+    CellTextInfo textInfo;
 } cellDisplayBuffer;
 
 typedef struct screenDisplayBuffer {
@@ -2884,7 +2890,8 @@ extern "C" {
     void plotChar(enum displayGlyph inputChar,
                   short xLoc, short yLoc,
                   short backRed, short backGreen, short backBlue,
-                  short foreRed, short foreGreen, short foreBlue);
+                  short foreRed, short foreGreen, short foreBlue,
+                  CellTextInfo textInfo);
 
     typedef struct PauseBehavior {
         /// If `interuptForMouseMove` is true, then the pause function will return `true`
@@ -2956,6 +2963,7 @@ extern "C" {
     void hiliteCell(short x, short y, const color *hiliteColor, short hiliteStrength, boolean distinctColors);
     void colorMultiplierFromDungeonLight(short x, short y, color *editColor);
     void plotCharWithColor(enum displayGlyph inputChar, windowpos loc, const color *cellForeColor, const color *cellBackColor);
+    void plotCharWithColorAndTextInfo(enum displayGlyph inputChar, windowpos loc, const color *cellForeColor, const color *cellBackColor, CellTextInfo textInfo);
     void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, const color *foreColor, const color *backColor, screenDisplayBuffer *dbuf);
     void plotForegroundChar(enum displayGlyph inputChar, short x, short y, const color *foreColor, boolean affectedByLighting);
     void commitDraws(void);

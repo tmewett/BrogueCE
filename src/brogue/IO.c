@@ -857,7 +857,9 @@ void commitDraws() {
                 || lastPlotted->foreColorComponents[2] != curr->foreColorComponents[2]
                 || lastPlotted->backColorComponents[0] != curr->backColorComponents[0]
                 || lastPlotted->backColorComponents[1] != curr->backColorComponents[1]
-                || lastPlotted->backColorComponents[2] != curr->backColorComponents[2];
+                || lastPlotted->backColorComponents[2] != curr->backColorComponents[2]
+                || lastPlotted->textInfo.mode != curr->textInfo.mode
+                || lastPlotted->textInfo.startColumn != curr->textInfo.startColumn;
 
             if (!needsUpdate) {
                 continue;
@@ -869,7 +871,8 @@ void commitDraws() {
                      curr->foreColorComponents[2],
                      curr->backColorComponents[0],
                      curr->backColorComponents[1],
-                     curr->backColorComponents[2]
+                     curr->backColorComponents[2],
+                     curr->textInfo
             );
             *lastPlotted = *curr;
         }
@@ -888,7 +891,8 @@ void refreshScreen() {
                      curr->foreColorComponents[2],
                      curr->backColorComponents[0],
                      curr->backColorComponents[1],
-                     curr->backColorComponents[2]
+                     curr->backColorComponents[2],
+                     curr->textInfo
             );
             // Remember that it was previously plotted, so that
             // commitDraws still knows when it needs updates.
@@ -1748,7 +1752,11 @@ void colorMultiplierFromDungeonLight(short x, short y, color *editColor) {
     editColor->colorDances = false;
 }
 
+/// Calls `plotCharWithColorAndTextInfo` with a default `CellTextInfo` config.
 void plotCharWithColor(enum displayGlyph inputChar, windowpos loc, const color *cellForeColor, const color *cellBackColor) {
+    plotCharWithColorAndTextInfo(inputChar, loc, cellForeColor, cellBackColor, (CellTextInfo) { .mode = 0 });
+}
+void plotCharWithColorAndTextInfo(enum displayGlyph inputChar, windowpos loc, const color *cellForeColor, const color *cellBackColor, CellTextInfo textInfo) {
     short oldRNG;
 
     short foreRed = cellForeColor->red,
@@ -1806,6 +1814,9 @@ void plotCharWithColor(enum displayGlyph inputChar, windowpos loc, const color *
     target->backColorComponents[0] = backRed;
     target->backColorComponents[1] = backGreen;
     target->backColorComponents[2] = backBlue;
+    if (textInfo.mode != 0) {
+        target->textInfo = textInfo;
+    }
 
     restoreRNG;
 }
@@ -1946,12 +1957,10 @@ void clearDisplayBuffer(screenDisplayBuffer *dbuf) {
 
     for (i=0; i<COLS; i++) {
         for (j=0; j<ROWS; j++) {
-            dbuf->cells[i][j].character = ' ';
-            for (k=0; k<3; k++) {
-                dbuf->cells[i][j].foreColorComponents[k] = 0;
-                dbuf->cells[i][j].backColorComponents[k] = 0;
-            }
-            dbuf->cells[i][j].opacity = 0;
+            dbuf->cells[i][j] = (cellDisplayBuffer) {
+                // All other fields will be zeroed.
+                .character = ' ',
+            };
         }
     }
 }
@@ -1994,7 +2003,7 @@ void overlayDisplayBuffer(const screenDisplayBuffer *overBuf) {
                 tempColor = colorFromComponents(displayBuffer.cells[i][j].backColorComponents);
                 applyColorAverage(&backColor, &tempColor, 100 - overBuf->cells[i][j].opacity);
 
-                plotCharWithColor(character, (windowpos){ i, j }, &foreColor, &backColor);
+                plotCharWithColorAndTextInfo(character, (windowpos){ i, j }, &foreColor, &backColor, overBuf->cells[i][j].textInfo);
             }
         }
     }
@@ -3239,6 +3248,10 @@ static void drawMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], sho
                     dbuf.cells[mapToWindowX(j)][i].foreColorComponents[k] = dbuf.cells[mapToWindowX(j)][i].foreColorComponents[k] * fadePercent / 100;
                 }
             }
+            dbuf.cells[mapToWindowX(j)][i].textInfo = (CellTextInfo) {
+                .mode = 1, // text
+                .startColumn = mapToWindowX(0),
+            };
         }
     }
 
@@ -3630,9 +3643,12 @@ void updateMessageDisplay() {
                 }
             }
 
-            plotCharWithColor(displayedMessage[i][m], (windowpos){ mapToWindowX(j), MESSAGE_LINES - i - 1 },
-                              &messageColor,
-                              &black);
+            plotCharWithColorAndTextInfo(
+                displayedMessage[i][m], (windowpos){ mapToWindowX(j), MESSAGE_LINES - i - 1 },
+                &messageColor,
+                &black,
+                (CellTextInfo) { .mode = 1, .startColumn = mapToWindowX(0) }
+            );
         }
         for (; j < DCOLS; j++) {
             plotCharWithColor(' ', (windowpos){ mapToWindowX(j), MESSAGE_LINES - i - 1 }, &black, &black);
