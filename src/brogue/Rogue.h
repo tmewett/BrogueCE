@@ -3170,6 +3170,7 @@ extern "C" {
     boolean monsterIsHidden(const creature *monst, const creature *observer);
     boolean canSeeMonster(creature *monst);
     boolean canDirectlySeeMonster(creature *monst);
+    boolean playerCanTargetSubmergedMonster(creature *monst);
     void monsterName(char *buf, creature *monst, boolean includeArticle);
     boolean monsterIsInClass(const creature *monst, const short monsterClass);
     boolean chooseTarget(pos *returnLoc, short maxDistance, boolean stopAtTarget, boolean autoTarget,

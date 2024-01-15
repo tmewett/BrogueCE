@@ -4340,18 +4340,26 @@ void monsterDetails(char buf[], creature *monst) {
     upperCase(newText);
     strcat(buf, newText);
 
-    for (theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
-        if (staffOrWandEffectOnMonsterDescription(newText, theItem, monst)) {
-            if (boltEffectForItem(theItem) == BE_DOMINATION) {
-                if (alreadyDisplayedDominationText) {
-                    continue;
-                } else {
-                    alreadyDisplayedDominationText = true;
-                }
-            }
+    // Staff and wand effects 
+    if (rogue.inWater && (monst->bookkeepingFlags & MB_SUBMERGED) && !playerCanTargetSubmergedMonster(monst)) {
+        sprintf(newText, "\n     %s is submerged and cannot be hit by a staff or wand.", capMonstName);
             i = strlen(buf);
             i = encodeMessageColor(buf, i, &itemMessageColor);
             strcat(buf, newText);
+    } else {
+        for (theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
+            if (staffOrWandEffectOnMonsterDescription(newText, theItem, monst)) {
+                if (boltEffectForItem(theItem) == BE_DOMINATION) {
+                    if (alreadyDisplayedDominationText) {
+                        continue;
+                    } else {
+                        alreadyDisplayedDominationText = true;
+                    }
+                }
+                i = strlen(buf);
+                i = encodeMessageColor(buf, i, &itemMessageColor);
+                strcat(buf, newText);
+            }
         }
     }
 

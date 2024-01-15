@@ -1,0 +1,2 @@
+A submerged player can now target an adjacent submerged monster with a staff or wand. If a non-adjacent submerged monster is manually targeted, the monster cell highlight color changes to a muted white. 
+The monster details window now informs the player when a submerged monster cannot be targeted with a staff or wand. 

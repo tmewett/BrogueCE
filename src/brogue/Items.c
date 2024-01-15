@@ -3322,6 +3322,13 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
 
     freeGrid(grid);
 }
+/// @brief Determines whether the monster is targetable by the player. 
+/// They must be adjacent and both must be submerged. 
+/// @param monst the monster
+/// @return true if the player can target the monster
+boolean playerCanTargetSubmergedMonster(creature *monst) {
+    return (monst->bookkeepingFlags & MB_SUBMERGED) && (rogue.inWater) && (abs(player.loc.x - monst->loc.x) <= 1) && (abs(player.loc.y - monst->loc.y) <= 1);
+}
 
 // Generates a list of coordinates extending in a straight line
 // from originLoc (not included in the output), through targetLoc,
@@ -3406,7 +3413,8 @@ short getLineCoordinates(pos listOfCoordinates[], const pos originLoc, const pos
             creature *caster = monsterAtLoc(originLoc);
             creature *monst = monsterAtLoc((pos){ x, y });
             boolean isMonster = monst
-                && !(monst->bookkeepingFlags & MB_SUBMERGED)
+                && (!(monst->bookkeepingFlags & MB_SUBMERGED) 
+                || (isCastByPlayer && playerCanTargetSubmergedMonster(monst)))
                 && !monsterIsHidden(monst, caster);
             boolean isEnemyOfCaster = (monst && caster && monstersAreEnemies(monst, caster));
             boolean isAllyOfCaster = (monst && caster && monstersAreTeammates(monst, caster));
@@ -3490,6 +3498,7 @@ void getImpactLoc(pos *returnLoc, const pos originLoc, const pos targetLoc,
     pos coords[DCOLS + 1];
     short i, n;
     creature *monst;
+    creature *caster = monsterAtLoc(originLoc);
 
     n = getLineCoordinates(coords, originLoc, targetLoc, theBolt);
     n = min(n, maxDistance);
@@ -3497,7 +3506,8 @@ void getImpactLoc(pos *returnLoc, const pos originLoc, const pos targetLoc,
         monst = monsterAtLoc(coords[i]);
         if (monst
             && !monsterIsHidden(monst, monsterAtLoc(originLoc))
-            && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
+            && (!(monst->bookkeepingFlags & MB_SUBMERGED) 
+            || (caster == &player && playerCanTargetSubmergedMonster(monst)))) {
             // Imaginary bolt hit the player or a monster.
             break;
         }
@@ -4322,7 +4332,8 @@ boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
     // Handle collisions with monsters.
 
     monst = monsterAtLoc((pos){ x, y });
-    if (monst && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
+    if (monst && (!(monst->bookkeepingFlags & MB_SUBMERGED) 
+        || (caster == &player && playerCanTargetSubmergedMonster(monst)))) {
         monsterName(monstName, monst, true);
 
         switch(theBolt->boltEffect) {
@@ -4981,7 +4992,8 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
 
             if (!(theBolt->flags & BF_PASSES_THRU_CREATURES)) {
                 monst = monsterAtLoc(listOfCoordinates[i+1]);
-                if (monst && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
+                if (monst && (!(monst->bookkeepingFlags & MB_SUBMERGED) 
+                    || (shootingMonst == &player && playerCanTargetSubmergedMonster(monst)))) {
                     break;
                 }
             }
@@ -5182,7 +5194,7 @@ boolean nextTargetAfter(short *returnX,
     return false;
 }
 
-// Returns how far it went before hitting something.
+// Returns how far a player-cast bolt went before hitting something.
 short hiliteTrajectory(const pos coordinateList[DCOLS], short numCells, boolean eraseHiliting, const bolt *theBolt, const color *hiliteColor) {
     short x, y, i;
     creature *monst;
@@ -5209,7 +5221,7 @@ short hiliteTrajectory(const pos coordinateList[DCOLS], short numCells, boolean 
         } else if (!passThroughMonsters && pmap[x][y].flags & (HAS_MONSTER)
                    && (playerCanSee(x, y) || player.status[STATUS_TELEPATHIC])) {
             monst = monsterAtLoc((pos){ x, y });
-            if (!(monst->bookkeepingFlags & MB_SUBMERGED)
+            if ((!(monst->bookkeepingFlags & MB_SUBMERGED) ||  playerCanTargetSubmergedMonster(monst))
                 && !monsterIsHidden(monst, &player)) {
 
                 i++;
@@ -5457,7 +5469,8 @@ static boolean creatureIsTargetable(creature *monst) {
         && canSeeMonster(monst)
         && monst->depth == rogue.depthLevel
         && !(monst->bookkeepingFlags & MB_IS_DYING)
-        && openPathBetween(player.loc.x, player.loc.y, monst->loc.x, monst->loc.y);
+        && openPathBetween(player.loc.x, player.loc.y, monst->loc.x, monst->loc.y)
+        && (!(monst->bookkeepingFlags & MB_SUBMERGED) || playerCanTargetSubmergedMonster(monst));
 }
 
 // Return true if a target is chosen, or false if canceled.
@@ -5573,6 +5586,11 @@ boolean chooseTarget(pos *returnLoc,
                 }
             }
             hiliteCell(targetLoc.x, targetLoc.y, &white, (cursorInTrajectory ? 100 : 35), true);
+
+            // player is underwater and trying to target an untargetable monster 
+            if (rogue.inWater && monst && (monst->bookkeepingFlags & MB_SUBMERGED) && !playerCanTargetSubmergedMonster(monst)) {
+                hiliteCell(targetLoc.x, targetLoc.y, &white, 35, true);
+            }
         }
 
         oldTargetLoc = targetLoc;
