@@ -1814,9 +1814,9 @@ void plotCharWithColorAndTextInfo(enum displayGlyph inputChar, windowpos loc, co
     target->backColorComponents[0] = backRed;
     target->backColorComponents[1] = backGreen;
     target->backColorComponents[2] = backBlue;
-    if (textInfo.mode != 0) {
-        target->textInfo = textInfo;
-    }
+    // if (textInfo.mode != 0 || inputChar != ' ') {
+    target->textInfo = textInfo;
+    // }
 
     restoreRNG;
 }
@@ -1846,9 +1846,8 @@ void plotCharToBufferWithTextInfo(enum displayGlyph inputChar, windowpos loc, co
     cell->backColorComponents[1] = backColor->green + rand_range(0, backColor->greenRand) + rand_range(0, backColor->rand);
     cell->backColorComponents[2] = backColor->blue + rand_range(0, backColor->blueRand) + rand_range(0, backColor->rand);
     cell->character = inputChar;
-    if (textInfo.mode != 0) {
-        cell->textInfo = textInfo;
-    }
+    
+    cell->textInfo = textInfo;
     restoreRNG;
 }
 
@@ -1877,6 +1876,7 @@ void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, const color *f
     cell->backColorComponents[1] = backColor->green + rand_range(0, backColor->greenRand) + rand_range(0, backColor->rand);
     cell->backColorComponents[2] = backColor->blue + rand_range(0, backColor->blueRand) + rand_range(0, backColor->rand);
     cell->character = inputChar;
+    cell->textInfo = (CellTextInfo) { .mode = 0 };
     restoreRNG;
 }
 
@@ -2020,6 +2020,8 @@ void overlayDisplayBuffer(const screenDisplayBuffer *overBuf) {
                 enum displayGlyph character;
                 backColor = colorFromComponents(overBuf->cells[i][j].backColorComponents);
 
+                CellTextInfo displayTextInfo = displayBuffer.cells[i][j].textInfo;
+
                 // character and fore color:
                 if (overBuf->cells[i][j].character == ' ') { // Blank cells in the overbuf take the character from the screen.
                     character = displayBuffer.cells[i][j].character;
@@ -2028,13 +2030,17 @@ void overlayDisplayBuffer(const screenDisplayBuffer *overBuf) {
                 } else {
                     character = overBuf->cells[i][j].character;
                     foreColor = colorFromComponents(overBuf->cells[i][j].foreColorComponents);
+                    displayTextInfo = overBuf->cells[i][j].textInfo;
+                }
+                if (overBuf->cells[i][j].opacity > 90) {
+                    displayTextInfo = overBuf->cells[i][j].textInfo;
                 }
 
                 // back color:
                 tempColor = colorFromComponents(displayBuffer.cells[i][j].backColorComponents);
                 applyColorAverage(&backColor, &tempColor, 100 - overBuf->cells[i][j].opacity);
 
-                plotCharWithColorAndTextInfo(character, (windowpos){ i, j }, &foreColor, &backColor, overBuf->cells[i][j].textInfo);
+                plotCharWithColorAndTextInfo(character, (windowpos){ i, j }, &foreColor, &backColor, displayTextInfo);
             }
         }
     }
