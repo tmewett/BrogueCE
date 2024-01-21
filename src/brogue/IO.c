@@ -2883,8 +2883,8 @@ boolean getInputTextString(char *inputText,
     return true;
 }
 
-void displayCenteredAlert(char *message) {
-    printString(message, (COLS - strLenWithoutEscapes(message)) / 2, ROWS / 2, &teal, &black, 0);
+void displayCenteredAlert(const char *message) {
+    printStringCentered(message, (COLS - strLenWithoutEscapes(message)) / 2, ROWS / 2, &teal, &black, 0);
 }
 
 // Flashes a message on the screen starting at (x, y) lasting for the given time (in ms) and with the given colors.
@@ -3565,9 +3565,9 @@ void message(const char *msg, unsigned long flags) {
 // Only used for the "you die..." message, to enable posthumous inventory viewing.
 void displayMoreSignWithoutWaitingForAcknowledgment() {
     if (strLenWithoutEscapes(displayedMessage[0]) < DCOLS - 8 || messagesUnconfirmed > 0) {
-        printString("--MORE--", COLS - 8, MESSAGE_LINES-1, &black, &white, 0);
+        printStringCentered("--MORE--", COLS - 8, MESSAGE_LINES-1, &black, &white, 0);
     } else {
-        printString("--MORE--", COLS - 8, MESSAGE_LINES, &black, &white, 0);
+        printStringCentered("--MORE--", COLS - 8, MESSAGE_LINES, &black, &white, 0);
     }
 }
 
@@ -3579,11 +3579,11 @@ void displayMoreSign() {
     }
 
     if (strLenWithoutEscapes(displayedMessage[0]) < DCOLS - 8 || messagesUnconfirmed > 0) {
-        printString("--MORE--", COLS - 8, MESSAGE_LINES-1, &black, &white, 0);
+        printStringCentered("--MORE--", COLS - 8, MESSAGE_LINES-1, &black, &white, 0);
         waitForAcknowledgment();
-        printString("        ", COLS - 8, MESSAGE_LINES-1, &black, &black, 0);
+        printStringCentered("        ", COLS - 8, MESSAGE_LINES-1, &black, &black, 0);
     } else {
-        printString("--MORE--", COLS - 8, MESSAGE_LINES, &black, &white, 0);
+        printStringCentered("--MORE--", COLS - 8, MESSAGE_LINES, &black, &white, 0);
         waitForAcknowledgment();
         for (i=1; i<=8; i++) {
             refreshDungeonCell((pos){ DCOLS - i, 0 });
@@ -3799,15 +3799,15 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
 
     // Header information for playback mode.
     if (rogue.playbackMode) {
-        printString("   -- PLAYBACK --   ", 0, printY++, &white, &black, 0);
+        printStringCentered("   -- PLAYBACK --   ", 0, printY++, &white, &black, 0);
         if (rogue.howManyTurns > 0) {
             sprintf(buf, "Turn %li/%li", rogue.playerTurnNumber, rogue.howManyTurns);
             printProgressBar(0, printY++, buf, rogue.playerTurnNumber, rogue.howManyTurns, &darkPurple, false);
         }
         if (rogue.playbackOOS) {
-            printString("    [OUT OF SYNC]   ", 0, printY++, &badMessageColor, &black, 0);
+            printStringCentered("    [OUT OF SYNC]   ", 0, printY++, &badMessageColor, &black, 0);
         } else if (rogue.playbackPaused) {
-            printString("      [PAUSED]      ", 0, printY++, &gray, &black, 0);
+            printStringCentered("      [PAUSED]      ", 0, printY++, &gray, &black, 0);
         }
         printString("                    ", 0, printY++, &white, &black, 0);
     }
@@ -3947,7 +3947,7 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
             printString("                    ", 0, i, &white, &black, 0);
         }
         sprintf(buf, "  -- Depth: %i --%s   ", rogue.depthLevel, (rogue.depthLevel < 10 ? " " : ""));
-        printString(buf, 0, ROWS - 1, &white, &black, 0);
+        printStringCentered(buf, 0, ROWS - 1, &white, &black, 0);
     } else if (!focusedEntityMustGoFirst) {
         // Failed to get the focusMonst printed on the screen. Try again, this time with the focus first.
         refreshSideBar(focusX, focusY, true);
@@ -3961,6 +3961,11 @@ void printString(const char *theString, short x, short y, const color *foreColor
 
     color fColor = *foreColor;
 
+    CellTextInfo textInfo = (CellTextInfo) {
+        .mode = 1,
+        .firstColumn = x,
+    };
+
     for (i=0; theString[i] != '\0' && x < COLS; i++, x++) {
         while (theString[i] == COLOR_ESCAPE) {
             i = decodeMessageColor(theString, i, &fColor);
@@ -3969,7 +3974,29 @@ void printString(const char *theString, short x, short y, const color *foreColor
             }
         }
 
-        plotCharToBuffer(theString[i], (windowpos){ x, y }, &fColor, backColor, dbuf);
+        plotCharToBufferWithTextInfo(theString[i], (windowpos){ x, y }, &fColor, backColor, textInfo, dbuf);
+    }
+}
+
+// The same as `printString`, but centers the text when performing letter spacing adjustments.
+void printStringCentered(const char *theString, short x, short y, const color *foreColor, const color *backColor, screenDisplayBuffer *dbuf) {
+    color fColor = *foreColor;
+
+    CellTextInfo textInfo = (CellTextInfo) {
+        .mode = 2,
+        .firstColumn = x,
+        .lastColumn = x + strLenWithoutEscapes(theString) - 1,
+    };
+
+    for (int i=0; theString[i] != '\0' && x < COLS; i++, x++) {
+        while (theString[i] == COLOR_ESCAPE) {
+            i = decodeMessageColor(theString, i, &fColor);
+            if (!theString[i]) {
+                return;
+            }
+        }
+
+        plotCharToBufferWithTextInfo(theString[i], (windowpos){ x, y }, &fColor, backColor, textInfo, dbuf);
     }
 }
 
@@ -4651,7 +4678,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
         } else if (player.status[STATUS_NUTRITION] > 0) {
             printProgressBar(0, y++, "Nutrition (Faint)", player.status[STATUS_NUTRITION], STOMACH_SIZE, &blueBar, dim);
         } else if (y < ROWS - 1) {
-            printString("      STARVING      ", 0, y++, &badMessageColor, &black, NULL);
+            printStringCentered("      STARVING      ", 0, y++, &badMessageColor, &black, NULL);
         }
     }
 
@@ -4698,35 +4725,35 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                     && monst->newPowerCount == monst->totalPowerCount
                     && y < ROWS - 1
                     && (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience )) {
-                    printString("      Negated       ", 0, y++, (dim ? &darkPink : &pink), &black, 0);
+                    printStringCentered("      Negated       ", 0, y++, (dim ? &darkPink : &pink), &black, 0);
                 }
                 if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience && y < ROWS - 1) {
-                    printString(hallucinationStrings[rand_range(0, 9)], 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                    printStringCentered(hallucinationStrings[rand_range(0, 9)], 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if (monst->bookkeepingFlags & MB_CAPTIVE && y < ROWS - 1) {
-                    printString("     (Captive)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                    printStringCentered("     (Captive)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID)
                            && !cellHasTMFlag(monst->loc.x, monst->loc.y, TM_ALLOWS_SUBMERGING)) {
-                    printString("     (Helpless)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                    printStringCentered("     (Helpless)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if (monst->creatureState == MONSTER_SLEEPING && y < ROWS - 1) {
-                    printString("     (Sleeping)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                    printStringCentered("     (Sleeping)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if ((monst->creatureState == MONSTER_ALLY) && y < ROWS - 1) {
-                    printString("       (Ally)       ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                    printStringCentered("       (Ally)       ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if (monst->creatureState == MONSTER_FLEEING && y < ROWS - 1) {
-                    printString("     (Fleeing)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                    printStringCentered("     (Fleeing)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if ((monst->creatureState == MONSTER_WANDERING) && y < ROWS - 1) {
                     if ((monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader && (monst->leader->info.flags & MONST_IMMOBILE)) {
                         // follower of an immobile leader -- i.e. a totem
-                        printString("    (Worshiping)    ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                        printStringCentered("    (Worshiping)    ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                     } else if ((monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader && (monst->leader->bookkeepingFlags & MB_CAPTIVE)) {
                         // actually a captor/torturer
-                        printString("     (Guarding)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                        printStringCentered("     (Guarding)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                     } else {
-                        printString("    (Wandering)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                        printStringCentered("    (Wandering)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                     }
                 } else if (monst->ticksUntilTurn > max(0, player.ticksUntilTurn) + player.movementSpeed) {
-                    printString("   (Off balance)    ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                    printStringCentered("   (Off balance)    ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if ((monst->creatureState == MONSTER_TRACKING_SCENT) && y < ROWS - 1) {
-                    printString("     (Hunting)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                    printStringCentered("     (Hunting)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 }
             }
         } else if (monst == &player) {
