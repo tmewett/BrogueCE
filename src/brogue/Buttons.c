@@ -77,6 +77,12 @@ void drawButton(brogueButton *button, enum buttonDrawStates highlight, screenDis
 
     short symbolNumber = 0;
 
+    CellTextInfo buttonTextInfo = (CellTextInfo) {
+        .mode = 2,
+        .firstColumn = button->x,
+        .lastColumn = button->x + width - 1,
+    };
+
     for (int i = 0, textLoc = 0; i < width && i + button->x < COLS; i++, textLoc++) {
         while (button->text[textLoc] == COLOR_ESCAPE) {
             textLoc = decodeMessageColor(button->text, textLoc, &fColorBase);
@@ -115,6 +121,9 @@ void drawButton(brogueButton *button, enum buttonDrawStates highlight, screenDis
             if (dbuf) {
                 // Only buffers can have opacity set.
                 dbuf->cells[button->x + i][button->y].opacity = opacity;
+                dbuf->cells[button->x + i][button->y].textInfo = buttonTextInfo;
+            } else {
+                displayBuffer.cells[button->x + i][button->y].textInfo = buttonTextInfo;
             }
         }
     }

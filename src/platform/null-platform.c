@@ -15,7 +15,8 @@ static void null_nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput,
 static void null_plotChar(enum displayGlyph ch,
               short xLoc, short yLoc,
               short foreRed, short foreGreen, short foreBlue,
-              short backRed, short backGreen, short backBlue) {
+              short backRed, short backGreen, short backBlue,
+              CellTextInfo textInfo) {
     return;
 }
 

@@ -1283,12 +1283,22 @@ enum dungeonLayers {
     NUMBER_TERRAIN_LAYERS
 };
 
+typedef struct CellTextInfo {
+    /// 0 : Normal terminal output
+    /// 1 : Left-aligned text [startColumn must be set]
+    /// 2 : Middle-aligned text [startColumn and endColumn must be set]
+    int8_t mode;
+    int8_t firstColumn; // first column (x coordinate) of text (inclusive)
+    int8_t lastColumn; // last column (x coordinate) of text (inclusive)
+} CellTextInfo;
+
 // keeps track of graphics so we only redraw if the cell has changed:
 typedef struct cellDisplayBuffer {
     enum displayGlyph character;
     char foreColorComponents[3];
     char backColorComponents[3];
     char opacity;
+    CellTextInfo textInfo;
 } cellDisplayBuffer;
 
 typedef struct screenDisplayBuffer {
@@ -2884,7 +2894,8 @@ extern "C" {
     void plotChar(enum displayGlyph inputChar,
                   short xLoc, short yLoc,
                   short backRed, short backGreen, short backBlue,
-                  short foreRed, short foreGreen, short foreBlue);
+                  short foreRed, short foreGreen, short foreBlue,
+                  CellTextInfo textInfo);
 
     typedef struct PauseBehavior {
         /// If `interuptForMouseMove` is true, then the pause function will return `true`
@@ -2931,7 +2942,7 @@ extern "C" {
                                           short x, short y, short width,
                                           boolean includeButtons);
     void funkyFade(screenDisplayBuffer *displayBuf, const color *colorStart, const color *colorEnd, short stepCount, short x, short y, boolean invert);
-    void displayCenteredAlert(char *message);
+    void displayCenteredAlert(const char *message);
     void flashMessage(char *message, short x, short y, int time, const color *fColor, const color *bColor);
     void flashTemporaryAlert(char *message, int time);
     void highlightScreenCell(short x, short y, const color *highlightColor, short strength);
@@ -2956,7 +2967,9 @@ extern "C" {
     void hiliteCell(short x, short y, const color *hiliteColor, short hiliteStrength, boolean distinctColors);
     void colorMultiplierFromDungeonLight(short x, short y, color *editColor);
     void plotCharWithColor(enum displayGlyph inputChar, windowpos loc, const color *cellForeColor, const color *cellBackColor);
+    void plotCharWithColorAndTextInfo(enum displayGlyph inputChar, windowpos loc, const color *cellForeColor, const color *cellBackColor, CellTextInfo textInfo);
     void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, const color *foreColor, const color *backColor, screenDisplayBuffer *dbuf);
+    void plotCharToBufferWithTextInfo(enum displayGlyph inputChar, windowpos loc, const color *foreColor, const color *backColor, CellTextInfo textInfo, screenDisplayBuffer *dbuf);
     void plotForegroundChar(enum displayGlyph inputChar, short x, short y, const color *foreColor, boolean affectedByLighting);
     void commitDraws(void);
     void dumpLevelToScreen(void);
@@ -2978,7 +2991,11 @@ extern "C" {
     void flashForeground(short *x, short *y, const color **flashColor, short *flashStrength, short count, short frames);
     void flashCell(const color *theColor, short frames, short x, short y);
     void colorFlash(const color *theColor, unsigned long reqTerrainFlags, unsigned long reqTileFlags, short frames, short maxRadius, short x, short y);
+    // Prints the specified formatted string to the screen, starting at the coordinates (x, y).
     void printString(const char *theString, short x, short y, const color *foreColor, const color* backColor, screenDisplayBuffer *dbuf);
+    void printStringWithTextMode(const char *theString, short x, short y, const color *foreColor, const color* backColor, int textMode, screenDisplayBuffer *dbuf);
+    // The same as `printString`, but centers the text when performing letter spacing adjustments.
+    void printStringCentered(const char *theString, short x, short y, const color *foreColor, const color* backColor, screenDisplayBuffer *dbuf);
     short wrapText(char *to, const char *sourceText, short width);
     short printStringWithWrapping(const char *theString, short x, short y, short width, const color *foreColor,
                                   const color *backColor, screenDisplayBuffer *dbuf);

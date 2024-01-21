@@ -35,6 +35,7 @@ typedef struct ScreenTile {
     short foreRed, foreGreen, foreBlue; // foreground color (0..100)
     short backRed, backGreen, backBlue; // background color (0..100)
     short charIndex;    // index of the glyph to draw
+    CellTextInfo textInfo;
     short needsRefresh; // true if the tile has changed since the last screen refresh, else false
 } ScreenTile;
 
@@ -589,7 +590,8 @@ static void createTextures(SDL_Renderer *renderer, int outputWidth, int outputHe
 ///
 void updateTile(int row, int column, short charIndex,
     short foreRed, short foreGreen, short foreBlue,
-    short backRed, short backGreen, short backBlue)
+    short backRed, short backGreen, short backBlue,
+    CellTextInfo textInfo)
 {
     screenTiles[row][column] = (ScreenTile){
         .foreRed   = foreRed,
@@ -599,6 +601,7 @@ void updateTile(int row, int column, short charIndex,
         .backGreen = backGreen,
         .backBlue  = backBlue,
         .charIndex = charIndex,
+        .textInfo  = textInfo,
         .needsRefresh = 1
     };
 }
@@ -692,8 +695,11 @@ void updateScreen() {
                         continue; // this tile uses another texture and gets painted at another step
                     }
 
-                    int tileRow    = tile->charIndex / 16;
-                    int tileColumn = tile->charIndex % 16;
+                    int textMode = tile->textInfo.mode;
+                    int charIndex = tile->charIndex;
+
+                    int tileRow    = charIndex / 16;
+                    int tileColumn = charIndex % 16;
 
                     if (tileEmpty[tileRow][tileColumn]
                             && !(tileRow == 21 && tileColumn == 1)) {  // wall top (procedural)
@@ -711,6 +717,32 @@ void updateScreen() {
                     dest.h = tileHeight;
                     dest.x = x * outputWidth / COLS;
                     dest.y = y * outputHeight / ROWS;
+
+                    if (textMode == 1) {
+                        // If it's text, then we want to compress the letters
+                        // so the spacing between consecutive letters is more
+                        // natural and readable.
+                        dest.x -= outputWidth * (x - tile->textInfo.firstColumn) / 5 / COLS;
+                    }
+                    if (textMode == 2) {
+                        int offsetForLetter = outputWidth * (x - tile->textInfo.firstColumn) / 5 / COLS;
+                        int offsetForEnd = outputWidth * (tile->textInfo.lastColumn - tile->textInfo.firstColumn) / 5 / COLS;
+                        // `offsetForLetter` is zero for the first letter, and increases for each
+                        // subsequent letter in the line.
+                        dest.x -= offsetForLetter;
+                        // `offsetForEnd` is a constant for all text in the same contiguous span.
+                        // By adding half its value back, we shift the text over so that the first
+                        // letter and the last letter in the span are shifted equally for kerning,
+                        // so that spacing on both sides is uniform.
+                        dest.x += offsetForEnd / 2;
+                    }
+
+                    // int diff = abs(tile->foreRed - tile->backRed) + abs(tile->foreGreen - tile->backGreen) + abs(tile->foreBlue - tile->backBlue);
+                    // if (diff < 100) {
+                    //     tile->foreRed = 100;
+                    //     tile->foreGreen = 100;
+                    //     tile->foreBlue = 100;
+                    // }
 
                     // blend the foreground
                     if (SDL_SetTextureColorMod(Textures[step],

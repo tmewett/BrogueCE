@@ -857,7 +857,9 @@ void commitDraws() {
                 || lastPlotted->foreColorComponents[2] != curr->foreColorComponents[2]
                 || lastPlotted->backColorComponents[0] != curr->backColorComponents[0]
                 || lastPlotted->backColorComponents[1] != curr->backColorComponents[1]
-                || lastPlotted->backColorComponents[2] != curr->backColorComponents[2];
+                || lastPlotted->backColorComponents[2] != curr->backColorComponents[2]
+                || lastPlotted->textInfo.mode != curr->textInfo.mode
+                || lastPlotted->textInfo.firstColumn != curr->textInfo.firstColumn;
 
             if (!needsUpdate) {
                 continue;
@@ -869,7 +871,8 @@ void commitDraws() {
                      curr->foreColorComponents[2],
                      curr->backColorComponents[0],
                      curr->backColorComponents[1],
-                     curr->backColorComponents[2]
+                     curr->backColorComponents[2],
+                     curr->textInfo
             );
             *lastPlotted = *curr;
         }
@@ -888,7 +891,8 @@ void refreshScreen() {
                      curr->foreColorComponents[2],
                      curr->backColorComponents[0],
                      curr->backColorComponents[1],
-                     curr->backColorComponents[2]
+                     curr->backColorComponents[2],
+                     curr->textInfo
             );
             // Remember that it was previously plotted, so that
             // commitDraws still knows when it needs updates.
@@ -1748,7 +1752,11 @@ void colorMultiplierFromDungeonLight(short x, short y, color *editColor) {
     editColor->colorDances = false;
 }
 
+/// Calls `plotCharWithColorAndTextInfo` with a default `CellTextInfo` config.
 void plotCharWithColor(enum displayGlyph inputChar, windowpos loc, const color *cellForeColor, const color *cellBackColor) {
+    plotCharWithColorAndTextInfo(inputChar, loc, cellForeColor, cellBackColor, (CellTextInfo) { .mode = 0 });
+}
+void plotCharWithColorAndTextInfo(enum displayGlyph inputChar, windowpos loc, const color *cellForeColor, const color *cellBackColor, CellTextInfo textInfo) {
     short oldRNG;
 
     short foreRed = cellForeColor->red,
@@ -1806,7 +1814,38 @@ void plotCharWithColor(enum displayGlyph inputChar, windowpos loc, const color *
     target->backColorComponents[0] = backRed;
     target->backColorComponents[1] = backGreen;
     target->backColorComponents[2] = backBlue;
+    target->textInfo = textInfo;
 
+    restoreRNG;
+}
+
+void plotCharToBufferWithTextInfo(enum displayGlyph inputChar, windowpos loc, const color *foreColor, const color *backColor, CellTextInfo textInfo, screenDisplayBuffer *dbuf) {
+    short oldRNG;
+
+    if (!dbuf) {
+        plotCharWithColorAndTextInfo(inputChar, loc, foreColor, backColor, textInfo);
+        return;
+    }
+
+    brogueAssert(locIsInWindow(loc));
+    if (!locIsInWindow(loc)) {
+        return;
+    }
+
+    oldRNG = rogue.RNG;
+    rogue.RNG = RNG_COSMETIC;
+    //assureCosmeticRNG;
+
+    cellDisplayBuffer* cell = &dbuf->cells[loc.window_x][loc.window_y];
+    cell->foreColorComponents[0] = foreColor->red + rand_range(0, foreColor->redRand) + rand_range(0, foreColor->rand);
+    cell->foreColorComponents[1] = foreColor->green + rand_range(0, foreColor->greenRand) + rand_range(0, foreColor->rand);
+    cell->foreColorComponents[2] = foreColor->blue + rand_range(0, foreColor->blueRand) + rand_range(0, foreColor->rand);
+    cell->backColorComponents[0] = backColor->red + rand_range(0, backColor->redRand) + rand_range(0, backColor->rand);
+    cell->backColorComponents[1] = backColor->green + rand_range(0, backColor->greenRand) + rand_range(0, backColor->rand);
+    cell->backColorComponents[2] = backColor->blue + rand_range(0, backColor->blueRand) + rand_range(0, backColor->rand);
+    cell->character = inputChar;
+    
+    cell->textInfo = textInfo;
     restoreRNG;
 }
 
@@ -1835,6 +1874,7 @@ void plotCharToBuffer(enum displayGlyph inputChar, windowpos loc, const color *f
     cell->backColorComponents[1] = backColor->green + rand_range(0, backColor->greenRand) + rand_range(0, backColor->rand);
     cell->backColorComponents[2] = backColor->blue + rand_range(0, backColor->blueRand) + rand_range(0, backColor->rand);
     cell->character = inputChar;
+    cell->textInfo = (CellTextInfo) { .mode = 0 };
     restoreRNG;
 }
 
@@ -1946,12 +1986,10 @@ void clearDisplayBuffer(screenDisplayBuffer *dbuf) {
 
     for (i=0; i<COLS; i++) {
         for (j=0; j<ROWS; j++) {
-            dbuf->cells[i][j].character = ' ';
-            for (k=0; k<3; k++) {
-                dbuf->cells[i][j].foreColorComponents[k] = 0;
-                dbuf->cells[i][j].backColorComponents[k] = 0;
-            }
-            dbuf->cells[i][j].opacity = 0;
+            dbuf->cells[i][j] = (cellDisplayBuffer) {
+                // All other fields will be zeroed.
+                .character = ' ',
+            };
         }
     }
 }
@@ -1980,6 +2018,8 @@ void overlayDisplayBuffer(const screenDisplayBuffer *overBuf) {
                 enum displayGlyph character;
                 backColor = colorFromComponents(overBuf->cells[i][j].backColorComponents);
 
+                CellTextInfo displayTextInfo = displayBuffer.cells[i][j].textInfo;
+
                 // character and fore color:
                 if (overBuf->cells[i][j].character == ' ') { // Blank cells in the overbuf take the character from the screen.
                     character = displayBuffer.cells[i][j].character;
@@ -1988,13 +2028,17 @@ void overlayDisplayBuffer(const screenDisplayBuffer *overBuf) {
                 } else {
                     character = overBuf->cells[i][j].character;
                     foreColor = colorFromComponents(overBuf->cells[i][j].foreColorComponents);
+                    displayTextInfo = overBuf->cells[i][j].textInfo;
+                }
+                if (overBuf->cells[i][j].opacity > 90) {
+                    displayTextInfo = overBuf->cells[i][j].textInfo;
                 }
 
                 // back color:
                 tempColor = colorFromComponents(displayBuffer.cells[i][j].backColorComponents);
                 applyColorAverage(&backColor, &tempColor, 100 - overBuf->cells[i][j].opacity);
 
-                plotCharWithColor(character, (windowpos){ i, j }, &foreColor, &backColor);
+                plotCharWithColorAndTextInfo(character, (windowpos){ i, j }, &foreColor, &backColor, displayTextInfo);
             }
         }
     }
@@ -2140,6 +2184,7 @@ void funkyFade(screenDisplayBuffer *displayBuf, const color *colorStart,
     }
 
     for (n=(invert ? stepCount - 1 : 0); (invert ? n >= 0 : n <= stepCount); n += (invert ? -1 : 1)) {
+        const boolean lastIteration = invert ? n == 0 : n == stepCount-1;
         for (i=0; i<COLS; i++) {
             for (j=0; j<ROWS; j++) {
 
@@ -2191,7 +2236,13 @@ void funkyFade(screenDisplayBuffer *displayBuf, const color *colorStart,
                     applyColorAverage(&foreColor, &tempColor, weight);
                 }
                 applyColorAverage(&backColor, &tempColor, weight);
-                plotCharWithColor(tempChar, (windowpos){ i, j }, &foreColor, &backColor);
+                if (lastIteration) {
+                    // Clear all styling.
+                    plotCharWithColor(tempChar, (windowpos){ i, j }, &foreColor, &backColor);
+                } else {
+                    // Preserve the existing text styling:
+                    plotCharWithColorAndTextInfo(tempChar, (windowpos){ i, j }, &foreColor, &backColor, displayBuffer.cells[i][j].textInfo);
+                }
             }
         }
         if (!fastForward && pauseAnimation(16, PAUSE_BEHAVIOR_DEFAULT)) {
@@ -2755,7 +2806,7 @@ boolean getInputTextString(char *inputText,
         x = mapToWindowX(strLenWithoutEscapes(prompt));
         y = MESSAGE_LINES - 1;
         temporaryMessage(prompt, 0);
-        printString(defaultEntry, x, y, &white, &black, 0);
+        printStringWithTextMode(defaultEntry, x, y, &white, &black, 0, NULL);
     }
 
     maxLength = min(maxLength, COLS - x);
@@ -2837,8 +2888,8 @@ boolean getInputTextString(char *inputText,
     return true;
 }
 
-void displayCenteredAlert(char *message) {
-    printString(message, (COLS - strLenWithoutEscapes(message)) / 2, ROWS / 2, &teal, &black, 0);
+void displayCenteredAlert(const char *message) {
+    printStringCentered(message, (COLS - strLenWithoutEscapes(message)) / 2, ROWS / 2, &teal, &black, 0);
 }
 
 // Flashes a message on the screen starting at (x, y) lasting for the given time (in ms) and with the given colors.
@@ -3239,6 +3290,10 @@ static void drawMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], sho
                     dbuf.cells[mapToWindowX(j)][i].foreColorComponents[k] = dbuf.cells[mapToWindowX(j)][i].foreColorComponents[k] * fadePercent / 100;
                 }
             }
+            dbuf.cells[mapToWindowX(j)][i].textInfo = (CellTextInfo) {
+                .mode = 1, // text
+                .firstColumn = mapToWindowX(0),
+            };
         }
     }
 
@@ -3398,7 +3453,7 @@ void temporaryMessage(const char *msg, unsigned long flags) {
             plotCharWithColor(' ', (windowpos){ mapToWindowX(j), i }, &black, &black);
         }
     }
-    printString(message, mapToWindowX(0), mapToWindowY(-1), &white, &black, 0);
+    printStringWithTextMode(message, mapToWindowX(0), mapToWindowY(-1), &white, &black, 0, NULL);
     if (flags & REQUIRE_ACKNOWLEDGMENT) {
         waitForAcknowledgment();
         updateMessageDisplay();
@@ -3515,9 +3570,9 @@ void message(const char *msg, unsigned long flags) {
 // Only used for the "you die..." message, to enable posthumous inventory viewing.
 void displayMoreSignWithoutWaitingForAcknowledgment() {
     if (strLenWithoutEscapes(displayedMessage[0]) < DCOLS - 8 || messagesUnconfirmed > 0) {
-        printString("--MORE--", COLS - 8, MESSAGE_LINES-1, &black, &white, 0);
+        printStringCentered("--MORE--", COLS - 8, MESSAGE_LINES-1, &black, &white, 0);
     } else {
-        printString("--MORE--", COLS - 8, MESSAGE_LINES, &black, &white, 0);
+        printStringCentered("--MORE--", COLS - 8, MESSAGE_LINES, &black, &white, 0);
     }
 }
 
@@ -3529,11 +3584,11 @@ void displayMoreSign() {
     }
 
     if (strLenWithoutEscapes(displayedMessage[0]) < DCOLS - 8 || messagesUnconfirmed > 0) {
-        printString("--MORE--", COLS - 8, MESSAGE_LINES-1, &black, &white, 0);
+        printStringCentered("--MORE--", COLS - 8, MESSAGE_LINES-1, &black, &white, 0);
         waitForAcknowledgment();
-        printString("        ", COLS - 8, MESSAGE_LINES-1, &black, &black, 0);
+        printStringCentered("        ", COLS - 8, MESSAGE_LINES-1, &black, &black, 0);
     } else {
-        printString("--MORE--", COLS - 8, MESSAGE_LINES, &black, &white, 0);
+        printStringCentered("--MORE--", COLS - 8, MESSAGE_LINES, &black, &white, 0);
         waitForAcknowledgment();
         for (i=1; i<=8; i++) {
             refreshDungeonCell((pos){ DCOLS - i, 0 });
@@ -3630,9 +3685,12 @@ void updateMessageDisplay() {
                 }
             }
 
-            plotCharWithColor(displayedMessage[i][m], (windowpos){ mapToWindowX(j), MESSAGE_LINES - i - 1 },
-                              &messageColor,
-                              &black);
+            plotCharWithColorAndTextInfo(
+                displayedMessage[i][m], (windowpos){ mapToWindowX(j), MESSAGE_LINES - i - 1 },
+                &messageColor,
+                &black,
+                (CellTextInfo) { .mode = 1, .firstColumn = mapToWindowX(0) }
+            );
         }
         for (; j < DCOLS; j++) {
             plotCharWithColor(' ', (windowpos){ mapToWindowX(j), MESSAGE_LINES - i - 1 }, &black, &black);
@@ -3746,15 +3804,15 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
 
     // Header information for playback mode.
     if (rogue.playbackMode) {
-        printString("   -- PLAYBACK --   ", 0, printY++, &white, &black, 0);
+        printStringCentered("   -- PLAYBACK --   ", 0, printY++, &white, &black, 0);
         if (rogue.howManyTurns > 0) {
             sprintf(buf, "Turn %li/%li", rogue.playerTurnNumber, rogue.howManyTurns);
             printProgressBar(0, printY++, buf, rogue.playerTurnNumber, rogue.howManyTurns, &darkPurple, false);
         }
         if (rogue.playbackOOS) {
-            printString("    [OUT OF SYNC]   ", 0, printY++, &badMessageColor, &black, 0);
+            printStringCentered("    [OUT OF SYNC]   ", 0, printY++, &badMessageColor, &black, 0);
         } else if (rogue.playbackPaused) {
-            printString("      [PAUSED]      ", 0, printY++, &gray, &black, 0);
+            printStringCentered("      [PAUSED]      ", 0, printY++, &gray, &black, 0);
         }
         printString("                    ", 0, printY++, &white, &black, 0);
     }
@@ -3894,7 +3952,7 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
             printString("                    ", 0, i, &white, &black, 0);
         }
         sprintf(buf, "  -- Depth: %i --%s   ", rogue.depthLevel, (rogue.depthLevel < 10 ? " " : ""));
-        printString(buf, 0, ROWS - 1, &white, &black, 0);
+        printStringCentered(buf, 0, ROWS - 1, &white, &black, 0);
     } else if (!focusedEntityMustGoFirst) {
         // Failed to get the focusMonst printed on the screen. Try again, this time with the focus first.
         refreshSideBar(focusX, focusY, true);
@@ -3904,9 +3962,29 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
 }
 
 void printString(const char *theString, short x, short y, const color *foreColor, const color *backColor, screenDisplayBuffer *dbuf) {
+    printStringWithTextMode(theString, x, y, foreColor, backColor, 1, dbuf);
+}
+
+
+void printStringWithTextMode(const char *theString, short x, short y, const color *foreColor, const color *backColor, int textMode, screenDisplayBuffer *dbuf) {
     short i;
 
     color fColor = *foreColor;
+
+    CellTextInfo textInfo = (CellTextInfo) { .mode = 0 };
+    if (textMode == 1) {
+        textInfo = (CellTextInfo) {
+            .mode = 1,
+            .firstColumn = x,
+        };
+    }
+    if (textMode == 2) {
+        textInfo = (CellTextInfo) {
+            .mode = 2,
+            .firstColumn = x,
+            .lastColumn = x + strLenWithoutEscapes(theString) - 1,
+        };
+    }
 
     for (i=0; theString[i] != '\0' && x < COLS; i++, x++) {
         while (theString[i] == COLOR_ESCAPE) {
@@ -3916,8 +3994,13 @@ void printString(const char *theString, short x, short y, const color *foreColor
             }
         }
 
-        plotCharToBuffer(theString[i], (windowpos){ x, y }, &fColor, backColor, dbuf);
+        plotCharToBufferWithTextInfo(theString[i], (windowpos){ x, y }, &fColor, backColor, textInfo, dbuf);
     }
+}
+
+// The same as `printString`, but centers the text when performing letter spacing adjustments.
+void printStringCentered(const char *theString, short x, short y, const color *foreColor, const color *backColor, screenDisplayBuffer *dbuf) {
+    printStringWithTextMode(theString, x, y, foreColor, backColor, 2, dbuf);
 }
 
 // Inserts line breaks into really long words. Optionally adds a hyphen, but doesn't do anything
@@ -4038,6 +4121,16 @@ short printStringWithWrapping(const char *theString, short x, short y, short wid
 
         if (locIsInWindow((windowpos){ px, py })) {
             plotCharToBuffer(printString[i], (windowpos){ px, py }, &fColor, backColor, dbuf);
+            CellTextInfo textInfo = (CellTextInfo) {
+                .mode = 2, // TEXT_CENTER
+                .firstColumn = x + 1,
+                .lastColumn = x + width-1,
+            };
+            if (dbuf) {
+                dbuf->cells[px][py].textInfo = textInfo;
+            } else {
+                displayBuffer.cells[px][py].textInfo = textInfo;
+            }
         }
 
         px++;
@@ -4588,7 +4681,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
         } else if (player.status[STATUS_NUTRITION] > 0) {
             printProgressBar(0, y++, "Nutrition (Faint)", player.status[STATUS_NUTRITION], STOMACH_SIZE, &blueBar, dim);
         } else if (y < ROWS - 1) {
-            printString("      STARVING      ", 0, y++, &badMessageColor, &black, NULL);
+            printStringCentered("      STARVING      ", 0, y++, &badMessageColor, &black, NULL);
         }
     }
 
@@ -4635,35 +4728,35 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                     && monst->newPowerCount == monst->totalPowerCount
                     && y < ROWS - 1
                     && (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience )) {
-                    printString("      Negated       ", 0, y++, (dim ? &darkPink : &pink), &black, 0);
+                    printStringCentered("      Negated       ", 0, y++, (dim ? &darkPink : &pink), &black, 0);
                 }
                 if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience && y < ROWS - 1) {
-                    printString(hallucinationStrings[rand_range(0, 9)], 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                    printStringCentered(hallucinationStrings[rand_range(0, 9)], 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if (monst->bookkeepingFlags & MB_CAPTIVE && y < ROWS - 1) {
-                    printString("     (Captive)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                    printStringCentered("     (Captive)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID)
                            && !cellHasTMFlag(monst->loc.x, monst->loc.y, TM_ALLOWS_SUBMERGING)) {
-                    printString("     (Helpless)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                    printStringCentered("     (Helpless)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if (monst->creatureState == MONSTER_SLEEPING && y < ROWS - 1) {
-                    printString("     (Sleeping)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                    printStringCentered("     (Sleeping)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if ((monst->creatureState == MONSTER_ALLY) && y < ROWS - 1) {
-                    printString("       (Ally)       ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                    printStringCentered("       (Ally)       ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if (monst->creatureState == MONSTER_FLEEING && y < ROWS - 1) {
-                    printString("     (Fleeing)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                    printStringCentered("     (Fleeing)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if ((monst->creatureState == MONSTER_WANDERING) && y < ROWS - 1) {
                     if ((monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader && (monst->leader->info.flags & MONST_IMMOBILE)) {
                         // follower of an immobile leader -- i.e. a totem
-                        printString("    (Worshiping)    ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                        printStringCentered("    (Worshiping)    ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                     } else if ((monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader && (monst->leader->bookkeepingFlags & MB_CAPTIVE)) {
                         // actually a captor/torturer
-                        printString("     (Guarding)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                        printStringCentered("     (Guarding)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                     } else {
-                        printString("    (Wandering)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                        printStringCentered("    (Wandering)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                     }
                 } else if (monst->ticksUntilTurn > max(0, player.ticksUntilTurn) + player.movementSpeed) {
-                    printString("   (Off balance)    ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                    printStringCentered("   (Off balance)    ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 } else if ((monst->creatureState == MONSTER_TRACKING_SCENT) && y < ROWS - 1) {
-                    printString("     (Hunting)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                    printStringCentered("     (Hunting)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
                 }
             }
         } else if (monst == &player) {

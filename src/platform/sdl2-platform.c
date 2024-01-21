@@ -390,11 +390,12 @@ static void _plotChar(
     enum displayGlyph inputChar,
     short x, short y,
     short foreRed, short foreGreen, short foreBlue,
-    short backRed, short backGreen, short backBlue
+    short backRed, short backGreen, short backBlue,
+    CellTextInfo textInfo
 ) {
     updateTile(y, x, fontIndex(inputChar),
         foreRed, foreGreen, foreBlue,
-        backRed, backGreen, backBlue);
+        backRed, backGreen, backBlue, textInfo);
 }
 
 
