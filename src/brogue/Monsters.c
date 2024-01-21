@@ -297,10 +297,12 @@ boolean attackWouldBeFutile(const creature *attacker, const creature *defender) 
     return false;
 }
 
-// This is a specific kind of willingness, bordering on ability.
-// Intuition: if it swung an axe from that position, should it
-// hit the defender? Or silently pass through it, as it does for
-// allies?
+/// @brief Determines if a creature is willing to attack another. Considers factors like discord,
+/// entrancement, confusion, and whether they are enemies. Terrain and location are not considered, 
+/// except for krakens and eels that attack anything in deep water. Used for player and monster attacks.
+/// @param attacker the attacking creature
+/// @param defender the defending creature
+/// @return true if the attacker is willing to attack the defender
 boolean monsterWillAttackTarget(const creature *attacker, const creature *defender) {
     if (attacker == defender || (defender->bookkeepingFlags & MB_IS_DYING)) {
         return false;
@@ -308,7 +310,7 @@ boolean monsterWillAttackTarget(const creature *attacker, const creature *defend
     if (attacker == &player
         && defender->creatureState == MONSTER_ALLY) {
 
-        return false;
+        return defender->status[STATUS_DISCORDANT];
     }
     if (attacker->status[STATUS_ENTRANCED]
         && defender->creatureState != MONSTER_ALLY) {
