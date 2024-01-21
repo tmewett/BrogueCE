@@ -1814,9 +1814,7 @@ void plotCharWithColorAndTextInfo(enum displayGlyph inputChar, windowpos loc, co
     target->backColorComponents[0] = backRed;
     target->backColorComponents[1] = backGreen;
     target->backColorComponents[2] = backBlue;
-    // if (textInfo.mode != 0 || inputChar != ' ') {
     target->textInfo = textInfo;
-    // }
 
     restoreRNG;
 }
@@ -2186,6 +2184,7 @@ void funkyFade(screenDisplayBuffer *displayBuf, const color *colorStart,
     }
 
     for (n=(invert ? stepCount - 1 : 0); (invert ? n >= 0 : n <= stepCount); n += (invert ? -1 : 1)) {
+        const boolean lastIteration = invert ? n == 0 : n == stepCount-1;
         for (i=0; i<COLS; i++) {
             for (j=0; j<ROWS; j++) {
 
@@ -2237,7 +2236,13 @@ void funkyFade(screenDisplayBuffer *displayBuf, const color *colorStart,
                     applyColorAverage(&foreColor, &tempColor, weight);
                 }
                 applyColorAverage(&backColor, &tempColor, weight);
-                plotCharWithColor(tempChar, (windowpos){ i, j }, &foreColor, &backColor);
+                if (lastIteration) {
+                    // Clear all styling.
+                    plotCharWithColor(tempChar, (windowpos){ i, j }, &foreColor, &backColor);
+                } else {
+                    // Preserve the existing text styling:
+                    plotCharWithColorAndTextInfo(tempChar, (windowpos){ i, j }, &foreColor, &backColor, displayBuffer.cells[i][j].textInfo);
+                }
             }
         }
         if (!fastForward && pauseAnimation(16, PAUSE_BEHAVIOR_DEFAULT)) {
@@ -2801,7 +2806,7 @@ boolean getInputTextString(char *inputText,
         x = mapToWindowX(strLenWithoutEscapes(prompt));
         y = MESSAGE_LINES - 1;
         temporaryMessage(prompt, 0);
-        printString(defaultEntry, x, y, &white, &black, 0);
+        printStringWithTextMode(defaultEntry, x, y, &white, &black, 0, NULL);
     }
 
     maxLength = min(maxLength, COLS - x);
@@ -3448,7 +3453,7 @@ void temporaryMessage(const char *msg, unsigned long flags) {
             plotCharWithColor(' ', (windowpos){ mapToWindowX(j), i }, &black, &black);
         }
     }
-    printString(message, mapToWindowX(0), mapToWindowY(-1), &white, &black, 0);
+    printStringWithTextMode(message, mapToWindowX(0), mapToWindowY(-1), &white, &black, 0, NULL);
     if (flags & REQUIRE_ACKNOWLEDGMENT) {
         waitForAcknowledgment();
         updateMessageDisplay();
@@ -3957,14 +3962,29 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
 }
 
 void printString(const char *theString, short x, short y, const color *foreColor, const color *backColor, screenDisplayBuffer *dbuf) {
+    printStringWithTextMode(theString, x, y, foreColor, backColor, 1, dbuf);
+}
+
+
+void printStringWithTextMode(const char *theString, short x, short y, const color *foreColor, const color *backColor, int textMode, screenDisplayBuffer *dbuf) {
     short i;
 
     color fColor = *foreColor;
 
-    CellTextInfo textInfo = (CellTextInfo) {
-        .mode = 1,
-        .firstColumn = x,
-    };
+    CellTextInfo textInfo = (CellTextInfo) { .mode = 0 };
+    if (textMode == 1) {
+        textInfo = (CellTextInfo) {
+            .mode = 1,
+            .firstColumn = x,
+        };
+    }
+    if (textMode == 2) {
+        textInfo = (CellTextInfo) {
+            .mode = 2,
+            .firstColumn = x,
+            .lastColumn = x + strLenWithoutEscapes(theString) - 1,
+        };
+    }
 
     for (i=0; theString[i] != '\0' && x < COLS; i++, x++) {
         while (theString[i] == COLOR_ESCAPE) {
@@ -3980,24 +4000,7 @@ void printString(const char *theString, short x, short y, const color *foreColor
 
 // The same as `printString`, but centers the text when performing letter spacing adjustments.
 void printStringCentered(const char *theString, short x, short y, const color *foreColor, const color *backColor, screenDisplayBuffer *dbuf) {
-    color fColor = *foreColor;
-
-    CellTextInfo textInfo = (CellTextInfo) {
-        .mode = 2,
-        .firstColumn = x,
-        .lastColumn = x + strLenWithoutEscapes(theString) - 1,
-    };
-
-    for (int i=0; theString[i] != '\0' && x < COLS; i++, x++) {
-        while (theString[i] == COLOR_ESCAPE) {
-            i = decodeMessageColor(theString, i, &fColor);
-            if (!theString[i]) {
-                return;
-            }
-        }
-
-        plotCharToBufferWithTextInfo(theString[i], (windowpos){ x, y }, &fColor, backColor, textInfo, dbuf);
-    }
+    printStringWithTextMode(theString, x, y, foreColor, backColor, 2, dbuf);
 }
 
 // Inserts line breaks into really long words. Optionally adds a hyphen, but doesn't do anything

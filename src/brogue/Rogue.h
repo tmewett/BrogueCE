@@ -2993,6 +2993,7 @@ extern "C" {
     void colorFlash(const color *theColor, unsigned long reqTerrainFlags, unsigned long reqTileFlags, short frames, short maxRadius, short x, short y);
     // Prints the specified formatted string to the screen, starting at the coordinates (x, y).
     void printString(const char *theString, short x, short y, const color *foreColor, const color* backColor, screenDisplayBuffer *dbuf);
+    void printStringWithTextMode(const char *theString, short x, short y, const color *foreColor, const color* backColor, int textMode, screenDisplayBuffer *dbuf);
     // The same as `printString`, but centers the text when performing letter spacing adjustments.
     void printStringCentered(const char *theString, short x, short y, const color *foreColor, const color* backColor, screenDisplayBuffer *dbuf);
     short wrapText(char *to, const char *sourceText, short width);
