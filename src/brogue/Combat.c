@@ -1208,7 +1208,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
 
         if (attacker == &player
             && (defender->bookkeepingFlags & MB_IS_DYING)
-            && (defender->bookkeepingFlags & MB_HAS_SOUL)) {
+            && (defender->bookkeepingFlags & MB_WEAPON_AUTO_ID)) {
 
             decrementWeaponAutoIDTimer();
         }
@@ -1663,7 +1663,8 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
         if (!administrativeDeath
             && decedent->creatureState == MONSTER_ALLY
             && !canSeeMonster(decedent)
-            && !(decedent->info.flags & MONST_INANIMATE)
+            && (!(decedent->info.flags & MONST_INANIMATE) 
+                || (monsterCatalog[decedent->info.monsterID].abilityFlags & MA_ENTER_SUMMONS))
             && !(decedent->bookkeepingFlags & MB_BOUND_TO_LEADER)
             && !decedent->carriedMonster) {
 

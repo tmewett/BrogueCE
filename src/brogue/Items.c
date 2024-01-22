@@ -3819,21 +3819,7 @@ boolean polymorph(creature *monst) {
         monst->attackSpeed *= 2;
     }
     monst->wasNegated = false;
-    clearStatus(monst);
-
-    if (monst->info.flags & MONST_FIERY) {
-        monst->status[STATUS_BURNING] = monst->maxStatus[STATUS_BURNING] = 1000; // won't decrease
-    }
-    if (monst->info.flags & MONST_FLIES) {
-        monst->status[STATUS_LEVITATING] = monst->maxStatus[STATUS_LEVITATING] = 1000; // won't decrease
-    }
-    if (monst->info.flags & MONST_IMMUNE_TO_FIRE) {
-        monst->status[STATUS_IMMUNE_TO_FIRE] = monst->maxStatus[STATUS_IMMUNE_TO_FIRE] = 1000; // won't decrease
-    }
-    if (monst->info.flags & MONST_INVISIBLE) {
-        monst->status[STATUS_INVISIBLE] = monst->maxStatus[STATUS_INVISIBLE] = 1000; // won't decrease
-    }
-    monst->status[STATUS_NUTRITION] = monst->maxStatus[STATUS_NUTRITION] = 1000;
+    initializeStatus(monst);
 
     if (monst->bookkeepingFlags & MB_CAPTIVE) {
         demoteMonsterFromLeadership(monst);

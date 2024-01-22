@@ -2088,7 +2088,7 @@ enum monsterAbilityFlags {
     MA_HIT_HALLUCINATE              = Fl(0),    // monster can hit to cause hallucinations
     MA_HIT_STEAL_FLEE               = Fl(1),    // monster can steal an item and then run away
     MA_HIT_BURN                     = Fl(2),    // monster can hit to set you on fire
-    MA_ENTER_SUMMONS                = Fl(3),    // monster will "become" its summoned leader, reappearing when that leader is defeated
+    MA_ENTER_SUMMONS                = Fl(3),    // monster will "become" its summoned leader, reappearing when that leader is defeated (phylactery, phoenix egg, vampire)
     MA_HIT_DEGRADE_ARMOR            = Fl(4),    // monster damages armor
     MA_CAST_SUMMON                  = Fl(5),    // requires that there be one or more summon hordes with this monster type as the leader
     MA_SEIZES                       = Fl(6),    // monster seizes enemies before attacking
@@ -2136,10 +2136,11 @@ enum monsterBookkeepingFlags {
     MB_IS_DYING                 = Fl(19),   // monster is currently dying; the death is still being processed
     MB_GIVEN_UP_ON_SCENT        = Fl(20),   // to help the monster remember that the scent map is a dead end
     MB_IS_DORMANT               = Fl(21),   // lurking, waiting to burst out
-    MB_HAS_SOUL                 = Fl(22),   // slaying the monster will count toward weapon auto-ID
+    MB_WEAPON_AUTO_ID           = Fl(22),   // slaying the monster will count toward weapon auto-ID
     MB_ALREADY_SEEN             = Fl(23),   // seeing this monster won't interrupt exploration
     MB_ADMINISTRATIVE_DEATH     = Fl(24),   // like the `administrativeDeath` parameter to `killCreature`
-    MB_HAS_DIED                 = Fl(25)    // monster has already been killed but not yet removed from `monsters`
+    MB_HAS_DIED                 = Fl(25),   // monster has already been killed but not yet removed from `monsters`
+    MB_DOES_NOT_RESURRECT       = Fl(26)    // resurrection altars don't revive monsters summoned by allies 
 };
 
 // Defines all creatures, which include monsters and the player:
@@ -3147,7 +3148,7 @@ extern "C" {
     void monstersTurn(creature *monst);
     boolean getRandomMonsterSpawnLocation(short *x, short *y);
     void spawnPeriodicHorde();
-    void clearStatus(creature *monst);
+    void initializeStatus(creature *monst);
     void moralAttack(creature *attacker, creature *defender);
     short runicWeaponChance(item *theItem, boolean customEnchantLevel, fixpt enchantLevel);
     void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed);
