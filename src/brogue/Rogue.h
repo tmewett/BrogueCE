@@ -1218,9 +1218,9 @@ unsigned long terrainFlags(pos loc);
 unsigned long terrainMechFlags(pos loc);
 
 boolean cellHasTerrainFlag(pos loc, unsigned long flagMask);
-boolean cellHasTMFlag(short x, short y, unsigned long flagMask);
+boolean cellHasTMFlag(pos loc, unsigned long flagMask);
 
-boolean cellHasTerrainType(short x, short y, enum tileType terrain);
+boolean cellHasTerrainType(pos loc, enum tileType terrain);
 
 static inline boolean coordinatesAreInMap(short x, short y) {
     return (x >= 0 && x < DCOLS && y >= 0 && y < DROWS);
@@ -2848,7 +2848,7 @@ extern "C" {
     void bakeColor(color *theColor);
     void shuffleTerrainColors(short percentOfCells, boolean refreshCells);
     void normColor(color *baseColor, const short aggregateMultiplier, const short colorTranslation);
-    void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *returnForeColor, color *returnBackColor);
+    void getCellAppearance(pos loc, enum displayGlyph *returnChar, color *returnForeColor, color *returnBackColor);
     void logBuffer(char array[DCOLS][DROWS]);
     //void logBuffer(short **array);
     boolean search(short searchStrength);

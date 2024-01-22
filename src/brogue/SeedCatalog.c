@@ -119,7 +119,7 @@ static void printSeedCatalogMonster(creature *theMonster, boolean isCsvFormat) {
 
     if (theMonster->bookkeepingFlags & MB_CAPTIVE) {
         strcpy(categoryName,"ally");
-        if (cellHasTMFlag(theMonster->loc.x, theMonster->loc.y, TM_PROMOTES_WITH_KEY)) {
+        if (cellHasTMFlag(theMonster->loc, TM_PROMOTES_WITH_KEY)) {
             strcpy(allyStatusName, isCsvFormat ? "caged" : "A caged ");
         } else {
             strcpy(allyStatusName, isCsvFormat ? "shackled" : "A shackled ");

@@ -659,7 +659,7 @@ unsigned long avoidedFlagsForMonster(creatureType *monsterType) {
 
 boolean monsterCanSubmergeNow(creature *monst) {
     return ((monst->info.flags & MONST_SUBMERGES)
-            && cellHasTMFlag(monst->loc.x, monst->loc.y, TM_ALLOWS_SUBMERGING)
+            && cellHasTMFlag(monst->loc, TM_ALLOWS_SUBMERGING)
             && !cellHasTerrainFlag(monst->loc, T_OBSTRUCTS_PASSABILITY)
             && !(monst->bookkeepingFlags & (MB_SEIZING | MB_SEIZED | MB_CAPTIVE))
             && ((monst->info.flags & (MONST_IMMUNE_TO_FIRE | MONST_INVULNERABLE))
@@ -697,7 +697,7 @@ static boolean spawnMinions(short hordeID, creature *leader, boolean summoned, b
                 getQualifyingPathLocNear(&(monst->loc.x), &(monst->loc.y), x, y, summoned,
                                          T_DIVIDES_LEVEL & forbiddenTerrainFlags, (HAS_PLAYER | HAS_STAIRS),
                                          forbiddenTerrainFlags, HAS_MONSTER, false);
-            } while (theHorde->spawnsIn && !cellHasTerrainType(monst->loc.x, monst->loc.y, theHorde->spawnsIn) && failsafe++ < 20);
+            } while (theHorde->spawnsIn && !cellHasTerrainType(monst->loc, theHorde->spawnsIn) && failsafe++ < 20);
             if (failsafe >= 20) {
                 // abort
                 killCreature(monst, true);
@@ -779,12 +779,12 @@ creature *spawnHorde(short hordeID, pos loc, unsigned long forbiddenFlags, unsig
             }
             if (isPosInMap(loc)) {
                 if (cellHasTerrainFlag(loc, T_PATHING_BLOCKER)
-                    && (!hordeCatalog[hordeID].spawnsIn || !cellHasTerrainType(loc.x, loc.y, hordeCatalog[hordeID].spawnsIn))) {
+                    && (!hordeCatalog[hordeID].spawnsIn || !cellHasTerrainType(loc, hordeCatalog[hordeID].spawnsIn))) {
 
                     // don't spawn a horde in special terrain unless it's meant to spawn there
                     tryAgain = true;
                 }
-                if (hordeCatalog[hordeID].spawnsIn && !cellHasTerrainType(loc.x, loc.y, hordeCatalog[hordeID].spawnsIn)) {
+                if (hordeCatalog[hordeID].spawnsIn && !cellHasTerrainType(loc, hordeCatalog[hordeID].spawnsIn)) {
                     // don't spawn a horde on normal terrain if it's meant for special terrain
                     tryAgain = true;
                 }
@@ -878,7 +878,7 @@ creature *spawnHorde(short hordeID, pos loc, unsigned long forbiddenFlags, unsig
 void fadeInMonster(creature *monst) {
     color fColor, bColor;
     enum displayGlyph displayChar;
-    getCellAppearance(monst->loc.x, monst->loc.y, &displayChar, &fColor, &bColor);
+    getCellAppearance(monst->loc, &displayChar, &fColor, &bColor);
     flashMonster(monst, &bColor, 100);
 }
 
@@ -1291,7 +1291,7 @@ boolean monsterAvoids(creature *monst, pos p) {
 
     // dry land
     if (monst->info.flags & MONST_RESTRICTED_TO_LIQUID
-        && !cellHasTMFlag(p.x, p.y, TM_ALLOWS_SUBMERGING)) {
+        && !cellHasTMFlag(p, TM_ALLOWS_SUBMERGING)) {
         return true;
     }
 
@@ -1303,7 +1303,7 @@ boolean monsterAvoids(creature *monst, pos p) {
     // walls
     if (tFlags & T_OBSTRUCTS_PASSABILITY) {
         if (monst != &player
-            && cellHasTMFlag(p.x, p.y, TM_IS_SECRET)
+            && cellHasTMFlag(p, TM_IS_SECRET)
             && !(discoveredTerrainFlagsAtLoc(p) & avoidedFlagsForMonster(&(monst->info)))) {
             // This is so monsters can use secret doors but won't embed themselves in secret levers.
             return false;
@@ -1345,7 +1345,7 @@ boolean monsterAvoids(creature *monst, pos p) {
     }
 
     // hidden terrain
-    if (cellHasTMFlag(p.x, p.y, TM_IS_SECRET) && monst == &player) {
+    if (cellHasTMFlag(p, TM_IS_SECRET) && monst == &player) {
         return false; // player won't avoid what he doesn't know about
     }
 
@@ -1437,7 +1437,7 @@ boolean monsterAvoids(creature *monst, pos p) {
     if ((tFlags & T_IS_DF_TRAP & ~terrainImmunities)
         && !(cFlags & PRESSURE_PLATE_DEPRESSED)
         && (monst == &player || monst->creatureState == MONSTER_WANDERING
-            || (monst->creatureState == MONSTER_ALLY && !(cellHasTMFlag(p.x, p.y, TM_IS_SECRET))))
+            || (monst->creatureState == MONSTER_ALLY && !(cellHasTMFlag(p, TM_IS_SECRET))))
         && !(monst->status[STATUS_ENTRANCED])
         && (!(tFlags & T_ENTANGLES) || !(monst->info.flags & MONST_IMMUNE_TO_WEBS))) {
         return true;
@@ -3306,7 +3306,7 @@ void monstersTurn(creature *monst) {
     if ((monst->creatureState == MONSTER_TRACKING_SCENT
         || (monst->creatureState == MONSTER_ALLY && monst->status[STATUS_DISCORDANT]))
         // eels don't charge if you're not in the water
-        && (!(monst->info.flags & MONST_RESTRICTED_TO_LIQUID) || cellHasTMFlag(player.loc.x, player.loc.y, TM_ALLOWS_SUBMERGING))) {
+        && (!(monst->info.flags & MONST_RESTRICTED_TO_LIQUID) || cellHasTMFlag(player.loc, TM_ALLOWS_SUBMERGING))) {
 
         // magic users sometimes cast spells
         if (monstUseMagic(monst)
@@ -3402,7 +3402,7 @@ void monstersTurn(creature *monst) {
         return;
     } else if (monst->creatureState == MONSTER_WANDERING
                // eels wander if you're not in water
-               || ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID) && !cellHasTMFlag(player.loc.x, player.loc.y, TM_ALLOWS_SUBMERGING))) {
+               || ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID) && !cellHasTMFlag(player.loc, TM_ALLOWS_SUBMERGING))) {
 
         // if we're standing in harmful terrain and there is a way to escape it, spend this turn escaping it.
         if (cellHasTerrainFlag((pos){ x, y }, (T_HARMFUL_TERRAIN & ~T_IS_FIRE))
@@ -3549,7 +3549,7 @@ boolean canPass(creature *mover, creature *blocker) {
 
 boolean isPassableOrSecretDoor(pos loc) {
     return (!cellHasTerrainFlag(loc, T_OBSTRUCTS_PASSABILITY)
-            || (cellHasTMFlag(loc.x, loc.y, TM_IS_SECRET) && !(discoveredTerrainFlagsAtLoc(loc) & T_OBSTRUCTS_PASSABILITY)));
+            || (cellHasTMFlag(loc, TM_IS_SECRET) && !(discoveredTerrainFlagsAtLoc(loc) & T_OBSTRUCTS_PASSABILITY)));
 }
 
 boolean knownToPlayerAsPassableOrSecretDoor(pos loc) {
@@ -3566,11 +3566,11 @@ void setMonsterLocation(creature *monst, pos newLoc) {
     monst->turnsSpentStationary = 0;
     monst->loc = newLoc;
     pmapAt(newLoc)->flags |= creatureFlag;
-    if ((monst->bookkeepingFlags & MB_SUBMERGED) && !cellHasTMFlag(newLoc.x, newLoc.y, TM_ALLOWS_SUBMERGING)) {
+    if ((monst->bookkeepingFlags & MB_SUBMERGED) && !cellHasTMFlag(newLoc, TM_ALLOWS_SUBMERGING)) {
         monst->bookkeepingFlags &= ~MB_SUBMERGED;
     }
     if (playerCanSee(newLoc.x, newLoc.y)
-        && cellHasTMFlag(newLoc.x, newLoc.y, TM_IS_SECRET)
+        && cellHasTMFlag(newLoc, TM_IS_SECRET)
         && cellHasTerrainFlag(newLoc, T_OBSTRUCTS_PASSABILITY)) {
 
         discover(newLoc.x, newLoc.y); // if you see a monster use a secret door, you discover it
@@ -3638,7 +3638,7 @@ boolean moveMonster(creature *monst, short dx, short dy) {
     newY = y + dy;
 
     // Liquid-based monsters should never move or attack outside of liquid.
-    if ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID) && !cellHasTMFlag(newX, newY, TM_ALLOWS_SUBMERGING)) {
+    if ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID) && !cellHasTMFlag((pos){ newX, newY }, TM_ALLOWS_SUBMERGING)) {
         return false;
     }
 
@@ -4164,7 +4164,7 @@ void monsterDetails(char buf[], creature *monst) {
     upperCase(capMonstName);
 
     if (!(monst->info.flags & MONST_RESTRICTED_TO_LIQUID)
-         || cellHasTMFlag(monst->loc.x, monst->loc.y, TM_ALLOWS_SUBMERGING)) {
+         || cellHasTMFlag(monst->loc, TM_ALLOWS_SUBMERGING)) {
         // If the monster is not a beached whale, print the ordinary flavor text.
         sprintf(newText, "     %s\n     ", monsterText[monst->info.monsterID].flavorText);
         strcat(buf, newText);
@@ -4226,7 +4226,7 @@ void monsterDetails(char buf[], creature *monst) {
     }
 
     // Combat info for the monster attacking the player
-    if ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID) && !cellHasTMFlag(monst->loc.x, monst->loc.y, TM_ALLOWS_SUBMERGING)) {
+    if ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID) && !cellHasTMFlag(monst->loc, TM_ALLOWS_SUBMERGING)) {
         sprintf(newText, "     %s writhes helplessly on dry land.\n     ", capMonstName);
     } else if (rogue.armor
                && (rogue.armor->flags & ITEM_RUNIC)

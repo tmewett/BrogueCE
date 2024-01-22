@@ -173,7 +173,7 @@ void getTMGrid(short **grid, short value, unsigned long TMflags) {
     short i, j;
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
-            if (grid[i][j] != value && cellHasTMFlag(i, j, TMflags)) {
+            if (grid[i][j] != value && cellHasTMFlag((pos){ i, j }, TMflags)) {
                 grid[i][j] = value;
             }
         }
