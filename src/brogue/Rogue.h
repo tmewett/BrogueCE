@@ -2917,6 +2917,9 @@ extern "C" {
     void printSeed(void);
     void printProgressBar(short x, short y, const char barLabel[COLS], long amtFilled, long amtMax, const color *fillColor, boolean dim);
     short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight);
+    enum displayGlyph getItemCategoryGlyph(const enum itemCategory theCategory);
+    enum itemCategory getHallucinatedItemCategory(void);
+    void describedItemName(const item *theItem, char *description, int maxLength);
     void describeHallucinatedItem(char *buf);
     short printItemInfo(item *theItem, short y, boolean dim, boolean highlight);
     short printTerrainInfo(short x, short y, short py, const char *description, boolean dim, boolean highlight);

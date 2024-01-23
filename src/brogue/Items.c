@@ -106,6 +106,51 @@ static unsigned long pickItemCategory(unsigned long theCategory) {
     }
 }
 
+/// @brief Pick a random item category for hallucination
+/// @return the category 
+enum itemCategory getHallucinatedItemCategory(void) {
+    const enum itemCategory itemCategories[10] = {FOOD, WEAPON, ARMOR, POTION, SCROLL, STAFF, WAND, RING, CHARM, GOLD};
+    return itemCategories[rand_range(0, 9)];
+}
+
+/// @brief Gets the glyph used to represent an item of the given category
+/// @param theCategory The item category
+/// @return The glyph
+enum displayGlyph getItemCategoryGlyph(const enum itemCategory theCategory) {
+
+    switch (theCategory) {
+        case FOOD:
+            return G_FOOD;
+        case WEAPON:
+            return G_WEAPON;
+        case ARMOR:
+            return G_ARMOR;
+        case SCROLL:
+            return G_SCROLL;
+        case POTION:
+            return G_POTION;
+        case STAFF:
+            return G_STAFF;
+        case WAND:
+            return G_WAND;
+        case GEM:
+            return G_GEM;
+        case RING:
+            return G_RING;
+        case CHARM:
+            return G_CHARM;
+        case KEY:
+            return G_KEY;
+        case GOLD:
+            return G_GOLD;
+        case AMULET:
+            return G_AMULET;
+        default:
+            break;
+    }
+    return 0;
+}
+
 // Sets an item to the given type and category (or chooses randomly if -1) with all other stats
 item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
     const itemTable *theEntry = NULL;
@@ -117,6 +162,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
     itemCategory = pickItemCategory(itemCategory);
 
     theItem->category = itemCategory;
+    theItem->displayChar = getItemCategoryGlyph(theItem->category);
 
     switch (itemCategory) {
 
@@ -125,7 +171,6 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                 itemKind = chooseKind(foodTable, NUMBER_FOOD_KINDS);
             }
             theEntry = &foodTable[itemKind];
-            theItem->displayChar = G_FOOD;
             theItem->flags |= ITEM_IDENTIFIED;
             break;
 
@@ -136,7 +181,6 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             theEntry = &weaponTable[itemKind];
             theItem->damage = weaponTable[itemKind].range;
             theItem->strengthRequired = weaponTable[itemKind].strengthRequired;
-            theItem->displayChar = G_WEAPON;
 
             switch (itemKind) {
                 case DAGGER:
@@ -214,7 +258,6 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             theEntry = &armorTable[itemKind];
             theItem->armor = randClump(armorTable[itemKind].range);
             theItem->strengthRequired = armorTable[itemKind].strengthRequired;
-            theItem->displayChar = G_ARMOR;
             theItem->charges = gameConst->armorDelayToAutoID; // this many turns until it reveals its enchants and whether runic
             if (rand_percent(40)) {
                 theItem->enchant1 += rand_range(1, 3);
@@ -244,7 +287,6 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                 itemKind = chooseKind(scrollTable, gameConst->numberScrollKinds);
             }
             theEntry = &scrollTable[itemKind];
-            theItem->displayChar = G_SCROLL;
             theItem->flags |= ITEM_FLAMMABLE;
             break;
         case POTION:
@@ -252,14 +294,12 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                 itemKind = chooseKind(potionTable, gameConst->numberPotionKinds);
             }
             theEntry = &potionTable[itemKind];
-            theItem->displayChar = G_POTION;
             break;
         case STAFF:
             if (itemKind < 0) {
                 itemKind = chooseKind(staffTable, NUMBER_STAFF_KINDS);
             }
             theEntry = &staffTable[itemKind];
-            theItem->displayChar = G_STAFF;
             theItem->charges = 2;
             if (rand_percent(50)) {
                 theItem->charges++;
@@ -278,7 +318,6 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                 itemKind = chooseKind(wandTable, gameConst->numberWandKinds);
             }
             theEntry = &(wandTable[itemKind]);
-            theItem->displayChar = G_WAND;
             theItem->charges = randClump(wandTable[itemKind].range);
             break;
         case RING:
@@ -286,7 +325,6 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                 itemKind = chooseKind(ringTable, NUMBER_RING_KINDS);
             }
             theEntry = &ringTable[itemKind];
-            theItem->displayChar = G_RING;
             theItem->enchant1 = randClump(ringTable[itemKind].range);
             theItem->charges = gameConst->ringDelayToAutoID; // how many turns of being worn until it auto-identifies
             if (rand_percent(16)) {
@@ -303,7 +341,6 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             if (itemKind < 0) {
                 itemKind = chooseKind(charmTable, gameConst->numberCharmKinds);
             }
-            theItem->displayChar = G_CHARM;
             theItem->charges = 0; // Charms are initially ready for use.
             theItem->enchant1 = randClump(charmTable[itemKind].range);
             while (rand_percent(7)) {
@@ -313,24 +350,20 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             break;
         case GOLD:
             theEntry = NULL;
-            theItem->displayChar = G_GOLD;
             theItem->quantity = rand_range(50 + rogue.depthLevel * 10 * gameConst->depthAccelerator, 100 + rogue.depthLevel * 15 * gameConst->depthAccelerator);
             break;
         case AMULET:
             theEntry = NULL;
-            theItem->displayChar = G_AMULET;
             itemKind = 0;
             theItem->flags |= ITEM_IDENTIFIED;
             break;
         case GEM:
             theEntry = NULL;
-            theItem->displayChar = G_GEM;
             itemKind = 0;
             theItem->flags |= ITEM_IDENTIFIED;
             break;
         case KEY:
             theEntry = NULL;
-            theItem->displayChar = G_KEY;
             theItem->flags |= ITEM_IDENTIFIED;
             break;
         default:
@@ -5132,7 +5165,8 @@ boolean nextTargetAfter(short *returnX,
         const int n = (selectedIndex + i) % targetCount;
         const int newX = deduplicatedTargetList[n].x;
         const int newY = deduplicatedTargetList[n].y;
-        if ((newX != player.loc.x || newY != player.loc.y)
+        if (((newX != player.loc.x || newY != player.loc.y) 
+            || (posEq((pos){newX, newY}, player.loc) && targetItems && itemAtLoc(player.loc)))
             && (newX != targetX || newY != targetY)
             && (!requireOpenPath || openPathBetween(player.loc.x, player.loc.y, newX, newY))) {
 
@@ -5155,7 +5189,7 @@ boolean nextTargetAfter(short *returnX,
                 }
             }
             item *const theItem = itemAtLoc((pos){ newX, newY });
-            if (!monst && theItem && targetItems) {
+            if ((!monst || (monst == &player)) && theItem && targetItems) {
                 *returnX = newX;
                 *returnY = newY;
                 return true;
