@@ -7143,6 +7143,8 @@ void drinkPotion(item *theItem) {
             if (player.status[STATUS_WEAKENED]) {
                 player.status[STATUS_WEAKENED] = 1;
             }
+            //Needed to make potion have immediate effect
+            player.weaknessAmount = 0;
             updateEncumbrance();
             messageWithColor("newfound strength surges through your body.", &advancementMessageColor, 0);
             createFlare(player.loc.x, player.loc.y, POTION_STRENGTH_LIGHT);
