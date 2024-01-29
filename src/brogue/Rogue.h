@@ -2814,6 +2814,13 @@ typedef struct archivedMessage {
     unsigned long flags;
 } archivedMessage;
 
+enum autoTargetMode {
+    AUTOTARGET_MODE_NONE,               // don't autotarget
+    AUTOTARGET_MODE_USE_STAFF_OR_WAND, 
+    AUTOTARGET_MODE_THROW,
+    AUTOTARGET_MODE_EXPLORE,            // cycle through anything in the sidebar
+};
+
 extern boolean serverMode;
 extern boolean nonInteractivePlayback;
 extern boolean hasGraphics;
@@ -3121,6 +3128,7 @@ extern "C" {
     boolean monsterWillAttackTarget(const creature *attacker, const creature *defender);
     boolean monstersAreTeammates(const creature *monst1, const creature *monst2);
     boolean monstersAreEnemies(const creature *monst1, const creature *monst2);
+    boolean monsterAlwaysReflectsBolts(const creature *monst);
     void initializeGender(creature *monst);
     boolean stringsMatch(const char *str1, const char *str2);
     void resolvePronounEscapes(char *text, creature *monst);
@@ -3173,8 +3181,7 @@ extern "C" {
     boolean canDirectlySeeMonster(creature *monst);
     void monsterName(char *buf, creature *monst, boolean includeArticle);
     boolean monsterIsInClass(const creature *monst, const short monsterClass);
-    boolean chooseTarget(pos *returnLoc, short maxDistance, boolean stopAtTarget, boolean autoTarget,
-                         boolean targetAllies, const bolt *theBolt, const color *trajectoryColor);
+    boolean chooseTarget(pos *returnLoc, short maxDistance, enum autoTargetMode targetingMode, const item *theItem);
     fixpt strengthModifier(item *theItem);
     fixpt netEnchant(item *theItem);
     short hitProbability(creature *attacker, creature *defender);
@@ -3212,15 +3219,12 @@ extern "C" {
     enum boltEffects boltEffectForItem(item *theItem);
     enum boltType boltForItem(item *theItem);
     boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, boolean reverseBoltDir);
-    boolean nextTargetAfter(short *returnX,
+    boolean nextTargetAfter(const item *theItem,
+                            short *returnX,
                             short *returnY,
                             short targetX,
                             short targetY,
-                            boolean targetEnemies,
-                            boolean targetAllies,
-                            boolean targetItems,
-                            boolean targetTerrain,
-                            boolean requireOpenPath,
+                            enum autoTargetMode targetingMode,
                             boolean reverseDirection);
     boolean moveCursor(boolean *targetConfirmed,
                        boolean *canceled,

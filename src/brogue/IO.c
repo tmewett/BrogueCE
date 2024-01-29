@@ -746,7 +746,7 @@ void mainInputLoop() {
             }
 
             if (tabKey && !playingBack) { // The tab key cycles the cursor through monsters, items and terrain features.
-                if (nextTargetAfter(&newX, &newY, rogue.cursorLoc.x, rogue.cursorLoc.y, true, true, true, true, false, theEvent.shiftKey)) {
+                if (nextTargetAfter(NULL, &newX, &newY, rogue.cursorLoc.x, rogue.cursorLoc.y, AUTOTARGET_MODE_EXPLORE, theEvent.shiftKey)) {
                     rogue.cursorLoc.x = newX;
                     rogue.cursorLoc.y = newY;
                 }

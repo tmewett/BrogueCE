@@ -375,7 +375,7 @@ static void dialogCreateMonster() {
     temporaryMessage(theMessage, REFRESH_SIDEBAR);
 
     // pick a location
-    if (chooseTarget(&selectedPosition, 0, false, true, false, &boltCatalog[BOLT_NONE], &white)) {
+    if (chooseTarget(&selectedPosition, 0, AUTOTARGET_MODE_NONE, NULL)) {
         confirmMessages();
 
         if (!playerCanSeeOrSense(selectedPosition.x, selectedPosition.y)) {

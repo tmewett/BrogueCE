@@ -1,0 +1,1 @@
+When using a staff or wand, enemy monsters that always reflect bolts will no longer be auto-targeted.

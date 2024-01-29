@@ -334,6 +334,20 @@ boolean monstersAreTeammates(const creature *monst1, const creature *monst2) {
                  && monst1->leader == monst2->leader)) ? true : false);
 }
 
+/// @brief Checks if a monster always reflects bolts (guardian spirit, mirror totem, stone/winged guardian)
+/// These monsters also always reflect the bolt back at the caster.
+/// @param monst the monster
+/// @return true if the monster always reflect bolts
+boolean monsterAlwaysReflectsBolts(const creature *monst) {
+    if (monst
+        && (monst->info.flags & MONST_REFLECT_4) 
+        && (monst->info.flags & MONST_ALWAYS_USE_ABILITY)) {
+        
+        return true;
+    }
+    return false;
+}
+
 boolean monstersAreEnemies(const creature *monst1, const creature *monst2) {
     if ((monst1->bookkeepingFlags | monst2->bookkeepingFlags) & MB_CAPTIVE) {
         return false;
