@@ -526,16 +526,15 @@ boolean freeCaptivesEmbeddedAt(short x, short y) {
     return false;
 }
 
-// Do we need confirmation so we don't accidently hit an acid mound?
+/// @brief Ask the player for confirmation before attacking an acidic monster
+/// @param hitList the creature(s) getting attacked 
+/// @return true to abort the attack
 boolean abortAttackAgainstAcidicTarget(creature *hitList[8]) {
     short i;
     char monstName[COLS], weaponName[COLS];
     char buf[COLS*3];
 
-    if (rogue.weapon
-        && !(rogue.weapon->flags & ITEM_PROTECTED)
-        && !player.status[STATUS_HALLUCINATING]
-        && !player.status[STATUS_CONFUSED]) {
+    if (rogue.weapon && !(rogue.weapon->flags & ITEM_PROTECTED)) {
 
         for (i=0; i<8; i++) {
             if (hitList[i]
@@ -560,9 +559,54 @@ boolean abortAttackAgainstAcidicTarget(creature *hitList[8]) {
     return false;
 }
 
+/// @brief Ask the player for confirmation before attacking a discordant ally
+/// @param hitList the creature(s) getting attacked 
+/// @return true to abort the attack
+static boolean abortAttackAgainstDiscordantAlly(const creature *hitList[8]) {
+
+    for (int i=0; i<8; i++) {
+        if (hitList[i]
+            && hitList[i]->creatureState == MONSTER_ALLY
+            && hitList[i]->status[STATUS_DISCORDANT]
+            && canSeeMonster(hitList[i])) {
+
+            char monstName[COLS], buf[COLS*3];
+            monsterName(monstName, hitList[i], true);
+            sprintf(buf, "Are you sure you want to attack %s?", monstName);
+            if (confirm(buf, false)) {
+                return false; // Don't abort. Attack the ally.
+            } else {
+                return true; // Abort!
+            }
+        }
+    }
+    return false; // the confirmation dialog was not shown 
+}
+
+/// @brief Determines if a player attack against the given creature(s) should be aborted. A confirmation
+/// dialog is shown when attempting to attack an acidic monster or discordant ally, unless confused or 
+/// hallucinating (but not telepathic). 
+/// @param hitList the creature(s) getting attacked 
+/// @return true to abort the attack
+static boolean abortAttack(const creature *hitList[8]) {
+
+    // too bad so sad if you're confused or hallucinating (but not telepathic)
+    if (player.status[STATUS_CONFUSED] 
+        || (player.status[STATUS_HALLUCINATING] && !player.status[STATUS_TELEPATHIC])) {
+        return false;
+    }
+
+    if (abortAttackAgainstAcidicTarget(hitList) 
+        || abortAttackAgainstDiscordantAlly(hitList)) {
+        return true;
+    }    
+
+    return false; // either the player confirmed the attack or the confirmation dialog was not shown
+}
+
 // Returns true if a whip attack was launched.
 // If "aborted" pointer is provided, sets it to true if it was aborted because
-// the player opted not to attack an acid mound (in which case the whole turn
+// the player opted not to attack (in which case the whole turn
 // should be aborted), as opposed to there being no valid whip attack available
 // (in which case the player/monster should move instead).
 boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *aborted) {
@@ -600,7 +644,7 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
 
         if (attacker == &player) {
             hitList[0] = defender;
-            if (abortAttackAgainstAcidicTarget(hitList)) {
+            if (abortAttack(hitList)) {
                 if (aborted) {
                     *aborted = true;
                 }
@@ -618,7 +662,7 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
 
 // Returns true if a spear attack was launched.
 // If "aborted" pointer is provided, sets it to true if it was aborted because
-// the player opted not to attack an acid mound (in which case the whole turn
+// the player opted not to attack (in which case the whole turn
 // should be aborted), as opposed to there being no valid spear attack available
 // (in which case the player/monster should move instead).
 boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *aborted) {
@@ -682,7 +726,7 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
     range = i;
     if (proceed) {
         if (attacker == &player) {
-            if (abortAttackAgainstAcidicTarget(hitList)) {
+            if (abortAttack(hitList)) {
                 if (aborted) {
                     *aborted = true;
                 }
@@ -869,7 +913,7 @@ boolean playerMoves(short direction) {
             moveEntrancedMonsters(direction);
             playerTurnEnded();
             return true;
-        } else if (specialAttackAborted) { // Canceled an attack against an acid mound.
+        } else if (specialAttackAborted) { // Canceled an attack against an acidic monster or discordant ally
             brogueAssert(!committed);
             cancelKeystroke();
             rogue.disturbed = true;
@@ -897,7 +941,7 @@ boolean playerMoves(short direction) {
                 }
             }
 
-            if (defender->creatureState != MONSTER_ALLY) {
+            if (defender->creatureState != MONSTER_ALLY || defender->status[STATUS_DISCORDANT]) {
                 // Make a hit list of monsters the player is attacking this turn.
                 // We separate this tallying phase from the actual attacking phase because sometimes the attacks themselves
                 // create more monsters, and those shouldn't be attacked in the same turn.
@@ -905,7 +949,7 @@ boolean playerMoves(short direction) {
                 buildHitList(hitList, &player, defender,
                              rogue.weapon && (rogue.weapon->flags & ITEM_ATTACKS_ALL_ADJACENT));
 
-                if (abortAttackAgainstAcidicTarget(hitList)) { // Acid mound attack confirmation.
+                if (abortAttack(hitList)) {
                     brogueAssert(!committed);
                     cancelKeystroke();
                     rogue.disturbed = true;
@@ -1049,7 +1093,7 @@ boolean playerMoves(short direction) {
                     && (!cellHasTerrainFlag(tempMonst->loc.x, tempMonst->loc.y, T_OBSTRUCTS_PASSABILITY) || (tempMonst->info.flags & MONST_ATTACKABLE_THRU_WALLS))) {
 
                     hitList[0] = tempMonst;
-                    if (abortAttackAgainstAcidicTarget(hitList)) { // Acid mound attack confirmation.
+                    if (abortAttack(hitList)) {
                         brogueAssert(!committed);
                         cancelKeystroke();
                         rogue.disturbed = true;
@@ -1060,7 +1104,7 @@ boolean playerMoves(short direction) {
         }
         if (rogue.weapon && (rogue.weapon->flags & ITEM_PASS_ATTACKS)) {
             buildFlailHitList(x, y, newX, newY, hitList);
-            if (abortAttackAgainstAcidicTarget(hitList)) { // Acid mound attack confirmation.
+            if (abortAttack(hitList)) {
                 brogueAssert(!committed);
                 cancelKeystroke();
                 rogue.disturbed = true;
