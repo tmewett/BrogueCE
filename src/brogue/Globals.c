@@ -54,6 +54,7 @@ itemTable *potionTable;
 itemTable *scrollTable;
 itemTable *wandTable;
 itemTable *charmTable;
+const feat *featTable;
 const charmEffectTableEntry *charmEffectTable;
 const levelFeeling *levelFeelings;
 const hordeType *hordeCatalog;
@@ -1659,21 +1660,6 @@ itemTable ringTable[NUMBER_RING_KINDS] = {
     {"awareness",       itemGems[5], "",    1,  700,    0, 0, {1,3,1}, false, false, 1, false, "This ring of effortless vigilance will enable you to notice traps, secret doors and hidden levers more often and from a greater distance. Cursed rings of awareness will dull your senses, making it harder to notice secrets without actively searching for them."},
     {"wisdom",          itemGems[6], "",    1,  700,    0, 0, {1,3,1}, false, false, 1, false, "This ring of arcane power will cause your staffs to recharge at an accelerated rate. Cursed rings of wisdom will cause your staffs to recharge more slowly."},
     {"reaping",         itemGems[7], "",    1,  700,    0, 0, {1,3,1}, false, false, 1, false, "This ring of blood magic will recharge your staffs and charms every time you hit an enemy. Cursed rings of reaping will drain your staffs and charms with every hit."},
-};
-
-const feat featTable[FEAT_COUNT] = {
-    {"Pure Mage",       "Ascend without using fists or a weapon.", true},
-    {"Pure Warrior",    "Ascend without using a staff, wand or charm.", true},
-    {"Pacifist",        "Ascend without attacking a creature.", true},
-    {"Archivist",       "Ascend without drinking a potion or reading a scroll.", true},
-    {"Companion",       "Journey with an ally through 20 depths.", false},
-    {"Specialist",      "Enchant an item up to or above +16.", false},
-    {"Jellymancer",     "Obtain at least 90 jelly allies simultaneously.", false},
-    {"Indomitable",     "Ascend without taking damage.", true},
-    {"Ascetic",         "Ascend without eating.", true},
-    {"Dragonslayer",    "Kill a dragon with a melee attack.", false},
-    {"Paladin",         "Ascend without attacking an unaware or fleeing creature.", true},
-    {"Untempted",       "Ascend without picking up gold.", true},
 };
 
 const char monsterBehaviorFlagDescriptions[32][COLS] = {

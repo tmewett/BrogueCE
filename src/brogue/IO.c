@@ -321,6 +321,13 @@ static short actionMenu(short x, boolean playingBack) {
         buttonCount++;
 
         if (KEYBOARD_LABELS) {
+            sprintf(buttons[buttonCount].text, "  %sF: %sFeats             ",   yellowColorEscape, whiteColorEscape);
+        } else {
+            strcpy(buttons[buttonCount].text, "  Feats             ");
+        }
+        buttons[buttonCount].hotkey[0] = FEATS_KEY;
+        buttonCount++;
+        if (KEYBOARD_LABELS) {
             sprintf(buttons[buttonCount].text, "  %sD: %sDiscovered items  ",   yellowColorEscape, whiteColorEscape);
         } else {
             strcpy(buttons[buttonCount].text, "  Discovered items  ");
@@ -2619,6 +2626,9 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
         case BROGUE_HELP_KEY:
             printHelpScreen();
             break;
+        case FEATS_KEY:
+            displayFeatsScreen();
+            break;
         case DISCOVERIES_KEY:
             printDiscoveriesScreen();
             break;
@@ -4181,6 +4191,59 @@ static void printDiscoveries(short category, short count, unsigned short itemCha
         strcat(buf, " ");
         printString(buf, x + 2, y + i, theColor, &black, dbuf);
     }
+}
+
+/// @brief Display the feats screen. Lists all feats and their achievement status.
+void displayFeatsScreen() {
+    char availableColorEscape[5] = "", achievedColorEscape[5] = "", failedColorEscape[5] = "";
+    encodeMessageColor(availableColorEscape, 0, &white);
+    encodeMessageColor(achievedColorEscape, 0, &advancementMessageColor);
+    encodeMessageColor(failedColorEscape, 0, &badMessageColor);
+
+    screenDisplayBuffer dbuf;
+    clearDisplayBuffer(&dbuf);
+
+    // Title
+    char buf[COLS*2] = "-- FEATS --";
+    short y = 1;
+    printString(buf, mapToWindowX((DCOLS - FEAT_NAME_LENGTH - strLenWithoutEscapes(buf)) / 2), y, &flavorTextColor, &black, &dbuf);
+
+    // List of feats, color-coded by status
+    char featColorEscape[5] = "", featStatusChar[2];
+    for (int i = 0; i < gameConst->numberFeats; i++) {
+        if (rogue.featRecord[i] == featTable[i].initialValue) {
+            strcpy(featColorEscape, availableColorEscape);
+            strcpy(featStatusChar," ");
+        } else if (rogue.featRecord[i]) {
+            strcpy(featColorEscape, achievedColorEscape);
+            strcpy(featStatusChar,"+");
+        } else {
+            strcpy(featColorEscape, failedColorEscape);
+            strcpy(featStatusChar,"-");
+        }
+        sprintf(buf, "%*s %s%s %s", FEAT_NAME_LENGTH, featTable[i].name, featColorEscape, featStatusChar, featTable[i].description);
+        printString(buf, mapToWindowX(0), y + i + 1, &itemMessageColor, &black, &dbuf);
+    }
+    
+    // Legend
+    strcpy(buf,"-- LEGEND --");
+    printString(buf, mapToWindowX((DCOLS - FEAT_NAME_LENGTH - strLenWithoutEscapes(buf)) / 2), ROWS-5, &gray, &black, &dbuf);
+    sprintf(buf, "%sFailed(-)  %sAchieved(+)  ", failedColorEscape, achievedColorEscape);
+    printString(buf, mapToWindowX((DCOLS - FEAT_NAME_LENGTH - strLenWithoutEscapes(buf)) / 2), ROWS-4, &white, &black, &dbuf);
+
+    strcpy(buf,KEYBOARD_LABELS ? "-- press any key to continue --" : "-- touch anywhere to continue --");
+    printString(buf, mapToWindowX((DCOLS - FEAT_NAME_LENGTH - strLenWithoutEscapes(buf)) / 2), ROWS-2, &itemMessageColor, &black, &dbuf);
+
+    // Set the opacity
+    for (int i=0; i<COLS; i++) {
+        for (int j=0; j<ROWS; j++) {
+            dbuf.cells[i][j].opacity = (i < STAT_BAR_WIDTH ? 0 : INTERFACE_OPACITY);
+        }
+    }
+    const SavedDisplayBuffer rbuf = saveDisplayBuffer();
+    overlayDisplayBuffer(&dbuf);
+    waitForKeystrokeOrMouseClick();
+    restoreDisplayBuffer(&rbuf);
 }
 
 void printDiscoveriesScreen() {

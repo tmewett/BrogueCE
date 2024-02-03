@@ -924,48 +924,49 @@ static void handleHealthAlerts() {
     restoreRNG;
 }
 
-static void addXPXPToAlly(short XPXP, creature *monst) {
-    char theMonsterName[100], buf[200];
-    if (!(monst->info.flags & (MONST_INANIMATE | MONST_IMMOBILE))
-        && !(monst->bookkeepingFlags & MB_TELEPATHICALLY_REVEALED)
-        && monst->creatureState == MONSTER_ALLY
-        && monst->spawnDepth <= rogue.depthLevel
-        && rogue.depthLevel <= gameConst->amuletLevel) {
+/// @brief Add experience to the given monster. Allies gain experience when the player discovers new pathable tiles.
+/// @param monst The ally that gains experience
+static void addXPXPToAlly(creature *monst) {
+    if (!(monst->creatureState == MONSTER_ALLY) || monst->info.flags & (MONST_INANIMATE | MONST_IMMOBILE)) {
+        return;
+    }
 
-        monst->xpxp += XPXP;
-        //printf("\n%i xpxp added to your %s this turn.", rogue.xpxpThisTurn, monst->info.monsterName);
-        if (monst->xpxp >= XPXP_NEEDED_FOR_TELEPATHIC_BOND
-            && !(monst->bookkeepingFlags & MB_TELEPATHICALLY_REVEALED)) {
+    monst->xpxp += rogue.xpxpThisTurn;
 
-            monst->bookkeepingFlags |= MB_TELEPATHICALLY_REVEALED;
-            updateVision(true);
-            monsterName(theMonsterName, monst, false);
-            sprintf(buf, "you have developed a telepathic bond with your %s.", theMonsterName);
-            messageWithColor(buf, &advancementMessageColor, 0);
-        }
-        if (monst->xpxp > 1500 * 20) {
-            rogue.featRecord[FEAT_COMPANION] = true;
-        }
+    // Telepathic bond
+    if (!(monst->bookkeepingFlags & MB_TELEPATHICALLY_REVEALED) && monst->xpxp >= XPXP_NEEDED_FOR_TELEPATHIC_BOND) {
+
+        monst->bookkeepingFlags |= MB_TELEPATHICALLY_REVEALED;
+        updateVision(true);
+        char theMonsterName[100], buf[200];
+        monsterName(theMonsterName, monst, false);
+        sprintf(buf, "you have developed a telepathic bond with your %s.", theMonsterName);
+        messageWithColor(buf, &advancementMessageColor, 0);
+    }
+
+    // Companion feat
+    if (!(rogue.featRecord[FEAT_COMPANION]) && monst->xpxp >= gameConst->companionFeatRequiredXP) {
+        rogue.featRecord[FEAT_COMPANION] = true;
     }
 }
 
+/// @brief Allies gain experience if they are within 1 depth level of the player
 static void handleXPXP() {
-    //char buf[DCOLS*2], theMonsterName[50];
 
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
-        addXPXPToAlly(rogue.xpxpThisTurn, monst);
+        addXPXPToAlly(monst);
     }
     if (rogue.depthLevel > 1) {
         for (creatureIterator it = iterateCreatures(&levels[rogue.depthLevel - 2].monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
-            addXPXPToAlly(rogue.xpxpThisTurn, monst);
+            addXPXPToAlly(monst);
         }
     }
     if (rogue.depthLevel < gameConst->deepestLevel) {
         for (creatureIterator it = iterateCreatures(&levels[rogue.depthLevel].monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
-            addXPXPToAlly(rogue.xpxpThisTurn, monst);
+            addXPXPToAlly(monst);
         }
     }
     rogue.xpxpThisTurn = 0;
