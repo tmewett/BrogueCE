@@ -3318,7 +3318,6 @@ extern "C" {
     void relabel(item *theItem);
     void swapLastEquipment(void);
     void apply(item *theItem);
-    void recordApplyItemCommand(item *theItem);
     boolean eat(item *theItem, boolean recordCommands);
     boolean itemCanBeCalled(item *theItem);
     void call(item *theItem);

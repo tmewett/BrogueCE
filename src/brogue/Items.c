@@ -6389,17 +6389,26 @@ static boolean playerCancelsBlinking(const pos originLoc, const pos targetLoc, c
     return false;
 }
 
-static boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
+/// @brief Records the keystroke sequence when a player applies an item
+/// @param theItem the item that was used
+static void recordApplyItemCommand(item *theItem) {
+    if (!theItem) {
+        return;
+    }
+
+    unsigned char command[3] = {'\0'};
+
+    command[0] = APPLY_KEY;
+    command[1] = theItem->inventoryLetter;
+    recordKeystrokeSequence(command);
+}
+
+static boolean useStaffOrWand(item *theItem) {
     char buf[COLS], buf2[COLS];
-    unsigned char command[10];
-    short maxDistance, c;
+    short maxDistance;
     boolean autoTarget, targetAllies, autoID, boltKnown, confirmedTarget;
     bolt theBolt;
     color trajectoryHiliteColor;
-
-    c = 0;
-    command[c++] = APPLY_KEY;
-    command[c++] = theItem->inventoryLetter;
 
     if (theItem->charges <= 0 && (theItem->flags & ITEM_IDENTIFIED)) {
         itemName(theItem, buf2, false, false, NULL);
@@ -6461,12 +6470,8 @@ static boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
     }
     if (confirmedTarget) {
 
-        command[c] = '\0';
-        if (!(*commandsRecorded)) {
-            recordKeystrokeSequence(command);
-            recordMouseClick(mapToWindowX(zapTarget.x), mapToWindowY(zapTarget.y), true, false);
-            *commandsRecorded = true;
-        }
+        recordApplyItemCommand(theItem);
+        recordMouseClick(mapToWindowX(zapTarget.x), mapToWindowY(zapTarget.y), true, false);
         confirmMessages();
 
         rogue.featRecord[FEAT_PURE_WARRIOR] = false;
@@ -6502,6 +6507,20 @@ static boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
     } else {
         return false;
     }
+
+    if (theItem->category & STAFF) {
+        theItem->lastUsed[2] = theItem->lastUsed[1];
+        theItem->lastUsed[1] = theItem->lastUsed[0];
+        theItem->lastUsed[0] = rogue.absoluteTurnNumber;
+    }
+
+    if (theItem->charges > 0) {
+        theItem->charges--;
+        if (theItem->category == WAND) {
+            theItem->enchant2++; // keeps track of how many times the wand has been discharged for the player's convenience
+        }
+    }
+
     return true;
 }
 
@@ -6533,20 +6552,6 @@ static void consumePackItem(item *theItem) {
         removeItemFromChain(theItem, packItems);
         deleteItem(theItem);
     }
-}
-
-/// @brief Records the keystroke sequence when a player applies an item
-/// @param theItem the item that was used
-void recordApplyItemCommand(item *theItem) {
-    if (!theItem) {
-        return;
-    }
-
-    unsigned char command[3] = {'\0'};
-
-    command[0] = APPLY_KEY;
-    command[1] = theItem->inventoryLetter;
-    recordKeystrokeSequence(command);
 }
 
 /// @brief The player eats the given item, nutrition is increased, the item is removed from inventory, and the
@@ -6665,15 +6670,6 @@ static boolean useCharm(item *theItem) {
 
 void apply(item *theItem) {
     char buf[COLS * 3], buf2[COLS * 3];
-    boolean commandsRecorded, revealItemType;
-    unsigned char command[10] = "";
-    short c;
-
-    commandsRecorded = false;
-    c = 0;
-    command[c++] = APPLY_KEY;
-
-    revealItemType = false;
 
     if (!theItem) {
         theItem = promptForItemOfType((SCROLL|FOOD|POTION|STAFF|WAND|CHARM), 0, 0,
@@ -6685,36 +6681,33 @@ void apply(item *theItem) {
         return;
     }
 
-
-
-    command[c++] = theItem->inventoryLetter;
     confirmMessages();
     switch (theItem->category) {
         case FOOD:
             if (eat(theItem, true)) {
-                playerTurnEnded();
+                break;
             }        
             return;
         case POTION:
             if (drinkPotion(theItem)) {
-                playerTurnEnded();
+                break;
             }
             return;
         case SCROLL:
             if (readScroll(theItem)) { 
                 consumePackItem(theItem);
-                playerTurnEnded();
+                break;
             }
             return;
         case STAFF:
         case WAND:
-            if (!useStaffOrWand(theItem, &commandsRecorded)) {
-                return;
+            if (useStaffOrWand(theItem)) {
+                break;
             }
-            break;
+            return;
         case CHARM:
             if (useCharm(theItem)) {
-                playerTurnEnded();
+                break;
             }
             return;
         default:
@@ -6724,37 +6717,6 @@ void apply(item *theItem) {
             return;
     }
 
-    if (!commandsRecorded) { // to make sure we didn't already record the keystrokes above with staff/wand targeting
-        command[c] = '\0';
-        recordKeystrokeSequence(command);
-        commandsRecorded = true;
-    }
-
-    // Reveal the item type if appropriate.
-    if (revealItemType) {
-        autoIdentify(theItem);
-    }
-
-    // track staff last usage
-    theItem->lastUsed[2] = theItem->lastUsed[1];
-    theItem->lastUsed[1] = theItem->lastUsed[0];
-    theItem->lastUsed[0] = rogue.absoluteTurnNumber;
-
-    if (theItem->category & CHARM) {
-       // theItem->charges = charmRechargeDelay(theItem->kind, theItem->enchant1);
-    // staff or wand
-    } else if (theItem->charges > 0) {
-        theItem->charges--;
-        if (theItem->category == WAND) {
-            theItem->enchant2++; // keeps track of how many times the wand has been discharged for the player's convenience
-        }
-    // stackable items
-    } else if (theItem->quantity > 1) {
-        theItem->quantity--;
-    } else {
-        removeItemFromChain(theItem, packItems);
-        deleteItem(theItem);
-    }
     playerTurnEnded();
 }
 
@@ -7160,13 +7122,13 @@ boolean drinkPotion(item *theItem) {
 
     brogueAssert(rogue.RNG == RNG_SUBSTANTIVE);
 
-    itemTable potionTable = tableForItemCategory(theItem->category)[theItem->kind];
+    itemTable potionKind = tableForItemCategory(theItem->category)[theItem->kind];
 
     if (magicCharDiscoverySuffix(theItem->category, theItem->kind) == -1
-        && ((theItem->flags & ITEM_MAGIC_DETECTED) || potionTable.identified)) {
+        && ((theItem->flags & ITEM_MAGIC_DETECTED) || potionKind.identified)) {
 
-        if (potionTable.identified) {
-            sprintf(buf,"Really drink a potion of %s?", potionTable.name);
+        if (potionKind.identified) {
+            sprintf(buf,"Really drink a potion of %s?", potionKind.name);
         } else {
             sprintf(buf,"Really drink a cursed potion?");
         }
@@ -7177,10 +7139,10 @@ boolean drinkPotion(item *theItem) {
 
     confirmMessages();
     rogue.featRecord[FEAT_ARCHIVIST] = false;
+    magnitude = randClump(potionKind.range);
 
     switch (theItem->kind) {
         case POTION_LIFE:
-            magnitude = randClump(potionTable.range);
             sprintf(buf, "%syour maximum health increases by %i%%.",
                     ((player.currentHP < player.info.maxHP) ? "you heal completely and " : ""),
                     (player.info.maxHP + magnitude) * 100 / player.info.maxHP - 100);
@@ -7191,7 +7153,6 @@ boolean drinkPotion(item *theItem) {
             messageWithColor(buf, &advancementMessageColor, 0);
             break;
         case POTION_HALLUCINATION:
-            magnitude = randClump(potionTable.range);
             player.status[STATUS_HALLUCINATING] = player.maxStatus[STATUS_HALLUCINATING] = magnitude;
             message("colors are everywhere! The walls are singing!", 0);
             break;
@@ -7202,7 +7163,6 @@ boolean drinkPotion(item *theItem) {
             exposeCreatureToFire(&player);
             break;
         case POTION_DARKNESS:
-            magnitude = randClump(potionTable.range);
             player.status[STATUS_DARKNESS] = max(magnitude, player.status[STATUS_DARKNESS]);
             player.maxStatus[STATUS_DARKNESS] = max(magnitude, player.maxStatus[STATUS_DARKNESS]);
             updateMinersLightRadius();
@@ -7218,7 +7178,6 @@ boolean drinkPotion(item *theItem) {
             }
             break;
         case POTION_STRENGTH:
-            magnitude = randClump(potionTable.range);
             rogue.strength += magnitude;
             if (player.status[STATUS_WEAKENED]) {
                 player.status[STATUS_WEAKENED] = 1;
@@ -7236,11 +7195,9 @@ boolean drinkPotion(item *theItem) {
             message("your muscles stiffen as a cloud of pink gas bursts from the open flask!", 0);
             break;
         case POTION_TELEPATHY:
-            magnitude = randClump(potionTable.range);
             makePlayerTelepathic(magnitude);
             break;
         case POTION_LEVITATION:
-            magnitude = randClump(potionTable.range);
             player.status[STATUS_LEVITATING] = player.maxStatus[STATUS_LEVITATING] = magnitude;
             player.bookkeepingFlags &= ~MB_SEIZED; // break free of holding monsters
             message("you float into the air!", 0);
@@ -7302,11 +7259,9 @@ boolean drinkPotion(item *theItem) {
             break;
         }
         case POTION_HASTE_SELF:
-            magnitude = randClump(potionTable.range);
             haste(&player, magnitude);
             break;
         case POTION_FIRE_IMMUNITY:
-            magnitude = randClump(potionTable.range);
             player.status[STATUS_IMMUNE_TO_FIRE] = player.maxStatus[STATUS_IMMUNE_TO_FIRE] = magnitude;
             if (player.status[STATUS_BURNING]) {
                 extinguishFireOnCreature(&player);
@@ -7314,7 +7269,6 @@ boolean drinkPotion(item *theItem) {
             message("a comforting breeze envelops you, and you no longer fear fire.", 0);
             break;
         case POTION_INVISIBILITY:
-            magnitude = randClump(potionTable.range);
             player.status[STATUS_INVISIBLE] = player.maxStatus[STATUS_INVISIBLE] = magnitude;
             message("you shiver as a chill runs up your spine.", 0);
             break;
@@ -7322,7 +7276,7 @@ boolean drinkPotion(item *theItem) {
             message("you feel very strange, as though your body doesn't know how to react!", REQUIRE_ACKNOWLEDGMENT);
     }
 
-    if (!potionTable.identified) {
+    if (!potionKind.identified) {
         autoIdentify(theItem);
     }
 
