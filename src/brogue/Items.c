@@ -6586,7 +6586,16 @@ boolean eat(item *theItem, boolean recordCommands) {
     return true;
 }
 
-static void useCharm(item *theItem) {
+static boolean useCharm(item *theItem) {
+
+    if (theItem->charges > 0) {
+        char buf[COLS * 3], buf2[COLS * 3];
+        itemName(theItem, buf2, false, false, NULL);
+        sprintf(buf, "Your %s hasn't finished recharging.", buf2);
+        messageWithColor(buf, &itemMessageColor, 0);
+        return false;
+    }
+
     fixpt enchant = netEnchant(theItem);
 
     rogue.featRecord[FEAT_PURE_WARRIOR] = false;
@@ -6648,6 +6657,10 @@ static void useCharm(item *theItem) {
         default:
             break;
     }
+
+    theItem->charges = charmRechargeDelay(theItem->kind, theItem->enchant1);
+    recordApplyItemCommand(theItem);
+    return true;
 }
 
 void apply(item *theItem) {
@@ -6723,19 +6736,10 @@ void apply(item *theItem) {
             }
             break;
         case CHARM:
-            if (theItem->charges > 0) {
-                itemName(theItem, buf2, false, false, NULL);
-                sprintf(buf, "Your %s hasn't finished recharging.", buf2);
-                messageWithColor(buf, &itemMessageColor, 0);
-                return;
-            }
-            if (!commandsRecorded) {
-                command[c] = '\0';
-                recordKeystrokeSequence(command);
-                commandsRecorded = true;
-            }
-            useCharm(theItem);
-            break;
+            if (useCharm(theItem)) {
+                playerTurnEnded();
+            };
+            return;
         default:
             itemName(theItem, buf2, false, true, NULL);
             sprintf(buf, "you can't apply %s.", buf2);
@@ -6760,7 +6764,7 @@ void apply(item *theItem) {
     theItem->lastUsed[0] = rogue.absoluteTurnNumber;
 
     if (theItem->category & CHARM) {
-        theItem->charges = charmRechargeDelay(theItem->kind, theItem->enchant1);
+       // theItem->charges = charmRechargeDelay(theItem->kind, theItem->enchant1);
     // staff or wand
     } else if (theItem->charges > 0) {
         theItem->charges--;
