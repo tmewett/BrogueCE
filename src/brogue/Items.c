@@ -2995,7 +2995,7 @@ char displayInventory(unsigned short categoryMask,
 
                     switch (actionKey) {
                         case APPLY_KEY:
-                            apply(theItem, true);
+                            apply(theItem);
                             break;
                         case EQUIP_KEY:
                             equip(theItem);
@@ -6523,6 +6523,64 @@ static void summonGuardian(item *theItem) {
     fadeInMonster(monst);
 }
 
+/// @brief Records the keystroke sequence when a player applies an item
+/// @param theItem the item that was used
+void recordApplyItemCommand(item *theItem) {
+    if (!theItem) {
+        return;
+    }
+
+    unsigned char command[3] = {'\0'};
+
+    command[0] = APPLY_KEY;
+    command[1] = theItem->inventoryLetter;
+    recordKeystrokeSequence(command);
+}
+
+/// @brief The player eats the given item, nutrition is increased, the item is removed from inventory, and the
+/// action is optionally recorded. If the player isn't hungry enough they can cancel the action.
+/// @param theItem the item to eat
+/// @param recordCommand set to true if called from the apply command and we need to record the command sequence 
+/// @return true if the player ate the item
+boolean eat(item *theItem, boolean recordCommands) {
+    if (!(theItem->category & FOOD)) {
+        return false;
+    }
+
+    confirmMessages();
+
+    if (STOMACH_SIZE - player.status[STATUS_NUTRITION] < foodTable[theItem->kind].power) { // Not hungry enough.
+        char buf[COLS * 3];
+        sprintf(buf, "You're not hungry enough to fully enjoy the %s. Eat it anyway?",
+                (theItem->kind == RATION ? "food" : "mango"));
+        if (!confirm(buf, false)) {
+            return false;
+        }
+    }
+
+    player.status[STATUS_NUTRITION] = min(foodTable[theItem->kind].power + player.status[STATUS_NUTRITION], STOMACH_SIZE);
+    if (theItem->kind == RATION) {
+        messageWithColor("That food tasted delicious!", &itemMessageColor, 0);
+    } else {
+        messageWithColor("My, what a yummy mango!", &itemMessageColor, 0);
+    }
+
+    rogue.featRecord[FEAT_ASCETIC] = false;
+
+    if (recordCommands) {
+        recordApplyItemCommand(theItem);
+    }
+
+    if (theItem->quantity > 1) {
+        theItem->quantity--;
+    } else {
+        removeItemFromChain(theItem, packItems);
+        deleteItem(theItem);
+    }
+    
+    return true;
+}
+
 static void useCharm(item *theItem) {
     fixpt enchant = netEnchant(theItem);
 
@@ -6587,13 +6645,13 @@ static void useCharm(item *theItem) {
     }
 }
 
-void apply(item *theItem, boolean recordCommands) {
+void apply(item *theItem) {
     char buf[COLS * 3], buf2[COLS * 3];
     boolean commandsRecorded, revealItemType;
     unsigned char command[10] = "";
     short c;
 
-    commandsRecorded = !recordCommands;
+    commandsRecorded = false;
     c = 0;
     command[c++] = APPLY_KEY;
 
@@ -6634,20 +6692,10 @@ void apply(item *theItem, boolean recordCommands) {
     confirmMessages();
     switch (theItem->category) {
         case FOOD:
-            if (STOMACH_SIZE - player.status[STATUS_NUTRITION] < foodTable[theItem->kind].power) { // Not hungry enough.
-                sprintf(buf, "You're not hungry enough to fully enjoy the %s. Eat it anyway?",
-                        (theItem->kind == RATION ? "food" : "mango"));
-                if (!confirm(buf, false)) {
-                    return;
-                }
-            }
-            player.status[STATUS_NUTRITION] = min(foodTable[theItem->kind].power + player.status[STATUS_NUTRITION], STOMACH_SIZE);
-            if (theItem->kind == RATION) {
-                messageWithColor("That food tasted delicious!", &itemMessageColor, 0);
-            } else {
-                messageWithColor("My, what a yummy mango!", &itemMessageColor, 0);
-            }
-            rogue.featRecord[FEAT_ASCETIC] = false;
+            if (eat(theItem, true)) {
+                playerTurnEnded();
+            }        
+            return;
             break;
         case POTION:
             command[c] = '\0';
@@ -6712,17 +6760,20 @@ void apply(item *theItem, boolean recordCommands) {
         autoIdentify(theItem);
     }
 
+    // track staff last usage
     theItem->lastUsed[2] = theItem->lastUsed[1];
     theItem->lastUsed[1] = theItem->lastUsed[0];
     theItem->lastUsed[0] = rogue.absoluteTurnNumber;
 
     if (theItem->category & CHARM) {
         theItem->charges = charmRechargeDelay(theItem->kind, theItem->enchant1);
+    // staff or wand
     } else if (theItem->charges > 0) {
         theItem->charges--;
         if (theItem->category == WAND) {
             theItem->enchant2++; // keeps track of how many times the wand has been discharged for the player's convenience
         }
+    // stackable items
     } else if (theItem->quantity > 1) {
         theItem->quantity--;
     } else {

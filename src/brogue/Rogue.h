@@ -3317,7 +3317,9 @@ extern "C" {
     void throwCommand(item *theItem, boolean autoThrow);
     void relabel(item *theItem);
     void swapLastEquipment(void);
-    void apply(item *theItem, boolean recordCommands);
+    void apply(item *theItem);
+    void recordApplyItemCommand(item *theItem);
+    boolean eat(item *theItem, boolean recordCommands);
     boolean itemCanBeCalled(item *theItem);
     void call(item *theItem);
     short chooseVorpalEnemy(void);

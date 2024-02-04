@@ -2561,7 +2561,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             drop(NULL);
             break;
         case APPLY_KEY:
-            apply(NULL, true);
+            apply(NULL);
             break;
         case THROW_KEY:
             throwCommand(NULL, false);
