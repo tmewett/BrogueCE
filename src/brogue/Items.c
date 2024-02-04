@@ -6685,22 +6685,7 @@ void apply(item *theItem) {
         return;
     }
 
-    if (theItem->category == SCROLL) {
-        itemTable scrollTable = tableForItemCategory(theItem->category)[theItem->kind];
 
-        if (magicCharDiscoverySuffix(theItem->category, theItem->kind) == -1
-            && ((theItem->flags & ITEM_MAGIC_DETECTED) || scrollTable.identified)) {
-
-            if (scrollTable.identified) {
-                sprintf(buf, "Really read a scroll of %s?", scrollTable.name);
-            } else {
-                sprintf(buf, "Really read a cursed scroll?");
-            }
-            if (!confirm(buf, false)) {
-                return;
-            }
-        }
-    }
 
     command[c++] = theItem->inventoryLetter;
     confirmMessages();
@@ -6713,22 +6698,14 @@ void apply(item *theItem) {
         case POTION:
             if (drinkPotion(theItem)) {
                 playerTurnEnded();
-            };
+            }
             return;
         case SCROLL:
-            command[c] = '\0';
-            if (!commandsRecorded) {
-                recordKeystrokeSequence(command);
-                commandsRecorded = true; // have to record in case further keystrokes are necessary (e.g. enchant scroll)
+            if (readScroll(theItem)) { 
+                consumePackItem(theItem);
+                playerTurnEnded();
             }
-            if (!scrollTable[theItem->kind].identified
-                && theItem->kind != SCROLL_ENCHANTING
-                && theItem->kind != SCROLL_IDENTIFY) {
-
-                revealItemType = true;
-            }
-            readScroll(theItem);
-            break;
+            return;
         case STAFF:
         case WAND:
             if (!useStaffOrWand(theItem, &commandsRecorded)) {
@@ -6738,7 +6715,7 @@ void apply(item *theItem) {
         case CHARM:
             if (useCharm(theItem)) {
                 playerTurnEnded();
-            };
+            }
             return;
         default:
             itemName(theItem, buf2, false, true, NULL);
@@ -6893,13 +6870,30 @@ static boolean uncurse( item *theItem ) {
     return false;
 }
 
-void readScroll(item *theItem) {
+boolean readScroll(item *theItem) {
     short i, j, x, y, numberOfMonsters = 0;
     item *tempItem;
     creature *monst;
     boolean hadEffect = false;
     char buf[COLS * 3], buf2[COLS * 3];
 
+    itemTable scrollKind = tableForItemCategory(theItem->category)[theItem->kind];
+
+    if (magicCharDiscoverySuffix(theItem->category, theItem->kind) == -1
+        && ((theItem->flags & ITEM_MAGIC_DETECTED) || scrollKind.identified)) {
+
+        if (scrollKind.identified) {
+            sprintf(buf, "Really read a scroll of %s?", scrollKind.name);
+        } else {
+            sprintf(buf, "Really read a cursed scroll?");
+        }
+        if (!confirm(buf, false)) {
+            return false;
+        }
+    }
+
+    // Past the point of no return.  
+    recordApplyItemCommand(theItem);
     rogue.featRecord[FEAT_ARCHIVIST] = false;
 
     switch (theItem->kind) {
@@ -6909,14 +6903,14 @@ void readScroll(item *theItem) {
             messageWithColor("this is a scroll of identify.", &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
             if (numberOfMatchingPackItems(ALL_ITEMS, ITEM_CAN_BE_IDENTIFIED, 0, false) == 0) {
                 message("everything in your pack is already identified.", 0);
-                break;
+                break; // regardless, the scroll is consumed
             }
             do {
                 theItem = promptForItemOfType((ALL_ITEMS), ITEM_CAN_BE_IDENTIFIED, 0,
                                               KEYBOARD_LABELS ? "Identify what? (a-z; shift for more info)" : "Identify what?",
                                               false);
                 if (rogue.gameHasEnded) {
-                    return;
+                    return false;
                 }
                 if (theItem && !(theItem->flags & ITEM_CAN_BE_IDENTIFIED)) {
                     confirmMessages();
@@ -6951,7 +6945,7 @@ void readScroll(item *theItem) {
             if (!numberOfMatchingPackItems((WEAPON | ARMOR | RING | STAFF | WAND | CHARM), 0, 0, false)) {
                 confirmMessages();
                 message("you have nothing that can be enchanted.", 0);
-                break;
+                break; // regardless, the scroll is consumed
             }
             do {
                 theItem = promptForItemOfType((WEAPON | ARMOR | RING | STAFF | WAND | CHARM), 0, 0,
@@ -6962,7 +6956,7 @@ void readScroll(item *theItem) {
                     message("Can't enchant that.", REQUIRE_ACKNOWLEDGMENT);
                 }
                 if (rogue.gameHasEnded) {
-                    return;
+                    return false;
                 }
             } while (theItem == NULL || !(theItem->category & (WEAPON | ARMOR | RING | STAFF | WAND | CHARM)));
             recordKeystroke(theItem->inventoryLetter, false, false);
@@ -7000,10 +6994,6 @@ void readScroll(item *theItem) {
                 case CHARM:
                     theItem->enchant1 += enchantMagnitude();
                     theItem->charges = min(0, theItem->charges); // Enchanting instantly recharges charms.
-                                                                 //                    theItem->charges = theItem->charges
-                                                                 //                    * charmRechargeDelay(theItem->kind, theItem->enchant1)
-                                                                 //                    / charmRechargeDelay(theItem->kind, theItem->enchant1 - 1);
-
                     break;
                 default:
                     break;
@@ -7137,6 +7127,16 @@ void readScroll(item *theItem) {
             discordBlast("the scroll", DCOLS);
             break;
     }
+
+    // all scrolls auto-identify on use
+    if (!scrollKind.identified
+        && (theItem->kind != SCROLL_ENCHANTING)
+        && (theItem->kind != SCROLL_IDENTIFY)) {
+
+        autoIdentify(theItem);
+    }
+
+    return true;
 }
 
 static void detectMagicOnItem(item *theItem) {
