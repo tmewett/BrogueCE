@@ -1199,6 +1199,7 @@ void saveGameNoPrompt() {
     rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
     rogue.recording = false;
 }
+#define MAX_TEXT_INPUT_FILENAME_LENGTH (COLS - 12) // max length including the suffix
 
 void saveGame() {
     char filePathWithoutSuffix[BROGUE_FILENAME_MAX - sizeof(GAME_SUFFIX)], filePath[BROGUE_FILENAME_MAX], defaultPath[BROGUE_FILENAME_MAX];
@@ -1212,11 +1213,10 @@ void saveGame() {
     getAvailableFilePath(filePathWithoutSuffix, defaultPath, GAME_SUFFIX);
     filePath[0] = '\0';
 
-    deleteMessages();
     do {
         askAgain = false;
         if (getInputTextString(filePathWithoutSuffix, "Save game as (<esc> to cancel): ",
-                               BROGUE_FILENAME_MAX - strlen(GAME_SUFFIX), filePathWithoutSuffix, GAME_SUFFIX, TEXT_INPUT_FILENAME, false)) {
+                               MAX_TEXT_INPUT_FILENAME_LENGTH, filePathWithoutSuffix, GAME_SUFFIX, TEXT_INPUT_FILENAME, true)) {
             snprintf(filePath, BROGUE_FILENAME_MAX, "%s%s", filePathWithoutSuffix, GAME_SUFFIX);
             if (!fileExists(filePath) || confirm("File of that name already exists. Overwrite?", true)) {
                 remove(filePath);
@@ -1232,7 +1232,6 @@ void saveGame() {
             }
         }
     } while (askAgain);
-    displayRecentMessages();
 }
 
 void saveRecordingNoPrompt(char *filePath) {
@@ -1260,11 +1259,10 @@ void saveRecording(char *filePathWithoutSuffix) {
     getAvailableFilePath(filePathWithoutSuffix, defaultPath, RECORDING_SUFFIX);
     filePath[0] = '\0';
 
-    deleteMessages();
     do {
         askAgain = false;
         if (getInputTextString(filePathWithoutSuffix, "Save recording as (<esc> to cancel): ",
-                               BROGUE_FILENAME_MAX - strlen(RECORDING_SUFFIX), filePathWithoutSuffix, RECORDING_SUFFIX, TEXT_INPUT_FILENAME, false)) {
+                               MAX_TEXT_INPUT_FILENAME_LENGTH, filePathWithoutSuffix, RECORDING_SUFFIX, TEXT_INPUT_FILENAME, true)) {
 
             snprintf(filePath, BROGUE_FILENAME_MAX, "%s%s", filePathWithoutSuffix, RECORDING_SUFFIX);
             if (!fileExists(filePath) || confirm("File of that name already exists. Overwrite?", true)) {
@@ -1283,7 +1281,6 @@ void saveRecording(char *filePathWithoutSuffix) {
             rogue.recording = false;
         }
     } while (askAgain);
-    deleteMessages();
 }
 
 static void copyFile(char *fromFilePath, char *toFilePath, unsigned long fromFileLength) {

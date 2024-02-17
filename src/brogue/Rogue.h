@@ -2985,7 +2985,7 @@ extern "C" {
     boolean getInputTextString(char *inputText,
                                const char *prompt,
                                short maxLength,
-                               const char *defaultEntry,
+                               char *defaultEntry,
                                const char *promptSuffix,
                                short textEntryType,
                                boolean useDialogBox);
