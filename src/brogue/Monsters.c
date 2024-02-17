@@ -221,11 +221,9 @@ boolean monsterIsHidden(const creature *monst, const creature *observer) {
     return false;
 }
 
-/// @brief Checks if the player knows a monster's location by any means, including physical sight,
-/// clairvoyance, telepathy, or entrancement. Hidden monsters are an exception and not considered
-/// "seen" even if their location is known (e.g. telepathically revealed with symbol 'x' or 'X').
-/// A monster is hidden if it's dormant, invisible (and not exposed by gas), or submerged (and the
-/// player isn't). A "seen" monster's kind is always known, except when hallucinating.
+/// @brief Checks if the player has full knowledge about a creature,
+/// i.e. they know where it is, and what kind it is. Ignores hallucination.
+/// Equivalent to the monster being not hidden and either on a visible cell or revealed.
 /// Some notable uses include: auto-targeting (staffs, wands, etc.), determining which monsters
 /// display in the sidebar, auto-id of unidentified items (staffs, wands, runics, etc.), and the
 /// verbiage used in combat/dungeon messages (or whether a message appears at all).
