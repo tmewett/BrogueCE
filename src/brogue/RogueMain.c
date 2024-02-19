@@ -112,7 +112,8 @@ boolean openFile(const char *path) {
     return retval;
 }
 
-void benchmark() {
+#ifdef SCREEN_UPDATE_BENCHMARK
+static void screen_update_benchmark() {
     short i, j, k;
     const color sparklesauce = {10, 0, 20,  60, 40, 100, 30, true};
     enum displayGlyph theChar;
@@ -125,19 +126,40 @@ void benchmark() {
                 plotCharWithColor(theChar, (windowpos){ i, j }, &sparklesauce, &sparklesauce);
             }
         }
-        pauseBrogue(1);
+        pauseBrogue(1, PAUSE_BEHAVIOR_DEFAULT);
     }
-    printf("\n\nBenchmark took a total of %lu seconds.", ((unsigned long) time(NULL)) - initialTime);
+    printf("\n\nBenchmark took a total of %lu seconds.\n", ((unsigned long) time(NULL)) - initialTime);
+}
+#endif
+
+static const char *getOrdinalSuffix(int number) {
+    // Handle special cases for 11, 12, and 13
+    if (number == 11 || number == 12 || number == 13) {
+        return "th";
+    }
+
+    // Determine the suffix based on the last digit
+    int lastDigit = number % 10;
+    switch (lastDigit) {
+        case 1:
+            return "st";
+        case 2:
+            return "nd";
+        case 3:
+            return "rd";
+        default:
+            return "th";
+    }
 }
 
-void welcome() {
+static void welcome() {
     char buf[DCOLS*3], buf2[DCOLS*3];
     message("Hello and welcome, adventurer, to the Dungeons of Doom!", 0);
     strcpy(buf, "Retrieve the ");
     encodeMessageColor(buf, strlen(buf), &itemMessageColor);
     strcat(buf, "Amulet of Yendor");
     encodeMessageColor(buf, strlen(buf), &white);
-    sprintf(buf2, " from the %ith floor and escape with it!", gameConst->amuletLevel);
+    sprintf(buf2, " from the %i%s floor and escape with it!", gameConst->amuletLevel, getOrdinalSuffix(gameConst->amuletLevel));
     strcat(buf, buf2);
     message(buf, 0);
     if (KEYBOARD_LABELS) {
@@ -206,7 +228,9 @@ void initializeRogue(uint64_t seed) {
         previousGameSeed = rogue.seed;
     }
 
-    //benchmark();
+#ifdef SCREEN_UPDATE_BENCHMARK
+    screen_update_benchmark();
+#endif
 
     initRecording();
 
@@ -503,7 +527,7 @@ void initializeRogue(uint64_t seed) {
 }
 
 // call this once per level to set all the dynamic colors as a function of depth
-void updateColors() {
+static void updateColors() {
     short i;
 
     for (i=0; i<NUMBER_DYNAMIC_COLORS; i++) {
@@ -544,9 +568,9 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     if (oldLevelNumber != rogue.depthLevel) {
         px = player.loc.x;
         py = player.loc.y;
-        if (cellHasTerrainFlag(player.loc.x, player.loc.y, T_AUTO_DESCENT)) {
+        if (cellHasTerrainFlag(player.loc, T_AUTO_DESCENT)) {
             for (i=0; i<8; i++) {
-                if (!cellHasTerrainFlag(player.loc.x+nbDirs[i][0], player.loc.y+nbDirs[i][1], (T_PATHING_BLOCKER))) {
+                if (!cellHasTerrainFlag((pos){ player.loc.x+nbDirs[i][0], player.loc.y+nbDirs[i][1] }, (T_PATHING_BLOCKER))) {
                     px = player.loc.x+nbDirs[i][0];
                     py = player.loc.y+nbDirs[i][1];
                     break;
@@ -566,11 +590,11 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                      || monst->creatureState == MONSTER_ALLY || monst == rogue.yendorWarden)
                     && (stairDirection != 0 || monst->currentHP > 10 || monst->status[STATUS_LEVITATING])
                     && ((flying != 0) == ((monst->status[STATUS_LEVITATING] != 0)
-                                          || cellHasTerrainFlag(x, y, T_PATHING_BLOCKER)
-                                          || cellHasTerrainFlag(px, py, T_AUTO_DESCENT)))
+                                          || cellHasTerrainFlag((pos){ x, y }, T_PATHING_BLOCKER)
+                                          || cellHasTerrainFlag((pos){ px, py }, T_AUTO_DESCENT)))
                     && !(monst->bookkeepingFlags & MB_CAPTIVE)
                     && !(monst->info.flags & (MONST_WILL_NOT_USE_STAIRS | MONST_RESTRICTED_TO_LIQUID))
-                    && !(cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY))
+                    && !(cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_PASSABILITY))
                     && !monst->status[STATUS_ENTRANCED]
                     && !monst->status[STATUS_PARALYZED]
                     && (mapToStairs[monst->loc.x][monst->loc.y] < 30000 || monst->creatureState == MONSTER_ALLY || monst == rogue.yendorWarden)) {
@@ -659,8 +683,19 @@ void startLevel(short oldLevelNumber, short stairDirection) {
 
         levels[rogue.depthLevel-1].items = NULL;
 
-        digDungeon();
-        initializeLevel();
+        pos upStairLocation;
+        int failsafe;
+        for (failsafe = 50; failsafe; failsafe--) {
+            digDungeon();
+            if (placeStairs(&upStairLocation)) {
+                break;
+            }
+        }
+        if (!failsafe) {
+            printf("\nFailed to place stairs for level %d! Please report this error\n", rogue.depthLevel);
+            exit(1);
+        }
+        initializeLevel(upStairLocation);
         setUpWaypoints();
 
         shuffleTerrainColors(100, false);
@@ -778,7 +813,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                              (T_PATHING_BLOCKER & ~T_IS_DEEP_WATER),
                              (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false, false);
 
-        if (cellHasTerrainFlag(loc.x, loc.y, T_IS_DEEP_WATER)) {
+        if (cellHasTerrainFlag(loc, T_IS_DEEP_WATER)) {
             // Fell into deep water... can we swim out of it?
             pos dryLoc;
             getQualifyingLocNear(&dryLoc, player.loc, true, 0,
@@ -802,7 +837,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
         placedPlayer = false;
         for (dir=0; dir<4 && !placedPlayer; dir++) {
             loc = posNeighborInDirection(player.loc, dir);
-            if (!cellHasTerrainFlag(loc.x, loc.y, T_PATHING_BLOCKER)
+            if (!cellHasTerrainFlag(loc, T_PATHING_BLOCKER)
                 && !(pmapAt(loc)->flags & (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE))) {
                 placedPlayer = true;
             }
@@ -829,8 +864,8 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             }
         }
     }
-    if (cellHasTerrainFlag(player.loc.x, player.loc.y, T_IS_DEEP_WATER) && !player.status[STATUS_LEVITATING]
-        && !cellHasTerrainFlag(player.loc.x, player.loc.y, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))) {
+    if (cellHasTerrainFlag(player.loc, T_IS_DEEP_WATER) && !player.status[STATUS_LEVITATING]
+        && !cellHasTerrainFlag(player.loc, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))) {
         rogue.inWater = true;
     }
 
@@ -873,7 +908,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     hideCursor();
 }
 
-void freeGlobalDynamicGrid(short ***grid) {
+static void freeGlobalDynamicGrid(short ***grid) {
     if (*grid) {
         freeGrid(*grid);
         *grid = NULL;
@@ -991,7 +1026,6 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     short i, y;
     char buf[200], highScoreText[200], buf2[200];
     rogueHighScoresEntry theEntry;
-    cellDisplayBuffer dbuf[COLS][ROWS];
     boolean playback;
     rogueEvent theEvent;
     item *theItem;
@@ -1078,8 +1112,8 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     if (rogue.quit) {
         blackOutScreen();
     } else {
-        copyDisplayBuffer(dbuf, displayBuffer);
-        funkyFade(dbuf, &black, 0, 120, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
+        screenDisplayBuffer dbuf = displayBuffer;
+        funkyFade(&dbuf, &black, 0, 120, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
     }
 
     if (useCustomPhrasing) {
@@ -1164,7 +1198,7 @@ void victory(boolean superVictory) {
     unsigned long totalValue = 0;
     rogueHighScoresEntry theEntry;
     boolean qualified, isPlayback;
-    cellDisplayBuffer dbuf[COLS][ROWS];
+    
     char recordingFilename[BROGUE_FILENAME_MAX] = {0};
 
     rogue.gameInProgress = false;
@@ -1180,35 +1214,37 @@ void victory(boolean superVictory) {
     //
     if (superVictory) {
         message(    "Light streams through the portal, and you are teleported out of the dungeon.", 0);
-        copyDisplayBuffer(dbuf, displayBuffer);
-        funkyFade(dbuf, &superVictoryColor, 0, 240, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
+        screenDisplayBuffer dbuf = displayBuffer;
+        funkyFade(&dbuf, &superVictoryColor, 0, 240, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
         displayMoreSign();
         printString("Congratulations; you have transcended the Dungeons of Doom!                 ", mapToWindowX(0), mapToWindowY(-1), &black, &white, 0);
         displayMoreSign();
-        clearDisplayBuffer(dbuf);
+        clearDisplayBuffer(&dbuf);
         deleteMessages();
         strcpy(displayedMessage[0], "You retire in splendor, forever renowned for your remarkable triumph.     ");
     } else {
         message(    "You are bathed in sunlight as you throw open the heavy doors.", 0);
-        copyDisplayBuffer(dbuf, displayBuffer);
-        funkyFade(dbuf, &white, 0, 240, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
+        screenDisplayBuffer dbuf = displayBuffer;
+        funkyFade(&dbuf, &white, 0, 240, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
         displayMoreSign();
         printString("Congratulations; you have escaped from the Dungeons of Doom!     ", mapToWindowX(0), mapToWindowY(-1), &black, &white, 0);
         displayMoreSign();
-        clearDisplayBuffer(dbuf);
         deleteMessages();
         strcpy(displayedMessage[0], "You sell your treasures and live out your days in fame and glory.");
     }
 
+    screenDisplayBuffer dbuf;
+    clearDisplayBuffer(&dbuf);
+
     //
     // Second screen - Show inventory and item's value
     //
-    printString(displayedMessage[0], mapToWindowX(0), mapToWindowY(-1), &white, &black, dbuf);
+    printString(displayedMessage[0], mapToWindowX(0), mapToWindowY(-1), &white, &black, &dbuf);
 
-    plotCharToBuffer(G_GOLD, mapToWindow((pos){ 2, 1 }), &yellow, &black, dbuf);
-    printString("Gold", mapToWindowX(4), mapToWindowY(1), &white, &black, dbuf);
+    plotCharToBuffer(G_GOLD, mapToWindow((pos){ 2, 1 }), &yellow, &black, &dbuf);
+    printString("Gold", mapToWindowX(4), mapToWindowY(1), &white, &black, &dbuf);
     sprintf(buf, "%li", rogue.gold);
-    printString(buf, mapToWindowX(60), mapToWindowY(1), &itemMessageColor, &black, dbuf);
+    printString(buf, mapToWindowX(60), mapToWindowY(1), &itemMessageColor, &black, &dbuf);
     totalValue += rogue.gold;
 
     for (i = 4, theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
@@ -1216,10 +1252,10 @@ void victory(boolean superVictory) {
             gemCount += theItem->quantity;
         }
         if (theItem->category == AMULET && superVictory) {
-            plotCharToBuffer(G_AMULET, (windowpos){ mapToWindowX(2), min(ROWS-1, i + 1) }, &yellow, &black, dbuf);
-            printString("The Birthright of Yendor", mapToWindowX(4), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
+            plotCharToBuffer(G_AMULET, (windowpos){ mapToWindowX(2), min(ROWS-1, i + 1) }, &yellow, &black, &dbuf);
+            printString("The Birthright of Yendor", mapToWindowX(4), min(ROWS-1, i + 1), &itemMessageColor, &black, &dbuf);
             sprintf(buf, "%li", max(0, itemValue(theItem) * 2));
-            printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
+            printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &itemMessageColor, &black, &dbuf);
             totalValue += max(0, itemValue(theItem) * 2);
             i++;
         } else {
@@ -1227,12 +1263,12 @@ void victory(boolean superVictory) {
             itemName(theItem, buf, true, true, &white);
             upperCase(buf);
 
-            plotCharToBuffer(theItem->displayChar, (windowpos){ mapToWindowX(2), min(ROWS-1, i + 1) }, &yellow, &black, dbuf);
-            printString(buf, mapToWindowX(4), min(ROWS-1, i + 1), &white, &black, dbuf);
+            plotCharToBuffer(theItem->displayChar, (windowpos){ mapToWindowX(2), min(ROWS-1, i + 1) }, &yellow, &black, &dbuf);
+            printString(buf, mapToWindowX(4), min(ROWS-1, i + 1), &white, &black, &dbuf);
 
             if (itemValue(theItem) > 0) {
                 sprintf(buf, "%li", max(0, itemValue(theItem)));
-                printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &itemMessageColor, &black, dbuf);
+                printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &itemMessageColor, &black, &dbuf);
             }
 
             totalValue += max(0, itemValue(theItem));
@@ -1240,11 +1276,11 @@ void victory(boolean superVictory) {
         }
     }
     i++;
-    printString("TOTAL:", mapToWindowX(2), min(ROWS-1, i + 1), &lightBlue, &black, dbuf);
+    printString("TOTAL:", mapToWindowX(2), min(ROWS-1, i + 1), &lightBlue, &black, &dbuf);
     sprintf(buf, "%li", totalValue);
-    printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &lightBlue, &black, dbuf);
+    printString(buf, mapToWindowX(60), min(ROWS-1, i + 1), &lightBlue, &black, &dbuf);
 
-    funkyFade(dbuf, &white, 0, 120, COLS/2, ROWS/2, true);
+    funkyFade(&dbuf, &white, 0, 120, COLS/2, ROWS/2, true);
     displayMoreSign();
 
     //
@@ -1289,11 +1325,12 @@ void victory(boolean superVictory) {
     rogue.playbackMode = false;
     rogue.playbackMode = isPlayback;
 
+    displayMoreSign();
+
     if (serverMode) {
-        // There's no save recording prompt, so let the player see achievements.
-        displayMoreSign();
         saveRecordingNoPrompt(recordingFilename);
     } else {
+        blackOutScreen();
         saveRecording(recordingFilename);
         printHighScores(qualified);
     }
@@ -1327,7 +1364,7 @@ void enableEasyMode() {
         message("An ancient and terrible evil burrows into your willing flesh!", REQUIRE_ACKNOWLEDGMENT);
         rogue.easyMode = true;
         setPlayerDisplayChar();
-        refreshDungeonCell(player.loc.x, player.loc.y);
+        refreshDungeonCell(player.loc);
         refreshSideBar(-1, -1, false);
         message("Wracked by spasms, your body contorts into an ALL-POWERFUL AMPERSAND!!!", 0);
         message("You have a feeling that you will take 20% as much damage from now on.", 0);

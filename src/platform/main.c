@@ -52,9 +52,13 @@ static void printCommandlineHelp() {
     return;
 }
 
-static void badArgument(const char *arg) {
-    printf("Bad argument: %s\n\n", arg);
+static void cliError(const char *prefix, const char *errorMsg) {
+    printf("%s%s\n\n", prefix, errorMsg);
     printCommandlineHelp();
+}
+
+static void badArgument(const char *arg) {
+    cliError("Bad argument: ", arg);
 }
 
 boolean tryParseUint64(char *str, uint64_t *num) {
@@ -195,20 +199,33 @@ int main(int argc, char *argv[])
         }
 
         if (strcmp(argv[i], "--print-seed-catalog") == 0) {
-            if (i + 3 < argc) {
-                uint64_t startingSeed, numberOfSeeds;
-                // Use converter for the type the next size up, because it returns signed
-                unsigned int numberOfLevels = atol(argv[i + 3]);
+            uint64_t startingSeed, numberOfSeeds;
+            int numberOfLevels;
 
-                if (tryParseUint64(argv[i+1], &startingSeed) && tryParseUint64(argv[i+2], &numberOfSeeds)
-                        && startingSeed > 0 && numberOfLevels <= 40) {
-                    printSeedCatalog(startingSeed, numberOfSeeds, numberOfLevels, isCsvFormat);
-                    return 0;
+            if (i + 3 < argc) {
+                numberOfLevels = atoi(argv[i + 3]);
+                if (!tryParseUint64(argv[i+1], &startingSeed)) {
+                    cliError("Bad params for seed catalog, starting seed: ", argv[i+1]);
+                    return 1;
+                }
+                if (!tryParseUint64(argv[i+2], &numberOfSeeds)) {
+                    cliError("Bad params for seed catalog, number of seeds: ", argv[i+2]);
+                    return 1;
                 }
             } else {
-                printSeedCatalog(1, 1000, 5, isCsvFormat);
-                return 0;
+                startingSeed = 1;
+                numberOfSeeds = 1000;
+                numberOfLevels = 5;
             }
+
+            int errorCode;
+            char errorMessage[ERROR_MESSAGE_LENGTH];
+
+            errorCode = printSeedCatalog(startingSeed, numberOfSeeds, numberOfLevels, isCsvFormat, errorMessage);
+            if (errorCode) {
+                cliError("Bad params for seed catalog, ", errorMessage);
+            }
+            return errorCode;
         }
 
         if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) {

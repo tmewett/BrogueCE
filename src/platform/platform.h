@@ -42,7 +42,7 @@ struct brogueConsole {
     Pause the game, returning a boolean specifying whether an input event
     is available for receiving with nextKeyOrMouseEvent.
     */
-    boolean (*pauseForMilliseconds)(short milliseconds);
+    boolean (*pauseForMilliseconds)(short milliseconds, PauseBehavior behavior);
 
     /*
     Block until an event is available and then update returnEvent with
@@ -87,8 +87,8 @@ struct brogueConsole {
 };
 
 // defined in platform
-void loadKeymap();
-void dumpScores();
+void loadKeymap(void);
+void dumpScores(void);
 unsigned int glyphToUnicode(enum displayGlyph glyph);
 boolean isEnvironmentGlyph(enum displayGlyph glyph);
 void setHighScoresFilename(char *buffer, int bufferMaxLength);

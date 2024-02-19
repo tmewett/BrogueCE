@@ -27,14 +27,34 @@
 
 short topBlobMinX, topBlobMinY, blobWidth, blobHeight;
 
-#ifdef BROGUE_ASSERTS // otherwise handled as a macro in rogue.h
-boolean cellHasTerrainFlag(short x, short y, unsigned long flagMask) {
-    assert(coordinatesAreInMap(x, y));
-    return ((flagMask) & terrainFlags((x), (y)) ? true : false);
+boolean cellHasTerrainFlag(pos loc, unsigned long flagMask) {
+    brogueAssert(isPosInMap(loc));
+    return ((flagMask) & terrainFlags(loc) ? true : false);
 }
-#endif
 
-boolean checkLoopiness(short x, short y) {
+boolean cellHasTMFlag(pos loc, unsigned long flagMask) {
+    return (flagMask & terrainMechFlags(loc)) ? true : false;
+}
+
+boolean cellHasTerrainType(pos p, enum tileType terrain) {
+    return (
+        pmapAt(p)->layers[DUNGEON] == terrain
+        || pmapAt(p)->layers[LIQUID] == terrain
+        || pmapAt(p)->layers[SURFACE] == terrain
+        || pmapAt(p)->layers[GAS] == terrain
+    ) ? true : false;
+}
+
+static inline boolean cellIsPassableOrDoor(short x, short y) {
+    if (!cellHasTerrainFlag((pos){ x, y }, T_PATHING_BLOCKER)) {
+        return true;
+    }
+    return (
+        (cellHasTMFlag((pos){ x, y }, (TM_IS_SECRET | TM_PROMOTES_WITH_KEY | TM_CONNECTS_LEVEL)) && cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_PASSABILITY))
+    );
+}
+
+static boolean checkLoopiness(short x, short y) {
     short newX, newY, dir, sdir;
     short numStrings, maxStringLength, currentStringLength;
 
@@ -98,7 +118,7 @@ boolean checkLoopiness(short x, short y) {
     }
 }
 
-void auditLoop(short x, short y, char grid[DCOLS][DROWS]) {
+static void auditLoop(short x, short y, char grid[DCOLS][DROWS]) {
     short dir, newX, newY;
     if (coordinatesAreInMap(x, y)
         && !grid[x][y]
@@ -117,7 +137,7 @@ void auditLoop(short x, short y, char grid[DCOLS][DROWS]) {
 
 // Assumes it is called with respect to a passable (startX, startY), and that the same is not already included in results.
 // Returns 10000 if the area included an area machine.
-short floodFillCount(char results[DCOLS][DROWS], char passMap[DCOLS][DROWS], short startX, short startY) {
+static short floodFillCount(char results[DCOLS][DROWS], char passMap[DCOLS][DROWS], short startX, short startY) {
     short dir, newX, newY, count;
 
     count = (passMap[startX][startY] == 2 ? 5000 : 1);
@@ -179,8 +199,8 @@ void analyzeMap(boolean calculateChokeMap) {
 
     for(i=0; i<DCOLS; i++) {
         for(j=0; j<DROWS; j++) {
-            if (cellHasTerrainFlag(i, j, T_PATHING_BLOCKER)
-                && !cellHasTMFlag(i, j, TM_IS_SECRET)) {
+            if (cellHasTerrainFlag((pos){ i, j }, T_PATHING_BLOCKER)
+                && !cellHasTMFlag((pos){ i, j }, TM_IS_SECRET)) {
 
                 pmap[i][j].flags &= ~IN_LOOP;
                 passMap[i][j] = false;
@@ -317,7 +337,7 @@ void analyzeMap(boolean calculateChokeMap) {
 }
 
 // Add some loops to the otherwise simply connected network of rooms.
-void addLoops(short **grid, short minimumPathingDistance) {
+static void addLoops(short **grid, short minimumPathingDistance) {
     short newX, newY, oppX, oppY;
     short **pathMap, **costMap;
     short i, d, x, y, sCoord[DCOLS*DROWS];
@@ -377,7 +397,7 @@ void addLoops(short **grid, short minimumPathingDistance) {
 // Assumes (startX, startY) is in the machine.
 // Returns true if everything went well, and false if we ran into a machine component
 // that was already there, as we don't want to build a machine around it.
-boolean addTileToMachineInteriorAndIterate(char interior[DCOLS][DROWS], short startX, short startY) {
+static boolean addTileToMachineInteriorAndIterate(char interior[DCOLS][DROWS], short startX, short startY) {
     short dir, newX, newY;
     boolean goodSoFar = true;
 
@@ -408,7 +428,7 @@ boolean addTileToMachineInteriorAndIterate(char interior[DCOLS][DROWS], short st
     return goodSoFar;
 }
 
-void copyMap(pcell from[DCOLS][DROWS], pcell to[DCOLS][DROWS]) {
+static void copyMap(pcell from[DCOLS][DROWS], pcell to[DCOLS][DROWS]) {
     short i, j;
 
     for(i=0; i<DCOLS; i++) {
@@ -418,7 +438,7 @@ void copyMap(pcell from[DCOLS][DROWS], pcell to[DCOLS][DROWS]) {
     }
 }
 
-boolean itemIsADuplicate(item *theItem, item **spawnedItems, short itemCount) {
+static boolean itemIsADuplicate(item *theItem, item **spawnedItems, short itemCount) {
     short i;
     if (theItem->category & (STAFF | WAND | POTION | SCROLL | RING | WEAPON | ARMOR | CHARM)) {
         for (i = 0; i < itemCount; i++) {
@@ -432,7 +452,7 @@ boolean itemIsADuplicate(item *theItem, item **spawnedItems, short itemCount) {
     return false;
 }
 
-boolean blueprintQualifies(short i, unsigned long requiredMachineFlags) {
+static boolean blueprintQualifies(short i, unsigned long requiredMachineFlags) {
     if (blueprintCatalog[i].depthRange[0] > rogue.depthLevel
         || blueprintCatalog[i].depthRange[1] < rogue.depthLevel
                 // Must have the required flags:
@@ -447,7 +467,7 @@ boolean blueprintQualifies(short i, unsigned long requiredMachineFlags) {
     return true;
 }
 
-void abortItemsAndMonsters(item *spawnedItems[MACHINES_BUFFER_LENGTH], creature *spawnedMonsters[MACHINES_BUFFER_LENGTH]) {
+static void abortItemsAndMonsters(item *spawnedItems[MACHINES_BUFFER_LENGTH], creature *spawnedMonsters[MACHINES_BUFFER_LENGTH]) {
     short i, j;
 
     for (i=0; i<MACHINES_BUFFER_LENGTH && spawnedItems[i]; i++) {
@@ -469,7 +489,7 @@ void abortItemsAndMonsters(item *spawnedItems[MACHINES_BUFFER_LENGTH], creature 
     }
 }
 
-boolean cellIsFeatureCandidate(short x, short y,
+static boolean cellIsFeatureCandidate(short x, short y,
                                short originX, short originY,
                                short distanceBound[2],
                                char interior[DCOLS][DROWS],
@@ -515,13 +535,13 @@ boolean cellIsFeatureCandidate(short x, short y,
     }
 
     // Do a distance check if the feature requests it.
-    if (cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY)) { // Distance is calculated for walls too.
+    if (cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_PASSABILITY)) { // Distance is calculated for walls too.
         distance = 10000;
         for (dir = 0; dir < 4; dir++) {
             newX = x + nbDirs[dir][0];
             newY = y + nbDirs[dir][1];
             if (coordinatesAreInMap(newX, newY)
-                && !cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)
+                && !cellHasTerrainFlag((pos){ newX, newY }, T_OBSTRUCTS_PASSABILITY)
                 && distance > distanceMap[newX][newY] + 1) {
 
                 distance = distanceMap[newX][newY] + 1;
@@ -538,25 +558,25 @@ boolean cellIsFeatureCandidate(short x, short y,
     if (featureFlags & MF_BUILD_IN_WALLS) {             // If we're supposed to build in a wall...
         if (!interior[x][y]
             && (pmap[x][y].machineNumber == 0 || pmap[x][y].machineNumber == machineNumber)
-            && cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY)) { // ...and this location is a wall that's not already machined...
+            && cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_PASSABILITY)) { // ...and this location is a wall that's not already machined...
             for (dir=0; dir<4; dir++) {
                 newX = x + nbDirs[dir][0];
                 newY = y + nbDirs[dir][1];
                 if (coordinatesAreInMap(newX, newY)     // ...and it's next to an interior spot or permitted elsewhere and next to passable spot...
                     && ((interior[newX][newY] && !(newX==originX && newY==originY))
                         || ((featureFlags & MF_BUILD_ANYWHERE_ON_LEVEL)
-                            && !cellHasTerrainFlag(newX, newY, T_PATHING_BLOCKER)
+                            && !cellHasTerrainFlag((pos){ newX, newY }, T_PATHING_BLOCKER)
                             && pmap[newX][newY].machineNumber == 0))) {
                     return true;                        // ...then we're golden!
                 }
             }
         }
         return false;                                   // Otherwise, no can do.
-    } else if (cellHasTerrainFlag(x, y, T_OBSTRUCTS_PASSABILITY)) { // Can't build in a wall unless instructed to do so.
+    } else if (cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_PASSABILITY)) { // Can't build in a wall unless instructed to do so.
         return false;
     } else if (featureFlags & MF_BUILD_ANYWHERE_ON_LEVEL) {
         if ((featureFlags & MF_GENERATE_ITEM)
-            && (cellHasTerrainFlag(x, y, T_OBSTRUCTS_ITEMS | T_PATHING_BLOCKER) || (pmap[x][y].flags & (IS_CHOKEPOINT | IN_LOOP | IS_IN_MACHINE)))) {
+            && (cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_ITEMS | T_PATHING_BLOCKER) || (pmap[x][y].flags & (IS_CHOKEPOINT | IN_LOOP | IS_IN_MACHINE)))) {
             return false;
         } else {
             return !(pmap[x][y].flags & IS_IN_MACHINE);
@@ -568,7 +588,7 @@ boolean cellIsFeatureCandidate(short x, short y,
 }
 
 
-void addLocationToKey(item *theItem, short x, short y, boolean disposableHere) {
+static void addLocationToKey(item *theItem, short x, short y, boolean disposableHere) {
     short i;
 
     for (i=0; i < KEY_ID_MAXIMUM && (theItem->keyLoc[i].loc.x || theItem->keyLoc[i].machine); i++);
@@ -576,7 +596,7 @@ void addLocationToKey(item *theItem, short x, short y, boolean disposableHere) {
     theItem->keyLoc[i].disposableHere = disposableHere;
 }
 
-void addMachineNumberToKey(item *theItem, short machineNumber, boolean disposableHere) {
+static void addMachineNumberToKey(item *theItem, short machineNumber, boolean disposableHere) {
     short i;
 
     for (i=0; i < KEY_ID_MAXIMUM && (theItem->keyLoc[i].loc.x || theItem->keyLoc[i].machine); i++);
@@ -584,7 +604,7 @@ void addMachineNumberToKey(item *theItem, short machineNumber, boolean disposabl
     theItem->keyLoc[i].disposableHere = disposableHere;
 }
 
-void expandMachineInterior(char interior[DCOLS][DROWS], short minimumInteriorNeighbors) {
+static void expandMachineInterior(char interior[DCOLS][DROWS], short minimumInteriorNeighbors) {
     boolean madeChange;
     short nbcount, newX, newY, i, j, layer;
     enum directions dir;
@@ -593,7 +613,7 @@ void expandMachineInterior(char interior[DCOLS][DROWS], short minimumInteriorNei
         madeChange = false;
         for(i=1; i<DCOLS-1; i++) {
             for(j=1; j < DROWS-1; j++) {
-                if (cellHasTerrainFlag(i, j, T_PATHING_BLOCKER)
+                if (cellHasTerrainFlag((pos){ i, j }, T_PATHING_BLOCKER)
                     && pmap[i][j].machineNumber == 0) {
 
                     // Count up the number of interior open neighbors out of eight:
@@ -601,7 +621,7 @@ void expandMachineInterior(char interior[DCOLS][DROWS], short minimumInteriorNei
                         newX = i + nbDirs[dir][0];
                         newY = j + nbDirs[dir][1];
                         if (interior[newX][newY]
-                            && !cellHasTerrainFlag(newX, newY, T_PATHING_BLOCKER)) {
+                            && !cellHasTerrainFlag((pos){ newX, newY }, T_PATHING_BLOCKER)) {
                             nbcount++;
                         }
                     }
@@ -611,7 +631,7 @@ void expandMachineInterior(char interior[DCOLS][DROWS], short minimumInteriorNei
                             newX = i + nbDirs[dir][0];
                             newY = j + nbDirs[dir][1];
                             if (!interior[newX][newY]
-                                && (!cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY) || pmap[newX][newY].machineNumber != 0)) {
+                                && (!cellHasTerrainFlag((pos){ newX, newY }, T_OBSTRUCTS_PASSABILITY) || pmap[newX][newY].machineNumber != 0)) {
                                 nbcount++;
                                 break;
                             }
@@ -651,7 +671,7 @@ void expandMachineInterior(char interior[DCOLS][DROWS], short minimumInteriorNei
     }
 }
 
-boolean fillInteriorForVestibuleMachine(char interior[DCOLS][DROWS], short bp, short originX, short originY) {
+static boolean fillInteriorForVestibuleMachine(char interior[DCOLS][DROWS], short bp, short originX, short originY) {
     short **distanceMap, **costMap, qualifyingTileCount, totalFreq, sRows[DROWS], sCols[DCOLS], i, j, k;
     boolean success = true;
 
@@ -711,7 +731,7 @@ boolean fillInteriorForVestibuleMachine(char interior[DCOLS][DROWS], short bp, s
     return success;
 }
 
-void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY, short theProfileIndex) {
+static void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY, short theProfileIndex) {
     short i, j, n, newX, newY;
     enum directions dir;
     pos orphanList[20];
@@ -833,7 +853,7 @@ void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY,
     freeGrid(grid);
 }
 
-void prepareInteriorWithMachineFlags(char interior[DCOLS][DROWS], short originX, short originY, unsigned long flags, short dungeonProfileIndex) {
+static void prepareInteriorWithMachineFlags(char interior[DCOLS][DROWS], short originX, short originY, unsigned long flags, short dungeonProfileIndex) {
     short i, j, newX, newY;
     enum dungeonLayers layer;
     enum directions dir;
@@ -894,10 +914,10 @@ void prepareInteriorWithMachineFlags(char interior[DCOLS][DROWS], short originX,
                         newY = j + nbDirs[dir][1];
                         if (coordinatesAreInMap(newX, newY)
                             && !interior[newX][newY]
-                            && !cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)
+                            && !cellHasTerrainFlag((pos){ newX, newY }, T_OBSTRUCTS_PASSABILITY)
                             && !(pmap[newX][newY].flags & IS_GATE_SITE)
                             && !pmap[newX][newY].machineNumber
-                            && cellHasTerrainFlag(newX, newY, T_PATHING_BLOCKER)) {
+                            && cellHasTerrainFlag((pos){ newX, newY }, T_PATHING_BLOCKER)) {
                             for (layer=0; layer<NUMBER_TERRAIN_LAYERS; layer++) {
                                 pmap[newX][newY].layers[layer] = (layer == DUNGEON ? WALL : 0);
                             }
@@ -1005,8 +1025,8 @@ boolean buildAMachine(enum machineTypes bp,
                     printf("\nDepth %i: Failed to build a machine; gave up after 10 unsuccessful attempts to find a suitable blueprint and/or location.",
                            rogue.depthLevel);
                 } else {
-                    printf("\nDepth %i: Failed to build a machine; requested blueprint and location did not work.",
-                           rogue.depthLevel);
+                    printf("\nDepth %i: Failed to build a machine; requested blueprint %i:%s and location did not work.",
+                           rogue.depthLevel, bp, blueprintCatalog[bp].name);
                 }
             }
             free(p);
@@ -1084,9 +1104,10 @@ boolean buildAMachine(enum machineTypes bp,
                     if (distanceMap) {
                         freeGrid(distanceMap);
                     }
-                    if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to build a machine; there was no eligible door candidate for the chosen room machine from blueprint %i.",
+                    if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to build a machine; there was no eligible door candidate for the chosen room machine from blueprint %i:%s.",
                                  rogue.depthLevel,
-                                 bp);
+                                 bp,
+                                 blueprintCatalog[bp].name);
                     free(p);
                     return false;
                 }
@@ -1103,9 +1124,10 @@ boolean buildAMachine(enum machineTypes bp,
                 if (distanceMap) {
                     freeGrid(distanceMap);
                 }
-                if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: ERROR: Attempted to build a door machine from blueprint %i without a location being provided.",
+                if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: ERROR: Attempted to build a door machine from blueprint %i:%s without a location being provided.",
                              rogue.depthLevel,
-                             bp);
+                             bp,
+                             blueprintCatalog[bp].name);
                 free(p);
                 return false;
             }
@@ -1113,9 +1135,10 @@ boolean buildAMachine(enum machineTypes bp,
                 if (distanceMap) {
                     freeGrid(distanceMap);
                 }
-                if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to build a door machine from blueprint %i; not enough room.",
+                if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to build a door machine from blueprint %i:%s; not enough room.",
                              rogue.depthLevel,
-                             bp);
+                             bp,
+                             blueprintCatalog[bp].name);
                 free(p);
                 return false;
             }
@@ -1549,7 +1572,7 @@ boolean buildAMachine(enum machineTypes bp,
                         }
 
                         if (!i) {
-                            if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to place blueprint %i because it requires an adoptive machine and we couldn't place one.", rogue.depthLevel, bp);
+                            if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to place blueprint %i:%s because it requires an adoptive machine and we couldn't place one.", rogue.depthLevel, bp, blueprintCatalog[bp].name);
                             // failure! abort!
                             copyMap(p->levelBackup, pmap);
                             abortItemsAndMonsters(p->spawnedItems, p->spawnedMonsters);
@@ -1651,8 +1674,8 @@ boolean buildAMachine(enum machineTypes bp,
         if (instance < feature->minimumInstanceCount && !(feature->flags & MF_REPEAT_UNTIL_NO_PROGRESS)) {
             // failure! abort!
 
-            if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to place blueprint %i because of feature %i; needed %i instances but got only %i.",
-                         rogue.depthLevel, bp, feat, feature->minimumInstanceCount, instance);
+            if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to place blueprint %i:%s because of feature %i; needed %i instances but got only %i.",
+                         rogue.depthLevel, bp, blueprintCatalog[bp].name, feat, feature->minimumInstanceCount, instance);
 
             // Restore the map to how it was before we touched it.
             copyMap(p->levelBackup, pmap);
@@ -1668,7 +1691,7 @@ boolean buildAMachine(enum machineTypes bp,
         for(int i=0; i<DCOLS; i++) {
             for(int j=0; j<DROWS; j++) {
                 if (pmap[i][j].machineNumber == machineNumber
-                    && !cellHasTMFlag(i, j, (TM_IS_WIRED | TM_IS_CIRCUIT_BREAKER))) {
+                    && !cellHasTMFlag((pos){ i, j }, (TM_IS_WIRED | TM_IS_CIRCUIT_BREAKER))) {
 
                     pmap[i][j].flags &= ~IS_IN_MACHINE;
                     pmap[i][j].machineNumber = 0;
@@ -1686,7 +1709,7 @@ boolean buildAMachine(enum machineTypes bp,
     }
 
     freeGrid(distanceMap);
-    if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Built a machine from blueprint %i with an origin at (%i, %i).", rogue.depthLevel, bp, originX, originY);
+    if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Built a machine from blueprint %i:%s with an origin at (%i, %i).", rogue.depthLevel, bp, blueprintCatalog[bp].name, originX, originY);
 
     //Pass created items and monsters to parent where they will be deleted on failure to place parent machine
     if (parentSpawnedItems) {
@@ -1705,7 +1728,7 @@ boolean buildAMachine(enum machineTypes bp,
 }
 
 // add machines to the dungeon.
-void addMachines() {
+static void addMachines() {
     short machineCount, failsafe;
     short randomMachineFactor;
 
@@ -1744,7 +1767,7 @@ void addMachines() {
 // Add terrain, DFs and flavor machines. Includes traps, torches, funguses, flavor machines, etc.
 // If buildAreaMachines is true, build ONLY the autogenerators that include machines.
 // If false, build all EXCEPT the autogenerators that include machines.
-void runAutogenerators(boolean buildAreaMachines) {
+static void runAutogenerators(boolean buildAreaMachines) {
     short AG, count, i;
     const autoGenerator *gen;
     char grid[DCOLS][DROWS];
@@ -1820,7 +1843,7 @@ void runAutogenerators(boolean buildAreaMachines) {
 }
 
 // Knock down the boundaries between similar lakes where possible.
-void cleanUpLakeBoundaries() {
+static void cleanUpLakeBoundaries() {
     short i, j, x, y, failsafe, layer;
     boolean reverse, madeChange;
     unsigned long subjectFlags;
@@ -1843,24 +1866,24 @@ void cleanUpLakeBoundaries() {
 
                 //assert(i >= 1 && i <= DCOLS - 2 && j >= 1 && j <= DROWS - 2);
 
-                //if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)
-                if (cellHasTerrainFlag(i, j, T_LAKE_PATHING_BLOCKER | T_OBSTRUCTS_PASSABILITY)
-                    && !cellHasTMFlag(i, j, TM_IS_SECRET)
+                //if (cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_PASSABILITY)
+                if (cellHasTerrainFlag((pos){ i, j }, T_LAKE_PATHING_BLOCKER | T_OBSTRUCTS_PASSABILITY)
+                    && !cellHasTMFlag((pos){ i, j }, TM_IS_SECRET)
                     && !(pmap[i][j].flags & IMPREGNABLE)) {
 
-                    subjectFlags = terrainFlags(i, j) & (T_LAKE_PATHING_BLOCKER | T_OBSTRUCTS_PASSABILITY);
+                    subjectFlags = terrainFlags((pos){ i, j }) & (T_LAKE_PATHING_BLOCKER | T_OBSTRUCTS_PASSABILITY);
 
                     x = y = 0;
-                    if ((terrainFlags(i - 1, j) & T_LAKE_PATHING_BLOCKER & ~subjectFlags)
-                        && !cellHasTMFlag(i - 1, j, TM_IS_SECRET)
-                        && !cellHasTMFlag(i + 1, j, TM_IS_SECRET)
-                        && (terrainFlags(i - 1, j) & T_LAKE_PATHING_BLOCKER & ~subjectFlags) == (terrainFlags(i + 1, j) & T_LAKE_PATHING_BLOCKER & ~subjectFlags)) {
+                    if ((terrainFlags((pos){ i - 1, j }) & T_LAKE_PATHING_BLOCKER & ~subjectFlags)
+                        && !cellHasTMFlag((pos){ i - 1, j }, TM_IS_SECRET)
+                        && !cellHasTMFlag((pos){ i + 1, j }, TM_IS_SECRET)
+                        && (terrainFlags((pos){ i - 1, j }) & T_LAKE_PATHING_BLOCKER & ~subjectFlags) == (terrainFlags((pos){ i + 1, j }) & T_LAKE_PATHING_BLOCKER & ~subjectFlags)) {
                         x = i + 1;
                         y = j;
-                    } else if ((terrainFlags(i, j - 1) & T_LAKE_PATHING_BLOCKER & ~subjectFlags)
-                               && !cellHasTMFlag(i, j - 1, TM_IS_SECRET)
-                               && !cellHasTMFlag(i, j + 1, TM_IS_SECRET)
-                               && (terrainFlags(i, j - 1) & T_LAKE_PATHING_BLOCKER & ~subjectFlags) == (terrainFlags(i, j + 1) & T_LAKE_PATHING_BLOCKER & ~subjectFlags)) {
+                    } else if ((terrainFlags((pos){ i, j - 1 }) & T_LAKE_PATHING_BLOCKER & ~subjectFlags)
+                               && !cellHasTMFlag((pos){ i, j - 1 }, TM_IS_SECRET)
+                               && !cellHasTMFlag((pos){ i, j + 1 }, TM_IS_SECRET)
+                               && (terrainFlags((pos){ i, j - 1 }) & T_LAKE_PATHING_BLOCKER & ~subjectFlags) == (terrainFlags((pos){ i, j + 1 }) & T_LAKE_PATHING_BLOCKER & ~subjectFlags)) {
                         x = i;
                         y = j + 1;
                     }
@@ -1877,7 +1900,7 @@ void cleanUpLakeBoundaries() {
     } while (madeChange && failsafe > 0);
 }
 
-void removeDiagonalOpenings() {
+static void removeDiagonalOpenings() {
     short i, j, k, x1, y1, x2, layer;
     boolean diagonalCornerRemoved;
 
@@ -1915,7 +1938,7 @@ void removeDiagonalOpenings() {
     } while (diagonalCornerRemoved == true);
 }
 
-void insertRoomAt(short **dungeonMap, short **roomMap, const short roomToDungeonX, const short roomToDungeonY, const short xRoom, const short yRoom) {
+static void insertRoomAt(short **dungeonMap, short **roomMap, const short roomToDungeonX, const short roomToDungeonY, const short xRoom, const short yRoom) {
     short newX, newY;
     enum directions dir;
 
@@ -1935,7 +1958,7 @@ void insertRoomAt(short **dungeonMap, short **roomMap, const short roomToDungeon
     }
 }
 
-void designCavern(short **grid, short minWidth, short maxWidth, short minHeight, short maxHeight) {
+static void designCavern(short **grid, short minWidth, short maxWidth, short minHeight, short maxHeight) {
     short destX, destY;
     short caveX, caveY, caveWidth, caveHeight;
     short fillX = 0, fillY = 0;
@@ -1969,7 +1992,7 @@ void designCavern(short **grid, short minWidth, short maxWidth, short minHeight,
 }
 
 // This is a special room that appears at the entrance to the dungeon on depth 1.
-void designEntranceRoom(short **grid) {
+static void designEntranceRoom(short **grid) {
     short roomWidth, roomHeight, roomWidth2, roomHeight2, roomX, roomY, roomX2, roomY2;
 
     fillGrid(grid, 0);
@@ -1987,7 +2010,7 @@ void designEntranceRoom(short **grid) {
     drawRectangleOnGrid(grid, roomX2, roomY2, roomWidth2, roomHeight2, 1);
 }
 
-void designCrossRoom(short **grid) {
+static void designCrossRoom(short **grid) {
     short roomWidth, roomHeight, roomWidth2, roomHeight2, roomX, roomY, roomX2, roomY2;
 
     fillGrid(grid, 0);
@@ -2007,7 +2030,7 @@ void designCrossRoom(short **grid) {
     drawRectangleOnGrid(grid, roomX2 - 5, roomY2 + 5, roomWidth2, roomHeight2, 1);
 }
 
-void designSymmetricalCrossRoom(short **grid) {
+static void designSymmetricalCrossRoom(short **grid) {
     short majorWidth, majorHeight, minorWidth, minorHeight;
 
     fillGrid(grid, 0);
@@ -2028,7 +2051,7 @@ void designSymmetricalCrossRoom(short **grid) {
     drawRectangleOnGrid(grid, (DCOLS - minorWidth)/2, (DROWS - majorHeight)/2, minorWidth, majorHeight, 1);
 }
 
-void designSmallRoom(short **grid) {
+static void designSmallRoom(short **grid) {
     short width, height;
 
     fillGrid(grid, 0);
@@ -2037,7 +2060,7 @@ void designSmallRoom(short **grid) {
     drawRectangleOnGrid(grid, (DCOLS - width) / 2, (DROWS - height) / 2, width, height, 1);
 }
 
-void designCircularRoom(short **grid) {
+static void designCircularRoom(short **grid) {
     short radius;
 
     if (rand_percent(5)) {
@@ -2055,7 +2078,7 @@ void designCircularRoom(short **grid) {
     }
 }
 
-void designChunkyRoom(short **grid) {
+static void designChunkyRoom(short **grid) {
     short i, x, y;
     short minX, maxX, minY, maxY;
     short chunkCount = rand_range(2, 8);
@@ -2090,7 +2113,7 @@ void designChunkyRoom(short **grid) {
 // If the indicated tile is a wall on the room stored in grid, and it could be the site of
 // a door out of that room, then return the outbound direction that the door faces.
 // Otherwise, return NO_DIRECTION.
-enum directions directionOfDoorSite(short **grid, short x, short y) {
+static enum directions directionOfDoorSite(short **grid, short x, short y) {
     enum directions dir, solutionDir;
     short newX, newY, oppX, oppY;
 
@@ -2119,7 +2142,7 @@ enum directions directionOfDoorSite(short **grid, short x, short y) {
     return solutionDir;
 }
 
-void chooseRandomDoorSites(short **roomMap, pos doorSites[4]) {
+static void chooseRandomDoorSites(short **roomMap, pos doorSites[4]) {
     short i, j, k, newX, newY;
     enum directions dir;
     short **grid;
@@ -2169,7 +2192,7 @@ void chooseRandomDoorSites(short **roomMap, pos doorSites[4]) {
     freeGrid(grid);
 }
 
-void attachHallwayTo(short **grid, pos doorSites[4]) {
+static void attachHallwayTo(short **grid, pos doorSites[4]) {
     short i, x, y, newX, newY, dirs[4];
     short length;
     enum directions dir, dir2;
@@ -2238,7 +2261,7 @@ void attachHallwayTo(short **grid, pos doorSites[4]) {
 //      6. Cavern (the kind that fills a level)
 //      7. Entrance room (the big upside-down T room at the start of depth 1)
 
-void designRandomRoom(short **grid, boolean attachHallway, pos doorSites[4],
+static void designRandomRoom(short **grid, boolean attachHallway, pos doorSites[4],
                       const short roomTypeFrequencies[ROOM_TYPE_COUNT]) {
     short randIndex, i, sum;
     enum directions dir;
@@ -2308,7 +2331,7 @@ void designRandomRoom(short **grid, boolean attachHallway, pos doorSites[4],
     }
 }
 
-boolean roomFitsAt(short **dungeonMap, short **roomMap, short roomToDungeonX, short roomToDungeonY) {
+static boolean roomFitsAt(short **dungeonMap, short **roomMap, short roomToDungeonX, short roomToDungeonY) {
     short xRoom, yRoom, xDungeon, yDungeon, i, j;
 
     for (xRoom = 0; xRoom < DCOLS; xRoom++) {
@@ -2389,7 +2412,7 @@ void attachRooms(short **grid, const dungeonProfile *theDP, short attempts, shor
     freeGrid(roomMap);
 }
 
-void adjustDungeonProfileForDepth(dungeonProfile *theProfile) {
+static void adjustDungeonProfileForDepth(dungeonProfile *theProfile) {
     const short descentPercent = clamp(100 * (rogue.depthLevel - 1) / (gameConst->amuletLevel - 1), 0, 100);
 
     theProfile->roomFrequencies[0] += 20 * (100 - descentPercent) / 100;
@@ -2400,7 +2423,7 @@ void adjustDungeonProfileForDepth(dungeonProfile *theProfile) {
     theProfile->corridorChance += 80 * (100 - descentPercent) / 100;
 }
 
-void adjustDungeonFirstRoomProfileForDepth(dungeonProfile *theProfile) {
+static void adjustDungeonFirstRoomProfileForDepth(dungeonProfile *theProfile) {
     short i;
     const short descentPercent = clamp(100 * (rogue.depthLevel - 1) / (gameConst->amuletLevel - 1), 0, 100);
 
@@ -2420,7 +2443,7 @@ void adjustDungeonFirstRoomProfileForDepth(dungeonProfile *theProfile) {
 // On the grid, a 0 denotes granite, a 1 denotes floor, and a 2 denotes a possible door site.
 // -1 denotes off-limits areas -- rooms can't be placed there and also can't sprout off of there.
 // Parent function will translate this grid into pmap[][] to make floors, walls, doors, etc.
-void carveDungeon(short **grid) {
+static void carveDungeon(short **grid) {
     dungeonProfile theDP, theFirstRoomDP;
 
     theDP = dungeonProfileCatalog[DP_BASIC];
@@ -2444,7 +2467,7 @@ void carveDungeon(short **grid) {
 //    temporaryMessage("How does this finished level look?", REQUIRE_ACKNOWLEDGMENT);
 }
 
-void finishWalls(boolean includingDiagonals) {
+static void finishWalls(boolean includingDiagonals) {
     short i, j, x1, y1;
     boolean foundExposure;
     enum directions dir;
@@ -2457,7 +2480,7 @@ void finishWalls(boolean includingDiagonals) {
                     x1 = i + nbDirs[dir][0];
                     y1 = j + nbDirs[dir][1];
                     if (coordinatesAreInMap(x1, y1)
-                        && (!cellHasTerrainFlag(x1, y1, T_OBSTRUCTS_VISION) || !cellHasTerrainFlag(x1, y1, T_OBSTRUCTS_PASSABILITY))) {
+                        && (!cellHasTerrainFlag((pos){ x1, y1 }, T_OBSTRUCTS_VISION) || !cellHasTerrainFlag((pos){ x1, y1 }, T_OBSTRUCTS_PASSABILITY))) {
 
                         pmap[i][j].layers[DUNGEON] = WALL;
                         foundExposure = true;
@@ -2469,7 +2492,7 @@ void finishWalls(boolean includingDiagonals) {
                     x1 = i + nbDirs[dir][0];
                     y1 = j + nbDirs[dir][1];
                     if (coordinatesAreInMap(x1, y1)
-                        && (!cellHasTerrainFlag(x1, y1, T_OBSTRUCTS_VISION) || !cellHasTerrainFlag(x1, y1, T_OBSTRUCTS_PASSABILITY))) {
+                        && (!cellHasTerrainFlag((pos){ x1, y1 }, T_OBSTRUCTS_VISION) || !cellHasTerrainFlag((pos){ x1, y1 }, T_OBSTRUCTS_PASSABILITY))) {
 
                         foundExposure = true;
                     }
@@ -2482,7 +2505,7 @@ void finishWalls(boolean includingDiagonals) {
     }
 }
 
-void liquidType(short *deep, short *shallow, short *shallowWidth) {
+static void liquidType(short *deep, short *shallow, short *shallowWidth) {
     short randMin, randMax, rand;
 
     randMin = (rogue.depthLevel < gameConst->minimumLavaLevel ? 1 : 0);
@@ -2518,7 +2541,7 @@ void liquidType(short *deep, short *shallow, short *shallowWidth) {
 
 // Fills a lake marked in unfilledLakeMap with the specified liquid type, scanning outward to reach other lakes within scanWidth.
 // Any wreath of shallow liquid must be done elsewhere.
-void fillLake(short x, short y, short liquid, short scanWidth, char wreathMap[DCOLS][DROWS], short **unfilledLakeMap) {
+static void fillLake(short x, short y, short liquid, short scanWidth, char wreathMap[DCOLS][DROWS], short **unfilledLakeMap) {
     short i, j;
 
     for (i = x - scanWidth; i <= x + scanWidth; i++) {
@@ -2533,7 +2556,7 @@ void fillLake(short x, short y, short liquid, short scanWidth, char wreathMap[DC
     }
 }
 
-void lakeFloodFill(short x, short y, short **floodMap, short **grid, short **lakeMap, short dungeonToGridX, short dungeonToGridY) {
+static void lakeFloodFill(short x, short y, short **floodMap, short **grid, short **lakeMap, short dungeonToGridX, short dungeonToGridY) {
     short newX, newY;
     enum directions dir;
 
@@ -2543,7 +2566,7 @@ void lakeFloodFill(short x, short y, short **floodMap, short **grid, short **lak
         newY = y + nbDirs[dir][1];
         if (coordinatesAreInMap(newX, newY)
             && !floodMap[newX][newY]
-            && (!cellHasTerrainFlag(newX, newY, T_PATHING_BLOCKER) || cellHasTMFlag(newX, newY, TM_CONNECTS_LEVEL))
+            && (!cellHasTerrainFlag((pos){ newX, newY }, T_PATHING_BLOCKER) || cellHasTMFlag((pos){ newX, newY }, TM_CONNECTS_LEVEL))
             && !lakeMap[newX][newY]
             && (!coordinatesAreInMap(newX+dungeonToGridX, newY+dungeonToGridY) || !grid[newX+dungeonToGridX][newY+dungeonToGridY])) {
 
@@ -2552,7 +2575,7 @@ void lakeFloodFill(short x, short y, short **floodMap, short **grid, short **lak
     }
 }
 
-boolean lakeDisruptsPassability(short **grid, short **lakeMap, short dungeonToGridX, short dungeonToGridY) {
+static boolean lakeDisruptsPassability(short **grid, short **lakeMap, short dungeonToGridX, short dungeonToGridY) {
     boolean result;
     short i, j, x, y;
     short **floodMap;
@@ -2563,7 +2586,7 @@ boolean lakeDisruptsPassability(short **grid, short **lakeMap, short dungeonToGr
     // Get starting location for the fill.
     for (i=0; i<DCOLS && x == -1; i++) {
         for (j=0; j<DROWS && x == -1; j++) {
-            if (!cellHasTerrainFlag(i, j, T_PATHING_BLOCKER)
+            if (!cellHasTerrainFlag((pos){ i, j }, T_PATHING_BLOCKER)
                 && !lakeMap[i][j]
                 && (!coordinatesAreInMap(i+dungeonToGridX, j+dungeonToGridY) || !grid[i+dungeonToGridX][j+dungeonToGridY])) {
 
@@ -2580,7 +2603,7 @@ boolean lakeDisruptsPassability(short **grid, short **lakeMap, short dungeonToGr
     result = false;
     for (i=0; i<DCOLS && result == false; i++) {
         for (j=0; j<DROWS && result == false; j++) {
-            if (!cellHasTerrainFlag(i, j, T_PATHING_BLOCKER)
+            if (!cellHasTerrainFlag((pos){ i, j }, T_PATHING_BLOCKER)
                 && !lakeMap[i][j]
                 && !floodMap[i][j]
                 && (!coordinatesAreInMap(i+dungeonToGridX, j+dungeonToGridY) || !grid[i+dungeonToGridX][j+dungeonToGridY])) {
@@ -2602,7 +2625,7 @@ boolean lakeDisruptsPassability(short **grid, short **lakeMap, short dungeonToGr
     return result;
 }
 
-void designLakes(short **lakeMap) {
+static void designLakes(short **lakeMap) {
     short i, j, k;
     short x, y;
     short lakeMaxHeight, lakeMaxWidth;
@@ -2653,7 +2676,7 @@ void designLakes(short **lakeMap) {
     freeGrid(grid);
 }
 
-void createWreath(short shallowLiquid, short wreathWidth, char wreathMap[DCOLS][DROWS]) {
+static void createWreath(short shallowLiquid, short wreathWidth, char wreathMap[DCOLS][DROWS]) {
     short i, j, k, l;
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
@@ -2674,7 +2697,7 @@ void createWreath(short shallowLiquid, short wreathWidth, char wreathMap[DCOLS][
     }
 }
 
-void fillLakes(short **lakeMap) {
+static void fillLakes(short **lakeMap) {
     short deepLiquid = CRYSTAL_WALL, shallowLiquid = CRYSTAL_WALL, shallowLiquidWidth = 0;
     char wreathMap[DCOLS][DROWS];
     short i, j;
@@ -2697,22 +2720,22 @@ void fillLakes(short **lakeMap) {
     }
 }
 
-void finishDoors() {
+static void finishDoors() {
     short i, j;
     const short secretDoorChance = clamp((rogue.depthLevel - 1) * 67 / (gameConst->amuletLevel - 1), 0, 67);
     for (i=1; i<DCOLS-1; i++) {
         for (j=1; j<DROWS-1; j++) {
             if (pmap[i][j].layers[DUNGEON] == DOOR
                 && pmap[i][j].machineNumber == 0) {
-                if ((!cellHasTerrainFlag(i+1, j, T_OBSTRUCTS_PASSABILITY) || !cellHasTerrainFlag(i-1, j, T_OBSTRUCTS_PASSABILITY))
-                    && (!cellHasTerrainFlag(i, j+1, T_OBSTRUCTS_PASSABILITY) || !cellHasTerrainFlag(i, j-1, T_OBSTRUCTS_PASSABILITY))) {
+                if ((!cellHasTerrainFlag((pos){ i+1, j }, T_OBSTRUCTS_PASSABILITY) || !cellHasTerrainFlag((pos){ i-1, j }, T_OBSTRUCTS_PASSABILITY))
+                    && (!cellHasTerrainFlag((pos){ i, j+1 }, T_OBSTRUCTS_PASSABILITY) || !cellHasTerrainFlag((pos){ i, j-1 }, T_OBSTRUCTS_PASSABILITY))) {
                     // If there's passable terrain to the left or right, and there's passable terrain
                     // above or below, then the door is orphaned and must be removed.
                     pmap[i][j].layers[DUNGEON] = FLOOR;
-                } else if ((cellHasTerrainFlag(i+1, j, T_PATHING_BLOCKER) ? 1 : 0)
-                           + (cellHasTerrainFlag(i-1, j, T_PATHING_BLOCKER) ? 1 : 0)
-                           + (cellHasTerrainFlag(i, j+1, T_PATHING_BLOCKER) ? 1 : 0)
-                           + (cellHasTerrainFlag(i, j-1, T_PATHING_BLOCKER) ? 1 : 0) >= 3) {
+                } else if ((cellHasTerrainFlag((pos){ i+1, j }, T_PATHING_BLOCKER) ? 1 : 0)
+                           + (cellHasTerrainFlag((pos){ i-1, j }, T_PATHING_BLOCKER) ? 1 : 0)
+                           + (cellHasTerrainFlag((pos){ i, j+1 }, T_PATHING_BLOCKER) ? 1 : 0)
+                           + (cellHasTerrainFlag((pos){ i, j-1 }, T_PATHING_BLOCKER) ? 1 : 0) >= 3) {
                     // If the door has three or more pathing blocker neighbors in the four cardinal directions,
                     // then the door is orphaned and must be removed.
                     pmap[i][j].layers[DUNGEON] = FLOOR;
@@ -2724,7 +2747,7 @@ void finishDoors() {
     }
 }
 
-void clearLevel() {
+static void clearLevel() {
     short i, j;
 
     for( i=0; i<DCOLS; i++ ) {
@@ -2750,7 +2773,7 @@ void clearLevel() {
 
 // Scans the map in random order looking for a good place to build a bridge.
 // If it finds one, it builds a bridge there, halts and returns true.
-boolean buildABridge() {
+static boolean buildABridge() {
     short i, j, k, l, i2, j2, nCols[DCOLS], nRows[DROWS];
     short bridgeRatioX, bridgeRatioY;
     boolean foundExposure;
@@ -2767,7 +2790,7 @@ boolean buildABridge() {
         i = nCols[i2];
         for (j2=1; j2<DROWS-1; j2++) {
             j = nRows[j2];
-            if (!cellHasTerrainFlag(i, j, (T_CAN_BE_BRIDGED | T_PATHING_BLOCKER))
+            if (!cellHasTerrainFlag((pos){ i, j }, (T_CAN_BE_BRIDGED | T_PATHING_BLOCKER))
                 && !pmap[i][j].machineNumber) {
 
                 // try a horizontal bridge
@@ -2775,22 +2798,22 @@ boolean buildABridge() {
                 for (k = i + 1;
                      k < DCOLS // Iterate across the prospective length of the bridge.
                      && !pmap[k][j].machineNumber // No bridges in machines.
-                     && cellHasTerrainFlag(k, j, T_CAN_BE_BRIDGED)  // Candidate tile must be chasm.
-                     && !cellHasTMFlag(k, j, TM_IS_SECRET) // Can't bridge over secret trapdoors.
-                     && !cellHasTerrainFlag(k, j, T_OBSTRUCTS_PASSABILITY)  // Candidate tile cannot be a wall.
-                     && cellHasTerrainFlag(k, j-1, (T_CAN_BE_BRIDGED | T_OBSTRUCTS_PASSABILITY))    // Only chasms or walls are permitted next to the length of the bridge.
-                     && cellHasTerrainFlag(k, j+1, (T_CAN_BE_BRIDGED | T_OBSTRUCTS_PASSABILITY));
+                     && cellHasTerrainFlag((pos){ k, j }, T_CAN_BE_BRIDGED)  // Candidate tile must be chasm.
+                     && !cellHasTMFlag((pos){ k, j }, TM_IS_SECRET) // Can't bridge over secret trapdoors.
+                     && !cellHasTerrainFlag((pos){ k, j }, T_OBSTRUCTS_PASSABILITY)  // Candidate tile cannot be a wall.
+                     && cellHasTerrainFlag((pos){ k, j-1 }, (T_CAN_BE_BRIDGED | T_OBSTRUCTS_PASSABILITY))    // Only chasms or walls are permitted next to the length of the bridge.
+                     && cellHasTerrainFlag((pos){ k, j+1 }, (T_CAN_BE_BRIDGED | T_OBSTRUCTS_PASSABILITY));
                      k++) {
 
-                    if (!cellHasTerrainFlag(k, j-1, T_OBSTRUCTS_PASSABILITY) // Can't run against a wall the whole way.
-                        && !cellHasTerrainFlag(k, j+1, T_OBSTRUCTS_PASSABILITY)) {
+                    if (!cellHasTerrainFlag((pos){ k, j-1 }, T_OBSTRUCTS_PASSABILITY) // Can't run against a wall the whole way.
+                        && !cellHasTerrainFlag((pos){ k, j+1 }, T_OBSTRUCTS_PASSABILITY)) {
                         foundExposure = true;
                     }
                 }
                 if (k < DCOLS
                     && (k - i > 3) // Can't have bridges shorter than 3 spaces.
                     && foundExposure
-                    && !cellHasTerrainFlag(k, j, T_PATHING_BLOCKER | T_CAN_BE_BRIDGED) // Must end on an unobstructed land tile.
+                    && !cellHasTerrainFlag((pos){ k, j }, T_PATHING_BLOCKER | T_CAN_BE_BRIDGED) // Must end on an unobstructed land tile.
                     && !pmap[k][j].machineNumber // Cannot end in a machine.
                     && 100 * pathingDistance(i, j, k, j, T_PATHING_BLOCKER) / (k - i) > bridgeRatioX) { // Must shorten the pathing distance enough.
 
@@ -2807,22 +2830,22 @@ boolean buildABridge() {
                 for (k = j + 1;
                      k < DROWS
                      && !pmap[i][k].machineNumber
-                     && cellHasTerrainFlag(i, k, T_CAN_BE_BRIDGED)
-                     && !cellHasTMFlag(i, k, TM_IS_SECRET)
-                     && !cellHasTerrainFlag(i, k, T_OBSTRUCTS_PASSABILITY)
-                     && cellHasTerrainFlag(i-1, k, (T_CAN_BE_BRIDGED | T_OBSTRUCTS_PASSABILITY))
-                     && cellHasTerrainFlag(i+1, k, (T_CAN_BE_BRIDGED | T_OBSTRUCTS_PASSABILITY));
+                     && cellHasTerrainFlag((pos){ i, k }, T_CAN_BE_BRIDGED)
+                     && !cellHasTMFlag((pos){ i, k }, TM_IS_SECRET)
+                     && !cellHasTerrainFlag((pos){ i, k }, T_OBSTRUCTS_PASSABILITY)
+                     && cellHasTerrainFlag((pos){ i-1, k }, (T_CAN_BE_BRIDGED | T_OBSTRUCTS_PASSABILITY))
+                     && cellHasTerrainFlag((pos){ i+1, k }, (T_CAN_BE_BRIDGED | T_OBSTRUCTS_PASSABILITY));
                      k++) {
 
-                    if (!cellHasTerrainFlag(i-1, k, T_OBSTRUCTS_PASSABILITY)
-                        && !cellHasTerrainFlag(i+1, k, T_OBSTRUCTS_PASSABILITY)) {
+                    if (!cellHasTerrainFlag((pos){ i-1, k }, T_OBSTRUCTS_PASSABILITY)
+                        && !cellHasTerrainFlag((pos){ i+1, k }, T_OBSTRUCTS_PASSABILITY)) {
                         foundExposure = true;
                     }
                 }
                 if (k < DROWS
                     && (k - j > 3)
                     && foundExposure
-                    && !cellHasTerrainFlag(i, k, T_PATHING_BLOCKER | T_CAN_BE_BRIDGED)
+                    && !cellHasTerrainFlag((pos){ i, k }, T_PATHING_BLOCKER | T_CAN_BE_BRIDGED)
                     && !pmap[i][k].machineNumber // Cannot end in a machine.
                     && 100 * pathingDistance(i, j, i, k, T_PATHING_BLOCKER) / (k - j) > bridgeRatioY) {
 
@@ -2961,13 +2984,13 @@ void updateMapToShore() {
     }
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_PASSABILITY)) {
-                costMap[i][j] = cellHasTerrainFlag(i, j, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
+            if (cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_PASSABILITY)) {
+                costMap[i][j] = cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
                 rogue.mapToShore[i][j] = 30000;
             } else {
                 costMap[i][j] = 1;
-                rogue.mapToShore[i][j] = (cellHasTerrainFlag(i, j, T_LAVA_INSTA_DEATH | T_IS_DEEP_WATER | T_AUTO_DESCENT)
-                                          && !cellHasTMFlag(i, j, TM_IS_SECRET)) ? 30000 : 0;
+                rogue.mapToShore[i][j] = (cellHasTerrainFlag((pos){ i, j }, T_LAVA_INSTA_DEATH | T_IS_DEEP_WATER | T_AUTO_DESCENT)
+                                          && !cellHasTMFlag((pos){ i, j }, TM_IS_SECRET)) ? 30000 : 0;
             }
         }
     }
@@ -3004,7 +3027,7 @@ void setUpWaypoints() {
     zeroOutGrid(grid);
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
-            if (cellHasTerrainFlag(i, j, T_OBSTRUCTS_SCENT)) {
+            if (cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_SCENT)) {
                 grid[i][j] = 1;
             }
         }
@@ -3073,7 +3096,7 @@ short oppositeDirection(short theDir) {
 
 // blockingMap is optional.
 // Returns the size of the connected zone, and marks visited[][] with the zoneLabel.
-short connectCell(short x, short y, short zoneLabel, char blockingMap[DCOLS][DROWS], char zoneMap[DCOLS][DROWS]) {
+static short connectCell(short x, short y, short zoneLabel, char blockingMap[DCOLS][DROWS], char zoneMap[DCOLS][DROWS]) {
     enum directions dir;
     short newX, newY, size;
 
@@ -3194,7 +3217,7 @@ boolean fillSpawnMap(enum dungeonLayers layer,
                     // and the terrain in the layer to be overwritten has a higher priority number (unless superpriority),
                 && (superpriority || tileCatalog[pmap[i][j].layers[layer]].drawPriority >= tileCatalog[surfaceTileType].drawPriority)
                     // and we won't be painting into the surface layer when that cell forbids it,
-                && !(layer == SURFACE && cellHasTerrainFlag(i, j, T_OBSTRUCTS_SURFACE_EFFECTS))
+                && !(layer == SURFACE && cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_SURFACE_EFFECTS))
                     // and, if requested, the fill won't violate the priority of the most important terrain in this cell:
                 && (!blockedByOtherLayers || tileCatalog[pmap[i][j].layers[highestPriorityLayer(i, j, true)]].drawPriority >= tileCatalog[surfaceTileType].drawPriority)
                 ) {
@@ -3214,7 +3237,7 @@ boolean fillSpawnMap(enum dungeonLayers layer,
                 accomplishedSomething = true;
 
                 if (refresh) {
-                    refreshDungeonCell(i, j);
+                    refreshDungeonCell((pos){ i, j });
                     if (player.loc.x == i && player.loc.y == j && !player.status[STATUS_LEVITATING] && refresh) {
                         flavorMessage(tileFlavor(player.loc.x, player.loc.y));
                     }
@@ -3242,7 +3265,7 @@ boolean fillSpawnMap(enum dungeonLayers layer,
     return accomplishedSomething;
 }
 
-void spawnMapDF(short x, short y,
+static void spawnMapDF(short x, short y,
                 enum tileType propagationTerrain,
                 boolean requirePropTerrain,
                 short startProb,
@@ -3266,8 +3289,8 @@ void spawnMapDF(short x, short y,
                         x2 = i + nbDirs[dir][0];
                         y2 = j + nbDirs[dir][1];
                         if (coordinatesAreInMap(x2, y2)
-                            && (!requirePropTerrain || (propagationTerrain > 0 && cellHasTerrainType(x2, y2, propagationTerrain)))
-                            && (!cellHasTerrainFlag(x2, y2, T_OBSTRUCTS_SURFACE_EFFECTS) || (propagationTerrain > 0 && cellHasTerrainType(x2, y2, propagationTerrain)))
+                            && (!requirePropTerrain || (propagationTerrain > 0 && cellHasTerrainType((pos){ x2, y2 }, propagationTerrain)))
+                            && (!cellHasTerrainFlag((pos){ x2, y2 }, T_OBSTRUCTS_SURFACE_EFFECTS) || (propagationTerrain > 0 && cellHasTerrainType((pos){ x2, y2 }, propagationTerrain)))
                             && rand_percent(startProb)) {
 
                             spawnMap[x2][y2] = t;
@@ -3291,12 +3314,12 @@ void spawnMapDF(short x, short y,
             t = 2;
         }
     }
-    if (requirePropTerrain && !cellHasTerrainType(x, y, propagationTerrain)) {
+    if (requirePropTerrain && !cellHasTerrainType((pos){ x, y }, propagationTerrain)) {
         spawnMap[x][y] = 0;
     }
 }
 
-void evacuateCreatures(char blockingMap[DCOLS][DROWS]) {
+static void evacuateCreatures(char blockingMap[DCOLS][DROWS]) {
     creature *monst;
 
     for (int i=0; i<DCOLS; i++) {
@@ -3352,7 +3375,7 @@ boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refr
             pmap[x][y].volume += feat->startProbability;
             pmap[x][y].layers[GAS] = feat->tile;
             if (refreshCell) {
-                refreshDungeonCell(x, y);
+                refreshDungeonCell((pos){ x, y });
             }
             succeeded = true;
         } else {
@@ -3415,7 +3438,7 @@ boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refr
 
     if (refreshCell
         && (tileCatalog[feat->tile].flags & (T_IS_FIRE | T_AUTO_DESCENT))
-        && cellHasTerrainFlag(player.loc.x, player.loc.y, (T_IS_FIRE | T_AUTO_DESCENT))) {
+        && cellHasTerrainFlag(player.loc, (T_IS_FIRE | T_AUTO_DESCENT))) {
 
         applyInstantTileEffectsToCreature(&player);
     }
@@ -3508,7 +3531,7 @@ void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
     monst->status[STATUS_ENTERS_LEVEL_IN] = 0;
     monst->corpseAbsorptionCounter = 0;
 
-    if ((monst->bookkeepingFlags & MB_SUBMERGED) && !cellHasTMFlag(*x, *y, TM_ALLOWS_SUBMERGING)) {
+    if ((monst->bookkeepingFlags & MB_SUBMERGED) && !cellHasTMFlag((pos){ *x, *y }, TM_ALLOWS_SUBMERGING)) {
         monst->bookkeepingFlags &= ~MB_SUBMERGED;
     }
 
@@ -3560,7 +3583,7 @@ void restoreItems() {
 
 // Returns true iff the location is a plain wall, three of the four cardinal neighbors are walls, the remaining cardinal neighbor
 // is not a pathing blocker, the two diagonals between the three cardinal walls are also walls, and none of the eight neighbors are in machines.
-boolean validStairLoc(short x, short y) {
+static boolean validStairLoc(short x, short y) {
     short newX, newY, dir, neighborWallCount;
 
     if (x < 1 || x >= DCOLS - 1 || y < 1 || y >= DROWS - 1 || pmap[x][y].layers[DUNGEON] != WALL) {
@@ -3580,12 +3603,12 @@ boolean validStairLoc(short x, short y) {
         newX = x + nbDirs[dir][0];
         newY = y + nbDirs[dir][1];
 
-        if (cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)) {
+        if (cellHasTerrainFlag((pos){ newX, newY }, T_OBSTRUCTS_PASSABILITY)) {
             // neighbor is a wall
             neighborWallCount++;
         } else {
             // neighbor is not a wall
-            if (cellHasTerrainFlag(newX, newY, T_PATHING_BLOCKER)
+            if (cellHasTerrainFlag((pos){ newX, newY }, T_PATHING_BLOCKER)
                 || passableArcCount(newX, newY) >= 2) {
                 return false;
             }
@@ -3593,13 +3616,13 @@ boolean validStairLoc(short x, short y) {
 
             newX = x - nbDirs[dir][0] + nbDirs[dir][1];
             newY = y - nbDirs[dir][1] + nbDirs[dir][0];
-            if (!cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)) {
+            if (!cellHasTerrainFlag((pos){ newX, newY }, T_OBSTRUCTS_PASSABILITY)) {
                 return false;
             }
 
             newX = x - nbDirs[dir][0] - nbDirs[dir][1];
             newY = y - nbDirs[dir][1] - nbDirs[dir][0];
-            if (!cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)) {
+            if (!cellHasTerrainFlag((pos){ newX, newY }, T_OBSTRUCTS_PASSABILITY)) {
                 return false;
             }
         }
@@ -3612,12 +3635,12 @@ boolean validStairLoc(short x, short y) {
 
 // The walls on either side become torches. Any adjacent granite then becomes top_wall. All wall neighbors are un-tunnelable.
 // Grid is zeroed out within 5 spaces in all directions.
-void prepareForStairs(short x, short y, char grid[DCOLS][DROWS]) {
+static void prepareForStairs(short x, short y, char grid[DCOLS][DROWS]) {
     short newX, newY, dir;
 
     // Add torches to either side.
     for (dir=0; dir<4; dir++) {
-        if (!cellHasTerrainFlag(x + nbDirs[dir][0], y + nbDirs[dir][1], T_OBSTRUCTS_PASSABILITY)) {
+        if (!cellHasTerrainFlag((pos){ x + nbDirs[dir][0], y + nbDirs[dir][1] }, T_OBSTRUCTS_PASSABILITY)) {
             newX = x - nbDirs[dir][1];
             newY = y - nbDirs[dir][0];
             pmap[newX][newY].layers[DUNGEON] = TORCH_WALL;
@@ -3634,7 +3657,7 @@ void prepareForStairs(short x, short y, char grid[DCOLS][DROWS]) {
         if (pmap[newX][newY].layers[DUNGEON] == GRANITE) {
             pmap[newX][newY].layers[DUNGEON] = WALL;
         }
-        if (cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)) {
+        if (cellHasTerrainFlag((pos){ newX, newY }, T_OBSTRUCTS_PASSABILITY)) {
             pmap[newX][newY].flags |= IMPREGNABLE;
         }
     }
@@ -3646,14 +3669,9 @@ void prepareForStairs(short x, short y, char grid[DCOLS][DROWS]) {
     }
 }
 
-// Places the player, monsters, items and stairs.
-void initializeLevel() {
-    short i, j, dir;
-    short **mapToStairs, **mapToPit;
+boolean placeStairs(pos *upStairsLoc) {
     char grid[DCOLS][DROWS];
     short n = rogue.depthLevel - 1;
-
-    // Place the stairs.
 
     for (int i=0; i < DCOLS; i++) {
         for (int j=0; j < DROWS; j++) {
@@ -3671,9 +3689,12 @@ void initializeLevel() {
     if (getQualifyingGridLocNear(&downLoc, levels[n].downStairsLoc, grid, false)) {
         prepareForStairs(downLoc.x, downLoc.y, grid);
     } else {
-        getQualifyingLocNear(&downLoc, levels[n].downStairsLoc, false, 0,
-                             (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_ITEMS | T_AUTO_DESCENT | T_IS_DEEP_WATER | T_LAVA_INSTA_DEATH | T_IS_DF_TRAP),
-                             (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), true, false);
+        boolean hasQualifyingLoc = getQualifyingLocNear(&downLoc, levels[n].downStairsLoc, false, 0,
+                                                        (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_ITEMS | T_AUTO_DESCENT | T_IS_DEEP_WATER | T_LAVA_INSTA_DEATH | T_IS_DF_TRAP),
+                                                        (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), true, false);
+        if (!hasQualifyingLoc) {
+            return false;
+        }
     }
 
     if (rogue.depthLevel == gameConst->deepestLevel) {
@@ -3693,9 +3714,13 @@ void initializeLevel() {
     if (getQualifyingGridLocNear(&upLoc, levels[n].upStairsLoc, grid, false)) {
         prepareForStairs(upLoc.x, upLoc.y, grid);
     } else { // Hopefully this never happens.
-        getQualifyingLocNear(&upLoc, levels[n].upStairsLoc, false, 0,
+        boolean hasQualifyingLoc;
+        hasQualifyingLoc = getQualifyingLocNear(&upLoc, levels[n].upStairsLoc, false, 0,
                              (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_ITEMS | T_AUTO_DESCENT | T_IS_DEEP_WATER | T_LAVA_INSTA_DEATH | T_IS_DF_TRAP),
                              (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), true, false);
+        if (!hasQualifyingLoc) {
+            return false;
+        }
     }
 
     levels[n].upStairsLoc = upLoc;
@@ -3713,12 +3738,24 @@ void initializeLevel() {
     rogue.upLoc = upLoc;
     pmapAt(upLoc)->flags |= HAS_STAIRS;
 
+    *upStairsLoc = upLoc;
+    return true;
+}
+
+// Places the player, monsters, items and stairs.
+void initializeLevel(pos upStairsLoc) {
+    short i, j, dir;
+    short **mapToStairs, **mapToPit;
+    char grid[DCOLS][DROWS];
+
+    pos upLoc = upStairsLoc;
+
     if (!levels[rogue.depthLevel-1].visited) {
 
         // Run a field of view check from up stairs so that monsters do not spawn within sight of it.
         for (dir=0; dir<4; dir++) {
             pos nextLoc = posNeighborInDirection(upLoc, dir);
-            if (isPosInMap(nextLoc) && !cellHasTerrainFlag(nextLoc.x, nextLoc.y, T_OBSTRUCTS_PASSABILITY)) {
+            if (isPosInMap(nextLoc) && !cellHasTerrainFlag(nextLoc, T_OBSTRUCTS_PASSABILITY)) {
                 upLoc = nextLoc;
                 break;
             }
@@ -3770,11 +3807,11 @@ boolean randomMatchingLocation(pos* loc, short dungeonType, short liquidType, sh
         failsafeCount++;
         loc->x = rand_range(0, DCOLS - 1);
         loc->y = rand_range(0, DROWS - 1);
-    } while (failsafeCount < 500 && ((terrainType >= 0 && !cellHasTerrainType(loc->x, loc->y, terrainType))
+    } while (failsafeCount < 500 && ((terrainType >= 0 && !cellHasTerrainType(*loc, terrainType))
                                      || (((dungeonType >= 0 && pmapAt(*loc)->layers[DUNGEON] != dungeonType) || (liquidType >= 0 && pmapAt(*loc)->layers[LIQUID] != liquidType)) && terrainType < 0)
                                      || (pmapAt(*loc)->flags & (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | HAS_ITEM | IS_IN_MACHINE))
                                      || (terrainType < 0 && !(tileCatalog[dungeonType].flags & T_OBSTRUCTS_ITEMS)
-                                         && cellHasTerrainFlag(loc->x, loc->y, T_OBSTRUCTS_ITEMS))));
+                                         && cellHasTerrainFlag(*loc, T_OBSTRUCTS_ITEMS))));
     if (failsafeCount >= 500) {
         return false;
     }

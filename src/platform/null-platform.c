@@ -4,7 +4,7 @@ static void null_gameLoop() {
     exit(rogueMain());
 }
 
-static boolean null_pauseForMilliseconds(short milliseconds) {
+static boolean null_pauseForMilliseconds(short milliseconds, PauseBehavior behavior) {
     return false;
 }
 

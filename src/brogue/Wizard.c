@@ -24,7 +24,7 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
-void initializeCreateItemButton(brogueButton *button, char *text) {
+static void initializeCreateItemButton(brogueButton *button, char *text) {
     char buttonText[COLS * 3];
 
     initializeButton(button);
@@ -43,7 +43,7 @@ static short dialogSelectEntryFromList(
 ) {
 
     short x=0, y=0, width=0, height=0;
-    cellDisplayBuffer dbuf[COLS][ROWS], rbuf[COLS][ROWS];
+    screenDisplayBuffer dbuf;
     short i, selectedButton, len, maxLen;
     char buttonText[COLS];
 
@@ -70,18 +70,19 @@ static short dialogSelectEntryFromList(
     height = buttonCount + 2;
     x = WINDOW_POSITION_DUNGEON_TOP_LEFT.window_x;
     y = WINDOW_POSITION_DUNGEON_TOP_LEFT.window_y;
-    clearDisplayBuffer(dbuf);
+    clearDisplayBuffer(&dbuf);
 
     //Dialog Title
-    printString(windowTitle, x , y - 1, &itemMessageColor, &interfaceBoxColor, dbuf);
+    printString(windowTitle, x , y - 1, &itemMessageColor, &interfaceBoxColor, &dbuf);
     //Dialog background
-    rectangularShading(x - 1, y - 1, width + 1, height + 1, &interfaceBoxColor, INTERFACE_OPACITY, dbuf);
+    rectangularShading(x - 1, y - 1, width + 1, height + 1, &interfaceBoxColor, INTERFACE_OPACITY, &dbuf);
     //Display the title/background and save the prior display state
-    overlayDisplayBuffer(dbuf, rbuf);
+    const SavedDisplayBuffer rbuf = saveDisplayBuffer();
+    overlayDisplayBuffer(&dbuf);
     //Display the buttons and wait for user selection
     selectedButton = buttonInputLoop(buttons, buttonCount, x, y, width, height, NULL);
     //Revert the display state
-    overlayDisplayBuffer(rbuf, NULL);
+    restoreDisplayBuffer(&rbuf);
 
     return selectedButton;
 }
@@ -384,7 +385,7 @@ static void dialogCreateMonster() {
         if (theMonster->info.displayChar == G_TURRET && (!(pmapAt(selectedPosition)->layers[DUNGEON] == WALL))) {
             locationIsValid = false;
         }
-        if (!(theMonster->info.displayChar == G_TURRET) && cellHasTerrainFlag(selectedPosition.x, selectedPosition.y, T_OBSTRUCTS_PASSABILITY)) {
+        if (!(theMonster->info.displayChar == G_TURRET) && cellHasTerrainFlag(selectedPosition, T_OBSTRUCTS_PASSABILITY)) {
             locationIsValid = false;
         }
 
@@ -408,7 +409,7 @@ static void dialogCreateMonster() {
         theMonster->creatureState = MONSTER_WANDERING;
         fadeInMonster(theMonster);
         refreshSideBar(-1, -1, false);
-        refreshDungeonCell(theMonster->loc.x, theMonster->loc.y);
+        refreshDungeonCell(theMonster->loc);
 
         if (!(theMonster->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))
             || theMonster->info.monsterID == MK_PHOENIX_EGG

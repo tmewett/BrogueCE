@@ -46,7 +46,7 @@ static inline pos posNeighborInDirection(pos p, enum directions direction_to_ste
 }
 
 extern short **scentMap;
-extern cellDisplayBuffer displayBuffer[COLS][ROWS];
+extern screenDisplayBuffer displayBuffer;
 extern short terrainRandomValues[DCOLS][DROWS][8];
 extern short **safetyMap;                                       // used to help monsters flee
 extern short **allySafetyMap;

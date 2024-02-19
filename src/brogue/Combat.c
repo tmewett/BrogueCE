@@ -145,7 +145,7 @@ boolean attackHit(creature *attacker, creature *defender) {
     return rand_percent(hitProbability(attacker, defender));
 }
 
-void addMonsterToContiguousMonsterGrid(short x, short y, creature *monst, char grid[DCOLS][DROWS]) {
+static void addMonsterToContiguousMonsterGrid(short x, short y, creature *monst, char grid[DCOLS][DROWS]) {
     short newX, newY;
     enum directions dir;
     creature *tempMonst;
@@ -169,7 +169,7 @@ void addMonsterToContiguousMonsterGrid(short x, short y, creature *monst, char g
 // group of monsters that the monster would not avoid.
 // The contiguous group is supplemented with the given (x, y) coordinates, if any;
 // this is so that jellies et al. can spawn behind the player in a hallway.
-void splitMonster(creature *monst, pos loc) {
+static void splitMonster(creature *monst, pos loc) {
     char buf[DCOLS * 3];
     char monstName[DCOLS];
     char monsterGrid[DCOLS][DROWS], eligibleGrid[DCOLS][DROWS];
@@ -264,7 +264,7 @@ void splitMonster(creature *monst, pos loc) {
     }
 }
 
-short alliedCloneCount(creature *monst) {
+static short alliedCloneCount(creature *monst) {
     short count = 0;
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *temp = nextCreature(&it);
@@ -354,7 +354,7 @@ void moralAttack(creature *attacker, creature *defender) {
     }
 }
 
-boolean playerImmuneToMonster(creature *monst) {
+static boolean playerImmuneToMonster(creature *monst) {
     if (monst != &player
         && rogue.armor
         && (rogue.armor->flags & ITEM_RUNIC)
@@ -367,7 +367,7 @@ boolean playerImmuneToMonster(creature *monst) {
     }
 }
 
-void specialHit(creature *attacker, creature *defender, short damage) {
+static void specialHit(creature *attacker, creature *defender, short damage) {
     short itemCandidates, randItemIndex, stolenQuantity;
     item *theItem = NULL, *itemFromTopOfStack;
     char buf[COLS], buf2[COLS], buf3[COLS];
@@ -483,7 +483,7 @@ void specialHit(creature *attacker, creature *defender, short damage) {
     }
 }
 
-boolean forceWeaponHit(creature *defender, item *theItem) {
+static boolean forceWeaponHit(creature *defender, item *theItem) {
     short forceDamage;
     char buf[DCOLS*3], buf2[COLS], monstName[DCOLS];
     creature *otherMonster = NULL;
@@ -498,7 +498,7 @@ boolean forceWeaponHit(creature *defender, item *theItem) {
         .y = defender->loc.y + clamp(defender->loc.y - player.loc.y, -1, 1)
     };
     if (canDirectlySeeMonster(defender)
-        && !cellHasTerrainFlag(newLoc.x, newLoc.y, T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION)
+        && !cellHasTerrainFlag(newLoc, T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION)
         && !(pmapAt(newLoc)->flags & (HAS_MONSTER | HAS_PLAYER))) {
         sprintf(buf, "you launch %s backward with the force of your blow", monstName);
         buf[DCOLS] = '\0';
@@ -771,7 +771,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
     }
 }
 
-void attackVerb(char returnString[DCOLS], creature *attacker, short hitPercentile) {
+static void attackVerb(char returnString[DCOLS], creature *attacker, short hitPercentile) {
     short verbCount, increment;
 
     if (attacker != &player && (player.status[STATUS_HALLUCINATING] || !canSeeMonster(attacker))) {
@@ -966,7 +966,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
     }
 }
 
-void decrementWeaponAutoIDTimer() {
+static void decrementWeaponAutoIDTimer() {
     char buf[COLS*3], buf2[COLS*3];
 
     if (rogue.weapon
@@ -985,14 +985,14 @@ void decrementWeaponAutoIDTimer() {
 void processStaggerHit(creature *attacker, creature *defender) {
     if ((defender->info.flags & (MONST_INVULNERABLE | MONST_IMMOBILE | MONST_INANIMATE))
         || (defender->bookkeepingFlags & MB_CAPTIVE)
-        || cellHasTerrainFlag(defender->loc.x, defender->loc.y, T_OBSTRUCTS_PASSABILITY)) {
+        || cellHasTerrainFlag(defender->loc, T_OBSTRUCTS_PASSABILITY)) {
 
         return;
     }
     short newX = clamp(defender->loc.x - attacker->loc.x, -1, 1) + defender->loc.x;
     short newY = clamp(defender->loc.y - attacker->loc.y, -1, 1) + defender->loc.y;
     if (coordinatesAreInMap(newX, newY)
-        && !cellHasTerrainFlag(newX, newY, T_OBSTRUCTS_PASSABILITY)
+        && !cellHasTerrainFlag((pos){ newX, newY }, T_OBSTRUCTS_PASSABILITY)
         && !(pmap[newX][newY].flags & (HAS_MONSTER | HAS_PLAYER))) {
 
         setMonsterLocation(defender, (pos){ newX, newY });
@@ -1341,7 +1341,7 @@ void flashMonster(creature *monst, const color *theColor, short strength) {
     }
 }
 
-boolean canAbsorb(creature *ally, boolean ourBolts[], creature *prey, short **grid) {
+static boolean canAbsorb(creature *ally, boolean ourBolts[], creature *prey, short **grid) {
     short i;
 
     if (ally->creatureState == MONSTER_ALLY
@@ -1375,19 +1375,19 @@ boolean canAbsorb(creature *ally, boolean ourBolts[], creature *prey, short **gr
     return false;
 }
 
-boolean anyoneWantABite(creature *decedent) {
+static boolean anyoneWantABite(creature *decedent) {
     short candidates, randIndex, i;
     short **grid;
     boolean success = false;
     boolean *ourBolts;
-    
+
     ourBolts = (boolean *)calloc(gameConst->numberBoltKinds, sizeof(boolean));
 
     candidates = 0;
     if ((!(decedent->info.abilityFlags & LEARNABLE_ABILITIES)
          && !(decedent->info.flags & LEARNABLE_BEHAVIORS)
          && decedent->info.bolts[0] == BOLT_NONE)
-        || (cellHasTerrainFlag(decedent->loc.x, decedent->loc.y, T_PATHING_BLOCKER))
+        || (cellHasTerrainFlag(decedent->loc, T_PATHING_BLOCKER))
         || decedent->info.monsterID == MK_SPECTRAL_IMAGE
         || (decedent->info.flags & (MONST_INANIMATE | MONST_IMMOBILE))) {
 
@@ -1708,7 +1708,7 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
                 applyInstantTileEffectsToCreature(carriedMonster);
             }
             anyoneWantABite(decedent);
-            refreshDungeonCell(x, y);
+            refreshDungeonCell((pos){ x, y });
         }
     }
     decedent->currentHP = 0;
@@ -1749,7 +1749,7 @@ void buildHitList(creature **hitList, const creature *attacker, creature *defend
                 defender = monsterAtLoc((pos){ newestX, newestY });
                 if (defender
                     && monsterWillAttackTarget(attacker, defender)
-                    && (!cellHasTerrainFlag(defender->loc.x, defender->loc.y, T_OBSTRUCTS_PASSABILITY) || (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS))) {
+                    && (!cellHasTerrainFlag(defender->loc, T_OBSTRUCTS_PASSABILITY) || (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS))) {
 
                     hitList[i] = defender;
                 }

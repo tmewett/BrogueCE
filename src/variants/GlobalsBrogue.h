@@ -21,7 +21,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-void initializeGameVariantBrogue();
+void initializeGameVariantBrogue(void);
 
 // Brogue version: what the user sees in the menu and title
 extern const char *brogueVersion;
