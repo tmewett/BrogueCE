@@ -163,6 +163,9 @@ creature *generateMonster(short monsterID, boolean itemPossible, boolean mutatio
     return monst;
 }
 
+/// @brief Checks if the player knows a monster's location via telepathy or entrancement.
+/// @param monst the monster
+/// @return true if the monster is either entranced or revealed by telepathy
 boolean monsterRevealed(creature *monst) {
     if (monst == &player) {
         return false;
@@ -191,6 +194,15 @@ boolean monsterHiddenBySubmersion(const creature *monst, const creature *observe
     return false;
 }
 
+/// @brief Checks if a creature is in a state that hides it from an observer.
+/// A creature is hidden if it's dormant, invisible (and not exposed by gas), or submerged (and the observer isn't).
+/// However, leader/followers and player/allies are never hidden from each other.
+/// Ignores line of sight, stealth, lighting, clairvoyance, telepathy, and terrain (except deep water).
+/// Used for bolt targeting/paths (player & monsters), whip/spear attacks (player & monsters).
+/// Called by canSeeMonster and canDirectlySeeMonster. A bit of a misnomer since monst can be the player.
+/// @param monst the creature
+/// @param observer the observer
+/// @return true if the creature is hidden from the observer
 boolean monsterIsHidden(const creature *monst, const creature *observer) {
     if (monst->bookkeepingFlags & MB_IS_DORMANT) {
         return true;
@@ -209,6 +221,14 @@ boolean monsterIsHidden(const creature *monst, const creature *observer) {
     return false;
 }
 
+/// @brief Checks if the player has full knowledge about a creature,
+/// i.e. they know where it is, and what kind it is. Ignores hallucination.
+/// Equivalent to the monster being not hidden and either on a visible cell or revealed.
+/// Some notable uses include: auto-targeting (staffs, wands, etc.), determining which monsters
+/// display in the sidebar, auto-id of unidentified items (staffs, wands, runics, etc.), and the
+/// verbiage used in combat/dungeon messages (or whether a message appears at all).
+/// @param monst the monster
+/// @return true if the monster is not hidden and the player knows its location
 boolean canSeeMonster(creature *monst) {
     if (monst == &player) {
         return true;
@@ -220,7 +240,11 @@ boolean canSeeMonster(creature *monst) {
     return false;
 }
 
-// This is different from canSeeMonster() in that it counts only physical sight -- not clairvoyance or telepathy.
+/// @brief Checks if the player can physically see a monster (i.e. line of sight and adequate lighting).
+/// Ignores telepathy, but invisible allies are treated as visible. Clairvoyant lighting is ignored, but
+/// darkening is a factor because it affects a cell's VISIBLE flag.
+/// @param monst the monster
+/// @return true if the player can physically see the monster
 boolean canDirectlySeeMonster(creature *monst) {
     if (monst == &player) {
         return true;
@@ -1478,6 +1502,14 @@ boolean monsterAvoids(creature *monst, pos p) {
     return false;
 }
 
+/// @brief Attempts to utilize a monster's turn by either initiating movement or launching an attack.
+/// Aims to shift the monster one space closer to the destination by evaluating the feasibility
+/// of moves in different directions. If the destination is occupied by an accessible enemy within
+/// melee range (including whip/spear), the monster will attack instead of moving.
+/// @param monst the monster
+/// @param targetLoc the destination
+/// @param willingToAttackPlayer
+/// @return true if a turn-consuming action was performed
 static boolean moveMonsterPassivelyTowards(creature *monst, pos targetLoc, boolean willingToAttackPlayer) {
     const int x = monst->loc.x;
     const int y = monst->loc.y;
@@ -2430,6 +2462,7 @@ boolean monsterSummons(creature *monst, boolean alwaysUse) {
 
 // Some monsters never make good targets irrespective of what bolt we're contemplating.
 // Return false for those. Otherwise, return true.
+// Used for monster-cast bolts only.
 static boolean generallyValidBoltTarget(creature *caster, creature *target) {
     if (caster == target) {
         // Can't target yourself; that's the fundamental theorem of Brogue bolts.
@@ -2482,6 +2515,7 @@ static boolean targetEligibleForCombatBuff(creature *caster, creature *target) {
 
 // Make a decision as to whether the given caster should fire the given bolt at the given target.
 // Assumes that the conditions in generallyValidBoltTarget have already been satisfied.
+// Used for monster-cast bolts only.
 static boolean specificallyValidBoltTarget(creature *caster, creature *target, enum boltType theBoltType) {
 
     if ((boltCatalog[theBoltType].flags & BF_TARGET_ALLIES)
@@ -2924,6 +2958,9 @@ static void monsterMillAbout(creature *monst, short movementChance) {
     }
 }
 
+/// @brief Handles the given allied monster's turn under normal circumstances
+/// e.g. not discordant, fleeing, paralyzed or entranced
+/// @param monst the allied monster
 static void moveAlly(creature *monst) {
     creature *closestMonster = NULL;
     short i, j, x, y, dir, shortestDistance, leashLength;
@@ -3586,9 +3623,15 @@ void setMonsterLocation(creature *monst, pos newLoc) {
     }
 }
 
-// Tries to move the given monster in the given vector; returns true if the move was legal
-// (including attacking player, vomiting or struggling in vain)
-// Be sure that dx, dy are both in the range [-1, 1] or the move will sometimes fail due to the diagonal check.
+/// @brief Tries to move a monster one space or perform a melee attack in the given direction.
+/// Handles confused movement, turn-consuming non-movement actions like vomiting, and unique
+/// attack patterns (axe-like, whip, spear). Fast-moving monsters get 2 turns, moving one
+/// space each time.
+/// @param monst the monster
+/// @param dx the x axis component of the direction [-1, 0, 1]
+/// @param dy the y axis component of the direction [-1, 0, 1]
+/// @return true if a turn-consuming action was performed. otherwise false (e.g. monster is
+/// unwilling to attack or blocked by terrain)
 boolean moveMonster(creature *monst, short dx, short dy) {
     short x = monst->loc.x, y = monst->loc.y;
     short newX, newY;
