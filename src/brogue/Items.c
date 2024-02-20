@@ -106,6 +106,18 @@ static unsigned long pickItemCategory(unsigned long theCategory) {
     }
 }
 
+/// @brief Checks if an item is a throwing weapon
+/// @param theItem the item
+/// @return true if the item is a throwing weapon
+static boolean itemIsThrowingWeapon(const item *theItem) {
+    if (theItem && (theItem->category == WEAPON) 
+        && ((theItem->kind == DART) || (theItem->kind == JAVELIN) || (theItem->kind == INCENDIARY_DART))) {
+
+        return true;
+    }
+    return false;
+}
+
 // Sets an item to the given type and category (or chooses randomly if -1) with all other stats
 item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
     const itemTable *theEntry = NULL;
@@ -5113,6 +5125,80 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
         }
     }
     return autoID;
+}
+
+/// @brief Checks if an item is known to be of the given magic polarity
+/// @param theItem the item to check
+/// @param magicPolarity the magic polarity (-1 for bad, 1 for good)
+/// @return true if the player knows the item is of the given magic polarity
+static boolean itemMagicPolarityIsKnown(const item *theItem, int magicPolarity) {
+    itemTable *table = tableForItemCategory(theItem->category);
+
+    if ((theItem && (theItem->flags & (ITEM_MAGIC_DETECTED | ITEM_IDENTIFIED)))
+        || (table && (table[theItem->kind].identified || table[theItem->kind].magicPolarityRevealed))) {
+
+            return itemMagicPolarity(theItem) == magicPolarity;
+    }
+    return false;
+}
+
+/// @brief Checks if a monster is a valid autotarget when the player is using a staff/wand or throwing something.
+/// The thrown item must be a throwing weapon, a known bad potion, or an unknown potion.
+/// @param monst the monster
+/// @param theItem the staff, wand, throwing weapon, or bad potion
+/// @param targetingMode The autotarget mode. Are we throwing or using that staff? 
+/// @return true if the monster can be autotargeted
+static boolean canAutoTargetMonster(const creature *monst, const item *theItem, enum autoTargetMode targetingMode) {
+
+    boolean throw = targetingMode == AUTOTARGET_MODE_THROW;
+
+    if (!monst || !theItem
+        || monst->depth != rogue.depthLevel
+        || (monst->bookkeepingFlags & MB_IS_DYING)
+        || (!throw && !((theItem->category == STAFF) || (theItem->category == WAND)))
+        || (throw && !((theItem->category == POTION) || (theItem->category == WEAPON)))
+        || (throw && (theItem->category == WEAPON) && !itemIsThrowingWeapon(theItem))
+        || (throw && (theItem->category == POTION) && itemMagicPolarityIsKnown(theItem, MAGIC_POLARITY_BENEVOLENT))
+        || !canSeeMonster(monst)
+        || !openPathBetween(player.loc.x, player.loc.y, monst->loc.x, monst->loc.y)) {
+
+        return false;
+    }
+
+    // If hallucinating but not telepathic (ally bonds don't count), all monsters appear as enemies, so most of them
+    // become targetable, regardless of whether we are casting or throwing.
+    if (player.status[STATUS_HALLUCINATING] && !player.status[STATUS_TELEPATHIC]
+        && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) { // todo: hallucination doesn't apply to monster
+
+        return true;
+    }
+
+    boolean isAlly = monstersAreTeammates(&player, monst);
+    boolean isEnemy = !isAlly;
+
+    if (throw) {
+        return isEnemy; // todo: monsters immune to fire or physical damage MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE
+    }
+
+    // If we got this far we're using a staff or wand, and we're either not hallucinating or we're telepathic.
+
+    bolt theBolt = boltCatalog[tableForItemCategory(theItem->category)[theItem->kind].power];
+    boolean magicPolarityIsKnown = (itemMagicPolarityIsKnown(theItem, MAGIC_POLARITY_BENEVOLENT) 
+                                    || itemMagicPolarityIsKnown(theItem, MAGIC_POLARITY_MALEVOLENT));
+
+    //Autotarget enemies if we don't know if the staff/wand is good or bad
+    if (!magicPolarityIsKnown && isEnemy) {
+        return true;
+    }
+
+    //If we know good/bad, target approriately
+    if (magicPolarityIsKnown &&
+        ((isAlly && (theBolt.flags & BF_TARGET_ALLIES)) || (isEnemy && (theBolt.flags & BF_TARGET_ENEMIES)))) {
+
+        return true;
+    }
+
+    return false;
 }
 
 // Relies on the sidebar entity list. If one is already selected, select the next qualifying. Otherwise, target the first qualifying.

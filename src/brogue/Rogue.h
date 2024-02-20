@@ -2793,6 +2793,13 @@ enum messageFlags {
     FOLDABLE                      = Fl(2),
 };
 
+enum autoTargetMode {
+    AUTOTARGET_MODE_NONE,               // don't autotarget
+    AUTOTARGET_MODE_USE_STAFF_OR_WAND, 
+    AUTOTARGET_MODE_THROW,
+    AUTOTARGET_MODE_EXPLORE,            // cycle through anything in the sidebar
+};
+
 typedef struct archivedMessage {
     char message[COLS*2];
     unsigned char count;          // how many times this message appears
