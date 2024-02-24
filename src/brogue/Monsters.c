@@ -1629,7 +1629,7 @@ static short awarenessDistance(creature *observer, creature *target) {
     // and wander toward the last location that we saw the player.
     perceivedDistance = (rogue.scentTurnNumber - scentMap[observer->loc.x][observer->loc.y]); // this value is double the apparent distance
     if ((target == &player && (pmapAt(observer->loc)->flags & IN_FIELD_OF_VIEW))
-        || (target != &player && openPathBetween(observer->loc.x, observer->loc.y, target->loc.x, target->loc.y))) {
+        || (target != &player && openPathBetween(observer->loc, target->loc))) {
 
         perceivedDistance = min(perceivedDistance, scentDistance(observer->loc.x, observer->loc.y, target->loc.x, target->loc.y));
     }
@@ -1746,7 +1746,7 @@ void updateMonsterState(creature *monst) {
         if (monsterFleesFrom(monst, monst2)
             && distanceBetween((pos){x, y}, monst2->loc) < closestFearedEnemy
             && traversiblePathBetween(monst2, x, y)
-            && openPathBetween(x, y, monst2->loc.x, monst2->loc.y)) {
+            && openPathBetween((pos){x, y}, monst2->loc)) {
 
             closestFearedEnemy = distanceBetween((pos){x, y}, monst2->loc);
         }
@@ -2030,16 +2030,11 @@ boolean specifiedPathBetween(short x1, short y1, short x2, short y2,
     return true; // should never get here
 }
 
-boolean openPathBetween(short x1, short y1, short x2, short y2) {
-    pos startLoc = (pos){ .x = x1, .y = y1 };
-    pos targetLoc = (pos){ .x = x2, .y = y2 };
+boolean openPathBetween(const pos startLoc, const pos targetLoc) {
 
     pos returnLoc;
     getImpactLoc(&returnLoc, startLoc, targetLoc, DCOLS, false, &boltCatalog[BOLT_NONE]);
-    if (returnLoc.x == targetLoc.x && returnLoc.y == targetLoc.y) {
-        return true;
-    }
-    return false;
+    return posEq(returnLoc,targetLoc);
 }
 
 // will return the player if the player is at (p.x, p.y).
@@ -2489,7 +2484,7 @@ static boolean generallyValidBoltTarget(creature *caster, creature *target) {
         // No bolt will affect a submerged creature. Can't shoot at invisible creatures unless it's in gas.
         return false;
     }
-    return openPathBetween(caster->loc.x, caster->loc.y, target->loc.x, target->loc.y);
+    return openPathBetween(caster->loc, target->loc);
 }
 
 static boolean targetEligibleForCombatBuff(creature *caster, creature *target) {

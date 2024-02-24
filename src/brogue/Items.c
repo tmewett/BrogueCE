@@ -5142,35 +5142,30 @@ static boolean itemMagicPolarityIsKnown(const item *theItem, int magicPolarity) 
     return false;
 }
 
-/// @brief Checks if a monster is a valid autotarget when the player is using a staff/wand or throwing something.
-/// The thrown item must be a throwing weapon, a known bad potion, or an unknown potion.
-/// @param monst the monster
-/// @param theItem the staff, wand, throwing weapon, or bad potion
-/// @param targetingMode The autotarget mode. Are we throwing or using that staff? 
-/// @return true if the monster can be autotargeted
+/// @brief Checks if a monster is a valid auto-target when the player is using a staff/wand or throwing something.
+/// @param monst The monster
+/// @param theItem The staff, wand, throwing weapon, or bad/unknown potion
+/// @param targetingMode The auto-target mode. Are we throwing or using that staff/wand? 
+/// @return True if the monster can be auto-targeted
 static boolean canAutoTargetMonster(const creature *monst, const item *theItem, enum autoTargetMode targetingMode) {
 
     boolean throw = targetingMode == AUTOTARGET_MODE_THROW;
-
+    boolean use = targetingMode == AUTOTARGET_MODE_USE_STAFF_OR_WAND;
+    
     if (!monst || !theItem
+        || (!throw && !use)
         || monst->depth != rogue.depthLevel
         || (monst->bookkeepingFlags & MB_IS_DYING)
-        || (!throw && !((theItem->category == STAFF) || (theItem->category == WAND)))
-        || (throw && !((theItem->category == POTION) || (theItem->category == WEAPON)))
+        || (use && (theItem->category != STAFF) && (theItem->category != WAND))
+        || (throw && (theItem->category != POTION) && (theItem->category != WEAPON))
         || (throw && (theItem->category == WEAPON) && !itemIsThrowingWeapon(theItem))
         || (throw && (theItem->category == POTION) && itemMagicPolarityIsKnown(theItem, MAGIC_POLARITY_BENEVOLENT))
         || !canSeeMonster(monst)
-        || !openPathBetween(player.loc.x, player.loc.y, monst->loc.x, monst->loc.y)) {
-
+        || !openPathBetween(player.loc, monst->loc)
+        // When hallucinating but not telepathic, don't target creatures whose appearance changes.
+        || (player.status[STATUS_HALLUCINATING] && !player.status[STATUS_TELEPATHIC]
+            && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE)))) {
         return false;
-    }
-
-    // If hallucinating but not telepathic (ally bonds don't count), all monsters appear as enemies, so most of them
-    // become targetable, regardless of whether we are casting or throwing.
-    if (player.status[STATUS_HALLUCINATING] && !player.status[STATUS_TELEPATHIC]
-        && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) { // todo: hallucination doesn't apply to monster
-
-        return true;
     }
 
     boolean isAlly = monstersAreTeammates(&player, monst);
@@ -5180,21 +5175,37 @@ static boolean canAutoTargetMonster(const creature *monst, const item *theItem, 
         return isEnemy; // todo: monsters immune to fire or physical damage MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE
     }
 
-    // If we got this far we're using a staff or wand, and we're either not hallucinating or we're telepathic.
+    // If we got this far we're using a staff or wand
+    // Enemies that always reflect bolts are not targetable with staffs/wands (stone/winged guardian, mirror totem)
+    if (isEnemy && (monst->info.flags & MONST_REFLECT_4) && (monst->info.flags & MONST_ALWAYS_USE_ABILITY)) {
+        return false;
+    }
 
     bolt theBolt = boltCatalog[tableForItemCategory(theItem->category)[theItem->kind].power];
     boolean magicPolarityIsKnown = (itemMagicPolarityIsKnown(theItem, MAGIC_POLARITY_BENEVOLENT) 
                                     || itemMagicPolarityIsKnown(theItem, MAGIC_POLARITY_MALEVOLENT));
+    boolean itemKindIsKnown = tableForItemCategory(theItem->category)[theItem->kind].identified;    
 
-    //Autotarget enemies if we don't know if the staff/wand is good or bad
+    // Target enemies if we don't know if the staff/wand is good or bad
     if (!magicPolarityIsKnown && isEnemy) {
         return true;
     }
 
-    //If we know good/bad, target approriately
+    // todo: additional bolt-specific exclusions where the bolt will have no effect on the monster. 
+    // e.g. entrancement/beckoning/teleport/slow on immobile targets, firebolt on fire immune, etc.
+    // see specificallyValidBoltTarget and forbiddenMonsterFlags for possible logic consolidation
+    // make a separate function that is also used in the monster details screen to show what effect (or not)
+    // the wand/staff will have on the monster
+
+    // Target sentinels and turrets with tunneling
+    if (itemKindIsKnown && isEnemy && (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS)
+        && theBolt.boltEffect == BE_TUNNELING) {            
+        return true;
+    }
+
+    // Otherwise, if we know good/bad, broadly target all enemies or allies based on the bolt flag (if any)
     if (magicPolarityIsKnown &&
         ((isAlly && (theBolt.flags & BF_TARGET_ALLIES)) || (isEnemy && (theBolt.flags & BF_TARGET_ENEMIES)))) {
-
         return true;
     }
 
@@ -5202,16 +5213,15 @@ static boolean canAutoTargetMonster(const creature *monst, const item *theItem, 
 }
 
 // Relies on the sidebar entity list. If one is already selected, select the next qualifying. Otherwise, target the first qualifying.
-boolean nextTargetAfter(short *returnX,
-                        short *returnY,
-                        short targetX,
-                        short targetY,
-                        boolean targetEnemies,
-                        boolean targetAllies,
-                        boolean targetItems,
-                        boolean targetTerrain,
-                        boolean requireOpenPath,
+boolean nextTargetAfter(const item *theItem,
+                        pos *returnLoc,
+                        pos targetLoc,
+                        enum autoTargetMode targetMode,
                         boolean reverseDirection) {
+
+    if (targetMode == AUTOTARGET_MODE_NONE) {
+        return false;
+    }
     short selectedIndex = 0;
     pos deduplicatedTargetList[ROWS];
 
@@ -5221,7 +5231,7 @@ boolean nextTargetAfter(short *returnX,
             if (targetCount == 0 || !posEq(deduplicatedTargetList[targetCount-1], rogue.sidebarLocationList[i])) {
 
                 deduplicatedTargetList[targetCount] = rogue.sidebarLocationList[i];
-                if (posEq(rogue.sidebarLocationList[i], (pos){ targetX, targetY })) {
+                if (posEq(rogue.sidebarLocationList[i], targetLoc)) {
                     selectedIndex = targetCount;
                 }
                 targetCount++;
@@ -5230,39 +5240,18 @@ boolean nextTargetAfter(short *returnX,
     }
     for (int i = reverseDirection ? targetCount - 1 : 0; reverseDirection ? i >= 0 : i < targetCount; reverseDirection ? i-- : i++) {
         const int n = (selectedIndex + i) % targetCount;
-        const int newX = deduplicatedTargetList[n].x;
-        const int newY = deduplicatedTargetList[n].y;
-        if ((newX != player.loc.x || newY != player.loc.y)
-            && (newX != targetX || newY != targetY)
-            && (!requireOpenPath || openPathBetween(player.loc.x, player.loc.y, newX, newY))) {
+        pos newLoc = (pos) {deduplicatedTargetList[n].x, deduplicatedTargetList[n].y};
+        if ((!posEq(newLoc, player.loc))
+            && (!posEq(newLoc, targetLoc))
+            && ((targetMode == AUTOTARGET_MODE_EXPLORE) || openPathBetween(player.loc, newLoc))) {
 
-            brogueAssert(coordinatesAreInMap(newX, newY));
+            brogueAssert(coordinatesAreInMap(newLoc.x, newLoc.y));
             brogueAssert(n >= 0 && n < targetCount);
-            creature *const monst = monsterAtLoc((pos){ newX, newY });
-            if (monst) {
-                if (monstersAreEnemies(&player, monst)) {
-                    if (targetEnemies) {
-                        *returnX = newX;
-                        *returnY = newY;
-                        return true;
-                    }
-                } else {
-                    if (targetAllies) {
-                        *returnX = newX;
-                        *returnY = newY;
-                        return true;
-                    }
-                }
-            }
-            item *const theItem = itemAtLoc((pos){ newX, newY });
-            if (!monst && theItem && targetItems) {
-                *returnX = newX;
-                *returnY = newY;
-                return true;
-            }
-            if (!monst && !theItem && targetTerrain) {
-                *returnX = newX;
-                *returnY = newY;
+            creature *const monst = monsterAtLoc(newLoc);
+            if ((monst && canAutoTargetMonster(monst, theItem, targetMode)) 
+                || (targetMode == AUTOTARGET_MODE_EXPLORE)) {
+
+                *returnLoc = newLoc; 
                 return true;
             }
         }
@@ -5548,24 +5537,48 @@ static boolean creatureIsTargetable(creature *monst) {
         && canSeeMonster(monst)
         && monst->depth == rogue.depthLevel
         && !(monst->bookkeepingFlags & MB_IS_DYING)
-        && openPathBetween(player.loc.x, player.loc.y, monst->loc.x, monst->loc.y);
+        && openPathBetween(player.loc, monst->loc);
 }
 
-// Return true if a target is chosen, or false if canceled.
-boolean chooseTarget(pos *returnLoc,
-                     short maxDistance,
-                     boolean stopAtTarget,
-                     boolean autoTarget,
-                     boolean targetAllies,
-                     const bolt *theBolt,
-                     const color *trajectoryColor) {
-    short numCells, i, distance, newX, newY;
+/// @brief Allows the player to interactively choose a target location for actions that require a straight line from
+/// the player to the target (e.g. throwing an item or using a staff/wand). The best path to the target is determined
+/// and highlighted. If possible, an inital target is chosen automatically. The player can cycle through additional
+/// targets (if any) with the tab key. Alternatively, the player can manually choose a target.
+/// @param returnLoc The location of the chosen target, if any.
+/// @param maxDistance The maximum throwing/blinking distance. Used to provide a visual cue to the player.
+/// @param targetMode Determines how targets are chosen based on the action (e.g. throw, use staff/wand).
+/// @param theItem The staff, wand, or thrown item, if any.
+/// @return True if the player selected a target
+boolean chooseTarget(pos *returnLoc, 
+                     short maxDistance, 
+                     enum autoTargetMode targetMode, 
+                     const item *theItem) {
+    short numCells, i, distance;
     pos coordinates[DCOLS];
     creature *monst;
     boolean canceled, targetConfirmed, tabKey, cursorInTrajectory, focusedOnSomething = false;
     rogueEvent event = {0};
     short oldRNG;
-    color trajColor = *trajectoryColor;
+    boolean stopAtTarget = (targetMode == AUTOTARGET_MODE_THROW);
+    color trajColor;
+    bolt theBolt;
+
+    // choose the bolt and color to use for highlighting the path to the target
+    if (theItem && (targetMode == AUTOTARGET_MODE_USE_STAFF_OR_WAND) 
+        && ((theItem->category == STAFF) || (theItem->category == WAND))) {
+
+        if (tableForItemCategory(theItem->category)[theItem->kind].identified) {
+            theBolt = boltCatalog[boltForItem(theItem)];
+            trajColor = (theBolt.backColor == NULL) ? red : *theBolt.backColor;
+        } else {
+            trajColor = gray;
+        }
+    } else if (theItem && (targetMode == AUTOTARGET_MODE_THROW)) {
+        trajColor = red;
+    } else {
+        trajColor = white;
+        theBolt = boltCatalog[BOLT_NONE];
+    }
 
     normColor(&trajColor, 100, 10);
 
@@ -5578,19 +5591,18 @@ boolean chooseTarget(pos *returnLoc,
 
     oldRNG = rogue.RNG;
     rogue.RNG = RNG_COSMETIC;
-    //assureCosmeticRNG;
 
     pos originLoc = player.loc;
     pos oldTargetLoc = player.loc;
     pos targetLoc = player.loc;
+    pos newLoc;
 
-    if (autoTarget) {
-        if (creatureIsTargetable(rogue.lastTarget) && (targetAllies == (rogue.lastTarget->creatureState == MONSTER_ALLY))) {
+    if (theItem && ((targetMode == AUTOTARGET_MODE_USE_STAFF_OR_WAND) || (targetMode == AUTOTARGET_MODE_THROW))) {
+        if (canAutoTargetMonster(rogue.lastTarget, theItem, targetMode)) {
             monst = rogue.lastTarget;
         } else {
-            //rogue.lastTarget = NULL;
-            if (nextTargetAfter(&newX, &newY, targetLoc.x, targetLoc.y, !targetAllies, targetAllies, false, false, true, false)) {
-                targetLoc = (pos) { .x = newX, .y = newY };
+            if (nextTargetAfter(theItem, &newLoc, targetLoc, targetMode, false)) {
+                targetLoc = newLoc;
             }
             monst = monsterAtLoc(targetLoc);
         }
@@ -5601,7 +5613,7 @@ boolean chooseTarget(pos *returnLoc,
         }
     }
 
-    numCells = getLineCoordinates(coordinates, originLoc, targetLoc, theBolt);
+    numCells = getLineCoordinates(coordinates, originLoc, targetLoc, &theBolt);
     if (maxDistance > 0) {
         numCells = min(numCells, maxDistance);
     }
@@ -5616,7 +5628,7 @@ boolean chooseTarget(pos *returnLoc,
 
         if (canceled) {
             refreshDungeonCell(oldTargetLoc);
-            hiliteTrajectory(coordinates, numCells, true, theBolt, trajectoryColor);
+            hiliteTrajectory(coordinates, numCells, true, &theBolt, &trajColor);
             confirmMessages();
             rogue.cursorLoc = INVALID_POS;
             restoreRNG;
@@ -5624,8 +5636,8 @@ boolean chooseTarget(pos *returnLoc,
         }
 
         if (tabKey) {
-            if (nextTargetAfter(&newX, &newY, targetLoc.x, targetLoc.y, !targetAllies, targetAllies, false, false, true, event.shiftKey)) {
-                targetLoc = (pos) { .x = newX, .y = newY };
+            if (nextTargetAfter(theItem, &newLoc, targetLoc, targetMode, event.shiftKey)) {
+                targetLoc = newLoc;
             }
         }
 
@@ -5644,10 +5656,10 @@ boolean chooseTarget(pos *returnLoc,
         }
 
         refreshDungeonCell(oldTargetLoc);
-        hiliteTrajectory(coordinates, numCells, true, theBolt, &trajColor);
+        hiliteTrajectory(coordinates, numCells, true, &theBolt, &trajColor);
 
         if (!targetConfirmed) {
-            numCells = getLineCoordinates(coordinates, originLoc, targetLoc, theBolt);
+            numCells = getLineCoordinates(coordinates, originLoc, targetLoc, &theBolt);
             if (maxDistance > 0) {
                 numCells = min(numCells, maxDistance);
             }
@@ -5655,7 +5667,7 @@ boolean chooseTarget(pos *returnLoc,
             if (stopAtTarget) {
                 numCells = min(numCells, distanceBetween(player.loc, targetLoc));
             }
-            distance = hiliteTrajectory(coordinates, numCells, false, theBolt, &trajColor);
+            distance = hiliteTrajectory(coordinates, numCells, false, &theBolt, &trajColor);
             cursorInTrajectory = false;
             for (i=0; i<distance; i++) {
                 if (coordinates[i].x == targetLoc.x && coordinates[i].y == targetLoc.y) {
@@ -5675,10 +5687,10 @@ boolean chooseTarget(pos *returnLoc,
     if (maxDistance > 0) {
         numCells = min(numCells, maxDistance);
     }
-    hiliteTrajectory(coordinates, numCells, true, theBolt, trajectoryColor);
+    hiliteTrajectory(coordinates, numCells, true, &theBolt, &trajColor);
     refreshDungeonCell(oldTargetLoc);
 
-    if (originLoc.x == targetLoc.x && originLoc.y == targetLoc.y) {
+    if (posEq(originLoc, targetLoc)) {
         confirmMessages();
         restoreRNG;
         rogue.cursorLoc = INVALID_POS;
@@ -6267,28 +6279,10 @@ void throwCommand(item *theItem, boolean autoThrow) {
     temporaryMessage(buf, REFRESH_SIDEBAR);
     maxDistance = (12 + 2 * max(rogue.strength - player.weaknessAmount - 12, 2));
 
-    // Automatically pick a target for known bad potions and throwing weapons
-    boolean autoTarget = false;
-    switch (theItem->category) {
-        case WEAPON:
-            if (theItem->kind == DART || theItem->kind == INCENDIARY_DART || theItem->kind == JAVELIN) {
-                autoTarget = true;
-            }
-            break;
-        case POTION:
-            if ((theItem->flags & ITEM_MAGIC_DETECTED || potionTable[theItem->kind].identified)
-                    && itemMagicPolarity(theItem) == -1) {
-                autoTarget = true;
-            }
-            break;
-        default:
-            break;
-    }
-
     pos zapTarget;
-    if (autoThrow && creatureIsTargetable(rogue.lastTarget)) {
+    if (canAutoTargetMonster(rogue.lastTarget, theItem, AUTOTARGET_MODE_THROW)) {
         zapTarget = rogue.lastTarget->loc;
-    } else if (!chooseTarget(&zapTarget, maxDistance, true, autoTarget, false, &boltCatalog[BOLT_NONE], &red)) {
+    } else if (!chooseTarget(&zapTarget, maxDistance, AUTOTARGET_MODE_THROW, theItem)) {
         // player doesn't choose a target? return
         return;
     }
@@ -6491,10 +6485,14 @@ static void recordApplyItemCommand(item *theItem) {
 
 static boolean useStaffOrWand(item *theItem) {
     char buf[COLS], buf2[COLS];
-    short maxDistance;
-    boolean autoTarget, targetAllies, autoID, boltKnown, confirmedTarget;
+    unsigned char command[10];
+    short maxDistance, c;
+    boolean autoID, confirmedTarget;
     bolt theBolt;
-    color trajectoryHiliteColor;
+
+    c = 0;
+    command[c++] = APPLY_KEY;
+    command[c++] = theItem->inventoryLetter;
 
     if (theItem->charges <= 0 && (theItem->flags & ITEM_IDENTIFIED)) {
         itemName(theItem, buf2, false, false, NULL);
@@ -6519,34 +6517,11 @@ static boolean useStaffOrWand(item *theItem) {
     } else {
         maxDistance = -1;
     }
-    if (tableForItemCategory(theItem->category)[theItem->kind].identified) {
-        autoTarget = targetAllies = false;
-        if (!player.status[STATUS_HALLUCINATING]) {
-            if (theBolt.flags & (BF_TARGET_ALLIES | BF_TARGET_ENEMIES)) {
-                autoTarget = true;
-            }
-            if (theBolt.flags & BF_TARGET_ALLIES) {
-                targetAllies = true;
-            }
-        }
-    } else {
-        autoTarget = true;
-        targetAllies = false;
-    }
-    boltKnown = (((theItem->category & WAND) && wandTable[theItem->kind].identified)
-                 || ((theItem->category & STAFF) && staffTable[theItem->kind].identified));
-    if (!boltKnown) {
-        trajectoryHiliteColor = gray;
-    } else if (theBolt.backColor == NULL) {
-        trajectoryHiliteColor = red;
-    } else {
-        trajectoryHiliteColor = *theBolt.backColor;
-    }
 
+    boolean boltKnown = tableForItemCategory(theItem->category)[theItem->kind].identified;
     pos originLoc = player.loc;
     pos zapTarget;
-    confirmedTarget = chooseTarget(&zapTarget, maxDistance, false, autoTarget,
-        targetAllies, (boltKnown ? &theBolt : &boltCatalog[BOLT_NONE]), &trajectoryHiliteColor);
+    confirmedTarget = chooseTarget(&zapTarget, maxDistance, AUTOTARGET_MODE_USE_STAFF_OR_WAND, theItem);
     if (confirmedTarget
         && boltKnown
         && theBolt.boltEffect == BE_BLINKING

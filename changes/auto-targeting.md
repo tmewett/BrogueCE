@@ -1,0 +1,4 @@
+- When using a staff or wand, enemies that always reflect bolts (stone/winged guardian, mirror totem) will no longer be auto-targeted.
+- When hallucinating but not telepathic, auto-targeting behavior has changed in two ways. First, an initial target will no longer be selected when using a staff or wand whose kind isn't known. Second, the tab key will have no effect. The previous behavoir leaked information about which creatures are allies.
+ - When using a staff or wand, the tab key will now only select additional targets (if any) when an initial target was selected.
+ - A known staff of tunneling will now auto-target turrets and sentinels.
