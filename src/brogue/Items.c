@@ -5530,16 +5530,6 @@ static pos pullMouseClickDuringPlayback(void) {
     };
 }
 
-// Returns whether monst is targetable with thrown items, staves, wands, etc.
-// i.e. would the player ever select it?
-static boolean creatureIsTargetable(creature *monst) {
-    return monst != NULL
-        && canSeeMonster(monst)
-        && monst->depth == rogue.depthLevel
-        && !(monst->bookkeepingFlags & MB_IS_DYING)
-        && openPathBetween(player.loc, monst->loc);
-}
-
 /// @brief Allows the player to interactively choose a target location for actions that require a straight line from
 /// the player to the target (e.g. throwing an item or using a staff/wand). The best path to the target is determined
 /// and highlighted. If possible, an inital target is chosen automatically. The player can cycle through additional
