@@ -3736,9 +3736,10 @@ boolean negate(creature *monst) {
         }
         for (i = 0; i < 20; i++) {
             backupBolts[i] = monst->info.bolts[i];
-            monst->info.bolts[i] = BOLT_NONE;
             if (monst->info.bolts[i] && !(boltCatalog[monst->info.bolts[i]].flags & BF_NOT_NEGATABLE)) {
+                monst->info.bolts[i] = BOLT_NONE;
                 negated = true;
+                monst->wasNegated = true;
             }
         }
         for (i = 0, j = 0; i < 20 && backupBolts[i]; i++) {
