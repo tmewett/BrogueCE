@@ -3615,6 +3615,51 @@ static boolean tunnelize(short x, short y) {
     }
     return didSomething;
 }
+
+/// @brief Checks if a monster will be affected by a negation bolt or blast
+/// @param monst The monster
+/// @param isBolt True to check for a negation bolt. False for negation blast.
+/// @return True if negation will have an effect
+static boolean negationWillAffectMonster(creature *monst, boolean isBolt) {
+
+    // negation bolts don't affect monsters that always reflect. negation never affects the warden.
+    if ((isBolt && (monst->info.flags & MONST_REFLECT_4) && (monst->info.flags & MONST_ALWAYS_USE_ABILITY))
+        || (monst->info.flags & MONST_INVULNERABLE)) {
+        return false;
+    }
+
+    if ((monst->info.abilityFlags & ~MA_NON_NEGATABLE_ABILITIES)
+        || (monst->bookkeepingFlags & MB_SEIZING)
+        || (monst->info.flags & MONST_DIES_IF_NEGATED)
+        || (monst->info.flags & NEGATABLE_TRAITS)
+        || (monst->info.flags & MONST_IMMUNE_TO_FIRE)
+        || ((monst->info.flags & MONST_FIERY) && (monst->status[STATUS_BURNING]))
+        || (monst->status[STATUS_IMMUNE_TO_FIRE])
+        || (monst->status[STATUS_SLOWED])
+        || (monst->status[STATUS_HASTED])
+        || (monst->status[STATUS_CONFUSED])
+        || (monst->status[STATUS_ENTRANCED])
+        || (monst->status[STATUS_DISCORDANT])
+        || (monst->status[STATUS_SHIELDED])
+        || (monst->status[STATUS_INVISIBLE])
+        || (monst->status[STATUS_MAGICAL_FEAR])
+        || (monst->status[STATUS_LEVITATING])
+        || (monst->movementSpeed != monst->info.movementSpeed)
+        || (monst->attackSpeed != monst->info.attackSpeed)
+        || (monst->mutationIndex > -1 && mutationCatalog[monst->mutationIndex].canBeNegated)) {
+        return true;
+    }
+
+    // any negatable bolts?
+    for (int i = 0; i < 20; i++) {
+        if (monst->info.bolts[i] && !(boltCatalog[monst->info.bolts[i]].flags & BF_NOT_NEGATABLE)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 /* Negates the given creature. Returns true if there was an effect for the purpose of identifying a wand of negation.
  * If the creature was stripped of any traits or abilities, the wasNegated property is set, which is used for display in
  * sidebar and the creature's description.
@@ -5159,6 +5204,7 @@ static boolean canAutoTargetMonster(const creature *monst, const item *theItem, 
         || (use && (theItem->category != STAFF) && (theItem->category != WAND))
         || (throw && (theItem->category != POTION) && (theItem->category != WEAPON))
         || (throw && (theItem->category == WEAPON) && !itemIsThrowingWeapon(theItem))
+        || (throw && (theItem->category == WEAPON) && (monst->info.flags & MONST_INVULNERABLE))
         || (throw && (theItem->category == POTION) && itemMagicPolarityIsKnown(theItem, MAGIC_POLARITY_BENEVOLENT))
         || !canSeeMonster(monst)
         || !openPathBetween(player.loc, monst->loc)
@@ -5168,15 +5214,29 @@ static boolean canAutoTargetMonster(const creature *monst, const item *theItem, 
         return false;
     }
 
-    boolean isAlly = monstersAreTeammates(&player, monst);
+    boolean isAlly = monstersAreTeammates(&player, monst) || (monst->bookkeepingFlags & MB_CAPTIVE);
     boolean isEnemy = !isAlly;
+    boolean itemKindIsKnown = tableForItemCategory(theItem->category)[theItem->kind].identified;    
 
-    if (throw) {
-        return isEnemy; // todo: monsters immune to fire or physical damage MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE
+    if (throw) { // we are throwing a throwing weapon or a bad/unknown potion
+        if (theItem->category == WEAPON) {
+            if ((theItem->kind == INCENDIARY_DART && monst->status[STATUS_IMMUNE_TO_FIRE])
+                || (theItem->kind != INCENDIARY_DART && (monst->info.flags & MONST_IMMUNE_TO_WEAPONS))) {
+                return false;
+            }
+        }
+        if (itemKindIsKnown && theItem->category == POTION) {
+            if ((theItem->kind == POTION_INCINERATION && monst->status[STATUS_IMMUNE_TO_FIRE])
+                || ((monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))
+                    && (theItem->kind == POTION_CONFUSION || theItem->kind == POTION_POISON))) {
+                return false;
+            }
+        } 
+        return isEnemy;
     }
 
     // If we got this far we're using a staff or wand
-    // Enemies that always reflect bolts are not targetable with staffs/wands (stone/winged guardian, mirror totem)
+    // Don't target enemies that always reflect bolts (stone/winged guardian, non-negated mirrored totem)
     if (isEnemy && (monst->info.flags & MONST_REFLECT_4) && (monst->info.flags & MONST_ALWAYS_USE_ABILITY)) {
         return false;
     }
@@ -5184,23 +5244,27 @@ static boolean canAutoTargetMonster(const creature *monst, const item *theItem, 
     bolt theBolt = boltCatalog[tableForItemCategory(theItem->category)[theItem->kind].power];
     boolean magicPolarityIsKnown = (itemMagicPolarityIsKnown(theItem, MAGIC_POLARITY_BENEVOLENT) 
                                     || itemMagicPolarityIsKnown(theItem, MAGIC_POLARITY_MALEVOLENT));
-    boolean itemKindIsKnown = tableForItemCategory(theItem->category)[theItem->kind].identified;    
 
     // Target enemies if we don't know if the staff/wand is good or bad
     if (!magicPolarityIsKnown && isEnemy) {
         return true;
     }
 
-    // todo: additional bolt-specific exclusions where the bolt will have no effect on the monster. 
-    // e.g. entrancement/beckoning/teleport/slow on immobile targets, firebolt on fire immune, etc.
-    // see specificallyValidBoltTarget and forbiddenMonsterFlags for possible logic consolidation
-    // make a separate function that is also used in the monster details screen to show what effect (or not)
-    // the wand/staff will have on the monster
-
-    // Target sentinels and turrets with tunneling
-    if (itemKindIsKnown && isEnemy && (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS)
-        && theBolt.boltEffect == BE_TUNNELING) {            
-        return true;
+    // todo: logic consolidation with this function, specificallyValidBoltTarget, and the monster details screen
+    // to show what effect (or not) the bolt will have
+    if (itemKindIsKnown) {
+        if ((theBolt.forbiddenMonsterFlags & monst->info.flags)
+            || (isEnemy && theBolt.boltEffect == BE_DOMINATION && (wandDominate(monst) <= 0))
+            || (isEnemy && theBolt.boltEffect == BE_BECKONING && (distanceBetween(player.loc, monst->loc) <= 1))
+            || (isEnemy && theBolt.boltEffect == BE_DAMAGE && (theBolt.flags & BF_FIERY) && monst->status[STATUS_IMMUNE_TO_FIRE])
+            || (isAlly && theBolt.boltEffect == BE_HEALING && !(monst->info.flags & MONST_REFLECT_4) 
+                && (monst->currentHP >= monst->info.maxHP))) {
+            return false;
+        } else if (isEnemy && theBolt.boltEffect == BE_NEGATION) {
+            return negationWillAffectMonster(monst, true);
+        } else if (isEnemy && theBolt.boltEffect == BE_TUNNELING && (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS)) {
+            return true;
+        } 
     }
 
     // Otherwise, if we know good/bad, broadly target all enemies or allies based on the bolt flag (if any)
@@ -6270,7 +6334,7 @@ void throwCommand(item *theItem, boolean autoThrow) {
     maxDistance = (12 + 2 * max(rogue.strength - player.weaknessAmount - 12, 2));
 
     pos zapTarget;
-    if (canAutoTargetMonster(rogue.lastTarget, theItem, AUTOTARGET_MODE_THROW)) {
+    if (autoThrow && canAutoTargetMonster(rogue.lastTarget, theItem, AUTOTARGET_MODE_THROW)) {
         zapTarget = rogue.lastTarget->loc;
     } else if (!chooseTarget(&zapTarget, maxDistance, AUTOTARGET_MODE_THROW, theItem)) {
         // player doesn't choose a target? return
@@ -6475,14 +6539,9 @@ static void recordApplyItemCommand(item *theItem) {
 
 static boolean useStaffOrWand(item *theItem) {
     char buf[COLS], buf2[COLS];
-    unsigned char command[10];
-    short maxDistance, c;
+    short maxDistance;
     boolean autoID, confirmedTarget;
     bolt theBolt;
-
-    c = 0;
-    command[c++] = APPLY_KEY;
-    command[c++] = theItem->inventoryLetter;
 
     if (theItem->charges <= 0 && (theItem->flags & ITEM_IDENTIFIED)) {
         itemName(theItem, buf2, false, false, NULL);
