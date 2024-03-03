@@ -4171,10 +4171,11 @@ boolean projectileReflects(creature *attacker, creature *defender) {
         netReflectionLevel = 0;
     }
 
-    if (defender && (defender->info.flags & MONST_REFLECT_4)) {
-        if (defender->info.flags & MONST_ALWAYS_USE_ABILITY) {
-            return true;
-        }
+    if (defender && (defender->info.abilityFlags & MA_REFLECT_100)) {
+        return true;
+    }
+
+    if (defender && (defender->info.flags & MONST_REFLECT_50)) {
         netReflectionLevel += 4 * FP_FACTOR;
     }
 
