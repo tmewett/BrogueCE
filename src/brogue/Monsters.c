@@ -56,7 +56,7 @@ void mutateMonster(creature *monst, short mutationIndex) {
 // TODO: generateMonster is convenient, but probably it should not add the monster to
 // any global lists. The caller can do this, to avoid needlessly moving them elsewhere.
 creature *generateMonster(short monsterID, boolean itemPossible, boolean mutationPossible) {
-    short itemChance, mutationChance, i, mutationAttempt;
+    short mutationChance, mutationAttempt;
 
     // 1.17^x * 10, with x from 1 to 13:
     const int POW_DEEP_MUTATION[] = {11, 13, 16, 18, 21, 25, 30, 35, 41, 48, 56, 65, 76};
@@ -89,6 +89,18 @@ creature *generateMonster(short monsterID, boolean itemPossible, boolean mutatio
     }
 
     prependCreature(monsters, monst);
+    initializeMonster(monst, itemPossible);
+
+    return monst;
+}
+
+/// @brief Prepares a monster for placement on the current level but does not assign a location. Sets the initial 
+/// monster properties, many based on the creatureType (monst->info) from the monster catalog. Expects monst->info
+/// to be populated and any mutation already applied. Optionally gives the monster an item. 
+/// @param monst The monster
+/// @param itemPossible True if the monster can carry an item. May have no effect if the monster can never carry one.
+void initializeMonster(creature *monst, boolean itemPossible) {
+
     monst->loc.x = monst->loc.y = 0;
     monst->depth = rogue.depthLevel;
     monst->bookkeepingFlags = 0;
@@ -114,7 +126,7 @@ creature *generateMonster(short monsterID, boolean itemPossible, boolean mutatio
     monst->targetCorpseLoc = INVALID_POS;
     monst->lastSeenPlayerAt = INVALID_POS;
     monst->targetWaypointIndex = -1;
-    for (i=0; i < MAX_WAYPOINT_COUNT; i++) {
+    for (int i=0; i < MAX_WAYPOINT_COUNT; i++) {
         monst->waypointAlreadyVisited[i] = rand_range(0, 1);
     }
 
@@ -132,6 +144,7 @@ creature *generateMonster(short monsterID, boolean itemPossible, boolean mutatio
     }
     monst->status[STATUS_NUTRITION] = monst->maxStatus[STATUS_NUTRITION] = 1000;
 
+    int itemChance;
     if (monst->info.flags & MONST_CARRY_ITEM_100) {
         itemChance = 100;
     } else if (monst->info.flags & MONST_CARRY_ITEM_25) {
@@ -160,7 +173,6 @@ creature *generateMonster(short monsterID, boolean itemPossible, boolean mutatio
         monst->bookkeepingFlags |= MB_HAS_SOUL;
     }
 
-    return monst;
 }
 
 /// @brief Checks if the player knows a monster's location via telepathy or entrancement.
