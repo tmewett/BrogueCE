@@ -4094,12 +4094,7 @@ static void crystalize(short radius) {
             if ((player.loc.x - i) * (player.loc.x - i) + (player.loc.y - j) * (player.loc.y - j) <= radius * radius
                 && !(pmap[i][j].flags & IMPREGNABLE)) {
 
-                if (i == 0 || i == DCOLS - 1 || j == 0 || j == DROWS - 1) {
-                    pmap[i][j].layers[DUNGEON] = CRYSTAL_WALL; // don't dissolve the boundary walls
-                } else if (tileCatalog[pmap[i][j].layers[DUNGEON]].flags & (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION)) {
-
-                    pmap[i][j].layers[DUNGEON] = FORCEFIELD;
-                    spawnDungeonFeature(i, j, &dungeonFeatureCatalog[DF_SHATTERING_SPELL], true, false);
+                if (tileCatalog[pmap[i][j].layers[DUNGEON]].flags & (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION)) {
 
                     if (pmap[i][j].flags & HAS_MONSTER) {
                         monst = monsterAtLoc((pos){ i, j });
@@ -4109,6 +4104,14 @@ static void crystalize(short radius) {
                         } else {
                             freeCaptivesEmbeddedAt(i, j);
                         }
+                    }
+
+                    if (i == 0 || i == DCOLS - 1 || j == 0 || j == DROWS - 1) {
+                        pmap[i][j].layers[DUNGEON] = CRYSTAL_WALL; // don't dissolve the boundary walls
+                    } else {
+                        pmap[i][j].layers[DUNGEON] = FORCEFIELD;
+                        spawnDungeonFeature(i, j, &dungeonFeatureCatalog[DF_SHATTERING_SPELL], true, false);
+
                     }
                 }
             }
