@@ -3317,7 +3317,8 @@ extern "C" {
     void throwCommand(item *theItem, boolean autoThrow);
     void relabel(item *theItem);
     void swapLastEquipment(void);
-    void apply(item *theItem, boolean recordCommands);
+    void apply(item *theItem);
+    boolean eat(item *theItem, boolean recordCommands);
     boolean itemCanBeCalled(item *theItem);
     void call(item *theItem);
     short chooseVorpalEnemy(void);
@@ -3325,12 +3326,12 @@ extern "C" {
     void identify(item *theItem);
     void updateIdentifiableItem(item *theItem);
     void updateIdentifiableItems(void);
-    void readScroll(item *theItem);
+    boolean readScroll(item *theItem);
     void updateRingBonuses(void);
     void updatePlayerRegenerationDelay(void);
     boolean removeItemFromChain(item *theItem, item *theChain);
     void addItemToChain(item *theItem, item *theChain);
-    void drinkPotion(item *theItem);
+    boolean drinkPotion(item *theItem);
     item *promptForItemOfType(unsigned short category,
                               unsigned long requiredFlags,
                               unsigned long forbiddenFlags,
