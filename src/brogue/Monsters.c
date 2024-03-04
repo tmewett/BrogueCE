@@ -2467,6 +2467,82 @@ boolean monsterSummons(creature *monst, boolean alwaysUse) {
     return false;
 }
 
+/// @brief Checks if a creature status effect is negatable and optionally negates it
+/// @param monst The creature 
+/// @param theStatus The status effect
+/// @param negate True to actually negate the status. False to just check if it's negatable.
+/// @return True if the status is negatable
+boolean canNegateCreatureStatusEffect(creature *monst, enum statusEffects theStatus, boolean negate) {
+
+    if (!monst || (monst->info.flags & MONST_INVULNERABLE)) {
+        return false;
+    }
+
+    if (monst->status[theStatus] > 0 && statusEffectCatalog[theStatus].isNegatable) {
+        if (negate) {
+            monst->status[theStatus] = (monst == &player) ? statusEffectCatalog[theStatus].playerNegatedValue : 0;
+            if (theStatus == STATUS_DARKNESS && monst == &player) {
+                updateMinersLightRadius();
+                updateVision(true);
+            }
+        }
+        return true;
+    }
+
+    return false;
+}
+
+/// @brief Checks if a creature has any negatable status effects and optionally negates them
+/// @param monst The creature
+/// @param negate True to actually negate. False to just check.
+/// @return True if the creature has any negatable status effects
+boolean canNegateCreatureStatusEffects(creature *monst, boolean negate) {
+
+    if (!monst || (monst->info.flags & MONST_INVULNERABLE)) {
+        return false;
+    }
+
+    boolean negated = false;
+    for (int i = 0; i < NUMBER_OF_STATUS_EFFECTS; i++) {
+        if (canNegateCreatureStatusEffect(monst, (enum statusEffects) i, negate)) {
+            negated = true;
+        }
+    }
+    return negated;
+}
+
+/// @brief Checks if a monster will be affected by negation
+/// @param monst The monster
+/// @return True if negation will have an effect
+boolean monsterIsNegatable(creature *monst) {
+
+    if (monst->info.flags & MONST_INVULNERABLE) {
+        return false;
+    }
+
+    if ((monst->info.abilityFlags & ~MA_NON_NEGATABLE_ABILITIES)
+        || (monst->bookkeepingFlags & MB_SEIZING)
+        || (monst->info.flags & MONST_DIES_IF_NEGATED)
+        || (monst->info.flags & NEGATABLE_TRAITS)
+        || (monst->info.flags & MONST_IMMUNE_TO_FIRE)
+        || ((monst->info.flags & MONST_FIERY) && (monst->status[STATUS_BURNING]))
+        || canNegateCreatureStatusEffects(monst, false)
+        || (monst->movementSpeed != monst->info.movementSpeed)
+        || (monst->attackSpeed != monst->info.attackSpeed)
+        || (monst->mutationIndex > -1 && mutationCatalog[monst->mutationIndex].canBeNegated)) {
+        return true;
+    }
+
+    // any negatable bolts?
+    for (int i = 0; i < 20; i++) {
+        if (monst->info.bolts[i] && !(boltCatalog[monst->info.bolts[i]].flags & BF_NOT_NEGATABLE)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 // Some monsters never make good targets irrespective of what bolt we're contemplating.
 // Return false for those. Otherwise, return true.
 // Used for monster-cast bolts only.
@@ -4116,6 +4192,176 @@ void toggleMonsterDormancy(creature *monst) {
     }
 }
 
+/// @brief Gets a description of the effect a wand of domination will have on the given monster.
+/// Assumes the wand is known to be domination.
+/// @param buf The string to append
+/// @param monst The monster
+static void getMonsterDominationText(char *buf, const creature *monst) {
+
+    if (!monst || monst->creatureState == MONSTER_ALLY || (monst->bookkeepingFlags & MB_CAPTIVE)) {
+        return;
+    }
+
+    char monstName[COLS], monstNamePossessive[COLS];
+    monsterName(monstName, monst, true);
+    strcpy(monstNamePossessive, monstName);
+    strcat(monstNamePossessive, endswith(monstName,"s") ? "'" : "'s");
+   
+    char newText[20*COLS];
+    short successChance = 0;
+    if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
+      successChance = wandDominate(monst);
+    }
+
+    if (monst->info.flags & MONST_INANIMATE) {
+        sprintf(newText, "\n     A wand of domination will have no effect on objects like %s.",
+                monstName);
+    } else if (monst->info.flags & MONST_INVULNERABLE) {
+            sprintf(newText, "\n     A wand of domination will not affect %s.",
+                    monstName);
+    } else if (successChance <= 0) {
+        sprintf(newText, "\n     A wand of domination will fail at %s current health level.",
+                monstNamePossessive);
+    } else if (successChance >= 100) {
+        sprintf(newText, "\n     A wand of domination will always succeed at %s current health level.",
+                monstNamePossessive);
+    } else {
+        sprintf(newText, "\n     A wand of domination will have a %i%% chance of success at %s current health level.",
+                successChance,
+                monstNamePossessive);
+    }
+    strcat(buf, newText);
+}
+
+// Takes a string delimited with '&' and appends the given destination with proper comma usage.
+static void buildProperCommaString(char *dest, char *newText) {
+
+    if (newText == NULL || newText[0] == '\0' || (newText[0] == '&' && newText[1] == '\0')) {
+        return;
+    }
+
+    int start = newText[0] == '&' ? 1 : 0; // ignore leading '&', if any
+    int commaCount = 0;
+    for (int i = start; newText[i] != '\0'; i++) {
+        if (newText[i] == '&') {
+            commaCount++;
+        }
+    }
+
+    if (commaCount == 0) {
+        strcat(dest, start == 0 ? newText : newText + 1);
+        return;
+    }
+
+    // append the text
+    int j = strlen(dest);
+    for (int i = start; newText[i] != '\0'; i++) {
+        if (newText[i] == '&') {
+            dest[j] = '\0';
+            if (!--commaCount) {
+                strcat(dest, " and ");
+                j += 5;
+            } else {
+                strcat(dest, ", ");
+                j += 2;
+            }
+        } else {
+            dest[j++] = newText[i];
+        }
+    }
+    dest[j] = '\0';
+}
+
+/// @brief Builds a comma separated list of monster abilities and appends it to the given string.
+/// @param monst The monster
+/// @param abilitiesText The abilities string to append
+/// @param includeNegatable True to include negatable abilities 
+/// @param includeNonNegatable True to include non-negatable abilities
+static void getMonsterAbilitiesText(const creature *monst, char *abilitiesText, boolean includeNegatable, boolean includeNonNegatable) {
+
+    char buf[TEXT_MAX_LENGTH] = "";
+    if (includeNegatable && (monst->mutationIndex >= 0) && mutationCatalog[monst->mutationIndex].canBeNegated) {
+        strcat(buf, "has a rare mutation");
+    }
+
+    if ((includeNegatable && monst->attackSpeed != monst->info.attackSpeed)
+        || (includeNonNegatable && monst->attackSpeed == monst->info.attackSpeed)) {
+
+        if (monst->attackSpeed < 100) {
+            strcat(buf, "&attacks quickly");
+        } else if (monst->attackSpeed > 100) {
+            strcat(buf, "&attacks slowly");
+        }
+    }
+
+    if ((includeNegatable && monst->movementSpeed != monst->info.movementSpeed)
+        || (includeNonNegatable && monst->movementSpeed == monst->info.movementSpeed)) {
+
+        if (monst->movementSpeed < 100) {
+            strcat(buf, "&moves quickly");
+        } else if (monst->movementSpeed > 100) {
+            strcat(buf, "&moves slowly");
+        }
+    }
+
+    if (includeNonNegatable) {
+        if (monst->info.turnsBetweenRegen == 0) {
+            strcat(buf, "&does not regenerate");
+        } else if (monst->info.turnsBetweenRegen < 5000) {
+            strcat(buf, "&regenerates quickly");
+        }
+    }
+
+    for (int i = 0; monst->info.bolts[i] != BOLT_NONE; i++) {
+        if (boltCatalog[monst->info.bolts[i]].abilityDescription[0]) {
+            if ((includeNegatable && !(boltCatalog[monst->info.bolts[i]].flags & BF_NOT_NEGATABLE))
+                || (includeNonNegatable && (boltCatalog[monst->info.bolts[i]].flags & BF_NOT_NEGATABLE))) {
+
+                strcat(buf, "&");
+                strcat(buf, boltCatalog[monst->info.bolts[i]].abilityDescription);
+            }
+        }
+    }
+
+    for (int i=0; i<32; i++) {
+        if ((monst->info.abilityFlags & (Fl(i)))
+            && monsterAbilityCatalog[i].description[0]) {
+            if ((includeNegatable && monsterAbilityCatalog[i].isNegatable)
+                || (includeNonNegatable && !monsterAbilityCatalog[i].isNegatable)) {
+
+                strcat(buf, "&");
+                strcat(buf, monsterAbilityCatalog[i].description);
+            }
+        }
+    }
+
+    for (int i=0; i<32; i++) {
+        if ((monst->info.flags & (Fl(i)))
+            && monsterBehaviorCatalog[i].description[0]) {
+            if ((includeNegatable && monsterBehaviorCatalog[i].isNegatable)
+                || (includeNonNegatable && !monsterBehaviorCatalog[i].isNegatable)) {
+
+                strcat(buf, "&");
+                strcat(buf, monsterBehaviorCatalog[i].description);
+            }
+        }
+    }
+
+    for (int i=0; i<32; i++) {
+        if ((monst->bookkeepingFlags & (Fl(i)))
+            && monsterBookkeepingFlagDescriptions[i][0]) {
+            if ((includeNegatable && (monst->bookkeepingFlags & MB_SEIZING))
+                || (includeNonNegatable && !(monst->bookkeepingFlags & MB_SEIZING))) {
+
+                strcat(buf, "&");
+                strcat(buf, monsterBookkeepingFlagDescriptions[i]);
+            }
+        }
+    }
+
+    buildProperCommaString(abilitiesText, buf);
+}
+
 static boolean staffOrWandEffectOnMonsterDescription(char *newText, item *theItem, creature *monst) {
     char theItemName[COLS], monstName[COLS];
     boolean successfulDescription = false;
@@ -4199,6 +4445,61 @@ static boolean staffOrWandEffectOnMonsterDescription(char *newText, item *theIte
     }
     return successfulDescription;
 }
+
+typedef struct packSummary {
+    boolean hasNegationWand;
+    boolean hasNegationScroll;
+    boolean hasNegationCharm;
+    boolean hasDominationWand;
+    boolean hasShatteringCharm;
+    boolean hasShatteringScroll;
+    boolean hasTunnelingStaff;
+    int wandCount;
+    int StaffCount;
+} packSummary;
+
+static void summarizePack (packSummary *pack) {
+    for (item *theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
+        if (theItem->category & (CHARM | WAND | SCROLL |STAFF)) {
+
+            if (tableForItemCategory(theItem->category)[theItem->kind].identified) {
+                switch (theItem->category) {
+                    case WAND:
+                        pack->wandCount++;
+                        if (theItem->kind == WAND_NEGATION) {
+                            pack->hasNegationWand = true;
+                        } else if (theItem->kind == WAND_DOMINATION) {
+                            pack->hasDominationWand = true;
+                        }
+                        break;
+                    case STAFF:
+                        pack->StaffCount++;
+                        if (theItem->kind == STAFF_TUNNELING) {
+                            pack->hasTunnelingStaff = true;
+                        }
+                        break;
+                    case CHARM:
+                        if (theItem->kind == CHARM_NEGATION) {
+                            pack->hasNegationCharm = true;
+                        } else if (theItem->kind == CHARM_SHATTERING) {
+                            pack->hasShatteringCharm = true;
+                        }
+                        break;
+                    case SCROLL:
+                        if (theItem->kind == SCROLL_NEGATION) {
+                            pack->hasNegationScroll = true;
+                        } else if (theItem->kind == SCROLL_SHATTERING) {
+                            pack->hasShatteringScroll = true;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }        
+    }
+}
+
 
 void monsterDetails(char buf[], creature *monst) {
     char monstName[COLS], capMonstName[COLS], theItemName[COLS * 3], newText[20*COLS];
