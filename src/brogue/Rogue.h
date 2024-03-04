@@ -3145,8 +3145,8 @@ extern "C" {
     boolean removeCreature(creatureList *list, creature *remove);
     creature *firstCreature(creatureList *list);
 
-    boolean canNegateCreatureStatusEffect(creature *monst, enum statusEffects theStatus, boolean negate);
-    boolean canNegateCreatureStatusEffects(creature *monst, boolean negate);
+    boolean canNegateCreatureStatusEffects(creature *monst);
+    void negateCreatureStatusEffects(creature *monst);
     boolean monsterIsNegatable(creature *monst);
 
     boolean monsterWillAttackTarget(const creature *attacker, const creature *defender);

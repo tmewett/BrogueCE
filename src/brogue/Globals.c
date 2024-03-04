@@ -1692,7 +1692,7 @@ const monsterBehavior monsterBehaviorCatalog[32] = {
     {"is immune to fire",               true},          // MONST_IMMUNE_TO_FIRE
     {"",                                false},         // MONST_CAST_SPELLS_SLOWLY
     {"cannot be entangled",             false},         // MONST_IMMUNE_TO_WEBS
-    {"can reflect magic spells",        true},          // MONST_REFLECT_4
+    {"can reflect magic spells",        true},          // MONST_REFLECT_50
     {"never sleeps",                    false},         // MONST_NEVER_SLEEPS
     {"burns unceasingly",               true},          // MONST_FIERY
     {"is invulnerable",                 false},         // MONST_INVULNERABLE
@@ -1830,5 +1830,4 @@ const statusEffect statusEffectCatalog[NUMBER_OF_STATUS_EFFECTS] = {
     {"Lifespan",        false, 0}, // STATUS_LIFESPAN_REMAINING
     {"Shielded",        true,  0}, // STATUS_SHIELDED
     {"Invisible",       true,  0}, // STATUS_INVISIBLE
-    {"",                false, 0}, // STATUS_AGGRAVATING,
-}; 
+};

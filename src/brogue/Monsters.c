@@ -2467,48 +2467,43 @@ boolean monsterSummons(creature *monst, boolean alwaysUse) {
     return false;
 }
 
-/// @brief Checks if a creature status effect is negatable and optionally negates it
-/// @param monst The creature 
-/// @param theStatus The status effect
-/// @param negate True to actually negate the status. False to just check if it's negatable.
-/// @return True if the status is negatable
-boolean canNegateCreatureStatusEffect(creature *monst, enum statusEffects theStatus, boolean negate) {
+/// @brief Checks if a creature has any negatable status effects
+/// @param monst The creature
+/// @return True if the creature has any negatable status effects
+boolean canNegateCreatureStatusEffects(creature *monst) {
 
     if (!monst || (monst->info.flags & MONST_INVULNERABLE)) {
         return false;
     }
 
-    if (monst->status[theStatus] > 0 && statusEffectCatalog[theStatus].isNegatable) {
-        if (negate) {
+    boolean hasNegatableStatusEffect = false;
+    for (int i = 0; i < NUMBER_OF_STATUS_EFFECTS; i++) {
+        enum statusEffects theStatus = (enum statusEffects) i;
+        if (monst->status[theStatus] > 0 && statusEffectCatalog[theStatus].isNegatable) {
+            hasNegatableStatusEffect = true;
+        }
+    }
+    return hasNegatableStatusEffect;
+}
+
+/// @brief Negates a creature's negatable status effects
+/// @param monst The creature
+void negateCreatureStatusEffects(creature *monst) {
+
+    if (!monst || (monst->info.flags & MONST_INVULNERABLE)) {
+        return;
+    }
+
+    for (int i = 0; i < NUMBER_OF_STATUS_EFFECTS; i++) {
+        enum statusEffects theStatus = (enum statusEffects) i;
+        if (monst->status[theStatus] > 0 && statusEffectCatalog[theStatus].isNegatable) {
             monst->status[theStatus] = (monst == &player) ? statusEffectCatalog[theStatus].playerNegatedValue : 0;
             if (theStatus == STATUS_DARKNESS && monst == &player) {
                 updateMinersLightRadius();
                 updateVision(true);
             }
         }
-        return true;
     }
-
-    return false;
-}
-
-/// @brief Checks if a creature has any negatable status effects and optionally negates them
-/// @param monst The creature
-/// @param negate True to actually negate. False to just check.
-/// @return True if the creature has any negatable status effects
-boolean canNegateCreatureStatusEffects(creature *monst, boolean negate) {
-
-    if (!monst || (monst->info.flags & MONST_INVULNERABLE)) {
-        return false;
-    }
-
-    boolean negated = false;
-    for (int i = 0; i < NUMBER_OF_STATUS_EFFECTS; i++) {
-        if (canNegateCreatureStatusEffect(monst, (enum statusEffects) i, negate)) {
-            negated = true;
-        }
-    }
-    return negated;
 }
 
 /// @brief Checks if a monster will be affected by negation
@@ -2526,7 +2521,7 @@ boolean monsterIsNegatable(creature *monst) {
         || (monst->info.flags & NEGATABLE_TRAITS)
         || (monst->info.flags & MONST_IMMUNE_TO_FIRE)
         || ((monst->info.flags & MONST_FIERY) && (monst->status[STATUS_BURNING]))
-        || canNegateCreatureStatusEffects(monst, false)
+        || canNegateCreatureStatusEffects(monst)
         || (monst->movementSpeed != monst->info.movementSpeed)
         || (monst->attackSpeed != monst->info.attackSpeed)
         || (monst->mutationIndex > -1 && mutationCatalog[monst->mutationIndex].canBeNegated)) {
@@ -3295,9 +3290,9 @@ static boolean updateMonsterCorpseAbsorption(creature *monst) {
                 if (monst->absorptionBolt != BOLT_NONE) {
                     sprintf(buf, "%s %s!", buf2, boltCatalog[monst->absorptionBolt].abilityDescription);
                 } else if (monst->absorbBehavior) {
-                    sprintf(buf, "%s now %s!", buf2, monsterBehaviorFlagDescriptions[unflag(monst->absorptionFlags)]);
+                    sprintf(buf, "%s now %s!", buf2, monsterBehaviorCatalog[unflag(monst->absorptionFlags)].description);
                 } else {
-                    sprintf(buf, "%s now %s!", buf2, monsterAbilityFlagDescriptions[unflag(monst->absorptionFlags)]);
+                    sprintf(buf, "%s now %s!", buf2, monsterAbilityCatalog[unflag(monst->absorptionFlags)].description);
                 }
                 resolvePronounEscapes(buf, monst);
                 messageWithColor(buf, &advancementMessageColor, 0);
@@ -4416,28 +4411,6 @@ static boolean staffOrWandEffectOnMonsterDescription(char *newText, item *theIte
                 }
                 successfulDescription = true;
                 break;
-            case BE_DOMINATION:
-                if (monst->creatureState != MONSTER_ALLY) {
-                    if (monst->info.flags & MONST_INANIMATE) {
-                        sprintf(newText, "\n     A wand of domination will have no effect on objects like %s.",
-                                monstName);
-                    } else if (monst->info.flags & MONST_INVULNERABLE) {
-                            sprintf(newText, "\n     A wand of domination will not affect %s.",
-                                    monstName);
-                    } else if (wandDominate(monst) <= 0) {
-                        sprintf(newText, "\n     A wand of domination will fail at %s's current health level.",
-                                monstName);
-                    } else if (wandDominate(monst) >= 100) {
-                        sprintf(newText, "\n     A wand of domination will always succeed at %s's current health level.",
-                                monstName);
-                    } else {
-                        sprintf(newText, "\n     A wand of domination will have a %i%% chance of success at %s's current health level.",
-                                wandDominate(monst),
-                                monstName);
-                    }
-                    successfulDescription = true;
-                }
-                break;
             default:
                 strcpy(newText, "");
                 break;
@@ -4455,7 +4428,7 @@ typedef struct packSummary {
     boolean hasShatteringScroll;
     boolean hasTunnelingStaff;
     int wandCount;
-    int StaffCount;
+    int staffCount;
 } packSummary;
 
 static void summarizePack (packSummary *pack) {
@@ -4473,7 +4446,7 @@ static void summarizePack (packSummary *pack) {
                         }
                         break;
                     case STAFF:
-                        pack->StaffCount++;
+                        pack->staffCount++;
                         if (theItem->kind == STAFF_TUNNELING) {
                             pack->hasTunnelingStaff = true;
                         }
@@ -4503,12 +4476,10 @@ static void summarizePack (packSummary *pack) {
 
 void monsterDetails(char buf[], creature *monst) {
     char monstName[COLS], capMonstName[COLS], theItemName[COLS * 3], newText[20*COLS];
-    short i, j, combatMath, combatMath2, playerKnownAverageDamage, playerKnownMaxDamage, commaCount, realArmorValue;
-    boolean anyFlags, alreadyDisplayedDominationText = false;
+    short i, combatMath, combatMath2, playerKnownAverageDamage, playerKnownMaxDamage, realArmorValue;
     item *theItem;
 
     buf[0] = '\0';
-    commaCount = 0;
 
     monsterName(monstName, monst, true);
     strcpy(capMonstName, monstName);
@@ -4691,21 +4662,98 @@ void monsterDetails(char buf[], creature *monst) {
     upperCase(newText);
     strcat(buf, newText);
 
-    for (theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
-        if (staffOrWandEffectOnMonsterDescription(newText, theItem, monst)) {
-            if (boltEffectForItem(theItem) == BE_DOMINATION) {
-                if (alreadyDisplayedDominationText) {
-                    continue;
-                } else {
-                    alreadyDisplayedDominationText = true;
-                }
-            }
-            i = strlen(buf);
-            i = encodeMessageColor(buf, i, &itemMessageColor);
+    packSummary pack = {0};
+    summarizePack(&pack);
+
+    char buf2[COLS] = "";
+    if (monsterIsNegatable(monst)) {
+        if (pack.hasNegationCharm) {
+            strcpy(buf2, "negation charm");
+        }
+        if (pack.hasNegationScroll) {
+            strcat(buf2, "&scroll of negation");
+        }
+        if (pack.hasNegationWand && !(monst->info.abilityFlags & MA_REFLECT_100)) {
+            strcat(buf2, "&wand of negation");
+        }
+    }
+
+    char negationMethodText[COLS] = "";
+    buildProperCommaString(negationMethodText, buf2);
+
+    // todo: A wand of polymorph will have no effect on the <monster>
+
+    // begin item-specific effects
+    encodeMessageColor(buf, strlen(buf), &itemMessageColor);
+    boolean printStaffOrWandEffect = true;
+
+    // Will it die if negated and we have the means to negate?
+    if ((monst->info.flags & MONST_DIES_IF_NEGATED) && negationMethodText[0]) {
+        sprintf(newText, "\n     Your %s will %s %s.",
+            negationMethodText,
+            (monst->info.flags & MONST_INANIMATE) ? "destroy" : "kill",
+            monstName);
+        strcat(buf, newText);
+    }
+
+    // Will shattering or tunneling destroy it?
+    if (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS) {
+        strcpy(buf2, "");
+        if (pack.hasShatteringCharm) {
+            strcpy(buf2, "shattering charm");
+        }
+        if (pack.hasShatteringScroll) {
+            strcat(buf2, "&scroll of shattering");
+        }
+        if (pack.hasTunnelingStaff) {
+            strcat(buf2, "&staff of tunneling");
+        }
+
+        char shatterMethodText[COLS] = "";
+        buildProperCommaString(shatterMethodText, buf2);
+        if (shatterMethodText[0]) {
+            sprintf(newText, "\n     Your %s will destroy %s.", shatterMethodText, monstName);
             strcat(buf, newText);
         }
     }
 
+    // Will it reflect all bolts?
+    if ((monst->info.abilityFlags & MA_REFLECT_100) && (pack.staffCount || pack.wandCount)) {
+
+        sprintf(newText, "\n     Bolts from your %s%s%s%s%s that hit %s will be reflected directly back at you.",
+            pack.staffCount ? "staff" : "",
+            pack.staffCount > 1 ? "s" : "",
+            pack.wandCount && pack.staffCount ? " and " : "",
+            pack.wandCount ? "wand" : "",
+            pack.wandCount > 1 ? "s" : "",
+            monstName);
+        strcat(buf, newText);
+        printStaffOrWandEffect = false;
+    }
+
+    // staffs and wands have no direct effect on the warden
+    if (monst->info.flags & MONST_INVULNERABLE) {
+        printStaffOrWandEffect = false;
+    }
+
+    if (printStaffOrWandEffect) {
+        for (theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
+            if ((theItem->category == STAFF || theItem->category == WAND)
+                && tableForItemCategory(theItem->category)[theItem->kind].identified
+                && staffOrWandEffectOnMonsterDescription(newText, theItem, monst)) {
+                    
+                strcat(buf, newText);
+            }
+        }
+
+        if (pack.hasDominationWand) {
+            strcpy(newText, "");
+            getMonsterDominationText(newText, monst);
+            strcat(buf, newText);
+        }
+    }
+
+    // monster has an item?
     if (monst->carriedItem) {
         i = strlen(buf);
         i = encodeMessageColor(buf, i, &itemMessageColor);
@@ -4716,6 +4764,7 @@ void monsterDetails(char buf[], creature *monst) {
         strcat(buf, newText);
     }
 
+    // was it negated?
     if (monst->wasNegated && monst->newPowerCount == monst->totalPowerCount) {
         i = strlen(buf);
         i = encodeMessageColor(buf, i, &pink);
@@ -4726,123 +4775,39 @@ void monsterDetails(char buf[], creature *monst) {
         strcat(buf, newText);
     }
 
-    strcat(buf, "\n     ");
+    // list the monster's abilities
+    encodeMessageColor(buf, strlen(buf), &white);
+    char abilitiesText[20*COLS] = "";
 
-    i = strlen(buf);
-    i = encodeMessageColor(buf, i, &white);
-
-    anyFlags = false;
-    sprintf(newText, "%s ", capMonstName);
-
-    if (monst->attackSpeed < 100) {
-        strcat(newText, "attacks quickly");
-        anyFlags = true;
-    } else if (monst->attackSpeed > 100) {
-        strcat(newText, "attacks slowly");
-        anyFlags = true;
-    }
-
-    if (monst->movementSpeed < 100) {
-        if (anyFlags) {
-            strcat(newText, "& ");
-            commaCount++;
+     // print all abilities if the player has no effective negation source, or they do and the monster dies to negation
+    if (((monst->info.flags & MONST_DIES_IF_NEGATED) && negationMethodText[0]) || !negationMethodText[0]) {
+        getMonsterAbilitiesText(monst, abilitiesText, true, true);
+        if (abilitiesText[0]) {
+            sprintf(newText, "\n     %s %s.", capMonstName, abilitiesText);
+            strcat(buf, newText);
         }
-        strcat(newText, "moves quickly");
-        anyFlags = true;
-    } else if (monst->movementSpeed > 100) {
-        if (anyFlags) {
-            strcat(newText, "& ");
-            commaCount++;
+    } else {
+        getMonsterAbilitiesText(monst, abilitiesText, false, true); // print non-negatable abilities, if any
+        boolean hasNonNegatableAbilities = false;
+        if (abilitiesText[0]) {
+            hasNonNegatableAbilities = true;
+            sprintf(newText, "\n     %s %s.", capMonstName, abilitiesText);
+            strcat(buf, newText);
         }
-        strcat(newText, "moves slowly");
-        anyFlags = true;
-    }
 
-    if (monst->info.turnsBetweenRegen == 0) {
-        if (anyFlags) {
-            strcat(newText, "& ");
-            commaCount++;
-        }
-        strcat(newText, "does not regenerate");
-        anyFlags = true;
-    } else if (monst->info.turnsBetweenRegen < 5000) {
-        if (anyFlags) {
-            strcat(newText, "& ");
-            commaCount++;
-        }
-        strcat(newText, "regenerates quickly");
-        anyFlags = true;
-    }
-
-    // bolt flags
-    for (i = 0; monst->info.bolts[i] != BOLT_NONE; i++) {
-        if (boltCatalog[monst->info.bolts[i]].abilityDescription[0]) {
-            if (anyFlags) {
-                strcat(newText, "& ");
-                commaCount++;
-            }
-            strcat(newText, boltCatalog[monst->info.bolts[i]].abilityDescription);
-            anyFlags = true;
+        strcpy(abilitiesText, "");
+        getMonsterAbilitiesText(monst, abilitiesText, true, false); // then print negatable abilities, if any
+        if (abilitiesText[0]) {
+            sprintf(newText, "\n     %s%s has special traits that can be removed by a ", capMonstName, hasNonNegatableAbilities ? " also" : "");
+            encodeMessageColor(newText, strlen(newText), &itemMessageColor);
+            strcat(newText, negationMethodText);
+            encodeMessageColor(newText, strlen(newText), &white);
+            strcat(newText, ": it ");
+            strcat(newText, abilitiesText);
+            strcat(newText, ".");
+            strcat(buf, newText);
         }
     }
 
-    // ability flags
-    for (i=0; i<32; i++) {
-        if ((monst->info.abilityFlags & (Fl(i)))
-            && monsterAbilityFlagDescriptions[i][0]) {
-            if (anyFlags) {
-                strcat(newText, "& ");
-                commaCount++;
-            }
-            strcat(newText, monsterAbilityFlagDescriptions[i]);
-            anyFlags = true;
-        }
-    }
-
-    // behavior flags
-    for (i=0; i<32; i++) {
-        if ((monst->info.flags & (Fl(i)))
-            && monsterBehaviorFlagDescriptions[i][0]) {
-            if (anyFlags) {
-                strcat(newText, "& ");
-                commaCount++;
-            }
-            strcat(newText, monsterBehaviorFlagDescriptions[i]);
-            anyFlags = true;
-        }
-    }
-
-    // bookkeeping flags
-    for (i=0; i<32; i++) {
-        if ((monst->bookkeepingFlags & (Fl(i)))
-            && monsterBookkeepingFlagDescriptions[i][0]) {
-            if (anyFlags) {
-                strcat(newText, "& ");
-                commaCount++;
-            }
-            strcat(newText, monsterBookkeepingFlagDescriptions[i]);
-            anyFlags = true;
-        }
-    }
-
-    if (anyFlags) {
-        strcat(newText, ". ");
-        //strcat(buf, "\n\n");
-        j = strlen(buf);
-        for (i=0; newText[i] != '\0'; i++) {
-            if (newText[i] == '&') {
-                if (!--commaCount) {
-                    buf[j] = '\0';
-                    strcat(buf, " and");
-                    j += 4;
-                } else {
-                    buf[j++] = ',';
-                }
-            } else {
-                buf[j++] = newText[i];
-            }
-        }
-        buf[j] = '\0';
-    }
     resolvePronounEscapes(buf, monst);
 }
