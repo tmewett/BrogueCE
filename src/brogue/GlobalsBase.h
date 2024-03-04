@@ -122,8 +122,6 @@ extern const color darkPink;
 extern const color tanColor;
 extern const color rainbow;
 
-extern const char monsterBehaviorFlagDescriptions[32][COLS];
-extern const char monsterAbilityFlagDescriptions[32][COLS];
 extern const monsterBehavior monsterBehaviorCatalog[32];
 extern const monsterAbility monsterAbilityCatalog[32];
 extern const char monsterBookkeepingFlagDescriptions[32][COLS];

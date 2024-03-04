@@ -4453,34 +4453,6 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
         "    (Shrieking)     ",
         "   (Caterwauling)   ",
     };
-    const char statusStrings[NUMBER_OF_STATUS_EFFECTS][COLS] = {
-        "Searching",
-        "Donning Armor",
-        "Weakened: -",
-        "Telepathic",
-        "Hallucinating",
-        "Levitating",
-        "Slowed",
-        "Hasted",
-        "Confused",
-        "Burning",
-        "Paralyzed",
-        "Poisoned",
-        "Stuck",
-        "Nauseous",
-        "Discordant",
-        "Immune to Fire",
-        "", // STATUS_EXPLOSION_IMMUNITY,
-        "", // STATUS_NUTRITION,
-        "", // STATUS_ENTERS_LEVEL_IN,
-        "", // STATUS_ENRAGED,
-        "Frightened",
-        "Entranced",
-        "Darkened",
-        "Lifespan",
-        "Shielded",
-        "Invisible",
-    };
 
     if (y >= ROWS - 1) {
         return ROWS - 1;
@@ -4603,7 +4575,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
 
         for (i=0; i<NUMBER_OF_STATUS_EFFECTS; i++) {
             if (i == STATUS_WEAKENED && monst->status[i] > 0) {
-                sprintf(buf, "%s%i", statusStrings[STATUS_WEAKENED], monst->weaknessAmount);
+                sprintf(buf, "%s%i", statusEffectCatalog[STATUS_WEAKENED].name, monst->weaknessAmount);
                 printProgressBar(0, y++, buf, monst->status[i], monst->maxStatus[i], &redBar, dim);
             } else if (i == STATUS_LEVITATING && monst->status[i] > 0) {
                 printProgressBar(0, y++, (monst == &player ? "Levitating" : "Flying"), monst->status[i], monst->maxStatus[i], &redBar, dim);
@@ -4624,8 +4596,8 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                             monst->poisonAmount);
                     printProgressBar(0, y++, buf2, monst->status[i], monst->maxStatus[i], &redBar, dim);
                 }
-            } else if (statusStrings[i][0] && monst->status[i] > 0) {
-                printProgressBar(0, y++, statusStrings[i], monst->status[i], monst->maxStatus[i], &redBar, dim);
+            } else if (statusEffectCatalog[i].name[0] && monst->status[i] > 0) {
+                printProgressBar(0, y++, statusEffectCatalog[i].name, monst->status[i], monst->maxStatus[i], &redBar, dim);
             }
         }
         if (posEq(monst->targetCorpseLoc, monst->loc)) {
