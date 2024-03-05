@@ -1092,8 +1092,6 @@ void getCellAppearance(pos loc, enum displayGlyph *returnChar, color *returnFore
     creature *monst = NULL;
     item *theItem = NULL;
     enum tileType tile = NOTHING;
-    const enum displayGlyph itemChars[] = {G_POTION, G_SCROLL, G_FOOD, G_WAND,
-                        G_STAFF, G_GOLD, G_ARMOR, G_WEAPON, G_RING, G_CHARM};
     enum dungeonLayers layer, maxLayer;
 
     assureCosmeticRNG;
@@ -1272,7 +1270,7 @@ void getCellAppearance(pos loc, enum displayGlyph *returnChar, color *returnFore
                    && (playerCanSeeOrSense(loc.x, loc.y) || ((pmapAt(loc)->flags & DISCOVERED) && !cellHasTerrainFlag(loc, T_MOVES_ITEMS)))) {
             needDistinctness = true;
             if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience) {
-                cellChar = itemChars[rand_range(0, 9)];
+                cellChar = getItemCategoryGlyph(getHallucinatedItemCategory());
                 cellForeColor = itemColor;
             } else {
                 theItem = itemAtLoc(loc);
@@ -3779,6 +3777,13 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
     entityType[displayEntityCount] = EDT_CREATURE;
     displayEntityCount++;
     addedEntity[player.loc.x][player.loc.y] = true;
+    // And the item at the player's location, if any
+    theItem = itemAtLoc(player.loc);
+    if (theItem) {
+        entityList[displayEntityCount] = theItem;
+        entityType[displayEntityCount] = EDT_ITEM;
+        displayEntityCount++;
+    }
 
     // Focused entity, if it must go first.
     if (focusedEntityMustGoFirst && !addedEntity[focusX][focusY]) {
@@ -4749,14 +4754,12 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
 }
 
 void describeHallucinatedItem(char *buf) {
-    const unsigned short itemCats[10] = {FOOD, WEAPON, ARMOR, POTION, SCROLL, STAFF, WAND, RING, CHARM, GOLD};
-    short cat, kind, maxKinds;
+    short kind, maxKinds;
     assureCosmeticRNG;
-    cat = itemCats[rand_range(0, 9)];
-    tableForItemCategory(cat);
+    enum itemCategory cat = getHallucinatedItemCategory();
     maxKinds = itemKindCount(cat, 0);
     kind = rand_range(0, maxKinds - 1);
-    describedItemBasedOnParameters(cat, kind, 1, 1, buf);
+    describedItemBasedOnParameters((short)cat, kind, 1, 1, buf);
     restoreRNG;
 }
 
@@ -4784,6 +4787,17 @@ short printItemInfo(item *theItem, short y, boolean dim, boolean highlight) {
         inPath = (pmapAt(theItem->loc)->flags & IS_IN_PATH) ? true : false;
         pmapAt(theItem->loc)->flags &= ~IS_IN_PATH;
         getCellAppearance(theItem->loc, &itemChar, &itemForeColor, &itemBackColor);
+        // override the glyph if the item is at the player's location because 
+        // getCellAppearance returns the player glyph
+        if (theItem->loc.x == player.loc.x && theItem->loc.y == player.loc.y) {
+            if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience) {
+                itemChar = getItemCategoryGlyph(getHallucinatedItemCategory());
+                itemForeColor = itemColor;
+            } else {
+                itemChar = theItem->displayChar;
+                itemForeColor = *(theItem->foreColor);
+            }
+        }
         applyColorBounds(&itemForeColor, 0, 100);
         applyColorBounds(&itemBackColor, 0, 100);
         if (inPath) {

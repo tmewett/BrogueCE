@@ -1,0 +1,4 @@
+- Fixed a bug where arriving on a level with items "obstructing" the stairs would cause the player to be moved to a non-item location without using a turn.
+- When the player arrives on a level and occupies a location with an item, a message is now displayed in the message pane.
+- If the player occupies a location with an item, the item is now shown in the sidebar. Additionally, the item is included in the description when inspecting the player's location. 
+- When inspecting a location, item descriptions now include details if space permits.

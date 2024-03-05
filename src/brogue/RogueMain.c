@@ -838,7 +838,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
         for (dir=0; dir<4 && !placedPlayer; dir++) {
             loc = posNeighborInDirection(player.loc, dir);
             if (!cellHasTerrainFlag(loc, T_PATHING_BLOCKER)
-                && !(pmapAt(loc)->flags & (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE))) {
+                && !(pmapAt(loc)->flags & (HAS_MONSTER | HAS_STAIRS | IS_IN_MACHINE))) {
                 placedPlayer = true;
             }
         }
@@ -847,13 +847,24 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                                      player.loc.x, player.loc.y,
                                      true,
                                      T_DIVIDES_LEVEL, 0,
-                                     T_PATHING_BLOCKER, (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE),
+                                     T_PATHING_BLOCKER, (HAS_MONSTER | HAS_STAIRS | IS_IN_MACHINE),
                                      false);
         }
     }
     player.loc = loc;
 
     pmapAt(player.loc)->flags |= HAS_PLAYER;
+
+    // Notify the player if they arrive standing on (or otherwise in the same location as) an item
+    if (itemAtLoc(player.loc)) {
+        item *theItem = itemAtLoc(player.loc);
+        char msg[COLS * 3], itemDescription[COLS * 3] = "";
+        
+        // the message pane wraps so we don't need to limit the description
+        describedItemName(theItem, itemDescription, COLS * 3);
+        sprintf(msg, "Below you lies %s.", itemDescription);
+        messageWithColor(msg, &itemMessageColor, 0);
+    }
 
     if (connectingStairsDiscovered) {
         for (i = rogue.upLoc.x-1; i <= rogue.upLoc.x + 1; i++) {

@@ -119,13 +119,22 @@ void describedItemBasedOnParameters(short theCategory, short theKind, short theQ
     return;
 }
 
-// Describes the item in question either by naming it if the player has already seen its name,
-// or by tersely identifying its category otherwise.
-static void describedItemName(item *theItem, char *buf) {
+/// @brief Describes an item, primarily as a component of the location description that displays just above the
+/// menu bar at the bottom of the screen. The complete location description needs to fit on a single line the width
+/// of the dungeon, so an attempt is made to fit as much detail as possible within a loose length constraint. If
+/// there is enough room, item details are included. If not, a terse description is used. Note that the final
+/// description may exceed the max length.
+/// @param theItem The item
+/// @param buf The item description
+/// @param maxLength The maximum length of the description
+void describedItemName(const item *theItem, char *description, int maxLength) {
     if (rogue.playbackOmniscience || (!player.status[STATUS_HALLUCINATING])) {
-        itemName(theItem, buf, (theItem->category & (WEAPON | ARMOR) ? false : true), true, NULL);
+        itemName(theItem, description, true, true, NULL);
+        if (strlen(description) > maxLength) {
+            itemName(theItem, description, false, true, NULL);
+        }
     } else {
-        describeHallucinatedItem(buf);
+        describeHallucinatedItem(description);
     }
 }
 
@@ -136,16 +145,20 @@ void describeLocation(char *buf, short x, short y) {
     boolean subjectMoving;
     boolean prepositionLocked = false;
     boolean monsterDormant;
+    boolean monsterIsPlayer = false;
 
     char subject[COLS * 3];
     char verb[COLS * 3];
     char preposition[COLS * 3];
     char object[COLS * 3];
+    char itemLocation[COLS * 3] = "";
     char adjective[COLS * 3];
 
     assureCosmeticRNG;
 
-    if (x == player.loc.x && y == player.loc.y) {
+    theItem = itemAtLoc((pos){ x, y });
+    // describe the player's location when there is no item there
+    if ((x == player.loc.x) && (y == player.loc.y) && !theItem) {
         if (player.status[STATUS_LEVITATING]) {
             sprintf(buf, "you are hovering above %s.", tileText(x, y));
         } else {
@@ -157,10 +170,11 @@ void describeLocation(char *buf, short x, short y) {
 
     monst = NULL;
     standsInTerrain = ((tileCatalog[pmap[x][y].layers[highestPriorityLayer(x, y, false)]].mechFlags & TM_STAND_IN_TILE) ? true : false);
-    theItem = itemAtLoc((pos){ x, y });
     monsterDormant = false;
-    if (pmap[x][y].flags & HAS_MONSTER) {
+    if (pmap[x][y].flags & (HAS_MONSTER | HAS_PLAYER)) {
         monst = monsterAtLoc((pos){ x, y });
+        monsterIsPlayer = (monst == &player);
+
     } else if (pmap[x][y].flags & HAS_DORMANT_MONSTER) {
         monst = dormantMonsterAtLoc((pos){ x, y });
         monsterDormant = true;
@@ -197,6 +211,7 @@ void describeLocation(char *buf, short x, short y) {
 
     // telepathy
     if (monst
+        && !monsterIsPlayer
         && !canSeeMonster(monst)
         && monsterRevealed(monst)) {
 
@@ -256,8 +271,9 @@ void describeLocation(char *buf, short x, short y) {
     if (monst) {
 
         monsterName(subject, monst, true);
+        strcpy(verb, monsterIsPlayer ? "are" : "is");
 
-        if (pmap[x][y].layers[GAS] && monst->status[STATUS_INVISIBLE]) { // phantoms in gas
+        if (pmap[x][y].layers[GAS] && monst->status[STATUS_INVISIBLE] && !monsterIsPlayer) { // phantoms in gas
             sprintf(buf, "you can perceive the faint outline of %s in %s.", subject, tileCatalog[pmap[x][y].layers[GAS]].description);
             restoreRNG;
             return;
@@ -269,60 +285,60 @@ void describeLocation(char *buf, short x, short y) {
                          && !(monst->bookkeepingFlags & (MB_SEIZED | MB_CAPTIVE)));
         if ((monst->info.flags & MONST_ATTACKABLE_THRU_WALLS)
             && cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_PASSABILITY)) {
-            strcpy(verb, "is embedded");
+            strcat(verb, " embedded");
         } else if (cellHasTerrainFlag((pos){ x, y }, T_OBSTRUCTS_PASSABILITY)) {
-            strcpy(verb, "is trapped");
+            strcat(verb, " trapped");
             subjectMoving = false;
         } else if (monst->bookkeepingFlags & MB_CAPTIVE) {
-            strcpy(verb, "is shackled in place");
+            strcat(verb, " shackled in place");
             subjectMoving = false;
         } else if (monst->status[STATUS_PARALYZED]) {
-            strcpy(verb, "is frozen in place");
+            strcat(verb, " frozen in place");
             subjectMoving = false;
         } else if (monst->status[STATUS_STUCK]) {
-            strcpy(verb, "is entangled");
+            strcat(verb, " entangled");
             subjectMoving = false;
         } else if (monst->status[STATUS_LEVITATING]) {
-            strcpy(verb, (subjectMoving ? "is flying" : "is hovering"));
-            strcpy(preposition, "over");
+            strcat(verb, (monsterIsPlayer ? " hovering" : (subjectMoving ? " flying" : " hovering")));
+            strcat(preposition, "over");
             prepositionLocked = true;
         } else if (monsterCanSubmergeNow(monst)) {
-            strcpy(verb, (subjectMoving ? "is gliding" : "is drifting"));
+            strcat(verb, (subjectMoving ? " gliding" : " drifting"));
         } else if (cellHasTerrainFlag((pos){ x, y }, T_MOVES_ITEMS) && !(monst->info.flags & MONST_SUBMERGES)) {
-            strcpy(verb, (subjectMoving ? "is swimming" : "is struggling"));
+            strcat(verb, (subjectMoving ? " swimming" : " struggling"));
         } else if (cellHasTerrainFlag((pos){ x, y }, T_AUTO_DESCENT)) {
-            strcpy(verb, "is suspended in mid-air");
-            strcpy(preposition, "over");
+            strcat(verb, " suspended in mid-air");
+            strcat(preposition, "over");
             prepositionLocked = true;
             subjectMoving = false;
         } else if (monst->status[STATUS_CONFUSED]) {
-            strcpy(verb, "is staggering");
+            strcat(verb, " staggering");
         } else if ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID)
                    && !cellHasTMFlag(monst->loc, TM_ALLOWS_SUBMERGING)) {
-            strcpy(verb, "is lying");
+            strcat(verb, " lying");
             subjectMoving = false;
         } else if (monst->info.flags & MONST_IMMOBILE) {
-            strcpy(verb, "is resting");
+            strcat(verb, " resting");
         } else {
             switch (monst->creatureState) {
                 case MONSTER_SLEEPING:
-                    strcpy(verb, "is sleeping");
+                    strcat(verb, " sleeping");
                     subjectMoving = false;
                     break;
                 case MONSTER_WANDERING:
-                    strcpy(verb, subjectMoving ? "is wandering" : "is standing");
+                    strcat(verb, subjectMoving ? " wandering" : " standing");
                     break;
                 case MONSTER_FLEEING:
-                    strcpy(verb, subjectMoving ? "is fleeing" : "is standing");
+                    strcat(verb, subjectMoving ? " fleeing" : " standing");
                     break;
                 case MONSTER_TRACKING_SCENT:
-                    strcpy(verb, subjectMoving ? "is charging" : "is standing");
+                    strcat(verb, subjectMoving ? " charging" : " standing");
                     break;
                 case MONSTER_ALLY:
-                    strcpy(verb, subjectMoving ? "is following you" : "is standing");
+                    strcat(verb, monsterIsPlayer ? " standing" : (subjectMoving ? " following you" : " standing"));
                     break;
                 default:
-                    strcpy(verb, "is standing");
+                    strcat(verb, " standing");
                     break;
             }
         }
@@ -332,7 +348,13 @@ void describeLocation(char *buf, short x, short y) {
 
         if (theItem) {
             strcpy(preposition, "over");
-            describedItemName(theItem, object);
+            if (monsterIsPlayer) {
+                strcat(itemLocation, standsInTerrain ? " in " : " on ");
+                strcat(itemLocation, tileText(x, y));
+            }
+            sprintf(buf, "%s %s %s %s%s.", subject, verb, preposition, object, itemLocation);
+            describedItemName(theItem, object, DCOLS - strlen(buf));
+
         } else {
             if (!prepositionLocked) {
                 strcpy(preposition, subjectMoving ? (standsInTerrain ? "through" : "across")
@@ -345,7 +367,6 @@ void describeLocation(char *buf, short x, short y) {
     } else { // no monster
         strcpy(object, tileText(x, y));
         if (theItem) {
-            describedItemName(theItem, subject);
             subjectMoving = cellHasTerrainFlag((pos){ x, y }, T_MOVES_ITEMS);
             if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience) {
                 strcpy(verb, "is");
@@ -360,6 +381,8 @@ void describeLocation(char *buf, short x, short y) {
             strcpy(preposition, standsInTerrain ? (subjectMoving ? "through" : "in")
                    : (subjectMoving ? "across" : "on"));
 
+            sprintf(buf, "%s %s %s %s%s.", subject, verb, preposition, object, itemLocation);
+            describedItemName(theItem, subject, DCOLS - strlen(buf));
 
         } else { // no item
             sprintf(buf, "you %s %s.", (playerCanDirectlySee(x, y) ? "see" : "sense"), object);
@@ -368,7 +391,7 @@ void describeLocation(char *buf, short x, short y) {
         }
     }
 
-    sprintf(buf, "%s %s %s %s.", subject, verb, preposition, object);
+    sprintf(buf, "%s %s %s %s%s.", subject, verb, preposition, object, itemLocation);
     restoreRNG;
 }
 
