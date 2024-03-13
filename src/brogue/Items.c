@@ -1216,16 +1216,19 @@ void updateFloorItems() {
         if (cellHasTerrainFlag((pos){ x, y }, T_MOVES_ITEMS)) {
             pos loc;
             getQualifyingLocNear(&loc, (pos){ x, y }, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM), false, false);
-            removeItemAt((pos){ x, y });
-            pmapAt(loc)->flags |= HAS_ITEM;
-            if (pmap[x][y].flags & ITEM_DETECTED) {
-                pmap[x][y].flags &= ~ITEM_DETECTED;
-                pmapAt(loc)->flags |= ITEM_DETECTED;
+            // To prevent items drifting through walls, they can only drift to an adjacent cell
+            if (distanceBetween((pos){ x, y }, loc) == 1) {
+                removeItemAt((pos){ x, y });
+                pmapAt(loc)->flags |= HAS_ITEM;
+                if (pmap[x][y].flags & ITEM_DETECTED) {
+                    pmap[x][y].flags &= ~ITEM_DETECTED;
+                    pmapAt(loc)->flags |= ITEM_DETECTED;
+                }
+                theItem->loc = loc;
+                refreshDungeonCell((pos){ x, y });
+                refreshDungeonCell(loc);
+                continue;
             }
-            theItem->loc = loc;
-            refreshDungeonCell((pos){ x, y });
-            refreshDungeonCell(loc);
-            continue;
         }
         if (cellHasTMFlag((pos){ x, y }, TM_PROMOTES_ON_ITEM)) {
             for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
