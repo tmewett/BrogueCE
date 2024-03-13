@@ -90,6 +90,18 @@ const bolt boltCatalog_Brogue[] = {
     {"whip",                    "whips",                        "wields a whip",                            '*',    &tanColor,      NULL,               BE_ATTACK,      1,              0,          0,          MONST_IMMUNE_TO_WEAPONS,    (BF_TARGET_ENEMIES | BF_NEVER_REFLECTS | BF_NOT_LEARNABLE | BF_DISPLAY_CHAR_ALONG_LENGTH)},
 };
 
+    //name              feat description                                        initial value
+const feat featTable_Brogue[] = {
+    {"Pure Mage",       "Ascend without using a weapon.",                           true},
+    {"Pure Warrior",    "Ascend without using a staff, wand or charm.",             true},
+    {"Companion",       "Explore 13 new depths with an ally.",                      false},
+    {"Specialist",      "Enchant an item to +16.",                                  false},
+    {"Jellymancer",     "Obtain 90 jelly allies simultaneously.",                   false},
+    {"Dragonslayer",    "Slay a dragon with a melee attack.",                       false},
+    {"Paladin",         "Ascend without attacking an unaware or fleeing creature.", true},
+    {"Untempted",       "Ascend without picking up gold.",                          true},
+};
+
 // Number of lumenstones on each level past amulet
 const short lumenstoneDistribution_Brogue[DEEPEST_LEVEL - AMULET_LEVEL] = {3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1};
 
@@ -1042,6 +1054,8 @@ const gameConstants brogueGameConst = {
     .numberCharmKinds = sizeof(charmTable_Brogue) / sizeof(itemTable),
     .numberMeteredItems = sizeof(meteredItemsGenerationTable_Brogue) / sizeof(meteredItemGenerationTable),
     .numberHordes = sizeof(hordeCatalog_Brogue) / sizeof(hordeType),
+    .numberFeats = sizeof(featTable_Brogue) / sizeof(feat),
+    .companionFeatRequiredXP = 10400, // about 13 depths
 
     .mainMenuTitleHeight = MENU_TITLE_HEIGHT,
     .mainMenuTitleWidth = MENU_TITLE_WIDTH
@@ -1063,6 +1077,7 @@ void initializeGameVariantBrogue() {
     scrollTable = scrollTable_Brogue;
     wandTable = wandTable_Brogue;
     charmTable = charmTable_Brogue;
+    featTable = featTable_Brogue;
 
     charmEffectTable = charmEffectTable_Brogue;
 

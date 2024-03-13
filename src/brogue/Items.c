@@ -4361,6 +4361,13 @@ static boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 if (autoID) {
                     *autoID = true;
                 }
+                // Check paladin feat before creatureState is changed in inflictDamage()
+                if (monst && caster == &player) {
+                    if (((theBolt->flags & BF_FIERY) && !(monst->status[STATUS_IMMUNE_TO_FIRE] > 0 ))
+                        || (theBolt->flags & BF_ELECTRIC)) {
+                        handlePaladinFeat(monst);
+                    }
+                }
                 if (((theBolt->flags & BF_FIERY) && monst->status[STATUS_IMMUNE_TO_FIRE] > 0)
                     || (monst->info.flags & MONST_INVULNERABLE)) {
 
@@ -5872,7 +5879,10 @@ static boolean hitMonsterWithProjectileWeapon(creature *thrower, creature *monst
     if (!(theItem->category & WEAPON)) {
         return false;
     }
-
+    // Check paladin feat before creatureState is changed
+    if (thrower == &player && !(monst->info.flags & (MONST_IMMUNE_TO_WEAPONS))) {
+        handlePaladinFeat(monst);
+    }
     armorRunicString[0] = '\0';
 
     itemName(theItem, theItemName, false, false, NULL);
@@ -6667,7 +6677,6 @@ void apply(item *theItem, boolean recordCommands) {
             } else {
                 messageWithColor("My, what a yummy mango!", &itemMessageColor, 0);
             }
-            rogue.featRecord[FEAT_ASCETIC] = false;
             break;
         case POTION:
             command[c] = '\0';
@@ -6870,8 +6879,6 @@ void readScroll(item *theItem) {
     creature *monst;
     boolean hadEffect = false;
     char buf[COLS * 3], buf2[COLS * 3];
-
-    rogue.featRecord[FEAT_ARCHIVIST] = false;
 
     switch (theItem->kind) {
         case SCROLL_IDENTIFY:
@@ -7130,8 +7137,6 @@ void drinkPotion(item *theItem) {
     int magnitude;
 
     brogueAssert(rogue.RNG == RNG_SUBSTANTIVE);
-
-    rogue.featRecord[FEAT_ARCHIVIST] = false;
 
     itemTable potionTable = tableForItemCategory(theItem->category)[theItem->kind];
 

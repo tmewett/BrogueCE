@@ -970,6 +970,11 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
             case BROGUE_HELP_KEY:
                 printPlaybackHelpScreen();
                 return true;
+            case FEATS_KEY:
+                rogue.playbackMode = false;
+                displayFeatsScreen();
+                rogue.playbackMode = true;
+                return true;
             case DISCOVERIES_KEY:
                 rogue.playbackMode = false;
                 printDiscoveriesScreen();
@@ -1401,7 +1406,7 @@ static void describeKeystroke(unsigned char key, char *description) {
         DESCEND_KEY, ASCEND_KEY, REST_KEY, AUTO_REST_KEY, SEARCH_KEY, INVENTORY_KEY,
         ACKNOWLEDGE_KEY, EQUIP_KEY, UNEQUIP_KEY, APPLY_KEY, THROW_KEY, RELABEL_KEY, DROP_KEY, CALL_KEY,
         //FIGHT_KEY, FIGHT_TO_DEATH_KEY,
-        BROGUE_HELP_KEY, DISCOVERIES_KEY, RETURN_KEY,
+        BROGUE_HELP_KEY, FEATS_KEY, DISCOVERIES_KEY, RETURN_KEY,
         EXPLORE_KEY, AUTOPLAY_KEY, SEED_KEY, EASY_MODE_KEY, ESCAPE_KEY,
         RETURN_KEY, DELETE_KEY, TAB_KEY, PERIOD_KEY, VIEW_RECORDING_KEY, NUMPAD_0,
         NUMPAD_1, NUMPAD_2, NUMPAD_3, NUMPAD_4, NUMPAD_5, NUMPAD_6, NUMPAD_7, NUMPAD_8,

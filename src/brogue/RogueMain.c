@@ -220,6 +220,7 @@ void initializeRogue(uint64_t seed) {
     rogue.milliseconds = 0;
 
     rogue.meteredItems = calloc(gameConst->numberMeteredItems, sizeof(meteredItem));
+    rogue.featRecord = calloc(gameConst->numberFeats, sizeof(boolean));
     strcpy(rogue.currentGamePath, currentGamePath);
 
     rogue.RNG = RNG_SUBSTANTIVE;
@@ -304,7 +305,7 @@ void initializeRogue(uint64_t seed) {
 
     shuffleFlavors();
 
-    for (i = 0; i < FEAT_COUNT; i++) {
+    for (i = 0; i < gameConst->numberFeats; i++) {
         rogue.featRecord[i] = featTable[i].initialValue;
     }
 
@@ -1031,6 +1032,8 @@ void freeEverything() {
 
     free(levels);
     levels = NULL;
+
+    free(rogue.featRecord);
 }
 
 void gameOver(char *killedBy, boolean useCustomPhrasing) {
@@ -1159,8 +1162,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         printString(buf, (COLS - strLenWithoutEscapes(buf)) / 2, ROWS / 2, &gray, &black, 0);
 
         y = ROWS / 2 + 3;
-        for (i = 0; i < FEAT_COUNT; i++) {
-            //printf("\nConduct %i (%s) is %s.", i, featTable[i].name, rogue.featRecord[i] ? "true" : "false");
+        for (i = 0; i < gameConst->numberFeats; i++) {
             if (rogue.featRecord[i]
                 && !featTable[i].initialValue) {
 
@@ -1303,7 +1305,7 @@ void victory(boolean superVictory) {
     printString("Achievements", mapToWindowX(2), i++, &lightBlue, &black, NULL);
 
     i++;
-    for (j = 0; i < ROWS && j < FEAT_COUNT; j++) {
+    for (j = 0; i < ROWS && j < gameConst->numberFeats; j++) {
         if (rogue.featRecord[j]) {
             sprintf(buf, "%s: %s", featTable[j].name, featTable[j].description);
             printString(buf, mapToWindowX(2), i, &advancementMessageColor, &black, NULL);

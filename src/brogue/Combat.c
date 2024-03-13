@@ -304,13 +304,6 @@ static short alliedCloneCount(creature *monst) {
 // This can be things like melee attacks, fire/lightning attacks or throwing a weapon.
 void moralAttack(creature *attacker, creature *defender) {
 
-    if (attacker == &player && canSeeMonster(defender)) {
-        rogue.featRecord[FEAT_PACIFIST] = false;
-        if (defender->creatureState != MONSTER_TRACKING_SCENT) {
-            rogue.featRecord[FEAT_PALADIN] = false;
-        }
-    }
-
     if (defender->currentHP > 0
         && !(defender->bookkeepingFlags & MB_IS_DYING)) {
 
@@ -351,6 +344,22 @@ void moralAttack(creature *attacker, creature *defender) {
                 splitMonster(defender, INVALID_POS);
             }
         }
+    }
+}
+
+/// @brief Determine if the action forfeits the paladin feat. In general, the player fails the feat if they attempt
+/// to deal direct damage to a non-hunting creature that they are aware of and the creature would be damaged by the attack.
+/// @param attacker 
+/// @param defender 
+void handlePaladinFeat(creature *defender) {
+    if (rogue.featRecord[FEAT_PALADIN]
+        && defender->creatureState != MONSTER_TRACKING_SCENT
+        && (player.status[STATUS_TELEPATHIC] || canSeeMonster(defender))
+        && !(defender->info.flags & (MONST_INANIMATE | MONST_TURRET | MONST_IMMOBILE | MONST_INVULNERABLE))
+        && !(player.bookkeepingFlags & MB_SEIZED)
+        && defender != &player
+        ) {
+        rogue.featRecord[FEAT_PALADIN] = false;
     }
 }
 
@@ -1005,7 +1014,12 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
     char buf[COLS*2], buf2[COLS*2], attackerName[COLS], defenderName[COLS], verb[DCOLS], explicationClause[DCOLS] = "", armorRunicString[DCOLS*3];
     boolean sneakAttack, defenderWasAsleep, defenderWasParalyzed, degradesAttackerWeapon, sightUnseen;
 
-    if (attacker == &player && canSeeMonster(defender)) {
+    // Check paladin feat before creatureState is changed
+    if (attacker == &player && !(defender->info.flags & MONST_IMMUNE_TO_WEAPONS)) {
+        handlePaladinFeat(defender);
+    }
+
+    if (attacker == &player && rogue.weapon && rogue.featRecord[FEAT_PURE_MAGE] && canSeeMonster(defender)) {
         rogue.featRecord[FEAT_PURE_MAGE] = false;
     }
 
@@ -1033,12 +1047,6 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
     defender->status[STATUS_ENTRANCED] = 0;
     if (defender->status[STATUS_MAGICAL_FEAR]) {
         defender->status[STATUS_MAGICAL_FEAR] = 1;
-    }
-
-    if (attacker == &player
-        && defender->creatureState != MONSTER_TRACKING_SCENT) {
-
-        rogue.featRecord[FEAT_PALADIN] = false;
     }
 
     if (attacker != &player && defender == &player && attacker->creatureState == MONSTER_WANDERING) {
@@ -1569,9 +1577,6 @@ boolean inflictDamage(creature *attacker, creature *defender,
             defender->currentHP = max(defender->currentHP, defender->info.maxHP);
         } else {
             defender->currentHP -= damage; // inflict the damage!
-            if (defender == &player && damage > 0) {
-                rogue.featRecord[FEAT_INDOMITABLE] = false;
-            }
         }
 
         if (defender != &player && defender->creatureState != MONSTER_ALLY
