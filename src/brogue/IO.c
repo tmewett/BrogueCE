@@ -527,7 +527,7 @@ static void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
 // This is basically the main loop for the game.
 void mainInputLoop() {
     pos oldTargetLoc = { 0, 0 };
-    short steps, oldRNG, dir, newX, newY;
+    short steps, oldRNG, dir;
     pos path[1000];
     creature *monst;
     item *theItem;
@@ -734,9 +734,9 @@ void mainInputLoop() {
             }
 
             if (tabKey && !playingBack) { // The tab key cycles the cursor through monsters, items and terrain features.
-                if (nextTargetAfter(&newX, &newY, rogue.cursorLoc.x, rogue.cursorLoc.y, true, true, true, true, false, theEvent.shiftKey)) {
-                    rogue.cursorLoc.x = newX;
-                    rogue.cursorLoc.y = newY;
+                pos newLoc;
+                if (nextTargetAfter(NULL, &newLoc, rogue.cursorLoc, AUTOTARGET_MODE_EXPLORE, theEvent.shiftKey)) {
+                    rogue.cursorLoc = newLoc;
                 }
             }
 
