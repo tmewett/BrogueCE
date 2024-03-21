@@ -187,7 +187,7 @@ void initializeRogue(uint64_t seed) {
     item *theItem;
     boolean playingback, playbackFF, playbackPaused, wizard, easy, displayStealthRangeMode;
     boolean trueColorMode;
-    short oldRNG;
+    short oldRNG, playbackDelay;
     char currentGamePath[BROGUE_FILENAME_MAX];
 
     playingback = rogue.playbackMode; // the only animals that need to go on the ark
@@ -197,6 +197,7 @@ void initializeRogue(uint64_t seed) {
     easy = rogue.easyMode;
     displayStealthRangeMode = rogue.displayStealthRangeMode;
     trueColorMode = rogue.trueColorMode;
+    playbackDelay = rogue.playbackDelayPerTurn;
 
     strcpy(currentGamePath, rogue.currentGamePath);
 
@@ -212,6 +213,7 @@ void initializeRogue(uint64_t seed) {
     rogue.easyMode = easy;
     rogue.displayStealthRangeMode = displayStealthRangeMode;
     rogue.trueColorMode = trueColorMode;
+    rogue.playbackDelayPerTurn = playbackDelay;
 
     rogue.gameHasEnded = false;
     rogue.gameInProgress = true;
