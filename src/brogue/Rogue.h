@@ -379,6 +379,19 @@ typedef struct rogueHighScoresEntry {
     char description[DCOLS];
 } rogueHighScoresEntry;
 
+typedef struct rogueRun {
+    uint64_t seed;
+    long dateNumber;
+    char result[DCOLS];
+    char killedBy[DCOLS];
+    int gold;
+    int lumenstones;
+    int score;
+    int turns;
+    int deepestLevel;
+    struct rogueRun *nextRun;
+} rogueRun;
+
 typedef struct fileEntry {
     char *path;
     struct tm date;
@@ -2301,6 +2314,7 @@ enum NGCommands {
     NG_OPEN_GAME,
     NG_VIEW_RECORDING,
     NG_HIGH_SCORES,
+    NG_GAME_STATS,
     NG_QUIT,
 };
 
@@ -2911,6 +2925,9 @@ extern "C" {
     boolean shiftKeyIsDown(void);
     short getHighScoresList(rogueHighScoresEntry returnList[HIGH_SCORES_COUNT]);
     boolean saveHighScore(rogueHighScoresEntry theEntry);
+    void saveRunHistory(char *result, char *killedBy, int score, int lumenstones);
+    void saveResetRun(void);
+    rogueRun *loadRunHistory(void);
     fileEntry *listFiles(short *fileCount, char **dynamicMemoryBuffer);
     void initializeLaunchArguments(enum NGCommands *command, char *path, uint64_t *seed);
 

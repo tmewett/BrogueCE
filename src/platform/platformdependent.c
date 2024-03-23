@@ -471,6 +471,88 @@ boolean saveHighScore(rogueHighScoresEntry theEntry) {
     return true;
 }
 
+/// @brief Sets the name of the run history file based on the variant
+/// @param buffer The filename
+/// @param bufferMaxLength The maximum filename length
+static void setRunHistoryFilename(char *buffer, int bufferMaxLength) {
+    strncpy(buffer, gameConst->variantName, bufferMaxLength);
+    strncat(buffer, "RunHistory.txt", bufferMaxLength);
+    buffer[0] = toupper(buffer[0]);
+}
+
+/// @brief Saves the run to the history file at the end of a game
+/// @param result The game result (Escaped, Mastered, Died, Quit)
+/// @param killedBy How the player died (monster name, etc.) 
+/// @param score The total score
+/// @param lumenstones The number of lumenstones collected
+void saveRunHistory(char *result, char *killedBy, int score, int lumenstones) {
+    FILE *runHistoryFile;
+    char runHistoryFilename[BROGUE_FILENAME_MAX];
+
+    setRunHistoryFilename(runHistoryFilename, BROGUE_FILENAME_MAX);
+    runHistoryFile = fopen(runHistoryFilename, "a"); // append. create if not found.
+
+    fprintf(runHistoryFile, "%llu\t%li\t%s\t%s\t%i\t%i\t%i\t%i\t%i\n", rogue.seed, (long) time(NULL), result, killedBy, 
+            score, (int) rogue.gold, lumenstones, (int) rogue.deepestLevel, (int) rogue.playerTurnNumber);
+    fclose(runHistoryFile);
+}
+/// @brief Saves a "reset" run to the history file. This serves to reset the player's recent stats to zero.
+void saveResetRun(void) {
+    FILE *runHistoryFile;
+    char runHistoryFilename[BROGUE_FILENAME_MAX];
+
+    setRunHistoryFilename(runHistoryFilename, BROGUE_FILENAME_MAX);
+    runHistoryFile = fopen(runHistoryFilename, "a"); // append. create if not found.
+
+    fprintf(runHistoryFile, "%i\t%li\t%s\t%s\t%i\t%i\t%i\t%i\t%i\n", 0, (long) time(NULL), "Reset", "-", 0, 0, 0, 0, 0);
+    fclose(runHistoryFile);
+}
+
+/// @brief Loads the run history file
+/// @return Linked list of runs
+rogueRun* loadRunHistory(void) {
+    FILE *runHistoryFile;
+    char runHistoryFilename[BROGUE_FILENAME_MAX];
+
+    setRunHistoryFilename(runHistoryFilename, BROGUE_FILENAME_MAX);
+    runHistoryFile = fopen(runHistoryFilename, "r"); // read
+
+    if (runHistoryFile == NULL) {
+        runHistoryFile = fopen(runHistoryFilename, "w"); // create if not found
+        fclose(runHistoryFile);
+        runHistoryFile = fopen(runHistoryFilename, "r");
+    }
+
+    rogueRun *runHistory = NULL;
+    rogueRun *current = NULL;
+    char line[1024]; // maximum line length
+    while (fgets(line, sizeof(line), runHistoryFile) != NULL) {
+        rogueRun *run = (rogueRun *)malloc(sizeof(rogueRun));
+        memset(run, '\0', sizeof(rogueRun));
+        run->nextRun = NULL;
+
+        int vals = sscanf(line, "%llu\t%li\t%s\t%[^\t]\t%i\t%i\t%i\t%i\t%i\n", &run->seed, &run->dateNumber,
+                   run->result, run->killedBy, &run->score, &run->gold, &run->lumenstones,
+                   &run->deepestLevel, &run->turns);
+
+        if ( vals == 9) {
+            if (runHistory == NULL) {
+                runHistory = run;
+                current = run;
+            } else {
+                current->nextRun = run;
+                current = run;
+            }
+        } else {
+            fprintf(stderr, "Error parsing line: %s\n", line);
+            free(run);
+        }
+    }
+    fclose(runHistoryFile);
+
+    return runHistory;
+}
+
 // start of file listing
 
 struct filelist {

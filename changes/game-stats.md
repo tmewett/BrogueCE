@@ -1,0 +1,1 @@
+Players can now view summary statistics of games played by selecting the "Game Stats" option from the "View" menu. Statistics are collected only for games played since the menu option became available.
