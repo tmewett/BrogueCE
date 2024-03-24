@@ -1395,7 +1395,7 @@ static boolean anyoneWantABite(creature *decedent) {
     if ((!(decedent->info.abilityFlags & LEARNABLE_ABILITIES)
          && !(decedent->info.flags & LEARNABLE_BEHAVIORS)
          && decedent->info.bolts[0] == BOLT_NONE)
-        || (cellHasTerrainFlag(decedent->loc, T_PATHING_BLOCKER))
+        || (cellHasTerrainFlag(decedent->loc, T_OBSTRUCTS_PASSABILITY))
         || decedent->info.monsterID == MK_SPECTRAL_IMAGE
         || (decedent->info.flags & (MONST_INANIMATE | MONST_IMMOBILE))) {
 
@@ -1403,10 +1403,12 @@ static boolean anyoneWantABite(creature *decedent) {
     }
 
     grid = allocGrid();
-    fillGrid(grid, 0);
-    calculateDistances(grid, decedent->loc.x, decedent->loc.y, T_PATHING_BLOCKER, NULL, true, true);
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *ally = nextCreature(&it);
+        if (ally->creatureState == MONSTER_ALLY) {
+            fillGrid(grid, 0);
+            calculateDistances(grid, decedent->loc.x, decedent->loc.y, forbiddenFlagsForMonster(&(ally->info)), NULL, true, true);
+        }
         if (canAbsorb(ally, ourBolts, decedent, grid)) {
             candidates++;
         }

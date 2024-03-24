@@ -1,0 +1,1 @@
+Fixed an issue that prevented allies (e.g. kraken) from learning abilities from monsters that die in certain terrain (e.g. deep water).
