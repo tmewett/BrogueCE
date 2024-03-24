@@ -2609,6 +2609,7 @@ static boolean specificallyValidBoltTarget(creature *caster, creature *target, e
                 }
                 if (monstersAreTeammates(caster, target)
                     && target->status[STATUS_DISCORDANT]
+                    && !caster->status[STATUS_DISCORDANT]
                     && !(target->info.flags & MONST_DIES_IF_NEGATED)) {
                     // Dispel discord from allies unless it would destroy them.
                     return true;
