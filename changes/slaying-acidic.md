@@ -1,0 +1,1 @@
+A weapon of slaying now includes a note that the weapon doesn't degrade when attacking a monster in the slaying monster class (if the class has an acidic monster). 
