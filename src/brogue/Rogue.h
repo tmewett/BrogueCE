@@ -1803,6 +1803,7 @@ enum DFFlags {
     DFF_SUPERPRIORITY               = Fl(7),    // Will overwrite terrain of a superior priority.
     DFF_AGGRAVATES_MONSTERS         = Fl(8),    // Will act as though an aggravate monster scroll of effectRadius radius had been read at that point.
     DFF_RESURRECT_ALLY              = Fl(9),    // Will bring back to life your most recently deceased ally.
+    DFF_CLEAR_LOWER_PRIORITY_TERRAIN= Fl(10),   // Erase terrain with a lower priority in the footprint of this DF.
 };
 
 enum boltEffects {

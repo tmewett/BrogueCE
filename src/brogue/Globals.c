@@ -744,7 +744,7 @@ dungeonFeature dungeonFeatureCatalog[NUMBER_DUNGEON_FEATURES] = {
     {PLAIN_FIRE,                SURFACE,    100,    37,     0},
     {EMBERS,                    SURFACE,    0,      0,      0},
     {EMBERS,                    SURFACE,    100,    94,     0},
-    {OBSIDIAN,                  SURFACE,    0,      0,      0},
+    {OBSIDIAN,                  SURFACE,    0,      0,      DFF_CLEAR_LOWER_PRIORITY_TERRAIN},
     {ITEM_FIRE,                 SURFACE,    0,      0,      0,  "", FALLEN_TORCH_FLASH_LIGHT},
     {CREATURE_FIRE,             SURFACE,    0,      0,      0,  "", FALLEN_TORCH_FLASH_LIGHT},
 
