@@ -4633,103 +4633,98 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
         }
     }
 
-    if (monst != &player
-        && (!(monst->info.flags & MONST_INANIMATE)
-            || monst->creatureState == MONSTER_ALLY)) {
-
-            if (y < ROWS - 1) {
-                if (monst->wasNegated
-                    && monst->newPowerCount == monst->totalPowerCount
-                    && y < ROWS - 1
-                    && (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience )) {
-                    printString("      Negated       ", 0, y++, (dim ? &darkPink : &pink), &black, 0);
-                }
-                if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience && y < ROWS - 1) {
-                    printString(hallucinationStrings[rand_range(0, 9)], 0, y++, (dim ? &darkGray : &gray), &black, 0);
-                } else if (monst->bookkeepingFlags & MB_CAPTIVE && y < ROWS - 1) {
-                    printString("     (Captive)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
-                } else if ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID)
-                           && !cellHasTMFlag(monst->loc, TM_ALLOWS_SUBMERGING)) {
-                    printString("     (Helpless)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
-                } else if (monst->creatureState == MONSTER_SLEEPING && y < ROWS - 1) {
-                    printString("     (Sleeping)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
-                } else if ((monst->creatureState == MONSTER_ALLY) && y < ROWS - 1) {
-                    printString("       (Ally)       ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
-                } else if (monst->creatureState == MONSTER_FLEEING && y < ROWS - 1) {
-                    printString("     (Fleeing)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
-                } else if ((monst->creatureState == MONSTER_WANDERING) && y < ROWS - 1) {
-                    if ((monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader && (monst->leader->info.flags & MONST_IMMOBILE)) {
-                        // follower of an immobile leader -- i.e. a totem
-                        printString("    (Worshiping)    ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
-                    } else if ((monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader && (monst->leader->bookkeepingFlags & MB_CAPTIVE)) {
-                        // actually a captor/torturer
-                        printString("     (Guarding)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
-                    } else {
-                        printString("    (Wandering)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
-                    }
-                } else if (monst->ticksUntilTurn > max(0, player.ticksUntilTurn) + player.movementSpeed) {
-                    printString("   (Off balance)    ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
-                } else if ((monst->creatureState == MONSTER_TRACKING_SCENT) && y < ROWS - 1) {
-                    printString("     (Hunting)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
-                }
-            }
-        } else if (monst == &player) {
-            if (y < ROWS - 1) {
-                tempColorEscape[0] = '\0';
-                grayColorEscape[0] = '\0';
-                if (player.status[STATUS_WEAKENED]) {
-                    tempColor = red;
-                    if (dim) {
-                        applyColorAverage(&tempColor, &black, 50);
-                    }
-                    encodeMessageColor(tempColorEscape, 0, &tempColor);
-                    encodeMessageColor(grayColorEscape, 0, (dim ? &darkGray : &gray));
-                }
-
-                if (!rogue.armor || rogue.armor->flags & ITEM_IDENTIFIED || rogue.playbackOmniscience) {
-
-                    sprintf(buf, "Str: %s%i%s  Armor: %i",
-                            tempColorEscape,
-                            rogue.strength - player.weaknessAmount,
-                            grayColorEscape,
-                            displayedArmorValue());
-                } else {
-                    sprintf(buf, "Str: %s%i%s  Armor: %i?",
-                            tempColorEscape,
-                            rogue.strength - player.weaknessAmount,
-                            grayColorEscape,
-                            estimatedArmorValue());
-                }
-                //buf[20] = '\0';
-                printString("                    ", 0, y, &white, &black, 0);
-                printString(buf, (20 - strLenWithoutEscapes(buf)) / 2, y++, (dim ? &darkGray : &gray), &black, 0);
-            }
-            if (y < ROWS - 1 && rogue.gold) {
-                sprintf(buf, "Gold: %li", rogue.gold);
-                buf[20] = '\0';
-                printString("                    ", 0, y, &white, &black, 0);
-                printString(buf, (20 - strLenWithoutEscapes(buf)) / 2, y++, (dim ? &darkGray : &gray), &black, 0);
-            }
-            if (y < ROWS - 1) {
-                tempColorEscape[0] = '\0';
-                grayColorEscape[0] = '\0';
-                tempColor = playerInShadowColor;
-                percent = (rogue.stealthRange - 2) * 100 / 28;
-                applyColorAverage(&tempColor, &black, percent);
-                applyColorAugment(&tempColor, &playerInLightColor, percent);
+    if (monst == &player) {
+        if (y < ROWS - 1) {
+            tempColorEscape[0] = '\0';
+            grayColorEscape[0] = '\0';
+            if (player.status[STATUS_WEAKENED]) {
+                tempColor = red;
                 if (dim) {
                     applyColorAverage(&tempColor, &black, 50);
                 }
                 encodeMessageColor(tempColorEscape, 0, &tempColor);
                 encodeMessageColor(grayColorEscape, 0, (dim ? &darkGray : &gray));
-                sprintf(buf, "%sStealth range: %i%s",
-                        tempColorEscape,
-                        rogue.stealthRange,
-                        grayColorEscape);
-                printString("                    ", 0, y, &white, &black, 0);
-                printString(buf, 1, y++, (dim ? &darkGray : &gray), &black, 0);
             }
+
+            if (!rogue.armor || rogue.armor->flags & ITEM_IDENTIFIED || rogue.playbackOmniscience) {
+
+                sprintf(buf, "Str: %s%i%s  Armor: %i",
+                        tempColorEscape,
+                        rogue.strength - player.weaknessAmount,
+                        grayColorEscape,
+                        displayedArmorValue());
+            } else {
+                sprintf(buf, "Str: %s%i%s  Armor: %i?",
+                        tempColorEscape,
+                        rogue.strength - player.weaknessAmount,
+                        grayColorEscape,
+                        estimatedArmorValue());
+            }
+            //buf[20] = '\0';
+            printString("                    ", 0, y, &white, &black, 0);
+            printString(buf, (20 - strLenWithoutEscapes(buf)) / 2, y++, (dim ? &darkGray : &gray), &black, 0);
         }
+        if (y < ROWS - 1 && rogue.gold) {
+            sprintf(buf, "Gold: %li", rogue.gold);
+            buf[20] = '\0';
+            printString("                    ", 0, y, &white, &black, 0);
+            printString(buf, (20 - strLenWithoutEscapes(buf)) / 2, y++, (dim ? &darkGray : &gray), &black, 0);
+        }
+        if (y < ROWS - 1) {
+            tempColorEscape[0] = '\0';
+            grayColorEscape[0] = '\0';
+            tempColor = playerInShadowColor;
+            percent = (rogue.stealthRange - 2) * 100 / 28;
+            applyColorAverage(&tempColor, &black, percent);
+            applyColorAugment(&tempColor, &playerInLightColor, percent);
+            if (dim) {
+                applyColorAverage(&tempColor, &black, 50);
+            }
+            encodeMessageColor(tempColorEscape, 0, &tempColor);
+            encodeMessageColor(grayColorEscape, 0, (dim ? &darkGray : &gray));
+            sprintf(buf, "%sStealth range: %i%s",
+                    tempColorEscape,
+                    rogue.stealthRange,
+                    grayColorEscape);
+            printString("                    ", 0, y, &white, &black, 0);
+            printString(buf, 1, y++, (dim ? &darkGray : &gray), &black, 0);
+        }
+    } else if (y < ROWS - 1) {
+        if (monst->wasNegated && monst->newPowerCount == monst->totalPowerCount
+            && (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience )) {
+            printString("      Negated       ", 0, y++, (dim ? &darkPink : &pink), &black, 0);
+        }
+        if (!(monst->info.flags & MONST_INANIMATE) && (y < ROWS - 1)) {
+            if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience) {
+                printString(hallucinationStrings[rand_range(0, 9)], 0, y++, (dim ? &darkGray : &gray), &black, 0);
+            } else if (monst->bookkeepingFlags & MB_CAPTIVE) {
+                printString("     (Captive)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+            } else if ((monst->info.flags & MONST_RESTRICTED_TO_LIQUID)
+                        && !cellHasTMFlag(monst->loc, TM_ALLOWS_SUBMERGING)) {
+                printString("     (Helpless)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+            } else if (monst->creatureState == MONSTER_SLEEPING) {
+                printString("     (Sleeping)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+            } else if (monst->creatureState == MONSTER_ALLY) {
+                printString("       (Ally)       ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+            } else if (monst->creatureState == MONSTER_FLEEING) {
+                printString("     (Fleeing)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+            } else if (monst->creatureState == MONSTER_WANDERING) {
+                if ((monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader && (monst->leader->info.flags & MONST_IMMOBILE)) {
+                    // follower of an immobile leader -- i.e. a totem
+                    printString("    (Worshiping)    ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                } else if ((monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader && (monst->leader->bookkeepingFlags & MB_CAPTIVE)) {
+                    // actually a captor/torturer
+                    printString("     (Guarding)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                } else {
+                    printString("    (Wandering)     ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+                }
+            } else if (monst->ticksUntilTurn > max(0, player.ticksUntilTurn) + player.movementSpeed) {
+                printString("   (Off balance)    ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+            } else if (monst->creatureState == MONSTER_TRACKING_SCENT) {
+                printString("     (Hunting)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
+            }    
+        }
+    }
 
     if (y < ROWS - 1) {
         printString("                    ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
