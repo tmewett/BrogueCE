@@ -2528,7 +2528,7 @@ static boolean specificallyValidBoltTarget(creature *caster, creature *target, e
 
         return false;
     }
-    if ((target->info.flags & MONST_REFLECT_4)
+    if (((target->info.flags & MONST_REFLECT_50) || (target->info.abilityFlags & MA_REFLECT_100))
         && target->creatureState != MONSTER_ALLY
         && !(boltCatalog[theBoltType].flags & (BF_NEVER_REFLECTS | BF_HALTS_BEFORE_OBSTRUCTION))) {
         // Don't fire a reflectable bolt at a reflective target unless it's your ally.
