@@ -1815,6 +1815,19 @@ static short apparentRingBonus(const enum ringKind kind) {
     return retval;
 }
 
+/// @brief Checks if there are any acidic monsters in a monster class
+/// @param classID The monster class
+/// @return True if the monster class has an acidic monster
+static boolean monsterClassHasAcidicMonster(const short classID) {
+
+    for (int i = 0; monsterClassCatalog[classID].memberList[i] != 0; i++) {
+        if (monsterCatalog[monsterClassCatalog[classID].memberList[i]].flags & MONST_DEFEND_DEGRADE_WEAPON) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void itemDetails(char *buf, item *theItem) {
     char buf2[1000], buf3[1000], theName[500], goodColorEscape[20], badColorEscape[20], whiteColorEscape[20];
     boolean singular, carried;
@@ -2124,9 +2137,15 @@ void itemDetails(char *buf, item *theItem) {
                         strcat(buf, buf2);
                         if (theItem->enchant2 == W_SLAYING) {
                             describeMonsterClass(buf3, theItem->vorpalEnemy, false);
-                            sprintf(buf2, "It will never fail to slay a%s %s in a single stroke. ",
-                                    (isVowelish(buf3) ? "n" : ""),
-                                    buf3);
+                            if (monsterClassHasAcidicMonster(theItem->vorpalEnemy)) {
+                                sprintf(buf2, "It is impervious to corrosion when attacking a%s %s, and will never fail to slay one in a single stroke. ",
+                                        (isVowelish(buf3) ? "n" : ""),
+                                        buf3);
+                            } else {
+                                sprintf(buf2, "It will never fail to slay a%s %s in a single stroke. ",
+                                        (isVowelish(buf3) ? "n" : ""),
+                                        buf3);
+                            }
                             strcat(buf, buf2);
                         } else if (theItem->enchant2 == W_MULTIPLICITY) {
                             if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
