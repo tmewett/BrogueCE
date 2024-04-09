@@ -367,7 +367,8 @@ static void dialogCreateMonster() {
     if (!(theMonster->info.flags & MONST_NEVER_MUTATED) && !(theMonster->info.abilityFlags & MA_NEVER_MUTATED)) {
         dialogCreateMonsterChooseMutation(theMonster);
     }
-
+    initializeMonster(theMonster, false);
+    
     if (theMonster->info.displayChar == G_TURRET) {
         sprintf(theMessage, "Create %s where? Choose a visible wall.", theMonster->info.monsterName);
     } else {

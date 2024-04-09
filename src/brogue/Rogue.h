@@ -3114,6 +3114,7 @@ extern "C" {
                        unsigned long forbiddenFlags, boolean cautiousOnWalls);
 
     creature *generateMonster(short monsterID, boolean itemPossible, boolean mutationPossible);
+    void initializeMonster(creature *monst, boolean itemPossible);
     void mutateMonster(creature *monst, short mutationIndex);
     short chooseMonster(short forLevel);
     creature *spawnHorde(short hordeID, pos loc, unsigned long forbiddenFlags, unsigned long requiredFlags);
