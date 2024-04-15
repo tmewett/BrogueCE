@@ -3410,12 +3410,17 @@ boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refr
         }
     }
 
-    if (succeeded && (feat->flags & DFF_CLEAR_OTHER_TERRAIN)) {
+    if (succeeded && (feat->flags & (DFF_CLEAR_LOWER_PRIORITY_TERRAIN | DFF_CLEAR_OTHER_TERRAIN))) {
         for (i=0; i<DCOLS; i++) {
             for (j=0; j<DROWS; j++) {
                 if (blockingMap[i][j]) {
                     for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
                         if (layer != feat->layer && layer != GAS) {
+                            if (feat->flags & DFF_CLEAR_LOWER_PRIORITY_TERRAIN) {
+                                if (tileCatalog[pmap[i][j].layers[layer]].drawPriority <= tileCatalog[feat->tile].drawPriority) {
+                                    continue;
+                                }
+                            }
                             pmap[i][j].layers[layer] = (layer == DUNGEON ? FLOOR : NOTHING);
                         }
                     }
