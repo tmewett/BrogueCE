@@ -1073,6 +1073,14 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
 
         attacker->bookkeepingFlags |= MB_SEIZING;
         defender->bookkeepingFlags |= MB_SEIZED;
+
+        // if the player is seized by a submerged monster they can see (i.e. player is also submerged), 
+        // it immediately surfaces so it can be targeted with staffs/wands
+        if (defender == &player && (attacker->bookkeepingFlags & MB_SUBMERGED) && canSeeMonster(attacker)) {            
+            attacker->bookkeepingFlags &= ~MB_SUBMERGED;
+            monsterName(attackerName, attacker, true);
+        }
+
         if (canSeeMonster(attacker) || canSeeMonster(defender)) {
             sprintf(buf, "%s seizes %s!", attackerName, (defender == &player ? "your legs" : defenderName));
             messageWithColor(buf, &white, 0);
