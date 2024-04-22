@@ -3642,7 +3642,7 @@ static boolean tunnelize(short x, short y) {
 static boolean negationWillAffectMonster(creature *monst, boolean isBolt) {
 
     // negation bolts don't affect monsters that always reflect. negation never affects the warden.
-    if ((isBolt && (monst->info.flags & MONST_REFLECT_4) && (monst->info.flags & MONST_ALWAYS_USE_ABILITY))
+    if ((isBolt && (monst->info.abilityFlags & MA_REFLECT_100))
         || (monst->info.flags & MONST_INVULNERABLE)) {
         return false;
     }
@@ -5258,7 +5258,7 @@ static boolean canAutoTargetMonster(const creature *monst, const item *theItem, 
 
     // If we got this far we're using a staff or wand
     // Don't target enemies that always reflect bolts (stone/winged guardian, non-negated mirrored totem)
-    if (isEnemy && (monst->info.flags & MONST_REFLECT_4) && (monst->info.flags & MONST_ALWAYS_USE_ABILITY)) {
+    if (isEnemy && (monst->info.abilityFlags & MA_REFLECT_100)) {
         return false;
     }
 
@@ -5278,7 +5278,7 @@ static boolean canAutoTargetMonster(const creature *monst, const item *theItem, 
             || (isEnemy && theBolt.boltEffect == BE_DOMINATION && (wandDominate(monst) <= 0))
             || (isEnemy && theBolt.boltEffect == BE_BECKONING && (distanceBetween(player.loc, monst->loc) <= 1))
             || (isEnemy && theBolt.boltEffect == BE_DAMAGE && (theBolt.flags & BF_FIERY) && monst->status[STATUS_IMMUNE_TO_FIRE])
-            || (isAlly && theBolt.boltEffect == BE_HEALING && !(monst->info.flags & MONST_REFLECT_4) 
+            || (isAlly && theBolt.boltEffect == BE_HEALING && !(monst->info.flags & MONST_REFLECT_50) 
                 && (monst->currentHP >= monst->info.maxHP))) {
             return false;
         } else if (isEnemy && theBolt.boltEffect == BE_NEGATION) {
