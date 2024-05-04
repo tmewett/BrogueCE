@@ -2001,6 +2001,12 @@ enum statusEffects {
     NUMBER_OF_STATUS_EFFECTS,
 };
 
+typedef struct statusEffect {
+    char name[COLS];
+    boolean isNegatable;
+    int playerNegatedValue;
+} statusEffect;
+
 enum hordeFlags {
     HORDE_DIES_ON_LEADER_DEATH      = Fl(0),    // if the leader dies, the horde will die instead of electing new leader
     HORDE_IS_SUMMONED               = Fl(1),    // minions summoned when any creature is the same species as the leader and casts summon
@@ -2074,6 +2080,12 @@ enum monsterBehaviorFlags {
     MONST_NEVER_MUTATED             = (MONST_INVISIBLE | MONST_INANIMATE | MONST_IMMOBILE | MONST_INVULNERABLE),
 };
 
+typedef struct monsterBehavior {
+    char description[COLS];
+    boolean isNegatable;
+} monsterBehavior;
+
+
 enum monsterAbilityFlags {
     MA_HIT_HALLUCINATE              = Fl(0),    // monster can hit to cause hallucinations
     MA_HIT_STEAL_FLEE               = Fl(1),    // monster can steal an item and then run away
@@ -2103,6 +2115,11 @@ enum monsterAbilityFlags {
     MA_NEVER_VORPAL_ENEMY           = (MA_KAMIKAZE),
     MA_NEVER_MUTATED                = (MA_KAMIKAZE),
 };
+
+typedef struct monsterAbility {
+    char description[COLS];
+    boolean isNegatable;
+} monsterAbility;
 
 enum monsterBookkeepingFlags {
     MB_WAS_VISIBLE              = Fl(0),    // monster was visible to player last turn
@@ -3127,6 +3144,10 @@ extern "C" {
     void prependCreature(creatureList *list, creature *add);
     boolean removeCreature(creatureList *list, creature *remove);
     creature *firstCreature(creatureList *list);
+
+    boolean canNegateCreatureStatusEffects(creature *monst);
+    void negateCreatureStatusEffects(creature *monst);
+    boolean monsterIsNegatable(creature *monst);
 
     boolean monsterWillAttackTarget(const creature *attacker, const creature *defender);
     boolean monstersAreTeammates(const creature *monst1, const creature *monst2);

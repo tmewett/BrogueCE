@@ -3714,71 +3714,9 @@ boolean negate(creature *monst) {
         combatMessage(buf, messageColorFromVictim(monst));
         negated = true;
     } else if (!(monst->info.flags & MONST_INVULNERABLE)) {
-        // works on inanimates
-        if (monst->status[STATUS_IMMUNE_TO_FIRE]) {
-            monst->status[STATUS_IMMUNE_TO_FIRE] = 0;
+        if (canNegateCreatureStatusEffects(monst)) {
             negated = true;
-        }
-        if (monst->status[STATUS_SLOWED]) {
-            monst->status[STATUS_SLOWED] = 0;
-            negated = true;
-        }
-        if (monst->status[STATUS_HASTED]) {
-            monst->status[STATUS_HASTED] = 0;
-            negated = true;
-        }
-        if (monst->status[STATUS_CONFUSED]) {
-            monst->status[STATUS_CONFUSED] = 0;
-            negated = true;
-        }
-        if (monst->status[STATUS_ENTRANCED]) {
-            monst->status[STATUS_ENTRANCED] = 0;
-            negated = true;
-        }
-        if (monst->status[STATUS_DISCORDANT]) {
-            monst->status[STATUS_DISCORDANT] = 0;
-            negated = true;
-        }
-        if (monst->status[STATUS_SHIELDED]) {
-            monst->status[STATUS_SHIELDED] = 0;
-            negated = true;
-        }
-        if (monst->status[STATUS_INVISIBLE]) {
-            monst->status[STATUS_INVISIBLE] = 0;
-            negated = true;
-        }
-        if (monst == &player) {
-            if (monst->status[STATUS_TELEPATHIC] > 1 ) {
-                monst->status[STATUS_TELEPATHIC] = 1;
-                negated = true;
-            }
-            if (monst->status[STATUS_MAGICAL_FEAR] > 1 ) {
-                monst->status[STATUS_MAGICAL_FEAR] = 1;
-                negated = true;
-            }
-            if (monst->status[STATUS_LEVITATING] > 1 ) {
-                monst->status[STATUS_LEVITATING] = 1;
-                negated = true;
-            }
-            if (monst->status[STATUS_DARKNESS]) {
-                monst->status[STATUS_DARKNESS] = 0;
-                updateMinersLightRadius();
-                updateVision(true);
-                negated = true;
-            }
-        } else {
-            if (monst->status[STATUS_TELEPATHIC] > 0 ) {
-                monst->status[STATUS_TELEPATHIC] = 0;
-                negated = true;
-            }
-            if (monst->status[STATUS_MAGICAL_FEAR] > 0 ) {
-                monst->status[STATUS_MAGICAL_FEAR] = 0;
-                negated = true;
-            }
-            if (monst->status[STATUS_LEVITATING] > 0 ) {
-                monst->status[STATUS_LEVITATING] = 0;
-                negated = true;
-            }
+            negateCreatureStatusEffects(monst);
         }
         if (monst->info.flags & MONST_IMMUNE_TO_FIRE) {
             monst->info.flags &= ~MONST_IMMUNE_TO_FIRE;

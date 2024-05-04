@@ -1676,6 +1676,59 @@ const feat featTable[FEAT_COUNT] = {
     {"Untempted",       "Ascend without picking up gold.", true},
 };
 
+const monsterBehavior monsterBehaviorCatalog[32] = {
+    {"is invisible",                    true},          // MONST_INVISIBLE
+    {"is an inanimate object",          false},         // MONST_INANIMATE
+    {"cannot move",                     false},         // MONST_IMMOBILE
+    {"",                                false},         // MONST_CARRY_ITEM_100
+    {"",                                false},         // MONST_CARRY_ITEM_25
+    {"",                                false},         // MONST_ALWAYS_HUNTING
+    {"flees at low health",             false},         // MONST_FLEES_NEAR_DEATH
+    {"",                                false},         // MONST_ATTACKABLE_THRU_WALLS
+    {"corrodes weapons when hit",       true},          // MONST_DEFEND_DEGRADE_WEAPON
+    {"is immune to weapon damage",      true},          // MONST_IMMUNE_TO_WEAPONS
+    {"flies",                           true},          // MONST_FLIES
+    {"moves erratically",               true},          // MONST_FLITS
+    {"is immune to fire",               true},          // MONST_IMMUNE_TO_FIRE
+    {"",                                false},         // MONST_CAST_SPELLS_SLOWLY
+    {"cannot be entangled",             false},         // MONST_IMMUNE_TO_WEBS
+    {"can reflect magic spells",        true},          // MONST_REFLECT_50
+    {"never sleeps",                    false},         // MONST_NEVER_SLEEPS
+    {"burns unceasingly",               true},          // MONST_FIERY
+    {"is invulnerable",                 false},         // MONST_INVULNERABLE
+    {"is at home in water",             false},         // MONST_IMMUNE_TO_WATER
+    {"cannot venture onto dry land",    false},         // MONST_RESTRICTED_TO_LIQUID
+    {"submerges",                       false},         // MONST_SUBMERGES
+    {"keeps $HISHER distance",          true},          // MONST_MAINTAINS_DISTANCE
+    {"",                                false},         // MONST_WILL_NOT_USE_STAIRS
+    {"is animated purely by magic",     false},         // MONST_DIES_IF_NEGATED
+    {"",                                false},         // MONST_MALE
+    {"",                                false},         // MONST_FEMALE
+    {"",                                false},         // MONST_NOT_LISTED_IN_SIDEBAR
+    {"moves only when activated",       false},         // MONST_GETS_TURN_ON_ACTIVATION
+};
+
+const monsterAbility monsterAbilityCatalog[32] = {
+    {"can induce hallucinations",                   true},  // MA_HIT_HALLUCINATE
+    {"can steal items",                             true},  // MA_HIT_STEAL_FLEE
+    {"lights enemies on fire when $HESHE hits",     true},  // MA_HIT_BURN
+    {"can possess $HISHER summoned allies",         true},  // MA_ENTER_SUMMONS
+    {"corrodes armor when $HESHE hits",             true},  // MA_HIT_DEGRADE_ARMOR
+    {"can summon allies",                           true},  // MA_CAST_SUMMON
+    {"immobilizes $HISHER prey",                    true},  // MA_SEIZES
+    {"injects poison when $HESHE hits",             true},  // MA_POISONS
+    {"",                                            true},  // MA_DF_ON_DEATH
+    {"divides in two when struck",                  true},  // MA_CLONE_SELF_ON_DEFEND
+    {"dies when $HESHE attacks",                    true},  // MA_KAMIKAZE
+    {"recovers health when $HESHE inflicts damage", true},  // MA_TRANSFERENCE
+    {"saps strength when $HESHE inflicts damage",   true},  // MA_CAUSE_WEAKNESS
+    {"attacks up to two opponents in a line",       false}, // MA_ATTACKS_PENETRATE
+    {"attacks all adjacent opponents at once",      false}, // MA_ATTACKS_ALL_ADJACENT
+    {"attacks with a whip",                         false}, // MA_ATTACKS_EXTEND
+    {"pushes opponents backward when $HESHE hits",  false}, // MA_ATTACKS_STAGGER
+    {"avoids attacking in corridors in a group",    true},  // MA_AVOID_CORRIDORS
+};
+
 const char monsterBehaviorFlagDescriptions[32][COLS] = {
     "is invisible",                             // MONST_INVISIBLE
     "is an inanimate object",                   // MONST_INANIMATE
@@ -1748,4 +1801,33 @@ const char monsterBookkeepingFlagDescriptions[32][COLS] = {
     "",                                         // MB_WILL_FLASH
     "is anchored to reality by $HISHER summoner",// MB_BOUND_TO_LEADER
     "is marked for demonic sacrifice",          // MB_MARKED_FOR_SACRIFICE
+};
+
+const statusEffect statusEffectCatalog[NUMBER_OF_STATUS_EFFECTS] = {
+    {"Searching",       false, 0}, // STATUS_SEARCHING
+    {"Donning Armor",   false, 0}, // STATUS_DONNING
+    {"Weakened: -",     false, 0}, // STATUS_WEAKENED
+    {"Telepathic",      true,  1}, // STATUS_TELEPATHIC
+    {"Hallucinating",   true,  0}, // STATUS_HALLUCINATING
+    {"Levitating",      true,  1}, // STATUS_LEVITATING
+    {"Slowed",          true,  0}, // STATUS_SLOWED
+    {"Hasted",          true,  0}, // STATUS_HASTED
+    {"Confused",        true,  0}, // STATUS_CONFUSED
+    {"Burning",         false, 0}, // STATUS_BURNING
+    {"Paralyzed",       false, 0}, // STATUS_PARALYZED
+    {"Poisoned",        false, 0}, // STATUS_POISONED
+    {"Stuck",           false, 0}, // STATUS_STUCK
+    {"Nauseous",        false, 0}, // STATUS_NAUSEOUS
+    {"Discordant",      true,  0}, // STATUS_DISCORDANT
+    {"Immune to Fire",  true,  1}, // STATUS_IMMUNE_TO_FIRE
+    {"",                false, 0}, // STATUS_EXPLOSION_IMMUNITY,
+    {"",                false, 0}, // STATUS_NUTRITION,
+    {"",                false, 0}, // STATUS_ENTERS_LEVEL_IN,
+    {"",                false, 0}, // STATUS_ENRAGED,
+    {"Frightened",      true,  0}, // STATUS_MAGICAL_FEAR
+    {"Entranced",       true,  0}, // STATUS_ENTRANCED
+    {"Darkened",        true,  0}, // STATUS_DARKNESS
+    {"Lifespan",        false, 0}, // STATUS_LIFESPAN_REMAINING
+    {"Shielded",        true,  0}, // STATUS_SHIELDED
+    {"Invisible",       true,  0}, // STATUS_INVISIBLE
 };
