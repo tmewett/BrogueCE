@@ -5201,13 +5201,9 @@ static boolean canAutoTargetMonster(const creature *monst, const item *theItem, 
     }
 
     bolt theBolt = boltCatalog[tableForItemCategory(theItem->category)[theItem->kind].power];
-    boolean magicPolarityIsKnown = (itemMagicPolarityIsKnown(theItem, MAGIC_POLARITY_BENEVOLENT) 
-                                    || itemMagicPolarityIsKnown(theItem, MAGIC_POLARITY_MALEVOLENT));
-
-    // Target enemies if we don't know if the staff/wand is good or bad
-    if (!magicPolarityIsKnown && isEnemy) {
-        return true;
-    }
+    boolean magicPolarityIsKnownBenevolent = itemMagicPolarityIsKnown(theItem, MAGIC_POLARITY_BENEVOLENT);
+    boolean magicPolarityIsKnownMalevolent = itemMagicPolarityIsKnown(theItem, MAGIC_POLARITY_MALEVOLENT);
+    boolean magicPolarityIsKnown = magicPolarityIsKnownBenevolent || magicPolarityIsKnownMalevolent;
 
     // todo: logic consolidation with this function, specificallyValidBoltTarget, and the monster details screen
     // to show what effect (or not) the bolt will have
@@ -5223,12 +5219,15 @@ static boolean canAutoTargetMonster(const creature *monst, const item *theItem, 
             return negationWillAffectMonster(monst, true);
         } else if (isEnemy && theBolt.boltEffect == BE_TUNNELING && (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS)) {
             return true;
-        } 
-    }
-
-    // Otherwise, if we know good/bad, broadly target all enemies or allies based on the bolt flag (if any)
-    if (magicPolarityIsKnown &&
-        ((isAlly && (theBolt.flags & BF_TARGET_ALLIES)) || (isEnemy && (theBolt.flags & BF_TARGET_ENEMIES)))) {
+        } else if (((isAlly && (theBolt.flags & BF_TARGET_ALLIES)) || (isEnemy && (theBolt.flags & BF_TARGET_ENEMIES)))) {
+            return true;
+        }
+    } else if (magicPolarityIsKnown) {
+        if ((isEnemy && magicPolarityIsKnownBenevolent)
+            || isAlly && magicPolarityIsKnownMalevolent) {
+            return true;
+        }
+    } else if (isEnemy) { // both the kind and magic polarity are unknown
         return true;
     }
 
