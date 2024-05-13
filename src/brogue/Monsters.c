@@ -307,6 +307,177 @@ static boolean attackWouldBeFutile(const creature *attacker, const creature *def
     return false;
 }
 
+// ------------------------------------------------------------------------
+const boolean yesSeeInvis = true;
+const boolean notSeeInvis = false;
+
+static boolean monsterIsEffectivelySubmerged( const creature *monst ) {
+    return (monst->bookkeepingFlags & MB_SUBMERGED)
+        || ((terrainFlags(monst->loc) & T_IS_DEEP_WATER) && !monst->status[STATUS_LEVITATING]);
+}
+
+static boolean monsterIsEffectivelyInvisible( const creature *monst, boolean ignoreInvisibility ) {
+    if (ignoreInvisibility) return false;
+
+    return monst->status[STATUS_INVISIBLE] && !pmapAt(monst->loc)->layers[GAS];
+}
+
+boolean monsterKnowsLocationOfMonster(
+        const creature *source,
+        const creature *target,
+        boolean ignoreInvisibility ) {
+
+    // Can't locate invalid entities
+    if (source == NULL || target == NULL) return false;
+
+    // Always know location of self
+    if (source == target) return true;
+
+    // Special player abilities
+    if (source == &player) {
+        // Player can see entranced, psychic-linked allies, and sacrifices.
+        // With telepathy, they can also see any animate creature.
+        // *** Q: Any special cases for clairvoyantly revealed creatures?
+        if (target->status[STATUS_ENTRANCED]) return true;
+        if (target->bookkeepingFlags & MB_TELEPATHICALLY_REVEALED) return true;
+        if (player.status[STATUS_TELEPATHIC] && !(target->info.flags & MONST_INANIMATE)) return true;
+
+        // Otherwise, player requires line-of-sight / clairvoyantly revealed cells.
+        if (!playerCanSee(target->loc.x, target->loc.y)) return false;
+    }
+
+    // Can't locate dormant creatures
+    if (target->bookkeepingFlags & MB_IS_DORMANT) return false;
+
+    // Can always see teammates
+    if (monstersAreTeammates(source, target)) return true;
+
+    // Can't see invisible monsters
+    if (monsterIsEffectivelyInvisible(target, ignoreInvisibility)) return false;
+
+    // Submerged monsters and monsters in deep water can see other submerged monsters
+    if (target->bookkeepingFlags & MB_SUBMERGED
+        && !monsterIsEffectivelySubmerged(source)) {
+        return false;
+    }
+
+    return true;
+}
+
+static boolean monsterIsNotAggressiveToPlayer(const creature *monst) {
+    return monst == &player
+      || monst->creatureState == MONSTER_ALLY;
+}
+
+boolean monsterIsAggressiveToMonster(const creature *attacker, const creature *defender) {
+
+    // Never aggressive when...
+    if (attacker == defender) return false;
+    if (attacker == NULL || defender == NULL) return false;
+    if (defender->bookkeepingFlags & MB_IS_DYING) return false;
+    if ((attacker->bookkeepingFlags | defender->bookkeepingFlags) & MB_CAPTIVE) return false;
+
+    // Always aggressive when discordant
+    if (attacker->status[STATUS_DISCORDANT]
+        || defender->status[STATUS_DISCORDANT]) return true;
+
+    // Not agressive to (non-discordant) teammates
+    if (monstersAreTeammates(attacker,defender)) return false;
+
+    // Don't let (sane) allies attack sacrifice targets or entranced monsters
+    if (attacker->creatureState == MONSTER_ALLY
+        && ((defender->bookkeepingFlags & MB_MARKED_FOR_SACRIFICE)
+            || defender->status[STATUS_ENTRANCED]))
+        return false;
+
+    // Water creatures attack anything in deep water (eg. eels and krakens)
+    if ((attacker->info.flags & MONST_RESTRICTED_TO_LIQUID)
+        && !(defender->info.flags & MONST_IMMUNE_TO_WATER)
+        && monsterIsEffectivelySubmerged(defender))
+        return true;
+
+    // Aligned on aggressiveness toward the player..
+    if (monsterIsNotAggressiveToPlayer(attacker) == monsterIsNotAggressiveToPlayer(defender)) return false;
+
+    // Default to aggressive
+    return true;
+}
+
+// DISTINCTION:
+//         monsterIsWillingToAttackMonster
+//      vs monsterIsAggressiveToMonster
+//
+// - Agressiveness is the native URGE to do harm
+// - Willingness is the CHOICE to do harm
+//
+// - EXAMPLE: Allies have the URGE to harm a Revnant, but CHOOSE not to because it is futile
+// - EXAMPLE: Allies do not have the URGE to harm the player, but a confused ally will CHOOSE to
+boolean monsterIsWillingToAttackMonster(const creature *attacker, const creature *defender) {
+
+    if (attacker == NULL || defender == NULL) return false;
+
+    // Fearful monsters will never attack.
+    if (attacker->status[STATUS_MAGICAL_FEAR]) return false;
+
+    // Confused monsters will attack anything
+    if (attacker->status[STATUS_CONFUSED]) return true;
+
+    // Entranced monsters will attack anything except player allies
+    if (attacker->status[STATUS_ENTRANCED]
+        && defender->creatureState != MONSTER_ALLY) return true;
+
+    // Otherwise make non-futile attacks on enemies
+    return (monsterIsAggressiveToMonster(attacker, defender)
+           && !attackWouldBeFutile(attacker, defender));
+}
+
+// Passing 0 for maxRange means "any distance"
+boolean monsterIsAbleToStrikeMonster(
+        const creature *attacker,
+        const creature *defender,
+        int maxRange) {
+
+    if (attacker == NULL || defender == NULL) return false;
+
+    // Is the target within range?
+    boolean withinRange = maxRange <= 0 || distanceBetween(attacker->loc, defender->loc) <= maxRange;
+
+    // Is the path clear of obstacles and avoidances?
+    //   traversiblePathBetween() includes monsterAvoids()
+    boolean pathClear = maxRange <= 0 || traversiblePathBetween(attacker, defender->loc.x, defender->loc.y);
+
+    // Allow the player to make futile attacks, but monsters will think first
+    boolean futile = attackWouldBeFutile(attacker, defender);
+
+    // All requirements must be met
+    return withinRange && pathClear && !futile;
+}
+
+// Centralize the logic of whether an attacker can/will attack the defender
+boolean ableAndWillingToAttack(
+            const creature *attacker,
+            const creature *defender,
+            boolean ignoreInvisibility,
+            int maxRange ) {
+
+    if (attacker == NULL || defender == NULL) return false;
+
+    // Must be enemies
+    boolean areEnemies = monsterIsWillingToAttackMonster(attacker, defender);
+
+    // Must be able to attack the cell where the defender is located
+    boolean canAttackCell = monsterIsAbleToStrikeMonster(attacker, defender, maxRange);
+
+    // Must be able to detect the defender
+    boolean locationKnown = monsterKnowsLocationOfMonster(attacker, defender, ignoreInvisibility);
+
+    // All requirements must be met
+    return areEnemies && canAttackCell && locationKnown;
+}
+
+// ------------------------------------------------------------------------
+
+
 /// @brief Determines if a creature is willing to attack another. Considers factors like discord,
 /// entrancement, confusion, and whether they are enemies. Terrain and location are not considered, 
 /// except for krakens and eels that attack anything in deep water. Used for player and monster attacks.
@@ -349,8 +520,25 @@ boolean monsterWillAttackTarget(const creature *attacker, const creature *defend
     return false;
 }
 
+static boolean isFollowing(const creature *source, const creature *target) {
+    return ((source->bookkeepingFlags & MB_FOLLOWER) && source->leader == target)
+         || (source->creatureState == MONSTER_ALLY && target == &player);
+}
+
+static boolean sameLeader(const creature *a, const creature *b) {
+    return (a->creatureState == MONSTER_ALLY && b->creatureState == MONSTER_ALLY)
+        || (a->leader == b->leader
+           && (a->bookkeepingFlags & MB_FOLLOWER)
+           && (b->bookkeepingFlags & MB_FOLLOWER));
+}
+
 boolean monstersAreTeammates(const creature *monst1, const creature *monst2) {
     // if one follows the other, or the other follows the one, or they both follow the same
+    if (monst1 == NULL || monst2 == NULL) return false;
+    return  sameLeader(monst1, monst2)
+        || isFollowing(monst1, monst2)
+        || isFollowing(monst2, monst1);
+/*
     return ((((monst1->bookkeepingFlags & MB_FOLLOWER) && monst1->leader == monst2)
              || ((monst2->bookkeepingFlags & MB_FOLLOWER) && monst2->leader == monst1)
              || (monst1->creatureState == MONSTER_ALLY && monst2 == &player)
@@ -358,6 +546,7 @@ boolean monstersAreTeammates(const creature *monst1, const creature *monst2) {
              || (monst1->creatureState == MONSTER_ALLY && monst2->creatureState == MONSTER_ALLY)
              || ((monst1->bookkeepingFlags & MB_FOLLOWER) && (monst2->bookkeepingFlags & MB_FOLLOWER)
                  && monst1->leader == monst2->leader)) ? true : false);
+*/
 }
 
 boolean monstersAreEnemies(const creature *monst1, const creature *monst2) {
@@ -1980,7 +2169,7 @@ void decrementMonsterStatus(creature *monst) {
     }
 }
 
-boolean traversiblePathBetween(creature *monst, short x2, short y2) {
+boolean traversiblePathBetween(const creature *monst, short x2, short y2) {
     pos originLoc = monst->loc;
     pos targetLoc = (pos){ .x = x2, .y = y2 };
 

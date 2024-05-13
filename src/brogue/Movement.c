@@ -660,10 +660,15 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
     getImpactLoc(&strikeLoc, originLoc, targetLoc, 5, false, &boltCatalog[BOLT_WHIP]);
 
     defender = monsterAtLoc(strikeLoc);
+/*
     if (defender
         && (attacker != &player || canSeeMonster(defender))
         && !monsterIsHidden(defender, attacker)
         && monsterWillAttackTarget(attacker, defender)) {
+*/
+    // Passing range=0 to ignore defender's location
+    if (ableAndWillingToAttack(attacker, defender, notSeeInvis, 0)
+        && !(defender->bookkeepingFlags & MB_SUBMERGED)) {
 
         if (attacker == &player) {
             hitList[0] = defender;
@@ -725,18 +730,25 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
         hitlist. Any of those that are either right by us or visible will
         trigger the attack. */
         defender = monsterAtLoc(targetLoc);
+/*
         if (defender
             && (!cellHasTerrainFlag(targetLoc, T_OBSTRUCTS_PASSABILITY)
                 || (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS))
             && monsterWillAttackTarget(attacker, defender)) {
+*/
+        if (ableAndWillingToAttack(attacker, defender, notSeeInvis, range)) {
 
             hitList[h++] = defender;
 
             /* We check if i=0, i.e. the defender is right next to us, because
             we have to do "normal" attacking here. We can't just return
             false and leave to playerMoves/moveMonster due to the collateral hitlist. */
+/*
             if (i == 0 || !monsterIsHidden(defender, attacker)
                 && (attacker != &player || canSeeMonster(defender))) {
+*/
+            if (i == 0 || monsterKnowsLocationOfMonster(attacker, defender, notSeeInvis)) {
+
                 // We'll attack.
                 proceed = true;
             }
@@ -801,6 +813,7 @@ static void buildFlailHitList(const short x, const short y, const short newX, co
         creature *monst = nextCreature(&it);
         mx = monst->loc.x;
         my = monst->loc.y;
+/*
         if (distanceBetween((pos){x, y}, (pos){mx, my}) == 1
             && distanceBetween((pos){newX, newY}, (pos){mx, my}) == 1
             && canSeeMonster(monst)
@@ -808,6 +821,10 @@ static void buildFlailHitList(const short x, const short y, const short newX, co
             && monst->creatureState != MONSTER_ALLY
             && !(monst->bookkeepingFlags & MB_IS_DYING)
             && (!cellHasTerrainFlag(monst->loc, T_OBSTRUCTS_PASSABILITY) || (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS))) {
+*/
+        if (distanceBetween((pos){x, y}, (pos){mx, my}) == 1
+            && distanceBetween((pos){newX, newY}, (pos){mx, my}) == 1
+            && ableAndWillingToAttack(&player, monst, notSeeInvis, 0)) {
 
             while (hitList[i]) {
                 i++;
@@ -1108,13 +1125,15 @@ boolean playerMoves(short direction) {
             newestY = player.loc.y + 2*nbDirs[direction][1];
             if (coordinatesAreInMap(newestX, newestY) && (pmap[newestX][newestY].flags & HAS_MONSTER)) {
                 tempMonst = monsterAtLoc((pos){ newestX, newestY });
+/*
                 if (tempMonst
                     && (canSeeMonster(tempMonst) || monsterRevealed(tempMonst))
                     && monstersAreEnemies(&player, tempMonst)
                     && tempMonst->creatureState != MONSTER_ALLY
                     && !(tempMonst->bookkeepingFlags & MB_IS_DYING)
                     && (!cellHasTerrainFlag(tempMonst->loc, T_OBSTRUCTS_PASSABILITY) || (tempMonst->info.flags & MONST_ATTACKABLE_THRU_WALLS))) {
-
+*/
+                if (ableAndWillingToAttack(&player, tempMonst, notSeeInvis, 2)) {
                     hitList[0] = tempMonst;
                     if (abortAttack(hitList)) {
                         brogueAssert(!committed);

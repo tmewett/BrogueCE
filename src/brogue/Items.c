@@ -3528,14 +3528,21 @@ void getImpactLoc(pos *returnLoc, const pos originLoc, const pos targetLoc,
     pos coords[DCOLS + 1];
     short i, n;
     creature *monst;
+    creature *caster = monsterAtLoc(originLoc);
 
     n = getLineCoordinates(coords, originLoc, targetLoc, theBolt);
     n = min(n, maxDistance);
     for (i=0; i<n; i++) {
         monst = monsterAtLoc(coords[i]);
+/*
         if (monst
             && !monsterIsHidden(monst, monsterAtLoc(originLoc))
             && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
+*/
+        // Don't allow zapping (or whipping) submerged monsters
+        if (monsterKnowsLocationOfMonster(caster, monst, notSeeInvis)
+            && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
+
             // Imaginary bolt hit the player or a monster.
             break;
         }
