@@ -1733,44 +1733,41 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
     }
 }
 
-void buildHitList(creature **hitList, const creature *attacker, creature *defender, const boolean sweep) {
-    short i, x, y, newX, newY, newestX, newestY;
-    enum directions dir, newDir;
+enum directions posDirectionToNeighborPos(
+        const pos *source,
+        const pos *target,
+        enum directions otherwise ) {
 
-    x = attacker->loc.x;
-    y = attacker->loc.y;
-    newX = defender->loc.x;
-    newY = defender->loc.y;
-
-    dir = NO_DIRECTION;
-    for (i = 0; i < DIRECTION_COUNT; i++) {
-        if (nbDirs[i][0] == newX - x
-            && nbDirs[i][1] == newY - y) {
+    enum directions dir = otherwise;
+    const pos p = (pos) {
+        target->x - source->x,
+        target->y - source->y
+    };
+    for (short i = 0; i < DIRECTION_COUNT; i++) {
+        if (nbDirs[i][0] == p.x && nbDirs[i][1] == p.y) {
 
             dir = i;
             break;
         }
     }
+    return dir;
+}
 
-    if (sweep) {
-        if (dir == NO_DIRECTION) {
-            dir = UP; // Just pick one.
-        }
-        for (i=0; i<8; i++) {
-            newDir = (dir + i) % DIRECTION_COUNT;
-            newestX = x + cDirs[newDir][0];
-            newestY = y + cDirs[newDir][1];
-            if (coordinatesAreInMap(newestX, newestY) && (pmap[newestX][newestY].flags & (HAS_MONSTER | HAS_PLAYER))) {
-                defender = monsterAtLoc((pos){ newestX, newestY });
-                if (defender
-                    && monsterWillAttackTarget(attacker, defender)
-                    && (!cellHasTerrainFlag(defender->loc, T_OBSTRUCTS_PASSABILITY) || (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS))) {
+void buildHitList(creature **hitList, const creature *attacker, creature *defender, const boolean sweep) {
 
-                    hitList[i] = defender;
-                }
-            }
-        }
-    } else {
+    if (!sweep) {
         hitList[0] = defender;
+        return;
+    }
+
+    enum directions bumpDir = posDirectionToNeighborPos( &attacker->loc, &defender->loc, UP );
+
+    for (short i=0, dir=bumpDir; i < DIRECTION_COUNT; i++, dir++) {
+        dir %= DIRECTION_COUNT;
+        const pos p = posNeighborInDirection( attacker->loc, dir );
+        defender = monsterAtLoc(p);
+        if (ableAndWillingToAttack(attacker, defender, dir == bumpDir, 1)) {
+            hitList[i] = defender;
+        }
     }
 }

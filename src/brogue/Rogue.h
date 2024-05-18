@@ -3142,7 +3142,7 @@ extern "C" {
     void decrementMonsterStatus(creature *monst);
     boolean specifiedPathBetween(short x1, short y1, short x2, short y2,
                                  unsigned long blockingTerrain, unsigned long blockingFlags);
-    boolean traversiblePathBetween(creature *monst, short x2, short y2);
+    boolean traversiblePathBetween(const creature *monst, short x2, short y2);
     boolean openPathBetween(short x1, short y1, short x2, short y2);
     creature *monsterAtLoc(pos p);
     creature *dormantMonsterAtLoc(pos p);
@@ -3174,6 +3174,19 @@ extern "C" {
     short distanceBetween(pos loc1, pos loc2);
     void alertMonster(creature *monst);
     void wakeUp(creature *monst);
+
+
+    // Convenience values for passing to the following functions
+    const short notSeeInvis;
+    const short yesSeeInvis;
+    const short isBumping;
+    boolean monsterIsAggressiveToMonster(const creature *attacker, const creature *defender);
+    boolean monsterIsWillingToAttackMonster(const creature *attacker, const creature *defender);
+    boolean monsterIsAbleToStrikeMonster(const creature *attacker, const creature *defender, int maxRange);
+    boolean monsterKnowsLocationOfMonster(const creature *source, const creature *target, short sensing );
+    boolean ableAndWillingToAttack( const creature *attacker, const creature *defender, short sensing, int maxRange );
+
+
     boolean monsterRevealed(creature *monst);
     boolean monsterHiddenBySubmersion(const creature *monst, const creature *observer);
     boolean monsterIsHidden(const creature *monst, const creature *observer);

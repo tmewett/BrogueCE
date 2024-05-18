@@ -656,14 +656,22 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
         return false;
     }
 
+    // getImpactLoc won't be stopped by monsters the player can't see
     pos strikeLoc;
     getImpactLoc(&strikeLoc, originLoc, targetLoc, 5, false, &boltCatalog[BOLT_WHIP]);
 
     defender = monsterAtLoc(strikeLoc);
-    if (defender
-        && (attacker != &player || canSeeMonster(defender))
-        && !monsterIsHidden(defender, attacker)
-        && monsterWillAttackTarget(attacker, defender)) {
+
+    // If defender exists, it must be known by the player (from getImpactLoc)
+    //    but there may be an unknown obstacle in between (eg. invis enemy)
+    //
+    // Here we check to see if the attacker wants to attack the defender
+    //   range 0 to ignore defender's location (already checked in getImpactLoc)
+    //   and whips can't strike underwater
+    //
+    // zap() does the hard work of actually casting the whip and deciding what happens
+    if (ableAndWillingToAttack(attacker, defender, notSeeInvis, 0)
+        && !(defender->bookkeepingFlags & MB_SUBMERGED)) {
 
         if (attacker == &player) {
             hitList[0] = defender;
@@ -690,8 +698,8 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
 // (in which case the player/monster should move instead).
 boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *aborted) {
     creature *defender, *hitList[8] = {0};
-    short range = 2, i = 0, h = 0;
-    boolean proceed = false, visualEffect = false;
+    short range = 2, i = 0, hits = 0;
+    boolean visualEffect = false;
 
     const char boltChar[DIRECTION_COUNT] = "||--\\//\\";
 
@@ -725,21 +733,13 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
         hitlist. Any of those that are either right by us or visible will
         trigger the attack. */
         defender = monsterAtLoc(targetLoc);
-        if (defender
-            && (!cellHasTerrainFlag(targetLoc, T_OBSTRUCTS_PASSABILITY)
-                || (defender->info.flags & MONST_ATTACKABLE_THRU_WALLS))
-            && monsterWillAttackTarget(attacker, defender)) {
 
-            hitList[h++] = defender;
-
-            /* We check if i=0, i.e. the defender is right next to us, because
-            we have to do "normal" attacking here. We can't just return
-            false and leave to playerMoves/moveMonster due to the collateral hitlist. */
-            if (i == 0 || !monsterIsHidden(defender, attacker)
-                && (attacker != &player || canSeeMonster(defender))) {
-                // We'll attack.
-                proceed = true;
-            }
+        // Passing range 0 here to ignore monster location (defined by outer loop instead)
+        //   at i == 0 we check if ANY monster we are willing to attack exists (eg. we're bumping that location)
+        //   at i == 1 we check if we KNOW of a monster we are willing to attack in that cell
+        // The attack proceeds if there are any monsters in the hit list
+        if (ableAndWillingToAttack(attacker, defender, i == 0, 0)) {
+            hitList[hits++] = defender;
         }
 
         if (cellHasTerrainFlag(targetLoc, (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION))) {
@@ -747,7 +747,7 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
         }
     }
     range = i;
-    if (proceed) {
+    if (hits > 0) {
         if (attacker == &player) {
             if (abortAttack(hitList)) {
                 if (aborted) {
@@ -773,7 +773,7 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
         attacker->bookkeepingFlags &= ~MB_SUBMERGED;
         // Artificially reverse the order of the attacks,
         // so that spears of force can send both monsters flying.
-        for (i = h - 1; i >= 0; i--) {
+        for (i = hits - 1; i >= 0; i--) {
             attack(attacker, hitList[i], false);
         }
         if (visualEffect) {
@@ -794,25 +794,22 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
 }
 
 static void buildFlailHitList(const short x, const short y, const short newX, const short newY, creature *hitList[16]) {
-    short mx, my;
     short i = 0;
+    while (hitList[i]) {
+        i++;
+    }
 
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
-        mx = monst->loc.x;
-        my = monst->loc.y;
-        if (distanceBetween((pos){x, y}, (pos){mx, my}) == 1
-            && distanceBetween((pos){newX, newY}, (pos){mx, my}) == 1
-            && canSeeMonster(monst)
-            && monstersAreEnemies(&player, monst)
-            && monst->creatureState != MONSTER_ALLY
-            && !(monst->bookkeepingFlags & MB_IS_DYING)
-            && (!cellHasTerrainFlag(monst->loc, T_OBSTRUCTS_PASSABILITY) || (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS))) {
 
-            while (hitList[i]) {
-                i++;
-            }
-            hitList[i] = monst;
+        // Difference in logic old vs new:
+        // - Original code does not check "willingness", only enemies
+        // - eg. flail won't hit allies when player is confused
+        if (distanceBetween((pos){x, y}, monst->loc) == 1
+            && distanceBetween((pos){newX, newY}, monst->loc) == 1
+            && ableAndWillingToAttack(&player, monst, notSeeInvis, 0)) {
+
+            hitList[i++] = monst;
         }
     }
 }
@@ -994,9 +991,9 @@ boolean playerMoves(short direction) {
                 // Attack!
                 for (i=0; i<16; i++) {
                     if (hitList[i]
-                        && monsterWillAttackTarget(&player, hitList[i])
-                        && !(hitList[i]->bookkeepingFlags & MB_IS_DYING)
-                        && !rogue.gameHasEnded) {
+                        // buildHitList does this too but it has to stay
+                        //    since attacking a creature might end the game
+                         && !rogue.gameHasEnded) {
 
                         if (attack(&player, hitList[i], false)) {
                             anyAttackHit = true;
@@ -1104,24 +1101,19 @@ boolean playerMoves(short direction) {
         }
 
         if (rogue.weapon && (rogue.weapon->flags & ITEM_LUNGE_ATTACKS)) {
-            newestX = player.loc.x + 2*nbDirs[direction][0];
-            newestY = player.loc.y + 2*nbDirs[direction][1];
-            if (coordinatesAreInMap(newestX, newestY) && (pmap[newestX][newestY].flags & HAS_MONSTER)) {
-                tempMonst = monsterAtLoc((pos){ newestX, newestY });
-                if (tempMonst
-                    && (canSeeMonster(tempMonst) || monsterRevealed(tempMonst))
-                    && monstersAreEnemies(&player, tempMonst)
-                    && tempMonst->creatureState != MONSTER_ALLY
-                    && !(tempMonst->bookkeepingFlags & MB_IS_DYING)
-                    && (!cellHasTerrainFlag(tempMonst->loc, T_OBSTRUCTS_PASSABILITY) || (tempMonst->info.flags & MONST_ATTACKABLE_THRU_WALLS))) {
+            const pos p = posNeighborInDirection( posNeighborInDirection(player.loc, direction), direction );
 
-                    hitList[0] = tempMonst;
-                    if (abortAttack(hitList)) {
-                        brogueAssert(!committed);
-                        cancelKeystroke();
-                        rogue.disturbed = true;
-                        return false;
-                    }
+            // Difference in logic old vs new:
+            // - Original code does not check "willingness", only enemies
+            // - eg. rapier won't hit allies when player is confused
+            tempMonst = monsterAtLoc(p);
+            if (ableAndWillingToAttack(&player, tempMonst, notSeeInvis, 0)) {
+                hitList[0] = tempMonst;
+                if (abortAttack(hitList)) {
+                    brogueAssert(!committed);
+                    cancelKeystroke();
+                    rogue.disturbed = true;
+                    return false;
                 }
             }
         }
