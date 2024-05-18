@@ -662,15 +662,6 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
 
     defender = monsterAtLoc(strikeLoc);
 
-    // TODO: Test striking visible monster with invisible monster in-between
-    //       ..@.P.g..
-
-    // TODO: Test striking visible monster with submerged monster in-between
-    //       ..@.e.g..
-
-    // TODO: Test striking across a chasm / lava
-    //       ..@.::.g..
-
     // If defender exists, it must be known by the player (from getImpactLoc)
     //    but there may be an unknown obstacle in between (eg. invis enemy)
     //
