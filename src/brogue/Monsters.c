@@ -308,24 +308,24 @@ static boolean attackWouldBeFutile(const creature *attacker, const creature *def
 }
 
 // ------------------------------------------------------------------------
-const boolean yesSeeInvis = true;
-const boolean notSeeInvis = false;
+const short notSeeInvis = 0;
+const short yesSeeInvis = 1;
+const short isBumping = 2;
 
 static boolean monsterIsEffectivelySubmerged( const creature *monst ) {
     return (monst->bookkeepingFlags & MB_SUBMERGED)
         || ((terrainFlags(monst->loc) & T_IS_DEEP_WATER) && !monst->status[STATUS_LEVITATING]);
 }
 
-static boolean monsterIsEffectivelyInvisible( const creature *monst, boolean ignoreInvisibility ) {
+static boolean monsterIsEffectivelyInvisible( const creature *monst, boolean ignoreInvisibility) {
     if (ignoreInvisibility) return false;
-
     return monst->status[STATUS_INVISIBLE] && !pmapAt(monst->loc)->layers[GAS];
 }
 
 boolean monsterKnowsLocationOfMonster(
         const creature *source,
         const creature *target,
-        boolean ignoreInvisibility ) {
+        short sensing ) {
 
     // Can't locate invalid entities
     if (source == NULL || target == NULL) return false;
@@ -352,11 +352,14 @@ boolean monsterKnowsLocationOfMonster(
     // Can always see teammates
     if (monstersAreTeammates(source, target)) return true;
 
+    // Invisibility & submersion are ignored when bumping into the monster
+    if (sensing == isBumping) return true;
+
     // Can't see invisible monsters
-    if (monsterIsEffectivelyInvisible(target, ignoreInvisibility)) return false;
+    if (monsterIsEffectivelyInvisible(target, sensing >= yesSeeInvis)) return false;
 
     // Submerged monsters and monsters in deep water can see other submerged monsters
-    if (target->bookkeepingFlags & MB_SUBMERGED
+    if ((target->bookkeepingFlags & MB_SUBMERGED)
         && !monsterIsEffectivelySubmerged(source)) {
         return false;
     }
@@ -457,10 +460,12 @@ boolean monsterIsAbleToStrikeMonster(
 boolean ableAndWillingToAttack(
             const creature *attacker,
             const creature *defender,
-            boolean ignoreInvisibility,
+            short sensing,
             int maxRange ) {
 
-    if (attacker == NULL || defender == NULL) return false;
+    if (attacker == NULL
+        || defender == NULL
+        || rogue.gameHasEnded) return false;
 
     // Must be enemies
     boolean areEnemies = monsterIsWillingToAttackMonster(attacker, defender);
@@ -469,7 +474,7 @@ boolean ableAndWillingToAttack(
     boolean canAttackCell = monsterIsAbleToStrikeMonster(attacker, defender, maxRange);
 
     // Must be able to detect the defender
-    boolean locationKnown = monsterKnowsLocationOfMonster(attacker, defender, ignoreInvisibility);
+    boolean locationKnown = monsterKnowsLocationOfMonster(attacker, defender, sensing);
 
     // All requirements must be met
     return areEnemies && canAttackCell && locationKnown;
@@ -2224,7 +2229,7 @@ boolean openPathBetween(short x1, short y1, short x2, short y2) {
 
 // will return the player if the player is at (p.x, p.y).
 creature *monsterAtLoc(pos p) {
-    if (!(pmapAt(p)->flags & (HAS_MONSTER | HAS_PLAYER))) {
+    if (!(isPosInMap(p) && (pmapAt(p)->flags & (HAS_MONSTER | HAS_PLAYER)))) {
         return NULL;
     }
     if (posEq(player.loc, p)) {

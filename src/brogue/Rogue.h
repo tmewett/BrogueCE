@@ -3177,13 +3177,14 @@ extern "C" {
 
 
     // Convenience values for passing to the following functions
-    const boolean yesSeeInvis;
-    const boolean notSeeInvis;
+    const short notSeeInvis;
+    const short yesSeeInvis;
+    const short isBumping;
     boolean monsterIsAggressiveToMonster(const creature *attacker, const creature *defender);
     boolean monsterIsWillingToAttackMonster(const creature *attacker, const creature *defender);
     boolean monsterIsAbleToStrikeMonster(const creature *attacker, const creature *defender, int maxRange);
-    boolean monsterKnowsLocationOfMonster(const creature *source, const creature *target, boolean ignoreInvisibility );
-    boolean ableAndWillingToAttack( const creature *attacker, const creature *defender, boolean ignoreInvisibility, int maxRange );
+    boolean monsterKnowsLocationOfMonster(const creature *source, const creature *target, short sensing );
+    boolean ableAndWillingToAttack( const creature *attacker, const creature *defender, short sensing, int maxRange );
 
 
     boolean monsterRevealed(creature *monst);
