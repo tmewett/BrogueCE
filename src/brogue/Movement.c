@@ -661,12 +661,6 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
     getImpactLoc(&strikeLoc, originLoc, targetLoc, 5, false, &boltCatalog[BOLT_WHIP]);
 
     defender = monsterAtLoc(strikeLoc);
-/*
-    if (defender
-        && (attacker != &player || canSeeMonster(defender))
-        && !monsterIsHidden(defender, attacker)
-        && monsterWillAttackTarget(attacker, defender)) {
-*/
 
     // TODO: Test striking visible monster with invisible monster in-between
     //       ..@.P.g..

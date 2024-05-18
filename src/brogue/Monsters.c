@@ -543,15 +543,6 @@ boolean monstersAreTeammates(const creature *monst1, const creature *monst2) {
     return  sameLeader(monst1, monst2)
         || isFollowing(monst1, monst2)
         || isFollowing(monst2, monst1);
-/*
-    return ((((monst1->bookkeepingFlags & MB_FOLLOWER) && monst1->leader == monst2)
-             || ((monst2->bookkeepingFlags & MB_FOLLOWER) && monst2->leader == monst1)
-             || (monst1->creatureState == MONSTER_ALLY && monst2 == &player)
-             || (monst1 == &player && monst2->creatureState == MONSTER_ALLY)
-             || (monst1->creatureState == MONSTER_ALLY && monst2->creatureState == MONSTER_ALLY)
-             || ((monst1->bookkeepingFlags & MB_FOLLOWER) && (monst2->bookkeepingFlags & MB_FOLLOWER)
-                 && monst1->leader == monst2->leader)) ? true : false);
-*/
 }
 
 boolean monstersAreEnemies(const creature *monst1, const creature *monst2) {
