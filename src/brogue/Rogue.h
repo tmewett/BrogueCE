@@ -2000,6 +2000,7 @@ enum statusEffects {
     STATUS_SHIELDED,
     STATUS_INVISIBLE,
     STATUS_AGGRAVATING,
+    STATUS_CURSED,
     NUMBER_OF_STATUS_EFFECTS,
 };
 
@@ -2360,6 +2361,7 @@ typedef struct gameConstants {
     const int onHitHallucinateDuration;             // duration of on-hit hallucination effect on player
     const int onHitWeakenDuration;                  // duration of on-hit weaken effect
     const int onHitMercyHealPercent;                // percentage of damage healed on-hit by mercy weapon effect
+    const int curseDuration;                        // Duration of curses (additive)
 
     const int fallDamageMin;                        // minimum for fall damage range
     const int fallDamageMax;                        // maximum for fall damage range
