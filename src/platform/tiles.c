@@ -67,14 +67,14 @@ boolean softwareRendering = false;  // true if hardware acceleration is disabled
 /// Prints the fatal error message provided by SDL then closes the app.
 static void sdlfatal(char *file, int line) {
     fprintf(stderr, "Fatal SDL error (%s:%d): %s\n", file, line, SDL_GetError());
-    exit(1);
+    exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
 }
 
 
 /// Prints the fatal error message provided by SDL_image then closes the app.
 static void imgfatal(char *file, int line) {
     fprintf(stderr, "Fatal SDL_image error (%s:%d): %s\n", file, line, IMG_GetError());
-    exit(1);
+    exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
 }
 
 
@@ -294,7 +294,7 @@ static double downscaleTile(SDL_Surface *surface, int tileWidth, int tileHeight,
             dst[scaledX[x0]] += (value * value) | 0x100000000U; // (gamma = 2.0, count = 1)
         }
         // interpolate skipped lines, if any
-        if (y1 >= 2 && scaledY[y0 - 1] == y1 - 2) {
+        if (y1 >= 2 && y0 >= 1 && scaledY[y0 - 1] == y1 - 2) {
             for (int x1 = 0; x1 < tileWidth; x1++) {
                 dst[x1 - tileWidth] = dst[x1 - 2*tileWidth] + dst[x1];
             }
@@ -373,7 +373,7 @@ static void optimizeTiles() {
                 if (event.type == SDL_QUIT) {
                     SDL_Quit();
                     fprintf(stderr, "Aborted.\n");
-                    exit(1);
+                    exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
                 }
             }
 
@@ -450,7 +450,7 @@ void initTiles() {
     // are we running Brogue from the correct folder to begin with?
     if (!fileExists(filename)) {
         fprintf(stderr, "Error: \"%s\" not found!\n", filename);
-        exit(1);
+        exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
     }
 
     // load the large PNG
@@ -480,7 +480,7 @@ void initTiles() {
         file = fopen(filename, "wb");
         if (!file) {
             fprintf(stderr, "Error: could not write to \"%s\"\n", filename);
-            exit(1);
+            exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
         }
         fwrite(tileShifts, 1, sizeof(tileShifts), file);
         fclose(file);

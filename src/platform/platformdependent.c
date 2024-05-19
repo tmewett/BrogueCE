@@ -30,6 +30,7 @@
 #include <dirent.h>
 
 #include "platform.h"
+#include "GlobalsBase.h"
 
 typedef struct brogueScoreEntry {
     long int score;
@@ -178,6 +179,7 @@ unsigned int glyphToUnicode(enum displayGlyph glyph) {
         case G_PIPES: return '+';
         case G_SAC_ALTAR: return '|';
         case G_ORB_ALTAR: return '|';
+        case G_LEFT_TRIANGLE: return U_LEFT_TRIANGLE;
 
         default:
             brogueAssert(false);
@@ -194,7 +196,7 @@ boolean isEnvironmentGlyph(enum displayGlyph glyph) {
         case G_AMULET: case G_ARMOR: case G_BEDROLL: case G_CHARM:
         case G_DEWAR: case G_EGG: case G_FOOD: case G_GEM: case G_BLOODWORT_POD:
         case G_GOLD: case G_KEY: case G_POTION: case G_RING:
-        case G_SCROLL: case G_STAFF: case G_WAND: case G_WEAPON:
+        case G_SCROLL: case G_STAFF: case G_WAND: case G_WEAPON: case G_LEFT_TRIANGLE:
             return false;
 
         // creatures
@@ -226,10 +228,6 @@ void plotChar(enum displayGlyph inputChar,
     currentConsole.plotChar(inputChar, xLoc, yLoc, foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue);
 }
 
-void pausingTimerStartsNow() {
-
-}
-
 boolean shiftKeyIsDown() {
     return currentConsole.modifierHeld(0);
 }
@@ -241,8 +239,8 @@ void nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean col
     currentConsole.nextKeyOrMouseEvent(returnEvent, textInput, colorsDance);
 }
 
-boolean pauseForMilliseconds(short milliseconds) {
-    return currentConsole.pauseForMilliseconds(milliseconds);
+boolean pauseForMilliseconds(short milliseconds, PauseBehavior behavior) {
+    return currentConsole.pauseForMilliseconds(milliseconds, behavior);
 }
 
 void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2) {
@@ -268,11 +266,14 @@ enum graphicsModes setGraphicsMode(enum graphicsModes mode) {
 }
 
 // creates an empty high scores file
-void initScores() {
+static void initScores() {
     short i;
     FILE *scoresFile;
+    char highScoresFilename[BROGUE_FILENAME_MAX];
 
-    scoresFile = fopen("BrogueHighScores.txt", "w");
+    setHighScoresFilename(highScoresFilename, BROGUE_FILENAME_MAX);
+
+    scoresFile = fopen(highScoresFilename, "w");
     for (i=0; i<HIGH_SCORES_COUNT; i++) {
         fprintf(scoresFile, "%li\t%li\t%s", (long) 0, (long) 0, "(empty entry)\n");
     }
@@ -281,7 +282,7 @@ void initScores() {
 
 // sorts the entries of the scoreBuffer global variable by score in descending order;
 // returns the sorted line number of the most recent entry
-short sortScoreBuffer() {
+static short sortScoreBuffer() {
     short i, j, highestUnsortedLine, mostRecentSortedLine = 0;
     long highestUnsortedScore, mostRecentDate;
     brogueScoreEntry sortedScoreBuffer[HIGH_SCORES_COUNT];
@@ -317,19 +318,28 @@ short sortScoreBuffer() {
     return mostRecentSortedLine;
 }
 
-// loads the BrogueHighScores.txt file into the scoreBuffer global variable
+void setHighScoresFilename(char *buffer, int bufferMaxLength) {
+    strncpy(buffer, gameConst->variantName, bufferMaxLength);
+    strncat(buffer, "HighScores.txt", bufferMaxLength);
+    buffer[0] = toupper(buffer[0]);
+}
+
+// loads the ([V]ariantName)HighScores.txt file into the scoreBuffer global variable
 // score file format is: score, tab, date in seconds, tab, description, newline.
-short loadScoreBuffer() {
+static short loadScoreBuffer() {
     short i;
     FILE *scoresFile;
     time_t rawtime;
     struct tm * timeinfo;
 
-    scoresFile = fopen("BrogueHighScores.txt", "r");
+    char highScoresFilename[BROGUE_FILENAME_MAX];
+    setHighScoresFilename(highScoresFilename, BROGUE_FILENAME_MAX);
+
+    scoresFile = fopen(highScoresFilename, "r");
 
     if (scoresFile == NULL) {
         initScores();
-        scoresFile = fopen("BrogueHighScores.txt", "r");
+        scoresFile = fopen(highScoresFilename, "r");
     }
 
     for (i=0; i<HIGH_SCORES_COUNT; i++) {
@@ -377,7 +387,9 @@ void loadKeymap() {
             if (input_name != NULL && output_name != NULL) {
                 if (input_name[0] == '#') continue; // must be a comment
 
-                currentConsole.remap(input_name, output_name);
+                if (currentConsole.remap) {
+                    currentConsole.remap(input_name, output_name);
+                }
             }
         }
         fclose(f);
@@ -389,11 +401,14 @@ void loadKeymap() {
 // thus overwriting whatever is already there.
 // The numerical version of the date is what gets saved; the "mm/dd/yy" version is ignored.
 // Does NOT do any sorting.
-void saveScoreBuffer() {
+static void saveScoreBuffer() {
     short i;
     FILE *scoresFile;
+    char highScoresFilename[BROGUE_FILENAME_MAX];
 
-    scoresFile = fopen("BrogueHighScores.txt", "w");
+    setHighScoresFilename(highScoresFilename, BROGUE_FILENAME_MAX);
+
+    scoresFile = fopen(highScoresFilename, "w");
 
     for (i=0; i<HIGH_SCORES_COUNT; i++) {
         // save the entry
@@ -466,7 +481,7 @@ struct filelist {
     int nextname, maxname;
 };
 
-struct filelist *newFilelist() {
+static struct filelist *newFilelist() {
     struct filelist *list = malloc(sizeof(*list));
 
     list->nfiles = 0;
@@ -480,7 +495,7 @@ struct filelist *newFilelist() {
     return list;
 }
 
-fileEntry *addfile(struct filelist *list, const char *name) {
+static fileEntry *addfile(struct filelist *list, const char *name) {
     int len = strlen(name);
     if (len + list->nextname >= list->maxname) {
         int newmax = (list->maxname + len) * 2;
@@ -518,13 +533,13 @@ fileEntry *addfile(struct filelist *list, const char *name) {
     return list->files + (list->nfiles - 1);
 }
 
-void freeFilelist(struct filelist *list) {
+static void freeFilelist(struct filelist *list) {
     //if (list->names != NULL) free(list->names);
     //if (list->files != NULL) free(list->files);
     free(list);
 }
 
-fileEntry *commitFilelist(struct filelist *list, char **namebuffer) {
+static fileEntry *commitFilelist(struct filelist *list, char **namebuffer) {
     int i;
     /*fileEntry *files = malloc(list->nfiles * sizeof(fileEntry) + list->nextname); // enough space for all the names and all the files
 
