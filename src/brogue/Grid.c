@@ -22,7 +22,8 @@
  */
 
 #include "Rogue.h"
-#include "IncludeGlobals.h"
+#include "Globals.h"
+#include "GlobalsBase.h"
 
 
 // mallocing two-dimensional arrays! dun dun DUN!
@@ -63,7 +64,7 @@ void fillGrid(short **grid, short fillValue) {
 }
 
 // Highlight the portion indicated by hiliteCharGrid with the hiliteColor at the hiliteStrength -- both latter arguments are optional.
-void hiliteGrid(short **grid, color *hiliteColor, short hiliteStrength) {
+void hiliteGrid(short **grid, const color *hiliteColor, short hiliteStrength) {
     short i, j, x, y;
     color hCol;
 
@@ -87,12 +88,13 @@ void hiliteGrid(short **grid, color *hiliteColor, short hiliteStrength) {
                 x = mapToWindowX(i);
                 y = mapToWindowY(j);
 
-                displayBuffer[x][y].backColorComponents[0] = clamp(displayBuffer[x][y].backColorComponents[0] + hCol.red * hiliteStrength / 100, 0, 100);
-                displayBuffer[x][y].backColorComponents[1] = clamp(displayBuffer[x][y].backColorComponents[1] + hCol.green * hiliteStrength / 100, 0, 100);
-                displayBuffer[x][y].backColorComponents[2] = clamp(displayBuffer[x][y].backColorComponents[2] + hCol.blue * hiliteStrength / 100, 0, 100);
-                displayBuffer[x][y].foreColorComponents[0] = clamp(displayBuffer[x][y].foreColorComponents[0] + hCol.red * hiliteStrength / 100, 0, 100);
-                displayBuffer[x][y].foreColorComponents[1] = clamp(displayBuffer[x][y].foreColorComponents[1] + hCol.green * hiliteStrength / 100, 0, 100);
-                displayBuffer[x][y].foreColorComponents[2] = clamp(displayBuffer[x][y].foreColorComponents[2] + hCol.blue * hiliteStrength / 100, 0, 100);
+                cellDisplayBuffer *cell = &displayBuffer.cells[x][y];
+                cell->backColorComponents[0] = clamp(cell->backColorComponents[0] + hCol.red * hiliteStrength / 100, 0, 100);
+                cell->backColorComponents[1] = clamp(cell->backColorComponents[1] + hCol.green * hiliteStrength / 100, 0, 100);
+                cell->backColorComponents[2] = clamp(cell->backColorComponents[2] + hCol.blue * hiliteStrength / 100, 0, 100);
+                cell->foreColorComponents[0] = clamp(cell->foreColorComponents[0] + hCol.red * hiliteStrength / 100, 0, 100);
+                cell->foreColorComponents[1] = clamp(cell->foreColorComponents[1] + hCol.green * hiliteStrength / 100, 0, 100);
+                cell->foreColorComponents[2] = clamp(cell->foreColorComponents[2] + hCol.blue * hiliteStrength / 100, 0, 100);
             }
         }
     }
@@ -154,46 +156,13 @@ void drawCircleOnGrid(short **grid, short x, short y, short radius, short value)
     }
 }
 
-void intersectGrids(short **onto, short **from) {
-    short i, j;
-    for(i = 0; i < DCOLS; i++) {
-        for(j = 0; j < DROWS; j++) {
-            if (onto[i][j] && from[i][j]) {
-                onto[i][j] = true;
-            } else {
-                onto[i][j] = false;
-            }
-        }
-    }
-}
-
-void uniteGrids(short **onto, short **from) {
-    short i, j;
-    for(i = 0; i < DCOLS; i++) {
-        for(j = 0; j < DROWS; j++) {
-            if (!onto[i][j] && from[i][j]) {
-                onto[i][j] = from[i][j];
-            }
-        }
-    }
-}
-
-void invertGrid(short **grid) {
-    short i, j;
-    for(i = 0; i < DCOLS; i++) {
-        for(j = 0; j < DROWS; j++) {
-            grid[i][j] = !grid[i][j];
-        }
-    }
-}
-
 // Fills grid locations with the given value if they match any terrain flags or map flags.
 // Otherwise does not change the grid location.
 void getTerrainGrid(short **grid, short value, unsigned long terrainFlags, unsigned long mapFlags) {
     short i, j;
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
-            if (grid[i][j] != value && cellHasTerrainFlag(i, j, terrainFlags) || (pmap[i][j].flags & mapFlags)) {
+            if (grid[i][j] != value && cellHasTerrainFlag((pos){ i, j }, terrainFlags) || (pmap[i][j].flags & mapFlags)) {
                 grid[i][j] = value;
             }
         }
@@ -204,14 +173,14 @@ void getTMGrid(short **grid, short value, unsigned long TMflags) {
     short i, j;
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
-            if (grid[i][j] != value && cellHasTMFlag(i, j, TMflags)) {
+            if (grid[i][j] != value && cellHasTMFlag((pos){ i, j }, TMflags)) {
                 grid[i][j] = value;
             }
         }
     }
 }
 
-void getPassableArcGrid(short **grid, short minPassableArc, short maxPassableArc, short value) {
+static void getPassableArcGrid(short **grid, short minPassableArc, short maxPassableArc, short value) {
     short i, j, count;
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
@@ -238,7 +207,7 @@ short validLocationCount(short **grid, short validValue) {
     return count;
 }
 
-short leastPositiveValueInGrid(short **grid) {
+static short leastPositiveValueInGrid(short **grid) {
     short i, j, leastPositiveValue = 0;
     for(i = 0; i < DCOLS; i++) {
         for(j = 0; j < DROWS; j++) {
@@ -277,7 +246,7 @@ void randomLocationInGrid(short **grid, short *x, short *y, short validValue) {
 
 // Finds the lowest positive number in a grid, chooses one location with that number randomly and returns it as (x, y).
 // If there are no valid locations, returns (-1, -1).
-void randomLeastPositiveLocationInGrid(short **grid, short *x, short *y, boolean deterministic) {
+static void randomLeastPositiveLocationInGrid(short **grid, short *x, short *y, boolean deterministic) {
     const short targetValue = leastPositiveValueInGrid(grid);
     short locationCount;
     short i, j, index;
@@ -327,7 +296,7 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
     short **grid, **costMap;
 
     // First check the given location to see if it works, as an optimization.
-    if (!cellHasTerrainFlag(x, y, blockingTerrainFlags | forbiddenTerrainFlags)
+    if (!cellHasTerrainFlag((pos){ x, y }, blockingTerrainFlags | forbiddenTerrainFlags)
         && !(pmap[x][y].flags & (blockingMapFlags | forbiddenMapFlags))
         && (hallwaysAllowed || passableArcCount(x, y) <= 1)) {
 
@@ -378,7 +347,7 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
     // Fall back to a pathing-agnostic alternative if there are no solutions.
     if (*retValX == -1 && *retValY == -1) {
         pos loc;
-        if (getQualifyingLocNear(&loc, x, y, hallwaysAllowed, NULL,
+        if (getQualifyingLocNear(&loc, (pos){ x, y }, hallwaysAllowed, NULL,
                                  (blockingTerrainFlags | forbiddenTerrainFlags),
                                  (blockingMapFlags | forbiddenMapFlags),
                                  false, deterministic)) {
@@ -393,7 +362,7 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
     }
 }
 
-void cellularAutomataRound(short **grid, char birthParameters[9], char survivalParameters[9]) {
+static void cellularAutomataRound(short **grid, char birthParameters[9], char survivalParameters[9]) {
     short i, j, nbCount, newX, newY;
     enum directions dir;
     short **buffer2;
@@ -427,7 +396,7 @@ void cellularAutomataRound(short **grid, char birthParameters[9], char survivalP
 }
 
 // Marks a cell as being a member of blobNumber, then recursively iterates through the rest of the blob
-short fillContiguousRegion(short **grid, short x, short y, short fillValue) {
+static short fillContiguousRegion(short **grid, short x, short y, short fillValue) {
     enum directions dir;
     short newX, newY, numberOfCells = 1;
 

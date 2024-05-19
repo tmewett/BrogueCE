@@ -1,0 +1,1 @@
+Fixed a bug where items in deep water could drift through walls. Items can now only drift to an available adjacent cell.

@@ -8,7 +8,7 @@ on:
 jobs:
 
   linux:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - name: "Install dependencies"
       run: |
@@ -16,7 +16,7 @@ jobs:
         sudo apt install -y libsdl2-dev libsdl2-image-dev
 
     - name: "Checkout sources"
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: "Compile"
       run: |
@@ -28,23 +28,23 @@ jobs:
         tar -czvf BrogueCE-linux-x86_64.tar.gz BrogueCE-linux
 
     - name: "Upload artifact"
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: linux-x86_64
         path: BrogueCE-linux-x86_64.tar.gz
 
   macos:
-    runs-on: macos-latest
+    runs-on: macos-12
     steps:
     - name: "Checkout sources"
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: "Prepare"
       run: |
         make macos/sdl2.rb
 
     - name: "Cache SDL2"
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: sdl2-cellar
         key: sdl2-${{hashFiles('macos/sdl2.rb')}}
@@ -76,7 +76,7 @@ jobs:
         zip -rll BrogueCE-macos-x86_64.zip BrogueCE-macos
 
     - name: "Upload artifact"
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: macos-x86_64
         path: BrogueCE-macos-x86_64.zip
@@ -85,7 +85,7 @@ jobs:
     runs-on: windows-latest
     steps:
     - name: "Checkout sources"
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: "Install dependencies"
       run: |
@@ -96,11 +96,11 @@ jobs:
       run: |
         $env:path = $env:path + ";" + (Join-Path $pwd.Drive.Root "opt/local/x86_64-w64-mingw32/bin")
         $env:path = $env:path + ';C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64'
-        mingw32-make CC=gcc bin/brogue.exe
+        mingw32-make SYSTEM=WINDOWS CC=gcc bin/brogue.exe
 
     - name: "Create artifact"
       run: |
-        mingw32-make BrogueCE-windows
+        mingw32-make SYSTEM=WINDOWS BrogueCE-windows
         cp SDL2\x86_64-w64-mingw32\bin\SDL2.dll BrogueCE-windows
         cp SDL2_image\x86_64-w64-mingw32\bin\zlib1.dll BrogueCE-windows
         cp SDL2_image\x86_64-w64-mingw32\bin\SDL2_image.dll BrogueCE-windows
@@ -108,7 +108,7 @@ jobs:
         7z a BrogueCE-windows-x86_64.zip BrogueCE-windows
 
     - name: "Upload artifact"
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: windows-x86_64
         path: BrogueCE-windows-x86_64.zip

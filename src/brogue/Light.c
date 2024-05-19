@@ -22,10 +22,10 @@
  */
 
 #include "Rogue.h"
-#include "IncludeGlobals.h"
+#include "GlobalsBase.h"
+#include "Globals.h"
 
 void logLights() {
-
     short i, j;
 
     printf("    ");
@@ -51,7 +51,7 @@ void logLights() {
 }
 
 // Returns true if any part of the light hit cells that are in the player's field of view.
-boolean paintLight(lightSource *theLight, short x, short y, boolean isMinersLight, boolean maintainShadows) {
+boolean paintLight(const lightSource *theLight, short x, short y, boolean isMinersLight, boolean maintainShadows) {
     short i, j, k;
     short colorComponents[3], randComponent, lightMultiplier;
     short fadeToPercent, radiusRounded;
@@ -153,7 +153,7 @@ void updateMinersLightRadius() {
     rogue.minersLight.lightRadius.upperBound = rogue.minersLight.lightRadius.lowerBound = clamp(lightRadius / FP_FACTOR, -30000, 30000);
 }
 
-void updateDisplayDetail() {
+static void updateDisplayDetail() {
     short i, j;
 
     for (i = 0; i < DCOLS; i++) {
@@ -194,7 +194,7 @@ void restoreLighting(short lights[DCOLS][DROWS][3]) {
     }
 }
 
-void recordOldLights() {
+static void recordOldLights() {
     short i, j, k;
     for (i = 0; i < DCOLS; i++) {
         for (j = 0; j < DROWS; j++) {
@@ -273,7 +273,7 @@ void updateLighting() {
         player.info.foreColor = &playerInvisibleColor;
     } else if (playerInDarkness()) {
         player.info.foreColor = &playerInDarknessColor;
-    } else if (pmap[player.loc.x][player.loc.y].flags & IS_IN_SHADOW) {
+    } else if (pmapAt(player.loc)->flags & IS_IN_SHADOW) {
         player.info.foreColor = &playerInShadowColor;
     } else {
         player.info.foreColor = &playerInLightColor;
@@ -281,14 +281,14 @@ void updateLighting() {
 }
 
 boolean playerInDarkness() {
-    return (tmap[player.loc.x][player.loc.y].light[0] + 10 < minersLightColor.red
-            && tmap[player.loc.x][player.loc.y].light[1] + 10 < minersLightColor.green
-            && tmap[player.loc.x][player.loc.y].light[2] + 10 < minersLightColor.blue);
+    return (tmapAt(player.loc)->light[0] + 10 < minersLightColor.red
+            && tmapAt(player.loc)->light[1] + 10 < minersLightColor.green
+            && tmapAt(player.loc)->light[2] + 10 < minersLightColor.blue);
 }
 
 #define flarePrecision 1000
 
-flare *newFlare(lightSource *light, short x, short y, short changePerFrame, short limit) {
+flare *newFlare(const lightSource *light, short x, short y, short changePerFrame, short limit) {
     flare *theFlare = malloc(sizeof(flare));
     memset(theFlare, '\0', sizeof(flare));
     theFlare->light = light;
@@ -318,7 +318,7 @@ void createFlare(short x, short y, enum lightType lightIndex) {
     rogue.flareCount++;
 }
 
-boolean flareIsActive(flare *theFlare) {
+static boolean flareIsActive(flare *theFlare) {
     const boolean increasing = (theFlare->coeffChangeAmount > 0);
     boolean active = true;
 
@@ -338,7 +338,7 @@ boolean flareIsActive(flare *theFlare) {
 }
 
 // Returns true if the flare is still active; false if it's not.
-boolean updateFlare(flare *theFlare) {
+static boolean updateFlare(flare *theFlare) {
     if (!flareIsActive(theFlare)) {
         return false;
     }
@@ -348,7 +348,7 @@ boolean updateFlare(flare *theFlare) {
 }
 
 // Returns whether it overlaps with the field of view.
-boolean drawFlareFrame(flare *theFlare) {
+static boolean drawFlareFrame(flare *theFlare) {
     boolean inView;
     lightSource tempLight = *(theFlare->light);
     color tempColor = *(tempLight.lightColor);
@@ -395,7 +395,7 @@ void animateFlares(flare **flares, short count) {
         demoteVisibility();
         updateFieldOfViewDisplay(false, true);
         if (!fastForward && (inView || rogue.playbackOmniscience) && atLeastOneFlareStillActive) {
-            fastForward = pauseAnimation(10);
+            fastForward = pauseAnimation(10, PAUSE_BEHAVIOR_DEFAULT);
         }
         recordOldLights();
         restoreLighting(lights);

@@ -1,0 +1,27 @@
+name: "Compare Seed Catalogs"
+on:
+  pull_request:
+    branches:
+    - 'release'
+
+jobs:
+
+  linux-test:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: "Install dependencies"
+      run: |
+        sudo apt update -y
+        sudo apt install -y libsdl2-dev libsdl2-image-dev
+
+    - name: "Checkout sources"
+      uses: actions/checkout@v3
+
+    - name: "Compile"
+      run: |
+        make bin/brogue
+
+    - name: "Run seed catalog regression tests"
+      run: |
+        python3 test/compare_seed_catalog.py test/seed_catalogs/seed_catalog_brogue.txt 40
+        python3 test/compare_seed_catalog.py --extra_args "--variant rapid_brogue" test/seed_catalogs/seed_catalog_rapid_brogue.txt 10

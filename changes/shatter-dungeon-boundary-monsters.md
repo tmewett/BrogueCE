@@ -1,0 +1,1 @@
+Fixed a bug where shattering failed to destroy sentinels at the edge of the dungeon.

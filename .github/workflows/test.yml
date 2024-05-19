@@ -1,0 +1,28 @@
+name: "Test"
+on:
+  pull_request:
+    # Only run on PRs into release
+    branches:
+    - 'release'
+
+jobs:
+
+  linux-test:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: "Install dependencies"
+      run: |
+        sudo apt update -y
+        sudo apt install -y libsdl2-dev libsdl2-image-dev
+
+    - name: "Checkout sources"
+      uses: actions/checkout@v3
+
+    - name: "Compile"
+      run: |
+        make bin/brogue
+
+    - name: "Run regression tests on merge to release branch"
+      run: |
+        python3 test/run_regression_tests.py test/regression_test_v1_13/
+        python3 test/run_regression_tests.py --extra_args "--variant rapid_brogue" test/regression_test_rapid_v1_5/
