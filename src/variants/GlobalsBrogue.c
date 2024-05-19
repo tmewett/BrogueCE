@@ -1034,7 +1034,6 @@ const gameConstants brogueGameConst = {
     .onHitHallucinateDuration = 20,
     .onHitWeakenDuration = 300,
     .onHitMercyHealPercent = 50,
-    .curseDuration = 1000,
 
     .weaponKillsToAutoID = 20,
     .armorDelayToAutoID = 1000,
