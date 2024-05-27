@@ -5142,6 +5142,12 @@ unsigned long printCarriedItemDetails(item *theItem,
             b++;
         }
 
+        if (theItem->category & (ARMOR | WEAPON | RING)) {
+            sprintf(buttons[b].text, "   %sS%study   ", goldColorEscape, whiteColorEscape);
+            buttons[b].hotkey[0] = 'S';
+            b++;
+        }
+
         // Add invisible previous and next buttons, so up and down arrows can page through items.
         // Previous
         buttons[b].flags = B_ENABLED; // clear everything else

@@ -2724,6 +2724,39 @@ static boolean displayMagicCharForItem(item *theItem) {
     }
 }
 
+void detectMagicOnItem(item *theItem);
+
+void studyItem(item *theItem) {
+    const short foodReq = numberOfMatchingPackItems(AMULET, 0, 0, false) > 0 ? 100 : 500;
+    if ( (theItem->flags & ITEM_IDENTIFIED)
+        || ((theItem->category & RING) && ringTable[theItem->kind].identified)) {
+        message("It's already identified!", 0);
+    } else if (!(theItem->category & RING)
+        && !(theItem->category & ARMOR)
+        && !(theItem->category & WEAPON) ) {
+        message("You discover nothing.", 0);
+    } else if ( player.status[STATUS_NUTRITION] < foodReq) {
+        message("You need to eat before you can study this item!", 0);
+    } else if ( theItem->charges <= 1 ) {
+        message("You have discovered everything you can about this item.", 0);
+    } else {
+        // Reduce the use-id cost by half
+        theItem->charges /= 2;
+        player.status[STATUS_NUTRITION] -= foodReq;
+        if ((theItem->category & CAN_BE_DETECTED)
+            && !(theItem->flags & ITEM_MAGIC_DETECTED)) {
+            detectMagicOnItem(theItem);
+            if (itemMagicPolarity(theItem)) {
+                message("You study the item, becoming more familiar.  It's magical!", 0);
+            } else {
+                message("You study the item, becoming more familiar.  It's definitely not magical.", 0);
+            }
+        } else {
+            message("You study the item, becoming more familiar.  You think you almost know it's inner secrets!", 0);
+        }
+    }
+}
+
 char displayInventory(unsigned short categoryMask,
                       unsigned long requiredFlags,
                       unsigned long forbiddenFlags,
@@ -3062,6 +3095,9 @@ char displayInventory(unsigned short categoryMask,
                             if (highlightItemLine >= itemNumber) {
                                 highlightItemLine = 0;
                             }
+                            break;
+                        case 'S':
+                            studyItem(theItem);
                             break;
                         default:
                             break;
@@ -7123,7 +7159,7 @@ void readScroll(item *theItem) {
     }
 }
 
-static void detectMagicOnItem(item *theItem) {
+void detectMagicOnItem(item *theItem) {
     if (theItem->category & HAS_INTRINSIC_POLARITY) {
         itemTable *theItemTable = tableForItemCategory(theItem->category);
         theItemTable[theItem->kind].magicPolarityRevealed = true;
