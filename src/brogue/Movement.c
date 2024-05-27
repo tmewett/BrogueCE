@@ -2178,6 +2178,12 @@ boolean useStairs(short stairDirection) {
     boolean succeeded = false;
     //screenDisplayBuffer fromBuf, toBuf;
 
+    levelSummarySidebar();
+    flashTemporaryAlert(" YOUR MEMORY OF THIS DEPTH ", 100); // Not sure why this is needed?  Screen refresh delay?
+    if (takeScreenshot()) {
+        flashTemporaryAlert(" Screenshot saved in save directory ", 1000);
+    }
+
     if (stairDirection == 1) {
         if (rogue.depthLevel < gameConst->deepestLevel) {
             rogue.cursorLoc = INVALID_POS;

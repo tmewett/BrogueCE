@@ -645,6 +645,12 @@ void populateItems(pos upstairs) {
         randomDepthOffset += rand_range(-1, 1);
     }
 
+    // TOTAL HACK!
+    pmap[0][0].machineNumber = 0;  // Food
+    pmap[1][0].machineNumber = 0;  // Life
+    pmap[2][0].machineNumber = 0;  // Strength
+    pmap[3][0].machineNumber = 0;  // Enchant
+
     for (int i=0; i<numberOfItems; i++) {
         short theCategory = ALL_ITEMS & ~GOLD; // gold is placed separately, below, so it's not a punishment
         short theKind = -1;
@@ -697,8 +703,23 @@ void populateItems(pos upstairs) {
         theItem->originDepth = rogue.depthLevel;
 
         if (theItem->category & FOOD) {
+            pmap[0][0].machineNumber++;
             rogue.foodSpawned += foodTable[theItem->kind].power;
             if (D_MESSAGE_ITEM_GENERATION) printf("\n(:)  Depth %i: generated food", rogue.depthLevel);
+        }
+
+        // Track how many were generated so they can be displayed on the level memory screen
+        // TODO: Actually need to track how many were discovered, not generated, but this will do for now..
+        if ((theItem->category & POTION) && (theItem->kind == POTION_LIFE)) {
+            pmap[1][0].machineNumber++;
+        }
+
+        if ((theItem->category & POTION) && (theItem->kind == POTION_STRENGTH)) {
+            pmap[2][0].machineNumber++;
+        }
+
+        if ((theItem->category & SCROLL) && (theItem->kind == SCROLL_ENCHANTING)) {
+            pmap[3][0].machineNumber++;
         }
 
         // Choose a placement location.
