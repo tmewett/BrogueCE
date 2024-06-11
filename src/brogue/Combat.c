@@ -1733,7 +1733,7 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
     }
 }
 
-void buildHitList(creature **hitList, const creature *attacker, creature *defender, const boolean sweep) {
+void buildHitList(const creature **hitList, const creature *attacker, creature *defender, const boolean sweep) {
     short i, x, y, newX, newY, newestX, newestY;
     enum directions dir, newDir;
 

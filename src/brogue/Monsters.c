@@ -3637,7 +3637,7 @@ boolean moveMonster(creature *monst, short dx, short dy) {
     short i;
     short confusedDirection, swarmDirection;
     creature *defender = NULL;
-    creature *hitList[16] = {NULL};
+    const creature *hitList[16] = {NULL};
     enum directions dir;
 
     if (dx == 0 && dy == 0) {
