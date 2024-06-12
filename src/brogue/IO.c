@@ -3925,6 +3925,94 @@ void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst
     restoreRNG;
 }
 
+void levelSummarySidebar() {
+    short printY, oldPrintY, i, j, x, y, displayEntityCount;
+    item *theItem = NULL;
+    char buf[COLS];
+    const void *entityList[ROWS] = {0};
+    enum entityDisplayTypes entityType[ROWS] = {0};
+    char addedEntity[DCOLS][DROWS];
+    short oldRNG;
+
+    if (rogue.gameHasEnded || rogue.playbackFastForward) {
+        return;
+    }
+
+    oldRNG = rogue.RNG;
+    rogue.RNG = RNG_COSMETIC;
+    //assureCosmeticRNG;
+
+    printY = 0;
+
+    zeroOutGrid(addedEntity);
+
+    // Initialization.
+    displayEntityCount = 0;
+    for (i=0; i<ROWS*2; i++) {
+        rogue.sidebarLocationList[i] = INVALID_POS;
+    }
+
+    // Summary of game-stat collectables
+    sprintf(buf, "  F%i L%i S%i E%i  ", pmap[0][0].machineNumber, pmap[1][0].machineNumber, pmap[2][0].machineNumber, pmap[3][0].machineNumber );
+    printString(buf, 0, printY++, &white, &black, 0);
+
+    // Discovered Items
+    for (theItem = floorItems->nextItem; theItem != NULL && (displayEntityCount * 2) < ROWS; theItem = theItem->nextItem) {
+        if (!addedEntity[theItem->loc.x][theItem->loc.y]
+            && (pmap[theItem->loc.x][theItem->loc.y].flags & DISCOVERED) ) {
+            addedEntity[theItem->loc.x][theItem->loc.y] = true;
+            entityList[displayEntityCount] = theItem;
+            entityType[displayEntityCount] = EDT_ITEM;
+            displayEntityCount++;
+        }
+    }
+
+    for (i=0; i<displayEntityCount && printY < ROWS - 1; i++) { // Bottom line is reserved for the depth.
+        oldPrintY = printY;
+
+        if (entityType[i] == EDT_ITEM) {
+            x = ((item *) entityList[i])->loc.x;
+            y = ((item *) entityList[i])->loc.y;
+
+            unsigned long flags = pmap[x][y].flags;
+            pmap[x][y].flags |= ANY_KIND_OF_VISIBLE;
+
+            short a = tmap[x][y].light[0];
+            short b = tmap[x][y].light[1];
+            short c = tmap[x][y].light[2];
+
+            tmap[x][y].light[0] = tmap[player.loc.x][player.loc.y].light[0];
+            tmap[x][y].light[1] = tmap[player.loc.x][player.loc.y].light[1];
+            tmap[x][y].light[2] = tmap[player.loc.x][player.loc.y].light[2];
+
+            printY = printItemInfo((item *) entityList[i],
+                                   printY,
+                                   false,
+                                   false);
+
+            pmap[x][y].flags = flags;
+            tmap[x][y].light[0] = a;
+            tmap[x][y].light[1] = b;
+            tmap[x][y].light[2] = c;
+
+            // Only one line
+            printY--;
+        }
+        for (j=oldPrintY; j<printY; j++) {
+            rogue.sidebarLocationList[j] = (pos){ x, y };
+        }
+    }
+
+    // Wrap things up.
+    for (i=printY; i< ROWS - 1; i++) {
+        printString("                    ", 0, i, &white, &black, 0);
+    }
+    sprintf(buf, "  -- Depth: %i --%s   ", rogue.depthLevel, (rogue.depthLevel < 10 ? " " : ""));
+    printString(buf, 0, ROWS - 1, &white, &black, 0);
+
+    restoreRNG;
+}
+
 void printString(const char *theString, short x, short y, const color *foreColor, const color *backColor, screenDisplayBuffer *dbuf) {
     short i;
 
