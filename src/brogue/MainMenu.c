@@ -373,9 +373,10 @@ static void initializeFlyoutMenu(buttonState *menu, screenDisplayBuffer *shadowB
 
     } else if (rogue.nextGame == NG_FLYOUT_VIEW) {
 
-        buttonCount = 2;
+        buttonCount = 3;
         initializeMainMenuButton(&(buttons[0]), "   View %sR%secording  ", 'r', 'R', NG_VIEW_RECORDING);
         initializeMainMenuButton(&(buttons[1]), "    %sH%sigh Scores    ", 'h', 'H', NG_HIGH_SCORES);
+        initializeMainMenuButton(&(buttons[2]), "    %sG%same Stats     ", 'g', 'G', NG_GAME_STATS);
 
     } else {
         return;
@@ -858,6 +859,217 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
     }
 }
 
+typedef struct gameStats {
+    int games;
+    int escaped;
+    int mastered;
+    int won;
+    float winRate;
+    int deepestLevel;
+    int cumulativeLevels;
+    int highestScore;
+    unsigned long cumulativeScore;
+    int mostGold;
+    unsigned long cumulativeGold;
+    int mostLumenstones;
+    int cumulativeLumenstones;
+    int fewestTurnsWin; // zero means never won
+    unsigned long cumulativeTurns;
+    int longestWinStreak;
+    int longestMasteryStreak;
+    int currentWinStreak;
+    int currentMasteryStreak;
+} gameStats;
+
+/// @brief Updates the given stats to include a run 
+/// @param run The run to add
+/// @param stats The stats to update
+static void addRuntoGameStats(rogueRun *run, gameStats *stats) {
+
+    stats->games++;
+    stats->cumulativeScore += run->score;
+    stats->cumulativeGold += run->gold;
+    stats->cumulativeLumenstones += run->lumenstones;
+    stats->cumulativeLevels += run->deepestLevel;
+    stats->cumulativeTurns += run->turns;
+
+    stats->highestScore = (run->score > stats->highestScore) ? run->score : stats->highestScore;
+    stats->mostGold = (run->gold > stats->mostGold) ? run->gold : stats->mostGold;
+    stats->mostLumenstones = (run->lumenstones > stats->mostLumenstones) ? run->lumenstones : stats->mostLumenstones;
+    stats->deepestLevel = (run->deepestLevel > stats->deepestLevel) ? run->deepestLevel : stats->deepestLevel;
+
+    if (strcmp(run->result, "Escaped") == 0 || strcmp(run->result, "Mastered") == 0) {
+        if (stats->fewestTurnsWin == 0 || run->turns < stats->fewestTurnsWin) {
+            stats->fewestTurnsWin = run->turns;
+        }
+        stats->won++;
+        stats->currentWinStreak++;
+        if (strcmp(run->result, "Mastered") == 0) {
+            stats->currentMasteryStreak++;
+            stats->mastered++;
+        } else {
+            stats->currentMasteryStreak = 0;
+            stats->escaped++;
+        }
+    } else {
+        stats->currentWinStreak = stats->currentMasteryStreak = 0;
+    }
+
+    if (stats->currentWinStreak > stats->longestWinStreak) {
+        stats->longestWinStreak = stats->currentWinStreak;
+    }
+    if (stats->currentMasteryStreak > stats->longestMasteryStreak) {
+        stats->longestMasteryStreak = stats->currentMasteryStreak;
+    }
+
+    if (stats->games == 0) {
+        stats->winRate = 0.0;
+    } else {
+        stats->winRate = ((float)stats->won / stats->games) * 100.0;
+    }
+}
+
+/// @brief Display the game stats screen
+/// Includes "All Time" stats and "Recent" stats. The player can reset their recent stats at any time.
+static void viewGameStats(void) {
+
+    gameStats allTimeStats = {0};
+    gameStats recentStats = {0};
+
+    rogueRun *runHistory = loadRunHistory(); 
+    rogueRun *run = runHistory;
+
+    // calculate stats
+    while (run != NULL) {
+        if (run->seed != 0) {
+            addRuntoGameStats(run, &allTimeStats);
+            addRuntoGameStats(run, &recentStats);
+        } else { // when seed == 0 the run entry means the player reset their recent stats at this point 
+            memset(&recentStats, 0, sizeof(gameStats));
+        }        
+        run = run->nextRun;
+    }
+
+    // free run history
+    run = runHistory;
+    rogueRun *next;
+    while (run != NULL) {
+        next = run->nextRun;
+        free(run);
+        run = next;
+    }
+
+    const SavedDisplayBuffer rbuf = saveDisplayBuffer();
+    blackOutScreen();
+
+    screenDisplayBuffer dbuf;
+    clearDisplayBuffer(&dbuf);
+
+    char buf[COLS*3];
+    int i = 4;
+    int offset = 21;
+    char whiteColorEscape[5] = "", yellowColorEscape[5] = "";
+    encodeMessageColor(whiteColorEscape, 0, &white);
+    encodeMessageColor(yellowColorEscape, 0, &itemMessageColor);
+
+    color titleColor = black;
+    applyColorAverage(&titleColor, &itemMessageColor, 100);
+    printString("-- GAME STATS --", (COLS - 17 + 1) / 2, 0, &titleColor, &black, &dbuf);
+
+    sprintf(buf,"%-30s%16s%16s","", "All Time", "Recent");
+    printString(buf, offset, i, &itemMessageColor, &black, &dbuf);
+
+    sprintf(buf,"%-30s%s%16i%16i","Games Played", whiteColorEscape, allTimeStats.games, recentStats.games);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+    i++;
+    sprintf(buf,"%-30s%s%16i%16i","Won", whiteColorEscape, allTimeStats.won, recentStats.won);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+
+    sprintf(buf,"%-30s%s%16.1f%16.1f","Win Rate (%)", whiteColorEscape, allTimeStats.winRate, recentStats.winRate);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+
+    sprintf(buf,"%-30s%s%16i%16i","Escaped", whiteColorEscape, allTimeStats.escaped, recentStats.escaped);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+
+    sprintf(buf,"%-30s%s%16i%16i","Mastered", whiteColorEscape, allTimeStats.mastered, recentStats.mastered);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+    i++;
+    sprintf(buf,"%-30s%s%16i%16i","High Score", whiteColorEscape, allTimeStats.highestScore, recentStats.highestScore);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+
+    sprintf(buf,"%-30s%s%16i%16i","Most Gold", whiteColorEscape, allTimeStats.mostGold, recentStats.mostGold);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+
+    sprintf(buf,"%-30s%s%16i%16i","Most Lumenstones", whiteColorEscape, allTimeStats.mostLumenstones, recentStats.mostLumenstones);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+    i++;
+    sprintf(buf,"%-30s%s%16i%16i","Deepest Level", whiteColorEscape, allTimeStats.deepestLevel, recentStats.deepestLevel);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+
+    char allTimeFewestTurns[20] = "-";
+    char recentFewestTurns[20] = "-";
+    if (allTimeStats.fewestTurnsWin > 0) {
+        sprintf(allTimeFewestTurns, "%i", allTimeStats.fewestTurnsWin);
+    }
+    if (recentStats.fewestTurnsWin > 0) {
+        sprintf(recentFewestTurns, "%i", recentStats.fewestTurnsWin);
+    }
+    sprintf(buf,"%-30s%s%16s%16s","Shortest Win (Turns)", whiteColorEscape, allTimeFewestTurns, recentFewestTurns);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+    i++;
+    sprintf(buf,"%-30s%s%16i%16i","Longest Win Streak", whiteColorEscape, allTimeStats.longestWinStreak, recentStats.longestWinStreak);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+
+    sprintf(buf,"%-30s%s%16i%16i","Longest Mastery Streak", whiteColorEscape, allTimeStats.longestMasteryStreak, recentStats.longestMasteryStreak);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+    i++;
+    sprintf(buf,"%-30s%s%32i","Current Win Streak", whiteColorEscape, recentStats.currentWinStreak);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+
+    sprintf(buf,"%-30s%s%32i","Current Mastery Streak", whiteColorEscape, recentStats.currentMasteryStreak);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+
+    // Set the dbuf opacity.
+    for (int i=0; i<COLS; i++) {
+        for (int j=0; j<ROWS; j++) {
+            dbuf.cells[i][j].opacity = INTERFACE_OPACITY;
+        }
+    }
+
+    // Display.
+    overlayDisplayBuffer(&dbuf);
+    color continueColor = black;
+    applyColorAverage(&continueColor, &goodMessageColor, 100);
+
+    printString(KEYBOARD_LABELS ? "Press space or click to continue." : "Touch anywhere to continue.",
+                (COLS - strLenWithoutEscapes(KEYBOARD_LABELS ? "Press space or click to continue." : "Touch anywhere to continue.")) / 2,
+                ROWS - 1, &continueColor, &black, 0);
+
+    commitDraws();
+
+    if (recentStats.games > 0) {
+        brogueButton buttons[1];
+        initializeButton(&(buttons[0]));
+        if (KEYBOARD_LABELS) {
+            sprintf(buttons[0].text,  "  %sR%seset  ", yellowColorEscape, whiteColorEscape);
+        } else {
+            strcpy(buttons[0].text, "  Reset  ");
+        }
+        buttons[0].hotkey[0] = 'R';
+        buttons[0].hotkey[1] = 'r';
+        buttons[0].x = 74;
+        buttons[0].y = 25;
+
+        if (buttonInputLoop(buttons, 1, 74, 25, 10, 3, NULL) == 0 && confirm("Reset recent stats?",false)) {
+            saveResetRun();
+        }
+    } else {
+        waitForKeystrokeOrMouseClick();
+    }
+
+    restoreDisplayBuffer(&rbuf);
+}
+
 // This is the basic program loop.
 // When the program launches, or when a game ends, you end up here.
 // If the player has already said what he wants to do next
@@ -1040,6 +1252,10 @@ void mainBrogueJunction() {
             case NG_HIGH_SCORES:
                 rogue.nextGame = NG_NOTHING;
                 printHighScores(false);
+                break;
+            case NG_GAME_STATS:
+                rogue.nextGame = NG_NOTHING;
+                viewGameStats();
                 break;
             case NG_QUIT:
                 // No need to do anything.

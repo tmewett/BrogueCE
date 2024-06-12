@@ -829,7 +829,9 @@ static void checkNutrition() {
             if (theItem->category == FOOD) {
                 sprintf(buf, "unable to control your hunger, you eat a %s.", (theItem->kind == FRUIT ? "mango" : "ration of food"));
                 messageWithColor(buf, &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
-                apply(theItem, false);
+                confirmMessages();
+                eat(theItem, false);
+                playerTurnEnded();
                 break;
             }
         }

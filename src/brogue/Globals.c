@@ -579,8 +579,8 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
 unsigned long terrainFlags(pos p) {
     return (
         tileCatalog[pmapAt(p)->layers[DUNGEON]].flags
-        | tileCatalog[pmapAt(p)->layers[LIQUID]].flags 
-        | tileCatalog[pmapAt(p)->layers[SURFACE]].flags 
+        | tileCatalog[pmapAt(p)->layers[LIQUID]].flags
+        | tileCatalog[pmapAt(p)->layers[SURFACE]].flags
         | tileCatalog[pmapAt(p)->layers[GAS]].flags
     );
 }
@@ -1117,7 +1117,7 @@ creatureType monsterCatalog[NUMBER_MONSTER_KINDS] = {
         (MONST_IMMUNE_TO_WEAPONS)},
     {0, "tentacle horror",G_TENTACLE_HORROR,  &centipedeColor,120,    95,     225,    {25, 35, 3},    1,  100,    100,    DF_PURPLE_BLOOD,0,    true,       0,      0,              {0}},
     {0, "golem",        G_GOLEM,    &gray,          400,    70,     225,    {4, 8, 1},      0,  100,    100,    DF_RUBBLE_BLOOD,0,    true,       0,      0,              {0},
-        (MONST_REFLECT_4 | MONST_DIES_IF_NEGATED)},
+        (MONST_REFLECT_50 | MONST_DIES_IF_NEGATED)},
     {0, "dragon",       G_DRAGON,    &dragonColor,   150,    90,     250,    {25, 50, 4},    20, 50,     200,    DF_GREEN_BLOOD, 0,    true,       0,      0,              {BOLT_DRAGONFIRE},
         (MONST_IMMUNE_TO_FIRE | MONST_CARRY_ITEM_100), (MA_ATTACKS_ALL_ADJACENT)},
 
@@ -1137,17 +1137,17 @@ creatureType monsterCatalog[NUMBER_MONSTER_KINDS] = {
     {0, "spectral sword",G_WEAPON, &spectralImageColor, 1,0, 150,    {1, 1, 1},      0,  50,     100,    0,              SPECTRAL_IMAGE_LIGHT,    false,0,0,       {0},
         (MONST_INANIMATE | MONST_NEVER_SLEEPS | MONST_FLIES | MONST_WILL_NOT_USE_STAIRS | MONST_DIES_IF_NEGATED | MONST_IMMUNE_TO_WEBS)},
     {0, "stone guardian",G_GUARDIAN, &white,   1000,   0,      200,    {12, 17, 2},    0,  100,    100,    DF_RUBBLE,      0,    false,      100,      DF_GUARDIAN_STEP, {0},
-        (MONST_INANIMATE | MONST_NEVER_SLEEPS | MONST_ALWAYS_HUNTING | MONST_IMMUNE_TO_FIRE | MONST_IMMUNE_TO_WEAPONS | MONST_WILL_NOT_USE_STAIRS | MONST_DIES_IF_NEGATED | MONST_REFLECT_4 | MONST_ALWAYS_USE_ABILITY | MONST_GETS_TURN_ON_ACTIVATION)},
+        (MONST_INANIMATE | MONST_NEVER_SLEEPS | MONST_ALWAYS_HUNTING | MONST_IMMUNE_TO_FIRE | MONST_IMMUNE_TO_WEAPONS | MONST_WILL_NOT_USE_STAIRS | MONST_DIES_IF_NEGATED | MONST_ALWAYS_USE_ABILITY | MONST_GETS_TURN_ON_ACTIVATION), (MA_REFLECT_100)},
     {0, "winged guardian",G_WINGED_GUARDIAN, &blue,   1000,   0,      200,    {12, 17, 2},    0,  100,    100,    DF_RUBBLE,      0,    false,      100,      DF_SILENT_GLYPH_GLOW, {BOLT_BLINKING},
-        (MONST_INANIMATE | MONST_NEVER_SLEEPS | MONST_ALWAYS_HUNTING | MONST_IMMUNE_TO_FIRE | MONST_IMMUNE_TO_WEAPONS | MONST_WILL_NOT_USE_STAIRS | MONST_DIES_IF_NEGATED | MONST_REFLECT_4 | MONST_GETS_TURN_ON_ACTIVATION | MONST_ALWAYS_USE_ABILITY), (0)},
+        (MONST_INANIMATE | MONST_NEVER_SLEEPS | MONST_ALWAYS_HUNTING | MONST_IMMUNE_TO_FIRE | MONST_IMMUNE_TO_WEAPONS | MONST_WILL_NOT_USE_STAIRS | MONST_DIES_IF_NEGATED | MONST_GETS_TURN_ON_ACTIVATION | MONST_ALWAYS_USE_ABILITY), (MA_REFLECT_100)},
     {0, "guardian spirit",G_GUARDIAN, &spectralImageColor,1000,0,200,  {5, 12, 2},     0,  100,    100,    0,              SPECTRAL_IMAGE_LIGHT,    false,100,0,     {0},
-        (MONST_INANIMATE | MONST_NEVER_SLEEPS | MONST_IMMUNE_TO_FIRE | MONST_IMMUNE_TO_WEAPONS | MONST_DIES_IF_NEGATED | MONST_REFLECT_4 | MONST_ALWAYS_USE_ABILITY)},
+        (MONST_INANIMATE | MONST_NEVER_SLEEPS | MONST_IMMUNE_TO_FIRE | MONST_IMMUNE_TO_WEAPONS | MONST_DIES_IF_NEGATED | MONST_ALWAYS_USE_ABILITY), (MA_REFLECT_100)},
     {0, "Warden of Yendor",G_WARDEN, &yendorLightColor,1000,   0,    300,    {12, 17, 2},    0,  200,    200,    DF_RUBBLE,      YENDOR_LIGHT,    true,  100, 0,           {0},
         (MONST_NEVER_SLEEPS | MONST_ALWAYS_HUNTING | MONST_INVULNERABLE | MONST_NO_POLYMORPH)},
     {0, "eldritch totem",G_TOTEM, &glyphColor,80,    0,      0,      {0, 0, 0},      0,  100,    100,    DF_RUBBLE_BLOOD,0,    false,      0,      0,              {0},
         (MONST_IMMUNE_TO_WEBS | MONST_NEVER_SLEEPS | MONST_IMMOBILE | MONST_INANIMATE | MONST_ALWAYS_HUNTING | MONST_WILL_NOT_USE_STAIRS | MONST_GETS_TURN_ON_ACTIVATION | MONST_ALWAYS_USE_ABILITY), (MA_CAST_SUMMON)},
     {0, "mirrored totem",G_TOTEM, &beckonColor,80,   0,      0,      {0, 0, 0},      0,  100,    100,    DF_RUBBLE_BLOOD,0,    false,      100,    DF_MIRROR_TOTEM_STEP, {BOLT_BECKONING},
-        (MONST_IMMUNE_TO_WEBS | MONST_NEVER_SLEEPS | MONST_IMMOBILE | MONST_INANIMATE | MONST_ALWAYS_HUNTING | MONST_WILL_NOT_USE_STAIRS | MONST_GETS_TURN_ON_ACTIVATION | MONST_ALWAYS_USE_ABILITY | MONST_REFLECT_4 | MONST_IMMUNE_TO_WEAPONS | MONST_IMMUNE_TO_FIRE), (0)},
+        (MONST_IMMUNE_TO_WEBS | MONST_NEVER_SLEEPS | MONST_IMMOBILE | MONST_INANIMATE | MONST_ALWAYS_HUNTING | MONST_WILL_NOT_USE_STAIRS | MONST_GETS_TURN_ON_ACTIVATION | MONST_ALWAYS_USE_ABILITY | MONST_IMMUNE_TO_WEAPONS | MONST_IMMUNE_TO_FIRE), (MA_REFLECT_100)},
 
     // legendary allies
     {0, "unicorn",      G_UNICORN, &white,   40,     60,     175,    {2, 10, 2},     20, 50,     100,    DF_RED_BLOOD,   UNICORN_LIGHT,    true, 1,DF_UNICORN_POOP, {BOLT_HEALING, BOLT_SHIELDING},
@@ -1407,7 +1407,7 @@ const mutation mutationCatalog[NUMBER_MUTATORS] = {
         "A rare mutation allows $HIMHER to heal $HIMSELFHERSELF with every attack.",    true},
     {"toxic",       &green,         100,            100,        200,            100,    20,     -1, 0,      0,      0,          (MA_CAUSES_WEAKNESS | MA_POISONS), MONST_MAINTAINS_DISTANCE, (MA_CAUSES_WEAKNESS | MA_POISONS),
         "A rare mutation causes $HIMHER to poison $HISHER victims and sap their strength with every attack.",   true},
-    {"reflective",  &darkTurquoise, 100,            100,        100,            100,    100,    -1, 0,      0,      MONST_REFLECT_4, 0,         (MONST_REFLECT_4 | MONST_ALWAYS_USE_ABILITY), 0,
+    {"reflective",  &darkTurquoise, 100,            100,        100,            100,    100,    -1, 0,      0,      MONST_REFLECT_50, 0,         (MONST_REFLECT_50 | MONST_ALWAYS_USE_ABILITY), 0,
         "A rare mutation has coated $HISHER flesh with reflective scales.",     true},
 };
 
@@ -1662,6 +1662,59 @@ itemTable ringTable[NUMBER_RING_KINDS] = {
     {"reaping",         itemGems[7], "",    1,  700,    0, 0, {1,3,1}, false, false, 1, false, "This ring of blood magic will recharge your staffs and charms every time you hit an enemy. Cursed rings of reaping will drain your staffs and charms with every hit."},
 };
 
+const monsterBehavior monsterBehaviorCatalog[32] = {
+    {"is invisible",                    true},          // MONST_INVISIBLE
+    {"is an inanimate object",          false},         // MONST_INANIMATE
+    {"cannot move",                     false},         // MONST_IMMOBILE
+    {"",                                false},         // MONST_CARRY_ITEM_100
+    {"",                                false},         // MONST_CARRY_ITEM_25
+    {"",                                false},         // MONST_ALWAYS_HUNTING
+    {"flees at low health",             false},         // MONST_FLEES_NEAR_DEATH
+    {"",                                false},         // MONST_ATTACKABLE_THRU_WALLS
+    {"corrodes weapons when hit",       true},          // MONST_DEFEND_DEGRADE_WEAPON
+    {"is immune to weapon damage",      true},          // MONST_IMMUNE_TO_WEAPONS
+    {"flies",                           true},          // MONST_FLIES
+    {"moves erratically",               true},          // MONST_FLITS
+    {"is immune to fire",               true},          // MONST_IMMUNE_TO_FIRE
+    {"",                                false},         // MONST_CAST_SPELLS_SLOWLY
+    {"cannot be entangled",             false},         // MONST_IMMUNE_TO_WEBS
+    {"can reflect magic spells",        true},          // MONST_REFLECT_50
+    {"never sleeps",                    false},         // MONST_NEVER_SLEEPS
+    {"burns unceasingly",               true},          // MONST_FIERY
+    {"is invulnerable",                 false},         // MONST_INVULNERABLE
+    {"is at home in water",             false},         // MONST_IMMUNE_TO_WATER
+    {"cannot venture onto dry land",    false},         // MONST_RESTRICTED_TO_LIQUID
+    {"submerges",                       false},         // MONST_SUBMERGES
+    {"keeps $HISHER distance",          true},          // MONST_MAINTAINS_DISTANCE
+    {"",                                false},         // MONST_WILL_NOT_USE_STAIRS
+    {"is animated purely by magic",     false},         // MONST_DIES_IF_NEGATED
+    {"",                                false},         // MONST_MALE
+    {"",                                false},         // MONST_FEMALE
+    {"",                                false},         // MONST_NOT_LISTED_IN_SIDEBAR
+    {"moves only when activated",       false},         // MONST_GETS_TURN_ON_ACTIVATION
+};
+
+const monsterAbility monsterAbilityCatalog[32] = {
+    {"can induce hallucinations",                   true},  // MA_HIT_HALLUCINATE
+    {"can steal items",                             true},  // MA_HIT_STEAL_FLEE
+    {"lights enemies on fire when $HESHE hits",     true},  // MA_HIT_BURN
+    {"can possess $HISHER summoned allies",         true},  // MA_ENTER_SUMMONS
+    {"corrodes armor when $HESHE hits",             true},  // MA_HIT_DEGRADE_ARMOR
+    {"can summon allies",                           true},  // MA_CAST_SUMMON
+    {"immobilizes $HISHER prey",                    true},  // MA_SEIZES
+    {"injects poison when $HESHE hits",             true},  // MA_POISONS
+    {"",                                            true},  // MA_DF_ON_DEATH
+    {"divides in two when struck",                  true},  // MA_CLONE_SELF_ON_DEFEND
+    {"dies when $HESHE attacks",                    true},  // MA_KAMIKAZE
+    {"recovers health when $HESHE inflicts damage", true},  // MA_TRANSFERENCE
+    {"saps strength when $HESHE inflicts damage",   true},  // MA_CAUSE_WEAKNESS
+    {"attacks up to two opponents in a line",       false}, // MA_ATTACKS_PENETRATE
+    {"attacks all adjacent opponents at once",      false}, // MA_ATTACKS_ALL_ADJACENT
+    {"attacks with a whip",                         false}, // MA_ATTACKS_EXTEND
+    {"pushes opponents backward when $HESHE hits",  false}, // MA_ATTACKS_STAGGER
+    {"avoids attacking in corridors in a group",    true},  // MA_AVOID_CORRIDORS
+};
+
 const char monsterBehaviorFlagDescriptions[32][COLS] = {
     "is invisible",                             // MONST_INVISIBLE
     "is an inanimate object",                   // MONST_INANIMATE
@@ -1678,7 +1731,7 @@ const char monsterBehaviorFlagDescriptions[32][COLS] = {
     "is immune to fire",                        // MONST_IMMUNE_TO_FIRE
     "",                                         // MONST_CAST_SPELLS_SLOWLY
     "cannot be entangled",                      // MONST_IMMUNE_TO_WEBS
-    "can reflect magic spells",                 // MONST_REFLECT_4
+    "can reflect magic spells",                 // MONST_REFLECT_50
     "never sleeps",                             // MONST_NEVER_SLEEPS
     "burns unceasingly",                        // MONST_FIERY
     "is invulnerable",                          // MONST_INVULNERABLE
@@ -1714,6 +1767,7 @@ const char monsterAbilityFlagDescriptions[32][COLS] = {
     "attacks with a whip",                      // MA_ATTACKS_EXTEND
     "pushes opponents backward when $HESHE hits", // MA_ATTACKS_STAGGER
     "avoids attacking in corridors in a group", // MA_AVOID_CORRIDORS
+    "reflects magic spells back at the caster", // MA_REFLECT_100
 };
 
 const char monsterBookkeepingFlagDescriptions[32][COLS] = {
@@ -1733,4 +1787,33 @@ const char monsterBookkeepingFlagDescriptions[32][COLS] = {
     "",                                         // MB_WILL_FLASH
     "is anchored to reality by $HISHER summoner",// MB_BOUND_TO_LEADER
     "is marked for demonic sacrifice",          // MB_MARKED_FOR_SACRIFICE
+};
+
+const statusEffect statusEffectCatalog[NUMBER_OF_STATUS_EFFECTS] = {
+    {"Searching",       false, 0}, // STATUS_SEARCHING
+    {"Donning Armor",   false, 0}, // STATUS_DONNING
+    {"Weakened: -",     false, 0}, // STATUS_WEAKENED
+    {"Telepathic",      true,  1}, // STATUS_TELEPATHIC
+    {"Hallucinating",   true,  0}, // STATUS_HALLUCINATING
+    {"Levitating",      true,  1}, // STATUS_LEVITATING
+    {"Slowed",          true,  0}, // STATUS_SLOWED
+    {"Hasted",          true,  0}, // STATUS_HASTED
+    {"Confused",        true,  0}, // STATUS_CONFUSED
+    {"Burning",         false, 0}, // STATUS_BURNING
+    {"Paralyzed",       false, 0}, // STATUS_PARALYZED
+    {"Poisoned",        false, 0}, // STATUS_POISONED
+    {"Stuck",           false, 0}, // STATUS_STUCK
+    {"Nauseous",        false, 0}, // STATUS_NAUSEOUS
+    {"Discordant",      true,  0}, // STATUS_DISCORDANT
+    {"Immune to Fire",  true,  1}, // STATUS_IMMUNE_TO_FIRE
+    {"",                false, 0}, // STATUS_EXPLOSION_IMMUNITY,
+    {"",                false, 0}, // STATUS_NUTRITION,
+    {"",                false, 0}, // STATUS_ENTERS_LEVEL_IN,
+    {"",                false, 0}, // STATUS_ENRAGED,
+    {"Frightened",      true,  0}, // STATUS_MAGICAL_FEAR
+    {"Entranced",       true,  0}, // STATUS_ENTRANCED
+    {"Darkened",        true,  0}, // STATUS_DARKNESS
+    {"Lifespan",        false, 0}, // STATUS_LIFESPAN_REMAINING
+    {"Shielded",        true,  0}, // STATUS_SHIELDED
+    {"Invisible",       true,  0}, // STATUS_INVISIBLE
 };

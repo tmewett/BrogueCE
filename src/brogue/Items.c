@@ -107,7 +107,7 @@ static unsigned long pickItemCategory(unsigned long theCategory) {
 }
 
 /// @brief Pick a random item category for hallucination
-/// @return the category 
+/// @return the category
 enum itemCategory getHallucinatedItemCategory(void) {
     const enum itemCategory itemCategories[10] = {FOOD, WEAPON, ARMOR, POTION, SCROLL, STAFF, WAND, RING, CHARM, GOLD};
     return itemCategories[rand_range(0, 9)];
@@ -149,6 +149,18 @@ enum displayGlyph getItemCategoryGlyph(const enum itemCategory theCategory) {
             break;
     }
     return 0;
+}
+
+/// @brief Checks if an item is a throwing weapon
+/// @param theItem the item
+/// @return true if the item is a throwing weapon
+static boolean itemIsThrowingWeapon(const item *theItem) {
+    if (theItem && (theItem->category == WEAPON)
+        && ((theItem->kind == DART) || (theItem->kind == JAVELIN) || (theItem->kind == INCENDIARY_DART))) {
+
+        return true;
+    }
+    return false;
 }
 
 // Sets an item to the given type and category (or chooses randomly if -1) with all other stats
@@ -1839,6 +1851,19 @@ static short apparentRingBonus(const enum ringKind kind) {
     return retval;
 }
 
+/// @brief Checks if there are any acidic monsters in a monster class
+/// @param classID The monster class
+/// @return True if the monster class has an acidic monster
+static boolean monsterClassHasAcidicMonster(const short classID) {
+
+    for (int i = 0; monsterClassCatalog[classID].memberList[i] != 0; i++) {
+        if (monsterCatalog[monsterClassCatalog[classID].memberList[i]].flags & MONST_DEFEND_DEGRADE_WEAPON) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void itemDetails(char *buf, item *theItem) {
     char buf2[1000], buf3[1000], theName[500], goodColorEscape[20], badColorEscape[20], whiteColorEscape[20];
     boolean singular, carried;
@@ -2148,9 +2173,15 @@ void itemDetails(char *buf, item *theItem) {
                         strcat(buf, buf2);
                         if (theItem->enchant2 == W_SLAYING) {
                             describeMonsterClass(buf3, theItem->vorpalEnemy, false);
-                            sprintf(buf2, "It will never fail to slay a%s %s in a single stroke. ",
-                                    (isVowelish(buf3) ? "n" : ""),
-                                    buf3);
+                            if (monsterClassHasAcidicMonster(theItem->vorpalEnemy)) {
+                                sprintf(buf2, "It is impervious to corrosion when attacking a%s %s, and will never fail to slay one in a single stroke. ",
+                                        (isVowelish(buf3) ? "n" : ""),
+                                        buf3);
+                            } else {
+                                sprintf(buf2, "It will never fail to slay a%s %s in a single stroke. ",
+                                        (isVowelish(buf3) ? "n" : ""),
+                                        buf3);
+                            }
                             strcat(buf, buf2);
                         } else if (theItem->enchant2 == W_MULTIPLICITY) {
                             if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
@@ -2754,7 +2785,7 @@ char displayInventory(unsigned short categoryMask,
 
     clearCursorPath();
 
-    
+
     screenDisplayBuffer dbuf;
     clearDisplayBuffer(&dbuf);
 
@@ -3031,7 +3062,7 @@ char displayInventory(unsigned short categoryMask,
 
                     switch (actionKey) {
                         case APPLY_KEY:
-                            apply(theItem, true);
+                            apply(theItem);
                             break;
                         case EQUIP_KEY:
                             equip(theItem);
@@ -3639,6 +3670,51 @@ static boolean tunnelize(short x, short y) {
     }
     return didSomething;
 }
+
+/// @brief Checks if a monster will be affected by a negation bolt or blast
+/// @param monst The monster
+/// @param isBolt True to check for a negation bolt. False for negation blast.
+/// @return True if negation will have an effect
+static boolean negationWillAffectMonster(creature *monst, boolean isBolt) {
+
+    // negation bolts don't affect monsters that always reflect. negation never affects the warden.
+    if ((isBolt && (monst->info.abilityFlags & MA_REFLECT_100))
+        || (monst->info.flags & MONST_INVULNERABLE)) {
+        return false;
+    }
+
+    if ((monst->info.abilityFlags & ~MA_NON_NEGATABLE_ABILITIES)
+        || (monst->bookkeepingFlags & MB_SEIZING)
+        || (monst->info.flags & MONST_DIES_IF_NEGATED)
+        || (monst->info.flags & NEGATABLE_TRAITS)
+        || (monst->info.flags & MONST_IMMUNE_TO_FIRE)
+        || ((monst->info.flags & MONST_FIERY) && (monst->status[STATUS_BURNING]))
+        || (monst->status[STATUS_IMMUNE_TO_FIRE])
+        || (monst->status[STATUS_SLOWED])
+        || (monst->status[STATUS_HASTED])
+        || (monst->status[STATUS_CONFUSED])
+        || (monst->status[STATUS_ENTRANCED])
+        || (monst->status[STATUS_DISCORDANT])
+        || (monst->status[STATUS_SHIELDED])
+        || (monst->status[STATUS_INVISIBLE])
+        || (monst->status[STATUS_MAGICAL_FEAR])
+        || (monst->status[STATUS_LEVITATING])
+        || (monst->movementSpeed != monst->info.movementSpeed)
+        || (monst->attackSpeed != monst->info.attackSpeed)
+        || (monst->mutationIndex > -1 && mutationCatalog[monst->mutationIndex].canBeNegated)) {
+        return true;
+    }
+
+    // any negatable bolts?
+    for (int i = 0; i < 20; i++) {
+        if (monst->info.bolts[i] && !(boltCatalog[monst->info.bolts[i]].flags & BF_NOT_NEGATABLE)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 /* Negates the given creature. Returns true if there was an effect for the purpose of identifying a wand of negation.
  * If the creature was stripped of any traits or abilities, the wasNegated property is set, which is used for display in
  * sidebar and the creature's description.
@@ -3674,71 +3750,9 @@ boolean negate(creature *monst) {
         combatMessage(buf, messageColorFromVictim(monst));
         negated = true;
     } else if (!(monst->info.flags & MONST_INVULNERABLE)) {
-        // works on inanimates
-        if (monst->status[STATUS_IMMUNE_TO_FIRE]) {
-            monst->status[STATUS_IMMUNE_TO_FIRE] = 0;
+        if (canNegateCreatureStatusEffects(monst)) {
             negated = true;
-        }
-        if (monst->status[STATUS_SLOWED]) {
-            monst->status[STATUS_SLOWED] = 0;
-            negated = true;
-        }
-        if (monst->status[STATUS_HASTED]) {
-            monst->status[STATUS_HASTED] = 0;
-            negated = true;
-        }
-        if (monst->status[STATUS_CONFUSED]) {
-            monst->status[STATUS_CONFUSED] = 0;
-            negated = true;
-        }
-        if (monst->status[STATUS_ENTRANCED]) {
-            monst->status[STATUS_ENTRANCED] = 0;
-            negated = true;
-        }
-        if (monst->status[STATUS_DISCORDANT]) {
-            monst->status[STATUS_DISCORDANT] = 0;
-            negated = true;
-        }
-        if (monst->status[STATUS_SHIELDED]) {
-            monst->status[STATUS_SHIELDED] = 0;
-            negated = true;
-        }
-        if (monst->status[STATUS_INVISIBLE]) {
-            monst->status[STATUS_INVISIBLE] = 0;
-            negated = true;
-        }
-        if (monst == &player) {
-            if (monst->status[STATUS_TELEPATHIC] > 1 ) {
-                monst->status[STATUS_TELEPATHIC] = 1;
-                negated = true;
-            }
-            if (monst->status[STATUS_MAGICAL_FEAR] > 1 ) {
-                monst->status[STATUS_MAGICAL_FEAR] = 1;
-                negated = true;
-            }
-            if (monst->status[STATUS_LEVITATING] > 1 ) {
-                monst->status[STATUS_LEVITATING] = 1;
-                negated = true;
-            }
-            if (monst->status[STATUS_DARKNESS]) {
-                monst->status[STATUS_DARKNESS] = 0;
-                updateMinersLightRadius();
-                updateVision(true);
-                negated = true;
-            }
-        } else {
-            if (monst->status[STATUS_TELEPATHIC] > 0 ) {
-                monst->status[STATUS_TELEPATHIC] = 0;
-                negated = true;
-            }
-            if (monst->status[STATUS_MAGICAL_FEAR] > 0 ) {
-                monst->status[STATUS_MAGICAL_FEAR] = 0;
-                negated = true;
-            }
-            if (monst->status[STATUS_LEVITATING] > 0 ) {
-                monst->status[STATUS_LEVITATING] = 0;
-                negated = true;
-            }
+            negateCreatureStatusEffects(monst);
         }
         if (monst->info.flags & MONST_IMMUNE_TO_FIRE) {
             monst->info.flags &= ~MONST_IMMUNE_TO_FIRE;
@@ -3772,9 +3786,10 @@ boolean negate(creature *monst) {
         }
         for (i = 0; i < 20; i++) {
             backupBolts[i] = monst->info.bolts[i];
-            monst->info.bolts[i] = BOLT_NONE;
             if (monst->info.bolts[i] && !(boltCatalog[monst->info.bolts[i]].flags & BF_NOT_NEGATABLE)) {
+                monst->info.bolts[i] = BOLT_NONE;
                 negated = true;
+                monst->wasNegated = true;
             }
         }
         for (i = 0, j = 0; i < 20 && backupBolts[i]; i++) {
@@ -4196,10 +4211,11 @@ boolean projectileReflects(creature *attacker, creature *defender) {
         netReflectionLevel = 0;
     }
 
-    if (defender && (defender->info.flags & MONST_REFLECT_4)) {
-        if (defender->info.flags & MONST_ALWAYS_USE_ABILITY) {
-            return true;
-        }
+    if (defender && (defender->info.abilityFlags & MA_REFLECT_100)) {
+        return true;
+    }
+
+    if (defender && (defender->info.flags & MONST_REFLECT_50)) {
         netReflectionLevel += 4 * FP_FACTOR;
     }
 
@@ -5147,17 +5163,119 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
     return autoID;
 }
 
+/// @brief Checks if an item is known to be of the given magic polarity
+/// @param theItem the item to check
+/// @param magicPolarity the magic polarity (-1 for bad, 1 for good)
+/// @return true if the player knows the item is of the given magic polarity
+static boolean itemMagicPolarityIsKnown(const item *theItem, int magicPolarity) {
+    itemTable *table = tableForItemCategory(theItem->category);
+
+    if ((theItem && (theItem->flags & (ITEM_MAGIC_DETECTED | ITEM_IDENTIFIED)))
+        || (table && (table[theItem->kind].identified || table[theItem->kind].magicPolarityRevealed))) {
+
+            return itemMagicPolarity(theItem) == magicPolarity;
+    }
+    return false;
+}
+
+/// @brief Checks if a monster is a valid auto-target when the player is using a staff/wand or throwing something.
+/// @param monst The monster
+/// @param theItem The staff, wand, throwing weapon, or bad/unknown potion
+/// @param targetingMode The auto-target mode. Are we throwing or using that staff/wand?
+/// @return True if the monster can be auto-targeted
+static boolean canAutoTargetMonster(const creature *monst, const item *theItem, enum autoTargetMode targetingMode) {
+
+    boolean throw = targetingMode == AUTOTARGET_MODE_THROW;
+    boolean use = targetingMode == AUTOTARGET_MODE_USE_STAFF_OR_WAND;
+
+    if (!monst || !theItem
+        || (!throw && !use)
+        || monst->depth != rogue.depthLevel
+        || (monst->bookkeepingFlags & MB_IS_DYING)
+        || (use && (theItem->category != STAFF) && (theItem->category != WAND))
+        || (throw && (theItem->category != POTION) && (theItem->category != WEAPON))
+        || (throw && (theItem->category == WEAPON) && !itemIsThrowingWeapon(theItem))
+        || (throw && (theItem->category == WEAPON) && (monst->info.flags & MONST_INVULNERABLE))
+        || (throw && (theItem->category == POTION) && itemMagicPolarityIsKnown(theItem, MAGIC_POLARITY_BENEVOLENT))
+        || !canSeeMonster(monst)
+        || !openPathBetween(player.loc, monst->loc)
+        // When hallucinating but not telepathic, don't target creatures whose appearance changes.
+        || (player.status[STATUS_HALLUCINATING] && !player.status[STATUS_TELEPATHIC]
+            && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE)))) {
+        return false;
+    }
+
+    boolean isAlly = monstersAreTeammates(&player, monst) || (monst->bookkeepingFlags & MB_CAPTIVE);
+    boolean isEnemy = !isAlly;
+    boolean itemKindIsKnown = tableForItemCategory(theItem->category)[theItem->kind].identified;
+
+    if (throw) { // we are throwing a throwing weapon or a bad/unknown potion
+        if (theItem->category == WEAPON) {
+            if ((theItem->kind == INCENDIARY_DART && monst->status[STATUS_IMMUNE_TO_FIRE])
+                || (theItem->kind != INCENDIARY_DART && (monst->info.flags & MONST_IMMUNE_TO_WEAPONS))) {
+                return false;
+            }
+        }
+        if (itemKindIsKnown && theItem->category == POTION) {
+            if ((theItem->kind == POTION_INCINERATION && monst->status[STATUS_IMMUNE_TO_FIRE])
+                || ((monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))
+                    && (theItem->kind == POTION_CONFUSION || theItem->kind == POTION_POISON))) {
+                return false;
+            }
+        }
+        return isEnemy;
+    }
+
+    // If we got this far we're using a staff or wand
+    // Don't target enemies that always reflect bolts (stone/winged guardian, non-negated mirrored totem)
+    if (isEnemy && (monst->info.abilityFlags & MA_REFLECT_100)) {
+        return false;
+    }
+
+    bolt theBolt = boltCatalog[tableForItemCategory(theItem->category)[theItem->kind].power];
+    boolean magicPolarityIsKnownBenevolent = itemMagicPolarityIsKnown(theItem, MAGIC_POLARITY_BENEVOLENT);
+    boolean magicPolarityIsKnownMalevolent = itemMagicPolarityIsKnown(theItem, MAGIC_POLARITY_MALEVOLENT);
+    boolean magicPolarityIsKnown = magicPolarityIsKnownBenevolent || magicPolarityIsKnownMalevolent;
+
+    // todo: logic consolidation with this function, specificallyValidBoltTarget, and the monster details screen
+    // to show what effect (or not) the bolt will have
+    if (itemKindIsKnown) {
+        if ((theBolt.forbiddenMonsterFlags & monst->info.flags)
+            || (isEnemy && theBolt.boltEffect == BE_DOMINATION && (wandDominate(monst) <= 0))
+            || (isEnemy && theBolt.boltEffect == BE_BECKONING && (distanceBetween(player.loc, monst->loc) <= 1))
+            || (isEnemy && theBolt.boltEffect == BE_DAMAGE && (theBolt.flags & BF_FIERY) && monst->status[STATUS_IMMUNE_TO_FIRE])
+            || (isAlly && theBolt.boltEffect == BE_HEALING && !(monst->info.flags & MONST_REFLECT_50)
+                && (monst->currentHP >= monst->info.maxHP))) {
+            return false;
+        } else if (isEnemy && theBolt.boltEffect == BE_NEGATION) {
+            return negationWillAffectMonster(monst, true);
+        } else if (isEnemy && theBolt.boltEffect == BE_TUNNELING && (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS)) {
+            return true;
+        } else if (((isAlly && (theBolt.flags & BF_TARGET_ALLIES)) || (isEnemy && (theBolt.flags & BF_TARGET_ENEMIES)))) {
+            return true;
+        }
+    } else if (magicPolarityIsKnown) {
+        if ((isEnemy && magicPolarityIsKnownBenevolent)
+            || isAlly && magicPolarityIsKnownMalevolent) {
+            return true;
+        }
+    } else if (isEnemy) { // both the kind and magic polarity are unknown
+        return true;
+    }
+
+    return false;
+}
+
 // Relies on the sidebar entity list. If one is already selected, select the next qualifying. Otherwise, target the first qualifying.
-boolean nextTargetAfter(short *returnX,
-                        short *returnY,
-                        short targetX,
-                        short targetY,
-                        boolean targetEnemies,
-                        boolean targetAllies,
-                        boolean targetItems,
-                        boolean targetTerrain,
-                        boolean requireOpenPath,
+boolean nextTargetAfter(const item *theItem,
+                        pos *returnLoc,
+                        pos targetLoc,
+                        enum autoTargetMode targetMode,
                         boolean reverseDirection) {
+
+    if (targetMode == AUTOTARGET_MODE_NONE) {
+        return false;
+    }
     short selectedIndex = 0;
     pos deduplicatedTargetList[ROWS];
 
@@ -5167,7 +5285,7 @@ boolean nextTargetAfter(short *returnX,
             if (targetCount == 0 || !posEq(deduplicatedTargetList[targetCount-1], rogue.sidebarLocationList[i])) {
 
                 deduplicatedTargetList[targetCount] = rogue.sidebarLocationList[i];
-                if (posEq(rogue.sidebarLocationList[i], (pos){ targetX, targetY })) {
+                if (posEq(rogue.sidebarLocationList[i], targetLoc)) {
                     selectedIndex = targetCount;
                 }
                 targetCount++;
@@ -5176,40 +5294,18 @@ boolean nextTargetAfter(short *returnX,
     }
     for (int i = reverseDirection ? targetCount - 1 : 0; reverseDirection ? i >= 0 : i < targetCount; reverseDirection ? i-- : i++) {
         const int n = (selectedIndex + i) % targetCount;
-        const int newX = deduplicatedTargetList[n].x;
-        const int newY = deduplicatedTargetList[n].y;
-        if (((newX != player.loc.x || newY != player.loc.y) 
-            || (posEq((pos){newX, newY}, player.loc) && targetItems && itemAtLoc(player.loc)))
-            && (newX != targetX || newY != targetY)
-            && (!requireOpenPath || openPathBetween(player.loc.x, player.loc.y, newX, newY))) {
+        pos newLoc = (pos) {deduplicatedTargetList[n].x, deduplicatedTargetList[n].y};
+        if ((!posEq(newLoc, player.loc) || (posEq(newLoc, player.loc) && targetMode == AUTOTARGET_MODE_EXPLORE && itemAtLoc(player.loc)))
+            && (!posEq(newLoc, targetLoc))
+            && ((targetMode == AUTOTARGET_MODE_EXPLORE) || openPathBetween(player.loc, newLoc))) {
 
-            brogueAssert(coordinatesAreInMap(newX, newY));
+            brogueAssert(coordinatesAreInMap(newLoc.x, newLoc.y));
             brogueAssert(n >= 0 && n < targetCount);
-            creature *const monst = monsterAtLoc((pos){ newX, newY });
-            if (monst) {
-                if (monstersAreEnemies(&player, monst)) {
-                    if (targetEnemies) {
-                        *returnX = newX;
-                        *returnY = newY;
-                        return true;
-                    }
-                } else {
-                    if (targetAllies) {
-                        *returnX = newX;
-                        *returnY = newY;
-                        return true;
-                    }
-                }
-            }
-            item *const theItem = itemAtLoc((pos){ newX, newY });
-            if ((!monst || (monst == &player)) && theItem && targetItems) {
-                *returnX = newX;
-                *returnY = newY;
-                return true;
-            }
-            if (!monst && !theItem && targetTerrain) {
-                *returnX = newX;
-                *returnY = newY;
+            creature *const monst = monsterAtLoc(newLoc);
+            if ((monst && canAutoTargetMonster(monst, theItem, targetMode))
+                || (targetMode == AUTOTARGET_MODE_EXPLORE)) {
+
+                *returnLoc = newLoc;
                 return true;
             }
         }
@@ -5488,31 +5584,45 @@ static pos pullMouseClickDuringPlayback(void) {
     };
 }
 
-// Returns whether monst is targetable with thrown items, staves, wands, etc.
-// i.e. would the player ever select it?
-static boolean creatureIsTargetable(creature *monst) {
-    return monst != NULL
-        && canSeeMonster(monst)
-        && monst->depth == rogue.depthLevel
-        && !(monst->bookkeepingFlags & MB_IS_DYING)
-        && openPathBetween(player.loc.x, player.loc.y, monst->loc.x, monst->loc.y);
-}
-
-// Return true if a target is chosen, or false if canceled.
+/// @brief Allows the player to interactively choose a target location for actions that require a straight line from
+/// the player to the target (e.g. throwing an item or using a staff/wand). The best path to the target is determined
+/// and highlighted. If possible, an inital target is chosen automatically. The player can cycle through additional
+/// targets (if any) with the tab key. Alternatively, the player can manually choose a target.
+/// @param returnLoc The location of the chosen target, if any.
+/// @param maxDistance The maximum throwing/blinking distance. Used to provide a visual cue to the player.
+/// @param targetMode Determines how targets are chosen based on the action (e.g. throw, use staff/wand).
+/// @param theItem The staff, wand, or thrown item, if any.
+/// @return True if the player selected a target
 boolean chooseTarget(pos *returnLoc,
                      short maxDistance,
-                     boolean stopAtTarget,
-                     boolean autoTarget,
-                     boolean targetAllies,
-                     const bolt *theBolt,
-                     const color *trajectoryColor) {
-    short numCells, i, distance, newX, newY;
+                     enum autoTargetMode targetMode,
+                     const item *theItem) {
+    short numCells, i, distance;
     pos coordinates[DCOLS];
     creature *monst;
     boolean canceled, targetConfirmed, tabKey, cursorInTrajectory, focusedOnSomething = false;
     rogueEvent event = {0};
     short oldRNG;
-    color trajColor = *trajectoryColor;
+    boolean stopAtTarget = (targetMode == AUTOTARGET_MODE_THROW);
+    color trajColor;
+    bolt theBolt;
+
+    // choose the bolt and color to use for highlighting the path to the target
+    if (theItem && (targetMode == AUTOTARGET_MODE_USE_STAFF_OR_WAND)
+        && ((theItem->category == STAFF) || (theItem->category == WAND))) {
+
+        if (tableForItemCategory(theItem->category)[theItem->kind].identified) {
+            theBolt = boltCatalog[boltForItem(theItem)];
+            trajColor = (theBolt.backColor == NULL) ? red : *theBolt.backColor;
+        } else {
+            trajColor = gray;
+        }
+    } else if (theItem && (targetMode == AUTOTARGET_MODE_THROW)) {
+        trajColor = red;
+    } else {
+        trajColor = white;
+        theBolt = boltCatalog[BOLT_NONE];
+    }
 
     normColor(&trajColor, 100, 10);
 
@@ -5525,19 +5635,18 @@ boolean chooseTarget(pos *returnLoc,
 
     oldRNG = rogue.RNG;
     rogue.RNG = RNG_COSMETIC;
-    //assureCosmeticRNG;
 
     pos originLoc = player.loc;
     pos oldTargetLoc = player.loc;
     pos targetLoc = player.loc;
+    pos newLoc;
 
-    if (autoTarget) {
-        if (creatureIsTargetable(rogue.lastTarget) && (targetAllies == (rogue.lastTarget->creatureState == MONSTER_ALLY))) {
+    if (theItem && ((targetMode == AUTOTARGET_MODE_USE_STAFF_OR_WAND) || (targetMode == AUTOTARGET_MODE_THROW))) {
+        if (canAutoTargetMonster(rogue.lastTarget, theItem, targetMode)) {
             monst = rogue.lastTarget;
         } else {
-            //rogue.lastTarget = NULL;
-            if (nextTargetAfter(&newX, &newY, targetLoc.x, targetLoc.y, !targetAllies, targetAllies, false, false, true, false)) {
-                targetLoc = (pos) { .x = newX, .y = newY };
+            if (nextTargetAfter(theItem, &newLoc, targetLoc, targetMode, false)) {
+                targetLoc = newLoc;
             }
             monst = monsterAtLoc(targetLoc);
         }
@@ -5548,7 +5657,7 @@ boolean chooseTarget(pos *returnLoc,
         }
     }
 
-    numCells = getLineCoordinates(coordinates, originLoc, targetLoc, theBolt);
+    numCells = getLineCoordinates(coordinates, originLoc, targetLoc, &theBolt);
     if (maxDistance > 0) {
         numCells = min(numCells, maxDistance);
     }
@@ -5563,7 +5672,7 @@ boolean chooseTarget(pos *returnLoc,
 
         if (canceled) {
             refreshDungeonCell(oldTargetLoc);
-            hiliteTrajectory(coordinates, numCells, true, theBolt, trajectoryColor);
+            hiliteTrajectory(coordinates, numCells, true, &theBolt, &trajColor);
             confirmMessages();
             rogue.cursorLoc = INVALID_POS;
             restoreRNG;
@@ -5571,8 +5680,8 @@ boolean chooseTarget(pos *returnLoc,
         }
 
         if (tabKey) {
-            if (nextTargetAfter(&newX, &newY, targetLoc.x, targetLoc.y, !targetAllies, targetAllies, false, false, true, event.shiftKey)) {
-                targetLoc = (pos) { .x = newX, .y = newY };
+            if (nextTargetAfter(theItem, &newLoc, targetLoc, targetMode, event.shiftKey)) {
+                targetLoc = newLoc;
             }
         }
 
@@ -5591,10 +5700,10 @@ boolean chooseTarget(pos *returnLoc,
         }
 
         refreshDungeonCell(oldTargetLoc);
-        hiliteTrajectory(coordinates, numCells, true, theBolt, &trajColor);
+        hiliteTrajectory(coordinates, numCells, true, &theBolt, &trajColor);
 
         if (!targetConfirmed) {
-            numCells = getLineCoordinates(coordinates, originLoc, targetLoc, theBolt);
+            numCells = getLineCoordinates(coordinates, originLoc, targetLoc, &theBolt);
             if (maxDistance > 0) {
                 numCells = min(numCells, maxDistance);
             }
@@ -5602,7 +5711,7 @@ boolean chooseTarget(pos *returnLoc,
             if (stopAtTarget) {
                 numCells = min(numCells, distanceBetween(player.loc, targetLoc));
             }
-            distance = hiliteTrajectory(coordinates, numCells, false, theBolt, &trajColor);
+            distance = hiliteTrajectory(coordinates, numCells, false, &theBolt, &trajColor);
             cursorInTrajectory = false;
             for (i=0; i<distance; i++) {
                 if (coordinates[i].x == targetLoc.x && coordinates[i].y == targetLoc.y) {
@@ -5622,10 +5731,10 @@ boolean chooseTarget(pos *returnLoc,
     if (maxDistance > 0) {
         numCells = min(numCells, maxDistance);
     }
-    hiliteTrajectory(coordinates, numCells, true, theBolt, trajectoryColor);
+    hiliteTrajectory(coordinates, numCells, true, &theBolt, &trajColor);
     refreshDungeonCell(oldTargetLoc);
 
-    if (originLoc.x == targetLoc.x && originLoc.y == targetLoc.y) {
+    if (posEq(originLoc, targetLoc)) {
         confirmMessages();
         restoreRNG;
         rogue.cursorLoc = INVALID_POS;
@@ -6217,28 +6326,10 @@ void throwCommand(item *theItem, boolean autoThrow) {
     temporaryMessage(buf, REFRESH_SIDEBAR);
     maxDistance = (12 + 2 * max(rogue.strength - player.weaknessAmount - 12, 2));
 
-    // Automatically pick a target for known bad potions and throwing weapons
-    boolean autoTarget = false;
-    switch (theItem->category) {
-        case WEAPON:
-            if (theItem->kind == DART || theItem->kind == INCENDIARY_DART || theItem->kind == JAVELIN) {
-                autoTarget = true;
-            }
-            break;
-        case POTION:
-            if ((theItem->flags & ITEM_MAGIC_DETECTED || potionTable[theItem->kind].identified)
-                    && itemMagicPolarity(theItem) == -1) {
-                autoTarget = true;
-            }
-            break;
-        default:
-            break;
-    }
-
     pos zapTarget;
-    if (autoThrow && creatureIsTargetable(rogue.lastTarget)) {
+    if (autoThrow && canAutoTargetMonster(rogue.lastTarget, theItem, AUTOTARGET_MODE_THROW)) {
         zapTarget = rogue.lastTarget->loc;
-    } else if (!chooseTarget(&zapTarget, maxDistance, true, autoTarget, false, &boltCatalog[BOLT_NONE], &red)) {
+    } else if (!chooseTarget(&zapTarget, maxDistance, AUTOTARGET_MODE_THROW, theItem)) {
         // player doesn't choose a target? return
         return;
     }
@@ -6425,17 +6516,25 @@ static boolean playerCancelsBlinking(const pos originLoc, const pos targetLoc, c
     return false;
 }
 
-static boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
-    char buf[COLS], buf2[COLS];
-    unsigned char command[10];
-    short maxDistance, c;
-    boolean autoTarget, targetAllies, autoID, boltKnown, confirmedTarget;
-    bolt theBolt;
-    color trajectoryHiliteColor;
+/// @brief Records the keystroke sequence when a player applies an item
+/// @param theItem the item that was used
+static void recordApplyItemCommand(item *theItem) {
+    if (!theItem) {
+        return;
+    }
 
-    c = 0;
-    command[c++] = APPLY_KEY;
-    command[c++] = theItem->inventoryLetter;
+    unsigned char command[3] = {'\0'};
+
+    command[0] = APPLY_KEY;
+    command[1] = theItem->inventoryLetter;
+    recordKeystrokeSequence(command);
+}
+
+static boolean useStaffOrWand(item *theItem) {
+    char buf[COLS], buf2[COLS];
+    short maxDistance;
+    boolean autoID, confirmedTarget;
+    bolt theBolt;
 
     if (theItem->charges <= 0 && (theItem->flags & ITEM_IDENTIFIED)) {
         itemName(theItem, buf2, false, false, NULL);
@@ -6460,34 +6559,11 @@ static boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
     } else {
         maxDistance = -1;
     }
-    if (tableForItemCategory(theItem->category)[theItem->kind].identified) {
-        autoTarget = targetAllies = false;
-        if (!player.status[STATUS_HALLUCINATING]) {
-            if (theBolt.flags & (BF_TARGET_ALLIES | BF_TARGET_ENEMIES)) {
-                autoTarget = true;
-            }
-            if (theBolt.flags & BF_TARGET_ALLIES) {
-                targetAllies = true;
-            }
-        }
-    } else {
-        autoTarget = true;
-        targetAllies = false;
-    }
-    boltKnown = (((theItem->category & WAND) && wandTable[theItem->kind].identified)
-                 || ((theItem->category & STAFF) && staffTable[theItem->kind].identified));
-    if (!boltKnown) {
-        trajectoryHiliteColor = gray;
-    } else if (theBolt.backColor == NULL) {
-        trajectoryHiliteColor = red;
-    } else {
-        trajectoryHiliteColor = *theBolt.backColor;
-    }
 
+    boolean boltKnown = tableForItemCategory(theItem->category)[theItem->kind].identified;
     pos originLoc = player.loc;
     pos zapTarget;
-    confirmedTarget = chooseTarget(&zapTarget, maxDistance, false, autoTarget,
-        targetAllies, (boltKnown ? &theBolt : &boltCatalog[BOLT_NONE]), &trajectoryHiliteColor);
+    confirmedTarget = chooseTarget(&zapTarget, maxDistance, AUTOTARGET_MODE_USE_STAFF_OR_WAND, theItem);
     if (confirmedTarget
         && boltKnown
         && theBolt.boltEffect == BE_BLINKING
@@ -6497,12 +6573,8 @@ static boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
     }
     if (confirmedTarget) {
 
-        command[c] = '\0';
-        if (!(*commandsRecorded)) {
-            recordKeystrokeSequence(command);
-            recordMouseClick(mapToWindowX(zapTarget.x), mapToWindowY(zapTarget.y), true, false);
-            *commandsRecorded = true;
-        }
+        recordApplyItemCommand(theItem);
+        recordMouseClick(mapToWindowX(zapTarget.x), mapToWindowY(zapTarget.y), true, false);
         confirmMessages();
 
         rogue.featRecord[FEAT_PURE_WARRIOR] = false;
@@ -6538,6 +6610,20 @@ static boolean useStaffOrWand(item *theItem, boolean *commandsRecorded) {
     } else {
         return false;
     }
+
+    if (theItem->category & STAFF) {
+        theItem->lastUsed[2] = theItem->lastUsed[1];
+        theItem->lastUsed[1] = theItem->lastUsed[0];
+        theItem->lastUsed[0] = rogue.absoluteTurnNumber;
+    }
+
+    if (theItem->charges > 0) {
+        theItem->charges--;
+        if (theItem->category == WAND) {
+            theItem->enchant2++; // keeps track of how many times the wand has been discharged for the player's convenience
+        }
+    }
+
     return true;
 }
 
@@ -6559,7 +6645,65 @@ static void summonGuardian(item *theItem) {
     fadeInMonster(monst);
 }
 
-static void useCharm(item *theItem) {
+/// @brief Decrements item quantity or removes an item from inventory if it's the last one
+/// @param theItem the item to consume
+static void consumePackItem(item *theItem) {
+
+    if (theItem->quantity > 1) {
+        theItem->quantity--;
+    } else {
+        removeItemFromChain(theItem, packItems);
+        deleteItem(theItem);
+    }
+}
+
+/// @brief The player eats the given item, nutrition is increased, the item is removed from inventory, and the
+/// action is optionally recorded. If the player isn't hungry enough they can cancel the action.
+/// @param theItem the item to eat
+/// @param recordCommand set to true if called from the apply command and we need to record the command sequence
+/// @return true if the player ate the item
+boolean eat(item *theItem, boolean recordCommands) {
+    if (!(theItem->category & FOOD)) {
+        return false;
+    }
+
+    if (STOMACH_SIZE - player.status[STATUS_NUTRITION] < foodTable[theItem->kind].power) { // Not hungry enough.
+        char buf[COLS * 3];
+        sprintf(buf, "You're not hungry enough to fully enjoy the %s. Eat it anyway?",
+                (theItem->kind == RATION ? "food" : "mango"));
+        if (!confirm(buf, false)) {
+            return false;
+        }
+    }
+
+    player.status[STATUS_NUTRITION] = min(foodTable[theItem->kind].power + player.status[STATUS_NUTRITION], STOMACH_SIZE);
+    if (theItem->kind == RATION) {
+        messageWithColor("That food tasted delicious!", &itemMessageColor, 0);
+    } else {
+        messageWithColor("My, what a yummy mango!", &itemMessageColor, 0);
+    }
+
+    rogue.featRecord[FEAT_ASCETIC] = false;
+
+    if (recordCommands) {
+        recordApplyItemCommand(theItem);
+    }
+
+    consumePackItem(theItem);
+
+    return true;
+}
+
+static boolean useCharm(item *theItem) {
+
+    if (theItem->charges > 0) {
+        char buf[COLS * 3], buf2[COLS * 3];
+        itemName(theItem, buf2, false, false, NULL);
+        sprintf(buf, "Your %s hasn't finished recharging.", buf2);
+        messageWithColor(buf, &itemMessageColor, 0);
+        return false;
+    }
+
     fixpt enchant = netEnchant(theItem);
 
     rogue.featRecord[FEAT_PURE_WARRIOR] = false;
@@ -6621,19 +6765,14 @@ static void useCharm(item *theItem) {
         default:
             break;
     }
+
+    theItem->charges = charmRechargeDelay(theItem->kind, theItem->enchant1);
+    recordApplyItemCommand(theItem);
+    return true;
 }
 
-void apply(item *theItem, boolean recordCommands) {
+void apply(item *theItem) {
     char buf[COLS * 3], buf2[COLS * 3];
-    boolean commandsRecorded, revealItemType;
-    unsigned char command[10] = "";
-    short c;
-
-    commandsRecorded = !recordCommands;
-    c = 0;
-    command[c++] = APPLY_KEY;
-
-    revealItemType = false;
 
     if (!theItem) {
         theItem = promptForItemOfType((SCROLL|FOOD|POTION|STAFF|WAND|CHARM), 0, 0,
@@ -6645,90 +6784,35 @@ void apply(item *theItem, boolean recordCommands) {
         return;
     }
 
-    if ((theItem->category == SCROLL || theItem->category == POTION)
-        && magicCharDiscoverySuffix(theItem->category, theItem->kind) == -1
-        && ((theItem->flags & ITEM_MAGIC_DETECTED) || tableForItemCategory(theItem->category)[theItem->kind].identified)) {
-
-        if (tableForItemCategory(theItem->category)[theItem->kind].identified) {
-            sprintf(buf,
-                    "Really %s a %s of %s?",
-                    theItem->category == SCROLL ? "read" : "drink",
-                    theItem->category == SCROLL ? "scroll" : "potion",
-                    tableForItemCategory(theItem->category)[theItem->kind].name);
-        } else {
-            sprintf(buf,
-                    "Really %s a cursed %s?",
-                    theItem->category == SCROLL ? "read" : "drink",
-                    theItem->category == SCROLL ? "scroll" : "potion");
-        }
-        if (!confirm(buf, false)) {
-            return;
-        }
-    }
-
-    command[c++] = theItem->inventoryLetter;
     confirmMessages();
     switch (theItem->category) {
         case FOOD:
-            if (STOMACH_SIZE - player.status[STATUS_NUTRITION] < foodTable[theItem->kind].power) { // Not hungry enough.
-                sprintf(buf, "You're not hungry enough to fully enjoy the %s. Eat it anyway?",
-                        (theItem->kind == RATION ? "food" : "mango"));
-                if (!confirm(buf, false)) {
-                    return;
-                }
+            if (eat(theItem, true)) {
+                break;
             }
-            player.status[STATUS_NUTRITION] = min(foodTable[theItem->kind].power + player.status[STATUS_NUTRITION], STOMACH_SIZE);
-            if (theItem->kind == RATION) {
-                messageWithColor("That food tasted delicious!", &itemMessageColor, 0);
-            } else {
-                messageWithColor("My, what a yummy mango!", &itemMessageColor, 0);
-            }
-            break;
+            return;
         case POTION:
-            command[c] = '\0';
-            if (!commandsRecorded) {
-                recordKeystrokeSequence(command);
-                commandsRecorded = true;
+            if (drinkPotion(theItem)) {
+                break;
             }
-            if (!potionTable[theItem->kind].identified) {
-                revealItemType = true;
-            }
-            drinkPotion(theItem);
-            break;
+            return;
         case SCROLL:
-            command[c] = '\0';
-            if (!commandsRecorded) {
-                recordKeystrokeSequence(command);
-                commandsRecorded = true; // have to record in case further keystrokes are necessary (e.g. enchant scroll)
+            if (readScroll(theItem)) {
+                consumePackItem(theItem);
+                break;
             }
-            if (!scrollTable[theItem->kind].identified
-                && theItem->kind != SCROLL_ENCHANTING
-                && theItem->kind != SCROLL_IDENTIFY) {
-
-                revealItemType = true;
-            }
-            readScroll(theItem);
-            break;
+            return;
         case STAFF:
         case WAND:
-            if (!useStaffOrWand(theItem, &commandsRecorded)) {
-                return;
+            if (useStaffOrWand(theItem)) {
+                break;
             }
-            break;
+            return;
         case CHARM:
-            if (theItem->charges > 0) {
-                itemName(theItem, buf2, false, false, NULL);
-                sprintf(buf, "Your %s hasn't finished recharging.", buf2);
-                messageWithColor(buf, &itemMessageColor, 0);
-                return;
+            if (useCharm(theItem)) {
+                break;
             }
-            if (!commandsRecorded) {
-                command[c] = '\0';
-                recordKeystrokeSequence(command);
-                commandsRecorded = true;
-            }
-            useCharm(theItem);
-            break;
+            return;
         default:
             itemName(theItem, buf2, false, true, NULL);
             sprintf(buf, "you can't apply %s.", buf2);
@@ -6736,34 +6820,6 @@ void apply(item *theItem, boolean recordCommands) {
             return;
     }
 
-    if (!commandsRecorded) { // to make sure we didn't already record the keystrokes above with staff/wand targeting
-        command[c] = '\0';
-        recordKeystrokeSequence(command);
-        commandsRecorded = true;
-    }
-
-    // Reveal the item type if appropriate.
-    if (revealItemType) {
-        autoIdentify(theItem);
-    }
-
-    theItem->lastUsed[2] = theItem->lastUsed[1];
-    theItem->lastUsed[1] = theItem->lastUsed[0];
-    theItem->lastUsed[0] = rogue.absoluteTurnNumber;
-
-    if (theItem->category & CHARM) {
-        theItem->charges = charmRechargeDelay(theItem->kind, theItem->enchant1);
-    } else if (theItem->charges > 0) {
-        theItem->charges--;
-        if (theItem->category == WAND) {
-            theItem->enchant2++; // keeps track of how many times the wand has been discharged for the player's convenience
-        }
-    } else if (theItem->quantity > 1) {
-        theItem->quantity--;
-    } else {
-        removeItemFromChain(theItem, packItems);
-        deleteItem(theItem);
-    }
     playerTurnEnded();
 }
 
@@ -6879,12 +6935,30 @@ static boolean uncurse( item *theItem ) {
     return false;
 }
 
-void readScroll(item *theItem) {
+boolean readScroll(item *theItem) {
     short i, j, x, y, numberOfMonsters = 0;
     item *tempItem;
     creature *monst;
     boolean hadEffect = false;
     char buf[COLS * 3], buf2[COLS * 3];
+
+    itemTable scrollKind = tableForItemCategory(theItem->category)[theItem->kind];
+
+    if (magicCharDiscoverySuffix(theItem->category, theItem->kind) == -1
+        && ((theItem->flags & ITEM_MAGIC_DETECTED) || scrollKind.identified)) {
+
+        if (scrollKind.identified) {
+            sprintf(buf, "Really read a scroll of %s?", scrollKind.name);
+        } else {
+            sprintf(buf, "Really read a cursed scroll?");
+        }
+        if (!confirm(buf, false)) {
+            return false;
+        }
+    }
+
+    // Past the point of no return.
+    recordApplyItemCommand(theItem);
 
     switch (theItem->kind) {
         case SCROLL_IDENTIFY:
@@ -6893,14 +6967,14 @@ void readScroll(item *theItem) {
             messageWithColor("this is a scroll of identify.", &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
             if (numberOfMatchingPackItems(ALL_ITEMS, ITEM_CAN_BE_IDENTIFIED, 0, false) == 0) {
                 message("everything in your pack is already identified.", 0);
-                break;
+                break; // regardless, the scroll is consumed
             }
             do {
                 theItem = promptForItemOfType((ALL_ITEMS), ITEM_CAN_BE_IDENTIFIED, 0,
                                               KEYBOARD_LABELS ? "Identify what? (a-z; shift for more info)" : "Identify what?",
                                               false);
                 if (rogue.gameHasEnded) {
-                    return;
+                    return false;
                 }
                 if (theItem && !(theItem->flags & ITEM_CAN_BE_IDENTIFIED)) {
                     confirmMessages();
@@ -6935,7 +7009,7 @@ void readScroll(item *theItem) {
             if (!numberOfMatchingPackItems((WEAPON | ARMOR | RING | STAFF | WAND | CHARM), 0, 0, false)) {
                 confirmMessages();
                 message("you have nothing that can be enchanted.", 0);
-                break;
+                break; // regardless, the scroll is consumed
             }
             do {
                 theItem = promptForItemOfType((WEAPON | ARMOR | RING | STAFF | WAND | CHARM), 0, 0,
@@ -6946,7 +7020,7 @@ void readScroll(item *theItem) {
                     message("Can't enchant that.", REQUIRE_ACKNOWLEDGMENT);
                 }
                 if (rogue.gameHasEnded) {
-                    return;
+                    return false;
                 }
             } while (theItem == NULL || !(theItem->category & (WEAPON | ARMOR | RING | STAFF | WAND | CHARM)));
             recordKeystroke(theItem->inventoryLetter, false, false);
@@ -6984,10 +7058,6 @@ void readScroll(item *theItem) {
                 case CHARM:
                     theItem->enchant1 += enchantMagnitude();
                     theItem->charges = min(0, theItem->charges); // Enchanting instantly recharges charms.
-                                                                 //                    theItem->charges = theItem->charges
-                                                                 //                    * charmRechargeDelay(theItem->kind, theItem->enchant1)
-                                                                 //                    / charmRechargeDelay(theItem->kind, theItem->enchant1 - 1);
-
                     break;
                 default:
                     break;
@@ -7121,6 +7191,16 @@ void readScroll(item *theItem) {
             discordBlast("the scroll", DCOLS);
             break;
     }
+
+    // all scrolls auto-identify on use
+    if (!scrollKind.identified
+        && (theItem->kind != SCROLL_ENCHANTING)
+        && (theItem->kind != SCROLL_IDENTIFY)) {
+
+        autoIdentify(theItem);
+    }
+
+    return true;
 }
 
 static void detectMagicOnItem(item *theItem) {
@@ -7137,18 +7217,33 @@ static void detectMagicOnItem(item *theItem) {
     }
 }
 
-void drinkPotion(item *theItem) {
+boolean drinkPotion(item *theItem) {
     item *tempItem = NULL;
     char buf[1000] = "";
     int magnitude;
 
     brogueAssert(rogue.RNG == RNG_SUBSTANTIVE);
 
-    itemTable potionTable = tableForItemCategory(theItem->category)[theItem->kind];
+    itemTable potionKind = tableForItemCategory(theItem->category)[theItem->kind];
+
+    if (magicCharDiscoverySuffix(theItem->category, theItem->kind) == -1
+        && ((theItem->flags & ITEM_MAGIC_DETECTED) || potionKind.identified)) {
+
+        if (potionKind.identified) {
+            sprintf(buf,"Really drink a potion of %s?", potionKind.name);
+        } else {
+            sprintf(buf,"Really drink a cursed potion?");
+        }
+        if (!confirm(buf, false)) {
+            return false;
+        }
+    }
+
+    confirmMessages();
+    magnitude = randClump(potionKind.range);
 
     switch (theItem->kind) {
         case POTION_LIFE:
-            magnitude = randClump(potionTable.range);
             sprintf(buf, "%syour maximum health increases by %i%%.",
                     ((player.currentHP < player.info.maxHP) ? "you heal completely and " : ""),
                     (player.info.maxHP + magnitude) * 100 / player.info.maxHP - 100);
@@ -7159,7 +7254,6 @@ void drinkPotion(item *theItem) {
             messageWithColor(buf, &advancementMessageColor, 0);
             break;
         case POTION_HALLUCINATION:
-            magnitude = randClump(potionTable.range);
             player.status[STATUS_HALLUCINATING] = player.maxStatus[STATUS_HALLUCINATING] = magnitude;
             message("colors are everywhere! The walls are singing!", 0);
             break;
@@ -7170,7 +7264,6 @@ void drinkPotion(item *theItem) {
             exposeCreatureToFire(&player);
             break;
         case POTION_DARKNESS:
-            magnitude = randClump(potionTable.range);
             player.status[STATUS_DARKNESS] = max(magnitude, player.status[STATUS_DARKNESS]);
             player.maxStatus[STATUS_DARKNESS] = max(magnitude, player.maxStatus[STATUS_DARKNESS]);
             updateMinersLightRadius();
@@ -7186,7 +7279,6 @@ void drinkPotion(item *theItem) {
             }
             break;
         case POTION_STRENGTH:
-            magnitude = randClump(potionTable.range);
             rogue.strength += magnitude;
             if (player.status[STATUS_WEAKENED]) {
                 player.status[STATUS_WEAKENED] = 1;
@@ -7206,11 +7298,9 @@ void drinkPotion(item *theItem) {
             message("your muscles stiffen as a cloud of pink gas bursts from the open flask!", 0);
             break;
         case POTION_TELEPATHY:
-            magnitude = randClump(potionTable.range);
             makePlayerTelepathic(magnitude);
             break;
         case POTION_LEVITATION:
-            magnitude = randClump(potionTable.range);
             player.status[STATUS_LEVITATING] = player.maxStatus[STATUS_LEVITATING] = magnitude;
             player.bookkeepingFlags &= ~MB_SEIZED; // break free of holding monsters
             message("you float into the air!", 0);
@@ -7272,11 +7362,9 @@ void drinkPotion(item *theItem) {
             break;
         }
         case POTION_HASTE_SELF:
-            magnitude = randClump(potionTable.range);
             haste(&player, magnitude);
             break;
         case POTION_FIRE_IMMUNITY:
-            magnitude = randClump(potionTable.range);
             player.status[STATUS_IMMUNE_TO_FIRE] = player.maxStatus[STATUS_IMMUNE_TO_FIRE] = magnitude;
             if (player.status[STATUS_BURNING]) {
                 extinguishFireOnCreature(&player);
@@ -7284,13 +7372,20 @@ void drinkPotion(item *theItem) {
             message("a comforting breeze envelops you, and you no longer fear fire.", 0);
             break;
         case POTION_INVISIBILITY:
-            magnitude = randClump(potionTable.range);
             player.status[STATUS_INVISIBLE] = player.maxStatus[STATUS_INVISIBLE] = magnitude;
             message("you shiver as a chill runs up your spine.", 0);
             break;
         default:
             message("you feel very strange, as though your body doesn't know how to react!", REQUIRE_ACKNOWLEDGMENT);
     }
+
+    if (!potionKind.identified) {
+        autoIdentify(theItem);
+    }
+
+    recordApplyItemCommand(theItem);
+    consumePackItem(theItem);
+    return true;
 }
 
 // Used for the Discoveries screen. Returns a number: 1 == good, -1 == bad, 0 == could go either way.

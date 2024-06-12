@@ -379,6 +379,19 @@ typedef struct rogueHighScoresEntry {
     char description[DCOLS];
 } rogueHighScoresEntry;
 
+typedef struct rogueRun {
+    uint64_t seed;
+    long dateNumber;
+    char result[DCOLS];
+    char killedBy[DCOLS];
+    int gold;
+    int lumenstones;
+    int score;
+    int turns;
+    int deepestLevel;
+    struct rogueRun *nextRun;
+} rogueRun;
+
 typedef struct fileEntry {
     char *path;
     struct tm date;
@@ -2003,6 +2016,12 @@ enum statusEffects {
     NUMBER_OF_STATUS_EFFECTS,
 };
 
+typedef struct statusEffect {
+    char name[COLS];
+    boolean isNegatable;
+    int playerNegatedValue;
+} statusEffect;
+
 enum hordeFlags {
     HORDE_DIES_ON_LEADER_DEATH      = Fl(0),    // if the leader dies, the horde will die instead of electing new leader
     HORDE_IS_SUMMONED               = Fl(1),    // minions summoned when any creature is the same species as the leader and casts summon
@@ -2050,7 +2069,7 @@ enum monsterBehaviorFlags {
     MONST_IMMUNE_TO_FIRE            = Fl(12),   // won't burn, won't die in lava
     MONST_CAST_SPELLS_SLOWLY        = Fl(13),   // takes twice the attack duration to cast a spell
     MONST_IMMUNE_TO_WEBS            = Fl(14),   // monster passes freely through webs
-    MONST_REFLECT_4                 = Fl(15),   // monster reflects projectiles as though wearing +4 armor of reflection
+    MONST_REFLECT_50                = Fl(15),   // monster reflects ~50% of bolts, as though wearing +4 armor of reflection
     MONST_NEVER_SLEEPS              = Fl(16),   // monster is always awake
     MONST_FIERY                     = Fl(17),   // monster carries an aura of flame (but no automatic fire light)
     MONST_INVULNERABLE              = Fl(18),   // monster is immune to absolutely everything
@@ -2068,13 +2087,19 @@ enum monsterBehaviorFlags {
     MONST_NO_POLYMORPH              = Fl(30),   // monster cannot result from a polymorph spell (liches, phoenixes and Warden of Yendor)
 
     NEGATABLE_TRAITS                = (MONST_INVISIBLE | MONST_DEFEND_DEGRADE_WEAPON | MONST_IMMUNE_TO_WEAPONS | MONST_FLIES
-                                       | MONST_FLITS | MONST_IMMUNE_TO_FIRE | MONST_REFLECT_4 | MONST_FIERY | MONST_MAINTAINS_DISTANCE),
+                                       | MONST_FLITS | MONST_IMMUNE_TO_FIRE | MONST_REFLECT_50 | MONST_FIERY | MONST_MAINTAINS_DISTANCE),
     MONST_TURRET                    = (MONST_IMMUNE_TO_WEBS | MONST_NEVER_SLEEPS | MONST_IMMOBILE | MONST_INANIMATE |
                                        MONST_ATTACKABLE_THRU_WALLS | MONST_WILL_NOT_USE_STAIRS),
-    LEARNABLE_BEHAVIORS             = (MONST_INVISIBLE | MONST_FLIES | MONST_IMMUNE_TO_FIRE | MONST_REFLECT_4),
+    LEARNABLE_BEHAVIORS             = (MONST_INVISIBLE | MONST_FLIES | MONST_IMMUNE_TO_FIRE | MONST_REFLECT_50),
     MONST_NEVER_VORPAL_ENEMY        = (MONST_INANIMATE | MONST_INVULNERABLE | MONST_IMMOBILE | MONST_RESTRICTED_TO_LIQUID | MONST_GETS_TURN_ON_ACTIVATION | MONST_MAINTAINS_DISTANCE),
     MONST_NEVER_MUTATED             = (MONST_INVISIBLE | MONST_INANIMATE | MONST_IMMOBILE | MONST_INVULNERABLE),
 };
+
+typedef struct monsterBehavior {
+    char description[COLS];
+    boolean isNegatable;
+} monsterBehavior;
+
 
 enum monsterAbilityFlags {
     MA_HIT_HALLUCINATE              = Fl(0),    // monster can hit to cause hallucinations
@@ -2095,6 +2120,7 @@ enum monsterAbilityFlags {
     MA_ATTACKS_EXTEND               = Fl(15),   // monster attacks from a distance in a cardinal direction, like a whip
     MA_ATTACKS_STAGGER              = Fl(16),   // monster attacks will push the player backward by one space if there is room
     MA_AVOID_CORRIDORS              = Fl(17),   // monster will avoid corridors when hunting
+    MA_REFLECT_100                  = Fl(18),   // monster reflects 100% of bolts directly back at the caster
 
     SPECIAL_HIT                     = (MA_HIT_HALLUCINATE | MA_HIT_STEAL_FLEE | MA_HIT_DEGRADE_ARMOR | MA_POISONS
                                        | MA_TRANSFERENCE | MA_CAUSES_WEAKNESS | MA_HIT_BURN | MA_ATTACKS_STAGGER),
@@ -2104,6 +2130,11 @@ enum monsterAbilityFlags {
     MA_NEVER_VORPAL_ENEMY           = (MA_KAMIKAZE),
     MA_NEVER_MUTATED                = (MA_KAMIKAZE),
 };
+
+typedef struct monsterAbility {
+    char description[COLS];
+    boolean isNegatable;
+} monsterAbility;
 
 enum monsterBookkeepingFlags {
     MB_WAS_VISIBLE              = Fl(0),    // monster was visible to player last turn
@@ -2304,6 +2335,7 @@ enum NGCommands {
     NG_OPEN_GAME,
     NG_VIEW_RECORDING,
     NG_HIGH_SCORES,
+    NG_GAME_STATS,
     NG_QUIT,
 };
 
@@ -2795,6 +2827,13 @@ enum messageFlags {
     FOLDABLE                      = Fl(2),
 };
 
+enum autoTargetMode {
+    AUTOTARGET_MODE_NONE,               // don't autotarget
+    AUTOTARGET_MODE_USE_STAFF_OR_WAND, 
+    AUTOTARGET_MODE_THROW,
+    AUTOTARGET_MODE_EXPLORE,            // cycle through anything in the sidebar
+};
+
 typedef struct archivedMessage {
     char message[COLS*2];
     unsigned char count;          // how many times this message appears
@@ -2906,6 +2945,9 @@ extern "C" {
     boolean shiftKeyIsDown(void);
     short getHighScoresList(rogueHighScoresEntry returnList[HIGH_SCORES_COUNT]);
     boolean saveHighScore(rogueHighScoresEntry theEntry);
+    void saveRunHistory(char *result, char *killedBy, int score, int lumenstones);
+    void saveResetRun(void);
+    rogueRun *loadRunHistory(void);
     fileEntry *listFiles(short *fileCount, char **dynamicMemoryBuffer);
     void initializeLaunchArguments(enum NGCommands *command, char *path, uint64_t *seed);
 
@@ -3112,6 +3154,7 @@ extern "C" {
                        unsigned long forbiddenFlags, boolean cautiousOnWalls);
 
     creature *generateMonster(short monsterID, boolean itemPossible, boolean mutationPossible);
+    void initializeMonster(creature *monst, boolean itemPossible);
     void mutateMonster(creature *monst, short mutationIndex);
     short chooseMonster(short forLevel);
     creature *spawnHorde(short hordeID, pos loc, unsigned long forbiddenFlags, unsigned long requiredFlags);
@@ -3124,6 +3167,10 @@ extern "C" {
     void prependCreature(creatureList *list, creature *add);
     boolean removeCreature(creatureList *list, creature *remove);
     creature *firstCreature(creatureList *list);
+
+    boolean canNegateCreatureStatusEffects(creature *monst);
+    void negateCreatureStatusEffects(creature *monst);
+    boolean monsterIsNegatable(creature *monst);
 
     boolean monsterWillAttackTarget(const creature *attacker, const creature *defender);
     boolean monstersAreTeammates(const creature *monst1, const creature *monst2);
@@ -3143,7 +3190,7 @@ extern "C" {
     boolean specifiedPathBetween(short x1, short y1, short x2, short y2,
                                  unsigned long blockingTerrain, unsigned long blockingFlags);
     boolean traversiblePathBetween(creature *monst, short x2, short y2);
-    boolean openPathBetween(short x1, short y1, short x2, short y2);
+    boolean openPathBetween(const pos startLoc, const pos targetLoc);
     creature *monsterAtLoc(pos p);
     creature *dormantMonsterAtLoc(pos p);
     pos perimeterCoords(short n);
@@ -3181,8 +3228,7 @@ extern "C" {
     boolean canDirectlySeeMonster(creature *monst);
     void monsterName(char *buf, creature *monst, boolean includeArticle);
     boolean monsterIsInClass(const creature *monst, const short monsterClass);
-    boolean chooseTarget(pos *returnLoc, short maxDistance, boolean stopAtTarget, boolean autoTarget,
-                         boolean targetAllies, const bolt *theBolt, const color *trajectoryColor);
+    boolean chooseTarget(pos *returnLoc, short maxDistance, enum autoTargetMode targetingMode, const item *theItem);
     fixpt strengthModifier(item *theItem);
     fixpt netEnchant(item *theItem);
     short hitProbability(creature *attacker, creature *defender);
@@ -3220,15 +3266,10 @@ extern "C" {
     enum boltEffects boltEffectForItem(item *theItem);
     enum boltType boltForItem(item *theItem);
     boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, boolean reverseBoltDir);
-    boolean nextTargetAfter(short *returnX,
-                            short *returnY,
-                            short targetX,
-                            short targetY,
-                            boolean targetEnemies,
-                            boolean targetAllies,
-                            boolean targetItems,
-                            boolean targetTerrain,
-                            boolean requireOpenPath,
+    boolean nextTargetAfter(const item *theItem,
+                            pos *returnLoc,
+                            pos targetLoc,
+                            enum autoTargetMode targetingMode,
                             boolean reverseDirection);
     boolean moveCursor(boolean *targetConfirmed,
                        boolean *canceled,
@@ -3324,7 +3365,8 @@ extern "C" {
     void throwCommand(item *theItem, boolean autoThrow);
     void relabel(item *theItem);
     void swapLastEquipment(void);
-    void apply(item *theItem, boolean recordCommands);
+    void apply(item *theItem);
+    boolean eat(item *theItem, boolean recordCommands);
     boolean itemCanBeCalled(item *theItem);
     void call(item *theItem);
     short chooseVorpalEnemy(void);
@@ -3332,12 +3374,12 @@ extern "C" {
     void identify(item *theItem);
     void updateIdentifiableItem(item *theItem);
     void updateIdentifiableItems(void);
-    void readScroll(item *theItem);
+    boolean readScroll(item *theItem);
     void updateRingBonuses(void);
     void updatePlayerRegenerationDelay(void);
     boolean removeItemFromChain(item *theItem, item *theChain);
     void addItemToChain(item *theItem, item *theChain);
-    void drinkPotion(item *theItem);
+    boolean drinkPotion(item *theItem);
     item *promptForItemOfType(unsigned short category,
                               unsigned long requiredFlags,
                               unsigned long forbiddenFlags,

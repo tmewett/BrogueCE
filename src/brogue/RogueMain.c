@@ -1200,6 +1200,10 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         notifyEvent(GAMEOVER_RECORDING, 0, 0, "recording ended", "none");
     }
 
+    if (!rogue.playbackMode && !rogue.easyMode && !rogue.wizard) {
+        saveRunHistory(rogue.quit ? "Quit" : "Died", rogue.quit ? "-" : killedBy, (int) theEntry.score, numGems);
+    }
+
     rogue.gameHasEnded = true;
     rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
 }
@@ -1360,6 +1364,10 @@ void victory(boolean superVictory) {
         }
     } else {
         notifyEvent(GAMEOVER_RECORDING, 0, 0, "recording ended", "none");
+    }
+
+    if (!rogue.playbackMode && !rogue.easyMode && !rogue.wizard) {
+        saveRunHistory(victoryVerb, "-", (int) theEntry.score, gemCount);
     }
 
     rogue.gameHasEnded = true;

@@ -367,7 +367,8 @@ static void dialogCreateMonster() {
     if (!(theMonster->info.flags & MONST_NEVER_MUTATED) && !(theMonster->info.abilityFlags & MA_NEVER_MUTATED)) {
         dialogCreateMonsterChooseMutation(theMonster);
     }
-
+    initializeMonster(theMonster, false);
+    
     if (theMonster->info.displayChar == G_TURRET) {
         sprintf(theMessage, "Create %s where? Choose a visible wall.", theMonster->info.monsterName);
     } else {
@@ -376,7 +377,7 @@ static void dialogCreateMonster() {
     temporaryMessage(theMessage, REFRESH_SIDEBAR);
 
     // pick a location
-    if (chooseTarget(&selectedPosition, 0, false, true, false, &boltCatalog[BOLT_NONE], &white)) {
+    if (chooseTarget(&selectedPosition, 0, AUTOTARGET_MODE_NONE, NULL)) {
         confirmMessages();
 
         if (!playerCanSeeOrSense(selectedPosition.x, selectedPosition.y)) {
