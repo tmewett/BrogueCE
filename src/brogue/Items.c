@@ -4446,6 +4446,7 @@ static boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                     if (!alreadyReflected
                         || caster != &player) {
                         moralAttack(caster, monst);
+                        splitMonster(monst, caster);
                     }
                 }
                 if (theBolt->flags & BF_FIERY) {
@@ -6053,6 +6054,7 @@ static boolean hitMonsterWithProjectileWeapon(creature *thrower, creature *monst
             messageWithColor(buf, messageColorFromVictim(monst), 0);
         }
         moralAttack(thrower, monst);
+        splitMonster(monst, thrower);
         if (armorRunicString[0]) {
             message(armorRunicString, 0);
         }

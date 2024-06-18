@@ -3205,6 +3205,7 @@ extern "C" {
     void initializeStatus(creature *monst);
     void handlePaladinFeat(creature *defender);
     void moralAttack(creature *attacker, creature *defender);
+    void splitMonster(creature *monst, creature *attacker);
     short runicWeaponChance(item *theItem, boolean customEnchantLevel, fixpt enchantLevel);
     void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed);
     void disentangle(creature *monst);
