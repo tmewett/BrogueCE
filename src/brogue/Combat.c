@@ -164,6 +164,42 @@ static void addMonsterToContiguousMonsterGrid(short x, short y, creature *monst,
     }
 }
 
+static short alliedCloneCount(creature *monst) {
+    short count = 0;
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
+        creature *temp = nextCreature(&it);
+        if (temp != monst
+            && temp->info.monsterID == monst->info.monsterID
+            && monstersAreTeammates(temp, monst)) {
+
+            count++;
+        }
+    }
+    if (rogue.depthLevel > 1) {
+        for (creatureIterator it = iterateCreatures(&levels[rogue.depthLevel - 2].monsters); hasNextCreature(it);) {
+            creature *temp = nextCreature(&it);
+            if (temp != monst
+                && temp->info.monsterID == monst->info.monsterID
+                && monstersAreTeammates(temp, monst)) {
+
+                count++;
+            }
+        }
+    }
+    if (rogue.depthLevel < gameConst->deepestLevel) {
+        for (creatureIterator it = iterateCreatures(&levels[rogue.depthLevel].monsters); hasNextCreature(it);) {
+            creature *temp = nextCreature(&it);
+            if (temp != monst
+                && temp->info.monsterID == monst->info.monsterID
+                && monstersAreTeammates(temp, monst)) {
+
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
 // Splits a monster in half.
 // The split occurs only if there is a spot adjacent to the contiguous
 // group of monsters that the monster would not avoid.
@@ -262,42 +298,6 @@ static void splitMonster(creature *monst, pos loc) {
             }
         }
     }
-}
-
-static short alliedCloneCount(creature *monst) {
-    short count = 0;
-    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
-        creature *temp = nextCreature(&it);
-        if (temp != monst
-            && temp->info.monsterID == monst->info.monsterID
-            && monstersAreTeammates(temp, monst)) {
-
-            count++;
-        }
-    }
-    if (rogue.depthLevel > 1) {
-        for (creatureIterator it = iterateCreatures(&levels[rogue.depthLevel - 2].monsters); hasNextCreature(it);) {
-            creature *temp = nextCreature(&it);
-            if (temp != monst
-                && temp->info.monsterID == monst->info.monsterID
-                && monstersAreTeammates(temp, monst)) {
-
-                count++;
-            }
-        }
-    }
-    if (rogue.depthLevel < gameConst->deepestLevel) {
-        for (creatureIterator it = iterateCreatures(&levels[rogue.depthLevel].monsters); hasNextCreature(it);) {
-            creature *temp = nextCreature(&it);
-            if (temp != monst
-                && temp->info.monsterID == monst->info.monsterID
-                && monstersAreTeammates(temp, monst)) {
-
-                count++;
-            }
-        }
-    }
-    return count;
 }
 
 // This function is called whenever one creature acts aggressively against another in a way that directly causes damage.
