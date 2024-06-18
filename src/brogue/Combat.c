@@ -205,11 +205,22 @@ static short alliedCloneCount(creature *monst) {
 // group of monsters that the monster would not avoid.
 // The contiguous group is supplemented with the given (x, y) coordinates, if any;
 // this is so that jellies et al. can spawn behind the player in a hallway.
-static void splitMonster(creature *monst, pos loc) {
+void splitMonster(creature *monst, creature *attacker) {
     char buf[DCOLS * 3];
     char monstName[DCOLS];
     char monsterGrid[DCOLS][DROWS], eligibleGrid[DCOLS][DROWS];
     creature *clone;
+    pos loc = INVALID_POS;
+
+    if ((monst->info.abilityFlags & MA_CLONE_SELF_ON_DEFEND) && alliedCloneCount(monst) < 100
+        && monst->currentHP > 0 && !(monst->bookkeepingFlags & MB_IS_DYING)) {
+
+        if (distanceBetween(monst->loc, attacker->loc) <= 1) {
+            loc = attacker->loc;
+        }
+    } else {
+        return;
+    }
 
     zeroOutGrid(monsterGrid);
     zeroOutGrid(eligibleGrid);
@@ -335,14 +346,6 @@ void moralAttack(creature *attacker, creature *defender) {
             && defender->creatureState != MONSTER_ALLY) {
 
             alertMonster(defender); // this alerts the monster that you're nearby
-        }
-
-        if ((defender->info.abilityFlags & MA_CLONE_SELF_ON_DEFEND) && alliedCloneCount(defender) < 100) {
-            if (distanceBetween(defender->loc, attacker->loc) <= 1) {
-                splitMonster(defender, attacker->loc);
-            } else {
-                splitMonster(defender, INVALID_POS);
-            }
         }
     }
 }
@@ -556,6 +559,7 @@ static boolean forceWeaponHit(creature *defender, item *theItem) {
             }
         }
         moralAttack(&player, defender);
+        splitMonster(defender, &player);
 
         if (otherMonster
             && !(defender->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE))) {
@@ -577,6 +581,7 @@ static boolean forceWeaponHit(creature *defender, item *theItem) {
             if (otherMonster->creatureState != MONSTER_ALLY) {
                 // Allies won't defect if you throw another monster at them, even though it hurts.
                 moralAttack(&player, otherMonster);
+                splitMonster(defender, &player);
             }
         }
     }
@@ -1216,11 +1221,13 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
             }
         }
 
+        moralAttack(attacker, defender);
+        
         if (attacker == &player && rogue.weapon && (rogue.weapon->flags & ITEM_RUNIC)) {
             magicWeaponHit(defender, rogue.weapon, sneakAttack || defenderWasAsleep || defenderWasParalyzed);
         }
 
-        moralAttack(attacker, defender);
+        splitMonster(defender, attacker);
 
         if (attacker == &player
             && (defender->bookkeepingFlags & MB_IS_DYING)
