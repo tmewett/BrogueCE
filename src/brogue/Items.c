@@ -4147,6 +4147,9 @@ static void crystalize(short radius) {
 
                 if (tileCatalog[pmap[i][j].layers[DUNGEON]].flags & (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION)) {
 
+                    pmap[i][j].layers[DUNGEON] = FORCEFIELD;
+                    spawnDungeonFeature(i, j, &dungeonFeatureCatalog[DF_SHATTERING_SPELL], true, false);
+
                     if (pmap[i][j].flags & HAS_MONSTER) {
                         monst = monsterAtLoc((pos){ i, j });
                         if (monst->info.flags & MONST_ATTACKABLE_THRU_WALLS) {
@@ -4156,13 +4159,8 @@ static void crystalize(short radius) {
                             freeCaptivesEmbeddedAt(i, j);
                         }
                     }
-
                     if (i == 0 || i == DCOLS - 1 || j == 0 || j == DROWS - 1) {
-                        pmap[i][j].layers[DUNGEON] = CRYSTAL_WALL; // don't dissolve the boundary walls
-                    } else {
-                        pmap[i][j].layers[DUNGEON] = FORCEFIELD;
-                        spawnDungeonFeature(i, j, &dungeonFeatureCatalog[DF_SHATTERING_SPELL], true, false);
-
+                        pmap[i][j].layers[DUNGEON] = CRYSTAL_WALL; // boundary walls turn to crystal
                     }
                 }
             }
