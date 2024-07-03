@@ -3242,7 +3242,7 @@ extern "C" {
                           short damage, const color *flashColor, boolean ignoresProtectionShield);
     void addPoison(creature *monst, short totalDamage, short concentrationIncrement);
     void killCreature(creature *decedent, boolean administrativeDeath);
-    void buildHitList(creature **hitList, const creature *attacker, creature *defender, const boolean sweep);
+    void buildHitList(const creature **hitList, const creature *attacker, creature *defender, const boolean sweep);
     void addScentToCell(short x, short y, short distance);
     void populateItems(pos upstairs);
     item *placeItemAt(item *theItem, pos dest);
