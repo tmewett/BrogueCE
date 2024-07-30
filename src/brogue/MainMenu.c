@@ -1006,6 +1006,19 @@ static void viewGameStats(void) {
     sprintf(buf,"%-30s%s%16i%16i","Deepest Level", whiteColorEscape, allTimeStats.deepestLevel, recentStats.deepestLevel);
     printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
 
+    float allTimeAverageDepth = 0;
+    float recentAverageDepth = 0;
+
+    if(allTimeStats.games > 0) {
+        allTimeAverageDepth = (float) allTimeStats.cumulativeLevels / allTimeStats.games;
+    }
+    if(recentStats.games > 0) {
+        recentAverageDepth = (float) recentStats.cumulativeLevels / recentStats.games;
+    }
+
+    sprintf(buf,"%-30s%s%16.1f%16.1f","Average Depth", whiteColorEscape, allTimeAverageDepth, recentAverageDepth);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+
     char allTimeFewestTurns[20] = "-";
     char recentFewestTurns[20] = "-";
     if (allTimeStats.fewestTurnsWin > 0) {
@@ -1028,6 +1041,7 @@ static void viewGameStats(void) {
 
     sprintf(buf,"%-30s%s%32i","Current Mastery Streak", whiteColorEscape, recentStats.currentMasteryStreak);
     printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+    i++;
 
     // Set the dbuf opacity.
     for (int i=0; i<COLS; i++) {
@@ -1048,6 +1062,7 @@ static void viewGameStats(void) {
     commitDraws();
 
     if (recentStats.games > 0) {
+        i++;
         brogueButton buttons[1];
         initializeButton(&(buttons[0]));
         if (KEYBOARD_LABELS) {
@@ -1058,7 +1073,7 @@ static void viewGameStats(void) {
         buttons[0].hotkey[0] = 'R';
         buttons[0].hotkey[1] = 'r';
         buttons[0].x = 74;
-        buttons[0].y = 25;
+        buttons[0].y = i;
 
         if (buttonInputLoop(buttons, 1, 74, 25, 10, 3, NULL) == 0 && confirm("Reset recent stats?",false)) {
             saveResetRun();

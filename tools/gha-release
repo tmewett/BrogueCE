@@ -4,7 +4,8 @@ set -exo pipefail
 unzip windows-x86_64.zip
 unzip BrogueCE-windows-x86_64.zip
 cd BrogueCE-windows
-wine brogue.exe
+chmod +x brogue.exe
+./brogue.exe
 cd ..
 
 unzip linux-x86_64.zip
