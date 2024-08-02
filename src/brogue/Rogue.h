@@ -2379,6 +2379,7 @@ typedef struct gameConstants {
     const int amuletLevel;                          // level on which the amulet appears (used in signed arithmetic)
 
     const int depthAccelerator;                     // factor for how fast depth-dependent features scale compared to usual 26-level dungeon
+    const int minimumAltarLevel;                    // how deep before resurrection and commutation altars can be generated
     const int minimumLavaLevel;                     // how deep before lava can be generated
     const int minimumBrimstoneLevel;                // how deep before brimstone can be generated
     const int mutationsOccurAboveLevel;                // how deep before monster mutations can be generated
