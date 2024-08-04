@@ -1,1 +1,0 @@
-Jellies now die without splitting when hit with a slaying or quietus weapon.

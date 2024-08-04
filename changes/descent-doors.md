@@ -1,1 +1,0 @@
-Fixed a bug where a closed wooden door or barricade would no longer be visibile but would block line of sight and blinking when a hole is created under them by a potion of descent or pit bloat. They will now remain visible.

@@ -1,1 +1,0 @@
-Changed the ability description for some monsters to differentiate those that can sometimes reflect magic spells from those that always reflect spells back at the caster.

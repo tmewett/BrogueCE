@@ -1,1 +1,0 @@
-Fixed a bug which treated obsidian as shallow water, allowing a kraken to both traverse it and sieze monsters or the player standing in it. 

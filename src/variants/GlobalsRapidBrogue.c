@@ -977,7 +977,7 @@ const char *mainMenuTitle_RapidBrogue =
                          ####                                       ";
 
 #define RAPID_BROGUE_MAJOR 1
-#define RAPID_BROGUE_MINOR 5
+#define RAPID_BROGUE_MINOR 6
 #define RAPID_BROGUE_PATCH 0
 
 // Brogue version: what the user sees in the menu and title

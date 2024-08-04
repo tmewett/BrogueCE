@@ -1,1 +1,0 @@
-When an inanimate monster is negated (e.g. turret or totem), a combat message is now displayed and the sidebar will show the negated status.

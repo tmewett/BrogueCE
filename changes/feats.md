@@ -1,5 +1,0 @@
-- Removed nearly impossible feats 'Pacifist', 'Archivist', 'Indomitable', and 'Ascetic'.
-- Added a new "Feats" menu option that shows a screen with all the feats and whether the player has achieved or failed them.
-- The 'Paladin' feat is no longer lost when the player is unaware of the monster, the player is seized, the monster is generated immobile (totems, turrets, etc.), or the monster is immune to physical attacks.
-- The 'Companion' feat now requires exploring only 13 floors with an ally instead of 20. Note that the # of floors is an approximation. Exploration is measured by the number of newly discovered traversable squares while an ally is within one floor of the player.
-- The 'Pure Mage' feat now allows the player to attack with their fists. Good luck with that.

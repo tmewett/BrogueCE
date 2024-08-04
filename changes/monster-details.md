@@ -1,1 +1,0 @@
-The monster details window now includes information about the effect of negation if the player has a known means to negate the monster. Also, if the player has a known means to destroy a monster via tunneling or shattering, that information is now displayed.

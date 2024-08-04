@@ -1,1 +1,0 @@
-Allows allies to spear attack over the player

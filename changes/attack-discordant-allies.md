@@ -1,1 +1,0 @@
-A discordant ally will no longer swap places with the player and can be attacked. Attacks require player confirmation and will not make the ally an enemy.

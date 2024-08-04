@@ -36,7 +36,7 @@
 
 // Brogue version number (for main engine)
 #define BROGUE_MAJOR 1
-#define BROGUE_MINOR 13
+#define BROGUE_MINOR 14
 #define BROGUE_PATCH 0
 
 // Expanding a macro as a string constant requires two levels of macros
@@ -2829,7 +2829,7 @@ enum messageFlags {
 
 enum autoTargetMode {
     AUTOTARGET_MODE_NONE,               // don't autotarget
-    AUTOTARGET_MODE_USE_STAFF_OR_WAND, 
+    AUTOTARGET_MODE_USE_STAFF_OR_WAND,
     AUTOTARGET_MODE_THROW,
     AUTOTARGET_MODE_EXPLORE,            // cycle through anything in the sidebar
 };
