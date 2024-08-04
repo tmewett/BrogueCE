@@ -306,7 +306,7 @@ int printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsign
             printSeedCatalogFloorItems(isCsvFormat);
             printSeedCatalogMonsterItems(isCsvFormat);
             printSeedCatalogMonsters(isCsvFormat, false); // captives and allies only
-            if (rogue.depthLevel >= 13) { // resurrection & commutation altars can spawn starting on 13
+            if (rogue.depthLevel >= gameConst->minimumAltarLevel) {
                 printSeedCatalogAltars(isCsvFormat);
             }
         }

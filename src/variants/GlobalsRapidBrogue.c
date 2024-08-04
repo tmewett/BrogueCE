@@ -1021,6 +1021,7 @@ const gameConstants rapidBrogueGameConst = {
     .amuletLevel = AMULET_LEVEL,
 
     .depthAccelerator = 4,
+    .minimumAltarLevel = 4,
     .minimumLavaLevel = 2,
     .minimumBrimstoneLevel = 5,
     .mutationsOccurAboveLevel = 3,
