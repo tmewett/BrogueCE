@@ -128,7 +128,7 @@ static void _delayUpTo(short ms) {
     lastDelayTime = getTime();
 }
 
-static boolean curses_pauseForMilliseconds(short milliseconds) {
+static boolean curses_pauseForMilliseconds(short milliseconds, PauseBehavior behavior) {
     Term.refresh();
     _delayUpTo(milliseconds);
 
