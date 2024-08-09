@@ -87,3 +87,15 @@ vars/%: vars FORCE
 
 
 FORCE:
+
+prefix ?= /usr
+metainfodir = $(prefix)/share/metainfo
+metainfo_in = linux/io.github.tmewett.brogue.metainfo.xml
+
+install: install_metainfo
+
+install_metainfo:
+	install -Dm644 $(metainfo_in) $(DESTDIR)$(metainfodir)/io.github.tmewett.brogue.metainfo.xml
+
+uninstall:
+	rm -f $(DESTDIR)$(metainfodir)/io.github.tmewett.brogue.metainfo.xml
