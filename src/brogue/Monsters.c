@@ -786,7 +786,7 @@ creature *spawnHorde(short hordeID, pos loc, unsigned long forbiddenFlags, unsig
     creature *leader, *preexistingMonst;
     boolean tryAgain;
 
-    if (rogue.depthLevel > 1 && rand_percent(10)) {
+    if (rogue.depthLevel > 1 && rand_percent(gameConst->monsterOutOfDepthChance)) {
         depth = rogue.depthLevel + rand_range(1, min(5, rogue.depthLevel / 2));
         if (depth > gameConst->amuletLevel) {
             depth = max(rogue.depthLevel, gameConst->amuletLevel);

@@ -401,18 +401,25 @@ static void chooseGameVariant() {
     append(textBuf, tmpBuf, TEXT_MAX_LENGTH);
     append(textBuf, "Die faster and more often in this quarter-length version of the classic game!\n\n", TEXT_MAX_LENGTH);
 
-    brogueButton buttons[2];
+    snprintf(tmpBuf, TEXT_MAX_LENGTH, "%sBullet Brogue%s\n", goldColorEscape, whiteColorEscape);
+    append(textBuf, tmpBuf, TEXT_MAX_LENGTH);
+    append(textBuf, "No time? Death wish? Bullet Brogue is for you. Not best for new players!\n\n", TEXT_MAX_LENGTH);
+
+    brogueButton buttons[3];
     initializeMainMenuButton(&(buttons[0]), "  %sR%sapid Brogue     ", 'r', 'R', NG_NOTHING);
     initializeMainMenuButton(&(buttons[1]), "     %sB%srogue        ", 'b', 'B', NG_NOTHING);
-    
+    initializeMainMenuButton(&(buttons[2]), "   Bu%sl%slet Brogue   ", 'l', 'L', NG_NOTHING);
+
     const SavedDisplayBuffer rbuf = saveDisplayBuffer();
-    gameVariantChoice = printTextBox(textBuf, 20, 7, 45, &white, &black, buttons, 2);
+    gameVariantChoice = printTextBox(textBuf, 20, 7, 45, &white, &black, buttons, 3);
     restoreDisplayBuffer(&rbuf);
 
-    if (gameVariantChoice == 1) {
-        gameVariant = VARIANT_BROGUE;
-    } else if (gameVariantChoice == 0) {
+    if (gameVariantChoice == 0) {
         gameVariant = VARIANT_RAPID_BROGUE;
+    } else if (gameVariantChoice == 1) {
+        gameVariant = VARIANT_BROGUE;
+    } else if (gameVariantChoice == 2) {
+        gameVariant = VARIANT_BULLET_BROGUE;
     } else {
         rogue.nextGame = NG_NOTHING;
     }
@@ -689,7 +696,7 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
     fileEntry *files;
     boolean retval = false, again;
     screenDisplayBuffer dbuf;
-    
+
     const color *dialogColor = &interfaceBoxColor;
     char *membuf;
     char fileDate [11];
@@ -881,7 +888,7 @@ typedef struct gameStats {
     int currentMasteryStreak;
 } gameStats;
 
-/// @brief Updates the given stats to include a run 
+/// @brief Updates the given stats to include a run
 /// @param run The run to add
 /// @param stats The stats to update
 static void addRuntoGameStats(rogueRun *run, gameStats *stats) {
@@ -936,7 +943,7 @@ static void viewGameStats(void) {
     gameStats allTimeStats = {0};
     gameStats recentStats = {0};
 
-    rogueRun *runHistory = loadRunHistory(); 
+    rogueRun *runHistory = loadRunHistory();
     rogueRun *run = runHistory;
 
     // calculate stats
@@ -944,9 +951,9 @@ static void viewGameStats(void) {
         if (run->seed != 0) {
             addRuntoGameStats(run, &allTimeStats);
             addRuntoGameStats(run, &recentStats);
-        } else { // when seed == 0 the run entry means the player reset their recent stats at this point 
+        } else { // when seed == 0 the run entry means the player reset their recent stats at this point
             memset(&recentStats, 0, sizeof(gameStats));
-        }        
+        }
         run = run->nextRun;
     }
 

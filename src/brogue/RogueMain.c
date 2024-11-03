@@ -26,6 +26,7 @@
 #include "Globals.h"
 #include "GlobalsBrogue.h"
 #include "GlobalsRapidBrogue.h"
+#include "GlobalsBulletBrogue.h"
 
 #include <time.h>
 
@@ -38,6 +39,7 @@ int rogueMain() {
 void printBrogueVersion() {
     printf("Brogue version: %s\n", brogueVersion);
     printf("Supports variant (rapid_brogue): %s\n", rapidBrogueVersion);
+    printf("Supports variant (bullet_brogue): %s\n", bulletBrogueVersion);
 }
 
 void executeEvent(rogueEvent *theEvent) {
@@ -173,6 +175,9 @@ void initializeGameVariant() {
     switch (gameVariant) {
         case VARIANT_RAPID_BROGUE:
             initializeGameVariantRapidBrogue();
+            break;
+        case VARIANT_BULLET_BROGUE:
+            initializeGameVariantBulletBrogue();
             break;
         default:
             initializeGameVariantBrogue();
