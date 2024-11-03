@@ -4411,7 +4411,12 @@ void printSeed() {
     } else if (rogue.wizard) {
         strcpy(mode,"wizard mode; ");
     }
-    snprintf(buf, COLS, "Dungeon seed #%llu; turn #%lu; %sversion %s", (unsigned long long)rogue.seed, rogue.playerTurnNumber, mode, gameConst->versionString);
+    if (rogue.hideSeed) {
+        snprintf(buf, COLS, "Dungeon seed HIDDEN; turn #%lu; %sversion %s", rogue.playerTurnNumber, mode, gameConst->versionString);
+    }
+    else {
+        snprintf(buf, COLS, "Dungeon seed #%llu; turn #%lu; %sversion %s", (unsigned long long)rogue.seed, rogue.playerTurnNumber, mode, gameConst->versionString);
+    }
     message(buf, 0);
 }
 
