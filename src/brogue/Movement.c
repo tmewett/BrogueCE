@@ -347,6 +347,9 @@ void describeLocation(char *buf, short x, short y) {
         }
 
         if (theItem) {
+            if (verb[strlen(verb) - 1] != ' ') {
+                strcat(verb, " ");
+            }
             strcpy(preposition, "over");
             if (monsterIsPlayer) {
                 strcat(itemLocation, standsInTerrain ? " in " : " on ");
