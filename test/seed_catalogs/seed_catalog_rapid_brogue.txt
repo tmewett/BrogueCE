@@ -1,5 +1,5 @@
 Brogue seed catalog, seeds 1 to 25, through depth 10.
-Generated with RB 1.5.0-dev.8736c7c.feature/fix_rb_seed519. Dungeons unchanged since RB 1.5.
+Generated with RB 1.6.1-dev.516bf81.release. Dungeons unchanged since RB 1.5.
 
 To play one of these seeds, select Play>New Seeded Game from the title screen.
 Seed 1:
@@ -99,6 +99,8 @@ Seed 1:
         A caged troll
         A caged naga
         A caged dar battlemage
+        A resurrection altar (vault 12)
+        A commutation altar (vault 1)
     Depth 5:
         A scroll of teleportation
         A potion of confusion
@@ -250,6 +252,8 @@ Seed 2:
         2234 gold pieces (7 piles)
         A staff of poison [3/3] (goblin conjurer)
         A door key (vampire) (opens vault 4)
+        A resurrection altar (vault 7)
+        A commutation altar (vault 4)
     Depth 6:
         +0 splint mail [9]<17>
         A scroll of identify
@@ -395,6 +399,7 @@ Seed 3:
         A wand of negation [3] (vault 1)
         A door key (opens vault 1)
         1989 gold pieces (8 piles)
+        A resurrection altar (vault 4)
     Depth 5:
         A scroll of summon monsters
         A wand of invisibility [4]
@@ -414,6 +419,7 @@ Seed 3:
         A scroll of aggravate monsters (dar blademaster)
         A shackled tentacle horror
         A shackled centaur [reflective]
+        A commutation altar (vault 1)
     Depth 6:
         A scroll of negation
         A scroll of recharging
@@ -541,6 +547,7 @@ Seed 4:
         A potion of invisibility (goblin mystic)
         A scroll of recharging (goblin conjurer)
         A potion of levitation (goblin warlord)
+        A resurrection altar (vault 2)
     Depth 5:
         A scroll of remove curse
         A potion of detect magic
@@ -555,6 +562,7 @@ Seed 4:
         A potion of life (vault 4)
         A door key (opens vault 1)
         2447 gold pieces (8 piles)
+        A commutation altar (vault 1)
     Depth 6:
         A scroll of identify
         A potion of strength
@@ -994,6 +1002,8 @@ Seed 7:
         +3 banded mail of absorption [10]<15> (vault 7)
         +1 scale mail of multiplicity [5]<12>
         2228 gold pieces (7 piles)
+        A resurrection altar (vault 9)
+        A commutation altar (vault 5)
     Depth 6:
         A scroll of remove curse
         A scroll of discord
@@ -1147,6 +1157,7 @@ Seed 8:
         A door key (opens vault 1)
         1600 gold pieces (6 piles)
         A scroll of identify (dar blademaster)
+        A commutation altar (vault 4)
     Depth 5:
         Some food
         A potion of invisibility
@@ -1174,6 +1185,7 @@ Seed 8:
         A door key (imp) (opens vault 2)
         A shackled tentacle horror
         A shackled dar blademaster
+        A commutation altar (vault 2)
     Depth 7:
         A lumenstone from depth 7
         A lumenstone from depth 7
@@ -1448,6 +1460,8 @@ Seed 10:
         A door key (opens vault 2)
         2789 gold pieces (8 piles)
         A scroll of recharging (dragon)
+        A resurrection altar (vault 6)
+        A commutation altar (vault 2)
     Depth 7:
         A lumenstone from depth 7
         A lumenstone from depth 7
@@ -1569,6 +1583,7 @@ Seed 11:
         A scroll of enchanting (vault 1)
         1688 gold pieces (6 piles)
         A shackled pixie
+        A commutation altar (vault 4)
     Depth 5:
         A potion of detect magic
         A scroll of summon monsters
@@ -1588,6 +1603,10 @@ Seed 11:
         A caged dar battlemage [explosive]
         A caged ogre
         A caged ogre [explosive]
+        A resurrection altar (vault 7)
+        A commutation altar (vault 1)
+        A commutation altar (vault 4)
+        A commutation altar (vault 14)
     Depth 6:
         A potion of caustic gas
         A scroll of recharging
@@ -1604,6 +1623,7 @@ Seed 11:
         A door key (stone guardian) (opens vault 2)
         A shackled imp
         A shackled tentacle horror
+        A resurrection altar (vault 2)
     Depth 7:
         A lumenstone from depth 7
         A lumenstone from depth 7
@@ -1747,6 +1767,8 @@ Seed 12:
         A door key (opens vault 2)
         2637 gold pieces (7 piles)
         A shackled dar priestess
+        A resurrection altar (vault 2)
+        A commutation altar (vault 5)
     Depth 7:
         A lumenstone from depth 7
         A lumenstone from depth 7
@@ -1912,6 +1934,7 @@ Seed 13:
         A scroll of enchanting
         2593 gold pieces (7 piles)
         A potion of confusion (dar priestess [explosive])
+        A commutation altar (vault 2)
     Depth 7:
         A lumenstone from depth 7
         A lumenstone from depth 7
@@ -2040,6 +2063,7 @@ Seed 14:
         A caged pixie
         A caged dar battlemage
         A caged ogre
+        A commutation altar (vault 15)
     Depth 6:
         A potion of hallucination
         A scroll of protect armor
@@ -2056,6 +2080,7 @@ Seed 14:
         A potion of life (vault 2)
         3804 gold pieces (10 piles)
         A scroll of identify (dragon)
+        A commutation altar (vault 5)
     Depth 7:
         A lumenstone from depth 7
         A lumenstone from depth 7
@@ -2179,6 +2204,7 @@ Seed 15:
         A scroll of shattering
         1581 gold pieces (6 piles)
         An allied phoenix egg
+        A commutation altar (vault 1)
     Depth 5:
         A scroll of recharging
         A scroll of identify
@@ -2201,6 +2227,7 @@ Seed 15:
         A potion of life (vault 5)
         A door key (opens vault 2)
         2946 gold pieces (8 piles)
+        A resurrection altar (vault 2)
     Depth 7:
         A lumenstone from depth 7
         A lumenstone from depth 7
@@ -2467,6 +2494,7 @@ Seed 17:
         A door key (opens vault 4)
         1654 gold pieces (6 piles)
         A shackled naga
+        A commutation altar (vault 1)
     Depth 5:
         A wand of polymorphism [1]
         A potion of creeping death
@@ -2492,6 +2520,7 @@ Seed 17:
         A potion of levitation
         3303 gold pieces (9 piles)
         A potion of incineration (dragon)
+        A commutation altar (vault 2)
     Depth 7:
         A lumenstone from depth 7
         A lumenstone from depth 7
@@ -2762,6 +2791,7 @@ Seed 19:
         A scroll of enchanting
         A door key (vault 3) (opens vault 1)
         2753 gold pieces (9 piles)
+        A commutation altar (vault 1)
     Depth 6:
         A scroll of remove curse
         A potion of creeping death
@@ -2777,6 +2807,7 @@ Seed 19:
         A scroll of protect weapon (dragon)
         A potion of confusion (dar blademaster)
         A potion of confusion (dar blademaster)
+        A commutation altar (vault 2)
     Depth 7:
         A lumenstone from depth 7
         A lumenstone from depth 7
@@ -2898,6 +2929,8 @@ Seed 20:
         A door key (opens vault 4)
         A door key (opens vault 1)
         2056 gold pieces (7 piles)
+        A commutation altar (vault 1)
+        A commutation altar (vault 4)
     Depth 5:
         +0 splint mail [9]<17>
         A potion of strength
@@ -3198,6 +3231,7 @@ Seed 22:
         A door key (opens vault 1)
         2774 gold pieces (8 piles)
         A scroll of aggravate monsters (goblin mystic)
+        A commutation altar (vault 1)
     Depth 6:
         A potion of hallucination
         +0 chain mail [5]<13>
@@ -3216,6 +3250,7 @@ Seed 22:
         4242 gold pieces (11 piles)
         A potion of caustic gas (dragon)
         +0 splint mail [9]<17> (dar blademaster)
+        A commutation altar (vault 2)
     Depth 7:
         A lumenstone from depth 7
         A lumenstone from depth 7
@@ -3342,6 +3377,7 @@ Seed 23:
         A potion of confusion (dragon)
         A door key (monkey) (opens vault 5)
         An allied ifrit
+        A commutation altar (vault 5)
     Depth 5:
         A scroll of identify
         A scroll of negation
@@ -3359,6 +3395,8 @@ Seed 23:
         A door key (opens vault 5)
         3133 gold pieces (10 piles)
         A shackled ogre
+        A commutation altar (vault 1)
+        A commutation altar (vault 3)
     Depth 6:
         A scroll of aggravate monsters
         A scroll of aggravate monsters
@@ -3496,6 +3534,7 @@ Seed 24:
         A caged dar battlemage
         A caged dar blademaster
         A shackled dar priestess
+        A resurrection altar (vault 3)
     Depth 6:
         A potion of darkness
         A scroll of identify
@@ -3636,6 +3675,7 @@ Seed 25:
         A shackled tentacle horror
         A shackled golem
         A shackled dar priestess
+        A resurrection altar (vault 3)
     Depth 6:
         A potion of caustic gas
         A scroll of sanctuary
