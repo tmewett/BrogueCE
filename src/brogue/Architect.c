@@ -3529,8 +3529,7 @@ void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
             pmap[*x][*y].flags &= ~HAS_MONSTER;
         }
 
-        pos qualifiedPosition = { *x, *y };
-        qualifiedPosition = getQualifyingPathLocNear(*x, *y, true, T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)), 0,
+        pos qualifiedPosition = getQualifyingPathLocNear((pos){ *x, *y }, true, T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)), 0,
                                  avoidedFlagsForMonster(&(monst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_STAIRS | IS_IN_MACHINE), true);
         *x = qualifiedPosition.x;
         *y = qualifiedPosition.y;
