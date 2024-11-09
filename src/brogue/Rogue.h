@@ -3345,13 +3345,14 @@ extern "C" {
     short validLocationCount(short **grid, short validValue);
     void randomLocationInGrid(short **grid, short *x, short *y, short validValue);
     pos getQualifyingPathLocNear(
-                                     short x, short y,
-                                     boolean hallwaysAllowed,
-                                     unsigned long blockingTerrainFlags,
-                                     unsigned long blockingMapFlags,
-                                     unsigned long forbiddenTerrainFlags,
-                                     unsigned long forbiddenMapFlags,
-                                     boolean deterministic);
+        pos target,
+        boolean hallwaysAllowed,
+        unsigned long blockingTerrainFlags,
+        unsigned long blockingMapFlags,
+        unsigned long forbiddenTerrainFlags,
+        unsigned long forbiddenMapFlags,
+        boolean deterministic
+    );
     void createBlobOnGrid(short **grid,
                           short *retMinX, short *retMinY, short *retWidth, short *retHeight,
                           short roundCount,

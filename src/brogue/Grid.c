@@ -285,21 +285,22 @@ static pos randomLeastPositiveLocationInGrid(short **grid, boolean deterministic
 }
 
 pos getQualifyingPathLocNear(
-                                 short x, short y,
-                                 boolean hallwaysAllowed,
-                                 unsigned long blockingTerrainFlags,
-                                 unsigned long blockingMapFlags,
-                                 unsigned long forbiddenTerrainFlags,
-                                 unsigned long forbiddenMapFlags,
-                                 boolean deterministic) {
+    pos target,
+    boolean hallwaysAllowed,
+    unsigned long blockingTerrainFlags,
+    unsigned long blockingMapFlags,
+    unsigned long forbiddenTerrainFlags,
+    unsigned long forbiddenMapFlags,
+    boolean deterministic
+) {
     short **grid, **costMap;
 
     // First check the given location to see if it works, as an optimization.
-    if (!cellHasTerrainFlag((pos){ x, y }, blockingTerrainFlags | forbiddenTerrainFlags)
-        && !(pmap[x][y].flags & (blockingMapFlags | forbiddenMapFlags))
-        && (hallwaysAllowed || passableArcCount(x, y) <= 1)) {
+    if (!cellHasTerrainFlag(target, blockingTerrainFlags | forbiddenTerrainFlags)
+        && !(pmapAt(target)->flags & (blockingMapFlags | forbiddenMapFlags))
+        && (hallwaysAllowed || passableArcCount(target.x, target.y) <= 1)) {
 
-        return (pos){ x, y };
+        return target;
     }
 
     // Allocate the grids.
@@ -317,8 +318,8 @@ pos getQualifyingPathLocNear(
     }
 
     // Run the distance scan.
-    grid[x][y] = 1;
-    costMap[x][y] = 1;
+    grid[target.x][target.y] = 1;
+    costMap[target.x][target.y] = 1;
     dijkstraScan(grid, costMap, true);
     findReplaceGrid(grid, 30000, 30000, 0);
 
@@ -347,7 +348,7 @@ pos getQualifyingPathLocNear(
     }
     
     pos loc;
-    if (getQualifyingLocNear(&loc, (pos){ x, y }, hallwaysAllowed, NULL,
+    if (getQualifyingLocNear(&loc, target, hallwaysAllowed, NULL,
                                 (blockingTerrainFlags | forbiddenTerrainFlags),
                                 (blockingMapFlags | forbiddenMapFlags),
                                 false, deterministic)) {
