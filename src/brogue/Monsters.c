@@ -4064,10 +4064,12 @@ boolean getQualifyingGridLocNear(pos *loc,
 }
 
 void makeMonsterDropItem(creature *monst) {
-    pos dropLocation;
-    dropLocation = getQualifyingPathLocNear(monst->loc, true,
-                             (T_DIVIDES_LEVEL), 0,
-                             T_OBSTRUCTS_ITEMS, (HAS_PLAYER | HAS_STAIRS | HAS_ITEM), false);
+    pos dropLocation = getQualifyingPathLocNear(
+        monst->loc, true,
+        (T_DIVIDES_LEVEL), 0,
+        T_OBSTRUCTS_ITEMS, (HAS_PLAYER | HAS_STAIRS | HAS_ITEM),
+        false
+    );
     placeItemAt(monst->carriedItem, dropLocation);
     monst->carriedItem = NULL;
     refreshDungeonCell(dropLocation);
