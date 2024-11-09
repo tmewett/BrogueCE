@@ -285,7 +285,7 @@ static void randomLeastPositiveLocationInGrid(short **grid, short *x, short *y, 
     return;
 }
 
-boolean getQualifyingPathLocNear(short *retValX, short *retValY,
+boolean getQualifyingPathLocNear(pos *retLoc,
                                  short x, short y,
                                  boolean hallwaysAllowed,
                                  unsigned long blockingTerrainFlags,
@@ -300,8 +300,7 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
         && !(pmap[x][y].flags & (blockingMapFlags | forbiddenMapFlags))
         && (hallwaysAllowed || passableArcCount(x, y) <= 1)) {
 
-        *retValX = x;
-        *retValY = y;
+        *retLoc = (pos){ x, y };
         return true;
     }
 
@@ -332,7 +331,7 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
     }
 
     // Get the solution.
-    randomLeastPositiveLocationInGrid(grid, retValX, retValY, deterministic);
+    randomLeastPositiveLocationInGrid(grid, &retLoc->x, &retLoc->y, deterministic);
 
 //    dumpLevelToScreen();
 //    displayGrid(grid);
@@ -345,14 +344,13 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
     freeGrid(costMap);
 
     // Fall back to a pathing-agnostic alternative if there are no solutions.
-    if (*retValX == -1 && *retValY == -1) {
+    if (!isPosInMap(*retLoc)) {
         pos loc;
         if (getQualifyingLocNear(&loc, (pos){ x, y }, hallwaysAllowed, NULL,
                                  (blockingTerrainFlags | forbiddenTerrainFlags),
                                  (blockingMapFlags | forbiddenMapFlags),
                                  false, deterministic)) {
-            *retValX = loc.x;
-            *retValY = loc.y;
+            *retLoc = loc;
             return true; // Found a fallback solution.
         } else {
             return false; // No solutions.
