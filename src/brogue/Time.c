@@ -1889,7 +1889,7 @@ static void monsterEntersLevel(creature *monst, short n) {
     monst->targetCorpseLoc = INVALID_POS;
 
     if (!pit) {
-        getQualifyingPathLocNear(&(monst->loc.x), &(monst->loc.y), monst->loc.x, monst->loc.y, true,
+        getQualifyingPathLocNear(&monst->loc, monst->loc.x, monst->loc.y, true,
                                  T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)), 0,
                                  avoidedFlagsForMonster(&(monst->info)), HAS_STAIRS, false);
     }
@@ -1899,7 +1899,7 @@ static void monsterEntersLevel(creature *monst, short n) {
         // Monsters using the stairs will displace any creatures already located there, to thwart stair-dancing.
         creature *prevMonst = monsterAtLoc(monst->loc);
         brogueAssert(prevMonst);
-        getQualifyingPathLocNear(&(prevMonst->loc.x), &(prevMonst->loc.y), monst->loc.x, monst->loc.y, true,
+        getQualifyingPathLocNear(&prevMonst->loc, monst->loc.x, monst->loc.y, true,
                                  T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(prevMonst->info)), 0,
                                  avoidedFlagsForMonster(&(prevMonst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_STAIRS), false);
         pmapAt(monst->loc)->flags &= ~(HAS_PLAYER | HAS_MONSTER);

@@ -3344,7 +3344,7 @@ extern "C" {
     void getTMGrid(short **grid, short value, unsigned long TMflags);
     short validLocationCount(short **grid, short validValue);
     void randomLocationInGrid(short **grid, short *x, short *y, short validValue);
-    boolean getQualifyingPathLocNear(short *retValX, short *retValY,
+    boolean getQualifyingPathLocNear(pos *retLoc,
                                      short x, short y,
                                      boolean hallwaysAllowed,
                                      unsigned long blockingTerrainFlags,

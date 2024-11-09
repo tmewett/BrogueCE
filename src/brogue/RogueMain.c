@@ -844,7 +844,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             }
         }
         if (!placedPlayer) {
-            getQualifyingPathLocNear(&loc.x, &loc.y,
+            getQualifyingPathLocNear(&loc,
                                      player.loc.x, player.loc.y,
                                      true,
                                      T_DIVIDES_LEVEL, 0,
