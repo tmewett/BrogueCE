@@ -683,7 +683,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
 
                 for (i = 0; i < (weaponImageCount(enchant)); i++) {
                     newMonst = generateMonster(MK_SPECTRAL_IMAGE, true, false);
-                    getQualifyingPathLocNear(&newMonst, defender->loc.x, defender->loc.y, true,
+                    newMonst->loc = getQualifyingPathLocNear(defender->loc.x, defender->loc.y, true,
                                              T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(newMonst->info)), HAS_PLAYER,
                                              avoidedFlagsForMonster(&(newMonst->info)), (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
                     newMonst->bookkeepingFlags |= (MB_FOLLOWER | MB_BOUND_TO_LEADER | MB_DOES_NOT_TRACK_LEADER | MB_TELEPATHICALLY_REVEALED);
