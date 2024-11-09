@@ -284,7 +284,7 @@ static pos randomLeastPositiveLocationInGrid(short **grid, boolean deterministic
     return INVALID_POS;
 }
 
-boolean getQualifyingPathLocNear(pos *retLoc,
+pos getQualifyingPathLocNear(
                                  short x, short y,
                                  boolean hallwaysAllowed,
                                  unsigned long blockingTerrainFlags,
@@ -299,8 +299,7 @@ boolean getQualifyingPathLocNear(pos *retLoc,
         && !(pmap[x][y].flags & (blockingMapFlags | forbiddenMapFlags))
         && (hallwaysAllowed || passableArcCount(x, y) <= 1)) {
 
-        *retLoc = (pos){ x, y };
-        return true;
+        return (pos){ x, y };
     }
 
     // Allocate the grids.
@@ -330,7 +329,7 @@ boolean getQualifyingPathLocNear(pos *retLoc,
     }
 
     // Get the solution.
-    *retLoc = randomLeastPositiveLocationInGrid(grid, deterministic);
+    pos retLoc = randomLeastPositiveLocationInGrid(grid, deterministic);
 
 //    dumpLevelToScreen();
 //    displayGrid(grid);
@@ -343,20 +342,20 @@ boolean getQualifyingPathLocNear(pos *retLoc,
     freeGrid(costMap);
 
     // Fall back to a pathing-agnostic alternative if there are no solutions.
-    if (!isPosInMap(*retLoc)) {
-        pos loc;
-        if (getQualifyingLocNear(&loc, (pos){ x, y }, hallwaysAllowed, NULL,
-                                 (blockingTerrainFlags | forbiddenTerrainFlags),
-                                 (blockingMapFlags | forbiddenMapFlags),
-                                 false, deterministic)) {
-            *retLoc = loc;
-            return true; // Found a fallback solution.
-        } else {
-            return false; // No solutions.
-        }
-    } else {
-        return true; // Found a primary solution.
+    if (isPosInMap(retLoc)) {
+        return retLoc;
     }
+    
+    pos loc;
+    if (getQualifyingLocNear(&loc, (pos){ x, y }, hallwaysAllowed, NULL,
+                                (blockingTerrainFlags | forbiddenTerrainFlags),
+                                (blockingMapFlags | forbiddenMapFlags),
+                                false, deterministic)) {
+        return loc;
+    } else {
+        return retLoc;
+    }
+    
 }
 
 static void cellularAutomataRound(short **grid, char birthParameters[9], char survivalParameters[9]) {
