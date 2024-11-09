@@ -245,44 +245,43 @@ void randomLocationInGrid(short **grid, short *x, short *y, short validValue) {
 }
 
 // Finds the lowest positive number in a grid, chooses one location with that number randomly and returns it as (x, y).
-// If there are no valid locations, returns (-1, -1).
-static void randomLeastPositiveLocationInGrid(short **grid, short *x, short *y, boolean deterministic) {
+// If there are no valid locations, returns INVALID_POS, aka (-1, -1).
+static pos randomLeastPositiveLocationInGrid(short **grid, boolean deterministic) {
     const short targetValue = leastPositiveValueInGrid(grid);
-    short locationCount;
-    short i, j, index;
 
     if (targetValue == 0) {
-        *x = *y = -1;
-        return;
+        return INVALID_POS;
     }
 
-    locationCount = 0;
-    for(i = 0; i < DCOLS; i++) {
-        for(j = 0; j < DROWS; j++) {
+    short locationCount = 0;
+    for(int i = 0; i < DCOLS; i++) {
+        for(int j = 0; j < DROWS; j++) {
             if (grid[i][j] == targetValue) {
                 locationCount++;
             }
         }
     }
 
+    short index;
     if (deterministic) {
         index = locationCount / 2;
     } else {
         index = rand_range(0, locationCount - 1);
     }
 
-    for(i = 0; i < DCOLS && index >= 0; i++) {
-        for(j = 0; j < DROWS && index >= 0; j++) {
+    for(int i = 0; i < DCOLS && index >= 0; i++) {
+        for(int j = 0; j < DROWS && index >= 0; j++) {
             if (grid[i][j] == targetValue) {
                 if (index == 0) {
-                    *x = i;
-                    *y = j;
+                    return (pos){ .x = i, .y = j };
                 }
                 index--;
             }
         }
     }
-    return;
+    // This should not be reachable, since we should have already hit
+    // the unique 'index == 0' point.
+    return INVALID_POS;
 }
 
 boolean getQualifyingPathLocNear(pos *retLoc,
@@ -331,7 +330,7 @@ boolean getQualifyingPathLocNear(pos *retLoc,
     }
 
     // Get the solution.
-    randomLeastPositiveLocationInGrid(grid, &retLoc->x, &retLoc->y, deterministic);
+    *retLoc = randomLeastPositiveLocationInGrid(grid, deterministic);
 
 //    dumpLevelToScreen();
 //    displayGrid(grid);
