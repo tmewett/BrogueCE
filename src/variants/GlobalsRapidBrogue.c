@@ -55,13 +55,6 @@ const color shieldingColor_RapidBrogue =        {150,   75,     0,      0,      
 const color dragonFireColor_RapidBrogue =       {500,   150,    0,      45,     30,         45,         0,      true};
 const color centipedeColor_RapidBrogue =        {75,    25,     85,     0,      0,          0,          0,      false};
 
-// Number of lumenstones on each level past amulet
-const short lumenstoneDistribution_RapidBrogue[DEEPEST_LEVEL - AMULET_LEVEL] = {7, 6, 6, 6};
-
-// Relative generation probabilities of item categories
-//                                                        (GOLD,  SCROLL, POTION, STAFF,  WAND,   WEAPON, ARMOR,  FOOD,   RING,   CHARM,    AMULET,   GEM,    KEY)
-const short itemGenerationProbabilities_RapidBrogue[13] = {50,    84,     104,     3,      3,     10,     8,      2,      3,      2,        0,        0,      0};
-
 const bolt boltCatalog_RapidBrogue[] = {
     {{0}},
     //name                      bolt description                ability description                         char    foreColor       backColor           boltEffect      magnitude       pathDF      targetDF    forbiddenMonsterFlags       flags
@@ -107,6 +100,13 @@ const feat featTable_RapidBrogue[] = {
     {"Paladin",         "Ascend without attacking an unaware or fleeing creature.", true},
     {"Untempted",       "Ascend without picking up gold.",                          true},
 };
+
+// Number of lumenstones on each level past amulet
+const short lumenstoneDistribution_RapidBrogue[DEEPEST_LEVEL - AMULET_LEVEL] = {7, 6, 6, 6};
+
+// Relative generation probabilities of item categories
+//                                                        (GOLD,  SCROLL, POTION, STAFF,  WAND,   WEAPON, ARMOR,  FOOD,   RING,   CHARM,    AMULET,   GEM,    KEY)
+const short itemGenerationProbabilities_RapidBrogue[13] = {50,    84,     104,     3,      3,     10,     8,      2,      3,      2,        0,        0,      0};
 
 const autoGenerator autoGeneratorCatalog_RapidBrogue[] = {
 //   terrain                    layer   DF                          Machine                     reqDungeon  reqLiquid   >=Depth <=Depth          freq    minIncp minSlope    maxNumber
@@ -620,6 +620,127 @@ const blueprint blueprintCatalog_RapidBrogue[] = {
         {DF_ASH,    0,          0,              {2, 3},     0,          0,          -1,         0,              0,              0,          0,          0}}},
 };
 
+// To meter item generation (on level generation):
+// .incrementFrequency must be != 0 for frequency biasing
+// .levelScaling != 0 for thresholding
+const meteredItemGenerationTable meteredItemsGenerationTable_RapidBrogue[] = {
+    { .category = SCROLL, .kind = SCROLL_ENCHANTING, .initialFrequency = 60, .incrementFrequency = 30, .decrementFrequency = 50, .genMultiplier = 4, .genIncrement = 0, .levelScaling = 4 },
+    { .category = SCROLL, .kind = SCROLL_IDENTIFY },
+    { .category = SCROLL, .kind = SCROLL_TELEPORT },
+    { .category = SCROLL, .kind = SCROLL_REMOVE_CURSE },
+    { .category = SCROLL, .kind = SCROLL_RECHARGING },
+    { .category = SCROLL, .kind = SCROLL_PROTECT_ARMOR },
+    { .category = SCROLL, .kind = SCROLL_PROTECT_WEAPON },
+    { .category = SCROLL, .kind = SCROLL_SANCTUARY },
+    { .category = SCROLL, .kind = SCROLL_MAGIC_MAPPING },
+    { .category = SCROLL, .kind = SCROLL_NEGATION },
+    { .category = SCROLL, .kind = SCROLL_SHATTERING },
+    { .category = SCROLL, .kind = SCROLL_DISCORD },
+    { .category = SCROLL, .kind = SCROLL_AGGRAVATE_MONSTER },
+    { .category = SCROLL, .kind = SCROLL_SUMMON_MONSTER },
+    { .category = POTION, .kind = POTION_LIFE, .initialFrequency = 0, .incrementFrequency = 34, .decrementFrequency = 150, .genMultiplier = 4, .genIncrement = 3, .levelScaling = 4 },
+    { .category = POTION, .kind = POTION_STRENGTH, .initialFrequency = 40, .incrementFrequency = 17, .decrementFrequency = 50, .genMultiplier = 4, .genIncrement = 3, .levelScaling = 4 },
+    { .category = POTION, .kind = POTION_TELEPATHY },
+    { .category = POTION, .kind = POTION_LEVITATION },
+    { .category = POTION, .kind = POTION_DETECT_MAGIC, .levelGuarantee = 2, .itemNumberGuarantee = 1 },
+    { .category = POTION, .kind = POTION_HASTE_SELF },
+    { .category = POTION, .kind = POTION_FIRE_IMMUNITY },
+    { .category = POTION, .kind = POTION_INVISIBILITY },
+    { .category = POTION, .kind = POTION_POISON },
+    { .category = POTION, .kind = POTION_PARALYSIS },
+    { .category = POTION, .kind = POTION_HALLUCINATION },
+    { .category = POTION, .kind = POTION_CONFUSION },
+    { .category = POTION, .kind = POTION_INCINERATION },
+    { .category = POTION, .kind = POTION_DARKNESS },
+    { .category = POTION, .kind = POTION_DESCENT },
+    { .category = POTION, .kind = POTION_LICHEN }
+};
+
+// levelFeelings[0] -> AMULET_LEVEL, levelFeelings[1] -> DEEPEST_LEVEL
+levelFeeling levelFeelings_RapidBrogue[] = {
+    { .message = "An alien energy permeates the area. The Amulet of Yendor must be nearby!", .color = &itemMessageColor },
+    { .message = "An overwhelming sense of peace and tranquility settles upon you... then you see monsters. Doh.", .color = &lightBlue }
+};
+
+itemTable potionTable_RapidBrogue[] = {
+    {"life",                itemColors[1], "",  0,  500,    0, 0, {10,10,0}, false, false, 1,  false, "A swirling elixir that will instantly heal you, cure you of ailments, and permanently increase your maximum health."}, // frequency is dynamically adjusted
+    {"strength",            itemColors[2], "",  0,  400,    0, 0, {2,2,0}, false, false, 1,  false, "This powerful medicine will course through your muscles, permanently increasing your strength by one point."}, // frequency is dynamically adjusted
+    {"telepathy",           itemColors[3], "",  20, 350,    0, 0, {50,50,0}, false, false, 1,  false, "This mysterious liquid will attune your mind to the psychic signature of distant creatures. Its effects will not reveal inanimate objects, such as totems, turrets and traps."},
+    {"levitation",          itemColors[4], "",  15, 250,    0, 0, {75,75,0}, false, false, 1,  false, "This curious liquid will cause you to hover in the air, able to drift effortlessly over lava, water, chasms and traps. Flames, gases and spiderwebs fill the air, and cannot be bypassed while airborne. Creatures that dwell in water or mud will be unable to attack you while you levitate."},
+    {"detect magic",        itemColors[5], "",  20, 500,    0, 0, {0,0,0}, false, false, 1,  false, "This mysterious brew will sensitize your mind to the radiance of magic. Items imbued with helpful enchantments will be marked with a full sigil; items corrupted by curses or designed to bring misfortune upon the bearer will be marked with a hollow sigil. The Amulet of Yendor will be revealed by its unique aura."},
+    {"speed",               itemColors[6], "",  10, 500,    0, 0, {25,25,0}, false, false, 1,  false, "Quaffing the contents of this flask will enable you to move at blinding speed for several minutes."},
+    {"fire immunity",       itemColors[7], "",  15, 500,    0, 0, {75,75,0}, false, false, 1,  false, "This potion will render you impervious to heat and permit you to wander through fire and lava and ignore otherwise deadly bolts of flame. It will not guard against the concussive impact of an explosion, however."},
+    {"invisibility",        itemColors[8], "",  15, 400,    0, 0, {50,50,0}, false, false, 1,  false, "Drinking this potion will render you temporarily invisible. Enemies more than two spaces away will be unable to track you."},
+    {"caustic gas",         itemColors[9], "",  15, 200,    0, 0, {0,0,0}, false, false, -1, false, "Uncorking or shattering this pressurized glass will cause its contents to explode into a deadly cloud of caustic purple gas. You might choose to fling this potion at distant enemies instead of uncorking it by hand."},
+    {"paralysis",           itemColors[10], "", 10, 250,    0, 0, {0,0,0}, false, false, -1, false, "Upon exposure to open air, the liquid in this flask will vaporize into a numbing pink haze. Anyone who inhales the cloud will be paralyzed instantly, unable to move for some time after the cloud dissipates. This item can be thrown at distant enemies to catch them within the effect of the gas."},
+    {"hallucination",       itemColors[11], "", 10, 500,    0, 0, {75,75,0}, false, false, -1, false, "This flask contains a vicious and long-lasting hallucinogen. Under its dazzling effect, you will wander through a rainbow wonderland, unable to discern the form of any creatures or items you see."},
+    {"confusion",           itemColors[12], "", 15, 450,    0, 0, {0,0,0}, false, false, -1, false, "This unstable chemical will quickly vaporize into a glittering cloud upon contact with open air, causing any creature that inhales it to lose control of the direction of its movements until the effect wears off (although its ability to aim projectile attacks will not be affected). Its vertiginous intoxication can cause creatures and adventurers to careen into one another or into chasms or lava pits, so extreme care should be taken when under its effect. Its contents can be weaponized by throwing the flask at distant enemies."},
+    {"incineration",        itemColors[13], "", 15, 500,    0, 0, {0,0,0}, false, false, -1, false, "This flask contains an unstable compound which will burst violently into flame upon exposure to open air. You might throw the flask at distant enemies -- or into a deep lake, to cleanse the cavern with scalding steam."},
+    {"darkness",            itemColors[14], "", 7,  150,    0, 0, {75,75,0}, false, false, -1, false, "Drinking this potion will plunge you into darkness. At first, you will be completely blind to anything not illuminated by an independent light source, but over time your vision will regain its former strength. Throwing the potion will create a cloud of supernatural darkness, and enemies will have difficulty seeing or following you if you take refuge under its cover."},
+    {"descent",             itemColors[15], "", 15, 500,    0, 0, {0,0,0}, false, false, -1, false, "When this flask is uncorked by hand or shattered by being thrown, the fog that seeps out will temporarily cause the ground in the vicinity to vanish."},
+    {"creeping death",      itemColors[16], "", 7,  450,    0, 0, {0,0,0}, false, false, -1, false, "When the cork is popped or the flask is thrown, tiny spores will spill across the ground and begin to grow a deadly lichen. Anything that touches the lichen will be poisoned by its clinging tendrils, and the lichen will slowly grow to fill the area. Fire will purge the infestation."},
+};
+
+itemTable scrollTable_RapidBrogue[] = {
+    {"enchanting",          itemTitles[0], "",  0,  550,    0, 2, {0,0,0}, false, false, 1,  false, "This ancient enchanting sorcery will imbue a single item with a powerful and permanent magical charge. A staff will increase in power and in number of charges; a weapon will inflict more damage and find its mark more easily; a suit of armor will deflect attacks more often; the magic of a ring will intensify; and a wand will gain expendable charges in the least amount that such a wand can be found with. Weapons and armor will also require less strength to use, and any curses on the item will be lifted."}, // frequency is dynamically adjusted
+    {"identify",            itemTitles[1], "",  30, 300,    0, 0, {0,0,0}, false, false, 1,  false, "This scrying magic will permanently reveal all of the secrets of a single item."},
+    {"teleportation",       itemTitles[2], "",  10, 500,    0, 0, {0,0,0}, false, false, 1,  false, "This escape spell will instantly relocate you to a random location on the dungeon level. It can be used to escape a dangerous situation with luck. The unlucky reader might find himself in an even more dangerous place."},
+    {"remove curse",        itemTitles[3], "",  15, 150,    0, 0, {0,0,0}, false, false, 1,  false, "This redemption spell will instantly strip from the reader's weapon, armor, rings and carried items any evil enchantments that might prevent the wearer from removing them."},
+    {"recharging",          itemTitles[4], "",  12, 375,    0, 0, {0,0,0}, false, false, 1,  false, "The power bound up in this parchment will instantly recharge all of your staffs and charms."},
+    {"protect armor",       itemTitles[5], "",  10, 400,    0, 0, {0,0,0}, false, false, 1,  false, "This ceremonial shielding magic will permanently proof your armor against degradation by acid."},
+    {"protect weapon",      itemTitles[6], "",  10, 400,    0, 0, {0,0,0}, false, false, 1,  false, "This ceremonial shielding magic will permanently proof your weapon against degradation by acid."},
+    {"sanctuary",           itemTitles[7], "",  10, 500,    0, 0, {0,0,0}, false, false, 1,  false, "This protection rite will imbue the area with powerful warding glyphs, when released over plain ground. Monsters will not willingly set foot on the affected area."},
+    {"magic mapping",       itemTitles[8], "",  12, 500,    0, 0, {0,0,0}, false, false, 1,  false, "This powerful scouting magic will etch a purple-hued image of crystal clarity into your memory, alerting you to the precise layout of the level and revealing all traps, secret doors and hidden levers."},
+    {"negation",            itemTitles[9], "",  8,  400,    0, 0, {0,0,0}, false, false, 1,  false, "When this powerful anti-magic is released, all creatures (including yourself) and all items lying on the ground within your field of view will be exposed to its blast and stripped of magic. Creatures animated purely by magic will die. Potions, scrolls, items being held by other creatures and items in your inventory will not be affected."},
+    {"shattering",          itemTitles[10],"",  8,  500,    0, 0, {0,0,0}, false, false, 1,  false, "This strange incantation will alter the physical structure of nearby stone, causing it to evaporate into the air over the ensuing minutes."},
+    {"discord",             itemTitles[11], "", 8,  400,    0, 0, {0,0,0}, false, false, 1,  false, "This scroll will unleash a powerful blast of mind magic. Any creatures within line of sight will turn against their companions and attack indiscriminately for 30 turns."},
+    {"aggravate monsters",  itemTitles[12], "", 15, 50,     0, 0, {0,0,0}, false, false, -1, false, "This scroll will unleash a piercing shriek that will awaken all monsters and alert them to the reader's location."},
+    {"summon monsters",     itemTitles[13], "", 10, 50,     0, 0, {0,0,0}, false, false, -1, false, "This summoning incantation will call out to creatures in other planes of existence, drawing them through the fabric of reality to confront the reader."},
+};
+
+itemTable wandTable_RapidBrogue[] = {
+    {"teleportation",   itemMetals[0], "",  3,  800,    0, BOLT_TELEPORT,      {1,2,1}, false, false, 1,  false, "This wand will teleport a creature to a random place on the level. Aquatic or mud-bound creatures will be rendered helpless on dry land."},
+    {"slowness",        itemMetals[1], "",  3,  800,    0, BOLT_SLOW,          {2,4,1}, false, false, 1,  false, "This wand will cause a creature to move at half its ordinary speed for 30 turns."},
+    {"polymorphism",    itemMetals[2], "",  3,  700,    0, BOLT_POLYMORPH,     {1,2,1}, false, false, 1,  false, "This mischievous magic will transform a creature into another creature at random. Beware: the tamest of creatures might turn into the most fearsome. The horror of the transformation will turn an allied victim against you."},
+    {"negation",        itemMetals[3], "",  3,  550,    0, BOLT_NEGATION,      {2,4,1}, false, false, 1,  false, "This powerful anti-magic will strip a creature of a host of magical traits, including flight, invisibility, acidic corrosiveness, telepathy, magical speed or slowness, hypnosis, magical fear, immunity to physical attack, fire resistance and the ability to blink. Spellcasters will lose their magical abilities and magical totems will be rendered inert. Creatures animated purely by magic will die."},
+    {"domination",      itemMetals[4], "",  1,  1000,   0, BOLT_DOMINATION,    {1,2,1}, false, false, 1,  false, "This wand can forever bind an enemy to the caster's will, turning it into a steadfast ally. However, the magic only works effectively against enemies that are near death."},
+    {"beckoning",       itemMetals[5], "",  3,  500,    0, BOLT_BECKONING,     {2,4,1}, false, false, 1,  false, "The force of this wand will draw the targeted creature into direct proximity."},
+    {"plenty",          itemMetals[6], "",  2,  700,    0, BOLT_PLENTY,        {1,2,1}, false, false, -1, false, "The creature at the other end of this mischievous bit of cloning magic, friend or foe, will be beside itself -- literally!"},
+    {"invisibility",    itemMetals[7], "",  3,  100,    0, BOLT_INVISIBILITY,  {2,4,1}, false, false, -1, false, "This wand will render a creature temporarily invisible to the naked eye. Only with telepathy or in the silhouette of a thick gas will an observer discern the creature's hazy outline."},
+    {"empowerment",     itemMetals[8], "",  2,  100,    0, BOLT_EMPOWERMENT,   {1,1,1}, false, false, -1, false, "This sacred magic will permanently improve the mind and body of any monster it hits. A wise adventurer will use it on allies, making them stronger in combat and able to learn a new talent from a fallen foe. If the bolt is reflected back at you, it will have no effect."},
+};
+
+itemTable charmTable_RapidBrogue[] = {
+    {"health",          "", "", 5,  900,    0, 0, {1,2,1}, true, false, 1, false, "A handful of dried bloodwort and mandrake root has been bound together with leather cord and imbued with a powerful healing magic."},
+    {"protection",      "", "", 5,  800,    0, 0, {1,2,1}, true, false, 1, false, "Four copper rings have been joined into a tetrahedron. The construct is oddly warm to the touch."},
+    {"haste",           "", "", 5,  750,    0, 0, {1,2,1}, true, false, 1, false, "Various animals have been etched into the surface of this brass bangle. It emits a barely audible hum."},
+    {"fire immunity",   "", "", 3,  750,    0, 0, {1,2,1}, true, false, 1, false, "Eldritch flames flicker within this polished crystal bauble."},
+    {"invisibility",    "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "A jade figurine depicts a strange humanoid creature. It has a face on both sides of its head, but all four eyes are closed."},
+    {"telepathy",       "", "", 3,  700,    0, 0, {1,2,1}, true, false, 1, false, "Seven tiny glass eyes roll freely within this glass sphere. Somehow, they always come to rest facing outward."},
+    {"levitation",      "", "", 1,  700,    0, 0, {1,2,1}, true, false, 1, false, "Sparkling dust and fragments of feather waft and swirl endlessly inside this small glass sphere."},
+    {"shattering",      "", "", 1,  700,    0, 0, {1,2,1}, true, false, 1, false, "This turquoise crystal, fixed to a leather lanyard, hums with an arcane energy that sets your teeth on edge."},
+    {"guardian",        "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "When you touch this tiny granite statue, a rhythmic booming echoes in your mind."},
+//    {"fear",            "", "",   3,  700,    0,{1,2,1}, true, false, "When you gaze into the murky interior of this obsidian cube, you feel as though something predatory is watching you."},
+    {"teleportation",   "", "", 4,  700,    0, 0, {1,2,1}, true, false, 1, false, "The surface of this nickel sphere has been etched with a perfect grid pattern. Somehow, the squares of the grid are all exactly the same size."},
+    {"recharging",      "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "A strip of bronze has been wound around a rough wooden sphere. Each time you touch it, you feel a tiny electric shock."},
+    {"negation",        "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "A featureless gray disc hangs from a lanyard. When you touch it, your hand and arm go numb."},
+};
+
+const charmEffectTableEntry charmEffectTable_RapidBrogue[] = {
+    { .kind = CHARM_HEALTH, .effectDurationBase = 3, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 2500, .rechargeDelayBase = FP_FACTOR * 55 / 100, .rechargeDelayMinTurns = 1, .effectMagnitudeMultiplier = 20 },
+    { .kind = CHARM_PROTECTION, .effectDurationBase = 20, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 1000, .rechargeDelayBase = FP_FACTOR * 60 / 100, .rechargeDelayMinTurns = 1, .effectMagnitudeMultiplier = 150 },
+    { .kind = CHARM_HASTE, .effectDurationBase = 7, .effectDurationIncrement = POW_120_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100, .rechargeDelayMinTurns = 1 },
+    { .kind = CHARM_FIRE_IMMUNITY, .effectDurationBase = 10, .effectDurationIncrement = POW_125_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 60 / 100, .rechargeDelayMinTurns = 1 },
+    { .kind = CHARM_INVISIBILITY, .effectDurationBase = 5, .effectDurationIncrement = POW_120_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100, .rechargeDelayMinTurns = 1 },
+    { .kind = CHARM_TELEPATHY, .effectDurationBase = 25, .effectDurationIncrement = POW_125_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100, .rechargeDelayMinTurns = 1 },
+    { .kind = CHARM_LEVITATION, .effectDurationBase = 10, .effectDurationIncrement = POW_125_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100, .rechargeDelayMinTurns = 1 },
+    { .kind = CHARM_SHATTERING, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 2500, .rechargeDelayBase = FP_FACTOR * 60 / 100, .rechargeDelayMinTurns = 1, .effectMagnitudeConstant = 4 },
+    { .kind = CHARM_GUARDIAN, .effectDurationBase = 18, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 700, .rechargeDelayBase = FP_FACTOR * 70 / 100, .rechargeDelayMinTurns = 1, .effectMagnitudeConstant = 4, .effectMagnitudeMultiplier = 2 },
+    { .kind = CHARM_TELEPORTATION, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 920, .rechargeDelayBase = FP_FACTOR * 60 / 100, .rechargeDelayMinTurns = 2 },
+    { .kind = CHARM_RECHARGING, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 10000, .rechargeDelayBase = FP_FACTOR * 55 / 100, .rechargeDelayMinTurns = 1 },
+    { .kind = CHARM_NEGATION, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 2500, .rechargeDelayBase = FP_FACTOR * 60 / 100, .rechargeDelayMinTurns = 1, .effectMagnitudeConstant = 1, .effectMagnitudeMultiplier = 3 }
+};
+
 const hordeType hordeCatalog_RapidBrogue[] = {
     // leader       #members    member list                             member numbers                  minL    maxL    freq    spawnsIn        machine         flags
     {MK_RAT,            0,      {0},                                    {{0}},                          1,      2,      150},
@@ -825,127 +946,6 @@ const hordeType hordeCatalog_RapidBrogue[] = {
     {MK_GOBLIN_CONJURER,2,      {MK_GOBLIN_CONJURER, MK_GOBLIN_MYSTIC}, {{0,1,1}, {1,1,1}},             3,      5,     40,      0,              0,              HORDE_MACHINE_GOBLIN_WARREN},
     {MK_GOBLIN_TOTEM,   4,      {MK_GOBLIN_TOTEM, MK_GOBLIN_CONJURER, MK_GOBLIN_MYSTIC, MK_GOBLIN}, {{1,2,1},{1,2,1},{1,2,1},{3,5,1}},10,17,80,0,MT_CAMP_AREA,  HORDE_MACHINE_GOBLIN_WARREN},
     {MK_GOBLIN,         1,      {MK_GOBLIN},                            {{1, 2, 1}},                    1,      3,      10,     0,              0,              HORDE_MACHINE_GOBLIN_WARREN | HORDE_LEADER_CAPTIVE},
-};
-
-// To meter item generation (on level generation):
-// .incrementFrequency must be != 0 for frequency biasing
-// .levelScaling != 0 for thresholding
-const meteredItemGenerationTable meteredItemsGenerationTable_RapidBrogue[] = {
-    { .category = SCROLL, .kind = SCROLL_ENCHANTING, .initialFrequency = 60, .incrementFrequency = 30, .decrementFrequency = 50, .genMultiplier = 4, .genIncrement = 0, .levelScaling = 4 },
-    { .category = SCROLL, .kind = SCROLL_IDENTIFY },
-    { .category = SCROLL, .kind = SCROLL_TELEPORT },
-    { .category = SCROLL, .kind = SCROLL_REMOVE_CURSE },
-    { .category = SCROLL, .kind = SCROLL_RECHARGING },
-    { .category = SCROLL, .kind = SCROLL_PROTECT_ARMOR },
-    { .category = SCROLL, .kind = SCROLL_PROTECT_WEAPON },
-    { .category = SCROLL, .kind = SCROLL_SANCTUARY },
-    { .category = SCROLL, .kind = SCROLL_MAGIC_MAPPING },
-    { .category = SCROLL, .kind = SCROLL_NEGATION },
-    { .category = SCROLL, .kind = SCROLL_SHATTERING },
-    { .category = SCROLL, .kind = SCROLL_DISCORD },
-    { .category = SCROLL, .kind = SCROLL_AGGRAVATE_MONSTER },
-    { .category = SCROLL, .kind = SCROLL_SUMMON_MONSTER },
-    { .category = POTION, .kind = POTION_LIFE, .initialFrequency = 0, .incrementFrequency = 34, .decrementFrequency = 150, .genMultiplier = 4, .genIncrement = 3, .levelScaling = 4 },
-    { .category = POTION, .kind = POTION_STRENGTH, .initialFrequency = 40, .incrementFrequency = 17, .decrementFrequency = 50, .genMultiplier = 4, .genIncrement = 3, .levelScaling = 4 },
-    { .category = POTION, .kind = POTION_TELEPATHY },
-    { .category = POTION, .kind = POTION_LEVITATION },
-    { .category = POTION, .kind = POTION_DETECT_MAGIC, .levelGuarantee = 2, .itemNumberGuarantee = 1 },
-    { .category = POTION, .kind = POTION_HASTE_SELF },
-    { .category = POTION, .kind = POTION_FIRE_IMMUNITY },
-    { .category = POTION, .kind = POTION_INVISIBILITY },
-    { .category = POTION, .kind = POTION_POISON },
-    { .category = POTION, .kind = POTION_PARALYSIS },
-    { .category = POTION, .kind = POTION_HALLUCINATION },
-    { .category = POTION, .kind = POTION_CONFUSION },
-    { .category = POTION, .kind = POTION_INCINERATION },
-    { .category = POTION, .kind = POTION_DARKNESS },
-    { .category = POTION, .kind = POTION_DESCENT },
-    { .category = POTION, .kind = POTION_LICHEN }
-};
-
-// levelFeelings[0] -> AMULET_LEVEL, levelFeelings[1] -> DEEPEST_LEVEL
-levelFeeling levelFeelings_RapidBrogue[] = {
-    { .message = "An alien energy permeates the area. The Amulet of Yendor must be nearby!", .color = &itemMessageColor },
-    { .message = "An overwhelming sense of peace and tranquility settles upon you... then you see monsters. Doh.", .color = &lightBlue }
-};
-
-itemTable potionTable_RapidBrogue[] = {
-    {"life",                itemColors[1], "",  0,  500,    0, 0, {10,10,0}, false, false, 1,  false, "A swirling elixir that will instantly heal you, cure you of ailments, and permanently increase your maximum health."}, // frequency is dynamically adjusted
-    {"strength",            itemColors[2], "",  0,  400,    0, 0, {2,2,0}, false, false, 1,  false, "This powerful medicine will course through your muscles, permanently increasing your strength by one point."}, // frequency is dynamically adjusted
-    {"telepathy",           itemColors[3], "",  20, 350,    0, 0, {50,50,0}, false, false, 1,  false, "This mysterious liquid will attune your mind to the psychic signature of distant creatures. Its effects will not reveal inanimate objects, such as totems, turrets and traps."},
-    {"levitation",          itemColors[4], "",  15, 250,    0, 0, {75,75,0}, false, false, 1,  false, "This curious liquid will cause you to hover in the air, able to drift effortlessly over lava, water, chasms and traps. Flames, gases and spiderwebs fill the air, and cannot be bypassed while airborne. Creatures that dwell in water or mud will be unable to attack you while you levitate."},
-    {"detect magic",        itemColors[5], "",  20, 500,    0, 0, {0,0,0}, false, false, 1,  false, "This mysterious brew will sensitize your mind to the radiance of magic. Items imbued with helpful enchantments will be marked with a full sigil; items corrupted by curses or designed to bring misfortune upon the bearer will be marked with a hollow sigil. The Amulet of Yendor will be revealed by its unique aura."},
-    {"speed",               itemColors[6], "",  10, 500,    0, 0, {25,25,0}, false, false, 1,  false, "Quaffing the contents of this flask will enable you to move at blinding speed for several minutes."},
-    {"fire immunity",       itemColors[7], "",  15, 500,    0, 0, {75,75,0}, false, false, 1,  false, "This potion will render you impervious to heat and permit you to wander through fire and lava and ignore otherwise deadly bolts of flame. It will not guard against the concussive impact of an explosion, however."},
-    {"invisibility",        itemColors[8], "",  15, 400,    0, 0, {50,50,0}, false, false, 1,  false, "Drinking this potion will render you temporarily invisible. Enemies more than two spaces away will be unable to track you."},
-    {"caustic gas",         itemColors[9], "",  15, 200,    0, 0, {0,0,0}, false, false, -1, false, "Uncorking or shattering this pressurized glass will cause its contents to explode into a deadly cloud of caustic purple gas. You might choose to fling this potion at distant enemies instead of uncorking it by hand."},
-    {"paralysis",           itemColors[10], "", 10, 250,    0, 0, {0,0,0}, false, false, -1, false, "Upon exposure to open air, the liquid in this flask will vaporize into a numbing pink haze. Anyone who inhales the cloud will be paralyzed instantly, unable to move for some time after the cloud dissipates. This item can be thrown at distant enemies to catch them within the effect of the gas."},
-    {"hallucination",       itemColors[11], "", 10, 500,    0, 0, {75,75,0}, false, false, -1, false, "This flask contains a vicious and long-lasting hallucinogen. Under its dazzling effect, you will wander through a rainbow wonderland, unable to discern the form of any creatures or items you see."},
-    {"confusion",           itemColors[12], "", 15, 450,    0, 0, {0,0,0}, false, false, -1, false, "This unstable chemical will quickly vaporize into a glittering cloud upon contact with open air, causing any creature that inhales it to lose control of the direction of its movements until the effect wears off (although its ability to aim projectile attacks will not be affected). Its vertiginous intoxication can cause creatures and adventurers to careen into one another or into chasms or lava pits, so extreme care should be taken when under its effect. Its contents can be weaponized by throwing the flask at distant enemies."},
-    {"incineration",        itemColors[13], "", 15, 500,    0, 0, {0,0,0}, false, false, -1, false, "This flask contains an unstable compound which will burst violently into flame upon exposure to open air. You might throw the flask at distant enemies -- or into a deep lake, to cleanse the cavern with scalding steam."},
-    {"darkness",            itemColors[14], "", 7,  150,    0, 0, {75,75,0}, false, false, -1, false, "Drinking this potion will plunge you into darkness. At first, you will be completely blind to anything not illuminated by an independent light source, but over time your vision will regain its former strength. Throwing the potion will create a cloud of supernatural darkness, and enemies will have difficulty seeing or following you if you take refuge under its cover."},
-    {"descent",             itemColors[15], "", 15, 500,    0, 0, {0,0,0}, false, false, -1, false, "When this flask is uncorked by hand or shattered by being thrown, the fog that seeps out will temporarily cause the ground in the vicinity to vanish."},
-    {"creeping death",      itemColors[16], "", 7,  450,    0, 0, {0,0,0}, false, false, -1, false, "When the cork is popped or the flask is thrown, tiny spores will spill across the ground and begin to grow a deadly lichen. Anything that touches the lichen will be poisoned by its clinging tendrils, and the lichen will slowly grow to fill the area. Fire will purge the infestation."},
-};
-
-itemTable scrollTable_RapidBrogue[] = {
-    {"enchanting",          itemTitles[0], "",  0,  550,    0, 2, {0,0,0}, false, false, 1,  false, "This ancient enchanting sorcery will imbue a single item with a powerful and permanent magical charge. A staff will increase in power and in number of charges; a weapon will inflict more damage and find its mark more easily; a suit of armor will deflect attacks more often; the magic of a ring will intensify; and a wand will gain expendable charges in the least amount that such a wand can be found with. Weapons and armor will also require less strength to use, and any curses on the item will be lifted."}, // frequency is dynamically adjusted
-    {"identify",            itemTitles[1], "",  30, 300,    0, 0, {0,0,0}, false, false, 1,  false, "This scrying magic will permanently reveal all of the secrets of a single item."},
-    {"teleportation",       itemTitles[2], "",  10, 500,    0, 0, {0,0,0}, false, false, 1,  false, "This escape spell will instantly relocate you to a random location on the dungeon level. It can be used to escape a dangerous situation with luck. The unlucky reader might find himself in an even more dangerous place."},
-    {"remove curse",        itemTitles[3], "",  15, 150,    0, 0, {0,0,0}, false, false, 1,  false, "This redemption spell will instantly strip from the reader's weapon, armor, rings and carried items any evil enchantments that might prevent the wearer from removing them."},
-    {"recharging",          itemTitles[4], "",  12, 375,    0, 0, {0,0,0}, false, false, 1,  false, "The power bound up in this parchment will instantly recharge all of your staffs and charms."},
-    {"protect armor",       itemTitles[5], "",  10, 400,    0, 0, {0,0,0}, false, false, 1,  false, "This ceremonial shielding magic will permanently proof your armor against degradation by acid."},
-    {"protect weapon",      itemTitles[6], "",  10, 400,    0, 0, {0,0,0}, false, false, 1,  false, "This ceremonial shielding magic will permanently proof your weapon against degradation by acid."},
-    {"sanctuary",           itemTitles[7], "",  10, 500,    0, 0, {0,0,0}, false, false, 1,  false, "This protection rite will imbue the area with powerful warding glyphs, when released over plain ground. Monsters will not willingly set foot on the affected area."},
-    {"magic mapping",       itemTitles[8], "",  12, 500,    0, 0, {0,0,0}, false, false, 1,  false, "This powerful scouting magic will etch a purple-hued image of crystal clarity into your memory, alerting you to the precise layout of the level and revealing all traps, secret doors and hidden levers."},
-    {"negation",            itemTitles[9], "",  8,  400,    0, 0, {0,0,0}, false, false, 1,  false, "When this powerful anti-magic is released, all creatures (including yourself) and all items lying on the ground within your field of view will be exposed to its blast and stripped of magic. Creatures animated purely by magic will die. Potions, scrolls, items being held by other creatures and items in your inventory will not be affected."},
-    {"shattering",          itemTitles[10],"",  8,  500,    0, 0, {0,0,0}, false, false, 1,  false, "This strange incantation will alter the physical structure of nearby stone, causing it to evaporate into the air over the ensuing minutes."},
-    {"discord",             itemTitles[11], "", 8,  400,    0, 0, {0,0,0}, false, false, 1,  false, "This scroll will unleash a powerful blast of mind magic. Any creatures within line of sight will turn against their companions and attack indiscriminately for 30 turns."},
-    {"aggravate monsters",  itemTitles[12], "", 15, 50,     0, 0, {0,0,0}, false, false, -1, false, "This scroll will unleash a piercing shriek that will awaken all monsters and alert them to the reader's location."},
-    {"summon monsters",     itemTitles[13], "", 10, 50,     0, 0, {0,0,0}, false, false, -1, false, "This summoning incantation will call out to creatures in other planes of existence, drawing them through the fabric of reality to confront the reader."},
-};
-
-itemTable wandTable_RapidBrogue[] = {
-    {"teleportation",   itemMetals[0], "",  3,  800,    0, BOLT_TELEPORT,      {1,2,1}, false, false, 1,  false, "This wand will teleport a creature to a random place on the level. Aquatic or mud-bound creatures will be rendered helpless on dry land."},
-    {"slowness",        itemMetals[1], "",  3,  800,    0, BOLT_SLOW,          {2,4,1}, false, false, 1,  false, "This wand will cause a creature to move at half its ordinary speed for 30 turns."},
-    {"polymorphism",    itemMetals[2], "",  3,  700,    0, BOLT_POLYMORPH,     {1,2,1}, false, false, 1,  false, "This mischievous magic will transform a creature into another creature at random. Beware: the tamest of creatures might turn into the most fearsome. The horror of the transformation will turn an allied victim against you."},
-    {"negation",        itemMetals[3], "",  3,  550,    0, BOLT_NEGATION,      {2,4,1}, false, false, 1,  false, "This powerful anti-magic will strip a creature of a host of magical traits, including flight, invisibility, acidic corrosiveness, telepathy, magical speed or slowness, hypnosis, magical fear, immunity to physical attack, fire resistance and the ability to blink. Spellcasters will lose their magical abilities and magical totems will be rendered inert. Creatures animated purely by magic will die."},
-    {"domination",      itemMetals[4], "",  1,  1000,   0, BOLT_DOMINATION,    {1,2,1}, false, false, 1,  false, "This wand can forever bind an enemy to the caster's will, turning it into a steadfast ally. However, the magic only works effectively against enemies that are near death."},
-    {"beckoning",       itemMetals[5], "",  3,  500,    0, BOLT_BECKONING,     {2,4,1}, false, false, 1,  false, "The force of this wand will draw the targeted creature into direct proximity."},
-    {"plenty",          itemMetals[6], "",  2,  700,    0, BOLT_PLENTY,        {1,2,1}, false, false, -1, false, "The creature at the other end of this mischievous bit of cloning magic, friend or foe, will be beside itself -- literally!"},
-    {"invisibility",    itemMetals[7], "",  3,  100,    0, BOLT_INVISIBILITY,  {2,4,1}, false, false, -1, false, "This wand will render a creature temporarily invisible to the naked eye. Only with telepathy or in the silhouette of a thick gas will an observer discern the creature's hazy outline."},
-    {"empowerment",     itemMetals[8], "",  2,  100,    0, BOLT_EMPOWERMENT,   {1,1,1}, false, false, -1, false, "This sacred magic will permanently improve the mind and body of any monster it hits. A wise adventurer will use it on allies, making them stronger in combat and able to learn a new talent from a fallen foe. If the bolt is reflected back at you, it will have no effect."},
-};
-
-itemTable charmTable_RapidBrogue[] = {
-    {"health",          "", "", 5,  900,    0, 0, {1,2,1}, true, false, 1, false, "A handful of dried bloodwort and mandrake root has been bound together with leather cord and imbued with a powerful healing magic."},
-    {"protection",      "", "", 5,  800,    0, 0, {1,2,1}, true, false, 1, false, "Four copper rings have been joined into a tetrahedron. The construct is oddly warm to the touch."},
-    {"haste",           "", "", 5,  750,    0, 0, {1,2,1}, true, false, 1, false, "Various animals have been etched into the surface of this brass bangle. It emits a barely audible hum."},
-    {"fire immunity",   "", "", 3,  750,    0, 0, {1,2,1}, true, false, 1, false, "Eldritch flames flicker within this polished crystal bauble."},
-    {"invisibility",    "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "A jade figurine depicts a strange humanoid creature. It has a face on both sides of its head, but all four eyes are closed."},
-    {"telepathy",       "", "", 3,  700,    0, 0, {1,2,1}, true, false, 1, false, "Seven tiny glass eyes roll freely within this glass sphere. Somehow, they always come to rest facing outward."},
-    {"levitation",      "", "", 1,  700,    0, 0, {1,2,1}, true, false, 1, false, "Sparkling dust and fragments of feather waft and swirl endlessly inside this small glass sphere."},
-    {"shattering",      "", "", 1,  700,    0, 0, {1,2,1}, true, false, 1, false, "This turquoise crystal, fixed to a leather lanyard, hums with an arcane energy that sets your teeth on edge."},
-    {"guardian",        "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "When you touch this tiny granite statue, a rhythmic booming echoes in your mind."},
-//    {"fear",            "", "",   3,  700,    0,{1,2,1}, true, false, "When you gaze into the murky interior of this obsidian cube, you feel as though something predatory is watching you."},
-    {"teleportation",   "", "", 4,  700,    0, 0, {1,2,1}, true, false, 1, false, "The surface of this nickel sphere has been etched with a perfect grid pattern. Somehow, the squares of the grid are all exactly the same size."},
-    {"recharging",      "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "A strip of bronze has been wound around a rough wooden sphere. Each time you touch it, you feel a tiny electric shock."},
-    {"negation",        "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "A featureless gray disc hangs from a lanyard. When you touch it, your hand and arm go numb."},
-};
-
-const charmEffectTableEntry charmEffectTable_RapidBrogue[] = {
-    { .kind = CHARM_HEALTH, .effectDurationBase = 3, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 2500, .rechargeDelayBase = FP_FACTOR * 55 / 100, .rechargeDelayMinTurns = 1, .effectMagnitudeMultiplier = 20 },
-    { .kind = CHARM_PROTECTION, .effectDurationBase = 20, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 1000, .rechargeDelayBase = FP_FACTOR * 60 / 100, .rechargeDelayMinTurns = 1, .effectMagnitudeMultiplier = 150 },
-    { .kind = CHARM_HASTE, .effectDurationBase = 7, .effectDurationIncrement = POW_120_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100, .rechargeDelayMinTurns = 1 },
-    { .kind = CHARM_FIRE_IMMUNITY, .effectDurationBase = 10, .effectDurationIncrement = POW_125_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 60 / 100, .rechargeDelayMinTurns = 1 },
-    { .kind = CHARM_INVISIBILITY, .effectDurationBase = 5, .effectDurationIncrement = POW_120_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100, .rechargeDelayMinTurns = 1 },
-    { .kind = CHARM_TELEPATHY, .effectDurationBase = 25, .effectDurationIncrement = POW_125_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100, .rechargeDelayMinTurns = 1 },
-    { .kind = CHARM_LEVITATION, .effectDurationBase = 10, .effectDurationIncrement = POW_125_CHARM_INCREMENT, .rechargeDelayDuration = 800, .rechargeDelayBase = FP_FACTOR * 65 / 100, .rechargeDelayMinTurns = 1 },
-    { .kind = CHARM_SHATTERING, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 2500, .rechargeDelayBase = FP_FACTOR * 60 / 100, .rechargeDelayMinTurns = 1, .effectMagnitudeConstant = 4 },
-    { .kind = CHARM_GUARDIAN, .effectDurationBase = 18, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 700, .rechargeDelayBase = FP_FACTOR * 70 / 100, .rechargeDelayMinTurns = 1, .effectMagnitudeConstant = 4, .effectMagnitudeMultiplier = 2 },
-    { .kind = CHARM_TELEPORTATION, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 920, .rechargeDelayBase = FP_FACTOR * 60 / 100, .rechargeDelayMinTurns = 2 },
-    { .kind = CHARM_RECHARGING, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 10000, .rechargeDelayBase = FP_FACTOR * 55 / 100, .rechargeDelayMinTurns = 1 },
-    { .kind = CHARM_NEGATION, .effectDurationBase = 0, .effectDurationIncrement = POW_0_CHARM_INCREMENT, .rechargeDelayDuration = 2500, .rechargeDelayBase = FP_FACTOR * 60 / 100, .rechargeDelayMinTurns = 1, .effectMagnitudeConstant = 1, .effectMagnitudeMultiplier = 3 }
 };
 
 const char *mainMenuTitle_RapidBrogue =
