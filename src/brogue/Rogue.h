@@ -194,6 +194,10 @@ typedef struct windowpos {
 #define COLOR_ESCAPE            25
 #define COLOR_VALUE_INTERCEPT   25
 
+#define MIN_PLAYBACK_DELAY      1
+#define MAX_PLAYBACK_DELAY      3000
+
+
 // variants supported in this code base
 enum gameVariant {
     VARIANT_BROGUE,
@@ -3518,6 +3522,9 @@ extern "C" {
 
     void dijkstraScan(short **distanceMap, short **costMap, boolean useDiagonals);
 
+    void readFromConfig(enum graphicsModes* initialGraphics);
+    void writeIntoConfig(void);
+    
 #if defined __cplusplus
 }
 #endif
