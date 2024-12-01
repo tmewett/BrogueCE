@@ -3528,8 +3528,11 @@ void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
             // so clearing it might screw up an existing monster.)
             pmap[*x][*y].flags &= ~HAS_MONSTER;
         }
-        getQualifyingPathLocNear(x, y, *x, *y, true, T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)), 0,
+
+        pos qualifiedPosition = getQualifyingPathLocNear((pos){ *x, *y }, true, T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)), 0,
                                  avoidedFlagsForMonster(&(monst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_STAIRS | IS_IN_MACHINE), true);
+        *x = qualifiedPosition.x;
+        *y = qualifiedPosition.y;
     }
     pmap[*x][*y].flags |= HAS_MONSTER;
     monst->bookkeepingFlags &= ~(MB_PREPLACED | MB_APPROACHING_DOWNSTAIRS | MB_APPROACHING_UPSTAIRS | MB_APPROACHING_PIT | MB_ABSORBING);

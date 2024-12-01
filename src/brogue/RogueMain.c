@@ -847,8 +847,8 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             }
         }
         if (!placedPlayer) {
-            getQualifyingPathLocNear(&loc.x, &loc.y,
-                                     player.loc.x, player.loc.y,
+            loc = getQualifyingPathLocNear(
+                                     player.loc,
                                      true,
                                      T_DIVIDES_LEVEL, 0,
                                      T_PATHING_BLOCKER, (HAS_MONSTER | HAS_STAIRS | IS_IN_MACHINE),
