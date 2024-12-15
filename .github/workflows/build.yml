@@ -35,7 +35,7 @@ jobs:
         compression-level: 0  # There's no point compressing something already compressed
 
   macos:
-    runs-on: macos-12
+    runs-on: macos-13
     steps:
     - name: "Checkout sources"
       uses: actions/checkout@v3
