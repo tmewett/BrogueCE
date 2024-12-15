@@ -28,10 +28,11 @@ jobs:
         tar -czvf BrogueCE-linux-x86_64.tar.gz BrogueCE-linux
 
     - name: "Upload artifact"
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: linux-x86_64
         path: BrogueCE-linux-x86_64.tar.gz
+        compression-level: 0  # There's no point compressing something already compressed
 
   macos:
     runs-on: macos-12
@@ -76,10 +77,11 @@ jobs:
         zip -rll BrogueCE-macos-x86_64.zip BrogueCE-macos
 
     - name: "Upload artifact"
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: macos-x86_64
         path: BrogueCE-macos-x86_64.zip
+        compression-level: 0  # There's no point compressing something already compressed
 
   windows:
     runs-on: windows-latest
@@ -107,7 +109,8 @@ jobs:
         7z a BrogueCE-windows-x86_64.zip BrogueCE-windows
 
     - name: "Upload artifact"
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: windows-x86_64
         path: BrogueCE-windows-x86_64.zip
+        compression-level: 0  # There's no point compressing something already compressed
