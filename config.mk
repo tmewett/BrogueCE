@@ -3,6 +3,8 @@ DATADIR := .
 
 # Host and target platform. Values: LINUXLIKE, WINDOWS, OS2
 SYSTEM := LINUXLIKE
+# Path to mt (Windows SDK), when building on Windows
+MT := mt
 
 # Include terminal support. Requires ncurses
 TERMINAL := NO

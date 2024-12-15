@@ -7,81 +7,81 @@ on:
 
 jobs:
 
-  linux:
-    runs-on: ubuntu-20.04
-    steps:
-    - name: "Install dependencies"
-      run: |
-        sudo apt update -y
-        sudo apt install -y libsdl2-dev libsdl2-image-dev
+  # linux:
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #   - name: "Install dependencies"
+  #     run: |
+  #       sudo apt update -y
+  #       sudo apt install -y libsdl2-dev libsdl2-image-dev
 
-    - name: "Checkout sources"
-      uses: actions/checkout@v3
+  #   - name: "Checkout sources"
+  #     uses: actions/checkout@v3
 
-    - name: "Compile"
-      run: |
-        make bin/brogue
+  #   - name: "Compile"
+  #     run: |
+  #       make bin/brogue
 
-    - name: "Create artifact"
-      run: |
-        make BrogueCE-linux
-        tar -czvf BrogueCE-linux-x86_64.tar.gz BrogueCE-linux
+  #   - name: "Create artifact"
+  #     run: |
+  #       make BrogueCE-linux
+  #       tar -czvf BrogueCE-linux-x86_64.tar.gz BrogueCE-linux
 
-    - name: "Upload artifact"
-      uses: actions/upload-artifact@v4
-      with:
-        name: linux-x86_64
-        path: BrogueCE-linux-x86_64.tar.gz
-        compression-level: 0  # There's no point compressing something already compressed
+  #   - name: "Upload artifact"
+  #     uses: actions/upload-artifact@v4
+  #     with:
+  #       name: linux-x86_64
+  #       path: BrogueCE-linux-x86_64.tar.gz
+  #       compression-level: 0  # There's no point compressing something already compressed
 
-  macos:
-    runs-on: macos-13
-    steps:
-    - name: "Checkout sources"
-      uses: actions/checkout@v3
+  # macos:
+  #   runs-on: macos-13
+  #   steps:
+  #   - name: "Checkout sources"
+  #     uses: actions/checkout@v3
 
-    - name: "Prepare"
-      run: |
-        make macos/sdl2.rb
+  #   - name: "Prepare"
+  #     run: |
+  #       make macos/sdl2.rb
 
-    - name: "Cache SDL2"
-      uses: actions/cache@v3
-      with:
-        path: sdl2-cellar
-        key: sdl2-${{hashFiles('macos/sdl2.rb')}}
+  #   - name: "Cache SDL2"
+  #     uses: actions/cache@v3
+  #     with:
+  #       path: sdl2-cellar
+  #       key: sdl2-${{hashFiles('macos/sdl2.rb')}}
 
-    - name: "Compile and install dependencies"
-      run: |
-        if [ -d sdl2-cellar ]; then
-          cp -r sdl2-cellar $(brew --cellar)/sdl2
-          brew link sdl2
-        else
-          brew install --build-from-source ./macos/sdl2.rb
-          cp -r $(brew --cellar)/sdl2 sdl2-cellar
-        fi
-        brew install sdl2_image dylibbundler
+  #   - name: "Compile and install dependencies"
+  #     run: |
+  #       if [ -d sdl2-cellar ]; then
+  #         cp -r sdl2-cellar $(brew --cellar)/sdl2
+  #         brew link sdl2
+  #       else
+  #         brew install --build-from-source ./macos/sdl2.rb
+  #         cp -r $(brew --cellar)/sdl2 sdl2-cellar
+  #       fi
+  #       brew install sdl2_image dylibbundler
 
-    - name: "Compile"
-      run: |
-        make MAC_APP=YES Brogue.app
-      env:
-        MACOSX_DEPLOYMENT_TARGET: "10.7"
+  #   - name: "Compile"
+  #     run: |
+  #       make MAC_APP=YES Brogue.app
+  #     env:
+  #       MACOSX_DEPLOYMENT_TARGET: "10.7"
 
-    - name: "Fix and bundle dylib references"
-      run: |
-        cd Brogue.app/Contents && dylibbundler -cd -b -x MacOS/brogue
+  #   - name: "Fix and bundle dylib references"
+  #     run: |
+  #       cd Brogue.app/Contents && dylibbundler -cd -b -x MacOS/brogue
 
-    - name: "Create artifact"
-      run: |
-        make BrogueCE-macos
-        zip -rll BrogueCE-macos-x86_64.zip BrogueCE-macos
+  #   - name: "Create artifact"
+  #     run: |
+  #       make BrogueCE-macos
+  #       zip -rll BrogueCE-macos-x86_64.zip BrogueCE-macos
 
-    - name: "Upload artifact"
-      uses: actions/upload-artifact@v4
-      with:
-        name: macos-x86_64
-        path: BrogueCE-macos-x86_64.zip
-        compression-level: 0  # There's no point compressing something already compressed
+  #   - name: "Upload artifact"
+  #     uses: actions/upload-artifact@v4
+  #     with:
+  #       name: macos-x86_64
+  #       path: BrogueCE-macos-x86_64.zip
+  #       compression-level: 0  # There's no point compressing something already compressed
 
   windows:
     runs-on: windows-latest
@@ -89,25 +89,27 @@ jobs:
     - name: "Checkout sources"
       uses: actions/checkout@v3
 
-    - name: "Install dependencies"
-      run: |
-        .\.github\get-deps-mingw.ps1
+    - name: "Install MSYS2 and packages"
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        release: false
+        install: "make zip diffutils mingw-w64-x86_64-gcc mingw-w64-x86_64-SDL2 mingw-w64-x86_64-SDL2_image"
 
     - name: "Compile"
-      shell: powershell
+      shell: "msys2 {0}"
       run: |
-        $env:path = $env:path + ";" + (Join-Path $pwd.Drive.Root "opt/local/x86_64-w64-mingw32/bin")
-        $env:path = $env:path + ';C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64'
-        mingw32-make SYSTEM=WINDOWS CC=gcc bin/brogue.exe
+        PATH="$PATH:$(cygpath -u 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64')"
+        echo "PATH = $PATH"
+        make SYSTEM=WINDOWS CC=gcc bin/brogue.exe
 
     - name: "Create artifact"
+      shell: "msys2 {0}"
       run: |
-        mingw32-make SYSTEM=WINDOWS BrogueCE-windows
-        cp SDL2\x86_64-w64-mingw32\bin\SDL2.dll BrogueCE-windows
-        cp SDL2_image\x86_64-w64-mingw32\bin\zlib1.dll BrogueCE-windows
-        cp SDL2_image\x86_64-w64-mingw32\bin\SDL2_image.dll BrogueCE-windows
-        cp SDL2_image\x86_64-w64-mingw32\bin\libpng16-16.dll BrogueCE-windows
-        7z a BrogueCE-windows-x86_64.zip BrogueCE-windows
+        make SYSTEM=WINDOWS BrogueCE-windows
+        ldd bin/brogue.exe
+        cp $(ldd bin/brogue.exe | grep -oE '/mingw64/bin/.+\.dll' | uniq) BrogueCE-windows
+        zip -r BrogueCE-windows-x86_64.zip BrogueCE-windows
 
     - name: "Upload artifact"
       uses: actions/upload-artifact@v4
