@@ -10,7 +10,7 @@ sources := $(wildcard src/brogue/*.c) $(wildcard src/variants/*.c) $(addprefix s
 objects :=
 
 ifeq ($(SYSTEM),WINDOWS)
-objects += windows/icon.o
+objects += windows/resources.o
 .exe := .exe
 endif
 
