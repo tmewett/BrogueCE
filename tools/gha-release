@@ -16,3 +16,8 @@ cd ..
 
 unzip macos-x86_64.zip
 unzip -l BrogueCE-macos-x86_64.zip
+
+version=1.14
+cp BrogueCE-windows-x86_64.zip BrogueCE-${version}-windows-x86_64.zip
+cp BrogueCE-macos-x86_64.zip BrogueCE-${version}-macos-x86_64.zip
+cp BrogueCE-linux-x86_64.tar.gz BrogueCE-${version}-linux-x86_64.tar.gz
