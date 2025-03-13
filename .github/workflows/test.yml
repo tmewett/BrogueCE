@@ -26,3 +26,4 @@ jobs:
       run: |
         python3 test/run_regression_tests.py test/regression_test_ce_v1_14/
         python3 test/run_regression_tests.py --extra_args "--variant rapid_brogue" test/regression_test_rb_v1_6/
+        python3 test/run_regression_tests.py --extra_args "--variant bullet_brogue" test/regression_test_bb_v1_1/
