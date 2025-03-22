@@ -1,0 +1,14 @@
+{
+  "timestamp": 1742669325135,
+  "eventType": "MONSTER_ENCOUNTERED",
+  "eventData": {
+    "isRare": true,
+    "monsterName": "crystal elemental",
+    "locationDesc": "glowing chamber",
+    "monsterLevel": 4,
+    "isFirstEncounter": true
+  },
+  "context": {
+    "playerLevel": 3
+  }
+}

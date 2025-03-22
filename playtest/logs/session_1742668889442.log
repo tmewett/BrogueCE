@@ -1,0 +1,5 @@
+[2025-03-22T18:41:29.487Z] [EVENT] Dungeon Master AI Initialized
+DATA: {
+  "model": "llama3",
+  "memoryPath": "../memory-bank"
+}

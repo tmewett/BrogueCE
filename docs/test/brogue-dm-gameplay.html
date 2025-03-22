@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrogueMCP: The AI Revolution in Roguelikes</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Share+Tech+Mono&family=Inconsolata&display=swap');
+        
+        :root {
+            --primary-bg: #121212;
+            --terminal-green: #33ff33;
+            --terminal-black: #111;
+            --pixel-border: 4px solid #444;
+            --retro-yellow: #ffcc00;
+            --retro-red: #ff5555;
+            --retro-blue: #5555ff;
+            --retro-purple: #aa44aa;
+            --goblin-color: #33dd44;
+            --crystal-color: #33aaff;
+            --undead-color: #aa44cc;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            background-color: var(--primary-bg);
+            background-image: 
+                linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: #eee;
+            font-family: 'Inconsolata', monospace;
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .magazine-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .magazine-header {
+            border: var(--pixel-border);
+            background-color: #222;
+            padding: 20px;
+            margin-bottom: 30px;
+            position: relative;
+            box-shadow: 0 0 15px rgba(0, 200, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .magazine-header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(to right, var(--terminal-green), var(--retro-yellow), var(--retro-red), var(--retro-blue), var(--retro-purple));
+        }
+        
+        .magazine-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 2.5rem;
+            text-align: center;
+            margin: 10px 0;
+            color: var(--terminal-green);
+            text-shadow: 0 0 5px rgba(51, 255, 51, 0.7);
+            letter-spacing: -2px;
+        }
+        
+        .magazine-subtitle {
+            font-family: 'VT323', monospace;
+            font-size: 1.5rem;
+            text-align: center;
+            color: #ddd;
+            margin-bottom: 10px;
+        }
+        
+        .magazine-info {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Share Tech Mono', monospace;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px dashed rgba(255, 255, 255, 0.2);
+        }
+        
+        .magazine-date {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        
+        .magazine-issue {
+            font-size: 0.9rem;
+            color: var(--retro-yellow);
+        }
+        
+        .exclusive-tag {
+            position: absolute;
+            top: 15px;
+            right: -30px;
+            background-color: var(--retro-red);
+            color: white;
+            padding: 5px 40px;
+            transform: rotate(45deg);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.7rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+        
+        .journalist-intro {
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            border-left: 4px solid var(--terminal-green);
+            padding: 10px 20px;
+            margin-bottom: 30px;
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+        
+        .highlight {
+            color: var(--retro-yellow);
+            font-weight: bold;
+        }
+        
+        .retro-terminal {
+            background-color: var(--terminal-black);
+            border: var(--pixel-border);
+            padding: 20px;
+            margin-bottom: 30px;
+            font-family: 'Share Tech Mono', monospace;
+            box-shadow: 0 0 30px rgba(0, 200, 0, 0.1);
+            position: relative;
+        }
+        
+        .terminal-header {
+            background-color: #333;
+            margin: -20px -20px 20px -20px;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #555;
+        }
+        
+        .terminal-title {
+            color: #fff;
+            font-size: 1.2rem;
+        }
+        
+        .terminal-controls {
+            display: flex;
+        }
+        
+        .terminal-button {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+        
+        .button-red {
+            background-color: var(--retro-red);
+        }
+        
+        .button-yellow {
+            background-color: var(--retro-yellow);
+        }
+        
+        .button-green {
+            background-color: var(--terminal-green);
+        }
+        
+        .tab-selector {
+            display: flex;
+            margin-bottom: 0;
+            overflow: hidden;
+            background-color: #222;
+            border-top: var(--pixel-border);
+            border-left: var(--pixel-border);
+            border-right: var(--pixel-border);
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-family: 'VT323', monospace;
+            font-size: 1.2rem;
+            border-bottom: 4px solid transparent;
+            position: relative;
+            transition: all 0.3s;
+        }
+        
+        .tab:after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+        
+        .tab:hover:after {
+            transform: scaleX(1);
+        }
+        
+        .tab[data-adventure="goblin"] {
+            color: var(--goblin-color);
+        }
+        
+        .tab[data-adventure="goblin"]:after {
+            background-color: var(--goblin-color);
+        }
+        
+        .tab[data-adventure="crystal"] {
+            color: var(--crystal-color);
+        }
+        
+        .tab[data-adventure="crystal"]:after {
+            background-color: var(--crystal-color);
+        }
+        
+        .tab[data-adventure="undead"] {
+            color: var(--undead-color);
+        }
+        
+        .tab[data-adventure="undead"]:after {
+            background-color: var(--undead-color);
+        }
+        
+        .tab.active {
+            background-color: #333;
+            border-bottom: 4px solid;
+        }
+        
+        .tab[data-adventure="goblin"].active {
+            border-bottom-color: var(--goblin-color);
+        }
+        
+        .tab[data-adventure="crystal"].active {
+            border-bottom-color: var(--crystal-color);
+        }
+        
+        .tab[data-adventure="undead"].active {
+            border-bottom-color: var(--undead-color);
+        }
+        
+        .adventure-content {
+            display: none;
+            padding: 20px;
+            background-color: #222;
+            border: var(--pixel-border);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .adventure-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .adventure-header {
+            margin-bottom: 20px;
+            border-bottom: 2px dashed rgba(255, 255, 255, 0.2);
+            padding-bottom: 15px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .adventure-header h2 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .goblin-text {
+            color: var(--goblin-color);
+            text-shadow: 0 0 5px rgba(51, 221, 68, 0.5);
+        }
+        
+        .crystal-text {
+            color: var(--crystal-color);
+            text-shadow: 0 0 5px rgba(51, 170, 255, 0.5);
+        }
+        
+        .undead-text {
+            color: var(--undead-color);
+            text-shadow: 0 0 5px rgba(170, 68, 204, 0.5);
+        }
+        
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            border: 2px solid #444;
+            padding: 15px 10px;
+            background-color: rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stats-bar::before {
+            content: "ADVENTURE METRICS";
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: #444;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            color: #ddd;
+            font-family: 'Share Tech Mono', monospace;
+        }
+        
+        .stat-block {
+            text-align: center;
+            padding: 0 10px;
+            position: relative;
+        }
+        
+        .stat-block:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100%;
+            width: 1px;
+            background-color: #444;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-family: 'Press Start 2P', cursive;
+            margin-bottom: 5px;
+        }
+        
+        .goblin-theme .stat-value {
+            color: var(--goblin-color);
+        }
+        
+        .crystal-theme .stat-value {
+            color: var(--crystal-color);
+        }
+        
+        .undead-theme .stat-value {
+            color: var(--undead-color);
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #aaa;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 1px;
+        }
+        
+        .pixel-divider {
+            height: 5px;
+            margin: 20px 0;
+            background: repeating-linear-gradient(
+                to right,
+                transparent,
+                transparent 4px,
+                #333 4px,
+                #333 8px
+            );
+        }
+        
+        .events-timeline {
+            position: relative;
+        }
+        
+        .events-timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 20px;
+            width: 4px;
+            background: repeating-linear-gradient(
+                to bottom,
+                #444,
+                #444 8px,
+                #333 8px,
+                #333 16px
+            );
+            z-index: 1;
+        }
+        
+        .event {
+            margin-bottom: 30px;
+            margin-left: 50px;
+            position: relative;
+            animation: slideRight 0.5s;
+        }
+        
+        @keyframes slideRight {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .event::before {
+            content: '';
+            position: absolute;
+            left: -38px;
+            top: 20px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            z-index: 2;
+            box-shadow: 0 0 10px currentColor;
+        }
+        
+        .goblin-theme .event::before {
+            background-color: var(--goblin-color);
+            color: var(--goblin-color);
+        }
+        
+        .crystal-theme .event::before {
+            background-color: var(--crystal-color);
+            color: var(--crystal-color);
+        }
+        
+        .undead-theme .event::before {
+            background-color: var(--undead-color);
+            color: var(--undead-color);
+        }
+        
+        .event-card {
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 2px solid #444;
+            overflow: hidden;
+        }
+        
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            font-family: 'Share Tech Mono', monospace;
+        }
+        
+        .goblin-theme .event-header {
+            background-color: rgba(51, 221, 68, 0.2);
+            border-bottom: 2px solid var(--goblin-color);
+        }
+        
+        .crystal-theme .event-header {
+            background-color: rgba(51, 170, 255, 0.2);
+            border-bottom: 2px solid var(--crystal-color);
+        }
+        
+        .undead-theme .event-header {
+            background-color: rgba(170, 68, 204, 0.2);
+            border-bottom: 2px solid var(--undead-color);
+        }
+        
+        .event-title {
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        
+        .event-time {
+            color: #999;
+            font-size: 0.9rem;
+        }
+        
+        .event-content {
+            padding: 15px;
+        }
+        
+        .event-description {
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-family: 'VT323', monospace;
+            font-size: 1.2rem;
+        }
+        
+        .dm-narration {
+            font-family: 'Inconsolata', monospace;
+            padding: 15px;
+            border-left: 4px solid;
+            font-style: italic;
+            line-height: 1.6;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 0 4px 4px 0;
+            position: relative;
+        }
+        
+        .goblin-theme .dm-narration {
+            border-left-color: var(--goblin-color);
+        }
+        
+        .crystal-theme .dm-narration {
+            border-left-color: var(--crystal-color);
+        }
+        
+        .undead-theme .dm-narration {
+            border-left-color: var(--undead-color);
+        }
+        
+        .dm-narration::before {
+            content: "DM:";
+            position: absolute;
+            top: -10px;
+            left: 15px;
+            background-color: #222;
+            padding: 0 10px;
+            font-style: normal;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+        
+        .goblin-theme .dm-narration::before {
+            color: var(--goblin-color);
+        }
+        
+        .crystal-theme .dm-narration::before {
+            color: var(--crystal-color);
+        }
+        
+        .undead-theme .dm-narration::before {
+            color: var(--undead-color);
+        }
+        
+        .gameplay-continues {
+            text-align: center;
+            margin: 20px 0;
+            color: #777;
+            font-family: 'Share Tech Mono', monospace;
+            position: relative;
+            z-index: 2;
+            height: 20px;
+            line-height: 20px;
+        }
+        
+        .gameplay-continues::before,
+        .gameplay-continues::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            height: 2px;
+            width: 40%;
+            background: repeating-linear-gradient(
+                to right,
+                transparent,
+                transparent 4px,
+                #555 4px,
+                #555 8px
+            );
+        }
+        
+        .gameplay-continues::before {
+            left: 0;
+        }
+        
+        .gameplay-continues::after {
+            right: 0;
+        }
+        
+        .adventure-complete {
+            margin-top: 30px;
+            text-align: center;
+            position: relative;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 2px solid #555;
+        }
+        
+        .adventure-complete h3 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .goblin-theme .adventure-complete h3 {
+            color: var(--goblin-color);
+        }
+        
+        .crystal-theme .adventure-complete h3 {
+            color: var(--crystal-color);
+        }
+        
+        .undead-theme .adventure-complete h3 {
+            color: var(--undead-color);
+        }
+        
+        .complete-stats {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        
+        .complete-stat {
+            margin: 0 15px;
+            font-family: 'VT323', monospace;
+            font-size: 1.2rem;
+        }
+        
+        .complete-stat span {
+            font-weight: bold;
+        }
+        
+        .goblin-theme .complete-stat span {
+            color: var(--goblin-color);
+        }
+        
+        .crystal-theme .complete-stat span {
+            color: var(--crystal-color);
+        }
+        
+        .undead-theme .complete-stat span {
+            color: var(--undead-color);
+        }
+        
+        .journalist-conclusion {
+            margin-top: 30px;
+            padding: 20px;
+            border: 3px solid var(--retro-yellow);
+            background-color: rgba(255, 204, 0, 0.1);
+            font-family: 'VT323', monospace;
+            font-size: 1.3rem;
+            position: relative;
+        }
+        
+        .conclusion-title {
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background-color: var(--primary-bg);
+            padding: 0 10px;
+            color: var(--retro-yellow);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1rem;
+        }
+        
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                rgba(255, 255, 255, 0.03),
+                rgba(255, 255, 255, 0.03) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            background-size: 100% 4px;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0.15;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            padding: 20px 0;
+            text-align: center;
+            border-top: 1px dashed #444;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9rem;
+            color: #777;
+        }
+        
+        .ascii-divider {
+            font-family: monospace;
+            text-align: center;
+            margin: 30px 0;
+            color: #666;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+    
+    <div class="magazine-container">
+        <header class="magazine-header">
+            <div class="exclusive-tag">EXCLUSIVE</div>
+            <h1 class="magazine-title">BrogueMCP</h1>
+            <h2 class="magazine-subtitle">The AI Revolution in Roguelikes</h2>
+            <div class="magazine-info">
+                <div class="magazine-date">MARCH 2025</div>
+                <div class="magazine-issue">ISSUE #42</div>
+            </div>
+        </header>
+        
+        <div class="journalist-intro">
+            <p>Welcome, fellow dungeon crawlers, to what might be the most significant evolution in roguelike gaming since the ASCII dungeon. After spending three intense days with <span class="highlight">BrogueMCP</span>, I can confidently say that what developer AI Interactive has created here isn't just a game – it's a glimpse into the future of procedural storytelling.</p>
+            <p>Imagine descending into the familiar permadeath labyrinths of a classic roguelike, but instead of generic text descriptions, you're guided by an <span class="highlight">AI Dungeon Master</span> that crafts vivid, dynamic narration tailored to every moment of your adventure. The system doesn't just describe rooms – it brings them to life with atmospheric details that shift based on your actions, the enemies you face, and the treasures you discover.</p>
+            <p>Let me take you through three sample playthroughs that showcase the remarkable emergent storytelling capabilities of the AI server running behind this deceptively simple-looking game...</p>
+        </div>
+        
+        <div class="retro-terminal">
+            <div class="terminal-header">
+                <span class="terminal-title">BROGUE DM AI - GAMEPLAY SIMULATION</span>
+                <div class="terminal-controls">
+                    <div class="terminal-button button-red"></div>
+                    <div class="terminal-button button-yellow"></div>
+                    <div class="terminal-button button-green"></div>
+                </div>
+            </div>
+            
+            <p>DM agent server is running.</p>
+            <p>Please select an adventure:</p>
+            <p>1. The Goblin Caves</p>
+            <p>2. The Crystal Caverns</p>
+            <p>3. The Undead Catacombs</p>
+        </div>
+        
+        <div class="tab-selector">
+            <div class="tab active" data-adventure="goblin" onclick="switchAdventure('goblin')">The Goblin Caves</div>
+            <div class="tab" data-adventure="crystal" onclick="switchAdventure('crystal')">The Crystal Caverns</div>
+            <div class="tab" data-adventure="undead" onclick="switchAdventure('undead')">The Undead Catacombs</div>
+        </div>
+        
+        <!-- Goblin Caves Adventure -->
+        <div class="adventure-content goblin-theme active" id="goblin-adventure">
+            <div class="adventure-header">
+                <h2 class="goblin-text">The Goblin Caves</h2>
+                <p>Playthrough #1: A brief but memorable descent</p>
+            </div>
+            
+            <div class="stats-bar">
+                <div class="stat-block">
+                    <div class="stat-value">1</div>
+                    <div class="stat-label">Max Depth</div>
+                </div>
+                <div class="stat-block">
+                    <div class="stat-value">2</div>
+                    <div class="stat-label">Monsters Faced</div>
+                </div>
+                <div class="stat-block">
+                    <div class="stat-value">1</div>
+                    <div class="stat-label">Items Found</div>
+                </div>
+                <div class="stat-block">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">Survived</div>
+                </div>
+            </div>
+            
+            <div class="events-timeline">
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">NEW_LEVEL Event</div>
+                            <div class="event-time">T+00:05</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Descended to depth 1: cave</div>
+                            <div class="dm-narration">
+                                As you step into the darkness of the cave, the air thickens with the damp scent of ages-old earth and the faint whisper of dripping water echoes through the cavern, while the soft glow of luminescent fungi casts an eerie light on the rough-hewn stone walls. Ahead, the narrow tunnel stretches out like a dark maw, promising secrets and terrors within its depths.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gameplay-continues">LOADING...</div>
+                
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">MONSTER_ENCOUNTERED Event</div>
+                            <div class="event-time">T+00:10</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Encountered a goblin scout in narrow passage</div>
+                            <div class="dm-narration">
+                                The air grows thick with the stench of damp earth as the goblin's beady eyes lock onto you, its pointed ears twitching with an unsettling intensity. As it takes a cautious step forward, the flickering torches above seem to dim, casting long shadows that stretch like grasping fingers across the passage floor.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gameplay-continues">LOADING...</div>
+                
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">MONSTER_KILLED Event</div>
+                            <div class="event-time">T+00:15</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Defeated a goblin scout</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gameplay-continues">LOADING...</div>
+                
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">ITEM_DISCOVERED Event</div>
+                            <div class="event-time">T+00:20</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Found a Dagger of Slaying</div>
+                            <div class="dm-narration">
+                                As you brush aside the dusty cobwebs, a glint of polished silver catches your eye: the Dagger of Slaying, its intricately etched blade seeming to drink in the faint torchlight like a dark and ancient thirst. Whispers speak of this relic's power to cleave even the most formidable foes, born from the very essence of battle itself.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gameplay-continues">LOADING...</div>
+                
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">MONSTER_ENCOUNTERED Event</div>
+                            <div class="event-time">T+00:25</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Encountered a goblin chieftain in throne room</div>
+                            <div class="dm-narration">
+                                As you push open the creaky door, the flickering torches cast eerie shadows on the walls, and the stench of rotting flesh wafts through the air, revealing the grotesque form of the goblin chieftain perched upon a rusted throne, its beady eyes fixed upon you with malevolent intent.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gameplay-continues">LOADING...</div>
+                
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">PLAYER_DIED Event</div>
+                            <div class="event-time">T+00:30</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Player died to a goblin chieftain at depth 1</div>
+                            <div class="dm-narration">
+                                "Here lies the brave but brief adventurer, felled by the cunning goblin chieftain in its own den. Though their journey was cut short, they managed to delve 1 level into the depths of darkness before their untimely demise. May their memory be honored, and may future explorers fare better than this valiant soul."
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="adventure-complete">
+                <h3>ADVENTURE COMPLETE</h3>
+                <p>The first foray into the goblin caves ended quickly but memorably</p>
+                <div class="complete-stats">
+                    <div class="complete-stat">Depth: <span>1</span></div>
+                    <div class="complete-stat">Monsters: <span>2</span></div>
+                    <div class="complete-stat">Items: <span>1</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Crystal Caverns Adventure -->
+        <div class="adventure-content crystal-theme" id="crystal-adventure">
+            <div class="adventure-header">
+                <h2 class="crystal-text">The Crystal Caverns</h2>
+                <p>Playthrough #2: The ill-fated dragon encounter</p>
+            </div>
+            
+            <div class="stats-bar">
+                <div class="stat-block">
+                    <div class="stat-value">12</div>
+                    <div class="stat-label">Max Depth</div>
+                </div>
+                <div class="stat-block">
+                    <div class="stat-value">3</div>
+                    <div class="stat-label">Monsters Faced</div>
+                </div>
+                <div class="stat-block">
+                    <div class="stat-value">1</div>
+                    <div class="stat-label">Items Found</div>
+                </div>
+                <div class="stat-block">
+                    <div class="stat-value">3456</div>
+                    <div class="stat-label">Turns</div>
+                </div>
+            </div>
+            
+            <div class="events-timeline">
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">NEW_LEVEL Event</div>
+                            <div class="event-time">T+00:05</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Descended to depth 3: crystal cavern</div>
+                            <div class="dm-narration">
+                                As you step into the crystal cavern, the soft luminescence of a thousand tiny crystals reflects off the walls, casting an ethereal glow that seems to whisper secrets in your ear, while the gentle hum of ancient energies resonates through the air like a chorus of subterranean songbirds. The scent of damp earth and crystalline essence wafts up, mingling with the faint tang of mineral-rich waters, as you gaze upon the glinting crystal formations that stretch out before you like an otherworldly forest.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gameplay-continues">LOADING...</div>
+                
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">MONSTER_ENCOUNTERED Event</div>
+                            <div class="event-time">T+00:10</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Encountered a crystal elemental in glowing chamber</div>
+                            <div class="dm-narration">
+                                As you step into the radiant chamber, the air thickens with an otherworldly energy, and the crystal elemental's ethereal form coalesces before you - its facets glinting like shards of moonlit ice as it regards you with an unblinking gaze. The very walls seem to hum in harmony with its silent, expectant presence.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gameplay-continues">LOADING...</div>
+                
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">ITEM_DISCOVERED Event</div>
+                            <div class="event-time">T+00:15</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Found a Staff of Lightning</div>
+                            <div class="dm-narration">
+                                As you stumble upon the Staff of Lightning, its crackling energy coursing through the air, you notice the staff's dark wood surface adorned with intricate etchings that seem to shift and writhe like living lightning bolts. Legend has it that this ancient relic was wielded by a powerful storm sorceress who could summon the fury of the skies themselves.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gameplay-continues">LOADING...</div>
+                
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">MONSTER_KILLED Event</div>
+                            <div class="event-time">T+00:20</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Defeated a crystal elemental</div>
+                            <div class="dm-narration">
+                                As the crystal elemental's fragile form shattered into a thousand sparkling shards, the air was filled with the sweet scent of ozone and the faint whisper of ancient secrets lost, its demise leaving behind a lingering aura of crystalline energy that crackles softly in the silence.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gameplay-continues">LOADING...</div>
+                
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">NEW_LEVEL Event</div>
+                            <div class="event-time">T+00:25</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Descended to depth 4: cavern</div>
+                            <div class="dm-narration">
+                                As you step into the dimly lit cavern, the air thickens with the damp scent of ages-old stone and the faint tang of mold, while the soft hiss of underground streams echoes through the darkness, punctuated by the distant rumble of ancient machinery stirring in slumber. The flickering torches that line the rough-hewn walls cast eerie shadows on the stony floor, like grasping fingers, as you venture deeper into this subterranean lair.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gameplay-continues">LOADING...</div>
+                
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">MONSTER_ENCOUNTERED Event</div>
+                            <div class="event-time">T+00:30</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Encountered a vampire bat in dark corridor</div>
+                            <div class="dm-narration">
+                                As you fumble through the darkness, the air thickens with the stench of damp earth and decay, and the faint rustle of leathery wings echoes through the corridor. Suddenly, a pair of glowing eyes appears before you, fixed on yours like an unblinking hunger.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gameplay-continues">LOADING...</div>
+                
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">MONSTER_KILLED Event</div>
+                            <div class="event-time">T+00:35</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Defeated a vampire bat</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gameplay-continues">LOADING...</div>
+                
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">MONSTER_ENCOUNTERED Event</div>
+                            <div class="event-time">T+00:40</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Encountered a dragon in treasure chamber</div>
+                            <div class="dm-narration">
+                                As you push aside the tapestry, the dragon's piercing gaze meets yours, its scales glinting like polished obsidian in the flickering torchlight. The air thickens with anticipation as it raises a clawed hand, the very tip of its talon scraping against the stone floor, signaling its intent to rend the silence and unleash fiery wrath upon you.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gameplay-continues">LOADING...</div>
+                
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">PLAYER_DIED Event</div>
+                            <div class="event-time">T+00:45</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Player died to a dragon at depth 12</div>
+                            <div class="dm-narration">
+                                "In eternal darkness, the brave warrior fell, consumed by the fiery breath of a mighty dragon at depths 12, where only the most courageous dare to tread. Their legacy lives on in the whispers of the ancient stones, where they once stood tall and proud for 3456 turns. May their ashes mingle with the dust of forgotten heroes, forever remembered as one who dared to challenge the unknown."
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="adventure-complete">
+                <h3>ADVENTURE COMPLETE</h3>
+                <p>A valiant effort through the crystal caverns ended in dragon fire</p>
+                <div class="complete-stats">
+                    <div class="complete-stat">Depth: <span>12</span></div>
+                    <div class="complete-stat">Monsters: <span>3</span></div>
+                    <div class="complete-stat">Turns: <span>3456</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Undead Catacombs Adventure -->
+        <div class="adventure-content undead-theme" id="undead-adventure">
+            <div class="adventure-header">
+                <h2 class="undead-text">The Undead Catacombs</h2>
+                <p>Playthrough #3: Victory against the Lich King</p>
+            </div>
+            
+            <div class="stats-bar">
+                <div class="stat-block">
+                    <div class="stat-value">5</div>
+                    <div class="stat-label">Max Depth</div>
+                </div>
+                <div class="stat-block">
+                    <div class="stat-value">2</div>
+                    <div class="stat-label">Monsters Killed</div>
+                </div>
+                <div class="stat-block">
+                    <div class="stat-value">2</div>
+                    <div class="stat-label">Items Found</div>
+                </div>
+                <div class="stat-block">
+                    <div class="stat-value">1</div>
+                    <div class="stat-label">Victories</div>
+                </div>
+            </div>
+            
+            <div class="events-timeline">
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">NEW_LEVEL Event</div>
+                            <div class="event-time">T+00:05</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Descended to depth 5: catacombs</div>
+                            <div class="dm-narration">
+                                As you venture deeper into the dank catacombs, the air thickens with the musty scent of aged stone and forgotten tombs, while the faint whisper of forgotten prayers echoes through the narrow tunnels, punctuated by the soft scraping of skeletal fingers against the walls. The flickering torches that line the passages cast eerie shadows on the ancient marble, making it seem as though the very spirits of the dead are watching your every move.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gameplay-continues">LOADING...</div>
+                
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">MONSTER_ENCOUNTERED Event</div>
+                            <div class="event-time">T+00:10</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Encountered a skeletal warrior in bone-littered hall</div>
+                            <div class="dm-narration">
+                                As you venture deeper into the dimly lit hall, the air thickens with the stench of decay, and the sound of scraping bones grows louder, until a gaunt figure emerges from the shadows: a skeletal warrior, its bony arms grasping an ancient sword, its empty sockets fixed on you with malevolent intent.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gameplay-continues">LOADING...</div>
+                
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">MONSTER_KILLED Event</div>
+                            <div class="event-time">T+00:15</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Defeated a skeletal warrior</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gameplay-continues">LOADING...</div>
+                
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">ITEM_DISCOVERED Event</div>
+                            <div class="event-time">T+00:20</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Found a Holy Avenger</div>
+                            <div class="dm-narration">
+                                The Holy Avenger appears as a gleaming silver sword with an unblemished white hilt, its blade etched with ancient runes that seem to pulse with a soft, holy light. Legends whisper that this relic was forged in the heart of a fallen angel's temple, imbuing it with the power to smite even the most formidable foes and bring solace to the righteous.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gameplay-continues">LOADING...</div>
+                
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">MONSTER_ENCOUNTERED Event</div>
+                            <div class="event-time">T+00:25</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Encountered a lich king in ancient throne room</div>
+                            <div class="dm-narration">
+                                As you burst into the throne room, the air thickens with malevolent energy as the Lich King's skeletal form rises from its throne, its cold, calculating gaze piercing through the dust and darkness like a dagger to your very soul. The faint whisper of forgotten centuries echoes off the crumbling stone walls, as if the very spirits of the dead are warning you: you should not have come here.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gameplay-continues">LOADING...</div>
+                
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">MONSTER_KILLED Event</div>
+                            <div class="event-time">T+00:30</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Defeated a lich king</div>
+                            <div class="dm-narration">
+                                As the lich king's undead form crumbles to dust, the air is heavy with the sweet scent of decay and forgotten knowledge, its ancient power dispersing into the darkness like a whispered secret. The stone floor beneath it now bears the faint outline of its defeated visage, a grim reminder of the brave adventurer who dared to vanquish this rare and feared creature.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gameplay-continues">LOADING...</div>
+                
+                <div class="event">
+                    <div class="event-card">
+                        <div class="event-header">
+                            <div class="event-title">ITEM_DISCOVERED Event</div>
+                            <div class="event-time">T+00:35</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-description">Found a Crown of Souls</div>
+                            <div class="dm-narration">
+                                As you rummage through the dusty chamber, a faint whisper of morbid curiosity guides your hands to a tattered, ornate crown that seems to hum with the weight of countless forgotten memories, its delicate filigree etched with cryptic runes that dance in the flickering torchlight like the whispers of the damned.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="adventure-complete">
+                <h3>ADVENTURE COMPLETE</h3>
+                <p>A successful venture through the catacombs resulted in the defeat of the Lich King</p>
+                <div class="complete-stats">
+                    <div class="complete-stat">Depth: <span>5</span></div>
+                    <div class="complete-stat">Monsters: <span>2</span></div>
+                    <div class="complete-stat">Items: <span>2</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="ascii-divider">
+            =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+        </div>
+        
+        <div class="journalist-conclusion">
+            <div class="conclusion-title">FINAL THOUGHTS</div>
+            <p>What makes BrogueMCP truly revolutionary isn't just the quality of its AI-generated text – it's how deeply integrated the system is with the game's mechanics. Each description isn't pre-written; it's dynamically generated based on game state, enemy types, player inventory, and even the character's past experiences.</p>
+            <p>The emotional impact of the AI Dungeon Master transforms what would otherwise be a standard "you died" message into a dramatic tale of heroism and tragedy. When fighting the Lich King, the description of its cold gaze wasn't just atmospheric flavor – it cleverly hinted at the undead monarch's special ability to paralyze unwary adventurers with its stare.</p>
+            <p>While the classic roguelike gameplay is satisfyingly intact – permadeath, procedural generation, turn-based combat – the addition of the AI narrator fundamentally changes the experience. Your imagination is no longer filling in the blanks; instead, you're collaborating with an AI storyteller that builds a coherent world around your actions.</p>
+            <p>The future of procedural storytelling in games is here, and it speaks with the voice of BrogueMCP's AI Dungeon Master.</p>
+        </div>
+        
+        <div class="footer">
+            <p>DIGITAL DUNGEON MONTHLY • MARCH 2025 • PAGE 42</p>
+            <p>Article by: Alex Cartwright, Senior Editor</p>
+        </div>
+    </div>
+    
+    <script>
+        function switchAdventure(adventure) {
+            // Hide all adventures
+            document.querySelectorAll('.adventure-content').forEach(function(el) {
+                el.classList.remove('active');
+            });
+            
+            // Show selected adventure
+            let adventureId = adventure + '-adventure';
+            document.getElementById(adventureId).classList.add('active');
+            
+            // Update tab styling
+            document.querySelectorAll('.tab').forEach(function(tab) {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelector(`.tab[data-adventure="${adventure}"]`).classList.add('active');
+        }
+    </script>
+</body>
+</html>

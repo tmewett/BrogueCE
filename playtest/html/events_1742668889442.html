@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brogue DM AI Log Viewer</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/styles/github-dark.css">
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #252526;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        h1, h2, h3 {
+            color: #f8f8f8;
+        }
+        h2 {
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+            margin-top: 25px;
+        }
+        h3 {
+            margin-top: 20px;
+            color: #dcdcaa;
+        }
+        blockquote {
+            border-left: 4px solid #569cd6;
+            padding: 10px 15px;
+            margin: 15px 0;
+            background-color: #2d2d30;
+            border-radius: 4px;
+            font-style: italic;
+        }
+        code {
+            background-color: #1e1e1e;
+            color: #ce9178;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        pre {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .navbar {
+            background-color: #333;
+            padding: 10px 0;
+            margin-bottom: 20px;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+        }
+        .event-icon {
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+        .timestamp {
+            color: #777;
+            font-size: 0.9em;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #569cd6;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navbar">
+            <a href="index.html">Log Index</a>
+            <span style="float: right;">Brogue DM AI</span>
+        </div>
+        
+        <a href="index.html" class="back-link">← Back to Index</a>
+        
+        <div id="content">
+            <div id="markdown-content"></div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/lib/core.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/lib/languages/json.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Parse and render markdown
+            const mdContent = $(# Brogue DM Session 3/22/2025, 1:41:29 PM
+
+## 1:41:29 PM - Dungeon Master AI Initialized
+
+```json
+{
+  "model": "llama3",
+  "memoryPath": "../memory-bank"
+}
+```
+
+ -replace '', '\' -replace '"', '\"' -replace "
+", '\n');
+            document.getElementById('markdown-content').innerHTML = marked.parse(mdContent);
+            
+            // Add icons to headers based on content
+            const headers = document.querySelectorAll('h3');
+            headers.forEach(header => {
+                const text = header.textContent;
+                let icon = '';
+                
+                if (text.includes('Encountered')) {
+                    icon = '👹';
+                } else if (text.includes('Defeated') || text.includes('killed')) {
+                    icon = '💀';
+                } else if (text.includes('Found')) {
+                    icon = '💎';
+                } else if (text.includes('Player died')) {
+                    icon = '☠️';
+                } else if (text.includes('Descended') || text.includes('depth')) {
+                    icon = '🗺️';
+                }
+                
+                if (icon) {
+                    header.innerHTML = <span class="event-icon"></span> ;
+                }
+            });
+            
+            // Highlight code blocks
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightBlock(block);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "timestamp": 1742669133397,
+  "eventType": "MONSTER_ENCOUNTERED",
+  "eventData": {
+    "isRare": true,
+    "monsterName": "goblin chieftain",
+    "locationDesc": "throne room",
+    "monsterLevel": 3,
+    "isFirstEncounter": true
+  },
+  "context": {
+    "playerLevel": 1
+  }
+}

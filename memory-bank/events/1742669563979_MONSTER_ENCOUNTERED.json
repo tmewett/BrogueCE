@@ -1,0 +1,14 @@
+{
+  "timestamp": 1742669563979,
+  "eventType": "MONSTER_ENCOUNTERED",
+  "eventData": {
+    "isRare": true,
+    "monsterName": "lich king",
+    "locationDesc": "ancient throne room",
+    "monsterLevel": 12,
+    "isFirstEncounter": true
+  },
+  "context": {
+    "playerLevel": 6
+  }
+}

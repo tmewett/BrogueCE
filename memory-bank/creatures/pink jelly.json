@@ -1,0 +1,10 @@
+{
+  "monsterName": "pink jelly",
+  "monsterLevel": 5,
+  "isRare": false,
+  "isFirstEncounter": true,
+  "locationDesc": "damp corridor",
+  "firstSeen": 1742664533373,
+  "lastSeen": 1742665118227,
+  "encounterCount": 4
+}

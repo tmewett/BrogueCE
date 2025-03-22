@@ -1,0 +1,11 @@
+{
+  "isRare": false,
+  "monsterName": "skeletal warrior",
+  "locationDesc": "bone-littered hall",
+  "monsterLevel": 5,
+  "isFirstEncounter": true,
+  "firstSeen": 1742669541042,
+  "lastSeen": 1742669548950,
+  "encounterCount": 2,
+  "killedBy": "player"
+}

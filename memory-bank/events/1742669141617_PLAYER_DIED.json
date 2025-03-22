@@ -1,0 +1,13 @@
+{
+  "timestamp": 1742669141617,
+  "eventType": "PLAYER_DIED",
+  "eventData": {
+    "totalTurns": 235,
+    "killedBy": "goblin chieftain",
+    "maxDepth": 1
+  },
+  "context": {
+    "playerLevel": 1,
+    "gold": 25
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "timestamp": 1742669531858,
+  "eventType": "NEW_LEVEL",
+  "eventData": {
+    "direction": 1,
+    "depth": 5,
+    "environmentType": "catacombs"
+  },
+  "context": {
+    "playerRace": "human",
+    "playerClass": "paladin",
+    "playerLevel": 6
+  }
+}

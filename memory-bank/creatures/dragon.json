@@ -1,0 +1,10 @@
+{
+  "isRare": true,
+  "monsterName": "dragon",
+  "locationDesc": "treasure chamber",
+  "monsterLevel": 10,
+  "isFirstEncounter": true,
+  "firstSeen": 1742669371174,
+  "lastSeen": 1742669371174,
+  "encounterCount": 1
+}

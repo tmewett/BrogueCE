@@ -1,0 +1,11 @@
+{
+  "isRare": true,
+  "monsterName": "crystal elemental",
+  "locationDesc": "glowing chamber",
+  "monsterLevel": 4,
+  "isFirstEncounter": true,
+  "firstSeen": 1742669325137,
+  "lastSeen": 1742669341210,
+  "encounterCount": 2,
+  "killedBy": "player"
+}

@@ -1,0 +1,14 @@
+{
+  "timestamp": 1742669110909,
+  "eventType": "MONSTER_ENCOUNTERED",
+  "eventData": {
+    "isRare": false,
+    "monsterName": "goblin scout",
+    "locationDesc": "narrow passage",
+    "monsterLevel": 1,
+    "isFirstEncounter": true
+  },
+  "context": {
+    "playerLevel": 1
+  }
+}

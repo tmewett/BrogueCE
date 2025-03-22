@@ -1,0 +1,13 @@
+{
+  "timestamp": 1742669341207,
+  "eventType": "MONSTER_KILLED",
+  "eventData": {
+    "isRare": true,
+    "monsterName": "crystal elemental",
+    "killedBy": "player",
+    "monsterLevel": 4
+  },
+  "context": {
+    "playerLevel": 3
+  }
+}

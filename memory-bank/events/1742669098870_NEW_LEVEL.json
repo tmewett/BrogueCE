@@ -1,0 +1,14 @@
+{
+  "timestamp": 1742669098870,
+  "eventType": "NEW_LEVEL",
+  "eventData": {
+    "direction": 1,
+    "depth": 1,
+    "environmentType": "cave"
+  },
+  "context": {
+    "playerRace": "human",
+    "playerClass": "warrior",
+    "playerLevel": 1
+  }
+}

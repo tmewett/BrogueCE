@@ -1,0 +1,14 @@
+{
+  "timestamp": 1742669541040,
+  "eventType": "MONSTER_ENCOUNTERED",
+  "eventData": {
+    "isRare": false,
+    "monsterName": "skeletal warrior",
+    "locationDesc": "bone-littered hall",
+    "monsterLevel": 5,
+    "isFirstEncounter": true
+  },
+  "context": {
+    "playerLevel": 6
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "timestamp": 1742669572399,
+  "eventType": "MONSTER_KILLED",
+  "eventData": {
+    "isRare": true,
+    "monsterName": "lich king",
+    "killedBy": "player",
+    "monsterLevel": 12
+  },
+  "context": {
+    "playerLevel": 7
+  }
+}

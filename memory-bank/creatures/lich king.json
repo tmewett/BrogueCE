@@ -1,0 +1,11 @@
+{
+  "isRare": true,
+  "monsterName": "lich king",
+  "locationDesc": "ancient throne room",
+  "monsterLevel": 12,
+  "isFirstEncounter": true,
+  "firstSeen": 1742669563981,
+  "lastSeen": 1742669572409,
+  "encounterCount": 2,
+  "killedBy": "player"
+}

@@ -1,0 +1,12 @@
+{
+  "timestamp": 1742669333232,
+  "eventType": "ITEM_DISCOVERED",
+  "eventData": {
+    "itemName": "Staff of Lightning",
+    "isRare": true,
+    "category": 2
+  },
+  "context": {
+    "playerLevel": 3
+  }
+}

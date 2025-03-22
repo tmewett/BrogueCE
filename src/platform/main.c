@@ -2,6 +2,7 @@
 #include <limits.h>
 #include "platform.h"
 #include "GlobalsBase.h"
+#include "../mcp/hooks.h"
 
 #ifndef DATADIR
 #error "The DATADIR macro is undefined."
@@ -341,6 +342,10 @@ int main(int argc, char *argv[])
     graphicsMode = setGraphicsMode(initialGraphics);
 
     loadKeymap();
+    
+    // Initialize Dungeon Master AI
+    installDungeonMasterAI();
+    
     currentConsole.gameLoop();
 
     return 0;

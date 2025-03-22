@@ -1,0 +1,12 @@
+{
+  "timestamp": 1742669124793,
+  "eventType": "ITEM_DISCOVERED",
+  "eventData": {
+    "itemName": "Dagger of Slaying",
+    "isRare": true,
+    "category": 1
+  },
+  "context": {
+    "playerLevel": 1
+  }
+}

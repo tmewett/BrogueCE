@@ -1,0 +1,13 @@
+{
+  "timestamp": 1742664952514,
+  "eventType": "NEW_LEVEL",
+  "eventData": {
+    "depth": 4,
+    "direction": 1,
+    "environmentType": "cavern"
+  },
+  "context": {
+    "playerLevel": 3,
+    "timestamp": 1742664950330
+  }
+}

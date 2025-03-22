@@ -1,0 +1,14 @@
+{
+  "timestamp": 1742669371173,
+  "eventType": "MONSTER_ENCOUNTERED",
+  "eventData": {
+    "isRare": true,
+    "monsterName": "dragon",
+    "locationDesc": "treasure chamber",
+    "monsterLevel": 10,
+    "isFirstEncounter": true
+  },
+  "context": {
+    "playerLevel": 8
+  }
+}

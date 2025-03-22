@@ -1,0 +1,14 @@
+{
+  "timestamp": 1742669315491,
+  "eventType": "NEW_LEVEL",
+  "eventData": {
+    "direction": 1,
+    "depth": 3,
+    "environmentType": "crystal cavern"
+  },
+  "context": {
+    "playerRace": "elf",
+    "playerClass": "mage",
+    "playerLevel": 3
+  }
+}

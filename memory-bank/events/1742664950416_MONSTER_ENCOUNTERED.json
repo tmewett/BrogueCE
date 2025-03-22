@@ -1,0 +1,15 @@
+{
+  "timestamp": 1742664950416,
+  "eventType": "MONSTER_ENCOUNTERED",
+  "eventData": {
+    "monsterName": "pink jelly",
+    "monsterLevel": 5,
+    "isRare": false,
+    "isFirstEncounter": true,
+    "locationDesc": "damp corridor"
+  },
+  "context": {
+    "playerLevel": 3,
+    "timestamp": 1742664950330
+  }
+}

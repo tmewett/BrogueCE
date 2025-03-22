@@ -1,0 +1,13 @@
+{
+  "timestamp": 1742669379710,
+  "eventType": "PLAYER_DIED",
+  "eventData": {
+    "totalTurns": 3456,
+    "killedBy": "dragon",
+    "maxDepth": 12
+  },
+  "context": {
+    "playerLevel": 8,
+    "gold": 780
+  }
+}

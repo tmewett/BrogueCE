@@ -1,0 +1,11 @@
+{
+  "isRare": false,
+  "monsterName": "goblin scout",
+  "locationDesc": "narrow passage",
+  "monsterLevel": 1,
+  "isFirstEncounter": true,
+  "firstSeen": 1742669110910,
+  "lastSeen": 1742669118765,
+  "encounterCount": 2,
+  "killedBy": "player"
+}

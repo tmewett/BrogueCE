@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Mirror of Galadriel - Narrator Settings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/narrator.css">
+</head>
+<body>
+    <div id="root">
+        <!-- This will be populated by the server API -->
+        <div class="loading-spinner">Loading...</div>
+    </div>
+
+    <script>
+        // Fetch the UI from the server
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/narrator/ui')
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('root').innerHTML = html;
+                    
+                    // Set up event handlers after UI is loaded
+                    setupEventHandlers();
+                })
+                .catch(error => {
+                    console.error('Error loading narrator UI:', error);
+                    document.getElementById('root').innerHTML = `
+                        <div class="narrator-settings-panel">
+                            <h2>Error</h2>
+                            <p>Failed to load narrator settings UI. Please try again later.</p>
+                            <p>Error: ${error.message}</p>
+                        </div>
+                    `;
+                });
+        });
+        
+        function setupEventHandlers() {
+            // Preset selector
+            const presetSelector = document.getElementById('narrator-preset');
+            if (presetSelector) {
+                presetSelector.addEventListener('change', function() {
+                    const presetName = this.value;
+                    updatePreview();
+                });
+            }
+            
+            // Load preset button
+            const loadPresetBtn = document.getElementById('load-preset');
+            if (loadPresetBtn) {
+                loadPresetBtn.addEventListener('click', function() {
+                    const presetName = document.getElementById('narrator-preset').value;
+                    updateSettings('applyPreset', { presetName });
+                });
+            }
+            
+            // Save preset button
+            const savePresetBtn = document.getElementById('save-preset');
+            if (savePresetBtn) {
+                savePresetBtn.addEventListener('click', function() {
+                    const name = prompt('Enter a name for this preset:');
+                    if (name) {
+                        updateSettings('savePreset', { presetName: name });
+                    }
+                });
+            }
+            
+            // Default preset button
+            const defaultPresetBtn = document.getElementById('default-preset');
+            if (defaultPresetBtn) {
+                defaultPresetBtn.addEventListener('click', function() {
+                    updateSettings('applyPreset', { presetName: 'default' });
+                });
+            }
+            
+            // Personality sliders
+            const sliders = document.querySelectorAll('.personality-slider');
+            sliders.forEach(slider => {
+                slider.addEventListener('input', function() {
+                    updatePreview();
+                });
+                
+                slider.addEventListener('change', function() {
+                    const attributeName = this.dataset.attribute;
+                    const attributeValue = parseInt(this.value);
+                    updateSettings('setAttribute', { attributeName, attributeValue });
+                });
+            });
+            
+            // Add phrase button
+            const addPhraseBtn = document.getElementById('add-phrase-btn');
+            if (addPhraseBtn) {
+                addPhraseBtn.addEventListener('click', function() {
+                    const newPhraseInput = document.getElementById('new-phrase');
+                    const phrase = newPhraseInput.value.trim();
+                    if (phrase) {
+                        updateSettings('addPhrase', { phrase });
+                        newPhraseInput.value = '';
+                    }
+                });
+            }
+            
+            // Remove phrase buttons
+            const removePhraseButtons = document.querySelectorAll('.remove-phrase');
+            removePhraseButtons.forEach((button, index) => {
+                button.addEventListener('click', function() {
+                    updateSettings('removePhrase', { phraseIndex: index });
+                });
+            });
+            
+            // Apply changes button
+            const applyChangesBtn = document.getElementById('apply-changes');
+            if (applyChangesBtn) {
+                applyChangesBtn.addEventListener('click', function() {
+                    // Apply all slider values at once
+                    const sliders = document.querySelectorAll('.personality-slider');
+                    sliders.forEach(slider => {
+                        const attributeName = slider.dataset.attribute;
+                        const attributeValue = parseInt(slider.value);
+                        updateSettings('setAttribute', { attributeName, attributeValue });
+                    });
+                    
+                    // Reload the UI to reflect all changes
+                    window.location.reload();
+                });
+            }
+            
+            // Cancel changes button
+            const cancelChangesBtn = document.getElementById('cancel-changes');
+            if (cancelChangesBtn) {
+                cancelChangesBtn.addEventListener('click', function() {
+                    if (confirm('Discard all unsaved changes?')) {
+                        window.location.reload();
+                    }
+                });
+            }
+        }
+        
+        function updatePreview() {
+            // Extract current slider values and update the preview text
+            const previewElem = document.querySelector('.preview-content');
+            if (previewElem) {
+                fetch('/api/narrator/settings')
+                    .then(response => response.json())
+                    .then(data => {
+                        // In a more sophisticated implementation, we would generate
+                        // a live preview by calling an API endpoint
+                        previewElem.textContent = "Preview will update after applying changes.";
+                    });
+            }
+        }
+        
+        function updateSettings(action, data) {
+            const payload = {
+                action: action,
+                ...data
+            };
+            
+            fetch('/api/narrator/settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    console.log('Settings updated:', data);
+                    
+                    // For some actions, reload the page to show updated state
+                    if (['applyPreset', 'savePreset', 'deletePreset'].includes(action)) {
+                        window.location.reload();
+                    }
+                } else {
+                    console.error('Error updating settings:', data.message);
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating settings');
+            });
+        }
+    </script>
+</body>
+</html> 

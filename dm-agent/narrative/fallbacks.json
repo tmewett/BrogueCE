@@ -1,0 +1,49 @@
+{
+  "MONSTER_ENCOUNTERED": [
+    "A {monsterName} emerges from the shadows, its eyes fixed upon you with predatory intent.",
+    "The air grows cold as a {monsterName} reveals itself in the {locationDesc}.",
+    "You hear a sound and turn to find a {monsterName} watching you from the {locationDesc}.",
+    "The {locationDesc} falls silent as a {monsterName} detects your presence.",
+    "A {monsterName} lurks in the {locationDesc}, its ancient hunger awakened by your intrusion."
+  ],
+  
+  "MONSTER_KILLED": [
+    "The {monsterName} collapses, its essence returning to the dungeon depths.",
+    "Your blow finds its mark, and the {monsterName} falls silent forever.",
+    "Victory! The {monsterName} has been vanquished by your hand.",
+    "The dungeon claims another soul as the {monsterName} meets its end.",
+    "With a final cry, the {monsterName} falls defeated before you."
+  ],
+  
+  "ITEM_DISCOVERED": [
+    "You discover a {itemName}, its magical aura pulsing with untapped potential.",
+    "Amidst the dungeon debris, a {itemName} catches your eye with an otherworldly gleam.",
+    "The {itemName} seems to call to you, as if it has been waiting for a worthy wielder.",
+    "An ancient {itemName} reveals itself to you, promising power to the one brave enough to wield it.",
+    "You uncover a {itemName}, a relic of forgotten times and untold power."
+  ],
+  
+  "NEW_LEVEL": [
+    "You descend to depth {depth}, where the air is thick with the scent of {environmentType} and danger.",
+    "The {environmentType} of depth {depth} spreads before you, untouched by sunlight for countless ages.",
+    "Deeper you go, into level {depth}, a {environmentType} that holds secrets and horrors in equal measure.",
+    "The passage opens to reveal depth {depth}, a {environmentType} shrouded in shadow and mystery.",
+    "You enter depth {depth}, a {environmentType} that has witnessed the fall of many adventurers before you."
+  ],
+  
+  "PLAYER_DIED": [
+    "Your journey ends here, felled by a {killedBy} after {totalTurns} valiant steps into the abyss.",
+    "The {killedBy} claims victory as your vision fades. Your quest ends at depth {maxDepth}.",
+    "Death comes for all adventurers eventually. Yours arrives in the form of a {killedBy} at depth {maxDepth}.",
+    "The dungeon claims another soul. Your {totalTurns}-turn saga concludes at the hands of a {killedBy}.",
+    "As the {killedBy} delivers the final blow, you reflect on your journey to depth {maxDepth}. Perhaps another will succeed where you have fallen."
+  ],
+  
+  "DEFAULT": [
+    "The dungeon seems to shift around you, ancient and alive.",
+    "Shadows dance across the walls, telling stories of adventurers long forgotten.",
+    "A distant sound echoes through the corridors, reminding you that you are never truly alone here.",
+    "The weight of the mountain above presses down, a constant reminder of how far you are from the surface.",
+    "Time seems to flow differently in these depths, minutes stretching into hours, hours into eternity."
+  ]
+} 

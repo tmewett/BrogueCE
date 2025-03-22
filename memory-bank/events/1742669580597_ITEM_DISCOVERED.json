@@ -1,0 +1,12 @@
+{
+  "timestamp": 1742669580597,
+  "eventType": "ITEM_DISCOVERED",
+  "eventData": {
+    "itemName": "Crown of Souls",
+    "isRare": true,
+    "category": 3
+  },
+  "context": {
+    "playerLevel": 7
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "monsterName": "vampire bat",
+  "monsterLevel": 4,
+  "killedBy": "player",
+  "isRare": false,
+  "firstSeen": 1742664536485,
+  "lastSeen": 1742669365150,
+  "encounterCount": 6,
+  "locationDesc": "dark corridor",
+  "isFirstEncounter": true
+}

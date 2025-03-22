@@ -1,0 +1,14 @@
+{
+  "timestamp": 1742669357365,
+  "eventType": "MONSTER_ENCOUNTERED",
+  "eventData": {
+    "isRare": false,
+    "monsterName": "vampire bat",
+    "locationDesc": "dark corridor",
+    "monsterLevel": 4,
+    "isFirstEncounter": true
+  },
+  "context": {
+    "playerLevel": 3
+  }
+}
