@@ -1,3 +1,10 @@
+1.14.1
+======
+
+- Fixed an issue with the RapidBrogue seed catalog which prevented altars from being listed.
+- Fixed the build for the curses/terminal version.
+
+
 1.14
 ====
 

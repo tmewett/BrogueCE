@@ -1,2 +1,2 @@
-windows/icon.o: windows/icon.rc make/windows.mk
+windows/resources.o: windows/resources.rc make/windows.mk
 	windres $< $@

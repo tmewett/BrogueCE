@@ -25,3 +25,4 @@ jobs:
       run: |
         python3 test/compare_seed_catalog.py test/seed_catalogs/seed_catalog_brogue.txt 40
         python3 test/compare_seed_catalog.py --extra_args "--variant rapid_brogue" test/seed_catalogs/seed_catalog_rapid_brogue.txt 10
+        python3 test/compare_seed_catalog.py --extra_args "--variant bullet_brogue" test/seed_catalogs/seed_catalog_bullet_brogue.txt 5

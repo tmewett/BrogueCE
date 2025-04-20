@@ -37,7 +37,7 @@
 // Brogue version number (for main engine)
 #define BROGUE_MAJOR 1
 #define BROGUE_MINOR 14
-#define BROGUE_PATCH 0
+#define BROGUE_PATCH 1
 
 // Expanding a macro as a string constant requires two levels of macros
 #define _str(x) #x
@@ -198,6 +198,7 @@ typedef struct windowpos {
 enum gameVariant {
     VARIANT_BROGUE,
     VARIANT_RAPID_BROGUE,
+    VARIANT_BULLET_BROGUE,
     NUMBER_VARIANTS
 };
 
@@ -2376,9 +2377,11 @@ typedef struct gameConstants {
     const int amuletLevel;                          // level on which the amulet appears (used in signed arithmetic)
 
     const int depthAccelerator;                     // factor for how fast depth-dependent features scale compared to usual 26-level dungeon
+    const int minimumAltarLevel;                    // how deep before resurrection and commutation altars can be generated
     const int minimumLavaLevel;                     // how deep before lava can be generated
     const int minimumBrimstoneLevel;                // how deep before brimstone can be generated
-    const int mutationsOccurAboveLevel;                // how deep before monster mutations can be generated
+    const int mutationsOccurAboveLevel;             // how deep before monster mutations can be generated
+    const int monsterOutOfDepthChance;              // the percentage chance to use a deeper depth when generating monster hordes
 
     const int extraItemsPerLevel;                   // how many extra items generated per level above vanilla
     const int goldAdjustmentStartDepth;             // depth from which gold is adjusted based on generation so far
@@ -2387,6 +2390,7 @@ typedef struct gameConstants {
     const int machinesPerLevelSuppressionOffset;     // offset for limiting number of machines generated so far against depth
     const int machinesPerLevelIncreaseFactor;        // scale factor for increasing number of machines generated so far against depth
     const int maxLevelForBonusMachines;              // deepest level that gets bonus machine generation chance
+    const int deepestLevelForMachines;               // deepest level where can machines be generated
 
     const int playerTransferenceRatio;              // player transference heal is (enchant / gameConst->playerTransferenceRatio)
     const int onHitHallucinateDuration;             // duration of on-hit hallucination effect on player
@@ -2451,6 +2455,7 @@ typedef struct playerCharacter {
     boolean alreadyFell;                // so the player can fall only one depth per turn
     boolean eligibleToUseStairs;        // so the player uses stairs only when he steps onto them
     boolean trueColorMode;              // whether lighting effects are disabled
+    boolean hideSeed;                   // whether seed is hidden when pressing SEED_KEY
     boolean displayStealthRangeMode;    // whether your stealth range is displayed
     boolean quit;                       // to skip the typical end-game theatrics when the player quits
     uint64_t seed;                      // the master seed for generating the entire dungeon
@@ -2520,7 +2525,7 @@ typedef struct playerCharacter {
     int gameExitStatusCode;             // exit status code indicating if brogue exited successfully or with an error
 
     // metered items
-    long long foodSpawned;                    // amount of nutrition units spawned so far this game
+    long long foodSpawned;              // amount of nutrition units spawned so far this game
     meteredItem *meteredItems;
 
     // ring bonuses:
@@ -2592,7 +2597,7 @@ enum machineFeatureFlags {
     MF_ALTERNATIVE_2                = Fl(17),   // same as MF_ALTERNATIVE, but provides for a second set of alternatives of which only one will be chosen
     MF_REQUIRE_GOOD_RUNIC           = Fl(18),   // generated item must be uncursed runic
     MF_MONSTERS_DORMANT             = Fl(19),   // monsters are dormant, and appear when a dungeon feature with DFF_ACTIVATE_DORMANT_MONSTER spawns on their tile
-    // unused                       = Fl(20),   //
+    MF_REQUIRE_HEAVY_WEAPON         = Fl(20),   // requires a positively-enchanted heavy weapon
     MF_BUILD_IN_WALLS               = Fl(21),   // build in an impassable tile that is adjacent to the interior
     MF_BUILD_ANYWHERE_ON_LEVEL      = Fl(22),   // build anywhere on the level that is not inside the machine
     MF_REPEAT_UNTIL_NO_PROGRESS     = Fl(23),   // keep trying to build this feature set until no changes are made
@@ -2735,7 +2740,10 @@ enum machineTypes {
     MT_PARALYSIS_TRAP_HIDDEN_AREA,
     MT_TRICK_STATUE_AREA,
     MT_WORM_AREA,
-    MT_SENTINEL_AREA
+    MT_SENTINEL_AREA,
+
+    // Variant-specific machines
+    MT_REWARD_HEAVY_OR_RUNIC_WEAPON
 };
 
 typedef struct autoGenerator {
@@ -2901,8 +2909,8 @@ extern "C" {
                           short originX, short originY,
                           unsigned long requiredMachineFlags,
                           item *adoptiveItem,
-                          item *parentSpawnedItems[50],
-                          creature *parentSpawnedMonsters[50]);
+                          item *parentSpawnedItems[MACHINES_BUFFER_LENGTH],
+                          creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]);
     void attachRooms(short **grid, const dungeonProfile *theDP, short attempts, short maxRoomCount);
     void digDungeon(void);
     void updateMapToShore(void);
@@ -3304,6 +3312,8 @@ extern "C" {
     item *generateItem(unsigned short theCategory, short theKind);
     short chooseKind(const itemTable *theTable, short numKinds);
     item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind);
+    boolean itemIsHeavyWeapon(const item *theItem);
+    boolean itemIsPositivelyEnchanted(const item *theItem);
     void updateEncumbrance(void);
     short displayedArmorValue(void);
     short armorValueIfUnenchanted(item *theItem);
@@ -3343,14 +3353,15 @@ extern "C" {
     void getTMGrid(short **grid, short value, unsigned long TMflags);
     short validLocationCount(short **grid, short validValue);
     void randomLocationInGrid(short **grid, short *x, short *y, short validValue);
-    boolean getQualifyingPathLocNear(short *retValX, short *retValY,
-                                     short x, short y,
-                                     boolean hallwaysAllowed,
-                                     unsigned long blockingTerrainFlags,
-                                     unsigned long blockingMapFlags,
-                                     unsigned long forbiddenTerrainFlags,
-                                     unsigned long forbiddenMapFlags,
-                                     boolean deterministic);
+    pos getQualifyingPathLocNear(
+        pos target,
+        boolean hallwaysAllowed,
+        unsigned long blockingTerrainFlags,
+        unsigned long blockingMapFlags,
+        unsigned long forbiddenTerrainFlags,
+        unsigned long forbiddenMapFlags,
+        boolean deterministic
+    );
     void createBlobOnGrid(short **grid,
                           short *retMinX, short *retMinY, short *retWidth, short *retHeight,
                           short roundCount,

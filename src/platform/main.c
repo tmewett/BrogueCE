@@ -39,10 +39,11 @@ static void printCommandlineHelp() {
 #ifdef BROGUE_CURSES
     "--term         -t          run in ncurses-based terminal mode\n"
 #endif
-    "--variant variant_name     run a variant game (options: rapid_brogue)\n"
+    "--variant variant_name     run a variant game (options: rapid_brogue, bullet_brogue)\n"
     "--stealth      -S          display stealth range\n"
     "--no-effects   -E          disable color effects\n"
     "--wizard       -W          run in wizard mode, invincible with powerful items\n"
+    "--hide-seed                disable seed display in game\n"
     "[--csv] --print-seed-catalog [START NUM LEVELS]\n"
     "                           (optional csv format)\n"
     "                           prints a catalog of the first LEVELS levels of NUM\n"
@@ -175,6 +176,9 @@ int main(int argc, char *argv[])
                 if (!strcmp("rapid_brogue", argv[i + 1])) {
                     gameVariant = VARIANT_RAPID_BROGUE;
                 }
+                if (!strcmp("bullet_brogue", argv[i + 1])) {
+                    gameVariant = VARIANT_BULLET_BROGUE;
+                }
                 i++;
                 continue;
             }
@@ -306,6 +310,11 @@ int main(int argc, char *argv[])
 
         if (strcmp(argv[i], "--wizard") == 0 || strcmp(argv[i], "-W") == 0) {
             rogue.wizard = true;
+            continue;
+        }
+
+        if (strcmp(argv[i], "--hide-seed") == 0) {
+            rogue.hideSeed = true;
             continue;
         }
 

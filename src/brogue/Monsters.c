@@ -597,7 +597,7 @@ creature *cloneMonster(creature *monst, boolean announce, boolean placeClone) {
 //      getQualifyingLocNear(loc, monst->loc.x, monst->loc.y, true, 0, forbiddenFlagsForMonster(&(monst->info)), (HAS_PLAYER | HAS_MONSTER), false, false);
 //      newMonst->loc.x = loc[0];
 //      newMonst->loc.y = loc[1];
-        getQualifyingPathLocNear(&(newMonst->loc.x), &(newMonst->loc.y), monst->loc.x, monst->loc.y, true,
+        newMonst->loc = getQualifyingPathLocNear(monst->loc, true,
                                  T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(newMonst->info)), HAS_PLAYER,
                                  avoidedFlagsForMonster(&(newMonst->info)), (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
         pmapAt(newMonst->loc)->flags |= HAS_MONSTER;
@@ -718,7 +718,7 @@ static boolean spawnMinions(short hordeID, creature *leader, boolean summoned, b
             monst = generateMonster(theHorde->memberType[iSpecies], itemPossible, !summoned);
             failsafe = 0;
             do {
-                getQualifyingPathLocNear(&(monst->loc.x), &(monst->loc.y), x, y, summoned,
+                monst->loc = getQualifyingPathLocNear((pos){ x, y }, summoned,
                                          T_DIVIDES_LEVEL & forbiddenTerrainFlags, (HAS_PLAYER | HAS_STAIRS),
                                          forbiddenTerrainFlags, HAS_MONSTER, false);
             } while (theHorde->spawnsIn && !cellHasTerrainType(monst->loc, theHorde->spawnsIn) && failsafe++ < 20);
@@ -786,7 +786,7 @@ creature *spawnHorde(short hordeID, pos loc, unsigned long forbiddenFlags, unsig
     creature *leader, *preexistingMonst;
     boolean tryAgain;
 
-    if (rogue.depthLevel > 1 && rand_percent(10)) {
+    if (rogue.depthLevel > 1 && rand_percent(gameConst->monsterOutOfDepthChance)) {
         depth = rogue.depthLevel + rand_range(1, min(5, rogue.depthLevel / 2));
         if (depth > gameConst->amuletLevel) {
             depth = max(rogue.depthLevel, gameConst->amuletLevel);
@@ -2909,7 +2909,7 @@ boolean resurrectAlly(const pos loc) {
         removeCreature(&purgatory, monToRaise);
         prependCreature(monsters, monToRaise);
 
-        getQualifyingPathLocNear(&monToRaise->loc.x, &monToRaise->loc.y, loc.x, loc.y, true,
+        monToRaise->loc = getQualifyingPathLocNear(loc, true,
                                  (T_PATHING_BLOCKER | T_HARMFUL_TERRAIN), 0,
                                  0, (HAS_PLAYER | HAS_MONSTER), false);
         pmapAt(monToRaise->loc)->flags |= HAS_MONSTER;
@@ -3835,7 +3835,7 @@ boolean moveMonster(creature *monst, short dx, short dy) {
                     pmapAt(monst->loc)->flags |= HAS_MONSTER;
 
                     if (monsterAvoids(defender, (pos){x, y})) { // don't want a flying monster to swap a non-flying monster into lava!
-                        getQualifyingPathLocNear(&(defender->loc.x), &(defender->loc.y), x, y, true,
+                        defender->loc = getQualifyingPathLocNear((pos){ x, y }, true,
                                                  forbiddenFlagsForMonster(&(defender->info)), HAS_PLAYER,
                                                  forbiddenFlagsForMonster(&(defender->info)), (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
                     } else {
@@ -4064,13 +4064,15 @@ boolean getQualifyingGridLocNear(pos *loc,
 }
 
 void makeMonsterDropItem(creature *monst) {
-    short x, y;
-    getQualifyingPathLocNear(&x, &y, monst->loc.x, monst->loc.y, true,
-                             (T_DIVIDES_LEVEL), 0,
-                             T_OBSTRUCTS_ITEMS, (HAS_PLAYER | HAS_STAIRS | HAS_ITEM), false);
-    placeItemAt(monst->carriedItem, (pos){ x, y });
+    pos dropLocation = getQualifyingPathLocNear(
+        monst->loc, true,
+        (T_DIVIDES_LEVEL), 0,
+        T_OBSTRUCTS_ITEMS, (HAS_PLAYER | HAS_STAIRS | HAS_ITEM),
+        false
+    );
+    placeItemAt(monst->carriedItem, dropLocation);
     monst->carriedItem = NULL;
-    refreshDungeonCell((pos){ x, y });
+    refreshDungeonCell(dropLocation);
 }
 
 void checkForContinuedLeadership(creature *monst) {
@@ -4156,11 +4158,8 @@ void toggleMonsterDormancy(creature *monst) {
 
         // Does it need a new location?
         if (pmapAt(monst->loc)->flags & (HAS_MONSTER | HAS_PLAYER)) { // Occupied!
-            getQualifyingPathLocNear(
-                &(monst->loc.x),
-                &(monst->loc.y),
-                monst->loc.x,
-                monst->loc.y,
+            monst->loc = getQualifyingPathLocNear(
+                monst->loc,
                 true,
                 T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)),
                 HAS_PLAYER,

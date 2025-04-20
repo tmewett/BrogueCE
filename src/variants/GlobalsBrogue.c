@@ -55,7 +55,6 @@ const color shieldingColor_Brogue =        {150,   75,     0,      0,      50,  
 const color dragonFireColor_Brogue =       {500,   150,    0,      45,     30,         45,         0,      true};
 const color centipedeColor_Brogue =        {75,    25,     85,     0,      0,          0,          0,      false};
 
-
 const bolt boltCatalog_Brogue[] = {
     {{0}},
     //name                      bolt description                ability description                         char    foreColor       backColor           boltEffect      magnitude       pathDF      targetDF    forbiddenMonsterFlags       flags
@@ -1018,14 +1017,17 @@ const gameConstants brogueGameConst = {
     .amuletLevel = AMULET_LEVEL,
 
     .depthAccelerator = 1,
+    .minimumAltarLevel = 13,
     .minimumLavaLevel = 4,
     .minimumBrimstoneLevel = 17,
     .mutationsOccurAboveLevel = 10,
+    .monsterOutOfDepthChance = 10,
 
     .machinesPerLevelSuppressionMultiplier = 4,
     .machinesPerLevelSuppressionOffset = 2,
     .machinesPerLevelIncreaseFactor = 1,
     .maxLevelForBonusMachines = 2,
+    .deepestLevelForMachines = AMULET_LEVEL,
 
     .extraItemsPerLevel = 0,
     .goldAdjustmentStartDepth = 6,

@@ -8,7 +8,7 @@ on:
 jobs:
 
   linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: "Install dependencies"
       run: |
@@ -28,13 +28,14 @@ jobs:
         tar -czvf BrogueCE-linux-x86_64.tar.gz BrogueCE-linux
 
     - name: "Upload artifact"
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: linux-x86_64
         path: BrogueCE-linux-x86_64.tar.gz
+        compression-level: 0  # There's no point compressing something already compressed
 
   macos:
-    runs-on: macos-12
+    runs-on: macos-13
     steps:
     - name: "Checkout sources"
       uses: actions/checkout@v3
@@ -76,10 +77,11 @@ jobs:
         zip -rll BrogueCE-macos-x86_64.zip BrogueCE-macos
 
     - name: "Upload artifact"
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: macos-x86_64
         path: BrogueCE-macos-x86_64.zip
+        compression-level: 0  # There's no point compressing something already compressed
 
   windows:
     runs-on: windows-latest
@@ -95,7 +97,6 @@ jobs:
       shell: powershell
       run: |
         $env:path = $env:path + ";" + (Join-Path $pwd.Drive.Root "opt/local/x86_64-w64-mingw32/bin")
-        $env:path = $env:path + ';C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64'
         mingw32-make SYSTEM=WINDOWS CC=gcc bin/brogue.exe
 
     - name: "Create artifact"
@@ -108,7 +109,8 @@ jobs:
         7z a BrogueCE-windows-x86_64.zip BrogueCE-windows
 
     - name: "Upload artifact"
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: windows-x86_64
         path: BrogueCE-windows-x86_64.zip
+        compression-level: 0  # There's no point compressing something already compressed

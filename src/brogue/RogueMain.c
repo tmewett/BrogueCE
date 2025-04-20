@@ -26,6 +26,7 @@
 #include "Globals.h"
 #include "GlobalsBrogue.h"
 #include "GlobalsRapidBrogue.h"
+#include "GlobalsBulletBrogue.h"
 
 #include <time.h>
 
@@ -38,6 +39,7 @@ int rogueMain() {
 void printBrogueVersion() {
     printf("Brogue version: %s\n", brogueVersion);
     printf("Supports variant (rapid_brogue): %s\n", rapidBrogueVersion);
+    printf("Supports variant (bullet_brogue): %s\n", bulletBrogueVersion);
 }
 
 void executeEvent(rogueEvent *theEvent) {
@@ -174,6 +176,9 @@ void initializeGameVariant() {
         case VARIANT_RAPID_BROGUE:
             initializeGameVariantRapidBrogue();
             break;
+        case VARIANT_BULLET_BROGUE:
+            initializeGameVariantBulletBrogue();
+            break;
         default:
             initializeGameVariantBrogue();
     }
@@ -187,6 +192,7 @@ void initializeRogue(uint64_t seed) {
     item *theItem;
     boolean playingback, playbackFF, playbackPaused, wizard, easy, displayStealthRangeMode;
     boolean trueColorMode;
+    boolean hideSeed;
     short oldRNG;
     char currentGamePath[BROGUE_FILENAME_MAX];
 
@@ -194,6 +200,7 @@ void initializeRogue(uint64_t seed) {
     playbackPaused = rogue.playbackPaused;
     playbackFF = rogue.playbackFastForward;
     wizard = rogue.wizard;
+    hideSeed = rogue.hideSeed;
     easy = rogue.easyMode;
     displayStealthRangeMode = rogue.displayStealthRangeMode;
     trueColorMode = rogue.trueColorMode;
@@ -209,6 +216,7 @@ void initializeRogue(uint64_t seed) {
     rogue.playbackPaused = playbackPaused;
     rogue.playbackFastForward = playbackFF;
     rogue.wizard = wizard;
+    rogue.hideSeed = hideSeed;
     rogue.easyMode = easy;
     rogue.displayStealthRangeMode = displayStealthRangeMode;
     rogue.trueColorMode = trueColorMode;
@@ -844,8 +852,8 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             }
         }
         if (!placedPlayer) {
-            getQualifyingPathLocNear(&loc.x, &loc.y,
-                                     player.loc.x, player.loc.y,
+            loc = getQualifyingPathLocNear(
+                                     player.loc,
                                      true,
                                      T_DIVIDES_LEVEL, 0,
                                      T_PATHING_BLOCKER, (HAS_MONSTER | HAS_STAIRS | IS_IN_MACHINE),

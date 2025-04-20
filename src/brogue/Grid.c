@@ -245,64 +245,62 @@ void randomLocationInGrid(short **grid, short *x, short *y, short validValue) {
 }
 
 // Finds the lowest positive number in a grid, chooses one location with that number randomly and returns it as (x, y).
-// If there are no valid locations, returns (-1, -1).
-static void randomLeastPositiveLocationInGrid(short **grid, short *x, short *y, boolean deterministic) {
+// If there are no valid locations, returns INVALID_POS, aka (-1, -1).
+static pos randomLeastPositiveLocationInGrid(short **grid, boolean deterministic) {
     const short targetValue = leastPositiveValueInGrid(grid);
-    short locationCount;
-    short i, j, index;
 
     if (targetValue == 0) {
-        *x = *y = -1;
-        return;
+        return INVALID_POS;
     }
 
-    locationCount = 0;
-    for(i = 0; i < DCOLS; i++) {
-        for(j = 0; j < DROWS; j++) {
+    short locationCount = 0;
+    for(int i = 0; i < DCOLS; i++) {
+        for(int j = 0; j < DROWS; j++) {
             if (grid[i][j] == targetValue) {
                 locationCount++;
             }
         }
     }
 
+    short index;
     if (deterministic) {
         index = locationCount / 2;
     } else {
         index = rand_range(0, locationCount - 1);
     }
 
-    for(i = 0; i < DCOLS && index >= 0; i++) {
-        for(j = 0; j < DROWS && index >= 0; j++) {
+    for(int i = 0; i < DCOLS && index >= 0; i++) {
+        for(int j = 0; j < DROWS && index >= 0; j++) {
             if (grid[i][j] == targetValue) {
                 if (index == 0) {
-                    *x = i;
-                    *y = j;
+                    return (pos){ .x = i, .y = j };
                 }
                 index--;
             }
         }
     }
-    return;
+    // This should not be reachable, since we should have already hit
+    // the unique 'index == 0' point.
+    return INVALID_POS;
 }
 
-boolean getQualifyingPathLocNear(short *retValX, short *retValY,
-                                 short x, short y,
-                                 boolean hallwaysAllowed,
-                                 unsigned long blockingTerrainFlags,
-                                 unsigned long blockingMapFlags,
-                                 unsigned long forbiddenTerrainFlags,
-                                 unsigned long forbiddenMapFlags,
-                                 boolean deterministic) {
+pos getQualifyingPathLocNear(
+    pos target,
+    boolean hallwaysAllowed,
+    unsigned long blockingTerrainFlags,
+    unsigned long blockingMapFlags,
+    unsigned long forbiddenTerrainFlags,
+    unsigned long forbiddenMapFlags,
+    boolean deterministic
+) {
     short **grid, **costMap;
 
     // First check the given location to see if it works, as an optimization.
-    if (!cellHasTerrainFlag((pos){ x, y }, blockingTerrainFlags | forbiddenTerrainFlags)
-        && !(pmap[x][y].flags & (blockingMapFlags | forbiddenMapFlags))
-        && (hallwaysAllowed || passableArcCount(x, y) <= 1)) {
+    if (!cellHasTerrainFlag(target, blockingTerrainFlags | forbiddenTerrainFlags)
+        && !(pmapAt(target)->flags & (blockingMapFlags | forbiddenMapFlags))
+        && (hallwaysAllowed || passableArcCount(target.x, target.y) <= 1)) {
 
-        *retValX = x;
-        *retValY = y;
-        return true;
+        return target;
     }
 
     // Allocate the grids.
@@ -320,8 +318,8 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
     }
 
     // Run the distance scan.
-    grid[x][y] = 1;
-    costMap[x][y] = 1;
+    grid[target.x][target.y] = 1;
+    costMap[target.x][target.y] = 1;
     dijkstraScan(grid, costMap, true);
     findReplaceGrid(grid, 30000, 30000, 0);
 
@@ -332,7 +330,7 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
     }
 
     // Get the solution.
-    randomLeastPositiveLocationInGrid(grid, retValX, retValY, deterministic);
+    pos retLoc = randomLeastPositiveLocationInGrid(grid, deterministic);
 
 //    dumpLevelToScreen();
 //    displayGrid(grid);
@@ -345,21 +343,20 @@ boolean getQualifyingPathLocNear(short *retValX, short *retValY,
     freeGrid(costMap);
 
     // Fall back to a pathing-agnostic alternative if there are no solutions.
-    if (*retValX == -1 && *retValY == -1) {
-        pos loc;
-        if (getQualifyingLocNear(&loc, (pos){ x, y }, hallwaysAllowed, NULL,
-                                 (blockingTerrainFlags | forbiddenTerrainFlags),
-                                 (blockingMapFlags | forbiddenMapFlags),
-                                 false, deterministic)) {
-            *retValX = loc.x;
-            *retValY = loc.y;
-            return true; // Found a fallback solution.
-        } else {
-            return false; // No solutions.
-        }
-    } else {
-        return true; // Found a primary solution.
+    if (isPosInMap(retLoc)) {
+        return retLoc;
     }
+    
+    pos loc;
+    if (getQualifyingLocNear(&loc, target, hallwaysAllowed, NULL,
+                                (blockingTerrainFlags | forbiddenTerrainFlags),
+                                (blockingMapFlags | forbiddenMapFlags),
+                                false, deterministic)) {
+        return loc;
+    } else {
+        return retLoc;
+    }
+    
 }
 
 static void cellularAutomataRound(short **grid, char birthParameters[9], char survivalParameters[9]) {
