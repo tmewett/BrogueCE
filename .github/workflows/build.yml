@@ -8,7 +8,7 @@ on:
 jobs:
 
   linux:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
     - name: "Install dependencies"
       run: |
@@ -16,7 +16,7 @@ jobs:
         sudo apt install -y libsdl2-dev libsdl2-image-dev
 
     - name: "Checkout sources"
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: "Compile"
       run: |
@@ -34,21 +34,21 @@ jobs:
         path: BrogueCE-linux-x86_64.tar.gz
         compression-level: 0  # There's no point compressing something already compressed
 
-  macos:
+  macos-intel:
     runs-on: macos-13
     steps:
     - name: "Checkout sources"
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: "Prepare"
       run: |
         make macos/sdl2.rb
 
     - name: "Cache SDL2"
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: sdl2-cellar
-        key: sdl2-${{hashFiles('macos/sdl2.rb')}}
+        key: sdl2-macos-amd64-${{hashFiles('macos/sdl2.rb')}}
 
     - name: "Compile and install dependencies"
       run: |
@@ -83,11 +83,59 @@ jobs:
         path: BrogueCE-macos-x86_64.zip
         compression-level: 0  # There's no point compressing something already compressed
 
+  macos-arm:
+    runs-on: macos-15
+    steps:
+    - name: "Checkout sources"
+      uses: actions/checkout@v4
+
+    - name: "Prepare"
+      run: |
+        make macos/sdl2.rb
+
+    - name: "Cache SDL2"
+      uses: actions/cache@v4
+      with:
+        path: sdl2-cellar
+        key: sdl2-macos-arm64-${{hashFiles('macos/sdl2.rb')}}
+
+    - name: "Compile and install dependencies"
+      run: |
+        if [ -d sdl2-cellar ]; then
+          cp -r sdl2-cellar $(brew --cellar)/sdl2
+          brew link sdl2
+        else
+          brew install --build-from-source ./macos/sdl2.rb
+          cp -r $(brew --cellar)/sdl2 sdl2-cellar
+        fi
+        brew install sdl2_image dylibbundler
+
+    - name: "Compile"
+      run: |
+        make MAC_APP=YES Brogue.app
+      env:
+        MACOSX_DEPLOYMENT_TARGET: "10.7"
+
+    - name: "Fix and bundle dylib references"
+      run: |
+        cd Brogue.app/Contents && dylibbundler -cd -b -x MacOS/brogue
+
+    - name: "Create artifact"
+      run: |
+        make BrogueCE-macos
+        zip -rll BrogueCE-macos-arm64.zip BrogueCE-macos
+
+    - name: "Upload artifact"
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-arm64
+        path: BrogueCE-macos-arm64.zip
+
   windows:
     runs-on: windows-latest
     steps:
     - name: "Checkout sources"
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: "Install dependencies"
       run: |
