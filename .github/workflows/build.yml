@@ -69,7 +69,7 @@ jobs:
 
     - name: "Fix and bundle dylib references"
       run: |
-        cd Brogue.app/Contents && dylibbundler -cd -b -x MacOS/brogue
+        cd Brogue.app/Contents && dylibbundler -cd -b -x MacOS/brogue -d ./libs-intel/ -p @executable_path/../libs-intel/
 
     - name: "Create artifact"
       run: |
@@ -118,7 +118,7 @@ jobs:
 
     - name: "Fix and bundle dylib references"
       run: |
-        cd Brogue.app/Contents && dylibbundler -cd -b -x MacOS/brogue
+        cd Brogue.app/Contents && dylibbundler -cd -b -x MacOS/brogue -d ./libs-arm/ -p @executable_path/../libs-arm/
 
     - name: "Create artifact"
       run: |
@@ -130,6 +130,83 @@ jobs:
       with:
         name: macos-arm64
         path: BrogueCE-macos-arm64.zip
+        compression-level: 0  # There's no point compressing something already compressed
+
+  macos-universal:
+    needs: [macos-intel, macos-arm]
+    runs-on: macos-15
+    steps:
+
+    - name: "Download artifacts"
+      uses: actions/download-artifact@v4
+      with:
+        pattern: macos-*
+        merge-multiple: true
+
+    - name: "Create script"
+      uses: 1arp/create-a-file-action@0.4.5
+      with:
+        file: 'process.sh'
+        content: |
+          #!/bin/bash
+          set -euo pipefail
+          IFS=$'\n\t'
+
+          rm -Rf arm64 x86_64 universal
+
+          # Define an array
+          architectures=("arm64" "x86_64")
+
+          # Loop through the array
+          for arch in "${architectures[@]}"; do
+              # Create a directory for each architecture
+              # and unzip the corresponding files
+
+              echo "Processing $arch"
+              mkdir -p "$arch"
+              cd "$arch"
+              unzip "../BrogueCE-macos-$arch.zip"
+              rm -f "../BrogueCE-macos-$arch.zip"
+              rm -Rf "BrogueCE-macos/Brogue CE.app/Contents/_CodeSignature"
+              xattr -c "BrogueCE-macos/Brogue CE.app"
+              cd ..
+          done
+
+          # Create a universal binary
+          echo "Creating universal binary"
+          mkdir -p universal
+
+          cp -av arm64/* \
+              x86_64/* \
+              universal/
+          rm "universal/BrogueCE-macos/Brogue CE.app/Contents/MacOS/brogue"
+
+          lipo -create \
+              "arm64/BrogueCE-macos/Brogue CE.app/Contents/MacOS/brogue" \
+              "x86_64/BrogueCE-macos/Brogue CE.app/Contents/MacOS/brogue" \
+              -output "universal/BrogueCE-macos/Brogue CE.app/Contents/MacOS/brogue"
+
+          lipo -info "universal/BrogueCE-macos/Brogue CE.app/Contents/MacOS/brogue"
+          xattr -c "universal/BrogueCE-macos/Brogue CE.app"
+          echo "Universal binary created successfully"
+
+    - name: "Execute script"
+      run: |
+        pwd
+        ls -al
+        bash -x process.sh
+
+    - name: "Create artifact"
+      run: |
+        cd universal
+        zip -rll ../BrogueCE-macos-universal.zip BrogueCE-macos
+
+    - name: "Upload artifact"
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-universal
+        path: BrogueCE-macos-universal.zip
+        compression-level: 0  # There's no point compressing something already compressed
 
   windows:
     runs-on: windows-latest
