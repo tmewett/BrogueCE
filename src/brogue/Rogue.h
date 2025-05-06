@@ -2961,6 +2961,7 @@ extern "C" {
 
     char nextKeyPress(boolean textInput);
     void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst);
+    void levelSummarySidebar(void);
     void printHelpScreen(void);
     void displayFeatsScreen(void);
     void printDiscoveriesScreen(void);

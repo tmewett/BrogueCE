@@ -416,7 +416,9 @@ static boolean _takeScreenshot() {
 
     // choose filename
     char screenshotFilepath[BROGUE_FILENAME_MAX];
-    getAvailableFilePath(screenshotFilepath, "Screenshot", SCREENSHOT_SUFFIX);
+    char tryName[BROGUE_FILENAME_MAX];
+    sprintf(tryName, "S%llu D%d T%d", (unsigned long long)rogue.seed, rogue.depthLevel, rogue.absoluteTurnNumber );
+    getAvailableFilePath(screenshotFilepath, tryName, SCREENSHOT_SUFFIX);
     strcat(screenshotFilepath, SCREENSHOT_SUFFIX);
 
     // save to PNG
