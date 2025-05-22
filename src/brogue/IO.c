@@ -1335,10 +1335,6 @@ void getCellAppearance(pos loc, enum displayGlyph *returnChar, color *returnFore
             pmapAt(loc)->flags |= STABLE_MEMORY;
             pmapAt(loc)->rememberedAppearance.character = cellChar;
 
-            if (rogue.trueColorMode) {
-                bakeTerrainColors(&cellForeColor, &cellBackColor, loc.x, loc.y);
-            }
-
             // store memory
             storeColorComponents(pmapAt(loc)->rememberedAppearance.foreColorComponents, &cellForeColor);
             storeColorComponents(pmapAt(loc)->rememberedAppearance.backColorComponents, &cellBackColor);
