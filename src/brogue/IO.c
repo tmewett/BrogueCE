@@ -28,6 +28,8 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
+#define D_DISABLE_BACKGROUND_COLORS     (rogue.wizard && 0)
+
 // Populates path[][] with a list of coordinates starting at origin and traversing down the map. Returns the number of steps in the path.
 short getPlayerPathOnMap(pos path[1000], short **map, pos origin) {
     pos at = origin;
