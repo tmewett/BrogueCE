@@ -1366,11 +1366,7 @@ void getCellAppearance(pos loc, enum displayGlyph *returnChar, color *returnFore
         // do nothing
     } else if (!(pmapAt(loc)->flags & VISIBLE) && (pmapAt(loc)->flags & CLAIRVOYANT_VISIBLE)) {
         // can clairvoyantly see it
-        if (rogue.trueColorMode) {
-            lightMultiplierColor = basicLightColor;
-        } else {
-            applyColorAugment(&lightMultiplierColor, &basicLightColor, 100);
-        }
+        applyColorAugment(&lightMultiplierColor, &basicLightColor, 100);
         if (!rogue.trueColorMode || !needDistinctness) {
             applyColorMultiplier(&cellForeColor, &lightMultiplierColor);
             applyColorMultiplier(&cellForeColor, &clairvoyanceColor);
