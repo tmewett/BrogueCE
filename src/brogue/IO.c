@@ -927,7 +927,7 @@ void storeColorComponents(char components[3], const color *theColor) {
 
 static void bakeTerrainColors(color *foreColor, color *backColor, short x, short y) {
     const short *vals;
-    const short neutralColors[8] = {1000, 1000, 1000, 1000, 0, 0, 0, 0};
+    const short neutralColors[8] = {500, 500, 500, 500, 500, 500, 0, 0};
     if (rogue.trueColorMode) {
         vals = neutralColors;
     } else {
