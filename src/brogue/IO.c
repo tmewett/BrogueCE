@@ -1184,7 +1184,7 @@ void getCellAppearance(pos loc, enum displayGlyph *returnChar, color *returnFore
         }
 
         if (rogue.trueColorMode) {
-            lightMultiplierColor = colorMultiplier100;
+            lightMultiplierColor = basicLightColor;
         } else {
             colorMultiplierFromDungeonLight(loc.x, loc.y, &lightMultiplierColor);
         }
