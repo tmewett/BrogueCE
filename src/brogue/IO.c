@@ -1342,8 +1342,8 @@ void getCellAppearance(pos loc, enum displayGlyph *returnChar, color *returnFore
             storeColorComponents(pmapAt(loc)->rememberedAppearance.backColorComponents, &cellBackColor);
 
             applyColorAugment(&lightMultiplierColor, &basicLightColor, 100);
+            applyColorMultiplier(&cellForeColor, &lightMultiplierColor);
             if (!rogue.trueColorMode || !needDistinctness) {
-                applyColorMultiplier(&cellForeColor, &lightMultiplierColor);
             }
             applyColorMultiplier(&cellBackColor, &lightMultiplierColor);
             bakeTerrainColors(&cellForeColor, &cellBackColor, loc.x, loc.y);
@@ -1367,19 +1367,17 @@ void getCellAppearance(pos loc, enum displayGlyph *returnChar, color *returnFore
     } else if (!(pmapAt(loc)->flags & VISIBLE) && (pmapAt(loc)->flags & CLAIRVOYANT_VISIBLE)) {
         // can clairvoyantly see it
         applyColorAugment(&lightMultiplierColor, &basicLightColor, 100);
+        applyColorMultiplier(&cellForeColor, &lightMultiplierColor);
         if (!rogue.trueColorMode || !needDistinctness) {
-            applyColorMultiplier(&cellForeColor, &lightMultiplierColor);
             applyColorMultiplier(&cellForeColor, &clairvoyanceColor);
         }
         applyColorMultiplier(&cellBackColor, &lightMultiplierColor);
         applyColorMultiplier(&cellBackColor, &clairvoyanceColor);
     } else if (!(pmapAt(loc)->flags & VISIBLE) && (pmapAt(loc)->flags & TELEPATHIC_VISIBLE)) {
         // Can telepathically see it through another creature's eyes.
-
         applyColorAugment(&lightMultiplierColor, &basicLightColor, 100);
-
+        applyColorMultiplier(&cellForeColor, &lightMultiplierColor);
         if (!rogue.trueColorMode || !needDistinctness) {
-            applyColorMultiplier(&cellForeColor, &lightMultiplierColor);
             applyColorMultiplier(&cellForeColor, &telepathyMultiplier);
         }
         applyColorMultiplier(&cellBackColor, &lightMultiplierColor);
@@ -1413,16 +1411,14 @@ void getCellAppearance(pos loc, enum displayGlyph *returnChar, color *returnFore
     } else if (playerCanSeeOrSense(loc.x, loc.y) && rogue.playbackOmniscience && !(pmapAt(loc)->flags & ANY_KIND_OF_VISIBLE)) {
         // omniscience
         applyColorAugment(&lightMultiplierColor, &basicLightColor, 100);
+        applyColorMultiplier(&cellForeColor, &lightMultiplierColor);
         if (!rogue.trueColorMode || !needDistinctness) {
-            applyColorMultiplier(&cellForeColor, &lightMultiplierColor);
             applyColorMultiplier(&cellForeColor, &omniscienceColor);
         }
         applyColorMultiplier(&cellBackColor, &lightMultiplierColor);
         applyColorMultiplier(&cellBackColor, &omniscienceColor);
     } else {
-        if (!rogue.trueColorMode || !needDistinctness) {
-            applyColorMultiplier(&cellForeColor, &lightMultiplierColor);
-        }
+        applyColorMultiplier(&cellForeColor, &lightMultiplierColor);
         applyColorMultiplier(&cellBackColor, &lightMultiplierColor);
 
         if (player.status[STATUS_HALLUCINATING] && !rogue.trueColorMode) {
