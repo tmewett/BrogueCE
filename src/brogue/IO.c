@@ -2688,7 +2688,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             DEBUG displayChokeMap();
             DEBUG displayMachines();
             DEBUG displayWaypoints();
-            
+
 #ifdef LOG_LIGHTS
             logLights();
 #endif
@@ -2947,7 +2947,7 @@ void waitForKeystrokeOrMouseClick() {
 boolean confirm(char *prompt, boolean alsoDuringPlayback) {
     short retVal;
     brogueButton buttons[2] = {{{0}}};
-    
+
     char whiteColorEscape[20] = "";
     char yellowColorEscape[20] = "";
 
@@ -3257,7 +3257,7 @@ static void drawMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], sho
         }
     }
 
-    
+
     overlayDisplayBuffer(&dbuf);
 }
 
@@ -4229,7 +4229,7 @@ void displayFeatsScreen() {
         sprintf(buf, "%*s %s%s %s", FEAT_NAME_LENGTH, featTable[i].name, featColorEscape, featStatusChar, featTable[i].description);
         printString(buf, mapToWindowX(0), y + i + 1, &itemMessageColor, &black, &dbuf);
     }
-    
+
     // Legend
     strcpy(buf,"-- LEGEND --");
     printString(buf, mapToWindowX((DCOLS - FEAT_NAME_LENGTH - strLenWithoutEscapes(buf)) / 2), ROWS-5, &gray, &black, &dbuf);
@@ -4767,7 +4767,7 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
                 printString("   (Off balance)    ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
             } else if (monst->creatureState == MONSTER_TRACKING_SCENT) {
                 printString("     (Hunting)      ", 0, y++, (dim ? &darkGray : &gray), &black, 0);
-            }    
+            }
         }
     }
 
@@ -4822,7 +4822,7 @@ short printItemInfo(item *theItem, short y, boolean dim, boolean highlight) {
         inPath = (pmapAt(theItem->loc)->flags & IS_IN_PATH) ? true : false;
         pmapAt(theItem->loc)->flags &= ~IS_IN_PATH;
         getCellAppearance(theItem->loc, &itemChar, &itemForeColor, &itemBackColor);
-        // override the glyph if the item is at the player's location because 
+        // override the glyph if the item is at the player's location because
         // getCellAppearance returns the player glyph
         if (theItem->loc.x == player.loc.x && theItem->loc.y == player.loc.y) {
             if (player.status[STATUS_HALLUCINATING] && !rogue.playbackOmniscience) {
