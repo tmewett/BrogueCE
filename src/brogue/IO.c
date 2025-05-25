@@ -1465,9 +1465,9 @@ void getCellAppearance(pos loc, enum displayGlyph *returnChar, color *returnFore
             applyColorMultiplier(&cellForeColor, &inDarknessMultiplierColor);
             applyColorMultiplier(&cellBackColor, &inDarknessMultiplierColor);
 
-            applyColorAugment(&cellForeColor, &purple, 10);
+            applyColorAugment(&cellForeColor, &purple, 7);
             applyColorAugment(&cellBackColor, &white, -10);
-            applyColorAverage(&cellBackColor, &purple, 20);
+            applyColorAverage(&cellBackColor, &purple, 17);
         } else if (displayDetail[loc.x][loc.y] == DV_LIT) {
 
             colorMultiplierFromDungeonLight(loc.x, loc.y, &lightMultiplierColor);
