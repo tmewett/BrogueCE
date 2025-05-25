@@ -166,7 +166,7 @@ const color goldAltarBackColor =    {25,    24,     12,     0,      0,          
 const color pedestalBackColor =     {10,    5,      20,     0,      0,          0,          0,      false};
 
 // monster colors
-const color goblinColor =           {40,    30,     20,     0,      0,          0,          0,      false};
+const color goblinColor =           {44,    33,     22,     0,      0,          0,          0,      false};
 const color jackalColor =           {60,    42,     27,     0,      0,          0,          0,      false};
 const color ogreColor =             {60,    25,     25,     0,      0,          0,          0,      false};
 const color eelColor =              {30,    12,     12,     0,      0,          0,          0,      false};
@@ -267,10 +267,10 @@ const color interfaceButtonColor =  {18,    15,     38,     0,      0,          
 const color buttonHoverColor =      {100,   70,     40,     0,      0,          0,          0,      false};
 const color titleButtonColor =      {23,    15,     30,     0,      0,          0,          0,      false};
 
-const color playerInvisibleColor =  {20,    20,     30,     0,      0,          80,         0,      true};
+const color playerInvisibleColor =  {30,    30,     40,     0,      0,          80,         0,      true};
 const color playerInLightColor =    {100,   90,     30,     0,      0,          0,          0,      false};
 const color playerInShadowColor =   {60,    60,     100,    0,      0,          0,          0,      false};
-const color playerInDarknessColor = {30,    30,     65,     0,      0,          0,          0,      false};
+const color playerInDarknessColor = {40,    40,     65,     0,      0,          0,          0,      false};
 
 const color inLightMultiplierColor ={150,   150,    75,     150,    150,        75,         100,    true};
 const color inDarknessMultiplierColor={66,  66,     120,    66,     66,         120,        66,     true};
