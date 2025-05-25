@@ -4555,19 +4555,15 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
         upperCase(monstName);
 
         if (monst == &player) {
+            strcat(monstName, " xxxx");
+            encodeMessageColor(monstName, strlen(monstName) - 4, &monstForeColor);
             if (player.status[STATUS_INVISIBLE]) {
-                strcat(monstName, " xxxx");
-                encodeMessageColor(monstName, strlen(monstName) - 4, &monstForeColor);
                 strcat(monstName, "(invisible)");
             } else if (playerInDarkness()) {
-                strcat(monstName, " xxxx");
                 //encodeMessageColor(monstName, strlen(monstName) - 4, &playerInDarknessColor);
-                encodeMessageColor(monstName, strlen(monstName) - 4, &monstForeColor);
                 strcat(monstName, "(dark)");
             } else if (!(pmapAt(player.loc)->flags & IS_IN_SHADOW)) {
-                strcat(monstName, " xxxx");
                 //encodeMessageColor(monstName, strlen(monstName) - 4, &playerInLightColor);
-                encodeMessageColor(monstName, strlen(monstName) - 4, &monstForeColor);
                 strcat(monstName, "(lit)");
             }
         }
