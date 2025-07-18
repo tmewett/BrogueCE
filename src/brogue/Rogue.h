@@ -56,7 +56,6 @@
 
 #define D_SAFETY_VISION                 (rogue.wizard && 0)
 #define D_SCENT_VISION                  (rogue.wizard && 0)
-#define D_DISABLE_BACKGROUND_COLORS     (rogue.wizard && 0)
 #define D_OMNISCENCE                    (rogue.wizard && 0)
 
 #define D_INSPECT_LEVELGEN              (rogue.wizard && 0)
