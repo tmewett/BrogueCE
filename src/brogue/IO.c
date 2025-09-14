@@ -34,7 +34,7 @@ short getPlayerPathOnMap(pos path[1000], short **map, pos origin) {
 
     int steps;
     for (steps = 0; true; steps++) {
-        const int dir = nextStep(map, at.x, at.y, &player, false);
+        const int dir = nextStep(map, at, &player, false);
         if (dir == -1) {
             break;
         }
@@ -775,7 +775,7 @@ void mainInputLoop() {
                      dir++);
                 playerMoves(dir);
             } else if (D_WORMHOLING) {
-                travel(rogue.cursorLoc.x, rogue.cursorLoc.y, true);
+                travel(rogue.cursorLoc, true);
             } else {
                 confirmMessages();
                 if (posEq(originLoc, rogue.cursorLoc)) {
@@ -2346,7 +2346,7 @@ static void exploreKey(const boolean controlKey) {
             exploreMap = allocGrid();
             getExploreMap(exploreMap, false);
             do {
-                dir = nextStep(exploreMap, x, y, NULL, false);
+                dir = nextStep(exploreMap, (pos){ x, y }, NULL, false);
                 if (dir != NO_DIRECTION) {
                     x += nbDirs[dir][0];
                     y += nbDirs[dir][1];
@@ -2367,7 +2367,7 @@ static void exploreKey(const boolean controlKey) {
         message("It's too dark to explore!", 0);
     } else if (x == player.loc.x && y == player.loc.y) {
         message("I see no path for further exploration.", 0);
-    } else if (proposeOrConfirmLocation(finalX, finalY, "I see no path for further exploration.")) {
+    } else if (proposeOrConfirmLocation((pos){ finalX, finalY }, "I see no path for further exploration.")) {
         explore(controlKey ? 1 : 20); // Do the exploring until interrupted.
         hideCursor();
         exploreKey(controlKey);
@@ -2439,24 +2439,20 @@ void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsD
 }
 
 void executeMouseClick(rogueEvent *theEvent) {
-    short x, y;
-    boolean autoConfirm;
-    x = theEvent->param1;
-    y = theEvent->param2;
-    autoConfirm = theEvent->controlKey;
+    windowpos mouse = { theEvent->param1, theEvent->param2 };
+    boolean autoConfirm = theEvent->controlKey;
 
     if (theEvent->eventType == RIGHT_MOUSE_UP) {
         displayInventory(ALL_ITEMS, 0, 0, true, true);
-    } else if (coordinatesAreInMap(windowToMapX(x), windowToMapY(y))) {
+    } else if (isPosInMap(windowToMap(mouse))) {
         if (autoConfirm) {
-            travel(windowToMapX(x), windowToMapY(y), autoConfirm);
+            travel(windowToMap(mouse), autoConfirm);
         } else {
-            rogue.cursorLoc.x = windowToMapX(x);
-            rogue.cursorLoc.y = windowToMapY(y);
+            rogue.cursorLoc = windowToMap(mouse);
             mainInputLoop();
         }
 
-    } else if (windowToMapX(x) >= 0 && windowToMapX(x) < DCOLS && y >= 0 && y < MESSAGE_LINES) {
+    } else if (windowToMapX(mouse.window_x) >= 0 && windowToMapX(mouse.window_x) < DCOLS && mouse.window_y >= 0 && mouse.window_y < MESSAGE_LINES) {
         // If the click location is in the message block, display the message archive.
         displayMessageArchive();
     }
@@ -2510,8 +2506,8 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             if (D_WORMHOLING) {
                 recordKeystroke(DESCEND_KEY, false, false);
                 useStairs(1);
-            } else if (proposeOrConfirmLocation(rogue.downLoc.x, rogue.downLoc.y, "I see no way down.")) {
-                travel(rogue.downLoc.x, rogue.downLoc.y, true);
+            } else if (proposeOrConfirmLocation(rogue.downLoc, "I see no way down.")) {
+                travel(rogue.downLoc, true);
             }
             break;
         case ASCEND_KEY:
@@ -2519,8 +2515,8 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             if (D_WORMHOLING) {
                 recordKeystroke(ASCEND_KEY, false, false);
                 useStairs(-1);
-            } else if (proposeOrConfirmLocation(rogue.upLoc.x, rogue.upLoc.y, "I see no way up.")) {
-                travel(rogue.upLoc.x, rogue.upLoc.y, true);
+            } else if (proposeOrConfirmLocation(rogue.upLoc, "I see no way up.")) {
+                travel(rogue.upLoc, true);
             }
             break;
         case RETURN_KEY:

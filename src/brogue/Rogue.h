@@ -2901,7 +2901,7 @@ extern "C" {
     void logBuffer(char array[DCOLS][DROWS]);
     //void logBuffer(short **array);
     boolean search(short searchStrength);
-    boolean proposeOrConfirmLocation(short x, short y, char *failureMessage);
+    boolean proposeOrConfirmLocation(pos target, char *failureMessage);
     boolean useStairs(short stairDirection);
     short passableArcCount(short x, short y);
     void analyzeMap(boolean calculateChokeMap);
@@ -3089,9 +3089,9 @@ extern "C" {
                             boolean canUseSecretDoors,
                             boolean eightWays);
     short pathingDistance(short x1, short y1, short x2, short y2, unsigned long blockingTerrainFlags);
-    short nextStep(short **distanceMap, short x, short y, creature *monst, boolean reverseDirections);
+    short nextStep(short **distanceMap, pos target, creature *monst, boolean reverseDirections);
     void travelRoute(pos path[1000], short steps);
-    void travel(short x, short y, boolean autoConfirm);
+    void travel(pos target, boolean autoConfirm);
     void populateGenericCostMap(short **costMap);
     void getLocationFlags(const short x, const short y,
                           unsigned long *tFlags, unsigned long *TMFlags, unsigned long *cellFlags,
