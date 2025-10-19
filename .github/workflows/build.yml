@@ -7,33 +7,6 @@ on:
 
 jobs:
 
-  linux:
-    runs-on: ubuntu-22.04
-    steps:
-    - name: "Install dependencies"
-      run: |
-        sudo apt update -y
-        sudo apt install -y libsdl2-dev libsdl2-image-dev
-
-    - name: "Checkout sources"
-      uses: actions/checkout@v3
-
-    - name: "Compile"
-      run: |
-        make bin/brogue
-
-    - name: "Create artifact"
-      run: |
-        make BrogueCE-linux
-        tar -czvf BrogueCE-linux-x86_64.tar.gz BrogueCE-linux
-
-    - name: "Upload artifact"
-      uses: actions/upload-artifact@v4
-      with:
-        name: linux-x86_64
-        path: BrogueCE-linux-x86_64.tar.gz
-        compression-level: 0  # There's no point compressing something already compressed
-
   macos-intel:
     runs-on: macos-13
     steps:
@@ -56,7 +29,10 @@ jobs:
           cp -r sdl2-cellar $(brew --cellar)/sdl2
           brew link sdl2
         else
-          brew install --build-from-source ./macos/sdl2.rb
+          tap_dir="$(brew --repository local/BrogueCE)"
+          mkdir -p "$tap_dir/Formula"
+          cp macos/sdl2.rb "$tap_dir/Formula"
+          brew install --build-from-source local/BrogueCE/sdl2
           cp -r $(brew --cellar)/sdl2 sdl2-cellar
         fi
         brew install sdl2_image dylibbundler
@@ -81,85 +57,4 @@ jobs:
       with:
         name: macos-x86_64
         path: BrogueCE-macos-x86_64.zip
-        compression-level: 0  # There's no point compressing something already compressed
-
-  macos-arm:
-    runs-on: macos-15
-    steps:
-    - name: "Checkout sources"
-      uses: actions/checkout@v3
-
-    - name: "Prepare"
-      run: |
-        make macos/sdl2.rb
-
-    - name: "Cache SDL2"
-      uses: actions/cache@v3
-      with:
-        path: sdl2-cellar
-        key: sdl2-macos-arm64-${{hashFiles('macos/sdl2.rb')}}
-
-    - name: "Compile and install dependencies"
-      run: |
-        if [ -d sdl2-cellar ]; then
-          cp -r sdl2-cellar $(brew --cellar)/sdl2
-          brew link sdl2
-        else
-          brew install --build-from-source ./macos/sdl2.rb
-          cp -r $(brew --cellar)/sdl2 sdl2-cellar
-        fi
-        brew install sdl2_image dylibbundler
-
-    - name: "Compile"
-      run: |
-        make MAC_APP=YES Brogue.app
-      env:
-        MACOSX_DEPLOYMENT_TARGET: "10.7"
-
-    - name: "Fix and bundle dylib references"
-      run: |
-        cd Brogue.app/Contents && dylibbundler -cd -b -x MacOS/brogue
-
-    - name: "Create artifact"
-      run: |
-        make BrogueCE-macos
-        zip -rll BrogueCE-macos-arm64.zip BrogueCE-macos
-
-    - name: "Upload artifact"
-      uses: actions/upload-artifact@v4
-      with:
-        name: macos-arm64
-        path: BrogueCE-macos-arm64.zip
-        compression-level: 0  # There's no point compressing something already compressed
-
-  windows:
-    runs-on: windows-latest
-    steps:
-    - name: "Checkout sources"
-      uses: actions/checkout@v3
-
-    - name: "Install dependencies"
-      run: |
-        .\.github\get-deps-mingw.ps1
-
-    - name: "Compile"
-      shell: powershell
-      run: |
-        $env:path = $env:path + ";" + (Join-Path $pwd.Drive.Root "opt/local/x86_64-w64-mingw32/bin")
-        mingw32-make SYSTEM=WINDOWS CC=gcc bin/brogue.exe
-
-    - name: "Create artifact"
-      run: |
-        mingw32-make SYSTEM=WINDOWS BrogueCE-windows
-        cp SDL2\x86_64-w64-mingw32\bin\SDL2.dll BrogueCE-windows
-        cp SDL2_image\x86_64-w64-mingw32\bin\zlib1.dll BrogueCE-windows
-        cp SDL2_image\x86_64-w64-mingw32\bin\SDL2_image.dll BrogueCE-windows
-        cp SDL2_image\x86_64-w64-mingw32\bin\libpng16-16.dll BrogueCE-windows
-        7z a BrogueCE-windows-x86_64.zip BrogueCE-windows
-
-    - name: "Upload artifact"
-      uses: actions/upload-artifact@v4
-      with:
-        name: windows-x86_64
-        path: BrogueCE-windows-x86_64.zip
         compression-level: 0  # There's no point compressing something already compressed
