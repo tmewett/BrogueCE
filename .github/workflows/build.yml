@@ -56,7 +56,10 @@ jobs:
           cp -r sdl2-cellar $(brew --cellar)/sdl2
           brew link sdl2
         else
-          brew install --build-from-source ./macos/sdl2.rb
+          tap_dir="$(brew --repository local/broguece)"
+          mkdir -p "$tap_dir/Formula"
+          cp macos/sdl2.rb "$tap_dir/Formula"
+          brew install --build-from-source local/broguece/sdl2
           cp -r $(brew --cellar)/sdl2 sdl2-cellar
         fi
         brew install sdl2_image dylibbundler
@@ -105,7 +108,10 @@ jobs:
           cp -r sdl2-cellar $(brew --cellar)/sdl2
           brew link sdl2
         else
-          brew install --build-from-source ./macos/sdl2.rb
+          tap_dir="$(brew --repository local/broguece)"
+          mkdir -p "$tap_dir/Formula"
+          cp macos/sdl2.rb "$tap_dir/Formula"
+          brew install --build-from-source local/broguece/sdl2
           cp -r $(brew --cellar)/sdl2 sdl2-cellar
         fi
         brew install sdl2_image dylibbundler
