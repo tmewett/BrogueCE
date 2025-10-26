@@ -166,7 +166,7 @@ const color goldAltarBackColor =    {25,    24,     12,     0,      0,          
 const color pedestalBackColor =     {10,    5,      20,     0,      0,          0,          0,      false};
 
 // monster colors
-const color goblinColor =           {40,    30,     20,     0,      0,          0,          0,      false};
+const color goblinColor =           {44,    33,     22,     0,      0,          0,          0,      false};
 const color jackalColor =           {60,    42,     27,     0,      0,          0,          0,      false};
 const color ogreColor =             {60,    25,     25,     0,      0,          0,          0,      false};
 const color eelColor =              {30,    12,     12,     0,      0,          0,          0,      false};
@@ -267,10 +267,10 @@ const color interfaceButtonColor =  {18,    15,     38,     0,      0,          
 const color buttonHoverColor =      {100,   70,     40,     0,      0,          0,          0,      false};
 const color titleButtonColor =      {23,    15,     30,     0,      0,          0,          0,      false};
 
-const color playerInvisibleColor =  {20,    20,     30,     0,      0,          80,         0,      true};
+const color playerInvisibleColor =  {30,    30,     40,     0,      0,          80,         0,      true};
 const color playerInLightColor =    {100,   90,     30,     0,      0,          0,          0,      false};
 const color playerInShadowColor =   {60,    60,     100,    0,      0,          0,          0,      false};
-const color playerInDarknessColor = {30,    30,     65,     0,      0,          0,          0,      false};
+const color playerInDarknessColor = {40,    40,     65,     0,      0,          0,          0,      false};
 
 const color inLightMultiplierColor ={150,   150,    75,     150,    150,        75,         100,    true};
 const color inDarknessMultiplierColor={66,  66,     120,    66,     66,         120,        66,     true};
@@ -371,7 +371,7 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
  /*MONSTER_CAGE_CLOSED*/        {G_CLOSED_CAGE, &gray,              &darkGray,          17, 0,  0,0,DF_MONSTER_CAGE_OPENS,                  0,  NO_LIGHT,       (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_SURFACE_EFFECTS | T_OBSTRUCTS_GAS), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_PROMOTES_WITH_KEY | TM_LIST_IN_SIDEBAR | TM_INTERRUPT_EXPLORATION_WHEN_SEEN),"a locked iron cage","the bars of the cage are firmly set and will not budge."},
  /*COFFIN_CLOSED*/          {G_CLOSED_COFFIN,   &bridgeFrontColor,  &bridgeBackColor,   17, 20, DF_COFFIN_BURNS,0,DF_COFFIN_BURSTS,         0,  NO_LIGHT,       (T_IS_FLAMMABLE), (TM_IS_WIRED | TM_VANISHES_UPON_PROMOTION | TM_LIST_IN_SIDEBAR),                  "a sealed coffin",      "a coffin made from thick wooden planks rests in a bed of moss."},
  /*COFFIN_OPEN*/                {G_OPEN_COFFIN, &black,             &bridgeBackColor,   17, 20, DF_PLAIN_FIRE,0,0,                          0,  NO_LIGHT,       (T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_LIST_IN_SIDEBAR),             "an empty coffin",      "an open wooden coffin rests in a bed of moss."},
- 
+
  // traps (part of dungeon layer):
  // tileType                    char            fore color          back color        prio ign% [fire,discover,promote]Type                         promoteChance   glowLight   flags mechflags                                                                     description             flavorText
  /*GAS_TRAP_POISON_HIDDEN*/     {G_FLOOR,       &floorForeColor,    &floorBackColor,    95, 0,  DF_POISON_GAS_CLOUD,DF_SHOW_POISON_GAS_TRAP,0,                  0,  NO_LIGHT,   (T_IS_DF_TRAP), (TM_IS_SECRET),                                                     "the ground",           ""},
@@ -463,7 +463,7 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
  /*PUDDLE*/                     {G_FLOOR_ALT,&shallowWaterBackColor,0,                  80, 20, 0,0,0,                                    100,  NO_LIGHT,       (T_IS_FLAMMABLE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION),                                  "a puddle of water",    "a puddle of water covers the ground."},
  /*BONES*/                      {G_BONES,   &bonesForeColor,        0,                  70, 0,  DF_PLAIN_FIRE,0,0,                          0,  NO_LIGHT,       (0), (TM_STAND_IN_TILE),                                                                            "a pile of bones",      "unidentifiable bones, yellowed with age, litter the ground."},
  /*RUBBLE*/                     {G_RUBBLE,  &gray,                  0,                  70, 0,  DF_PLAIN_FIRE,0,0,                          0,  NO_LIGHT,       (0), (TM_STAND_IN_TILE),                                                                            "a pile of rubble",     "rocky rubble covers the ground."},
- /*JUNK*/                       {G_BONES,   &mudBackColor,          &refuseBackColor,   50, 20, DF_PLAIN_FIRE,0,0,                          0,  NO_LIGHT,       (0), (TM_STAND_IN_TILE),                                                                            "a pile of filthy effects","primitive tools, carvings and trinkets are strewn about the area."},
+ /*JUNK*/                       {G_BONES,   &mudBackColor,          &refuseBackColor,   70, 20, DF_PLAIN_FIRE,0,0,                          0,  NO_LIGHT,       (0), (TM_STAND_IN_TILE),                                                                            "a pile of filthy effects","primitive tools, carvings and trinkets are strewn about the area."},
  /*BROKEN_GLASS*/               {G_FLOOR_ALT,&white,                0,                  70, 0,  DF_PLAIN_FIRE,0,0,                          0,  NO_LIGHT,       (0), (TM_STAND_IN_TILE),                                                                            "shattered glass",      "jagged chunks of glass from the broken dewar litter the ground."},
  /*ECTOPLASM*/                  {G_FLOOR_ALT,&ectoplasmColor,       0,                  70, 0,  DF_PLAIN_FIRE,0,0,                          0,  ECTOPLASM_LIGHT,(0), (TM_STAND_IN_TILE),                                                                            "ectoplasmic residue",  "a thick, glowing substance has congealed on the ground."},
  /*EMBERS*/                     {G_ASHES,   &fireForeColor,         0,                  70, 0,  DF_PLAIN_FIRE,0,DF_ASH,                   300,  EMBER_LIGHT,    (0), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION),                                               "sputtering embers",    "sputtering embers cover the ground."},
@@ -487,7 +487,7 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
  /*MANACLE_R*/                  {G_CHAIN_RIGHT,         &gray,      0,                  20, 0,  0,0,0,                                      0,  NO_LIGHT,       0, 0,                                                                                               "an iron manacle",      "a thick iron manacle is anchored to the wall."},
  /*PORTAL_LIGHT*/               {0,                     0,          0,                  1,  0,  0,0,0,                                  10000,  PORTAL_ACTIVATE_LIGHT,(0), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION),                                         "blinding light",       "blinding light streams out of the archway."},
  /*GUARDIAN_GLOW*/              {0,                     0,          0,                  100,0,  0,0,0,                                  10000,  GLYPH_LIGHT_BRIGHT,(0), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION),                                            "a red glow",           "a red glow fills the area."},
-                                                                            
+
  // fire tiles                  char        fore color              back color        prio ign% [fire,discover,promote]Type     promoteChance   glowLight       flags mechflags                                                                                     description             flavorText
  /*PLAIN_FIRE*/                 {G_FIRE,    &fireForeColor,         0,                  10, 0,  0,0,DF_EMBERS,                            500,  FIRE_LIGHT,     (T_IS_FIRE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_VISUALLY_DISTINCT),                "billowing flames",     "flames billow upward."},
  /*BRIMSTONE_FIRE*/             {G_FIRE,    &fireForeColor,         0,                  10, 0,  0,0,0,                                   2500,  BRIMSTONE_FIRE_LIGHT,(T_IS_FIRE), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_VISUALLY_DISTINCT),           "sulfurous flames",     "sulfurous flames leap from the unstable bed of brimstone."},

@@ -1708,7 +1708,7 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
     }
 
     if (includeDetails && theItem->inscription[0]) {
-        sprintf(buf, "%s \"%s\"", root, theItem->inscription);
+        sprintf(buf, "%s %s\"%s\"", root, grayEscapeSequence, theItem->inscription);
         strcpy(root, buf);
     }
     return;
