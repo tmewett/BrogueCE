@@ -5099,27 +5099,22 @@ unsigned long printCarriedItemDetails(item *theItem,
             buttons[b].hotkey[0] = RELABEL_KEY;
             b++;
         }
-
-        // Add invisible previous and next buttons, so up and down arrows can page through items.
-        // Previous
-        buttons[b].flags = B_ENABLED; // clear everything else
-        buttons[b].hotkey[0] = UP_KEY;
-        buttons[b].hotkey[1] = NUMPAD_8;
-        buttons[b].hotkey[2] = UP_ARROW;
-        b++;
-        // Next
-        buttons[b].flags = B_ENABLED; // clear everything else
-        buttons[b].hotkey[0] = DOWN_KEY;
-        buttons[b].hotkey[1] = NUMPAD_2;
-        buttons[b].hotkey[2] = DOWN_ARROW;
-        b++;
     }
+    // Add invisible previous and next buttons, so up and down arrows can page through items.
+    // Previous
+    buttons[b].flags = B_ENABLED; // clear everything else
+    buttons[b].hotkey[0] = UP_KEY;
+    buttons[b].hotkey[1] = NUMPAD_8;
+    buttons[b].hotkey[2] = UP_ARROW;
+    b++;
+    // Next
+    buttons[b].flags = B_ENABLED; // clear everything else
+    buttons[b].hotkey[0] = DOWN_KEY;
+    buttons[b].hotkey[1] = NUMPAD_2;
+    buttons[b].hotkey[2] = DOWN_ARROW;
+    b++;
+
     b = printTextBox(textBuf, x, y, width, &white, &interfaceBoxColor, buttons, b);
-
-    if (!includeButtons) {
-        waitForKeystrokeOrMouseClick();
-        return -1;
-    }
 
     if (b >= 0) {
         return buttons[b].hotkey[0];
