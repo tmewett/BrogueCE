@@ -4799,17 +4799,17 @@ short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight)
 
                 if (!rogue.armor || rogue.armor->flags & ITEM_IDENTIFIED || rogue.playbackOmniscience) {
 
-                    sprintf(buf, "Str: %s%i%s  Armor: %g",
+                    sprintf(buf, "Str: %s%i%s  Armor: %i",
                             tempColorEscape,
                             rogue.strength - player.weaknessAmount,
                             grayColorEscape,
-                            displayedArmorValue());
+                            (int) displayedArmorValue());
                 } else {
-                    sprintf(buf, "Str: %s%i%s  Armor: %g?",
+                    sprintf(buf, "Str: %s%i%s  Armor: %i?",
                             tempColorEscape,
                             rogue.strength - player.weaknessAmount,
                             grayColorEscape,
-                            estimatedArmorValue());
+                            (int) estimatedArmorValue());
                 }
                 //buf[20] = '\0';
                 printString("                    ", 0, y, &white, &black, 0);
