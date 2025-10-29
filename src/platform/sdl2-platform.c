@@ -24,13 +24,13 @@ static rogueEvent lastEvent;
 
 static void sdlfatal(char *file, int line) {
     fprintf(stderr, "Fatal SDL error (%s:%d): %s\n", file, line, SDL_GetError());
-    exit(1);
+    exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
 }
 
 
 static void imgfatal(char *file, int line) {
     fprintf(stderr, "Fatal SDL_image error (%s:%d): %s\n", file, line, IMG_GetError());
-    exit(1);
+    exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
 }
 
 
@@ -159,7 +159,8 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
         if (event.type == SDL_QUIT) {
             // the player clicked the X button!
             SDL_Quit();
-            quitImmediately();
+            int statusCode = quitImmediately();
+            exit(statusCode);
         } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
             resizeWindow(event.window.data1, event.window.data2);
         } else if (event.type == SDL_KEYDOWN) {
@@ -251,14 +252,14 @@ static void _gameLoop() {
         strcpy(dataDirectory, path);
     } else {
         fprintf(stderr, "Failed to find the path to the application\n");
-        exit(1);
+        exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
     }
     free(path);
 
     path = SDL_GetPrefPath("Brogue", "Brogue CE");
     if (!path || chdir(path) != 0) {
         fprintf(stderr, "Failed to find or change to the save directory\n");
-        exit(1);
+        exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
     }
     fprintf(stderr, "Save path: %s\n", path);
     free(path);
@@ -274,30 +275,44 @@ static void _gameLoop() {
 
     resizeWindow(windowWidth, windowHeight);
 
-    rogueMain();
+    int statusCode = rogueMain();
 
     SDL_Quit();
+
+    exit(statusCode);
 }
 
+static long lastDelayTime = 0;
 
-static boolean _pauseForMilliseconds(short ms) {
+// Like SDL_Delay, but reduces the delay if time has passed since the last delay
+static void _delayUpTo(short ms) {
+    long curTime = SDL_GetTicks();
+    long timeDiff = curTime - lastDelayTime;
+    ms -= timeDiff;
+
+    if (ms > 0) {
+        SDL_Delay(ms);
+    } // else delaying further would go past the time we want to delay until
+
+    lastDelayTime = SDL_GetTicks();
+}
+
+static boolean _pauseForMilliseconds(short ms, PauseBehavior behavior) {
     updateScreen();
-    SDL_Delay(ms);
+    _delayUpTo(ms);
 
     if (lastEvent.eventType != EVENT_ERROR
-        && lastEvent.eventType != MOUSE_ENTERED_CELL) {
+        && (lastEvent.eventType != MOUSE_ENTERED_CELL || behavior.interuptForMouseMove)) {
         return true; // SDL already gave us an interrupting event to process
     }
 
     return pollBrogueEvent(&lastEvent, false) // ask SDL for a new event if one is available
         && lastEvent.eventType != EVENT_ERROR // and check if it is interrupting
-        && lastEvent.eventType != MOUSE_ENTERED_CELL;
+        && (lastEvent.eventType != MOUSE_ENTERED_CELL || behavior.interuptForMouseMove);
 }
 
 
 static void _nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance) {
-    long tstart, dt;
-
     updateScreen();
 
     if (lastEvent.eventType != EVENT_ERROR) {
@@ -307,8 +322,6 @@ static void _nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boo
     }
 
     while (true) {
-        tstart = SDL_GetTicks();
-
         if (colorsDance) {
             shuffleTerrainColors(3, true);
             commitDraws();
@@ -318,10 +331,7 @@ static void _nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boo
 
         if (pollBrogueEvent(returnEvent, textInput)) break;
 
-        dt = PAUSE_BETWEEN_EVENT_POLLING - (SDL_GetTicks() - tstart);
-        if (dt > 0) {
-            SDL_Delay(dt);
-        }
+        _delayUpTo(PAUSE_BETWEEN_EVENT_POLLING);
     }
 }
 
@@ -366,6 +376,7 @@ static int fontIndex(enum displayGlyph glyph) {
             case U_OMEGA: return 0x96;
             case U_CIRCLE_BARS: return 0x8c;
             case U_FILLED_CIRCLE_BARS: return 0x8d;
+            case U_LEFT_TRIANGLE: return 0x8e;
 
             default:
                 brogueAssert(code < 256);

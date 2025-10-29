@@ -1,6 +1,7 @@
 #include <math.h>
 #include <limits.h>
 #include "platform.h"
+#include "GlobalsBase.h"
 
 #ifndef DATADIR
 #error "The DATADIR macro is undefined."
@@ -17,9 +18,9 @@ boolean isCsvFormat = false;
 
 static void printCommandlineHelp() {
     printf("%s",
-    "--help         -h          print this help message\n"
-    "--version      -V          print the version (i.e., " BROGUE_VERSION_STRING ")\n"
-    "--scores                   dump scores to output and exit immediately\n"
+    "--help         -h          print this help message and exit \n"
+    "--version      -V          print the version and exit\n"
+    "--scores                   dump scores to output and exit\n"
     "-n                         start a new game, skipping the menu\n"
     "-s seed                    start a new game with the specified numerical seed\n"
     "-o filename[.broguesave]   open a save file (extension optional)\n"
@@ -38,9 +39,11 @@ static void printCommandlineHelp() {
 #ifdef BROGUE_CURSES
     "--term         -t          run in ncurses-based terminal mode\n"
 #endif
+    "--variant variant_name     run a variant game (options: rapid_brogue, bullet_brogue)\n"
     "--stealth      -S          display stealth range\n"
     "--no-effects   -E          disable color effects\n"
     "--wizard       -W          run in wizard mode, invincible with powerful items\n"
+    "--hide-seed                disable seed display in game\n"
     "[--csv] --print-seed-catalog [START NUM LEVELS]\n"
     "                           (optional csv format)\n"
     "                           prints a catalog of the first LEVELS levels of NUM\n"
@@ -50,9 +53,13 @@ static void printCommandlineHelp() {
     return;
 }
 
-static void badArgument(const char *arg) {
-    printf("Bad argument: %s\n\n", arg);
+static void cliError(const char *prefix, const char *errorMsg) {
+    printf("%s%s\n\n", prefix, errorMsg);
     printCommandlineHelp();
+}
+
+static void badArgument(const char *arg) {
+    cliError("Bad argument: ", arg);
 }
 
 boolean tryParseUint64(char *str, uint64_t *num) {
@@ -164,6 +171,19 @@ int main(int argc, char *argv[])
             }
         }
 
+        if (strcmp(argv[i], "--variant") == 0) {
+            if (i + 1 < argc) {
+                if (!strcmp("rapid_brogue", argv[i + 1])) {
+                    gameVariant = VARIANT_RAPID_BROGUE;
+                }
+                if (!strcmp("bullet_brogue", argv[i + 1])) {
+                    gameVariant = VARIANT_BULLET_BROGUE;
+                }
+                i++;
+                continue;
+            }
+        }
+        
         if (strcmp(argv[i], "-vn") == 0) {
             if (i + 1 < argc) {
                 strncpy(rogue.nextGamePath, argv[i + 1], BROGUE_FILENAME_MAX);
@@ -183,24 +203,37 @@ int main(int argc, char *argv[])
         }
 
         if (strcmp(argv[i], "--print-seed-catalog") == 0) {
-            if (i + 3 < argc) {
-                uint64_t startingSeed, numberOfSeeds;
-                // Use converter for the type the next size up, because it returns signed
-                unsigned int numberOfLevels = atol(argv[i + 3]);
+            uint64_t startingSeed, numberOfSeeds;
+            int numberOfLevels;
 
-                if (tryParseUint64(argv[i+1], &startingSeed) && tryParseUint64(argv[i+2], &numberOfSeeds)
-                        && startingSeed > 0 && numberOfLevels <= 40) {
-                    printSeedCatalog(startingSeed, numberOfSeeds, numberOfLevels, isCsvFormat);
-                    return 0;
+            if (i + 3 < argc) {
+                numberOfLevels = atoi(argv[i + 3]);
+                if (!tryParseUint64(argv[i+1], &startingSeed)) {
+                    cliError("Bad params for seed catalog, starting seed: ", argv[i+1]);
+                    return 1;
+                }
+                if (!tryParseUint64(argv[i+2], &numberOfSeeds)) {
+                    cliError("Bad params for seed catalog, number of seeds: ", argv[i+2]);
+                    return 1;
                 }
             } else {
-                printSeedCatalog(1, 1000, 5, isCsvFormat);
-                return 0;
+                startingSeed = 1;
+                numberOfSeeds = 1000;
+                numberOfLevels = 5;
             }
+
+            int errorCode;
+            char errorMessage[ERROR_MESSAGE_LENGTH];
+
+            errorCode = printSeedCatalog(startingSeed, numberOfSeeds, numberOfLevels, isCsvFormat, errorMessage);
+            if (errorCode) {
+                cliError("Bad params for seed catalog, ", errorMessage);
+            }
+            return errorCode;
         }
 
         if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) {
-            printf("%s\n", BROGUE_VERSION_STRING);
+            printBrogueVersion();
             return 0;
         }
 
@@ -277,6 +310,11 @@ int main(int argc, char *argv[])
 
         if (strcmp(argv[i], "--wizard") == 0 || strcmp(argv[i], "-W") == 0) {
             rogue.wizard = true;
+            continue;
+        }
+
+        if (strcmp(argv[i], "--hide-seed") == 0) {
+            rogue.hideSeed = true;
             continue;
         }
 

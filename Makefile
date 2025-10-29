@@ -1,16 +1,16 @@
 include config.mk
 
-cflags := -Isrc/brogue -Isrc/platform -std=c99 \
+cflags := -Isrc/brogue -Isrc/platform -Isrc/variants -std=c99 \
 	-Wall -Wpedantic -Werror=implicit -Wno-parentheses -Wno-unused-result \
-	-Wformat -Werror=format-security -Wformat-overflow=0
+	-Wformat -Werror=format-security -Wformat-overflow=0 -Wmissing-prototypes
 libs := -lm
 cppflags := -DDATADIR=$(DATADIR)
 
-sources := $(wildcard src/brogue/*.c) $(addprefix src/platform/,main.c platformdependent.c null-platform.c)
+sources := $(wildcard src/brogue/*.c) $(wildcard src/variants/*.c) $(addprefix src/platform/,main.c platformdependent.c null-platform.c)
 objects :=
 
 ifeq ($(SYSTEM),WINDOWS)
-objects += windows/icon.o
+objects += windows/resources.o
 .exe := .exe
 endif
 
@@ -27,7 +27,6 @@ extra_version :=
 else
 extra_version := $(shell bash tools/git-extra-version)
 endif
-cppflags += -DBROGUE_EXTRA_VERSION='"$(extra_version)"'
 
 ifeq ($(TERMINAL),YES)
 sources += $(addprefix src/platform/,curses-platform.c term.c)
@@ -48,6 +47,10 @@ endif
 ifeq ($(WEBBROGUE),YES)
 sources += $(addprefix src/platform/,web-platform.c)
 cppflags += -DBROGUE_WEB
+endif
+
+ifeq ($(RAPIDBROGUE),YES)
+cppflags += -DRAPID_BROGUE
 endif
 
 ifeq ($(MAC_APP),YES)
@@ -76,11 +79,11 @@ clean:
 
 escape = $(subst ','\'',$(1))
 vars:
-	mkdir vars
+	mkdir -p vars
 # Write the value to a temporary file and only overwrite if it's different.
 vars/%: vars FORCE
 	@echo '$(call escape,$($*))' > vars/$*.tmp
-	@if cmp --quiet vars/$*.tmp vars/$*; then :; else cp vars/$*.tmp vars/$*; fi
+	@if ! cmp --quiet vars/$*.tmp vars/$*; then cp vars/$*.tmp vars/$*; fi
 
 
 FORCE:

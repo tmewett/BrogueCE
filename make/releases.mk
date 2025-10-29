@@ -10,15 +10,15 @@ define make_release_base
 endef
 
 # Flatten bin/ in the Windows archive
-BrogueCE-windows: bin/brogue.exe
+BrogueCE-windows:
 	$(make_release_base)
 	cp -r $(common_bin) bin/{brogue.exe,brogue-cmd.bat} $@
 
-BrogueCE-macos: Brogue.app
+BrogueCE-macos:
 	$(make_release_base)
 	cp -r Brogue.app $@/"Brogue CE.app"
 
-BrogueCE-linux: bin/brogue
+BrogueCE-linux:
 	$(make_release_base)
 	cp brogue $@
 	cp -r --parents $(common_bin) bin/brogue $@
@@ -42,5 +42,5 @@ Brogue.app: bin/brogue
 	cp -r macos/Brogue.icns bin/assets $@/Contents/Resources
 
 macos/sdl2.rb:
-	curl -L 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/sdl2.rb' >$@
+	curl -L 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/s/sdl2.rb' >$@
 	patch $@ macos/sdl2-deployment-target.patch

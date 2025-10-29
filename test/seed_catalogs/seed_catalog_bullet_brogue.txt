@@ -1,0 +1,3094 @@
+Brogue seed catalog, seeds 1 to 25, through depth 5.
+Generated with BB 1.1.1-dev.ac31fd1.feature/bullet_brogue_mainline. Dungeons unchanged since BB 1.1.
+
+To play one of these seeds, select Play>New Seeded Game from the title screen.
+Seed 1:
+    Depth 1:
+        A potion of fire immunity
+        A potion of caustic gas
+        A potion of creeping death
+        A potion of speed
+        A potion of paralysis
+        A +3 ring of reaping
+        A scroll of aggravate monsters
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A +0 mace <16> (vault 8)
+        +1 splint mail [10]<17> (vault 8)
+        A potion of life (vault 8)
+        4 +0 incendiary darts <12>
+        +2 banded mail of multiplicity [9]<15> (vault 5)
+        A scroll of shattering
+        A +1 broadsword <19> (vault 1)
+        484 gold pieces (3 piles)
+        A shackled ogre
+        A shackled ogre
+        A shackled goblin mystic
+        A shackled goblin mystic
+    Depth 2:
+        A potion of paralysis
+        A +1 ring of light
+        A potion of caustic gas
+        A scroll of protect armor
+        +0 banded mail [7]<15>
+        A scroll of identify
+        A scroll of summon monsters
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        +2 banded mail of mutuality [9]<15>
+        2104 gold pieces (8 piles)
+        A door key (stone guardian) (opens vault 5)
+        A resurrection altar (vault 5)
+    Depth 3:
+        A potion of confusion
+        A potion of levitation
+        A scroll of discord
+        A scroll of teleportation
+        A scroll of remove curse
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A scroll of enchanting
+        Some food
+        A cage key
+        A crystal orb
+        A scroll of shattering
+        2637 gold pieces (7 piles)
+        A potion of hallucination (dar battlemage)
+        A caged pixie
+        A caged dar battlemage
+        A caged salamander
+        A caged dar battlemage
+        A caged imp
+        A shackled tentacle horror
+        A shackled naga
+        An allied unicorn
+        A resurrection altar (vault 2)
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A potion of fire immunity
+        A door key (opens vault 7)
+        A scroll of protect armor (vault 7)
+        A scroll of protect weapon (vault 7)
+        A scroll of teleportation (vault 7)
+        A scroll of negation (vault 7)
+        A cage key (stone guardian)
+        A shackled dar priestess
+        A shackled tentacle horror [reflective]
+        A shackled pixie
+        A caged dar battlemage [explosive]
+        A caged dar battlemage
+        A caged dar blademaster [reflective]
+        A resurrection altar (vault 1)
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+Seed 2:
+    Depth 1:
+        A staff of lightning [2/2]
+        A potion of levitation
+        A scroll of teleportation
+        A scroll of discord
+        A wand of polymorphism [1]
+        A potion of detect magic
+        +0 chain mail [5]<13>
+        A potion of darkness
+        A potion of levitation
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A +0 war hammer <20> (vault 15)
+        14 +0 javelins <15> (vault 15)
+        A +0 rapier <15> (vault 15)
+        A potion of life (vault 15)
+        A staff of lightning [5/5] (vault 12)
+        A staff of firebolt [2/2] (vault 12)
+        A staff of conjuration [2/2] (vault 12)
+        A staff of tunneling [3/3] (vault 12)
+        A staff of obstruction [4/4] (vault 12)
+        A cage key
+        A door key (opens vault 7)
+        +2 scale mail of fireborne immunity [6]<12> (vault 7)
+        +0 leather armor [3]<10> (vault 3)
+        +0 splint mail [9]<17> (vault 3)
+        A +0 war axe <19> (vault 3)
+        A scroll of enchanting (vault 3)
+        A +2 flail <17> (vault 1)
+        303 gold pieces (2 piles)
+        A potion of paralysis (goblin mystic)
+        A door key (monkey) (opens vault 12)
+        A potion of fire immunity (goblin mystic)
+        A scroll of negation (goblin warlord)
+        A caged ogre
+        A caged goblin conjurer
+        A caged goblin conjurer
+    Depth 2:
+        A scroll of identify
+        A potion of hallucination
+        A scroll of recharging
+        +0 splint mail [9]<17>
+        A potion of levitation
+        A potion of caustic gas
+        A scroll of recharging
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        2105 gold pieces (8 piles)
+        A shackled ogre
+        A commutation altar (vault 1)
+    Depth 3:
+        A scroll of protect weapon
+        A scroll of remove curse
+        A potion of invisibility
+        A staff of healing [2/2]
+        A potion of paralysis
+        A potion of descent
+        A potion of incineration
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A scroll of enchanting
+        Some food
+        2998 gold pieces (8 piles)
+        A scroll of teleportation (dar blademaster [reflective])
+        A shackled golem
+        A shackled dar blademaster
+        A shackled troll
+        A resurrection altar (vault 4)
+        A commutation altar (vault 2)
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A door key (vault 7) (opens vault 5)
+        A staff of obstruction [3/3] (vault 7)
+        A +0 whip <14> (vault 7)
+        A door key (vault 9) (opens vault 7)
+        A +2 teleportation charm (ready) (vault 9)
+        A +2 war axe <19> (vault 9)
+        A potion of levitation
+        A door key (opens vault 9)
+        A +3 spear of slowing <13> (vault 5)
+        A door key (opens vault 1)
+        A potion of invisibility (vault 1)
+        A potion of darkness (vault 1)
+        A potion of speed (vault 1)
+        A potion of hallucination (vault 1)
+        A potion of fire immunity (vault 1)
+        A potion of descent (vault 1)
+        A potion of incineration (vault 1)
+        A shackled tentacle horror
+        A shackled dar priestess
+        A shackled dar battlemage [infested]
+        A commutation altar (vault 12)
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A shackled dar priestess
+Seed 3:
+    Depth 1:
+        A scroll of summon monsters
+        A potion of fire immunity
+        A potion of invisibility
+        A scroll of identify
+        A +0 spear <13>
+        A potion of paralysis
+        A scroll of discord
+        A scroll of identify
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A door key (vault 8) (opens vault 6)
+        A +2 protection charm (ready) (vault 8)
+        +0 scale mail [4]<12> (vault 8)
+        A +2 war hammer <20> (vault 8)
+        A staff of firebolt [3/3] (vault 6)
+        A staff of lightning [3/3] (vault 6)
+        A +0 dagger <12> (vault 4)
+        +0 plate armor [11]<19> (vault 4)
+        A potion of life (vault 4)
+        A door key (opens vault 1)
+        A +1 war pike <18> (vault 1)
+        606 gold pieces (3 piles)
+        A shackled goblin mystic
+        A shackled goblin mystic
+    Depth 2:
+        A scroll of remove curse
+        A potion of speed
+        A scroll of protect armor
+        A potion of detect magic
+        A potion of fire immunity
+        A scroll of recharging
+        A scroll of discord
+        A -3 war hammer <20>
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A door key (opens vault 8)
+        A staff of tunneling [3/3] (vault 1)
+        A staff of blinking [2/2] (vault 1)
+        A staff of firebolt [3/3] (vault 1)
+        A staff of conjuration [3/3] (vault 1)
+        A staff of lightning [5/5] (vault 1)
+        A door key (vault 4) (opens vault 1)
+        A staff of poison [2/2] (vault 4)
+        A +0 dagger <12> (vault 4)
+        A door key (opens vault 4)
+        2354 gold pieces (8 piles)
+        A shackled ogre
+        A shackled ogre
+        A commutation altar (vault 8)
+    Depth 3:
+        A potion of hallucination
+        A scroll of protect armor
+        A scroll of protect weapon
+        A potion of invisibility
+        A +0 mace <16>
+        A potion of invisibility
+        A scroll of identify
+        A potion of speed
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A scroll of enchanting
+        Some food
+        A +2 whip of quietus <14> (vault 2)
+        3808 gold pieces (11 piles)
+        A scroll of remove curse (dar battlemage)
+        A scroll of magic mapping (dar priestess)
+        A scroll of teleportation (dar priestess)
+        A cage key (vampire)
+        A shackled dar blademaster
+        A shackled imp
+        A caged imp
+        A caged dar priestess
+        A shackled dragon
+        A shackled wraith
+        A shackled troll
+        A shackled dar priestess
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A scroll of enchanting (vault 5)
+        A door key (opens vault 2)
+        A door key (imp) (opens vault 5)
+        A cage key (vampire)
+        A shackled dar priestess
+        A caged imp
+        A caged dar blademaster [agile]
+        A shackled tentacle horror [juggernaut]
+        A shackled tentacle horror
+        A resurrection altar (vault 2)
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A shackled pixie
+        A shackled dar battlemage [infested]
+        A shackled dar blademaster [toxic]
+Seed 4:
+    Depth 1:
+        A scroll of protect armor
+        A scroll of sanctuary
+        A potion of hallucination
+        A potion of incineration
+        A scroll of identify
+        A scroll of summon monsters
+        A scroll of identify
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A cage key
+        A door key (vault 10) (opens vault 8)
+        A +4 ring of reaping (vault 10)
+        A +2 teleportation charm (ready) (vault 10)
+        +0 plate armor [11]<19> (vault 10)
+        A +3 war axe <19> (vault 8)
+        A staff of blinking [2/2] (vault 5)
+        A staff of poison [3/3] (vault 5)
+        A staff of lightning [2/2] (vault 5)
+        A staff of discord [3/3] (vault 5)
+        A door key (opens vault 5)
+        A scroll of shattering
+        A +1 war hammer <20> (vault 3)
+        A scroll of shattering
+        A +2 dagger of speed <12> (vault 1)
+        333 gold pieces (2 piles)
+        A scroll of negation (goblin conjurer)
+        A scroll of identify (goblin mystic)
+        A caged goblin
+        A caged goblin conjurer
+        A caged monkey
+        A caged ogre
+        A shackled goblin mystic
+        A shackled goblin mystic
+    Depth 2:
+        A +3 flail <17>
+        A potion of invisibility
+        A potion of creeping death
+        A scroll of remove curse
+        A potion of invisibility
+        A scroll of identify
+        A scroll of summon monsters
+        A scroll of identify
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A door key (opens vault 1)
+        A staff of poison [3/3] (vault 1)
+        A staff of protection [2/2] (vault 1)
+        1898 gold pieces (7 piles)
+        A shackled troll
+        A shackled centaur
+    Depth 3:
+        A potion of invisibility
+        A scroll of aggravate monsters
+        A potion of levitation
+        A scroll of summon monsters
+        A potion of speed
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A scroll of enchanting
+        Some food
+        A door key (opens vault 5)
+        A cage key
+        A cage key
+        3479 gold pieces (9 piles)
+        A shackled tentacle horror
+        A shackled dar blademaster
+        A caged troll
+        A caged imp [infested]
+        A caged imp [grappling]
+        A commutation altar (vault 5)
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A scroll of shattering
+        A staff of firebolt [3/3] (vault 7)
+        A staff of entrancement [3/3] (vault 7)
+        A scroll of shattering
+        A potion of life (vault 4)
+        A door key (opens vault 1)
+        A shackled pixie [infested]
+        A shackled dar blademaster [infested]
+        A shackled dar blademaster
+        A shackled dragon [reflective]
+        A shackled dragon [vampiric]
+        A commutation altar (vault 1)
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A shackled dar priestess
+Seed 5:
+    Depth 1:
+        A potion of levitation
+        A potion of descent
+        A scroll of discord
+        A potion of speed
+        A scroll of summon monsters
+        A potion of paralysis
+        A scroll of shattering
+        A wand of invisibility [3]
+        A potion of darkness
+        A scroll of remove curse
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A door key (opens vault 10)
+        A +1 dagger of quietus <12> (vault 10)
+        A +1 protection charm (ready) (vault 7)
+        A +2 ring of awareness (vault 7)
+        +1 banded mail [8]<15> (vault 7)
+        +0 plate armor [11]<19> (vault 7)
+        +0 scale mail [4]<12> (vault 7)
+        A wand of plenty [1] (vault 7)
+        A potion of levitation
+        A door key (opens vault 7)
+        A +1 ring of awareness (vault 4)
+        A +3 ring of light (vault 4)
+        A +1 ring of stealth (vault 4)
+        A potion of creeping death
+        A potion of creeping death
+        A door key (opens vault 1)
+        A +2 flail of paralysis <17> (vault 1)
+        783 gold pieces (4 piles)
+        A shackled ogre
+        A shackled ogre
+    Depth 2:
+        A +0 broadsword <19>
+        A scroll of summon monsters
+        A scroll of identify
+        A scroll of summon monsters
+        A scroll of shattering
+        A potion of darkness
+        A scroll of aggravate monsters
+        A potion of invisibility
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A scroll of shattering
+        A +2 dagger of speed <12> (vault 6)
+        A door key (vault 3) (opens vault 1)
+        A +2 telepathy charm (ready) (vault 3)
+        A staff of healing [2/2] (vault 3)
+        +0 scale mail [4]<12> (vault 3)
+        +0 plate armor [11]<19> (vault 3)
+        A door key (opens vault 3)
+        A scroll of enchanting (vault 1)
+        1829 gold pieces (7 piles)
+        A potion of invisibility (dar blademaster)
+        A potion of invisibility (dar blademaster)
+    Depth 3:
+        A scroll of identify
+        A potion of incineration
+        A potion of detect magic
+        A scroll of shattering
+        A potion of caustic gas
+        A potion of descent
+        A potion of caustic gas
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        Some food
+        A scroll of aggravate monsters (vault 5)
+        A scroll of protect weapon (vault 5)
+        A scroll of remove curse (vault 5)
+        A scroll of identify (vault 5)
+        A door key (opens vault 2)
+        A scroll of enchanting (vault 2)
+        3328 gold pieces (8 piles)
+        A potion of telepathy (dar battlemage)
+        A potion of fire immunity (dar blademaster)
+        A shackled tentacle horror
+        A commutation altar (vault 7)
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A staff of healing [2/2] (vault 4)
+        A staff of discord [3/3] (vault 4)
+        A cage key
+        A cage key
+        A caged dar priestess
+        A caged dar priestess
+        A caged dar blademaster [grappling]
+        A caged dar priestess
+        A caged dar priestess
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A shackled pixie [explosive]
+        A shackled dar priestess [explosive]
+        A shackled dar blademaster [agile]
+Seed 6:
+    Depth 1:
+        A potion of darkness
+        +2 banded mail [9]<15>
+        A scroll of protect armor
+        A potion of descent
+        A scroll of magic mapping
+        A scroll of identify
+        A +1 ring of light
+        A potion of detect magic
+        A scroll of aggravate monsters
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A scroll of shattering
+        A +2 spear of slowing <13> (vault 8)
+        A staff of healing [3/3] (vault 6)
+        A staff of protection [2/2] (vault 6)
+        A +2 fire immunity charm (ready) (vault 3)
+        A staff of obstruction [2/2] (vault 3)
+        A staff of firebolt [2/2] (vault 3)
+        A +0 broadsword <19> (vault 3)
+        +0 banded mail [7]<15> (vault 3)
+        +0 scale mail [4]<12> (vault 3)
+        A wand of negation [3] (vault 3)
+        A door key (opens vault 3)
+        A +2 war pike <18> (vault 1)
+        381 gold pieces (2 piles)
+        A scroll of identify (goblin conjurer)
+    Depth 2:
+        A scroll of identify
+        A scroll of identify
+        A scroll of recharging
+        A potion of descent
+        A potion of detect magic
+        A scroll of teleportation
+        A potion of confusion
+        A potion of fire immunity
+        A scroll of teleportation
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        +2 scale mail of multiplicity [6]<12>
+        6 +0 incendiary darts <12> (vault 1)
+        A +0 war hammer <20> (vault 1)
+        A scroll of enchanting (vault 1)
+        1885 gold pieces (7 piles)
+        A potion of confusion (goblin conjurer)
+        A potion of fire immunity (goblin conjurer)
+        A potion of detect magic (goblin warlord)
+        A cage key (vampire)
+        A caged pixie
+        A caged dar blademaster
+        A caged ogre
+        A caged pixie
+        A shackled golem
+    Depth 3:
+        A scroll of identify
+        A scroll of remove curse
+        A potion of hallucination
+        A potion of detect magic
+        A scroll of aggravate monsters
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A scroll of enchanting
+        Some food
+        A potion of levitation
+        A +2 recharging charm (ready)
+        A potion of fire immunity
+        A +1 guardian charm (ready)
+        A +3 spear of undead slaying <13>
+        A +1 sword of paralysis <14>
+        A door key (vault 4) (opens vault 2)
+        A +1 telepathy charm (ready) (vault 4)
+        A staff of entrancement [2/2] (vault 4)
+        +0 plate armor [11]<19> (vault 4)
+        A door key (opens vault 5)
+        A scroll of enchanting (vault 2)
+        3624 gold pieces (10 piles)
+        A shackled ogre
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A +3 whip of multiplicity <14> (vault 6)
+        A door key (opens vault 3)
+        A scroll of shattering
+        A +2 spear of quietus <13> (vault 1)
+        A shackled golem [explosive]
+        A commutation altar (vault 3)
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A shackled dar blademaster [grappling]
+        A shackled pixie
+Seed 7:
+    Depth 1:
+        A potion of invisibility
+        A potion of telepathy
+        A scroll of shattering
+        A scroll of identify
+        A scroll of summon monsters
+        A scroll of remove curse
+        A potion of incineration
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A staff of tunneling [3/3] (vault 6)
+        A staff of haste [4/4] (vault 6)
+        A staff of lightning [3/3] (vault 6)
+        A staff of healing [4/4] (vault 6)
+        A door key (opens vault 6)
+        A +3 ring of transference (vault 4)
+        A +1 ring of clairvoyance (vault 4)
+        A +2 ring of wisdom (vault 4)
+        A +1 ring of awareness (vault 4)
+        A +2 sword of paralysis <14> (vault 1)
+        304 gold pieces (2 piles)
+        A scroll of identify (goblin mystic)
+        A door key (monkey) (opens vault 1)
+        A shackled goblin mystic
+        A shackled ogre
+    Depth 2:
+        A potion of darkness
+        A scroll of summon monsters
+        +0 banded mail [7]<15>
+        A potion of fire immunity
+        A potion of telepathy
+        A potion of incineration
+        A potion of incineration
+        A potion of fire immunity
+        A scroll of protect weapon
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A staff of lightning [3/3]
+        A staff of discord [4/4]
+        A door key (opens vault 9)
+        A scroll of shattering
+        A crystal orb (vault 2)
+        A +1 haste charm (ready) (vault 2)
+        A +2 spear of slowing <13> (vault 2)
+        A door key (opens vault 2)
+        2039 gold pieces (7 piles)
+        A potion of incineration (goblin conjurer)
+        A potion of hallucination (dar priestess)
+        An allied unicorn
+        A resurrection altar (vault 9)
+        A resurrection altar (vault 7)
+        A commutation altar (vault 5)
+    Depth 3:
+        A potion of invisibility
+        A +0 mace <16>
+        A scroll of remove curse
+        A +0 dagger <12>
+        A +0 flail <17>
+        A scroll of protect armor
+        A +0 spear <13>
+        A +3 ring of awareness
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        Some food
+        3121 gold pieces (8 piles)
+        A potion of telepathy (dar priestess)
+        A potion of detect magic (dar priestess)
+        A +1 war pike <18> (dar blademaster)
+        A crystal orb (flamedancer)
+        A shackled golem [agile]
+        An allied mangrove dryad
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A door key (opens vault 9)
+        A cage key
+        A +3 spear of confusion <13> (vault 3)
+        A scroll of shattering
+        A scroll of enchanting (vault 1)
+        A caged dar priestess
+        A caged dar priestess [reflective]
+        A caged dar blademaster [reflective]
+        A caged dar priestess
+        A resurrection altar (vault 9)
+        A commutation altar (vault 5)
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A shackled dar blademaster [reflective]
+Seed 8:
+    Depth 1:
+        A potion of hallucination
+        A scroll of identify
+        A scroll of identify
+        A potion of hallucination
+        A scroll of protect weapon
+        A scroll of aggravate monsters
+        A scroll of negation
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        +2 banded mail [9]<15> (vault 12)
+        A +0 flail <17> (vault 12)
+        A scroll of enchanting (vault 12)
+        A scroll of shattering
+        +3 scale mail of absorption [7]<12> (vault 10)
+        A +1 ring of clairvoyance (vault 7)
+        A +2 ring of stealth (vault 7)
+        A +1 ring of regeneration (vault 7)
+        A door key (opens vault 7)
+        A staff of poison [2/2] (vault 3)
+        A +1 invisibility charm (ready) (vault 3)
+        A staff of tunneling [3/3] (vault 3)
+        +0 leather armor [3]<10> (vault 3)
+        A +1 broadsword <19> (vault 3)
+        A +1 sword of quietus <14> (vault 3)
+        A wand of empowerment [1] (vault 3)
+        A door key (opens vault 3)
+        A +3 broadsword <19> (vault 1)
+        523 gold pieces (3 piles)
+        A potion of descent (goblin mystic)
+        A scroll of aggravate monsters (goblin conjurer)
+    Depth 2:
+        A potion of telepathy
+        A potion of descent
+        A +0 whip <14>
+        A potion of telepathy
+        A scroll of sanctuary
+        A scroll of identify
+        +0 chain mail [5]<13>
+        A +0 dagger <12>
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        +3 leather armor of mutuality [6]<10>
+        +3 chain mail of jelly immunity [8]<13>
+        A door key (opens vault 5)
+        A scroll of discord (vault 5)
+        A scroll of negation (vault 5)
+        A scroll of recharging (vault 5)
+        A scroll of shattering (vault 5)
+        A scroll of protect armor (vault 5)
+        A scroll of identify (vault 5)
+        A potion of life (vault 3)
+        1984 gold pieces (7 piles)
+    Depth 3:
+        A potion of invisibility
+        A wand of beckoning [2]
+        A potion of detect magic
+        A potion of caustic gas
+        A scroll of aggravate monsters
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A scroll of enchanting
+        Some food
+        A potion of detect magic
+        +2 scale mail of dampening [6]<12>
+        A crystal orb
+        A potion of life (vault 2)
+        2648 gold pieces (7 piles)
+        A +3 broadsword <19> (dar blademaster)
+        A scroll of discord (dar blademaster [reflective])
+        A potion of fire immunity (dar blademaster)
+        A potion of paralysis (dragon)
+        A shackled dar blademaster
+        An allied phoenix egg
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A door key (opens vault 1)
+        A resurrection altar (vault 1)
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A shackled dar battlemage [reflective]
+Seed 9:
+    Depth 1:
+        A scroll of summon monsters
+        +0 scale mail [4]<12>
+        A potion of confusion
+        A scroll of identify
+        A potion of confusion
+        A potion of incineration
+        A potion of detect magic
+        A scroll of negation
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A +1 fire immunity charm (ready) (vault 13)
+        A +2 ring of regeneration (vault 13)
+        A +1 ring of awareness (vault 13)
+        +0 leather armor [3]<10> (vault 13)
+        A +0 axe <15> (vault 13)
+        A +0 broadsword <19> (vault 13)
+        A wand of negation [4] (vault 13)
+        A scroll of shattering
+        A door key (opens vault 9)
+        A +3 war hammer <20> (vault 9)
+        A cage key (vault 6)
+        A staff of obstruction [2/2] (vault 6)
+        A +1 ring of wisdom (vault 6)
+        +0 leather armor [3]<10> (vault 6)
+        A door key (opens vault 6)
+        A cage key
+        A +3 spear of dragon slaying <13> (vault 1)
+        737 gold pieces (4 piles)
+        A shackled goblin
+        A shackled monkey
+        A shackled ogre
+        A shackled goblin mystic
+        A caged goblin
+        A caged monkey
+        A caged ogre
+    Depth 2:
+        A wand of teleportation [1]
+        A potion of incineration
+        A scroll of protect armor
+        A potion of detect magic
+        A potion of detect magic
+        A potion of confusion
+        A scroll of identify
+        A scroll of magic mapping
+        A scroll of sanctuary
+        A potion of incineration
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A door key (opens vault 5)
+        A cage key
+        A cage key
+        2127 gold pieces (8 piles)
+        A potion of speed (goblin mystic)
+        A shackled goblin mystic
+        A caged naga
+        A caged goblin mystic
+        A caged ogre
+        A caged imp
+        A caged salamander
+        A commutation altar (vault 5)
+    Depth 3:
+        A potion of caustic gas
+        A potion of incineration
+        A potion of telepathy
+        A potion of confusion
+        A potion of speed
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A scroll of enchanting
+        Some food
+        A door key (opens vault 5)
+        3030 gold pieces (8 piles)
+        A crystal orb (imp)
+        A potion of telepathy (dragon)
+        A cage key (vampire)
+        A shackled ogre
+        A shackled ogre
+        A caged troll
+        A caged dar battlemage
+        A shackled wraith
+        A shackled dar blademaster
+        An allied unicorn
+        A commutation altar (vault 5)
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A door key (vault 8) (opens vault 6)
+        A potion of fire immunity (vault 6)
+        A potion of caustic gas (vault 6)
+        A potion of levitation (vault 6)
+        A potion of descent (vault 6)
+        A potion of invisibility (vault 6)
+        A scroll of enchanting (vault 4)
+        A potion of levitation
+        A door key (opens vault 1)
+        A commutation altar (vault 1)
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A shackled dar battlemage
+        A shackled dar battlemage
+Seed 10:
+    Depth 1:
+        A potion of invisibility
+        A scroll of summon monsters
+        A scroll of discord
+        A scroll of remove curse
+        A scroll of remove curse
+        A potion of invisibility
+        A staff of tunneling [3/3]
+        A scroll of discord
+        A potion of invisibility
+        A -3 broadsword of mercy <19>
+        A wand of domination [2]
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A potion of incineration
+        A +2 spear of airborne slaying <13> (vault 11)
+        A door key (opens vault 8)
+        A +3 dagger of confusion <12> (vault 8)
+        +2 plate armor [13]<19> (vault 7)
+        A +3 axe of quietus <15> (vault 7)
+        A scroll of enchanting (vault 7)
+        A scroll of teleportation
+        A cage key
+        A door key (vault 3) (opens vault 1)
+        A +3 ring of transference (vault 3)
+        A +0 war pike <18> (vault 3)
+        A +0 war axe <19> (vault 3)
+        6 +0 incendiary darts <12>
+        A +2 broadsword <19> (vault 1)
+        533 gold pieces (3 piles)
+        A +2 ring of stealth (goblin mystic)
+        A caged goblin mystic
+        A caged goblin mystic
+        A caged monkey
+        A caged goblin mystic
+    Depth 2:
+        A scroll of aggravate monsters
+        A potion of detect magic
+        A potion of speed
+        A scroll of negation
+        A potion of confusion
+        A potion of descent
+        A potion of levitation
+        A potion of telepathy
+        A scroll of aggravate monsters
+        A scroll of negation
+        A scroll of remove curse
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A potion of life (vault 4)
+        A potion of descent
+        A door key (opens vault 1)
+        A +2 whip of slowing <14> (vault 1)
+        1939 gold pieces (7 piles)
+    Depth 3:
+        6 +0 incendiary darts <12>
+        A potion of telepathy
+        A +1 negation charm (ready)
+        A potion of caustic gas
+        A scroll of identify
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A scroll of enchanting
+        Some food
+        +2 leather armor of multiplicity [5]<10>
+        A potion of life (vault 2)
+        3135 gold pieces (8 piles)
+        A cage key (vampire)
+        A caged dar battlemage
+        A caged imp [juggernaut]
+        A shackled wraith
+        A shackled dar priestess
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A door key (opens vault 8)
+        A staff of obstruction [3/3] (vault 8)
+        A staff of lightning [4/4] (vault 8)
+        A cage key
+        A cage key
+        A shackled pixie
+        A caged dar blademaster
+        A caged dar blademaster [toxic]
+        A caged dar priestess
+        A caged dar blademaster
+        A commutation altar (vault 6)
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A shackled pixie
+        A shackled tentacle horror [toxic]
+Seed 11:
+    Depth 1:
+        A scroll of recharging
+        A scroll of identify
+        A scroll of identify
+        A scroll of shattering
+        A potion of invisibility
+        Some food
+        A scroll of identify
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        +0 chain mail [5]<13> (vault 11)
+        A +0 mace <16> (vault 11)
+        A +1 axe <15> (vault 11)
+        A scroll of enchanting (vault 11)
+        A +5 ring of awareness (vault 9)
+        A staff of healing [3/3] (vault 9)
+        A +0 rapier <15> (vault 9)
+        +0 banded mail [7]<15> (vault 9)
+        A +0 mace <16> (vault 9)
+        A wand of polymorphism [2] (vault 9)
+        A +2 ring of light (vault 6)
+        A staff of blinking [2/2] (vault 6)
+        +0 banded mail [7]<15> (vault 6)
+        A +0 mace <16> (vault 6)
+        A +0 war axe <19> (vault 6)
+        A wand of negation [3] (vault 6)
+        A door key (opens vault 6)
+        A cage key
+        A scroll of shattering
+        A +2 sword of multiplicity <14> (vault 1)
+        356 gold pieces (2 piles)
+        A scroll of negation (goblin conjurer)
+        A caged monkey
+        A caged goblin mystic
+        A caged ogre
+        A caged goblin conjurer
+        A caged monkey
+    Depth 2:
+        A scroll of magic mapping
+        A scroll of remove curse
+        A potion of speed
+        A potion of creeping death
+        A scroll of discord
+        +0 plate armor [11]<19>
+        A scroll of protect weapon
+        A wand of polymorphism [2]
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A scroll of identify
+        A door key (opens vault 3)
+        A potion of incineration
+        1628 gold pieces (6 piles)
+        A scroll of remove curse (dar priestess)
+        A potion of speed (dar priestess)
+        A commutation altar (vault 1)
+        A commutation altar (vault 3)
+    Depth 3:
+        A scroll of protect weapon
+        A potion of speed
+        A +0 whip <14>
+        A potion of levitation
+        A scroll of summon monsters
+        A scroll of sanctuary
+        A potion of invisibility
+        A scroll of identify
+        A potion of telepathy
+        A potion of hallucination
+        A scroll of recharging
+        A scroll of negation
+        A potion of strength
+        A scroll of enchanting
+        A scroll of enchanting
+        A potion of fire immunity
+        A +1 mace of waterborne slaying <16>
+        A crystal orb
+        2906 gold pieces (8 piles)
+        A potion of invisibility (dar priestess)
+        A shackled ogre [juggernaut]
+        A shackled tentacle horror
+        A shackled tentacle horror
+        A shackled dar priestess
+        An allied phoenix egg
+        A commutation altar (vault 7)
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A door key (opens vault 3)
+        A scroll of shattering
+        A resurrection altar (vault 1)
+        A commutation altar (vault 3)
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+Seed 12:
+    Depth 1:
+        A scroll of discord
+        A potion of creeping death
+        A potion of confusion
+        A potion of hallucination
+        A potion of caustic gas
+        A potion of fire immunity
+        A potion of incineration
+        A scroll of magic mapping
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A +1 rapier of paralysis <15> (vault 19)
+        A +2 telepathy charm (ready) (vault 17)
+        A staff of haste [2/2] (vault 17)
+        +0 banded mail [7]<15> (vault 17)
+        A +0 war hammer <20> (vault 17)
+        A +0 spear <13> (vault 17)
+        A wand of slowness [2] (vault 17)
+        3 +0 incendiary darts <12>
+        A door key (opens vault 14)
+        +2 scale mail of dampening [6]<12> (vault 14)
+        A potion of incineration
+        A +3 dagger of quietus <12> (vault 12)
+        A cage key
+        A cage key
+        A staff of haste [3/3] (vault 5)
+        A staff of entrancement [2/2] (vault 5)
+        A staff of lightning [2/2] (vault 5)
+        +0 scale mail [4]<12> (vault 5)
+        +1 splint mail [10]<17> (vault 5)
+        +3 chain mail of airborne immunity [8]<13> (vault 5)
+        A wand of polymorphism [2] (vault 5)
+        A door key (opens vault 5)
+        A door key (opens vault 1)
+        A +2 rapier of waterborne slaying <15> (vault 1)
+        346 gold pieces (2 piles)
+        A potion of incineration (goblin mystic)
+        A caged goblin conjurer
+        A caged monkey
+        A caged goblin mystic
+        A shackled ogre
+        A shackled goblin mystic
+    Depth 2:
+        A scroll of summon monsters
+        A scroll of shattering
+        A potion of incineration
+        A potion of incineration
+        A potion of levitation
+        A potion of caustic gas
+        A +0 whip <14>
+        A potion of levitation
+        +0 scale mail [4]<12>
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A +1 whip of abomination slaying <14>
+        2430 gold pieces (9 piles)
+    Depth 3:
+        A wand of negation [2]
+        A potion of paralysis
+        A scroll of magic mapping
+        A scroll of identify
+        A scroll of discord
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A scroll of enchanting
+        A mango
+        A potion of telepathy
+        +3 banded mail of dampening [10]<15>
+        3174 gold pieces (8 piles)
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A cage key (vampire)
+        A shackled dar blademaster
+        A shackled dragon
+        A shackled tentacle horror [infested]
+        A caged dar priestess
+        A caged dar battlemage [infested]
+        A shackled tentacle horror
+        A shackled dragon
+        A commutation altar (vault 1)
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A shackled dar blademaster
+Seed 13:
+    Depth 1:
+        A scroll of teleportation
+        A scroll of protect armor
+        A scroll of summon monsters
+        A scroll of protect armor
+        A potion of levitation
+        A scroll of identify
+        A scroll of summon monsters
+        A potion of incineration
+        A scroll of discord
+        A scroll of protect weapon
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A +2 flail <17> (vault 6)
+        +3 leather armor of abomination immunity [6]<10> (vault 4)
+        A +2 war hammer <20> (vault 1)
+        488 gold pieces (3 piles)
+        A shackled ogre
+        A shackled goblin mystic
+    Depth 2:
+        A potion of paralysis
+        A potion of hallucination
+        5 +0 incendiary darts <12>
+        A scroll of discord
+        A potion of speed
+        A potion of detect magic
+        A staff of firebolt [3/3]
+        A potion of incineration
+        A potion of detect magic
+        A +0 axe <15>
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A +3 ring of clairvoyance (vault 8)
+        A staff of firebolt [2/2] (vault 8)
+        A +0 broadsword <19> (vault 8)
+        A +0 flail <17> (vault 8)
+        +0 leather armor [3]<10> (vault 8)
+        A wand of invisibility [3] (vault 8)
+        A door key (opens vault 8)
+        A +1 guardian charm (ready) (vault 5)
+        A +2 haste charm (ready) (vault 5)
+        A +1 health charm (ready) (vault 5)
+        +0 splint mail [9]<17> (vault 5)
+        +0 leather armor [3]<10> (vault 5)
+        A wand of empowerment [1] (vault 5)
+        A wand of slowness [2] (vault 5)
+        A door key (opens vault 5)
+        A door key (opens vault 1)
+        1925 gold pieces (7 piles)
+        A commutation altar (vault 1)
+    Depth 3:
+        A potion of caustic gas
+        -2 banded mail of immolation [5]<15>
+        A scroll of negation
+        A potion of levitation
+        A potion of caustic gas
+        A +2 ring of awareness
+        A scroll of remove curse
+        A scroll of remove curse
+        A potion of detect magic
+        A potion of strength
+        A scroll of enchanting
+        A scroll of enchanting
+        Some food
+        A potion of descent (vault 6)
+        A potion of invisibility (vault 6)
+        A potion of darkness (vault 6)
+        A scroll of enchanting (vault 6)
+        A cage key
+        A +1 sword of fireborne slaying <14>
+        3246 gold pieces (9 piles)
+        A potion of paralysis (dar blademaster)
+        A caged troll
+        A caged naga
+        A caged dar blademaster
+        A caged dar priestess
+        A caged naga
+        A resurrection altar (vault 7)
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A cage key
+        A shackled dar battlemage
+        A caged dar battlemage
+        A caged dar priestess
+        A caged dar priestess
+        A caged dar blademaster
+        A shackled dragon
+        A shackled tentacle horror
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A shackled dar priestess
+        A shackled dar blademaster [agile]
+Seed 14:
+    Depth 1:
+        A scroll of protect armor
+        A scroll of summon monsters
+        A potion of caustic gas
+        A potion of incineration
+        A -2 whip <14>
+        A scroll of magic mapping
+        A staff of lightning [2/2]
+        A potion of descent
+        A potion of telepathy
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A cage key
+        A cage key
+        A cage key
+        A staff of obstruction [2/2] (vault 1)
+        A staff of lightning [2/2] (vault 1)
+        A staff of poison [2/2] (vault 1)
+        A staff of tunneling [3/3] (vault 1)
+        874 gold pieces (5 piles)
+        A scroll of summon monsters (goblin conjurer)
+        A potion of invisibility (goblin conjurer)
+        A scroll of shattering (goblin mystic)
+        A caged monkey
+        A caged goblin
+        A caged goblin conjurer
+        A caged goblin conjurer
+        A caged goblin mystic
+        A caged monkey
+        A caged monkey
+        A caged goblin mystic
+    Depth 2:
+        A scroll of magic mapping
+        A potion of speed
+        A scroll of aggravate monsters
+        A potion of telepathy
+        A scroll of aggravate monsters
+        A potion of hallucination
+        A potion of paralysis
+        A potion of fire immunity
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A scroll of shattering
+        A cage key (vault 2)
+        A +1 protection charm (ready) (vault 2)
+        A wand of plenty [2] (vault 2)
+        1811 gold pieces (7 piles)
+        A potion of hallucination (dragon)
+        A shackled dragon
+        A shackled ogre
+        A caged pixie
+        A caged dar blademaster
+        A caged goblin mystic
+        A commutation altar (vault 4)
+    Depth 3:
+        A potion of telepathy
+        A scroll of aggravate monsters
+        A scroll of discord
+        A scroll of protect armor
+        A +3 ring of reaping
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A scroll of enchanting
+        Some food
+        A scroll of summon monsters (vault 7)
+        A scroll of remove curse (vault 7)
+        A scroll of sanctuary (vault 7)
+        A scroll of protect weapon (vault 7)
+        A scroll of recharging (vault 7)
+        A scroll of identify (vault 7)
+        +3 banded mail of reprisal [10]<15> (vault 4)
+        A scroll of shattering
+        2822 gold pieces (7 piles)
+        A door key (imp) (opens vault 4)
+        A shackled troll
+        A shackled dar battlemage
+        A resurrection altar (vault 2)
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A potion of life (vault 14)
+        A +2 dagger of paralysis <12> (vault 10)
+        A scroll of aggravate monsters (vault 7)
+        A scroll of protect armor (vault 7)
+        A scroll of remove curse (vault 7)
+        A scroll of recharging (vault 7)
+        A scroll of negation (vault 7)
+        A scroll of identify (vault 7)
+        A potion of speed (vault 2)
+        A potion of darkness (vault 2)
+        A potion of fire immunity (vault 2)
+        A potion of creeping death (vault 2)
+        A scroll of teleportation (vault 1)
+        A scroll of identify (vault 1)
+        A scroll of enchanting (vault 1)
+        A door key (vampire) (opens vault 7)
+        A door key (imp [reflective]) (opens vault 4)
+        A shackled tentacle horror [agile]
+        A shackled tentacle horror
+        A resurrection altar (vault 12)
+        A commutation altar (vault 4)
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A shackled dar priestess
+Seed 15:
+    Depth 1:
+        A scroll of summon monsters
+        A scroll of identify
+        A scroll of teleportation
+        A potion of invisibility
+        A scroll of remove curse
+        A potion of detect magic
+        A scroll of remove curse
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A staff of blinking [3/3] (vault 8)
+        A +3 ring of clairvoyance (vault 8)
+        A +0 rapier <15> (vault 8)
+        +0 scale mail [4]<12> (vault 8)
+        A +0 flail <17> (vault 8)
+        A wand of invisibility [3] (vault 8)
+        A +2 axe of multiplicity <15> (vault 4)
+        A door key (opens vault 1)
+        A +2 war hammer <20> (vault 1)
+        701 gold pieces (4 piles)
+        A door key (monkey) (vault 8) (opens vault 4)
+    Depth 2:
+        A wand of teleportation [2]
+        A potion of detect magic
+        A potion of descent
+        A potion of levitation
+        A scroll of identify
+        A scroll of aggravate monsters
+        A potion of paralysis
+        A scroll of shattering
+        A scroll of discord
+        A scroll of identify
+        A potion of speed
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A door key (opens vault 11)
+        A crystal orb
+        A door key (opens vault 5)
+        A crystal orb
+        A +3 whip of paralysis <14>
+        1538 gold pieces (6 piles)
+        An allied mangrove dryad
+        An allied phoenix egg
+        A commutation altar (vault 5)
+        A commutation altar (vault 11)
+    Depth 3:
+        A scroll of discord
+        A wand of beckoning [2]
+        A potion of detect magic
+        A +0 whip <14>
+        A +3 ring of reaping
+        A wand of polymorphism [1]
+        A potion of creeping death
+        A scroll of summon monsters
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A mango
+        A door key (opens vault 4)
+        A potion of caustic gas (vault 4)
+        A potion of incineration (vault 4)
+        A potion of detect magic (vault 4)
+        A potion of invisibility (vault 4)
+        A potion of fire immunity (vault 4)
+        A potion of levitation
+        A +1 spear of force <13>
+        2934 gold pieces (8 piles)
+        A potion of incineration (dar priestess)
+        A scroll of recharging (dar blademaster)
+        A shackled troll
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A +1 whip of multiplicity <14> (vault 5)
+        A door key (opens vault 1)
+        A shackled pixie
+        A shackled dar blademaster [agile]
+        A shackled pixie
+        A shackled dragon
+        A shackled tentacle horror [reflective]
+        A commutation altar (vault 1)
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A shackled dar blademaster [reflective]
+Seed 16:
+    Depth 1:
+        +0 splint mail [9]<17>
+        A scroll of aggravate monsters
+        A potion of fire immunity
+        A scroll of magic mapping
+        A scroll of teleportation
+        A potion of fire immunity
+        A potion of detect magic
+        A potion of detect magic
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        4 +0 incendiary darts <12>
+        A staff of conjuration [2/2] (vault 10)
+        A staff of firebolt [2/2] (vault 10)
+        A cage key (vault 4)
+        A staff of firebolt [3/3] (vault 4)
+        A +0 broadsword <19> (vault 4)
+        A door key (vault 6) (opens vault 4)
+        A +3 ring of wisdom (vault 6)
+        A staff of entrancement [3/3] (vault 6)
+        +0 splint mail [9]<17> (vault 6)
+        A door key (vault 8) (opens vault 6)
+        A staff of conjuration [2/2] (vault 8)
+        A +1 ring of clairvoyance (vault 8)
+        +3 chain mail [8]<13> (vault 8)
+        +0 leather armor [3]<10> (vault 8)
+        A +2 broadsword <19> (vault 1)
+        503 gold pieces (3 piles)
+        A potion of confusion (goblin mystic)
+        A shackled goblin mystic
+        A shackled ogre
+        A caged goblin
+        A caged goblin mystic
+        A caged ogre
+        A caged goblin
+    Depth 2:
+        A scroll of identify
+        A scroll of teleportation
+        A potion of caustic gas
+        A scroll of identify
+        A potion of levitation
+        A potion of detect magic
+        A scroll of aggravate monsters
+        A scroll of identify
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A door key (opens vault 7)
+        A +1 spear of troll slaying <13> (vault 7)
+        A potion of caustic gas (vault 6)
+        A potion of fire immunity (vault 6)
+        A scroll of magic mapping (vault 6)
+        A potion of life (vault 6)
+        A +2 teleportation charm (ready) (vault 4)
+        A staff of discord [2/2] (vault 4)
+        A +1 health charm (ready) (vault 4)
+        A wand of slowness [2] (vault 4)
+        A +0 spear <13> (vault 4)
+        A +0 axe <15> (vault 4)
+        A wand of polymorphism [1] (vault 4)
+        6 +0 incendiary darts <12>
+        A +2 ring of awareness (vault 1)
+        A staff of lightning [2/2] (vault 1)
+        A +2 shattering charm (ready) (vault 1)
+        A +0 dagger <12> (vault 1)
+        +0 scale mail [4]<12> (vault 1)
+        A +2 war hammer <20> (vault 1)
+        A wand of invisibility [3] (vault 1)
+        A door key (opens vault 1)
+        2091 gold pieces (7 piles)
+    Depth 3:
+        A potion of paralysis
+        A potion of hallucination
+        A scroll of aggravate monsters
+        A scroll of negation
+        A potion of caustic gas
+        A potion of telepathy
+        A potion of confusion
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        Some food
+        A potion of life (vault 4)
+        A cage key
+        3133 gold pieces (8 piles)
+        A caged dar blademaster [infested]
+        A caged troll
+        A caged naga
+        A caged pixie
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A cage key
+        A cage key
+        A cage key
+        A cage key (imp)
+        A crystal orb (flamedancer)
+        A caged dar blademaster [infested]
+        A caged dar battlemage
+        A caged dar priestess
+        A caged dar blademaster [infested]
+        A caged dar battlemage
+        A caged dar blademaster
+        A caged dar battlemage
+        An allied ifrit
+        A commutation altar (vault 6)
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A shackled golem [grappling]
+        A shackled dar blademaster [reflective]
+Seed 17:
+    Depth 1:
+        A potion of incineration
+        A potion of descent
+        A scroll of summon monsters
+        +0 banded mail [7]<15>
+        A -2 rapier of plenty <15>
+        A potion of paralysis
+        A scroll of discord
+        A scroll of sanctuary
+        A scroll of summon monsters
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A staff of obstruction [2/2] (vault 8)
+        A staff of poison [2/2] (vault 8)
+        A cage key
+        5 +0 incendiary darts <12>
+        A +3 war axe <19> (vault 1)
+        361 gold pieces (2 piles)
+        A door key (monkey) (opens vault 8)
+        A cage key (monkey)
+        A shackled ogre
+        A shackled ogre
+        A shackled ogre
+        A shackled goblin mystic
+        A caged goblin mystic
+        A caged ogre
+        A caged goblin conjurer
+    Depth 2:
+        A scroll of identify
+        A scroll of aggravate monsters
+        A scroll of aggravate monsters
+        A +0 war pike <18>
+        A wand of invisibility [3]
+        A potion of hallucination
+        A potion of confusion
+        A scroll of protect weapon
+        A potion of detect magic
+        A potion of invisibility
+        A scroll of teleportation
+        A scroll of summon monsters
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A +2 ring of awareness (vault 4)
+        A +3 ring of clairvoyance (vault 4)
+        A +3 ring of wisdom (vault 4)
+        A +2 ring of regeneration (vault 4)
+        A door key (opens vault 4)
+        A staff of blinking [4/4] (vault 1)
+        A staff of entrancement [2/2] (vault 1)
+        +0 scale mail [4]<12> (vault 1)
+        A +0 rapier <15> (vault 1)
+        A +0 whip <14> (vault 1)
+        A wand of negation [2] (vault 1)
+        A door key (opens vault 1)
+        1657 gold pieces (6 piles)
+    Depth 3:
+        A potion of detect magic
+        A scroll of aggravate monsters
+        A potion of telepathy
+        A potion of caustic gas
+        A scroll of remove curse
+        A scroll of protect weapon
+        A potion of caustic gas
+        +0 scale mail [4]<12>
+        A potion of descent
+        A potion of strength
+        A scroll of enchanting
+        A scroll of enchanting
+        A staff of poison [2/2]
+        A staff of tunneling [2/2]
+        A staff of blinking [3/3]
+        A potion of life (vault 7)
+        A scroll of teleportation
+        A door key (opens vault 4)
+        A scroll of shattering
+        A potion of incineration (vault 2)
+        A potion of speed (vault 2)
+        A potion of darkness (vault 2)
+        A potion of detect magic (vault 2)
+        A potion of paralysis (vault 2)
+        A potion of descent (vault 2)
+        3121 gold pieces (8 piles)
+        A scroll of summon monsters (dar battlemage)
+        A +2 protection charm (ready) (dar blademaster)
+        A staff of protection [3/3] (imp)
+        A door key (imp) (opens vault 8)
+        A potion of descent (dragon)
+        A shackled tentacle horror
+        A shackled troll
+        A shackled pixie
+        A commutation altar (vault 4)
+        A commutation altar (vault 11)
+        A commutation altar (vault 14)
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        Some food
+        A shackled tentacle horror
+        A shackled golem
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A shackled dar priestess
+        A shackled pixie
+Seed 18:
+    Depth 1:
+        A potion of darkness
+        A potion of telepathy
+        A scroll of aggravate monsters
+        A potion of creeping death
+        A potion of incineration
+        A scroll of remove curse
+        A potion of descent
+        A scroll of teleportation
+        A scroll of magic mapping
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A cage key (vault 10)
+        A +2 ring of transference (vault 10)
+        A +0 mace <16> (vault 10)
+        +1 banded mail [8]<15> (vault 10)
+        A cage key
+        A staff of blinking [4/4] (vault 4)
+        A +1 negation charm (ready) (vault 4)
+        A +1 ring of reaping (vault 4)
+        A +0 whip <14> (vault 4)
+        A +0 sword <14> (vault 4)
+        +0 splint mail [9]<17> (vault 4)
+        A wand of teleportation [1] (vault 4)
+        A door key (opens vault 4)
+        A door key (opens vault 1)
+        A +3 dagger of multiplicity <12> (vault 1)
+        394 gold pieces (2 piles)
+        A caged monkey
+        A caged ogre
+        A caged goblin conjurer
+        A caged goblin
+        A caged ogre
+        A caged monkey
+        A caged goblin mystic
+        A caged goblin
+    Depth 2:
+        A potion of levitation
+        A potion of fire immunity
+        +1 plate armor [12]<19>
+        A scroll of recharging
+        A +1 dagger of quietus <12>
+        A scroll of shattering
+        A potion of confusion
+        A wand of invisibility [3]
+        +0 plate armor [11]<19>
+        A potion of invisibility
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A +1 axe of multiplicity <15>
+        A potion of fire immunity
+        A door key (opens vault 6)
+        A scroll of enchanting (vault 6)
+        A scroll of shattering
+        A +3 war pike <18> (vault 4)
+        A staff of tunneling [2/2] (vault 1)
+        A staff of firebolt [2/2] (vault 1)
+        A staff of blinking [2/2] (vault 1)
+        A staff of poison [2/2] (vault 1)
+        A door key (opens vault 1)
+        1639 gold pieces (6 piles)
+    Depth 3:
+        A scroll of identify
+        -2 plate armor [9]<19>
+        A potion of fire immunity
+        A +2 ring of wisdom
+        A wand of teleportation [2]
+        A scroll of protect armor
+        A potion of fire immunity
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        Some food
+        A door key (opens vault 4)
+        2441 gold pieces (7 piles)
+        A resurrection altar (vault 2)
+        A commutation altar (vault 4)
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A door key (opens vault 6)
+        A potion of caustic gas (vault 6)
+        A potion of creeping death (vault 6)
+        A potion of telepathy (vault 6)
+        A potion of fire immunity (vault 6)
+        A potion of detect magic (vault 6)
+        A potion of invisibility (vault 6)
+        A door key (opens vault 3)
+        A potion of life (vault 3)
+        A shackled dar battlemage
+        A shackled dar priestess
+        A commutation altar (vault 1)
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A shackled golem
+Seed 19:
+    Depth 1:
+        A scroll of identify
+        A potion of detect magic
+        A potion of speed
+        A scroll of remove curse
+        A potion of creeping death
+        A potion of caustic gas
+        A scroll of discord
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        +3 chain mail of absorption [8]<13> (vault 12)
+        A cage key
+        A scroll of shattering
+        A +1 axe of speed <15> (vault 8)
+        A door key (opens vault 5)
+        A +2 mace of confusion <16> (vault 5)
+        A door key (vault 3) (opens vault 1)
+        A +1 ring of stealth (vault 3)
+        A +0 sword <14> (vault 3)
+        A +0 war hammer <20> (vault 3)
+        6 +0 incendiary darts <12>
+        A +2 whip of slowing <14> (vault 1)
+        772 gold pieces (4 piles)
+        A scroll of protect weapon (goblin mystic)
+        A caged monkey
+        A caged goblin mystic
+        A caged ogre
+        A caged monkey
+        A caged ogre
+    Depth 2:
+        A potion of confusion
+        A scroll of aggravate monsters
+        A scroll of recharging
+        A potion of confusion
+        A potion of speed
+        A scroll of negation
+        A scroll of negation
+        A potion of descent
+        A scroll of remove curse
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A scroll of identify
+        A scroll of shattering
+        A scroll of shattering
+        1863 gold pieces (7 piles)
+        A shackled centaur
+        A shackled ogre
+        A resurrection altar (vault 3)
+        A commutation altar (vault 1)
+    Depth 3:
+        A scroll of negation
+        A scroll of remove curse
+        A potion of telepathy
+        A potion of invisibility
+        A +1 recharging charm (ready)
+        A potion of confusion
+        A potion of paralysis
+        A scroll of identify
+        A scroll of summon monsters
+        A potion of strength
+        A scroll of enchanting
+        A scroll of enchanting
+        A potion of levitation
+        A door key (opens vault 6)
+        2539 gold pieces (7 piles)
+        A resurrection altar (vault 2)
+        A resurrection altar (vault 4)
+        A resurrection altar (vault 6)
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A mango
+        A staff of protection [2/2] (vault 5)
+        A staff of lightning [3/3] (vault 5)
+        A shackled dar blademaster
+        A shackled pixie
+        A shackled dragon
+        A shackled dragon
+        A shackled tentacle horror
+        A shackled tentacle horror
+        A resurrection altar (vault 2)
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+Seed 20:
+    Depth 1:
+        A scroll of remove curse
+        A scroll of protect armor
+        A potion of levitation
+        A potion of confusion
+        A scroll of protect armor
+        A potion of incineration
+        A scroll of discord
+        A scroll of protect weapon
+        A scroll of identify
+        A potion of levitation
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A +3 ring of stealth (vault 14)
+        A +2 ring of clairvoyance (vault 14)
+        A staff of lightning [3/3] (vault 14)
+        A +0 spear <13> (vault 14)
+        +0 banded mail [7]<15> (vault 14)
+        A wand of empowerment [1] (vault 14)
+        A wand of invisibility [2] (vault 14)
+        A door key (opens vault 11)
+        A +3 whip of dar slaying <14> (vault 11)
+        A cage key
+        A staff of lightning [3/3] (vault 6)
+        A +1 ring of stealth (vault 6)
+        A +3 axe <15> (vault 6)
+        +0 chain mail [5]<13> (vault 6)
+        +0 leather armor [3]<10> (vault 6)
+        A wand of polymorphism [1] (vault 6)
+        A door key (opens vault 6)
+        A scroll of shattering
+        A +1 war hammer <20> (vault 4)
+        A +2 mace <16> (vault 1)
+        340 gold pieces (2 piles)
+        A door key (monkey) (opens vault 14)
+        A caged goblin conjurer
+        A caged monkey
+        A caged goblin
+        A shackled ogre
+        A shackled goblin mystic
+    Depth 2:
+        A scroll of summon monsters
+        A scroll of summon monsters
+        6 +0 incendiary darts <12>
+        A scroll of aggravate monsters
+        A scroll of sanctuary
+        A potion of fire immunity
+        A potion of confusion
+        A potion of confusion
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        1900 gold pieces (7 piles)
+        A potion of detect magic (goblin mystic)
+    Depth 3:
+        A potion of levitation
+        A potion of detect magic
+        A wand of plenty [2]
+        A scroll of magic mapping
+        A scroll of remove curse
+        A scroll of sanctuary
+        A potion of telepathy
+        A potion of detect magic
+        A potion of strength
+        A scroll of enchanting
+        A scroll of enchanting
+        A mango
+        A staff of haste [3/3] (vault 9)
+        A staff of blinking [3/3] (vault 9)
+        A door key (opens vault 6)
+        A +1 sword of multiplicity <14> (vault 6)
+        2580 gold pieces (7 piles)
+        A scroll of magic mapping (dar priestess)
+        A potion of invisibility (dar priestess)
+        A potion of caustic gas (dar priestess)
+        A cage key (vampire)
+        A caged imp
+        A caged imp
+        A caged imp
+        A caged pixie
+        A shackled golem
+        A shackled dar priestess
+        A resurrection altar (vault 3)
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A shackled tentacle horror
+        A shackled tentacle horror
+        A shackled dragon
+        A shackled tentacle horror
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A shackled dar blademaster
+        A shackled pixie
+        A shackled dar blademaster [infested]
+        A shackled dar blademaster
+Seed 21:
+    Depth 1:
+        A potion of speed
+        A scroll of aggravate monsters
+        A potion of speed
+        A potion of hallucination
+        A +1 health charm (ready)
+        A scroll of negation
+        A scroll of aggravate monsters
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A cage key
+        A staff of discord [4/4] (vault 5)
+        A staff of poison [3/3] (vault 5)
+        A staff of lightning [3/3] (vault 5)
+        A wand of invisibility [2] (vault 5)
+        A +2 axe of confusion <15> (vault 5)
+        +0 chain mail [5]<13> (vault 5)
+        A wand of slowness [3] (vault 5)
+        A door key (opens vault 1)
+        A +1 dagger of paralysis <12> (vault 1)
+        553 gold pieces (3 piles)
+        A door key (monkey) (opens vault 5)
+        A shackled goblin mystic
+        A shackled goblin mystic
+        A caged ogre
+        A caged goblin mystic
+        A caged goblin
+        A caged ogre
+        A shackled goblin mystic
+        A shackled goblin mystic
+    Depth 2:
+        A potion of hallucination
+        A scroll of protect armor
+        A scroll of identify
+        A potion of speed
+        A scroll of protect armor
+        A potion of descent
+        A potion of confusion
+        A +0 flail <17>
+        A scroll of remove curse
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A potion of incineration
+        A +3 ring of light (vault 8)
+        A staff of firebolt [2/2] (vault 8)
+        A +1 recharging charm (ready) (vault 8)
+        A +0 rapier <15> (vault 8)
+        A +0 sword <14> (vault 8)
+        A +0 spear <13> (vault 8)
+        A wand of invisibility [2] (vault 8)
+        A door key (opens vault 8)
+        A door key (opens vault 5)
+        +1 splint mail of respiration [10]<17>
+        1607 gold pieces (6 piles)
+        A scroll of summon monsters (goblin conjurer)
+        A scroll of protect weapon (dar priestess)
+        A resurrection altar (vault 1)
+        A commutation altar (vault 5)
+        A commutation altar (vault 11)
+    Depth 3:
+        A scroll of summon monsters
+        A scroll of negation
+        A potion of levitation
+        A wand of beckoning [2]
+        A scroll of remove curse
+        A scroll of shattering
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        Some food
+        A staff of firebolt [2/2]
+        A door key (opens vault 5)
+        A potion of levitation (vault 5)
+        A potion of confusion (vault 5)
+        A potion of detect magic (vault 5)
+        A potion of telepathy (vault 5)
+        A potion of caustic gas (vault 5)
+        A potion of invisibility (vault 5)
+        A door key (opens vault 2)
+        2897 gold pieces (8 piles)
+        A staff of blinking [3/3] (imp)
+        A shackled troll
+        A commutation altar (vault 2)
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A shackled dar blademaster
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+Seed 22:
+    Depth 1:
+        A potion of telepathy
+        A potion of invisibility
+        A potion of hallucination
+        A potion of incineration
+        A potion of levitation
+        A potion of descent
+        A potion of caustic gas
+        A potion of confusion
+        A potion of paralysis
+        A potion of caustic gas
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A door key (opens vault 5)
+        A +2 axe of speed <15> (vault 5)
+        A door key (opens vault 1)
+        A +1 spear of confusion <13> (vault 1)
+        699 gold pieces (4 piles)
+        A shackled ogre
+        A shackled ogre
+    Depth 2:
+        A scroll of negation
+        A potion of confusion
+        A scroll of sanctuary
+        A scroll of protect armor
+        A +0 war axe <19>
+        A potion of invisibility
+        A scroll of recharging
+        A potion of paralysis
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A +1 teleportation charm (ready)
+        A +1 dagger of quietus <12> (vault 9)
+        A staff of healing [2/2]
+        A staff of discord [4/4]
+        A staff of firebolt [2/2]
+        1536 gold pieces (6 piles)
+        A +2 guardian charm (ready) (imp)
+        +1 chain mail of undead immunity [6]<13> (monkey)
+        A staff of protection [3/3] (stone guardian)
+        A commutation altar (vault 7)
+    Depth 3:
+        A potion of hallucination
+        A scroll of aggravate monsters
+        A scroll of summon monsters
+        A scroll of teleportation
+        A potion of invisibility
+        A scroll of sanctuary
+        A scroll of identify
+        A potion of telepathy
+        A potion of invisibility
+        A scroll of protect weapon
+        A potion of confusion
+        A potion of caustic gas
+        A potion of darkness
+        A scroll of teleportation
+        A potion of caustic gas
+        A scroll of negation
+        A scroll of protect armor
+        Some food
+        A scroll of magic mapping
+        A potion of strength
+        A scroll of enchanting
+        A scroll of enchanting
+        Some food
+        A scroll of enchanting (vault 2)
+        3019 gold pieces (8 piles)
+        A potion of fire immunity (dar blademaster)
+        A scroll of teleportation (dar priestess)
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A door key (opens vault 6)
+        A scroll of enchanting (vault 6)
+        A door key (vault 4) (opens vault 2)
+        A +2 ring of reaping (vault 4)
+        A wand of teleportation [1] (vault 4)
+        A shackled pixie [agile]
+        A shackled dar battlemage [infested]
+        A shackled tentacle horror [agile]
+        A shackled dar priestess
+        A shackled dar blademaster [explosive]
+        A shackled tentacle horror
+        A shackled dragon [vampiric]
+        A commutation altar (vault 2)
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+Seed 23:
+    Depth 1:
+        A scroll of remove curse
+        A potion of speed
+        A scroll of summon monsters
+        A scroll of discord
+        A scroll of magic mapping
+        A potion of fire immunity
+        A +3 rapier of force <15>
+        A scroll of summon monsters
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A cage key
+        A +2 health charm (ready) (vault 8)
+        A +2 invisibility charm (ready) (vault 8)
+        +0 chain mail [5]<13> (vault 8)
+        +0 scale mail [4]<12> (vault 8)
+        +0 banded mail [7]<15> (vault 8)
+        A wand of slowness [4] (vault 8)
+        A door key (vault 10) (opens vault 8)
+        A +4 ring of wisdom (vault 10)
+        +0 plate armor [11]<19> (vault 10)
+        A potion of incineration
+        A cage key (vault 6)
+        A +1 ring of awareness (vault 6)
+        A +3 ring of wisdom (vault 6)
+        +0 leather armor [3]<10> (vault 6)
+        A +0 flail <17> (vault 6)
+        A cage key
+        A door key (opens vault 1)
+        A +3 mace of force <16> (vault 1)
+        510 gold pieces (3 piles)
+        A shackled goblin
+        A caged goblin
+        A caged goblin conjurer
+        A caged goblin conjurer
+        A caged goblin conjurer
+        A caged goblin conjurer
+        A caged ogre
+    Depth 2:
+        -1 leather armor [2]<10>
+        A scroll of protect armor
+        A scroll of aggravate monsters
+        A scroll of discord
+        A potion of speed
+        A scroll of aggravate monsters
+        A potion of confusion
+        A potion of telepathy
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A cage key
+        1838 gold pieces (7 piles)
+        +1 leather armor of dragon immunity [4]<10> (monkey)
+        A door key (goblin warlord) (opens vault 4)
+        A cage key (goblin warlord)
+        A potion of confusion (dar blademaster)
+        A caged goblin mystic
+        A caged dar blademaster
+        A caged dar blademaster
+        A caged dar blademaster
+        A caged troll
+        A resurrection altar (vault 4)
+    Depth 3:
+        A potion of speed
+        A scroll of aggravate monsters
+        A potion of invisibility
+        A scroll of aggravate monsters
+        A potion of speed
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A scroll of enchanting
+        Some food
+        A +1 spear of speed <13>
+        A cage key
+        A cage key
+        3042 gold pieces (9 piles)
+        A potion of caustic gas (dar blademaster)
+        A potion of incineration (dar blademaster)
+        A shackled dar blademaster
+        A shackled golem
+        A caged dar battlemage
+        A caged dar battlemage
+        A caged troll
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A potion of fire immunity (vault 8)
+        A scroll of shattering (vault 8)
+        A potion of life (vault 8)
+        +1 chain mail of respiration [6]<13> (vault 6)
+        A door key (opens vault 3)
+        A shackled dar battlemage
+        A commutation altar (vault 1)
+        A commutation altar (vault 3)
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A shackled tentacle horror [agile]
+Seed 24:
+    Depth 1:
+        A scroll of summon monsters
+        A potion of creeping death
+        A potion of invisibility
+        A staff of tunneling [3/3]
+        A potion of speed
+        A potion of speed
+        A potion of speed
+        A scroll of identify
+        A scroll of aggravate monsters
+        A scroll of teleportation
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A +1 whip of confusion <14> (vault 5)
+        A +0 whip <14> (vault 3)
+        A +0 broadsword <19> (vault 3)
+        A scroll of enchanting (vault 3)
+        A +2 war axe <19> (vault 1)
+        319 gold pieces (2 piles)
+        +3 plate armor [14]<19> (goblin mystic)
+        A shackled ogre
+        A shackled ogre
+    Depth 2:
+        A scroll of discord
+        A wand of polymorphism [1]
+        A scroll of teleportation
+        A potion of paralysis
+        A potion of hallucination
+        A staff of lightning [3/3]
+        A scroll of remove curse
+        A potion of caustic gas
+        A scroll of discord
+        A potion of hallucination
+        A +0 war hammer <20>
+        A scroll of teleportation
+        A potion of darkness
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        A potion of fire immunity
+        A +1 protection charm (ready)
+        A door key (opens vault 14)
+        +1 scale mail of reprisal [5]<12>
+        A door key (opens vault 7)
+        A +1 dagger of multiplicity <12>
+        A potion of life (vault 2)
+        1584 gold pieces (6 piles)
+        A scroll of remove curse (dragon)
+        A cage key (vampire)
+        A cage key (vampire)
+        A caged goblin conjurer
+        A caged dar battlemage
+        A caged goblin conjurer
+        A caged dar battlemage
+        A shackled dragon
+        A shackled dar blademaster
+        A caged ogre
+        A caged dar battlemage
+        A caged dar blademaster
+        A shackled ogre
+        A resurrection altar (vault 14)
+        A resurrection altar (vault 7)
+    Depth 3:
+        A potion of descent
+        A scroll of aggravate monsters
+        A +0 spear <13>
+        A scroll of protect armor
+        A scroll of shattering
+        A potion of fire immunity
+        A potion of creeping death
+        A scroll of summon monsters
+        A scroll of identify
+        A scroll of summon monsters
+        A potion of caustic gas
+        A -1 ring of awareness
+        A potion of strength
+        A scroll of enchanting
+        A scroll of enchanting
+        Some food
+        2959 gold pieces (8 piles)
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A cage key
+        A cage key (vampire)
+        A caged dar battlemage
+        A caged dar priestess [agile]
+        A caged dar battlemage
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A shackled dar battlemage
+        A shackled dar priestess
+        A shackled pixie
+        A shackled pixie
+Seed 25:
+    Depth 1:
+        A potion of invisibility
+        A -1 war hammer <20>
+        A potion of darkness
+        A potion of descent
+        A potion of invisibility
+        A potion of incineration
+        +2 chain mail [7]<13>
+        A scroll of identify
+        A potion of detect magic
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        +0 chain mail [5]<13> (vault 8)
+        A +0 war hammer <20> (vault 8)
+        A +0 mace <16> (vault 8)
+        A scroll of enchanting (vault 8)
+        A +3 flail of confusion <17> (vault 5)
+        A door key (opens vault 1)
+        A +2 war pike <18> (vault 1)
+        745 gold pieces (4 piles)
+        A potion of confusion (goblin mystic)
+        A scroll of summon monsters (goblin conjurer)
+        A potion of descent (goblin mystic)
+        A potion of confusion (goblin warlord)
+        A potion of invisibility (goblin mystic)
+        A shackled ogre
+        A shackled goblin mystic
+        A shackled ogre
+        A shackled goblin mystic
+    Depth 2:
+        A potion of telepathy
+        A potion of paralysis
+        A potion of descent
+        A potion of descent
+        A scroll of aggravate monsters
+        A potion of invisibility
+        A scroll of aggravate monsters
+        A potion of fire immunity
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        1717 gold pieces (6 piles)
+        A staff of protection [3/3] (stone guardian)
+        A staff of conjuration [3/3] (stone guardian)
+        A +1 ring of clairvoyance (dragon)
+        A shackled dragon
+        A shackled dragon
+    Depth 3:
+        A scroll of identify
+        A scroll of teleportation
+        A scroll of sanctuary
+        A potion of caustic gas
+        A potion of hallucination
+        A potion of hallucination
+        A potion of strength
+        A potion of strength
+        A potion of life
+        A scroll of enchanting
+        A scroll of enchanting
+        Some food
+        A scroll of summon monsters (vault 9)
+        A potion of paralysis (vault 9)
+        A scroll of enchanting (vault 9)
+        A +2 teleportation charm (ready)
+        A +1 dagger of force <12> (vault 5)
+        A staff of conjuration [3/3] (vault 5)
+        A +1 ring of clairvoyance (vault 5)
+        A wand of empowerment [1] (vault 5)
+        3269 gold pieces (9 piles)
+        A resurrection altar (vault 2)
+    Depth 4:
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A lumenstone from depth 4
+        A scroll of protect armor (vault 1)
+        A scroll of protect weapon (vault 1)
+        A scroll of summon monsters (vault 1)
+        A scroll of discord (vault 1)
+        A shackled dragon
+        A shackled tentacle horror [explosive]
+    Depth 5:
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5
+        A lumenstone from depth 5

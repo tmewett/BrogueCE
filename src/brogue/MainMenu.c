@@ -22,7 +22,8 @@
  */
 
 #include "Rogue.h"
-#include "IncludeGlobals.h"
+#include "GlobalsBase.h"
+#include "Globals.h"
 #include <time.h>
 #include <limits.h>
 
@@ -33,26 +34,33 @@
 #define MENU_FLAME_FADE_SPEED           20
 #define MENU_FLAME_UPDATE_DELAY         50
 #define MENU_FLAME_ROW_PADDING          2
-#define MENU_TITLE_OFFSET_X             (-4)
-#define MENU_TITLE_OFFSET_Y             (-1)
-
 #define MENU_FLAME_COLOR_SOURCE_COUNT   1136
 
 #define MENU_FLAME_DENOMINATOR          (100 + MENU_FLAME_RISE_SPEED + MENU_FLAME_SPREAD_SPEED)
 
 
-void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3], unsigned char mask[COLS][ROWS]) {
-    short i, j, versionStringLength;
+static void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3], unsigned char mask[COLS][ROWS]) {
+    short i, j, versionStringLength, gameModeStringLength;
     color tempColor = {0};
     const color *maskColor = &black;
+    char gameModeString[COLS] = "";
     char dchar;
 
-    versionStringLength = strLenWithoutEscapes(BROGUE_VERSION_STRING);
+    versionStringLength = strLenWithoutEscapes(gameConst->versionString);
+
+    if (rogue.wizard) {
+        strcpy(gameModeString, "Wizard Mode");
+    } else if (rogue.easyMode) {
+        strcpy(gameModeString, "Easy Mode");
+    }
+    gameModeStringLength = strLenWithoutEscapes(gameModeString);
 
     for (j=0; j<ROWS; j++) {
         for (i=0; i<COLS; i++) {
             if (j == ROWS - 1 && i >= COLS - versionStringLength) {
-                dchar = BROGUE_VERSION_STRING[i - (COLS - versionStringLength)];
+                dchar = gameConst->versionString[i - (COLS - versionStringLength)];
+            } else if (gameModeStringLength && j == ROWS - 1 && i <= gameModeStringLength) {
+                dchar = gameModeString[i];
             } else {
                 dchar = ' ';
             }
@@ -73,7 +81,7 @@ void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3
     }
 }
 
-void updateMenuFlames(const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)],
+static void updateMenuFlames(const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)],
                       signed short colorSources[MENU_FLAME_COLOR_SOURCE_COUNT][4],
                       signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3]) {
 
@@ -150,7 +158,7 @@ void updateMenuFlames(const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)]
 }
 
 // Takes a grid of values, each of which is 0 or 100, and fills in some middle values in the interstices.
-void antiAlias(unsigned char mask[COLS][ROWS]) {
+static void antiAlias(unsigned char mask[COLS][ROWS]) {
     short i, j, x, y, dir, nbCount;
     const short intensity[5] = {0, 0, 35, 50, 60};
 
@@ -171,37 +179,16 @@ void antiAlias(unsigned char mask[COLS][ROWS]) {
     }
 }
 
-#define MENU_TITLE_WIDTH    74
-#define MENU_TITLE_HEIGHT   19
+#define MENU_TITLE_OFFSET_X (-7)
+#define MENU_TITLE_OFFSET_Y (-2)
 
-void initializeMenuFlames(boolean includeTitle,
+static void initializeMenuFlames(boolean includeTitle,
                           const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)],
                           color colorStorage[COLS],
                           signed short colorSources[MENU_FLAME_COLOR_SOURCE_COUNT][4],
                           signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3],
                           unsigned char mask[COLS][ROWS]) {
     short i, j, k, colorSourceCount;
-    const char title[MENU_TITLE_HEIGHT][MENU_TITLE_WIDTH+1] = {
-        "########   ########       ######         #######   ####     ###  #########",
-        " ##   ###   ##   ###    ##     ###     ##      ##   ##       #    ##     #",
-        " ##    ##   ##    ##   ##       ###   ##        #   ##       #    ##     #",
-        " ##    ##   ##    ##   #    #    ##   #         #   ##       #    ##      ",
-        " ##    ##   ##    ##  ##   ##     ## ##             ##       #    ##    # ",
-        " ##   ##    ##   ##   ##   ###    ## ##             ##       #    ##    # ",
-        " ######     ## ###    ##   ####   ## ##             ##       #    ####### ",
-        " ##    ##   ##  ##    ##   ####   ## ##             ##       #    ##    # ",
-        " ##     ##  ##   ##   ##    ###   ## ##      #####  ##       #    ##    # ",
-        " ##     ##  ##   ##   ###    ##   ## ###       ##   ##       #    ##      ",
-        " ##     ##  ##    ##   ##    #    #   ##       ##   ##       #    ##      ",
-        " ##     ##  ##    ##   ###       ##   ###      ##   ###      #    ##     #",
-        " ##    ##   ##     ##   ###     ##     ###    ###    ###    #     ##     #",
-        "########   ####    ###    ######         #####        ######     #########",
-        "                            ##                                            ",
-        "                        ##########                                        ",
-        "                            ##                                            ",
-        "                            ##                                            ",
-        "                           ####                                           ",
-    };
 
     for (i=0; i<COLS; i++) {
         for (j=0; j<ROWS; j++) {
@@ -237,13 +224,13 @@ void initializeMenuFlames(boolean includeTitle,
 
     if (includeTitle) {
         // Wreathe the title in flames, and mask it in black.
-        for (i=0; i<MENU_TITLE_WIDTH; i++) {
-            for (j=0; j<MENU_TITLE_HEIGHT; j++) {
-                if (title[j][i] != ' ') {
-                    colors[(COLS - MENU_TITLE_WIDTH)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - MENU_TITLE_HEIGHT)/2 + j + MENU_TITLE_OFFSET_Y] = &flameTitleColor;
+        for (i=0; i<gameConst->mainMenuTitleWidth; i++) {
+            for (j=0; j<gameConst->mainMenuTitleHeight; j++) {
+                if (mainMenuTitle[j * gameConst->mainMenuTitleWidth + i] != ' ') {
+                    colors[(COLS - gameConst->mainMenuTitleWidth)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - gameConst->mainMenuTitleHeight)/2 + j + MENU_TITLE_OFFSET_Y] = &flameTitleColor;
                     colorSourceCount++;
-                    mask[(COLS - MENU_TITLE_WIDTH)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - MENU_TITLE_HEIGHT)/2 + j + MENU_TITLE_OFFSET_Y] = 100;
-                }
+                    mask[(COLS - gameConst->mainMenuTitleWidth)/2 + i + MENU_TITLE_OFFSET_X][(ROWS - gameConst->mainMenuTitleHeight)/2 + j + MENU_TITLE_OFFSET_Y] = 100;
+               }
             }
         }
 
@@ -260,140 +247,384 @@ void initializeMenuFlames(boolean includeTitle,
 
 }
 
-void titleMenu() {
+/// @brief Inititializes a main menu button. Does not position the button.
+/// @param button The button to initialize
+/// @param textWithHotkey The button text. A string with 2 format specifiers for color escapes,
+/// denoting the start and end of the hotkey text (e.g. "%sN%sew Game").
+/// @param hotkey1 Keyboard hotkey #1
+/// @param hotkey2 Keyboard hotkey #2
+static void initializeMainMenuButton(brogueButton *button, char *textWithHotkey, unsigned long hotkey1, unsigned long hotkey2, enum NGCommands command) {
+
+    initializeButton(button);
+
+    char textWithoutHotkey[BUTTON_TEXT_SIZE];
+    snprintf(textWithoutHotkey, BUTTON_TEXT_SIZE - 1, textWithHotkey, "","");
+
+    setButtonText(button, textWithHotkey, textWithoutHotkey);
+    button->hotkey[0] = hotkey1;
+    button->hotkey[1] = hotkey2;
+    button->flags |= B_WIDE_CLICK_AREA;
+    button->buttonColor = titleButtonColor;
+    button->command = command;
+}
+
+#define MAIN_MENU_BUTTON_COUNT 4
+
+/// @brief Initializes the main menu buttons
+/// @param buttons An array of buttons to initialize
+static void initializeMainMenuButtons(brogueButton *buttons) {
+
+    initializeMainMenuButton(&(buttons[0]), "     %sN%sew Game     ", 'n', 'N', NG_NEW_GAME);
+    initializeMainMenuButton(&(buttons[1]), " *     %sP%slay       ", 'p', 'P', NG_FLYOUT_PLAY);
+    initializeMainMenuButton(&(buttons[2]), " *     %sV%siew       ", 'v', 'V', NG_FLYOUT_VIEW);
+    initializeMainMenuButton(&(buttons[3]), "       %sQ%suit       ", 'q', 'Q', NG_QUIT);
+
+    // Add a left-facing triangle to all the buttons except quit
+    for (int i=0; i<MAIN_MENU_BUTTON_COUNT-1; i++) {
+        buttons[i].symbol[0] = G_LEFT_TRIANGLE;
+    }
+
+}
+
+/// @brief Sets button x, y coordinates, stacking them vertically either top to bottom or bottom to top
+/// @param buttons An array of buttons to stack
+/// @param buttonCount The number of buttons in the array
+/// @param startPosition The position of the first button to place
+/// @param spacing The number of rows between buttons
+/// @param topToBottomFlag If true, @position is the top of the stack. Otherwise it's the bottom and the array is processed in reverse order.
+static void stackButtons(brogueButton *buttons, short buttonCount, windowpos startPosition, short spacing, boolean topToBottomFlag) {
+    short y = startPosition.window_y;
+
+    if (topToBottomFlag) {
+        for (int i = 0; i < buttonCount; i++) {
+            buttons[i].x = startPosition.window_x;
+            buttons[i].y = y;
+            y += spacing;
+        }
+    } else {
+        for (int i = buttonCount - 1; i >= 0; i--) {
+            buttons[i].x = startPosition.window_x;
+            buttons[i].y = y;
+            y -= spacing;
+        }
+    }
+}
+
+/// @brief Initializes a menu with buttons and a background/shadow. Relies on pre-positioned buttons with text.
+/// Dynamically determines the menu size based on the button positions and text.
+/// @param menu The menu to initialize
+/// @param buttons An array of initialized, positioned buttons, with text
+/// @param buttonCount The number of buttons in the array
+/// @param shadowBuf The display buffer object for the background/shadow
+static void initializeMenu(buttonState *menu, brogueButton *buttons, short buttonCount, screenDisplayBuffer *shadowBuf) {
+    memset((void *) menu, 0, sizeof( buttonState ));
+    short minX, maxX, minY, maxY;
+    minX = COLS;
+    minY = ROWS;
+    maxX = maxY = 0;
+
+    // determine the button frame size and position (upper-left)
+    for (int i = 0; i < buttonCount; i++) {
+        minX = min(minX, buttons[i].x);
+        maxX = max(maxX, buttons[i].x + strLenWithoutEscapes(buttons[i].text));
+        minY = min(minY, buttons[i].y);
+        maxY = max(maxY, buttons[i].y);
+    }
+
+    short width = maxX - minX;
+    short height = maxY - minY;
+
+    initializeButtonState(menu, buttons, buttonCount, minX, minY, width, height);
+
+    // Draws a rectangular shaded area of the specified color and opacity to a buffer. Position x, y is the upper/left.
+    // The shading effect outside the rectangle decreases with distance.
+    // Warning: shading of neighboring rectangles stacks
+    clearDisplayBuffer(shadowBuf);
+    rectangularShading(minX, minY, width, height + 1, &black, INTERFACE_OPACITY, shadowBuf);
+}
+
+/// @brief Initialize the main menu
+/// @param menu The main menu
+/// @param buttons The main menu buttons
+/// @param position The window position of the quit button
+/// @param shadowBuf The display buffer object for the background/shadow
+static void initializeMainMenu(buttonState *menu, brogueButton *buttons, windowpos position, screenDisplayBuffer *shadowBuf) {
+    initializeMainMenuButtons(buttons);
+    stackButtons(buttons, MAIN_MENU_BUTTON_COUNT, position, 2, false);
+
+    initializeMenu(menu, buttons, MAIN_MENU_BUTTON_COUNT, shadowBuf);
+}
+
+/// @brief Initialize a flyout menu and position the buttons
+/// @param menu The menu to initialize
+/// @param shadowBuf The display buffer for the menu background/shadow
+/// @param buttons The buttons to add to the menu
+/// @param position The window position of the anchor button. All buttons are positioned relative to this location.
+static void initializeFlyoutMenu(buttonState *menu, screenDisplayBuffer *shadowBuf, brogueButton *buttons, windowpos position) {
+    short buttonCount = 0;
+
+    if (rogue.nextGame == NG_FLYOUT_PLAY) {
+
+        buttonCount = 4;
+        initializeMainMenuButton(&(buttons[0]), "  New %sS%seeded Game  ", 's', 'S', NG_NEW_GAME_WITH_SEED);
+        initializeMainMenuButton(&(buttons[1]), "     %sL%soad Game     ", 'l', 'L', NG_OPEN_GAME);
+        initializeMainMenuButton(&(buttons[2]), "  Change V%sa%sriant   ", 'a', 'A', NG_GAME_VARIANT);
+        initializeMainMenuButton(&(buttons[3]), "   Change %sM%sode     ", 'm', 'M', NG_GAME_MODE);
+
+    } else if (rogue.nextGame == NG_FLYOUT_VIEW) {
+
+        buttonCount = 3;
+        initializeMainMenuButton(&(buttons[0]), "   View %sR%secording  ", 'r', 'R', NG_VIEW_RECORDING);
+        initializeMainMenuButton(&(buttons[1]), "    %sH%sigh Scores    ", 'h', 'H', NG_HIGH_SCORES);
+        initializeMainMenuButton(&(buttons[2]), "    %sG%same Stats     ", 'g', 'G', NG_GAME_STATS);
+
+    } else {
+        return;
+    }
+
+    stackButtons(buttons, buttonCount, position, 2, false);
+    initializeMenu(menu, buttons, buttonCount, shadowBuf);
+}
+
+/// @brief Displays a dialog window for the user to chose a game variant
+static void chooseGameVariant() {
+    short gameVariantChoice;
+    char textBuf[TEXT_MAX_LENGTH] = "", tmpBuf[TEXT_MAX_LENGTH] = "", goldColorEscape[5] = "", whiteColorEscape[5] = "";
+
+    encodeMessageColor(goldColorEscape, 0, &yellow);
+    encodeMessageColor(whiteColorEscape, 0, &white);
+
+    snprintf(textBuf, TEXT_MAX_LENGTH, "%sBrogue%s\n", goldColorEscape, whiteColorEscape);
+    append(textBuf, "Classic Brogue. The endlessly captivating masterpiece of dungeon adventuring.\n\n", TEXT_MAX_LENGTH);
+
+    snprintf(tmpBuf, TEXT_MAX_LENGTH, "%sRapid Brogue%s\n", goldColorEscape, whiteColorEscape);
+    append(textBuf, tmpBuf, TEXT_MAX_LENGTH);
+    append(textBuf, "Die faster and more often in this quarter-length version of the classic game!\n\n", TEXT_MAX_LENGTH);
+
+    snprintf(tmpBuf, TEXT_MAX_LENGTH, "%sBullet Brogue%s\n", goldColorEscape, whiteColorEscape);
+    append(textBuf, tmpBuf, TEXT_MAX_LENGTH);
+    append(textBuf, "No time? Death wish? Bullet Brogue is for you. Not best for new players!\n\n", TEXT_MAX_LENGTH);
+
+    brogueButton buttons[3];
+    initializeMainMenuButton(&(buttons[0]), "  %sR%sapid Brogue     ", 'r', 'R', NG_NOTHING);
+    initializeMainMenuButton(&(buttons[1]), "     %sB%srogue        ", 'b', 'B', NG_NOTHING);
+    initializeMainMenuButton(&(buttons[2]), "   Bu%sl%slet Brogue   ", 'l', 'L', NG_NOTHING);
+
+    const SavedDisplayBuffer rbuf = saveDisplayBuffer();
+    gameVariantChoice = printTextBox(textBuf, 20, 7, 45, &white, &black, buttons, 3);
+    restoreDisplayBuffer(&rbuf);
+
+    if (gameVariantChoice == 0) {
+        gameVariant = VARIANT_RAPID_BROGUE;
+    } else if (gameVariantChoice == 1) {
+        gameVariant = VARIANT_BROGUE;
+    } else if (gameVariantChoice == 2) {
+        gameVariant = VARIANT_BULLET_BROGUE;
+    } else {
+        rogue.nextGame = NG_NOTHING;
+    }
+}
+
+/// @brief Displays a dialog window for the user to chose a game mode. The game mode is displayed in the bottom left
+/// on the title screen (except normal mode).
+static void chooseGameMode() {
+    short gameMode;
+    char textBuf[TEXT_MAX_LENGTH] = "", tmpBuf[TEXT_MAX_LENGTH] = "", goldColorEscape[5] = "", whiteColorEscape[5] = "";
+
+    encodeMessageColor(goldColorEscape, 0, &yellow);
+    encodeMessageColor(whiteColorEscape, 0, &white);
+
+    snprintf(textBuf, TEXT_MAX_LENGTH, "%sNormal Mode%s\n", goldColorEscape, whiteColorEscape);
+    append(textBuf, "Punishingly difficult. Maliciously alluring. Perfectly normal.\n\n", TEXT_MAX_LENGTH);
+
+    snprintf(tmpBuf, TEXT_MAX_LENGTH, "%sEasy Mode%s\n", goldColorEscape, whiteColorEscape);
+    append(textBuf, tmpBuf, TEXT_MAX_LENGTH);
+    append(textBuf, "Succumb to temptation and transform into a powerful demon, taking 20% as much damage. "
+                    "But great power comes at a great price -- you keep only 10% of your score.\n\n", TEXT_MAX_LENGTH);
+
+    snprintf(tmpBuf, TEXT_MAX_LENGTH, "%sWizard Mode%s\n", goldColorEscape, whiteColorEscape);
+    append(textBuf, tmpBuf, TEXT_MAX_LENGTH);
+    append(textBuf, "Play as an invincible wizard that starts with legendary items and is magically reborn after every "
+                    "death. Summon monsters and make them friend or foe. Conjure any item out of thin air. "
+                    "(Your score is not saved.)", TEXT_MAX_LENGTH);
+
+    brogueButton buttons[3];
+    initializeMainMenuButton(&(buttons[0]), "      %sW%sizard       ", 'w', 'W', NG_NOTHING);
+    initializeMainMenuButton(&(buttons[1]), "       %sE%sasy        ", 'e', 'E', NG_NOTHING);
+    initializeMainMenuButton(&(buttons[2]), "      %sN%sormal       ", 'n', 'N', NG_NOTHING);
+    const SavedDisplayBuffer rbuf = saveDisplayBuffer();
+    gameMode = printTextBox(textBuf, 10, 5, 66, &white, &black, buttons, 3);
+    restoreDisplayBuffer(&rbuf);
+    if (gameMode == 0) {
+        rogue.wizard = true;
+        rogue.easyMode = false;
+    } else if (gameMode == 1) {
+        rogue.wizard = false;
+        rogue.easyMode = true;
+    } else if (gameMode == 2) {
+        rogue.wizard = false;
+        rogue.easyMode = false;
+    }
+
+    rogue.nextGame = NG_NOTHING;
+}
+
+/// @brief Used on the title screen for showing/hiding the flyout menus
+/// @return True if rogue.nextGame is a flyout command
+static boolean isFlyoutActive() {
+    return ((int)rogue.nextGame >= (int)NG_FLYOUT_PLAY && rogue.nextGame <= (int)NG_FLYOUT_OPTIONS);
+}
+
+/// @brief Used to align the bottom flyout button of a flyout menu with the position of the
+/// main menu button that triggers the flyout
+/// @param buttons The array of main menu buttons
+/// @return The window position (bottom-left) of the button associated with the current nextGame value
+static windowpos getNextGameButtonPos(brogueButton *buttons) {
+    for (int i = 0; i < MAIN_MENU_BUTTON_COUNT; i++) {
+        if (buttons[i].command == rogue.nextGame) {
+            return (windowpos) {buttons[i].x, buttons[i].y};
+        }
+    }
+    return mapToWindow(INVALID_POS);
+}
+
+/// @brief Changes the appearance of the main menu buttons based the active flyout menu (if any), so
+/// the button associated with the active flyout is more prominently displayed.
+/// @param menu The main menu
+static void redrawMainMenuButtons(buttonState *menu, screenDisplayBuffer *button_dbuf) {
+    enum buttonDrawStates drawState;
+
+    if (rogue.nextGame == NG_NOTHING) {
+        drawButtonsInState(menu, button_dbuf);
+    } else {
+        //darken the main menu buttons not selected
+        for (int i = 0; i < MAIN_MENU_BUTTON_COUNT; i++) {
+            drawState = (menu->buttons[i].command == rogue.nextGame) ? BUTTON_NORMAL : BUTTON_PRESSED;
+            drawButton(&(menu->buttons[i]), drawState, button_dbuf);
+        }
+    }
+}
+
+#define FLYOUT_X 59
+
+static void titleMenu() {
     signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3]; // red, green and blue
     signed short colorSources[MENU_FLAME_COLOR_SOURCE_COUNT][4]; // red, green, blue, and rand, one for each color source (no more than MENU_FLAME_COLOR_SOURCE_COUNT).
     const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)];
     color colorStorage[COLS];
     unsigned char mask[COLS][ROWS];
-    boolean controlKeyWasDown = false;
 
-    short i, b, x, y, button;
-    buttonState state;
-    brogueButton buttons[6];
-    char whiteColorEscape[10] = "";
-    char goldColorEscape[10] = "";
-    char newGameText[100] = "", customNewGameText[100] = "";
-    rogueEvent theEvent;
-    enum NGCommands buttonCommands[6] = {NG_NEW_GAME, NG_OPEN_GAME, NG_VIEW_RECORDING, NG_HIGH_SCORES, NG_QUIT};
+    // Main menu
+    buttonState mainMenu;
+    brogueButton mainButtons[MAIN_MENU_BUTTON_COUNT];
+    screenDisplayBuffer mainShadowBuf;
 
-    cellDisplayBuffer shadowBuf[COLS][ROWS];
+    // Flyout menu
+    buttonState flyoutMenu;
+    brogueButton flyoutButtons[10];
+    screenDisplayBuffer flyoutShadowBuf;
 
     // Initialize the RNG so the flames aren't always the same.
-
     seedRandomGenerator(0);
 
     // Empty nextGamePath and nextGameSeed so that the buttons don't try to load an old game path or seed.
     rogue.nextGamePath[0] = '\0';
     rogue.nextGameSeed = 0;
 
-    // Initialize the title menu buttons.
-    encodeMessageColor(whiteColorEscape, 0, &white);
-    encodeMessageColor(goldColorEscape, 0, KEYBOARD_LABELS ? &itemMessageColor : &white);
-    sprintf(newGameText, "      %sN%sew Game      ", goldColorEscape, whiteColorEscape);
-    sprintf(customNewGameText, " %sN%sew Game (custom) ", goldColorEscape, whiteColorEscape);
-    b = 0;
-    button = -1;
-
-    initializeButton(&(buttons[b]));
-    strcpy(buttons[b].text, newGameText);
-    buttons[b].hotkey[0] = 'n';
-    buttons[b].hotkey[1] = 'N';
-    b++;
-
-    initializeButton(&(buttons[b]));
-    sprintf(buttons[b].text, "     %sO%spen Game      ", goldColorEscape, whiteColorEscape);
-    buttons[b].hotkey[0] = 'o';
-    buttons[b].hotkey[1] = 'O';
-    b++;
-
-    initializeButton(&(buttons[b]));
-    sprintf(buttons[b].text, "   %sV%siew Recording   ", goldColorEscape, whiteColorEscape);
-    buttons[b].hotkey[0] = 'v';
-    buttons[b].hotkey[1] = 'V';
-    b++;
-
-    initializeButton(&(buttons[b]));
-    sprintf(buttons[b].text, "    %sH%sigh Scores     ", goldColorEscape, whiteColorEscape);
-    buttons[b].hotkey[0] = 'h';
-    buttons[b].hotkey[1] = 'H';
-    b++;
-
-    initializeButton(&(buttons[b]));
-    sprintf(buttons[b].text, "        %sQ%suit        ", goldColorEscape, whiteColorEscape);
-    buttons[b].hotkey[0] = 'q';
-    buttons[b].hotkey[1] = 'Q';
-    b++;
-
-    x = COLS - 1 - 20 - 2;
-    y = ROWS - 1;
-    for (i = b-1; i >= 0; i--) {
-        y -= 2;
-        buttons[i].x = x;
-        buttons[i].y = y;
-        buttons[i].buttonColor = titleButtonColor;
-        buttons[i].flags |= B_WIDE_CLICK_AREA;
-    }
-
     blackOutScreen();
-    clearDisplayBuffer(shadowBuf);
-    initializeButtonState(&state, buttons, b, x, y, 20, b*2-1);
-    rectangularShading(x, y, 20, b*2-1, &black, INTERFACE_OPACITY, shadowBuf);
-    drawButtonsInState(&state);
 
+    // Initialize the main menu with buttons stacked on top of the quit button
+    windowpos quitButtonPosition = {COLS - 20, ROWS - 3};
+    initializeMainMenu(&mainMenu, mainButtons, quitButtonPosition, &mainShadowBuf);
+
+    // Display the title and flames
     initializeMenuFlames(true, colors, colorStorage, colorSources, flames, mask);
     rogue.creaturesWillFlashThisTurn = false; // total unconscionable hack
 
+    rogueEvent theEvent;
+    short mainIndex = -1;
+    short flyoutIndex = -1;
+    windowpos bPos;
+
+    // Outer loop for menu navigation (showing/hiding the flyout menus). Repeat until the user selects
+    // a button with a command handled by mainBrogueJunction.
     do {
-        if (isApplicationActive()) {
-            // Revert the display.
-            overlayDisplayBuffer(state.rbuf, NULL);
-
-            if (!controlKeyWasDown && controlKeyIsDown()) {
-                strcpy(state.buttons[0].text, customNewGameText);
-                drawButtonsInState(&state);
-                buttonCommands[0] = NG_NEW_GAME_WITH_SEED;
-                controlKeyWasDown = true;
-            } else if (controlKeyWasDown && !controlKeyIsDown()) {
-                strcpy(state.buttons[0].text, newGameText);
-                drawButtonsInState(&state);
-                buttonCommands[0] = NG_NEW_GAME;
-                controlKeyWasDown = false;
-            }
-
-            // Update the display.
-            updateMenuFlames(colors, colorSources, flames);
-            drawMenuFlames(flames, mask);
-            overlayDisplayBuffer(shadowBuf, NULL);
-            overlayDisplayBuffer(state.dbuf, NULL);
-
-            // Pause briefly.
-            if (pauseBrogue(MENU_FLAME_UPDATE_DELAY)) {
-                // There was input during the pause! Get the input.
-                nextBrogueEvent(&theEvent, true, false, true);
-
-                // Process the input.
-                button = processButtonInput(&state, NULL, &theEvent);
-            }
-
-        } else {
-            pauseBrogue(64);
+        if (isFlyoutActive()) {
+            bPos = getNextGameButtonPos(mainButtons);
+            initializeFlyoutMenu(&flyoutMenu, &flyoutShadowBuf, flyoutButtons, (windowpos){FLYOUT_X, bPos.window_y});
         }
-    } while (button == -1 && rogue.nextGame == NG_NOTHING);
+
+        // Inner input loop until the user selects a button or presses a key. For mouse input, a button
+        // is considered selected only on the MOUSE_UP event.
+        do {
+            if (isApplicationActive()) {
+                // Update the display.
+                updateMenuFlames(colors, colorSources, flames);
+                drawMenuFlames(flames, mask);
+                overlayDisplayBuffer(&mainShadowBuf);
+
+                // Draw the main menu buttons
+                screenDisplayBuffer dbuf;
+                clearDisplayBuffer(&dbuf);
+                redrawMainMenuButtons(&mainMenu, &dbuf);
+                overlayDisplayBuffer(&dbuf);
+
+                //Show flyout if selected
+                if (isFlyoutActive()) {
+                    overlayDisplayBuffer(&flyoutShadowBuf);
+                    screenDisplayBuffer flyout_dbuf;
+                    clearDisplayBuffer(&flyout_dbuf);
+                    drawButtonsInState(&flyoutMenu, &flyout_dbuf);
+                    overlayDisplayBuffer(&flyout_dbuf);
+                    mainMenu.buttonDepressed = -1;
+                    mainMenu.buttonFocused = -1;
+                }
+                // Pause briefly.
+                if (pauseBrogue(MENU_FLAME_UPDATE_DELAY, (PauseBehavior){.interuptForMouseMove = true})) {
+                    // There was input during the pause! Get the input.
+                    nextBrogueEvent(&theEvent, true, false, true);
+
+                    // quickstart a new game
+                    if (theEvent.eventType == KEYSTROKE && (theEvent.param1 == 'n' || theEvent.param1 == 'N')) {
+                        rogue.nextGame = NG_NEW_GAME;
+                        break;
+                    }
+
+                    // Process the flyout menu input as needed
+                    if (isFlyoutActive()) {
+                        flyoutIndex = processButtonInput(&flyoutMenu, NULL, &theEvent);
+                        if (flyoutIndex != -1 && (theEvent.eventType == MOUSE_UP || theEvent.eventType == KEYSTROKE)) {
+                            rogue.nextGame = flyoutButtons[flyoutIndex].command;
+                        }
+                        if (rogue.nextGame == NG_GAME_MODE) {
+                            chooseGameMode();
+                        } else if (rogue.nextGame == NG_GAME_VARIANT) {
+                            chooseGameVariant();
+                        }
+                    }
+                    // Process the main menu input
+                    mainIndex = processButtonInput(&mainMenu, NULL, &theEvent);
+
+                    if (theEvent.eventType == MOUSE_UP || theEvent.eventType == KEYSTROKE) {
+                        if (mainIndex != - 1 && rogue.nextGame != mainButtons[mainIndex].command) {
+                            rogue.nextGame = mainButtons[mainIndex].command;
+                        } else if (flyoutIndex == -1) {
+                            // Hide the flyout menu if the user clicked somewhere random, pressed a random key, or re-selected the
+                            // button for the active flyout (e.g. 'p', 'p' in succession opens and closes the play flyout)
+                            rogue.nextGame = NG_NOTHING;
+                        }
+                    }
+                }
+            } else {
+                pauseBrogue(64, PAUSE_BEHAVIOR_DEFAULT);
+            }
+        } while (theEvent.eventType != MOUSE_UP && theEvent.eventType != KEYSTROKE && (isFlyoutActive() || rogue.nextGame == NG_NOTHING));
+    } while (isFlyoutActive() || rogue.nextGame == NG_NOTHING);
     drawMenuFlames(flames, mask);
-    if (button != -1) {
-        if (button == 0 && controlKeyIsDown()) {
-            // Should fix an issue with Linux/Windows ports that require moving the mouse after
-            // pressing control to get the button to change.
-            rogue.nextGame = NG_NEW_GAME_WITH_SEED;
-        } else {
-            rogue.nextGame = buttonCommands[button];
-        }
-    }
 }
 
 // Closes Brogue without any further prompts, animations, or user interaction.
-void quitImmediately() {
+int quitImmediately() {
     // If we are recording a game, save it.
     if (rogue.recording) {
         flushBufferToFile();
@@ -406,22 +637,22 @@ void quitImmediately() {
             saveRecordingNoPrompt(path);
         }
     }
-    exit(0);
+    return EXIT_STATUS_SUCCESS;
 }
 
 void dialogAlert(char *message) {
-    cellDisplayBuffer rbuf[COLS][ROWS];
 
     brogueButton OKButton;
     initializeButton(&OKButton);
     strcpy(OKButton.text, "     OK     ");
     OKButton.hotkey[0] = RETURN_KEY;
     OKButton.hotkey[1] = ACKNOWLEDGE_KEY;
-    printTextBox(message, COLS/3, ROWS/3, COLS/3, &white, &interfaceBoxColor, rbuf, &OKButton, 1);
-    overlayDisplayBuffer(rbuf, NULL);
+    const SavedDisplayBuffer rbuf = saveDisplayBuffer();
+    printTextBox(message, COLS/3, ROWS/3, COLS/3, &white, &interfaceBoxColor, &OKButton, 1);
+    restoreDisplayBuffer(&rbuf);
 }
 
-boolean stringsExactlyMatch(const char *string1, const char *string2) {
+static boolean stringsExactlyMatch(const char *string1, const char *string2) {
     short i;
     for (i=0; string1[i] && string2[i]; i++) {
         if (string1[i] != string2[i]) {
@@ -436,7 +667,7 @@ boolean stringsExactlyMatch(const char *string1, const char *string2) {
 //      < 0 if 'b' date is lesser than 'a' date
 //      = 0 if 'b' date is equal to 'a' date,
 //      > 0 if 'b' date is greater than 'a' date
-int fileEntryCompareDates(const void *a, const void *b) {
+static int fileEntryCompareDates(const void *a, const void *b) {
     fileEntry *f1 = (fileEntry *)a;
     fileEntry *f2 = (fileEntry *)b;
     time_t t1, t2;
@@ -464,14 +695,15 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
     brogueButton buttons[FILES_ON_PAGE_MAX + 2];
     fileEntry *files;
     boolean retval = false, again;
-    cellDisplayBuffer dbuf[COLS][ROWS], rbuf[COLS][ROWS];
-    color *dialogColor = &interfaceBoxColor;
+    screenDisplayBuffer dbuf;
+
+    const color *dialogColor = &interfaceBoxColor;
     char *membuf;
     char fileDate [11];
 
     suffixLength = strlen(suffix);
     files = listFiles(&count, &membuf);
-    copyDisplayBuffer(rbuf, displayBuffer);
+    const SavedDisplayBuffer rbuf = saveDisplayBuffer();
     maxPathLength = strLenWithoutEscapes(prompt);
 
     // First, we want to filter the list by stripping out any filenames that do not end with suffix.
@@ -578,10 +810,10 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
         }
 
         if (count) {
-            clearDisplayBuffer(dbuf);
-            printString(prompt, x, y - 1, &itemMessageColor, dialogColor, dbuf);
-            rectangularShading(x - 1, y - 1, width + 1, height + 1, dialogColor, INTERFACE_OPACITY, dbuf);
-            overlayDisplayBuffer(dbuf, NULL);
+            clearDisplayBuffer(&dbuf);
+            printString(prompt, x, y - 1, &itemMessageColor, dialogColor, &dbuf);
+            rectangularShading(x - 1, y - 1, width + 1, height + 1, dialogColor, INTERFACE_OPACITY, &dbuf);
+            overlayDisplayBuffer(&dbuf);
 
 //          for (j=0; j<min(count - currentPageStart, FILES_ON_PAGE_MAX); j++) {
 //              strftime(fileDate, sizeof(fileDate), DATE_FORMAT, &files[currentPageStart+j].date);
@@ -603,7 +835,7 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
 //              printf("\n   (button name)Sanity check AFTER: %s", buttons[j].text);
 //          }
 
-            overlayDisplayBuffer(rbuf, NULL);
+            restoreDisplayBuffer(&rbuf);
 
             if (i < min(count - currentPageStart, FILES_ON_PAGE_MAX)) {
                 if (i >= 0) {
@@ -634,6 +866,232 @@ boolean dialogChooseFile(char *path, const char *suffix, const char *prompt) {
     }
 }
 
+typedef struct gameStats {
+    int games;
+    int escaped;
+    int mastered;
+    int won;
+    float winRate;
+    int deepestLevel;
+    int cumulativeLevels;
+    int highestScore;
+    unsigned long cumulativeScore;
+    int mostGold;
+    unsigned long cumulativeGold;
+    int mostLumenstones;
+    int cumulativeLumenstones;
+    int fewestTurnsWin; // zero means never won
+    unsigned long cumulativeTurns;
+    int longestWinStreak;
+    int longestMasteryStreak;
+    int currentWinStreak;
+    int currentMasteryStreak;
+} gameStats;
+
+/// @brief Updates the given stats to include a run
+/// @param run The run to add
+/// @param stats The stats to update
+static void addRuntoGameStats(rogueRun *run, gameStats *stats) {
+
+    stats->games++;
+    stats->cumulativeScore += run->score;
+    stats->cumulativeGold += run->gold;
+    stats->cumulativeLumenstones += run->lumenstones;
+    stats->cumulativeLevels += run->deepestLevel;
+    stats->cumulativeTurns += run->turns;
+
+    stats->highestScore = (run->score > stats->highestScore) ? run->score : stats->highestScore;
+    stats->mostGold = (run->gold > stats->mostGold) ? run->gold : stats->mostGold;
+    stats->mostLumenstones = (run->lumenstones > stats->mostLumenstones) ? run->lumenstones : stats->mostLumenstones;
+    stats->deepestLevel = (run->deepestLevel > stats->deepestLevel) ? run->deepestLevel : stats->deepestLevel;
+
+    if (strcmp(run->result, "Escaped") == 0 || strcmp(run->result, "Mastered") == 0) {
+        if (stats->fewestTurnsWin == 0 || run->turns < stats->fewestTurnsWin) {
+            stats->fewestTurnsWin = run->turns;
+        }
+        stats->won++;
+        stats->currentWinStreak++;
+        if (strcmp(run->result, "Mastered") == 0) {
+            stats->currentMasteryStreak++;
+            stats->mastered++;
+        } else {
+            stats->currentMasteryStreak = 0;
+            stats->escaped++;
+        }
+    } else {
+        stats->currentWinStreak = stats->currentMasteryStreak = 0;
+    }
+
+    if (stats->currentWinStreak > stats->longestWinStreak) {
+        stats->longestWinStreak = stats->currentWinStreak;
+    }
+    if (stats->currentMasteryStreak > stats->longestMasteryStreak) {
+        stats->longestMasteryStreak = stats->currentMasteryStreak;
+    }
+
+    if (stats->games == 0) {
+        stats->winRate = 0.0;
+    } else {
+        stats->winRate = ((float)stats->won / stats->games) * 100.0;
+    }
+}
+
+/// @brief Display the game stats screen
+/// Includes "All Time" stats and "Recent" stats. The player can reset their recent stats at any time.
+static void viewGameStats(void) {
+
+    gameStats allTimeStats = {0};
+    gameStats recentStats = {0};
+
+    rogueRun *runHistory = loadRunHistory();
+    rogueRun *run = runHistory;
+
+    // calculate stats
+    while (run != NULL) {
+        if (run->seed != 0) {
+            addRuntoGameStats(run, &allTimeStats);
+            addRuntoGameStats(run, &recentStats);
+        } else { // when seed == 0 the run entry means the player reset their recent stats at this point
+            memset(&recentStats, 0, sizeof(gameStats));
+        }
+        run = run->nextRun;
+    }
+
+    // free run history
+    run = runHistory;
+    rogueRun *next;
+    while (run != NULL) {
+        next = run->nextRun;
+        free(run);
+        run = next;
+    }
+
+    const SavedDisplayBuffer rbuf = saveDisplayBuffer();
+    blackOutScreen();
+
+    screenDisplayBuffer dbuf;
+    clearDisplayBuffer(&dbuf);
+
+    char buf[COLS*3];
+    int i = 4;
+    int offset = 21;
+    char whiteColorEscape[5] = "", yellowColorEscape[5] = "";
+    encodeMessageColor(whiteColorEscape, 0, &white);
+    encodeMessageColor(yellowColorEscape, 0, &itemMessageColor);
+
+    color titleColor = black;
+    applyColorAverage(&titleColor, &itemMessageColor, 100);
+    printString("-- GAME STATS --", (COLS - 17 + 1) / 2, 0, &titleColor, &black, &dbuf);
+
+    sprintf(buf,"%-30s%16s%16s","", "All Time", "Recent");
+    printString(buf, offset, i, &itemMessageColor, &black, &dbuf);
+
+    sprintf(buf,"%-30s%s%16i%16i","Games Played", whiteColorEscape, allTimeStats.games, recentStats.games);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+    i++;
+    sprintf(buf,"%-30s%s%16i%16i","Won", whiteColorEscape, allTimeStats.won, recentStats.won);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+
+    sprintf(buf,"%-30s%s%16.1f%16.1f","Win Rate (%)", whiteColorEscape, allTimeStats.winRate, recentStats.winRate);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+
+    sprintf(buf,"%-30s%s%16i%16i","Escaped", whiteColorEscape, allTimeStats.escaped, recentStats.escaped);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+
+    sprintf(buf,"%-30s%s%16i%16i","Mastered", whiteColorEscape, allTimeStats.mastered, recentStats.mastered);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+    i++;
+    sprintf(buf,"%-30s%s%16i%16i","High Score", whiteColorEscape, allTimeStats.highestScore, recentStats.highestScore);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+
+    sprintf(buf,"%-30s%s%16i%16i","Most Gold", whiteColorEscape, allTimeStats.mostGold, recentStats.mostGold);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+
+    sprintf(buf,"%-30s%s%16i%16i","Most Lumenstones", whiteColorEscape, allTimeStats.mostLumenstones, recentStats.mostLumenstones);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+    i++;
+    sprintf(buf,"%-30s%s%16i%16i","Deepest Level", whiteColorEscape, allTimeStats.deepestLevel, recentStats.deepestLevel);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+
+    float allTimeAverageDepth = 0;
+    float recentAverageDepth = 0;
+
+    if(allTimeStats.games > 0) {
+        allTimeAverageDepth = (float) allTimeStats.cumulativeLevels / allTimeStats.games;
+    }
+    if(recentStats.games > 0) {
+        recentAverageDepth = (float) recentStats.cumulativeLevels / recentStats.games;
+    }
+
+    sprintf(buf,"%-30s%s%16.1f%16.1f","Average Depth", whiteColorEscape, allTimeAverageDepth, recentAverageDepth);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+
+    char allTimeFewestTurns[20] = "-";
+    char recentFewestTurns[20] = "-";
+    if (allTimeStats.fewestTurnsWin > 0) {
+        sprintf(allTimeFewestTurns, "%i", allTimeStats.fewestTurnsWin);
+    }
+    if (recentStats.fewestTurnsWin > 0) {
+        sprintf(recentFewestTurns, "%i", recentStats.fewestTurnsWin);
+    }
+    sprintf(buf,"%-30s%s%16s%16s","Shortest Win (Turns)", whiteColorEscape, allTimeFewestTurns, recentFewestTurns);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+    i++;
+    sprintf(buf,"%-30s%s%16i%16i","Longest Win Streak", whiteColorEscape, allTimeStats.longestWinStreak, recentStats.longestWinStreak);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+
+    sprintf(buf,"%-30s%s%16i%16i","Longest Mastery Streak", whiteColorEscape, allTimeStats.longestMasteryStreak, recentStats.longestMasteryStreak);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+    i++;
+    sprintf(buf,"%-30s%s%32i","Current Win Streak", whiteColorEscape, recentStats.currentWinStreak);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+
+    sprintf(buf,"%-30s%s%32i","Current Mastery Streak", whiteColorEscape, recentStats.currentMasteryStreak);
+    printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
+    i++;
+
+    // Set the dbuf opacity.
+    for (int i=0; i<COLS; i++) {
+        for (int j=0; j<ROWS; j++) {
+            dbuf.cells[i][j].opacity = INTERFACE_OPACITY;
+        }
+    }
+
+    // Display.
+    overlayDisplayBuffer(&dbuf);
+    color continueColor = black;
+    applyColorAverage(&continueColor, &goodMessageColor, 100);
+
+    printString(KEYBOARD_LABELS ? "Press space or click to continue." : "Touch anywhere to continue.",
+                (COLS - strLenWithoutEscapes(KEYBOARD_LABELS ? "Press space or click to continue." : "Touch anywhere to continue.")) / 2,
+                ROWS - 1, &continueColor, &black, 0);
+
+    commitDraws();
+
+    if (recentStats.games > 0) {
+        i++;
+        brogueButton buttons[1];
+        initializeButton(&(buttons[0]));
+        if (KEYBOARD_LABELS) {
+            sprintf(buttons[0].text,  "  %sR%seset  ", yellowColorEscape, whiteColorEscape);
+        } else {
+            strcpy(buttons[0].text, "  Reset  ");
+        }
+        buttons[0].hotkey[0] = 'R';
+        buttons[0].hotkey[1] = 'r';
+        buttons[0].x = 74;
+        buttons[0].y = i;
+
+        if (buttonInputLoop(buttons, 1, 74, 25, 10, 3, NULL) == 0 && confirm("Reset recent stats?",false)) {
+            saveResetRun();
+        }
+    } else {
+        waitForKeystrokeOrMouseClick();
+    }
+
+    restoreDisplayBuffer(&rbuf);
+}
+
 // This is the basic program loop.
 // When the program launches, or when a game ends, you end up here.
 // If the player has already said what he wants to do next
@@ -651,15 +1109,17 @@ void mainBrogueJunction() {
     // clear screen and display buffer
     for (i=0; i<COLS; i++) {
         for (j=0; j<ROWS; j++) {
-            displayBuffer[i][j].character = 0;
-            displayBuffer[i][j].opacity = 100;
+            displayBuffer.cells[i][j].character = 0;
+            displayBuffer.cells[i][j].opacity = 100;
             for (k=0; k<3; k++) {
-                displayBuffer[i][j].foreColorComponents[k] = 0;
-                displayBuffer[i][j].backColorComponents[k] = 0;
+                displayBuffer.cells[i][j].foreColorComponents[k] = 0;
+                displayBuffer.cells[i][j].backColorComponents[k] = 0;
             }
             plotCharWithColor(' ', (windowpos){ i, j }, &black, &black);
         }
     }
+
+    initializeGameVariant();
 
     initializeLaunchArguments(&rogue.nextGame, rogue.nextGamePath, &rogue.nextGameSeed);
 
@@ -671,6 +1131,10 @@ void mainBrogueJunction() {
             case NG_NOTHING:
                 // Run the main menu to get a decision out of the player.
                 titleMenu();
+                break;
+            case NG_GAME_VARIANT:
+                rogue.nextGame = NG_NOTHING;
+                initializeGameVariant();
                 break;
             case NG_NEW_GAME:
             case NG_NEW_GAME_WITH_SEED:
@@ -810,6 +1274,10 @@ void mainBrogueJunction() {
             case NG_HIGH_SCORES:
                 rogue.nextGame = NG_NOTHING;
                 printHighScores(false);
+                break;
+            case NG_GAME_STATS:
+                rogue.nextGame = NG_NOTHING;
+                viewGameStats();
                 break;
             case NG_QUIT:
                 // No need to do anything.
