@@ -26,7 +26,7 @@
 #include <stdint.h> // C99
 
 #include "Rogue.h"
-#include "IncludeGlobals.h"
+#include "GlobalsBase.h"
 
 
     // Random number generation
@@ -94,7 +94,7 @@ typedef struct ranctx { u4 a; u4 b; u4 c; u4 d; } ranctx;
 static ranctx RNGState[2];
 
 #define rot(x,k) (((x)<<(k))|((x)>>(32-(k))))
-u4 ranval( ranctx *x ) {
+static u4 ranval( ranctx *x ) {
     u4 e = x->a - rot(x->b, 27);
     x->a = x->b ^ rot(x->c, 17);
     x->b = x->c + x->d;
@@ -103,7 +103,7 @@ u4 ranval( ranctx *x ) {
     return x->d;
 }
 
-void raninit( ranctx *x, uint64_t seed ) {
+static void raninit( ranctx *x, uint64_t seed ) {
     u4 i;
     x->a = 0xf1ea5eed, x->b = x->c = x->d = (u4)seed;
     x->c ^= (u4)(seed >> 32);
@@ -122,7 +122,7 @@ void raninit( ranctx *x, uint64_t seed ) {
 
 #define RAND_MAX_COMBO ((unsigned long) UINT32_MAX)
 
-long range(long n, short RNG) {
+static long range(long n, short RNG) {
     unsigned long div;
     long r;
 

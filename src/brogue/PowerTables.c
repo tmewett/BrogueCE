@@ -22,6 +22,8 @@
  */
 
 #include "Rogue.h"
+#include "Globals.h"
+#include "GlobalsBase.h"
 
 #define LAST_INDEX(a) (sizeof(a) / sizeof(fixpt) - 1)
 
@@ -78,10 +80,10 @@ fixpt ringWisdomMultiplier(fixpt enchant) {
     return POW_WISDOM[idx];
 }
 
-short charmHealing(fixpt enchant)              {return ((int) clamp(20 * (enchant) / FP_FACTOR, 0, 100));}
-short charmShattering(fixpt enchant)           {return ((int) (4 + (enchant / FP_FACTOR)));}
-short charmGuardianLifespan(fixpt enchant)     {return ((int) (4 + 2 * (enchant / FP_FACTOR)));}
-short charmNegationRadius(fixpt enchant)       {return ((int) (1 + 3 * (enchant / FP_FACTOR)));}
+short charmHealing(fixpt enchant)              {return ((int) clamp(charmEffectTable[CHARM_HEALTH].effectMagnitudeMultiplier * (enchant) / FP_FACTOR, 0, 100));}
+short charmShattering(fixpt enchant)           {return ((int) (charmEffectTable[CHARM_SHATTERING].effectMagnitudeConstant + (enchant / FP_FACTOR)));}
+short charmGuardianLifespan(fixpt enchant)     {return ((int) (charmEffectTable[CHARM_GUARDIAN].effectMagnitudeConstant + charmEffectTable[CHARM_GUARDIAN].effectMagnitudeMultiplier * (enchant / FP_FACTOR)));}
+short charmNegationRadius(fixpt enchant)       {return ((int) (charmEffectTable[CHARM_NEGATION].effectMagnitudeConstant + charmEffectTable[CHARM_NEGATION].effectMagnitudeMultiplier * (enchant / FP_FACTOR)));}
 int charmProtection(fixpt enchant) {
     const fixpt POW_CHARM_PROTECTION[] = {
         // 1.35^x fixed point, with x from 0 to 50 in increments of 1:
@@ -91,7 +93,7 @@ int charmProtection(fixpt enchant) {
         48028554155, 64838548109, 87532039948, 118168253930, 159527142806, 215361642788};
 
     short idx = clamp(enchant / FP_FACTOR - 1, 0, LAST_INDEX(POW_CHARM_PROTECTION));
-    return 150 * POW_CHARM_PROTECTION[idx] / FP_FACTOR;
+    return charmEffectTable[CHARM_PROTECTION].effectMagnitudeMultiplier * POW_CHARM_PROTECTION[idx] / FP_FACTOR;
 }
 
 short weaponParalysisDuration(fixpt enchant)   {return (max(2, (int) (2 + ((enchant) / 2 / FP_FACTOR))));}
@@ -216,87 +218,17 @@ fixpt defenseFraction(fixpt netDefense) {
 }
 
 short charmEffectDuration(short charmKind, short enchant) {
-    const fixpt POW_0_CHARM_INCREMENT[] = { // 1.0
-        65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536,
-        65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536,
-        65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536, 65536};
-    const fixpt POW_120_CHARM_INCREMENT[] = { // 1.20^x fixed point, with x from 1 to 50 in increments of 1:
-        78643, 94371, 113246, 135895, 163074, 195689, 234827, 281792, 338151, 405781, 486937, 584325, 701190, 841428, 1009714, 1211657,
-        1453988, 1744786, 2093744, 2512492, 3014991, 3617989, 4341587, 5209905, 6251886, 7502263, 9002716, 10803259, 12963911, 15556694,
-        18668032, 22401639, 26881967, 32258360, 38710033, 46452039, 55742447, 66890937, 80269124, 96322949, 115587539, 138705047, 166446056,
-        199735268, 239682321, 287618785, 345142543, 414171051, 497005262, 596406314, 715687577};
-    const fixpt POW_125_CHARM_INCREMENT[] = { // 1.25^x fixed point, with x from 1 to 50 in increments of 1:
-        81920, 102400, 128000, 160000, 200000, 250000, 312500, 390625, 488281, 610351, 762939, 953674, 1192092, 1490116, 1862645, 2328306,
-        2910383, 3637978, 4547473, 5684341, 7105427, 8881784, 11102230, 13877787, 17347234, 21684043, 27105054, 33881317, 42351647, 52939559,
-        66174449, 82718061, 103397576, 129246970, 161558713, 201948391, 252435489, 315544362, 394430452, 493038065, 616297582, 770371977,
-        962964972, 1203706215, 1504632769, 1880790961, 2350988701, 2938735877, 3673419846, 4591774807, 5739718509};
-    const short duration[NUMBER_CHARM_KINDS] = {
-        3,  // Health
-        20, // Protection
-        7,  // Haste
-        10, // Fire immunity
-        5,  // Invisibility
-        25, // Telepathy
-        10, // Levitation
-        0,  // Shattering
-        18, // Guardian
-        0,  // Teleportation
-        0,  // Recharging
-        0,  // Negation
-    };
-    const fixpt *increment[NUMBER_CHARM_KINDS] = {
-        POW_0_CHARM_INCREMENT,      // Health
-        POW_0_CHARM_INCREMENT,      // Protection
-        POW_120_CHARM_INCREMENT,    // Haste
-        POW_125_CHARM_INCREMENT,    // Fire immunity
-        POW_120_CHARM_INCREMENT,    // Invisibility
-        POW_125_CHARM_INCREMENT,    // Telepathy
-        POW_125_CHARM_INCREMENT,    // Levitation
-        POW_0_CHARM_INCREMENT,      // Shattering
-        POW_0_CHARM_INCREMENT,      // Guardian
-        POW_0_CHARM_INCREMENT,      // Teleportation
-        POW_0_CHARM_INCREMENT,      // Recharging
-        POW_0_CHARM_INCREMENT,      // Negation
-    };
 
-    short idx = clamp(enchant - 1, 0, LAST_INDEX(POW_125_CHARM_INCREMENT));
-    return duration[charmKind] * increment[charmKind][idx] / FP_FACTOR;
+    short idx = clamp(enchant - 1, 0, CHARM_EFFECT_DURATION_INCREMENT_ARRAY_SIZE - 1);
+    return charmEffectTable[charmKind].effectDurationBase * charmEffectTable[charmKind].effectDurationIncrement[idx] / FP_FACTOR;
 }
 
 short charmRechargeDelay(short charmKind, short enchant) {
-    const short duration[NUMBER_CHARM_KINDS] = {
-        2500,   // Health
-        1000,   // Protection
-        800,    // Haste
-        800,    // Fire immunity
-        800,    // Invisibility
-        800,    // Telepathy
-        800,    // Levitation
-        2500,   // Shattering
-        700,    // Guardian
-        920,    // Teleportation
-        10000,  // Recharging
-        2500,   // Negation
-    };
-    const fixpt base[NUMBER_CHARM_KINDS] = {
-        FP_FACTOR * 55 / 100, // Health
-        FP_FACTOR * 60 / 100, // Protection
-        FP_FACTOR * 65 / 100, // Haste
-        FP_FACTOR * 60 / 100, // Fire immunity
-        FP_FACTOR * 65 / 100, // Invisibility
-        FP_FACTOR * 65 / 100, // Telepathy
-        FP_FACTOR * 65 / 100, // Levitation
-        FP_FACTOR * 60 / 100, // Shattering
-        FP_FACTOR * 70 / 100, // Guardian
-        FP_FACTOR * 60 / 100, // Teleportation
-        FP_FACTOR * 55 / 100, // Recharging
-        FP_FACTOR * 60 / 100, // Negation
-    };
 
     enchant = clamp(enchant, 1, 50);
     short delay = charmEffectDuration(charmKind, enchant)
-        + (duration[charmKind] * fp_pow(base[charmKind], enchant) / FP_FACTOR);
-    return max(1, delay);
+        + (charmEffectTable[charmKind].rechargeDelayDuration * fp_pow(charmEffectTable[charmKind].rechargeDelayBase, enchant) / FP_FACTOR);
+    return max(charmEffectTable[charmKind].rechargeDelayMinTurns, delay);
 }
 
 short runicWeaponChance(item *theItem, boolean customEnchantLevel, fixpt enchantLevel) {
