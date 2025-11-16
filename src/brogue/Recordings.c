@@ -188,7 +188,7 @@ static void writeHeaderInfo(char *path) {
     for (i = 0; rogue.versionString[i] != '\0'; i++) {
         c[i] = rogue.versionString[i];
     }
-    c[15] = rogue.wizard;
+    c[15] = rogue.mode;
     i = 16;
     numberToString(rogue.seed, 8, &c[i]);
     i += 8;
@@ -527,7 +527,7 @@ void initRecording() {
             rogue.gameExitStatusCode = EXIT_STATUS_FAILURE_RECORDING_WRONG_VERSION;
         }
 
-        if (wizardMode != rogue.wizard) {
+        if (wizardMode != WIZARD_MODE) {
             // wizard game cannot be played in normal mode and vice versa
             rogue.playbackMode = false;
             rogue.playbackFastForward = false;
@@ -1182,9 +1182,9 @@ static void getDefaultFilePath(char *defaultPath, boolean gameOver) {
     } else {
         sprintf(defaultPath, "%s #%s Escaped the dungeons", gameConst->versionString, seed);
     }
-    if (rogue.wizard) {
+    if (rogue.mode == GAME_MODE_WIZARD) {
         strcat(defaultPath, " (wizard)");
-    } else if (rogue.easyMode) {
+    } else if (rogue.mode == GAME_MODE_EASY) {
         strcat(defaultPath, " (easy)");
     }
 }
