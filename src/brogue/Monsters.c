@@ -114,7 +114,8 @@ void initializeMonster(creature *monst, boolean itemPossible) {
     monst->currentHP = monst->info.maxHP;
     monst->spawnDepth = rogue.depthLevel;
     monst->ticksUntilTurn = monst->info.movementSpeed;
-    monst->info.turnsBetweenRegen *= 1000; // tracked as thousandths to prevent rounding errors
+    if (monst->info.turnsBetweenRegen < 1000)   // Fix double-initialize issue when creating monsters in wizard mode
+        monst->info.turnsBetweenRegen *= 1000;  // tracked as thousandths to prevent rounding errors
     monst->turnsUntilRegen = monst->info.turnsBetweenRegen;
     monst->regenPerTurn = 0;
     monst->movementSpeed = monst->info.movementSpeed;
