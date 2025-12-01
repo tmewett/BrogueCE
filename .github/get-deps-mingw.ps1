@@ -1,8 +1,8 @@
 ﻿$ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
-$sdlVersion = "2.0.10"
-$sdlImageVersion = "2.0.5"
+$sdlVersion = "2.32.10"
+$sdlImageVersion = "2.8.8"
 
 $sdlArhive = "SDL2-devel-$sdlVersion-mingw.tar.gz"
 $sdlImageArhive = "SDL2_image-devel-$sdlImageVersion-mingw.tar.gz"
