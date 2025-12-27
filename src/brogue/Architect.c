@@ -3519,7 +3519,7 @@ void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
             // STATUS_ENTERS_LEVEL_IN accounts for monster speed; convert back to map distance and subtract from distance to stairs
             turnCount = (theMap[monst->loc.x][monst->loc.y] - (monst->status[STATUS_ENTERS_LEVEL_IN] * 100 / monst->movementSpeed));
             for (i=0; i < turnCount; i++) {
-                if ((dir = nextStep(theMap, monst->loc.x, monst->loc.y, NULL, true)) != NO_DIRECTION) {
+                if ((dir = nextStep(theMap, monst->loc, NULL, true)) != NO_DIRECTION) {
                     monst->loc.x += nbDirs[dir][0];
                     monst->loc.y += nbDirs[dir][1];
                 } else {

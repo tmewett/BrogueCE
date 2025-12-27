@@ -1487,7 +1487,7 @@ void calculateDistances(short **distanceMap, short destinationX, short destinati
 // Always rolls downhill on the distance map.
 // If monst is provided, do not return a direction pointing to
 // a cell that the monster avoids.
-short nextStep(short **distanceMap, short x, short y, creature *monst, boolean preferDiagonals) {
+short nextStep(short **distanceMap, pos target, creature *monst, boolean preferDiagonals) {
     short newX, newY, bestScore;
     enum directions dir, bestDir;
     creature *blocker;
@@ -1646,30 +1646,28 @@ static void travelMap(short **distanceMap) {
     updateFlavorText();
 }
 
-void travel(short x, short y, boolean autoConfirm) {
-    short **distanceMap, i;
+void travel(pos target, boolean autoConfirm) {
     rogueEvent theEvent;
     unsigned short staircaseConfirmKey;
 
     confirmMessages();
 
     if (D_WORMHOLING) {
-        recordMouseClick(mapToWindowX(x), mapToWindowY(y), true, false);
+        recordMouseClick(mapToWindowX(target.x), mapToWindowY(target.y), true, false);
         pmapAt(player.loc)->flags &= ~HAS_PLAYER;
         refreshDungeonCell(player.loc);
-        player.loc.x = x;
-        player.loc.y = y;
-        pmap[x][y].flags |= HAS_PLAYER;
+        player.loc = target;
+        pmapAt(target)->flags |= HAS_PLAYER;
         updatePlayerUnderwaterness();
-        refreshDungeonCell((pos){ x, y });
+        refreshDungeonCell(target);
         updateVision(true);
         return;
     }
 
-    if (abs(player.loc.x - x) + abs(player.loc.y - y) == 1) {
+    if (abs(player.loc.x - target.x) + abs(player.loc.y - target.y) == 1) {
         // targeting a cardinal neighbor
-        for (i=0; i<4; i++) {
-            if (nbDirs[i][0] == (x - player.loc.x) && nbDirs[i][1] == (y - player.loc.y)) {
+        for (int i=0; i<4; i++) {
+            if (nbDirs[i][0] == (target.x - player.loc.x) && nbDirs[i][1] == (target.y - player.loc.y)) {
                 playerMoves(i);
                 break;
             }
@@ -1677,22 +1675,22 @@ void travel(short x, short y, boolean autoConfirm) {
         return;
     }
 
-    if (!(pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED))) {
+    if (!(pmapAt(target)->flags & (DISCOVERED | MAGIC_MAPPED))) {
         message("You have not explored that location.", 0);
         return;
     }
 
-    distanceMap = allocGrid();
+    short **distanceMap = allocGrid();
 
-    calculateDistances(distanceMap, x, y, 0, &player, false, false);
+    calculateDistances(distanceMap, target.x, target.y, 0, &player, false, false);
     if (distanceMap[player.loc.x][player.loc.y] < 30000) {
         if (autoConfirm) {
             travelMap(distanceMap);
             //refreshSideBar(-1, -1, false);
         } else {
-            if (rogue.upLoc.x == x && rogue.upLoc.y == y) {
+            if (posEq(rogue.upLoc, target)) {
                 staircaseConfirmKey = ASCEND_KEY;
-            } else if (rogue.downLoc.x == x && rogue.downLoc.y == y) {
+            } else if (posEq(rogue.downLoc, target)) {
                 staircaseConfirmKey = DESCEND_KEY;
             } else {
                 staircaseConfirmKey = 0;
@@ -1707,7 +1705,7 @@ void travel(short x, short y, boolean autoConfirm) {
             displayRoute(distanceMap, true); // clear route display
             confirmMessages();
 
-            if ((theEvent.eventType == MOUSE_UP && windowToMapX(theEvent.param1) == x && windowToMapY(theEvent.param2) == y)
+            if ((theEvent.eventType == MOUSE_UP && windowToMapX(theEvent.param1) == target.x && windowToMapY(theEvent.param2) == target.y)
                 || (theEvent.eventType == KEYSTROKE && (theEvent.param1 == 'Y' || theEvent.param1 == 'y'
                                                         || theEvent.param1 == RETURN_KEY
                                                         || (theEvent.param1 == staircaseConfirmKey
@@ -2010,7 +2008,7 @@ boolean explore(short frameDelay) {
         hilitePath(path, steps, false);
 
         // take a step
-        dir = nextStep(distanceMap, player.loc.x, player.loc.y, NULL, false);
+        dir = nextStep(distanceMap, player.loc, NULL, false);
 
         if (!headingToStairs && rogue.autoPlayingLevel && dir == NO_DIRECTION) {
             headingToStairs = true;
@@ -2163,16 +2161,15 @@ boolean search(short searchStrength) {
     return foundSomething;
 }
 
-boolean proposeOrConfirmLocation(short x, short y, char *failureMessage) {
+boolean proposeOrConfirmLocation(pos target, char *failureMessage) {
     boolean retval = false;
-    if (player.loc.x == x && player.loc.y == y) {
+    if (posEq(player.loc, target)) {
         message("you are already there.", 0);
-    } else if (pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED)) {
-        if (rogue.cursorLoc.x == x && rogue.cursorLoc.y == y) {
+    } else if (pmapAt(target)->flags & (DISCOVERED | MAGIC_MAPPED)) {
+        if (posEq(rogue.cursorLoc, target)) {
             retval = true;
         } else {
-            rogue.cursorLoc.x = x;
-            rogue.cursorLoc.y = y;
+            rogue.cursorLoc = target;
         }
     } else {
         message(failureMessage, 0);

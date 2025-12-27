@@ -1200,7 +1200,7 @@ static boolean isValidWanderDestination(creature *monst, short wpIndex) {
             && wpIndex < rogue.wpCount
             && !monst->waypointAlreadyVisited[wpIndex]
             && rogue.wpDistance[wpIndex][monst->loc.x][monst->loc.y] >= 0
-            && nextStep(rogue.wpDistance[wpIndex], monst->loc.x, monst->loc.y, monst, false) != NO_DIRECTION);
+            && nextStep(rogue.wpDistance[wpIndex], monst->loc, monst, false) != NO_DIRECTION);
 }
 
 static short closestWaypointIndex(creature *monst) {
@@ -2120,7 +2120,7 @@ static void pathTowardCreature(creature *monst, creature *target) {
     }
 
     // follow the map.
-    short dir = nextStep(target->mapToMe, monst->loc.x, monst->loc.y, monst, true);
+    short dir = nextStep(target->mapToMe, monst->loc, monst, true);
     if (dir == NO_DIRECTION) {
         dir = randValidDirectionFrom(monst, monst->loc.x, monst->loc.y, true);
     }
@@ -3068,7 +3068,7 @@ static void moveAlly(creature *monst) {
             return;
         }
 
-        dir = nextStep(rogue.mapToSafeTerrain, x, y, monst, true);
+        dir = nextStep(rogue.mapToSafeTerrain, (pos){ x, y }, monst, true);
         if (dir != -1) {
             targetLoc = (pos){
                 x + nbDirs[dir][0],
@@ -3111,7 +3111,7 @@ static void moveAlly(creature *monst) {
         if (!rogue.updatedAllySafetyMapThisTurn) {
             updateAllySafetyMap();
         }
-        dir = nextStep(allySafetyMap, monst->loc.x, monst->loc.y, monst, true);
+        dir = nextStep(allySafetyMap, monst->loc, monst, true);
         if (dir != -1) {
             targetLoc = (pos){
                 x + nbDirs[dir][0],
@@ -3492,7 +3492,7 @@ void monstersTurn(creature *monst) {
             return;
         }
 
-        dir = nextStep(getSafetyMap(monst), monst->loc.x, monst->loc.y, NULL, true);
+        dir = nextStep(getSafetyMap(monst), monst->loc, NULL, true);
         if (dir != -1) {
             targetLoc = (pos){
                 x + nbDirs[dir][0],
@@ -3530,7 +3530,7 @@ void monstersTurn(creature *monst) {
                 return;
             }
 
-            dir = nextStep(rogue.mapToSafeTerrain, x, y, monst, true);
+            dir = nextStep(rogue.mapToSafeTerrain, (pos){ x, y }, monst, true);
             if (dir != -1) {
                 targetLoc = (pos) {
                     x + nbDirs[dir][0],
@@ -3594,7 +3594,7 @@ void monstersTurn(creature *monst) {
             // Step toward the chosen waypoint.
             dir = NO_DIRECTION;
             if (isValidWanderDestination(monst, monst->targetWaypointIndex)) {
-                dir = nextStep(rogue.wpDistance[monst->targetWaypointIndex], monst->loc.x, monst->loc.y, monst, false);
+                dir = nextStep(rogue.wpDistance[monst->targetWaypointIndex], monst->loc, monst, false);
             }
             // If there's no path forward, call that waypoint finished and pick a new one.
             if (!isValidWanderDestination(monst, monst->targetWaypointIndex)
@@ -3602,7 +3602,7 @@ void monstersTurn(creature *monst) {
 
                 chooseNewWanderDestination(monst);
                 if (isValidWanderDestination(monst, monst->targetWaypointIndex)) {
-                    dir = nextStep(rogue.wpDistance[monst->targetWaypointIndex], monst->loc.x, monst->loc.y, monst, false);
+                    dir = nextStep(rogue.wpDistance[monst->targetWaypointIndex], monst->loc, monst, false);
                 }
             }
             // If there's still no path forward, step randomly as though flitting.
