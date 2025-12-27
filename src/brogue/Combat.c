@@ -1558,7 +1558,7 @@ boolean inflictDamage(creature *attacker, creature *defender,
     }
 
     if (defender == &player
-        && rogue.easyMode
+        && rogue.mode == GAME_MODE_EASY
         && damage > 0) {
         damage = max(1, damage/5);
     }

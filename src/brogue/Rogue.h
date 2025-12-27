@@ -46,23 +46,25 @@
 // Macro to compare BROGUE_MAJOR.BROGUE_MINOR.patchVersion to a.b.c
 #define BROGUE_VERSION_ATLEAST(a,b,c) (BROGUE_MAJOR != (a) ? BROGUE_MAJOR > (a) : BROGUE_MINOR != (b) ? BROGUE_MINOR > (b) : rogue.patchVersion >= (c))
 
-#define DEBUG                           if (rogue.wizard)
-#define MONSTERS_ENABLED                (!rogue.wizard || 1) // Quest room monsters can be generated regardless.
-#define ITEMS_ENABLED                   (!rogue.wizard || 1)
+#define WIZARD_MODE                     (rogue.mode == GAME_MODE_WIZARD)
 
-#define D_BULLET_TIME                   (rogue.wizard && 0)
-#define D_WORMHOLING                    (rogue.wizard && 1)
-#define D_IMMORTAL                      (rogue.wizard && 1)
+#define DEBUG                           if (WIZARD_MODE)
+#define MONSTERS_ENABLED                (!WIZARD_MODE || 1) // Quest room monsters can be generated regardless.
+#define ITEMS_ENABLED                   (!WIZARD_MODE || 1)
 
-#define D_SAFETY_VISION                 (rogue.wizard && 0)
-#define D_SCENT_VISION                  (rogue.wizard && 0)
-#define D_OMNISCENCE                    (rogue.wizard && 0)
+#define D_BULLET_TIME                   (WIZARD_MODE && 0)
+#define D_WORMHOLING                    (WIZARD_MODE && 1)
+#define D_IMMORTAL                      (WIZARD_MODE && 1)
 
-#define D_INSPECT_LEVELGEN              (rogue.wizard && 0)
-#define D_INSPECT_MACHINES              (rogue.wizard && 0)
+#define D_SAFETY_VISION                 (WIZARD_MODE && 0)
+#define D_SCENT_VISION                  (WIZARD_MODE && 0)
+#define D_OMNISCENCE                    (WIZARD_MODE && 0)
 
-#define D_MESSAGE_ITEM_GENERATION       (rogue.wizard && 0)
-#define D_MESSAGE_MACHINE_GENERATION    (rogue.wizard && 0)
+#define D_INSPECT_LEVELGEN              (WIZARD_MODE && 0)
+#define D_INSPECT_MACHINES              (WIZARD_MODE && 0)
+
+#define D_MESSAGE_ITEM_GENERATION       (WIZARD_MODE && 0)
+#define D_MESSAGE_MACHINE_GENERATION    (WIZARD_MODE && 0)
 
 // If enabled, runs a benchmark for the performance of repeatedly updating the screen at the start of the game.
 // #define SCREEN_UPDATE_BENCHMARK
@@ -2424,10 +2426,15 @@ typedef struct gameConstants {
     const int mainMenuTitleWidth;                   // width of the title screen in characters
 } gameConstants;
 
+enum gameMode {
+    GAME_MODE_NORMAL,
+    GAME_MODE_WIZARD,
+    GAME_MODE_EASY
+};
 
 // these are basically global variables pertaining to the game state and player's unique variables:
 typedef struct playerCharacter {
-    boolean wizard;                     // in wizard mode
+    enum gameMode mode;                     // in wizard/easy mode
 
     short depthLevel;                   // which dungeon level are we on
     short deepestLevel;
@@ -2446,7 +2453,6 @@ typedef struct playerCharacter {
     boolean updatedAllySafetyMapThisTurn;   // so it's updated no more than once per turn
     boolean updatedMapToSafeTerrainThisTurn;// so it's updated no more than once per turn
     boolean updatedMapToShoreThisTurn;      // so it's updated no more than once per turn
-    boolean easyMode;                   // enables easy mode
     boolean inWater;                    // helps with the blue water filter effect
     boolean heardCombatThisTurn;        // so you get only one "you hear combat in the distance" per turn
     boolean creaturesWillFlashThisTurn; // there are creatures out there that need to flash before the turn ends
