@@ -6543,7 +6543,7 @@ static void recordApplyItemCommand(item *theItem) {
 }
 
 static boolean useStaffOrWand(item *theItem) {
-    char buf[COLS], buf2[COLS];
+    char buf[COLS], buf2[COLS], buf3[COLS];
     short maxDistance;
     boolean autoID, confirmedTarget;
     bolt theBolt;
@@ -6583,6 +6583,7 @@ static boolean useStaffOrWand(item *theItem) {
 
         confirmedTarget = false;
     }
+
     if (confirmedTarget) {
 
         recordApplyItemCommand(theItem);
@@ -6592,13 +6593,22 @@ static boolean useStaffOrWand(item *theItem) {
         rogue.featRecord[FEAT_PURE_WARRIOR] = false;
 
         if (theItem->charges > 0) {
+
+            creature *monst = monsterAtLoc(zapTarget);
+            if (monst) {
+                monsterName(buf3, monst, true);
+                sprintf(buf, "you zap your %s at %s.", buf2, buf3);
+            } else {
+                sprintf(buf, "you zap your %s.", buf2);
+            }
+            message(buf, 0);
+
             autoID = zap(originLoc, zapTarget,
                          &theBolt,
                          !boltKnown,   // hide bolt details
                          false);
             if (autoID) {
                 if (!tableForItemCategory(theItem->category)[theItem->kind].identified) {
-                    itemName(theItem, buf2, false, false, NULL);
                     sprintf(buf, "(Your %s must be ", buf2);
                     identifyItemKind(theItem);
                     itemName(theItem, buf2, false, true, NULL);
@@ -6608,7 +6618,6 @@ static boolean useStaffOrWand(item *theItem) {
                 }
             }
         } else {
-            itemName(theItem, buf2, false, false, NULL);
             if (theItem->category == STAFF) {
                 sprintf(buf, "Your %s fizzles; it must be out of charges for now.", buf2);
             } else {

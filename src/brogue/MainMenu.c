@@ -48,9 +48,9 @@ static void drawMenuFlames(signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADD
 
     versionStringLength = strLenWithoutEscapes(gameConst->versionString);
 
-    if (rogue.wizard) {
+    if (WIZARD_MODE) {
         strcpy(gameModeString, "Wizard Mode");
-    } else if (rogue.easyMode) {
+    } else if (rogue.mode == GAME_MODE_EASY) {
         strcpy(gameModeString, "Easy Mode");
     }
     gameModeStringLength = strLenWithoutEscapes(gameModeString);
@@ -456,14 +456,11 @@ static void chooseGameMode() {
     gameMode = printTextBox(textBuf, 10, 5, 66, &white, &black, buttons, 3);
     restoreDisplayBuffer(&rbuf);
     if (gameMode == 0) {
-        rogue.wizard = true;
-        rogue.easyMode = false;
+        rogue.mode = GAME_MODE_WIZARD;
     } else if (gameMode == 1) {
-        rogue.wizard = false;
-        rogue.easyMode = true;
+        rogue.mode = GAME_MODE_EASY;
     } else if (gameMode == 2) {
-        rogue.wizard = false;
-        rogue.easyMode = false;
+        rogue.mode = GAME_MODE_NORMAL;
     }
 
     rogue.nextGame = NG_NOTHING;

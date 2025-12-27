@@ -28,7 +28,7 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
-#define D_DISABLE_BACKGROUND_COLORS     (rogue.wizard && 0)
+#define D_DISABLE_BACKGROUND_COLORS     (WIZARD_MODE && 0)
 
 // Populates path[][] with a list of coordinates starting at origin and traversing down the map. Returns the number of steps in the path.
 short getPlayerPathOnMap(pos path[1000], short **map, pos origin) {
@@ -275,7 +275,7 @@ static short actionMenu(short x, boolean playingBack) {
             buttons[buttonCount].hotkey[0] = RETHROW_KEY;
             buttonCount++;
 
-            if (!rogue.easyMode) {
+            if (!rogue.mode == GAME_MODE_EASY) {
                 if (KEYBOARD_LABELS) {
                     sprintf(buttons[buttonCount].text, "  %s&: %sEasy mode  ",              yellowColorEscape, whiteColorEscape);
                 } else {
@@ -4396,9 +4396,9 @@ void printSeed() {
     char buf[COLS];
     char mode[14] = "";
 
-    if (rogue.easyMode) {
+    if (rogue.mode = GAME_MODE_EASY) {
         strcpy(mode,"easy mode; ");
-    } else if (rogue.wizard) {
+    } else if (WIZARD_MODE) {
         strcpy(mode,"wizard mode; ");
     }
     if (rogue.hideSeed) {
@@ -5099,27 +5099,22 @@ unsigned long printCarriedItemDetails(item *theItem,
             buttons[b].hotkey[0] = RELABEL_KEY;
             b++;
         }
-
-        // Add invisible previous and next buttons, so up and down arrows can page through items.
-        // Previous
-        buttons[b].flags = B_ENABLED; // clear everything else
-        buttons[b].hotkey[0] = UP_KEY;
-        buttons[b].hotkey[1] = NUMPAD_8;
-        buttons[b].hotkey[2] = UP_ARROW;
-        b++;
-        // Next
-        buttons[b].flags = B_ENABLED; // clear everything else
-        buttons[b].hotkey[0] = DOWN_KEY;
-        buttons[b].hotkey[1] = NUMPAD_2;
-        buttons[b].hotkey[2] = DOWN_ARROW;
-        b++;
     }
+    // Add invisible previous and next buttons, so up and down arrows can page through items.
+    // Previous
+    buttons[b].flags = B_ENABLED; // clear everything else
+    buttons[b].hotkey[0] = UP_KEY;
+    buttons[b].hotkey[1] = NUMPAD_8;
+    buttons[b].hotkey[2] = UP_ARROW;
+    b++;
+    // Next
+    buttons[b].flags = B_ENABLED; // clear everything else
+    buttons[b].hotkey[0] = DOWN_KEY;
+    buttons[b].hotkey[1] = NUMPAD_2;
+    buttons[b].hotkey[2] = DOWN_ARROW;
+    b++;
+
     b = printTextBox(textBuf, x, y, width, &white, &interfaceBoxColor, buttons, b);
-
-    if (!includeButtons) {
-        waitForKeystrokeOrMouseClick();
-        return -1;
-    }
 
     if (b >= 0) {
         return buttons[b].hotkey[0];
