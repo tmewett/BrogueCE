@@ -6,16 +6,19 @@
 
 #define PI  3.14159265358979323846
 
-#define PNG_WIDTH    2048   // width (px) of the source PNG
-#define PNG_HEIGHT   5568   // height (px) of the source PNG
-#define TILE_WIDTH    128   // width (px) of a single tile in the source PNG
-#define TILE_HEIGHT   232   // height (px) of a single tile in the source PNG
+static int PNG_WIDTH;   // width (px) of the source PNG
+static int PNG_HEIGHT;     // height (px) of the source PNG
+static int TILE_WIDTH;      // width (px) of a single tile in the source PNG
+static int TILE_HEIGHT;    // height (px) of a single tile in the source PNG
+static int TEXT_X_HEIGHT;   // height (px) of the 'x' outline
+static int TEXT_BASELINE;   // height (px) of the blank space below the 'x' outline
+static int MAX_TILE_SIZE;   // maximum width or height (px) 
 #define TILE_ROWS      24   // number of rows in the source PNG
 #define TILE_COLS      16   // number of columns in the source PNG
-#define TEXT_X_HEIGHT 100   // height (px) of the 'x' outline
-#define TEXT_BASELINE  46   // height (px) of the blank space below the 'x' outline
-#define MAX_TILE_SIZE  64   // maximum width or height (px) of screen tiles before we switch to linear interpolation
 
+#define PNG_HEADER_SIZE 6 // the number of int32_t to read from a PNG header to get to the width and height
+#define PNG_HEADER_WIDTH 4 // the PNG header width index
+#define PNG_HEADER_HEIGHT 5 // the PNG header depth index
 
 // How each tile should be processed:
 //  -  's' = stretch: tile stretches to fill the space
@@ -51,7 +54,7 @@ static boolean tileEmpty[TILE_ROWS][TILE_COLS];   // true if a tile is completel
 // The fourth dimention is the downscaling operation's target size (width for horizontal axis, height for vertical).
 // The last dimension is 0 for top/left, 1 for bottom/right, 2 for center.
 // The values stored in tileShifts are signed integers. Unit is 1/10th of a pixel.
-static int8_t tileShifts[TILE_ROWS][TILE_COLS][2][MAX_TILE_SIZE][3];
+static int8_t ***** tileShifts;
 
 static ScreenTile screenTiles[ROWS][COLS];  // buffer for the expected contents of the screen
 static int baseTileWidth = -1;      // width (px) of tiles in the smallest texture (`Textures[0]`)
@@ -63,6 +66,26 @@ int windowHeight = -1;              // the SDL window's height (in "screen units
 boolean fullScreen = false;         // true if the window should be full-screen, else false
 boolean softwareRendering = false;  // true if hardware acceleration is disabled (by choice or by force)
 
+
+// allocator for tile shifts on the heap required since MAX_TILE_SIZE is not known at compile time.
+// Doesnt need freeing since allocated only once per program run.
+static int8_t ***** allocTileShifts() {
+    int8_t ***** out;
+    out = malloc(TILE_ROWS * sizeof(int*));
+    for (int i = 0; i < TILE_ROWS; i++) {
+        out[i] = malloc(TILE_COLS * sizeof(int*));
+        for (int j = 0; j < TILE_COLS; j++) {
+            out[i][j] = malloc(2 * sizeof(int*));
+            for (int k = 0; k < 2; k++) {
+                out[i][j][k] = malloc(MAX_TILE_SIZE * sizeof(int*));
+                for (int l = 0; l < MAX_TILE_SIZE; l++) {
+                    out[i][j][k][l] = malloc(3 * sizeof(int8_t));
+                }
+            }
+        }
+    }
+    return out;
+}
 
 /// Prints the fatal error message provided by SDL then closes the app.
 static void sdlfatal(char *file, int line) {
@@ -441,6 +464,23 @@ static void optimizeTiles() {
     SDL_DestroyWindow(window);
 }
 
+void setImageWidthHeight(const char * filename) {
+    FILE* fptr = fopen(filename, "r");
+    int32_t buf[PNG_HEADER_SIZE];
+    if (PNG_HEADER_SIZE > fread(&buf, sizeof(int32_t), PNG_HEADER_SIZE, fptr)) {
+        imgfatal(__FILE__, __LINE__);
+    }
+   
+    // PNG file headers are in big endian
+    PNG_WIDTH = __builtin_bswap32(buf[PNG_HEADER_WIDTH]);
+    PNG_HEIGHT = __builtin_bswap32(buf[PNG_HEADER_HEIGHT]);
+    TILE_WIDTH = PNG_WIDTH / TILE_COLS;
+    TILE_HEIGHT = PNG_HEIGHT / TILE_ROWS;
+    TEXT_BASELINE = PNG_HEIGHT / 3;
+    TEXT_X_HEIGHT = PNG_HEIGHT - TEXT_BASELINE;
+    MAX_TILE_SIZE = (TILE_HEIGHT > TILE_WIDTH ? TILE_HEIGHT : TILE_WIDTH) / 2;
+    tileShifts = allocTileShifts();
+}
 
 /// Loads the PNG and analyses it.
 void initTiles() {
@@ -452,7 +492,7 @@ void initTiles() {
         fprintf(stderr, "Error: \"%s\" not found!\n", filename);
         exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
     }
-
+    setImageWidthHeight(filename);
     // load the large PNG
     SDL_Surface *image = IMG_Load(filename);
     if (!image) imgfatal(__FILE__, __LINE__);
