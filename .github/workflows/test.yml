@@ -20,10 +20,16 @@ jobs:
 
     - name: "Compile"
       run: |
-        make bin/brogue
+        make -j3 bin/brogue
 
-    - name: "Run regression tests on merge to release branch"
+    - name: "Check that replays still play back"
       run: |
-        python3 test/run_regression_tests.py test/regression_test_ce_v1_14/
-        python3 test/run_regression_tests.py --extra_args "--variant rapid_brogue" test/regression_test_rb_v1_6/
-        python3 test/run_regression_tests.py --extra_args "--variant bullet_brogue" test/regression_test_bb_v1_1/
+        python3 test/run_regression_tests.py --num_processes=3 test/regression_test_ce_v1_14/
+        python3 test/run_regression_tests.py --num_processes=3 --extra_args "--variant rapid_brogue" test/regression_test_rb_v1_6/
+        python3 test/run_regression_tests.py --num_processes=3 --extra_args "--variant bullet_brogue" test/regression_test_bb_v1_1/
+
+    - name: "Check that seed catalogs are unchanged"
+      run: |
+        python3 test/compare_seed_catalog.py test/seed_catalogs/seed_catalog_brogue.txt 40
+        python3 test/compare_seed_catalog.py --extra_args "--variant rapid_brogue" test/seed_catalogs/seed_catalog_rapid_brogue.txt 10
+        python3 test/compare_seed_catalog.py --extra_args "--variant bullet_brogue" test/seed_catalogs/seed_catalog_bullet_brogue.txt 5
