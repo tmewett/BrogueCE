@@ -188,7 +188,7 @@ static void writeHeaderInfo(char *path) {
     for (i = 0; rogue.versionString[i] != '\0'; i++) {
         c[i] = rogue.versionString[i];
     }
-    c[15] = rogue.wizard;
+    c[15] = rogue.mode;
     i = 16;
     numberToString(rogue.seed, 8, &c[i]);
     i += 8;
@@ -468,7 +468,7 @@ void initRecording() {
     }
 
     short i;
-    boolean wizardMode;
+    enum gameMode mode;
     unsigned short recPatch;
     char buf[1000], *versionString = rogue.versionString;
     FILE *recordFile;
@@ -502,7 +502,7 @@ void initRecording() {
         for (i=0; i<15; i++) {
             versionString[i] = recallChar();
         }
-        wizardMode = recallChar();
+        rogue.mode = recallChar();
 
         if (getPatchVersion(versionString, &recPatch) && recPatch <= gameConst->patchVersion) {
             // Major and Minor match ours, Patch is less than or equal to ours: we are compatible.
@@ -517,34 +517,6 @@ void initRecording() {
                 dialogAlert(buf);
             } else {
                 printf("This file is from version %s and cannot be opened in version %s.", versionString, gameConst->versionString);
-            }
-
-            rogue.playbackMode = true;
-            rogue.playbackPaused = true;
-            rogue.playbackFastForward = false;
-            rogue.playbackOOS = false;
-            rogue.gameHasEnded = true;
-            rogue.gameExitStatusCode = EXIT_STATUS_FAILURE_RECORDING_WRONG_VERSION;
-        }
-
-        if (wizardMode != rogue.wizard) {
-            // wizard game cannot be played in normal mode and vice versa
-            rogue.playbackMode = false;
-            rogue.playbackFastForward = false;
-            if (wizardMode) {
-                if (!nonInteractivePlayback) {
-                    sprintf(buf, "This game was played in wizard mode. You must start Brogue in wizard mode to replay it.");
-                    dialogAlert(buf);
-                } else {
-                    printf("This game was played in wizard mode. You must start Brogue in wizard mode to replay it.");
-                }
-            } else {
-                if (!nonInteractivePlayback) {
-                    sprintf(buf, "To play this regular recording, please restart Brogue without the wizard mode option.");
-                    dialogAlert(buf);
-                } else {
-                    printf("To play this regular recording, please restart Brogue without the wizard mode option.");
-                }
             }
 
             rogue.playbackMode = true;
@@ -1182,9 +1154,9 @@ static void getDefaultFilePath(char *defaultPath, boolean gameOver) {
     } else {
         sprintf(defaultPath, "%s #%s Escaped the dungeons", gameConst->versionString, seed);
     }
-    if (rogue.wizard) {
+    if (rogue.mode == GAME_MODE_WIZARD) {
         strcat(defaultPath, " (wizard)");
-    } else if (rogue.easyMode) {
+    } else if (rogue.mode == GAME_MODE_EASY) {
         strcat(defaultPath, " (easy)");
     }
 }
