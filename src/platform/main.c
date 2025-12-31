@@ -14,7 +14,7 @@ boolean serverMode = false;
 boolean nonInteractivePlayback = false;
 boolean hasGraphics = false;
 enum graphicsModes graphicsMode = TEXT_GRAPHICS;
-boolean isCsvFormat = false;
+boolean isCsvFormat, includeVaults = false;
 
 static void printCommandlineHelp() {
     printf("%s",
@@ -44,8 +44,9 @@ static void printCommandlineHelp() {
     "--no-effects   -E          disable color effects\n"
     "--wizard       -W          run in wizard mode, invincible with powerful items\n"
     "--hide-seed                disable seed display in game\n"
-    "[--csv] --print-seed-catalog [START NUM LEVELS]\n"
-    "                           (optional csv format)\n"
+    "--print-seed-catalog [START NUM LEVELS]\n"
+    "[--csv]                    (optional csv format)\n"
+    "[--vaults]                 (optional include vaults)\n"
     "                           prints a catalog of the first LEVELS levels of NUM\n"
     "                           seeds from seed START (defaults: 1 1000 5)\n"
     "--data-dir DIRECTORY       specify directory containing game resources (experimental)\n"
@@ -183,7 +184,7 @@ int main(int argc, char *argv[])
                 continue;
             }
         }
-        
+
         if (strcmp(argv[i], "-vn") == 0) {
             if (i + 1 < argc) {
                 strncpy(rogue.nextGamePath, argv[i + 1], BROGUE_FILENAME_MAX);
@@ -225,7 +226,7 @@ int main(int argc, char *argv[])
             int errorCode;
             char errorMessage[ERROR_MESSAGE_LENGTH];
 
-            errorCode = printSeedCatalog(startingSeed, numberOfSeeds, numberOfLevels, isCsvFormat, errorMessage);
+            errorCode = printSeedCatalog(startingSeed, numberOfSeeds, numberOfLevels, isCsvFormat, includeVaults, errorMessage);
             if (errorCode) {
                 cliError("Bad params for seed catalog, ", errorMessage);
             }
@@ -254,6 +255,11 @@ int main(int argc, char *argv[])
 
         if (strcmp(argv[i], "--csv") == 0 ) {
             isCsvFormat = true;  // we call printSeedCatalog later
+            continue;
+        }
+
+        if (strcmp(argv[i], "--vaults") == 0 ) {
+            includeVaults = true;  // we call printSeedCatalog later
             continue;
         }
 

@@ -851,7 +851,7 @@ creature *spawnHorde(short hordeID, pos loc, unsigned long forbiddenFlags, unsig
 
     if (theHorde->machine > 0) {
         // Build the accompanying machine (e.g. a goblin encampment)
-        buildAMachine(theHorde->machine, loc.x, loc.y, 0, NULL, NULL, NULL);
+        buildAMachine(theHorde->machine, loc.x, loc.y, 0);
     }
 
     leader = generateMonster(theHorde->leaderType, true, true);
