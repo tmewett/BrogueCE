@@ -1239,7 +1239,7 @@ void updateFloorItems() {
         }
         if (cellHasTerrainFlag((pos){ x, y }, T_MOVES_ITEMS)) {
             pos loc;
-            getQualifyingLocNear(&loc, (pos){ x, y }, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM), false, false);
+            getQualifyingLocNear(&loc, (pos){ x, y }, true, 0, (T_OBSTRUCTS_ITEMS | T_OBSTRUCTS_PASSABILITY), (HAS_ITEM | HAS_MONSTER), false, false);
             // To prevent items drifting through walls, they can only drift to an adjacent cell
             if (distanceBetween((pos){ x, y }, loc) == 1) {
                 removeItemAt((pos){ x, y });
