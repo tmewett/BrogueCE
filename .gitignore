@@ -3,9 +3,11 @@ bin/*.brogue*
 bin/BrogueHighScores.txt
 bin/brogue*
 bin/*.png
+vars
 
 # Release dirs and archives
 BrogueCE-*
+*.zip
 
 .vscode
 .gdb_history

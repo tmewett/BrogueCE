@@ -2,6 +2,6 @@
 set -euo pipefail
 
 for file in "$@"; do
-    echo '-'
-    sed -e 's/^/  /' < $file
+    cat $file
+    echo
 done

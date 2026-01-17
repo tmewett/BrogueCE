@@ -5,6 +5,7 @@ You need these things at minimum to compile the game:
 
 - a C compiler (Clang or GCC)
 - Make
+- diffutils (cmp)
 
 You will also need additional dependencies based on the build options you select.
 You can see the options and their requirements in `config.mk`. You can configure
@@ -23,13 +24,13 @@ tested by the author and is relatively simple.
 
 ### Setting up
 
-1. Install [MSYS2][1] for x86_64. Refer to [its wiki][2] for essential info
+1. Install [MSYS2][1] for x86_64. Refer to the website for essential info
 on how to use it.
 
 2. (Installing the dependencies) Open the MSYS2 shell and run the following:
 
     ```
-    pacman -S make mingw-w64-x86_64-{gcc,SDL2,SDL2_image}
+    pacman -S make diffutils mingw-w64-x86_64-{gcc,SDL2,SDL2_image}
     ```
 
 ### Building
@@ -39,7 +40,7 @@ directory (the one containing this file; your Windows drives can be accessed
 at `/c`, `/d` etc.) and run
 
     ```
-    make bin/brogue.exe
+    make SYSTEM=WINDOWS bin/brogue.exe
     ```
 
 2. Optional: You can now run the game by running `cd bin; ./brogue.exe`.
@@ -100,7 +101,7 @@ These instructions are for the graphical version only.
 1. Install the dependencies; for example, on Debian/Ubuntu, run
 
     ```
-    sudo apt install make gcc libsdl2-2.0-0 libsdl2-dev libsdl2-image-2.0-0 libsdl2-image-dev
+    sudo apt install make gcc diffutils libsdl2-2.0-0 libsdl2-dev libsdl2-image-2.0-0 libsdl2-image-dev
     ```
 
 ### Building
@@ -113,6 +114,5 @@ These instructions are for the graphical version only.
 
 
 [1]: https://www.msys2.org/
-[2]: https://github.com/msys2/msys2/wiki
 [3]: https://www.java.com/en/download/help/path.xml
 [4]: https://brew.sh/

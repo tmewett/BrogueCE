@@ -113,9 +113,24 @@ static uint64_t getTime() {
     return (uint64_t)tv.tv_sec * 1000 + tv.tv_usec / 1000;
 }
 
-static boolean curses_pauseForMilliseconds(short milliseconds) {
+static long lastDelayTime = 0;
+
+// Like SDL_Delay, but reduces the delay if time has passed since the last delay
+static void _delayUpTo(short ms) {
+    long curTime = getTime();
+    long timeDiff = curTime - lastDelayTime;
+    ms -= timeDiff;
+
+    if (ms > 0) {
+        Term.wait(ms);
+    } // else delaying further would go past the time we want to delay until
+
+    lastDelayTime = getTime();
+}
+
+static boolean curses_pauseForMilliseconds(short milliseconds, PauseBehavior behavior) {
     Term.refresh();
-    Term.wait(milliseconds);
+    _delayUpTo(milliseconds);
 
     // hasKey returns true if we have a mouse event, too.
     return Term.hasKey();
@@ -124,14 +139,11 @@ static boolean curses_pauseForMilliseconds(short milliseconds) {
 static void curses_nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance) {
     int key;
     // TCOD_mouse_t mouse;
-    uint64_t theTime, waitTime;
     // short x, y;
 
     Term.refresh();
 
     for (;;) {
-        theTime = getTime(); //TCOD_sys_elapsed_milli();
-
         /*if (TCOD_console_is_window_closed()) {
             rogue.gameHasEnded = true; // causes the game loop to terminate quickly
             returnEvent->eventType = KEYSTROKE;
@@ -173,6 +185,7 @@ static void curses_nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInpu
             else if (key == Term.keys.right) returnEvent->param1 = RIGHT_ARROW;
             else if (key == Term.keys.quit) {
                 rogue.gameHasEnded = true;
+                rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
                 rogue.nextGame = NG_QUIT; // causes the menu to drop out immediately
             }
             else if ((key >= 'A' && key <= 'Z')) {
@@ -188,11 +201,7 @@ static void curses_nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInpu
             return;
         }
 
-        waitTime = PAUSE_BETWEEN_EVENT_POLLING + theTime - getTime();
-
-        if (waitTime > 0 && waitTime <= PAUSE_BETWEEN_EVENT_POLLING) {
-            curses_pauseForMilliseconds(waitTime);
-        }
+        _delayUpTo(PAUSE_BETWEEN_EVENT_POLLING);
     }
 }
 
