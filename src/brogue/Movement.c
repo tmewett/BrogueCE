@@ -1502,8 +1502,8 @@ short nextStep(short **distanceMap, pos target, creature *monst, boolean preferD
          (preferDiagonals ? dir >= 0 : dir < DIRECTION_COUNT);
          (preferDiagonals ? dir-- : dir++)) {
 
-        newX = x + nbDirs[dir][0];
-        newY = y + nbDirs[dir][1];
+        newX = target.x + nbDirs[dir][0];
+        newY = target.y + nbDirs[dir][1];
 
         brogueAssert(coordinatesAreInMap(newX, newY));
         if (coordinatesAreInMap(newX, newY)) {
@@ -1520,13 +1520,13 @@ short nextStep(short **distanceMap, pos target, creature *monst, boolean preferD
                        && !monstersAreEnemies(monst, blocker)) {
                 blocked = true;
             }
-            if ((distanceMap[x][y] - distanceMap[newX][newY]) > bestScore
-                && !diagonalBlocked(x, y, newX, newY, monst == &player)
+            if ((distanceMap[target.x][target.y] - distanceMap[newX][newY]) > bestScore
+                && !diagonalBlocked(target.x, target.y, newX, newY, monst == &player)
                 && knownToPlayerAsPassableOrSecretDoor((pos){ newX, newY })
                 && !blocked) {
 
                 bestDir = dir;
-                bestScore = distanceMap[x][y] - distanceMap[newX][newY];
+                bestScore = distanceMap[target.x][target.y] - distanceMap[newX][newY];
             }
         }
     }
