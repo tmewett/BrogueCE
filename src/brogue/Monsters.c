@@ -3410,7 +3410,7 @@ void monstersTurn(creature *monst) {
         }
         if (closestMonster && !(monst->info.flags & MONST_MAINTAINS_DISTANCE)) {
             targetLoc = closestMonster->loc;
-            if (moveMonsterPassivelyTowards(monst, targetLoc, monst->creatureState == MONSTER_ALLY)) {
+            if (moveMonsterPassivelyTowards(monst, targetLoc, true)) {
                 return;
             }
         }
