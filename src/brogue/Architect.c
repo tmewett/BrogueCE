@@ -3251,7 +3251,7 @@ boolean fillSpawnMap(enum dungeonLayers layer,
                     if (player.loc.x == i && player.loc.y == j && !player.status[STATUS_LEVITATING] && refresh) {
                         flavorMessage(tileFlavor(player.loc.x, player.loc.y));
                     }
-                    if (pmap[i][j].flags & (HAS_MONSTER)) {
+                    if (pmap[i][j].flags & (HAS_MONSTER | HAS_PLAYER)) {
                         monst = monsterAtLoc((pos){ i, j });
                         applyInstantTileEffectsToCreature(monst);
                         if (rogue.gameHasEnded) {

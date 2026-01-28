@@ -2091,6 +2091,12 @@ void autoRest() {
         danger[dir] = monsterAvoids(&player, newLoc);
     }
 
+    // Clear already-seen flag from all monsters
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
+        monst->bookkeepingFlags &= ~MB_ALREADY_SEEN;
+    }
+
     rogue.disturbed = false;
     rogue.automationActive = true;
     // Stop as soon as we're free from crystal.

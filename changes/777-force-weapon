@@ -1,0 +1,1 @@
+Fixed a bug that caused force-weapons to assign damage to the wrong creature when a creature is thrown.
