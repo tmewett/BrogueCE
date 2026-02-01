@@ -88,7 +88,7 @@ static short dialogSelectEntryFromList(
 }
 
 // Display a dialog window for the user to chose a vorpal enemy. Remove the runic if none selected.
-static short dialogCreateItemChooseVorpalEnemy() {
+static short dialogCreateItemChooseVorpalEnemy(void) {
     char buttonText[COLS];
     short i;
     brogueButton buttons[DIALOG_CREATE_ITEM_MAX_BUTTONS];
@@ -302,7 +302,7 @@ static void dialogCreateMonsterChooseMutation(creature *theMonster) {
 }
 
 // Display a series of dialog windows for creating an arbitrary monster chosen by the user
-static void dialogCreateMonster() {
+static void dialogCreateMonster(void) {
     brogueButton buttons[DIALOG_CREATE_ITEM_MAX_BUTTONS];
     char buttonText[COLS];
     pos selectedPosition;
@@ -436,7 +436,7 @@ static void dialogCreateMonster() {
 }
 
 // Display a series of dialog windows for creating an arbitrary item chosen by the user
-static void dialogCreateItem() {
+static void dialogCreateItem(void) {
     brogueButton buttons[DIALOG_CREATE_ITEM_MAX_BUTTONS];
     char buttonText[COLS];
     short i, selectedCategory, selectedKind;
@@ -505,7 +505,7 @@ static void dialogCreateItem() {
     messageWithColor(message, &itemMessageColor, 0);
 }
 
-void dialogCreateItemOrMonster() {
+void dialogCreateItemOrMonster(void) {
     brogueButton buttons[DIALOG_CREATE_ITEM_MAX_BUTTONS];
     short selectedType;
 

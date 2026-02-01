@@ -16,7 +16,7 @@ boolean hasGraphics = false;
 enum graphicsModes graphicsMode = TEXT_GRAPHICS;
 boolean isCsvFormat = false;
 
-static void printCommandlineHelp() {
+static void printCommandlineHelp(void) {
     printf("%s",
     "--help         -h          print this help message and exit \n"
     "--version      -V          print the version and exit\n"

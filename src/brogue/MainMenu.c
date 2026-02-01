@@ -387,7 +387,7 @@ static void initializeFlyoutMenu(buttonState *menu, screenDisplayBuffer *shadowB
 }
 
 /// @brief Displays a dialog window for the user to chose a game variant
-static void chooseGameVariant() {
+static void chooseGameVariant(void) {
     short gameVariantChoice;
     char textBuf[TEXT_MAX_LENGTH] = "", tmpBuf[TEXT_MAX_LENGTH] = "", goldColorEscape[5] = "", whiteColorEscape[5] = "";
 
@@ -427,7 +427,7 @@ static void chooseGameVariant() {
 
 /// @brief Displays a dialog window for the user to chose a game mode. The game mode is displayed in the bottom left
 /// on the title screen (except normal mode).
-static void chooseGameMode() {
+static void chooseGameMode(void) {
     short gameMode;
     char textBuf[TEXT_MAX_LENGTH] = "", tmpBuf[TEXT_MAX_LENGTH] = "", goldColorEscape[5] = "", whiteColorEscape[5] = "";
 
@@ -468,7 +468,7 @@ static void chooseGameMode() {
 
 /// @brief Used on the title screen for showing/hiding the flyout menus
 /// @return True if rogue.nextGame is a flyout command
-static boolean isFlyoutActive() {
+static boolean isFlyoutActive(void) {
     return ((int)rogue.nextGame >= (int)NG_FLYOUT_PLAY && rogue.nextGame <= (int)NG_FLYOUT_OPTIONS);
 }
 
@@ -504,7 +504,7 @@ static void redrawMainMenuButtons(buttonState *menu, screenDisplayBuffer *button
 
 #define FLYOUT_X 59
 
-static void titleMenu() {
+static void titleMenu(void) {
     signed short flames[COLS][(ROWS + MENU_FLAME_ROW_PADDING)][3]; // red, green and blue
     signed short colorSources[MENU_FLAME_COLOR_SOURCE_COUNT][4]; // red, green, blue, and rand, one for each color source (no more than MENU_FLAME_COLOR_SOURCE_COUNT).
     const color *colors[COLS][(ROWS + MENU_FLAME_ROW_PADDING)];
@@ -621,7 +621,7 @@ static void titleMenu() {
 }
 
 // Closes Brogue without any further prompts, animations, or user interaction.
-int quitImmediately() {
+int quitImmediately(void) {
     // If we are recording a game, save it.
     if (rogue.recording) {
         flushBufferToFile();
@@ -1098,7 +1098,7 @@ static void viewGameStats(void) {
 // accompanying path, and it's a command that should take a path, then pop up a dialog to have
 // the player specify a path. If there is no command (i.e. if rogue.nextGame contains NG_NOTHING),
 // then we'll display the title screen so the player can choose.
-void mainBrogueJunction() {
+void mainBrogueJunction(void) {
     rogueEvent theEvent;
     char path[BROGUE_FILENAME_MAX], buf[100], seedDefault[100];
     short i, j, k;

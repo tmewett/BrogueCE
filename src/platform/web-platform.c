@@ -57,7 +57,7 @@ static int readFromSocket(unsigned char *buf, int size);
 static void writeToSocket(unsigned char *buf, int size);
 static void flushOutputBuffer();
 
-static void gameLoop() {
+static void gameLoop(void) {
     openLogfile();
     writeToLog("Logfile started\n");
 
@@ -70,7 +70,7 @@ static void gameLoop() {
     exit(statusCode);
 }
 
-static void openLogfile() {
+static void openLogfile(void) {
     logfile = fopen("brogue-web.txt", "a");
     if (logfile == NULL)
     {
@@ -78,7 +78,7 @@ static void openLogfile() {
     }
 }
 
-static void closeLogfile() {
+static void closeLogfile(void) {
     fclose(logfile);
 }
 
@@ -87,7 +87,7 @@ static void writeToLog(const char *msg) {
     fflush(logfile);
 }
 
-static void setupSockets() {
+static void setupSockets(void) {
     struct sockaddr_un addr_read;
 
     // Open read socket (from external)
@@ -112,7 +112,7 @@ int readFromSocket(unsigned char *buf, int size) {
     return recvfrom(rfd, buf, size, 0, NULL, NULL);
 }
 
-static void flushOutputBuffer() {
+static void flushOutputBuffer(void) {
     char msg[80];
     int no_bytes_sent;
 
@@ -177,7 +177,7 @@ static void web_plotChar(enum displayGlyph inputChar,
     writeToSocket(outputBuffer, OUTPUT_SIZE);
 }
 
-static void sendStatusUpdate() {
+static void sendStatusUpdate(void) {
     unsigned char statusOutputBuffer[OUTPUT_SIZE];
     unsigned long statusValues[STATUS_TYPES_NUMBER];
     int i, j;
