@@ -1,0 +1,3 @@
+iBrogueCE does not collect any data from using the app. All files are stored
+locally on whatever device is running the app. There is no personal data
+collected, no usage patterns monitored, no telemetry logged.

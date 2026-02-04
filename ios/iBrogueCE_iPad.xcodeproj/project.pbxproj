@@ -1,0 +1,573 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 70;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		C4170021281718DC00704CD4 /* BrogueCE.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C417001F281717CB00704CD4 /* BrogueCE.ttf */; };
+		C532C8A61971AB8800695956 /* DirectionControlsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C532C8A41971AB8800695956 /* DirectionControlsViewController.m */; };
+		C57A962916D7EAD500C233F1 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C57A962816D7EAD500C233F1 /* UIKit.framework */; };
+		C57A962B16D7EAD500C233F1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C57A962A16D7EAD500C233F1 /* Foundation.framework */; };
+		C57A962D16D7EAD500C233F1 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C57A962C16D7EAD500C233F1 /* CoreGraphics.framework */; };
+		C57A963316D7EAD500C233F1 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = C57A963116D7EAD500C233F1 /* InfoPlist.strings */; };
+		C57A963516D7EAD500C233F1 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = C57A963416D7EAD500C233F1 /* main.m */; };
+		C57A963916D7EAD500C233F1 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = C57A963816D7EAD500C233F1 /* AppDelegate.m */; };
+		C57A963B16D7EAD500C233F1 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = C57A963A16D7EAD500C233F1 /* Default.png */; };
+		C57A963D16D7EAD500C233F1 /* Default@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = C57A963C16D7EAD500C233F1 /* Default@2x.png */; };
+		C57A963F16D7EAD500C233F1 /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = C57A963E16D7EAD500C233F1 /* Default-568h@2x.png */; };
+		C57A965116D7EB4C00C233F1 /* RogueDriver.mm in Sources */ = {isa = PBXBuildFile; fileRef = C57A964E16D7EB4C00C233F1 /* RogueDriver.mm */; };
+		C57A967516DBF1CE00C233F1 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C57A967416DBF1CE00C233F1 /* QuartzCore.framework */; };
+		C5958C6C174AFFBB00519AD9 /* about_brogue.png in Resources */ = {isa = PBXBuildFile; fileRef = C5958C5C174AFFBB00519AD9 /* about_brogue.png */; };
+		C5958C6D174AFFBB00519AD9 /* about_brogue@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = C5958C5D174AFFBB00519AD9 /* about_brogue@2x.png */; };
+		C5958C6E174AFFBB00519AD9 /* brogue_directionals.png in Resources */ = {isa = PBXBuildFile; fileRef = C5958C5E174AFFBB00519AD9 /* brogue_directionals.png */; };
+		C5958C6F174AFFBB00519AD9 /* brogue_directionals@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = C5958C5F174AFFBB00519AD9 /* brogue_directionals@2x.png */; };
+		C5958C70174AFFBB00519AD9 /* brogue_dismissbutton.png in Resources */ = {isa = PBXBuildFile; fileRef = C5958C60174AFFBB00519AD9 /* brogue_dismissbutton.png */; };
+		C5958C71174AFFBB00519AD9 /* brogue_dismissbutton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = C5958C61174AFFBB00519AD9 /* brogue_dismissbutton@2x.png */; };
+		C5958C72174AFFBB00519AD9 /* brogue_escapebutton.png in Resources */ = {isa = PBXBuildFile; fileRef = C5958C62174AFFBB00519AD9 /* brogue_escapebutton.png */; };
+		C5958C73174AFFBB00519AD9 /* brogue_escapebutton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = C5958C63174AFFBB00519AD9 /* brogue_escapebutton@2x.png */; };
+		C5958C76174AFFBB00519AD9 /* brogue_showinventory_button.png in Resources */ = {isa = PBXBuildFile; fileRef = C5958C66174AFFBB00519AD9 /* brogue_showinventory_button.png */; };
+		C5958C77174AFFBB00519AD9 /* brogue_showinventory_button@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = C5958C67174AFFBB00519AD9 /* brogue_showinventory_button@2x.png */; };
+		C5B7FF1B1D8D933D00F04098 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C5B7FF1A1D8D933D00F04098 /* Main.storyboard */; };
+		C5D117041D8B786800356DBA /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C5D117031D8B786800356DBA /* Images.xcassets */; };
+		C5D5EC6C16FC07EB00E9A9AF /* icon_72x72.png in Resources */ = {isa = PBXBuildFile; fileRef = C5D5EC6B16FC07EB00E9A9AF /* icon_72x72.png */; };
+		C5D5EC6E16FC07F300E9A9AF /* icon_144x144.png in Resources */ = {isa = PBXBuildFile; fileRef = C5D5EC6D16FC07F300E9A9AF /* icon_144x144.png */; };
+		C5FFC5DD17B9A913007A05F3 /* Default-Landscape@2x~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = C5FFC5DC17B9A913007A05F3 /* Default-Landscape@2x~ipad.png */; };
+		C5FFC5DF17B9A9DB007A05F3 /* Default-Landscape~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = C5FFC5DE17B9A9DB007A05F3 /* Default-Landscape~ipad.png */; };
+		ECBE68A71EC0D4A200E9F366 /* RogueScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECBE68A61EC0D4A200E9F366 /* RogueScene.swift */; };
+		ECBE68A91EC0D4C600E9F366 /* Cell.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECBE68A81EC0D4C600E9F366 /* Cell.swift */; };
+		ECBE68AB1EC0DB1800E9F366 /* SKViewPort.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECBE68AA1EC0DB1800E9F366 /* SKViewPort.swift */; };
+		ECBE68AD1EC0E1C600E9F366 /* BrogueViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECBE68AC1EC0E1C600E9F366 /* BrogueViewController.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		C417001F281717CB00704CD4 /* BrogueCE.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = BrogueCE.ttf; sourceTree = "<group>"; };
+		C5213CD31B75445F00E97A27 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		C52686A6215C0A9800033E3F /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
+		C52686A8215C0AA800033E3F /* libc++.1.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.1.tbd"; path = "usr/lib/libc++.1.tbd"; sourceTree = SDKROOT; };
+		C532C8A31971AB8800695956 /* DirectionControlsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DirectionControlsViewController.h; sourceTree = "<group>"; };
+		C532C8A41971AB8800695956 /* DirectionControlsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DirectionControlsViewController.m; sourceTree = "<group>"; };
+		C57A962516D7EAD500C233F1 /* BrogueCE.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BrogueCE.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C57A962816D7EAD500C233F1 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		C57A962A16D7EAD500C233F1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		C57A962C16D7EAD500C233F1 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		C57A963016D7EAD500C233F1 /* iBrogueCE_iPad-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "iBrogueCE_iPad-Info.plist"; sourceTree = "<group>"; };
+		C57A963216D7EAD500C233F1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		C57A963416D7EAD500C233F1 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		C57A963716D7EAD500C233F1 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		C57A963816D7EAD500C233F1 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		C57A963A16D7EAD500C233F1 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
+		C57A963C16D7EAD500C233F1 /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
+		C57A963E16D7EAD500C233F1 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
+		C57A964D16D7EB4C00C233F1 /* RogueDriver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RogueDriver.h; sourceTree = "<group>"; };
+		C57A964E16D7EB4C00C233F1 /* RogueDriver.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RogueDriver.mm; sourceTree = "<group>"; };
+		C57A967416DBF1CE00C233F1 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		C5958C5C174AFFBB00519AD9 /* about_brogue.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = about_brogue.png; sourceTree = "<group>"; };
+		C5958C5D174AFFBB00519AD9 /* about_brogue@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "about_brogue@2x.png"; sourceTree = "<group>"; };
+		C5958C5E174AFFBB00519AD9 /* brogue_directionals.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = brogue_directionals.png; sourceTree = "<group>"; };
+		C5958C5F174AFFBB00519AD9 /* brogue_directionals@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "brogue_directionals@2x.png"; sourceTree = "<group>"; };
+		C5958C60174AFFBB00519AD9 /* brogue_dismissbutton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = brogue_dismissbutton.png; sourceTree = "<group>"; };
+		C5958C61174AFFBB00519AD9 /* brogue_dismissbutton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "brogue_dismissbutton@2x.png"; sourceTree = "<group>"; };
+		C5958C62174AFFBB00519AD9 /* brogue_escapebutton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = brogue_escapebutton.png; sourceTree = "<group>"; };
+		C5958C63174AFFBB00519AD9 /* brogue_escapebutton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "brogue_escapebutton@2x.png"; sourceTree = "<group>"; };
+		C5958C66174AFFBB00519AD9 /* brogue_showinventory_button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = brogue_showinventory_button.png; sourceTree = "<group>"; };
+		C5958C67174AFFBB00519AD9 /* brogue_showinventory_button@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "brogue_showinventory_button@2x.png"; sourceTree = "<group>"; };
+		C5B7FF1A1D8D933D00F04098 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
+		C5D117031D8B786800356DBA /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		C5D5EC6B16FC07EB00E9A9AF /* icon_72x72.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_72x72.png; sourceTree = "<group>"; };
+		C5D5EC6D16FC07F300E9A9AF /* icon_144x144.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_144x144.png; sourceTree = "<group>"; };
+		C5EA72D616FE92DC00AE688A /* CoreText.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreText.framework; path = System/Library/Frameworks/CoreText.framework; sourceTree = SDKROOT; };
+		C5FFC5DC17B9A913007A05F3 /* Default-Landscape@2x~ipad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-Landscape@2x~ipad.png"; sourceTree = "<group>"; };
+		C5FFC5DE17B9A9DB007A05F3 /* Default-Landscape~ipad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-Landscape~ipad.png"; sourceTree = "<group>"; };
+		ECBE68A51EC0D45200E9F366 /* iBrogue_iPad-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iBrogue_iPad-Bridging-Header.h"; sourceTree = "<group>"; };
+		ECBE68A61EC0D4A200E9F366 /* RogueScene.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RogueScene.swift; sourceTree = "<group>"; };
+		ECBE68A81EC0D4C600E9F366 /* Cell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Cell.swift; sourceTree = "<group>"; };
+		ECBE68AA1EC0DB1800E9F366 /* SKViewPort.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SKViewPort.swift; sourceTree = "<group>"; };
+		ECBE68AC1EC0E1C600E9F366 /* BrogueViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BrogueViewController.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		F13BA7992F2FEC7100267329 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"platform/curses-platform.c",
+				platform/main.c,
+				"platform/null-platform.c",
+				"platform/sdl2-platform.c",
+				platform/term.c,
+				platform/tiles.c,
+				"platform/web-platform.c",
+			);
+			target = C57A962416D7EAD500C233F1 /* iBrogueCE_iPad */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		F13BA72D2F2FD79500267329 /* src */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (F13BA7992F2FEC7100267329 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); name = src; path = ../src; sourceTree = SOURCE_ROOT; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		C57A962216D7EAD500C233F1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C57A967516DBF1CE00C233F1 /* QuartzCore.framework in Frameworks */,
+				C57A962916D7EAD500C233F1 /* UIKit.framework in Frameworks */,
+				C57A962B16D7EAD500C233F1 /* Foundation.framework in Frameworks */,
+				C57A962D16D7EAD500C233F1 /* CoreGraphics.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		C57A961C16D7EAD500C233F1 = {
+			isa = PBXGroup;
+			children = (
+				F13BA72D2F2FD79500267329 /* src */,
+				C5EA72D616FE92DC00AE688A /* CoreText.framework */,
+				C57A967416DBF1CE00C233F1 /* QuartzCore.framework */,
+				C57A962E16D7EAD500C233F1 /* iBrogueCE_iPad */,
+				C57A962716D7EAD500C233F1 /* Frameworks */,
+				C57A962616D7EAD500C233F1 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C57A962616D7EAD500C233F1 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C57A962516D7EAD500C233F1 /* BrogueCE.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C57A962716D7EAD500C233F1 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				C52686A8215C0AA800033E3F /* libc++.1.tbd */,
+				C52686A6215C0A9800033E3F /* libc++.tbd */,
+				C5213CD31B75445F00E97A27 /* StoreKit.framework */,
+				C57A962816D7EAD500C233F1 /* UIKit.framework */,
+				C57A962A16D7EAD500C233F1 /* Foundation.framework */,
+				C57A962C16D7EAD500C233F1 /* CoreGraphics.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		C57A962E16D7EAD500C233F1 /* iBrogueCE_iPad */ = {
+			isa = PBXGroup;
+			children = (
+				C5958C5B174AFFBB00519AD9 /* Image Assets */,
+				C57A964B16D7EB4C00C233F1 /* PlatformCode */,
+				C57A963716D7EAD500C233F1 /* AppDelegate.h */,
+				C57A963816D7EAD500C233F1 /* AppDelegate.m */,
+				C5B7FF1A1D8D933D00F04098 /* Main.storyboard */,
+				C57A962F16D7EAD500C233F1 /* Supporting Files */,
+				C5D117031D8B786800356DBA /* Images.xcassets */,
+			);
+			path = iBrogueCE_iPad;
+			sourceTree = "<group>";
+		};
+		C57A962F16D7EAD500C233F1 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				C417001F281717CB00704CD4 /* BrogueCE.ttf */,
+				C57A963016D7EAD500C233F1 /* iBrogueCE_iPad-Info.plist */,
+				C57A963116D7EAD500C233F1 /* InfoPlist.strings */,
+				C57A963416D7EAD500C233F1 /* main.m */,
+				C57A963A16D7EAD500C233F1 /* Default.png */,
+				C57A963C16D7EAD500C233F1 /* Default@2x.png */,
+				C57A963E16D7EAD500C233F1 /* Default-568h@2x.png */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		C57A964B16D7EB4C00C233F1 /* PlatformCode */ = {
+			isa = PBXGroup;
+			children = (
+				ECBE68A51EC0D45200E9F366 /* iBrogue_iPad-Bridging-Header.h */,
+				ECBE68AC1EC0E1C600E9F366 /* BrogueViewController.swift */,
+				ECBE68A81EC0D4C600E9F366 /* Cell.swift */,
+				ECE0ECF31F156DA600F65B75 /* Directional Controls */,
+				C57A964D16D7EB4C00C233F1 /* RogueDriver.h */,
+				C57A964E16D7EB4C00C233F1 /* RogueDriver.mm */,
+				ECBE68A61EC0D4A200E9F366 /* RogueScene.swift */,
+				ECBE68AA1EC0DB1800E9F366 /* SKViewPort.swift */,
+			);
+			path = PlatformCode;
+			sourceTree = "<group>";
+		};
+		C5958C5B174AFFBB00519AD9 /* Image Assets */ = {
+			isa = PBXGroup;
+			children = (
+				C5D5EC6D16FC07F300E9A9AF /* icon_144x144.png */,
+				C5D5EC6B16FC07EB00E9A9AF /* icon_72x72.png */,
+				C5FFC5DC17B9A913007A05F3 /* Default-Landscape@2x~ipad.png */,
+				C5FFC5DE17B9A9DB007A05F3 /* Default-Landscape~ipad.png */,
+				C5958C5C174AFFBB00519AD9 /* about_brogue.png */,
+				C5958C5D174AFFBB00519AD9 /* about_brogue@2x.png */,
+				C5958C5E174AFFBB00519AD9 /* brogue_directionals.png */,
+				C5958C5F174AFFBB00519AD9 /* brogue_directionals@2x.png */,
+				C5958C60174AFFBB00519AD9 /* brogue_dismissbutton.png */,
+				C5958C61174AFFBB00519AD9 /* brogue_dismissbutton@2x.png */,
+				C5958C62174AFFBB00519AD9 /* brogue_escapebutton.png */,
+				C5958C63174AFFBB00519AD9 /* brogue_escapebutton@2x.png */,
+				C5958C66174AFFBB00519AD9 /* brogue_showinventory_button.png */,
+				C5958C67174AFFBB00519AD9 /* brogue_showinventory_button@2x.png */,
+			);
+			path = "Image Assets";
+			sourceTree = "<group>";
+		};
+		ECE0ECF31F156DA600F65B75 /* Directional Controls */ = {
+			isa = PBXGroup;
+			children = (
+				C532C8A31971AB8800695956 /* DirectionControlsViewController.h */,
+				C532C8A41971AB8800695956 /* DirectionControlsViewController.m */,
+			);
+			path = "Directional Controls";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		C57A962416D7EAD500C233F1 /* iBrogueCE_iPad */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C57A964816D7EAD500C233F1 /* Build configuration list for PBXNativeTarget "iBrogueCE_iPad" */;
+			buildPhases = (
+				C57A962116D7EAD500C233F1 /* Sources */,
+				C57A962216D7EAD500C233F1 /* Frameworks */,
+				C57A962316D7EAD500C233F1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				F13BA72D2F2FD79500267329 /* src */,
+			);
+			name = iBrogueCE_iPad;
+			productName = iBrogue_iPad;
+			productReference = C57A962516D7EAD500C233F1 /* BrogueCE.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		C57A961D16D7EAD500C233F1 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2600;
+				ORGANIZATIONNAME = "Seth howard";
+				TargetAttributes = {
+					C57A962416D7EAD500C233F1 = {
+						LastSwiftMigration = 1000;
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.InAppPurchase = {
+								enabled = 1;
+							};
+						};
+					};
+				};
+			};
+			buildConfigurationList = C57A962016D7EAD500C233F1 /* Build configuration list for PBXProject "iBrogueCE_iPad" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = C57A961C16D7EAD500C233F1;
+			productRefGroup = C57A962616D7EAD500C233F1 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C57A962416D7EAD500C233F1 /* iBrogueCE_iPad */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C57A962316D7EAD500C233F1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C4170021281718DC00704CD4 /* BrogueCE.ttf in Resources */,
+				C57A963316D7EAD500C233F1 /* InfoPlist.strings in Resources */,
+				C5D117041D8B786800356DBA /* Images.xcassets in Resources */,
+				C57A963B16D7EAD500C233F1 /* Default.png in Resources */,
+				C57A963D16D7EAD500C233F1 /* Default@2x.png in Resources */,
+				C57A963F16D7EAD500C233F1 /* Default-568h@2x.png in Resources */,
+				C5FFC5DD17B9A913007A05F3 /* Default-Landscape@2x~ipad.png in Resources */,
+				C5D5EC6C16FC07EB00E9A9AF /* icon_72x72.png in Resources */,
+				C5D5EC6E16FC07F300E9A9AF /* icon_144x144.png in Resources */,
+				C5958C6C174AFFBB00519AD9 /* about_brogue.png in Resources */,
+				C5958C6D174AFFBB00519AD9 /* about_brogue@2x.png in Resources */,
+				C5958C6E174AFFBB00519AD9 /* brogue_directionals.png in Resources */,
+				C5958C6F174AFFBB00519AD9 /* brogue_directionals@2x.png in Resources */,
+				C5958C70174AFFBB00519AD9 /* brogue_dismissbutton.png in Resources */,
+				C5958C71174AFFBB00519AD9 /* brogue_dismissbutton@2x.png in Resources */,
+				C5958C72174AFFBB00519AD9 /* brogue_escapebutton.png in Resources */,
+				C5958C73174AFFBB00519AD9 /* brogue_escapebutton@2x.png in Resources */,
+				C5B7FF1B1D8D933D00F04098 /* Main.storyboard in Resources */,
+				C5958C76174AFFBB00519AD9 /* brogue_showinventory_button.png in Resources */,
+				C5958C77174AFFBB00519AD9 /* brogue_showinventory_button@2x.png in Resources */,
+				C5FFC5DF17B9A9DB007A05F3 /* Default-Landscape~ipad.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		C57A962116D7EAD500C233F1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C57A963516D7EAD500C233F1 /* main.m in Sources */,
+				C57A963916D7EAD500C233F1 /* AppDelegate.m in Sources */,
+				ECBE68A91EC0D4C600E9F366 /* Cell.swift in Sources */,
+				C57A965116D7EB4C00C233F1 /* RogueDriver.mm in Sources */,
+				C532C8A61971AB8800695956 /* DirectionControlsViewController.m in Sources */,
+				ECBE68AD1EC0E1C600E9F366 /* BrogueViewController.swift in Sources */,
+				ECBE68AB1EC0DB1800E9F366 /* SKViewPort.swift in Sources */,
+				ECBE68A71EC0D4A200E9F366 /* RogueScene.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		C57A963116D7EAD500C233F1 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C57A963216D7EAD500C233F1 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		C57A964616D7EAD500C233F1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = NO;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Distribution: Robert Taylor (J33P3R33M4)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEVELOPMENT_TEAM = J33P3R33M4;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 9;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "/Users/bob/Production/iBrogueCE/iBrogueCE_iPad/PlatformCode/iBrogueCE_iPad-Bridging-Header.h";
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Debug;
+		};
+		C57A964716D7EAD500C233F1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = NO;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Distribution: Robert Taylor (J33P3R33M4)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				COPY_PHASE_STRIP = YES;
+				DEVELOPMENT_TEAM = J33P3R33M4;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 9;
+				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OBJC_BRIDGING_HEADER = "/Users/bob/Production/iBrogueCE/iBrogueCE_iPad/PlatformCode/iBrogueCE_iPad-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				TARGETED_DEVICE_FAMILY = 2;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		C57A964916D7EAD500C233F1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CLANG_ANALYZER_DEADCODE_DEADSTORES = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "compiler-default";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ST4D2Q7PJ6;
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "iBrogueCE_iPad/iBrogueCE_iPad-Prefix.pch";
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=*]" = (
+					"BROGUE_TABLET=1",
+					"BROGUE_EXTRA_VERSION=\\\"-ios\\\"",
+				);
+				INFOPLIST_FILE = "iBrogueCE_iPad/iBrogueCE_iPad-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 9;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MARKETING_VERSION = 1.14.1;
+				PRODUCT_BUNDLE_IDENTIFIER = bryan.turner.broguece;
+				PRODUCT_NAME = BrogueCE;
+				PROVISIONING_PROFILE = "";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_OBJC_BRIDGING_HEADER = "iBrogueCE_iPad/PlatformCode/iBrogue_iPad-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_SWIFT3_OBJC_INFERENCE = On;
+				SWIFT_VERSION = 4.2;
+				TARGETED_DEVICE_FAMILY = 2;
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		C57A964A16D7EAD500C233F1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CLANG_ANALYZER_DEADCODE_DEADSTORES = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "compiler-default";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ST4D2Q7PJ6;
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "iBrogueCE_iPad/iBrogueCE_iPad-Prefix.pch";
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=*]" = (
+					"BROGUE_EXTRA_VERSION=\\\"-ios\\\"",
+					"BROGUE_TABLET=1",
+				);
+				INFOPLIST_FILE = "iBrogueCE_iPad/iBrogueCE_iPad-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 9;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MARKETING_VERSION = 1.14.1;
+				PRODUCT_BUNDLE_IDENTIFIER = bryan.turner.broguece;
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=*]" = md.taylor.broguece;
+				PRODUCT_NAME = BrogueCE;
+				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_OBJC_BRIDGING_HEADER = "iBrogueCE_iPad/PlatformCode/iBrogue_iPad-Bridging-Header.h";
+				SWIFT_SWIFT3_OBJC_INFERENCE = On;
+				SWIFT_VERSION = 4.2;
+				TARGETED_DEVICE_FAMILY = 2;
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C57A962016D7EAD500C233F1 /* Build configuration list for PBXProject "iBrogueCE_iPad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C57A964616D7EAD500C233F1 /* Debug */,
+				C57A964716D7EAD500C233F1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C57A964816D7EAD500C233F1 /* Build configuration list for PBXNativeTarget "iBrogueCE_iPad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C57A964916D7EAD500C233F1 /* Debug */,
+				C57A964A16D7EAD500C233F1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = C57A961D16D7EAD500C233F1 /* Project object */;
+}

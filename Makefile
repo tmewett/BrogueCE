@@ -2,7 +2,7 @@ include config.mk
 
 cflags := -Isrc/brogue -Isrc/platform -Isrc/variants -std=c99 \
 	-Wall -Wpedantic -Werror=implicit -Wno-parentheses -Wno-unused-result \
-	-Wformat -Werror=format-security -Wformat-overflow=0 -Wmissing-prototypes
+	-Wformat -Werror=format-security -Wno-format-overflow -Wmissing-prototypes
 libs := -lm
 cppflags := -DDATADIR=$(DATADIR)
 
@@ -57,6 +57,10 @@ ifeq ($(MAC_APP),YES)
 cppflags += -DSDL_PATHS
 endif
 
+ifeq ($(TABLET),YES)
+cppflags += -DBROGUE_TABLET
+endif
+
 ifeq ($(DEBUG),YES)
 cflags += -g -Og
 cppflags += -DENABLE_PLAYBACK_SWITCH
@@ -76,6 +80,8 @@ include make/*.mk
 
 clean:
 	$(warning 'make clean' is no longer needed in many situations, so is not supported. Use 'make -B' to force rebuild something.)
+	rm src/*/*.o
+	rm build/src/*/*.o
 
 escape = $(subst ','\'',$(1))
 vars:
