@@ -338,6 +338,8 @@ short buttonInputLoop(brogueButton *buttons,
     
     initializeButtonState(&state, buttons, buttonCount, winX, winY, winWidth, winHeight);
 
+    CBrogueGameEvent oldUiMode = uiMode;
+    uiMode = CBrogueGameEventInMenu;    // tablet ui mode
     do {
         screenDisplayBuffer dbuf;
         clearDisplayBuffer(&dbuf);
@@ -357,6 +359,7 @@ short buttonInputLoop(brogueButton *buttons,
         restoreDisplayBuffer(&rbuf);
 
     } while (button == -1 && !canceled);
+    uiMode = oldUiMode;
 
     if (returnEvent) {
         *returnEvent = theEvent;

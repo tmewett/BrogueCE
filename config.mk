@@ -16,10 +16,13 @@ SDL_CONFIG := sdl2-config
 WEBBROGUE := NO
 
 # Enable debugging mode. See top of Rogue.h for features
-DEBUG := NO
+DEBUG := YES
 
 # Declare this is a release build
 RELEASE := NO
 
 # Configure the executable to run from a macOS .app bundle (only works in graphical mode)
 MAC_APP := NO
+
+# Tablet platform (no quit, ui modes, software keyboard, etc.)
+TABLET := YES
