@@ -23,30 +23,15 @@ import SpriteKit
 
 // copied from Platform.h and adapted to Swift style constants
 // for use in defining the GlyphType enum
-//let U_MIDDLE_DOT = "\u{00b7}"
-//let U_FOUR_DOTS = "\u{2237}"
-//let U_DIAMOND = "\u{25c7}"
-//let U_FLIPPED_V = "\u{22CF}"
 let U_ARIES = "\u{2648}"        // foliage glyph
-//let U_ESZETT = "\u{00df}"
 let U_ANKH = "\u{2640}"         // amulet
 let U_MUSIC_NOTE = "\u{266A}"   // scroll glyph
 let U_CIRCLE = "\u{25CB}"       // ring glyph
 let U_LIGHTNING_BOLT = "\u{03DF}"   // charm glyph
-//let U_FILLED_CIRCLE = "\u{25cf}"
-//let U_NEUTER = "\u{26b2}"
-//let U_U_ACUTE = "\u{00da}"
-//let U_CURRENCY = "\u{00A4}"
 let U_UP_ARROW = "\u{2191}"     // weapon glyph
-//let U_DOWN_ARROW = "\u{2193}"
-//let U_LEFT_ARROW = "\u{2190}"
-//let U_RIGHT_ARROW = "\u{2192}"
 let U_OMEGA = "\u{03A9}"        // omega glyph (special door)
-//let U_CIRCLE_BARS = "\u{29F2}"
-//let U_FILLED_CIRCLE_BARS = "\u{29F3}"
-//let U_LEFT_TRIANGLE = "\u{25C4}"
-//
-//// special characters from BrogueCE font, copied from platform.h
+
+// special characters from BrogueCE font, copied from platform.h
 let U_TILES_WALL_TOP = "\u{4051}"
 let U_TILES_WALL = "\u{4002}"
 

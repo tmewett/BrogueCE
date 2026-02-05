@@ -84,7 +84,7 @@
 #ifdef BROGUE_TABLET
 #define KEYBOARD_LABELS false
 #else
-#define KEYBOARD_LABELS false
+#define KEYBOARD_LABELS true
 #endif
 
 //#define BROGUE_ASSERTS        // introduces several assert()s -- useful to find certain array overruns and other bugs

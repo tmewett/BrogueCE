@@ -31,9 +31,6 @@ class SKViewPort: SKView {
         rogueScene = RogueScene(size: CGSize(width: rect.size.width * scale, height: rect.size.height * scale), rows: 34, cols: 100)
         rogueScene.scaleMode = .fill
         super.init(coder: aDecoder)
-        
-       // showsFPS = true
-      //  showsNodeCount = true
         ignoresSiblingOrder = true
         backgroundColor = .black
     }

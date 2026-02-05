@@ -2741,7 +2741,11 @@ boolean getInputTextString(char *inputText,
     // x and y mark the origin for text entry.
     if (useDialogBox) {
         x = (COLS - max(maxLength, strLenWithoutEscapes(prompt))) / 2;
+#ifdef BROGUE_TABLET
         y = ROWS / 2 - 5;  //  move dialogues up so the onscreen tablet keyboard doesn't obscure them
+#else
+        y = ROWS / 2 - 1;
+#endif
         clearDisplayBuffer(&dbuf);
         rectangularShading(x - 1, y - 2, max(maxLength, strLenWithoutEscapes(prompt)) + 2,
                            4, &interfaceBoxColor, INTERFACE_OPACITY, &dbuf);

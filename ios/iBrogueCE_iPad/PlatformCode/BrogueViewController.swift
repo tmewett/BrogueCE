@@ -111,9 +111,6 @@ final class BrogueViewController: UIViewController {
         }
     }
     @IBOutlet fileprivate weak var inputTextField: UITextField!
-  //  @IBOutlet fileprivate weak var leaderBoardButton: UIButton!
- //   @IBOutlet fileprivate weak var seedButton: UIButton!
-   
     @IBOutlet weak var dContainerView: UIView!
     
     fileprivate func hideKeyboard() {
@@ -202,6 +199,18 @@ final class BrogueViewController: UIViewController {
         if #available(iOS 11.0, *) {
             setNeedsUpdateOfHomeIndicatorAutoHidden()
         }
+
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardDidHideNotification,  object: nil)
+    }
+
+    @objc func keyboardWillHide(notification: NSNotification) {
+        if self.lastBrogueGameEvent == .showKeyboardAndEscape {
+            // Don't let the keyboard close if we're still in keyboard mode
+            DispatchQueue.main.async {
+                self.showKeyboard()
+            }
+        }
     }
     
     @objc func handleDirectionTouch(_ sender: UIPanGestureRecognizer) {
@@ -233,18 +242,6 @@ extension BrogueViewController {
         hideKeyboard()
         hideEscButton()
     }
-    
-//    @IBAction func seedButtonPressed(_ sender: Any) {
-//        seedKeyDown = !seedKeyDown
-//
-//        if seedKeyDown {
-//            let image = UIImage(named: "brogue_sproutedseed.png")
-//            seedButton.setImage(image, for: .normal)
-//        } else {
-//            let image = UIImage(named: "brogue_seed.png")
-//            seedButton.setImage(image, for: .normal)
-//        }
-//    }
 }
 
 extension BrogueViewController {
@@ -297,8 +294,8 @@ extension BrogueViewController {
             let location = touch.location(in: skViewPort)
             
             if pointIsInSideBar(point: location) &&
-                lastBrogueGameEvent == .inNormalPlay {
-
+               lastBrogueGameEvent == .inNormalPlay
+            {
                 // side bar
                 if touch.tapCount >= 2 {
                     addTouchEvent(event: UIBrogueTouchEvent(phase: .ended, location: lastTouchLocation))
@@ -311,13 +308,7 @@ extension BrogueViewController {
                 addTouchEvent(event: UIBrogueTouchEvent(phase: .ended, location: lastTouchLocation))
                 
                 if pointIsInPlayArea(point: location) &&
-                    lastBrogueGameEvent == .inNormalPlay
-//                    &&
-//                    lastBrogueGameEvent != .openedInventory &&
-//                    lastBrogueGameEvent != .inventoryItemAction &&
-//                    lastBrogueGameEvent != .showTitle &&
-//                    lastBrogueGameEvent != .waitingForConfirmation &&
-//                    lastBrogueGameEvent != .actionMenuOpen
+                   lastBrogueGameEvent == .inNormalPlay
                 {
                     addTouchEvent(event: UIBrogueTouchEvent(phase: .ended, location: lastTouchLocation))
                 }
@@ -416,10 +407,6 @@ extension BrogueViewController {
             magnifierTimer?.invalidate()
             magnifierTimer = nil
             magnifierTimer = Timer.scheduledTimer(timeInterval: 0.2, target: self, selector: #selector(BrogueViewController.handleMagnifierTimer), userInfo: nil, repeats: false)
-            // Need to go iOS 10
-            //            magnifierTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
-            //                self.magView.showMagnifier(at: self.lastTouchLocation)
-            //            }
         } else {
             magView.updateMagnifier(at: point)
         }

@@ -204,10 +204,6 @@ void _nextKeyOrMouseEvent(rogueEvent *returnEvent, __unused boolean textInput, b
 
 #pragma mark - bridge
 
-void _requestKeyboardInput(char *string) {
-    [brogueViewController requestTextInputFor:[NSString stringWithUTF8String:string]];
-}
-
 boolean _controlKeyIsDown(void) {
     return brogueViewController.controlKeyDown;
 }
