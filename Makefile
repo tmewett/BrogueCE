@@ -1,8 +1,9 @@
 include config.mk
 
-cflags := -Isrc/brogue -Isrc/platform -Isrc/variants -std=c99 \
+# cflags := -std=c99
+cflags := -Isrc/brogue -Isrc/platform -Isrc/variants \
 	-Wall -Wpedantic -Werror=implicit -Wno-parentheses -Wno-unused-result \
-	-Wformat -Werror=format-security -Wformat-overflow=0 -Wmissing-prototypes
+	-Wformat -Werror=format-security -Wno-format-overflow -Wmissing-prototypes
 libs := -lm
 cppflags := -DDATADIR=$(DATADIR)
 
@@ -48,6 +49,18 @@ ifeq ($(WEBBROGUE),YES)
 sources += $(addprefix src/platform/,web-platform.c)
 cppflags += -DBROGUE_WEB
 endif
+
+ifeq ($(JSBROGUE),YES)
+sources += $(addprefix src/platform/,javascript-platform.c)
+cppflags += -DBROGUE_JS
+cflags += -std=gnu11 -Wbad-function-cast -Wcast-function-type
+CC = emcc -g -O3
+#-fsanitize=address -fsanitize=undefined -Wcast-function-type
+libs += -sASYNCIFY=1 -sALLOW_MEMORY_GROWTH=1 -sSTACK_SIZE=33554432 -sASYNCIFY_STACK_SIZE=10240 -lidbfs.js -sFORCE_FILESYSTEM --shell-file javascript/custom-shell.html --pre-js javascript/init-mod.js
+.exe = .html
+extra_version := '-js'
+endif
+
 
 ifeq ($(RAPIDBROGUE),YES)
 cppflags += -DRAPID_BROGUE
