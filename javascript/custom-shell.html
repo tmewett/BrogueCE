@@ -1,0 +1,580 @@
+<!--
+
+  BrogueJS (https://github.com/freethenation)
+
+  @freethenation (Richard Klafter, 2019)
+  @lachesis      (Eric Swanson,    2019)
+  @brturn        (Bryan Turner,    2026)
+
+  Copyright (C) 2019 Richard Klafter
+
+     This program is free software: you can redistribute it and/or modify
+     it under the terms of the GNU Affero General Public License as published by
+     the Free Software Foundation, either version 3 of the License, or
+     (at your option) any later version.
+
+     This program is distributed in the hope that it will be useful,
+     but WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     GNU Affero General Public License for more details.
+
+     You should have received a copy of the GNU Affero General Public License
+     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+
+<html>
+  <head>
+    <link rel="apple-touch-icon" type="image/png" sizes="256x256" href="brogue-icon.png">
+    <link rel="icon" type="image/png" sizes="256x256" href="brogue-icon.png">
+
+    <!-- Various favicon formats -->
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="icon" type="image/vnd.microsoft.icon" href="favicon.ico">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" href="favicon.ico">
+    <link rel="icon" type="image/png" href="brogue-icon.png">
+    <!-- <link rel="icon" type="image/svg+xml" href="https://example.com/image.svg"> -->
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        height: 100vh;           /* Viewport height */
+        background: #111111;
+        color: #e6e6e6;
+        background-attachment: fixed;
+        overflow: hidden;
+        /* border: 1px solid red; */
+
+        display: flex;
+        flex-direction: column;
+        justify-content: center; /* Centers horizontally */
+        align-items: center;     /* Centers vertically */
+      }
+      body {
+        width: 98%;
+        height: 98%;
+        /* border: 1px solid green; */
+      }
+
+      /* Try to remove iPad/iPhone top padding */
+      @supports (padding-top: constant(safe-area-inset-top)) {
+        body {
+          padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+      }
+      #content {
+        /* border: 1px solid cyan; */
+        display: flex;
+        flex-direction: column;
+        justify-content: center; /* Centers horizontally */
+        align-items: center;     /* Centers vertically */
+        width: 100%;
+        height: 100%;
+      }
+      div {
+        margin: 0;
+      }
+      body a {
+          color: #e6e6e6;
+      }
+      body a:hover {
+          color: #6666cb;
+      }
+      #game-canvas {
+          object-fit: contain;
+          flex-grow: 1;
+          flex-shrink: 1;
+          background: #111111; /* fullscreen */
+          image-rendering: pixelated;
+      }
+      .nav-bar > div {
+        margin: 2px;  /* file manager list item padding */
+        background-color: #6666cb;
+      }
+      span {
+        height: 100%;
+      }
+      img.delete {
+        max-width: 1.5em;
+        max-height: 1.5em;
+        margin: 2px;
+      }
+      img.download {
+        max-width: 1.5em;
+        max-height: 1.5em;
+        margin: 2px;
+      }
+      .close {
+        font-style: normal;
+        text-decoration-line: none;
+      }
+      .list-item {
+        display: flex;
+        align-items: center;
+        height: 2em;
+      }
+      .item-text {
+        display: flex;
+        align-items: center;
+        height: 100%;
+        padding-left: 0.5em;
+      }
+      .floating-div {
+          position: fixed;
+          top: 2em;
+          left: 10%;
+          width: 40%;
+          height: 30%;
+          overflow-y: auto;
+          background-color: #333333;
+          border: 1px solid black;
+          padding: 10px;
+          z-index: -1000;
+          color: white;
+      }
+      canvas {
+        image-rendering: pixelated;
+      }
+      #canvas-container {
+        border: 1px solid orange;
+      }
+    </style>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
+    <script type="text/javascript">
+      let ctx, ctxWidth, ctxHeight, cellWidth, cellHeight;
+      let FONT_NAME = "monospace";
+
+      window.keyOrMouseEvents = []; // Shared with C code for event queue
+      window.plotChars = {}; // Shared with C code for graphics update queue
+
+      const devicePixelRatio = window.devicePixelRatio || 1;
+      const CONSOLE_HEIGHT = 34;
+      const CONSOLE_WIDTH = 100;
+      const CELL_ASPECT_RATIO = 19/10;            
+      const eventTypes = {
+          KEYSTROKE:0,
+          MOUSE_UP:1,
+          MOUSE_DOWN:2,
+          RIGHT_MOUSE_DOWN:3,
+          RIGHT_MOUSE_UP:4,
+          MOUSE_ENTERED_CELL:5
+      }
+      function throttle(fn, threshhold, scope) {
+          threshhold || (threshhold = 250);
+          let last,
+              deferTimer;
+          return function () {
+              const context = scope || this;
+
+              const now = +new Date,
+                  args = arguments;
+              if (last && now < last + threshhold) {
+                  // hold on to it
+                  clearTimeout(deferTimer);
+                  deferTimer = setTimeout(function () {
+                      last = now;
+                      fn.apply(context, args);
+                  }, threshhold);
+              } else {
+                  last = now;
+                  fn.apply(context, args);
+              }
+          };
+      }
+    const plotAllChars = () => {
+        Object.values(window.plotChars).forEach( plotChar => {
+            let [char, x, y, fr, fg, fb, br, bg, bb] = plotChar;
+            x = x*cellWidth
+            y = y*cellHeight
+            ctx.fillStyle = `rgb(${br/100*255|0}, ${bg/100*255|0}, ${bb/100*255|0})`
+            ctx.fillRect(x,y,cellWidth,cellHeight)
+            ctx.fillStyle = `rgb(${fr/100*255|0}, ${fg/100*255|0}, ${fb/100*255|0})`
+            ctx.fillText(String.fromCharCode(char), x, y);
+          });
+        window.plotChars = {};
+    }
+      function  getMousePos(canvas, evt) {
+          const rect = canvas.getBoundingClientRect(); // abs. size of element
+          const actualWidth = Math.min(rect.height*(canvas.width/canvas.height), rect.width)|0; //object-fit means the canvas ele will be scaled proportionally
+          const actualHeight = Math.min(rect.width*(canvas.height/canvas.width), rect.height)|0; //so calculate actual width and height
+          const scale = canvas.width/actualWidth;
+          const offsetX = (rect.width-actualWidth)/2;
+          const offsetY = (rect.height-actualHeight)/2;
+          const x = (evt.clientX - rect.left) - offsetX;
+          const y = (evt.clientY - rect.top) - offsetY;
+          if (x<0 || x>actualWidth)  return null; // ignore if object-fit causes us to be outside actual canvas
+          if (y<0 || y>actualHeight) return null; // ignore if object-fit causes us to be outside actual canvas
+          const pix = [x*scale/devicePixelRatio, y*scale/devicePixelRatio] // in pixels
+          const pos = [(pix[0]/cellWidth)|0, (pix[1]/cellHeight)|0] // in cells
+          return pos
+      }
+      let lastMouseCell = [-1,-1];
+      function onMouseMove(e){
+          const pos = getMousePos(this, e);
+          if (!pos) return;
+          if (lastMouseCell[0]===pos[0] && lastMouseCell[1]===pos[1]) return; //cell did not change...bail
+          lastMouseCell = pos;
+          const EVENT = [ eventTypes.MOUSE_ENTERED_CELL, pos[0], pos[1], e.ctrlKey?1:0, e.shiftKey?1:0 ];
+          window.keyOrMouseEvents.push(EVENT);
+      }
+      function onMouseDown(e){
+          const pos = getMousePos(this, e);
+          if (!pos) return;
+          const EVENT = [ e.button===0?eventTypes.MOUSE_DOWN:eventTypes.RIGHT_MOUSE_DOWN, pos[0], pos[1], e.ctrlKey?1:0, e.shiftKey?1:0 ];
+          window.keyOrMouseEvents.push(EVENT);
+      }
+      function onMouseUp(e){
+          const pos = getMousePos(this, e);
+          if(!pos) return;
+          const EVENT = [ e.button===0?eventTypes.MOUSE_UP:eventTypes.RIGHT_MOUSE_UP, pos[0], pos[1], e.ctrlKey?1:0, e.shiftKey?1:0 ];
+          window.keyOrMouseEvents.push(EVENT);
+      }
+      const KEY_MAP = {
+          ArrowUp: 63232,
+          ArrowLeft: 63234,
+          ArrowDown: 63233,
+          ArrowRight: 63235,
+          PageUp:63276,
+          PageDown:63277,
+          Escape:27,
+          Return:13,
+          Enter:10,
+          Delete:127,
+          Backspace:127,
+          Tab:9,
+      }
+      function onKeydown(e){
+          const key = (e.key.length > 1) ? KEY_MAP[e.key] : e.key.charCodeAt(0);
+          const EVENT = [eventTypes.KEYSTROKE, key, 0, e.ctrlKey?1:0, e.shiftKey?1:0];
+          window.keyOrMouseEvents.push(EVENT);
+      }
+
+      function preventDefault(e) {
+          e.preventDefault();
+      }
+
+      function onRequestFullscreen() {
+          const ele = document.getElementById('game-canvas');
+          if (ele) (ele.requestFullscreen || ele.webkitRequestFullscreen || ele.mozRequestFullScreen || ele.msRequestFullscreen).call(ele);
+      }
+
+      function onRequestFiles() {
+          readDatabase();
+          document.getElementById('file-manager').style.zIndex = 1000;
+      }
+
+      function setupRetinaCanvas(canvas) {
+          const ctx = canvas.getContext('2d');
+
+          // Get the CSS-determined size of the canvas
+          const rect = canvas.getBoundingClientRect();
+          const cssWidth = rect.width;
+          const cssHeight = rect.height;
+
+          // Set the actual canvas buffer size to the high DPI dimensions
+          canvas.width = cssWidth * devicePixelRatio;
+          canvas.height = cssHeight * devicePixelRatio;
+
+          // Scale the context so drawing operations use the CSS pixel coordinates
+          ctx.scale(devicePixelRatio, devicePixelRatio);
+
+          // Set the CSS dimensions back to the original intended size
+          canvas.style.width = cssWidth + 'px';
+          canvas.style.height = cssHeight + 'px';
+
+          return ctx;
+      }
+
+      function measureText() {
+        const measure = ctx.measureText('A');
+        const width   = Math.ceil(measure.width);
+        const height  = Math.ceil(measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent);
+
+        // Adjust cell size to appropriate aspect ratio
+        cellWidth  = width;
+        cellHeight = Math.ceil(cellWidth * CELL_ASPECT_RATIO);
+        if (cellHeight < height) {
+          cellHeight = height;
+          cellWidth  = Math.ceil(cellHeight / CELL_ASPECT_RATIO);
+        }
+      }
+
+      function resizeCanvas() {
+        const content = document.getElementById("content");
+        const maxCellWidth  = Math.floor(content.clientWidth  / (CONSOLE_WIDTH  + 2));
+        const maxCellHeight = Math.floor(content.clientHeight / (CONSOLE_HEIGHT + 2));
+
+        const canvas = document.getElementById('game-canvas');
+        ctx = canvas.getContext("2d");
+        ctx.textBaseline = "top";
+        ctx.textRendering = 'pixelated';  // or 'geometricPrecision' or 'optimizeLegibility' (default)
+        ctx.imageSmoothingEnabled = false;
+
+        // Find proper font size
+        ctx.font = '10px '+FONT_NAME;
+        let size = 10;
+        for (let i = 7; i <= 40; i++) {
+            ctx.font = i+'px '+FONT_NAME;
+            measureText();
+            if (cellWidth > maxCellWidth || cellHeight > maxCellHeight) {
+                ctx.font = (i-1)+'px '+FONT_NAME;
+                size = i-1;
+                measureText();
+                break;
+            }
+        }
+
+        // Resize canvas
+        ctxWidth = cellWidth * CONSOLE_WIDTH;
+        ctxHeight = cellHeight * CONSOLE_HEIGHT;
+        canvas.setAttribute('height', ctxHeight);
+        canvas.setAttribute('width', ctxWidth);
+
+        // Get context for the resized canvas
+        ctx = setupRetinaCanvas(canvas);
+        ctx.textBaseline = "top";
+        ctx.fillStyle = 'white';
+        ctx.textRendering = 'pixelated';  // or 'geometricPrecision' or 'optimizeLegibility' (default)
+        ctx.imageSmoothingEnabled = false;
+        ctx.font = size+'px '+FONT_NAME;
+      }
+
+      function initializeBrogueFrame() {
+        resizeCanvas(FONT_NAME);
+
+        // Register event handlers
+        window.addEventListener('keydown', onKeydown, false);
+        document.getElementById('game-canvas').addEventListener('mousedown', onMouseDown, false);
+        document.getElementById('game-canvas').addEventListener('mouseup', onMouseUp, false);
+        document.getElementById('game-canvas').addEventListener('mousemove', throttle(onMouseMove, 100), false);
+        document.getElementById('request-fullscreen').addEventListener('click', onRequestFullscreen, false);
+        document.getElementById('request-files').addEventListener('click', onRequestFiles, false);
+        document.getElementById('file-input').addEventListener("change", handleFiles);
+        document.getElementById('keyboard').addEventListener("blur", (ele) => { ele.target.value = ""; });
+
+        // Touch & Stylus Events
+
+
+        // TODO - need to refresh the display on resize
+        window.addEventListener('resize', () => resizeCanvas() );
+      }
+
+      $(function(){
+          // Load custom font
+          const BROGUE_FONT = 'BrogueFont';
+          const myFont = new FontFace(BROGUE_FONT, 'url(BrogueCE.ttf)');
+          myFont.load().then(font => {
+            document.fonts.add(font); // Add font to the document's font list
+            FONT_NAME = BROGUE_FONT;
+            initializeBrogueFrame();
+          }).catch(e=>{
+            FONT_NAME = "monospace";
+            initializeBrogueFrame();
+          });
+      })
+
+      // File Manager
+      const STORE_NAME = "FILE_DATA";
+      const BROGUE_PATH = "/brogue/";
+      let db = null;
+
+      function downloadFile(uint8Array, filename, contentType) {
+        const blob = new Blob([uint8Array], { type: contentType });
+        const exportUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        document.body.appendChild(a); // Append link to body to ensure it's clickable in all browsers
+
+        a.href = exportUrl;
+        a.download = filename; // The 'download' attribute suggests a filename
+        a.target = "_self"; // Open in the same tab
+        a.click();
+
+        document.body.removeChild(a);
+        URL.revokeObjectURL(exportUrl);
+      }
+
+      function requestFileForDownload(fileName) {
+        const transaction = db.transaction([STORE_NAME], "readonly");
+        const objectStore = transaction.objectStore(STORE_NAME);
+        const request = objectStore.get(BROGUE_PATH+fileName);
+        request.onerror = (event) => {
+          // Handle errors!
+        };
+        request.onsuccess = (event) => {
+          downloadFile(request.result.contents, fileName, "text/plain"); 
+        };
+      }
+
+
+      function requestDeleteFile(fileName, ele) {
+        const transaction = db.transaction([STORE_NAME], "readwrite");
+        const objectStore = transaction.objectStore(STORE_NAME);
+        const request = objectStore.delete(BROGUE_PATH+fileName);
+        request.onerror = (event) => {
+          // Handle errors!
+        };
+        request.onsuccess = (event) => {
+          ele.parentNode.removeChild(ele);
+        };
+      }
+
+      function requestWriteFile(fileName, fileData) {
+        const transaction = db.transaction([STORE_NAME], "readwrite");
+        const objectStore = transaction.objectStore(STORE_NAME);
+
+        const newFile = {
+          contents: new Uint8Array(fileData),
+          mode: 0o100666,
+          timestamp: new Date(),
+        };
+        const request = objectStore.add(newFile, BROGUE_PATH+fileName);
+        request.onsuccess = (event) => {
+          console.log("Data added successfully", event.target.result);
+          const FILES = document.getElementById("file-manager");
+          addFileListItem(FILES,fileName);
+        };
+        request.onerror = (event) => {
+          console.error("Error adding data:", event.target.error);
+        };
+      }
+
+      function addFileListItem(FILES, fileName) {
+        fileName = fileName.replaceAll(BROGUE_PATH,"");
+        const a = document.createElement("div");
+        a.className = "list-item";
+
+        const del = document.createElement("img");
+        del.src = "delete.svg";
+        del.className = "delete";
+        del.addEventListener("click",() => requestDeleteFile(fileName, a));
+        a.appendChild(del)
+
+        const save = document.createElement("img");
+        save.src = "download.svg";
+        save.className = "download";
+        save.addEventListener("click",() => requestFileForDownload(fileName));
+        a.appendChild(save);
+
+        const txt = document.createElement("span");
+        txt.className = "item-text";
+        txt.textContent = fileName;
+        a.appendChild(txt)
+        FILES.appendChild(a); // Append link to body to ensure it's clickable in all browsers
+      }
+
+      function listAllObjects() {
+        const transaction = db.transaction([STORE_NAME], "readonly");
+        const objectStore = transaction.objectStore(STORE_NAME);
+        const allKeysReq = objectStore.getAllKeys();
+        allKeysReq.onsuccess = function(event) {
+          const allKeys = event.target.result;
+          const FILES = document.getElementById("file-manager");
+          allKeys.forEach(key => {
+            addFileListItem(FILES, key);
+          });
+        };
+
+        allKeysReq.onerror = function(event) {
+          console.error("Error retrieving all objects:", event.target.error);
+        };
+
+        // Optional: monitor the transaction completion
+        transaction.oncomplete = function() {
+          console.log("Transaction completed.");
+        };
+      }
+
+      // IndexedDB
+      function readDatabase() {
+        // Let us open our database
+        const request = window.indexedDB.open("/brogue");
+        request.onerror = (event) => {
+          console.error("Why didn't you allow my web app to use IndexedDB?!");
+        };
+        request.onsuccess = (event) => {
+          db = event.target.result;
+          db.onerror = (event) => {
+            // Generic error handler for all errors targeted at this database's requests!
+            console.error(`Database error: ${event.target.error?.message}`);
+          };
+
+          listAllObjects();
+        };
+      }
+
+      function handleFiles() {
+        const selectedFiles = this.files; // This is a FileList object
+
+        if (selectedFiles.length > 0) {
+          const firstFile = selectedFiles[0];
+          const reader = new FileReader();
+
+          // Define what to do when the file is loaded
+          reader.onload = function(event) {
+            const fileContent = event.target.result;
+            console.log('File content (as text):', fileContent);
+            requestWriteFile(firstFile.name, fileContent);
+          };
+
+          // Read the file content
+          reader.readAsArrayBuffer(firstFile);
+        }
+      }
+
+      function getMostRecentTuesday() {
+        const today = new Date();
+        const todayDayOfWeek = today.getDay(); // 0 (Sunday) to 6 (Saturday)
+        const TUESDAY_DAY_OF_WEEK = 2; // Tuesday is 2
+
+        // Calculate the difference in days.
+        // The expression handles cases where today is Tuesday (diff is 0) or earlier in the week than Tuesday.
+        const daysToSubtract = (todayDayOfWeek - TUESDAY_DAY_OF_WEEK + 7) % 7;
+
+        // Create a new Date object for the most recent Tuesday to avoid modifying the 'today' object.
+        const mostRecentTuesday = new Date(today);
+
+        // Set the date back by the calculated number of days.
+        mostRecentTuesday.setDate(today.getDate() - daysToSubtract);
+
+        // Get year, month, and day components
+        const year = mostRecentTuesday.getFullYear();
+        const month = (mostRecentTuesday.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-indexed
+        const day = mostRecentTuesday.getDate().toString().padStart(2, '0');
+
+        // Combine into YYYYMMDD format
+        return `${year}${month}${day}`;
+      }
+    </script>
+  </head>
+    <body oncontextmenu="return false;">
+      <div id="content">
+        <div id="nav-bar">
+          <div id="project-info">
+                  <a href="#" class="close" onclick="this.parentElement.style.display='none';">&nbsp;&nbsp;[X]&nbsp;&nbsp;</a>
+                  <a href="#" id="request-fullscreen">Fullscreen</a>
+                  --
+                  <a href="#" id="request-files">Files</a>
+                  --
+                  <input type="text" id="keyboard" size="8" placeholder="Keyboard"/>
+                  -- 
+                  <span>Report any issues to <a href="https://github.com/tmewett/BrogueCE" target="_blank" rel="noopener noreferrer">BrogueCE</a>.</span>
+          </div>
+          <div id="file-manager" class="floating-div">
+              <a href="#" class="close" onclick="this.parentElement.style.zIndex=-1000;">&nbsp;&nbsp;[X]&nbsp;&nbsp;</a>
+              <span>File Manager - upload, download, or delete save files and recordings</span>
+              <hr/>
+              Add new file: <input type="file" id="file-input" accept=".broguerec, .broguesave">
+              <hr/>
+          </div>
+        </div>
+        <div class="canvas-container">
+          <canvas id="game-canvas"></canvas>
+        </div>
+      </div>
+      {{{ SCRIPT }}}
+    </body>
+</html>

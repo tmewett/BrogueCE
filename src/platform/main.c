@@ -96,6 +96,8 @@ int main(int argc, char *argv[])
     currentConsole = webConsole;
 #elif BROGUE_CURSES
     currentConsole = cursesConsole;
+#elif BROGUE_JS
+    currentConsole = javascriptConsole;
 #else
     currentConsole = nullConsole;
 #endif
