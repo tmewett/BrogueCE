@@ -80,6 +80,8 @@ include make/*.mk
 
 clean:
 	$(warning 'make clean' is no longer needed in many situations, so is not supported. Use 'make -B' to force rebuild something.)
+	rm src/*/*.o
+	rm build/src/*/*.o
 
 escape = $(subst ','\'',$(1))
 vars:

@@ -548,11 +548,14 @@ extension BrogueViewController: UITextFieldDelegate {
                  (key.modifierFlags.contains(.command) &&
                   !key.modifierFlags.contains([.shift,.alternate,.control]))) {
                  // they entered Command-V, without other modifiers
-                 if (UIPasteboard.general.hasStrings) {
-                     let seedData = UIPasteboard.general.string!
-                     for ch in seedData {
-                         if ch.isASCII && ch.isNumber {
-                             addKeyEvent(event: ch.asciiValue!)
+
+                 if #available(iOS 11.0, *) {
+                     if (UIPasteboard.general.hasStrings) {
+                         let seedData = UIPasteboard.general.string!
+                         for ch in seedData {
+                             if ch.isASCII && ch.isNumber {
+                                 addKeyEvent(event: ch.asciiValue!)
+                             }
                          }
                      }
                  }
