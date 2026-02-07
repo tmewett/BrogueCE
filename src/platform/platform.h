@@ -119,6 +119,7 @@ extern struct brogueConsole nullConsole;
 extern struct brogueConsole currentConsole;
 extern boolean noMenu;
 extern char dataDirectory[];
+extern char uiTextEntry[BROGUE_FILENAME_MAX];
 
 // defined in brogue
 extern playerCharacter rogue;

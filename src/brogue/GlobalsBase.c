@@ -44,6 +44,7 @@ playerCharacter rogue;
 const gameConstants *gameConst;
 int gameVariant = VARIANT_BROGUE;
 CBrogueGameEvent uiMode = CBrogueGameEventInMenu;
+char uiTextEntry[BROGUE_FILENAME_MAX];
 creatureList *monsters;
 creatureList *dormantMonsters;
 creatureList purgatory;     // used to hold dead allies awaiting resurrection

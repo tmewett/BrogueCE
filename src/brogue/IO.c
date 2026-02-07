@@ -2770,6 +2770,10 @@ boolean getInputTextString(char *inputText,
     if (inputText != defaultEntry) {
         strcpy(inputText, defaultEntry);
     }
+
+    // Copy the input string before padding it
+    strcpy(uiTextEntry, inputText);
+
     charNum = strLenWithoutEscapes(inputText);
     for (i = charNum; i < maxLength; i++) {
         inputText[i] = ' ';
@@ -2831,6 +2835,7 @@ boolean getInputTextString(char *inputText,
 #endif
     } while (keystroke != RETURN_KEY && keystroke != ESCAPE_KEY);
     uiMode = oldUiMode;
+    uiTextEntry[0] = '\0';
 
     if (useDialogBox) {
         restoreDisplayBuffer(&rbuf);

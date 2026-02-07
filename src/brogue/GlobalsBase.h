@@ -60,6 +60,7 @@ extern playerCharacter rogue;
 extern const gameConstants *gameConst;
 extern int gameVariant;
 extern CBrogueGameEvent uiMode;
+extern char uiTextEntry[BROGUE_FILENAME_MAX];
 extern creatureList *monsters;
 extern creatureList *dormantMonsters;
 extern creatureList purgatory;

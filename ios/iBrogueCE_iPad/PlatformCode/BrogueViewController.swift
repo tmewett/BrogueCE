@@ -23,7 +23,7 @@ import SpriteKit
 import Foundation
 
 fileprivate let kESCKey = "\u{1B}"    // 27
-fileprivate let kDelKey = "\u{B1}"    // 177
+fileprivate let kDelKey = "\u{7F}"    // 127
 fileprivate let kEnterKey = "\n"
  
  // Because of a main thread issue we need to set this.
@@ -98,7 +98,6 @@ final class BrogueViewController: UIViewController {
     @objc fileprivate var directionsViewController: DirectionControlsViewController?
     fileprivate var keyEvents = [UInt8]()
     fileprivate var magnifierTimer: Timer?
-    fileprivate var inputRequestString: String?
     fileprivate var shiftModifierPressed: Bool = false
     fileprivate var controlModifierPressed: Bool = false
     
@@ -120,6 +119,7 @@ final class BrogueViewController: UIViewController {
     fileprivate func showKeyboard() {
         if ( !self.keyboardDetectedKeyEvent) {
             // only display a screen keyboard if we haven't seen any key presses
+            self.inputTextField.text = brogueTextInput as String;
             self.inputTextField.becomeFirstResponder()
         }
     }
@@ -142,6 +142,7 @@ final class BrogueViewController: UIViewController {
         self.dContainerView.isUserInteractionEnabled = false
     }
     
+    @objc var brogueTextInput: NSString = "";
     @objc var lastBrogueGameEvent: BrogueGameEvent = .inMenu {
         didSet {
             DispatchQueue.main.async {
@@ -485,8 +486,6 @@ extension BrogueViewController {
 // MARK: - Handle Key input from screen or keyboard
 extension BrogueViewController: UITextFieldDelegate {
     @objc func requestTextInput(for string: String) {
-        inputRequestString = string
-        
         DispatchQueue.main.async {
             self.hideDirectionControls()
             self.showEscButton()
@@ -497,24 +496,30 @@ extension BrogueViewController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         self.hideEscButton()
         self.hideKeyboard()
-        addKeyEvent(event: "\n".ascii)
+        addKeyEvent(event: kEnterKey.ascii)
         return true
     }
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        inputTextField.text = inputRequestString ?? ""
         self.showEscButton()
+        self.showKeyboard()
     }
     
     func textFieldDidEndEditing(_ textField: UITextField) {
         self.hideEscButton()
+        self.hideKeyboard()
     }
     
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         if string.isEmpty {
             addKeyEvent(event: kDelKey.ascii)
         } else {
-            // string may be multiple characters, if a paste operation occured
+            // Delete part of the field if requested
+            for _ in 0..<range.length {
+                addKeyEvent(event: kDelKey.ascii)
+            }
+
+            // String may be multiple characters, if a paste operation occured
             for char in string {
                 addKeyEvent(event: char.asciiValue ?? " ".ascii)
             }
@@ -523,12 +528,14 @@ extension BrogueViewController: UITextFieldDelegate {
     }
     
     override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
-        // TODO: set a timer or otherwise start a key repitition simulation
+        guard let key = presses.first?.key else {
+            super.pressesBegan(presses, with: event)
+            return
+        }
         
-            guard let key = presses.first?.key else { return }
-            shiftModifierPressed = key.modifierFlags.contains([.shift,.alphaShift])
-            controlModifierPressed = key.modifierFlags.contains(.control)
-      }
+        shiftModifierPressed = key.modifierFlags.contains([.shift,.alphaShift])
+        controlModifierPressed = key.modifierFlags.contains(.control)
+    }
     
     
     override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {

@@ -35,6 +35,7 @@ extern "C" {
     #include "platform.h"
 
     extern CBrogueGameEvent uiMode;
+    extern char uiTextEntry[BROGUE_FILENAME_MAX];
 }
 
 
@@ -128,6 +129,7 @@ boolean _pauseForMilliseconds(short milliseconds, PauseBehavior behavior) {
 
     // brturn: Update the UI Mode every frame
     if (brogueViewController.lastBrogueGameEvent != (BrogueGameEvent)uiMode) {
+        brogueViewController.brogueTextInput = [NSString stringWithUTF8String:uiTextEntry];
         brogueViewController.lastBrogueGameEvent = (BrogueGameEvent)uiMode;
     }
     
@@ -151,6 +153,7 @@ void _nextKeyOrMouseEvent(rogueEvent *returnEvent, __unused boolean textInput, b
         
         // brturn: Update the UI Mode every frame
         if (brogueViewController.lastBrogueGameEvent != (BrogueGameEvent)uiMode) {
+            brogueViewController.brogueTextInput = [NSString stringWithUTF8String:uiTextEntry];
             brogueViewController.lastBrogueGameEvent = (BrogueGameEvent)uiMode;
         }
         
