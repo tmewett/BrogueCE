@@ -562,14 +562,14 @@ static boolean forceWeaponHit(creature *defender, item *theItem) {
         splitMonster(defender, &player);
 
         if (otherMonster
-            && !(defender->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE))) {
+            && !(otherMonster->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE))) {
 
             if (inflictDamage(NULL, otherMonster, forceDamage, &white, false)) {
                 if (canDirectlySeeMonster(otherMonster)) {
                     sprintf(buf, "%s %s%s when %s slams into $HIMHER",
                             buf2,
                             (knowFirstMonsterDied ? "also " : ""),
-                            (defender->info.flags & MONST_INANIMATE) ? "is destroyed" : "dies",
+                            (otherMonster->info.flags & MONST_INANIMATE) ? "is destroyed" : "dies",
                             monstName);
                     resolvePronounEscapes(buf, otherMonster);
                     buf[DCOLS] = '\0';
@@ -581,7 +581,7 @@ static boolean forceWeaponHit(creature *defender, item *theItem) {
             if (otherMonster->creatureState != MONSTER_ALLY) {
                 // Allies won't defect if you throw another monster at them, even though it hurts.
                 moralAttack(&player, otherMonster);
-                splitMonster(defender, &player);
+                splitMonster(otherMonster, &player);
             }
         }
     }
@@ -1588,6 +1588,7 @@ boolean inflictDamage(creature *attacker, creature *defender,
     }
 
     if (defender->currentHP <= damage) { // killed
+        defender->currentHP = 0;
         return true;
     } else { // survived
         if (damage < 0 && defender->currentHP - damage > defender->info.maxHP) {

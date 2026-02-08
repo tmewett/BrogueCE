@@ -114,8 +114,7 @@ void initializeMonster(creature *monst, boolean itemPossible) {
     monst->currentHP = monst->info.maxHP;
     monst->spawnDepth = rogue.depthLevel;
     monst->ticksUntilTurn = monst->info.movementSpeed;
-    monst->info.turnsBetweenRegen *= 1000; // tracked as thousandths to prevent rounding errors
-    monst->turnsUntilRegen = monst->info.turnsBetweenRegen;
+    monst->turnsUntilRegen = monst->info.turnsBetweenRegen * 1000; // tracked as thousandths to prevent rounding errors
     monst->regenPerTurn = 0;
     monst->movementSpeed = monst->info.movementSpeed;
     monst->attackSpeed = monst->info.attackSpeed;
@@ -1836,7 +1835,7 @@ void decrementMonsterStatus(creature *monst) {
         if ((monst->turnsUntilRegen -= 1000) <= 0) {
             monst->currentHP++;
             monst->previousHealthPoints++;
-            monst->turnsUntilRegen += monst->info.turnsBetweenRegen;
+            monst->turnsUntilRegen += monst->info.turnsBetweenRegen * 1000;
         }
     }
 
@@ -3410,7 +3409,7 @@ void monstersTurn(creature *monst) {
         }
         if (closestMonster && !(monst->info.flags & MONST_MAINTAINS_DISTANCE)) {
             targetLoc = closestMonster->loc;
-            if (moveMonsterPassivelyTowards(monst, targetLoc, monst->creatureState == MONSTER_ALLY)) {
+            if (moveMonsterPassivelyTowards(monst, targetLoc, true)) {
                 return;
             }
         }

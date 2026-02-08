@@ -766,7 +766,7 @@ static void seek(unsigned long seekTarget, enum recordingSeekModes seekMode) {
         executeEvent(&theEvent);
 
         if ((seekMode == RECORDING_SEEK_MODE_DEPTH && rogue.depthLevel == seekTarget)
-            || (seekMode == RECORDING_SEEK_MODE_TURN && rogue.playerTurnNumber == seekTarget)) {
+            || (seekMode == RECORDING_SEEK_MODE_TURN && rogue.playerTurnNumber >= seekTarget)) {
 
             arrivedAtDestination = true;
         }
