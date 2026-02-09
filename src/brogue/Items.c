@@ -4743,6 +4743,13 @@ static void detonateBolt(bolt *theBolt, creature *caster, short x, short y, bool
                 monst->loc = getQualifyingPathLocNear((pos){ x, y }, true,
                                          T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)) & ~T_SPONTANEOUSLY_IGNITES, HAS_PLAYER,
                                          avoidedFlagsForMonster(&(monst->info)) & ~T_SPONTANEOUSLY_IGNITES, (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
+
+                // Invalid location (level is full)
+                if (posEq(monst->loc, INVALID_POS)) {
+                    killCreature(monst, true); // Administrative death
+                    break; // Don't conjure any more
+                }
+
                 monst->bookkeepingFlags |= (MB_FOLLOWER | MB_BOUND_TO_LEADER | MB_DOES_NOT_TRACK_LEADER);
                 monst->bookkeepingFlags &= ~MB_JUST_SUMMONED;
                 monst->leader = &player;
