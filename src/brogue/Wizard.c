@@ -296,7 +296,7 @@ static void dialogCreateMonsterChooseMutation(creature *theMonster) {
 
     selectedMutation = dialogSelectEntryFromList(buttons, j+1, "Choose a mutation:");
 
-    if (selectedMutation != noMutation) {
+    if (selectedMutation >= 0 && selectedMutation != noMutation) {
         mutateMonster(theMonster, selectedMutation);
     }
 }
@@ -456,10 +456,10 @@ static void dialogCreateItem() {
 
     selectedCategory = dialogSelectEntryFromList(buttons, i, "Create item:");
 
-    if (tableForItemCategory(Fl(selectedCategory))) {
-        selectedKind = dialogCreateItemChooseKind(Fl(selectedCategory));
-    } else if (selectedCategory == -1) {
+    if (selectedCategory == -1) {
         return;
+    } else if (tableForItemCategory(Fl(selectedCategory))) {
+        selectedKind = dialogCreateItemChooseKind(Fl(selectedCategory));
     } else {
         selectedKind = 0;
     }
