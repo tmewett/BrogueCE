@@ -6960,6 +6960,7 @@ boolean readScroll(item *theItem) {
     creature *monst;
     boolean hadEffect = false;
     char buf[COLS * 3], buf2[COLS * 3];
+    item *theScroll = theItem;
 
     itemTable scrollKind = tableForItemCategory(theItem->category)[theItem->kind];
 
@@ -7212,12 +7213,7 @@ boolean readScroll(item *theItem) {
     }
 
     // all scrolls auto-identify on use
-    if (!scrollKind.identified
-        && (theItem->kind != SCROLL_ENCHANTING)
-        && (theItem->kind != SCROLL_IDENTIFY)) {
-
-        autoIdentify(theItem);
-    }
+    autoIdentify(theScroll);
 
     return true;
 }
