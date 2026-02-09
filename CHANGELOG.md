@@ -1,3 +1,28 @@
+1.15
+====
+
+Miscellaneous improvements and bug fixes.
+
+Thanks to co-maintainers flend and zenzombie, and to contributors adrior11, AndrewSav, BoatsandJoes, Bryan Turner, Hectocotylus, thebrave, nathanf, ZayadNimrod, androidnisse, and zeb33n.
+
+- Increased the brightness of the "hide color effects" mode to match the normal mode.
+- Added messages to the game log for zapping wands and staffs.
+- Loading a save file will now place the game into the same mode the save was made in (i.e normal, wizard, or easy).
+- Enabled scrolling through the inventory with Up/Down/8/2 keys in some cases where it was not possible: the item selection for scrolls of enchanting and identify, in replays, and on the death screen.
+- Fixed a bug where the cell the player was on would remain encased in obstruction crystal after casting, instead of it dissolving immediately.
+- Fixed a bug where auto-resting was sometimes not cancelled when seeing a monster.
+- Fixed a bug that caused recordings to skip to the end if the player was forced to eat food to avoid starvation.
+- Fixed a bug where water was not visible on cells with filthy effects piles.
+- Fixed a bug where, if a monster was thrown into a jelly by a force runic, the jelly didn't split.
+- Fixed a bug where, if a jelly was thrown into another monster by a force runic, it split twice.
+- Fixed a bug where, if a weapon-immune monster was thrown into another monster by a force runic, the collided monster would not take any damage.
+- Fixed a bug where a fatal reflected bolt could leave the player at zero health without killing them.
+- Fixed a bug where discordant monsters would sometimes not attack the player when they could.
+- Fixed a bug in wizard mode which caused regenerating monsters not to regenerate.
+- Increased the constrast of a few game elements: the goblin/kobold, dark player, and invisible player colors are now slightly brighter, and the purple tint of highlighted dark areas has been slightly reduced.
+- Fixed a bug where some item inscriptions would render with the wrong text colour.
+
+
 1.14.1
 ======
 

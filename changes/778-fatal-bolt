@@ -1,1 +1,0 @@
-Fixed a bug which caused a fatal reflected bolt to leave the player at zero health without death.

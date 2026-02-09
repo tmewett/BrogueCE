@@ -1,1 +1,0 @@
-Loading a savegame will now place the game into the same mode the savegame was made in (i.e normal, wizard, easy).
