@@ -502,7 +502,20 @@ void initRecording() {
         for (i=0; i<15; i++) {
             versionString[i] = recallChar();
         }
-        rogue.mode = recallChar();
+
+        // Read the game mode and verify it
+        unsigned char ch = recallChar();
+        switch (ch) {
+        case 0:
+        case 1:
+        case 2:
+            rogue.mode = ch;
+            break;
+
+        default:
+            rogue.mode = GAME_MODE_NORMAL;
+            break;
+        }
 
         if (getPatchVersion(versionString, &recPatch) && recPatch <= gameConst->patchVersion) {
             // Major and Minor match ours, Patch is less than or equal to ours: we are compatible.
