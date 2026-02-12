@@ -1,3 +1,11 @@
+1.15.1
+======
+
+- Fixed a bug that sometimes caused Brogue to switch to easy mode without confirmation.
+- Fixed a bug where switching to easy mode in-game didn't do anything.
+- Fixed other broken code related to game modes.
+
+
 1.15
 ====
 

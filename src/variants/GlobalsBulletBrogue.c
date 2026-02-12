@@ -988,7 +988,7 @@ const char *mainMenuTitle_BulletBrogue =
 
 #define BULLET_BROGUE_MAJOR 1
 #define BULLET_BROGUE_MINOR 2
-#define BULLET_BROGUE_PATCH 0
+#define BULLET_BROGUE_PATCH 1
 
 // Brogue version: what the user sees in the menu and title
 #define BULLET_BROGUE_VERSION_STRING "BB " STRINGIFY(BULLET_BROGUE_MAJOR) "." STRINGIFY(BULLET_BROGUE_MINOR) "." STRINGIFY(BULLET_BROGUE_PATCH) BROGUE_EXTRA_VERSION
