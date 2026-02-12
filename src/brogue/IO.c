@@ -275,7 +275,7 @@ static short actionMenu(short x, boolean playingBack) {
             buttons[buttonCount].hotkey[0] = RETHROW_KEY;
             buttonCount++;
 
-            if (!rogue.mode == GAME_MODE_EASY) {
+            if (rogue.mode != GAME_MODE_EASY) {
                 if (KEYBOARD_LABELS) {
                     sprintf(buttons[buttonCount].text, "  %s&: %sEasy mode  ",              yellowColorEscape, whiteColorEscape);
                 } else {
@@ -4392,7 +4392,7 @@ void printSeed() {
     char buf[COLS];
     char mode[14] = "";
 
-    if (rogue.mode = GAME_MODE_EASY) {
+    if (rogue.mode == GAME_MODE_EASY) {
         strcpy(mode,"easy mode; ");
     } else if (WIZARD_MODE) {
         strcpy(mode,"wizard mode; ");

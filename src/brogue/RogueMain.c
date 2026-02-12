@@ -190,11 +190,12 @@ void initializeGameVariant() {
 void initializeRogue(uint64_t seed) {
     short i, j, k;
     item *theItem;
-    boolean playingback, playbackFF, playbackPaused, mode, easy, displayStealthRangeMode;
+    boolean playingback, playbackFF, playbackPaused, displayStealthRangeMode;
     boolean trueColorMode;
     boolean hideSeed;
     short oldRNG;
     char currentGamePath[BROGUE_FILENAME_MAX];
+    enum gameMode mode;
 
     playingback = rogue.playbackMode; // the only animals that need to go on the ark
     playbackPaused = rogue.playbackPaused;
@@ -1338,7 +1339,7 @@ void victory(boolean superVictory) {
         theEntry.score /= 10;
     }
 
-    if (!rogue.mode == GAME_MODE_WIZARD && !rogue.playbackMode) {
+    if (rogue.mode != GAME_MODE_WIZARD && !rogue.playbackMode) {
         qualified = saveHighScore(theEntry);
     } else {
         qualified = false;
@@ -1389,7 +1390,7 @@ void enableEasyMode() {
     if (confirm("Succumb to demonic temptation (i.e. enable Easy Mode)?", false)) {
         recordKeystroke(EASY_MODE_KEY, false, true);
         message("An ancient and terrible evil burrows into your willing flesh!", REQUIRE_ACKNOWLEDGMENT);
-        rogue.mode == GAME_MODE_EASY;
+        rogue.mode = GAME_MODE_EASY;
         setPlayerDisplayChar();
         refreshDungeonCell(player.loc);
         refreshSideBar(-1, -1, false);
