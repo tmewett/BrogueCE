@@ -31,6 +31,7 @@ BrogueCE-javascript:
 	cp javascript/*.png $@
 	cp javascript/*.txt $@
 	cp javascript/*.ico $@
+	cp javascript/*.ttf $@
 
 # macOS app bundle
 
