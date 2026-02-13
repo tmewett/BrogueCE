@@ -138,7 +138,7 @@ void describedItemName(const item *theItem, char *description, int maxLength) {
     }
 }
 
-void describeLocation(char *buf, short x, short y) {
+void describeLocation(char buf[DCOLS], short x, short y) {
     creature *monst;
     item *theItem, *magicItem;
     boolean standsInTerrain;
@@ -555,7 +555,7 @@ boolean freeCaptivesEmbeddedAt(short x, short y) {
 /// @brief Ask the player for confirmation before attacking an acidic monster
 /// @param hitList the creature(s) getting attacked
 /// @return true to abort the attack
-static boolean abortAttackAgainstAcidicTarget(const creature *hitList[8]) {
+static boolean abortAttackAgainstAcidicTarget(creature *hitList[8]) {
     short i;
     char monstName[COLS], weaponName[COLS];
     char buf[COLS*3];
@@ -588,7 +588,7 @@ static boolean abortAttackAgainstAcidicTarget(const creature *hitList[8]) {
 /// @brief Ask the player for confirmation before attacking a discordant ally
 /// @param hitList the creature(s) getting attacked
 /// @return true to abort the attack
-static boolean abortAttackAgainstDiscordantAlly(const creature *hitList[8]) {
+static boolean abortAttackAgainstDiscordantAlly(creature *hitList[8]) {
 
     for (int i=0; i<8; i++) {
         if (hitList[i]
@@ -614,7 +614,7 @@ static boolean abortAttackAgainstDiscordantAlly(const creature *hitList[8]) {
 /// hallucinating (but not telepathic).
 /// @param hitList the creature(s) getting attacked
 /// @return true to abort the attack
-static boolean abortAttack(const creature *hitList[8]) {
+static boolean abortAttack(creature *hitList[8]) {
 
     // too bad so sad if you're confused or hallucinating (but not telepathic)
     if (player.status[STATUS_CONFUSED]
@@ -638,7 +638,7 @@ static boolean abortAttack(const creature *hitList[8]) {
 boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *aborted) {
     bolt theBolt;
     creature *defender;
-    const creature *hitList[8] = {0};
+    creature *hitList[8] = {0};
 
     const char boltChar[DIRECTION_COUNT] = "||~~\\//\\";
 
@@ -694,7 +694,7 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
 // (in which case the player/monster should move instead).
 boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *aborted) {
     creature *defender;
-    const creature *hitList[8] = {0};
+    creature *hitList[8] = {0};
     short range = 2, i = 0, h = 0;
     boolean proceed = false, visualEffect = false;
 
@@ -798,7 +798,7 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
     return false;
 }
 
-static void buildFlailHitList(const short x, const short y, const short newX, const short newY, const creature *hitList[16]) {
+static void buildFlailHitList(const short x, const short y, const short newX, const short newY, creature *hitList[16]) {
     short mx, my;
     short i = 0;
 
@@ -846,7 +846,7 @@ boolean playerMoves(short direction) {
     short newX, newY, newestX, newestY;
     boolean playerMoved = false, specialAttackAborted = false, anyAttackHit = false;
     creature *defender = NULL, *tempMonst = NULL;
-    const creature *hitList[16] = {NULL};
+    creature *hitList[16] = {NULL};
     char monstName[COLS];
     char buf[COLS*3];
     const int directionKeys[8] = {UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, UPLEFT_KEY, DOWNLEFT_KEY, UPRIGHT_KEY, DOWNRIGHT_KEY};
