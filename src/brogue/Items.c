@@ -1423,7 +1423,7 @@ void call(item *theItem) {
 // If baseColor is provided, then the suffix will be in gray, flavor portions of the item name (e.g. a "pink" potion,
 //  a "sandalwood" staff, a "ruby" ring) will be in dark purple, and the Amulet of Yendor and lumenstones will be in yellow.
 //  BaseColor itself will be the color that the name reverts to outside of these colored portions.
-void itemName(item *theItem, char *root, boolean includeDetails, boolean includeArticle, const color *baseColor) {
+void itemName(const item *theItem, char *root, boolean includeDetails, boolean includeArticle, const color *baseColor) {
     char buf[DCOLS * 5], pluralization[10], article[10] = "", runicName[30],
     grayEscapeSequence[5], purpleEscapeSequence[5], yellowEscapeSequence[5], baseEscapeSequence[5];
     color tempColor;
@@ -1714,7 +1714,7 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
     return;
 }
 
-void itemKindName(item *theItem, char *kindName) {
+void itemKindName(const item *theItem, char *kindName) {
 
     // use lookup table for randomly generated items with more than one kind per category
     if (theItem->category & (ARMOR | CHARM | FOOD | POTION | RING | SCROLL | STAFF | WAND | WEAPON)) {
@@ -1741,7 +1741,7 @@ void itemKindName(item *theItem, char *kindName) {
     }
 }
 
-void itemRunicName(item *theItem, char *runicName) {
+void itemRunicName(const item *theItem, char *runicName) {
     char vorpalEnemyMonsterClass[15] ="";
 
     if (theItem->flags & ITEM_RUNIC) {
@@ -3687,7 +3687,7 @@ static boolean tunnelize(short x, short y) {
 /// @param monst The monster
 /// @param isBolt True to check for a negation bolt. False for negation blast.
 /// @return True if negation will have an effect
-static boolean negationWillAffectMonster(creature *monst, boolean isBolt) {
+static boolean negationWillAffectMonster(const creature *monst, boolean isBolt) {
 
     // negation bolts don't affect monsters that always reflect. negation never affects the warden.
     if ((isBolt && (monst->info.abilityFlags & MA_REFLECT_100))
@@ -4342,7 +4342,7 @@ enum boltEffects boltEffectForItem(item *theItem) {
     }
 }
 
-enum boltType boltForItem(item *theItem) {
+enum boltType boltForItem(const item *theItem) {
     if (theItem->category & (STAFF | WAND)) {
         return tableForItemCategory(theItem->category)[theItem->kind].power;
     } else {
@@ -7462,7 +7462,7 @@ short magicCharDiscoverySuffix(short category, short kind) {
 -1 if the item is of bad magic
  0 if it is neutral
  1 if it is of good magic */
-int itemMagicPolarity(item *theItem) {
+int itemMagicPolarity(const item *theItem) {
     itemTable *theItemTable = tableForItemCategory(theItem->category);
     switch (theItem->category) {
         case WEAPON:
