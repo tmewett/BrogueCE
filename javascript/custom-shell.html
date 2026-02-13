@@ -138,6 +138,7 @@
       }
       canvas {
         image-rendering: pixelated;
+        touch-action: none;
       }
       #canvas-container {
         border: 1px solid orange;
@@ -348,16 +349,30 @@
 
         // Register event handlers
         window.addEventListener('keydown', onKeydown, false);
-        document.getElementById('game-canvas').addEventListener('mousedown', onMouseDown, false);
-        document.getElementById('game-canvas').addEventListener('mouseup', onMouseUp, false);
-        document.getElementById('game-canvas').addEventListener('mousemove', throttle(onMouseMove, 100), false);
         document.getElementById('request-fullscreen').addEventListener('click', onRequestFullscreen, false);
         document.getElementById('request-files').addEventListener('click', onRequestFiles, false);
         document.getElementById('file-input').addEventListener("change", handleFiles);
         document.getElementById('keyboard').addEventListener("blur", (ele) => { ele.target.value = ""; });
 
         // Touch & Stylus Events
+        const gameCanvas = document.getElementById('game-canvas');
+        gameCanvas.addEventListener('mousedown', onMouseDown, false);
+        gameCanvas.addEventListener('mouseup', onMouseUp, false);
+        gameCanvas.addEventListener('mousemove', throttle(onMouseMove, 100), false);
 
+        gameCanvas.addEventListener('pointerdown', onMouseDown, false);
+        gameCanvas.addEventListener('pointerup', onMouseUp, false);
+        gameCanvas.addEventListener('pointermove', throttle(onMouseMove, 100), false);
+
+        gameCanvas.addEventListener('touchstart', onMouseDown, false);
+        gameCanvas.addEventListener('touchend', onMouseUp, false);
+        gameCanvas.addEventListener('touchmove', throttle(onMouseMove, 100), false);
+
+        // Other touch/stylus events
+        //    touchcancel
+        //    pointerover
+        //    pointerout / pointerleave
+        //    pointercancel
 
         // TODO - need to refresh the display on resize
         window.addEventListener('resize', () => resizeCanvas() );
@@ -408,7 +423,6 @@
           downloadFile(request.result.contents, fileName, "text/plain"); 
         };
       }
-
 
       function requestDeleteFile(fileName, ele) {
         const transaction = db.transaction([STORE_NAME], "readwrite");
@@ -560,7 +574,7 @@
                   <a href="#" id="request-files">Files</a>
                   --
                   <input type="text" id="keyboard" size="8" placeholder="Keyboard"/>
-                  -- 
+                  --
                   <span>Report any issues to <a href="https://github.com/tmewett/BrogueCE" target="_blank" rel="noopener noreferrer">BrogueCE</a>.</span>
           </div>
           <div id="file-manager" class="floating-div">
