@@ -35,7 +35,6 @@
 
 extern playerCharacter rogue;
 
-// boolean useAscii;
 static void javascript_gameLoop(void) {
 
   // Setup file system
@@ -65,7 +64,16 @@ static void javascript_plotChar(enum displayGlyph glyph,
         short foreRed, short foreGreen, short foreBlue,
         short backRed, short backGreen, short backBlue) {
 
-    unsigned int ch = glyphToUnicode(glyph);
+    unsigned int ch;
+
+    if ( (glyph > G_DOWN_ARROW) &&
+        ((graphicsMode == TILES_GRAPHICS) ||
+        ((graphicsMode == HYBRID_GRAPHICS) && (isEnvironmentGlyph(glyph))))
+        ) {
+        ch = (glyph-130) + 0x4000;
+    } else {
+        ch = glyphToUnicode(glyph);
+    }
 
     EM_ASM_({
       window.plotChars[($1<<8)+$2] = ([$0,$1,$2,$3,$4,$5,$6,$7,$8]);
@@ -123,6 +131,15 @@ static boolean javascript_modifier_held(int modifier) {
   return 0;
 }
 
+static enum graphicsModes showGraphics = TEXT_GRAPHICS;
+static enum graphicsModes javascript_setGraphicsMode(enum graphicsModes mode) {
+    showGraphics = mode;
+    refreshScreen();
+    // updateScreen();
+    return mode;
+}
+
+
 struct brogueConsole javascriptConsole = {
   javascript_gameLoop,
   javascript_pauseForMilliseconds,
@@ -132,5 +149,5 @@ struct brogueConsole javascriptConsole = {
   javascript_modifier_held,
   NULL,
   NULL,
-  NULL
+  javascript_setGraphicsMode
 };
