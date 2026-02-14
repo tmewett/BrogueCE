@@ -393,24 +393,21 @@
       const setupRetinaCanvas = (canvas) => {
           const ctx = canvas.getContext('2d');
 
-          if (devicePixelRatio != 1) {
-            // Get the CSS-determined size of the canvas
-            const rect = canvas.getBoundingClientRect();
-            const cssWidth = rect.width;
-            const cssHeight = rect.height;
+          // Get the CSS-determined size of the canvas
+          const rect = canvas.getBoundingClientRect();
+          const cssWidth = rect.width;
+          const cssHeight = rect.height;
 
-            // Set the actual canvas buffer size to the high DPI dimensions
-            canvas.width = cssWidth * devicePixelRatio;
-            canvas.height = cssHeight * devicePixelRatio;
+          // Set the actual canvas buffer size to the high DPI dimensions
+          canvas.width = cssWidth * devicePixelRatio;
+          canvas.height = cssHeight * devicePixelRatio;
 
-            // Scale the context so drawing operations use the CSS pixel coordinates
-            ctx.scale(devicePixelRatio, devicePixelRatio);
+          // Scale the context so drawing operations use the CSS pixel coordinates
+          ctx.scale(devicePixelRatio, devicePixelRatio);
 
-            // Set the CSS dimensions back to the original intended size
-            canvas.style.width = cssWidth + 'px';
-            canvas.style.height = cssHeight + 'px';
-          }
-
+          // Set the CSS dimensions back to the original intended size
+          canvas.style.width = cssWidth + 'px';
+          canvas.style.height = cssHeight + 'px';
           return ctx;
       }
 
