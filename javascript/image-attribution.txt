@@ -1,5 +1,3 @@
-https://www.svgrepo.com/svg/502629/download-2
-https://www.svgrepo.com/svg/502614/delete
 
 Kalai Oval Interface Icons Collection
 Created by Ananthanath A & Kalaiism
@@ -8,4 +6,21 @@ https://nathdesign.in
 Kalai Icons are a set of open-source icons designed in a consistent style. These icons are created in Figma and made available to the community.
 
 It's Free to use for personal & commercial projects. Also, have the freedom to edit or modify, or share. 
+
+https://www.svgrepo.com/svg/502629/download-2
+https://www.svgrepo.com/svg/502614/delete
+https://www.svgrepo.com/svg/502833/share-2
+https://www.svgrepo.com/svg/502912/warning-1
+https://www.svgrepo.com/svg/502829/share-2
+https://www.svgrepo.com/svg/502485/arrow-diagonal
+https://www.svgrepo.com/svg/502668/file
+https://www.svgrepo.com/svg/502579/clear-circle
+
+----------------------------------------------
+
+COLLECTION: Ui Oval Interface Icons
+LICENSE: CC0 License
+UPLOADER: SVG Repo
+
+https://www.svgrepo.com/svg/472018/type-square
 
