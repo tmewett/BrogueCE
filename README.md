@@ -24,6 +24,7 @@ lucky few to return alive?
 - IRC: [##brogue on Libera Chat](https://kiwiirc.com/nextclient/irc.libera.chat/##brogue)
 - [Original website](https://sites.google.com/site/broguegame/)
 - [Android port](https://github.com/bilgincoskun/brogue-android-port/releases)
+- [iPad Version on the Apple Store](https://apps.apple.com/us/app/ibroguece/id1619142059)
 
 
 Playing
