@@ -523,13 +523,15 @@
       window.allChars = {}; // For redrawing the window on resize, etc.
 
       // Load custom font
-      myFont.load().then(font => {
-        document.fonts.add(font); // Add font to the document's font list
-        FONT_NAME = BROGUE_FONT;
-        initializeBrogueFrame();
-      }).catch( e => {
-        FONT_NAME = "monospace";
-        initializeBrogueFrame();
+      document.addEventListener('DOMContentLoaded', function() {
+        myFont.load().then(font => {
+          document.fonts.add(font); // Add font to the document's font list
+          FONT_NAME = BROGUE_FONT;
+          initializeBrogueFrame();
+        }).catch( e => {
+          FONT_NAME = "monospace";
+          initializeBrogueFrame();
+        });
       });
 
       // -------------------------------------------------
