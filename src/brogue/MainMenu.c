@@ -268,11 +268,7 @@ static void initializeMainMenuButton(brogueButton *button, char *textWithHotkey,
     button->command = command;
 }
 
-#ifndef BROGUE_TABLET
-#define MAIN_MENU_BUTTON_COUNT 3
-#else
 #define MAIN_MENU_BUTTON_COUNT 4
-#endif
 
 /// @brief Initializes the main menu buttons
 /// @param buttons An array of buttons to initialize

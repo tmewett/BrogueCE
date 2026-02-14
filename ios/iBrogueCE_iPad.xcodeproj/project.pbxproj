@@ -489,7 +489,7 @@
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 1.14.1;
+				MARKETING_VERSION = 1.1151.0;
 				PRODUCT_BUNDLE_IDENTIFIER = bryan.turner.broguece;
 				PRODUCT_NAME = BrogueCE;
 				PROVISIONING_PROFILE = "";
@@ -532,7 +532,7 @@
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 1.14.1;
+				MARKETING_VERSION = 1.1151.0;
 				PRODUCT_BUNDLE_IDENTIFIER = bryan.turner.broguece;
 				"PRODUCT_BUNDLE_IDENTIFIER[sdk=*]" = md.taylor.broguece;
 				PRODUCT_NAME = BrogueCE;

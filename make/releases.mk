@@ -24,7 +24,6 @@ BrogueCE-linux:
 	cp -r --parents $(common_bin) bin/brogue $@
 	cp linux/make-link-for-desktop.sh $@
 
-
 # macOS app bundle
 
 # $* is the matched %
@@ -67,4 +66,4 @@ BrogueCE-ios-test:
 BrogueCE-ios-clean:
 	xcodebuild clean -project $(PROJECT) -scheme $(SCHEME)
 
-BrogueCE-ios: BrogueCE-ios-build BrogueCE-ios-release BrogueCE-ios-clean
+BrogueCE-ios: BrogueCE-ios-build BrogueCE-ios-clean
