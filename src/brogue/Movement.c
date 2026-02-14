@@ -355,9 +355,11 @@ void describeLocation(char *buf, short x, short y) {
                 strcat(itemLocation, standsInTerrain ? " in " : " on ");
                 strcat(itemLocation, tileText(x, y));
             }
-            sprintf(buf, "%s %s %s %s%s.", subject, verb, preposition, object, itemLocation);
-            describedItemName(theItem, object, DCOLS - strlen(buf));
 
+            describedItemName(theItem, object, DCOLS - strlen(buf));
+            sprintf(buf, "%s %s%s %s%s.", subject, verb, preposition, object, itemLocation);
+            restoreRNG;
+            return;
         } else {
             if (!prepositionLocked) {
                 strcpy(preposition, subjectMoving ? (standsInTerrain ? "through" : "across")
@@ -384,7 +386,6 @@ void describeLocation(char *buf, short x, short y) {
             strcpy(preposition, standsInTerrain ? (subjectMoving ? "through" : "in")
                    : (subjectMoving ? "across" : "on"));
 
-            sprintf(buf, "%s %s %s %s%s.", subject, verb, preposition, object, itemLocation);
             describedItemName(theItem, subject, DCOLS - strlen(buf));
 
         } else { // no item
