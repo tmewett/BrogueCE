@@ -103,6 +103,14 @@
       .close {
         font-style: normal;
         text-decoration-line: none;
+        color: #b55a5a;
+        background-color: #555555;
+        padding: 0.1em 0.1em;
+        border: 2px solid var(--input-border);
+        border-radius: 4px;
+      }
+      .close:hover {
+        background-color: #777777;
       }
       .list-item {
         display: flex;
@@ -140,6 +148,15 @@
         padding: 0.25em 0.5em;
         border: 2px solid var(--input-border);
         border-radius: 4px;
+      }
+      img {
+        background-color: #555555;
+        padding: 0.1em 0.1em;
+        border: 2px solid var(--input-border);
+        border-radius: 4px;
+      }
+      img:hover {
+        background-color: #777777;
       }
     </style>
     <script type="text/javascript">
@@ -659,10 +676,10 @@
         };
       }
 
-      const handleFiles = () => {
-        const selectedFiles = this.files; // This is a FileList object
+      const handleFiles = (event) => {
+        const selectedFiles = event.target.files; // This is a FileList object
 
-        if (selectedFiles.length > 0) {
+        if (selectedFiles && selectedFiles.length > 0) {
           const firstFile = selectedFiles[0];
           const reader = new FileReader();
 
@@ -720,10 +737,10 @@
                   <span>Report any issues to <a href="https://github.com/tmewett/BrogueCE" target="_blank" rel="noopener noreferrer">BrogueCE</a>.</span>
           </div>
           <div id="file-manager" class="floating-div">
-              <a href="#" class="close" onclick="this.parentElement.style.zIndex=-1000;">&nbsp;&nbsp;[X]&nbsp;&nbsp;</a>
+              <a href="#" class="close" onclick="this.parentElement.style.zIndex=-1000;">[X]</a>
               <span>File Manager - upload, download, or delete save files and recordings</span>
               <hr/>
-              Add new file: <input type="file" id="file-input" accept=".broguerec, .broguesave">
+              Add new file: <input type="file" id="file-input" accept=".broguerec,.broguesave">
               <hr/>
               <div id="files"></div>
           </div>
