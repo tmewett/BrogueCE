@@ -90,28 +90,6 @@
       span {
         height: 100%;
       }
-      img.delete {
-        max-width: 1.5em;
-        max-height: 1.5em;
-        margin: 2px;
-      }
-      img.download {
-        max-width: 1.5em;
-        max-height: 1.5em;
-        margin: 2px;
-      }
-      .close {
-        font-style: normal;
-        text-decoration-line: none;
-        color: #b55a5a;
-        background-color: #555555;
-        padding: 0.1em 0.1em;
-        border: 2px solid var(--input-border);
-        border-radius: 4px;
-      }
-      .close:hover {
-        background-color: #777777;
-      }
       .list-item {
         display: flex;
         align-items: center;
@@ -143,20 +121,64 @@
       #canvas-container {
         border: 1px solid orange;
       }
-      #keyboard, #file-input {
+      #keyboard {
         background-color: #222222;
         padding: 0.25em 0.5em;
         border: 2px solid var(--input-border);
         border-radius: 4px;
+        display: none;
       }
+      #file-manager {
+        display: flex;
+        flex-direction: column;
+        border: 2px solid var(--input-border);
+        border-radius: 4px;
+      }
+      #file-mgr-title {
+        display: flex;
+        align-items: center;
+      }
+      #file-mgr-upload {
+        display: none;
+      }
+      #file-input {
+        background-color: #222222;
+        padding: 0.25em 0.5em;
+        border: 2px solid var(--input-border);
+        border-radius: 4px;
+        /* display: none; */
+      }
+
       img {
         background-color: #555555;
         padding: 0.1em 0.1em;
         border: 2px solid var(--input-border);
         border-radius: 4px;
+        max-width: 1.5em;
+        max-height: 1.5em;
+        margin: 2px;
       }
       img:hover {
         background-color: #777777;
+      }
+      #project-info {
+          position: absolute;
+          top: -2.5em;
+          left: 20%;
+          width: 9em;
+          min-height: 3em;
+          transition: top 0.5s ease;
+          box-sizing: border-box;
+          z-index: 500;
+
+          background-color: #555555;
+          padding: 0.1em 0.1em;
+          border: 2px solid var(--input-border);
+          border-radius: 4px;
+          margin: 2px;
+      }
+      #project-info.open {
+          top: 0;
       }
     </style>
     <script type="text/javascript">
@@ -172,7 +194,7 @@
       const SAMPLE_TEXT = 'hfgjM,_';
       const STORE_NAME = "FILE_DATA";
       const BROGUE_PATH = "/brogue/";
-      const devicePixelRatio = window.devicePixelRatio || 1;
+      const devicePixelRatio = 1; //window.devicePixelRatio || 1;
       const CONSOLE_HEIGHT = 34;
       const CONSOLE_WIDTH = 100;
       const CELL_ASPECT_RATIO = 19/10;
@@ -266,6 +288,7 @@
           if (!pos) return;
           const EVENT = [ e.button===0?eventTypes.MOUSE_DOWN:eventTypes.RIGHT_MOUSE_DOWN, pos[0], pos[1], e.ctrlKey?1:0, e.shiftKey?1:0 ];
           window.keyOrMouseEvents.push(EVENT);
+          document.getElementById('project-info').classList.remove("open");
       }
 
       const onMouseUp = (e) => {
@@ -509,25 +532,31 @@
         resizeCanvas(FONT_NAME);
 
         // Register event handlers
+        window.addEventListener('resize', () => resizeCanvas() );
         window.addEventListener('keydown', onKeydown, false);
+
         document.getElementById('request-fullscreen').addEventListener('click', onRequestFullscreen, false);
         document.getElementById('request-files').addEventListener('click', onRequestFiles, false);
         document.getElementById('file-input').addEventListener("change", handleFiles);
-        document.getElementById('keyboard').addEventListener("blur", (ele) => { ele.target.value = ""; });
+        document.getElementById('keyboard-icon').addEventListener("click", (ele) => { ele.target.value = ""; document.getElementById('keyboard').style.display = "block"; });
+        document.getElementById('keyboard').addEventListener("blur", (ele) => { ele.target.value = ""; ele.target.style.display = "none"; document.getElementById('project-info').classList.remove("open"); });
+        document.getElementById('file-mgr-close').addEventListener('click', () => { document.getElementById('file-manager').style.zIndex = -1000; }, false);
+        document.getElementById('project-info').addEventListener('click', (ele) => { ele.target.classList.add("open"); }, false);
+        document.getElementById('project-info').addEventListener('hover', (ele) => { ele.target.classList.add("open"); }, false);
+        document.getElementById('upload').addEventListener('click', (ele) => { ele.target.style.display = "none"; document.getElementById('file-mgr-upload').style.display = "block"; }, false);
+        document.getElementById('content').addEventListener("fullscreenchange", resizeCanvas );
 
         // Mouse & Touch Events
         canvas = document.getElementById('game-canvas');
         canvas.addEventListener('mousedown', onMouseDown, false);
         canvas.addEventListener('mouseup', onMouseUp, false);
-        canvas.addEventListener('mousemove', onMouseMove, false); //throttle(onMouseMove, 100), false);
+        canvas.addEventListener('mousemove', onMouseMove, false);
 
         canvas.addEventListener('touchstart', handleTouchStart, false);
         canvas.addEventListener('touchend', handleTouchEnd, false);
         canvas.addEventListener('touchmove', handleTouchMove, false);
         canvas.addEventListener('touchcancel', handleTouchCancel, false);
 
-        window.addEventListener('resize', () => resizeCanvas() );
-        document.getElementById('content').addEventListener("fullscreenchange", resizeCanvas );
         startAnimation();
       }
 
@@ -605,9 +634,10 @@
           console.log("Data added successfully", event.target.result);
           const FILES = document.getElementById("files");
           addFileListItem(FILES,fileName);
+          document.getElementById("file-mgr-upload").innerHTML = "<hr/>Reload page to make this file visible to BrogueJS.";
         };
         request.onerror = (event) => {
-          console.error("Error adding data:", event.target.error);
+          document.getElementById("file-mgr-upload").innerHTML = "<hr/>ERROR - " + event.target.error;
         };
       }
 
@@ -727,22 +757,25 @@
       <div id="content">
         <div id="nav-bar">
           <div id="project-info">
-                  <!-- <a href="#" class="close" onclick="this.parentElement.style.display='none';">&nbsp;&nbsp;[X]&nbsp;&nbsp;</a> -->
-                  <a href="#" id="request-fullscreen">Fullscreen</a>
-                  --
-                  <a href="#" id="request-files">Files</a>
-                  --
-                  <input type="text" id="keyboard" size="8" placeholder="Keyboard"/>
-                  --
-                  <span>Report any issues to <a href="https://github.com/tmewett/BrogueCE" target="_blank" rel="noopener noreferrer">BrogueCE</a>.</span>
+            <a href="#" id="request-fullscreen" title="Fulscreen"><img src="fullscreen.svg"/></a>
+            <a href="#" id="request-files" title="File manager"><img src="files.svg"/></a>
+            <img id="keyboard-icon" src="keyboard.svg" title="Open keyboard (for tablets)"/>
+            <a href="https://github.com/tmewett/BrogueCE" target="_blank" rel="noopener noreferrer" title="Report an issue"><img src="bugs.svg"/></a>
+            <div><input type="text" id="keyboard" size="8" placeholder="Keyboard"/></div>
           </div>
           <div id="file-manager" class="floating-div">
-              <a href="#" class="close" onclick="this.parentElement.style.zIndex=-1000;">[X]</a>
-              <span>File Manager - upload, download, or delete save files and recordings</span>
+            <div id="file-mgr-nav">
+              <div id="file-mgr-title">
+                <img id="file-mgr-close" src="close.svg"/>
+                <img id="upload" src="upload.svg"/>
+                <span class="item-text">File Manager - upload, download, or delete save files and recordings</span>
+              </div>
+              <div id="file-mgr-upload" class="list-item">
+                <hr/><span class="item-text"><input type="file" id="file-input" accept=".broguerec,.broguesave"/></span>
+              </div>
               <hr/>
-              Add new file: <input type="file" id="file-input" accept=".broguerec,.broguesave">
-              <hr/>
-              <div id="files"></div>
+            </div>
+            <div id="files"></div>
           </div>
         </div>
         <div class="canvas-container">
