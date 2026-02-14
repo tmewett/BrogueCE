@@ -39,47 +39,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <style>
       html, body {
-        margin: 0;
-        padding: 0;
-        border: 0;
-        height: 100vh;           /* Viewport height */
+        margin: 1;
+        padding: 1;
+        height: 100vh; /* Viewport height */
         background: #111111;
-        color: #e6e6e6;
+        color: #888888;
         background-attachment: fixed;
         overflow: hidden;
-        /* border: 1px solid red; */
-
-        display: flex;
-        flex-direction: column;
-        justify-content: center; /* Centers horizontally */
-        align-items: center;     /* Centers vertically */
       }
       body {
         width: 98%;
         height: 98%;
-        /* border: 1px solid green; */
-      }
 
-      /* Try to remove iPad/iPhone top padding */
-      @supports (padding-top: constant(safe-area-inset-top)) {
-        body {
-          padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-        }
-      }
-      #content {
-        /* border: 1px solid cyan; */
         display: flex;
         flex-direction: column;
-        justify-content: center; /* Centers horizontally */
-        align-items: center;     /* Centers vertically */
+        align-items: center;
+        justify-content: center;
+
+        /* align-content: stretch;
+        align-items: stretch; */
+      }
+      #content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         width: 100%;
         height: 100%;
       }
       div {
         margin: 0;
+        padding: 0;
       }
       body a {
-          color: #e6e6e6;
+          color: #888888;
       }
       body a:hover {
           color: #6666cb;
@@ -143,19 +135,30 @@
       #canvas-container {
         border: 1px solid orange;
       }
+      #keyboard, #file-input {
+        background-color: #222222;
+        padding: 0.25em 0.5em;
+        border: 2px solid var(--input-border);
+        border-radius: 4px;
+      }
     </style>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
     <script type="text/javascript">
-      let ctx, ctxWidth, ctxHeight, cellWidth, cellHeight;
-      let FONT_NAME = "monospace";
 
-      window.keyOrMouseEvents = []; // Shared with C code for event queue
-      window.plotChars = {}; // Shared with C code for graphics update queue
+      // -------------------------------------------------
+      // Constants
+      // -------------------------------------------------
 
+      const BROGUE_FONT = 'BrogueFont';
+      const myFont = new FontFace(BROGUE_FONT, 'url(BrogueCE.ttf)');
+      const MIN_EVENT_MS = 100;
+      const FONT_HEIGHT_SCALE = 1.3;
+      const SAMPLE_TEXT = 'hfgjM,_';
+      const STORE_NAME = "FILE_DATA";
+      const BROGUE_PATH = "/brogue/";
       const devicePixelRatio = window.devicePixelRatio || 1;
       const CONSOLE_HEIGHT = 34;
       const CONSOLE_WIDTH = 100;
-      const CELL_ASPECT_RATIO = 19/10;            
+      const CELL_ASPECT_RATIO = 19/10;
       const eventTypes = {
           KEYSTROKE:0,
           MOUSE_UP:1,
@@ -164,41 +167,54 @@
           RIGHT_MOUSE_UP:4,
           MOUSE_ENTERED_CELL:5
       }
-      function throttle(fn, threshhold, scope) {
-          threshhold || (threshhold = 250);
-          let last,
-              deferTimer;
-          return function () {
-              const context = scope || this;
 
-              const now = +new Date,
-                  args = arguments;
-              if (last && now < last + threshhold) {
-                  // hold on to it
-                  clearTimeout(deferTimer);
-                  deferTimer = setTimeout(function () {
-                      last = now;
-                      fn.apply(context, args);
-                  }, threshhold);
-              } else {
-                  last = now;
-                  fn.apply(context, args);
-              }
-          };
+      // -------------------------------------------------
+      // Globals
+      // -------------------------------------------------
+
+      let ctx, ctxWidth, ctxHeight, cellWidth, cellHeight, canvas;
+      let FONT_NAME = "monospace";
+      let lastMouseCell = [-1,-1];
+      let lastMoveEvent = 0;
+      const ongoingTouches = new Map(); // Mapping from the pointerId to the current finger position
+      let firstTouch = null;
+      let db = null;
+
+      // -------------------------------------------------
+      // Rendering
+      // -------------------------------------------------
+
+      const status = (str) => {
+        document.getElementById("status").innerText = str;
       }
-    const plotAllChars = () => {
-        Object.values(window.plotChars).forEach( plotChar => {
-            let [char, x, y, fr, fg, fb, br, bg, bb] = plotChar;
-            x = x*cellWidth
-            y = y*cellHeight
-            ctx.fillStyle = `rgb(${br/100*255|0}, ${bg/100*255|0}, ${bb/100*255|0})`
-            ctx.fillRect(x,y,cellWidth,cellHeight)
-            ctx.fillStyle = `rgb(${fr/100*255|0}, ${fg/100*255|0}, ${fb/100*255|0})`
-            ctx.fillText(String.fromCharCode(char), x, y);
-          });
+
+      const plotCharMap = (charMap, allChars) => {
+        Object.values(charMap).forEach( plotChar => {
+          let [char, x, y, fr, fg, fb, br, bg, bb] = plotChar;
+          if (allChars !== null) allChars[(x<<8)+y] = plotChar;
+          x = x*cellWidth;
+          y = y*cellHeight;
+          ctx.fillStyle = `rgb(${br/100*255|0}, ${bg/100*255|0}, ${bb/100*255|0})`;
+          ctx.fillRect(x,y,cellWidth,cellHeight);
+          ctx.fillStyle = `rgb(${fr/100*255|0}, ${fg/100*255|0}, ${fb/100*255|0})`;
+          ctx.fillText(String.fromCharCode(char), x, y);
+        });
+      }
+
+      const plotChars = () => {
+        plotCharMap(window.plotChars, window.allChars);
         window.plotChars = {};
-    }
-      function  getMousePos(canvas, evt) {
+      }
+
+      const plotAllChars = () => {
+        plotCharMap(window.allChars, null);
+      }
+
+      // -------------------------------------------------
+      // Mouse & Touch Events
+      // -------------------------------------------------
+
+      const getMousePos = (evt) => {
           const rect = canvas.getBoundingClientRect(); // abs. size of element
           const actualWidth = Math.min(rect.height*(canvas.width/canvas.height), rect.width)|0; //object-fit means the canvas ele will be scaled proportionally
           const actualHeight = Math.min(rect.width*(canvas.height/canvas.width), rect.height)|0; //so calculate actual width and height
@@ -209,31 +225,141 @@
           const y = (evt.clientY - rect.top) - offsetY;
           if (x<0 || x>actualWidth)  return null; // ignore if object-fit causes us to be outside actual canvas
           if (y<0 || y>actualHeight) return null; // ignore if object-fit causes us to be outside actual canvas
-          const pix = [x*scale/devicePixelRatio, y*scale/devicePixelRatio] // in pixels
-          const pos = [(pix[0]/cellWidth)|0, (pix[1]/cellHeight)|0] // in cells
-          return pos
+          const pix = [x*scale/devicePixelRatio, y*scale/devicePixelRatio]; // in pixels
+          const pos = [(pix[0]/cellWidth)|0, (pix[1]/cellHeight)|0]; // in cells
+          return pos;
       }
-      let lastMouseCell = [-1,-1];
-      function onMouseMove(e){
-          const pos = getMousePos(this, e);
-          if (!pos) return;
-          if (lastMouseCell[0]===pos[0] && lastMouseCell[1]===pos[1]) return; //cell did not change...bail
-          lastMouseCell = pos;
-          const EVENT = [ eventTypes.MOUSE_ENTERED_CELL, pos[0], pos[1], e.ctrlKey?1:0, e.shiftKey?1:0 ];
-          window.keyOrMouseEvents.push(EVENT);
+
+      const onMouseMove = (e) => {
+        // Throttle mouse move events
+        const now = Date.now();
+        if (now < lastMoveEvent + MIN_EVENT_MS) return;
+        lastMoveEvent = now;
+
+        const pos = getMousePos(e);
+        if (!pos) return;
+        if (lastMouseCell[0]===pos[0] && lastMouseCell[1]===pos[1]) return; //cell did not change...bail
+        lastMouseCell = pos;
+        const EVENT = [ eventTypes.MOUSE_ENTERED_CELL, pos[0], pos[1], e.ctrlKey?1:0, e.shiftKey?1:0 ];
+        window.keyOrMouseEvents.push(EVENT);
       }
-      function onMouseDown(e){
-          const pos = getMousePos(this, e);
+
+      const onMouseDown = (e) => {
+          const pos = getMousePos(e);
           if (!pos) return;
           const EVENT = [ e.button===0?eventTypes.MOUSE_DOWN:eventTypes.RIGHT_MOUSE_DOWN, pos[0], pos[1], e.ctrlKey?1:0, e.shiftKey?1:0 ];
           window.keyOrMouseEvents.push(EVENT);
       }
-      function onMouseUp(e){
-          const pos = getMousePos(this, e);
+
+      const onMouseUp = (e) => {
+          const pos = getMousePos(e);
           if(!pos) return;
           const EVENT = [ e.button===0?eventTypes.MOUSE_UP:eventTypes.RIGHT_MOUSE_UP, pos[0], pos[1], e.ctrlKey?1:0, e.shiftKey?1:0 ];
           window.keyOrMouseEvents.push(EVENT);
       }
+
+      const sendTouchAsMouseEvent = (event) => {
+        if (event.touches.length > 1) return;
+        if (event.type === "touchend" && event.touches.length > 0) return;
+
+        // Make it look like a mouse event
+        const touch = event.changedTouches[0];
+        const e = {
+          clientX: touch.clientX,
+          clientY: touch.clientY,
+          ctrlKey: event.ctrlKey,
+          shiftKey: event.shiftKey,
+          button: 0,
+        }
+
+        switch (event.type) {
+          case "touchstart": return onMouseDown(e);
+          case "touchmove":  return onMouseMove(e);
+          case "touchend":   return onMouseUp(e);
+          default: return;
+        }
+      }
+
+      const handleTouchStart = (event) => {
+        event.preventDefault();
+
+        // Manage each simultaneous touch
+        for (const changedTouch of event.changedTouches) {
+          const touch = {
+            pageX: changedTouch.pageX,
+            pageY: changedTouch.pageY,
+            id: changedTouch.identifier,
+          };
+          ongoingTouches.set(changedTouch.identifier, touch);
+
+          // Record or update the first touch
+          if (firstTouch === null || firstTouch.id === changedTouch.identifier) {
+            firstTouch = touch;
+            sendTouchAsMouseEvent(event);
+          }
+        }
+      }
+
+      const handleTouchMove = (event) => {
+        event.preventDefault();
+
+        for (const changedTouch of event.changedTouches) {
+          const touch = ongoingTouches.get(changedTouch.identifier);
+          if (!touch) {
+            continue;
+          }
+          touch.pageX = changedTouch.pageX;
+          touch.pageY = changedTouch.pageY;
+
+          // Update firstTouch
+          if (firstTouch !== null && firstTouch.id === changedTouch.identifier) {
+            sendTouchAsMouseEvent(event);
+          }
+            // sendTouchAsMouseEvent(event);
+        }
+      }
+
+      const handleTouchEnd = (event) => {
+        event.preventDefault();
+
+        for (const changedTouch of event.changedTouches) {
+          if (!ongoingTouches.has(changedTouch.identifier)) {
+            continue;
+          }
+          ongoingTouches.delete(changedTouch.identifier);
+
+          // Update firstTouch
+          if (firstTouch !== null && firstTouch.id === changedTouch.identifier) {
+            sendTouchAsMouseEvent(event);
+            firstTouch = null;
+          }
+        }
+
+        // Failsafe, reset firstTouch when all touches end
+        if (event.touches.length == 0) {
+          firstTouch = null;
+        }
+      }
+
+      const handleTouchCancel = (event) => {
+        event.preventDefault();
+
+        for (const changedTouch of event.changedTouches) {
+          if (!ongoingTouches.has(changedTouch.identifier)) {
+            continue;
+          }
+          ongoingTouches.delete(changedTouch.identifier);
+          if (firstTouch !== null && firstTouch.id === changedTouch.identifier) {
+            sendTouchAsMouseEvent(event);
+            firstTouch = null;
+          }
+        }
+      }
+
+      // -------------------------------------------------
+      // Key Events
+      // -------------------------------------------------
+
       const KEY_MAP = {
           ArrowUp: 63232,
           ArrowLeft: 63234,
@@ -248,82 +374,89 @@
           Backspace:127,
           Tab:9,
       }
-      function onKeydown(e){
+
+      const onKeydown = (e) => {
           const key = (e.key.length > 1) ? KEY_MAP[e.key] : e.key.charCodeAt(0);
           const EVENT = [eventTypes.KEYSTROKE, key, 0, e.ctrlKey?1:0, e.shiftKey?1:0];
           window.keyOrMouseEvents.push(EVENT);
       }
 
-      function preventDefault(e) {
-          e.preventDefault();
+      // -------------------------------------------------
+      // Initialization & Resizing
+      // -------------------------------------------------
+
+      const onRequestFullscreen = () => {
+          const ele = document.getElementById('content');
+          if (ele) ele.requestFullscreen();
       }
 
-      function onRequestFullscreen() {
-          const ele = document.getElementById('game-canvas');
-          if (ele) (ele.requestFullscreen || ele.webkitRequestFullscreen || ele.mozRequestFullScreen || ele.msRequestFullscreen).call(ele);
-      }
-
-      function onRequestFiles() {
-          readDatabase();
-          document.getElementById('file-manager').style.zIndex = 1000;
-      }
-
-      function setupRetinaCanvas(canvas) {
+      const setupRetinaCanvas = (canvas) => {
           const ctx = canvas.getContext('2d');
 
-          // Get the CSS-determined size of the canvas
-          const rect = canvas.getBoundingClientRect();
-          const cssWidth = rect.width;
-          const cssHeight = rect.height;
+          if (devicePixelRatio != 1) {
+            // Get the CSS-determined size of the canvas
+            const rect = canvas.getBoundingClientRect();
+            const cssWidth = rect.width;
+            const cssHeight = rect.height;
 
-          // Set the actual canvas buffer size to the high DPI dimensions
-          canvas.width = cssWidth * devicePixelRatio;
-          canvas.height = cssHeight * devicePixelRatio;
+            // Set the actual canvas buffer size to the high DPI dimensions
+            canvas.width = cssWidth * devicePixelRatio;
+            canvas.height = cssHeight * devicePixelRatio;
 
-          // Scale the context so drawing operations use the CSS pixel coordinates
-          ctx.scale(devicePixelRatio, devicePixelRatio);
+            // Scale the context so drawing operations use the CSS pixel coordinates
+            ctx.scale(devicePixelRatio, devicePixelRatio);
 
-          // Set the CSS dimensions back to the original intended size
-          canvas.style.width = cssWidth + 'px';
-          canvas.style.height = cssHeight + 'px';
+            // Set the CSS dimensions back to the original intended size
+            canvas.style.width = cssWidth + 'px';
+            canvas.style.height = cssHeight + 'px';
+          }
 
           return ctx;
       }
 
-      function measureText() {
-        const measure = ctx.measureText('A');
-        const width   = Math.ceil(measure.width);
-        const height  = Math.ceil(measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent);
+      const measureText = () => {
+        const measure = ctx.measureText(SAMPLE_TEXT);
+        const width   = Math.ceil(measure.width/SAMPLE_TEXT.length);
+        const height  = Math.ceil(FONT_HEIGHT_SCALE * (measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent));
 
-        // Adjust cell size to appropriate aspect ratio
+        // Use the measurements directly (aligns cell size with font sizes for clean rendering)
         cellWidth  = width;
-        cellHeight = Math.ceil(cellWidth * CELL_ASPECT_RATIO);
-        if (cellHeight < height) {
-          cellHeight = height;
-          cellWidth  = Math.ceil(cellHeight / CELL_ASPECT_RATIO);
+        cellHeight = height;
+
+        // Cells are too wide
+        const aspect = cellHeight / cellWidth;
+        if (aspect < 1) {
+          cellWidth = height;
+        }
+
+        // Cells are too tall
+        if (aspect > CELL_ASPECT_RATIO) {
+          cellWidth = cellHeight/CELL_ASPECT_RATIO;
         }
       }
 
-      function resizeCanvas() {
+      const resizeCanvas = () => {
         const content = document.getElementById("content");
-        const maxCellWidth  = Math.floor(content.clientWidth  / (CONSOLE_WIDTH  + 2));
-        const maxCellHeight = Math.floor(content.clientHeight / (CONSOLE_HEIGHT + 2));
+        const maxCellWidth  = Math.floor(content.clientWidth  / (CONSOLE_WIDTH  + 0));
+        const maxCellHeight = Math.floor(content.clientHeight / (CONSOLE_HEIGHT + 1));  // Extra line of room at the bottom
 
-        const canvas = document.getElementById('game-canvas');
+        canvas = document.getElementById('game-canvas');
         ctx = canvas.getContext("2d");
         ctx.textBaseline = "top";
         ctx.textRendering = 'pixelated';  // or 'geometricPrecision' or 'optimizeLegibility' (default)
         ctx.imageSmoothingEnabled = false;
 
         // Find proper font size
-        ctx.font = '10px '+FONT_NAME;
-        let size = 10;
-        for (let i = 7; i <= 40; i++) {
-            ctx.font = i+'px '+FONT_NAME;
+        ctx.font = '7px '+FONT_NAME;
+        let size = 7;
+        const FONT_MULT = 100;
+        for (let i = 7*FONT_MULT; i <= 80*FONT_MULT; i++) { // 1/10 step in font sizes
+            size = i/FONT_MULT;
+            ctx.font = size+'px '+FONT_NAME;
             measureText();
             if (cellWidth > maxCellWidth || cellHeight > maxCellHeight) {
-                ctx.font = (i-1)+'px '+FONT_NAME;
-                size = i-1;
+                size = (i-1)/FONT_MULT;
+                ctx.font = size+'px '+FONT_NAME;
                 measureText();
                 break;
             }
@@ -332,8 +465,8 @@
         // Resize canvas
         ctxWidth = cellWidth * CONSOLE_WIDTH;
         ctxHeight = cellHeight * CONSOLE_HEIGHT;
-        canvas.setAttribute('height', ctxHeight);
-        canvas.setAttribute('width', ctxWidth);
+        canvas.style.height = ctxHeight;
+        canvas.style.width = ctxWidth;
 
         // Get context for the resized canvas
         ctx = setupRetinaCanvas(canvas);
@@ -342,9 +475,23 @@
         ctx.textRendering = 'pixelated';  // or 'geometricPrecision' or 'optimizeLegibility' (default)
         ctx.imageSmoothingEnabled = false;
         ctx.font = size+'px '+FONT_NAME;
+
+        // Redraw the canvas
+        plotAllChars();
       }
 
-      function initializeBrogueFrame() {
+      let animating = false;
+      const startAnimation = () => {
+        if (animating) return;  // Idempotent
+        animating = true;
+        window.requestAnimationFrame(() => {
+            animating = false;
+            plotChars();
+            startAnimation();
+          });
+      }
+
+      const initializeBrogueFrame = () => {
         resizeCanvas(FONT_NAME);
 
         // Register event handlers
@@ -354,50 +501,42 @@
         document.getElementById('file-input').addEventListener("change", handleFiles);
         document.getElementById('keyboard').addEventListener("blur", (ele) => { ele.target.value = ""; });
 
-        // Touch & Stylus Events
-        const gameCanvas = document.getElementById('game-canvas');
-        gameCanvas.addEventListener('mousedown', onMouseDown, false);
-        gameCanvas.addEventListener('mouseup', onMouseUp, false);
-        gameCanvas.addEventListener('mousemove', throttle(onMouseMove, 100), false);
+        // Mouse & Touch Events
+        canvas = document.getElementById('game-canvas');
+        canvas.addEventListener('mousedown', onMouseDown, false);
+        canvas.addEventListener('mouseup', onMouseUp, false);
+        canvas.addEventListener('mousemove', onMouseMove, false); //throttle(onMouseMove, 100), false);
 
-        gameCanvas.addEventListener('pointerdown', onMouseDown, false);
-        gameCanvas.addEventListener('pointerup', onMouseUp, false);
-        gameCanvas.addEventListener('pointermove', throttle(onMouseMove, 100), false);
+        canvas.addEventListener('touchstart', handleTouchStart, false);
+        canvas.addEventListener('touchend', handleTouchEnd, false);
+        canvas.addEventListener('touchmove', handleTouchMove, false);
+        canvas.addEventListener('touchcancel', handleTouchCancel, false);
 
-        gameCanvas.addEventListener('touchstart', onMouseDown, false);
-        gameCanvas.addEventListener('touchend', onMouseUp, false);
-        gameCanvas.addEventListener('touchmove', throttle(onMouseMove, 100), false);
-
-        // Other touch/stylus events
-        //    touchcancel
-        //    pointerover
-        //    pointerout / pointerleave
-        //    pointercancel
-
-        // TODO - need to refresh the display on resize
         window.addEventListener('resize', () => resizeCanvas() );
+        document.getElementById('content').addEventListener("fullscreenchange", resizeCanvas );
+        startAnimation();
       }
 
-      $(function(){
-          // Load custom font
-          const BROGUE_FONT = 'BrogueFont';
-          const myFont = new FontFace(BROGUE_FONT, 'url(BrogueCE.ttf)');
-          myFont.load().then(font => {
-            document.fonts.add(font); // Add font to the document's font list
-            FONT_NAME = BROGUE_FONT;
-            initializeBrogueFrame();
-          }).catch(e=>{
-            FONT_NAME = "monospace";
-            initializeBrogueFrame();
-          });
-      })
+      // Page initialization
+      window.keyOrMouseEvents = []; // Shared with C code for event queue
+      window.plotChars = {}; // Shared with C code for graphics update queue
+      window.allChars = {}; // For redrawing the window on resize, etc.
 
+      // Load custom font
+      myFont.load().then(font => {
+        document.fonts.add(font); // Add font to the document's font list
+        FONT_NAME = BROGUE_FONT;
+        initializeBrogueFrame();
+      }).catch( e => {
+        FONT_NAME = "monospace";
+        initializeBrogueFrame();
+      });
+
+      // -------------------------------------------------
       // File Manager
-      const STORE_NAME = "FILE_DATA";
-      const BROGUE_PATH = "/brogue/";
-      let db = null;
+      // -------------------------------------------------
 
-      function downloadFile(uint8Array, filename, contentType) {
+      const downloadFile = (uint8Array, filename, contentType) => {
         const blob = new Blob([uint8Array], { type: contentType });
         const exportUrl = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -412,7 +551,7 @@
         URL.revokeObjectURL(exportUrl);
       }
 
-      function requestFileForDownload(fileName) {
+      const requestFileForDownload = (fileName) => {
         const transaction = db.transaction([STORE_NAME], "readonly");
         const objectStore = transaction.objectStore(STORE_NAME);
         const request = objectStore.get(BROGUE_PATH+fileName);
@@ -424,7 +563,7 @@
         };
       }
 
-      function requestDeleteFile(fileName, ele) {
+      const requestDeleteFile = (fileName, ele) => {
         const transaction = db.transaction([STORE_NAME], "readwrite");
         const objectStore = transaction.objectStore(STORE_NAME);
         const request = objectStore.delete(BROGUE_PATH+fileName);
@@ -436,7 +575,7 @@
         };
       }
 
-      function requestWriteFile(fileName, fileData) {
+      const requestWriteFile = (fileName, fileData) => {
         const transaction = db.transaction([STORE_NAME], "readwrite");
         const objectStore = transaction.objectStore(STORE_NAME);
 
@@ -448,7 +587,7 @@
         const request = objectStore.add(newFile, BROGUE_PATH+fileName);
         request.onsuccess = (event) => {
           console.log("Data added successfully", event.target.result);
-          const FILES = document.getElementById("file-manager");
+          const FILES = document.getElementById("files");
           addFileListItem(FILES,fileName);
         };
         request.onerror = (event) => {
@@ -456,7 +595,7 @@
         };
       }
 
-      function addFileListItem(FILES, fileName) {
+      const addFileListItem = (FILES, fileName) => {
         fileName = fileName.replaceAll(BROGUE_PATH,"");
         const a = document.createElement("div");
         a.className = "list-item";
@@ -480,13 +619,14 @@
         FILES.appendChild(a); // Append link to body to ensure it's clickable in all browsers
       }
 
-      function listAllObjects() {
+      const listAllObjects = () => {
         const transaction = db.transaction([STORE_NAME], "readonly");
         const objectStore = transaction.objectStore(STORE_NAME);
         const allKeysReq = objectStore.getAllKeys();
         allKeysReq.onsuccess = function(event) {
           const allKeys = event.target.result;
-          const FILES = document.getElementById("file-manager");
+          const FILES = document.getElementById("files");
+          FILES.innerHTML = ""; // Delete existing file list
           allKeys.forEach(key => {
             addFileListItem(FILES, key);
           });
@@ -503,7 +643,7 @@
       }
 
       // IndexedDB
-      function readDatabase() {
+      const readDatabase = () => {
         // Let us open our database
         const request = window.indexedDB.open("/brogue");
         request.onerror = (event) => {
@@ -520,7 +660,7 @@
         };
       }
 
-      function handleFiles() {
+      const handleFiles = () => {
         const selectedFiles = this.files; // This is a FileList object
 
         if (selectedFiles.length > 0) {
@@ -539,7 +679,16 @@
         }
       }
 
-      function getMostRecentTuesday() {
+      const onRequestFiles = () => {
+          readDatabase();
+          document.getElementById('file-manager').style.zIndex = 1000;
+      }
+
+      // -------------------------------------------------
+      // Brogue Weekly Contest Seed
+      // -------------------------------------------------
+
+      const getMostRecentTuesday = () => {
         const today = new Date();
         const todayDayOfWeek = today.getDay(); // 0 (Sunday) to 6 (Saturday)
         const TUESDAY_DAY_OF_WEEK = 2; // Tuesday is 2
@@ -547,19 +696,13 @@
         // Calculate the difference in days.
         // The expression handles cases where today is Tuesday (diff is 0) or earlier in the week than Tuesday.
         const daysToSubtract = (todayDayOfWeek - TUESDAY_DAY_OF_WEEK + 7) % 7;
-
-        // Create a new Date object for the most recent Tuesday to avoid modifying the 'today' object.
         const mostRecentTuesday = new Date(today);
-
-        // Set the date back by the calculated number of days.
         mostRecentTuesday.setDate(today.getDate() - daysToSubtract);
 
         // Get year, month, and day components
         const year = mostRecentTuesday.getFullYear();
         const month = (mostRecentTuesday.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-indexed
         const day = mostRecentTuesday.getDate().toString().padStart(2, '0');
-
-        // Combine into YYYYMMDD format
         return `${year}${month}${day}`;
       }
     </script>
@@ -568,7 +711,7 @@
       <div id="content">
         <div id="nav-bar">
           <div id="project-info">
-                  <a href="#" class="close" onclick="this.parentElement.style.display='none';">&nbsp;&nbsp;[X]&nbsp;&nbsp;</a>
+                  <!-- <a href="#" class="close" onclick="this.parentElement.style.display='none';">&nbsp;&nbsp;[X]&nbsp;&nbsp;</a> -->
                   <a href="#" id="request-fullscreen">Fullscreen</a>
                   --
                   <a href="#" id="request-files">Files</a>
@@ -583,10 +726,13 @@
               <hr/>
               Add new file: <input type="file" id="file-input" accept=".broguerec, .broguesave">
               <hr/>
+              <div id="files"></div>
           </div>
         </div>
         <div class="canvas-container">
           <canvas id="game-canvas"></canvas>
+        </div>
+        <div id="status">
         </div>
       </div>
       {{{ SCRIPT }}}
