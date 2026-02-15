@@ -468,7 +468,6 @@ void initRecording() {
     }
 
     short i;
-    enum gameMode mode;
     unsigned short recPatch;
     char buf[1000], *versionString = rogue.versionString;
     FILE *recordFile;

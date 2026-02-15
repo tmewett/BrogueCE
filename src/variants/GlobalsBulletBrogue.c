@@ -38,6 +38,7 @@
 #include "Rogue.h"
 #include "GlobalsBase.h"
 #include "Globals.h"
+#include "GlobalsBulletBrogue.h"
 
 #define AMULET_LEVEL            3          // how deep before the amulet appears
 #define DEEPEST_LEVEL           5         // how deep the universe goes
