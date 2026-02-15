@@ -3591,9 +3591,9 @@ void restoreItems() {
     for (theItem = preplaced.nextItem; theItem != NULL; theItem = nextItem) {
         nextItem = theItem->nextItem;
 
-        // Items can fall into deep water, enclaved lakes, another chasm, even lava!
+        // Items can fall into deep water or another chasm
         getQualifyingLocNear(&loc, theItem->loc, true, 0,
-                            (T_OBSTRUCTS_ITEMS),
+                            (T_OBSTRUCTS_ITEMS | T_LAVA_INSTA_DEATH),
                             (HAS_MONSTER | HAS_ITEM | HAS_STAIRS | IS_IN_MACHINE), false, false);
         placeItemAt(theItem, loc);
     }
