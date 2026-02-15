@@ -1,6 +1,6 @@
 #include "platform.h"
 
-static void null_gameLoop() {
+static void null_gameLoop(void) {
     exit(rogueMain());
 }
 

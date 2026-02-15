@@ -49,7 +49,7 @@ static void recordChar(unsigned char c) {
     }
 }
 
-static void considerFlushingBufferToFile() {
+static void considerFlushingBufferToFile(void) {
     if (locationInRecordingBuffer >= INPUT_RECORD_BUFFER) {
         flushBufferToFile();
     }
@@ -144,7 +144,7 @@ void recordKeystroke(int keystroke, boolean controlKey, boolean shiftKey) {
     recordEvent(&theEvent);
 }
 
-void cancelKeystroke() {
+void cancelKeystroke(void) {
     brogueAssert(locationInRecordingBuffer >= 3);
     locationInRecordingBuffer -= 3; // a keystroke is encoded into 3 bytes
     recordingLocation -= 3;
@@ -220,7 +220,7 @@ static void writeHeaderInfo(char *path) {
     }
 }
 
-void flushBufferToFile() {
+void flushBufferToFile(void) {
     if (rogue.playbackMode) {
         return;
     }
@@ -248,7 +248,7 @@ void flushBufferToFile() {
     locationInRecordingBuffer = 0;
 }
 
-void fillBufferFromFile() {
+void fillBufferFromFile(void) {
 //  short i;
     FILE *recordFile;
 
@@ -263,7 +263,7 @@ void fillBufferFromFile() {
     locationInRecordingBuffer = 0;
 }
 
-static unsigned char recallChar() {
+static unsigned char recallChar(void) {
     unsigned char c;
     if (recordingLocation > lengthOfPlaybackFile) {
         return END_OF_RECORDING;
@@ -302,7 +302,7 @@ simply be the result of a bug.\n\n\
 If this is a different computer from the one on which the recording was saved, the recording \
 might succeed on the original computer."
 
-static void playbackPanic() {
+static void playbackPanic(void) {
 
     if (!rogue.playbackOOS) {
         rogue.playbackFastForward = false;
@@ -382,7 +382,7 @@ void recallEvent(rogueEvent *event) {
     event->shiftKey =   (c & Fl(2)) ? true : false;
 }
 
-static void loadNextAnnotation() {
+static void loadNextAnnotation(void) {
     unsigned long currentReadTurn;
     short i;
     FILE *annotationFile;
@@ -432,7 +432,7 @@ static void loadNextAnnotation() {
     fclose(annotationFile);
 }
 
-void displayAnnotation() {
+void displayAnnotation(void) {
     if (rogue.playbackMode
         && rogue.playerTurnNumber == rogue.nextAnnotationTurn) {
 
@@ -462,7 +462,7 @@ static boolean getPatchVersion(char *versionString, unsigned short *patchVersion
 
 // creates a game recording file, or if in playback mode,
 // initializes based on and starts reading from the recording file
-void initRecording() {
+void initRecording(void) {
     if (currentFilePath[0] == '\0') {
         return;
     }
@@ -579,7 +579,7 @@ void OOSCheck(unsigned long x, short numberOfBytes) {
 }
 
 // compare a random number once per player turn so we instantly know if we are out of sync during playback
-void RNGCheck() {
+void RNGCheck(void) {
     short oldRNG;
     unsigned long randomNumber;
 
@@ -596,7 +596,7 @@ void RNGCheck() {
     rogue.RNG = oldRNG;
 }
 
-static boolean unpause() {
+static boolean unpause(void) {
     if (rogue.playbackOOS) {
         flashTemporaryAlert(" Out of sync ", 2000);
     } else if (rogue.playbackPaused) {
@@ -608,7 +608,7 @@ static boolean unpause() {
 
 #define PLAYBACK_HELP_LINE_COUNT    20
 
-static void printPlaybackHelpScreen() {
+static void printPlaybackHelpScreen(void) {
     short i, j;
     screenDisplayBuffer dbuf;
     char helpText[PLAYBACK_HELP_LINE_COUNT][80] = {
@@ -664,7 +664,7 @@ static void printPlaybackHelpScreen() {
     restoreDisplayBuffer(&rbuf);
 }
 
-static void resetPlayback() {
+static void resetPlayback(void) {
     boolean omniscient, stealth, trueColors;
 
     omniscient = rogue.playbackOmniscience;
@@ -810,7 +810,7 @@ static void promptToAdvanceToLocation(short keystroke) {
     }
 }
 
-void pausePlayback() {
+void pausePlayback(void) {
     //short oldRNG;
     if (!rogue.playbackPaused) {
         rogue.playbackPaused = true;
@@ -1161,7 +1161,7 @@ static void getDefaultFilePath(char *defaultPath, boolean gameOver) {
     }
 }
 
-void saveGameNoPrompt() {
+void saveGameNoPrompt(void) {
     char filePath[BROGUE_FILENAME_MAX], defaultPath[BROGUE_FILENAME_MAX];
     if (rogue.playbackMode) {
         return;
@@ -1178,7 +1178,7 @@ void saveGameNoPrompt() {
 }
 #define MAX_TEXT_INPUT_FILENAME_LENGTH (COLS - 12) // max length including the suffix
 
-void saveGame() {
+void saveGame(void) {
     char filePathWithoutSuffix[BROGUE_FILENAME_MAX - sizeof(GAME_SUFFIX)], filePath[BROGUE_FILENAME_MAX], defaultPath[BROGUE_FILENAME_MAX];
     boolean askAgain;
 
@@ -1281,7 +1281,7 @@ static void copyFile(char *fromFilePath, char *toFilePath, unsigned long fromFil
 }
 
 // at the end of loading a saved game, this function transitions into active play mode.
-void switchToPlaying() {
+void switchToPlaying(void) {
     char lastGamePath[BROGUE_FILENAME_MAX];
 
     getAvailableFilePath(lastGamePath, LAST_GAME_NAME, GAME_SUFFIX);
@@ -1308,7 +1308,7 @@ void switchToPlaying() {
 }
 
 // Return whether the load was cancelled by an event
-boolean loadSavedGame() {
+boolean loadSavedGame(void) {
     unsigned long progressBarInterval;
     unsigned long previousRecordingLocation;
     rogueEvent theEvent;
@@ -1432,7 +1432,7 @@ static boolean selectFile(char *prompt, char *defaultName, char *suffix) {
     return retval;
 }
 
-void parseFile() {
+void parseFile(void) {
     FILE *descriptionFile;
     unsigned long oldFileLoc, oldRecLoc, oldLength, oldBufLoc, i, numTurns, numDepths, fileLength, startLoc;
     uint64_t seed;

@@ -1869,7 +1869,7 @@ void populateCreatureCostMap(short **costMap, creature *monst) {
     }
 }
 
-enum directions adjacentFightingDir() {
+enum directions adjacentFightingDir(void) {
     if (cellHasTerrainFlag(player.loc, T_OBSTRUCTS_PASSABILITY)) {
         return NO_DIRECTION;
     }

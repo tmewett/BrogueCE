@@ -25,7 +25,7 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
-void logLights() {
+void logLights(void) {
     short i, j;
 
     printf("    ");
@@ -117,7 +117,7 @@ boolean paintLight(const lightSource *theLight, short x, short y, boolean isMine
 
 
 // sets miner's light strength and characteristics based on rings of illumination, scrolls of darkness and water submersion
-void updateMinersLightRadius() {
+void updateMinersLightRadius(void) {
     fixpt base_fraction, fraction, lightRadius;
 
     lightRadius = 100 * rogue.minersLightRadius;
@@ -153,7 +153,7 @@ void updateMinersLightRadius() {
     rogue.minersLight.lightRadius.upperBound = rogue.minersLight.lightRadius.lowerBound = clamp(lightRadius / FP_FACTOR, -30000, 30000);
 }
 
-static void updateDisplayDetail() {
+static void updateDisplayDetail(void) {
     short i, j;
 
     for (i = 0; i < DCOLS; i++) {
@@ -194,7 +194,7 @@ void restoreLighting(short lights[DCOLS][DROWS][3]) {
     }
 }
 
-static void recordOldLights() {
+static void recordOldLights(void) {
     short i, j, k;
     for (i = 0; i < DCOLS; i++) {
         for (j = 0; j < DROWS; j++) {
@@ -205,7 +205,7 @@ static void recordOldLights() {
     }
 }
 
-void updateLighting() {
+void updateLighting(void) {
     short i, j, k;
     enum dungeonLayers layer;
     enum tileType tile;
@@ -280,7 +280,7 @@ void updateLighting() {
     }
 }
 
-boolean playerInDarkness() {
+boolean playerInDarkness(void) {
     return (tmapAt(player.loc)->light[0] + 10 < minersLightColor.red
             && tmapAt(player.loc)->light[1] + 10 < minersLightColor.green
             && tmapAt(player.loc)->light[2] + 10 < minersLightColor.blue);
@@ -403,7 +403,7 @@ void animateFlares(flare **flares, short count) {
     updateFieldOfViewDisplay(false, true);
 }
 
-void deleteAllFlares() {
+void deleteAllFlares(void) {
     short i;
     for (i=0; i<rogue.flareCount; i++) {
         free(rogue.flares[i]);

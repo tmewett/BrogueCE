@@ -406,7 +406,7 @@ void initializeGender(creature *monst) {
 }
 
 /// @brief Sets the character used to represent the player in the game, based on the game mode
-void setPlayerDisplayChar() {
+void setPlayerDisplayChar(void) {
     if (rogue.mode == GAME_MODE_EASY) {
         player.info.displayChar = G_DEMON;
     } else {
@@ -908,7 +908,7 @@ void fadeInMonster(creature *monst) {
     flashMonster(monst, &bColor, 100);
 }
 
-creatureList createCreatureList() {
+creatureList createCreatureList(void) {
     creatureList list;
     list.head = NULL;
     return list;
@@ -1068,7 +1068,7 @@ static boolean summonMinions(creature *summoner) {
 }
 
 // Generates and places monsters for the level.
-void populateMonsters() {
+void populateMonsters(void) {
     if (!MONSTERS_ENABLED) {
         return;
     }
@@ -1112,7 +1112,7 @@ boolean getRandomMonsterSpawnLocation(short *x, short *y) {
     return true;
 }
 
-void spawnPeriodicHorde() {
+void spawnPeriodicHorde(void) {
     creature *monst;
     short x, y;
 

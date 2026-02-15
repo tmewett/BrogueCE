@@ -6,7 +6,7 @@
 #include "platform.h"
 #include "term.h"
 
-static void gameLoop() {
+static void gameLoop(void) {
     signal(SIGINT, SIG_DFL); // keep SDL from overriding the default ^C handler when it's linked
 
     if (!Term.start()) {
@@ -107,7 +107,7 @@ static int rewriteKey(int key, boolean text) {
 
 #define PAUSE_BETWEEN_EVENT_POLLING     34//17
 
-static uint64_t getTime() {
+static uint64_t getTime(void) {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return (uint64_t)tv.tv_sec * 1000 + tv.tv_usec / 1000;
