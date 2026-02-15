@@ -55,14 +55,8 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-
-        /* align-content: stretch;
-        align-items: stretch; */
       }
       #content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
         width: 100%;
         height: 100%;
       }
@@ -80,7 +74,7 @@
           object-fit: contain;
           flex-grow: 1;
           flex-shrink: 1;
-          background: #111111; /* fullscreen */
+          background: #111111;
           image-rendering: pixelated;
       }
       .nav-bar > div {
@@ -148,7 +142,6 @@
         border-radius: 4px;
         /* display: none; */
       }
-
       img {
         background-color: #555555;
         padding: 0.1em 0.1em;
@@ -164,8 +157,8 @@
       #project-info {
           position: absolute;
           top: -2.5em;
-          left: 20%;
-          width: 9em;
+          right: 0;
+          width: 11em;
           min-height: 3em;
           transition: top 0.5s ease;
           box-sizing: border-box;
@@ -180,6 +173,28 @@
       #project-info.open {
           top: 0;
       }
+      #brogue-js-info {
+          position: fixed;
+          top: 2em;
+          left: 30%;
+          width: 30%;
+          height: 50%;
+          overflow-y: auto;
+          background-color: #333333;
+          border: 1px solid black;
+          padding: 10px;
+          z-index: -1000;
+          color: white;
+      }
+      #brogue-js-info a {
+        color: #4c89c2
+      }
+      /* .initalized {
+          display: flex;
+          flex-direction: column;
+          align-content: stretch;
+          align-items: stretch;
+      } */
     </style>
     <script type="text/javascript">
 
@@ -194,7 +209,6 @@
       const SAMPLE_TEXT = 'hfgjM,_';
       const STORE_NAME = "FILE_DATA";
       const BROGUE_PATH = "/brogue/";
-      const devicePixelRatio = window.devicePixelRatio || 1;
       const CONSOLE_HEIGHT = 34;
       const CONSOLE_WIDTH = 100;
       const CELL_ASPECT_RATIO = 19/10;
@@ -211,7 +225,11 @@
       // Globals
       // -------------------------------------------------
 
-      let ctx, ctxWidth, ctxHeight, cellWidth, cellHeight, canvas;
+      let ctx, ctxWidth, ctxHeight;
+      let cellWidth, cellHeight, canvas;
+      let halfWidth;
+      let devicePixelRatio = window.devicePixelRatio || 1;
+      let SUB_PIXEL_SCALE = devicePixelRatio;
       let FONT_NAME = "monospace";
       let lastMouseCell = [-1,-1];
       let lastMoveEvent = 0;
@@ -236,7 +254,7 @@
           ctx.fillStyle = `rgb(${br/100*255|0}, ${bg/100*255|0}, ${bb/100*255|0})`;
           ctx.fillRect(x,y,cellWidth,cellHeight);
           ctx.fillStyle = `rgb(${fr/100*255|0}, ${fg/100*255|0}, ${fb/100*255|0})`;
-          ctx.fillText(String.fromCharCode(char), x, y);
+          ctx.fillText(String.fromCharCode(char), x + halfWidth, y);
         });
       }
 
@@ -416,7 +434,14 @@
       }
 
       const onKeydown = (e) => {
+          if(    event.code == "NumpadDivide"
+              || event.code == "Slash"
+              || event.code == "Quote") {
+
+            event.preventDefault();
+          }
           const key = (e.key.length > 1) ? KEY_MAP[e.key] : e.key.charCodeAt(0);
+          if (key === undefined) return;
           const EVENT = [eventTypes.KEYSTROKE, key, 0, e.ctrlKey?1:0, e.shiftKey?1:0];
           window.keyOrMouseEvents.push(EVENT);
       }
@@ -451,10 +476,14 @@
           return ctx;
       }
 
-      const measureText = () => {
+      const roundTo = (num,sz) => {
+        return Math.floor(num * sz) / sz;
+      }
+
+      const measureText = (cellAspect) => {
         const measure = ctx.measureText(SAMPLE_TEXT);
-        const width   = Math.ceil(measure.width/SAMPLE_TEXT.length);
-        const height  = Math.ceil(FONT_HEIGHT_SCALE * (measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent));
+        const width   = roundTo(measure.width/SAMPLE_TEXT.length, SUB_PIXEL_SCALE);
+        const height  = roundTo(FONT_HEIGHT_SCALE * (measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent), SUB_PIXEL_SCALE);
 
         // Use the measurements directly (aligns cell size with font sizes for clean rendering)
         cellWidth  = width;
@@ -464,22 +493,31 @@
         const aspect = cellHeight / cellWidth;
         if (aspect < 1) {
           cellWidth = height;
+        } else if (aspect > cellAspect) { // Cells are too tall
+          cellWidth = cellHeight/cellAspect;
         }
 
-        // Cells are too tall
-        if (aspect > CELL_ASPECT_RATIO) {
-          cellWidth = cellHeight/CELL_ASPECT_RATIO;
-        }
+        halfWidth = cellWidth/2;  // Optimization
       }
 
       const resizeCanvas = () => {
         const content = document.getElementById("content");
-        const maxCellWidth  = Math.floor(content.clientWidth  / (CONSOLE_WIDTH  + 0));
-        const maxCellHeight = Math.floor(content.clientHeight / (CONSOLE_HEIGHT + 1));  // Extra line of room at the bottom
-
         canvas = document.getElementById('game-canvas');
+
+        // We have to do a two-step dance when resizing:
+        // - Set the content size to 100% to fill the screen
+        // - Resize the canvas based on the content size
+        // - Set the content size to be the size of the canvas so it centers properly
+        content.style.width = "100%";
+        content.style.height = "100%";
+
+        const maxCellWidth  = roundTo(content.clientWidth  / (CONSOLE_WIDTH  + 0), SUB_PIXEL_SCALE);
+        const maxCellHeight = roundTo(content.clientHeight / (CONSOLE_HEIGHT + 0), SUB_PIXEL_SCALE);  // Extra line of room at the bottom
+        const cellAspect = Math.max( 1, maxCellHeight / maxCellWidth );
+
         ctx = canvas.getContext("2d");
         ctx.textBaseline = "top";
+        ctx.textAlign = "center";
         ctx.textRendering = 'pixelated';  // or 'geometricPrecision' or 'optimizeLegibility' (default)
         ctx.imageSmoothingEnabled = false;
 
@@ -490,11 +528,11 @@
         for (let i = 7*FONT_MULT; i <= 80*FONT_MULT; i++) { // 1/10 step in font sizes
             size = i/FONT_MULT;
             ctx.font = size+'px '+FONT_NAME;
-            measureText();
+            measureText(cellAspect);
             if (cellWidth > maxCellWidth || cellHeight > maxCellHeight) {
                 size = (i-1)/FONT_MULT;
                 ctx.font = size+'px '+FONT_NAME;
-                measureText();
+                measureText(cellAspect);
                 break;
             }
         }
@@ -508,10 +546,15 @@
         // Get context for the resized canvas
         ctx = setupRetinaCanvas(canvas);
         ctx.textBaseline = "top";
+        ctx.textAlign = "center";
         ctx.fillStyle = 'white';
         ctx.textRendering = 'pixelated';  // or 'geometricPrecision' or 'optimizeLegibility' (default)
         ctx.imageSmoothingEnabled = false;
         ctx.font = size+'px '+FONT_NAME;
+
+        // Set the content tightly around the canvas so it centers properly
+        content.style.width = ctxWidth;
+        content.style.height = ctxHeight;
 
         // Redraw the canvas
         plotAllChars();
@@ -533,7 +576,7 @@
 
         // Register event handlers
         window.addEventListener('resize', () => resizeCanvas() );
-        window.addEventListener('keydown', onKeydown, false);
+        window.addEventListener('keydown', onKeydown, { capture: true });
 
         document.getElementById('request-fullscreen').addEventListener('click', onRequestFullscreen, false);
         document.getElementById('request-files').addEventListener('click', onRequestFiles, false);
@@ -541,6 +584,8 @@
         document.getElementById('keyboard-icon').addEventListener("click", (ele) => { ele.target.value = ""; document.getElementById('keyboard').style.display = "block"; });
         document.getElementById('keyboard').addEventListener("blur", (ele) => { ele.target.value = ""; ele.target.style.display = "none"; document.getElementById('project-info').classList.remove("open"); });
         document.getElementById('file-mgr-close').addEventListener('click', () => { document.getElementById('file-manager').style.zIndex = -1000; }, false);
+        document.getElementById('info').addEventListener('click', () => { document.getElementById('brogue-js-info').style.zIndex = 1000; }, false);
+        document.getElementById('brogue-js-info').addEventListener('click', () => { document.getElementById('brogue-js-info').style.zIndex = -1000; }, false);
         document.getElementById('project-info').addEventListener('click', (ele) => { ele.target.classList.add("open"); }, false);
         document.getElementById('project-info').addEventListener('hover', (ele) => { ele.target.classList.add("open"); }, false);
         document.getElementById('upload').addEventListener('click', (ele) => { ele.target.style.display = "none"; document.getElementById('file-mgr-upload').style.display = "block"; }, false);
@@ -760,8 +805,53 @@
             <a href="#" id="request-fullscreen" title="Fulscreen"><img src="fullscreen.svg"/></a>
             <a href="#" id="request-files" title="File manager"><img src="files.svg"/></a>
             <img id="keyboard-icon" src="keyboard.svg" title="Open keyboard (for tablets)"/>
-            <a href="https://github.com/tmewett/BrogueCE" target="_blank" rel="noopener noreferrer" title="Report an issue"><img src="bugs.svg"/></a>
+            <img id="info" src="info.svg" title="About BrogueJS"/>
+            <a href="https://github.com/brturn/BrogueCE/issues" target="_blank" rel="noopener noreferrer" title="Report an issue"><img src="bugs.svg"/></a>
             <div><input type="text" id="keyboard" size="8" placeholder="Keyboard"/></div>
+          </div>
+          <div id="brogue-js-info">
+            <img src="close.svg"/> <b>BrogueJS - Brogue in the browser!</b>
+            <p><a href="https://github.com/brturn" target="_blank" rel="noopener noreferrer">Bryan Turner, 2026</a></p>
+
+            <p>Please report any issues with this beta-test version to <a href="https://github.com/brturn/BrogueCE/issues">Bryan's issues list</a>.</p>
+
+            <p>This is an updated and improved version of the original <a href="https://github.com/freethenation/broguejs" target="_blank" rel="noopener noreferrer">BrogueJS</a>,
+              full credit goes to <a href="https://github.com/freethenation" target="_blank" rel="noopener noreferrer">Richard Klafter</a>
+              and <a href="https://github.com/lachesis" target="_blank" rel="noopener noreferrer">Eric Swanson</a>.</p>
+
+            <p>This version of Brogue is based on <a href="https://github.com/tmewett/BrogueCE" target="_blank" rel="noopener noreferrer">BrogueCE</a> (community edition),
+              led by <a href="https://github.com/tmewett" target="_blank" rel="noopener noreferrer">Tom Mewett</a>.</p>
+
+            <p>Brogue was created by <a href="http://sites.google.com/site/broguegame/" target="_blank" rel="noopener noreferrer">Brian Walker</a>.</p>
+
+            <p>Graphic tiles are from the iOS port, <a href="https://github.com/btaylor84/iBrogueCE" target="_blank" rel="noopener noreferrer">iBrogueCE</a>,
+              credit goes to <a href="https://github.com/sethhoward" target="_blank" rel="noopener noreferrer">Seth Howard</a>
+              and <a href="https://github.com/btaylor84" target="_blank" rel="noopener noreferrer">Robert Taylor</a>.</p>
+
+            <p>Improvements include:</p>
+            <ul>
+            <li>Updated to BrogueCE v1.15.1</li>
+            <li>Uses the same font and graphics as the iOS port</li>
+            <li>Supports high-dpi (retina) displays</li>
+            <li>Sharp graphics, no image stretching</li>
+            <li>Touch support for tablets (tested on iPad and iPhone)</li>
+            <li>File manager for uploading, downloading, and deleting the save games and recordings</li>
+            <li>Files are compatible with other BrogueCE platforms, so you can move files between devices to continue the adventure</li>
+            <li>URL parameters supported for seed, graphics, mode, etc.  Allowing easy bookmarking and sharing experiences</li>
+            <li>Keyboard request for tablet support</li>
+            </ul>
+
+            <p>BrogueJS has been tested working on:</p>
+            <ul>
+            <li>MacBook Pro M4, Mac OS 26.2: Safari, Firefox, Chrome</li>
+            <li>iPad Pro Gen 3, iOS 26.3, Safari</li>
+            <li>iPhone 14 Pro, iOS 26.2, Safari</li>
+            </ul>
+
+            <p>Please note this is not the same project as <a href="http://brogue.roguelikelike.com/" target="_blank" rel="noopener noreferrer">web-brogue</a>,
+              which is a cloud-based service, stores files in the cloud, and allows visitors to watch players and past recordings.
+              BrogueJS is fully local to your browser and no information is sent to the server,
+              files have to be downloaded using the file manager before sharing.</p>
           </div>
           <div id="file-manager" class="floating-div">
             <div id="file-mgr-nav">

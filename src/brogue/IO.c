@@ -430,6 +430,7 @@ static short actionMenu(short x, boolean playingBack) {
             theEvent.param2 = 0;
             theEvent.shiftKey = theEvent.controlKey = false;
             executeEvent(&theEvent);
+            refreshScreen();
         } else {
             return buttons[buttonChosen].hotkey[0];
         }

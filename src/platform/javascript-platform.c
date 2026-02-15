@@ -66,7 +66,7 @@ static void javascript_plotChar(enum displayGlyph glyph,
 
     unsigned int ch;
 
-    if ( (glyph > G_DOWN_ARROW) &&
+    if ((glyph > G_DOWN_ARROW) && (glyph != G_LEFT_TRIANGLE) &&
         ((graphicsMode == TILES_GRAPHICS) ||
         ((graphicsMode == HYBRID_GRAPHICS) && (isEnvironmentGlyph(glyph))))
         ) {
@@ -134,11 +134,8 @@ static boolean javascript_modifier_held(int modifier) {
 static enum graphicsModes showGraphics = TEXT_GRAPHICS;
 static enum graphicsModes javascript_setGraphicsMode(enum graphicsModes mode) {
     showGraphics = mode;
-    refreshScreen();
-    // updateScreen();
     return mode;
 }
-
 
 struct brogueConsole javascriptConsole = {
   javascript_gameLoop,
