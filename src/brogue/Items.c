@@ -21,6 +21,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <math.h>
 
 #include "Rogue.h"
 #include "GlobalsBase.h"
@@ -2086,62 +2087,74 @@ void itemDetails(char *buf, item *theItem) {
             }
 
             // Display the known percentage by which the armor/weapon will increase/decrease accuracy/damage/defense if not already equipped.
-            if (!(theItem->flags & ITEM_EQUIPPED)) {
-                if (theItem->category & WEAPON) {
-                    current = player.info.accuracy;
-                    if (rogue.weapon) {
-                        currentDamage = (rogue.weapon->damage.lowerBound + rogue.weapon->damage.upperBound) * FP_FACTOR / 2;
-                        if ((rogue.weapon->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                            current = current * accuracyFraction(netEnchant(rogue.weapon)) / FP_FACTOR;
-                            currentDamage = currentDamage * damageFraction(netEnchant(rogue.weapon)) / FP_FACTOR;
-                        } else {
-                            current = current * accuracyFraction(strengthModifier(rogue.weapon)) / FP_FACTOR;
-                            currentDamage = currentDamage * damageFraction(strengthModifier(rogue.weapon)) / FP_FACTOR;
-                        }
+            if (!(theItem->flags & ITEM_EQUIPPED) && (theItem->category & WEAPON)) {
+                current = player.info.accuracy;
+                if (rogue.weapon) {
+                    currentDamage = (rogue.weapon->damage.lowerBound + rogue.weapon->damage.upperBound) * FP_FACTOR / 2;
+                    if ((rogue.weapon->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
+                        current = current * accuracyFraction(netEnchant(rogue.weapon)) / FP_FACTOR;
+                        currentDamage = currentDamage * damageFraction(netEnchant(rogue.weapon)) / FP_FACTOR;
                     } else {
-                        currentDamage = (player.info.damage.lowerBound + player.info.damage.upperBound) * FP_FACTOR / 2;
+                        current = current * accuracyFraction(strengthModifier(rogue.weapon)) / FP_FACTOR;
+                        currentDamage = currentDamage * damageFraction(strengthModifier(rogue.weapon)) / FP_FACTOR;
                     }
+                } else {
+                    currentDamage = (player.info.damage.lowerBound + player.info.damage.upperBound) * FP_FACTOR / 2;
+                }
 
-                    new = player.info.accuracy;
-                    newDamage = (theItem->damage.lowerBound + theItem->damage.upperBound) * FP_FACTOR / 2;
-                    if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                        new = new * accuracyFraction(netEnchant(theItem)) / FP_FACTOR;
-                        newDamage = newDamage * damageFraction(netEnchant(theItem)) / FP_FACTOR;
-                    } else {
-                        new = new * accuracyFraction(strengthModifier(theItem)) / FP_FACTOR;
-                        newDamage = newDamage * damageFraction(strengthModifier(theItem)) / FP_FACTOR;
-                    }
-                    accuracyChange  = (new * 100 / current) - 100;
-                    damageChange    = (newDamage * 100 / currentDamage) - 100;
-                    sprintf(buf2, "Wielding the %s%s will %s your current accuracy by %s%i%%%s, and will %s your current damage by %s%i%%%s. ",
-                            theName,
-                            ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) ? "" : ", assuming it has no hidden properties,",
-                            (((short) accuracyChange) < 0) ? "decrease" : "increase",
-                            (((short) accuracyChange) < 0) ? badColorEscape : (accuracyChange > 0 ? goodColorEscape : ""),
-                            abs((short) accuracyChange),
-                            whiteColorEscape,
-                            (((short) damageChange) < 0) ? "decrease" : "increase",
-                            (((short) damageChange) < 0) ? badColorEscape : (damageChange > 0 ? goodColorEscape : ""),
-                            abs((short) damageChange),
+                new = player.info.accuracy;
+                newDamage = (theItem->damage.lowerBound + theItem->damage.upperBound) * FP_FACTOR / 2;
+                if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
+                    new = new * accuracyFraction(netEnchant(theItem)) / FP_FACTOR;
+                    newDamage = newDamage * damageFraction(netEnchant(theItem)) / FP_FACTOR;
+                } else {
+                    new = new * accuracyFraction(strengthModifier(theItem)) / FP_FACTOR;
+                    newDamage = newDamage * damageFraction(strengthModifier(theItem)) / FP_FACTOR;
+                }
+                accuracyChange  = (new * 100 / current) - 100;
+                damageChange    = (newDamage * 100 / currentDamage) - 100;
+                sprintf(buf2, "Wielding the %s%s will %s your current accuracy by %s%i%%%s, and will %s your current damage by %s%i%%%s. ",
+                        theName,
+                        ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) ? "" : ", assuming it has no hidden properties,",
+                        (((short) accuracyChange) < 0) ? "decrease" : "increase",
+                        (((short) accuracyChange) < 0) ? badColorEscape : (accuracyChange > 0 ? goodColorEscape : ""),
+                        abs((short) accuracyChange),
+                        whiteColorEscape,
+                        (((short) damageChange) < 0) ? "decrease" : "increase",
+                        (((short) damageChange) < 0) ? badColorEscape : (damageChange > 0 ? goodColorEscape : ""),
+                        abs((short) damageChange),
+                        whiteColorEscape);
+                strcat(buf, buf2);
+            } else if (theItem->category & ARMOR) {
+                float armorValue;
+
+                if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
+                    armorValue = theItem->armor;
+                    armorValue += 10 * netEnchant(theItem) / FP_FACTOR;
+                    armorValue /= 10;
+                } else {
+                    armorValue = armorValueIfUnenchanted(theItem);
+                }
+
+                armorValue = max(0, armorValue);
+                // If `armorValue` should end in 0.25 or 0.75, the last digit is truncated, so re-add it here.
+                float armorValueFractionalPart = armorValue - floor(armorValue);
+                if (fabs(armorValueFractionalPart - 0.2) < 1.0e-5 || fabs(armorValueFractionalPart - 0.7) < 1.0e-5) {
+                    armorValue += 0.05;
+                }
+
+                if (theItem->flags & ITEM_EQUIPPED) {
+                    sprintf(buf2, "%s has an armor rating of %s%g%s. ",
+                            ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) ? "It" : "If it has no hidden properties, it",
+                            armorValue > 0 ? goodColorEscape : badColorEscape,
+                            armorValue,
                             whiteColorEscape);
                 } else {
-                    new = 0;
-
-                    if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
-                        new = theItem->armor;
-                        new += 10 * netEnchant(theItem) / FP_FACTOR;
-                        new /= 10;
-                    } else {
-                        new = armorValueIfUnenchanted(theItem);
-                    }
-
-                    new = max(0, new);
-
-                    sprintf(buf2, "Wearing the %s%s will result in an armor rating of %s%i%s. ",
+                    sprintf(buf2, "Wearing the %s%s will result in an armor rating of %s%g%s. ",
                             theName,
                             ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) ? "" : ", assuming it has no hidden properties,",
-                            (new > displayedArmorValue() ? goodColorEscape : (new < displayedArmorValue() ? badColorEscape : whiteColorEscape)),
-                            new, whiteColorEscape);
+                            (armorValue > displayedArmorValue() ? goodColorEscape : (armorValue < displayedArmorValue() ? badColorEscape : whiteColorEscape)),
+                            armorValue, whiteColorEscape);
                 }
                 strcat(buf, buf2);
             }
@@ -3185,16 +3198,16 @@ void updateEncumbrance() {
 }
 
 // Estimates the armor value of the given item, assuming the item is unenchanted.
-short armorValueIfUnenchanted(item *theItem) {
-    short averageValue = (armorTable[theItem->kind].range.upperBound + armorTable[theItem->kind].range.lowerBound) / 2;
-    short strengthAdjusted = averageValue + 10 * strengthModifier(theItem) / FP_FACTOR;
+float armorValueIfUnenchanted(item *theItem) {
+    float averageValue = (armorTable[theItem->kind].range.upperBound + armorTable[theItem->kind].range.lowerBound) / 2;
+    float strengthAdjusted = averageValue + 10 * strengthModifier(theItem) / FP_FACTOR;
     return max(0, strengthAdjusted / 10);
 }
 
 // Calculates the armor value to display to the player (estimated if the item is unidentified).
-short displayedArmorValue() {
+float displayedArmorValue() {
     if (!rogue.armor || (rogue.armor->flags & ITEM_IDENTIFIED)) {
-        return player.info.defense / 10;
+        return ((float) player.info.defense) / 10;
     } else {
         return armorValueIfUnenchanted(rogue.armor);
     }
