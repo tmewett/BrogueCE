@@ -48,9 +48,6 @@
         overflow: hidden;
       }
       body {
-        width: 98%;
-        height: 98%;
-
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -112,9 +109,6 @@
         image-rendering: pixelated;
         touch-action: none;
       }
-      #canvas-container {
-        border: 1px solid orange;
-      }
       #keyboard {
         background-color: #222222;
         padding: 0.25em 0.5em;
@@ -140,7 +134,6 @@
         padding: 0.25em 0.5em;
         border: 2px solid var(--input-border);
         border-radius: 4px;
-        /* display: none; */
       }
       img {
         background-color: #555555;
@@ -189,12 +182,6 @@
       #brogue-js-info a {
         color: #4c89c2
       }
-      /* .initalized {
-          display: flex;
-          flex-direction: column;
-          align-content: stretch;
-          align-items: stretch;
-      } */
     </style>
     <script type="text/javascript">
 
@@ -227,7 +214,7 @@
 
       let ctx, ctxWidth, ctxHeight;
       let cellWidth, cellHeight, canvas;
-      let halfWidth;
+      let halfWidth, wallWidth, wallHeight, fontSize;
       let devicePixelRatio = window.devicePixelRatio || 1;
       let SUB_PIXEL_SCALE = devicePixelRatio;
       let FONT_NAME = "monospace";
@@ -254,7 +241,20 @@
           ctx.fillStyle = `rgb(${br/100*255|0}, ${bg/100*255|0}, ${bb/100*255|0})`;
           ctx.fillRect(x,y,cellWidth,cellHeight);
           ctx.fillStyle = `rgb(${fr/100*255|0}, ${fg/100*255|0}, ${fb/100*255|0})`;
-          ctx.fillText(String.fromCharCode(char), x + halfWidth, y);
+
+          // Graphics mode tiles that look bad if there are gaps between them
+          if ((char == 0x4051 || char == 0x4064 || char == 0x4041 || char == 0x4002)) {
+            ctx.save(); // Save the current state
+            const scaleX = cellWidth/wallWidth;
+            const scaleY = cellHeight/wallHeight;
+            const newX = (x + halfWidth)/scaleX; // Adjust location based on scale
+            const newY = y/scaleY;
+            ctx.scale(scaleX, scaleY);           // Stretch graphics to fit cell
+            ctx.fillText(String.fromCharCode(char), newX, newY);
+            ctx.restore();
+          } else {
+            ctx.fillText(String.fromCharCode(char), x + halfWidth, y);
+          }
         });
       }
 
@@ -481,9 +481,15 @@
       }
 
       const measureText = (cellAspect) => {
-        const measure = ctx.measureText(SAMPLE_TEXT);
-        const width   = roundTo(measure.width/SAMPLE_TEXT.length, SUB_PIXEL_SCALE);
-        const height  = roundTo(FONT_HEIGHT_SCALE * (measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent), SUB_PIXEL_SCALE);
+        // const measure = ctx.measureText(SAMPLE_TEXT);
+        const measure = ctx.measureText("\u{4051}")
+        // const width   = roundTo(measure.width/SAMPLE_TEXT.length, SUB_PIXEL_SCALE);
+        const width   = roundTo(measure.width, SUB_PIXEL_SCALE);
+        const height  = roundTo((measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent), SUB_PIXEL_SCALE);
+
+        // Record actual values for scaling later
+        wallWidth  = width;
+        wallHeight = height;
 
         // Use the measurements directly (aligns cell size with font sizes for clean rendering)
         cellWidth  = width;
@@ -496,8 +502,25 @@
         } else if (aspect > cellAspect) { // Cells are too tall
           cellWidth = cellHeight/cellAspect;
         }
+      }
 
-        halfWidth = cellWidth/2;  // Optimization
+      const findFontThatFits = (maxWidth, maxHeight) => {
+        // Find proper font size
+        const cellAspect = Math.max( 1, maxHeight / maxWidth );
+        let size = 7;
+        const FONT_MULT = 100;
+        for (let i = 7*FONT_MULT; i <= 80*FONT_MULT; i++) { // 1/10 step in font sizes
+            size = i/FONT_MULT;
+            ctx.font = size+'px '+FONT_NAME;
+            measureText(cellAspect);
+            if (cellWidth > maxWidth || cellHeight > maxHeight) {
+                size = (i-1)/FONT_MULT;
+                ctx.font = size+'px '+FONT_NAME;
+                measureText(cellAspect);
+                break;
+            }
+        }
+        return size;
       }
 
       const resizeCanvas = () => {
@@ -513,7 +536,6 @@
 
         const maxCellWidth  = roundTo(content.clientWidth  / (CONSOLE_WIDTH  + 0), SUB_PIXEL_SCALE);
         const maxCellHeight = roundTo(content.clientHeight / (CONSOLE_HEIGHT + 0), SUB_PIXEL_SCALE);  // Extra line of room at the bottom
-        const cellAspect = Math.max( 1, maxCellHeight / maxCellWidth );
 
         ctx = canvas.getContext("2d");
         ctx.textBaseline = "top";
@@ -522,20 +544,8 @@
         ctx.imageSmoothingEnabled = false;
 
         // Find proper font size
-        ctx.font = '7px '+FONT_NAME;
-        let size = 7;
-        const FONT_MULT = 100;
-        for (let i = 7*FONT_MULT; i <= 80*FONT_MULT; i++) { // 1/10 step in font sizes
-            size = i/FONT_MULT;
-            ctx.font = size+'px '+FONT_NAME;
-            measureText(cellAspect);
-            if (cellWidth > maxCellWidth || cellHeight > maxCellHeight) {
-                size = (i-1)/FONT_MULT;
-                ctx.font = size+'px '+FONT_NAME;
-                measureText(cellAspect);
-                break;
-            }
-        }
+        fontSize = findFontThatFits(maxCellWidth, maxCellHeight);
+        halfWidth = cellWidth/2;  // Optimization
 
         // Resize canvas
         ctxWidth = cellWidth * CONSOLE_WIDTH;
@@ -550,7 +560,7 @@
         ctx.fillStyle = 'white';
         ctx.textRendering = 'pixelated';  // or 'geometricPrecision' or 'optimizeLegibility' (default)
         ctx.imageSmoothingEnabled = false;
-        ctx.font = size+'px '+FONT_NAME;
+        ctx.font = fontSize+'px '+FONT_NAME;
 
         // Set the content tightly around the canvas so it centers properly
         content.style.width = ctxWidth;
@@ -868,11 +878,10 @@
             <div id="files"></div>
           </div>
         </div>
-        <div class="canvas-container">
-          <canvas id="game-canvas"></canvas>
-        </div>
-        <div id="status">
-        </div>
+        <!-- <div class="canvas-container"> -->
+        <canvas id="game-canvas"></canvas>
+        <!-- </div> -->
+        <!-- <div id="status"></div> -->
       </div>
       {{{ SCRIPT }}}
     </body>
