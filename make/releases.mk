@@ -24,6 +24,14 @@ BrogueCE-linux:
 	cp -r --parents $(common_bin) bin/brogue $@
 	cp linux/make-link-for-desktop.sh $@
 
+BrogueCE-javascript:
+	$(make_release_base)
+	cp bin/brogue.* $@
+	cp javascript/*.svg $@
+	cp javascript/*.png $@
+	cp javascript/*.txt $@
+	cp javascript/*.ico $@
+	cp javascript/*.ttf $@
 
 # macOS app bundle
 
