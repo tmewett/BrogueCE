@@ -189,11 +189,11 @@
       // Constants
       // -------------------------------------------------
 
+      const isMacOS = navigator.platform.match("Mac");
       const BROGUE_FONT = 'BrogueFont';
       const myFont = new FontFace(BROGUE_FONT, 'url(BrogueCE.ttf)');
       const MIN_EVENT_MS = 100;
       const FONT_HEIGHT_SCALE = 1.3;
-      const SAMPLE_TEXT = 'hfgjM,_';
       const STORE_NAME = "FILE_DATA";
       const BROGUE_PATH = "/brogue/";
       const CONSOLE_HEIGHT = 34;
@@ -433,12 +433,15 @@
           Tab:9,
       }
 
+      const allCtrlKeys = "hjklyubn78946123sxA"; // Keys that behave differently when a modifier is used
       const onKeydown = (e) => {
-          if(    event.code == "NumpadDivide"
-              || event.code == "Slash"
-              || event.code == "Quote") {
-
-            event.preventDefault();
+          // Override browser key bindings where possible
+          const modkey = isMacOS ? e.metaKey : e.ctrlKey;
+          if (   e.code == "NumpadDivide"
+              || e.code == "Slash"
+              || e.code == "Quote"
+              || (modkey && allCtrlKeys.includes(e.key[0]))) {
+            e.preventDefault();
           }
           const key = (e.key.length > 1) ? KEY_MAP[e.key] : e.key.charCodeAt(0);
           if (key === undefined) return;
@@ -481,9 +484,7 @@
       }
 
       const measureText = (cellAspect) => {
-        // const measure = ctx.measureText(SAMPLE_TEXT);
         const measure = ctx.measureText("\u{4051}")
-        // const width   = roundTo(measure.width/SAMPLE_TEXT.length, SUB_PIXEL_SCALE);
         const width   = roundTo(measure.width, SUB_PIXEL_SCALE);
         const height  = roundTo((measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent), SUB_PIXEL_SCALE);
 
