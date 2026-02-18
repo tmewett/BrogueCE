@@ -35,6 +35,32 @@
 
 extern playerCharacter rogue;
 
+static uint64_t lastPlayedTuesday = 0;  // Did we already play this one?
+uint64_t mostRecentTuesday() {
+    time_t t = time(NULL);
+    struct tm *tm_info = localtime(&t);
+
+    // tm_wday: 0=Sunday, 1=Monday, 2=Tuesday, ..., 6=Saturday
+    int current_wday = tm_info->tm_wday;
+    int target_wday = 2; // Tuesday
+
+    // Calculate days to subtract to get to the most recent Tuesday
+    int days_ago = (current_wday - target_wday + 7) % 7;
+
+    // Move time back
+    t -= (days_ago * 24 * 60 * 60);
+    tm_info = localtime(&t);
+
+    uint64_t yyyymmdd =
+        10000 * (tm_info->tm_year + 1900) +
+          100 * (tm_info->tm_mon + 1) +
+                (tm_info->tm_mday);
+
+    printf("%lu\n", yyyymmdd);
+    return yyyymmdd;
+}
+
+
 static void javascript_gameLoop(void) {
 
   // Setup file system
@@ -55,6 +81,8 @@ static void javascript_gameLoop(void) {
       }
     });
   );
+
+  mostRecentTuesday();
 
   rogueMain();
 }
