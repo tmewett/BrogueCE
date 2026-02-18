@@ -373,7 +373,6 @@
           if (firstTouch !== null && firstTouch.id === changedTouch.identifier) {
             sendTouchAsMouseEvent(event);
           }
-            // sendTouchAsMouseEvent(event);
         }
       }
 
@@ -463,18 +462,18 @@
 
           // Get the CSS-determined size of the canvas
           const rect = canvas.getBoundingClientRect();
-          const cssWidth = rect.width;
+          const cssWidth  = rect.width;
           const cssHeight = rect.height;
 
           // Set the actual canvas buffer size to the high DPI dimensions
-          canvas.width = cssWidth * devicePixelRatio;
+          canvas.width  = cssWidth  * devicePixelRatio;
           canvas.height = cssHeight * devicePixelRatio;
 
           // Scale the context so drawing operations use the CSS pixel coordinates
           ctx.scale(devicePixelRatio, devicePixelRatio);
 
           // Set the CSS dimensions back to the original intended size
-          canvas.style.width = cssWidth + 'px';
+          canvas.style.width  = cssWidth  + 'px';
           canvas.style.height = cssHeight + 'px';
           return ctx;
       }
@@ -484,7 +483,7 @@
       }
 
       const measureText = (cellAspect) => {
-        const measure = ctx.measureText("\u{4051}")
+        const measure = ctx.measureText("\u{4051}");  // BrogueCE.ttf graphic wall tile
         const width   = roundTo(measure.width, SUB_PIXEL_SCALE);
         const height  = roundTo((measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent), SUB_PIXEL_SCALE);
 
@@ -532,16 +531,16 @@
         // - Set the content size to 100% to fill the screen
         // - Resize the canvas based on the content size
         // - Set the content size to be the size of the canvas so it centers properly
-        content.style.width = "100%";
+        content.style.width  = "100%";
         content.style.height = "100%";
 
         const maxCellWidth  = roundTo(content.clientWidth  / (CONSOLE_WIDTH  + 0), SUB_PIXEL_SCALE);
         const maxCellHeight = roundTo(content.clientHeight / (CONSOLE_HEIGHT + 0), SUB_PIXEL_SCALE);  // Extra line of room at the bottom
 
         ctx = canvas.getContext("2d");
-        ctx.textBaseline = "top";
         ctx.textAlign = "center";
-        ctx.textRendering = 'pixelated';  // or 'geometricPrecision' or 'optimizeLegibility' (default)
+        ctx.textBaseline = "top";
+        ctx.textRendering = 'pixelated';
         ctx.imageSmoothingEnabled = false;
 
         // Find proper font size
@@ -549,22 +548,22 @@
         halfWidth = cellWidth/2;  // Optimization
 
         // Resize canvas
-        ctxWidth = cellWidth * CONSOLE_WIDTH;
+        ctxWidth  = cellWidth  * CONSOLE_WIDTH;
         ctxHeight = cellHeight * CONSOLE_HEIGHT;
+        canvas.style.width  = ctxWidth;
         canvas.style.height = ctxHeight;
-        canvas.style.width = ctxWidth;
 
         // Get context for the resized canvas
         ctx = setupRetinaCanvas(canvas);
-        ctx.textBaseline = "top";
-        ctx.textAlign = "center";
         ctx.fillStyle = 'white';
-        ctx.textRendering = 'pixelated';  // or 'geometricPrecision' or 'optimizeLegibility' (default)
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.textRendering = 'pixelated';
         ctx.imageSmoothingEnabled = false;
         ctx.font = fontSize+'px '+FONT_NAME;
 
         // Set the content tightly around the canvas so it centers properly
-        content.style.width = ctxWidth;
+        content.style.width  = ctxWidth;
         content.style.height = ctxHeight;
 
         // Redraw the canvas
@@ -576,8 +575,8 @@
         if (animating) return;  // Idempotent
         animating = true;
         window.requestAnimationFrame(() => {
-            animating = false;
             plotChars();
+            animating = false;
             startAnimation();
           });
       }
