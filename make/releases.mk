@@ -34,7 +34,7 @@ BrogueCE-javascript:
 	cp javascript/*.ico  $@
 	cp javascript/*.ttf  $@
 	cp javascript/*.json $@
-	cp javascript/*.js   $@
+	cp javascript/sw.js  $@
 	cp bin/brogue.html   $@/index.html
 
 
