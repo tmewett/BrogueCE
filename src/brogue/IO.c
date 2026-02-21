@@ -430,7 +430,6 @@ static short actionMenu(short x, boolean playingBack) {
             theEvent.param2 = 0;
             theEvent.shiftKey = theEvent.controlKey = false;
             executeEvent(&theEvent);
-            refreshScreen();
         } else {
             return buttons[buttonChosen].hotkey[0];
         }
@@ -2663,6 +2662,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                             : "Switched to hybrid mode.", &teal, 0);
                         break;
                 }
+                refreshScreen();
             }
             break;
         case SEED_KEY:

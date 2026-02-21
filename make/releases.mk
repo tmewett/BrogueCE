@@ -26,12 +26,16 @@ BrogueCE-linux:
 
 BrogueCE-javascript:
 	$(make_release_base)
-	cp bin/brogue.* $@
-	cp javascript/*.svg $@
-	cp javascript/*.png $@
-	cp javascript/*.txt $@
-	cp javascript/*.ico $@
-	cp javascript/*.ttf $@
+	cp bin/brogue.*      $@
+	cp javascript/*.svg  $@
+	cp javascript/*.png  $@
+	cp javascript/*.txt  $@
+	cp javascript/*.ico  $@
+	cp javascript/*.ttf  $@
+	cp javascript/*.json $@
+	cp javascript/*.js   $@
+	cp bin/brogue.html   $@/index.html
+
 
 # macOS app bundle
 

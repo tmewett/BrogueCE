@@ -25,18 +25,20 @@
 
 <html>
   <head>
+    <link rel="manifest" href="manifest.json" />
     <link rel="apple-touch-icon" type="image/png" sizes="256x256" href="brogue-icon.png">
     <link rel="icon" type="image/png" sizes="256x256" href="brogue-icon.png">
-
-    <!-- Various favicon formats -->
     <link rel="shortcut icon" href="favicon.ico">
     <link rel="icon" type="image/vnd.microsoft.icon" href="favicon.ico">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="icon" href="favicon.ico">
-    <link rel="icon" type="image/png" href="brogue-icon.png">
-    <!-- <link rel="icon" type="image/svg+xml" href="https://example.com/image.svg"> -->
 
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta content="no-cache, no-store, must-revalidate" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
     <style>
       html, body {
         margin: 1;
@@ -149,10 +151,10 @@
       }
       #project-info {
           position: absolute;
-          top: -2.5em;
-          right: 0;
-          width: 11em;
-          min-height: 3em;
+          right: -2.5em;
+          top: 10%;
+          width: 3em;
+          min-height: 11em;
           transition: top 0.5s ease;
           box-sizing: border-box;
           z-index: 500;
@@ -162,15 +164,17 @@
           border: 2px solid var(--input-border);
           border-radius: 4px;
           margin: 2px;
+
+          padding-left: 0.75em;
       }
       #project-info.open {
-          top: 0;
+          right: 0;
       }
       #brogue-js-info {
           position: fixed;
-          top: 2em;
-          left: 30%;
-          width: 30%;
+          top: 10%;
+          left: 20%;
+          width: 50%;
           height: 50%;
           overflow-y: auto;
           background-color: #333333;
@@ -182,7 +186,43 @@
       #brogue-js-info a {
         color: #4c89c2
       }
+
+      /* Wrap it in a @supports rule so it only takes effect on devices that understand this */
+      @supports (padding: env(safe-area-inset-top)) {
+        /* This is for PWA (on iOS), so that the status bar has a transparent yet blurry background. */
+        body::before {
+          content: '';
+          z-index: 2; /* necessary to be above <audio> elements */
+          position: fixed; /* position it fixed to it stays put at the top */
+          top: 0;
+          left: 0;
+          right: 0;
+          height: env(safe-area-inset-top); /* i.e. the exact height of the status bar */
+          backdrop-filter: blur(10px);
+          /* Fully blur the top half, then up to 0.7 blur-opacity/strength for the next quarter, and at last, go from 0.7 to full transparent (i.e. no blur) at the very bottom. */
+          mask: linear-gradient(to bottom, black, black 50%, rgba(0, 0, 0, 0.7) 75%, rgba(0, 0, 0, 0) 100%);
+        }
+      }
+
     </style>
+    <script>
+      // Service worker registration for offline web app support
+      let swRegistered = false;
+      const registerServiceWorker = () => {
+        if (swRegistered) return;
+        swRegistered = true; // Only do it once
+        if (!('serviceWorker' in navigator)) return;
+        navigator.serviceWorker.register('sw.js')
+          .then(registration => {
+            console.log('service worker registered successfully:', registration);
+          })
+          .catch(error => {
+            console.log('service worker registration failed:', error);
+          });
+      }
+      document.addEventListener('DOMContentLoaded', registerServiceWorker );
+      window.addEventListener('load', registerServiceWorker);
+    </script>
     <script type="text/javascript">
 
       // -------------------------------------------------
@@ -192,7 +232,7 @@
       const isMacOS = navigator.platform.match("Mac");
       const BROGUE_FONT = 'BrogueFont';
       const myFont = new FontFace(BROGUE_FONT, 'url(BrogueCE.ttf)');
-      const MIN_EVENT_MS = 100;
+      const MIN_EVENT_MS = 100; // TODO: Adjust this dynamically to match device performance
       const FONT_HEIGHT_SCALE = 1.3;
       const STORE_NAME = "FILE_DATA";
       const BROGUE_PATH = "/brogue/";
@@ -232,39 +272,32 @@
         document.getElementById("status").innerText = str;
       }
 
-      const plotCharMap = (charMap, allChars) => {
-        Object.values(charMap).forEach( plotChar => {
-          let [char, x, y, fr, fg, fb, br, bg, bb] = plotChar;
-          if (allChars !== null) allChars[(x<<8)+y] = plotChar;
-          x = x*cellWidth;
-          y = y*cellHeight;
-          ctx.fillStyle = `rgb(${br/100*255|0}, ${bg/100*255|0}, ${bb/100*255|0})`;
-          ctx.fillRect(x,y,cellWidth,cellHeight);
-          ctx.fillStyle = `rgb(${fr/100*255|0}, ${fg/100*255|0}, ${fb/100*255|0})`;
+      const plotChar = tile => {
+        let [char, x, y, fr, fg, fb, br, bg, bb] = tile;
+        window.allChars[(x<<8)+y] = tile; // Store a buffer of all tiles for when the window gets resized
+        x = x*cellWidth;
+        y = y*cellHeight;
+        ctx.fillStyle = `rgb(${br/100*255|0}, ${bg/100*255|0}, ${bb/100*255|0})`;
+        ctx.fillRect(x,y,cellWidth,cellHeight);
+        ctx.fillStyle = `rgb(${fr/100*255|0}, ${fg/100*255|0}, ${fb/100*255|0})`;
 
-          // Graphics mode tiles that look bad if there are gaps between them
-          if ((char == 0x4051 || char == 0x4064 || char == 0x4041 || char == 0x4002)) {
-            ctx.save(); // Save the current state
-            const scaleX = cellWidth/wallWidth;
-            const scaleY = cellHeight/wallHeight;
-            const newX = (x + halfWidth)/scaleX; // Adjust location based on scale
-            const newY = y/scaleY;
-            ctx.scale(scaleX, scaleY);           // Stretch graphics to fit cell
-            ctx.fillText(String.fromCharCode(char), newX, newY);
-            ctx.restore();
-          } else {
-            ctx.fillText(String.fromCharCode(char), x + halfWidth, y);
-          }
-        });
-      }
-
-      const plotChars = () => {
-        plotCharMap(window.plotChars, window.allChars);
-        window.plotChars = {};
+        // Graphics mode tiles that look bad if there are gaps between them
+        if ((char == 0x4051 || char == 0x4064 || char == 0x4041 || char == 0x4002)) {
+          ctx.save(); // Save the current state
+          const scaleX = cellWidth/wallWidth;
+          const scaleY = cellHeight/wallHeight;
+          const newX = (x + halfWidth)/scaleX; // Adjust location based on scale
+          const newY = y/scaleY;
+          ctx.scale(scaleX, scaleY);           // Stretch graphics to fit cell
+          ctx.fillText(String.fromCharCode(char), newX, newY);
+          ctx.restore();
+        } else {
+          ctx.fillText(String.fromCharCode(char), x + halfWidth, y);
+        }
       }
 
       const plotAllChars = () => {
-        plotCharMap(window.allChars, null);
+        Object.values(window.allChars).forEach(plotChar);
       }
 
       // -------------------------------------------------
@@ -570,17 +603,6 @@
         plotAllChars();
       }
 
-      let animating = false;
-      const startAnimation = () => {
-        if (animating) return;  // Idempotent
-        animating = true;
-        window.requestAnimationFrame(() => {
-            plotChars();
-            animating = false;
-            startAnimation();
-          });
-      }
-
       const initializeBrogueFrame = () => {
         resizeCanvas(FONT_NAME);
 
@@ -611,8 +633,6 @@
         canvas.addEventListener('touchend', handleTouchEnd, false);
         canvas.addEventListener('touchmove', handleTouchMove, false);
         canvas.addEventListener('touchcancel', handleTouchCancel, false);
-
-        startAnimation();
       }
 
       // Page initialization
@@ -812,10 +832,11 @@
       <div id="content">
         <div id="nav-bar">
           <div id="project-info">
-            <a href="#" id="request-fullscreen" title="Fulscreen"><img src="fullscreen.svg"/></a>
-            <a href="#" id="request-files" title="File manager"><img src="files.svg"/></a>
-            <img id="keyboard-icon" src="keyboard.svg" title="Open keyboard (for tablets)"/>
-            <img id="info" src="info.svg" title="About BrogueJS"/>
+            <span style="font-size: x-small;">260219</span>
+            <img src="fullscreen.svg" id="request-fullscreen" title="Fulscreen"/>
+            <img src="files.svg"      id="request-files"      title="File manager"/>
+            <img src="keyboard.svg"   id="keyboard-icon"      title="Open keyboard (for tablets)"/>
+            <img src="info.svg"       id="info"               title="About BrogueJS"/>
             <a href="https://github.com/brturn/BrogueCE/issues" target="_blank" rel="noopener noreferrer" title="Report an issue"><img src="bugs.svg"/></a>
             <div><input type="text" id="keyboard" size="8" placeholder="Keyboard"/></div>
           </div>
@@ -825,18 +846,23 @@
 
             <p>Please report any issues with this beta-test version to <a href="https://github.com/brturn/BrogueCE/issues">Bryan's issues list</a>.</p>
 
-            <p>This is an updated and improved version of the original <a href="https://github.com/freethenation/broguejs" target="_blank" rel="noopener noreferrer">BrogueJS</a>,
-              full credit goes to <a href="https://github.com/freethenation" target="_blank" rel="noopener noreferrer">Richard Klafter</a>
-              and <a href="https://github.com/lachesis" target="_blank" rel="noopener noreferrer">Eric Swanson</a>.</p>
+            <p>This is an updated and improved version of the original
+              <a href="https://github.com/freethenation/broguejs" target="_blank" rel="noopener noreferrer">BrogueJS</a>, full credit goes to
+              <a href="https://github.com/freethenation"          target="_blank" rel="noopener noreferrer">Richard Klafter</a> and
+              <a href="https://github.com/lachesis"               target="_blank" rel="noopener noreferrer">Eric Swanson</a>.</p>
 
-            <p>This version of Brogue is based on <a href="https://github.com/tmewett/BrogueCE" target="_blank" rel="noopener noreferrer">BrogueCE</a> (community edition),
-              led by <a href="https://github.com/tmewett" target="_blank" rel="noopener noreferrer">Tom Mewett</a>.</p>
+            <p>This version of Brogue is based on
+              <a href="https://github.com/tmewett/BrogueCE" target="_blank" rel="noopener noreferrer">BrogueCE</a> (community edition), led by
+              <a href="https://github.com/tmewett"          target="_blank" rel="noopener noreferrer">Tom Mewett</a> with support from
+              <a href="https://github.com/flend"            target="_blank" rel="noopener noreferrer">Tom Ford</a> and
+              <a href="https://github.com/zenzombie"        target="_blank" rel="noopener noreferrer">Brandon Groom</a>.</p>
 
-            <p>Brogue was created by <a href="http://sites.google.com/site/broguegame/" target="_blank" rel="noopener noreferrer">Brian Walker</a>.</p>
+            <p>Brogue was created by <a href="http://sites.google.com/site/broguegame/" target="_blank" rel="noopener noreferrer">Brian Walker</a> (aka Pender).</p>
 
-            <p>Graphic tiles are from the iOS port, <a href="https://github.com/btaylor84/iBrogueCE" target="_blank" rel="noopener noreferrer">iBrogueCE</a>,
-              credit goes to <a href="https://github.com/sethhoward" target="_blank" rel="noopener noreferrer">Seth Howard</a>
-              and <a href="https://github.com/btaylor84" target="_blank" rel="noopener noreferrer">Robert Taylor</a>.</p>
+            <p>Graphic tiles are from the iOS port,
+              <a href="https://github.com/btaylor84/iBrogueCE" target="_blank" rel="noopener noreferrer">iBrogueCE</a>, credit goes to
+              <a href="https://github.com/sethhoward"          target="_blank" rel="noopener noreferrer">Seth Howard</a> and
+              <a href="https://github.com/btaylor84"           target="_blank" rel="noopener noreferrer">Robert Taylor</a>.</p>
 
             <p>Improvements include:</p>
             <ul>
@@ -849,6 +875,7 @@
             <li>Files are compatible with other BrogueCE platforms, so you can move files between devices to continue the adventure</li>
             <li>URL parameters supported for seed, graphics, mode, etc.  Allowing easy bookmarking and sharing experiences</li>
             <li>Keyboard request for tablet support</li>
+            <li>Offline and webapp support for native app-like interface</li>
             </ul>
 
             <p>BrogueJS has been tested working on:</p>
@@ -878,10 +905,7 @@
             <div id="files"></div>
           </div>
         </div>
-        <!-- <div class="canvas-container"> -->
         <canvas id="game-canvas"></canvas>
-        <!-- </div> -->
-        <!-- <div id="status"></div> -->
       </div>
       {{{ SCRIPT }}}
     </body>
