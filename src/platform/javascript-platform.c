@@ -35,7 +35,6 @@
 
 extern playerCharacter rogue;
 
-static uint64_t lastPlayedTuesday = 0;  // Did we already play this one?
 uint64_t mostRecentTuesday() {
     time_t t = time(NULL);
     struct tm *tm_info = localtime(&t);

@@ -22,7 +22,6 @@
      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<!DOCTYPE html>
 <html>
   <head>
     <!-- App title -->
@@ -87,6 +86,8 @@
           flex-shrink: 1;
           background: #111111;
           image-rendering: pixelated;
+          touch-action: none;
+          aspect-ratio: inherit;
       }
       .nav-bar > div {
         margin: 2px;  /* file manager list item padding */
@@ -118,10 +119,6 @@
           padding: 10px;
           z-index: -1000;
           color: white;
-      }
-      canvas {
-        image-rendering: pixelated;
-        touch-action: none;
       }
       #keyboard {
         background-color: #222222;
@@ -219,14 +216,27 @@
     </style>
     <script>
       // Service worker registration for offline web app support
-      let swRegistered = false;
+      let serviceWorker = null;
       const registerServiceWorker = () => {
-        if (swRegistered) return;
-        swRegistered = true; // Only do it once
+        if (serviceWorker !== null) return;
+        serviceWorker = false; // Arbitrary
         if (!('serviceWorker' in navigator)) return;
         navigator.serviceWorker.register('sw.js')
           .then(registration => {
+            serviceWorker = registration;
             console.log('service worker registered successfully:', registration);
+
+            // Check to make sure background sync is supported.
+            if ('SyncManager' in window) {
+              try {
+                registration.sync.register('background-sync')
+                  .then( e => {
+                    console.log("Background Sync registration successful.", e);
+                  });
+              } catch (e) {
+                console.log("Background Sync registration failed.", e)
+              }
+            }
           })
           .catch(error => {
             console.log('service worker registration failed:', error);

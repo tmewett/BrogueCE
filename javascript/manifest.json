@@ -1,4 +1,5 @@
 {
+    "id": "BrogueCE-js",
     "name": "BrogueCE v1.15.1-js",
     "short_name": "BrogueCE",
     "display": "fullscreen",
@@ -9,6 +10,7 @@
     "prefer_related_applications": false,
     "categories": ["games","entertainment"],
     "start_url": "index.html",
+    "scope": ".",
     "dir": "auto",
     "lang": "en",
     "icons": [
@@ -26,6 +28,11 @@
             "src": "brogue-icon-512.png",
             "sizes": "512x512",
             "type": "image/png"
+        },
+        {
+            "src": "brogue-icon-1024.png",
+            "sizes": "1024x1024",
+            "type": "image/png"
         }
     ],
         "shortcuts": [
@@ -39,26 +46,45 @@
         {
             "src": "brogue-title-screen.jpg",
             "sizes": "1280x720",
-            "type": "image/jpg",
+            "type": "image/jpeg",
             "platform": "wide"
         },
         {
             "src": "brogue-screen-1.jpg",
             "sizes": "1280x720",
-            "type": "image/jpg",
+            "type": "image/jpeg",
             "platform": "wide"
         },
         {
             "src": "brogue-screen-3.jpg",
             "sizes": "1280x720",
-            "type": "image/jpg",
+            "type": "image/jpeg",
             "platform": "wide"
         },
         {
             "src": "brogue-screen-3.jpg",
             "sizes": "1280x720",
-            "type": "image/jpg",
+            "type": "image/jpeg",
             "platform": "wide"
+        },
+        {
+            "src": "brogue-title-screen-rot.jpg",
+            "sizes": "720x1280",
+            "type": "image/jpeg",
+            "platform": "narrow"
         }
+    ],
+    "related_applications": [
+        {
+            "platform": "itunes",
+            "url": "https://apps.apple.com/us/app/ibroguece/id1619142059",
+            "id": "iBrogueCE"
+        }
+    ],
+    "display_override": [
+        "fullscreen",
+        "standalone",
+        "minimal-ui",
+        "window-controls-overlay"
     ]
 }
