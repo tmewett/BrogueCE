@@ -104,7 +104,7 @@ static void javascript_plotChar(enum displayGlyph glyph,
     }
 
     EM_ASM_({
-      window.plotChars[($1<<8)+$2] = ([$0,$1,$2,$3,$4,$5,$6,$7,$8]);
+      plotChar([$0,$1,$2,$3,$4,$5,$6,$7,$8]);
     }, ch, xLoc, yLoc, foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue);
 }
 
