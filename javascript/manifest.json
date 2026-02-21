@@ -1,15 +1,64 @@
 {
- "name": "BrogueCE",
- "short_name": "BrogueCE",
- "display": "standalone",
- "orientation": "landscape",
- "background_color": "#000000",
- "theme_color": "#007bff",
- "description": "Brogue is a single-player strategy game set in the halls of a mysterious and randomly-generated dungeon. Retrieve the fabled Amulet of Yendor from the 26th level and escape with your life!",
- "start_url": ".",
- "icons": [{
-     "src": "/brogue-icon.png",
-     "sizes": "256x256",
-     "type": "image/png"
- }]
+    "name": "BrogueCE v1.15.1-js",
+    "short_name": "BrogueCE",
+    "display": "fullscreen",
+    "orientation": "landscape",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "description": "Brogue is a single-player strategy game set in the halls of a mysterious and randomly-generated dungeon. Retrieve the fabled Amulet of Yendor from the 26th level and escape with your life!",
+    "prefer_related_applications": false,
+    "categories": ["games","entertainment"],
+    "start_url": "index.html",
+    "dir": "auto",
+    "lang": "en",
+    "icons": [
+        {
+            "src": "brogue-icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "brogue-icon-256.png",
+            "sizes": "256x256",
+            "type": "image/png"
+        },
+        {
+            "src": "brogue-icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+        "shortcuts": [
+        {
+            "name": "Weekly Contest",
+            "url": "index.html?seed=tuesday",
+            "description": "Jump into the adventure and compete with other players on the weekly seed!  r/brogueforum"
+        }
+    ],
+    "screenshots" : [
+        {
+            "src": "brogue-title-screen.jpg",
+            "sizes": "1280x720",
+            "type": "image/jpg",
+            "platform": "wide"
+        },
+        {
+            "src": "brogue-screen-1.jpg",
+            "sizes": "1280x720",
+            "type": "image/jpg",
+            "platform": "wide"
+        },
+        {
+            "src": "brogue-screen-3.jpg",
+            "sizes": "1280x720",
+            "type": "image/jpg",
+            "platform": "wide"
+        },
+        {
+            "src": "brogue-screen-3.jpg",
+            "sizes": "1280x720",
+            "type": "image/jpg",
+            "platform": "wide"
+        }
+    ]
 }

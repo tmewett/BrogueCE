@@ -30,6 +30,7 @@ BrogueCE-javascript:
 	cp bin/brogue.*      $@
 	cp javascript/*.svg  $@
 	cp javascript/*.png  $@
+	cp javascript/*.jpg  $@
 	cp javascript/*.txt  $@
 	cp javascript/*.ico  $@
 	cp javascript/*.ttf  $@
