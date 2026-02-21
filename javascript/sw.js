@@ -2,7 +2,9 @@ const version = "20260219";
 const assets = [
     "./",
     "./apple-touch-icon.png",
-    "./brogue-icon.png",
+    "./brogue-icon-192.png",
+    "./brogue-icon-256.png",
+    "./brogue-icon-512.png",
     "./brogue.html",
     "./brogue.js",
     "./brogue.wasm",
@@ -14,10 +16,15 @@ const assets = [
     "./favicon.ico",
     "./files.svg",
     "./fullscreen.svg",
+    "./index.html",
     "./info.svg",
     "./keyboard.svg",
     "./manifest.json",
     "./upload.svg",
+    "./brogue-title-screen.jpg",
+    "./brogue-screen-1.jpg",
+    "./brogue-screen-3.jpg",
+    "./brogue-screen-3.jpg",
 ];
 
 self.addEventListener('install', e => {
