@@ -89,6 +89,7 @@
           image-rendering: pixelated;
           touch-action: none;
           aspect-ratio: inherit;
+          image-rendering: pixelated;
       }
       .nav-bar > div {
         margin: 2px;  /* file manager list item padding */
@@ -279,7 +280,7 @@
       let cellWidth, cellHeight, canvas;
       let halfWidth, wallWidth, wallHeight, fontSize;
       let devicePixelRatio = window.devicePixelRatio || 1;
-      let SUB_PIXEL_SCALE = devicePixelRatio;
+      let subPixelScale = 1; // devicePixelRatio;
       let FONT_NAME = "monospace";
       let lastMouseCell = [-1,-1];
       let lastMoveEvent = 0;
@@ -488,7 +489,7 @@
           Tab:9,
       }
 
-      const allCtrlKeys = "hjklyubn78946123sxA"; // Keys that behave differently when a modifier is used
+      const allCtrlKeys = "hjklyubn78946123sxA<>"; // Keys that behave differently when a modifier is used
       const onKeydown = (e) => {
           // Override browser key bindings where possible
           const modkey = isMacOS ? e.metaKey : e.ctrlKey;
@@ -539,37 +540,33 @@
       }
 
       const measureText = (cellAspect) => {
-        const measure = ctx.measureText("\u{4051}");  // BrogueCE.ttf graphic wall tile
-        const width   = roundTo(measure.width, SUB_PIXEL_SCALE);
-        const height  = roundTo((measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent), SUB_PIXEL_SCALE);
+        // Special: Measure the BrogueCE.ttf graphic wall tile
+        const wallMeasure = ctx.measureText("\u{4051}");
+        wallWidth   = roundTo(wallMeasure.width, subPixelScale);
+        wallHeight  = roundTo((wallMeasure.actualBoundingBoxAscent + wallMeasure.actualBoundingBoxDescent), subPixelScale);
 
-        // Record actual values for scaling later
-        wallWidth  = width;
-        wallHeight = height;
+        // Measure text chars
+        const measure = ctx.measureText("jf"); // Tallest and lowest chars
+        const width   = roundTo(measure.width/2, subPixelScale);
+        const height  = roundTo((measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent), subPixelScale);
 
         // Use the measurements directly (aligns cell size with font sizes for clean rendering)
-        cellWidth  = width;
-        cellHeight = height;
-
-        // Cells are too wide
-        const aspect = cellHeight / cellWidth;
-        if (aspect < 1) {
-          cellWidth = height;
-        } else if (aspect > cellAspect) { // Cells are too tall
-          cellWidth = cellHeight/cellAspect;
-        }
+        cellHeight = Math.max(wallHeight,height) + 1; // Padding
+        cellWidth = wallWidth + 1; // Padding
       }
 
       const findFontThatFits = (maxWidth, maxHeight) => {
         // Find proper font size
-        const cellAspect = Math.max( 1, maxHeight / maxWidth );
+        const cellAspect = roundTo(maxHeight / maxWidth, subPixelScale);
         let size = 7;
-        const FONT_MULT = 100;
-        for (let i = 7*FONT_MULT; i <= 80*FONT_MULT; i++) { // 1/10 step in font sizes
+        const FONT_MULT = 10; // Micro-step font sizes
+        const MIN_FONT_SIZE = 7;
+        const MAX_FONT_SIZE = 80;
+        for (let i = MIN_FONT_SIZE*FONT_MULT; i <= MAX_FONT_SIZE*FONT_MULT; i++) {
             size = i/FONT_MULT;
             ctx.font = size+'px '+FONT_NAME;
             measureText(cellAspect);
-            if (cellWidth > maxWidth || cellHeight > maxHeight) {
+            if (cellWidth >= maxWidth || cellHeight >= maxHeight) {
                 size = (i-1)/FONT_MULT;
                 ctx.font = size+'px '+FONT_NAME;
                 measureText(cellAspect);
@@ -590,8 +587,8 @@
         content.style.width  = "100%";
         content.style.height = "100%";
 
-        const maxCellWidth  = roundTo(content.clientWidth  / (CONSOLE_WIDTH  + 0), SUB_PIXEL_SCALE);
-        const maxCellHeight = roundTo(content.clientHeight / (CONSOLE_HEIGHT + 0), SUB_PIXEL_SCALE);  // Extra line of room at the bottom
+        const maxCellWidth  = roundTo(content.clientWidth  / CONSOLE_WIDTH,  subPixelScale);
+        const maxCellHeight = roundTo(content.clientHeight / CONSOLE_HEIGHT, subPixelScale);
 
         ctx = canvas.getContext("2d");
         ctx.textAlign = "center";
@@ -601,6 +598,9 @@
 
         // Find proper font size
         fontSize = findFontThatFits(maxCellWidth, maxCellHeight);
+
+        cellWidth = maxCellWidth;
+        cellHeight = maxCellHeight;
         halfWidth = cellWidth/2;  // Optimization
 
         // Resize canvas
@@ -611,7 +611,6 @@
 
         // Get context for the resized canvas
         ctx = setupRetinaCanvas(canvas);
-        ctx.fillStyle = 'white';
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
         ctx.textRendering = 'pixelated';
