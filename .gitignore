@@ -3,6 +3,9 @@ bin/*.brogue*
 bin/BrogueHighScores.txt
 bin/brogue*
 bin/*.png
+bin/*.svg
+bin/*.ico
+bin/*.ttf
 vars
 
 # Release dirs and archives
@@ -18,3 +21,5 @@ BrogueCE-*
 *.gcov
 *.desktop
 gmon.out
+
+.DS_Store

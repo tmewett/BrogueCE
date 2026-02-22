@@ -167,3 +167,35 @@ jobs:
         name: windows-x86_64
         path: BrogueCE-windows-x86_64.zip
         compression-level: 0  # There's no point compressing something already compressed
+
+  javascript:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Setup Emscripten
+      # You can use actions/setup-emscripten or mymindstorm/setup-emsdk
+      uses: mymindstorm/setup-emsdk@v14
+      with:
+        # Optional: specify a version, e.g., '3.1.50' or 'latest'
+        version: 'latest' 
+
+    - name: Verify Emscripten installation
+      run: emcc --version
+
+    - name: Build project
+      run: |
+        make JSBROGUE=YES GRAPHICS=NO bin/brogue.html
+
+    - name: "Create artifact"
+      run: |
+        make BrogueCE-javascript
+        tar -czvf BrogueCE-javascript.tar.gz BrogueCE-javascript
+
+    - name: "Upload artifact"
+      uses: actions/upload-artifact@v4
+      with:
+        name: javascript
+        path: BrogueCE-javascript.tar.gz
+        compression-level: 0  # There's no point compressing something already compressed
