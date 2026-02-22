@@ -1,4 +1,4 @@
-const version = "20260219";
+const version = "20260221";
 const assets = [
     "./",
     "./apple-touch-icon.png",
