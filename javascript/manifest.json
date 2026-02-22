@@ -75,21 +75,21 @@
         },
         {
             "src": "brogue-screen-1-rot.jpg",
-            "sizes": "1280x720",
+            "sizes": "720x1280",
             "type": "image/jpeg",
             "form_factor": "narrow",
             "label": "In-game view of dungeon, status bar, and messages"
         },
         {
             "src": "brogue-screen-2-rot.jpg",
-            "sizes": "1280x720",
+            "sizes": "720x1280",
             "type": "image/jpeg",
             "form_factor": "narrow",
             "label": "In-game view of monster detail dialog"
         },
         {
             "src": "brogue-screen-3-rot.jpg",
-            "sizes": "1280x720",
+            "sizes": "720x1280",
             "type": "image/jpeg",
             "form_factor": "narrow",
             "label": "In-game view of inventory items"

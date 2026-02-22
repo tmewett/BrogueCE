@@ -22,9 +22,6 @@ const assets = [
     "./manifest.json",
     "./upload.svg",
     "./brogue-title-screen.jpg",
-    "./brogue-screen-1.jpg",
-    "./brogue-screen-3.jpg",
-    "./brogue-screen-3.jpg",
 ];
 
 self.addEventListener('install', e => {
