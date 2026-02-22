@@ -280,7 +280,7 @@
       let cellWidth, cellHeight, canvas;
       let halfWidth, wallWidth, wallHeight, fontSize;
       let devicePixelRatio = window.devicePixelRatio || 1;
-      let subPixelScale = 1; // devicePixelRatio;
+      const subPixelScale = 1;
       let FONT_NAME = "monospace";
       let lastMouseCell = [-1,-1];
       let lastMoveEvent = 0;
@@ -854,7 +854,7 @@
       <div id="content">
         <div id="nav-bar">
           <div id="project-info">
-            <span style="font-size: x-small;">260219</span>
+            <span style="font-size: x-small;">260221</span>
             <img src="fullscreen.svg" id="request-fullscreen" title="Fulscreen"/>
             <img src="files.svg"      id="request-files"      title="File manager"/>
             <img src="keyboard.svg"   id="keyboard-icon"      title="Open keyboard (for tablets)"/>
