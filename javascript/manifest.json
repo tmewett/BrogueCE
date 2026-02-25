@@ -3,10 +3,11 @@
     "name": "BrogueCE v1.15.1-js",
     "short_name": "BrogueCE",
     "display": "fullscreen",
-    "orientation": "landscape",
+    "orientation": "landscape-primary",
     "background_color": "#000000",
     "theme_color": "#000000",
     "description": "Brogue is a single-player strategy game set in the halls of a mysterious and randomly-generated dungeon. Retrieve the fabled Amulet of Yendor from the 26th level and escape with your life!",
+    "iarc_rating_id": "fcd6daa1-26c6-81e1-8870-3ef1dccaa0df",
     "prefer_related_applications": false,
     "categories": ["games","entertainment"],
     "start_url": "index.html",
@@ -33,8 +34,16 @@
     "shortcuts": [
         {
             "name": "Weekly Contest",
+            "short_name": "Weekly Contest",
             "url": "index.html?seed=tuesday",
-            "description": "Jump into the adventure and compete with other players on the weekly seed!  r/brogueforum"
+            "description": "Jump into the adventure and compete with other players on the weekly seed!  r/brogueforum",
+            "icons": [
+                {
+                    "src": "brogue-icon-256.png",
+                    "sizes": "256x256",
+                    "type": "image/png"
+                }
+            ]
         }
     ],
     "screenshots" : [
@@ -64,34 +73,6 @@
             "sizes": "1280x720",
             "type": "image/jpeg",
             "form_factor": "wide",
-            "label": "In-game view of inventory items"
-        },
-        {
-            "src": "brogue-title-screen-rot.jpg",
-            "sizes": "720x1280",
-            "type": "image/jpeg",
-            "form_factor": "narrow",
-            "label": "Title screen with animation"
-        },
-        {
-            "src": "brogue-screen-1-rot.jpg",
-            "sizes": "720x1280",
-            "type": "image/jpeg",
-            "form_factor": "narrow",
-            "label": "In-game view of dungeon, status bar, and messages"
-        },
-        {
-            "src": "brogue-screen-2-rot.jpg",
-            "sizes": "720x1280",
-            "type": "image/jpeg",
-            "form_factor": "narrow",
-            "label": "In-game view of monster detail dialog"
-        },
-        {
-            "src": "brogue-screen-3-rot.jpg",
-            "sizes": "720x1280",
-            "type": "image/jpeg",
-            "form_factor": "narrow",
             "label": "In-game view of inventory items"
         }
     ],

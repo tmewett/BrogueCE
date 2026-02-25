@@ -55,10 +55,14 @@ uint64_t mostRecentTuesday() {
           100 * (tm_info->tm_mon + 1) +
                 (tm_info->tm_mday);
 
-    printf("%lu\n", yyyymmdd);
     return yyyymmdd;
 }
 
+
+EMSCRIPTEN_KEEPALIVE
+void saveState() {
+  flushBufferToFile();
+}
 
 static void javascript_gameLoop(void) {
 
