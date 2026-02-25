@@ -2662,6 +2662,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                             : "Switched to hybrid mode.", &teal, 0);
                         break;
                 }
+                refreshScreen();
             }
             break;
         case SEED_KEY:
