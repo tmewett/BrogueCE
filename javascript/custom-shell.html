@@ -22,8 +22,11 @@
      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
     <!-- App title -->
     <title>BrogueCE v1.15.1-js</title>
     <meta name="application-name" content="BrogueCE v1.15.1-js" />
@@ -40,7 +43,6 @@
     <!-- Web-app support -->
     <link rel="manifest" href="manifest.json" />
     <meta content="no-cache, no-store, must-revalidate" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -52,24 +54,29 @@
 
     <style>
       html, body {
-        margin: 1;
-        padding: 1;
-        width: 100%;
-        height: 100vh; /* Viewport height */
+        margin: 0;
+        margin-top: 0;
+        margin-bottom: 0;
+        margin-left: 0;
+        margin-right: 0;
+
+        padding: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        padding-left: 0;
+        padding-right: 0;
+
+        width: 100vw;
+        height: 100vh;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
         background: #111111;
         color: #888888;
         background-attachment: fixed;
         overflow: hidden;
-      }
-      body {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-      }
-      #content {
-        width: 100%;
-        height: 100%;
       }
       div {
         margin: 0;
@@ -82,14 +89,10 @@
           color: #6666cb;
       }
       #game-canvas {
-          object-fit: contain;
-          flex-grow: 1;
-          flex-shrink: 1;
           background: #111111;
           image-rendering: pixelated;
           touch-action: none;
           aspect-ratio: inherit;
-          image-rendering: pixelated;
       }
       .nav-bar > div {
         margin: 2px;  /* file manager list item padding */
@@ -134,6 +137,8 @@
         flex-direction: column;
         border: 2px solid var(--input-border);
         border-radius: 4px;
+        z-index: 1000;
+        visibility: hidden;
       }
       #file-mgr-title {
         display: flex;
@@ -160,7 +165,7 @@
       img:hover {
         background-color: #777777;
       }
-      #project-info {
+      #button-bar {
           position: absolute;
           right: -2.5em;
           top: 10%;
@@ -178,10 +183,10 @@
 
           padding-left: 0.75em;
       }
-      #project-info.open {
+      #button-bar.open {
           right: 0;
       }
-      #brogue-js-info {
+      #about {
           position: fixed;
           top: 10%;
           left: 20%;
@@ -191,11 +196,34 @@
           background-color: #333333;
           border: 1px solid black;
           padding: 10px;
-          z-index: -1000;
+          z-index: 900;
+          visibility: hidden;
           color: white;
       }
-      #brogue-js-info a {
+      #about a {
         color: #4c89c2
+      }
+      #escape {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 16em;
+        max-height: none;
+        max-width: none;
+        z-index: 100;
+        visibility: hidden;
+      }
+      #dirpad {
+        position: absolute;
+        visibility: hidden;
+        bottom: 3em;
+        left: 3em;
+        width: 1.5in;
+        height: 1.5in;
+        max-width: none;
+        max-height: none;
+        z-index: 90;
+        background-color: transparent;
       }
 
       /* Wrap it in a @supports rule so it only takes effect on devices that understand this */
@@ -214,7 +242,6 @@
           mask: linear-gradient(to bottom, black, black 50%, rgba(0, 0, 0, 0.7) 75%, rgba(0, 0, 0, 0) 100%);
         }
       }
-
     </style>
     <script>
       // Service worker registration for offline web app support
@@ -253,6 +280,7 @@
       // Constants
       // -------------------------------------------------
 
+      const ongoingTouches = new Map(); // Mapping from the pointerId to the current finger position
       const isMacOS = navigator.platform.match("Mac");
       const BROGUE_FONT = 'BrogueFont';
       const myFont = new FontFace(BROGUE_FONT, 'url(BrogueCE.ttf)');
@@ -277,16 +305,16 @@
       // -------------------------------------------------
 
       let ctx, ctxWidth, ctxHeight;
-      let cellWidth, cellHeight, canvas;
+      let cellWidth, cellHeight, cellOffset, canvas;
       let halfWidth, wallWidth, wallHeight, fontSize;
-      let devicePixelRatio = window.devicePixelRatio || 1;
-      const subPixelScale = 1;
+      let wallScaleX, wallScaleY;
       let FONT_NAME = "monospace";
       let lastMouseCell = [-1,-1];
       let lastMoveEvent = 0;
-      const ongoingTouches = new Map(); // Mapping from the pointerId to the current finger position
       let firstTouch = null;
       let db = null;
+      let gamepad = null;
+      let devicePixelRatio = window.devicePixelRatio || 1;
 
       // -------------------------------------------------
       // Rendering
@@ -299,25 +327,31 @@
       const plotChar = tile => {
         let [char, x, y, fr, fg, fb, br, bg, bb] = tile;
         window.allChars[(x<<8)+y] = tile; // Store a buffer of all tiles for when the window gets resized
-        x = x*cellWidth;
-        y = y*cellHeight;
+        x = Math.floor(x*cellWidth);
+        y = Math.floor(y*cellHeight);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x,y,cellWidth,cellHeight);
+        ctx.clip();
+
         ctx.fillStyle = `rgb(${br/100*255|0}, ${bg/100*255|0}, ${bb/100*255|0})`;
         ctx.fillRect(x,y,cellWidth,cellHeight);
         ctx.fillStyle = `rgb(${fr/100*255|0}, ${fg/100*255|0}, ${fb/100*255|0})`;
 
+        // Center text in cell
+        x += halfWidth;
+
         // Graphics mode tiles that look bad if there are gaps between them
         if ((char == 0x4051 || char == 0x4064 || char == 0x4041 || char == 0x4002)) {
-          ctx.save(); // Save the current state
-          const scaleX = cellWidth/wallWidth;
-          const scaleY = cellHeight/wallHeight;
-          const newX = (x + halfWidth)/scaleX; // Adjust location based on scale
-          const newY = y/scaleY;
-          ctx.scale(scaleX, scaleY);           // Stretch graphics to fit cell
+          const newX = Math.ceil(x/wallScaleX);   // Adjust location based on scale
+          const newY = Math.floor((y-1)/wallScaleY);
+          ctx.scale(wallScaleX, wallScaleY);      // Stretch graphics to fit cell
           ctx.fillText(String.fromCharCode(char), newX, newY);
-          ctx.restore();
         } else {
-          ctx.fillText(String.fromCharCode(char), x + halfWidth, y);
+          ctx.fillText(String.fromCharCode(char), x, y + cellOffset);
         }
+        ctx.restore();
       }
 
       const plotAllChars = () => {
@@ -363,7 +397,8 @@
           if (!pos) return;
           const EVENT = [ e.button===0?eventTypes.MOUSE_DOWN:eventTypes.RIGHT_MOUSE_DOWN, pos[0], pos[1], e.ctrlKey?1:0, e.shiftKey?1:0 ];
           window.keyOrMouseEvents.push(EVENT);
-          document.getElementById('project-info').classList.remove("open");
+          document.getElementById('button-bar').classList.remove("open");
+          document.getElementById('escape').style.visibility = "hidden";
       }
 
       const onMouseUp = (e) => {
@@ -470,6 +505,114 @@
         }
       }
 
+      const pressed = (gp,idx) => {
+        const button = gp.buttons[idx];
+        return button.pressed || button.touched || button.value > 0.01;
+      }
+
+      let delay = 10; // At 60 FPS, this is 6 keypresses per sec
+      let delayCountdown = 0;
+      const handleGamepad = () => {
+        // Called regularly to translate gamepad events into keystrokes
+        if (!gamepad) return;
+        window.requestAnimationFrame(handleGamepad);
+
+        // Delay key presses
+        delayCountdown -= 1;
+        if (delayCountdown > 0) return;
+
+        /*
+        Standard Game-Pad:
+        https://w3c.github.io/gamepad/#remapping
+
+             06                           07    <-- Bottom trigger buttons
+             04                           05    <-- Top trigger buttons
+                           16                   <-- Middle console button
+
+         Left D-Pad                   Right D-Pad
+        |    12    | select   start  |    03    |
+        | 14    15 |   08      09    | 02    01 |
+        |    13    |                 |    00    |
+
+             10                           11     <-- Press analog sticks
+
+        Left Joystick
+          axes[0] -1 (left) .. +1 (right)
+          axes[1] -1 (up)   .. +1 (down)
+
+        Right Joystick
+          axes[2] -1 (left) .. +1 (right)
+          axes[3] -1 (up)   .. +1 (down)
+        */
+
+        const gp = navigator.getGamepads()[gamepad.index];
+        const EVENT = [eventTypes.KEYSTROKE, 0, 0, 0/* ctrlKey */, 0 /* shiftKey */];
+        const dpadRight = "789"+  // Use number pad to avoid answering Y/N while traveling
+                          "456"+
+                          "123";
+
+        const dpadLeft  = "789"+
+                          "456"+
+                          "123";
+
+        const otherKeys = "s.td\u{1b}\u{0d}.."; // Left-Top-Trigger, Right-Top-Trigger, Left-Bottom-Trigger, Right-Bottom-Trigger, Select, Start, Left-Alog-Press, Right-Alog-Press
+
+        // Right D-Pad (assume 8-way)
+        const rightY = (pressed(gp,3) ? 0x100 : (pressed(gp,0) ? 0x106 : 3));
+        const rightX = (pressed(gp,2) ? 0x100 : (pressed(gp,1) ? 0x102 : 1));
+        const rightKey = rightY + rightX;
+        if (rightKey >= 0x100) {
+          EVENT[1] = dpadRight.charCodeAt(rightKey & 0xFF);
+          window.keyOrMouseEvents.push(EVENT);
+          delayCountdown = delay;
+          return;
+        }
+
+        // Left D-Pad (assume 8-way)
+        const leftY = (pressed(gp,12) ? 0x100 : (pressed(gp,13) ? 0x106 : 3));
+        const leftX = (pressed(gp,14) ? 0x100 : (pressed(gp,15) ? 0x102 : 1));
+        const leftKey = leftY + leftX;
+        if (leftKey >= 0x100) {
+          EVENT[1] = dpadLeft.charCodeAt(leftKey & 0xFF);
+          window.keyOrMouseEvents.push(EVENT);
+          delayCountdown = delay;
+          return;
+        }
+
+        // Right joystick
+        const BIAS = 1.2;
+        if (gp.axes.length > 3) {
+          const keyIdx = Math.floor(gp.axes[3]+BIAS)*3 + Math.floor(gp.axes[2]+BIAS);
+          if (keyIdx != 4) {
+            EVENT[1] = dpadLeft.charCodeAt(keyIdx);
+            window.keyOrMouseEvents.push(EVENT);
+            delayCountdown = delay;
+            return;
+          }
+        }
+
+        // Left joystick
+        if (gp.axes.length > 1) {
+          const keyIdx = Math.floor(gp.axes[1]+BIAS)*3 + Math.floor(gp.axes[0]+BIAS);
+          if (keyIdx != 4) {
+            EVENT[1] = dpadLeft.charCodeAt(keyIdx);
+            window.keyOrMouseEvents.push(EVENT);
+            delayCountdown = delay;
+            return;
+          }
+        }
+
+        // Other buttons
+        const LOW_IDX = 4;
+        const others = gp.buttons.map((b,i) => (i >= LOW_IDX && pressed(gp,i)) ? i-LOW_IDX : null ).filter(Boolean);
+        if (others.length > 0) {
+            EVENT[1] = otherKeys.charCodeAt(others[0]); // Take the first button in the list
+            window.keyOrMouseEvents.push(EVENT);
+            delayCountdown = delay;
+            return;
+        }
+      }
+
       // -------------------------------------------------
       // Key Events
       // -------------------------------------------------
@@ -489,6 +632,7 @@
           Tab:9,
       }
 
+      const ESCAPE_KEY_EVENT = [eventTypes.KEYSTROKE,27,0,0,0];
       const allCtrlKeys = "hjklyubn78946123sxA<>"; // Keys that behave differently when a modifier is used
       const onKeydown = (e) => {
           // Override browser key bindings where possible
@@ -514,17 +658,17 @@
           if (ele) ele.requestFullscreen();
       }
 
-      const setupRetinaCanvas = (canvas) => {
+      const setupRetinaCanvas = (canvas, width, height) => {
           const ctx = canvas.getContext('2d');
 
           // Get the CSS-determined size of the canvas
-          const rect = canvas.getBoundingClientRect();
-          const cssWidth  = rect.width;
-          const cssHeight = rect.height;
+          // const rect = canvas.getBoundingClientRect();
+          const cssWidth  = Math.floor(width);
+          const cssHeight = Math.floor(height);
 
           // Set the actual canvas buffer size to the high DPI dimensions
-          canvas.width  = cssWidth  * devicePixelRatio;
-          canvas.height = cssHeight * devicePixelRatio;
+          canvas.width  = Math.floor(cssWidth  * devicePixelRatio);
+          canvas.height = Math.floor(cssHeight * devicePixelRatio);
 
           // Scale the context so drawing operations use the CSS pixel coordinates
           ctx.scale(devicePixelRatio, devicePixelRatio);
@@ -542,22 +686,21 @@
       const measureText = (cellAspect) => {
         // Special: Measure the BrogueCE.ttf graphic wall tile
         const wallMeasure = ctx.measureText("\u{4051}");
-        wallWidth   = roundTo(wallMeasure.width, subPixelScale);
-        wallHeight  = roundTo((wallMeasure.actualBoundingBoxAscent + wallMeasure.actualBoundingBoxDescent), subPixelScale);
+        wallWidth  = Math.floor(wallMeasure.width)-1; // Stretch the wall slightly so there are no gaps
+        wallHeight = Math.floor(wallMeasure.actualBoundingBoxAscent + wallMeasure.actualBoundingBoxDescent)-1;
 
         // Measure text chars
         const measure = ctx.measureText("jf"); // Tallest and lowest chars
-        const width   = roundTo(measure.width/2, subPixelScale);
-        const height  = roundTo((measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent), subPixelScale);
+        const width   = Math.floor(measure.width/2);
+        const height  = Math.floor(measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent) + 2; // Make the font slightly taller when measuring
 
-        // Use the measurements directly (aligns cell size with font sizes for clean rendering)
-        cellHeight = Math.max(wallHeight,height) + 1; // Padding
-        cellWidth = wallWidth + 1; // Padding
+        cellHeight = Math.max(wallHeight, height);
+        cellWidth  = wallWidth;
       }
 
       const findFontThatFits = (maxWidth, maxHeight) => {
         // Find proper font size
-        const cellAspect = roundTo(maxHeight / maxWidth, subPixelScale);
+        const cellAspect = Math.floor(maxHeight / maxWidth);
         let size = 7;
         const FONT_MULT = 10; // Micro-step font sizes
         const MIN_FONT_SIZE = 7;
@@ -573,6 +716,9 @@
                 break;
             }
         }
+
+        // Vertical centering
+        cellOffset = Math.floor((maxHeight - cellHeight)/2) - 1; // Shift characters up 1 pixel so they don't get clipped off
         return size;
       }
 
@@ -581,14 +727,20 @@
         canvas = document.getElementById('game-canvas');
 
         // We have to do a two-step dance when resizing:
-        // - Set the content size to 100% to fill the screen
+        // - Set the content size to fill the screen
         // - Resize the canvas based on the content size
         // - Set the content size to be the size of the canvas so it centers properly
-        content.style.width  = "100%";
-        content.style.height = "100%";
+        content.style.width  = "100vw";
+        content.style.height = "100vh";
 
-        const maxCellWidth  = roundTo(content.clientWidth  / CONSOLE_WIDTH,  subPixelScale);
-        const maxCellHeight = roundTo(content.clientHeight / CONSOLE_HEIGHT, subPixelScale);
+        const maxCellWidth  = Math.floor(content.clientWidth  / CONSOLE_WIDTH);
+        const maxCellHeight = Math.floor(content.clientHeight / CONSOLE_HEIGHT);
+
+        // Adjust DPR
+        const urlParams = new URLSearchParams(window.location.search);
+        const dpr = urlParams.get('dpr');
+        if (dpr) devicePixelRatio = Number(dpr);
+        else devicePixelRatio = window.devicePixelRatio || 1;
 
         ctx = canvas.getContext("2d");
         ctx.textAlign = "center";
@@ -599,18 +751,16 @@
         // Find proper font size
         fontSize = findFontThatFits(maxCellWidth, maxCellHeight);
 
-        cellWidth = maxCellWidth;
+        cellWidth  = maxCellWidth;
         cellHeight = maxCellHeight;
-        halfWidth = cellWidth/2;  // Optimization
-
-        // Resize canvas
-        ctxWidth  = cellWidth  * CONSOLE_WIDTH;
-        ctxHeight = cellHeight * CONSOLE_HEIGHT;
-        canvas.style.width  = ctxWidth;
-        canvas.style.height = ctxHeight;
+        wallScaleX = cellWidth/wallWidth;
+        wallScaleY = cellHeight/wallHeight;
+        halfWidth  = Math.floor(cellWidth/2);
+        ctxWidth   = cellWidth  * CONSOLE_WIDTH;
+        ctxHeight  = cellHeight * CONSOLE_HEIGHT;
 
         // Get context for the resized canvas
-        ctx = setupRetinaCanvas(canvas);
+        ctx = setupRetinaCanvas(canvas, ctxWidth, ctxHeight);
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
         ctx.textRendering = 'pixelated';
@@ -625,36 +775,65 @@
         plotAllChars();
       }
 
+      const getEl = (id) => document.getElementById(id);
+      const addEvent = (id,evt,fn,opt) => getEl(id).addEventListener(evt,fn,opt);
+
       const initializeBrogueFrame = () => {
         resizeCanvas(FONT_NAME);
 
         // Register event handlers
         window.addEventListener('resize', () => resizeCanvas() );
         window.addEventListener('keydown', onKeydown, { capture: true });
+        window.addEventListener('gamepadconnected', (e) => { gamepad = e.gamepad; window.requestAnimationFrame(handleGamepad); });
+        window.addEventListener('gamepaddisconnected', (e) => { gamepad = null; });
 
-        document.getElementById('request-fullscreen').addEventListener('click', onRequestFullscreen, false);
-        document.getElementById('request-files').addEventListener('click', onRequestFiles, false);
-        document.getElementById('file-input').addEventListener("change", handleFiles);
-        document.getElementById('keyboard-icon').addEventListener("click", (ele) => { ele.target.value = ""; document.getElementById('keyboard').style.display = "block"; });
-        document.getElementById('keyboard').addEventListener("blur", (ele) => { ele.target.value = ""; ele.target.style.display = "none"; document.getElementById('project-info').classList.remove("open"); });
-        document.getElementById('file-mgr-close').addEventListener('click', () => { document.getElementById('file-manager').style.zIndex = -1000; }, false);
-        document.getElementById('info').addEventListener('click', () => { document.getElementById('brogue-js-info').style.zIndex = 1000; }, false);
-        document.getElementById('brogue-js-info').addEventListener('click', () => { document.getElementById('brogue-js-info').style.zIndex = -1000; }, false);
-        document.getElementById('project-info').addEventListener('click', (ele) => { ele.target.classList.add("open"); }, false);
-        document.getElementById('project-info').addEventListener('hover', (ele) => { ele.target.classList.add("open"); }, false);
-        document.getElementById('upload').addEventListener('click', (ele) => { ele.target.style.display = "none"; document.getElementById('file-mgr-upload').style.display = "block"; }, false);
-        document.getElementById('content').addEventListener("fullscreenchange", resizeCanvas );
+        addEvent('fullscreen',      'click',  onRequestFullscreen, false);
+        addEvent('files',           'click',  onRequestFiles, false);
+        addEvent('file-input',      "change", handleFiles);
+        addEvent('keyboard-icon',   "click",  (ele) => { ele.target.value = ""; getEl('keyboard').style.display = "block"; getEl('keyboard').focus(); getEl('escape').style.visibility = "visible"; });
+        addEvent('keyboard',        "blur",   (ele) => { ele.target.value = ""; ele.target.style.display = "none"; getEl('button-bar').classList.remove("open"); });
+        addEvent('escape',          "click",  (ele) => { window.keyOrMouseEvents.push(ESCAPE_KEY_EVENT); ele.target.style.visibility = "hidden"; });
+        addEvent('file-mgr-close',  'click',  ()    => { getEl('file-manager').style.visibility = "hidden"; }, false);
+        addEvent('info',            'click',  ()    => { getEl('about').style.visibility = "visible"; }, false);
+        addEvent('about',           'click',  ()    => { getEl('about').style.visibility = "hidden"; }, false);
+        addEvent('button-bar',      'click',  (ele) => { ele.target.classList.add("open"); }, false);
+        addEvent('upload',          'click',  (ele) => { ele.target.style.display = "none"; getEl('file-mgr-upload').style.display = "block"; }, false);
+        addEvent('content',         "fullscreenchange", resizeCanvas );
+        addEvent('dirs',            "click",  (ele) => { const dirs = getEl("dirpad"); dirs.style.visibility = (dirs.style.visibility == "visible") ? "hidden" : "visible"; } );
+
+        // Auto-save when user leaves the page or app
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden || document.visibilityState === "hidden") {
+            if (Module && Module._saveState) {
+              Module._saveState();
+            }
+          } else {
+            // Restore last state?
+          }
+        });
 
         // Mouse & Touch Events
         canvas = document.getElementById('game-canvas');
-        canvas.addEventListener('mousedown', onMouseDown, false);
-        canvas.addEventListener('mouseup', onMouseUp, false);
-        canvas.addEventListener('mousemove', onMouseMove, false);
+        canvas.addEventListener('mousedown',   onMouseDown, false);
+        canvas.addEventListener('mouseup',     onMouseUp,   false);
+        canvas.addEventListener('mousemove',   onMouseMove, false);
 
-        canvas.addEventListener('touchstart', handleTouchStart, false);
-        canvas.addEventListener('touchend', handleTouchEnd, false);
-        canvas.addEventListener('touchmove', handleTouchMove, false);
+        canvas.addEventListener('touchstart',  handleTouchStart,  false);
+        canvas.addEventListener('touchend',    handleTouchEnd,    false);
+        canvas.addEventListener('touchmove',   handleTouchMove,   false);
         canvas.addEventListener('touchcancel', handleTouchCancel, false);
+
+        addEvent("dirpad", "click", (event) => {
+          event.preventDefault();
+          const x = Math.floor(3*event.offsetX/event.target.width);
+          const y = Math.floor(3*event.offsetY/event.target.height);
+          const EVENT = [eventTypes.KEYSTROKE,0,0,0,0];
+          const keys  = "789"+
+                        "456"+
+                        "123";
+          EVENT[1] = keys.charCodeAt(y*3+x);
+          window.keyOrMouseEvents.push(EVENT);
+        }, false);
       }
 
       // Page initialization
@@ -698,7 +877,7 @@
         const objectStore = transaction.objectStore(STORE_NAME);
         const request = objectStore.get(BROGUE_PATH+fileName);
         request.onerror = (event) => {
-          // Handle errors!
+          console.log("ERROR:",event)
         };
         request.onsuccess = (event) => {
           downloadFile(request.result.contents, fileName, "text/plain"); 
@@ -710,7 +889,7 @@
         const objectStore = transaction.objectStore(STORE_NAME);
         const request = objectStore.delete(BROGUE_PATH+fileName);
         request.onerror = (event) => {
-          // Handle errors!
+          console.log("ERROR:",event)
         };
         request.onsuccess = (event) => {
           ele.parentNode.removeChild(ele);
@@ -729,7 +908,7 @@
         const request = objectStore.add(newFile, BROGUE_PATH+fileName);
         request.onsuccess = (event) => {
           console.log("Data added successfully", event.target.result);
-          const FILES = document.getElementById("files");
+          const FILES = document.getElementById("file-list");
           addFileListItem(FILES,fileName);
           document.getElementById("file-mgr-upload").innerHTML = "<hr/>Reload page to make this file visible to BrogueJS.";
         };
@@ -768,7 +947,7 @@
         const allKeysReq = objectStore.getAllKeys();
         allKeysReq.onsuccess = function(event) {
           const allKeys = event.target.result;
-          const FILES = document.getElementById("files");
+          const FILES = document.getElementById("file-list");
           FILES.innerHTML = ""; // Delete existing file list
           allKeys.forEach(key => {
             addFileListItem(FILES, key);
@@ -824,7 +1003,7 @@
 
       const onRequestFiles = () => {
           readDatabase();
-          document.getElementById('file-manager').style.zIndex = 1000;
+          document.getElementById('file-manager').style.visibility = "visible";
       }
 
       // -------------------------------------------------
@@ -853,16 +1032,17 @@
     <body oncontextmenu="return false;">
       <div id="content">
         <div id="nav-bar">
-          <div id="project-info">
-            <span style="font-size: x-small;">260221</span>
-            <img src="fullscreen.svg" id="request-fullscreen" title="Fulscreen"/>
-            <img src="files.svg"      id="request-files"      title="File manager"/>
-            <img src="keyboard.svg"   id="keyboard-icon"      title="Open keyboard (for tablets)"/>
-            <img src="info.svg"       id="info"               title="About BrogueJS"/>
+          <div id="button-bar">
+            <span style="font-size: x-small;">260222</span>
+            <img src="fullscreen.svg" id="fullscreen"    title="Fulscreen"/>
+            <img src="dir-pad.svg"    id="dirs"          title="Direction Pad"/>
+            <img src="files.svg"      id="files"         title="File manager"/>
+            <img src="keyboard.svg"   id="keyboard-icon" title="Open keyboard (for tablets)"/>
+            <img src="info.svg"       id="info"          title="About BrogueJS"/>
             <a href="https://github.com/brturn/BrogueCE/issues" target="_blank" rel="noopener noreferrer" title="Report an issue"><img src="bugs.svg"/></a>
-            <div><input type="text" id="keyboard" size="8" placeholder="Keyboard"/></div>
+            <div><input type="text" id="keyboard" size="2" placeholder="Keyboard"/></div>
           </div>
-          <div id="brogue-js-info">
+          <div id="about">
             <img src="close.svg"/> <b>BrogueJS - Brogue in the browser!</b>
             <p><a href="https://github.com/brturn" target="_blank" rel="noopener noreferrer">Bryan Turner, 2026</a></p>
 
@@ -924,9 +1104,11 @@
               </div>
               <hr/>
             </div>
-            <div id="files"></div>
+            <div id="file-list"></div>
           </div>
         </div>
+        <img id="escape" src="esc-button.png" />
+        <img id="dirpad" src="direction-pad.svg" />
         <canvas id="game-canvas"></canvas>
       </div>
       {{{ SCRIPT }}}
