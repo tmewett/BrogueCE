@@ -606,7 +606,7 @@ static boolean unpause() {
     return false;
 }
 
-#define PLAYBACK_HELP_LINE_COUNT    20
+#define PLAYBACK_HELP_LINE_COUNT    21
 
 static void printPlaybackHelpScreen() {
     short i, j;
@@ -621,6 +621,7 @@ static void printPlaybackHelpScreen() {
         "               >: ****go to next level",
         "             0-9: ****skip to specified turn number",
         "l or right arrow: ****advance one turn (shift for 5 turns; control for 20)",
+        " h or left arrow: ****rewind one turn (shift for 5 turns; control for 20)",
         "",
         "           <tab>: ****enable or disable omniscience",
         "          return: ****examine surroundings",
