@@ -1145,7 +1145,12 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     }
 
     // Count gems as 500 gold each
-    short numGems = numberOfMatchingPackItems(GEM, 0, 0, false);
+    short numGems = 0;
+    for (i = 4, theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
+        if (theItem->category & GEM) {
+            numGems += theItem->quantity;
+        }
+}
     rogue.gold += 500 * numGems;
     theEntry.score = rogue.gold;
 
