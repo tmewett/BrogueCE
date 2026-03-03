@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <inttypes.h>
 
 #include "platform.h"
 #include "GlobalsBase.h"
@@ -492,7 +493,7 @@ void saveRunHistory(char *result, char *killedBy, int score, int lumenstones) {
     setRunHistoryFilename(runHistoryFilename, BROGUE_FILENAME_MAX);
     runHistoryFile = fopen(runHistoryFilename, "a"); // append. create if not found.
 
-    fprintf(runHistoryFile, "%llu\t%li\t%s\t%s\t%i\t%i\t%i\t%i\t%i\n", rogue.seed, (long) time(NULL), result, killedBy, 
+    fprintf(runHistoryFile, "%" PRIu64 "\t%li\t%s\t%s\t%i\t%i\t%i\t%i\t%i\n", rogue.seed, (long) time(NULL), result, killedBy, 
             score, (int) rogue.gold, lumenstones, (int) rogue.deepestLevel, (int) rogue.playerTurnNumber);
     fclose(runHistoryFile);
 }
@@ -531,7 +532,7 @@ rogueRun* loadRunHistory(void) {
         memset(run, '\0', sizeof(rogueRun));
         run->nextRun = NULL;
 
-        int vals = sscanf(line, "%llu\t%li\t%s\t%[^\t]\t%i\t%i\t%i\t%i\t%i\n", &run->seed, &run->dateNumber,
+        int vals = sscanf(line, "%" PRIu64 "\t%li\t%s\t%[^\t]\t%i\t%i\t%i\t%i\t%i\n", &run->seed, &run->dateNumber,
                    run->result, run->killedBy, &run->score, &run->gold, &run->lumenstones,
                    &run->deepestLevel, &run->turns);
 

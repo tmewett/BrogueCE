@@ -42,7 +42,7 @@
 
 // game data formulae:
 
-short wandDominate(creature *monst)                 {return (((monst)->currentHP * 5 < (monst)->info.maxHP) ? 100 : \
+short wandDominate(const creature *monst)           {return (((monst)->currentHP * 5 < (monst)->info.maxHP) ? 100 : \
                                                      max(0, 100 * ((monst)->info.maxHP - (monst)->currentHP) / (monst)->info.maxHP));}
 
 // All "enchant" parameters must already be multiplied by FP_FACTOR:
