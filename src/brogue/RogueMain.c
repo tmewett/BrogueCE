@@ -1146,7 +1146,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
 
     // Count gems as 500 gold each
     short numGems = 0;
-    for (i = 4, theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
+    for (theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
         if (theItem->category & GEM) {
             numGems += theItem->quantity;
         }
