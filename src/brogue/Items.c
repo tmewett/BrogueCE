@@ -6193,7 +6193,7 @@ static void throwItem(item *theItem, creature *thrower, pos targetLoc, short max
         if (theItem->kind == POTION_CONFUSION || theItem->kind == POTION_POISON
             || theItem->kind == POTION_PARALYSIS || theItem->kind == POTION_INCINERATION
             || theItem->kind == POTION_DARKNESS || theItem->kind == POTION_LICHEN
-            || theItem->kind == POTION_DESCENT) {
+            || theItem->kind == POTION_DESCENT || theItem->kind == POTION_HALLUCINATION) {
             switch (theItem->kind) {
                 case POTION_POISON:
                     strcpy(buf, "the flask shatters and a deadly purple cloud billows out!");
@@ -6230,6 +6230,11 @@ static void throwItem(item *theItem, creature *thrower, pos targetLoc, short max
                     message(buf, 0);
                     spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_LICHEN_PLANTED], true, false);
                     break;
+                case POTION_HALLUCINATION:
+		            strcpy(buf, "the flask shatters and a luminescent fungal forest blooms forth!");
+		            message(buf, 0);
+		            spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DF_FUNGUS_FOREST], true, false);
+		            break;
             }
 
             autoIdentify(theItem);
@@ -6250,14 +6255,7 @@ static void throwItem(item *theItem, creature *thrower, pos targetLoc, short max
             }
             sprintf(buf, "the flask shatters and %s liquid splashes harmlessly %s %s.",
                     potionTable[theItem->kind].flavor, buf2, tileText(x, y));
-            message(buf, 0);
-            // hallucination is the only malevolent potion that splashes harmlessly when thrown
-            if (theItem->kind == POTION_HALLUCINATION) {
-                if (theItem->flags & ITEM_MAGIC_DETECTED
-                    || (magicPolarityRevealedItemKindCount(theItem->category, 1) == gameConst->numberGoodPotionKinds)) {
-                    autoIdentify(theItem);
-                }
-            }
+            message(buf, 0);        
         }
         deleteItem(theItem);
         return; // potions disappear when they break
