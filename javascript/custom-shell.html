@@ -841,7 +841,7 @@
       }
 
       const hideDirectionControls = () => { getEl("dirpad").style.visibility = "hidden"; };
-      const showDirectionControls = () => { getEl('dirpad').style.visibility = "visible"; }
+      const showDirectionControls = () => { if (!hasKeyboard) getEl('dirpad').style.visibility = "visible"; }
 
       const hideEscButton         = () => { getEl('escape').style.visibility = "hidden"; }
       const showEscButton         = () => { if (!hasKeyboard) getEl('escape').style.visibility = "visible"; }
@@ -1158,7 +1158,7 @@
         <div id="nav-bar">
           <div id="pull-out-menu">
             <div id="button-bar">
-              <span style="font-size: x-small;">260303</span>
+              <span style="font-size: x-small;">260304</span>
               <img src="fullscreen.svg" id="fullscreen"    title="Fulscreen"/>
               <img src="dir-pad.svg"    id="dirs"          title="Direction Pad"/>
               <img src="files.svg"      id="files"         title="File manager"/>

@@ -1,4 +1,4 @@
-const version = "260303";
+const version = "260304";
 const assets = [
     // Priority
     "./brogue.html",
@@ -38,6 +38,12 @@ const sendMessage = (data) => {
       client.postMessage(data);
     });
   });
+}
+
+const refresh = `<!DOCTYPE html><body><h1>Service worker cache cleared!</h1></body>`;
+
+const staticPage = (html) => {
+  return new Response(html, { headers: { "content-type": "text/html; charset=UTF-8" } });
 }
 
 const preCache = async () => {
@@ -86,11 +92,18 @@ self.addEventListener('install', e => {
 
 // New service worker version is now in control, clear old caches
 self.addEventListener('activate', e => {
-  e.waitUntil(drainCache(version))
+  e.waitUntil(drainCache(version).then( () => self.clients.claim() ));
 });
 
 // App wants to load a resource
 self.addEventListener('fetch', e => {
   if (e.request.method !== "GET") return;
-  e.respondWith(fromCache(e.request));
+  if (e.request.url.includes('/REFRESH')) { drainCache("all").then( e.respondWith(staticPage(refresh)) ); }
+  else e.respondWith(fromCache(e.request));
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
