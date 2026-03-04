@@ -58,34 +58,38 @@ uint64_t mostRecentTuesday() {
     return yyyymmdd;
 }
 
+void sync_files(boolean loadFiles) {
+  EM_ASM_({
+    FS.syncfs($0, function(err) {
+      if (err) {
+        console.warn("Error syncing files:", err);
+      } else {
+        console.log("FS synced IndexedDB");
+      }
+    });
+  }, loadFiles);
+}
 
 EMSCRIPTEN_KEEPALIVE
 void saveState() {
+  printf("C Flushing to file...\n");
   flushBufferToFile();
+  sync_files(false);
 }
+
+EMSCRIPTEN_KEEPALIVE
+void loadFileSystem() {
+  sync_files(true);
+}
+
 
 static void javascript_gameLoop(void) {
 
-  // Setup file system
-	EM_ASM( FS.mkdir('/brogue'); );
+  printf("--- javascript_gameLoop ---\n");
 
   // Enter the working directory
 	char *directory = "/brogue";
 	chdir(directory);
-
-  // Mount the directory and load persistent data from browser's IndexedDB
-	EM_ASM(
-    FS.mount(IDBFS, { autoPersist: true }, '/brogue');
-    FS.syncfs(true, function (err) {
-      if (err) {
-        console.error("Failed to load persistent data: ", err);
-      } else {
-        console.log("Persistent data loaded sucessfully!");
-      }
-    });
-  );
-
-  mostRecentTuesday();
 
   rogueMain();
 }
@@ -128,8 +132,21 @@ void EMSCRIPTEN_KEEPALIVE javascript_receiveNextKeyOrMouseEvent(enum eventTypes 
   javascript_nextRogueEvent.shiftKey = shiftKey;
 }
 
+static CBrogueGameEvent lastUiMode = -1;
 void javascript_nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance) {
   for (;;) {
+
+    // Update the UI Mode every frame
+    if (lastUiMode != uiMode) {
+        lastUiMode = uiMode;
+        switch (lastUiMode) {
+        case CBrogueGameEventInMenu:                 EM_ASM(uiModeInMenu()); break;
+        case CBrogueGameEventShowEscape:             EM_ASM(uiModeShowEscape()); break;
+        case CBrogueGameEventShowKeyboardAndEscape:  EM_ASM_({uiModeShowKeyboardAndEscape($0)}, uiTextEntry); break;
+        case CBrogueGameEventInNormalPlay:           EM_ASM(uiModeInNormalPlay()); break;
+        }
+    }
+
     if (colorsDance) {
       shuffleTerrainColors(3, true);
       commitDraws();

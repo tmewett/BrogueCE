@@ -1126,6 +1126,7 @@ void mainBrogueJunction() {
         rogue.gameHasEnded = false;
         rogue.playbackFastForward = false;
         rogue.playbackMode = false;
+        uiMode = CBrogueGameEventInMenu;
         switch (rogue.nextGame) {
             case NG_NOTHING:
                 // Run the main menu to get a decision out of the player.

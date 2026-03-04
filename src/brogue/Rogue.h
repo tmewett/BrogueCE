@@ -3530,6 +3530,14 @@ extern "C" {
     void loadSettingsFromConfig(void);
     void writeSettingsToConfig(void);
     
+     // tablet ui modes
+    typedef enum {
+        CBrogueGameEventInMenu = 0,
+        CBrogueGameEventInNormalPlay,
+        CBrogueGameEventShowEscape,
+        CBrogueGameEventShowKeyboardAndEscape,
+    } CBrogueGameEvent;
+
 #if defined __cplusplus
 }
 #endif

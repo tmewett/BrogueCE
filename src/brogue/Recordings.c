@@ -240,6 +240,17 @@ void flushBufferToFile() {
                 putc(inputRecordBuffer[i], recordFile);
             }
 
+            long actualLength = ftell(recordFile);
+            printf("Added %ld to file %p actual length now %ld\n", locationInRecordingBuffer, recordFile, actualLength);
+            if (actualLength > lengthOfPlaybackFile) {
+                // Not sure what is causing the OOS errors?
+                // Actual file length is longer than the expected length.
+                // Usually the extra data is duplicated from of other data in the file.
+                // But I've also seen the wrong data from the start.
+                printf("ERROR - File write caused invalid file, exiting!");
+                exit(0);
+            }
+
             if (recordFile) {
                 fclose(recordFile);
             }
