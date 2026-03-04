@@ -7,4 +7,4 @@ javascript: javascript/*
 	cp javascript/*.ttf  bin
 	cp javascript/*.json bin
 	cp javascript/sw.js  bin
-
+	cp bin/brogue.html   bin/index.html

@@ -22,3 +22,18 @@ if (noEffects != null) Module.arguments.push("--no-effects");
 if (wizard    != null) Module.arguments.push("--wizard");
 if (graphics  != null) Module.arguments.push("--graphics");
 if (hybrid    != null) Module.arguments.push("--hybrid");
+
+const PRE_RUN = "preRun";
+if (!Module[PRE_RUN]) Module[PRE_RUN] = [];
+
+Module[PRE_RUN].push(function() {
+    console.log("Starting FS load...");
+    // addRunDependency('syncfs');
+    FS.mkdir('/brogue');
+    FS.mount(IDBFS, { autoPersist: true }, '/brogue');
+    FS.syncfs(true, function (err) {
+      if (err) throw err;
+      // removeRunDependency('syncfs');
+      console.log("FS loaded from IndexedDB");
+    })
+});

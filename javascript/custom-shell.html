@@ -77,6 +77,7 @@
         color: #888888;
         background-attachment: fixed;
         overflow: hidden;
+        overflow-x: hidden;
       }
       div {
         margin: 0;
@@ -137,8 +138,7 @@
         flex-direction: column;
         border: 2px solid var(--input-border);
         border-radius: 4px;
-        z-index: 1000;
-        visibility: hidden;
+        z-index: -1000;
       }
       #file-mgr-title {
         display: flex;
@@ -165,13 +165,12 @@
       img:hover {
         background-color: #777777;
       }
-      #button-bar {
+      #pull-out-menu {
           position: absolute;
-          right: -2.5em;
+          right: 0;
           top: 10%;
-          width: 3em;
+          min-width: 1em;
           min-height: 11em;
-          transition: top 0.5s ease;
           box-sizing: border-box;
           z-index: 500;
 
@@ -180,11 +179,24 @@
           border: 2px solid var(--input-border);
           border-radius: 4px;
           margin: 2px;
+      }
+      #button-bar {
+          display: none;
+          width: 3em;
+          min-height: 11em;
+          box-sizing: border-box;
 
-          padding-left: 0.75em;
+          background-color: #555555;
+          padding: 0.1em 0.1em;
+          border: 2px solid var(--input-border);
+          border-radius: 4px;
+          margin: 2px;
+
+          /* padding-left: 0.75em; */
       }
       #button-bar.open {
           right: 0;
+          display: block;
       }
       #about {
           position: fixed;
@@ -225,7 +237,6 @@
         z-index: 90;
         background-color: transparent;
       }
-
       /* Wrap it in a @supports rule so it only takes effect on devices that understand this */
       @supports (padding: env(safe-area-inset-top)) {
         /* This is for PWA (on iOS), so that the status bar has a transparent yet blurry background. */
@@ -243,43 +254,35 @@
         }
       }
     </style>
-    <script>
-      // Service worker registration for offline web app support
+    <script type="text/javascript">
+
+      // -------------------------------------------------
+      // Service Worker
+      // -------------------------------------------------
+
       let serviceWorker = null;
+
+      const onSWRegistered = reg => {
+        serviceWorker = reg;
+        console.log('service worker registered:', reg);
+      }
+
+      // Service worker registration for offline web app support
       const registerServiceWorker = () => {
-        if (serviceWorker !== null) return;
-        serviceWorker = false; // Arbitrary
         if (!('serviceWorker' in navigator)) return;
         navigator.serviceWorker.register('sw.js')
-          .then(registration => {
-            serviceWorker = registration;
-            console.log('service worker registered successfully:', registration);
-
-            // Check to make sure background sync is supported.
-            if ('SyncManager' in window) {
-              try {
-                registration.sync.register('background-sync')
-                  .then( e => {
-                    console.log("Background Sync registration successful.", e);
-                  });
-              } catch (e) {
-                console.log("Background Sync registration failed.", e)
-              }
-            }
-          })
-          .catch(error => {
-            console.log('service worker registration failed:', error);
-          });
+          .then(onSWRegistered)
+          .catch(error => console.log('service worker registration failed:', error));
       }
-      document.addEventListener('DOMContentLoaded', registerServiceWorker );
+
+      // Wait for all resources load before registering service worker
       window.addEventListener('load', registerServiceWorker);
-    </script>
-    <script type="text/javascript">
 
       // -------------------------------------------------
       // Constants
       // -------------------------------------------------
 
+      const isTouchEnabled = navigator.maxTouchPoints > 0;
       const ongoingTouches = new Map(); // Mapping from the pointerId to the current finger position
       const isMacOS = navigator.platform.match("Mac");
       const BROGUE_FONT = 'BrogueFont';
@@ -299,6 +302,12 @@
           RIGHT_MOUSE_UP:4,
           MOUSE_ENTERED_CELL:5
       }
+      const UI_MODES = {
+        IN_MENU: 0,
+        IN_NORMAL_PLAY: 1,
+        SHOW_ESCAPE: 2,
+        SHOW_KEYBOARD: 3,
+      }
 
       // -------------------------------------------------
       // Globals
@@ -315,6 +324,9 @@
       let db = null;
       let gamepad = null;
       let devicePixelRatio = window.devicePixelRatio || 1;
+      let uiMode = UI_MODES.IN_MENU;
+      let hasKeyboard = !isTouchEnabled; // Assume tablets do not have keyboards
+      let idbfsLoaded = false;
 
       // -------------------------------------------------
       // Rendering
@@ -325,6 +337,8 @@
       }
 
       const plotChar = tile => {
+        if (ctx == null) return;
+
         let [char, x, y, fr, fg, fb, br, bg, bb] = tile;
         window.allChars[(x<<8)+y] = tile; // Store a buffer of all tiles for when the window gets resized
         x = Math.floor(x*cellWidth);
@@ -397,8 +411,6 @@
           if (!pos) return;
           const EVENT = [ e.button===0?eventTypes.MOUSE_DOWN:eventTypes.RIGHT_MOUSE_DOWN, pos[0], pos[1], e.ctrlKey?1:0, e.shiftKey?1:0 ];
           window.keyOrMouseEvents.push(EVENT);
-          document.getElementById('button-bar').classList.remove("open");
-          document.getElementById('escape').style.visibility = "hidden";
       }
 
       const onMouseUp = (e) => {
@@ -423,9 +435,10 @@
         }
 
         switch (event.type) {
-          case "touchstart": return onMouseDown(e);
-          case "touchmove":  return onMouseMove(e);
-          case "touchend":   return onMouseUp(e);
+          case "touchstart":  { uiModeRefresh(); return onMouseDown(e); }
+          case "touchmove":   return onMouseMove(e);
+          case "touchend":    return onMouseUp(e);
+          case "touchcancel": return onMouseUp(e);
           default: return;
         }
       }
@@ -518,8 +531,10 @@
         window.requestAnimationFrame(handleGamepad);
 
         // Delay key presses
-        delayCountdown -= 1;
-        if (delayCountdown > 0) return;
+        if (delayCountdown > 0) {
+          delayCountdown -= 1;
+          return;
+        }
 
         /*
         Standard Game-Pad:
@@ -632,21 +647,38 @@
           Tab:9,
       }
 
+      const sendKeySequence = (text) => {
+        for (let i=0; i < text.length; i++ ) {
+          const key = text.charCodeAt(i);
+          const EVENT = [eventTypes.KEYSTROKE, key, 0, 0, 0];
+          window.keyOrMouseEvents.push(EVENT);
+        }
+      }
+
       const ESCAPE_KEY_EVENT = [eventTypes.KEYSTROKE,27,0,0,0];
-      const allCtrlKeys = "hjklyubn78946123sxA<>"; // Keys that behave differently when a modifier is used
+      // const allCtrlKeys = "hjklyubn78946123sxA<>"; // Keys that behave differently when a modifier is used
       const onKeydown = (e) => {
           // Override browser key bindings where possible
           const modkey = isMacOS ? e.metaKey : e.ctrlKey;
-          if (   e.code == "NumpadDivide"
-              || e.code == "Slash"
-              || e.code == "Quote"
-              || (modkey && allCtrlKeys.includes(e.key[0]))) {
-            e.preventDefault();
-          }
+          // if (   e.code == "NumpadDivide"
+          //     || e.code == "Slash"
+          //     || e.code == "Quote"
+          //     || (modkey && allCtrlKeys.includes(e.key[0]))) {
+          //   e.preventDefault();
+          // }
           const key = (e.key.length > 1) ? KEY_MAP[e.key] : e.key.charCodeAt(0);
           if (key === undefined) return;
+          if (e.key == "v" && modkey) return;
+
+          e.preventDefault();
           const EVENT = [eventTypes.KEYSTROKE, key, 0, e.ctrlKey?1:0, e.shiftKey?1:0];
           window.keyOrMouseEvents.push(EVENT);
+      }
+
+      const onInput = (e) => {
+        if (!e.data) return;
+        const EVENT = [eventTypes.KEYSTROKE, e.data.charCodeAt(0), 0, 0, 0];
+        window.keyOrMouseEvents.push(EVENT);
       }
 
       // -------------------------------------------------
@@ -745,7 +777,7 @@
         ctx = canvas.getContext("2d");
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
-        ctx.textRendering = 'pixelated';
+        ctx.textRendering = "optimizeSpeed";
         ctx.imageSmoothingEnabled = false;
 
         // Find proper font size
@@ -763,7 +795,7 @@
         ctx = setupRetinaCanvas(canvas, ctxWidth, ctxHeight);
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
-        ctx.textRendering = 'pixelated';
+        ctx.textRendering = "optimizeSpeed";
         ctx.imageSmoothingEnabled = false;
         ctx.font = fontSize+'px '+FONT_NAME;
 
@@ -775,6 +807,96 @@
         plotAllChars();
       }
 
+      const onPaste = (event) => {
+        event.preventDefault();
+        const pastedText = event.clipboardData.getData('text/plain');
+        sendKeySequence(pastedText);
+      }
+
+      // Function to get the touch position relative to the target element (e.g., a canvas)
+      const setOffsetPos = (event) => {
+        if (event.offsetX !== undefined) return;
+        if (event.changedTouches === undefined) return;
+        const touch = event.changedTouches[0];
+        const rect = event.target.getBoundingClientRect();
+        const offsetX = touch.clientX - rect.left;
+        const offsetY = touch.clientY - rect.top;
+        event.offsetX = offsetX;
+        event.offsetY = offsetY;
+      }
+
+      const preventDefault = (e) => e.preventDefault();
+
+      const dirPadClick = (event) => {
+          event.preventDefault();
+          setOffsetPos(event);
+          const x = Math.floor(3*event.offsetX/event.target.width);
+          const y = Math.floor(3*event.offsetY/event.target.height);
+          const EVENT = [eventTypes.KEYSTROKE,0,0,0,0];
+          const keys  = "789"+
+                        "456"+
+                        "123";
+          EVENT[1] = keys.charCodeAt(y*3+x);
+          window.keyOrMouseEvents.push(EVENT);
+      }
+
+      const hideDirectionControls = () => { getEl("dirpad").style.visibility = "hidden"; };
+      const showDirectionControls = () => { getEl('dirpad').style.visibility = "visible"; }
+
+      const hideEscButton         = () => { getEl('escape').style.visibility = "hidden"; }
+      const showEscButton         = () => { if (!hasKeyboard) getEl('escape').style.visibility = "visible"; }
+
+      const hideKeyboard = () => {
+        getEl('keyboard').style.display = "none";
+        getEl('button-bar').classList.remove("open");
+      }
+
+      const showKeyboard = (input) => {
+        if (hasKeyboard) return;
+        getEl('button-bar').classList.add("open");
+        const kbd = getEl('keyboard');
+        kbd.style.display = "block";
+        // kbd.value = input;
+        kbd.focus();
+      }
+
+      const uiModeInMenu = () => {
+        uiMode = UI_MODES.IN_MENU;
+        hideDirectionControls();
+        hideEscButton();
+        hideKeyboard();
+      };
+
+      const uiModeShowEscape = () => {
+        uiMode = UI_MODES.SHOW_ESCAPE;
+        hideDirectionControls();
+        showEscButton();
+        hideKeyboard();
+      }
+
+      const uiModeShowKeyboardAndEscape = (input) => {
+        uiMode = UI_MODES.SHOW_KEYBOARD;
+        hideDirectionControls();
+        showEscButton();
+        showKeyboard(input);
+      }
+
+      const uiModeInNormalPlay = () => {
+        uiMode = UI_MODES.IN_NORMAL_PLAY;
+        showDirectionControls();
+        hideEscButton();
+        hideKeyboard();
+      }
+
+      const uiModeRefresh = () => {
+        switch (uiMode) {
+          case UI_MODES.IN_MENU:        uiModeInMenu(); break;
+          case UI_MODES.IN_NORMAL_PLAY: uiModeInNormalPlay(); break;
+          case UI_MODES.SHOW_ESCAPE:    uiModeShowEscape(); break;
+          case UI_MODES.SHOW_KEYBOARD:  uiModeShowKeyboardAndEscape(); break;
+        }
+      }
+
       const getEl = (id) => document.getElementById(id);
       const addEvent = (id,evt,fn,opt) => getEl(id).addEventListener(evt,fn,opt);
 
@@ -784,6 +906,8 @@
         // Register event handlers
         window.addEventListener('resize', () => resizeCanvas() );
         window.addEventListener('keydown', onKeydown, { capture: true });
+        document.addEventListener('input', onInput, { capture: true });
+        document.addEventListener('paste', onPaste, { capture: true });
         window.addEventListener('gamepadconnected', (e) => { gamepad = e.gamepad; window.requestAnimationFrame(handleGamepad); });
         window.addEventListener('gamepaddisconnected', (e) => { gamepad = null; });
 
@@ -793,10 +917,10 @@
         addEvent('keyboard-icon',   "click",  (ele) => { ele.target.value = ""; getEl('keyboard').style.display = "block"; getEl('keyboard').focus(); getEl('escape').style.visibility = "visible"; });
         addEvent('keyboard',        "blur",   (ele) => { ele.target.value = ""; ele.target.style.display = "none"; getEl('button-bar').classList.remove("open"); });
         addEvent('escape',          "click",  (ele) => { window.keyOrMouseEvents.push(ESCAPE_KEY_EVENT); ele.target.style.visibility = "hidden"; });
-        addEvent('file-mgr-close',  'click',  ()    => { getEl('file-manager').style.visibility = "hidden"; }, false);
+        addEvent('file-mgr-close',  'click',  ()    => { getEl('file-manager').style.zIndex = -1000; }, false);
         addEvent('info',            'click',  ()    => { getEl('about').style.visibility = "visible"; }, false);
         addEvent('about',           'click',  ()    => { getEl('about').style.visibility = "hidden"; }, false);
-        addEvent('button-bar',      'click',  (ele) => { ele.target.classList.add("open"); }, false);
+        addEvent('pull-out-menu',   'click',  (ele) => { getEl('button-bar').classList.add("open"); }, false);
         addEvent('upload',          'click',  (ele) => { ele.target.style.display = "none"; getEl('file-mgr-upload').style.display = "block"; }, false);
         addEvent('content',         "fullscreenchange", resizeCanvas );
         addEvent('dirs',            "click",  (ele) => { const dirs = getEl("dirpad"); dirs.style.visibility = (dirs.style.visibility == "visible") ? "hidden" : "visible"; } );
@@ -804,7 +928,7 @@
         // Auto-save when user leaves the page or app
         document.addEventListener("visibilitychange", () => {
           if (document.hidden || document.visibilityState === "hidden") {
-            if (Module && Module._saveState) {
+            if (Module !== undefined && Module._saveState) {
               Module._saveState();
             }
           } else {
@@ -823,17 +947,8 @@
         canvas.addEventListener('touchmove',   handleTouchMove,   false);
         canvas.addEventListener('touchcancel', handleTouchCancel, false);
 
-        addEvent("dirpad", "click", (event) => {
-          event.preventDefault();
-          const x = Math.floor(3*event.offsetX/event.target.width);
-          const y = Math.floor(3*event.offsetY/event.target.height);
-          const EVENT = [eventTypes.KEYSTROKE,0,0,0,0];
-          const keys  = "789"+
-                        "456"+
-                        "123";
-          EVENT[1] = keys.charCodeAt(y*3+x);
-          window.keyOrMouseEvents.push(EVENT);
-        }, false);
+        addEvent("dirpad", "click",   dirPadClick,    false);
+        addEvent("dirpad", 'touchstart',  dirPadClick,    false); // Only touchstart
       }
 
       // Page initialization
@@ -842,7 +957,7 @@
       window.allChars = {}; // For redrawing the window on resize, etc.
 
       // Load custom font
-      document.addEventListener('DOMContentLoaded', function() {
+      document.addEventListener('DOMContentLoaded', () => {
         myFont.load().then(font => {
           document.fonts.add(font); // Add font to the document's font list
           FONT_NAME = BROGUE_FONT;
@@ -856,6 +971,13 @@
       // -------------------------------------------------
       // File Manager
       // -------------------------------------------------
+
+      const loadFilesystem = () => {
+        if (Module !== undefined && Module._loadFileSystem) {
+          console.log("Loading filesystem...")
+          Module._loadFileSystem();
+        }
+      }
 
       const downloadFile = (uint8Array, filename, contentType) => {
         const blob = new Blob([uint8Array], { type: contentType });
@@ -893,6 +1015,7 @@
         };
         request.onsuccess = (event) => {
           ele.parentNode.removeChild(ele);
+          loadFilesystem();
         };
       }
 
@@ -910,7 +1033,8 @@
           console.log("Data added successfully", event.target.result);
           const FILES = document.getElementById("file-list");
           addFileListItem(FILES,fileName);
-          document.getElementById("file-mgr-upload").innerHTML = "<hr/>Reload page to make this file visible to BrogueJS.";
+          // document.getElementById("file-mgr-upload").innerHTML = "<hr/>Reload page to make this file visible to BrogueJS.";
+          loadFilesystem();
         };
         request.onerror = (event) => {
           document.getElementById("file-mgr-upload").innerHTML = "<hr/>ERROR - " + event.target.error;
@@ -1003,7 +1127,7 @@
 
       const onRequestFiles = () => {
           readDatabase();
-          document.getElementById('file-manager').style.visibility = "visible";
+          document.getElementById('file-manager').style.zIndex = 1000;
       }
 
       // -------------------------------------------------
@@ -1032,15 +1156,17 @@
     <body oncontextmenu="return false;">
       <div id="content">
         <div id="nav-bar">
-          <div id="button-bar">
-            <span style="font-size: x-small;">260224</span>
-            <img src="fullscreen.svg" id="fullscreen"    title="Fulscreen"/>
-            <img src="dir-pad.svg"    id="dirs"          title="Direction Pad"/>
-            <img src="files.svg"      id="files"         title="File manager"/>
-            <img src="keyboard.svg"   id="keyboard-icon" title="Open keyboard (for tablets)"/>
-            <img src="info.svg"       id="info"          title="About BrogueJS"/>
-            <a href="https://github.com/brturn/BrogueCE/issues" target="_blank" rel="noopener noreferrer" title="Report an issue"><img src="bugs.svg"/></a>
-            <div><input type="text" id="keyboard" size="2" placeholder="Keyboard"/></div>
+          <div id="pull-out-menu">
+            <div id="button-bar">
+              <span style="font-size: x-small;">260303</span>
+              <img src="fullscreen.svg" id="fullscreen"    title="Fulscreen"/>
+              <img src="dir-pad.svg"    id="dirs"          title="Direction Pad"/>
+              <img src="files.svg"      id="files"         title="File manager"/>
+              <img src="keyboard.svg"   id="keyboard-icon" title="Open keyboard (for tablets)"/>
+              <img src="info.svg"       id="info"          title="About BrogueJS"/>
+              <a href="https://github.com/brturn/BrogueCE/issues" target="_blank" rel="noopener noreferrer" title="Report an issue"><img src="bugs.svg"/></a>
+              <div><input type="text" id="keyboard" size="2" placeholder="Keyboard"/></div>
+            </div>
           </div>
           <div id="about">
             <img src="close.svg"/> <b>BrogueJS - Brogue in the browser!</b>
@@ -1071,8 +1197,8 @@
             <li>Updated to BrogueCE v1.15.1</li>
             <li>Uses the same font and graphics as the iOS port</li>
             <li>Supports high-dpi (retina) displays</li>
-            <li>Sharp graphics, no image stretching</li>
             <li>Touch support for tablets (tested on iPad and iPhone)</li>
+            <li>Gamepad support (preview)</li>
             <li>File manager for uploading, downloading, and deleting the save games and recordings</li>
             <li>Files are compatible with other BrogueCE platforms, so you can move files between devices to continue the adventure</li>
             <li>URL parameters supported for seed, graphics, mode, etc.  Allowing easy bookmarking and sharing experiences</li>
@@ -1082,9 +1208,10 @@
 
             <p>BrogueJS has been tested working on:</p>
             <ul>
-            <li>MacBook Pro M4, Mac OS 26.2: Safari, Firefox, Chrome</li>
+            <li>MacBook Pro M4, Mac OS 26.3: Safari, Firefox, Chrome</li>
             <li>iPad Pro Gen 3, iOS 26.3, Safari</li>
-            <li>iPhone 14 Pro, iOS 26.2, Safari</li>
+            <li>iPhone 14 Pro, iOS 26.3, Safari</li>
+            <li>Android 15 tablet (onn.8)</li>
             </ul>
 
             <p>Please note this is not the same project as <a href="http://brogue.roguelikelike.com/" target="_blank" rel="noopener noreferrer">web-brogue</a>,
