@@ -25,6 +25,7 @@ const assets = [
     "./favicon.ico",
     "./brogue-icon-192.png",
     "./brogue-icon-256.png",
+    "./brogue-icon-512.png",
     "./brogue-title-screen.jpg",
     "./brogue-screen-1.jpg",
     "./brogue-screen-2.jpg",
@@ -102,8 +103,11 @@ self.addEventListener('fetch', e => {
   else e.respondWith(fromCache(e.request));
 });
 
-self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
+// Receive message from main page
+self.addEventListener("message", e => {
+  if (!e.data) return;
+  switch (e.data.type) {
+  case "SKIP_WAITING": self.skipWaiting(); break;
+  case "GET_VERSION":  e.ports[0].postMessage({version}); break;
   }
 });

@@ -273,6 +273,13 @@
         navigator.serviceWorker.register('sw.js')
           .then(onSWRegistered)
           .catch(error => console.log('service worker registration failed:', error));
+
+        navigator.serviceWorker.addEventListener('message', e => {
+          if (!e.data) return;
+          switch (e.data.type) {
+          case "RELOAD": location.reload(); break;
+          }
+        });
       }
 
       // Wait for all resources load before registering service worker
