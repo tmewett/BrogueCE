@@ -1493,7 +1493,7 @@ short nextStep(short **distanceMap, pos target, creature *monst, boolean preferD
     creature *blocker;
     boolean blocked;
 
-    brogueAssert(coordinatesAreInMap(x, y));
+    brogueAssert(coordinatesAreInMap(target.x, target.y));
 
     bestScore = 0;
     bestDir = NO_DIRECTION;

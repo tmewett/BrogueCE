@@ -42,7 +42,7 @@ short getPlayerPathOnMap(pos path[1000], short **map, pos origin) {
         }
         at = posNeighborInDirection(at, dir);
         path[steps] = at;
-        brogueAssert(coordinatesAreInMap(x, y));
+        brogueAssert(coordinatesAreInMap(at.x, at.y));
     }
     return steps;
 }
