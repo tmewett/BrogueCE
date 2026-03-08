@@ -31,6 +31,14 @@
 #include <time.h>
 #include "PlatformDefines.h"
 
+// These flags aren't supported by Clang (only by GCC), so they have to be
+// disabled here instead of in the Makefile.
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
+#pragma GCC diagnostic ignored "-Wstringop-overread"
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+
 // unicode: comment this line to revert to ASCII
 #define USE_UNICODE
 
