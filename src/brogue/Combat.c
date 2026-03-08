@@ -980,7 +980,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
     }
 }
 
-static void decrementWeaponAutoIDTimer() {
+static void decrementWeaponAutoIDTimer(void) {
     char buf[COLS*3], buf2[COLS*3];
 
     if (rogue.weapon
@@ -1324,7 +1324,7 @@ void combatMessage(char *theMsg, const color *theColor) {
 // they may be joined together by semi-colons.  Notice that combat messages may
 // be flushed by a number of different callers.  One is message() itself
 // creating a recursion, which this function is responsible for terminating.
-void displayCombatText() {
+void displayCombatText(void) {
     char buf[COLS * 2];
     char *start, *end;
 

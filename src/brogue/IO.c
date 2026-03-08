@@ -72,7 +72,7 @@ void hilitePath(pos path[1000], short steps, boolean unhilite) {
 }
 
 // More expensive than hilitePath(__, __, true), but you don't need access to the path itself.
-void clearCursorPath() {
+void clearCursorPath(void) {
     short i, j;
 
     if (!rogue.playbackMode) { // There are no cursor paths during playback.
@@ -87,14 +87,14 @@ void clearCursorPath() {
     }
 }
 
-void hideCursor() {
+void hideCursor(void) {
     // Drop out of cursor mode if we're in it, and hide the path either way.
     rogue.cursorMode = false;
     rogue.cursorPathIntensity = (rogue.cursorMode ? 50 : 20);
     rogue.cursorLoc = INVALID_POS;
 }
 
-void showCursor() {
+void showCursor(void) {
     // Return or enter turns on cursor mode. When the path is hidden, move the cursor to the player.
     if (!isPosInMap(rogue.cursorLoc)) {
         rogue.cursorLoc = player.loc;
@@ -534,7 +534,7 @@ static void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
 
 
 // This is basically the main loop for the game.
-void mainInputLoop() {
+void mainInputLoop(void) {
     pos oldTargetLoc = { 0, 0 };
     short steps, oldRNG, dir;
     pos path[1000];
@@ -837,7 +837,7 @@ void mainInputLoop() {
 
 #define MILLISECONDS_FOR_CAUTION    100
 
-void considerCautiousMode() {
+void considerCautiousMode(void) {
     /*
     signed long oldMilliseconds = rogue.milliseconds;
     rogue.milliseconds = MILLISECONDS;
@@ -854,7 +854,7 @@ static screenDisplayBuffer previouslyPlottedCells;
 
 // Only cells which have changed since the previous commitDraws are actually
 // drawn.
-void commitDraws() {
+void commitDraws(void) {
     for (int j = 0; j < ROWS; j++) {
         for (int i = 0; i < COLS; i++) {
             cellDisplayBuffer *lastPlotted = &previouslyPlottedCells.cells[i][j];
@@ -887,7 +887,7 @@ void commitDraws() {
 
 // flags the entire window as needing to be redrawn at next flush.
 // very low level -- does not interface with the guts of the game.
-void refreshScreen() {
+void refreshScreen(void) {
     for (int i = 0; i < COLS; i++) {
         for (int j = 0; j < ROWS; j++) {
             cellDisplayBuffer *curr = &displayBuffer.cells[i][j];
@@ -907,7 +907,7 @@ void refreshScreen() {
 }
 
 // higher-level redraw
-void displayLevel() {
+void displayLevel(void) {
     short i, j;
 
     for( i=0; i<DCOLS; i++ ) {
@@ -1073,7 +1073,7 @@ static boolean glyphIsWallish(enum displayGlyph glyph) {
     }
 }
 
-static enum monsterTypes randomAnimateMonster() {
+static enum monsterTypes randomAnimateMonster(void) {
     /* Randomly pick an animate and vulnerable monster type. Used by
     getCellAppearance for hallucination effects. */
     static int listLength = 0;
@@ -1847,7 +1847,7 @@ void plotForegroundChar(enum displayGlyph inputChar, short x, short y, const col
 }
 
 // Debug feature: display the level to the screen without regard to lighting, field of view, etc.
-void dumpLevelToScreen() {
+void dumpLevelToScreen(void) {
     short i, j;
     pcell backup;
 
@@ -1912,7 +1912,7 @@ void hiliteCharGrid(char hiliteCharGrid[DCOLS][DROWS], const color *hiliteColor,
     restoreRNG;
 }
 
-void blackOutScreen() {
+void blackOutScreen(void) {
     short i, j;
 
     for (i=0; i<COLS; i++) {
@@ -2203,7 +2203,7 @@ void funkyFade(screenDisplayBuffer *displayBuf, const color *colorStart,
     restoreRNG;
 }
 
-static void displayWaypoints() {
+static void displayWaypoints(void) {
     short i, j, w, lowestDistance;
 
     for (i=0; i<DCOLS; i++) {
@@ -2223,7 +2223,7 @@ static void displayWaypoints() {
     displayLevel();
 }
 
-static void displayMachines() {
+static void displayMachines(void) {
     short i, j;
     color foreColor, backColor, machineColors[50];
     enum displayGlyph dchar;
@@ -2261,7 +2261,7 @@ static void displayMachines() {
 }
 
 #define CHOKEMAP_DISPLAY_CUTOFF 160
-static void displayChokeMap() {
+static void displayChokeMap(void) {
     short i, j;
     color foreColor, backColor;
     enum displayGlyph dchar;
@@ -2286,7 +2286,7 @@ static void displayChokeMap() {
     displayLevel();
 }
 
-static void displayLoops() {
+static void displayLoops(void) {
     short i, j;
     color foreColor, backColor;
     enum displayGlyph dchar;
@@ -2907,7 +2907,7 @@ void flashTemporaryAlert(char *message, int time) {
     flashMessage(message, (COLS - strLenWithoutEscapes(message)) / 2, ROWS / 2, time, &teal, &black);
 }
 
-void waitForAcknowledgment() {
+void waitForAcknowledgment(void) {
     rogueEvent theEvent;
 
     if (rogue.autoPlayingLevel || (rogue.playbackMode && !rogue.playbackOOS) || nonInteractivePlayback) {
@@ -2923,7 +2923,7 @@ void waitForAcknowledgment() {
                || theEvent.eventType == MOUSE_UP));
 }
 
-void waitForKeystrokeOrMouseClick() {
+void waitForKeystrokeOrMouseClick(void) {
     rogueEvent theEvent;
     do {
         nextBrogueEvent(&theEvent, false, false, false);
@@ -3006,13 +3006,13 @@ void displayMonsterFlashes(boolean flashingEnabled) {
     restoreRNG;
 }
 
-static void dequeueEvent() {
+static void dequeueEvent(void) {
     rogueEvent returnEvent;
     nextBrogueEvent(&returnEvent, false, false, true);
 }
 
 // Empty the message archive
-void clearMessageArchive() {
+void clearMessageArchive(void) {
     messageArchivePosition = 0;
 }
 
@@ -3203,7 +3203,7 @@ void formatRecentMessages(char buffer[][COLS*2], size_t height, short *linesForm
 }
 
 // Display recent archived messages after recalculating message confirmations.
-void displayRecentMessages() {
+void displayRecentMessages(void) {
     short i;
     char messageBuffer[MESSAGE_LINES][COLS*2];
 
@@ -3353,7 +3353,7 @@ static short scrollMessageArchive(char messages[MESSAGE_ARCHIVE_LINES][COLS*2], 
     return offset;
 }
 
-void displayMessageArchive() {
+void displayMessageArchive(void) {
     short length, offset, height;
     char messageBuffer[MESSAGE_ARCHIVE_LINES][COLS*2];
 
@@ -3514,7 +3514,7 @@ void message(const char *msg, unsigned long flags) {
 }
 
 // Only used for the "you die..." message, to enable posthumous inventory viewing.
-void displayMoreSignWithoutWaitingForAcknowledgment() {
+void displayMoreSignWithoutWaitingForAcknowledgment(void) {
     if (strLenWithoutEscapes(displayedMessage[0]) < DCOLS - 8 || messagesUnconfirmed > 0) {
         printString("--MORE--", COLS - 8, MESSAGE_LINES-1, &black, &white, 0);
     } else {
@@ -3522,7 +3522,7 @@ void displayMoreSignWithoutWaitingForAcknowledgment() {
     }
 }
 
-void displayMoreSign() {
+void displayMoreSign(void) {
     short i;
 
     if (rogue.autoPlayingLevel) {
@@ -3609,7 +3609,7 @@ const color *messageColorFromVictim(creature *monst) {
     }
 }
 
-void updateMessageDisplay() {
+void updateMessageDisplay(void) {
     short i, j, m;
     color messageColor;
 
@@ -3642,7 +3642,7 @@ void updateMessageDisplay() {
 }
 
 // Does NOT clear the message archive.
-void deleteMessages() {
+void deleteMessages(void) {
     short i;
     for (i=0; i<MESSAGE_LINES; i++) {
         displayedMessage[i][0] = '\0';
@@ -3650,7 +3650,7 @@ void deleteMessages() {
     confirmMessages();
 }
 
-void confirmMessages() {
+void confirmMessages(void) {
     messagesUnconfirmed = 0;
     updateMessageDisplay();
 }
@@ -4063,7 +4063,7 @@ char nextKeyPress(boolean textInput) {
 
 #define BROGUE_HELP_LINE_COUNT  33
 
-void printHelpScreen() {
+void printHelpScreen(void) {
     short i, j;
     char helpText[BROGUE_HELP_LINE_COUNT][DCOLS*3] = {
         "",
@@ -4185,7 +4185,7 @@ static void printDiscoveries(short category, short count, unsigned short itemCha
 }
 
 /// @brief Display the feats screen. Lists all feats and their achievement status.
-void displayFeatsScreen() {
+void displayFeatsScreen(void) {
     char availableColorEscape[5] = "", achievedColorEscape[5] = "", failedColorEscape[5] = "";
     encodeMessageColor(availableColorEscape, 0, &white);
     encodeMessageColor(achievedColorEscape, 0, &advancementMessageColor);
@@ -4237,7 +4237,7 @@ void displayFeatsScreen() {
     restoreDisplayBuffer(&rbuf);
 }
 
-void printDiscoveriesScreen() {
+void printDiscoveriesScreen(void) {
     short i, j, y;
     const SavedDisplayBuffer rbuf = saveDisplayBuffer();
 
@@ -4388,7 +4388,7 @@ void displayGrid(short **map) {
 }
 
 /// @brief Display a message with the seed #, turn #, game mode (except normal), and game version
-void printSeed() {
+void printSeed(void) {
     char buf[COLS];
     char mode[14] = "";
 
@@ -4472,7 +4472,7 @@ void highlightScreenCell(short x, short y, const color *highlightColor, short st
 
 // Like `armorValueIfUnenchanted` for the currently-equipped armor, but takes the penalty from
 // donning into account.
-static short estimatedArmorValue() {
+static short estimatedArmorValue(void) {
     short retVal = armorValueIfUnenchanted(rogue.armor) - player.status[STATUS_DONNING];
     return max(0, retVal);
 }

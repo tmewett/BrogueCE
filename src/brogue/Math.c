@@ -170,7 +170,7 @@ long rand_range(long lowerBound, long upperBound) {
 }
 #endif
 
-uint64_t rand_64bits() {
+uint64_t rand_64bits(void) {
     if (rogue.RNG == RNG_SUBSTANTIVE) {
         randomNumbersGenerated++;
     }

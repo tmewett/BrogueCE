@@ -36,7 +36,7 @@ struct brogueConsole {
     The platform entrypoint, called by the main function. Should initialize
     and then call rogueMain.
     */
-    void (*gameLoop)();
+    void (*gameLoop)(void);
 
     /*
     Pause the game, returning a boolean specifying whether an input event
@@ -76,7 +76,7 @@ struct brogueConsole {
     /*
     Optional. Take a screenshot in current working directory
     */
-    boolean (*takeScreenshot)();
+    boolean (*takeScreenshot)(void);
 
     /*
     Optional. Enables or disables graphical tiles, returning the new state. This
