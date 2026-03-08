@@ -6501,7 +6501,7 @@ static boolean playerCancelsBlinking(const pos originLoc, const pos targetLoc, c
             x = coordinates[i].x;
             y = coordinates[i].y;
             if (pmap[x][y].flags & DISCOVERED) {
-                getLocationFlags(x, y, &tFlags, NULL, NULL, true);
+                getLocationFlags(x, y, &tFlags, &tmFlags, NULL, true);
                 if ((tFlags & T_LAVA_INSTA_DEATH)
                     && !(tFlags & (T_ENTANGLES | T_AUTO_DESCENT))
                     && !(tmFlags & TM_EXTINGUISHES_FIRE)) {
