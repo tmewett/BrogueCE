@@ -4089,14 +4089,14 @@ void printHelpScreen() {
         "              x  ****auto-explore (control-x: fast forward)",
         "              A  ****autopilot (control-A: fast forward)",
         "              M  ****display old messages",
-        "              G  ****toggle graphical tiles (when available)",
+        "    <space/esc>  ****clear message or cancel command",
         "",
         "              S  ****save and exit",
         "              Q  ****quit and abandon game",
         "",
         "              \\  ****disable/enable color effects",
         "              ]  ****display/hide stealth range",
-        "    <space/esc>  ****clear message or cancel command",
+        "              G  ****toggle graphical tiles (when available)",
         "",
         "        -- press space or click to continue --"
     };
