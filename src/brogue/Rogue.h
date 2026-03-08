@@ -48,7 +48,6 @@
 
 #define WIZARD_MODE                     (rogue.mode == GAME_MODE_WIZARD)
 
-#define DEBUG                           if (WIZARD_MODE)
 #define MONSTERS_ENABLED                (!WIZARD_MODE || 1) // Quest room monsters can be generated regardless.
 #define ITEMS_ENABLED                   (!WIZARD_MODE || 1)
 
@@ -78,14 +77,16 @@
 // set to false to disable references to keystrokes (e.g. for a tablet port)
 #define KEYBOARD_LABELS true
 
-//#define BROGUE_ASSERTS        // introduces several assert()s -- useful to find certain array overruns and other bugs
 //#define AUDIT_RNG             // VERY slow, but sometimes necessary to debug out-of-sync recording errors
 //#define GENERATE_FONT_FILES   // Displays font in grid upon startup, which can be screen-captured into font files for PC.
 
-#ifdef BROGUE_ASSERTS
+#ifdef DEBUG_ENABLED
+#define DEBUG                   if (true)
 #include <assert.h>
+// introduces several assert()s -- useful to find certain array overruns and other bugs
 #define brogueAssert(x)         assert(x)
 #else
+#define DEBUG                   if (false)
 #define brogueAssert(x)
 #endif
 
