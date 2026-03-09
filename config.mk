@@ -15,7 +15,8 @@ SDL_CONFIG := sdl2-config
 # Select web brogue mode. Requires POSIX system.
 WEBBROGUE := NO
 
-# Enable debugging mode. See top of Rogue.h for features
+# Enable debugging mode. Primarily enables assertions and the ability to switch
+# a recording to a regular game.
 DEBUG := NO
 
 # Declare this is a release build
