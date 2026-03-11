@@ -6,16 +6,19 @@
 
 #define PI  3.14159265358979323846
 
-#define PNG_WIDTH    2048   // width (px) of the source PNG
-#define PNG_HEIGHT   5568   // height (px) of the source PNG
-#define TILE_WIDTH    128   // width (px) of a single tile in the source PNG
-#define TILE_HEIGHT   232   // height (px) of a single tile in the source PNG
+static int PNG_WIDTH;   // width (px) of the source PNG
+static int PNG_HEIGHT;     // height (px) of the source PNG
+static int TILE_WIDTH;      // width (px) of a single tile in the source PNG
+static int TILE_HEIGHT;    // height (px) of a single tile in the source PNG
+static int TEXT_X_HEIGHT;   // height (px) of the 'x' outline
+static int TEXT_BASELINE;   // height (px) of the blank space below the 'x' outline
+static int MAX_TILE_SIZE;   // maximum width or height (px) 
 #define TILE_ROWS      24   // number of rows in the source PNG
 #define TILE_COLS      16   // number of columns in the source PNG
-#define TEXT_X_HEIGHT 100   // height (px) of the 'x' outline
-#define TEXT_BASELINE  46   // height (px) of the blank space below the 'x' outline
-#define MAX_TILE_SIZE  64   // maximum width or height (px) of screen tiles before we switch to linear interpolation
 
+#define PNG_HEADER_SIZE 6 // the number of int32_t to read from a PNG header to get to the width and height
+#define PNG_HEADER_WIDTH 4 // the PNG header width index
+#define PNG_HEADER_HEIGHT 5 // the PNG header depth index
 
 // How each tile should be processed:
 //  -  's' = stretch: tile stretches to fill the space
@@ -51,7 +54,7 @@ static boolean tileEmpty[TILE_ROWS][TILE_COLS];   // true if a tile is completel
 // The fourth dimention is the downscaling operation's target size (width for horizontal axis, height for vertical).
 // The last dimension is 0 for top/left, 1 for bottom/right, 2 for center.
 // The values stored in tileShifts are signed integers. Unit is 1/10th of a pixel.
-static int8_t tileShifts[TILE_ROWS][TILE_COLS][2][MAX_TILE_SIZE][3];
+static int8_t ***** tileShifts;
 
 static ScreenTile screenTiles[ROWS][COLS];  // buffer for the expected contents of the screen
 static int baseTileWidth = -1;      // width (px) of tiles in the smallest texture (`Textures[0]`)
@@ -63,6 +66,26 @@ int windowHeight = -1;              // the SDL window's height (in "screen units
 boolean fullScreen = false;         // true if the window should be full-screen, else false
 boolean softwareRendering = false;  // true if hardware acceleration is disabled (by choice or by force)
 
+
+// allocator for tile shifts on the heap required since MAX_TILE_SIZE is not known at compile time.
+// Doesnt need freeing since allocated only once per program run.
+static int8_t ***** allocTileShifts() {
+    int8_t ***** out;
+    out = malloc(TILE_ROWS * sizeof(int*));
+    for (int i = 0; i < TILE_ROWS; i++) {
+        out[i] = malloc(TILE_COLS * sizeof(int*));
+        for (int j = 0; j < TILE_COLS; j++) {
+            out[i][j] = malloc(2 * sizeof(int*));
+            for (int k = 0; k < 2; k++) {
+                out[i][j][k] = malloc(MAX_TILE_SIZE * sizeof(int*));
+                for (int l = 0; l < MAX_TILE_SIZE; l++) {
+                    out[i][j][k][l] = malloc(3 * sizeof(int8_t));
+                }
+            }
+        }
+    }
+    return out;
+}
 
 /// Prints the fatal error message provided by SDL then closes the app.
 static void sdlfatal(char *file, int line) {
@@ -187,120 +210,120 @@ static double downscaleTile(SDL_Surface *surface, int tileWidth, int tileHeight,
     double blur = 0;
 
     // if the tile is empty, we can skip the downscaling
-    if (tileEmpty[row][column]) goto downscaled;
+    if (!tileEmpty[row][column]) {
 
-    // decide how large we can draw the glyph
-    if (processing == 's' || optimizing) {
-        // stretch
-        glyphWidth = fitWidth = tileWidth;
-        glyphHeight = fitHeight = tileHeight;
-    } else if (processing == 'f') {
-        // fit
-        int hi = fitHeight * TILE_HEIGHT / (TILE_HEIGHT - 2 * padding);
-        int lo = max(1, min(fitHeight, round(1.2 * fitWidth * TILE_HEIGHT / TILE_WIDTH)));
-        glyphHeight = max(lo, min(hi, round((double)fitWidth * TILE_HEIGHT / TILE_WIDTH)));
-        glyphWidth = max(1, min(fitWidth, round(1.2 * glyphHeight * TILE_WIDTH / TILE_HEIGHT)));
-    } else {
-        // text
-        glyphWidth = max(1, min(fitWidth, round(1.4 * fitHeight * TILE_WIDTH / TILE_HEIGHT)));
-        glyphHeight = max(1, min(fitHeight, round(1.4 * fitWidth * TILE_HEIGHT / TILE_WIDTH)));
-    }
-
-    // map source pixels to target pixels...
-    int scaledX[TILE_WIDTH], scaledY[TILE_HEIGHT];
-    int stop0, stop1, stop2, stop3, stop4;
-    double map0, map1, map2, map3, map4;
-    int8_t *shifts;
-
-    // ... horizontally:
-
-    // horizontal coordinates on the source tile for the left border (stop0), 3 taps (stop1, 2, 3), and right border (stop4)
-    stop0 = 0;
-    stop1 = TILE_WIDTH / 5;   // 20%
-    stop2 = TILE_WIDTH / 2;   // 50%
-    stop3 = TILE_WIDTH * 4/5; // 80%
-    stop4 = TILE_WIDTH;
-
-    // corresponding coordinates on the target tile, taking into account centering and sub-pixel positioning
-    shifts = (glyphWidth > MAX_TILE_SIZE ? noShifts : tileShifts[row][column][0][glyphWidth - 1]);
-    map0 = (fitWidth - glyphWidth + (shifts[0] + shifts[1] < 0 ? 1 : 0)) / 2;
-    map1 = map0 + glyphWidth * (double)(stop1 - stop0) / (stop4 - stop0) + shifts[0] * 0.1;
-    map2 = map0 + glyphWidth * (double)(stop2 - stop0) / (stop4 - stop0) + shifts[2] * 0.1;
-    map3 = map0 + glyphWidth * (double)(stop3 - stop0) / (stop4 - stop0) + shifts[1] * 0.1;
-    map4 = map0 + glyphWidth;
-
-    // now we can interpolate the horizontal coordinates for all pixels
-    for (int x = stop0; x < stop1; x++) scaledX[x] = map0 + (map1 - map0) * (x - stop0) / (stop1 - stop0);
-    for (int x = stop1; x < stop2; x++) scaledX[x] = map1 + (map2 - map1) * (x - stop1) / (stop2 - stop1);
-    for (int x = stop2; x < stop3; x++) scaledX[x] = map2 + (map3 - map2) * (x - stop2) / (stop3 - stop2);
-    for (int x = stop3; x < stop4; x++) scaledX[x] = map3 + (map4 - map3) * (x - stop3) / (stop4 - stop3);
-
-    // ... vertically:
-
-    if (processing == 't') {
-        // vertical coordinates on the source tile for the top edge (stop0), stem (stop1), "x" (stop2, stop3), and bottom edge (stop4)
-        stop4 = TILE_HEIGHT;
-        stop3 = stop4 - TEXT_BASELINE;
-        stop2 = stop3 - TEXT_X_HEIGHT;
-        stop1 = stop2 / 3;
-        stop0 = 0;
-    } else {
-        // vertical coordinates on the source tile for the top edge (stop0), 3 taps (stop1, 2, 3), and bottom edge (stop4)
-        stop0 = 0;
-        stop1 = TILE_HEIGHT / 5;   // 20%
-        stop2 = TILE_HEIGHT / 2;   // 50%
-        stop3 = TILE_HEIGHT * 4/5; // 80%
-        stop4 = TILE_HEIGHT;
-    }
-
-    // corresponding coordinates on the target tile, taking into account centering
-    map0 = (fitHeight - glyphHeight) / 2;
-    map1 = map0 + glyphHeight * (double)(stop1 - stop0) / (stop4 - stop0);
-    map2 = map0 + glyphHeight * (double)(stop2 - stop0) / (stop4 - stop0);
-    map3 = map0 + glyphHeight * (double)(stop3 - stop0) / (stop4 - stop0);
-    map4 = map0 + glyphHeight;
-
-    // for text tiles, we must exactly align stops #2 and #3 with output pixels
-    if (processing == 't') {
-        map3 += round(map2) - map2;
-        map2 = round(map2);
-        map3 = max(map2 + 1, round(map3));
-        map1 = map0 + (map2 - map0) / 3;
-    }
-
-    // now add sub-pixel positioning (for text tiles, we have shifts[1] == shifts[2] == 0)
-    shifts = (glyphHeight > MAX_TILE_SIZE ? noShifts : tileShifts[row][column][1][glyphHeight - 1]);
-    map1 += shifts[0] * 0.1;
-    map2 += shifts[2] * 0.1;
-    map3 += shifts[1] * 0.1;
-
-    // finally we can interpolate the vertical coordinates for all pixels
-    for (int y = 0; y < stop0; y++) scaledY[y] = -1; // not mapped (can happen with fitted tiles)
-    for (int y = stop0; y < stop1; y++) scaledY[y] = map0 + (map1 - map0) * (y - stop0) / (stop1 - stop0);
-    for (int y = stop1; y < stop2; y++) scaledY[y] = map1 + (map2 - map1) * (y - stop1) / (stop2 - stop1);
-    for (int y = stop2; y < stop3; y++) scaledY[y] = map2 + (map3 - map2) * (y - stop2) / (stop3 - stop2);
-    for (int y = stop3; y < stop4; y++) scaledY[y] = map3 + (map4 - map3) * (y - stop3) / (stop4 - stop3);
-    for (int y = stop4; y < TILE_HEIGHT; y++) scaledY[y] = -1; // not mapped (can happen with fitted tiles)
-
-    // downscale source tile to accumulator
-    for (int y0 = 0; y0 < TILE_HEIGHT; y0++) {
-        int y1 = scaledY[y0];
-        if (y1 < 0 || y1 >= tileHeight) continue;
-        uint64_t *dst = &values[y1 * tileWidth];
-        Uint32 *src = TilesPNG->pixels; // each pixel is encoded as 0xffRRGGBB
-        src += (column * TILE_WIDTH) + (row * TILE_HEIGHT + y0) * PNG_WIDTH;
-        for (int x0 = 0; x0 < TILE_WIDTH; x0++) {
-            uint64_t value = src[x0] & 0xffU;
-            dst[scaledX[x0]] += (value * value) | 0x100000000U; // (gamma = 2.0, count = 1)
+        // decide how large we can draw the glyph
+        if (processing == 's' || optimizing) {
+            // stretch
+            glyphWidth = fitWidth = tileWidth;
+            glyphHeight = fitHeight = tileHeight;
+        } else if (processing == 'f') {
+            // fit
+            int hi = fitHeight * TILE_HEIGHT / (TILE_HEIGHT - 2 * padding);
+            int lo = max(1, min(fitHeight, round(1.2 * fitWidth * TILE_HEIGHT / TILE_WIDTH)));
+            glyphHeight = max(lo, min(hi, round((double)fitWidth * TILE_HEIGHT / TILE_WIDTH)));
+            glyphWidth = max(1, min(fitWidth, round(1.2 * glyphHeight * TILE_WIDTH / TILE_HEIGHT)));
+        } else {
+            // text
+            glyphWidth = max(1, min(fitWidth, round(1.4 * fitHeight * TILE_WIDTH / TILE_HEIGHT)));
+            glyphHeight = max(1, min(fitHeight, round(1.4 * fitWidth * TILE_HEIGHT / TILE_WIDTH)));
         }
-        // interpolate skipped lines, if any
-        if (y1 >= 2 && y0 >= 1 && scaledY[y0 - 1] == y1 - 2) {
-            for (int x1 = 0; x1 < tileWidth; x1++) {
-                dst[x1 - tileWidth] = dst[x1 - 2*tileWidth] + dst[x1];
+
+        // map source pixels to target pixels...
+        int scaledX[TILE_WIDTH], scaledY[TILE_HEIGHT];
+        int stop0, stop1, stop2, stop3, stop4;
+        double map0, map1, map2, map3, map4;
+        int8_t *shifts;
+
+        // ... horizontally:
+
+        // horizontal coordinates on the source tile for the left border (stop0), 3 taps (stop1, 2, 3), and right border (stop4)
+        stop0 = 0;
+        stop1 = TILE_WIDTH / 5;   // 20%
+        stop2 = TILE_WIDTH / 2;   // 50%
+        stop3 = TILE_WIDTH * 4/5; // 80%
+        stop4 = TILE_WIDTH;
+
+        // corresponding coordinates on the target tile, taking into account centering and sub-pixel positioning
+        shifts = (glyphWidth > MAX_TILE_SIZE ? noShifts : tileShifts[row][column][0][glyphWidth - 1]);
+        map0 = (fitWidth - glyphWidth + (shifts[0] + shifts[1] < 0 ? 1 : 0)) / 2;
+        map1 = map0 + glyphWidth * (double)(stop1 - stop0) / (stop4 - stop0) + shifts[0] * 0.1;
+        map2 = map0 + glyphWidth * (double)(stop2 - stop0) / (stop4 - stop0) + shifts[2] * 0.1;
+        map3 = map0 + glyphWidth * (double)(stop3 - stop0) / (stop4 - stop0) + shifts[1] * 0.1;
+        map4 = map0 + glyphWidth;
+
+        // now we can interpolate the horizontal coordinates for all pixels
+        for (int x = stop0; x < stop1; x++) scaledX[x] = map0 + (map1 - map0) * (x - stop0) / (stop1 - stop0);
+        for (int x = stop1; x < stop2; x++) scaledX[x] = map1 + (map2 - map1) * (x - stop1) / (stop2 - stop1);
+        for (int x = stop2; x < stop3; x++) scaledX[x] = map2 + (map3 - map2) * (x - stop2) / (stop3 - stop2);
+        for (int x = stop3; x < stop4; x++) scaledX[x] = map3 + (map4 - map3) * (x - stop3) / (stop4 - stop3);
+
+        // ... vertically:
+
+        if (processing == 't') {
+            // vertical coordinates on the source tile for the top edge (stop0), stem (stop1), "x" (stop2, stop3), and bottom edge (stop4)
+            stop4 = TILE_HEIGHT;
+            stop3 = stop4 - TEXT_BASELINE;
+            stop2 = stop3 - TEXT_X_HEIGHT;
+            stop1 = stop2 / 3;
+            stop0 = 0;
+        } else {
+            // vertical coordinates on the source tile for the top edge (stop0), 3 taps (stop1, 2, 3), and bottom edge (stop4)
+            stop0 = 0;
+            stop1 = TILE_HEIGHT / 5;   // 20%
+            stop2 = TILE_HEIGHT / 2;   // 50%
+            stop3 = TILE_HEIGHT * 4/5; // 80%
+            stop4 = TILE_HEIGHT;
+        }
+
+        // corresponding coordinates on the target tile, taking into account centering
+        map0 = (fitHeight - glyphHeight) / 2;
+        map1 = map0 + glyphHeight * (double)(stop1 - stop0) / (stop4 - stop0);
+        map2 = map0 + glyphHeight * (double)(stop2 - stop0) / (stop4 - stop0);
+        map3 = map0 + glyphHeight * (double)(stop3 - stop0) / (stop4 - stop0);
+        map4 = map0 + glyphHeight;
+
+        // for text tiles, we must exactly align stops #2 and #3 with output pixels
+        if (processing == 't') {
+            map3 += round(map2) - map2;
+            map2 = round(map2);
+            map3 = max(map2 + 1, round(map3));
+            map1 = map0 + (map2 - map0) / 3;
+        }
+
+        // now add sub-pixel positioning (for text tiles, we have shifts[1] == shifts[2] == 0)
+        shifts = (glyphHeight > MAX_TILE_SIZE ? noShifts : tileShifts[row][column][1][glyphHeight - 1]);
+        map1 += shifts[0] * 0.1;
+        map2 += shifts[2] * 0.1;
+        map3 += shifts[1] * 0.1;
+
+        // finally we can interpolate the vertical coordinates for all pixels
+        for (int y = 0; y < stop0; y++) scaledY[y] = -1; // not mapped (can happen with fitted tiles)
+        for (int y = stop0; y < stop1; y++) scaledY[y] = map0 + (map1 - map0) * (y - stop0) / (stop1 - stop0);
+        for (int y = stop1; y < stop2; y++) scaledY[y] = map1 + (map2 - map1) * (y - stop1) / (stop2 - stop1);
+        for (int y = stop2; y < stop3; y++) scaledY[y] = map2 + (map3 - map2) * (y - stop2) / (stop3 - stop2);
+        for (int y = stop3; y < stop4; y++) scaledY[y] = map3 + (map4 - map3) * (y - stop3) / (stop4 - stop3);
+        for (int y = stop4; y < TILE_HEIGHT; y++) scaledY[y] = -1; // not mapped (can happen with fitted tiles)
+
+        // downscale source tile to accumulator
+        for (int y0 = 0; y0 < TILE_HEIGHT; y0++) {
+            int y1 = scaledY[y0];
+            if (y1 < 0 || y1 >= tileHeight) continue;
+            uint64_t *dst = &values[y1 * tileWidth];
+            Uint32 *src = TilesPNG->pixels; // each pixel is encoded as 0xffRRGGBB
+            src += (column * TILE_WIDTH) + (row * TILE_HEIGHT + y0) * PNG_WIDTH;
+            for (int x0 = 0; x0 < TILE_WIDTH; x0++) {
+                uint64_t value = src[x0] & 0xffU;
+                dst[scaledX[x0]] += (value * value) | 0x100000000U; // (gamma = 2.0, count = 1)
+            }
+            // interpolate skipped lines, if any
+            if (y1 >= 2 && y0 >= 1 && scaledY[y0 - 1] == y1 - 2) {
+                for (int x1 = 0; x1 < tileWidth; x1++) {
+                    dst[x1 - tileWidth] = dst[x1 - 2*tileWidth] + dst[x1];
+                }
             }
         }
     }
-    downscaled:
 
     // procedural wall tops: diagonal sine waves
     if ((row == 16 && column == 2 || row == 21 && column == 1 || row == 22 && column == 4) && !optimizing) {
@@ -441,6 +464,23 @@ static void optimizeTiles() {
     SDL_DestroyWindow(window);
 }
 
+void setImageWidthHeight(const char * filename) {
+    FILE* fptr = fopen(filename, "r");
+    int32_t buf[PNG_HEADER_SIZE];
+    if (PNG_HEADER_SIZE > fread(&buf, sizeof(int32_t), PNG_HEADER_SIZE, fptr)) {
+        imgfatal(__FILE__, __LINE__);
+    }
+   
+    // PNG file headers are in big endian
+    PNG_WIDTH = __builtin_bswap32(buf[PNG_HEADER_WIDTH]);
+    PNG_HEIGHT = __builtin_bswap32(buf[PNG_HEADER_HEIGHT]);
+    TILE_WIDTH = PNG_WIDTH / TILE_COLS;
+    TILE_HEIGHT = PNG_HEIGHT / TILE_ROWS;
+    TEXT_BASELINE = PNG_HEIGHT / 3;
+    TEXT_X_HEIGHT = PNG_HEIGHT - TEXT_BASELINE;
+    MAX_TILE_SIZE = (TILE_HEIGHT > TILE_WIDTH ? TILE_HEIGHT : TILE_WIDTH) / 2;
+    tileShifts = allocTileShifts();
+}
 
 /// Loads the PNG and analyses it.
 void initTiles() {
@@ -452,7 +492,7 @@ void initTiles() {
         fprintf(stderr, "Error: \"%s\" not found!\n", filename);
         exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
     }
-
+    setImageWidthHeight(filename);
     // load the large PNG
     SDL_Surface *image = IMG_Load(filename);
     if (!image) imgfatal(__FILE__, __LINE__);
