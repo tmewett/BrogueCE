@@ -57,6 +57,8 @@ static int readFromSocket(unsigned char *buf, int size);
 static void writeToSocket(unsigned char *buf, int size);
 static void flushOutputBuffer();
 
+extern int snprintf(char *restrict, unsigned long, const char *restrict, ...);
+
 static void gameLoop() {
     openLogfile();
     writeToLog("Logfile started\n");
@@ -213,7 +215,7 @@ static void sendStatusUpdate() {
 }
 
 // Pause by doing a blocking poll on the socket
-static boolean web_pauseForMilliseconds(short milliseconds) {
+static boolean web_pauseForMilliseconds(short milliseconds, PauseBehavior _) {
     fd_set input;
     struct timeval timeout;
 
@@ -300,8 +302,8 @@ static void web_notifyEvent(short eventId, int data1, int data2, const char *str
     statusOutputBuffer[6] = data1;
     statusOutputBuffer[7] = rogue.depthLevel >> 8 & 0xff;
     statusOutputBuffer[8] = rogue.depthLevel;
-    statusOutputBuffer[9] = rogue.easyMode >> 8 & 0xff;
-    statusOutputBuffer[10] = rogue.easyMode;
+    statusOutputBuffer[9] = rogue.mode >> 8 & 0xff;
+    statusOutputBuffer[10] = rogue.mode;
     statusOutputBuffer[11] = rogue.gold >> 24 & 0xff;
     statusOutputBuffer[12] = rogue.gold >> 16 & 0xff;
     statusOutputBuffer[13] = rogue.gold >> 8 & 0xff;

@@ -599,6 +599,7 @@ void RNGCheck() {
 static boolean unpause() {
     if (rogue.playbackOOS) {
         flashTemporaryAlert(" Out of sync ", 2000);
+        rogue.gameHasEnded = true; // Seth: Added to ensure we exit when oos
     } else if (rogue.playbackPaused) {
         rogue.playbackPaused = false;
         return true;

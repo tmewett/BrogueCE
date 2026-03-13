@@ -23,3 +23,6 @@ RELEASE := NO
 
 # Configure the executable to run from a macOS .app bundle (only works in graphical mode)
 MAC_APP := NO
+
+# Tablet platform (no quit, ui modes, software keyboard, etc.)
+TABLET := NO

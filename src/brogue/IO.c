@@ -569,6 +569,7 @@ void mainInputLoop() {
 
     rogue.cursorLoc = INVALID_POS;
 
+    uiMode = CBrogueGameEventInNormalPlay; // tablet ui mode
     while (!rogue.gameHasEnded && (!playingBack || !canceled)) { // repeats until the game ends
 
         oldRNG = rogue.RNG;
@@ -2740,7 +2741,11 @@ boolean getInputTextString(char *inputText,
     // x and y mark the origin for text entry.
     if (useDialogBox) {
         x = (COLS - max(maxLength, strLenWithoutEscapes(prompt))) / 2;
+#ifdef BROGUE_TABLET
+        y = ROWS / 2 - 5;  //  move dialogues up so the onscreen tablet keyboard doesn't obscure them
+#else
         y = ROWS / 2 - 1;
+#endif
         clearDisplayBuffer(&dbuf);
         rectangularShading(x - 1, y - 2, max(maxLength, strLenWithoutEscapes(prompt)) + 2,
                            4, &interfaceBoxColor, INTERFACE_OPACITY, &dbuf);
@@ -2765,6 +2770,10 @@ boolean getInputTextString(char *inputText,
     if (inputText != defaultEntry) {
         strcpy(inputText, defaultEntry);
     }
+
+    // Copy the input string before padding it
+    strcpy(uiTextEntry, inputText);
+
     charNum = strLenWithoutEscapes(inputText);
     for (i = charNum; i < maxLength; i++) {
         inputText[i] = ' ';
@@ -2776,7 +2785,9 @@ boolean getInputTextString(char *inputText,
         strcpy(suffix, promptSuffix);
     }
 
+    CBrogueGameEvent oldUiMode = uiMode;
     do {
+        uiMode = CBrogueGameEventShowKeyboardAndEscape; // tablet ui mode
         printString(suffix, charNum + x, y, &gray, &black, 0);
         plotCharWithColor((suffix[0] ? suffix[0] : ' '), (windowpos){ x + charNum, y }, &black, &white);
         keystroke = nextKeyPress(true);
@@ -2823,6 +2834,8 @@ boolean getInputTextString(char *inputText,
         }
 #endif
     } while (keystroke != RETURN_KEY && keystroke != ESCAPE_KEY);
+    uiMode = oldUiMode;
+    uiTextEntry[0] = '\0';
 
     if (useDialogBox) {
         restoreDisplayBuffer(&rbuf);
@@ -2914,6 +2927,8 @@ void waitForAcknowledgment() {
         return;
     }
 
+    CBrogueGameEvent oldUiMode = uiMode;
+    uiMode = CBrogueGameEventShowEscape;    // tablet ui mode
     do {
         nextBrogueEvent(&theEvent, false, false, false);
         if (theEvent.eventType == KEYSTROKE && theEvent.param1 != ACKNOWLEDGE_KEY && theEvent.param1 != ESCAPE_KEY) {
@@ -2921,13 +2936,18 @@ void waitForAcknowledgment() {
         }
     } while (!(theEvent.eventType == KEYSTROKE && (theEvent.param1 == ACKNOWLEDGE_KEY || theEvent.param1 == ESCAPE_KEY)
                || theEvent.eventType == MOUSE_UP));
+    uiMode = oldUiMode;    // tablet ui mode
 }
 
 void waitForKeystrokeOrMouseClick() {
     rogueEvent theEvent;
+
+    CBrogueGameEvent oldUiMode = uiMode;
+    uiMode = CBrogueGameEventShowEscape;    // tablet ui mode
     do {
         nextBrogueEvent(&theEvent, false, false, false);
     } while (theEvent.eventType != KEYSTROKE && theEvent.eventType != MOUSE_UP);
+    uiMode = oldUiMode;    // tablet ui mode
 }
 
 boolean confirm(char *prompt, boolean alsoDuringPlayback) {
