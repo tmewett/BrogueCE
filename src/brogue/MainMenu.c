@@ -539,6 +539,7 @@ static void titleMenu() {
     rogue.creaturesWillFlashThisTurn = false; // total unconscionable hack
 
     rogueEvent theEvent;
+    theEvent.eventType = EVENT_ERROR;
     short mainIndex = -1;
     short flyoutIndex = -1;
     windowpos bPos;
