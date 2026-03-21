@@ -1373,7 +1373,7 @@ void victory(boolean superVictory) {
         notifyEvent(GAMEOVER_RECORDING, 0, 0, "recording ended", "none");
     }
 
-    if (!rogue.playbackMode && rogue.mode != GAME_MODE_EASY && rogue.mode != GAME_MODE_NORMAL) {
+    if (!rogue.playbackMode && rogue.mode != GAME_MODE_EASY && rogue.mode != GAME_MODE_WIZARD) {
         saveRunHistory(victoryVerb, "-", (int) theEntry.score, gemCount);
     }
 
