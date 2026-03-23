@@ -1207,7 +1207,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         notifyEvent(GAMEOVER_RECORDING, 0, 0, "recording ended", "none");
     }
 
-    if (!rogue.playbackMode && rogue.mode != GAME_MODE_EASY &&  rogue.mode != GAME_MODE_WIZARD) {
+    if (!rogue.playbackMode && rogue.mode == GAME_MODE_NORMAL) {
         saveRunHistory(rogue.quit ? "Quit" : "Died", rogue.quit ? "-" : killedBy, (int) theEntry.score, numGems);
     }
 
@@ -1373,7 +1373,7 @@ void victory(boolean superVictory) {
         notifyEvent(GAMEOVER_RECORDING, 0, 0, "recording ended", "none");
     }
 
-    if (!rogue.playbackMode && rogue.mode != GAME_MODE_EASY && rogue.mode != GAME_MODE_NORMAL) {
+    if (!rogue.playbackMode && rogue.mode == GAME_MODE_NORMAL) {
         saveRunHistory(victoryVerb, "-", (int) theEntry.score, gemCount);
     }
 
