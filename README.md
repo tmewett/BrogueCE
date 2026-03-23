@@ -10,7 +10,7 @@ Changes:
 - Android Menu overlay, including a mouse toggle.
 - Swipe gestures for movement.
 
-![Screenshot_20260323_180248_Brogue CE](https://github.com/user-attachments/assets/d2482ce3-b45a-4cb3-baca-5d11fdf954f8)
+![Screenshot_20260323_201423_Brogue CE](https://github.com/user-attachments/assets/281b4ae6-6d50-456d-9471-6492a44f94d1)
 
 ![Screenshot_20260323_180304_Brogue CE](https://github.com/user-attachments/assets/8b89cc9b-7e25-475c-86cc-fdd61edc3486)
 
