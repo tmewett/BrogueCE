@@ -1,0 +1,32 @@
+[submodule "external/jpeg"]
+	path = external/jpeg
+	url = https://github.com/libsdl-org/jpeg.git
+	branch = v9f-SDL
+[submodule "external/libpng"]
+	path = external/libpng
+	url = https://github.com/libsdl-org/libpng.git
+	branch = v1.6.55-SDL
+[submodule "external/libwebp"]
+	path = external/libwebp
+	url = https://github.com/libsdl-org/libwebp.git
+	branch = 1.0.3-SDL
+[submodule "external/libtiff"]
+	path = external/libtiff
+	url = https://github.com/libsdl-org/libtiff.git
+	branch = v4.2.0-SDL
+[submodule "external/zlib"]
+	path = external/zlib
+	url = https://github.com/libsdl-org/zlib.git
+	branch = v1.3.1-SDL
+[submodule "external/libjxl"]
+	path = external/libjxl
+	url = https://github.com/libsdl-org/libjxl.git
+	branch = v0.7.3-SDL
+[submodule "external/libavif"]
+	path = external/libavif
+	url = https://github.com/libsdl-org/libavif.git
+	branch = v1.0.4-SDL
+[submodule "external/dav1d"]
+	path = external/dav1d
+	url = https://github.com/libsdl-org/dav1d.git
+	branch = 1.2.1-SDL

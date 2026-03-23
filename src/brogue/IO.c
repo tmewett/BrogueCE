@@ -27,6 +27,7 @@
 #include "Rogue.h"
 #include "GlobalsBase.h"
 #include "Globals.h"
+#include "platform.h"
 
 #define D_DISABLE_BACKGROUND_COLORS     (WIZARD_MODE && 0)
 
@@ -455,6 +456,7 @@ static void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
         buttons[i].y = ROWS - 1;
         buttons[i].flags |= B_WIDE_CLICK_AREA;
         buttons[i].flags &= ~B_KEYPRESS_HIGHLIGHT;
+        buttons[i].flags &= ~B_DRAW; // Android uses native overlay buttons
     }
 
     buttonCount = 0;
@@ -486,6 +488,7 @@ static void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
         buttonCount++;
 
         strcpy(buttons[buttonCount].text,       "  Menu  ");
+        buttons[buttonCount].hotkey[0] = ESCAPE_KEY;
         buttonCount++;
     } else {
         sprintf(buttons[buttonCount].text,  "   E%sx%splore   ", goldTextEscape, whiteTextEscape);
@@ -510,6 +513,7 @@ static void initializeMenuButtons(buttonState *state, brogueButton buttons[5]) {
         buttonCount++;
 
         strcpy(buttons[buttonCount].text,       "    Menu    ");
+        buttons[buttonCount].hotkey[0] = ESCAPE_KEY;
         buttonCount++;
     }
 
@@ -555,6 +559,7 @@ void mainInputLoop() {
     canceled = false;
     rogue.cursorMode = false; // Controls whether the keyboard moves the cursor or the character.
     steps = 0;
+    boolean androidTextDismissed = false;
 
     rogue.cursorPathIntensity = (rogue.cursorMode ? 50 : 20);
 
@@ -667,8 +672,11 @@ void mainInputLoop() {
                     rogue.playbackMode = false;
 
                     focusedOnMonster = true;
-                    if (monst != &player && (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience || player.status[STATUS_TELEPATHIC])) {
+                    if (androidTextDismissed) {
+                        androidTextDismissed = false;
+                    } else if (monst != &player && (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience || player.status[STATUS_TELEPATHIC])) {
                         rbuf = saveDisplayBuffer();
+                        enterModalMode();
                         printMonsterDetails(monst);
                         textDisplayed = true;
                     }
@@ -678,8 +686,11 @@ void mainInputLoop() {
                     rogue.playbackMode = false;
 
                     focusedOnItem = true;
-                    if (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience) {
+                    if (androidTextDismissed) {
+                        androidTextDismissed = false;
+                    } else if (!player.status[STATUS_HALLUCINATING] || rogue.playbackOmniscience) {
                         rbuf = saveDisplayBuffer();
+                        enterModalMode();
                         printFloorItemDetails(theItem);
                         textDisplayed = true;
                     }
@@ -694,9 +705,22 @@ void mainInputLoop() {
             }
 
             // Get the input!
+            if (textDisplayed) {
+                // On Android, dismiss the description with any input but don't
+                // move the cursor or take action. Skip text on the next iteration
+                // so the user can swipe away before it re-appears.
+                rogueEvent dismissEvent;
+                nextBrogueEvent(&dismissEvent, false, false, false);
+                androidResetTouchState(); // Flush pending MOUSE_UP from the dismiss tap
+                targetConfirmed = false;
+                canceled = false;
+                doEvent = false;
+                androidTextDismissed = true;
+            } else {
             rogue.playbackMode = playingBack;
             doEvent = moveCursor(&targetConfirmed, &canceled, &tabKey, &rogue.cursorLoc, &theEvent, &state, !textDisplayed, rogue.cursorMode, true);
             rogue.playbackMode = false;
+            }
 
             if (state.buttonChosen == 3) { // Actions menu button.
                 buttonInput = actionMenu(buttons[3].x - 4, playingBack); // Returns the corresponding keystroke.
@@ -736,6 +760,7 @@ void mainInputLoop() {
                 focusedOnTerrain = false;
                 if (textDisplayed) {
                     restoreDisplayBuffer(&rbuf); // Erase the monster info window.
+                    exitModalMode();
                 }
                 rogue.playbackMode = playingBack;
                 refreshSideBar(-1, -1, false);
@@ -1977,8 +2002,13 @@ void overlayDisplayBuffer(const screenDisplayBuffer *overBuf) {
 
                 // character and fore color:
                 if (overBuf->cells[i][j].character == ' ') { // Blank cells in the overbuf take the character from the screen.
-                    character = displayBuffer.cells[i][j].character;
-                    foreColor = colorFromComponents(displayBuffer.cells[i][j].foreColorComponents);
+                    if (getRenderMode() == RENDER_MODAL) {
+                        character = ' ';
+                        foreColor = black;
+                    } else {
+                        character = displayBuffer.cells[i][j].character;
+                        foreColor = colorFromComponents(displayBuffer.cells[i][j].foreColorComponents);
+                    }
                     applyColorAverage(&foreColor, &backColor, overBuf->cells[i][j].opacity);
                 } else {
                     character = overBuf->cells[i][j].character;
@@ -1986,7 +2016,11 @@ void overlayDisplayBuffer(const screenDisplayBuffer *overBuf) {
                 }
 
                 // back color:
-                tempColor = colorFromComponents(displayBuffer.cells[i][j].backColorComponents);
+                if (getRenderMode() == RENDER_MODAL) {
+                    tempColor = black;
+                } else {
+                    tempColor = colorFromComponents(displayBuffer.cells[i][j].backColorComponents);
+                }
                 applyColorAverage(&backColor, &tempColor, 100 - overBuf->cells[i][j].opacity);
 
                 plotCharWithColor(character, (windowpos){ i, j }, &foreColor, &backColor);
@@ -2512,6 +2546,13 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
         case RETURN_KEY:
             showCursor();
             break;
+        case CURSOR_TOGGLE_KEY:
+            if (rogue.cursorMode) {
+                hideCursor();
+            } else {
+                showCursor();
+            }
+            break;
         case REST_KEY:
         case PERIOD_KEY:
         case NUMPAD_5:
@@ -2737,6 +2778,7 @@ boolean getInputTextString(char *inputText,
         defaultEntry[strlen(defaultEntry) - defaultEntrylengthOverflow] = '\0';
     }
 
+    if (useDialogBox) enterModalMode();
     // x and y mark the origin for text entry.
     if (useDialogBox) {
         x = (COLS - max(maxLength, strLenWithoutEscapes(prompt))) / 2;
@@ -2826,6 +2868,7 @@ boolean getInputTextString(char *inputText,
 
     if (useDialogBox) {
         restoreDisplayBuffer(&rbuf);
+        exitModalMode();
     }
 
     inputText[charNum] = '\0';
@@ -4231,10 +4274,12 @@ void displayFeatsScreen() {
             dbuf.cells[i][j].opacity = (i < STAT_BAR_WIDTH ? 0 : INTERFACE_OPACITY);
         }
     }
+    enterModalMode();
     const SavedDisplayBuffer rbuf = saveDisplayBuffer();
     overlayDisplayBuffer(&dbuf);
     waitForKeystrokeOrMouseClick();
     restoreDisplayBuffer(&rbuf);
+    exitModalMode();
 }
 
 void printDiscoveriesScreen() {
@@ -4268,11 +4313,13 @@ void printDiscoveriesScreen() {
             dbuf.cells[i][j].opacity = (i < STAT_BAR_WIDTH ? 0 : INTERFACE_OPACITY);
         }
     }
+    enterModalMode();
     overlayDisplayBuffer(&dbuf);
 
     waitForKeystrokeOrMouseClick();
 
     restoreDisplayBuffer(&rbuf);
+    exitModalMode();
 }
 
 void printHighScores(boolean hiliteMostRecent) {
@@ -4287,6 +4334,7 @@ void printHighScores(boolean hiliteMostRecent) {
         hiliteLineNum = -1;
     }
 
+    enterModalMode();
     blackOutScreen();
 
     for (i = 0; i < HIGH_SCORES_COUNT && list[i].score > 0; i++) {
@@ -4334,6 +4382,7 @@ void printHighScores(boolean hiliteMostRecent) {
 
     commitDraws();
     waitForAcknowledgment();
+    exitModalMode();
 }
 
 void displayGrid(short **map) {
@@ -5023,10 +5072,13 @@ short printTextBox(char *textBuf, short x, short y, short width,
     clearDisplayBuffer(&dbuf);
     printStringWithWrapping(textBuf, x2, y2, width, foreColor, backColor, &dbuf);
     rectangularShading(x2, y2, width, lineCount + padLines, backColor, INTERFACE_OPACITY, &dbuf);
+    if (buttonCount > 0) enterModalMode();
     overlayDisplayBuffer(&dbuf);
 
     if (buttonCount > 0) {
-        return buttonInputLoop(buttons, buttonCount, x2, y2, width, by - y2 + 1 + padLines, NULL);
+        short result = buttonInputLoop(buttons, buttonCount, x2, y2, width, by - y2 + 1 + padLines, NULL);
+        exitModalMode();
+        return result;
     } else {
         return -1;
     }

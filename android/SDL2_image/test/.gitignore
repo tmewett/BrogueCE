@@ -1,0 +1,7 @@
+/*.test
+/*.log
+/*.trs
+/CompareSurfaces*.bmp
+/save-*.bmp
+/save*.*
+/testimage

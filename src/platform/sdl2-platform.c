@@ -1,11 +1,10 @@
-#ifdef SDL_PATHS
 #include <unistd.h>
-#endif
-
 #include <limits.h>
 #include <SDL_image.h>
 #include "platform.h"
 #include "tiles.h"
+
+#include "android-touch.h"
 
 #define PAUSE_BETWEEN_EVENT_POLLING     36L//17
 #define MAX_REMAPS  128
@@ -67,6 +66,9 @@ static boolean eventFromKey(rogueEvent *event, SDL_Keycode key) {
             return true;
         case SDLK_TAB:
             event->param1 = TAB_KEY;
+            return true;
+        case SDLK_HOME:
+            event->param1 = CURSOR_TOGGLE_KEY;
             return true;
         case SDLK_PRINTSCREEN:
             event->param1 = PRINTSCREEN_KEY;
@@ -153,9 +155,14 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
     SDL_Event event;
     boolean ret = false;
 
+    // Deliver any queued touch events (e.g. pending MOUSE_UP) without waiting for SDL
+    if (androidTouchEvent(NULL, returnEvent))
+        return true;
 
     // ~ for (int i=0; i < 100 && SDL_PollEvent(&event); i++) {
     while (SDL_PollEvent(&event)) {
+        if (androidTouchEvent(&event, returnEvent))
+            return true;
         if (event.type == SDL_QUIT) {
             // the player clicked the X button!
             SDL_Quit();
@@ -244,27 +251,19 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
 
 
 static void _gameLoop() {
-#ifdef SDL_PATHS
-    char *path = SDL_GetBasePath();
-    if (path) {
-        fprintf(stderr, "Base path: %s\n", path);
-        path[strlen(path) - 1] = '\0';  // remove trailing separator
-        strcpy(dataDirectory, path);
-    } else {
-        fprintf(stderr, "Failed to find the path to the application\n");
-        exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
-    }
-    free(path);
-
-    path = SDL_GetPrefPath("Brogue", "Brogue CE");
+    char *path = SDL_GetPrefPath("Brogue", "Brogue CE");
     if (!path || chdir(path) != 0) {
         fprintf(stderr, "Failed to find or change to the save directory\n");
         exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
     }
     fprintf(stderr, "Save path: %s\n", path);
+    androidExtractAssets(path);
+    path[strlen(path) - 1] = '\0';  // remove trailing separator
+    strcpy(dataDirectory, path);
     free(path);
-#endif
 
+    SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
+    SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
     if (SDL_Init(SDL_INIT_VIDEO) < 0) sdlfatal(__FILE__, __LINE__);
 
     if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) imgfatal(__FILE__, __LINE__);
@@ -273,6 +272,7 @@ static void _gameLoop() {
 
     lastEvent.eventType = EVENT_ERROR;
 
+    fullScreen = true;
     resizeWindow(windowWidth, windowHeight);
 
     int statusCode = rogueMain();
@@ -340,7 +340,7 @@ static void _nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boo
 Returns the index of the sprite representing the given glyph. Sprites <256 are
 from the text font sheet, 256+ are from the tiles sheet.
 */
-static int fontIndex(enum displayGlyph glyph) {
+int fontIndex(enum displayGlyph glyph) {
     // These are the only non-ASCII glyphs which always come from the font sheet
     if (glyph == G_UP_ARROW) return 0x90;
     if (glyph == G_DOWN_ARROW) return 0x91;

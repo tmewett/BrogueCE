@@ -93,21 +93,25 @@ unsigned int glyphToUnicode(enum displayGlyph glyph);
 boolean isEnvironmentGlyph(enum displayGlyph glyph);
 void setHighScoresFilename(char *buffer, int bufferMaxLength);
 
-#ifdef BROGUE_SDL
 extern struct brogueConsole sdlConsole;
 extern int windowWidth;
 extern int windowHeight;
 extern boolean fullScreen;
 extern boolean softwareRendering;
-#endif
+int fontIndex(enum displayGlyph glyph);
 
-#ifdef BROGUE_CURSES
-extern struct brogueConsole cursesConsole;
-#endif
+void androidResetTouchState(void);
+#define TITLE_COLS 140
+void updateTitleScreenTile(int row, int column, enum displayGlyph glyph,
+    short foreRed, short foreGreen, short foreBlue,
+    short backRed, short backGreen, short backBlue);
+void androidSetOverlayVisible(boolean visible);
 
-#ifdef BROGUE_WEB
-extern struct brogueConsole webConsole;
-#endif
+enum RenderMode { RENDER_TITLE, RENDER_GAMEPLAY, RENDER_MODAL };
+void setRenderMode(enum RenderMode mode);
+enum RenderMode getRenderMode(void);
+void enterModalMode(void);
+void exitModalMode(void);
 
 extern struct brogueConsole nullConsole;
 

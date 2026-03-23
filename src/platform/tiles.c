@@ -4,6 +4,12 @@
 #include "platform.h"
 #include "tiles.h"
 
+#include "android-touch.h"
+#include "GlobalsBase.h"
+
+static enum RenderMode renderMode = RENDER_TITLE;
+static int modalNestCount = 0;
+
 #define PI  3.14159265358979323846
 
 #define PNG_WIDTH    2048   // width (px) of the source PNG
@@ -54,6 +60,57 @@ static boolean tileEmpty[TILE_ROWS][TILE_COLS];   // true if a tile is completel
 static int8_t tileShifts[TILE_ROWS][TILE_COLS][2][MAX_TILE_SIZE][3];
 
 static ScreenTile screenTiles[ROWS][COLS];  // buffer for the expected contents of the screen
+static ScreenTile uiTiles[ROWS][COLS];     // UI overlay layer (sidebar, messages, bottom bar, modals)
+
+static ScreenTile titleScreenTiles[ROWS][TITLE_COLS];
+
+void updateTitleScreenTile(int row, int column, enum displayGlyph glyph,
+    short foreRed, short foreGreen, short foreBlue,
+    short backRed, short backGreen, short backBlue)
+{
+    if (column < 0 || column >= TITLE_COLS || row < 0 || row >= ROWS) return;
+    titleScreenTiles[row][column] = (ScreenTile){
+        .foreRed   = foreRed,
+        .foreGreen = foreGreen,
+        .foreBlue  = foreBlue,
+        .backRed   = backRed,
+        .backGreen = backGreen,
+        .backBlue  = backBlue,
+        .charIndex = fontIndex(glyph),
+        .needsRefresh = 1
+    };
+}
+
+static void clearOverlayRegion(void) {
+    for (int y = 0; y < ROWS; y++)
+        for (int x = 0; x < COLS; x++)
+            if (x >= STAT_BAR_WIDTH && y >= MESSAGE_LINES && y < ROWS - 2)
+                uiTiles[y][x] = (ScreenTile){0};
+}
+
+void setRenderMode(enum RenderMode mode) {
+    renderMode = mode;
+    modalNestCount = 0;
+    if (mode == RENDER_GAMEPLAY)
+        clearOverlayRegion();
+    else if (mode == RENDER_TITLE)
+        memset(uiTiles, 0, sizeof(uiTiles));
+}
+
+enum RenderMode getRenderMode(void) { return renderMode; }
+
+void enterModalMode(void) {
+    if (modalNestCount++ == 0) renderMode = RENDER_MODAL;
+}
+
+void exitModalMode(void) {
+    if (--modalNestCount <= 0) {
+        modalNestCount = 0;
+        renderMode = RENDER_GAMEPLAY;
+        clearOverlayRegion();
+    }
+}
+
 static int baseTileWidth = -1;      // width (px) of tiles in the smallest texture (`Textures[0]`)
 static int baseTileHeight = -1;     // height (px) of tiles in the smallest texture (`Textures[0]`)
 
@@ -591,7 +648,7 @@ void updateTile(int row, int column, short charIndex,
     short foreRed, short foreGreen, short foreBlue,
     short backRed, short backGreen, short backBlue)
 {
-    screenTiles[row][column] = (ScreenTile){
+    ScreenTile tile = {
         .foreRed   = foreRed,
         .foreGreen = foreGreen,
         .foreBlue  = foreBlue,
@@ -601,22 +658,103 @@ void updateTile(int row, int column, short charIndex,
         .charIndex = charIndex,
         .needsRefresh = 1
     };
+
+    switch (renderMode) {
+    case RENDER_TITLE:
+        screenTiles[row][column] = tile;
+        break;
+    case RENDER_MODAL:
+        uiTiles[row][column] = tile;
+        break;
+    case RENDER_GAMEPLAY:
+        if (column < STAT_BAR_WIDTH || row < MESSAGE_LINES || row >= ROWS - 2) {
+            uiTiles[row][column] = tile;
+            screenTiles[row][column] = (ScreenTile){0};
+            screenTiles[row][column].needsRefresh = 1;
+        } else {
+            screenTiles[row][column] = tile;
+            uiTiles[row][column] = (ScreenTile){0};
+            uiTiles[row][column].needsRefresh = 1;
+        }
+        break;
+    }
 }
 
+
+/// Renders a tile grid to the screen.
+/// `tilePtr` points to the first element of a [rows][cols] ScreenTile array.
+/// `cols`, `rows` are the grid dimensions.
+static void renderTilesEx(SDL_Renderer *renderer, ScreenTile *tilePtr,
+                          int cols, int rows,
+                          int ofsX, int ofsY, int width, int height) {
+    for (int step = -1; step < numTextures; step++) {
+        for (int x = 0; x < cols; x++) {
+            int tileWidth = ((x+1) * width / cols) - (x * width / cols);
+            if (tileWidth == 0) continue;
+
+            for (int y = 0; y < rows; y++) {
+                int tileHeight = ((y+1) * height / rows) - (y * height / rows);
+                if (tileHeight == 0) continue;
+
+                ScreenTile *tile = &tilePtr[y * cols + x];
+
+                if (step < 0) {
+                    if (tile->backRed == 0 && tile->backGreen == 0 && tile->backBlue == 0)
+                        continue;
+
+                    SDL_Rect dest = {
+                        ofsX + x * width / cols,
+                        ofsY + y * height / rows,
+                        tileWidth, tileHeight
+                    };
+                    if (SDL_SetRenderDrawColor(renderer,
+                        round(2.55 * tile->backRed),
+                        round(2.55 * tile->backGreen),
+                        round(2.55 * tile->backBlue), 255) < 0) sdlfatal(__FILE__, __LINE__);
+                    if (SDL_RenderFillRect(renderer, &dest) < 0) sdlfatal(__FILE__, __LINE__);
+
+                } else {
+                    int textureIndex = (numTextures < 4 ? 0 : (tileWidth > baseTileWidth ? 1 : 0) + (tileHeight > baseTileHeight ? 2 : 0));
+                    if (step != textureIndex) continue;
+
+                    int tileRow    = tile->charIndex / 16;
+                    int tileColumn = tile->charIndex % 16;
+
+                    if (tileEmpty[tileRow][tileColumn]
+                            && !(tileRow == 21 && tileColumn == 1))
+                        continue;
+
+                    SDL_Rect src = {
+                        (baseTileWidth  + (step == 1 || step == 3 ? 1 : 0)) * tileColumn,
+                        (baseTileHeight + (step == 2 || step == 3 ? 1 : 0)) * tileRow,
+                        baseTileWidth  + (step == 1 || step == 3 ? 1 : 0),
+                        baseTileHeight + (step == 2 || step == 3 ? 1 : 0)
+                    };
+                    SDL_Rect dest = {
+                        ofsX + x * width / cols,
+                        ofsY + y * height / rows,
+                        tileWidth, tileHeight
+                    };
+                    if (SDL_SetTextureColorMod(Textures[step],
+                        round(2.55 * tile->foreRed),
+                        round(2.55 * tile->foreGreen),
+                        round(2.55 * tile->foreBlue)) < 0) sdlfatal(__FILE__, __LINE__);
+                    if (SDL_RenderCopy(renderer, Textures[step], &src, &dest) < 0) sdlfatal(__FILE__, __LINE__);
+                }
+            }
+        }
+    }
+}
+
+static void renderTiles(SDL_Renderer *renderer, ScreenTile tiles[ROWS][COLS],
+                        int ofsX, int ofsY, int width, int height) {
+    renderTilesEx(renderer, &tiles[0][0], COLS, ROWS, ofsX, ofsY, width, height);
+}
 
 /// Draws everything on screen.
 ///
 /// OpenGL drivers don't like alternating between different textures too much, so we
 /// first draw the background colors then do 4 passes over the tiles, one pass per texture.
-///
-/// Some video drivers are quite inefficient, notably in virtual machines, so
-/// there is a new `--no-gpu` command-line parameter to disable hardware acceleration.
-/// The software renderer does not support HiDPI, though.
-///
-/// To improve performance of the software renderer, we don't redraw the whole screen but
-/// only the tiles that have changed recently (which is tracked with ScreenTile::needsRefresh).
-/// This works because, unlike the accelerated renderers, the software renderer draws on a
-/// single surface and doesn't do double-buffering.
 ///
 void updateScreen() {
     if (!Win) return;
@@ -628,7 +766,6 @@ void updateScreen() {
 
         if (SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE) < 0) sdlfatal(__FILE__, __LINE__);
 
-        // see if we ended up using the software renderer or not
         SDL_RendererInfo info;
         if (SDL_GetRendererInfo(renderer, &info) < 0) sdlfatal(__FILE__, __LINE__);
         softwareRendering = (strcmp(info.name, "software") == 0);
@@ -638,86 +775,163 @@ void updateScreen() {
     if (SDL_GetRendererOutputSize(renderer, &outputWidth, &outputHeight) < 0) sdlfatal(__FILE__, __LINE__);
     if (outputWidth == 0 || outputHeight == 0) return;
 
-    createTextures(renderer, outputWidth, outputHeight);
-
     if (!softwareRendering) {
-        // black out the frame (double-buffering invalidated it)
         if (SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0) < 0) sdlfatal(__FILE__, __LINE__);
         if (SDL_RenderClear(renderer) < 0) sdlfatal(__FILE__, __LINE__);
     }
 
-    // To please the OpenGL renderer, we'll proceed in 5 steps:
-    //  -1. background colors
-    //  0.  Textures[0]
-    //  1.  Textures[1]
-    //  2.  Textures[2]
-    //  3.  Textures[3]
+    int offsetX = 0, offsetY = 0;
+    int screenW = outputWidth, screenH = outputHeight;
+    int fitW = outputHeight * 16 / 10;
+    int fitH = outputHeight;
+    if (fitW > outputWidth) {
+        fitW = outputWidth;
+        fitH = outputWidth * 10 / 16;
+    }
 
-    for (int step = -1; step < numTextures; step++) {
+    float effectiveZoom = (renderMode != RENDER_TITLE) ? androidZoomLevel : 1.0f;
+    boolean inGame = (renderMode != RENDER_TITLE);
 
-        for (int x = 0; x < COLS; x++) {
-            int tileWidth = ((x+1) * outputWidth / COLS) - (x * outputWidth / COLS);
-            if (tileWidth == 0) continue;
+    if (inGame && effectiveZoom > 1.0f) {
+        // Clear UI regions from the map layer so they don't render
+        // behind the overlay (sidebar, messages, bottom bar)
+        for (int y = 0; y < ROWS; y++)
+            for (int x = 0; x < COLS; x++)
+                if (x < STAT_BAR_WIDTH || y < MESSAGE_LINES || y >= ROWS - 2)
+                    screenTiles[y][x] = (ScreenTile){0};
+    }
 
-            for (int y = 0; y < ROWS; y++) {
-                int tileHeight = ((y+1) * outputHeight / ROWS) - (y * outputHeight / ROWS);
-                if (tileHeight == 0) continue;
+    int zoomW = (int)(fitW * effectiveZoom);
+    int zoomH = (int)(fitH * effectiveZoom);
 
-                ScreenTile *tile = &screenTiles[y][x];
-                if (softwareRendering && !tile->needsRefresh) {
-                    continue; // software rendering does not use double-buffering, so the tile is still on screen
+    // Auto-center view (suppressed during two-finger drag)
+    if (effectiveZoom > 1.0f && !androidPanOverride) {
+        int centerX, centerY;
+        if (inGame) {
+            centerX = player.loc.x + STAT_BAR_WIDTH + 1;
+            centerY = player.loc.y + MESSAGE_LINES;
+        } else {
+            centerX = COLS / 2;
+            centerY = ROWS / 2;
+        }
+        float targetPanX = screenW / 2.0f - (centerX + 0.5f) * zoomW / COLS - (screenW - zoomW) / 2.0f;
+        float targetPanY = screenH / 2.0f - (centerY + 0.5f) * zoomH / ROWS - (screenH - zoomH) / 2.0f;
+        androidPanX += (targetPanX - androidPanX) * 0.15f;
+        androidPanY += (targetPanY - androidPanY) * 0.15f;
+    }
+
+    int cx = (screenW - zoomW) / 2 + (int)androidPanX;
+    int cy = (screenH - zoomH) / 2 + (int)androidPanY;
+
+    // Clamp pan
+    if (cx > 0) { androidPanX -= cx; cx = 0; }
+    if (cy > 0) { androidPanY -= cy; cy = 0; }
+    if (cx + zoomW < screenW) { androidPanX += screenW - (cx + zoomW); cx = screenW - zoomW; }
+    if (cy + zoomH < screenH) { androidPanY += screenH - (cy + zoomH); cy = screenH - zoomH; }
+
+    if (effectiveZoom <= 1.0f) {
+        androidPanX = 0; androidPanY = 0;
+        cx = (screenW - zoomW) / 2;
+        cy = (screenH - zoomH) / 2;
+    }
+
+    offsetX = cx;
+    offsetY = cy;
+    outputWidth = zoomW;
+    outputHeight = zoomH;
+
+    createTextures(renderer, outputWidth, outputHeight);
+
+    // Pass 1: render the map/title layer
+    if (!inGame) {
+        renderTilesEx(renderer, &titleScreenTiles[0][0], TITLE_COLS, ROWS,
+                      0, 0, screenW, screenH);
+    } else {
+        renderTiles(renderer, screenTiles, offsetX, offsetY, outputWidth, outputHeight);
+    }
+
+    // Dim the zoomed dungeon when a modal overlay is active
+    if (renderMode == RENDER_MODAL) {
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 160);
+        SDL_RenderFillRect(renderer, NULL);
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+    }
+
+    // Pass 2: render the UI layer (uiTiles)
+    // During gameplay: 1x scale, pinned to screen edges
+    // Title menu: 2x scale, centered
+    if (inGame && effectiveZoom > 1.0f) {
+        int uiW = fitW;
+        int uiH = fitH;
+        int uiBaseX = (screenW - uiW) / 2;
+        int uiBaseY = (screenH - uiH) / 2;
+        // Sidebar pinned to left screen edge (x starts at 0, not uiBaseX)
+        // Adjust uiTiles X positions: shift sidebar cols to screen-left
+        // We render the full uiTiles grid at 1x centered, except sidebar at left edge.
+
+        // Render UI grid centered, skipping sidebar (rendered separately at left edge)
+        {
+            // Temporarily zero sidebar cols so renderTiles skips them
+            ScreenTile savedSidebar[ROWS][STAT_BAR_WIDTH];
+            for (int y = 0; y < ROWS; y++)
+                for (int x = 0; x < STAT_BAR_WIDTH; x++) {
+                    savedSidebar[y][x] = uiTiles[y][x];
+                    uiTiles[y][x] = (ScreenTile){0};
                 }
+            renderTiles(renderer, uiTiles, uiBaseX, uiBaseY, uiW, uiH);
+            // Restore sidebar data for the left-edge render
+            for (int y = 0; y < ROWS; y++)
+                for (int x = 0; x < STAT_BAR_WIDTH; x++)
+                    uiTiles[y][x] = savedSidebar[y][x];
+        }
 
-                if (step < 0) {
-                    if (!softwareRendering && tile->backRed == 0 && tile->backGreen == 0 && tile->backBlue == 0) {
-                        continue; // SDL_RenderClear already painted everything black
+        // During gameplay, re-render sidebar pinned to left screen edge
+        if (inGame) {
+            SDL_Rect sidebarBg = {0, 0, STAT_BAR_WIDTH * fitW / COLS, fitH};
+            if (SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255) < 0) sdlfatal(__FILE__, __LINE__);
+            if (SDL_RenderFillRect(renderer, &sidebarBg) < 0) sdlfatal(__FILE__, __LINE__);
+
+            // Render sidebar tiles at left edge
+            for (int step = -1; step < numTextures; step++) {
+                for (int x = 0; x < STAT_BAR_WIDTH; x++) {
+                    int tw = ((x+1) * fitW / COLS) - (x * fitW / COLS);
+                    if (tw == 0) continue;
+                    for (int y = 0; y < ROWS; y++) {
+                        int th = ((y+1) * fitH / ROWS) - (y * fitH / ROWS);
+                        if (th == 0) continue;
+                        ScreenTile *tile = &uiTiles[y][x];
+
+                        if (step < 0) {
+                            if (tile->backRed == 0 && tile->backGreen == 0 && tile->backBlue == 0)
+                                continue;
+                            SDL_Rect dest = {x * fitW / COLS, y * fitH / ROWS, tw, th};
+                            SDL_SetRenderDrawColor(renderer,
+                                round(2.55 * tile->backRed),
+                                round(2.55 * tile->backGreen),
+                                round(2.55 * tile->backBlue), 255);
+                            SDL_RenderFillRect(renderer, &dest);
+                        } else {
+                            int ti = (numTextures < 4 ? 0 : (tw > baseTileWidth ? 1 : 0) + (th > baseTileHeight ? 2 : 0));
+                            if (step != ti) continue;
+                            int tileRow = tile->charIndex / 16;
+                            int tileColumn = tile->charIndex % 16;
+                            if (tileEmpty[tileRow][tileColumn] && !(tileRow == 21 && tileColumn == 1))
+                                continue;
+                            SDL_Rect src = {
+                                (baseTileWidth + (step==1||step==3?1:0)) * tileColumn,
+                                (baseTileHeight + (step==2||step==3?1:0)) * tileRow,
+                                baseTileWidth + (step==1||step==3?1:0),
+                                baseTileHeight + (step==2||step==3?1:0)
+                            };
+                            SDL_Rect dest = {x * fitW / COLS, y * fitH / ROWS, tw, th};
+                            SDL_SetTextureColorMod(Textures[step],
+                                round(2.55 * tile->foreRed),
+                                round(2.55 * tile->foreGreen),
+                                round(2.55 * tile->foreBlue));
+                            SDL_RenderCopy(renderer, Textures[step], &src, &dest);
+                        }
                     }
-
-                    SDL_Rect dest;
-                    dest.w = tileWidth;
-                    dest.h = tileHeight;
-                    dest.x = x * outputWidth / COLS;
-                    dest.y = y * outputHeight / ROWS;
-
-                    // paint the background
-                    if (SDL_SetRenderDrawColor(renderer,
-                        round(2.55 * tile->backRed),
-                        round(2.55 * tile->backGreen),
-                        round(2.55 * tile->backBlue), 255) < 0) sdlfatal(__FILE__, __LINE__);
-                    if (SDL_RenderFillRect(renderer, &dest) < 0) sdlfatal(__FILE__, __LINE__);
-
-                } else {
-                    int textureIndex = (numTextures < 4 ? 0 : (tileWidth > baseTileWidth ? 1 : 0) + (tileHeight > baseTileHeight ? 2 : 0));
-                    if (step != textureIndex) {
-                        continue; // this tile uses another texture and gets painted at another step
-                    }
-
-                    int tileRow    = tile->charIndex / 16;
-                    int tileColumn = tile->charIndex % 16;
-
-                    if (tileEmpty[tileRow][tileColumn]
-                            && !(tileRow == 21 && tileColumn == 1)) {  // wall top (procedural)
-                        continue; // there is nothing to draw
-                    }
-
-                    SDL_Rect src;
-                    src.w = baseTileWidth  + (step == 1 || step == 3 ? 1 : 0);
-                    src.h = baseTileHeight + (step == 2 || step == 3 ? 1 : 0);
-                    src.x = src.w * tileColumn;
-                    src.y = src.h * tileRow;
-
-                    SDL_Rect dest;
-                    dest.w = tileWidth;
-                    dest.h = tileHeight;
-                    dest.x = x * outputWidth / COLS;
-                    dest.y = y * outputHeight / ROWS;
-
-                    // blend the foreground
-                    if (SDL_SetTextureColorMod(Textures[step],
-                        round(2.55 * tile->foreRed),
-                        round(2.55 * tile->foreGreen),
-                        round(2.55 * tile->foreBlue)) < 0) sdlfatal(__FILE__, __LINE__);
-                    if (SDL_RenderCopy(renderer, Textures[step], &src, &dest) < 0) sdlfatal(__FILE__, __LINE__);
                 }
             }
         }
@@ -725,12 +939,13 @@ void updateScreen() {
 
     SDL_RenderPresent(renderer);
 
-    // the screen is now up to date
-    for (int y = 0; y < ROWS; y++) {
-        for (int x = 0; x < COLS; x++) {
+    // Mark all tiles clean
+    for (int y = 0; y < ROWS; y++)
+        for (int x = 0; x < COLS; x++)
             screenTiles[y][x].needsRefresh = 0;
-        }
-    }
+    for (int y = 0; y < ROWS; y++)
+        for (int x = 0; x < COLS; x++)
+            uiTiles[y][x].needsRefresh = 0;
 }
 
 

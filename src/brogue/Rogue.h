@@ -1198,6 +1198,7 @@ enum tileFlags {
 #define AUTOPLAY_KEY        'A'
 #define SEED_KEY            '~'
 #define EASY_MODE_KEY       '&'
+#define CURSOR_TOGGLE_KEY   '\001'
 #define ESCAPE_KEY          '\033'
 #define RETURN_KEY          '\012'
 #define DELETE_KEY          '\177'

@@ -24,6 +24,7 @@
 #include "Rogue.h"
 #include "GlobalsBase.h"
 #include "Globals.h"
+#include "platform.h"
 #include <math.h>
 #include <time.h>
 
@@ -335,7 +336,7 @@ short buttonInputLoop(brogueButton *buttons,
     assureCosmeticRNG;
 
     canceled = false;
-    
+
     initializeButtonState(&state, buttons, buttonCount, winX, winY, winWidth, winHeight);
 
     do {

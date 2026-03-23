@@ -25,6 +25,7 @@
 #include "Rogue.h"
 #include "GlobalsBase.h"
 #include "Globals.h"
+#include "platform.h"
 
 #define MAGIC_POLARITY_BENEVOLENT 1
 #define MAGIC_POLARITY_MALEVOLENT -1
@@ -3010,6 +3011,7 @@ char displayInventory(unsigned short categoryMask,
     buttons[itemNumber + extraLineCount + 1].hotkey[0] = NUMPAD_2;
     buttons[itemNumber + extraLineCount + 1].hotkey[1] = DOWN_ARROW;
 
+    enterModalMode();
     const SavedDisplayBuffer rbuf = saveDisplayBuffer();
     overlayDisplayBuffer(&dbuf);
 
@@ -3115,6 +3117,7 @@ char displayInventory(unsigned short categoryMask,
                         theItem = itemList[highlightItemLine];
                     } else if (actionKey > -1) {
                         // Player took an action directly from the item screen; we're done here.
+                        exitModalMode();
                         restoreRNG;
                         return 0;
                     }
@@ -3124,6 +3127,7 @@ char displayInventory(unsigned short categoryMask,
     } while (repeatDisplay); // so you can get info on multiple items sequentially
 
     restoreDisplayBuffer(&rbuf); // restore the original screen
+    exitModalMode();
 
     restoreRNG;
     return theKey;

@@ -1,0 +1,147 @@
+{
+  "name": "SDL2_image",
+  "remote": "libsdl-org/SDL_image",
+  "dependencies": {
+    "SDL": {
+      "startswith": "2.",
+      "repo": "libsdl-org/SDL"
+    }
+  },
+  "version": {
+    "file": "include/SDL_image.h",
+    "re_major": "^#define SDL_IMAGE_MAJOR_VERSION\\s+([0-9]+)$",
+    "re_minor": "^#define SDL_IMAGE_MINOR_VERSION\\s+([0-9]+)$",
+    "re_micro": "^#define SDL_IMAGE_PATCHLEVEL\\s+([0-9]+)$"
+  },
+  "source": {
+    "checks": [
+      "include/SDL_image.h",
+      "src/IMG.c",
+      "src/IMG_tif.c"
+    ]
+  },
+  "dmg": {
+    "project": "Xcode/SDL_image.xcodeproj",
+    "path": "Xcode/build/SDL2_image.dmg",
+    "scheme": "Create DMG",
+    "build-xcconfig": "Xcode/pkg-support/build.xcconfig",
+    "dependencies": {
+      "SDL": {
+        "artifact": "SDL2-*.dmg"
+      }
+    }
+  },
+  "mingw": {
+    "autotools": {
+      "archs": ["x86", "x64"],
+      "args": [
+        "--with-sdl-prefix=@<@DEP_PREFIX@>@",
+        "CFLAGS=-O2 -I@<@DEP_PREFIX@>@/include -I@<@DEP_PREFIX@>@/include/SDL2",
+        "LDFLAGS=-Wl,-s -L@<@PROJECT_ROOT@>@/VisualC/external/optional/@<@ARCH@>@ -L@<@DEP_PREFIX@>@/lib -lSDL2",
+        "LIBAVIF_CFLAGS=-I@<@PROJECT_ROOT@>@/VisualC/external/include",
+        "LIBAVIF_LIBS=-L@<@PROJECT_ROOT@>@/VisualC/external/optional/@<@ARCH@>@",
+        "LIBTIFF_CFLAGS=-I@<@PROJECT_ROOT@>@/VisualC/external/include",
+        "LIBTIFF_LIBS=-L@<@PROJECT_ROOT@>@/VisualC/external/optional/@<@ARCH@>@",
+        "LIBWEBPDEMUX_CFLAGS=-I@<@PROJECT_ROOT@>@/VisualC/external/include",
+        "LIBWEBPDEMUX_LIBS=-L@<@PROJECT_ROOT@>@/VisualC/external/optional/@<@ARCH@>@",
+        "LIBWEBP_CFLAGS=-I@<@PROJECT_ROOT@>@/VisualC/external/include",
+        "LIBWEBP_LIBS=-L@<@PROJECT_ROOT@>@/VisualC/external/optional/@<@ARCH@>@"
+      ]
+    },
+    "files": {
+      "": [
+        "CHANGES.txt",
+        "LICENSE.txt",
+        "README.txt",
+        "mingw/pkg-support/Makefile"
+      ],
+      "cmake": [
+        "mingw/pkg-support/cmake/sdl2_image-config.cmake",
+        "mingw/pkg-support/cmake/sdl2_image-config-version.cmake"
+      ]
+    },
+    "dependencies": {
+      "SDL": {
+        "artifact": "SDL2-devel-*-mingw.tar.gz",
+        "install-command": "make install-package arch=@<@TRIPLET@>@ prefix=@<@PREFIX@>@"
+      }
+    }
+  },
+  "msvc": {
+    "msbuild": {
+      "archs": [
+        "x86",
+        "x64"
+      ],
+      "projects": [
+        "VisualC/SDL_image.vcxproj"
+      ],
+      "files-lib": {
+        "": [
+          "VisualC/@<@PLATFORM@>@/@<@CONFIGURATION@>@/SDL2_image.dll"
+        ]
+      },
+      "files-devel": {
+        "lib/@<@ARCH@>@": [
+          "VisualC/@<@PLATFORM@>@/@<@CONFIGURATION@>@/SDL2_image.dll",
+          "VisualC/@<@PLATFORM@>@/@<@CONFIGURATION@>@/SDL2_image.lib",
+          "VisualC/@<@PLATFORM@>@/@<@CONFIGURATION@>@/SDL2_image.pdb"
+        ]
+      }
+    },
+    "files-lib": {
+      "": [
+        "README.txt"
+      ],
+      "optional": [
+        "VisualC/external/optional/@<@ARCH@>@/libavif-16.dll",
+        "VisualC/external/optional/@<@ARCH@>@/libtiff-5.dll",
+        "VisualC/external/optional/@<@ARCH@>@/libwebp-7.dll",
+        "VisualC/external/optional/@<@ARCH@>@/libwebpdemux-2.dll",
+        "VisualC/external/optional/@<@ARCH@>@/LICENSE.avif.txt",
+        "VisualC/external/optional/@<@ARCH@>@/LICENSE.dav1d.txt",
+        "VisualC/external/optional/@<@ARCH@>@/LICENSE.tiff.txt",
+        "VisualC/external/optional/@<@ARCH@>@/LICENSE.webp.txt"
+      ]
+    },
+    "files-devel": {
+      "": [
+        "CHANGES.txt",
+        "LICENSE.txt",
+        "README.txt"
+      ],
+      "include": [
+        "include/SDL_image.h"
+      ],
+      "lib/@<@ARCH@>@/optional": [
+        "VisualC/external/optional/@<@ARCH@>@/libavif-16.dll",
+        "VisualC/external/optional/@<@ARCH@>@/libtiff-5.dll",
+        "VisualC/external/optional/@<@ARCH@>@/libwebp-7.dll",
+        "VisualC/external/optional/@<@ARCH@>@/libwebpdemux-2.dll",
+        "VisualC/external/optional/@<@ARCH@>@/LICENSE.avif.txt",
+        "VisualC/external/optional/@<@ARCH@>@/LICENSE.dav1d.txt",
+        "VisualC/external/optional/@<@ARCH@>@/LICENSE.tiff.txt",
+        "VisualC/external/optional/@<@ARCH@>@/LICENSE.webp.txt"
+      ],
+      "cmake": [
+        "VisualC/pkg-support/cmake/sdl2_image-config.cmake",
+        "VisualC/pkg-support/cmake/sdl2_image-config-version.cmake"
+      ]
+    },
+    "dependencies": {
+      "SDL": {
+        "artifact": "SDL2-devel-*-VC.zip",
+        "copy": [
+          {
+            "src": "lib/@<@ARCH@>@/SDL2.*",
+            "dst": "../SDL/VisualC/@<@PLATFORM@>@/@<@CONFIGURATION@>@"
+          },
+          {
+            "src": "include/*",
+            "dst": "../SDL/include"
+          }
+        ]
+      }
+    }
+  }
+}

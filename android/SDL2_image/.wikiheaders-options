@@ -1,0 +1,19 @@
+projectfullname = SDL_image
+projectshortname = SDL_image
+incsubdir = include
+wikisubdir = SDL_image
+apiprefixregex = IMG_
+mainincludefname = SDL_image.h
+versionfname = include/SDL_image.h
+versionmajorregex = \A\#define\s+SDL_IMAGE_MAJOR_VERSION\s+(\d+)\Z
+versionminorregex = \A\#define\s+SDL_IMAGE_MINOR_VERSION\s+(\d+)\Z
+versionpatchregex = \A\#define\s+SDL_IMAGE_PATCHLEVEL\s+(\d+)\Z
+selectheaderregex = \ASDL_image\.h\Z
+projecturl = https://libsdl.org/projects/SDL_image
+wikiurl = https://wiki.libsdl.org/SDL_image
+bugreporturl = https://github.com/libsdl-org/sdlwiki/issues/new
+warn_about_missing = 0
+wikipreamble = (This function is part of SDL_image, a separate library from SDL.)
+wikiheaderfiletext = Defined in [<%fname%>](https://github.com/libsdl-org/SDL_image/blob/SDL2/include/%fname%)
+manpageheaderfiletext = Defined in %fname%
+

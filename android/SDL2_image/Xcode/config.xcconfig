@@ -1,0 +1,25 @@
+//
+//  config.xcconfig
+//  SDL_image
+//
+
+// Configuration settings file format documentation can be found at:
+// https://help.apple.com/xcode/#/dev745c5c974
+
+// Include any optional config for this build
+#include? "build.xcconfig"
+
+// Uncomment these lines to enable AVIF support
+// If you do this, you should run external/download.sh to download the decode libraries and add avif.framework to your application bundle.
+//CONFIG_PREPROCESSOR_DEFINITIONS = $(inherited) LOAD_AVIF
+//CONFIG_FRAMEWORK_LDFLAGS = $(inherited) -weak_framework avif
+
+// Uncomment these lines to enable JPEG-XL support
+// If you do this, you should run external/download.sh to download the decode libraries and add jxl.framework to your application bundle.
+//CONFIG_PREPROCESSOR_DEFINITIONS = $(inherited) LOAD_JXL
+//CONFIG_FRAMEWORK_LDFLAGS = $(inherited) -weak_framework jxl
+
+// Uncomment these lines to enable WebP support
+// If you do this, you should run external/download.sh to download the decode libraries and add webp.framework to your application bundle.
+//CONFIG_PREPROCESSOR_DEFINITIONS = $(inherited) LOAD_WEBP
+//CONFIG_FRAMEWORK_LDFLAGS = $(inherited) -weak_framework webp
