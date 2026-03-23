@@ -27,6 +27,7 @@
 #include "GlobalsBrogue.h"
 #include "GlobalsRapidBrogue.h"
 #include "GlobalsBulletBrogue.h"
+#include "platform.h"
 
 #include <time.h>
 
@@ -222,6 +223,9 @@ void initializeRogue(uint64_t seed) {
 
     rogue.gameHasEnded = false;
     rogue.gameInProgress = true;
+    androidResetTouchState();
+    androidSetOverlayVisible(true);
+    setRenderMode(RENDER_GAMEPLAY);
     rogue.highScoreSaved = false;
     rogue.cautiousMode = false;
     rogue.milliseconds = 0;
@@ -1060,6 +1064,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     player.bookkeepingFlags |= MB_IS_DYING;
     rogue.autoPlayingLevel = false;
     rogue.gameInProgress = false;
+    enterModalMode();
     flushBufferToFile();
 
     if (rogue.playbackFastForward) {
@@ -1182,15 +1187,8 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         displayMoreSign();
     }
 
-    if (serverMode) {
-        blackOutScreen();
-        saveRecordingNoPrompt(recordingFilename);
-    } else {
-        if (!rogue.playbackMode && saveHighScore(theEntry)) {
-            printHighScores(true);
-        }
-        blackOutScreen();
-        saveRecording(recordingFilename);
+    if (!rogue.playbackMode) {
+        saveHighScore(theEntry);
     }
 
     if (rogue.playbackMode && nonInteractivePlayback) {
@@ -1211,6 +1209,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         saveRunHistory(rogue.quit ? "Quit" : "Died", rogue.quit ? "-" : killedBy, (int) theEntry.score, numGems);
     }
 
+    exitModalMode();
     rogue.gameHasEnded = true;
     rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
 }
@@ -1221,11 +1220,12 @@ void victory(boolean superVictory) {
     short i, j, gemCount = 0;
     unsigned long totalValue = 0;
     rogueHighScoresEntry theEntry;
-    boolean qualified, isPlayback;
+    boolean isPlayback;
     
     char recordingFilename[BROGUE_FILENAME_MAX] = {0};
 
     rogue.gameInProgress = false;
+    enterModalMode();
     flushBufferToFile();
 
     if (rogue.playbackFastForward) {
@@ -1340,9 +1340,7 @@ void victory(boolean superVictory) {
     }
 
     if (rogue.mode != GAME_MODE_WIZARD && !rogue.playbackMode) {
-        qualified = saveHighScore(theEntry);
-    } else {
-        qualified = false;
+        saveHighScore(theEntry);
     }
 
     isPlayback = rogue.playbackMode;
@@ -1351,12 +1349,8 @@ void victory(boolean superVictory) {
 
     displayMoreSign();
 
-    if (serverMode) {
-        saveRecordingNoPrompt(recordingFilename);
-    } else {
-        blackOutScreen();
-        saveRecording(recordingFilename);
-        printHighScores(qualified);
+    if (!rogue.playbackMode) {
+        saveHighScore(theEntry);
     }
 
     if (rogue.playbackMode && nonInteractivePlayback) {
@@ -1377,6 +1371,7 @@ void victory(boolean superVictory) {
         saveRunHistory(victoryVerb, "-", (int) theEntry.score, gemCount);
     }
 
+    exitModalMode();
     rogue.gameHasEnded = true;
     rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
 }

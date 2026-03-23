@@ -23,6 +23,7 @@
 #include "Rogue.h"
 #include "GlobalsBase.h"
 #include "Globals.h"
+#include "platform.h"
 
 static void initializeCreateItemButton(brogueButton *button, char *text) {
     char buttonText[COLS * 3];
@@ -77,12 +78,14 @@ static short dialogSelectEntryFromList(
     //Dialog background
     rectangularShading(x - 1, y - 1, width + 1, height + 1, &interfaceBoxColor, INTERFACE_OPACITY, &dbuf);
     //Display the title/background and save the prior display state
+    enterModalMode();
     const SavedDisplayBuffer rbuf = saveDisplayBuffer();
     overlayDisplayBuffer(&dbuf);
     //Display the buttons and wait for user selection
     selectedButton = buttonInputLoop(buttons, buttonCount, x, y, width, height, NULL);
     //Revert the display state
     restoreDisplayBuffer(&rbuf);
+    exitModalMode();
 
     return selectedButton;
 }
