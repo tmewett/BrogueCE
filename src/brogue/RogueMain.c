@@ -1138,7 +1138,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     if (rogue.quit) {
         blackOutScreen();
     } else {
-        screenDisplayBuffer dbuf = displayBuffer;
+        screenDisplayBuffer dbuf = dungeonDisplayBuffer;
         funkyFade(&dbuf, &black, 0, 120, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
     }
 
@@ -1238,7 +1238,7 @@ void victory(boolean superVictory) {
     //
     if (superVictory) {
         message(    "Light streams through the portal, and you are teleported out of the dungeon.", 0);
-        screenDisplayBuffer dbuf = displayBuffer;
+        screenDisplayBuffer dbuf = dungeonDisplayBuffer;
         funkyFade(&dbuf, &superVictoryColor, 0, 240, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
         displayMoreSign();
         printString("Congratulations; you have transcended the Dungeons of Doom!                 ", mapToWindowX(0), mapToWindowY(-1), &black, &white, 0);
@@ -1248,7 +1248,7 @@ void victory(boolean superVictory) {
         strcpy(displayedMessage[0], "You retire in splendor, forever renowned for your remarkable triumph.     ");
     } else {
         message(    "You are bathed in sunlight as you throw open the heavy doors.", 0);
-        screenDisplayBuffer dbuf = displayBuffer;
+        screenDisplayBuffer dbuf = dungeonDisplayBuffer;
         funkyFade(&dbuf, &white, 0, 240, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
         displayMoreSign();
         printString("Congratulations; you have escaped from the Dungeons of Doom!     ", mapToWindowX(0), mapToWindowY(-1), &black, &white, 0);

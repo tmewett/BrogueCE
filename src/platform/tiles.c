@@ -59,8 +59,10 @@ static boolean tileEmpty[TILE_ROWS][TILE_COLS];   // true if a tile is completel
 // The values stored in tileShifts are signed integers. Unit is 1/10th of a pixel.
 static int8_t tileShifts[TILE_ROWS][TILE_COLS][2][MAX_TILE_SIZE][3];
 
-static ScreenTile screenTiles[ROWS][COLS];  // buffer for the expected contents of the screen
-static ScreenTile uiTiles[ROWS][COLS];     // UI overlay layer (sidebar, messages, bottom bar, modals)
+static ScreenTile dungeonTiles[ROWS][COLS]; // dungeon layer (rendered at 2x zoom)
+static ScreenTile uiTiles[ROWS][COLS];     // UI layer (sidebar, messages, bottom bar, modals — rendered at 1x)
+
+boolean plotToUiLayer = false; // set by commitDraws/refreshScreen to route plotChar → updateTile
 
 static ScreenTile titleScreenTiles[ROWS][TITLE_COLS];
 
@@ -659,24 +661,12 @@ void updateTile(int row, int column, short charIndex,
         .needsRefresh = 1
     };
 
-    switch (renderMode) {
-    case RENDER_TITLE:
-        screenTiles[row][column] = tile;
-        break;
-    case RENDER_MODAL:
+    // Route to the correct layer based on plotToUiLayer flag,
+    // which is set by commitDraws/refreshScreen before each buffer pass.
+    if (plotToUiLayer) {
         uiTiles[row][column] = tile;
-        break;
-    case RENDER_GAMEPLAY:
-        if (column < STAT_BAR_WIDTH || row < MESSAGE_LINES || row >= ROWS - 2) {
-            uiTiles[row][column] = tile;
-            screenTiles[row][column] = (ScreenTile){0};
-            screenTiles[row][column].needsRefresh = 1;
-        } else {
-            screenTiles[row][column] = tile;
-            uiTiles[row][column] = (ScreenTile){0};
-            uiTiles[row][column].needsRefresh = 1;
-        }
-        break;
+    } else {
+        dungeonTiles[row][column] = tile;
     }
 }
 
@@ -798,7 +788,7 @@ void updateScreen() {
         for (int y = 0; y < ROWS; y++)
             for (int x = 0; x < COLS; x++)
                 if (x < STAT_BAR_WIDTH || y < MESSAGE_LINES || y >= ROWS - 2)
-                    screenTiles[y][x] = (ScreenTile){0};
+                    dungeonTiles[y][x] = (ScreenTile){0};
     }
 
     int zoomW = (int)(fitW * effectiveZoom);
@@ -847,7 +837,7 @@ void updateScreen() {
         renderTilesEx(renderer, &titleScreenTiles[0][0], TITLE_COLS, ROWS,
                       0, 0, screenW, screenH);
     } else {
-        renderTiles(renderer, screenTiles, offsetX, offsetY, outputWidth, outputHeight);
+        renderTiles(renderer, dungeonTiles, offsetX, offsetY, outputWidth, outputHeight);
     }
 
     // Dim the zoomed dungeon when a modal overlay is active
@@ -942,7 +932,7 @@ void updateScreen() {
     // Mark all tiles clean
     for (int y = 0; y < ROWS; y++)
         for (int x = 0; x < COLS; x++)
-            screenTiles[y][x].needsRefresh = 0;
+            dungeonTiles[y][x].needsRefresh = 0;
     for (int y = 0; y < ROWS; y++)
         for (int x = 0; x < COLS; x++)
             uiTiles[y][x].needsRefresh = 0;

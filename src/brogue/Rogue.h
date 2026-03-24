@@ -3032,7 +3032,8 @@ extern "C" {
     // Obtain one by calling `saveDisplayBuffer()` and restore it to the screen
     // by calling `restoreDisplayBuffer()`.
     typedef struct SavedDisplayBuffer {
-        screenDisplayBuffer savedScreen;
+        screenDisplayBuffer savedDungeon;
+        screenDisplayBuffer savedUI;
     } SavedDisplayBuffer;
     SavedDisplayBuffer saveDisplayBuffer(void);
     void restoreDisplayBuffer(const SavedDisplayBuffer *savedBuf);

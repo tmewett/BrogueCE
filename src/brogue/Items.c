@@ -3074,6 +3074,12 @@ char displayInventory(unsigned short categoryMask,
                         restoreDisplayBuffer(&rbuf); // restore the original screen
                     }
 
+                    // Exit modal before gameplay actions so the dungeon
+                    // renders undimmed at 2x (e.g. throw targeting).
+                    if (actionKey > -1 && actionKey != UP_KEY && actionKey != DOWN_KEY) {
+                        exitModalMode();
+                    }
+
                     switch (actionKey) {
                         case APPLY_KEY:
                             apply(theItem);
@@ -3116,8 +3122,6 @@ char displayInventory(unsigned short categoryMask,
                         theKey = itemList[highlightItemLine]->inventoryLetter;
                         theItem = itemList[highlightItemLine];
                     } else if (actionKey > -1) {
-                        // Player took an action directly from the item screen; we're done here.
-                        exitModalMode();
                         restoreRNG;
                         return 0;
                     }
