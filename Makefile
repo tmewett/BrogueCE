@@ -1,8 +1,10 @@
 include config.mk
 
+# Warning flags: enable flags first, "no-" flags next, "error" flags last
 cflags := -Isrc/brogue -Isrc/platform -Isrc/variants -std=c99 \
-	-Wall -Wpedantic -Werror=implicit -Wno-parentheses -Wno-unused-result \
-	-Wformat -Werror=format-security -Wformat-overflow=0 -Wmissing-prototypes
+	-Wall -Wpedantic  -Wformat -Wmissing-prototypes \
+	-Wno-parentheses -Wno-unused-result -Wno-format-overflow \
+	-Werror=implicit -Werror=format-security -Werror=strict-prototypes
 libs := -lm
 cppflags := -DDATADIR=$(DATADIR)
 

@@ -1078,7 +1078,7 @@ const gameConstants bulletBrogueGameConst = {
     .mainMenuTitleWidth = MENU_TITLE_WIDTH
 };
 
-void initializeGameVariantBulletBrogue() {
+void initializeGameVariantBulletBrogue(void) {
 
     // Game constants
     gameConst = &bulletBrogueGameConst;
