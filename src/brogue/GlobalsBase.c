@@ -30,7 +30,8 @@
 tcell tmap[DCOLS][DROWS];                       // grids with info about the map
 pcell pmap[DCOLS][DROWS];
 short **scentMap;
-screenDisplayBuffer displayBuffer;    // used to optimize plotCharWithColor
+screenDisplayBuffer dungeonDisplayBuffer;  // dungeon region cells — pushed to dungeonTiles (2x)
+screenDisplayBuffer uiDisplayBuffer;       // UI region cells + modal overlays — pushed to uiTiles (1x)
 short terrainRandomValues[DCOLS][DROWS][8];
 short **safetyMap;                              // used to help monsters flee
 short **allySafetyMap;                          // used to help allies flee

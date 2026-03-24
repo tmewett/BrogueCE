@@ -46,7 +46,8 @@ static inline pos posNeighborInDirection(pos p, enum directions direction_to_ste
 }
 
 extern short **scentMap;
-extern screenDisplayBuffer displayBuffer;
+extern screenDisplayBuffer dungeonDisplayBuffer;  // dungeon region cells — pushed to dungeonTiles (2x)
+extern screenDisplayBuffer uiDisplayBuffer;       // UI region cells + modal overlays — pushed to uiTiles (1x)
 extern short terrainRandomValues[DCOLS][DROWS][8];
 extern short **safetyMap;                                       // used to help monsters flee
 extern short **allySafetyMap;

@@ -660,13 +660,6 @@ static void viewGameStats(void) {
     printString(buf, offset, ++i, &itemMessageColor, &black, &dbuf);
     i++;
 
-    // Set the dbuf opacity.
-    for (int i=0; i<COLS; i++) {
-        for (int j=0; j<ROWS; j++) {
-            dbuf.cells[i][j].opacity = INTERFACE_OPACITY;
-        }
-    }
-
     // Display.
     overlayDisplayBuffer(&dbuf);
     color continueColor = black;
@@ -719,11 +712,15 @@ void mainBrogueJunction() {
     // clear screen and display buffer
     for (i=0; i<COLS; i++) {
         for (j=0; j<ROWS; j++) {
-            displayBuffer.cells[i][j].character = 0;
-            displayBuffer.cells[i][j].opacity = 100;
+            dungeonDisplayBuffer.cells[i][j].character = 0;
+            dungeonDisplayBuffer.cells[i][j].opacity = 100;
+            uiDisplayBuffer.cells[i][j].character = 0;
+            uiDisplayBuffer.cells[i][j].opacity = 100;
             for (k=0; k<3; k++) {
-                displayBuffer.cells[i][j].foreColorComponents[k] = 0;
-                displayBuffer.cells[i][j].backColorComponents[k] = 0;
+                dungeonDisplayBuffer.cells[i][j].foreColorComponents[k] = 0;
+                dungeonDisplayBuffer.cells[i][j].backColorComponents[k] = 0;
+                uiDisplayBuffer.cells[i][j].foreColorComponents[k] = 0;
+                uiDisplayBuffer.cells[i][j].backColorComponents[k] = 0;
             }
             plotCharWithColor(' ', (windowpos){ i, j }, &black, &black);
         }

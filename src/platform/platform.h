@@ -113,6 +113,10 @@ enum RenderMode getRenderMode(void);
 void enterModalMode(void);
 void exitModalMode(void);
 
+// Set by commitDraws/refreshScreen before each buffer pass.
+// When true, plotChar → updateTile writes to uiTiles; when false, to dungeonTiles.
+extern boolean plotToUiLayer;
+
 extern struct brogueConsole nullConsole;
 
 extern struct brogueConsole currentConsole;

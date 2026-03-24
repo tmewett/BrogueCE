@@ -406,7 +406,7 @@ static short actionMenu(short x, boolean playingBack) {
         if (x + longestName >= COLS) {
             x = COLS - longestName - 1;
         }
-        y = ROWS - buttonCount;
+        y = ROWS - buttonCount - 4; // Shift up to avoid Android overlay buttons
         for (i=0; i<buttonCount; i++) {
             buttons[i].x = x;
             buttons[i].y = y + i;
@@ -419,9 +419,11 @@ static short actionMenu(short x, boolean playingBack) {
         screenDisplayBuffer dbuf;
         clearDisplayBuffer(&dbuf);
         rectangularShading(x - 1, y, longestName + 2, buttonCount, &black, INTERFACE_OPACITY / 2, &dbuf);
+        enterModalMode();
         overlayDisplayBuffer(&dbuf);
         buttonChosen = buttonInputLoop(buttons, buttonCount, x - 1, y, longestName + 2, buttonCount, NULL);
         restoreDisplayBuffer(&rbuf);
+        exitModalMode();
         if (buttonChosen == -1) {
             return -1;
         } else if (takeActionOurselves[buttonChosen]) {
@@ -873,17 +875,15 @@ void considerCautiousMode() {
     }*/
 }
 
-// previouslyPlottedCells is only accessed by commitDraws and refreshScreen,
-// as below.
-static screenDisplayBuffer previouslyPlottedCells;
+// Each display buffer has its own "previously plotted" tracker for commitDraws.
+static screenDisplayBuffer prevDungeonCells;
+static screenDisplayBuffer prevUiCells;
 
-// Only cells which have changed since the previous commitDraws are actually
-// drawn.
-void commitDraws() {
+static void commitBuffer(screenDisplayBuffer *buf, screenDisplayBuffer *prev) {
     for (int j = 0; j < ROWS; j++) {
         for (int i = 0; i < COLS; i++) {
-            cellDisplayBuffer *lastPlotted = &previouslyPlottedCells.cells[i][j];
-            cellDisplayBuffer *curr = &displayBuffer.cells[i][j];
+            cellDisplayBuffer *lastPlotted = &prev->cells[i][j];
+            cellDisplayBuffer *curr = &buf->cells[i][j];
             boolean needsUpdate =
                 lastPlotted->character != curr->character
                 || lastPlotted->foreColorComponents[0] != curr->foreColorComponents[0]
@@ -910,12 +910,23 @@ void commitDraws() {
     }
 }
 
+// Only cells which have changed since the previous commitDraws are actually
+// drawn. Pushes each display buffer to its corresponding rendering layer.
+void commitDraws() {
+    plotToUiLayer = false;
+    commitBuffer(&dungeonDisplayBuffer, &prevDungeonCells);
+    plotToUiLayer = true;
+    commitBuffer(&uiDisplayBuffer, &prevUiCells);
+    plotToUiLayer = false;
+}
+
 // flags the entire window as needing to be redrawn at next flush.
 // very low level -- does not interface with the guts of the game.
 void refreshScreen() {
+    plotToUiLayer = false;
     for (int i = 0; i < COLS; i++) {
         for (int j = 0; j < ROWS; j++) {
-            cellDisplayBuffer *curr = &displayBuffer.cells[i][j];
+            cellDisplayBuffer *curr = &dungeonDisplayBuffer.cells[i][j];
             plotChar(curr->character, i, j,
                      curr->foreColorComponents[0],
                      curr->foreColorComponents[1],
@@ -924,11 +935,25 @@ void refreshScreen() {
                      curr->backColorComponents[1],
                      curr->backColorComponents[2]
             );
-            // Remember that it was previously plotted, so that
-            // commitDraws still knows when it needs updates.
-            previouslyPlottedCells.cells[i][j] = *curr;
+            prevDungeonCells.cells[i][j] = *curr;
         }
     }
+    plotToUiLayer = true;
+    for (int i = 0; i < COLS; i++) {
+        for (int j = 0; j < ROWS; j++) {
+            cellDisplayBuffer *curr = &uiDisplayBuffer.cells[i][j];
+            plotChar(curr->character, i, j,
+                     curr->foreColorComponents[0],
+                     curr->foreColorComponents[1],
+                     curr->foreColorComponents[2],
+                     curr->backColorComponents[0],
+                     curr->backColorComponents[1],
+                     curr->backColorComponents[2]
+            );
+            prevUiCells.cells[i][j] = *curr;
+        }
+    }
+    plotToUiLayer = false;
 }
 
 // higher-level redraw
@@ -1381,7 +1406,7 @@ void getCellAppearance(pos loc, enum displayGlyph *returnChar, color *returnFore
 
     // Smooth out walls: if there's a "wall-ish" tile drawn below us, just draw the wall top
     if ((cellChar == G_WALL || cellChar == G_GRANITE) && coordinatesAreInMap(loc.x, loc.y+1)
-        && glyphIsWallish(displayBuffer.cells[mapToWindowX(loc.x)][mapToWindowY(loc.y+1)].character)) {
+        && glyphIsWallish(dungeonDisplayBuffer.cells[mapToWindowX(loc.x)][mapToWindowY(loc.y+1)].character)) {
         cellChar = G_WALL_TOP;
     }
 
@@ -1818,7 +1843,15 @@ void plotCharWithColor(enum displayGlyph inputChar, windowpos loc, const color *
         inputChar = ' ';
     }
 
-    cellDisplayBuffer *target = &displayBuffer.cells[loc.window_x][loc.window_y];
+    // Route to the correct display buffer based on coordinates only.
+    // Never uses render mode — RENDER_MODAL routing is handled by overlayDisplayBuffer
+    // writing directly to uiDisplayBuffer.
+    boolean isUI = loc.window_x < STAT_BAR_WIDTH
+        || loc.window_y < MESSAGE_LINES
+        || loc.window_y >= ROWS - 2;
+    cellDisplayBuffer *target = isUI
+        ? &uiDisplayBuffer.cells[loc.window_x][loc.window_y]
+        : &dungeonDisplayBuffer.cells[loc.window_x][loc.window_y];
     target->character = inputChar;
     target->foreColorComponents[0] = foreRed;
     target->foreColorComponents[1] = foreGreen;
@@ -1924,7 +1957,7 @@ void hiliteCharGrid(char hiliteCharGrid[DCOLS][DROWS], const color *hiliteColor,
                 x = mapToWindowX(i);
                 y = mapToWindowY(j);
 
-                cellDisplayBuffer *cell = &displayBuffer.cells[x][y];
+                cellDisplayBuffer *cell = &dungeonDisplayBuffer.cells[x][y];
                 cell->backColorComponents[0] = clamp(cell->backColorComponents[0] + hCol.red * hiliteStrength / 100, 0, 100);
                 cell->backColorComponents[1] = clamp(cell->backColorComponents[1] + hCol.green * hiliteStrength / 100, 0, 100);
                 cell->backColorComponents[2] = clamp(cell->backColorComponents[2] + hCol.blue * hiliteStrength / 100, 0, 100);
@@ -1985,14 +2018,20 @@ color colorFromComponents(const char rgb[3]) {
 }
 
 SavedDisplayBuffer saveDisplayBuffer(void) {
-    return (SavedDisplayBuffer) { .savedScreen = displayBuffer };
+    return (SavedDisplayBuffer) {
+        .savedDungeon = dungeonDisplayBuffer,
+        .savedUI = uiDisplayBuffer
+    };
 }
 void restoreDisplayBuffer(const SavedDisplayBuffer *savedBuf) {
-    displayBuffer = savedBuf->savedScreen;
+    dungeonDisplayBuffer = savedBuf->savedDungeon;
+    uiDisplayBuffer = savedBuf->savedUI;
 }
 
 // draws overBuf over the current display with per-cell pseudotransparency as specified in overBuf.
 void overlayDisplayBuffer(const screenDisplayBuffer *overBuf) {
+    boolean isModal = (getRenderMode() == RENDER_MODAL);
+
     for (int i=0; i<COLS; i++) {
         for (int j=0; j<ROWS; j++) {
             if (overBuf->cells[i][j].opacity != 0) {
@@ -2002,12 +2041,14 @@ void overlayDisplayBuffer(const screenDisplayBuffer *overBuf) {
 
                 // character and fore color:
                 if (overBuf->cells[i][j].character == ' ') { // Blank cells in the overbuf take the character from the screen.
-                    if (getRenderMode() == RENDER_MODAL) {
+                    if (isModal) {
                         character = ' ';
                         foreColor = black;
                     } else {
-                        character = displayBuffer.cells[i][j].character;
-                        foreColor = colorFromComponents(displayBuffer.cells[i][j].foreColorComponents);
+                        screenDisplayBuffer *src = (i < STAT_BAR_WIDTH || j < MESSAGE_LINES || j >= ROWS - 2)
+                            ? &uiDisplayBuffer : &dungeonDisplayBuffer;
+                        character = src->cells[i][j].character;
+                        foreColor = colorFromComponents(src->cells[i][j].foreColorComponents);
                     }
                     applyColorAverage(&foreColor, &backColor, overBuf->cells[i][j].opacity);
                 } else {
@@ -2016,14 +2057,36 @@ void overlayDisplayBuffer(const screenDisplayBuffer *overBuf) {
                 }
 
                 // back color:
-                if (getRenderMode() == RENDER_MODAL) {
+                if (isModal) {
                     tempColor = black;
                 } else {
-                    tempColor = colorFromComponents(displayBuffer.cells[i][j].backColorComponents);
+                    screenDisplayBuffer *src = (i < STAT_BAR_WIDTH || j < MESSAGE_LINES || j >= ROWS - 2)
+                        ? &uiDisplayBuffer : &dungeonDisplayBuffer;
+                    tempColor = colorFromComponents(src->cells[i][j].backColorComponents);
                 }
                 applyColorAverage(&backColor, &tempColor, 100 - overBuf->cells[i][j].opacity);
 
-                plotCharWithColor(character, (windowpos){ i, j }, &foreColor, &backColor);
+                if (isModal) {
+                    short fr = min(100, max(0, foreColor.red));
+                    short fg = min(100, max(0, foreColor.green));
+                    short fb = min(100, max(0, foreColor.blue));
+                    short br = min(100, max(0, backColor.red));
+                    short bg = min(100, max(0, backColor.green));
+                    short bb = min(100, max(0, backColor.blue));
+                    if (character != ' ' && fr == br && fg == bg && fb == bb) {
+                        character = ' ';
+                    }
+                    cellDisplayBuffer *target = &uiDisplayBuffer.cells[i][j];
+                    target->character = character;
+                    target->foreColorComponents[0] = fr;
+                    target->foreColorComponents[1] = fg;
+                    target->foreColorComponents[2] = fb;
+                    target->backColorComponents[0] = br;
+                    target->backColorComponents[1] = bg;
+                    target->backColorComponents[2] = bb;
+                } else {
+                    plotCharWithColor(character, (windowpos){ i, j }, &foreColor, &backColor);
+                }
             }
         }
     }
@@ -2708,7 +2771,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
         case SEED_KEY:
             /*DEBUG {
                 screenDisplayBuffer dbuf;
-                copyDisplayBuffer(&dbuf, &displayBuffer);
+                copyDisplayBuffer(&dbuf, &dungeonDisplayBuffer);
                 funkyFade(dbuf, &white, 0, 100, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
             }*/
             DEBUG displayLoops();
@@ -2907,8 +2970,8 @@ void flashMessage(char *message, short x, short y, int time, const color *fColor
     fastForward = false;
 
     for (j=0; j<messageLength; j++) {
-        backColors[j] = colorFromComponents(displayBuffer.cells[j + x][y].backColorComponents);
-        dbufs[j] = displayBuffer.cells[j + x][y];
+        backColors[j] = colorFromComponents(uiDisplayBuffer.cells[j + x][y].backColorComponents);
+        dbufs[j] = uiDisplayBuffer.cells[j + x][y];
     }
 
     previousPercentComplete = -1;
@@ -2918,8 +2981,8 @@ void flashMessage(char *message, short x, short y, int time, const color *fColor
         if (previousPercentComplete != percentComplete) {
             for (j=0; j<messageLength; j++) {
                 if (i==0) {
-                    backColors[j] = colorFromComponents(displayBuffer.cells[j + x][y].backColorComponents);
-                    dbufs[j] = displayBuffer.cells[j + x][y];
+                    backColors[j] = colorFromComponents(uiDisplayBuffer.cells[j + x][y].backColorComponents);
+                    dbufs[j] = uiDisplayBuffer.cells[j + x][y];
                 }
                 backColor = backColors[j];
                 applyColorAverage(&backColor, bColor, 100 - percentComplete);
@@ -4163,11 +4226,10 @@ void printHelpScreen() {
         printString(helpText[i], mapToWindowX(1), i, &itemMessageColor, &black, &dbuf);
     }
 
-    // Set the dbuf opacity.
-    for (i=0; i<DCOLS; i++) {
-        for (j=0; j<ROWS; j++) {
-            //plotCharWithColor(' ', (windowpos) { mapToWindowX(i), j }, &black, &black);
-            dbuf.cells[mapToWindowX(i)][j].opacity = INTERFACE_OPACITY;
+    // Set opacity only for cells that have content (text lines).
+    for (i=0; i<BROGUE_HELP_LINE_COUNT && i < ROWS; i++) {
+        for (j=0; j<DCOLS; j++) {
+            dbuf.cells[mapToWindowX(j)][i].opacity = INTERFACE_OPACITY;
         }
     }
 
@@ -4268,12 +4330,6 @@ void displayFeatsScreen() {
     strcpy(buf,KEYBOARD_LABELS ? "-- press any key to continue --" : "-- touch anywhere to continue --");
     printString(buf, mapToWindowX((DCOLS - FEAT_NAME_LENGTH - strLenWithoutEscapes(buf)) / 2), ROWS-2, &itemMessageColor, &black, &dbuf);
 
-    // Set the opacity
-    for (int i=0; i<COLS; i++) {
-        for (int j=0; j<ROWS; j++) {
-            dbuf.cells[i][j].opacity = (i < STAT_BAR_WIDTH ? 0 : INTERFACE_OPACITY);
-        }
-    }
     enterModalMode();
     const SavedDisplayBuffer rbuf = saveDisplayBuffer();
     overlayDisplayBuffer(&dbuf);
@@ -4308,11 +4364,6 @@ void printDiscoveriesScreen() {
     printString(KEYBOARD_LABELS ? "-- press any key to continue --" : "-- touch anywhere to continue --",
                 mapToWindowX(20), mapToWindowY(DROWS-2), &itemMessageColor, &black, &dbuf);
 
-    for (i=0; i<COLS; i++) {
-        for (j=0; j<ROWS; j++) {
-            dbuf.cells[i][j].opacity = (i < STAT_BAR_WIDTH ? 0 : INTERFACE_OPACITY);
-        }
-    }
     enterModalMode();
     overlayDisplayBuffer(&dbuf);
 
@@ -4506,17 +4557,20 @@ void printProgressBar(short x, short y, const char barLabel[COLS], long amtFille
     }
 }
 
-// Very low-level. Changes displayBuffer directly.
+// Very low-level. Changes the display buffer directly.
 void highlightScreenCell(short x, short y, const color *highlightColor, short strength) {
     color tempColor;
+    boolean isUI = (getRenderMode() == RENDER_MODAL)
+        || x < STAT_BAR_WIDTH || y < MESSAGE_LINES || y >= ROWS - 2;
+    screenDisplayBuffer *buf = isUI ? &uiDisplayBuffer : &dungeonDisplayBuffer;
 
-    tempColor = colorFromComponents(displayBuffer.cells[x][y].foreColorComponents);
+    tempColor = colorFromComponents(buf->cells[x][y].foreColorComponents);
     applyColorAugment(&tempColor, highlightColor, strength);
-    storeColorComponents(displayBuffer.cells[x][y].foreColorComponents, &tempColor);
+    storeColorComponents(buf->cells[x][y].foreColorComponents, &tempColor);
 
-    tempColor = colorFromComponents(displayBuffer.cells[x][y].backColorComponents);
+    tempColor = colorFromComponents(buf->cells[x][y].backColorComponents);
     applyColorAugment(&tempColor, highlightColor, strength);
-    storeColorComponents(displayBuffer.cells[x][y].backColorComponents, &tempColor);
+    storeColorComponents(buf->cells[x][y].backColorComponents, &tempColor);
 }
 
 // Like `armorValueIfUnenchanted` for the currently-equipped armor, but takes the penalty from
@@ -4967,38 +5021,14 @@ short printTerrainInfo(short x, short y, short py, const char *description, bool
 
 void rectangularShading(short x, short y, short width, short height,
                         const color *backColor, short opacity, screenDisplayBuffer* dbuf) {
-    short i, j, dist;
+    short i, j;
 
-    assureCosmeticRNG;
-    for (i=0; i<COLS; i++) {
-        for (j=0; j<ROWS; j++) {
+    for (i = x; i < x + width && i < COLS; i++) {
+        for (j = y; j < y + height && j < ROWS; j++) {
             storeColorComponents(dbuf->cells[i][j].backColorComponents, backColor);
-
-            if (i >= x && i < x + width
-                && j >= y && j < y + height) {
-                dbuf->cells[i][j].opacity = min(100, opacity);
-            } else {
-                dist = 0;
-                dist += max(0, max(x - i, i - x - width + 1));
-                dist += max(0, max(y - j, j - y - height + 1));
-                dbuf->cells[i][j].opacity = (int) ((opacity - 10) / max(1, dist));
-                if (dbuf->cells[i][j].opacity < 3) {
-                    dbuf->cells[i][j].opacity = 0;
-                }
-            }
+            dbuf->cells[i][j].opacity = min(100, opacity);
         }
     }
-
-//  for (i=0; i<COLS; i++) {
-//      for (j=0; j<ROWS; j++) {
-//          if (i >= x && i < x + width && j >= y && j < y + height) {
-//              plotCharWithColor(' ', (windowpos){ i, j }, &white, &darkGreen);
-//          }
-//      }
-//  }
-//  displayMoreSign();
-
-    restoreRNG;
 }
 
 #define MIN_DEFAULT_INFO_PANEL_WIDTH    33

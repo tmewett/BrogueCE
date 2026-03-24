@@ -649,12 +649,6 @@ static void printPlaybackHelpScreen() {
         printString(helpText[i], mapToWindowX(5), mapToWindowY(i), &itemMessageColor, &black, &dbuf);
     }
 
-    for (i=0; i<COLS; i++) {
-        for (j=0; j<ROWS; j++) {
-            dbuf.cells[i][j].opacity = (i < STAT_BAR_WIDTH ? 0 : INTERFACE_OPACITY);
-        }
-    }
-
     const SavedDisplayBuffer rbuf = saveDisplayBuffer();
     overlayDisplayBuffer(&dbuf);
 
