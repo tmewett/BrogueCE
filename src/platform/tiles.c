@@ -661,9 +661,9 @@ void updateTile(int row, int column, short charIndex,
         .needsRefresh = 1
     };
 
-    // In modal mode, everything renders to the UI overlay so it appears
-    // on top of the dimmed dungeon layer.
-    if (renderMode == RENDER_MODAL || plotToUiLayer) {
+    // Route to the correct layer based on plotToUiLayer flag,
+    // which is set by commitDraws/refreshScreen before each buffer pass.
+    if (plotToUiLayer) {
         uiTiles[row][column] = tile;
     } else {
         dungeonTiles[row][column] = tile;

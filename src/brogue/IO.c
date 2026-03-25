@@ -1843,10 +1843,11 @@ void plotCharWithColor(enum displayGlyph inputChar, windowpos loc, const color *
         inputChar = ' ';
     }
 
-    // Route to the correct display buffer based on coordinates only.
-    // Never uses render mode — RENDER_MODAL routing is handled by overlayDisplayBuffer
-    // writing directly to uiDisplayBuffer.
-    boolean isUI = loc.window_x < STAT_BAR_WIDTH
+    // In modal mode, all direct draws go to uiDisplayBuffer so they
+    // render on the UI layer (above the dimmed dungeon).
+    // In gameplay mode, route by coordinates: sidebar/messages/bottom → UI, rest → dungeon.
+    boolean isUI = (getRenderMode() == RENDER_MODAL)
+        || loc.window_x < STAT_BAR_WIDTH
         || loc.window_y < MESSAGE_LINES
         || loc.window_y >= ROWS - 2;
     cellDisplayBuffer *target = isUI

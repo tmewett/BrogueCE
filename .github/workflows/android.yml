@@ -28,7 +28,12 @@ jobs:
         working-directory: android
         run: ./gradlew assembleRelease
 
+      - name: Rename APK with release tag
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          cp android/app/build/outputs/apk/release/app-release.apk "brogue-${TAG}.apk"
+
       - name: Upload APK to release
         uses: softprops/action-gh-release@v2
         with:
-          files: android/app/build/outputs/apk/release/app-release.apk
+          files: brogue-${{ github.ref_name }}.apk

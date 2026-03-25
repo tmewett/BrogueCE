@@ -26,6 +26,7 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 #include "platform.h"
+#include "android-touch.h"
 
 #define MAGIC_POLARITY_BENEVOLENT 1
 #define MAGIC_POLARITY_MALEVOLENT -1
@@ -2768,54 +2769,54 @@ static boolean displayMagicCharForItem(item *theItem) {
     }
 }
 
+// Strip brogue color escape sequences (COLOR_ESCAPE + 3 bytes) from a string.
+static void stripEscapes(char *dest, const char *src, int maxLen) {
+    int j = 0;
+    for (int i = 0; src[i] && j < maxLen - 1;) {
+        if (src[i] == COLOR_ESCAPE) {
+            i += 4;
+            continue;
+        }
+        dest[j++] = src[i++];
+    }
+    dest[j] = '\0';
+}
+
+// Write a JSON-escaped version of src into dest. Returns chars written (excluding NUL).
+static int jsonEscape(char *dest, const char *src, int maxLen) {
+    int j = 0;
+    for (int i = 0; src[i] && j < maxLen - 2; i++) {
+        char c = src[i];
+        if (c == '"' || c == '\\') {
+            if (j + 2 >= maxLen) break;
+            dest[j++] = '\\';
+            dest[j++] = c;
+        } else if (c == '\n') {
+            if (j + 2 >= maxLen) break;
+            dest[j++] = '\\';
+            dest[j++] = 'n';
+        } else if ((unsigned char)c >= 0x20) {
+            dest[j++] = c;
+        }
+    }
+    dest[j] = '\0';
+    return j;
+}
+
 char displayInventory(unsigned short categoryMask,
                       unsigned long requiredFlags,
                       unsigned long forbiddenFlags,
                       boolean waitForAcknowledge,
                       boolean includeButtons) {
     item *theItem;
-    short i, j, m, maxLength = 0, itemNumber, itemCount, equippedItemCount;
-    short extraLineCount = 0;
+    short i, itemNumber, equippedItemCount;
     item *itemList[DROWS];
     char buf[COLS*3];
     char theKey;
     rogueEvent theEvent;
-    boolean magicDetected, repeatDisplay;
-    short highlightItemLine, itemSpaceRemaining;
-    brogueButton buttons[50] = {{{0}}};
-    short actionKey = -1;
-    color darkItemColor;
-
-    char whiteColorEscapeSequence[20],
-    grayColorEscapeSequence[20],
-    yellowColorEscapeSequence[20],
-    darkYellowColorEscapeSequence[20],
-    goodColorEscapeSequence[20],
-    badColorEscapeSequence[20];
-    char *magicEscapePtr;
 
     assureCosmeticRNG;
-
     clearCursorPath();
-
-
-    screenDisplayBuffer dbuf;
-    clearDisplayBuffer(&dbuf);
-
-    whiteColorEscapeSequence[0] = '\0';
-    encodeMessageColor(whiteColorEscapeSequence, 0, &white);
-    grayColorEscapeSequence[0] = '\0';
-    encodeMessageColor(grayColorEscapeSequence, 0, &gray);
-    yellowColorEscapeSequence[0] = '\0';
-    encodeMessageColor(yellowColorEscapeSequence, 0, &itemColor);
-    darkItemColor = itemColor;
-    applyColorAverage(&darkItemColor, &black, 50);
-    darkYellowColorEscapeSequence[0] = '\0';
-    encodeMessageColor(darkYellowColorEscapeSequence, 0, &darkItemColor);
-    goodColorEscapeSequence[0] = '\0';
-    encodeMessageColor(goodColorEscapeSequence, 0, &goodMessageColor);
-    badColorEscapeSequence[0] = '\0';
-    encodeMessageColor(badColorEscapeSequence, 0, &badMessageColor);
 
     if (packItems->nextItem == NULL) {
         confirmMessages();
@@ -2824,315 +2825,172 @@ char displayInventory(unsigned short categoryMask,
         return 0;
     }
 
-    magicDetected = false;
-    for (theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
-        if (displayMagicCharForItem(theItem) && (theItem->flags & ITEM_MAGIC_DETECTED)) {
-            magicDetected = true;
-        }
-    }
-
-    // List the items in the order we want to display them, with equipped items at the top.
+    // Build sorted item list: equipped first, then unequipped.
     itemNumber = 0;
     equippedItemCount = 0;
-    // First, the equipped weapon if any.
-    if (rogue.weapon) {
-        itemList[itemNumber] = rogue.weapon;
-        itemNumber++;
-        equippedItemCount++;
-    }
-    // Now, the equipped armor if any.
-    if (rogue.armor) {
-        itemList[itemNumber] = rogue.armor;
-        itemNumber++;
-        equippedItemCount++;
-    }
-    // Now, the equipped rings, if any.
-    if (rogue.ringLeft) {
-        itemList[itemNumber] = rogue.ringLeft;
-        itemNumber++;
-        equippedItemCount++;
-    }
-    if (rogue.ringRight) {
-        itemList[itemNumber] = rogue.ringRight;
-        itemNumber++;
-        equippedItemCount++;
-    }
-    // Now all of the non-equipped items.
+    if (rogue.weapon) { itemList[itemNumber++] = rogue.weapon; equippedItemCount++; }
+    if (rogue.armor)  { itemList[itemNumber++] = rogue.armor;  equippedItemCount++; }
+    if (rogue.ringLeft)  { itemList[itemNumber++] = rogue.ringLeft;  equippedItemCount++; }
+    if (rogue.ringRight) { itemList[itemNumber++] = rogue.ringRight; equippedItemCount++; }
     for (theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
         if (!(theItem->flags & ITEM_EQUIPPED)) {
-            itemList[itemNumber] = theItem;
-            itemNumber++;
+            itemList[itemNumber++] = theItem;
         }
     }
 
-    // Initialize the buttons:
-    for (i=0; i < max(MAX_PACK_ITEMS, ROWS); i++) {
-        buttons[i].y = mapToWindowY(i + (equippedItemCount && i >= equippedItemCount ? 1 : 0));
-        buttons[i].buttonColor = black;
-        buttons[i].opacity = INTERFACE_OPACITY;
-        buttons[i].flags |= B_DRAW;
-    }
-    // Now prepare the buttons.
-    const char closeParen = KEYBOARD_LABELS ? ')' : ' ';
-    for (i=0; i<itemNumber; i++) {
-        theItem = itemList[i];
-        // Set button parameters for the item:
-        buttons[i].flags |= (B_DRAW | B_GRADIENT | B_ENABLED);
-        if (!waitForAcknowledge) {
-            buttons[i].flags |= B_KEYPRESS_HIGHLIGHT;
-        }
-        buttons[i].hotkey[0] = theItem->inventoryLetter;
-        buttons[i].hotkey[1] = theItem->inventoryLetter + 'A' - 'a';
-
-        if ((theItem->category & categoryMask) &&
-            !(~(theItem->flags) & requiredFlags) &&
-            !(theItem->flags & forbiddenFlags)) {
-
-            buttons[i].flags |= (B_HOVER_ENABLED);
-        }
-
-        // Set the text for the button:
-        itemName(theItem, buf, true, true, (buttons[i].flags & B_HOVER_ENABLED) ? &white : &gray);
-        upperCase(buf);
-
-        if ((theItem->flags & ITEM_MAGIC_DETECTED)
-            && !(theItem->category & AMULET)) { // Won't include food, keys, lumenstones or amulet.
-
-            int polarity = itemMagicPolarity(theItem);
-            if (polarity == 0) {
-                buttons[i].symbol[0] = '-';
-                magicEscapePtr = yellowColorEscapeSequence;
-            } else if (polarity == 1) {
-                buttons[i].symbol[0] = G_GOOD_MAGIC;
-                magicEscapePtr = goodColorEscapeSequence;
-            } else {
-                buttons[i].symbol[0] = G_BAD_MAGIC;
-                magicEscapePtr = badColorEscapeSequence;
-            }
-
-            // The first '*' is the magic detection symbol, e.g. '-' for non-magical.
-            // The second '*' is the item character, e.g. ':' for food.
-            sprintf(buttons[i].text, " %c%c %s* %s* %s%s%s%s",
-                    KEYBOARD_LABELS ? theItem->inventoryLetter : ' ',
-                    (theItem->flags & ITEM_PROTECTED ? '}' : closeParen),
-                    magicEscapePtr,
-                    (buttons[i].flags & B_HOVER_ENABLED) ? yellowColorEscapeSequence : darkYellowColorEscapeSequence,
-                    (buttons[i].flags & B_HOVER_ENABLED) ? whiteColorEscapeSequence : grayColorEscapeSequence,
-                    buf,
-                    grayColorEscapeSequence,
-                    (theItem->flags & ITEM_EQUIPPED ? ((theItem->category & WEAPON) ? " (in hand) " : " (worn) ") : ""));
-            buttons[i].symbol[1] = theItem->displayChar;
-        } else {
-            sprintf(buttons[i].text, " %c%c %s%s* %s%s%s%s", // The '*' is the item character, e.g. ':' for food.
-                    KEYBOARD_LABELS ? theItem->inventoryLetter : ' ',
-                    (theItem->flags & ITEM_PROTECTED ? '}' : closeParen),
-                    (magicDetected ? "  " : ""), // For proper spacing when this item is not detected but another is.
-                    (buttons[i].flags & B_HOVER_ENABLED) ? yellowColorEscapeSequence : darkYellowColorEscapeSequence,
-                    (buttons[i].flags & B_HOVER_ENABLED) ? whiteColorEscapeSequence : grayColorEscapeSequence,
-                    buf,
-                    grayColorEscapeSequence,
-                    (theItem->flags & ITEM_EQUIPPED ? ((theItem->category & WEAPON) ? " (in hand) " : " (worn) ") : ""));
-            buttons[i].symbol[0] = theItem->displayChar;
-        }
-
-        // Keep track of the maximum width needed:
-        maxLength = max(maxLength, strLenWithoutEscapes(buttons[i].text));
-
-        //      itemList[itemNumber] = theItem;
-        //
-        //      itemNumber++;
-    }
-    //printf("\nMaxlength: %i", maxLength);
-    itemCount = itemNumber;
     if (!itemNumber) {
         confirmMessages();
         message("Nothing of that type!", 0);
         restoreRNG;
         return 0;
     }
-    if (waitForAcknowledge) {
-        // Add the two extra lines as disabled buttons.
-        itemSpaceRemaining = MAX_PACK_ITEMS - numberOfItemsInPack();
-        if (itemSpaceRemaining) {
-            sprintf(buttons[itemNumber + extraLineCount].text, "%s%s    You have room for %i more item%s.",
-                    grayColorEscapeSequence,
-                    (magicDetected ? "  " : ""),
-                    itemSpaceRemaining,
-                    (itemSpaceRemaining == 1 ? "" : "s"));
+
+    // Serialize inventory to JSON for the native Android UI.
+    // mode: "inventory" = full browse with actions, "select" = pick one item.
+    char json[16384];
+    int pos = 0;
+    pos += snprintf(json, sizeof(json),
+        "{\"mode\":\"%s\",\"items\":[",
+        waitForAcknowledge ? "inventory" : "select");
+
+    for (i = 0; i < itemNumber; i++) {
+        theItem = itemList[i];
+
+        // Get plain item name (no color escapes).
+        itemName(theItem, buf, true, true, NULL);
+        upperCase(buf);
+        char nameClean[COLS*3];
+        stripEscapes(nameClean, buf, sizeof(nameClean));
+
+        // Determine if this item matches the category filter.
+        boolean selectable = (theItem->category & categoryMask) &&
+            !(~(theItem->flags) & requiredFlags) &&
+            !(theItem->flags & forbiddenFlags);
+
+        char nameEsc[COLS*6];
+        jsonEscape(nameEsc, nameClean, sizeof(nameEsc));
+
+        if (waitForAcknowledge) {
+            // Full inventory mode: include description and actions.
+            char descRaw[COLS * 100];
+            itemDetails(descRaw, theItem);
+            char descClean[COLS * 100];
+            stripEscapes(descClean, descRaw, sizeof(descClean));
+
+            char actions[32];
+            int ai = 0;
+            if (theItem->category & (FOOD | SCROLL | POTION | WAND | STAFF | CHARM)) {
+                actions[ai++] = APPLY_KEY; actions[ai++] = ',';
+            }
+            if (theItem->category & (ARMOR | WEAPON | RING)) {
+                actions[ai++] = (theItem->flags & ITEM_EQUIPPED) ? UNEQUIP_KEY : EQUIP_KEY;
+                actions[ai++] = ',';
+            }
+            actions[ai++] = DROP_KEY;  actions[ai++] = ',';
+            actions[ai++] = THROW_KEY; actions[ai++] = ',';
+            if (ai > 0 && actions[ai-1] == ',') ai--;
+            actions[ai] = '\0';
+
+            char descEsc[COLS*200];
+            jsonEscape(descEsc, descClean, sizeof(descEsc));
+
+            pos += snprintf(json + pos, sizeof(json) - pos,
+                "%s{\"letter\":\"%c\",\"name\":\"%s\",\"desc\":\"%s\","
+                "\"category\":%u,\"equipped\":%s,\"selectable\":%s,"
+                "\"actions\":\"%s\",\"equippedCount\":%d}",
+                (i > 0 ? "," : ""),
+                theItem->inventoryLetter, nameEsc, descEsc,
+                theItem->category,
+                (theItem->flags & ITEM_EQUIPPED) ? "true" : "false",
+                selectable ? "true" : "false",
+                actions, equippedItemCount);
         } else {
-            sprintf(buttons[itemNumber + extraLineCount].text, "%s%s    Your pack is full.",
-                    grayColorEscapeSequence,
-                    (magicDetected ? "  " : ""));
+            // Selection mode: no description or actions needed.
+            pos += snprintf(json + pos, sizeof(json) - pos,
+                "%s{\"letter\":\"%c\",\"name\":\"%s\","
+                "\"category\":%u,\"equipped\":%s,\"selectable\":%s,"
+                "\"equippedCount\":%d}",
+                (i > 0 ? "," : ""),
+                theItem->inventoryLetter, nameEsc,
+                theItem->category,
+                (theItem->flags & ITEM_EQUIPPED) ? "true" : "false",
+                selectable ? "true" : "false",
+                equippedItemCount);
         }
-        maxLength = max(maxLength, (strLenWithoutEscapes(buttons[itemNumber + extraLineCount].text)));
-        extraLineCount++;
-
-        sprintf(buttons[itemNumber + extraLineCount].text,
-                KEYBOARD_LABELS ? "%s%s -- press (a-z) for more info -- " : "%s%s -- touch an item for more info -- ",
-                grayColorEscapeSequence,
-                (magicDetected ? "  " : ""));
-        maxLength = max(maxLength, (strLenWithoutEscapes(buttons[itemNumber + extraLineCount].text)));
-        extraLineCount++;
     }
-    if (equippedItemCount) {
-        // Add a separator button to fill in the blank line between equipped and unequipped items.
-        sprintf(buttons[itemNumber + extraLineCount].text, "      %s%s---",
-                (magicDetected ? "  " : ""),
-                grayColorEscapeSequence);
-        buttons[itemNumber + extraLineCount].y = mapToWindowY(equippedItemCount);
-        extraLineCount++;
-    }
+    pos += snprintf(json + pos, sizeof(json) - pos, "]}");
 
-    for (i=0; i < itemNumber + extraLineCount; i++) {
+    // Show native inventory and wait for user input.
+    androidShowInventory(json);
 
-        // Position the button.
-        buttons[i].x = COLS - maxLength;
+    // Event loop: wait for item letter then action key, or ESCAPE to cancel.
+    theKey = ESCAPE_KEY;
+    theItem = NULL;
+    boolean waitingForAction = false;
 
-        // Pad the button label with space, so the button reaches to the right edge of the screen.
-        m = strlen(buttons[i].text);
-        for (j=buttons[i].x + strLenWithoutEscapes(buttons[i].text); j < COLS; j++) {
-            buttons[i].text[m] = ' ';
-            m++;
-        }
-        buttons[i].text[m] = '\0';
+    while (1) {
+        nextBrogueEvent(&theEvent, true, false, false);
+        if (theEvent.eventType != KEYSTROKE) continue;
 
-        // Display the button. This would be redundant with the button loop,
-        // except that we want the display to stick around until we get rid of it.
-        drawButton(&(buttons[i]), BUTTON_NORMAL, &dbuf);
-    }
+        char key = theEvent.param1;
 
-    // Add invisible previous and next buttons, so up and down arrows can select items.
-    // Previous
-    buttons[itemNumber + extraLineCount + 0].flags = B_ENABLED; // clear everything else
-    buttons[itemNumber + extraLineCount + 0].hotkey[0] = NUMPAD_8;
-    buttons[itemNumber + extraLineCount + 0].hotkey[1] = UP_ARROW;
-    // Next
-    buttons[itemNumber + extraLineCount + 1].flags = B_ENABLED; // clear everything else
-    buttons[itemNumber + extraLineCount + 1].hotkey[0] = NUMPAD_2;
-    buttons[itemNumber + extraLineCount + 1].hotkey[1] = DOWN_ARROW;
-
-    enterModalMode();
-    const SavedDisplayBuffer rbuf = saveDisplayBuffer();
-    overlayDisplayBuffer(&dbuf);
-
-    do {
-        repeatDisplay = false;
-
-        // Do the button loop.
-        highlightItemLine = -1;
-        restoreDisplayBuffer(&rbuf);   // Remove the inventory display while the buttons are active,
-                                            // since they look the same and we don't want their opacities to stack.
-
-        highlightItemLine = buttonInputLoop(buttons,
-                                            itemCount + extraLineCount + 2, // the 2 is for up/down hotkeys
-                                            COLS - maxLength,
-                                            mapToWindowY(0),
-                                            maxLength,
-                                            itemNumber + extraLineCount,
-                                            &theEvent);
-        if (highlightItemLine == itemNumber + extraLineCount + 0) {
-            // Up key
-            highlightItemLine = itemNumber - 1;
-            theEvent.shiftKey = true;
-        } else if (highlightItemLine == itemNumber + extraLineCount + 1) {
-            // Down key
-            highlightItemLine = 0;
-            theEvent.shiftKey = true;
+        if (key == ESCAPE_KEY) {
+            break;
         }
 
-        if (highlightItemLine >= 0) {
-            theKey = itemList[highlightItemLine]->inventoryLetter;
-            theItem = itemList[highlightItemLine];
-        } else {
-            theKey = ESCAPE_KEY;
-        }
-
-        // Was an item selected?
-        if (highlightItemLine > -1 && (waitForAcknowledge || theEvent.shiftKey || theEvent.controlKey)) {
-
-            do {
-                // Yes. Highlight the selected item. Do this by changing the button color and re-displaying it.
-
-                overlayDisplayBuffer(&dbuf);
-
-                //buttons[highlightItemLine].buttonColor = interfaceBoxColor;
-                drawButton(&(buttons[highlightItemLine]), BUTTON_PRESSED, NULL);
-                //buttons[highlightItemLine].buttonColor = black;
-
-                if (theEvent.shiftKey || theEvent.controlKey || waitForAcknowledge) {
-                    // Display an information window about the item.
-                    actionKey = printCarriedItemDetails(theItem, max(2, mapToWindowX(DCOLS - maxLength - 42)), mapToWindowY(2), 40, includeButtons);
-
-                    restoreDisplayBuffer(&rbuf); // remove the item info window
-
-                    if (actionKey == -1) {
-                        repeatDisplay = true;
-                        overlayDisplayBuffer(&dbuf); // redisplay the inventory
-                    } else {
-                        restoreRNG;
-                        repeatDisplay = false;
-                        restoreDisplayBuffer(&rbuf); // restore the original screen
-                    }
-
-                    // Exit modal before gameplay actions so the dungeon
-                    // renders undimmed at 2x (e.g. throw targeting).
-                    if (actionKey > -1 && actionKey != UP_KEY && actionKey != DOWN_KEY) {
-                        exitModalMode();
-                    }
-
-                    switch (actionKey) {
-                        case APPLY_KEY:
-                            apply(theItem);
-                            break;
-                        case EQUIP_KEY:
-                            equip(theItem);
-                            break;
-                        case UNEQUIP_KEY:
-                            unequip(theItem);
-                            break;
-                        case DROP_KEY:
-                            drop(theItem);
-                            break;
-                        case THROW_KEY:
-                            throwCommand(theItem, false);
-                            break;
-                        case RELABEL_KEY:
-                            relabel(theItem);
-                            break;
-                        case CALL_KEY:
-                            call(theItem);
-                            break;
-                        case UP_KEY:
-                            highlightItemLine = highlightItemLine - 1;
-                            if (highlightItemLine < 0) {
-                                highlightItemLine = itemNumber - 1;
-                            }
-                            break;
-                        case DOWN_KEY:
-                            highlightItemLine = highlightItemLine + 1;
-                            if (highlightItemLine >= itemNumber) {
-                                highlightItemLine = 0;
-                            }
-                            break;
-                        default:
-                            break;
-                    }
-
-                    if (actionKey == UP_KEY || actionKey == DOWN_KEY) {
-                        theKey = itemList[highlightItemLine]->inventoryLetter;
-                        theItem = itemList[highlightItemLine];
-                    } else if (actionKey > -1) {
-                        restoreRNG;
-                        return 0;
-                    }
+        if (!waitingForAction) {
+            // First keypress: item selection (inventory letter a-z).
+            for (i = 0; i < itemNumber; i++) {
+                if (itemList[i]->inventoryLetter == key) {
+                    theItem = itemList[i];
+                    theKey = key;
+                    waitingForAction = true;
+                    break;
                 }
-            } while (actionKey == UP_KEY || actionKey == DOWN_KEY);
+            }
+            // If this was a non-waitForAcknowledge call, return the letter directly.
+            if (theItem && !waitForAcknowledge) {
+                break;
+            }
+        } else {
+            // Second keypress: action key.
+            androidHideInventory();
+
+            switch (key) {
+                case APPLY_KEY:
+                    apply(theItem);
+                    restoreRNG;
+                    return 0;
+                case EQUIP_KEY:
+                    equip(theItem);
+                    restoreRNG;
+                    return 0;
+                case UNEQUIP_KEY:
+                    unequip(theItem);
+                    restoreRNG;
+                    return 0;
+                case DROP_KEY:
+                    drop(theItem);
+                    restoreRNG;
+                    return 0;
+                case THROW_KEY:
+                    throwCommand(theItem, false);
+                    restoreRNG;
+                    return 0;
+                case ESCAPE_KEY:
+                    restoreRNG;
+                    return 0;
+                default:
+                    // Unknown action, treat as cancel on this item, go back to list.
+                    waitingForAction = false;
+                    theItem = NULL;
+                    androidShowInventory(json); // re-show
+                    break;
+            }
         }
-    } while (repeatDisplay); // so you can get info on multiple items sequentially
+    }
 
-    restoreDisplayBuffer(&rbuf); // restore the original screen
-    exitModalMode();
-
+    androidHideInventory();
     restoreRNG;
     return theKey;
 }

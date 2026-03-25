@@ -71,6 +71,28 @@ void androidSetOverlayVisible(boolean visible) {
     (*env)->DeleteLocalRef(env, activity);
 }
 
+void androidShowInventory(const char *json) {
+    JNIEnv *env = (JNIEnv *)SDL_AndroidGetJNIEnv();
+    jobject activity = (jobject)SDL_AndroidGetActivity();
+    jclass cls = (*env)->GetObjectClass(env, activity);
+    jstring jstr = (*env)->NewStringUTF(env, json);
+    jmethodID mid = (*env)->GetMethodID(env, cls, "showInventory", "(Ljava/lang/String;)V");
+    if (mid) (*env)->CallVoidMethod(env, activity, mid, jstr);
+    (*env)->DeleteLocalRef(env, jstr);
+    (*env)->DeleteLocalRef(env, cls);
+    (*env)->DeleteLocalRef(env, activity);
+}
+
+void androidHideInventory(void) {
+    JNIEnv *env = (JNIEnv *)SDL_AndroidGetJNIEnv();
+    jobject activity = (jobject)SDL_AndroidGetActivity();
+    jclass cls = (*env)->GetObjectClass(env, activity);
+    jmethodID mid = (*env)->GetMethodID(env, cls, "hideInventory", "()V");
+    if (mid) (*env)->CallVoidMethod(env, activity, mid);
+    (*env)->DeleteLocalRef(env, cls);
+    (*env)->DeleteLocalRef(env, activity);
+}
+
 float androidZoomLevel = 2.0f;
 float androidPanX = 0.0f, androidPanY = 0.0f;
 boolean androidPanOverride = false;
