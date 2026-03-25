@@ -661,9 +661,9 @@ void updateTile(int row, int column, short charIndex,
         .needsRefresh = 1
     };
 
-    // Route to the correct layer based on plotToUiLayer flag,
-    // which is set by commitDraws/refreshScreen before each buffer pass.
-    if (plotToUiLayer) {
+    // In modal mode, everything renders to the UI overlay so it appears
+    // on top of the dimmed dungeon layer.
+    if (renderMode == RENDER_MODAL || plotToUiLayer) {
         uiTiles[row][column] = tile;
     } else {
         dungeonTiles[row][column] = tile;
@@ -849,78 +849,68 @@ void updateScreen() {
     }
 
     // Pass 2: render the UI layer (uiTiles)
-    // During gameplay: 1x scale, pinned to screen edges
-    // Title menu: 2x scale, centered
+    // Sidebar columns are pinned flush-left; everything else is centered.
     if (inGame && effectiveZoom > 1.0f) {
         int uiW = fitW;
         int uiH = fitH;
         int uiBaseX = (screenW - uiW) / 2;
         int uiBaseY = (screenH - uiH) / 2;
-        // Sidebar pinned to left screen edge (x starts at 0, not uiBaseX)
-        // Adjust uiTiles X positions: shift sidebar cols to screen-left
-        // We render the full uiTiles grid at 1x centered, except sidebar at left edge.
 
-        // Render UI grid centered, skipping sidebar (rendered separately at left edge)
+        // Opaque black background behind the sidebar so the dungeon doesn't show through
         {
-            // Temporarily zero sidebar cols so renderTiles skips them
-            ScreenTile savedSidebar[ROWS][STAT_BAR_WIDTH];
-            for (int y = 0; y < ROWS; y++)
-                for (int x = 0; x < STAT_BAR_WIDTH; x++) {
-                    savedSidebar[y][x] = uiTiles[y][x];
-                    uiTiles[y][x] = (ScreenTile){0};
-                }
-            renderTiles(renderer, uiTiles, uiBaseX, uiBaseY, uiW, uiH);
-            // Restore sidebar data for the left-edge render
-            for (int y = 0; y < ROWS; y++)
-                for (int x = 0; x < STAT_BAR_WIDTH; x++)
-                    uiTiles[y][x] = savedSidebar[y][x];
-        }
-
-        // During gameplay, re-render sidebar pinned to left screen edge
-        if (inGame) {
-            SDL_Rect sidebarBg = {0, 0, STAT_BAR_WIDTH * fitW / COLS, fitH};
+            SDL_Rect sidebarBg = {0, uiBaseY, STAT_BAR_WIDTH * uiW / COLS, uiH};
             if (SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255) < 0) sdlfatal(__FILE__, __LINE__);
             if (SDL_RenderFillRect(renderer, &sidebarBg) < 0) sdlfatal(__FILE__, __LINE__);
+        }
 
-            // Render sidebar tiles at left edge
-            for (int step = -1; step < numTextures; step++) {
-                for (int x = 0; x < STAT_BAR_WIDTH; x++) {
-                    int tw = ((x+1) * fitW / COLS) - (x * fitW / COLS);
-                    if (tw == 0) continue;
-                    for (int y = 0; y < ROWS; y++) {
-                        int th = ((y+1) * fitH / ROWS) - (y * fitH / ROWS);
-                        if (th == 0) continue;
-                        ScreenTile *tile = &uiTiles[y][x];
+        for (int step = -1; step < numTextures; step++) {
+            for (int x = 0; x < COLS; x++) {
+                int tileWidth = ((x+1) * uiW / COLS) - (x * uiW / COLS);
+                if (tileWidth == 0) continue;
 
-                        if (step < 0) {
-                            if (tile->backRed == 0 && tile->backGreen == 0 && tile->backBlue == 0)
-                                continue;
-                            SDL_Rect dest = {x * fitW / COLS, y * fitH / ROWS, tw, th};
-                            SDL_SetRenderDrawColor(renderer,
-                                round(2.55 * tile->backRed),
-                                round(2.55 * tile->backGreen),
-                                round(2.55 * tile->backBlue), 255);
-                            SDL_RenderFillRect(renderer, &dest);
-                        } else {
-                            int ti = (numTextures < 4 ? 0 : (tw > baseTileWidth ? 1 : 0) + (th > baseTileHeight ? 2 : 0));
-                            if (step != ti) continue;
-                            int tileRow = tile->charIndex / 16;
-                            int tileColumn = tile->charIndex % 16;
-                            if (tileEmpty[tileRow][tileColumn] && !(tileRow == 21 && tileColumn == 1))
-                                continue;
-                            SDL_Rect src = {
-                                (baseTileWidth + (step==1||step==3?1:0)) * tileColumn,
-                                (baseTileHeight + (step==2||step==3?1:0)) * tileRow,
-                                baseTileWidth + (step==1||step==3?1:0),
-                                baseTileHeight + (step==2||step==3?1:0)
-                            };
-                            SDL_Rect dest = {x * fitW / COLS, y * fitH / ROWS, tw, th};
-                            SDL_SetTextureColorMod(Textures[step],
-                                round(2.55 * tile->foreRed),
-                                round(2.55 * tile->foreGreen),
-                                round(2.55 * tile->foreBlue));
-                            SDL_RenderCopy(renderer, Textures[step], &src, &dest);
-                        }
+                // Sidebar columns render flush-left, others centered
+                int destX = (x < STAT_BAR_WIDTH)
+                    ? x * uiW / COLS
+                    : uiBaseX + x * uiW / COLS;
+
+                for (int y = 0; y < ROWS; y++) {
+                    int tileHeight = ((y+1) * uiH / ROWS) - (y * uiH / ROWS);
+                    if (tileHeight == 0) continue;
+
+                    ScreenTile *tile = &uiTiles[y][x];
+                    int destY = uiBaseY + y * uiH / ROWS;
+
+                    if (step < 0) {
+                        if (tile->backRed == 0 && tile->backGreen == 0 && tile->backBlue == 0)
+                            continue;
+                        SDL_Rect dest = {destX, destY, tileWidth, tileHeight};
+                        if (SDL_SetRenderDrawColor(renderer,
+                            round(2.55 * tile->backRed),
+                            round(2.55 * tile->backGreen),
+                            round(2.55 * tile->backBlue), 255) < 0) sdlfatal(__FILE__, __LINE__);
+                        if (SDL_RenderFillRect(renderer, &dest) < 0) sdlfatal(__FILE__, __LINE__);
+                    } else {
+                        int textureIndex = (numTextures < 4 ? 0 : (tileWidth > baseTileWidth ? 1 : 0) + (tileHeight > baseTileHeight ? 2 : 0));
+                        if (step != textureIndex) continue;
+
+                        int tileRow    = tile->charIndex / 16;
+                        int tileColumn = tile->charIndex % 16;
+                        if (tileEmpty[tileRow][tileColumn]
+                                && !(tileRow == 21 && tileColumn == 1))
+                            continue;
+
+                        SDL_Rect src = {
+                            (baseTileWidth  + (step == 1 || step == 3 ? 1 : 0)) * tileColumn,
+                            (baseTileHeight + (step == 2 || step == 3 ? 1 : 0)) * tileRow,
+                            baseTileWidth  + (step == 1 || step == 3 ? 1 : 0),
+                            baseTileHeight + (step == 2 || step == 3 ? 1 : 0)
+                        };
+                        SDL_Rect dest = {destX, destY, tileWidth, tileHeight};
+                        if (SDL_SetTextureColorMod(Textures[step],
+                            round(2.55 * tile->foreRed),
+                            round(2.55 * tile->foreGreen),
+                            round(2.55 * tile->foreBlue)) < 0) sdlfatal(__FILE__, __LINE__);
+                        if (SDL_RenderCopy(renderer, Textures[step], &src, &dest) < 0) sdlfatal(__FILE__, __LINE__);
                     }
                 }
             }
