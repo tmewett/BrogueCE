@@ -1,10 +1,12 @@
 include config.mk
 
-# Warning flags: enable flags first, "no-" flags next, "error" flags last
+# Warning flags: generic flags first, then prototype-related flags, then format-related flags,
+# then misc. flags
 cflags := -Isrc/brogue -Isrc/platform -Isrc/variants -std=c99 \
-	-Wall -Wpedantic  -Wformat -Wmissing-prototypes \
-	-Wno-parentheses -Wno-unused-result -Wno-format-overflow \
-	-Werror=implicit -Werror=format-security -Werror=strict-prototypes
+	-Wall -Wextra -Wpedantic \
+	-Werror=implicit -Wmissing-prototypes -Werror=strict-prototypes \
+	-Wformat -Werror=format-security -Wno-format-truncation -Wno-format-overflow \
+	-Wno-unused-result -Wno-missing-field-initializers
 libs := -lm
 cppflags := -DDATADIR=$(DATADIR)
 
