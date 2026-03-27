@@ -3725,7 +3725,7 @@ boolean moveMonster(creature *monst, short dx, short dy) {
     newY = y + dy;
 
     if (!coordinatesAreInMap(newX, newY)) {
-        //DEBUG printf("\nProblem! Monster trying to move more than one space at a time.");
+        DEBUG printf("\nProblem! Monster trying to move outside the map.");
         return false;
     }
 

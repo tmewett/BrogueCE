@@ -448,7 +448,7 @@ void initializeRogue(uint64_t seed) {
         rogue.playbackOmniscience = 1;
     }
 
-    DEBUG {
+    if (WIZARD_MODE) {
         theItem = generateItem(RING, RING_CLAIRVOYANCE);
         theItem->enchant1 = max(DROWS, DCOLS);
         theItem->flags &= ~ITEM_CURSED;
