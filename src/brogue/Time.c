@@ -50,7 +50,7 @@ void exposeCreatureToFire(creature *monst) {
     monst->status[STATUS_BURNING] = monst->maxStatus[STATUS_BURNING] = max(monst->status[STATUS_BURNING], 7);
 }
 
-void updateFlavorText() {
+void updateFlavorText(void) {
     char buf[DCOLS * 3];
     if (rogue.disturbed && !rogue.gameHasEnded) {
         if (rogue.armor
@@ -68,7 +68,7 @@ void updateFlavorText() {
     }
 }
 
-void updatePlayerUnderwaterness() {
+void updatePlayerUnderwaterness(void) {
     if (rogue.inWater) {
         if (!cellHasTerrainFlag(player.loc, T_IS_DEEP_WATER) || player.status[STATUS_LEVITATING]
             || cellHasTerrainFlag(player.loc, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))) {
@@ -549,7 +549,7 @@ static void applyGradualTileEffectsToCreature(creature *monst, short ticks) {
     }
 }
 
-void updateClairvoyance() {
+void updateClairvoyance(void) {
     short i, j, clairvoyanceRadius, dx, dy;
     boolean cursed;
     unsigned long cFlags;
@@ -597,7 +597,7 @@ void updateClairvoyance() {
     }
 }
 
-static void updateTelepathy() {
+static void updateTelepathy(void) {
     short i, j;
     boolean grid[DCOLS][DROWS];
 
@@ -646,7 +646,7 @@ short scentDistance(short x1, short y1, short x2, short y2) {
     }
 }
 
-static void updateScent() {
+static void updateScent(void) {
     short i, j;
     char grid[DCOLS][DROWS];
 
@@ -673,7 +673,7 @@ short armorStealthAdjustment(item *theArmor) {
     return max(0, armorTable[theArmor->kind].strengthRequired - 12);
 }
 
-short currentStealthRange() {
+short currentStealthRange(void) {
     // Default value of 14 in the light.
     short stealthRange = 14;
 
@@ -715,7 +715,7 @@ short currentStealthRange() {
     return stealthRange;
 }
 
-void demoteVisibility() {
+void demoteVisibility(void) {
     short i, j;
 
     for (i=0; i<DCOLS; i++) {
@@ -801,7 +801,7 @@ void updateVision(boolean refreshDisplay) {
     }
 }
 
-static void checkNutrition() {
+static void checkNutrition(void) {
     item *theItem;
     char buf[DCOLS*3], foodWarning[DCOLS*3];
 
@@ -880,7 +880,7 @@ static void flashCreatureAlert(creature *monst, char msg[200], const color *fore
     rogue.autoPlayingLevel = false;
 }
 
-static void handleHealthAlerts() {
+static void handleHealthAlerts(void) {
     short i, currentPercent, previousPercent,
     thresholds[] = {5, 10, 25, 40},
     pThresholds[] = {100, 90, 50};
@@ -953,7 +953,7 @@ static void addXPXPToAlly(creature *monst) {
 }
 
 /// @brief Allies gain experience if they are within 1 depth level of the player
-static void handleXPXP() {
+static void handleXPXP(void) {
 
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
@@ -974,7 +974,7 @@ static void handleXPXP() {
     rogue.xpxpThisTurn = 0;
 }
 
-static void playerFalls() {
+static void playerFalls(void) {
     short damage;
     short layer;
 
@@ -1221,7 +1221,7 @@ boolean exposeTileToFire(short x, short y, boolean alwaysIgnite) {
 }
 
 // Only the gas layer can be volumetric.
-static void updateVolumetricMedia() {
+static void updateVolumetricMedia(void) {
     short i, j, newX, newY, numSpaces;
     unsigned long highestNeighborVolume;
     unsigned long sum;
@@ -1321,7 +1321,7 @@ static void updateVolumetricMedia() {
     }
 }
 
-static void updateYendorWardenTracking() {
+static void updateYendorWardenTracking(void) {
     short n;
 
     if (!rogue.yendorWarden) {
@@ -1358,7 +1358,7 @@ static void updateYendorWardenTracking() {
 
 // Monsters who are over chasms or other descent tiles won't fall until this is called.
 // This is to avoid having the monster chain change unpredictably in the middle of a turn.
-void monstersFall() {
+void monstersFall(void) {
     short x, y;
     char buf[DCOLS], buf2[DCOLS];
 
@@ -1409,7 +1409,7 @@ void monstersFall() {
     }
 }
 
-void updateEnvironment() {
+void updateEnvironment(void) {
     short i, j, direction, newX, newY, promotions[DCOLS][DROWS];
     long promoteChance;
     enum dungeonLayers layer;
@@ -1519,7 +1519,7 @@ void updateEnvironment() {
     updateFloorItems();
 }
 
-void updateAllySafetyMap() {
+void updateAllySafetyMap(void) {
     short i, j;
     short **playerCostMap, **monsterCostMap;
 
@@ -1595,7 +1595,7 @@ static void resetDistanceCellInGrid(short **grid, short x, short y) {
     }
 }
 
-void updateSafetyMap() {
+void updateSafetyMap(void) {
     short i, j;
     short **playerCostMap, **monsterCostMap;
     creature *monst;
@@ -1729,7 +1729,7 @@ void updateSafetyMap() {
     freeGrid(monsterCostMap);
 }
 
-void updateSafeTerrainMap() {
+void updateSafeTerrainMap(void) {
     short i, j;
     short **costMap;
     creature *monst;
@@ -1769,7 +1769,7 @@ void updateSafeTerrainMap() {
     freeGrid(costMap);
 }
 
-static void processIncrementalAutoID() {
+static void processIncrementalAutoID(void) {
     item *theItem, *autoIdentifyItems[3] = {rogue.armor, rogue.ringLeft, rogue.ringRight};
     char buf[DCOLS*3], theItemName[DCOLS*3];
     short i;
@@ -1943,7 +1943,7 @@ static void monsterEntersLevel(creature *monst, short n) {
     }
 }
 
-static void monstersApproachStairs() {
+static void monstersApproachStairs(void) {
     short n;
 
     for (n = rogue.depthLevel - 2; n <= rogue.depthLevel; n += 2) { // cycle through previous and next level
@@ -1966,7 +1966,7 @@ static void monstersApproachStairs() {
     }
 }
 
-static void decrementPlayerStatus() {
+static void decrementPlayerStatus(void) {
     // Handle hunger.
     if (!player.status[STATUS_PARALYZED]) {
         // No nutrition is expended while paralyzed.
@@ -2084,7 +2084,7 @@ static boolean dangerChanged(boolean danger[4]) {
     return false;
 }
 
-void autoRest() {
+void autoRest(void) {
     boolean danger[4];
     for (enum directions dir = 0; dir < 4; dir++) {
         const pos newLoc = posNeighborInDirection(player.loc, dir);
@@ -2143,7 +2143,7 @@ void autoRest() {
     rogue.automationActive = false;
 }
 
-void manualSearch() {
+void manualSearch(void) {
     recordKeystroke(SEARCH_KEY, false, false);
 
     if (player.status[STATUS_SEARCHING] <= 0) {
@@ -2184,7 +2184,7 @@ void manualSearch() {
 
 // Call this periodically (when haste/slow wears off and when moving between depths)
 // to keep environmental updates in sync with player turns.
-void synchronizePlayerTimeState() {
+void synchronizePlayerTimeState(void) {
     rogue.ticksTillUpdateEnvironment = player.ticksUntilTurn;
 }
 
@@ -2202,7 +2202,7 @@ void playerRecoversFromAttacking(boolean anAttackHit) {
 }
 
 
-static void recordCurrentCreatureHealths() {
+static void recordCurrentCreatureHealths(void) {
 
     boolean handledPlayer = false;
     for (creatureIterator it = iterateCreatures(monsters); !handledPlayer || hasNextCreature(it);) {
@@ -2216,7 +2216,7 @@ static void recordCurrentCreatureHealths() {
 // It hands control over to monsters until they've all expended their accumulated ticks,
 // updating the environment (gas spreading, flames spreading and burning out, etc.) every
 // 100 ticks.
-void playerTurnEnded() {
+void playerTurnEnded(void) {
     short soonestTurn, damage, turnsRequiredToShore, turnsToShore;
     char buf[COLS], buf2[COLS];
     boolean fastForward = false;
@@ -2621,7 +2621,7 @@ void playerTurnEnded() {
     }
 }
 
-void resetScentTurnNumber() { // don't want player.scentTurnNumber to roll over the short maxint!
+void resetScentTurnNumber(void) { // don't want player.scentTurnNumber to roll over the short maxint!
     short i, j, d;
     rogue.scentTurnNumber -= 15000;
     for (d = 0; d < gameConst->deepestLevel; d++) {

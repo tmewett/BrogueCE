@@ -30,13 +30,13 @@
 
 #include <time.h>
 
-int rogueMain() {
+int rogueMain(void) {
     previousGameSeed = 0;
     mainBrogueJunction();
     return rogue.gameExitStatusCode;
 }
 
-void printBrogueVersion() {
+void printBrogueVersion(void) {
     printf("Brogue version: %s\n", brogueVersion);
     printf("Supports variant (rapid_brogue): %s\n", rapidBrogueVersion);
     printf("Supports variant (bullet_brogue): %s\n", bulletBrogueVersion);
@@ -115,7 +115,7 @@ boolean openFile(const char *path) {
 }
 
 #ifdef SCREEN_UPDATE_BENCHMARK
-static void screen_update_benchmark() {
+static void screen_update_benchmark(void) {
     short i, j, k;
     const color sparklesauce = {10, 0, 20,  60, 40, 100, 30, true};
     enum displayGlyph theChar;
@@ -154,7 +154,7 @@ static const char *getOrdinalSuffix(int number) {
     }
 }
 
-static void welcome() {
+static void welcome(void) {
     char buf[DCOLS*3], buf2[DCOLS*3];
     message("Hello and welcome, adventurer, to the Dungeons of Doom!", 0);
     strcpy(buf, "Retrieve the ");
@@ -170,7 +170,7 @@ static void welcome() {
     flavorMessage("The doors to the dungeon slam shut behind you.");
 }
 
-void initializeGameVariant() {
+void initializeGameVariant(void) {
 
     switch (gameVariant) {
         case VARIANT_RAPID_BROGUE:
@@ -535,7 +535,7 @@ void initializeRogue(uint64_t seed) {
 }
 
 // call this once per level to set all the dynamic colors as a function of depth
-static void updateColors() {
+static void updateColors(void) {
     short i;
 
     for (i=0; i<NUMBER_DYNAMIC_COLORS; i++) {
@@ -976,12 +976,12 @@ static void removeDeadMonstersFromList(creatureList *list) {
 
 // Removes dead monsters from `monsters`/`dormantMonsters`, and inserts them into `purgatory` if
 // the decedent is a player ally at the moment of death, for possible future resurrection.
-void removeDeadMonsters() {
+void removeDeadMonsters(void) {
     removeDeadMonstersFromList(monsters);
     removeDeadMonstersFromList(dormantMonsters);
 }
 
-void freeEverything() {
+void freeEverything(void) {
     short i;
     item *theItem, *theItem2;
 
@@ -1381,7 +1381,7 @@ void victory(boolean superVictory) {
     rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
 }
 
-void enableEasyMode() {
+void enableEasyMode(void) {
     if (rogue.mode == GAME_MODE_EASY) {
         message("Alas, all hope of salvation is lost. You shed scalding tears at your plight.", 0);
         return;

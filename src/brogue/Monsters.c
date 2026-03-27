@@ -163,7 +163,7 @@ void initializeMonster(creature *monst, boolean itemPossible) {
 /// @brief Checks if the player knows a monster's location via telepathy or entrancement.
 /// @param monst the monster
 /// @return true if the monster is either entranced or revealed by telepathy
-boolean monsterRevealed(creature *monst) {
+boolean monsterRevealed(const creature *monst) {
     if (monst == &player) {
         return false;
     } else if (monst->bookkeepingFlags & MB_TELEPATHICALLY_REVEALED) {
@@ -226,7 +226,7 @@ boolean monsterIsHidden(const creature *monst, const creature *observer) {
 /// verbiage used in combat/dungeon messages (or whether a message appears at all).
 /// @param monst the monster
 /// @return true if the monster is not hidden and the player knows its location
-boolean canSeeMonster(creature *monst) {
+boolean canSeeMonster(const creature *monst) {
     if (monst == &player) {
         return true;
     }
@@ -242,7 +242,7 @@ boolean canSeeMonster(creature *monst) {
 /// darkening is a factor because it affects a cell's VISIBLE flag.
 /// @param monst the monster
 /// @return true if the player can physically see the monster
-boolean canDirectlySeeMonster(creature *monst) {
+boolean canDirectlySeeMonster(const creature *monst) {
     if (monst == &player) {
         return true;
     }
@@ -252,7 +252,7 @@ boolean canDirectlySeeMonster(creature *monst) {
     return false;
 }
 
-void monsterName(char *buf, creature *monst, boolean includeArticle) {
+void monsterName(char *buf, const creature *monst, boolean includeArticle) {
     short oldRNG;
 
     if (monst == &player) {
@@ -406,7 +406,7 @@ void initializeGender(creature *monst) {
 }
 
 /// @brief Sets the character used to represent the player in the game, based on the game mode
-void setPlayerDisplayChar() {
+void setPlayerDisplayChar(void) {
     if (rogue.mode == GAME_MODE_EASY) {
         player.info.displayChar = G_DEMON;
     } else {
@@ -908,7 +908,7 @@ void fadeInMonster(creature *monst) {
     flashMonster(monst, &bColor, 100);
 }
 
-creatureList createCreatureList() {
+creatureList createCreatureList(void) {
     creatureList list;
     list.head = NULL;
     return list;
@@ -1068,7 +1068,7 @@ static boolean summonMinions(creature *summoner) {
 }
 
 // Generates and places monsters for the level.
-void populateMonsters() {
+void populateMonsters(void) {
     if (!MONSTERS_ENABLED) {
         return;
     }
@@ -1112,7 +1112,7 @@ boolean getRandomMonsterSpawnLocation(short *x, short *y) {
     return true;
 }
 
-void spawnPeriodicHorde() {
+void spawnPeriodicHorde(void) {
     creature *monst;
     short x, y;
 
@@ -3714,7 +3714,7 @@ boolean moveMonster(creature *monst, short dx, short dy) {
     short i;
     short confusedDirection, swarmDirection;
     creature *defender = NULL;
-    const creature *hitList[16] = {NULL};
+    creature *hitList[16] = {NULL};
     enum directions dir;
 
     if (dx == 0 && dy == 0) {

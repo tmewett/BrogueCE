@@ -31,7 +31,7 @@
 #define MAGIC_POLARITY_NEUTRAL 0
 #define MAGIC_POLARITY_ANY 0
 
-item *initializeItem() {
+item *initializeItem(void) {
     short i;
     item *theItem;
 
@@ -1017,7 +1017,7 @@ item *addItemToPack(item *theItem) {
     return theItem;
 }
 
-short numberOfItemsInPack() {
+short numberOfItemsInPack(void) {
     short theCount = 0;
     item *theItem;
     for(theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
@@ -1026,7 +1026,7 @@ short numberOfItemsInPack() {
     return theCount;
 }
 
-char nextAvailableInventoryCharacter() {
+char nextAvailableInventoryCharacter(void) {
     boolean charTaken[26];
     short i;
     item *theItem;
@@ -1189,7 +1189,7 @@ static boolean swapItemEnchants(const short machineNumber) {
     return false;
 }
 
-void updateFloorItems() {
+void updateFloorItems(void) {
     short x, y;
     char buf[DCOLS*3], buf2[DCOLS*3];
     enum dungeonLayers layer;
@@ -1423,7 +1423,7 @@ void call(item *theItem) {
 // If baseColor is provided, then the suffix will be in gray, flavor portions of the item name (e.g. a "pink" potion,
 //  a "sandalwood" staff, a "ruby" ring) will be in dark purple, and the Amulet of Yendor and lumenstones will be in yellow.
 //  BaseColor itself will be the color that the name reverts to outside of these colored portions.
-void itemName(item *theItem, char *root, boolean includeDetails, boolean includeArticle, const color *baseColor) {
+void itemName(const item *theItem, char *root, boolean includeDetails, boolean includeArticle, const color *baseColor) {
     char buf[DCOLS * 5], pluralization[10], article[10] = "", runicName[30],
     grayEscapeSequence[5], purpleEscapeSequence[5], yellowEscapeSequence[5], baseEscapeSequence[5];
     color tempColor;
@@ -1714,7 +1714,7 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
     return;
 }
 
-void itemKindName(item *theItem, char *kindName) {
+void itemKindName(const item *theItem, char *kindName) {
 
     // use lookup table for randomly generated items with more than one kind per category
     if (theItem->category & (ARMOR | CHARM | FOOD | POTION | RING | SCROLL | STAFF | WAND | WEAPON)) {
@@ -1741,7 +1741,7 @@ void itemKindName(item *theItem, char *kindName) {
     }
 }
 
-void itemRunicName(item *theItem, char *runicName) {
+void itemRunicName(const item *theItem, char *runicName) {
     char vorpalEnemyMonsterClass[15] ="";
 
     if (theItem->flags & ITEM_RUNIC) {
@@ -1757,7 +1757,7 @@ void itemRunicName(item *theItem, char *runicName) {
     }
 }
 
-static int enchantMagnitude() {
+static int enchantMagnitude(void) {
     return tableForItemCategory(SCROLL)[SCROLL_ENCHANTING].power;
 }
 
@@ -3164,7 +3164,7 @@ short numberOfMatchingPackItems(unsigned short categoryMask,
     return matchingItemCount;
 }
 
-void updateEncumbrance() {
+void updateEncumbrance(void) {
     short moveSpeed, attackSpeed;
 
     moveSpeed = player.info.movementSpeed;
@@ -3192,7 +3192,7 @@ short armorValueIfUnenchanted(item *theItem) {
 }
 
 // Calculates the armor value to display to the player (estimated if the item is unidentified).
-short displayedArmorValue() {
+short displayedArmorValue(void) {
     if (!rogue.armor || (rogue.armor->flags & ITEM_IDENTIFIED)) {
         return player.info.defense / 10;
     } else {
@@ -3687,7 +3687,7 @@ static boolean tunnelize(short x, short y) {
 /// @param monst The monster
 /// @param isBolt True to check for a negation bolt. False for negation blast.
 /// @return True if negation will have an effect
-static boolean negationWillAffectMonster(creature *monst, boolean isBolt) {
+static boolean negationWillAffectMonster(const creature *monst, boolean isBolt) {
 
     // negation bolts don't affect monsters that always reflect. negation never affects the warden.
     if ((isBolt && (monst->info.abilityFlags & MA_REFLECT_100))
@@ -4342,7 +4342,7 @@ enum boltEffects boltEffectForItem(item *theItem) {
     }
 }
 
-enum boltType boltForItem(item *theItem) {
+enum boltType boltForItem(const item *theItem) {
     if (theItem->category & (STAFF | WAND)) {
         return tableForItemCategory(theItem->category)[theItem->kind].power;
     } else {
@@ -6438,7 +6438,7 @@ void relabel(item *theItem) {
 
 // If the most recently equipped item caused another item to be unequiped, is
 // uncursed, and both haven't left the inventory since, swap them back.
-void swapLastEquipment() {
+void swapLastEquipment(void) {
     item *theItem;
     unsigned char command[10];
 
@@ -6873,7 +6873,7 @@ static short lotteryDraw(short *frequencies, short itemCount) {
     return 0;
 }
 
-short chooseVorpalEnemy() {
+short chooseVorpalEnemy(void) {
     short i, frequencies[MONSTER_CLASS_COUNT];
     for (i = 0; i < MONSTER_CLASS_COUNT; i++) {
         if (monsterClassCatalog[i].maxDepth <= 0
@@ -6925,7 +6925,7 @@ void updateIdentifiableItem(item *theItem) {
     }
 }
 
-void updateIdentifiableItems() {
+void updateIdentifiableItems(void) {
     item *theItem;
     for (theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
         updateIdentifiableItem(theItem);
@@ -7462,7 +7462,7 @@ short magicCharDiscoverySuffix(short category, short kind) {
 -1 if the item is of bad magic
  0 if it is neutral
  1 if it is of good magic */
-int itemMagicPolarity(item *theItem) {
+int itemMagicPolarity(const item *theItem) {
     itemTable *theItemTable = tableForItemCategory(theItem->category);
     switch (theItem->category) {
         case WEAPON:
@@ -7538,7 +7538,7 @@ void unequip(item *theItem) {
     playerTurnEnded();
 }
 
-static boolean canDrop() {
+static boolean canDrop(void) {
     if (cellHasTerrainFlag(player.loc, T_OBSTRUCTS_ITEMS)) {
         return false;
     }
@@ -7684,7 +7684,7 @@ item *dropItem(item *theItem) {
     }
 }
 
-void recalculateEquipmentBonuses() {
+void recalculateEquipmentBonuses(void) {
     fixpt enchant;
     item *theItem;
     if (rogue.weapon) {
@@ -7849,7 +7849,7 @@ boolean unequipItem(item *theItem, boolean force) {
     return true;
 }
 
-void updateRingBonuses() {
+void updateRingBonuses(void) {
     short i;
     item *rings[2] = {rogue.ringLeft, rogue.ringRight};
 
@@ -7900,7 +7900,7 @@ void updateRingBonuses() {
     }
 }
 
-void updatePlayerRegenerationDelay() {
+void updatePlayerRegenerationDelay(void) {
     short maxHP;
     long turnsForFull; // In thousandths of a turn.
     maxHP = player.info.maxHP;
@@ -7946,7 +7946,7 @@ static void resetItemTableEntry(itemTable *theEntry) {
     theEntry->callTitle[0] = '\0';
 }
 
-void shuffleFlavors() {
+void shuffleFlavors(void) {
     short i, j, randIndex, randNumber;
     char buf[COLS];
 

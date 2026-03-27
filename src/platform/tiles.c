@@ -349,7 +349,7 @@ static double downscaleTile(SDL_Surface *surface, int tileWidth, int tileHeight,
 ///
 /// This is a slow function (takes ~2 minutes) so the results are saved to disk and reloaded when Brogue starts.
 /// After you modify the PNG, you should also delete "tiles.bin" and run Brogue so that the new tiles get optimized.
-static void optimizeTiles() {
+static void optimizeTiles(void) {
     SDL_Window *window = SDL_CreateWindow("Brogue", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 400, 300, 0);
 
     for (int row = 0; row < TILE_ROWS; row++) {
@@ -443,7 +443,7 @@ static void optimizeTiles() {
 
 
 /// Loads the PNG and analyses it.
-void initTiles() {
+void initTiles(void) {
     char filename[BROGUE_FILENAME_MAX];
     sprintf(filename, "%s/assets/tiles.png", dataDirectory);
 
@@ -618,7 +618,7 @@ void updateTile(int row, int column, short charIndex,
 /// This works because, unlike the accelerated renderers, the software renderer draws on a
 /// single surface and doesn't do double-buffering.
 ///
-void updateScreen() {
+void updateScreen(void) {
     if (!Win) return;
 
     SDL_Renderer *renderer = SDL_GetRenderer(Win);
@@ -792,7 +792,7 @@ void resizeWindow(int width, int height) {
 }
 
 
-SDL_Surface *captureScreen() {
+SDL_Surface *captureScreen(void) {
     if (!Win) return NULL;
 
     // get the renderer
