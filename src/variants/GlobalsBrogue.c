@@ -1017,7 +1017,6 @@ const gameConstants brogueGameConst = {
     .amuletLevel = AMULET_LEVEL,
 
     .depthAccelerator = 1,
-    .minimumAltarLevel = 13,
     .minimumLavaLevel = 4,
     .minimumBrimstoneLevel = 17,
     .mutationsOccurAboveLevel = 10,
