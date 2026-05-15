@@ -1,0 +1,16 @@
+module(name = "brogue-ce", version = "1.15.1")
+
+bazel_dep(name = "rules_cc", version = "0.2.17")
+bazel_dep(name = "sdl2", version = "2.32.0.bcr.beta.5")
+bazel_dep(name = "libpng", version = "1.6.54")
+
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "sdl-image",
+    urls = ["https://github.com/libsdl-org/SDL_image/releases/download/release-2.8.12/SDL2_image-2.8.12.tar.gz"],
+    integrity = "sha256-OT9e+1BTbsE8pPSv+2nMmWbTw/lp5sXnAfrd+fl4U4E=",
+    build_file = "@//:sdl-image.bazel",
+    strip_prefix = "SDL2_image-2.8.12",
+)
+

@@ -18,3 +18,7 @@ BrogueCE-*
 *.gcov
 *.desktop
 gmon.out
+bazel-BrogueCE
+bazel-bin
+bazel-out
+bazel-testlogs
