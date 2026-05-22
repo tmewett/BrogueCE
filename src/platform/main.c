@@ -233,7 +233,7 @@ int main(int argc, char *argv[])
         }
 
         if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) {
-            printBrogueVersion();
+            printBrogueVersion(dataDirectory);
             return 0;
         }
 
