@@ -27,6 +27,13 @@
 #include <math.h>
 #include <time.h>
 
+#ifdef BROGUE_BRIDGE
+extern void brh_mark_invalid_key(void);
+#define BRIDGE_MARK_INVALID_KEY() brh_mark_invalid_key()
+#else
+#define BRIDGE_MARK_INVALID_KEY() ((void) 0)
+#endif
+
 // Draws the smooth gradient that appears on a button when you hover over or depress it.
 // Returns the percentage by which the current tile should be averaged toward a hilite color.
 short smoothHiliteGradient(const short currentXValue, const short maxXValue) {
@@ -352,6 +359,9 @@ short buttonInputLoop(brogueButton *buttons,
 
         // Process the input.
         button = processButtonInput(&state, &canceled, &theEvent);
+        if (theEvent.eventType == KEYSTROKE && button == -1 && !canceled) {
+            BRIDGE_MARK_INVALID_KEY();
+        }
 
         // Revert the display.
         restoreDisplayBuffer(&rbuf);

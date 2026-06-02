@@ -28,6 +28,13 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
+#ifdef BROGUE_BRIDGE
+extern void brh_mark_invalid_key(void);
+#define BRIDGE_MARK_INVALID_KEY() brh_mark_invalid_key()
+#else
+#define BRIDGE_MARK_INVALID_KEY() ((void) 0)
+#endif
+
 #define D_DISABLE_BACKGROUND_COLORS     (WIZARD_MODE && 0)
 
 // Populates path[][] with a list of coordinates starting at origin and traversing down the map. Returns the number of steps in the path.
@@ -2694,6 +2701,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             }
             break;
         default:
+            BRIDGE_MARK_INVALID_KEY();
             break;
     }
     if (direction >= 0) { // if it was a movement command
@@ -2822,6 +2830,9 @@ boolean getInputTextString(char *inputText,
             }
         }
 #endif
+        else if (keystroke != RETURN_KEY && keystroke != ESCAPE_KEY) {
+            BRIDGE_MARK_INVALID_KEY();
+        }
     } while (keystroke != RETURN_KEY && keystroke != ESCAPE_KEY);
 
     if (useDialogBox) {
@@ -2917,6 +2928,7 @@ void waitForAcknowledgment() {
     do {
         nextBrogueEvent(&theEvent, false, false, false);
         if (theEvent.eventType == KEYSTROKE && theEvent.param1 != ACKNOWLEDGE_KEY && theEvent.param1 != ESCAPE_KEY) {
+            BRIDGE_MARK_INVALID_KEY();
             flashTemporaryAlert(" -- Press space or click to continue -- ", 500);
         }
     } while (!(theEvent.eventType == KEYSTROKE && (theEvent.param1 == ACKNOWLEDGE_KEY || theEvent.param1 == ESCAPE_KEY)

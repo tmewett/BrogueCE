@@ -1142,9 +1142,13 @@ void mainBrogueJunction() {
                 rogue.playbackFastForward = false;
                 rogue.playbackBetweenTurns = false;
 
+#ifdef BROGUE_BRIDGE
+                currentFilePath[0] = '\0';
+#else
                 getAvailableFilePath(path, LAST_GAME_NAME, GAME_SUFFIX);
                 strcat(path, GAME_SUFFIX);
                 strcpy(currentFilePath, path);
+#endif
 
                 if (rogue.nextGame == NG_NEW_GAME_WITH_SEED) {
                     if (rogue.nextGameSeed == 0) { // Prompt for seed; default is the previous game's seed.
