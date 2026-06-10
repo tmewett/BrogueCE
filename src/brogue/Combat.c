@@ -1044,62 +1044,34 @@ static short rateItemStealDesirability(creature *thief, item *theItem) {
     if (!theItem) return 0;
     short score = 10; // Base score for any item
     
-    // Query baseline market value from the static item tables
-    itemTable *entry = tableForItemCategory((enum itemCategory)theItem->category);
-    int baseValue = entry ? entry[theItem->kind].marketValue : 0;
-    
-    // A. MONKEY BEHAVIOR (Consumables, Food, Physical Utility)
+    // A. MONKEY BEHAVIOR (Consumables, Food)
     if (thief->info.monsterID == MK_MONKEY) {
         if (theItem->category & FOOD) {
             score += 50; // Monkeys absolutely love food!
         }
         else if (theItem->category & POTION) {
-            if (theItem->kind == POTION_LIFE) {
-                score += 40; // Smells like life essence!
-            } else if (theItem->kind == POTION_STRENGTH) {
-                score += 30; // Smells like physical power!
-            } else {
-                score += 10; // Enjoys shiny fluids
+            if (theItem->kind == POTION_LIFE || theItem->kind == POTION_STRENGTH) {
+                score += 50; // Highly nutritious biological drafts!
             }
-        }
-        else if (theItem->category & (WEAPON | ARMOR)) {
-            // Monkeys hate heavy metallic things
-            if (theItem->strengthRequired > 12) {
-                score -= 8;
-            }
-        }
-        // Monkeys prefer familiar, identified things
-        if (theItem->flags & ITEM_IDENTIFIED) {
-            score += 5;
         }
     }
     
     // B. IMP BEHAVIOR (Arcane, Enchantments, Runics)
     else if (thief->info.monsterID == MK_IMP) {
         if (theItem->category & SCROLL && theItem->kind == SCROLL_ENCHANTING) {
-            score += 60; // Imps crave raw enchantment scrolls!
+            score += 50; // Imps crave raw enchantment scrolls!
         }
-        
-        // Imps can sense magical polarity and enchantment magnitude
-        if (theItem->category & (RING | CHARM | STAFF | WEAPON | ARMOR)) {
-            // Add score based on positive enchantments (even if unidentified by player!)
+        else if (theItem->category & (RING | CHARM | STAFF | WEAPON | ARMOR)) {
+            // Imps sense positive magical enchantments (even if unidentified by player)
             if (theItem->enchant1 > 0) {
-                score += (theItem->enchant1 * 6);
-            }
-            if (theItem->timesEnchanted > 0) {
-                score += (theItem->timesEnchanted * 4);
+                score += (theItem->enchant1 * 5);
             }
             if (theItem->flags & ITEM_RUNIC) {
-                score += 30; // Imps love runics
+                score += 25; // Imps love runics
             }
-            
-            // Baseline magical value scaling
-            score += (baseValue / 100);
         }
-        
-        // Imps dislike organic or non-magical things
         if (theItem->category & FOOD) {
-            score -= 8;
+            score -= 8; // Imps dislike food
         }
     }
     
