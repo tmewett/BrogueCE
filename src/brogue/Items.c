@@ -7712,6 +7712,25 @@ void recalculateEquipmentBonuses() {
     }
 }
 
+// A ring whose effect is obvious the instant it is worn identifies its kind on equip.
+static boolean ringIdentifiesOnEquip(short ringKind) {
+    return ringKind == RING_CLAIRVOYANCE
+        || ringKind == RING_LIGHT
+        || ringKind == RING_STEALTH;
+}
+
+// How many ring kinds are still unidentified AND stay hidden when worn. If a freshly-worn ring reveals
+// nothing and this count is 1, the worn ring must be that kind (issue #683).
+static int unidentifiedRingKindsHiddenOnEquip(void) {
+    int count = 0;
+    for (short k = 0; k < NUMBER_RING_KINDS; k++) {
+        if (!ringTable[k].identified && !ringIdentifiesOnEquip(k)) {
+            count++;
+        }
+    }
+    return count;
+}
+
 // Returns true on success, false otherwise (for example, if failing to remove
 // a cursed item) If something must be first unequipped and it is not clear
 // what, unequipHint will be used if passed.
@@ -7758,9 +7777,13 @@ boolean equipItem(item *theItem, boolean force, item *unequipHint) {
         if (theItem->kind == RING_CLAIRVOYANCE) {
             updateClairvoyance();
             displayLevel();
+        }
+        if (ringIdentifiesOnEquip(theItem->kind)) {
             identifyItemKind(theItem);
-        } else if (theItem->kind == RING_LIGHT
-                   || theItem->kind == RING_STEALTH) {
+        } else if (!ringTable[theItem->kind].identified
+                   && unidentifiedRingKindsHiddenOnEquip() == 1) {
+            // Issue #683: the worn ring revealed no obvious effect, and it is the only still-unidentified
+            // ring kind that stays hidden on equip, so its kind is deducible.
             identifyItemKind(theItem);
         }
         updateEncumbrance();
