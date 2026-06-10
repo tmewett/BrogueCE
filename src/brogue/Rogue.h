@@ -3406,6 +3406,7 @@ extern "C" {
     boolean unequipItem(item *theItem, boolean force);
     short magicCharDiscoverySuffix(short category, short kind);
     int itemMagicPolarity(item *theItem);
+    void gainScrollInsightFromEating(void);
     item *itemAtLoc(pos loc);
     item *dropItem(item *theItem);
     itemTable *tableForItemCategory(enum itemCategory theCat);

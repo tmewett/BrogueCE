@@ -6710,6 +6710,7 @@ boolean eat(item *theItem, boolean recordCommands) {
 
     consumePackItem(theItem);
 
+    gainScrollInsightFromEating(); // a safe meal reveals one unknown scroll's polarity
     return true;
 }
 
@@ -7234,6 +7235,44 @@ static void detectMagicOnItem(item *theItem) {
 
         identify(theItem);
     }
+}
+
+// Eating a meal with nothing hunting you is a calm moment to study a scroll — it reveals the polarity of
+// the first still-unknown scroll in the pack. Polarity only, never a full ID. Gated on no creature in the
+// (Hunting) state. Pure flag-flipping via detectMagicOnItem — no RNG, no stored state — so it is
+// reconstructed identically on replay. Called from eat() on a successful meal.
+void gainScrollInsightFromEating(void) {
+    // Only when nothing is hunting you — you need a calm moment to study.
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
+        if (nextCreature(&it)->creatureState == MONSTER_TRACKING_SCENT) {
+            return;
+        }
+    }
+    // First unidentified scroll whose polarity is still unknown (deterministic top-of-pack order).
+    item *target = NULL;
+    for (item *theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
+        if ((theItem->category & SCROLL)
+            && !(theItem->flags & ITEM_IDENTIFIED)
+            && itemMagicPolarity(theItem) != MAGIC_POLARITY_NEUTRAL
+            && !itemMagicPolarityIsKnown(theItem, MAGIC_POLARITY_BENEVOLENT)
+            && !itemMagicPolarityIsKnown(theItem, MAGIC_POLARITY_MALEVOLENT)) {
+
+            target = theItem;
+            break;
+        }
+    }
+    if (target == NULL) {
+        return; // no unknown scroll to study
+    }
+
+    detectMagicOnItem(target);
+    tryIdentifyLastItemKinds(SCROLL);
+
+    const boolean benevolent = (itemMagicPolarity(target) == MAGIC_POLARITY_BENEVOLENT);
+    messageWithColor(benevolent
+                     ? "you study a scroll intently while eating; it radiates a benevolent aura."
+                     : "you study a scroll intently while eating; it radiates a malevolent aura.",
+                     (benevolent ? &goodMessageColor : &badMessageColor), 0);
 }
 
 boolean drinkPotion(item *theItem) {
