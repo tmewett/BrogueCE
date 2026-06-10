@@ -1180,7 +1180,7 @@ const monsterWords monsterText[NUMBER_MONSTER_KINDS] = {
     {"The eel slips silently through the subterranean lake, waiting for unsuspecting prey to set foot in $HISHER dark waters.",
         "eating", "Eating",
         {"shocks", "bites", {0}}},
-    {"Mischievous trickster that $HESHE is, the monkey lives to snatch familiar foods, sweet fruits, and life-giving draft potions from passing adventurers.",
+    {"Mischievous trickster that $HESHE is, the monkey lives to snatch familiar foods, sweet fruits, and drafts of health or strength from passing adventurers.",
         "examining", "Examining",
         {"tweaks", "bites", "punches", {0}}},
     {"A bladder of deadly gas buoys the bloat through the air, $HISHER thin veinous membrane ready to rupture at the slightest stress.",
