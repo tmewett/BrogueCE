@@ -1042,16 +1042,16 @@ void processStaggerHit(creature *attacker, creature *defender) {
 
 static short rateItemStealDesirability(creature *thief, item *theItem) {
     if (!theItem) return 0;
-    short score = 10; // Base score for any item
+    short score = 1; // Base score for any item
     
     // A. MONKEY BEHAVIOR (Consumables, Food)
     if (thief->info.monsterID == MK_MONKEY) {
         if (theItem->category & FOOD) {
-            score += 50; // Monkeys absolutely love food!
+            score += 29; // Monkeys absolutely love food! (Score = 30)
         }
         else if (theItem->category & POTION) {
             if (theItem->kind == POTION_LIFE || theItem->kind == POTION_STRENGTH) {
-                score += 50; // Highly nutritious biological drafts!
+                score += 29; // Highly nutritious biological drafts! (Score = 30)
             }
         }
     }
@@ -1059,15 +1059,15 @@ static short rateItemStealDesirability(creature *thief, item *theItem) {
     // B. IMP BEHAVIOR (Arcane, Enchantments, Runics)
     else if (thief->info.monsterID == MK_IMP) {
         if (theItem->category & SCROLL && theItem->kind == SCROLL_ENCHANTING) {
-            score += 50; // Imps crave raw enchantment scrolls!
+            score += 29; // Imps crave raw enchantment scrolls! (Score = 30)
         }
         else if (theItem->category & (RING | CHARM | STAFF | WEAPON | ARMOR)) {
             // Imps sense positive magical enchantments (even if unidentified by player)
             if (theItem->enchant1 > 0) {
-                score += (theItem->enchant1 * 5);
+                score += (theItem->enchant1 * 3);
             }
             if (theItem->flags & ITEM_RUNIC) {
-                score += 25; // Imps love runics
+                score += 15; // Imps love runics (Score = 16)
             }
         }
         if (theItem->category & FOOD) {
