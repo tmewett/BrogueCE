@@ -287,6 +287,7 @@ static void dialogCreateMonsterChooseMutation(creature *theMonster) {
             && !(theMonster->info.abilityFlags & mutationCatalog[i].forbiddenAbilityFlags)) {
             strncpy(buttonText, mutationCatalog[i].title, COLS);
             initializeCreateItemButton(&(buttons[j]), buttonText);
+            buttons[j].command = i; // Store the mutation index (as opposed to the button index)
             j++;
         }
     }
@@ -296,8 +297,8 @@ static void dialogCreateMonsterChooseMutation(creature *theMonster) {
 
     selectedMutation = dialogSelectEntryFromList(buttons, j+1, "Choose a mutation:");
 
-    if (selectedMutation != noMutation) {
-        mutateMonster(theMonster, selectedMutation);
+    if (selectedMutation >= 0 && selectedMutation != noMutation) {
+        mutateMonster(theMonster, buttons[selectedMutation].command); // Retrieve the mutation index from the button
     }
 }
 
@@ -456,10 +457,10 @@ static void dialogCreateItem() {
 
     selectedCategory = dialogSelectEntryFromList(buttons, i, "Create item:");
 
-    if (tableForItemCategory(Fl(selectedCategory))) {
-        selectedKind = dialogCreateItemChooseKind(Fl(selectedCategory));
-    } else if (selectedCategory == -1) {
+    if (selectedCategory == -1) {
         return;
+    } else if (tableForItemCategory(Fl(selectedCategory))) {
+        selectedKind = dialogCreateItemChooseKind(Fl(selectedCategory));
     } else {
         selectedKind = 0;
     }

@@ -1901,7 +1901,7 @@ static void monsterEntersLevel(creature *monst, short n) {
         brogueAssert(prevMonst);
         prevMonst->loc = getQualifyingPathLocNear(monst->loc, true,
                                  T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(prevMonst->info)), 0,
-                                 avoidedFlagsForMonster(&(prevMonst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_STAIRS), false);
+                                 avoidedFlagsForMonster(&(prevMonst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_STAIRS | IS_IN_MACHINE), false);
         pmapAt(monst->loc)->flags &= ~(HAS_PLAYER | HAS_MONSTER);
         pmapAt(prevMonst->loc)->flags |= (prevMonst == &player ? HAS_PLAYER : HAS_MONSTER);
         refreshDungeonCell(prevMonst->loc);
