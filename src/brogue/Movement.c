@@ -355,9 +355,16 @@ void describeLocation(char buf[DCOLS], short x, short y) {
                 strcat(itemLocation, standsInTerrain ? " in " : " on ");
                 strcat(itemLocation, tileText(x, y));
             }
-            sprintf(buf, "%s %s %s %s%s.", subject, verb, preposition, object, itemLocation);
-            describedItemName(theItem, object, DCOLS - strlen(buf));
 
+            describedItemName(theItem, object, DCOLS - strlen(buf));
+            // This `sprintf` call is similar to the one at the end of this function, but that one
+            // adds an extra space; to avoid the extra space in messages like "X is standing  over Y",
+            // we have to use a slightly different version here. A space is added to the end of the
+            // verb (if not already present) a few lines above here, so we shouldn't add a space
+            // after the verb in this `sprintf` call.
+            sprintf(buf, "%s %s%s %s%s.", subject, verb, preposition, object, itemLocation);
+            restoreRNG;
+            return;
         } else {
             if (!prepositionLocked) {
                 strcpy(preposition, subjectMoving ? (standsInTerrain ? "through" : "across")
@@ -384,7 +391,6 @@ void describeLocation(char buf[DCOLS], short x, short y) {
             strcpy(preposition, standsInTerrain ? (subjectMoving ? "through" : "in")
                    : (subjectMoving ? "across" : "on"));
 
-            sprintf(buf, "%s %s %s %s%s.", subject, verb, preposition, object, itemLocation);
             describedItemName(theItem, subject, DCOLS - strlen(buf));
 
         } else { // no item
