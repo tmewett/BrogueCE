@@ -277,7 +277,10 @@ static void initializeMainMenuButtons(brogueButton *buttons) {
     initializeMainMenuButton(&(buttons[0]), "     %sN%sew Game     ", 'n', 'N', NG_NEW_GAME);
     initializeMainMenuButton(&(buttons[1]), " *     %sP%slay       ", 'p', 'P', NG_FLYOUT_PLAY);
     initializeMainMenuButton(&(buttons[2]), " *     %sV%siew       ", 'v', 'V', NG_FLYOUT_VIEW);
+
+#ifndef BROGUE_TABLET
     initializeMainMenuButton(&(buttons[3]), "       %sQ%suit       ", 'q', 'Q', NG_QUIT);
+#endif
 
     // Add a left-facing triangle to all the buttons except quit
     for (int i=0; i<MAIN_MENU_BUTTON_COUNT-1; i++) {
@@ -1124,6 +1127,7 @@ void mainBrogueJunction() {
         rogue.gameHasEnded = false;
         rogue.playbackFastForward = false;
         rogue.playbackMode = false;
+        uiMode = CBrogueGameEventInMenu;
         switch (rogue.nextGame) {
             case NG_NOTHING:
                 // Run the main menu to get a decision out of the player.
