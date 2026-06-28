@@ -335,7 +335,7 @@ static short actionMenu(short x, boolean playingBack) {
             strcpy(buttons[buttonCount].text, "  Discovered items  ");
         }
         buttons[buttonCount].hotkey[0] = DISCOVERIES_KEY;
-        DEBUG {
+        if (WIZARD_MODE) {
             buttonCount++;
             if (KEYBOARD_LABELS) {
                 sprintf(buttons[buttonCount].text, "  %sC: %sCreate item or monster  ", yellowColorEscape, whiteColorEscape);
@@ -2617,7 +2617,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             printDiscoveriesScreen();
             break;
         case CREATE_ITEM_MONSTER_KEY:
-            DEBUG {
+            if (WIZARD_MODE) {
                 dialogCreateItemOrMonster();
             }
             break;
@@ -2670,10 +2670,12 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                 copyDisplayBuffer(&dbuf, &displayBuffer);
                 funkyFade(dbuf, &white, 0, 100, mapToWindowX(player.loc.x), mapToWindowY(player.loc.y), false);
             }*/
-            DEBUG displayLoops();
-            DEBUG displayChokeMap();
-            DEBUG displayMachines();
-            DEBUG displayWaypoints();
+            DEBUG {
+                displayLoops();
+                displayChokeMap();
+                displayMachines();
+                displayWaypoints();
+            }
 
 #ifdef LOG_LIGHTS
             logLights();
