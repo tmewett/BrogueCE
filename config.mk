@@ -23,3 +23,11 @@ RELEASE := NO
 
 # Configure the executable to run from a macOS .app bundle (only works in graphical mode)
 MAC_APP := NO
+
+# Javascript
+#  For testing:
+#  - serve using:  python3 -m http.server
+#  - Open browser to localhost:8000
+#  - Navigate to /bin and it should load index.html automatically
+#
+JSBROGUE := NO

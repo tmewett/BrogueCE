@@ -5685,6 +5685,8 @@ boolean chooseTarget(pos *returnLoc,
 
     targetConfirmed = canceled = tabKey = false;
 
+    CBrogueGameEvent oldUiMode = uiMode;
+    uiMode = CBrogueGameEventShowEscape;
     do {
         printLocationDescription(targetLoc.x, targetLoc.y);
 
@@ -5693,6 +5695,7 @@ boolean chooseTarget(pos *returnLoc,
             hiliteTrajectory(coordinates, numCells, true, &theBolt, &trajColor);
             confirmMessages();
             rogue.cursorLoc = INVALID_POS;
+            uiMode = oldUiMode;
             restoreRNG;
             return false;
         }
@@ -5751,6 +5754,7 @@ boolean chooseTarget(pos *returnLoc,
     }
     hiliteTrajectory(coordinates, numCells, true, &theBolt, &trajColor);
     refreshDungeonCell(oldTargetLoc);
+    uiMode = oldUiMode;
 
     if (posEq(originLoc, targetLoc)) {
         confirmMessages();

@@ -3533,6 +3533,14 @@ extern "C" {
 
     void dijkstraScan(short **distanceMap, short **costMap, boolean useDiagonals);
 
+     // tablet ui modes
+    typedef enum {
+        CBrogueGameEventInMenu = 0,
+        CBrogueGameEventInNormalPlay,
+        CBrogueGameEventShowEscape,
+        CBrogueGameEventShowKeyboardAndEscape,
+    } CBrogueGameEvent;
+
 #if defined __cplusplus
 }
 #endif
