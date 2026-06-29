@@ -118,11 +118,17 @@ static long lastDelayTime = 0;
 // Like SDL_Delay, but reduces the delay if time has passed since the last delay
 static void _delayUpTo(short ms) {
     long curTime = getTime();
-    long timeDiff = curTime - lastDelayTime;
-    ms -= timeDiff;
+    // On the first call lastDelayTime is still 0, so timeDiff would be the
+    // entire current time in milliseconds (gettimeofday-based); subtracting that
+    // into the short `ms` overflowed and could leave a large positive value (up
+    // to 32767), making the title screen hang in a single napms() for up to ~32
+    // seconds on startup. Compute the remaining delay in long, and treat the
+    // first call as if no time had elapsed.
+    long timeDiff = (lastDelayTime == 0) ? 0 : (curTime - lastDelayTime);
+    long remaining = (long)ms - timeDiff;
 
-    if (ms > 0) {
-        Term.wait(ms);
+    if (remaining > 0) {
+        Term.wait((int)remaining);
     } // else delaying further would go past the time we want to delay until
 
     lastDelayTime = getTime();
