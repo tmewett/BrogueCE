@@ -25,6 +25,8 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
+static short rateItemStealDesirability(creature *thief, item *theItem);
+
 
 /* Combat rules:
  * Each combatant has an accuracy rating. This is the percentage of their attacks that will ordinarily hit;
@@ -430,51 +432,76 @@ static void specialHit(creature *attacker, creature *defender, short damage) {
             && !attacker->status[STATUS_CONFUSED] // No stealing from the player if you bump him while confused.
             && attackHit(attacker, defender)) {
 
-            itemCandidates = numberOfMatchingPackItems(ALL_ITEMS, 0, (ITEM_EQUIPPED), false);
-            if (itemCandidates) {
-                randItemIndex = rand_range(1, itemCandidates);
+            // 10% of the time, use legacy uniform random. 90% of the time, use weighted preferences.
+            if (rand_percent(10)) {
+                itemCandidates = numberOfMatchingPackItems(ALL_ITEMS, 0, (ITEM_EQUIPPED), false);
+                if (itemCandidates) {
+                    randItemIndex = rand_range(1, itemCandidates);
+                    for (theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
+                        if (!(theItem->flags & (ITEM_EQUIPPED))) {
+                            if (randItemIndex == 1) {
+                                break;
+                            } else {
+                                randItemIndex--;
+                            }
+                        }
+                    }
+                }
+            } else {
+                int totalScoreSum = 0;
                 for (theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
                     if (!(theItem->flags & (ITEM_EQUIPPED))) {
-                        if (randItemIndex == 1) {
-                            break;
-                        } else {
-                            randItemIndex--;
-                        }
+                        totalScoreSum += rateItemStealDesirability(attacker, theItem);
                     }
                 }
-                if (theItem) {
-                    if (theItem->category & WEAPON) { // Monkeys will steal half of a stack of weapons, and one of any other stack.
-                        if (theItem->quantity > 3) {
-                            stolenQuantity = (theItem->quantity + 1) / 2;
-                        } else {
-                            stolenQuantity = theItem->quantity;
+                if (totalScoreSum > 0) {
+                    int choiceRoll = rand_range(1, totalScoreSum);
+                    int runningSum = 0;
+                    for (theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
+                        if (!(theItem->flags & (ITEM_EQUIPPED))) {
+                            runningSum += rateItemStealDesirability(attacker, theItem);
+                            if (runningSum >= choiceRoll) {
+                                break;
+                            }
                         }
-                    } else {
-                        stolenQuantity = 1;
                     }
-                    if (stolenQuantity < theItem->quantity) { // Peel off stolen item(s).
-                        itemFromTopOfStack = generateItem(ALL_ITEMS, -1);
-                        *itemFromTopOfStack = *theItem; // Clone the item.
-                        theItem->quantity -= stolenQuantity;
-                        itemFromTopOfStack->quantity = stolenQuantity;
-                        theItem = itemFromTopOfStack; // Redirect pointer.
-                    } else {
-                        if (rogue.swappedIn == theItem || rogue.swappedOut == theItem) {
-                            rogue.swappedIn = NULL;
-                            rogue.swappedOut = NULL;
-                        }
-                        removeItemFromChain(theItem, packItems);
-                    }
-                    theItem->flags &= ~ITEM_PLAYER_AVOIDS; // Explore will seek the item out if it ends up on the floor again.
-                    attacker->carriedItem = theItem;
-                    attacker->creatureMode = MODE_PERM_FLEEING;
-                    attacker->creatureState = MONSTER_FLEEING;
-                    monsterName(buf2, attacker, true);
-                    itemName(theItem, buf3, false, true, NULL);
-                    sprintf(buf, "%s stole %s!", buf2, buf3);
-                    messageWithColor(buf, &badMessageColor, 0);
-                    rogue.autoPlayingLevel = false;
+                } else {
+                    theItem = NULL;
                 }
+            }
+
+            if (theItem) {
+                if (theItem->category & WEAPON) { // Monkeys will steal half of a stack of weapons, and one of any other stack.
+                    if (theItem->quantity > 3) {
+                        stolenQuantity = (theItem->quantity + 1) / 2;
+                    } else {
+                        stolenQuantity = theItem->quantity;
+                    }
+                } else {
+                    stolenQuantity = 1;
+                }
+                if (stolenQuantity < theItem->quantity) { // Peel off stolen item(s).
+                    itemFromTopOfStack = generateItem(ALL_ITEMS, -1);
+                    *itemFromTopOfStack = *theItem; // Clone the item.
+                    theItem->quantity -= stolenQuantity;
+                    itemFromTopOfStack->quantity = stolenQuantity;
+                    theItem = itemFromTopOfStack; // Redirect pointer.
+                } else {
+                    if (rogue.swappedIn == theItem || rogue.swappedOut == theItem) {
+                        rogue.swappedIn = NULL;
+                        rogue.swappedOut = NULL;
+                    }
+                    removeItemFromChain(theItem, packItems);
+                }
+                theItem->flags &= ~ITEM_PLAYER_AVOIDS; // Explore will seek the item out if it ends up on the floor again.
+                attacker->carriedItem = theItem;
+                attacker->creatureMode = MODE_PERM_FLEEING;
+                attacker->creatureState = MONSTER_FLEEING;
+                monsterName(buf2, attacker, true);
+                itemName(theItem, buf3, false, true, NULL);
+                sprintf(buf, "%s stole %s!", buf2, buf3);
+                messageWithColor(buf, &badMessageColor, 0);
+                rogue.autoPlayingLevel = false;
             }
         }
     }
@@ -1011,6 +1038,44 @@ void processStaggerHit(creature *attacker, creature *defender) {
 
         setMonsterLocation(defender, (pos){ newX, newY });
     }
+}
+
+static short rateItemStealDesirability(creature *thief, item *theItem) {
+    if (!theItem) return 0;
+    short score = 1; // Base score for any item
+    
+    // A. MONKEY BEHAVIOR (Consumables, Food)
+    if (thief->info.monsterID == MK_MONKEY) {
+        if (theItem->category & FOOD) {
+            score += 29; // Monkeys absolutely love food! (Score = 30)
+        }
+        else if (theItem->category & POTION) {
+            if (theItem->kind == POTION_LIFE || theItem->kind == POTION_STRENGTH) {
+                score += 29; // Highly nutritious biological drafts! (Score = 30)
+            }
+        }
+    }
+    
+    // B. IMP BEHAVIOR (Arcane, Enchantments, Runics)
+    else if (thief->info.monsterID == MK_IMP) {
+        if (theItem->category & SCROLL && theItem->kind == SCROLL_ENCHANTING) {
+            score += 29; // Imps crave raw enchantment scrolls! (Score = 30)
+        }
+        else if (theItem->category & (RING | CHARM | STAFF | WEAPON | ARMOR)) {
+            // Imps sense positive magical enchantments (even if unidentified by player)
+            if (theItem->enchant1 > 0) {
+                score += (theItem->enchant1 * 3);
+            }
+            if (theItem->flags & ITEM_RUNIC) {
+                score += 15; // Imps love runics (Score = 16)
+            }
+        }
+        if (theItem->category & FOOD) {
+            score -= 8; // Imps dislike food
+        }
+    }
+    
+    return max(1, score); // Ensure score is never negative or zero
 }
 
 // returns whether the attack hit
