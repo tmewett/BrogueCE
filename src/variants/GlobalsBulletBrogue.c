@@ -330,10 +330,11 @@ const blueprint blueprintCatalog_BulletBrogue[] = {
         {0,         SECRET_DOOR,DUNGEON,        {1,1},      1,          0,          0,          0,              1,              0,          0,          (MF_IMPREGNABLE | MF_PERMIT_BLOCKING | MF_BUILD_AT_ORIGIN | MF_ALTERNATIVE)},
         {0,         TRAP_DOOR_HIDDEN,DUNGEON,   {60, 60},   1,          0,          -1,         0,              1,              0,          0,          (MF_TREAT_AS_BLOCKING | MF_REPEAT_UNTIL_NO_PROGRESS)}}},
     {"Beckoning obstacle -- a mirrored totem guards the door, and glyph are around the doorway.",
-    {2, DEEPEST_LEVEL-1}, {15, 30},   15,      3,          0,                  (BP_VESTIBULE | BP_PURGE_INTERIOR | BP_OPEN_INTERIOR), {
+    {2, DEEPEST_LEVEL-1}, {15, 30},   15,      4,          0,                  (BP_VESTIBULE | BP_PURGE_INTERIOR | BP_OPEN_INTERIOR), {
         {0,         DOOR,       DUNGEON,        {1,1},      1,          0,          -1,         0,              1,              0,          0,          (MF_PERMIT_BLOCKING | MF_BUILD_AT_ORIGIN)},
         {0,         MACHINE_GLYPH,DUNGEON,      {1,1},      0,          0,          -1,         0,              1,              0,          0,          (MF_NEAR_ORIGIN | MF_EVERYWHERE)},
         {0,         0,          0,              {1,1},      1,          0,          -1,         MK_MIRRORED_TOTEM,3,            0,          0,          (MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY | MF_IN_VIEW_OF_ORIGIN | MF_BUILD_ANYWHERE_ON_LEVEL)},
+        {0,         0,          0,              {1,1},      1,          POTION,     POTION_HALLUCINATION, 0,    1,              0,          0,          (MF_GENERATE_ITEM | MF_BUILD_ANYWHERE_ON_LEVEL | MF_NOT_IN_HALLWAY)},
         {0,         MACHINE_GLYPH,DUNGEON,      {3,5},      2,          0,          -1,         0,              2,              0,          0,          (MF_TREAT_AS_BLOCKING)}}},
     {"Guardian obstacle -- a guardian is in the door on a glyph, with other glyphs scattered around.",
     {2, DEEPEST_LEVEL-1}, {25, 25},   15,      4,          0,                  (BP_VESTIBULE | BP_OPEN_INTERIOR),  {
@@ -497,10 +498,11 @@ const blueprint blueprintCatalog_BulletBrogue[] = {
         {DF_GLYPH_CIRCLE,ALTAR_INERT,DUNGEON,   {1,1},      1,          0,          -1,         0,              3,              0,          0,          (MF_ADOPT_ITEM | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY | MF_FAR_FROM_ORIGIN)},
         {DF_GLYPH_CIRCLE,0,     0,              {1,1},      1,          0,          -1,         MK_ELDRITCH_TOTEM,3,            0,          0,          (MF_FAR_FROM_ORIGIN | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)}}},
     {"Beckoning obstacle -- key surrounded by glyphs in a room with a mirrored totem.",
-    {2, DEEPEST_LEVEL-1}, {60, 100},  15,     4,          0,                  (BP_ROOM | BP_PURGE_INTERIOR | BP_SURROUND_WITH_WALLS | BP_OPEN_INTERIOR | BP_ADOPT_ITEM), {
+    {2, DEEPEST_LEVEL-1}, {60, 100},  15,     5,          0,                  (BP_ROOM | BP_PURGE_INTERIOR | BP_SURROUND_WITH_WALLS | BP_OPEN_INTERIOR | BP_ADOPT_ITEM), {
         {DF_GLYPH_CIRCLE,ALTAR_INERT,DUNGEON,   {1,1},      1,          0,          -1,         0,              3,              0,          0,          (MF_ADOPT_ITEM | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY | MF_FAR_FROM_ORIGIN | MF_IN_VIEW_OF_ORIGIN)},
         {0,         0,          0,              {1,1},      1,          0,          -1,         MK_MIRRORED_TOTEM,3,            0,          0,          (MF_NEAR_ORIGIN | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY | MF_IN_VIEW_OF_ORIGIN)},
         {0,         0,          0,              {1,1},      1,          0,          -1,         0,              2,              0,          0,          (MF_BUILD_AT_ORIGIN)},
+        {0,         0,          0,              {1,1},      1,          POTION,     POTION_HALLUCINATION, 0,    1,              0,          0,          (MF_GENERATE_ITEM | MF_BUILD_ANYWHERE_ON_LEVEL | MF_NOT_IN_HALLWAY)},
         {0,         MACHINE_GLYPH,DUNGEON,      {3,5},      2,          0,          -1,         0,              2,              0,          0,          (MF_TREAT_AS_BLOCKING)}}},
     {"Worms in the walls -- key on altar; take key to cause underworms to burst out of the walls",
     {2,DEEPEST_LEVEL-1}, {7, 7},     10,      2,          0,                  (BP_ADOPT_ITEM),    {
