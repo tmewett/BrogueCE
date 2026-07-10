@@ -2868,7 +2868,7 @@ extern "C" {
     void append(char *str, char *ending, int bufsize);
 
     int rogueMain(void);
-    void printBrogueVersion(void);
+    void printBrogueVersion(const char *dataDir);
     void executeEvent(rogueEvent *theEvent);
     boolean fileExists(const char *pathname);
     boolean chooseFile(char *path, char *prompt, char *defaultName, char *suffix);

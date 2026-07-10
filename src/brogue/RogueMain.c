@@ -36,10 +36,11 @@ int rogueMain() {
     return rogue.gameExitStatusCode;
 }
 
-void printBrogueVersion() {
+void printBrogueVersion(const char *dataDir) {
     printf("Brogue version: %s\n", brogueVersion);
     printf("Supports variant (rapid_brogue): %s\n", rapidBrogueVersion);
     printf("Supports variant (bullet_brogue): %s\n", bulletBrogueVersion);
+    printf("Default data directory: %s\n", dataDir);
 }
 
 void executeEvent(rogueEvent *theEvent) {
