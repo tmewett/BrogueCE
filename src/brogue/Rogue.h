@@ -48,6 +48,11 @@
 
 #define WIZARD_MODE                     (rogue.mode == GAME_MODE_WIZARD)
 
+// Wipe any existing DEBUG flag
+#ifdef DEBUG
+#undef DEBUG
+#endif
+
 #define DEBUG                           if (WIZARD_MODE)
 #define MONSTERS_ENABLED                (!WIZARD_MODE || 1) // Quest room monsters can be generated regardless.
 #define ITEMS_ENABLED                   (!WIZARD_MODE || 1)
@@ -76,7 +81,11 @@
 #define DELETE_SAVE_FILE_AFTER_LOADING  true
 
 // set to false to disable references to keystrokes (e.g. for a tablet port)
+#ifdef BROGUE_TABLET
+#define KEYBOARD_LABELS false
+#else
 #define KEYBOARD_LABELS true
+#endif
 
 //#define BROGUE_ASSERTS        // introduces several assert()s -- useful to find certain array overruns and other bugs
 //#define AUDIT_RNG             // VERY slow, but sometimes necessary to debug out-of-sync recording errors
@@ -1252,15 +1261,15 @@ inline static boolean locIsInWindow(windowpos w) {
 
 inline static pos windowToMap(windowpos w) {
     return (pos) {
-        .x = w.window_x - STAT_BAR_WIDTH - 1,
-        .y = w.window_y - MESSAGE_LINES,
+        .x = (short)(w.window_x - STAT_BAR_WIDTH - 1),
+        .y = (short)(w.window_y - MESSAGE_LINES),
     };
 }
 
 inline static windowpos mapToWindow(pos p) {
     return (windowpos) {
-        .window_x = p.x + STAT_BAR_WIDTH + 1,
-        .window_y = p.y + MESSAGE_LINES,
+        .window_x = (short)(p.x + STAT_BAR_WIDTH + 1),
+        .window_y = (short)(p.y + MESSAGE_LINES),
     };
 }
 
@@ -3532,6 +3541,16 @@ extern "C" {
                           rogueEvent *returnEvent);
 
     void dijkstraScan(short **distanceMap, short **costMap, boolean useDiagonals);
+
+    // tablet ui modes
+    typedef enum {
+        CBrogueGameEventInMenu = 0,
+        CBrogueGameEventInNormalPlay,
+        CBrogueGameEventShowEscape,
+        CBrogueGameEventShowKeyboardAndEscape,
+    } CBrogueGameEvent;
+
+    void brogueMainIOS();
 
 #if defined __cplusplus
 }
