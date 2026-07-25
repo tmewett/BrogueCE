@@ -736,6 +736,9 @@ void discoverCell(const short x, const short y) {
         if (!cellHasTerrainFlag((pos){ x, y }, T_PATHING_BLOCKER)) {
             rogue.xpxpThisTurn++;
         }
+        // Memory is otherwise only stored when a cell stops being visible, a
+        // transition a cell discovered unseen never makes.
+        storeMemories(x, y);
     }
 }
 
