@@ -137,17 +137,21 @@ void initializeMonster(creature *monst, boolean itemPossible) {
     } else {
         itemChance = 0;
     }
+    if ((rogue.monsterSpawnFuse <= 0) // try to affect only periodic spawns
+        && ((rogue.starvedTurnsLeeway <= 0) // i.e. player is also starving
+            || (player.status[STATUS_PARALYZED] && rogue.paralyzedTurnsLeeway <= 0))) {
+                
+                monst->carriedItem = NULL; // antigrind measures
+    } else if (ITEMS_ENABLED
+               && itemPossible
+               && (rogue.depthLevel <= gameConst->amuletLevel)
+               && monsterItemsHopper->nextItem
+               && rand_percent(itemChance)) {
 
-    if (ITEMS_ENABLED
-        && itemPossible
-        && (rogue.depthLevel <= gameConst->amuletLevel)
-        && monsterItemsHopper->nextItem
-        && rand_percent(itemChance)) {
-
-        monst->carriedItem = monsterItemsHopper->nextItem;
-        monsterItemsHopper->nextItem = monsterItemsHopper->nextItem->nextItem;
-        monst->carriedItem->nextItem = NULL;
-        monst->carriedItem->originDepth = rogue.depthLevel;
+               monst->carriedItem = monsterItemsHopper->nextItem;
+               monsterItemsHopper->nextItem = monsterItemsHopper->nextItem->nextItem;
+               monst->carriedItem->nextItem = NULL;
+               monst->carriedItem->originDepth = rogue.depthLevel;
     } else {
         monst->carriedItem = NULL;
     }
