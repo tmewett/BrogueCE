@@ -132,7 +132,7 @@ static void dialogCreateItemChooseRunic(item *theItem){
             return;
         }
     } else if (theItem->category == ARMOR) {
-        if (theItem->kind == PLATE_MAIL) { //bad runics only
+        if (theItem->kind == SHINING_ARMOR) { //bad runics only
             for (i=0; i<NUMBER_ARMOR_ENCHANT_KINDS - NUMBER_GOOD_ARMOR_ENCHANT_KINDS; i++) {
                 strcpy(buttonText, armorRunicNames[i + NUMBER_GOOD_ARMOR_ENCHANT_KINDS]);
                 initializeCreateItemButton(&(buttons[i]), buttonText);
