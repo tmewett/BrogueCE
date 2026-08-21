@@ -806,8 +806,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
     char armorName[DCOLS], attackerName[DCOLS], monstName[DCOLS], buf[DCOLS * 3];
     boolean runicKnown;
     boolean runicDiscovered;
-    short newDamage, dir, newX, newY, count, i;
-    fixpt enchant;
+    short dir, newX, newY, count, i;
     creature *monst, *hitList[8];
 
     returnString[0] = '\0';
@@ -815,8 +814,6 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
     if (!(rogue.armor && rogue.armor->flags & ITEM_RUNIC)) {
         return; // just in case
     }
-
-    enchant = netEnchant(rogue.armor);
 
     runicKnown = rogue.armor->flags & ITEM_RUNIC_IDENTIFIED;
     runicDiscovered = false;
@@ -826,48 +823,6 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
     monsterName(attackerName, attacker, true);
 
     switch (rogue.armor->enchant2) {
-        case A_MULTIPLICITY:
-            if (melee && !(attacker->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE)) && rand_percent(33)) {
-                for (i = 0; i < armorImageCount(enchant); i++) {
-                    monst = cloneMonster(attacker, false, true);
-                    monst->bookkeepingFlags |= (MB_FOLLOWER | MB_BOUND_TO_LEADER | MB_DOES_NOT_TRACK_LEADER | MB_TELEPATHICALLY_REVEALED);
-                    monst->info.flags |= MONST_DIES_IF_NEGATED;
-                    monst->bookkeepingFlags &= ~(MB_JUST_SUMMONED | MB_SEIZED | MB_SEIZING);
-                    monst->info.abilityFlags &= ~(MA_CAST_SUMMON | MA_DF_ON_DEATH); // No summoning by spectral images. Gotta draw the line!
-                                                                                    // Also no exploding or infecting by spectral clones.
-                    monst->leader = &player;
-                    monst->creatureState = MONSTER_ALLY;
-                    monst->status[STATUS_DISCORDANT] = 0; // Otherwise things can get out of control...
-                    monst->ticksUntilTurn = 100;
-                    monst->info.monsterID = MK_SPECTRAL_IMAGE;
-                    if (monst->carriedMonster) {
-                        creature *carried = monst->carriedMonster;
-                        monst->carriedMonster = NULL;
-                        killCreature(carried, true); // Otherwise you can get infinite phoenices from a discordant phoenix.
-                    }
-
-                    // Give it the glowy red light and color.
-                    monst->info.intrinsicLightType = SPECTRAL_IMAGE_LIGHT;
-                    monst->info.foreColor = &spectralImageColor;
-
-                    // Temporary guest!
-                    monst->status[STATUS_LIFESPAN_REMAINING] = monst->maxStatus[STATUS_LIFESPAN_REMAINING] = 3;
-                    monst->currentHP = monst->info.maxHP = 1;
-                    monst->info.defense = 0;
-
-                    if (strLenWithoutEscapes(attacker->info.monsterName) <= 6) {
-                        sprintf(monst->info.monsterName, "spectral %s", attacker->info.monsterName);
-                    } else {
-                        strcpy(monst->info.monsterName, "spectral clone");
-                    }
-                    fadeInMonster(monst);
-                }
-                updateVision(true);
-
-                runicDiscovered = true;
-                sprintf(returnString, "Your %s flashes, and spectral images of %s appear!", armorName, attackerName);
-            }
-            break;
         case A_MUTUALITY:
             if (*damage > 0) {
                 count = 0;
@@ -912,33 +867,6 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
                 }
             }
             break;
-        case A_ABSORPTION:
-            *damage -= rand_range(1, armorAbsorptionMax(enchant));
-            if (*damage <= 0) {
-                *damage = 0;
-                runicDiscovered = true;
-                if (!runicKnown) {
-                    sprintf(returnString, "your %s pulses and absorbs the blow!", armorName);
-                }
-            }
-            break;
-        case A_REPRISAL:
-            if (melee && !(attacker->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
-                newDamage = max(1, armorReprisalPercent(enchant) * (*damage) / 100); // 5% reprisal per armor level
-                if (inflictDamage(&player, attacker, newDamage, &blue, true)) {
-                    if (canSeeMonster(attacker)) {
-                        sprintf(returnString, "your %s pulses and %s drops dead!", armorName, attackerName);
-                        runicDiscovered = true;
-                    }
-                    killCreature(attacker, false);
-                } else if (!runicKnown) {
-                    if (canSeeMonster(attacker)) {
-                        sprintf(returnString, "your %s pulses and %s shudders in pain!", armorName, attackerName);
-                        runicDiscovered = true;
-                    }
-                }
-            }
-            break;
         case A_IMMUNITY:
             if (monsterIsInClass(attacker, rogue.armor->vorpalEnemy)) {
                 *damage = 0;
@@ -974,6 +902,86 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
 
     if (runicDiscovered && !runicKnown) {
         autoIdentify(rogue.armor);
+    }
+}
+
+void applyArmorIntrinsicEffect(char returnString[DCOLS], creature *attacker, short *damage, boolean melee) {
+    char armorName[DCOLS], attackerName[DCOLS];
+    short newDamage, i;
+    fixpt enchant;
+    creature *monst;
+
+    returnString[0] = '\0';
+
+    if (!(rogue.armor)) {
+        return; // just in case
+    }
+
+    enchant = netEnchant(rogue.armor);
+
+    itemName(rogue.armor, armorName, false, false, NULL);
+
+    monsterName(attackerName, attacker, true);
+
+    switch (rogue.armor->enchant3) {
+        case A_REPRISAL:
+            if (melee && !(attacker->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
+                newDamage = max(1, armorReprisalPercent(enchant) * (*damage) / 100); // 5% reprisal per armor level
+                if (inflictDamage(&player, attacker, newDamage, &blue, true)) {
+                    if (canSeeMonster(attacker)) {
+                        sprintf(returnString, "your %s pulses and %s drops dead!", armorName, attackerName);
+                    }
+                    killCreature(attacker, false);
+            }
+            break;
+        case A_ABSORPTION:
+            *damage -= rand_range(1, armorAbsorptionMax(enchant));
+            if (*damage <= 0) {
+                *damage = 0;
+            }
+            break;
+        case A_MULTIPLICITY:
+            if (melee && !(attacker->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE)) && rand_percent(33)) {
+                for (i = 0; i < armorImageCount(enchant); i++) {
+                    monst = cloneMonster(attacker, false, true);
+                    monst->bookkeepingFlags |= (MB_FOLLOWER | MB_BOUND_TO_LEADER | MB_DOES_NOT_TRACK_LEADER | MB_TELEPATHICALLY_REVEALED);
+                    monst->info.flags |= MONST_DIES_IF_NEGATED;
+                    monst->bookkeepingFlags &= ~(MB_JUST_SUMMONED | MB_SEIZED | MB_SEIZING);
+                    monst->info.abilityFlags &= ~(MA_CAST_SUMMON | MA_DF_ON_DEATH); // No summoning by spectral images. Gotta draw the line!
+                                                                                    // Also no exploding or infecting by spectral clones.
+                    monst->leader = &player;
+                    monst->creatureState = MONSTER_ALLY;
+                    monst->status[STATUS_DISCORDANT] = 0; // Otherwise things can get out of control...
+                    monst->ticksUntilTurn = 100;
+                    monst->info.monsterID = MK_SPECTRAL_IMAGE;
+                    if (monst->carriedMonster) {
+                        creature *carried = monst->carriedMonster;
+                        monst->carriedMonster = NULL;
+                        killCreature(carried, true); // Otherwise you can get infinite phoenices from a discordant phoenix.
+                    }
+
+                    // Give it the glowy red light and color.
+                    monst->info.intrinsicLightType = SPECTRAL_IMAGE_LIGHT;
+                    monst->info.foreColor = &spectralImageColor;
+
+                    // Temporary guest!
+                    monst->status[STATUS_LIFESPAN_REMAINING] = monst->maxStatus[STATUS_LIFESPAN_REMAINING] = 3;
+                    monst->currentHP = monst->info.maxHP = 1;
+                    monst->info.defense = 0;
+
+                    if (strLenWithoutEscapes(attacker->info.monsterName) <= 6) {
+                        sprintf(monst->info.monsterName, "spectral %s", attacker->info.monsterName);
+                    } else {
+                        strcpy(monst->info.monsterName, "spectral clone");
+                    }
+                    fadeInMonster(monst);
+                }
+                updateVision(true);
+
+                sprintf(returnString, "Your %s flashes, and spectral images of %s appear!", armorName, attackerName);
+            }
+            break;
+        }
     }
 }
 
@@ -1013,7 +1021,7 @@ void processStaggerHit(const creature *attacker, creature *defender) {
 // returns whether the attack hit
 boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
     short damage, specialDamage, poisonDamage;
-    char buf[COLS*2], buf2[COLS*2], attackerName[COLS], defenderName[COLS], verb[DCOLS], explicationClause[DCOLS] = "", armorRunicString[DCOLS*3];
+    char buf[COLS*2], buf2[COLS*2], attackerName[COLS], defenderName[COLS], verb[DCOLS], explicationClause[DCOLS] = "", armorRunicString[DCOLS*3], armorIntrinsicString[DCOLS*3];
     boolean sneakAttack, defenderWasAsleep, defenderWasParalyzed, degradesAttackerWeapon, sightUnseen;
 
     // Check paladin feat before creatureState is changed
@@ -1031,6 +1039,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
     }
 
     armorRunicString[0] = '\0';
+    armorIntrinsicString[0] = '\0';
 
     poisonDamage = 0;
 
@@ -1087,11 +1096,11 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
         return false;
     }
 
+    // If the attack hit:
+    damage = (defender->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE)
+              ? 0 : randClump(attacker->info.damage) * monsterDamageAdjustmentAmount(attacker) / FP_FACTOR);
     if (sneakAttack || defenderWasAsleep || defenderWasParalyzed || lungeAttack || attackHit(attacker, defender)) {
-        // If the attack hit:
-        damage = (defender->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE)
-                  ? 0 : randClump(attacker->info.damage) * monsterDamageAdjustmentAmount(attacker) / FP_FACTOR);
-
+        
         if (sneakAttack || defenderWasAsleep || defenderWasParalyzed) {
             if (defender != &player) {
                 // The non-player defender doesn't hit back this turn because it's still flat-footed.
@@ -1112,6 +1121,9 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
             }
         }
 
+        if (defender == &player && rogue.armor && (rogue.armor->enchant3 & A_ABSORPTION)) {
+            applyArmorIntrinsicEffect(armorIntrinsicString, attacker, &damage, true);
+        }
         if (defender == &player && rogue.armor && (rogue.armor->flags & ITEM_RUNIC)) {
             applyArmorRunicEffect(armorRunicString, attacker, &damage, true);
         }
@@ -1213,6 +1225,9 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
                     strengthCheck(rogue.armor, true);
                 }
             }
+            if (armorIntrinsicString[0]) {
+                message(armorIntrinsicString, 0);
+            }
         }
 
         moralAttack(attacker, defender);
@@ -1262,6 +1277,13 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
                 combatMessage(buf, 0);
             }
         }
+        // reprisal and multiplicity armor effects trigger on a miss
+        if (defender == &player && rogue.armor && (rogue.armor->enchant3 & (A_REPRISAL | A_MULTIPLICITY))) {
+            applyArmorIntrinsicEffect(armorIntrinsicString, attacker, &damage, true);
+        }
+        if (armorIntrinsicString[0]) {
+                message(armorIntrinsicString, 0);
+            }
         return false;
     }
 }

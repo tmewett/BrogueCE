@@ -434,7 +434,7 @@ void initializeRogue(uint64_t seed) {
     identify(theItem);
     theItem = addItemToPack(theItem);
 
-    theItem = generateItem(ARMOR, LEATHER_ARMOR);
+    theItem = generateItem(ARMOR, RAGS);
     theItem->enchant1 = 0;
     theItem->flags &= ~(ITEM_CURSED | ITEM_RUNIC);
     identify(theItem);
@@ -470,11 +470,12 @@ void initializeRogue(uint64_t seed) {
         identify(theItem);
         theItem = addItemToPack(theItem);
 
-        theItem = generateItem(ARMOR, LEATHER_ARMOR);
+        theItem = generateItem(ARMOR, SHINING_ARMOR);
         theItem->enchant1 = 50;
-        theItem->enchant2 = A_REFLECTION;
-        theItem->flags &= ~(ITEM_CURSED | ITEM_RUNIC_HINTED);
-        theItem->flags |= (ITEM_PROTECTED | ITEM_RUNIC);
+        theItem->enchant2 = 0;
+        theItem->strengthRequired = 10;
+        theItem->flags &= ~(ITEM_CURSED | ITEM_RUNIC);
+        theItem->flags |= ITEM_PROTECTED;
         identify(theItem);
         theItem = addItemToPack(theItem);
 
@@ -669,6 +670,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     }
     rogue.minersLightRadius += FP_FACTOR * 225 / 100;
     updateColors();
+    updateArmorStealthBonuses(); // cloak
     updateRingBonuses(); // also updates miner's light
 
     if (!levels[rogue.depthLevel - 1].visited) { // level has not already been visited
