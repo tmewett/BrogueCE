@@ -470,7 +470,7 @@ void initializeRogue(uint64_t seed) {
         identify(theItem);
         theItem = addItemToPack(theItem);
 
-        theItem = generateItem(ARMOR, SHINING_ARMOR);
+        theItem = generateItem(ARMOR, MIRRORED_PLATE);
         theItem->enchant1 = 50;
         theItem->enchant2 = 0;
         theItem->strengthRequired = 10;

@@ -295,10 +295,10 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                 case PADDED_MAIL:
                     theItem->enchant3 = A_ABSORPTION;
                     break;
-                case MIRROR_MAIL:
+                case SPECTRAL_MAIL:
                     theItem->enchant3 = A_MULTIPLICITY;
                     break;
-                case SHINING_ARMOR:
+                case MIRRORED_PLATE:
                     theItem->enchant3 = A_REFLECTION;
                     break;
                 default:
@@ -2353,7 +2353,7 @@ void itemDetails(char *buf, const item *theItem) {
 
                     switch (theItem->enchant3) {
                         case A_STEALTH:
-                            sprintf(buf2, "This cloak of silent passage will reduce your stealth range, making enemies less likely to notice you and more likely to lose your trail. Staying motionless and lurking in the shadows will make you even harder to spot. Cursed cloaks of stealth will increase your stealth range, making you easier to spot and to track. ");
+                            sprintf(buf2, "It grants the wearer a stealth bonus equal to its raw enchantment level, if uncursed. Cursed cloaks of stealth will increase your stealth range, making you easier to spot and to track. ");
                             break;
                         case A_REPRISAL:
                             sprintf(buf2, "Any enemy that attacks and misses you will itself be wounded by %i%% of the damage that it would inflict. (If the %s is enchanted, this percentage will increase to %i%%.) ",

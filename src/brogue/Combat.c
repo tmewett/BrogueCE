@@ -1280,10 +1280,10 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
         // reprisal and multiplicity armor effects trigger on a miss
         if (defender == &player && rogue.armor && (rogue.armor->enchant3 & (A_REPRISAL | A_MULTIPLICITY))) {
             applyArmorIntrinsicEffect(armorIntrinsicString, attacker, &damage, true);
-        }
-        if (armorIntrinsicString[0]) {
+            if (armorIntrinsicString[0]) {
                 message(armorIntrinsicString, 0);
             }
+        }
         return false;
     }
 }
