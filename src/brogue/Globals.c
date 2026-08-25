@@ -1578,11 +1578,11 @@ itemTable weaponTable[NUMBER_WEAPON_KINDS] = {
 
 itemTable armorTable[NUMBER_ARMOR_KINDS] = {
     {"rags",                "", "",  0, 250,        10, 0, {30,30,0},      true, false, 0, false, "Threadbare garments offer scanty protection."},
-    {"cloak",               "", "", 10, 350,        12, 0, {40,40,0},      true, false, 0, false, "A sheet of thickly woven fabric hides the wearer from the eyes of others."},
+    {"cloak",               "", "", 10, 350,        12, 0, {40,40,0},      true, false, 0, false, "This cloak of silent passage will reduce your stealth range, making enemies less likely to notice you and more likely to lose your trail. Staying motionless and lurking in the shadows will make you even harder to spot."},
     {"thorned mail",        "", "", 10, 500,        13, 0, {50,50,0},      true, false, 0, false, "Sharp metal spikes protrude from a splint mail base, harming any who dare attack its wearer."},
     {"padded mail",         "", "", 10, 800,        15, 0, {70,70,0},      true, false, 0, false, "Overlapping strips of metal horizontally encircle a ring mail base, offering an additional layer of protection."},
-    {"mirror mail",         "", "", 10, 1000,       17, 0, {90,90,0},      true, false, 0, false, "Metal plates of such polish adorn this suit that one can almost make out a reflection of oneself."},
-    {"shining armor",       "", "", 10, 1300,       19, 0, {110,110,0},    true, false, 0, false, "Antimagic material coating a plate mail base offers unsurpassed protection."}
+    {"spectral mail",       "", "", 10, 1000,       17, 0, {90,90,0},      true, false, 0, false, "Bright otherworldly material coats this suit, providing a glimpse of alternate realities."},
+    {"mirrored plate",      "", "", 10, 1300,       19, 0, {110,110,0},    true, false, 0, false, "Polished metal plates adorning a plate mail base provides protection in melee and against spellcasters."}
 };
 
 const char weaponRunicNames[NUMBER_WEAPON_RUNIC_KINDS][30] = {

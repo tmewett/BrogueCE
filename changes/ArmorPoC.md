@@ -6,5 +6,5 @@ The armors are:
 - Cloak [4]<12> -- stealth intrinsic, replaces ring of stealth
 - Thorned mail [5]<13> -- reprisal intrinsic, reprisal runic removed
 - Padded mail [7]<15> -- absorption intrinsic, absorption runic removed
-- Mirror mail [9]<17> -- multiplicity intrinsic, multiplicity runic removed
-- Shining armor [11]<19> -- reflection intrinsic, reflection runic removed
+- Spectral mail [9]<17> -- multiplicity intrinsic, multiplicity runic removed
+- Mirrored plate [11]<19> -- reflection intrinsic, reflection runic removed
