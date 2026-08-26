@@ -843,23 +843,24 @@ enum weaponEnchants {
 enum armorKind {
     RAGS,
     CLOAK,
-    THORNED_MAIL,
+    SCALE_MAIL,
     PADDED_MAIL,
-    SPECTRAL_MAIL,
+    THORNED_MAIL,
     MIRRORED_PLATE,
     NUMBER_ARMOR_KINDS
 };
 
 enum armorIntrinsics {
     A_STEALTH,
-    A_REPRISAL,
+    A_CRAFTSMANSHIP,
     A_ABSORPTION,
-    A_MULTIPLICITY,
+    A_REPRISAL,
     A_REFLECTION,
     NUMBER_ARMOR_INTRINSIC_KINDS,
 };
 
 enum armorEnchants {
+    A_MULTIPLICITY,
     A_MUTUALITY,
     A_IMMUNITY,
     A_RESPIRATION,
@@ -2529,8 +2530,9 @@ typedef struct playerCharacter {
     short wisdomBonus;
     short reaping;
 
-    // armor (cloak) bonus:
+    // armor bonuses:
     short stealthBonus;
+    short armorEnchantBonus;
     
     // feats:
     boolean *featRecord;
@@ -3381,7 +3383,7 @@ extern "C" {
     void updateIdentifiableItem(item *theItem);
     void updateIdentifiableItems(void);
     boolean readScroll(item *theItem);
-    void updateArmorStealthBonuses(void);
+    void updateArmorIntrinsicBonuses(void);
     void updateRingBonuses(void);
     void updatePlayerRegenerationDelay(void);
     boolean removeItemFromChain(item *theItem, item *theChain);
