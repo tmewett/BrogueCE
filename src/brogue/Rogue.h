@@ -855,8 +855,9 @@ enum armorKind {
 };
 
 enum armorIntrinsics {
+    A_PLAIN,
     A_STEALTH,
-    A_CRAFTSMANSHIP,
+    A_ARMORSMITH,
     A_ABSORPTION,
     A_REPRISAL,
     A_REFLECTION,
@@ -2536,7 +2537,6 @@ typedef struct playerCharacter {
 
     // armor bonuses:
     short stealthBonus;
-    short armorEnchantBonus;
     
     // feats:
     boolean *featRecord;
