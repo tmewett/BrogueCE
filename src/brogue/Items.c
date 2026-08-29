@@ -290,7 +290,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                     theItem->enchant3 = A_STEALTH;
                     break;
                 case SCALE_MAIL:
-                    theItem->enchant3 = A_CRAFTSMANSHIP;
+                    theItem->enchant3 = A_ARMORSMITH;
                     break;
                 case PADDED_MAIL:
                     theItem->enchant3 = A_ABSORPTION;
@@ -302,6 +302,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                     theItem->enchant3 = A_REFLECTION;
                     break;
                 default:
+                    theItem->enchant3 = A_PLAIN;
                     break;
             }
 
@@ -2156,6 +2157,9 @@ void itemDetails(char *buf, const item *theItem) {
                     if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
                         new = theItem->armor;
                         new += 10 * netEnchant(theItem) / FP_FACTOR;
+                        if (theItem->enchant3 & A_ARMORSMITH) {
+                            new += 10 * (netEnchant(theItem) / 2) / FP_FACTOR;
+                        }
                         new /= 10;
                     } else {
                         new = armorValueIfUnenchanted(theItem);
@@ -2345,19 +2349,21 @@ void itemDetails(char *buf, const item *theItem) {
             } else if (theItem->category & ARMOR) {
 
                 // non-runic intrinsics?
-                if (theItem->kind != RAGS) {
-                    sprintf(buf2, "\n\nIntrinsic %s adorns the %s. ",
-                            armorIntrinsicNames[theItem->enchant3],
-                            theName);
+                if (theItem->enchant3 != A_PLAIN) {
+                    sprintf(buf2, "\n\nThe %s bears the %s intrinsic. ",
+                            theName,
+                            armorIntrinsicNames[theItem->enchant3]);
                     strcat(buf, buf2);
 
                     if (theItem->flags & ITEM_IDENTIFIED) {
                         switch (theItem->enchant3) {
                             case A_STEALTH:
-                                sprintf(buf2, "If positively enchanted, it grants the wearer a stealth bonus equal to its raw enchantment level. ");
+                                sprintf(buf2, "If positively enchanted, it grants the wearer a stealth bonus equal to its raw enchantment level. Your stealth bonus will be %i. ",
+                                    (theItem->enchant1));
                                 break;
-                            case A_CRAFTSMANSHIP:
-                                sprintf(buf2, "It has a bonus to armor equal to 50%% of its enchantment level. ");
+                            case A_ARMORSMITH:
+                                sprintf(buf2, "It has a bonus to armor equal to 50%% of its net enchantment level of %i. Your armor bonus will be %i. ",
+                                    (enchant / FP_FACTOR), ((enchant / 2) / FP_FACTOR));
                                 break;
                             case A_ABSORPTION:
                                 sprintf(buf2, "It will reduce the damage of inbound attacks by a random amount between 1 and %i, which is %i%% of your current maximum health. (If the %s is enchanted, this maximum amount will %s %i.) ",
@@ -2401,8 +2407,19 @@ void itemDetails(char *buf, const item *theItem) {
                                 theName);
                         strcat(buf, buf2);
 
-                        // A_MUTUALITY, A_IMMUNITY, A_RESPIRATION, A_DAMPENING, A_BURDEN, A_VULNERABILITY, A_IMMOLATION
+                        // A_MULTIPLICITY, A_MUTUALITY, A_IMMUNITY, A_RESPIRATION, A_DAMPENING, A_BURDEN, A_VULNERABILITY, A_IMMOLATION
                         switch (theItem->enchant2) {
+                            case A_MULTIPLICITY:
+                                sprintf(buf2, "When worn, 33%% of the time that an enemy's attack connects, %i allied spectral duplicate%s of your attacker will appear for 3 turns. ",
+                                        armorImageCount(enchant),
+                                        (armorImageCount(enchant) == 1 ? "" : "s"));
+                                if (armorImageCount(enchant + enchantMagnitude() * enchantIncrement(theItem)) > armorImageCount(enchant)) {
+                                    sprintf(buf3, "(If the %s is enchanted, the number of duplicates will increase to %i.) ",
+                                            theName,
+                                            (armorImageCount(enchant + enchantMagnitude() * enchantIncrement(theItem))));
+                                    strcat(buf2, buf3);
+                                }
+                                break;
                             case A_MUTUALITY:
                                 strcpy(buf2, "When worn, the damage that you incur from physical attacks will be split evenly among yourself and all other adjacent enemies. ");
                                 break;
@@ -7690,6 +7707,11 @@ void recalculateEquipmentBonuses() {
     if (rogue.armor) {
         theItem = rogue.armor;
         enchant = netEnchant(theItem);
+        if (theItem->enchant3 & A_ARMORSMITH) {
+            if (enchant > 0) {
+            enchant += enchant / 2;
+            }
+        }
         enchant -= player.status[STATUS_DONNING] * FP_FACTOR;
         player.info.defense = (theItem->armor * FP_FACTOR + enchant * 10) / FP_FACTOR;
         if (player.info.defense < 0) {
@@ -7887,23 +7909,15 @@ void updateRingBonuses() {
 // cloak's intrinsic stealth bonus
 void updateArmorIntrinsicBonuses() {
     rogue.stealthBonus = 0;
-    rogue.armorEnchantBonus = 0;
     
     if (rogue.armor) {
-        switch (rogue.armor->enchant3) {
-            case A_STEALTH:
-                rogue.stealthBonus = rogue.armor->enchant1;
-                if (rogue.stealthBonus < 0) {
-                    rogue.stealthBonus = 0;
-                } else if (!(rogue.armor->flags & ITEM_IDENTIFIED)) {
-                    rogue.stealthBonus = 1;
-                }
-                break;
-            case A_CRAFTSMANSHIP:
-                rogue.armorEnchantBonus = netEnchant(rogue.armor) / 2;
-                break;
-            default:
-                break;
+        if (rogue.armor->enchant3 & A_STEALTH) {  
+            rogue.stealthBonus = rogue.armor->enchant1;
+            if (rogue.stealthBonus < 0) {
+                rogue.stealthBonus = 0;
+            } else if (!(rogue.armor->flags & ITEM_IDENTIFIED)) {
+                rogue.stealthBonus = 1;
+            }
         }
     }
 }

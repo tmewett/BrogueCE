@@ -670,7 +670,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     }
     rogue.minersLightRadius += FP_FACTOR * 225 / 100;
     updateColors();
-    updateArmorIntrinsicBonuses(); // cloak and scale mail
+    updateArmorIntrinsicBonuses(); // also updates stealth
     updateRingBonuses(); // also updates miner's light
 
     if (!levels[rogue.depthLevel - 1].visited) { // level has not already been visited
