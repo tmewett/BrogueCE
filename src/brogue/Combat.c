@@ -969,13 +969,20 @@ void applyArmorIntrinsicEffect(char returnString[DCOLS], creature *attacker, sho
 
     monsterName(attackerName, attacker, true);
 
+    // do nothing if enchant1 or enchant is 0, depending on the intrinsic and ID status
     switch (rogue.armor->enchant3) {
         case A_ABSORPTION:
-            if (enchant >= 1) {
-                if (!(rogue.armor->flags & ITEM_IDENTIFIED)) {
-                    *damage -= rand_range(1, armorAbsorptionMax(unknownPositiveArmor));
-                } else {
+            if (!(rogue.armor->flags & ITEM_IDENTIFIED)) {
+                if (rogue.armor->enchant1 >= 1) {
+                    *damage -= rand_range(1, 1);
+                } else if (rogue.armor->enchant1 < 0) { // pinch the player
+                    *damage += rand_range(0, 1);
+                }
+            } else {
+                if (enchant > 0) {
                     *damage -= rand_range(1, armorAbsorptionMax(enchant));
+                } else if (enchant < 0) { // punch the player
+                    *damage += rand_range(1, armorAbsorptionMax(enchant));
                 }
             }
             if (*damage <= 0) {
@@ -983,17 +990,28 @@ void applyArmorIntrinsicEffect(char returnString[DCOLS], creature *attacker, sho
             }
             break;
         case A_REPRISAL:
-            if (melee && !(attacker->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE)) && (enchant >= 1)) {
+            if (melee && !(attacker->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
                 if (!(rogue.armor->flags & ITEM_IDENTIFIED)) {
-                    newDamage = max(1, armorReprisalPercent(unknownPositiveArmor) * (*damage) / 100); // 5% reprisal per armor level
-                } else {
-                    newDamage = max(1, armorReprisalPercent(enchant) * (*damage) / 100);
-                }
-                if (inflictDamage(&player, attacker, newDamage, &blue, true)) {
-                    if (canSeeMonster(attacker)) {
-                        sprintf(returnString, "your %s pulses and %s drops dead!", armorName, attackerName);
+                    if (rogue.armor->enchant1 != 0) {
+                        newDamage = max(1, armorReprisalPercent(unknownPositiveArmor) * (*damage) / 100); // 5% reprisal per armor level
                     }
-                    killCreature(attacker, false);
+                } else {
+                    if (enchant != 0) {
+                        newDamage = max(1, armorReprisalPercent(enchant) * (*damage) / 100);
+                    }
+                }
+
+                if (((rogue.armor->flags & ITEM_IDENTIFIED) && enchant > 0)
+                    || (!(rogue.armor->flags & ITEM_IDENTIFIED) && rogue.armor->enchant1 > 0)) {
+                    if (inflictDamage(&player, attacker, newDamage, &blue, true)) {
+                        if (canSeeMonster(attacker)) {
+                            sprintf(returnString, "your %s pulses and %s drops dead!", armorName, attackerName);
+                        }
+                        killCreature(attacker, false);
+                    }
+                } else if (((rogue.armor->flags & ITEM_IDENTIFIED) && enchant < 0)
+                    || (!(rogue.armor->flags & ITEM_IDENTIFIED) && rogue.armor->enchant1 < 0)) {
+                    heal(attacker, newDamage, false);
                 }
             }
             break;
@@ -1138,7 +1156,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
             }
         }
 
-        if (defender == &player && rogue.armor && (rogue.armor->enchant3 & A_ABSORPTION)) {
+        if (defender == &player && rogue.armor && (rogue.armor->enchant3 == A_ABSORPTION)) {
             applyArmorIntrinsicEffect(armorIntrinsicString, attacker, &damage, true);
         }
         if (defender == &player && rogue.armor && (rogue.armor->flags & ITEM_RUNIC) && (rogue.armor->enchant2 != A_MULTIPLICITY)) {
@@ -1295,7 +1313,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
             }
         }
         // reprisal armor effect triggers on a miss
-        if (defender == &player && rogue.armor && (rogue.armor->enchant3 & A_REPRISAL)) {
+        if (defender == &player && rogue.armor && (rogue.armor->enchant3 == A_REPRISAL)) {
             applyArmorIntrinsicEffect(armorIntrinsicString, attacker, &damage, true);
             if (armorIntrinsicString[0]) {
                 message(armorIntrinsicString, 0);
