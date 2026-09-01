@@ -2154,7 +2154,7 @@ void itemDetails(char *buf, item *theItem) {
                         new = theItem->armor;
                         new += 10 * netEnchant(theItem) / FP_FACTOR;
                         if (theItem->enchant3 == A_ARMORSMITH) {
-                            new += 10 * (netEnchant(theItem) / 2) / FP_FACTOR;
+                            new += ((10 * netEnchant(theItem)) / 2) / FP_FACTOR;
                         }
                         new /= 10;
                     } else {
@@ -2352,53 +2352,66 @@ void itemDetails(char *buf, item *theItem) {
                     strcat(buf, buf2);
 
                     if (theItem->flags & ITEM_IDENTIFIED) {
-                        switch (theItem->enchant3) {
-                            case A_STEALTH:
-                                sprintf(buf2, "If positively enchanted, it grants the wearer a stealth bonus equal to its raw enchantment level. Your stealth bonus will be %i. ",
-                                    (theItem->enchant1));
-                                break;
-                            case A_ARMORSMITH:
-                                sprintf(buf2, "It has a bonus to armor equal to 50%% of its net enchantment level of %i. Your armor bonus will be %i. ",
-                                    (enchant / FP_FACTOR),
-                                    (((theItem->armor + (15 * enchant / FP_FACTOR)) / 10)) - ((theItem->armor + (10 * enchant / FP_FACTOR)) / 10)); // necessary to prevent erroneous rounding of negative fractions
-                                break;
-                            case A_ABSORPTION:
-                                sprintf(buf2, "It will reduce the damage of inbound attacks by a random amount between 1 and %i, which is %i%% of your current maximum health. (If the %s is enchanted, this maximum amount will %s %i.) ",
-                                        (int) armorAbsorptionMax(enchant),
-                                        (int) (100 * armorAbsorptionMax(enchant) / player.info.maxHP),
-                                        theName,
-                                        (armorAbsorptionMax(enchant) == armorAbsorptionMax(enchant + enchantIncrement(theItem)) ? "remain at" : "increase to"),
-                                        (int) armorAbsorptionMax(enchant + enchantMagnitude() * enchantIncrement(theItem)));
-                                break;
-                            case A_REPRISAL:
-                                sprintf(buf2, "Any enemy that attacks and misses you will itself be wounded by %i%% of the damage that it would inflict. (If the %s is enchanted, this percentage will increase to %i%%.) ",
-                                        armorReprisalPercent(enchant),
-                                        theName,
-                                        armorReprisalPercent(enchant + enchantMagnitude() * enchantIncrement(theItem)));
-                                break;
-                            case A_REFLECTION:
-                                if (theItem->enchant1 == 0) {
-                                    strcpy(buf2, "When worn, you will deflect some percentage of incoming spells, determined by enchantment level. ");
-                                } else {
-                                    short reflectChance = reflectionChance(enchant);
-                                    short reflectChance2 = reflectionChance(enchant + enchantMagnitude() * enchantIncrement(theItem));
-                                    if (theItem->enchant1 > 0) {
-                                        sprintf(buf2, "When worn, you will deflect %i%% of incoming spells -- including directly back at their source %i%% of the time. (If the armor is enchanted, these will increase to %i%% and %i%%.) ",
-                                                reflectChance,
-                                                reflectChance * reflectChance / 100,
-                                                reflectChance2,
-                                                reflectChance2 * reflectChance2 / 100);
-                                    } else if (theItem->enchant1 < 0) {
-                                        sprintf(buf2, "When worn, %i%% of your own spells will deflect from their target -- including directly back at you %i%% of the time. (If the armor is enchanted, these will decrease to %i%% and %i%%.) ",
-                                                reflectChance,
-                                                reflectChance * reflectChance / 100,
-                                                reflectChance2,
-                                                reflectChance2 * reflectChance2 / 100);
-                                    }    
-                                }
-                                break;
-                            default:
-                                break;
+                        if (enchant == 0) {
+                                    strcpy(buf2, "This armor's intrinsic is currently inert. ");
+                        } else {
+                            switch (theItem->enchant3) {
+                                case A_STEALTH:
+                                        sprintf(buf2, "If %s, it grants the wearer a stealth %s equal to %sits raw enchantment level. Your stealth bonus will be %i. ",
+                                            (enchant > 0 ? "enchanted" : "cursed"),
+                                            (enchant > 0 ? "bonus" : "malus"),
+                                            (enchant > 0 ? "" : "four times "),
+                                            (enchant > 0 ? (theItem->enchant1) : ((theItem->enchant1) * 4)));
+                                    break;
+                                case A_ARMORSMITH:
+                                    sprintf(buf2, "It has a %s to armor equal to 50%% of its net enchantment level of %i. Your armor %s will be %i. ",
+                                        (enchant > 0 ? "bonus" : "malus"),
+                                        (enchant / FP_FACTOR),
+                                        (enchant > 0 ? "bonus" : "malus"),
+                                        (((theItem->armor + (15 * enchant / FP_FACTOR)) / 10)) - ((theItem->armor + (10 * enchant / FP_FACTOR)) / 10)); // necessary to prevent erroneous rounding of negative fractions
+                                    break;
+                                case A_ABSORPTION:
+                                    sprintf(buf2, "It will %s the damage of inbound attacks by a random amount between %s and %i, which is %i%% of your current maximum health. (If the %s is enchanted, this maximum amount will %s %i.) ",
+                                            (enchant > 0 ? "reduce" : "increase"),
+                                            (enchant > 0 ? "1" : "0"),
+                                            (int) armorAbsorptionMax(enchant),
+                                            (int) (100 * armorAbsorptionMax(enchant) / player.info.maxHP),
+                                            theName,
+                                            (armorAbsorptionMax(enchant) == armorAbsorptionMax(enchant + enchantIncrement(theItem)) ? "remain at" : "increase to"),
+                                            (int) armorAbsorptionMax(enchant + enchantMagnitude() * enchantIncrement(theItem)));
+                                    break;
+                                case A_REPRISAL:
+                                    sprintf(buf2, "Any enemy that attacks and %s you will itself be %s by %i%% of the damage that it %s. (If the %s is enchanted, this percentage will increase to %i%%.) ",
+                                            (enchant > 0 ? "misses" : "hits"),
+                                            (enchant > 0 ? "wounded" : "healed"),
+                                            armorReprisalPercent(enchant),
+                                            (enchant > 0 ? "would inflict" : "inflicts"),
+                                            theName,
+                                            armorReprisalPercent(enchant + enchantMagnitude() * enchantIncrement(theItem)));
+                                    break;
+                                case A_REFLECTION:
+                                        short reflectChance = reflectionChance(enchant);
+                                        short reflectChance2 = reflectionChance(enchant + enchantMagnitude() * enchantIncrement(theItem));
+                                        short fizzleChance = ((-(enchant) * 10) / FP_FACTOR);
+                                        short fizzleChance2 = ((-(enchant + enchantMagnitude() * enchantIncrement(theItem)) * 10) / FP_FACTOR);
+                                        if (theItem->enchant1 > 0) {
+                                            sprintf(buf2, "When worn, you will deflect %i%% of incoming spells -- including directly back at their source %i%% of the time. (If the armor is enchanted, these will increase to %i%% and %i%%.) ",
+                                                    reflectChance,
+                                                    reflectChance * reflectChance / 100,
+                                                    reflectChance2,
+                                                    reflectChance2 * reflectChance2 / 100);
+                                        } else if (theItem->enchant1 < -1) {
+                                            sprintf(buf2, "When worn, %i%% of your own spells will fizzle. (If the armor is enchanted, this will decrease to %i%%.) ",
+                                                    fizzleChance,
+                                                    fizzleChance2);
+                                        } else if (theItem->enchant1 >= -1) {
+                                            sprintf(buf2, "When worn, %i%% of your own spells will fizzle. (If the armor is enchanted, your staffs and wands will no longer fizzle.) ",
+                                                    fizzleChance);
+                                        }
+                                    break;
+                                default:
+                                    break;
+                            }
                         }
                         strcat(buf, buf2);
                     }
@@ -6635,7 +6648,19 @@ static boolean useStaffOrWand(item *theItem) {
 
         rogue.featRecord[FEAT_PURE_WARRIOR] = false;
 
-        if (theItem->charges > 0) {
+        if (rogue.armor 
+            && (rogue.armor->enchant3 == A_REFLECTION) 
+            && (netEnchant(rogue.armor) < 0) 
+            && rand_percent(((-(netEnchant(rogue.armor)) * 10) / FP_FACTOR))) {
+                if (theItem->category == STAFF) {
+                    sprintf(buf, "Your %s fizzles; your reflective armor blocks spellcasting.", buf2);
+                } else {
+                    sprintf(buf, "Your %s fizzles; your reflective armor blocks spellcasting.", buf2);
+                }
+                messageWithColor(buf, &itemMessageColor, 0);
+                playerTurnEnded();
+                return false;
+        } else if (theItem->charges > 0) {
 
             creature *monst = monsterAtLoc(zapTarget);
             if (monst) {
@@ -7791,9 +7816,6 @@ boolean equipItem(item *theItem, boolean force, item *unequipHint) {
         }
         rogue.armor = theItem;
         strengthCheck(theItem, !force);
-        if ((theItem->enchant1 == 0) && (theItem->enchant3 == A_STEALTH) && !(theItem->flags & ITEM_IDENTIFIED)) {
-            identify(theItem); // obviously can't be cursed, can't be positive, and can't bear a runic
-        }
         updateArmorIntrinsicBonuses();
     } else if (theItem->category & RING) {
         if (rogue.ringLeft && rogue.ringRight) {
@@ -7944,23 +7966,21 @@ void updateRingBonuses() {
 
 }
 
-// cloak's intrinsic stealth bonus
+// cloak's intrinsic stealth bonus and any other intrinsics
 void updateArmorIntrinsicBonuses() {
     rogue.stealthBonus = 0;
     
     if (rogue.armor) {
         if (rogue.armor->enchant3 == A_STEALTH) {  
             rogue.stealthBonus = rogue.armor->enchant1;
-            if (!(rogue.armor->flags & ITEM_IDENTIFIED)) { // +0 stealth armors auto-identify
+            if (!(rogue.armor->flags & ITEM_IDENTIFIED)) { // consequence of turning stealth ring into armor
                 if (rogue.stealthBonus < 0) {
                     rogue.stealthBonus = -1;
-                } else if (rogue.stealthBonus >= 1) {
-                    rogue.stealthBonus = 1;
+                } else if (rogue.stealthBonus >= 0) {
+                    rogue.stealthBonus = 0; // don't differentiate between +0 and greater unIDed cloaks
                 }
-            } else {
-                if (rogue.stealthBonus < 0) {
+            } else if (rogue.stealthBonus < 0) {
                     rogue.stealthBonus *= 4; // cloak's clasp contains a cursed stealth ring
-                }
             }
         }
     }
