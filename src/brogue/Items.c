@@ -312,11 +312,12 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                     // cursed
                     theItem->enchant1 *= -1;
                     theItem->flags |= ITEM_CURSED;
-                    if (rand_percent(33)) { // give it a bad runic
+                /*    if (rand_percent(33)) { // give it a bad runic
                         theItem->enchant2 = rand_range(NUMBER_GOOD_ARMOR_ENCHANT_KINDS, NUMBER_ARMOR_ENCHANT_KINDS - 1);
                         theItem->flags |= ITEM_RUNIC;
-                    }
-                } else if (rand_range(0, 95) > theItem->armor) { // give it a good runic
+                    } */
+                // } else if (rand_range(0, 95) > theItem->armor) { // give it a good runic
+                } else if (rand_percent(40) && (theItem->enchant3 != A_REFLECTION)) { // reflection intrinsic too good to exist alongside a runic
                     theItem->enchant2 = rand_range(0, NUMBER_GOOD_ARMOR_ENCHANT_KINDS - 1);
                     theItem->flags |= ITEM_RUNIC;
                     if (theItem->enchant2 == A_IMMUNITY) {
