@@ -853,6 +853,7 @@ enum armorKind {
     PADDED_MAIL,
     THORNED_MAIL,
     MIRRORED_PLATE,
+    SHINING_ARMOR,
     NUMBER_ARMOR_KINDS
 };
 
