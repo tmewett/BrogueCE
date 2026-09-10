@@ -118,11 +118,14 @@ static long lastDelayTime = 0;
 // Like SDL_Delay, but reduces the delay if time has passed since the last delay
 static void _delayUpTo(short ms) {
     long curTime = getTime();
-    long timeDiff = curTime - lastDelayTime;
-    ms -= timeDiff;
+    // lastDelayTime == 0 means this is the first call, so treat it as
+    // "no time elapsed". Compute in long: subtracting the elapsed time
+    // into the short `ms` overflows on the first call.
+    long timeDiff = (lastDelayTime == 0) ? 0 : (curTime - lastDelayTime);
+    long remaining = (long)ms - timeDiff;
 
-    if (ms > 0) {
-        Term.wait(ms);
+    if (remaining > 0) {
+        Term.wait((int)remaining);
     } // else delaying further would go past the time we want to delay until
 
     lastDelayTime = getTime();
