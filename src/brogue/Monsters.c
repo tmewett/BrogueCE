@@ -2406,7 +2406,7 @@ static boolean monsterBlinkToSafety(creature *monst) {
     return monsterBlinkToPreferenceMap(monst, blinkSafetyMap, false);
 }
 
-boolean monsterSummons(creature *monst, boolean alwaysUse) {
+boolean monsterSummons(creature *monst) {
     short minionCount = 0;
 
     if (monst->info.abilityFlags & (MA_CAST_SUMMON)) {
@@ -2439,10 +2439,7 @@ boolean monsterSummons(creature *monst, boolean alwaysUse) {
                 }
             }
         }
-        if (alwaysUse && minionCount < 50) {
-            summonMinions(monst);
-            return true;
-        } else if (monst->info.abilityFlags & MA_ENTER_SUMMONS) {
+        if (monst->info.abilityFlags & MA_ENTER_SUMMONS) {
             if (!rand_range(0, 7)) {
                 summonMinions(monst);
                 return true;
@@ -2806,7 +2803,7 @@ static boolean monstUseBolt(creature *monst) {
 
 // returns whether the monster did something (and therefore ended its turn)
 static boolean monstUseMagic(creature *monst) {
-    if (monsterSummons(monst, (monst->info.flags & MONST_ALWAYS_USE_ABILITY))) {
+    if (monsterSummons(monst)) {
         return true;
     } else if (monstUseBolt(monst)) {
         return true;
@@ -3104,7 +3101,7 @@ static void moveAlly(creature *monst) {
 
             return;
         }
-        if (monsterSummons(monst, (monst->info.flags & MONST_ALWAYS_USE_ABILITY))) {
+        if (monsterSummons(monst)) {
             return;
         }
         if (!rogue.updatedAllySafetyMapThisTurn) {
@@ -3488,7 +3485,7 @@ void monstersTurn(creature *monst) {
             return;
         }
 
-        if (monsterSummons(monst, (monst->info.flags & MONST_ALWAYS_USE_ABILITY))) {
+        if (monsterSummons(monst)) {
             return;
         }
 
