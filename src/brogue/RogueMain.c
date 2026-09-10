@@ -879,6 +879,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
             for (j = rogue.upLoc.y-1; j <= rogue.upLoc.y + 1; j++) {
                 if (coordinatesAreInMap(i, j)) {
                     discoverCell(i, j);
+                    storeMemories(i, j);
                 }
             }
         }
