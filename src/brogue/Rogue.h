@@ -2447,6 +2447,7 @@ typedef struct playerCharacter {
     boolean automationActive;           // cut some corners during redraws to speed things up
     boolean justRested;                 // previous turn was a rest -- used in stealth
     boolean justSearched;               // previous turn was a search -- used in manual searches
+    boolean explosionImmunityFresh;     // #816: true only for the turn an explosion granted STATUS_EXPLOSION_IMMUNITY, so playerTurnEnded's per-turn decrement skips itself once and a grant applied before it (a bloat detonating in melee) keeps the full five turns
     boolean cautiousMode;               // used to prevent careless deaths caused by holding down a key
     boolean receivedLevitationWarning;  // only warn you once when you're hovering dangerously over liquid
     boolean updatedSafetyMapThisTurn;   // so it's updated no more than once per turn
