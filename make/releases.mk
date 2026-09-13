@@ -41,6 +41,8 @@ Brogue.app: bin/brogue
 	cp bin/brogue $@/Contents/MacOS
 	cp -r macos/Brogue.icns bin/assets $@/Contents/Resources
 
-macos/sdl2.rb:
-	curl -L 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/s/sdl2.rb' >$@
-	patch $@ macos/sdl-deployment-target.patch
+macos/sdl3.orig.rb:
+	curl -L 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/s/sdl3.rb' >$@
+
+macos/sdl3.rb: macos/sdl3.orig.rb
+	patch -o $@ macos/sdl3.orig.rb macos/sdl-deployment-target.patch

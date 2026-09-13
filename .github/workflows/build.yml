@@ -42,27 +42,27 @@ jobs:
 
     - name: "Prepare"
       run: |
-        make macos/sdl2.rb
+        make macos/sdl3.rb
 
-    - name: "Cache SDL2"
+    - name: "Cache SDL"
       uses: actions/cache@v3
       with:
-        path: sdl2-cellar
-        key: sdl2-macos-x86_64-${{hashFiles('macos/sdl2.rb')}}
+        path: sdl3-cellar
+        key: sdl3-macos-x86_64-${{hashFiles('macos/sdl3.rb')}}
 
     - name: "Compile and install dependencies"
       run: |
-        if [ -d sdl2-cellar ]; then
-          cp -r sdl2-cellar $(brew --cellar)/sdl2
-          brew link sdl2
+        if [ -d sdl3-cellar ]; then
+          cp -r sdl3-cellar $(brew --cellar)/sdl3
+          brew link sdl3
         else
           tap_dir="$(brew --repository local/broguece)"
           mkdir -p "$tap_dir/Formula"
-          cp macos/sdl2.rb "$tap_dir/Formula"
-          brew install --build-from-source local/broguece/sdl2
-          cp -r $(brew --cellar)/sdl2 sdl2-cellar
+          cp macos/sdl3.rb "$tap_dir/Formula"
+          brew install --build-from-source local/broguece/sdl3
+          cp -r $(brew --cellar)/sdl3 sdl3-cellar
         fi
-        brew install sdl2_image dylibbundler
+        brew install sdl2-compat sdl2_image dylibbundler
 
     - name: "Compile"
       run: |
@@ -94,27 +94,27 @@ jobs:
 
     - name: "Prepare"
       run: |
-        make macos/sdl2.rb
+        make macos/sdl3.rb
 
-    - name: "Cache SDL2"
+    - name: "Cache SDL"
       uses: actions/cache@v3
       with:
-        path: sdl2-cellar
-        key: sdl2-macos-arm64-${{hashFiles('macos/sdl2.rb')}}
+        path: sdl3-cellar
+        key: sdl3-macos-arm64-${{hashFiles('macos/sdl3.rb')}}
 
     - name: "Compile and install dependencies"
       run: |
-        if [ -d sdl2-cellar ]; then
-          cp -r sdl2-cellar $(brew --cellar)/sdl2
-          brew link sdl2
+        if [ -d sdl3-cellar ]; then
+          cp -r sdl3-cellar $(brew --cellar)/sdl3
+          brew link sdl3
         else
           tap_dir="$(brew --repository local/broguece)"
           mkdir -p "$tap_dir/Formula"
-          cp macos/sdl2.rb "$tap_dir/Formula"
-          brew install --build-from-source local/broguece/sdl2
-          cp -r $(brew --cellar)/sdl2 sdl2-cellar
+          cp macos/sdl3.rb "$tap_dir/Formula"
+          brew install --build-from-source local/broguece/sdl3
+          cp -r $(brew --cellar)/sdl3 sdl3-cellar
         fi
-        brew install sdl2_image dylibbundler
+        brew install sdl2-compat sdl2_image dylibbundler
 
     - name: "Compile"
       run: |
