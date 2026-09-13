@@ -1,1 +1,2 @@
 Fixed monster descriptions to correctly display "regenerates quickly" only for monsters with fast-regeneration.
+Fixed polymorphed monsters not regenerating.
