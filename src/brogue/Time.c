@@ -1789,6 +1789,7 @@ static void processIncrementalAutoID() {
                 if (theItem->category & ARMOR) {
                     // Don't necessarily reveal the armor's runic specifically, just that it has one.
                     theItem->flags |= ITEM_IDENTIFIED;
+                    updateArmorIntrinsicBonuses();
                 } else if (theItem->category & RING) {
                     identify(theItem);
                 }
