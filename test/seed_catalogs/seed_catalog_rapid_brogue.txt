@@ -1,5 +1,5 @@
 Brogue seed catalog, seeds 1 to 25, through depth 10.
-Generated with RB 1.6.1-dev.516bf81.release. Dungeons unchanged since RB 1.5.
+Generated with RB 1.7.1-dev.c71e78f.seed-catalog-vault-numbering. Dungeons unchanged since RB 1.5.
 
 To play one of these seeds, select Play>New Seeded Game from the title screen.
 Seed 1:
@@ -78,12 +78,12 @@ Seed 1:
         A potion of strength
         A potion of life
         A scroll of enchanting
-        A door key (opens vault 12)
+        A door key (opens vault 11)
         A cage key (vault 8)
         A staff of obstruction [2/2] (vault 8)
         A staff of lightning [2/2] (vault 8)
         A wand of teleportation [1] (vault 8)
-        A door key (opens vault 9)
+        A door key (opens vault 8)
         A +3 recharging charm (ready) (vault 4)
         A staff of lightning [3/3] (vault 4)
         A +0 flail <17> (vault 4)
@@ -99,7 +99,7 @@ Seed 1:
         A caged troll
         A caged naga
         A caged dar battlemage
-        A resurrection altar (vault 12)
+        A resurrection altar (vault 11)
         A commutation altar (vault 1)
     Depth 5:
         A scroll of teleportation
@@ -380,8 +380,8 @@ Seed 3:
         A scroll of sanctuary
         A potion of darkness
         A scroll of enchanting
-        A door key (opens vault 11)
-        A potion of life (vault 11)
+        A door key (opens vault 10)
+        A potion of life (vault 10)
         A +2 ring of wisdom (vault 7)
         A +2 ring of reaping (vault 7)
         A wand of slowness [4] (vault 7)
@@ -539,7 +539,7 @@ Seed 4:
         A potion of strength
         A potion of life
         A scroll of enchanting
-        A door key (opens vault 3)
+        A door key (opens vault 2)
         3 +0 incendiary darts <12> (vault 1)
         A +0 rapier <15> (vault 1)
         A scroll of enchanting (vault 1)
@@ -678,13 +678,13 @@ Seed 5:
         A potion of strength
         A potion of life
         A scroll of enchanting
-        A staff of obstruction [2/2] (vault 4)
-        A +3 ring of light (vault 4)
-        +0 chain mail [5]<13> (vault 4)
-        +0 banded mail [7]<15> (vault 4)
-        A wand of beckoning [3] (vault 4)
-        A wand of empowerment [1] (vault 4)
-        A door key (opens vault 4)
+        A staff of obstruction [2/2] (vault 3)
+        A +3 ring of light (vault 3)
+        +0 chain mail [5]<13> (vault 3)
+        +0 banded mail [7]<15> (vault 3)
+        A wand of beckoning [3] (vault 3)
+        A wand of empowerment [1] (vault 3)
+        A door key (opens vault 3)
         A potion of descent
         A crystal orb
         1644 gold pieces (6 piles)
@@ -844,8 +844,8 @@ Seed 6:
         A potion of strength
         A potion of life
         A scroll of enchanting
-        A door key (opens vault 14)
-        A scroll of enchanting (vault 14)
+        A door key (opens vault 11)
+        A scroll of enchanting (vault 11)
         A door key (vault 5) (opens vault 3)
         A +2 ring of stealth (vault 5)
         A +0 broadsword <19> (vault 5)
@@ -856,7 +856,7 @@ Seed 6:
         2109 gold pieces (7 piles)
         A scroll of aggravate monsters (dar blademaster)
         A staff of healing [2/2] (dar blademaster)
-        A staff of firebolt [3/3] (imp) (vault 14)
+        A staff of firebolt [3/3] (imp) (vault 11)
         A staff of poison [2/2] (imp)
         An allied mangrove dryad
     Depth 6:
@@ -969,12 +969,12 @@ Seed 7:
         A potion of telepathy
         A scroll of aggravate monsters
         A scroll of enchanting
-        +2 leather armor of reflection [5]<10> (vault 7)
+        +2 leather armor of reflection [5]<10> (vault 5)
         A door key (opens vault 2)
         A staff of obstruction [4/4] (vault 2)
         A staff of protection [2/2] (vault 2)
         1175 gold pieces (5 piles)
-        A door key (stone guardian) (opens vault 7)
+        A door key (stone guardian) (opens vault 5)
         A scroll of summon monsters (dar blademaster)
         A shackled dar blademaster
         A shackled dar blademaster
@@ -998,12 +998,12 @@ Seed 7:
         A potion of strength
         A potion of life
         A scroll of enchanting
-        A door key (vault 13) (opens vault 9)
-        +3 banded mail of absorption [10]<15> (vault 7)
+        A door key (vault 9) (opens vault 7)
+        +3 banded mail of absorption [10]<15> (vault 5)
         +1 scale mail of multiplicity [5]<12>
         2228 gold pieces (7 piles)
-        A resurrection altar (vault 9)
-        A commutation altar (vault 5)
+        A resurrection altar (vault 7)
+        A commutation altar (vault 3)
     Depth 6:
         A scroll of remove curse
         A scroll of discord
@@ -1321,12 +1321,12 @@ Seed 9:
         A potion of strength
         A potion of life
         A scroll of enchanting
-        A door key (vault 5) (opens vault 3)
-        A scroll of remove curse (vault 3)
-        A scroll of discord (vault 3)
-        A scroll of teleportation (vault 3)
-        A scroll of protect armor (vault 3)
-        A scroll of identify (vault 3)
+        A door key (vault 4) (opens vault 2)
+        A scroll of remove curse (vault 2)
+        A scroll of discord (vault 2)
+        A scroll of teleportation (vault 2)
+        A scroll of protect armor (vault 2)
+        A scroll of identify (vault 2)
         3101 gold pieces (8 piles)
         A potion of fire immunity (dar battlemage)
         A scroll of recharging (dragon)
@@ -1456,11 +1456,11 @@ Seed 10:
         A scroll of enchanting
         A scroll of enchanting
         A mango
-        A door key (opens vault 6)
+        A door key (opens vault 5)
         A door key (opens vault 2)
         2789 gold pieces (8 piles)
         A scroll of recharging (dragon)
-        A resurrection altar (vault 6)
+        A resurrection altar (vault 5)
         A commutation altar (vault 2)
     Depth 7:
         A lumenstone from depth 7
@@ -2047,7 +2047,7 @@ Seed 14:
         A potion of life
         A scroll of enchanting
         A scroll of enchanting
-        A door key (opens vault 15)
+        A door key (opens vault 11)
         A staff of tunneling [3/3]
         A staff of firebolt [3/3]
         A cage key (vault 4)
@@ -2063,7 +2063,7 @@ Seed 14:
         A caged pixie
         A caged dar battlemage
         A caged ogre
-        A commutation altar (vault 15)
+        A commutation altar (vault 11)
     Depth 6:
         A potion of hallucination
         A scroll of protect armor
@@ -2479,19 +2479,19 @@ Seed 17:
         A potion of life
         A scroll of enchanting
         A scroll of enchanting
-        A potion of speed (vault 7)
-        A potion of invisibility (vault 7)
-        A potion of descent (vault 7)
-        A potion of caustic gas (vault 7)
-        A potion of telepathy (vault 7)
-        A potion of detect magic (vault 7)
-        A door key (vault 4) (opens vault 1)
-        A +1 guardian charm (ready) (vault 4)
-        A +1 recharging charm (ready) (vault 4)
-        A +0 war pike <18> (vault 4)
-        +0 plate armor [11]<19> (vault 4)
+        A potion of speed (vault 6)
+        A potion of invisibility (vault 6)
+        A potion of descent (vault 6)
+        A potion of caustic gas (vault 6)
+        A potion of telepathy (vault 6)
+        A potion of detect magic (vault 6)
+        A door key (vault 3) (opens vault 1)
+        A +1 guardian charm (ready) (vault 3)
+        A +1 recharging charm (ready) (vault 3)
+        A +0 war pike <18> (vault 3)
+        +0 plate armor [11]<19> (vault 3)
         A potion of fire immunity
-        A door key (opens vault 4)
+        A door key (opens vault 3)
         1654 gold pieces (6 piles)
         A shackled naga
         A commutation altar (vault 1)
@@ -3528,13 +3528,13 @@ Seed 24:
         A potion of life
         A scroll of enchanting
         A scroll of enchanting
-        A door key (opens vault 3)
+        A door key (opens vault 2)
         2249 gold pieces (7 piles)
         A cage key (vampire [reflective])
         A caged dar battlemage
         A caged dar blademaster
         A shackled dar priestess
-        A resurrection altar (vault 3)
+        A resurrection altar (vault 2)
     Depth 6:
         A potion of darkness
         A scroll of identify
