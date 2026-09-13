@@ -889,19 +889,37 @@ void startLevel(short oldLevelNumber, short stairDirection) {
     }
 
     if (levels[rogue.depthLevel - 1].visited) {
+        // Build both a normal and a "flying" distance map to each destination.
+        // The flying map treats blockers like traps and fires as passable
+        // so a monster on such a tile is simulated based on its real distance to the target.
+        // Without this, the distance becomes the unreachable value 30,000,
+        // which causes the monster to skip directly to the stairs.
+        short **mapToStairsFlying = allocGrid();
+        short **mapToPitFlying = allocGrid();
         mapToStairs = allocGrid();
         mapToPit = allocGrid();
-        fillGrid(mapToStairs, 0);
-        fillGrid(mapToPit, 0);
-        calculateDistances(mapToStairs, player.loc.x, player.loc.y, T_PATHING_BLOCKER, NULL, true, true);
-        calculateDistances(mapToPit, levels[rogue.depthLevel-1].playerExitedVia.x,
-                           levels[rogue.depthLevel-1].playerExitedVia.y, T_PATHING_BLOCKER, NULL, true, true);
+        for (flying = 0; flying <= 1; flying++) {
+            short **stairsMap = flying ? mapToStairsFlying : mapToStairs;
+            short **pitMap = flying ? mapToPitFlying : mapToPit;
+            const unsigned long blockingFlags = flying ? T_OBSTRUCTS_PASSABILITY : T_PATHING_BLOCKER;
+            fillGrid(stairsMap, 0);
+            fillGrid(pitMap, 0);
+            calculateDistances(stairsMap, player.loc.x, player.loc.y, blockingFlags, NULL, true, true);
+            calculateDistances(pitMap, levels[rogue.depthLevel-1].playerExitedVia.x,
+                               levels[rogue.depthLevel-1].playerExitedVia.y, blockingFlags, NULL, true, true);
+        }
         for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
-            restoreMonster(monst, mapToStairs, mapToPit);
+            const boolean usesFlyingMap = monst->status[STATUS_LEVITATING]
+                                          || cellHasTerrainFlag(monst->loc, T_PATHING_BLOCKER);
+            restoreMonster(monst,
+                           usesFlyingMap ? mapToStairsFlying : mapToStairs,
+                           usesFlyingMap ? mapToPitFlying : mapToPit);
         }
         freeGrid(mapToStairs);
         freeGrid(mapToPit);
+        freeGrid(mapToStairsFlying);
+        freeGrid(mapToPitFlying);
     }
 
     updateMapToShore();
