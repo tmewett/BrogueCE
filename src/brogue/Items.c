@@ -3870,7 +3870,6 @@ static boolean polymorph(creature *monst) {
              || newMonsterIndex == monst->info.monsterID); // Can't stay the same monster.
     monst->info = monsterCatalog[newMonsterIndex]; // Presto change-o!
 
-    monst->info.turnsBetweenRegen *= 1000;
     monst->currentHP = max(1, max(healthFraction * monst->info.maxHP / 1000, monst->info.maxHP - previousDamageTaken));
 
     monst->movementSpeed = monst->info.movementSpeed;

@@ -4316,7 +4316,7 @@ static void getMonsterAbilitiesText(const creature *monst, char *abilitiesText, 
     if (includeNonNegatable) {
         if (monst->info.turnsBetweenRegen == 0) {
             strcat(buf, "&does not regenerate");
-        } else if (monst->info.turnsBetweenRegen < 5000) {
+        } else if (monst->info.turnsBetweenRegen < 5) {
             strcat(buf, "&regenerates quickly");
         }
     }
