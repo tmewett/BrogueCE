@@ -147,10 +147,10 @@ void describeLocation(char buf[DCOLS], short x, short y) {
     boolean monsterDormant;
     boolean monsterIsPlayer = false;
 
-    char subject[COLS * 3];
+    char subject[COLS * 3] = "";
     char verb[COLS * 3];
     char preposition[COLS * 3];
-    char object[COLS * 3];
+    char object[COLS * 3] = "";
     char itemLocation[COLS * 3] = "";
     char adjective[COLS * 3];
 
@@ -356,6 +356,8 @@ void describeLocation(char buf[DCOLS], short x, short y) {
                 strcat(itemLocation, tileText(x, y));
             }
 
+            // This call is only needed for the `strlen()` call just below here
+            sprintf(buf, "%s %s%s %s%s.", subject, verb, preposition, object, itemLocation);
             describedItemName(theItem, object, DCOLS - strlen(buf));
             // This `sprintf` call is similar to the one at the end of this function, but that one
             // adds an extra space; to avoid the extra space in messages like "X is standing  over Y",
@@ -391,6 +393,8 @@ void describeLocation(char buf[DCOLS], short x, short y) {
             strcpy(preposition, standsInTerrain ? (subjectMoving ? "through" : "in")
                    : (subjectMoving ? "across" : "on"));
 
+            // This call is only needed for the `strlen()` call just below here
+            sprintf(buf, "%s %s %s %s%s.", subject, verb, preposition, object, itemLocation);
             describedItemName(theItem, subject, DCOLS - strlen(buf));
 
         } else { // no item
