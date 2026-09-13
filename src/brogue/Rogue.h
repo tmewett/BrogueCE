@@ -194,8 +194,7 @@ typedef struct windowpos {
 
 #define MACHINES_BUFFER_LENGTH  200
 
-#define INPUT_RECORD_BUFFER     1000        // the threshold size before flushing the record buffer to disk
-#define INPUT_RECORD_BUFFER_MAX_SIZE 1100   // the maximum size of the record buffer
+#define INPUT_RECORD_BUFFER_SIZE 1024
 #define DEFAULT_PLAYBACK_DELAY  50
 
 #define HIGH_SCORES_COUNT       30
@@ -3457,7 +3456,6 @@ extern "C" {
     void initRecording(void);
     void flushBufferToFile(void);
     void fillBufferFromFile(void);
-    void recordEvent(rogueEvent *event);
     void recallEvent(rogueEvent *event);
     void pausePlayback(void);
     void displayAnnotation(void);
@@ -3467,7 +3465,6 @@ extern "C" {
     void cancelKeystroke(void);
     void recordKeystrokeSequence(unsigned char *commandSequence);
     void recordMouseClick(short x, short y, boolean controlKey, boolean shiftKey);
-    void OOSCheck(unsigned long x, short numberOfBytes);
     void RNGCheck(void);
     boolean executePlaybackInput(rogueEvent *recordingInput);
     void getAvailableFilePath(char *filePath, const char *defaultPath, const char *suffix);

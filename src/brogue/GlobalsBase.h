@@ -85,7 +85,7 @@ extern FILE *RNGLogFile;
 #define MENU_TITLE_WIDTH    68
 #define MENU_TITLE_HEIGHT   26
 
-extern unsigned char inputRecordBuffer[INPUT_RECORD_BUFFER + 100];
+extern unsigned char inputRecordBuffer[INPUT_RECORD_BUFFER_SIZE];
 extern unsigned short locationInRecordingBuffer;
 
 extern unsigned long positionInPlaybackFile;

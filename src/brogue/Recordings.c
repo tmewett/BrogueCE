@@ -41,18 +41,14 @@ enum recordingSeekModes {
 };
 
 static void recordChar(unsigned char c) {
-    if (locationInRecordingBuffer < INPUT_RECORD_BUFFER_MAX_SIZE) {
-        inputRecordBuffer[locationInRecordingBuffer++] = c;
-        recordingLocation++;
-    } else {
-        printf("Recording buffer length exceeded at location %li! Turn number %li.\n", recordingLocation - 1, rogue.playerTurnNumber);
-    }
-}
-
-static void considerFlushingBufferToFile(void) {
-    if (locationInRecordingBuffer >= INPUT_RECORD_BUFFER) {
+    // This should never fail; if it does, part of the recording has already been lost
+    brogueAssert(locationInRecordingBuffer <= INPUT_RECORD_BUFFER_SIZE);
+    if (locationInRecordingBuffer >= INPUT_RECORD_BUFFER_SIZE) {
         flushBufferToFile();
     }
+    brogueAssert(locationInRecordingBuffer < INPUT_RECORD_BUFFER_SIZE);
+    inputRecordBuffer[locationInRecordingBuffer++] = c;
+    recordingLocation++;
 }
 
 // compresses a int into a char, discarding stuff we don't need
@@ -97,7 +93,7 @@ static void recordNumber(unsigned long number, short numberOfBytes) {
 // Keystrokes: Event type, keystroke value, modifier flags. (3 bytes.)
 // All other events: Event type, x-coordinate of the event, y-coordinate of the event, modifier flags. (4 bytes.)
 // Note: these must be sanitized, because user input may contain more than one byte per parameter.
-void recordEvent(rogueEvent *event) {
+static void recordEvent(rogueEvent *event) {
     unsigned char c;
 
     if (rogue.playbackMode) {
@@ -255,7 +251,7 @@ void fillBufferFromFile(void) {
     recordFile = fopen(currentFilePath, "rb");
     fseek(recordFile, positionInPlaybackFile, SEEK_SET);
 
-    fread((void *) inputRecordBuffer, 1, INPUT_RECORD_BUFFER, recordFile);
+    fread((void *) inputRecordBuffer, 1, INPUT_RECORD_BUFFER_SIZE, recordFile);
 
     positionInPlaybackFile = ftell(recordFile);
     fclose(recordFile);
@@ -270,7 +266,8 @@ static unsigned char recallChar(void) {
     }
     c = inputRecordBuffer[locationInRecordingBuffer++];
     recordingLocation++;
-    if (locationInRecordingBuffer >= INPUT_RECORD_BUFFER) {
+    brogueAssert(locationInRecordingBuffer <= INPUT_RECORD_BUFFER_SIZE);
+    if (locationInRecordingBuffer >= INPUT_RECORD_BUFFER_SIZE) {
         fillBufferFromFile();
     }
     return c;
@@ -330,7 +327,7 @@ static void playbackPanic(void) {
         }
         rogue.gameExitStatusCode = EXIT_STATUS_FAILURE_RECORDING_OOS;
 
-        printf("Playback panic at location %li! Turn number %li.\n", recordingLocation - 1, rogue.playerTurnNumber);
+        printf("Playback panic at location %li, Turn number %li, recording buffer location %d, playback file position %ld\n", recordingLocation - 1, rogue.playerTurnNumber, locationInRecordingBuffer, positionInPlaybackFile);
         restoreDisplayBuffer(&rbuf);
 
         mainInputLoop();
@@ -369,7 +366,7 @@ void recallEvent(rogueEvent *event) {
             case EVENT_ERROR:
             default:
                 message("Unrecognized event type in playback.", REQUIRE_ACKNOWLEDGMENT);
-                printf("Unrecognized event type in playback: event ID %i", c);
+                printf("Unrecognized event type in playback: event ID %i\n", c);
                 tryAgain = true;
                 playbackPanic();
                 break;
@@ -378,6 +375,12 @@ void recallEvent(rogueEvent *event) {
 
     // record the modifier keys
     c = recallChar();
+    if (c >= 4) {
+        message("Invalid modifiers in playback.", REQUIRE_ACKNOWLEDGMENT);
+        printf("Invalid modifiers in playback: %d\n", c);
+        playbackPanic();
+        return;
+    }
     event->controlKey = (c & Fl(1)) ? true : false;
     event->shiftKey =   (c & Fl(2)) ? true : false;
 }
@@ -554,26 +557,23 @@ void initRecording(void) {
     rogue.currentTurnNumber = 0;
 }
 
-void OOSCheck(unsigned long x, short numberOfBytes) {
+static void OOSCheck(unsigned long x, short numberOfBytes) {
     unsigned char eventType;
     unsigned long recordedNumber;
 
     if (rogue.playbackMode) {
         eventType = recallChar();
         recordedNumber = recallNumber(numberOfBytes);
-        if (eventType != RNG_CHECK || recordedNumber != x) {
-            if (eventType != RNG_CHECK) {
-                printf("Event type mismatch in RNG check.\n");
-                playbackPanic();
-            } else if (recordedNumber != x) {
-                printf("Expected RNG output of %li; got %i.\n", recordedNumber, (int) x);
-                playbackPanic();
-            }
+        if (eventType != RNG_CHECK) {
+            printf("Event type mismatch in RNG check; event was of type %d.\n", eventType);
+            playbackPanic();
+        } else if (recordedNumber != x) {
+            printf("Expected RNG output of %li; got %i.\n", recordedNumber, (int) x);
+            playbackPanic();
         }
     } else {
         recordChar(RNG_CHECK);
         recordNumber(x, numberOfBytes);
-        considerFlushingBufferToFile();
     }
 }
 
@@ -584,10 +584,6 @@ void RNGCheck(void) {
 
     oldRNG = rogue.RNG;
     rogue.RNG = RNG_SUBSTANTIVE;
-
-//#ifdef AUDIT_RNG
-//reportRNGState();
-//#endif
 
     randomNumber = (unsigned long) rand_range(0, 255);
     OOSCheck(randomNumber, 1);
@@ -1262,7 +1258,7 @@ void saveRecording(char *filePathWithoutSuffix) {
 
 static void copyFile(char *fromFilePath, char *toFilePath, unsigned long fromFileLength) {
     unsigned long m, n;
-    unsigned char fileBuffer[INPUT_RECORD_BUFFER];
+    unsigned char fileBuffer[INPUT_RECORD_BUFFER_SIZE];
     FILE *fromFile, *toFile;
 
     remove(toFilePath);
@@ -1271,7 +1267,7 @@ static void copyFile(char *fromFilePath, char *toFilePath, unsigned long fromFil
     toFile      = fopen(toFilePath, "wb");
 
     for (n = 0; n < fromFileLength; n += m) {
-        m = min(INPUT_RECORD_BUFFER, fromFileLength - n);
+        m = min(INPUT_RECORD_BUFFER_SIZE, fromFileLength - n);
         fread((void *) fileBuffer, 1, m, fromFile);
         fwrite((void *) fileBuffer, 1, m, toFile);
     }
@@ -1398,15 +1394,21 @@ static void describeKeystroke(unsigned char key, char *description) {
     if (key >= 32 && key <= 126) {
         sprintf(description, "Key: %c\t(%s)", key, descList[i]);
     } else {
-        sprintf(description, "Key: %i\t(%s)", key, descList[i]);
+        sprintf(description, "Key index: %i\t(%s)", key, descList[i]);
     }
 }
 
 static void appendModifierKeyDescription(char *description) {
     unsigned char c = recallChar();
+    if (c >= 4) {
+        // In this case, the recording has been corrupted, so print the exact modifier data
+        sprintf(description + strlen(description), "; modifiers %d (", c);
+        describeKeystroke(c, description + strlen(description));
+        strcat(description, ")");
+    }
 
     if (c & Fl(1)) {
-        strcat(description, " + CRTL");
+        strcat(description, " + CTRL");
     }
     if (c & Fl(2)) {
         strcat(description, " + SHIFT");
@@ -1440,7 +1442,7 @@ void parseFile(void) {
     char description[1000], versionString[500];
     short x, y;
 
-    if (selectFile("Parse recording: ", "Recording.broguerec", "")) {
+    if (selectFile("Parse recording: ", "LastRecording.broguerec", "")) {
 
         oldFileLoc = positionInPlaybackFile;
         oldRecLoc = recordingLocation;
