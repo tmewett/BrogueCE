@@ -730,7 +730,6 @@ itemTable charmTable_BulletBrogue[] = {
     {"levitation",      "", "", 1,  700,    0, 0, {1,2,1}, true, false, 1, false, "Sparkling dust and fragments of feather waft and swirl endlessly inside this small glass sphere."},
     {"shattering",      "", "", 1,  700,    0, 0, {1,2,1}, true, false, 1, false, "This turquoise crystal, fixed to a leather lanyard, hums with an arcane energy that sets your teeth on edge."},
     {"guardian",        "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "When you touch this tiny granite statue, a rhythmic booming echoes in your mind."},
-//    {"fear",            "", "",   3,  700,    0,{1,2,1}, true, false, "When you gaze into the murky interior of this obsidian cube, you feel as though something predatory is watching you."},
     {"teleportation",   "", "", 4,  700,    0, 0, {1,2,1}, true, false, 1, false, "The surface of this nickel sphere has been etched with a perfect grid pattern. Somehow, the squares of the grid are all exactly the same size."},
     {"recharging",      "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "A strip of bronze has been wound around a rough wooden sphere. Each time you touch it, you feel a tiny electric shock."},
     {"negation",        "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "A featureless gray disc hangs from a lanyard. When you touch it, your hand and arm go numb."},

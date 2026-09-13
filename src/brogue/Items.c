@@ -3709,7 +3709,6 @@ static boolean negationWillAffectMonster(creature *monst, boolean isBolt) {
         || (monst->status[STATUS_DISCORDANT])
         || (monst->status[STATUS_SHIELDED])
         || (monst->status[STATUS_INVISIBLE])
-        || (monst->status[STATUS_MAGICAL_FEAR])
         || (monst->status[STATUS_LEVITATING])
         || (monst->movementSpeed != monst->info.movementSpeed)
         || (monst->attackSpeed != monst->info.attackSpeed)
@@ -4040,35 +4039,6 @@ static void rechargeItems(unsigned long categories) {
         message("a surge of energy courses through your pack, but nothing happens.", 0);
     }
 }
-
-//void causeFear(const char *emitterName) {
-//    creature *monst;
-//    short numberOfMonsters = 0;
-//    char buf[DCOLS*3], mName[DCOLS];
-//
-//    for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
-//        if (pmapAt(monst->loc)->flags & IN_FIELD_OF_VIEW
-//            && monst->creatureState != MONSTER_FLEEING
-//            && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
-//
-//            monst->status[STATUS_MAGICAL_FEAR] = monst->maxStatus[STATUS_MAGICAL_FEAR] = rand_range(150, 225);
-//            monst->creatureState = MONSTER_FLEEING;
-//            if (canSeeMonster(monst)) {
-//                numberOfMonsters++;
-//                monsterName(mName, monst, true);
-//            }
-//        }
-//    }
-//    if (numberOfMonsters > 1) {
-//        sprintf(buf, "%s emits a brilliant flash of red light, and the monsters flee!", emitterName);
-//    } else if (numberOfMonsters == 1) {
-//        sprintf(buf, "%s emits a brilliant flash of red light, and %s flees!", emitterName, mName);
-//    } else {
-//        sprintf(buf, "%s emits a brilliant flash of red light!", emitterName);
-//    }
-//    message(buf, 0);
-//    colorFlash(&redFlashColor, 0, IN_FIELD_OF_VIEW, 15, DCOLS, player.loc.x, player.loc.y);
-//}
 
 static void negationBlast(const char *emitterName, const short distance) {
     item *theItem;
@@ -4438,10 +4408,9 @@ static boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                     // monster lives
                     if (monst->creatureMode != MODE_PERM_FLEEING
                         && monst->creatureState != MONSTER_ALLY
-                        && (monst->creatureState != MONSTER_FLEEING || monst->status[STATUS_MAGICAL_FEAR])) {
+                        && monst->creatureState != MONSTER_FLEEING) {
 
                         monst->creatureState = MONSTER_TRACKING_SCENT;
-                        monst->status[STATUS_MAGICAL_FEAR] = 0;
                     }
                     if (boltInView) {
                         sprintf(buf, "%s %s hits %s",
@@ -6025,14 +5994,11 @@ static boolean hitMonsterWithProjectileWeapon(creature *thrower, creature *monst
 
     if (monst != &player
         && monst->creatureMode != MODE_PERM_FLEEING
-        && (monst->creatureState != MONSTER_FLEEING || monst->status[STATUS_MAGICAL_FEAR])
+        && monst->creatureState != MONSTER_FLEEING
         && !(monst->bookkeepingFlags & MB_CAPTIVE)
         && monst->creatureState != MONSTER_ALLY) {
 
         monst->creatureState = MONSTER_TRACKING_SCENT;
-        if (monst->status[STATUS_MAGICAL_FEAR]) {
-            monst->status[STATUS_MAGICAL_FEAR] = 1;
-        }
     }
 
     if (thrower == &player) {

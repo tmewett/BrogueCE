@@ -1782,14 +1782,12 @@ void updateMonsterState(creature *monst) {
         }
     } else if (monst->creatureMode == MODE_NORMAL
                && monst->creatureState == MONSTER_FLEEING
-               && !(monst->status[STATUS_MAGICAL_FEAR])
                && closestFearedEnemy >= 3) {
 
         monst->creatureState = MONSTER_TRACKING_SCENT;
     } else if (monst->creatureMode == MODE_PERM_FLEEING
                && monst->creatureState == MONSTER_FLEEING
                && (monst->info.abilityFlags & MA_HIT_STEAL_FLEE)
-               && !(monst->status[STATUS_MAGICAL_FEAR])
                && !(monst->carriedItem)) {
 
         monst->creatureMode = MODE_NORMAL;
@@ -1803,7 +1801,6 @@ void updateMonsterState(creature *monst) {
     } else if (monst->creatureMode == MODE_NORMAL
                && monst->creatureState == MONSTER_FLEEING
                && (monst->info.flags & MONST_FLEES_NEAR_DEATH)
-               && !(monst->status[STATUS_MAGICAL_FEAR])
                && monst->currentHP >= monst->info.maxHP * 3 / 4) {
 
         if ((monst->bookkeepingFlags & MB_FOLLOWER) && monst->leader == &player) {
@@ -1929,20 +1926,12 @@ void decrementMonsterStatus(creature *monst) {
             case STATUS_DISCORDANT:
                 if (monst->status[i] && !--monst->status[i]) {
                     if (monst->creatureState == MONSTER_FLEEING
-                        && !monst->status[STATUS_MAGICAL_FEAR]
                         && monst->leader == &player) {
 
                         monst->creatureState = MONSTER_ALLY;
                         if (monst->carriedItem) {
                             makeMonsterDropItem(monst);
                         }
-                    }
-                }
-                break;
-            case STATUS_MAGICAL_FEAR:
-                if (monst->status[i]) {
-                    if (!--monst->status[i]) {
-                        monst->creatureState = (monst->leader == &player ? MONSTER_ALLY : MONSTER_TRACKING_SCENT);
                     }
                 }
                 break;
@@ -1977,8 +1966,7 @@ void decrementMonsterStatus(creature *monst) {
     if (monsterCanSubmergeNow(monst) && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
         if (rand_percent(20)) {
             monst->bookkeepingFlags |= MB_SUBMERGED;
-            if (!monst->status[STATUS_MAGICAL_FEAR]
-                && monst->creatureState == MONSTER_FLEEING
+            if (monst->creatureState == MONSTER_FLEEING
                 && (!(monst->info.flags & MONST_FLEES_NEAR_DEATH) || monst->currentHP >= monst->info.maxHP * 3 / 4)) {
 
                 monst->creatureState = MONSTER_TRACKING_SCENT;
@@ -2137,7 +2125,6 @@ static boolean creatureEligibleForSwarming(creature *monst) {
         || monst->status[STATUS_CONFUSED]
         || monst->status[STATUS_STUCK]
         || monst->status[STATUS_PARALYZED]
-        || monst->status[STATUS_MAGICAL_FEAR]
         || monst->status[STATUS_LIFESPAN_REMAINING] == 1
         || (monst->bookkeepingFlags & (MB_SEIZED | MB_SEIZING))) {
 
@@ -2705,10 +2692,6 @@ static boolean specificallyValidBoltTarget(creature *caster, creature *target, e
                 if (target->status[STATUS_ENTRANCED]
                     && caster->creatureState != MONSTER_ALLY) {
                     // Non-allied monsters will dispel entrancement on their own kind.
-                    return true;
-                }
-                if (target->status[STATUS_MAGICAL_FEAR]) {
-                    // Dispel magical fear.
                     return true;
                 }
             }
@@ -3504,8 +3487,7 @@ void monstersTurn(creature *monst) {
             for (creatureIterator it = iterateCreatures(monsters); !handledPlayer || hasNextCreature(it);) {
                 creature *ally = !handledPlayer ? &player : nextCreature(&it);
                 handledPlayer = true;
-                if (!monst->status[STATUS_MAGICAL_FEAR] // Fearful monsters will never attack.
-                    && monsterWillAttackTarget(monst, ally)
+                if (monsterWillAttackTarget(monst, ally)
                     && distanceBetween((pos){x, y}, ally->loc) <= 1) {
 
                     moveMonster(monst, ally->loc.x - x, ally->loc.y - y); // attack the player if cornered

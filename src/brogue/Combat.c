@@ -323,9 +323,6 @@ void moralAttack(creature *attacker, creature *defender) {
              // Paralyzed creature gets a turn to react before the attacker moves again.
             defender->ticksUntilTurn = min(attacker->attackSpeed, 100) - 1;
         }
-        if (defender->status[STATUS_MAGICAL_FEAR]) {
-            defender->status[STATUS_MAGICAL_FEAR] = 1;
-        }
         defender->status[STATUS_ENTRANCED] = 0;
 
         if ((defender->info.abilityFlags & MA_AVOID_CORRIDORS)) {
@@ -1050,9 +1047,6 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
     }
 
     defender->status[STATUS_ENTRANCED] = 0;
-    if (defender->status[STATUS_MAGICAL_FEAR]) {
-        defender->status[STATUS_MAGICAL_FEAR] = 1;
-    }
 
     if (attacker != &player && defender == &player && attacker->creatureState == MONSTER_WANDERING) {
         attacker->creatureState = MONSTER_TRACKING_SCENT;
