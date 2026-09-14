@@ -2344,11 +2344,20 @@ void playerTurnEnded() {
         }
 
         updateScent();
-//      updateVision(true);
-//        rogue.stealthRange = currentStealthRange();
-//        if (rogue.displayStealthRangeMode) {
-//            displayLevel();
-//        }
+        // #837: recompute lighting and the player's stealth range *before* monsters evaluate
+        // awareness this turn. The player has already moved, so without this the monster wake check
+        // (which reads rogue.stealthRange) runs against last turn's stealth range -- computed for the
+        // previous tile's lighting -- while the monster's awareness distance already reflects the new
+        // position. That let a monster start hunting from within the stale (brighter) range even
+        // though the freshly-drawn stealth circle excluded it (e.g. stepping from lit into dark).
+        // updateVision(true) (not a bare updateLighting) keeps the light-diff bookkeeping correct for
+        // the end-of-turn pass below; FOV is recomputed redundantly here, but the player does not move
+        // during the monster loop.
+        updateVision(true);
+        rogue.stealthRange = currentStealthRange();
+        if (rogue.displayStealthRangeMode) {
+            displayLevel();
+        }
         rogue.updatedSafetyMapThisTurn          = false;
         rogue.updatedAllySafetyMapThisTurn      = false;
         rogue.updatedMapToSafeTerrainThisTurn   = false;
