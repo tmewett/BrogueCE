@@ -7941,6 +7941,14 @@ void deleteItem(item *theItem) {
     free(theItem);
 }
 
+void deleteItemList(item *theItem) {
+    while (theItem != NULL) {
+        item *nextItem = theItem->nextItem;
+        deleteItem(theItem);
+        theItem = nextItem;
+    }
+}
+
 static void resetItemTableEntry(itemTable *theEntry) {
     theEntry->identified = false;
     theEntry->magicPolarityRevealed = false;
