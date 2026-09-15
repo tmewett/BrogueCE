@@ -147,6 +147,16 @@ void applyInstantTileEffectsToCreature(creature *monst) {
         monst->bookkeepingFlags &= ~MB_SEIZING;
     }
 
+    // #855: a kraken or eel knocked onto dry land can no longer hold its prey. A liquid-restricted
+    // monster off submergible terrain writhes helplessly (enforced in monstersTurn), so it must
+    // also release any seize the instant it is beached; otherwise the seized creature stays pinned.
+    if ((monst->bookkeepingFlags & MB_SEIZING)
+        && (monst->info.flags & MONST_RESTRICTED_TO_LIQUID)
+        && !cellHasTMFlag((pos){ *x, *y }, TM_ALLOWS_SUBMERGING)) {
+
+        monst->bookkeepingFlags &= ~MB_SEIZING;
+    }
+
     // Creatures plunge into chasms and through trap doors.
     if (monsterShouldFall(monst)) {
         if (monst == &player) {
