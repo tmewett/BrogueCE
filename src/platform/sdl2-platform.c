@@ -119,13 +119,6 @@ static boolean eventFromKey(rogueEvent *event, SDL_Keycode key) {
         return true;
     }
 
-    // // TESTING KEYBOARD INPUT
-    // if (key >= SDLK_A && key <= SDLK_Z) {
-    //     event->param1 = 'a' + (key - SDLK_A);
-    //     if (event->shiftKey) event->param1 -= 'a' - 'A';
-    //     return true;
-    // }
-
     return false;
 }
 
@@ -168,12 +161,10 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
             SDL_Quit();
             int statusCode = quitImmediately();
             exit(statusCode);
-        } else if (event.type == SDL_EVENT_WINDOW_RESIZED) { //} && event.window.event == SDL_EVENT_WINDOW_RESIZED) {
+        } else if (event.type == SDL_EVENT_WINDOW_RESIZED) {
             resizeWindow(event.window.data1, event.window.data2);
         } else if (event.type == SDL_EVENT_KEY_DOWN) {
-
-            SDL_Keycode key = event.key.key; //.keysym.sym;
-
+            SDL_Keycode key = event.key.key;
             if (key == SDLK_PAGEUP) {
                 resizeWindow(max(windowWidth * 11/10, windowWidth + 1), max(windowHeight * 11/10, windowHeight + 1));
                 continue;

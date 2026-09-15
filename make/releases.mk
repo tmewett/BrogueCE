@@ -44,22 +44,3 @@ Brogue.app: bin/brogue
 macos/sdl2.rb:
 	curl -L 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/s/sdl2.rb' >$@
 	patch $@ macos/sdl2-deployment-target.patch
-
-
-# Define project and scheme names (adjust these to match your project)
-PROJECT = ios/iBrogueCE_iPad.xcodeproj
-SCHEME = iBrogueCE_iPad
-
-# Target to build the app for a simulator (Debug configuration)
-BrogueCE-iOS-build:
-	xcodebuild build -project $(PROJECT) -scheme $(SCHEME) -configuration Debug -sdk iphonesimulator -allowProvisioningUpdates
-
-# Target to build an archive (for distribution or testing on a physical device)
-BrogueCE-iOS-release:
-	xcodebuild archive -project $(PROJECT) -scheme $(SCHEME) -configuration Release -destination "generic/platform=iOS"
-
-# Target to clean the build directory
-BrogueCE-iOS-clean:
-	xcodebuild clean -project $(PROJECT) -scheme $(SCHEME)
-
-BrogueCE-iOS: BrogueCE-iOS-build BrogueCE-iOS-release BrogueCE-iOS-clean

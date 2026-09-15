@@ -438,7 +438,7 @@ void initTiles() {
     // load the large PNG
     SDL_Surface *image = IMG_Load(filename);
     if (!image) sdlfatal(__FILE__, __LINE__);
-    TilesPNG = SDL_ConvertSurface(image, SDL_PIXELFORMAT_ARGB8888); // ,0);
+    TilesPNG = SDL_ConvertSurface(image, SDL_PIXELFORMAT_ARGB8888);
     if (!TilesPNG) sdlfatal(__FILE__, __LINE__);
     SDL_DestroySurface(image);
 
@@ -609,7 +609,7 @@ void updateScreen() {
 
     SDL_Renderer *renderer = SDL_GetRenderer(Win);
     if (!renderer) {
-        renderer = SDL_CreateRenderer(Win, NULL); //-1, (softwareRendering ? SDL_RENDERER_SOFTWARE : 0));
+        renderer = SDL_CreateRenderer(Win, NULL);
         if (!renderer) sdlfatal(__FILE__, __LINE__);
 
         if (!SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE)) sdlfatal(__FILE__, __LINE__);
@@ -618,7 +618,6 @@ void updateScreen() {
         // SDL_RendererInfo info;
         // if (SDL_GetRendererInfo(renderer, &info) < 0) sdlfatal(__FILE__, __LINE__);
         // softwareRendering = (strcmp(info.name, "software") == 0);
-        // BT TODO??  SDL_CreateSoftwareRenderer(surface)
         softwareRendering = false;
     }
 
@@ -800,7 +799,7 @@ SDL_Surface *captureScreen() {
     if (outputWidth == 0 || outputHeight == 0) return NULL;
 
     // take a screenshot
-    SDL_Surface *screenshot = SDL_RenderReadPixels(renderer, NULL); //SDL_CreateRGBSurfaceWithFormat(0, outputWidth, outputHeight, 32, SDL_PIXELFORMAT_ARGB8888);
+    SDL_Surface *screenshot = SDL_RenderReadPixels(renderer, NULL);
     if (!screenshot) sdlfatal(__FILE__, __LINE__);
     return screenshot;
 }
