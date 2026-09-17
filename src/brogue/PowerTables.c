@@ -199,7 +199,21 @@ fixpt defenseFraction(fixpt netDefense) {
         469, 453, 439, 425, 411, 398, 385, 373, 361, 349, 338, 327, 316, 306, 296, 287, 277, 268, 260, 251, 243, 235, 228, 221, 213, 207,
         200, 193, 187, 181, 175, 170, 164, 159, 154, 149, 144, 139, 135, 130, 126, 122, 118, 114, 111, 107, 104, 100, 97, 94};
 
-    short idx = clamp(netDefense * 4 / 10 / FP_FACTOR + 80, 0, LAST_INDEX(POW_DEFENSE_FRACTION));
+    /* Examples of what this code does for different armor values:
+    (Using floating point instead of fixed point, and using small armor values, for clarity)
+    An armor value of 1.5 results in a netDefense is 15.0.
+    An armor value of 1.75 results in a netDefense of 17.0 (the 0.5 is lost before this function is called).
+    It multiplies by 4, so the last decimal place would be zero if it weren't for the 0.5 being lost (as above).
+        15.0 -> 60.0; 17.0 -> 68.0 (this would be 70 if not for the truncation)
+    It divides by 10: 60.0 -> 6.0, 68.0 -> 6.8
+    It adds 0.5 to compensate for the truncation: 6.0 -> 6.5; 6.8 -> 7.3
+        This could add anywhere from 0.2 to 0.99, but 0.5 seems like the least arbitrary choice.
+        Without this, the step below would round both 6.0 and 6.8 down to 6.
+    It converts to an integer (which rounds towards zero): 6.5 -> 6; 7.3 -> 7
+    It adds 80 (because some of the entries are for negative armor values) and clamps to the size of the table
+        This is the index into the table above.
+    */
+    short idx = clamp((netDefense * 4 / 10 + FP_FACTOR / 2) / FP_FACTOR + 80, 0, LAST_INDEX(POW_DEFENSE_FRACTION));
     return POW_DEFENSE_FRACTION[idx];
 }
 
