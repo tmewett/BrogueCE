@@ -3821,15 +3821,34 @@ void initializeLevel(pos upStairsLoc) {
 // A dungeon, liquid type of -1 will match anything.
 boolean randomMatchingLocation(pos* loc, short dungeonType, short liquidType, short terrainType) {
     short failsafeCount = 0;
+    boolean terrainMismatch, dungeonMismatch, liquidMismatch, cellIsOccupied, itemMismatch, monsterMismatch;
     do {
         failsafeCount++;
         loc->x = rand_range(0, DCOLS - 1);
         loc->y = rand_range(0, DROWS - 1);
-    } while (failsafeCount < 500 && ((terrainType >= 0 && !cellHasTerrainType(*loc, terrainType))
-                                     || (((dungeonType >= 0 && pmapAt(*loc)->layers[DUNGEON] != dungeonType) || (liquidType >= 0 && pmapAt(*loc)->layers[LIQUID] != liquidType)) && terrainType < 0)
-                                     || (pmapAt(*loc)->flags & (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | HAS_ITEM | IS_IN_MACHINE))
-                                     || (terrainType < 0 && !(tileCatalog[dungeonType].flags & T_OBSTRUCTS_ITEMS)
-                                         && cellHasTerrainFlag(*loc, T_OBSTRUCTS_ITEMS))));
+
+        // Check various compatability requirements for the chosen cell
+        terrainMismatch = terrainType >= 0 && !cellHasTerrainType(*loc, terrainType);
+        dungeonMismatch = dungeonType >= 0 && pmapAt(*loc)->layers[DUNGEON] != dungeonType;
+        liquidMismatch  = liquidType  >= 0 && pmapAt(*loc)->layers[LIQUID]  != liquidType;
+        cellIsOccupied  = (pmapAt(*loc)->flags & (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | HAS_ITEM | IS_IN_MACHINE)) != 0;
+
+        // If the dungeonType does not obstruct items then the cell must not obstruct items
+        itemMismatch = dungeonType >= 0
+                        && !(tileCatalog[dungeonType].flags & T_OBSTRUCTS_ITEMS)
+                        && cellHasTerrainFlag(*loc, T_OBSTRUCTS_ITEMS);
+
+        // If the terrainType does not obstruct monsters then the cell must not obstruct monsters
+        monsterMismatch = terrainType >= 0
+                        && !(tileCatalog[terrainType].flags & T_PATHING_BLOCKER)
+                        && cellHasTerrainFlag(*loc, T_PATHING_BLOCKER);
+
+    } while (failsafeCount < 500 &&
+             (terrainMismatch
+            || (terrainType < 0 && (dungeonMismatch || liquidMismatch || itemMismatch))
+            || cellIsOccupied
+            || monsterMismatch));
+
     if (failsafeCount >= 500) {
         return false;
     }
