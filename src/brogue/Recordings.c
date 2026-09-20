@@ -49,7 +49,7 @@ static void recordChar(unsigned char c) {
     }
 }
 
-static void considerFlushingBufferToFile() {
+void considerFlushingBufferToFile() {
     if (locationInRecordingBuffer >= INPUT_RECORD_BUFFER) {
         flushBufferToFile();
     }
@@ -351,10 +351,6 @@ void recallEvent(rogueEvent *event) {
                 // record which key
                 event->param1 = uncompressKeystroke(recallChar());
                 event->param2 = 0;
-                break;
-            case SAVED_GAME_LOADED:
-                tryAgain = true;
-                flashTemporaryAlert(" Saved game loaded ", 1000);
                 break;
             case MOUSE_UP:
             case MOUSE_DOWN:
@@ -1324,7 +1320,7 @@ boolean loadSavedGame() {
         startLevel(rogue.depthLevel, 1);
     }
 
-    if (rogue.howManyTurns > 0) {
+    if (recordingLocation < lengthOfPlaybackFile) {
 
         progressBarInterval = max(1, lengthOfPlaybackFile / 100);
         previousRecordingLocation = -1; // unsigned
@@ -1335,7 +1331,6 @@ boolean loadSavedGame() {
         rogue.playbackFastForward = true;
 
         while (recordingLocation < lengthOfPlaybackFile
-               && rogue.playerTurnNumber < rogue.howManyTurns
                && !rogue.gameHasEnded
                && !rogue.playbackOOS) {
 
@@ -1363,7 +1358,6 @@ boolean loadSavedGame() {
 
     if (!rogue.gameHasEnded && !rogue.playbackOOS) {
         switchToPlaying();
-        recordChar(SAVED_GAME_LOADED);
     }
     return true;
 }
@@ -1489,9 +1483,6 @@ void parseFile() {
                     break;
                 case RNG_CHECK:
                     sprintf(description, "\tRNG check: %i", (short) recallChar());
-                    break;
-                case SAVED_GAME_LOADED:
-                    strcpy(description, "Saved game loaded");
                     break;
                 default:
                     sprintf(description, "UNKNOWN EVENT TYPE: %i", (short) c);

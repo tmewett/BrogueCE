@@ -1363,6 +1363,7 @@ void call(item *theItem) {
                 strcat((char *) command, theItem->inscription);
                 recordKeystrokeSequence(command);
                 recordKeystroke(RETURN_KEY, false, false);
+                considerFlushingBufferToFile();
             }
         } else {
             message("you already know what that is.", 0);
@@ -1377,6 +1378,7 @@ void call(item *theItem) {
                 strcat((char *) command, theItem->inscription);
                 recordKeystrokeSequence(command);
                 recordKeystroke(RETURN_KEY, false, false);
+                considerFlushingBufferToFile();
             }
             return;
         } else if (confirm("Inscribe this particular item instead of all similar items?", true)) {
@@ -1386,6 +1388,7 @@ void call(item *theItem) {
                 strcat((char *) command, theItem->inscription);
                 recordKeystrokeSequence(command);
                 recordKeystroke(RETURN_KEY, false, false);
+                considerFlushingBufferToFile();
             }
             return;
         } else {
@@ -1401,6 +1404,7 @@ void call(item *theItem) {
             strcat((char *) command, itemText);
             recordKeystrokeSequence(command);
             recordKeystroke(RETURN_KEY, false, false);
+            considerFlushingBufferToFile();
             if (itemText[0]) {
                 strcpy(tableForItemCategory(theItem->category)[theItem->kind].callTitle, itemText);
                 tableForItemCategory(theItem->category)[theItem->kind].called = true;
