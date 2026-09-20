@@ -3395,6 +3395,7 @@ void aggravateMonsters(short distance, short x, short y, const color *flashColor
     if (grid[player.loc.x][player.loc.y] >= 0 && grid[player.loc.x][player.loc.y] <= distance) {
         discover(x, y);
         discoverCell(x, y);
+        storeMemories(x, y);
         colorFlash(flashColor, 0, (DISCOVERED | MAGIC_MAPPED), 10, distance, x, y);
         if (!playerCanSee(x, y)) {
             message("You hear a piercing shriek; something must have triggered a nearby alarm.", 0);
