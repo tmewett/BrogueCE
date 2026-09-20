@@ -3415,6 +3415,7 @@ extern "C" {
     boolean itemIsCarried(item *theItem);
     void itemDetails(char *buf, item *theItem);
     void deleteItem(item *theItem);
+    void deleteItemList(item *theItem);
     void shuffleFlavors(void);
     unsigned long itemValue(item *theItem);
     short strLenWithoutEscapes(const char *str);
