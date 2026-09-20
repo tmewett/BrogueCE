@@ -3,7 +3,7 @@
 #endif
 
 #include <limits.h>
-#include <SDL_image.h>
+#include <SDL3_image/SDL_image.h>
 #include "platform.h"
 #include "tiles.h"
 
@@ -29,7 +29,7 @@ static void sdlfatal(char *file, int line) {
 
 
 static void imgfatal(char *file, int line) {
-    fprintf(stderr, "Fatal SDL_image error (%s:%d): %s\n", file, line, IMG_GetError());
+    fprintf(stderr, "Fatal SDL_image error (%s:%d): %s\n", file, line, SDL_GetError());
     exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
 }
 
@@ -113,8 +113,8 @@ static boolean eventFromKey(rogueEvent *event, SDL_Keycode key) {
     }
 
     // Ctrl+letter doesn't give a TextInputEvent
-    if (event->controlKey && key >= SDLK_a && key <= SDLK_z) {
-        event->param1 = 'a' + (key - SDLK_a);
+    if (event->controlKey && key >= SDLK_A && key <= SDLK_Z) {
+        event->param1 = 'a' + (key - SDLK_A);
         if (event->shiftKey) event->param1 -= 'a' - 'A';
         return true;
     }
@@ -125,8 +125,8 @@ static boolean eventFromKey(rogueEvent *event, SDL_Keycode key) {
 
 static boolean _modifierHeld(int mod) {
     SDL_Keymod km = SDL_GetModState();
-    return mod == 0 && (km & (KMOD_LSHIFT | KMOD_RSHIFT))
-        || mod == 1 && (km & (KMOD_LCTRL | KMOD_RCTRL));
+    return mod == 0 && (km & (SDL_KMOD_LSHIFT | SDL_KMOD_RSHIFT))
+        || mod == 1 && (km & (SDL_KMOD_LCTRL | SDL_KMOD_RCTRL));
 }
 
 
@@ -156,16 +156,15 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
 
     // ~ for (int i=0; i < 100 && SDL_PollEvent(&event); i++) {
     while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_QUIT) {
+        if (event.type == SDL_EVENT_QUIT) {
             // the player clicked the X button!
             SDL_Quit();
             int statusCode = quitImmediately();
             exit(statusCode);
-        } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
+        } else if (event.type == SDL_EVENT_WINDOW_RESIZED) {
             resizeWindow(event.window.data1, event.window.data2);
-        } else if (event.type == SDL_KEYDOWN) {
-            SDL_Keycode key = event.key.keysym.sym;
-
+        } else if (event.type == SDL_EVENT_KEY_DOWN) {
+            SDL_Keycode key = event.key.key;
             if (key == SDLK_PAGEUP) {
                 resizeWindow(max(windowWidth * 11/10, windowWidth + 1), max(windowHeight * 11/10, windowHeight + 1));
                 continue;
@@ -174,7 +173,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
                 resizeWindow(max(windowWidth * 10/11, 1), max(windowHeight * 10/11, 1));
                 continue;
             } else if (key == SDLK_F11 || key == SDLK_F12
-                    || key == SDLK_RETURN && (SDL_GetModState() & KMOD_ALT)) {
+                    || key == SDLK_RETURN && (SDL_GetModState() & SDL_KMOD_ALT)) {
                 fullScreen = !fullScreen;
                 resizeWindow(-1, -1);  // Reset to starting resolution
                 continue;
@@ -184,7 +183,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
                 returnEvent->eventType = KEYSTROKE;
                 return true;
             }
-        } else if (event.type == SDL_TEXTINPUT && (unsigned char)(event.text.text[0]) < 0x80) {
+        } else if (event.type == SDL_EVENT_TEXT_INPUT && (unsigned char)(event.text.text[0]) < 0x80) {
             /*
             It's difficult/impossible to check what characters are on the
             shifts of keys. So to detect '&', '>' etc. reliably we need to
@@ -208,22 +207,22 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
             returnEvent->param1 = c;
             // ~ printf("textinput %s\n", event.text.text);
             return true;
-        } else if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP) {
+        } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
             if (event.button.button == SDL_BUTTON_LEFT || event.button.button == SDL_BUTTON_RIGHT) {
-                if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
+                if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_LEFT) {
                     returnEvent->eventType = MOUSE_DOWN;
-                } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT) {
+                } else if (event.type == SDL_EVENT_MOUSE_BUTTON_UP && event.button.button == SDL_BUTTON_LEFT) {
                     returnEvent->eventType = MOUSE_UP;
-                } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_RIGHT) {
+                } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_RIGHT) {
                     returnEvent->eventType = RIGHT_MOUSE_DOWN;
-                } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_RIGHT) {
+                } else if (event.type == SDL_EVENT_MOUSE_BUTTON_UP && event.button.button == SDL_BUTTON_RIGHT) {
                     returnEvent->eventType = RIGHT_MOUSE_UP;
                 }
                 returnEvent->param1 = event.button.x * COLS / windowWidth;
                 returnEvent->param2 = event.button.y * ROWS / windowHeight;
                 return true;
             }
-        } else if (event.type == SDL_MOUSEMOTION) {
+        } else if (event.type == SDL_EVENT_MOUSE_MOTION) {
             // We don't want to return on a mouse motion event, because only the last
             // in the queue is important. That's why we just set ret=true
             int xcell = event.motion.x * COLS / windowWidth,
@@ -265,9 +264,8 @@ static void _gameLoop() {
     free(path);
 #endif
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) sdlfatal(__FILE__, __LINE__);
-
-    if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) imgfatal(__FILE__, __LINE__);
+    SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");    // Don't disable screensavers
+    if (!SDL_Init(SDL_INIT_VIDEO)) sdlfatal(__FILE__, __LINE__);
 
     initTiles();
 
@@ -421,7 +419,7 @@ static boolean _takeScreenshot() {
 
     // save to PNG
     IMG_SavePNG(screenshot, screenshotFilepath);
-    SDL_FreeSurface(screenshot);
+    SDL_DestroySurface(screenshot);
 
     return true;
 }
