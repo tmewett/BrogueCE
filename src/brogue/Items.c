@@ -4318,16 +4318,15 @@ void checkForMissingKeys(short x, short y) {
     }
 }
 
-static void beckonMonster(creature *monst, short x, short y) {
+static void beckonMonster(creature *monst, pos to, pos beckonTargetLoc) {
     bolt theBolt = boltCatalog[BOLT_BLINKING];
 
     if (monst->bookkeepingFlags & MB_CAPTIVE) {
         freeCaptive(monst);
     }
     pos from = monst->loc;
-    pos to = (pos){ .x = x, .y = y };
-    theBolt.magnitude = max(1, (distanceBetween((pos){x, y}, monst->loc) - 2) / 2);
-    zap(from, to, &theBolt, false, true);
+    theBolt.magnitude = max(1, (distanceBetween(to, from) - 2) / 2);
+    zapBeckoning(from, to, &theBolt, false, beckonTargetLoc);
     if (monst->ticksUntilTurn < player.attackSpeed+1) {
         monst->ticksUntilTurn = player.attackSpeed+1;
     }
@@ -4358,9 +4357,11 @@ enum boltType boltForItem(item *theItem) {
 // *autoID will be set to true. (AutoID can be null.)
 // If the effect causes the level's lighting or vision to change, *lightingChanged
 // will be set to true. (LightingChanged can be null.)
+// `targetLoc` should be the target tile for the bolt (only needed for beckoning).
 static boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                    boolean boltInView, boolean alreadyReflected,
-                   boolean *autoID, boolean *lightingChanged) {
+                   boolean *autoID, boolean *lightingChanged,
+                   pos targetLoc) {
     char buf[COLS], monstName[COLS];
     creature *monst; // Creature being hit by the bolt, if any.
     creature *newMonst; // Utility variable for plenty
@@ -4478,7 +4479,7 @@ static boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                     if (canSeeMonster(monst) && autoID) {
                         *autoID = true;
                     }
-                    beckonMonster(monst, caster->loc.x, caster->loc.y);
+                    beckonMonster(monst, caster->loc, targetLoc);
                     if (canSeeMonster(monst) && autoID) {
                         *autoID = true;
                     }
@@ -4817,7 +4818,23 @@ static void detonateBolt(bolt *theBolt, creature *caster, short x, short y, bool
 }
 
 // returns whether the bolt effect should autoID any staff or wand it came from, if it came from a staff or wand
-boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, boolean reverseBoltDir) {
+// `beckonTargetLoc` should only be specified if `reverseBoltDir` is true, which should only be true
+// for beckoning. It specifies the tile that the beckoning bolt was originally targeted at,
+// unlike `targetLoc` which is the tile the monster is on.
+//
+// Beckoning (from mirrored totems and the wand) is implemented as two bolts, one going from
+// the totem/player to the target, and another from the target back to the source, to blink
+// them adjacent. However, bolt paths are asymmetric; the path from A to B isn't necessarily
+// the same as the path from B to A. If the second bolt (the blink) follows a different
+// path, it's possible for the target not to be blinked all the way back to the source
+// because it hits an obstacle (usually a monster). This results in issue #497, as well as
+// unintuitive behavior for the wand of beckoning. As a workaround, for the second bolt, we
+// compute it as if it went from the player to the original target location of the beckoning,
+// and then reverse the list of coordinates. This ensures that the two bolts will include
+// exactly the same coordinates, so the target won't get stuck on any obstacles while being
+// beckoned, and that the targeted monster will follow the displayed path when targeting
+// a tile behind the monster.
+static boolean zapInner(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, boolean reverseBoltDir, pos beckonTargetLoc) {
     pos listOfCoordinates[MAX_BOLT_LENGTH];
     short i, j, k, x, y, x2, y2, numCells, blinkDistance = 0, boltLength, initialBoltLength, lights[DCOLS][DROWS][3];
     creature *monst = NULL, *shootingMonst;
@@ -4846,18 +4863,12 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
 
     initialBoltLength = boltLength = 5 * theBolt->magnitude;
     if (reverseBoltDir) {
-        // Beckoning (from mirrored totems and the wand) is implemented as two bolts, one going from
-        // the totem/player to the target, and another from the target back to the source, to blink
-        // them adjacent. However, bolt paths are asymmetric; the path from A to B isn't necessarily
-        // the same as the path from B to A. If the second bolt (the blink) follows a different
-        // path, it's possible for the target not to be blinked all the way back to the source
-        // because it hits an obstacle (usually a monster). This results in issue #497, as well as
-        // unintuitive behavior for the wand of beckoning. As a workaround, for the second bolt, we
-        // compute it as if it went from the source to the target, and then reverse the list of
-        // coordinates. This ensures that the two bolts will include exactly the same coordinates,
-        // so the target won't get stuck on any obstacles while being beckoned.
         pos listOfCoordinatesTmp[MAX_BOLT_LENGTH];
-        short numCellsTmp = getLineCoordinates(listOfCoordinatesTmp, targetLoc, originLoc, (hideDetails ? &boltCatalog[BOLT_NONE] : theBolt));
+        // This code only runs for the return bolt for beckoning, which is a blink trajectory. Bolt
+        // paths are computed slightly differently for different bolt types, so in order to ensure
+        // that the path is the same, we need to use the same bolt type as was used for the original
+        // path, which is a beckoning bolt.
+        short numCellsTmp = getLineCoordinates(listOfCoordinatesTmp, targetLoc, beckonTargetLoc, (hideDetails ? &boltCatalog[BOLT_NONE] : &boltCatalog[BOLT_BECKONING]));
         numCells = -1;
         for (int i = 0; i < numCellsTmp; i++) {
             if (listOfCoordinatesTmp[i].x == originLoc.x && listOfCoordinatesTmp[i].y == originLoc.y) {
@@ -4866,10 +4877,12 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
             }
         }
         brogueAssert(numCells > -1);
-        for (int i = 0; i < numCells-1; i++) {
-            listOfCoordinates[i] = listOfCoordinatesTmp[numCells-2-i];
+        if (numCells > -1) {
+            for (int i = 0; i < numCells-1; i++) {
+                listOfCoordinates[i] = listOfCoordinatesTmp[numCells-2-i];
+            }
+            listOfCoordinates[numCells-1] = targetLoc;
         }
-        listOfCoordinates[numCells-1] = targetLoc;
     } else {
         numCells = getLineCoordinates(listOfCoordinates, originLoc, targetLoc, (hideDetails ? &boltCatalog[BOLT_NONE] : theBolt));
     }
@@ -4956,7 +4969,7 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
             continue;
         }
 
-        if (updateBolt(theBolt, shootingMonst, x, y, boltInView, alreadyReflected, &autoID, &lightingChanged)) {
+        if (updateBolt(theBolt, shootingMonst, x, y, boltInView, alreadyReflected, &autoID, &lightingChanged, targetLoc)) {
             break;
         }
 
@@ -5178,6 +5191,15 @@ boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, bo
         }
     }
     return autoID;
+}
+
+// Wrapper around `zapInner` that omits parameters only needed for beckoning
+boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails) {
+    return zapInner(originLoc, targetLoc, theBolt, hideDetails, false, INVALID_POS);
+}
+
+boolean zapBeckoning(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, pos beckonTargetLoc) {
+    return zapInner(originLoc, targetLoc, theBolt, hideDetails, true, beckonTargetLoc);
 }
 
 /// @brief Checks if an item is known to be of the given magic polarity
@@ -6611,8 +6633,7 @@ static boolean useStaffOrWand(item *theItem) {
 
             autoID = zap(originLoc, zapTarget,
                          &theBolt,
-                         !boltKnown,   // hide bolt details
-                         false);
+                         !boltKnown);   // hide bolt details
             if (autoID) {
                 if (!tableForItemCategory(theItem->category)[theItem->kind].identified) {
                     sprintf(buf, "(Your %s must be ", buf2);
