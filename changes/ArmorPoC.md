@@ -8,3 +8,4 @@ The armors are:
 - Padded mail [7]<15> -- absorption intrinsic, absorption runic removed
 - Thorned mail [8]<16> -- reprisal intrinsic, reprisal runic removed
 - Mirrored plate [11]<19> -- reflection intrinsic, reflection runic removed
+- Shining armor [14]<20> -- no intrinsic, no runic
