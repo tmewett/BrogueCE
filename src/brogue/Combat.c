@@ -770,6 +770,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
             case W_PLENTY:
                 newMonst = cloneMonster(defender, true, true);
                 if (newMonst) {
+                    unAlly(newMonst); // Cloned allies shall always be hostile, no army generation allowed here
                     flashMonster(newMonst, effectColors[enchantType], 100);
                     if (canSeeMonster(newMonst)) {
                         autoID = true;
