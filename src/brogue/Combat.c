@@ -955,9 +955,8 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
 
 void applyArmorIntrinsicEffect(char returnString[DCOLS], creature *attacker, short *damage, boolean melee) {
     char armorName[DCOLS], attackerName[DCOLS];
-    short newDamage, i;
+    short newDamage;
     fixpt enchant;
-    creature *monst;
 
     returnString[0] = '\0';
 
@@ -971,13 +970,11 @@ void applyArmorIntrinsicEffect(char returnString[DCOLS], creature *attacker, sho
 
     monsterName(attackerName, attacker, true);
 
-    // do nothing if enchant is 0
+    // do nothing if enchant is 0 or less (negative runics too harsh, 0 for the ID game)
     switch (rogue.armor->enchant3) {
         case A_ABSORPTION:
             if (enchant > 0) {
                 *damage -= rand_range(1, armorAbsorptionMax(enchant));
-            } else if (enchant < 0) { // punch the player (protect yourself against acidic jellies!)
-                *damage += rand_range(0, armorAbsorptionMax(enchant));
             }
             if (*damage <= 0) {
                 *damage = 0;
@@ -993,9 +990,6 @@ void applyArmorIntrinsicEffect(char returnString[DCOLS], creature *attacker, sho
                         }
                         killCreature(attacker, false);
                     }
-                } else if (enchant < 0) {
-                    newDamage = max(1, armorReprisalPercent(-enchant) * (*damage) / 100);
-                    heal(attacker, newDamage, false);
                 }
             }
             break;
@@ -1143,14 +1137,12 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
             }
         }
 
-        // absorption and negative reprisal intrinsics trigger on a hit
         if (defender == &player && rogue.armor 
-            && ((rogue.armor->enchant3 == A_ABSORPTION) 
-            || (rogue.armor->enchant3 == A_REPRISAL && netEnchant(rogue.armor) < 0))) {
+            && (rogue.armor->enchant3 == A_ABSORPTION)) { // reprisal triggers on a miss instead
                 applyArmorIntrinsicEffect(armorIntrinsicString, attacker, &damage, true);
         }
         if (defender == &player && rogue.armor && (rogue.armor->flags & ITEM_RUNIC) 
-            && (rogue.armor->enchant2 != A_MULTIPLICITY)) { // multiplicity runic triggers on a miss instead
+            && (rogue.armor->enchant2 != A_MULTIPLICITY)) { // multiplicity triggers on a miss instead
             applyArmorRunicEffect(armorRunicString, attacker, &damage, true);
         }
 
@@ -1303,7 +1295,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
                 combatMessage(buf, 0);
             }
         }
-        // positive reprisal intrinsic triggers on a miss
+        // triggering on a miss makes these two work better with armor enchanting
         if (defender == &player && rogue.armor 
             && (rogue.armor->enchant3 == A_REPRISAL) && netEnchant(rogue.armor) > 0) {
                 applyArmorIntrinsicEffect(armorIntrinsicString, attacker, &damage, true);
