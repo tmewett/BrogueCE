@@ -1,0 +1,1 @@
+Charms and staffs of protection above +18 no longer behave unpredictably (their shield value could previously overflow and turn negative).
