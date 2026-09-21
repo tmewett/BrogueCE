@@ -284,25 +284,31 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             theItem->armor = randClump(armorTable[itemKind].range);
             theItem->strengthRequired = armorTable[itemKind].strengthRequired;
             theItem->charges = gameConst->armorDelayToAutoID; // this many turns until it reveals its enchants and whether runic
+            short runicArmorPercent = 40; // base runic armor percent should be balanced around 40%
 
             switch (itemKind) {
                 case CLOAK:
                     theItem->enchant3 = A_STEALTH;
+                    runicArmorPercent = 25;
                     break;
                 case SCALE_MAIL:
                     theItem->enchant3 = A_ARMORSMITH;
+                    runicArmorPercent = 45;
                     break;
                 case PADDED_MAIL:
                     theItem->enchant3 = A_ABSORPTION;
+                    runicArmorPercent = 65;
                     break;
                 case THORNED_MAIL:
                     theItem->enchant3 = A_REPRISAL;
+                    runicArmorPercent = 55;
                     break;
                 case MIRRORED_PLATE:
                     theItem->enchant3 = A_REFLECTION;
+                    runicArmorPercent = 10;
                     break;
                 default:
-                    theItem->enchant3 = A_PLAIN;
+                    theItem->enchant3 = A_PLAIN; // only above intrinsics should count for balancing runic chance
                     break;
             }
 
@@ -317,7 +323,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                         theItem->flags |= ITEM_RUNIC;
                     }
                 // } else if (rand_range(0, 95) > theItem->armor) { // give it a good runic
-                } else if (rand_percent(40) && (theItem->enchant3 != A_REFLECTION)) { // reflection intrinsic too good to exist alongside a runic
+                } else if (rand_percent(runicArmorPercent) && theItem->enchant3 != A_PLAIN) {
                     theItem->enchant2 = rand_range(0, NUMBER_GOOD_ARMOR_ENCHANT_KINDS - 1);
                     theItem->flags |= ITEM_RUNIC;
                     if (theItem->enchant2 == A_IMMUNITY) {
