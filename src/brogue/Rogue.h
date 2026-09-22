@@ -1050,7 +1050,6 @@ enum monsterTypes {
     MK_WINGED_GUARDIAN,
     MK_CHARM_GUARDIAN,
     MK_WARDEN_OF_YENDOR,
-    MK_ELDRITCH_TOTEM,
     MK_MIRRORED_TOTEM,
 
     MK_UNICORN,
@@ -2086,6 +2085,7 @@ enum monsterBehaviorFlags {
     MONST_NOT_LISTED_IN_SIDEBAR     = Fl(27),   // monster doesn't show up in the sidebar
     MONST_GETS_TURN_ON_ACTIVATION   = Fl(28),   // monster never gets a turn, except when its machine is activated
     MONST_ALWAYS_USE_ABILITY        = Fl(29),   // monster will never fail to use special ability if eligible (no random factor)
+                                                // summoning does NOT respect MONST_ALWAYS_USE_ABILITY
     MONST_NO_POLYMORPH              = Fl(30),   // monster cannot result from a polymorph spell (liches, phoenixes and Warden of Yendor)
 
     NEGATABLE_TRAITS                = (MONST_INVISIBLE | MONST_DEFEND_DEGRADE_WEAPON | MONST_IMMUNE_TO_WEAPONS | MONST_FLIES
@@ -2720,7 +2720,6 @@ enum machineTypes {
     MT_KEY_GUARDIAN_GAUNTLET_ROOM,
     MT_KEY_GUARDIAN_CORRIDOR_ROOM,
     MT_KEY_SACRIFICE_ROOM,
-    MT_KEY_SUMMONING_CIRCLE_ROOM,
     MT_KEY_BECKONING_OBSTACLE_ROOM,
     MT_KEY_WORM_TRAP_AREA,
     MT_KEY_MUD_TRAP_ROOM,
@@ -3208,7 +3207,7 @@ extern "C" {
     creature *dormantMonsterAtLoc(pos p);
     pos perimeterCoords(short n);
     boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, boolean blinkUphill);
-    boolean monsterSummons(creature *monst, boolean alwaysUse);
+    boolean monsterSummons(creature *monst);
     boolean resurrectAlly(const pos loc);
     void unAlly(creature *monst);
     boolean monsterFleesFrom(creature *monst, creature *defender);
