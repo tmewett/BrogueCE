@@ -3827,8 +3827,8 @@ static boolean filterTerrain(const pos loc, short terrainType) {
 
     // If the terrainType does not obstruct monsters then the location must not obstruct monsters
     boolean monsterMatch =
-                !(tileCatalog[terrainType].flags & T_PATHING_BLOCKER)
-                && !cellHasTerrainFlag(loc, T_PATHING_BLOCKER);
+        !(tileCatalog[terrainType].flags & T_PATHING_BLOCKER)
+        && !cellHasTerrainFlag(loc, T_PATHING_BLOCKER);
 
     return terrainMatch && monsterMatch;
 }
@@ -3841,8 +3841,8 @@ static boolean filterDungeon(const pos loc, short dungeonType) {
 
     // If the dungeonType does not obstruct items then the cell must not obstruct items
     boolean itemMatch =
-                !(tileCatalog[dungeonType].flags & T_OBSTRUCTS_ITEMS)
-                && !cellHasTerrainFlag(loc, T_OBSTRUCTS_ITEMS);
+        !(tileCatalog[dungeonType].flags & T_OBSTRUCTS_ITEMS)
+        && !cellHasTerrainFlag(loc, T_OBSTRUCTS_ITEMS);
 
     return dungeonMatch && itemMatch;
 }
