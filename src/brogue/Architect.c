@@ -3815,56 +3815,56 @@ void initializeLevel(pos upStairsLoc) {
     freeGrid(mapToPit);
 }
 
-boolean locationEmpty(const pos* loc) {
-    return !(pmapAt(*loc)->flags & (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | HAS_ITEM | IS_IN_MACHINE));
+static boolean locationEmpty(const pos loc) {
+    return !(pmapAt(loc)->flags & (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | HAS_ITEM | IS_IN_MACHINE));
 }
 
-boolean locationHasTerrainType(const pos* loc, short terrainType) {
+static boolean filterTerrain(const pos loc, short terrainType) {
     // Wildcard terrainType always matches
     if (terrainType < 0) return true;
 
-    boolean terrainMatch = cellHasTerrainType(*loc, terrainType);
+    boolean terrainMatch = cellHasTerrainType(loc, terrainType);
 
     // If the terrainType does not obstruct monsters then the location must not obstruct monsters
     boolean monsterMatch =
                 !(tileCatalog[terrainType].flags & T_PATHING_BLOCKER)
-                && !cellHasTerrainFlag(*loc, T_PATHING_BLOCKER);
+                && !cellHasTerrainFlag(loc, T_PATHING_BLOCKER);
 
     return terrainMatch && monsterMatch;
 }
 
-boolean locationHasDungeonType(const pos* loc, short dungeonType) {
+static boolean filterDungeon(const pos loc, short dungeonType) {
     // Wildcard dungeonType always matches
     if (dungeonType < 0) return true;
 
-    boolean dungeonMatch = pmapAt(*loc)->layers[DUNGEON] == dungeonType;
+    boolean dungeonMatch = pmapAt(loc)->layers[DUNGEON] == dungeonType;
 
     // If the dungeonType does not obstruct items then the cell must not obstruct items
     boolean itemMatch =
                 !(tileCatalog[dungeonType].flags & T_OBSTRUCTS_ITEMS)
-                && !cellHasTerrainFlag(*loc, T_OBSTRUCTS_ITEMS);
+                && !cellHasTerrainFlag(loc, T_OBSTRUCTS_ITEMS);
 
     return dungeonMatch && itemMatch;
 }
 
-boolean locationHasLiquidType(const pos* loc, short liquidType) {
+static boolean filterLiquid(const pos loc, short liquidType) {
     // Wildcard liquidType always matches
     if (liquidType < 0) return true;
 
-    return pmapAt(*loc)->layers[LIQUID] == liquidType;
+    return pmapAt(loc)->layers[LIQUID] == liquidType;
 }
 
-boolean locationMatches(const pos* loc, short dungeonType, short liquidType, short terrainType) {
+static boolean filterLocation(const pos loc, short dungeonType, short liquidType, short terrainType) {
     // Specifying a terrainType overrides the dungeon/liquid match case
     if (terrainType >= 0) {
         return locationEmpty(loc)
-            && locationHasTerrainType(loc, terrainType);
+            && filterTerrain(loc, terrainType);
     }
 
     // Otherwise make sure both dungeon and liquid types match
     return locationEmpty(loc)
-        && locationHasDungeonType(loc, dungeonType)
-        && locationHasLiquidType(loc, liquidType);
+        && filterDungeon(loc, dungeonType)
+        && filterLiquid(loc, liquidType);
 }
 
 // fills (*x, *y) with the coordinates of a random cell with
@@ -3872,11 +3872,10 @@ boolean locationMatches(const pos* loc, short dungeonType, short liquidType, sho
 // or at least one layer of type terrainType.
 // A dungeon, liquid type of -1 will match anything.
 boolean randomMatchingLocation(pos* loc, short dungeonType, short liquidType, short terrainType) {
-    if (loc == NULL) return false;
     for (short failsafeCount = 0; failsafeCount < 500; failsafeCount++) {
         loc->x = rand_range(0, DCOLS - 1);
         loc->y = rand_range(0, DROWS - 1);
-        if (locationMatches(loc, dungeonType, liquidType, terrainType)) return true;
+        if (filterLocation(*loc, dungeonType, liquidType, terrainType)) return true;
     }
     return false;
 }
