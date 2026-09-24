@@ -841,13 +841,14 @@ enum weaponEnchants {
 };
 
 enum armorKind {
-    RAGS,
-    CLOAK,
+    LEATHER_ARMOR,
+    HIDE_ARMOR,
+    RING_MAIL,
     SCALE_MAIL,
-    PADDED_MAIL,
-    THORNED_MAIL,
-    MIRRORED_PLATE,
-    SHINING_ARMOR,
+    PADDED_ARMOR,
+    SPIKED_ARMOR,
+    MIRROR_ARMOR,
+    PLATE_ARMOR,
     NUMBER_ARMOR_KINDS
 };
 
@@ -2534,6 +2535,7 @@ typedef struct playerCharacter {
 
     // armor bonuses:
     short stealthBonus;
+    short armorBonus;                   // armorsmith intrinsic
     
     // feats:
     boolean *featRecord;
