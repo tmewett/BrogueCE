@@ -1602,14 +1602,17 @@ itemTable weaponTable[NUMBER_WEAPON_KINDS] = {
     {"javelin",             "", "", 10, 40,         15, 0, {3, 11, 3},     true, false, 0, false, "This length of metal is weighted to keep the spike at its tip foremost as it sails through the air."},
 };
 
+// +10 defense for plain intrinsic; +10 defense for non-runic
+// ring mail has a plain intrinsic for now; it could be ally, necromancer, mage, or paladin (aura) armor in the future
 itemTable armorTable[NUMBER_ARMOR_KINDS] = {
-    {"rags",                "", "",  0, 250,        10, 0, {30,30,0},      true, false, 0, false, "Threadbare garments offer scanty protection."},
-    {"cloak",               "", "", 10, 350,        12, 0, {40,40,0},      true, false, 0, false, "This cloak of silent passage will reduce your stealth range, making enemies less likely to notice you and more likely to lose your trail. Staying motionless and lurking in the shadows will make you even harder to spot."},
-    {"scale mail",          "", "", 10, 650,        14, 0, {90,90,0},      true, false, 0, false, "Bronze scales of a master metallurgist cover the surface of treated leather, offering greater protection to an enterprising armorsmith."},
-    {"padded mail",         "", "", 10, 800,        15, 0, {70,70,0},      true, false, 0, false, "Overlapping strips of metal horizontally encircle a ring mail base, offering an additional layer of protection."},
-    {"thorned mail",        "", "", 10, 900,        16, 0, {80,80,0},      true, false, 0, false, "Sharp metal spikes protrude from a splint mail base, harming any who dare attack its wearer."},
-    {"mirrored plate",      "", "", 10, 1300,       19, 0, {110,110,0},    true, false, 0, false, "Reflective metal plates riveted to a plate mail base provide protection against melee combatants and spellcasters alike."},
-    {"shining armor",       "", "", 10, 1500,       20, 0, {140,140,0},    true, false, 0, false, "Polished metal plates fitted to a plate mail base provide the ultimate in head to toe protection."},
+    {"leather armor",       "", "",  0, 250,        10, 0, {30,30,0},      true, false, 0, false, "This lightweight armor offers basic protection."},
+    {"hide armor",          "", "", 10, 250,        10, 0, {20,20,0},      true, false, 0, false, "The skin of a wild beast worn as a cloak provides light protection."},
+    {"ring mail",           "", "", 10, 350,        12, 0, {50,50,0},      true, false, 0, false, "Metallic rings are sewn into and cover a leather foundation, offering more protection than plain leather with minimal additional weight."},
+    {"scale mail",          "", "", 10, 650,        14, 0, {90,90,0},      true, false, 0, false, "Iron scales covering the surface of treated leather make for a tough but flexible suit of armor easy to enhance further."},
+    {"padded armor",        "", "", 10, 800,        15, 0, {70,70,0},      true, false, 0, false, "Overlapping strips of metal horizontally encircle a leather armor base, providing auxiliary protection against glancing blows."},
+    {"spiked armor",        "", "", 10, 900,        16, 0, {80,80,0},      true, false, 0, false, "Thick plates of jagged metal are embedded into a light plate armor base, protecting the wearer while harming any melee attacker."},
+    {"mirror armor",        "", "", 10, 1000,       17, 0, {90,90,0},      true, false, 0, false, "Polished metal discs worn over a medium plate armor protect the wearer from both physical and magical attacks."},
+    {"plate armor",         "", "", 10, 1300,       19, 0, {130,130,0},    true, false, 0, false, "Enormous plates of metal are joined together into a suit that provides unmatched protection to any adventurer strong enough to bear its staggering weight."},
 };
 
 const char weaponRunicNames[NUMBER_WEAPON_RUNIC_KINDS][30] = {
