@@ -1602,16 +1602,15 @@ itemTable weaponTable[NUMBER_WEAPON_KINDS] = {
     {"javelin",             "", "", 10, 40,         15, 0, {3, 11, 3},     true, false, 0, false, "This length of metal is weighted to keep the spike at its tip foremost as it sails through the air."},
 };
 
-// +10 defense for plain intrinsic; +10 defense for non-runic
-// ring mail has a plain intrinsic for now; it could be ally, necromancer, mage, or paladin (aura) armor in the future
 itemTable armorTable[NUMBER_ARMOR_KINDS] = {
+    {"hide armor",          "", "", 10, 150,         9, 0, {10,10,0},      true, false, 0, false, "The skin of a wild beast worn as a cloak provides light protection."},
     {"leather armor",       "", "",  0, 250,        10, 0, {30,30,0},      true, false, 0, false, "This lightweight armor offers basic protection."},
-    {"hide armor",          "", "", 10, 250,        10, 0, {20,20,0},      true, false, 0, false, "The skin of a wild beast worn as a cloak provides light protection."},
-    {"ring mail",           "", "", 10, 350,        12, 0, {50,50,0},      true, false, 0, false, "Metallic rings are sewn into and cover a leather foundation, offering more protection than plain leather with minimal additional weight."},
-    {"scale mail",          "", "", 10, 650,        14, 0, {90,90,0},      true, false, 0, false, "Iron scales covering the surface of treated leather make for a tough but flexible suit of armor easy to enhance further."},
-    {"padded armor",        "", "", 10, 800,        15, 0, {70,70,0},      true, false, 0, false, "Overlapping strips of metal horizontally encircle a leather armor base, providing auxiliary protection against glancing blows."},
-    {"spiked armor",        "", "", 10, 900,        16, 0, {80,80,0},      true, false, 0, false, "Thick plates of jagged metal are embedded into a light plate armor base, protecting the wearer while harming any melee attacker."},
-    {"mirror armor",        "", "", 10, 1000,       17, 0, {90,90,0},      true, false, 0, false, "Polished metal discs worn over a medium plate armor protect the wearer from both physical and magical attacks."},
+    {"ring mail",           "", "", 10, 350,        12, 0, {50,50,0},      true, false, 0, false, "Metallic rings sewn into and covering a leather foundation offer more protection than plain leather with minimal additional weight."},
+    {"scale mail",          "", "", 10, 650,        14, 0, {90,90,0},      true, false, 0, false, "Iron scales covering the surface of treated leather make for a tough suit of armor easy to enhance further."},
+    {"padded armor",        "", "", 10, 800,        15, 0, {70,70,0},      true, false, 0, false, "Overlapping strips of metal horizontally encircle a leather armor base, providing extra protection against glancing blows."},
+ // {"chain mail",          "", "", 10, 900,        16, 0, {80,80,0},      true, false, 0, false, "Interlocking metal links make for a tough but flexible suit of armor."}, // reserved
+    {"spiked armor",        "", "", 10, 1000,       17, 0, {90,90,0},      true, false, 0, false, "Thick plates of jagged metal are embedded into a splint armor base, protecting the wearer while harming melee attackers."},
+    {"mirror armor",        "", "", 10, 1150,       18, 0, {100,100,0},    true, false, 0, false, "Polished metal discs worn over a light plate armor protect the wearer from both physical and magical attacks."},
     {"plate armor",         "", "", 10, 1300,       19, 0, {130,130,0},    true, false, 0, false, "Enormous plates of metal are joined together into a suit that provides unmatched protection to any adventurer strong enough to bear its staggering weight."},
 };
 

@@ -284,35 +284,31 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             theItem->armor = randClump(armorTable[itemKind].range);
             theItem->strengthRequired = armorTable[itemKind].strengthRequired;
             theItem->charges = gameConst->armorDelayToAutoID; // this many turns until it reveals its enchants and whether runic
-            short runicArmorPercent = 40; // base runic armor percent should be balanced around 40%
+            short runicArmorPercent = 35; // base runic armor percent should be balanced around 40%; currently diverting 5% of the 40% to ring mail
 
             switch (itemKind) {
                 case HIDE_ARMOR:
                     theItem->enchant3 = A_STEALTH;
-                    runicArmorPercent = 20;
                     break;
                 case RING_MAIL:
                     theItem->enchant3 = A_PLAIN;
-                    runicArmorPercent = 50;
+                    runicArmorPercent = 65; // skimmed 5% off the top of the other armor kinds and added here
                     break;
                 case SCALE_MAIL:
                     theItem->enchant3 = A_ARMORSMITH;
-                    runicArmorPercent = 40;
                     break;
                 case PADDED_ARMOR:
                     theItem->enchant3 = A_ABSORPTION;
-                    runicArmorPercent = 65;
                     break;
                 case SPIKED_ARMOR:
                     theItem->enchant3 = A_REPRISAL;
-                    runicArmorPercent = 55;
                     break;
                 case MIRROR_ARMOR:
                     theItem->enchant3 = A_REFLECTION;
-                    runicArmorPercent = 10;
                     break;
                 default:
-                    theItem->enchant3 = A_PLAIN; // leather and plate armor
+                    theItem->enchant3 = A_PLAIN; // leather doesn't spawn, plate cannot spawn with runics
+                    runicArmorPercent = 40;
                     break;
             }
 
@@ -2366,55 +2362,79 @@ void itemDetails(char *buf, item *theItem) {
                 strcat(buf, buf2);
 
                 if (theItem->flags & ITEM_IDENTIFIED) {
-                    if (enchant == 0) {
-                        strcpy(buf2, "This armor's intrinsic is currently inert. ");
-                    } else {
-                        switch (theItem->enchant3) {
-                            case A_PLAIN:
-                                sprintf(buf2, "");
-                                break;
-                            case A_STEALTH:
-                                sprintf(buf2, "It will reduce your stealth range, making enemies less likely to notice you and more likely to lose your trail. Staying motionless and lurking in the shadows will make you even harder to spot. A cursed armor will increase your stealth range, making you easier to spot and to track. It grants the wearer a stealth %s equal to its raw enchantment level. Your stealth %s will be %i. ",
-                                        (theItem->enchant1 >= 0 ? "bonus" : "malus"),
-                                        (theItem->enchant1 >= 0 ? "bonus" : "malus"),
-                                        (theItem->enchant1));
-                                break;
-                            case A_ARMORSMITH:
-                                sprintf(buf2, "It has a high base armor rating. It has a bonus to armor equal to 50%% of its net positive enchantment level. ");
-                                break;
-                            case A_ABSORPTION:
-                                sprintf(buf2, "It will reduce the damage of inbound attacks by a random amount between %s and %i, which is %i%% of your current maximum health. (If the %s is enchanted, this maximum amount will %s %i.) ",
-                                        (enchant > 0 ? "1" : "0"),
+                    switch (theItem->enchant3) {
+                        case A_PLAIN:
+                            sprintf(buf2, ""); // prevents double printing of "no special intrinsic message"
+                            break;
+                        case A_STEALTH:
+                            sprintf(buf2, "It grants the wearer a stealth %s equal to its raw enchantment level. Your stealth %s will be %i. It will reduce your stealth range, making enemies less likely to notice you and more likely to lose your trail. Staying motionless and lurking in the shadows will make you even harder to spot. A cursed armor will increase your stealth range, making you easier to spot and to track. ",
+                                    (theItem->enchant1 >= 0 ? "bonus" : "malus"),
+                                    (theItem->enchant1 >= 0 ? "bonus" : "malus"),
+                                    (theItem->enchant1));
+                            break;
+                        case A_ARMORSMITH:
+                            sprintf(buf2, "It has a high base armor rating. It has a bonus to armor equal to 50%% of its net positive enchantment level. ");
+                            break;
+                        case A_ABSORPTION:
+                            if (enchant > 0) {
+                                sprintf(buf2, "It will reduce the damage of inbound attacks by a random amount between 1 and %i, which is %i%% of your current maximum health. (If the %s is enchanted, this maximum amount will %s %i.) ",
                                         (int) armorAbsorptionMax(enchant),
                                         (int) (100 * armorAbsorptionMax(enchant) / player.info.maxHP),
                                         theName,
                                         (armorAbsorptionMax(enchant) == armorAbsorptionMax(enchant + enchantIncrement(theItem)) ? "remain at" : "increase to"),
                                         (int) armorAbsorptionMax(enchant + enchantMagnitude() * enchantIncrement(theItem)));
-                                break;
-                            case A_REPRISAL:
-                                sprintf(buf2, "Any enemy that attacks and misses you will itself be wounded by %i%% of the damage that it would have inflicted. (If the %s is enchanted, this percentage will %s %i%%.) ",
-                                        (enchant > 0 ? armorReprisalPercent(enchant) : 0),
+                            } else {
+                                sprintf(buf2, "This armor's intrinsic is currently inert. ");
+                                    if (enchant == 0) {
+                                        strcat(buf, buf2);
+                                        sprintf(buf2, "(If the %s is enchanted, it will reduce damage by a minimum of 1 and a maximum of %i.) ",
+                                                theName,
+                                                (int) armorAbsorptionMax(enchant + enchantMagnitude() * enchantIncrement(theItem)));
+                                    }
+                            }
+                            break;
+                        case A_REPRISAL:
+                            if (enchant > 0) {
+                                sprintf(buf2, "Any enemy that attacks but misses you will itself be wounded by %i%% of the damage that it would have inflicted. (If the %s is enchanted, this percentage will %s %i%%.) ",
+                                        armorReprisalPercent(enchant),
                                         theName,
                                         (armorReprisalPercent(enchant) == armorReprisalPercent(enchant + enchantIncrement(theItem)) ? "remain at" : "increase to"),
-                                        (enchant > 0 ? armorReprisalPercent(enchant + enchantMagnitude() * enchantIncrement(theItem)) : 0));
-                                break;
-                            case A_REFLECTION:
-                                if (theItem->enchant1 > 0) {
-                                    short reflectChance = reflectionChance(enchant);
-                                    short reflectChance2 = reflectionChance(enchant + enchantMagnitude() * enchantIncrement(theItem));
-                                    sprintf(buf2, "When worn, you will deflect %i%% of incoming spells -- including directly back at their source %i%% of the time. (If the armor is enchanted, these will %s %i%% and %i%%.) ",
-                                            (enchant > 0 ? reflectChance : 0),
-                                            (enchant > 0 ? (reflectChance * reflectChance / 100) : 0),
-                                            (reflectChance == reflectChance2 ? "remain at" : "increase to"),
-                                            (enchant >= 0 ? reflectChance2 : 0),
-                                            (enchant >= 0 ? (reflectChance2 * reflectChance2 / 100) : 0));
-                                } else {
-                                    sprintf(buf2, "");
-                                }
-                                break;
-                            default:
-                                break;
-                        }
+                                        (armorReprisalPercent(enchant + enchantMagnitude() * enchantIncrement(theItem))));
+                            } else {
+                                sprintf(buf2, "This armor's intrinsic is currently inert. ");
+                                    if (enchant == 0) {
+                                        strcat(buf, buf2);
+                                        sprintf(buf2, "(If the %s is enchanted, any enemy that attacks but misses you will itself be wounded by %i%% of the damage that it would have inflicted.) ",
+                                                theName,
+                                                (armorReprisalPercent(enchant + enchantMagnitude() * enchantIncrement(theItem))));
+                                    }
+                            }
+                            break;
+                        case A_REFLECTION:
+                            if (enchant > 0) {
+                                short reflectChance = reflectionChance(enchant);
+                                short reflectChance2 = reflectionChance(enchant + enchantMagnitude() * enchantIncrement(theItem));
+                                sprintf(buf2, "When worn, you will deflect %i%% of incoming spells -- including directly back at their source %i%% of the time. (If the armor is enchanted, these will %s %i%% and %i%%.) ",
+                                        reflectChance,
+                                        (reflectChance * reflectChance / 100),
+                                        (reflectChance == reflectChance2 ? "remain at" : "increase to"),
+                                        reflectChance2,
+                                        (reflectChance2 * reflectChance2 / 100));
+                            } else {
+                                short reflectChance = reflectionChance(enchant);
+                                short reflectChance2 = reflectionChance(enchant + enchantMagnitude() * enchantIncrement(theItem));
+                                sprintf(buf2, "This armor's intrinsic is currently inert. ");
+                                    if (enchant == 0) {
+                                        strcat(buf, buf2);
+                                        sprintf(buf2, "(If the armor is enchanted, these will increase to %i%% and %i%%.)",
+                                                reflectChance2,
+                                                (reflectChance2 * reflectChance2 / 100));
+                                    }
+                            }
+                            break;
+                        default:
+                            break;
+                    
                     }
                     strcat(buf, buf2);
                 }

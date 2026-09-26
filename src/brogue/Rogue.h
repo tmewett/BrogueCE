@@ -847,11 +847,12 @@ enum weaponEnchants {
 };
 
 enum armorKind {
-    LEATHER_ARMOR,
     HIDE_ARMOR,
+    LEATHER_ARMOR,
     RING_MAIL,
     SCALE_MAIL,
     PADDED_ARMOR,
+    // CHAIN_MAIL,
     SPIKED_ARMOR,
     MIRROR_ARMOR,
     PLATE_ARMOR,
