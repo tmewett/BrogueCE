@@ -1,0 +1,1 @@
+Added measures to combat grinding via bypassing the food clock. Wear identification and item generation are significantly curtailed if you are starving or paralyzed.

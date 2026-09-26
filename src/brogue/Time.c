@@ -847,6 +847,7 @@ static void forceEatFood(void) {
             messageWithColor(buf, &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
             confirmMessages();
             eat(theItem, false);
+            rogue.starvedTurnsLeeway = gameConst->starvationLeeway; // ensures a positive leeway when not starving
             playerTurnEnded();
             break;
         }
@@ -1784,6 +1785,13 @@ static void processIncrementalAutoID() {
     char buf[DCOLS*3], theItemName[DCOLS*3];
     short i;
 
+    // A safeguard placed against grindy foodclock bypasses, with a paralysis loophole closed
+    if ((rogue.starvedTurnsLeeway <= 0) // i.e. player is also starving
+        || (player.status[STATUS_PARALYZED] && rogue.paralyzedTurnsLeeway <= 0)) {
+            
+            return;
+	}
+
     for (i=0; i<3; i++) {
         theItem = autoIdentifyItems[i];
         if (theItem
@@ -1988,6 +1996,11 @@ static void decrementPlayerStatus() {
         }
     }
 
+    // Handle starvation grinding
+    if (player.status[STATUS_NUTRITION] <= 0 && rogue.starvedTurnsLeeway > 0) {
+        rogue.starvedTurnsLeeway--;
+    }
+
     if (player.status[STATUS_TELEPATHIC] > 0 && !--player.status[STATUS_TELEPATHIC]) {
         updateVision(true);
         message("your preternatural mental sensitivity fades.", 0);
@@ -2018,8 +2031,13 @@ static void decrementPlayerStatus() {
         message("you feel less nauseous.", 0);
     }
 
-    if (player.status[STATUS_PARALYZED] > 0 && !--player.status[STATUS_PARALYZED]) {
-        message("you can move again.", 0);
+    if (player.status[STATUS_PARALYZED] > 0) {
+        if (rogue.paralyzedTurnsLeeway > 0) { // handle paralysis grinding
+            rogue.paralyzedTurnsLeeway--;
+        }
+        if (!--player.status[STATUS_PARALYZED]) {
+            message("you can move again.", 0);
+        }
     }
 
     if (player.status[STATUS_HASTED] > 0 && !--player.status[STATUS_HASTED]) {

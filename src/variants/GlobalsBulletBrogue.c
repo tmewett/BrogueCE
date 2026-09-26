@@ -1055,6 +1055,9 @@ const gameConstants bulletBrogueGameConst = {
     .armorDelayToAutoID = 120,
     .ringDelayToAutoID = 120,
 
+    .starvationLeeway = 120, // less than monsterSpawnFuse
+    .paralysisLeeway = 120, // 80 base + 40 for difficulty
+
     .fallDamageMin = 8,
     .fallDamageMax = 10,
 
