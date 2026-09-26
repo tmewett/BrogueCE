@@ -1603,12 +1603,15 @@ itemTable weaponTable[NUMBER_WEAPON_KINDS] = {
 };
 
 itemTable armorTable[NUMBER_ARMOR_KINDS] = {
-    {"leather armor",   "", "", 10, 250,        10, 0, {30,30,0},      true, false, 0, false, "This lightweight armor offers basic protection."},
-    {"scale mail",      "", "", 10, 350,        12, 0, {40,40,0},      true, false, 0, false, "Bronze scales cover the surface of treated leather, offering greater protection than plain leather with minimal additional weight."},
-    {"chain mail",      "", "", 10, 500,        13, 0, {50,50,0},      true, false, 0, false, "Interlocking metal links make for a tough but flexible suit of armor."},
-    {"banded mail",     "", "", 10, 800,        15, 0, {70,70,0},      true, false, 0, false, "Overlapping strips of metal horizontally encircle a chain mail base, offering an additional layer of protection at the cost of greater weight."},
-    {"splint mail",     "", "", 10, 1000,       17, 0, {90,90,0},      true, false, 0, false, "Thick plates of metal are embedded into a chain mail base, providing the wearer with substantial protection."},
-    {"plate armor",     "", "", 10, 1300,       19, 0, {110,110,0},    true, false, 0, false, "Enormous plates of metal are joined together into a suit that provides unmatched protection to any adventurer strong enough to bear its staggering weight."}
+    {"hide armor",          "", "", 10, 150,         9, 0, {10,10,0},      true, false, 0, false, "The skin of a wild beast worn as a cloak provides light protection."},
+    {"leather armor",       "", "",  0, 250,        10, 0, {30,30,0},      true, false, 0, false, "This lightweight armor offers basic protection."},
+    {"ring mail",           "", "", 10, 350,        12, 0, {50,50,0},      true, false, 0, false, "Metallic rings sewn into and covering a leather foundation offer more protection than plain leather with minimal additional weight."},
+    {"scale mail",          "", "", 10, 650,        14, 0, {90,90,0},      true, false, 0, false, "Iron scales covering the surface of treated leather make for a tough suit of armor easy to enhance further."},
+    {"padded armor",        "", "", 10, 800,        15, 0, {70,70,0},      true, false, 0, false, "Overlapping strips of metal horizontally encircle a leather armor base, providing extra protection against glancing blows."},
+ // {"chain mail",          "", "", 10, 900,        16, 0, {80,80,0},      true, false, 0, false, "Interlocking metal links make for a tough but flexible suit of armor."}, // reserved
+    {"spiked armor",        "", "", 10, 1000,       17, 0, {90,90,0},      true, false, 0, false, "Thick plates of jagged metal are embedded into a splint armor base, protecting the wearer while harming melee attackers."},
+    {"mirror armor",        "", "", 10, 1150,       18, 0, {100,100,0},    true, false, 0, false, "Polished metal discs worn over a light plate armor protect the wearer from both physical and magical attacks."},
+    {"plate armor",         "", "", 10, 1300,       19, 0, {130,130,0},    true, false, 0, false, "Enormous plates of metal are joined together into a suit that provides unmatched protection to any adventurer strong enough to bear its staggering weight."},
 };
 
 const char weaponRunicNames[NUMBER_WEAPON_RUNIC_KINDS][30] = {
@@ -1624,13 +1627,19 @@ const char weaponRunicNames[NUMBER_WEAPON_RUNIC_KINDS][30] = {
     "plenty"
 };
 
+const char armorIntrinsicNames[NUMBER_ARMOR_INTRINSIC_KINDS][30] = {
+    "plain",
+    "stealth",
+    "armorsmith",
+    "absorption",
+    "reprisal",
+    "reflection",
+};
+
 const char armorRunicNames[NUMBER_ARMOR_ENCHANT_KINDS][30] = {
     "multiplicity",
     "mutuality",
-    "absorption",
-    "reprisal",
     "immunity",
-    "reflection",
     "respiration",
     "dampening",
     "burden",
@@ -1655,7 +1664,6 @@ itemTable staffTable[NUMBER_STAFF_KINDS] = {
 
 itemTable ringTable[NUMBER_RING_KINDS] = {
     {"clairvoyance",    itemGems[0], "",    1,  900,    0, 0, {1,3,1}, false, false, 1, false, "This ring of eldritch scrying will permit you to see through nearby walls and doors, within a radius determined by the level of the ring. A cursed ring of clairvoyance will blind you to your immediate surroundings."},
-    {"stealth",         itemGems[1], "",    1,  800,    0, 0, {1,3,1}, false, false, 1, false, "This ring of silent passage will reduce your stealth range, making enemies less likely to notice you and more likely to lose your trail. Staying motionless and lurking in the shadows will make you even harder to spot. Cursed rings of stealth will increase your stealth range, making you easier to spot and to track."},
     {"regeneration",    itemGems[2], "",    1,  750,    0, 0, {1,3,1}, false, false, 1, false, "This ring of sacred life will allow you to recover lost health at an accelerated rate. Cursed rings will decrease or even halt your natural regeneration."},
     {"transference",    itemGems[3], "",    1,  750,    0, 0, {1,3,1}, false, false, 1, false, "This ring of blood magic will heal you in proportion to the damage you inflict on others. Cursed rings will cause you to lose health when inflicting damage."},
     {"light",           itemGems[4], "",    1,  600,    0, 0, {1,3,1}, false, false, 1, false, "This ring of preternatural vision will allow you to see farther in the dimming light of the deeper dungeon levels. It will not make you more noticeable to enemies."},
