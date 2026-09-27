@@ -572,9 +572,9 @@ creature *cloneMonster(creature *monst, boolean announce, boolean placeClone) {
     newMonst->safetyMap = NULL;
     newMonst->carriedItem = NULL;
     if (monst->carriedMonster) {
-        creature *parentMonst = cloneMonster(monst->carriedMonster, false, false); // Also clone the carriedMonster
-        removeCreature(monsters, parentMonst); // The cloned create will be added to the world, which we immediately undo.
-        removeCreature(dormantMonsters, parentMonst); // in case it's added as a dormant creature? TODO: is this possible?
+        newMonst->carriedMonster = cloneMonster(monst->carriedMonster, false, false); // Also clone the carriedMonster
+        removeCreature(monsters, newMonst->carriedMonster); // The cloned creature will be added to the world, which we immediately undo.
+        removeCreature(dormantMonsters, newMonst->carriedMonster); // in case it's added as a dormant creature? TODO: is this possible?
     }
     newMonst->ticksUntilTurn = 101;
     if (!(monst->creatureState == MONSTER_ALLY)) {
