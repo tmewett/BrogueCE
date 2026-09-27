@@ -850,7 +850,6 @@ enum armorKind {
     RING_MAIL,
     SCALE_MAIL,
     PADDED_ARMOR,
-    // CHAIN_MAIL,
     SPIKED_ARMOR,
     MIRROR_ARMOR,
     PLATE_ARMOR,
@@ -1409,7 +1408,7 @@ typedef struct item {
     short charges;
     short enchant1;
     short enchant2;
-    short enchant3;                     // armor intrinsics
+    short enchant3;
     short timesEnchanted;
     enum monsterTypes vorpalEnemy;
     short strengthRequired;
@@ -2540,7 +2539,7 @@ typedef struct playerCharacter {
 
     // armor bonuses:
     short stealthBonus;
-    short armorBonus;                   // armorsmith intrinsic
+    short armorsmithBonus;              // expressed as a percentage
     
     // feats:
     boolean *featRecord;
