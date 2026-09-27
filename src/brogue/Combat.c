@@ -1112,9 +1112,11 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
         return false;
     }
 
-    // If the attack hit:
+    // Calculate damage not just for hits but also misses (for riposte, shield bash, thorns, reversal, etc. type effects)
     damage = (defender->info.flags & (MONST_IMMUNE_TO_WEAPONS | MONST_INVULNERABLE)
               ? 0 : randClump(attacker->info.damage) * monsterDamageAdjustmentAmount(attacker) / FP_FACTOR);
+    
+    // If the attack hit:
     if (sneakAttack || defenderWasAsleep || defenderWasParalyzed || lungeAttack || attackHit(attacker, defender)) {
         
         if (sneakAttack || defenderWasAsleep || defenderWasParalyzed) {
@@ -1295,9 +1297,8 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
                 combatMessage(buf, 0);
             }
         }
-        // triggering on a miss makes these two work better with armor enchanting
-        if (defender == &player && rogue.armor 
-            && (rogue.armor->enchant3 == A_REPRISAL) && netEnchant(rogue.armor) > 0) {
+        // triggering on a miss makes these two work better wrt armor enchanting
+        if (defender == &player && rogue.armor && (rogue.armor->enchant3 == A_REPRISAL)) {
                 applyArmorIntrinsicEffect(armorIntrinsicString, attacker, &damage, true);
                 if (armorIntrinsicString[0]) {
                     message(armorIntrinsicString, 0);

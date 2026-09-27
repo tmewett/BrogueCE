@@ -284,15 +284,15 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             theItem->armor = randClump(armorTable[itemKind].range);
             theItem->strengthRequired = armorTable[itemKind].strengthRequired;
             theItem->charges = gameConst->armorDelayToAutoID; // this many turns until it reveals its enchants and whether runic
-            short runicArmorPercent = 35; // base runic armor percent should be balanced around 40%; currently diverting 5% of the 40% to ring mail
+            short runicArmorPercent = 35; // currently diverting 5% off the 40% target average from each armor to ring mail
 
-            switch (itemKind) {
+            switch (itemKind) { // leather is only a starter item; doesn't spawn in the dungeon
                 case HIDE_ARMOR:
                     theItem->enchant3 = A_STEALTH;
                     break;
                 case RING_MAIL:
                     theItem->enchant3 = A_PLAIN;
-                    runicArmorPercent = 65; // skimmed 5% off the top of the other armor kinds and added here
+                    runicArmorPercent = 65; // compensated for having no special intrinsic
                     break;
                 case SCALE_MAIL:
                     theItem->enchant3 = A_ARMORSMITH;
@@ -306,9 +306,13 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                 case MIRROR_ARMOR:
                     theItem->enchant3 = A_REFLECTION;
                     break;
+                case PLATE_ARMOR:
+                    theItem->enchant3 = A_PLAIN;
+                    runicArmorPercent = 0;
+                    break;
                 default:
-                    theItem->enchant3 = A_PLAIN; // leather doesn't spawn, plate cannot spawn with runics
-                    runicArmorPercent = 40;
+                    theItem->enchant3 = A_PLAIN;
+                    runicArmorPercent = 40; // 40% is the balancing target for all runic eligible armor kinds
                     break;
             }
 
@@ -322,7 +326,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                         theItem->enchant2 = rand_range(NUMBER_GOOD_ARMOR_ENCHANT_KINDS, NUMBER_ARMOR_ENCHANT_KINDS - 1);
                         theItem->flags |= ITEM_RUNIC;
                     }
-                } else if (rand_percent(runicArmorPercent) && theItem->kind != PLATE_ARMOR) {
+                } else if (rand_percent(runicArmorPercent)) {
                     theItem->enchant2 = rand_range(0, NUMBER_GOOD_ARMOR_ENCHANT_KINDS - 1);
                     theItem->flags |= ITEM_RUNIC;
                     if (theItem->enchant2 == A_IMMUNITY) {
@@ -2159,9 +2163,7 @@ void itemDetails(char *buf, item *theItem) {
                     if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
                         new = theItem->armor;
                         new += 10 * netEnchant(theItem) / FP_FACTOR;
-                        if (theItem->enchant3 == A_ARMORSMITH) {
-                            new += ((10 * netEnchant(theItem)) / 2) / FP_FACTOR;
-                        }
+                        new += ((10 * netEnchant(theItem)) * (rogue.armorsmithBonus / 100)) / FP_FACTOR; // a_armorsmith bonus, if any
                         new /= 10;
                     } else {
                         new = armorValueIfUnenchanted(theItem);
@@ -2364,7 +2366,7 @@ void itemDetails(char *buf, item *theItem) {
                 if (theItem->flags & ITEM_IDENTIFIED) {
                     switch (theItem->enchant3) {
                         case A_PLAIN:
-                            sprintf(buf2, ""); // prevents double printing of "no special intrinsic message"
+                            sprintf(buf2, ""); // prevents double printing of "no special intrinsic" message
                             break;
                         case A_STEALTH:
                             sprintf(buf2, "It grants the wearer a stealth %s equal to its raw enchantment level. Your stealth %s will be %i. It will reduce your stealth range, making enemies less likely to notice you and more likely to lose your trail. Staying motionless and lurking in the shadows will make you even harder to spot. A cursed armor will increase your stealth range, making you easier to spot and to track. ",
@@ -2421,7 +2423,7 @@ void itemDetails(char *buf, item *theItem) {
                                         reflectChance2,
                                         (reflectChance2 * reflectChance2 / 100));
                             } else {
-                                short reflectChance = reflectionChance(enchant);
+                                short reflectChance = reflectionChance(enchant); // declarations repeated because of reports MacOS won't compile if placed outside the conditional branch
                                 short reflectChance2 = reflectionChance(enchant + enchantMagnitude() * enchantIncrement(theItem));
                                 sprintf(buf2, "This armor's intrinsic is currently inert. ");
                                     if (enchant == 0) {
@@ -6671,6 +6673,7 @@ static boolean useStaffOrWand(item *theItem) {
         rogue.featRecord[FEAT_PURE_WARRIOR] = false;
 
         if (theItem->charges > 0) {
+
             creature *monst = monsterAtLoc(zapTarget);
             if (monst) {
                 monsterName(buf3, monst, true);
@@ -7455,7 +7458,7 @@ boolean drinkPotion(item *theItem) {
             } else {
                 message("you can somehow feel the absence of magic on the level and in your pack.", 0);
             }
-            updateArmorIntrinsicBonuses();
+            updateArmorIntrinsicBonuses(); // stealth armor needs to function as +1/0/-1 when DMed but not IDed
             break;
         }
         case POTION_HASTE_SELF:
@@ -7783,7 +7786,7 @@ void recalculateEquipmentBonuses() {
         theItem = rogue.armor;
         enchant = netEnchant(theItem);
         if (enchant > 0) {
-            enchant += enchant * (rogue.armorBonus / 100);
+            enchant += (enchant * rogue.armorsmithBonus) / 100;
         }
         enchant -= player.status[STATUS_DONNING] * FP_FACTOR;
         player.info.defense = (theItem->armor * FP_FACTOR + enchant * 10) / FP_FACTOR;
@@ -7977,16 +7980,16 @@ void updateRingBonuses() {
 }
 
 void updateArmorIntrinsicBonuses() {
-    rogue.stealthBonus = rogue.armorBonus = 0;
+    rogue.stealthBonus = rogue.armorsmithBonus = 0;
     
     if (rogue.armor) {
         switch (rogue.armor->enchant3) {
             case A_STEALTH:
                 rogue.stealthBonus = rogue.armor->enchant1;
-                if (!(rogue.armor->flags & ITEM_IDENTIFIED)) { // consequence of turning stealth ring into armor
+                if (!(rogue.armor->flags & ITEM_IDENTIFIED)) { // follow unIDed ring logic
                     if (rogue.stealthBonus < 0) {
                         rogue.stealthBonus = -1;
-                    } else if ((rogue.stealthBonus >= 1) && (rogue.armor->flags & ITEM_MAGIC_DETECTED)) { // follow ring logic for unIDed stealth
+                    } else if ((rogue.stealthBonus >= 1) && (rogue.armor->flags & ITEM_MAGIC_DETECTED)) {
                         rogue.stealthBonus = min(rogue.armor->enchant1, rogue.armor->timesEnchanted + 1);
                     } else if (rogue.stealthBonus >= 0) { // don't automatically reveal whether it is positively enchanted
                         rogue.stealthBonus = min(rogue.armor->enchant1, rogue.armor->timesEnchanted);
@@ -7994,7 +7997,7 @@ void updateArmorIntrinsicBonuses() {
                 }
                 break;
             case A_ARMORSMITH:
-                rogue.armorBonus = 50; // percentage bonus
+                rogue.armorsmithBonus = 50; // percentage
                 break;
             default:
                 break;
