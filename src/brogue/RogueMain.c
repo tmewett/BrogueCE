@@ -473,9 +473,9 @@ void initializeRogue(uint64_t seed) {
         theItem = generateItem(ARMOR, MIRROR_ARMOR);
         theItem->enchant1 = 50;
         theItem->enchant2 = 0;
-        theItem->strengthRequired = 10;
         theItem->flags &= ~(ITEM_CURSED | ITEM_RUNIC);
         theItem->flags |= ITEM_PROTECTED;
+        theItem->strengthRequired = 10;
         identify(theItem);
         theItem = addItemToPack(theItem);
 
