@@ -7,33 +7,6 @@ on:
 
 jobs:
 
-  linux:
-    runs-on: ubuntu-22.04
-    steps:
-    - name: "Install dependencies"
-      run: |
-        sudo apt update -y
-        sudo apt install -y libsdl2-dev libsdl2-image-dev
-
-    - name: "Checkout sources"
-      uses: actions/checkout@v3
-
-    - name: "Compile"
-      run: |
-        make bin/brogue
-
-    - name: "Create artifact"
-      run: |
-        make BrogueCE-linux
-        tar -czvf BrogueCE-linux-x86_64.tar.gz BrogueCE-linux
-
-    - name: "Upload artifact"
-      uses: actions/upload-artifact@v4
-      with:
-        name: linux-x86_64
-        path: BrogueCE-linux-x86_64.tar.gz
-        compression-level: 0  # There's no point compressing something already compressed
-
   macos-intel:
     runs-on: macos-15-intel
     steps:
@@ -72,7 +45,7 @@ jobs:
 
     - name: "Fix and bundle dylib references"
       run: |
-        cd Brogue.app/Contents && dylibbundler -cd -b -x MacOS/brogue
+        cd Brogue.app/Contents && dylibbundler -cd -b -x MacOS/brogue -x "$(brew --cellar)"/sdl3/*/lib/libSDL3.dylib
 
     - name: "Create artifact"
       run: |
@@ -124,7 +97,7 @@ jobs:
 
     - name: "Fix and bundle dylib references"
       run: |
-        cd Brogue.app/Contents && dylibbundler -cd -b -x MacOS/brogue
+        cd Brogue.app/Contents && dylibbundler -cd -b -x MacOS/brogue -x "$(brew --cellar)"/sdl3/*/lib/libSDL3.dylib
 
     - name: "Create artifact"
       run: |
@@ -136,34 +109,4 @@ jobs:
       with:
         name: macos-arm64
         path: BrogueCE-macos-arm64.zip
-        compression-level: 0  # There's no point compressing something already compressed
-
-  windows:
-    runs-on: windows-latest
-    steps:
-    - name: "Checkout sources"
-      uses: actions/checkout@v3
-
-    - name: "Install dependencies"
-      run: |
-        .\.github\get-deps-mingw.ps1
-
-    - name: "Compile"
-      shell: powershell
-      run: |
-        $env:path = $env:path + ";" + (Join-Path $pwd.Drive.Root "opt/local/x86_64-w64-mingw32/bin")
-        mingw32-make SDL_CONFIG='sdl2-config --prefix=/opt/local/x86_64-w64-mingw32' SYSTEM=WINDOWS CC=gcc bin/brogue.exe
-
-    - name: "Create artifact"
-      run: |
-        mingw32-make SYSTEM=WINDOWS BrogueCE-windows
-        cp SDL2\x86_64-w64-mingw32\bin\SDL2.dll BrogueCE-windows
-        cp SDL2_image\x86_64-w64-mingw32\bin\SDL2_image.dll BrogueCE-windows
-        7z a BrogueCE-windows-x86_64.zip BrogueCE-windows
-
-    - name: "Upload artifact"
-      uses: actions/upload-artifact@v4
-      with:
-        name: windows-x86_64
-        path: BrogueCE-windows-x86_64.zip
         compression-level: 0  # There's no point compressing something already compressed
