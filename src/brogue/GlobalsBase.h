@@ -42,7 +42,7 @@ extern const short nbDirs[8][2];
 // The direction must not be `NO_DIRECTION`.
 static inline pos posNeighborInDirection(pos p, enum directions direction_to_step) {
   brogueAssert(direction_to_step >= 0 && direction_to_step < 8);
-  return (pos) { .x = p.x + nbDirs[direction_to_step][0], .y = p.y + nbDirs[direction_to_step][1] };
+  return (pos) { .x = (short)(p.x + nbDirs[direction_to_step][0]), .y = (short)(p.y + nbDirs[direction_to_step][1]) };
 }
 
 extern short **scentMap;
@@ -59,6 +59,8 @@ extern creature player;
 extern playerCharacter rogue;
 extern const gameConstants *gameConst;
 extern int gameVariant;
+extern CBrogueGameEvent uiMode;
+extern char uiTextEntry[BROGUE_FILENAME_MAX];
 extern creatureList *monsters;
 extern creatureList *dormantMonsters;
 extern creatureList purgatory;
