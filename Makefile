@@ -8,6 +8,7 @@ cppflags := -DDATADIR=$(DATADIR)
 
 sources := $(wildcard src/brogue/*.c) $(wildcard src/variants/*.c) $(addprefix src/platform/,main.c platformdependent.c null-platform.c)
 objects :=
+objdir := build
 
 ifeq ($(SYSTEM),WINDOWS)
 objects += windows/resources.o
@@ -27,6 +28,7 @@ extra_version :=
 else
 extra_version := $(shell bash tools/git-extra-version)
 endif
+cppflags += -DBROGUE_EXTRA_VERSION='"$(extra_version)"'
 
 ifeq ($(TERMINAL),YES)
 sources += $(addprefix src/platform/,curses-platform.c term.c)
@@ -69,7 +71,7 @@ cflags += $(CFLAGS)
 cppflags += $(CPPFLAGS)
 libs += $(LDLIBS)
 
-objects += $(sources:%.c=build/%.o)
+objects += $(sources:%.c=$(objdir)/%.o)
 
 include make/*.mk
 .DEFAULT_GOAL := bin/brogue$(.exe)
