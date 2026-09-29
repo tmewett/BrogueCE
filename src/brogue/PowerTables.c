@@ -103,7 +103,7 @@ short weaponSlowDuration(fixpt enchant)        {return (max(3, (int) ((((enchant
 short weaponImageCount(fixpt enchant)          {return (clamp((int) ((enchant) / 3 / FP_FACTOR), 1, 7));}
 short weaponImageDuration(fixpt enchant)       {return 3;}
 
-short armorReprisalPercent(fixpt enchant)      {return (max(5, (int) ((enchant) * 5 / FP_FACTOR)));}
+short armorLacerationPercent(fixpt enchant)    {return (max(5, (int) ((enchant) * 5 / FP_FACTOR)));}
 short armorAbsorptionMax(fixpt enchant)        {return (max(1, (int) ((enchant) / FP_FACTOR)));}
 short armorImageCount(fixpt enchant)           {return (clamp((int) ((enchant) / 3 / FP_FACTOR), 1, 5));}
 short reflectionChance(fixpt enchant) {
