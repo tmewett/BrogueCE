@@ -301,7 +301,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                     theItem->enchant3 = A_ABSORPTION;
                     break;
                 case SPIKED_ARMOR:
-                    theItem->enchant3 = A_REPRISAL;
+                    theItem->enchant3 = A_LACERATION;
                     break;
                 case MIRROR_ARMOR:
                     theItem->enchant3 = A_REFLECTION;
@@ -2395,20 +2395,20 @@ void itemDetails(char *buf, item *theItem) {
                                     }
                             }
                             break;
-                        case A_REPRISAL:
+                        case A_LACERATION:
                             if (enchant > 0) {
                                 sprintf(buf2, "Any enemy that attacks but misses you will itself be wounded by %i%% of the damage that it would have inflicted. (If the %s is enchanted, this percentage will %s %i%%.) ",
-                                        armorReprisalPercent(enchant),
+                                        armorLacerationPercent(enchant),
                                         theName,
-                                        (armorReprisalPercent(enchant) == armorReprisalPercent(enchant + enchantIncrement(theItem)) ? "remain at" : "increase to"),
-                                        (armorReprisalPercent(enchant + enchantMagnitude() * enchantIncrement(theItem))));
+                                        (armorLacerationPercent(enchant) == armorLacerationPercent(enchant + enchantIncrement(theItem)) ? "remain at" : "increase to"),
+                                        (armorLacerationPercent(enchant + enchantMagnitude() * enchantIncrement(theItem))));
                             } else {
                                 sprintf(buf2, "This armor's intrinsic is currently inert. ");
                                     if (enchant == 0) {
                                         strcat(buf, buf2);
                                         sprintf(buf2, "(If the %s is enchanted, any enemy that attacks but misses you will itself be wounded by %i%% of the damage that it would have inflicted.) ",
                                                 theName,
-                                                (armorReprisalPercent(enchant + enchantMagnitude() * enchantIncrement(theItem))));
+                                                (armorLacerationPercent(enchant + enchantMagnitude() * enchantIncrement(theItem))));
                                     }
                             }
                             break;

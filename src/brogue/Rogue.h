@@ -863,7 +863,7 @@ enum armorIntrinsics {
     A_STEALTH,
     A_ARMORSMITH,
     A_ABSORPTION,
-    A_REPRISAL,
+    A_LACERATION,
     A_REFLECTION,
     NUMBER_ARMOR_INTRINSIC_KINDS,
 };
@@ -3507,7 +3507,7 @@ extern "C" {
     short weaponSlowDuration(fixpt enchant);
     short weaponImageCount(fixpt enchant);
     short weaponImageDuration(fixpt enchant);
-    short armorReprisalPercent(fixpt enchant);
+    short armorLacerationPercent(fixpt enchant);
     short armorAbsorptionMax(fixpt enchant);
     short armorImageCount(fixpt enchant);
     short reflectionChance(fixpt enchant);

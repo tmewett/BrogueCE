@@ -980,10 +980,10 @@ void applyArmorIntrinsicEffect(char returnString[DCOLS], creature *attacker, sho
                 *damage = 0;
             }
             break;
-        case A_REPRISAL:
+        case A_LACERATION:
             if (melee && !(attacker->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
                 if (enchant > 0) {
-                    newDamage = max(1, armorReprisalPercent(enchant) * (*damage) / 100);
+                    newDamage = max(1, armorLacerationPercent(enchant) * (*damage) / 100);
                     if (inflictDamage(&player, attacker, newDamage, &blue, true)) {
                         if (canSeeMonster(attacker)) {
                             sprintf(returnString, "your %s pulses and %s drops dead!", armorName, attackerName);
@@ -1140,7 +1140,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
         }
 
         if (defender == &player && rogue.armor 
-            && (rogue.armor->enchant3 == A_ABSORPTION)) { // reprisal triggers on a miss instead
+            && (rogue.armor->enchant3 == A_ABSORPTION)) { // laceration triggers on a miss instead
                 applyArmorIntrinsicEffect(armorIntrinsicString, attacker, &damage, true);
         }
         if (defender == &player && rogue.armor && (rogue.armor->flags & ITEM_RUNIC) 
@@ -1298,7 +1298,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
             }
         }
         // triggering on a miss makes these two work better wrt armor enchanting
-        if (defender == &player && rogue.armor && (rogue.armor->enchant3 == A_REPRISAL)) {
+        if (defender == &player && rogue.armor && (rogue.armor->enchant3 == A_LACERATION)) {
                 applyArmorIntrinsicEffect(armorIntrinsicString, attacker, &damage, true);
                 if (armorIntrinsicString[0]) {
                     message(armorIntrinsicString, 0);

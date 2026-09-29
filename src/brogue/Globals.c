@@ -1606,9 +1606,9 @@ itemTable armorTable[NUMBER_ARMOR_KINDS] = {
     {"hide armor",          "", "", 10, 150,         9, 0, {10,10,0},      true, false, 0, false, "The skin of a wild beast worn as a cloak provides light protection."},
     {"leather armor",       "", "",  0, 250,        10, 0, {30,30,0},      true, false, 0, false, "This lightweight armor offers basic protection."},
     {"ring mail",           "", "", 10, 350,        12, 0, {50,50,0},      true, false, 0, false, "Metallic rings sewn into and covering a leather foundation offer more protection than plain leather with minimal additional weight."},
-    {"scale mail",          "", "", 10, 650,        14, 0, {90,90,0},      true, false, 0, false, "Iron scales covering the surface of treated leather make for a tough suit of armor easy to enhance further."},
+    {"scale mail",          "", "", 10, 650,        14, 0, {90,90,0},      true, false, 0, false, "Iron scales covering the surface of treated leather make for a tough suit of armor easy to further enhance."},
     {"padded armor",        "", "", 10, 800,        15, 0, {70,70,0},      true, false, 0, false, "Overlapping strips of metal horizontally encircle a leather armor base, providing extra protection against glancing blows."},
-    {"spiked armor",        "", "", 10, 1000,       17, 0, {90,90,0},      true, false, 0, false, "Thick plates of jagged metal are embedded into a splint armor base, protecting the wearer while harming melee attackers."},
+    {"spiked armor",        "", "", 10, 1000,       17, 0, {90,90,0},      true, false, 0, false, "Jagged metal shards protrude from a splint armor base, protecting the wearer while lacerating those whose careless attacks miss with damage taken proportional to the amount of force misapplied."},
     {"mirror armor",        "", "", 10, 1150,       18, 0, {100,100,0},    true, false, 0, false, "Polished metal discs worn over a light plate armor protect the wearer from both physical and magical attacks."},
     {"plate armor",         "", "", 10, 1300,       19, 0, {130,130,0},    true, false, 0, false, "Enormous plates of metal are joined together into a suit that provides unmatched protection to any adventurer strong enough to bear its staggering weight."},
 };
@@ -1631,7 +1631,7 @@ const char armorIntrinsicNames[NUMBER_ARMOR_INTRINSIC_KINDS][30] = {
     "stealth",
     "armorsmith",
     "absorption",
-    "reprisal",
+    "laceration",
     "reflection",
 };
 
