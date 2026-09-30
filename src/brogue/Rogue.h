@@ -546,13 +546,8 @@ enum tileType {
     MACHINE_FLOOD_WATER_DORMANT,
     MACHINE_FLOOD_WATER_SPREADING,
     MACHINE_MUD_DORMANT,
-    ICE_DEEP,
-    ICE_DEEP_MELT,
-    ICE_SHALLOW,
-    ICE_SHALLOW_MELT,
 
     HOLE,
-    HOLE_GLOW,
     HOLE_EDGE,
     FLOOD_WATER_DEEP,
     FLOOD_WATER_SHALLOW,
@@ -1607,15 +1602,6 @@ enum dungeonFeatureTypes {
     DF_HOLE_2,
     DF_HOLE_DRAIN,
 
-    DF_DEEP_WATER_FREEZE,
-    DF_ALGAE_1_FREEZE,
-    DF_ALGAE_2_FREEZE,
-    DF_DEEP_WATER_MELTING,
-    DF_DEEP_WATER_THAW,
-    DF_SHALLOW_WATER_FREEZE,
-    DF_SHALLOW_WATER_MELTING,
-    DF_SHALLOW_WATER_THAW,
-
     DF_POISON_GAS_CLOUD,
     DF_CONFUSION_GAS_TRAP_CLOUD,
     DF_NET,
@@ -1633,8 +1619,6 @@ enum dungeonFeatureTypes {
 
     // other items
     DF_ARMOR_IMMOLATION,
-    DF_STAFF_HOLE,
-    DF_STAFF_HOLE_EDGE,
 
     // commutation altar
     DF_ALTAR_COMMUTE,
@@ -1658,7 +1642,6 @@ enum dungeonFeatureTypes {
     // throwing tutorial -- button in chasm
     DF_CAGE_DISAPPEARS,
     DF_MEDIUM_HOLE,
-    DF_MEDIUM_LAVA_POND,
     DF_MACHINE_PRESSURE_PLATE_USED,
 
     // rat trap
@@ -1726,7 +1709,6 @@ enum dungeonFeatureTypes {
     DF_WORM_TUNNEL_MARKER_DORMANT,
     DF_WORM_TUNNEL_MARKER_ACTIVE,
     DF_GRANITE_CRUMBLES,
-    DF_WALL_OPEN,
 
     // the room gradually darkens
     DF_DARKENING_FLOOR,
