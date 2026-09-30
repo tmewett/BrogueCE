@@ -846,22 +846,31 @@ enum weaponEnchants {
 };
 
 enum armorKind {
+    HIDE_ARMOR,
     LEATHER_ARMOR,
+    RING_MAIL,
     SCALE_MAIL,
-    CHAIN_MAIL,
-    BANDED_MAIL,
-    SPLINT_MAIL,
-    PLATE_MAIL,
+    PADDED_ARMOR,
+    SPIKED_ARMOR,
+    MIRROR_ARMOR,
+    PLATE_ARMOR,
     NUMBER_ARMOR_KINDS
+};
+
+enum armorIntrinsics {
+    A_PLAIN,
+    A_STEALTH,
+    A_ARMORSMITH,
+    A_ABSORPTION,
+    A_LACERATION,
+    A_REFLECTION,
+    NUMBER_ARMOR_INTRINSIC_KINDS,
 };
 
 enum armorEnchants {
     A_MULTIPLICITY,
     A_MUTUALITY,
-    A_ABSORPTION,
-    A_REPRISAL,
     A_IMMUNITY,
-    A_REFLECTION,
     A_RESPIRATION,
     A_DAMPENING,
     A_BURDEN,
@@ -936,7 +945,6 @@ enum boltType {
 
 enum ringKind {
     RING_CLAIRVOYANCE,
-    RING_STEALTH,
     RING_REGENERATION,
     RING_TRANSFERENCE,
     RING_LIGHT,
@@ -1402,6 +1410,7 @@ typedef struct item {
     short charges;
     short enchant1;
     short enchant2;
+    short enchant3;
     short timesEnchanted;
     enum monsterTypes vorpalEnemy;
     short strengthRequired;
@@ -2534,7 +2543,6 @@ typedef struct playerCharacter {
 
     // ring bonuses:
     short clairvoyance;
-    short stealthBonus;
     short regenerationBonus;
     short lightMultiplier;
     short awarenessBonus;
@@ -2542,6 +2550,10 @@ typedef struct playerCharacter {
     short wisdomBonus;
     short reaping;
 
+    // armor bonuses:
+    short stealthBonus;
+    short armorsmithBonus;              // expressed as a percentage
+    
     // feats:
     boolean *featRecord;
 
@@ -3246,6 +3258,7 @@ extern "C" {
     fixpt netEnchant(item *theItem);
     short hitProbability(creature *attacker, creature *defender);
     boolean attackHit(creature *attacker, creature *defender);
+    void applyArmorIntrinsicEffect(char returnString[DCOLS], creature *attacker, short *damage, boolean melee);
     void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *damage, boolean melee);
     void processStaggerHit(creature *attacker, creature *defender);
     boolean attack(creature *attacker, creature *defender, boolean lungeAttack);
@@ -3391,6 +3404,7 @@ extern "C" {
     void updateIdentifiableItem(item *theItem);
     void updateIdentifiableItems(void);
     boolean readScroll(item *theItem);
+    void updateArmorIntrinsicBonuses(void);
     void updateRingBonuses(void);
     void updatePlayerRegenerationDelay(void);
     boolean removeItemFromChain(item *theItem, item *theChain);
@@ -3494,7 +3508,7 @@ extern "C" {
     short weaponSlowDuration(fixpt enchant);
     short weaponImageCount(fixpt enchant);
     short weaponImageDuration(fixpt enchant);
-    short armorReprisalPercent(fixpt enchant);
+    short armorLacerationPercent(fixpt enchant);
     short armorAbsorptionMax(fixpt enchant);
     short armorImageCount(fixpt enchant);
     short reflectionChance(fixpt enchant);
