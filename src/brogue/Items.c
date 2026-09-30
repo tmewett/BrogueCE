@@ -2163,7 +2163,9 @@ void itemDetails(char *buf, item *theItem) {
                     if ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) {
                         new = theItem->armor;
                         new += 10 * netEnchant(theItem) / FP_FACTOR;
-                        new += ((10 * netEnchant(theItem)) * (rogue.armorsmithBonus / 100)) / FP_FACTOR; // a_armorsmith bonus, if any
+                        if (theItem->enchant1 > 0 && theItem->enchant3 == A_ARMORSMITH) {
+                            new += (10 * theItem->enchant1) / 2; // armorsmith bonus, if any
+                        }
                         new /= 10;
                     } else {
                         new = armorValueIfUnenchanted(theItem);
@@ -2375,7 +2377,7 @@ void itemDetails(char *buf, item *theItem) {
                                     (theItem->enchant1));
                             break;
                         case A_ARMORSMITH:
-                            sprintf(buf2, "It has a high base armor rating. It has a bonus to armor equal to 50%% of its net positive enchantment level. ");
+                            sprintf(buf2, "It has a high base armor rating. It has a bonus to armor equal to 50%% of its raw positive enchantment level. ");
                             break;
                         case A_ABSORPTION:
                             if (enchant > 0) {
@@ -7784,9 +7786,10 @@ void recalculateEquipmentBonuses() {
 
     if (rogue.armor) {
         theItem = rogue.armor;
+        fixpt rawEnchant = theItem->enchant1 * FP_FACTOR;
         enchant = netEnchant(theItem);
-        if (enchant > 0) {
-            enchant += (enchant * rogue.armorsmithBonus) / 100;
+        if (theItem->enchant1 > 0) {
+            enchant += (rawEnchant * rogue.armorsmithBonus) / 100;
         }
         enchant -= player.status[STATUS_DONNING] * FP_FACTOR;
         player.info.defense = (theItem->armor * FP_FACTOR + enchant * 10) / FP_FACTOR;
@@ -7997,7 +8000,9 @@ void updateArmorIntrinsicBonuses() {
                 }
                 break;
             case A_ARMORSMITH:
-                rogue.armorsmithBonus = 50; // percentage
+                if (rogue.armor->enchant1 > 0) {
+                    rogue.armorsmithBonus = 50; // percentage
+                }
                 break;
             default:
                 break;
