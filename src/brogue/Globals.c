@@ -1812,7 +1812,6 @@ const statusEffect statusEffectCatalog[NUMBER_OF_STATUS_EFFECTS] = {
     {"",                false, 0}, // STATUS_NUTRITION,
     {"",                false, 0}, // STATUS_ENTERS_LEVEL_IN,
     {"",                false, 0}, // STATUS_ENRAGED,
-    {"Frightened",      true,  0}, // STATUS_MAGICAL_FEAR
     {"Entranced",       true,  0}, // STATUS_ENTRANCED
     {"Darkened",        true,  0}, // STATUS_DARKNESS
     {"Lifespan",        false, 0}, // STATUS_LIFESPAN_REMAINING
