@@ -1,0 +1,1 @@
+Fixed explosive terrain being able to hit you again a turn too early: after an explosion you are now reliably immune for the full five turns.
