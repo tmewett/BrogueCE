@@ -176,15 +176,62 @@ boolean monsterRevealed(creature *monst) {
     return false;
 }
 
+// #831: true if `to` is reachable from `from` through a contiguous, 8-connected region of deep
+// water. A submerged observer should only make out submerged monsters sharing its own body of
+// water; without this, an observer submerged in any pool revealed every submerged monster on the
+// level (and, with telepathy, learned each one's identity), even across disconnected pools.
+// Iterative flood fill (explicit queue, not recursion) so an arbitrarily large water body can't
+// blow the stack. Only ever called when the observer is already standing in deep water, so the
+// common (non-swimming) case never reaches it.
+static boolean inSameDeepWaterBody(pos from, pos to) {
+    if (!cellHasTerrainFlag(from, T_IS_DEEP_WATER) || !cellHasTerrainFlag(to, T_IS_DEEP_WATER)) {
+        return false;
+    }
+    if (from.x == to.x && from.y == to.y) {
+        return true;
+    }
+
+    char visited[DCOLS][DROWS];
+    pos queue[DCOLS * DROWS];
+    short head = 0, tail = 0;
+
+    memset(visited, 0, sizeof(visited));
+    queue[tail++] = from;
+    visited[from.x][from.y] = true;
+
+    while (head < tail) {
+        const pos cur = queue[head++];
+        for (short dir = 0; dir < DIRECTION_COUNT; dir++) {
+            const short nx = cur.x + nbDirs[dir][0];
+            const short ny = cur.y + nbDirs[dir][1];
+            if (!coordinatesAreInMap(nx, ny)
+                || visited[nx][ny]
+                || !cellHasTerrainFlag((pos){ nx, ny }, T_IS_DEEP_WATER)) {
+
+                continue;
+            }
+            if (nx == to.x && ny == to.y) {
+                return true;
+            }
+            visited[nx][ny] = true;
+            queue[tail++] = (pos){ nx, ny };
+        }
+    }
+    return false;
+}
+
 boolean monsterHiddenBySubmersion(const creature *monst, const creature *observer) {
     if (monst->bookkeepingFlags & MB_SUBMERGED) {
         if (observer
             && (terrainFlags(observer->loc) & T_IS_DEEP_WATER)
-            && !observer->status[STATUS_LEVITATING]) {
-            // observer is in deep water, so target is not hidden by water
+            && !observer->status[STATUS_LEVITATING]
+            // #831: and only if the observer shares the same connected body of deep water as the
+            // submerged target (see inSameDeepWaterBody).
+            && inSameDeepWaterBody(observer->loc, monst->loc)) {
+            // observer is in the same body of deep water, so target is not hidden by water
             return false;
         } else {
-            // submerged and the observer is not in deep water.
+            // submerged, and the observer is not in the same body of deep water.
             return true;
         }
     }
