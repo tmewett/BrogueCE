@@ -1,0 +1,1 @@
+Fixed monsters occasionally starting to hunt you from just outside your stealth range when you step into darkness, because they judged awareness against your previous, brighter position's range.
