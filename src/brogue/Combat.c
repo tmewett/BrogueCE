@@ -950,7 +950,7 @@ void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *
     }
 }
 
-void applyArmorIntrinsicEffect(char returnString[DCOLS], creature *attacker, short *damage, boolean melee) {
+void applyArmorPassiveEffect(char returnString[DCOLS], creature *attacker, short *damage, boolean melee) {
     char armorName[DCOLS], attackerName[DCOLS];
     short newDamage;
     fixpt enchant;
@@ -977,10 +977,10 @@ void applyArmorIntrinsicEffect(char returnString[DCOLS], creature *attacker, sho
                 *damage = 0;
             }
             break;
-        case A_LACERATION:
+        case A_MANGLE:
             if (melee && !(attacker->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
                 if (enchant > 0) {
-                    newDamage = max(1, armorLacerationPercent(enchant) * (*damage) / 100);
+                    newDamage = max(1, armorManglePercent(enchant) * (*damage) / 100);
                     if (inflictDamage(&player, attacker, newDamage, &blue, true)) {
                         if (canSeeMonster(attacker)) {
                             sprintf(returnString, "your %s pulses and %s drops dead!", armorName, attackerName);
@@ -1031,7 +1031,7 @@ void processStaggerHit(const creature *attacker, creature *defender) {
 // returns whether the attack hit
 boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
     short damage, specialDamage, poisonDamage;
-    char buf[COLS*2], buf2[COLS*2], attackerName[COLS], defenderName[COLS], verb[DCOLS], explicationClause[DCOLS] = "", armorRunicString[DCOLS*3], armorIntrinsicString[DCOLS*3];
+    char buf[COLS*2], buf2[COLS*2], attackerName[COLS], defenderName[COLS], verb[DCOLS], explicationClause[DCOLS] = "", armorRunicString[DCOLS*3], armorPassiveEffectString[DCOLS*3];
     boolean sneakAttack, defenderWasAsleep, defenderWasParalyzed, degradesAttackerWeapon, sightUnseen;
 
     // Check paladin feat before creatureState is changed
@@ -1049,7 +1049,7 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
     }
 
     armorRunicString[0] = '\0';
-    armorIntrinsicString[0] = '\0';
+    armorPassiveEffectString[0] = '\0';
 
     poisonDamage = 0;
 
@@ -1134,8 +1134,8 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
         }
 
         if (defender == &player && rogue.armor 
-            && (rogue.armor->enchant3 == A_ABSORPTION)) { // laceration triggers on a miss instead
-                applyArmorIntrinsicEffect(armorIntrinsicString, attacker, &damage, true);
+            && (rogue.armor->enchant3 == A_ABSORPTION)) { // mangle triggers on a miss instead
+                applyArmorPassiveEffect(armorPassiveEffectString, attacker, &damage, true);
         }
         if (defender == &player && rogue.armor && (rogue.armor->flags & ITEM_RUNIC) 
             && (rogue.armor->enchant2 != A_MULTIPLICITY)) { // multiplicity triggers on a miss instead
@@ -1239,8 +1239,8 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
                     strengthCheck(rogue.armor, true);
                 }
             }
-            if (armorIntrinsicString[0]) {
-                message(armorIntrinsicString, 0);
+            if (armorPassiveEffectString[0]) {
+                message(armorPassiveEffectString, 0);
             }
         }
 
@@ -1292,10 +1292,10 @@ boolean attack(creature *attacker, creature *defender, boolean lungeAttack) {
             }
         }
         // triggering on a miss makes these two work better wrt armor enchanting
-        if (defender == &player && rogue.armor && (rogue.armor->enchant3 == A_LACERATION)) {
-                applyArmorIntrinsicEffect(armorIntrinsicString, attacker, &damage, true);
-                if (armorIntrinsicString[0]) {
-                    message(armorIntrinsicString, 0);
+        if (defender == &player && rogue.armor && (rogue.armor->enchant3 == A_MANGLE)) {
+                applyArmorPassiveEffect(armorPassiveEffectString, attacker, &damage, true);
+                if (armorPassiveEffectString[0]) {
+                    message(armorPassiveEffectString, 0);
                 }
         }
         if (defender == &player && rogue.armor 
