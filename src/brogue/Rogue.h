@@ -847,25 +847,23 @@ enum weaponEnchants {
 };
 
 enum armorKind {
-    HIDE_ARMOR,
     LEATHER_ARMOR,
-    RING_MAIL,
+    HIDE_ARMOR,
     SCALE_MAIL,
     PADDED_ARMOR,
     SPIKED_ARMOR,
     MIRROR_ARMOR,
-    PLATE_ARMOR,
     NUMBER_ARMOR_KINDS
 };
 
-enum armorIntrinsics {
+enum armorPassiveEffects {
     A_PLAIN,
     A_STEALTH,
     A_ARMORSMITH,
     A_ABSORPTION,
-    A_LACERATION,
+    A_MANGLE,
     A_REFLECTION,
-    NUMBER_ARMOR_INTRINSIC_KINDS,
+    NUMBER_ARMOR_PASSIVE_EFFECT_KINDS,
 };
 
 enum armorEnchants {
@@ -1135,6 +1133,8 @@ enum tileFlags {
 #define FAINT_THRESHOLD                     50
 #define MAX_EXP_LEVEL                       20
 #define MAX_EXP                             100000000L
+#define ARMORSMITH_BONUS_PERCENT            50
+#define ARMORSMITH_BONUS_DEFENSE            20
 
 #define XPXP_NEEDED_FOR_TELEPATHIC_BOND     1400 // XPXP required to enable telepathic awareness with the ally
 
@@ -2553,7 +2553,8 @@ typedef struct playerCharacter {
 
     // armor bonuses:
     short stealthBonus;
-    short armorsmithBonus;              // expressed as a percentage
+    short armorsmithBonusPercent;
+    short armorsmithBonusDefense;
     
     // feats:
     boolean *featRecord;
@@ -3259,7 +3260,7 @@ extern "C" {
     fixpt netEnchant(item *theItem);
     short hitProbability(creature *attacker, creature *defender);
     boolean attackHit(creature *attacker, creature *defender);
-    void applyArmorIntrinsicEffect(char returnString[DCOLS], creature *attacker, short *damage, boolean melee);
+    void applyArmorPassiveEffect(char returnString[DCOLS], creature *attacker, short *damage, boolean melee);
     void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *damage, boolean melee);
     void processStaggerHit(creature *attacker, creature *defender);
     boolean attack(creature *attacker, creature *defender, boolean lungeAttack);
@@ -3405,7 +3406,7 @@ extern "C" {
     void updateIdentifiableItem(item *theItem);
     void updateIdentifiableItems(void);
     boolean readScroll(item *theItem);
-    void updateArmorIntrinsicBonuses(void);
+    void updateArmorPassiveEffectBonuses(void);
     void updateRingBonuses(void);
     void updatePlayerRegenerationDelay(void);
     boolean removeItemFromChain(item *theItem, item *theChain);
@@ -3507,7 +3508,7 @@ extern "C" {
     short weaponSlowDuration(fixpt enchant);
     short weaponImageCount(fixpt enchant);
     short weaponImageDuration(fixpt enchant);
-    short armorLacerationPercent(fixpt enchant);
+    short armorManglePercent(fixpt enchant);
     short armorAbsorptionMax(fixpt enchant);
     short armorImageCount(fixpt enchant);
     short reflectionChance(fixpt enchant);
