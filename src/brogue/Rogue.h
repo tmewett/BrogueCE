@@ -3353,6 +3353,7 @@ extern "C" {
     short floodFillGrid(short **grid, short x, short y, short eligibleValueMin, short eligibleValueMax, short fillValue);
     void drawRectangleOnGrid(short **grid, short x, short y, short width, short height, short value);
     void drawCircleOnGrid(short **grid, short x, short y, short radius, short value);
+    boolean withinBlastRadius(pos center, pos loc, short radius);
     void getTerrainGrid(short **grid, short value, unsigned long terrainFlags, unsigned long mapFlags);
     void getTMGrid(short **grid, short value, unsigned long TMflags);
     short validLocationCount(short **grid, short validValue);
