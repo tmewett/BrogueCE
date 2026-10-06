@@ -1,0 +1,1 @@
+Fixed missing status-ended messages when negation immediately removes certain player status effects.
