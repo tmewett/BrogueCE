@@ -2492,6 +2492,13 @@ void negateCreatureStatusEffects(creature *monst) {
                 updateMinersLightRadius();
                 updateVision(true);
             }
+            if (monst == &player
+                && statusEffectCatalog[theStatus].playerNegatedValue == 0) {
+                const char *statusEndedMessage = playerStatusEndedMessage(theStatus);
+                if (statusEndedMessage) {
+                    message(statusEndedMessage, 0);
+                }
+            }
         }
     }
 }
