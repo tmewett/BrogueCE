@@ -1243,13 +1243,11 @@ void mainBrogueJunction(void) {
                             rogue.playbackPaused = false;
                             pausePlayback();
                         }
-#ifdef ENABLE_PLAYBACK_SWITCH
-                        // We are coming from the end of a recording the user has taken over.
-                        // No more event checks, that has already been handled
+                        // Once a recording ends, we need to stop handling events.
                         if (rogue.gameHasEnded) {
                             break;
                         }
-#endif
+
                         rogue.RNG = RNG_COSMETIC; // dancing terrain colors can't influence recordings
                         rogue.playbackBetweenTurns = true;
                         nextBrogueEvent(&theEvent, false, true, false);
