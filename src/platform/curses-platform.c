@@ -6,7 +6,7 @@
 #include "platform.h"
 #include "term.h"
 
-static void gameLoop() {
+static void gameLoop(void) {
     signal(SIGINT, SIG_DFL); // keep SDL from overriding the default ^C handler when it's linked
 
     if (!Term.start()) {
@@ -107,7 +107,7 @@ static int rewriteKey(int key, boolean text) {
 
 #define PAUSE_BETWEEN_EVENT_POLLING     34//17
 
-static uint64_t getTime() {
+static uint64_t getTime(void) {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return (uint64_t)tv.tv_sec * 1000 + tv.tv_usec / 1000;
@@ -118,11 +118,14 @@ static long lastDelayTime = 0;
 // Like SDL_Delay, but reduces the delay if time has passed since the last delay
 static void _delayUpTo(short ms) {
     long curTime = getTime();
-    long timeDiff = curTime - lastDelayTime;
-    ms -= timeDiff;
+    // lastDelayTime == 0 means this is the first call, so treat it as
+    // "no time elapsed". Compute in long: subtracting the elapsed time
+    // into the short `ms` overflows on the first call.
+    long timeDiff = (lastDelayTime == 0) ? 0 : (curTime - lastDelayTime);
+    long remaining = (long)ms - timeDiff;
 
-    if (ms > 0) {
-        Term.wait(ms);
+    if (remaining > 0) {
+        Term.wait((int)remaining);
     } // else delaying further would go past the time we want to delay until
 
     lastDelayTime = getTime();

@@ -31,6 +31,14 @@
 #include <time.h>
 #include "PlatformDefines.h"
 
+// These flags aren't supported by Clang (only by GCC), so they have to be
+// disabled here instead of in the Makefile.
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
+#pragma GCC diagnostic ignored "-Wstringop-overread"
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+
 // unicode: comment this line to revert to ASCII
 #define USE_UNICODE
 
@@ -48,7 +56,6 @@
 
 #define WIZARD_MODE                     (rogue.mode == GAME_MODE_WIZARD)
 
-#define DEBUG                           if (WIZARD_MODE)
 #define MONSTERS_ENABLED                (!WIZARD_MODE || 1) // Quest room monsters can be generated regardless.
 #define ITEMS_ENABLED                   (!WIZARD_MODE || 1)
 
@@ -78,14 +85,16 @@
 // set to false to disable references to keystrokes (e.g. for a tablet port)
 #define KEYBOARD_LABELS true
 
-//#define BROGUE_ASSERTS        // introduces several assert()s -- useful to find certain array overruns and other bugs
 //#define AUDIT_RNG             // VERY slow, but sometimes necessary to debug out-of-sync recording errors
 //#define GENERATE_FONT_FILES   // Displays font in grid upon startup, which can be screen-captured into font files for PC.
 
-#ifdef BROGUE_ASSERTS
+#ifdef DEBUG_ENABLED
+#define DEBUG                   if (true)
 #include <assert.h>
+// introduces several assert()s -- useful to find certain array overruns and other bugs
 #define brogueAssert(x)         assert(x)
 #else
+#define DEBUG                   if (false)
 #define brogueAssert(x)
 #endif
 
@@ -3235,12 +3244,12 @@ extern "C" {
     short distanceBetween(pos loc1, pos loc2);
     void alertMonster(creature *monst);
     void wakeUp(creature *monst);
-    boolean monsterRevealed(creature *monst);
+    boolean monsterRevealed(const creature *monst);
     boolean monsterHiddenBySubmersion(const creature *monst, const creature *observer);
     boolean monsterIsHidden(const creature *monst, const creature *observer);
-    boolean canSeeMonster(creature *monst);
-    boolean canDirectlySeeMonster(creature *monst);
-    void monsterName(char *buf, creature *monst, boolean includeArticle);
+    boolean canSeeMonster(const creature *monst);
+    boolean canDirectlySeeMonster(const creature *monst);
+    void monsterName(char *buf, const creature *monst, boolean includeArticle);
     boolean monsterIsInClass(const creature *monst, const short monsterClass);
     boolean chooseTarget(pos *returnLoc, short maxDistance, enum autoTargetMode targetingMode, const item *theItem);
     fixpt strengthModifier(item *theItem);
@@ -3255,7 +3264,7 @@ extern "C" {
                           short damage, const color *flashColor, boolean ignoresProtectionShield);
     void addPoison(creature *monst, short totalDamage, short concentrationIncrement);
     void killCreature(creature *decedent, boolean administrativeDeath);
-    void buildHitList(const creature **hitList, const creature *attacker, creature *defender, const boolean sweep);
+    void buildHitList(creature **hitList, const creature *attacker, creature *defender, const boolean sweep);
     void addScentToCell(short x, short y, short distance);
     void populateItems(pos upstairs);
     item *placeItemAt(item *theItem, pos dest);
@@ -3278,7 +3287,7 @@ extern "C" {
     short reflectBolt(short targetX, short targetY, pos listOfCoordinates[], short kinkCell, boolean retracePath);
     void checkForMissingKeys(short x, short y);
     enum boltEffects boltEffectForItem(item *theItem);
-    enum boltType boltForItem(item *theItem);
+    enum boltType boltForItem(const item *theItem);
     boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, boolean reverseBoltDir);
     boolean nextTargetAfter(const item *theItem,
                             pos *returnLoc,
@@ -3300,9 +3309,9 @@ extern "C" {
     char nextAvailableInventoryCharacter(void);
     void checkForDisenchantment(item *theItem);
     void updateFloorItems(void);
-    void itemKindName(item *theItem, char *kindName);
-    void itemRunicName(item *theItem, char *runicName);
-    void itemName(item *theItem, char *root, boolean includeDetails, boolean includeArticle, const color *baseColor);
+    void itemKindName(const item *theItem, char *kindName);
+    void itemRunicName(const item *theItem, char *runicName);
+    void itemName(const item *theItem, char *root, boolean includeDetails, boolean includeArticle, const color *baseColor);
     int itemKindCount(enum itemCategory category, int magicPolarity);
     char displayInventory(unsigned short categoryMask,
                           unsigned long requiredFlags,
@@ -3405,7 +3414,7 @@ extern "C" {
     item *itemOfPackLetter(char letter);
     boolean unequipItem(item *theItem, boolean force);
     short magicCharDiscoverySuffix(short category, short kind);
-    int itemMagicPolarity(item *theItem);
+    int itemMagicPolarity(const item *theItem);
     item *itemAtLoc(pos loc);
     item *dropItem(item *theItem);
     itemTable *tableForItemCategory(enum itemCategory theCat);
@@ -3470,7 +3479,7 @@ extern "C" {
     void parseFile(void);
     void RNGLog(char *message);
 
-    short wandDominate(creature *monst);
+    short wandDominate(const creature *monst);
     short staffDamageLow(fixpt enchant);
     short staffDamageHigh(fixpt enchant);
     short staffDamage(fixpt enchant);

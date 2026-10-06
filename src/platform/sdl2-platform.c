@@ -243,7 +243,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
 }
 
 
-static void _gameLoop() {
+static void _gameLoop(void) {
 #ifdef SDL_PATHS
     char *path = SDL_GetBasePath();
     if (path) {
@@ -410,7 +410,7 @@ static void _remap(const char *from, const char *to) {
 /*
  * Take screenshot in current working directory (ScreenshotN.png)
  */
-static boolean _takeScreenshot() {
+static boolean _takeScreenshot(void) {
     SDL_Surface *screenshot = captureScreen();
     if (!screenshot) return false;
 

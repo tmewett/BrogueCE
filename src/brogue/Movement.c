@@ -138,7 +138,7 @@ void describedItemName(const item *theItem, char *description, int maxLength) {
     }
 }
 
-void describeLocation(char *buf, short x, short y) {
+void describeLocation(char buf[DCOLS], short x, short y) {
     creature *monst;
     item *theItem, *magicItem;
     boolean standsInTerrain;
@@ -147,10 +147,10 @@ void describeLocation(char *buf, short x, short y) {
     boolean monsterDormant;
     boolean monsterIsPlayer = false;
 
-    char subject[COLS * 3];
+    char subject[COLS * 3] = "";
     char verb[COLS * 3];
     char preposition[COLS * 3];
-    char object[COLS * 3];
+    char object[COLS * 3] = "";
     char itemLocation[COLS * 3] = "";
     char adjective[COLS * 3];
 
@@ -355,9 +355,18 @@ void describeLocation(char *buf, short x, short y) {
                 strcat(itemLocation, standsInTerrain ? " in " : " on ");
                 strcat(itemLocation, tileText(x, y));
             }
-            sprintf(buf, "%s %s %s %s%s.", subject, verb, preposition, object, itemLocation);
-            describedItemName(theItem, object, DCOLS - strlen(buf));
 
+            // This call is only needed for the `strlen()` call just below here
+            sprintf(buf, "%s %s%s %s%s.", subject, verb, preposition, object, itemLocation);
+            describedItemName(theItem, object, DCOLS - strlen(buf));
+            // This `sprintf` call is similar to the one at the end of this function, but that one
+            // adds an extra space; to avoid the extra space in messages like "X is standing  over Y",
+            // we have to use a slightly different version here. A space is added to the end of the
+            // verb (if not already present) a few lines above here, so we shouldn't add a space
+            // after the verb in this `sprintf` call.
+            sprintf(buf, "%s %s%s %s%s.", subject, verb, preposition, object, itemLocation);
+            restoreRNG;
+            return;
         } else {
             if (!prepositionLocked) {
                 strcpy(preposition, subjectMoving ? (standsInTerrain ? "through" : "across")
@@ -384,6 +393,7 @@ void describeLocation(char *buf, short x, short y) {
             strcpy(preposition, standsInTerrain ? (subjectMoving ? "through" : "in")
                    : (subjectMoving ? "across" : "on"));
 
+            // This call is only needed for the `strlen()` call just below here
             sprintf(buf, "%s %s %s %s%s.", subject, verb, preposition, object, itemLocation);
             describedItemName(theItem, subject, DCOLS - strlen(buf));
 
@@ -555,7 +565,7 @@ boolean freeCaptivesEmbeddedAt(short x, short y) {
 /// @brief Ask the player for confirmation before attacking an acidic monster
 /// @param hitList the creature(s) getting attacked
 /// @return true to abort the attack
-static boolean abortAttackAgainstAcidicTarget(const creature *hitList[8]) {
+static boolean abortAttackAgainstAcidicTarget(creature *hitList[8]) {
     short i;
     char monstName[COLS], weaponName[COLS];
     char buf[COLS*3];
@@ -588,7 +598,7 @@ static boolean abortAttackAgainstAcidicTarget(const creature *hitList[8]) {
 /// @brief Ask the player for confirmation before attacking a discordant ally
 /// @param hitList the creature(s) getting attacked
 /// @return true to abort the attack
-static boolean abortAttackAgainstDiscordantAlly(const creature *hitList[8]) {
+static boolean abortAttackAgainstDiscordantAlly(creature *hitList[8]) {
 
     for (int i=0; i<8; i++) {
         if (hitList[i]
@@ -614,7 +624,7 @@ static boolean abortAttackAgainstDiscordantAlly(const creature *hitList[8]) {
 /// hallucinating (but not telepathic).
 /// @param hitList the creature(s) getting attacked
 /// @return true to abort the attack
-static boolean abortAttack(const creature *hitList[8]) {
+static boolean abortAttack(creature *hitList[8]) {
 
     // too bad so sad if you're confused or hallucinating (but not telepathic)
     if (player.status[STATUS_CONFUSED]
@@ -638,7 +648,7 @@ static boolean abortAttack(const creature *hitList[8]) {
 boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *aborted) {
     bolt theBolt;
     creature *defender;
-    const creature *hitList[8] = {0};
+    creature *hitList[8] = {0};
 
     const char boltChar[DIRECTION_COUNT] = "||~~\\//\\";
 
@@ -694,7 +704,7 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
 // (in which case the player/monster should move instead).
 boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *aborted) {
     creature *defender;
-    const creature *hitList[8] = {0};
+    creature *hitList[8] = {0};
     short range = 2, i = 0, h = 0;
     boolean proceed = false, visualEffect = false;
 
@@ -798,7 +808,7 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
     return false;
 }
 
-static void buildFlailHitList(const short x, const short y, const short newX, const short newY, const creature *hitList[16]) {
+static void buildFlailHitList(const short x, const short y, const short newX, const short newY, creature *hitList[16]) {
     short mx, my;
     short i = 0;
 
@@ -846,7 +856,7 @@ boolean playerMoves(short direction) {
     short newX, newY, newestX, newestY;
     boolean playerMoved = false, specialAttackAborted = false, anyAttackHit = false;
     creature *defender = NULL, *tempMonst = NULL;
-    const creature *hitList[16] = {NULL};
+    creature *hitList[16] = {NULL};
     char monstName[COLS];
     char buf[COLS*3];
     const int directionKeys[8] = {UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, UPLEFT_KEY, DOWNLEFT_KEY, UPRIGHT_KEY, DOWNRIGHT_KEY};
@@ -1493,7 +1503,7 @@ short nextStep(short **distanceMap, pos target, creature *monst, boolean preferD
     creature *blocker;
     boolean blocked;
 
-    brogueAssert(coordinatesAreInMap(x, y));
+    brogueAssert(coordinatesAreInMap(target.x, target.y));
 
     bestScore = 0;
     bestDir = NO_DIRECTION;
@@ -1869,7 +1879,7 @@ void populateCreatureCostMap(short **costMap, creature *monst) {
     }
 }
 
-enum directions adjacentFightingDir() {
+enum directions adjacentFightingDir(void) {
     if (cellHasTerrainFlag(player.loc, T_OBSTRUCTS_PASSABILITY)) {
         return NO_DIRECTION;
     }

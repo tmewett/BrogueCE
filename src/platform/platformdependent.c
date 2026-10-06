@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <inttypes.h>
 
 #include "platform.h"
 #include "GlobalsBase.h"
@@ -228,10 +229,10 @@ void plotChar(enum displayGlyph inputChar,
     currentConsole.plotChar(inputChar, xLoc, yLoc, foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue);
 }
 
-boolean shiftKeyIsDown() {
+boolean shiftKeyIsDown(void) {
     return currentConsole.modifierHeld(0);
 }
-boolean controlKeyIsDown() {
+boolean controlKeyIsDown(void) {
     return currentConsole.modifierHeld(1);
 }
 
@@ -249,7 +250,7 @@ void notifyEvent(short eventId, int data1, int data2, const char *str1, const ch
     }
 }
 
-boolean takeScreenshot() {
+boolean takeScreenshot(void) {
     if (currentConsole.takeScreenshot) {
         return currentConsole.takeScreenshot();
     } else {
@@ -266,7 +267,7 @@ enum graphicsModes setGraphicsMode(enum graphicsModes mode) {
 }
 
 // creates an empty high scores file
-static void initScores() {
+static void initScores(void) {
     short i;
     FILE *scoresFile;
     char highScoresFilename[BROGUE_FILENAME_MAX];
@@ -282,7 +283,7 @@ static void initScores() {
 
 // sorts the entries of the scoreBuffer global variable by score in descending order;
 // returns the sorted line number of the most recent entry
-static short sortScoreBuffer() {
+static short sortScoreBuffer(void) {
     short i, j, highestUnsortedLine, mostRecentSortedLine = 0;
     long highestUnsortedScore, mostRecentDate;
     brogueScoreEntry sortedScoreBuffer[HIGH_SCORES_COUNT];
@@ -326,7 +327,7 @@ void setHighScoresFilename(char *buffer, int bufferMaxLength) {
 
 // loads the ([V]ariantName)HighScores.txt file into the scoreBuffer global variable
 // score file format is: score, tab, date in seconds, tab, description, newline.
-static short loadScoreBuffer() {
+static short loadScoreBuffer(void) {
     short i;
     FILE *scoresFile;
     time_t rawtime;
@@ -360,7 +361,7 @@ static short loadScoreBuffer() {
     return sortScoreBuffer();
 }
 
-void loadKeymap() {
+void loadKeymap(void) {
     int i;
     FILE *f;
     char buffer[512];
@@ -401,7 +402,7 @@ void loadKeymap() {
 // thus overwriting whatever is already there.
 // The numerical version of the date is what gets saved; the "mm/dd/yy" version is ignored.
 // Does NOT do any sorting.
-static void saveScoreBuffer() {
+static void saveScoreBuffer(void) {
     short i;
     FILE *scoresFile;
     char highScoresFilename[BROGUE_FILENAME_MAX];
@@ -418,7 +419,7 @@ static void saveScoreBuffer() {
     fclose(scoresFile);
 }
 
-void dumpScores() {
+void dumpScores(void) {
     int i;
 
     rogueHighScoresEntry list[HIGH_SCORES_COUNT];
@@ -492,7 +493,7 @@ void saveRunHistory(char *result, char *killedBy, int score, int lumenstones) {
     setRunHistoryFilename(runHistoryFilename, BROGUE_FILENAME_MAX);
     runHistoryFile = fopen(runHistoryFilename, "a"); // append. create if not found.
 
-    fprintf(runHistoryFile, "%llu\t%li\t%s\t%s\t%i\t%i\t%i\t%i\t%i\n", rogue.seed, (long) time(NULL), result, killedBy, 
+    fprintf(runHistoryFile, "%" PRIu64 "\t%li\t%s\t%s\t%i\t%i\t%i\t%i\t%i\n", rogue.seed, (long) time(NULL), result, killedBy, 
             score, (int) rogue.gold, lumenstones, (int) rogue.deepestLevel, (int) rogue.playerTurnNumber);
     fclose(runHistoryFile);
 }
@@ -531,7 +532,7 @@ rogueRun* loadRunHistory(void) {
         memset(run, '\0', sizeof(rogueRun));
         run->nextRun = NULL;
 
-        int vals = sscanf(line, "%llu\t%li\t%s\t%[^\t]\t%i\t%i\t%i\t%i\t%i\n", &run->seed, &run->dateNumber,
+        int vals = sscanf(line, "%" PRIu64 "\t%li\t%s\t%[^\t]\t%i\t%i\t%i\t%i\t%i\n", &run->seed, &run->dateNumber,
                    run->result, run->killedBy, &run->score, &run->gold, &run->lumenstones,
                    &run->deepestLevel, &run->turns);
 
@@ -563,7 +564,7 @@ struct filelist {
     int nextname, maxname;
 };
 
-static struct filelist *newFilelist() {
+static struct filelist *newFilelist(void) {
     struct filelist *list = malloc(sizeof(*list));
 
     list->nfiles = 0;

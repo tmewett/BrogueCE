@@ -27,7 +27,7 @@
 
 
 // mallocing two-dimensional arrays! dun dun DUN!
-short **allocGrid() {
+short **allocGrid(void) {
     short i;
     short **array = malloc(DCOLS * sizeof(short *));
 
