@@ -344,6 +344,7 @@ static int fontIndex(enum displayGlyph glyph) {
     // These are the only non-ASCII glyphs which always come from the font sheet
     if (glyph == G_UP_ARROW) return 0x90;
     if (glyph == G_DOWN_ARROW) return 0x91;
+    if (glyph == G_LEFT_TRIANGLE) return 0x8e;
 
     if (glyph < 128) {
         // ASCII characters map directly
