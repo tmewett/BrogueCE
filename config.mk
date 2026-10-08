@@ -7,10 +7,10 @@ SYSTEM := LINUXLIKE
 # Include terminal support. Requires ncurses
 TERMINAL := NO
 
-# Include graphical support. Requires SDL2 and SDL2_image
+# Include graphical support. Requires SDL3 and SDL3_image
+#     brew install sdl3 sdl3_image pkg-config
 GRAPHICS := YES
-# Path to sdl2-config script
-SDL_CONFIG := sdl2-config
+SDL_CONFIG := pkg-config sdl3
 
 # Select web brogue mode. Requires POSIX system.
 WEBBROGUE := NO
