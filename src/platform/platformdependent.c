@@ -274,6 +274,9 @@ static void initScores() {
     setHighScoresFilename(highScoresFilename, BROGUE_FILENAME_MAX);
 
     scoresFile = fopen(highScoresFilename, "w");
+    if (scoresFile == NULL) {
+        return;
+    }
     for (i=0; i<HIGH_SCORES_COUNT; i++) {
         fprintf(scoresFile, "%li\t%li\t%s", (long) 0, (long) 0, "(empty entry)\n");
     }
@@ -341,15 +344,24 @@ static short loadScoreBuffer() {
         initScores();
         scoresFile = fopen(highScoresFilename, "r");
     }
+    if (scoresFile == NULL) {
+        return 0;
+    }
 
     for (i=0; i<HIGH_SCORES_COUNT; i++) {
         // load score and also the date in seconds
-        fscanf(scoresFile, "%li\t%li\t", &(scoreBuffer[i].score), &(scoreBuffer[i].dateNumber));
+        if (fscanf(scoresFile, "%li\t%li\t", &(scoreBuffer[i].score), &(scoreBuffer[i].dateNumber)) != 2) {
+            scoreBuffer[i].score = 0;
+            scoreBuffer[i].dateNumber = 0;
+        }
 
         // load description
-        fgets(scoreBuffer[i].description, COLS, scoresFile);
-        // strip the newline off the end
-        scoreBuffer[i].description[strlen(scoreBuffer[i].description) - 1] = '\0';
+        if (fgets(scoreBuffer[i].description, COLS, scoresFile) == NULL) {
+            scoreBuffer[i].description[0] = '\0';
+        } else if (scoreBuffer[i].description[0] != '\0') {
+            // strip the newline off the end
+            scoreBuffer[i].description[strlen(scoreBuffer[i].description) - 1] = '\0';
+        }
 
         // convert date to DATE_FORMAT
         rawtime = (time_t) scoreBuffer[i].dateNumber;
@@ -409,6 +421,9 @@ static void saveScoreBuffer() {
     setHighScoresFilename(highScoresFilename, BROGUE_FILENAME_MAX);
 
     scoresFile = fopen(highScoresFilename, "w");
+    if (scoresFile == NULL) {
+        return;
+    }
 
     for (i=0; i<HIGH_SCORES_COUNT; i++) {
         // save the entry
@@ -491,6 +506,9 @@ void saveRunHistory(char *result, char *killedBy, int score, int lumenstones) {
 
     setRunHistoryFilename(runHistoryFilename, BROGUE_FILENAME_MAX);
     runHistoryFile = fopen(runHistoryFilename, "a"); // append. create if not found.
+    if (runHistoryFile == NULL) {
+        return;
+    }
 
     fprintf(runHistoryFile, "%llu\t%li\t%s\t%s\t%i\t%i\t%i\t%i\t%i\n", rogue.seed, (long) time(NULL), result, killedBy, 
             score, (int) rogue.gold, lumenstones, (int) rogue.deepestLevel, (int) rogue.playerTurnNumber);
@@ -503,6 +521,9 @@ void saveResetRun(void) {
 
     setRunHistoryFilename(runHistoryFilename, BROGUE_FILENAME_MAX);
     runHistoryFile = fopen(runHistoryFilename, "a"); // append. create if not found.
+    if (runHistoryFile == NULL) {
+        return;
+    }
 
     fprintf(runHistoryFile, "%i\t%li\t%s\t%s\t%i\t%i\t%i\t%i\t%i\n", 0, (long) time(NULL), "Reset", "-", 0, 0, 0, 0, 0);
     fclose(runHistoryFile);
@@ -519,8 +540,14 @@ rogueRun* loadRunHistory(void) {
 
     if (runHistoryFile == NULL) {
         runHistoryFile = fopen(runHistoryFilename, "w"); // create if not found
+        if (runHistoryFile == NULL) {
+            return NULL;
+        }
         fclose(runHistoryFile);
         runHistoryFile = fopen(runHistoryFilename, "r");
+        if (runHistoryFile == NULL) {
+            return NULL;
+        }
     }
 
     rogueRun *runHistory = NULL;
@@ -528,6 +555,9 @@ rogueRun* loadRunHistory(void) {
     char line[1024]; // maximum line length
     while (fgets(line, sizeof(line), runHistoryFile) != NULL) {
         rogueRun *run = (rogueRun *)malloc(sizeof(rogueRun));
+        if (run == NULL) {
+            break;
+        }
         memset(run, '\0', sizeof(rogueRun));
         run->nextRun = NULL;
 
@@ -565,6 +595,9 @@ struct filelist {
 
 static struct filelist *newFilelist() {
     struct filelist *list = malloc(sizeof(*list));
+    if (list == NULL) {
+        return NULL;
+    }
 
     list->nfiles = 0;
     list->nextname = 0;
@@ -573,6 +606,13 @@ static struct filelist *newFilelist() {
 
     list->files = malloc(sizeof(fileEntry) * list->maxfiles);
     list->names = malloc(list->maxname);
+
+    if (list->files == NULL || list->names == NULL) {
+        free(list->files);
+        free(list->names);
+        free(list);
+        return NULL;
+    }
 
     return list;
 }
@@ -646,6 +686,10 @@ static fileEntry *commitFilelist(struct filelist *list, char **namebuffer) {
 
 fileEntry *listFiles(short *fileCount, char **namebuffer) {
     struct filelist *list = newFilelist();
+    if (list == NULL) {
+        *fileCount = 0;
+        return NULL;
+    }
 
     // windows: FindFirstFile/FindNextFile
     DIR *dp= opendir ("./");

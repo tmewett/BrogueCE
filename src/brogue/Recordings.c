@@ -253,9 +253,14 @@ void fillBufferFromFile() {
     FILE *recordFile;
 
     recordFile = fopen(currentFilePath, "rb");
+    if (recordFile == NULL) {
+        bytesInPlaybackBuffer = 0;
+        locationInRecordingBuffer = 0;
+        return;
+    }
     fseek(recordFile, positionInPlaybackFile, SEEK_SET);
 
-    fread((void *) inputRecordBuffer, 1, INPUT_RECORD_BUFFER, recordFile);
+    bytesInPlaybackBuffer = fread((void *) inputRecordBuffer, 1, INPUT_RECORD_BUFFER, recordFile);
 
     positionInPlaybackFile = ftell(recordFile);
     fclose(recordFile);
@@ -265,7 +270,8 @@ void fillBufferFromFile() {
 
 static unsigned char recallChar() {
     unsigned char c;
-    if (recordingLocation > lengthOfPlaybackFile) {
+    if (recordingLocation >= lengthOfPlaybackFile
+        || locationInRecordingBuffer >= bytesInPlaybackBuffer) {
         return END_OF_RECORDING;
     }
     c = inputRecordBuffer[locationInRecordingBuffer++];
@@ -360,8 +366,13 @@ void recallEvent(rogueEvent *event) {
                 event->param1 = recallChar();
                 event->param2 = recallChar();
                 break;
-            case RNG_CHECK:
             case END_OF_RECORDING:
+                message("Recording ended prematurely.", REQUIRE_ACKNOWLEDGMENT);
+                printf("Recording ended prematurely at location %li! Turn number %li.\n", recordingLocation, rogue.playerTurnNumber);
+                tryAgain = true;
+                playbackPanic();
+                break;
+            case RNG_CHECK:
             case EVENT_ERROR:
             default:
                 message("Unrecognized event type in playback.", REQUIRE_ACKNOWLEDGMENT);
@@ -478,6 +489,7 @@ void initRecording() {
 
     locationInRecordingBuffer   = 0;
     positionInPlaybackFile      = 0;
+    bytesInPlaybackBuffer       = 0;
     recordingLocation           = 0;
     maxLevelChanges             = 0;
     rogue.playbackOOS           = false;
@@ -1468,6 +1480,10 @@ void parseFile() {
         for (i=0; recordingLocation < fileLength; i++) {
             startLoc = recordingLocation;
             c = recallChar();
+            if (c == END_OF_RECORDING) {
+                fprintf(descriptionFile, "\nRecording ended prematurely at location %li.", recordingLocation);
+                break;
+            }
             switch (c) {
                 case KEYSTROKE:
                     describeKeystroke(recallChar(), description);
