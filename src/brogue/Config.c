@@ -4,12 +4,11 @@
 
 typedef struct configParams {
     short playbackDelayPerTurn;
-    short gameVariant;
-    short graphicsMode;
-    boolean displayStealthRangeMode;
-    boolean trueColorMode;
-    boolean wizard;
-    boolean easyMode;
+    short gameVariant;      // Brogue, Rapid, Bullet
+    short gameMode;         // Normal, Easy, Wizard
+    short graphicsMode;     // Ascii, Hybrid, Graphics
+    boolean stealthRangeEnabled;
+    boolean colorEffectsEnabled;
 } configParams;
 
 typedef enum {
@@ -38,28 +37,30 @@ typedef struct {
 static const char* JSON_FILENAME = "brogue_config.json";
 
 // maps json strings to the gameVariant Enum
-static const char* variantMappings[] = {"brogue", "rapid", NULL};
+static const char* variantMappings[] = {"brogue", "rapid", "bullet", NULL};
 
 // maps json strings to the graphicsModes Enum
 static const char* graphicsModeMappings[] = {"text", "tiles", "hybrid", NULL};
 
+// maps json strings to the gameMode Enum
+static const char* gameModeMappings[] = {"normal", "easy", "wizard", NULL};
+
 static intRange playbackDelayRange = {MIN_PLAYBACK_DELAY, MAX_PLAYBACK_DELAY};
 
-static configParams createDefaultConfig() {
+static configParams createDefaultConfig(void) {
     configParams config;
 
     config.playbackDelayPerTurn = DEFAULT_PLAYBACK_DELAY;
     config.gameVariant = VARIANT_BROGUE;
     config.graphicsMode = TEXT_GRAPHICS;
-    config.displayStealthRangeMode = false;
-    config.trueColorMode = false;
-    config.easyMode = false;
-    config.wizard = false;
+    config.gameMode = 0; // TODO
+    config.colorEffectsEnabled = false;
+    config.stealthRangeEnabled = false;
 
     return config;
 }
 
-static char* loadConfigFile() {
+static char* loadConfigFile(void) {
     FILE* jsonFile = fopen(JSON_FILENAME, "r");
 
     if (!jsonFile) {
@@ -77,10 +78,14 @@ static char* loadConfigFile() {
         return NULL;
     }
 
-    fread(buffer, 1, fileSize, jsonFile);
+    size_t len = fread(buffer, 1, fileSize, jsonFile);
     fclose(jsonFile);
 
-    buffer[fileSize] = '\0';
+    if (len < fileSize) {
+        fprintf(stderr, "ERROR: Failed to read entire file.  Attempting to continue.");
+    }
+
+    buffer[len] = '\0';
 
     return buffer;
 }
@@ -91,11 +96,10 @@ static configField* getFieldEntries(configParams* config) {
     configField fieldDescriptors[] = {
         {"gameVariant", &(config->gameVariant), ENUM_STRING, {.enumMappings = variantMappings}},
         {"graphicsMode", &(config->graphicsMode), ENUM_STRING, {.enumMappings = graphicsModeMappings}},
+        {"gameMode", &(config->gameMode), ENUM_STRING, {.enumMappings = gameModeMappings}},
         {"playbackDelayPerTurn", &(config->playbackDelayPerTurn), INT_TYPE, {.intRange = playbackDelayRange}},
-        {"displayStealthRangeMode", &(config->displayStealthRangeMode), BOOLEAN_TYPE},
-        {"trueColorMode", &(config->trueColorMode), BOOLEAN_TYPE},
-        {"wizard", &(config->wizard), BOOLEAN_TYPE},
-        {"easyMode", &(config->easyMode), BOOLEAN_TYPE},
+        {"stealthRangeEnabled", &(config->stealthRangeEnabled), BOOLEAN_TYPE},
+        {"colorEffectsEnabled", &(config->colorEffectsEnabled), BOOLEAN_TYPE},
         {NULL}};
 
     configField* entries = calloc(numFields + 1, sizeof(configField));
@@ -131,40 +135,60 @@ static void parseConfigValues(const char* jsonString, configParams* config) {
 
     for (int i = 0; entries[i].name; i++) {
         cJSON* jsonField = cJSON_GetObjectItem(root, entries[i].name);
+        if (!jsonField) continue;
+        
+        switch (entries[i].type) {
+        case INT_TYPE: {
+            intRange valueRange = entries[i].validator.intRange;
 
-        if (jsonField) {
-            switch (entries[i].type) {
-            case INT_TYPE:
-                if (cJSON_IsNumber(jsonField)) {
-                    short value = jsonField->valueint;
-                    intRange valueRange = entries[i].validator.intRange;
+            // Clamp to range of short
+            valueRange.min = max(INT16_MIN, valueRange.min); // We're assuming short means 16 bits...
+            valueRange.max = min(INT16_MAX, valueRange.max);
 
-                    if (value >= valueRange.min && value <= valueRange.max) {
-                        *((short*)entries[i].paramPointer) = value;
-                    }
+            if (cJSON_IsNumber(jsonField)) {
+                int value = jsonField->valueint;
+                if (value >= valueRange.min && value <= valueRange.max) {
+                    *((short*)entries[i].paramPointer) = value;
+                } else {
+                    fprintf(stderr, "ERROR: Value '%d' not valid for field '%s'.  Using default '%d' instead.\n", value, entries[i].name, valueRange.min);
+                    *((short*)entries[i].paramPointer) = valueRange.min;
                 }
-                break;
-
-            case BOOLEAN_TYPE:
-                if (cJSON_IsBool(jsonField)) {
-                    *((boolean*)entries[i].paramPointer) = jsonField->valueint;
-                }
-                break;
-
-            case ENUM_STRING:
-                if (cJSON_IsString(jsonField)) {
-                    const char* modeString = jsonField->valuestring;
-                    short mode = mapStringToEnum(modeString, entries[i].validator.enumMappings);
-
-                    if (mode != -1) {
-                        *((short*)entries[i].paramPointer) = mode;
-                    }
-                }
-                break;
-
-            default:
-                break;
+            } else {
+                fprintf(stderr, "ERROR: Invalid type for field '%s'.  Using default '%d' instead.\n", entries[i].name, valueRange.min);
+                *((short*)entries[i].paramPointer) = valueRange.min;
             }
+            }
+            break;
+
+        case BOOLEAN_TYPE:
+            if (cJSON_IsBool(jsonField)) {
+                *((boolean*)entries[i].paramPointer) = cJSON_IsTrue(jsonField) ? true : false;
+            } else {
+                fprintf(stderr, "ERROR: Invalid type for field '%s'.  Using default 'false'.\n", entries[i].name);
+                *((boolean*)entries[i].paramPointer) = false;
+            }
+            break;
+
+        case ENUM_STRING:
+            if (cJSON_IsString(jsonField)) {
+                const char* modeString = jsonField->valuestring;
+                short index = mapStringToEnum(modeString, entries[i].validator.enumMappings);
+
+                if (index != -1) {
+                    *((short*)entries[i].paramPointer) = index;
+                } else {
+                    fprintf(stderr, "ERROR: String '%s' not valid for field '%s'.  Using default '%s' instead.\n", modeString, entries[i].name, entries[i].validator.enumMappings[0]);
+                    *((short*)entries[i].paramPointer) = 0;
+                }
+            } else {
+                fprintf(stderr, "ERROR: Invalid type for field '%s'.  Using default '%s' instead.\n", entries[i].name, entries[i].validator.enumMappings[0]);
+                *((short*)entries[i].paramPointer) = 0;
+            }
+            break;
+
+        default:
+            fprintf(stderr, "ERROR: Unknown field type for field '%s', ignoring.\n", entries[i].name);
+            break;
         }
     }
 
@@ -216,10 +240,10 @@ void readFromConfig(enum graphicsModes* initialGraphics) {
 
     parseConfigValues(jsonString, &config);
 
-    rogue.wizard = config.wizard;
-    rogue.easyMode = config.easyMode;
-    rogue.displayStealthRangeMode = config.displayStealthRangeMode;
-    rogue.trueColorMode = config.trueColorMode;
+    rogue.wizard = config.gameMode == 2;
+    rogue.easyMode = config.gameMode == 1;
+    rogue.displayStealthRangeMode = config.stealthRangeEnabled;
+    rogue.trueColorMode = config.colorEffectsEnabled;
     rogue.playbackDelayPerTurn = config.playbackDelayPerTurn;
 
     gameVariant = config.gameVariant;
@@ -228,7 +252,7 @@ void readFromConfig(enum graphicsModes* initialGraphics) {
     free(jsonString);
 }
 
-void writeIntoConfig() {
+void writeIntoConfig(void) {
     configParams config;
 
     FILE* file = fopen(JSON_FILENAME, "w");
@@ -237,10 +261,9 @@ void writeIntoConfig() {
         return;
     }
 
-    config.wizard = rogue.wizard;
-    config.easyMode = rogue.easyMode;
-    config.displayStealthRangeMode = rogue.displayStealthRangeMode;
-    config.trueColorMode = rogue.trueColorMode;
+    config.gameMode = rogue.wizard ? 0 : (rogue.easyMode ? 1 : 2);
+    config.stealthRangeEnabled = rogue.displayStealthRangeMode;
+    config.colorEffectsEnabled = rogue.trueColorMode;
     config.playbackDelayPerTurn = rogue.playbackDelayPerTurn;
 
     config.gameVariant = gameVariant;
