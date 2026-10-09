@@ -36,8 +36,8 @@
 
 // Brogue version number (for main engine)
 #define BROGUE_MAJOR 1
-#define BROGUE_MINOR 13
-#define BROGUE_PATCH 0
+#define BROGUE_MINOR 15
+#define BROGUE_PATCH 1
 
 // Expanding a macro as a string constant requires two levels of macros
 #define _str(x) #x
@@ -46,24 +46,25 @@
 // Macro to compare BROGUE_MAJOR.BROGUE_MINOR.patchVersion to a.b.c
 #define BROGUE_VERSION_ATLEAST(a,b,c) (BROGUE_MAJOR != (a) ? BROGUE_MAJOR > (a) : BROGUE_MINOR != (b) ? BROGUE_MINOR > (b) : rogue.patchVersion >= (c))
 
-#define DEBUG                           if (rogue.wizard)
-#define MONSTERS_ENABLED                (!rogue.wizard || 1) // Quest room monsters can be generated regardless.
-#define ITEMS_ENABLED                   (!rogue.wizard || 1)
+#define WIZARD_MODE                     (rogue.mode == GAME_MODE_WIZARD)
 
-#define D_BULLET_TIME                   (rogue.wizard && 0)
-#define D_WORMHOLING                    (rogue.wizard && 1)
-#define D_IMMORTAL                      (rogue.wizard && 1)
+#define DEBUG                           if (WIZARD_MODE)
+#define MONSTERS_ENABLED                (!WIZARD_MODE || 1) // Quest room monsters can be generated regardless.
+#define ITEMS_ENABLED                   (!WIZARD_MODE || 1)
 
-#define D_SAFETY_VISION                 (rogue.wizard && 0)
-#define D_SCENT_VISION                  (rogue.wizard && 0)
-#define D_DISABLE_BACKGROUND_COLORS     (rogue.wizard && 0)
-#define D_OMNISCENCE                    (rogue.wizard && 0)
+#define D_BULLET_TIME                   (WIZARD_MODE && 0)
+#define D_WORMHOLING                    (WIZARD_MODE && 1)
+#define D_IMMORTAL                      (WIZARD_MODE && 1)
 
-#define D_INSPECT_LEVELGEN              (rogue.wizard && 0)
-#define D_INSPECT_MACHINES              (rogue.wizard && 0)
+#define D_SAFETY_VISION                 (WIZARD_MODE && 0)
+#define D_SCENT_VISION                  (WIZARD_MODE && 0)
+#define D_OMNISCENCE                    (WIZARD_MODE && 0)
 
-#define D_MESSAGE_ITEM_GENERATION       (rogue.wizard && 0)
-#define D_MESSAGE_MACHINE_GENERATION    (rogue.wizard && 0)
+#define D_INSPECT_LEVELGEN              (WIZARD_MODE && 0)
+#define D_INSPECT_MACHINES              (WIZARD_MODE && 0)
+
+#define D_MESSAGE_ITEM_GENERATION       (WIZARD_MODE && 0)
+#define D_MESSAGE_MACHINE_GENERATION    (WIZARD_MODE && 0)
 
 // If enabled, runs a benchmark for the performance of repeatedly updating the screen at the start of the game.
 // #define SCREEN_UPDATE_BENCHMARK
@@ -185,7 +186,7 @@ typedef struct windowpos {
 #define MACHINES_BUFFER_LENGTH  200
 
 #define INPUT_RECORD_BUFFER     1000        // the threshold size before flushing the record buffer to disk
-#define INPUT_RECORD_BUFFER_MAX_SIZE 1100   // the maximum size of the record buffer 
+#define INPUT_RECORD_BUFFER_MAX_SIZE 1100   // the maximum size of the record buffer
 #define DEFAULT_PLAYBACK_DELAY  50
 
 #define HIGH_SCORES_COUNT       30
@@ -202,6 +203,7 @@ typedef struct windowpos {
 enum gameVariant {
     VARIANT_BROGUE,
     VARIANT_RAPID_BROGUE,
+    VARIANT_BULLET_BROGUE,
     NUMBER_VARIANTS
 };
 
@@ -355,7 +357,6 @@ enum eventTypes {
     RIGHT_MOUSE_UP,
     MOUSE_ENTERED_CELL,
     RNG_CHECK,
-    SAVED_GAME_LOADED,
     END_OF_RECORDING,
     EVENT_ERROR,
     NUMBER_OF_EVENT_TYPES, // unused
@@ -382,6 +383,19 @@ typedef struct rogueHighScoresEntry {
     char date[100];
     char description[DCOLS];
 } rogueHighScoresEntry;
+
+typedef struct rogueRun {
+    uint64_t seed;
+    long dateNumber;
+    char result[DCOLS];
+    char killedBy[DCOLS];
+    int gold;
+    int lumenstones;
+    int score;
+    int turns;
+    int deepestLevel;
+    struct rogueRun *nextRun;
+} rogueRun;
 
 typedef struct fileEntry {
     char *path;
@@ -1181,6 +1195,7 @@ enum tileFlags {
 #define MESSAGE_ARCHIVE_KEY 'M'
 #define BROGUE_HELP_KEY     '?'
 #define DISCOVERIES_KEY     'D'
+#define FEATS_KEY           'F'
 #define CREATE_ITEM_MONSTER_KEY 'C'
 #define EXPLORE_KEY         'x'
 #define AUTOPLAY_KEY        'A'
@@ -1222,9 +1237,9 @@ unsigned long terrainFlags(pos loc);
 unsigned long terrainMechFlags(pos loc);
 
 boolean cellHasTerrainFlag(pos loc, unsigned long flagMask);
-boolean cellHasTMFlag(short x, short y, unsigned long flagMask);
+boolean cellHasTMFlag(pos loc, unsigned long flagMask);
 
-boolean cellHasTerrainType(short x, short y, enum tileType terrain);
+boolean cellHasTerrainType(pos loc, enum tileType terrain);
 
 static inline boolean coordinatesAreInMap(short x, short y) {
     return (x >= 0 && x < DCOLS && y >= 0 && y < DROWS);
@@ -1806,6 +1821,7 @@ enum DFFlags {
     DFF_SUPERPRIORITY               = Fl(7),    // Will overwrite terrain of a superior priority.
     DFF_AGGRAVATES_MONSTERS         = Fl(8),    // Will act as though an aggravate monster scroll of effectRadius radius had been read at that point.
     DFF_RESURRECT_ALLY              = Fl(9),    // Will bring back to life your most recently deceased ally.
+    DFF_CLEAR_LOWER_PRIORITY_TERRAIN= Fl(10),   // Erase terrain with a lower priority in the footprint of this DF.
 };
 
 enum boltEffects {
@@ -2005,6 +2021,12 @@ enum statusEffects {
     NUMBER_OF_STATUS_EFFECTS,
 };
 
+typedef struct statusEffect {
+    char name[COLS];
+    boolean isNegatable;
+    int playerNegatedValue;
+} statusEffect;
+
 enum hordeFlags {
     HORDE_DIES_ON_LEADER_DEATH      = Fl(0),    // if the leader dies, the horde will die instead of electing new leader
     HORDE_IS_SUMMONED               = Fl(1),    // minions summoned when any creature is the same species as the leader and casts summon
@@ -2052,7 +2074,7 @@ enum monsterBehaviorFlags {
     MONST_IMMUNE_TO_FIRE            = Fl(12),   // won't burn, won't die in lava
     MONST_CAST_SPELLS_SLOWLY        = Fl(13),   // takes twice the attack duration to cast a spell
     MONST_IMMUNE_TO_WEBS            = Fl(14),   // monster passes freely through webs
-    MONST_REFLECT_4                 = Fl(15),   // monster reflects projectiles as though wearing +4 armor of reflection
+    MONST_REFLECT_50                = Fl(15),   // monster reflects ~50% of bolts, as though wearing +4 armor of reflection
     MONST_NEVER_SLEEPS              = Fl(16),   // monster is always awake
     MONST_FIERY                     = Fl(17),   // monster carries an aura of flame (but no automatic fire light)
     MONST_INVULNERABLE              = Fl(18),   // monster is immune to absolutely everything
@@ -2070,19 +2092,25 @@ enum monsterBehaviorFlags {
     MONST_NO_POLYMORPH              = Fl(30),   // monster cannot result from a polymorph spell (liches, phoenixes and Warden of Yendor)
 
     NEGATABLE_TRAITS                = (MONST_INVISIBLE | MONST_DEFEND_DEGRADE_WEAPON | MONST_IMMUNE_TO_WEAPONS | MONST_FLIES
-                                       | MONST_FLITS | MONST_IMMUNE_TO_FIRE | MONST_REFLECT_4 | MONST_FIERY | MONST_MAINTAINS_DISTANCE),
+                                       | MONST_FLITS | MONST_IMMUNE_TO_FIRE | MONST_REFLECT_50 | MONST_FIERY | MONST_MAINTAINS_DISTANCE),
     MONST_TURRET                    = (MONST_IMMUNE_TO_WEBS | MONST_NEVER_SLEEPS | MONST_IMMOBILE | MONST_INANIMATE |
                                        MONST_ATTACKABLE_THRU_WALLS | MONST_WILL_NOT_USE_STAIRS),
-    LEARNABLE_BEHAVIORS             = (MONST_INVISIBLE | MONST_FLIES | MONST_IMMUNE_TO_FIRE | MONST_REFLECT_4),
+    LEARNABLE_BEHAVIORS             = (MONST_INVISIBLE | MONST_FLIES | MONST_IMMUNE_TO_FIRE | MONST_REFLECT_50),
     MONST_NEVER_VORPAL_ENEMY        = (MONST_INANIMATE | MONST_INVULNERABLE | MONST_IMMOBILE | MONST_RESTRICTED_TO_LIQUID | MONST_GETS_TURN_ON_ACTIVATION | MONST_MAINTAINS_DISTANCE),
     MONST_NEVER_MUTATED             = (MONST_INVISIBLE | MONST_INANIMATE | MONST_IMMOBILE | MONST_INVULNERABLE),
 };
+
+typedef struct monsterBehavior {
+    char description[COLS];
+    boolean isNegatable;
+} monsterBehavior;
+
 
 enum monsterAbilityFlags {
     MA_HIT_HALLUCINATE              = Fl(0),    // monster can hit to cause hallucinations
     MA_HIT_STEAL_FLEE               = Fl(1),    // monster can steal an item and then run away
     MA_HIT_BURN                     = Fl(2),    // monster can hit to set you on fire
-    MA_ENTER_SUMMONS                = Fl(3),    // monster will "become" its summoned leader, reappearing when that leader is defeated
+    MA_ENTER_SUMMONS                = Fl(3),    // monster will "become" its summoned leader, reappearing when that leader is defeated (phylactery, phoenix egg, vampire)
     MA_HIT_DEGRADE_ARMOR            = Fl(4),    // monster damages armor
     MA_CAST_SUMMON                  = Fl(5),    // requires that there be one or more summon hordes with this monster type as the leader
     MA_SEIZES                       = Fl(6),    // monster seizes enemies before attacking
@@ -2097,6 +2125,7 @@ enum monsterAbilityFlags {
     MA_ATTACKS_EXTEND               = Fl(15),   // monster attacks from a distance in a cardinal direction, like a whip
     MA_ATTACKS_STAGGER              = Fl(16),   // monster attacks will push the player backward by one space if there is room
     MA_AVOID_CORRIDORS              = Fl(17),   // monster will avoid corridors when hunting
+    MA_REFLECT_100                  = Fl(18),   // monster reflects 100% of bolts directly back at the caster
 
     SPECIAL_HIT                     = (MA_HIT_HALLUCINATE | MA_HIT_STEAL_FLEE | MA_HIT_DEGRADE_ARMOR | MA_POISONS
                                        | MA_TRANSFERENCE | MA_CAUSES_WEAKNESS | MA_HIT_BURN | MA_ATTACKS_STAGGER),
@@ -2106,6 +2135,11 @@ enum monsterAbilityFlags {
     MA_NEVER_VORPAL_ENEMY           = (MA_KAMIKAZE),
     MA_NEVER_MUTATED                = (MA_KAMIKAZE),
 };
+
+typedef struct monsterAbility {
+    char description[COLS];
+    boolean isNegatable;
+} monsterAbility;
 
 enum monsterBookkeepingFlags {
     MB_WAS_VISIBLE              = Fl(0),    // monster was visible to player last turn
@@ -2130,10 +2164,11 @@ enum monsterBookkeepingFlags {
     MB_IS_DYING                 = Fl(19),   // monster is currently dying; the death is still being processed
     MB_GIVEN_UP_ON_SCENT        = Fl(20),   // to help the monster remember that the scent map is a dead end
     MB_IS_DORMANT               = Fl(21),   // lurking, waiting to burst out
-    MB_HAS_SOUL                 = Fl(22),   // slaying the monster will count toward weapon auto-ID
+    MB_WEAPON_AUTO_ID           = Fl(22),   // slaying the monster will count toward weapon auto-ID
     MB_ALREADY_SEEN             = Fl(23),   // seeing this monster won't interrupt exploration
     MB_ADMINISTRATIVE_DEATH     = Fl(24),   // like the `administrativeDeath` parameter to `killCreature`
-    MB_HAS_DIED                 = Fl(25)    // monster has already been killed but not yet removed from `monsters`
+    MB_HAS_DIED                 = Fl(25),   // monster has already been killed but not yet removed from `monsters`
+    MB_DOES_NOT_RESURRECT       = Fl(26)    // resurrection altars don't revive monsters summoned by allies
 };
 
 // Defines all creatures, which include monsters and the player:
@@ -2305,24 +2340,19 @@ enum NGCommands {
     NG_OPEN_GAME,
     NG_VIEW_RECORDING,
     NG_HIGH_SCORES,
+    NG_GAME_STATS,
     NG_QUIT,
 };
 
 enum featTypes {
     FEAT_PURE_MAGE = 0,
     FEAT_PURE_WARRIOR,
-    FEAT_PACIFIST,
-    FEAT_ARCHIVIST,
     FEAT_COMPANION,
     FEAT_SPECIALIST,
     FEAT_JELLYMANCER,
-    FEAT_INDOMITABLE,
-    FEAT_ASCETIC,
     FEAT_DRAGONSLAYER,
     FEAT_PALADIN,
-    FEAT_TONE,
-
-    FEAT_COUNT,
+    FEAT_TONE
 };
 
 enum exitStatus {
@@ -2351,9 +2381,11 @@ typedef struct gameConstants {
     const int amuletLevel;                          // level on which the amulet appears (used in signed arithmetic)
 
     const int depthAccelerator;                     // factor for how fast depth-dependent features scale compared to usual 26-level dungeon
+    const int minimumAltarLevel;                    // how deep before resurrection and commutation altars can be generated
     const int minimumLavaLevel;                     // how deep before lava can be generated
     const int minimumBrimstoneLevel;                // how deep before brimstone can be generated
-    const int mutationsOccurAboveLevel;                // how deep before monster mutations can be generated
+    const int mutationsOccurAboveLevel;             // how deep before monster mutations can be generated
+    const int monsterOutOfDepthChance;              // the percentage chance to use a deeper depth when generating monster hordes
 
     const int extraItemsPerLevel;                   // how many extra items generated per level above vanilla
     const int goldAdjustmentStartDepth;             // depth from which gold is adjusted based on generation so far
@@ -2362,6 +2394,7 @@ typedef struct gameConstants {
     const int machinesPerLevelSuppressionOffset;     // offset for limiting number of machines generated so far against depth
     const int machinesPerLevelIncreaseFactor;        // scale factor for increasing number of machines generated so far against depth
     const int maxLevelForBonusMachines;              // deepest level that gets bonus machine generation chance
+    const int deepestLevelForMachines;               // deepest level where can machines be generated
 
     const int playerTransferenceRatio;              // player transference heal is (enchant / gameConst->playerTransferenceRatio)
     const int onHitHallucinateDuration;             // duration of on-hit hallucination effect on player
@@ -2389,14 +2422,22 @@ typedef struct gameConstants {
     const int numberWandKinds;                      // size of the wands table
     const int numberGoodWandKinds;                  // number of good wands in the game (ordered first in the table)
 
+    const int numberFeats;                          // size of feats table
+    const int companionFeatRequiredXP;              // Ally XP needed for the companion feat
+
     const int mainMenuTitleHeight;                  // height of the title screen in characters
     const int mainMenuTitleWidth;                   // width of the title screen in characters
 } gameConstants;
 
+enum gameMode {
+    GAME_MODE_NORMAL,
+    GAME_MODE_WIZARD,
+    GAME_MODE_EASY
+};
 
 // these are basically global variables pertaining to the game state and player's unique variables:
 typedef struct playerCharacter {
-    boolean wizard;                     // in wizard mode
+    enum gameMode mode;                     // in wizard/easy mode
 
     short depthLevel;                   // which dungeon level are we on
     short deepestLevel;
@@ -2415,7 +2456,6 @@ typedef struct playerCharacter {
     boolean updatedAllySafetyMapThisTurn;   // so it's updated no more than once per turn
     boolean updatedMapToSafeTerrainThisTurn;// so it's updated no more than once per turn
     boolean updatedMapToShoreThisTurn;      // so it's updated no more than once per turn
-    boolean easyMode;                   // enables easy mode
     boolean inWater;                    // helps with the blue water filter effect
     boolean heardCombatThisTurn;        // so you get only one "you hear combat in the distance" per turn
     boolean creaturesWillFlashThisTurn; // there are creatures out there that need to flash before the turn ends
@@ -2423,6 +2463,7 @@ typedef struct playerCharacter {
     boolean alreadyFell;                // so the player can fall only one depth per turn
     boolean eligibleToUseStairs;        // so the player uses stairs only when he steps onto them
     boolean trueColorMode;              // whether lighting effects are disabled
+    boolean hideSeed;                   // whether seed is hidden when pressing SEED_KEY
     boolean displayStealthRangeMode;    // whether your stealth range is displayed
     boolean quit;                       // to skip the typical end-game theatrics when the player quits
     uint64_t seed;                      // the master seed for generating the entire dungeon
@@ -2492,7 +2533,7 @@ typedef struct playerCharacter {
     int gameExitStatusCode;             // exit status code indicating if brogue exited successfully or with an error
 
     // metered items
-    long long foodSpawned;                    // amount of nutrition units spawned so far this game
+    long long foodSpawned;              // amount of nutrition units spawned so far this game
     meteredItem *meteredItems;
 
     // ring bonuses:
@@ -2506,7 +2547,7 @@ typedef struct playerCharacter {
     short reaping;
 
     // feats:
-    boolean featRecord[FEAT_COUNT];
+    boolean *featRecord;
 
     // waypoints:
     short **wpDistance[MAX_WAYPOINT_COUNT];
@@ -2564,7 +2605,7 @@ enum machineFeatureFlags {
     MF_ALTERNATIVE_2                = Fl(17),   // same as MF_ALTERNATIVE, but provides for a second set of alternatives of which only one will be chosen
     MF_REQUIRE_GOOD_RUNIC           = Fl(18),   // generated item must be uncursed runic
     MF_MONSTERS_DORMANT             = Fl(19),   // monsters are dormant, and appear when a dungeon feature with DFF_ACTIVATE_DORMANT_MONSTER spawns on their tile
-    // unused                       = Fl(20),   //
+    MF_REQUIRE_HEAVY_WEAPON         = Fl(20),   // requires a positively-enchanted heavy weapon
     MF_BUILD_IN_WALLS               = Fl(21),   // build in an impassable tile that is adjacent to the interior
     MF_BUILD_ANYWHERE_ON_LEVEL      = Fl(22),   // build anywhere on the level that is not inside the machine
     MF_REPEAT_UNTIL_NO_PROGRESS     = Fl(23),   // keep trying to build this feature set until no changes are made
@@ -2707,7 +2748,10 @@ enum machineTypes {
     MT_PARALYSIS_TRAP_HIDDEN_AREA,
     MT_TRICK_STATUE_AREA,
     MT_WORM_AREA,
-    MT_SENTINEL_AREA
+    MT_SENTINEL_AREA,
+
+    // Variant-specific machines
+    MT_REWARD_HEAVY_OR_RUNIC_WEAPON
 };
 
 typedef struct autoGenerator {
@@ -2730,8 +2774,10 @@ typedef struct autoGenerator {
     short maxNumber;
 } autoGenerator;
 
+#define FEAT_NAME_LENGTH 15
+
 typedef struct feat {
-    char name[100];
+    char name[FEAT_NAME_LENGTH + 1];
     char description[200];
     boolean initialValue;
 } feat;
@@ -2789,16 +2835,19 @@ typedef struct buttonState {
     short winY;
     short winWidth;
     short winHeight;
-
-    // Graphical buffers:
-    screenDisplayBuffer dbuf; // Where buttons are drawn.
-    screenDisplayBuffer rbuf; // Reversion screen state.
 } buttonState;
 
 enum messageFlags {
     REQUIRE_ACKNOWLEDGMENT        = Fl(0),
     REFRESH_SIDEBAR               = Fl(1),
     FOLDABLE                      = Fl(2),
+};
+
+enum autoTargetMode {
+    AUTOTARGET_MODE_NONE,               // don't autotarget
+    AUTOTARGET_MODE_USE_STAFF_OR_WAND,
+    AUTOTARGET_MODE_THROW,
+    AUTOTARGET_MODE_EXPLORE,            // cycle through anything in the sidebar
 };
 
 typedef struct archivedMessage {
@@ -2856,11 +2905,11 @@ extern "C" {
     void bakeColor(color *theColor);
     void shuffleTerrainColors(short percentOfCells, boolean refreshCells);
     void normColor(color *baseColor, const short aggregateMultiplier, const short colorTranslation);
-    void getCellAppearance(short x, short y, enum displayGlyph *returnChar, color *returnForeColor, color *returnBackColor);
+    void getCellAppearance(pos loc, enum displayGlyph *returnChar, color *returnForeColor, color *returnBackColor);
     void logBuffer(char array[DCOLS][DROWS]);
     //void logBuffer(short **array);
     boolean search(short searchStrength);
-    boolean proposeOrConfirmLocation(short x, short y, char *failureMessage);
+    boolean proposeOrConfirmLocation(pos target, char *failureMessage);
     boolean useStairs(short stairDirection);
     short passableArcCount(short x, short y);
     void analyzeMap(boolean calculateChokeMap);
@@ -2868,8 +2917,8 @@ extern "C" {
                           short originX, short originY,
                           unsigned long requiredMachineFlags,
                           item *adoptiveItem,
-                          item *parentSpawnedItems[50],
-                          creature *parentSpawnedMonsters[50]);
+                          item *parentSpawnedItems[MACHINES_BUFFER_LENGTH],
+                          creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]);
     void attachRooms(short **grid, const dungeonProfile *theDP, short attempts, short maxRoomCount);
     void digDungeon(void);
     void updateMapToShore(void);
@@ -2893,7 +2942,16 @@ extern "C" {
                   short xLoc, short yLoc,
                   short backRed, short backGreen, short backBlue,
                   short foreRed, short foreGreen, short foreBlue);
-    boolean pauseForMilliseconds(short milliseconds);
+
+    typedef struct PauseBehavior {
+        /// If `interuptForMouseMove` is true, then the pause function will return `true`
+        /// if a mouse move occurs during the pause.
+        /// Otherwise, mouse movements will be ignored.
+        boolean interuptForMouseMove;
+    } PauseBehavior;
+#define PAUSE_BEHAVIOR_DEFAULT ((PauseBehavior) { .interuptForMouseMove = false })
+
+    boolean pauseForMilliseconds(short milliseconds, PauseBehavior behavior);
     boolean isApplicationActive(void);
     void nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance);
     void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2);
@@ -2903,18 +2961,25 @@ extern "C" {
     boolean shiftKeyIsDown(void);
     short getHighScoresList(rogueHighScoresEntry returnList[HIGH_SCORES_COUNT]);
     boolean saveHighScore(rogueHighScoresEntry theEntry);
+    void saveRunHistory(char *result, char *killedBy, int score, int lumenstones);
+    void saveResetRun(void);
+    rogueRun *loadRunHistory(void);
     fileEntry *listFiles(short *fileCount, char **dynamicMemoryBuffer);
     void initializeLaunchArguments(enum NGCommands *command, char *path, uint64_t *seed);
 
     char nextKeyPress(boolean textInput);
     void refreshSideBar(short focusX, short focusY, boolean focusedEntityMustGoFirst);
     void printHelpScreen(void);
+    void displayFeatsScreen(void);
     void printDiscoveriesScreen(void);
     void printHighScores(boolean hiliteMostRecent);
     void displayGrid(short **map);
     void printSeed(void);
     void printProgressBar(short x, short y, const char barLabel[COLS], long amtFilled, long amtMax, const color *fillColor, boolean dim);
     short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight);
+    enum displayGlyph getItemCategoryGlyph(const enum itemCategory theCategory);
+    enum itemCategory getHallucinatedItemCategory(void);
+    void describedItemName(const item *theItem, char *description, int maxLength);
     void describeHallucinatedItem(char *buf);
     short printItemInfo(item *theItem, short y, boolean dim, boolean highlight);
     short printTerrainInfo(short x, short y, short py, const char *description, boolean dim, boolean highlight);
@@ -2922,15 +2987,13 @@ extern "C" {
                             const color *backColor, short opacity, screenDisplayBuffer *dbuf);
     short printTextBox(char *textBuf, short x, short y, short width,
                        const color *foreColor, const color *backColor,
-                       screenDisplayBuffer *rbuf,
                        brogueButton *buttons, short buttonCount);
     void setButtonText(brogueButton *button, const char *textWithHotkey, const char *textWithoutHotkey);
-    void printMonsterDetails(creature *monst, screenDisplayBuffer* rbuf);
-    void printFloorItemDetails(item *theItem, screenDisplayBuffer* rbuf);
+    void printMonsterDetails(creature *monst);
+    void printFloorItemDetails(item *theItem);
     unsigned long printCarriedItemDetails(item *theItem,
                                           short x, short y, short width,
-                                          boolean includeButtons,
-                                          screenDisplayBuffer* rbuf);
+                                          boolean includeButtons);
     void funkyFade(screenDisplayBuffer *displayBuf, const color *colorStart, const color *colorEnd, short stepCount, short x, short y, boolean invert);
     void displayCenteredAlert(char *message);
     void flashMessage(char *message, short x, short y, int time, const color *fColor, const color *bColor);
@@ -2966,8 +3029,16 @@ extern "C" {
     void colorOverDungeon(const color *color);
     void copyDisplayBuffer(screenDisplayBuffer *toBuf, screenDisplayBuffer *fromBuf);
     void clearDisplayBuffer(screenDisplayBuffer *dbuf);
-    color colorFromComponents(char rgb[3]);
-    void overlayDisplayBuffer(screenDisplayBuffer *overBuf, screenDisplayBuffer *previousBuf);
+    color colorFromComponents(const char rgb[3]);
+    // A `SavedDisplayBuffer` holds a previous version of the screen. It can be
+    // Obtain one by calling `saveDisplayBuffer()` and restore it to the screen
+    // by calling `restoreDisplayBuffer()`.
+    typedef struct SavedDisplayBuffer {
+        screenDisplayBuffer savedScreen;
+    } SavedDisplayBuffer;
+    SavedDisplayBuffer saveDisplayBuffer(void);
+    void restoreDisplayBuffer(const SavedDisplayBuffer *savedBuf);
+    void overlayDisplayBuffer(const screenDisplayBuffer *overBuf);
     void flashForeground(short *x, short *y, const color **flashColor, short *flashStrength, short count, short frames);
     void flashCell(const color *theColor, short frames, short x, short y);
     void colorFlash(const color *theColor, unsigned long reqTerrainFlags, unsigned long reqTileFlags, short frames, short maxRadius, short x, short y);
@@ -2978,16 +3049,17 @@ extern "C" {
     boolean getInputTextString(char *inputText,
                                const char *prompt,
                                short maxLength,
-                               const char *defaultEntry,
+                               char *defaultEntry,
                                const char *promptSuffix,
                                short textEntryType,
                                boolean useDialogBox);
-    boolean pauseBrogue(short milliseconds);
-    boolean pauseAnimation(short milliseconds);
+    boolean pauseBrogue(short milliseconds, PauseBehavior behavior);
+    boolean pauseAnimation(short milliseconds, PauseBehavior behavior);
     void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance, boolean realInputEvenInPlayback);
     void executeMouseClick(rogueEvent *theEvent);
     void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKey);
-    void initializeLevel(void);
+    boolean placeStairs(pos *upStairsLoc);
+    void initializeLevel(pos upStairsLoc);
     void startLevel (short oldLevelNumber, short stairDirection);
     void updateMinersLightRadius(void);
     void freeCreature(creature *monst);
@@ -3025,9 +3097,9 @@ extern "C" {
                             boolean canUseSecretDoors,
                             boolean eightWays);
     short pathingDistance(short x1, short y1, short x2, short y2, unsigned long blockingTerrainFlags);
-    short nextStep(short **distanceMap, short x, short y, creature *monst, boolean reverseDirections);
+    short nextStep(short **distanceMap, pos target, creature *monst, boolean reverseDirections);
     void travelRoute(pos path[1000], short steps);
-    void travel(short x, short y, boolean autoConfirm);
+    void travel(pos target, boolean autoConfirm);
     void populateGenericCostMap(short **costMap);
     void getLocationFlags(const short x, const short y,
                           unsigned long *tFlags, unsigned long *TMFlags, unsigned long *cellFlags,
@@ -3098,6 +3170,7 @@ extern "C" {
                        unsigned long forbiddenFlags, boolean cautiousOnWalls);
 
     creature *generateMonster(short monsterID, boolean itemPossible, boolean mutationPossible);
+    void initializeMonster(creature *monst, boolean itemPossible);
     void mutateMonster(creature *monst, short mutationIndex);
     short chooseMonster(short forLevel);
     creature *spawnHorde(short hordeID, pos loc, unsigned long forbiddenFlags, unsigned long requiredFlags);
@@ -3110,6 +3183,10 @@ extern "C" {
     void prependCreature(creatureList *list, creature *add);
     boolean removeCreature(creatureList *list, creature *remove);
     creature *firstCreature(creatureList *list);
+
+    boolean canNegateCreatureStatusEffects(creature *monst);
+    void negateCreatureStatusEffects(creature *monst);
+    boolean monsterIsNegatable(creature *monst);
 
     boolean monsterWillAttackTarget(const creature *attacker, const creature *defender);
     boolean monstersAreTeammates(const creature *monst1, const creature *monst2);
@@ -3129,7 +3206,7 @@ extern "C" {
     boolean specifiedPathBetween(short x1, short y1, short x2, short y2,
                                  unsigned long blockingTerrain, unsigned long blockingFlags);
     boolean traversiblePathBetween(creature *monst, short x2, short y2);
-    boolean openPathBetween(short x1, short y1, short x2, short y2);
+    boolean openPathBetween(const pos startLoc, const pos targetLoc);
     creature *monsterAtLoc(pos p);
     creature *dormantMonsterAtLoc(pos p);
     pos perimeterCoords(short n);
@@ -3141,8 +3218,10 @@ extern "C" {
     void monstersTurn(creature *monst);
     boolean getRandomMonsterSpawnLocation(short *x, short *y);
     void spawnPeriodicHorde(void);
-    void clearStatus(creature *monst);
+    void initializeStatus(creature *monst);
+    void handlePaladinFeat(creature *defender);
     void moralAttack(creature *attacker, creature *defender);
+    void splitMonster(creature *monst, creature *attacker);
     short runicWeaponChance(item *theItem, boolean customEnchantLevel, fixpt enchantLevel);
     void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed);
     void disentangle(creature *monst);
@@ -3166,8 +3245,7 @@ extern "C" {
     boolean canDirectlySeeMonster(creature *monst);
     void monsterName(char *buf, creature *monst, boolean includeArticle);
     boolean monsterIsInClass(const creature *monst, const short monsterClass);
-    boolean chooseTarget(pos *returnLoc, short maxDistance, boolean stopAtTarget, boolean autoTarget,
-                         boolean targetAllies, const bolt *theBolt, const color *trajectoryColor);
+    boolean chooseTarget(pos *returnLoc, short maxDistance, enum autoTargetMode targetingMode, const item *theItem);
     fixpt strengthModifier(item *theItem);
     fixpt netEnchant(item *theItem);
     short hitProbability(creature *attacker, creature *defender);
@@ -3180,7 +3258,7 @@ extern "C" {
                           short damage, const color *flashColor, boolean ignoresProtectionShield);
     void addPoison(creature *monst, short totalDamage, short concentrationIncrement);
     void killCreature(creature *decedent, boolean administrativeDeath);
-    void buildHitList(creature **hitList, const creature *attacker, creature *defender, const boolean sweep);
+    void buildHitList(const creature **hitList, const creature *attacker, creature *defender, const boolean sweep);
     void addScentToCell(short x, short y, short distance);
     void populateItems(pos upstairs);
     item *placeItemAt(item *theItem, pos dest);
@@ -3205,15 +3283,10 @@ extern "C" {
     enum boltEffects boltEffectForItem(item *theItem);
     enum boltType boltForItem(item *theItem);
     boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, boolean reverseBoltDir);
-    boolean nextTargetAfter(short *returnX,
-                            short *returnY,
-                            short targetX,
-                            short targetY,
-                            boolean targetEnemies,
-                            boolean targetAllies,
-                            boolean targetItems,
-                            boolean targetTerrain,
-                            boolean requireOpenPath,
+    boolean nextTargetAfter(const item *theItem,
+                            pos *returnLoc,
+                            pos targetLoc,
+                            enum autoTargetMode targetingMode,
                             boolean reverseDirection);
     boolean moveCursor(boolean *targetConfirmed,
                        boolean *canceled,
@@ -3247,6 +3320,8 @@ extern "C" {
     item *generateItem(unsigned short theCategory, short theKind);
     short chooseKind(const itemTable *theTable, short numKinds);
     item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind);
+    boolean itemIsHeavyWeapon(const item *theItem);
+    boolean itemIsPositivelyEnchanted(const item *theItem);
     void updateEncumbrance(void);
     short displayedArmorValue(void);
     short armorValueIfUnenchanted(item *theItem);
@@ -3286,14 +3361,15 @@ extern "C" {
     void getTMGrid(short **grid, short value, unsigned long TMflags);
     short validLocationCount(short **grid, short validValue);
     void randomLocationInGrid(short **grid, short *x, short *y, short validValue);
-    boolean getQualifyingPathLocNear(short *retValX, short *retValY,
-                                     short x, short y,
-                                     boolean hallwaysAllowed,
-                                     unsigned long blockingTerrainFlags,
-                                     unsigned long blockingMapFlags,
-                                     unsigned long forbiddenTerrainFlags,
-                                     unsigned long forbiddenMapFlags,
-                                     boolean deterministic);
+    pos getQualifyingPathLocNear(
+        pos target,
+        boolean hallwaysAllowed,
+        unsigned long blockingTerrainFlags,
+        unsigned long blockingMapFlags,
+        unsigned long forbiddenTerrainFlags,
+        unsigned long forbiddenMapFlags,
+        boolean deterministic
+    );
     void createBlobOnGrid(short **grid,
                           short *retMinX, short *retMinY, short *retWidth, short *retHeight,
                           short roundCount,
@@ -3309,7 +3385,8 @@ extern "C" {
     void throwCommand(item *theItem, boolean autoThrow);
     void relabel(item *theItem);
     void swapLastEquipment(void);
-    void apply(item *theItem, boolean recordCommands);
+    void apply(item *theItem);
+    boolean eat(item *theItem, boolean recordCommands);
     boolean itemCanBeCalled(item *theItem);
     void call(item *theItem);
     short chooseVorpalEnemy(void);
@@ -3317,12 +3394,12 @@ extern "C" {
     void identify(item *theItem);
     void updateIdentifiableItem(item *theItem);
     void updateIdentifiableItems(void);
-    void readScroll(item *theItem);
+    boolean readScroll(item *theItem);
     void updateRingBonuses(void);
     void updatePlayerRegenerationDelay(void);
     boolean removeItemFromChain(item *theItem, item *theChain);
     void addItemToChain(item *theItem, item *theChain);
-    void drinkPotion(item *theItem);
+    boolean drinkPotion(item *theItem);
     item *promptForItemOfType(unsigned short category,
                               unsigned long requiredFlags,
                               unsigned long forbiddenFlags,
@@ -3341,6 +3418,7 @@ extern "C" {
     boolean itemIsCarried(item *theItem);
     void itemDetails(char *buf, item *theItem);
     void deleteItem(item *theItem);
+    void deleteItemList(item *theItem);
     void shuffleFlavors(void);
     unsigned long itemValue(item *theItem);
     short strLenWithoutEscapes(const char *str);
@@ -3371,6 +3449,7 @@ extern "C" {
     short armorStealthAdjustment(item *theArmor);
     short currentStealthRange(void);
 
+    void considerFlushingBufferToFile();
     void initRecording(void);
     void flushBufferToFile(void);
     void fillBufferFromFile(void);
@@ -3438,7 +3517,7 @@ extern "C" {
     int printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsigned int scanThroughDepth, boolean isCsvFormat, char *errorMessage);
 
     void initializeButton(brogueButton *button);
-    void drawButtonsInState(buttonState *state);
+    void drawButtonsInState(buttonState *state, screenDisplayBuffer *button_dbuf);
     void initializeButtonState(buttonState *state,
                                brogueButton *buttons,
                                short buttonCount,

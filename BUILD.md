@@ -40,7 +40,7 @@ directory (the one containing this file; your Windows drives can be accessed
 at `/c`, `/d` etc.) and run
 
     ```
-    make bin/brogue.exe
+    make SYSTEM=WINDOWS bin/brogue.exe
     ```
 
 2. Optional: You can now run the game by running `cd bin; ./brogue.exe`.

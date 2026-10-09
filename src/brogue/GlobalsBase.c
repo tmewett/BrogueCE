@@ -45,7 +45,7 @@ const gameConstants *gameConst;
 int gameVariant = VARIANT_BROGUE;
 creatureList *monsters;
 creatureList *dormantMonsters;
-creatureList purgatory;
+creatureList purgatory;     // used to hold dead allies awaiting resurrection
 item *floorItems;
 item *packItems;
 item *monsterItemsHopper;

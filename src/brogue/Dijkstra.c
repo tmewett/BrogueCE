@@ -225,7 +225,7 @@ void calculateDistances(short **distanceMap,
                 // Always avoid damage-immune stationary monsters.
                 cost = PDS_FORBIDDEN;
             } else if (canUseSecretDoors
-                && cellHasTMFlag(i, j, TM_IS_SECRET)
+                && cellHasTMFlag((pos){ i, j }, TM_IS_SECRET)
                 && cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_PASSABILITY)
                 && !(discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY)) {
 

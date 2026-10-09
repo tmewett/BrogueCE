@@ -119,7 +119,7 @@ static void printSeedCatalogMonster(creature *theMonster, boolean isCsvFormat) {
 
     if (theMonster->bookkeepingFlags & MB_CAPTIVE) {
         strcpy(categoryName,"ally");
-        if (cellHasTMFlag(theMonster->loc.x, theMonster->loc.y, TM_PROMOTES_WITH_KEY)) {
+        if (cellHasTMFlag(theMonster->loc, TM_PROMOTES_WITH_KEY)) {
             strcpy(allyStatusName, isCsvFormat ? "caged" : "A caged ");
         } else {
             strcpy(allyStatusName, isCsvFormat ? "shackled" : "A shackled ");
@@ -306,7 +306,7 @@ int printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsign
             printSeedCatalogFloorItems(isCsvFormat);
             printSeedCatalogMonsterItems(isCsvFormat);
             printSeedCatalogMonsters(isCsvFormat, false); // captives and allies only
-            if (rogue.depthLevel >= 13) { // resurrection & commutation altars can spawn starting on 13
+            if (rogue.depthLevel >= gameConst->minimumAltarLevel) {
                 printSeedCatalogAltars(isCsvFormat);
             }
         }

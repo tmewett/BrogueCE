@@ -1,3 +1,139 @@
+1.15.1
+======
+
+- Fixed a bug that sometimes caused Brogue to switch to easy mode without confirmation.
+- Fixed a bug where switching to easy mode in-game didn't do anything.
+- Fixed other broken code related to game modes.
+
+
+1.15
+====
+
+This version adds the Bullet Brogue variant, as well as many miscellaneous improvements and bug fixes.
+
+Thanks to co-maintainers flend and zenzombie, and to contributors adrior11, AndrewSav, BoatsandJoes, Bryan Turner, Hectocotylus, thebrave, nathanf, ZayadNimrod, androidnisse, and zeb33n.
+
+- Added Bullet Brogue, a variant even shorter than Rapid Brogue. (Play it via Play > Change Variant.)
+- Increased the brightness of the "hide color effects" mode to match the normal mode.
+- Added messages to the game log for zapping wands and staffs.
+- Loading a save file will now place the game into the same mode the save was made in (i.e normal, wizard, or easy).
+- Enabled scrolling through the inventory with Up/Down/8/2 keys in some cases where it was not possible: the item selection for scrolls of enchanting and identify, in replays, and on the death screen.
+- Fixed a bug where the cell the player was on would remain encased in obstruction crystal after casting, instead of it dissolving immediately.
+- Fixed a bug where auto-resting was sometimes not cancelled when seeing a monster.
+- Fixed a bug that caused recordings to skip to the end if the player was forced to eat food to avoid starvation.
+- Fixed a bug where water was not visible on cells with filthy effects piles.
+- Fixed a bug where, if a monster was thrown into a jelly by a force runic, the jelly didn't split.
+- Fixed a bug where, if a jelly was thrown into another monster by a force runic, it split twice.
+- Fixed a bug where, if a weapon-immune monster was thrown into another monster by a force runic, the collided monster would not take any damage.
+- Fixed a bug where a fatal reflected bolt could leave the player at zero health without killing them.
+- Fixed a bug where discordant monsters would sometimes not attack the player when they could.
+- Fixed a bug in wizard mode which caused regenerating monsters not to regenerate.
+- Increased the constrast of a few game elements: the goblin/kobold, dark player, and invisible player colors are now slightly brighter, and the purple tint of highlighted dark areas has been slightly reduced.
+- Fixed a bug where some item inscriptions would render with the wrong text colour.
+
+
+1.14.1
+======
+
+- Fixed an issue with the RapidBrogue seed catalog which prevented altars from being listed.
+- Fixed the build for the curses/terminal version.
+
+
+1.14
+====
+
+A fairly big update, featuring new feats, many combat and resurrection tweaks,
+and more.
+
+Thanks to contributors Kissyboots, Matti Armston, Nathan Fenner, Nathan
+Stoddard, and co-maintainers flend and zenzombie.
+
+## Gameplay changes
+
+- A discordant ally will no longer swap places with the player and can be
+  attacked. Attacks require player confirmation and will not make the ally an
+  enemy.
+- Fixed an issue that prevented allies (e.g. kraken) from learning abilities
+  from monsters that die in certain terrain (e.g. deep water).
+- Allies can now spear attack over the player.
+- Monsters with a spear or whip attack can no longer attack around corners.
+- Jellies now die without splitting when hit with a slaying or quietus weapon.
+- Resurrection altars now function differently for phoenixes and liches. The
+  phoenix egg or phylactery will be revived instead, and the ability to turn
+  into a phoenix or lich restored. Similarly, a vampire's ability to spawn
+  vampire bats will be restored.
+- If the player is seized by a submerged monster they can see (i.e. player is
+  also submerged), it will now immediately surface so it can be targeted with
+  staffs/wands.
+- Overhauled feats:
+    - Removed nearly impossible feats 'Pacifist', 'Archivist', 'Indomitable',
+      and 'Ascetic'.
+    - Added a new "Feats" menu option that shows a screen with all the feats and
+      whether the player has achieved or failed them.
+    - The 'Paladin' feat is no longer lost when the player is unaware of the
+      monster, the player is seized, the monster is generated immobile (totems,
+      turrets, etc.), or the monster is immune to physical attacks.
+    - The 'Companion' feat now requires exploring only (approximately) 13 floors
+      with an ally instead of 20. Exploration is measured by the number of newly
+      discovered traversable squares while an ally is within one floor of the
+      player.
+    - The 'Pure Mage' feat now allows the player to attack with their fists.
+      Good luck with that.
+- Drinking a strength potion now causes weakness to be removed from a character
+  immediately, so that receiving another weakening attack on the same turn does
+  not completely negate the potion.
+- Fixed a bug which treated obsidian as shallow water, allowing a kraken to both
+  traverse it and sieze monsters or the player standing in it.
+- Monsters that are summoned by allies (furies, phantoms, vampire bats) are no
+  longer eligible for resurrection. Only the summoner will be resurrected.
+- Destroying a phoenix egg or phylactery now counts toward weapon auto-ID.
+- When arriving on a level with items "obstructing" the stairs, the player now
+  appears by the stairs like normal, on top of the item, instead of being placed
+  on a nearby free cell. A message is displayed describing the item.
+- Fixed a bug where items in deep water could drift diagonally through walls.
+  Items can now only drift to an available adjacent cell.
+- Fixed a bug where shattering failed to destroy sentinels at the edge of the
+  dungeon.
+
+## UI changes
+
+- Players can now view summary statistics of games played by selecting the "Game
+  Stats" option from the "View" menu. Statistics are collected only for games
+  played since the menu option became available.
+- The auto-targeting system now understands much more about whether the used
+  item will have an effect, and skips target where it won't. This includes
+  taking into account reflection, fire immunity, health (for domination and
+  healing), negatable abilities, proximity (for beckoning), and weapon immunity.
+- When using a known staff of tunneling, turrets and sentinels will now be
+  auto-targeted.
+- Fixed issues where auto-targeting leaked information about an unknown staff or
+  wand.
+- The monster details window now includes information about the effect of
+  negation if the player has a known means to negate the monster.
+- The monster details window now includes information about the effect of
+  tunneling or shattering if the player has such a staff.
+- When an inanimate monster (e.g. turret or totem) is negated, a combat message
+  is now displayed and the sidebar will show the negated status.
+- Fixed a bug where a closed door affected by descent would no longer be visible
+  but would still block visibility. They now remain visible.
+- Staves and wands that affect allies are now displayed correctly on the
+  discovered items screen.
+- If the player occupies a location with an item, the item is now shown in the
+  sidebar. Additionally, the item is included in the description when inspecting
+  the player's location.
+- When inspecting a location, item descriptions now include details if space
+  permits.
+- A weapon of slaying now includes a note that the weapon doesn't degrade when
+  attacking an acidic monster in the slaying class.
+- Changed the ability description for some monsters to differentiate those that
+  can sometimes reflect magic spells from those that always reflect spells back
+  at the caster.
+- Animations such as autoexplore and using a staff now run at a consistent
+  speed.
+- Change the color of the message when you try to pick up an item when your
+  inventory is full, so it stands out more.
+
+
 1.13
 ====
 

@@ -31,7 +31,7 @@ void exposeCreatureToFire(creature *monst) {
         || monst->status[STATUS_IMMUNE_TO_FIRE]
         || (monst->info.flags & MONST_INVULNERABLE)
         || (monst->bookkeepingFlags & MB_SUBMERGED)
-        || ((!monst->status[STATUS_LEVITATING]) && cellHasTMFlag(monst->loc.x, monst->loc.y, TM_EXTINGUISHES_FIRE))) {
+        || ((!monst->status[STATUS_LEVITATING]) && cellHasTMFlag(monst->loc, TM_EXTINGUISHES_FIRE))) {
         return;
     }
     if (monst->status[STATUS_BURNING] == 0) {
@@ -123,14 +123,14 @@ void applyInstantTileEffectsToCreature(creature *monst) {
     // You will discover the secrets of any tile you stand on.
     if (monst == &player
         && !(monst->status[STATUS_LEVITATING])
-        && cellHasTMFlag(*x, *y, TM_IS_SECRET)
+        && cellHasTMFlag((pos){ *x, *y }, TM_IS_SECRET)
         && playerCanSee(*x, *y)) {
 
         discover(*x, *y);
     }
 
     // Submerged monsters in terrain that doesn't permit submersion should immediately surface.
-    if ((monst->bookkeepingFlags & MB_SUBMERGED) && !cellHasTMFlag(*x, *y, TM_ALLOWS_SUBMERGING)) {
+    if ((monst->bookkeepingFlags & MB_SUBMERGED) && !cellHasTMFlag((pos){ *x, *y }, TM_ALLOWS_SUBMERGING)) {
         monst->bookkeepingFlags &= ~MB_SUBMERGED;
     }
 
@@ -143,6 +143,16 @@ void applyInstantTileEffectsToCreature(creature *monst) {
     if ((monst->bookkeepingFlags & MB_SEIZING)
         && (cellHasTerrainFlag((pos){ *x, *y }, T_OBSTRUCTS_PASSABILITY))
         && !(monst->info.flags & MONST_ATTACKABLE_THRU_WALLS)) {
+
+        monst->bookkeepingFlags &= ~MB_SEIZING;
+    }
+
+    // #855: a kraken or eel knocked onto dry land can no longer hold its prey. A liquid-restricted
+    // monster off submergible terrain writhes helplessly (enforced in monstersTurn), so it must
+    // also release any seize the instant it is beached; otherwise the seized creature stays pinned.
+    if ((monst->bookkeepingFlags & MB_SEIZING)
+        && (monst->info.flags & MONST_RESTRICTED_TO_LIQUID)
+        && !cellHasTMFlag((pos){ *x, *y }, TM_ALLOWS_SUBMERGING)) {
 
         monst->bookkeepingFlags &= ~MB_SEIZING;
     }
@@ -165,7 +175,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
         && !(monst->status[STATUS_IMMUNE_TO_FIRE])
         && !(monst->info.flags & MONST_INVULNERABLE)
         && !cellHasTerrainFlag((pos){ *x, *y }, (T_ENTANGLES | T_OBSTRUCTS_PASSABILITY))
-        && !cellHasTMFlag(*x, *y, TM_EXTINGUISHES_FIRE)
+        && !cellHasTMFlag((pos){ *x, *y }, TM_EXTINGUISHES_FIRE)
         && cellHasTerrainFlag((pos){ *x, *y }, T_LAVA_INSTA_DEATH)) {
 
         if (monst == &player) {
@@ -197,7 +207,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
     }
 
     // Water puts out fire.
-    if (cellHasTMFlag(*x, *y, TM_EXTINGUISHES_FIRE)
+    if (cellHasTMFlag((pos){ *x, *y }, TM_EXTINGUISHES_FIRE)
         && monst->status[STATUS_BURNING]
         && !monst->status[STATUS_LEVITATING]
         && !(monst->info.flags & MONST_ATTACKABLE_THRU_WALLS)
@@ -207,7 +217,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
 
     // If you see a monster use a secret door, you discover it.
     if (playerCanSee(*x, *y)
-        && cellHasTMFlag(*x, *y, TM_IS_SECRET)
+        && cellHasTMFlag((pos){ *x, *y }, TM_IS_SECRET)
         && (cellHasTerrainFlag((pos){ *x, *y }, T_OBSTRUCTS_PASSABILITY))) {
         discover(*x, *y);
     }
@@ -215,12 +225,12 @@ void applyInstantTileEffectsToCreature(creature *monst) {
     // Pressure plates.
     if (!(monst->status[STATUS_LEVITATING])
         && !(monst->bookkeepingFlags & MB_SUBMERGED)
-        && (!cellHasTMFlag(*x, *y, TM_ALLOWS_SUBMERGING) || !(monst->info.flags & MONST_SUBMERGES))
+        && (!cellHasTMFlag((pos){ *x, *y }, TM_ALLOWS_SUBMERGING) || !(monst->info.flags & MONST_SUBMERGES))
         && cellHasTerrainFlag((pos){ *x, *y }, T_IS_DF_TRAP)
         && !(pmap[*x][*y].flags & PRESSURE_PLATE_DEPRESSED)) {
 
         pmap[*x][*y].flags |= PRESSURE_PLATE_DEPRESSED;
-        if (playerCanSee(*x, *y) && cellHasTMFlag(*x, *y, TM_IS_SECRET)) {
+        if (playerCanSee(*x, *y) && cellHasTMFlag((pos){ *x, *y }, TM_IS_SECRET)) {
             discover(*x, *y);
             refreshDungeonCell((pos){ *x, *y });
         }
@@ -240,7 +250,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
         }
     }
 
-    if (cellHasTMFlag(*x, *y, TM_PROMOTES_ON_CREATURE)) { // flying creatures activate too
+    if (cellHasTMFlag((pos){ *x, *y }, TM_PROMOTES_ON_CREATURE)) { // flying creatures activate too
         // Because this uses no pressure plate to keep track of whether it's already depressed,
         // it will trigger every time this function is called while the monster or player is on the tile.
         // Because this function can be called several times per turn, multiple promotions can
@@ -254,7 +264,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
         }
     }
 
-    if (cellHasTMFlag(*x, *y, TM_PROMOTES_ON_PLAYER_ENTRY) && monst == &player) {
+    if (cellHasTMFlag((pos){ *x, *y }, TM_PROMOTES_ON_PLAYER_ENTRY) && monst == &player) {
         // Subject to same caveats as T_PROMOTES_ON_STEP above.
         for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
             if (tileCatalog[pmap[*x][*y].layers[layer]].mechFlags & TM_PROMOTES_ON_PLAYER_ENTRY) {
@@ -263,7 +273,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
         }
     }
 
-    if (cellHasTMFlag(*x, *y, TM_PROMOTES_ON_SACRIFICE_ENTRY)
+    if (cellHasTMFlag((pos){ *x, *y }, TM_PROMOTES_ON_SACRIFICE_ENTRY)
         && monst->machineHome == pmap[*x][*y].machineNumber
         && (monst->bookkeepingFlags & MB_MARKED_FOR_SACRIFICE)) {
         // Subject to same caveats as T_PROMOTES_ON_STEP above.
@@ -449,7 +459,7 @@ void applyInstantTileEffectsToCreature(creature *monst) {
     }
 
     // keys
-    if (cellHasTMFlag(*x, *y, TM_PROMOTES_WITH_KEY) && (theItem = keyOnTileAt((pos){ *x, *y }))) {
+    if (cellHasTMFlag((pos){ *x, *y }, TM_PROMOTES_WITH_KEY) && (theItem = keyOnTileAt((pos){ *x, *y }))) {
         useKeyAt(theItem, *x, *y);
     }
 }
@@ -801,8 +811,8 @@ void updateVision(boolean refreshDisplay) {
     }
 }
 
-static void checkNutrition() {
-    item *theItem;
+// This should be called only after decrementing the player's nutrition.
+static void printNutritionMessages(void) {
     char buf[DCOLS*3], foodWarning[DCOLS*3];
 
     if (numberOfMatchingPackItems(FOOD, 0, 0, false) == 0) {
@@ -812,32 +822,34 @@ static void checkNutrition() {
     }
 
     if (player.status[STATUS_NUTRITION] == HUNGER_THRESHOLD) {
-        player.status[STATUS_NUTRITION]--;
         sprintf(buf, "you are hungry%s.", foodWarning);
         message(buf, foodWarning[0] ? REQUIRE_ACKNOWLEDGMENT : 0);
     } else if (player.status[STATUS_NUTRITION] == WEAK_THRESHOLD) {
-        player.status[STATUS_NUTRITION]--;
         sprintf(buf, "you feel weak with hunger%s.", foodWarning);
         message(buf, REQUIRE_ACKNOWLEDGMENT);
     } else if (player.status[STATUS_NUTRITION] == FAINT_THRESHOLD) {
-        player.status[STATUS_NUTRITION]--;
         sprintf(buf, "you feel faint with hunger%s.", foodWarning);
         message(buf, REQUIRE_ACKNOWLEDGMENT);
-    } else if (player.status[STATUS_NUTRITION] <= 1) {
-        // Force the player to eat something if he has it
-        for (theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
-            if (theItem->category == FOOD) {
-                sprintf(buf, "unable to control your hunger, you eat a %s.", (theItem->kind == FRUIT ? "mango" : "ration of food"));
-                messageWithColor(buf, &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
-                apply(theItem, false);
-                break;
-            }
-        }
-    }
-
-    if (player.status[STATUS_NUTRITION] == 1) { // Didn't manage to eat any food above.
-        player.status[STATUS_NUTRITION] = 0;    // So the status bar changes in time for the message:
+    } else if (player.status[STATUS_NUTRITION] == 0) {
         message("you are starving to death!", REQUIRE_ACKNOWLEDGMENT);
+    }
+}
+
+// This should only be called when the player is starving or very close to it.
+static void forceEatFood(void) {
+    brogueAssert(player.status[STATUS_NUTRITION] <= 1);
+    char buf[DCOLS*3];
+    // Force the player to eat something if he has it
+    for (item *theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
+        if (theItem->category == FOOD) {
+            const char *foodName = theItem->kind == FRUIT ? "mango" : "ration of food";
+            sprintf(buf, "unable to control your hunger, you eat a %s.", foodName);
+            messageWithColor(buf, &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
+            confirmMessages();
+            eat(theItem, false);
+            playerTurnEnded();
+            break;
+        }
     }
 }
 
@@ -924,48 +936,49 @@ static void handleHealthAlerts() {
     restoreRNG;
 }
 
-static void addXPXPToAlly(short XPXP, creature *monst) {
-    char theMonsterName[100], buf[200];
-    if (!(monst->info.flags & (MONST_INANIMATE | MONST_IMMOBILE))
-        && !(monst->bookkeepingFlags & MB_TELEPATHICALLY_REVEALED)
-        && monst->creatureState == MONSTER_ALLY
-        && monst->spawnDepth <= rogue.depthLevel
-        && rogue.depthLevel <= gameConst->amuletLevel) {
+/// @brief Add experience to the given monster. Allies gain experience when the player discovers new pathable tiles.
+/// @param monst The ally that gains experience
+static void addXPXPToAlly(creature *monst) {
+    if (!(monst->creatureState == MONSTER_ALLY) || monst->info.flags & (MONST_INANIMATE | MONST_IMMOBILE)) {
+        return;
+    }
 
-        monst->xpxp += XPXP;
-        //printf("\n%i xpxp added to your %s this turn.", rogue.xpxpThisTurn, monst->info.monsterName);
-        if (monst->xpxp >= XPXP_NEEDED_FOR_TELEPATHIC_BOND
-            && !(monst->bookkeepingFlags & MB_TELEPATHICALLY_REVEALED)) {
+    monst->xpxp += rogue.xpxpThisTurn;
 
-            monst->bookkeepingFlags |= MB_TELEPATHICALLY_REVEALED;
-            updateVision(true);
-            monsterName(theMonsterName, monst, false);
-            sprintf(buf, "you have developed a telepathic bond with your %s.", theMonsterName);
-            messageWithColor(buf, &advancementMessageColor, 0);
-        }
-        if (monst->xpxp > 1500 * 20) {
-            rogue.featRecord[FEAT_COMPANION] = true;
-        }
+    // Telepathic bond
+    if (!(monst->bookkeepingFlags & MB_TELEPATHICALLY_REVEALED) && monst->xpxp >= XPXP_NEEDED_FOR_TELEPATHIC_BOND) {
+
+        monst->bookkeepingFlags |= MB_TELEPATHICALLY_REVEALED;
+        updateVision(true);
+        char theMonsterName[100], buf[200];
+        monsterName(theMonsterName, monst, false);
+        sprintf(buf, "you have developed a telepathic bond with your %s.", theMonsterName);
+        messageWithColor(buf, &advancementMessageColor, 0);
+    }
+
+    // Companion feat
+    if (!(rogue.featRecord[FEAT_COMPANION]) && monst->xpxp >= gameConst->companionFeatRequiredXP) {
+        rogue.featRecord[FEAT_COMPANION] = true;
     }
 }
 
+/// @brief Allies gain experience if they are within 1 depth level of the player
 static void handleXPXP() {
-    //char buf[DCOLS*2], theMonsterName[50];
 
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
-        addXPXPToAlly(rogue.xpxpThisTurn, monst);
+        addXPXPToAlly(monst);
     }
     if (rogue.depthLevel > 1) {
         for (creatureIterator it = iterateCreatures(&levels[rogue.depthLevel - 2].monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
-            addXPXPToAlly(rogue.xpxpThisTurn, monst);
+            addXPXPToAlly(monst);
         }
     }
     if (rogue.depthLevel < gameConst->deepestLevel) {
         for (creatureIterator it = iterateCreatures(&levels[rogue.depthLevel].monsters); hasNextCreature(it);) {
             creature *monst = nextCreature(&it);
-            addXPXPToAlly(rogue.xpxpThisTurn, monst);
+            addXPXPToAlly(monst);
         }
     }
     rogue.xpxpThisTurn = 0;
@@ -975,7 +988,7 @@ static void playerFalls() {
     short damage;
     short layer;
 
-    if (cellHasTMFlag(player.loc.x, player.loc.y, TM_IS_SECRET)
+    if (cellHasTMFlag(player.loc, TM_IS_SECRET)
         && playerCanSee(player.loc.x, player.loc.y)) {
 
         discover(player.loc.x, player.loc.y);
@@ -1002,7 +1015,7 @@ static void playerFalls() {
         if (terrainFlags(player.loc) & T_IS_DEEP_WATER) {
             messageWithColor("You fall into deep water, unharmed.", &badMessageColor, 0);
         } else {
-            if (cellHasTMFlag(player.loc.x, player.loc.y, TM_ALLOWS_SUBMERGING)) {
+            if (cellHasTMFlag(player.loc, TM_ALLOWS_SUBMERGING)) {
                 damage /= 2; // falling into liquid (shallow water, bog, etc.) hurts less than hitting hard floor
             }
             messageWithColor("You are injured by the fall.", &badMessageColor, 0);
@@ -1041,7 +1054,7 @@ void activateMachine(short machineNumber) {
             if ((pmap[x][y].flags & IS_IN_MACHINE)
                 && pmap[x][y].machineNumber == machineNumber
                 && !(pmap[x][y].flags & IS_POWERED)
-                && cellHasTMFlag(x, y, TM_IS_WIRED)) {
+                && cellHasTMFlag((pos){ x, y }, TM_IS_WIRED)) {
 
                 pmap[x][y].flags |= IS_POWERED;
                 for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
@@ -1086,7 +1099,7 @@ boolean circuitBreakersPreventActivation(short machineNumber) {
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
             if (pmap[i][j].machineNumber == machineNumber
-                && cellHasTMFlag(i, j, TM_IS_CIRCUIT_BREAKER)) {
+                && cellHasTMFlag((pos){ i, j }, TM_IS_CIRCUIT_BREAKER)) {
 
                 return true;
             }
@@ -1140,7 +1153,7 @@ boolean exposeTileToElectricity(short x, short y) {
     enum dungeonLayers layer;
     boolean promotedSomething = false;
 
-    if (!cellHasTMFlag(x, y, TM_PROMOTES_ON_ELECTRICITY)) {
+    if (!cellHasTMFlag((pos){ x, y }, TM_PROMOTES_ON_ELECTRICITY)) {
         return false;
     }
     for (layer=0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
@@ -1186,12 +1199,12 @@ boolean exposeTileToFire(short x, short y, boolean alwaysIgnite) {
         fireIgnited = true;
 
         // Count explosive neighbors.
-        if (cellHasTMFlag(x, y, TM_EXPLOSIVE_PROMOTE)) {
+        if (cellHasTMFlag((pos){ x, y }, TM_EXPLOSIVE_PROMOTE)) {
             for (dir = 0, explosiveNeighborCount = 0; dir < DIRECTION_COUNT; dir++) {
                 newX = x + nbDirs[dir][0];
                 newY = y + nbDirs[dir][1];
                 if (coordinatesAreInMap(newX, newY)
-                    && (cellHasTerrainFlag((pos){ newX, newY }, T_IS_FIRE | T_OBSTRUCTS_GAS) || cellHasTMFlag(newX, newY, TM_EXPLOSIVE_PROMOTE))) {
+                    && (cellHasTerrainFlag((pos){ newX, newY }, T_IS_FIRE | T_OBSTRUCTS_GAS) || cellHasTMFlag((pos){ newX, newY }, TM_EXPLOSIVE_PROMOTE))) {
 
                     explosiveNeighborCount++;
                 }
@@ -1486,7 +1499,7 @@ void updateEnvironment() {
 
                 pmap[i][j].flags &= ~PRESSURE_PLATE_DEPRESSED;
             }
-            if (cellHasTMFlag(i, j, TM_PROMOTES_WITHOUT_KEY) && !keyOnTileAt((pos){ i, j })) {
+            if (cellHasTMFlag((pos){ i, j }, TM_PROMOTES_WITHOUT_KEY) && !keyOnTileAt((pos){ i, j })) {
                 for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
                     if (tileCatalog[pmap[i][j].layers[layer]].mechFlags & TM_PROMOTES_WITHOUT_KEY) {
                         promoteTile(i, j, layer, false);
@@ -1532,7 +1545,7 @@ void updateAllySafetyMap() {
             playerCostMap[i][j] = monsterCostMap[i][j] = 1;
 
             if (cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_PASSABILITY)
-                && (!cellHasTMFlag(i, j, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY))) {
+                && (!cellHasTMFlag((pos){ i, j }, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY))) {
 
                 playerCostMap[i][j] = monsterCostMap[i][j] = cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
             } else if (cellHasTerrainFlag((pos){ i, j }, T_PATHING_BLOCKER & ~T_OBSTRUCTS_PASSABILITY)) {
@@ -1609,7 +1622,7 @@ void updateSafetyMap() {
             playerCostMap[i][j] = monsterCostMap[i][j] = 1; // prophylactic
 
             if (cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_PASSABILITY)
-                && (!cellHasTMFlag(i, j, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY))) {
+                && (!cellHasTMFlag((pos){ i, j }, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY))) {
 
                 playerCostMap[i][j] = monsterCostMap[i][j] = cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
             } else if (cellHasTerrainFlag((pos){ i, j }, T_SACRED)) {
@@ -1659,7 +1672,7 @@ void updateSafetyMap() {
                     }
                     monsterCostMap[i][j] = 5;
                 } else if (cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_PASSABILITY)
-                           && cellHasTMFlag(i, j, TM_IS_SECRET) && !(discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY)
+                           && cellHasTMFlag((pos){ i, j }, TM_IS_SECRET) && !(discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY)
                            && !(pmap[i][j].flags & IN_FIELD_OF_VIEW)) {
                     // Secret door that the player can't currently see
                     playerCostMap[i][j] = 100;
@@ -1685,7 +1698,7 @@ void updateSafetyMap() {
     for (i=0; i<DCOLS; i++) {
         for (j=0; j<DROWS; j++) {
             if (cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_PASSABILITY)
-                && cellHasTMFlag(i, j, TM_IS_SECRET) && !(discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY)
+                && cellHasTMFlag((pos){ i, j }, TM_IS_SECRET) && !(discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY)
                 && !(pmap[i][j].flags & IN_FIELD_OF_VIEW)) {
 
                 // Secret doors that the player can't see are not particularly safe themselves;
@@ -1738,12 +1751,12 @@ void updateSafeTerrainMap() {
         for (j=0; j<DROWS; j++) {
             monst = monsterAtLoc((pos){ i, j });
             if (cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_PASSABILITY)
-                && (!cellHasTMFlag(i, j, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY))) {
+                && (!cellHasTMFlag((pos){ i, j }, TM_IS_SECRET) || (discoveredTerrainFlagsAtLoc((pos){ i, j }) & T_OBSTRUCTS_PASSABILITY))) {
 
                 costMap[i][j] = cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_DIAGONAL_MOVEMENT) ? PDS_OBSTRUCTION : PDS_FORBIDDEN;
                 rogue.mapToSafeTerrain[i][j] = 30000; // OOS prophylactic
             } else if ((monst && (monst->turnsSpentStationary > 1 || (monst->info.flags & MONST_GETS_TURN_ON_ACTIVATION)))
-                       || (cellHasTerrainFlag((pos){ i, j }, T_PATHING_BLOCKER & ~T_HARMFUL_TERRAIN) && !cellHasTMFlag(i, j, TM_IS_SECRET))) {
+                       || (cellHasTerrainFlag((pos){ i, j }, T_PATHING_BLOCKER & ~T_HARMFUL_TERRAIN) && !cellHasTMFlag((pos){ i, j }, TM_IS_SECRET))) {
 
                 costMap[i][j] = PDS_FORBIDDEN;
                 rogue.mapToSafeTerrain[i][j] = 30000;
@@ -1886,7 +1899,7 @@ static void monsterEntersLevel(creature *monst, short n) {
     monst->targetCorpseLoc = INVALID_POS;
 
     if (!pit) {
-        getQualifyingPathLocNear(&(monst->loc.x), &(monst->loc.y), monst->loc.x, monst->loc.y, true,
+        monst->loc = getQualifyingPathLocNear(monst->loc, true,
                                  T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)), 0,
                                  avoidedFlagsForMonster(&(monst->info)), HAS_STAIRS, false);
     }
@@ -1896,9 +1909,9 @@ static void monsterEntersLevel(creature *monst, short n) {
         // Monsters using the stairs will displace any creatures already located there, to thwart stair-dancing.
         creature *prevMonst = monsterAtLoc(monst->loc);
         brogueAssert(prevMonst);
-        getQualifyingPathLocNear(&(prevMonst->loc.x), &(prevMonst->loc.y), monst->loc.x, monst->loc.y, true,
+        prevMonst->loc = getQualifyingPathLocNear(monst->loc, true,
                                  T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(prevMonst->info)), 0,
-                                 avoidedFlagsForMonster(&(prevMonst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_STAIRS), false);
+                                 avoidedFlagsForMonster(&(prevMonst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_STAIRS | IS_IN_MACHINE), false);
         pmapAt(monst->loc)->flags &= ~(HAS_PLAYER | HAS_MONSTER);
         pmapAt(prevMonst->loc)->flags |= (prevMonst == &player ? HAS_PLAYER : HAS_MONSTER);
         refreshDungeonCell(prevMonst->loc);
@@ -1970,9 +1983,9 @@ static void decrementPlayerStatus() {
         if (player.status[STATUS_NUTRITION] > 0) {
             if (!numberOfMatchingPackItems(AMULET, 0, 0, false) || rand_percent(20)) {
                 player.status[STATUS_NUTRITION]--;
+                printNutritionMessages();
             }
         }
-        checkNutrition();
     }
 
     if (player.status[STATUS_TELEPATHIC] > 0 && !--player.status[STATUS_TELEPATHIC]) {
@@ -2088,6 +2101,12 @@ void autoRest() {
         danger[dir] = monsterAvoids(&player, newLoc);
     }
 
+    // Clear already-seen flag from all monsters
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
+        monst->bookkeepingFlags &= ~MB_ALREADY_SEEN;
+    }
+
     rogue.disturbed = false;
     rogue.automationActive = true;
     // Stop as soon as we're free from crystal.
@@ -2117,7 +2136,7 @@ void autoRest() {
             recordKeystroke(REST_KEY, false, false);
             rogue.justRested = true;
             playerTurnEnded();
-            if (dangerChanged(danger) || pauseAnimation(1)) {
+            if (dangerChanged(danger) || pauseAnimation(1, PAUSE_BEHAVIOR_DEFAULT)) {
                 rogue.disturbed = true;
             }
         }
@@ -2126,7 +2145,7 @@ void autoRest() {
             recordKeystroke(REST_KEY, false, false);
             rogue.justRested = true;
             playerTurnEnded();
-            if (dangerChanged(danger) || pauseAnimation(1)) {
+            if (dangerChanged(danger) || pauseAnimation(1, PAUSE_BEHAVIOR_DEFAULT)) {
                 rogue.disturbed = true;
             }
         }
@@ -2416,7 +2435,7 @@ void playerTurnEnded() {
                 monstersApproachStairs();
 
                 if (player.ticksUntilTurn > 100 && !fastForward) {
-                    fastForward = rogue.playbackFastForward || pauseAnimation(25);
+                    fastForward = rogue.playbackFastForward || pauseAnimation(25, PAUSE_BEHAVIOR_DEFAULT);
                 }
 
                 // Rolling waypoint refresh:
@@ -2498,7 +2517,7 @@ void playerTurnEnded() {
             if (canSeeMonster(monst)) {
                 monst->bookkeepingFlags |= MB_WAS_VISIBLE;
                 if (cellHasTerrainFlag(monst->loc, T_OBSTRUCTS_PASSABILITY)
-                    && cellHasTMFlag(monst->loc.x, monst->loc.y, TM_IS_SECRET)) {
+                    && cellHasTMFlag(monst->loc, TM_IS_SECRET)) {
 
                     discover(monst->loc.x, monst->loc.y);
                 }
@@ -2540,11 +2559,10 @@ void playerTurnEnded() {
 
         if (player.status[STATUS_PARALYZED]) {
             if (!fastForward) {
-                fastForward = rogue.playbackFastForward || pauseAnimation(25);
+                fastForward = rogue.playbackFastForward || pauseAnimation(25, PAUSE_BEHAVIOR_DEFAULT);
             }
         }
 
-        //checkNutrition(); // Now handled within decrementPlayerStatus().
         if (!rogue.playbackFastForward) {
             shuffleTerrainColors(100, false);
         }
@@ -2609,6 +2627,10 @@ void playerTurnEnded() {
     if (rogue.flareCount > 0) {
         animateFlares(rogue.flares, rogue.flareCount);
         rogue.flareCount = 0;
+    }
+    
+    if (player.status[STATUS_NUTRITION] <= 1) {
+        forceEatFood();
     }
 }
 

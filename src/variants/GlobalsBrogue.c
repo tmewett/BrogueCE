@@ -55,7 +55,6 @@ const color shieldingColor_Brogue =        {150,   75,     0,      0,      50,  
 const color dragonFireColor_Brogue =       {500,   150,    0,      45,     30,         45,         0,      true};
 const color centipedeColor_Brogue =        {75,    25,     85,     0,      0,          0,          0,      false};
 
-
 const bolt boltCatalog_Brogue[] = {
     {{0}},
     //name                      bolt description                ability description                         char    foreColor       backColor           boltEffect      magnitude       pathDF      targetDF    forbiddenMonsterFlags       flags
@@ -88,6 +87,18 @@ const bolt boltCatalog_Brogue[] = {
     {"poisoned dart",           "fires a dart",                 "fires strength-sapping darts",             G_WEAPON,&centipedeColor_Brogue,NULL,              BE_ATTACK,      1,              0,          0,          0,                          (BF_TARGET_ENEMIES | BF_NEVER_REFLECTS | BF_NOT_LEARNABLE)},
     {"growing vines",           "releases carnivorous vines into the ground", "conjures carnivorous vines", G_GRASS,&tanColor,      NULL,               BE_NONE,        5,              DF_ANCIENT_SPIRIT_GRASS, DF_ANCIENT_SPIRIT_VINES, (MONST_INANIMATE | MONST_IMMUNE_TO_WEBS),   (BF_TARGET_ENEMIES | BF_NEVER_REFLECTS)},
     {"whip",                    "whips",                        "wields a whip",                            '*',    &tanColor,      NULL,               BE_ATTACK,      1,              0,          0,          MONST_IMMUNE_TO_WEAPONS,    (BF_TARGET_ENEMIES | BF_NEVER_REFLECTS | BF_NOT_LEARNABLE | BF_DISPLAY_CHAR_ALONG_LENGTH)},
+};
+
+    //name              feat description                                        initial value
+const feat featTable_Brogue[] = {
+    {"Pure Mage",       "Ascend without using a weapon.",                           true},
+    {"Pure Warrior",    "Ascend without using a staff, wand or charm.",             true},
+    {"Companion",       "Explore 13 new depths with an ally.",                      false},
+    {"Specialist",      "Enchant an item to +16.",                                  false},
+    {"Jellymancer",     "Obtain 90 jelly allies simultaneously.",                   false},
+    {"Dragonslayer",    "Slay a dragon with a melee attack.",                       false},
+    {"Paladin",         "Ascend without attacking an unaware or fleeing creature.", true},
+    {"Untempted",       "Ascend without picking up gold.",                          true},
 };
 
 // Number of lumenstones on each level past amulet
@@ -824,7 +835,7 @@ const hordeType hordeCatalog_Brogue[] = {
     {MK_SALAMANDER,     1,      {MK_NAGA},                              {{1, 2, 1}},                    13,     20,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_TROLL,          1,      {MK_SALAMANDER},                        {{1, 2, 1}},                    13,     19,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_IMP,            1,      {MK_FURY},                              {{2, 4, 1}},                    18,     26,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
-    {MK_PIXIE,          1,      {MK_IMP, MK_PHANTOM},                   {{1, 2, 1}, {1, 2, 1}},         14,     21,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
+    {MK_PIXIE,          1,      {MK_IMP},                               {{1, 2, 1}},                    14,     21,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_DAR_BLADEMASTER,1,      {MK_FURY},                              {{2, 4, 1}},                    18,     26,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_DAR_BLADEMASTER,1,      {MK_IMP},                               {{2, 3, 1}},                    18,     26,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
     {MK_DAR_PRIESTESS,  1,      {MK_FURY},                              {{2, 4, 1}},                    18,     26,     10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
@@ -833,7 +844,7 @@ const hordeType hordeCatalog_Brogue[] = {
     {MK_GOLEM,          3,      {MK_DAR_BLADEMASTER, MK_DAR_PRIESTESS, MK_DAR_BATTLEMAGE},{{1,2,1},{1,1,1},{1,1,1}},18,25,10,   0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},
 
     // bosses
-    {MK_GOBLIN_CHIEFTAN,2,      {MK_GOBLIN_MYSTIC, MK_GOBLIN, MK_GOBLIN_TOTEM}, {{1,1,1}, {2,3,1}, {2,2,1}},2,  10,     50,     0,          0,                  HORDE_MACHINE_BOSS},
+    {MK_GOBLIN_CHIEFTAN,2,      {MK_GOBLIN_MYSTIC, MK_GOBLIN},          {{1,1,1}, {2,3,1}},             2,      10,     50,     0,          0,                  HORDE_MACHINE_BOSS},
     {MK_BLACK_JELLY,    0,      {0},                                    {{0}},                          5,      15,     50,     0,          0,                  HORDE_MACHINE_BOSS},
     {MK_VAMPIRE,        0,      {0},                                    {{0}},                          10,     DEEPEST_LEVEL,  50,  0,     0,                  HORDE_MACHINE_BOSS},
     {MK_FLAMEDANCER,    0,      {0},                                    {{0}},                          10,     DEEPEST_LEVEL,  50,  0,     0,                  HORDE_MACHINE_BOSS},
@@ -1006,14 +1017,17 @@ const gameConstants brogueGameConst = {
     .amuletLevel = AMULET_LEVEL,
 
     .depthAccelerator = 1,
+    .minimumAltarLevel = 13,
     .minimumLavaLevel = 4,
     .minimumBrimstoneLevel = 17,
     .mutationsOccurAboveLevel = 10,
+    .monsterOutOfDepthChance = 10,
 
     .machinesPerLevelSuppressionMultiplier = 4,
     .machinesPerLevelSuppressionOffset = 2,
     .machinesPerLevelIncreaseFactor = 1,
     .maxLevelForBonusMachines = 2,
+    .deepestLevelForMachines = AMULET_LEVEL,
 
     .extraItemsPerLevel = 0,
     .goldAdjustmentStartDepth = 6,
@@ -1042,6 +1056,8 @@ const gameConstants brogueGameConst = {
     .numberCharmKinds = sizeof(charmTable_Brogue) / sizeof(itemTable),
     .numberMeteredItems = sizeof(meteredItemsGenerationTable_Brogue) / sizeof(meteredItemGenerationTable),
     .numberHordes = sizeof(hordeCatalog_Brogue) / sizeof(hordeType),
+    .numberFeats = sizeof(featTable_Brogue) / sizeof(feat),
+    .companionFeatRequiredXP = 10400, // about 13 depths
 
     .mainMenuTitleHeight = MENU_TITLE_HEIGHT,
     .mainMenuTitleWidth = MENU_TITLE_WIDTH
@@ -1063,6 +1079,7 @@ void initializeGameVariantBrogue() {
     scrollTable = scrollTable_Brogue;
     wandTable = wandTable_Brogue;
     charmTable = charmTable_Brogue;
+    featTable = featTable_Brogue;
 
     charmEffectTable = charmEffectTable_Brogue;
 

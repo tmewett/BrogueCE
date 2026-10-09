@@ -44,7 +44,6 @@ static short dialogSelectEntryFromList(
 
     short x=0, y=0, width=0, height=0;
     screenDisplayBuffer dbuf;
-    screenDisplayBuffer rbuf;
     short i, selectedButton, len, maxLen;
     char buttonText[COLS];
 
@@ -78,11 +77,12 @@ static short dialogSelectEntryFromList(
     //Dialog background
     rectangularShading(x - 1, y - 1, width + 1, height + 1, &interfaceBoxColor, INTERFACE_OPACITY, &dbuf);
     //Display the title/background and save the prior display state
-    overlayDisplayBuffer(&dbuf, &rbuf);
+    const SavedDisplayBuffer rbuf = saveDisplayBuffer();
+    overlayDisplayBuffer(&dbuf);
     //Display the buttons and wait for user selection
     selectedButton = buttonInputLoop(buttons, buttonCount, x, y, width, height, NULL);
     //Revert the display state
-    overlayDisplayBuffer(&rbuf, NULL);
+    restoreDisplayBuffer(&rbuf);
 
     return selectedButton;
 }
@@ -287,6 +287,7 @@ static void dialogCreateMonsterChooseMutation(creature *theMonster) {
             && !(theMonster->info.abilityFlags & mutationCatalog[i].forbiddenAbilityFlags)) {
             strncpy(buttonText, mutationCatalog[i].title, COLS);
             initializeCreateItemButton(&(buttons[j]), buttonText);
+            buttons[j].command = i; // Store the mutation index (as opposed to the button index)
             j++;
         }
     }
@@ -296,8 +297,8 @@ static void dialogCreateMonsterChooseMutation(creature *theMonster) {
 
     selectedMutation = dialogSelectEntryFromList(buttons, j+1, "Choose a mutation:");
 
-    if (selectedMutation != noMutation) {
-        mutateMonster(theMonster, selectedMutation);
+    if (selectedMutation >= 0 && selectedMutation != noMutation) {
+        mutateMonster(theMonster, buttons[selectedMutation].command); // Retrieve the mutation index from the button
     }
 }
 
@@ -367,7 +368,8 @@ static void dialogCreateMonster() {
     if (!(theMonster->info.flags & MONST_NEVER_MUTATED) && !(theMonster->info.abilityFlags & MA_NEVER_MUTATED)) {
         dialogCreateMonsterChooseMutation(theMonster);
     }
-
+    initializeMonster(theMonster, false);
+    
     if (theMonster->info.displayChar == G_TURRET) {
         sprintf(theMessage, "Create %s where? Choose a visible wall.", theMonster->info.monsterName);
     } else {
@@ -376,7 +378,7 @@ static void dialogCreateMonster() {
     temporaryMessage(theMessage, REFRESH_SIDEBAR);
 
     // pick a location
-    if (chooseTarget(&selectedPosition, 0, false, true, false, &boltCatalog[BOLT_NONE], &white)) {
+    if (chooseTarget(&selectedPosition, 0, AUTOTARGET_MODE_NONE, NULL)) {
         confirmMessages();
 
         if (!playerCanSeeOrSense(selectedPosition.x, selectedPosition.y)) {
@@ -455,10 +457,10 @@ static void dialogCreateItem() {
 
     selectedCategory = dialogSelectEntryFromList(buttons, i, "Create item:");
 
-    if (tableForItemCategory(Fl(selectedCategory))) {
-        selectedKind = dialogCreateItemChooseKind(Fl(selectedCategory));
-    } else if (selectedCategory == -1) {
+    if (selectedCategory == -1) {
         return;
+    } else if (tableForItemCategory(Fl(selectedCategory))) {
+        selectedKind = dialogCreateItemChooseKind(Fl(selectedCategory));
     } else {
         selectedKind = 0;
     }

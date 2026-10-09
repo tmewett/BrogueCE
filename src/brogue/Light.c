@@ -395,7 +395,7 @@ void animateFlares(flare **flares, short count) {
         demoteVisibility();
         updateFieldOfViewDisplay(false, true);
         if (!fastForward && (inView || rogue.playbackOmniscience) && atLeastOneFlareStillActive) {
-            fastForward = pauseAnimation(10);
+            fastForward = pauseAnimation(10, PAUSE_BEHAVIOR_DEFAULT);
         }
         recordOldLights();
         restoreLighting(lights);

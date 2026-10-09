@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.tmewett.brogue</id>
+  
+  <name>Brogue</name>
+  <summary>Brogue is a Roguelike game by Brian Walker (community edition)</summary>
+  
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0-or-later</project_license>
+  
+  <description>
+    <p>
+      Brogue is a Roguelike game by Brian Walker. It is a direct descendant of Rogue, unlike other popular modern roguelikes, and it favors simplicity over complexity, while trying to ensure that the interactions between components will be interesting and varied. It is possible to play entirely with the keyboard, or entirely with the mouse, or a combination of the two as the player chooses.
+    </p>
+  </description>
+  
+  <launchable type="desktop-id">brogue.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://static.wikia.nocookie.net/brogue/images/6/6a/Brogue-menu.png</image>
+    </screenshot>
+  </screenshots>
+</component>

@@ -97,8 +97,9 @@ extern const monsterWords monsterText[NUMBER_MONSTER_KINDS];
 extern const hordeType *hordeCatalog;
 extern const mutation mutationCatalog[NUMBER_MUTATORS];
 extern const monsterClass monsterClassCatalog[MONSTER_CLASS_COUNT];
+extern const statusEffect statusEffectCatalog[NUMBER_OF_STATUS_EFFECTS];
 
-extern const feat featTable[FEAT_COUNT];
+extern const feat *featTable;
 
 extern char itemTitles[NUMBER_ITEM_TITLES][30];
 extern char itemColors[NUMBER_ITEM_COLORS][30];
