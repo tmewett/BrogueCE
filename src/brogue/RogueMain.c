@@ -596,7 +596,7 @@ void startLevel(short oldLevelNumber, short stairDirection) {
                 y = monst->loc.y;
                 if (((monst->creatureState == MONSTER_TRACKING_SCENT && (stairDirection != 0 || monst->status[STATUS_LEVITATING]))
                      || monst->creatureState == MONSTER_ALLY || monst == rogue.yendorWarden)
-                    && (stairDirection != 0 || monst->currentHP > 10 || monst->status[STATUS_LEVITATING])
+                    && (stairDirection != 0 || monst->currentHP > 12 || monst->status[STATUS_LEVITATING])
                     && ((flying != 0) == ((monst->status[STATUS_LEVITATING] != 0)
                                           || cellHasTerrainFlag((pos){ x, y }, T_PATHING_BLOCKER)
                                           || cellHasTerrainFlag((pos){ px, py }, T_AUTO_DESCENT)))
