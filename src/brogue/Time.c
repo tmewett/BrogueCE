@@ -312,7 +312,8 @@ void applyInstantTileEffectsToCreature(creature *monst) {
         && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
         damage = rand_range(15, 20);
         damage = max(damage, monst->info.maxHP / 2);
-        monst->status[STATUS_EXPLOSION_IMMUNITY] = 5;
+        // monster and player explosion immunity is decremented 2 too many times, for the intended full 5 turns bump it to 7
+        monst->status[STATUS_EXPLOSION_IMMUNITY] = 7;
         if (monst == &player) {
             rogue.disturbed = true;
             for (layer = 0; layer < NUMBER_TERRAIN_LAYERS && !(tileCatalog[pmap[*x][*y].layers[layer]].flags & T_CAUSES_EXPLOSIVE_DAMAGE); layer++);

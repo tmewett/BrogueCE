@@ -1,0 +1,1 @@
+Fixed explosion immunity after an explosion to last a full five turns, instead of three.
