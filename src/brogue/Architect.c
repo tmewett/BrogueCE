@@ -1540,15 +1540,22 @@ boolean buildAMachine(enum machineTypes bp,
                         // we pass the monsters and items that it spawned back to the parent,
                         // so that if the parent fails, they can all be freed.
                         int i;
+                        // Remember the item's key locations before any adoption attempt, so that a failed
+                        // attempt can't leave it keyed to a location in a machine that no longer exists.
+                        keyLocationProfile keyLocBackup[KEY_ID_MAXIMUM];
+                        if (theItem) {
+                            memcpy(keyLocBackup, theItem->keyLoc, sizeof(keyLocBackup));
+                        }
                         for (i=10; i > 0; i--) {
                             // First make sure our adopted item, if any, is not on the floor or in the pack already.
                             // Otherwise, a previous attempt to place it may have put it on the floor in a different
                             // machine, only to have that machine fail and be deleted, leaving the item remaining on
-                            // the floor where placed.
+                            // the floor where placed. For the same reason, restore its key locations.
                             if ((feature->flags & MF_OUTSOURCE_ITEM_TO_MACHINE) && theItem) {
                                 removeItemFromChain(theItem, floorItems);
                                 removeItemFromChain(theItem, packItems);
                                 theItem->nextItem = NULL;
+                                memcpy(theItem->keyLoc, keyLocBackup, sizeof(keyLocBackup));
                                 success = buildAMachine(-1, -1, -1, BP_ADOPT_ITEM, theItem, p->spawnedItemsSub, p->spawnedMonstersSub);
                             } else if (feature->flags & MF_BUILD_VESTIBULE) {
                                 success = buildAMachine(-1, featX, featY, BP_VESTIBULE, NULL, p->spawnedItemsSub, p->spawnedMonstersSub);
