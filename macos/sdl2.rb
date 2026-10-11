@@ -45,6 +45,10 @@ class Sdl2 < Formula
   end
 
   def install
+    # BROGUE PATCH: Set deployment target version environment variable, so SDL works on older versions of macOS.
+    # 10.7 is the earliest version SDL supports. [citation needed]
+    ENV["MACOSX_DEPLOYMENT_TARGET"] = "10.7"
+
     # We have to do this because most build scripts assume that all SDL modules
     # are installed to the same prefix. Consequently SDL stuff cannot be
     # keg-only but I doubt that will be needed.
