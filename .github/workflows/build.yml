@@ -13,10 +13,6 @@ jobs:
     - name: "Checkout sources"
       uses: actions/checkout@v3
 
-    - name: "Prepare"
-      run: |
-        make macos/sdl2.rb
-
     - name: "Cache SDL2"
       uses: actions/cache@v3
       with:
@@ -64,10 +60,6 @@ jobs:
     steps:
     - name: "Checkout sources"
       uses: actions/checkout@v3
-
-    - name: "Prepare"
-      run: |
-        make macos/sdl2.rb
 
     - name: "Cache SDL2"
       uses: actions/cache@v3
