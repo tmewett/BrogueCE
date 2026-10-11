@@ -1,1 +1,1 @@
-Raised threshold so allies don't follow the player into chasms unless their HP is above 12
+Allies with 12 HP (Such as the monkey) usually follow the player down into chasms, however the chasm deals 6-12 damage, which may cause the monkey to die. Raised threshold so allies don't follow the player into chasms unless their HP is above 12
