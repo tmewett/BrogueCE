@@ -1,0 +1,16 @@
+Set deployment target version environment variable, so SDL works on older
+versions of macOS.
+
+10.7 is the earliest version SDL supports. [citation needed]
+
+--- sdl3.orig.rb        2026-09-13 20:01:43.432290000 +0100
++++ sdl3.rb     2026-09-13 20:09:09.395303000 +0100
+@@ -48,6 +48,8 @@
+   end
+
+   def install
++    ENV["MACOSX_DEPLOYMENT_TARGET"] = "10.7"
++
+     inreplace "cmake/sdl3.pc.in", "@SDL_PKGCONFIG_PREFIX@", HOMEBREW_PREFIX
+
+     args = %w[
