@@ -312,9 +312,13 @@ void applyInstantTileEffectsToCreature(creature *monst) {
         && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
         damage = rand_range(15, 20);
         damage = max(damage, monst->info.maxHP / 2);
-        // monster and player explosion immunity is decremented 2 too many times, for the intended full 5 turns bump it to 7
-        monst->status[STATUS_EXPLOSION_IMMUNITY] = 7;
         if (monst == &player) {
+            // The code has a 1st_explosion-decrement_explosion_immunity-2nd_explosion pattern. The first explosion sets explosion immunity.
+            // From a value of 5 for explosion immunity, the first turn's setting of 5 for explosion immunity is immediately decremented on the same turn.
+            // The final turn which the player begins with an explosion immunity of 1 has a decrement immediately followed by an explosion.
+            // i.e. there are 2 off-by-one errors: at the start (explosion immunity set, then decrement) and at the end (start with 1 immunity, decrement, then explosion).
+            // The player gets only 3 turns of immunity. n becomes n-2, so if you want n turns of immunity set the value to n + 2.
+            monst->status[STATUS_EXPLOSION_IMMUNITY] = 7; // 7 gives the player the intended 5 full turns of immunity to both gas and monster explosions
             rogue.disturbed = true;
             for (layer = 0; layer < NUMBER_TERRAIN_LAYERS && !(tileCatalog[pmap[*x][*y].layers[layer]].flags & T_CAUSES_EXPLOSIVE_DAMAGE); layer++);
             message(tileCatalog[pmap[*x][*y].layers[layer]].flavorText, 0);
@@ -331,6 +335,10 @@ void applyInstantTileEffectsToCreature(creature *monst) {
                 return;
             }
         } else { // it's a monster
+            // Unsure how this occurs, but extensive testing reveals that n turns of explosion immunity
+            // gives monsters n turns of gas explosion immunity, but n - 1 turns of e.g. explosive bloat immunity.
+            // 6 gives monsters 6 turns of immunity to gas explosions, 5 turns of immunity to monster explosions
+            monst->status[STATUS_EXPLOSION_IMMUNITY] = 6;
             if (monst->creatureState == MONSTER_SLEEPING) {
                 monst->creatureState = MONSTER_TRACKING_SCENT;
             }
