@@ -2692,8 +2692,8 @@ static boolean specificallyValidBoltTarget(creature *caster, creature *target, e
                     return true;
                 }
             } else if (monstersAreTeammates(caster, target)) {
-                if (target == &player && rogue.armor && (rogue.armor->flags & ITEM_RUNIC) && (rogue.armor->flags & ITEM_RUNIC_IDENTIFIED)
-                    && rogue.armor->enchant2 == A_REFLECTION && netEnchant(rogue.armor) > 0) {
+                if (target == &player && rogue.armor && (rogue.armor->flags & (ITEM_IDENTIFIED | ITEM_MAGIC_DETECTED))
+                && rogue.armor->enchant3 == A_REFLECTION && netEnchant(rogue.armor) > 0) {
                     // Allies shouldn't cast negation on the player if she's knowingly wearing armor of reflection.
                     // Too much risk of negating themselves in the process.
                     return false;
