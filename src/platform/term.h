@@ -7,13 +7,13 @@
 
 typedef struct {float r, g, b;} fcolor;
 struct term_t {
-    int (*start)();
-    void (*end)();
+    int (*start)(void);
+    void (*end)(void);
     void (*put)(int x, int y, int ch, fcolor *fg, fcolor *bg);
-    void (*refresh)();
-    int (*getkey)();
+    void (*refresh)(void);
+    int (*getkey)(void);
     void (*wait)(int ms);
-    int (*hasKey)();
+    int (*hasKey)(void);
     void (*title)(const char *);
     void (*resize)(int w, int h);
     int (*keycodeByName)(const char *);
