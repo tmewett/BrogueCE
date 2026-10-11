@@ -1134,7 +1134,7 @@ enum tileFlags {
 #define MAX_EXP_LEVEL                       20
 #define MAX_EXP                             100000000L
 #define ARMORSMITH_BONUS_PERCENT            50
-#define ARMORSMITH_BONUS_DEFENSE            20
+#define ARMORSMITH_BONUS_DEFENSE            10
 
 #define XPXP_NEEDED_FOR_TELEPATHIC_BOND     1400 // XPXP required to enable telepathic awareness with the ally
 
