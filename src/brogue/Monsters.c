@@ -4583,21 +4583,26 @@ void monsterDetails(char buf[], creature *monst) {
         itemName(rogue.armor, theItemName, false, false, NULL);
         sprintf(newText, "Your %s renders you immune to %s.\n     ", theItemName, monstName);
     } else if (monst->info.damage.upperBound * monsterDamageAdjustmentAmount(monst) / FP_FACTOR == 0) {
-        // The monster has no melee attack. If it casts a bolt that deals direct
-        // damage (e.g. the flame turret's firebolt), report that damage instead;
-        // it is dealt with the same formula as a staff of that bolt at the
-        // bolt's magnitude (see the BE_DAMAGE case in updateBolt()).
+        // The monster has no melee attack. If it casts bolts that deal direct
+        // damage (e.g. the flame turret's firebolt), report the strongest one;
+        // damage is rolled with the same formula as a staff of that bolt at the
+        // bolt's magnitude (see the BE_DAMAGE case in updateBolt()). Ally
+        // monsters can learn extra bolts by absorbing corpses, so pick the
+        // worst case rather than the first damaging bolt in the list.
         const bolt *damageBolt = NULL;
+        short bestBoltDamageHigh = 0;
         for (i = 0; monst->info.bolts[i] != 0; i++) {
-            if (boltCatalog[monst->info.bolts[i]].boltEffect == BE_DAMAGE) {
-                damageBolt = &boltCatalog[monst->info.bolts[i]];
-                break;
+            const bolt *theBolt = &boltCatalog[monst->info.bolts[i]];
+            if (theBolt->boltEffect == BE_DAMAGE
+                && staffDamageHigh(theBolt->magnitude * FP_FACTOR) > bestBoltDamageHigh) {
+
+                damageBolt = theBolt;
+                bestBoltDamageHigh = staffDamageHigh(theBolt->magnitude * FP_FACTOR);
             }
         }
         if (damageBolt) {
             short boltDamageLow = staffDamageLow(damageBolt->magnitude * FP_FACTOR);
-            short boltDamageHigh = staffDamageHigh(damageBolt->magnitude * FP_FACTOR);
-            short hitsToDefeat = (player.currentHP + boltDamageHigh - 1) / boltDamageHigh;
+            short hitsToDefeat = (player.currentHP + bestBoltDamageHigh - 1) / bestBoltDamageHigh;
 
             i = strlen(buf);
             i = encodeMessageColor(buf, i, &badMessageColor);
@@ -4606,8 +4611,8 @@ void monsterDetails(char buf[], creature *monst) {
                     capMonstName,
                     damageBolt->description,
                     boltDamageLow,
-                    boltDamageHigh,
-                    (int) (100 * (boltDamageLow + boltDamageHigh) / 2 / player.currentHP),
+                    bestBoltDamageHigh,
+                    (int) (100 * (boltDamageLow + bestBoltDamageHigh) / 2 / player.currentHP),
                     hitsToDefeat,
                     (hitsToDefeat > 1 ? "s" : ""));
         } else {
