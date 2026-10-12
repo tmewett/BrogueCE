@@ -878,7 +878,7 @@ struct {
     {NULL, 0},
 };
 
-int term_keycodeByName(const char *name) {
+static int term_keycodeByName(const char *name) {
     int i = 0;
     while (curses_keys[i].name != NULL) {
         if (strcmp(name, curses_keys[i].name) == 0) {
