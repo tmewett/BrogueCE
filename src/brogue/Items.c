@@ -1206,7 +1206,17 @@ void updateFloorItems() {
         if (cellHasTerrainFlag((pos){ x, y }, T_AUTO_DESCENT)) {
             if (playerCanSeeOrSense(x, y)) {
                 itemName(theItem, buf, false, false, NULL);
-                sprintf(buf2, "The %s plunge%s out of sight!", buf, (theItem->quantity > 1 ? "" : "s"));
+                if ((theItem->category == AMULET) && rogue.depthLevel == gameConst->deepestLevel) {
+                    sprintf(buf2, "The Amulet vanishes and reappears elsewhere!");
+                } else if ((theItem->category == GEM) && rogue.depthLevel == gameConst->deepestLevel) {
+                    sprintf(buf2, "%s lumenstone%s vanish%s and reappear%s elsewhere!",
+                            (theItem->quantity > 1 ? "Some" : "A"),
+                            (theItem->quantity > 1 ? "s" : ""),
+                            (theItem->quantity > 1 ? "" : "es"),
+                            (theItem->quantity > 1 ? "" : "s"));
+                } else {
+                    sprintf(buf2, "The %s plunge%s out of sight!", buf, (theItem->quantity > 1 ? "" : "s"));
+                }
                 messageWithColor(buf2, &itemMessageColor, 0);
             }
             if (playerCanSee(x, y)) {
@@ -1219,7 +1229,24 @@ void updateFloorItems() {
 
             pmap[x][y].flags &= ~(HAS_ITEM | ITEM_DETECTED);
 
-            if (theItem->category == POTION || rogue.depthLevel == gameConst->deepestLevel) {
+            if ((theItem->category == GEM || theItem->category == AMULET) && rogue.depthLevel == gameConst->deepestLevel) {
+                // Choose a placement location.
+                pos itemPlacementLoc = INVALID_POS;
+                    do {
+                        randomMatchingLocation(&itemPlacementLoc, FLOOR, NOTHING, -1);
+                    } while (passableArcCount(itemPlacementLoc.x, itemPlacementLoc.y) > 1); // Not in a hallway.
+                brogueAssert(isPosInMap(itemPlacementLoc));
+
+                item *newItem;
+                unsigned short loot = theItem->category;
+                newItem = generateItem(loot, 0);
+                newItem->quantity = theItem->quantity;
+                newItem->originDepth = theItem->originDepth;
+
+                deleteItem(theItem);
+                placeItemAt(newItem, itemPlacementLoc);
+                brogueAssert(!cellHasTerrainFlag(itemPlacementLoc, T_OBSTRUCTS_PASSABILITY));
+            } else if (theItem->category == POTION || rogue.depthLevel == gameConst->deepestLevel) {
                 // Potions don't survive the fall.
                 deleteItem(theItem);
             } else {
