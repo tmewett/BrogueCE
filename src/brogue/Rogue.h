@@ -2348,7 +2348,9 @@ enum featTypes {
     FEAT_JELLYMANCER,
     FEAT_DRAGONSLAYER,
     FEAT_PALADIN,
-    FEAT_TONE
+    FEAT_TONE,
+    FEAT_GEMINI,
+    FEAT_ESOTERIC
 };
 
 enum exitStatus {

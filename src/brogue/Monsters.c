@@ -616,6 +616,10 @@ creature *cloneMonster(creature *monst, boolean announce, boolean placeClone) {
         newMonst->info.defense = 0;
         strcpy(newMonst->info.monsterName, "clone");
         newMonst->creatureState = MONSTER_ALLY;
+
+        if (!rogue.featRecord[FEAT_GEMINI]) {
+            rogue.featRecord[FEAT_GEMINI] = true;
+        }
     }
 
     if (monst->creatureState == MONSTER_ALLY
@@ -3275,6 +3279,12 @@ static boolean updateMonsterCorpseAbsorption(creature *monst) {
                 monst->status[STATUS_LEVITATING] = monst->maxStatus[STATUS_LEVITATING] = 1000; // won't decrease
                 monst->info.flags &= ~(MONST_RESTRICTED_TO_LIQUID | MONST_SUBMERGES);
                 monst->bookkeepingFlags &= ~(MB_SUBMERGED);
+
+                if ((monst->info.monsterID == MK_KRAKEN) 
+                    && (monstersAreTeammates(monst, &player)) // just in case
+                    && !rogue.featRecord[FEAT_ESOTERIC]) {
+                    rogue.featRecord[FEAT_ESOTERIC] = true;
+                }
             }
             if (monst->info.flags & MONST_IMMUNE_TO_FIRE) {
                 monst->status[STATUS_IMMUNE_TO_FIRE] = monst->maxStatus[STATUS_IMMUNE_TO_FIRE] = 1000; // won't decrease
