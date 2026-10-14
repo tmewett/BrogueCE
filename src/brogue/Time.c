@@ -1776,10 +1776,8 @@ static void processIncrementalAutoID() {
     short i;
 
     // A safeguard placed against grindy foodclock bypasses, with a paralysis loophole closed
-    if ((rogue.starvedTurnsLeeway <= 0) // i.e. player is also starving
-        || (player.status[STATUS_PARALYZED] && rogue.paralyzedTurnsLeeway <= 0)) {
-            
-            return;
+    if ((rogue.starvedTurnsLeeway <= 0) || (player.status[STATUS_PARALYZED])) {
+        return;
 	}
 
     for (i=0; i<3; i++) {
@@ -1975,14 +1973,11 @@ static void monstersApproachStairs() {
 }
 
 static void decrementPlayerStatus() {
-    // Handle hunger.
-    if (!player.status[STATUS_PARALYZED]) {
-        // No nutrition is expended while paralyzed.
-        if (player.status[STATUS_NUTRITION] > 0) {
-            if (!numberOfMatchingPackItems(AMULET, 0, 0, false) || rand_percent(20)) {
-                player.status[STATUS_NUTRITION]--;
-                printNutritionMessages();
-            }
+    // Handle hunger. Paralysis consumes hunger at a 20% rate to prevent potential food clock abuses.
+    if (player.status[STATUS_NUTRITION] > 0) {
+        if (!(numberOfMatchingPackItems(AMULET, 0, 0, false) || player.status[STATUS_PARALYZED]) || rand_percent(20)) {
+            player.status[STATUS_NUTRITION]--;
+            printNutritionMessages();
         }
     }
 
@@ -2021,13 +2016,8 @@ static void decrementPlayerStatus() {
         message("you feel less nauseous.", 0);
     }
 
-    if (player.status[STATUS_PARALYZED] > 0) {
-        if (rogue.paralyzedTurnsLeeway > 0) { // handle paralysis grinding
-            rogue.paralyzedTurnsLeeway--;
-        }
-        if (!--player.status[STATUS_PARALYZED]) {
-            message("you can move again.", 0);
-        }
+    if (player.status[STATUS_PARALYZED] > 0 && !--player.status[STATUS_PARALYZED]) {
+        message("you can move again.", 0);
     }
 
     if (player.status[STATUS_HASTED] > 0 && !--player.status[STATUS_HASTED]) {
