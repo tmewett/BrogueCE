@@ -99,7 +99,7 @@ const feat featTable_Brogue[] = {
     {"Dragonslayer",    "Slay a dragon with a melee attack.",                       false},
     {"Paladin",         "Ascend without attacking an unaware or fleeing creature.", true},
     {"Untempted",       "Ascend without picking up gold.",                          true},
-    {"Gemini",          "Clone yourself.",                                          false},
+    {"Mirror Image",    "Clone yourself.",                                          false},
     {"Esoteric",        "Teach an allied kraken to fly.",                           false},
 };
 

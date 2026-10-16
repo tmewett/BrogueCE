@@ -617,9 +617,7 @@ creature *cloneMonster(creature *monst, boolean announce, boolean placeClone) {
         strcpy(newMonst->info.monsterName, "clone");
         newMonst->creatureState = MONSTER_ALLY;
 
-        if (!rogue.featRecord[FEAT_GEMINI]) {
-            rogue.featRecord[FEAT_GEMINI] = true;
-        }
+        rogue.featRecord[FEAT_MIRROR_IMAGE] = true;
     }
 
     if (monst->creatureState == MONSTER_ALLY
@@ -3281,8 +3279,7 @@ static boolean updateMonsterCorpseAbsorption(creature *monst) {
                 monst->bookkeepingFlags &= ~(MB_SUBMERGED);
 
                 if ((monst->info.monsterID == MK_KRAKEN) 
-                    && (monstersAreTeammates(monst, &player)) // just in case
-                    && !rogue.featRecord[FEAT_ESOTERIC]) {
+                    && monstersAreTeammates(monst, &player)) { // just in case
                     rogue.featRecord[FEAT_ESOTERIC] = true;
                 }
             }
