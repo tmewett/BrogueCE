@@ -1189,6 +1189,14 @@ static boolean swapItemEnchants(const short machineNumber) {
     return false;
 }
 
+void teleportFloorItem(item *theItem) {
+    pos loc = theItem->loc;
+    removeItemAt(loc);
+    pmapAt(loc)->flags &= ~(HAS_ITEM | ITEM_DETECTED);
+    placeItemAt(theItem, INVALID_POS); // Picks a random location to place the item
+    if (theItem != NULL) refreshDungeonCell(theItem->loc); // Draw at new location
+}
+
 void updateFloorItems() {
     short x, y;
     char buf[DCOLS*3], buf2[DCOLS*3];
@@ -1207,23 +1215,29 @@ void updateFloorItems() {
             if (playerCanSeeOrSense(x, y)) {
                 itemName(theItem, buf, false, false, NULL);
                 sprintf(buf2, "The %s plunge%s out of sight!", buf, (theItem->quantity > 1 ? "" : "s"));
+                if ((theItem->category == AMULET) || (theItem->category == GEM) 
+                    && rogue.depthLevel == gameConst->deepestLevel) {
+                    sprintf(buf2, "A strange force rejects your loot.");
+                }
                 messageWithColor(buf2, &itemMessageColor, 0);
             }
             if (playerCanSee(x, y)) {
                 discover(x, y);
             }
-            theItem->flags |= ITEM_PREPLACED;
 
             // Remove from item chain.
             removeItemFromChain(theItem, floorItems);
-
             pmap[x][y].flags &= ~(HAS_ITEM | ITEM_DETECTED);
 
-            if (theItem->category == POTION || rogue.depthLevel == gameConst->deepestLevel) {
+            if ((theItem->category == GEM || theItem->category == AMULET)
+                && rogue.depthLevel == gameConst->deepestLevel) {
+                teleportFloorItem(theItem);
+            } else if (theItem->category == POTION || rogue.depthLevel == gameConst->deepestLevel) {
                 // Potions don't survive the fall.
                 deleteItem(theItem);
             } else {
                 // Add to next level's chain.
+                theItem->flags |= ITEM_PREPLACED;
                 theItem->spawnTurnNumber = rogue.absoluteTurnNumber;
                 theItem->nextItem = levels[rogue.depthLevel-1 + 1].items;
                 levels[rogue.depthLevel-1 + 1].items = theItem;

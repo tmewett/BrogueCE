@@ -165,6 +165,9 @@ void applyInstantTileEffectsToCreature(creature *monst) {
                 monst->bookkeepingFlags |= MB_IS_FALLING;
             }
             return;
+        } else if ((monst->info.monsterID == MK_WARDEN_OF_YENDOR) && (rogue.depthLevel == gameConst->deepestLevel)) {
+            message("A strange force seizes The Warden of Yendor as it falls.", 0);
+            teleport(monst, INVALID_POS, true);
         } else { // it's a monster
             monst->bookkeepingFlags |= MB_IS_FALLING; // handled at end of turn
         }
