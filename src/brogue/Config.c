@@ -35,6 +35,7 @@ typedef struct {
 } configField;
 
 static const char* JSON_FILENAME = "brogue_config.json";
+static const char* JSON_FILENAME_BACKUP = "brogue_config_backup.json";
 
 // maps json strings to the gameVariant Enum
 static const char* variantMappings[] = {"brogue", "rapid", "bullet", NULL};
@@ -128,7 +129,22 @@ static void parseConfigValues(const char* jsonString, configParams* config) {
     cJSON* root = cJSON_Parse(jsonString);
 
     if (!root) {
-        return; // JSON parsing error
+        const char *error_ptr = cJSON_GetErrorPtr();
+        if (error_ptr != NULL) {
+            fprintf(stderr, "JSON Format Error! Defect detected starting here: \n%s\n", error_ptr);
+        } else {
+            fprintf(stderr, "Failed to parse JSON (possibly due to an out-of-memory error).\n");
+        }
+
+        // Save old config file so the user can fix it
+        if (rename(JSON_FILENAME, JSON_FILENAME_BACKUP) == 0) {
+            printf("Config file renamed to '%s'.\n", JSON_FILENAME_BACKUP);
+        } else {
+            // perror prints a system error message explaining why it failed
+            perror("Error renaming config file!");
+        }
+
+        return;
     }
 
     configField* entries = getFieldEntries(config);
