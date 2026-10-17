@@ -43,7 +43,7 @@ static const char* variantMappings[] = {"brogue", "rapid", "bullet", NULL};
 static const char* graphicsModeMappings[] = {"text", "tiles", "hybrid", NULL};
 
 // maps json strings to the gameMode Enum
-static const char* gameModeMappings[] = {"normal", "easy", "wizard", NULL};
+static const char* gameModeMappings[] = {"normal", "wizard", "easy", NULL};
 
 static intRange playbackDelayRange = {MIN_PLAYBACK_DELAY, MAX_PLAYBACK_DELAY};
 
@@ -53,7 +53,7 @@ static configParams createDefaultConfig(void) {
     config.playbackDelayPerTurn = DEFAULT_PLAYBACK_DELAY;
     config.gameVariant = VARIANT_BROGUE;
     config.graphicsMode = TEXT_GRAPHICS;
-    config.gameMode = 0; // TODO
+    config.gameMode = GAME_MODE_NORMAL;
     config.colorEffectsEnabled = false;
     config.stealthRangeEnabled = false;
 
@@ -240,8 +240,7 @@ void readFromConfig(enum graphicsModes* initialGraphics) {
 
     parseConfigValues(jsonString, &config);
 
-    rogue.wizard = config.gameMode == 2;
-    rogue.easyMode = config.gameMode == 1;
+    rogue.mode = config.gameMode;
     rogue.displayStealthRangeMode = config.stealthRangeEnabled;
     rogue.trueColorMode = config.colorEffectsEnabled;
     rogue.playbackDelayPerTurn = config.playbackDelayPerTurn;
@@ -261,7 +260,7 @@ void writeIntoConfig(void) {
         return;
     }
 
-    config.gameMode = rogue.wizard ? 0 : (rogue.easyMode ? 1 : 2);
+    config.gameMode = rogue.mode;
     config.stealthRangeEnabled = rogue.displayStealthRangeMode;
     config.colorEffectsEnabled = rogue.trueColorMode;
     config.playbackDelayPerTurn = rogue.playbackDelayPerTurn;
