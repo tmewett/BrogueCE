@@ -3299,6 +3299,7 @@ extern "C" {
     char nextAvailableInventoryCharacter(void);
     void checkForDisenchantment(item *theItem);
     void updateFloorItems(void);
+    void teleportFloorItem(item *theItem);
     void itemKindName(item *theItem, char *kindName);
     void itemRunicName(item *theItem, char *runicName);
     void itemName(item *theItem, char *root, boolean includeDetails, boolean includeArticle, const color *baseColor);
