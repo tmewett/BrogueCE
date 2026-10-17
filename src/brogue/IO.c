@@ -27,6 +27,7 @@
 #include "Rogue.h"
 #include "GlobalsBase.h"
 #include "Globals.h"
+#include "../../test/TestFramework.h"
 
 #define D_DISABLE_BACKGROUND_COLORS     (WIZARD_MODE && 0)
 
@@ -2392,6 +2393,19 @@ void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsD
     boolean repeatAgain, interaction;
     short pauseDuration;
 
+    if (rogue.mode == GAME_MODE_TEST) {
+        // Headless test mode: never touch the console.  Answer prompts from the
+        // test's queued input, or escape if the queue is empty so nothing blocks.
+        if (!testNextInputEvent(returnEvent)) {
+            returnEvent->eventType = KEYSTROKE;
+            returnEvent->param1 = ESCAPE_KEY;
+            returnEvent->param2 = 0;
+            returnEvent->controlKey = false;
+            returnEvent->shiftKey = false;
+        }
+        return;
+    }
+
     returnEvent->eventType = EVENT_ERROR;
 
     if (rogue.playbackMode && !realInputEvenInPlayback) {
@@ -3383,6 +3397,10 @@ void temporaryMessage(const char *msg, unsigned long flags) {
     char message[COLS];
     short i, j;
 
+    if (rogue.mode == GAME_MODE_TEST) {
+        return;
+    }
+
     assureCosmeticRNG;
     strcpy(message, msg);
 
@@ -3446,6 +3464,14 @@ void message(const char *msg, unsigned long flags) {
     short i;
     archivedMessage *archiveEntry;
     boolean newMessage;
+
+    if (rogue.mode == GAME_MODE_TEST) {
+        // Headless test mode: suppress display but let tests assert on the text.
+        if (msg != NULL && msg[0]) {
+            recordTestMessage(msg);
+        }
+        return;
+    }
 
     if (msg == NULL || !msg[0]) {
         return;
@@ -4965,6 +4991,10 @@ short printTextBox(char *textBuf, short x, short y, short width,
                    const color *foreColor, const color *backColor,
                    brogueButton *buttons, short buttonCount) {
     short x2, y2, lineCount, i, bx, by, padLines;
+
+    if (rogue.mode == GAME_MODE_TEST && textBuf != NULL) {
+        recordTestMessage(textBuf);
+    }
 
     if (width <= 0) {
         // autocalculate y and width

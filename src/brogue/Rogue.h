@@ -2338,6 +2338,7 @@ enum NGCommands {
     NG_HIGH_SCORES,
     NG_GAME_STATS,
     NG_QUIT,
+    NG_TEST,
 };
 
 enum featTypes {
@@ -2428,7 +2429,8 @@ typedef struct gameConstants {
 enum gameMode {
     GAME_MODE_NORMAL,
     GAME_MODE_WIZARD,
-    GAME_MODE_EASY
+    GAME_MODE_EASY,
+    GAME_MODE_TEST    // Special mode for testing Brogue logic
 };
 
 // these are basically global variables pertaining to the game state and player's unique variables:

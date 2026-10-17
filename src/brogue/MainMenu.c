@@ -24,6 +24,7 @@
 #include "Rogue.h"
 #include "GlobalsBase.h"
 #include "Globals.h"
+#include "../../test/TestFramework.h"
 #include <time.h>
 #include <limits.h>
 
@@ -1132,6 +1133,22 @@ void mainBrogueJunction() {
             case NG_GAME_VARIANT:
                 rogue.nextGame = NG_NOTHING;
                 initializeGameVariant();
+                break;
+            case NG_TEST:
+                // Handle test mode - run the named test
+                {
+                    char testName[BROGUE_FILENAME_MAX];
+                    strcpy(testName, rogue.nextGamePath);
+                    rogue.nextGame = NG_NOTHING;
+                    if (rogue.nextGameSeed == 0) {
+                        // Use a fixed dungeon so tests are deterministic unless
+                        // the caller supplied an explicit --seed.
+                        rogue.nextGameSeed = 20221016;
+                    }
+                    initializeRogue(rogue.nextGameSeed);
+                    startLevel(rogue.depthLevel, 1);
+                    runTestByName(testName);
+                }
                 break;
             case NG_NEW_GAME:
             case NG_NEW_GAME_WITH_SEED:
