@@ -1,4 +1,4 @@
-#include "../cjson/cJSON.h"
+#include "../../external/cJSON/cJSON.h"
 #include "Rogue.h"
 #include "GlobalsBase.h"
 

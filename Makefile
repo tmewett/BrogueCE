@@ -6,7 +6,7 @@ cflags := -Isrc/brogue -Isrc/platform -Isrc/variants -Isrc/cjson -std=c99 \
 libs := -lm
 cppflags := -DDATADIR=$(DATADIR)
 
-sources := $(wildcard src/brogue/*.c) $(wildcard src/cjson/*.c) $(wildcard src/variants/*.c) $(addprefix src/platform/,main.c platformdependent.c null-platform.c)
+sources := $(wildcard src/brogue/*.c) $(wildcard src/cjson/*.c) $(wildcard src/variants/*.c) $(addprefix src/platform/,main.c platformdependent.c null-platform.c) external/cJSON/cJSON.c
 objects :=
 
 ifeq ($(SYSTEM),WINDOWS)
