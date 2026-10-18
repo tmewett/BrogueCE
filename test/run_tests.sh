@@ -1,15 +1,17 @@
 #!/bin/zsh
 set -e
-cd "$(dirname "$0")"
+cd "$(git rev-parse --show-toplevel)"
 make GRAPHICS=NO TERMINAL=NO MAC_APP=NO >/dev/null
 fail=0; total=0
 for n in $(grep -rhoE '\{ "BR[^"]+"' test/Tests_*.c | sed -E 's/\{ "//; s/"$//'); do
   total=$((total+1))
   # out=$(./bin/brogue --test "$n" 2>/dev/null | tail -3)
   out=$(./bin/brogue --test "$n" | tail -3)
-  echo $out
+  # echo $out
   if ! echo "$out" | grep -q PASS; then
-    echo "FAIL $n"; echo "$out"; fail=$((fail+1))
+    echo "FAIL $n"
+    # echo "$out"
+    fail=$((fail+1))
   fi
 done
 echo "total=$total fails=$fail"

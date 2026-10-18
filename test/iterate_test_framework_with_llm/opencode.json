@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "llama-local": {
+      "name": "Llama.cpp",
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "http://host.docker.internal:8012/v1"
+      },
+      "models": {
+        "unsloth/Qwen3.6-27B-GGUF:Q6_K": {
+          "name": "Qwen3.6-27B Q6_K"
+        }
+      }
+    }
+  }
+}

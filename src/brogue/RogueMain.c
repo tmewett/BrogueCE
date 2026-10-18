@@ -965,6 +965,10 @@ static void freeGlobalDynamicGrid(short ***grid) {
 }
 
 void freeCreature(creature *monst) {
+
+    // Don't free anything while testing (so we can inspect killed creatures, etc.)
+    if (rogue.mode == GAME_MODE_TEST) return;
+
     freeGlobalDynamicGrid(&(monst->mapToMe));
     freeGlobalDynamicGrid(&(monst->safetyMap));
     if (monst->carriedItem) {

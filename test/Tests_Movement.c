@@ -13,21 +13,6 @@ static pos startPos;
 static pos platePos;
 static pos targetPos;
 
-// --- shared setup helpers ---
-
-static void clearArena(void) {
-    setTerrainAroundLoc(player.loc, FLOOR);
-    setPlayerPos(player.loc);
-    clearMonsters();
-}
-
-static creature *placeHostileMonster(enum monsterTypes type, pos loc) {
-    creature *monst = spawnMonster(type, loc);
-    makeMonsterHostile(monst);
-    revealCell(loc);
-    return monst;
-}
-
 // ============================================================
 // BR31821 — a move is blocked by an obstructing destination square
 // ============================================================

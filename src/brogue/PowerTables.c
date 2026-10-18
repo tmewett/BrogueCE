@@ -217,7 +217,7 @@ short charmRechargeDelay(short charmKind, short enchant) {
     return max(charmEffectTable[charmKind].rechargeDelayMinTurns, delay);
 }
 
-short runicWeaponChance(item *theItem, boolean customEnchantLevel, fixpt enchantLevel) {
+short runicWeaponChance(const item *theItem, boolean customEnchantLevel, fixpt enchantLevel) {
     const fixpt POW_16_RUNIC_DECREMENT[] = { // (1-0.16)^x fixed point, with x from 0 to 50 in increments of 0.25:
         65536, 62740, 60064, 57502, 55050, 52702, 50454, 48302, 46242, 44269, 42381, 40574, 38843, 37186, 35600, 34082, 32628, 31236, 29904,
         28629, 27407, 26238, 25119, 24048, 23022, 22040, 21100, 20200, 19339, 18514, 17724, 16968, 16244, 15551, 14888, 14253, 13645, 13063,

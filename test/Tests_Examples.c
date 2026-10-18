@@ -146,36 +146,6 @@ static void levitation_rat_setup(void) {
 
 // ------- STEP FUNCTIONS -------
 
-static boolean wait_until_fall(void) {
-    if (isSameDepth() && turnNumber() < 1000) {
-        restOneTurn();
-        return true; // keep going
-    }
-    return false; // End test
-}
-
-static boolean trap_step(void) {
-    // Move onto trap (right)
-    switch (turnNumber()) {
-    case 0: moveRight(); return true; // Continue
-    case 1: restOneTurn(); return true; // Continue
-    }
-    return false; // End test
-}
-
-static boolean wait_10_turns(void) {
-    if (turnNumber() < 10) {
-        restOneTurn();
-        return true; // Continue
-    }
-    return false; // end test
-}
-
-static boolean levitation_web_step(void) {
-    moveRight();
-    return false;
-}
-
 static boolean levitation_breaks_seized_step(void) {
     const creature *bog = findMonster(MK_BOG_MONSTER);
 
@@ -269,20 +239,20 @@ static boolean player_not_seized_verify(void) {
 
 
 const testCase tests_examples[] = {
-    { "chasm_fall",                     chasm_setup,                wait_until_fall,               chasm_fall_verify           },
-    { "water_steals_items",             water_setup,                wait_10_turns,                 inventory_items_missing     },
-    { "bog_monster_seizes",             bog_monster_setup,          wait_10_turns,                 player_seized_verify        },
-    { "aquatic_attack",                 eel_setup,                  wait_10_turns,                 player_is_hurt              },
+    { "chasm_fall",                     chasm_setup,                wait_until_fall_step,               chasm_fall_verify           },
+    { "water_steals_items",             water_setup,                wait_10_turns_step,                 inventory_items_missing     },
+    { "bog_monster_seizes",             bog_monster_setup,          wait_10_turns_step,                 player_seized_verify        },
+    { "aquatic_attack",                 eel_setup,                  wait_10_turns_step,                 player_is_hurt              },
     { "trigger_trap",                   trap_setup,                 trap_step,                     trap_triggered              },
-    { "harmful_gas",                    gas_setup,                  wait_10_turns,                 player_is_hurt              },
+    { "harmful_gas",                    gas_setup,                  wait_10_turns_step,                 player_is_hurt              },
 
     { "levitation_breaks_seized",       bog_monster_setup,          levitation_breaks_seized_step, player_not_seized_verify    },
-    { "levitation_chasm",               levitation_chasm_setup,     wait_until_fall,               levitation_chasm_verify,    },
-    { "regular_can_attack_levitating",  levitation_rat_setup,       wait_10_turns,                 player_is_hurt              },
-    { "aquatic_cant_attack_levitating", levitation_eel_setup,       wait_10_turns,                 player_is_healthy           },
-    { "levitation_over_water",          levitation_water_setup,     wait_10_turns,                 inventory_items_not_missing },
+    { "levitation_chasm",               levitation_chasm_setup,     wait_until_fall_step,               levitation_chasm_verify,    },
+    { "regular_can_attack_levitating",  levitation_rat_setup,       wait_10_turns_step,                 player_is_hurt              },
+    { "aquatic_cant_attack_levitating", levitation_eel_setup,       wait_10_turns_step,                 player_is_healthy           },
+    { "levitation_over_water",          levitation_water_setup,     wait_10_turns_step,                 inventory_items_not_missing },
     { "levitation_over_trap",           levitation_trap_setup,      trap_step,                     trap_not_triggered          },
-    { "levitation_web",                 levitation_web_setup,       levitation_web_step,           levitation_web_verify       },
+    { "levitation_web",                 levitation_web_setup,       move_right_step,           levitation_web_verify       },
 
     // --- Terminal Test ---
     { NULL, NULL, NULL, NULL, NULL }

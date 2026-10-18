@@ -164,6 +164,7 @@ void runTestByName(const char *name) {
 }
 
 void testFail(const char *msg) {
+    if (testFailed) return; // Some prior test already failed, don't overwrite it.
     testFailed = true;
     snprintf(failureMessage, sizeof(failureMessage), "%s", msg);
 }
@@ -540,6 +541,15 @@ int monsterCount(void) {
     return count;
 }
 
+int countMonstersOfType(enum monsterTypes monstTyp) {
+    int count = 0;
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
+        creature *m = nextCreature(&it);
+        if (m != NULL && m->info.monsterID == monstTyp) count++;
+    }
+    return count;
+}
+
 void setMonsterPos(creature *monst, pos loc) {
     unsigned long creatureFlag = (monst == &player ? HAS_PLAYER : HAS_MONSTER);
     pmapAt(monst->loc)->flags &= ~creatureFlag;
@@ -583,9 +593,17 @@ boolean monsterHasStatus(const creature *monst, enum statusEffects status) {
     return monst->status[status] > 0;
 }
 
+boolean monsterIsDead(const creature *monst) {
+    return monst->currentHP <= 0 || (monst->bookkeepingFlags & MB_IS_DYING);
+}
+
+boolean monsterIsAlive(const creature *monst) {
+    return !monsterIsDead(monst);
+}
+
 boolean monsterIsHealthy(const creature *monst) {
-    int max = monst->info.maxHP * 0.95;
-    return monst->currentHP >= max;
+    if (monsterIsDead(monst)) return false;
+    return monst->currentHP >= monst->info.maxHP;
 }
 
 boolean monsterIsHurt(const creature *monst) {
@@ -656,6 +674,13 @@ boolean monsterAttacksPlayer(creature *monst) {
         return false;
     }
     return attack(monst, &player, false);
+}
+
+boolean attackMonster(creature *attacker, creature *defender) {
+    if (attacker == NULL || defender == NULL) {
+        return false;
+    }
+    return attack(attacker, defender, false);
 }
 
 void monsterTakesTurn(creature *monst) {
@@ -899,6 +924,16 @@ boolean itemIsRunic(const item *theItem) {
     return (theItem->flags & ITEM_RUNIC) != 0;
 }
 
+int runicActivationChance(const item *theItem) {
+    if (theItem->category == WEAPON) {
+        return runicWeaponChance(theItem, true, theItem->enchant1 * FP_FACTOR);
+    } else if (theItem->category == ARMOR) {
+        return 0; // TODO
+    }
+
+    return 0;
+}
+
 item *equippedWeapon(void) {
     return rogue.weapon;
 }
@@ -959,13 +994,13 @@ void wearArmorOfEnchant(short kind, int enchant) {
     equipItem(theItem, true, NULL);
 }
 
-item *givePlayerRunicWeapon(short kind, short runicKind, short enchant) {
+item *givePlayerRunicWeapon(short kind, short runicKind, short enchant, boolean revealIdentity) {
     item *theItem = generateItem(WEAPON, kind);
     theItem->enchant1 = enchant;
     theItem->enchant2 = runicKind;
     theItem->flags |= (ITEM_RUNIC | ITEM_RUNIC_IDENTIFIED | ITEM_RUNIC_HINTED);
     theItem->flags &= ~ITEM_CURSED;
-    identify(theItem);
+    if (revealIdentity) identify(theItem);
     addItemToPack(theItem);
     return theItem;
 }
@@ -1110,4 +1145,142 @@ boolean retryAction(int maxAttempts, boolean (*action)(void)) {
         if (action()) return true;
     }
     return false;
+}
+
+short vorpalEnemyClassByName(const char *className) {
+    for (short i = 0; i < MONSTER_CLASS_COUNT; i++) {
+        if (strcmp(monsterClassCatalog[i].name, className) != 0) {
+            continue;
+        }
+        return i;
+    }
+
+    // Not found, fail the test
+    testFail("Unknown monster class name");
+    return 0;
+}
+
+short vorpalEnemyClassForMonster(enum monsterTypes monstType) {
+    for (short classID = 0; classID < MONSTER_CLASS_COUNT; classID++) {
+        for (short i = 0; monsterClassCatalog[classID].memberList[i] != 0; i++) {
+            if (monsterClassCatalog[classID].memberList[i] != monstType) {
+                continue;
+            }
+            return classID;
+        }
+    }
+
+    // Not found, fail the test
+    testFail("Monster not found in any monster class");
+    return 0;
+}
+
+
+// ---------------------------------------------
+// TEST SETUP HELPERS
+// ---------------------------------------------
+
+void clearArenaRadius(int radius) {
+    // Clear a wide area so knockback and clone destinations are open floor.
+    for (int dx = -radius; dx <= radius; dx++) {
+        for (int dy = -radius; dy <= radius; dy++) {
+            setTerrain(posOffset(player.loc, dx, dy), FLOOR);
+        }
+    }
+    setPlayerPos(player.loc);
+    clearMonsters();
+}
+
+void clearArena(void) {
+    clearArenaRadius(2);
+}
+
+// Give a runic weapon AND equip it as rogue.weapon (unlike givePlayerRunicWeapon
+// which only adds it to the pack).  Returns the item for convenience.
+item *giveAndEquipRunicWeapon(short kind, short runicKind, short enchant, boolean revealIdentity) {
+    item *w = givePlayerRunicWeapon(kind, runicKind, enchant, revealIdentity);
+    equip(w);
+
+    // // Match player strength to weapon so there is no negative
+    rogue.strength = w->strengthRequired;
+    recalculateEquipmentBonuses();
+    // player.info.accuracy = 100;
+    return w;
+}
+
+
+creature *placeHostileMonster(enum monsterTypes type, pos loc) {
+    creature *monst = spawnMonster(type, loc);
+    makeMonsterHostile(monst);
+    revealCell(loc);
+    return monst;
+}
+
+
+// ---------------------------------------------
+// TEST STEP HELPERS
+// ---------------------------------------------
+static int test_turn_number = -1;
+
+boolean wait_until_fall_step(void) {
+    if (isSameDepth() && turnNumber() < 1000) {
+        restOneTurn();
+        return true; // keep going
+    }
+    return false; // End test
+}
+
+boolean wait_until_hurt(void) {
+    if (isPlayerHealthy() && turnNumber() < 1000) {
+        restOneTurn();
+        return true; // keep waiting
+    }
+    return false; // End test
+}
+
+
+boolean trap_step(void) {
+    if (test_turn_number == -1) {
+        test_turn_number = turnNumber();
+    }
+
+    // Move onto trap, then wait 
+    if (test_turn_number == turnNumber()) {
+        moveRight();
+        return true; // Continue
+    }
+
+    // Wait one turn then end the test
+    restOneTurn();
+    test_turn_number = -1;
+    return false; // End test
+}
+
+boolean wait_10_turns_step(void) {
+    if (test_turn_number == -1) {
+        test_turn_number = turnNumber();
+    }
+
+    if (turnNumber() - test_turn_number < 10) {
+        restOneTurn();
+        return true; // continue waiting
+    }
+
+    test_turn_number = -1;
+    return false; // end test
+}
+
+boolean move_right_step(void) {
+    moveRight();
+    return false;
+}
+
+
+// ---------------------------------------------
+// TEST VERIFY HELPERS
+// ---------------------------------------------
+
+boolean player_is_hurt_verify(void) {
+    TEST_ASSERT(isPlayerHurt(), "player should be hurt");
+    return !testFailed;
 }

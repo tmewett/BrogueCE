@@ -111,6 +111,14 @@ void searchOneTurn(void);
 // turn, so the immediate result of the blow can be observed.
 boolean playerAttacksMonster(creature *monst);
 
+// Perform a single melee attack from the given monster against the player,
+// without ending the turn.
+boolean monsterAttacksPlayer(creature *monst);
+
+// Perform a single melee attack from *attacker* against *defender* (both can
+// be any creature, including the player), without ending the turn.
+boolean attackMonster(creature *attacker, creature *defender);
+
 // ---------------------------------------------
 // Terrain (events and predicates)
 // ---------------------------------------------
@@ -192,6 +200,7 @@ creature *spawnMonster(enum monsterTypes type, pos loc);
 creature *findMonster(enum monsterTypes type);
 void clearMonsters(void);
 int monsterCount(void);
+int countMonstersOfType(enum monsterTypes monstTyp);
 void setMonsterPos(creature *monst, pos loc);
 void makeMonsterHostile(creature *monst);
 void makeMonsterAlly(creature *monst);
@@ -202,6 +211,8 @@ void applyStatusToMonster(creature *monst, enum statusEffects status, int durati
 boolean monsterHasStatus(const creature *monst, enum statusEffects status);
 boolean monsterIsHealthy(const creature *monst);
 boolean monsterIsHurt(const creature *monst);
+boolean monsterIsDead(const creature *monst);
+boolean monsterIsAlive(const creature *monst);
 boolean monsterIsAlly(const creature *monst);
 boolean monsterIsHostile(const creature *monst);
 boolean monsterIsAsleep(const creature *monst);
@@ -215,6 +226,9 @@ int monsterTicksUntilTurn(const creature *monst);
 void giveMonsterItem(creature *monst, short category, short kind);
 pos monsterPosition(const creature *monst);
 boolean monsterIsAdjacentToPlayer(const creature *monst);
+short vorpalEnemyClassForMonster(enum monsterTypes monstType);
+short vorpalEnemyClassByName(const char *className);
+
 
 // Have the given monster make a single melee attack against the player,
 // without ending the turn.
@@ -285,6 +299,7 @@ boolean itemIsCursed(const item *theItem);
 boolean itemIsRunic(const item *theItem);
 unsigned long itemGoldValue(const item *theItem);
 boolean itemKindIsKnown(short category, short kind);
+int runicActivationChance(const item *theItem);
 
 // The items currently worn.
 item *equippedWeapon(void);
@@ -312,7 +327,7 @@ void wearArmorOfEnchant(short kind, int enchant);
 
 // Create a freshly generated runic weapon/armor in the player's pack at the
 // chosen enchantment, already identified as runic.
-item *givePlayerRunicWeapon(short kind, short runicKind, short enchant);
+item *givePlayerRunicWeapon(short kind, short runicKind, short enchant, boolean revealIdentity);
 item *givePlayerRunicArmor(short kind, short runicKind, short enchant);
 
 // ---------------------------------------------
@@ -357,5 +372,30 @@ boolean playerIsCarryingAmulet(void);
 int deepestDepth(void);
 int totalGoldGenerated(void);
 int playerTurnCount(void);
+
+// ---------------------------------------------
+// TEST SETUP HELPERS
+// ---------------------------------------------
+
+void clearArena(void);
+void clearArenaRadius(int radius);
+item *giveAndEquipRunicWeapon(short kind, short runicKind, short enchant, boolean revealIdentity);
+creature *placeHostileMonster(enum monsterTypes type, pos loc);
+
+// ---------------------------------------------
+// TEST STEP HELPERS
+// ---------------------------------------------
+boolean wait_until_fall_step(void);
+boolean wait_until_hurt(void);
+boolean trap_step(void);
+boolean wait_10_turns_step(void);
+boolean move_right_step(void);
+
+
+// ---------------------------------------------
+// TEST VERIFY HELPERS
+// ---------------------------------------------
+
+boolean player_is_hurt_verify(void);
 
 #endif

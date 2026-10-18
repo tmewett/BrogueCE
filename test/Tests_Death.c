@@ -4,17 +4,7 @@
 
 static creature *subject;
 
-static void clearArena(void) {
-    for (int dx = -2; dx <= 2; dx++) {
-        for (int dy = -2; dy <= 2; dy++) {
-            setTerrain(posOffset(player.loc, dx, dy), FLOOR);
-        }
-    }
-    setPlayerPos(player.loc);
-    clearMonsters();
-}
-
-// BR100001 — killed by monster melee
+// BR10001 — killed by monster melee
 static creature *killer;
 static void melee_death_setup(void) {
     clearArena();
@@ -30,7 +20,7 @@ static boolean melee_death_verify(void) {
     return !testFailed;
 }
 
-// BR100005 — starvation
+// BR10005 — starvation
 static void starve_setup(void) {
     clearArena();
     setPlayerNutrition(0);
@@ -42,7 +32,7 @@ static boolean starve_verify(void) {
     return !testFailed;
 }
 
-// BR100006 — poison
+// BR10006 — poison
 static void poison_death_setup(void) {
     clearArena();
     setPlayerHealth(1);
@@ -54,7 +44,7 @@ static boolean poison_death_verify(void) {
     return !testFailed;
 }
 
-// BR100007 — burning
+// BR10007 — burning
 static void burn_death_setup(void) {
     clearArena();
     setPlayerHealth(1);
@@ -66,7 +56,7 @@ static boolean burn_death_verify(void) {
     return !testFailed;
 }
 
-// BR100008 — lava
+// BR10008 — lava
 static void lava_death_setup(void) {
     clearArena();
     setTerrain(player.loc, LAVA);
@@ -80,7 +70,7 @@ static boolean lava_death_verify(void) {
     return !testFailed;
 }
 
-// BR100009 — explosive terrain
+// BR10009 — explosive terrain
 static void explosive_death_setup(void) {
     clearArena();
     setTerrain(player.loc, GAS_EXPLOSION);
@@ -94,7 +84,7 @@ static boolean explosive_death_verify(void) {
     return !testFailed;
 }
 
-// BR100002 — killed by monster bolt
+// BR10002 — killed by monster bolt
 static void bolt_death_setup(void) {
     clearArena();
     subject = spawnMonster(MK_LICH, posOffset(player.loc, 4, 0));
@@ -108,7 +98,7 @@ static boolean bolt_death_verify(void) {
     return !testFailed;
 }
 
-// BR100011 — killed by fall
+// BR10011 — killed by fall
 static void fall_death_setup(void) {
     clearArena();
     setTerrain(player.loc, CHASM);
@@ -123,7 +113,7 @@ static boolean fall_death_verify(void) {
     return !testFailed;
 }
 
-// BR100004 — drained by cursed ring
+// BR10004 — drained by cursed ring
 static void cursed_ring_death_setup(void) {
     clearArena();
     subject = spawnMonster(MK_RAT, posOffset(player.loc, 1, 0));
@@ -139,7 +129,7 @@ static boolean cursed_ring_death_verify(void) {
     return !testFailed;
 }
 
-// BR100003 — killed by reflected bolt
+// BR10003 — killed by reflected bolt
 static void reflected_bolt_death_setup(void) {
     clearArena();
     subject = spawnMonster(MK_GUARDIAN, posOffset(player.loc, 4, 0));
@@ -153,7 +143,7 @@ static boolean reflected_bolt_death_verify(void) {
     return !testFailed;
 }
 
-// BR100010 — damaging terrain
+// BR10010 — damaging terrain
 static void damaging_death_setup(void) {
     clearArena();
     setTerrain(player.loc, STEAM);
@@ -168,16 +158,16 @@ static boolean damaging_death_verify(void) {
 }
 
 const testCase tests_death[] = {
-    { "BR100001_melee_death", melee_death_setup, NULL, melee_death_verify },
-    { "BR100005_starvation", starve_setup, NULL, starve_verify },
-    { "BR100006_poison", poison_death_setup, NULL, poison_death_verify },
-    { "BR100007_burning", burn_death_setup, NULL, burn_death_verify },
-    { "BR100008_lava", lava_death_setup, NULL, lava_death_verify },
-    { "BR100009_explosive", explosive_death_setup, NULL, explosive_death_verify },
-    { "BR100002_bolt", bolt_death_setup, NULL, bolt_death_verify },
-    { "BR100011_fall", fall_death_setup, NULL, fall_death_verify },
-    { "BR100004_cursed_ring", cursed_ring_death_setup, NULL, cursed_ring_death_verify },
-    { "BR100003_reflected_bolt", reflected_bolt_death_setup, NULL, reflected_bolt_death_verify },
-    { "BR100010_damaging", damaging_death_setup, NULL, damaging_death_verify },
+    { "BR10001_melee_death", melee_death_setup, NULL, melee_death_verify },
+    { "BR10005_starvation", starve_setup, NULL, starve_verify },
+    { "BR10006_poison", poison_death_setup, NULL, poison_death_verify },
+    { "BR10007_burning", burn_death_setup, NULL, burn_death_verify },
+    { "BR10008_lava", lava_death_setup, NULL, lava_death_verify },
+    { "BR10009_explosive", explosive_death_setup, NULL, explosive_death_verify },
+    { "BR10002_bolt", bolt_death_setup, NULL, bolt_death_verify },
+    { "BR10011_fall", fall_death_setup, NULL, fall_death_verify },
+    { "BR10004_cursed_ring", cursed_ring_death_setup, NULL, cursed_ring_death_verify },
+    { "BR10003_reflected_bolt", reflected_bolt_death_setup, NULL, reflected_bolt_death_verify },
+    { "BR10010_damaging", damaging_death_setup, NULL, damaging_death_verify },
     { NULL, NULL, NULL, NULL }
 };
