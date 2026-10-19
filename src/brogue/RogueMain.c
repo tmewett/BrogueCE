@@ -405,7 +405,7 @@ void initializeRogue(uint64_t seed) {
     rogue.mapToShore = NULL;
     rogue.cursorLoc = INVALID_POS;
     rogue.xpxpThisTurn = 0;
-    rogue.starvedTurnsLeeway = gameConst->starvationLeeway;
+    rogue.antigrindCounter = 0;
 
     rogue.yendorWarden = NULL;
 

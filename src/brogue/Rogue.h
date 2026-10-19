@@ -2405,8 +2405,6 @@ typedef struct gameConstants {
     const int armorDelayToAutoID;                   // number of turns until unknown armor is IDed
     const int ringDelayToAutoID;                    // number of turns until unknown ring is IDed
 
-    const int starvationLeeway;                     // turns a player may starve before antigrind measures kick in, per starvation event
-
     const int numberAutogenerators;                 // size of autoGeneratorCatalog table
     const int numberBoltKinds;                      // size of boltKinds table
     const int numberBlueprints;                     // size of blueprintCatalog table
@@ -2471,7 +2469,7 @@ typedef struct playerCharacter {
     unsigned long goldGenerated;        // how much gold has been generated on the levels, not counting gold held by monsters
     short strength;
     unsigned short monsterSpawnFuse;    // how much longer till a random monster spawns
-    short starvedTurnsLeeway;           // how many turns more a player may starve before antigrind measures kick in, per starve event
+    short antigrindCounter;             // counts how often monsters spawned while the player was starving
 
     item *weapon;
     item *armor;

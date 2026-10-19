@@ -1045,8 +1045,6 @@ const gameConstants rapidBrogueGameConst = {
     .armorDelayToAutoID = 250,
     .ringDelayToAutoID = 250,
 
-    .starvationLeeway = 120, // less than monsterSpawnFuse
-
     .fallDamageMin = 8,
     .fallDamageMax = 10,
 

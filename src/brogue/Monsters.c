@@ -137,20 +137,17 @@ void initializeMonster(creature *monst, boolean itemPossible) {
     } else {
         itemChance = 0;
     }
-    if ((rogue.monsterSpawnFuse <= 0) // try to affect only periodic spawns
-        && ((rogue.starvedTurnsLeeway <= 0) )) { // i.e. player is also starving
-                
-                monst->carriedItem = NULL; // antigrind measures
-    } else if (ITEMS_ENABLED
-               && itemPossible
-               && (rogue.depthLevel <= gameConst->amuletLevel)
-               && monsterItemsHopper->nextItem
-               && rand_percent(itemChance)) {
 
-               monst->carriedItem = monsterItemsHopper->nextItem;
-               monsterItemsHopper->nextItem = monsterItemsHopper->nextItem->nextItem;
-               monst->carriedItem->nextItem = NULL;
-               monst->carriedItem->originDepth = rogue.depthLevel;
+    if (ITEMS_ENABLED
+        && itemPossible
+        && (rogue.depthLevel <= gameConst->amuletLevel)
+        && monsterItemsHopper->nextItem
+        && rand_percent(itemChance)) {
+
+        monst->carriedItem = monsterItemsHopper->nextItem;
+        monsterItemsHopper->nextItem = monsterItemsHopper->nextItem->nextItem;
+        monst->carriedItem->nextItem = NULL;
+        monst->carriedItem->originDepth = rogue.depthLevel;
     } else {
         monst->carriedItem = NULL;
     }
@@ -789,13 +786,15 @@ creature *spawnHorde(short hordeID, pos loc, unsigned long forbiddenFlags, unsig
     boolean tryAgain;
 
     if (rogue.depthLevel > 1 && rand_percent(gameConst->monsterOutOfDepthChance)) {
-        depth = rogue.depthLevel + rand_range(1, min(5, rogue.depthLevel / 2));
+        depth = rogue.depthLevel + rand_range(1, min(5, rogue.depthLevel / 2)) + rogue.antigrindCounter;
         if (depth > gameConst->amuletLevel) {
             depth = max(rogue.depthLevel, gameConst->amuletLevel);
         }
         forbiddenFlags |= HORDE_NEVER_OOD;
+    } else if (gameConst->variantName == "brogue") { // monsters don't spawn on d40 on classic
+        depth = min(gameConst->deepestLevel - 1, rogue.depthLevel + rogue.antigrindCounter);
     } else {
-        depth = rogue.depthLevel;
+        depth = min(gameConst->deepestLevel, rogue.depthLevel + rogue.antigrindCounter);
     }
 
     if (hordeID <= 0) {
