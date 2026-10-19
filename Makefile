@@ -64,6 +64,11 @@ else
 cflags += -O2
 endif
 
+ifeq ($(COVERAGE),YES)
+cflags += -fprofile-instr-generate -fcoverage-mapping
+cppflags += -fprofile-instr-generate -fcoverage-mapping
+endif
+
 # Add user-provided flags.
 cflags += $(CFLAGS)
 cppflags += $(CPPFLAGS)

@@ -152,3 +152,6 @@
 [Combat.c:1737-1741](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1737-L1741)
 **BR36640** — A creature with a staggering attack knocks its victim back one square under the same restrictions as a heavy weapon.
 [Combat.c:493-495](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L493-L495) [Combat.c:999-1014](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L999-L1014)
+**BR17384** — A monster that can grab seizes an adjacent opponent instead of injuring them that turn. [Combat.c:1074-1093](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1074-L1093)
+**BR25575** — A creature that is not bound to water can attack a levitating opponent. [Combat.c:1044-1046](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1044-L1046)
+**BR37800** — A water-bound monster cannot attack a levitating or flying opponent. [Combat.c:1044-1046](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1044-L1046)

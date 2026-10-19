@@ -231,6 +231,37 @@ static boolean reading_scroll_consumes_it(void) {
 }
 
 // ============================================================
+// BR47462 — a scroll of enchanting also removes the chosen item's curse
+// ============================================================
+
+static item *enchantedItem;
+static char enchantedItemLetter;
+
+static void enchanting_removes_curse_setup(void) {
+    clearArena();
+    enchantedItem = givePlayerItem(WEAPON, DAGGER, 0);
+    curseItem(enchantedItem);
+    enchantedItemLetter = itemInventoryLetter(enchantedItem);
+    givePlayerItem(SCROLL, SCROLL_ENCHANTING, 0);
+    // "Really read a scroll of enchanting?" → yes; then target the cursed weapon.
+    queueConfirmYes();
+    queueKeystroke(enchantedItemLetter, false, false);
+}
+
+static boolean enchanting_removes_curse_step(void) {
+    readScrollOfKind(SCROLL_ENCHANTING);
+    return false;
+}
+
+static boolean curse_removed_by_enchanting(void) {
+    TEST_ASSERT(!itemIsCursed(enchantedItem),
+                "a scroll of enchanting should remove the chosen item's curse");
+    TEST_ASSERT(messageWasShown("malevolent force leaves"),
+                "removing a curse should announce it");
+    return !testFailed;
+}
+
+// ============================================================
 // Picking things up
 // ============================================================
 
@@ -396,6 +427,7 @@ const testCase tests_items[] = {
 
     { "BR29492_scroll_of_aggravate_wakes_monsters", aggravate_scroll_setup,     NULL, aggravate_scroll_wakes_monsters },
     { "BR95938_reading_scroll_consumes_it",         consume_scroll_setup,       NULL, reading_scroll_consumes_it },
+    { "BR47462_enchanting_removes_curse",           enchanting_removes_curse_setup, enchanting_removes_curse_step, curse_removed_by_enchanting },
 
     { "BR30836_gold_pickup_adds_to_total",          gold_pickup_setup,          NULL, gold_pickup_adds_to_total },
     { "BR31757_second_amulet_cannot_be_taken",      second_amulet_setup,        NULL, second_amulet_cannot_be_taken },

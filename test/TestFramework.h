@@ -170,6 +170,9 @@ boolean isPlayerPoisoned(void);
 boolean isPlayerWeakened(void);
 boolean playerHasFeat(short feat);
 boolean playerHasItem(short category, short kind);
+// Mark a pack item as cursed, so that rules about curse handling (such as a
+// scroll of enchanting removing a curse) can be set up deterministically.
+void curseItem(item *theItem);
 void removeAllFood(void);
 
 // Numeric status details, for rules about exact counters and amounts.
@@ -381,6 +384,15 @@ void clearArena(void);
 void clearArenaRadius(int radius);
 item *giveAndEquipRunicWeapon(short kind, short runicKind, short enchant, boolean revealIdentity);
 creature *placeHostileMonster(enum monsterTypes type, pos loc);
+
+// Add a dead ally of the given kind to purgatory, so it can be raised with
+// resurrectDeadAllyAt.  The ally dies at `loc` and awaits resurrection there.
+void addDeadAllyToPurgatory(enum monsterTypes type, pos loc);
+
+// Raise the most empowered dead ally at the given location.  Returns true if
+// an ally was raised; it is placed on nearby ground free of harmful terrain
+// and occupants.
+boolean resurrectDeadAllyAt(pos loc);
 
 // ---------------------------------------------
 // TEST STEP HELPERS

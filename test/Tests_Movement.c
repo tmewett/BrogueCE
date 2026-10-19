@@ -162,6 +162,33 @@ static boolean refused_lava(void) {
 }
 
 // ============================================================
+// BR88965 — the game warns before a confused player's random step could carry them into lava
+// ============================================================
+
+static void confused_lava_warning_setup(void) {
+    clearArena();
+    applyStatusToPlayer(STATUS_CONFUSED, 20);
+    targetPos = posOffset(getPlayerPos(), 1, 0);
+    setTerrain(targetPos, LAVA);
+    revealCell(targetPos); // the lava must be known for the warning to fire
+    queueConfirmNo();      // decline the warning, so the move is cancelled
+    startPos = getPlayerPos();
+}
+
+static boolean confused_lava_warning_step(void) {
+    moveRight();
+    return false;
+}
+
+static boolean warned_before_confused_step_into_lava(void) {
+    TEST_ASSERT(messageWasShown("Risk stumbling into lava?"),
+                "the game should warn before a confused step could carry the player into lava");
+    TEST_ASSERT(playerIsAt(startPos),
+                "declining the warning should cancel the move");
+    return !testFailed;
+}
+
+// ============================================================
 // BR63035 — walking into a chasm asks for confirmation
 // ============================================================
 
@@ -521,6 +548,7 @@ const testCase tests_movement[] = {
     { "BR44054_step_onto_ally_swaps_places",   ally_swap_setup,        ally_swap_step,           ally_swapped },
     { "BR96161_move_into_hostile_attacks",     attack_on_bump_setup,   attack_on_bump_step,      player_stayed_and_monster_hurt },
     { "BR60519_refuse_known_lava",             lava_refusal_setup,     lava_refusal_step,        refused_lava },
+    { "BR88965_confused_lava_warning",         confused_lava_warning_setup, confused_lava_warning_step, warned_before_confused_step_into_lava },
     { "BR63035_chasm_prompt_cancels_move",     chasm_prompt_setup,     chasm_prompt_step,        chasm_prompt_refused },
     { "BR95206_fire_prompt_cancels_move",      fire_prompt_setup,      fire_prompt_step,         fire_prompt_refused },
     { "BR83833_pressure_plate_prompt_cancels", plate_prompt_setup,     plate_prompt_step,        plate_prompt_refused },

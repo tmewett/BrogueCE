@@ -920,6 +920,12 @@ boolean itemIsCursed(const item *theItem) {
     return (theItem->flags & ITEM_CURSED) != 0;
 }
 
+void curseItem(item *theItem) {
+    if (theItem != NULL) {
+        theItem->flags |= ITEM_CURSED;
+    }
+}
+
 boolean itemIsRunic(const item *theItem) {
     return (theItem->flags & ITEM_RUNIC) != 0;
 }
@@ -1214,6 +1220,21 @@ creature *placeHostileMonster(enum monsterTypes type, pos loc) {
     makeMonsterHostile(monst);
     revealCell(loc);
     return monst;
+}
+
+void addDeadAllyToPurgatory(enum monsterTypes type, pos loc) {
+    creature *m = spawnMonster(type, loc);
+    makeMonsterAlly(m);
+    m->leader = &player;
+    damageMonster(m, monsterMaxHealth(m) + 100); // reduce HP to 0
+    killCreature(m, false);                      // mark dead (MB_HAS_DIED), not administrative
+    // Move the dead ally from `monsters` into `purgatory`, where resurrection
+    // can find it.
+    removeDeadMonsters();
+}
+
+boolean resurrectDeadAllyAt(pos loc) {
+    return resurrectAlly(loc);
 }
 
 

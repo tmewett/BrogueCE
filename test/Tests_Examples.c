@@ -100,16 +100,14 @@ static void levitation_web_setup(void) {
     setTerrainAroundLoc(player.loc, FLOOR);
     setPlayerPos(player.loc);
 
-    pos trapLoc = {player.loc.x + 1, player.loc.y};
-    setTerrain(trapLoc, MACHINE_PRESSURE_PLATE);
+    // Place a web under the player's feet.
+    setTerrain(player.loc, SPIDERWEB);  // T_ENTANGLES
 
-
-    // Place web on player
-    pos webLoc = player.loc;
-    setTerrain(webLoc, SPIDERWEB);  // T_ENTANGLES
-    
-    // Give player levitation
+    // Give the player levitation (it does not protect from webbing).
     applyStatusToMonster(&player, STATUS_LEVITATING, 10);
+
+    // Apply instant tile effects so the web sticks the levitating player.
+    applyTileEffectsToPlayer();
 }
 
 // Setup, then levitate the player
@@ -239,20 +237,20 @@ static boolean player_not_seized_verify(void) {
 
 
 const testCase tests_examples[] = {
-    { "chasm_fall",                     chasm_setup,                wait_until_fall_step,               chasm_fall_verify           },
-    { "water_steals_items",             water_setup,                wait_10_turns_step,                 inventory_items_missing     },
-    { "bog_monster_seizes",             bog_monster_setup,          wait_10_turns_step,                 player_seized_verify        },
-    { "aquatic_attack",                 eel_setup,                  wait_10_turns_step,                 player_is_hurt              },
-    { "trigger_trap",                   trap_setup,                 trap_step,                     trap_triggered              },
-    { "harmful_gas",                    gas_setup,                  wait_10_turns_step,                 player_is_hurt              },
+    { "BR16982_chasm_fall",             chasm_setup,                wait_until_fall_step,               chasm_fall_verify           },
+    { "BR17312_water_steals_items",     water_setup,                wait_10_turns_step,                 inventory_items_missing     },
+    { "BR17384_bog_monster_seizes",     bog_monster_setup,          wait_10_turns_step,                 player_seized_verify        },
+    { "BR17765_aquatic_attack",         eel_setup,                  wait_10_turns_step,                 player_is_hurt              },
+    { "BR20087_trigger_trap",           trap_setup,                 trap_step,                     trap_triggered              },
+    { "BR21016_harmful_gas",            gas_setup,                  wait_10_turns_step,                 player_is_hurt              },
 
-    { "levitation_breaks_seized",       bog_monster_setup,          levitation_breaks_seized_step, player_not_seized_verify    },
-    { "levitation_chasm",               levitation_chasm_setup,     wait_until_fall_step,               levitation_chasm_verify,    },
-    { "regular_can_attack_levitating",  levitation_rat_setup,       wait_10_turns_step,                 player_is_hurt              },
-    { "aquatic_cant_attack_levitating", levitation_eel_setup,       wait_10_turns_step,                 player_is_healthy           },
-    { "levitation_over_water",          levitation_water_setup,     wait_10_turns_step,                 inventory_items_not_missing },
-    { "levitation_over_trap",           levitation_trap_setup,      trap_step,                     trap_not_triggered          },
-    { "levitation_web",                 levitation_web_setup,       move_right_step,           levitation_web_verify       },
+    { "BR22389_levitation_breaks_seized", bog_monster_setup,         levitation_breaks_seized_step, player_not_seized_verify    },
+    { "BR23474_levitation_chasm",       levitation_chasm_setup,     wait_until_fall_step,               levitation_chasm_verify,    },
+    { "BR25575_regular_can_attack_levitating", levitation_rat_setup, wait_10_turns_step,             player_is_hurt              },
+    { "BR37800_aquatic_cant_attack_levitating", levitation_eel_setup, wait_10_turns_step,             player_is_healthy           },
+    { "BR39325_levitation_over_water",  levitation_water_setup,     wait_10_turns_step,                 inventory_items_not_missing },
+    { "BR39456_levitation_over_trap",   levitation_trap_setup,      trap_step,                     trap_not_triggered          },
+    { "BR39871_levitation_web",         levitation_web_setup,       NULL,                      levitation_web_verify       },
 
     // --- Terminal Test ---
     { NULL, NULL, NULL, NULL, NULL }

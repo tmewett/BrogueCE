@@ -579,6 +579,89 @@ static boolean never_sleeping_monster_starts_awake(void) {
     return !testFailed;
 }
 
+// ---------------------------------------------
+// BR67313 — a raised ally is placed on nearby ground free of harmful terrain
+// and occupants
+// ---------------------------------------------
+
+static void raised_ally_safe_ground_setup(void) {
+    clearMonsters();
+    standPlayerOn(FLOOR);
+
+    // A dead ally awaits resurrection in purgatory; where it died is irrelevant.
+    pos ratLoc = posOffset(getPlayerPos(), -6, 0);
+    setTerrain(ratLoc, FLOOR);
+    addDeadAllyToPurgatory(MK_RAT, ratLoc);
+
+    // The raise point is good, unoccupied ground.
+    pos raiseLoc = posOffset(getPlayerPos(), 3, 0);
+    setTerrain(raiseLoc, FLOOR);
+
+    resurrectDeadAllyAt(raiseLoc);
+}
+
+static boolean raised_ally_placed_on_safe_ground(void) {
+    creature *ally = findMonster(MK_RAT);
+    TEST_ASSERT(ally != NULL, "an ally should have been raised");
+    if (ally == NULL) {
+        return !testFailed;
+    }
+
+    pos raiseLoc = posOffset(getPlayerPos(), 3, 0);
+    TEST_ASSERT_POS_EQ(monsterPosition(ally), raiseLoc,
+                       "a raised ally should be placed on the nearby ground");
+    TEST_ASSERT(cellIsTerrain(monsterPosition(ally), FLOOR),
+                "a raised ally should stand on ordinary ground");
+    TEST_ASSERT(!cellIsTerrain(monsterPosition(ally), LAVA),
+                "a raised ally should not stand on harmful terrain");
+    TEST_ASSERT(monsterIsAlly(ally), "the raised creature should be an ally");
+    TEST_ASSERT(monsterIsAlive(ally), "the raised ally should be alive");
+    return !testFailed;
+}
+
+static void raised_ally_avoids_harmful_setup(void) {
+    clearMonsters();
+    standPlayerOn(FLOOR);
+
+    // A dead ally awaits resurrection in purgatory.
+    pos ratLoc = posOffset(getPlayerPos(), -6, 0);
+    setTerrain(ratLoc, FLOOR);
+    addDeadAllyToPurgatory(MK_RAT, ratLoc);
+
+    // The raise point is occupied by the player, and every adjacent square is
+    // harmful lava except one safe square to the east.
+    pos playerLoc = getPlayerPos();
+    setTerrain(posOffset(playerLoc, -1, -1), LAVA);
+    setTerrain(posOffset(playerLoc, 0, -1), LAVA);
+    setTerrain(posOffset(playerLoc, 1, -1), LAVA);
+    setTerrain(posOffset(playerLoc, -1, 0), LAVA);
+    setTerrain(posOffset(playerLoc, 1, 0), FLOOR);
+    setTerrain(posOffset(playerLoc, -1, 1), LAVA);
+    setTerrain(posOffset(playerLoc, 0, 1), LAVA);
+    setTerrain(posOffset(playerLoc, 1, 1), LAVA);
+
+    resurrectDeadAllyAt(playerLoc);
+}
+
+static boolean raised_ally_avoids_harmful_terrain_and_occupants(void) {
+    creature *ally = findMonster(MK_RAT);
+    TEST_ASSERT(ally != NULL, "an ally should have been raised");
+    if (ally == NULL) {
+        return !testFailed;
+    }
+
+    pos safeSquare = posOffset(getPlayerPos(), 1, 0);
+    TEST_ASSERT_POS_EQ(monsterPosition(ally), safeSquare,
+                       "a raised ally should avoid harmful terrain and occupants");
+    TEST_ASSERT(cellIsTerrain(monsterPosition(ally), FLOOR),
+                "a raised ally should stand on ordinary ground");
+    TEST_ASSERT(!cellIsTerrain(monsterPosition(ally), LAVA),
+                "a raised ally should not stand on harmful terrain");
+    TEST_ASSERT(monsterIsAlly(ally), "the raised creature should be an ally");
+    TEST_ASSERT(monsterIsAlive(ally), "the raised ally should be alive");
+    return !testFailed;
+}
+
 // ============================================================
 
 const testCase tests_monsters[] = {
@@ -636,6 +719,9 @@ const testCase tests_monsters[] = {
     { "BR51199_beached_liquid_monster_cannot_move",   beached_eel_setup,               NULL, beached_liquid_monster_cannot_move },
 
     { "BR44948_never_sleeping_monster_starts_awake",  never_sleeping_monster_setup,    NULL, never_sleeping_monster_starts_awake },
+
+    { "BR67313_raised_ally_placed_on_safe_ground",    raised_ally_safe_ground_setup,   NULL, raised_ally_placed_on_safe_ground },
+    { "BR67313_raised_ally_avoids_harmful_and_occupied", raised_ally_avoids_harmful_setup, NULL, raised_ally_avoids_harmful_terrain_and_occupants },
 
     { NULL, NULL, NULL, NULL }
 };

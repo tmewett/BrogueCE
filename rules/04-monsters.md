@@ -188,3 +188,4 @@
 **BR41166** — A wand of domination has no effect on inanimate objects or invulnerable monsters. [Monsters.c:4231-4240](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L4231-L4240)
 **BR69013** — A wand of domination's chance of succeeding depends on the target's current health. [Monsters.c:4241-4250](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L4241-L4250)
 **BR69574** — A monster armed with an all-adjacent attack hits every adjacent valid target. [Monsters.c:3880-3891](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3880-L3891)
+**BR17765** — An eel or other water-dwelling monster treats creatures standing in deep water as enemies and attacks them. [Monsters.c:384-396](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L384-L396)
