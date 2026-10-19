@@ -41,8 +41,22 @@ Brogue.app: bin/brogue
 	cp bin/brogue $@/Contents/MacOS
 	cp -r macos/Brogue.icns bin/assets $@/Contents/Resources
 
+# The homebrew-core commit to take the SDL3 and sdl2-compat formulae from. Pinning both to one commit makes macOS
+# builds reproducible and keeps the two versions matched (sdl2-compat loads SDL3 at runtime). Update it deliberately,
+# to a commit where both formulae are versions known to work: e.g. sdl2-compat 2.32.72 scales mouse coordinates
+# wrongly on HiDPI displays (libsdl-org/sdl2-compat#624).
+# bf15382d (2026-10-19): SDL3 3.4.18, sdl2-compat 2.32.74
+HOMEBREW_CORE_COMMIT := bf15382d54581a9a5f9836fbe141cdd1b57eff67
+HOMEBREW_FORMULA_URL := https://raw.githubusercontent.com/Homebrew/homebrew-core/$(HOMEBREW_CORE_COMMIT)/Formula
+
 macos/sdl3.orig.rb:
-	curl -L 'https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/s/sdl3.rb' >$@
+	curl -fL '$(HOMEBREW_FORMULA_URL)/s/sdl3.rb' >$@
 
 macos/sdl3.rb: macos/sdl3.orig.rb
 	patch -o $@ macos/sdl3.orig.rb macos/sdl-deployment-target.patch
+
+macos/sdl2-compat.orig.rb:
+	curl -fL '$(HOMEBREW_FORMULA_URL)/s/sdl2-compat.rb' >$@
+
+macos/sdl2-compat.rb: macos/sdl2-compat.orig.rb
+	patch -o $@ macos/sdl2-compat.orig.rb macos/sdl2-compat-deployment-target.patch

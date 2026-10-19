@@ -1,0 +1,14 @@
+Set deployment target version environment variable, so sdl2-compat works on older
+versions of macOS (matching sdl-deployment-target.patch for SDL3).
+
+--- sdl2-compat.orig.rb
++++ sdl2-compat.rb
+@@ -20,6 +20,8 @@
+   deny_network_access!
+ 
+   def install
++    ENV["MACOSX_DEPLOYMENT_TARGET"] = "10.7"
++
+     args = ["-DCMAKE_INSTALL_RPATH=#{rpath(target: formula_opt_lib("sdl3"))}"] if OS.mac?
+ 
+     # We override install_prefix to make sure substituted CMAKE_INSTALL_FULL_* use

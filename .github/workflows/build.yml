@@ -42,27 +42,35 @@ jobs:
 
     - name: "Prepare"
       run: |
-        make macos/sdl3.rb
+        make macos/sdl3.rb macos/sdl2-compat.rb
 
     - name: "Cache SDL"
       uses: actions/cache@v3
       with:
-        path: sdl3-cellar
-        key: sdl3-macos-x86_64-${{hashFiles('macos/sdl3.rb')}}
+        path: |
+          sdl3-cellar
+          sdl2-compat-cellar
+        key: sdl-macos-x86_64-${{hashFiles('macos/sdl3.rb', 'macos/sdl2-compat.rb')}}
 
     - name: "Compile and install dependencies"
       run: |
-        if [ -d sdl3-cellar ]; then
+        # SDL3 and sdl2-compat are built from formulae pinned in make/releases.mk (HOMEBREW_CORE_COMMIT).
+        # The local tap is always set up, so Homebrew can find the formulae of the installed (or cached) kegs.
+        tap_dir="$(brew --repository local/broguece)"
+        mkdir -p "$tap_dir/Formula"
+        cp macos/sdl3.rb macos/sdl2-compat.rb "$tap_dir/Formula"
+        if [ -d sdl3-cellar ] && [ -d sdl2-compat-cellar ]; then
           cp -r sdl3-cellar $(brew --cellar)/sdl3
-          brew link sdl3
+          cp -r sdl2-compat-cellar $(brew --cellar)/sdl2-compat
+          brew link sdl3 sdl2-compat
         else
-          tap_dir="$(brew --repository local/broguece)"
-          mkdir -p "$tap_dir/Formula"
-          cp macos/sdl3.rb "$tap_dir/Formula"
           brew install --build-from-source local/broguece/sdl3
+          brew install --build-from-source local/broguece/sdl2-compat
           cp -r $(brew --cellar)/sdl3 sdl3-cellar
+          cp -r $(brew --cellar)/sdl2-compat sdl2-compat-cellar
         fi
-        brew install sdl2-compat sdl2_image dylibbundler
+        brew install sdl2_image dylibbundler
+        brew list --versions sdl3 sdl2-compat sdl2_image
 
     - name: "Compile"
       run: |
@@ -97,27 +105,35 @@ jobs:
 
     - name: "Prepare"
       run: |
-        make macos/sdl3.rb
+        make macos/sdl3.rb macos/sdl2-compat.rb
 
     - name: "Cache SDL"
       uses: actions/cache@v3
       with:
-        path: sdl3-cellar
-        key: sdl3-macos-arm64-${{hashFiles('macos/sdl3.rb')}}
+        path: |
+          sdl3-cellar
+          sdl2-compat-cellar
+        key: sdl-macos-arm64-${{hashFiles('macos/sdl3.rb', 'macos/sdl2-compat.rb')}}
 
     - name: "Compile and install dependencies"
       run: |
-        if [ -d sdl3-cellar ]; then
+        # SDL3 and sdl2-compat are built from formulae pinned in make/releases.mk (HOMEBREW_CORE_COMMIT).
+        # The local tap is always set up, so Homebrew can find the formulae of the installed (or cached) kegs.
+        tap_dir="$(brew --repository local/broguece)"
+        mkdir -p "$tap_dir/Formula"
+        cp macos/sdl3.rb macos/sdl2-compat.rb "$tap_dir/Formula"
+        if [ -d sdl3-cellar ] && [ -d sdl2-compat-cellar ]; then
           cp -r sdl3-cellar $(brew --cellar)/sdl3
-          brew link sdl3
+          cp -r sdl2-compat-cellar $(brew --cellar)/sdl2-compat
+          brew link sdl3 sdl2-compat
         else
-          tap_dir="$(brew --repository local/broguece)"
-          mkdir -p "$tap_dir/Formula"
-          cp macos/sdl3.rb "$tap_dir/Formula"
           brew install --build-from-source local/broguece/sdl3
+          brew install --build-from-source local/broguece/sdl2-compat
           cp -r $(brew --cellar)/sdl3 sdl3-cellar
+          cp -r $(brew --cellar)/sdl2-compat sdl2-compat-cellar
         fi
-        brew install sdl2-compat sdl2_image dylibbundler
+        brew install sdl2_image dylibbundler
+        brew list --versions sdl3 sdl2-compat sdl2_image
 
     - name: "Compile"
       run: |
