@@ -421,7 +421,7 @@ short chooseKind(const itemTable *theTable, short numKinds) {
 // Places an item at (x,y) if provided or else a random location if they're 0. Inserts item into the floor list.
 item *placeItemAt(item *theItem, pos dest) {
     enum dungeonLayers layer;
-    char theItemName[DCOLS], buf[DCOLS];
+    char theItemName[DCOLS], buf[COLS * 2];
 
     // If no valid position is supplied by the caller, choose a random one instead.
     if (!isPosInMap(dest)) {
