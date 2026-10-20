@@ -1090,7 +1090,7 @@ creatureType monsterCatalog[NUMBER_MONSTER_KINDS] = {
         (MONST_MAINTAINS_DISTANCE | MONST_FLIES | MONST_FLITS | MONST_MALE | MONST_FEMALE), (0)},
     {0, "phantom",      G_PHANTOM,    &ectoplasmColor,35,     70,     160,    {12, 18, 4},    0,  50,     200,    DF_ECTOPLASM_BLOOD, 0,    true,   2,      DF_ECTOPLASM_DROPLET, {0},
         (MONST_INVISIBLE | MONST_FLITS | MONST_FLIES | MONST_IMMUNE_TO_WEBS)},
-    {0, "flame turret", G_TURRET, &lavaForeColor,40, 0,      150,    {1, 2, 1},      0,  100,    250,    0,              LAVA_LIGHT,    false, 0,  0,              {BOLT_FIRE},
+    {0, "flame turret", G_TURRET, &lavaForeColor,40, 0,      150,    {0, 0, 0},      0,  100,    250,    0,              LAVA_LIGHT,    false, 0,  0,              {BOLT_FIRE},
         (MONST_TURRET), (0)},
     {0, "imp",          G_IMP,    &pink,          35,     90,     225,    {4, 9, 2},      10, 100,    100,    DF_GREEN_BLOOD, IMP_LIGHT,    false,  0,  0,              {BOLT_BLINKING},
         (0), (MA_HIT_STEAL_FLEE)},
