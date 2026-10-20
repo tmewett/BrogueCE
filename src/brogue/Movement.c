@@ -148,11 +148,11 @@ void describeLocation(char buf[DCOLS], short x, short y) {
     boolean monsterIsPlayer = false;
 
     char subject[COLS * 3] = "";
-    char verb[COLS * 3];
-    char preposition[COLS * 3];
+    char verb[COLS * 3] = "";
+    char preposition[COLS * 3] = "";
     char object[COLS * 3] = "";
     char itemLocation[COLS * 3] = "";
-    char adjective[COLS * 3];
+    char adjective[COLS * 3] = "";
 
     assureCosmeticRNG;
 
@@ -300,7 +300,7 @@ void describeLocation(char buf[DCOLS], short x, short y) {
             subjectMoving = false;
         } else if (monst->status[STATUS_LEVITATING]) {
             strcat(verb, (monsterIsPlayer ? " hovering" : (subjectMoving ? " flying" : " hovering")));
-            strcat(preposition, "over");
+            strcpy(preposition, "over");
             prepositionLocked = true;
         } else if (monsterCanSubmergeNow(monst)) {
             strcat(verb, (subjectMoving ? " gliding" : " drifting"));
@@ -308,7 +308,7 @@ void describeLocation(char buf[DCOLS], short x, short y) {
             strcat(verb, (subjectMoving ? " swimming" : " struggling"));
         } else if (cellHasTerrainFlag((pos){ x, y }, T_AUTO_DESCENT)) {
             strcat(verb, " suspended in mid-air");
-            strcat(preposition, "over");
+            strcpy(preposition, "over");
             prepositionLocked = true;
             subjectMoving = false;
         } else if (monst->status[STATUS_CONFUSED]) {
