@@ -906,6 +906,7 @@ void fadeInMonster(creature *monst) {
     enum displayGlyph displayChar;
     getCellAppearance(monst->loc, &displayChar, &fColor, &bColor);
     flashMonster(monst, &bColor, 100);
+    refreshDungeonCell(monst->loc);
 }
 
 creatureList createCreatureList(void) {
