@@ -4477,7 +4477,7 @@ static short estimatedArmorValue() {
     return max(0, retVal);
 }
 
-static short creatureHealthChangePercent(creature *monst) {
+static short creatureHealthChangePercent(const creature *monst) {
     if (monst->previousHealthPoints <= 0) {
         return 0;
     }
@@ -4486,7 +4486,7 @@ static short creatureHealthChangePercent(creature *monst) {
 }
 
 // returns the y-coordinate after the last line printed
-short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight) {
+short printMonsterInfo(const creature *monst, short y, boolean dim, boolean highlight) {
     char buf[COLS * 2], buf2[COLS * 2], monstName[COLS], tempColorEscape[5], grayColorEscape[5];
     enum displayGlyph monstChar;
     color monstForeColor, monstBackColor, healthBarColor, tempColor;
@@ -4781,7 +4781,7 @@ void describeHallucinatedItem(char *buf) {
 }
 
 // Returns the y-coordinate after the last line printed.
-short printItemInfo(item *theItem, short y, boolean dim, boolean highlight) {
+short printItemInfo(const item *theItem, short y, boolean dim, boolean highlight) {
     char name[COLS * 3];
     enum displayGlyph itemChar;
     color itemForeColor, itemBackColor;
@@ -5032,7 +5032,7 @@ short printTextBox(char *textBuf, short x, short y, short width,
     }
 }
 
-void printMonsterDetails(creature *monst) {
+void printMonsterDetails(const creature *monst) {
     char textBuf[COLS * 100];
     monsterDetails(textBuf, monst);
     printTextBox(textBuf, monst->loc.x, 0, 0, &white, &black, NULL, 0);
@@ -5120,7 +5120,7 @@ unsigned long printCarriedItemDetails(item *theItem,
 }
 
 // Returns true if an action was taken.
-void printFloorItemDetails(item *theItem) {
+void printFloorItemDetails(const item *theItem) {
     char textBuf[COLS * 100];
     itemDetails(textBuf, theItem);
 

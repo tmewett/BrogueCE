@@ -98,6 +98,8 @@ const feat featTable_BulletBrogue[] = {
     {"Dragonslayer",    "Slay a dragon with a melee attack.",                       false},
     {"Paladin",         "Ascend without attacking an unaware or fleeing creature.", true},
     {"Untempted",       "Ascend without picking up gold.",                          true},
+    {"Mirror Image",    "Clone yourself.",                                          false},
+    {"Esoteric",        "Teach an allied kraken to fly.",                           false},
 };
 
 // Number of lumenstones on each level past amulet
@@ -492,10 +494,6 @@ const blueprint blueprintCatalog_BulletBrogue[] = {
         {0,         SACRIFICE_CAGE_DORMANT,DUNGEON,{1,1},   1,          0,          -1,         0,              2,              0,          0,          (MF_ADOPT_ITEM | MF_NOT_IN_HALLWAY | MF_IMPREGNABLE)},
         {0,         DEMONIC_STATUE,DUNGEON,     {1,1},      1,          0,          -1,         0,              2,              0,          0,          (MF_FAR_FROM_ORIGIN | MF_NOT_IN_HALLWAY | MF_IMPREGNABLE)},
         {0,         STATUE_INSTACRACK,DUNGEON,  {1,1},      1,          0,          -1,         0,              2,              (HORDE_SACRIFICE_TARGET), 0, (MF_BUILD_ANYWHERE_ON_LEVEL | MF_GENERATE_HORDE | MF_MONSTERS_DORMANT | MF_TREAT_AS_BLOCKING | MF_IMPREGNABLE | MF_NOT_IN_HALLWAY)}}},
-    {"Summoning circle -- key in a room with an eldritch totem, glyphs unavoidable. // DISABLED. (Not fun enough.)",
-    {2, DEEPEST_LEVEL-1}, {50, 100}, 0,      2,          0,                  (BP_ROOM | BP_OPEN_INTERIOR | BP_ADOPT_ITEM),   {
-        {DF_GLYPH_CIRCLE,ALTAR_INERT,DUNGEON,   {1,1},      1,          0,          -1,         0,              3,              0,          0,          (MF_ADOPT_ITEM | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY | MF_FAR_FROM_ORIGIN)},
-        {DF_GLYPH_CIRCLE,0,     0,              {1,1},      1,          0,          -1,         MK_ELDRITCH_TOTEM,3,            0,          0,          (MF_FAR_FROM_ORIGIN | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY)}}},
     {"Beckoning obstacle -- key surrounded by glyphs in a room with a mirrored totem.",
     {2, DEEPEST_LEVEL-1}, {60, 100},  15,     4,          0,                  (BP_ROOM | BP_PURGE_INTERIOR | BP_SURROUND_WITH_WALLS | BP_OPEN_INTERIOR | BP_ADOPT_ITEM), {
         {DF_GLYPH_CIRCLE,ALTAR_INERT,DUNGEON,   {1,1},      1,          0,          -1,         0,              3,              0,          0,          (MF_ADOPT_ITEM | MF_TREAT_AS_BLOCKING | MF_NOT_IN_HALLWAY | MF_FAR_FROM_ORIGIN | MF_IN_VIEW_OF_ORIGIN)},
@@ -730,7 +728,6 @@ itemTable charmTable_BulletBrogue[] = {
     {"levitation",      "", "", 1,  700,    0, 0, {1,2,1}, true, false, 1, false, "Sparkling dust and fragments of feather waft and swirl endlessly inside this small glass sphere."},
     {"shattering",      "", "", 1,  700,    0, 0, {1,2,1}, true, false, 1, false, "This turquoise crystal, fixed to a leather lanyard, hums with an arcane energy that sets your teeth on edge."},
     {"guardian",        "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "When you touch this tiny granite statue, a rhythmic booming echoes in your mind."},
-//    {"fear",            "", "",   3,  700,    0,{1,2,1}, true, false, "When you gaze into the murky interior of this obsidian cube, you feel as though something predatory is watching you."},
     {"teleportation",   "", "", 4,  700,    0, 0, {1,2,1}, true, false, 1, false, "The surface of this nickel sphere has been etched with a perfect grid pattern. Somehow, the squares of the grid are all exactly the same size."},
     {"recharging",      "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "A strip of bronze has been wound around a rough wooden sphere. Each time you touch it, you feel a tiny electric shock."},
     {"negation",        "", "", 5,  700,    0, 0, {1,2,1}, true, false, 1, false, "A featureless gray disc hangs from a lanyard. When you touch it, your hand and arm go numb."},
@@ -828,8 +825,6 @@ const hordeType hordeCatalog_BulletBrogue[] = {
     {MK_PHYLACTERY,     1,      {MK_LICH},                              {{1,1,1}},                      0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED},
     {MK_GOBLIN_CHIEFTAN,2,      {MK_GOBLIN_CONJURER, MK_GOBLIN},        {{1,1,1}, {3,4,1}},             0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED | HORDE_SUMMONED_AT_DISTANCE},
     {MK_PHOENIX_EGG,    1,      {MK_PHOENIX},                           {{1,1,1}},                      0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED},
-    {MK_ELDRITCH_TOTEM, 1,      {MK_SPECTRAL_BLADE},                    {{4, 7, 1}},                    0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED | HORDE_DIES_ON_LEADER_DEATH},
-    {MK_ELDRITCH_TOTEM, 1,      {MK_FURY},                              {{2, 3, 1}},                    0,      0,      100,    0,          0,                  HORDE_IS_SUMMONED | HORDE_DIES_ON_LEADER_DEATH},
 
     // captives
     {MK_MONKEY,         1,      {MK_KOBOLD},                            {{1, 2, 1}},                    1,      1,      10,     0,          0,                  HORDE_LEADER_CAPTIVE | HORDE_NEVER_OOD},

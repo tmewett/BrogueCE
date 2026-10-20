@@ -1311,7 +1311,7 @@ static boolean inscribeItem(item *theItem) {
     }
 }
 
-boolean itemCanBeCalled(item *theItem) {
+boolean itemCanBeCalled(const item *theItem) {
     if (theItem->category & (WEAPON|ARMOR|SCROLL|RING|POTION|STAFF|WAND|CHARM)) {
         return true;
     } else if ((theItem->category & (POTION | SCROLL))
@@ -1363,6 +1363,7 @@ void call(item *theItem) {
                 strcat((char *) command, theItem->inscription);
                 recordKeystrokeSequence(command);
                 recordKeystroke(RETURN_KEY, false, false);
+                considerFlushingBufferToFile();
             }
         } else {
             message("you already know what that is.", 0);
@@ -1377,6 +1378,7 @@ void call(item *theItem) {
                 strcat((char *) command, theItem->inscription);
                 recordKeystrokeSequence(command);
                 recordKeystroke(RETURN_KEY, false, false);
+                considerFlushingBufferToFile();
             }
             return;
         } else if (confirm("Inscribe this particular item instead of all similar items?", true)) {
@@ -1386,6 +1388,7 @@ void call(item *theItem) {
                 strcat((char *) command, theItem->inscription);
                 recordKeystrokeSequence(command);
                 recordKeystroke(RETURN_KEY, false, false);
+                considerFlushingBufferToFile();
             }
             return;
         } else {
@@ -1401,6 +1404,7 @@ void call(item *theItem) {
             strcat((char *) command, itemText);
             recordKeystrokeSequence(command);
             recordKeystroke(RETURN_KEY, false, false);
+            considerFlushingBufferToFile();
             if (itemText[0]) {
                 strcpy(tableForItemCategory(theItem->category)[theItem->kind].callTitle, itemText);
                 tableForItemCategory(theItem->category)[theItem->kind].called = true;
@@ -1423,7 +1427,7 @@ void call(item *theItem) {
 // If baseColor is provided, then the suffix will be in gray, flavor portions of the item name (e.g. a "pink" potion,
 //  a "sandalwood" staff, a "ruby" ring) will be in dark purple, and the Amulet of Yendor and lumenstones will be in yellow.
 //  BaseColor itself will be the color that the name reverts to outside of these colored portions.
-void itemName(item *theItem, char *root, boolean includeDetails, boolean includeArticle, const color *baseColor) {
+void itemName(const item *theItem, char *root, boolean includeDetails, boolean includeArticle, const color *baseColor) {
     char buf[DCOLS * 5], pluralization[10], article[10] = "", runicName[30],
     grayEscapeSequence[5], purpleEscapeSequence[5], yellowEscapeSequence[5], baseEscapeSequence[5];
     color tempColor;
@@ -1714,7 +1718,7 @@ void itemName(item *theItem, char *root, boolean includeDetails, boolean include
     return;
 }
 
-void itemKindName(item *theItem, char *kindName) {
+void itemKindName(const item *theItem, char *kindName) {
 
     // use lookup table for randomly generated items with more than one kind per category
     if (theItem->category & (ARMOR | CHARM | FOOD | POTION | RING | SCROLL | STAFF | WAND | WEAPON)) {
@@ -1741,7 +1745,7 @@ void itemKindName(item *theItem, char *kindName) {
     }
 }
 
-void itemRunicName(item *theItem, char *runicName) {
+void itemRunicName(const item *theItem, char *runicName) {
     char vorpalEnemyMonsterClass[15] ="";
 
     if (theItem->flags & ITEM_RUNIC) {
@@ -1811,7 +1815,7 @@ boolean isVowelish(char *theChar) {
     }
 }
 
-static fixpt enchantIncrement(item *theItem) {
+static fixpt enchantIncrement(const item *theItem) {
     if (theItem->category & (WEAPON | ARMOR)) {
         if (theItem->strengthRequired == 0) {
             return FP_FACTOR;
@@ -1825,7 +1829,7 @@ static fixpt enchantIncrement(item *theItem) {
     }
 }
 
-boolean itemIsCarried(item *theItem) {
+boolean itemIsCarried(const item *theItem) {
     item *tempItem;
 
     for (tempItem = packItems->nextItem; tempItem != NULL; tempItem = tempItem->nextItem) {
@@ -1836,7 +1840,7 @@ boolean itemIsCarried(item *theItem) {
     return false;
 }
 
-static short effectiveRingEnchant(item *theItem) {
+static short effectiveRingEnchant(const item *theItem) {
     if (theItem->category != RING) {
         return 0;
     }
@@ -1876,7 +1880,7 @@ static boolean monsterClassHasAcidicMonster(const short classID) {
     return false;
 }
 
-void itemDetails(char *buf, item *theItem) {
+void itemDetails(char *buf, const item *theItem) {
     char buf2[1000], buf3[1000], theName[500], goodColorEscape[20], badColorEscape[20], whiteColorEscape[20];
     boolean singular, carried;
     fixpt enchant;
@@ -3185,7 +3189,7 @@ void updateEncumbrance() {
 }
 
 // Estimates the armor value of the given item, assuming the item is unenchanted.
-short armorValueIfUnenchanted(item *theItem) {
+short armorValueIfUnenchanted(const item *theItem) {
     short averageValue = (armorTable[theItem->kind].range.upperBound + armorTable[theItem->kind].range.lowerBound) / 2;
     short strengthAdjusted = averageValue + 10 * strengthModifier(theItem) / FP_FACTOR;
     return max(0, strengthAdjusted / 10);
@@ -3200,7 +3204,7 @@ short displayedArmorValue() {
     }
 }
 
-void strengthCheck(item *theItem, boolean noisy) {
+void strengthCheck(const item *theItem, boolean noisy) {
     char buf1[COLS], buf2[COLS*2];
     short strengthDeficiency;
 
@@ -3687,7 +3691,7 @@ static boolean tunnelize(short x, short y) {
 /// @param monst The monster
 /// @param isBolt True to check for a negation bolt. False for negation blast.
 /// @return True if negation will have an effect
-static boolean negationWillAffectMonster(creature *monst, boolean isBolt) {
+static boolean negationWillAffectMonster(const creature *monst, boolean isBolt) {
 
     // negation bolts don't affect monsters that always reflect. negation never affects the warden.
     if ((isBolt && (monst->info.abilityFlags & MA_REFLECT_100))
@@ -3709,7 +3713,6 @@ static boolean negationWillAffectMonster(creature *monst, boolean isBolt) {
         || (monst->status[STATUS_DISCORDANT])
         || (monst->status[STATUS_SHIELDED])
         || (monst->status[STATUS_INVISIBLE])
-        || (monst->status[STATUS_MAGICAL_FEAR])
         || (monst->status[STATUS_LEVITATING])
         || (monst->movementSpeed != monst->info.movementSpeed)
         || (monst->attackSpeed != monst->info.attackSpeed)
@@ -3870,7 +3873,6 @@ static boolean polymorph(creature *monst) {
              || newMonsterIndex == monst->info.monsterID); // Can't stay the same monster.
     monst->info = monsterCatalog[newMonsterIndex]; // Presto change-o!
 
-    monst->info.turnsBetweenRegen *= 1000;
     monst->currentHP = max(1, max(healthFraction * monst->info.maxHP / 1000, monst->info.maxHP - previousDamageTaken));
 
     monst->movementSpeed = monst->info.movementSpeed;
@@ -4041,35 +4043,6 @@ static void rechargeItems(unsigned long categories) {
     }
 }
 
-//void causeFear(const char *emitterName) {
-//    creature *monst;
-//    short numberOfMonsters = 0;
-//    char buf[DCOLS*3], mName[DCOLS];
-//
-//    for (monst = monsters->nextCreature; monst != NULL; monst = monst->nextCreature) {
-//        if (pmapAt(monst->loc)->flags & IN_FIELD_OF_VIEW
-//            && monst->creatureState != MONSTER_FLEEING
-//            && !(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
-//
-//            monst->status[STATUS_MAGICAL_FEAR] = monst->maxStatus[STATUS_MAGICAL_FEAR] = rand_range(150, 225);
-//            monst->creatureState = MONSTER_FLEEING;
-//            if (canSeeMonster(monst)) {
-//                numberOfMonsters++;
-//                monsterName(mName, monst, true);
-//            }
-//        }
-//    }
-//    if (numberOfMonsters > 1) {
-//        sprintf(buf, "%s emits a brilliant flash of red light, and the monsters flee!", emitterName);
-//    } else if (numberOfMonsters == 1) {
-//        sprintf(buf, "%s emits a brilliant flash of red light, and %s flees!", emitterName, mName);
-//    } else {
-//        sprintf(buf, "%s emits a brilliant flash of red light!", emitterName);
-//    }
-//    message(buf, 0);
-//    colorFlash(&redFlashColor, 0, IN_FIELD_OF_VIEW, 15, DCOLS, player.loc.x, player.loc.y);
-//}
-
 static void negationBlast(const char *emitterName, const short distance) {
     item *theItem;
     char buf[DCOLS];
@@ -4203,7 +4176,7 @@ static boolean imbueInvisibility(creature *monst, short duration) {
     return autoID;
 }
 
-boolean projectileReflects(creature *attacker, creature *defender) {
+boolean projectileReflects(const creature *attacker, const creature *defender) {
     short prob;
     fixpt netReflectionLevel;
 
@@ -4333,7 +4306,7 @@ static void beckonMonster(creature *monst, pos to, short numCoordinates, pos coo
     }
 }
 
-enum boltEffects boltEffectForItem(item *theItem) {
+enum boltEffects boltEffectForItem(const item *theItem) {
     if (theItem->category & (STAFF | WAND)) {
         return boltCatalog[tableForItemCategory(theItem->category)[theItem->kind].power].boltEffect;
     } else {
@@ -4341,7 +4314,7 @@ enum boltEffects boltEffectForItem(item *theItem) {
     }
 }
 
-enum boltType boltForItem(item *theItem) {
+enum boltType boltForItem(const item *theItem) {
     if (theItem->category & (STAFF | WAND)) {
         return tableForItemCategory(theItem->category)[theItem->kind].power;
     } else {
@@ -4440,10 +4413,9 @@ static boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                     // monster lives
                     if (monst->creatureMode != MODE_PERM_FLEEING
                         && monst->creatureState != MONSTER_ALLY
-                        && (monst->creatureState != MONSTER_FLEEING || monst->status[STATUS_MAGICAL_FEAR])) {
+                        && monst->creatureState != MONSTER_FLEEING) {
 
                         monst->creatureState = MONSTER_TRACKING_SCENT;
-                        monst->status[STATUS_MAGICAL_FEAR] = 0;
                     }
                     if (boltInView) {
                         sprintf(buf, "%s %s hits %s",
@@ -4745,6 +4717,13 @@ static void detonateBolt(bolt *theBolt, creature *caster, short x, short y, bool
                 monst->loc = getQualifyingPathLocNear((pos){ x, y }, true,
                                          T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)) & ~T_SPONTANEOUSLY_IGNITES, HAS_PLAYER,
                                          avoidedFlagsForMonster(&(monst->info)) & ~T_SPONTANEOUSLY_IGNITES, (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
+
+                // Invalid location (level is full)
+                if (posEq(monst->loc, INVALID_POS)) {
+                    killCreature(monst, true); // Administrative death
+                    break; // Don't conjure any more
+                }
+
                 monst->bookkeepingFlags |= (MB_FOLLOWER | MB_BOUND_TO_LEADER | MB_DOES_NOT_TRACK_LEADER);
                 monst->bookkeepingFlags &= ~MB_JUST_SUMMONED;
                 monst->leader = &player;
@@ -6028,14 +6007,11 @@ static boolean hitMonsterWithProjectileWeapon(creature *thrower, creature *monst
 
     if (monst != &player
         && monst->creatureMode != MODE_PERM_FLEEING
-        && (monst->creatureState != MONSTER_FLEEING || monst->status[STATUS_MAGICAL_FEAR])
+        && monst->creatureState != MONSTER_FLEEING
         && !(monst->bookkeepingFlags & MB_CAPTIVE)
         && monst->creatureState != MONSTER_ALLY) {
 
         monst->creatureState = MONSTER_TRACKING_SCENT;
-        if (monst->status[STATUS_MAGICAL_FEAR]) {
-            monst->status[STATUS_MAGICAL_FEAR] = 1;
-        }
     }
 
     if (thrower == &player) {
@@ -6969,6 +6945,7 @@ boolean readScroll(item *theItem) {
     creature *monst;
     boolean hadEffect = false;
     char buf[COLS * 3], buf2[COLS * 3];
+    item *theScroll = theItem;
 
     itemTable scrollKind = tableForItemCategory(theItem->category)[theItem->kind];
 
@@ -7221,12 +7198,7 @@ boolean readScroll(item *theItem) {
     }
 
     // all scrolls auto-identify on use
-    if (!scrollKind.identified
-        && (theItem->kind != SCROLL_ENCHANTING)
-        && (theItem->kind != SCROLL_IDENTIFY)) {
-
-        autoIdentify(theItem);
-    }
+    autoIdentify(theScroll);
 
     return true;
 }
@@ -7471,7 +7443,7 @@ short magicCharDiscoverySuffix(short category, short kind) {
 -1 if the item is of bad magic
  0 if it is neutral
  1 if it is of good magic */
-int itemMagicPolarity(item *theItem) {
+int itemMagicPolarity(const item *theItem) {
     itemTable *theItemTable = tableForItemCategory(theItem->category);
     switch (theItem->category) {
         case WEAPON:
@@ -7948,6 +7920,14 @@ void deleteItem(item *theItem) {
     free(theItem);
 }
 
+void deleteItemList(item *theItem) {
+    while (theItem != NULL) {
+        item *nextItem = theItem->nextItem;
+        deleteItem(theItem);
+        theItem = nextItem;
+    }
+}
+
 static void resetItemTableEntry(itemTable *theEntry) {
     theEntry->identified = false;
     theEntry->magicPolarityRevealed = false;
@@ -8034,7 +8014,7 @@ void shuffleFlavors() {
     }
 }
 
-unsigned long itemValue(item *theItem) {
+unsigned long itemValue(const item *theItem) {
     switch (theItem->category) {
         case AMULET:
             return 35000;

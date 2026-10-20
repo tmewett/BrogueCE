@@ -159,11 +159,9 @@ jobs:
         mingw32-make SYSTEM=WINDOWS BrogueCE-windows
         cp SDL2\x86_64-w64-mingw32\bin\SDL2.dll BrogueCE-windows
         cp SDL2_image\x86_64-w64-mingw32\bin\SDL2_image.dll BrogueCE-windows
-        7z a BrogueCE-windows-x86_64.zip BrogueCE-windows
 
     - name: "Upload artifact"
       uses: actions/upload-artifact@v4
       with:
         name: windows-x86_64
-        path: BrogueCE-windows-x86_64.zip
-        compression-level: 0  # There's no point compressing something already compressed
+        path: BrogueCE-windows

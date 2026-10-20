@@ -1540,15 +1540,22 @@ boolean buildAMachine(enum machineTypes bp,
                         // we pass the monsters and items that it spawned back to the parent,
                         // so that if the parent fails, they can all be freed.
                         int i;
+                        // Remember the item's key locations before any adoption attempt, so that a failed
+                        // attempt can't leave it keyed to a location in a machine that no longer exists.
+                        keyLocationProfile keyLocBackup[KEY_ID_MAXIMUM];
+                        if (theItem) {
+                            memcpy(keyLocBackup, theItem->keyLoc, sizeof(keyLocBackup));
+                        }
                         for (i=10; i > 0; i--) {
                             // First make sure our adopted item, if any, is not on the floor or in the pack already.
                             // Otherwise, a previous attempt to place it may have put it on the floor in a different
                             // machine, only to have that machine fail and be deleted, leaving the item remaining on
-                            // the floor where placed.
+                            // the floor where placed. For the same reason, restore its key locations.
                             if ((feature->flags & MF_OUTSOURCE_ITEM_TO_MACHINE) && theItem) {
                                 removeItemFromChain(theItem, floorItems);
                                 removeItemFromChain(theItem, packItems);
                                 theItem->nextItem = NULL;
+                                memcpy(theItem->keyLoc, keyLocBackup, sizeof(keyLocBackup));
                                 success = buildAMachine(-1, -1, -1, BP_ADOPT_ITEM, theItem, p->spawnedItemsSub, p->spawnedMonstersSub);
                             } else if (feature->flags & MF_BUILD_VESTIBULE) {
                                 success = buildAMachine(-1, featX, featY, BP_VESTIBULE, NULL, p->spawnedItemsSub, p->spawnedMonstersSub);
@@ -1897,7 +1904,7 @@ static void cleanUpLakeBoundaries() {
                         x = i;
                         y = j + 1;
                     }
-                    if (x) {
+                    if (x && !(pmap[i][j].flags & HAS_MONSTER)) {
                         madeChange = true;
                         for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
                             pmap[i][j].layers[layer] = pmap[x][y].layers[layer];
@@ -3228,6 +3235,11 @@ boolean fillSpawnMap(enum dungeonLayers layer,
                 && (superpriority || tileCatalog[pmap[i][j].layers[layer]].drawPriority >= tileCatalog[surfaceTileType].drawPriority)
                     // and we won't be painting into the surface layer when that cell forbids it,
                 && !(layer == SURFACE && cellHasTerrainFlag((pos){ i, j }, T_OBSTRUCTS_SURFACE_EFFECTS))
+                    // #832: and we won't bury a trap under vision-blocking terrain -- foliage on a trap
+                    // hides it from view and stops thrown items from settling on the trigger. Applies to
+                    // every foliage source (autogenerators, the jackal den, regrowth).
+                && !((tileCatalog[surfaceTileType].flags & T_OBSTRUCTS_VISION)
+                     && cellHasTerrainFlag((pos){ i, j }, T_IS_DF_TRAP))
                     // and, if requested, the fill won't violate the priority of the most important terrain in this cell:
                 && (!blockedByOtherLayers || tileCatalog[pmap[i][j].layers[highestPriorityLayer(i, j, true)]].drawPriority >= tileCatalog[surfaceTileType].drawPriority)
                 ) {
