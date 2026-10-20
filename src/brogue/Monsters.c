@@ -3834,7 +3834,11 @@ boolean moveMonster(creature *monst, short dx, short dy) {
                     monst->loc.y = newY;
                     pmapAt(monst->loc)->flags |= HAS_MONSTER;
 
-                    if (monsterAvoids(defender, (pos){x, y})) { // don't want a flying monster to swap a non-flying monster into lava!
+                    // Only redirect the defender when the vacated tile would kill it
+                    // (lava) or swallow it (chasm). Softer dislikes such as brimstone
+                    // or stairs must not teleport it across the room.
+                    if (monsterAvoids(defender, (pos){x, y})
+                        && cellHasTerrainFlag((pos){x, y}, T_LAVA_INSTA_DEATH | T_AUTO_DESCENT)) { // don't want a flying monster to swap a non-flying monster into lava!
                         defender->loc = getQualifyingPathLocNear((pos){ x, y }, true,
                                                  forbiddenFlagsForMonster(&(defender->info)), HAS_PLAYER,
                                                  forbiddenFlagsForMonster(&(defender->info)), (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);

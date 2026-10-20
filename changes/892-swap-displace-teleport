@@ -1,0 +1,1 @@
+Fixed a bug that could teleport a monster several tiles when it was swapped by another monster onto a tile it preferred to avoid, such as brimstone.
