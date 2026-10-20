@@ -3540,8 +3540,11 @@ void monstersTurn(creature *monst) {
 
         // if a captive leader is captive, regenerative and healthy enough to withstand an attack,
         // and we're not poisonous, then approach or attack him.
+        // #903: a paralyzed captive is never attacked -- attacks against paralyzed creatures deal
+        // triple damage (see attack()), which the damage estimate below does not account for.
         if ((monst->bookkeepingFlags & MB_FOLLOWER)
             && (monst->leader->bookkeepingFlags & MB_CAPTIVE)
+            && monst->leader->status[STATUS_PARALYZED] == 0
             && monst->leader->currentHP > (int) (monst->info.damage.upperBound * monsterDamageAdjustmentAmount(monst) / FP_FACTOR)
             && monst->leader->info.turnsBetweenRegen > 0
             && !(monst->info.abilityFlags & MA_POISONS)
