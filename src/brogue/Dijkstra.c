@@ -209,7 +209,7 @@ void dijkstraScan(short **distanceMap, short **costMap, boolean useDiagonals) {
 void calculateDistances(short **distanceMap,
                         short destinationX, short destinationY,
                         unsigned long blockingTerrainFlags,
-                        creature *traveler,
+                        const creature *traveler,
                         boolean canUseSecretDoors,
                         boolean eightWays) {
     static pdsMap map;

@@ -57,7 +57,7 @@
  * strength penalty/benefit) increases
  */
 
-fixpt strengthModifier(item *theItem) {
+fixpt strengthModifier(const item *theItem) {
     int difference = (rogue.strength - player.weaknessAmount) - theItem->strengthRequired;
     if (difference > 0) {
         return difference * FP_FACTOR / 4; // 0.25x
@@ -66,7 +66,7 @@ fixpt strengthModifier(item *theItem) {
     }
 }
 
-fixpt netEnchant(item *theItem) {
+fixpt netEnchant(const item *theItem) {
     fixpt retval = theItem->enchant1 * FP_FACTOR;
     if (theItem->category & (WEAPON | ARMOR)) {
         retval += strengthModifier(theItem);
@@ -102,7 +102,7 @@ short monsterAccuracyAdjusted(const creature *monst) {
 
 // does NOT account for auto-hit from sleeping or unaware defenders; does account for auto-hit from
 // stuck or captive defenders and from weapons of slaying.
-short hitProbability(creature *attacker, creature *defender) {
+short hitProbability(const creature *attacker, const creature *defender) {
     short accuracy = monsterAccuracyAdjusted(attacker);
     short defense = monsterDefenseAdjusted(defender);
     short hitProbability;
@@ -133,7 +133,7 @@ short hitProbability(creature *attacker, creature *defender) {
     return hitProbability;
 }
 
-boolean attackHit(creature *attacker, creature *defender) {
+boolean attackHit(const creature *attacker, const creature *defender) {
     // automatically hit if the monster is sleeping or captive or stuck in a web
     if (defender->status[STATUS_STUCK]
         || defender->status[STATUS_PARALYZED]
@@ -145,7 +145,7 @@ boolean attackHit(creature *attacker, creature *defender) {
     return rand_percent(hitProbability(attacker, defender));
 }
 
-static void addMonsterToContiguousMonsterGrid(short x, short y, creature *monst, char grid[DCOLS][DROWS]) {
+static void addMonsterToContiguousMonsterGrid(short x, short y, const creature *monst, char grid[DCOLS][DROWS]) {
     short newX, newY;
     enum directions dir;
     creature *tempMonst;
@@ -164,7 +164,7 @@ static void addMonsterToContiguousMonsterGrid(short x, short y, creature *monst,
     }
 }
 
-static short alliedCloneCount(creature *monst) {
+static short alliedCloneCount(const creature *monst) {
     short count = 0;
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *temp = nextCreature(&it);
@@ -205,7 +205,7 @@ static short alliedCloneCount(creature *monst) {
 // group of monsters that the monster would not avoid.
 // The contiguous group is supplemented with the given (x, y) coordinates, if any;
 // this is so that jellies et al. can spawn behind the player in a hallway.
-void splitMonster(creature *monst, creature *attacker) {
+void splitMonster(creature *monst, const creature *attacker) {
     char buf[DCOLS * 3];
     char monstName[DCOLS];
     char monsterGrid[DCOLS][DROWS], eligibleGrid[DCOLS][DROWS];
@@ -313,7 +313,7 @@ void splitMonster(creature *monst, creature *attacker) {
 
 // This function is called whenever one creature acts aggressively against another in a way that directly causes damage.
 // This can be things like melee attacks, fire/lightning attacks or throwing a weapon.
-void moralAttack(creature *attacker, creature *defender) {
+void moralAttack(const creature *attacker, creature *defender) {
 
     if (defender->currentHP > 0
         && !(defender->bookkeepingFlags & MB_IS_DYING)) {
@@ -351,7 +351,7 @@ void moralAttack(creature *attacker, creature *defender) {
 /// to deal direct damage to a non-hunting creature that they are aware of and the creature would be damaged by the attack.
 /// @param attacker 
 /// @param defender 
-void handlePaladinFeat(creature *defender) {
+void handlePaladinFeat(const creature *defender) {
     if (rogue.featRecord[FEAT_PALADIN]
         && defender->creatureState != MONSTER_TRACKING_SCENT
         && (player.status[STATUS_TELEPATHIC] || canSeeMonster(defender))
@@ -363,7 +363,7 @@ void handlePaladinFeat(creature *defender) {
     }
 }
 
-static boolean playerImmuneToMonster(creature *monst) {
+static boolean playerImmuneToMonster(const creature *monst) {
     if (monst != &player
         && rogue.armor
         && (rogue.armor->flags & ITEM_RUNIC)
@@ -492,7 +492,7 @@ static void specialHit(creature *attacker, creature *defender, short damage) {
     }
 }
 
-static boolean forceWeaponHit(creature *defender, item *theItem) {
+static boolean forceWeaponHit(creature *defender, const item *theItem) {
     short forceDamage;
     char buf[DCOLS*3], buf2[COLS], monstName[DCOLS];
     creature *otherMonster = NULL;
@@ -782,7 +782,7 @@ void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed) {
     }
 }
 
-static void attackVerb(char returnString[DCOLS], creature *attacker, short hitPercentile) {
+static void attackVerb(char returnString[DCOLS], const creature *attacker, short hitPercentile) {
     short verbCount, increment;
 
     if (attacker != &player && (player.status[STATUS_HALLUCINATING] || !canSeeMonster(attacker))) {
@@ -993,7 +993,7 @@ static void decrementWeaponAutoIDTimer() {
     }
 }
 
-void processStaggerHit(creature *attacker, creature *defender) {
+void processStaggerHit(const creature *attacker, creature *defender) {
     if ((defender->info.flags & (MONST_INVULNERABLE | MONST_IMMOBILE | MONST_INANIMATE))
         || (defender->bookkeepingFlags & MB_CAPTIVE)
         || cellHasTerrainFlag(defender->loc, T_OBSTRUCTS_PASSABILITY)) {
@@ -1358,7 +1358,7 @@ void flashMonster(creature *monst, const color *theColor, short strength) {
     }
 }
 
-static boolean canAbsorb(creature *ally, boolean ourBolts[], creature *prey, short **grid) {
+static boolean canAbsorb(const creature *ally, boolean ourBolts[], const creature *prey, short **grid) {
     short i;
 
     if (ally->creatureState == MONSTER_ALLY
@@ -1392,7 +1392,7 @@ static boolean canAbsorb(creature *ally, boolean ourBolts[], creature *prey, sho
     return false;
 }
 
-static boolean anyoneWantABite(creature *decedent) {
+static boolean anyoneWantABite(const creature *decedent) {
     short candidates, randIndex, i;
     short **grid;
     boolean success = false;
@@ -1735,7 +1735,7 @@ void killCreature(creature *decedent, boolean administrativeDeath) {
     }
 }
 
-void buildHitList(const creature **hitList, const creature *attacker, creature *defender, const boolean sweep) {
+void buildHitList(creature **hitList, const creature *attacker, creature *defender, const boolean sweep) {
     short i, x, y, newX, newY, newestX, newestY;
     enum directions dir, newDir;
 

@@ -163,7 +163,7 @@ void initializeMonster(creature *monst, boolean itemPossible) {
 /// @brief Checks if the player knows a monster's location via telepathy or entrancement.
 /// @param monst the monster
 /// @return true if the monster is either entranced or revealed by telepathy
-boolean monsterRevealed(creature *monst) {
+boolean monsterRevealed(const creature *monst) {
     if (monst == &player) {
         return false;
     } else if (monst->bookkeepingFlags & MB_TELEPATHICALLY_REVEALED) {
@@ -226,7 +226,7 @@ boolean monsterIsHidden(const creature *monst, const creature *observer) {
 /// verbiage used in combat/dungeon messages (or whether a message appears at all).
 /// @param monst the monster
 /// @return true if the monster is not hidden and the player knows its location
-boolean canSeeMonster(creature *monst) {
+boolean canSeeMonster(const creature *monst) {
     if (monst == &player) {
         return true;
     }
@@ -242,7 +242,7 @@ boolean canSeeMonster(creature *monst) {
 /// darkening is a factor because it affects a cell's VISIBLE flag.
 /// @param monst the monster
 /// @return true if the player can physically see the monster
-boolean canDirectlySeeMonster(creature *monst) {
+boolean canDirectlySeeMonster(const creature *monst) {
     if (monst == &player) {
         return true;
     }
@@ -252,7 +252,7 @@ boolean canDirectlySeeMonster(creature *monst) {
     return false;
 }
 
-void monsterName(char *buf, creature *monst, boolean includeArticle) {
+void monsterName(char *buf, const creature *monst, boolean includeArticle) {
     short oldRNG;
 
     if (monst == &player) {
@@ -432,7 +432,7 @@ boolean stringsMatch(const char *str1, const char *str2) {
 //  2 = male
 //  3 = female
 //  4 = neuter
-void resolvePronounEscapes(char *text, creature *monst) {
+void resolvePronounEscapes(char *text, const creature *monst) {
     short pronounType, gender, i;
     char *insert, *scan;
     boolean capitalize;
@@ -638,7 +638,7 @@ creature *cloneMonster(creature *monst, boolean announce, boolean placeClone) {
     return newMonst;
 }
 
-unsigned long forbiddenFlagsForMonster(creatureType *monsterType) {
+unsigned long forbiddenFlagsForMonster(const creatureType *monsterType) {
     unsigned long flags;
 
     flags = T_PATHING_BLOCKER;
@@ -660,7 +660,7 @@ unsigned long forbiddenFlagsForMonster(creatureType *monsterType) {
     return flags;
 }
 
-unsigned long avoidedFlagsForMonster(creatureType *monsterType) {
+unsigned long avoidedFlagsForMonster(const creatureType *monsterType) {
     unsigned long flags;
 
     flags = forbiddenFlagsForMonster(monsterType) | T_HARMFUL_TERRAIN | T_SACRED;
@@ -680,7 +680,7 @@ unsigned long avoidedFlagsForMonster(creatureType *monsterType) {
     return flags;
 }
 
-boolean monsterCanSubmergeNow(creature *monst) {
+boolean monsterCanSubmergeNow(const creature *monst) {
     return ((monst->info.flags & MONST_SUBMERGES)
             && cellHasTMFlag(monst->loc, TM_ALLOWS_SUBMERGING)
             && !cellHasTerrainFlag(monst->loc, T_OBSTRUCTS_PASSABILITY)
@@ -1301,9 +1301,9 @@ unsigned long discoveredTerrainFlagsAtLoc(pos loc) {
     return flags;
 }
 
-boolean monsterAvoids(creature *monst, pos p) {
+boolean monsterAvoids(const creature *monst, pos p) {
     unsigned long terrainImmunities;
-    creature *defender;
+    const creature *defender;
     unsigned long tFlags, cFlags;
 
     getLocationFlags(p.x, p.y, &tFlags, NULL, &cFlags, monst == &player);
@@ -1979,7 +1979,7 @@ void decrementMonsterStatus(creature *monst) {
     }
 }
 
-boolean traversiblePathBetween(creature *monst, short x2, short y2) {
+boolean traversiblePathBetween(const creature *monst, short x2, short y2) {
     pos originLoc = monst->loc;
     pos targetLoc = (pos){ .x = x2, .y = y2 };
 
@@ -2444,7 +2444,7 @@ boolean monsterSummons(creature *monst) {
 /// @brief Checks if a creature has any negatable status effects
 /// @param monst The creature
 /// @return True if the creature has any negatable status effects
-boolean canNegateCreatureStatusEffects(creature *monst) {
+boolean canNegateCreatureStatusEffects(const creature *monst) {
 
     if (!monst || (monst->info.flags & MONST_INVULNERABLE)) {
         return false;
@@ -2483,7 +2483,7 @@ void negateCreatureStatusEffects(creature *monst) {
 /// @brief Checks if a monster will be affected by negation
 /// @param monst The monster
 /// @return True if negation will have an effect
-boolean monsterIsNegatable(creature *monst) {
+boolean monsterIsNegatable(const creature *monst) {
 
     if (monst->info.flags & MONST_INVULNERABLE) {
         return false;
@@ -2924,7 +2924,7 @@ void unAlly(creature *monst) {
     }
 }
 
-boolean monsterFleesFrom(creature *monst, creature *defender) {
+boolean monsterFleesFrom(const creature *monst, const creature *defender) {
     const short dist = distanceBetween(monst->loc, defender->loc);
 
     if (!monsterWillAttackTarget(defender, monst)) {
@@ -3614,7 +3614,7 @@ void monstersTurn(creature *monst) {
     }
 }
 
-boolean canPass(creature *mover, creature *blocker) {
+boolean canPass(const creature *mover, const creature *blocker) {
 
     if (blocker == &player) {
         return false;
@@ -3704,7 +3704,7 @@ boolean moveMonster(creature *monst, short dx, short dy) {
     short i;
     short confusedDirection, swarmDirection;
     creature *defender = NULL;
-    const creature *hitList[16] = {NULL};
+    creature *hitList[16] = {NULL};
     enum directions dir;
 
     if (dx == 0 && dy == 0) {
@@ -4362,7 +4362,7 @@ static void getMonsterAbilitiesText(const creature *monst, char *abilitiesText, 
     buildProperCommaString(abilitiesText, buf);
 }
 
-static boolean staffOrWandEffectOnMonsterDescription(char *newText, item *theItem, creature *monst) {
+static boolean staffOrWandEffectOnMonsterDescription(char *newText, const item *theItem, const creature *monst) {
     char theItemName[COLS], monstName[COLS];
     boolean successfulDescription = false;
     fixpt enchant = netEnchant(theItem);
@@ -4479,7 +4479,7 @@ static void summarizePack (packSummary *pack) {
 }
 
 
-void monsterDetails(char buf[], creature *monst) {
+void monsterDetails(char buf[], const creature *monst) {
     char monstName[COLS], capMonstName[COLS], theItemName[COLS * 3], newText[20*COLS];
     short i, combatMath, combatMath2, playerKnownAverageDamage, playerKnownMaxDamage, realArmorValue;
     item *theItem;

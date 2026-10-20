@@ -90,7 +90,7 @@ void updatePlayerUnderwaterness() {
     }
 }
 
-boolean monsterShouldFall(creature *monst) {
+boolean monsterShouldFall(const creature *monst) {
     return (!(monst->status[STATUS_LEVITATING])
             && cellHasTerrainFlag(monst->loc, T_AUTO_DESCENT)
             && !cellHasTerrainFlag(monst->loc, T_ENTANGLES | T_OBSTRUCTS_PASSABILITY)
@@ -674,7 +674,7 @@ static void updateScent() {
     addScentToCell(player.loc.x, player.loc.y, 0);
 }
 
-short armorStealthAdjustment(item *theArmor) {
+short armorStealthAdjustment(const item *theArmor) {
     if (!theArmor
         || !(theArmor->category & ARMOR)) {
 
