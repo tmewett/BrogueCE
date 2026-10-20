@@ -5616,7 +5616,7 @@ boolean chooseTarget(pos *returnLoc,
     short oldRNG;
     boolean stopAtTarget = (targetMode == AUTOTARGET_MODE_THROW);
     color trajColor;
-    bolt theBolt;
+    bolt theBolt = boltCatalog[BOLT_NONE];
 
     // choose the bolt and color to use for highlighting the path to the target
     if (theItem && (targetMode == AUTOTARGET_MODE_USE_STAFF_OR_WAND)
@@ -5632,7 +5632,6 @@ boolean chooseTarget(pos *returnLoc,
         trajColor = red;
     } else {
         trajColor = white;
-        theBolt = boltCatalog[BOLT_NONE];
     }
 
     normColor(&trajColor, 100, 10);
