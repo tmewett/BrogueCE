@@ -3504,7 +3504,7 @@ boolean spawnDungeonFeature(short x, short y, dungeonFeature *feat, boolean refr
 }
 
 void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
-    short i, *x, *y, turnCount;
+    short *x, *y;
     boolean foundLeader = false;
     short **theMap;
     enum directions dir;
@@ -3521,15 +3521,14 @@ void restoreMonster(creature *monst, short **mapToStairs, short **mapToPit) {
 
         pmap[*x][*y].flags &= ~HAS_MONSTER;
         if (theMap) {
-            // STATUS_ENTERS_LEVEL_IN accounts for monster speed; convert back to map distance and subtract from distance to stairs
-            turnCount = (theMap[monst->loc.x][monst->loc.y] - (monst->status[STATUS_ENTERS_LEVEL_IN] * 100 / monst->movementSpeed));
-            for (i=0; i < turnCount; i++) {
-                if ((dir = nextStep(theMap, monst->loc, NULL, true)) != NO_DIRECTION) {
-                    monst->loc.x += nbDirs[dir][0];
-                    monst->loc.y += nbDirs[dir][1];
-                } else {
-                    break;
-                }
+            // STATUS_ENTERS_LEVEL_IN is a turn count factoring in monster speed.
+            // Convert it back into the tile distance the monster should still be from its destination
+            // then walk it towards the destination until it's closed the distance.
+            const short remainingDistance = monst->status[STATUS_ENTERS_LEVEL_IN] * 100 / monst->movementSpeed;
+            while (theMap[monst->loc.x][monst->loc.y] > remainingDistance
+                   && (dir = nextStep(theMap, monst->loc, NULL, true)) != NO_DIRECTION) {
+                monst->loc.x += nbDirs[dir][0];
+                monst->loc.y += nbDirs[dir][1];
             }
         }
         monst->bookkeepingFlags |= MB_PREPLACED;
