@@ -680,7 +680,7 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
         attacker->bookkeepingFlags &= ~MB_SUBMERGED;
         theBolt = boltCatalog[BOLT_WHIP];
         theBolt.theChar = boltChar[dir];
-        zap(originLoc, targetLoc, &theBolt, false, false);
+        zap(originLoc, targetLoc, &theBolt, false);
         return true;
     }
     return false;

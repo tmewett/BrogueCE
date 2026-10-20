@@ -3260,7 +3260,8 @@ extern "C" {
     void checkForMissingKeys(short x, short y);
     enum boltEffects boltEffectForItem(const item *theItem);
     enum boltType boltForItem(const item *theItem);
-    boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, boolean reverseBoltDir);
+    boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails);
+    boolean zapBeckoning(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, short numCoordinates, pos coordinates[]);
     boolean nextTargetAfter(const item *theItem,
                             pos *returnLoc,
                             pos targetLoc,
