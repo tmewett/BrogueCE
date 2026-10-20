@@ -3888,6 +3888,8 @@ void initializeStatus(creature *monst) {
     for (i=0; i<NUMBER_OF_STATUS_EFFECTS; i++) {
         monst->status[i] = monst->maxStatus[i] = 0;
     }
+    monst->poisonAmount = 0;
+    monst->weaknessAmount = 0;
 
     if (monst->info.flags & MONST_FIERY) {
         monst->status[STATUS_BURNING] = monst->maxStatus[STATUS_BURNING] = 1000; // won't decrease
