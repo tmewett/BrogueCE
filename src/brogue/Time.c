@@ -736,6 +736,9 @@ void discoverCell(const short x, const short y) {
         if (!cellHasTerrainFlag((pos){ x, y }, T_PATHING_BLOCKER)) {
             rogue.xpxpThisTurn++;
         }
+        // Memory is otherwise only stored when a cell stops being visible, a
+        // transition a cell discovered unseen never makes.
+        storeMemories(x, y);
     }
 }
 
@@ -801,8 +804,8 @@ void updateVision(boolean refreshDisplay) {
     }
 }
 
-static void checkNutrition(void) {
-    item *theItem;
+// This should be called only after decrementing the player's nutrition.
+static void printNutritionMessages(void) {
     char buf[DCOLS*3], foodWarning[DCOLS*3];
 
     if (numberOfMatchingPackItems(FOOD, 0, 0, false) == 0) {
@@ -812,34 +815,34 @@ static void checkNutrition(void) {
     }
 
     if (player.status[STATUS_NUTRITION] == HUNGER_THRESHOLD) {
-        player.status[STATUS_NUTRITION]--;
         sprintf(buf, "you are hungry%s.", foodWarning);
         message(buf, foodWarning[0] ? REQUIRE_ACKNOWLEDGMENT : 0);
     } else if (player.status[STATUS_NUTRITION] == WEAK_THRESHOLD) {
-        player.status[STATUS_NUTRITION]--;
         sprintf(buf, "you feel weak with hunger%s.", foodWarning);
         message(buf, REQUIRE_ACKNOWLEDGMENT);
     } else if (player.status[STATUS_NUTRITION] == FAINT_THRESHOLD) {
-        player.status[STATUS_NUTRITION]--;
         sprintf(buf, "you feel faint with hunger%s.", foodWarning);
         message(buf, REQUIRE_ACKNOWLEDGMENT);
-    } else if (player.status[STATUS_NUTRITION] <= 1) {
-        // Force the player to eat something if he has it
-        for (theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
-            if (theItem->category == FOOD) {
-                sprintf(buf, "unable to control your hunger, you eat a %s.", (theItem->kind == FRUIT ? "mango" : "ration of food"));
-                messageWithColor(buf, &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
-                confirmMessages();
-                eat(theItem, false);
-                playerTurnEnded();
-                break;
-            }
-        }
-    }
-
-    if (player.status[STATUS_NUTRITION] == 1) { // Didn't manage to eat any food above.
-        player.status[STATUS_NUTRITION] = 0;    // So the status bar changes in time for the message:
+    } else if (player.status[STATUS_NUTRITION] == 0) {
         message("you are starving to death!", REQUIRE_ACKNOWLEDGMENT);
+    }
+}
+
+// This should only be called when the player is starving or very close to it.
+static void forceEatFood(void) {
+    brogueAssert(player.status[STATUS_NUTRITION] <= 1);
+    char buf[DCOLS*3];
+    // Force the player to eat something if he has it
+    for (item *theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
+        if (theItem->category == FOOD) {
+            const char *foodName = theItem->kind == FRUIT ? "mango" : "ration of food";
+            sprintf(buf, "unable to control your hunger, you eat a %s.", foodName);
+            messageWithColor(buf, &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
+            confirmMessages();
+            eat(theItem, false);
+            playerTurnEnded();
+            break;
+        }
     }
 }
 
@@ -1901,7 +1904,7 @@ static void monsterEntersLevel(creature *monst, short n) {
         brogueAssert(prevMonst);
         prevMonst->loc = getQualifyingPathLocNear(monst->loc, true,
                                  T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(prevMonst->info)), 0,
-                                 avoidedFlagsForMonster(&(prevMonst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_STAIRS), false);
+                                 avoidedFlagsForMonster(&(prevMonst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_STAIRS | IS_IN_MACHINE), false);
         pmapAt(monst->loc)->flags &= ~(HAS_PLAYER | HAS_MONSTER);
         pmapAt(prevMonst->loc)->flags |= (prevMonst == &player ? HAS_PLAYER : HAS_MONSTER);
         refreshDungeonCell(prevMonst->loc);
@@ -1973,9 +1976,9 @@ static void decrementPlayerStatus(void) {
         if (player.status[STATUS_NUTRITION] > 0) {
             if (!numberOfMatchingPackItems(AMULET, 0, 0, false) || rand_percent(20)) {
                 player.status[STATUS_NUTRITION]--;
+                printNutritionMessages();
             }
         }
-        checkNutrition();
     }
 
     if (player.status[STATUS_TELEPATHIC] > 0 && !--player.status[STATUS_TELEPATHIC]) {
@@ -2553,7 +2556,6 @@ void playerTurnEnded(void) {
             }
         }
 
-        //checkNutrition(); // Now handled within decrementPlayerStatus().
         if (!rogue.playbackFastForward) {
             shuffleTerrainColors(100, false);
         }
@@ -2618,6 +2620,10 @@ void playerTurnEnded(void) {
     if (rogue.flareCount > 0) {
         animateFlares(rogue.flares, rogue.flareCount);
         rogue.flareCount = 0;
+    }
+    
+    if (player.status[STATUS_NUTRITION] <= 1) {
+        forceEatFood();
     }
 }
 

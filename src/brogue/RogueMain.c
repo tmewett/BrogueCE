@@ -1145,7 +1145,12 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     }
 
     // Count gems as 500 gold each
-    short numGems = numberOfMatchingPackItems(GEM, 0, 0, false);
+    short numGems = 0;
+    for (theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
+        if (theItem->category & GEM) {
+            numGems += theItem->quantity;
+        }
+}
     rogue.gold += 500 * numGems;
     theEntry.score = rogue.gold;
 
@@ -1207,7 +1212,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         notifyEvent(GAMEOVER_RECORDING, 0, 0, "recording ended", "none");
     }
 
-    if (!rogue.playbackMode && rogue.mode != GAME_MODE_EASY &&  rogue.mode != GAME_MODE_WIZARD) {
+    if (!rogue.playbackMode && rogue.mode == GAME_MODE_NORMAL) {
         saveRunHistory(rogue.quit ? "Quit" : "Died", rogue.quit ? "-" : killedBy, (int) theEntry.score, numGems);
     }
 
@@ -1373,7 +1378,7 @@ void victory(boolean superVictory) {
         notifyEvent(GAMEOVER_RECORDING, 0, 0, "recording ended", "none");
     }
 
-    if (!rogue.playbackMode && rogue.mode != GAME_MODE_EASY && rogue.mode != GAME_MODE_NORMAL) {
+    if (!rogue.playbackMode && rogue.mode == GAME_MODE_NORMAL) {
         saveRunHistory(victoryVerb, "-", (int) theEntry.score, gemCount);
     }
 

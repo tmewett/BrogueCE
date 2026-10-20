@@ -1,0 +1,1 @@
+Fixed a bug where tiles discovered without ever being seen, such as the stairs on arrival or a wall bumped into in the dark, were described as "a chilly void".

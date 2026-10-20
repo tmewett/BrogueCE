@@ -4743,6 +4743,13 @@ static void detonateBolt(bolt *theBolt, creature *caster, short x, short y, bool
                 monst->loc = getQualifyingPathLocNear((pos){ x, y }, true,
                                          T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(monst->info)) & ~T_SPONTANEOUSLY_IGNITES, HAS_PLAYER,
                                          avoidedFlagsForMonster(&(monst->info)) & ~T_SPONTANEOUSLY_IGNITES, (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), false);
+
+                // Invalid location (level is full)
+                if (posEq(monst->loc, INVALID_POS)) {
+                    killCreature(monst, true); // Administrative death
+                    break; // Don't conjure any more
+                }
+
                 monst->bookkeepingFlags |= (MB_FOLLOWER | MB_BOUND_TO_LEADER | MB_DOES_NOT_TRACK_LEADER);
                 monst->bookkeepingFlags &= ~MB_JUST_SUMMONED;
                 monst->leader = &player;
@@ -6500,7 +6507,7 @@ static boolean playerCancelsBlinking(const pos originLoc, const pos targetLoc, c
             x = coordinates[i].x;
             y = coordinates[i].y;
             if (pmap[x][y].flags & DISCOVERED) {
-                getLocationFlags(x, y, &tFlags, NULL, NULL, true);
+                getLocationFlags(x, y, &tFlags, &tmFlags, NULL, true);
                 if ((tFlags & T_LAVA_INSTA_DEATH)
                     && !(tFlags & (T_ENTANGLES | T_AUTO_DESCENT))
                     && !(tmFlags & TM_EXTINGUISHES_FIRE)) {
@@ -6959,6 +6966,7 @@ boolean readScroll(item *theItem) {
     creature *monst;
     boolean hadEffect = false;
     char buf[COLS * 3], buf2[COLS * 3];
+    item *theScroll = theItem;
 
     itemTable scrollKind = tableForItemCategory(theItem->category)[theItem->kind];
 
@@ -7211,12 +7219,7 @@ boolean readScroll(item *theItem) {
     }
 
     // all scrolls auto-identify on use
-    if (!scrollKind.identified
-        && (theItem->kind != SCROLL_ENCHANTING)
-        && (theItem->kind != SCROLL_IDENTIFY)) {
-
-        autoIdentify(theItem);
-    }
+    autoIdentify(theScroll);
 
     return true;
 }
