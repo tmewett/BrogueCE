@@ -1131,6 +1131,10 @@ void promoteTile(short x, short y, enum dungeonLayers layer, boolean useFireDF) 
         spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DFType], true, false);
     }
 
+    // Promotions can make hazardous terrain safe (for example, extending a
+    // bridge over a chasm), so the route to shore must be recalculated.
+    rogue.updatedMapToShoreThisTurn = false;
+
     if (!useFireDF && (tile->mechFlags & TM_IS_WIRED)
         && !(pmap[x][y].flags & IS_POWERED)
         && !circuitBreakersPreventActivation(pmap[x][y].machineNumber)) {
