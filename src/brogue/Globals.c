@@ -432,15 +432,10 @@ const floorTileType tileCatalog[NUMBER_TILETYPES] = {
  /*MACHINE_FLOOD_WATER_DORMANT*/{0,     &shallowWaterForeColor, &shallowWaterBackColor, 60, 0,  DF_STEAM_ACCUMULATION,0,DF_SPREADABLE_WATER,                    0,  NO_LIGHT,   (0), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_EXTINGUISHES_FIRE | TM_ALLOWS_SUBMERGING), "shallow water", "the water is cold and reaches your knees."},
  /*MACHINE_FLOOD_WATER_SPREADING*/{0,   &shallowWaterForeColor, &shallowWaterBackColor, 60, 0,  DF_STEAM_ACCUMULATION,0,DF_WATER_SPREADS,                    2500,  NO_LIGHT,   (0), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_EXTINGUISHES_FIRE | TM_ALLOWS_SUBMERGING), "shallow water", "the water is cold and reaches your knees."},
  /*MACHINE_MUD_DORMANT*/        {G_FLOOR,   &mudForeColor,          &mudBackColor,      55, 0,  DF_PLAIN_FIRE,0,DF_MUD_ACTIVATE,                                0,  NO_LIGHT,   (0), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_IS_WIRED | TM_ALLOWS_SUBMERGING), "a bog",         "you are knee-deep in thick, foul-smelling mud."},
- /*ICE_DEEP*/                   {G_FLOOR,   &white,                 &lightBlue,         35, 100,DF_DEEP_WATER_THAW,0,DF_DEEP_WATER_MELTING,                  -100,  NO_LIGHT,   (T_IS_FLAMMABLE), (TM_VANISHES_UPON_PROMOTION),                                     "ice",                  "a sheet of ice extends into the water, ripples frozen into its glossy surface."},
- /*ICE_DEEP_MELT*/              {G_FLOOR,   &black,                 &lightBlue,         35, 100,DF_DEEP_WATER_THAW,0,DF_DEEP_WATER_THAW,                    10000,  NO_LIGHT,   (T_IS_FLAMMABLE), (TM_VANISHES_UPON_PROMOTION),                                     "melting ice",          "cracks extend across the surface of the ice as it melts before your eyes."},
- /*ICE_SHALLOW*/                {G_FLOOR,   &white,                 &lightBlue,         35, 100,DF_SHALLOW_WATER_THAW,0,DF_SHALLOW_WATER_MELTING,            -100,  NO_LIGHT,   (T_IS_FLAMMABLE), (TM_VANISHES_UPON_PROMOTION),                                     "ice",                  "a sheet of ice extends into the water, ripples frozen into its glossy surface."},
- /*ICE_SHALLOW_MELT*/           {G_FLOOR,   &black,                 &lightBlue,         35, 100,DF_DEEP_WATER_THAW,0,DF_SHALLOW_WATER_THAW,                 10000,  NO_LIGHT,   (T_IS_FLAMMABLE), (TM_VANISHES_UPON_PROMOTION),                                     "melting ice",          "cracks extend across the surface of the ice as it melts before your eyes."},
 
  // surface layer
  // tileType                    char        fore color              back color        prio ign% [fire,discover,promote]Type     promoteChance   glowLight   flags mechflags                                                                                         description             flavorText
  /*HOLE*/                       {G_CHASM,   &chasmForeColor,        &black,             9,  0,  DF_PLAIN_FIRE,0,DF_HOLE_DRAIN,          -1000,  NO_LIGHT,       (T_AUTO_DESCENT), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION),                                  "a hole",               "you plunge downward into the hole!"},
- /*HOLE_GLOW*/                  {G_CHASM,   &chasmForeColor,        &black,             9,  0,  DF_PLAIN_FIRE,0,DF_HOLE_DRAIN,          -1000,  DESCENT_LIGHT,  (T_AUTO_DESCENT), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION),                                  "a hole",               "you plunge downward into the hole!"},
  /*HOLE_EDGE*/                  {G_FLOOR,   &white,                 &chasmEdgeBackColor,50, 0,  DF_PLAIN_FIRE,0,0,                       -500,  NO_LIGHT,       (0), (TM_VANISHES_UPON_PROMOTION),                                                                  "translucent ground",   "chilly gusts of air blow upward through the translucent floor."},
  /*FLOOD_WATER_DEEP*/           {G_LIQUID,  &deepWaterForeColor,    &deepWaterBackColor,41, 100,DF_STEAM_ACCUMULATION,0,DF_FLOOD_DRAIN,  -200,  NO_LIGHT,       (T_IS_FLAMMABLE | T_IS_DEEP_WATER), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_EXTINGUISHES_FIRE | TM_ALLOWS_SUBMERGING), "sloshing water", "roiling water floods the room."},
  /*FLOOD_WATER_SHALLOW*/        {0,     &shallowWaterForeColor, &shallowWaterBackColor, 50, 0,  DF_STEAM_ACCUMULATION,0,DF_PUDDLE,       -100,  NO_LIGHT,       (0), (TM_STAND_IN_TILE | TM_VANISHES_UPON_PROMOTION | TM_EXTINGUISHES_FIRE | TM_ALLOWS_SUBMERGING), "shallow water",        "knee-deep water drains slowly into holes in the floor."},
@@ -756,16 +751,6 @@ dungeonFeature dungeonFeatureCatalog[NUMBER_DUNGEON_FEATURES] = {
     {HOLE,                      SURFACE,    200,    100,    0},
     {HOLE_EDGE,                 SURFACE,    0,      0,      0},
 
-    // ice effects
-    {ICE_DEEP,                  LIQUID,     150,    50,     DFF_EVACUATE_CREATURES_FIRST,   "", 0,  0,  0,      DEEP_WATER,         DF_ALGAE_1_FREEZE},
-    {ICE_DEEP,                  LIQUID,     150,    50,     DFF_EVACUATE_CREATURES_FIRST,   "", 0,  0,  0,      DEEP_WATER_ALGAE_1, DF_ALGAE_2_FREEZE},
-    {ICE_DEEP,                  LIQUID,     150,    50,     DFF_EVACUATE_CREATURES_FIRST,   "", 0,  0,  0,      DEEP_WATER_ALGAE_2, DF_SHALLOW_WATER_FREEZE},
-    {ICE_DEEP_MELT,             LIQUID,     0,      0,      0},
-    {DEEP_WATER,                LIQUID,     0,      0,      0},
-    {ICE_SHALLOW,               LIQUID,     100,    50,     DFF_EVACUATE_CREATURES_FIRST,   "", 0,  0,  0,      SHALLOW_WATER},
-    {ICE_SHALLOW_MELT,          LIQUID,     0,      0,      0},
-    {SHALLOW_WATER,             LIQUID,     0,      0,      0},
-
     // gas trap effects
     {POISON_GAS,                GAS,        1000,   0,      0,  "a cloud of caustic gas sprays upward from the floor!"},
     {CONFUSION_GAS,             GAS,        300,    0,      0,  "a sparkling cloud of confusion gas sprays upward from the floor!"},
@@ -784,8 +769,6 @@ dungeonFeature dungeonFeatureCatalog[NUMBER_DUNGEON_FEATURES] = {
 
     // other items
     {PLAIN_FIRE,                SURFACE,    100,    45,     0,  "", 0,  &yellow,3},
-    {HOLE_GLOW,                 SURFACE,    200,    100,    DFF_SUBSEQ_EVERYWHERE,  "", 0,  &darkBlue,3,0,          DF_STAFF_HOLE_EDGE},
-    {HOLE_EDGE,                 SURFACE,    100,    100,    0},
 
     // machine components
 
@@ -811,7 +794,6 @@ dungeonFeature dungeonFeatureCatalog[NUMBER_DUNGEON_FEATURES] = {
     // throwing tutorial:
     {ALTAR_INERT,               DUNGEON,    0,      0,      0,  "the cage lifts off of the altar.", GENERIC_FLASH_LIGHT},
     {TRAP_DOOR,                 LIQUID,     225,    100,    (DFF_CLEAR_OTHER_TERRAIN | DFF_SUBSEQ_EVERYWHERE), "", 0, 0, 0, 0, DF_SHOW_TRAPDOOR_HALO},
-    {LAVA,                      LIQUID,     225,    100,    (DFF_CLEAR_OTHER_TERRAIN)},
     {MACHINE_PRESSURE_PLATE_USED,DUNGEON,   0,      0,      0},
 
     // rat trap:
@@ -879,7 +861,6 @@ dungeonFeature dungeonFeatureCatalog[NUMBER_DUNGEON_FEATURES] = {
     {WORM_TUNNEL_MARKER_DORMANT,LIQUID,     5,      5,      0,  "", 0,  0,  GRANITE},
     {WORM_TUNNEL_MARKER_ACTIVE, LIQUID,     0,      0,      0},
     {FLOOR,                     DUNGEON,    0,      0,      (DFF_SUPERPRIORITY | DFF_ACTIVATE_DORMANT_MONSTER),  "", 0, 0,  0,  0,  DF_TUNNELIZE},
-    {FLOOR,                     DUNGEON,    0,      0,      0,  "the nearby wall cracks and collapses in a cloud of dust!", 0, &darkGray,  5,  0,  DF_TUNNELIZE},
 
     // haunted room:
     {DARK_FLOOR_DARKENING,      DUNGEON,    0,      0,      0,  "the light in the room flickers and you feel a chill in the air."},
