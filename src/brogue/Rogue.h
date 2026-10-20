@@ -3301,8 +3301,8 @@ extern "C" {
     boolean itemIsHeavyWeapon(const item *theItem);
     boolean itemIsPositivelyEnchanted(const item *theItem);
     void updateEncumbrance(void);
-    short displayedArmorValue(void);
-    short armorValueIfUnenchanted(const item *theItem);
+    float displayedArmorValue(void);
+    float armorValueIfUnenchanted(const item *theItem);
     void strengthCheck(const item *theItem, boolean noisy);
     void recalculateEquipmentBonuses(void);
     boolean equipItem(item *theItem, boolean force, item *unequipHint);
