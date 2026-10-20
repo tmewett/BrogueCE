@@ -28,7 +28,7 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
-#define D_DISABLE_BACKGROUND_COLORS     (rogue.wizard && 0)
+#define D_DISABLE_BACKGROUND_COLORS     (WIZARD_MODE && 0)
 
 // Populates path[][] with a list of coordinates starting at origin and traversing down the map. Returns the number of steps in the path.
 short getPlayerPathOnMap(pos path[1000], short **map, pos origin) {
@@ -36,7 +36,7 @@ short getPlayerPathOnMap(pos path[1000], short **map, pos origin) {
 
     int steps;
     for (steps = 0; true; steps++) {
-        const int dir = nextStep(map, at.x, at.y, &player, false);
+        const int dir = nextStep(map, at, &player, false);
         if (dir == -1) {
             break;
         }
@@ -275,7 +275,7 @@ static short actionMenu(short x, boolean playingBack) {
             buttons[buttonCount].hotkey[0] = RETHROW_KEY;
             buttonCount++;
 
-            if (!rogue.easyMode) {
+            if (rogue.mode != GAME_MODE_EASY) {
                 if (KEYBOARD_LABELS) {
                     sprintf(buttons[buttonCount].text, "  %s&: %sEasy mode  ",              yellowColorEscape, whiteColorEscape);
                 } else {
@@ -777,7 +777,7 @@ void mainInputLoop() {
                      dir++);
                 playerMoves(dir);
             } else if (D_WORMHOLING) {
-                travel(rogue.cursorLoc.x, rogue.cursorLoc.y, true);
+                travel(rogue.cursorLoc, true);
             } else {
                 confirmMessages();
                 if (posEq(originLoc, rogue.cursorLoc)) {
@@ -2336,7 +2336,7 @@ static void exploreKey(const boolean controlKey) {
             exploreMap = allocGrid();
             getExploreMap(exploreMap, false);
             do {
-                dir = nextStep(exploreMap, x, y, NULL, false);
+                dir = nextStep(exploreMap, (pos){ x, y }, NULL, false);
                 if (dir != NO_DIRECTION) {
                     x += nbDirs[dir][0];
                     y += nbDirs[dir][1];
@@ -2357,7 +2357,7 @@ static void exploreKey(const boolean controlKey) {
         message("It's too dark to explore!", 0);
     } else if (x == player.loc.x && y == player.loc.y) {
         message("I see no path for further exploration.", 0);
-    } else if (proposeOrConfirmLocation(finalX, finalY, "I see no path for further exploration.")) {
+    } else if (proposeOrConfirmLocation((pos){ finalX, finalY }, "I see no path for further exploration.")) {
         explore(controlKey ? 1 : 20); // Do the exploring until interrupted.
         hideCursor();
         exploreKey(controlKey);
@@ -2429,24 +2429,20 @@ void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsD
 }
 
 void executeMouseClick(rogueEvent *theEvent) {
-    short x, y;
-    boolean autoConfirm;
-    x = theEvent->param1;
-    y = theEvent->param2;
-    autoConfirm = theEvent->controlKey;
+    windowpos mouse = { theEvent->param1, theEvent->param2 };
+    boolean autoConfirm = theEvent->controlKey;
 
     if (theEvent->eventType == RIGHT_MOUSE_UP) {
         displayInventory(ALL_ITEMS, 0, 0, true, true);
-    } else if (coordinatesAreInMap(windowToMapX(x), windowToMapY(y))) {
+    } else if (isPosInMap(windowToMap(mouse))) {
         if (autoConfirm) {
-            travel(windowToMapX(x), windowToMapY(y), autoConfirm);
+            travel(windowToMap(mouse), autoConfirm);
         } else {
-            rogue.cursorLoc.x = windowToMapX(x);
-            rogue.cursorLoc.y = windowToMapY(y);
+            rogue.cursorLoc = windowToMap(mouse);
             mainInputLoop();
         }
 
-    } else if (windowToMapX(x) >= 0 && windowToMapX(x) < DCOLS && y >= 0 && y < MESSAGE_LINES) {
+    } else if (windowToMapX(mouse.window_x) >= 0 && windowToMapX(mouse.window_x) < DCOLS && mouse.window_y >= 0 && mouse.window_y < MESSAGE_LINES) {
         // If the click location is in the message block, display the message archive.
         displayMessageArchive();
     }
@@ -2500,8 +2496,8 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             if (D_WORMHOLING) {
                 recordKeystroke(DESCEND_KEY, false, false);
                 useStairs(1);
-            } else if (proposeOrConfirmLocation(rogue.downLoc.x, rogue.downLoc.y, "I see no way down.")) {
-                travel(rogue.downLoc.x, rogue.downLoc.y, true);
+            } else if (proposeOrConfirmLocation(rogue.downLoc, "I see no way down.")) {
+                travel(rogue.downLoc, true);
             }
             break;
         case ASCEND_KEY:
@@ -2509,8 +2505,8 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             if (D_WORMHOLING) {
                 recordKeystroke(ASCEND_KEY, false, false);
                 useStairs(-1);
-            } else if (proposeOrConfirmLocation(rogue.upLoc.x, rogue.upLoc.y, "I see no way up.")) {
-                travel(rogue.upLoc.x, rogue.upLoc.y, true);
+            } else if (proposeOrConfirmLocation(rogue.upLoc, "I see no way up.")) {
+                travel(rogue.upLoc, true);
             }
             break;
         case RETURN_KEY:
@@ -4396,9 +4392,9 @@ void printSeed() {
     char buf[COLS];
     char mode[14] = "";
 
-    if (rogue.easyMode) {
+    if (rogue.mode == GAME_MODE_EASY) {
         strcpy(mode,"easy mode; ");
-    } else if (rogue.wizard) {
+    } else if (WIZARD_MODE) {
         strcpy(mode,"wizard mode; ");
     }
     if (rogue.hideSeed) {
@@ -4481,7 +4477,7 @@ static float estimatedArmorValue() {
     return max(0, retVal);
 }
 
-static short creatureHealthChangePercent(creature *monst) {
+static short creatureHealthChangePercent(const creature *monst) {
     if (monst->previousHealthPoints <= 0) {
         return 0;
     }
@@ -4490,7 +4486,7 @@ static short creatureHealthChangePercent(creature *monst) {
 }
 
 // returns the y-coordinate after the last line printed
-short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight) {
+short printMonsterInfo(const creature *monst, short y, boolean dim, boolean highlight) {
     char buf[COLS * 2], buf2[COLS * 2], monstName[COLS], tempColorEscape[5], grayColorEscape[5];
     enum displayGlyph monstChar;
     color monstForeColor, monstBackColor, healthBarColor, tempColor;
@@ -4785,7 +4781,7 @@ void describeHallucinatedItem(char *buf) {
 }
 
 // Returns the y-coordinate after the last line printed.
-short printItemInfo(item *theItem, short y, boolean dim, boolean highlight) {
+short printItemInfo(const item *theItem, short y, boolean dim, boolean highlight) {
     char name[COLS * 3];
     enum displayGlyph itemChar;
     color itemForeColor, itemBackColor;
@@ -5036,7 +5032,7 @@ short printTextBox(char *textBuf, short x, short y, short width,
     }
 }
 
-void printMonsterDetails(creature *monst) {
+void printMonsterDetails(const creature *monst) {
     char textBuf[COLS * 100];
     monsterDetails(textBuf, monst);
     printTextBox(textBuf, monst->loc.x, 0, 0, &white, &black, NULL, 0);
@@ -5099,27 +5095,22 @@ unsigned long printCarriedItemDetails(item *theItem,
             buttons[b].hotkey[0] = RELABEL_KEY;
             b++;
         }
-
-        // Add invisible previous and next buttons, so up and down arrows can page through items.
-        // Previous
-        buttons[b].flags = B_ENABLED; // clear everything else
-        buttons[b].hotkey[0] = UP_KEY;
-        buttons[b].hotkey[1] = NUMPAD_8;
-        buttons[b].hotkey[2] = UP_ARROW;
-        b++;
-        // Next
-        buttons[b].flags = B_ENABLED; // clear everything else
-        buttons[b].hotkey[0] = DOWN_KEY;
-        buttons[b].hotkey[1] = NUMPAD_2;
-        buttons[b].hotkey[2] = DOWN_ARROW;
-        b++;
     }
+    // Add invisible previous and next buttons, so up and down arrows can page through items.
+    // Previous
+    buttons[b].flags = B_ENABLED; // clear everything else
+    buttons[b].hotkey[0] = UP_KEY;
+    buttons[b].hotkey[1] = NUMPAD_8;
+    buttons[b].hotkey[2] = UP_ARROW;
+    b++;
+    // Next
+    buttons[b].flags = B_ENABLED; // clear everything else
+    buttons[b].hotkey[0] = DOWN_KEY;
+    buttons[b].hotkey[1] = NUMPAD_2;
+    buttons[b].hotkey[2] = DOWN_ARROW;
+    b++;
+
     b = printTextBox(textBuf, x, y, width, &white, &interfaceBoxColor, buttons, b);
-
-    if (!includeButtons) {
-        waitForKeystrokeOrMouseClick();
-        return -1;
-    }
 
     if (b >= 0) {
         return buttons[b].hotkey[0];
@@ -5129,7 +5120,7 @@ unsigned long printCarriedItemDetails(item *theItem,
 }
 
 // Returns true if an action was taken.
-void printFloorItemDetails(item *theItem) {
+void printFloorItemDetails(const item *theItem) {
     char textBuf[COLS * 100];
     itemDetails(textBuf, theItem);
 

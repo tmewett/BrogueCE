@@ -482,7 +482,7 @@ short randValidDirectionFrom(creature *monst, short x, short y, boolean respectA
     return validDirections[rand_range(0, count - 1)];
 }
 
-void vomit(creature *monst) {
+void vomit(const creature *monst) {
     char buf[COLS], monstName[COLS];
     spawnDungeonFeature(monst->loc.x, monst->loc.y, &dungeonFeatureCatalog[DF_VOMIT], true, false);
 
@@ -501,7 +501,6 @@ static void moveEntrancedMonsters(enum directions dir) {
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         if (monst->status[STATUS_ENTRANCED]
-            && !monst->status[STATUS_STUCK]
             && !monst->status[STATUS_PARALYZED]
             && !(monst->bookkeepingFlags & MB_CAPTIVE)) {
 
@@ -555,7 +554,7 @@ boolean freeCaptivesEmbeddedAt(short x, short y) {
 /// @brief Ask the player for confirmation before attacking an acidic monster
 /// @param hitList the creature(s) getting attacked
 /// @return true to abort the attack
-static boolean abortAttackAgainstAcidicTarget(const creature *hitList[8]) {
+static boolean abortAttackAgainstAcidicTarget(creature *hitList[8]) {
     short i;
     char monstName[COLS], weaponName[COLS];
     char buf[COLS*3];
@@ -588,7 +587,7 @@ static boolean abortAttackAgainstAcidicTarget(const creature *hitList[8]) {
 /// @brief Ask the player for confirmation before attacking a discordant ally
 /// @param hitList the creature(s) getting attacked
 /// @return true to abort the attack
-static boolean abortAttackAgainstDiscordantAlly(const creature *hitList[8]) {
+static boolean abortAttackAgainstDiscordantAlly(creature *hitList[8]) {
 
     for (int i=0; i<8; i++) {
         if (hitList[i]
@@ -614,7 +613,7 @@ static boolean abortAttackAgainstDiscordantAlly(const creature *hitList[8]) {
 /// hallucinating (but not telepathic).
 /// @param hitList the creature(s) getting attacked
 /// @return true to abort the attack
-static boolean abortAttack(const creature *hitList[8]) {
+static boolean abortAttack(creature *hitList[8]) {
 
     // too bad so sad if you're confused or hallucinating (but not telepathic)
     if (player.status[STATUS_CONFUSED]
@@ -638,7 +637,7 @@ static boolean abortAttack(const creature *hitList[8]) {
 boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *aborted) {
     bolt theBolt;
     creature *defender;
-    const creature *hitList[8] = {0};
+    creature *hitList[8] = {0};
 
     const char boltChar[DIRECTION_COUNT] = "||~~\\//\\";
 
@@ -694,7 +693,7 @@ boolean handleWhipAttacks(creature *attacker, enum directions dir, boolean *abor
 // (in which case the player/monster should move instead).
 boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *aborted) {
     creature *defender;
-    const creature *hitList[8] = {0};
+    creature *hitList[8] = {0};
     short range = 2, i = 0, h = 0;
     boolean proceed = false, visualEffect = false;
 
@@ -798,7 +797,7 @@ boolean handleSpearAttacks(creature *attacker, enum directions dir, boolean *abo
     return false;
 }
 
-static void buildFlailHitList(const short x, const short y, const short newX, const short newY, const creature *hitList[16]) {
+static void buildFlailHitList(const short x, const short y, const short newX, const short newY, creature *hitList[16]) {
     short mx, my;
     short i = 0;
 
@@ -846,7 +845,7 @@ boolean playerMoves(short direction) {
     short newX, newY, newestX, newestY;
     boolean playerMoved = false, specialAttackAborted = false, anyAttackHit = false;
     creature *defender = NULL, *tempMonst = NULL;
-    const creature *hitList[16] = {NULL};
+    creature *hitList[16] = {NULL};
     char monstName[COLS];
     char buf[COLS*3];
     const int directionKeys[8] = {UP_KEY, DOWN_KEY, LEFT_KEY, RIGHT_KEY, UPLEFT_KEY, DOWNLEFT_KEY, UPRIGHT_KEY, DOWNRIGHT_KEY};
@@ -1487,7 +1486,7 @@ void calculateDistances(short **distanceMap, short destinationX, short destinati
 // Always rolls downhill on the distance map.
 // If monst is provided, do not return a direction pointing to
 // a cell that the monster avoids.
-short nextStep(short **distanceMap, short x, short y, creature *monst, boolean preferDiagonals) {
+short nextStep(short **distanceMap, pos target, const creature *monst, boolean preferDiagonals) {
     short newX, newY, bestScore;
     enum directions dir, bestDir;
     creature *blocker;
@@ -1502,8 +1501,8 @@ short nextStep(short **distanceMap, short x, short y, creature *monst, boolean p
          (preferDiagonals ? dir >= 0 : dir < DIRECTION_COUNT);
          (preferDiagonals ? dir-- : dir++)) {
 
-        newX = x + nbDirs[dir][0];
-        newY = y + nbDirs[dir][1];
+        newX = target.x + nbDirs[dir][0];
+        newY = target.y + nbDirs[dir][1];
 
         brogueAssert(coordinatesAreInMap(newX, newY));
         if (coordinatesAreInMap(newX, newY)) {
@@ -1520,13 +1519,13 @@ short nextStep(short **distanceMap, short x, short y, creature *monst, boolean p
                        && !monstersAreEnemies(monst, blocker)) {
                 blocked = true;
             }
-            if ((distanceMap[x][y] - distanceMap[newX][newY]) > bestScore
-                && !diagonalBlocked(x, y, newX, newY, monst == &player)
+            if ((distanceMap[target.x][target.y] - distanceMap[newX][newY]) > bestScore
+                && !diagonalBlocked(target.x, target.y, newX, newY, monst == &player)
                 && knownToPlayerAsPassableOrSecretDoor((pos){ newX, newY })
                 && !blocked) {
 
                 bestDir = dir;
-                bestScore = distanceMap[x][y] - distanceMap[newX][newY];
+                bestScore = distanceMap[target.x][target.y] - distanceMap[newX][newY];
             }
         }
     }
@@ -1646,30 +1645,28 @@ static void travelMap(short **distanceMap) {
     updateFlavorText();
 }
 
-void travel(short x, short y, boolean autoConfirm) {
-    short **distanceMap, i;
+void travel(pos target, boolean autoConfirm) {
     rogueEvent theEvent;
     unsigned short staircaseConfirmKey;
 
     confirmMessages();
 
     if (D_WORMHOLING) {
-        recordMouseClick(mapToWindowX(x), mapToWindowY(y), true, false);
+        recordMouseClick(mapToWindowX(target.x), mapToWindowY(target.y), true, false);
         pmapAt(player.loc)->flags &= ~HAS_PLAYER;
         refreshDungeonCell(player.loc);
-        player.loc.x = x;
-        player.loc.y = y;
-        pmap[x][y].flags |= HAS_PLAYER;
+        player.loc = target;
+        pmapAt(target)->flags |= HAS_PLAYER;
         updatePlayerUnderwaterness();
-        refreshDungeonCell((pos){ x, y });
+        refreshDungeonCell(target);
         updateVision(true);
         return;
     }
 
-    if (abs(player.loc.x - x) + abs(player.loc.y - y) == 1) {
+    if (abs(player.loc.x - target.x) + abs(player.loc.y - target.y) == 1) {
         // targeting a cardinal neighbor
-        for (i=0; i<4; i++) {
-            if (nbDirs[i][0] == (x - player.loc.x) && nbDirs[i][1] == (y - player.loc.y)) {
+        for (int i=0; i<4; i++) {
+            if (nbDirs[i][0] == (target.x - player.loc.x) && nbDirs[i][1] == (target.y - player.loc.y)) {
                 playerMoves(i);
                 break;
             }
@@ -1677,22 +1674,22 @@ void travel(short x, short y, boolean autoConfirm) {
         return;
     }
 
-    if (!(pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED))) {
+    if (!(pmapAt(target)->flags & (DISCOVERED | MAGIC_MAPPED))) {
         message("You have not explored that location.", 0);
         return;
     }
 
-    distanceMap = allocGrid();
+    short **distanceMap = allocGrid();
 
-    calculateDistances(distanceMap, x, y, 0, &player, false, false);
+    calculateDistances(distanceMap, target.x, target.y, 0, &player, false, false);
     if (distanceMap[player.loc.x][player.loc.y] < 30000) {
         if (autoConfirm) {
             travelMap(distanceMap);
             //refreshSideBar(-1, -1, false);
         } else {
-            if (rogue.upLoc.x == x && rogue.upLoc.y == y) {
+            if (posEq(rogue.upLoc, target)) {
                 staircaseConfirmKey = ASCEND_KEY;
-            } else if (rogue.downLoc.x == x && rogue.downLoc.y == y) {
+            } else if (posEq(rogue.downLoc, target)) {
                 staircaseConfirmKey = DESCEND_KEY;
             } else {
                 staircaseConfirmKey = 0;
@@ -1707,7 +1704,7 @@ void travel(short x, short y, boolean autoConfirm) {
             displayRoute(distanceMap, true); // clear route display
             confirmMessages();
 
-            if ((theEvent.eventType == MOUSE_UP && windowToMapX(theEvent.param1) == x && windowToMapY(theEvent.param2) == y)
+            if ((theEvent.eventType == MOUSE_UP && windowToMapX(theEvent.param1) == target.x && windowToMapY(theEvent.param2) == target.y)
                 || (theEvent.eventType == KEYSTROKE && (theEvent.param1 == 'Y' || theEvent.param1 == 'y'
                                                         || theEvent.param1 == RETURN_KEY
                                                         || (theEvent.param1 == staircaseConfirmKey
@@ -1779,7 +1776,7 @@ void getLocationFlags(const short x, const short y,
     }
 }
 
-void populateCreatureCostMap(short **costMap, creature *monst) {
+void populateCreatureCostMap(short **costMap, const creature *monst) {
     short i, j, unexploredCellCost;
     creature *currentTenant;
     item *theItem;
@@ -2010,7 +2007,7 @@ boolean explore(short frameDelay) {
         hilitePath(path, steps, false);
 
         // take a step
-        dir = nextStep(distanceMap, player.loc.x, player.loc.y, NULL, false);
+        dir = nextStep(distanceMap, player.loc, NULL, false);
 
         if (!headingToStairs && rogue.autoPlayingLevel && dir == NO_DIRECTION) {
             headingToStairs = true;
@@ -2071,7 +2068,7 @@ boolean startFighting(enum directions dir, boolean tillDeath) {
         return false;
     }
     int expectedDamage = monst->info.damage.upperBound * monsterDamageAdjustmentAmount(monst) / FP_FACTOR;
-    if (rogue.easyMode) {
+    if (rogue.mode == GAME_MODE_EASY) {
         expectedDamage /= 5;
     }
     rogue.blockCombatText = true;
@@ -2163,16 +2160,15 @@ boolean search(short searchStrength) {
     return foundSomething;
 }
 
-boolean proposeOrConfirmLocation(short x, short y, char *failureMessage) {
+boolean proposeOrConfirmLocation(pos target, char *failureMessage) {
     boolean retval = false;
-    if (player.loc.x == x && player.loc.y == y) {
+    if (posEq(player.loc, target)) {
         message("you are already there.", 0);
-    } else if (pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED)) {
-        if (rogue.cursorLoc.x == x && rogue.cursorLoc.y == y) {
+    } else if (pmapAt(target)->flags & (DISCOVERED | MAGIC_MAPPED)) {
+        if (posEq(rogue.cursorLoc, target)) {
             retval = true;
         } else {
-            rogue.cursorLoc.x = x;
-            rogue.cursorLoc.y = y;
+            rogue.cursorLoc = target;
         }
     } else {
         message(failureMessage, 0);
