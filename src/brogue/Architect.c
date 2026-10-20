@@ -1897,7 +1897,7 @@ static void cleanUpLakeBoundaries() {
                         x = i;
                         y = j + 1;
                     }
-                    if (x) {
+                    if (x && !(pmap[i][j].flags & HAS_MONSTER)) {
                         madeChange = true;
                         for (layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
                             pmap[i][j].layers[layer] = pmap[x][y].layers[layer];
