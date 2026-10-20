@@ -3629,6 +3629,7 @@ boolean canPass(const creature *mover, const creature *blocker) {
 
     if (blocker->status[STATUS_CONFUSED]
         || blocker->status[STATUS_STUCK]
+        || mover->status[STATUS_STUCK]
         || blocker->status[STATUS_PARALYZED]
         || blocker->status[STATUS_ENTRANCED]
         || mover->status[STATUS_ENTRANCED]) {
