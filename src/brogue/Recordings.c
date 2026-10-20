@@ -434,7 +434,7 @@ static void loadNextAnnotation(void) {
 
 void displayAnnotation(void) {
     if (rogue.playbackMode
-        && rogue.playerTurnNumber == rogue.nextAnnotationTurn) {
+        && rogue.playerTurnNumber >= rogue.nextAnnotationTurn) {
 
         if (!rogue.playbackFastForward) {
             refreshSideBar(-1, -1, false);
