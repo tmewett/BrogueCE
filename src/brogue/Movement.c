@@ -501,7 +501,6 @@ static void moveEntrancedMonsters(enum directions dir) {
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         if (monst->status[STATUS_ENTRANCED]
-            && !monst->status[STATUS_STUCK]
             && !monst->status[STATUS_PARALYZED]
             && !(monst->bookkeepingFlags & MB_CAPTIVE)) {
 
