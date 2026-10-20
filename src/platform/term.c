@@ -21,11 +21,11 @@ static struct { int curses, color; } videomode = { 0, 0 };
 
 static struct { int width, height; } minsize = { 80, 24 };
 
-static void init_coersion();
+static void init_coersion(void);
 
 
 // 256 color mode stuff
-static void initialize_prs();
+static void initialize_prs(void);
 
 typedef struct {
     int r, g, b, idx;
@@ -55,7 +55,7 @@ int is_xterm;
 
 //
 
-static void preparecolor ( ) {
+static void preparecolor (void) {
     // sixteen color mode colors (we use these in 256-color mode, too)
     static int pairParts[8] = {
         COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW,
@@ -125,7 +125,7 @@ static void term_show_scrollbar(int show) {
     }
 }
 
-static int curses_init( ) {
+static int curses_init(void) {
     if (videomode.curses) return 0;
 
     // isterm?
@@ -636,9 +636,9 @@ static void term_refresh(void) {
     }
 }
 
-static void ensure_size( );
+static void ensure_size(void);
 
-static int term_getkey( ) {
+static int term_getkey(void) {
     Term.mouse.justPressed = 0;
     Term.mouse.justReleased = 0;
     Term.mouse.justMoved = 0;
@@ -685,7 +685,7 @@ static int term_has_key(void) {
     }
 }
 
-static void ensure_size( ) {
+static void ensure_size(void) {
     int w = minsize.width, h = minsize.height;
 
     getmaxyx(stdscr, Term.height, Term.width);
@@ -878,7 +878,7 @@ struct {
     {NULL, 0},
 };
 
-int term_keycodeByName(const char *name) {
+static int term_keycodeByName(const char *name) {
     int i = 0;
     while (curses_keys[i].name != NULL) {
         if (strcmp(name, curses_keys[i].name) == 0) {
