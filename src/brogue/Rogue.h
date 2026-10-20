@@ -2105,7 +2105,7 @@ typedef struct monsterBehavior {
 enum monsterAbilityFlags {
     MA_HIT_HALLUCINATE              = Fl(0),    // monster can hit to cause hallucinations
     MA_HIT_STEAL_FLEE               = Fl(1),    // monster can steal an item and then run away
-    MA_HIT_BURN                     = Fl(2),    // monster can hit to set you on fire
+    MA_HIT_BURN                     = Fl(2),    // monster can hit to set its target on fire
     MA_ENTER_SUMMONS                = Fl(3),    // monster will "become" its summoned leader, reappearing when that leader is defeated (phylactery, phoenix egg, vampire)
     MA_HIT_DEGRADE_ARMOR            = Fl(4),    // monster damages armor
     MA_CAST_SUMMON                  = Fl(5),    // requires that there be one or more summon hordes with this monster type as the leader
