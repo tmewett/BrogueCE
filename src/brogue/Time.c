@@ -2335,8 +2335,11 @@ void playerTurnEnded() {
                 killCreature(&player, false);
                 gameOver("Burned to death", true);
             }
-            if (!--player.status[STATUS_BURNING]) {
-                extinguishFireOnCreature(&player);
+            if (player.status[STATUS_BURNING] > 0) {
+                player.status[STATUS_BURNING]--;
+                if (player.status[STATUS_BURNING] == 0) {
+                    extinguishFireOnCreature(&player);
+                }
             }
         }
 
