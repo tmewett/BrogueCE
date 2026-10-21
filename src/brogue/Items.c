@@ -3888,10 +3888,22 @@ static boolean polymorph(creature *monst) {
     monst->wasNegated = false;
     initializeStatus(monst);
 
-    if (monst->bookkeepingFlags & MB_CAPTIVE) {
+    if (monst->bookkeepingFlags & (MB_LEADER | MB_CAPTIVE)) {
         demoteMonsterFromLeadership(monst);
-        monst->creatureState = MONSTER_TRACKING_SCENT;
-        monst->bookkeepingFlags &= ~MB_CAPTIVE;
+        if (monst->bookkeepingFlags & MB_CAPTIVE) {
+            monst->bookkeepingFlags &= ~MB_CAPTIVE;
+            monst->creatureState = MONSTER_TRACKING_SCENT;
+        }
+    }
+    // A leader can also be a follower (a pack conjurer leading its summoned
+    // blades), so detach it from its own leader as well.
+    if (monst->bookkeepingFlags & MB_FOLLOWER) {
+        creature *formerLeader = monst->leader;
+        monst->bookkeepingFlags &= ~MB_FOLLOWER;
+        monst->leader = NULL;
+        if (formerLeader && formerLeader != monst) {
+            checkForContinuedLeadership(formerLeader);
+        }
     }
     monst->bookkeepingFlags &= ~(MB_SEIZING | MB_SEIZED);
 
