@@ -1,0 +1,1 @@
+Fixed an exploit which allowed players to clone allies using a weapon of plenty against discordant allies.
