@@ -3793,6 +3793,13 @@ boolean negate(creature *monst) {
             if ((monst->info.flags & MONST_FIERY) && monst->status[STATUS_BURNING]) {
                 extinguishFireOnCreature(monst);
             }
+            // The flamedancer corona is its own dungeon feature. Remove that generator
+            // with the fiery trait, whether or not the creature is burning right now.
+            if ((monst->info.flags & MONST_FIERY)
+                && monst->info.DFType == DF_FLAMEDANCER_CORONA) {
+                monst->info.DFChance = 0;
+                monst->info.DFType = 0;
+            }
             monst->info.flags &= ~NEGATABLE_TRAITS;
             negated = true;
             monst->wasNegated = true;
