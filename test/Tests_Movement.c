@@ -82,6 +82,8 @@ static boolean player_moved_right(void) {
 static void floor_item_setup(void) {
     clearArena();
     targetPos = posOffset(player.loc, 1, 0);
+    removePackFood();
+    removeFloorFood();
     placeItemOnFloor(FOOD, RATION, targetPos);
 }
 
@@ -388,13 +390,9 @@ static boolean player_is_webbed(void) {
 
 static void standing_in_fire_setup(void) {
     clearArena();
-    setTerrain(player.loc, PLAIN_FIRE);
-    setPlayerPos(player.loc);
-}
-
-static boolean standing_in_fire_step(void) {
-    restOneTurn();
-    return false;
+    // setTerrain(player.loc, PLAIN_FIRE);
+    spawnFeature(getPlayerPos(), DF_PLAIN_FIRE);
+    // setPlayerPos(player.loc);
 }
 
 static boolean player_is_burning(void) {
@@ -432,7 +430,7 @@ static int healthBefore;
 
 static void starvation_setup(void) {
     clearArena();
-    removeAllFood();
+    removePackFood();
     setPlayerNutrition(0);
     setPlayerHealth(playerMaxHealth());
 }
@@ -539,8 +537,38 @@ static boolean lunged_and_moved(void) {
 }
 
 // ============================================================
+// BR21546 — a thorough search also marks nearby squares as known to be trap-free
+// ============================================================
+
+static pos searchedPos;
+static int searchCount;
+
+static void thorough_search_setup(void) {
+    clearArena();
+    searchedPos = posOffset(player.loc, 3, 0);
+    setTerrain(searchedPos, FLOOR);
+    revealCell(searchedPos); // the square must be visible to be searched
+}
+
+static boolean thorough_search_step(void) {
+    if (searchCount < 5) {
+        searchOneTurn();
+        searchCount++;
+        return true; // keep searching until the thorough (fifth) search
+    }
+    return false; // the thorough search has been performed
+}
+
+static boolean nearby_square_marked_trap_free(void) {
+    TEST_ASSERT(cellIsKnownTrapFree(searchedPos),
+                "a thorough search should mark a nearby searched square as known to be trap-free");
+    TEST_ASSERT(messageWasShown("you finish your detailed search of the area."),
+                "the fifth search should be a thorough search");
+    return !testFailed;
+}
 
 const testCase tests_movement[] = {
+    { "BR21546_thorough_search_marks_nearby_square_trap_free", thorough_search_setup, thorough_search_step, nearby_square_marked_trap_free },
     { "BR31821_move_blocked_by_obstruction",   wall_blocks_setup,      wall_blocks_step,         player_did_not_move },
     { "BR29427_diagonal_blocked_by_corner",    corner_blocks_setup,    corner_blocks_step,       player_did_not_move },
     { "BR10367_cardinal_not_corner_blocked",   cardinal_corner_setup,  cardinal_corner_step,     player_moved_right },
@@ -558,7 +586,7 @@ const testCase tests_movement[] = {
     { "BR24837_lava_kills",                    lava_kills_setup,       rest_a_few_turns_step,    player_was_killed },
     { "BR51947_deep_water_submerges",          deep_water_setup,       deep_water_step,          player_is_submerged },
     { "BR91575_web_traps_creature",            web_setup,              web_step,                 player_is_webbed },
-    { "BR79486_standing_in_fire_ignites",      standing_in_fire_setup, standing_in_fire_step,    player_is_burning },
+    { "BR79486_standing_in_fire_ignites",      standing_in_fire_setup, wait_until_hurt,          player_is_burning },
     { "BR34974_nutrition_drops_each_turn",     nutrition_setup,        nutrition_step,           nutrition_dropped },
     { "BR95832_starvation_drains_health",      starvation_setup,       starvation_step,          starved },
     { "BR35928_whip_strikes_distant_enemy",    whip_setup,             whip_step,                whip_hit_distant_enemy },

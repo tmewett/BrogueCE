@@ -37,7 +37,7 @@ set -euo pipefail
 #
 # A local LLM can be run using llama.cpp, like this (MacOS, settings for an MacBook Pro M4 Max):
 #    brew install llama.cpp
-#    llama serve -hf unsloth/Qwen3.6-35B-A3B-GGUF:Q6_K --metrics --flash-attn on -ngl 9999 --ctx-size 0 --jinja -ub 4096 -b 4096 -t 10 --threads-batch 10 --chat-template-kwargs '{"preserve_thinking": true}' --port 8012
+#    llama serve -hf unsloth/Qwen3.6-35B-A3B-GGUF:Q6_K --metrics --flash-attn on -ngl 9999 --ctx-size 0 --jinja -ub 4096 -b 4096 -t 10 --threads-batch 10 --chat-template-kwargs '{"preserve_thinking": true}' --port 8012 --alias qwen-local
 #
 # OpenCode supports local LLMs via a config file, like this:
 # .config/opencode/opencode.json
@@ -270,7 +270,7 @@ function code_coverage() {
 
     # Run all tests, collect test coverage data
     $REPO_ROOT/test/run_tests.sh
-    xcrun llvm-profdata merge -sparse $REPO_ROOT/code-*.profraw -o coverage.profdata
+    xcrun llvm-profdata merge -sparse $REPO_ROOT/prof/code-*.profraw -o coverage.profdata
 
     # Display low-coverage regions/lines
     xcrun llvm-cov show ../../bin/brogue -instr-profile=coverage.profdata -region-coverage-lt=1 -ignore-filename-regex='test|\.h' > low_coverage_regions.txt
@@ -323,10 +323,10 @@ function delete_epmemeral_files() {
     rm -f $REPO_ROOT/test/RulesMissingTests.txt
     rm -f $REPO_ROOT/test/TestsMissingRules.txt
 
-    rm -f $REPO_ROOT/code-*.profraw
+    rm -f $REPO_ROOT/prof/code-*.profraw
     rm -f coverage.profdata
-    rm low_coverage_regions.txt
-    rm low_coverage_citations.txt
+    rm -f low_coverage_regions.txt
+    rm -f low_coverage_citations.txt
 }
 
 
@@ -335,18 +335,18 @@ delete_epmemeral_files
 
 # --------------------------------------------
 # Gardening the test cases...
-for i in {1..10}; do
+for i in {1..100}; do
     # Pick random rule IDs and validate they meet rule requirements
-    validate_random_rules
+    # validate_random_rules
 
     # Pick random rule IDs and validate they have tests
-    validate_random_rules_have_tests
+    # validate_random_rules_have_tests
 
     # Pick random rule IDs and validate the tests match the rules and that the tests pass
-    validate_random_tests
+    # validate_random_tests
 
     # Pick random source code citation and validate its behavior is described by a rule
-    find_missing_rules
+    # find_missing_rules
 
     # Pick a rule which has no test and implement it
     write_missing_tests
@@ -358,7 +358,7 @@ for i in {1..10}; do
     fix_broken_tests
 
     # Locate uncovered code and write a rule that attempts to capture it
-    code_coverage
+    # code_coverage
 
     # TODO: RulesNeedImprovement, TestsNeedImprovement
 

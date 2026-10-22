@@ -663,8 +663,52 @@ static boolean raised_ally_avoids_harmful_terrain_and_occupants(void) {
 }
 
 // ============================================================
+// BR44825 — an attack is futile against a target that is invulnerable (and
+// likewise embedded in walls, weapon-immune to a non-poisonous attacker, or
+// levitating while the attacker is water-bound); a monster will not engage
+// such a target
+// ============================================================
+
+static creature *futilitySubject;
+static pos futilityTarget;
+
+static void futile_invulnerable_setup(void) {
+    clearMonsters();
+    standPlayerOn(FLOOR);
+    futilitySubject = monsterOn(MK_RAT, 1, 0, FLOOR);
+    makeMonsterAlly(futilitySubject);
+    futilityTarget = posOffset(monsterPosition(futilitySubject), 1, 0);
+    setTerrain(futilityTarget, FLOOR);
+    creature *warden = spawnMonster(MK_WARDEN_OF_YENDOR, futilityTarget);
+    makeMonsterHostile(warden);
+}
+
+static void futile_normal_setup(void) {
+    clearMonsters();
+    standPlayerOn(FLOOR);
+    futilitySubject = monsterOn(MK_RAT, 1, 0, FLOOR);
+    makeMonsterAlly(futilitySubject);
+    futilityTarget = posOffset(monsterPosition(futilitySubject), 1, 0);
+    setTerrain(futilityTarget, FLOOR);
+    creature *rat = spawnMonster(MK_RAT, futilityTarget);
+    makeMonsterHostile(rat);
+}
+
+static boolean monster_avoids_invulnerable_enemy(void) {
+    TEST_ASSERT(monsterAvoidsCell(futilitySubject, futilityTarget),
+                "a monster should avoid attacking an invulnerable enemy, since the attack is futile");
+    return !testFailed;
+}
+
+static boolean monster_does_not_avoid_normal_enemy(void) {
+    TEST_ASSERT(!monsterAvoidsCell(futilitySubject, futilityTarget),
+                "a monster should not avoid attacking a normal, damageable enemy");
+    return !testFailed;
+}
 
 const testCase tests_monsters[] = {
+    { "BR44825_monster_avoids_invulnerable_enemy", futile_invulnerable_setup, NULL, monster_avoids_invulnerable_enemy },
+    { "BR44825_monster_attacks_normal_enemy",      futile_normal_setup,       NULL, monster_does_not_avoid_normal_enemy },
     { "BR92702_dormant_monster_hidden",               dormant_monster_setup,           NULL, dormant_monster_is_hidden },
     { "BR92702_invisible_monster_hidden",             invisible_monster_setup,         NULL, invisible_monster_is_hidden },
     { "BR92702_submerged_monster_hidden",             submerged_monster_setup,         NULL, submerged_monster_is_hidden },

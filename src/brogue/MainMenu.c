@@ -1147,6 +1147,11 @@ void mainBrogueJunction() {
                     }
                     initializeRogue(rogue.nextGameSeed);
                     startLevel(rogue.depthLevel, 1);
+
+                    // Force-reseed for randomization
+                    struct timespec ts;
+                    clock_gettime(CLOCK_REALTIME, &ts);
+                    seedRandomGenerator(ts.tv_nsec / 1000);
                     runTestByName(testName);
                 }
                 break;

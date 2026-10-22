@@ -16,11 +16,19 @@
 
 static enum statusEffects decrementingStatus;
 static int decrementStart;
-static creature *decrementingMonster;
+static creature *monst;
+static int healthBefore;
+static pos startPos;
 
-static void status_decrement_setup(void) {
+static void status_decrement_setup(enum statusEffects status, int turns) {
+    decrementingStatus = status;
+    decrementStart = turns;
     applyStatusToPlayer(decrementingStatus, decrementStart);
-    restTurns(1);
+}
+
+static boolean rest_one_turn_step(void) {
+    restOneTurn();
+    return false;   // done
 }
 
 static boolean status_decremented_by_one(void) {
@@ -30,72 +38,53 @@ static boolean status_decremented_by_one(void) {
 }
 
 static void telepathy_decrement_setup(void) {
-    decrementingStatus = STATUS_TELEPATHIC;
-    decrementStart = 5;
-    status_decrement_setup();
+    status_decrement_setup(STATUS_TELEPATHIC,5);
 }
 
 static void hallucination_decrement_setup(void) {
-    decrementingStatus = STATUS_HALLUCINATING;
-    decrementStart = 5;
-    status_decrement_setup();
+    status_decrement_setup(STATUS_HALLUCINATING,5);
 }
 
 static void levitation_decrement_setup(void) {
-    decrementingStatus = STATUS_LEVITATING;
-    decrementStart = 5;
-    status_decrement_setup();
+    status_decrement_setup(STATUS_LEVITATING,5);
 }
 
 static void confusion_decrement_setup(void) {
-    decrementingStatus = STATUS_CONFUSED;
-    decrementStart = 5;
-    status_decrement_setup();
+    status_decrement_setup(STATUS_CONFUSED,5);
 }
 
 static void nausea_decrement_setup(void) {
-    decrementingStatus = STATUS_NAUSEOUS;
-    decrementStart = 5;
-    status_decrement_setup();
+    status_decrement_setup(STATUS_NAUSEOUS,5);
 }
 
 static void paralysis_decrement_setup(void) {
     // A paralyzed player fast-forwards through several turns at once, so the
     // per-update decrement is observed on a monster instead.
     clearMonsters();
-    decrementingMonster = spawnMonster(MK_TROLL, posOffset(player.loc, 4, 0));
-    applyStatusToMonster(decrementingMonster, STATUS_PARALYZED, 50);
-    restTurns(1);
+    monst = spawnMonster(MK_TROLL, posOffset(player.loc, 4, 0));
+    applyStatusToMonster(monst, STATUS_PARALYZED, 50);
 }
 
 static boolean monster_paralysis_decremented(void) {
-    TEST_ASSERT_EQ(monsterStatusTurns(decrementingMonster, STATUS_PARALYZED), 49,
+    TEST_ASSERT_EQ(monsterStatusTurns(monst, STATUS_PARALYZED), 49,
                    "a monster's paralysis should decrease by 1 per update");
     return !testFailed;
 }
 
 static void darkness_decrement_setup(void) {
-    decrementingStatus = STATUS_DARKNESS;
-    decrementStart = 5;
-    status_decrement_setup();
+    status_decrement_setup(STATUS_DARKNESS,5);
 }
 
 static void invisibility_decrement_setup(void) {
-    decrementingStatus = STATUS_INVISIBLE;
-    decrementStart = 5;
-    status_decrement_setup();
+    status_decrement_setup(STATUS_INVISIBLE,5);
 }
 
 static void aggravation_decrement_setup(void) {
-    decrementingStatus = STATUS_AGGRAVATING;
-    decrementStart = 5;
-    status_decrement_setup();
+    status_decrement_setup(STATUS_AGGRAVATING,5);
 }
 
 static void fire_immunity_decrement_setup(void) {
-    decrementingStatus = STATUS_IMMUNE_TO_FIRE;
-    decrementStart = 5;
-    status_decrement_setup();
+    status_decrement_setup(STATUS_IMMUNE_TO_FIRE,5);
 }
 
 // ============================================================
@@ -104,7 +93,6 @@ static void fire_immunity_decrement_setup(void) {
 
 static void telepathy_fades_setup(void) {
     applyStatusToPlayer(STATUS_TELEPATHIC, 1);
-    restTurns(1);
 }
 
 static boolean telepathy_faded_message(void) {
@@ -120,7 +108,6 @@ static boolean telepathy_faded_message(void) {
 
 static void darkness_fades_setup(void) {
     applyStatusToPlayer(STATUS_DARKNESS, 1);
-    restTurns(1);
 }
 
 static boolean darkness_faded_message(void) {
@@ -232,7 +219,6 @@ static boolean weakness_stacked(void) {
 
 static void weakness_expires_setup(void) {
     weakenPlayer(1);
-    restTurns(1);
 }
 
 static boolean weakness_cleared(void) {
@@ -247,21 +233,20 @@ static boolean weakness_cleared(void) {
 // BR50918 — slowing sets slow, clears haste, and doubles the time
 // ============================================================
 
-static creature *slowedMonster;
 static int monsterBaseSpeed;
 
 static void slow_sets_slow_setup(void) {
     clearMonsters();
-    slowedMonster = spawnMonster(MK_TROLL, posOffset(player.loc, 2, 0));
-    monsterBaseSpeed = monsterMovementSpeed(slowedMonster);
-    hasteMonster(slowedMonster, 10);
-    slowMonster(slowedMonster, 10);
+    monst = spawnMonster(MK_TROLL, posOffset(player.loc, 2, 0));
+    monsterBaseSpeed = monsterMovementSpeed(monst);
+    hasteMonster(monst, 10);
+    slowMonster(monst, 10);
 }
 
 static boolean slow_applied(void) {
-    TEST_ASSERT_EQ(monsterStatusTurns(slowedMonster, STATUS_SLOWED), 10, "slow should be set");
-    TEST_ASSERT_EQ(monsterStatusTurns(slowedMonster, STATUS_HASTED), 0, "slow should clear haste");
-    TEST_ASSERT_EQ(monsterMovementSpeed(slowedMonster), monsterBaseSpeed * 2,
+    TEST_ASSERT_EQ(monsterStatusTurns(monst, STATUS_SLOWED), 10, "slow should be set");
+    TEST_ASSERT_EQ(monsterStatusTurns(monst, STATUS_HASTED), 0, "slow should clear haste");
+    TEST_ASSERT_EQ(monsterMovementSpeed(monst), monsterBaseSpeed * 2,
                    "a slowed monster should take twice as long to act");
     return !testFailed;
 }
@@ -272,16 +257,16 @@ static boolean slow_applied(void) {
 
 static void haste_sets_haste_setup(void) {
     clearMonsters();
-    slowedMonster = spawnMonster(MK_TROLL, posOffset(player.loc, 2, 0));
-    monsterBaseSpeed = monsterMovementSpeed(slowedMonster);
-    slowMonster(slowedMonster, 10);
-    hasteMonster(slowedMonster, 10);
+    monst = spawnMonster(MK_TROLL, posOffset(player.loc, 2, 0));
+    monsterBaseSpeed = monsterMovementSpeed(monst);
+    slowMonster(monst, 10);
+    hasteMonster(monst, 10);
 }
 
 static boolean haste_applied(void) {
-    TEST_ASSERT_EQ(monsterStatusTurns(slowedMonster, STATUS_HASTED), 10, "haste should be set");
-    TEST_ASSERT_EQ(monsterStatusTurns(slowedMonster, STATUS_SLOWED), 0, "haste should clear slow");
-    TEST_ASSERT_EQ(monsterMovementSpeed(slowedMonster), monsterBaseSpeed / 2,
+    TEST_ASSERT_EQ(monsterStatusTurns(monst, STATUS_HASTED), 10, "haste should be set");
+    TEST_ASSERT_EQ(monsterStatusTurns(monst, STATUS_SLOWED), 0, "haste should clear slow");
+    TEST_ASSERT_EQ(monsterMovementSpeed(monst), monsterBaseSpeed / 2,
                    "a hasted monster should take half as long to act");
     return !testFailed;
 }
@@ -292,15 +277,14 @@ static boolean haste_applied(void) {
 
 static void slow_expires_setup(void) {
     clearMonsters();
-    slowedMonster = spawnMonster(MK_TROLL, posOffset(player.loc, 2, 0));
-    monsterBaseSpeed = monsterMovementSpeed(slowedMonster);
-    slowMonster(slowedMonster, 1);
-    restTurns(1);
+    monst = spawnMonster(MK_TROLL, posOffset(player.loc, 2, 0));
+    monsterBaseSpeed = monsterMovementSpeed(monst);
+    slowMonster(monst, 1);
 }
 
 static boolean speed_restored(void) {
-    TEST_ASSERT_EQ(monsterStatusTurns(slowedMonster, STATUS_SLOWED), 0, "slow should have expired");
-    TEST_ASSERT_EQ(monsterMovementSpeed(slowedMonster), monsterBaseSpeed,
+    TEST_ASSERT_EQ(monsterStatusTurns(monst, STATUS_SLOWED), 0, "slow should have expired");
+    TEST_ASSERT_EQ(monsterMovementSpeed(monst), monsterBaseSpeed,
                    "expiring slow should restore the monster's normal speed");
     return !testFailed;
 }
@@ -323,19 +307,16 @@ static boolean poison_added(void) {
 // BR75638 — poison damages by its concentration and ticks down
 // ============================================================
 
-static int healthBeforePoison;
-
 static void poison_damages_setup(void) {
     setPlayerHealth(playerMaxHealth());
-    healthBeforePoison = playerHealth();
+    healthBefore = playerHealth();
     poisonPlayer(3, 1);
-    restTurns(1);
 }
 
 static boolean poison_damaged_and_ticked(void) {
     TEST_ASSERT_EQ(playerStatusTurns(STATUS_POISONED), 2,
                    "the poison counter should decrease by 1");
-    TEST_ASSERT_EQ(playerHealth(), healthBeforePoison - 1,
+    TEST_ASSERT_EQ(playerHealth(), healthBefore - 1,
                    "the player should take damage equal to the poison concentration");
     return !testFailed;
 }
@@ -410,7 +391,6 @@ static boolean nutrition_is_full(void) {
 
 static void nutrition_decreases_setup(void) {
     setPlayerNutrition(1000);
-    restTurns(1);
 }
 
 static boolean nutrition_decreased(void) {
@@ -425,7 +405,6 @@ static boolean nutrition_decreased(void) {
 static void paralyzed_no_nutrition_setup(void) {
     applyStatusToPlayer(STATUS_PARALYZED, 50);
     setPlayerNutrition(1000);
-    restTurns(1);
 }
 
 static boolean nutrition_unchanged(void) {
@@ -439,14 +418,13 @@ static boolean nutrition_unchanged(void) {
 // ============================================================
 
 static void starvation_setup(void) {
-    removeAllFood();
+    removePackFood();
     setPlayerNutrition(0);
-    healthBeforePoison = playerHealth();
-    restTurns(1);
+    healthBefore = playerHealth();
 }
 
 static boolean starved_one_point(void) {
-    TEST_ASSERT_EQ(playerHealth(), healthBeforePoison - 1,
+    TEST_ASSERT_EQ(playerHealth(), healthBefore - 1,
                    "starvation should cost 1 health per turn");
     return !testFailed;
 }
@@ -456,9 +434,8 @@ static boolean starved_one_point(void) {
 // ============================================================
 
 static void hunger_warning_setup(void) {
-    removeAllFood();
+    removePackFood();
     setPlayerNutrition(HUNGER_THRESHOLD + 1);
-    restTurns(1);
 }
 
 static boolean hunger_warning_shown(void) {
@@ -487,21 +464,16 @@ static boolean not_underwater(void) {
 // BR62028 — a paralyzed monster takes no action
 // ============================================================
 
-static creature *idleMonster;
-static pos idleStart;
-
 static void paralyzed_monster_idle_setup(void) {
-    clearMonsters();
-    idleMonster = spawnMonster(MK_TROLL, posOffset(player.loc, 2, 0));
-    makeMonsterHostile(idleMonster);
-    setTerrainAroundLoc(player.loc, FLOOR);
-    applyStatusToMonster(idleMonster, STATUS_PARALYZED, 50);
-    idleStart = monsterPosition(idleMonster);
-    restTurns(1);
+    clearArena();
+    monst = spawnMonster(MK_TROLL, posOffset(player.loc, 2, 0));
+    makeMonsterHostile(monst);
+    applyStatusToMonster(monst, STATUS_PARALYZED, 50);
+    startPos = monsterPosition(monst);
 }
 
 static boolean paralyzed_monster_did_nothing(void) {
-    TEST_ASSERT_POS_EQ(monsterPosition(idleMonster), idleStart,
+    TEST_ASSERT_POS_EQ(monsterPosition(monst), startPos,
                        "a paralyzed monster should not move");
     return !testFailed;
 }
@@ -512,16 +484,15 @@ static boolean paralyzed_monster_did_nothing(void) {
 
 static void entranced_monster_idle_setup(void) {
     clearMonsters();
-    idleMonster = spawnMonster(MK_TROLL, posOffset(player.loc, 2, 0));
-    makeMonsterHostile(idleMonster);
+    monst = spawnMonster(MK_TROLL, posOffset(player.loc, 2, 0));
+    makeMonsterHostile(monst);
     setTerrainAroundLoc(player.loc, FLOOR);
-    applyStatusToMonster(idleMonster, STATUS_ENTRANCED, 50);
-    idleStart = monsterPosition(idleMonster);
-    restTurns(1);
+    applyStatusToMonster(monst, STATUS_ENTRANCED, 50);
+    startPos = monsterPosition(monst);
 }
 
 static boolean entranced_monster_did_nothing(void) {
-    TEST_ASSERT_POS_EQ(monsterPosition(idleMonster), idleStart,
+    TEST_ASSERT_POS_EQ(monsterPosition(monst), startPos,
                        "an entranced monster should not move");
     return !testFailed;
 }
@@ -530,19 +501,19 @@ static boolean entranced_monster_did_nothing(void) {
 // BR73717 — attacking a paralyzed creature clears its paralysis
 // ============================================================
 
-static creature *paralyzedVictim;
-
 static void attack_paralyzed_setup(void) {
-    clearMonsters();
-    paralyzedVictim = spawnMonster(MK_TROLL, posOffset(player.loc, 1, 0));
-    makeMonsterHostile(paralyzedVictim);
-    setMonsterHealth(paralyzedVictim, paralyzedVictim->info.maxHP);
-    applyStatusToMonster(paralyzedVictim, STATUS_PARALYZED, 50);
-    playerAttacksMonster(paralyzedVictim);
+    clearArena();
+    monst = placeHostileMonster(MK_KRAKEN, posOffset(player.loc, 1, 0));
+    applyStatusToMonster(monst, STATUS_PARALYZED, 50);
+}
+
+static boolean attack_paralyzed_step(void) {
+    moveRight();
+    return false; // end test
 }
 
 static boolean paralysis_cleared(void) {
-    TEST_ASSERT(!monsterHasStatus(paralyzedVictim, STATUS_PARALYZED),
+    TEST_ASSERT(!monsterHasStatus(monst, STATUS_PARALYZED),
                 "hitting a paralyzed creature should clear its paralysis");
     return !testFailed;
 }
@@ -553,7 +524,6 @@ static boolean paralysis_cleared(void) {
 
 static void shield_decays_setup(void) {
     applyStatusToPlayer(STATUS_SHIELDED, 200);
-    restTurns(1);
 }
 
 static boolean shield_decayed(void) {
@@ -565,19 +535,19 @@ static boolean shield_decayed(void) {
 // ============================================================
 
 const testCase tests_status_effects[] = {
-    { "BR97529_telepathy_counter_decrements",   telepathy_decrement_setup,      NULL, status_decremented_by_one },
-    { "BR97529_hallucination_counter_decrements", hallucination_decrement_setup, NULL, status_decremented_by_one },
-    { "BR35089_levitation_counter_decrements",  levitation_decrement_setup,     NULL, status_decremented_by_one },
-    { "BR84218_confusion_counter_decrements",   confusion_decrement_setup,      NULL, status_decremented_by_one },
-    { "BR48502_nausea_counter_decrements",      nausea_decrement_setup,         NULL, status_decremented_by_one },
-    { "BR74294_paralysis_counter_decrements",   paralysis_decrement_setup,      NULL, monster_paralysis_decremented },
-    { "BR41654_darkness_counter_decrements",    darkness_decrement_setup,       NULL, status_decremented_by_one },
-    { "BR48230_invisibility_counter_decrements",invisibility_decrement_setup,   NULL, status_decremented_by_one },
-    { "BR18867_aggravation_counter_decrements", aggravation_decrement_setup,    NULL, status_decremented_by_one },
-    { "BR75439_fire_immunity_counter_decrements",fire_immunity_decrement_setup, NULL, status_decremented_by_one },
+    { "BR97529_telepathy_counter_decrements",   telepathy_decrement_setup,      rest_one_turn_step, status_decremented_by_one },
+    { "BR97529_hallucination_counter_decrements", hallucination_decrement_setup, rest_one_turn_step, status_decremented_by_one },
+    { "BR35089_levitation_counter_decrements",  levitation_decrement_setup,     rest_one_turn_step, status_decremented_by_one },
+    { "BR84218_confusion_counter_decrements",   confusion_decrement_setup,      rest_one_turn_step, status_decremented_by_one },
+    { "BR48502_nausea_counter_decrements",      nausea_decrement_setup,         rest_one_turn_step, status_decremented_by_one },
+    { "BR74294_paralysis_counter_decrements",   paralysis_decrement_setup,      rest_one_turn_step, monster_paralysis_decremented },
+    { "BR41654_darkness_counter_decrements",    darkness_decrement_setup,       rest_one_turn_step, status_decremented_by_one },
+    { "BR48230_invisibility_counter_decrements",invisibility_decrement_setup,   rest_one_turn_step, status_decremented_by_one },
+    { "BR18867_aggravation_counter_decrements", aggravation_decrement_setup,    rest_one_turn_step, status_decremented_by_one },
+    { "BR75439_fire_immunity_counter_decrements",fire_immunity_decrement_setup, rest_one_turn_step, status_decremented_by_one },
 
-    { "BR28518_telepathy_fades_message",        telepathy_fades_setup,          NULL, telepathy_faded_message },
-    { "BR41654_darkness_fades_message",         darkness_fades_setup,           NULL, darkness_faded_message },
+    { "BR28518_telepathy_fades_message",        telepathy_fades_setup,          rest_one_turn_step, telepathy_faded_message },
+    { "BR41654_darkness_fades_message",         darkness_fades_setup,           rest_one_turn_step, darkness_faded_message },
 
     { "BR76412_searches_accumulate",            search_accumulates_setup,       NULL, search_counter_is_three },
     { "BR76412_search_counter_resets",          search_then_stop_setup,         NULL, search_counter_reset },
@@ -587,32 +557,32 @@ const testCase tests_status_effects[] = {
     { "BR37051_removing_armor_resets_donning",  removing_armor_setup,           NULL, donning_counter_reset },
 
     { "BR49074_weakness_stacks",                weakness_stacks_setup,          NULL, weakness_stacked },
-    { "BR55648_weakness_expiry_clears_amount",  weakness_expires_setup,         NULL, weakness_cleared },
+    { "BR55648_weakness_expiry_clears_amount",  weakness_expires_setup,         rest_one_turn_step, weakness_cleared },
 
     { "BR50918_slow_sets_slow_clears_haste",    slow_sets_slow_setup,           NULL, slow_applied },
     { "BR40736_haste_sets_haste_clears_slow",   haste_sets_haste_setup,         NULL, haste_applied },
-    { "BR22853_slow_expiry_restores_speed",     slow_expires_setup,             NULL, speed_restored },
+    { "BR22853_slow_expiry_restores_speed",     slow_expires_setup,             rest_one_turn_step, speed_restored },
 
     { "BR64646_poison_adds_concentration",      poison_added_setup,             NULL, poison_added },
-    { "BR75638_poison_damages_and_ticks",       poison_damages_setup,           NULL, poison_damaged_and_ticked },
+    { "BR75638_poison_damages_and_ticks",       poison_damages_setup,           rest_one_turn_step, poison_damaged_and_ticked },
     { "BR52651_panacea_clears_poison",          panacea_clears_poison_setup,    NULL, poison_cleared },
     { "BR33833_panacea_caps_statuses",          panacea_caps_statuses_setup,    NULL, statuses_capped },
 
     { "BR51327_fire_immunity_extinguishes",     immunity_extinguishes_setup,    NULL, burning_extinguished },
 
     { "BR25686_nutrition_starts_full",          nutrition_starts_full_setup,    NULL, nutrition_is_full },
-    { "BR49432_nutrition_decrements",           nutrition_decreases_setup,      NULL, nutrition_decreased },
-    { "BR24204_no_nutrition_while_paralyzed",   paralyzed_no_nutrition_setup,   NULL, nutrition_unchanged },
-    { "BR80877_starvation_costs_health",        starvation_setup,               NULL, starved_one_point },
-    { "BR58287_hunger_threshold_warning",       hunger_warning_setup,           NULL, hunger_warning_shown },
+    { "BR49432_nutrition_decrements",           nutrition_decreases_setup,      rest_one_turn_step, nutrition_decreased },
+    { "BR24204_no_nutrition_while_paralyzed",   paralyzed_no_nutrition_setup,   wait_10_turns_step, nutrition_unchanged },
+    { "BR80877_starvation_costs_health",        starvation_setup,               rest_one_turn_step, starved_one_point },
+    { "BR58287_hunger_threshold_warning",       hunger_warning_setup,           rest_one_turn_step, hunger_warning_shown },
 
     { "BR73170_levitating_not_underwater",      levitating_over_water_setup,    NULL, not_underwater },
 
-    { "BR62028_paralyzed_monster_takes_no_action", paralyzed_monster_idle_setup, NULL, paralyzed_monster_did_nothing },
-    { "BR34867_entranced_monster_skips_turn",   entranced_monster_idle_setup,   NULL, entranced_monster_did_nothing },
-    { "BR73717_attacking_paralyzed_clears_it",  attack_paralyzed_setup,         NULL, paralysis_cleared },
+    { "BR62028_paralyzed_monster_takes_no_action", paralyzed_monster_idle_setup, wait_10_turns_step, paralyzed_monster_did_nothing },
+    { "BR34867_entranced_monster_skips_turn",   entranced_monster_idle_setup,   wait_10_turns_step, entranced_monster_did_nothing },
+    { "BR73717_attacking_paralyzed_clears_it",  attack_paralyzed_setup,         attack_paralyzed_step, paralysis_cleared },
 
-    { "BR68621_shield_decays_by_twentieth",     shield_decays_setup,            NULL, shield_decayed },
+    { "BR68621_shield_decays_by_twentieth",     shield_decays_setup,            rest_one_turn_step, shield_decayed },
 
     { NULL, NULL, NULL, NULL }
 };

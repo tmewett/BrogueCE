@@ -2,172 +2,147 @@
 #include "Globals.h"
 #include "GlobalsBase.h"
 
-static creature *subject;
+static creature *monst;
+static item *theItem;
+
+static void death_setup(void) {
+    clearMonsters();
+    clearArena();
+    setPlayerHealth(1);
+    setPlayerPos(player.loc);
+    revealCell(player.loc);
+}
+
+static creature *spawn_test_monster(enum monsterTypes monstTyp, short xOffset) {
+    monst = spawnMonster(monstTyp, posOffset(player.loc, xOffset, 0));
+    makeMonsterHostile(monst);
+    revealCell(monst->loc);
+    return monst;
+}
+
+static boolean wait_until_dead_step(void) {
+    if (!isPlayerDead() && turnNumber() < 1000) {
+        restOneTurn();
+        return true; // Keep going
+    }
+    return false; // Done
+}
+
+static boolean death_verify(void) {
+    TEST_ASSERT(isPlayerDead() && turnNumber() < 1000, "player should have died");
+    return !testFailed;
+}
 
 // BR10001 — killed by monster melee
 static creature *killer;
 static void melee_death_setup(void) {
-    clearArena();
-    killer = spawnMonster(MK_RAT, posOffset(player.loc, 1, 0));
-    makeMonsterHostile(killer);
-    revealCell(killer->loc);
-    setPlayerHealth(1);
+    death_setup();
+
+    // TODO:
+    // - Pick random animate monsters to kill the player with
+    // - Verify the death message includes the monster name
+    spawn_test_monster(MK_TROLL,1);
     applyStatusToPlayer(STATUS_PARALYZED, 100);
-}
-static boolean melee_death_verify(void) {
-    monsterAttacksPlayer(killer);
-    TEST_ASSERT(rogue.gameHasEnded || isPlayerDead(), "rat melee should kill");
-    return !testFailed;
 }
 
 // BR10005 — starvation
 static void starve_setup(void) {
-    clearArena();
+    death_setup();
     setPlayerNutrition(0);
-    setPlayerHealth(1);
-}
-static boolean starve_verify(void) {
-    restOneTurn();
-    TEST_ASSERT(rogue.gameHasEnded || isPlayerDead(), "starvation should kill");
-    return !testFailed;
 }
 
 // BR10006 — poison
 static void poison_death_setup(void) {
-    clearArena();
-    setPlayerHealth(1);
+    death_setup();
     poisonPlayer(10, 100);
-}
-static boolean poison_death_verify(void) {
-    restOneTurn();
-    TEST_ASSERT(rogue.gameHasEnded || isPlayerDead(), "poison should kill");
-    return !testFailed;
 }
 
 // BR10007 — burning
 static void burn_death_setup(void) {
-    clearArena();
-    setPlayerHealth(1);
+    death_setup();
     applyStatusToPlayer(STATUS_BURNING, 10);
-}
-static boolean burn_death_verify(void) {
-    restOneTurn();
-    TEST_ASSERT(rogue.gameHasEnded || isPlayerDead(), "burning should kill");
-    return !testFailed;
 }
 
 // BR10008 — lava
 static void lava_death_setup(void) {
-    clearArena();
+    death_setup();
     setTerrain(player.loc, LAVA);
-    setPlayerPos(player.loc);
-    revealCell(player.loc);
-    setPlayerHealth(1);
-}
-static boolean lava_death_verify(void) {
-    applyTileEffectsToPlayer();
-    TEST_ASSERT(rogue.gameHasEnded || isPlayerDead(), "lava should kill");
-    return !testFailed;
 }
 
 // BR10009 — explosive terrain
 static void explosive_death_setup(void) {
-    clearArena();
-    setTerrain(player.loc, GAS_EXPLOSION);
-    setPlayerPos(player.loc);
-    revealCell(player.loc);
-    setPlayerHealth(1);
-}
-static boolean explosive_death_verify(void) {
-    applyTileEffectsToPlayer();
-    TEST_ASSERT(rogue.gameHasEnded || isPlayerDead(), "explosion should kill");
-    return !testFailed;
+    death_setup();
+
+    // TODO:
+    // - Pick random explosive monsters to kill the player with (eg. explosive mutations)
+    spawn_test_monster(MK_EXPLOSIVE_BLOAT,1);
 }
 
 // BR10002 — killed by monster bolt
 static void bolt_death_setup(void) {
-    clearArena();
-    subject = spawnMonster(MK_LICH, posOffset(player.loc, 4, 0));
-    makeMonsterHostile(subject);
-    revealCell(subject->loc);
-    setPlayerHealth(1);
-}
-static boolean bolt_death_verify(void) {
-    monsterTakesTurn(subject);
-    TEST_ASSERT(rogue.gameHasEnded || isPlayerDead(), "lich bolt should kill");
-    return !testFailed;
+    death_setup();
+
+    // TODO:
+    // - Pick random damage-bolt casting monsters to kill the player with
+    // - Verify the death message includes the monster name
+    spawn_test_monster(MK_SPARK_TURRET, 2);
 }
 
 // BR10011 — killed by fall
 static void fall_death_setup(void) {
-    clearArena();
+    death_setup();
     setTerrain(player.loc, CHASM);
-    setPlayerPos(player.loc);
-    revealCell(player.loc);
-    player.bookkeepingFlags |= MB_IS_FALLING;
-    setPlayerHealth(1);
-}
-static boolean fall_death_verify(void) {
-    restOneTurn();
-    TEST_ASSERT(rogue.gameHasEnded || isPlayerDead(), "fall should kill");
-    return !testFailed;
 }
 
 // BR10004 — drained by cursed ring
 static void cursed_ring_death_setup(void) {
-    clearArena();
-    subject = spawnMonster(MK_RAT, posOffset(player.loc, 1, 0));
-    makeMonsterHostile(subject);
-    revealCell(subject->loc);
-    setMonsterHealth(subject, 1);
-    setPlayerHealth(1);
-    rogue.transference = -100;
+    death_setup();
+    spawn_test_monster(MK_KRAKEN, 1);   // Kraken out of water is helpless
+
+    // Cursed ring
+    item *ring = givePlayerItem(RING, RING_TRANSFERENCE, -10);
+    equip(ring);
 }
-static boolean cursed_ring_death_verify(void) {
-    playerAttacksMonster(subject);
-    TEST_ASSERT(rogue.gameHasEnded || isPlayerDead(), "cursed ring drain should kill");
-    return !testFailed;
+
+static boolean cursed_ring_death_step() {
+    moveRight(); // Attack monster
+    if (isPlayerDead()) return false;
+    return true;
 }
 
 // BR10003 — killed by reflected bolt
 static void reflected_bolt_death_setup(void) {
-    clearArena();
-    subject = spawnMonster(MK_GUARDIAN, posOffset(player.loc, 4, 0));
-    makeMonsterHostile(subject);
-    revealCell(subject->loc);
-    setPlayerHealth(1);
+    death_setup();
+    spawn_test_monster(MK_GUARDIAN, 4);
+
+    // TODO: Test different damaging bolts (fire, lightning, etc)
+    theItem = givePlayerItem(STAFF, STAFF_LIGHTNING, 10);
+    theItem->charges = 100;
 }
-static boolean reflected_bolt_death_verify(void) {
-    zap(player.loc, subject->loc, &boltCatalog[BOLT_FIRE], false, false);
-    TEST_ASSERT(rogue.gameHasEnded || isPlayerDead(), "reflected bolt should kill");
-    return !testFailed;
+
+static boolean reflected_bolt_death_step(void) {
+    playerZapsAt(theItem, monst);
+    if (isPlayerDead()) return false;
+    return true;
 }
 
 // BR10010 — damaging terrain
 static void damaging_death_setup(void) {
-    clearArena();
+    death_setup();
     setTerrain(player.loc, STEAM);
-    setPlayerPos(player.loc);
-    revealCell(player.loc);
-    setPlayerHealth(1);
-}
-static boolean damaging_death_verify(void) {
-    restTurns(3);
-    TEST_ASSERT(rogue.gameHasEnded || isPlayerDead(), "damaging terrain should kill");
-    return !testFailed;
 }
 
 const testCase tests_death[] = {
-    { "BR10001_melee_death", melee_death_setup, NULL, melee_death_verify },
-    { "BR10005_starvation", starve_setup, NULL, starve_verify },
-    { "BR10006_poison", poison_death_setup, NULL, poison_death_verify },
-    { "BR10007_burning", burn_death_setup, NULL, burn_death_verify },
-    { "BR10008_lava", lava_death_setup, NULL, lava_death_verify },
-    { "BR10009_explosive", explosive_death_setup, NULL, explosive_death_verify },
-    { "BR10002_bolt", bolt_death_setup, NULL, bolt_death_verify },
-    { "BR10011_fall", fall_death_setup, NULL, fall_death_verify },
-    { "BR10004_cursed_ring", cursed_ring_death_setup, NULL, cursed_ring_death_verify },
-    { "BR10003_reflected_bolt", reflected_bolt_death_setup, NULL, reflected_bolt_death_verify },
-    { "BR10010_damaging", damaging_death_setup, NULL, damaging_death_verify },
+    { "BR10001_melee_death",          melee_death_setup,          wait_until_dead_step, death_verify },
+    { "BR10005_starvation",           starve_setup,               wait_until_dead_step, death_verify },
+    { "BR10006_poison_death",         poison_death_setup,         wait_until_dead_step, death_verify },
+    { "BR10007_burning_death",        burn_death_setup,           wait_until_dead_step, death_verify },
+    { "BR10008_lava_death",           lava_death_setup,           wait_until_dead_step, death_verify },
+    { "BR10009_explosive_death",      explosive_death_setup,      wait_until_dead_step, death_verify },
+    { "BR10002_bolt_death",           bolt_death_setup,           wait_until_dead_step, death_verify },
+    { "BR10011_fall_death",           fall_death_setup,           wait_until_dead_step, death_verify },
+    { "BR10004_cursed_ring",          cursed_ring_death_setup,    cursed_ring_death_step, death_verify },
+    { "BR10003_reflected_bolt_death", reflected_bolt_death_setup, reflected_bolt_death_step, death_verify },
+    { "BR10010_damaging_death",       damaging_death_setup,       wait_until_dead_step, death_verify },
     { NULL, NULL, NULL, NULL }
 };

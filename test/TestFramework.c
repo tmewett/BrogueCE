@@ -83,6 +83,10 @@ static void clearInputQueue(void) {
 }
 
 void recordTestMessage(const char *msg) {
+
+    // Only record messages once
+    if (messageWasShown(msg)) return;
+
     if (messageLogCount < TEST_MESSAGE_LOG_SIZE) {
         messageLogCount++;
     }
@@ -112,6 +116,13 @@ const char *lastMessage(void) {
     }
     return messageLog[messageLogCount - 1];
 }
+
+void printTestMessages(void) {
+    for (int i = 0; i < messageLogCount; i++) {
+        fprintf(stderr,"-- %s\n", messageLog[i]);
+    }
+}
+
 
 void runTestByName(const char *name) {
     testStartDepth = rogue.depthLevel;
@@ -209,12 +220,6 @@ void injectMouseClick(pos loc, boolean rightClick, boolean control, boolean shif
 
 void restOneTurn(void) {
     injectKeystroke(PERIOD_KEY, false, false);
-}
-
-void restTurns(int turns) {
-    for (int i = 0; i < turns && !rogue.gameHasEnded; i++) {
-        restOneTurn();
-    }
 }
 
 void moveDirection(enum directions dir) {
@@ -328,6 +333,10 @@ boolean isTrapTriggered(pos loc) {
     return (pmapAt(loc)->flags & PRESSURE_PLATE_DEPRESSED) != 0;
 }
 
+boolean cellIsKnownTrapFree(pos loc) {
+    return (pmapAt(loc)->flags & KNOWN_TO_BE_TRAP_FREE) != 0;
+}
+
 // ---------------------------------------------
 // Player state
 // ---------------------------------------------
@@ -349,7 +358,7 @@ boolean playerIsOnTerrain(short terrainType) {
 }
 
 boolean playerHasStatus(enum statusEffects status) {
-    return player.status[status] > 0;
+    return player.status[status] > 1;
 }
 
 void applyStatusToPlayer(enum statusEffects status, int duration) {
@@ -361,9 +370,7 @@ void removeStatusFromPlayer(enum statusEffects status) {
 }
 
 void setPlayerHealth(int hp) {
-    if (hp < 1) hp = 1;
-    if (hp > player.info.maxHP) hp = player.info.maxHP;
-    player.currentHP = hp;
+    setMonsterHealth(&player, hp);
 }
 
 int playerHealth(void) {
@@ -406,7 +413,7 @@ boolean isPlayerHealthy(void) {
 }
 
 boolean isPlayerDead(void) {
-    return player.currentHP <= 0;
+    return player.currentHP <= 0 || rogue.gameHasEnded;
 }
 
 boolean isPlayerLevitating(void) {
@@ -516,6 +523,10 @@ void clearMonsters(void) {
         creature *m = nextCreature(&it);
         killCreature(m, true);
     }
+    removeDeadMonsters();
+
+    // Don't let new monsters spawn while testing
+    rogue.monsterSpawnFuse = 10000;
 }
 
 creature *spawnMonster(enum monsterTypes type, pos loc) {
@@ -652,7 +663,8 @@ int monsterHealth(const creature *monst) {
 
 void setMonsterHealth(creature *monst, int hp) {
     if (hp < 1) hp = 1;
-    if (hp > monst->info.maxHP) hp = monst->info.maxHP;
+    // if (hp > monst->info.maxHP) hp = monst->info.maxHP;
+    if (hp > monst->info.maxHP) monst->info.maxHP = hp;
     monst->currentHP = hp;
 }
 
@@ -682,6 +694,14 @@ boolean attackMonster(creature *attacker, creature *defender) {
     }
     return attack(attacker, defender, false);
 }
+
+void playerZapsAt( item *theItem, creature *monst ) {
+    if (theItem->category != STAFF && theItem->category != WAND) return;
+
+    bolt theBolt = boltCatalog[tableForItemCategory(theItem->category)[theItem->kind].power];
+    zap(player.loc, monst->loc, &theBolt, false, false);
+}
+
 
 void monsterTakesTurn(creature *monst) {
     if (monst != NULL) {
@@ -833,9 +853,59 @@ boolean monsterAvoidsCell(const creature *monst, pos loc) {
     return monsterAvoids((creature *)monst, loc);
 }
 
+enum monsterTypes chooseMonsterTypeByProperty(enum boltType bolt, enum monsterBehaviorFlags behaviorFlagsInclude,  enum monsterBehaviorFlags behaviorFlagsExclude, enum monsterAbilityFlags abilityFlagsInclude, enum monsterAbilityFlags abilityFlagsExclude) {
+    enum monsterTypes types[NUMBER_MONSTER_KINDS];
+    int count = 0;
+
+    for (int i = 0; i < NUMBER_MONSTER_KINDS; i++) {
+        const creatureType *cTyp = &monsterCatalog[i];
+
+        boolean includedBehaviors = (cTyp->flags & behaviorFlagsInclude) == behaviorFlagsInclude;
+        if (!includedBehaviors) continue;
+
+        boolean excludedBehaviors = (cTyp->flags & behaviorFlagsExclude) != 0;
+        if (excludedBehaviors) continue;
+
+        boolean includedAbilities = (cTyp->abilityFlags & abilityFlagsInclude) == abilityFlagsInclude;
+        boolean excludedAbilities = (cTyp->abilityFlags & abilityFlagsExclude) != 0;
+        if (!includedAbilities || excludedAbilities) continue;
+
+        if (bolt == BOLT_NONE) {
+            types[count++] = i;
+        } else {
+            // Check for the bolt
+            for (int b = 0; b < 20; b++) {
+                if (cTyp->bolts[b] == BOLT_NONE) break;
+                if (cTyp->bolts[b] == bolt) types[count++] = i;
+            }
+        }
+    }
+
+    if (count == 0) return MK_YOU;  // Fall back to rogue if nothing else matches
+
+    // Pick a matching monster type
+    assureCosmeticRNG;
+    enum monsterTypes monstType = types[rand_range(0, count-1)];
+    fprintf(stderr, "CHOSE: %s: %d\n", monsterCatalog[monstType].monsterName, monstType);
+    return monstType;
+}
+
 // ---------------------------------------------
 // Items
 // ---------------------------------------------
+
+
+void removeFloorFood(void) {
+    for (item *i = floorItems->nextItem; i != NULL;) {
+        item *next = i->nextItem;
+        if (i->category == FOOD) {
+            removeItemFromChain(i, floorItems);
+            deleteItem(i);
+        }
+        i = next;
+    }
+}
+
 
 item *findInventoryItem(short category, short kind) {
     for (item *i = packItems->nextItem; i; i = i->nextItem) {
@@ -920,6 +990,10 @@ boolean itemIsCursed(const item *theItem) {
     return (theItem->flags & ITEM_CURSED) != 0;
 }
 
+boolean itemIsIdentified(const item *theItem) {
+    return (theItem->flags & ITEM_IDENTIFIED) != 0;
+}
+
 void curseItem(item *theItem) {
     if (theItem != NULL) {
         theItem->flags |= ITEM_CURSED;
@@ -930,6 +1004,15 @@ boolean itemIsRunic(const item *theItem) {
     return (theItem->flags & ITEM_RUNIC) != 0;
 }
 
+boolean runicIsIdentified(const item *theItem) {
+    return itemIsRunic(theItem) && (theItem->flags & ITEM_RUNIC_IDENTIFIED) != 0;
+}
+
+boolean runicIsHinted(const item *theItem) {
+    return itemIsRunic(theItem) && (theItem->flags & ITEM_RUNIC_HINTED) != 0;
+}
+
+
 int runicActivationChance(const item *theItem) {
     if (theItem->category == WEAPON) {
         return runicWeaponChance(theItem, true, theItem->enchant1 * FP_FACTOR);
@@ -938,6 +1021,13 @@ int runicActivationChance(const item *theItem) {
     }
 
     return 0;
+}
+
+void setItemTargetClass(item *theItem, short classId) {
+    if (theItem == NULL) {
+        return;
+    }
+    theItem->vorpalEnemy = classId;
 }
 
 item *equippedWeapon(void) {
@@ -1004,20 +1094,20 @@ item *givePlayerRunicWeapon(short kind, short runicKind, short enchant, boolean 
     item *theItem = generateItem(WEAPON, kind);
     theItem->enchant1 = enchant;
     theItem->enchant2 = runicKind;
-    theItem->flags |= (ITEM_RUNIC | ITEM_RUNIC_IDENTIFIED | ITEM_RUNIC_HINTED);
+    theItem->flags |= ITEM_RUNIC;
     theItem->flags &= ~ITEM_CURSED;
     if (revealIdentity) identify(theItem);
     addItemToPack(theItem);
     return theItem;
 }
 
-item *givePlayerRunicArmor(short kind, short runicKind, short enchant) {
+item *givePlayerRunicArmor(short kind, short runicKind, short enchant, boolean revealIdentity) {
     item *theItem = generateItem(ARMOR, kind);
     theItem->enchant1 = enchant;
     theItem->enchant2 = runicKind;
-    theItem->flags |= (ITEM_RUNIC | ITEM_RUNIC_IDENTIFIED | ITEM_RUNIC_HINTED);
+    theItem->flags |= ITEM_RUNIC;
     theItem->flags &= ~ITEM_CURSED;
-    identify(theItem);
+    if (revealIdentity) identify(theItem);
     addItemToPack(theItem);
     equipItem(theItem, true, NULL);
     return theItem;
@@ -1027,7 +1117,7 @@ boolean playerHasItem(short category, short kind) {
     return findInventoryItem(category, kind) != NULL;
 }
 
-void removeAllFood(void) {
+void removePackFood(void) {
     // Starving players automatically eat any food in the pack, so a test of
     // starvation has to get rid of it first.
     for (item *i = packItems->nextItem; i != NULL;) {
@@ -1146,13 +1236,6 @@ void recomputeLighting(void) {
     updateLighting();
 }
 
-boolean retryAction(int maxAttempts, boolean (*action)(void)) {
-    for (int i = 0; i < maxAttempts; i++) {
-        if (action()) return true;
-    }
-    return false;
-}
-
 short vorpalEnemyClassByName(const char *className) {
     for (short i = 0; i < MONSTER_CLASS_COUNT; i++) {
         if (strcmp(monsterClassCatalog[i].name, className) != 0) {
@@ -1186,19 +1269,20 @@ short vorpalEnemyClassForMonster(enum monsterTypes monstType) {
 // TEST SETUP HELPERS
 // ---------------------------------------------
 
-void clearArenaRadius(int radius) {
+void setArenaRadius(int radius, enum tileType tile) {
     // Clear a wide area so knockback and clone destinations are open floor.
     for (int dx = -radius; dx <= radius; dx++) {
         for (int dy = -radius; dy <= radius; dy++) {
-            setTerrain(posOffset(player.loc, dx, dy), FLOOR);
+            setTerrain(posOffset(player.loc, dx, dy), tile);
         }
     }
     setPlayerPos(player.loc);
     clearMonsters();
+    removeFloorFood();
 }
 
 void clearArena(void) {
-    clearArenaRadius(2);
+    setArenaRadius(2,FLOOR);
 }
 
 // Give a runic weapon AND equip it as rogue.weapon (unlike givePlayerRunicWeapon
@@ -1283,6 +1367,21 @@ boolean wait_10_turns_step(void) {
     }
 
     if (turnNumber() - test_turn_number < 10) {
+        restOneTurn();
+        return true; // continue waiting
+    }
+
+    test_turn_number = -1;
+    return false; // end test
+}
+
+
+boolean wait_100_turns_step(void) {
+    if (test_turn_number == -1) {
+        test_turn_number = turnNumber();
+    }
+
+    if (turnNumber() - test_turn_number < 100) {
         restOneTurn();
         return true; // continue waiting
     }

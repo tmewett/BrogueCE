@@ -40,10 +40,6 @@ extern boolean testFailed;
 
 void runTestByName(const char *name);
 
-// Retry a probabilistic action up to maxAttempts times.  Returns true once the
-// action returns true, or false if it never does.
-boolean retryAction(int maxAttempts, boolean (*action)(void));
-
 // ---------------------------------------------
 // Positions
 // ---------------------------------------------
@@ -89,13 +85,13 @@ void recordTestMessage(const char *msg);
 void clearMessages(void);
 boolean messageWasShown(const char *substring);
 const char *lastMessage(void);
+void printTestMessages(void);
 
 // ---------------------------------------------
 // Player actions (events)
 // ---------------------------------------------
 
 void restOneTurn(void);
-void restTurns(int turns);
 void moveDirection(enum directions dir);
 void moveRight(void);
 void moveLeft(void);
@@ -119,6 +115,8 @@ boolean monsterAttacksPlayer(creature *monst);
 // be any creature, including the player), without ending the turn.
 boolean attackMonster(creature *attacker, creature *defender);
 
+void playerZapsAt( item *theItem, creature *monst );
+
 // ---------------------------------------------
 // Terrain (events and predicates)
 // ---------------------------------------------
@@ -137,6 +135,7 @@ boolean cellIsVisible(pos loc);
 boolean cellHasGas(pos loc);
 boolean cellIsOnFire(pos loc);
 boolean cellIsTrap(pos loc);
+boolean cellIsKnownTrapFree(pos loc);
 boolean isTrapTriggered(pos loc);
 
 // ---------------------------------------------
@@ -173,7 +172,7 @@ boolean playerHasItem(short category, short kind);
 // Mark a pack item as cursed, so that rules about curse handling (such as a
 // scroll of enchanting removing a curse) can be set up deterministically.
 void curseItem(item *theItem);
-void removeAllFood(void);
+void removePackFood(void);
 
 // Numeric status details, for rules about exact counters and amounts.
 int playerStatusTurns(enum statusEffects status);
@@ -199,6 +198,7 @@ void takeOffArmor(void);
 // Monsters (predicates and events)
 // ---------------------------------------------
 
+enum monsterTypes chooseMonsterTypeByProperty(enum boltType bolt, enum monsterBehaviorFlags behaviorFlagsInclude,  enum monsterBehaviorFlags behaviorFlagsExclude, enum monsterAbilityFlags abilityFlagsInclude, enum monsterAbilityFlags abilityFlagsExclude);
 creature *spawnMonster(enum monsterTypes type, pos loc);
 creature *findMonster(enum monsterTypes type);
 void clearMonsters(void);
@@ -280,6 +280,7 @@ boolean monsterAvoidsCell(const creature *monst, pos loc);
 // Items (predicates and events)
 // ---------------------------------------------
 
+void removeFloorFood(void);
 item *findInventoryItem(short category, short kind);
 item *findFloorItem(short category, short kind);
 item *findItem(short category, short kind);
@@ -299,10 +300,19 @@ char itemInventoryLetter(const item *theItem);
 short itemKind(const item *theItem);
 short itemCategory(const item *theItem);
 boolean itemIsCursed(const item *theItem);
+boolean itemIsIdentified(const item *theItem);
 boolean itemIsRunic(const item *theItem);
+boolean runicIsIdentified(const item *theItem);
+boolean runicIsHinted(const item *theItem);
 unsigned long itemGoldValue(const item *theItem);
 boolean itemKindIsKnown(short category, short kind);
 int runicActivationChance(const item *theItem);
+
+// Key a runic item to a creature class: the class of creature that a slaying
+// rune destroys, or the class of creature that an immunity armor protects
+// against.  The class id comes from vorpalEnemyClassByName() or
+// vorpalEnemyClassForMonster().
+void setItemTargetClass(item *theItem, short classId);
 
 // The items currently worn.
 item *equippedWeapon(void);
@@ -331,7 +341,7 @@ void wearArmorOfEnchant(short kind, int enchant);
 // Create a freshly generated runic weapon/armor in the player's pack at the
 // chosen enchantment, already identified as runic.
 item *givePlayerRunicWeapon(short kind, short runicKind, short enchant, boolean revealIdentity);
-item *givePlayerRunicArmor(short kind, short runicKind, short enchant);
+item *givePlayerRunicArmor(short kind, short runicKind, short enchant, boolean revealIdentity);
 
 // ---------------------------------------------
 // Dungeon (predicates and events)
@@ -381,7 +391,7 @@ int playerTurnCount(void);
 // ---------------------------------------------
 
 void clearArena(void);
-void clearArenaRadius(int radius);
+void setArenaRadius(int radius, enum tileType tile);
 item *giveAndEquipRunicWeapon(short kind, short runicKind, short enchant, boolean revealIdentity);
 creature *placeHostileMonster(enum monsterTypes type, pos loc);
 
@@ -401,6 +411,7 @@ boolean wait_until_fall_step(void);
 boolean wait_until_hurt(void);
 boolean trap_step(void);
 boolean wait_10_turns_step(void);
+boolean wait_100_turns_step(void);
 boolean move_right_step(void);
 
 

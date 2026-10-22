@@ -114,6 +114,38 @@ static boolean hidden_seed_is_reported_hidden(void) {
 }
 
 // ============================================================
+// BR33110 — the Feats screen lists every feat with its achievement status
+// and closes on any key or click
+// ============================================================
+
+static void feats_screen_setup(void) {
+    clearArena();
+    // Earn a feat deterministically so that an "achieved" status exists for the
+    // feats screen to list (killing a dragon earns the dragonslayer feat).
+    pos dragonLoc = posOffset(player.loc, 1, 0);
+    givePlayerItem(WEAPON, SWORD, 0);
+    equipItemFromPack(WEAPON, SWORD);
+    creature *dragon = placeHostileMonster(MK_DRAGON, dragonLoc);
+    setMonsterHealth(dragon, 1);
+    applyStatusToMonster(dragon, STATUS_PARALYZED, 20);
+    playerAttacksMonster(dragon);
+}
+
+static boolean feats_screen_opens_and_closes(void) {
+    // Opening the feats screen should not end the game; with no input queued,
+    // test mode answers the "press any key to continue" prompt with escape, so
+    // the screen closes and play resumes.
+    injectKeystroke(FEATS_KEY, false, false);
+    return false;
+}
+
+static boolean feats_achievement_status_tracked(void) {
+    TEST_ASSERT(playerHasFeat(FEAT_DRAGONSLAYER),
+                "an earned feat should be recorded as achieved");
+    TEST_ASSERT(!rogue.gameHasEnded,
+                "opening and closing the feats screen should not end the game");
+    return !testFailed;
+}
 
 const testCase tests_interaction[] = {
     { "BR56719_confirmation_accepts_y_Y_return",   yes_keys_setup,      NULL, confirmation_accepts_y_Y_return },
@@ -122,6 +154,7 @@ const testCase tests_interaction[] = {
     { "BR67301_autopilot_skips_confirmation",      autopilot_setup,     NULL, autopilot_skips_confirmation },
     { "BR53953_seed_report_shows_seed_and_turn",   seed_report_setup,   NULL, seed_report_shows_seed_and_turn },
     { "BR78309_hidden_seed_is_reported_hidden",    hidden_seed_setup,   NULL, hidden_seed_is_reported_hidden },
+    { "BR33110_feats_screen_lists_achievement_status_and_closes", feats_screen_setup, feats_screen_opens_and_closes, feats_achievement_status_tracked },
 
     { NULL, NULL, NULL, NULL }
 };

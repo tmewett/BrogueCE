@@ -130,3 +130,75 @@ BR20949 — NEW rule
 Citation: [SeedCatalog.c:197-215](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/SeedCatalog.c#L197-L215), [SeedCatalog.c:176-195](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/SeedCatalog.c#L176-L195)
 Note: SeedCatalog.c:197-215 walks the floor items and lists each non-gold, non-amulet item individually via printSeedCatalogItem, skips amulets (the empty AMULET branch at SeedCatalog.c:206-207), and tallies gold across piles so it can be printed as a single combined entry (handled at SeedCatalog.c:176-195 and invoked when gold is present at SeedCatalog.c:212-214). BR23144 covers the gold-entry formatting but no rule in rules/* describes that each non-gold floor item gets its own listing or that amulets are omitted from the seed catalog. ID BR20949 is unique across rules/ and test/NewRules.txt.
 
+------------------------------------------------------------
+BR27081 — NEW rule
+"Mud tiles are drawn in a flat brown color that does not change from turn to turn."
+Citation: [Globals.c:131-132](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L131-L132)
+Note: Globals.c:131-132 defines the fore and back colors that render mud tiles as a flat brown which never animates. No rule in rules/* describes how mud is colored; BR11497 covers only the general named palette in GlobalsBase.h, not these feature-specific colors. ID BR27081 is unique across rules/.
+
+------------------------------------------------------------
+BR39659 — NEW rule
+"A chasm is drawn as a dark void outlined by a distinctly colored edge that does not change from turn to turn."
+Citation: [Globals.c:133-135](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L133-L135)
+Note: Globals.c:133-135 defines the dark fore color and edge back colors that render a chasm as a dark void with a distinct edge, never animating. Existing chasm rules cover falling and movement, but none describes a chasm's appearance. ID BR39659 is unique across rules/.
+
+------------------------------------------------------------
+BR16685 — NEW rule
+"Fire burns in bright orange and yellow that flickers with every refresh."
+Citation: [Globals.c:136-136](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L136-L136)
+Note: Globals.c:136 defines fire's bright orange-yellow fore color with colorDances set, so fire flickers with every refresh. Existing fire rules cover burning and damage, but none describes fire's color or flickering. ID BR16685 is unique across rules/.
+
+------------------------------------------------------------
+BR40964 — NEW rule
+"Lava pools are dark red and flicker with every refresh."
+Citation: [Globals.c:137-137](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L137-L137), [Globals.c:141-141](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L141-L141)
+Note: Globals.c:137 and Globals.c:141 define lava's fore and back colors, both dark red with colorDances set, so lava pools and their background flicker dark red with every refresh. Existing lava rules cover damage and generation, but none describes lava's color. ID BR40964 is unique across rules/.
+
+------------------------------------------------------------
+BR14703 — NEW rule
+"Brimstone burns yellow-orange against a dark background and flickers with every refresh."
+Citation: [Globals.c:138-139](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L138-L139)
+Note: Globals.c:138-139 defines brimstone's yellow-orange fore color and dark back color, both with colorDances set, so brimstone burns and flickers against a dark background. Existing brimstone rules cover terrain generation and monster avoidance, but none describes brimstone's color. ID BR14703 is unique across rules/.
+
+------------------------------------------------------------
+BR27749 — NEW rule
+"Acid pools are green and flicker with every refresh."
+Citation: [Globals.c:142-142](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L142-L142)
+Note: Globals.c:142 defines acid's green back color with colorDances set, so acid pools are green and flicker with every refresh. Existing acid rules cover corrosion and damage, but none describes acid's color. ID BR27749 is unique across rules/.
+
+------------------------------------------------------------
+BR40679 — NEW rule
+"Lightning flashes in brilliant white and yellow and flickers intensely."
+Citation: [Globals.c:144-144](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L144-L144)
+Note: Globals.c:144 defines lightning's brilliant white-yellow color, with a high red component and colorDances set, so lightning flashes intensely and flickers. Existing lightning rules cover monster bolts, but none describes the flash itself. ID BR40679 is unique across rules/.
+
+------------------------------------------------------------
+BR20557 — NEW rule
+"Fungus, lava, and deep water cast dim colored glows—blue-green, red, and blue—that flicker with every refresh."
+Citation: [Globals.c:145-147](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L145-L147)
+Note: Globals.c:145-147 define the fungus, lava, and deep water light colors—dim blue-green, red, and blue glows, all with colorDances set—so these features cast dim colored light that flickers with every refresh. Existing light rules cover the player's draw colour and general lighting, but none describes these feature glows. ID BR20557 is unique across rules/.
+
+------------------------------------------------------------
+BR11267 — NEW rule
+"While the mouse pointer rests over a menu button that can be clicked, that button is drawn in a subtly warmer, brighter tint than the other buttons, marking it as the control a click would select."
+Citation: [Buttons.c:163-166](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L163-L166), [Buttons.c:53-58](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L53-L58)
+Note: Buttons.c:163-166 is the hover branch of the routine that paints a menu's buttons: the button under the mouse pointer is given the hover style instead of the normal style, and that style blends the button's text and background colours 25% toward the game's warm hover tint at Buttons.c:53-58. The pointer position is turned into the focused button at Buttons.c:215-237, so only the button under the pointer is highlighted, and only buttons that are enabled can receive the highlight. Existing button rules (BR91827, BR25868) cover how a button is chosen and how a menu is cancelled, but no rule in rules/* describes the highlight shown under the mouse pointer. ID BR11267 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR35576 — NEW rule
+"While the mouse button is held down on a menu button, that button is drawn darker and its label dims to show that the click is in progress, and this pressed look takes the place of the hover tint when the same button is under the pointer."
+Citation: [Buttons.c:167-170](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L167-L170), [Buttons.c:64-70](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L64-L70), [Buttons.c:93-95](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L93-L95)
+Note: Buttons.c:167-170 is the pressed branch of the routine that paints a menu's buttons: the button that is currently held down is given the pressed style, and because that check comes after the hover check it overrides the hover tint for a button that is both under the pointer and held down. The pressed style darkens the middle of the button's background toward black (Buttons.c:64-70) and blends the label colour 30% toward that background (Buttons.c:93-95), so the button darkens and its label dims. The held-down button is tracked from mouse-down to mouse-up at Buttons.c:230 and Buttons.c:254. No rule in rules/* describes the pressed appearance of a button. ID BR35576 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR23709 — NEW rule
+"Some menu controls are never painted on the screen even though they still answer the keyboard: the item detail box and the inventory list each keep invisible previous and next controls so the up and down arrow keys can page through their contents."
+Citation: [Buttons.c:161-162](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L161-L162), [IO.c:5129-5141](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L5129-L5141), [Items.c:3007-3015](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3007-L3015)
+Note: Buttons.c:161-162 is the check that skips any button not marked for display while a menu's buttons are painted, so such controls stay invisible on screen; they remain live because their hotkeys are still matched at Buttons.c:263-266. IO.c:5129-5141 and Items.c:3007-3015 are the two places that add such invisible previous and next controls, for the carried-item detail box and the inventory list, whose comments state they exist so the up and down arrows can page through items. No rule in rules/* describes that a menu can hold controls which are never drawn. ID BR23709 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR20238 — NEW rule
+"When a menu or dialog first appears, no button is highlighted, held down, or chosen; the player must move the mouse onto a button or press its hotkey before anything is selected."
+Citation: [Buttons.c:182-191](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L182-L191)
+Note: Buttons.c:182-191 is the body of the routine whose opening line is Buttons.c:175, the last line of the referenced block: it clears the chosen, focused, and depressed buttons to "none" before copying the menu's buttons into place, so a menu that has just opened shows no highlighted, pressed, or chosen button. No rule in rules/* describes the initial state of a menu's buttons. ID BR20238 is unique across rules/ and test/.
+

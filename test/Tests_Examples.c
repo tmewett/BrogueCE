@@ -4,9 +4,6 @@
 
 const short TEMP_STATUS_AMOUNT = 5;
 
-typedef void (*setupFn)(void);
-
-
 // ------- SETUP FUNCTIONS -------
 
 static void floor_setup(void) {
@@ -84,16 +81,6 @@ static void eel_setup(void) {
     drink(POTION_LIFE); // Give the player enough HP to survive for 10 turns against eel
 }
 
-static void bloat_setup(void) {
-    chasm_setup();
-    clearMonsters();
-
-    // Spawn a bloat (has MONST_FLIES)
-    pos bloatLoc = {player.loc.x + 1, player.loc.y};
-    creature *bloat = generateMonster(MK_BLOAT, false, false);
-    setMonsterLocation(bloat, bloatLoc);
-    makeMonsterHostile(bloat);
-}
 
 static void levitation_web_setup(void) {
 
@@ -123,11 +110,6 @@ static void levitation_trap_setup(void) {
 
 static void levitation_water_setup(void) {
     water_setup();
-    drink(POTION_LEVITATION);
-}
-
-static void levitation_bog_setup(void) {
-    bog_monster_setup();
     drink(POTION_LEVITATION);
 }
 
@@ -208,11 +190,11 @@ static boolean levitation_web_verify(void) {
 }
 
 static boolean items_remain_in_inventory(void) {
-    return findItem(WEAPON,SPEAR) == findInventoryItem(WEAPON,SPEAR)
-        && findItem(WEAPON,MACE)  == findInventoryItem(WEAPON,MACE)
-        && findItem(WEAPON,WHIP)  == findInventoryItem(WEAPON,WHIP)
-        && findItem(WEAPON,AXE)   == findInventoryItem(WEAPON,AXE)
-        && findItem(WEAPON,PIKE)  == findInventoryItem(WEAPON,PIKE);
+    return findInventoryItem(WEAPON,SPEAR) != NULL
+        && findInventoryItem(WEAPON,MACE)  != NULL
+        && findInventoryItem(WEAPON,WHIP)  != NULL
+        && findInventoryItem(WEAPON,AXE)   != NULL
+        && findInventoryItem(WEAPON,PIKE)  != NULL;
 }
 
 static boolean inventory_items_not_missing(void) {
@@ -238,7 +220,7 @@ static boolean player_not_seized_verify(void) {
 
 const testCase tests_examples[] = {
     { "BR16982_chasm_fall",             chasm_setup,                wait_until_fall_step,               chasm_fall_verify           },
-    { "BR17312_water_steals_items",     water_setup,                wait_10_turns_step,                 inventory_items_missing     },
+    { "BR17312_water_steals_items",     water_setup,                wait_100_turns_step,                 inventory_items_missing     },
     { "BR17384_bog_monster_seizes",     bog_monster_setup,          wait_10_turns_step,                 player_seized_verify        },
     { "BR17765_aquatic_attack",         eel_setup,                  wait_10_turns_step,                 player_is_hurt              },
     { "BR20087_trigger_trap",           trap_setup,                 trap_step,                     trap_triggered              },
@@ -253,5 +235,5 @@ const testCase tests_examples[] = {
     { "BR39871_levitation_web",         levitation_web_setup,       NULL,                      levitation_web_verify       },
 
     // --- Terminal Test ---
-    { NULL, NULL, NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL }
 };

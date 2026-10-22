@@ -45,10 +45,52 @@ static void life_potion_setup(void) {
     emptyRoomSetup();
     setPlayerHealth(1);
     before = playerMaxHealth();
+
+    // Apply all the statuses to the player
+    applyStatusToPlayer(STATUS_WEAKENED, 10);
+    applyStatusToPlayer(STATUS_HALLUCINATING, 10);
+    applyStatusToPlayer(STATUS_CONFUSED, 10);
+    applyStatusToPlayer(STATUS_POISONED, 10);
+    applyStatusToPlayer(STATUS_NAUSEOUS, 10);
+    applyStatusToPlayer(STATUS_DARKNESS, 10);
+    applyStatusToPlayer(STATUS_SLOWED, 10);
+
+    applyStatusToPlayer(STATUS_TELEPATHIC, 10);
+    applyStatusToPlayer(STATUS_LEVITATING, 10);
+    applyStatusToPlayer(STATUS_HASTED, 10);
+    applyStatusToPlayer(STATUS_BURNING, 10);
+    applyStatusToPlayer(STATUS_STUCK, 10);
+    applyStatusToPlayer(STATUS_IMMUNE_TO_FIRE, 10);
+    applyStatusToPlayer(STATUS_SHIELDED, 10);
+    applyStatusToPlayer(STATUS_INVISIBLE, 10);
+
     drink(POTION_LIFE);
 }
 
 static boolean life_potion_raises_max_health(void) {
+    boolean statusCured = 
+           !playerHasStatus(STATUS_WEAKENED)
+        && !playerHasStatus(STATUS_HALLUCINATING)
+        && !playerHasStatus(STATUS_CONFUSED)
+        && !playerHasStatus(STATUS_POISONED)
+        && !playerHasStatus(STATUS_NAUSEOUS)
+        && !playerHasStatus(STATUS_DARKNESS)
+        && !playerHasStatus(STATUS_SLOWED);
+
+    boolean statusRemains =
+           playerHasStatus(STATUS_TELEPATHIC)
+        && playerHasStatus(STATUS_LEVITATING)
+        && playerHasStatus(STATUS_HASTED)
+        && playerHasStatus(STATUS_BURNING)
+        && playerHasStatus(STATUS_STUCK)
+        && playerHasStatus(STATUS_IMMUNE_TO_FIRE)
+        && playerHasStatus(STATUS_SHIELDED)
+        && playerHasStatus(STATUS_INVISIBLE);
+
+
+    TEST_ASSERT(statusCured && statusRemains,
+                "potion of life cures curable ailments and not incurable statuses");
+
     TEST_ASSERT(playerMaxHealth() > before,
                 "a potion of life should raise maximum health");
     TEST_ASSERT_EQ(playerHealth(), playerMaxHealth(),
@@ -207,7 +249,7 @@ static boolean incineration_potion_sets_you_on_fire(void) {
 
 static void aggravate_scroll_setup(void) {
     emptyRoomSetup();
-    subject = monsterOn(MK_RAT, 5, 0, FLOOR);
+    subject = monsterOn(MK_RAT, 3, 0, FLOOR);
     putMonsterToSleep(subject);
     queueConfirmYes();
     readScrollOfKind(SCROLL_AGGRAVATE_MONSTER);
@@ -243,8 +285,6 @@ static void enchanting_removes_curse_setup(void) {
     curseItem(enchantedItem);
     enchantedItemLetter = itemInventoryLetter(enchantedItem);
     givePlayerItem(SCROLL, SCROLL_ENCHANTING, 0);
-    // "Really read a scroll of enchanting?" → yes; then target the cursed weapon.
-    queueConfirmYes();
     queueKeystroke(enchantedItemLetter, false, false);
 }
 
@@ -347,27 +387,12 @@ static boolean charm_starts_ready(void) {
     return !testFailed;
 }
 
-static boolean same_potions_stack(void) {
+static boolean potions_do_not_stack(void) {
     givePlayerItem(POTION, POTION_LIFE, 0);
+    int onePotion = numberOfItemsInPack();
     givePlayerItem(POTION, POTION_LIFE, 0);
-    TEST_ASSERT_EQ(packStackCount(POTION, POTION_LIFE), 1,
-                   "potions of the same kind should share one stack");
-    TEST_ASSERT_EQ(packUnitCount(POTION, POTION_LIFE), 2,
-                   "both potions should be in that stack");
-    return !testFailed;
-}
-
-static void potion_slots_setup(void) {
-    emptyRoomSetup();
-    packedBefore = packItemCount();
-    givePlayerItem(POTION, POTION_LIFE, 0);
-    givePlayerItem(POTION, POTION_LIFE, 0);
-    givePlayerItem(POTION, POTION_LIFE, 0);
-}
-
-static boolean potions_take_one_slot_each(void) {
-    TEST_ASSERT_EQ(packItemCount(), packedBefore + 3,
-                   "three potions should occupy three pack slots");
+    int twoPotion = numberOfItemsInPack();
+    TEST_ASSERT(onePotion < twoPotion, "potions should not stack");
     return !testFailed;
 }
 
@@ -398,12 +423,16 @@ static boolean armor_adds_ten_defense_per_enchant(void) {
 
 static boolean donning_armor_reduces_defense(void) {
     emptyRoomSetup();
-    wearArmorOfEnchant(LEATHER_ARMOR, 0);
-    int donnedDefense = playerDefense();
-    takeOffArmor();
-    wearArmor(LEATHER_ARMOR); // worn without force, so you are still donning it
-    int midDonningDefense = playerDefense();
-    TEST_ASSERT(midDonningDefense < donnedDefense,
+    applyStatusToPlayer(STATUS_DONNING,0);
+    recalculateEquipmentBonuses();
+    int donning0 = playerDefense();
+    applyStatusToPlayer(STATUS_DONNING,1);
+    recalculateEquipmentBonuses();
+    int donning1 = playerDefense();
+    applyStatusToPlayer(STATUS_DONNING,2);
+    recalculateEquipmentBonuses();
+    int donning2 = playerDefense();
+    TEST_ASSERT(donning0 > donning1 && donning1 > donning2,
                 "armor should add less defense while it is being donned");
     return !testFailed;
 }
@@ -437,12 +466,11 @@ const testCase tests_items[] = {
 
     { "BR39162_staff_starts_with_charges",          NULL,                       NULL, staff_starts_with_charges },
     { "BR22095_charm_starts_ready",                 NULL,                       NULL, charm_starts_ready },
-    { "BR35670_same_potions_stack",                 NULL,                       NULL, same_potions_stack },
-    { "BR36426_potions_take_one_slot_each",         potion_slots_setup,         NULL, potions_take_one_slot_each },
+    { "BR35670_potions_do_not_stack",               NULL,                       NULL, potions_do_not_stack },
     { "BR32867_items_have_distinct_letters",        NULL,                       NULL, items_have_distinct_letters },
 
     { "BR30796_armor_adds_ten_defense_per_enchant", NULL,                       NULL, armor_adds_ten_defense_per_enchant },
-    { "BR30796_donning_armor_reduces_defense",      NULL,                       NULL, donning_armor_reduces_defense },
+    { "BR30796_donning_armor_reduces_defense",      NULL,  NULL, donning_armor_reduces_defense },
 
     { NULL, NULL, NULL, NULL }
 };

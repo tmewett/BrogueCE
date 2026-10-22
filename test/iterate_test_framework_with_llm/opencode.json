@@ -1,0 +1,24 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "local-llamacpp/qwen-local",
+  "share": "disabled",
+  "provider": {
+    "local-llamacpp": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "llama.cpp (Local)",
+      "options": {
+        "baseURL": "http://127.0.0.1:8012/v1"
+      },
+      "models": {
+        "qwen-local": {
+          "name": "qwen-local",
+          "supportsToolCalls": true,
+          "limit": {
+            "context": 262144,
+            "output": 8192
+          }
+        }
+      }
+    }
+  }
+}

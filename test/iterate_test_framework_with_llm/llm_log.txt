@@ -1,0 +1,202 @@
+--------------------------------------------
+Mon Oct 19 09:26:31 EDT 2026
+--------------------------------------------
+validate_random_rules
+BR34867
+BR53458
+BR47597
+OBJECTIVE
+Verify that rule IDs BR34867
+BR53458
+BR47597 meet the following requirements.
+
+REQUIREMENTS
+Rules for the game Brogue are collated into files in the directory rules/*.
+Rules MUST describe in-game behavior in one or two natural-language sentences.
+Rules MUST NOT name data structures, functions, or modules from the source code, but rather use in-game terminology for their descriptions.
+Rules MUST cite source code lines where that behavior is implemented in the game code.
+Rules MUST describe a single, simple, observable behavior.
+Rules MUST be assigned an ID beginning with BR followed by 5 random digits (such as BR39812). Use new_rule_id.sh to generate a new rule ID.
+Rule IDs MUST be unique across all rule files.
+
+OUTPUT
+Rules not meeting requirements SHOULD be appended to the file test/RulesNeedImprovement.txt with a short note describing the issue.
+
+Now I have all the information I need. Let me record my findings:
+Verification complete. Results for the three rules (citations checked against the pinned commit `104a20f`):
+
+**BR34867** — `rules/03-status-effects.md:225` — **PASS**
+- One natural-language sentence, in-game terminology ("entranced" is the player-visible status label, `Globals.c:1816`; the game prints "*is entranced!*", `Items.c:4610`).
+- Both citations implement the behavior: `Monsters.c:3340-3349` returns early from the monster's turn, and `Time.c:2456-2462` never calls the turn handler for an entranced creature.
+- Single observable behavior, valid unique ID (`BR34867`). It also has a passing test (`Tests_StatusEffects.c:612`).
+
+**BR53458** — `rules/07-player-interaction.md:146` — **FAILS** (appended to `test/RulesNeedImprovement.txt`)
+- "Monsters *flagged* to be omitted" describes a source-code mechanism, not in-game terminology.
+- "never listed there" is false: the cursor-focus path lists such a creature regardless of the trait (`IO.c:3718-3724`, `IO.c:3784-3791`), and the sidebar is redrawn with the focus first if the focused entity didn't make it onto the screen (`IO.c:3906-3909`). The citation `IO.c:3800-3802` only covers the automatic listing.
+- Also duplicates `BR48675`, which states the same behavior in in-game terms.
+
+**BR47597** — `rules/09-monsters-bestiary.md:10` — **FAILS** (appended to `test/RulesNeedImprovement.txt`)
+- The trailing parenthetical "(and, for a player, would not force item-dropping)" is a second, counterfactual behavior: the player never has the water-immunity trait (player entry grants only male/female, `Globals.c:1027-1028`), so it can never occur in game.
+- The cited lines (`Rogue.h:2077`, `Monsters.c:1395-1398`) don't implement that clause; the deep-water item loss is `Time.c:474-477`.
+
+`BR34867` needed no change; no rules were modified.
+--------------------------------------------
+Mon Oct 19 09:29:59 EDT 2026
+--------------------------------------------
+validate_random_rules_have_tests
+BR95398
+BR72064
+BR91557
+OBJECTIVE
+Verify that rule IDs BR95398
+BR72064
+BR91557 meet the following requirements.
+
+REQUIREMENTS
+Rules MUST have one or more associated tests in test/*
+Tests for a rule MUST include the rule ID in the test name.
+
+OUTPUT
+Rule IDs without tests SHOULD be appended to test/RulesMissingTests.txt only append the rule ID, no commentary.  Deduplicate the file to keep it clean.
+
+I'll start by exploring the repository structure to understand the layout.
+All three rule IDs appear in test files. Let me verify these are real, registered tests.
+All three have registered tests. Let me verify they actually run and pass.
+Build succeeded. Now running the three tests:
+Let me confirm the rule definitions themselves to ensure the test names map to the right rules.
+No rule IDs are missing tests. Creating the output file in a clean, empty state:
+Verification complete. All three rules pass.
+
+## Results
+
+| Rule ID | Rule location | Associated test | Test location | Status |
+|---|---|---|---|---|
+| BR95398 | `rules/02-combat.md:115` | `BR95398_monster_flees_at_quarter_health` | `test/Tests_Combat.c:529` | PASS |
+| BR72064 | `rules/09-monsters-bestiary.md:19` | `BR72064_keeps_distance` | `test/Tests_Bestiary.c:133` | PASS |
+| BR91557 | `rules/09-monsters-bestiary.md:24` | `BR91557_immune_webs` | `test/Tests_Bestiary.c:135` | PASS |
+
+**Requirement 1 — one or more associated tests in `test/*`:** satisfied. Each rule has a test registered in a suite that is linked into the master registry (`test/Tests.c:20` → `testSuites[]`).
+
+**Requirement 2 — rule ID in the test name:** satisfied. Each registered test name is prefixed with its rule ID.
+
+I also confirmed the tests are real and executable, not just name matches: built with `make GRAPHICS=NO TERMINAL=NO MAC_APP=NO` and ran each via `./bin/brogue --test <name>` — all three reported `PASS`.
+
+**Output:** Since no rule ID is missing a test, nothing was appended. `test/RulesMissingTests.txt` did not previously exist, so I created it empty (0 lines) to represent the clean state, which the downstream `write_missing_tests` step in `iterate-test-framework.sh` consumes as its input. No source files were modified; the rebuild only touched gitignored artifacts (`*.o`, `bin/brogue*`).
+--------------------------------------------
+Mon Oct 19 09:31:05 EDT 2026
+--------------------------------------------
+validate_random_tests
+BR10002
+BR68026
+BR57646
+
+OBJECTIVE
+Verify that tests for rule IDs BR10002
+BR68026
+BR57646 meet the following requirements.
+
+REQUIREMENTS
+Tests MUST be associated with a rule found in rules/*
+If a rule has more than one test, they MUST include a positive and negative test.
+Tests SHOULD NOT reference game engine components or data structures.  Use TestFramework functions which hide engine details instead.
+Tests MUST be falsifiable.  If a test succeeds when its test assertion is negated, it is not a valid test.
+
+OUTPUT
+Tests without associated rules SHOULD be appended to test/TestsMissingRules.txt with a short note describing the issue.
+Tests which directly examine engine components should be noted in test/TestsNeedImprovement.txt with a short note describing the issue.
+
+I'll start by exploring the repository structure to understand the codebase.
+Now let me verify falsifiability by mutation-testing (negating each assertion) to confirm the tests can actually fail.
+All six tests fail when negated — confirming they are falsifiable. Now restoring the originals:
+Let me check the broader picture — how many rules lack ID-matching tests, to see if BR57646 is an isolated case:
+Now I'll write the findings to the designated output files.
+Verification complete.
+
+## Results
+
+| Rule ID | Rule location | Test(s) | Status |
+|---|---|---|---|
+| BR10002 | `rules/10-player-death.md:3` | `BR10002_bolt` (`test/Tests_Death.c:167`) | Associated ✓, falsifiable ✓, **engine access ✗** |
+| BR68026 | `rules/09-monsters-bestiary.md:135` | `BR68026_discord` (`test/Tests_Bestiary.c:178`) | Associated ✓, falsifiable ✓, **engine access ✗** |
+| BR57646 | `rules/02-combat.md:55` | none named `BR57646_*` — behaviour covered by `BR11010_*` (`test/Tests_Runic.c`) | **Duplicate rule**, see below |
+
+**Falsifiability** was proven by mutation: I negated each of the 6 assertions, rebuilt, and confirmed all 6 tests reported `FAIL`; the originals were then restored (verified byte-identical via `git diff`) and all 6 report `PASS`.
+
+**Positive/negative pairing** — only BR11010/BR57646 has more than one test, and it satisfies the requirement: three negative tests (speed/quietus/paralysis runes do *not* fire on an invulnerable creature) plus one positive test (`BR11010_slaying_inanim` — slaying runes *do* still fire).
+
+**Key finding on BR57646:** it is a verbatim duplicate of BR11010 — same text, same citation (`Combat.c:615-616`) — so no test carries the `BR57646` ID, while the behaviour itself is well covered.
+
+## Output files written
+
+- `test/TestsNeedImprovement.txt` — 3 notes appended (BR10002, BR68026, BR57646/BR11010) covering the direct engine reads: `player.loc`, `subject->loc`, `rogue.gameHasEnded`, `player.ticksUntilTurn`, `rogue.weapon`, `warden->info.maxHP`, `item->vorpalEnemy`, each with the framework replacement (`getPlayerPos()`, `monsterPosition()`, `isPlayerDead()`, `ticksUntilPlayerActs()`, `equippedWeapon()`, `monsterMaxHealth()`). Also flagged two coverage gaps: BR10002's "attributed to that monster" clause is unasserted (and the attribution text is drawn via `printString()`, so it never reaches the message log), and BR68026's test only checks the spell list, never the discord effect.
+- `test/TestsMissingRules.txt` — created empty: none of the three targets' tests lack a rule.
+- `test/RulesMissingTests.txt` — appended `BR57646` (rule ID only), since no test name carries that ID and the pipeline's backfill step consumes this file.
+
+One framework gap worth acting on: there is no way to set a slaying rune's target class through the TestFramework API, so `slaying->vorpalEnemy = ...` cannot currently be hidden from tests — a helper is needed before `BR11010_slaying_inanim` can be cleaned up.
+--------------------------------------------
+Mon Oct 19 09:36:11 EDT 2026
+--------------------------------------------
+find_missing_rules
+[Buttons.c:157-175](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L157-L175)
+
+OBJECTIVE
+Verify that the in-game behaviors described by source code at [Buttons.c:157-175](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L157-L175) is captured by one or more rules in rules/*
+
+REQUIREMENTS
+Each observable in-game behavior MUST have a rule describing it in rules/*
+Rules MUST describe in-game behavior in one or two natural-language sentences.
+Each rule MUST cite the source code where the in-game behavior is implemented.
+Rules MUST be assigned an ID beginning with BR followed by 5 random digits (such as BR39812). Use new_rule_id.sh to generate a new rule ID.
+Rule IDs MUST be unique across all rule files.  Use new_rule_id.sh to generate new rule IDs.
+
+OUTPUT
+Missing rules SHOULD be added to rules/NewRules.txt with a short note and precise citation for the missing behavior.
+
+I'll start by exploring the working directory to understand the structure and the task.
+Now let me generate unique rule IDs using the provided script:
+Now I'll append the new rules to `rules/NewRules.txt`:
+Verification complete. Here's what I found and did.
+
+## Scope of the cited block
+
+`src/brogue/Buttons.c` at pinned commit `104a20f` is byte-identical to the working tree. Lines 157–175 (16 non-comment code lines) cover:
+
+- **159–173** `drawButtonsInState` — paints every button of a menu, choosing a normal / hover / pressed look per button
+- **175** opening line of `initializeButtonState` (body at 182–191)
+
+## Coverage check
+
+Existing rules in `rules/*` only cover button *input* (`BR91827` choosing a button, `BR25868` cancelling, `BR30441` cancel-counts-as-No) and button *content* (`BR22832`, `BR65948` bottom-row buttons). **No rule describes how a button is drawn** — hover highlight, pressed look, hidden controls, or the initial menu state.
+
+## Rules added to `rules/NewRules.txt`
+
+| ID | Behavior | Citation |
+|---|---|---|
+| **BR11267** | Button under the mouse pointer is drawn in a warmer, brighter tint | `Buttons.c:163-166`, `Buttons.c:53-58` |
+| **BR35576** | Button held down is drawn darker with a dimmed label, and that look overrides the hover tint | `Buttons.c:167-170`, `Buttons.c:64-70`, `Buttons.c:93-95` |
+| **BR23709** | Controls not marked for display are never painted, yet still answer the keyboard (invisible prev/next for arrow-key paging) | `Buttons.c:161-162`, `IO.c:5129-5141`, `Items.c:3007-3015` |
+| **BR20238** | A freshly opened menu has no highlighted, held-down, or chosen button | `Buttons.c:182-191` |
+
+Each entry follows the file's existing format (quoted one-or-two-sentence rule, `Citation:` line with pinned permalinks, and a `Note:` explaining the gap). IDs were generated with `new_rule_id.sh` and confirmed unique across `rules/` and `test/`.
+
+Two accuracy notes from reading the code: the pressed branch comes *after* the hover branch, so a held-down button shows the pressed look rather than the hover tint; and a hotkey press does **not** flash the pressed style, because the depressed state is assigned only after the redraw (`Buttons.c:279` vs `Buttons.c:295`) — so no rule claims a hotkey flash.
+--------------------------------------------
+Mon Oct 19 09:39:56 EDT 2026
+--------------------------------------------
+write_missing_tests
+
+OBJECTIVE
+The tests for rules in test/RulesMissingTests.txt are missing.  Write tests which meets the requirements below and add it to test/*
+
+REQUIREMENTS
+Tests SHOULD NOT reference game engine components or data structures.  Use TestFramework functions which hide engine details instead.
+Tests MUST be falsifiable.  If a test succeeds when its test assertion is negated, it is not a valid test.
+
+Build Brogue for testing using: make GRAPHICS=NO TERMINAL=NO MAC_APP=NO
+Run a specific test using: ./bin/brogue --test <<TEST_NAME>>
+
+--------------------------------------------
+Mon Oct 19 15:43:10 EDT 2026
+--------------------------------------------
+fix_broken_tests
+Run all tests using test/run_tests.sh and fix any tests which are failing.  Only modify files in test/*
