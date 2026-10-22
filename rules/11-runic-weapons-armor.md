@@ -22,7 +22,7 @@
   [Combat.c:498-589](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L498-L589)
 - **BR11007** — A slaying rune always hits and instantly kills creatures of its designated kind.
   [Combat.c:613-614](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L613-L614) [Combat.c:655-665](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L655-L665)
-- **BR11008** — A mercy rune heals the creature it strikes instead of harming it.
+- **BR11008** — When a mercy rune activates, it heals the creature that was struck.
   [Combat.c:764-769](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L764-L769)
 - **BR11009** — A plenty rune creates a duplicate of the struck creature.
   [Combat.c:770-778](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L770-L778)
