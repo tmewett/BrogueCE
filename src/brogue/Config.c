@@ -92,8 +92,6 @@ static char* loadConfigFile(void) {
 }
 
 static configField* getFieldEntries(configParams* config) {
-    int numFields = 7;
-
     configField fieldDescriptors[] = {
         {"gameVariant", &(config->gameVariant), ENUM_STRING, {.enumMappings = variantMappings}},
         {"graphicsMode", &(config->graphicsMode), ENUM_STRING, {.enumMappings = graphicsModeMappings}},
@@ -103,12 +101,8 @@ static configField* getFieldEntries(configParams* config) {
         {"colorEffectsEnabled", &(config->colorEffectsEnabled), BOOLEAN_TYPE},
         {NULL}};
 
-    configField* entries = calloc(numFields + 1, sizeof(configField));
-
-    for (int i = 0; i < numFields; i++) {
-        entries[i] = fieldDescriptors[i];
-    }
-
+    configField* entries = malloc(sizeof(fieldDescriptors));
+    memcpy(entries, fieldDescriptors, sizeof(fieldDescriptors));
     return entries;
 }
 
@@ -150,61 +144,61 @@ static void parseConfigValues(const char* jsonString, configParams* config) {
     configField* entries = getFieldEntries(config);
 
     for (int i = 0; entries[i].name; i++) {
+        intRange valueRange;
         cJSON* jsonField = cJSON_GetObjectItem(root, entries[i].name);
         if (!jsonField) continue;
         
         switch (entries[i].type) {
-        case INT_TYPE: {
-            intRange valueRange = entries[i].validator.intRange;
+            case INT_TYPE:
+                valueRange = entries[i].validator.intRange;
 
-            // Clamp to range of short
-            valueRange.min = max(INT16_MIN, valueRange.min); // We're assuming short means 16 bits...
-            valueRange.max = min(INT16_MAX, valueRange.max);
+                // Clamp to range of short
+                valueRange.min = max(INT16_MIN, valueRange.min); // We're assuming short means 16 bits...
+                valueRange.max = min(INT16_MAX, valueRange.max);
 
-            if (cJSON_IsNumber(jsonField)) {
-                int value = jsonField->valueint;
-                if (value >= valueRange.min && value <= valueRange.max) {
-                    *((short*)entries[i].paramPointer) = value;
+                if (cJSON_IsNumber(jsonField)) {
+                    int value = jsonField->valueint;
+                    if (value >= valueRange.min && value <= valueRange.max) {
+                        *((short*)entries[i].paramPointer) = value;
+                    } else {
+                        fprintf(stderr, "ERROR: Value '%d' not valid for field '%s'.  Using default '%d' instead.\n", value, entries[i].name, valueRange.min);
+                        *((short*)entries[i].paramPointer) = valueRange.min;
+                    }
                 } else {
-                    fprintf(stderr, "ERROR: Value '%d' not valid for field '%s'.  Using default '%d' instead.\n", value, entries[i].name, valueRange.min);
+                    fprintf(stderr, "ERROR: Invalid type for field '%s'.  Using default '%d' instead.\n", entries[i].name, valueRange.min);
                     *((short*)entries[i].paramPointer) = valueRange.min;
                 }
-            } else {
-                fprintf(stderr, "ERROR: Invalid type for field '%s'.  Using default '%d' instead.\n", entries[i].name, valueRange.min);
-                *((short*)entries[i].paramPointer) = valueRange.min;
-            }
-            }
-            break;
+                break;
 
-        case BOOLEAN_TYPE:
-            if (cJSON_IsBool(jsonField)) {
-                *((boolean*)entries[i].paramPointer) = cJSON_IsTrue(jsonField) ? true : false;
-            } else {
-                fprintf(stderr, "ERROR: Invalid type for field '%s'.  Using default 'false'.\n", entries[i].name);
-                *((boolean*)entries[i].paramPointer) = false;
-            }
-            break;
-
-        case ENUM_STRING:
-            if (cJSON_IsString(jsonField)) {
-                const char* modeString = jsonField->valuestring;
-                short index = mapStringToEnum(modeString, entries[i].validator.enumMappings);
-
-                if (index != -1) {
-                    *((short*)entries[i].paramPointer) = index;
+            case BOOLEAN_TYPE:
+                if (cJSON_IsBool(jsonField)) {
+                    *((boolean*)entries[i].paramPointer) = cJSON_IsTrue(jsonField) ? true : false;
                 } else {
-                    fprintf(stderr, "ERROR: String '%s' not valid for field '%s'.  Using default '%s' instead.\n", modeString, entries[i].name, entries[i].validator.enumMappings[0]);
+                    fprintf(stderr, "ERROR: Invalid type for field '%s'.  Using default 'false'.\n", entries[i].name);
+                    *((boolean*)entries[i].paramPointer) = false;
+                }
+                break;
+
+            case ENUM_STRING:
+                if (cJSON_IsString(jsonField)) {
+                    const char* modeString = jsonField->valuestring;
+                    short index = mapStringToEnum(modeString, entries[i].validator.enumMappings);
+
+                    if (index != -1) {
+                        *((short*)entries[i].paramPointer) = index;
+                    } else {
+                        fprintf(stderr, "ERROR: String '%s' not valid for field '%s'.  Using default '%s' instead.\n", modeString, entries[i].name, entries[i].validator.enumMappings[0]);
+                        *((short*)entries[i].paramPointer) = 0;
+                    }
+                } else {
+                    fprintf(stderr, "ERROR: Invalid type for field '%s'.  Using default '%s' instead.\n", entries[i].name, entries[i].validator.enumMappings[0]);
                     *((short*)entries[i].paramPointer) = 0;
                 }
-            } else {
-                fprintf(stderr, "ERROR: Invalid type for field '%s'.  Using default '%s' instead.\n", entries[i].name, entries[i].validator.enumMappings[0]);
-                *((short*)entries[i].paramPointer) = 0;
-            }
-            break;
+                break;
 
-        default:
-            fprintf(stderr, "ERROR: Unknown field type for field '%s', ignoring.\n", entries[i].name);
-            break;
+            default:
+                fprintf(stderr, "ERROR: Unknown field type for field '%s', ignoring.\n", entries[i].name);
+                break;
         }
     }
 
@@ -219,25 +213,25 @@ static char* createJsonString(configParams* config) {
 
     for (int i = 0; entries[i].name; i++) {
         switch (entries[i].type) {
-        case INT_TYPE: {
-            short short_value = *((short*)entries[i].paramPointer);
-            cJSON_AddNumberToObject(root, entries[i].name, short_value);
-            break;
-        }
-        case BOOLEAN_TYPE: {
-            boolean bool_value = *((boolean*)entries[i].paramPointer);
-            cJSON_AddBoolToObject(root, entries[i].name, bool_value);
-            break;
-        }
-        case ENUM_STRING: {
-            short enum_value = *((short*)entries[i].paramPointer);
-            const char* string_value = entries[i].validator.enumMappings[enum_value];
-            cJSON_AddStringToObject(root, entries[i].name, string_value);
-            break;
-        }
+            case INT_TYPE: {
+                short short_value = *((short*)entries[i].paramPointer);
+                cJSON_AddNumberToObject(root, entries[i].name, short_value);
+                break;
+            }
+            case BOOLEAN_TYPE: {
+                boolean bool_value = *((boolean*)entries[i].paramPointer);
+                cJSON_AddBoolToObject(root, entries[i].name, bool_value);
+                break;
+            }
+            case ENUM_STRING: {
+                short enum_value = *((short*)entries[i].paramPointer);
+                const char* string_value = entries[i].validator.enumMappings[enum_value];
+                cJSON_AddStringToObject(root, entries[i].name, string_value);
+                break;
+            }
 
-        default:
-            break;
+            default:
+                break;
         }
     }
 
