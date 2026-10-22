@@ -1,0 +1,1 @@
+Fixed an issue where polymorphing a monster did not clear its old poison and weakness stacks, which could reappear and stack further when the new form was poisoned or weakened.

@@ -546,13 +546,8 @@ enum tileType {
     MACHINE_FLOOD_WATER_DORMANT,
     MACHINE_FLOOD_WATER_SPREADING,
     MACHINE_MUD_DORMANT,
-    ICE_DEEP,
-    ICE_DEEP_MELT,
-    ICE_SHALLOW,
-    ICE_SHALLOW_MELT,
 
     HOLE,
-    HOLE_GLOW,
     HOLE_EDGE,
     FLOOD_WATER_DEEP,
     FLOOD_WATER_SHALLOW,
@@ -1049,7 +1044,6 @@ enum monsterTypes {
     MK_WINGED_GUARDIAN,
     MK_CHARM_GUARDIAN,
     MK_WARDEN_OF_YENDOR,
-    MK_ELDRITCH_TOTEM,
     MK_MIRRORED_TOTEM,
 
     MK_UNICORN,
@@ -1607,15 +1601,6 @@ enum dungeonFeatureTypes {
     DF_HOLE_2,
     DF_HOLE_DRAIN,
 
-    DF_DEEP_WATER_FREEZE,
-    DF_ALGAE_1_FREEZE,
-    DF_ALGAE_2_FREEZE,
-    DF_DEEP_WATER_MELTING,
-    DF_DEEP_WATER_THAW,
-    DF_SHALLOW_WATER_FREEZE,
-    DF_SHALLOW_WATER_MELTING,
-    DF_SHALLOW_WATER_THAW,
-
     DF_POISON_GAS_CLOUD,
     DF_CONFUSION_GAS_TRAP_CLOUD,
     DF_NET,
@@ -1633,8 +1618,6 @@ enum dungeonFeatureTypes {
 
     // other items
     DF_ARMOR_IMMOLATION,
-    DF_STAFF_HOLE,
-    DF_STAFF_HOLE_EDGE,
 
     // commutation altar
     DF_ALTAR_COMMUTE,
@@ -1658,7 +1641,6 @@ enum dungeonFeatureTypes {
     // throwing tutorial -- button in chasm
     DF_CAGE_DISAPPEARS,
     DF_MEDIUM_HOLE,
-    DF_MEDIUM_LAVA_POND,
     DF_MACHINE_PRESSURE_PLATE_USED,
 
     // rat trap
@@ -1726,7 +1708,6 @@ enum dungeonFeatureTypes {
     DF_WORM_TUNNEL_MARKER_DORMANT,
     DF_WORM_TUNNEL_MARKER_ACTIVE,
     DF_GRANITE_CRUMBLES,
-    DF_WALL_OPEN,
 
     // the room gradually darkens
     DF_DARKENING_FLOOR,
@@ -2007,7 +1988,6 @@ enum statusEffects {
     STATUS_NUTRITION,
     STATUS_ENTERS_LEVEL_IN,
     STATUS_ENRAGED, // temporarily ignores normal MA_AVOID_CORRIDORS behavior
-    STATUS_MAGICAL_FEAR,
     STATUS_ENTRANCED,
     STATUS_DARKNESS,
     STATUS_LIFESPAN_REMAINING,
@@ -2085,6 +2065,7 @@ enum monsterBehaviorFlags {
     MONST_NOT_LISTED_IN_SIDEBAR     = Fl(27),   // monster doesn't show up in the sidebar
     MONST_GETS_TURN_ON_ACTIVATION   = Fl(28),   // monster never gets a turn, except when its machine is activated
     MONST_ALWAYS_USE_ABILITY        = Fl(29),   // monster will never fail to use special ability if eligible (no random factor)
+                                                // summoning does NOT respect MONST_ALWAYS_USE_ABILITY
     MONST_NO_POLYMORPH              = Fl(30),   // monster cannot result from a polymorph spell (liches, phoenixes and Warden of Yendor)
 
     NEGATABLE_TRAITS                = (MONST_INVISIBLE | MONST_DEFEND_DEGRADE_WEAPON | MONST_IMMUNE_TO_WEAPONS | MONST_FLIES
@@ -2295,8 +2276,8 @@ typedef struct creature {
     short turnsSpentStationary;         // how many (subjective) turns it's been since the creature moved between tiles
     short flashStrength;                // monster will flash soon; this indicates the percent strength of flash
     color flashColor;                   // the color that the monster will flash
-    short status[NUMBER_OF_STATUS_EFFECTS];
-    short maxStatus[NUMBER_OF_STATUS_EFFECTS]; // used to set the max point on the status bars
+    int status[NUMBER_OF_STATUS_EFFECTS];
+    int maxStatus[NUMBER_OF_STATUS_EFFECTS]; // used to set the max point on the status bars
     unsigned long bookkeepingFlags;
     short spawnDepth;                   // keep track of the depth of the machine to which they relate (for activation monsters)
     short machineHome;                  // monsters that spawn in a machine keep track of the machine number here (for activation monsters)
@@ -2349,7 +2330,9 @@ enum featTypes {
     FEAT_JELLYMANCER,
     FEAT_DRAGONSLAYER,
     FEAT_PALADIN,
-    FEAT_TONE
+    FEAT_TONE,
+    FEAT_MIRROR_IMAGE,
+    FEAT_ESOTERIC
 };
 
 enum exitStatus {
@@ -2721,7 +2704,6 @@ enum machineTypes {
     MT_KEY_GUARDIAN_GAUNTLET_ROOM,
     MT_KEY_GUARDIAN_CORRIDOR_ROOM,
     MT_KEY_SACRIFICE_ROOM,
-    MT_KEY_SUMMONING_CIRCLE_ROOM,
     MT_KEY_BECKONING_OBSTACLE_ROOM,
     MT_KEY_WORM_TRAP_AREA,
     MT_KEY_MUD_TRAP_ROOM,
@@ -2974,12 +2956,12 @@ extern "C" {
     void displayGrid(short **map);
     void printSeed(void);
     void printProgressBar(short x, short y, const char barLabel[COLS], long amtFilled, long amtMax, const color *fillColor, boolean dim);
-    short printMonsterInfo(creature *monst, short y, boolean dim, boolean highlight);
+    short printMonsterInfo(const creature *monst, short y, boolean dim, boolean highlight);
     enum displayGlyph getItemCategoryGlyph(const enum itemCategory theCategory);
     enum itemCategory getHallucinatedItemCategory(void);
     void describedItemName(const item *theItem, char *description, int maxLength);
     void describeHallucinatedItem(char *buf);
-    short printItemInfo(item *theItem, short y, boolean dim, boolean highlight);
+    short printItemInfo(const item *theItem, short y, boolean dim, boolean highlight);
     short printTerrainInfo(short x, short y, short py, const char *description, boolean dim, boolean highlight);
     void rectangularShading(short x, short y, short width, short height,
                             const color *backColor, short opacity, screenDisplayBuffer *dbuf);
@@ -2987,8 +2969,8 @@ extern "C" {
                        const color *foreColor, const color *backColor,
                        brogueButton *buttons, short buttonCount);
     void setButtonText(brogueButton *button, const char *textWithHotkey, const char *textWithoutHotkey);
-    void printMonsterDetails(creature *monst);
-    void printFloorItemDetails(item *theItem);
+    void printMonsterDetails(const creature *monst);
+    void printFloorItemDetails(const item *theItem);
     unsigned long printCarriedItemDetails(item *theItem,
                                           short x, short y, short width,
                                           boolean includeButtons);
@@ -3078,9 +3060,9 @@ extern "C" {
     void exposeCreatureToFire(creature *monst);
     void updateFlavorText(void);
     void updatePlayerUnderwaterness(void);
-    boolean monsterShouldFall(creature *monst);
+    boolean monsterShouldFall(const creature *monst);
     void applyInstantTileEffectsToCreature(creature *monst);
-    void vomit(creature *monst);
+    void vomit(const creature *monst);
     void becomeAllyWith(creature *monst);
     void freeCaptive(creature *monst);
     boolean freeCaptivesEmbeddedAt(short x, short y);
@@ -3091,18 +3073,18 @@ extern "C" {
     void calculateDistances(short **distanceMap,
                             short destinationX, short destinationY,
                             unsigned long blockingTerrainFlags,
-                            creature *traveler,
+                            const creature *traveler,
                             boolean canUseSecretDoors,
                             boolean eightWays);
     short pathingDistance(short x1, short y1, short x2, short y2, unsigned long blockingTerrainFlags);
-    short nextStep(short **distanceMap, pos target, creature *monst, boolean reverseDirections);
+    short nextStep(short **distanceMap, pos target, const creature *monst, boolean reverseDirections);
     void travelRoute(pos path[1000], short steps);
     void travel(pos target, boolean autoConfirm);
     void populateGenericCostMap(short **costMap);
     void getLocationFlags(const short x, const short y,
                           unsigned long *tFlags, unsigned long *TMFlags, unsigned long *cellFlags,
                           const boolean limitToPlayerKnowledge);
-    void populateCreatureCostMap(short **costMap, creature *monst);
+    void populateCreatureCostMap(short **costMap, const creature *monst);
     enum directions adjacentFightingDir(void);
     void getExploreMap(short **map, boolean headingToStairs);
     boolean explore(short frameDelay);
@@ -3182,81 +3164,81 @@ extern "C" {
     boolean removeCreature(creatureList *list, creature *remove);
     creature *firstCreature(creatureList *list);
 
-    boolean canNegateCreatureStatusEffects(creature *monst);
+    boolean canNegateCreatureStatusEffects(const creature *monst);
     void negateCreatureStatusEffects(creature *monst);
-    boolean monsterIsNegatable(creature *monst);
+    boolean monsterIsNegatable(const creature *monst);
 
     boolean monsterWillAttackTarget(const creature *attacker, const creature *defender);
     boolean monstersAreTeammates(const creature *monst1, const creature *monst2);
     boolean monstersAreEnemies(const creature *monst1, const creature *monst2);
     void initializeGender(creature *monst);
     boolean stringsMatch(const char *str1, const char *str2);
-    void resolvePronounEscapes(char *text, creature *monst);
+    void resolvePronounEscapes(char *text, const creature *monst);
     short pickHordeType(short depth, enum monsterTypes summonerType, unsigned long forbiddenFlags, unsigned long requiredFlags);
     creature *cloneMonster(creature *monst, boolean announce, boolean placeClone);
     void empowerMonster(creature *monst);
-    unsigned long forbiddenFlagsForMonster(creatureType *monsterType);
-    unsigned long avoidedFlagsForMonster(creatureType *monsterType);
-    boolean monsterCanSubmergeNow(creature *monst);
+    unsigned long forbiddenFlagsForMonster(const creatureType *monsterType);
+    unsigned long avoidedFlagsForMonster(const creatureType *monsterType);
+    boolean monsterCanSubmergeNow(const creature *monst);
     void populateMonsters(void);
     void updateMonsterState(creature *monst);
     void decrementMonsterStatus(creature *monst);
     boolean specifiedPathBetween(short x1, short y1, short x2, short y2,
                                  unsigned long blockingTerrain, unsigned long blockingFlags);
-    boolean traversiblePathBetween(creature *monst, short x2, short y2);
+    boolean traversiblePathBetween(const creature *monst, short x2, short y2);
     boolean openPathBetween(const pos startLoc, const pos targetLoc);
     creature *monsterAtLoc(pos p);
     creature *dormantMonsterAtLoc(pos p);
     pos perimeterCoords(short n);
     boolean monsterBlinkToPreferenceMap(creature *monst, short **preferenceMap, boolean blinkUphill);
-    boolean monsterSummons(creature *monst, boolean alwaysUse);
+    boolean monsterSummons(creature *monst);
     boolean resurrectAlly(const pos loc);
     void unAlly(creature *monst);
-    boolean monsterFleesFrom(creature *monst, creature *defender);
+    boolean monsterFleesFrom(const creature *monst, const creature *defender);
     void monstersTurn(creature *monst);
     boolean getRandomMonsterSpawnLocation(short *x, short *y);
     void spawnPeriodicHorde(void);
     void initializeStatus(creature *monst);
-    void handlePaladinFeat(creature *defender);
-    void moralAttack(creature *attacker, creature *defender);
-    void splitMonster(creature *monst, creature *attacker);
+    void handlePaladinFeat(const creature *defender);
+    void moralAttack(const creature *attacker, creature *defender);
+    void splitMonster(creature *monst, const creature *attacker);
     short runicWeaponChance(const item *theItem, boolean customEnchantLevel, fixpt enchantLevel);
     void magicWeaponHit(creature *defender, item *theItem, boolean backstabbed);
     void disentangle(creature *monst);
     void teleport(creature *monst, pos destination, boolean respectTerrainAvoidancePreferences);
     void chooseNewWanderDestination(creature *monst);
-    boolean canPass(creature *mover, creature *blocker);
+    boolean canPass(const creature *mover, const creature *blocker);
     boolean isPassableOrSecretDoor(pos loc);
     boolean knownToPlayerAsPassableOrSecretDoor(pos loc);
     void setMonsterLocation(creature *monst, pos newLoc);
     boolean moveMonster(creature *monst, short dx, short dy);
     unsigned long burnedTerrainFlagsAtLoc(pos loc);
     unsigned long discoveredTerrainFlagsAtLoc(pos loc);
-    boolean monsterAvoids(creature *monst, pos p);
+    boolean monsterAvoids(const creature *monst, pos p);
     short distanceBetween(pos loc1, pos loc2);
     void alertMonster(creature *monst);
     void wakeUp(creature *monst);
-    boolean monsterRevealed(creature *monst);
+    boolean monsterRevealed(const creature *monst);
     boolean monsterHiddenBySubmersion(const creature *monst, const creature *observer);
     boolean monsterIsHidden(const creature *monst, const creature *observer);
-    boolean canSeeMonster(creature *monst);
-    boolean canDirectlySeeMonster(creature *monst);
-    void monsterName(char *buf, creature *monst, boolean includeArticle);
+    boolean canSeeMonster(const creature *monst);
+    boolean canDirectlySeeMonster(const creature *monst);
+    void monsterName(char *buf, const creature *monst, boolean includeArticle);
     boolean monsterIsInClass(const creature *monst, const short monsterClass);
     boolean chooseTarget(pos *returnLoc, short maxDistance, enum autoTargetMode targetingMode, const item *theItem);
-    fixpt strengthModifier(item *theItem);
-    fixpt netEnchant(item *theItem);
-    short hitProbability(creature *attacker, creature *defender);
-    boolean attackHit(creature *attacker, creature *defender);
+    fixpt strengthModifier(const item *theItem);
+    fixpt netEnchant(const item *theItem);
+    short hitProbability(const creature *attacker, const creature *defender);
+    boolean attackHit(const creature *attacker, const creature *defender);
     void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *damage, boolean melee);
-    void processStaggerHit(creature *attacker, creature *defender);
+    void processStaggerHit(const creature *attacker, creature *defender);
     boolean attack(creature *attacker, creature *defender, boolean lungeAttack);
     void inflictLethalDamage(creature *attacker, creature *defender);
     boolean inflictDamage(creature *attacker, creature *defender,
                           short damage, const color *flashColor, boolean ignoresProtectionShield);
     void addPoison(creature *monst, short totalDamage, short concentrationIncrement);
     void killCreature(creature *decedent, boolean administrativeDeath);
-    void buildHitList(const creature **hitList, const creature *attacker, creature *defender, const boolean sweep);
+    void buildHitList(creature **hitList, const creature *attacker, creature *defender, const boolean sweep);
     void addScentToCell(short x, short y, short distance);
     void populateItems(pos upstairs);
     item *placeItemAt(item *theItem, pos dest);
@@ -3275,11 +3257,11 @@ extern "C" {
     void slow(creature *monst, short turns);
     void haste(creature *monst, short turns);
     void heal(creature *monst, short percent, boolean panacea);
-    boolean projectileReflects(creature *attacker, creature *defender);
+    boolean projectileReflects(const creature *attacker, const creature *defender);
     short reflectBolt(short targetX, short targetY, pos listOfCoordinates[], short kinkCell, boolean retracePath);
     void checkForMissingKeys(short x, short y);
-    enum boltEffects boltEffectForItem(item *theItem);
-    enum boltType boltForItem(item *theItem);
+    enum boltEffects boltEffectForItem(const item *theItem);
+    enum boltType boltForItem(const item *theItem);
     boolean zap(pos originLoc, pos targetLoc, bolt *theBolt, boolean hideDetails, boolean reverseBoltDir);
     boolean nextTargetAfter(const item *theItem,
                             pos *returnLoc,
@@ -3301,9 +3283,9 @@ extern "C" {
     char nextAvailableInventoryCharacter(void);
     void checkForDisenchantment(item *theItem);
     void updateFloorItems(void);
-    void itemKindName(item *theItem, char *kindName);
-    void itemRunicName(item *theItem, char *runicName);
-    void itemName(item *theItem, char *root, boolean includeDetails, boolean includeArticle, const color *baseColor);
+    void itemKindName(const item *theItem, char *kindName);
+    void itemRunicName(const item *theItem, char *runicName);
+    void itemName(const item *theItem, char *root, boolean includeDetails, boolean includeArticle, const color *baseColor);
     int itemKindCount(enum itemCategory category, int magicPolarity);
     char displayInventory(unsigned short categoryMask,
                           unsigned long requiredFlags,
@@ -3322,8 +3304,8 @@ extern "C" {
     boolean itemIsPositivelyEnchanted(const item *theItem);
     void updateEncumbrance(void);
     short displayedArmorValue(void);
-    short armorValueIfUnenchanted(item *theItem);
-    void strengthCheck(item *theItem, boolean noisy);
+    short armorValueIfUnenchanted(const item *theItem);
+    void strengthCheck(const item *theItem, boolean noisy);
     void recalculateEquipmentBonuses(void);
     boolean equipItem(item *theItem, boolean force, item *unequipHint);
     void equip(item *theItem);
@@ -3378,14 +3360,14 @@ extern "C" {
     void checkForContinuedLeadership(creature *monst);
     void demoteMonsterFromLeadership(creature *monst);
     void toggleMonsterDormancy(creature *monst);
-    void monsterDetails(char buf[], creature *monst);
+    void monsterDetails(char buf[], const creature *monst);
     void makeMonsterDropItem(creature *monst);
     void throwCommand(item *theItem, boolean autoThrow);
     void relabel(item *theItem);
     void swapLastEquipment(void);
     void apply(item *theItem);
     boolean eat(item *theItem, boolean recordCommands);
-    boolean itemCanBeCalled(item *theItem);
+    boolean itemCanBeCalled(const item *theItem);
     void call(item *theItem);
     short chooseVorpalEnemy(void);
     void describeMonsterClass(char *buf, const short classID, boolean conjunctionAnd);
@@ -3406,19 +3388,19 @@ extern "C" {
     item *itemOfPackLetter(char letter);
     boolean unequipItem(item *theItem, boolean force);
     short magicCharDiscoverySuffix(short category, short kind);
-    int itemMagicPolarity(item *theItem);
+    int itemMagicPolarity(const item *theItem);
     item *itemAtLoc(pos loc);
     item *dropItem(item *theItem);
     itemTable *tableForItemCategory(enum itemCategory theCat);
     boolean isVowelish(char *theChar);
     short charmEffectDuration(short charmKind, short enchant);
     short charmRechargeDelay(short charmKind, short enchant);
-    boolean itemIsCarried(item *theItem);
-    void itemDetails(char *buf, item *theItem);
+    boolean itemIsCarried(const item *theItem);
+    void itemDetails(char *buf, const item *theItem);
     void deleteItem(item *theItem);
     void deleteItemList(item *theItem);
     void shuffleFlavors(void);
-    unsigned long itemValue(item *theItem);
+    unsigned long itemValue(const item *theItem);
     short strLenWithoutEscapes(const char *str);
     void combatMessage(char *theMsg, const color *theColor);
     void displayCombatText(void);
@@ -3444,7 +3426,7 @@ extern "C" {
     void autoPlayLevel(boolean fastForward);
     void updateClairvoyance(void);
     short scentDistance(short x1, short y1, short x2, short y2);
-    short armorStealthAdjustment(item *theArmor);
+    short armorStealthAdjustment(const item *theArmor);
     short currentStealthRange(void);
 
     void considerFlushingBufferToFile();
@@ -3473,7 +3455,7 @@ extern "C" {
     void parseFile(void);
     void RNGLog(char *message);
 
-    short wandDominate(creature *monst);
+    short wandDominate(const creature *monst);
     short staffDamageLow(fixpt enchant);
     short staffDamageHigh(fixpt enchant);
     short staffDamage(fixpt enchant);
