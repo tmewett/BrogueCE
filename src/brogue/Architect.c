@@ -3815,46 +3815,50 @@ void initializeLevel(pos upStairsLoc) {
     freeGrid(mapToPit);
 }
 
-static boolean locationEmpty(const pos loc) {
+static boolean locationEmpty(pos loc) {
     return !(pmapAt(loc)->flags & (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | HAS_ITEM | IS_IN_MACHINE));
 }
 
-static boolean filterTerrain(const pos loc, short terrainType) {
+static boolean filterTerrain(pos loc, short terrainType) {
     // Wildcard terrainType always matches
     if (terrainType < 0) return true;
 
     boolean terrainMatch = cellHasTerrainType(loc, terrainType);
 
-    // If the terrainType does not obstruct monsters then the location must not obstruct monsters
-    boolean monsterMatch =
-        !(tileCatalog[terrainType].flags & T_PATHING_BLOCKER)
-        && !cellHasTerrainFlag(loc, T_PATHING_BLOCKER);
+    // How do the tiles respond to pathing?
+    boolean desiredTileAllowsPathing  = !(tileCatalog[terrainType].flags & T_PATHING_BLOCKER);
+    boolean selectedTileAllowsPathing = !cellHasTerrainFlag(loc, T_PATHING_BLOCKER);
 
-    return terrainMatch && monsterMatch;
+    // The desired and selected tile must match path-blocking behavior
+    boolean pathingMatch = desiredTileAllowsPathing == selectedTileAllowsPathing;
+
+    return terrainMatch && pathingMatch;
 }
 
-static boolean filterDungeon(const pos loc, short dungeonType) {
+static boolean filterDungeon(pos loc, short dungeonType) {
     // Wildcard dungeonType always matches
     if (dungeonType < 0) return true;
 
     boolean dungeonMatch = pmapAt(loc)->layers[DUNGEON] == dungeonType;
 
-    // If the dungeonType does not obstruct items then the cell must not obstruct items
-    boolean itemMatch =
-        !(tileCatalog[dungeonType].flags & T_OBSTRUCTS_ITEMS)
-        && !cellHasTerrainFlag(loc, T_OBSTRUCTS_ITEMS);
+    // How do the tiles respond to items?
+    boolean desiredTileAllowsItems  = !(tileCatalog[dungeonType].flags & T_OBSTRUCTS_ITEMS);
+    boolean selectedTileAllowsItems = !cellHasTerrainFlag(loc, T_OBSTRUCTS_ITEMS);
+
+    // The desired and selected tile must match item-blocking behavior
+    boolean itemMatch = desiredTileAllowsItems == selectedTileAllowsItems;
 
     return dungeonMatch && itemMatch;
 }
 
-static boolean filterLiquid(const pos loc, short liquidType) {
+static boolean filterLiquid(pos loc, short liquidType) {
     // Wildcard liquidType always matches
     if (liquidType < 0) return true;
 
     return pmapAt(loc)->layers[LIQUID] == liquidType;
 }
 
-static boolean filterLocation(const pos loc, short dungeonType, short liquidType, short terrainType) {
+static boolean filterLocation(pos loc, short dungeonType, short liquidType, short terrainType) {
     // Specifying a terrainType overrides the dungeon/liquid match case
     if (terrainType >= 0) {
         return locationEmpty(loc)
