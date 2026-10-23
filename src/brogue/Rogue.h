@@ -2469,7 +2469,8 @@ typedef struct playerCharacter {
     unsigned long goldGenerated;        // how much gold has been generated on the levels, not counting gold held by monsters
     short strength;
     unsigned short monsterSpawnFuse;    // how much longer till a random monster spawns
-    short antigrindCounter;             // counts how often monsters spawned while the player was starving
+    short monsterSpawnRamp;             // antigrind: ramps difficulty of monsters spawned to serve as better item gatekeepers to foil starvation strategies
+    short starveDamageRamp;             // antigrind: ramps starvation damage to prevent games being infinitely extendable
 
     item *weapon;
     item *armor;

@@ -786,15 +786,15 @@ creature *spawnHorde(short hordeID, pos loc, unsigned long forbiddenFlags, unsig
     boolean tryAgain;
 
     if (rogue.depthLevel > 1 && rand_percent(gameConst->monsterOutOfDepthChance)) {
-        depth = rogue.depthLevel + rand_range(1, min(5, rogue.depthLevel / 2)) + rogue.antigrindCounter;
+        depth = rogue.depthLevel + rand_range(1, min(5, rogue.depthLevel / 2)) + rogue.monsterSpawnRamp;
         if (depth > gameConst->amuletLevel) {
             depth = max(rogue.depthLevel, gameConst->amuletLevel);
         }
         forbiddenFlags |= HORDE_NEVER_OOD;
     } else if (gameConst->variantName == "brogue") { // monsters don't spawn on d40 on classic
-        depth = min(gameConst->deepestLevel - 1, rogue.depthLevel + rogue.antigrindCounter);
+        depth = min(gameConst->deepestLevel - 1, rogue.depthLevel + rogue.monsterSpawnRamp);
     } else {
-        depth = min(gameConst->deepestLevel, rogue.depthLevel + rogue.antigrindCounter);
+        depth = min(gameConst->deepestLevel, rogue.depthLevel + rogue.monsterSpawnRamp);
     }
 
     if (hordeID <= 0) {
