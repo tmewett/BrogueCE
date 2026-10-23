@@ -284,12 +284,11 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             theItem->armor = randClump(armorTable[itemKind].range);
             theItem->strengthRequired = armorTable[itemKind].strengthRequired;
             theItem->charges = gameConst->armorDelayToAutoID; // this many turns until it reveals its enchants and whether runic
-            short runicArmorPercent = 34; // the same flat runic chance for all except leather
+            short runicArmorPercent = 40; // the same flat runic chance for all
 
             switch (itemKind) {
                 case LEATHER_ARMOR:
                     theItem->enchant3 = A_PLAIN;
-                    runicArmorPercent = 70; // 6% skimmed off each of the armor kinds below and added here
                     break;
                 case HIDE_ARMOR:
                     theItem->enchant3 = A_STEALTH;
@@ -308,7 +307,6 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                     break;
                 default:
                     theItem->enchant3 = A_PLAIN;
-                    runicArmorPercent = 40; // 40% average is the target for all runic eligible armor kinds
                     break;
             }
 
@@ -2372,17 +2370,16 @@ void itemDetails(char *buf, const item *theItem) {
                 if (theItem->flags & ITEM_IDENTIFIED) {
                     switch (theItem->enchant3) {
                         case A_PLAIN:
-                            sprintf(buf2, ""); // prevents double printing of "no special passive effect" message
+                            sprintf(buf2, "It is plain. ");
                             break;
                         case A_STEALTH:
-                            sprintf(buf2, "It grants the wearer a stealth %s equal to its intrinsic enchantment level of %i, at the cost of halving any bonus armor beyond the base armor rating of %i. An enchanted armor will reduce your stealth range, making enemies less likely to notice you and more likely to lose your trail. Staying motionless and lurking in the shadows will make you even harder to spot. A cursed armor will increase your stealth range, making you easier to spot and to track. ",
-                                    (theItem->enchant1 >= 0 ? "bonus" : "malus"),
+                            sprintf(buf2, "It grants the wearer a stealth bonus equal to its intrinsic enchantment level of %i, at the cost of halving any bonus armor beyond the base armor rating of %i. An enchanted armor will reduce your stealth range, making enemies less likely to notice you and more likely to lose your trail. Staying motionless and lurking in the shadows will make you even harder to spot. ",
                                     (theItem->enchant1),
                                     (theItem->armor / 10));
                             break;
                         case A_ARMORSMITH:
                             if (theItem->enchant1 > 0) {                 
-                                sprintf(buf2, "It has a %s+%i%s bonus to its base armor rating increasing it from %i to %i in addition to a %s%+.2f%s bonus to its armor (equal to %i%% of its intrinsic enchantment level). ",
+                                sprintf(buf2, "It has a %s+%i%s bonus to its base armor rating increasing it from %i to %i in addition to a %s%+.2f%s bonus to its armor (equal to %i%% of its intrinsic enchantment level.) ",
                                 goodColorEscape, ARMORSMITH_BONUS_DEFENSE / 10, whiteColorEscape,
                                 theItem->armor / 10,
                                 (theItem->armor + ARMORSMITH_BONUS_DEFENSE) / 10,
@@ -2412,7 +2409,7 @@ void itemDetails(char *buf, const item *theItem) {
                             break;
                         case A_MANGLE:
                             if (enchant > 0) {
-                                sprintf(buf2, "Any enemy that attacks but misses you will itself be wounded by %i%% of the damage that it would have inflicted. (If the %s is enchanted, this percentage will %s %i%%.) ",
+                                sprintf(buf2, "Any enemy that attacks but misses you will wound itself for %i%% of its damage. (If the %s is enchanted, this percentage will %s %i%%.) ",
                                         armorManglePercent(enchant),
                                         theName,
                                         (armorManglePercent(enchant) == armorManglePercent(enchant + enchantIncrement(theItem)) ? "remain at" : "increase to"),
@@ -7967,11 +7964,9 @@ void updateArmorPassiveEffectBonuses() {
     if (rogue.armor) {
         switch (rogue.armor->enchant3) {
             case A_STEALTH:
-                rogue.stealthBonus = rogue.armor->enchant1;
+                rogue.stealthBonus = max(0, rogue.armor->enchant1); // no negative stealth
                 if (!(rogue.armor->flags & ITEM_IDENTIFIED)) { // follow unIDed ring logic
-                    if (rogue.stealthBonus < 0) {
-                        rogue.stealthBonus = -1;
-                    } else if ((rogue.stealthBonus >= 1) && (rogue.armor->flags & ITEM_MAGIC_DETECTED)) {
+                    if ((rogue.stealthBonus >= 1) && (rogue.armor->flags & ITEM_MAGIC_DETECTED)) {
                         rogue.stealthBonus = min(rogue.armor->enchant1, rogue.armor->timesEnchanted + 1);
                     } else if (rogue.stealthBonus >= 0) { // don't automatically reveal whether it is positively enchanted
                         rogue.stealthBonus = min(rogue.armor->enchant1, rogue.armor->timesEnchanted);

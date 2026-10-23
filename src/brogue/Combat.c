@@ -967,7 +967,7 @@ void applyArmorPassiveEffect(char returnString[DCOLS], creature *attacker, short
 
     monsterName(attackerName, attacker, true);
 
-    // do nothing if enchant is 0 or less (negative runics too harsh, 0 for the ID game)
+    // do nothing if enchant is 0 or less (0 is for the ID game)
     switch (rogue.armor->enchant3) {
         case A_ABSORPTION:
             if (enchant > 0) {
