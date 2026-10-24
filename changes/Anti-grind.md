@@ -1,0 +1,1 @@
+Added measures to combat grinding via food clock bypasses. Being paralyzed now consumes nutrition at 1/5 the normal rate and no longer grants progress towards item identification. Starving for too long will ramp up starvation damage while also ramping up the difficulty of any monsters that spawn.

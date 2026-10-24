@@ -856,6 +856,8 @@ static void forceEatFood(void) {
             messageWithColor(buf, &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
             confirmMessages();
             eat(theItem, false);
+            rogue.monsterSpawnRamp = 0; // antigrind measures end when the player eats
+            rogue.starveDamageRamp = 0; // ditto
             playerTurnEnded();
             break;
         }
@@ -1797,6 +1799,10 @@ static void processIncrementalAutoID() {
     char buf[DCOLS*3], theItemName[DCOLS*3];
     short i;
 
+    if (player.status[STATUS_PARALYZED]) {
+        return;
+	}
+
     for (i=0; i<3; i++) {
         theItem = autoIdentifyItems[i];
         if (theItem
@@ -1990,15 +1996,20 @@ static void monstersApproachStairs() {
 }
 
 static void decrementPlayerStatus() {
-    // Handle hunger.
-    if (!player.status[STATUS_PARALYZED]) {
-        // No nutrition is expended while paralyzed.
-        if (player.status[STATUS_NUTRITION] > 0) {
-            if (!numberOfMatchingPackItems(AMULET, 0, 0, false) || rand_percent(20)) {
-                player.status[STATUS_NUTRITION]--;
-                printNutritionMessages();
-            }
+
+    // Handle hunger. Paralysis consumes hunger at a 20% rate to ward against potential food clock abuses.
+    if (player.status[STATUS_NUTRITION] > 0) {
+        if (!(numberOfMatchingPackItems(AMULET, 0, 0, false) || player.status[STATUS_PARALYZED]) 
+            || rand_percent(20)) {
+            player.status[STATUS_NUTRITION]--;
+            printNutritionMessages();
         }
+    }
+
+    // Handle starvation grinding. 30000 gate value gets divided by 150 
+    // (avg monsterSpawnFuse) to yield up to 200 extra damage per turn
+    if (player.status[STATUS_NUTRITION] <= 0 && rogue.starveDamageRamp < 30000) {
+        rogue.starveDamageRamp++;
     }
 
     if (player.status[STATUS_TELEPATHIC] > 0 && !--player.status[STATUS_TELEPATHIC]) {
@@ -2094,6 +2105,9 @@ static void decrementPlayerStatus() {
     if (rogue.monsterSpawnFuse <= 0) {
         spawnPeriodicHorde();
         rogue.monsterSpawnFuse = rand_range(125, 175);
+        if (player.status[STATUS_NUTRITION] <= 0 && rogue.monsterSpawnRamp < gameConst->deepestLevel) {
+            rogue.monsterSpawnRamp++;
+        }
     }
 }
 
@@ -2288,7 +2302,7 @@ void playerTurnEnded() {
 
         // Regeneration/starvation:
         if (player.status[STATUS_NUTRITION] <= 0) {
-            player.currentHP--;
+            player.currentHP -= 1 + (rogue.starveDamageRamp / 150);
             if (player.currentHP <= 0) {
                 gameOver("Starved to death", true);
                 return;
