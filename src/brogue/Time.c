@@ -1980,28 +1980,28 @@ static void decrementPlayerStatus(void) {
 
     if (player.status[STATUS_TELEPATHIC] > 0 && !--player.status[STATUS_TELEPATHIC]) {
         updateVision(true);
-        message("your preternatural mental sensitivity fades.", 0);
+        message(playerStatusEndedMessage(STATUS_TELEPATHIC), 0);
     }
 
     if (player.status[STATUS_DARKNESS] > 0) {
         player.status[STATUS_DARKNESS]--;
         updateMinersLightRadius();
         if (!player.status[STATUS_DARKNESS]) {
-            message("the cloak of darkness lifts from your vision.", 0);
+            message(playerStatusEndedMessage(STATUS_DARKNESS), 0);
         }
     }
 
     if (player.status[STATUS_HALLUCINATING] > 0 && !--player.status[STATUS_HALLUCINATING]) {
         displayLevel();
-        message("your hallucinations fade.", 0);
+        message(playerStatusEndedMessage(STATUS_HALLUCINATING), 0);
     }
 
     if (player.status[STATUS_LEVITATING] > 0 && !--player.status[STATUS_LEVITATING]) {
-        message("you are no longer levitating.", 0);
+        message(playerStatusEndedMessage(STATUS_LEVITATING), 0);
     }
 
     if (player.status[STATUS_CONFUSED] > 0 && !--player.status[STATUS_CONFUSED]) {
-        message("you no longer feel confused.", 0);
+        message(playerStatusEndedMessage(STATUS_CONFUSED), 0);
     }
 
     if (player.status[STATUS_NAUSEOUS] > 0 && !--player.status[STATUS_NAUSEOUS]) {
@@ -2016,14 +2016,14 @@ static void decrementPlayerStatus(void) {
         player.movementSpeed = player.info.movementSpeed;
         player.attackSpeed = player.info.attackSpeed;
         synchronizePlayerTimeState();
-        message("your supernatural speed fades.", 0);
+        message(playerStatusEndedMessage(STATUS_HASTED), 0);
     }
 
     if (player.status[STATUS_SLOWED] > 0 && !--player.status[STATUS_SLOWED]) {
         player.movementSpeed = player.info.movementSpeed;
         player.attackSpeed = player.info.attackSpeed;
         synchronizePlayerTimeState();
-        message("your normal speed resumes.", 0);
+        message(playerStatusEndedMessage(STATUS_SLOWED), 0);
     }
 
     if (player.status[STATUS_WEAKENED] > 0 && !--player.status[STATUS_WEAKENED]) {
@@ -2038,7 +2038,7 @@ static void decrementPlayerStatus(void) {
     }
 
     if (player.status[STATUS_IMMUNE_TO_FIRE] > 0 && !--player.status[STATUS_IMMUNE_TO_FIRE]) {
-        message("you no longer feel immune to fire.", 0);
+        message(playerStatusEndedMessage(STATUS_IMMUNE_TO_FIRE), 0);
     }
 
     if (player.status[STATUS_STUCK] && !cellHasTerrainFlag(player.loc, T_ENTANGLES)) {
@@ -2065,7 +2065,7 @@ static void decrementPlayerStatus(void) {
     }
 
     if (player.status[STATUS_INVISIBLE] > 0 && !--player.status[STATUS_INVISIBLE]) {
-        message("you are no longer invisible.", 0);
+        message(playerStatusEndedMessage(STATUS_INVISIBLE), 0);
     }
 
     if (rogue.monsterSpawnFuse <= 0) {
