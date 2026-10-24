@@ -325,6 +325,19 @@ int main(int argc, char *argv[])
             }
         }
 
+        if (strcmp(argv[i], "--test") == 0) {
+            if (i + 1 < argc) {
+                strncpy(rogue.nextGamePath, argv[i + 1], BROGUE_FILENAME_MAX);
+                rogue.nextGamePath[BROGUE_FILENAME_MAX - 1] = '\0';
+                rogue.nextGame = NG_TEST;
+                rogue.mode = GAME_MODE_TEST;
+                i++;
+                continue;
+            }
+            badArgument("--test requires a test name");
+            return 1;
+        }
+
         // maybe it ends with .broguesave or .broguerec, then?
         if (endswith(argv[i], GAME_SUFFIX)) {
             strncpy(rogue.nextGamePath, argv[i], BROGUE_FILENAME_MAX);

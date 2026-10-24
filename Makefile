@@ -6,7 +6,7 @@ cflags := -Isrc/brogue -Isrc/platform -Isrc/variants -std=c99 \
 libs := -lm
 cppflags := -DDATADIR=$(DATADIR)
 
-sources := $(wildcard src/brogue/*.c) $(wildcard src/variants/*.c) $(addprefix src/platform/,main.c platformdependent.c null-platform.c)
+sources := $(wildcard src/brogue/*.c) $(wildcard src/variants/*.c) $(addprefix src/platform/,main.c platformdependent.c null-platform.c) $(wildcard test/Test*.c)
 objects :=
 
 ifeq ($(SYSTEM),WINDOWS)
@@ -62,6 +62,11 @@ cflags += -g -Og
 cppflags += -DENABLE_PLAYBACK_SWITCH
 else
 cflags += -O2
+endif
+
+ifeq ($(COVERAGE),YES)
+cflags += -fprofile-instr-generate -fcoverage-mapping
+cppflags += -fprofile-instr-generate -fcoverage-mapping
 endif
 
 # Add user-provided flags.

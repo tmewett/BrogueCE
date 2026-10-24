@@ -1,0 +1,204 @@
+------------------------------------------------------------
+BR14654 — NEW rule
+"While computing a route, whenever a tile's best-known distance to the destination improves, that tile is moved so that expansion always continues from the nearest unsettled tile first; as a result, every route reported by pathfinding is the shortest passable route to the destination."
+Citation: [Dijkstra.c:114-123](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Dijkstra.c#L114-L123)
+Note: Dijkstra.c:114-123 reinserts a tile into the sorted expansion structure whenever its best-known distance improves, so pathfinding always expands the nearest unsettled tile first and every reported route is the shortest passable route to the destination. Existing Dijkstra rules (BR14015, BR82699, BR37348, BR43009, BR33256, BR68830) cover scanning directions, diagonal corner-cutting, obstruction cost, per-traveller costs, and uses of distance maps, but none describes this nearest-first expansion / shortest-path guarantee. ID BR14654 is unique across rules/.
+
+------------------------------------------------------------
+BR14684 — NEW rule
+"Before a pathfinding scan begins, each tile's starting distance is copied from an existing distance map when one is supplied, so the scan can build on prior distances; otherwise the tile starts at a large maximum and no tile is lined up for expansion yet."
+Citation: [Dijkstra.c:127-132](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Dijkstra.c#L127-L132)
+Note: Dijkstra.c:127-132 empties the expansion structure at the start of pdsBatchInput and seeds every tile's distance from an input distance map when one is given (otherwise leaving it at a high maximum). This multi-source-capable initialization powers monster homing, player pathing maps, ally-safety maps, distance-to-shore, and waypoint maps. No rule in rules/* describes this scan seeding. ID BR14684 is unique across rules/.
+
+----------------------------------------------------------
+BR71426 — NEW rule
+"When your field of view reaches the edge of the dungeon, any square that falls outside the map is skipped and is never marked as visible, so your sight never extends past the dungeon's boundary."
+Citation: [Movement.c:2432-2434](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L2432-L2434)
+Note: Movement.c:2434 (inside the check at lines 2432-2434) skips any square outside the map during field-of-view scanning — the "off the map -- here there be memory corruption" guard. This is part of the referenced Movement.c:2434-2453 range. No rule in rules/* describes this off-map skip, so squares beyond the dungeon edge are never revealed by vision. ID BR71426 is unique across rules/.
+
+----------------------------------------------------------
+BR33509 — NEW rule
+"When vision is computed cautiously around walls, a sight-blocking square is illuminated only if the square between it and the source of view is already visible; otherwise the blocked square stays dark, so a wall can hide what lies beyond it."
+Citation: [Movement.c:2438-2452](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L2438-L2452)
+Note: Movement.c:2438-2452 is the cautious-on-walls branch: an obstructed square is lit only when the square one step closer to the origin is already in field of view, preventing a light from illuminating a wall on the far side of another wall. Existing lighting rules (e.g., BR77568) describe light radius at the Light.c layer but not this wall-adjacency rule, and none cite Movement.c for it. ID BR33509 is unique across rules/.
+
+----------------------------------------------------------
+BR89014 — NEW rule
+"Any square reached by the field-of-view scan that is not blocked from view is marked as visible."
+Citation: [Movement.c:2453-2455](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L2453-L2455)
+Note: Movement.c:2453-2455 is the default illumination branch that marks each reached, non-blocked square as visible. While BR77568 describes light radius at the Light.c layer, no rule in rules/* describes this field-of-view mask marking from Movement.c. ID BR89014 is unique across rules/.
+
+------------------------------------------------------------
+BR13087 — NEW rule
+"During a cellular automata generation that shapes a dungeon feature, a tile is cleared to empty unless its count of live neighbors matches a birth or survival condition, so only qualifying tiles remain floor."
+Citation: [Grid.c:386-388](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Grid.c#L386-L388)
+Note: Grid.c:386-388 is the death branch of cellularAutomataRound inside createBlobOnGrid: any tile that is neither born (a dead cell meeting a birth condition) nor survives (a live cell meeting a survival condition) is cleared to empty. This per-generation birth/survive/die decision shapes the blob that becomes a dungeon feature. No rule in rules/* describes this cellular-automata cell fate or cites Grid.c's cellular automata logic. ID BR13087 is unique across rules/.
+
+------------------------------------------------------------
+BR10340 — NEW rule
+"To measure a dungeon feature, the game marks a starting tile as part of a contiguous region and then walks its four cardinal neighbors, moving into each unmarked neighbor that belongs to the same region to count the whole region's extent."
+Citation: [Grid.c:395-407](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Grid.c#L395-L407)
+Note: Grid.c:395-407 is fillContiguousRegion, which marks a tile as a blob member and then iterates the four cardinal neighbors, stopping at the map edge and stepping into each unmarked region neighbor to count a contiguous blob during dungeon feature measurement. No rule in rules/* describes this contiguous-region detection or cites fillContiguousRegion. ID BR10340 is unique across rules/.
+
+------------------------------------------------------------
+BR70163 — NEW rule
+"When an ally dies, it is kept waiting to be brought back to life rather than being discarded, so it can later be raised from the dead."
+Citation: [GlobalsBase.c:48](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/GlobalsBase.c#L48)
+Note: GlobalsBase.c:48 declares the purgatory list "used to hold dead allies awaiting resurrection". BR27884 describes how a raised ally is chosen and BR79511 notes that summoned allies cannot be resurrected, but no rule in rules/* describes that dead allies are held awaiting resurrection. ID BR70163 is unique across rules/.
+
+------------------------------------------------------------
+BR39812 — NEW rule
+"A key that opens a vault is bound to that specific vault, and the game identifies which vault it opens — reported as "(opens vault N)"."
+Citation: [SeedCatalog.c:97-98](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/SeedCatalog.c#L97-L98)
+Note: SeedCatalog.c:97-98 computes the "opens vault" number for a vault-opening key as one less than the door tile's machine number and prints it as "(opens vault N)" (or just N in CSV). This reflects the in-game key-to-vault binding: each key is bound to the vault door it opens. BR53635 covers that keys only open locks matching their location or mechanism on the depth where found, but no rule in rules/* describes that a key identifies which specific vault it opens, and no rule mentions "opens vault." ID BR39812 is unique across rules/ and test/NewRules.txt.
+
+------------------------------------------------------------
+BR36680 — NEW rule
+"To decide each tile's fate during a cellular automata generation that shapes a dungeon feature, the game counts its live neighbors among the surrounding eight tiles that lie within the map, ignoring anything outside the dungeon boundary."
+Citation: [Grid.c:377-381](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Grid.c#L377-L381)
+Note: Grid.c:377-381 counts live neighbors (within map bounds via coordinatesAreInMap) for every tile each generation; this count feeds the birth/survival/death decision at Grid.c:382-388. No rule in rules/* describes this neighbor counting, and none cites Grid.c's cellular automata round except the death-only BR13087 candidate in this file. ID BR36680 is unique across rules/ and test/NewRules.txt.
+
+------------------------------------------------------------
+BR21409 — NEW rule
+"A tile that is currently empty becomes floor during a cellular automata generation when its live-neighbor count matches a birth condition, so new floor can appear within the blob being shaped."
+Citation: [Grid.c:382-383](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Grid.c#L382-L383)
+Note: Grid.c:382-383 is the birth branch of cellularAutomataRound inside createBlobOnGrid: a dead tile meeting a birth parameter becomes floor. No rule in rules/* describes this birth behavior or cites Grid.c's birth logic. ID BR21409 is unique across rules/ and test/NewRules.txt.
+
+------------------------------------------------------------
+BR93785 — NEW rule
+"A tile that is already floor stays floor during a cellular automata generation when its live-neighbor count matches a survival condition, so existing floor within the blob is preserved."
+Citation: [Grid.c:384-386](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Grid.c#L384-L386)
+Note: Grid.c:384-386 is the survival branch of cellularAutomataRound inside createBlobOnGrid: a live tile meeting a survival parameter remains floor. No rule in rules/* describes this survival behavior or cites Grid.c's survival logic. ID BR93785 is unique across rules/ and test/NewRules.txt.
+
+------------------------------------------------------------
+BR11497 — NEW rule
+"Terrain, items, monsters, and messages are rendered in colors drawn from a fixed named palette, so game elements are visually distinguished by color."
+Citation: [GlobalsBase.h:107-122](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/GlobalsBase.h#L107-L122)
+Note: GlobalsBase.h:107-122 declares the game's named color constants (yellow, dark yellow, teal, purple, brown, green, orange, blue, pink, tan, rainbow, and their dark variants) that form the palette used to render terrain, items, monsters, and messages. No rule in rules/* describes this general color-palette rendering behavior; existing color rules cover only narrow cases such as message color by importance (BR31995) and the player's draw colour under lighting (BR39459). ID BR11497 is unique across rules/ and test/NewRules.txt.
+
+------------------------------------------------------------
+BR33863 — NEW rule
+"The tile a light source occupies is lit at full strength, so the light is brightest at its own tile rather than fading there."
+Citation: [Light.c:107-109](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Light.c#L107-L109)
+Note: Light.c:107-109 adds the light's full colour components directly to the source tile's light map. The field-of-view mask used by the light loop is built by getFOVMask starting one tile out from the origin (Movement.c:2390), so the source tile is never reached by the radius loop (Light.c:90-105) and would otherwise stay unlit. BR27303 describes the fade from full at the centre toward the edge but cites only Light.c:76 and Light.c:93-96, not this centre-tile assignment. No rule in rules/* describes the source tile receiving full-strength light. ID BR33863 is unique across rules/ and test/NewRules.txt.
+
+------------------------------------------------------------
+BR25779 — NEW rule
+"A light source's own tile is cleared of shadow whenever the light dispels shadows, so the light's origin is never hidden in shadow."
+Citation: [Light.c:111-113](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Light.c#L111-L113)
+Note: Light.c:111-113 clears the IS_IN_SHADOW flag on the source tile when dispelShadows is set (non-shadow-maintaining lights with colour, e.g. not the miner's light — see Light.c:72-74). BR32985 covers shadow removal for tiles within the light's radius but cites only Light.c:72-74 and Light.c:97-99, which is the radius loop that never reaches the source tile (the FOV mask starts one tile out, Movement.c:2390). No rule in rules/* describes the source tile being kept out of shadow. ID BR25779 is unique across rules/ and test/NewRules.txt.
+
+------------------------------------------------------------
+BR23306 — NEW rule
+"When you return to a previously visited level, the game simulates up to 100 turns of environmental change — fire spreading, gas diffusing, items floating, and monsters falling — that occurred while you were gone, bringing the level up to date. You are meanwhile held in limbo at square (0, 0) so harmful terrain cannot affect you during the catch-up."
+Citation: [RogueMain.c:816-830](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/RogueMain.c#L816-L830)
+Note: RogueMain.c:816-830 parks the player at square (0, 0) ("limbo") so harmful terrain cannot affect them during the catch-up, then runs the environment simulation once per turn for up to 100 turns (timeAway is clamped at RogueMain.c:779 and capped at 100 here) before restoring the player's position and the absolute turn counter. BR32390 covers the ordinary every-100-ticks environment update during normal play, and BR71115 (RogueMain.c:775-814) covers restoring a level's saved map, items, and monsters when you return, but no rule in rules/* describes this environment catch-up simulation that runs when you come back to a level you have been away from. ID BR23306 is unique across rules/ and test/NewRules.txt.
+
+------------------------------------------------------------
+BR14627 — NEW rule
+"Each time your vision refreshes, every square you can currently see is marked as previously visible, so the game remembers everything you have seen; squares stay on your map even after they pass out of your field of view."
+Citation: [Time.c:736-736](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L736-L736), [Movement.c:2276-2277](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L2276-L2277)
+Note: demoteVisibility at Time.c:733-736 clears VISIBLE and sets WAS_VISIBLE on every currently visible square each vision update; Movement.c:2276-2277 then detects squares that just ceased being visible and stores their memories so they remain on the map. No rule in rules/* describes this visible-to-previously-visible demotion at each vision refresh or the resulting persistent memory of seen squares. ID BR14627 is unique across rules/ and test/NewRules.txt.
+
+------------------------------------------------------------
+BR24943 — NEW rule
+"The first time you discover a square, it is permanently revealed on your map and remains known even after it passes out of your sight."
+Citation: [Time.c:744-745](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L744-L745)
+Note: discoverCell at Time.c:742-750 sets the DISCOVERED flag on a newly discovered square (Time.c:745); DISCOVERED is a permanent tile flag, so discovered terrain stays on the player's map even when out of sight. BR34157 already covers the discovery-count part of discoverCell (Time.c:747), but no rule in rules/* describes the permanent revelation of a newly discovered square. ID BR24943 is unique across rules/ and test/NewRules.txt.
+
+------------------------------------------------------------
+BR22852 — NEW rule
+"A request for a random number between a lower and upper bound returns a uniformly distributed whole number across the whole inclusive range, so every value from the lower bound to the upper bound is equally likely."
+Citation: [Math.c:160-170](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Math.c#L160-L170)
+Note: Math.c:160-170 is the normal build of rand_range: it computes the span upperBound - lowerBound + 1, guards against wrap-around with an assertion, and returns the lower bound plus a bias-free draw in [0, span-1], yielding a uniform integer in [lowerBound, upperBound]. The degenerate case (upper bound not greater than lower bound) returns the lower bound directly and is covered by BR34428. No rule in rules/* describes this uniform inclusive-range random draw or cites Math.c's rand_range. ID BR22852 is unique across rules/.
+
+------------------------------------------------------------
+BR34428 — NEW rule
+"When the upper bound is not greater than the lower bound, a random request returns the lower bound directly and no random number is drawn."
+Citation: [Math.c:161-163](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Math.c#L161-L163)
+Note: Math.c:161-163 is the degenerate-range branch of rand_range: when upperBound <= lowerBound the function returns lowerBound without consuming randomness. This pairs with BR22852, which covers the uniform draw for a non-degenerate range. No rule in rules/* describes this deterministic degenerate case or cites Math.c's rand_range. ID BR34428 is unique across rules/.
+
+------------------------------------------------------------
+BR23144 — NEW rule
+"When the seed catalog lists what is on a dungeon level, gold pieces lying on the floor are reported together as one entry, stating the total number of gold pieces and whether they lie in a single pile or several piles."
+Citation: [SeedCatalog.c:176-195](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/SeedCatalog.c#L176-L195)
+Note: SeedCatalog.c:176-195 emits the floor-gold entry (invoked only when gold is present at SeedCatalog.c:212-214), printing "N gold pieces" for one pile and "N gold pieces (M piles)" for multiple piles in both CSV and plain-text catalog output. No rule in rules/* describes how gold on the floor is summarized in the seed catalog, so output such as "25 gold pieces (3 piles)" is uncovered by any rule. ID BR23144 is unique across rules/ and test/NewRules.txt.
+
+------------------------------------------------------------
+BR20949 — NEW rule
+"When the seed catalog reports what lies on a dungeon level, every non-gold item on the floor is listed individually, while amulets are omitted from the catalog entirely; gold pieces on the floor are instead combined into one entry stating the total number of pieces and whether they lie in one pile or several."
+Citation: [SeedCatalog.c:197-215](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/SeedCatalog.c#L197-L215), [SeedCatalog.c:176-195](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/SeedCatalog.c#L176-L195)
+Note: SeedCatalog.c:197-215 walks the floor items and lists each non-gold, non-amulet item individually via printSeedCatalogItem, skips amulets (the empty AMULET branch at SeedCatalog.c:206-207), and tallies gold across piles so it can be printed as a single combined entry (handled at SeedCatalog.c:176-195 and invoked when gold is present at SeedCatalog.c:212-214). BR23144 covers the gold-entry formatting but no rule in rules/* describes that each non-gold floor item gets its own listing or that amulets are omitted from the seed catalog. ID BR20949 is unique across rules/ and test/NewRules.txt.
+
+------------------------------------------------------------
+BR27081 — NEW rule
+"Mud tiles are drawn in a flat brown color that does not change from turn to turn."
+Citation: [Globals.c:131-132](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L131-L132)
+Note: Globals.c:131-132 defines the fore and back colors that render mud tiles as a flat brown which never animates. No rule in rules/* describes how mud is colored; BR11497 covers only the general named palette in GlobalsBase.h, not these feature-specific colors. ID BR27081 is unique across rules/.
+
+------------------------------------------------------------
+BR39659 — NEW rule
+"A chasm is drawn as a dark void outlined by a distinctly colored edge that does not change from turn to turn."
+Citation: [Globals.c:133-135](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L133-L135)
+Note: Globals.c:133-135 defines the dark fore color and edge back colors that render a chasm as a dark void with a distinct edge, never animating. Existing chasm rules cover falling and movement, but none describes a chasm's appearance. ID BR39659 is unique across rules/.
+
+------------------------------------------------------------
+BR16685 — NEW rule
+"Fire burns in bright orange and yellow that flickers with every refresh."
+Citation: [Globals.c:136-136](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L136-L136)
+Note: Globals.c:136 defines fire's bright orange-yellow fore color with colorDances set, so fire flickers with every refresh. Existing fire rules cover burning and damage, but none describes fire's color or flickering. ID BR16685 is unique across rules/.
+
+------------------------------------------------------------
+BR40964 — NEW rule
+"Lava pools are dark red and flicker with every refresh."
+Citation: [Globals.c:137-137](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L137-L137), [Globals.c:141-141](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L141-L141)
+Note: Globals.c:137 and Globals.c:141 define lava's fore and back colors, both dark red with colorDances set, so lava pools and their background flicker dark red with every refresh. Existing lava rules cover damage and generation, but none describes lava's color. ID BR40964 is unique across rules/.
+
+------------------------------------------------------------
+BR14703 — NEW rule
+"Brimstone burns yellow-orange against a dark background and flickers with every refresh."
+Citation: [Globals.c:138-139](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L138-L139)
+Note: Globals.c:138-139 defines brimstone's yellow-orange fore color and dark back color, both with colorDances set, so brimstone burns and flickers against a dark background. Existing brimstone rules cover terrain generation and monster avoidance, but none describes brimstone's color. ID BR14703 is unique across rules/.
+
+------------------------------------------------------------
+BR27749 — NEW rule
+"Acid pools are green and flicker with every refresh."
+Citation: [Globals.c:142-142](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L142-L142)
+Note: Globals.c:142 defines acid's green back color with colorDances set, so acid pools are green and flicker with every refresh. Existing acid rules cover corrosion and damage, but none describes acid's color. ID BR27749 is unique across rules/.
+
+------------------------------------------------------------
+BR40679 — NEW rule
+"Lightning flashes in brilliant white and yellow and flickers intensely."
+Citation: [Globals.c:144-144](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L144-L144)
+Note: Globals.c:144 defines lightning's brilliant white-yellow color, with a high red component and colorDances set, so lightning flashes intensely and flickers. Existing lightning rules cover monster bolts, but none describes the flash itself. ID BR40679 is unique across rules/.
+
+------------------------------------------------------------
+BR20557 — NEW rule
+"Fungus, lava, and deep water cast dim colored glows—blue-green, red, and blue—that flicker with every refresh."
+Citation: [Globals.c:145-147](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L145-L147)
+Note: Globals.c:145-147 define the fungus, lava, and deep water light colors—dim blue-green, red, and blue glows, all with colorDances set—so these features cast dim colored light that flickers with every refresh. Existing light rules cover the player's draw colour and general lighting, but none describes these feature glows. ID BR20557 is unique across rules/.
+
+------------------------------------------------------------
+BR11267 — NEW rule
+"While the mouse pointer rests over a menu button that can be clicked, that button is drawn in a subtly warmer, brighter tint than the other buttons, marking it as the control a click would select."
+Citation: [Buttons.c:163-166](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L163-L166), [Buttons.c:53-58](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L53-L58)
+Note: Buttons.c:163-166 is the hover branch of the routine that paints a menu's buttons: the button under the mouse pointer is given the hover style instead of the normal style, and that style blends the button's text and background colours 25% toward the game's warm hover tint at Buttons.c:53-58. The pointer position is turned into the focused button at Buttons.c:215-237, so only the button under the pointer is highlighted, and only buttons that are enabled can receive the highlight. Existing button rules (BR91827, BR25868) cover how a button is chosen and how a menu is cancelled, but no rule in rules/* describes the highlight shown under the mouse pointer. ID BR11267 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR35576 — NEW rule
+"While the mouse button is held down on a menu button, that button is drawn darker and its label dims to show that the click is in progress, and this pressed look takes the place of the hover tint when the same button is under the pointer."
+Citation: [Buttons.c:167-170](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L167-L170), [Buttons.c:64-70](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L64-L70), [Buttons.c:93-95](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L93-L95)
+Note: Buttons.c:167-170 is the pressed branch of the routine that paints a menu's buttons: the button that is currently held down is given the pressed style, and because that check comes after the hover check it overrides the hover tint for a button that is both under the pointer and held down. The pressed style darkens the middle of the button's background toward black (Buttons.c:64-70) and blends the label colour 30% toward that background (Buttons.c:93-95), so the button darkens and its label dims. The held-down button is tracked from mouse-down to mouse-up at Buttons.c:230 and Buttons.c:254. No rule in rules/* describes the pressed appearance of a button. ID BR35576 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR23709 — NEW rule
+"Some menu controls are never painted on the screen even though they still answer the keyboard: the item detail box and the inventory list each keep invisible previous and next controls so the up and down arrow keys can page through their contents."
+Citation: [Buttons.c:161-162](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L161-L162), [IO.c:5129-5141](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L5129-L5141), [Items.c:3007-3015](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3007-L3015)
+Note: Buttons.c:161-162 is the check that skips any button not marked for display while a menu's buttons are painted, so such controls stay invisible on screen; they remain live because their hotkeys are still matched at Buttons.c:263-266. IO.c:5129-5141 and Items.c:3007-3015 are the two places that add such invisible previous and next controls, for the carried-item detail box and the inventory list, whose comments state they exist so the up and down arrows can page through items. No rule in rules/* describes that a menu can hold controls which are never drawn. ID BR23709 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR20238 — NEW rule
+"When a menu or dialog first appears, no button is highlighted, held down, or chosen; the player must move the mouse onto a button or press its hotkey before anything is selected."
+Citation: [Buttons.c:182-191](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L182-L191)
+Note: Buttons.c:182-191 is the body of the routine whose opening line is Buttons.c:175, the last line of the referenced block: it clears the chosen, focused, and depressed buttons to "none" before copying the menu's buttons into place, so a menu that has just opened shows no highlighted, pressed, or chosen button. No rule in rules/* describes the initial state of a menu's buttons. ID BR20238 is unique across rules/ and test/.
+
