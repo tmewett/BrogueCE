@@ -2,7 +2,6 @@
 #include "Globals.h"
 #include "GlobalsBase.h"
 
-// static pos startPos;
 static pos targetPos;
 static creature *monst;
 static enum monsterTypes monstType;
@@ -120,8 +119,12 @@ static boolean monster_was_alerted(void) {
 
 static void sweep_setup(void) {
     clearArena();
-    theItem = givePlayerItem(WEAPON, AXE, 0);
+    theItem = givePlayerItem(WEAPON, AXE, 20);
     equip(theItem);
+    drink(POTION_STRENGTH); // STR 13
+    drink(POTION_STRENGTH); // STR 14
+    drink(POTION_STRENGTH); // STR 15 (axe)
+
     static const int offsets[3][2] = { {1, 0}, {0, -1}, {0, 1} };
     for (int i = 0; i < 3; i++) {
         pos loc = posOffset(getPlayerPos(), offsets[i][0], offsets[i][1]);
@@ -341,8 +344,7 @@ static boolean monster_divided(void) {
 
 static void weakening_setup(void) {
     clearArena();
-    // A paralyzed player cannot dodge, so the centipede's blow lands.
-    // Place centipede on FLOOR with guaranteed LOS.
+    setPlayerHealth(500); // Don't let the player die
     targetPos = posOffset(getPlayerPos(), 1, 0);
     monstType = chooseMonsterTypeByProperty(BOLT_NONE, 0, 0, MA_CAUSES_WEAKNESS, 0);
     monst = placeHostileMonster(monstType, targetPos);
@@ -350,7 +352,7 @@ static void weakening_setup(void) {
 }
 
 static boolean player_was_weakened(void) {
-    TEST_ASSERT(isPlayerWeakened(), "a weakening attack should weaken the player");
+    TEST_ASSERT(!isPlayerDead() && isPlayerWeakened(), "a weakening attack should weaken the player");
     return !testFailed;
 }
 
@@ -544,7 +546,7 @@ const testCase tests_combat[] = {
     { "BR86360_staggering_weapon_knocks_back",  stagger_setup,           stagger_step,            target_was_knocked_back },
     { "BR95398_monster_flees_at_quarter_health",flee_setup,              NULL,                    monster_fled },
     { "BR74866_dividing_monster_splits",        splitting_setup,         attack_once_step,        monster_divided },
-    { "BR82949_weakening_attack_weakens_player",weakening_setup,         rest_once_step,          player_was_weakened },
+    { "BR82949_weakening_attack_weakens_player",weakening_setup,         wait_until_hurt,         player_was_weakened },
     { "BR61676_exploding_attacker_dies",        kamikaze_setup,          kamikaze_step,           bloat_was_destroyed },
     { "BR57747_killing_dragon_earns_feat",      dragonslayer_setup,      attack_once_step,        dragonslayer_earned },
     { "BR86062_player_death_ends_game",         player_death_setup,      rest_once_step,          game_ended },

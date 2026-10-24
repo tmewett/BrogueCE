@@ -228,7 +228,7 @@ const testCase tests_examples[] = {
 
     { "BR22389_levitation_breaks_seized", bog_monster_setup,         levitation_breaks_seized_step, player_not_seized_verify    },
     { "BR23474_levitation_chasm",       levitation_chasm_setup,     wait_until_fall_step,               levitation_chasm_verify,    },
-    { "BR25575_regular_can_attack_levitating", levitation_rat_setup, wait_10_turns_step,             player_is_hurt              },
+    { "BR25575_regular_can_attack_levitating", levitation_rat_setup, wait_until_hurt,             player_is_hurt              },
     { "BR37800_aquatic_cant_attack_levitating", levitation_eel_setup, wait_10_turns_step,             player_is_healthy           },
     { "BR39325_levitation_over_water",  levitation_water_setup,     wait_10_turns_step,                 inventory_items_not_missing },
     { "BR39456_levitation_over_trap",   levitation_trap_setup,      trap_step,                     trap_not_triggered          },

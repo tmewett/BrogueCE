@@ -886,7 +886,7 @@ enum monsterTypes chooseMonsterTypeByProperty(enum boltType bolt, enum monsterBe
     // Pick a matching monster type
     assureCosmeticRNG;
     enum monsterTypes monstType = types[rand_range(0, count-1)];
-    fprintf(stderr, "CHOSE: %s: %d\n", monsterCatalog[monstType].monsterName, monstType);
+    // fprintf(stderr, "CHOSE: %s: %d\n", monsterCatalog[monstType].monsterName, monstType);
     return monstType;
 }
 

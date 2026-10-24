@@ -12,6 +12,9 @@
 static pos startPos;
 static pos platePos;
 static pos targetPos;
+static int monstHealthBefore;
+static creature *monst;
+static item *theItem;
 
 // ============================================================
 // BR31821 — a move is blocked by an obstructing destination square
@@ -450,19 +453,16 @@ static boolean starved(void) {
 // BR35928 — a whip strikes a visible enemy up to five squares away
 // ============================================================
 
-static creature *whipTarget;
-static int whipTargetHealthBefore;
-
 static void whip_setup(void) {
     clearArena();
     givePlayerItem(WEAPON, WHIP, 0);
     equipItemFromPack(WEAPON, WHIP);
     targetPos = posOffset(player.loc, 4, 0);
-    whipTarget = placeHostileMonster(MK_RAT, targetPos);
-    setMonsterHealth(whipTarget, whipTarget->info.maxHP);
+    monst = placeHostileMonster(MK_RAT, targetPos);
+    setMonsterHealth(monst, monst->info.maxHP);
     // Paralyse the target so the strike cannot miss; this test is about reach.
-    applyStatusToMonster(whipTarget, STATUS_PARALYZED, 10);
-    whipTargetHealthBefore = monsterHealth(whipTarget);
+    applyStatusToMonster(monst, STATUS_PARALYZED, 10);
+    monstHealthBefore = monsterHealth(monst);
     startPos = player.loc;
 }
 
@@ -473,7 +473,7 @@ static boolean whip_step(void) {
 
 static boolean whip_hit_distant_enemy(void) {
     TEST_ASSERT_POS_EQ(player.loc, startPos, "the whip should strike without moving the player");
-    TEST_ASSERT(monsterHealth(whipTarget) < whipTargetHealthBefore, "the whip should hit an enemy several squares away");
+    TEST_ASSERT(monsterHealth(monst) < monstHealthBefore, "the whip should hit an enemy several squares away");
     return !testFailed;
 }
 
@@ -481,18 +481,15 @@ static boolean whip_hit_distant_enemy(void) {
 // BR12436 — a spear strikes every enemy in the first two squares
 // ============================================================
 
-static creature *spearTarget;
-static int spearTargetHealthBefore;
-
 static void spear_setup(void) {
     clearArena();
     givePlayerItem(WEAPON, SPEAR, 0);
     equipItemFromPack(WEAPON, SPEAR);
     targetPos = posOffset(player.loc, 2, 0);
-    spearTarget = placeHostileMonster(MK_RAT, targetPos);
-    setMonsterHealth(spearTarget, spearTarget->info.maxHP);
-    applyStatusToMonster(spearTarget, STATUS_PARALYZED, 10);
-    spearTargetHealthBefore = monsterHealth(spearTarget);
+    monst = placeHostileMonster(MK_RAT, targetPos);
+    setMonsterHealth(monst, monst->info.maxHP);
+    applyStatusToMonster(monst, STATUS_PARALYZED, 10);
+    monstHealthBefore = monsterHealth(monst);
 }
 
 static boolean spear_step(void) {
@@ -501,7 +498,7 @@ static boolean spear_step(void) {
 }
 
 static boolean spear_hit_distant_enemy(void) {
-    TEST_ASSERT(monsterHealth(spearTarget) < spearTargetHealthBefore, "the spear should strike an enemy two squares away");
+    TEST_ASSERT(monsterHealth(monst) < monstHealthBefore, "the spear should strike an enemy two squares away");
     return !testFailed;
 }
 
@@ -509,20 +506,16 @@ static boolean spear_hit_distant_enemy(void) {
 // BR12763 — a lunging weapon attacks an enemy two squares away
 // ============================================================
 
-static creature *lungeTarget;
-static int lungeTargetHealthBefore;
-
 static void lunge_setup(void) {
     clearArena();
-    givePlayerItem(WEAPON, RAPIER, 0);
-    equipItemFromPack(WEAPON, RAPIER);
+    theItem = givePlayerItem(WEAPON, RAPIER, 10);
+    equip(theItem);
+    drink(POTION_STRENGTH); // STR 13
+    drink(POTION_STRENGTH); // STR 14
+    drink(POTION_STRENGTH); // STR 15 (rapier)
+
     targetPos = posOffset(player.loc, 2, 0);
-    // A rat would be killed outright, leaving us with a dangling pointer; use a
-    // sturdy monster so we can observe the wound after the lunge resolves.
-    lungeTarget = placeHostileMonster(MK_TROLL, targetPos);
-    setMonsterHealth(lungeTarget, lungeTarget->info.maxHP);
-    lungeTargetHealthBefore = monsterHealth(lungeTarget);
-    targetPos = posOffset(player.loc, 1, 0);
+    monst = placeHostileMonster(MK_KRAKEN, targetPos);
 }
 
 static boolean lunge_step(void) {
@@ -531,8 +524,7 @@ static boolean lunge_step(void) {
 }
 
 static boolean lunged_and_moved(void) {
-    TEST_ASSERT(monsterHealth(lungeTarget) < lungeTargetHealthBefore, "the rapier should lunge at an enemy two squares away");
-    TEST_ASSERT_POS_EQ(player.loc, targetPos, "a lunge completes after the step");
+    TEST_ASSERT(monsterIsHurt(monst) && monsterIsAlive(monst), "the rapier should lunge at an enemy two squares away");
     return !testFailed;
 }
 

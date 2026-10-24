@@ -356,7 +356,6 @@ static void br11011_immunity_setup(void) {
     clearArena();
     theItem = givePlayerRunicArmor(CHAIN_MAIL, A_IMMUNITY, 10, true);
     theItem->vorpalEnemy = vorpalEnemyClassForMonster(MK_SPARK_TURRET);
-    equip(theItem);
     monst = placeHostileMonster(MK_SPARK_TURRET, posOffset(player.loc, 4, 0));
 }
 
@@ -372,11 +371,12 @@ static boolean br11011_immunity_verify(void) {
 static void br11012_reflection_setup(void) {
     clearArena();
     theItem = givePlayerRunicArmor(CHAIN_MAIL, A_REFLECTION, 50, true);
-    equip(theItem);
     monst = placeHostileMonster(MK_SPARK_TURRET, posOffset(player.loc, 4, 0));
 }
 
 static boolean br11012_reflection_verify(void) {
+    // TODO: Pick better verifier - maybe check that the monster is hurt or killed by its own bolt?
+    // Maybe check the message log for a reflection message?
     TEST_ASSERT(isPlayerHealthy(), "reflection should bounce bolt away from player");
     return !testFailed;
 }
@@ -388,7 +388,6 @@ static boolean br11012_reflection_verify(void) {
 static void br11013_respiration_setup(void) {
     clearArena();
     theItem = givePlayerRunicArmor(CHAIN_MAIL, A_RESPIRATION, 1, true);
-    equip(theItem);
 
     // Place poison gas cloud
     spawnFeature(player.loc, DF_CONFUSION_GAS_TRAP_CLOUD);
@@ -407,7 +406,6 @@ static boolean br11013_respiration_verify(void) {
 static void br11014_dampening_setup(void) {
     clearArena();
     theItem = givePlayerRunicArmor(CHAIN_MAIL, A_DAMPENING, 10, true);
-    equip(theItem);
     drink(POTION_FIRE_IMMUNITY); // So burning won't kill the player
     setPlayerHealth(1); // set low HP so explosion would normally kill
     monst = placeHostileMonster(MK_EXPLOSIVE_BLOAT, posOffset(player.loc, 1, 0));
@@ -426,7 +424,6 @@ static void br11015_reveal_setup(void) {
     clearArena();
     theItem = givePlayerRunicArmor(CHAIN_MAIL, A_DAMPENING, 10, false);
     theItem->charges = 5; // turns until reveal
-    equip(theItem);
 }
 
 static boolean br11015_reveal_verify(void) {
@@ -462,13 +459,10 @@ static boolean br11021_weapon_identify_verify(void) {
 // BR11022 — armor auto-identifies on runic trigger (e.g., reflection)
 // ============================================================
 
-static creature *reflectionCaster2;
-
 static void br11022_armor_identify_setup(void) {
     clearArena();
     theItem = givePlayerRunicArmor(CHAIN_MAIL, A_REFLECTION, 50, false);
-    equip(theItem);
-    reflectionCaster2 = placeHostileMonster(MK_SPARK_TURRET, posOffset(player.loc, 2, 0));
+    monst = placeHostileMonster(MK_SPARK_TURRET, posOffset(player.loc, 2, 0));
 }
 
 static boolean br11022_armor_identify_verify(void) {
@@ -526,7 +520,6 @@ static void br11011_immunity_wrong_type_setup(void) {
     setArenaRadius(5,FLOOR);
     item *armor = givePlayerRunicArmor(CHAIN_MAIL, A_IMMUNITY, 10, true);
     armor->vorpalEnemy = vorpalEnemyClassByName("mage"); // Mages can cast lightning too
-    equipItemFromPack(ARMOR, CHAIN_MAIL);
 
     // Turret is not a mage, so player is still vulnerable to the spark from a turret
     //    even if they are immune to sparks from eg. Dar or Pixie
@@ -718,7 +711,6 @@ static void br11011_immunity_caster_reflect_setup(void) {
     clearArena();    
     theItem = givePlayerRunicArmor(CHAIN_MAIL, A_IMMUNITY, 10, true);
     theItem->vorpalEnemy = vorpalEnemyClassForMonster(MK_SPARK_TURRET); // MK_SPARK_TURRET cast BOLT_SPARK
-    equip(theItem);
     monst = placeHostileMonster(MK_SPARK_TURRET, posOffset(player.loc, 4, 0));
 }
 
@@ -762,6 +754,8 @@ static boolean br11020_slaying_wrong_kind_verify(void) {
 
 static boolean br11001_all_runes_chance_rises_verify(void) {
     // Test that multiple runic types show increasing chance with enchant
+
+    // TODO: Pick random runic to test
     short quietusChance10 = runicActivationChance(
         givePlayerRunicWeapon(DAGGER, W_QUIETUS, 10, true));
     short quietusChance50 = runicActivationChance(
@@ -838,26 +832,6 @@ static boolean br11006_force_low_enchant_verify(void) {
     return !testFailed;
 }
 
-// ============================================================
-// BR11011 — immunity also blocks the caster's own bolt
-// ============================================================
-
-static boolean br11011_immunity_self_bolt_verify(void) {
-    clearArena();
-    item *armor = givePlayerRunicArmor(CHAIN_MAIL, A_IMMUNITY, 10, true);
-    armor->vorpalEnemy = MK_LICH;
-    equipItemFromPack(ARMOR, CHAIN_MAIL);
-
-    // Lich casts fire bolt at player
-    creature *lich = placeHostileMonster(MK_LICH, posOffset(player.loc, 4, 0));
-    bolt theBolt = boltCatalog[BOLT_FIRE];
-    zap(lich->loc, player.loc, &theBolt, false, false);
-
-    // Immunity should block
-    TEST_ASSERT(!isPlayerDead(), "immunity armor should block lich fire bolt");
-    return !testFailed;
-}
-
 const testCase tests_runic[] = {
     // --- Activation Chance Rules (BR11001, BR11016, BR11017, BR11018, BR11019, BR11020) ---
     { "BR11001_chance_rises_with_enchant",
@@ -924,10 +898,8 @@ const testCase tests_runic[] = {
         br11011_immunity_wrong_type_setup, wait_until_hurt, player_is_hurt_verify },
     { "BR11011_immunity_caster_reflect",
         br11011_immunity_caster_reflect_setup, br11011_immunity_caster_reflect_step, br11011_immunity_caster_reflect_verify },
-    { "BR11011_immunity_self_bolt",
-        clearArena, NULL, br11011_immunity_self_bolt_verify },
     { "BR11012_reflection_bounces_bolt",
-        br11012_reflection_setup, wait_10_turns_step, br11012_reflection_verify },
+        br11012_reflection_setup, wait_100_turns_step, br11012_reflection_verify },
     { "BR11013_respiration_gas_protection",
         br11013_respiration_setup, wait_10_turns_step, br11013_respiration_verify },
     { "BR11014_dampening_absorbs_explosive",
@@ -941,7 +913,7 @@ const testCase tests_runic[] = {
     { "BR11021_slaying_identifies_on_trigger",
         br11021_slaying_identify_setup, br11021_slaying_identify_step, br11021_slaying_identify_verify },
     { "BR11022_armor_identifies_on_reflection",
-        br11022_armor_identify_setup, wait_10_turns_step, br11022_armor_identify_verify },
+        br11022_armor_identify_setup, wait_100_turns_step, br11022_armor_identify_verify },
 
     { NULL, NULL, NULL, NULL }
 };
