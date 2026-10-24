@@ -7,6 +7,7 @@ define make_release_base
 	cp README.md $@/README.txt
 	cp CHANGELOG.md $@/CHANGELOG.txt
 	cp LICENSE.txt $@
+	cp external/LICENSE $@/cJSON_LICENSE.txt
 endef
 
 # Flatten bin/ in the Windows archive
