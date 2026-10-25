@@ -6714,7 +6714,8 @@ boolean eat(item *theItem, boolean recordCommands) {
     if (recordCommands) {
         recordApplyItemCommand(theItem);
     }
-
+    
+    rogue.monsterSpawnRamp = 0; // antigrind measures end when the player eats
     consumePackItem(theItem);
 
     return true;

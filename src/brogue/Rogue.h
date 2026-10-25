@@ -1128,6 +1128,12 @@ enum tileFlags {
 #define MAX_EXP_LEVEL                       20
 #define MAX_EXP                             100000000L
 
+// antigrind measures
+#define STARVE_DAMAGE_TURNS_TO_RAMP         150 // average of the monster spawn fuse (125-175)
+#define STARVE_DAMAGE_DERAMP_FREQUENCY      1   // increase for starvation damage to decay less frequently
+#define STARVE_DAMAGE_RAMP_AMOUNT           1
+#define MONSTER_SPAWN_RAMP_AMOUNT           1   // number of depths deeper the monster spawns
+
 #define XPXP_NEEDED_FOR_TELEPATHIC_BOND     1400 // XPXP required to enable telepathic awareness with the ally
 
 #define ROOM_MIN_WIDTH                      4
@@ -2470,7 +2476,8 @@ typedef struct playerCharacter {
     short strength;
     unsigned short monsterSpawnFuse;    // how much longer till a random monster spawns
     short monsterSpawnRamp;             // antigrind: ramps difficulty of monsters spawned to serve as better item gatekeepers to foil starvation strategies
-    short starveDamageRamp;             // antigrind: ramps starvation damage to prevent games being infinitely extendable
+    short starveDamage;                 // antigrind: made increasable to prevent games being infinitely extendable
+    unsigned long starvedTurnNumber;    // antigrind: marks the first turn each time the player starves
 
     item *weapon;
     item *armor;

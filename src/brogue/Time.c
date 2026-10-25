@@ -837,8 +837,6 @@ static void forceEatFood(void) {
             messageWithColor(buf, &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
             confirmMessages();
             eat(theItem, false);
-            rogue.monsterSpawnRamp = 0; // antigrind measures end when the player eats
-            rogue.starveDamageRamp = 0; // ditto
             playerTurnEnded();
             break;
         }
@@ -1979,14 +1977,22 @@ static void decrementPlayerStatus() {
         if (!(numberOfMatchingPackItems(AMULET, 0, 0, false) || player.status[STATUS_PARALYZED]) 
             || rand_percent(20)) {
             player.status[STATUS_NUTRITION]--;
+                // Some starvation grinding code.
+                if (player.status[STATUS_NUTRITION] <= 0) {
+                    rogue.starvedTurnNumber = rogue.playerTurnNumber; // record first turn each time the player starves
+                } else if (rogue.starveDamage > 1 
+                    && rand_range(1, STARVE_DAMAGE_TURNS_TO_RAMP * STARVE_DAMAGE_DERAMP_FREQUENCY) == 1) {
+                        rogue.starveDamage--; // deramp starve damage for playing without starving
+                }
             printNutritionMessages();
         }
     }
 
-    // Handle starvation grinding. 30000 gate value gets divided by 150 
-    // (avg monsterSpawnFuse) to yield up to 200 extra damage per turn
-    if (player.status[STATUS_NUTRITION] <= 0 && rogue.starveDamageRamp < 30000) {
-        rogue.starveDamageRamp++;
+    // Handle starvation grinding.
+    if (player.status[STATUS_NUTRITION] <= 0
+        && (rogue.starvedTurnNumber != rogue.playerTurnNumber) // a leeway before starvation damage ramps
+        && (rogue.starvedTurnNumber % STARVE_DAMAGE_TURNS_TO_RAMP == rogue.playerTurnNumber % STARVE_DAMAGE_TURNS_TO_RAMP)) {
+            rogue.starveDamage += STARVE_DAMAGE_RAMP_AMOUNT;
     }
 
     if (player.status[STATUS_TELEPATHIC] > 0 && !--player.status[STATUS_TELEPATHIC]) {
@@ -2083,7 +2089,7 @@ static void decrementPlayerStatus() {
         spawnPeriodicHorde();
         rogue.monsterSpawnFuse = rand_range(125, 175);
         if (player.status[STATUS_NUTRITION] <= 0 && rogue.monsterSpawnRamp < gameConst->deepestLevel) {
-            rogue.monsterSpawnRamp++;
+            rogue.monsterSpawnRamp += MONSTER_SPAWN_RAMP_AMOUNT;
         }
     }
 }
@@ -2279,7 +2285,7 @@ void playerTurnEnded() {
 
         // Regeneration/starvation:
         if (player.status[STATUS_NUTRITION] <= 0) {
-            player.currentHP -= 1 + (rogue.starveDamageRamp / 150);
+            player.currentHP -= rogue.starveDamage;
             if (player.currentHP <= 0) {
                 gameOver("Starved to death", true);
                 return;
