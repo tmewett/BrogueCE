@@ -1406,10 +1406,9 @@ void monstersFall() {
             } else if (!inflictDamage(NULL, monst, randClumpedRange(6, 12, 2), &red, false)) {
                 demoteMonsterFromLeadership(monst);
 
-                // A captive that falls leaves its shackles and guards behind.
+                // A captive that falls leaves its shackles behind and is freed as an ally.
                 if (monst->bookkeepingFlags & MB_CAPTIVE) {
-                    monst->creatureState = MONSTER_TRACKING_SCENT;
-                    monst->bookkeepingFlags &= ~MB_CAPTIVE;
+                    freeCaptive(monst);
                 }
 
                 monst->status[STATUS_ENTRANCED] = 0;
