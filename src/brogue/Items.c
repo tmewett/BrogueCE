@@ -6714,7 +6714,7 @@ boolean eat(item *theItem, boolean recordCommands) {
     if (recordCommands) {
         recordApplyItemCommand(theItem);
     }
-    
+
     consumePackItem(theItem);
 
     return true;

@@ -1977,22 +1977,17 @@ static void decrementPlayerStatus() {
         if (!(numberOfMatchingPackItems(AMULET, 0, 0, false) || player.status[STATUS_PARALYZED]) 
             || rand_percent(20)) {
             player.status[STATUS_NUTRITION]--;
-                // Some starvation grinding code.
-                if (player.status[STATUS_NUTRITION] <= 0) {
-                    rogue.starvedTurnNumber = rogue.absoluteTurnNumber; // record first turn each time the player starves
-                } else if (rogue.starveDamage > 1 
-                    && rand_range(1, STARVE_DAMAGE_TURNS_TO_RAMP * STARVE_DAMAGE_DERAMP_FREQUENCY) == 1) {
-                        rogue.starveDamage--; // deramp starve damage for playing without starving
-                }
             printNutritionMessages();
+            // Handle starvation grinding.
+            if (player.status[STATUS_NUTRITION] <= 0) {
+                rogue.starvedTurnNumber = rogue.absoluteTurnNumber; // record first turn each time the player starves
+            } else if (rogue.starveDamage > 1 
+                       && rand_range(1, STARVE_DAMAGE_TURNS_TO_RAMP * STARVE_DAMAGE_DERAMP_FREQUENCY) == 1) {
+                           rogue.starveDamage--; // deramp starve damage for playing without starving
+            }
         }
-    }
-
-    // Handle starvation grinding.
-    if (player.status[STATUS_NUTRITION] <= 0
-        && (rogue.starvedTurnNumber != rogue.absoluteTurnNumber) // a leeway before starvation damage ramps
-        && (rogue.starvedTurnNumber % STARVE_DAMAGE_TURNS_TO_RAMP == rogue.absoluteTurnNumber % STARVE_DAMAGE_TURNS_TO_RAMP)) {
-            rogue.starveDamage += STARVE_DAMAGE_RAMP_AMOUNT;
+    } else if ((rogue.absoluteTurnNumber - rogue.starvedTurnNumber) % STARVE_DAMAGE_TURNS_TO_RAMP == 0) {
+               rogue.starveDamage += STARVE_DAMAGE_RAMP_AMOUNT;
     }
 
     if (player.status[STATUS_TELEPATHIC] > 0 && !--player.status[STATUS_TELEPATHIC]) {
