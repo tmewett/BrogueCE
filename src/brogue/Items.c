@@ -2175,8 +2175,7 @@ void itemDetails(char *buf, const item *theItem) {
 
                     new = max(0, new);
 
-                    sprintf(buf2, "Wearing the %s%s will result in an armor rating of %s%i%s. ",
-                            theName,
+                    sprintf(buf2, "Wearing it%s will result in an armor rating of %s%i%s. ",
                             ((theItem->flags & ITEM_IDENTIFIED) || rogue.playbackOmniscience) ? "" : ", assuming it has no hidden properties,",
                             (new > displayedArmorValue() ? goodColorEscape : (new < displayedArmorValue() ? badColorEscape : whiteColorEscape)),
                             new, whiteColorEscape);
@@ -2186,9 +2185,8 @@ void itemDetails(char *buf, const item *theItem) {
 
             // protected?
             if (theItem->flags & ITEM_PROTECTED) {
-                sprintf(buf2, "%sThe %s cannot be corroded by acid.%s ",
+                sprintf(buf2, "%sIt cannot be corroded by acid.%s ",
                         goodColorEscape,
-                        theName,
                         whiteColorEscape);
                 strcat(buf, buf2);
             }
@@ -2203,8 +2201,7 @@ void itemDetails(char *buf, const item *theItem) {
                 if (rogue.armor) {
                     new -= armorStealthAdjustment(rogue.armor);
                 }
-                sprintf(buf2, "Equipping the %s will %s%s your stealth range by %i%s. ",
-                        theName,
+                sprintf(buf2, "Equipping it will %s%s your stealth range by %i%s. ",
                         new > 0 ? badColorEscape : goodColorEscape,
                         new > 0 ? "increase" : "decrease",
                         abs(new),
@@ -2356,7 +2353,7 @@ void itemDetails(char *buf, const item *theItem) {
 
             } else if (theItem->category & ARMOR) {
 
-                // non-runic passive effects?
+                // armor passives?
                 if (theItem->enchant3 == A_PLAIN) {
                     sprintf(buf2, "\n\nThe %s has no special passive effect. ",
                             theName);
@@ -2367,59 +2364,74 @@ void itemDetails(char *buf, const item *theItem) {
                 }
                 strcat(buf, buf2);
 
+                switch (theItem->enchant3) {
+                    case A_PLAIN:
+                        sprintf(buf2, "It is plain. ");
+                        break;
+                    case A_STEALTH:
+                        sprintf(buf2, "Stealth range is reduced, but bonus armor is halved. Stealth makes enemies less likely to notice you and more likely to lose your trail. Staying still and hiding in the shadows will make you even harder to spot. ");
+                        break;
+                    case A_ARMORSMITH:
+                        sprintf(buf2, "It has a bonus to base armor rating and a %i%% bonus to armor per enchantment level. ", ARMORSMITH_BONUS_PERCENT);
+                        break;
+                    case A_ABSORPTION:
+                        sprintf(buf2, "It will reduce the damage of inbound attacks. ");
+                        break;
+                    case A_MANGLE:
+                        sprintf(buf2, "Any enemy that hits your armor but misses you will be wounded by spiky shrapnel. ");
+                        break;
+                    case A_REFLECTION:
+                        sprintf(buf2, "It can deflect incoming spells and reflect them back at their source. ");
+                        break;
+                    default:
+                        break;
+                }
+                strcat(buf, buf2);
+
                 if (theItem->flags & ITEM_IDENTIFIED) {
                     switch (theItem->enchant3) {
                         case A_PLAIN:
-                            sprintf(buf2, "It is plain. ");
+                            sprintf(buf2, ""); // prevents double printing of "It is plain. "
                             break;
                         case A_STEALTH:
-                            sprintf(buf2, "It grants the wearer a stealth bonus equal to its intrinsic enchantment level of %i, at the cost of halving any bonus armor beyond the base armor rating of %i. An enchanted armor will reduce your stealth range, making enemies less likely to notice you and more likely to lose your trail. Staying motionless and lurking in the shadows will make you even harder to spot. ",
-                                    (theItem->enchant1),
-                                    (theItem->armor / 10));
+                            sprintf(buf2, "Stealth bonus: %i. ", (theItem->enchant1));
                             break;
                         case A_ARMORSMITH:
                             if (theItem->enchant1 > 0) {                 
-                                sprintf(buf2, "It has a %s+%i%s bonus to its base armor rating increasing it from %i to %i in addition to a %s%+.2f%s bonus to its armor (equal to %i%% of its intrinsic enchantment level.) ",
+                                sprintf(buf2, "Bonus to base armor rating: %s+%i%s. Bonus for enchanting: %s%+.2f%s. ",
                                 goodColorEscape, ARMORSMITH_BONUS_DEFENSE / 10, whiteColorEscape,
-                                theItem->armor / 10,
-                                (theItem->armor + ARMORSMITH_BONUS_DEFENSE) / 10,
-                                goodColorEscape, (float) theItem->enchant1 / 2, whiteColorEscape,
-                                ARMORSMITH_BONUS_PERCENT);
+                                goodColorEscape, (float) theItem->enchant1 / 2, whiteColorEscape);
                             } else {
                                 sprintf(buf2, "Its passive effect is enabled when its intrinsic enchantment level is positive. ");
                             }
                             break;
                         case A_ABSORPTION:
                             if (enchant > 0) {
-                                sprintf(buf2, "It will reduce the damage of inbound attacks by a random amount between 1 and %i, which is %i%% of your current maximum health. (If the %s is enchanted, this maximum amount will %s %i.) ",
+                                sprintf(buf2, "Damage reduced: a random amount between 1 and %i, which is %i%% of your current maximum health. (If the armor is enchanted, this maximum amount will %s %i.) ",
                                         (int) armorAbsorptionMax(enchant),
                                         (int) (100 * armorAbsorptionMax(enchant) / player.info.maxHP),
-                                        theName,
                                         (armorAbsorptionMax(enchant) == armorAbsorptionMax(enchant + enchantIncrement(theItem)) ? "remain at" : "increase to"),
                                         (int) armorAbsorptionMax(enchant + enchantMagnitude() * enchantIncrement(theItem)));
                             } else {
                                 sprintf(buf2, "Its passive effect is enabled when its enchantment level is positive. ");
                                     if (enchant == 0) {
                                         strcat(buf, buf2);
-                                        sprintf(buf2, "(If the %s is enchanted, it will reduce damage by a minimum of 1 and a maximum of %i.) ",
-                                                theName,
+                                        sprintf(buf2, "(If it is enchanted, it will reduce damage by a minimum of 1 and a maximum of %i.) ",
                                                 (int) armorAbsorptionMax(enchant + enchantMagnitude() * enchantIncrement(theItem)));
                                     }
                             }
                             break;
                         case A_MANGLE:
                             if (enchant > 0) {
-                                sprintf(buf2, "Any enemy that attacks but misses you will wound itself for %i%% of its damage. (If the %s is enchanted, this percentage will %s %i%%.) ",
+                                sprintf(buf2, "Mangle damage: %i%% of the enemy's damage. (If the armor is enchanted, this percentage will %s %i%%.) ",
                                         armorManglePercent(enchant),
-                                        theName,
                                         (armorManglePercent(enchant) == armorManglePercent(enchant + enchantIncrement(theItem)) ? "remain at" : "increase to"),
                                         (armorManglePercent(enchant + enchantMagnitude() * enchantIncrement(theItem))));
                             } else {
                                 sprintf(buf2, "Its passive effect is enabled when its enchantment level is positive. ");
                                     if (enchant == 0) {
                                         strcat(buf, buf2);
-                                        sprintf(buf2, "(If the %s is enchanted, any enemy that attacks but misses you will itself be wounded by %i%% of the damage that it would have inflicted.) ",
-                                                theName,
+                                        sprintf(buf2, "(If it is enchanted, any enemy that attacks but misses you will itself be wounded by %i%% of the damage that it would have inflicted.) ",
                                                 (armorManglePercent(enchant + enchantMagnitude() * enchantIncrement(theItem))));
                                     }
                             }
@@ -2428,7 +2440,7 @@ void itemDetails(char *buf, const item *theItem) {
                             if (enchant > 0) {
                                 short reflectChance = reflectionChance(enchant);
                                 short reflectChance2 = reflectionChance(enchant + enchantMagnitude() * enchantIncrement(theItem));
-                                sprintf(buf2, "When worn, you will deflect %i%% of incoming spells -- including directly back at their source %i%% of the time. (If the armor is enchanted, these will %s %i%% and %i%%.) ",
+                                sprintf(buf2, "Deflect chance: %i%%. Reflect chance: %i%%. (If it is enchanted, these will %s %i%% and %i%%.) ",
                                         reflectChance,
                                         (reflectChance * reflectChance / 100),
                                         (reflectChance == reflectChance2 ? "remain at" : "increase to"),
@@ -2440,7 +2452,7 @@ void itemDetails(char *buf, const item *theItem) {
                                 sprintf(buf2, "Its passive effect is enabled when its enchantment level is positive. ");
                                     if (enchant == 0) {
                                         strcat(buf, buf2);
-                                        sprintf(buf2, "(If the armor is enchanted, these will increase to %i%% and %i%%.)",
+                                        sprintf(buf2, "(If it is enchanted, these will increase to %i%% and %i%%.)",
                                                 reflectChance2,
                                                 (reflectChance2 * reflectChance2 / 100));
                                     }
@@ -2448,7 +2460,6 @@ void itemDetails(char *buf, const item *theItem) {
                             break;
                         default:
                             break;
-                    
                     }
                     strcat(buf, buf2);
                 }
@@ -2468,8 +2479,7 @@ void itemDetails(char *buf, const item *theItem) {
                                         armorImageCount(enchant),
                                         (armorImageCount(enchant) == 1 ? "" : "s"));
                                 if (armorImageCount(enchant + enchantMagnitude() * enchantIncrement(theItem)) > armorImageCount(enchant)) {
-                                    sprintf(buf3, "(If the %s is enchanted, the number of duplicates will increase to %i.) ",
-                                            theName,
+                                    sprintf(buf3, "(If it is enchanted, the number of duplicates will increase to %i.) ",
                                             (armorImageCount(enchant + enchantMagnitude() * enchantIncrement(theItem))));
                                     strcat(buf2, buf3);
                                 }
