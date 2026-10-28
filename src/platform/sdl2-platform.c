@@ -68,8 +68,9 @@ static boolean eventFromKey(rogueEvent *event, SDL_Keycode key) {
         case SDLK_TAB:
             event->param1 = TAB_KEY;
             return true;
+        case SDLK_F2:
         case SDLK_PRINTSCREEN:
-            event->param1 = PRINTSCREEN_KEY;
+            event->param1 = SCREENSHOT_KEY;
             return true;
     }
 
