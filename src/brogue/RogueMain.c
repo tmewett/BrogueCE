@@ -405,7 +405,6 @@ void initializeRogue(uint64_t seed) {
     rogue.mapToShore = NULL;
     rogue.cursorLoc = INVALID_POS;
     rogue.xpxpThisTurn = 0;
-    rogue.monsterSpawnRamp = 0;
     rogue.starveDamage = 1;
     rogue.starvedTurnNumber = 0;
 

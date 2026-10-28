@@ -1979,7 +1979,7 @@ static void decrementPlayerStatus() {
             player.status[STATUS_NUTRITION]--;
                 // Some starvation grinding code.
                 if (player.status[STATUS_NUTRITION] <= 0) {
-                    rogue.starvedTurnNumber = rogue.playerTurnNumber; // record first turn each time the player starves
+                    rogue.starvedTurnNumber = rogue.absoluteTurnNumber; // record first turn each time the player starves
                 } else if (rogue.starveDamage > 1 
                     && rand_range(1, STARVE_DAMAGE_TURNS_TO_RAMP * STARVE_DAMAGE_DERAMP_FREQUENCY) == 1) {
                         rogue.starveDamage--; // deramp starve damage for playing without starving
@@ -1990,8 +1990,8 @@ static void decrementPlayerStatus() {
 
     // Handle starvation grinding.
     if (player.status[STATUS_NUTRITION] <= 0
-        && (rogue.starvedTurnNumber != rogue.playerTurnNumber) // a leeway before starvation damage ramps
-        && (rogue.starvedTurnNumber % STARVE_DAMAGE_TURNS_TO_RAMP == rogue.playerTurnNumber % STARVE_DAMAGE_TURNS_TO_RAMP)) {
+        && (rogue.starvedTurnNumber != rogue.absoluteTurnNumber) // a leeway before starvation damage ramps
+        && (rogue.starvedTurnNumber % STARVE_DAMAGE_TURNS_TO_RAMP == rogue.absoluteTurnNumber % STARVE_DAMAGE_TURNS_TO_RAMP)) {
             rogue.starveDamage += STARVE_DAMAGE_RAMP_AMOUNT;
     }
 
@@ -2088,9 +2088,6 @@ static void decrementPlayerStatus() {
     if (rogue.monsterSpawnFuse <= 0) {
         spawnPeriodicHorde();
         rogue.monsterSpawnFuse = rand_range(125, 175);
-        if (player.status[STATUS_NUTRITION] <= 0 && rogue.monsterSpawnRamp < gameConst->deepestLevel) {
-            rogue.monsterSpawnRamp += MONSTER_SPAWN_RAMP_AMOUNT;
-        }
     }
 }
 
