@@ -2369,10 +2369,10 @@ void itemDetails(char *buf, const item *theItem) {
                         sprintf(buf2, "It is plain. ");
                         break;
                     case A_STEALTH:
-                        sprintf(buf2, "Stealth range is reduced, but bonus armor is halved. Stealth makes enemies less likely to notice you and more likely to lose your trail. Staying still and hiding in the shadows will make you even harder to spot. ");
+                        sprintf(buf2, "You are less likely to be noticed and more likely to lose pursuers. Staying still or hiding in darkness conceals you even more. ");
                         break;
                     case A_ARMORSMITH:
-                        sprintf(buf2, "It has a bonus to base armor rating and a %i%% bonus to armor per enchantment level. ", ARMORSMITH_BONUS_PERCENT);
+                        sprintf(buf2, "It grants armor related bonuses. ");
                         break;
                     case A_ABSORPTION:
                         sprintf(buf2, "It will reduce the damage of inbound attacks. ");
@@ -2394,26 +2394,28 @@ void itemDetails(char *buf, const item *theItem) {
                             sprintf(buf2, ""); // prevents double printing of "It is plain. "
                             break;
                         case A_STEALTH:
-                            sprintf(buf2, "Stealth bonus: %i. ", (theItem->enchant1));
+                            sprintf(buf2, "Stealth bonus: %i. Armor gain is halved. ", 
+                                theItem->enchant1 >= 0 ? theItem->enchant1 : 0);
                             break;
                         case A_ARMORSMITH:
                             if (theItem->enchant1 > 0) {                 
-                                sprintf(buf2, "Bonus to base armor rating: %s+%i%s. Bonus for enchanting: %s%+.2f%s. ",
-                                goodColorEscape, ARMORSMITH_BONUS_DEFENSE / 10, whiteColorEscape,
-                                goodColorEscape, (float) theItem->enchant1 / 2, whiteColorEscape);
+                                sprintf(buf2, "One time bonus: +%i. %i%% bonus per enchantment level: +%.2f. ",
+                                ARMORSMITH_BONUS_DEFENSE / 10,
+                                ARMORSMITH_BONUS_PERCENT,
+                                (float) theItem->enchant1 / 2);
                             } else {
-                                sprintf(buf2, "Its passive effect is enabled when its intrinsic enchantment level is positive. ");
+                                sprintf(buf2, "It is not sufficiently enchanted. ");
                             }
                             break;
                         case A_ABSORPTION:
                             if (enchant > 0) {
-                                sprintf(buf2, "Damage reduced: a random amount between 1 and %i, which is %i%% of your current maximum health. (If the armor is enchanted, this maximum amount will %s %i.) ",
+                                sprintf(buf2, "Damage reduced by a random amount between 1 and %i, which is %i%% of your current maximum health. (If the armor is enchanted, this maximum amount will %s %i.) ",
                                         (int) armorAbsorptionMax(enchant),
                                         (int) (100 * armorAbsorptionMax(enchant) / player.info.maxHP),
                                         (armorAbsorptionMax(enchant) == armorAbsorptionMax(enchant + enchantIncrement(theItem)) ? "remain at" : "increase to"),
                                         (int) armorAbsorptionMax(enchant + enchantMagnitude() * enchantIncrement(theItem)));
                             } else {
-                                sprintf(buf2, "Its passive effect is enabled when its enchantment level is positive. ");
+                                sprintf(buf2, "It is not sufficiently enchanted. ");
                                     if (enchant == 0) {
                                         strcat(buf, buf2);
                                         sprintf(buf2, "(If it is enchanted, it will reduce damage by a minimum of 1 and a maximum of %i.) ",
@@ -2428,7 +2430,7 @@ void itemDetails(char *buf, const item *theItem) {
                                         (armorManglePercent(enchant) == armorManglePercent(enchant + enchantIncrement(theItem)) ? "remain at" : "increase to"),
                                         (armorManglePercent(enchant + enchantMagnitude() * enchantIncrement(theItem))));
                             } else {
-                                sprintf(buf2, "Its passive effect is enabled when its enchantment level is positive. ");
+                                sprintf(buf2, "It is not sufficiently enchanted. ");
                                     if (enchant == 0) {
                                         strcat(buf, buf2);
                                         sprintf(buf2, "(If it is enchanted, any enemy that attacks but misses you will itself be wounded by %i%% of the damage that it would have inflicted.) ",
@@ -2447,9 +2449,9 @@ void itemDetails(char *buf, const item *theItem) {
                                         reflectChance2,
                                         (reflectChance2 * reflectChance2 / 100));
                             } else {
-                                short reflectChance = reflectionChance(enchant); // declared twice because of reports MacOS won't compile if placed outside the conditional branch
+                                // declared twice because of reports MacOS won't compile if placed outside the conditional branch
                                 short reflectChance2 = reflectionChance(enchant + enchantMagnitude() * enchantIncrement(theItem));
-                                sprintf(buf2, "Its passive effect is enabled when its enchantment level is positive. ");
+                                sprintf(buf2, "It is not sufficiently enchanted. ");
                                     if (enchant == 0) {
                                         strcat(buf, buf2);
                                         sprintf(buf2, "(If it is enchanted, these will increase to %i%% and %i%%.)",

@@ -1578,8 +1578,8 @@ itemTable weaponTable[NUMBER_WEAPON_KINDS] = {
 
 itemTable armorTable[NUMBER_ARMOR_KINDS] = {
     {"leather armor",       "", "",  0, 250,        10, 0, {30,30,0},      true, false, 0, false, "This lightweight armor offers basic protection."},
-    {"hide armor",          "", "", 10, 350,        12, 0, {40,40,0},      true, false, 0, false, "The hide of a beast provides light protection."},
-    {"scale mail",          "", "", 10, 650,        14, 0, {70,70,0},      true, false, 0, false, "Iron scales cover the surface of treated leather making for a tough suit of armor."},
+    {"hide armor",          "", "", 10, 350,        12, 0, {40,40,0},      true, false, 0, false, "This thick hide offers light protection."},
+    {"scale mail",          "", "", 10, 650,        14, 0, {70,70,0},      true, false, 0, false, "Iron scales sewn onto a leather backing make for a tough suit of armor."},
     {"padded armor",        "", "", 10, 800,        15, 0, {70,70,0},      true, false, 0, false, "A padded jacket worn under chain mail provides an extra layer of protection."},
     {"spiked armor",        "", "", 10, 900,        16, 0, {80,80,0},      true, false, 0, false, "Jagged spikes protruding from a splint armor base offers offensive protection."},
     {"mirror armor",        "", "", 10, 1000,       17, 0, {90,90,0},      true, false, 0, false, "Polished metal discs worn over a plate armor base provide magic protection."},
