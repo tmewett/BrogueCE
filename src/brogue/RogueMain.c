@@ -446,7 +446,7 @@ void initializeRogue(uint64_t seed) {
 
     recalculateEquipmentBonuses();
 
-    if (D_OMNISCENCE) {
+    if (WIZARD_MODE && getConfigValue(CONFIG_OMNISCENCE)) {
         rogue.playbackOmniscience = 1;
     }
 
@@ -1094,7 +1094,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         }
     } else {
         playback = rogue.playbackMode;
-        if (!D_IMMORTAL && !nonInteractivePlayback) {
+        if (!(WIZARD_MODE && getConfigValue(CONFIG_IMMORTAL)) && !nonInteractivePlayback) {
             rogue.playbackMode = false;
         }
         strcpy(buf, "You die...");
@@ -1133,7 +1133,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
 
     rogue.creaturesWillFlashThisTurn = false;
 
-    if (D_IMMORTAL && !rogue.quit) {
+    if (WIZARD_MODE && getConfigValue(CONFIG_IMMORTAL) && !rogue.quit) {
         message("...but then you get better.", 0);
         player.currentHP = player.info.maxHP;
         if (player.status[STATUS_NUTRITION] < 10) {

@@ -52,13 +52,8 @@
 #define MONSTERS_ENABLED                (!WIZARD_MODE || 1) // Quest room monsters can be generated regardless.
 #define ITEMS_ENABLED                   (!WIZARD_MODE || 1)
 
-#define D_BULLET_TIME                   (WIZARD_MODE && 0)
-#define D_WORMHOLING                    (WIZARD_MODE && 1)
-#define D_IMMORTAL                      (WIZARD_MODE && 1)
-
 #define D_SAFETY_VISION                 (WIZARD_MODE && 0)
 #define D_SCENT_VISION                  (WIZARD_MODE && 0)
-#define D_OMNISCENCE                    (WIZARD_MODE && 0)
 
 #define D_INSPECT_LEVELGEN              (WIZARD_MODE && 0)
 #define D_INSPECT_MACHINES              (WIZARD_MODE && 0)
@@ -205,6 +200,21 @@ enum gameVariant {
     VARIANT_RAPID_BROGUE,
     VARIANT_BULLET_BROGUE,
     NUMBER_VARIANTS
+};
+
+// Configuration Entries
+enum configSetting {
+    CONFIG_PLAYBACK_DELAY_PER_TURN,
+    CONFIG_GAME_VARIANT,          // Brogue, Rapid, Bullet
+    CONFIG_GAME_MODE,             // Normal, Easy, Wizard
+    CONFIG_GRAPHICS_MODE,         // Ascii, Hybrid, Graphics
+    CONFIG_STEALTH_RANGE_ENABLED,
+    CONFIG_COLOR_EFFECTS_ENABLED,
+    CONFIG_BULLETTIME,           // Player actions take no time, resting lets time pass
+    CONFIG_WORMHOLING,           // Clicking on map teleports player, "<" or ">" moves between depths
+    CONFIG_IMMORTAL,             // Restore health/food after death
+    CONFIG_OMNISCENCE,           // No hidden information
+    NUMBER_CONFIG_SETTINGS
 };
 
 // display characters:
@@ -3520,7 +3530,8 @@ extern "C" {
 
     void dijkstraScan(short **distanceMap, short **costMap, boolean useDiagonals);
 
-    void readFromConfig(enum graphicsModes* initialGraphics);
+    short getConfigValue(enum configSetting cfgItem);
+    void readFromConfig(void);
     void writeIntoConfig(void);
     
 #if defined __cplusplus
