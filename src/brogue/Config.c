@@ -4,11 +4,17 @@
 
 typedef struct configParams {
     short playbackDelayPerTurn;
-    short gameVariant;      // Brogue, Rapid, Bullet
-    short gameMode;         // Normal, Easy, Wizard
-    short graphicsMode;     // Ascii, Hybrid, Graphics
+    short gameVariant;          // Brogue, Rapid, Bullet
+    short gameMode;             // Normal, Easy, Wizard
+    short graphicsMode;         // Ascii, Hybrid, Graphics
     boolean stealthRangeEnabled;
     boolean colorEffectsEnabled;
+
+    // Wizard-Mode Settings
+    boolean bulletTime;         // Player actions take no time, resting lets time pass
+    boolean wormholing;         // Clicking on map teleports player, "<" or ">" moves between depths
+    boolean immortal;           // Restore health/food after death
+    boolean omniscence;         // No hidden information
 } configParams;
 
 typedef enum {
@@ -33,6 +39,9 @@ typedef struct {
     fieldType type;
     fieldValidator validator;
 } configField;
+
+// TODO: Should, all config go in a global struct?  Doing this for the wizard mode settings for now.
+static configParams globalConfig;
 
 static const char* JSON_FILENAME = "brogue_config.json";
 static const char* JSON_FILENAME_BACKUP = "brogue_config_backup.json";
@@ -71,10 +80,16 @@ static configParams defaultConfig(void) {
     config.colorEffectsEnabled = false;
     config.stealthRangeEnabled = false;
 
+    config.bulletTime = false;
+    config.omniscence = false;
+    config.immortal = true;
+    config.wormholing = true;
     return config;
 }
 
 void getLiveConfig(configParams* config) {
+    *config = globalConfig;
+
     config->gameMode = rogue.mode;
     config->stealthRangeEnabled = rogue.displayStealthRangeMode;
     config->colorEffectsEnabled = rogue.trueColorMode;
@@ -90,6 +105,8 @@ void setLiveConfig(const configParams* config) {
     rogue.playbackDelayPerTurn = config->playbackDelayPerTurn;
     gameVariant = config->gameVariant;
     graphicsMode = config->graphicsMode;
+
+    globalConfig = *config;
 }
 
 // ---------------------------------
@@ -104,6 +121,12 @@ static configField* setupFieldEntries(configParams* config) {
         {"playbackDelayPerTurn", &(config->playbackDelayPerTurn), INT_TYPE,      {.intRange = playbackDelayRange}},
         {"stealthRangeEnabled",  &(config->stealthRangeEnabled),  BOOLEAN_TYPE},
         {"colorEffectsEnabled",  &(config->colorEffectsEnabled),  BOOLEAN_TYPE},
+
+        // TODO: maybe put these under a "wizard: {}" sub-object in the JSON?
+        {"wizardBulletTime",     &(config->bulletTime),           BOOLEAN_TYPE},
+        {"wizardWormholing",     &(config->wormholing),           BOOLEAN_TYPE},
+        {"wizardImmortal",       &(config->immortal),             BOOLEAN_TYPE},
+        {"wizardOmniscence",     &(config->omniscence),           BOOLEAN_TYPE},
         {NULL}};
 
     configField* entries = malloc(sizeof(fieldDescriptors));
@@ -300,6 +323,23 @@ static void configureBrogue(boolean writeConfig) {
     }
 
     cJSON_Delete(root);
+}
+
+// Bit of a hack, but should work for first pass
+short getConfigValue(enum configSetting cfgItem) {
+    switch (cfgItem) {
+        case CONFIG_PLAYBACK_DELAY_PER_TURN: return globalConfig.playbackDelayPerTurn;
+        case CONFIG_GAME_VARIANT:            return globalConfig.gameVariant;
+        case CONFIG_GAME_MODE:               return globalConfig.gameMode;
+        case CONFIG_GRAPHICS_MODE:           return globalConfig.graphicsMode;
+        case CONFIG_STEALTH_RANGE_ENABLED:   return globalConfig.stealthRangeEnabled;
+        case CONFIG_COLOR_EFFECTS_ENABLED:   return globalConfig.colorEffectsEnabled;
+        case CONFIG_BULLETTIME:              return globalConfig.bulletTime;
+        case CONFIG_WORMHOLING:              return globalConfig.wormholing;
+        case CONFIG_IMMORTAL:                return globalConfig.immortal;
+        case CONFIG_OMNISCENCE:              return globalConfig.omniscence;
+    }
+    return 0; // Probably a safe default (bool=false, enum=0, short=0)
 }
 
 void readFromConfig(void) {

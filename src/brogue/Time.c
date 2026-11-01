@@ -2396,7 +2396,7 @@ void playerTurnEnded() {
             }
         }
 
-        if (D_BULLET_TIME && !rogue.justRested) {
+        if (WIZARD_MODE && getConfigValue(CONFIG_BULLETTIME) && !rogue.justRested) {
             player.ticksUntilTurn = 0;
         }
 

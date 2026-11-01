@@ -1651,7 +1651,7 @@ void travel(pos target, boolean autoConfirm) {
 
     confirmMessages();
 
-    if (D_WORMHOLING) {
+    if (WIZARD_MODE && getConfigValue(CONFIG_WORMHOLING)) {
         recordMouseClick(mapToWindowX(target.x), mapToWindowY(target.y), true, false);
         pmapAt(player.loc)->flags &= ~HAS_PLAYER;
         refreshDungeonCell(player.loc);

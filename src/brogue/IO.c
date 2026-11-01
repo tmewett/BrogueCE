@@ -776,7 +776,7 @@ void mainInputLoop() {
                      dir < DIRECTION_COUNT && !posEq(posNeighborInDirection(player.loc, dir) , path[0]);
                      dir++);
                 playerMoves(dir);
-            } else if (D_WORMHOLING) {
+            } else if (WIZARD_MODE && getConfigValue(CONFIG_WORMHOLING)) {
                 travel(rogue.cursorLoc, true);
             } else {
                 confirmMessages();
@@ -1486,7 +1486,7 @@ void getCellAppearance(pos loc, enum displayGlyph *returnChar, color *returnFore
     if (D_SCENT_VISION) {
         if (rogue.scentTurnNumber > (unsigned short) scentMap[loc.x][loc.y]) {
             cellBackColor.red = rogue.scentTurnNumber - (unsigned short) scentMap[loc.x][loc.y];
-            cellBackColor.red = clamp(cellBackColor.red, 0, 100);
+            cellBackColor.red = 100 - clamp(cellBackColor.red, 0, 100);
         } else {
             cellBackColor.green = abs(rogue.scentTurnNumber - (unsigned short) scentMap[loc.x][loc.y]);
             cellBackColor.green = clamp(cellBackColor.green, 0, 100);
@@ -2493,7 +2493,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             break;
         case DESCEND_KEY:
             considerCautiousMode();
-            if (D_WORMHOLING) {
+            if (WIZARD_MODE && getConfigValue(CONFIG_WORMHOLING)) {
                 recordKeystroke(DESCEND_KEY, false, false);
                 useStairs(1);
             } else if (proposeOrConfirmLocation(rogue.downLoc, "I see no way down.")) {
@@ -2502,7 +2502,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
             break;
         case ASCEND_KEY:
             considerCautiousMode();
-            if (D_WORMHOLING) {
+            if (WIZARD_MODE && getConfigValue(CONFIG_WORMHOLING)) {
                 recordKeystroke(ASCEND_KEY, false, false);
                 useStairs(-1);
             } else if (proposeOrConfirmLocation(rogue.upLoc, "I see no way up.")) {
