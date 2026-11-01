@@ -3520,7 +3520,7 @@ extern "C" {
 
     void dijkstraScan(short **distanceMap, short **costMap, boolean useDiagonals);
 
-    void readFromConfig(enum graphicsModes* initialGraphics);
+    void readFromConfig(void);
     void writeIntoConfig(void);
     
 #if defined __cplusplus

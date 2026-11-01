@@ -46,9 +46,22 @@ static const char* graphicsModeMappings[] = {"text", "tiles", "hybrid", NULL};
 // maps json strings to the gameMode Enum
 static const char* gameModeMappings[] = {"normal", "wizard", "easy", NULL};
 
-static intRange playbackDelayRange = {MIN_PLAYBACK_DELAY, MAX_PLAYBACK_DELAY};
+static const intRange playbackDelayRange = {MIN_PLAYBACK_DELAY, MAX_PLAYBACK_DELAY};
 
-static configParams createDefaultConfig(void) {
+static short mapStringToEnum(const char* inputString, const char** mappings) {
+    for (short i = 0; mappings[i]; i++) {
+        if (strcmp(inputString, mappings[i]) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+// ---------------------------------
+// configParams functions
+// ---------------------------------
+
+static configParams defaultConfig(void) {
     configParams config;
 
     config.playbackDelayPerTurn = DEFAULT_PLAYBACK_DELAY;
@@ -61,44 +74,36 @@ static configParams createDefaultConfig(void) {
     return config;
 }
 
-static char* loadConfigFile(void) {
-    FILE* jsonFile = fopen(JSON_FILENAME, "r");
-
-    if (!jsonFile) {
-        return NULL;
-    }
-
-    fseek(jsonFile, 0, SEEK_END);
-    long fileSize = ftell(jsonFile);
-    fseek(jsonFile, 0, SEEK_SET);
-
-    char* buffer = (char*)malloc(fileSize + 1);
-
-    if (!buffer) {
-        fclose(jsonFile);
-        return NULL;
-    }
-
-    size_t len = fread(buffer, 1, fileSize, jsonFile);
-    fclose(jsonFile);
-
-    if (len < fileSize) {
-        fprintf(stderr, "ERROR: Failed to read entire file.  Attempting to continue.");
-    }
-
-    buffer[len] = '\0';
-
-    return buffer;
+void getLiveConfig(configParams* config) {
+    config->gameMode = rogue.mode;
+    config->stealthRangeEnabled = rogue.displayStealthRangeMode;
+    config->colorEffectsEnabled = rogue.trueColorMode;
+    config->playbackDelayPerTurn = rogue.playbackDelayPerTurn;
+    config->gameVariant = gameVariant;
+    config->graphicsMode = graphicsMode;
 }
 
-static configField* getFieldEntries(configParams* config) {
+void setLiveConfig(const configParams* config) {
+    rogue.mode = config->gameMode;
+    rogue.displayStealthRangeMode = config->stealthRangeEnabled;
+    rogue.trueColorMode = config->colorEffectsEnabled;
+    rogue.playbackDelayPerTurn = config->playbackDelayPerTurn;
+    gameVariant = config->gameVariant;
+    graphicsMode = config->graphicsMode;
+}
+
+// ---------------------------------
+// Config field functions
+// ---------------------------------
+
+static configField* setupFieldEntries(configParams* config) {
     configField fieldDescriptors[] = {
-        {"gameVariant", &(config->gameVariant), ENUM_STRING, {.enumMappings = variantMappings}},
-        {"graphicsMode", &(config->graphicsMode), ENUM_STRING, {.enumMappings = graphicsModeMappings}},
-        {"gameMode", &(config->gameMode), ENUM_STRING, {.enumMappings = gameModeMappings}},
-        {"playbackDelayPerTurn", &(config->playbackDelayPerTurn), INT_TYPE, {.intRange = playbackDelayRange}},
-        {"stealthRangeEnabled", &(config->stealthRangeEnabled), BOOLEAN_TYPE},
-        {"colorEffectsEnabled", &(config->colorEffectsEnabled), BOOLEAN_TYPE},
+        {"gameVariant",          &(config->gameVariant),          ENUM_STRING,   {.enumMappings = variantMappings}},
+        {"graphicsMode",         &(config->graphicsMode),         ENUM_STRING,   {.enumMappings = graphicsModeMappings}},
+        {"gameMode",             &(config->gameMode),             ENUM_STRING,   {.enumMappings = gameModeMappings}},
+        {"playbackDelayPerTurn", &(config->playbackDelayPerTurn), INT_TYPE,      {.intRange = playbackDelayRange}},
+        {"stealthRangeEnabled",  &(config->stealthRangeEnabled),  BOOLEAN_TYPE},
+        {"colorEffectsEnabled",  &(config->colorEffectsEnabled),  BOOLEAN_TYPE},
         {NULL}};
 
     configField* entries = malloc(sizeof(fieldDescriptors));
@@ -106,42 +111,10 @@ static configField* getFieldEntries(configParams* config) {
     return entries;
 }
 
-static short mapStringToEnum(const char* inputString, const char** mappings) {
-    for (short i = 0; mappings[i]; i++) {
-        if (strcmp(inputString, mappings[i]) == 0) {
-            return i;
-        }
+static boolean readEntriesFromJson(cJSON *root, configField* entries) {
+    if (!root || !entries) {
+        return false;
     }
-    return -1;
-}
-
-static void parseConfigValues(const char* jsonString, configParams* config) {
-    if (!jsonString || !config) {
-        return; // Invalid input
-    }
-
-    cJSON* root = cJSON_Parse(jsonString);
-
-    if (!root) {
-        const char *error_ptr = cJSON_GetErrorPtr();
-        if (error_ptr != NULL) {
-            fprintf(stderr, "JSON Format Error! Defect detected starting here: \n%s\n", error_ptr);
-        } else {
-            fprintf(stderr, "Failed to parse JSON (possibly due to an out-of-memory error).\n");
-        }
-
-        // Save old config file so the user can fix it
-        if (rename(JSON_FILENAME, JSON_FILENAME_BACKUP) == 0) {
-            printf("Config file renamed to '%s'.\n", JSON_FILENAME_BACKUP);
-        } else {
-            // perror prints a system error message explaining why it failed
-            perror("Error renaming config file!");
-        }
-
-        return;
-    }
-
-    configField* entries = getFieldEntries(config);
 
     for (int i = 0; entries[i].name; i++) {
         intRange valueRange;
@@ -161,12 +134,10 @@ static void parseConfigValues(const char* jsonString, configParams* config) {
                     if (value >= valueRange.min && value <= valueRange.max) {
                         *((short*)entries[i].paramPointer) = value;
                     } else {
-                        fprintf(stderr, "ERROR: Value '%d' not valid for field '%s'.  Using default '%d' instead.\n", value, entries[i].name, valueRange.min);
-                        *((short*)entries[i].paramPointer) = valueRange.min;
+                        fprintf(stderr, "ERROR: Value '%d' not valid for field '%s'.\n", value, entries[i].name);
                     }
                 } else {
-                    fprintf(stderr, "ERROR: Invalid type for field '%s'.  Using default '%d' instead.\n", entries[i].name, valueRange.min);
-                    *((short*)entries[i].paramPointer) = valueRange.min;
+                    fprintf(stderr, "ERROR: Invalid type for field '%s'.\n", entries[i].name);
                 }
                 break;
 
@@ -174,8 +145,7 @@ static void parseConfigValues(const char* jsonString, configParams* config) {
                 if (cJSON_IsBool(jsonField)) {
                     *((boolean*)entries[i].paramPointer) = cJSON_IsTrue(jsonField) ? true : false;
                 } else {
-                    fprintf(stderr, "ERROR: Invalid type for field '%s'.  Using default 'false'.\n", entries[i].name);
-                    *((boolean*)entries[i].paramPointer) = false;
+                    fprintf(stderr, "ERROR: Invalid type for field '%s'.\n", entries[i].name);
                 }
                 break;
 
@@ -187,12 +157,10 @@ static void parseConfigValues(const char* jsonString, configParams* config) {
                     if (index != -1) {
                         *((short*)entries[i].paramPointer) = index;
                     } else {
-                        fprintf(stderr, "ERROR: String '%s' not valid for field '%s'.  Using default '%s' instead.\n", modeString, entries[i].name, entries[i].validator.enumMappings[0]);
-                        *((short*)entries[i].paramPointer) = 0;
+                        fprintf(stderr, "ERROR: String '%s' not valid for field '%s'.\n", modeString, entries[i].name);
                     }
                 } else {
-                    fprintf(stderr, "ERROR: Invalid type for field '%s'.  Using default '%s' instead.\n", entries[i].name, entries[i].validator.enumMappings[0]);
-                    *((short*)entries[i].paramPointer) = 0;
+                    fprintf(stderr, "ERROR: Invalid type for field '%s'.\n", entries[i].name);
                 }
                 break;
 
@@ -201,31 +169,32 @@ static void parseConfigValues(const char* jsonString, configParams* config) {
                 break;
         }
     }
-
-    free(entries);
-    cJSON_Delete(root);
+    return true;
 }
 
-static char* createJsonString(configParams* config) {
-    cJSON* root = cJSON_CreateObject();
-
-    configField* entries = getFieldEntries(config);
+static boolean writeEntriesToJson(cJSON* root, const configField* entries) {
+    if (!root || !entries) {
+        return false;
+    }
 
     for (int i = 0; entries[i].name; i++) {
         switch (entries[i].type) {
             case INT_TYPE: {
                 short short_value = *((short*)entries[i].paramPointer);
+                cJSON_DeleteItemFromObject(root, entries[i].name);
                 cJSON_AddNumberToObject(root, entries[i].name, short_value);
                 break;
             }
             case BOOLEAN_TYPE: {
                 boolean bool_value = *((boolean*)entries[i].paramPointer);
+                cJSON_DeleteItemFromObject(root, entries[i].name);
                 cJSON_AddBoolToObject(root, entries[i].name, bool_value);
                 break;
             }
             case ENUM_STRING: {
                 short enum_value = *((short*)entries[i].paramPointer);
                 const char* string_value = entries[i].validator.enumMappings[enum_value];
+                cJSON_DeleteItemFromObject(root, entries[i].name);
                 cJSON_AddStringToObject(root, entries[i].name, string_value);
                 break;
             }
@@ -234,54 +203,109 @@ static char* createJsonString(configParams* config) {
                 break;
         }
     }
-
-    char* jsonString = cJSON_Print(root);
-
-    free(entries);
-    cJSON_Delete(root);
-
-    return jsonString;
+    return true;
 }
 
-void readFromConfig(enum graphicsModes* initialGraphics) {
-    char* jsonString = loadConfigFile();
+// ---------------------------------
+// File read/write functions
+// ---------------------------------
 
-    configParams config = createDefaultConfig();
+static char* readRawConfigFile(void) {
+    FILE* jsonFile = fopen(JSON_FILENAME, "r");
 
-    parseConfigValues(jsonString, &config);
+    if (!jsonFile) {
+        fprintf(stderr, "Brogue config file not found.\n");
+        return NULL;
+    }
 
-    rogue.mode = config.gameMode;
-    rogue.displayStealthRangeMode = config.stealthRangeEnabled;
-    rogue.trueColorMode = config.colorEffectsEnabled;
-    rogue.playbackDelayPerTurn = config.playbackDelayPerTurn;
+    fseek(jsonFile, 0, SEEK_END);
+    long fileSize = ftell(jsonFile);
+    fseek(jsonFile, 0, SEEK_SET);
 
-    gameVariant = config.gameVariant;
-    *initialGraphics = config.graphicsMode;
+    char* buffer = (char*)malloc(fileSize + 1);
 
-    free(jsonString);
+    if (!buffer) {
+        fclose(jsonFile);
+        fprintf(stderr, "ERROR: Failed to read config file.\n");
+        return NULL;
+    }
+
+    size_t len = fread(buffer, 1, fileSize, jsonFile);
+    fclose(jsonFile);
+
+    if (len < fileSize) {
+        fprintf(stderr, "ERROR: Failed to read entire file.  Attempting to continue.\n");
+    }
+
+    buffer[len] = '\0';
+
+    return buffer;
 }
 
-void writeIntoConfig(void) {
-    configParams config;
+static boolean writeRawConfigFile(char *jsonString) {
+    FILE* jsonFile = fopen(JSON_FILENAME, "w");
 
-    FILE* file = fopen(JSON_FILENAME, "w");
+    if (!jsonFile) {
+        fprintf(stderr, "ERROR: Failed to create or open config file for writing.\n");
+        return false;
+    }
 
-    if (!file) {
+    fprintf(jsonFile, "%s\n", jsonString);
+    fclose(jsonFile);
+    return true;
+}
+
+
+// ---------------------------------
+// Config API
+// ---------------------------------
+
+static void configureBrogue(boolean writeConfig) {
+    char* jsonString = readRawConfigFile();
+    cJSON* root = cJSON_Parse(jsonString);
+
+    if (jsonString != NULL) {
+        free(jsonString);
+        jsonString = NULL;
+    }
+
+    // No config found, create a blank JSON object
+    if (root == NULL) {
+        root = cJSON_CreateObject();
+    }
+
+    // Setup a default config
+    configParams config = defaultConfig();
+    configField* entries = setupFieldEntries(&config);
+
+    // Read the config items from the JSON
+    if (!readEntriesFromJson(root, entries)) {
+        cJSON_Delete(root);
         return;
     }
 
-    config.gameMode = rogue.mode;
-    config.stealthRangeEnabled = rogue.displayStealthRangeMode;
-    config.colorEffectsEnabled = rogue.trueColorMode;
-    config.playbackDelayPerTurn = rogue.playbackDelayPerTurn;
+    if (!writeConfig) {
+        // Apply the config to the live game
+        setLiveConfig(&config);
+    } else {
+        // Collect the config from the game
+        getLiveConfig(&config);
 
-    config.gameVariant = gameVariant;
-    config.graphicsMode = graphicsMode;
+        // Insert the config into the JSON structure and write it to the file
+        if (writeEntriesToJson(root, entries)) {
+            jsonString = cJSON_Print(root);
+            writeRawConfigFile(jsonString);
+            free(jsonString);
+        }
+    }
 
-    char* jsonString = createJsonString(&config);
+    cJSON_Delete(root);
+}
 
-    fprintf(file, "%s", jsonString);
+void readFromConfig(void) {
+    configureBrogue(false);
+}
 
-    fclose(file);
-    free(jsonString);
+void writeIntoConfig(void) {
+    configureBrogue(true);
 }
