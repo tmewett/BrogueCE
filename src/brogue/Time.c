@@ -1416,6 +1416,9 @@ void monstersFall() {
 
                 // add to next level's chain
                 prependCreature(&levels[rogue.depthLevel-1 + 1].monsters, monst);
+                if (monst->bookkeepingFlags & MB_CAPTIVE) {
+                    freeCaptive(monst);
+                }
 
                 monst->depth = rogue.depthLevel + 1;
 

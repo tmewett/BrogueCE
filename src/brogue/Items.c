@@ -2746,10 +2746,11 @@ void itemDetails(char *buf, const item *theItem) {
                             charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
                     break;
                 case CHARM_NEGATION:
+                    // +1 to match the radius used by negationBlast() in useCharm().
                     sprintf(buf2, "\n\nWhen used, the charm will emit a wave of anti-magic up to %i spaces away, negating all magical effects on you and on creatures and dropped items in your field of view. It will recharge in %i turns. (If the charm is enchanted, it will reach up to %i spaces and recharge in %i turns.)",
-                            charmNegationRadius(enchant),
+                            charmNegationRadius(enchant) + 1,
                             charmRechargeDelay(theItem->kind, theItem->enchant1),
-                            charmNegationRadius(enchant + enchantMagnitude() * FP_FACTOR),
+                            charmNegationRadius(enchant + enchantMagnitude() * FP_FACTOR) + 1,
                             charmRechargeDelay(theItem->kind, theItem->enchant1 + enchantMagnitude()));
                     break;
                 default:
@@ -4055,7 +4056,7 @@ static void negationBlast(const char *emitterName, const short distance) {
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         if ((pmapAt(monst->loc)->flags & IN_FIELD_OF_VIEW)
-            && (player.loc.x - monst->loc.x) * (player.loc.x - monst->loc.x) + (player.loc.y - monst->loc.y) * (player.loc.y - monst->loc.y) <= distance * distance) {
+            && withinBlastRadius(player.loc, monst->loc, distance)) {
 
             if (canSeeMonster(monst)) {
                 flashMonster(monst, &pink, 100);
@@ -4065,7 +4066,7 @@ static void negationBlast(const char *emitterName, const short distance) {
     }
     for (theItem = floorItems; theItem != NULL; theItem = theItem->nextItem) {
         if ((pmapAt(theItem->loc)->flags & IN_FIELD_OF_VIEW)
-            && (player.loc.x - theItem->loc.x) * (player.loc.x - theItem->loc.x) + (player.loc.y - theItem->loc.y) * (player.loc.y - theItem->loc.y) <= distance * distance) {
+            && withinBlastRadius(player.loc, theItem->loc, distance)) {
 
             theItem->flags &= ~(ITEM_MAGIC_DETECTED | ITEM_CURSED);
             switch (theItem->category) {
@@ -4108,7 +4109,7 @@ static void discordBlast(const char *emitterName, const short distance) {
     for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
         creature *monst = nextCreature(&it);
         if ((pmapAt(monst->loc)->flags & IN_FIELD_OF_VIEW)
-            && (player.loc.x - monst->loc.x) * (player.loc.x - monst->loc.x) + (player.loc.y - monst->loc.y) * (player.loc.y - monst->loc.y) <= distance * distance) {
+            && withinBlastRadius(player.loc, monst->loc, distance)) {
 
             if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
                 if (canSeeMonster(monst)) {
@@ -4127,7 +4128,7 @@ static void crystalize(short radius) {
 
     for (i=0; i<DCOLS; i++) {
         for (j=0; j < DROWS; j++) {
-            if ((player.loc.x - i) * (player.loc.x - i) + (player.loc.y - j) * (player.loc.y - j) <= radius * radius
+            if (withinBlastRadius(player.loc, (pos){ i, j }, radius)
                 && !(pmap[i][j].flags & IMPREGNABLE)) {
 
                 if (tileCatalog[pmap[i][j].layers[DUNGEON]].flags & (T_OBSTRUCTS_PASSABILITY | T_OBSTRUCTS_VISION)) {
