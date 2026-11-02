@@ -854,14 +854,14 @@ enum armorKind {
     NUMBER_ARMOR_KINDS
 };
 
-enum armorPassiveEffects {
+enum armorTraits {
     A_PLAIN,
     A_STEALTH,
     A_ARMORSMITH,
     A_ABSORPTION,
     A_MANGLE,
     A_REFLECTION,
-    NUMBER_ARMOR_PASSIVE_EFFECT_KINDS,
+    NUMBER_ARMOR_TRAIT_KINDS,
 };
 
 enum armorEnchants {
@@ -3245,8 +3245,8 @@ extern "C" {
     fixpt netEnchant(const item *theItem);
     short hitProbability(const creature *attacker, const creature *defender);
     boolean attackHit(const creature *attacker, const creature *defender);
-    void applyArmorPassiveEffect(char returnString[DCOLS], creature *attacker, short *damage, boolean melee);
     void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *damage, boolean melee);
+    void applyArmorTraitEffect(char returnString[DCOLS], creature *attacker, short *damage, boolean melee);
     void processStaggerHit(const creature *attacker, creature *defender);
     boolean attack(creature *attacker, creature *defender, boolean lungeAttack);
     void inflictLethalDamage(creature *attacker, creature *defender);
@@ -3391,7 +3391,7 @@ extern "C" {
     void updateIdentifiableItem(item *theItem);
     void updateIdentifiableItems(void);
     boolean readScroll(item *theItem);
-    void updateArmorPassiveEffectBonuses(void);
+    void updateArmorTraitBonuses(void);
     void updateRingBonuses(void);
     void updatePlayerRegenerationDelay(void);
     boolean removeItemFromChain(item *theItem, item *theChain);

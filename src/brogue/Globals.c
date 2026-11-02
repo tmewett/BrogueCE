@@ -1598,7 +1598,7 @@ const char weaponRunicNames[NUMBER_WEAPON_RUNIC_KINDS][30] = {
     "plenty"
 };
 
-const char armorPassiveEffectNames[NUMBER_ARMOR_PASSIVE_EFFECT_KINDS][30] = {
+const char armorTraitNames[NUMBER_ARMOR_TRAIT_KINDS][30] = {
     "plain",
     "stealth",
     "armorsmith",
