@@ -15,6 +15,7 @@ boolean nonInteractivePlayback = false;
 boolean hasGraphics = false;
 enum graphicsModes graphicsMode = TEXT_GRAPHICS;
 boolean isCsvFormat = false;
+int screenshotDepth = 0;
 
 static void printCommandlineHelp() {
     printf("%s",
@@ -35,7 +36,13 @@ static void printCommandlineHelp() {
     "--hybrid       -H          enable hybrid graphics\n"
     "--full-screen  -F          enable full screen\n"
     "--no-gpu                   disable hardware-accelerated graphics and HiDPI\n"
-#endif
+
+#ifdef DEBUG_ENABLED
+    "--screenshot depth         screenshot the requested depth, then quit\n"
+#else
+    "--screenshot               screenshot depth 1, then quit\n"
+#endif // DEBUG
+#endif // SDL
 #ifdef BROGUE_CURSES
     "--term         -t          run in ncurses-based terminal mode\n"
 #endif
@@ -326,6 +333,24 @@ int main(int argc, char *argv[])
                 strcpy(dataDirectory, argv[++i]);
                 continue;
             }
+        }
+
+        if (strcmp(argv[i], "--screenshot") == 0) {
+            int depth = 1;
+
+// When running a debug build, allow screenshotting any depth by passing an arg
+#ifdef DEBUG_ENABLED
+            if (i + 1 < argc) {
+                depth = atoi(argv[i + 1]);
+                if (depth < 1 || depth > 40) {
+                    depth = 1;
+                }
+                i++;
+            }
+#endif
+
+            screenshotDepth = depth;
+            continue;
         }
 
         // maybe it ends with .broguesave or .broguerec, then?
