@@ -284,7 +284,6 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
             theItem->armor = randClump(armorTable[itemKind].range);
             theItem->strengthRequired = armorTable[itemKind].strengthRequired;
             theItem->charges = gameConst->armorDelayToAutoID; // this many turns until it reveals its enchants and whether runic
-            short runicArmorPercent = 40; // the same flat runic chance for all
 
             switch (itemKind) {
                 case LEATHER_ARMOR:
@@ -320,7 +319,7 @@ item *makeItemInto(item *theItem, unsigned long itemCategory, short itemKind) {
                         theItem->enchant2 = rand_range(NUMBER_GOOD_ARMOR_ENCHANT_KINDS, NUMBER_ARMOR_ENCHANT_KINDS - 1);
                         theItem->flags |= ITEM_RUNIC;
                     }
-                } else if (rand_percent(runicArmorPercent)) {
+                } else if (rand_percent(33)) {
                     theItem->enchant2 = rand_range(0, NUMBER_GOOD_ARMOR_ENCHANT_KINDS - 1);
                     theItem->flags |= ITEM_RUNIC;
                     if (theItem->enchant2 == A_IMMUNITY) {
