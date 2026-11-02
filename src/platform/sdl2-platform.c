@@ -3,7 +3,7 @@
 #endif
 
 #include <limits.h>
-#include <SDL_image.h>
+#include <SDL3_image/SDL_image.h>
 #include "platform.h"
 #include "tiles.h"
 
@@ -29,7 +29,7 @@ static void sdlfatal(char *file, int line) {
 
 
 static void imgfatal(char *file, int line) {
-    fprintf(stderr, "Fatal SDL_image error (%s:%d): %s\n", file, line, IMG_GetError());
+    fprintf(stderr, "Fatal SDL_image error (%s:%d): %s\n", file, line, SDL_GetError());
     exit(EXIT_STATUS_FAILURE_PLATFORM_ERROR);
 }
 
@@ -74,49 +74,104 @@ static boolean eventFromKey(rogueEvent *event, SDL_Keycode key) {
     }
 
     /*
-    Only process keypad events when we're holding a modifier, as there is no
-    TextInputEvent then.
+    Keypad events
     */
-    if (event->shiftKey || event->controlKey) {
+    switch (key) {
+        case SDLK_KP_0:
+            event->param1 = NUMPAD_0;
+            return true;
+        case SDLK_KP_1:
+            event->param1 = NUMPAD_1;
+            return true;
+        case SDLK_KP_2:
+            event->param1 = NUMPAD_2;
+            return true;
+        case SDLK_KP_3:
+            event->param1 = NUMPAD_3;
+            return true;
+        case SDLK_KP_4:
+            event->param1 = NUMPAD_4;
+            return true;
+        case SDLK_KP_5:
+            event->param1 = NUMPAD_5;
+            return true;
+        case SDLK_KP_6:
+            event->param1 = NUMPAD_6;
+            return true;
+        case SDLK_KP_7:
+            event->param1 = NUMPAD_7;
+            return true;
+        case SDLK_KP_8:
+            event->param1 = NUMPAD_8;
+            return true;
+        case SDLK_KP_9:
+            event->param1 = NUMPAD_9;
+            return true;
+    }
+
+    // Letters
+    if (key >= SDLK_A && key <= SDLK_Z) {
+        event->param1 = 'a' + (key - SDLK_A);
+        if (event->shiftKey) event->param1 -= 'a' - 'A';
+        return true;
+    }
+
+    if (event->shiftKey) {
+        // US Keyboard:  ~!@#$%^&*()_+{}|:"<>?
         switch (key) {
-            case SDLK_KP_0:
-                event->param1 = NUMPAD_0;
-                return true;
-            case SDLK_KP_1:
-                event->param1 = NUMPAD_1;
-                return true;
-            case SDLK_KP_2:
-                event->param1 = NUMPAD_2;
-                return true;
-            case SDLK_KP_3:
-                event->param1 = NUMPAD_3;
-                return true;
-            case SDLK_KP_4:
-                event->param1 = NUMPAD_4;
-                return true;
-            case SDLK_KP_5:
-                event->param1 = NUMPAD_5;
-                return true;
-            case SDLK_KP_6:
-                event->param1 = NUMPAD_6;
-                return true;
-            case SDLK_KP_7:
-                event->param1 = NUMPAD_7;
-                return true;
-            case SDLK_KP_8:
-                event->param1 = NUMPAD_8;
-                return true;
-            case SDLK_KP_9:
-                event->param1 = NUMPAD_9;
-                return true;
+            case SDLK_GRAVE:           case SDLK_TILDE:            event->param1 = '~';    return true;
+            case SDLK_1:               case SDLK_EXCLAIM:          event->param1 = '!';    return true;
+            case SDLK_2:               case SDLK_AT:               event->param1 = '@';    return true;
+            case SDLK_3:               case SDLK_HASH:             event->param1 = '#';    return true;
+            case SDLK_4:               case SDLK_DOLLAR:           event->param1 = '$';    return true;
+            case SDLK_5:               case SDLK_PERCENT:          event->param1 = '%';    return true;
+            case SDLK_6:               case SDLK_CARET:            event->param1 = '^';    return true;
+            case SDLK_7:               case SDLK_AMPERSAND:        event->param1 = '&';    return true;
+            case SDLK_8:               case SDLK_ASTERISK:         event->param1 = '*';    return true;
+            case SDLK_9:               case SDLK_LEFTPAREN:        event->param1 = '(';    return true;
+            case SDLK_0:               case SDLK_RIGHTPAREN:       event->param1 = ')';    return true;
+            case SDLK_MINUS:           case SDLK_UNDERSCORE:       event->param1 = '_';    return true;
+            case SDLK_EQUALS:          case SDLK_PLUS:             event->param1 = '+';    return true;
+            case SDLK_LEFTBRACKET:     case SDLK_LEFTBRACE:        event->param1 = '{';    return true;
+            case SDLK_RIGHTBRACKET:    case SDLK_RIGHTBRACE:       event->param1 = '}';    return true;
+            case SDLK_BACKSLASH:       case SDLK_PIPE:             event->param1 = '|';    return true;
+            case SDLK_SEMICOLON:       case SDLK_COLON:            event->param1 = ':';    return true;
+            case SDLK_APOSTROPHE:      case SDLK_DBLAPOSTROPHE:    event->param1 = '"';    return true;
+            case SDLK_COMMA:           case SDLK_LESS:             event->param1 = '<';    return true;
+            case SDLK_PERIOD:          case SDLK_GREATER:          event->param1 = '>';    return true;
+            case SDLK_SLASH:           case SDLK_QUESTION:         event->param1 = '?';    return true;
+        }
+    } else {
+        // US Keyboard:  `1234567890-=[]\;',./
+        switch (key) {
+            case SDLK_GRAVE:            event->param1 = '`';    return true;
+            case SDLK_1:                event->param1 = '1';    return true;
+            case SDLK_2:                event->param1 = '2';    return true;
+            case SDLK_3:                event->param1 = '3';    return true;
+            case SDLK_4:                event->param1 = '4';    return true;
+            case SDLK_5:                event->param1 = '5';    return true;
+            case SDLK_6:                event->param1 = '6';    return true;
+            case SDLK_7:                event->param1 = '7';    return true;
+            case SDLK_8:                event->param1 = '8';    return true;
+            case SDLK_9:                event->param1 = '9';    return true;
+            case SDLK_0:                event->param1 = '0';    return true;
+            case SDLK_MINUS:            event->param1 = '-';    return true;
+            case SDLK_EQUALS:           event->param1 = '=';    return true;
+            case SDLK_LEFTBRACKET:      event->param1 = '[';    return true;
+            case SDLK_RIGHTBRACKET:     event->param1 = ']';    return true;
+            case SDLK_BACKSLASH:        event->param1 = '\\';   return true;
+            case SDLK_SEMICOLON:        event->param1 = ';';    return true;
+            case SDLK_APOSTROPHE:       event->param1 = '\'';   return true;
+            case SDLK_COMMA:            event->param1 = ',';    return true;
+            case SDLK_PERIOD:           event->param1 = '.';    return true;
+            case SDLK_SLASH:            event->param1 = '/';    return true;
         }
     }
 
-    // Ctrl+letter doesn't give a TextInputEvent
-    if (event->controlKey && key >= SDLK_a && key <= SDLK_z) {
-        event->param1 = 'a' + (key - SDLK_a);
-        if (event->shiftKey) event->param1 -= 'a' - 'A';
-        return true;
+    // Everything else?
+    switch (key) {
+        case SDLK_SPACE:            event->param1 = ' ';        return true;
+        case SDLK_DELETE:           event->param1 = DELETE_KEY; return true;
     }
 
     return false;
@@ -125,8 +180,8 @@ static boolean eventFromKey(rogueEvent *event, SDL_Keycode key) {
 
 static boolean _modifierHeld(int mod) {
     SDL_Keymod km = SDL_GetModState();
-    return mod == 0 && (km & (KMOD_LSHIFT | KMOD_RSHIFT))
-        || mod == 1 && (km & (KMOD_LCTRL | KMOD_RCTRL));
+    return mod == 0 && (km & (SDL_KMOD_LSHIFT | SDL_KMOD_RSHIFT))
+        || mod == 1 && (km & (SDL_KMOD_LCTRL | SDL_KMOD_RCTRL));
 }
 
 
@@ -156,15 +211,23 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
 
     // ~ for (int i=0; i < 100 && SDL_PollEvent(&event); i++) {
     while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_QUIT) {
+        if (event.type == SDL_EVENT_QUIT) {
             // the player clicked the X button!
             SDL_Quit();
             int statusCode = quitImmediately();
             exit(statusCode);
-        } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
+        } else if (event.type == SDL_EVENT_WINDOW_RESIZED) {
             resizeWindow(event.window.data1, event.window.data2);
-        } else if (event.type == SDL_KEYDOWN) {
-            SDL_Keycode key = event.key.keysym.sym;
+        } else if (event.type == SDL_EVENT_KEY_DOWN) {
+            SDL_Keycode key = event.key.key;
+
+            // Ignore common meta key-down events (they will be recorded as modifiers on the subsequent keys)
+            if ( event.key.scancode == SDL_SCANCODE_RSHIFT || event.key.scancode == SDL_SCANCODE_LSHIFT
+              || event.key.scancode == SDL_SCANCODE_RALT   || event.key.scancode == SDL_SCANCODE_LALT
+              || event.key.scancode == SDL_SCANCODE_RCTRL  || event.key.scancode == SDL_SCANCODE_LCTRL
+              || event.key.scancode == SDL_SCANCODE_RGUI   || event.key.scancode == SDL_SCANCODE_LGUI ) {
+                continue;
+            }
 
             if (key == SDLK_PAGEUP) {
                 resizeWindow(max(windowWidth * 11/10, windowWidth + 1), max(windowHeight * 11/10, windowHeight + 1));
@@ -174,7 +237,7 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
                 resizeWindow(max(windowWidth * 10/11, 1), max(windowHeight * 10/11, 1));
                 continue;
             } else if (key == SDLK_F11 || key == SDLK_F12
-                    || key == SDLK_RETURN && (SDL_GetModState() & KMOD_ALT)) {
+                    || key == SDLK_RETURN && (SDL_GetModState() & SDL_KMOD_ALT)) {
                 fullScreen = !fullScreen;
                 resizeWindow(-1, -1);  // Reset to starting resolution
                 continue;
@@ -184,46 +247,46 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
                 returnEvent->eventType = KEYSTROKE;
                 return true;
             }
-        } else if (event.type == SDL_TEXTINPUT && (unsigned char)(event.text.text[0]) < 0x80) {
-            /*
-            It's difficult/impossible to check what characters are on the
-            shifts of keys. So to detect '&', '>' etc. reliably we need to
-            listen for text input events as well as keydowns. This results
-            in hybrid keyboard code, where Brogue KEYSTROKEs can come from
-            different SDL events.
-            */
-            char c = event.text.text[0];
+        // } else if (event.type == SDL_EVENT_TEXT_INPUT && (unsigned char)(event.text.text[0]) < 0x80) {
+        //     /*
+        //     It's difficult/impossible to check what characters are on the
+        //     shifts of keys. So to detect '&', '>' etc. reliably we need to
+        //     listen for text input events as well as keydowns. This results
+        //     in hybrid keyboard code, where Brogue KEYSTROKEs can come from
+        //     different SDL events.
+        //     */
+        //     char c = event.text.text[0];
 
-            if (!textInput) {
-                c = applyRemaps(c);
-                if (c == '=' || c == '+') {
-                    resizeWindow(max(windowWidth * 11/10, windowWidth + 1), max(windowHeight * 11/10, windowHeight + 1));
-                } else if (c == '-') {
-                    fullScreen = false;
-                    resizeWindow(max(windowWidth * 10/11, 1), max(windowHeight * 10/11, 1));
-                }
-            }
+        //     if (!textInput) {
+        //         c = applyRemaps(c);
+        //         if (c == '=' || c == '+') {
+        //             resizeWindow(max(windowWidth * 11/10, windowWidth + 1), max(windowHeight * 11/10, windowHeight + 1));
+        //         } else if (c == '-') {
+        //             fullScreen = false;
+        //             resizeWindow(max(windowWidth * 10/11, 1), max(windowHeight * 10/11, 1));
+        //         }
+        //     }
 
-            returnEvent->eventType = KEYSTROKE;
-            returnEvent->param1 = c;
-            // ~ printf("textinput %s\n", event.text.text);
-            return true;
-        } else if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP) {
+        //     returnEvent->eventType = KEYSTROKE;
+        //     returnEvent->param1 = c;
+        //     // ~ printf("textinput %s\n", event.text.text);
+        //     return true;
+        } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
             if (event.button.button == SDL_BUTTON_LEFT || event.button.button == SDL_BUTTON_RIGHT) {
-                if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
+                if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_LEFT) {
                     returnEvent->eventType = MOUSE_DOWN;
-                } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT) {
+                } else if (event.type == SDL_EVENT_MOUSE_BUTTON_UP && event.button.button == SDL_BUTTON_LEFT) {
                     returnEvent->eventType = MOUSE_UP;
-                } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_RIGHT) {
+                } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_RIGHT) {
                     returnEvent->eventType = RIGHT_MOUSE_DOWN;
-                } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_RIGHT) {
+                } else if (event.type == SDL_EVENT_MOUSE_BUTTON_UP && event.button.button == SDL_BUTTON_RIGHT) {
                     returnEvent->eventType = RIGHT_MOUSE_UP;
                 }
                 returnEvent->param1 = event.button.x * COLS / windowWidth;
                 returnEvent->param2 = event.button.y * ROWS / windowHeight;
                 return true;
             }
-        } else if (event.type == SDL_MOUSEMOTION) {
+        } else if (event.type == SDL_EVENT_MOUSE_MOTION) {
             // We don't want to return on a mouse motion event, because only the last
             // in the queue is important. That's why we just set ret=true
             int xcell = event.motion.x * COLS / windowWidth,
@@ -265,9 +328,8 @@ static void _gameLoop() {
     free(path);
 #endif
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) sdlfatal(__FILE__, __LINE__);
-
-    if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) imgfatal(__FILE__, __LINE__);
+    SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");    // Don't disable screensavers
+    if (!SDL_Init(SDL_INIT_VIDEO)) sdlfatal(__FILE__, __LINE__);
 
     initTiles();
 
@@ -421,7 +483,7 @@ static boolean _takeScreenshot() {
 
     // save to PNG
     IMG_SavePNG(screenshot, screenshotFilepath);
-    SDL_FreeSurface(screenshot);
+    SDL_DestroySurface(screenshot);
 
     return true;
 }
