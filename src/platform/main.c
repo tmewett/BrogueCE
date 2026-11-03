@@ -107,8 +107,8 @@ int main(int argc, char *argv[])
     rogue.displayStealthRangeMode = false;
     rogue.trueColorMode = false;
 
-    readFromConfig();
-    atexit(writeIntoConfig);
+    loadSettingsFromConfig();
+    atexit(writeSettingsToConfig);
     enum graphicsModes initialGraphics = graphicsMode;
     
     int i;

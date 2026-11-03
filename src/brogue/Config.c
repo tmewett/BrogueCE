@@ -214,7 +214,6 @@ static char* readRawConfigFile(void) {
     FILE* jsonFile = fopen(JSON_FILENAME, "r");
 
     if (!jsonFile) {
-        fprintf(stderr, "Brogue config file not found.\n");
         return NULL;
     }
 
@@ -260,52 +259,58 @@ static boolean writeRawConfigFile(char *jsonString) {
 // Config API
 // ---------------------------------
 
-static void configureBrogue(boolean writeConfig) {
+static cJSON *readAndParseJsonConfig(configField *entries) {
     char* jsonString = readRawConfigFile();
     cJSON* root = cJSON_Parse(jsonString);
-
-    if (jsonString != NULL) {
-        free(jsonString);
-        jsonString = NULL;
-    }
+    free(jsonString);
 
     // No config found, create a blank JSON object
     if (root == NULL) {
         root = cJSON_CreateObject();
     }
 
+    // Read the config items from the JSON
+    if (!readEntriesFromJson(root, entries)) {
+        cJSON_Delete(root);
+        return NULL;
+    }
+
+    return root;
+}
+
+void loadSettingsFromConfig(void) {
     // Setup a default config
     configParams config = defaultConfig();
     configField* entries = setupFieldEntries(&config);
 
-    // Read the config items from the JSON
-    if (!readEntriesFromJson(root, entries)) {
-        cJSON_Delete(root);
-        return;
-    }
+    // Overwrite default config with JSON config values
+    cJSON *root = readAndParseJsonConfig(entries);
 
-    if (!writeConfig) {
-        // Apply the config to the live game
-        setLiveConfig(&config);
-    } else {
-        // Collect the config from the game
-        getLiveConfig(&config);
+    // Apply the config to the live game
+    setLiveConfig(&config);
 
-        // Insert the config into the JSON structure and write it to the file
-        if (writeEntriesToJson(root, entries)) {
-            jsonString = cJSON_Print(root);
-            writeRawConfigFile(jsonString);
-            free(jsonString);
-        }
-    }
-
+    // Cleanup
     cJSON_Delete(root);
 }
 
-void readFromConfig(void) {
-    configureBrogue(false);
-}
+void writeSettingsToConfig(void) {
+    // Setup a default config
+    configParams config = defaultConfig();
+    configField* entries = setupFieldEntries(&config);
 
-void writeIntoConfig(void) {
-    configureBrogue(true);
+    // Overwrite default config with JSON config values
+    cJSON *root = readAndParseJsonConfig(entries);
+
+    // Collect config from the game
+    getLiveConfig(&config);
+
+    // Insert the config into the JSON structure and write it to the file
+    if (writeEntriesToJson(root, entries)) {
+        char *jsonString = cJSON_Print(root);
+        writeRawConfigFile(jsonString);
+        free(jsonString);
+    }
+
+    // Cleanup
+    cJSON_Delete(root);
 }
