@@ -1859,6 +1859,13 @@ void populateCreatureCostMap(short **costMap, const creature *monst) {
             }
 
             if (monst == &player) {
+                // Steer around magical glyphs: stepping on one sets off its machine,
+                // and a mirrored totem may then beckon the player into lava.
+                if (pmap[i][j].layers[DUNGEON] == MACHINE_GLYPH
+                    || pmap[i][j].layers[DUNGEON] == MACHINE_GLYPH_INACTIVE) {
+                    costMap[i][j] += 20;
+                }
+
                 theItem = itemAtLoc((pos){ i, j });
                 if (theItem && (theItem->flags & ITEM_PLAYER_AVOIDS)) {
                     costMap[i][j] += 10;
