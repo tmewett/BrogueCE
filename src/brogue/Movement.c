@@ -1917,6 +1917,12 @@ void getExploreMap(short **map, boolean headingToStairs) {// calculate explore m
                     costMap[i][j] = 1;
                     map[i][j] = exploreGoalValue(i, j);
                 }
+            } else if (pmap[i][j].layers[DUNGEON] == MACHINE_GLYPH
+                       || pmap[i][j].layers[DUNGEON] == MACHINE_GLYPH_INACTIVE) {
+                // Autoexplore never steps on a known magical glyph: it could set off a mirrored
+                // totem that beckons the player into lava. Areas reachable only across glyphs
+                // are left for the player to explore manually.
+                costMap[i][j] = PDS_FORBIDDEN;
             } else if (theItem
                        && !monsterAvoids(&player, (pos){i, j})) {
                 if (theItem->flags & ITEM_PLAYER_AVOIDS) {
