@@ -1,6 +1,7 @@
 #include "../../external/cJSON/cJSON.h"
 #include "Rogue.h"
 #include "GlobalsBase.h"
+#include <time.h>
 
 typedef struct configParams {
     short playbackDelayPerTurn;
@@ -35,7 +36,7 @@ typedef struct {
 } configField;
 
 static const char* JSON_FILENAME = "brogue_config.json";
-static const char* JSON_FILENAME_BACKUP = "brogue_config_backup.json";
+static const char* JSON_FILENAME_BACKUP = "brogue_config";
 
 // maps json strings to the gameVariant Enum
 static const char* variantMappings[] = {"brogue", "rapid", "bullet", NULL};
@@ -261,13 +262,39 @@ static boolean writeRawConfigFile(char *jsonString) {
 
 static cJSON *readAndParseJsonConfig(configField *entries) {
     char* jsonString = readRawConfigFile();
-    cJSON* root = cJSON_Parse(jsonString);
-    free(jsonString);
+    cJSON* root = NULL;
 
-    // No config found, create a blank JSON object
-    if (root == NULL) {
+    if (jsonString == NULL) {
+        // No config found, create a blank JSON object
         root = cJSON_CreateObject();
+    } else {
+        root = cJSON_Parse(jsonString);
+        free(jsonString);
     }
+
+    if (!root) {
+        const char *error_ptr = cJSON_GetErrorPtr();
+        if (error_ptr != NULL) {
+            fprintf(stderr, "\nJSON Format Error! Defect detected starting here: \n%s\n", error_ptr);
+        } else {
+            fprintf(stderr, "\nFailed to parse JSON.\n");
+        }
+
+        // Save old config file so the user can fix it
+        time_t timestamp = time(NULL);
+        char fname[255];
+        snprintf(fname,255, "%s_%ld.json", JSON_FILENAME_BACKUP, (long)timestamp);
+
+        if (rename(JSON_FILENAME, fname) == 0) {
+            fprintf(stderr, "Config file renamed to '%s'.\n", fname);
+        } else {
+            // perror prints a system error message explaining why it failed
+            perror("Error renaming config file!");
+        }
+
+        return NULL;
+    }
+
 
     // Read the config items from the JSON
     if (!readEntriesFromJson(root, entries)) {
