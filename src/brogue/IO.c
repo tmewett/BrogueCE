@@ -2690,7 +2690,7 @@ void executeKeystroke(signed long keystroke, boolean controlKey, boolean shiftKe
                 enableEasyMode();
             //}
             break;
-        case PRINTSCREEN_KEY:
+        case SCREENSHOT_KEY:
             if (takeScreenshot()) {
                 flashTemporaryAlert(" Screenshot saved in save directory ", 2000);
             }
@@ -4063,7 +4063,7 @@ char nextKeyPress(boolean textInput) {
     return theEvent.param1;
 }
 
-#define BROGUE_HELP_LINE_COUNT  33
+#define BROGUE_HELP_LINE_COUNT  34
 
 void printHelpScreen(void) {
     short i, j;
@@ -4092,6 +4092,7 @@ void printHelpScreen(void) {
         "              A  ****autopilot (control-A: fast forward)",
         "              M  ****display old messages",
         "    <space/esc>  ****clear message or cancel command",
+        "             F2  ****take a screenshot (when available)",
         "",
         "              S  ****save and exit",
         "              Q  ****quit and abandon game",

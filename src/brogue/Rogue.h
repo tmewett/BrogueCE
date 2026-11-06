@@ -1231,7 +1231,7 @@ enum tileFlags {
 #define NUMPAD_9            57
 #define PAGE_UP_KEY         63276
 #define PAGE_DOWN_KEY       63277
-#define PRINTSCREEN_KEY     '\054'
+#define SCREENSHOT_KEY      63237 // arbitrary; only needs to differ from the other key codes
 
 #define UNKNOWN_KEY         (128+19)
 
