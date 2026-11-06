@@ -4295,13 +4295,14 @@ void checkForMissingKeys(short x, short y) {
 static void beckonMonster(creature *monst, short x, short y) {
     bolt theBolt = boltCatalog[BOLT_BLINKING];
 
-    if (monst->bookkeepingFlags & MB_CAPTIVE) {
-        freeCaptive(monst);
-    }
     pos from = monst->loc;
     pos to = (pos){ .x = x, .y = y };
     theBolt.magnitude = max(1, (distanceBetween((pos){x, y}, monst->loc) - 2) / 2);
     zap(from, to, &theBolt, false, true);
+    // Free a captive after it moves, so it drops its item where it lands.
+    if ((monst->bookkeepingFlags & MB_CAPTIVE) && !(monst->bookkeepingFlags & MB_IS_DYING)) {
+        freeCaptive(monst);
+    }
     if (monst->ticksUntilTurn < player.attackSpeed+1) {
         monst->ticksUntilTurn = player.attackSpeed+1;
     }
@@ -4437,10 +4438,10 @@ static boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                 break;
             case BE_TELEPORT:
                 if (!(monst->info.flags & MONST_IMMOBILE)) {
-                    if (monst->bookkeepingFlags & MB_CAPTIVE) {
+                    teleport(monst, INVALID_POS, false);
+                    if ((monst->bookkeepingFlags & MB_CAPTIVE) && !(monst->bookkeepingFlags & MB_IS_DYING)) {
                         freeCaptive(monst);
                     }
-                    teleport(monst, INVALID_POS, false);
                 }
                 break;
             case BE_BECKONING:
