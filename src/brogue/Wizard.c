@@ -57,7 +57,7 @@ static short dialogSelectEntryFromList(
         buttons[i].x = WINDOW_POSITION_DUNGEON_TOP_LEFT.window_x;
         buttons[i].y = WINDOW_POSITION_DUNGEON_TOP_LEFT.window_y + 1 + i;
         if (KEYBOARD_LABELS) {
-            sprintf(buttonText, "%c) %s", (int)buttons[i].hotkey[0], buttons[i].text);
+            snprintf(buttonText, sizeof(buttonText), "%c) %s", (int)buttons[i].hotkey[0], buttons[i].text);
             strcpy(buttons[i].text, buttonText);
             len = strlen(buttonText);
             if (len > maxLen) {

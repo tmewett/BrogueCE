@@ -89,6 +89,7 @@ extern unsigned char inputRecordBuffer[INPUT_RECORD_BUFFER + 100];
 extern unsigned short locationInRecordingBuffer;
 
 extern unsigned long positionInPlaybackFile;
+extern unsigned long bytesInPlaybackBuffer;   // number of valid bytes in inputRecordBuffer during playback
 extern unsigned long lengthOfPlaybackFile;
 extern unsigned long recordingLocation;
 extern unsigned long maxLevelChanges;
