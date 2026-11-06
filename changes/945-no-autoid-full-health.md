@@ -1,0 +1,1 @@
+A staff of healing or wand of domination used on a monster at full health no longer identifies itself, since it has no visible effect. The "looks healthier" message is also no longer shown for monsters that were already at full health.

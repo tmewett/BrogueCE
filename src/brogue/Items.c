@@ -3934,6 +3934,7 @@ void haste(creature *monst, short turns) {
 
 void heal(creature *monst, short percent, boolean panacea) {
     char buf[COLS], monstName[COLS];
+    boolean wasAtFullHealth = (monst->currentHP >= monst->info.maxHP);
     monst->currentHP = min(monst->info.maxHP, monst->currentHP + percent * monst->info.maxHP / 100);
     if (panacea) {
         if (monst->status[STATUS_HALLUCINATING] > 1) {
@@ -3967,7 +3968,8 @@ void heal(creature *monst, short percent, boolean panacea) {
     }
     if (canDirectlySeeMonster(monst)
         && monst != &player
-        && !panacea) {
+        && !panacea
+        && !wasAtFullHealth) {
 
         monsterName(monstName, monst, true);
         sprintf(buf, "%s looks healthier", monstName);
@@ -4507,7 +4509,8 @@ static boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                                 flashMonster(monst, boltCatalog[BOLT_DOMINATION].backColor, 100);
                             }
                         }
-                    } else if (canSeeMonster(monst)) {
+                    } else if (canSeeMonster(monst)
+                        && monst->currentHP < monst->info.maxHP) {
                         if (autoID) {
                             *autoID = true;
                         }
@@ -4581,14 +4584,16 @@ static boolean updateBolt(bolt *theBolt, creature *caster, short x, short y,
                     }
                 }
                 break;
-            case BE_HEALING:
+            case BE_HEALING: {
+                boolean wasAtFullHealth = (monst->currentHP >= monst->info.maxHP);
                 heal(monst, theBolt->magnitude * 10, false);
-                if (canSeeMonster(monst)) {
+                if (canSeeMonster(monst) && !wasAtFullHealth) {
                     if (autoID) {
                         *autoID = true;
                     }
                 }
                 break;
+            }
             case BE_PLENTY:
                 if (!(monst->info.flags & (MONST_INANIMATE | MONST_INVULNERABLE))) {
                     newMonst = cloneMonster(monst, true, true);
