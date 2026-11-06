@@ -493,7 +493,7 @@ static void specialHit(creature *attacker, creature *defender, short damage) {
 }
 
 static boolean forceWeaponHit(creature *defender, const item *theItem) {
-    short forceDamage;
+    short forceDamage, maxDistance;
     char buf[DCOLS*3], buf2[COLS], monstName[DCOLS];
     creature *otherMonster = NULL;
     boolean knowFirstMonsterDied = false, autoID = false;
@@ -516,10 +516,12 @@ static boolean forceWeaponHit(creature *defender, const item *theItem) {
     }
     theBolt = boltCatalog[BOLT_BLINKING];
     theBolt.magnitude = max(1, netEnchant(theItem) / FP_FACTOR);
+    // Match the actual blink range before zap changes the bolt's magnitude.
+    maxDistance = staffBlinkDistance(theBolt.magnitude * FP_FACTOR);
     zap(oldLoc, newLoc, &theBolt, false, false);
     if (!(defender->bookkeepingFlags & MB_IS_DYING)
         && distanceBetween(oldLoc, defender->loc) > 0
-        && distanceBetween(oldLoc, defender->loc) < weaponForceDistance(netEnchant(theItem))) {
+        && distanceBetween(oldLoc, defender->loc) < maxDistance) {
 
         if (pmap[defender->loc.x + newLoc.x - oldLoc.x][defender->loc.y + newLoc.y - oldLoc.y].flags & (HAS_MONSTER | HAS_PLAYER)) {
             otherMonster = monsterAtLoc((pos){ defender->loc.x + newLoc.x - oldLoc.x, defender->loc.y + newLoc.y - oldLoc.y });
