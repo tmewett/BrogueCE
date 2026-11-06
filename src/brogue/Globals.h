@@ -132,6 +132,7 @@ extern const bolt *boltCatalog;
 
 extern const char weaponRunicNames[NUMBER_WEAPON_RUNIC_KINDS][30];
 
+extern const char armorTraitNames[NUMBER_ARMOR_TRAIT_KINDS][30];
 extern const char armorRunicNames[NUMBER_ARMOR_ENCHANT_KINDS][30];
 
 extern const char *mainMenuTitle;
