@@ -1019,6 +1019,10 @@ static void playerFalls() {
     if (rogue.depthLevel < gameConst->deepestLevel) {
         rogue.depthLevel++;
         startLevel(rogue.depthLevel - 1, 0);
+
+        // Falling breaks paralysis, just like being attacked does.
+        player.status[STATUS_PARALYZED] = 0;
+
         damage = randClumpedRange(gameConst->fallDamageMin, gameConst->fallDamageMax, 2);
         boolean killed = false;
         if (terrainFlags(player.loc) & T_IS_DEEP_WATER) {
@@ -1407,6 +1411,7 @@ void monstersFall() {
                 demoteMonsterFromLeadership(monst);
 
                 monst->status[STATUS_ENTRANCED] = 0;
+                monst->status[STATUS_PARALYZED] = 0;
                 monst->bookkeepingFlags |= MB_PREPLACED;
                 monst->bookkeepingFlags &= ~(MB_IS_FALLING | MB_SEIZED | MB_SEIZING);
                 monst->targetCorpseLoc = INVALID_POS;
