@@ -846,21 +846,28 @@ enum weaponEnchants {
 
 enum armorKind {
     LEATHER_ARMOR,
+    HIDE_ARMOR,
     SCALE_MAIL,
-    CHAIN_MAIL,
-    BANDED_MAIL,
-    SPLINT_MAIL,
-    PLATE_MAIL,
+    PADDED_ARMOR,
+    SPIKED_ARMOR,
+    MIRROR_ARMOR,
     NUMBER_ARMOR_KINDS
+};
+
+enum armorTraits {
+    A_PLAIN,
+    A_STEALTH,
+    A_ARMORSMITH,
+    A_ABSORPTION,
+    A_MANGLE,
+    A_REFLECTION,
+    NUMBER_ARMOR_TRAIT_KINDS,
 };
 
 enum armorEnchants {
     A_MULTIPLICITY,
     A_MUTUALITY,
-    A_ABSORPTION,
-    A_REPRISAL,
     A_IMMUNITY,
-    A_REFLECTION,
     A_RESPIRATION,
     A_DAMPENING,
     A_BURDEN,
@@ -935,7 +942,6 @@ enum boltType {
 
 enum ringKind {
     RING_CLAIRVOYANCE,
-    RING_STEALTH,
     RING_REGENERATION,
     RING_TRANSFERENCE,
     RING_LIGHT,
@@ -1124,6 +1130,8 @@ enum tileFlags {
 #define FAINT_THRESHOLD                     50
 #define MAX_EXP_LEVEL                       20
 #define MAX_EXP                             100000000L
+#define ARMORSMITH_BONUS_PERCENT            50
+#define ARMORSMITH_BONUS_DEFENSE            10
 
 #define XPXP_NEEDED_FOR_TELEPATHIC_BOND     1400 // XPXP required to enable telepathic awareness with the ally
 
@@ -1400,6 +1408,7 @@ typedef struct item {
     short charges;
     short enchant1;
     short enchant2;
+    short enchant3;
     short timesEnchanted;
     enum monsterTypes vorpalEnemy;
     short strengthRequired;
@@ -2521,7 +2530,6 @@ typedef struct playerCharacter {
 
     // ring bonuses:
     short clairvoyance;
-    short stealthBonus;
     short regenerationBonus;
     short lightMultiplier;
     short awarenessBonus;
@@ -2529,6 +2537,11 @@ typedef struct playerCharacter {
     short wisdomBonus;
     short reaping;
 
+    // armor bonuses:
+    short stealthBonus;
+    short armorsmithBonusPercent;
+    short armorsmithBonusDefense;
+    
     // feats:
     boolean *featRecord;
 
@@ -3233,6 +3246,7 @@ extern "C" {
     short hitProbability(const creature *attacker, const creature *defender);
     boolean attackHit(const creature *attacker, const creature *defender);
     void applyArmorRunicEffect(char returnString[DCOLS], creature *attacker, short *damage, boolean melee);
+    void applyArmorTraitEffect(char returnString[DCOLS], creature *attacker, short *damage, boolean melee);
     void processStaggerHit(const creature *attacker, creature *defender);
     boolean attack(creature *attacker, creature *defender, boolean lungeAttack);
     void inflictLethalDamage(creature *attacker, creature *defender);
@@ -3377,6 +3391,7 @@ extern "C" {
     void updateIdentifiableItem(item *theItem);
     void updateIdentifiableItems(void);
     boolean readScroll(item *theItem);
+    void updateArmorTraitBonuses(void);
     void updateRingBonuses(void);
     void updatePlayerRegenerationDelay(void);
     boolean removeItemFromChain(item *theItem, item *theChain);
@@ -3480,7 +3495,7 @@ extern "C" {
     short weaponSlowDuration(fixpt enchant);
     short weaponImageCount(fixpt enchant);
     short weaponImageDuration(fixpt enchant);
-    short armorReprisalPercent(fixpt enchant);
+    short armorManglePercent(fixpt enchant);
     short armorAbsorptionMax(fixpt enchant);
     short armorImageCount(fixpt enchant);
     short reflectionChance(fixpt enchant);
