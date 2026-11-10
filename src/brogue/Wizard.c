@@ -24,6 +24,37 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
+
+creature *wizardCreateMonster( enum monsterTypes monsterID, pos selectedPosition, short mutationIndex, boolean ally) {
+
+    PACK_wizardCreateMonster(monsterID, selectedPosition, mutationIndex, ally);
+
+    // If there's already a monster here, quietly bury the body.
+    creature *oldMonster = monsterAtLoc(selectedPosition);
+    if (oldMonster) {
+        killCreature(oldMonster, true);
+        removeDeadMonsters();
+    }
+
+    // Wizard code to create monster
+    creature *theMonster = generateMonster(monsterID, false, false);
+    if (mutationIndex >= 0) mutateMonster(theMonster, mutationIndex);
+    initializeMonster(theMonster, false);
+    theMonster->loc = selectedPosition;
+    pmapAt(theMonster->loc)->flags |= HAS_MONSTER;
+    theMonster->creatureState = MONSTER_WANDERING;
+    fadeInMonster(theMonster);
+    refreshSideBar(-1, -1, false);
+    refreshDungeonCell(theMonster->loc);
+    if (ally) becomeAllyWith(theMonster);
+
+    return theMonster;
+}
+
+item *wizardCreateItem( enum itemCategory category, short itemKind, short enchantment, short runicIndex, short vorpalEnemy, boolean identifyEnchant) {
+    return NULL;
+}
+
 static void initializeCreateItemButton(brogueButton *button, char *text) {
     char buttonText[COLS * 3];
 
@@ -282,6 +313,12 @@ static void dialogCreateMonsterChooseMutation(creature *theMonster) {
     short i, j = 0, noMutation, selectedMutation;
     brogueButton buttons[DIALOG_CREATE_ITEM_MAX_BUTTONS];
 
+    // Add a button for choosing no mutation
+    initializeCreateItemButton(&(buttons[j]), "No mutation");
+    noMutation = j;
+    j++;
+    fprintf(stderr, "START 1.3.1 randomNumbersGenerated: %llu\n", (unsigned long long) randomNumbersGenerated);
+
     for (i=0; i<NUMBER_MUTATORS; i++) {
         if (!(theMonster->info.flags & mutationCatalog[i].forbiddenFlags)
             && !(theMonster->info.abilityFlags & mutationCatalog[i].forbiddenAbilityFlags)) {
@@ -291,15 +328,14 @@ static void dialogCreateMonsterChooseMutation(creature *theMonster) {
             j++;
         }
     }
-    // add an extra button for choosing no mutation
-    initializeCreateItemButton(&(buttons[j]), "No mutation");
-    noMutation = j;
 
     selectedMutation = dialogSelectEntryFromList(buttons, j+1, "Choose a mutation:");
+    fprintf(stderr, "START 1.3.3 randomNumbersGenerated: %llu\n", (unsigned long long) randomNumbersGenerated);
 
-    if (selectedMutation >= 0 && selectedMutation != noMutation) {
+    if (selectedMutation > 0 && selectedMutation != noMutation) {
         mutateMonster(theMonster, buttons[selectedMutation].command); // Retrieve the mutation index from the button
     }
+    fprintf(stderr, "START 1.3.4 randomNumbersGenerated: %llu\n", (unsigned long long) randomNumbersGenerated);
 }
 
 // Display a series of dialog windows for creating an arbitrary monster chosen by the user
