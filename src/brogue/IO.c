@@ -796,7 +796,7 @@ void mainInputLoop() {
                                         dir++);
                                    playerMoves(dir);
                                } else if (steps) {
-                                   travelRoute(path, steps);
+                                   travelRoute(path, steps, 25);
                                }
             }
         } else if (doEvent) {

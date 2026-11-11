@@ -1562,7 +1562,8 @@ static void displayRoute(short **distanceMap, boolean removeRoute) {
     } while (advanced);
 }
 
-void travelRoute(pos path[1000], short steps) {
+// Return true only if the route completed without a disturbance.
+boolean travelRoute(pos path[1000], short steps, short frameDelay) {
     short i, j;
     short dir;
 
@@ -1592,19 +1593,22 @@ void travelRoute(pos path[1000], short steps) {
         }
         for (dir = 0; dir < DIRECTION_COUNT && !rogue.disturbed; dir++) {
             if (posEq(posNeighborInDirection(player.loc, dir), path[i])) {
-                if (!playerMoves(dir)) {
+                // Spending a turn without reaching the next cell must stop travel.
+                if (!playerMoves(dir) || !posEq(player.loc, path[i])) {
                     rogue.disturbed = true;
                 }
-                if (pauseAnimation(25, PAUSE_BEHAVIOR_DEFAULT)) {
+                if (pauseAnimation(frameDelay, PAUSE_BEHAVIOR_DEFAULT)) {
                     rogue.disturbed = true;
                 }
                 break;
             }
         }
     }
+    const boolean arrived = steps > 0 && !rogue.disturbed && posEq(player.loc, path[steps - 1]);
     rogue.disturbed = true;
     rogue.automationActive = false;
     updateFlavorText();
+    return arrived;
 }
 
 static void travelMap(short **distanceMap) {

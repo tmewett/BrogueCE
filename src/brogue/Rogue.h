@@ -3080,7 +3080,7 @@ extern "C" {
                             boolean eightWays);
     short pathingDistance(short x1, short y1, short x2, short y2, unsigned long blockingTerrainFlags);
     short nextStep(short **distanceMap, pos target, const creature *monst, boolean reverseDirections);
-    void travelRoute(pos path[1000], short steps);
+    boolean travelRoute(pos path[1000], short steps, short frameDelay);
     void travel(pos target, boolean autoConfirm);
     void populateGenericCostMap(short **costMap);
     void getLocationFlags(const short x, const short y,
