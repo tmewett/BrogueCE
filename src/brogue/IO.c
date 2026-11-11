@@ -2360,10 +2360,25 @@ static void exploreKey(const boolean controlKey) {
         message("It's too dark to explore!", 0);
     } else if (x == player.loc.x && y == player.loc.y) {
         message("I see no path for further exploration.", 0);
+    } else if (player.status[STATUS_CONFUSED]) {
+        message("Not while you're confused.", 0);
+    } else if (cellHasTerrainFlag(player.loc, T_OBSTRUCTS_PASSABILITY)) {
+        message("Not while you're trapped.", 0);
     } else if (proposeOrConfirmLocation((pos){ finalX, finalY }, "I see no path for further exploration.")) {
-        explore(controlKey ? 1 : 20); // Do the exploring until interrupted.
+        pos path[1000];
+        short **costMap = allocGrid();
+        short **distanceMap = allocGrid();
+        populateCreatureCostMap(costMap, &player);
+        const short steps = getPlayerPathToLocation(path, distanceMap, costMap, (pos){ finalX, finalY });
+        freeGrid(distanceMap);
+        freeGrid(costMap);
+
+        const boolean arrived = travelRoute(path, steps, controlKey ? 1 : 20);
+        clearCursorPath();
         hideCursor();
-        exploreKey(controlKey);
+        if (arrived) {
+            exploreKey(controlKey); // Propose the next destination, then wait for confirmation.
+        }
     }
 }
 
