@@ -2329,32 +2329,25 @@ static void exploreKey(const boolean controlKey) {
     enum directions dir;
     boolean tooDark = false;
 
-    // fight any adjacent enemies first
-    dir = adjacentFightingDir();
-    if (dir == NO_DIRECTION) {
-        tooDark = isNextToUnexplored(player.loc);
-        if (!tooDark) {
-            x = finalX = player.loc.x;
-            y = finalY = player.loc.y;
+    tooDark = isNextToUnexplored(player.loc);
+    if (!tooDark) {
+        x = finalX = player.loc.x;
+        y = finalY = player.loc.y;
 
-            exploreMap = allocGrid();
-            getExploreMap(exploreMap, false);
-            do {
-                dir = nextStep(exploreMap, (pos){ x, y }, NULL, false);
-                if (dir != NO_DIRECTION) {
-                    x += nbDirs[dir][0];
-                    y += nbDirs[dir][1];
-                    if (pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED)) {
-                        finalX = x;
-                        finalY = y;
-                    }
+        exploreMap = allocGrid();
+        getExploreMap(exploreMap, false);
+        do {
+            dir = nextStep(exploreMap, (pos){ x, y }, NULL, false);
+            if (dir != NO_DIRECTION) {
+                x += nbDirs[dir][0];
+                y += nbDirs[dir][1];
+                if (pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED)) {
+                    finalX = x;
+                    finalY = y;
                 }
-            } while (dir != NO_DIRECTION);
-            freeGrid(exploreMap);
-        }
-    } else {
-        x = finalX = player.loc.x + nbDirs[dir][0];
-        y = finalY = player.loc.y + nbDirs[dir][1];
+            }
+        } while (dir != NO_DIRECTION);
+        freeGrid(exploreMap);
     }
 
     if (tooDark) {
