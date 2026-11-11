@@ -2323,70 +2323,77 @@ static boolean isNextToUnexplored(pos location) {
     return false;
 }
 
-static void exploreKey(const boolean controlKey) {
-    short x, y, finalX = 0, finalY = 0;
-    short **exploreMap;
+// Select a known destination using exploration goal weights.
+static pos getExploreDestination(void) {
+    pos destination = player.loc;
+    short **exploreMap = allocGrid();
+    getExploreMap(exploreMap, false);
+    pos location = player.loc;
     enum directions dir;
-    boolean tooDark = false;
-
-    tooDark = isNextToUnexplored(player.loc);
-    if (!tooDark) {
-        x = finalX = player.loc.x;
-        y = finalY = player.loc.y;
-
-        exploreMap = allocGrid();
-        getExploreMap(exploreMap, false);
-        do {
-            dir = nextStep(exploreMap, (pos){ x, y }, NULL, false);
-            if (dir != NO_DIRECTION) {
-                x += nbDirs[dir][0];
-                y += nbDirs[dir][1];
-                if (pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED)) {
-                    finalX = x;
-                    finalY = y;
-                }
+    do {
+        dir = nextStep(exploreMap, location, NULL, false);
+        if (dir != NO_DIRECTION) {
+            location = posNeighborInDirection(location, dir);
+            if (pmapAt(location)->flags & (DISCOVERED | MAGIC_MAPPED)) {
+                destination = location;
             }
-        } while (dir != NO_DIRECTION);
-        freeGrid(exploreMap);
+        }
+    } while (dir != NO_DIRECTION);
+    freeGrid(exploreMap);
+    return destination;
+}
+
+static void exploreKey(const boolean controlKey) {
+    if (player.status[STATUS_CONFUSED]) {
+        message("Not while you're confused.", 0);
+        return;
+    }
+    if (cellHasTerrainFlag(player.loc, T_OBSTRUCTS_PASSABILITY)) {
+        message("Not while you're trapped.", 0);
+        return;
     }
 
-    if (tooDark) {
+    if (isNextToUnexplored(player.loc)) {
         message("It's too dark to explore!", 0);
-    } else if (x == player.loc.x && y == player.loc.y) {
-        message("I see no path for further exploration.", 0);
-    } else if (player.status[STATUS_CONFUSED]) {
-        message("Not while you're confused.", 0);
-    } else if (cellHasTerrainFlag(player.loc, T_OBSTRUCTS_PASSABILITY)) {
-        message("Not while you're trapped.", 0);
-    } else {
-        pos path[1000];
-        short **costMap = allocGrid();
-        short **distanceMap = allocGrid();
-        populateCreatureCostMap(costMap, &player);
-        short steps = getPlayerPathToLocation(path, distanceMap, costMap, (pos){ finalX, finalY });
-        freeGrid(distanceMap);
-        freeGrid(costMap);
+        return;
+    }
 
-        // Keep the weighted goal, but preview only as far as the first exploration opportunity.
-        for (short i = 0; i < steps; i++) {
-            if (isNextToUnexplored(path[i])) {
-                steps = i + 1;
-                break;
-            }
+    const pos destination = getExploreDestination();
+
+    if (posEq(destination, player.loc)) {
+        message("I see no path for further exploration.", 0);
+        return;
+    }
+
+    pos path[1000];
+    short **costMap = allocGrid();
+    short **distanceMap = allocGrid();
+    populateCreatureCostMap(costMap, &player);
+    short steps = getPlayerPathToLocation(path, distanceMap, costMap, destination);
+    freeGrid(distanceMap);
+    freeGrid(costMap);
+
+    // Truncate the path at the first cell adjacent to an unexplored cell.
+    // This allows paths that move towards distant goals (items) but don't
+    // blunder into the unknown.
+    for (short i = 0; i < steps; i++) {
+        if (isNextToUnexplored(path[i])) {
+            steps = i + 1;
+            break;
         }
-        if (!steps) {
-            message("I see no path for further exploration.", 0);
-            return;
-        }
-        if (!proposeOrConfirmLocation(path[steps - 1], "I see no path for further exploration.")) {
-            return;
-        }
-        const boolean arrived = travelRoute(path, steps, controlKey ? 1 : 20);
-        clearCursorPath();
-        hideCursor();
-        if (arrived) {
-            exploreKey(controlKey); // Propose the next destination, then wait for confirmation.
-        }
+    }
+    if (!steps) {
+        message("I see no path for further exploration.", 0);
+        return;
+    }
+    if (!proposeOrConfirmLocation(path[steps - 1], "I see no path for further exploration.")) {
+        return;
+    }
+    const boolean arrived = travelRoute(path, steps, controlKey ? 1 : 20);
+    clearCursorPath();
+    hideCursor();
+    if (arrived) {
+        exploreKey(controlKey); // Propose the next destination, then wait for confirmation.
     }
 }
 
