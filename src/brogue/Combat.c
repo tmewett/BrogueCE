@@ -414,12 +414,6 @@ static void specialHit(creature *attacker, creature *defender, short damage) {
             player.status[STATUS_HALLUCINATING] += gameConst->onHitHallucinateDuration;
             player.maxStatus[STATUS_HALLUCINATING] = max(player.maxStatus[STATUS_HALLUCINATING], player.status[STATUS_HALLUCINATING]);
         }
-        if (attacker->info.abilityFlags & MA_HIT_BURN
-             && !defender->status[STATUS_IMMUNE_TO_FIRE]) {
-
-            exposeCreatureToFire(defender);
-        }
-
         if (attacker->info.abilityFlags & MA_HIT_STEAL_FLEE
             && !(attacker->carriedItem)
             && (packItems->nextItem)
@@ -474,6 +468,9 @@ static void specialHit(creature *attacker, creature *defender, short damage) {
                 }
             }
         }
+    }
+    if (attacker->info.abilityFlags & MA_HIT_BURN) {
+        exposeCreatureToFire(defender);
     }
     if ((attacker->info.abilityFlags & MA_POISONS)
         && damage > 0
