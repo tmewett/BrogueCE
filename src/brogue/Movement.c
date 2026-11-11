@@ -1939,12 +1939,11 @@ void getExploreMap(short **map, boolean headingToStairs) {// calculate explore m
         }
     }
 
-    costMap[rogue.downLoc.x][rogue.downLoc.y] = 100;
+    // Don't explore onto the downstairs to reveal the walls behind them.
+    costMap[rogue.downLoc.x][rogue.downLoc.y] = headingToStairs ? 100 : PDS_FORBIDDEN;
     costMap[rogue.upLoc.x][rogue.upLoc.y]     = 100;
 
-    if (headingToStairs) {
-        map[rogue.downLoc.x][rogue.downLoc.y] = 0; // head to the stairs
-    }
+    map[rogue.downLoc.x][rogue.downLoc.y] = headingToStairs ? 0 : 30000;
 
     dijkstraScan(map, costMap, true);
 
