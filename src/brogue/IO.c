@@ -47,6 +47,16 @@ short getPlayerPathOnMap(pos path[1000], short **map, pos origin) {
     return steps;
 }
 
+static short getPlayerPathToLocation(pos path[1000], short **distanceMap, short **costMap, pos destination) {
+    fillGrid(distanceMap, 30000);
+    distanceMap[destination.x][destination.y] = 0;
+    const short backupCost = costMap[destination.x][destination.y];
+    costMap[destination.x][destination.y] = 1;
+    dijkstraScan(distanceMap, costMap, true);
+    costMap[destination.x][destination.y] = backupCost;
+    return getPlayerPathOnMap(path, distanceMap, player.loc);
+}
+
 void reversePath(pos path[1000], short steps) {
     for (int i=0; i<steps / 2; i++) {
         pos temp = path[steps - i - 1];
@@ -550,7 +560,6 @@ void mainInputLoop() {
     brogueButton buttons[5] = {{{0}}};
     buttonState state;
     short buttonInput;
-    short backupCost;
 
     canceled = false;
     rogue.cursorMode = false; // Controls whether the keyboard moves the cursor or the character.
@@ -624,13 +633,7 @@ void mainInputLoop() {
                         pathDestination = getClosestValidLocationOnMap(cursorSnapMap, rogue.cursorLoc.x, rogue.cursorLoc.y);
                     }
 
-                    fillGrid(playerPathingMap, 30000);
-                    playerPathingMap[pathDestination.x][pathDestination.y] = 0;
-                    backupCost = costMap[pathDestination.x][pathDestination.y];
-                    costMap[pathDestination.x][pathDestination.y] = 1;
-                    dijkstraScan(playerPathingMap, costMap, true);
-                    costMap[pathDestination.x][pathDestination.y] = backupCost;
-                    steps = getPlayerPathOnMap(path, playerPathingMap, player.loc);
+                    steps = getPlayerPathToLocation(path, playerPathingMap, costMap, pathDestination);
 
 //                  steps = getPlayerPathOnMap(path, playerPathingMap, pathDestination[0], pathDestination[1]) - 1; // Get new path.
 //                  reversePath(path, steps);   // Flip it around, back-to-front.
