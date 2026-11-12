@@ -24,6 +24,10 @@
 #include <math.h>
 #include <time.h>
 
+#ifdef BROGUE_SDL
+#include <SDL3/SDL.h>
+#endif
+
 #include "Rogue.h"
 #include "GlobalsBase.h"
 #include "Globals.h"
@@ -2729,6 +2733,9 @@ boolean getInputTextString(char *inputText,
     const short textEntryBounds[TEXT_INPUT_TYPES][2] = {{' ', '~'}, {' ', '~'}, {'0', '9'}};
     screenDisplayBuffer dbuf;
     SavedDisplayBuffer rbuf;
+    char* clipboard = NULL;
+    int clipboardIdx = 0;
+    rogueEvent theEvent;
 
     // handle defaultEntry values exceeding maxLength
     promptSuffixLen = strlen(promptSuffix);
@@ -2779,7 +2786,31 @@ boolean getInputTextString(char *inputText,
     do {
         printString(suffix, charNum + x, y, &gray, &black, 0);
         plotCharWithColor((suffix[0] ? suffix[0] : ' '), (windowpos){ x + charNum, y }, &black, &white);
-        keystroke = nextKeyPress(true);
+
+        // Get next keyboard event
+        if (clipboard == NULL) {
+            do {
+                nextBrogueEvent(&theEvent, true, false, false);
+            } while (theEvent.eventType != KEYSTROKE);
+            keystroke = theEvent.param1;
+
+#ifdef BROGUE_SDL
+            if (keystroke == 'v' && theEvent.controlKey) {
+                clipboardIdx = 0;
+                clipboard = SDL_GetClipboardText();
+                continue;
+            }
+#endif
+        } else {
+            keystroke = clipboard[clipboardIdx++];
+            if (keystroke == 0) {
+#ifdef BROGUE_SDL
+                SDL_free(clipboard);
+#endif
+                clipboard = NULL;
+            }
+        }
+
         if (keystroke == DELETE_KEY && charNum > 0) {
             printString(suffix, charNum + x - 1, y, &gray, &black, 0);
             plotCharWithColor(' ', (windowpos){ x + charNum + strlen(suffix) - 1, y }, &black, &black);
@@ -2801,27 +2832,6 @@ boolean getInputTextString(char *inputText,
                 charNum++;
             }
         }
-#ifdef USE_CLIPBOARD
-        else if (keystroke == TAB_KEY) {
-            char* clipboard = getClipboard();
-            for (int i=0; i<(int) min(strlen(clipboard), (unsigned long) (maxLength - charNum)); ++i) {
-
-                char character = clipboard[i];
-
-                if (character >= textEntryBounds[textEntryType][0]
-                    && character <= textEntryBounds[textEntryType][1]) { // allow only permitted input
-                    if (textEntryType == TEXT_INPUT_FILENAME
-                        && characterForbiddenInFilename(character)) {
-                        character = '-';
-                    }
-                    plotCharWithColor(character, (windowpos){ x + charNum, y }, &white, &black);
-                    if (charNum < maxLength) {
-                        charNum++;
-                    }
-                }
-            }
-        }
-#endif
     } while (keystroke != RETURN_KEY && keystroke != ESCAPE_KEY);
 
     if (useDialogBox) {

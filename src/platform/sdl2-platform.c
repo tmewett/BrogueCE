@@ -229,6 +229,23 @@ static boolean pollBrogueEvent(rogueEvent *returnEvent, boolean textInput) {
                 continue;
             }
 
+            // Keycode vs Scancode
+            //     https://github.com/libsdl-org/SDL/issues/11434
+            // - Keycode is the actual value which gets reported to the OS, regardless of what button was pressed to generate it
+            //   - eg. SDLK_ESCAPE is the escape key, regardless of where it is on the keyboard
+            // - Scancode is a location (a button) on a keyboard, regardless of what value that button produces
+            //   - eg. SDL_SCANCODE_A is a key on a full keyboard, but the value generated depends on what keyboard layout is currently applied
+
+            fprintf(stderr, "Key: ");
+            int mods = SDL_GetModState();
+            if (mods != 0) {
+                if (mods & SDL_KMOD_ALT)   fprintf(stderr, "Alt+");
+                if (mods & SDL_KMOD_SHIFT) fprintf(stderr, "Shift+");
+                if (mods & SDL_KMOD_CTRL)  fprintf(stderr, "Ctrl+");
+                if (mods & SDL_KMOD_GUI)   fprintf(stderr, "Gui+");
+            }
+            fprintf(stderr, "%s\n", SDL_GetKeyName(key));
+
             if (key == SDLK_PAGEUP) {
                 resizeWindow(max(windowWidth * 11/10, windowWidth + 1), max(windowHeight * 11/10, windowHeight + 1));
                 continue;

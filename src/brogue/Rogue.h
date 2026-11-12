@@ -1226,6 +1226,94 @@ enum tileFlags {
 
 #define UNKNOWN_KEY         (128+19)
 
+// All supported commands
+// TODO:
+// - Cursor movement (CMD_TARGET_XY)?
+// - Clicking (CMD_TARGET_ACTION)?
+enum commands {
+    CMD_MOVE_UP,
+    CMD_MOVE_DOWN,
+    CMD_MOVE_LEFT,
+    CMD_MOVE_RIGHT,
+    CMD_MOVE_UPLEFT,
+    CMD_MOVE_UPRIGHT,
+    CMD_MOVE_DOWNLEFT,
+    CMD_MOVE_DOWNRIGHT,
+
+    CMD_RUN_UP,
+    CMD_RUN_DOWN,
+    CMD_RUN_LEFT,
+    CMD_RUN_RIGHT,
+    CMD_RUN_UPLEFT,
+    CMD_RUN_UPRIGHT,
+    CMD_RUN_DOWNLEFT,
+    CMD_RUN_DOWNRIGHT,
+
+    CMD_REST,
+    CMD_AUTO_REST,
+    CMD_SEARCH,
+    CMD_LONG_SEARCH,
+
+    CMD_DESCEND,
+    CMD_ASCEND,
+    CMD_EXPLORE,
+    CMD_FAST_EXPLORE,
+    CMD_AUTOPLAY,
+    CMD_FAST_AUTOPLAY,
+
+    CMD_INVENTORY,
+    CMD_EQUIP,
+    CMD_UNEQUIP,
+    CMD_APPLY,
+    CMD_THROW,
+    CMD_RETHROW,
+    CMD_RELABEL,
+    CMD_SWAP,
+    CMD_DROP,
+    CMD_CALL,
+
+    CMD_QUIT,
+    CMD_MESSAGE_ARCHIVE,
+    CMD_HELP,
+    CMD_DISCOVERIES,
+    CMD_FEATS,
+    CMD_SEED,
+    CMD_EASY_MODE,
+
+    CMD_SWITCH_TARGET,
+    CMD_TOGGLE_EXAMINE,
+
+    CMD_VIEW_RECORDING,
+    CMD_LOAD_SAVED_GAME,
+    CMD_SAVE_GAME,
+    CMD_NEW_GAME,
+
+    CMD_RECORDING_PAUSE,
+    CMD_RECORDING_OMNICIENCE,
+    CMD_RECORDING_ONE_TURN,
+    CMD_RECORDING_FIVE_TURNS,
+    CMD_RECORDING_TWENTY_TURNS,
+    CMD_RECORDING_FASTER_PLAYBACK,
+    CMD_RECORDING_SLOWER_PLAYBACK,
+
+    CMD_TOGGLE_TRUE_COLORS,
+    CMD_TOGGLE_STEALTH_RANGE,
+    CMD_TOGGLE_GRAPHICS,
+
+    CMD_RESIZE_LARGER,
+    CMD_RESIZE_SMALLER,
+    CMD_TOGGLE_FULLSCREEN,
+
+    CMD_SCREENSHOT,
+    CMD_CONFIRM_YES,
+    CMD_CONFIRM_NO,
+    CMD_ACKNOWLEDGE,
+    CMD_CANCEL,
+
+    CMD_RECORDING_SWITCH_TO_PLAYING,
+    CMD_WIZARD_CREATE,
+};
+
 #define min(x, y)       (((x) < (y)) ? (x) : (y))
 #define max(x, y)       (((x) > (y)) ? (x) : (y))
 #define clamp(x, low, hi)   (min(hi, max(x, low))) // pins x to the [y, z] interval
