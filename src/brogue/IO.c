@@ -47,6 +47,16 @@ short getPlayerPathOnMap(pos path[1000], short **map, pos origin) {
     return steps;
 }
 
+static short getPlayerPathToLocation(pos path[1000], short **distanceMap, short **costMap, pos destination) {
+    fillGrid(distanceMap, 30000);
+    distanceMap[destination.x][destination.y] = 0;
+    const short backupCost = costMap[destination.x][destination.y];
+    costMap[destination.x][destination.y] = 1;
+    dijkstraScan(distanceMap, costMap, true);
+    costMap[destination.x][destination.y] = backupCost;
+    return getPlayerPathOnMap(path, distanceMap, player.loc);
+}
+
 void reversePath(pos path[1000], short steps) {
     for (int i=0; i<steps / 2; i++) {
         pos temp = path[steps - i - 1];
@@ -550,7 +560,6 @@ void mainInputLoop() {
     brogueButton buttons[5] = {{{0}}};
     buttonState state;
     short buttonInput;
-    short backupCost;
 
     canceled = false;
     rogue.cursorMode = false; // Controls whether the keyboard moves the cursor or the character.
@@ -624,13 +633,7 @@ void mainInputLoop() {
                         pathDestination = getClosestValidLocationOnMap(cursorSnapMap, rogue.cursorLoc.x, rogue.cursorLoc.y);
                     }
 
-                    fillGrid(playerPathingMap, 30000);
-                    playerPathingMap[pathDestination.x][pathDestination.y] = 0;
-                    backupCost = costMap[pathDestination.x][pathDestination.y];
-                    costMap[pathDestination.x][pathDestination.y] = 1;
-                    dijkstraScan(playerPathingMap, costMap, true);
-                    costMap[pathDestination.x][pathDestination.y] = backupCost;
-                    steps = getPlayerPathOnMap(path, playerPathingMap, player.loc);
+                    steps = getPlayerPathToLocation(path, playerPathingMap, costMap, pathDestination);
 
 //                  steps = getPlayerPathOnMap(path, playerPathingMap, pathDestination[0], pathDestination[1]) - 1; // Get new path.
 //                  reversePath(path, steps);   // Flip it around, back-to-front.
@@ -793,7 +796,7 @@ void mainInputLoop() {
                                         dir++);
                                    playerMoves(dir);
                                } else if (steps) {
-                                   travelRoute(path, steps);
+                                   travelRoute(path, steps, 25);
                                }
             }
         } else if (doEvent) {
@@ -2310,57 +2313,87 @@ static void displayLoops() {
     displayLevel();
 }
 
-static void exploreKey(const boolean controlKey) {
-    short x, y, finalX = 0, finalY = 0;
-    short **exploreMap;
+static boolean isNextToUnexplored(pos location) {
+    for (enum directions dir = 0; dir < DIRECTION_COUNT; dir++) {
+        const pos neighbor = posNeighborInDirection(location, dir);
+        if (isPosInMap(neighbor) && !(pmapAt(neighbor)->flags & DISCOVERED)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Select a known destination using exploration goal weights.
+static pos getExploreDestination(void) {
+    pos destination = player.loc;
+    short **exploreMap = allocGrid();
+    getExploreMap(exploreMap, false);
+    pos location = player.loc;
     enum directions dir;
-    boolean tooDark = false;
-
-    // fight any adjacent enemies first
-    dir = adjacentFightingDir();
-    if (dir == NO_DIRECTION) {
-        for (dir = 0; dir < DIRECTION_COUNT; dir++) {
-            x = player.loc.x + nbDirs[dir][0];
-            y = player.loc.y + nbDirs[dir][1];
-            if (coordinatesAreInMap(x, y)
-                && !(pmap[x][y].flags & DISCOVERED)) {
-
-                tooDark = true;
-                break;
+    do {
+        dir = nextStep(exploreMap, location, NULL, false);
+        if (dir != NO_DIRECTION) {
+            location = posNeighborInDirection(location, dir);
+            if (pmapAt(location)->flags & (DISCOVERED | MAGIC_MAPPED)) {
+                destination = location;
             }
         }
-        if (!tooDark) {
-            x = finalX = player.loc.x;
-            y = finalY = player.loc.y;
+    } while (dir != NO_DIRECTION);
+    freeGrid(exploreMap);
+    return destination;
+}
 
-            exploreMap = allocGrid();
-            getExploreMap(exploreMap, false);
-            do {
-                dir = nextStep(exploreMap, (pos){ x, y }, NULL, false);
-                if (dir != NO_DIRECTION) {
-                    x += nbDirs[dir][0];
-                    y += nbDirs[dir][1];
-                    if (pmap[x][y].flags & (DISCOVERED | MAGIC_MAPPED)) {
-                        finalX = x;
-                        finalY = y;
-                    }
-                }
-            } while (dir != NO_DIRECTION);
-            freeGrid(exploreMap);
-        }
-    } else {
-        x = finalX = player.loc.x + nbDirs[dir][0];
-        y = finalY = player.loc.y + nbDirs[dir][1];
+static void exploreKey(const boolean controlKey) {
+    if (player.status[STATUS_CONFUSED]) {
+        message("Not while you're confused.", 0);
+        return;
+    }
+    if (cellHasTerrainFlag(player.loc, T_OBSTRUCTS_PASSABILITY)) {
+        message("Not while you're trapped.", 0);
+        return;
     }
 
-    if (tooDark) {
+    if (isNextToUnexplored(player.loc)) {
         message("It's too dark to explore!", 0);
-    } else if (x == player.loc.x && y == player.loc.y) {
+        return;
+    }
+
+    const pos destination = getExploreDestination();
+
+    if (posEq(destination, player.loc)) {
         message("I see no path for further exploration.", 0);
-    } else if (proposeOrConfirmLocation((pos){ finalX, finalY }, "I see no path for further exploration.")) {
-        explore(controlKey ? 1 : 20); // Do the exploring until interrupted.
-        hideCursor();
-        exploreKey(controlKey);
+        return;
+    }
+
+    pos path[1000];
+    short **costMap = allocGrid();
+    short **distanceMap = allocGrid();
+    populateCreatureCostMap(costMap, &player);
+    short steps = getPlayerPathToLocation(path, distanceMap, costMap, destination);
+    freeGrid(distanceMap);
+    freeGrid(costMap);
+
+    // Truncate the path at the first cell adjacent to an unexplored cell.
+    // This allows paths that move towards distant goals (items) but don't
+    // blunder into the unknown.
+    for (short i = 0; i < steps; i++) {
+        if (isNextToUnexplored(path[i])) {
+            steps = i + 1;
+            break;
+        }
+    }
+    if (!steps) {
+        message("I see no path for further exploration.", 0);
+        return;
+    }
+    if (!proposeOrConfirmLocation(path[steps - 1], "I see no path for further exploration.")) {
+        return;
+    }
+    const boolean arrived = travelRoute(path, steps, controlKey ? 1 : 20);
+    clearCursorPath();
+    hideCursor();
+    if (arrived) {
+        exploreKey(controlKey); // Propose the next destination, then wait for confirmation.
     }
 }
 
