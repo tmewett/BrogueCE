@@ -2068,7 +2068,7 @@ void colorFlash(const color *theColor, unsigned long reqTerrainFlags,
         for (j = max(y - maxRadius, 0); j <= min(y + maxRadius, DROWS - 1); j++) {
             if ((!reqTerrainFlags || cellHasTerrainFlag((pos){ reqTerrainFlags, i }, j))
                 && (!reqTileFlags || (pmap[i][j].flags & reqTileFlags))
-                && (i-x) * (i-x) + (j-y) * (j-y) <= maxRadius * maxRadius) {
+                && withinBlastRadius((pos){ x, y }, (pos){ i, j }, maxRadius)) {
 
                 tileQualifies[i][j] = true;
                 localRadius[i][j] = fp_sqrt(((i-x) * (i-x) + (j-y) * (j-y)) * FP_FACTOR) / FP_FACTOR;
@@ -2083,9 +2083,10 @@ void colorFlash(const color *theColor, unsigned long reqTerrainFlags,
         return;
     }
 
-    for (k = 1; k <= frames; k++) {
+    // Grow the wave over `frames` steps, ending at the full radius, then clear the highlight.
+    for (k = 1; k <= frames + 1; k++) {
         currentRadius = max(1, maxRadius * k / frames);
-        fadeOut = min(100, (frames - k) * 100 * 5 / frames);
+        fadeOut = min(100, (frames - k + 1) * 100 * 5 / frames);
         for (i = max(x - maxRadius, 0); i <= min(x + maxRadius, DCOLS - 1); i++) {
             for (j = max(y - maxRadius, 0); j <= min(y + maxRadius, DROWS - 1); j++) {
                 if (tileQualifies[i][j] && (localRadius[i][j] <= currentRadius)) {
