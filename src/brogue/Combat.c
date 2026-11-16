@@ -355,7 +355,9 @@ void handlePaladinFeat(const creature *defender) {
     if (rogue.featRecord[FEAT_PALADIN]
         && defender->creatureState != MONSTER_TRACKING_SCENT
         && (player.status[STATUS_TELEPATHIC] || canSeeMonster(defender))
-        && !(defender->info.flags & (MONST_INANIMATE | MONST_TURRET | MONST_IMMOBILE | MONST_INVULNERABLE))
+        && !(defender->info.flags & (
+            MONST_INANIMATE | MONST_IMMOBILE | MONST_INVULNERABLE
+            | MONST_ATTACKABLE_THRU_WALLS | MONST_WILL_NOT_USE_STAIRS))
         && !(player.bookkeepingFlags & MB_SEIZED)
         && defender != &player
         ) {
