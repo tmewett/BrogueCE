@@ -2,7 +2,7 @@ include config.mk
 
 cflags := -Isrc/brogue -Isrc/platform -Isrc/variants -std=c99 \
 	-Wall -Wpedantic -Werror=implicit -Wno-parentheses -Wno-unused-result \
-	-Wformat -Werror=format-security -Wformat-overflow=0 -Wmissing-prototypes
+	-Wformat -Werror=format-security -Wno-format-overflow -Wmissing-prototypes
 libs := -lm
 cppflags := -DDATADIR=$(DATADIR)
 
@@ -41,7 +41,7 @@ ifeq ($(GRAPHICS),YES)
 sources += $(addprefix src/platform/,sdl2-platform.c tiles.c)
 cflags += $(shell $(SDL_CONFIG) --cflags)
 cppflags += -DBROGUE_SDL
-libs += $(shell $(SDL_CONFIG) --libs) -lSDL2_image
+libs += $(shell $(SDL_CONFIG) --libs) -lSDL3_image
 endif
 
 ifeq ($(WEBBROGUE),YES)
