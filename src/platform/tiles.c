@@ -751,10 +751,11 @@ void resizeWindow(int width, int height) {
     if (width >= mode.w && height >= mode.h) fullScreen = true;
 
     if (Win == NULL) {
-        // create the window
+        // create the window (--no-gpu also turns off HiDPI)
         Win = SDL_CreateWindow("Brogue",
             SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height,
-            SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | (fullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
+            SDL_WINDOW_RESIZABLE | (softwareRendering ? 0 : SDL_WINDOW_ALLOW_HIGHDPI)
+            | (fullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
         if (!Win) sdlfatal(__FILE__, __LINE__);
 
         // set its icon
