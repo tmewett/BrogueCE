@@ -40,6 +40,10 @@
 		ECBE68A91EC0D4C600E9F366 /* Cell.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECBE68A81EC0D4C600E9F366 /* Cell.swift */; };
 		ECBE68AB1EC0DB1800E9F366 /* SKViewPort.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECBE68AA1EC0DB1800E9F366 /* SKViewPort.swift */; };
 		ECBE68AD1EC0E1C600E9F366 /* BrogueViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECBE68AC1EC0E1C600E9F366 /* BrogueViewController.swift */; };
+		F1F38AFA30B4FF7500C129A2 /* cJSON.c in Sources */ = {isa = PBXBuildFile; fileRef = F1F38AF530B4FF7500C129A2 /* cJSON.c */; };
+		F1F38AFB30B4FF7500C129A2 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = F1F38AF730B4FF7500C129A2 /* LICENSE */; };
+		F1F38AFC30B4FF7500C129A2 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = F1F38AF830B4FF7500C129A2 /* README.md */; };
+		F1F38AFD30B4FF7500C129A2 /* cJSON.o in Resources */ = {isa = PBXBuildFile; fileRef = F1F38AF630B4FF7500C129A2 /* cJSON.o */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -86,6 +90,11 @@
 		ECBE68A81EC0D4C600E9F366 /* Cell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Cell.swift; sourceTree = "<group>"; };
 		ECBE68AA1EC0DB1800E9F366 /* SKViewPort.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SKViewPort.swift; sourceTree = "<group>"; };
 		ECBE68AC1EC0E1C600E9F366 /* BrogueViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BrogueViewController.swift; sourceTree = "<group>"; };
+		F1F38AF430B4FF7500C129A2 /* cJSON.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cJSON.h; sourceTree = "<group>"; };
+		F1F38AF530B4FF7500C129A2 /* cJSON.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = cJSON.c; sourceTree = "<group>"; };
+		F1F38AF630B4FF7500C129A2 /* cJSON.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.object-library"; path = cJSON.o; sourceTree = "<group>"; };
+		F1F38AF730B4FF7500C129A2 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		F1F38AF830B4FF7500C129A2 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -126,6 +135,7 @@
 		C57A961C16D7EAD500C233F1 = {
 			isa = PBXGroup;
 			children = (
+				F1F38AF930B4FF7500C129A2 /* cJSON */,
 				F13BA72D2F2FD79500267329 /* src */,
 				C5EA72D616FE92DC00AE688A /* CoreText.framework */,
 				C57A967416DBF1CE00C233F1 /* QuartzCore.framework */,
@@ -229,6 +239,19 @@
 			path = "Directional Controls";
 			sourceTree = "<group>";
 		};
+		F1F38AF930B4FF7500C129A2 /* cJSON */ = {
+			isa = PBXGroup;
+			children = (
+				F1F38AF430B4FF7500C129A2 /* cJSON.h */,
+				F1F38AF530B4FF7500C129A2 /* cJSON.c */,
+				F1F38AF630B4FF7500C129A2 /* cJSON.o */,
+				F1F38AF730B4FF7500C129A2 /* LICENSE */,
+				F1F38AF830B4FF7500C129A2 /* README.md */,
+			);
+			name = cJSON;
+			path = ../external/cJSON;
+			sourceTree = SOURCE_ROOT;
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -305,6 +328,9 @@
 				C5FFC5DD17B9A913007A05F3 /* Default-Landscape@2x~ipad.png in Resources */,
 				C5D5EC6C16FC07EB00E9A9AF /* icon_72x72.png in Resources */,
 				C5D5EC6E16FC07F300E9A9AF /* icon_144x144.png in Resources */,
+				F1F38AFB30B4FF7500C129A2 /* LICENSE in Resources */,
+				F1F38AFC30B4FF7500C129A2 /* README.md in Resources */,
+				F1F38AFD30B4FF7500C129A2 /* cJSON.o in Resources */,
 				C5958C6C174AFFBB00519AD9 /* about_brogue.png in Resources */,
 				C5958C6D174AFFBB00519AD9 /* about_brogue@2x.png in Resources */,
 				C5958C6E174AFFBB00519AD9 /* brogue_directionals.png in Resources */,
@@ -332,6 +358,7 @@
 				ECBE68A91EC0D4C600E9F366 /* Cell.swift in Sources */,
 				C57A965116D7EB4C00C233F1 /* RogueDriver.mm in Sources */,
 				C532C8A61971AB8800695956 /* DirectionControlsViewController.m in Sources */,
+				F1F38AFA30B4FF7500C129A2 /* cJSON.c in Sources */,
 				ECBE68AD1EC0E1C600E9F366 /* BrogueViewController.swift in Sources */,
 				ECBE68AB1EC0DB1800E9F366 /* SKViewPort.swift in Sources */,
 				ECBE68A71EC0D4A200E9F366 /* RogueScene.swift in Sources */,
