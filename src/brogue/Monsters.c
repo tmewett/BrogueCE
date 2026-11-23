@@ -1091,7 +1091,7 @@ boolean getRandomMonsterSpawnLocation(short *x, short *y) {
     grid = allocGrid();
     fillGrid(grid, 0);
     calculateDistances(grid, player.loc.x, player.loc.y, T_DIVIDES_LEVEL, NULL, true, true);
-    getTerrainGrid(grid, 0, (T_PATHING_BLOCKER | T_HARMFUL_TERRAIN), (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | IN_FIELD_OF_VIEW));
+    getTerrainGrid(grid, 0, (T_PATHING_BLOCKER | T_HARMFUL_TERRAIN), (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | IN_FIELD_OF_VIEW | IS_IN_MACHINE));
     findReplaceGrid(grid, -30000, DCOLS/2-1, 0);
     findReplaceGrid(grid, 30000, 30000, 0);
     findReplaceGrid(grid, DCOLS/2, 30000-1, 1);
