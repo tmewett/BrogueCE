@@ -1,0 +1,1 @@
+The Amulet, lumenstones, and The Warden are no longer destroyed by a chasm (spawned by a potion of descent) on the deepest depth, but are instead teleported elsewhere.
