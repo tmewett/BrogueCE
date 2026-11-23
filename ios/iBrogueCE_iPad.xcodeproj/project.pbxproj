@@ -483,13 +483,13 @@
 					"BROGUE_EXTRA_VERSION=\\\"-ios\\\"",
 				);
 				INFOPLIST_FILE = "iBrogueCE_iPad/iBrogueCE_iPad-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 9;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 1.14.1;
+				MARKETING_VERSION = 1.15.1;
 				PRODUCT_BUNDLE_IDENTIFIER = bryan.turner.broguece;
 				PRODUCT_NAME = BrogueCE;
 				PROVISIONING_PROFILE = "";
@@ -526,13 +526,13 @@
 					"BROGUE_TABLET=1",
 				);
 				INFOPLIST_FILE = "iBrogueCE_iPad/iBrogueCE_iPad-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 9;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MARKETING_VERSION = 1.14.1;
+				MARKETING_VERSION = 1.15.1;
 				PRODUCT_BUNDLE_IDENTIFIER = bryan.turner.broguece;
 				"PRODUCT_BUNDLE_IDENTIFIER[sdk=*]" = md.taylor.broguece;
 				PRODUCT_NAME = BrogueCE;
