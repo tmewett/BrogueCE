@@ -4358,6 +4358,15 @@ static void getMonsterAbilitiesText(const creature *monst, char *abilitiesText, 
         }
     }
 
+    // A fiery creature's flamedancer corona is a separate, negatable aura.
+    if (includeNegatable
+        && (monst->info.flags & MONST_FIERY)
+        && monst->info.DFChance > 0
+        && monst->info.DFType == DF_FLAMEDANCER_CORONA) {
+
+        strcat(buf, "&radiates an aura of flame");
+    }
+
     for (int i=0; i<32; i++) {
         if ((monst->bookkeepingFlags & (Fl(i)))
             && monsterBookkeepingFlagDescriptions[i][0]) {
