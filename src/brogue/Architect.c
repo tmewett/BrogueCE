@@ -1225,6 +1225,10 @@ boolean buildAMachine(enum machineTypes bp,
     prepareInteriorWithMachineFlags(p->interior, originX, originY, blueprintCatalog[bp].flags, blueprintCatalog[bp].dungeonProfileType);
 
     // If necessary, label the interior as IS_IN_AREA_MACHINE or IS_IN_ROOM_MACHINE and mark down the number.
+    // Record the counter, so that if this machine (and any submachines) is rolled back, the number can be released
+    // This keeps the machine numbers compact and supports the seed catalog assumption that vestibules are numbered
+    // exactly one above the corresponding vault
+    const short machineNumberBeforeReserving = rogue.machineNumber;
     machineNumber = ++rogue.machineNumber; // Reserve this machine number, starting with 1.
     for(int i=0; i<DCOLS; i++) {
         for(int j=0; j<DROWS; j++) {
@@ -1576,6 +1580,7 @@ boolean buildAMachine(enum machineTypes bp,
                             if (D_MESSAGE_MACHINE_GENERATION) printf("\nDepth %i: Failed to place blueprint %i:%s because it requires an adoptive machine and we couldn't place one.", rogue.depthLevel, bp, blueprintCatalog[bp].name);
                             // failure! abort!
                             copyMap(p->levelBackup, pmap);
+                            rogue.machineNumber = machineNumberBeforeReserving; // release this machine's number (and its submachines)
                             abortItemsAndMonsters(p->spawnedItems, p->spawnedMonsters);
                             freeGrid(distanceMap);
                             free(p);
@@ -1680,6 +1685,7 @@ boolean buildAMachine(enum machineTypes bp,
 
             // Restore the map to how it was before we touched it.
             copyMap(p->levelBackup, pmap);
+            rogue.machineNumber = machineNumberBeforeReserving; // release this machine's number (and its submachines)
             abortItemsAndMonsters(p->spawnedItems, p->spawnedMonsters);
             freeGrid(distanceMap);
             free(p);

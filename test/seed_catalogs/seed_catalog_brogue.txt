@@ -1,5 +1,5 @@
 Brogue seed catalog, seeds 1 to 25, through depth 40.
-Generated with CE 1.13.0-dev.8736c7c.feature/fix_rb_seed519. Dungeons unchanged since CE 1.11.
+Generated with CE 1.15.1-dev.c71e78f.seed-catalog-vault-numbering. Dungeons unchanged since CE 1.11.
 
 To play one of these seeds, select Play>New Seeded Game from the title screen.
 Seed 1:
@@ -1189,10 +1189,10 @@ Seed 5:
         A potion of creeping death
         A potion of strength
         A potion of life
-        A door key (vault 4) (opens vault 1)
-        A +2 ring of regeneration (vault 4)
-        A +2 dagger of speed <12> (vault 4)
-        A door key (opens vault 4)
+        A door key (vault 3) (opens vault 1)
+        A +2 ring of regeneration (vault 3)
+        A +2 dagger of speed <12> (vault 3)
+        A door key (opens vault 3)
         1059 gold pieces (4 piles)
         A resurrection altar (vault 1)
     Depth 16:
@@ -1777,10 +1777,10 @@ Seed 7:
         A potion of paralysis
         A potion of confusion
         Some food
-        A door key (vault 4) (opens vault 1)
-        A +1 ring of wisdom (vault 4)
-        +0 plate armor [11]<19> (vault 4)
-        +0 scale mail [4]<12> (vault 4)
+        A door key (vault 3) (opens vault 1)
+        A +1 ring of wisdom (vault 3)
+        +0 plate armor [11]<19> (vault 3)
+        +0 scale mail [4]<12> (vault 3)
         A potion of life (vault 1)
         2057 gold pieces (6 piles)
         A staff of blinking [3/3] (dar priestess)
@@ -4415,10 +4415,10 @@ Seed 17:
         A staff of obstruction [2/2]
         A potion of detect magic
         A potion of strength
-        A cage key (vault 3)
-        A +2 ring of transference (vault 3)
-        +2 leather armor of multiplicity [5]<10> (vault 3)
-        A +2 dagger of speed <12> (vault 3)
+        A cage key (vault 2)
+        A +2 ring of transference (vault 2)
+        +2 leather armor of multiplicity [5]<10> (vault 2)
+        A +2 dagger of speed <12> (vault 2)
         821 gold pieces (4 piles)
         A caged dar blademaster
         A caged pixie
@@ -4663,12 +4663,12 @@ Seed 18:
         A +1 ring of light (vault 1)
         A +1 ring of wisdom (vault 1)
         A +2 ring of transference (vault 1)
-        A door key (vault 4) (opens vault 2)
-        A +1 ring of stealth (vault 4)
-        A +0 sword <14> (vault 4)
-        A +0 war hammer <20> (vault 4)
+        A door key (vault 3) (opens vault 1)
+        A +1 ring of stealth (vault 3)
+        A +0 sword <14> (vault 3)
+        A +0 war hammer <20> (vault 3)
         A potion of levitation
-        A door key (opens vault 4)
+        A door key (opens vault 3)
         370 gold pieces (3 piles)
     Depth 7:
         +5 plate armor [16]<19>
@@ -5025,11 +5025,11 @@ Seed 19:
         A scroll of enchanting
         A potion of life
         Some food
-        A scroll of recharging (vault 5)
-        A scroll of shattering (vault 5)
-        A scroll of aggravate monsters (vault 5)
-        A scroll of teleportation (vault 5)
-        A scroll of sanctuary (vault 5)
+        A scroll of recharging (vault 4)
+        A scroll of shattering (vault 4)
+        A scroll of aggravate monsters (vault 4)
+        A scroll of teleportation (vault 4)
+        A scroll of sanctuary (vault 4)
         1198 gold pieces (4 piles)
         A door key (stone guardian) (opens vault 1)
         A commutation altar (vault 1)
@@ -5537,9 +5537,9 @@ Seed 21:
         A potion of caustic gas
         +0 scale mail [4]<12>
         A scroll of teleportation
-        A door key (opens vault 4)
-        A staff of blinking [3/3] (vault 4)
-        A staff of firebolt [2/2] (vault 4)
+        A door key (opens vault 1)
+        A staff of blinking [3/3] (vault 1)
+        A staff of firebolt [2/2] (vault 1)
         917 gold pieces (5 piles)
         A shackled ogre
     Depth 10:
