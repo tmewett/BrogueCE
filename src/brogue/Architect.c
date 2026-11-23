@@ -3827,23 +3827,71 @@ void initializeLevel(pos upStairsLoc) {
     freeGrid(mapToPit);
 }
 
+static boolean locationEmpty(pos loc) {
+    return !(pmapAt(loc)->flags & (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | HAS_ITEM | IS_IN_MACHINE));
+}
+
+static boolean filterTerrain(pos loc, short terrainType) {
+    // Wildcard terrainType always matches
+    if (terrainType < 0) return true;
+
+    boolean terrainMatch = cellHasTerrainType(loc, terrainType);
+
+    // How do the tiles respond to pathing?
+    boolean desiredTileAllowsPathing  = !(tileCatalog[terrainType].flags & T_PATHING_BLOCKER);
+    boolean selectedTileAllowsPathing = !cellHasTerrainFlag(loc, T_PATHING_BLOCKER);
+
+    // The desired and selected tile must match path-blocking behavior
+    boolean pathingMatch = desiredTileAllowsPathing == selectedTileAllowsPathing;
+
+    return terrainMatch && pathingMatch;
+}
+
+static boolean filterDungeon(pos loc, short dungeonType) {
+    // Wildcard dungeonType always matches
+    if (dungeonType < 0) return true;
+
+    boolean dungeonMatch = pmapAt(loc)->layers[DUNGEON] == dungeonType;
+
+    // How do the tiles respond to items?
+    boolean desiredTileAllowsItems  = !(tileCatalog[dungeonType].flags & T_OBSTRUCTS_ITEMS);
+    boolean selectedTileAllowsItems = !cellHasTerrainFlag(loc, T_OBSTRUCTS_ITEMS);
+
+    // The desired and selected tile must match item-blocking behavior
+    boolean itemMatch = desiredTileAllowsItems == selectedTileAllowsItems;
+
+    return dungeonMatch && itemMatch;
+}
+
+static boolean filterLiquid(pos loc, short liquidType) {
+    // Wildcard liquidType always matches
+    if (liquidType < 0) return true;
+
+    return pmapAt(loc)->layers[LIQUID] == liquidType;
+}
+
+static boolean filterLocation(pos loc, short dungeonType, short liquidType, short terrainType) {
+    // Specifying a terrainType overrides the dungeon/liquid match case
+    if (terrainType >= 0) {
+        return locationEmpty(loc)
+            && filterTerrain(loc, terrainType);
+    }
+
+    // Otherwise make sure both dungeon and liquid types match
+    return locationEmpty(loc)
+        && filterDungeon(loc, dungeonType)
+        && filterLiquid(loc, liquidType);
+}
+
 // fills (*x, *y) with the coordinates of a random cell with
 // no creatures, items or stairs and with either a matching liquid and dungeon type
 // or at least one layer of type terrainType.
 // A dungeon, liquid type of -1 will match anything.
 boolean randomMatchingLocation(pos* loc, short dungeonType, short liquidType, short terrainType) {
-    short failsafeCount = 0;
-    do {
-        failsafeCount++;
+    for (short failsafeCount = 0; failsafeCount < 500; failsafeCount++) {
         loc->x = rand_range(0, DCOLS - 1);
         loc->y = rand_range(0, DROWS - 1);
-    } while (failsafeCount < 500 && ((terrainType >= 0 && !cellHasTerrainType(*loc, terrainType))
-                                     || (((dungeonType >= 0 && pmapAt(*loc)->layers[DUNGEON] != dungeonType) || (liquidType >= 0 && pmapAt(*loc)->layers[LIQUID] != liquidType)) && terrainType < 0)
-                                     || (pmapAt(*loc)->flags & (HAS_PLAYER | HAS_MONSTER | HAS_STAIRS | HAS_ITEM | IS_IN_MACHINE))
-                                     || (terrainType < 0 && !(tileCatalog[dungeonType].flags & T_OBSTRUCTS_ITEMS)
-                                         && cellHasTerrainFlag(*loc, T_OBSTRUCTS_ITEMS))));
-    if (failsafeCount >= 500) {
-        return false;
+        if (filterLocation(*loc, dungeonType, liquidType, terrainType)) return true;
     }
-    return true;
+    return false;
 }
