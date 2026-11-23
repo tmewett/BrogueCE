@@ -35,7 +35,7 @@ enum StatusTypes
     DEEPEST_LEVEL_STATUS,
     GOLD_STATUS,
     SEED_STATUS,
-    EASY_MODE_STATUS,
+    MODE_STATUS,
     STATUS_TYPES_NUMBER
 };
 
@@ -185,7 +185,7 @@ static void sendStatusUpdate() {
     statusValues[DEEPEST_LEVEL_STATUS] = rogue.deepestLevel;
     statusValues[GOLD_STATUS] = rogue.gold;
     statusValues[SEED_STATUS] = rogue.seed;
-    statusValues[EASY_MODE_STATUS] = rogue.easyMode;
+    statusValues[MODE_STATUS] = rogue.mode;
 
     memset(statusOutputBuffer, 0, OUTPUT_SIZE);
 

@@ -1,0 +1,1 @@
+Fixed players suffering from second explosions too soon. Players should now get at least 5 turns of explosion immunity.

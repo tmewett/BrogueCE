@@ -1,0 +1,1 @@
+Fixed a rare bug where the key in an item library could also open another item's cage, letting you take two items.

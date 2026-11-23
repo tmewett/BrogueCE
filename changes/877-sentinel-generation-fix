@@ -1,0 +1,1 @@
+Sentinel generation no longer loses sentinels to lake boundary cleanup that removes floor tiles beneath them.

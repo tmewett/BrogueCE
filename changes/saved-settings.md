@@ -1,0 +1,1 @@
+Game settings are saved to a configuration file, persisting between game launches. The saved settings include game variant (vanilla or rapid), graphical mode, replay speed, color effects, stealth range visibility, wizard mode, and easy mode.

@@ -1,0 +1,1 @@
+The examine window now reports the correct bolt damage for creatures that attack with a damaging bolt but have no melee attack, such as the flame turret, instead of showing inaccurate melee figures or no damage at all.

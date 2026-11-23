@@ -35,7 +35,7 @@ jobs:
         compression-level: 0  # There's no point compressing something already compressed
 
   macos-intel:
-    runs-on: macos-13
+    runs-on: macos-15-intel
     steps:
     - name: "Checkout sources"
       uses: actions/checkout@v4
@@ -48,7 +48,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: sdl2-cellar
-        key: sdl2-macos-amd64-${{hashFiles('macos/sdl2.rb')}}
+        key: sdl2-macos-x86_64-${{hashFiles('macos/sdl2.rb')}}
 
     - name: "Compile and install dependencies"
       run: |
@@ -56,7 +56,10 @@ jobs:
           cp -r sdl2-cellar $(brew --cellar)/sdl2
           brew link sdl2
         else
-          brew install --build-from-source ./macos/sdl2.rb
+          tap_dir="$(brew --repository local/broguece)"
+          mkdir -p "$tap_dir/Formula"
+          cp macos/sdl2.rb "$tap_dir/Formula"
+          brew install --build-from-source local/broguece/sdl2
           cp -r $(brew --cellar)/sdl2 sdl2-cellar
         fi
         brew install sdl2_image dylibbundler
@@ -105,7 +108,10 @@ jobs:
           cp -r sdl2-cellar $(brew --cellar)/sdl2
           brew link sdl2
         else
-          brew install --build-from-source ./macos/sdl2.rb
+          tap_dir="$(brew --repository local/broguece)"
+          mkdir -p "$tap_dir/Formula"
+          cp macos/sdl2.rb "$tap_dir/Formula"
+          brew install --build-from-source local/broguece/sdl2
           cp -r $(brew --cellar)/sdl2 sdl2-cellar
         fi
         brew install sdl2_image dylibbundler
@@ -222,20 +228,16 @@ jobs:
       shell: powershell
       run: |
         $env:path = $env:path + ";" + (Join-Path $pwd.Drive.Root "opt/local/x86_64-w64-mingw32/bin")
-        mingw32-make SYSTEM=WINDOWS CC=gcc bin/brogue.exe
+        mingw32-make SDL_CONFIG='sdl2-config --prefix=/opt/local/x86_64-w64-mingw32' SYSTEM=WINDOWS CC=gcc bin/brogue.exe
 
     - name: "Create artifact"
       run: |
         mingw32-make SYSTEM=WINDOWS BrogueCE-windows
         cp SDL2\x86_64-w64-mingw32\bin\SDL2.dll BrogueCE-windows
-        cp SDL2_image\x86_64-w64-mingw32\bin\zlib1.dll BrogueCE-windows
         cp SDL2_image\x86_64-w64-mingw32\bin\SDL2_image.dll BrogueCE-windows
-        cp SDL2_image\x86_64-w64-mingw32\bin\libpng16-16.dll BrogueCE-windows
-        7z a BrogueCE-windows-x86_64.zip BrogueCE-windows
 
     - name: "Upload artifact"
       uses: actions/upload-artifact@v4
       with:
         name: windows-x86_64
-        path: BrogueCE-windows-x86_64.zip
-        compression-level: 0  # There's no point compressing something already compressed
+        path: BrogueCE-windows

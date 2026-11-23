@@ -90,7 +90,7 @@ void updatePlayerUnderwaterness() {
     }
 }
 
-boolean monsterShouldFall(creature *monst) {
+boolean monsterShouldFall(const creature *monst) {
     return (!(monst->status[STATUS_LEVITATING])
             && cellHasTerrainFlag(monst->loc, T_AUTO_DESCENT)
             && !cellHasTerrainFlag(monst->loc, T_ENTANGLES | T_OBSTRUCTS_PASSABILITY)
@@ -143,6 +143,16 @@ void applyInstantTileEffectsToCreature(creature *monst) {
     if ((monst->bookkeepingFlags & MB_SEIZING)
         && (cellHasTerrainFlag((pos){ *x, *y }, T_OBSTRUCTS_PASSABILITY))
         && !(monst->info.flags & MONST_ATTACKABLE_THRU_WALLS)) {
+
+        monst->bookkeepingFlags &= ~MB_SEIZING;
+    }
+
+    // #855: a kraken or eel knocked onto dry land can no longer hold its prey. A liquid-restricted
+    // monster off submergible terrain writhes helplessly (enforced in monstersTurn), so it must
+    // also release any seize the instant it is beached; otherwise the seized creature stays pinned.
+    if ((monst->bookkeepingFlags & MB_SEIZING)
+        && (monst->info.flags & MONST_RESTRICTED_TO_LIQUID)
+        && !cellHasTMFlag((pos){ *x, *y }, TM_ALLOWS_SUBMERGING)) {
 
         monst->bookkeepingFlags &= ~MB_SEIZING;
     }
@@ -302,8 +312,13 @@ void applyInstantTileEffectsToCreature(creature *monst) {
         && !(monst->bookkeepingFlags & MB_SUBMERGED)) {
         damage = rand_range(15, 20);
         damage = max(damage, monst->info.maxHP / 2);
-        monst->status[STATUS_EXPLOSION_IMMUNITY] = 5;
         if (monst == &player) {
+            // The code has a 1st_explosion-decrement_explosion_immunity-2nd_explosion pattern. The first explosion sets explosion immunity.
+            // From a value of 5 for explosion immunity, the first turn's setting of 5 for explosion immunity is immediately decremented on the same turn.
+            // The final turn which the player begins with an explosion immunity of 1 has a decrement immediately followed by an explosion.
+            // i.e. there are 2 off-by-one errors: at the start (explosion immunity set, then decrement) and at the end (start with 1 immunity, decrement, then explosion).
+            // The player gets only 3 turns of immunity. n becomes n-2, so if you want n turns of immunity set the value to n + 2.
+            monst->status[STATUS_EXPLOSION_IMMUNITY] = 7; // 7 gives the player the intended 5 full turns of immunity to both gas and monster explosions
             rogue.disturbed = true;
             for (layer = 0; layer < NUMBER_TERRAIN_LAYERS && !(tileCatalog[pmap[*x][*y].layers[layer]].flags & T_CAUSES_EXPLOSIVE_DAMAGE); layer++);
             message(tileCatalog[pmap[*x][*y].layers[layer]].flavorText, 0);
@@ -320,6 +335,10 @@ void applyInstantTileEffectsToCreature(creature *monst) {
                 return;
             }
         } else { // it's a monster
+            // Unsure how this occurs, but extensive testing reveals that n turns of explosion immunity
+            // gives monsters n turns of gas explosion immunity, but n - 1 turns of e.g. explosive bloat immunity.
+            // 6 gives monsters 6 turns of immunity to gas explosions, 5 turns of immunity to monster explosions
+            monst->status[STATUS_EXPLOSION_IMMUNITY] = 6;
             if (monst->creatureState == MONSTER_SLEEPING) {
                 monst->creatureState = MONSTER_TRACKING_SCENT;
             }
@@ -664,7 +683,7 @@ static void updateScent() {
     addScentToCell(player.loc.x, player.loc.y, 0);
 }
 
-short armorStealthAdjustment(item *theArmor) {
+short armorStealthAdjustment(const item *theArmor) {
     if (!theArmor
         || !(theArmor->category & ARMOR)) {
 
@@ -801,8 +820,8 @@ void updateVision(boolean refreshDisplay) {
     }
 }
 
-static void checkNutrition() {
-    item *theItem;
+// This should be called only after decrementing the player's nutrition.
+static void printNutritionMessages(void) {
     char buf[DCOLS*3], foodWarning[DCOLS*3];
 
     if (numberOfMatchingPackItems(FOOD, 0, 0, false) == 0) {
@@ -812,34 +831,34 @@ static void checkNutrition() {
     }
 
     if (player.status[STATUS_NUTRITION] == HUNGER_THRESHOLD) {
-        player.status[STATUS_NUTRITION]--;
         sprintf(buf, "you are hungry%s.", foodWarning);
         message(buf, foodWarning[0] ? REQUIRE_ACKNOWLEDGMENT : 0);
     } else if (player.status[STATUS_NUTRITION] == WEAK_THRESHOLD) {
-        player.status[STATUS_NUTRITION]--;
         sprintf(buf, "you feel weak with hunger%s.", foodWarning);
         message(buf, REQUIRE_ACKNOWLEDGMENT);
     } else if (player.status[STATUS_NUTRITION] == FAINT_THRESHOLD) {
-        player.status[STATUS_NUTRITION]--;
         sprintf(buf, "you feel faint with hunger%s.", foodWarning);
         message(buf, REQUIRE_ACKNOWLEDGMENT);
-    } else if (player.status[STATUS_NUTRITION] <= 1) {
-        // Force the player to eat something if he has it
-        for (theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
-            if (theItem->category == FOOD) {
-                sprintf(buf, "unable to control your hunger, you eat a %s.", (theItem->kind == FRUIT ? "mango" : "ration of food"));
-                messageWithColor(buf, &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
-                confirmMessages();
-                eat(theItem, false);
-                playerTurnEnded();
-                break;
-            }
-        }
-    }
-
-    if (player.status[STATUS_NUTRITION] == 1) { // Didn't manage to eat any food above.
-        player.status[STATUS_NUTRITION] = 0;    // So the status bar changes in time for the message:
+    } else if (player.status[STATUS_NUTRITION] == 0) {
         message("you are starving to death!", REQUIRE_ACKNOWLEDGMENT);
+    }
+}
+
+// This should only be called when the player is starving or very close to it.
+static void forceEatFood(void) {
+    brogueAssert(player.status[STATUS_NUTRITION] <= 1);
+    char buf[DCOLS*3];
+    // Force the player to eat something if he has it
+    for (item *theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
+        if (theItem->category == FOOD) {
+            const char *foodName = theItem->kind == FRUIT ? "mango" : "ration of food";
+            sprintf(buf, "unable to control your hunger, you eat a %s.", foodName);
+            messageWithColor(buf, &itemMessageColor, REQUIRE_ACKNOWLEDGMENT);
+            confirmMessages();
+            eat(theItem, false);
+            playerTurnEnded();
+            break;
+        }
     }
 }
 
@@ -1120,6 +1139,10 @@ void promoteTile(short x, short y, enum dungeonLayers layer, boolean useFireDF) 
     if (DFType) {
         spawnDungeonFeature(x, y, &dungeonFeatureCatalog[DFType], true, false);
     }
+
+    // Promotions can make hazardous terrain safe (for example, extending a
+    // bridge over a chasm), so the route to shore must be recalculated.
+    rogue.updatedMapToShoreThisTurn = false;
 
     if (!useFireDF && (tile->mechFlags & TM_IS_WIRED)
         && !(pmap[x][y].flags & IS_POWERED)
@@ -1901,7 +1924,7 @@ static void monsterEntersLevel(creature *monst, short n) {
         brogueAssert(prevMonst);
         prevMonst->loc = getQualifyingPathLocNear(monst->loc, true,
                                  T_DIVIDES_LEVEL & avoidedFlagsForMonster(&(prevMonst->info)), 0,
-                                 avoidedFlagsForMonster(&(prevMonst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_STAIRS), false);
+                                 avoidedFlagsForMonster(&(prevMonst->info)), (HAS_MONSTER | HAS_PLAYER | HAS_STAIRS | IS_IN_MACHINE), false);
         pmapAt(monst->loc)->flags &= ~(HAS_PLAYER | HAS_MONSTER);
         pmapAt(prevMonst->loc)->flags |= (prevMonst == &player ? HAS_PLAYER : HAS_MONSTER);
         refreshDungeonCell(prevMonst->loc);
@@ -1973,9 +1996,9 @@ static void decrementPlayerStatus() {
         if (player.status[STATUS_NUTRITION] > 0) {
             if (!numberOfMatchingPackItems(AMULET, 0, 0, false) || rand_percent(20)) {
                 player.status[STATUS_NUTRITION]--;
+                printNutritionMessages();
             }
         }
-        checkNutrition();
     }
 
     if (player.status[STATUS_TELEPATHIC] > 0 && !--player.status[STATUS_TELEPATHIC]) {
@@ -2089,6 +2112,12 @@ void autoRest() {
     for (enum directions dir = 0; dir < 4; dir++) {
         const pos newLoc = posNeighborInDirection(player.loc, dir);
         danger[dir] = monsterAvoids(&player, newLoc);
+    }
+
+    // Clear already-seen flag from all monsters
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
+        creature *monst = nextCreature(&it);
+        monst->bookkeepingFlags &= ~MB_ALREADY_SEEN;
     }
 
     rogue.disturbed = false;
@@ -2315,8 +2344,11 @@ void playerTurnEnded() {
                 killCreature(&player, false);
                 gameOver("Burned to death", true);
             }
-            if (!--player.status[STATUS_BURNING]) {
-                extinguishFireOnCreature(&player);
+            if (player.status[STATUS_BURNING] > 0) {
+                player.status[STATUS_BURNING]--;
+                if (player.status[STATUS_BURNING] == 0) {
+                    extinguishFireOnCreature(&player);
+                }
             }
         }
 
@@ -2338,11 +2370,20 @@ void playerTurnEnded() {
         }
 
         updateScent();
-//      updateVision(true);
-//        rogue.stealthRange = currentStealthRange();
-//        if (rogue.displayStealthRangeMode) {
-//            displayLevel();
-//        }
+        // #837: recompute lighting and the player's stealth range *before* monsters evaluate
+        // awareness this turn. The player has already moved, so without this the monster wake check
+        // (which reads rogue.stealthRange) runs against last turn's stealth range -- computed for the
+        // previous tile's lighting -- while the monster's awareness distance already reflects the new
+        // position. That let a monster start hunting from within the stale (brighter) range even
+        // though the freshly-drawn stealth circle excluded it (e.g. stepping from lit into dark).
+        // updateVision(true) (not a bare updateLighting) keeps the light-diff bookkeeping correct for
+        // the end-of-turn pass below; FOV is recomputed redundantly here, but the player does not move
+        // during the monster loop.
+        updateVision(true);
+        rogue.stealthRange = currentStealthRange();
+        if (rogue.displayStealthRangeMode) {
+            displayLevel();
+        }
         rogue.updatedSafetyMapThisTurn          = false;
         rogue.updatedAllySafetyMapThisTurn      = false;
         rogue.updatedMapToSafeTerrainThisTurn   = false;
@@ -2547,7 +2588,6 @@ void playerTurnEnded() {
             }
         }
 
-        //checkNutrition(); // Now handled within decrementPlayerStatus().
         if (!rogue.playbackFastForward) {
             shuffleTerrainColors(100, false);
         }
@@ -2612,6 +2652,10 @@ void playerTurnEnded() {
     if (rogue.flareCount > 0) {
         animateFlares(rogue.flares, rogue.flareCount);
         rogue.flareCount = 0;
+    }
+    
+    if (player.status[STATUS_NUTRITION] <= 1) {
+        forceEatFood();
     }
 }
 
