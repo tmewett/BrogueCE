@@ -21,7 +21,12 @@
 #define U_OMEGA  0x03A9
 #define U_CIRCLE_BARS  0x29F2
 #define U_FILLED_CIRCLE_BARS  0x29F3
+
+#ifdef BROGUE_JS
+#define U_LEFT_TRIANGLE 0x25C4
+#else
 #define U_LEFT_TRIANGLE 0x1F780
+#endif
 
 // #define U_UP_TRIANGLE  0x2206
 // #define U_DOWN_TRIANGLE  0x2207
@@ -109,11 +114,17 @@ extern struct brogueConsole cursesConsole;
 extern struct brogueConsole webConsole;
 #endif
 
+#ifdef BROGUE_JS
+extern struct brogueConsole javascriptConsole;
+#endif
+
 extern struct brogueConsole nullConsole;
 
 extern struct brogueConsole currentConsole;
 extern boolean noMenu;
 extern char dataDirectory[];
+extern char uiTextEntry[BROGUE_FILENAME_MAX];
+extern CBrogueGameEvent uiMode;
 
 // defined in brogue
 extern playerCharacter rogue;

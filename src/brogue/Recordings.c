@@ -179,6 +179,11 @@ static void writeHeaderInfo(char *path) {
     short i;
     FILE *recordFile;
 
+    // Set file length before writing it to the file
+    if (lengthOfPlaybackFile < RECORDING_HEADER_LENGTH) {
+        lengthOfPlaybackFile = RECORDING_HEADER_LENGTH;
+    }
+
     // Zero out the entire header to start.
     for (i=0; i<RECORDING_HEADER_LENGTH; i++) {
         c[i] = 0;
@@ -200,24 +205,20 @@ static void writeHeaderInfo(char *path) {
     i += 4;
 
     if (!fileExists(path)) {
+        printf("Creating new file %s", path);
         recordFile = fopen(path, "wb");
         if (recordFile) {
             fclose(recordFile);
         }
     }
 
-    recordFile = fopen(path, "r+b");
+    recordFile = fopen(path, "rb+");
+    if (recordFile == NULL) return;
     rewind(recordFile);
     for (i=0; i<RECORDING_HEADER_LENGTH; i++) {
         putc(c[i], recordFile);
     }
-    if (recordFile) {
-        fclose(recordFile);
-    }
-
-    if (lengthOfPlaybackFile < RECORDING_HEADER_LENGTH) {
-        lengthOfPlaybackFile = RECORDING_HEADER_LENGTH;
-    }
+    fclose(recordFile);
 }
 
 void flushBufferToFile() {
@@ -229,21 +230,35 @@ void flushBufferToFile() {
         short i;
         FILE *recordFile;
 
+        unsigned long curLength = lengthOfPlaybackFile;
         lengthOfPlaybackFile += locationInRecordingBuffer;
         writeHeaderInfo(currentFilePath);
 
-        if (locationInRecordingBuffer != 0) {
+        if (locationInRecordingBuffer == 0) return;
 
-            recordFile = fopen(currentFilePath, "ab");
+        recordFile = fopen(currentFilePath, "rb+");
+        if (recordFile == NULL) return;
 
-            for (i=0; i<locationInRecordingBuffer; i++) {
-                putc(inputRecordBuffer[i], recordFile);
-            }
-
-            if (recordFile) {
-                fclose(recordFile);
-            }
+        // Attempting to fix the OOS errors
+        // Move to expected location in file (don't rely on the file length being correct)
+        if (fseek(recordFile, curLength, SEEK_SET) != 0 ) {
+            printf("--- ERROR - File seek failed - save game is corrupt! ---");
         }
+        for (i=0; i<locationInRecordingBuffer; i++) {
+            putc(inputRecordBuffer[i], recordFile);
+        }
+
+        long actualLength = ftell(recordFile);
+        printf("Added %ld bytes to %ld, expected length %ld, actual length %ld\n", locationInRecordingBuffer, curLength, lengthOfPlaybackFile, actualLength);
+        if (actualLength != lengthOfPlaybackFile) {
+            // Not sure what is causing the OOS errors.
+            // Actual file length is longer than the expected length.
+            // Usually the extra data is duplicated from of other data in the file.
+            // But I've also seen the wrong data from the start.
+            printf("--- ERROR - File write failed - save game is corrupt! ---");
+        }
+
+        fclose(recordFile);
     }
     locationInRecordingBuffer = 0;
 }
