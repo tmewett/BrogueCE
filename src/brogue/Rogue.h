@@ -359,6 +359,7 @@ enum eventTypes {
     RNG_CHECK,
     END_OF_RECORDING,
     EVENT_ERROR,
+    API_CALL,
     NUMBER_OF_EVENT_TYPES, // unused
 };
 
@@ -368,6 +369,12 @@ enum notificationEventTypes {
 	GAMEOVER_VICTORY,
 	GAMEOVER_SUPERVICTORY,
 	GAMEOVER_RECORDING
+};
+
+enum API_IDS {
+    NOOP = 0,
+    WIZ_CREATE_MONSTER,
+    WIZ_CREATE_ITEM,
 };
 
 typedef struct rogueEvent {
@@ -3463,6 +3470,8 @@ extern "C" {
     void saveRecordingNoPrompt(char *filePath);
     void parseFile(void);
     void RNGLog(char *message);
+    void recordApiCall(int apiId, int a, int b, int c, int d, int e);
+
 
     short wandDominate(const creature *monst);
     short staffDamageLow(fixpt enchant);
@@ -3500,6 +3509,11 @@ extern "C" {
 
     boolean dialogChooseFile(char *path, const char *suffix, const char *prompt);
     void dialogCreateItemOrMonster(void);
+    creature *wizardCreateMonster( enum monsterTypes monsterID, pos selectedPosition, short mutationIndex, boolean ally);
+    item *wizardCreateItem( enum itemCategory category, short itemKind, short enchantment, short runicIndex, short vorpalEnemy, boolean identify);
+    void RECORD_wizardCreateMonster( enum monsterTypes monsterID, pos selectedPosition, short mutationIndex, boolean ally);
+    void RECORD_wizardCreateItem( enum itemCategory category, short kind, short enchantment, short runicIndex, short vorpalEnemy, boolean identify );
+
     int quitImmediately(void);
     void dialogAlert(char *message);
     void mainBrogueJunction(void);
