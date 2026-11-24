@@ -3511,6 +3511,8 @@ extern "C" {
     void dialogCreateItemOrMonster(void);
     creature *wizardCreateMonster( enum monsterTypes monsterID, pos selectedPosition, short mutationIndex, boolean ally);
     item *wizardCreateItem( enum itemCategory category, short itemKind, short enchantment, short runicIndex, short vorpalEnemy, boolean identify);
+    void RECORD_wizardCreateMonster( enum monsterTypes monsterID, pos selectedPosition, short mutationIndex, boolean ally);
+    void RECORD_wizardCreateItem( enum itemCategory category, short kind, short enchantment, short runicIndex, short vorpalEnemy, boolean identify );
 
     int quitImmediately(void);
     void dialogAlert(char *message);

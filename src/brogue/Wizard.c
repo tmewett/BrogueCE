@@ -24,10 +24,14 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
-
 creature *wizardCreateMonster( enum monsterTypes monsterID, pos selectedPosition, short mutationIndex, boolean ally) {
 
-    PACK_wizardCreateMonster(monsterID, selectedPosition, mutationIndex, ally);
+    // fprintf(stderr, "START wizardCreateMonster randomNumbersGenerated: %llu\n", (unsigned long long) randomNumbersGenerated);
+
+    // Record this API call (done first to avoid missing early exits)
+    RECORD_wizardCreateMonster(monsterID, selectedPosition, mutationIndex, ally);
+
+    char theMessage[COLS] = "";
 
     // If there's already a monster here, quietly bury the body.
     creature *oldMonster = monsterAtLoc(selectedPosition);
@@ -46,13 +50,84 @@ creature *wizardCreateMonster( enum monsterTypes monsterID, pos selectedPosition
     fadeInMonster(theMonster);
     refreshSideBar(-1, -1, false);
     refreshDungeonCell(theMonster->loc);
-    if (ally) becomeAllyWith(theMonster);
-
+    if (ally) {
+        becomeAllyWith(theMonster);
+        sprintf(theMessage, "Allied %s created.", theMonster->info.monsterName);
+    } else {
+        sprintf(theMessage, "%s created.", theMonster->info.monsterName);
+    }
+    message(theMessage, 0);
+    // fprintf(stderr, "END wizardCreateMonster randomNumbersGenerated: %llu\n", (unsigned long long) randomNumbersGenerated);
     return theMonster;
 }
 
 item *wizardCreateItem( enum itemCategory category, short itemKind, short enchantment, short runicIndex, short vorpalEnemy, boolean identifyEnchant) {
-    return NULL;
+
+    // fprintf(stderr, "START wizardCreateItem randomNumbersGenerated: %llu\n", (unsigned long long) randomNumbersGenerated);
+
+    // Record this API call (done first to avoid missing early exits)
+    RECORD_wizardCreateItem(category, itemKind, enchantment, runicIndex, vorpalEnemy, identifyEnchant);
+
+    char message[COLS] = "";
+    item *theItem;
+    char theItemName[100]="";
+
+    if (itemKind >= 0) {
+        theItem = generateItem(Fl(category), itemKind);
+        theItem->flags &= ~(ITEM_CURSED); // we'll add a curse later if the item is negatively enchanted
+    } else {
+        return NULL;
+    }
+
+    if (Fl(category) == GEM) {
+        theItem->originDepth = rogue.depthLevel;
+    }
+
+    if (Fl(category) == GOLD) {
+        rogue.gold += theItem->quantity;
+        sprintf(message, "you found %i pieces of gold.%s", theItem->quantity, rogue.featRecord[FEAT_TONE] ? ".. and strike a tone of disappointment." : "");
+        rogue.featRecord[FEAT_TONE] = false;
+        messageWithColor(message, &itemMessageColor, 0);
+        deleteItem(theItem);
+        return NULL;
+    }
+
+    if (runicIndex > 0 && (category == ARMOR || category == WEAPON)) {
+        theItem->enchant2 = runicIndex;
+        theItem->vorpalEnemy = vorpalEnemy;
+        theItem->flags |= ITEM_RUNIC;
+    } else {
+        theItem->enchant2 = 0;
+        theItem->vorpalEnemy = 0;
+        theItem->flags &= ~(ITEM_RUNIC);
+    }
+
+    if (Fl(category) & CAN_BE_ENCHANTED && theItem->quiverNumber == 0) {
+        // set enchantment level based on item category
+        if (theItem->category == WAND) {
+            theItem->charges = enchantment;
+        } else if (theItem->category == STAFF) {
+            theItem->charges = theItem->enchant1 = enchantment;
+        } else {
+            theItem->enchant1 = enchantment;
+        }
+
+        if (theItem->enchant1 < 0) {
+            theItem->flags |= ITEM_CURSED;
+        }
+    }
+
+    if (identifyEnchant) {
+        identify(theItem);
+    }
+
+    theItem = addItemToPack(theItem);
+    itemName(theItem, theItemName, true, true, NULL);
+
+    sprintf(message,"you now have %s (%c).", theItemName, theItem->inventoryLetter);
+    messageWithColor(message, &itemMessageColor, 0);
+    // fprintf(stderr, "END wizardCreateItem randomNumbersGenerated: %llu\n", (unsigned long long) randomNumbersGenerated);
+    return theItem;
 }
 
 static void initializeCreateItemButton(brogueButton *button, char *text) {
@@ -310,14 +385,11 @@ static int creatureTypeCompareMonsterNames (const void * a, const void * b) {
 // Display a dialog window for the user to select a mutation for the specified monster.
 static void dialogCreateMonsterChooseMutation(creature *theMonster) {
     char buttonText[COLS];
-    short i, j = 0, noMutation, selectedMutation;
+    short i, j = 0, selectedMutation;
     brogueButton buttons[DIALOG_CREATE_ITEM_MAX_BUTTONS];
 
     // Add a button for choosing no mutation
-    initializeCreateItemButton(&(buttons[j]), "No mutation");
-    noMutation = j;
-    j++;
-    fprintf(stderr, "START 1.3.1 randomNumbersGenerated: %llu\n", (unsigned long long) randomNumbersGenerated);
+    initializeCreateItemButton(&(buttons[j++]), "No mutation");
 
     for (i=0; i<NUMBER_MUTATORS; i++) {
         if (!(theMonster->info.flags & mutationCatalog[i].forbiddenFlags)
@@ -330,12 +402,10 @@ static void dialogCreateMonsterChooseMutation(creature *theMonster) {
     }
 
     selectedMutation = dialogSelectEntryFromList(buttons, j+1, "Choose a mutation:");
-    fprintf(stderr, "START 1.3.3 randomNumbersGenerated: %llu\n", (unsigned long long) randomNumbersGenerated);
 
-    if (selectedMutation > 0 && selectedMutation != noMutation) {
+    if (selectedMutation > 0) {
         mutateMonster(theMonster, buttons[selectedMutation].command); // Retrieve the mutation index from the button
     }
-    fprintf(stderr, "START 1.3.4 randomNumbersGenerated: %llu\n", (unsigned long long) randomNumbersGenerated);
 }
 
 // Display a series of dialog windows for creating an arbitrary monster chosen by the user
@@ -343,7 +413,7 @@ static void dialogCreateMonster() {
     brogueButton buttons[DIALOG_CREATE_ITEM_MAX_BUTTONS];
     char buttonText[COLS];
     pos selectedPosition;
-    boolean locationIsValid = true;
+    boolean locationIsValid = true, ally=false;
     short i, j=0, selectedMonster, monsterOffset, buttonCount=0;
     const short MONSTERS_PER_PAGE = 24;
     const short CREATABLE_MONSTER_KINDS = NUMBER_MONSTER_KINDS - 2;
@@ -457,6 +527,7 @@ static void dialogCreateMonster() {
             if (confirm(theMessage, false)) {
                 becomeAllyWith(theMonster);
                 sprintf(theMessage, "Allied %s created.", theMonster->info.monsterName);
+                ally = true;
             } else {
                 sprintf(theMessage, "%s created.", theMonster->info.monsterName);
             }
@@ -464,6 +535,9 @@ static void dialogCreateMonster() {
             sprintf(theMessage, "%s created.", theMonster->info.monsterName);
         }
         message(theMessage, 0);
+
+        // Record the monster creation command
+        RECORD_wizardCreateMonster(monsterKinds[selectedMonster].monsterID, selectedPosition, theMonster->mutationIndex, ally);
     } else {  // no location chosen
         confirmMessages();
         killCreature(theMonster, true);
@@ -480,6 +554,7 @@ static void dialogCreateItem() {
     char message[COLS] = "";
     item *theItem;
     char theItemName[100]="";
+    boolean shouldIdentify = false;
 
     if (numberOfItemsInPack() == MAX_PACK_ITEMS) {
         messageWithColor("Your pack is already full.", &itemMessageColor, 0);
@@ -532,6 +607,7 @@ static void dialogCreateItem() {
     if (theItem->flags & ITEM_CAN_BE_IDENTIFIED && !(Fl(selectedCategory) & NEVER_IDENTIFIABLE)) {
         if (confirm("Identify the item?", false)) {
             identify(theItem);
+            shouldIdentify = true;
         }
     }
 
@@ -540,11 +616,15 @@ static void dialogCreateItem() {
 
     sprintf(message,"you now have %s (%c).", theItemName, theItem->inventoryLetter);
     messageWithColor(message, &itemMessageColor, 0);
+
+    RECORD_wizardCreateItem(selectedCategory, selectedKind, (theItem->category == WAND) ? theItem->charges : theItem->enchant1, theItem->enchant2, theItem->vorpalEnemy, shouldIdentify);
 }
 
 void dialogCreateItemOrMonster() {
     brogueButton buttons[DIALOG_CREATE_ITEM_MAX_BUTTONS];
     short selectedType;
+
+    // fprintf(stderr, "START 1.1 randomNumbersGenerated: %llu\n", (unsigned long long) randomNumbersGenerated);
 
     initializeCreateItemButton(&(buttons[0]), "Item");
     initializeCreateItemButton(&(buttons[1]), "Monster");
@@ -556,4 +636,5 @@ void dialogCreateItemOrMonster() {
     } else if (selectedType == 1) {
         dialogCreateMonster();
     }
+    // fprintf(stderr, "END 1.2 randomNumbersGenerated: %llu\n", (unsigned long long) randomNumbersGenerated);
 }

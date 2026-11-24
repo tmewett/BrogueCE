@@ -23,6 +23,7 @@
 #include <time.h>
 #include <math.h>
 #include <limits.h>
+// #include <stdarg.h>
 #include "Rogue.h"
 #include "GlobalsBase.h"
 #include "Globals.h"
@@ -338,23 +339,8 @@ static void playbackPanic() {
 }
 
 
-// // ------------------------------------------------
-// // Var args example
-
-// #include <stdarg.h>
-
-// double average(int count, ...)
-// {
-//     va_list ap;
-//     int j;
-//     double tot = 0;
-//     va_start(ap, count); //Requires the last fixed parameter (to get the address)
-//     for(j=0; j<count; j++)
-//         tot+=va_arg(ap, double); //Requires the type to cast to. Increments ap to the next argument.
-//     va_end(ap);
-//     return tot/count;
-// }
-// // ------------------------------------------------
+// ------------------------------------------------
+// Record API Calls (such as Wizard-mode item/monster creation)
 
 // Define some size assumptions and check them
 const boolean size_expectations_met = sizeof(char) >= 1 && sizeof(short) >= 2 && sizeof(long) >= 4;
@@ -401,66 +387,13 @@ static pos            UNPACK_POSITION() {
     return (pos){x,y};
 }
 
-// APIs Supported in Recordings
-
-void PACK_wizardCreateMonster( enum monsterTypes monsterID, pos selectedPosition, short mutationIndex, boolean ally) {
-    if (rogue.playbackMode) return;
-    PACK_API_ID(WIZ_CREATE_MONSTER);
-    PACK_UINT8(monsterID);
-    PACK_POSITION(selectedPosition);
-    PACK_SINT8(mutationIndex);
-    PACK_BOOL(ally);
-}
-
-void UNPACK_wizardCreateMonster() {
-    long monsterID = UNPACK_UINT8();
-    pos selectedPosition = UNPACK_POSITION();
-    long mutationIndex = UNPACK_SINT8();
-    long ally = UNPACK_BOOL();
-    wizardCreateMonster(monsterID, selectedPosition, mutationIndex, ally);
-}
-
-void PACK_wizardCreateItem( enum itemCategory category, short kind, short enchantment, short runicIndex, short vorpalEnemy, boolean identify ) {
-    if (rogue.playbackMode) return;
-    PACK_API_ID(WIZ_CREATE_ITEM);
-    PACK_UINT8(category);
-    PACK_UINT8(kind);
-    PACK_SINT8(enchantment);
-    PACK_UINT8(runicIndex);
-    PACK_UINT8(vorpalEnemy);
-    PACK_BOOL(identify);
-}
-
-void UNPACK_wizardCreateItem(void) {
-    long category = UNPACK_UINT8();
-    long kind = UNPACK_UINT8();
-    long enchantment = UNPACK_SINT8();
-    long runicIndex = UNPACK_UINT8();
-    long vorpalEnemy = UNPACK_UINT8();
-    long identify = UNPACK_BOOL();
-    wizardCreateItem(category, kind, enchantment, runicIndex, vorpalEnemy, identify );
-}
-
-void UNPACK_API_CALL() {
-    switch (UNPACK_UINT16()) {
-        case WIZ_CREATE_ITEM:       UNPACK_wizardCreateItem();      break;
-        case WIZ_CREATE_MONSTER:    UNPACK_wizardCreateMonster();   break;
-        default:                    playbackPanic();                break;
-    }
-}
-
-// #define MAX_ARGS 5
+// #define MAX_ARGS 6
 
 // typedef struct {
 //     const int id;
-//     void (*fnPtr)(int a, int b, int c, int d, int e); // Generic function call, max 5 args
+//     void (*fnPtr)();
 //     const enum argType args[MAX_ARGS];
 // } apiCall;
-
-// const apiCall apiCalls[] = {
-//     { WIZ_CREATE_MONSTER, API_wizardCreateMonster, {UINT16, POSITION, SINT8, BOOLEAN} },
-//     { WIZ_CREATE_ITEM,    API_wizardCreateItem,    {UINT16, SINT8, UINT16, BOOLEAN} },
-// };
 
 // apiCall *getApiById(int apiId) {
 //     int i;
@@ -471,105 +404,93 @@ void UNPACK_API_CALL() {
 //     return &apiCalls[i];
 // }
 
-// void recordApiCall(int apiId, int a, int b, int c, int d, int e) {
+// const apiCall apiCalls[] = {
+//     { WIZ_CREATE_MONSTER, (void (*)())wizardCreateMonster, {UINT8, POSITION, SINT8, BOOLEAN} },
+//     { WIZ_CREATE_ITEM,    (void (*)())wizardCreateItem,    {UINT8, UINT8, SINT8, UINT8, UINT8, BOOLEAN} },
+// };
 
-//     apiCall *api = getApiById(apiId);
-//     if (api == NULL) {
-//         // TODO: Some failure condition...
-//         return;
-//     }
-
-//     // Write the API ID
-//     recordNumber(API_CALL, 1);
-//     recordNumber(apiId, 2);
-
-//     // Write each of the args
-//     int args[MAX_ARGS] = {a,b,c,d,e};
-//     for (int i = 0; i < MAX_ARGS && api->args[i] != 0; i++) {
-//         switch (api->args[i]) {
-//         case UINT8:
-//         case BOOLEAN:
-//             recordNumber(args[i], 1);
-//             break;
-//         case UINT16:
-//             recordNumber(args[i], 2);
-//             break;
-//         case UINT32:
-//             recordNumber(args[i], 4);
-//             break;
-//         case SINT8:
-//             recordNumber(args[i] + 1<<7, 1);
-//             break;
-//         case SINT16:
-//             recordNumber(args[i] + 1<<15, 2);
-//             break;
-//         case SINT32:
-//             recordNumber(args[i] + 1<<31, 4);
-//             break;
-//         case POSITION:
-//             // Order doesn't really matter, as long as reader and writer are consistent
-//             recordNumber(args[i] & 0xFF, 1);
-//             recordNumber(args[i] >> 8, 1);
-//             break;
-//         case END:
-//         default:
-//             // Something went wrong...
-//             break;
+// // Attempt at creating a vararg packer
+// // Doesn't quite work because we usually pack a smaller size than the actual arg
+// void PACK_API(apiCall api, ...) {
+//     if (rogue.playbackMode) return;
+//     va_list ap;
+//     va_start(ap, api); // Requires a fixed parameter (to get the address)
+//     for(int j = 0; j < MAX_ARGS; j++ ) {
+//         switch (api.args[j]) {
+//             case UINT8:    PACK_UINT8(   va_arg(ap, unsigned char )); break;
+//             case UINT16:   PACK_UINT16(  va_arg(ap, unsigned short)); break;
+//             case UINT32:   PACK_UINT32(  va_arg(ap, unsigned long )); break;
+//             case SINT8:    PACK_SINT8(   va_arg(ap, signed char   )); break;
+//             case SINT16:   PACK_SINT16(  va_arg(ap, signed short  )); break;
+//             case SINT32:   PACK_SINT32(  va_arg(ap, signed long   )); break;
+//             case BOOLEAN:  PACK_BOOLEAN( va_arg(ap, boolean       )); break;
+//             case POSITION: PACK_POSITION(va_arg(ap, pos           )); break;
+//             case END:
+//             default:
+//                 va_end(ap);
+//                 return;
 //         }
 //     }
+//     va_end(ap);
 // }
 
-// void executeApiCall(unsigned long apiId) {
+// ------------------------------------------------
+// APIs Supported in Recordings
 
-//     apiCall *api = getApiById(apiId);
-//     if (api == NULL) {
-//         playbackPanic();
-//         return;
-//     }
+void RECORD_wizardCreateMonster( enum monsterTypes monsterID, pos selectedPosition, short mutationIndex, boolean ally) {
+    if (rogue.playbackMode) return;
+    PACK_UINT8(API_CALL);
+    PACK_API_ID(WIZ_CREATE_MONSTER);
+    PACK_UINT8(monsterID);
+    PACK_POSITION(selectedPosition);
+    PACK_SINT8(mutationIndex);
+    PACK_BOOL(ally);
+}
 
-//     // TODO: Scan for the API ID instead of indexing to it?
-//     int args[MAX_ARGS] = {0};
-//     for (int i = 0; i < MAX_ARGS && api->args[i] != 0; i++) {
-//         switch (api->args[i]) {
-//         case UINT8:
-//         case BOOLEAN:
-//             args[i] = recallNumber(1);
-//             break;
-//         case UINT16:
-//             args[i] = recallNumber(2);
-//             break;
-//         case UINT32:
-//             args[i] = recallNumber(4);
-//             break;
-//         case SINT8:
-//             args[i] = recallNumber(1) - 1<<7;
-//             break;
-//         case SINT16:
-//             args[i] = recallNumber(2) - 1<<15;
-//             break;
-//         case SINT32:
-//             args[i] = recallNumber(4) - 1<<31;
-//             break;
-//         case POSITION:
-//             // Order doesn't really matter, as long as reader and writer are consistent
-//             args[i] = recallNumber(1);
-//             args[i] += recallNumber(1) << 8;
-//             break;
-//         case END:
-//         default:
-//             playbackPanic();
-//             break;
-//         }
-//     }
+void RECORD_wizardCreateItem( enum itemCategory category, short kind, short enchantment, short runicIndex, short vorpalEnemy, boolean identify ) {
+    if (rogue.playbackMode) return;
+    PACK_UINT8(API_CALL);
+    PACK_API_ID(WIZ_CREATE_ITEM);
+    PACK_UINT8(category);
+    PACK_UINT8(kind);
+    PACK_SINT8(enchantment);
+    PACK_UINT8(runicIndex);
+    PACK_UINT8(vorpalEnemy);
+    PACK_BOOL(identify);
+}
 
-//     short oldRNG = rogue.RNG;
-//     rogue.RNG = RNG_SUBSTANTIVE;
+// ------------------------------------------------
 
-//     // Call the function
-//     api->fnPtr(args[0], args[1], args[2], args[3], args[4]);
+static void UNPACK_wizardCreateMonster() {
+    long monsterID = UNPACK_UINT8();
+    pos selectedPosition = UNPACK_POSITION();
+    long mutationIndex = UNPACK_SINT8();
+    long ally = UNPACK_BOOL();
+    wizardCreateMonster(monsterID, selectedPosition, mutationIndex, ally);
+}
 
-//     rogue.RNG = oldRNG;
-// }
+static void UNPACK_wizardCreateItem(void) {
+    long category = UNPACK_UINT8();
+    long kind = UNPACK_UINT8();
+    long enchantment = UNPACK_SINT8();
+    long runicIndex = UNPACK_UINT8();
+    long vorpalEnemy = UNPACK_UINT8();
+    long identify = UNPACK_BOOL();
+    wizardCreateItem(category, kind, enchantment, runicIndex, vorpalEnemy, identify );
+}
+
+static void UNPACK_API_CALL() {
+    short oldRNG = rogue.RNG;
+    rogue.RNG = RNG_SUBSTANTIVE;
+    switch (UNPACK_UINT16()) {
+        case WIZ_CREATE_ITEM:       UNPACK_wizardCreateItem();      break;
+        case WIZ_CREATE_MONSTER:    UNPACK_wizardCreateMonster();   break;
+        default:                    playbackPanic();                break;
+    }
+    rogue.RNG = oldRNG;    
+}
+
+// ------------------------------------------------
 
 void recallEvent(rogueEvent *event) {
     unsigned char c;
@@ -595,10 +516,9 @@ void recallEvent(rogueEvent *event) {
                 event->param2 = recallChar();
                 break;
             case API_CALL:
-                fprintf(stderr, "START 2 randomNumbersGenerated: %llu\n", (unsigned long long) randomNumbersGenerated);
-                // executeApiCall(recallNumber(2));
+                // fprintf(stderr, "START 2 randomNumbersGenerated: %llu\n", (unsigned long long) randomNumbersGenerated);
                 UNPACK_API_CALL();
-                fprintf(stderr, "END 2 randomNumbersGenerated: %llu\n", (unsigned long long) randomNumbersGenerated);
+                // fprintf(stderr, "END 2 randomNumbersGenerated: %llu\n", (unsigned long long) randomNumbersGenerated);
                 tryAgain = true;    // Keep going
                 break;
             case RNG_CHECK:
