@@ -101,7 +101,8 @@ Rules not meeting requirements SHOULD be appended to the file test/RulesNeedImpr
     writeToLog "$PRMPT"
 
     # Execute the prompt
-    OUT=$(opencode run --standalone "$PRMPT")
+    # OUT=$(opencode run --standalone "$PRMPT")
+    OUT=$(omp --print "$PRMPT")
     writeToLog "$OUT"
 }
 
@@ -128,7 +129,8 @@ Rule IDs without tests SHOULD be appended to test/RulesMissingTests.txt only app
     writeToLog "$PRMPT"
 
     # Execute the prompt
-    OUT=$(opencode run --standalone "$PRMPT")
+    # OUT=$(opencode run --standalone "$PRMPT")
+    OUT=$(omp --print "$PRMPT")
     writeToLog "$OUT"
 }
 
@@ -159,7 +161,8 @@ Tests which directly examine engine components should be noted in test/TestsNeed
     writeToLog "$PRMPT"
 
     # Execute the prompt
-    OUT=$(opencode run --standalone "$PRMPT")
+    # OUT=$(opencode run --standalone "$PRMPT")
+    OUT=$(omp --print "$PRMPT")
     writeToLog "$OUT"
 }
 
@@ -190,7 +193,8 @@ Missing rules SHOULD be added to rules/NewRules.txt with a short note and precis
     writeToLog "$PRMPT"
 
     # Execute the prompt
-    OUT=$(opencode run --standalone "$PRMPT")
+    # OUT=$(opencode run --standalone "$PRMPT")
+    OUT=$(omp --print "$PRMPT")
     writeToLog "$OUT"
 }
 
@@ -222,7 +226,8 @@ Run a specific test using: ./bin/brogue --test <<TEST_NAME>>
     writeToLog "$PRMPT"
 
     # Execute the prompt
-    OUT=$(opencode run --standalone "$PRMPT")
+    # OUT=$(opencode run --standalone "$PRMPT")
+    OUT=$(omp --print "$PRMPT")
     writeToLog "$OUT"
 }
 
@@ -258,7 +263,8 @@ Rule IDs MUST be unique across all rule files.
     writeToLog "$PRMPT"
 
     # Execute the prompt
-    OUT=$(opencode run --standalone "$PRMPT")
+    # OUT=$(opencode run --standalone "$PRMPT")
+    OUT=$(omp --print "$PRMPT")
     writeToLog "$OUT"
 }
 
@@ -298,7 +304,8 @@ Rule IDs MUST be unique across all rule files.  Use new_rule_id.sh to generate n
     writeToLog "$PRMPT"
 
     # Execute the prompt
-    OUT=$(opencode run --standalone "$PRMPT")
+    # OUT=$(opencode run --standalone "$PRMPT")
+    OUT=$(omp --print "$PRMPT")
     writeToLog "$OUT"
 
 }
@@ -313,7 +320,8 @@ function fix_broken_tests() {
     writeToLog "$PRMPT"
 
     # Execute the prompt
-    OUT=$(opencode run --standalone "$PRMPT")
+    # OUT=$(opencode run --standalone "$PRMPT")
+    OUT=$(omp --print "$PRMPT")
     writeToLog "$OUT"
 }
 
@@ -337,16 +345,16 @@ delete_epmemeral_files
 # Gardening the test cases...
 for i in {1..100}; do
     # Pick random rule IDs and validate they meet rule requirements
-    # validate_random_rules
+    validate_random_rules
 
     # Pick random rule IDs and validate they have tests
-    # validate_random_rules_have_tests
+    validate_random_rules_have_tests
 
     # Pick random rule IDs and validate the tests match the rules and that the tests pass
-    # validate_random_tests
+    validate_random_tests
 
     # Pick random source code citation and validate its behavior is described by a rule
-    # find_missing_rules
+    find_missing_rules
 
     # Pick a rule which has no test and implement it
     write_missing_tests

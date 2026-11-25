@@ -581,12 +581,24 @@ static void br11005_multiplicity_enchant10_setup(void) {
     theItem = giveAndEquipRunicWeapon(DAGGER, W_MULTIPLICITY, 10, true);
     monst = placeHostileMonster(MK_KRAKEN, posOffset(player.loc, 1, 0));
 
+    drink(POTION_STRENGTH); // STR 13
+    drink(POTION_STRENGTH); // STR 14
+    drink(POTION_STRENGTH); // STR 15
+
     test_phase = 1;
     test_int[0] = 0;
     test_int[1] = 0;
 }
 
 static boolean br11005_multiplicity_enchant10_step(void) {
+
+    // The kraken is only a punching bag: the spectral images fight as your
+    // allies and kill it (as can the blows before the runic first triggers).
+    // With it gone, moveRight() in phases 1 and 4 walks east instead of
+    // attacking, so no runic can ever trigger and the phase never ends.
+    // Keeping it alive guarantees every step strikes a target.
+    setMonsterHealth(monst, 10000);
+
     int count;
     switch (test_phase) {
 
@@ -606,7 +618,7 @@ static boolean br11005_multiplicity_enchant10_step(void) {
 
     // Phase 3: Equip +20
     case 3:
-        giveAndEquipRunicWeapon(SWORD, W_MULTIPLICITY, 20, true);
+        giveAndEquipRunicWeapon(DAGGER, W_MULTIPLICITY, 20, true);
         test_phase++;
         return true;
 
@@ -624,6 +636,10 @@ static boolean br11005_multiplicity_enchant10_step(void) {
 
 static boolean br11005_multiplicity_enchant10_verify(void) {
     TEST_ASSERT(test_phase >= 5 && test_int[0] > 0 && test_int[1] > test_int[0], "multiplicity should spawn more images at +20 than +10");
+    if (testFailed) {
+        creature *kraken = findMonster(MK_KRAKEN);
+        pos pp = getPlayerPos();
+    }
     return !testFailed;
 }
 

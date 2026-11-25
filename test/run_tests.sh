@@ -10,6 +10,7 @@ function run_times() {
       out=$(./bin/brogue --test "$1" | tail -3)
       if ! echo "$out" | grep -q PASS; then
         echo "FAIL after $i tries: $1"
+        echo "$out"
         fail=$((fail+1))
         return 0
       fi

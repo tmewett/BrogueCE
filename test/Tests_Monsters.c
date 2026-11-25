@@ -2,13 +2,20 @@
 //
 // These cover the deterministic, headless-observable monster rules: what hides
 // a creature from an observer, who is willing to attack whom, allegiance
-// (teammates and enemies), the terrain a monster refuses to enter, a beached
-// liquid creature, and whether a never-sleeping monster starts awake.
+// (teammates and enemies), which monsters you know the location of, the
+// terrain a monster refuses to enter, a beached
+// liquid creature, whether a never-sleeping monster starts awake, which
+// targets a monster is allowed to cast at, the order a monster tries its
+// steps in when walking toward a destination, how a wandering monster
+// travels between its checkpoints, how an ally idles when it is close
+// to you and can see you, and how a permanently fleeing thief that loses
+// its stolen item returns to normal behaviour.
 //
-// Omitted are everything that depends on level/horde generation, random
-// chances (mutations, item drops, detection rolls, splitting, summoning
-// counts), pathing choices, spell/bolt selection, messages and death text, and
-// any rule that needs a screen or is otherwise not reproducible headlessly.
+// Omitted are everything that depends on the particular layout of generated
+// levels or on horde generation, random chances (mutations, item drops,
+// detection rolls, splitting, summoning counts), general route-finding,
+// spell/bolt selection, messages and death text, and any rule that needs a
+// screen or is otherwise not reproducible headlessly.
 
 #include "TestFramework.h"
 #include "Globals.h"
@@ -204,6 +211,79 @@ static void entranced_revealed_setup(void) {
 static boolean entranced_monster_is_revealed(void) {
     TEST_ASSERT(monsterIsRevealedToPlayer(subject),
                 "an entranced monster should always be revealed");
+    return !testFailed;
+}
+
+// ---------------------------------------------
+// BR43957 — you know a monster's location only when it is not hidden
+// from you and either its square is visible or it has been revealed
+// to you.  The sidebar lists exactly the monsters whose location you
+// know, so it is the observable.
+// ---------------------------------------------
+
+static void known_monster_setup(void) {
+    clearMonsters();
+    standPlayerOn(FLOOR);
+    subject = monsterOn(MK_OGRE, 1, 0, FLOOR);
+    otherMonster = monsterOn(MK_KOBOLD, 0, 1, FLOOR);
+    revealCell(monsterPosition(subject));
+    revealCell(monsterPosition(otherMonster));
+    applyStatusToMonster(otherMonster, STATUS_INVISIBLE, 100);
+}
+
+static boolean visible_monster_known_hidden_monster_unknown(void) {
+    TEST_ASSERT(sidebarContains("Ogre"),
+                "a monster on a visible square should be known and listed in the sidebar");
+    TEST_ASSERT(!sidebarContains("Kobold"),
+                "a hidden monster should be unknown even when its square is visible");
+    return !testFailed;
+}
+
+static void distant_monster_setup(void) {
+    clearMonsters();
+    standPlayerOn(FLOOR);
+    subject = monsterOn(MK_GOBLIN, 5, 0, FLOOR);
+}
+
+static boolean distant_monster_unknown(void) {
+    TEST_ASSERT(!cellIsVisible(monsterPosition(subject)),
+                "precondition: the goblin's square is not visible");
+    TEST_ASSERT(!sidebarContains("Goblin"),
+                "a monster whose square is neither visible nor revealed should be unknown");
+    return !testFailed;
+}
+
+static void revealed_distant_monster_setup(void) {
+    clearMonsters();
+    standPlayerOn(FLOOR);
+    applyStatusToPlayer(STATUS_TELEPATHIC, 100);
+    subject = monsterOn(MK_GOBLIN, 5, 0, FLOOR);
+}
+
+static boolean revealed_distant_monster_known(void) {
+    TEST_ASSERT(!cellIsVisible(monsterPosition(subject)),
+                "precondition: revealing the monster does not make its square visible");
+    TEST_ASSERT(sidebarContains("Goblin"),
+                "a revealed monster should be known even though its square is not visible");
+    return !testFailed;
+}
+
+static void hidden_revealed_monster_setup(void) {
+    clearMonsters();
+    standPlayerOn(FLOOR);
+    applyStatusToPlayer(STATUS_TELEPATHIC, 100);
+    subject = monsterOn(MK_KOBOLD, 1, 0, FLOOR);
+    revealCell(monsterPosition(subject));
+    applyStatusToMonster(subject, STATUS_INVISIBLE, 100);
+}
+
+static boolean hidden_monster_stays_unknown_when_revealed(void) {
+    TEST_ASSERT(cellIsVisible(monsterPosition(subject)),
+                "precondition: the kobold's square is visible");
+    TEST_ASSERT(monsterIsRevealedToPlayer(subject),
+                "precondition: telepathy has revealed the kobold");
+    TEST_ASSERT(!sidebarContains("Kobold"),
+                "a hidden monster should be unknown even when it has been revealed");
     return !testFailed;
 }
 
@@ -706,9 +786,959 @@ static boolean monster_does_not_avoid_normal_enemy(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR83744 — a monster will not cast at a target that is hidden
+// from it, submerged, or without a clear line of fire
+//
+// The caster is a mirrored totem: it never moves, never stops hunting, and
+// always uses its beckoning spell when a target is eligible, so whether the
+// target is pulled toward it shows exactly when the cast was allowed.
+// ============================================================
+
+static boolean samePos(pos a, pos b) {
+    return a.x == b.x && a.y == b.y;
+}
+
+// --- hidden target ------------------------------------------------------
+
+static creature *hiddenCaster;
+static pos hiddenStart;
+static boolean castAtVisibleTarget, castAtHiddenTarget, castAtRevealedTarget;
+
+static void hidden_target_setup(void) {
+    setArenaRadius(6, FLOOR);
+    hiddenStart = getPlayerPos();
+    hiddenCaster = placeHostileMonster(MK_MIRRORED_TOTEM, posOffset(hiddenStart, -4, 0));
+}
+
+static boolean hidden_target_step(void) {
+    monsterTakesTurn(hiddenCaster);
+    castAtVisibleTarget = !playerIsAt(hiddenStart);
+    setPlayerPos(hiddenStart);
+
+    applyStatusToPlayer(STATUS_INVISIBLE, 100);
+    monsterTakesTurn(hiddenCaster);
+    castAtHiddenTarget = !playerIsAt(hiddenStart);
+    setPlayerPos(hiddenStart);
+
+    removeStatusFromPlayer(STATUS_INVISIBLE);
+    monsterTakesTurn(hiddenCaster);
+    castAtRevealedTarget = !playerIsAt(hiddenStart);
+    setPlayerPos(hiddenStart);
+    return false;
+}
+
+static boolean monster_will_not_cast_at_hidden_target(void) {
+    TEST_ASSERT(castAtVisibleTarget,
+                "control: the totem should cast at a target it can see");
+    TEST_ASSERT(!castAtHiddenTarget,
+                "a monster should not cast at a target that is hidden from it");
+    TEST_ASSERT(castAtRevealedTarget,
+                "control: the totem should cast again once the target is visible");
+    return !testFailed;
+}
+
+// --- no clear line of fire ----------------------------------------------
+
+static creature *walledCaster;
+static pos walledStart;
+static boolean castWithClearLine, castWithWallBetween, castAfterWallRemoved;
+
+static void line_of_fire_setup(void) {
+    setArenaRadius(6, FLOOR);
+    walledStart = getPlayerPos();
+    walledCaster = placeHostileMonster(MK_MIRRORED_TOTEM, posOffset(walledStart, -4, 0));
+}
+
+static void setWallBetweenCasterAndPlayer(boolean wallPresent) {
+    short tile = wallPresent ? GRANITE : FLOOR;
+    for (int dy = -6; dy <= 6; dy++) {
+        setTerrain(posOffset(walledStart, -2, dy), tile);
+    }
+}
+
+static boolean line_of_fire_step(void) {
+    monsterTakesTurn(walledCaster);
+    castWithClearLine = !playerIsAt(walledStart);
+    setPlayerPos(walledStart);
+
+    setWallBetweenCasterAndPlayer(true);
+    monsterTakesTurn(walledCaster);
+    castWithWallBetween = !playerIsAt(walledStart);
+    setPlayerPos(walledStart);
+
+    setWallBetweenCasterAndPlayer(false);
+    monsterTakesTurn(walledCaster);
+    castAfterWallRemoved = !playerIsAt(walledStart);
+    setPlayerPos(walledStart);
+    return false;
+}
+
+static boolean monster_will_not_cast_without_line_of_fire(void) {
+    TEST_ASSERT(castWithClearLine,
+                "control: the totem should cast with a clear line of fire");
+    TEST_ASSERT(!castWithWallBetween,
+                "a monster should not cast at a target without a clear line of fire");
+    TEST_ASSERT(castAfterWallRemoved,
+                "control: the totem should cast again once the line of fire is clear");
+    return !testFailed;
+}
+
+// --- submerged target ----------------------------------------------------
+
+static creature *submergedCaster, *submergedAlly;
+static pos submergedStart, submergedAllyStart;
+static boolean castAtVisibleAlly, noCastAtSubmergedAlly, castAtResurfacedAlly;
+
+static void submerged_target_setup(void) {
+    setArenaRadius(6, FLOOR);
+    submergedStart = getPlayerPos();
+    submergedCaster = placeHostileMonster(MK_MIRRORED_TOTEM, posOffset(submergedStart, -4, 0));
+
+    // Stay hidden from the totem yourself, so its only possible target is
+    // the ally.
+    applyStatusToPlayer(STATUS_INVISIBLE, 10000);
+
+    submergedAllyStart = posOffset(submergedStart, 0, -3);
+    setTerrain(submergedAllyStart, FLOOR);
+    submergedAlly = spawnMonster(MK_RAT, submergedAllyStart);
+    makeMonsterAlly(submergedAlly);
+    revealCell(submergedAllyStart);
+}
+
+static boolean submerged_target_step(void) {
+    monsterTakesTurn(submergedCaster);
+    castAtVisibleAlly = !samePos(monsterPosition(submergedAlly), submergedAllyStart);
+    setMonsterPos(submergedAlly, submergedAllyStart);
+
+    setMonsterSubmerged(submergedAlly, true);
+    monsterTakesTurn(submergedCaster);
+    noCastAtSubmergedAlly = samePos(monsterPosition(submergedAlly), submergedAllyStart);
+    setMonsterPos(submergedAlly, submergedAllyStart);
+
+    setMonsterSubmerged(submergedAlly, false);
+    monsterTakesTurn(submergedCaster);
+    castAtResurfacedAlly = !samePos(monsterPosition(submergedAlly), submergedAllyStart);
+    setMonsterPos(submergedAlly, submergedAllyStart);
+    return false;
+}
+
+static boolean monster_will_not_cast_at_submerged_target(void) {
+    TEST_ASSERT(castAtVisibleAlly,
+                "control: the totem should cast at an ally it can see");
+    TEST_ASSERT(noCastAtSubmergedAlly,
+                "a monster should not cast at a target that is submerged");
+    TEST_ASSERT(castAtResurfacedAlly,
+                "control: the totem should cast again once the target surfaces");
+    return !testFailed;
+}
+
+// ---------------------------------------------
+// BR83001 — a monster wears down the webbing it is caught in, escaping after
+// a few turns; a monster that cannot be harmed by webs walks free at once
+// ---------------------------------------------
+
+static creature *webbedSubject;
+static pos webbedStart;
+static int struggleTurns;
+
+// Open floor for four squares in every direction, with a web three squares to
+// the player's right.  Returns a monster standing in that web, hunting you.
+static creature *monsterStandingInWeb(enum monsterTypes type) {
+    setArenaRadius(4, FLOOR);
+    pos webLoc = posOffset(player.loc, 3, 0);
+    setTerrain(webLoc, SPIDERWEB);
+    creature *caught = spawnMonster(type, webLoc);
+    makeMonsterHostile(caught);
+    return caught;
+}
+
+static void webbed_monster_setup(void) {
+    webbedSubject = monsterStandingInWeb(MK_RAT);
+    // Three turns of struggling, as webs normally give a creature.
+    applyStatusToMonster(webbedSubject, STATUS_STUCK, 3);
+    webbedStart = monsterPosition(webbedSubject);
+    struggleTurns = 0;
+}
+
+// Take turns for the monster until it manages to walk off the web.
+static boolean webbed_monster_struggles_step(void) {
+    monsterTakesTurn(webbedSubject);
+    struggleTurns++;
+    pos here = monsterPosition(webbedSubject);
+    return here.x == webbedStart.x && here.y == webbedStart.y && struggleTurns < 20;
+}
+
+static boolean webbed_monster_escapes_after_a_few_turns(void) {
+    pos here = monsterPosition(webbedSubject);
+    TEST_ASSERT(here.x != webbedStart.x || here.y != webbedStart.y,
+                "a monster caught in a web should struggle free and walk away");
+    TEST_ASSERT(struggleTurns >= 2,
+                "a monster caught in a web should need several turns to escape");
+    TEST_ASSERT_EQ(monsterStatusTurns(webbedSubject, STATUS_STUCK), 0,
+                   "an escaped monster should no longer be entangled");
+    return !testFailed;
+}
+
+static creature *webImmuneSubject;
+static pos webImmuneStart;
+static int freeTurns;
+
+static void web_immune_monster_setup(void) {
+    webImmuneSubject = monsterStandingInWeb(MK_PHANTOM);
+    // Webs cannot hold a creature that is immune to them, so the entangling
+    // status is applied anyway and must be ignored.
+    applyStatusToMonster(webImmuneSubject, STATUS_STUCK, 3);
+    webImmuneStart = monsterPosition(webImmuneSubject);
+    freeTurns = 0;
+}
+
+// Take a single turn for the monster; keep going only if it failed to leave.
+static boolean web_immune_monster_turn_step(void) {
+    monsterTakesTurn(webImmuneSubject);
+    freeTurns++;
+    pos here = monsterPosition(webImmuneSubject);
+    return here.x == webImmuneStart.x && here.y == webImmuneStart.y && freeTurns < 10;
+}
+
+static boolean web_immune_monster_walks_free_immediately(void) {
+    pos here = monsterPosition(webImmuneSubject);
+    TEST_ASSERT(here.x != webImmuneStart.x || here.y != webImmuneStart.y,
+                "a monster immune to webs should not be held by a web");
+    TEST_ASSERT_EQ(freeTurns, 1,
+                   "a monster immune to webs should walk out of the web in a single turn");
+    return !testFailed;
+}
+
+// ============================================================
+// BR39283 — some hordes are summoned at a distance: their members
+// appear outside your field of view, within half the level's width in
+// travel distance, and never in harmful terrain or on occupied squares
+// ============================================================
+
+static creature *distanceSummoner;
+static int summoningTurns;
+
+// The goblin warlord's summon horde is the one horde flagged to appear at a
+// distance.  Summoning it as an ally lets it cast on its own turn without
+// first having to notice you, and no other monster shares the level with it,
+// so every monster but the warlord is a summoned member.
+static void summoned_at_distance_setup(void) {
+    clearMonsters();
+    standPlayerOn(FLOOR);
+    distanceSummoner = monsterOn(MK_GOBLIN_CHIEFTAN, 3, 0, FLOOR);
+    makeMonsterAlly(distanceSummoner);
+    summoningTurns = 0;
+}
+
+// Give the warlord turns until its summoning spell lands; while it has fewer
+// than five followers it has a one-in-five chance each turn.
+static boolean summoned_at_distance_step(void) {
+    if (monsterCount() > 1) {
+        return false;
+    }
+    summoningTurns++;
+    if (summoningTurns > 100) {
+        return false;
+    }
+    monsterTakesTurn(distanceSummoner);
+    return true;
+}
+
+static boolean summoned_members_appear_at_distance(void) {
+    TEST_ASSERT(monsterCount() > 1,
+                "the warlord should summon its conjurer and goblins before the turns run out");
+
+    pos summonerPos = monsterPosition(distanceSummoner);
+    int memberCount = 0;
+
+    for (int i = 0; i < monsterCount(); i++) {
+        creature *member = monsterAtIndex(i);
+        if (member == NULL || member == distanceSummoner) {
+            continue;
+        }
+        memberCount++;
+        pos memberPos = monsterPosition(member);
+
+        TEST_ASSERT(!cellIsVisible(memberPos),
+                    "summoned members should appear outside your field of view");
+
+        int travel = pathingDistanceBetween(summonerPos, memberPos, 0);
+        TEST_ASSERT(travel >= 1 && travel <= levelWidth() / 2,
+                    "summoned members should appear within half the level's width in travel distance of their summoner");
+
+        TEST_ASSERT(!cellIsHarmfulTerrain(memberPos),
+                    "summoned members should never appear in harmful terrain");
+
+        TEST_ASSERT(!playerIsAt(memberPos)
+                        && (memberPos.x != summonerPos.x || memberPos.y != summonerPos.y),
+                    "summoned members should never appear on an occupied square");
+
+        for (int j = i + 1; j < monsterCount(); j++) {
+            creature *other = monsterAtIndex(j);
+            if (other == NULL || other == distanceSummoner) {
+                continue;
+            }
+            pos otherPos = monsterPosition(other);
+            TEST_ASSERT(memberPos.x != otherPos.x || memberPos.y != otherPos.y,
+                        "no two summoned members should appear on the same square");
+        }
+    }
+    TEST_ASSERT(memberCount > 0,
+                "the summoned members should be inspectable one by one");
+    return !testFailed;
+}
+
+// ---------------------------------------------
+// BR51745 — A monster may step onto an adjacent unfriendly monster it is
+// willing to fight, but avoids that square if the attack would be futile.
+//
+// The observable is whether the monster avoids the target's square.  The
+// subject is your ally, so it is willing to fight a hostile neighbour; the
+// positive and negative cases differ only in whether that neighbour can
+// actually be harmed.
+// ---------------------------------------------
+
+static creature *adjSubject;
+static pos adjTarget;
+
+// Lay a patch of open floor, put an allied subject monster on it, and set a
+// hostile target of the given kind on the square right next to the subject.
+static void adjacent_scene(enum monsterTypes targetType) {
+    pos base = posAt(40, 14);
+    setTerrain(base, FLOOR);
+    setPlayerPos(base);
+    setArenaRadius(4, FLOOR);          // clears monsters and squares off floor
+
+    adjTarget = posOffset(base, 3, 0);
+    pos subjPos = posOffset(base, 2, 0);
+    adjSubject = spawnMonster(MK_RAT, subjPos);
+    makeMonsterAlly(adjSubject);
+    creature *target = spawnMonster(targetType, adjTarget);
+    makeMonsterHostile(target);
+}
+
+static void fightable_adjacent_setup(void) {
+    adjacent_scene(MK_RAT);             // a damageable hostile neighbour
+}
+
+static boolean monster_steps_onto_fightable_adjacent(void) {
+    TEST_ASSERT(!monsterAvoidsCell(adjSubject, adjTarget),
+                "a monster should not avoid the square of an adjacent enemy it can fight");
+    return !testFailed;
+}
+
+static void futile_adjacent_setup(void) {
+    adjacent_scene(MK_WARDEN_OF_YENDOR); // invulnerable, so the attack is futile
+}
+
+static boolean monster_avoids_futile_adjacent(void) {
+    TEST_ASSERT(monsterAvoidsCell(adjSubject, adjTarget),
+                "a monster should avoid the square of an adjacent enemy it cannot harm");
+    return !testFailed;
+}
+
+// ============================================================
+// BR52591 — a monster moving toward a destination tries the diagonal
+// step first, then falls back to the two cardinal directions, and then
+// to off-axis steps.
+// ============================================================
+//
+// An allied rat two squares due east of you walks toward a hostile rat
+// two squares due north of you: the target lies two squares diagonally
+// away, with equal east-west and north-south gaps, so every attempt the
+// walking monster makes is fully determined.  Each variant walls off or
+// poisons one more tier of the step order and asserts which square the
+// monster actually steps into.
+
+static creature *br52591_ally;
+static pos br52591_playerPos;
+
+// Lay the scene: open floor around the player, a hostile rat two squares
+// due north, and an allied rat two squares due east that will walk north-
+// west toward it on its next turn.
+static void br52591_scene(void) {
+    clearArena();
+    br52591_playerPos = getPlayerPos();
+    placeHostileMonster(MK_RAT, posOffset(br52591_playerPos, 0, -2));
+    br52591_ally = spawnMonster(MK_RAT, posOffset(br52591_playerPos, 2, 0));
+    makeMonsterAlly(br52591_ally);
+}
+
+// Give the walking monster its one turn.
+static boolean br52591_take_turn_step(void) {
+    monsterTakesTurn(br52591_ally);
+    return false;
+}
+
+// --- open ground: the diagonal step comes first -------------------
+
+static void br52591_diagonal_setup(void) {
+    br52591_scene();
+}
+
+static boolean br52591_diagonal_step_taken(void) {
+    TEST_ASSERT_POS_EQ(monsterPosition(br52591_ally),
+                       posOffset(br52591_playerPos, 1, -1),
+                       "with the diagonal square open, the monster should take the diagonal step first");
+    return !testFailed;
+}
+
+// --- diagonal step refused: fall back to a cardinal step -----------
+
+static void br52591_cardinal_setup(void) {
+    br52591_scene();
+    // Wall one flank of the diagonal step (the square south of the
+    // diagonal destination), which closes off the diagonal way while
+    // leaving the straight line to the target and both cardinal
+    // squares open.
+    setTerrain(posOffset(br52591_playerPos, 2, -1), GRANITE);
+}
+
+static boolean br52591_cardinal_step_taken(void) {
+    TEST_ASSERT_POS_EQ(monsterPosition(br52591_ally),
+                       posOffset(br52591_playerPos, 1, 0),
+                       "with the diagonal way walled off, the monster should fall back to a cardinal step");
+    return !testFailed;
+}
+
+// --- diagonal refused and both cardinal squares refused: off-axis --
+
+static void br52591_off_axis_setup(void) {
+    br52591_scene();
+    // The diagonal way is walled off by the granite flank; the first
+    // cardinal square holds lava, which the monster will not enter, and
+    // the second cardinal square is the granite wall itself.  Only the
+    // off-axis steps remain.
+    setTerrain(posOffset(br52591_playerPos, 2, -1), GRANITE);
+    setTerrain(posOffset(br52591_playerPos, 1, 0), LAVA);
+}
+
+static boolean br52591_off_axis_step_taken(void) {
+    TEST_ASSERT_POS_EQ(monsterPosition(br52591_ally),
+                       posOffset(br52591_playerPos, 1, 1),
+                       "with the diagonal way and both cardinal squares refused, the monster should fall back to an off-axis step");
+    return !testFailed;
+}
+
+// ============================================================
+// BR53265 — a wandering monster travels between checkpoints,
+// choosing ones it has not recently visited and clearing roughly
+// half of them at a time.
+// ============================================================
+//
+// A monster set to wander is left alone on the generated level, far
+// from you, and given many turns.  Travelling between checkpoints shows
+// up as long trips away from its starting square throughout the run: it
+// gets far from where it began, it is still reaching distant parts of
+// the level late in the run — when every nearby checkpoint has already
+// been visited — and it keeps moving instead of settling on one spot.
+
+#define BR53265_TURNS 150
+
+static creature *br53265_subject;
+static pos br53265_start;
+static int br53265_turns;
+static int br53265_maxDist;       // farthest square reached from the start
+static int br53265_lateMaxDist;   // farthest reached over the last half
+static int br53265_startGap;      // how far from the player it started
+static int br53265_lateMoves;     // position changes over the last 30 turns
+static boolean br53265_stayedWandering;
+
+static int br53265_dist(pos a, pos b) {
+    int dx = a.x - b.x;
+    int dy = a.y - b.y;
+    if (dx < 0) dx = -dx;
+    if (dy < 0) dy = -dy;
+    return dx > dy ? dx : dy;
+}
+
+static void br53265_setup(void) {
+    clearMonsters();
+    pos playerPos = getPlayerPos();
+    // Wall the player into their starting square, so no checkpoint route
+    // can ever bring the wanderer into sight of them: it must keep to its
+    // checkpoints for the whole run instead of noticing you and tracking.
+    for (int dx = -1; dx <= 1; dx++) {
+        for (int dy = -1; dy <= 1; dy++) {
+            if (dx != 0 || dy != 0) {
+                setTerrain(posOffset(playerPos, dx, dy), GRANITE);
+            }
+        }
+    }
+    // Take one player turn so field of view is recomputed against the new
+    // walls; without it the mask from level generation still covers the
+    // squares around the player and the wanderer could notice them.
+    restOneTurn();
+    // Spawn the wanderer on the floor square farthest from the player,
+    // so it starts a long way from the walled-in player.
+    pos best = playerPos;
+    int bestDist = -1;
+    for (int x = 1; x < levelWidth() - 1; x++) {
+        for (int y = 1; y < levelHeight() - 1; y++) {
+            pos candidate = posAt(x, y);
+            if (terrainAt(candidate) == FLOOR) {
+                int d = br53265_dist(candidate, playerPos);
+                if (d > bestDist) {
+                    bestDist = d;
+                    best = candidate;
+                }
+            }
+        }
+    }
+    br53265_startGap = bestDist;
+    br53265_subject = spawnMonster(MK_RAT, best);
+    makeMonsterUnaware(br53265_subject);
+    br53265_start = best;
+    br53265_turns = 0;
+    br53265_maxDist = 0;
+    br53265_lateMaxDist = 0;
+    br53265_lateMoves = 0;
+    br53265_stayedWandering = true;
+}
+
+static boolean br53265_step(void) {
+    if (br53265_turns >= BR53265_TURNS) {
+        return false;
+    }
+    pos before = monsterPosition(br53265_subject);
+    monsterTakesTurn(br53265_subject);
+    pos here = monsterPosition(br53265_subject);
+    br53265_turns++;
+
+    if (!monsterIsWandering(br53265_subject)) {
+        br53265_stayedWandering = false;
+        return false; // setup broken: it noticed you
+    }
+
+    int d = br53265_dist(here, br53265_start);
+    if (d > br53265_maxDist) {
+        br53265_maxDist = d;
+    }
+    if (br53265_turns > BR53265_TURNS / 2 && d > br53265_lateMaxDist) {
+        br53265_lateMaxDist = d;
+    }
+    if (br53265_turns > BR53265_TURNS - 30
+        && (here.x != before.x || here.y != before.y)) {
+        br53265_lateMoves++;
+    }
+    return true;
+}
+
+static boolean wanders_between_distant_checkpoints(void) {
+    TEST_ASSERT(br53265_stayedWandering,
+                "setup: the wanderer must never notice you while it travels its checkpoints");
+    TEST_ASSERT(br53265_startGap >= 15,
+                "setup: the wanderer should start a long way from the player");
+    TEST_ASSERT(br53265_maxDist >= 15,
+                "a wandering monster should travel far from where it began, out to checkpoints across the level");
+    TEST_ASSERT(br53265_lateMaxDist >= 12,
+                "late in the run, with every nearby checkpoint already visited, it should still be heading out to distant parts of the level");
+    TEST_ASSERT(br53265_lateMoves >= 15,
+                "with roughly half its checkpoints always available again, it should still be travelling in the last stretch of the run instead of settling on one spot");
+    return !testFailed;
+}
+
+// ---------------------------------------------
+// BR66644 — an ally within 3 squares of you that can see you
+// wanders idly about 30% of the time instead of following you
+// ---------------------------------------------
+
+static creature *br66644_ally;
+static int br66644_movedTurns;
+
+static void br66644_ally_setup(void) {
+    // Open floor around the player; this also clears monsters and floor food.
+    setArenaRadius(6, FLOOR);
+    restOneTurn(); // establish sight over the cleared floor
+    pos start = posOffset(getPlayerPos(), 2, 0);
+    br66644_ally = spawnMonster(MK_RAT, start);
+    makeMonsterAlly(br66644_ally);
+    TEST_ASSERT(cellIsVisible(start),
+                "setup: the ally must stand within sight of the player");
+}
+
+static boolean br66644_ally_step(void) {
+    // Give the ally 200 turns and count how often it actually moves.  With no
+    // enemies around, a close visible ally should take a step on only about
+    // 30% of its turns; blindly following you every turn would move far more
+    // often, and never moving at all far less.
+    br66644_movedTurns = 0;
+    pos prev = monsterPosition(br66644_ally);
+    for (int i = 0; i < 200; i++) {
+        monsterTakesTurn(br66644_ally);
+        pos now = monsterPosition(br66644_ally);
+        if (!posEq(now, prev)) {
+            br66644_movedTurns++;
+        }
+        prev = now;
+    }
+    return false;
+}
+
+static boolean ally_idles_when_close_and_seen(void) {
+    TEST_ASSERT(br66644_movedTurns >= 25 && br66644_movedTurns <= 130,
+                "an ally that can see you up close should move on only a minority of its turns (about 30%)");
+    return !testFailed;
+}
+
+// ---------------------------------------------
+// BR54211 — a permanently fleeing thief that loses the item it stole
+// returns to normal behaviour: an ally if it follows you, otherwise hunting
+// ---------------------------------------------
+
+static creature *br54211_thief;
+
+// Open floor, with a monkey that has just stolen a ration and fled with it.
+static void br54211_thief_setup(void) {
+    setArenaRadius(4, FLOOR);
+    br54211_thief = placeHostileMonster(MK_MONKEY, posOffset(getPlayerPos(), 4, 0));
+    makeMonsterStealAndFlee(br54211_thief, FOOD, RATION);
+    TEST_ASSERT(monsterHasAbility(br54211_thief, MA_HIT_STEAL_FLEE),
+                "setup: the monkey should be a steal-and-flee monster");
+    TEST_ASSERT(monsterIsCarryingItem(br54211_thief),
+                "setup: the thief should be holding the stolen item");
+    TEST_ASSERT(monsterIsPermFleeing(br54211_thief),
+                "setup: the thief should be in permanent flight");
+    TEST_ASSERT(monsterIsFleeing(br54211_thief),
+                "setup: the thief should be fleeing");
+}
+
+static boolean br54211_hunting_step(void) {
+    monsterLosesCarriedItem(br54211_thief);
+    TEST_ASSERT(!monsterIsCarryingItem(br54211_thief),
+                "setup: the thief should now be empty-handed");
+    // A full turn: the player acts (refreshing the scent trail), then the
+    // thief takes the turn in which it gives up its flight.
+    restOneTurn();
+    return false;
+}
+
+static boolean br54211_returns_to_hunting(void) {
+    TEST_ASSERT(monsterIsAlive(br54211_thief), "control: the thief survives");
+    TEST_ASSERT(!monsterIsPermFleeing(br54211_thief),
+                "losing the stolen item should end permanent flight");
+    TEST_ASSERT(!monsterIsFleeing(br54211_thief),
+                "the thief should stop fleeing");
+    TEST_ASSERT(monsterIsTrackingPlayer(br54211_thief),
+                "a thief that does not follow you should go back to hunting you");
+    return !testFailed;
+}
+
+// The same thief, except that it follows you: it must come back as an ally.
+static void br54211_follower_setup(void) {
+    br54211_thief_setup();
+    makeMonsterFollowPlayer(br54211_thief);
+    TEST_ASSERT(monsterIsAlive(br54211_thief), "setup: the following thief should be alive");
+    TEST_ASSERT(!monsterIsAlly(br54211_thief),
+                "setup: it should still be a fleeing thief until it loses the item");
+}
+
+static boolean br54211_ally_step(void) {
+    monsterLosesCarriedItem(br54211_thief);
+    restOneTurn();
+    return false;
+}
+
+static boolean br54211_returns_to_ally(void) {
+    TEST_ASSERT(!monsterIsPermFleeing(br54211_thief),
+                "losing the stolen item should end permanent flight");
+    TEST_ASSERT(monsterIsAlly(br54211_thief),
+                "a thief that follows you and loses the item should become an ally");
+    return !testFailed;
+}
+
+// ============================================================
+// BR46360 — a level begins populated with 6 monsters, plus 3
+// more for each depth below the amulet depth, up to a maximum
+// of 20.
+//
+// Three first-time descents take the census at a shallow depth
+// (base 6), two depths below the amulet depth (6 + 3 + 3 = 12),
+// and depth 39, the deepest level any horde will spawn on (where
+// the uncapped formula would ask for 6 + 3 * 13 = 45).  The
+// lower bounds falsify a flat or lagging population; the upper
+// bound on the depth-39 census is what falsifies the missing
+// cap — the capped run seeds ~20 hordes where an uncapped run
+// would seed ~45, and the census tracks that difference closely
+// on the fixed test seed (71 observed), so 100 separates the two
+// with room to spare while staying far below the ~150 an
+// uncapped population reaches.  The fixed seed makes every
+// census reproducible.
+// ============================================================
+
+#define BR46360_DEEP_CENSUS_LIMIT 100
+
+static boolean population_matches_the_depth_formula(void) {
+    while (currentDepth() < 2) {
+        descendToNextLevel();
+    }
+    int shallow = monsterCount();
+
+    setDepth(27);
+    descendToNextLevel();
+    int belowAmulet = monsterCount();
+
+    setDepth(38);
+    descendToNextLevel();
+    int deep = monsterCount();
+
+    TEST_ASSERT(shallow >= 6,
+                "a level at the surface begins with the base of 6 monsters");
+    TEST_ASSERT(belowAmulet >= 12,
+                "two depths below the amulet depth adds 3 monsters per depth to the base");
+    TEST_ASSERT(deep >= 20,
+                "population grows with depth until it reaches the cap of 20");
+    TEST_ASSERT(deep <= BR46360_DEEP_CENSUS_LIMIT,
+                "the cap keeps a deep level far below the uncapped 45-horde population");
+    return !testFailed;
+}
+
+// ============================================================
+// BR59340 (player half) — allies will not negate a player
+// knowingly wearing identified reflection armor.
+//
+// First a control: with a shielded player and no reflection
+// armor, a hostile dar priestess finds a reason to negate and
+// must strip the shield, proving this harness can catch a
+// negation aimed at the player.  Then the rule's own scenario:
+// the same caster becomes your ally and you wear identified
+// armor of reflection — for the rest of the run it must never
+// cast a negation spell at you and your shield must stand.
+// ============================================================
+
+static creature *br59340_priestess;
+static pos br59340_playerSpot;
+static boolean br59340_hostileCast;
+static boolean br59340_rulePhase;
+static int br59340_turns;
+
+static void br59340_player_setup(void) {
+    setArenaRadius(6, FLOOR);
+    br59340_playerSpot = getPlayerPos();
+    // Aggravate yourself before the turn below: it pins the engine's stealth
+    // range to a huge value when the turn recomputes it, so the caster's
+    // awareness of you is deterministic instead of a per-turn dice roll that
+    // could drop it out of its hunting state mid-test.
+    applyStatusToPlayer(STATUS_AGGRAVATING, 10000);
+    restOneTurn(); // one real turn so the engine recomputes the field of view over the cleared arena
+    applyStatusToPlayer(STATUS_SHIELDED, 10000);
+    br59340_priestess = placeHostileMonster(MK_DAR_PRIESTESS,
+                                            posOffset(br59340_playerSpot, -4, 0));
+    br59340_hostileCast = false;
+    br59340_rulePhase = false;
+    br59340_turns = 0;
+}
+
+static boolean br59340_player_step(void) {
+    monsterTakesTurn(br59340_priestess);
+    br59340_turns++;
+    setPlayerHealth(playerMaxHealth()); // shrug off the sparks and blows of the control phase
+
+    if (!br59340_rulePhase) {
+        if (playerHasStatus(STATUS_SHIELDED) && br59340_turns < 40) {
+            return true; // keep rolling until the control negation lands (or time out)
+        }
+        // Only negation strips a shield, so its disappearance is the control
+        // signal (spell announcements depend on lighting and cannot be
+        // relied on at every distance).
+        br59340_hostileCast = !playerHasStatus(STATUS_SHIELDED);
+        // Switch to the rule's scenario: same caster, now your ally, and you
+        // are knowingly wearing identified armor of reflection.
+        givePlayerRunicArmor(CHAIN_MAIL, A_REFLECTION, 3, true);
+        applyStatusToPlayer(STATUS_SHIELDED, 10000);
+        makeMonsterAlly(br59340_priestess);
+        // If the ally ever broke the rule, its negation would either strip
+        // your shield (bolt lands) or, reflected by your armor, strip the
+        // ally's own haste (bolt bounces) — one of the two must survive.
+        applyStatusToMonster(br59340_priestess, STATUS_HASTED, 10000);
+        clearMessages();
+        br59340_rulePhase = true;
+        br59340_turns = 0;
+        return true;
+    }
+    return br59340_turns < 40;
+}
+
+static boolean br59340_player_verify(void) {
+    item *armor = equippedArmor();
+    TEST_ASSERT(br59340_hostileCast,
+                "control: a hostile caster must negate a shielded player");
+    TEST_ASSERT(armor != NULL && runicIsIdentified(armor),
+                "the player is knowingly wearing identified reflection armor");
+    TEST_ASSERT(playerHasStatus(STATUS_SHIELDED),
+                "an ally will not negate a player knowingly wearing identified reflection armor");
+    TEST_ASSERT(monsterHasStatus(br59340_priestess, STATUS_HASTED),
+                "the ally never negated itself through the reflected spell either");
+    TEST_ASSERT(!messageWasShown("casts a negation spell"),
+                "the ally never casts a negation spell at the player");
+    if (testFailed) {
+        pos mp = monsterPosition(br59340_priestess);
+        pos pp = getPlayerPos();
+    }
+    return !testFailed;
+}
+
+// ============================================================
+// BR59340 (creature half) — allies will never destroy an allied
+// creature with negation.
+//
+// Phase one: your allied dar priestess spends 30 turns beside an
+// allied phylactery — a creature negation would destroy — with
+// the player visible so the caster runs its spell selection
+// every turn; the phylactery must live.  Phase two, the control:
+// the caster turns hostile, the still-allied phylactery is then
+// a legitimate enemy target for it, and the same caster's
+// negation must destroy it — without the rule, phase one and
+// phase two look the same.  The phylactery (not the golem) is
+// the dies-if-negated creature of choice because it never
+// reflects: a reflected negation would strike the caster itself,
+// stripping its spells and ending the control on a coin flip.
+// ============================================================
+
+static creature *br59340b_priestess;
+static creature *br59340b_fragile;
+static boolean br59340b_rulePhase;
+static boolean br59340b_allySafe;
+static boolean br59340b_controlKilled;
+static int br59340b_turns;
+
+static void br59340b_setup(void) {
+    setArenaRadius(14, FLOOR);
+    pos spot = getPlayerPos();
+    // Aggravate yourself before the turn below: it pins the engine's stealth
+    // range to a huge value when the turn recomputes it, so the caster's
+    // awareness of you is deterministic instead of a per-turn dice roll that
+    // could drop it out of its hunting state mid-test.
+    applyStatusToPlayer(STATUS_AGGRAVATING, 10000);
+    restOneTurn(); // one real turn so the engine recomputes the field of view over the cleared arena
+    // Seal a full-height wall between you and the caster's side of the
+    // arena.  The caster still sees you (its tiles were in the field of view
+    // computed above, and no player turn recomputes it), so it keeps its
+    // hunting state, but you are no longer a reachable bolt target — the
+    // phylactery is its only possible target, which keeps every
+    // spell-selection roll on the creature the rule is about.  The
+    // phylactery sits 14 tiles from you while the caster never roams more
+    // than 10 (its leash), so the two are always at least 4 tiles apart:
+    // closer than that the caster, which keeps its distance from everything,
+    // would settle into a fleeing state where it casts nothing at all.  You
+    // are 4+ tiles from the caster's stopping point on the wall for the same
+    // reason.
+    for (int y = 0; y < levelHeight(); y++) {
+        setTerrain(posAt(spot.x - 3, y), GRANITE);
+    }
+    br59340b_priestess = spawnMonster(MK_DAR_PRIESTESS, posOffset(spot, -6, 0));
+    makeMonsterAlly(br59340b_priestess);
+    br59340b_fragile = spawnMonster(MK_PHYLACTERY, posOffset(spot, -14, 0));
+    makeMonsterAlly(br59340b_fragile);
+    // Raise its hit points far above what stray sparks can chip off, so
+    // only negation can ever make it dead and the control signal stays
+    // pure.
+    setMonsterHealth(br59340b_fragile, 1000);
+    revealCell(monsterPosition(br59340b_fragile));
+    br59340b_rulePhase = true;
+    br59340b_allySafe = false;
+    br59340b_controlKilled = false;
+    br59340b_turns = 0;
+}
+
+static boolean br59340b_step(void) {
+    monsterTakesTurn(br59340b_priestess);
+    br59340b_turns++;
+
+    if (br59340b_rulePhase) {
+        if (br59340b_turns >= 30) {
+            br59340b_allySafe = monsterIsAlive(br59340b_fragile);
+            // Control: with the caster turned against you, the still-allied
+            // phylactery is a legitimate enemy target for it, so the same
+            // caster's negation must destroy it.
+            makeMonsterHostile(br59340b_priestess);
+            br59340b_rulePhase = false;
+            br59340b_turns = 0;
+        }
+        return true;
+    }
+    if (monsterIsDead(br59340b_fragile)) {
+        // Nothing but negation can destroy a creature that dies if negated
+        // (its hit points are out of reach of every other effect here), so
+        // its death is the control signal (spell announcements depend on
+        // lighting and cannot be relied on at every distance).
+        br59340b_controlKilled = true;
+        return false;
+    }
+    return br59340b_turns < 40;
+}
+
+static boolean br59340b_verify(void) {
+    TEST_ASSERT(br59340b_allySafe,
+                "an ally will not negate — and so never destroy — an allied creature");
+    TEST_ASSERT(br59340b_controlKilled,
+                "control: the same caster's negation destroys that creature when it is an enemy");
+    return !testFailed;
+}
+
+// ============================================================
+// BR20368 — immobile monsters such as totems are aware of you only
+// while you are within their detection range, and otherwise stand
+// inert as though asleep
+// ============================================================
+
+static creature *br20368_nearTotem;
+static creature *br20368_farTotem;
+
+static void br20368_setup(void) {
+    clearArena();
+    pos playerStart = getPlayerPos();
+    // A clear east-west line: one totem two squares away, one twenty, so
+    // both sit at unambiguous ends of the detection range.
+    int step = (playerStart.x + 20 <= levelWidth() - 2) ? 1 : -1;
+    for (int i = 1; i <= 20; i++) {
+        setTerrain(posAt(playerStart.x + step * i, playerStart.y), FLOOR);
+    }
+    // Carving the corridor invalidates the field of view and the scent map
+    // computed at level start; a resting turn recomputes both over the new
+    // open floor before either totem is placed.
+    restOneTurn();
+    br20368_nearTotem = placeHostileMonster(MK_GOBLIN_TOTEM,
+                                             posAt(playerStart.x + step * 2, playerStart.y));
+    br20368_farTotem = placeHostileMonster(MK_GOBLIN_TOTEM,
+                                            posAt(playerStart.x + step * 20, playerStart.y));
+    TEST_ASSERT(br20368_nearTotem != NULL, "setup: the near totem should spawn");
+    TEST_ASSERT(br20368_farTotem != NULL, "setup: the far totem should spawn");
+    putMonsterToSleep(br20368_nearTotem);
+    putMonsterToSleep(br20368_farTotem);
+    TEST_ASSERT(monsterIsAsleep(br20368_nearTotem), "setup: the near totem should start inert");
+    TEST_ASSERT(monsterIsAsleep(br20368_farTotem), "setup: the far totem should start inert");
+}
+
+static boolean br20368_step(void) {
+    monsterTakesTurn(br20368_nearTotem);
+    monsterTakesTurn(br20368_farTotem);
+    return false;
+}
+
+static boolean br20368_totem_aware_only_within_range(void) {
+    TEST_ASSERT(monsterIsTrackingPlayer(br20368_nearTotem),
+                "a totem within its detection range should become aware of you and start hunting");
+    TEST_ASSERT(!monsterIsAsleep(br20368_nearTotem),
+                "a totem within its detection range should not stand inert");
+    TEST_ASSERT(monsterIsAsleep(br20368_farTotem),
+                "a totem outside its detection range should stand inert as though asleep");
+    TEST_ASSERT(!monsterIsTrackingPlayer(br20368_farTotem),
+                "a totem outside its detection range should not become aware of you");
+    return !testFailed;
+}
+
 const testCase tests_monsters[] = {
+    { "BR83001_webbed_monster_struggles_free_after_a_few_turns", webbed_monster_setup, webbed_monster_struggles_step, webbed_monster_escapes_after_a_few_turns },
+    { "BR83001_web_immune_monster_walks_free_immediately",       web_immune_monster_setup, web_immune_monster_turn_step, web_immune_monster_walks_free_immediately },
+
     { "BR44825_monster_avoids_invulnerable_enemy", futile_invulnerable_setup, NULL, monster_avoids_invulnerable_enemy },
     { "BR44825_monster_attacks_normal_enemy",      futile_normal_setup,       NULL, monster_does_not_avoid_normal_enemy },
+
+    { "BR83744_will_not_cast_at_hidden_target",      hidden_target_setup,    hidden_target_step, monster_will_not_cast_at_hidden_target },
+    { "BR83744_will_not_cast_without_line_of_fire",  line_of_fire_setup,     line_of_fire_step, monster_will_not_cast_without_line_of_fire },
+    { "BR83744_will_not_cast_at_submerged_target",   submerged_target_setup, submerged_target_step, monster_will_not_cast_at_submerged_target },
     { "BR92702_dormant_monster_hidden",               dormant_monster_setup,           NULL, dormant_monster_is_hidden },
     { "BR92702_invisible_monster_hidden",             invisible_monster_setup,         NULL, invisible_monster_is_hidden },
     { "BR92702_submerged_monster_hidden",             submerged_monster_setup,         NULL, submerged_monster_is_hidden },
@@ -724,6 +1754,11 @@ const testCase tests_monsters[] = {
     { "BR63373_telepathy_skips_inanimate_monster",    telepathy_inanimate_setup,       NULL, telepathy_skips_inanimate_monster },
 
     { "BR44440_entranced_monster_always_revealed",    entranced_revealed_setup,        NULL, entranced_monster_is_revealed },
+
+    { "BR43957_visible_monster_known_hidden_monster_unknown", known_monster_setup,              NULL, visible_monster_known_hidden_monster_unknown },
+    { "BR43957_distant_monster_unknown",                       distant_monster_setup,           NULL, distant_monster_unknown },
+    { "BR43957_revealed_distant_monster_known",                revealed_distant_monster_setup,  NULL, revealed_distant_monster_known },
+    { "BR43957_hidden_monster_stays_unknown_when_revealed",    hidden_revealed_monster_setup,   NULL, hidden_monster_stays_unknown_when_revealed },
 
     { "BR78631_entranced_monster_attacks_non_ally",   entranced_attacker_setup,        NULL, entranced_attacks_non_ally },
     { "BR78631_entranced_monster_attacks_player",     entranced_attacker_setup,        NULL, entranced_attacks_player },
@@ -766,6 +1801,28 @@ const testCase tests_monsters[] = {
 
     { "BR67313_raised_ally_placed_on_safe_ground",    raised_ally_safe_ground_setup,   NULL, raised_ally_placed_on_safe_ground },
     { "BR67313_raised_ally_avoids_harmful_and_occupied", raised_ally_avoids_harmful_setup, NULL, raised_ally_avoids_harmful_terrain_and_occupants },
+
+    { "BR39283_summons_appear_at_distance", summoned_at_distance_setup, summoned_at_distance_step, summoned_members_appear_at_distance },
+
+    { "BR51745_steps_onto_adjacent_fightable_enemy", fightable_adjacent_setup, NULL, monster_steps_onto_fightable_adjacent },
+    { "BR51745_avoids_adjacent_futile_enemy",        futile_adjacent_setup,     NULL, monster_avoids_futile_adjacent },
+
+    { "BR52591_diagonal_step_first",                 br52591_diagonal_setup,  br52591_take_turn_step, br52591_diagonal_step_taken },
+    { "BR52591_cardinal_step_fallback",              br52591_cardinal_setup,  br52591_take_turn_step, br52591_cardinal_step_taken },
+    { "BR52591_off_axis_step_fallback",              br52591_off_axis_setup,  br52591_take_turn_step, br52591_off_axis_step_taken },
+
+    { "BR53265_wanderer_travels_between_checkpoints", br53265_setup, br53265_step, wanders_between_distant_checkpoints },
+
+    { "BR66644_ally_idles_when_close_and_seen",      br66644_ally_setup, br66644_ally_step, ally_idles_when_close_and_seen },
+
+    { "BR54211_thief_without_item_returns_to_hunting", br54211_thief_setup, br54211_hunting_step, br54211_returns_to_hunting },
+    { "BR54211_following_thief_without_item_becomes_ally", br54211_follower_setup, br54211_ally_step, br54211_returns_to_ally },
+
+    { "BR46360_population_matches_the_depth_formula", NULL, NULL, population_matches_the_depth_formula },
+    { "BR59340_ally_never_negates_player_in_reflection_armor", br59340_player_setup, br59340_player_step, br59340_player_verify },
+    { "BR59340_ally_never_negates_an_allied_creature", br59340b_setup, br59340b_step, br59340b_verify },
+
+    { "BR20368_totem_aware_only_within_detection_range", br20368_setup, br20368_step, br20368_totem_aware_only_within_range },
 
     { NULL, NULL, NULL, NULL }
 };

@@ -131,14 +131,12 @@ static boolean levitation_breaks_seized_step(void) {
 
     // If player is seized, take levitation potion
     if (player.bookkeepingFlags & MB_SEIZED && bog->bookkeepingFlags & MB_SEIZING) {
-        // fprintf(stderr, "Player seized, taking levitation potion\n");
         drink(POTION_LEVITATION);
         return true;
     }
 
     // Let the bog monster attempt to seize player
     if (turnNumber() < 10) {
-        // fprintf(stderr, "...resting\n");
         restOneTurn();
         return true;
     }
@@ -150,13 +148,11 @@ static boolean levitation_breaks_seized_step(void) {
 // ------- VERIFY FUNCTIONS -------
 
 static boolean levitation_chasm_verify(void) {
-    // fprintf(stderr,"depth: %d, stat[lev]: %d, turn: %d, ", rogue.depthLevel, player.status[STATUS_LEVITATING], rogue.absoluteTurnNumber );
     TEST_ASSERT(!isSameDepth() && !monsterHasStatus(&player, STATUS_LEVITATING) && turnNumber() >= TEMP_STATUS_AMOUNT, "Player should have fallen after levitation expired");
     return !testFailed;
 }
 
 static boolean chasm_fall_verify(void) {
-    // fprintf(stderr,"depth: %d, stat[lev]: %d, turn: %d, ", rogue.depthLevel, player.status[STATUS_LEVITATING], rogue.absoluteTurnNumber );
     TEST_ASSERT(!isSameDepth() && !monsterHasStatus(&player, STATUS_LEVITATING) && turnNumber() < TEMP_STATUS_AMOUNT, "Player should have fallen immediately");
     // TEST_ASSERT(player.bookkeepingFlags & MB_IS_FALLING, "Player should be falling immediately");
     return !testFailed;

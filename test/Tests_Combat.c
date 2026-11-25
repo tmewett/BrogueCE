@@ -530,6 +530,215 @@ static boolean invulnerable_rune_never_triggered(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR29616 — a creature able to steal and flee takes a random unequipped
+// item from the player's pack when its blow lands (never while it is
+// confused) and then flees; a weapon stack of more than three loses about
+// half, while any other stack loses one item.
+// ============================================================
+
+// The pack holds a 15-dart weapon stack, a wielded dagger and worn armor.
+// Stripping the food leaves the darts as the only steal candidate, and a
+// stuck player is always hit, so both hit rolls the steal depends on land.
+static void steal_weapon_stack_setup(void) {
+    clearArena();
+    removePackFood();
+    applyStatusToPlayer(STATUS_STUCK, 100);
+    monst = placeHostileMonster(MK_MONKEY, posOffset(getPlayerPos(), 1, 0));
+    monsterAttacksPlayer(monst);
+}
+
+static boolean weapon_stack_loses_half_and_monkey_flees(void) {
+    TEST_ASSERT_EQ(packUnitCount(WEAPON, DART), 7,
+                   "a stolen weapon stack of more than three should lose about half (15 darts -> 7)");
+    TEST_ASSERT(monsterIsFleeing(monst),
+                "the creature should flee once it has stolen an item");
+    TEST_ASSERT(messageWasShown("stole"),
+                "the theft should be announced to the player");
+    return !testFailed;
+}
+
+// Negative test: a confused creature never steals, even when its blow lands.
+static void confused_monkey_steals_setup(void) {
+    clearArena();
+    removePackFood();
+    applyStatusToPlayer(STATUS_STUCK, 100);
+    monst = placeHostileMonster(MK_MONKEY, posOffset(getPlayerPos(), 1, 0));
+    applyStatusToMonster(monst, STATUS_CONFUSED, 20);
+    monsterAttacksPlayer(monst);
+}
+
+static boolean confused_monkey_steals_nothing(void) {
+    TEST_ASSERT_EQ(packUnitCount(WEAPON, DART), 15,
+                   "a confused creature should leave the pack untouched");
+    TEST_ASSERT(!monsterIsFleeing(monst),
+                "a confused creature should not flee after its blow lands");
+    return !testFailed;
+}
+
+// Strip the darts too, so a stack of four potions is the only steal
+// candidate: a non-weapon stack must lose exactly one item, not half.
+static void steal_consumable_stack_setup(void) {
+    clearArena();
+    removePackFood();
+    removePackItems(WEAPON, DART);
+    givePlayerItem(POTION, POTION_LIFE, 0);
+    givePlayerItem(POTION, POTION_LIFE, 0);
+    givePlayerItem(POTION, POTION_LIFE, 0);
+    givePlayerItem(POTION, POTION_LIFE, 0);
+    applyStatusToPlayer(STATUS_STUCK, 100);
+    monst = placeHostileMonster(MK_MONKEY, posOffset(getPlayerPos(), 1, 0));
+    monsterAttacksPlayer(monst);
+}
+
+static boolean consumable_stack_loses_one(void) {
+    TEST_ASSERT_EQ(packUnitCount(POTION, POTION_LIFE), 3,
+                   "a stolen non-weapon stack should lose exactly one item (4 potions -> 3)");
+    TEST_ASSERT(monsterIsFleeing(monst),
+                "the creature should flee once it has stolen an item");
+    return !testFailed;
+}
+
+// ============================================================
+// BR89754 — attacking an acid-type creature corrodes the player's
+// weapon, lowering its enchantment by one and announcing that the
+// weapon weakens; a slaying weapon attacking its designated kind
+// is exempt from this
+// ============================================================
+
+enum br89754_phase {
+    BR89754_VS_MOUND,     // plain weapon against an acid mound
+    BR89754_VS_JELLY,     // plain weapon against an acidic jelly
+    BR89754_SLAYING_JELLY, // slaying weapon against the same jelly
+    BR89754_DONE
+};
+
+static item *br89754_plainWeapon;
+static item *br89754_slayWeapon;
+static creature *br89754_acidMound;
+static creature *br89754_jelly;
+static enum br89754_phase br89754_phase;
+static int br89754_plainBefore;
+static int br89754_plainExpected;
+static int br89754_afterMound;
+static int br89754_attacks;
+static boolean br89754_moundCorroded;
+static boolean br89754_moundAnnounced;
+static boolean br89754_jellyCorroded;
+static boolean br89754_jellyAnnounced;
+static boolean br89754_slayHit;
+
+static void br89754_setup(void) {
+    clearArena();
+    br89754_plainBefore = 3;
+    // The player starts with a plain dagger; drop it so that the pack holds
+    // only the dagger this test hands out.
+    removePackItems(WEAPON, DAGGER);
+    br89754_plainWeapon = givePlayerItem(WEAPON, DAGGER, br89754_plainBefore);
+    equipItemFromPack(WEAPON, DAGGER);
+    // Built up front, but only equipped once the plain dagger has corroded
+    // against both acid creatures.  Acid mounds belong to no slaying class,
+    // so the exemption is exercised on the acidic jelly (jelly class), which
+    // corrodes weapons just as an acid mound does.
+    br89754_slayWeapon = givePlayerRunicWeapon(SWORD, W_SLAYING, 5, true);
+    setItemTargetClass(br89754_slayWeapon, vorpalEnemyClassForMonster(MK_ACID_JELLY));
+    br89754_acidMound = placeHostileMonster(MK_ACID_MOUND, posOffset(getPlayerPos(), 1, 0));
+    TEST_ASSERT(br89754_acidMound != NULL, "setup: the acid mound should spawn");
+    TEST_ASSERT(equippedWeapon() == br89754_plainWeapon,
+                "setup: the plain dagger should be the equipped weapon");
+    putMonsterToSleep(br89754_acidMound); // a sleeping defender is always hit
+    br89754_phase = BR89754_VS_MOUND;
+    br89754_plainExpected = br89754_plainBefore;
+    br89754_afterMound = br89754_plainBefore;
+    br89754_attacks = 0;
+    br89754_moundCorroded = false;
+    br89754_moundAnnounced = false;
+    br89754_jellyCorroded = false;
+    br89754_jellyAnnounced = false;
+    br89754_slayHit = false;
+}
+
+static boolean br89754_step(void) {
+    switch (br89754_phase) {
+        case BR89754_VS_MOUND:
+            if (itemEnchant(br89754_plainWeapon) < br89754_plainExpected) {
+                br89754_moundCorroded = true;
+                br89754_moundAnnounced = messageWasShown("weakens");
+                br89754_afterMound = itemEnchant(br89754_plainWeapon);
+                clearMessages(); // each phase is judged on its own messages
+                // Same corrosion test again, but against the jelly that the
+                // slaying exemption below will be tried on.
+                br89754_jelly = placeHostileMonster(MK_ACID_JELLY,
+                                                     posOffset(getPlayerPos(), -1, 0));
+                if (br89754_jelly == NULL) {
+                    return false;
+                }
+                putMonsterToSleep(br89754_jelly);
+                br89754_plainExpected = itemEnchant(br89754_plainWeapon);
+                br89754_phase = BR89754_VS_JELLY;
+                br89754_attacks = 0;
+                return true;
+            }
+            if (br89754_attacks >= 8) {
+                return false; // let verify report the missing corrosion
+            }
+            playerAttacksMonster(br89754_acidMound);
+            br89754_attacks++;
+            return true;
+
+        case BR89754_VS_JELLY:
+            if (itemEnchant(br89754_plainWeapon) < br89754_plainExpected) {
+                br89754_jellyCorroded = true;
+                br89754_jellyAnnounced = messageWasShown("weakens");
+                clearMessages(); // judge the slaying weapon on its own messages
+                equipItemFromPack(WEAPON, SWORD);
+                putMonsterToSleep(br89754_jelly);
+                br89754_phase = BR89754_SLAYING_JELLY;
+                br89754_attacks = 0;
+                return true;
+            }
+            if (br89754_attacks >= 8) {
+                return false;
+            }
+            playerAttacksMonster(br89754_jelly);
+            br89754_attacks++;
+            return true;
+
+        case BR89754_SLAYING_JELLY:
+            if (!br89754_slayHit && br89754_attacks < 8) {
+                br89754_slayHit = playerAttacksMonster(br89754_jelly);
+                br89754_attacks++;
+                return br89754_slayHit ? false : true;
+            }
+            return false;
+
+        default:
+            return false;
+    }
+}
+
+static boolean br89754_corrodes_weapon_unless_slaying(void) {
+    TEST_ASSERT(br89754_moundCorroded,
+                "attacking an acid mound should corrode the plain weapon");
+    TEST_ASSERT_EQ(br89754_afterMound, br89754_plainBefore - 1,
+                   "the plain weapon's enchantment should drop by one against the acid mound");
+    TEST_ASSERT(br89754_moundAnnounced,
+                "the corrosion should announce that the weapon weakens");
+    TEST_ASSERT(br89754_jellyCorroded,
+                "the plain weapon should also corrode against the acidic jelly");
+    TEST_ASSERT_EQ(itemEnchant(br89754_plainWeapon), br89754_plainBefore - 2,
+                   "the plain weapon's enchantment should drop again against the acidic jelly");
+    TEST_ASSERT(br89754_jellyAnnounced,
+                "the second corrosion should announce that the weapon weakens too");
+    TEST_ASSERT(br89754_slayHit,
+                "the slaying weapon should land a blow on the sleeping acidic jelly");
+    TEST_ASSERT_EQ(itemEnchant(br89754_slayWeapon), 5,
+                   "a slaying weapon attacking its designated kind should not corrode");
+    TEST_ASSERT(!messageWasShown("weakens"),
+                "the exempt slaying weapon should not report weakening");
+    return !testFailed;
+}
+
 const testCase tests_combat[] = {
     { "BR94361_immolation_armor_erupts_in_flame", immolation_armor_setup, immolation_strikes_step, armor_erupts_in_flame },
     { "BR65933_paralyzed_defender_always_hit",  paralyzed_target_setup,  attack_once_step,        target_was_wounded },
@@ -549,10 +758,15 @@ const testCase tests_combat[] = {
     { "BR82949_weakening_attack_weakens_player",weakening_setup,         wait_until_hurt,         player_was_weakened },
     { "BR61676_exploding_attacker_dies",        kamikaze_setup,          kamikaze_step,           bloat_was_destroyed },
     { "BR57747_killing_dragon_earns_feat",      dragonslayer_setup,      attack_once_step,        dragonslayer_earned },
-    { "BR86062_player_death_ends_game",         player_death_setup,      rest_once_step,          game_ended },
+    { "BR86062_player_death_ends_game",         player_death_setup,          rest_once_step,          game_ended },
+    { "BR29616_steal_takes_half_a_weapon_stack", steal_weapon_stack_setup,    NULL,                    weapon_stack_loses_half_and_monkey_flees },
+    { "BR29616_confused_creature_steals_nothing", confused_monkey_steals_setup, NULL,                  confused_monkey_steals_nothing },
+    { "BR29616_steal_takes_one_from_other_stack", steal_consumable_stack_setup, NULL,                   consumable_stack_loses_one },
     { "BR11906_transference_heals_on_attack",   transference_heals_setup, monster_attacks_step,   monster_was_healed },
     { "BR57646_rune_triggers_against_ordinary_creature", br57646_ordinary_setup, br57646_step, ordinary_rune_triggered },
     { "BR57646_rune_never_triggers_against_inanimate_creature", br57646_inanimate_setup, br57646_step, inanimate_rune_never_triggered },
     { "BR57646_rune_never_triggers_against_invulnerable_creature", br57646_invulnerable_setup, br57646_step, invulnerable_rune_never_triggered },
+
+    { "BR89754_acid_corrodes_weapon_slaying_exempt", br89754_setup, br89754_step, br89754_corrodes_weapon_unless_slaying },
     { NULL, NULL, NULL, NULL }
 };

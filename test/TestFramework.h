@@ -54,15 +54,28 @@ pos posOffset(pos origin, int dx, int dy);
 void injectKeystroke(int key, boolean shift, boolean control);
 void injectMouseClick(pos loc, boolean rightClick, boolean control, boolean shift);
 
+// Whether the keyboard cursor is currently turned on (Return/Enter toggles it
+// on; movement, space or escape turns it off again).
+boolean isKeyboardCursorActive(void);
+
 // Supply a keystroke to the engine as the answer to the next prompt or
 // confirmation.  Unlike injectKeystroke, this does not immediately act: the
 // engine consumes it when it next asks for input.
 void queueKeystroke(int key, boolean shift, boolean control);
+// Supply a mouse click to the engine as the answer to the next prompt or
+// menu.  Like queueKeystroke, the event is consumed when the engine next
+// asks for input, so a prompt that is not open yet can still be clicked.
+void queueMouseClick(pos loc);
 void queueConfirmYes(void);
 void queueConfirmNo(void);
 
 // Show a two-button confirmation prompt and report whether it was accepted.
 boolean askConfirmation(void);
+
+// Open the engine's file-picker dialog (the one the main menu uses for saved
+// games and recordings) with the given filename suffix, and report whether it
+// selected a file.  The dialog's answers come from the test's queued input.
+boolean chooseFileWithSuffix(const char *suffix);
 
 // Turn autopilot on (confirmations are then skipped and treated as "yes").
 void enableAutopilot(void);
@@ -86,6 +99,44 @@ void clearMessages(void);
 boolean messageWasShown(const char *substring);
 const char *lastMessage(void);
 void printTestMessages(void);
+
+// Whether any message the engine emitted while the game was starting up (the
+// welcome message and its fellows, all shown before the test began) contains
+// the given substring.  runTestByName() clears the ordinary message log before
+// each test, so startup messages are kept in their own snapshot.
+boolean startupMessageWasShown(const char *substring);
+// The full text of the first startup message containing the given substring,
+// or NULL when there is none.
+const char *startupMessageWith(const char *substring);
+
+// Send one message through the game's real message archive pipeline (repeat
+// collapsing, counting, and display formatting).  In test mode the engine
+// captures raw message text and skips all of that, so this briefly runs the
+// normal-mode path for the single message.
+void emitArchivedMessage(const char *msg);
+
+// The newest message line as the game renders it after formatting: repeats
+// collapsed into a counted entry ("... (x5)"), "(many)" once the repeat cap
+// is reached, capitalized and punctuated.  Empty string if nothing has been
+// emitted with emitArchivedMessage() yet.
+const char *renderedMessageLine(void);
+
+// ---------------------------------------------
+// Screen
+// ---------------------------------------------
+
+// Redraw the sidebar and report whether the given text appears in it.  The
+// sidebar is the stats column at the left edge of the screen, so a match here
+// can only have come from the sidebar.
+boolean sidebarContains(const char *substring);
+
+// Report whether the given text appears on the whole screen as of the most
+// recent time the engine asked the test for input.  Full-screen displays (the
+// discoveries screen, the message archive, the help screen) draw themselves
+// over the map, wait for a key, and then restore the previous screen, so the
+// frame at that input request is the only moment their text can be observed.
+// False when the test has not yet caused an input request.
+boolean screenTextContains(const char *substring);
 
 // ---------------------------------------------
 // Player actions (events)
@@ -134,9 +185,17 @@ boolean cellObstructsPassage(pos loc);
 boolean cellIsVisible(pos loc);
 boolean cellHasGas(pos loc);
 boolean cellIsOnFire(pos loc);
+// Whether any layer of the tile holds terrain that harms creatures standing
+// on it: fire, damage, poison, paralysis, confusion, or explosive damage.
+boolean cellIsHarmfulTerrain(pos loc);
 boolean cellIsTrap(pos loc);
 boolean cellIsKnownTrapFree(pos loc);
 boolean isTrapTriggered(pos loc);
+// Whether the tile belongs to the interior of a vault built during level
+// generation.
+boolean cellIsVaultInterior(pos loc);
+// Whether the tile's liquid layer holds a liquid (water, lava, and so on).
+boolean cellHasLiquid(pos loc);
 
 // ---------------------------------------------
 // Player state (predicates and events)
@@ -164,6 +223,9 @@ boolean isPlayerBurning(void);
 boolean isPlayerConfused(void);
 boolean isPlayerParalyzed(void);
 boolean isPlayerStuck(void);
+// Whether a hostile creature is currently holding the player's legs, as set
+// by a seizing attack.
+boolean playerIsSeized(void);
 boolean isPlayerSubmerged(void);
 boolean isPlayerPoisoned(void);
 boolean isPlayerWeakened(void);
@@ -173,6 +235,9 @@ boolean playerHasItem(short category, short kind);
 // scroll of enchanting removing a curse) can be set up deterministically.
 void curseItem(item *theItem);
 void removePackFood(void);
+// Remove every pack item of the given category and kind, so a test can
+// control exactly which items are available to be stolen or consumed.
+void removePackItems(short category, short kind);
 
 // Numeric status details, for rules about exact counters and amounts.
 int playerStatusTurns(enum statusEffects status);
@@ -180,6 +245,7 @@ int playerWeaknessAmount(void);
 int playerPoisonConcentration(void);
 int playerShield(void);
 int playerMovementSpeed(void);
+int playerAttackSpeed(void);
 int playerArmorValue(void);
 
 // Apply a status effect through the engine's own routines.
@@ -204,6 +270,10 @@ creature *findMonster(enum monsterTypes type);
 void clearMonsters(void);
 int monsterCount(void);
 int countMonstersOfType(enum monsterTypes monstTyp);
+// The nth monster on the level, in the engine's own creature order, or NULL
+// when index is out of range.  Lets a test visit every monster without
+// touching the engine's creature list.
+creature *monsterAtIndex(int index);
 void setMonsterPos(creature *monst, pos loc);
 void makeMonsterHostile(creature *monst);
 void makeMonsterAlly(creature *monst);
@@ -246,7 +316,11 @@ void makeMonsterFollow(creature *follower, creature *leader);
 int monsterStatusTurns(const creature *monst, enum statusEffects status);
 int monsterWeaknessAmount(const creature *monst);
 int monsterMovementSpeed(const creature *monst);
+int monsterAttackSpeed(const creature *monst);
 void weakenMonster(creature *monst, int duration);
+
+// The experience an ally has accumulated from discovered territory.
+int monsterExperience(const creature *monst);
 
 // Bestiary trait/ability predicates (read from monsterCatalog info).
 boolean monsterHasTrait(const creature *monst, unsigned long trait);
@@ -261,6 +335,8 @@ int monsterBaseDamageLow(const creature *monst);
 int monsterBaseDamageHigh(const creature *monst);
 int monsterBaseMovementSpeed(const creature *monst);
 int monsterBaseAttackSpeed(const creature *monst);
+// Whether the monster's catalog entry gives it natural health regeneration.
+boolean monsterRegenerates(const creature *monst);
 void poisonMonster(creature *monst, int duration, int concentration);
 void slowMonster(creature *monst, int turns);
 void hasteMonster(creature *monst, int turns);
@@ -276,6 +352,25 @@ boolean monstersAreAlliesOf(const creature *a, const creature *b);
 boolean monstersAreFoesOf(const creature *a, const creature *b);
 boolean monsterAvoidsCell(const creature *monst, pos loc);
 
+// Whether the monster is carrying an item (a thief's stolen loot, for
+// example).
+boolean monsterIsCarryingItem(const creature *monst);
+
+// Whether the monster is in the permanent flight that a steal-and-flee
+// attack starts.
+boolean monsterIsPermFleeing(const creature *monst);
+
+// Give the monster an item to carry and put it into permanent flight, as it
+// is after a successful steal-and-flee attack.
+void makeMonsterStealAndFlee(creature *monst, short category, short kind);
+
+// The monster loses whatever it was carrying, as a thief does when the item
+// it stole is dropped or washed away.
+void monsterLosesCarriedItem(creature *monst);
+
+// Make the given monster a follower of the player.
+void makeMonsterFollowPlayer(creature *monst);
+
 // ---------------------------------------------
 // Items (predicates and events)
 // ---------------------------------------------
@@ -286,11 +381,36 @@ item *findFloorItem(short category, short kind);
 item *findItem(short category, short kind);
 item *givePlayerItem(short category, short kind, short enchant);
 item *placeItemOnFloor(short category, short kind, pos loc);
+// The tile an item occupies: where a floor item lies, or for a pack item the
+// tile it was picked up from.
+pos itemPosition(const item *theItem);
+// How many ordinary (non-gold) items lie on the level.  Gold piles follow
+// their own generation rule and are not counted.
+int countFloorItems(void);
 void equipItemFromPack(short category, short kind);
+// Take off an equipped item of the given category and kind, so a test can
+// cycle equipment one piece at a time.
+void unequipItemFromPack(short category, short kind);
+
+// The bonuses that wearing rings contributes, so a test can assert that a
+// ring's enchantment applies without reading engine state.
+int playerClairvoyanceBonus(void);
+int playerStealthBonus(void);
+int playerAwarenessBonus(void);
+int playerWisdomBonus(void);
+int playerRegenerationBonus(void);
+int playerTransferenceBonus(void);
+int playerLightMultiplier(void);
+int playerReapingBonus(void);
+
 // Drink a potion, applying its effect without ending the turn.
 void drink(enum potionKind kind);
 // Read a scroll, applying its effect (and ending the turn).
 void readScrollOfKind(short kind);
+// Use (apply) an item already in the pack: zap with a staff or activate a
+// charm.  Any targeting prompt is answered from the queued keystrokes, or with
+// escape when the queue is empty.
+void applyPackItem(short category, short kind);
 
 // Item details a rule can depend on.
 int itemQuantity(const item *theItem);
@@ -306,6 +426,12 @@ boolean runicIsIdentified(const item *theItem);
 boolean runicIsHinted(const item *theItem);
 unsigned long itemGoldValue(const item *theItem);
 boolean itemKindIsKnown(short category, short kind);
+// Whether magic detection has revealed this item's polarity, so the game
+// knows whether its magic is good or bad (the state the inventory's glowing
+// good/bad-magic symbol is drawn from).
+boolean itemMagicWasDetected(const item *theItem);
+// The polarity magic detection reveals: 1 good, -1 bad, 0 neutral.
+int itemMagicPolarityValue(const item *theItem);
 int runicActivationChance(const item *theItem);
 
 // Key a runic item to a creature class: the class of creature that a slaying
@@ -322,6 +448,8 @@ item *equippedArmor(void);
 int packStackCount(short category, short kind);
 int packUnitCount(short category, short kind);
 int packItemCount(void);
+// Fill the pack to its maximum capacity, for rules that depend on a full pack.
+void fillPackToCapacity(void);
 
 // Player numbers related to items.
 int playerGold(void);
@@ -334,6 +462,49 @@ void woundPlayer(int amount);
 
 // Succumb to easy mode.
 void enterEasyMode(void);
+
+// ---------------------------------------------
+// Game modes and high scores
+// ---------------------------------------------
+
+// Open the wizard mode dialog that creates an item or a monster.  While the
+// game stays in test mode the dialog answers from the test's queued
+// keystrokes, so no screen or real input is needed.
+void attemptWizardItemCreation(void);
+
+// Enter wizard mode: a victory in wizard mode is never scored.  Wizard mode
+// turns off the test-mode input plumbing, so a test that enters it must also
+// avoid every prompt: use enableServerMode() and enableAutopilot().
+void enterWizardMode(void);
+
+// Enter playback mode: the game replays a recording, skips all prompts, and
+// never saves a score or a run history entry.
+void enterPlaybackMode(void);
+
+// Enter playback armed with a recording of `turns` out-of-sync checks plus
+// room to advance `turns` further turns.  The checks are recorded from two
+// real passes over alternating UPRIGHT/DOWNLEFT steps (so the replay
+// reproduces the recording pass's per-turn randomness), and periodic
+// environment updates are pushed beyond all passes.  In test mode a playback
+// seek takes its events from the test's queued input while the engine's
+// per-turn out-of-sync check still reads the recording, so queueing the same
+// steps afterwards makes an "advance N turns" command observable with
+// playerTurnCount().
+void startPlaybackWithRecordedChecks(unsigned int turns);
+
+// Run as a server: the victory path skips the save-recording prompt and the
+// high-score screen, so the game never asks for input.
+void enableServerMode(void);
+
+// Put the given amount of gold in the player's purse.
+void givePlayerGold(int amount);
+
+// The score a victory recorded right now would carry: gold plus the value of
+// every carried item.
+int expectedVictoryScore(void);
+
+// Whether the high-score file currently holds an entry with this score.
+boolean highScoreHasScore(int score);
 
 // Wear a freshly generated suit of armor at a chosen enchantment.
 void wearArmorOfEnchant(short kind, int enchant);
@@ -357,6 +528,14 @@ int countTerrain(short terrainType);
 // Descend one level, generating the next dungeon level.
 void descendToNextLevel(void);
 
+// Descend to the amulet's floor with the amulet altar machine rigged to fail
+// every build attempt, so that the engine's fallback amulet placement is the
+// only way an amulet can appear.  Returns once the amulet floor is built.
+void descendWithFailedAmuletAltar(void);
+
+// Climb one level, the mirror of descendToNextLevel.
+void ascendToPreviousLevel(void);
+
 // The total brightness of a tile's light.
 int lightAt(pos loc);
 
@@ -372,12 +551,22 @@ void setLightMultiplier(int multiplier);
 void setPlayerInWater(boolean inWater);
 void recomputeLighting(void);
 
+// How many floor tiles of the level are cut off from the region containing
+// `from`.  Passability follows the rule the generator flood-fills with when
+// it decides whether a placement would strand part of the level: ordinary
+// walls block, while doorways, secret doors, portcullises, barricades and
+// statue doorways count as connections.
+int countUnreachableFloorFrom(pos from);
+
 // ---------------------------------------------
 // World (predicates and events)
 // ---------------------------------------------
 
 unsigned long turnNumber(void);
 int ticksUntilPlayerActs(void);
+// Ticks remaining before the environment next updates; the player's haste and
+// slow expiry resynchronize this counter with the player's time state.
+int ticksUntilEnvironmentUpdate(void);
 int currentDepth(void);
 void setDepth(int depth);
 boolean isSameDepth(void);
@@ -407,6 +596,14 @@ boolean resurrectDeadAllyAt(pos loc);
 // ---------------------------------------------
 // TEST STEP HELPERS
 // ---------------------------------------------
+
+// Feed the queued input through the engine's main input loop — the loop a live
+// game pumps for player input — and return as soon as the queue runs dry.  The
+// loop has no other exit, so the input hook flags the game as ended when the
+// queue empties; this helper clears that flag before returning and discards
+// anything left queued.
+void runQueuedInputThroughMainLoop(void);
+
 boolean wait_until_fall_step(void);
 boolean wait_until_hurt(void);
 boolean trap_step(void);

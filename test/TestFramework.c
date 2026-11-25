@@ -4,6 +4,7 @@
 #include "GlobalsBase.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 // The master registry of test suites (see Tests.c).
 extern const testCase *const testSuites[];
@@ -27,6 +28,48 @@ static int inputQueueTail = 0;
 static char messageLog[TEST_MESSAGE_LOG_SIZE][DCOLS * 2];
 static int messageLogCount = 0;
 
+// Snapshot of the messages the engine emitted while the game was starting up
+// (the welcome message and its fellows), taken by runTestByName() just before
+// it clears the log for the test itself.
+static char startupMessageLog[TEST_MESSAGE_LOG_SIZE][DCOLS * 2];
+static int startupMessageCount = 0;
+
+// Set while runQueuedInputThroughMainLoop() is pumping the engine's main input
+// loop.  That loop only ends when the game ends, so the input hook flags the
+// game as ended as soon as the queue runs dry, giving the pump control back.
+static boolean inputLoopPumpActive = false;
+
+// Snapshot of the whole screen, taken every time the engine asks the test for
+// input.  Full-screen displays (the discoveries screen, the message archive,
+// the help screen) draw themselves over the map, wait for a key, and then
+// restore the previous screen, so the frame at that input request is the only
+// moment their text can be observed.  Invalid until the first input request.
+static char screenSnapshot[ROWS][COLS + 1];
+static boolean screenSnapshotValid = false;
+
+static void captureScreenSnapshot(void) {
+    for (int y = 0; y < ROWS; y++) {
+        for (int x = 0; x < COLS; x++) {
+            int glyph = (int) displayBuffer.cells[x][y].character;
+            screenSnapshot[y][x] = (glyph >= ' ' && glyph < 127) ? (char) glyph : ' ';
+        }
+        screenSnapshot[y][COLS] = '\0';
+    }
+    screenSnapshotValid = true;
+}
+
+boolean screenTextContains(const char *substring) {
+    if (!screenSnapshotValid) {
+        return false;
+    }
+    for (int y = 0; y < ROWS; y++) {
+        if (strstr(screenSnapshot[y], substring) != NULL) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void queueKeystroke(int key, boolean shift, boolean control) {
     int next = (inputQueueTail + 1) % TEST_INPUT_QUEUE_SIZE;
     if (next == inputQueueHead) {
@@ -41,8 +84,29 @@ void queueKeystroke(int key, boolean shift, boolean control) {
     inputQueueTail = next;
 }
 
+void queueMouseClick(pos loc) {
+    int next = (inputQueueTail + 1) % TEST_INPUT_QUEUE_SIZE;
+    if (next == inputQueueHead) {
+        return; // Queue full; drop the click.
+    }
+    rogueEvent *evt = &inputQueue[inputQueueTail];
+    memset(evt, 0, sizeof(*evt));
+    evt->eventType = MOUSE_UP;
+    evt->param1 = loc.x;
+    evt->param2 = loc.y;
+    inputQueueTail = next;
+}
+
 boolean testNextInputEvent(rogueEvent *evt) {
+    // The engine is about to hand control to whatever is drawing the current
+    // screen, so this is the moment any full-screen display is visible.
+    captureScreenSnapshot();
     if (inputQueueHead == inputQueueTail) {
+        if (inputLoopPumpActive) {
+            // The main input loop has no exit other than the game ending, so
+            // flag it ended; the pump clears the flag once the loop returns.
+            rogue.gameHasEnded = true;
+        }
         return false;
     }
     *evt = inputQueue[inputQueueHead];
@@ -60,6 +124,12 @@ void queueConfirmNo(void) {
 
 boolean askConfirmation(void) {
     return confirm("Are you sure?", false);
+}
+
+boolean chooseFileWithSuffix(const char *suffix) {
+    char path[BROGUE_FILENAME_MAX];
+    path[0] = '\0';
+    return dialogChooseFile(path, suffix, "Open file:");
 }
 
 void enableAutopilot(void) {
@@ -123,6 +193,66 @@ void printTestMessages(void) {
     }
 }
 
+boolean startupMessageWasShown(const char *substring) {
+    return startupMessageWith(substring) != NULL;
+}
+
+const char *startupMessageWith(const char *substring) {
+    for (int i = 0; i < startupMessageCount; i++) {
+        if (strstr(startupMessageLog[i], substring) != NULL) {
+            return startupMessageLog[i];
+        }
+    }
+    return NULL;
+}
+
+void emitArchivedMessage(const char *msg) {
+    // In test mode message() captures raw text and returns before touching the
+    // archive, collapsing, or the display.  Run this one message through the
+    // normal-mode pipeline so the archived entry, its repeat count, and the
+    // rendered line all behave as they do in a real game.
+    enum gameMode savedMode = rogue.mode;
+    rogue.mode = GAME_MODE_NORMAL;
+    message(msg, 0);
+    rogue.mode = savedMode;
+}
+
+const char *renderedMessageLine(void) {
+    static char line[COLS * 2];
+    char buffer[MESSAGE_LINES][COLS * 2];
+
+    formatRecentMessages(buffer, MESSAGE_LINES, NULL, NULL);
+    snprintf(line, sizeof(line), "%s", buffer[MESSAGE_LINES - 1]);
+    return line;
+}
+
+boolean sidebarContains(const char *substring) {
+    char row[STAT_BAR_WIDTH + 1];
+
+    refreshSideBar(-1, -1, false);
+    for (int y = 0; y < ROWS; y++) {
+        for (int x = 0; x < STAT_BAR_WIDTH; x++) {
+            int glyph = (int) displayBuffer.cells[x][y].character;
+            row[x] = (glyph >= ' ' && glyph < 127) ? (char) glyph : ' ';
+        }
+        row[STAT_BAR_WIDTH] = '\0';
+        if (strstr(row, substring) != NULL) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+// Feed the queued input through the engine's main input loop and return as
+// soon as the queue runs dry.  See the declaration in TestFramework.h.
+void runQueuedInputThroughMainLoop(void) {
+    inputLoopPumpActive = true;
+    mainInputLoop();
+    inputLoopPumpActive = false;
+    clearInputQueue();
+    rogue.gameHasEnded = false;
+}
 
 void runTestByName(const char *name) {
     testStartDepth = rogue.depthLevel;
@@ -136,8 +266,13 @@ void runTestByName(const char *name) {
             testStepCount = 0;
             testFailed = false;
             failureMessage[0] = '\0';
+            // Keep what the engine said while the game was starting up: the
+            // log below is cleared for the test itself.
+            memcpy(startupMessageLog, messageLog, sizeof(messageLog));
+            startupMessageCount = messageLogCount;
             clearInputQueue();
             clearMessages();
+            screenSnapshotValid = false;
 
             // Setup
             if (currentTest->setup) currentTest->setup();
@@ -206,6 +341,10 @@ void injectKeystroke(int key, boolean shift, boolean control) {
     evt.shiftKey = shift;
     evt.controlKey = control;
     executeEvent(&evt);
+}
+
+boolean isKeyboardCursorActive(void) {
+    return rogue.cursorMode;
 }
 
 void injectMouseClick(pos loc, boolean rightClick, boolean control, boolean shift) {
@@ -314,7 +453,9 @@ boolean cellObstructsPassage(pos loc) {
 }
 
 boolean cellIsVisible(pos loc) {
-    return playerCanSee(loc.x, loc.y);
+    // playerCanSee expands to a flag mask; normalize it, since high flag bits
+    // would otherwise be lost when truncated to a boolean.
+    return (playerCanSee(loc.x, loc.y)) != 0;
 }
 
 boolean cellHasGas(pos loc) {
@@ -323,6 +464,10 @@ boolean cellHasGas(pos loc) {
 
 boolean cellIsOnFire(pos loc) {
     return cellHasTerrainFlag(loc, T_IS_FIRE);
+}
+
+boolean cellIsHarmfulTerrain(pos loc) {
+    return cellHasTerrainFlag(loc, T_HARMFUL_TERRAIN);
 }
 
 boolean cellIsTrap(pos loc) {
@@ -335,6 +480,14 @@ boolean isTrapTriggered(pos loc) {
 
 boolean cellIsKnownTrapFree(pos loc) {
     return (pmapAt(loc)->flags & KNOWN_TO_BE_TRAP_FREE) != 0;
+}
+
+boolean cellIsVaultInterior(pos loc) {
+    return pmapAt(loc)->machineNumber != 0;
+}
+
+boolean cellHasLiquid(pos loc) {
+    return pmapAt(loc)->layers[LIQUID] != NOTHING;
 }
 
 // ---------------------------------------------
@@ -396,6 +549,124 @@ void enterEasyMode(void) {
     rogue.mode = GAME_MODE_EASY;
 }
 
+// ---------------------------------------------
+// Game modes and high scores
+// ---------------------------------------------
+
+void attemptWizardItemCreation(void) {
+    dialogCreateItemOrMonster();
+}
+
+void enterWizardMode(void) {
+    rogue.mode = GAME_MODE_WIZARD;
+}
+
+void enterPlaybackMode(void) {
+    rogue.playbackMode = true;
+}
+
+// See the declaration in TestFramework.h.  A replayed player turn runs the
+// engine's whole per-turn machinery — lighting and vision consume
+// randomness, and the out-of-sync check reads the recording — so the checks
+// are recorded from two real passes over the same steps: the first settles
+// the state that only changes on a tile's first visit (discovery, the
+// auto-search marker), the second records; the replay then starts from the
+// same state and seed as the recording pass and reproduces its consumption
+// turn for turn.  In test mode a playback seek never reads events from the
+// buffer (nextBrogueEvent answers from the test's queue instead), so only
+// the checks are read back, one per replayed player turn.
+//
+// The steps must mirror what the test queues after this call: alternating
+// UPRIGHT/DOWNLEFT keystrokes, which net zero displacement.
+void startPlaybackWithRecordedChecks(unsigned int turns) {
+    if (turns == 0) {
+        testFail("startPlaybackWithRecordedChecks needs at least one turn");
+        return;
+    }
+
+    // The periodic environment update runs inside a player turn; push it
+    // beyond all three passes (30000 ticks covers 300 turns of them) so none
+    // of them takes it.  Nothing resynchronizes it while the game stays on
+    // one level.
+    rogue.ticksTillUpdateEnvironment = 30000;
+
+    // Settling pass: walked once so the recording pass and the replay both
+    // see tiles the player has already stepped on and searched.
+    for (unsigned int i = 0; i < turns; i++) {
+        injectKeystroke((i % 2) ? DOWNLEFT_KEY : UPRIGHT_KEY, false, false);
+    }
+
+    // Recording pass, from a fresh generator state.
+    locationInRecordingBuffer = 0;
+    recordingLocation = 0;
+    seedRandomGenerator(rogue.seed);
+    for (unsigned int i = 0; i < turns; i++) {
+        injectKeystroke((i % 2) ? DOWNLEFT_KEY : UPRIGHT_KEY, false, false);
+    }
+
+    // Collect the recorded out-of-sync checks (one per turn, interleaved
+    // with the recorded keystrokes, which the replay never reads) and write
+    // them back as one contiguous run for the replay to start on.
+    unsigned int checkCount = 0;
+    unsigned char *buffer = inputRecordBuffer;
+    unsigned short bufferLength = locationInRecordingBuffer;
+    for (unsigned short p = 0; p + 1 < bufferLength; p++) {
+        if (buffer[p] == RNG_CHECK) {
+            buffer[checkCount * 2] = RNG_CHECK;
+            buffer[checkCount * 2 + 1] = buffer[p + 1];
+            checkCount++;
+            p++;
+        }
+    }
+    if (checkCount != turns) {
+        testFail("recording pass did not record one out-of-sync check per turn");
+        return;
+    }
+    // Rewind so the replay reads the checks back from the start; the file
+    // length (not the position) records how much is there.
+    locationInRecordingBuffer = 0;
+    recordingLocation = 0;
+    seedRandomGenerator(rogue.seed);
+
+    lengthOfPlaybackFile = 100000; // so recallChar() never hits end-of-recording
+    // Room beyond `turns` so an over-large advance is not clamped down to
+    // the expected answer by the recording's length.
+    rogue.howManyTurns = rogue.playerTurnNumber + 2 * turns;
+    rogue.playbackMode = true;
+}
+
+void enableServerMode(void) {
+    serverMode = true;
+}
+
+void givePlayerGold(int amount) {
+    rogue.gold = amount;
+}
+
+// Mirrors the score a victory computes: gold plus the value of every carried
+// item (lumenstones are carried in no test, and only a greater victory doubles
+// the amulet's value).
+int expectedVictoryScore(void) {
+    long total = rogue.gold;
+    for (item *theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
+        if (itemValue(theItem) > 0) {
+            total += itemValue(theItem);
+        }
+    }
+    return (int) total;
+}
+
+boolean highScoreHasScore(int score) {
+    rogueHighScoresEntry list[HIGH_SCORES_COUNT];
+    getHighScoresList(list); // re-reads the high-score file each call
+    for (int i = 0; i < HIGH_SCORES_COUNT; i++) {
+        if (list[i].score == (long) score) {
+            return true;
+        }
+    }
+    return false;
+}
+
 int playerNutrition(void) {
     return player.status[STATUS_NUTRITION];
 }
@@ -436,6 +707,10 @@ boolean isPlayerStuck(void) {
     return playerHasStatus(STATUS_STUCK);
 }
 
+boolean playerIsSeized(void) {
+    return (player.bookkeepingFlags & MB_SEIZED) != 0;
+}
+
 boolean isPlayerSubmerged(void) {
     // The player's submersion is tracked as a visual state, unlike monsters.
     return rogue.inWater != 0;
@@ -471,6 +746,10 @@ int playerShield(void) {
 
 int playerMovementSpeed(void) {
     return player.movementSpeed;
+}
+
+int playerAttackSpeed(void) {
+    return player.attackSpeed;
 }
 
 int playerArmorValue(void) {
@@ -561,6 +840,16 @@ int countMonstersOfType(enum monsterTypes monstTyp) {
     return count;
 }
 
+creature *monsterAtIndex(int index) {
+    int i = 0;
+    for (creatureIterator it = iterateCreatures(monsters); hasNextCreature(it);) {
+        creature *m = nextCreature(&it);
+        if (i == index) return m;
+        i++;
+    }
+    return NULL;
+}
+
 void setMonsterPos(creature *monst, pos loc) {
     unsigned long creatureFlag = (monst == &player ? HAS_PLAYER : HAS_MONSTER);
     pmapAt(monst->loc)->flags &= ~creatureFlag;
@@ -577,6 +866,10 @@ void makeMonsterHostile(creature *monst) {
 
 void makeMonsterAlly(creature *monst) {
     monst->creatureState = MONSTER_ALLY;
+}
+
+int monsterExperience(const creature *monst) {
+    return monst->xpxp;
 }
 
 void wakeMonster(creature *monst) {
@@ -728,6 +1021,11 @@ int monsterMovementSpeed(const creature *monst) {
     return monst->movementSpeed;
 }
 
+int monsterAttackSpeed(const creature *monst) {
+    if (monst == NULL) return 0;
+    return monst->attackSpeed;
+}
+
 boolean monsterHasTrait(const creature *monst, unsigned long trait) {
     if (monst == NULL) return false;
     return (monst->info.flags & trait) != 0;
@@ -780,6 +1078,11 @@ int monsterBaseMovementSpeed(const creature *monst) {
 int monsterBaseAttackSpeed(const creature *monst) {
     if (monst == NULL) return 0;
     return monst->info.attackSpeed;
+}
+
+boolean monsterRegenerates(const creature *monst) {
+    if (monst == NULL) return false;
+    return monst->info.turnsBetweenRegen > 0;
 }
 
 void weakenMonster(creature *monst, int duration) {
@@ -851,6 +1154,34 @@ boolean monstersAreFoesOf(const creature *a, const creature *b) {
 
 boolean monsterAvoidsCell(const creature *monst, pos loc) {
     return monsterAvoids((creature *)monst, loc);
+}
+
+boolean monsterIsCarryingItem(const creature *monst) {
+    return monst != NULL && monst->carriedItem != NULL;
+}
+
+boolean monsterIsPermFleeing(const creature *monst) {
+    return monst != NULL && monst->creatureMode == MODE_PERM_FLEEING;
+}
+
+void makeMonsterStealAndFlee(creature *monst, short category, short kind) {
+    if (monst == NULL) {
+        return;
+    }
+    monst->carriedItem = generateItem(category, kind);
+    monst->creatureMode = MODE_PERM_FLEEING;
+    monst->creatureState = MONSTER_FLEEING;
+}
+
+void monsterLosesCarriedItem(creature *monst) {
+    if (monst == NULL || monst->carriedItem == NULL) {
+        return;
+    }
+    makeMonsterDropItem(monst);
+}
+
+void makeMonsterFollowPlayer(creature *monst) {
+    makeMonsterFollow(monst, &player);
 }
 
 enum monsterTypes chooseMonsterTypeByProperty(enum boltType bolt, enum monsterBehaviorFlags behaviorFlagsInclude,  enum monsterBehaviorFlags behaviorFlagsExclude, enum monsterAbilityFlags abilityFlagsInclude, enum monsterAbilityFlags abilityFlagsExclude) {
@@ -939,12 +1270,42 @@ item *placeItemOnFloor(short category, short kind, pos loc) {
     return placeItemAt(theItem, loc);
 }
 
+pos itemPosition(const item *theItem) {
+    if (theItem == NULL) return (pos) { -1, -1 };
+    return theItem->loc;
+}
+
+int countFloorItems(void) {
+    int count = 0;
+    for (item *i = floorItems->nextItem; i; i = i->nextItem) {
+        if (!(i->category & GOLD)) count++;
+    }
+    return count;
+}
+
 void equipItemFromPack(short category, short kind) {
     item *theItem = findInventoryItem(category, kind);
     if (theItem != NULL) {
         equipItem(theItem, true, NULL);
     }
 }
+
+void unequipItemFromPack(short category, short kind) {
+    item *theItem = findInventoryItem(category, kind);
+    if (theItem != NULL) {
+        unequipItem(theItem, true);
+    }
+}
+
+// The bonuses updateRingBonuses() derives from the worn rings.
+int playerClairvoyanceBonus(void)      { return rogue.clairvoyance; }
+int playerStealthBonus(void)           { return rogue.stealthBonus; }
+int playerAwarenessBonus(void)         { return rogue.awarenessBonus; }
+int playerWisdomBonus(void)            { return rogue.wisdomBonus; }
+int playerRegenerationBonus(void)      { return rogue.regenerationBonus; }
+int playerTransferenceBonus(void)      { return rogue.transference; }
+int playerLightMultiplier(void)        { return rogue.lightMultiplier; }
+int playerReapingBonus(void)           { return rogue.reaping; }
 
 void drink(enum potionKind kind) {
     // Apply the potion's effect without ending the turn, so that transient
@@ -960,6 +1321,13 @@ void drink(enum potionKind kind) {
 void readScrollOfKind(short kind) {
     item *scroll = givePlayerItem(SCROLL, kind, 0);
     apply(scroll);
+}
+
+void applyPackItem(short category, short kind) {
+    item *theItem = findInventoryItem(category, kind);
+    if (theItem != NULL) {
+        apply(theItem);
+    }
 }
 
 int itemQuantity(const item *theItem) {
@@ -992,6 +1360,14 @@ boolean itemIsCursed(const item *theItem) {
 
 boolean itemIsIdentified(const item *theItem) {
     return (theItem->flags & ITEM_IDENTIFIED) != 0;
+}
+
+boolean itemMagicWasDetected(const item *theItem) {
+    return (theItem->flags & ITEM_MAGIC_DETECTED) != 0;
+}
+
+int itemMagicPolarityValue(const item *theItem) {
+    return itemMagicPolarity(theItem);
 }
 
 void curseItem(item *theItem) {
@@ -1068,6 +1444,13 @@ int packItemCount(void) {
     return numberOfItemsInPack();
 }
 
+void fillPackToCapacity(void) {
+    // Potions stack, so each added unit still counts toward the pack limit.
+    while (numberOfItemsInPack() < MAX_PACK_ITEMS) {
+        givePlayerItem(POTION, POTION_LIFE, 0);
+    }
+}
+
 int playerGold(void) {
     return rogue.gold;
 }
@@ -1130,6 +1513,22 @@ void removePackFood(void) {
     }
 }
 
+void removePackItems(short category, short kind) {
+    for (item *i = packItems->nextItem; i != NULL;) {
+        item *next = i->nextItem;
+        if (i->category == category && i->kind == kind) {
+            if (rogue.weapon == i || rogue.armor == i) {
+                if (rogue.weapon == i) rogue.weapon = NULL;
+                if (rogue.armor == i) rogue.armor = NULL;
+                recalculateEquipmentBonuses();
+            }
+            removeItemFromChain(i, packItems);
+            deleteItem(i);
+        }
+        i = next;
+    }
+}
+
 // ---------------------------------------------
 // World
 // ---------------------------------------------
@@ -1140,6 +1539,10 @@ unsigned long turnNumber(void) {
 
 int ticksUntilPlayerActs(void) {
     return player.ticksUntilTurn;
+}
+
+int ticksUntilEnvironmentUpdate(void) {
+    return rogue.ticksTillUpdateEnvironment;
 }
 
 int currentDepth(void) {
@@ -1206,6 +1609,31 @@ void descendToNextLevel(void) {
     }
 }
 
+void ascendToPreviousLevel(void) {
+    useStairs(-1);
+}
+
+void descendWithFailedAmuletAltar(void) {
+    // Copy the blueprint table and rig the amulet altar machine so that its
+    // first feature can never be placed in the required number of instances;
+    // every build attempt during generation of the amulet floor then fails,
+    // which is the precondition for the engine's fallback amulet placement.
+    blueprint *tweakedBlueprints = malloc(gameConst->numberBlueprints * sizeof(blueprint));
+    if (tweakedBlueprints == NULL) {
+        testFail("could not allocate the tweaked blueprint table");
+        return;
+    }
+    memcpy(tweakedBlueprints, blueprintCatalog, gameConst->numberBlueprints * sizeof(blueprint));
+    tweakedBlueprints[MT_AMULET_AREA].feature[0].minimumInstanceCount = 99;
+
+    const blueprint *originalBlueprints = blueprintCatalog;
+    blueprintCatalog = tweakedBlueprints;
+    setDepth(gameConst->amuletLevel - 1);
+    descendToNextLevel();
+    blueprintCatalog = originalBlueprints;
+    free(tweakedBlueprints);
+}
+
 int pathingDistanceBetween(pos from, pos to, unsigned long blockingTerrainFlags) {
     return pathingDistance(from.x, from.y, to.x, to.y, blockingTerrainFlags);
 }
@@ -1234,6 +1662,59 @@ void setPlayerInWater(boolean inWater) {
 void recomputeLighting(void) {
     updateMinersLightRadius();
     updateLighting();
+}
+
+// Mirrors cellIsPassableOrDoor() in Architect.c, which the generator
+// flood-fills with when it decides whether a placement would strand part of
+// the level (that helper is static there).
+static boolean countsAsConnected(pos loc) {
+    if (!cellHasTerrainFlag(loc, T_PATHING_BLOCKER)) {
+        return true;
+    }
+    return (cellHasTMFlag(loc, (TM_IS_SECRET | TM_PROMOTES_WITH_KEY | TM_CONNECTS_LEVEL))
+            && cellHasTerrainFlag(loc, T_OBSTRUCTS_PASSABILITY));
+}
+
+int countUnreachableFloorFrom(pos from) {
+    static const int dirs[4][2] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
+    boolean visited[DCOLS][DROWS];
+    pos queue[DCOLS * DROWS];
+    int head = 0, tail = 0;
+    int unreachable = 0;
+
+    memset(visited, 0, sizeof(visited));
+    if (from.x < 0 || from.y < 0 || from.x >= DCOLS || from.y >= DROWS) {
+        return 0;
+    }
+    visited[from.x][from.y] = true;
+    queue[tail++] = from;
+
+    while (head < tail) {
+        pos here = queue[head++];
+        for (int d = 0; d < 4; d++) {
+            pos next = posOffset(here, dirs[d][0], dirs[d][1]);
+            if (next.x < 0 || next.y < 0 || next.x >= DCOLS || next.y >= DROWS) {
+                continue;
+            }
+            if (visited[next.x][next.y] || !countsAsConnected(next)) {
+                continue;
+            }
+            visited[next.x][next.y] = true;
+            queue[tail++] = next;
+        }
+    }
+
+    // Dry floor is what has to stay connected; floor drowned in deep water or
+    // split by a chasm is not part of the walkable region to begin with.
+    for (int x = 0; x < DCOLS; x++) {
+        for (int y = 0; y < DROWS; y++) {
+            pos cell = posAt(x, y);
+            if (terrainAt(cell) == FLOOR && countsAsConnected(cell) && !visited[x][y]) {
+                unreachable++;
+            }
+        }
+    }
+    return unreachable;
 }
 
 short vorpalEnemyClassByName(const char *className) {

@@ -2,9 +2,10 @@
 //
 // These exercise the status effects that can be observed headlessly: the
 // counters that tick down on the periodic environmental update, searching,
-// weakening, haste and slow, poison, starvation, paralysis, entrancement and
-// the shield.  Rules about rendering (light radius, hallucinated names),
-// combat prompts, and specific item/bolt magnitudes are omitted.
+// weakening, haste and slow, poison, starvation, paralysis, entrancement, the
+// shield, and being stuck ending as soon as a creature is off an entangling
+// tile.  Rules about rendering (light radius, hallucinated names), combat
+// prompts, and specific item/bolt magnitudes are omitted.
 
 #include "TestFramework.h"
 #include "Globals.h"
@@ -85,6 +86,10 @@ static void aggravation_decrement_setup(void) {
 
 static void fire_immunity_decrement_setup(void) {
     status_decrement_setup(STATUS_IMMUNE_TO_FIRE,5);
+}
+
+static void explosion_immunity_decrement_setup(void) {
+    status_decrement_setup(STATUS_EXPLOSION_IMMUNITY,5);
 }
 
 // ============================================================
@@ -286,6 +291,105 @@ static boolean speed_restored(void) {
     TEST_ASSERT_EQ(monsterStatusTurns(monst, STATUS_SLOWED), 0, "slow should have expired");
     TEST_ASSERT_EQ(monsterMovementSpeed(monst), monsterBaseSpeed,
                    "expiring slow should restore the monster's normal speed");
+    return !testFailed;
+}
+
+// ============================================================
+// BR71884 — when the haste counter reaches 0 the creature's normal
+// movement and attack speeds are restored, and for the player the
+// time state is resynchronized.
+// ============================================================
+
+static int monsterNormalMove, monsterNormalAttack;
+static int monsterHastedMove, monsterHastedAttack;
+static int playerNormalMove, playerNormalAttack;
+static int playerHastedMove, playerHastedAttack;
+static int hasteRestsRemaining;
+
+// Status counters tick once per 100-tick environment cycle, but a hasted
+// player's rest lasts only 50 ticks, so two rests are needed before one
+// full cycle elapses and the haste counter ticks down.
+static boolean rest_twice_step(void) {
+    restOneTurn();
+    return --hasteRestsRemaining > 0;
+}
+
+static void monster_haste_expires_setup(void) {
+    clearMonsters();
+    monst = spawnMonster(MK_TROLL, posOffset(player.loc, 2, 0));
+    monsterNormalMove = monsterMovementSpeed(monst);
+    monsterNormalAttack = monsterAttackSpeed(monst);
+    hasteMonster(monst, 1);
+    monsterHastedMove = monsterMovementSpeed(monst);
+    monsterHastedAttack = monsterAttackSpeed(monst);
+}
+
+static boolean monster_haste_expired(void) {
+    TEST_ASSERT_EQ(monsterHastedMove, monsterNormalMove / 2,
+                   "precondition: haste should halve the monster's movement time");
+    TEST_ASSERT_EQ(monsterHastedAttack, monsterNormalAttack / 2,
+                   "precondition: haste should halve the monster's attack time");
+    TEST_ASSERT_EQ(monsterStatusTurns(monst, STATUS_HASTED), 0,
+                   "the haste counter should have reached 0");
+    TEST_ASSERT_EQ(monsterMovementSpeed(monst), monsterNormalMove,
+                   "expiring haste should restore the monster's normal movement speed");
+    TEST_ASSERT_EQ(monsterAttackSpeed(monst), monsterNormalAttack,
+                   "expiring haste should restore the monster's normal attack speed");
+    return !testFailed;
+}
+
+static void player_haste_expires_setup(void) {
+    clearMonsters();
+    playerNormalMove = playerMovementSpeed();
+    playerNormalAttack = playerAttackSpeed();
+    hastePlayer(1);
+    playerHastedMove = playerMovementSpeed();
+    playerHastedAttack = playerAttackSpeed();
+    hasteRestsRemaining = 2;
+}
+
+static boolean player_haste_expired(void) {
+    TEST_ASSERT_EQ(playerHastedMove, playerNormalMove / 2,
+                   "precondition: haste should halve the player's movement time");
+    TEST_ASSERT_EQ(playerHastedAttack, playerNormalAttack / 2,
+                   "precondition: haste should halve the player's attack time");
+    TEST_ASSERT_EQ(playerStatusTurns(STATUS_HASTED), 0,
+                   "the haste counter should have reached 0");
+    TEST_ASSERT_EQ(playerMovementSpeed(), playerNormalMove,
+                   "expiring haste should restore the player's normal movement speed");
+    TEST_ASSERT_EQ(playerAttackSpeed(), playerNormalAttack,
+                   "expiring haste should restore the player's normal attack speed");
+    TEST_ASSERT(messageWasShown("your supernatural speed fades"),
+                "expiring haste should announce that the player's speed has faded");
+    // The expiry re-anchors the environment-update clock to the player's own
+    // action clock; without the resynchronization it would stay on the old
+    // cycle (a full 100) instead of matching the player's remaining time.
+    TEST_ASSERT_EQ(ticksUntilEnvironmentUpdate(), playerHastedMove,
+                   "expiring haste should resynchronize the player's time state");
+    return !testFailed;
+}
+
+// Negative test: while turns of haste remain, the raised speeds stay in
+// effect and no fade message is shown -- restoration happens only at 0.
+static void player_haste_still_running_setup(void) {
+    clearMonsters();
+    playerNormalMove = playerMovementSpeed();
+    playerNormalAttack = playerAttackSpeed();
+    hastePlayer(2);
+    playerHastedMove = playerMovementSpeed();
+    playerHastedAttack = playerAttackSpeed();
+    hasteRestsRemaining = 2;
+}
+
+static boolean player_speeds_still_hasted(void) {
+    TEST_ASSERT_EQ(playerStatusTurns(STATUS_HASTED), 1,
+                   "one rest should leave one turn of haste remaining");
+    TEST_ASSERT_EQ(playerMovementSpeed(), playerHastedMove,
+                   "movement time should stay halved while haste remains");
+    TEST_ASSERT_EQ(playerAttackSpeed(), playerHastedAttack,
+                   "attack time should stay halved while haste remains");
+    TEST_ASSERT(!messageWasShown("your supernatural speed fades"),
+                "no fade message should appear while haste remains");
     return !testFailed;
 }
 
@@ -533,6 +637,67 @@ static boolean shield_decayed(void) {
 }
 
 // ============================================================
+// BR23913 — being stuck ends immediately for a creature no longer standing
+// on an entangling tile
+// ============================================================
+
+static creature *br23913_subject;
+
+static void br23913_player_setup(void) {
+    clearArena();
+    pos here = getPlayerPos();
+    setTerrain(here, SPIDERWEB);
+    setPlayerPos(here);
+    applyStatusToPlayer(STATUS_STUCK, 10);
+    TEST_ASSERT_EQ(playerStatusTurns(STATUS_STUCK), 10,
+                   "setup: the player should start out stuck in the web");
+}
+
+static boolean br23913_player_step(void) {
+    // Step off the web onto the open floor beside it, then let a turn pass.
+    setPlayerPos(posOffset(getPlayerPos(), 1, 0));
+    restOneTurn();
+    return false;
+}
+
+static boolean br23913_player_stuck_ends(void) {
+    TEST_ASSERT(!playerIsOnTerrain(SPIDERWEB),
+                "control: the player is no longer standing on the web");
+    TEST_ASSERT_EQ(playerStatusTurns(STATUS_STUCK), 0,
+                   "a player no longer on an entangling tile stops being stuck at once");
+    return !testFailed;
+}
+
+static void br23913_monster_setup(void) {
+    setArenaRadius(4, FLOOR);
+    pos webLoc = posOffset(getPlayerPos(), 3, 0);
+    setTerrain(webLoc, SPIDERWEB);
+    br23913_subject = spawnMonster(MK_RAT, webLoc);
+    makeMonsterHostile(br23913_subject);
+    applyStatusToMonster(br23913_subject, STATUS_STUCK, 10);
+    TEST_ASSERT_EQ(monsterStatusTurns(br23913_subject, STATUS_STUCK), 10,
+                   "setup: the rat should start out stuck in the web");
+}
+
+static boolean br23913_monster_step(void) {
+    // Walk the rat off the web onto the open floor beside it, then let a
+    // turn pass.  The web lies behind the rat, away from the player, so its
+    // own turn cannot carry it back onto the tile.
+    setMonsterPos(br23913_subject, posOffset(monsterPosition(br23913_subject), -1, 0));
+    restOneTurn();
+    return false;
+}
+
+static boolean br23913_monster_stuck_ends(void) {
+    TEST_ASSERT(monsterIsAlive(br23913_subject), "control: the rat survives the wait");
+    TEST_ASSERT(!cellIsTerrain(monsterPosition(br23913_subject), SPIDERWEB),
+                "control: the rat is no longer standing on an entangling tile");
+    TEST_ASSERT_EQ(monsterStatusTurns(br23913_subject, STATUS_STUCK), 0,
+                   "a monster no longer on an entangling tile stops being stuck at once");
+    return !testFailed;
+}
+
+// ============================================================
 
 const testCase tests_status_effects[] = {
     { "BR97529_telepathy_counter_decrements",   telepathy_decrement_setup,      rest_one_turn_step, status_decremented_by_one },
@@ -545,6 +710,7 @@ const testCase tests_status_effects[] = {
     { "BR48230_invisibility_counter_decrements",invisibility_decrement_setup,   rest_one_turn_step, status_decremented_by_one },
     { "BR18867_aggravation_counter_decrements", aggravation_decrement_setup,    rest_one_turn_step, status_decremented_by_one },
     { "BR75439_fire_immunity_counter_decrements",fire_immunity_decrement_setup, rest_one_turn_step, status_decremented_by_one },
+    { "BR31504_explosion_immunity_counter_decrements", explosion_immunity_decrement_setup, rest_one_turn_step, status_decremented_by_one },
 
     { "BR28518_telepathy_fades_message",        telepathy_fades_setup,          rest_one_turn_step, telepathy_faded_message },
     { "BR41654_darkness_fades_message",         darkness_fades_setup,           rest_one_turn_step, darkness_faded_message },
@@ -562,6 +728,9 @@ const testCase tests_status_effects[] = {
     { "BR50918_slow_sets_slow_clears_haste",    slow_sets_slow_setup,           NULL, slow_applied },
     { "BR40736_haste_sets_haste_clears_slow",   haste_sets_haste_setup,         NULL, haste_applied },
     { "BR22853_slow_expiry_restores_speed",     slow_expires_setup,             rest_one_turn_step, speed_restored },
+    { "BR71884_haste_expiry_restores_monster_speed", monster_haste_expires_setup, rest_one_turn_step, monster_haste_expired },
+    { "BR71884_haste_expiry_restores_player_speed_and_time", player_haste_expires_setup, rest_twice_step, player_haste_expired },
+    { "BR71884_haste_still_running_keeps_speeds_raised", player_haste_still_running_setup, rest_twice_step, player_speeds_still_hasted },
 
     { "BR64646_poison_adds_concentration",      poison_added_setup,             NULL, poison_added },
     { "BR75638_poison_damages_and_ticks",       poison_damages_setup,           rest_one_turn_step, poison_damaged_and_ticked },
@@ -583,6 +752,9 @@ const testCase tests_status_effects[] = {
     { "BR73717_attacking_paralyzed_clears_it",  attack_paralyzed_setup,         attack_paralyzed_step, paralysis_cleared },
 
     { "BR68621_shield_decays_by_twentieth",     shield_decays_setup,            rest_one_turn_step, shield_decayed },
+
+    { "BR23913_player_stuck_ends_off_entangling_tile", br23913_player_setup, br23913_player_step, br23913_player_stuck_ends },
+    { "BR23913_monster_stuck_ends_off_entangling_tile", br23913_monster_setup, br23913_monster_step, br23913_monster_stuck_ends },
 
     { NULL, NULL, NULL, NULL }
 };

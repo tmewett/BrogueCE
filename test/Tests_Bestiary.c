@@ -1,9 +1,11 @@
 // Tests derived from rules/09-monsters-bestiary.md.
 //
 // Headless-testable subset: bestiary trait/ability flags and base stats, read
-// directly from each monster's catalog entry via the new predicates.  Behavior
-// that depends on RNG, level generation, pathing, spell selection, messages or
-// a screen is omitted.
+// directly from each monster's catalog entry via the new predicates, plus the
+// regeneration period, which runs deterministically in the turn loop, and the
+// glow a lit tile reports with and without its source standing on it.
+// Behavior that depends on RNG, level generation, pathing, spell selection,
+// messages or a screen is omitted.
 
 #include "TestFramework.h"
 #include "Globals.h"
@@ -123,6 +125,290 @@ static boolean rat_dmg_high(void) { TEST_ASSERT_EQ(monsterBaseDamageHigh(subject
 static boolean rat_movespeed(void) { TEST_ASSERT_EQ(monsterBaseMovementSpeed(subject), 100, "rat move speed"); return !testFailed; }
 static boolean rat_attackspeed(void) { TEST_ASSERT_EQ(monsterBaseAttackSpeed(subject), 100, "rat attack speed"); return !testFailed; }
 
+// ============================================================
+// BR18852 — Phylactery.  Health 30, defense 0, accuracy 0, damage 0; no
+// regeneration; normal movement but a slow attack (150).  Immobile, never
+// sleeping, inanimate, always hunting, will not follow between levels, cannot
+// be entangled, dies if negated; summons allies; glows.
+// ============================================================
+
+static creature *br18852_subject;
+static int br18852_light_with_glow;
+static int br18852_light_without_glow;
+
+// Measure how much light the subject alone sheds on its own tile: the tile is
+// brightest while the subject stands there and dimmer once it has stepped
+// away, so the difference isolates the subject's glow from every other light.
+static void measureMonsterGlow(creature *glowing, int *withGlow, int *withoutGlow) {
+    pos here = monsterPosition(glowing);
+    recomputeLighting();
+    *withGlow = lightAt(here);
+    pos away = (here.x + 20 < levelWidth())
+        ? posAt(here.x + 20, here.y)
+        : posAt(here.x - 20, here.y);
+    setMonsterPos(glowing, away);
+    recomputeLighting();
+    *withoutGlow = lightAt(here);
+    setMonsterPos(glowing, here);
+    recomputeLighting();
+}
+
+static void br18852_setup(void) {
+    trait_setup(MK_PHYLACTERY);
+    br18852_subject = subject;
+    measureMonsterGlow(br18852_subject, &br18852_light_with_glow,
+                       &br18852_light_without_glow);
+    // An ally is a harmless bystander while time passes, and a wounded
+    // creature would heal during the wait if it regenerated.
+    makeMonsterAlly(br18852_subject);
+    setMonsterHealth(br18852_subject, monsterMaxHealth(br18852_subject) / 2);
+}
+
+static boolean br18852_verify(void) {
+    creature *s = br18852_subject;
+    TEST_ASSERT(s != NULL, "phylactery spawned");
+    TEST_ASSERT_EQ(monsterMaxHealth(s), 30, "phylactery health");
+    TEST_ASSERT_EQ(monsterBaseDefense(s), 0, "phylactery defense");
+    TEST_ASSERT_EQ(monsterBaseAccuracy(s), 0, "phylactery accuracy");
+    TEST_ASSERT_EQ(monsterBaseDamageLow(s), 0, "phylactery damage low");
+    TEST_ASSERT_EQ(monsterBaseDamageHigh(s), 0, "phylactery damage high");
+    TEST_ASSERT_EQ(monsterBaseMovementSpeed(s), 100, "phylactery moves at normal speed");
+    TEST_ASSERT_EQ(monsterBaseAttackSpeed(s), 150, "phylactery attacks slowly");
+    TEST_ASSERT(monsterHasTrait(s, MONST_IMMOBILE), "phylactery is immobile");
+    TEST_ASSERT(monsterHasTrait(s, MONST_NEVER_SLEEPS), "phylactery never sleeps");
+    TEST_ASSERT(monsterHasTrait(s, MONST_INANIMATE), "phylactery is inanimate");
+    TEST_ASSERT(monsterHasTrait(s, MONST_ALWAYS_HUNTING), "phylactery always hunts");
+    TEST_ASSERT(monsterHasTrait(s, MONST_WILL_NOT_USE_STAIRS),
+                "phylactery will not follow between levels");
+    TEST_ASSERT(monsterHasTrait(s, MONST_IMMUNE_TO_WEBS), "phylactery cannot be entangled");
+    TEST_ASSERT(monsterHasTrait(s, MONST_DIES_IF_NEGATED), "phylactery dies if negated");
+    TEST_ASSERT(monsterHasAbility(s, MA_CAST_SUMMON), "phylactery summons allies");
+    TEST_ASSERT(!monsterRegenerates(s), "phylactery has no natural regeneration");
+    TEST_ASSERT_EQ(monsterHealth(s), monsterMaxHealth(s) / 2,
+                   "a wounded phylactery stays wounded as time passes");
+    TEST_ASSERT(br18852_light_with_glow > br18852_light_without_glow,
+                "phylactery glows");
+    return !testFailed;
+}
+
+// ============================================================
+// BR67777 — Spectral Sword.  Health 1, defense 0, accuracy 150, damage 1; no
+// regeneration; moves twice as fast (50) with a normal attack (100).
+// Inanimate, never sleeping, flying, will not follow between levels, cannot
+// be entangled, dies if negated; glows.
+// ============================================================
+
+static creature *br67777_subject;
+static int br67777_light_with_glow;
+static int br67777_light_without_glow;
+
+static void br67777_setup(void) {
+    trait_setup(MK_SPECTRAL_IMAGE);
+    br67777_subject = subject;
+    measureMonsterGlow(br67777_subject, &br67777_light_with_glow,
+                       &br67777_light_without_glow);
+}
+
+static boolean br67777_verify(void) {
+    creature *s = br67777_subject;
+    TEST_ASSERT(s != NULL, "spectral sword spawned");
+    TEST_ASSERT_EQ(monsterMaxHealth(s), 1, "spectral sword health");
+    TEST_ASSERT_EQ(monsterBaseDefense(s), 0, "spectral sword defense");
+    TEST_ASSERT_EQ(monsterBaseAccuracy(s), 150, "spectral sword accuracy");
+    TEST_ASSERT_EQ(monsterBaseDamageLow(s), 1, "spectral sword damage low");
+    TEST_ASSERT_EQ(monsterBaseDamageHigh(s), 1, "spectral sword damage high");
+    TEST_ASSERT_EQ(monsterBaseMovementSpeed(s), 50, "spectral sword moves twice as fast");
+    TEST_ASSERT_EQ(monsterBaseAttackSpeed(s), 100, "spectral sword attacks at normal speed");
+    TEST_ASSERT(monsterHasTrait(s, MONST_INANIMATE), "spectral sword is inanimate");
+    TEST_ASSERT(monsterHasTrait(s, MONST_NEVER_SLEEPS), "spectral sword never sleeps");
+    TEST_ASSERT(monsterHasTrait(s, MONST_FLIES), "spectral sword flies");
+    TEST_ASSERT(monsterHasTrait(s, MONST_WILL_NOT_USE_STAIRS),
+                "spectral sword will not follow between levels");
+    TEST_ASSERT(monsterHasTrait(s, MONST_IMMUNE_TO_WEBS), "spectral sword cannot be entangled");
+    TEST_ASSERT(monsterHasTrait(s, MONST_DIES_IF_NEGATED), "spectral sword dies if negated");
+    TEST_ASSERT(!monsterRegenerates(s), "spectral sword has no natural regeneration");
+    TEST_ASSERT(br67777_light_with_glow > br67777_light_without_glow,
+                "spectral sword glows");
+    return !testFailed;
+}
+
+// ============================================================
+// BR45724 — Monkey.  Health 12, defense 17, accuracy 100, damage
+// 1-3; regenerates every 20 turns; normal speeds.  It steals an
+// item and flees when it hits (BR18776) and has a 1% chance per
+// turn to leave a urine trail.
+//
+// The stat block, the natural-regeneration flag and the
+// steal-and-flee ability are read from the spawned monkey's
+// catalog entry.  The 1%-per-turn urine trail depends on the RNG
+// stream and is not checked here; the 20-turn regen period is
+// checked behaviorally below.
+// ============================================================
+
+static void br45724_setup(void) { trait_setup(MK_MONKEY); }
+
+static boolean br45724_verify(void) {
+    TEST_ASSERT(subject != NULL, "monkey spawned");
+    TEST_ASSERT_EQ(monsterMaxHealth(subject), 12, "monkey health");
+    TEST_ASSERT_EQ(monsterBaseDefense(subject), 17, "monkey defense");
+    TEST_ASSERT_EQ(monsterBaseAccuracy(subject), 100, "monkey accuracy");
+    TEST_ASSERT_EQ(monsterBaseDamageLow(subject), 1, "monkey damage low");
+    TEST_ASSERT_EQ(monsterBaseDamageHigh(subject), 3, "monkey damage high");
+    TEST_ASSERT_EQ(monsterBaseMovementSpeed(subject), 100, "monkey moves at normal speed");
+    TEST_ASSERT_EQ(monsterBaseAttackSpeed(subject), 100, "monkey attacks at normal speed");
+    TEST_ASSERT(monsterRegenerates(subject), "monkey regenerates naturally");
+    TEST_ASSERT(monsterHasAbility(subject, MA_HIT_STEAL_FLEE),
+                "monkey steals an item and flees when its attack lands");
+    return !testFailed;
+}
+
+// The regen period, watched turn by turn: a wounded monkey with no enemies
+// about can only regain health through regeneration, so it must sit at 1 HP
+// for 19 turns and regain exactly one point on the 20th.
+static int br45724_regenTurns;
+
+static void br45724_regen_setup(void) {
+    trait_setup(MK_MONKEY);
+    makeMonsterAlly(subject);
+    setMonsterHealth(subject, 1);
+    br45724_regenTurns = 0;
+}
+
+static boolean br45724_regen_step(void) {
+    restOneTurn();
+    br45724_regenTurns++;
+    if (monsterHealth(subject) > 1) {
+        return false;
+    }
+    return br45724_regenTurns < 60;
+}
+
+static boolean br45724_regen_verify(void) {
+    TEST_ASSERT(subject != NULL, "monkey spawned");
+    TEST_ASSERT_EQ(br45724_regenTurns, 20,
+                   "the monkey should wait 20 turns before regenerating");
+    TEST_ASSERT_EQ(monsterHealth(subject), 2,
+                   "the monkey should regain exactly one point of health per period");
+    return !testFailed;
+}
+
+// ============================================================
+// BR69414 — Imp.  Health 35, defense 90, accuracy 225, damage 4-9;
+// regenerates every 10 turns; normal speeds.  It steals an item and flees
+// when it hits (BR18776) and blinks around the battlefield (BR16647).  It
+// glows.
+// ============================================================
+
+static int br69414_light_with_glow;
+static int br69414_light_without_glow;
+
+static void br69414_setup(void) {
+    trait_setup(MK_IMP);
+    measureMonsterGlow(subject, &br69414_light_with_glow, &br69414_light_without_glow);
+}
+
+static boolean br69414_verify(void) {
+    TEST_ASSERT(subject != NULL, "imp spawned");
+    TEST_ASSERT_EQ(monsterMaxHealth(subject), 35, "imp health");
+    TEST_ASSERT_EQ(monsterBaseDefense(subject), 90, "imp defense");
+    TEST_ASSERT_EQ(monsterBaseAccuracy(subject), 225, "imp accuracy");
+    TEST_ASSERT_EQ(monsterBaseDamageLow(subject), 4, "imp damage low");
+    TEST_ASSERT_EQ(monsterBaseDamageHigh(subject), 9, "imp damage high");
+    TEST_ASSERT_EQ(monsterBaseMovementSpeed(subject), 100, "imp moves at normal speed");
+    TEST_ASSERT_EQ(monsterBaseAttackSpeed(subject), 100, "imp attacks at normal speed");
+    TEST_ASSERT(monsterRegenerates(subject), "imp regenerates naturally");
+    TEST_ASSERT(monsterHasAbility(subject, MA_HIT_STEAL_FLEE),
+                "imp steals an item and flees when its attack lands");
+    TEST_ASSERT(monsterCastsBolt(subject, BOLT_BLINKING),
+                "imp blinks around the battlefield");
+    TEST_ASSERT(br69414_light_with_glow > br69414_light_without_glow,
+                "imp glows");
+    return !testFailed;
+}
+
+// The 10-turn regeneration period, watched turn by turn: a wounded imp with
+// no enemies about can only regain health through regeneration, so it must
+// sit at 1 HP for 9 turns and regain exactly one point on the 10th.
+static int br69414_regenTurns;
+
+static void br69414_regen_setup(void) {
+    trait_setup(MK_IMP);
+    makeMonsterAlly(subject);
+    setMonsterHealth(subject, 1);
+    br69414_regenTurns = 0;
+}
+
+static boolean br69414_regen_step(void) {
+    restOneTurn();
+    br69414_regenTurns++;
+    if (monsterHealth(subject) > 1) {
+        return false;
+    }
+    return br69414_regenTurns < 40;
+}
+
+static boolean br69414_regen_verify(void) {
+    TEST_ASSERT(subject != NULL, "imp spawned");
+    TEST_ASSERT_EQ(br69414_regenTurns, 10,
+                   "the imp should wait 10 turns before regenerating");
+    TEST_ASSERT_EQ(monsterHealth(subject), 2,
+                   "the imp should regain exactly one point of health per period");
+    return !testFailed;
+}
+
+// ============================================================
+// BR73845 — Goblin.  Health 15, defense 10, accuracy 70, damage
+// 2–5; regenerates every 20 turns; normal speeds.  Its attacks
+// penetrate to a second enemy in a line (BR43379), and it avoids
+// corridors while hunting (BR48373).
+//
+// The stat block, the natural-regeneration flag and the two
+// abilities are read from the spawned goblin's catalog entry.
+// The 20-turn regeneration period is watched turn by turn in the
+// same test: a wounded ally with no enemies about can only
+// regain health through regeneration, so it must sit at 1 HP
+// for 19 turns and regain exactly one point on the 20th.
+// ============================================================
+
+static int br73845_regenTurns;
+
+static void br73845_setup(void) {
+    trait_setup(MK_GOBLIN);
+    makeMonsterAlly(subject);
+    setMonsterHealth(subject, 1);
+    br73845_regenTurns = 0;
+}
+
+static boolean br73845_step(void) {
+    restOneTurn();
+    br73845_regenTurns++;
+    if (monsterHealth(subject) > 1) {
+        return false;
+    }
+    return br73845_regenTurns < 60;
+}
+
+static boolean br73845_verify(void) {
+    TEST_ASSERT(subject != NULL, "goblin spawned");
+    TEST_ASSERT_EQ(monsterMaxHealth(subject), 15, "goblin health");
+    TEST_ASSERT_EQ(monsterBaseDefense(subject), 10, "goblin defense");
+    TEST_ASSERT_EQ(monsterBaseAccuracy(subject), 70, "goblin accuracy");
+    TEST_ASSERT_EQ(monsterBaseDamageLow(subject), 2, "goblin damage low");
+    TEST_ASSERT_EQ(monsterBaseDamageHigh(subject), 5, "goblin damage high");
+    TEST_ASSERT_EQ(monsterBaseMovementSpeed(subject), 100, "goblin moves at normal speed");
+    TEST_ASSERT_EQ(monsterBaseAttackSpeed(subject), 100, "goblin attacks at normal speed");
+    TEST_ASSERT(monsterRegenerates(subject), "goblin regenerates naturally");
+    TEST_ASSERT(monsterHasAbility(subject, MA_ATTACKS_PENETRATE),
+                "goblin attacks penetrate to a second enemy in a line");
+    TEST_ASSERT(monsterHasAbility(subject, MA_AVOID_CORRIDORS),
+                "goblin avoids corridors while hunting");
+    TEST_ASSERT_EQ(br73845_regenTurns, 20,
+                   "the goblin should wait 20 turns before regenerating");
+    TEST_ASSERT_EQ(monsterHealth(subject), 2,
+                   "the goblin should regain exactly one point of health per period");
+    return !testFailed;
+}
+
 const testCase tests_bestiary[] = {
     { "BR39474_flies", br39474_setup, NULL, br39474_verify },
     { "BR10411_erratic", br10411_setup, NULL, br10411_verify },
@@ -191,5 +477,12 @@ const testCase tests_bestiary[] = {
     { "BR83147_rat_damage_high", rat_stats_setup, NULL, rat_dmg_high },
     { "BR83147_rat_movement_speed", rat_stats_setup, NULL, rat_movespeed },
     { "BR83147_rat_attack_speed", rat_stats_setup, NULL, rat_attackspeed },
+    { "BR18852_phylactery_stats_and_traits", br18852_setup, wait_100_turns_step, br18852_verify },
+    { "BR67777_spectral_sword_stats_and_traits", br67777_setup, NULL, br67777_verify },
+    { "BR45724_monkey_stats_and_traits", br45724_setup, NULL, br45724_verify },
+    { "BR45724_monkey_regenerates_every_20_turns", br45724_regen_setup, br45724_regen_step, br45724_regen_verify },
+    { "BR69414_imp_stats_and_traits", br69414_setup, NULL, br69414_verify },
+    { "BR69414_imp_regenerates_every_10_turns", br69414_regen_setup, br69414_regen_step, br69414_regen_verify },
+    { "BR73845_goblin_stats_and_regeneration", br73845_setup, br73845_step, br73845_verify },
     { NULL, NULL, NULL, NULL }
 };
