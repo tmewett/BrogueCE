@@ -1175,11 +1175,35 @@ void mainBrogueJunction() {
 
                 rogue.nextGame = NG_NOTHING;
                 initializeRogue(rogue.nextGameSeed);
-                startLevel(rogue.depthLevel, 1); // descending into level 1
 
-                mainInputLoop();
-                if(serverMode) {
+                if (screenshotDepth > 0) {
+                    rogue.depthLevel = (screenshotDepth > gameConst->deepestLevel) ? gameConst->deepestLevel : screenshotDepth;
+                    startLevel(rogue.depthLevel, 1);
+
+                    // Print the seed
+                    theEvent.controlKey = false;
+                    theEvent.shiftKey = false;
+                    theEvent.eventType = KEYSTROKE;
+                    theEvent.param1 = '~';
+                    theEvent.param2 = 0;
+                    executeEvent(&theEvent);
+
+// When running a debug build reveal whole level
+#ifdef DEBUG_ENABLED
+                    dumpLevelToScreen();
+#else
+                    displayLevel();
+#endif
+                    // Give it a moment to render to the window
+                    pauseAnimation(300, PAUSE_BEHAVIOR_DEFAULT);
+                    takeScreenshot();
                     rogue.nextGame = NG_QUIT;
+                } else {
+                    startLevel(rogue.depthLevel, 1); // descending into level 1
+                    mainInputLoop();
+                    if(serverMode) {
+                        rogue.nextGame = NG_QUIT;
+                    }
                 }
                 freeEverything();
                 break;

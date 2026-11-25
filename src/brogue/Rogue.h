@@ -2850,6 +2850,7 @@ extern boolean serverMode;
 extern boolean nonInteractivePlayback;
 extern boolean hasGraphics;
 extern enum graphicsModes graphicsMode;
+extern int screenshotDepth;
 
 #if defined __cplusplus
 extern "C" {
