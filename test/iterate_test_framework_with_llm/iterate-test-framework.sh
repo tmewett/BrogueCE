@@ -220,7 +220,7 @@ REQUIREMENTS
 Tests SHOULD NOT reference game engine components or data structures.  Use TestFramework functions which hide engine details instead.
 Tests MUST be falsifiable.  If a test succeeds when its test assertion is negated, it is not a valid test.
 
-Build Brogue for testing using: make GRAPHICS=NO TERMINAL=NO MAC_APP=NO
+Build Brogue for testing using: make GRAPHICS=NO TERMINAL=NO MAC_APP=NO TEST_FRAMEWORK=YES
 Run a specific test using: ./bin/brogue --test <<TEST_NAME>>
 "
     writeToLog "$PRMPT"

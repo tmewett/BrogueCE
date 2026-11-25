@@ -1,7 +1,7 @@
 #!/bin/zsh
 set -e
 cd "$(git rev-parse --show-toplevel)"
-make GRAPHICS=NO TERMINAL=NO MAC_APP=NO >/dev/null
+make GRAPHICS=NO TERMINAL=NO MAC_APP=NO TEST_FRAMEWORK=YES >/dev/null
 fail=0; total=0
 
 function run_times() {

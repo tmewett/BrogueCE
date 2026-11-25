@@ -325,6 +325,7 @@ int main(int argc, char *argv[])
             }
         }
 
+#ifdef BROGUE_TESTING
         if (strcmp(argv[i], "--test") == 0) {
             if (i + 1 < argc) {
                 strncpy(rogue.nextGamePath, argv[i + 1], BROGUE_FILENAME_MAX);
@@ -337,6 +338,7 @@ int main(int argc, char *argv[])
             badArgument("--test requires a test name");
             return 1;
         }
+#endif
 
         // maybe it ends with .broguesave or .broguerec, then?
         if (endswith(argv[i], GAME_SUFFIX)) {

@@ -26,3 +26,6 @@ MAC_APP := NO
 
 # Configure code coverage reporting
 COVERAGE := NO
+
+# Include the test framework
+TEST_FRAMEWORK := NO

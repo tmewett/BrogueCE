@@ -6,7 +6,7 @@ cflags := -Isrc/brogue -Isrc/platform -Isrc/variants -std=c99 \
 libs := -lm
 cppflags := -DDATADIR=$(DATADIR)
 
-sources := $(wildcard src/brogue/*.c) $(wildcard src/variants/*.c) $(addprefix src/platform/,main.c platformdependent.c null-platform.c) $(wildcard test/Test*.c)
+sources := $(wildcard src/brogue/*.c) $(wildcard src/variants/*.c) $(addprefix src/platform/,main.c platformdependent.c null-platform.c)
 objects :=
 
 ifeq ($(SYSTEM),WINDOWS)
@@ -67,6 +67,11 @@ endif
 ifeq ($(COVERAGE),YES)
 cflags += -fprofile-instr-generate -fcoverage-mapping
 cppflags += -fprofile-instr-generate -fcoverage-mapping
+endif
+
+ifeq ($(TEST_FRAMEWORK),YES)
+sources += $(wildcard test/Test*.c)
+cppflags += -DBROGUE_TESTING
 endif
 
 # Add user-provided flags.

@@ -1134,6 +1134,7 @@ void mainBrogueJunction() {
                 rogue.nextGame = NG_NOTHING;
                 initializeGameVariant();
                 break;
+#ifdef BROGUE_TESTING
             case NG_TEST:
                 // Handle test mode - run the named test
                 {
@@ -1155,6 +1156,7 @@ void mainBrogueJunction() {
                     runTestByName(testName);
                 }
                 break;
+#endif
             case NG_NEW_GAME:
             case NG_NEW_GAME_WITH_SEED:
                 rogue.nextGamePath[0] = '\0';

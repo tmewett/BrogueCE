@@ -1241,6 +1241,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
     rogue.gameHasEnded = true;
     rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
 
+#ifdef BROGUE_TESTING
     if (rogue.mode == GAME_MODE_TEST) {
         // Headless test mode: let tests assert on the text.
         if (killedBy != NULL && killedBy[0]) {
@@ -1248,6 +1249,7 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
         }
         return;
     }
+#endif
 }
 
 void victory(boolean superVictory) {

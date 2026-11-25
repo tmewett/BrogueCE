@@ -2393,6 +2393,7 @@ void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsD
     boolean repeatAgain, interaction;
     short pauseDuration;
 
+#ifdef BROGUE_TESTING
     if (rogue.mode == GAME_MODE_TEST) {
         // Headless test mode: never touch the console.  Answer prompts from the
         // test's queued input, or escape if the queue is empty so nothing blocks.
@@ -2405,6 +2406,7 @@ void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsD
         }
         return;
     }
+#endif
 
     returnEvent->eventType = EVENT_ERROR;
 
@@ -3465,6 +3467,7 @@ void message(const char *msg, unsigned long flags) {
     archivedMessage *archiveEntry;
     boolean newMessage;
 
+#ifdef BROGUE_TESTING
     if (rogue.mode == GAME_MODE_TEST) {
         // Headless test mode: suppress display but let tests assert on the text.
         if (msg != NULL && msg[0]) {
@@ -3472,6 +3475,7 @@ void message(const char *msg, unsigned long flags) {
         }
         return;
     }
+#endif
 
     if (msg == NULL || !msg[0]) {
         return;
@@ -4992,9 +4996,11 @@ short printTextBox(char *textBuf, short x, short y, short width,
                    brogueButton *buttons, short buttonCount) {
     short x2, y2, lineCount, i, bx, by, padLines;
 
+#ifdef BROGUE_TESTING
     if (rogue.mode == GAME_MODE_TEST && textBuf != NULL) {
         recordTestMessage(textBuf);
     }
+#endif
 
     if (width <= 0) {
         // autocalculate y and width
