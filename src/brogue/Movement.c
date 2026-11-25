@@ -1840,10 +1840,9 @@ void populateCreatureCostMap(short **costMap, const creature *monst) {
 
             if ((cFlags & KNOWN_TO_BE_TRAP_FREE)
                 || (monst != &player && monst->creatureState != MONSTER_ALLY)
-                || monst->status[STATUS_LEVITATING]
-                    > distanceBetween((pos){i, j}, monst->loc) * monst->movementSpeed / 100) {
+                || monst->status[STATUS_LEVITATING]) {
                 // Traps can't be triggered while levitating, so there's no reason to prefer
-                // known trap-free cells that can be reached before levitation runs out.
+                // known trap-free cells.
 
                 costMap[i][j] = 10;
             } else {
