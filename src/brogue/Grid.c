@@ -156,6 +156,13 @@ void drawCircleOnGrid(short **grid, short x, short y, short radius, short value)
     }
 }
 
+// Returns true if loc is within the given radius of center, approximating a
+// circle. Used by the blast effects and their expanding flashes so that both
+// cover the same tiles.
+boolean withinBlastRadius(pos center, pos loc, short radius) {
+    return (center.x - loc.x) * (center.x - loc.x) + (center.y - loc.y) * (center.y - loc.y) <= radius * radius + radius;
+}
+
 // Fills grid locations with the given value if they match any terrain flags or map flags.
 // Otherwise does not change the grid location.
 void getTerrainGrid(short **grid, short value, unsigned long terrainFlags, unsigned long mapFlags) {
