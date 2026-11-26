@@ -466,11 +466,18 @@ short randValidDirectionFrom(creature *monst, short x, short y, boolean respectA
     for (i=0; i<8; i++) {
         newX = x + nbDirs[i][0];
         newY = y + nbDirs[i][1];
+        const pos newPos = (pos){ newX, newY };
         if (coordinatesAreInMap(newX, newY)
-            && !cellHasTerrainFlag((pos){ newX, newY }, T_OBSTRUCTS_PASSABILITY)
+            && !cellHasTerrainFlag(newPos, T_OBSTRUCTS_PASSABILITY)
             && !diagonalBlocked(x, y, newX, newY, false)
-            && (!respectAvoidancePreferences
-                || (!monsterAvoids(monst, (pos){newX, newY}))
+            // #841: sacred ground (scroll of sanctuary glyphs) is a hard ward, not just an avoidance
+            // preference. A confused monster stumbles with respectAvoidancePreferences == false, which
+            // would otherwise let it wander onto a glyph it could never willingly cross; so sacred tiles
+            // get the avoidance/attack check regardless. A monster may still step onto the glyph to
+            // attack a player standing on it, and the player is sacred-immune so monsterAvoids never
+            // restricts the confused player.
+            && ((!cellHasTerrainFlag(newPos, T_SACRED) && !respectAvoidancePreferences)
+                || !monsterAvoids(monst, newPos)
                 || ((pmap[newX][newY].flags & HAS_PLAYER) && monst->creatureState != MONSTER_ALLY))) {
             validDirections[count++] = i;
         }
