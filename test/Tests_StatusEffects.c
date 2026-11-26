@@ -801,6 +801,62 @@ static boolean br25391_fire_immunity_counter_set(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR91998 — the player must confirm before diving into a
+// chasm, and levitation removes the confirmation.
+//
+// The control case shows a known chasm one step east asking
+// "Dive into the depths?"; the queued "no" cancels the move,
+// so the player stays put.  The levitating case queues the
+// same "no" as a trap: if the game still asked, the move would
+// be cancelled and the position assertion would fail.  With
+// levitation running the unconfirmed step goes through and the
+// player ends up hovering over the chasm, not falling.
+// ============================================================
+
+static pos br91998_start;
+static pos br91998_chasm;
+static int br91998_depth;
+
+static void br91998_chasm_setup(void) {
+    clearArena();
+    br91998_start = getPlayerPos();
+    br91998_depth = currentDepth();
+    br91998_chasm = posOffset(br91998_start, 1, 0);
+    setTerrain(br91998_chasm, CHASM);
+    revealCell(br91998_chasm); // the confirmation only applies to a known chasm
+    queueConfirmNo();          // answered "no" only if the game asks at all
+}
+
+static void br91998_levitating_setup(void) {
+    br91998_chasm_setup();
+    applyStatusToPlayer(STATUS_LEVITATING, 20);
+}
+
+static boolean br91998_step_right(void) {
+    moveRight();
+    return false;
+}
+
+static boolean br91998_dive_asks_for_confirmation(void) {
+    TEST_ASSERT(messageWasShown("Dive into the depths?"),
+                "the player should be asked to confirm before diving into a chasm");
+    TEST_ASSERT(playerIsAt(br91998_start),
+                "declining the dive confirmation should cancel the step");
+    return !testFailed;
+}
+
+static boolean br91998_levitation_removes_confirmation(void) {
+    TEST_ASSERT(isPlayerLevitating(), "setup: the player should be levitating");
+    TEST_ASSERT(!messageWasShown("Dive into the depths?"),
+                "levitating, the player should not be asked to confirm the dive");
+    TEST_ASSERT(playerIsAt(br91998_chasm),
+                "levitating, the unconfirmed step should carry the player over the chasm");
+    TEST_ASSERT_EQ(currentDepth(), br91998_depth,
+                   "levitating over the chasm should leave the player on the same level");
+    return !testFailed;
+}
+
 const testCase tests_status_effects[] = {
     { "BR97529_telepathy_counter_decrements",   telepathy_decrement_setup,      rest_one_turn_step, status_decremented_by_one },
     { "BR97529_hallucination_counter_decrements", hallucination_decrement_setup, rest_one_turn_step, status_decremented_by_one },
@@ -862,6 +918,9 @@ const testCase tests_status_effects[] = {
     { "BR45966_lava_step_refused_without_exception", br45966_lava_setup,     br45966_step_right, br45966_refused_without_an_exception },
     { "BR45966_levitation_steps_into_lava",          br45966_levitating_setup, br45966_step_right, br45966_exception_steps_onto_lava },
     { "BR45966_fire_immunity_steps_into_lava",       br45966_fire_immune_setup, br45966_step_right, br45966_exception_steps_onto_lava },
+
+    { "BR91998_chasm_dive_asks_for_confirmation",    br91998_chasm_setup,       br91998_step_right, br91998_dive_asks_for_confirmation },
+    { "BR91998_levitation_removes_dive_confirmation", br91998_levitating_setup,  br91998_step_right, br91998_levitation_removes_confirmation },
 
     { NULL, NULL, NULL, NULL }
 };

@@ -1927,6 +1927,116 @@ static boolean br61713_verify(void) {
 }
 
 // ---------------------------------------------
+// BR61728 — an allied monster that can blink teleports
+// toward the nearest enemy, using a distance map it constructs
+// ---------------------------------------------
+
+static creature *br61728_ally;
+static creature *br61728_nearest;
+static creature *br61728_far;
+static pos br61728_allyBefore, br61728_allyAfter;
+static int br61728_nearestBefore, br61728_nearestAfter;
+static int br61728_farBefore, br61728_farAfter;
+static int br61728_maxJump;
+
+static int br61728_chebyshev(pos a, pos b) {
+    int dx = a.x - b.x;
+    int dy = a.y - b.y;
+    if (dx < 0) dx = -dx;
+    if (dy < 0) dy = -dy;
+    return (dx > dy ? dx : dy);
+}
+
+static void br61728_setup(void) {
+    setArenaRadius(16, FLOOR);
+    pos p = getPlayerPos();
+    // The ally three squares from you, its nearest enemy twelve squares
+    // beyond it, and a visible enemy the other way fifteen squares from the
+    // ally, so "nearest" is a real choice between two foes.  Pick the side of
+    // you that has room for both enemies.
+    boolean westRoom = (p.x - 15 >= 0 && p.x + 12 <= levelWidth() - 1);
+    int dir = westRoom ? -1 : 1;
+    TEST_ASSERT(westRoom || (p.x + 15 <= levelWidth() - 1 && p.x - 12 >= 0),
+                "setup: there should be room for the enemy squares");
+
+    restOneTurn(); // establish sight over the cleared floor
+
+    br61728_ally = spawnMonster(MK_WINGED_GUARDIAN, posOffset(p, 3 * dir, 0));
+    makeMonsterAlly(br61728_ally);
+    makeMonsterFollowPlayer(br61728_ally);
+    makeMonsterNotFollowPlayer(br61728_ally); // holds no leash: it acts on enemies wherever they are
+    TEST_ASSERT(cellIsVisible(monsterPosition(br61728_ally)),
+                "setup: the ally must stand within sight of the player");
+
+    // The nearest enemy is invisible: the ally's scan for the enemy it walks
+    // toward notices an invisible foe only by chance, while the distance map
+    // it builds for its blink sees every enemy.  A blink therefore heads for
+    // the invisible nearest enemy instead of the visible farther one.
+    br61728_nearest = spawnMonster(MK_RAT, posOffset(p, 15 * dir, 0));
+    makeMonsterHostile(br61728_nearest);
+    applyStatusToMonster(br61728_nearest, STATUS_INVISIBLE, 50);
+
+    br61728_far = placeHostileMonster(MK_RAT, posOffset(p, -12 * dir, 0));
+}
+
+static boolean br61728_step(void) {
+    br61728_allyBefore = monsterPosition(br61728_ally);
+    br61728_nearestBefore = br61728_chebyshev(br61728_allyBefore,
+                                              monsterPosition(br61728_nearest));
+    br61728_farBefore = br61728_chebyshev(br61728_allyBefore,
+                                          monsterPosition(br61728_far));
+
+    // Give the ally turns until it blinks.  On a turn where its enemy scan
+    // happens to notice the invisible foe it just steps one square toward
+    // it; each turn re-rolls that scan, and a blink follows with overwhelming
+    // probability well within the cap.
+    pos prev = br61728_allyBefore;
+    br61728_maxJump = 0;
+    for (int turn = 0; turn < 40; turn++) {
+        monsterTakesTurn(br61728_ally);
+        pos now = monsterPosition(br61728_ally);
+        int jump = br61728_chebyshev(now, prev);
+        if (jump > br61728_maxJump) {
+            br61728_maxJump = jump;
+        }
+        prev = now;
+        if (jump > 1) {
+            break; // a blink, not a step
+        }
+    }
+    br61728_allyAfter = prev;
+    br61728_nearestAfter = br61728_chebyshev(br61728_allyAfter,
+                                             monsterPosition(br61728_nearest));
+    br61728_farAfter = br61728_chebyshev(br61728_allyAfter,
+                                         monsterPosition(br61728_far));
+
+    // End a player turn: its schedule flushes the buffered "blinks" combat
+    // message into the log.  All distances are already captured above, so
+    // whatever the creatures do during that turn cannot change them.
+    restOneTurn();
+    return false;
+}
+
+static boolean br61728_ally_blinks_toward_nearest_enemy(void) {
+    TEST_ASSERT(monsterIsAlly(br61728_ally), "precondition: the subject is an ally");
+    TEST_ASSERT_EQ(br61728_nearestBefore, 12,
+                   "precondition: the nearest enemy is twelve squares beyond the ally");
+    TEST_ASSERT_EQ(br61728_farBefore, 15,
+                   "precondition: the other enemy is fifteen squares from the ally");
+    TEST_ASSERT(messageWasShown("blinks"),
+                "an allied monster that can blink should blink instead of walking");
+    TEST_ASSERT(!posEq(br61728_allyAfter, br61728_allyBefore),
+                "the blink should teleport the ally to a new square");
+    TEST_ASSERT(br61728_maxJump > 1,
+                "the blink should jump several squares at once, not step one");
+    TEST_ASSERT(br61728_nearestAfter < br61728_nearestBefore,
+                "the blink should carry the ally toward its nearest enemy");
+    TEST_ASSERT(br61728_farAfter > br61728_farBefore,
+                "the blink should not carry the ally toward the farther enemy");
+    return !testFailed;
+}
+
+// ---------------------------------------------
 // BR75632 — each of a monster's timed conditions, such as slowness,
 // haste, levitation, invisibility, poisoning and discord, counts down
 // by one per turn
@@ -2267,6 +2377,7 @@ const testCase tests_monsters[] = {
     { "BR44597_hallucinated_monster_names", br44597_setup, br44597_step, br44597_verify },
 
     { "BR61713_hunting_blinker_teleports_up_scent_trail", br61713_setup, br61713_step, br61713_verify },
+    { "BR61728_ally_blinks_toward_nearest_enemy",   br61728_setup, br61728_step, br61728_ally_blinks_toward_nearest_enemy },
 
     { "BR58883_no_attack_bolt_at_embedded_creature", br58883_setup, br58883_step, br58883_no_attack_bolt_at_embedded_creature },
 

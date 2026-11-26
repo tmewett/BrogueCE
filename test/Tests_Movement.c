@@ -787,10 +787,37 @@ static boolean trap_free_route_was_taken(void) {
 // BR91235 — every 100 ticks staffs recharge and charms count down
 // ============================================================
 
+// The three tests below sample the rule's 100-tick environment cycle one
+// update at a time.  While the player is hasted a rest costs 50 ticks — half
+// a cycle — so a rest can fall entirely between two environment updates:
+// restAndDetectUpdate() reports whether an update fired during the rest
+// (the cycle counter only rises past its old value when it wraps and the
+// update runs; it falls by 50 when no update did), and every test records
+// that recharge/countdown state moves only on rests where one fired.  The
+// helper also remembers any reading above the rule's 100-tick period, so a
+// cycle that ran long cannot pass unnoticed.  Each test re-hastes itself for
+// far longer than its budget, keeping every rest at a steady 50 ticks; the
+// haste expiry that would re-anchor the cycle mid-test never happens.
+static boolean cadenceCycleTooLong;
+
+static boolean restAndDetectUpdate(void) {
+    int ticksBefore = ticksUntilEnvironmentUpdate();
+    restOneTurn();
+    int ticksAfter = ticksUntilEnvironmentUpdate();
+    if (ticksAfter > 100) {
+        cadenceCycleTooLong = true;
+    }
+    return ticksAfter > ticksBefore;
+}
+
 static item *spentStaff;
 static int staffChargesBeforeZap;
 static int staffChargesAfterZap;
-static int rechargeRestTurns;
+static int staffChargesLastSeen;
+static int staffUpdatesSeen;
+static boolean staffChargedBetweenUpdates;
+static boolean staffChargedTwicePerUpdate;
+static int staffRests;
 
 // Zap a monster with a fresh staff so the staff ends up one charge short of
 // full, then clear the dungeon so nothing interferes while the charge returns.
@@ -799,7 +826,7 @@ static void staff_recharge_setup(void) {
     setPlayerNutrition(2000);
     spentStaff = givePlayerItem(STAFF, STAFF_LIGHTNING, 0);
     staffChargesBeforeZap = itemCharges(spentStaff);
-    placeHostileMonster(MK_RAT, posOffset(player.loc, 3, 0));
+    placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 3, 0));
     // A turn ends with a sidebar refresh, and auto-targeting reads the
     // sidebar's list of visible creatures to pick what to aim at.
     restOneTurn();
@@ -807,18 +834,42 @@ static void staff_recharge_setup(void) {
     applyPackItem(STAFF, STAFF_LIGHTNING);
     clearMonsters();
     staffChargesAfterZap = itemCharges(spentStaff);
-    rechargeRestTurns = 0;
+    hastePlayer(30000);
+    cadenceCycleTooLong = false;
+    staffChargesLastSeen = staffChargesAfterZap;
+    staffUpdatesSeen = 0;
+    staffChargedBetweenUpdates = false;
+    staffChargedTwicePerUpdate = false;
+    staffRests = 0;
 }
 
 static boolean staff_recharge_step(void) {
-    restOneTurn();
-    rechargeRestTurns++;
-    return itemCharges(spentStaff) <= staffChargesAfterZap && rechargeRestTurns < 400;
+    boolean updated = restAndDetectUpdate();
+    staffRests++;
+    int chargesNow = itemCharges(spentStaff);
+    if (updated) {
+        staffUpdatesSeen++;
+        if (chargesNow > staffChargesLastSeen + 1) {
+            staffChargedTwicePerUpdate = true;
+        }
+    } else if (chargesNow != staffChargesLastSeen) {
+        staffChargedBetweenUpdates = true;
+    }
+    staffChargesLastSeen = chargesNow;
+    return chargesNow <= staffChargesAfterZap && staffRests < 1000;
 }
 
 static boolean spent_staff_recharges(void) {
     TEST_ASSERT_EQ(staffChargesAfterZap, staffChargesBeforeZap - 1,
                    "zapping should cost the staff one charge");
+    TEST_ASSERT(staffUpdatesSeen > 0,
+                "setup: environment updates should pass while resting");
+    TEST_ASSERT(!cadenceCycleTooLong,
+                "the environment cycle should never exceed the rule's 100 ticks");
+    TEST_ASSERT(!staffChargedBetweenUpdates,
+                "a charge must not return between environment updates");
+    TEST_ASSERT(!staffChargedTwicePerUpdate,
+                "no more than one charge may return per environment update");
     TEST_ASSERT(itemCharges(spentStaff) > staffChargesAfterZap,
                 "a staff that is short a charge should recharge over time");
     return !testFailed;
@@ -826,25 +877,45 @@ static boolean spent_staff_recharges(void) {
 
 static item *fullStaff;
 static int fullStaffCharges;
-static int fullStaffRestTurns;
+static int fullStaffChargesLastSeen;
+static int fullStaffUpdatesSeen;
+static boolean fullStaffEverChanged;
+static int fullStaffRests;
 
 static void full_staff_setup(void) {
     setArenaRadius(4, FLOOR);
     setPlayerNutrition(2000);
     fullStaff = givePlayerItem(STAFF, STAFF_LIGHTNING, 0);
     fullStaffCharges = itemCharges(fullStaff);
-    fullStaffRestTurns = 0;
+    hastePlayer(30000);
+    cadenceCycleTooLong = false;
+    fullStaffChargesLastSeen = fullStaffCharges;
+    fullStaffUpdatesSeen = 0;
+    fullStaffEverChanged = false;
+    fullStaffRests = 0;
 }
 
 static boolean full_staff_rest_step(void) {
-    restOneTurn();
-    fullStaffRestTurns++;
-    return fullStaffRestTurns < 60;
+    if (restAndDetectUpdate()) {
+        fullStaffUpdatesSeen++;
+    }
+    fullStaffRests++;
+    if (itemCharges(fullStaff) != fullStaffChargesLastSeen) {
+        fullStaffEverChanged = true;
+        fullStaffChargesLastSeen = itemCharges(fullStaff);
+    }
+    return fullStaffRests < 60;
 }
 
 static boolean full_staff_gains_no_charges(void) {
     TEST_ASSERT(fullStaffCharges > 0,
                 "a freshly found staff should start out carrying charges");
+    TEST_ASSERT(fullStaffUpdatesSeen > 0,
+                "setup: environment updates should pass while resting");
+    TEST_ASSERT(!cadenceCycleTooLong,
+                "the environment cycle should never exceed the rule's 100 ticks");
+    TEST_ASSERT(!fullStaffEverChanged,
+                "a full staff's charge count must never change");
     TEST_ASSERT_EQ(itemCharges(fullStaff), fullStaffCharges,
                    "a staff that is already full should not gain more charges");
     return !testFailed;
@@ -852,27 +923,57 @@ static boolean full_staff_gains_no_charges(void) {
 
 static item *countdownCharm;
 static int charmChargesWhenUsed;
-static int charmRestTurns;
+static int charmChargesLastSeen;
+static int charmUpdatesSeen;
+static boolean charmChangedBetweenUpdates;
+static boolean charmCountdownSkipped;
+static int charmRests;
 
 static void charm_countdown_setup(void) {
     setArenaRadius(4, FLOOR);
     setPlayerNutrition(2000);
     countdownCharm = givePlayerItem(CHARM, CHARM_HASTE, 3);
-    charmChargesWhenUsed = 0;
     applyPackItem(CHARM, CHARM_HASTE);
     charmChargesWhenUsed = itemCharges(countdownCharm);
-    charmRestTurns = 0;
+    // Activating the charm hastes you as well; overwriting that with our own
+    // long duration pins the 50-tick rest for the whole countdown.
+    hastePlayer(30000);
+    cadenceCycleTooLong = false;
+    charmChargesLastSeen = charmChargesWhenUsed;
+    charmUpdatesSeen = 0;
+    charmChangedBetweenUpdates = false;
+    charmCountdownSkipped = false;
+    charmRests = 0;
 }
 
 static boolean charm_countdown_step(void) {
-    restOneTurn();
-    charmRestTurns++;
-    return itemCharges(countdownCharm) > 0 && charmRestTurns < 1000;
+    boolean updated = restAndDetectUpdate();
+    charmRests++;
+    int chargesNow = itemCharges(countdownCharm);
+    if (updated) {
+        charmUpdatesSeen++;
+        int expected = charmChargesLastSeen > 0 ? charmChargesLastSeen - 1 : 0;
+        if (chargesNow != expected) {
+            charmCountdownSkipped = true;
+        }
+    } else if (chargesNow != charmChargesLastSeen) {
+        charmChangedBetweenUpdates = true;
+    }
+    charmChargesLastSeen = chargesNow;
+    return chargesNow > 0 && charmRests < 3000;
 }
 
 static boolean charm_counts_down_to_recharged(void) {
     TEST_ASSERT(charmChargesWhenUsed > 0,
                 "using a charm should start its recharge countdown");
+    TEST_ASSERT(charmUpdatesSeen > 0,
+                "setup: environment updates should pass while resting");
+    TEST_ASSERT(!cadenceCycleTooLong,
+                "the environment cycle should never exceed the rule's 100 ticks");
+    TEST_ASSERT(!charmChangedBetweenUpdates,
+                "a charm's countdown must not run between environment updates");
+    TEST_ASSERT(!charmCountdownSkipped,
+                "each environment update should run the countdown down by exactly one");
     TEST_ASSERT_EQ(itemCharges(countdownCharm), 0,
                    "a used charm's countdown should run all the way down to recharged");
     TEST_ASSERT(messageWasShown("has recharged"),

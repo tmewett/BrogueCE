@@ -138,9 +138,9 @@ Note: Globals.c:133-135 defines the dark fore color and edge back colors that re
 
 ------------------------------------------------------------
 BR16685 — NEW rule
-"Fire burns in bright orange and yellow that flickers with every refresh."
+"Fire burns bright orange and flickers with every refresh."
 Citation: [Globals.c:136-136](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L136-L136)
-Note: Globals.c:136 defines fire's bright orange-yellow fore color with colorDances set, so fire flickers with every refresh. Existing fire rules cover burning and damage, but none describes fire's color or flickering. ID BR16685 is unique across rules/.
+Note: Globals.c:136 defines fire's bright orange fore color with colorDances set, so fire flickers with every refresh. Existing fire rules cover burning and damage, but none describes fire's color or flickering. ID BR16685 is unique across rules/.
 
 ------------------------------------------------------------
 BR40964 — NEW rule
@@ -735,3 +735,21 @@ BR36929 — NEW rule
 "While you are confused, you are never asked "Venture into flame?" before moving into visible fire — the confirmation is skipped entirely, so a confused stumble into flame happens with no prompt."
 Citation: [Movement.c:1072-1078](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L1072-L1078)
 Note: Movement.c:1073 is the `!player.status[STATUS_CONFUSED]` guard inside the fire-confirmation block (Movement.c:1072-1082); when the player is confused the whole `else if` fails, so the "Venture into flame?" prompt at Movement.c:1078 never appears and the move proceeds unconfirmed. BR95206 covers the prompt and its burning/fire-immunity exemptions but does not mention confusion, and no rule in rules/* describes confusion bypassing this confirmation. ID BR36929 is unique across all rule files.
+
+------------------------------------------------------------
+BR22313 — NEW rule
+"When the game takes a square root — the fixed-point math behind distance-based effects such as light fading with distance — a whole-number input from 0 to 127 returns the exact square root from a built-in table of precomputed values, so for those inputs the result is precisely correct rather than an approximation."
+Citation: [Math.c:226-242](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Math.c#L226-L242)
+Note: Math.c:226-235 declares the SQUARE_ROOTS lookup table of exact fixed-point square roots for the integers 0 through 127, and Math.c:239-242 is the guard that returns the corresponding table entry when the input is such an integer; fp_sqrt's consumers include light falloff (Light.c:93), light smoothing (IO.c:1733), local light radius (IO.c:2075), cone-shaped field geometry (Movement.c:2419), and the ranged-chance power table (PowerTables.c:337). Lines 244-246 of the cited range only compute the input's binary magnitude to bracket the bisection whose actual search loop lies outside the range (Math.c:248-258), so they yield no separate in-game observation and need no rule of their own. No rule in rules/* mentions fp_sqrt, square roots, or this exact-value fast path, and none cites Math.c for it. ID BR22313 is unique across all rule files.
+
+------------------------------------------------------------
+BR15493 — NEW rule
+"The square-root calculation preserves the sign of its input: asking for the square root of a negative amount returns the negated square root of its magnitude, so the result is negative exactly when the input is negative."
+Citation: [Math.c:237-237](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Math.c#L237-L237)
+Note: Math.c:237 is the negative-input branch of fp_sqrt: for u < 0 it recurses on -u and negates the result, so the function is odd-symmetric. fp_sqrt feeds distance-sensitive effects such as light falloff (Light.c:93), so signed differences passed to it stay signed through the square root. No rule in rules/* describes this sign behavior of the game's square-root calculation, and none cites Math.c's fp_sqrt at all. ID BR15493 is unique across all rule files.
+
+------------------------------------------------------------
+BR30792 — NEW rule
+"The title screen shows the current game mode at the bottom left: 'Wizard Mode' in wizard mode and 'Easy Mode' in easy mode, while normal mode shows nothing there."
+Citation: [MainMenu.c:51-63](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L51-L63), [MainMenu.c:428-429](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L428-L429)
+Note: MainMenu.c:428-429 documents that the chosen game mode is displayed in the bottom left of the title screen (except normal mode); the behavior is implemented in drawMenuFlames, where MainMenu.c:51-56 builds the string only for wizard or easy mode and MainMenu.c:62-63 plots it along the bottom row at the left edge (the version string occupies the right side). BR85257, BR43510, BR47986, and the Change Mode dialog rules describe the mode-chooser dialog, and BR53953 describes the game mode in the in-game dungeon-seed report, but no rule in rules/* describes the mode indicator on the title screen itself. ID BR30792 is unique across rules/ and test/.

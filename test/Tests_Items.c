@@ -1467,6 +1467,37 @@ static boolean br75263_auto_target_picks_only_a_valid_target(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR44912 — a scroll of teleportation teleports you to
+// another part of the level.
+//
+// The destination is a random legal square you cannot
+// currently see and that lies at least two squares from where
+// you stand, so reading the scroll has to change your position
+// while the depth you are on stays the same.
+// ============================================================
+
+static pos br44912_start;
+static int br44912_depth;
+
+static void br44912_setup(void) {
+    br44912_start = getPlayerPos();
+    br44912_depth = currentDepth();
+}
+
+static boolean br44912_step(void) {
+    readScrollOfKind(SCROLL_TELEPORT);
+    return false;
+}
+
+static boolean br44912_teleports_to_another_part_of_the_level(void) {
+    TEST_ASSERT(!playerIsAt(br44912_start),
+                "the scroll should teleport the player to another square of the level");
+    TEST_ASSERT_EQ(currentDepth(), br44912_depth,
+                   "the scroll should teleport you within the level, not off it");
+    return !testFailed;
+}
+
 const testCase tests_items[] = {
     { "BR58888_throwing_weapons_never_magical",     br58888_setup,             NULL, throwing_weapons_are_never_magical },
 
@@ -1536,6 +1567,8 @@ const testCase tests_items[] = {
     { "BR69624_runic_armor_runes_fade_at_zero",   br69624_armor_setup,   br69624_armor_struck_step,   br69624_armor_runes_fade_at_zero },
 
     { "BR75263_auto_target_picks_only_a_valid_target", br75263_setup, br75263_zap_aim_step, br75263_auto_target_picks_only_a_valid_target },
+
+    { "BR44912_scroll_teleportation_moves_you",   br44912_setup,  br44912_step, br44912_teleports_to_another_part_of_the_level },
 
     { NULL, NULL, NULL, NULL }
 };
