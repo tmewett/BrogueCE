@@ -6,8 +6,8 @@
 // diverge while you are paralyzed, the wording the Change Mode dialog uses
 // for Wizard mode, the opacity menu buttons are painted with, the
 // decorative random-number stream button painting uses, the reach of a pile
-// of unicorn poop's rainbow glow, and where a guardian charm places its
-// guardian.
+// of unicorn poop's rainbow glow, the radius and edge brightness of a crystal
+// wall's glow, and where a guardian charm places its guardian.
 //
 // Omitted are everything that needs a recording or a run history, neither of
 // which the pending rules describe headlessly.
@@ -389,6 +389,442 @@ static boolean br19494_glow_ends_at_two_tiles(void) {
     return !testFailed;
 }
 
+
+// ============================================================
+// BR27383 — a crystal wall glows over a randomly chosen radius of
+// 3 to 5 tiles, with the light dimming to half brightness at the
+// edge of the glow.
+//
+// A bare floor is laid out with the player far enough away that the
+// miner's light cannot reach the probes, and the probes are sampled
+// once without a crystal wall as the control.  Each lighting pass
+// rolls a new radius, and the outward field-of-view stops just short
+// of the exact radius, so the last lit tile lies at 2, 3 or 4 tiles
+// for a radius of 3, 4 or 5.  Over many passes all three extents must
+// occur (the radius really is random across its whole range), no
+// pass may light a fifth tile (the radius never exceeds 5), and the
+// glow must be continuous.  The outermost lit tile's brightness
+// relative to the crystal wall's own tile is the edge fade: about
+// half, which rules out both a fade to nothing and no fade at all.
+// ============================================================
+
+#define BR27383_TRIALS 128
+
+static pos br27383_source;
+static int br27383_extentCounts[7];
+static int br27383_minEdgePercent;
+static int br27383_maxEdgePercent;
+static int br27383_baselineLit;
+static int br27383_sourceDark;
+static int br27383_gaps;
+
+static void br27383_setup(void) {
+    clearMonsters();
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            setTerrain(posAt(x, y), FLOOR);
+        }
+    }
+    setPlayerPos(posAt(levelWidth() / 2, levelHeight() / 2));
+    // The miner's light bottoms out at two tiles, which cannot reach the
+    // probes eight tiles away.
+    setLightMultiplier(0);
+
+    br27383_source = posOffset(getPlayerPos(), 8, 0);
+    recomputeLighting();
+    br27383_baselineLit = 0;
+    for (int d = 0; d <= 6; d++) {
+        if (lightAt(posOffset(br27383_source, d, 0)) > 0) {
+            br27383_baselineLit++;
+        }
+    }
+
+    setTerrain(br27383_source, CRYSTAL_WALL);
+    for (int d = 0; d <= 6; d++) {
+        br27383_extentCounts[d] = 0;
+    }
+    br27383_minEdgePercent = 1000;
+    br27383_maxEdgePercent = -1;
+    br27383_sourceDark = 0;
+    br27383_gaps = 0;
+
+    for (int trial = 0; trial < BR27383_TRIALS; trial++) {
+        int lights[7];
+        int far = 0;
+        recomputeLighting();
+        int sourceLight = lightAt(br27383_source);
+        if (sourceLight <= 0) {
+            br27383_sourceDark++;
+            continue;
+        }
+        for (int d = 1; d <= 6; d++) {
+            lights[d] = lightAt(posOffset(br27383_source, d, 0));
+            if (lights[d] > 0) {
+                far = d;
+            }
+        }
+        for (int d = 1; d <= far; d++) {
+            if (lights[d] == 0) {
+                br27383_gaps++;
+            }
+        }
+        if (far > 0) {
+            br27383_extentCounts[far]++;
+            int edgePercent = lights[far] * 100 / sourceLight;
+            if (edgePercent < br27383_minEdgePercent) {
+                br27383_minEdgePercent = edgePercent;
+            }
+            if (edgePercent > br27383_maxEdgePercent) {
+                br27383_maxEdgePercent = edgePercent;
+            }
+        }
+    }
+}
+
+static boolean br27383_crystal_wall_glow_radius_and_edge(void) {
+    TEST_ASSERT_EQ(br27383_baselineLit, 0,
+                   "control: without a crystal wall nothing lights the probes");
+    TEST_ASSERT_EQ(br27383_sourceDark, 0,
+                   "a crystal wall should always glow on its own tile");
+
+    TEST_ASSERT(br27383_extentCounts[2] > 0,
+                "the glow should sometimes reach only two tiles past its origin, "
+                "which is a three-tile light radius");
+    TEST_ASSERT(br27383_extentCounts[3] > 0,
+                "the glow should sometimes reach three tiles, a four-tile light radius");
+    TEST_ASSERT(br27383_extentCounts[4] > 0,
+                "the glow should sometimes reach four tiles, a five-tile light radius");
+    TEST_ASSERT_EQ(br27383_extentCounts[1], 0,
+                   "the light radius should never fall below three tiles");
+    TEST_ASSERT_EQ(br27383_extentCounts[5], 0,
+                   "the light radius should never exceed five tiles");
+    TEST_ASSERT_EQ(br27383_extentCounts[6], 0,
+                   "the light radius should never exceed five tiles");
+    TEST_ASSERT_EQ(br27383_gaps, 0,
+                   "the glow should fill every tile out to its edge without gaps");
+
+    TEST_ASSERT(br27383_minEdgePercent >= 45,
+                "the edge of the glow should still carry about half the source brightness");
+    TEST_ASSERT(br27383_maxEdgePercent <= 75,
+                "the edge of the glow should dim to about half brightness, not stay near full");
+    return !testFailed;
+}
+
+// ============================================================
+// BR33689 — the first time the vulnerability armor's rune takes
+// effect, the game tells you "your <armor> pulses and you are
+// wracked with pain!" and the armor is identified; once the rune
+// is known, triggering it again produces no message.
+//
+// The player wears an unidentified suit of vulnerability armor
+// and is paralyzed so the adjacent rat's blows cannot miss.  The
+// first blow must land, announce the rune and identify it; the
+// second blow must land too (health falls again) but must not
+// repeat the announcement.  Clearing the message log between the
+// blows keeps the second check independent of the first.
+// ============================================================
+
+static item *br33689_armor;
+static creature *br33689_attacker;
+static boolean br33689_firstMessage;
+static boolean br33689_secondMessage;
+static boolean br33689_firstIdentified;
+static int br33689_healthAfterFirst;
+static int br33689_healthAfterSecond;
+
+static void br33689_setup(void) {
+    clearArena();
+    br33689_armor = givePlayerRunicArmor(CHAIN_MAIL, A_VULNERABILITY, 10, false);
+    setPlayerHealth(1000);
+    br33689_attacker = placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 1, 0));
+    // A paralyzed defender is hit without a roll, so both blows are guaranteed
+    // to reach the armor's rune handler.
+    applyStatusToPlayer(STATUS_PARALYZED, 100);
+
+    clearMessages();
+    monsterAttacksPlayer(br33689_attacker);
+    br33689_firstMessage = messageWasShown("wracked with pain");
+    br33689_firstIdentified = runicIsIdentified(br33689_armor);
+    br33689_healthAfterFirst = playerHealth();
+
+    // The first blow's morale check shakes off paralysis, so restore it to
+    // guarantee that the second blow lands as well.
+    applyStatusToPlayer(STATUS_PARALYZED, 100);
+    clearMessages();
+    monsterAttacksPlayer(br33689_attacker);
+    br33689_secondMessage = messageWasShown("wracked with pain");
+    br33689_healthAfterSecond = playerHealth();
+}
+
+static boolean br33689_first_trigger_announces_and_identifies(void) {
+    TEST_ASSERT(br33689_healthAfterFirst < 1000,
+                "control: the first blow should land");
+    TEST_ASSERT(br33689_firstMessage,
+                "the first triggering of the vulnerability rune should announce that you are wracked with pain");
+    TEST_ASSERT(br33689_firstIdentified,
+                "the first triggering should identify the armor's rune");
+
+    TEST_ASSERT(br33689_healthAfterSecond < br33689_healthAfterFirst,
+                "control: the second blow should land");
+    TEST_ASSERT(!br33689_secondMessage,
+                "once the rune is known, triggering it again should produce no message");
+    return !testFailed;
+}
+
+// ============================================================
+// BR34933 — wall-mounted torches cast a warm orange light
+// reaching 10 tiles, and candles on altars and pedestals cast
+// the same orange light reaching 2 to 4 tiles; both shades
+// flicker at every screen refresh.  Before it is triggered, a
+// wired wall torch draws its flame in that same flickering
+// orange.
+//
+// A bare floor keeps every other light source away, and the
+// player's light is scaled down to its two-tile minimum far from
+// the probes, so each sample shows only the tested terrain.  The
+// radius is counted as the number of lit tiles including the
+// source tile, matching the way a light radius of 3 lights two
+// tiles outward.  64 refreshes of each source expose the random
+// re-shading (the light colour must change) and the random candle
+// radius (all of 2, 3 and 4 tiles must occur), while a fixed
+// torch radius must light the same extent every time.  The drawn
+// colours and the light colours are compared by name, so equal
+// names mean the same shade.
+// ============================================================
+
+#define BR34933_TRIALS 64
+
+static pos br34933_source;
+static int br34933_torchExtent[12];
+static int br34933_candleExtent[6];
+static boolean br34933_torchColorVaries;
+static boolean br34933_torchAlwaysOrange;
+static boolean br34933_candleColorVaries;
+static boolean br34933_candleAlwaysOrange;
+static int br34933_baselineLight;
+
+static unsigned long br34933_colorId(int red, int green, int blue) {
+    return ((unsigned long) (unsigned short) red << 32)
+         | ((unsigned long) (unsigned short) green << 16)
+         | (unsigned long) (unsigned short) blue;
+}
+
+static void br34933_sampleTerrain(short terrain, int trials,
+                                  int *extentCounts, int extentLimit,
+                                  boolean *colorVaries, boolean *alwaysOrange) {
+    unsigned long firstColor = 0;
+    setTerrain(br34933_source, terrain);
+    for (int trial = 0; trial < trials; trial++) {
+        recomputeLighting();
+
+        int red, green, blue;
+        lightColorAt(br34933_source, &red, &green, &blue);
+        unsigned long color = br34933_colorId(red, green, blue);
+        if (trial == 0) {
+            firstColor = color;
+            *colorVaries = false;
+            *alwaysOrange = true;
+        } else if (color != firstColor) {
+            *colorVaries = true;
+        }
+        if (!(red > green && green > blue && red >= 2 * blue)) {
+            *alwaysOrange = false;
+        }
+
+        int farthest = -1;
+        for (int distance = 1; distance < extentLimit; distance++) {
+            if (lightAt(posOffset(br34933_source, distance, 0)) > 0) {
+                farthest = distance;
+            }
+        }
+        if (farthest >= 0 && farthest < extentLimit) {
+            extentCounts[farthest]++;
+        }
+    }
+}
+
+static void br34933_light_setup(void) {
+    clearMonsters();
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            setTerrain(posAt(x, y), FLOOR);
+        }
+    }
+    setPlayerPos(posAt(10, 14));
+    setLightMultiplier(0);
+    br34933_source = posAt(50, 14);
+
+    for (int distance = 0; distance < 12; distance++) {
+        br34933_torchExtent[distance] = 0;
+    }
+    for (int distance = 0; distance < 6; distance++) {
+        br34933_candleExtent[distance] = 0;
+    }
+
+    setTerrain(br34933_source, FLOOR);
+    recomputeLighting();
+    br34933_baselineLight = lightAt(br34933_source);
+    for (int distance = 1; distance < 12; distance++) {
+        br34933_baselineLight += lightAt(posOffset(br34933_source, distance, 0));
+    }
+
+    br34933_sampleTerrain(TORCH_WALL, BR34933_TRIALS,
+                          br34933_torchExtent, 12,
+                          &br34933_torchColorVaries, &br34933_torchAlwaysOrange);
+
+    boolean altarColorVaries, altarAlwaysOrange;
+    br34933_sampleTerrain(ALTAR_INERT, BR34933_TRIALS / 2,
+                          br34933_candleExtent, 6,
+                          &altarColorVaries, &altarAlwaysOrange);
+
+    boolean pedestalColorVaries, pedestalAlwaysOrange;
+    br34933_sampleTerrain(PEDESTAL, BR34933_TRIALS / 2,
+                          br34933_candleExtent, 6,
+                          &pedestalColorVaries, &pedestalAlwaysOrange);
+    br34933_candleColorVaries = altarColorVaries || pedestalColorVaries;
+    br34933_candleAlwaysOrange = altarAlwaysOrange && pedestalAlwaysOrange;
+}
+
+static boolean br34933_torch_and_candle_light_is_flickering_orange(void) {
+    TEST_ASSERT_EQ(br34933_baselineLight, 0,
+                   "control: bare floor should cast no light at the probes");
+
+    TEST_ASSERT_EQ(br34933_torchExtent[9], BR34933_TRIALS,
+                   "a wall torch should light nine tiles beyond its own tile, "
+                   "a reach of ten tiles including the source");
+    TEST_ASSERT_EQ(br34933_torchExtent[10], 0,
+                   "a wall torch should not reach an eleventh tile");
+    TEST_ASSERT(br34933_torchColorVaries,
+                "the torch light should be re-shaded on every refresh");
+    TEST_ASSERT(br34933_torchAlwaysOrange,
+                "the torch light should be warm orange (red over green over blue)");
+
+    TEST_ASSERT(br34933_candleExtent[1] > 0,
+                "candle light should sometimes reach only two tiles including its source");
+    TEST_ASSERT(br34933_candleExtent[2] > 0,
+                "candle light should sometimes reach three tiles including its source");
+    TEST_ASSERT(br34933_candleExtent[3] > 0,
+                "candle light should sometimes reach all four tiles including its source");
+    TEST_ASSERT_EQ(br34933_candleExtent[0], 0,
+                   "candle light should always light at least its own tile and one more");
+    TEST_ASSERT_EQ(br34933_candleExtent[4], 0,
+                   "candle light should never reach a fifth tile");
+    TEST_ASSERT(br34933_candleColorVaries,
+                "the candle light should be re-shaded on every refresh");
+    TEST_ASSERT(br34933_candleAlwaysOrange,
+                "the candle light should be the same warm orange as the torch light");
+    return !testFailed;
+}
+
+static const char *br34933_torchDrawName;
+static const char *br34933_wiredTorchDrawName;
+static const char *br34933_torchGlowName;
+static const char *br34933_altarGlowName;
+static const char *br34933_pedestalGlowName;
+static const char *br34933_wallDrawName;
+static const char *br34933_wallGlowName;
+static boolean br34933_torchDrawFlickers;
+static boolean br34933_wiredTorchDrawFlickers;
+static boolean br34933_wallDrawFlickers;
+
+static void br34933_drawn_setup(void) {
+    clearMonsters();
+    pos torch = posAt(20, 10);
+    pos wiredTorch = posAt(24, 10);
+    pos altar = posAt(28, 10);
+    pos pedestal = posAt(32, 10);
+    pos wall = posAt(36, 10);
+
+    setTerrain(torch, TORCH_WALL);
+    setTerrain(wiredTorch, PILOT_LIGHT_DORMANT);
+    setTerrain(altar, ALTAR_INERT);
+    setTerrain(pedestal, PEDESTAL);
+    setTerrain(wall, WALL);
+
+    br34933_torchDrawName = terrainDrawColorName(torch);
+    br34933_wiredTorchDrawName = terrainDrawColorName(wiredTorch);
+    br34933_torchGlowName = terrainGlowLightColorName(torch);
+    br34933_altarGlowName = terrainGlowLightColorName(altar);
+    br34933_pedestalGlowName = terrainGlowLightColorName(pedestal);
+    br34933_wallDrawName = terrainDrawColorName(wall);
+    br34933_wallGlowName = terrainGlowLightColorName(wall);
+    br34933_torchDrawFlickers = terrainDrawColorFlickers(torch);
+    br34933_wiredTorchDrawFlickers = terrainDrawColorFlickers(wiredTorch);
+    br34933_wallDrawFlickers = terrainDrawColorFlickers(wall);
+}
+
+static boolean br34933_wired_torch_flame_is_flickering_orange(void) {
+    TEST_ASSERT(strcmp(br34933_torchDrawName, "torch orange") == 0,
+                "an ordinary wall torch should be drawn as a torch-orange flame");
+    TEST_ASSERT(strcmp(br34933_wiredTorchDrawName, "torch orange") == 0,
+                "a dormant wired wall torch should draw its flame in the same torch orange");
+    TEST_ASSERT(br34933_torchDrawFlickers,
+                "the ordinary torch flame should flicker on every refresh");
+    TEST_ASSERT(br34933_wiredTorchDrawFlickers,
+                "the dormant wired torch flame should flicker on every refresh");
+
+    TEST_ASSERT(strcmp(br34933_torchGlowName, "torch orange") == 0,
+                "a wall torch should cast an orange light");
+    TEST_ASSERT(strcmp(br34933_altarGlowName, br34933_torchGlowName) == 0,
+                "an altar's candles should cast the same orange light as a torch");
+    TEST_ASSERT(strcmp(br34933_pedestalGlowName, br34933_torchGlowName) == 0,
+                "a pedestal's candles should cast the same orange light as a torch");
+
+    TEST_ASSERT(strcmp(br34933_wallDrawName, "torch orange") != 0,
+                "control: a plain wall should not be drawn as a torch flame");
+    TEST_ASSERT(!br34933_wallDrawFlickers,
+                "control: a plain wall's colour should not flicker");
+    TEST_ASSERT(strcmp(br34933_wallGlowName, "other") == 0,
+                "control: a plain wall should cast no light of its own");
+    return !testFailed;
+}
+
+// ============================================================
+// BR29041 — a bolt from a staff of poison poisons the creature it hits
+// for 5 turns at +2 enchantment or lower, and each enchantment level
+// above that lengthens the poisoning by about 30% (5 × 1.3^(enchantment
+// − 2), rounded down, so +3 gives 6 turns and +10 gives 40).
+//
+// Each enchantment is fired at a fresh target: the staff's enchantment is
+// the bolt magnitude the engine's formula reads, so the duration left on
+// the struck creature is the rule's whole observable result.
+// ============================================================
+
+static int br29041_turnsAt1;
+static int br29041_turnsAt2;
+static int br29041_turnsAt3;
+static int br29041_turnsAt10;
+
+static int br29041_poisonTurnsFor(int enchant) {
+    clearMonsters();
+    creature *target = placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 4, 0));
+    item *staff = givePlayerItem(STAFF, STAFF_POISON, enchant);
+    playerZapsStaffAt(staff, target);
+    return monsterStatusTurns(target, STATUS_POISONED);
+}
+
+static void br29041_setup(void) {
+    setArenaRadius(8, FLOOR);
+    br29041_turnsAt1 = br29041_poisonTurnsFor(1);
+    br29041_turnsAt2 = br29041_poisonTurnsFor(2);
+    br29041_turnsAt3 = br29041_poisonTurnsFor(3);
+    br29041_turnsAt10 = br29041_poisonTurnsFor(10);
+}
+
+static boolean br29041_poison_staff_duration_scales_with_enchantment(void) {
+    TEST_ASSERT_EQ(br29041_turnsAt1, 5,
+                   "a +1 staff of poison should poison for 5 turns (the floor)");
+    TEST_ASSERT_EQ(br29041_turnsAt2, 5,
+                   "a +2 staff of poison should poison for 5 turns");
+    TEST_ASSERT_EQ(br29041_turnsAt3, 6,
+                   "+3 staff of poison should poison for 6 turns");
+    TEST_ASSERT_EQ(br29041_turnsAt10, 40,
+                   "+10 staff of poison should poison for 40 turns");
+    TEST_ASSERT(br29041_turnsAt3 > br29041_turnsAt2,
+                "each enchantment above +2 should lengthen the poisoning");
+    return !testFailed;
+}
+
 const testCase tests_newrules[] = {
     { "BR29087_turn_counts_diverge_while_paralyzed",      br29087_setup, br29087_step, br29087_turn_counts_diverge_while_paralyzed },
     { "BR14549_change_mode_dialog_describes_wizard_mode", br14549_setup, NULL,         br14549_change_mode_dialog_describes_wizard_mode },
@@ -401,6 +837,18 @@ const testCase tests_newrules[] = {
     { "BR36733_guardian_avoids_avoided_terrain",         br36733_terrain_setup,  NULL, br36733_terrain_verify },
 
     { "BR19494_glow_ends_at_two_tiles", br19494_setup, NULL, br19494_glow_ends_at_two_tiles },
+
+    { "BR27383_crystal_wall_glow_radius_and_edge", br27383_setup, NULL, br27383_crystal_wall_glow_radius_and_edge },
+
+    { "BR33689_vulnerability_rune_first_trigger", br33689_setup, NULL, br33689_first_trigger_announces_and_identifies },
+
+    { "BR34933_torch_and_candle_light_is_flickering_orange",
+      br34933_light_setup, NULL, br34933_torch_and_candle_light_is_flickering_orange },
+    { "BR34933_wired_torch_flame_is_flickering_orange",
+      br34933_drawn_setup, NULL, br34933_wired_torch_flame_is_flickering_orange },
+
+    { "BR29041_poison_staff_duration_scales_with_enchantment",
+      br29041_setup, NULL, br29041_poison_staff_duration_scales_with_enchantment },
 
     { NULL, NULL, NULL, NULL }
 };

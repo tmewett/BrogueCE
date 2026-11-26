@@ -1457,6 +1457,87 @@ static boolean explore_walks_to_the_stairs(void) {
 }
 
 // ============================================================
+// BR19564 — auto-explore stops the moment you are disturbed.
+//
+// A one-square-wide corridor runs east from the player, turns north,
+// and ends at a single unexplored goal square around the corner.  A
+// hostile rat stands in the east leg two squares from the player.
+// Auto-explore steps toward the goal, but the step that brings the
+// player next to the rat ends with an exchange of blows (the rat
+// attacks, or the player attacks on the following iteration), which
+// disturbs the player.  The exploration loop must quit at once: the
+// player stays on that square instead of fighting through and walking
+// on around the corner to the goal.
+// ============================================================
+
+static pos br19564_start;
+static pos br19564_goal;
+
+static void br19564_setup(void) {
+    clearMonsters();
+    // Rebuild the level as solid granite so the corridor is the only
+    // walkable ground.  The granite rebuild also clears every floor
+    // item's cell flag, so no leftover item can act as a competing
+    // exploration goal.
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            setTerrain(posAt(x, y), GRANITE);
+        }
+    }
+
+    br19564_start = posAt(levelWidth() / 2, levelHeight() / 2);
+    // East leg, with the rat two squares along it.
+    for (int i = 0; i <= 3; i++) {
+        setTerrain(posOffset(br19564_start, i, 0), FLOOR);
+    }
+    // North leg around the corner.
+    for (int i = 1; i <= 3; i++) {
+        setTerrain(posOffset(br19564_start, 3, -i), FLOOR);
+    }
+    br19564_goal = posOffset(br19564_start, 3, -3);
+
+    // Everything is known except the goal square around the corner, so
+    // the goal is the only thing left to explore.
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            pos p = posAt(x, y);
+            if (p.x != br19564_goal.x || p.y != br19564_goal.y) {
+                revealCell(p);
+            }
+        }
+    }
+
+    setPlayerPos(br19564_start);
+    placeHostileMonster(MK_RAT, posOffset(br19564_start, 2, 0));
+}
+
+static boolean br19564_step(void) {
+    TEST_ASSERT(playerIsAt(br19564_start),
+                "setup: the player should start at the mouth of the corridor");
+    TEST_ASSERT(!cellIsDiscovered(br19564_goal),
+                "setup: the goal around the corner should still be unexplored");
+
+    // The first press picks the exploration target; the second press
+    // starts exploring toward it.
+    injectKeystroke('x', false, false);
+    injectKeystroke('x', false, false);
+    return false;
+}
+
+static boolean br19564_stops_when_disturbed(void) {
+    TEST_ASSERT(playerIsAt(posOffset(br19564_start, 1, 0)),
+                "auto-explore should stop on the square where the fight disturbed the player");
+    TEST_ASSERT_EQ(countMonstersOfType(MK_RAT), 1,
+                   "control: the monster should still be alive, so the stop was not caused by its death");
+    creature *rat = findMonster(MK_RAT);
+    TEST_ASSERT(rat != NULL && monsterIsAdjacentToPlayer(rat),
+                "the player should have stopped next to the hostile monster, not walked past it");
+    TEST_ASSERT(!cellIsDiscovered(br19564_goal),
+                "the player should not have walked on around the corner to the goal");
+    return !testFailed;
+}
+
+// ============================================================
 // BR24904 — Surviving explosive ground grants 5 turns of immunity
 // to further explosions.
 //
@@ -2104,6 +2185,112 @@ static boolean br17834_unexplored_reports_failure(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR21973 — A confused player cannot use auto-explore.
+// ============================================================
+
+static void br21973_setup(void) {
+    clearArena();
+    // Leave one square unexplored so auto-explore has a goal to head for.
+    pos goal = posOffset(getPlayerPos(), 2, 0);
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            pos p = posAt(x, y);
+            if (p.x != goal.x || p.y != goal.y) {
+                revealCell(p);
+            }
+        }
+    }
+    applyStatusToPlayer(STATUS_CONFUSED, 5);
+}
+
+static boolean br21973_step(void) {
+    // The first press picks the exploration target; the second starts exploring.
+    injectKeystroke('x', false, false);
+    injectKeystroke('x', false, false);
+    return false;
+}
+
+static boolean br21973_verify(void) {
+    TEST_ASSERT(messageWasShown("Not while you're confused."),
+                "a confused player should be told auto-explore is unavailable");
+    return !testFailed;
+}
+
+// ============================================================
+// BR28134 — while burning you take 1-3 fire damage each turn
+//            until the flames burn out on their own
+// ============================================================
+
+#define BR28134_BURN_TURNS 3
+
+static int br28134_healthBefore;
+static int br28134_damage[BR28134_BURN_TURNS + 1];
+static int br28134_rests;
+
+static void br28134_burning_setup(void) {
+    clearArena();
+    // A poison status with no concentration suppresses natural regeneration
+    // without dealing damage, so each turn's fire damage is measured exactly.
+    applyStatusToPlayer(STATUS_POISONED, 100);
+    TEST_ASSERT_EQ(playerPoisonConcentration(), 0,
+                   "setup: the poison status should carry no concentration");
+    setPlayerHealth(200);
+    applyStatusToPlayer(STATUS_BURNING, BR28134_BURN_TURNS);
+    br28134_healthBefore = playerHealth();
+    br28134_rests = 0;
+}
+
+static boolean br28134_burning_step(void) {
+    restOneTurn();
+    int health = playerHealth();
+    br28134_damage[br28134_rests] = br28134_healthBefore - health;
+    br28134_healthBefore = health;
+    br28134_rests++;
+    // One extra rest after the flames have burned out proves they stay out.
+    return br28134_rests <= BR28134_BURN_TURNS;
+}
+
+static boolean br28134_burning_verify(void) {
+    for (int i = 0; i < BR28134_BURN_TURNS; i++) {
+        TEST_ASSERT(br28134_damage[i] >= 1 && br28134_damage[i] <= 3,
+                    "each turn of burning should deal 1 to 3 fire damage");
+    }
+    TEST_ASSERT_EQ(playerStatusTurns(STATUS_BURNING), 0,
+                   "the flames should burn out on their own");
+    TEST_ASSERT(!isPlayerBurning(), "the player should no longer be burning");
+    TEST_ASSERT_EQ(br28134_damage[BR28134_BURN_TURNS], 0,
+                   "the fire should stop damaging once the flames burn out");
+    return !testFailed;
+}
+
+// ============================================================
+// BR28134 — burning can kill you "Burned to death"
+// ============================================================
+
+static void br28134_burn_death_setup(void) {
+    clearArena();
+    setPlayerHealth(1);
+    // Long enough that the flames cannot burn out before the damage kills.
+    applyStatusToPlayer(STATUS_BURNING, 100);
+}
+
+static boolean br28134_burn_death_step(void) {
+    if (!isPlayerDead() && turnNumber() < 1000) {
+        restOneTurn();
+        return true;
+    }
+    return false;
+}
+
+static boolean br28134_burn_death_verify(void) {
+    TEST_ASSERT(isPlayerDead() && runHasEnded(),
+                "burning should be able to kill the player");
+    TEST_ASSERT(playerDeathWasAttributedTo("Burned to death"),
+                "a death by burning should be attributed to \"Burned to death\"");
+    return !testFailed;
+}
+
 const testCase tests_movement[] = {
     { "BR91235_staff_recharges_a_spent_charge",      staff_recharge_setup, staff_recharge_step, spent_staff_recharges },
     { "BR91235_full_staff_gains_no_charges",         full_staff_setup,    full_staff_rest_step, full_staff_gains_no_charges },
@@ -2134,6 +2321,8 @@ const testCase tests_movement[] = {
     { "BR32089_monster_status_timers_tick_each_100_ticks", monster_status_timer_setup, monster_status_timer_step, monster_status_timers_decrement_per_100_ticks },
     { "BR79486_standing_in_fire_ignites",      standing_in_fire_setup, wait_until_hurt,          player_is_burning },
     { "BR95213_burning_square_ignites_orthogonal_neighbours", br95213_setup, br95213_step, br95213_verify },
+    { "BR28134_burning_deals_one_to_three_and_burns_out", br28134_burning_setup, br28134_burning_step, br28134_burning_verify },
+    { "BR28134_burning_can_kill",             br28134_burn_death_setup, br28134_burn_death_step, br28134_burn_death_verify },
     { "BR34974_nutrition_drops_each_turn",     nutrition_setup,        nutrition_step,           nutrition_dropped },
     { "BR95832_starvation_drains_health",      starvation_setup,       starvation_step,          starved },
     { "BR32992_first_hunger_warning_skips_acknowledgment", br32992_first_setup, br32992_first_step, br32992_first_needs_no_acknowledgment },
@@ -2151,6 +2340,7 @@ const testCase tests_movement[] = {
     { "BR11386_hidden_holder_spends_turn_struggling", br11386_hidden_setup, br11386_step, br11386_hidden_holder_spends_turn_struggling },
 
     { "BR65504_explore_heads_for_stairs_when_level_mapped", explore_to_stairs_setup, explore_to_stairs_step, explore_walks_to_the_stairs },
+    { "BR19564_explore_stops_when_disturbed",  br19564_setup,           br19564_step,             br19564_stops_when_disturbed },
 
     { "BR24904_explosion_immunity_lasts_five_turns", br24904_setup, br24904_step, br24904_survivor_is_temporarily_immune },
 
@@ -2165,6 +2355,8 @@ const testCase tests_movement[] = {
     { "BR17834_own_square_reports_already_there", br17834_own_square_setup, br17834_own_square_step, br17834_own_square_reports_already_there },
     { "BR17834_explored_square_becomes_cursor_target", br17834_explored_setup, br17834_explored_step, br17834_explored_target_is_travelled_to },
     { "BR17834_unexplored_square_reports_failure", br17834_unexplored_setup, br17834_unexplored_step, br17834_unexplored_reports_failure },
+
+    { "BR21973_confused_auto_explore", br21973_setup, br21973_step, br21973_verify },
 
     { NULL, NULL, NULL, NULL }
 };

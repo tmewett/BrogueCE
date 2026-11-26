@@ -15,8 +15,10 @@
 // thief that loses its stolen item returns to normal behaviour, how an
 // always-hunting monster that has given up on the scent trail paths toward
 // you, the randomly chosen kind name a visible monster is displayed under
-// while you hallucinate, and the allegiance of the members of a horde flagged
-// as allied with you.
+// while you hallucinate, the allegiance of the members of a horde flagged
+// as allied with you, and how a monster generated through level population
+// takes an item out of the shared item pool and tags it with the depth it
+// was handed out on.
 //
 // Omitted are everything that depends on the particular layout of generated
 // levels or on most horde generation, random chances (mutations, item drops,
@@ -2737,7 +2739,283 @@ static boolean br64018_allied_horde_spawns_allies(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR43734 — a monster armed with a whip or spear attacks along a
+// line in the chosen direction instead of stepping forward.
+//
+// A goblin carries a spear (two-square reach) and a salamander a
+// whip (five-square reach).  Each is placed in a straight line with
+// the player and given one turn while the player is held in place by
+// webbing, so the blow cannot miss.  The player loses health, and the
+// monster is still on the square it started from: a creature that
+// could only fight in melee would have had to step into the square
+// next to the player first.
+// ============================================================
+
+static creature *br43734_subject;
+static pos br43734_start;
+static int br43734_healthBefore;
+
+static void br43734_scene(enum monsterTypes type, int distance) {
+    setArenaRadius(6, FLOOR);
+    // One real turn on the cleared floor refreshes the scent trail and
+    // field of view at the player's present location.
+    applyStatusToPlayer(STATUS_AGGRAVATING, 10000);
+    restOneTurn();
+
+    br43734_start = posOffset(getPlayerPos(), distance, 0);
+    br43734_subject = placeHostileMonster(type, br43734_start);
+
+    // Stand in a spiderweb and web yourself in place so the strike
+    // cannot miss (a stuck defender is always hit) without tripping
+    // the extra damage a paralyzed defender would take.  The web must
+    // be underfoot: the engine clears the stuck condition at the start
+    // of a turn unless the player is standing on an entangling tile.
+    pos here = getPlayerPos();
+    setTerrain(here, SPIDERWEB);
+    setPlayerPos(here); // setTerrain cleared the player's cell flag
+    applyStatusToPlayer(STATUS_STUCK, 10);
+    br43734_healthBefore = playerHealth();
+}
+
+static void br43734_spear_setup(void) {
+    br43734_scene(MK_GOBLIN, 2);
+}
+
+static void br43734_whip_setup(void) {
+    br43734_scene(MK_SALAMANDER, 3);
+}
+
+static boolean br43734_step(void) {
+    restOneTurn(); // the monster acts on its own turn
+    return false;
+}
+
+static boolean br43734_spear_strikes_along_the_line(void) {
+    TEST_ASSERT(playerHealth() < br43734_healthBefore,
+                "a goblin with a spear should hit you two squares away");
+    TEST_ASSERT_POS_EQ(monsterPosition(br43734_subject), br43734_start,
+                       "a goblin with a spear should attack along the line instead of stepping forward");
+    return !testFailed;
+}
+
+static boolean br43734_whip_strikes_along_the_line(void) {
+    TEST_ASSERT(playerHealth() < br43734_healthBefore,
+                "a salamander with a whip should hit you three squares away");
+    TEST_ASSERT_POS_EQ(monsterPosition(br43734_subject), br43734_start,
+                       "a salamander with a whip should attack along the line instead of stepping forward");
+    return !testFailed;
+}
+
+// ============================================================
+// BR46783 — a monster may be generated carrying an item, drawn from
+// the item hopper and tagged with its origin depth.
+//
+// Every monster is generated through the engine's own generation
+// path (spawnMonsterWithItemChance), which is the path level
+// population uses.  A dragon's catalog entry says it carries an
+// item every time, so it is the positive case; a rat's entry says
+// it never does, so it is the negative one.
+//
+// The carried item must be tagged with the depth it was handed out
+// on, and it must come out of the shared pool: the pool shrinks by
+// exactly the number of items handed out, runs dry instead of
+// supplying every monster forever, and is untouched by monsters
+// that never carry items.
+// ============================================================
+
+static creature *br46783_carrier;
+static int br46783_carryDepth;
+
+static void br46783_carrier_setup(void) {
+    clearMonsters();
+    standPlayerOn(FLOOR);
+    // Generate well below the starting level.  An item still carrying the
+    // origin depth it was created with (zero) or the depth the pool was
+    // stocked on cannot pass for a depth of three.
+    descendToNextLevel();
+    descendToNextLevel();
+    br46783_carryDepth = currentDepth();
+    br46783_carrier = spawnMonsterWithItemChance(MK_DRAGON, posOffset(getPlayerPos(), 5, 0));
+}
+
+static boolean br46783_carrier_verify(void) {
+    TEST_ASSERT(br46783_carrier != NULL, "the monster should be generated");
+    if (br46783_carrier == NULL) {
+        return false;
+    }
+    TEST_ASSERT(monsterHasTrait(br46783_carrier, MONST_CARRY_ITEM_100),
+                "control: the dragon's catalog entry says it always carries an item");
+    TEST_ASSERT_EQ(br46783_carryDepth, 3,
+                   "control: the monster should be generated on depth 3");
+    TEST_ASSERT(monsterIsCarryingItem(br46783_carrier),
+                "a monster generated through the item path should be holding an item");
+    item *carriedItem = monsterCarriedItem(br46783_carrier);
+    TEST_ASSERT(carriedItem != NULL, "the item the monster carries should be readable");
+    if (carriedItem != NULL) {
+        TEST_ASSERT(itemCategory(carriedItem) != 0,
+                    "the thing the monster carries should be a real item");
+        TEST_ASSERT_EQ(itemOriginDepth(carriedItem), br46783_carryDepth,
+                       "the carried item should be tagged with the depth it was handed out on");
+    }
+    return !testFailed;
+}
+
+#define BR46783_SPAWN_COUNT 120
+
+static int br46783_hopperBefore;
+static int br46783_hopperAfter;
+static int br46783_itemCarriers;
+
+static void br46783_pool_setup(void) {
+    clearMonsters();
+    standPlayerOn(FLOOR);
+    br46783_hopperBefore = monsterItemHopperCount();
+    br46783_itemCarriers = 0;
+    // More monsters than the pool can supply, all certain to want an item.
+    for (int i = 0; i < BR46783_SPAWN_COUNT; i++) {
+        creature *monst = spawnMonsterWithItemChance(MK_DRAGON, posOffset(getPlayerPos(), 5, 0));
+        if (monsterIsCarryingItem(monst)) {
+            br46783_itemCarriers++;
+        }
+    }
+    br46783_hopperAfter = monsterItemHopperCount();
+}
+
+static boolean br46783_pool_verify(void) {
+    TEST_ASSERT(br46783_hopperBefore > 0, "control: the item pool starts out stocked");
+    TEST_ASSERT(br46783_itemCarriers > 0, "at least one generated monster should be holding an item");
+    TEST_ASSERT(br46783_itemCarriers < BR46783_SPAWN_COUNT,
+                "the pool should run dry rather than hand out an item to every monster");
+    TEST_ASSERT_EQ(br46783_hopperBefore - br46783_hopperAfter, br46783_itemCarriers,
+                   "the pool should shrink by exactly the number of items handed out");
+    TEST_ASSERT_EQ(br46783_hopperAfter, 0,
+                   "the pool should be empty once more monsters were generated than it could supply");
+    return !testFailed;
+}
+
+static creature *br46783_rat;
+static int br46783_ratHopperBefore;
+static int br46783_ratHopperAfter;
+static boolean br46783_ratCarried;
+
+static void br46783_rat_setup(void) {
+    clearMonsters();
+    standPlayerOn(FLOOR);
+    br46783_ratHopperBefore = monsterItemHopperCount();
+    br46783_ratCarried = false;
+    for (int i = 0; i < 40; i++) {
+        creature *rat = spawnMonsterWithItemChance(MK_RAT, posOffset(getPlayerPos(), 5, 0));
+        if (br46783_rat == NULL) {
+            br46783_rat = rat;
+        }
+        br46783_ratCarried = br46783_ratCarried || monsterIsCarryingItem(rat);
+    }
+    br46783_ratHopperAfter = monsterItemHopperCount();
+}
+
+static boolean br46783_rat_verify(void) {
+    TEST_ASSERT(br46783_rat != NULL, "the monster should be generated");
+    if (br46783_rat == NULL) {
+        return false;
+    }
+    TEST_ASSERT(!monsterHasTrait(br46783_rat, MONST_CARRY_ITEM_100)
+                && !monsterHasTrait(br46783_rat, MONST_CARRY_ITEM_25),
+                "control: the rat's catalog entry says it never carries an item");
+    TEST_ASSERT(!br46783_ratCarried,
+                "a monster that never carries items should not be handed one");
+    TEST_ASSERT_EQ(br46783_ratHopperAfter, br46783_ratHopperBefore,
+                   "generating monsters that never carry items should leave the pool alone");
+    return !testFailed;
+}
+
+// ============================================================
+// BR55571 — cloning a captive produces an ally
+// ============================================================
+
+static creature *br55571_subject;
+static item *br55571_wand;
+
+static int br55571_alliedCount(void) {
+    int allies = 0;
+    for (int i = 0; i < monsterCount(); i++) {
+        creature *m = monsterAtIndex(i);
+        if (m != NULL && monsterIsAlly(m)) {
+            allies++;
+        }
+    }
+    return allies;
+}
+
+static void br55571_setup(boolean captive) {
+    clearArena();
+    br55571_subject = spawnMonster(MK_RAT, posOffset(getPlayerPos(), 1, 0));
+    if (captive) {
+        makeMonsterCaptive(br55571_subject);
+    }
+    br55571_wand = givePlayerItem(WAND, WAND_PLENTY, 5);
+}
+
+static void br55571_captive_setup(void) {
+    br55571_setup(true);
+}
+
+static void br55571_noncaptive_setup(void) {
+    br55571_setup(false);
+}
+
+static boolean br55571_captive_clone_is_ally(void) {
+    TEST_ASSERT(br55571_subject != NULL, "setup: the captive should exist");
+    TEST_ASSERT(!monsterIsAlly(br55571_subject),
+                "control: the captive itself is not an ally");
+    TEST_ASSERT_EQ(br55571_alliedCount(), 0, "control: there are no allies yet");
+
+    playerZapsAt(br55571_wand, br55571_subject);
+
+    TEST_ASSERT_EQ(countMonstersOfType(MK_RAT), 2,
+                   "the wand of plenty should clone the captive");
+    TEST_ASSERT_EQ(br55571_alliedCount(), 1,
+                   "cloning a captive should produce an ally");
+    TEST_ASSERT(!monsterIsAlly(br55571_subject),
+                "the captive itself should remain a captive, not become an ally");
+
+    boolean cloneIsAlly = false;
+    for (int i = 0; i < monsterCount(); i++) {
+        creature *m = monsterAtIndex(i);
+        if (m != NULL && m != br55571_subject && monsterIsAlly(m)) {
+            cloneIsAlly = true;
+        }
+    }
+    TEST_ASSERT(cloneIsAlly, "the newly cloned creature should be the ally");
+    return !testFailed;
+}
+
+static boolean br55571_noncaptive_clone_is_not_ally(void) {
+    TEST_ASSERT(br55571_subject != NULL, "setup: the monster should exist");
+    TEST_ASSERT(!monsterIsAlly(br55571_subject),
+                "control: an ordinary monster is not your ally");
+    TEST_ASSERT_EQ(br55571_alliedCount(), 0, "control: there are no allies yet");
+
+    playerZapsAt(br55571_wand, br55571_subject);
+
+    TEST_ASSERT_EQ(countMonstersOfType(MK_RAT), 2,
+                   "the wand of plenty should clone the monster");
+    TEST_ASSERT_EQ(br55571_alliedCount(), 0,
+                   "only a captive's clone becomes an ally");
+    return !testFailed;
+}
+
 const testCase tests_monsters[] = {
+    { "BR46783_generated_monster_carries_hopper_item", br46783_carrier_setup, NULL, br46783_carrier_verify },
+    { "BR46783_hopper_items_are_taken_and_exhausted", br46783_pool_setup, NULL, br46783_pool_verify },
+    { "BR46783_non_carrier_leaves_hopper_alone", br46783_rat_setup, NULL, br46783_rat_verify },
+
+    { "BR55571_cloning_a_captive_produces_an_ally", br55571_captive_setup, NULL, br55571_captive_clone_is_ally },
+    { "BR55571_cloning_a_noncaptive_is_not_an_ally", br55571_noncaptive_setup, NULL, br55571_noncaptive_clone_is_not_ally },
+
+    { "BR43734_spear_monster_strikes_along_the_line", br43734_spear_setup, br43734_step, br43734_spear_strikes_along_the_line },
+    { "BR43734_whip_monster_strikes_along_the_line",  br43734_whip_setup,  br43734_step, br43734_whip_strikes_along_the_line },
+
     { "BR83001_webbed_monster_struggles_free_after_a_few_turns", webbed_monster_setup, webbed_monster_struggles_step, webbed_monster_escapes_after_a_few_turns },
     { "BR83001_web_immune_monster_walks_free_immediately",       web_immune_monster_setup, web_immune_monster_turn_step, web_immune_monster_walks_free_immediately },
 

@@ -4335,6 +4335,12 @@ void printHighScores(boolean hiliteMostRecent) {
         hiliteLineNum = -1;
     }
 
+#ifdef BROGUE_TESTING
+    if (rogue.mode == GAME_MODE_TEST) {
+        recordHighScoresDisplayed();
+    }
+#endif
+
     blackOutScreen();
 
     for (i = 0; i < HIGH_SCORES_COUNT && list[i].score > 0; i++) {

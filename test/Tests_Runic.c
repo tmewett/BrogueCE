@@ -302,6 +302,11 @@ static void br11006_force_setup(void) {
 }
 
 static boolean br11006_force_step(void) {
+    // The force effect is skipped for a defender the blow is already killing,
+    // so a lethal hit would leave the target where it fell and the retry loop
+    // could never observe a knockback.  Keep the target alive to be struck
+    // again so every landed blow still exercises the rune.
+    setMonsterHealth(monst, 1000);
     playerAttacksMonster(monst);
     pos newPos = monsterPosition(monst);
     if (!posEq(startPos, newPos)) {

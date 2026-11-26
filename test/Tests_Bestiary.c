@@ -353,7 +353,28 @@ static boolean br37585_verify(void) {
                 "the corrosion should announce that the weapon weakens");
     return !testFailed;
 }
-TRAIT_TEST(br13523, MK_DRAGON, MONST_IMMUNE_TO_FIRE, "dragon immune to fire")
+// BR13523 — immune to fire.  Fire cannot set the creature alight, while an
+// ordinary creature exposed to the same flame catches fire.
+static creature *br13523_control;
+
+static void br13523_setup(void) {
+    setArenaRadius(5, FLOOR);
+    subject = placeHostileMonster(MK_DRAGON, posOffset(getPlayerPos(), 3, 0));
+    br13523_control = placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 0, 3));
+    TEST_ASSERT(subject != NULL, "setup: dragon spawned");
+    TEST_ASSERT(br13523_control != NULL, "setup: control rat spawned");
+}
+
+static boolean br13523_verify(void) {
+    exposeCreatureToFire(subject);
+    TEST_ASSERT(!monsterHasStatus(subject, STATUS_BURNING),
+                "fire should not set a fire-immune dragon burning");
+
+    exposeCreatureToFire(br13523_control);
+    TEST_ASSERT(monsterHasStatus(br13523_control, STATUS_BURNING),
+                "the same fire should set an ordinary creature burning");
+    return !testFailed;
+}
 TRAIT_TEST(br57968, MK_WILL_O_THE_WISP, MONST_FIERY, "wisp burns")
 // BR18737 — reflects about half of magical bolts.  The catalog flag alone only
 // proves the potential, so fire real healing bolts at a golem kept at 1 health:
@@ -1384,6 +1405,49 @@ static boolean br16799_regen_verify(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR83759 — Ifrit. Health 40, defense 75, accuracy 175, damage 5-13;
+// regenerates rapidly (1 health every turn); moves twice as fast as normal
+// (speed 50); normal attack speed. A large creature that is immune to fire
+// and flies, and that casts discord. It glows.
+// ============================================================
+
+static creature *br83759_ifrit;
+static int br83759_light_with_glow;
+static int br83759_light_without_glow;
+
+static void br83759_setup(void) {
+    trait_setup(MK_IFRIT);
+    br83759_ifrit = subject;
+    measureMonsterGlow(br83759_ifrit, &br83759_light_with_glow, &br83759_light_without_glow);
+    makeMonsterAlly(br83759_ifrit);
+    setMonsterHealth(br83759_ifrit, 1);
+}
+
+static boolean br83759_step(void) {
+    restOneTurn();
+    return false;
+}
+
+static boolean br83759_verify(void) {
+    TEST_ASSERT(br83759_ifrit != NULL, "ifrit spawned");
+    TEST_ASSERT_EQ(monsterMaxHealth(br83759_ifrit), 40, "ifrit health");
+    TEST_ASSERT_EQ(monsterBaseDefense(br83759_ifrit), 75, "ifrit defense");
+    TEST_ASSERT_EQ(monsterBaseAccuracy(br83759_ifrit), 175, "ifrit accuracy");
+    TEST_ASSERT_EQ(monsterBaseDamageLow(br83759_ifrit), 5, "ifrit damage low");
+    TEST_ASSERT_EQ(monsterBaseDamageHigh(br83759_ifrit), 13, "ifrit damage high");
+    TEST_ASSERT_EQ(monsterBaseMovementSpeed(br83759_ifrit), 50, "ifrit moves twice as fast as normal");
+    TEST_ASSERT_EQ(monsterBaseAttackSpeed(br83759_ifrit), 100, "ifrit attacks at normal speed");
+    TEST_ASSERT(monsterRegenerates(br83759_ifrit), "ifrit regenerates naturally");
+    TEST_ASSERT(monsterIsLarge(br83759_ifrit), "ifrit is large");
+    TEST_ASSERT(monsterHasTrait(br83759_ifrit, MONST_IMMUNE_TO_FIRE), "ifrit is immune to fire");
+    TEST_ASSERT(monsterHasTrait(br83759_ifrit, MONST_FLIES), "ifrit flies");
+    TEST_ASSERT(monsterCastsBolt(br83759_ifrit, BOLT_DISCORD), "ifrit casts discord");
+    TEST_ASSERT(br83759_light_with_glow > br83759_light_without_glow, "ifrit glows");
+    TEST_ASSERT_EQ(monsterHealth(br83759_ifrit), 2, "ifrit regenerates 1 health per turn");
+    return !testFailed;
+}
+
 const testCase tests_bestiary[] = {
     { "BR39474_flies", br39474_setup, NULL, br39474_verify },
     { "BR10411_erratic", br10411_setup, NULL, br10411_verify },
@@ -1467,5 +1531,6 @@ const testCase tests_bestiary[] = {
     { "BR89674_pixie_stats_and_regeneration", br89674_setup, br89674_step, br89674_verify },
     { "BR16799_ogre_shaman_stats_and_traits", br16799_stats_setup, NULL, br16799_stats_verify },
     { "BR16799_ogre_shaman_regenerates_every_20_turns", br16799_regen_setup, br16799_regen_step, br16799_regen_verify },
+    { "BR83759_ifrit_stats_and_rapid_regeneration", br83759_setup, br83759_step, br83759_verify },
     { NULL, NULL, NULL, NULL }
 };

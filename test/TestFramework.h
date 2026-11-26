@@ -188,6 +188,14 @@ boolean screenTextContains(const char *substring);
 // the kind is identified (shown by its item glyph) or is not on screen.
 int discoveryScreenMagicMarkerFor(const char *name);
 
+// Open the real inventory over the dungeon, dismiss it, and report the magic
+// mark drawn beside the pack item with the given inventory letter, once magic
+// detection has revealed the item's polarity: 1 for the glowing good-magic
+// mark, -1 for the glowing bad-magic mark, and 0 for the plain mark neutral
+// magic gets.  Returns -2 when the item's line carries no magic mark at all
+// (before detection, for example) or is not on screen.
+int inventoryScreenMagicMarkerFor(char inventoryLetter);
+
 // Remember the background colour every cell was drawn with in the frame that
 // screenTextContains() reads.  Call it while a transient highlight (the aim
 // trajectory, say) is on screen, then compare later frames against it with
@@ -233,6 +241,9 @@ boolean monsterAttacksPlayer(creature *monst);
 boolean attackMonster(creature *attacker, creature *defender);
 
 void playerZapsAt( item *theItem, creature *monst );
+// Zap a staff at a monster exactly as using the staff does, including the
+// staff's enchantment-scaled bolt magnitude, but without spending a turn.
+void playerZapsStaffAt( item *theItem, creature *monst );
 
 // ---------------------------------------------
 // Terrain (events and predicates)
@@ -272,6 +283,18 @@ boolean cellHasLiquid(pos loc);
 // shadows clear the flag from the tiles they reach (and from their own
 // origin tile), while the miner's light maintains it.
 boolean cellIsInShadow(pos loc);
+
+// The colour a terrain tile is drawn with, named for the tile's role:
+// "torch orange" for the flame of an ordinary or not-yet-triggered wired wall
+// torch, and "other" for any other tile.  Equal names mean equal colours.
+const char *terrainDrawColorName(pos loc);
+// Whether the terrain tile's drawn colour re-shades itself on every screen
+// refresh (its colour "dances").
+boolean terrainDrawColorFlickers(pos loc);
+// The colour of the light the terrain tile casts, named the same way as the
+// drawn colour ("torch orange" for torches, candles, altars and pedestals,
+// "other" otherwise).  Equal names mean equal light colours.
+const char *terrainGlowLightColorName(pos loc);
 
 // ---------------------------------------------
 // Player state (predicates and events)
@@ -471,6 +494,9 @@ boolean monsterAvoidsCell(const creature *monst, pos loc);
 // example).
 boolean monsterIsCarryingItem(const creature *monst);
 
+// The item the monster is carrying, or NULL when it carries nothing.
+item *monsterCarriedItem(const creature *monst);
+
 // Whether the monster is in the permanent flight that a steal-and-flee
 // attack starts.
 boolean monsterIsPermFleeing(const creature *monst);
@@ -506,6 +532,10 @@ item *placeItemOnFloor(short category, short kind, pos loc);
 // The tile an item occupies: where a floor item lies, or for a pack item the
 // tile it was picked up from.
 pos itemPosition(const item *theItem);
+// The dungeon depth the item was generated on, or the depth it was handed to
+// its owner on when it came out of a shared pool.  Zero when it was never
+// tagged.
+int itemOriginDepth(const item *theItem);
 // How many ordinary (non-gold) items lie on the level.  Gold piles follow
 // their own generation rule and are not counted.
 int countFloorItems(void);
@@ -741,6 +771,14 @@ void givePlayerGold(int amount);
 // every carried item.
 int expectedVictoryScore(void);
 
+// Whether a high-score list has been drawn to the screen since the current
+// test began.  The engine records this when it opens the high-score display,
+// which is otherwise immediately covered by the prompts that follow a death.
+boolean highScoresWereDisplayed(void);
+
+// Engine-facing: remember that printHighScores() opened the score display.
+void recordHighScoresDisplayed(void);
+
 // Whether the high-score file currently holds an entry with this score.
 boolean highScoreHasScore(int score);
 
@@ -790,6 +828,10 @@ boolean firstRoomCovers(pos loc);
 // before attaching any other room.
 void recordFirstRoomForTesting(short **grid);
 
+// Framework internal: remember the tile an open-area vault's interior is
+// growing from.  Called by the machine builder after it chooses the origin.
+void recordOpenAreaVaultOriginForTesting(short x, short y);
+
 // ---------------------------------------------
 // Vault layouts
 // ---------------------------------------------
@@ -829,6 +871,24 @@ int chamberFloorCellCount(void);
 boolean chamberFloorContains(pos loc);
 boolean chamberDoorwayAt(pos loc);
 
+// Build an open-area vault through the engine's own location chooser, using
+// the engine's actual depth-appropriate target-size range, and return true
+// when it was built.  `openAreaVaultOrigin()` then reports the random floor
+// tile the vault grew from.
+boolean buildOpenAreaVault(void);
+// The same, but growing from `origin` and aiming for exactly `targetSize`
+// tiles.  Passing a fixed origin isolates the way the interior grows and the
+// conditions that make it abort.  After a successful build the interior is
+// identified by cellIsVaultInterior().
+boolean buildOpenAreaVaultAt(pos origin, int targetSize);
+// The tile the most recent open-area vault grew from.
+pos openAreaVaultOrigin(void);
+// The path distance from that origin to `loc`, or -1 when no route exists.
+int openAreaVaultPathDistance(pos loc);
+// The smallest and largest target size an open-area vault may choose.
+int openAreaVaultTargetMin(void);
+int openAreaVaultTargetMax(void);
+
 // Descend one level, generating the next dungeon level.
 void descendToNextLevel(void);
 
@@ -842,6 +902,8 @@ void ascendToPreviousLevel(void);
 
 // The total brightness of a tile's light.
 int lightAt(pos loc);
+// The red, green and blue components of the light on a tile.
+void lightColorAt(pos loc, int *red, int *green, int *blue);
 
 // Pathfinding distances between two tiles.  pathingDistanceBetween routes with
 // no traveller (so undiscovered tiles are passable); playerPathingDistance
@@ -905,6 +967,11 @@ creature *placeHostileMonster(enum monsterTypes type, pos loc);
 // quarter of the time for MONST_CARRY_ITEM_25).  spawnMonster() switches item
 // generation off, so a monster spawned with it never holds anything.
 creature *spawnMonsterWithItemChance(enum monsterTypes type, pos loc);
+
+// How many items remain in the shared pool monsters are generated from.  Each
+// monster generated holding an item takes that item out of the pool, so the
+// count only falls.
+int monsterItemHopperCount(void);
 
 // Run the game's ordinary item and gold population for the current level,
 // measuring placement from `upstairs` exactly as level generation does.  The

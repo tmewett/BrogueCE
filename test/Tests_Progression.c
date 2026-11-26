@@ -5,7 +5,8 @@
 // equipment), the message log and archive being cleared and the screen
 // blacked out before the welcome message, the reduced damage taken in easy
 // mode, the amulet fallback, the high-score gate on victory, the treasure
-// tally a victory records, and the text of the high-score entry saved on death.
+// tally a victory records, the high-score entry saved and displayed on death
+// outside playback, and the text of that entry.
 //
 // Omitted are everything that depends on the run history, the achievement
 // screens, stair travel between levels, and level restoration.  The wizard
@@ -621,6 +622,64 @@ static boolean start_clears_messages_and_blacks_out_screen(void) {
 }
 
 // ============================================================
+// BR44882 — when the player dies and the run is not a playback, the
+// score is saved to the high-score list and the high scores are
+// displayed.
+//
+// Starving at one health ends the run through the ordinary death
+// path.  The normal case must both write the score and open the
+// high-score display; the playback case must do neither.  The display
+// is recorded by the engine when printHighScores() opens it, because
+// the save-recording prompt that follows a death covers the screen
+// before the test's last-input snapshot is taken.
+// ============================================================
+
+#define BR44882_SCORE 44882
+
+static void br44882_common_setup(void) {
+    clearArena();
+    clearMonsters();
+    clearHighScores();
+    givePlayerGold(BR44882_SCORE);
+    setPlayerHealth(1);
+    setPlayerNutrition(0);
+}
+
+static void br44882_death_setup(void) {
+    br44882_common_setup();
+}
+
+static void br44882_playback_death_setup(void) {
+    br44882_common_setup();
+    enterPlaybackMode();
+}
+
+static boolean br44882_starve_step(void) {
+    restOneTurn();
+    return false;
+}
+
+static boolean br44882_death_saves_and_displays_scores(void) {
+    TEST_ASSERT(isPlayerDead(), "the player should have starved to death");
+    TEST_ASSERT(runHasEnded(), "the death should end the run");
+    TEST_ASSERT(highScoreHasScore(BR44882_SCORE),
+                "a death outside playback should save its score");
+    TEST_ASSERT(highScoresWereDisplayed(),
+                "a death outside playback should display the high scores");
+    return !testFailed;
+}
+
+static boolean br44882_playback_death_is_not_scored(void) {
+    TEST_ASSERT(isPlayerDead(), "the player should have starved to death");
+    TEST_ASSERT(runHasEnded(), "the death should end the run");
+    TEST_ASSERT(!highScoreHasScore(BR44882_SCORE),
+                "a death during playback must not save a score");
+    TEST_ASSERT(!highScoresWereDisplayed(),
+                "a death during playback must not display the high scores");
+    return !testFailed;
+}
+
+// ============================================================
 // BR74433 — the high-score entry saved on death describes only the
 // killer and depth, omitting the treasure amount.
 // ============================================================
@@ -793,6 +852,9 @@ const testCase tests_progression[] = {
 
     { "BR99222_escape_records_full_treasure",  br99222_escape_setup, escape_the_dungeon_step, br99222_escape_records_full_treasure },
     { "BR99222_greater_doubles_amulet_value",  br99222_greater_setup, br99222_greater_victory_step, br99222_greater_doubles_amulet_value },
+
+    { "BR44882_death_saves_and_displays_high_scores", br44882_death_setup, br44882_starve_step, br44882_death_saves_and_displays_scores },
+    { "BR44882_playback_death_is_not_scored",         br44882_playback_death_setup, br44882_starve_step, br44882_playback_death_is_not_scored },
 
     { "BR74433_death_high_score_omits_treasure", br74433_setup, br74433_starve_step, br74433_high_score_omits_treasure },
 

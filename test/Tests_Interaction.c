@@ -385,6 +385,85 @@ static boolean stacked_poison_shows_strength(void) {
 }
 
 // ============================================================
+// BR82377 — the player's own sidebar entry shows a nutrition bar whose
+// label changes through "Nutrition (Hungry)", "Nutrition (Weak)", and
+// "Nutrition (Faint)" down to "STARVING".
+//
+// The bar prints its label inside its 20-column row, so each stage name is
+// one contiguous sidebar string.  The most severe label is tested first so
+// the shorter "Nutrition" cannot mask a more specific one.
+// ============================================================
+
+static const char *br82377_labelAt(int nutrition) {
+    setPlayerNutrition(nutrition);
+    if (sidebarContains("STARVING")) {
+        return "STARVING";
+    }
+    if (sidebarContains("Nutrition (Faint)")) {
+        return "Nutrition (Faint)";
+    }
+    if (sidebarContains("Nutrition (Weak)")) {
+        return "Nutrition (Weak)";
+    }
+    if (sidebarContains("Nutrition (Hungry)")) {
+        return "Nutrition (Hungry)";
+    }
+    return sidebarContains("Nutrition") ? "Nutrition" : "(none)";
+}
+
+static const char *br82377_full;
+static const char *br82377_hungry;
+static const char *br82377_weak;
+static const char *br82377_faint;
+static const char *br82377_starving;
+
+static void br82377_stages_setup(void) {
+    br82377_full = br82377_labelAt(2150);   // a full stomach
+    br82377_hungry = br82377_labelAt(350);  // last value in the hungry band
+    br82377_weak = br82377_labelAt(150);    // last value in the weak band
+    br82377_faint = br82377_labelAt(50);    // last value in the faint band
+    br82377_starving = br82377_labelAt(0);  // an empty stomach
+}
+
+static boolean br82377_nutrition_bar_labels_each_stage(void) {
+    TEST_ASSERT(strcmp(br82377_full, "Nutrition") == 0,
+                "a full stomach should show the plain Nutrition bar");
+    TEST_ASSERT(strcmp(br82377_hungry, "Nutrition (Hungry)") == 0,
+                "a hungry stomach should show Nutrition (Hungry)");
+    TEST_ASSERT(strcmp(br82377_weak, "Nutrition (Weak)") == 0,
+                "a weak stomach should show Nutrition (Weak)");
+    TEST_ASSERT(strcmp(br82377_faint, "Nutrition (Faint)") == 0,
+                "a faint stomach should show Nutrition (Faint)");
+    TEST_ASSERT(strcmp(br82377_starving, "STARVING") == 0,
+                "an empty stomach should show STARVING");
+    return !testFailed;
+}
+
+static const char *br82377_aboveHunger;
+static const char *br82377_aboveWeak;
+static const char *br82377_aboveFaint;
+static const char *br82377_aboveStarving;
+
+static void br82377_above_thresholds_setup(void) {
+    br82377_aboveHunger = br82377_labelAt(351);
+    br82377_aboveWeak = br82377_labelAt(151);
+    br82377_aboveFaint = br82377_labelAt(51);
+    br82377_aboveStarving = br82377_labelAt(1);
+}
+
+static boolean br82377_labels_change_only_at_the_thresholds(void) {
+    TEST_ASSERT(strcmp(br82377_aboveHunger, "Nutrition") == 0,
+                "one point above the hunger threshold should still show the plain Nutrition bar");
+    TEST_ASSERT(strcmp(br82377_aboveWeak, "Nutrition (Hungry)") == 0,
+                "one point above the weakness threshold should still show Nutrition (Hungry)");
+    TEST_ASSERT(strcmp(br82377_aboveFaint, "Nutrition (Weak)") == 0,
+                "one point above the faint threshold should still show Nutrition (Weak)");
+    TEST_ASSERT(strcmp(br82377_aboveStarving, "Nutrition (Faint)") == 0,
+                "one point of nutrition should still show Nutrition (Faint)");
+    return !testFailed;
+}
+
+// ============================================================
 // BR21675 — confirming the cursor while it sits on the player's own
 // location does nothing
 // ============================================================
@@ -1127,6 +1206,9 @@ const testCase tests_interaction[] = {
     { "BR23017_lethal_poison_labeled_fatal",   fatal_poison_setup,       NULL, lethal_poison_labeled_fatal },
     { "BR23017_nonlethal_poison_labeled_poisoned", surviving_poison_setup, NULL, nonlethal_poison_labeled_poisoned },
     { "BR23017_stacked_poison_shows_strength", stacked_poison_setup,     NULL, stacked_poison_shows_strength },
+
+    { "BR82377_nutrition_bar_labels_each_stage", br82377_stages_setup, NULL, br82377_nutrition_bar_labels_each_stage },
+    { "BR82377_nutrition_labels_change_only_at_thresholds", br82377_above_thresholds_setup, NULL, br82377_labels_change_only_at_the_thresholds },
     { "BR72215_discoveries_screen_lists_all_five_categories", discoveries_screen_setup, open_discoveries_screen_step, discoveries_screen_lists_all_five_categories },
 
     { "BR27870_unidentified_kinds_show_marker_and_chance", br27870_unknown_setup, br27870_unknown_step, br27870_unidentified_kinds_show_marker_and_chance },

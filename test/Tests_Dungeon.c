@@ -2237,6 +2237,339 @@ static boolean br22946_failed_subvault_aborts_whole_vault(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR36818 — an open-area vault expands from a random floor tile
+// along path distance until it reaches a randomly chosen size,
+// and is rejected if it would engulf an item, a monster, or
+// another vault.
+//
+// Every scenario first strips the level to solid wall and carves
+// a single known floor region, so no generated terrain, item or
+// monster can affect the outcome.  The growth test repeats the
+// build on the same open room and checks, for each build, that
+// the interior is exactly a prefix of the four-way pathing
+// distances from the recorded origin: every tile closer to the
+// origin than the farthest interior tile is inside, the origin
+// itself is inside, and the size lies within the vault's
+// advertised range.  Across builds both the origin and the size
+// must vary, showing that both are chosen at random.  The
+// rejection tests compare the same corridor with and without the
+// obstruction; the control must build, and the obstructed build
+// must fail without claiming tiles or disturbing the obstruction.
+// ============================================================
+
+#define BR36818_TRIALS 8
+
+static boolean br36818_built[BR36818_TRIALS];
+static int br36818_size[BR36818_TRIALS];
+static boolean br36818_prefixHolds[BR36818_TRIALS];
+static boolean br36818_originOnFloor[BR36818_TRIALS];
+static boolean br36818_originInside[BR36818_TRIALS];
+static pos br36818_origin[BR36818_TRIALS];
+
+static void br36818_stripLevel(void) {
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            setTerrain(posAt(x, y), WALL);
+        }
+    }
+}
+
+static void br36818_carveRect(int x0, int y0, int x1, int y1) {
+    for (int x = x0; x <= x1; x++) {
+        for (int y = y0; y <= y1; y++) {
+            setTerrain(posAt(x, y), FLOOR);
+        }
+    }
+}
+
+// Whether the current vault interior is exactly the set of tiles within some
+// four-way path distance of the recorded origin.  The engine processes the
+// distance rings in order, so it must include every tile closer than the
+// farthest interior tile and may include only part of that farthest ring.
+static boolean br36818_interiorIsDistancePrefix(void) {
+    int maxDistance = -1;
+
+    if (!isPosInMap(openAreaVaultOrigin())
+        || !cellIsVaultInterior(openAreaVaultOrigin())) {
+        return false;
+    }
+
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            pos loc = posAt(x, y);
+            if (!cellIsVaultInterior(loc)) {
+                continue;
+            }
+            int distance = openAreaVaultPathDistance(loc);
+            if (distance < 0) {
+                return false; // an interior tile the origin cannot path to
+            }
+            if (distance > maxDistance) {
+                maxDistance = distance;
+            }
+        }
+    }
+    if (maxDistance < 0) {
+        return false;
+    }
+
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            pos loc = posAt(x, y);
+            int distance = openAreaVaultPathDistance(loc);
+            if (distance >= 0 && distance < maxDistance && !cellIsVaultInterior(loc)) {
+                return false; // a closer tile was skipped while a farther one was taken
+            }
+        }
+    }
+
+    // The growth stops partway through the farthest ring, so at least one tile
+    // at that distance must be inside.
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            pos loc = posAt(x, y);
+            if (cellIsVaultInterior(loc)
+                && openAreaVaultPathDistance(loc) == maxDistance) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+static void br36818_growth_setup(void) {
+    clearMonsters();
+    for (int trial = 0; trial < BR36818_TRIALS; trial++) {
+        br36818_stripLevel();
+        br36818_carveRect(20, 7, 58, 21); // a wide open room
+        setPlayerPos(posAt(39, 14));
+
+        br36818_built[trial] = buildOpenAreaVault();
+        br36818_origin[trial] = openAreaVaultOrigin();
+        br36818_size[trial] = countVaultInteriorCells();
+        br36818_originOnFloor[trial] = (terrainAt(br36818_origin[trial]) == FLOOR);
+        br36818_originInside[trial] = cellIsVaultInterior(br36818_origin[trial]);
+        br36818_prefixHolds[trial] = br36818_interiorIsDistancePrefix();
+    }
+}
+
+static boolean br36818_grows_from_random_floor_tile_to_random_size(void) {
+    const int minSize = openAreaVaultTargetMin();
+    const int maxSize = openAreaVaultTargetMax();
+    int distinctOrigins = 0;
+    int distinctSizes = 0;
+
+    TEST_ASSERT(minSize > 0 && maxSize >= minSize,
+                "control: the vault should advertise a target-size range");
+
+    for (int trial = 0; trial < BR36818_TRIALS; trial++) {
+        TEST_ASSERT(br36818_built[trial],
+                    "an unobstructed open room should let the vault be built");
+        TEST_ASSERT(br36818_originOnFloor[trial],
+                    "the vault should grow from a floor tile");
+        TEST_ASSERT(br36818_originInside[trial],
+                    "the origin tile should belong to the vault interior");
+        TEST_ASSERT(br36818_size[trial] >= minSize
+                        && br36818_size[trial] <= maxSize,
+                    "the vault should grow to a size inside its target range");
+        TEST_ASSERT(br36818_prefixHolds[trial],
+                    "the vault should take tiles in path-distance order from its origin");
+
+        boolean newOrigin = true;
+        boolean newSize = true;
+        for (int earlier = 0; earlier < trial; earlier++) {
+            if (posAt(br36818_origin[earlier].x, br36818_origin[earlier].y).x
+                    == br36818_origin[trial].x
+                && br36818_origin[earlier].y == br36818_origin[trial].y) {
+                newOrigin = false;
+            }
+            if (br36818_size[earlier] == br36818_size[trial]) {
+                newSize = false;
+            }
+        }
+        distinctOrigins += newOrigin ? 1 : 0;
+        distinctSizes += newSize ? 1 : 0;
+    }
+
+    TEST_ASSERT(distinctOrigins > 1,
+                "the vault should pick its starting floor tile at random");
+    TEST_ASSERT(distinctSizes > 1,
+                "the vault should pick its target size at random");
+    return !testFailed;
+}
+
+#define BR36818_CORRIDOR_X0 10
+#define BR36818_CORRIDOR_X1 50
+#define BR36818_CORRIDOR_Y 14
+#define BR36818_ORIGIN_X 10
+#define BR36818_OBSTRUCTION_X 20
+#define BR36818_TARGET 20
+
+static boolean br36818_itemControlBuilt;
+static boolean br36818_itemBlockedBuilt;
+static int br36818_itemControlSize;
+static int br36818_itemBlockedSize;
+static pos br36818_itemLocation;
+
+static void br36818_item_setup(void) {
+    clearMonsters();
+
+    br36818_stripLevel();
+    br36818_carveRect(BR36818_CORRIDOR_X0, BR36818_CORRIDOR_Y,
+                      BR36818_CORRIDOR_X1, BR36818_CORRIDOR_Y);
+    setPlayerPos(posAt(35, BR36818_CORRIDOR_Y));
+    br36818_itemControlBuilt =
+        buildOpenAreaVaultAt(posAt(BR36818_ORIGIN_X, BR36818_CORRIDOR_Y), BR36818_TARGET);
+    br36818_itemControlSize = countVaultInteriorCells();
+
+    br36818_stripLevel();
+    br36818_carveRect(BR36818_CORRIDOR_X0, BR36818_CORRIDOR_Y,
+                      BR36818_CORRIDOR_X1, BR36818_CORRIDOR_Y);
+    setPlayerPos(posAt(35, BR36818_CORRIDOR_Y));
+    br36818_itemLocation = posAt(BR36818_OBSTRUCTION_X, BR36818_CORRIDOR_Y);
+    placeItemOnFloor(FOOD, RATION, br36818_itemLocation);
+    br36818_itemBlockedBuilt =
+        buildOpenAreaVaultAt(posAt(BR36818_ORIGIN_X, BR36818_CORRIDOR_Y), BR36818_TARGET);
+    br36818_itemBlockedSize = countVaultInteriorCells();
+}
+
+static boolean br36818_rejects_engulfing_an_item(void) {
+    TEST_ASSERT(br36818_itemControlBuilt,
+                "control: a clear corridor should let the vault be built");
+    TEST_ASSERT_EQ(br36818_itemControlSize, BR36818_TARGET,
+                   "control: the clear vault should reach its target size");
+
+    TEST_ASSERT(!br36818_itemBlockedBuilt,
+                "a vault that would engulf an item should be rejected");
+    TEST_ASSERT_EQ(br36818_itemBlockedSize, 0,
+                   "a rejected vault should claim no interior tiles");
+
+    item *theItem = findFloorItem(FOOD, RATION);
+    TEST_ASSERT(theItem != NULL,
+                "a rejected vault should leave the item where it was");
+    TEST_ASSERT_POS_EQ(itemPosition(theItem), br36818_itemLocation,
+                       "the item should not be moved or removed");
+    return !testFailed;
+}
+
+static boolean br36818_monsterControlBuilt;
+static boolean br36818_monsterBlockedBuilt;
+static int br36818_monsterControlSize;
+static int br36818_monsterBlockedSize;
+static creature *br36818_obstructingMonster;
+static pos br36818_monsterLocation;
+
+static void br36818_monster_setup(void) {
+    clearMonsters();
+
+    br36818_stripLevel();
+    br36818_carveRect(BR36818_CORRIDOR_X0, BR36818_CORRIDOR_Y,
+                      BR36818_CORRIDOR_X1, BR36818_CORRIDOR_Y);
+    setPlayerPos(posAt(35, BR36818_CORRIDOR_Y));
+    br36818_monsterControlBuilt =
+        buildOpenAreaVaultAt(posAt(BR36818_ORIGIN_X, BR36818_CORRIDOR_Y), BR36818_TARGET);
+    br36818_monsterControlSize = countVaultInteriorCells();
+
+    br36818_stripLevel();
+    br36818_carveRect(BR36818_CORRIDOR_X0, BR36818_CORRIDOR_Y,
+                      BR36818_CORRIDOR_X1, BR36818_CORRIDOR_Y);
+    setPlayerPos(posAt(35, BR36818_CORRIDOR_Y));
+    br36818_monsterLocation = posAt(BR36818_OBSTRUCTION_X, BR36818_CORRIDOR_Y);
+    br36818_obstructingMonster = spawnMonster(MK_RAT, br36818_monsterLocation);
+    br36818_monsterBlockedBuilt =
+        buildOpenAreaVaultAt(posAt(BR36818_ORIGIN_X, BR36818_CORRIDOR_Y), BR36818_TARGET);
+    br36818_monsterBlockedSize = countVaultInteriorCells();
+}
+
+static boolean br36818_rejects_engulfing_a_monster(void) {
+    TEST_ASSERT(br36818_monsterControlBuilt,
+                "control: a clear corridor should let the vault be built");
+    TEST_ASSERT_EQ(br36818_monsterControlSize, BR36818_TARGET,
+                   "control: the clear vault should reach its target size");
+
+    TEST_ASSERT(!br36818_monsterBlockedBuilt,
+                "a vault that would engulf a monster should be rejected");
+    TEST_ASSERT_EQ(br36818_monsterBlockedSize, 0,
+                   "a rejected vault should claim no interior tiles");
+    TEST_ASSERT(br36818_obstructingMonster != NULL
+                    && monsterIsAlive(br36818_obstructingMonster),
+                "a rejected vault should leave the monster alive");
+    if (br36818_obstructingMonster != NULL) {
+        TEST_ASSERT_POS_EQ(monsterPosition(br36818_obstructingMonster),
+                           br36818_monsterLocation,
+                           "the monster should not be moved or removed");
+    }
+    return !testFailed;
+}
+
+// The second vault starts two tiles from the corridor's right end, so its
+// growth has almost nowhere to go but left, toward the first vault.  Its
+// target size is exactly the number of tiles it takes to reach the first
+// vault's near edge; one more tile would engulf it.
+#define BR36818_VAULT_CORRIDOR_X1 50
+#define BR36818_FIRST_ORIGIN_X 10
+#define BR36818_FIRST_TARGET 10
+#define BR36818_SECOND_ORIGIN_X 48
+#define BR36818_SECOND_TARGET 32
+
+static boolean br36818_vaultControlBuilt;
+static int br36818_vaultControlSize;
+static boolean br36818_firstVaultBuilt;
+static boolean br36818_secondVaultBuilt;
+static int br36818_firstVaultSize;
+static int br36818_tilesAfterFirst;
+static int br36818_tilesAfterSecond;
+
+static void br36818_vault_setup(void) {
+    clearMonsters();
+
+    // Control: the second vault's growth alone, on a clear corridor.
+    br36818_stripLevel();
+    br36818_carveRect(BR36818_CORRIDOR_X0, BR36818_CORRIDOR_Y,
+                      BR36818_VAULT_CORRIDOR_X1, BR36818_CORRIDOR_Y);
+    setPlayerPos(posAt(45, BR36818_CORRIDOR_Y));
+    br36818_vaultControlBuilt =
+        buildOpenAreaVaultAt(posAt(BR36818_SECOND_ORIGIN_X, BR36818_CORRIDOR_Y),
+                             BR36818_SECOND_TARGET);
+    br36818_vaultControlSize = countVaultInteriorCells();
+
+    // A first vault near the left end, then a second whose growth toward it
+    // must run into the first vault's tiles before reaching its target.
+    br36818_stripLevel();
+    br36818_carveRect(BR36818_CORRIDOR_X0, BR36818_CORRIDOR_Y,
+                      BR36818_VAULT_CORRIDOR_X1, BR36818_CORRIDOR_Y);
+    setPlayerPos(posAt(45, BR36818_CORRIDOR_Y));
+    br36818_firstVaultBuilt =
+        buildOpenAreaVaultAt(posAt(BR36818_FIRST_ORIGIN_X, BR36818_CORRIDOR_Y),
+                             BR36818_FIRST_TARGET);
+    br36818_firstVaultSize = countVaultInteriorCells();
+    br36818_tilesAfterFirst = br36818_firstVaultSize;
+
+    br36818_secondVaultBuilt =
+        buildOpenAreaVaultAt(posAt(BR36818_SECOND_ORIGIN_X, BR36818_CORRIDOR_Y),
+                             BR36818_SECOND_TARGET);
+    br36818_tilesAfterSecond = countVaultInteriorCells();
+}
+
+static boolean br36818_rejects_engulfing_another_vault(void) {
+    TEST_ASSERT(br36818_vaultControlBuilt,
+                "control: the same corridor without an earlier vault should accept the second vault");
+    TEST_ASSERT_EQ(br36818_vaultControlSize, BR36818_SECOND_TARGET,
+                   "control: the second vault should reach its target size");
+
+    TEST_ASSERT(br36818_firstVaultBuilt,
+                "the first vault should build on the clear corridor");
+    TEST_ASSERT_EQ(br36818_firstVaultSize, BR36818_FIRST_TARGET,
+                   "the first vault should reach its target size");
+
+    TEST_ASSERT(!br36818_secondVaultBuilt,
+                "a vault whose growth would engulf another vault should be rejected");
+    TEST_ASSERT_EQ(br36818_tilesAfterSecond, br36818_tilesAfterFirst,
+                   "the rejected vault should add no interior tiles");
+    return !testFailed;
+}
+
 const testCase tests_dungeon[] = {
     { "BR94157_first_room_entrance_on_depth_1_cavern_below", NULL, NULL, br94157_first_room_entrance_on_depth_1_cavern_below },
     { "BR71397_level_is_79_by_29",                       NULL, NULL, level_is_79_by_29 },
@@ -2284,6 +2617,15 @@ const testCase tests_dungeon[] = {
     { "BR49485_room_vault_grows_from_in_range_doorway", br49485_in_range_setup, NULL, br49485_in_range_vault_grows_from_doorway },
     { "BR49485_room_vault_rejects_out_of_range_doorway", br49485_out_of_range_setup, NULL, br49485_out_of_range_doorway_is_rejected },
     { "BR39459_player_lighting_colors_are_distinct",   br39459_setup, NULL, br39459_player_has_distinct_lighting_colors },
+
+    { "BR36818_open_area_vault_grows_from_random_tile_to_random_size",
+      br36818_growth_setup, NULL, br36818_grows_from_random_floor_tile_to_random_size },
+    { "BR36818_open_area_vault_rejects_engulfing_item",
+      br36818_item_setup, NULL, br36818_rejects_engulfing_an_item },
+    { "BR36818_open_area_vault_rejects_engulfing_monster",
+      br36818_monster_setup, NULL, br36818_rejects_engulfing_a_monster },
+    { "BR36818_open_area_vault_rejects_engulfing_another_vault",
+      br36818_vault_setup, NULL, br36818_rejects_engulfing_another_vault },
 
     { NULL, NULL, NULL, NULL }
 };

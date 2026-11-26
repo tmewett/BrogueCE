@@ -136,21 +136,26 @@ static void levitation_rat_setup(void) {
 // ------- STEP FUNCTIONS -------
 
 static boolean levitation_breaks_seized_step(void) {
-    const creature *bog = findMonster(MK_BOG_MONSTER);
+    creature *bog = findMonster(MK_BOG_MONSTER);
 
-    // If player is seized, take levitation potion
-    if (player.bookkeepingFlags & MB_SEIZED && bog->bookkeepingFlags & MB_SEIZING) {
+    if (player.bookkeepingFlags & MB_SEIZED) {
+        // If player is seized, take the levitation potion to break the grab.
         drink(POTION_LEVITATION);
         return true;
     }
-
-    // Let the bog monster attempt to seize player
-    if (turnNumber() < 10) {
-        restOneTurn();
-        return true;
+    if (isPlayerLevitating()) {
+        return false; // levitating and free; let verify confirm the grab is gone
     }
 
-    return false;
+    // The grab happens inside the bog monster's attack, so drive one directly;
+    // waiting for the monster's erratic movement to land an attack can take an
+    // unbounded number of turns.
+    TEST_ASSERT(bog != NULL && monsterIsAlive(bog), "bog monster should be present");
+    if (testFailed) {
+        return false;
+    }
+    monsterAttacksPlayer(bog);
+    return true;
 }
 
 
@@ -225,6 +230,20 @@ static boolean inventory_items_missing(void) {
     return !testFailed;
 }
 
+// A bog monster grabs rather than injuring, and the grab happens inside its
+// attack.  Drive the attack directly: waiting for the monster's erratic
+// movement (it flits in a random direction a third of the time) to land a
+// blow leaves the seize to chance.
+static boolean bog_monster_attack_step(void) {
+    creature *bog = findMonster(MK_BOG_MONSTER);
+
+    TEST_ASSERT(bog != NULL && monsterIsAlive(bog), "bog monster should be present");
+    if (!testFailed) {
+        monsterAttacksPlayer(bog);
+    }
+    return false;
+}
+
 static boolean player_seized_verify(void) {
     TEST_ASSERT(player.bookkeepingFlags & MB_SEIZED, "Bog monster should seize player");
     return !testFailed;
@@ -239,7 +258,7 @@ static boolean player_not_seized_verify(void) {
 const testCase tests_examples[] = {
     { "BR16982_chasm_fall",             chasm_setup,                wait_until_fall_step,               chasm_fall_verify           },
     { "BR17312_water_steals_items",     water_setup,                wait_100_turns_step,                 inventory_items_missing     },
-    { "BR17384_bog_monster_seizes",     bog_monster_setup,          wait_10_turns_step,                 player_seized_verify        },
+    { "BR17384_bog_monster_seizes",     bog_monster_setup,          bog_monster_attack_step,            player_seized_verify        },
     { "BR17765_aquatic_attack",         eel_setup,                  wait_10_turns_step,                 aquatic_eel_verify          },
     { "BR20087_trigger_trap",           trap_setup,                 trap_step,                     trap_triggered              },
     { "BR21016_harmful_gas",            gas_setup,                  wait_10_turns_step,                 player_is_hurt              },

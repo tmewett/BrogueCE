@@ -1184,6 +1184,10 @@ boolean buildAMachine(enum machineTypes bp,
                     originY = originLoc.y;
                 }
 
+#ifdef BROGUE_TESTING
+                recordOpenAreaVaultOriginForTesting(originX, originY);
+#endif
+
                 if (!distanceMap) {
                     distanceMap = allocGrid();
                 }

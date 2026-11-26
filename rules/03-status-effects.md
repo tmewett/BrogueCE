@@ -94,8 +94,8 @@
 [Time.c:2025-2030](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2025-L2030) [Monsters.c:1860-1866](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1860-L1866)
 **BR28481** — Haste and slow are mutually exclusive: applying either one clears the other.
 [Items.c:3908-3934](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3908-L3934)
-**BR84218** — The confusion counter decreases by 1 per periodic update.
-[Time.c:2013-2015](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2013-L2015)
+**BR84218** — Each turn a confused player's confusion wears off by one turn, and when it expires they are told they no longer feel confused.
+[Time.c:2026-2028](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2026-L2028)
 **BR14011** — Confusion gas sets the confusion counter to at least 25 on a creature that is neither inanimate nor invulnerable.
 [Time.c:391-406](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L391-L406)
 **BR24556** — A weapon of confusion sets the target's confusion duration based on the weapon's enchantment.
@@ -200,8 +200,6 @@
 [Time.c:1980-1989](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1980-L1989)
 **BR80877** — At 0 nutrition the player loses 1 health per turn and dies of starvation when health reaches 0.
 [Time.c:2276-2282](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2276-L2282)
-**BR58287** — When nutrition crosses the hunger, weak, and faint thresholds the player receives the corresponding warning message, and at 0 calories the player is told they are starving to death.
-[Time.c:824-835](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L824-L835)
 **BR98143** — A monster traveling between levels is given a countdown; each periodic update it decreases by 1, and when it reaches exactly 1 the monster enters the current level.
 [Time.c:1960-1970](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1960-L1970)
 **BR59859** — The Yendor warden is given a countdown of 50 when repositioned just below the player's depth.

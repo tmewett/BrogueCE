@@ -320,8 +320,8 @@
   [Time.c:1981-1982](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1981-L1982)
 - **BR32984** — Carrying the Amulet of Yendor slows the nutrition drain to one turn in five.
   [Time.c:1984-1984](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1984-L1984)
-- **BR32368** — As nutrition falls you are told "you are hungry", "you feel weak with hunger", "you feel faint with hunger", and finally "you are starving to death!".
-  [Time.c:814-836](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L814-L836)
+- **BR32368** — As your hunger deepens you are warned in turn: "you are hungry", "you feel weak with hunger", "you feel faint with hunger", and finally "you are starving to death!".
+  [Time.c:824-835](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L824-L835)
 - **BR32992** — Every hunger warning demands acknowledgment, except that "you are hungry" demands it only when your pack contains no food.
   [Time.c:818-835](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L818-L835)
 - **BR33395** — The "hungry", "weak with hunger" and "faint with hunger" warnings add " and have no food" when your pack contains no food.

@@ -6,7 +6,8 @@
 // shield, being stuck ending as soon as a creature is off an entangling tile,
 // and a discordant creature attacking the nearest eligible creature.  Rules
 // about rendering (light radius, hallucinated names), combat prompts, and
-// specific item/bolt magnitudes are omitted.
+// item/bolt magnitudes other than the staff-scaled entrancement duration
+// are omitted.
 
 #include "TestFramework.h"
 #include "Globals.h"
@@ -619,7 +620,7 @@ static boolean starved_one_point(void) {
 }
 
 // ============================================================
-// BR58287 — crossing the hunger threshold warns the player
+// BR32368 — crossing the hunger threshold warns the player
 // ============================================================
 
 static void hunger_warning_setup(void) {
@@ -1117,6 +1118,141 @@ static boolean br49341_attacks_nearest_creature(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR50793 — an entrancement bolt sets the entranced counter on a
+// non-inanimate monster (a scaled staff duration) and wakes it.
+//
+// The staff's bolt magnitude is its enchantment, so the entrancement
+// lasts three turns per point of enchantment.  Two different
+// enchantments are used so a fixed duration cannot pass, and the
+// target is put to sleep first so the waking half of the rule is
+// observable.  The staff is zapped without spending a turn, so the
+// counter can be read at the value the bolt set rather than one
+// periodic-update tick later.  A separate inanimate target shows the
+// effect is limited to creatures that can be entranced at all.
+// ============================================================
+
+static creature *br50793_target;
+static int br50793_expectedTurns;
+static boolean br50793_wasAsleep;
+
+static void br50793_animate_setup(int enchant) {
+    setArenaRadius(5, FLOOR);
+    br50793_target = placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 3, 0));
+    putMonsterToSleep(br50793_target);
+    br50793_wasAsleep = monsterIsAsleep(br50793_target);
+    br50793_expectedTurns = enchant * 3;
+    item *staff = givePlayerItem(STAFF, STAFF_ENTRANCEMENT, enchant);
+    playerZapsStaffAt(staff, br50793_target);
+}
+
+static void br50793_enchant5_setup(void) {
+    br50793_animate_setup(5);
+}
+
+static void br50793_enchant2_setup(void) {
+    br50793_animate_setup(2);
+}
+
+static void br50793_inanimate_setup(void) {
+    setArenaRadius(5, FLOOR);
+    br50793_target = placeHostileMonster(MK_OGRE_TOTEM, posOffset(getPlayerPos(), 3, 0));
+    item *staff = givePlayerItem(STAFF, STAFF_ENTRANCEMENT, 5);
+    playerZapsStaffAt(staff, br50793_target);
+}
+
+static boolean br50793_entrances_and_wakes(void) {
+    TEST_ASSERT(br50793_target != NULL, "setup: the target should exist");
+    TEST_ASSERT(br50793_wasAsleep, "setup: the target should start asleep");
+    TEST_ASSERT(monsterIsAlive(br50793_target), "the bolt should not kill the target");
+    TEST_ASSERT(!monsterIsAsleep(br50793_target),
+                "an entrancement bolt should wake the monster");
+    TEST_ASSERT_EQ(monsterStatusTurns(br50793_target, STATUS_ENTRANCED),
+                   br50793_expectedTurns,
+                   "entrancement should last three turns per point of staff enchantment");
+    TEST_ASSERT(messageWasShown("is entranced!"),
+                "the visible target should be reported as entranced");
+    return !testFailed;
+}
+
+static boolean br50793_inanimate_not_entranced(void) {
+    TEST_ASSERT(br50793_target != NULL, "setup: the inanimate target should exist");
+    TEST_ASSERT(!monsterHasStatus(br50793_target, STATUS_ENTRANCED),
+                "an inanimate creature should not be entranced");
+    TEST_ASSERT_EQ(monsterStatusTurns(br50793_target, STATUS_ENTRANCED), 0,
+                   "an inanimate creature should have no entrancement counter");
+    TEST_ASSERT(!messageWasShown("is entranced!"),
+                "an inanimate creature should not be reported as entranced");
+    return !testFailed;
+}
+
+// ============================================================
+// BR36538 — a paralyzed defender is always hit, takes triple
+//            damage, and does not get to retaliate
+// ============================================================
+
+#define BR36538_TRIALS 20
+
+static creature *br36538_target;
+
+static void br36538_setup(enum monsterTypes type, int health) {
+    clearArena();
+    // Triple damage is measured against an unarmed blow, whose base damage is
+    // 1-2.  Take off the starting dagger so the expected range is exact.
+    if (equippedWeapon() != NULL) {
+        unequipItemFromPack(WEAPON, itemKind(equippedWeapon()));
+    }
+    br36538_target = placeHostileMonster(type, posOffset(getPlayerPos(), 1, 0));
+    setMonsterHealth(br36538_target, health);
+    applyStatusToMonster(br36538_target, STATUS_PARALYZED, 100);
+}
+
+static void br36538_damage_setup(void) {
+    // A troll's defense of 70 turns a normal blow aside most of the time, so
+    // the damage assertions also rest on the paralyzed defender being hit.
+    br36538_setup(MK_TROLL, 500);
+}
+
+static void br36538_jackal_setup(void) {
+    // A hasted jackal attacks twice as fast as the player, so delaying it past
+    // its own attack interval proves it was not allowed to retaliate.
+    br36538_setup(MK_JACKAL, 500);
+    hasteMonster(br36538_target, 100);
+}
+
+static boolean br36538_triple_damage(void) {
+    int before = monsterHealth(br36538_target);
+    TEST_ASSERT(playerAttacksMonster(br36538_target),
+                "an attack should always hit a paralyzed defender");
+    int damage = before - monsterHealth(br36538_target);
+    TEST_ASSERT(damage == 3 || damage == 6,
+                "a paralyzed defender should take triple the 1-2 damage of an unarmed blow");
+    return !testFailed;
+}
+
+static boolean br36538_always_hit(void) {
+    for (int i = 0; i < BR36538_TRIALS; i++) {
+        setMonsterHealth(br36538_target, monsterMaxHealth(br36538_target));
+        // Attacking clears paralysis, so restore it before each trial.
+        applyStatusToMonster(br36538_target, STATUS_PARALYZED, 100);
+        if (!playerAttacksMonster(br36538_target)) {
+            testFail("a paralyzed defender should be hit by every attack");
+            break;
+        }
+    }
+    return !testFailed;
+}
+
+static boolean br36538_no_retaliation(void) {
+    TEST_ASSERT(monsterHasStatus(br36538_target, STATUS_PARALYZED),
+                "setup: the target should be paralyzed");
+    TEST_ASSERT(playerAttacksMonster(br36538_target),
+                "an attack should always hit a paralyzed defender");
+    TEST_ASSERT(monsterTicksUntilTurn(br36538_target) > monsterAttackSpeed(br36538_target),
+                "a paralyzed defender should be delayed past its own attack instead of retaliating");
+    return !testFailed;
+}
+
 const testCase tests_status_effects[] = {
     { "BR97529_telepathy_counter_decrements",   telepathy_decrement_setup,      rest_one_turn_step, status_decremented_by_one },
     { "BR97529_hallucination_counter_decrements", hallucination_decrement_setup, rest_one_turn_step, status_decremented_by_one },
@@ -1165,7 +1301,7 @@ const testCase tests_status_effects[] = {
     { "BR49432_nutrition_decrements",           nutrition_decreases_setup,      rest_one_turn_step, nutrition_decreased },
     { "BR24204_no_nutrition_while_paralyzed",   paralyzed_no_nutrition_setup,   wait_10_turns_step, nutrition_unchanged },
     { "BR80877_starvation_costs_health",        starvation_setup,               rest_one_turn_step, starved_one_point },
-    { "BR58287_hunger_threshold_warning",       hunger_warning_setup,           rest_one_turn_step, hunger_warning_shown },
+    { "BR32368_hunger_threshold_warning",       hunger_warning_setup,           rest_one_turn_step, hunger_warning_shown },
 
     { "BR73170_levitating_not_underwater",      levitating_over_water_setup,    NULL, not_underwater },
 
@@ -1177,7 +1313,14 @@ const testCase tests_status_effects[] = {
 
     { "BR62028_paralyzed_monster_takes_no_action", paralyzed_monster_idle_setup, wait_10_turns_step, paralyzed_monster_did_nothing },
     { "BR34867_entranced_monster_skips_turn",   entranced_monster_idle_setup,   wait_10_turns_step, entranced_monster_did_nothing },
+
+    { "BR50793_entrancement_duration_scales_with_enchant5", br50793_enchant5_setup, NULL, br50793_entrances_and_wakes },
+    { "BR50793_entrancement_duration_scales_with_enchant2", br50793_enchant2_setup, NULL, br50793_entrances_and_wakes },
+    { "BR50793_entrancement_skips_inanimate",               br50793_inanimate_setup, NULL, br50793_inanimate_not_entranced },
     { "BR73717_attacking_paralyzed_clears_it",  attack_paralyzed_setup,         attack_paralyzed_step, paralysis_cleared },
+    { "BR36538_paralyzed_defender_takes_triple_damage", br36538_damage_setup, NULL, br36538_triple_damage },
+    { "BR36538_paralyzed_defender_always_hit",          br36538_damage_setup, NULL, br36538_always_hit },
+    { "BR36538_paralyzed_defender_does_not_retaliate",  br36538_jackal_setup, NULL, br36538_no_retaliation },
 
     { "BR68621_shield_decays_by_twentieth",     shield_decays_setup,            rest_one_turn_step, shield_decayed },
 

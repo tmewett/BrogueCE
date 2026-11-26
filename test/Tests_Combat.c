@@ -27,12 +27,15 @@ static void protectEquipmentFromAcid(void) {
     theItem->flags |= ITEM_PROTECTED;
 }
 
-static void target_setup(enum monsterTypes typ) {
+static void seized_target_setup(void) {
     clearArena();
+    setTerrainAroundLoc(getPlayerPos(), MUD);
+    setPlayerPos(getPlayerPos());
     targetPos = posOffset(getPlayerPos(), 1, 0);
-    monstType = typ;
-    monst = placeHostileMonster(monstType, targetPos);
-    applyStatusToMonster(monst, STATUS_PARALYZED, 20);
+    monst = placeHostileMonster(MK_BOG_MONSTER, targetPos);
+    // A zero-accuracy attacker never lands a normal blow, so any hit proves
+    // the seize auto-hit.
+    monst->info.accuracy = 0;
 }
 
 static boolean attack_once_step(void) {
@@ -46,18 +49,24 @@ static boolean monster_attacks_step(void) {
     return false;
 }
 
-static boolean target_was_wounded(void) {
-    TEST_ASSERT(monsterIsHurt(monst), "monster should be dead or wounded");
-    return !testFailed;
+// ============================================================
+// BR65933 — an attack always hits a defender the attacker has seized
+// ============================================================
+
+static boolean br65933_hit;
+
+static boolean seized_defender_step(void) {
+    monsterAttacksPlayer(monst);               // the grab seizes the player
+    br65933_hit = monsterAttacksPlayer(monst); // the next blow must hit
+    return false;
 }
 
-// ============================================================
-// BR65933 — an attack always hits a paralyzed defender
-// ============================================================
-
-static void paralyzed_target_setup(void) {
-    // TODO: Test different paralyzable, non-invulnerable monsters
-    target_setup(MK_TROLL);
+static boolean seized_defender_was_hit(void) {
+    TEST_ASSERT(playerIsSeized(),
+                "the bog monster should have seized the player");
+    TEST_ASSERT(br65933_hit,
+                "an attack against a seized defender should always hit");
+    return !testFailed;
 }
 
 
@@ -871,7 +880,7 @@ static boolean br41331_reaping_is_bounded_by_damage(void) {
 
 const testCase tests_combat[] = {
     { "BR94361_immolation_armor_erupts_in_flame", immolation_armor_setup, immolation_strikes_step, armor_erupts_in_flame },
-    { "BR65933_paralyzed_defender_always_hit",  paralyzed_target_setup,  attack_once_step,        target_was_wounded },
+    { "BR65933_seized_defender_always_hit",     seized_target_setup,     seized_defender_step,    seized_defender_was_hit },
     { "BR66846_sleeping_defender_always_hit",   sleeping_target_setup,   attack_once_step,        sleeping_target_was_wounded },
     { "BR89965_struck_monster_wakes",           sleeping_target_setup,   attack_once_step,        struck_monster_woke },
     { "BR62243_attacking_alerts_monster",       unaware_target_setup,    attack_once_step,     monster_was_alerted },

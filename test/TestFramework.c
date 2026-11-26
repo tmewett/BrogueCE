@@ -44,6 +44,12 @@ static int startupMessageCount = 0;
 // screen rather than sent through message().
 static char playerDeathCauseText[TEXT_MAX_LENGTH + 1];
 
+// Whether the high-score display has opened during the current test.  The
+// display is drawn and then immediately covered by the save-recording prompt,
+// so it cannot be observed in the screen snapshot taken at the last input
+// request; the engine reports the display here instead.
+static boolean highScoresDisplayed = false;
+
 // Set while runQueuedInputThroughMainLoop() is pumping the engine's main input
 // loop.  That loop only ends when the game ends, so the input hook flags the
 // game as ended as soon as the queue runs dry, giving the pump control back.
@@ -255,6 +261,47 @@ unsigned long long dungeonSeed(void) {
 
 static void clearInputQueue(void) {
     inputQueueHead = inputQueueTail = 0;
+}
+
+// See the declaration in TestFramework.h.
+int inventoryScreenMagicMarkerFor(char inventoryLetter) {
+    // Open the real inventory over the dungeon.  The frame captured at its
+    // input request is the inventory as drawn; dismissing it afterwards leaves
+    // that frame available for inspection.
+    queueKeystroke(ESCAPE_KEY, false, false);
+    displayInventory(ALL_ITEMS, 0, 0, true, true);
+    clearInputQueue();
+
+    if (!screenSnapshotValid) {
+        return -2;
+    }
+
+    // Each item's row starts with " <letter>)", followed by a space and then
+    // the magic mark cell: the glowing good/bad-magic sigil, a plain '-' for
+    // neutral magic, or the item's own glyph when no magic mark is shown.
+    char prefix[4] = { ' ', inventoryLetter, ')', '\0' };
+    for (int y = 0; y < ROWS; y++) {
+        const char *match = strstr(screenSnapshot[y], prefix);
+        if (match == NULL) {
+            continue;
+        }
+        const int markColumn = (int) (match - screenSnapshot[y]) + 4;
+        if (markColumn >= COLS) {
+            return -2;
+        }
+        const int glyph = screenGlyphSnapshot[y][markColumn];
+        if (glyph == G_GOOD_MAGIC) {
+            return 1;
+        }
+        if (glyph == G_BAD_MAGIC) {
+            return -1;
+        }
+        if (glyph == '-') {
+            return 0;
+        }
+        return -2;
+    }
+    return -2;
 }
 
 // The text the most recent text-entry prompt opened with, recorded by the
@@ -469,6 +516,7 @@ void runTestByName(const char *name) {
             clearInputQueue();
             clearMessages();
             playerDeathCauseText[0] = '\0';
+            highScoresDisplayed = false;
             screenSnapshotValid = false;
             rememberedColorsValid = false;
 
@@ -711,6 +759,38 @@ boolean cellIsInShadow(pos loc) {
         return false;
     }
     return (pmapAt(loc)->flags & IS_IN_SHADOW) != 0;
+}
+
+static const char *colorRoleName(const color *theColor) {
+    if (theColor == &torchColor || theColor == &torchLightColor) {
+        return "torch orange";
+    }
+    return "other";
+}
+
+const char *terrainDrawColorName(pos loc) {
+    if (!isPosInMap(loc)) {
+        return "other";
+    }
+    return colorRoleName(tileCatalog[pmapAt(loc)->layers[DUNGEON]].foreColor);
+}
+
+boolean terrainDrawColorFlickers(pos loc) {
+    if (!isPosInMap(loc)) {
+        return false;
+    }
+    return tileCatalog[pmapAt(loc)->layers[DUNGEON]].foreColor->colorDances;
+}
+
+const char *terrainGlowLightColorName(pos loc) {
+    if (!isPosInMap(loc)) {
+        return "other";
+    }
+    const short glowLight = tileCatalog[pmapAt(loc)->layers[DUNGEON]].glowLight;
+    if (glowLight <= 0 || glowLight >= NUMBER_LIGHT_KINDS) {
+        return "other";
+    }
+    return colorRoleName(lightCatalog[glowLight].lightColor);
 }
 
 // ---------------------------------------------
@@ -1171,6 +1251,14 @@ int expectedVictoryScore(void) {
     return (int) total;
 }
 
+void recordHighScoresDisplayed(void) {
+    highScoresDisplayed = true;
+}
+
+boolean highScoresWereDisplayed(void) {
+    return highScoresDisplayed;
+}
+
 boolean highScoreHasScore(int score) {
     rogueHighScoresEntry list[HIGH_SCORES_COUNT];
     getHighScoresList(list); // re-reads the high-score file each call
@@ -1603,6 +1691,14 @@ void playerZapsAt( item *theItem, creature *monst ) {
     zap(player.loc, monst->loc, &theBolt, false, false);
 }
 
+void playerZapsStaffAt( item *theItem, creature *monst ) {
+    if (theItem->category != STAFF) return;
+
+    bolt theBolt = boltCatalog[tableForItemCategory(theItem->category)[theItem->kind].power];
+    theBolt.magnitude = theItem->enchant1;
+    zap(player.loc, monst->loc, &theBolt, false, false);
+}
+
 
 void monsterTakesTurn(creature *monst) {
     if (monst != NULL) {
@@ -1793,6 +1889,11 @@ boolean monsterIsCarryingItem(const creature *monst) {
     return monst != NULL && monst->carriedItem != NULL;
 }
 
+// See the declaration in TestFramework.h.
+item *monsterCarriedItem(const creature *monst) {
+    return monst != NULL ? monst->carriedItem : NULL;
+}
+
 boolean monsterIsPermFleeing(const creature *monst) {
     return monst != NULL && monst->creatureMode == MODE_PERM_FLEEING;
 }
@@ -1926,6 +2027,11 @@ item *placeItemOnFloor(short category, short kind, pos loc) {
 pos itemPosition(const item *theItem) {
     if (theItem == NULL) return (pos) { -1, -1 };
     return theItem->loc;
+}
+
+// See the declaration in TestFramework.h.
+int itemOriginDepth(const item *theItem) {
+    return theItem != NULL ? theItem->originDepth : 0;
 }
 
 int countFloorItems(void) {
@@ -2544,8 +2650,90 @@ boolean buildRoomVaultAtChamber(int roomCells) {
     return built;
 }
 
+// The engine's open-area vault (the amulet holder's statuary area).  It is
+// neither a room vault nor a vestibule, so its interior grows along the
+// pathing map from a random floor tile.
+#define TEST_OPEN_AREA_VAULT_BLUEPRINT MT_AMULET_AREA
+
+static pos openAreaVaultOriginRecorded = {0, 0};
+
+void recordOpenAreaVaultOriginForTesting(short x, short y) {
+    openAreaVaultOriginRecorded = posAt(x, y);
+}
+
+pos openAreaVaultOrigin(void) {
+    return openAreaVaultOriginRecorded;
+}
+
+int openAreaVaultTargetMin(void) {
+    return blueprintCatalog[TEST_OPEN_AREA_VAULT_BLUEPRINT].roomSize[0];
+}
+
+int openAreaVaultTargetMax(void) {
+    return blueprintCatalog[TEST_OPEN_AREA_VAULT_BLUEPRINT].roomSize[1];
+}
+
+int openAreaVaultPathDistance(pos loc) {
+    // A blocked tile is never part of the growth, and seeding a distance map
+    // on one would report a spurious distance, so reject it up front.
+    if (!isPosInMap(loc) || cellHasTerrainFlag(loc, T_PATHING_BLOCKER)) {
+        return -1;
+    }
+    // The expansion walks a four-way pathing map (eightWays is false), so the
+    // distance a test sees must be measured the same way.
+    short **distanceMap = allocGrid();
+    calculateDistances(distanceMap, loc.x, loc.y, T_PATHING_BLOCKER, NULL, true, false);
+    int distance = distanceMap[openAreaVaultOriginRecorded.x][openAreaVaultOriginRecorded.y];
+    freeGrid(distanceMap);
+    return distance;
+}
+
+static boolean buildOpenAreaVaultInternal(int originX, int originY, int targetSize) {
+    blueprint *tweakedBlueprints = malloc(gameConst->numberBlueprints * sizeof(blueprint));
+    if (tweakedBlueprints == NULL) {
+        testFail("could not allocate the tweaked blueprint table");
+        return false;
+    }
+    memcpy(tweakedBlueprints, blueprintCatalog, gameConst->numberBlueprints * sizeof(blueprint));
+
+    blueprint *vault = &tweakedBlueprints[TEST_OPEN_AREA_VAULT_BLUEPRINT];
+    vault->featureCount = 0;
+    if (targetSize > 0) {
+        vault->roomSize[0] = vault->roomSize[1] = targetSize;
+    }
+    // The raw growth is what is under test.  Keep the interior purge (which
+    // leaves the grown tiles as plain floor) but drop the passes that would
+    // reshape the interior afterwards, so cellIsVaultInterior() reports
+    // exactly the tiles expansion selected.
+    vault->flags &= ~(BP_OPEN_INTERIOR | BP_MAXIMIZE_INTERIOR
+                      | BP_REDESIGN_INTERIOR | BP_SURROUND_WITH_WALLS);
+
+    const blueprint *originalBlueprints = blueprintCatalog;
+    blueprintCatalog = tweakedBlueprints;
+    boolean built = buildAMachine(TEST_OPEN_AREA_VAULT_BLUEPRINT, originX, originY,
+                                  0, NULL, NULL, NULL);
+    blueprintCatalog = originalBlueprints;
+    free(tweakedBlueprints);
+
+    return built;
+}
+
+boolean buildOpenAreaVault(void) {
+    return buildOpenAreaVaultInternal(-1, -1, 0);
+}
+
+boolean buildOpenAreaVaultAt(pos origin, int targetSize) {
+    return buildOpenAreaVaultInternal(origin.x, origin.y, targetSize);
+}
+
 int lightAt(pos loc) {
     return tmapAt(loc)->light[0] + tmapAt(loc)->light[1] + tmapAt(loc)->light[2];
+}
+
+void lightColorAt(pos loc, int *red, int *green, int *blue) {
+    *red = tmapAt(loc)->light[0];
+    *green = tmapAt(loc)->light[1];
+    *blue = tmapAt(loc)->light[2];
 }
 
 void descendToNextLevel(void) {
@@ -2767,6 +2955,15 @@ creature *spawnMonsterWithItemChance(enum monsterTypes type, pos loc) {
     creature *monst = generateMonster(type, true, false);
     setMonsterPos(monst, loc);
     return monst;
+}
+
+// See the declaration in TestFramework.h.
+int monsterItemHopperCount(void) {
+    int count = 0;
+    for (item *i = monsterItemsHopper->nextItem; i != NULL; i = i->nextItem) {
+        count++;
+    }
+    return count;
 }
 
 void addDeadAllyToPurgatory(enum monsterTypes type, pos loc) {

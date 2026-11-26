@@ -534,6 +534,59 @@ static boolean donning_armor_reduces_defense(void) {
 }
 
 // ============================================================
+// BR83562 — a suit of armor identifies itself after it has been
+// worn for a set number of turns.
+//
+// The armor starts unidentified and carries the wearing countdown
+// the engine will run down while it stays worn.  Resting one turn
+// short of that countdown must leave it unidentified; the next
+// turn must identify it.  Reading the countdown from the item,
+// rather than assuming a fixed number, keeps the test tied to the
+// rule instead of a particular game variant.
+// ============================================================
+
+static item *br83562_armor;
+static int br83562_delay;
+static int br83562_startTurn;
+
+static void br83562_setup(void) {
+    clearArena();
+    br83562_armor = givePlayerRunicArmor(LEATHER_ARMOR, A_DAMPENING, 5, false);
+    TEST_ASSERT(br83562_armor != NULL, "setup: the armor should be created");
+    if (br83562_armor == NULL) {
+        return;
+    }
+    TEST_ASSERT(equippedArmor() == br83562_armor,
+                "setup: the armor should be worn");
+    TEST_ASSERT(!itemIsIdentified(br83562_armor),
+                "setup: the armor should start unidentified");
+    br83562_delay = itemCharges(br83562_armor);
+    TEST_ASSERT(br83562_delay > 1,
+                "setup: the armor should carry a wearing countdown");
+    br83562_startTurn = playerTurnCount();
+}
+
+static boolean br83562_step(void) {
+    if (playerTurnCount() - br83562_startTurn < br83562_delay - 1) {
+        restOneTurn();
+        return true;
+    }
+    return false;
+}
+
+static boolean br83562_armor_identifies_after_wearing_delay(void) {
+    if (br83562_armor == NULL) {
+        return false;
+    }
+    TEST_ASSERT(!itemIsIdentified(br83562_armor),
+                "the armor should still be unidentified one turn before the wearing delay ends");
+    restOneTurn();
+    TEST_ASSERT(itemIsIdentified(br83562_armor),
+                "the armor should identify itself once it has been worn for the whole delay");
+    return !testFailed;
+}
+
+// ============================================================
 // BR56988 — enchanting a ring raises its enchantment level, and
 // enchanting a ring of clairvoyance immediately updates your vision
 // ============================================================
@@ -890,6 +943,91 @@ static boolean br63185_detect_magic_reveals_polarity(void) {
                 "the level item should read as bad magic");
     TEST_ASSERT(messageWasShown("you can somehow feel the presence of magic"),
                 "the potion should report feeling magic in the pack and on the level");
+    return !testFailed;
+}
+
+// ============================================================
+// BR59433 — once magic detection has revealed an item's polarity, the
+// inventory screen draws a glowing good-magic or bad-magic symbol beside
+// it, and a plain marker for neutral magic.
+//
+// Each test carries one item of the relevant polarity.  Before the
+// potion its inventory row shows no magic mark; after drinking a potion
+// of detect magic the row must show the mark matching that polarity.
+// ============================================================
+
+static item *br59433_item;
+static char br59433_letter;
+static int br59433_markerBefore;
+
+static void br59433_good_setup(void) {
+    clearArena();
+    br59433_item = givePlayerItem(POTION, POTION_LIFE, 0);
+    TEST_ASSERT(br59433_item != NULL, "setup: the pack should accept the potion");
+    TEST_ASSERT(itemMagicPolarityValue(br59433_item) > 0,
+                "setup: the potion of life should be good magic");
+    TEST_ASSERT(!itemMagicWasDetected(br59433_item),
+                "setup: the potion's magic should not be revealed yet");
+    br59433_letter = itemInventoryLetter(br59433_item);
+}
+
+static void br59433_bad_setup(void) {
+    clearArena();
+    br59433_item = givePlayerItem(POTION, POTION_HALLUCINATION, 0);
+    TEST_ASSERT(br59433_item != NULL, "setup: the pack should accept the potion");
+    TEST_ASSERT(itemMagicPolarityValue(br59433_item) < 0,
+                "setup: the potion of hallucination should be bad magic");
+    TEST_ASSERT(!itemMagicWasDetected(br59433_item),
+                "setup: the potion's magic should not be revealed yet");
+    br59433_letter = itemInventoryLetter(br59433_item);
+}
+
+static void br59433_neutral_setup(void) {
+    clearArena();
+    // An unenchanted, non-runic weapon has neutral magic.
+    br59433_item = givePlayerPlainWeapon(DAGGER, 0);
+    TEST_ASSERT(br59433_item != NULL, "setup: the pack should accept the dagger");
+    TEST_ASSERT_EQ(itemMagicPolarityValue(br59433_item), 0,
+                   "setup: the unenchanted dagger should be neutral magic");
+    TEST_ASSERT(!itemMagicWasDetected(br59433_item),
+                "setup: the dagger's magic should not be revealed yet");
+    br59433_letter = itemInventoryLetter(br59433_item);
+}
+
+static boolean br59433_detect_magic_step(void) {
+    // The mark seen after the potion must have come from the potion.
+    br59433_markerBefore = inventoryScreenMagicMarkerFor(br59433_letter);
+    drink(POTION_DETECT_MAGIC);
+    return false;
+}
+
+static boolean br59433_good_magic_shows_good_marker(void) {
+    TEST_ASSERT_EQ(br59433_markerBefore, -2,
+                   "no magic mark should be drawn in the inventory before detection");
+    TEST_ASSERT(itemMagicWasDetected(br59433_item),
+                "detect magic should reveal the potion's polarity");
+    TEST_ASSERT_EQ(inventoryScreenMagicMarkerFor(br59433_letter), 1,
+                   "a good-magic item should show the glowing good-magic mark");
+    return !testFailed;
+}
+
+static boolean br59433_bad_magic_shows_bad_marker(void) {
+    TEST_ASSERT_EQ(br59433_markerBefore, -2,
+                   "no magic mark should be drawn in the inventory before detection");
+    TEST_ASSERT(itemMagicWasDetected(br59433_item),
+                "detect magic should reveal the potion's polarity");
+    TEST_ASSERT_EQ(inventoryScreenMagicMarkerFor(br59433_letter), -1,
+                   "a bad-magic item should show the glowing bad-magic mark");
+    return !testFailed;
+}
+
+static boolean br59433_neutral_magic_shows_plain_marker(void) {
+    TEST_ASSERT_EQ(br59433_markerBefore, -2,
+                   "no magic mark should be drawn in the inventory before detection");
+    TEST_ASSERT(itemMagicWasDetected(br59433_item),
+                "detect magic should reveal the dagger's polarity");
+    TEST_ASSERT_EQ(inventoryScreenMagicMarkerFor(br59433_letter), 0,
+                   "a neutral-magic item should show the plain neutral marker");
     return !testFailed;
 }
 
@@ -1776,6 +1914,9 @@ const testCase tests_items[] = {
     { "BR83854_potion_of_confusion_releases_gas",   confusion_potion_setup,     NULL, confusion_potion_releases_gas },
     { "BR43470_potion_of_incineration_sets_you_on_fire", incineration_potion_setup, NULL, incineration_potion_sets_you_on_fire },
     { "BR63185_detect_magic_reveals_polarity",      br63185_detect_magic_setup, br63185_detect_magic_step, br63185_detect_magic_reveals_polarity },
+    { "BR59433_good_magic_shows_good_marker",       br59433_good_setup,    br59433_detect_magic_step, br59433_good_magic_shows_good_marker },
+    { "BR59433_bad_magic_shows_bad_marker",         br59433_bad_setup,     br59433_detect_magic_step, br59433_bad_magic_shows_bad_marker },
+    { "BR59433_neutral_magic_shows_plain_marker",   br59433_neutral_setup, br59433_detect_magic_step, br59433_neutral_magic_shows_plain_marker },
 
     { "BR29492_scroll_of_aggravate_wakes_monsters", aggravate_scroll_setup,     NULL, aggravate_scroll_wakes_monsters },
     { "BR95938_reading_scroll_consumes_it",         consume_scroll_setup,       NULL, reading_scroll_consumes_it },
@@ -1799,6 +1940,8 @@ const testCase tests_items[] = {
 
     { "BR30796_armor_adds_ten_defense_per_enchant", NULL,                       NULL, armor_adds_ten_defense_per_enchant },
     { "BR30796_donning_armor_reduces_defense",      NULL,  NULL, donning_armor_reduces_defense },
+
+    { "BR83562_armor_identifies_after_wearing_delay", br83562_setup, br83562_step, br83562_armor_identifies_after_wearing_delay },
 
     { "BR56988_enchanting_a_ring_raises_its_enchant", ring_enchant_setup,        ring_enchant_step, enchanting_a_ring_raises_its_enchant },
     { "BR56988_enchanting_clairvoyance_updates_vision", ring_clairvoyance_setup, ring_clairvoyance_step, enchanting_clairvoyance_updates_vision },

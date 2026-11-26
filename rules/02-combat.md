@@ -14,8 +14,8 @@
 [Combat.c:60-67](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L60-L67) [Combat.c:69-76](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L69-L76)
 **BR20189** — Damage output is scaled by roughly 1.065 per point of enchantment-like adjustment, which is how a weakened monster's blows grow softer; the same scaling table corresponds to the enchantment values used elsewhere in combat.
 [Combat.c:78-85](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L78-L85) [PowerTables.c:138-159](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L138-L159)
-**BR65933** — An attack automatically hits a defender that is stuck, paralyzed, held captive, or already seized by the attacker.
-[Combat.c:110-117](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L110-L117) [Combat.c:136-146](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L136-L146)
+**BR65933** — An attack automatically hits a defender that the attacker has already seized.
+[Combat.c:113-117](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L113-L117)
 **BR66846** — The player catches a wandering (unaware) monster by surprise, and a defender that is asleep or paralyzed is likewise caught flat-footed; all such attacks automatically hit.
 [Combat.c:1061-1069](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1061-L1069) [Combat.c:1096-1099](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1096-L1099)
 **BR38655** — A surprise attack deals triple damage; a dagger used for a surprise attack deals five times damage instead.
@@ -26,8 +26,6 @@
 [Combat.c:1105-1107](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1105-L1107)
 **BR45761** — A lunge attack always hits and deals the same triple damage as a surprise attack (or five times damage with a dagger), and is reported as a vicious lunge.
 [Combat.c:1096](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1096) [Combat.c:1110-1119](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1110-L1119) [Combat.c:1145-1146](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1145-L1146)
-**BR54926** — A creature able to grab that attacks an adjacent opponent seizes it instead of dealing damage that turn, and while a creature is seized by its attacker every subsequent attack against it automatically hits.
-[Combat.c:1074-1094](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1074-L1094) [Combat.c:110-117](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L110-L117)
 **BR52487** — If a submerged grabbing creature seizes a player who can see it, the creature immediately surfaces so it can be targeted.
 [Combat.c:1082-1087](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1082-L1087)
 **BR33297** — A sweeping attack strikes every creature adjacent to the attacker in all eight directions, not just the original target. Each would-be victim must be one the attacker is willing to attack, and cannot be hidden behind impenetrable terrain unless it can be attacked through walls.
@@ -120,8 +118,8 @@
 [Combat.c:1546-1554](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1546-L1554)
 **BR11906** — An attacker with transference heals itself for a share of the damage it inflicts: the player heals by the ring's multiplier, allied monsters recover 40%, and enemy monsters recover 90%.
 [Combat.c:1566-1588](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1566-L1588)
-**BR41331** — Reaping recharges the player's staffs, wands, and charms by a random amount up to the damage dealt multiplied by the reaping bonus, and never more than the victim's remaining health.
-[Combat.c:1125-1138](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1125-L1138)
+**BR41331** — Hitting an enemy while wearing a ring of reaping randomly recharges your staffs and charms by up to the smaller of the damage dealt and the enemy's remaining health, multiplied by the ring's enchantment. A cursed ring of reaping drains your staffs and charms instead.
+[Combat.c:1125-1138](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1125-L1138) [Time.c:1821-1866](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1821-L1866)
 **BR61676** — An exploding, self-destructive attacker dies in the act of attacking and deals no ordinary blow.
 [Combat.c:1031-1034](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1031-L1034)
 **BR86360** — A weapon heavy enough to stagger can knock its target back one square, unless the target is invulnerable, immobile, inanimate, held captive, backed against a wall, or the destination square is occupied.
