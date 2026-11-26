@@ -2589,7 +2589,7 @@ void itemDetails(char *buf, item *theItem) {
 
         case RING:
             if (((theItem->flags & ITEM_IDENTIFIED) && ringTable[theItem->kind].identified) || rogue.playbackOmniscience) {
-                if (theItem->enchant1) {
+                if (theItem->enchant1 || theItem->kind == RING_REGENERATION) {
                     switch (theItem->kind) {
                         case RING_CLAIRVOYANCE:
                             if (theItem->enchant1 > 0) {
@@ -2604,10 +2604,12 @@ void itemDetails(char *buf, item *theItem) {
                             strcat(buf, buf2);
                             break;
                         case RING_REGENERATION:
-                            sprintf(buf2, "\n\nWith this ring equipped, you will regenerate all of your health in %li turns (instead of %li). (If the ring is enchanted, this will decrease to %li turns.)",
-                                    (long) (turnsForFullRegenInThousandths(enchant) / 1000),
-                                    (long) TURNS_FOR_FULL_REGEN,
-                                    (long) (turnsForFullRegenInThousandths(enchant + enchantMagnitude() * FP_FACTOR) / 1000));
+                            sprintf(buf2, "\n\nWith this ring alone, full health regeneration takes "
+                                    "%ld turns (normally %ld), or %ld turns if you enchant it.",
+                                    turnsForFullRegenInThousandths(enchant) / 1000,
+                                    turnsForFullRegenInThousandths(0) / 1000,
+                                    turnsForFullRegenInThousandths(
+                                        enchant + enchantMagnitude() * FP_FACTOR) / 1000);
                             strcat(buf, buf2);
                             break;
                         case RING_TRANSFERENCE:
