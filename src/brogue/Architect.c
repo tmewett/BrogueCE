@@ -3127,7 +3127,8 @@ static short connectCell(short x, short y, short zoneLabel, char blockingMap[DCO
         if (coordinatesAreInMap(newX, newY)
             && zoneMap[newX][newY] == 0
             && (!blockingMap || !blockingMap[newX][newY])
-            && cellIsPassableOrDoor(newX, newY)) {
+            && cellIsPassableOrDoor(newX, newY)
+            && !cellHasTMFlag((pos){ newX, newY }, TM_TREAT_AS_BLOCKING)) {
 
             size += connectCell(newX, newY, zoneLabel, blockingMap, zoneMap);
         }
@@ -3156,7 +3157,10 @@ short levelIsDisconnectedWithBlockingMap(char blockingMap[DCOLS][DROWS], boolean
     // Map out the zones with the blocking area blocked.
     for (i=1; i<DCOLS-1; i++) {
         for (j=1; j<DROWS-1; j++) {
-            if (cellIsPassableOrDoor(i, j) && zoneMap[i][j] == 0 && !blockingMap[i][j]) {
+            if (cellIsPassableOrDoor(i, j)
+                && !cellHasTMFlag((pos){ i, j }, TM_TREAT_AS_BLOCKING)
+                && zoneMap[i][j] == 0
+                && !blockingMap[i][j]) {
                 for (dir=0; dir<4; dir++) {
                     if (blockingMap[i + nbDirs[dir][0]][j + nbDirs[dir][1]]) {
                         zoneCount++;
@@ -3171,7 +3175,10 @@ short levelIsDisconnectedWithBlockingMap(char blockingMap[DCOLS][DROWS], boolean
     // Expand the zones into the blocking area.
     for (i=1; i<DCOLS-1; i++) {
         for (j=1; j<DROWS-1; j++) {
-            if (blockingMap[i][j] && zoneMap[i][j] == 0 && cellIsPassableOrDoor(i, j)) {
+            if (blockingMap[i][j]
+                && zoneMap[i][j] == 0
+                && cellIsPassableOrDoor(i, j)
+                && !cellHasTMFlag((pos){ i, j }, TM_TREAT_AS_BLOCKING)) {
                 for (dir=0; dir<4; dir++) {
                     borderingZone = zoneMap[i + nbDirs[dir][0]][j + nbDirs[dir][1]];
                     if (borderingZone != 0) {
