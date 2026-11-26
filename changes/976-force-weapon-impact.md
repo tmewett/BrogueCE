@@ -1,0 +1,1 @@
+Force weapons no longer report an impact or deal impact damage when the enemy was thrown its full distance, and the throw distance shown in the item description now matches the actual throw when strength leaves a fractional enchant.

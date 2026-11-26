@@ -98,7 +98,7 @@ int charmProtection(fixpt enchant) {
 
 short weaponParalysisDuration(fixpt enchant)   {return (max(2, (int) (2 + ((enchant) / 2 / FP_FACTOR))));}
 short weaponConfusionDuration(fixpt enchant)   {return (max(3, (int) ((enchant) * 3/2 / FP_FACTOR)));}
-short weaponForceDistance(fixpt enchant)       {return (max(4, (int) (((enchant) * 2 / FP_FACTOR) + 2)));} // Depends on definition of staffBlinkDistance() above.
+short weaponForceDistance(fixpt enchant)       {return (max(4, 2 + 2 * (int) (enchant / FP_FACTOR)));} // Depends on definition of staffBlinkDistance() above.
 short weaponSlowDuration(fixpt enchant)        {return (max(3, (int) ((((enchant) / FP_FACTOR) + 2) * ((enchant) + (2 * FP_FACTOR))) / 3 / FP_FACTOR));}
 short weaponImageCount(fixpt enchant)          {return (clamp((int) ((enchant) / 3 / FP_FACTOR), 1, 7));}
 short weaponImageDuration(fixpt enchant)       {return 3;}
