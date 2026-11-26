@@ -479,13 +479,11 @@ static boolean burning_extinguished(void) {
 // BR25686 — nutrition starts at the stomach size
 // ============================================================
 
-static void nutrition_starts_full_setup(void) {
-    setPlayerNutrition(STOMACH_SIZE);
-}
-
+// The setup is deliberately empty: the test must observe the nutrition a new
+// game actually gives the player, not a value the test wrote itself.
 static boolean nutrition_is_full(void) {
-    TEST_ASSERT_EQ(playerNutrition(), STOMACH_SIZE,
-                   "nutrition should start at the stomach size");
+    TEST_ASSERT_EQ(playerNutrition(), 2150,
+                   "a new game should start the player at full nutrition (2150)");
     return !testFailed;
 }
 
@@ -857,6 +855,57 @@ static boolean br91998_levitation_removes_confirmation(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR24556 — a weapon of confusion sets the target's confusion
+// duration from the weapon's enchantment.
+//
+// The duration is three halves of the enchantment, never less
+// than 3.  The target is a beached kraken, which cannot act, and
+// each blow is struck without ending the turn, so the counter
+// cannot tick down between the hit and the check.  Only the hit
+// is random: the number of blows is bounded so a broken runic
+// fails the test instead of looping forever.
+// ============================================================
+
+static int br24556_duration;
+static int br24556_expected;
+static int br24556_attempts;
+
+static void br24556_prepare(int enchant) {
+    clearArena();
+    giveAndEquipRunicWeapon(DAGGER, W_CONFUSION, enchant, true);
+    monst = placeHostileMonster(MK_KRAKEN, posOffset(getPlayerPos(), 1, 0));
+    br24556_duration = 0;
+    br24556_attempts = 0;
+}
+
+static boolean br24556_step(void) {
+    setMonsterHealth(monst, monsterMaxHealth(monst)); // keep the target alive to be struck again
+    playerAttacksMonster(monst);
+    if (monsterHasStatus(monst, STATUS_CONFUSED)) {
+        br24556_duration = monsterStatusTurns(monst, STATUS_CONFUSED);
+        return false; // runic fired, done
+    }
+    return ++br24556_attempts < 2000;
+}
+
+static boolean br24556_confusion_duration_is(void) {
+    TEST_ASSERT(br24556_duration > 0, "the confusion rune should have triggered");
+    TEST_ASSERT_EQ(br24556_duration, br24556_expected,
+                   "a weapon of confusion should set the target's confusion duration from its enchantment");
+    return !testFailed;
+}
+
+static void br24556_enchant10_setup(void) {
+    br24556_prepare(10);
+    br24556_expected = 15; // 10 * 3 / 2
+}
+
+static void br24556_enchant4_setup(void) {
+    br24556_prepare(4);
+    br24556_expected = 6; // 4 * 3 / 2
+}
+
 const testCase tests_status_effects[] = {
     { "BR97529_telepathy_counter_decrements",   telepathy_decrement_setup,      rest_one_turn_step, status_decremented_by_one },
     { "BR97529_hallucination_counter_decrements", hallucination_decrement_setup, rest_one_turn_step, status_decremented_by_one },
@@ -898,7 +947,7 @@ const testCase tests_status_effects[] = {
     { "BR51327_fire_immunity_extinguishes",     immunity_extinguishes_setup,    NULL, burning_extinguished },
     { "BR25391_fire_immunity_counter_set",      br25391_setup,                  br25391_step, br25391_fire_immunity_counter_set },
 
-    { "BR25686_nutrition_starts_full",          nutrition_starts_full_setup,    NULL, nutrition_is_full },
+    { "BR25686_nutrition_starts_full",          NULL,                           NULL, nutrition_is_full },
     { "BR49432_nutrition_decrements",           nutrition_decreases_setup,      rest_one_turn_step, nutrition_decreased },
     { "BR24204_no_nutrition_while_paralyzed",   paralyzed_no_nutrition_setup,   wait_10_turns_step, nutrition_unchanged },
     { "BR80877_starvation_costs_health",        starvation_setup,               rest_one_turn_step, starved_one_point },
@@ -921,6 +970,9 @@ const testCase tests_status_effects[] = {
 
     { "BR91998_chasm_dive_asks_for_confirmation",    br91998_chasm_setup,       br91998_step_right, br91998_dive_asks_for_confirmation },
     { "BR91998_levitation_removes_dive_confirmation", br91998_levitating_setup,  br91998_step_right, br91998_levitation_removes_confirmation },
+
+    { "BR24556_confusion_weapon_duration_enchant10", br24556_enchant10_setup, br24556_step, br24556_confusion_duration_is },
+    { "BR24556_confusion_weapon_duration_enchant4",  br24556_enchant4_setup,  br24556_step, br24556_confusion_duration_is },
 
     { NULL, NULL, NULL, NULL }
 };

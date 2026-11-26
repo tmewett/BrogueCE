@@ -99,23 +99,28 @@ static boolean br72064_verify(void) {
 }
 
 // BR30757 — will not follow between levels.  A control monster without the
-// trait chases the player down the stairs, so the totem's absence on the new
-// level proves the trait, not a broken follow mechanic.
+// trait chases the player down the stairs, so the totem's absence from the new
+// level proves the trait, not a broken follow mechanic.  Both are tracked by
+// the level they stand on, so a creature the new level generated on its own
+// cannot stand in for the control or the totem.
 static creature *br30757_totem;
+static creature *br30757_follower;
+static int br30757_oldDepth;
 static int br30757_turns;
 
 static void br30757_setup(void) {
     setArenaRadius(8, FLOOR);
     br30757_totem = spawnMonster(MK_GOBLIN_TOTEM, posOffset(getPlayerPos(), 3, 0));
-    creature *follower = spawnMonster(MK_RAT, posOffset(getPlayerPos(), -3, 0));
+    br30757_follower = spawnMonster(MK_RAT, posOffset(getPlayerPos(), -3, 0));
     makeMonsterHostile(br30757_totem);
-    makeMonsterHostile(follower);
+    makeMonsterHostile(br30757_follower);
+    br30757_oldDepth = currentDepth();
     br30757_turns = 0;
     descendToNextLevel();
 }
 
 static boolean br30757_step(void) {
-    if (findMonster(MK_RAT) != NULL) {
+    if (br30757_follower != NULL && monsterDepth(br30757_follower) == currentDepth()) {
         return false;
     }
     restOneTurn();
@@ -123,13 +128,23 @@ static boolean br30757_step(void) {
 }
 
 static boolean br30757_verify(void) {
-    TEST_ASSERT(br30757_totem != NULL, "goblin totem spawned");
+    TEST_ASSERT(br30757_totem != NULL && br30757_follower != NULL,
+                "both monsters spawned");
+    if (br30757_totem == NULL || br30757_follower == NULL) {
+        return false;
+    }
     TEST_ASSERT(monsterHasTrait(br30757_totem, MONST_WILL_NOT_USE_STAIRS),
-                "totem won't use stairs");
-    TEST_ASSERT(findMonster(MK_RAT) != NULL,
-                "a monster without the trait should follow you between levels");
-    TEST_ASSERT(findMonster(MK_GOBLIN_TOTEM) == NULL,
-                "the totem should stay on its own dungeon level");
+                "control: the totem's catalog entry says it won't use stairs");
+    TEST_ASSERT_EQ(currentDepth(), br30757_oldDepth + 1,
+                   "the player should have descended one level");
+    TEST_ASSERT(monsterIsAlive(br30757_follower),
+                "the follower should still be alive");
+    TEST_ASSERT_EQ(monsterDepth(br30757_follower), currentDepth(),
+                   "a monster without the trait should follow you between levels");
+    TEST_ASSERT(monsterIsAlive(br30757_totem),
+                "the totem should still be alive on its old level");
+    TEST_ASSERT_EQ(monsterDepth(br30757_totem), br30757_oldDepth,
+                   "the totem should stay on its own dungeon level");
     return !testFailed;
 }
 
@@ -171,7 +186,24 @@ static boolean br53451_verify(void) {
     return !testFailed;
 }
 TRAIT_TEST(br48675, MK_SPECTRAL_BLADE, MONST_NOT_LISTED_IN_SIDEBAR, "spectral blade not in sidebar")
-TRAIT_TEST(br67941, MK_EEL, MONST_NEVER_SLEEPS, "eel never sleeps")
+// BR67941 — never sleeps.  The catalog flag alone only proves the potential,
+// so the setup also checks the live behavior: the eel starts awake and
+// hunting, never asleep.  A creature without the trait would start asleep
+// roughly three times in four (Monsters.c:111), so the two control
+// assertions pin the mechanism and the clean starting state.
+static void br67941_setup(void) {
+    trait_setup(MK_EEL);
+}
+
+static boolean br67941_verify(void) {
+    TEST_ASSERT(monsterHasTrait(subject, MONST_NEVER_SLEEPS),
+                "control: the eel's catalog entry carries the never-sleeps flag");
+    TEST_ASSERT(!monsterIsAsleep(subject),
+                "the eel should start awake");
+    TEST_ASSERT(monsterIsTrackingPlayer(subject),
+                "the eel should start hunting, not sleeping");
+    return !testFailed;
+}
 TRAIT_TEST(br46423, MK_WARDEN_OF_YENDOR, MONST_ALWAYS_HUNTING, "warden always hunting")
 TRAIT_TEST(br51688, MK_WRAITH, MONST_FLEES_NEAR_DEATH, "wraith flees near death")
 TRAIT_TEST(br16717, MK_GUARDIAN, MONST_GETS_TURN_ON_ACTIVATION, "guardian acts on activation")
@@ -180,10 +212,92 @@ TRAIT_TEST(br39641, MK_SPIDER, MONST_CAST_SPELLS_SLOWLY, "spider casts slowly")
 TRAIT_TEST(br21958, MK_GOBLIN_TOTEM, MONST_INANIMATE, "totem inanimate")
 TRAIT_TEST(br90225, MK_WARDEN_OF_YENDOR, MONST_INVULNERABLE, "warden invulnerable")
 TRAIT_TEST(br95842, MK_REVENANT, MONST_IMMUNE_TO_WEAPONS, "revenant immune to weapons")
-TRAIT_TEST(br37585, MK_ACID_MOUND, MONST_DEFEND_DEGRADE_WEAPON, "acid mound corrodes weapon")
+// BR37585 — corrodes the weapon that strikes it.  The rule is about the
+// attacker's weapon losing an enchantment, so make a real blow against a
+// sleeping acid mound (a sleeping defender is always hit) and watch the
+// equipped dagger weaken.  The catalog flag is checked only as a control.
+// The dagger must be plain: a randomly rolled quietus or slaying runic would
+// kill the mound outright and leave the survival control with nothing to see.
+static item *br37585_weapon;
+static int br37585_before;
+
+static void br37585_setup(void) {
+    clearArena();
+    removePackItems(WEAPON, DAGGER);
+    br37585_weapon = givePlayerPlainWeapon(DAGGER, 3);
+    equipItemFromPack(WEAPON, DAGGER);
+    subject = placeHostileMonster(MK_ACID_MOUND, posOffset(getPlayerPos(), 1, 0));
+    putMonsterToSleep(subject); // a sleeping defender is always hit
+    setMonsterHealth(subject, 100); // survive the blow so the corrosion is the only change
+    br37585_before = itemEnchant(br37585_weapon);
+}
+
+static boolean br37585_step(void) {
+    playerAttacksMonster(subject);
+    return false; // one blow; verify checks its effect
+}
+
+static boolean br37585_verify(void) {
+    TEST_ASSERT(subject != NULL && monsterIsAlive(subject),
+                "control: the acid mound survived the blow");
+    TEST_ASSERT(monsterHasTrait(subject, MONST_DEFEND_DEGRADE_WEAPON),
+                "control: the acid mound's catalog entry says it corrodes weapons");
+    TEST_ASSERT(equippedWeapon() == br37585_weapon,
+                "the dagger should be the equipped weapon");
+    TEST_ASSERT_EQ(itemEnchant(br37585_weapon), br37585_before - 1,
+                   "hitting the acid mound should weaken the weapon by one enchantment");
+    TEST_ASSERT(messageWasShown("weakens"),
+                "the corrosion should announce that the weapon weakens");
+    return !testFailed;
+}
 TRAIT_TEST(br13523, MK_DRAGON, MONST_IMMUNE_TO_FIRE, "dragon immune to fire")
 TRAIT_TEST(br57968, MK_WILL_O_THE_WISP, MONST_FIERY, "wisp burns")
-TRAIT_TEST(br18737, MK_GOLEM, MONST_REFLECT_50, "golem reflects half")
+// BR18737 — reflects about half of magical bolts.  The catalog flag alone only
+// proves the potential, so fire real healing bolts at a golem kept at 1 health:
+// a bolt that reaches it heals it, while a reflected bolt leaves it at 1.  The
+// reflection roll is independent per bolt, so 200 bolts put the count far from
+// the tails (about 48% expected, well inside the 30-70% window).  A golem
+// without the flag would never reflect, and a creature that reflected every
+// bolt would heal on none of them.
+#define BR18737_TRIALS 200
+static item *br18737_staff;
+static int br18737_reflected;
+static int br18737_notReflected;
+
+static void br18737_setup(void) {
+    setArenaRadius(8, FLOOR);
+    subject = placeHostileMonster(MK_GOLEM, posOffset(getPlayerPos(), 1, 0));
+    br18737_staff = givePlayerItem(STAFF, STAFF_HEALING, 0);
+    br18737_reflected = 0;
+    br18737_notReflected = 0;
+}
+
+static boolean br18737_step(void) {
+    setMonsterHealth(subject, 1);
+    playerZapsAt(br18737_staff, subject);
+    if (monsterHealth(subject) > 1) {
+        br18737_notReflected++;
+    } else {
+        br18737_reflected++;
+    }
+    return br18737_reflected + br18737_notReflected < BR18737_TRIALS;
+}
+
+static boolean br18737_verify(void) {
+    TEST_ASSERT(subject != NULL && monsterIsAlive(subject), "golem spawned");
+    TEST_ASSERT(monsterHasTrait(subject, MONST_REFLECT_50),
+                "control: the golem's catalog entry reflects half of bolts");
+    TEST_ASSERT_EQ(br18737_reflected + br18737_notReflected, BR18737_TRIALS,
+                   "all of the bolts should have been fired");
+    TEST_ASSERT(br18737_reflected > 0,
+                "the golem should reflect some bolts");
+    TEST_ASSERT(br18737_notReflected > 0,
+                "the golem should not reflect every bolt");
+    TEST_ASSERT(br18737_reflected >= BR18737_TRIALS * 30 / 100
+                && br18737_reflected <= BR18737_TRIALS * 70 / 100,
+                "the golem should reflect about half of the bolts");
+    return !testFailed;
+}
 TRAIT_TEST(br12704, MK_LICH, MONST_NO_POLYMORPH, "lich no polymorph")
 TRAIT_TEST(br49476, MK_WILL_O_THE_WISP, MONST_DIES_IF_NEGATED, "wisp dies if negated")
 TRAIT_TEST(br56920, MK_PHANTOM, MONST_INVISIBLE, "phantom invisible")
@@ -258,17 +372,24 @@ static boolean br40544_verify(void) {
     creature *minion = NULL;
     for (int i = 0; i < monsterCount() && minion == NULL; i++) {
         creature *m = monsterAtIndex(i);
-        if (m != NULL && m != subject) {
+        if (m != NULL && m != subject && monsterIsAlive(m)) {
             minion = m;
         }
     }
     TEST_ASSERT(subject != NULL && monsterIsAlive(subject), "lich spawned");
+    if (subject == NULL) {
+        return false;
+    }
+    TEST_ASSERT_EQ(br40544_monstersBefore, 1,
+                   "control: the cleared arena should start with only the lich");
     TEST_ASSERT(monsterHasAbility(subject, MA_CAST_SUMMON),
                 "control: the lich's catalog entry carries the summon ability");
     TEST_ASSERT(monsterCount() > br40544_monstersBefore,
                 "the lich should call up new minions");
     TEST_ASSERT(minion != NULL,
                 "the summoned minion should share the level with the lich");
+    TEST_ASSERT(minion != NULL && monsterDepth(minion) == currentDepth(),
+                "the summoned minion should stand on the lich's level");
     TEST_ASSERT(minion != NULL && monsterIsHostile(minion),
                 "the summoned minion should be hostile to you");
     TEST_ASSERT(minion != NULL && monstersAreAlliesOf(minion, subject),
@@ -687,6 +808,60 @@ static boolean br45724_regen_verify(void) {
 }
 
 // ============================================================
+// BR24264 — Jackal.  Health 8, defense 0, accuracy 70, damage 2-4;
+// regenerates every 20 turns; moves twice as fast as normal
+// (speed 50) with a normal attack (100).  It has a 1% chance
+// each turn to leave a trail of urine.
+//
+// The stat block, the two speeds and the urine trail (its chance
+// and kind) are read from the spawned jackal's catalog entry.
+// The 20-turn regeneration period is watched turn by turn: a
+// wounded ally with no enemies about can only regain health
+// through regeneration, so it must sit at 1 HP for 19 turns and
+// regain exactly one point on the 20th.
+// ============================================================
+
+static int br24264_regenTurns;
+
+static void br24264_setup(void) {
+    trait_setup(MK_JACKAL);
+    makeMonsterAlly(subject);
+    setMonsterHealth(subject, 1);
+    br24264_regenTurns = 0;
+}
+
+static boolean br24264_step(void) {
+    restOneTurn();
+    br24264_regenTurns++;
+    if (monsterHealth(subject) > 1) {
+        return false;
+    }
+    return br24264_regenTurns < 60;
+}
+
+static boolean br24264_verify(void) {
+    TEST_ASSERT(subject != NULL, "jackal spawned");
+    TEST_ASSERT_EQ(monsterMaxHealth(subject), 8, "jackal health");
+    TEST_ASSERT_EQ(monsterBaseDefense(subject), 0, "jackal defense");
+    TEST_ASSERT_EQ(monsterBaseAccuracy(subject), 70, "jackal accuracy");
+    TEST_ASSERT_EQ(monsterBaseDamageLow(subject), 2, "jackal damage low");
+    TEST_ASSERT_EQ(monsterBaseDamageHigh(subject), 4, "jackal damage high");
+    TEST_ASSERT_EQ(monsterBaseMovementSpeed(subject), 50,
+                   "jackal moves twice as fast as normal");
+    TEST_ASSERT_EQ(monsterBaseAttackSpeed(subject), 100,
+                   "jackal attacks at normal speed");
+    TEST_ASSERT(monsterRegenerates(subject), "jackal regenerates naturally");
+    TEST_ASSERT_EQ(monsterTrailChance(subject), 1,
+                   "jackal leaves a trail on 1% of its turns");
+    TEST_ASSERT(monsterLeavesUrineTrail(subject), "jackal's trail is urine");
+    TEST_ASSERT_EQ(br24264_regenTurns, 20,
+                   "the jackal should wait 20 turns before regenerating");
+    TEST_ASSERT_EQ(monsterHealth(subject), 2,
+                   "the jackal should regain exactly one point of health per period");
+    return !testFailed;
+}
+
+// ============================================================
 // BR69414 — Imp.  Health 35, defense 90, accuracy 225, damage 4-9;
 // regenerates every 10 turns; normal speeds.  It steals an item and flees
 // when it hits (BR18776) and blinks around the battlefield (BR16647).  It
@@ -1015,10 +1190,10 @@ const testCase tests_bestiary[] = {
     { "BR21958_inanimate", br21958_setup, NULL, br21958_verify },
     { "BR90225_invulnerable", br90225_setup, NULL, br90225_verify },
     { "BR95842_immune_weapons", br95842_setup, NULL, br95842_verify },
-    { "BR37585_corrodes_weapon", br37585_setup, NULL, br37585_verify },
+    { "BR37585_corrodes_weapon", br37585_setup, br37585_step, br37585_verify },
     { "BR13523_immune_fire", br13523_setup, NULL, br13523_verify },
     { "BR57968_burns", br57968_setup, NULL, br57968_verify },
-    { "BR18737_reflects_half", br18737_setup, NULL, br18737_verify },
+    { "BR18737_reflects_half", br18737_setup, br18737_step, br18737_verify },
     { "BR12704_no_polymorph", br12704_setup, NULL, br12704_verify },
     { "BR49476_dies_if_negated", br49476_setup, NULL, br49476_verify },
     { "BR56920_invisible", br56920_setup, NULL, br56920_verify },
@@ -1065,6 +1240,7 @@ const testCase tests_bestiary[] = {
     { "BR67777_spectral_sword_stats_and_traits", br67777_setup, NULL, br67777_verify },
     { "BR45724_monkey_stats_and_traits", br45724_setup, NULL, br45724_verify },
     { "BR45724_monkey_regenerates_every_20_turns", br45724_regen_setup, br45724_regen_step, br45724_regen_verify },
+    { "BR24264_jackal_stats_trail_and_regeneration", br24264_setup, br24264_step, br24264_verify },
     { "BR69414_imp_stats_and_traits", br69414_setup, NULL, br69414_verify },
     { "BR69414_imp_regenerates_every_10_turns", br69414_regen_setup, br69414_regen_step, br69414_regen_verify },
     { "BR73845_goblin_stats_and_regeneration", br73845_setup, br73845_step, br73845_verify },

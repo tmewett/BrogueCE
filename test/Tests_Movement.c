@@ -22,8 +22,8 @@ static item *theItem;
 
 static void wall_blocks_setup(void) {
     clearArena();
-    setTerrain(posOffset(player.loc, 1, 0), GRANITE);
-    startPos = player.loc;
+    startPos = getPlayerPos();
+    setTerrain(posOffset(startPos, 1, 0), GRANITE);
 }
 
 static boolean wall_blocks_step(void) {
@@ -32,7 +32,7 @@ static boolean wall_blocks_step(void) {
 }
 
 static boolean player_did_not_move(void) {
-    TEST_ASSERT_POS_EQ(player.loc, startPos, "player should not have moved");
+    TEST_ASSERT(playerIsAt(startPos), "player should not have moved");
     return !testFailed;
 }
 
@@ -43,9 +43,9 @@ static boolean player_did_not_move(void) {
 static void corner_blocks_setup(void) {
     clearArena();
     // Obstacles beside the destination, so cutting the corner is not allowed.
-    setTerrain(posOffset(player.loc, 0, -1), GRANITE);
-    setTerrain(posOffset(player.loc, 1, 0), GRANITE);
-    startPos = player.loc;
+    startPos = getPlayerPos();
+    setTerrain(posOffset(startPos, 0, -1), GRANITE);
+    setTerrain(posOffset(startPos, 1, 0), GRANITE);
 }
 
 static boolean corner_blocks_step(void) {
@@ -453,17 +453,10 @@ static boolean starved(void) {
 // Shared setup helpers for the reach-weapon tests
 // ============================================================
 
-// generateItem() rolls a random enchant and possibly a runic — including
-// mercy, which heals its victim back to full on hit — even when a specific
-// weapon kind is requested, and givePlayerItem() ignores an enchant of 0.
-// These tests need an exactly plain weapon so the strike's outcome is fixed.
-static item *givePlainWeapon(short kind, short enchant) {
-    item *theItem = givePlayerItem(WEAPON, kind, enchant);
-    theItem->enchant1 = enchant;
-    theItem->enchant2 = 0;
-    theItem->flags &= ~(ITEM_RUNIC | ITEM_RUNIC_HINTED | ITEM_RUNIC_IDENTIFIED | ITEM_CURSED);
-    return theItem;
-}
+// These tests need an exactly plain weapon so the strike's outcome is fixed;
+// generateItem() otherwise rolls a random enchant and possibly a runic —
+// including mercy, which heals its victim back to full on hit.  See
+// givePlayerPlainWeapon() in TestFramework.c.
 
 // A monster that dies is freed at the end of the turn, leaving the test with
 // a dangling pointer; give the target far more HP than one strike can do so
@@ -478,7 +471,7 @@ static void whip_setup(void) {
     // Clear the full reach of the whip so the line of sight to the target
     // does not depend on the dungeon layout.
     setArenaRadius(5, FLOOR);
-    givePlainWeapon(WHIP, 0);
+    givePlayerPlainWeapon(WHIP, 0);
     equipItemFromPack(WEAPON, WHIP);
     targetPos = posOffset(player.loc, 4, 0);
     monst = placeHostileMonster(MK_RAT, targetPos);
@@ -506,7 +499,7 @@ static boolean whip_hit_distant_enemy(void) {
 
 static void spear_setup(void) {
     clearArena();
-    givePlainWeapon(SPEAR, 0);
+    givePlayerPlainWeapon(SPEAR, 0);
     equipItemFromPack(WEAPON, SPEAR);
     targetPos = posOffset(player.loc, 2, 0);
     monst = placeHostileMonster(MK_RAT, targetPos);
@@ -531,7 +524,7 @@ static boolean spear_hit_distant_enemy(void) {
 
 static void lunge_setup(void) {
     clearArena();
-    theItem = givePlainWeapon(RAPIER, 10);
+    theItem = givePlayerPlainWeapon(RAPIER, 10);
     equip(theItem);
     drink(POTION_STRENGTH); // STR 13
     drink(POTION_STRENGTH); // STR 14
@@ -562,7 +555,7 @@ static pos flailStartPos;
 
 static void flail_setup(void) {
     setArenaRadius(3, FLOOR);
-    givePlainWeapon(FLAIL, 0);
+    givePlayerPlainWeapon(FLAIL, 0);
     equipItemFromPack(WEAPON, FLAIL);
     flailStartPos = getPlayerPos();
 
@@ -1462,6 +1455,116 @@ static boolean discovery_xp_goes_to_allies_on_nearby_levels(void) {
 }
 
 // ============================================================
+// BR34157 — discovering a new square that can be pathed through
+// adds to the current turn's discovery count
+//
+// The turn's count is handed to your allies as experience when the
+// turn ends, so a captive ally left on the level reports how many
+// squares the turn discovered.  The same sealed room is used twice:
+// once with a floor tile left unseen (it must add one), and once
+// with only a granite wall left unseen (it must add nothing even
+// though the wall is newly discovered).
+// ============================================================
+
+#define BR34157_SEAL_RADIUS 5
+#define BR34157_SIGHT_RADIUS 3
+
+static pos br34157_centre, br34157_floorTarget, br34157_wallTarget;
+static creature *br34157_ally;
+static int br34157_phase;
+static int br34157_floorGain, br34157_wallGain;
+static boolean br34157_wallDiscovered;
+
+static void br34157_spawnAlly(void) {
+    pos allyLoc = posAt(4, 4);
+    setTerrain(allyLoc, FLOOR);
+    br34157_ally = spawnMonster(MK_RAT, allyLoc);
+    makeMonsterAlly(br34157_ally);
+    makeMonsterCaptive(br34157_ally);
+}
+
+// A 3x3 floor room at the level's centre, sealed inside granite thick enough
+// that vision cannot escape past the walls.
+static void br34157_buildRoom(void) {
+    br34157_centre = posAt(levelWidth() / 2, levelHeight() / 2);
+    setPlayerPos(br34157_centre);
+    setArenaRadius(BR34157_SEAL_RADIUS, GRANITE);
+    for (int dx = -1; dx <= 1; dx++) {
+        for (int dy = -1; dy <= 1; dy++) {
+            setTerrain(posOffset(br34157_centre, dx, dy), FLOOR);
+        }
+    }
+    setPlayerPos(br34157_centre);
+    br34157_floorTarget = posOffset(br34157_centre, 1, 0);
+    br34157_wallTarget = posOffset(br34157_centre, 2, 0);
+}
+
+// Mark everything the room's vision can reach as already discovered, except
+// the one tile whose discovery this phase is about.
+static void br34157_revealRoomExcept(pos skip) {
+    for (int dx = -BR34157_SIGHT_RADIUS; dx <= BR34157_SIGHT_RADIUS; dx++) {
+        for (int dy = -BR34157_SIGHT_RADIUS; dy <= BR34157_SIGHT_RADIUS; dy++) {
+            pos loc = posOffset(br34157_centre, dx, dy);
+            if ((loc.x != skip.x || loc.y != skip.y)
+                && loc.x >= 0 && loc.x < levelWidth()
+                && loc.y >= 0 && loc.y < levelHeight()) {
+                revealCell(loc);
+            }
+        }
+    }
+}
+
+static void br34157_setup(void) {
+    // Keep staircases out of the sealed room.
+    placeUpStairs(posAt(1, 1));
+    placeDownStairs(posAt(levelWidth() - 2, levelHeight() - 2));
+    br34157_buildRoom();
+    // Level generation discovered the starting level without a turn ending,
+    // leaving its count pending.  Spend one turn in the fully discovered room
+    // so that count is granted and cleared before either phase begins.
+    br34157_revealRoomExcept(posAt(-1, -1));
+    restOneTurn();
+    br34157_phase = 0;
+}
+
+static boolean br34157_step(void) {
+    if (br34157_phase == 0) {
+        // The settling turn in setup marked the room seen; rebuild it so the
+        // tiles this phase is about start undiscovered again.
+        br34157_buildRoom();
+        // An unseen floor tile lies one step to the right.
+        br34157_revealRoomExcept(br34157_floorTarget);
+        br34157_spawnAlly();
+        moveRight();
+        // The count is granted to allies at a turn end; a rest turn in the
+        // fully discovered room adds no discovery of its own.
+        restOneTurn();
+        br34157_floorGain = monsterExperience(br34157_ally);
+        br34157_phase = 1;
+        return true;
+    }
+    // Same room, but now only the granite wall beyond the known floor is new.
+    br34157_buildRoom();
+    br34157_revealRoomExcept(br34157_wallTarget);
+    br34157_spawnAlly();
+    moveRight();
+    restOneTurn();
+    br34157_wallGain = monsterExperience(br34157_ally);
+    br34157_wallDiscovered = cellIsDiscovered(br34157_wallTarget);
+    return false;
+}
+
+static boolean br34157_verify(void) {
+    TEST_ASSERT_EQ(br34157_floorGain, 1,
+                   "a newly discovered floor square adds one to the turn's discovery count");
+    TEST_ASSERT(br34157_wallDiscovered,
+                "the granite wall beyond the room should have been newly discovered");
+    TEST_ASSERT_EQ(br34157_wallGain, 0,
+                   "a newly discovered wall adds nothing to the turn's discovery count");
+    return !testFailed;
+}
+
+// ============================================================
 // BR21531 — explosive terrain erupts once at least 8 of its
 // neighbouring squares are on fire, block gas, or are themselves
 // explosive
@@ -1729,6 +1832,68 @@ static boolean br25953_verify(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR70260 — monsters that fall take 6-12 damage and reappear on
+// the level below.
+//
+// An ogre spawned onto a chasm and paralyzed so it cannot step
+// away falls at the end of an environment update: it is removed
+// from the upper level, loses 6-12 health, and is waiting on the
+// next level down.  An ogre has enough health to survive the
+// range, so the disappearance cannot be explained by death.
+// ============================================================
+
+static creature *br70260_subject;
+static int br70260_healthBefore;
+static int br70260_waited;
+
+static void br70260_setup(void) {
+    clearArena();
+
+    const pos chasm = posOffset(getPlayerPos(), 2, 0);
+    setTerrain(chasm, CHASM);
+
+    br70260_subject = spawnMonster(MK_OGRE, chasm);
+    applyStatusToMonster(br70260_subject, STATUS_PARALYZED, 1000);
+    br70260_healthBefore = monsterHealth(br70260_subject);
+    br70260_waited = 0;
+}
+
+static boolean br70260_wait_to_fall_step(void) {
+    if (countMonstersOfType(MK_OGRE) == 0 || monsterIsDead(br70260_subject)) {
+        return false;
+    }
+    if (++br70260_waited > 400) {
+        testFail("the monster over the chasm never fell");
+        return false;
+    }
+    restOneTurn();
+    return true;
+}
+
+static boolean br70260_monster_falls_damaged_to_level_below(void) {
+    TEST_ASSERT(!monsterIsDead(br70260_subject),
+                "the fallen monster should survive 6-12 points of fall damage");
+
+    const int healthAfterFall = monsterHealth(br70260_subject);
+    const int damage = br70260_healthBefore - healthAfterFall;
+    TEST_ASSERT(damage >= 6, "a fall should deal at least 6 damage");
+    TEST_ASSERT(damage <= 12, "a fall should deal at most 12 damage");
+
+    TEST_ASSERT_EQ(countMonstersOfType(MK_OGRE), 0,
+                   "the fallen monster should leave the upper level");
+
+    descendToNextLevel();
+    TEST_ASSERT_EQ(currentDepth(), 2, "the player should now be on depth 2");
+
+    creature *below = findMonster(MK_OGRE);
+    TEST_ASSERT(below != NULL,
+                "the fallen monster should reappear on the level below");
+    TEST_ASSERT_EQ(monsterHealth(below), healthAfterFall,
+                   "the monster below should be the one that fell, still damaged");
+    return !testFailed;
+}
+
 const testCase tests_movement[] = {
     { "BR91235_staff_recharges_a_spent_charge",      staff_recharge_setup, staff_recharge_step, spent_staff_recharges },
     { "BR91235_full_staff_gains_no_charges",         full_staff_setup,    full_staff_rest_step, full_staff_gains_no_charges },
@@ -1749,6 +1914,7 @@ const testCase tests_movement[] = {
     { "BR83833_pressure_plate_prompt_cancels", plate_prompt_setup,     plate_prompt_step,        plate_prompt_refused },
     { "BR50847_stairs_change_level",           stairs_setup,           stairs_step,              descended_a_level },
     { "BR34686_discovery_xp_goes_to_nearby_allies", discovery_xp_setup, discovery_xp_step,        discovery_xp_goes_to_allies_on_nearby_levels },
+    { "BR34157_passable_discovery_counts",           br34157_setup,      br34157_step,             br34157_verify },
     { "BR39970_pressure_plate_depresses",      plate_depress_setup,    plate_depress_step,       plate_is_depressed },
     { "BR22348_pressure_plate_resets",         plate_depress_setup,    plate_reset_step,         plate_reset },
     { "BR24837_lava_kills",                    lava_kills_setup,       rest_a_few_turns_step,    player_was_killed },
@@ -1780,6 +1946,8 @@ const testCase tests_movement[] = {
 
     { "BR30801_disabled_monsters_do_not_act", br30801_setup, br30801_step, br30801_verify },
     { "BR25953_mending_ground_heals", br25953_setup, br25953_step, br25953_verify },
+
+    { "BR70260_falling_monster_damaged_and_moves_down", br70260_setup, br70260_wait_to_fall_step, br70260_monster_falls_damaged_to_level_below },
 
     { NULL, NULL, NULL, NULL }
 };

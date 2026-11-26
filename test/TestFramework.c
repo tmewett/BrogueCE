@@ -522,6 +522,13 @@ boolean cellIsVisible(pos loc) {
     return (playerCanSee(loc.x, loc.y)) != 0;
 }
 
+boolean cellIsDiscovered(pos loc) {
+    if (!isPosInMap(loc)) {
+        return false;
+    }
+    return (pmapAt(loc)->flags & DISCOVERED) != 0;
+}
+
 boolean cellHasGas(pos loc) {
     return pmapAt(loc)->volume > 0;
 }
@@ -714,6 +721,143 @@ boolean showOversizedButton(const char *label) {
     return chosen == 0;
 }
 
+// ---------------------------------------------
+// Menu buttons
+// ---------------------------------------------
+
+// Opacity the button painter stored in each cell of the most recently drawn
+// menu, captured by testRecordButtonCellOpacity() while a test runs.
+static short buttonOpacityRecord[COLS][ROWS];
+static boolean buttonOpacityRecorded[COLS][ROWS];
+
+static void clearButtonOpacityRecord(void) {
+    memset(buttonOpacityRecorded, 0, sizeof(buttonOpacityRecorded));
+}
+
+void testRecordButtonCellOpacity(short x, short y, short opacity) {
+    if (x < 0 || x >= COLS || y < 0 || y >= ROWS) {
+        return;
+    }
+    buttonOpacityRecord[x][y] = opacity;
+    buttonOpacityRecorded[x][y] = true;
+}
+
+static int recordedButtonOpacity(void) {
+    int found = -1;
+    for (int x = 0; x < COLS; x++) {
+        for (int y = 0; y < ROWS; y++) {
+            if (!buttonOpacityRecorded[x][y]) {
+                continue;
+            }
+            if (found >= 0 && found != buttonOpacityRecord[x][y]) {
+                return -2;
+            }
+            found = buttonOpacityRecord[x][y];
+        }
+    }
+    return found;
+}
+
+// See the declaration in TestFramework.h.
+int buttonBackdropVisibility(int opacity) {
+    SavedDisplayBuffer saved = saveDisplayBuffer();
+    screenDisplayBuffer dbuf;
+    brogueButton button;
+
+    // A solid white screen and a black button make the composited colour a
+    // direct reading of how much of the screen survives: white * (100-p).
+    for (int x = 0; x < COLS; x++) {
+        for (int y = 0; y < ROWS; y++) {
+            displayBuffer.cells[x][y].character = ' ';
+            displayBuffer.cells[x][y].foreColorComponents[0] = 0;
+            displayBuffer.cells[x][y].foreColorComponents[1] = 0;
+            displayBuffer.cells[x][y].foreColorComponents[2] = 0;
+            displayBuffer.cells[x][y].backColorComponents[0] = 100;
+            displayBuffer.cells[x][y].backColorComponents[1] = 100;
+            displayBuffer.cells[x][y].backColorComponents[2] = 100;
+        }
+    }
+
+    initializeButton(&button);
+    snprintf(button.text, BUTTON_TEXT_SIZE, "%s", "Backdrop");
+    button.x = 0;
+    button.y = 0;
+    button.buttonColor = black;
+    button.flags &= ~B_GRADIENT;
+    button.opacity = opacity;
+
+    clearDisplayBuffer(&dbuf);
+    drawButton(&button, BUTTON_NORMAL, &dbuf);
+
+    // Every cell the label covers must carry the opacity; one unmarked cell
+    // would let the screen behind it stay unblended.
+    const int width = strLenWithoutEscapes(button.text);
+    for (int i = 0; i < width && button.x + i < COLS; i++) {
+        if (dbuf.cells[button.x + i][button.y].opacity != opacity) {
+            restoreDisplayBuffer(&saved);
+            return -1;
+        }
+    }
+
+    overlayDisplayBuffer(&dbuf);
+
+    const int showing = displayBuffer.cells[0][0].backColorComponents[0];
+    restoreDisplayBuffer(&saved);
+    return showing;
+}
+
+// See the declaration in TestFramework.h.
+int inventoryButtonOpacity(void) {
+    if (packItemCount() == 0) {
+        givePlayerItem(FOOD, RATION, 0);
+    }
+    clearButtonOpacityRecord();
+    queueKeystroke(ESCAPE_KEY, false, false);
+    displayInventory(ALL_ITEMS, 0, 0, true, true);
+    clearInputQueue();
+    return recordedButtonOpacity();
+}
+
+// See the declaration in TestFramework.h.
+int bottomRowButtonOpacity(void) {
+    clearButtonOpacityRecord();
+    runQueuedInputThroughMainLoop();
+    return recordedButtonOpacity();
+}
+
+// See the declaration in TestFramework.h.
+void paintMenuButton(const char *label) {
+    brogueButton button;
+    screenDisplayBuffer dbuf;
+
+    initializeButton(&button);
+    snprintf(button.text, BUTTON_TEXT_SIZE, "%s", label);
+    button.x = 0;
+    button.y = 0;
+    // A button colour with a random component makes the painter draw
+    // randomness while it works, which is what the rule protects the game's
+    // own sequence from.
+    button.buttonColor.rand = 50;
+
+    clearDisplayBuffer(&dbuf);
+    drawButton(&button, BUTTON_NORMAL, &dbuf);
+}
+
+// See the declaration in TestFramework.h.
+unsigned long gameplayRandomDraws(void) {
+    return randomNumbersGenerated;
+}
+
+// See the declaration in TestFramework.h.
+boolean gameplayRandomStreamActive(void) {
+    return rogue.RNG == RNG_SUBSTANTIVE;
+}
+
+// See the declaration in TestFramework.h.
+int drawGameplayRandomNumber(void) {
+    return (int) rand_range(0, 100);
+}
+
 const char *gameVariantName(void) {
     switch (gameVariant) {
         case VARIANT_RAPID_BROGUE:  return "Rapid Brogue";
@@ -834,6 +978,20 @@ boolean highScoreHasScore(int score) {
         }
     }
     return false;
+}
+
+const char *highScoreDescription(int score) {
+    static char description[DCOLS];
+    rogueHighScoresEntry list[HIGH_SCORES_COUNT];
+    getHighScoresList(list);
+    for (int i = 0; i < HIGH_SCORES_COUNT; i++) {
+        if (list[i].score == (long) score) {
+            strcpy(description, list[i].description);
+            return description;
+        }
+    }
+    description[0] = '\0';
+    return description;
 }
 
 void clearHighScores(void) {
@@ -1144,6 +1302,10 @@ pos monsterPosition(const creature *monst) {
     return monst->loc;
 }
 
+int monsterDepth(const creature *monst) {
+    return monst->depth;
+}
+
 int monsterHealth(const creature *monst) {
     return monst->currentHP;
 }
@@ -1277,6 +1439,16 @@ int monsterBaseAttackSpeed(const creature *monst) {
 boolean monsterRegenerates(const creature *monst) {
     if (monst == NULL) return false;
     return monst->info.turnsBetweenRegen > 0;
+}
+
+int monsterTrailChance(const creature *monst) {
+    if (monst == NULL) return 0;
+    return monst->info.DFChance;
+}
+
+boolean monsterLeavesUrineTrail(const creature *monst) {
+    if (monst == NULL) return false;
+    return monst->info.DFType == DF_URINE;
 }
 
 void weakenMonster(creature *monst, int duration) {
@@ -1501,6 +1673,13 @@ void equipItemFromPack(short category, short kind) {
     }
 }
 
+void equipItemFromPackAsPlayer(short category, short kind) {
+    item *theItem = findInventoryItem(category, kind);
+    if (theItem != NULL) {
+        equip(theItem);
+    }
+}
+
 void unequipItemFromPack(short category, short kind) {
     item *theItem = findInventoryItem(category, kind);
     if (theItem != NULL) {
@@ -1569,6 +1748,10 @@ boolean itemIsCursed(const item *theItem) {
     return (theItem->flags & ITEM_CURSED) != 0;
 }
 
+boolean itemIsEquipped(const item *theItem) {
+    return theItem != NULL && (theItem->flags & ITEM_EQUIPPED) != 0;
+}
+
 boolean itemIsIdentified(const item *theItem) {
     return (theItem->flags & ITEM_IDENTIFIED) != 0;
 }
@@ -1584,6 +1767,12 @@ int itemMagicPolarityValue(const item *theItem) {
 void curseItem(item *theItem) {
     if (theItem != NULL) {
         theItem->flags |= ITEM_CURSED;
+    }
+}
+
+void uncurseItem(item *theItem) {
+    if (theItem != NULL) {
+        theItem->flags &= ~ITEM_CURSED;
     }
 }
 
@@ -1623,6 +1812,10 @@ item *equippedWeapon(void) {
 
 item *equippedArmor(void) {
     return rogue.armor;
+}
+
+int equippedRingCount(void) {
+    return (rogue.ringLeft != NULL) + (rogue.ringRight != NULL);
 }
 
 unsigned long itemGoldValue(const item *theItem) {
@@ -1689,6 +1882,19 @@ void wearArmorOfEnchant(short kind, int enchant) {
     identify(theItem);
     addItemToPack(theItem);
     equipItem(theItem, true, NULL);
+}
+
+item *givePlayerPlainWeapon(short kind, int enchant) {
+    // generateItem() rolls a random enchant and possibly a runic (quietus or
+    // slaying can kill a target outright) even when a specific kind is asked
+    // for, and givePlayerItem() ignores an enchant of 0.
+    item *theItem = generateItem(WEAPON, kind);
+    theItem->enchant1 = enchant;
+    theItem->enchant2 = 0;
+    theItem->flags &= ~(ITEM_CURSED | ITEM_RUNIC | ITEM_RUNIC_IDENTIFIED | ITEM_RUNIC_HINTED);
+    identify(theItem);
+    addItemToPack(theItem);
+    return theItem;
 }
 
 item *givePlayerRunicWeapon(short kind, short runicKind, short enchant, boolean revealIdentity) {
@@ -1815,6 +2021,79 @@ int countTerrain(short terrainType) {
     return count;
 }
 
+// ---------------------------------------------
+// Vault layouts
+// ---------------------------------------------
+
+// The reward-vault blueprints, in catalog order.  A test sees only their
+// positions in this list, never the catalog itself.
+#define TEST_VAULT_LAYOUT_LIMIT 64
+static short vaultLayoutIds[TEST_VAULT_LAYOUT_LIMIT];
+static int vaultLayoutCountCache = -1;
+
+static void ensureVaultLayouts(void) {
+    if (vaultLayoutCountCache >= 0) {
+        return;
+    }
+    int count = 0;
+    for (int i = 1; i < gameConst->numberBlueprints && count < TEST_VAULT_LAYOUT_LIMIT; i++) {
+        const unsigned long flags = blueprintCatalog[i].flags;
+        // The same eligibility test the raffle applies when it is asked for a
+        // reward vault: reward vaults are never adoptive or vestibule machines.
+        if ((flags & BP_REWARD) && !(flags & (BP_ADOPT_ITEM | BP_VESTIBULE))) {
+            vaultLayoutIds[count++] = i;
+        }
+    }
+    vaultLayoutCountCache = count;
+}
+
+static boolean vaultLayoutIsValid(int layout) {
+    ensureVaultLayouts();
+    return layout >= 0 && layout < vaultLayoutCountCache;
+}
+
+int vaultLayoutCount(void) {
+    ensureVaultLayouts();
+    return vaultLayoutCountCache;
+}
+
+int vaultLayoutMinDepth(int layout) {
+    if (!vaultLayoutIsValid(layout)) {
+        return 0;
+    }
+    return blueprintCatalog[vaultLayoutIds[layout]].depthRange[0];
+}
+
+int vaultLayoutMaxDepth(int layout) {
+    if (!vaultLayoutIsValid(layout)) {
+        return 0;
+    }
+    return blueprintCatalog[vaultLayoutIds[layout]].depthRange[1];
+}
+
+int vaultLayoutFrequency(int layout) {
+    if (!vaultLayoutIsValid(layout)) {
+        return 0;
+    }
+    return blueprintCatalog[vaultLayoutIds[layout]].frequency;
+}
+
+int drawVaultLayout(int depth) {
+    ensureVaultLayouts();
+
+    const short savedDepth = rogue.depthLevel;
+    rogue.depthLevel = depth;
+    const short chosen = chooseBlueprintForTesting(BP_REWARD);
+    rogue.depthLevel = savedDepth;
+
+    for (int i = 0; i < vaultLayoutCountCache; i++) {
+        if (vaultLayoutIds[i] == chosen) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 int lightAt(pos loc) {
     return tmapAt(loc)->light[0] + tmapAt(loc)->light[1] + tmapAt(loc)->light[2];
 }
@@ -1880,6 +2159,26 @@ void setPlayerInWater(boolean inWater) {
 void recomputeLighting(void) {
     updateMinersLightRadius();
     updateLighting();
+}
+
+const char *playerDrawColorName(void) {
+    const color *drawColor = player.info.foreColor;
+    if (drawColor == &playerInvisibleColor) return "invisible";
+    if (drawColor == &playerInDarknessColor) return "darkness";
+    if (drawColor == &playerInShadowColor) return "shadow";
+    if (drawColor == &playerInLightColor) return "light";
+    return "unknown";
+}
+
+unsigned long playerDrawColorId(void) {
+    const color *drawColor = player.info.foreColor;
+    return ((unsigned long)(unsigned char) drawColor->red << 16)
+         | ((unsigned long)(unsigned char) drawColor->green << 8)
+         | (unsigned long)(unsigned char) drawColor->blue;
+}
+
+void updatePlayerDrawColor(void) {
+    updatePlayerForeColor();
 }
 
 // Mirrors cellIsPassableOrDoor() in Architect.c, which the generator

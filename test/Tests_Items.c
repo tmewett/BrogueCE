@@ -7,8 +7,8 @@
 // feat, the number of items each level generates, that generated throwing
 // weapons come out plain (never cursed, runic, or enchanted), the runes
 // fading from runic gear whose enchantment drops to zero or less, which
-// targets a zap's auto-targeting will and will not pick, and the pressure
-// plate an item placed on it depresses.
+// targets a zap's auto-targeting will and will not pick, the pressure plate
+// an item placed on it depresses, and the two-ring limit with its swap prompt.
 //
 // Omitted are everything else about level population (what is generated and
 // where), random chances (curses, runics, mutations, spawn counts), flavour
@@ -667,12 +667,9 @@ static void throw_hit_setup(void) {
     applyStatusToMonster(throwTarget, STATUS_PARALYZED, 100);
     setMonsterHealth(throwTarget, 50);
     throwTargetHealthBefore = monsterHealth(throwTarget);
-    item *dagger = givePlayerItem(WEAPON, DAGGER, 3);
-    // generateItem() may have rolled the dagger a runic; a W_MERCY hit heals
-    // the target back to full and would erase the damage this test asserts on.
-    // Strip it so the dagger is always plain.
-    dagger->flags &= ~(ITEM_RUNIC | ITEM_CURSED);
-    dagger->enchant2 = 0;
+    // A plain dagger: a randomly rolled W_MERCY runic heals the target back to
+    // full and would erase the damage this test asserts on.
+    item *dagger = givePlayerPlainWeapon(DAGGER, 3);
     daggersBeforeThrow = packUnitCount(WEAPON, DAGGER);
     queueKeystroke(itemInventoryLetter(dagger), false, false);
     queueKeystroke(RIGHT_KEY, false, false);
@@ -1498,6 +1495,80 @@ static boolean br44912_teleports_to_another_part_of_the_level(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR18415 — you can wear at most two rings; equipping a third asks
+// you to choose which worn ring to remove first, and a ring you are
+// already wearing cannot be equipped again
+// ============================================================
+
+static item *br18415_first;
+static item *br18415_second;
+static item *br18415_third;
+
+// Wear two rings through the direct equip helper, leaving a third in the pack.
+static void br18415_wear_two_rings(void) {
+    clearArena();
+    br18415_first = givePlayerItem(RING, RING_STEALTH, 2);
+    uncurseItem(br18415_first);
+    equipItemFromPack(RING, RING_STEALTH);
+    br18415_second = givePlayerItem(RING, RING_WISDOM, 2);
+    uncurseItem(br18415_second);
+    equipItemFromPack(RING, RING_WISDOM);
+    br18415_third = givePlayerItem(RING, RING_AWARENESS, 2);
+    uncurseItem(br18415_third);
+}
+
+static void br18415_swap_setup(void) {
+    br18415_wear_two_rings();
+    // The answer to "remove which first?" is the first worn ring.
+    queueKeystroke(itemInventoryLetter(br18415_first), false, false);
+    equipItemFromPackAsPlayer(RING, RING_AWARENESS);
+}
+
+static boolean br18415_third_ring_replaces_the_chosen_one(void) {
+    TEST_ASSERT_EQ(equippedRingCount(), 2,
+                   "only two rings should be worn after the swap");
+    TEST_ASSERT(itemIsEquipped(br18415_third),
+                "answering the choice prompt should put the third ring on");
+    TEST_ASSERT(!itemIsEquipped(br18415_first),
+                "the worn ring named in the prompt should come off");
+    TEST_ASSERT(itemIsEquipped(br18415_second),
+                "the worn ring not named in the prompt should stay on");
+    return !testFailed;
+}
+
+static void br18415_cancel_setup(void) {
+    br18415_wear_two_rings();
+    equipItemFromPackAsPlayer(RING, RING_AWARENESS);
+}
+
+static boolean br18415_third_ring_waits_for_a_choice(void) {
+    TEST_ASSERT_EQ(equippedRingCount(), 2,
+                   "a third ring must not be worn while two are already on");
+    TEST_ASSERT(!itemIsEquipped(br18415_third),
+                "with the choice prompt cancelled the third ring stays in the pack");
+    TEST_ASSERT(itemIsEquipped(br18415_first) && itemIsEquipped(br18415_second),
+                "cancelling the choice should leave both worn rings on");
+    return !testFailed;
+}
+
+static void br18415_repeat_setup(void) {
+    clearArena();
+    br18415_first = givePlayerItem(RING, RING_STEALTH, 2);
+    equipItemFromPack(RING, RING_STEALTH);
+    equipItemFromPackAsPlayer(RING, RING_STEALTH);
+}
+
+static boolean br18415_worn_ring_cannot_be_worn_again(void) {
+    TEST_ASSERT(itemIsEquipped(br18415_first),
+                "the ring should still be worn after trying to equip it again");
+    TEST_ASSERT_EQ(equippedRingCount(), 1,
+                   "a worn ring must not occupy a second finger");
+    TEST_ASSERT(messageWasShown("already wearing that ring"),
+                "the game should say the ring is already being worn");
+    return !testFailed;
+}
+
 const testCase tests_items[] = {
     { "BR58888_throwing_weapons_never_magical",     br58888_setup,             NULL, throwing_weapons_are_never_magical },
 
@@ -1569,6 +1640,10 @@ const testCase tests_items[] = {
     { "BR75263_auto_target_picks_only_a_valid_target", br75263_setup, br75263_zap_aim_step, br75263_auto_target_picks_only_a_valid_target },
 
     { "BR44912_scroll_teleportation_moves_you",   br44912_setup,  br44912_step, br44912_teleports_to_another_part_of_the_level },
+
+    { "BR18415_third_ring_replaces_the_chosen_worn_ring", br18415_swap_setup, NULL, br18415_third_ring_replaces_the_chosen_one },
+    { "BR18415_third_ring_waits_for_a_choice",    br18415_cancel_setup, NULL, br18415_third_ring_waits_for_a_choice },
+    { "BR18415_worn_ring_cannot_be_equipped_again", br18415_repeat_setup, NULL, br18415_worn_ring_cannot_be_worn_again },
 
     { NULL, NULL, NULL, NULL }
 };

@@ -4,8 +4,8 @@
 // state a new game starts in (depth, gold, turn counts, strength, starting
 // equipment), the message log and archive being cleared and the screen
 // blacked out before the welcome message, the reduced damage taken in easy
-// mode, the amulet fallback, the high-score gate on victory, and the
-// treasure tally a victory records.
+// mode, the amulet fallback, the high-score gate on victory, the treasure
+// tally a victory records, and the text of the high-score entry saved on death.
 //
 // Omitted are everything that depends on the run history, the achievement
 // screens, stair travel between levels, level restoration, and the wizard
@@ -477,6 +477,40 @@ static boolean start_clears_messages_and_blacks_out_screen(void) {
 }
 
 // ============================================================
+// BR74433 — the high-score entry saved on death describes only the
+// killer and depth, omitting the treasure amount.
+// ============================================================
+
+static int br74433_score;
+
+static void br74433_setup(void) {
+    clearArena();
+    clearHighScores();
+    br74433_score = 74433;
+    givePlayerGold(br74433_score);
+    setPlayerHealth(1);
+    setPlayerNutrition(0);
+}
+
+static boolean br74433_starve_step(void) {
+    restOneTurn();
+    return false;
+}
+
+static boolean br74433_high_score_omits_treasure(void) {
+    TEST_ASSERT(isPlayerDead(),
+                "the player should have starved to death");
+    TEST_ASSERT(highScoreHasScore(br74433_score),
+                "the death should save the player's score");
+    const char *description = highScoreDescription(br74433_score);
+    TEST_ASSERT(strcmp(description, "Starved to death on depth 1.") == 0,
+                "the saved entry should name only the killer and depth");
+    TEST_ASSERT(strstr(description, "gold") == NULL,
+                "the saved entry must omit the treasure amount");
+    return !testFailed;
+}
+
+// ============================================================
 
 const testCase tests_progression[] = {
     { "BR19079_new_game_begins_on_depth_1",        NULL,                    NULL, new_game_begins_on_depth_1 },
@@ -508,6 +542,8 @@ const testCase tests_progression[] = {
 
     { "BR99222_escape_records_full_treasure",  br99222_escape_setup, escape_the_dungeon_step, br99222_escape_records_full_treasure },
     { "BR99222_greater_doubles_amulet_value",  br99222_greater_setup, br99222_greater_victory_step, br99222_greater_doubles_amulet_value },
+
+    { "BR74433_death_high_score_omits_treasure", br74433_setup, br74433_starve_step, br74433_high_score_omits_treasure },
 
     { NULL, NULL, NULL, NULL }
 };

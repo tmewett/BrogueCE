@@ -205,6 +205,8 @@ short terrainAt(pos loc);
 boolean cellIsTerrain(pos loc, short terrainType);
 boolean cellObstructsPassage(pos loc);
 boolean cellIsVisible(pos loc);
+// Whether the player has ever seen the tile (it stays discovered once seen).
+boolean cellIsDiscovered(pos loc);
 boolean cellHasGas(pos loc);
 boolean cellIsOnFire(pos loc);
 // Whether any layer of the tile holds terrain that harms creatures standing
@@ -264,6 +266,8 @@ boolean playerHasItem(short category, short kind);
 // Mark a pack item as cursed, so that rules about curse handling (such as a
 // scroll of enchanting removing a curse) can be set up deterministically.
 void curseItem(item *theItem);
+// Clear a pack item's curse, for rules whose setup needs a removable item.
+void uncurseItem(item *theItem);
 void removePackFood(void);
 // Remove every pack item of the given category and kind, so a test can
 // control exactly which items are available to be stolen or consumed.
@@ -332,6 +336,9 @@ void damageMonster(creature *monst, int amount);
 int monsterTicksUntilTurn(const creature *monst);
 void giveMonsterItem(creature *monst, short category, short kind);
 pos monsterPosition(const creature *monst);
+// The dungeon level the monster is standing on, which follows it across a
+// level change only when the engine actually moves it.
+int monsterDepth(const creature *monst);
 boolean monsterIsAdjacentToPlayer(const creature *monst);
 short vorpalEnemyClassForMonster(enum monsterTypes monstType);
 short vorpalEnemyClassByName(const char *className);
@@ -371,6 +378,12 @@ int monsterBaseMovementSpeed(const creature *monst);
 int monsterBaseAttackSpeed(const creature *monst);
 // Whether the monster's catalog entry gives it natural health regeneration.
 boolean monsterRegenerates(const creature *monst);
+// Chance, in percent, that the monster leaves its trail on the floor each
+// turn (0 when it leaves no trail).
+int monsterTrailChance(const creature *monst);
+// Whether the trail the monster leaves is a puddle of urine, as the
+// territory-marking animals leave behind.
+boolean monsterLeavesUrineTrail(const creature *monst);
 void poisonMonster(creature *monst, int duration, int concentration);
 void slowMonster(creature *monst, int turns);
 void hasteMonster(creature *monst, int turns);
@@ -428,6 +441,11 @@ pos itemPosition(const item *theItem);
 // their own generation rule and are not counted.
 int countFloorItems(void);
 void equipItemFromPack(short category, short kind);
+// Equip an item from the pack through the player's equip command, including
+// the prompt shown when both ring slots are already full.  The prompt's answer
+// comes from the test's queued input; a cancelled prompt leaves the equipment
+// unchanged.
+void equipItemFromPackAsPlayer(short category, short kind);
 // Take off an equipped item of the given category and kind, so a test can
 // cycle equipment one piece at a time.
 void unequipItemFromPack(short category, short kind);
@@ -483,6 +501,10 @@ void setItemTargetClass(item *theItem, short classId);
 // The items currently worn.
 item *equippedWeapon(void);
 item *equippedArmor(void);
+// Whether an item is currently equipped.
+boolean itemIsEquipped(const item *theItem);
+// How many rings are currently on the player's fingers (0, 1, or 2).
+int equippedRingCount(void);
 
 // Counts within the pack.
 int packStackCount(short category, short kind);
@@ -548,6 +570,53 @@ void showModeDialog(int answerKey);
 void showTitleScreen(void);
 
 // ---------------------------------------------
+// Menu buttons
+// ---------------------------------------------
+
+// Draw one menu button at the given opacity over a solid white screen and
+// report how much of that screen still shows through the button, in percent:
+// 0 when the button is fully opaque, 100 when it is fully transparent.  The
+// screen is restored before returning.
+int buttonBackdropVisibility(int opacity);
+
+// Open the real inventory over the dungeon, dismiss it, and report the
+// opacity its buttons were painted with: 0 is fully transparent and 100 fully
+// opaque.  Returns -1 when no button was drawn or -2 when the buttons
+// disagree.
+int inventoryButtonOpacity(void);
+
+// Report the opacity the bottom-row buttons were painted with in the frame
+// the game drew just now: 0 is fully transparent and 100 fully opaque.  As
+// with inventoryButtonOpacity(), -1 means no button was drawn and -2 means
+// the buttons disagree.
+int bottomRowButtonOpacity(void);
+
+// Paint one ordinary menu button through the game's own button painter,
+// without any surrounding menu, so the randomness it consumes can be
+// observed directly.
+void paintMenuButton(const char *label);
+
+// ---------------------------------------------
+// Random-number sequence
+// ---------------------------------------------
+
+// How many numbers the game has drawn from the sequence that governs
+// gameplay.  Painting menus and other decorative work must not change it.
+unsigned long gameplayRandomDraws(void);
+
+// Whether the game's own random-number sequence is the one currently in
+// effect (rather than the decorative one used while drawing).
+boolean gameplayRandomStreamActive(void);
+
+// Draw one number from the game's own random sequence, for use as a control
+// that the sequence and its counter are observable.
+int drawGameplayRandomNumber(void);
+
+// Framework internal: remember the opacity the button painter stored in one
+// cell of a menu's off-screen layer.  Called by the painter while testing.
+void testRecordButtonCellOpacity(short x, short y, short opacity);
+
+// ---------------------------------------------
 // Game modes and high scores
 // ---------------------------------------------
 
@@ -590,6 +659,10 @@ int expectedVictoryScore(void);
 // Whether the high-score file currently holds an entry with this score.
 boolean highScoreHasScore(int score);
 
+// The description saved in the high-score entry carrying this score, or the
+// empty string when no entry has it.
+const char *highScoreDescription(int score);
+
 // Empty the high-score list before a run whose recorded score a test will
 // assert on: saveHighScore() refuses to write below the list's lowest
 // entry, so a fresh test needs a known, empty list to write into, and an
@@ -598,6 +671,11 @@ void clearHighScores(void);
 
 // Wear a freshly generated suit of armor at a chosen enchantment.
 void wearArmorOfEnchant(short kind, int enchant);
+
+// Create a freshly generated plain (non-runic, uncursed) weapon in the
+// player's pack at an exact enchantment: generateItem() otherwise rolls a
+// random enchant and possibly a runic.
+item *givePlayerPlainWeapon(short kind, int enchant);
 
 // Create a freshly generated runic weapon/armor in the player's pack at the
 // chosen enchantment, already identified as runic.
@@ -614,6 +692,21 @@ int levelHeight(void);
 
 // How many tiles of the dungeon layer hold the given terrain.
 int countTerrain(short terrainType);
+
+// ---------------------------------------------
+// Vault layouts
+// ---------------------------------------------
+
+// Reward vaults choose among their layouts by a weighted raffle.  A layout is
+// an opaque index in [0, vaultLayoutCount()), and every layout shown here is a
+// reward vault that can enter that raffle.  drawVaultLayout() performs the
+// engine's own choice for the given depth, so a test can sample it without
+// touching the blueprint catalog.
+int vaultLayoutCount(void);
+int vaultLayoutMinDepth(int layout);
+int vaultLayoutMaxDepth(int layout);
+int vaultLayoutFrequency(int layout);
+int drawVaultLayout(int depth);
 
 // Descend one level, generating the next dungeon level.
 void descendToNextLevel(void);
@@ -640,6 +733,17 @@ int minersLightRadius(void);
 void setLightMultiplier(int multiplier);
 void setPlayerInWater(boolean inWater);
 void recomputeLighting(void);
+
+// The colour the player is currently drawn with: "invisible", "darkness",
+// "shadow", "light", or "unknown".  The four named colours are distinct.
+const char *playerDrawColorName(void);
+// An opaque id of the current draw colour, built from its RGB components, so
+// a test can compare colours without reading engine state.  Equal ids mean
+// equal colours.
+unsigned long playerDrawColorId(void);
+// Recompute the player's draw colour from the current light map without
+// repainting the lighting, so a test can inspect the darkness colour.
+void updatePlayerDrawColor(void);
 
 // How many floor tiles of the level are cut off from the region containing
 // `from`.  Passability follows the rule the generator flood-fills with when

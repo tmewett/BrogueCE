@@ -979,6 +979,45 @@ typedef struct machineData {
     short sCols[DCOLS];
 } machineData;
 
+// Pick one blueprint from those that qualify for the current depth and the
+// required machine flags, each entering the raffle with `frequency` tickets.
+// Returns 0 when no blueprint qualifies.
+static short chooseBlueprint(unsigned long requiredMachineFlags) {
+    short totalFreq = 0, bp = 0;
+
+    for (int i=1; i<gameConst->numberBlueprints; i++) {
+        if (blueprintQualifies(i, requiredMachineFlags)) {
+            totalFreq += blueprintCatalog[i].frequency;
+        }
+    }
+
+    if (!totalFreq) { // No suitable blueprints are in the library.
+        return 0;
+    }
+
+    int randIndex = rand_range(1, totalFreq);
+    for (int i=1; i<gameConst->numberBlueprints; i++) {
+        if (blueprintQualifies(i, requiredMachineFlags)) {
+            if (randIndex <= blueprintCatalog[i].frequency) {
+                bp = i;
+                break;
+            } else {
+                randIndex -= blueprintCatalog[i].frequency;
+            }
+        }
+    }
+
+    return bp;
+}
+
+#ifdef BROGUE_TESTING
+// Exposed to the test framework so a test can observe the raffle directly,
+// without building a machine.
+short chooseBlueprintForTesting(unsigned long requiredMachineFlags) {
+    return chooseBlueprint(requiredMachineFlags);
+}
+#endif
+
 // Returns true if the machine got built; false if it was aborted.
 // If empty array parentSpawnedItems or parentSpawnedMonsters is given, will pass those back for deletion if necessary.
 boolean buildAMachine(enum machineTypes bp,
@@ -1037,14 +1076,9 @@ boolean buildAMachine(enum machineTypes bp,
 
             // First, choose the blueprint. We choose from among blueprints
             // that have the required blueprint flags and that satisfy the depth requirements.
-            totalFreq = 0;
-            for (int i=1; i<gameConst->numberBlueprints; i++) {
-                if (blueprintQualifies(i, requiredMachineFlags)) {
-                    totalFreq += blueprintCatalog[i].frequency;
-                }
-            }
+            bp = chooseBlueprint(requiredMachineFlags);
 
-            if (!totalFreq) { // If no suitable blueprints are in the library, fail.
+            if (!bp) { // If no suitable blueprints are in the library, fail.
                 if (distanceMap) {
                     freeGrid(distanceMap);
                 }
@@ -1053,22 +1087,6 @@ boolean buildAMachine(enum machineTypes bp,
                 free(p);
                 return false;
             }
-
-            // Pick from among the suitable blueprints.
-            int randIndex = rand_range(1, totalFreq);
-            for (int i=1; i<gameConst->numberBlueprints; i++) {
-                if (blueprintQualifies(i, requiredMachineFlags)) {
-                    if (randIndex <= blueprintCatalog[i].frequency) {
-                        bp = i;
-                        break;
-                    } else {
-                        randIndex -= blueprintCatalog[i].frequency;
-                    }
-                }
-            }
-
-            // If we don't have a blueprint yet, something went wrong.
-            brogueAssert(bp>0);
         }
 
         // Find a location and map out the machine interior.

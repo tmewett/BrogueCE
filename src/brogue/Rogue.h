@@ -2899,6 +2899,9 @@ extern "C" {
                           item *adoptiveItem,
                           item *parentSpawnedItems[MACHINES_BUFFER_LENGTH],
                           creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]);
+#ifdef BROGUE_TESTING
+    short chooseBlueprintForTesting(unsigned long requiredMachineFlags);
+#endif
     void attachRooms(short **grid, const dungeonProfile *theDP, short attempts, short maxRoomCount);
     void digDungeon(void);
     void updateMapToShore(void);
@@ -3411,6 +3414,7 @@ extern "C" {
     void backUpLighting(short lights[DCOLS][DROWS][3]);
     void restoreLighting(short lights[DCOLS][DROWS][3]);
     void updateLighting(void);
+    void updatePlayerForeColor(void);
     boolean playerInDarkness(void);
     flare *newFlare(const lightSource *light, short x, short y, short changePerFrame, short limit);
     void createFlare(short x, short y, enum lightType lightIndex);

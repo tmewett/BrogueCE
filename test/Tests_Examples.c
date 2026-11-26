@@ -23,8 +23,9 @@ static void bog_setup(void) {
 }
 
 static void water_setup(void) {
-    setTerrainAroundLoc(player.loc, DEEP_WATER);
-    setPlayerPos(player.loc); // Replace player on tile
+    pos waterLoc = getPlayerPos();
+    setTerrainAroundLoc(waterLoc, DEEP_WATER);
+    setPlayerPos(waterLoc); // Replace player on tile
 
     // Give player items that will float away
     givePlayerItem(WEAPON,SPEAR,0);
@@ -69,16 +70,24 @@ static void rat_setup(void) {
     makeMonsterHostile(rat);
 }
 
+static creature *aquatic_eel;
+
 static void eel_setup(void) {
     water_setup();
     clearMonsters();
 
-    pos eelLoc = {player.loc.x + 1, player.loc.y};
-    creature *eel = generateMonster(MK_EEL, false, false);
-    setMonsterLocation(eel, eelLoc);
-    makeMonsterHostile(eel);
+    // Spawn the eel without forcing it hostile: standing in deep water is what
+    // makes it treat the player as an enemy.
+    aquatic_eel = spawnMonster(MK_EEL, posOffset(getPlayerPos(), 1, 0));
 
     drink(POTION_LIFE); // Give the player enough HP to survive for 10 turns against eel
+}
+
+// A deliberately hostile eel, so a test can isolate a condition (such as
+// levitation) that stops an otherwise-willing attacker.
+static void hostile_eel_setup(void) {
+    eel_setup();
+    makeMonsterHostile(aquatic_eel);
 }
 
 
@@ -114,7 +123,7 @@ static void levitation_water_setup(void) {
 }
 
 static void levitation_eel_setup(void) {
-    eel_setup();
+    hostile_eel_setup();
     drink(POTION_LEVITATION);
 }
 
@@ -174,8 +183,21 @@ static boolean player_is_hurt(void) {
     return !testFailed;
 }
 
-static boolean player_is_healthy(void) {
-    TEST_ASSERT(isPlayerHealthy(), "Player should be unharmeds");
+static boolean aquatic_eel_verify(void) {
+    TEST_ASSERT(aquatic_eel != NULL && monsterIsAlive(aquatic_eel), "eel spawned");
+    TEST_ASSERT(isPlayerHurt(),
+                "the eel should attack a creature standing in deep water");
+    return !testFailed;
+}
+
+static boolean aquatic_eel_cannot_attack_levitating(void) {
+    TEST_ASSERT(aquatic_eel != NULL && monsterIsAlive(aquatic_eel), "eel spawned");
+    TEST_ASSERT(isPlayerLevitating(), "player should be levitating");
+    TEST_ASSERT(aquatic_eel == NULL || !monsterIsAlive(aquatic_eel)
+                    || !monsterAttacksPlayer(aquatic_eel),
+                "a water-bound monster cannot attack a levitating opponent");
+    TEST_ASSERT(isPlayerHealthy(),
+                "a water-bound monster should not hurt a levitating opponent");
     return !testFailed;
 }
 
@@ -218,14 +240,14 @@ const testCase tests_examples[] = {
     { "BR16982_chasm_fall",             chasm_setup,                wait_until_fall_step,               chasm_fall_verify           },
     { "BR17312_water_steals_items",     water_setup,                wait_100_turns_step,                 inventory_items_missing     },
     { "BR17384_bog_monster_seizes",     bog_monster_setup,          wait_10_turns_step,                 player_seized_verify        },
-    { "BR17765_aquatic_attack",         eel_setup,                  wait_10_turns_step,                 player_is_hurt              },
+    { "BR17765_aquatic_attack",         eel_setup,                  wait_10_turns_step,                 aquatic_eel_verify          },
     { "BR20087_trigger_trap",           trap_setup,                 trap_step,                     trap_triggered              },
     { "BR21016_harmful_gas",            gas_setup,                  wait_10_turns_step,                 player_is_hurt              },
 
     { "BR22389_levitation_breaks_seized", bog_monster_setup,         levitation_breaks_seized_step, player_not_seized_verify    },
     { "BR23474_levitation_chasm",       levitation_chasm_setup,     wait_until_fall_step,               levitation_chasm_verify,    },
     { "BR25575_regular_can_attack_levitating", levitation_rat_setup, wait_until_hurt,             player_is_hurt              },
-    { "BR37800_aquatic_cant_attack_levitating", levitation_eel_setup, wait_10_turns_step,             player_is_healthy           },
+    { "BR37800_aquatic_cant_attack_levitating", levitation_eel_setup, wait_10_turns_step,             aquatic_eel_cannot_attack_levitating },
     { "BR39325_levitation_over_water",  levitation_water_setup,     wait_10_turns_step,                 inventory_items_not_missing },
     { "BR39456_levitation_over_trap",   levitation_trap_setup,      trap_step,                     trap_not_triggered          },
     { "BR39871_levitation_web",         levitation_web_setup,       NULL,                      levitation_web_verify       },

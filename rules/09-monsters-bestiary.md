@@ -24,7 +24,7 @@
 - **BR91557** — **Cannot be entangled.** Webs and similar entangling effects pass harmlessly
   through or off the creature. Reference: [Rogue.h 2072](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2072), [Monsters.c 1392](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1392).
 - **BR13361** — **Attackable while embedded in a wall.** Normally a creature set into solid stone
-  cannot be struck; this one can be. Reference: [Rogue.h 2065](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2065), [Monsters.c 3826-3830](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3826-L3830).
+  cannot be struck; this one can be. Reference: [Rogue.h 2045](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2045), [Monsters.c 297-301](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L297-L301).
 - **BR53451** — **Carries an item.** The creature may be generated holding a random item, which
   it drops when it dies. Some carry one every time, others only about a quarter of the
   time. Reference: [Rogue.h 2061-2062](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2061-L2062), [Monsters.c 133-145](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L133-L145).
@@ -38,8 +38,8 @@
 - **BR51688** — **Flees near death.** Once reduced below one quarter of its health the creature
   turns and runs; it re-engages once it climbs back above three quarters of its health.
   Reference: [Rogue.h 2064](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2064), [Monsters.c 1774-1814](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1774-L1814), [Combat.c 1600-1605](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1600-L1605).
-- **BR48373** — **Avoids corridors.** While hunting, the creature steers around narrow corridors
-  and prefers open ground; being struck enrages it. Reference: [Rogue.h 2123](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2123), [Combat.c 331-333](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L331-L333).
+- **BR48373** — **Avoids corridors.** While hunting as part of a group, the creature keeps to
+  open ground and will not step from it into a corridor. Reference: [Monsters.c 1494-1502](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1494-L1502), [Dijkstra.c 237-238](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Dijkstra.c#L237-L238).
 - **BR16717** — **Acts only when activated.** The creature never takes a turn on its own; it
   springs to life (and acts) only when the magical machine it guards is triggered.
   Reference: [Rogue.h 2086](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2086), [Monsters.c 3333-3338](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3333-L3338).
@@ -68,7 +68,7 @@
 - **BR12704** — **Cannot be polymorphed.** The creature can never be produced by a polymorph
   effect. Reference: [Rogue.h 2088](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2088).
 - **BR49476** — **Dies if negated.** Exposing the creature to negation magic destroys it outright,
-  because it is held together purely by magic. Reference: [Rogue.h 2082](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2082), [Items.c 3757-3766](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3757-L3766).
+  because it is held together purely by magic. Reference: [Items.c 3757-3766](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3757-L3766).
 - **BR56920** — **Invisible.** The creature cannot ordinarily be seen; magic or other senses are
   needed to detect it. Reference: [Rogue.h 2058](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2058), [Monsters.c 3922-3924](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3922-L3924).
 - **BR11587** — **Gender (male or female).** Purely a grammatical/flavor property of the creature
@@ -102,12 +102,10 @@
   effect in the square it occupied (a gas cloud, an explosion, a pool of blood and
   so on). Reference: [Rogue.h 2114](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2114), [Combat.c 1671-1681](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1671-L1681).
 - **BR43379** — **Strikes up to two enemies in a line.** The attack thrusts through the first
-  enemy and can also hit a second one directly behind it, like a spear. (Note: the source
-  comment on this flag is transposed with BR97260; the behavior described here is what the
-  implementation and the in-game description actually produce.) Reference:
+  enemy and can also hit a second one directly behind it, like a spear. Reference:
   [Rogue.h 2119](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2119), [Movement.c 695-753](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L695-L753), [Monsters.c 3819-3824](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3819-L3824).
 - **BR97260** — **Strikes every adjacent enemy at once.** One swing hits all enemies surrounding
-  the creature, like a sweeping axe blow. (See the note on BR43379.) Reference:
+  the creature, like a sweeping axe blow. Reference:
   [Rogue.h 2120](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2120), [Monsters.c 3880-3891](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3880-L3891).
 - **BR17980** — **Strikes at a distance with a whip.** The creature can attack a target one tile
   away in a cardinal direction, reaching past the space immediately in front of it.
@@ -130,13 +128,13 @@
 - **BR73986** — **Casts a haste spell on allies.** Makes a friendly creature act more often
   (faster movement and attacks) for a time. Reference: [Monsters.c 2722-2729](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2722-L2729).
 - **BR32475** — **Casts a slowing spell on enemies.** Slows a target so it moves and attacks less
-  often. Reference: [Monsters.c 2717-2721](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2717-L2721).
+  often. Reference: [Items.c 4491-4492](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4491-L4492), [Items.c 3908-3919](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3908-L3919), [Monsters.c 1849-1853](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1849-L1853).
 - **BR68026** — **Casts discord on enemies.** Turns the victim against its own allies so it
   attacks them for a time. It will not intentionally target the player with this.
   Reference: [Monsters.c 2664-2671](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2664-L2671).
-- **BR81389** — **Casts negation.** Strips magical effects (haste, protection, levitation and the
-  like) from a target, and can destroy magic-animated creatures or drop flying ones into
-  lava. Reference: [Monsters.c 2672-2716](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2672-L2716).
+- **BR81389** — **Casts negation.** Strips a target's magical effects — haste, levitation,
+  shielding and the like — leaving it as it naturally is. Reference:
+  [Items.c 3738-3828](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3738-L3828), [Monsters.c 2481-2497](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2481-L2497).
 - **BR60584** — **Hurls fire bolts.** A searing bolt that damages the target and can set it alight.
   Reference: [Monsters.c 2614-2618](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2614-L2618), [Monsters.c 2639-2645](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2639-L2645).
 - **BR78949** — **Fires bolts of lightning.** A damaging electrical bolt (the spark turret's whole
@@ -156,8 +154,8 @@
 - **BR88052** — **Fires poison darts.** A ranged attack delivered by poison dart (the dart turret's
   whole attack). Reference: [Monsters.c 2632-2645](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2632-L2645).
 - **BR77502** — **Breathes dragonfire.** The dragon breathes a gout of white-hot flame at an
-  enemy — a fiery bolt that deals heavy damage to the target and is never aimed at creatures
-  immune to fire. Reference: [Globals.c 1123-1124](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1123-L1124), [GlobalsBrogue.c 85](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/variants/GlobalsBrogue.c#L85), [Monsters.c 2614-2618](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2614-L2618).
+  enemy — a fiery bolt that deals heavy damage and is never aimed at a creature immune to fire.
+  Reference: [Globals.c 1123-1124](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1123-L1124), [GlobalsBrogue.c 85](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/variants/GlobalsBrogue.c#L85), [Monsters.c 2755-2769](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2755-L2769), [Items.c 4395-4417](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4395-L4417), [Monsters.c 2608-2618](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2608-L2618).
 ---
 **BR83147** — **Rat.** Health 6, defense 0, accuracy 80, damage 1–3; regenerates 1 health every 20
 turns; normal movement and attack speed. It has no special attacks, but has a 1% chance
@@ -367,12 +365,8 @@ in a line** (BR43379), and **avoids corridors** (BR48373).
 regeneration; normal speeds. A **large** creature that **splits in two whenever it is
 struck** (BR97180). [Globals.c 1129-1130](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1129-L1130)
 **BR78289** — **Vampire.** Health 75, defense 60, accuracy 120, damage 4–15; regenerates every 6
-turns; **moves twice as fast as normal** (speed 50); normal attack speed. A **large**
-creature that **flees near death** (BR51688), **recovers health from the damage it deals**
-(BR83324, at the 90% monster rate), **blinks** (BR16647), **casts discord** (BR68026), **summons
-allies** (BR40544), and, on death, **releases a burst of blood** (BR12637); when its summoned
-minions are struck down it **re-emerges from within one of them** (BR70715).
-[Globals.c 1131-1132](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1131-L1132)
+turns; **moves twice as fast as normal** (speed 50); normal attack speed. It is a **large**
+creature. [Globals.c 1131-1132](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1131-L1132)
 **BR56088** — **Flamedancer.** Health 65, defense 80, accuracy 120, damage 3–8; **no natural
 regeneration**; normal speeds. A **large** creature that **keeps its distance** (BR72064),
 **is immune to fire** (BR13523), and **burns unceasingly** (BR57968). Its touch **sets the victim alight**

@@ -753,3 +753,111 @@ BR30792 — NEW rule
 "The title screen shows the current game mode at the bottom left: 'Wizard Mode' in wizard mode and 'Easy Mode' in easy mode, while normal mode shows nothing there."
 Citation: [MainMenu.c:51-63](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L51-L63), [MainMenu.c:428-429](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L428-L429)
 Note: MainMenu.c:428-429 documents that the chosen game mode is displayed in the bottom left of the title screen (except normal mode); the behavior is implemented in drawMenuFlames, where MainMenu.c:51-56 builds the string only for wizard or easy mode and MainMenu.c:62-63 plots it along the bottom row at the left edge (the version string occupies the right side). BR85257, BR43510, BR47986, and the Change Mode dialog rules describe the mode-chooser dialog, and BR53953 describes the game mode in the in-game dungeon-seed report, but no rule in rules/* describes the mode indicator on the title screen itself. ID BR30792 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR40802 — NEW rule
+"Each weapon rune activates on its own curve, so at the same enchantment different runes trigger at different rates: a speed rune improves fastest (its chance of not activating shrinks by 16% per enchantment), followed by multiplicity and force (15%), slowing (14%), confusion (11%), and paralysis (7%), with quietus slowest (6%). Consequently, at the same enchantment and with the same weapon, a speed rune is more likely to trigger than a quietus rune."
+Citation: [PowerTables.c:284-294](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L284-L294), [PowerTables.c:326-328](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L326-L328)
+Note: PowerTables.c:284-294 maps each weapon rune to its own decay table (speed 16%, quietus 6%, paralysis 7%, multiplicity 15%, slowing 14%, confusion 11%, force 15%; slaying, mercy, and plenty have no table), and PowerTables.c:326-328 turns the weapon's enchantment into an index into that rune's table and converts the result to a percentage, so each rune's activation chance climbs at its own rate. Examined weapons display this per-rune percentage (Items.c:2227-2228) and every melee rune roll uses it (Combat.c:618-622). Existing rules BR11001 and BR53275 say only that the chance rises with enchantment, falls with base damage, is adjusted for attack speed, and is clamped; BR11016-BR11020 likewise never distinguish one rune from another, and no rule cites this table. The three table-less entries are unreachable because slaying returns 0 and the other two take the flat-15% bad-rune branch (PowerTables.c:300-305), already covered by BR11019 and BR11020. ID BR40802 is unique across all rule files.
+
+------------------------------------------------------------
+BR41276 — NEW rule
+"In a confirmation box the Yes and No labels are white except for their shortcut letters, which are highlighted in yellow."
+Citation: [IO.c:2944-2945](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L2944-L2945), [IO.c:2948](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L2948), [IO.c:2971](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L2971)
+Note: IO.c:2944-2945 encode white for the ordinary label text and yellow for the shortcut letter (the keyboard-labels-off white fallback never occurs because KEYBOARD_LABELS is defined true at Rogue.h:79), and IO.c:2948/2971 splice those colours around the "Y" in "Yes" and the "N" in "No". Existing confirmation rules BR12747, BR56719, BR19813, BR30441, and BR67301 cover the two-button box, its keys, cancellation, and auto-answering but not the label colours. ID BR41276 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR33467 — NEW rule
+"Clicking one row above or below a confirmation's Yes or No button still selects that button, because both buttons accept clicks across a widened vertical area instead of only on their own text row."
+Citation: [IO.c:2952](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L2952), [IO.c:2976](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L2976), [Buttons.c:224](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L224)
+Note: IO.c:2952 and IO.c:2976 set the wide-click flag on the Yes and No buttons, and Buttons.c:224 treats a click in the button's columns on the button's own row or one row above or below as a hit. BR91827 states only that a button is chosen by clicking it, and BR12747 only that a two-button box appears; no rule in rules/* describes this widened click area. ID BR33467 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR29041 — NEW rule
+"A bolt from a staff of poison poisons the creature it hits for 5 turns at +2 enchantment or lower, and each enchantment level above that lengthens the poisoning by about 30% (5 × 1.3^(enchantment − 2), rounded down, so +3 gives 6 turns and +10 gives 40)."
+Citation: [PowerTables.c:65-69](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L65-L69), [Items.c:4542](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4542)
+Note: PowerTables.c:65-66 are the tail of the 1.3^x table, PowerTables.c:68 clamps the table index to enchantment − 2 (never below 0), and PowerTables.c:69 multiplies the tabulated value by 5, so the poisoning duration is 5 × 1.3^(enchantment − 2) with at least 5 turns; Items.c:4542 applies that duration to a creature hit by a poison bolt and adds 1 to its poison strength. BR45733 only states that a poison bolt adds concentration 1 with a duration "scaled to the bolt's magnitude"; BR64646/BR75638 describe generic poison bookkeeping. No rule states the poison staff's actual turn formula or its +2 floor. ID BR29041 is unique across rules/.
+
+------------------------------------------------------------
+BR26565 — NEW rule
+"A worn ring of wisdom makes your staffs recharge faster: at +0 they recharge at their normal rate, and every enchantment level multiplies that rate by 1.3 (so +1 is about 130% of normal, +2 about 169%, +3 about 220%, and so on), with the multiplier freezing at +27."
+Citation: [PowerTables.c:72-81](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L72-L81), [Time.c:1839-1843](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1839-L1843), [Items.c:2626-2629](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L2626-L2629)
+Note: PowerTables.c:73-77 tabulate 1.3^x for x from −10 to 30, PowerTables.c:79 offsets the enchantment by +10 into that table while clamping the enchantment at 27, and PowerTables.c:80 returns the multiplier (65536 = 100% at +0). Time.c:1839-1843 scales the per-100-tick staff recharge increment by this multiplier, and Items.c:2626-2629 display it as "staffs will recharge at %i%% of their normal rate". BR91235 only says staffs recharge every 100 ticks and BR40130 only says wearing rings adds to the wisdom bonus; no rule gives the 1.3^enchantment rate, the 100% baseline, or the +27 cap. The multiplier applies to staffs only — charms count down by a flat amount per 100 ticks (Time.c:1870-1878). ID BR26565 is unique across rules/.
+
+------------------------------------------------------------
+BR23613 — NEW rule
+"Using a health charm restores 20% of your maximum health per enchantment level, capped at 100% of your maximum health."
+Citation: [PowerTables.c:83](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L83), [Items.c:6707-6710](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6707-L6710), [Items.c:3937](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3937)
+Note: PowerTables.c:83 computes the heal as 20% × enchantment (the charm's magnitude multiplier of 20 is set at GlobalsBrogue.c:727) clamped to 0-100%, and Items.c:6707-6710 applies it through heal(), which adds that percentage of maximum health (Items.c:3937). BR70483 says only "the health charm heals you"; no rule states the 20%-per-level amount or the 100% cap. ID BR23613 is unique across rules/.
+
+------------------------------------------------------------
+BR25383 — NEW rule
+"Using a shattering charm dissolves the walls within 4 spaces at +0, and each enchantment level adds one space of reach (5 spaces at +1, 6 at +2, and so on)."
+Citation: [PowerTables.c:84](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L84), [Items.c:6743-6746](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6743-L6746), [Items.c:4123-4161](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4123-L4161)
+Note: PowerTables.c:84 returns a radius of 4 (the charm's magnitude constant at GlobalsBrogue.c:734) plus the enchantment level; Items.c:6745-6746 passes it to the crystalizing routine, which turns every passability- or vision-blocking tile inside that radius around you to forcefield (boundary tiles become crystal), killing wall-embedded attackable monsters and freeing other captives. BR93940 only says the charm "pierces nearby walls"; no rule gives the 4-space base radius or the +1 space per enchantment. ID BR25383 is unique across rules/.
+
+------------------------------------------------------------
+BR26583 — NEW rule
+"The guardian summoned by a guardian charm lasts 4 turns at +0 and 2 more turns per enchantment level (+3 gives 10 turns)."
+Citation: [PowerTables.c:85](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L85), [Items.c:6640](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6640)
+Note: PowerTables.c:85 returns 4 (the charm's magnitude constant) + 2 × enchantment (constant 4, multiplier 2 set at GlobalsBrogue.c:735), and Items.c:6640 stores it as the summoned guardian's remaining lifespan, which ticks down once per turn and dissipates the guardian at zero (BR45587). BR96573 says only that the charm "summons a mythical guardian that fights for you"; no rule states the guardian's 4-turn base lifespan or its 2-turn-per-enchantment growth. ID BR26583 is unique across rules/.
+
+------------------------------------------------------------
+BR12962 — NEW rule
+"A room-like vault can begin only at a doorway that is not already inside another vault, so a new vault never grows out of a doorway that already belongs to one."
+Citation: [Architect.c:1085-1088](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1085-L1088)
+Note: Architect.c:1085-1088 is the eligibility test for a room machine's gate site: the tile must be a gate site (1085) and must not already be part of a machine (1086), and its choke value must lie within the vault's room-size range (1087-1088). BR49485 covers the room-size range and that candidates are rated by blocked-off region size, but no rule in rules/* states that a doorway already inside another vault is excluded. ID BR12962 is unique across rules/.
+
+------------------------------------------------------------
+BR30135 — NEW rule
+"When more than one doorway is eligible, the vault's starting doorway is chosen at random among the eligible doorways, so the vault can attach to any qualifying doorway rather than a fixed one; at most the first 50 eligible doorways found by scanning the level are considered."
+Citation: [Architect.c:1083-1101](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1083-L1101)
+Note: Architect.c:1083-1084 scans the level in column-major order and stops collecting candidates once 50 have been found, and Architect.c:1097-1101 picks one of the collected candidates with a uniform random index and uses it as the vault's origin. BR49485 describes that a room-like vault grows from a doorway in the required size range but not that the starting doorway is selected randomly or that candidate collection is capped at 50. ID BR30135 is unique across rules/.
+
+------------------------------------------------------------
+BR39772 — NEW rule
+"If no doorway on the level is of an eligible size for a room-like vault, the vault is not built at all and that attempt ends without changing the level."
+Citation: [Architect.c:1097-1112](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1097-L1112)
+Note: When the candidate list is empty, Architect.c:1102-1112 skips doorway selection entirely, frees the working state, and returns failure for this machine build; no map change occurs at this stage. BR45230 covers the separate ten-try outer failsafe that abandons a vault after repeated unsuitable blueprints or locations, but no rule in rules/* describes this immediate no-eligible-doorway failure. ID BR39772 is unique across rules/.
+
+------------------------------------------------------------
+BR39588 — NEW rule
+"A vault may be defined so that it does not claim its interior as part of the vault; when such a vault is built, every tile belonging to it is released to ordinary dungeon floor except tiles that are wired and tiles that act as circuit breakers."
+Citation: [Architect.c:1690-1702](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1690-L1702)
+Note: Architect.c:1690-1702 runs only for a blueprint that asks not to mark its interior (the flag is documented at Rogue.h:2637), and for every tile that belongs to the machine but is neither wired nor a circuit breaker it clears both the in-machine mark and the owning machine's number, so those tiles stop being vault ground. Many flavour blueprints use this option (GlobalsBrogue.c:565-616, GlobalsBrogue.c:330). Existing machine rules BR35857 (activation powers the wired squares), BR35874 (a circuit breaker prevents activation) and BR97359 (wiring stolen from another vault is cleared) cover activation and wiring, not this optional release of the interior. ID BR39588 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR39616 — NEW rule
+"When a vault feature gives an item into the keeping of the creature it generates, the hand-off happens only after the vault is confirmed built, and anything that creature was already carrying is destroyed rather than dropped."
+Citation: [Architect.c:1619-1625](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1619-L1625), [Architect.c:1704-1710](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1704-L1710)
+Note: Architect.c:1619-1625 only remembers the feature's item and the creature that will receive it, and the item is likewise skipped by the ordinary floor placement at Architect.c:1528-1532. Once every feature of the vault has been placed, Architect.c:1704-1710 deletes outright any item the creature already carried, removes the new item from the floor list, and makes it the creature's carried item. Features using this delivery include the vampire's caged key (GlobalsBrogue.c:260) and a boss horde's item (GlobalsBrogue.c:551). BR53451 covers creatures generated holding a random item, BR22946 covers items adopted by or handed between vaults, and BR22654 covers a key used from a monster's possession, but no rule in rules/* describes this final hand-off or the destruction of the creature's previous item. ID BR39616 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR26075 — NEW rule
+"Everything a sub-vault creates is credited to the vault that contains it, so when the containing vault later fails to be built, the sub-vault's items are deleted and its creatures are killed along with the rest of that failed vault."
+Citation: [Architect.c:1557-1572](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1557-L1572), [Architect.c:1715-1725](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1715-L1725), [Architect.c:470-490](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L470-L490)
+Note: Architect.c:1557-1572 copies a successful sub-vault's created items and creatures into the containing vault's own lists, and Architect.c:1715-1725 passes those lists up to the parent whenever the vault itself was built as a sub-vault. Architect.c:470-490 is the cleanup that then deletes the listed items (detaching each one from its carrier first so it is not freed twice) and kills the listed creatures. BR45230 says that a vault abandoned after 10 tries rolls its partial changes back and BR22946 says a failed sub-vault aborts the whole vault, but no rule in rules/* states that a sub-vault's creations are owned by its parent so that a later parent failure removes them. ID BR26075 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR41848 — NEW rule
+"Extra loop doorways are also added when a vault's interior is rebuilt, but there the walking route between the two flanking floor tiles has only to exceed 10 tiles instead of the 20 tiles required on the main dungeon level."
+Citation: [Architect.c:836](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L836), [Architect.c:340-395](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L340-L395)
+Note: Architect.c:836 calls the loop-adding pass with a 10-tile threshold while rebuilding a vault's interior, whereas Architect.c:2897 uses 20 for ordinary level generation. BR70551 states only the 20-tile case, so it does not describe the more eager loop cutting inside rebuilt vault interiors. ID BR41848 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR29365 — NEW rule
+"A wall tile can become at most one loop doorway, and when it has floor directly on both its left and right sides as well as both its top and bottom sides, the horizontal opening is the one that is cut."
+Citation: [Architect.c:363-387](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L363-L387)
+Note: Architect.c:364 tries the horizontal direction first and Architect.c:384 breaks out of the direction loop once a doorway is placed, so a wall tile flanked by floor on all four sides receives a horizontal doorway and is never reconsidered for a vertical one. BR70551 covers the route-length condition for loop doorways but not the one-doorway-per-tile cap or the horizontal-first choice. ID BR29365 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR10761 — NEW rule
+"You can attack an invulnerable creature or one immune to weapons, though the blow deals no damage, whereas monsters decline to attack such targets."
+Citation: [Monsters.c:302-305](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L302-L305), [Monsters.c:311-316](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L311-L316), [Combat.c:1091-1093](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1091-L1093)
+Note: Monsters.c:302-305 exempts the player from the futility test before any invulnerability or weapon-immunity check, while Monsters.c:311-316 makes those two conditions stop a monster from choosing the attack. Combat.c:1091-1093 then computes zero damage from such a blow, so the player's attack is allowed but harmless. BR44825 states the futility conditions and BR77279/BR81065 state that no damage results, but none says the player may still make the attack that monsters refuse. ID BR10761 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR25122 — NEW rule
+"A square glows when any of its terrain layers is a glowing kind—its ground, liquid, gas, or surface—and each additional glowing layer adds that layer's own light, so a square can be lit by more than one of its layers at once."
+Citation: [Light.c:227-236](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Light.c#L227-L236)
+Note: Light.c:227-236 walks every map square and all four terrain layers, painting the catalog light of each layer whose tile type has a glow light, so a glowing liquid, gas, or surface layer contributes light in addition to the ground layer. BR56856 describes the from-scratch recompute ("glowing tiles ... are painted on") but not the per-layer lookup or that multiple glowing layers stack; BR20557 describes the colors of some glowing features, not which layers emit light. ID BR25122 is unique across rules/ and test/.

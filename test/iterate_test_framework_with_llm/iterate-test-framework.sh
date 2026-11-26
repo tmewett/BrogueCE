@@ -423,6 +423,11 @@ for i in {1..25}; do
 
     # Clean up from this iteration
     delete_epmemeral_files
+
+    RULES=$(count_rules.sh)
+    TESTS=$(count_tests.sh)
+    echo "Rules: $RULES"
+    echo "Tests: $TESTS"
 done
 
 write_date

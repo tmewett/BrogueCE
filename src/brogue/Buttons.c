@@ -27,6 +27,10 @@
 #include <math.h>
 #include <time.h>
 
+#ifdef BROGUE_TESTING
+#include "../../test/TestFramework.h"
+#endif
+
 // Draws the smooth gradient that appears on a button when you hover over or depress it.
 // Returns the percentage by which the current tile should be averaged toward a hilite color.
 short smoothHiliteGradient(const short currentXValue, const short maxXValue) {
@@ -115,6 +119,10 @@ void drawButton(brogueButton *button, enum buttonDrawStates highlight, screenDis
             if (dbuf) {
                 // Only buffers can have opacity set.
                 dbuf->cells[button->x + i][button->y].opacity = opacity;
+#ifdef BROGUE_TESTING
+                testRecordButtonCellOpacity(button->x + i, button->y,
+                                            dbuf->cells[button->x + i][button->y].opacity);
+#endif
             }
         }
     }

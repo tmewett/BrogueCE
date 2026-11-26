@@ -266,7 +266,7 @@ static void stagger_setup(void) {
 
     givePlayerRunicArmor(CHAIN_MAIL, A_RESPIRATION, 1, true); // Protection from paralysis gas
 
-    theItem = givePlayerItem(WEAPON, MACE, 0);
+    theItem = givePlayerPlainWeapon(MACE, 0);
     equip(theItem);
     protectEquipmentFromAcid();
 
@@ -634,7 +634,9 @@ static void br89754_setup(void) {
     // The player starts with a plain dagger; drop it so that the pack holds
     // only the dagger this test hands out.
     removePackItems(WEAPON, DAGGER);
-    br89754_plainWeapon = givePlayerItem(WEAPON, DAGGER, br89754_plainBefore);
+    // A plain dagger: a randomly rolled slaying runic aimed at the jelly
+    // class would be exempt from the corrosion this test asserts on.
+    br89754_plainWeapon = givePlayerPlainWeapon(DAGGER, br89754_plainBefore);
     equipItemFromPack(WEAPON, DAGGER);
     // Built up front, but only equipped once the plain dagger has corroded
     // against both acid creatures.  Acid mounds belong to no slaying class,

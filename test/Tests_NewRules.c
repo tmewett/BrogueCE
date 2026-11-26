@@ -3,11 +3,12 @@
 //
 // These cover the deterministic, headless-observable behaviors those rules
 // describe: how the game's absolute turn count and your own turn count
-// diverge while you are paralyzed, and the wording the Change Mode dialog
-// uses for Wizard mode.
+// diverge while you are paralyzed, the wording the Change Mode dialog uses
+// for Wizard mode, the opacity menu buttons are painted with, and the
+// decorative random-number stream button painting uses.
 //
-// Omitted are everything that needs a screen, a recording, or a run
-// history, none of which the pending rules describe headlessly.
+// Omitted are everything that needs a recording or a run history, neither of
+// which the pending rules describe headlessly.
 
 #include "TestFramework.h"
 #include "Globals.h"
@@ -102,9 +103,77 @@ static boolean br14549_change_mode_dialog_describes_wizard_mode(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR12483 — Every screen cell a button covers is marked with
+// that button's opacity when the menu is drawn as an overlay,
+// so a translucent button lets the screen behind it show
+// through rather than blocking it; buttons appear at 95% opacity
+// in menus such as the actions menu and the inventory, and at
+// 75% along the bottom row.
+//
+// The first three checks paint one button at 50%, 95% and 75%
+// opacity over a solid white screen: because the button is
+// black, the white that survives is exactly the percentage the
+// button lets through, so a missing opacity (fully transparent)
+// or a forced 100 (fully opaque) is distinguished from a real
+// blend.  The last two checks read the opacity the game's own
+// inventory menu and bottom-row buttons actually painted with.
+// ============================================================
+
+static void br12483_setup(void) {
+    clearArena();
+}
+
+static boolean br12483_translucent_buttons_show_screen_through(void) {
+    TEST_ASSERT_EQ(buttonBackdropVisibility(50), 50,
+                   "a 50%-opacity button should let half the screen behind it show through");
+    TEST_ASSERT_EQ(buttonBackdropVisibility(95), 5,
+                   "a 95%-opacity button should let 5% of the screen behind it show through");
+    TEST_ASSERT_EQ(buttonBackdropVisibility(75), 25,
+                   "a 75%-opacity button should let a quarter of the screen behind it show through");
+    TEST_ASSERT_EQ(inventoryButtonOpacity(), 95,
+                   "the inventory's buttons should be painted at 95% opacity");
+    TEST_ASSERT_EQ(bottomRowButtonOpacity(), 75,
+                   "the bottom row's buttons should be painted at 75% opacity");
+    return !testFailed;
+}
+
+// ============================================================
+// BR14317 — Painting a menu button never disturbs the game's
+// own random-number sequence: any randomness used while the
+// button is drawn comes from the decorative stream, and the
+// ordinary sequence is switched back in the moment the button
+// is finished, so redrawing menus cannot change the game's
+// outcomes.
+//
+// paintMenuButton() paints a button directly, outside any menu
+// loop that might already hold the decorative stream, so the
+// button painter has to make the switch itself.  The control
+// then draws one number from the game's own sequence and shows
+// that the counter does advance when gameplay randomness is
+// really consumed.
+// ============================================================
+
+static boolean br14317_painting_button_leaves_game_rng_alone(void) {
+    const unsigned long before = gameplayRandomDraws();
+    paintMenuButton("Sample button");
+    TEST_ASSERT_EQ(gameplayRandomDraws(), before,
+                   "painting a menu button should not consume the game's own random numbers");
+    TEST_ASSERT(gameplayRandomStreamActive(),
+                "the ordinary random-number sequence should be back in effect after the button is painted");
+
+    const unsigned long controlBefore = gameplayRandomDraws();
+    drawGameplayRandomNumber();
+    TEST_ASSERT_EQ(gameplayRandomDraws(), controlBefore + 1,
+                   "control: drawing from the game's own sequence should consume one number");
+    return !testFailed;
+}
+
 const testCase tests_newrules[] = {
     { "BR29087_turn_counts_diverge_while_paralyzed",      br29087_setup, br29087_step, br29087_turn_counts_diverge_while_paralyzed },
     { "BR14549_change_mode_dialog_describes_wizard_mode", br14549_setup, NULL,         br14549_change_mode_dialog_describes_wizard_mode },
+    { "BR12483_translucent_buttons_show_screen_through",  br12483_setup, NULL,         br12483_translucent_buttons_show_screen_through },
+    { "BR14317_painting_button_leaves_game_rng_alone",    NULL,          NULL,         br14317_painting_button_leaves_game_rng_alone },
 
     { NULL, NULL, NULL, NULL }
 };

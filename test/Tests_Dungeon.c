@@ -1787,6 +1787,165 @@ static boolean br72185_caves_fit_three_size_classes(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR32765 — a vault layout is chosen by weighted frequency from
+// those whose depth range includes the current depth.
+//
+// At depth 1 exactly two reward-vault layouts are in range, one
+// with twice the frequency of the other, while every deeper
+// layout stands outside its range.  Sampling the engine's own
+// raffle therefore has three observable consequences: an
+// out-of-range layout is never drawn, each in-range layout is
+// drawn sometimes, and the two in-range layouts split the draws
+// in proportion to their frequencies rather than evenly.
+// ============================================================
+
+#define BR32765_MAX_LAYOUTS 64
+#define BR32765_DEPTH 1
+#define BR32765_TRIALS 3000
+
+static boolean br32765_vault_layout_raffle_is_weighted_by_depth(void) {
+    const int layoutCount = vaultLayoutCount();
+    TEST_ASSERT(layoutCount > 1,
+                "control: the game should define more than one reward vault layout");
+
+    int counts[BR32765_MAX_LAYOUTS] = {0};
+    int eligibleCount = 0, totalWeight = 0;
+
+    for (int i = 0; i < layoutCount && i < BR32765_MAX_LAYOUTS; i++) {
+        const int minDepth = vaultLayoutMinDepth(i);
+        const int maxDepth = vaultLayoutMaxDepth(i);
+        const int frequency = vaultLayoutFrequency(i);
+
+        TEST_ASSERT(minDepth <= maxDepth,
+                    "each vault layout should have a valid depth range");
+        TEST_ASSERT(frequency > 0,
+                    "each vault layout should enter the raffle with positive weight");
+
+        if (minDepth <= BR32765_DEPTH && BR32765_DEPTH <= maxDepth) {
+            eligibleCount++;
+            totalWeight += frequency;
+        }
+    }
+    TEST_ASSERT(eligibleCount >= 2,
+                "control: depth 1 should offer at least two vault layouts");
+    TEST_ASSERT(totalWeight > 0,
+                "control: the in-range layouts should contribute raffle tickets");
+
+    for (int trial = 0; trial < BR32765_TRIALS; trial++) {
+        const int chosen = drawVaultLayout(BR32765_DEPTH);
+        TEST_ASSERT(chosen >= 0 && chosen < layoutCount,
+                    "the raffle should always choose one of the known vault layouts");
+        if (chosen < 0 || chosen >= layoutCount) {
+            break;
+        }
+        TEST_ASSERT(vaultLayoutMinDepth(chosen) <= BR32765_DEPTH
+                        && BR32765_DEPTH <= vaultLayoutMaxDepth(chosen),
+                    "a vault layout outside its depth range should never be chosen");
+        counts[chosen]++;
+    }
+
+    for (int i = 0; i < layoutCount && i < BR32765_MAX_LAYOUTS; i++) {
+        const boolean inRange = vaultLayoutMinDepth(i) <= BR32765_DEPTH
+                                && BR32765_DEPTH <= vaultLayoutMaxDepth(i);
+        if (!inRange) {
+            TEST_ASSERT_EQ(counts[i], 0,
+                           "a vault layout outside its depth range should not be chosen");
+            continue;
+        }
+
+        const long expected = (long) BR32765_TRIALS * vaultLayoutFrequency(i) / totalWeight;
+        const long tolerance = expected / 6 + 1;
+        const long deviation = labs((long) counts[i] - expected);
+        TEST_ASSERT(deviation <= tolerance,
+                    "a vault layout should be chosen in proportion to its frequency");
+        TEST_ASSERT(counts[i] > 0,
+                    "every vault layout in range should be chosen sometimes");
+    }
+    return !testFailed;
+}
+
+// ============================================================
+// BR39459 — the player is drawn with a distinct colour when
+// invisible, in darkness, in shadow, or in light.
+//
+// A granite pocket washed only by the miner's light leaves the
+// player in shadow, because the miner's light maintains shadow.
+// A fungus on the player's tile lights it and dispels that
+// shadow; invisibility overrides the lighting entirely.  The
+// fourth state takes the local light from the map: moving the
+// player six tiles into the granite leaves a tile whose local
+// light is zero, which counts as darkness when the colour is
+// recomputed.  The four chosen colours must all differ.
+// ============================================================
+
+#define BR39459_POCKET_RADIUS 2
+
+static pos br39459_centre;
+
+static void br39459_setup(void) {
+    removeStatusFromPlayer(STATUS_INVISIBLE);
+    setLightMultiplier(1);
+    setPlayerInWater(false);
+    clearMonsters();
+
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            setTerrain(posAt(x, y), GRANITE);
+        }
+    }
+    br39459_centre = posAt(levelWidth() / 2, levelHeight() / 2);
+    for (int dx = -BR39459_POCKET_RADIUS; dx <= BR39459_POCKET_RADIUS; dx++) {
+        for (int dy = -BR39459_POCKET_RADIUS; dy <= BR39459_POCKET_RADIUS; dy++) {
+            setTerrain(posOffset(br39459_centre, dx, dy), FLOOR);
+        }
+    }
+    setPlayerPos(br39459_centre);
+    recomputeLighting();
+}
+
+static boolean br39459_player_has_distinct_lighting_colors(void) {
+    TEST_ASSERT(strcmp(playerDrawColorName(), "shadow") == 0,
+                "a player lit only by the miner's light should be drawn in shadow");
+    const unsigned long shadowColor = playerDrawColorId();
+
+    spawnFeature(br39459_centre, DF_LUMINESCENT_FUNGUS);
+    recomputeLighting();
+    TEST_ASSERT(strcmp(playerDrawColorName(), "light") == 0,
+                "a player standing in light should be drawn in the light colour");
+    const unsigned long lightColor = playerDrawColorId();
+
+    applyStatusToPlayer(STATUS_INVISIBLE, 100);
+    recomputeLighting();
+    TEST_ASSERT(strcmp(playerDrawColorName(), "invisible") == 0,
+                "an invisible player should be drawn in the invisibility colour");
+    const unsigned long invisibleColor = playerDrawColorId();
+
+    removeStatusFromPlayer(STATUS_INVISIBLE);
+    const pos darkTile = posOffset(br39459_centre, 6, 0);
+    setPlayerPos(darkTile);
+    updatePlayerDrawColor();
+    TEST_ASSERT(playerIsInDarkness(),
+                "control: the granite tile should have no local light");
+    TEST_ASSERT(strcmp(playerDrawColorName(), "darkness") == 0,
+                "a player in darkness should be drawn in the darkness colour");
+    const unsigned long darknessColor = playerDrawColorId();
+
+    TEST_ASSERT(shadowColor != lightColor,
+                "shadow and light should be distinct colours");
+    TEST_ASSERT(shadowColor != invisibleColor,
+                "shadow and invisibility should be distinct colours");
+    TEST_ASSERT(shadowColor != darknessColor,
+                "shadow and darkness should be distinct colours");
+    TEST_ASSERT(lightColor != invisibleColor,
+                "light and invisibility should be distinct colours");
+    TEST_ASSERT(lightColor != darknessColor,
+                "light and darkness should be distinct colours");
+    TEST_ASSERT(invisibleColor != darknessColor,
+                "invisibility and darkness should be distinct colours");
+    return !testFailed;
+}
+
 const testCase tests_dungeon[] = {
     { "BR71397_level_is_79_by_29",                       NULL, NULL, level_is_79_by_29 },
     { "BR51037_carving_leaves_solid_granite",            NULL, NULL, carving_leaves_solid_granite },
@@ -1825,6 +1984,9 @@ const testCase tests_dungeon[] = {
     { "BR25779_light_origin_cleared_of_shadow",   NULL, NULL, br25779_origin_cleared_and_controls_hold },
     { "BR11884_hallways_fall_away_with_depth",    NULL, NULL, br11884_hallways_fall_away_with_depth },
     { "BR72185_caves_fit_three_size_classes",      NULL, NULL, br72185_caves_fit_three_size_classes },
+
+    { "BR32765_vault_layout_raffle_weighted_by_depth", NULL, NULL, br32765_vault_layout_raffle_is_weighted_by_depth },
+    { "BR39459_player_lighting_colors_are_distinct",   br39459_setup, NULL, br39459_player_has_distinct_lighting_colors },
 
     { NULL, NULL, NULL, NULL }
 };

@@ -12,7 +12,7 @@
   [Time.c:2338-2343](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2338-L2343)
 - **BR10007** — When the player is burning, the fire deals damage each turn and can kill the player.
   [Time.c:2328-2332](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2328-L2332)
-- **BR10008** — When the player steps into lava without levitation, fire immunity, or invulnerability, the player is consumed instantly.
+- **BR10008** — When the player steps into lava without levitation or fire immunity, the player is consumed instantly.
   [Time.c:170-188](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L170-L188)
 - **BR10009** — When the player stands on explosive terrain, the explosion deals heavy damage and can kill the player.
   [Time.c:316-329](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L316-L329)
