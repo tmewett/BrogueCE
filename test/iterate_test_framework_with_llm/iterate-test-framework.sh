@@ -21,16 +21,16 @@ set -euo pipefail
 #
 #
 # ITERATION STEPS:
-# - [GARDENING] Pick random existing rule IDs and verify they meet the requirements --> record issues in RulesNeedImprovement.txt
-# - [GARDENING] Pick random existing rule IDs and verify they have tests associated with them --> record missing tests in RulesMissingTests.txt
-# - [GARDENING] Pick random existing test IDs and verify the test has a rule, matches the rule, and the test passes --> record issues in TestsMissingRules.txt and TestsNeedImprovement.txt
-# - [EXTENSION] Pick random code block and check that its behavior is specified by some rule(s) --> add new behaviors to NewRules.txt
-# - [BACKFILL] Pick RulesMissingTests.txt --> write a test
-# - [BACKFILL] Pick TestsMissingRules.txt --> write a rule
-# - [STABILIZE] Run all tests and fix any failing tests
-# - [COVERAGE] Run all tests with coverage, choose a poorly-covered region and write a rule that references it
-# - [IMPROVEMENT] RulesNeedImprovement.txt --> refine the rule
-# - [IMPROVEMENT] TestsNeedImprovement.txt --> refine the test framework to improve the tests
+# - [GARDENING]   validate_random_rules            : Pick random existing rule IDs and verify they meet the requirements --> record issues in RulesNeedImprovement.txt
+# - [GARDENING]   validate_random_rules_have_tests : Pick random existing rule IDs and verify they have tests associated with them --> record missing tests in RulesMissingTests.txt
+# - [GARDENING]   validate_random_tests            : Pick random existing test IDs and verify the test has a rule, matches the rule, and the test passes --> record issues in TestsMissingRules.txt and TestsNeedImprovement.txt
+# - [EXTENSION]   find_missing_rules               : Pick random code block and check that its behavior is specified by some rule(s) --> add new behaviors to NewRules.txt
+# - [BACKFILL]    write_missing_tests              : Pick RulesMissingTests.txt --> write a test
+# - [BACKFILL]    write_missing_rules              : Pick TestsMissingRules.txt --> write a rule
+# - [STABILIZE]   fix_broken_tests                 : Run all tests and fix any failing tests
+# - [COVERAGE]    code_coverage                    : Run all tests with coverage, choose a poorly-covered region and write a rule that references it
+# - [IMPROVEMENT] improve_rules                    : RulesNeedImprovement.txt --> refine the rule
+# - [IMPROVEMENT] improve_tests                    : TestsNeedImprovement.txt --> refine the test framework to improve the tests
 #
 #
 # LOCAL LLM TOOLING
@@ -74,6 +74,16 @@ function write_date() {
     writeToLog "--------------------------------------------"
 }
 
+function run_prompt() {
+    writeToLog "$1"
+    writeToLog "----------------------------"
+
+    # Execute the prompt
+    # OUT=$(opencode run --standalone "$1")
+    OUT=$(omp --print "$1")
+    writeToLog "$OUT"
+}
+
 # --------------------------------------------
 function validate_random_rules() {
     write_date
@@ -98,12 +108,7 @@ Rule IDs MUST be unique across all rule files.
 OUTPUT
 Rules not meeting requirements SHOULD be appended to the file test/RulesNeedImprovement.txt with a short note describing the issue.
 "
-    writeToLog "$PRMPT"
-
-    # Execute the prompt
-    # OUT=$(opencode run --standalone "$PRMPT")
-    OUT=$(omp --print "$PRMPT")
-    writeToLog "$OUT"
+    run_prompt "$PRMPT"
 }
 
 
@@ -126,12 +131,7 @@ Tests for a rule MUST include the rule ID in the test name.
 OUTPUT
 Rule IDs without tests SHOULD be appended to test/RulesMissingTests.txt only append the rule ID, no commentary.  Deduplicate the file to keep it clean.
 "
-    writeToLog "$PRMPT"
-
-    # Execute the prompt
-    # OUT=$(opencode run --standalone "$PRMPT")
-    OUT=$(omp --print "$PRMPT")
-    writeToLog "$OUT"
+    run_prompt "$PRMPT"
 }
 
 
@@ -158,12 +158,7 @@ OUTPUT
 Tests without associated rules SHOULD be appended to test/TestsMissingRules.txt with a short note describing the issue.
 Tests which directly examine engine components should be noted in test/TestsNeedImprovement.txt with a short note describing the issue.
 "
-    writeToLog "$PRMPT"
-
-    # Execute the prompt
-    # OUT=$(opencode run --standalone "$PRMPT")
-    OUT=$(omp --print "$PRMPT")
-    writeToLog "$OUT"
+    run_prompt "$PRMPT"
 }
 
 
@@ -190,27 +185,22 @@ Rule IDs MUST be unique across all rule files.  Use new_rule_id.sh to generate n
 OUTPUT
 Missing rules SHOULD be added to rules/NewRules.txt with a short note and precise citation for the missing behavior.
 "
-    writeToLog "$PRMPT"
-
-    # Execute the prompt
-    # OUT=$(opencode run --standalone "$PRMPT")
-    OUT=$(omp --print "$PRMPT")
-    writeToLog "$OUT"
+    run_prompt "$PRMPT"
 }
 
 
 # --------------------------------------------
 function write_missing_tests() {
+    write_date
+    writeToLog "write_missing_tests"
 
     # Check if there are any tests missing rules
     FILE="$REPO_ROOT/test/RulesMissingTests.txt"
     line_count=$([ -f "$FILE" ] && wc -l < "$FILE" || echo 0)
     if [ "$line_count" -eq 0 ]; then
+        writeToLog "*** No missing tests found! ***"
         return 0
     fi
-
-    write_date
-    writeToLog "write_missing_tests"
 
 PRMPT="
 OBJECTIVE
@@ -223,27 +213,23 @@ Tests MUST be falsifiable.  If a test succeeds when its test assertion is negate
 Build Brogue for testing using: make GRAPHICS=NO TERMINAL=NO MAC_APP=NO TEST_FRAMEWORK=YES
 Run a specific test using: ./bin/brogue --test <<TEST_NAME>>
 "
-    writeToLog "$PRMPT"
-
-    # Execute the prompt
-    # OUT=$(opencode run --standalone "$PRMPT")
-    OUT=$(omp --print "$PRMPT")
-    writeToLog "$OUT"
+    run_prompt "$PRMPT"
 }
 
 
 # --------------------------------------------
 function write_missing_rules() {
 
+    write_date
+    writeToLog "write_missing_rules"
+
     # Check if there are any tests missing rules
     FILE="$REPO_ROOT/test/TestsMissingRules.txt"
     line_count=$([ -f "$FILE" ] && wc -l < "$FILE" || echo 0)
     if [ "$line_count" -eq 0 ]; then
+        writeToLog "*** No missing rules found! ***"
         return 0
     fi
-
-    write_date
-    writeToLog "write_missing_rules"
 
 PRMPT="
 OBJECTIVE
@@ -260,14 +246,82 @@ Rules MUST describe a single, simple, observable behavior.
 Rules MUST be assigned an ID beginning with BR followed by 5 random digits (such as BR39812). Use new_rule_id.sh to generate a new rule ID.
 Rule IDs MUST be unique across all rule files.
 "
-    writeToLog "$PRMPT"
-
-    # Execute the prompt
-    # OUT=$(opencode run --standalone "$PRMPT")
-    OUT=$(omp --print "$PRMPT")
-    writeToLog "$OUT"
+    run_prompt "$PRMPT"
 }
 
+# --------------------------------------------
+function improve_tests() {
+
+    write_date
+    writeToLog "improve_tests"
+
+    # Check if there are any tests that need improvement
+    FILE="$REPO_ROOT/test/TestsNeedImprovement.txt"
+    line_count=$([ -f "$FILE" ] && wc -l < "$FILE" || echo 0)
+    if [ "$line_count" -eq 0 ]; then
+        writeToLog "*** Nothing to improve! ***"
+        return 0
+    fi
+
+    # Pick random rule IDs
+    RULES=$(./pick_random_test_needs_improvement.sh)
+    writeToLog "$RULES"
+
+PRMPT="
+OBJECTIVE
+The tests for $RULES need improvment, see test/TestsNeedImprovement.txt for details about the work needed.
+Adjust the existing tests for these rules to apply the requested improvements.
+
+REQUIREMENTS
+Tests SHOULD NOT reference game engine components or data structures.  Use TestFramework functions which hide engine details instead.
+Tests MUST be falsifiable.  If a test succeeds when its test assertion is negated, it is not a valid test.
+
+Build Brogue for testing using: make GRAPHICS=NO TERMINAL=NO MAC_APP=NO TEST_FRAMEWORK=YES
+Run a specific test using: ./bin/brogue --test <<TEST_NAME>>
+
+OUTPUT
+After adjusting the tests, remove the notes for rule IDs $RULES from the test/TestsNeedImprovement.txt file.
+"
+    run_prompt "$PRMPT"
+}
+
+# --------------------------------------------
+function improve_rules() {
+
+    write_date
+    writeToLog "improve_rules"
+
+    # Check if there are any rules that need improvement
+    FILE="$REPO_ROOT/test/RulesNeedImprovement.txt"
+    line_count=$([ -f "$FILE" ] && wc -l < "$FILE" || echo 0)
+    if [ "$line_count" -eq 0 ]; then
+        writeToLog "*** Nothing to improve! ***"
+        return 0
+    fi
+
+    # Pick random rule IDs
+    RULES=$(./pick_random_rule_needs_improvement.sh)
+    writeToLog "$RULES"
+
+PRMPT="
+OBJECTIVE
+The rules for $RULES need improvment, see test/RulesNeedImprovement.txt for details about the work needed.
+Adjust the existing rules in rules/* to apply the requested improvements.
+
+REQUIREMENTS
+Rules for the game Brogue are collated into files in the directory rules/*
+Rules MUST describe in-game behavior in one or two natural-language sentences.
+Rules MUST NOT name data structures, functions, or modules from the source code, but rather use in-game terminology for their descriptions.
+Rules MUST cite source code lines where that behavior is implemented in the game code.
+Rules MUST describe a single, simple, observable behavior.
+Rules MUST be assigned an ID beginning with BR followed by 5 random digits (such as BR39812). Use new_rule_id.sh to generate a new rule ID.
+Rule IDs MUST be unique across all rule files.
+
+OUTPUT
+After adjusting the tests, remove the notes for rule IDs $RULES from the test/RulesNeedImprovement.txt file.
+"
+    run_prompt "$PRMPT"
+}
 
 # --------------------------------------------
 function code_coverage() {
@@ -301,13 +355,7 @@ Each rule MUST cite the source code where the in-game behavior is implemented.
 Rules MUST be assigned an ID beginning with BR followed by 5 random digits (such as BR39812). Use new_rule_id.sh to generate a new rule ID.
 Rule IDs MUST be unique across all rule files.  Use new_rule_id.sh to generate new rule IDs.
 "
-    writeToLog "$PRMPT"
-
-    # Execute the prompt
-    # OUT=$(opencode run --standalone "$PRMPT")
-    OUT=$(omp --print "$PRMPT")
-    writeToLog "$OUT"
-
+    run_prompt "$PRMPT"
 }
 
 
@@ -317,12 +365,7 @@ function fix_broken_tests() {
     writeToLog "fix_broken_tests"
 
     PRMPT="Run all tests using test/run_tests.sh and fix any tests which are failing.  Only modify files in test/*"
-    writeToLog "$PRMPT"
-
-    # Execute the prompt
-    # OUT=$(opencode run --standalone "$PRMPT")
-    OUT=$(omp --print "$PRMPT")
-    writeToLog "$OUT"
+    run_prompt "$PRMPT"
 }
 
 function delete_epmemeral_files() {
@@ -343,7 +386,7 @@ delete_epmemeral_files
 
 # --------------------------------------------
 # Gardening the test cases...
-for i in {1..100}; do
+for i in {1..25}; do
     # Pick random rule IDs and validate they meet rule requirements
     validate_random_rules
 
@@ -351,7 +394,7 @@ for i in {1..100}; do
     validate_random_rules_have_tests
 
     # Pick random rule IDs and validate the tests match the rules and that the tests pass
-    validate_random_tests
+    # validate_random_tests
 
     # Pick random source code citation and validate its behavior is described by a rule
     find_missing_rules
@@ -368,7 +411,11 @@ for i in {1..100}; do
     # Locate uncovered code and write a rule that attempts to capture it
     # code_coverage
 
-    # TODO: RulesNeedImprovement, TestsNeedImprovement
+    # RulesNeedImprovement
+    improve_rules
+
+    # TestsNeedImprovement
+    improve_tests
 
     # TODO: Look for test framework components that can be simplified / abstracted
 

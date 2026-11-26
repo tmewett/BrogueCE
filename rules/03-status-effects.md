@@ -212,10 +212,6 @@
 [Combat.c:314-333](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L314-L333)
 **BR51151** — A creature under magical fear flees; the only enabled way to apply it is to set it to 1 when a fearful creature is attacked, and it is reset to 1 again by any aggressive action against it.
 [Combat.c:326-328](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L326-L328) [Combat.c:1052-1055](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1052-L1055)
-**BR67694** — When a bolt that deals damage fails to kill a monster, its magical fear is cleared to 0.
-[Items.c:4440-4448](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4440-L4448)
-**BR15302** — When the fear counter reaches 0 the monster reverts to allied state if the player is its leader, otherwise to tracking the player.
-[Monsters.c:1942-1948](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1942-L1948)
 **BR60087** — The code path that would set a long magical-fear duration (150 to 225) is disabled, so meaningful fear durations in practice come only from the on-attack setting of 1.
 [Items.c:4047-4074](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4047-L4074)
 **BR50793** — An entrancement bolt sets the entranced counter on a non-inanimate monster (a scaled staff duration) and wakes it.
@@ -258,7 +254,7 @@
 [Time.c:2077-2079](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2077-L2079) [Monsters.c:1960-1968](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1960-L1968)
 **BR80706** — Aggravation sets the counter to its radius when applied at the player's location.
 [Items.c:3394-3397](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3394-L3397)
-**BR50175** — While the aggravation counter is positive it adds that many points to the player's stealth range.
+**BR50175** — While the aggravation counter is positive and the player is not invisible, it adds that many points to the player's stealth range.
 [Time.c:710-712](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L710-L712)
 **BR18867** — The aggravation counter decreases by 1 per periodic update.
 [Time.c:2066-2068](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2066-L2068)

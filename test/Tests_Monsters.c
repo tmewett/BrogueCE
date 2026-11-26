@@ -8,8 +8,12 @@
 // targets a monster is allowed to cast at, the order a monster tries its
 // steps in when walking toward a destination, how a wandering monster
 // travels between its checkpoints, how an ally idles when it is close
-// to you and can see you, and how a permanently fleeing thief that loses
-// its stolen item returns to normal behaviour.
+// to you and can see you, how an ally told not to follow you holds its
+// post while still chasing enemies within its range, how a monster's
+// timed conditions count down once per turn, how a permanently fleeing
+// thief that loses its stolen item returns to normal behaviour, and the
+// randomly chosen kind name a visible monster is displayed under while
+// you hallucinate.
 //
 // Omitted are everything that depends on the particular layout of generated
 // levels or on horde generation, random chances (mutations, item drops,
@@ -28,7 +32,7 @@
 // Put a monster of the given kind on a chosen patch of terrain at a spot
 // relative to the player.
 static creature *monsterOn(enum monsterTypes type, int dx, int dy, short terrain) {
-    pos p = posOffset(player.loc, dx, dy);
+    pos p = posOffset(getPlayerPos(), dx, dy);
     setTerrain(p, terrain);
     return spawnMonster(type, p);
 }
@@ -36,7 +40,7 @@ static creature *monsterOn(enum monsterTypes type, int dx, int dy, short terrain
 // Re-lay the player's own tile so its terrain is known.  setTerrain clears the
 // whole cell, including the HAS_PLAYER flag, so the player is replaced on it.
 static void standPlayerOn(short terrain) {
-    pos p = player.loc;
+    pos p = getPlayerPos();
     setTerrain(p, terrain);
     setPlayerPos(p);
 }
@@ -359,7 +363,7 @@ static boolean ally_spares_entranced_creature(void) {
 }
 
 // ---------------------------------------------
-// BR45346 — nobody attacks a captive
+// BR45346 — nobody attacks a captive or a dying creature
 // ---------------------------------------------
 
 static void captive_setup(void) {
@@ -370,11 +374,37 @@ static void captive_setup(void) {
     makeMonsterCaptive(otherMonster);
 }
 
+// BR45346's own setup: the captive pair, plus a creature that is already
+// dying and a healthy control each attacker is willing to face, so the
+// refusals in the verify step cannot pass vacuously.
+static creature *allyControl;   // your ally — a plain monster will attack it
+static creature *wildControl;   // a free creature — you will attack it
+static creature *dyingMonster;
+
+static void nobody_attacks_setup(void) {
+    captive_setup();
+    allyControl = monsterOn(MK_RAT, 7, 0, FLOOR);
+    makeMonsterAlly(allyControl);
+    wildControl = monsterOn(MK_RAT, 7, 1, FLOOR);
+    dyingMonster = monsterOn(MK_RAT, 7, 2, FLOOR);
+    makeMonsterDying(dyingMonster);
+}
+
 static boolean nobody_attacks_a_captive(void) {
+    // Positive controls: both attackers are willing to attack a healthy
+    // creature, so the refusals below come from the captive/dying state.
+    TEST_ASSERT(monsterCouldAttack(subject, allyControl),
+                "a monster should attack your ally when nothing stops it");
+    TEST_ASSERT(monsterCouldAttack(&player, wildControl),
+                "you should attack a free creature when nothing stops it");
     TEST_ASSERT(!monsterCouldAttack(subject, otherMonster),
                 "a monster should not attack a captive");
     TEST_ASSERT(!monsterCouldAttack(&player, otherMonster),
                 "you should not attack a captive");
+    TEST_ASSERT(!monsterCouldAttack(subject, dyingMonster),
+                "a monster should not attack a creature that is already dying");
+    TEST_ASSERT(!monsterCouldAttack(&player, dyingMonster),
+                "you should not attack a creature that is already dying");
     return !testFailed;
 }
 
@@ -484,6 +514,38 @@ static void followers_of_one_leader_setup(void) {
 static boolean followers_are_teammates(void) {
     TEST_ASSERT(monstersAreAlliesOf(subject, otherMonster),
                 "followers of one leader should be teammates");
+    return !testFailed;
+}
+
+// The negative side of the rule: creatures that share no leader and no
+// allegiance are NOT teammates.  Two monsters that follow nobody and are
+// nobody's ally form one pair; two followers led by different leaders form
+// the other.  Either pair would read as teammates if the rule leaked — for
+// example if any two followers counted together regardless of who leads them.
+static creature *otherLeaderMonster;
+static creature *neutralOne;
+static creature *neutralTwo;
+
+static void no_shared_leader_setup(void) {
+    clearMonsters();
+    standPlayerOn(FLOOR);
+    neutralOne = monsterOn(MK_RAT, 5, 0, FLOOR);
+    neutralTwo = monsterOn(MK_RAT, 6, 0, FLOOR);
+    leaderMonster = monsterOn(MK_TROLL, 7, 0, FLOOR);
+    otherLeaderMonster = monsterOn(MK_OGRE, 8, 0, FLOOR);
+    subject = monsterOn(MK_RAT, 4, 0, FLOOR);
+    otherMonster = monsterOn(MK_RAT, 3, 0, FLOOR);
+    makeMonsterFollow(subject, leaderMonster);
+    makeMonsterFollow(otherMonster, otherLeaderMonster);
+}
+
+static boolean monsters_without_a_shared_leader_are_not_teammates(void) {
+    TEST_ASSERT(!monstersAreAlliesOf(neutralOne, neutralTwo),
+                "two unaligned monsters should not be teammates");
+    TEST_ASSERT(!monstersAreAlliesOf(subject, otherMonster),
+                "followers of different leaders should not be teammates");
+    TEST_ASSERT(!monstersAreAlliesOf(&player, neutralOne),
+                "an unaligned monster should not be your teammate");
     return !testFailed;
 }
 
@@ -1729,6 +1791,381 @@ static boolean br20368_totem_aware_only_within_range(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR44597 — While you are hallucinating and not telepathic,
+// monsters you can see are displayed under the name of a
+// randomly chosen monster kind.
+//
+// The sidebar draws each listed monster's name through the same
+// naming the game uses everywhere, and every redraw picks a fresh
+// random kind, so the name is sampled several times.  A control
+// sample before the hallucination starts proves the monster is
+// listed under its true name to begin with.  A second control
+// then turns telepathy on, which must restore the true name even
+// though the hallucination is still running.
+// ============================================================
+
+#define BR44597_TRUE_NAME "Kraken"
+#define BR44597_SAMPLES 6
+
+static boolean br44597_controlChecked;
+static boolean br44597_telepathyChecked;
+static int br44597_trueNameCount;
+static int br44597_otherNameCount;
+
+static void br44597_setup(void) {
+    clearMonsters();
+    standPlayerOn(FLOOR);
+    placeHostileMonster(MK_KRAKEN, posOffset(getPlayerPos(), 1, 0));
+    br44597_controlChecked = false;
+    br44597_telepathyChecked = false;
+    br44597_trueNameCount = 0;
+    br44597_otherNameCount = 0;
+}
+
+static boolean br44597_step(void) {
+    if (!br44597_controlChecked) {
+        // Control: with clear senses the visible monster is listed
+        // under its true kind name.
+        TEST_ASSERT(sidebarContains(BR44597_TRUE_NAME),
+                    "control: a monster you can see is listed under its true name");
+        br44597_controlChecked = true;
+        applyStatusToPlayer(STATUS_HALLUCINATING, 100);
+        return true;
+    }
+    if (br44597_trueNameCount + br44597_otherNameCount < BR44597_SAMPLES) {
+        // Each sidebar redraw while hallucinating picks a fresh name.
+        if (sidebarContains(BR44597_TRUE_NAME)) {
+            br44597_trueNameCount++;
+        } else {
+            br44597_otherNameCount++;
+        }
+        return true;
+    }
+    if (!br44597_telepathyChecked) {
+        // The rule holds only while you are not telepathic: with
+        // telepathy on, the true name must come back.
+        applyStatusToPlayer(STATUS_TELEPATHIC, 10);
+        TEST_ASSERT(sidebarContains(BR44597_TRUE_NAME),
+                    "telepathy restores the true name while hallucinating");
+        br44597_telepathyChecked = true;
+    }
+    return false;
+}
+
+static boolean br44597_verify(void) {
+    TEST_ASSERT(br44597_controlChecked,
+                "control ran: the true name was listed before hallucinating");
+    TEST_ASSERT(playerHasStatus(STATUS_HALLUCINATING),
+                "you are hallucinating throughout the sampling");
+    TEST_ASSERT(!playerHasStatus(STATUS_TELEPATHIC) || br44597_telepathyChecked,
+                "telepathy was off during the sampling");
+    TEST_ASSERT_EQ(br44597_trueNameCount + br44597_otherNameCount,
+                   BR44597_SAMPLES, "sidebar name samples observed");
+    TEST_ASSERT(br44597_otherNameCount >= 1,
+                "while hallucinating and not telepathic, a visible monster is "
+                "displayed under a randomly chosen monster kind name");
+    TEST_ASSERT(br44597_telepathyChecked,
+                "the telepathy check ran");
+    return !testFailed;
+}
+
+// ---------------------------------------------
+// BR61713 — a hunting monster that can blink teleports up the scent
+// trail toward you
+// ---------------------------------------------
+
+static creature *br61713_guardian;
+static int br61713_startDistance;
+
+static int br61713_chebyshev(pos a, pos b) {
+    int dx = a.x - b.x;
+    int dy = a.y - b.y;
+    if (dx < 0) dx = -dx;
+    if (dy < 0) dy = -dy;
+    return (dx > dy ? dx : dy);
+}
+
+static void br61713_setup(void) {
+    clearArena();
+    // An open corridor east of you: the blink's candidate squares and the
+    // scent gradient both run along it.
+    for (int i = 1; i <= 5; i++) {
+        setTerrain(posOffset(getPlayerPos(), i, 0), FLOOR);
+    }
+    // A player turn end lays the scent trail (updateScent() runs as the turn
+    // ends), before there is a monster to act on it.
+    restOneTurn();
+    // The winged guardian carries MONST_ALWAYS_USE_ABILITY with its blinking
+    // bolt, so its hunting turn attempts the blink outright instead of
+    // rolling the usual 30 percent chance.
+    br61713_guardian = placeHostileMonster(MK_WINGED_GUARDIAN,
+                                           posOffset(getPlayerPos(), 4, 0));
+    br61713_startDistance = br61713_chebyshev(monsterPosition(br61713_guardian),
+                                              getPlayerPos());
+}
+
+static boolean br61713_step(void) {
+    // Give the guardian its hunting turn outright - its blink message is
+    // buffered as a combat message - then end a player turn, whose schedule
+    // flushes buffered combat messages into the log.
+    monsterTakesTurn(br61713_guardian);
+    restOneTurn();
+    return false;
+}
+
+static boolean br61713_verify(void) {
+    TEST_ASSERT(monsterIsTrackingPlayer(br61713_guardian),
+                "precondition: the guardian is hunting you");
+    TEST_ASSERT(messageWasShown("blinks"),
+                "a hunting monster that can blink should blink instead of walking");
+    int endDistance = br61713_chebyshev(monsterPosition(br61713_guardian),
+                                         getPlayerPos());
+    TEST_ASSERT(endDistance < br61713_startDistance,
+                "the blink should carry it up the scent trail, closer to you");
+    return !testFailed;
+}
+
+// ---------------------------------------------
+// BR75632 — each of a monster's timed conditions, such as slowness,
+// haste, levitation, invisibility, poisoning and discord, counts down
+// by one per turn
+// ---------------------------------------------
+
+static creature *br75632_subject;
+static creature *br75632_hasted;
+
+static void br75632_setup(void) {
+    setArenaRadius(8, FLOOR);
+    pos p = getPlayerPos();
+    // Well away from you, on a line where every step stays on cleared floor.
+    int dx = (p.x + 7 <= levelWidth()) ? 6 : -6;
+
+    // One monster carries five of the conditions the rule names.
+    br75632_subject = spawnMonster(MK_OGRE, posOffset(p, dx, 0));
+    slowMonster(br75632_subject, 10);
+    poisonMonster(br75632_subject, 10, 1);
+    applyStatusToMonster(br75632_subject, STATUS_LEVITATING, 10);
+    applyStatusToMonster(br75632_subject, STATUS_INVISIBLE, 10);
+    applyStatusToMonster(br75632_subject, STATUS_DISCORDANT, 10);
+
+    // Slowness and haste cancel each other out, so haste goes on a second
+    // monster.  It is kept from acting at all: while you rest, the ally's
+    // leash stretches past the discordant ogre, which it may glimpse
+    // through the ogre's invisibility, and a free-roaming rat would then
+    // blunder into the ogre's reach.  The countdown runs for every monster
+    // every turn whether it acts or not.
+    br75632_hasted = spawnMonster(MK_RAT, posOffset(p, dx < 0 ? 2 : -2, 0));
+    makeMonsterAlly(br75632_hasted);
+    hasteMonster(br75632_hasted, 10);
+    applyStatusToMonster(br75632_hasted, STATUS_PARALYZED, 20);
+
+    TEST_ASSERT_EQ(monsterStatusTurns(br75632_subject, STATUS_SLOWED), 10,
+                   "setup: the subject should start with 10 turns of slowness");
+    TEST_ASSERT_EQ(monsterStatusTurns(br75632_subject, STATUS_POISONED), 10,
+                   "setup: the subject should start with 10 turns of poisoning");
+    TEST_ASSERT_EQ(monsterStatusTurns(br75632_subject, STATUS_LEVITATING), 10,
+                   "setup: the subject should start with 10 turns of levitation");
+    TEST_ASSERT_EQ(monsterStatusTurns(br75632_subject, STATUS_INVISIBLE), 10,
+                   "setup: the subject should start with 10 turns of invisibility");
+    TEST_ASSERT_EQ(monsterStatusTurns(br75632_subject, STATUS_DISCORDANT), 10,
+                   "setup: the subject should start with 10 turns of discord");
+    TEST_ASSERT_EQ(monsterStatusTurns(br75632_hasted, STATUS_HASTED), 10,
+                   "setup: the second monster should start with 10 turns of haste");
+}
+
+static boolean br75632_countdown_step(void) {
+    // Five player turns, each of which ends one round of turns for every
+    // monster on the level.
+    for (int i = 0; i < 5; i++) {
+        restOneTurn();
+    }
+    return false;
+}
+
+static boolean monster_conditions_count_down_by_one_per_turn(void) {
+    TEST_ASSERT(monsterIsAlive(br75632_subject),
+                "setup: the subject should survive the counted turns");
+    TEST_ASSERT(monsterIsAlive(br75632_hasted),
+                "setup: the hasted monster should survive the counted turns");
+    TEST_ASSERT_EQ(monsterStatusTurns(br75632_subject, STATUS_SLOWED), 5,
+                   "slowness should count down by one per turn");
+    TEST_ASSERT_EQ(monsterStatusTurns(br75632_subject, STATUS_POISONED), 5,
+                   "poisoning should count down by one per turn");
+    TEST_ASSERT_EQ(monsterStatusTurns(br75632_subject, STATUS_LEVITATING), 5,
+                   "levitation should count down by one per turn");
+    TEST_ASSERT_EQ(monsterStatusTurns(br75632_subject, STATUS_INVISIBLE), 5,
+                   "invisibility should count down by one per turn");
+    TEST_ASSERT_EQ(monsterStatusTurns(br75632_subject, STATUS_DISCORDANT), 5,
+                   "discord should count down by one per turn");
+    TEST_ASSERT_EQ(monsterStatusTurns(br75632_hasted, STATUS_HASTED), 5,
+                   "haste should count down by one per turn");
+    return !testFailed;
+}
+
+// ---------------------------------------------
+// BR29907 — an ally told not to follow you stays where it is and
+// mills about, though it still chases enemies that come within its
+// range
+// ---------------------------------------------
+
+static creature *br29907_ally;
+static creature *br29907_enemy;
+static int br29907_movedTurns;
+
+static void br29907_setup(void) {
+    setArenaRadius(8, FLOOR);
+    pos p = getPlayerPos();
+    // Beyond the 4-square leash and the 3-square idle radius, so only the
+    // order not to follow can explain where it stays.
+    int dx = (p.x + 7 <= levelWidth()) ? 6 : -6;
+    pos post = posOffset(p, dx, 0);
+    TEST_ASSERT(cellIsTerrain(post, FLOOR),
+                "setup: the ally's post should be cleared floor");
+
+    br29907_ally = spawnMonster(MK_RAT, post);
+    makeMonsterAlly(br29907_ally);
+    makeMonsterFollowPlayer(br29907_ally);
+    makeMonsterNotFollowPlayer(br29907_ally); // told not to follow you
+    TEST_ASSERT(monsterIsAlly(br29907_ally), "setup: the subject should be an ally");
+}
+
+static boolean br29907_hold_and_chase_step(void) {
+    // Phase 1: with no enemy around it mills about, stepping on only about
+    // one turn in three.  Each turn starts back at its post, so the dice
+    // that decide its step cannot wander it off the cleared floor, and so
+    // that an ally which simply tracked you instead would step on every
+    // single one of the 200 turns.
+    pos post = monsterPosition(br29907_ally);
+    br29907_movedTurns = 0;
+    for (int i = 0; i < 200; i++) {
+        monsterTakesTurn(br29907_ally);
+        if (!posEq(monsterPosition(br29907_ally), post)) {
+            br29907_movedTurns++;
+        }
+        setMonsterPos(br29907_ally, post);
+    }
+
+    // Phase 2: an enemy comes within its range.  It is placed to the side
+    // of the post, off the line back to you, so only the chase can bring
+    // the ally to it.
+    pos enemyLoc = posOffset(post, 0, (post.y + 5 < levelHeight()) ? 5 : -5);
+    TEST_ASSERT(cellIsTerrain(enemyLoc, FLOOR),
+                "setup: the enemy should stand on cleared floor");
+    br29907_enemy = placeHostileMonster(MK_RAT, enemyLoc);
+    if (br29907_enemy == NULL) {
+        testFail("setup: the enemy could not be placed");
+        return false;
+    }
+    for (int i = 0; i < 15; i++) {
+        monsterTakesTurn(br29907_ally);
+    }
+    return false;
+}
+
+static boolean ally_holds_post_and_still_chases(void) {
+    TEST_ASSERT(br29907_movedTurns >= 35 && br29907_movedTurns <= 100,
+                "an ally told not to follow you should mill about, stepping on "
+                "only a minority of its turns instead of tracking you every turn");
+    if (br29907_enemy == NULL) {
+        return false;
+    }
+    TEST_ASSERT(monsterIsHurt(br29907_enemy) || monsterIsDead(br29907_enemy),
+                "an ally told not to follow you should still chase an enemy "
+                "that comes within its range");
+    return !testFailed;
+}
+
+// ============================================================
+// BR58883 — an attack bolt is not fired at a creature embedded
+// in a wall.
+//
+// An allied arrow turret faces a hostile rat along a clear
+// east–west line north of you.  An ally never targets you
+// with an attack bolt, so the rat is the turret's only candidate;
+// the turret is immobile, so every one of its turns tries the
+// bolt.  With the rat on open floor its arrows land (control);
+// wall the rat in — its cell now obstructs passability, and a
+// rat is no creature that can be attacked through walls — and
+// over the same number of turret turns not one bolt is fired;
+// restoring the floor brings the arrows back (control).  The
+// observable is the rat's health, so each open-floor phase gives
+// the cast a hundred turns to land while the walled phase must
+// produce no damage at all.
+// ============================================================
+
+static creature *br58883_turret;
+static creature *br58883_target;
+static pos br58883_targetPos;
+static int br58883_healthStart;
+static boolean br58883_openShot, br58883_wallShot, br58883_againShot;
+
+static void br58883_setup(void) {
+    setArenaRadius(6, FLOOR);
+    br58883_targetPos = posOffset(getPlayerPos(), 3, 1);
+
+    // The caster: an allied arrow turret.  (MONST_TURRET includes
+    // MONST_IMMOBILE, so the turret tries its bolt every turn instead of
+    // moving, and as an ally it never bolts you.)
+    br58883_turret = spawnMonster(MK_ARROW_TURRET, posOffset(getPlayerPos(), -4, 1));
+    TEST_ASSERT(br58883_turret != NULL, "setup: the arrow turret should spawn");
+    if (br58883_turret == NULL) {
+        return;
+    }
+    makeMonsterAlly(br58883_turret);
+    revealCell(monsterPosition(br58883_turret));
+
+    // The target: a hostile rat on the same unobstructed line.
+    br58883_target = placeHostileMonster(MK_RAT, br58883_targetPos);
+    TEST_ASSERT(br58883_target != NULL, "setup: the rat should spawn");
+    if (br58883_target == NULL) {
+        return;
+    }
+    setMonsterHealth(br58883_target, 100);
+    br58883_healthStart = monsterHealth(br58883_target);
+}
+
+static boolean br58883_step(void) {
+    // Control: the rat stands in the open — the turret should shoot it.
+    for (int i = 0;
+         i < 100 && monsterHealth(br58883_target) == br58883_healthStart;
+         i++) {
+        monsterTakesTurn(br58883_turret);
+    }
+    br58883_openShot = monsterHealth(br58883_target) < br58883_healthStart;
+
+    // The rule's scenario: embed the rat in a wall.  (setTerrain clears the
+    // cell's creature flag, so the rat is re-placed on it afterwards.)
+    setTerrain(br58883_targetPos, GRANITE);
+    setMonsterPos(br58883_target, br58883_targetPos);
+    int beforeWall = monsterHealth(br58883_target);
+    for (int i = 0; i < 100; i++) {
+        monsterTakesTurn(br58883_turret);
+    }
+    br58883_wallShot = monsterHealth(br58883_target) < beforeWall;
+
+    // Control again: restore the floor under the rat.
+    setTerrain(br58883_targetPos, FLOOR);
+    setMonsterPos(br58883_target, br58883_targetPos);
+    for (int i = 0;
+         i < 100 && monsterHealth(br58883_target) == beforeWall;
+         i++) {
+        monsterTakesTurn(br58883_turret);
+    }
+    br58883_againShot = monsterHealth(br58883_target) < beforeWall;
+    return false;
+}
+
+static boolean br58883_no_attack_bolt_at_embedded_creature(void) {
+    TEST_ASSERT(br58883_openShot,
+                "control: the turret should shoot a creature standing in the open");
+    TEST_ASSERT(!br58883_wallShot,
+                "an attack bolt should not be fired at a creature embedded in a wall");
+    TEST_ASSERT(br58883_againShot,
+                "control: the turret should shoot again once the creature is out of the wall");
+    return !testFailed;
+}
+
 const testCase tests_monsters[] = {
     { "BR83001_webbed_monster_struggles_free_after_a_few_turns", webbed_monster_setup, webbed_monster_struggles_step, webbed_monster_escapes_after_a_few_turns },
     { "BR83001_web_immune_monster_walks_free_immediately",       web_immune_monster_setup, web_immune_monster_turn_step, web_immune_monster_walks_free_immediately },
@@ -1768,7 +2205,7 @@ const testCase tests_monsters[] = {
 
     { "BR45066_ally_spares_entranced_creature",       ally_and_entranced_setup,        NULL, ally_spares_entranced_creature },
 
-    { "BR45346_nobody_attacks_a_captive",             captive_setup,                   NULL, nobody_attacks_a_captive },
+    { "BR45346_nobody_attacks_a_captive",             nobody_attacks_setup,            NULL, nobody_attacks_a_captive },
 
     { "BR54066_discordant_attacks_own_kind",          discordant_setup,                NULL, discordant_attacks_own_kind },
     { "BR54066_discordant_attacks_player",            discordant_setup,                NULL, discordant_attacks_player },
@@ -1780,6 +2217,7 @@ const testCase tests_monsters[] = {
     { "BR45522_you_and_ally_are_teammates",           ally_setup,                      NULL, you_and_ally_are_teammates },
     { "BR45522_allies_are_teammates",                 ally_pair_setup,                 NULL, allies_are_teammates },
     { "BR45522_followers_of_one_leader_are_teammates", followers_of_one_leader_setup,  NULL, followers_are_teammates },
+    { "BR45522_monsters_without_a_shared_leader_are_not_teammates", no_shared_leader_setup, NULL, monsters_without_a_shared_leader_are_not_teammates },
 
     { "BR89577_eel_attacks_creature_in_deep_water",   eel_and_water_creature_setup,    NULL, eel_attacks_creature_in_deep_water },
     { "BR89577_eel_ignores_levitating_creature",      eel_and_levitating_creature_setup, NULL, eel_ignores_levitating_creature },
@@ -1814,6 +2252,8 @@ const testCase tests_monsters[] = {
     { "BR53265_wanderer_travels_between_checkpoints", br53265_setup, br53265_step, wanders_between_distant_checkpoints },
 
     { "BR66644_ally_idles_when_close_and_seen",      br66644_ally_setup, br66644_ally_step, ally_idles_when_close_and_seen },
+    { "BR29907_ally_told_not_to_follow_holds_post",  br29907_setup, br29907_hold_and_chase_step, ally_holds_post_and_still_chases },
+    { "BR75632_monster_conditions_count_down_per_turn", br75632_setup, br75632_countdown_step, monster_conditions_count_down_by_one_per_turn },
 
     { "BR54211_thief_without_item_returns_to_hunting", br54211_thief_setup, br54211_hunting_step, br54211_returns_to_hunting },
     { "BR54211_following_thief_without_item_becomes_ally", br54211_follower_setup, br54211_ally_step, br54211_returns_to_ally },
@@ -1823,6 +2263,12 @@ const testCase tests_monsters[] = {
     { "BR59340_ally_never_negates_an_allied_creature", br59340b_setup, br59340b_step, br59340b_verify },
 
     { "BR20368_totem_aware_only_within_detection_range", br20368_setup, br20368_step, br20368_totem_aware_only_within_range },
+
+    { "BR44597_hallucinated_monster_names", br44597_setup, br44597_step, br44597_verify },
+
+    { "BR61713_hunting_blinker_teleports_up_scent_trail", br61713_setup, br61713_step, br61713_verify },
+
+    { "BR58883_no_attack_bolt_at_embedded_creature", br58883_setup, br58883_step, br58883_no_attack_bolt_at_embedded_creature },
 
     { NULL, NULL, NULL, NULL }
 };

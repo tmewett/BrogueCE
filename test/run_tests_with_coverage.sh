@@ -2,7 +2,7 @@
 set -e
 cd "$(git rev-parse --show-toplevel)"
 mkdir -p prof
-make GRAPHICS=NO TERMINAL=NO MAC_APP=NO COVERAGE=YES >/dev/null
+make GRAPHICS=NO TERMINAL=NO MAC_APP=NO COVERAGE=YES TEST_FRAMEWORK=YES >/dev/null
 fail=0; total=0
 for n in $(grep -rhoE '\{ "BR[^"]+"' test/Tests_*.c | sed -E 's/\{ "//; s/"$//'); do
   total=$((total+1))

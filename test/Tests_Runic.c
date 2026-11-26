@@ -154,7 +154,7 @@ static boolean br11002_speed_verify(void) {
 static void br11003_quietus_setup(void) {
     clearArena();
     giveAndEquipRunicWeapon(DAGGER, W_QUIETUS, 20, true);
-    monst = placeHostileMonster(MK_KRAKEN, posOffset(player.loc, 1, 0)); // Kraken is helpless out of water
+    monst = placeHostileMonster(MK_KRAKEN, posOffset(getPlayerPos(), 1, 0)); // Kraken is helpless out of water
 }
 
 static boolean br11003_quietus_step(void) {
@@ -228,7 +228,7 @@ static boolean br11005_multiplicity_verify(void) {
 static void br11006_force_setup(void) {
     clearArena();
     giveAndEquipRunicWeapon(SWORD, W_FORCE, 20, true);
-    monst = placeHostileMonster(MK_KRAKEN, posOffset(player.loc, 1, 0)); // Kraken is helpless out of water
+    monst = placeHostileMonster(MK_KRAKEN, posOffset(getPlayerPos(), 1, 0)); // Kraken is helpless out of water
     startPos = monsterPosition(monst);
 }
 
@@ -245,6 +245,30 @@ static boolean br11006_force_verify(void) {
     pos newPos = monsterPosition(monst);
     TEST_ASSERT(!posEq(startPos, newPos),
                 "force rune should knock target backward");
+    return !testFailed;
+}
+
+// Negative control: the same blow from a weapon with a non-force rune never
+// throws its target, so the knockback above is attributable to force alone.
+static int nonforceAttempts;
+
+static void br11006_nonforce_setup(void) {
+    clearArena();
+    giveAndEquipRunicWeapon(SWORD, W_PARALYSIS, 20, true); // a non-force rune
+    monst = placeHostileMonster(MK_KRAKEN, posOffset(getPlayerPos(), 1, 0)); // Kraken is helpless out of water
+    startPos = monsterPosition(monst);
+    nonforceAttempts = 0;
+}
+
+static boolean br11006_nonforce_step(void) {
+    setMonsterHealth(monst, monsterMaxHealth(monst)); // keep the target alive to be struck again
+    playerAttacksMonster(monst);
+    return ++nonforceAttempts < 5; // land several blows; the target must never move
+}
+
+static boolean br11006_nonforce_verify(void) {
+    TEST_ASSERT(posEq(startPos, monsterPosition(monst)),
+                "a weapon without the force rune must not knock its target back");
     return !testFailed;
 }
 
@@ -329,14 +353,14 @@ static void br11010_inanimate_setup(void) {
     clearArena();
     giveAndEquipRunicWeapon(DAGGER, W_SPEED, 20, true);
     // WARDEN_OF_YENDOR is MONST_INVULNERABLE
-    monst = placeHostileMonster(MK_WARDEN_OF_YENDOR, posOffset(player.loc, 1, 0));
+    monst = placeHostileMonster(MK_WARDEN_OF_YENDOR, posOffset(getPlayerPos(), 1, 0));
     inanimHitOccurred = false;
 }
 
 static boolean br11010_inanimate_step(void) {
     playerAttacksMonster(monst);
-    // Speed rune should NOT fire on invulnerable — player.ticksUntilTurn should not be -1
-    if (player.ticksUntilTurn == -1) {
+    // Speed rune should NOT fire on invulnerable — ticksUntilPlayerActs() should not be -1
+    if (ticksUntilPlayerActs() == -1) {
         inanimHitOccurred = true;
     }
     return false; // test done after one attack
@@ -477,16 +501,16 @@ static boolean br11022_armor_identify_verify(void) {
 
 static void br11006_force_collateral_setup(void) {
     setArenaRadius(5,FLOOR);
-    playerStartPos = monsterPosition(&player);
+    playerStartPos = getPlayerPos();
 
     giveAndEquipRunicWeapon(DAGGER, W_FORCE, 20, true);
 
     // Target directly in front
-    monst = placeHostileMonster(MK_KRAKEN, posOffset(player.loc, 1, 0)); // Kraken out of water is helpless
+    monst = placeHostileMonster(MK_KRAKEN, posOffset(getPlayerPos(), 1, 0)); // Kraken out of water is helpless
     startPos = monsterPosition(monst);
 
     // Collateral target behind the primary target
-    forceCollateral = placeHostileMonster(MK_KRAKEN, posOffset(player.loc, 5, 0)); // Kraken out of water is helpless
+    forceCollateral = placeHostileMonster(MK_KRAKEN, posOffset(getPlayerPos(), 5, 0)); // Kraken out of water is helpless
 }
 
 static boolean br11006_force_collateral_step(void) {
@@ -495,7 +519,7 @@ static boolean br11006_force_collateral_step(void) {
 
     // If target or player moves, or target dies, then end the test
     if (!posEq(startPos, endPos)
-        || !posEq(monsterPosition(&player), playerStartPos)
+        || !playerIsAt(playerStartPos)
         || monsterIsDead(monst)) {
         return false; // end test
     }
@@ -504,7 +528,7 @@ static boolean br11006_force_collateral_step(void) {
 
 static boolean br11006_force_collateral_verify(void) {
     endPos = monsterPosition(monst);
-    TEST_ASSERT(posEq(monsterPosition(&player), playerStartPos) // Player didn't move
+    TEST_ASSERT(playerIsAt(playerStartPos)         // Player didn't move
                 && !posEq(startPos, endPos)         // Target was thrown
                 && monsterIsHurt(monst)             // Target was hurt
                 && monsterIsHurt(forceCollateral),  // Collateral was hurt
@@ -675,8 +699,8 @@ static boolean br11021_slaying_identify_verify(void) {
 static void br11010_slaying_inanim_setup(void) {
     clearArena();
     theItem = giveAndEquipRunicWeapon(DAGGER, W_SLAYING, 10, true);
-    theItem->vorpalEnemy = vorpalEnemyClassForMonster(MK_REVENANT);
-    monst = placeHostileMonster(MK_REVENANT, posOffset(player.loc, 1, 0));
+    setItemTargetClass(theItem, vorpalEnemyClassForMonster(MK_REVENANT));
+    monst = placeHostileMonster(MK_REVENANT, posOffset(getPlayerPos(), 1, 0));
     // Paralyze the target so the attack is guaranteed to land.
     applyStatusToMonster(monst, STATUS_PARALYZED, 20);
 }
@@ -829,7 +853,7 @@ static boolean br11018_minimum_enchant_verify(void) {
 static void br11006_force_low_enchant_setup(void) {
     clearArena();
     theItem = giveAndEquipRunicWeapon(DAGGER, W_FORCE, 20, true);
-    monst = placeHostileMonster(MK_KRAKEN, posOffset(player.loc, 1, 0));
+    monst = placeHostileMonster(MK_KRAKEN, posOffset(getPlayerPos(), 1, 0));
     startPos = monsterPosition(monst);
 }
 
@@ -892,6 +916,8 @@ const testCase tests_runic[] = {
         br11006_force_collateral_setup, br11006_force_collateral_step, br11006_force_collateral_verify },
     { "BR11006_force_low_enchant",
         br11006_force_low_enchant_setup, br11006_force_low_enchant_step, br11006_force_low_enchant_verify },
+    { "BR11006_no_knockback_without_force",
+        br11006_nonforce_setup, br11006_nonforce_step, br11006_nonforce_verify },
     { "BR11007_slaying_kills_designated",
         br11007_slaying_setup, br11007_slaying_step, br11007_slaying_verify },
     { "BR11007_slaying_miss_non_designated",

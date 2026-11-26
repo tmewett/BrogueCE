@@ -2,17 +2,23 @@
 //
 // These cover the deterministic, headless-observable item rules: the effects
 // of drinking potions, a scroll, picking up gold and the Amulet, the tile a
-// pickup promotes, stacking and pack slots, generated charge counts and gold
+// generated charge counts and gold
 // values, the defense an enchanted suit of armor contributes, the specialist
-// feat, the number of items each level generates, and the pressure plate an
-// item placed on it depresses.
+// feat, the number of items each level generates, that generated throwing
+// weapons come out plain (never cursed, runic, or enchanted), the runes
+// fading from runic gear whose enchantment drops to zero or less, which
+// targets a zap's auto-targeting will and will not pick, and the pressure
+// plate an item placed on it depresses.
 //
 // Omitted are everything else about level population (what is generated and
 // where), random chances (curses, runics, mutations, spawn counts), flavour
-// shuffling, identification RNG, targeting and trajectory prompts, bolt
-// physics and reflection, dropping, machine interactions other than switch
-// promotion and pressure plates, and any rule that needs a screen or is
-// otherwise not reproducible headlessly.
+// shuffling, identification RNG, the rest of the targeting prompts (cursor
+// movement and tab-cycling), dropping, machine interactions other than
+// switch promotion and pressure plates, and any rule that needs a screen or
+// is otherwise not reproducible headlessly.
+// Two aim rules do reach the screen: the throw trajectory's highlight and
+// the auto-targeted zap's trajectory are compared frame by frame through
+// the screen-colour snapshot helpers.
 
 #include "TestFramework.h"
 #include "Globals.h"
@@ -28,7 +34,7 @@ static int packedBefore;
 
 static void emptyRoomSetup(void) {
     clearMonsters();
-    pos p = player.loc;
+    pos p = getPlayerPos();
     setTerrain(p, FLOOR);
     setPlayerPos(p);
 }
@@ -214,11 +220,16 @@ static void paralysis_potion_setup(void) {
     emptyRoomSetup();
     queueConfirmYes();
     drink(POTION_PARALYSIS);
+    // The cloud settles over the tile you drank it on; run the engine's own
+    // tile-effect pass so the gas can take effect before the assertions.
+    applyTileEffectsToPlayer();
 }
 
 static boolean paralysis_potion_releases_gas(void) {
-    TEST_ASSERT(cellHasGas(player.loc),
+    TEST_ASSERT(cellHasGas(getPlayerPos()),
                 "a potion of paralysis should release gas where you stand");
+    TEST_ASSERT(isPlayerParalyzed(),
+                "the gas a potion of paralysis releases should be paralyzing");
     return !testFailed;
 }
 
@@ -509,14 +520,11 @@ static boolean armor_adds_ten_defense_per_enchant(void) {
 
 static boolean donning_armor_reduces_defense(void) {
     emptyRoomSetup();
-    applyStatusToPlayer(STATUS_DONNING,0);
-    recalculateEquipmentBonuses();
+    applyEquipmentStatusToPlayer(STATUS_DONNING, 0);
     int donning0 = playerDefense();
-    applyStatusToPlayer(STATUS_DONNING,1);
-    recalculateEquipmentBonuses();
+    applyEquipmentStatusToPlayer(STATUS_DONNING, 1);
     int donning1 = playerDefense();
-    applyStatusToPlayer(STATUS_DONNING,2);
-    recalculateEquipmentBonuses();
+    applyEquipmentStatusToPlayer(STATUS_DONNING, 2);
     int donning2 = playerDefense();
     TEST_ASSERT(donning0 > donning1 && donning1 > donning2,
                 "armor should add less defense while it is being donned");
@@ -939,8 +947,529 @@ static boolean br90259_empty_staff_cannot_fire(void) {
 }
 
 // ============================================================
+// BR71867 — food, charms, gold, the Amulet of Yendor, lumenstones, and
+// keys are known to you from the moment they appear
+// ============================================================
+
+static item *bornFood, *bornCharm, *bornGold, *bornAmulet, *bornGem, *bornKey, *bornPotion;
+
+static void born_known_setup(void) {
+    clearArena();
+    pos p = getPlayerPos();
+    bornFood   = placeItemOnFloor(FOOD, RATION,        posOffset(p, -1, -1));
+    bornCharm  = placeItemOnFloor(CHARM, CHARM_HEALTH, posOffset(p,  0, -1));
+    bornGold   = placeItemOnFloor(GOLD, 0,             posOffset(p,  1, -1));
+    bornAmulet = placeItemOnFloor(AMULET, 0,           posOffset(p, -1,  0));
+    bornGem    = placeItemOnFloor(GEM, 0,              posOffset(p,  1,  0));
+    bornKey    = placeItemOnFloor(KEY, 0,              posOffset(p,  0,  1));
+    bornPotion = placeItemOnFloor(POTION, POTION_LIFE, posOffset(p,  1,  1));
+}
+
+static boolean known_the_moment_they_appear(void) {
+    // Each listed item carries its identity from the moment of generation.
+    TEST_ASSERT(itemIsIdentified(bornFood),
+                "food should be born known");
+    TEST_ASSERT(itemIsIdentified(bornCharm),
+                "a charm should be born known");
+    TEST_ASSERT(itemIsIdentified(bornAmulet),
+                "the Amulet of Yendor should be born known");
+    TEST_ASSERT(itemIsIdentified(bornGem),
+                "a lumenstone should be born known");
+    TEST_ASSERT(itemIsIdentified(bornKey),
+                "a key should be born known");
+
+    // Their kinds are known without ever having to be learned.
+    TEST_ASSERT(itemKindIsKnown(FOOD, RATION),
+                "a ration of food should be a known kind");
+    TEST_ASSERT(itemKindIsKnown(CHARM, CHARM_HEALTH),
+                "a charm should be a known kind");
+    TEST_ASSERT(itemKindIsKnown(GOLD, 0),
+                "gold should be a known kind");
+    TEST_ASSERT(itemKindIsKnown(AMULET, 0),
+                "the Amulet of Yendor should be a known kind");
+    TEST_ASSERT(itemKindIsKnown(GEM, 0),
+                "a lumenstone should be a known kind");
+    TEST_ASSERT(itemKindIsKnown(KEY, 0),
+                "a key should be a known kind");
+
+    // An ordinary item outside the list is not known the same way, which is
+    // what keeps the assertions above from passing vacuously.
+    TEST_ASSERT(!itemIsIdentified(bornPotion),
+                "a potion should not be born known");
+    TEST_ASSERT(!itemKindIsKnown(POTION, POTION_LIFE),
+                "a potion should not be a known kind at first");
+    return !testFailed;
+}
+
+// ============================================================
+
+// ============================================================
+// BR90956 — when you aim a throw, the highlighted trajectory stops
+// at the target you selected rather than continuing past it
+// ============================================================
+
+static void throw_aim_setup(void) {
+    clearArena();
+    // An open, revealed corridor east of you: the aim line runs along it, and
+    // every cell it could pass through is discovered, so the highlight is not
+    // cut short by unseen terrain (BR96156).
+    for (int i = 1; i <= 9; i++) {
+        pos p = posOffset(getPlayerPos(), i, 0);
+        setTerrain(p, FLOOR);
+        revealCell(p);
+    }
+    item *dagger = givePlayerItem(WEAPON, DAGGER, 0);
+    queueKeystroke(itemInventoryLetter(dagger), false, false); // choose the thrown item
+    for (int i = 0; i < 5; i++) {
+        queueKeystroke(RIGHT_KEY, false, false); // move the cursor five cells east
+    }
+}
+
+static boolean throw_aim_step(void) {
+    // The throw runs the whole aim from the queue; the last frame captured
+    // before the queue empties has the trajectory drawn to the cursor, five
+    // cells east.  Remember that frame, then ask for one more input: the
+    // request it makes captures the frame with the aim closed and the
+    // trajectory erased again.
+    injectKeystroke(THROW_KEY, false, false);
+    rememberScreenColors();
+    runQueuedInputThroughMainLoop();
+    return false;
+}
+
+static boolean throw_aim_trajectory_stops_at_target(void) {
+    TEST_ASSERT(screenCellColorsChanged(posOffset(getPlayerPos(), 2, 0)),
+                "aiming a throw should highlight the trajectory through the cells on the way to the target");
+    TEST_ASSERT(!screenCellColorsChanged(posOffset(getPlayerPos(), 7, 0)),
+                "the highlighted trajectory should stop at the selected target, not continue past it");
+    return !testFailed;
+}
+
+// ============================================================
+// BR61428 — A wand of domination may bind a monster to your
+// will, or the monster resists.
+//
+// The bind roll is the missing fraction of the target's
+// health: a monster at full health offers 0% (an always-resist)
+// and once below a fifth of its maximum health the roll is 100%
+// (an always-bind), so one target zapped twice walks both arms
+// of the rule deterministically.  The zaps are fired directly
+// at the target and no player turn runs between them, so the
+// target never moves, acts, or regains health in between.
+// ============================================================
+
+static item *br61428_wand;
+static creature *br61428_target;
+
+static void br61428_setup(void) {
+    setArenaRadius(6, FLOOR);
+    br61428_target = placeHostileMonster(MK_WILL_O_THE_WISP, posOffset(getPlayerPos(), 5, 0));
+    TEST_ASSERT(br61428_target != NULL, "setup: the domination target should spawn");
+    // The arena is carved after the level's vision pass, so grant telepathy:
+    // the wand's bind/resist report is only spoken about a target the player
+    // knows, and telepathy reveals every living creature's location.
+    applyStatusToPlayer(STATUS_TELEPATHIC, 1000);
+    TEST_ASSERT(monsterMaxHealth(br61428_target) > 5,
+                "setup: the target needs more than 5 maximum health, so 1 health is below a fifth of it");
+    TEST_ASSERT(monsterIsHostile(br61428_target), "setup: the target should start hostile");
+    br61428_wand = givePlayerItem(WAND, WAND_DOMINATION, 5);
+}
+
+static boolean br61428_step(void) {
+    TEST_ASSERT(!monsterIsAlly(br61428_target),
+                "the target should start as your enemy, not your ally");
+    playerZapsAt(br61428_wand, br61428_target);
+    TEST_ASSERT(!monsterIsAlly(br61428_target),
+                "a monster at full health has a 0% bind chance and should resist the bolt");
+    setMonsterHealth(br61428_target, 1);
+    playerZapsAt(br61428_wand, br61428_target);
+    return false;
+}
+
+static boolean br61428_domination_binds_or_resists(void) {
+    TEST_ASSERT(messageWasShown("resists the bolt of domination"),
+                "the wand should report that the monster resisted domination");
+    TEST_ASSERT(messageWasShown("is bound to your will"),
+                "the wand should report that the wounded monster was bound to your will");
+    TEST_ASSERT(monsterIsAlly(br61428_target),
+                "a monster zapped below a fifth of its health should become your ally");
+    return !testFailed;
+}
+
+// ============================================================
+// BR84582 — Bolts can be reflected by reflective creatures (or
+// by reflective terrain, or by a ring or armor of reflection);
+// a reflected bolt takes a new path and can strike its own
+// caster.
+//
+// The guardian reflects every bolt that reaches it, with no
+// roll, so zapping it with a staff of haste must leave the
+// guardian untouched and send the haste bolt back onto the
+// caster instead.  The bolt's own path starts one tile beyond
+// the caster, so the player can only be hastened by a bolt that
+// was reflected off the guardian and travelled back; if the
+// reflection were broken the bolt would apply its haste to the
+// guardian and the player would be left alone.  Both halves of
+// the assertion catch that.
+// ============================================================
+
+static creature *br84582_guardian;
+
+static void br84582_setup(void) {
+    setArenaRadius(8, FLOOR);
+    br84582_guardian = placeHostileMonster(MK_GUARDIAN, posOffset(getPlayerPos(), 1, 0));
+    item *staff = givePlayerItem(STAFF, STAFF_HASTE, 0);
+    playerZapsAt(staff, br84582_guardian);
+}
+
+static boolean br84582_verify(void) {
+    TEST_ASSERT(playerHasStatus(STATUS_HASTED),
+                "a bolt reflected by a reflective creature should strike its own caster");
+    TEST_ASSERT(messageWasShown("you feel yourself speed up"),
+                "the reflected bolt should arrive as a haste spell on the caster");
+    TEST_ASSERT(!monsterHasStatus(br84582_guardian, STATUS_HASTED),
+                "the reflective creature should deflect the bolt, not be affected by it");
+    return !testFailed;
+}
+
+// ============================================================
+// BR76873 — After identifying itself, a scroll of identify lets
+// you identify one other item in your pack.
+//
+// The target is a freshly donned suit of runic armor that has
+// not been identified (the setup asserts as much), and the
+// queued keystroke answers the scroll's "Identify what?"
+// prompt with the armor's inventory letter.
+// ============================================================
+
+static item *br76873_target;
+
+static void br76873_setup(void) {
+    clearArena();
+    br76873_target = givePlayerRunicArmor(CHAIN_MAIL, A_DAMPENING, 1, false);
+    TEST_ASSERT(!itemIsIdentified(br76873_target),
+                "setup: the armor must start unidentified");
+    queueKeystroke(itemInventoryLetter(br76873_target), false, false);
+}
+
+static boolean br76873_step(void) {
+    readScrollOfKind(SCROLL_IDENTIFY);
+    return false;
+}
+
+static boolean br76873_identifies_one_other_item(void) {
+    TEST_ASSERT(messageWasShown("this is a scroll of identify."),
+                "the scroll of identify should identify itself first");
+    TEST_ASSERT(itemIsIdentified(br76873_target),
+                "a scroll of identify should identify one other item in your pack");
+    return !testFailed;
+}
+
+// ============================================================
+// BR58888 — Throwing weapons are never cursed, runic, or enchanted.
+//
+// Thirty of them are generated through the game's own item generation
+// (ten each of darts, incendiary darts and javelins), which rolls the
+// usual weapon enchantment, curse and runic chances before stripping
+// them from throwing weapons.
+// ============================================================
+
+static void br58888_setup(void) {
+    setArenaRadius(4, FLOOR);
+}
+
+static boolean throwing_weapons_are_never_magical(void) {
+    static const short kinds[] = { DART, INCENDIARY_DART, JAVELIN };
+    pos origin = getPlayerPos();
+    int generated = 0;
+
+    for (int k = 0; k < 3; k++) {
+        for (int i = 0; i < 10; i++) {
+            pos loc = posOffset(origin, (i % 5) - 2, (i / 5) - 1);
+            item *theItem = placeItemOnFloor(WEAPON, kinds[k], loc);
+            TEST_ASSERT(theItem != NULL, "setup: a throwing weapon should be generated");
+            if (theItem == NULL) {
+                continue;
+            }
+            generated++;
+
+            // The stack size is chosen by the very branch of item
+            // generation that strips the magic, so seeing a throwing
+            // weapon's characteristic stack proves that branch ran.
+            int quantity = itemQuantity(theItem);
+            if (kinds[k] == INCENDIARY_DART) {
+                TEST_ASSERT(quantity >= 3 && quantity <= 6,
+                            "setup: incendiary darts come in stacks of 3-6 "
+                            "(the throwing-weapon branch of generation should have run)");
+            } else {
+                TEST_ASSERT(quantity >= 5 && quantity <= 18,
+                            "setup: darts and javelins come in stacks of 5-18 "
+                            "(the throwing-weapon branch of generation should have run)");
+            }
+
+            TEST_ASSERT(itemEnchant(theItem) == 0,
+                        "a generated throwing weapon should not be enchanted");
+            TEST_ASSERT(!itemIsCursed(theItem),
+                        "a generated throwing weapon should not be cursed");
+            TEST_ASSERT(!itemIsRunic(theItem),
+                        "a generated throwing weapon should not be runic");
+        }
+    }
+    TEST_ASSERT_EQ(generated, 30,
+                   "setup: ten of each throwing weapon should be generated");
+    return !testFailed;
+}
+
+// ============================================================
+// BR69624 — when a runic weapon or armor's enchantment drops to
+// zero or less, its runes fade and it ceases to be runic.
+//
+// Attacking an acid mound corrodes the wielded weapon by one (a
+// sleeping defender is always hit); being struck by one corrodes
+// worn armor by one (a paralyzed defender is always hit).
+// Each corrosion runs the disenchantment check: starting from
+// +1, the corroding point lands on zero and the runes fade with
+// the "the runes fade" announcement; starting from +2, it stops
+// at +1 and the gear stays runic — the negative test that pins
+// the fade to zero or below.
+// ============================================================
+
+static item *br69624_weapon;
+static boolean br69624_weaponWasRunic;
+static int br69624_weaponEnchantWas;
+static boolean br69624_weaponHitLanded;
+
+static void br69624_weapon_setup(void) {
+    setArenaRadius(4, FLOOR);
+    br69624_weapon = giveAndEquipRunicWeapon(DAGGER, W_SPEED, 1, true);
+    TEST_ASSERT(br69624_weapon != NULL, "setup: the runic dagger should be created");
+    if (br69624_weapon == NULL) {
+        return;
+    }
+    br69624_weaponEnchantWas = itemEnchant(br69624_weapon);
+    TEST_ASSERT_EQ(br69624_weaponEnchantWas, 1,
+                   "setup: the runic dagger should start at +1");
+    br69624_weaponWasRunic = itemIsRunic(br69624_weapon);
+    TEST_ASSERT(br69624_weaponWasRunic, "setup: the dagger should start runic");
+
+    creature *mound = placeHostileMonster(MK_ACID_MOUND, posOffset(getPlayerPos(), 1, 0));
+    TEST_ASSERT(mound != NULL, "setup: an acid mound should spawn");
+    if (mound != NULL) {
+        putMonsterToSleep(mound); // a sleeping defender is always hit
+    }
+}
+
+static boolean br69624_weapon_attacks_step(void) {
+    creature *mound = findMonster(MK_ACID_MOUND);
+    TEST_ASSERT(mound != NULL, "step: the acid mound should be present");
+    if (mound == NULL) {
+        return false;
+    }
+    br69624_weaponHitLanded = playerAttacksMonster(mound);
+    return false;
+}
+
+static boolean br69624_weapon_runes_fade_at_zero(void) {
+    TEST_ASSERT(br69624_weaponWasRunic,
+                "precondition: the dagger was runic before the corroding blow");
+    TEST_ASSERT_EQ(br69624_weaponEnchantWas, 1,
+                   "precondition: the dagger's enchantment started at +1");
+    TEST_ASSERT(br69624_weaponHitLanded,
+                "control: a sleeping defender is always hit");
+    TEST_ASSERT_EQ(itemEnchant(br69624_weapon), 0,
+                   "the corroding blow should drop the dagger's enchantment to zero");
+    TEST_ASSERT(!itemIsRunic(br69624_weapon),
+                "a runic weapon whose enchantment has dropped to zero should cease to be runic");
+    TEST_ASSERT(messageWasShown("runes fade"),
+                "the fading of the runes should be announced");
+    return !testFailed;
+}
+
+static void br69624_above_setup(void) {
+    setArenaRadius(4, FLOOR);
+    br69624_weapon = giveAndEquipRunicWeapon(DAGGER, W_SPEED, 2, true);
+    TEST_ASSERT(br69624_weapon != NULL, "setup: the runic dagger should be created");
+    if (br69624_weapon == NULL) {
+        return;
+    }
+    br69624_weaponEnchantWas = itemEnchant(br69624_weapon);
+    TEST_ASSERT_EQ(br69624_weaponEnchantWas, 2,
+                   "setup: the runic dagger should start at +2");
+    br69624_weaponWasRunic = itemIsRunic(br69624_weapon);
+    TEST_ASSERT(br69624_weaponWasRunic, "setup: the dagger should start runic");
+
+    creature *mound = placeHostileMonster(MK_ACID_MOUND, posOffset(getPlayerPos(), 1, 0));
+    TEST_ASSERT(mound != NULL, "setup: an acid mound should spawn");
+    if (mound != NULL) {
+        putMonsterToSleep(mound);
+    }
+}
+
+static boolean br69624_above_zero_keeps_runes(void) {
+    TEST_ASSERT(br69624_weaponWasRunic,
+                "precondition: the dagger was runic before the corroding blow");
+    TEST_ASSERT_EQ(br69624_weaponEnchantWas, 2,
+                   "precondition: the dagger's enchantment started at +2");
+    TEST_ASSERT(br69624_weaponHitLanded,
+                "control: a sleeping defender is always hit");
+    TEST_ASSERT_EQ(itemEnchant(br69624_weapon), 1,
+                   "the corroding blow should stop one above zero");
+    TEST_ASSERT(itemIsRunic(br69624_weapon),
+                "a runic weapon above zero enchantment should keep its runes");
+    TEST_ASSERT(!messageWasShown("runes fade"),
+                "the runes should not fade while the enchantment stays above zero");
+    return !testFailed;
+}
+
+static item *br69624_armor;
+static boolean br69624_armorWasRunic;
+static int br69624_armorEnchantWas;
+static boolean br69624_armorHitLanded;
+
+static void br69624_armor_setup(void) {
+    setArenaRadius(4, FLOOR);
+    setPlayerHealth(playerMaxHealth());
+    applyStatusToPlayer(STATUS_PARALYZED, 100); // a paralyzed defender is always hit
+    br69624_armor = givePlayerRunicArmor(LEATHER_ARMOR, A_DAMPENING, 1, true);
+    TEST_ASSERT(br69624_armor != NULL, "setup: the runic armor should be created");
+    if (br69624_armor == NULL) {
+        return;
+    }
+    TEST_ASSERT(equippedArmor() == br69624_armor,
+                "setup: the runic armor should be the worn armor");
+    br69624_armorEnchantWas = itemEnchant(br69624_armor);
+    TEST_ASSERT_EQ(br69624_armorEnchantWas, 1,
+                   "setup: the runic armor should start at +1");
+    br69624_armorWasRunic = itemIsRunic(br69624_armor);
+    TEST_ASSERT(br69624_armorWasRunic, "setup: the armor should start runic");
+
+    creature *mound = placeHostileMonster(MK_ACID_MOUND, posOffset(getPlayerPos(), 1, 0));
+    TEST_ASSERT(mound != NULL, "setup: an acid mound should spawn");
+}
+
+static boolean br69624_armor_struck_step(void) {
+    creature *mound = findMonster(MK_ACID_MOUND);
+    TEST_ASSERT(mound != NULL, "step: the acid mound should be present");
+    if (mound == NULL) {
+        return false;
+    }
+    br69624_armorHitLanded = monsterAttacksPlayer(mound);
+    return false;
+}
+
+static boolean br69624_armor_runes_fade_at_zero(void) {
+    TEST_ASSERT(br69624_armorWasRunic,
+                "precondition: the armor was runic before the corroding blow");
+    TEST_ASSERT_EQ(br69624_armorEnchantWas, 1,
+                   "precondition: the armor's enchantment started at +1");
+    TEST_ASSERT(br69624_armorHitLanded,
+                "control: a paralyzed defender is always hit");
+    TEST_ASSERT_EQ(itemEnchant(br69624_armor), 0,
+                   "the corroding blow should drop the armor's enchantment to zero");
+    TEST_ASSERT(!itemIsRunic(br69624_armor),
+                "a runic armor whose enchantment has dropped to zero should cease to be runic");
+    TEST_ASSERT(messageWasShown("runes fade"),
+                "the fading of the runes should be announced");
+    return !testFailed;
+}
+
+// ============================================================
+// BR75263 — auto-targeting only picks monsters you can see with
+// an unobstructed path, avoids allies for harmful effects, and
+// skips creatures that are immune to the effect (such as
+// fire-immune targets for flame).
+//
+// Opening a zap of the staff of flame auto-selects a target from
+// the sidebar's visible creatures.  Four monsters ring the
+// player: a plain hostile enemy to the north (the only valid
+// one), a hostile enemy to the east carrying the fire-immune
+// status (skipped for flame), an ally to the west (a harmful
+// effect never picks allies), and a hostile enemy to the south
+// behind a granite cell (no unobstructed path).  The aim frame's
+// trajectory highlight — captured at the prompt's first input
+// request — must run north toward the one valid target, and must
+// not light a single cell on the way to any skipped candidate; a
+// later frame, taken after the aim closes, shows the highlight
+// erased again.  Every cell a wrongly-drawn trajectory would
+// cross is revealed in setup, so a broken skip would actually
+// light it up in the captured frame.
+// ============================================================
+
+static void br75263_setup(void) {
+    setArenaRadius(6, FLOOR);
+
+    // The one valid target: a plain hostile enemy to the north.
+    creature *valid = placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 0, -3));
+    TEST_ASSERT(valid != NULL, "setup: the plain enemy should spawn");
+
+    // Skipped for flame's fire: a hostile enemy carrying fire immunity.
+    creature *immune = placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 3, 0));
+    TEST_ASSERT(immune != NULL, "setup: the fire-immune enemy should spawn");
+    if (immune != NULL) {
+        applyStatusToMonster(immune, STATUS_IMMUNE_TO_FIRE, 10000);
+    }
+
+    // Skipped as an ally: flame only targets enemies.
+    creature *ally = spawnMonster(MK_RAT, posOffset(getPlayerPos(), -3, 0));
+    TEST_ASSERT(ally != NULL, "setup: the ally should spawn");
+    if (ally != NULL) {
+        makeMonsterAlly(ally);
+        revealCell(monsterPosition(ally));
+    }
+
+    // Skipped for want of an unobstructed path: a hostile enemy behind granite.
+    setTerrain(posOffset(getPlayerPos(), 0, 2), GRANITE);
+    creature *walled = placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 0, 3));
+    TEST_ASSERT(walled != NULL, "setup: the walled-off enemy should spawn");
+
+    // Reveal every cell a trajectory toward a skipped candidate would cross,
+    // so a broken skip shows up as a highlight in the captured frame.
+    revealCell(posOffset(getPlayerPos(), 0, -1)); // toward the valid target
+    revealCell(posOffset(getPlayerPos(), 0, -2));
+    revealCell(posOffset(getPlayerPos(), 1, 0));  // toward the immune enemy
+    revealCell(posOffset(getPlayerPos(), 2, 0));
+    revealCell(posOffset(getPlayerPos(), -1, 0)); // toward the ally
+    revealCell(posOffset(getPlayerPos(), -2, 0));
+    revealCell(posOffset(getPlayerPos(), 0, 1));  // toward the walled enemy
+
+    // The staff's kind must be known for the immunity and ally gates to run.
+    item *staff = givePlayerItem(STAFF, STAFF_FIRE, 0);
+    TEST_ASSERT(staff != NULL, "setup: the staff of flame should be created");
+    TEST_ASSERT(itemKindIsKnown(STAFF, STAFF_FIRE),
+                "setup: the staff's kind should be known");
+
+    // Populate the sidebar's entity list, which auto-targeting reads.
+    TEST_ASSERT(sidebarContains("Rat"),
+                "setup: the sidebar should list a visible monster before auto-targeting runs");
+}
+
+static boolean br75263_zap_aim_step(void) {
+    applyPackItem(STAFF, STAFF_FIRE);
+    // The auto-selected target's trajectory is drawn before the prompt's
+    // first input request, whose captured frame applyPackItem leaves as the
+    // most recent snapshot...
+    rememberScreenColors();
+    // ... and one more input pass captures a frame with the aim closed and
+    // the trajectory erased again.
+    runQueuedInputThroughMainLoop();
+    return false;
+}
+
+static boolean br75263_auto_target_picks_only_a_valid_target(void) {
+    TEST_ASSERT(screenCellColorsChanged(posOffset(getPlayerPos(), 0, -1)),
+                "auto-targeting should aim at the one valid enemy, north of you");
+    TEST_ASSERT(!screenCellColorsChanged(posOffset(getPlayerPos(), 1, 0)),
+                "auto-targeting should skip a fire-immune enemy when aiming flame");
+    TEST_ASSERT(!screenCellColorsChanged(posOffset(getPlayerPos(), -1, 0)),
+                "auto-targeting should avoid allies for a harmful effect");
+    TEST_ASSERT(!screenCellColorsChanged(posOffset(getPlayerPos(), 0, 1)),
+                "auto-targeting should skip a monster without an unobstructed path");
+    return !testFailed;
+}
 
 const testCase tests_items[] = {
+    { "BR58888_throwing_weapons_never_magical",     br58888_setup,             NULL, throwing_weapons_are_never_magical },
+
     { "BR83362_potion_of_life_raises_max_health",   life_potion_setup,          NULL, life_potion_raises_max_health },
     { "BR50436_potion_of_strength_raises_strength", strength_potion_setup,      NULL, strength_potion_raises_strength },
     { "BR53042_potion_of_telepathy_grants_telepathy", telepathy_potion_setup,   NULL, telepathy_potion_grants_telepathy },
@@ -959,6 +1488,7 @@ const testCase tests_items[] = {
     { "BR29492_scroll_of_aggravate_wakes_monsters", aggravate_scroll_setup,     NULL, aggravate_scroll_wakes_monsters },
     { "BR95938_reading_scroll_consumes_it",         consume_scroll_setup,       NULL, reading_scroll_consumes_it },
     { "BR47462_enchanting_removes_curse",           enchanting_removes_curse_setup, enchanting_removes_curse_step, curse_removed_by_enchanting },
+    { "BR76873_identify_scroll_identifies_one_other_item", br76873_setup, br76873_step, br76873_identifies_one_other_item },
 
     { "BR46995_enchant_to_16_earns_specialist",     specialist_earned_setup,    specialist_earned_step, specialist_feat_at_plus_16 },
     { "BR46995_enchant_below_16_grants_nothing",    specialist_denied_setup,    specialist_denied_step, no_specialist_below_plus_16 },
@@ -985,13 +1515,27 @@ const testCase tests_items[] = {
     { "BR15388_thrown_weapon_hit_deals_damage",     throw_hit_setup,             throw_hit_step, thrown_weapon_hit_deals_damage },
     { "BR15388_thrown_weapon_miss_lands_on_floor",  throw_miss_setup,            throw_miss_step, thrown_weapon_miss_lands_on_floor },
 
+    { "BR90956_throw_aim_stops_at_target",          throw_aim_setup,             throw_aim_step, throw_aim_trajectory_stops_at_target },
+
     { "BR28082_level_item_counts_follow_depth_bands", NULL, NULL, level_item_counts_follow_depth_bands },
 
     { "BR94199_beckoning_pulls_monster_adjacent", br94199_setup, br94199_step, beckoning_pulls_the_monster_adjacent },
 
+    { "BR61428_domination_binds_or_resists",      br61428_setup,  br61428_step,  br61428_domination_binds_or_resists },
+
     { "BR43662_item_on_pressure_plate_depresses_it", br43662_plate_setup, br43662_place_item_step, br43662_plate_depresses },
 
     { "BR90259_empty_staff_cannot_fire",            br90259_setup,        br90259_step,           br90259_empty_staff_cannot_fire },
+
+    { "BR71867_kinds_known_the_moment_they_appear", born_known_setup,     NULL,                   known_the_moment_they_appear },
+
+    { "BR84582_reflected_bolt_strikes_its_own_caster", br84582_setup, NULL, br84582_verify },
+
+    { "BR69624_runic_weapon_runes_fade_at_zero",  br69624_weapon_setup, br69624_weapon_attacks_step, br69624_weapon_runes_fade_at_zero },
+    { "BR69624_runic_weapon_keeps_runes_above_zero", br69624_above_setup, br69624_weapon_attacks_step, br69624_above_zero_keeps_runes },
+    { "BR69624_runic_armor_runes_fade_at_zero",   br69624_armor_setup,   br69624_armor_struck_step,   br69624_armor_runes_fade_at_zero },
+
+    { "BR75263_auto_target_picks_only_a_valid_target", br75263_setup, br75263_zap_aim_step, br75263_auto_target_picks_only_a_valid_target },
 
     { NULL, NULL, NULL, NULL }
 };

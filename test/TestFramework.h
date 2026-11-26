@@ -121,6 +121,12 @@ void emitArchivedMessage(const char *msg);
 // emitted with emitArchivedMessage() yet.
 const char *renderedMessageLine(void);
 
+// The colour the message area shows for a recorded message containing
+// `substring`: "bad" (harm to you or an ally), "good" (harm to an enemy), or
+// "white" (a neutral event, or a message that carries no colour of its own).
+// NULL when no recorded message contains the substring.
+const char *messageColorOf(const char *substring);
+
 // ---------------------------------------------
 // Screen
 // ---------------------------------------------
@@ -137,6 +143,22 @@ boolean sidebarContains(const char *substring);
 // frame at that input request is the only moment their text can be observed.
 // False when the test has not yet caused an input request.
 boolean screenTextContains(const char *substring);
+
+// Remember the background colour every cell was drawn with in the frame that
+// screenTextContains() reads.  Call it while a transient highlight (the aim
+// trajectory, say) is on screen, then compare later frames against it with
+// screenCellColorsChanged().  Does nothing when no frame has been captured
+// yet; screenCellColorsChanged() then reports false.
+void rememberScreenColors(void);
+
+// Whether the cell at `loc` is drawn with a different background colour now
+// than when rememberScreenColors() took its snapshot - a highlight that was
+// on screen then and has since been erased, for example.  The foreground is
+// ignored because it is re-randomized on every draw; the background only
+// jitters by a couple of colour points, so a blend of twenty points reads as
+// a change.  False when either snapshot is missing or `loc` lies off the
+// window.
+boolean screenCellColorsChanged(pos loc);
 
 // ---------------------------------------------
 // Player actions (events)
@@ -196,6 +218,11 @@ boolean isTrapTriggered(pos loc);
 boolean cellIsVaultInterior(pos loc);
 // Whether the tile's liquid layer holds a liquid (water, lava, and so on).
 boolean cellHasLiquid(pos loc);
+// Whether the lighting pass last marked the tile as being in shadow.  Every
+// tile starts each lighting recomputation in shadow; lights that dispel
+// shadows clear the flag from the tiles they reach (and from their own
+// origin tile), while the miner's light maintains it.
+boolean cellIsInShadow(pos loc);
 
 // ---------------------------------------------
 // Player state (predicates and events)
@@ -229,6 +256,9 @@ boolean playerIsSeized(void);
 boolean isPlayerSubmerged(void);
 boolean isPlayerPoisoned(void);
 boolean isPlayerWeakened(void);
+// Whether the player counts as standing in darkness: the local light on the
+// tile they occupy is more than 10 below the colour of the miner's light.
+boolean playerIsInDarkness(void);
 boolean playerHasFeat(short feat);
 boolean playerHasItem(short category, short kind);
 // Mark a pack item as cursed, so that rules about curse handling (such as a
@@ -259,6 +289,10 @@ void applyTileEffectsToPlayer(void);
 // Armor donning and removal.
 void wearArmor(short kind);
 void takeOffArmor(void);
+// Apply a status that feeds into the derived equipment bonuses (the donning
+// countdown, for example) and refresh those bonuses, so a test can read the
+// result with playerDefense() without calling engine functions itself.
+void applyEquipmentStatusToPlayer(enum statusEffects status, int duration);
 
 // ---------------------------------------------
 // Monsters (predicates and events)
@@ -343,6 +377,7 @@ void hasteMonster(creature *monst, int turns);
 
 void setMonsterSubmerged(creature *monst, boolean submerged);
 void makeMonsterCaptive(creature *monst);
+void makeMonsterDying(creature *monst);
 void makeMonsterDormant(creature *monst);
 
 boolean monsterIsHiddenFrom(const creature *monst, const creature *observer);
@@ -370,6 +405,11 @@ void monsterLosesCarriedItem(creature *monst);
 
 // Make the given monster a follower of the player.
 void makeMonsterFollowPlayer(creature *monst);
+
+// Tell an ally not to follow you any more: it holds its post and mills
+// about nearby instead of tracking you, though it still chases enemies
+// that come within its range.
+void makeMonsterNotFollowPlayer(creature *monst);
 
 // ---------------------------------------------
 // Items (predicates and events)
@@ -464,6 +504,50 @@ void woundPlayer(int amount);
 void enterEasyMode(void);
 
 // ---------------------------------------------
+// Game start-up
+// ---------------------------------------------
+
+// Start the game over from the beginning with the same seed, running the
+// whole start-up sequence again exactly as the game does when a run begins:
+// the message log and archive are cleared, the screen is blacked out, and a
+// freshly generated dungeon welcomes the player.
+void restartGame(void);
+
+// ---------------------------------------------
+// Main menu (variant dialog)
+// ---------------------------------------------
+
+// The game variant currently in effect, named as the Change Variant dialog
+// names it: "Brogue", "Rapid Brogue", or "Bullet Brogue".
+const char *gameVariantName(void);
+
+// Show a one-button dialog whose label is wider than the screen, centred so
+// that both ends of the label land off the display window, and report whether
+// Return chose the button.  The dialog answers from the test's queued input
+// (a Return is queued here), and is dismissed again before returning, so the
+// drawn label can be read afterwards with screenTextContains().
+boolean showOversizedButton(const char *label);
+
+// Show the main menu's Change Variant dialog and answer it from the test's
+// queued input: `answerKey` is one of the dialog's own letter hotkeys, or
+// ESCAPE_KEY to cancel the dialog.  The menu is dismissed again before
+// returning, so the outcome can be read with gameVariantName().
+void showVariantDialog(int answerKey);
+
+// Show the main menu's Change Mode dialog and answer it from the test's
+// queued input: `answerKey` is one of the dialog's own letter hotkeys, or
+// ESCAPE_KEY to cancel the dialog (leaving the mode in effect unchanged).
+// The menu is dismissed again before returning; in test mode the dialog's
+// full text is recorded, so its wording can be read with messageWasShown().
+void showModeDialog(int answerKey);
+
+// Show the main menu's title screen — the screen offering New Game, Play,
+// View and Quit — and dismiss it again by answering Quit.  The menu is
+// dismissed before returning, so the drawn entries can be read afterwards
+// with screenTextContains().
+void showTitleScreen(void);
+
+// ---------------------------------------------
 // Game modes and high scores
 // ---------------------------------------------
 
@@ -505,6 +589,12 @@ int expectedVictoryScore(void);
 
 // Whether the high-score file currently holds an entry with this score.
 boolean highScoreHasScore(int score);
+
+// Empty the high-score list before a run whose recorded score a test will
+// assert on: saveHighScore() refuses to write below the list's lowest
+// entry, so a fresh test needs a known, empty list to write into, and an
+// entry found afterwards was written by that run alone.
+void clearHighScores(void);
 
 // Wear a freshly generated suit of armor at a chosen enchantment.
 void wearArmorOfEnchant(short kind, int enchant);
@@ -583,6 +673,13 @@ void clearArena(void);
 void setArenaRadius(int radius, enum tileType tile);
 item *giveAndEquipRunicWeapon(short kind, short runicKind, short enchant, boolean revealIdentity);
 creature *placeHostileMonster(enum monsterTypes type, pos loc);
+
+// Spawn a monster through the same generation path level population uses,
+// letting it draw a random item from the level's monster-item hopper when its
+// catalog entry says it carries one (always for MONST_CARRY_ITEM_100, a
+// quarter of the time for MONST_CARRY_ITEM_25).  spawnMonster() switches item
+// generation off, so a monster spawned with it never holds anything.
+creature *spawnMonsterWithItemChance(enum monsterTypes type, pos loc);
 
 // Add a dead ally of the given kind to purgatory, so it can be raised with
 // resurrectDeadAllyAt.  The ally dies at `loc` and awaits resurrection there.

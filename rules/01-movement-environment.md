@@ -370,9 +370,11 @@
   [Time.c:1934-1953](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1934-L1953)
 - **BR37131** — Monsters on the level above or below approach the stairs and enter your level after a countdown.
   [Time.c:1956-1977](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1956-L1977)
-- **BR16982** — Standing on a chasm makes you fall to the level below, taking damage from the fall.
+- **BR16982** — Standing on a chasm makes you fall to the level below, unless you are levitating.
+  The fall damages you unless you land in deep water.
   [Time.c:93-98](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L93-L98)
   [Time.c:1000-1012](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1000-L1012)
+  [Time.c:1013-1026](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1013-L1026)
 - **BR17312** — Standing in deep water without levitation can make items in your pack float away in the current and be lost.
   [Time.c:474-505](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L474-L505)
 - **BR20087** — Stepping onto a pressure plate depresses it and triggers the trap it controls.

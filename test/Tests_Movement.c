@@ -1430,6 +1430,204 @@ static boolean br21531_gas_holds_at_seven(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR30801 — Monsters that are activation-only, paralyzed,
+// entranced, or captive do not act when their ticks run out;
+// their timer is reset.
+//
+// Three identical rats start eight squares away.  The control
+// phase waits until every one of them has taken a turn of its own
+// accord, then disables each in a different way and locks in the
+// positions.  Over the following turns none of them may budge:
+// if the rule were broken they would keep closing on you.  The
+// guardian, which acts only when its machine triggers, must stay
+// put from the start.
+// ============================================================
+
+static creature *br30801_subjects[3];  // paralyzed, entranced, captive
+static creature *br30801_guardian;
+static pos br30801_startPos[3];
+static pos br30801_lockedPos[3];
+static pos br30801_guardianStart;
+static boolean br30801_moved[3];
+static boolean br30801_controlDone;
+static int br30801_turn;
+
+static const char *br30801_messages[3] = {
+    "a paralyzed monster does not act when its ticks run out",
+    "an entranced monster does not act when its ticks run out",
+    "a captive monster does not act when its ticks run out"
+};
+
+static boolean br30801_displaced(pos start, pos current) {
+    return current.x != start.x || current.y != start.y;
+}
+
+static void br30801_setup(void) {
+    // Work from the middle of the map so the eight-square approach
+    // runs are guaranteed to be in bounds.
+    pos centre = posAt(levelWidth() / 2, levelHeight() / 2);
+    setTerrain(centre, FLOOR);
+    setPlayerPos(centre);
+    setArenaRadius(10, FLOOR);
+
+    br30801_subjects[0] = placeHostileMonster(MK_RAT, posOffset(centre, 8, 0));
+    br30801_subjects[1] = placeHostileMonster(MK_RAT, posOffset(centre, 8, 2));
+    br30801_subjects[2] = placeHostileMonster(MK_RAT, posOffset(centre, 8, -2));
+    br30801_guardian = placeHostileMonster(MK_GUARDIAN, posOffset(centre, 8, -4));
+
+    for (int i = 0; i < 3; i++) {
+        br30801_startPos[i] = monsterPosition(br30801_subjects[i]);
+        br30801_moved[i] = false;
+    }
+    br30801_guardianStart = monsterPosition(br30801_guardian);
+    br30801_controlDone = false;
+    br30801_turn = 0;
+}
+
+static boolean br30801_step(void) {
+    if (!br30801_controlDone) {
+        // Control phase: each rat must first be seen taking a turn
+        // normally, so its later stillness cannot be a vacuous pass.
+        restOneTurn();
+        br30801_turn++;
+        for (int i = 0; i < 3; i++) {
+            if (!br30801_moved[i]
+                && br30801_displaced(br30801_startPos[i],
+                                     monsterPosition(br30801_subjects[i]))) {
+                br30801_moved[i] = true;
+            }
+        }
+        if (br30801_moved[0] && br30801_moved[1] && br30801_moved[2]) {
+            br30801_controlDone = true;
+            applyStatusToMonster(br30801_subjects[0], STATUS_PARALYZED, 100);
+            applyStatusToMonster(br30801_subjects[1], STATUS_ENTRANCED, 100);
+            makeMonsterCaptive(br30801_subjects[2]);
+            for (int i = 0; i < 3; i++) {
+                br30801_lockedPos[i] = monsterPosition(br30801_subjects[i]);
+            }
+            br30801_turn = 0;
+            return true;
+        }
+        return br30801_turn < 15;   // give up; verify() reports the control
+    }
+
+    restOneTurn();
+    br30801_turn++;
+    return br30801_turn < 6;
+}
+
+static boolean br30801_verify(void) {
+    TEST_ASSERT(br30801_controlDone,
+                "control: each rat takes its turn normally before it is disabled");
+    if (br30801_controlDone) {
+        for (int i = 0; i < 3; i++) {
+            TEST_ASSERT(monsterIsAlive(br30801_subjects[i]),
+                        "the disabled monster is still alive");
+            TEST_ASSERT(!br30801_displaced(br30801_lockedPos[i],
+                                           monsterPosition(br30801_subjects[i])),
+                        br30801_messages[i]);
+        }
+    }
+    TEST_ASSERT(monsterIsAlive(br30801_guardian), "the guardian is still alive");
+    TEST_ASSERT(!br30801_displaced(br30801_guardianStart,
+                                   monsterPosition(br30801_guardian)),
+                "an activation-only monster does not act until its machine triggers");
+    return !testFailed;
+}
+
+// ============================================================
+// BR25953 — Mending ground heals you at the same rate, up to
+// your maximum ("you feel much better.").
+//
+// Starving (nutrition 0) suppresses the player's fickle natural
+// regeneration, so every turn has the same shape: a fixed one
+// point of starvation, then whatever the tile underfoot does.
+// From one starting health, a control turn on bare floor records
+// that fixed balance, a turn in caustic gas records how fast
+// harmful ground drains you, and the mirrored turn on the
+// mending cloud must come out exactly as far ahead as the
+// caustic gas left you behind — that equality is the rule's
+// "same rate", and the control-drain assertion keeps it from
+// passing vacuously.  The last turn starts at full health:
+// starvation dips you one point below, and healing must carry
+// you back to the maximum and not past it.
+// ============================================================
+
+#define BR25953_START_HP 10
+
+static int br25953_hpControl;
+static int br25953_hpHarmed;
+static int br25953_hpMended;
+static int br25953_hpCapped;
+static int br25953_phase;
+
+static void br25953_setup(void) {
+    // Work from the middle of the map so the clouds stay in bounds.
+    pos centre = posAt(levelWidth() / 2, levelHeight() / 2);
+    setTerrain(centre, FLOOR);
+    setPlayerPos(centre);
+    setArenaRadius(4, FLOOR);
+    // Starve the player so natural regeneration (which is fickle about
+    // when it fires) can never mask the tile's own healing.
+    setPlayerNutrition(0);
+    br25953_phase = 0;
+}
+
+static boolean br25953_step(void) {
+    if (br25953_phase == 0) {
+        // Control: one wounded turn with bare floor under you.
+        setPlayerHealth(BR25953_START_HP);
+        restOneTurn();
+        br25953_hpControl = playerHealth();
+        br25953_phase = 1;
+        return true;
+    }
+    if (br25953_phase == 1) {
+        // The same turn standing in caustic gas: the drain rate.
+        spawnFeature(getPlayerPos(), DF_POISON_GAS_CLOUD);
+        setPlayerHealth(BR25953_START_HP);
+        restOneTurn();
+        br25953_hpHarmed = playerHealth();
+        br25953_phase = 2;
+        return true;
+    }
+    if (br25953_phase == 2) {
+        // The mirrored turn on mending ground; the healing cloud
+        // replaces the caustic gas on your own tile.
+        spawnFeature(getPlayerPos(), DF_BLOODFLOWER_POD_BURST);
+        setPlayerHealth(BR25953_START_HP);
+        restOneTurn();
+        br25953_hpMended = playerHealth();
+        br25953_phase = 3;
+        return true;
+    }
+    // Start at full health: starvation dips you one point below the
+    // maximum, so the heal must reach the maximum and stop there.
+    spawnFeature(getPlayerPos(), DF_BLOODFLOWER_POD_BURST);
+    setPlayerHealth(playerMaxHealth());
+    restOneTurn();
+    br25953_hpCapped = playerHealth();
+    return false;
+}
+
+static boolean br25953_verify(void) {
+    TEST_ASSERT(cellHasGas(getPlayerPos()),
+                "the healing cloud surrounds you");
+    TEST_ASSERT(br25953_hpControl > br25953_hpHarmed,
+                "control: harmful ground drains you, so its rate is observable");
+    // The fixed starvation balance is common to the control, harmed and
+    // mended turns and cancels: mending gain == harm drain rearranges to
+    // mended + harmed == 2 * control.
+    TEST_ASSERT_EQ(br25953_hpMended + br25953_hpHarmed, 2 * br25953_hpControl,
+                   "mending ground heals at the same rate harmful ground drains");
+    TEST_ASSERT(messageWasShown("you feel much better."),
+                "mending ground says \"you feel much better.\"");
+    TEST_ASSERT_EQ(br25953_hpCapped, playerMaxHealth(),
+                   "mending ground heals up to your maximum and no further");
+    return !testFailed;
+}
+
 const testCase tests_movement[] = {
     { "BR91235_staff_recharges_a_spent_charge",      staff_recharge_setup, staff_recharge_step, spent_staff_recharges },
     { "BR91235_full_staff_gains_no_charges",         full_staff_setup,    full_staff_rest_step, full_staff_gains_no_charges },
@@ -1477,7 +1675,10 @@ const testCase tests_movement[] = {
     { "BR24904_explosion_immunity_lasts_five_turns", br24904_setup, br24904_step, br24904_survivor_is_temporarily_immune },
 
     { "BR21531_gas_erupts_at_eight_qualifying_neighbours", br21531_erupt_setup, br21531_step, br21531_gas_erupts_at_eight },
-    { "BR21531_gas_holds_at_seven_qualifying_neighbours",  br21531_quiet_setup, br21531_step, br21531_gas_holds_at_seven },
+    { "BR21531_gas_holds_at_seven_qualifying_neighbours",  br21531_quiet_setup,  br21531_step, br21531_gas_holds_at_seven },
+
+    { "BR30801_disabled_monsters_do_not_act", br30801_setup, br30801_step, br30801_verify },
+    { "BR25953_mending_ground_heals", br25953_setup, br25953_step, br25953_verify },
 
     { NULL, NULL, NULL, NULL }
 };

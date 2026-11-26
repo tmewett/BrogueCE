@@ -14,8 +14,10 @@
 //
 // Omitted are everything about the generation process that leaves no
 // deterministic, inspectable trace once the level exists: the order levels are
-// built in, the shapes and placement of rooms other than chunky rooms,
-// vault/lake shapes and placement, doorway and secret
+// built in, the shapes of rooms other than chunky rooms and the three cave
+// size classes (the number of rooms placed on a level is still checked
+// against its generation cap, and how often rooms get hallways is checked
+// against depth), vault/lake shapes and placement, doorway and secret
 // door selection, feature and auto-generator placement, stair-adjacency and
 // waypoint bookkeeping, monster/item population, and the shade a tile is drawn
 // in, all of which need the RNG stream, the drawing code, or a screen.
@@ -159,8 +161,8 @@ static boolean lighting_is_recomputed_from_scratch(void) {
 
     pos far = posAt(there.x < levelWidth() / 2 ? levelWidth() - 2 : 1,
                     there.y < levelHeight() / 2 ? levelHeight() - 2 : 1);
-    TEST_ASSERT_EQ(lightAt(far), 0,
-                   "a tile beyond the light should start each recompute unlit");
+    TEST_ASSERT(lightAt(far) == 0,
+                "a tile beyond the light should start each recompute unlit");
     return !testFailed;
 }
 
@@ -1338,6 +1340,452 @@ static boolean chunky_rooms_are_radius2_disc_chains(void) {
 }
 
 // ============================================================
+// BR23784 — after the first room, up to 35 further rooms are
+// placed, and no more than 35 placement attempts are made.
+//
+// On a finished level each placed room shows up as a region of
+// dry floor: rooms are placed with a tile of clearance from all
+// existing open space and connect to it only through one-tile
+// doorway sites, which are door terrain when they become doors
+// and plain floor when they do not — so a region never spans
+// more than a few rooms merged through doorless doorways, and
+// one room can never split across regions (its floor is one
+// piece).  Hallways and loops hang off the rooms they open into
+// and never form a region of their own.  The region count can
+// therefore only undercount the rooms the generator placed, and
+// "the first room plus at most 35 more" caps it at 36 on every
+// level.  The controls require levels that really do hold
+// several regions, so the bound cannot pass vacuously.  The
+// attempt cap itself leaves no trace once the level exists and
+// is not re-checked here.
+// ============================================================
+
+// Count the 4-connected regions of dry plain floor on the level.  Doors and
+// other non-floor doorway outcomes break a region; liquid layered over the
+// floor does not count as floor.
+static int countDryFloorRegions(void) {
+    int W = levelWidth(), H = levelHeight();
+    static boolean seen[79][29];
+    pos queue[79 * 29];
+    int regions = 0;
+
+    for (int x = 0; x < W; x++) {
+        for (int y = 0; y < H; y++) {
+            seen[x][y] = false;
+        }
+    }
+
+    for (int sx = 0; sx < W; sx++) {
+        for (int sy = 0; sy < H; sy++) {
+            pos start = posAt(sx, sy);
+            if (seen[sx][sy] || terrainAt(start) != FLOOR || cellHasLiquid(start)) {
+                continue;
+            }
+            regions++;
+            int head = 0, tail = 0;
+            seen[sx][sy] = true;
+            queue[tail++] = start;
+            while (head < tail) {
+                pos p = queue[head++];
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        if (dx == 0 && dy == 0 || (dx != 0 && dy != 0)) {
+                            continue; // four-way connectivity
+                        }
+                        int nx = p.x + dx, ny = p.y + dy;
+                        if (nx < 0 || nx >= W || ny < 0 || ny >= H || seen[nx][ny]) {
+                            continue;
+                        }
+                        pos n = posAt(nx, ny);
+                        if (terrainAt(n) == FLOOR && !cellHasLiquid(n)) {
+                            seen[nx][ny] = true;
+                            queue[tail++] = n;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return regions;
+}
+
+// Generate depths 1 through 26 and check every level's floor-region count
+// against the room cap, with a control that levels hold several regions.
+static boolean br23784_room_count_capped(void) {
+    int maxRegions = 0;
+    for (int depth = 1; depth <= 26; depth++) {
+        while (currentDepth() < depth) {
+            descendToNextLevel();
+        }
+        int regions = countDryFloorRegions();
+        if (regions > maxRegions) {
+            maxRegions = regions;
+        }
+    }
+
+    TEST_ASSERT(maxRegions <= 36,
+                "the first room plus at most 35 more caps a level at 36 floor regions");
+    TEST_ASSERT(maxRegions >= 2,
+                "levels should hold several rooms, so the cap is not vacuous");
+    return !testFailed;
+}
+
+// ============================================================
+// BR70413 — the player counts as standing in darkness when the
+// local light is more than 10 below the colour of the miner's
+// light.
+//
+// The level is stripped to granite and the player pocketed in a
+// five-tile floor cell, so the miner's own light is the only
+// light anywhere.  Repainted from the player's tile, it fills
+// that tile to the miner's light colour — nowhere near 10 below —
+// and the player is not in darkness.  Six tiles away the local
+// light is exactly zero: two rings of granite between it and the
+// pocket stop every light ray, so every channel sits below the
+// miner's colour minus 10 and a player standing there counts as
+// standing in darkness.  Repainting from the new tile lifts the
+// same tile straight back out of darkness, so what the rule's
+// test follows is the local light against the threshold, not the
+// location.
+// ============================================================
+
+static boolean br70413_darkness_follows_the_local_light(void) {
+    clearMonsters();
+    pos centre = posAt(levelWidth() / 2, levelHeight() / 2);
+
+    // Strip the level to solid granite, then carve the player's pocket.
+    for (int i = 0; i < levelWidth(); i++) {
+        for (int j = 0; j < levelHeight(); j++) {
+            setTerrain(posAt(i, j), GRANITE);
+        }
+    }
+    for (int dx = -2; dx <= 2; dx++) {
+        for (int dy = -2; dy <= 2; dy++) {
+            setTerrain(posOffset(centre, dx, dy), FLOOR);
+        }
+    }
+    setPlayerPos(centre);
+    recomputeLighting();
+    TEST_ASSERT(!playerIsInDarkness(),
+                "a freshly painted miner's light fills the player's own tile, so it is not darkness");
+
+    pos dark = posOffset(centre, 6, 0);
+    setPlayerPos(dark);
+    TEST_ASSERT_EQ(lightAt(dark), 0,
+                   "control: light cannot cross the granite rings, so the tile's local light is zero");
+    TEST_ASSERT(playerIsInDarkness(),
+                "local light more than 10 below the miner's light counts as standing in darkness");
+
+    recomputeLighting();
+    TEST_ASSERT(!playerIsInDarkness(),
+                "repainting the light from the new tile lifts it back out of darkness");
+    return !testFailed;
+}
+
+// ============================================================
+
+// ============================================================
+// BR43163 — before carving, the whole level is filled with solid
+// granite, and any liquid, gas or surface layer is cleared
+// ============================================================
+
+#define BR43163_FLOOR_MAX 4096
+static pos br43163_oldFloor[BR43163_FLOOR_MAX];
+static int br43163_oldFloorCount;
+
+// Totals across the two level regenerations the test drives: the level's own
+// single pmap only shows the generation being judged, so each regeneration is
+// scored as it is in effect.
+static int br43163_refilled;    // old floor now untouched granite
+static int br43163_leftoverLiquid, br43163_leftoverGas, br43163_leftoverFire;
+
+// Stamp every floor cell of the current level with a liquid, a surface and a
+// gas layer.  The next level is generated over these exact cells -
+// clearLevel() runs before the new carve - so the state they are found in
+// afterwards is entirely the pre-carve wipe's doing: granite where the old
+// level had floor proves the refill, and cleared layers prove the wipe.
+static void br43163_stampLevel(void) {
+    br43163_oldFloorCount = 0;
+    for (int x = 0; x < levelWidth() && br43163_oldFloorCount < BR43163_FLOOR_MAX; x++) {
+        for (int y = 0; y < levelHeight() && br43163_oldFloorCount < BR43163_FLOOR_MAX; y++) {
+            pos p = posAt(x, y);
+            if (terrainAt(p) != FLOOR || playerIsAt(p)) {
+                continue;
+            }
+            br43163_oldFloor[br43163_oldFloorCount++] = p;
+            spawnFeature(p, DF_SHALLOW_WATER);     // liquid layer
+            spawnFeature(p, DF_PLAIN_FIRE);        // surface layer
+            spawnFeature(p, DF_POISON_GAS_CLOUD);  // gas layer
+        }
+    }
+    TEST_ASSERT(br43163_oldFloorCount > 0, "setup: the level should have floor to stamp");
+    TEST_ASSERT(cellHasLiquid(br43163_oldFloor[0]), "setup: the liquid layer was stamped");
+    TEST_ASSERT(cellIsOnFire(br43163_oldFloor[0]), "setup: the surface layer was stamped");
+    TEST_ASSERT(cellHasGas(br43163_oldFloor[0]), "setup: the gas layer was stamped");
+}
+
+// Score the stamped cells as they now stand on the freshly generated level:
+// cells the new carve left as untouched granite, judged for the layers the
+// old level's stamps put on them.
+static void br43163_judgeLevel(void) {
+    for (int i = 0; i < br43163_oldFloorCount; i++) {
+        pos p = br43163_oldFloor[i];
+        if (terrainAt(p) != GRANITE) {
+            continue;
+        }
+        br43163_refilled++;
+        if (cellHasLiquid(p)) br43163_leftoverLiquid++;
+        if (cellHasGas(p)) br43163_leftoverGas++;
+        if (cellIsOnFire(p)) br43163_leftoverFire++;
+    }
+}
+
+static void br43163_setup(void) {
+    br43163_refilled = 0;
+    br43163_leftoverLiquid = br43163_leftoverGas = br43163_leftoverFire = 0;
+
+    br43163_stampLevel();
+    descendToNextLevel();   // depth 2 is generated over the stamped depth 1
+    br43163_judgeLevel();
+
+    br43163_stampLevel();
+    descendToNextLevel();   // depth 3 is generated over the stamped depth 2
+    br43163_judgeLevel();
+}
+
+static boolean br43163_verify(void) {
+    TEST_ASSERT(br43163_refilled > 0,
+                "the new level should be filled with solid granite where the old level had floor, before carving");
+    TEST_ASSERT_EQ(br43163_leftoverLiquid, 0,
+                   "liquid from the previous level should be cleared before carving");
+    TEST_ASSERT_EQ(br43163_leftoverGas, 0,
+                   "gas from the previous level should be cleared before carving");
+    TEST_ASSERT_EQ(br43163_leftoverFire, 0,
+                   "surface effects from the previous level should be cleared before carving");
+    return !testFailed;
+}
+
+// ============================================================
+// BR25779 — A light source's own tile is cleared of shadow
+// whenever the light dispels shadows, so the light's origin is
+// never hidden in shadow.
+//
+// The level is stripped to bare floor first, so no glowing
+// terrain, gas, liquid, or feature can clear a shadow anywhere;
+// after the repaint the only lights left are a will-o'-the-wisp
+// (whose light dispels shadows) and the player's miner's light
+// (which maintains them).  The wisp takes the map corner
+// farthest from the player — at least ~40 tiles away, while its
+// light reaches at most 8 — so the two lights cannot overlap
+// each other's tiles: the wisp's own origin tile must come out
+// of the repaint unshadowed, the player's own origin tile must
+// stay shadowed, and a tile beyond the wisp's reach must keep
+// its shadow as the control.
+// ============================================================
+
+static boolean br25779_origin_cleared_and_controls_hold(void) {
+    clearMonsters();
+
+    // Strip the whole level to plain floor (clearing every layer), so the
+    // only light sources that survive are the two placed here.
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            setTerrain(posAt(x, y), FLOOR);
+        }
+    }
+
+    const pos corners[4] = {
+        posAt(1, 1),
+        posAt(levelWidth() - 2, 1),
+        posAt(1, levelHeight() - 2),
+        posAt(levelWidth() - 2, levelHeight() - 2)
+    };
+    const pos playerPos = getPlayerPos();
+    int farthest = 0;
+    long farDist = -1;
+    for (int i = 0; i < 4; i++) {
+        const long dx = corners[i].x - playerPos.x;
+        const long dy = corners[i].y - playerPos.y;
+        if (dx * dx + dy * dy > farDist) {
+            farDist = dx * dx + dy * dy;
+            farthest = i;
+        }
+    }
+    const pos source = corners[farthest];
+    const pos control = corners[3 - farthest]; // the diagonally opposite corner
+
+    TEST_ASSERT(placeHostileMonster(MK_WILL_O_THE_WISP, source) != NULL,
+                "setup: the wisp should spawn in the chosen corner");
+    recomputeLighting();
+
+    TEST_ASSERT(lightAt(source) > 0,
+                "control: the wisp's own tile holds light, so the wisp is a light source");
+    TEST_ASSERT(!cellIsInShadow(source),
+                "a light source that dispels shadows should clear its own origin tile of shadow");
+    TEST_ASSERT(cellIsInShadow(control),
+                "control: a tile beyond the light's reach keeps its shadow");
+    TEST_ASSERT(cellIsInShadow(playerPos),
+                "control: the miner's light maintains shadows, so your own light's origin tile stays in shadow");
+    return !testFailed;
+}
+
+// ============================================================
+// BR11884 — The chance that a newly placed room gets a
+// hallway attached decreases with depth.
+//
+// Each room placement rolls the level profile's corridor
+// chance, which the depth adjustment slides from 90% on depth 1
+// down to 10% on the amulet level, and every hallway that ends
+// up on the finished level is one such attachment (the scan
+// counts only room-to-door hallway runs, as in BR26268).  With
+// the same room counts offered at every depth, the total number
+// of hallways over the shallow half of the dungeon must
+// therefore exceed the total over the deep half.  Both totals
+// also have to be positive: the chance falls with depth, it
+// does not vanish, and an empty scan would prove nothing.
+// ============================================================
+
+static boolean br11884_hallways_fall_away_with_depth(void) {
+    int shallow = 0, deep = 0;
+
+    for (int depth = 1; depth <= 26; depth++) {
+        while (currentDepth() < depth) {
+            descendToNextLevel();
+        }
+        int hCount = 0, vCount = 0, maxH = 0, maxV = 0;
+        scanHallways(&hCount, &vCount, &maxH, &maxV);
+        if (depth <= 13) {
+            shallow += hCount + vCount;
+        } else {
+            deep += hCount + vCount;
+        }
+    }
+
+    TEST_ASSERT(shallow > 0,
+                "control: shallow levels should carry hallways");
+    TEST_ASSERT(deep > 0,
+                "control: deep levels should still carry hallways (the chance falls, it does not vanish)");
+    TEST_ASSERT(shallow > deep,
+                "rooms get hallways attached less often at depth, so shallow levels should carry more hallways than deep ones");
+    return !testFailed;
+}
+
+// ============================================================
+// BR72185 — Cave rooms are blobs formed by smoothing random
+// noise in one of three sizes: compact (3-12 wide by 4-8
+// tall), tall north-south (3-12 wide by 15-27 tall), or wide
+// east-west (20-27 wide by 4-8 tall).
+//
+// Rooms are recovered from the finished level with the same
+// machinery the chunky-room test uses: 4-connected floor
+// components are cut back into individual rooms at their
+// one-tile doorway and hallway necks, so each piece's bounding
+// box is one room's true footprint, hallway spurs and all.
+// Solid rectangles (small rooms, vaults, straight passages),
+// plain circles, and chained radius-2 disc unions (chunky
+// rooms) are recognised and skipped — none of them is a cave —
+// and among the remaining irregular pieces every footprint must
+// fall in one of the three size bands, with all three bands
+// actually observed across depths 1-26.  The tall band is the
+// load-bearing one: nothing other than a tall cave (3-12 wide,
+// 15-27 tall) can produce it — crosses top out at 8 rows,
+// circles are square and would need to be 15+ wide, and chunky
+// chains are excluded — so a generator that stops rolling tall
+// caves fails the test.
+// ============================================================
+
+// Bounding box of the cells currently in br88382_region, as width and height.
+static void br72185_region_bbox(int *outW, int *outH) {
+    int minX = br88382_W, maxX = -1, minY = br88382_H, maxY = -1;
+    for (int x = 0; x < br88382_W; x++) {
+        for (int y = 0; y < br88382_H; y++) {
+            if (br88382_region[br88382_idx(x, y)]) {
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+            }
+        }
+    }
+    *outW = maxX - minX + 1;
+    *outH = maxY - minY + 1;
+}
+
+// Cut one floor component into its individual rooms and fold each room's
+// footprint into the three cave size-band counters.  A room that is a plain
+// rectangle, a plain circle, or a chained union of radius-2 discs is not a
+// cave and is skipped; an irregular room counts in a band when its bounding
+// box lies in it.
+static void br72185_count_rooms(int *rooms, int *compact, int *tall, int *wide) {
+    memset(br88382_cut, 0, BR88382_AREA);
+    memset(br88382_assigned, 0, BR88382_AREA);
+    br88382_mark_cuts();
+
+    int pieceSize;
+    while ((pieceSize = br88382_next_piece()) > 0) {
+        (void)pieceSize;
+        (*rooms)++;
+        int w, h;
+        br72185_region_bbox(&w, &h);
+        if (br88382_region_count() == w * h) {
+            continue; // a solid rectangle: small room, vault, or straight passage
+        }
+        if (br88382_is_single_circle()) {
+            continue; // a circular room
+        }
+        const boolean isTall = (w >= 3 && w <= 12 && h >= 15 && h <= 27);
+        const boolean isWide = (w >= 20 && w <= 27 && h >= 4 && h <= 8);
+        if (isTall || isWide) {
+            int discs;
+            if (br88382_exact_chain_cover(&discs)) {
+                continue; // a chunky room: discs chained, not smoothed noise
+            }
+        }
+        if (w >= 3 && w <= 12 && h >= 4 && h <= 8) {
+            (*compact)++;
+        } else if (isTall) {
+            (*tall)++;
+        } else if (isWide) {
+            (*wide)++;
+        }
+    }
+}
+
+static boolean br72185_caves_fit_three_size_classes(void) {
+    int rooms = 0, compact = 0, tall = 0, wide = 0;
+
+    br88382_W = levelWidth();
+    br88382_H = levelHeight();
+    memset(br88382_seen, 0, BR88382_AREA);
+
+    for (int depth = 1; depth <= 26; depth++) {
+        while (currentDepth() < depth) {
+            descendToNextLevel();
+        }
+        memset(br88382_seen, 0, BR88382_AREA);
+        for (int x = 0; x < br88382_W; x++) {
+            for (int y = 0; y < br88382_H; y++) {
+                const pos p = posAt(x, y);
+                if (terrainAt(p) != FLOOR || br88382_seen[br88382_idx(x, y)]) {
+                    continue;
+                }
+                br88382_collect_region(p);
+                memcpy(br88382_comp, br88382_region, BR88382_AREA);
+                br72185_count_rooms(&rooms, &compact, &tall, &wide);
+            }
+        }
+    }
+
+    TEST_ASSERT(rooms > 0,
+                "control: the generated levels should hold rooms at all");
+    TEST_ASSERT(compact > 0,
+                "some room should be a compact cave, 3-12 wide by 4-8 tall");
+    TEST_ASSERT(tall > 0,
+                "some room should be a tall north-south cave, 3-12 wide by 15-27 tall");
+    TEST_ASSERT(wide > 0,
+                "some room should be a wide east-west cave, 20-27 wide by 4-8 tall");
+    return !testFailed;
+}
 
 const testCase tests_dungeon[] = {
     { "BR71397_level_is_79_by_29",                       NULL, NULL, level_is_79_by_29 },
@@ -1368,6 +1816,15 @@ const testCase tests_dungeon[] = {
     { "BR24979_lake_bodies_fit_the_generation_canvas", NULL, NULL, lake_bodies_fit_the_generation_canvas },
 
     { "BR88382_chunky_rooms_are_radius2_disc_chains", NULL, NULL, chunky_rooms_are_radius2_disc_chains },
+
+    { "BR23784_room_count_capped_after_the_first", NULL, NULL, br23784_room_count_capped },
+    { "BR70413_darkness_when_local_light_below_miners", NULL, NULL, br70413_darkness_follows_the_local_light },
+
+    { "BR43163_level_refilled_with_granite_and_cleared_layers", br43163_setup, NULL, br43163_verify },
+
+    { "BR25779_light_origin_cleared_of_shadow",   NULL, NULL, br25779_origin_cleared_and_controls_hold },
+    { "BR11884_hallways_fall_away_with_depth",    NULL, NULL, br11884_hallways_fall_away_with_depth },
+    { "BR72185_caves_fit_three_size_classes",      NULL, NULL, br72185_caves_fit_three_size_classes },
 
     { NULL, NULL, NULL, NULL }
 };

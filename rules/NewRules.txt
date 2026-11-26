@@ -110,13 +110,7 @@ Note: discoverCell at Time.c:742-750 sets the DISCOVERED flag on a newly discove
 BR22852 — NEW rule
 "A request for a random number between a lower and upper bound returns a uniformly distributed whole number across the whole inclusive range, so every value from the lower bound to the upper bound is equally likely."
 Citation: [Math.c:160-170](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Math.c#L160-L170)
-Note: Math.c:160-170 is the normal build of rand_range: it computes the span upperBound - lowerBound + 1, guards against wrap-around with an assertion, and returns the lower bound plus a bias-free draw in [0, span-1], yielding a uniform integer in [lowerBound, upperBound]. The degenerate case (upper bound not greater than lower bound) returns the lower bound directly and is covered by BR34428. No rule in rules/* describes this uniform inclusive-range random draw or cites Math.c's rand_range. ID BR22852 is unique across rules/.
-
-------------------------------------------------------------
-BR34428 — NEW rule
-"When the upper bound is not greater than the lower bound, a random request returns the lower bound directly and no random number is drawn."
-Citation: [Math.c:161-163](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Math.c#L161-L163)
-Note: Math.c:161-163 is the degenerate-range branch of rand_range: when upperBound <= lowerBound the function returns lowerBound without consuming randomness. This pairs with BR22852, which covers the uniform draw for a non-degenerate range. No rule in rules/* describes this deterministic degenerate case or cites Math.c's rand_range. ID BR34428 is unique across rules/.
+Note: Math.c:160-170 is the normal build of rand_range: it computes the span upperBound - lowerBound + 1, guards against wrap-around with an assertion, and returns the lower bound plus a bias-free draw in [0, span-1], yielding a uniform integer in [lowerBound, upperBound]. The degenerate case (upper bound not greater than lower bound) returns the lower bound directly. No rule in rules/* describes this uniform inclusive-range random draw or cites Math.c's rand_range. ID BR22852 is unique across rules/.
 
 ------------------------------------------------------------
 BR23144 — NEW rule
@@ -272,7 +266,7 @@ Note: Grid.c:432-434 is the start of createBlobOnGrid's do-loop (within the cite
 BR13355 — NEW rule
 "Each attempt at generating a dungeon feature's blob begins with random noise: every tile in the feature's working area independently becomes floor with a percentSeeded% chance and is left empty otherwise, and this noise is what the cellular automata then smooths into the feature's shape."
 Citation: [Grid.c:436-441](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Grid.c#L436-L441)
-Note: Grid.c:436-441 is the seeding loop of createBlobOnGrid (within the cited Grid.c:418-441 block): each cell of the maxBlobWidth-by-maxBlobHeight working area is set to 1 with probability percentSeeded and 0 otherwise, producing the starting noise that cellularAutomataRound then smooths. BR72185, BR51980, and BR55910 mention smoothing random noise and a 55% initial fill but cite only the Architect.c call sites, not this Grid.c seeding loop; no rule in rules/* describes the percentSeeded noise generation itself. ID BR13355 is unique across rules/ and test/.
+Note: Grid.c:436-441 is the seeding loop of createBlobOnGrid (within the cited Grid.c:418-441 block): each cell of the maxBlobWidth-by-maxBlobHeight working area is set to 1 with probability percentSeeded and 0 otherwise, producing the starting noise that cellularAutomataRound then smooths. BR72185 and BR51980 mention smoothing random noise and a 55% initial fill but cite only the Architect.c call sites, not this Grid.c seeding loop; no rule in rules/* describes the percentSeeded noise generation itself. ID BR13355 is unique across rules/ and test/.
 
 ------------------------------------------------------------
 BR37990 — NEW rule
@@ -573,3 +567,171 @@ BR35125 — NEW rule
 "While the title screen waits for your choice, the flames are recomputed and the menu redrawn on every pass of the input loop only when the game's window is active; if the window is inactive, the display is left as it was."
 Citation: [MainMenu.c:557-561](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L557-L561)
 Note: The guard at MainMenu.c:557 — within the target range 532-558 (the range ends at the "// Update the display." comment on line 558) — gates the flame update, redraw, and shadow-overlay calls at MainMenu.c:559-561, so an inactive window (minimized or hidden) freezes the title screen's animation while the input loop still waits for a click or key. The MOUSE_UP-only selection comment at MainMenu.c:554-555 is already covered by BR91827 (Buttons.c), but no rule in rules/* describes the display being updated only while the application is active. ID BR35125 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR26686 — NEW rule
+"When an item is created in wizard mode, a runic is offered only if the item is a weapon or armor, and a throwing weapon — a dart, incendiary dart, or javelin — is never offered one either, so it is added to the pack with no runic prompt."
+Citation: [Wizard.c:111-113](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L111-L113), [Wizard.c:126-132](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L126-L132)
+Note: Wizard.c:111-113 returns before any runic buttons are built unless the item is a weapon or armor (the chooser is invoked from Wizard.c:488-490 only for those categories, so this guard makes the skip unconditional), and Wizard.c:126-132 falls through to the return at Wizard.c:132 for any weapon that belongs to a quiver — the throwing weapons dart, incendiary dart, and javelin, which receive a quiver number at Items.c:265-273 when generated — so those are created without the "Choose a runic:" dialog at all. BR36714 cites the whole chooser (Wizard.c:106-173) but says only that created weapons and armor *can* be given a runic, and BR58888 concerns dungeon-generated throwing weapons rather than the wizard chooser; no rule in rules/* describes which items are never offered the runic choice. ID BR26686 is unique across all rule files.
+
+------------------------------------------------------------
+BR24625 — NEW rule
+"When the runic chooser appears for a weapon created in wizard mode, a hammer, war axe, pike, or broadsword is offered only the mercy and plenty runics, while any other weapon is offered every runic."
+Citation: [Wizard.c:118-130](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L118-L130)
+Note: Wizard.c:119-124 limits the offered buttons for hammers, war axes, pikes, and broadswords to the runics beyond the good ones — mercy and plenty (Globals.c:1588-1599, indices 8-9 of the ten weapon runics, matching NUMBER_GOOD_WEAPON_ENCHANT_KINDS at Rogue.h:838) — and adds the same offset to the player's selection at Wizard.c:155; Wizard.c:126-130 offers all ten runics for any other weapon with no quiver number. BR36714 cites Wizard.c:106-173 but describes only that a runic can be given and the vorpal-target step; BR58106 and BR58888 concern how dungeon-generated items gain runics, not this chooser's contents, so no rule in rules/* describes the heavy-weapon restriction. ID BR24625 is unique across all rule files.
+
+------------------------------------------------------------
+BR25587 — NEW rule
+"The number of spectral copies that multiplicity armor spawns rises with the armor's enchantment: one copy at the lowest levels, one more copy for every three points of enchantment, and no more than five copies at once."
+Citation: [PowerTables.c:108](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L108), [Combat.c:833-834](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L833-L834), [Items.c:2336-2344](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L2336-L2344)
+Note: PowerTables.c:108 (armorImageCount) computes the copy count as clamp(enchant / 3, 1, 5), Combat.c:833-834 gates the spawn on the 33% melee trigger and loops that many times to clone the attacker, and Items.c:2336-2344 announces the count in the examine text ("N allied spectral duplicates of your attacker will appear for 3 turns") and previews its increase after enchanting. BR23904 (citing PowerTables.c:108) describes only the trigger and the one-to-five range, and BR83507 describes enchantment scaling only for the multiplicity weapon (PowerTables.c:103-104), so no rule in rules/* describes the armor's copy count rising with enchantment — the observable scaling implemented at PowerTables.c:106-123's line 108. ID BR25587 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR10231 — NEW rule
+"When wizard mode asks where to create a monster, the prompt reads "Create <name> where? Choose a visible wall." for a turret and "Create <name> where? Choose a visible unobstructed location." for any other monster."
+Citation: [Wizard.c:373-378](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L373-L378)
+Note: Wizard.c:373-377 builds the placement prompt, choosing its wording by testing whether the created monster is a turret, and Wizard.c:378 displays it as a temporary message (refreshing the sidebar) before the player picks a square at Wizard.c:381. BR24559 cites Wizard.c:371-400 but describes only which chosen locations are valid and that an invalid choice discards the monster, not the prompt text; no rule in rules/* quotes this prompt. ID BR10231 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR30936 — NEW rule
+"A wizard-created monster may be placed on a square you sense but do not see: a telepathically sensed or clairvoyantly visible square counts as valid for placement even though it is not in plain view."
+Citation: [Wizard.c:384-386](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L384-L386)
+Note: Wizard.c:384-386 invalidates a chosen square only when the player can neither see nor sense it; that test (the playerCanSeeOrSense macro, Rogue.h:1271-1272) accepts any square whose flags include ANY_KIND_OF_VISIBLE (visible, clairvoyant, or telepathic — Rogue.h:1113). BR24559 phrases the requirement as a "visible" location alongside the turret-wall rule and the discard on an invalid choice, so the acceptance of sensed-but-unseen squares has no rule in rules/*. ID BR30936 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR21320 — NEW rule
+"While a route is calculated, work always advances from the square nearest the destination that is still waiting, and once a square's neighboring squares have all been considered it is set aside for good; the calculation therefore stops on its own when no waiting squares remain, leaving every square it can reach with its final route distance."
+Citation: [Dijkstra.c:80-90](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Dijkstra.c#L80-L90)
+Note: Dijkstra.c:80-81 close the relaxation conditional and the neighbor loop of one square's pass, and Dijkstra.c:83-88 unlink the worked square from the distance-ordered waiting list before taking the next one, so the update loop (Dijkstra.c:48-90) consumes waiting squares nearest-first and terminates when the list empties — this is the dequeue/termination half of the scan, with the reinsert half (Dijkstra.c:114-123) already covered. Existing rule BR14654 describes nearest-first expansion and shortest routes via that reinsertion at Dijkstra.c:114-123, but it does not describe worked squares being dropped from the waiting list or the scan ending when none remain, and no rule in rules/* cites Dijkstra.c:80-100. ID BR21320 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR16761 — NEW rule
+"Before a route is calculated, every square's stored distance is wiped back to a fixed maximum of 30000, so no distance from an earlier calculation carries over; any square that cannot be reached from the destination keeps that maximum, which the game treats as having no route to it."
+Citation: [Dijkstra.c:92-100](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Dijkstra.c#L92-L100), [Dijkstra.c:247-247](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Dijkstra.c#L247-L247)
+Note: Dijkstra.c:92-100 empties the waiting list and resets every square's distance to the supplied maximum before a fresh scan of the main route calculation, and Dijkstra.c:247 passes 30000 as that maximum; callers read 30000 as "no path" (auto-travel gives up when the player's square reads 30000 at Movement.c:1539 and Movement.c:1617, and the cursor's pathing map ignores such squares at IO.c:2151), so an unreachable square ends up at 30000 instead of retaining a stale value from a previous calculation. BR14684 (Dijkstra.c:127-132) describes the other scan's input seeding — a large maximum when no distance map is supplied — which is a different code path, and no rule in rules/* describes this per-calculation reset. ID BR16761 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR35067 — NEW rule
+"Each asterisk in a button's label is drawn as the next symbol chosen for that button — a left triangle beside the title-screen entries, up and down arrows on a file picker's paging buttons, or an item's glyph after its magic-detection marker in the inventory — and as a plain asterisk when no symbol was chosen for that spot."
+Citation: [Buttons.c:105-111](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L105-L111)
+Note: Buttons.c:106-111 is the placeholder branch of the button-drawing loop: when the label character is '*', it is replaced by the next character of that button's symbol string if one was set (Buttons.c:107-108), advancing through the symbols with each asterisk (Buttons.c:110), so the symbols configured at MainMenu.c:285, MainMenu.c:784-798, and Items.c:2906-2938 actually appear on screen. Rules BR77643 (title-screen entries), BR84005 (file-picker paging arrows), and BR59433 (inventory magic markers) describe those buttons' visible contents but cite only the setup sites in MainMenu.c and Items.c; no rule in rules/* describes the placeholder substitution when the button is drawn. ID BR35067 is unique across all rule files.
+
+------------------------------------------------------------
+BR14809 — NEW rule
+"Each character of a button's label is drawn at the button's own position, but any character that would land outside the display window is skipped, so a label running past the edge of the screen is simply cut off there instead of being drawn off-screen."
+Citation: [Buttons.c:113-114](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L113-L114)
+Note: Buttons.c:113 guards the per-character plot at Buttons.c:114 with a display-window bounds check, so label characters outside the window are never drawn (the drawing loop also stops before the rightmost column at Buttons.c:80). BR23709 covers buttons skipped entirely because they are not marked for display, but no rule in rules/* describes a drawn button's label being clipped to the screen edges. ID BR14809 is unique across all rule files.
+
+------------------------------------------------------------
+BR12483 — NEW rule
+"Every screen cell a button covers is marked with that button's opacity when the menu is drawn as an overlay, so a translucent button lets the screen behind it show through rather than blocking it; buttons appear at 95% opacity in menus such as the actions menu and the inventory, and at 75% along the bottom row."
+Citation: [Buttons.c:115-118](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L115-L118)
+Note: Buttons.c:115-118 stores the button's opacity in each covered cell of the overlay buffer (direct-to-screen drawing has no buffer, so no opacity is recorded there); buttons get translucent opacities at IO.c:189 and IO.c:454 (95 and 75) and Items.c:2875 (95), and hovering or pressing applies the opacity twice to make the button more see-through (Buttons.c:73-76), all blending when the overlay is composited. BR30288 describes 95% opacity only for the whole help-screen overlay citing IO.c, and no rule in rules/* describes button cells carrying opacity. ID BR12483 is unique across all rule files.
+
+------------------------------------------------------------
+BR14317 — NEW rule
+"Painting a menu button never disturbs the game's own random-number sequence: any randomness used while the button is drawn comes from the decorative stream, and the ordinary sequence is switched back in the moment the button is finished, so redrawing menus cannot change the game's outcomes."
+Citation: [Buttons.c:46-47](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L46-L47), [Buttons.c:121-121](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L121-L121)
+Note: The button-drawing routine saves the current random-number source and switches to the cosmetic one at Buttons.c:46-47, and Buttons.c:121 — the restore at the end of the draw, the last statement inside the cited Buttons.c:107-125 range — switches back, so nothing drawn for a button can advance the stream that governs gameplay. BR26982 describes this same cosmetic-only pattern solely for fetching recorded events (MainMenu.c:1252-1257); no rule in rules/* covers randomness during button drawing. ID BR14317 is unique across all rule files.
+
+------------------------------------------------------------
+BR29809 — NEW rule
+"The alert shown when a newly noticed monster comes to your attention never disturbs the game's own random-number sequence: any randomness used while the alert is composed and shown comes from the decorative stream, and the ordinary sequence is switched back the moment the alert is finished, so producing the alert cannot change the game's outcomes."
+Citation: [Time.c:2499-2499](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2499-L2499), [Time.c:2512-2512](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2512-L2512)
+Note: Time.c:2499 switches the random-number source to the cosmetic generator before the monster's name and the "you see/sense" message are built (the previous source is saved at Time.c:2498), and Time.c:2512 (restoreRNG) switches the ordinary generator back after the message is posted, so nothing in the alert can advance the stream that governs gameplay. BR14317 covers this same cosmetic-only pattern for drawing menu buttons (Buttons.c:46-47, 121) and BR26982 for fetching recorded events (MainMenu.c:1252-1257), but no rule in rules/* describes the pattern at this Time.c site. ID BR29809 is unique across all rule files.
+
+------------------------------------------------------------
+BR36246 — NEW rule
+"The alert for a newly noticed, non-allied monster reads "you see a <monster>" when the monster's square is directly visible and "you sense a <monster>" when you perceive the monster without directly seeing its square, using "an" before a vowel-sounding name."
+Citation: [Time.c:2501-2505](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2501-L2505)
+Note: Time.c:2501 fetches the monster's name and Time.c:2502-2505 builds the message, choosing "see" or "sense" from playerCanDirectlySee of the monster's square and inserting "n" after the "a" when the name is vowelish, yielding e.g. "you see a goblin" versus "you sense an ogre". The alert is emitted only for a monster that is neither an ally (Time.c:2495) nor already marked seen or visible (Time.c:2494), and only while cautious mode or automation is active (Time.c:2497). No rule in rules/* describes this wording or cites these lines. ID BR36246 is unique across all rule files.
+
+------------------------------------------------------------
+BR42379 — NEW rule
+"In cautious mode the monster-spotting alert is a message ending with a period that must be acknowledged before play continues; when cautious mode is off while automation such as resting or auto-exploration is running, the same alert appears as a combat message that does not pause the game."
+Citation: [Time.c:2497-2511](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2497-L2511)
+Note: Time.c:2497 guards the announcement on cautiousMode || automationActive; inside it, Time.c:2506-2508 appends "." and displays the text with REQUIRE_ACKNOWLEDGMENT when cautious mode is on (a --MORE-- pause, per BR26976), while the else branch at Time.c:2509-2511 posts it as a combat message when only automation is active. BR19564 notes only that auto-explore stops when you are disturbed; no rule in rules/* describes how the spotting alert is presented in cautious mode versus automation. ID BR42379 is unique across all rule files.
+
+------------------------------------------------------------
+BR34296 — NEW rule
+"Every monster you can currently see is marked as having just been visible, and the mark is dropped once you can no longer see it; this mark is what makes the monster-spotting alert fire when a monster first comes into your view rather than on every turn it remains in sight."
+Citation: [Time.c:2517-2518](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2517-L2518), [Time.c:2494-2494](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2494-L2494), [Time.c:2548-2554](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2548-L2554)
+Note: Time.c:2517-2518 sets MB_WAS_VISIBLE on each currently visible monster every turn; the alert condition at Time.c:2494 — just above the cited range — requires the monster to lack MB_WAS_VISIBLE (and MB_ALREADY_SEEN), and Time.c:2548-2554 clears the mark when a monster (other than a captive, which is deliberately never unmarked) is no longer visible, so the alert keys off the transition into view. No rule in rules/* describes this visible marking or the once-per-arrival alert it enables; BR21760 (Time.c:2517-2523) cites the same block but describes only the secret reveal. ID BR34296 is unique across all rule files.
+
+------------------------------------------------------------
+BR14132 — NEW rule
+"Every displayed message is written as proper sentences: its first character is capitalized, and each character that follows a line break is capitalized too, so each line of text the message area shows begins with a capital letter."
+Citation: [IO.c:3104-3118](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3104-L3118)
+Note: IO.c:3104 starts the pass with a sentence already begun, IO.c:3114-3115 re-arms that start at every newline in the message text, and IO.c:3116-3118 uppercases the next character and clears the flag, so archived messages stored in lowercase display capitalized after they are folded (BR87254). BR58724 covers capitalizing only the temporary prompt text, so no rule in rules/* describes the capitalization of the messages themselves. ID BR14132 is unique across all rule files.
+
+------------------------------------------------------------
+BR12951 — NEW rule
+"When a displayed message has a quotation mark sitting immediately before a period or comma, the two are swapped, so the punctuation appears inside the closing quote — ending 'word.' or 'word,' in the American style."
+Citation: [IO.c:3109-3113](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3109-L3113)
+Note: IO.c:3109-3110 detects a quotation mark immediately followed by a period or comma, and IO.c:3112-3113 exchanges the two characters, implementing the American quotation-mark/punctuation ordering rule noted in the comment at IO.c:3111. No rule in rules/* describes where the closing quotation mark is placed relative to a following period or comma in displayed text. ID BR12951 is unique across all rule files.
+
+------------------------------------------------------------
+BR40849 — NEW rule
+"The color codes that tint parts of a message are skipped while sentences are fixed up, so a message's colors are never disturbed and the first visible letter of a line is still the one that gets capitalized."
+Citation: [IO.c:3107-3108](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3107-L3108)
+Note: IO.c:3107-3108 jumps over a color escape sequence without examining its bytes, so neither the capitalization (IO.c:3116-3118) nor the quotation-ordering swap (IO.c:3109-3113) can treat a color code as text; without the skip, a line whose first visible letter follows a color change would not be capitalized and the color sequence itself could be rewritten. BR31995 covers only choosing message color by importance; no rule in rules/* describes color codes being left untouched while messages are formatted for display. ID BR40849 is unique across all rule files.
+
+------------------------------------------------------------
+BR15615 — NEW rule
+"When a recording is parsed, each recorded mouse event — a mouse button press, a mouse button release, or the mouse entering a new cell — is written to the description file as 'Mouse click: (x, y)' with the coordinates read from the recording, followed by a note of any CTRL or SHIFT modifier recorded with it."
+Citation: [Recordings.c:1477-1483](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L1477-L1483)
+Note: Recordings.c:1477-1478 group the MOUSE_DOWN and MOUSE_ENTERED_CELL cases with the MOUSE_UP case above them, so all three mouse event types take the same branch: Recordings.c:1479-1480 recall the event's two coordinate bytes, Recordings.c:1481 formats "Mouse click: (x, y)", and Recordings.c:1482 appends the CTRL/SHIFT modifier text. This is the per-event description written by the parse-recording debug feature parseFile (Recordings.c:1429), which opens "Recording Description.txt" at Recordings.c:1450; its only call site is currently commented out at IO.c:2698. No rule in rules/* describes any output of the recording parser. ID BR15615 is unique across all rule files.
+
+------------------------------------------------------------
+BR34612 — NEW rule
+"When a recording is parsed, an RNG-check event is written to the description file as 'RNG check: n', where n is the check value recalled from the recording."
+Citation: [Recordings.c:1484-1486](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L1484-L1486)
+Note: Recordings.c:1484 selects the RNG_CHECK case of the event-description switch inside parseFile (Recordings.c:1429), Recordings.c:1485 recalls the event's data byte and formats "RNG check: %i" with it, and the parse loop then writes the line at Recordings.c:1491. No rule in rules/* describes this or any other recording-parser output. ID BR34612 is unique across all rule files.
+
+------------------------------------------------------------
+BR13228 — NEW rule
+"When a recording is parsed, an event whose type byte is not recognized is written to the description file as 'UNKNOWN EVENT TYPE: n' rather than stopping the parse."
+Citation: [Recordings.c:1487-1489](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L1487-L1489)
+Note: Recordings.c:1487 is the default branch of the event-description switch in parseFile (Recordings.c:1429); Recordings.c:1488 formats "UNKNOWN EVENT TYPE: %i" with the raw event type byte, and control then falls to Recordings.c:1491 to write the line and the loop at Recordings.c:1468 continues, so an unrecognized event type is reported in place and parsing proceeds. No rule in rules/* describes this fallback. ID BR13228 is unique across all rule files.
+
+------------------------------------------------------------
+BR35314 — NEW rule
+"Each event written to a parsed recording's description file begins with the event's sequence number, the byte position in the file where the event starts, and the event's length in bytes, followed by the event's description text."
+Citation: [Recordings.c:1491-1491](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L1491)
+Note: Recordings.c:1491 writes "Event %li, loc %li, length %li" using the loop counter i, startLoc captured at Recordings.c:1469, and the difference recordingLocation - startLoc after the event's bytes were recalled, then appends the description built by the switch at Recordings.c:1471-1490. No rule in rules/* describes the line format of the recording parser's output. ID BR35314 is unique across all rule files.
+
+------------------------------------------------------------
+BR16220 — NEW rule
+"When a wound makes a creature bleed, what ends up on the floor matches the creature: a centaur leaves a pool of blood, an underworm a pool of worm entrails, a sentinel or phylactery a pile of rubble, a lich a pile of ashes, a pixie a pool of green blood, and a phantom a glowing ectoplasmic residue. Wounding a dart turret or a kraken leaves nothing on the floor at all."
+Citation: [Globals.c:1094-1110](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1094-L1110), [Combat.c:1546-1553](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1546-L1553)
+Note: In Globals.c:1094-1110 the blood field of each monster entry holds the substance it sheds: red blood at Globals.c:1094 (centaur), worm entrails at Globals.c:1096 (underworm), rubble at Globals.c:1098 (sentinel) and Globals.c:1106 (phylactery), ashes at Globals.c:1104 (lich), green blood at Globals.c:1108 (pixie), and ectoplasmic residue at Globals.c:1110 (phantom), while Globals.c:1100 (dart turret) and Globals.c:1102 (kraken) hold none; Combat.c:1546-1553 spawns that blood feature on any damaging hit, scaled to the damage, and skips creatures with no blood. The bestiary rules for these entries (BR68715, BR52291, BR20321, BR53622, BR88545, BR62417, BR18852, BR89674, BR13994) describe their stats, speeds, flags, lights, and spells but none says what each one leaves on the floor, and BR58833 says only that wounds bleed more with bigger injuries, not which substance comes out; no rule in rules/* covers this. ID BR16220 is unique across all rule files.
+
+------------------------------------------------------------
+BR24821 — NEW rule
+"A thrown item's flight ends as soon as it reaches a non-submerged creature's square: any item thrown along a line occupied by a creature — a potion, a scroll, food, a missed weapon — stops at that creature and resolves there (shatters, bursts, or lands) instead of flying past it."
+Citation: [Items.c:6124-6147](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6124-L6147)
+Note: Items.c:6124-6126 detects a non-submerged creature on the projectile's path and the break at Items.c:6146 exits the cell loop at that square, after which the potion shatter (Items.c:6202-6274), incendiary dart burst (Items.c:6275-6281), or floor drop (Items.c:6283-6287) all resolve at the creature's location; a weapon that scores a hit instead consumes itself first (Items.c:6140-6145, covered by BR15388). Rules BR77762, BR36664, and BR16839 describe what happens at the impact point but none states that a creature arrests a thrown item's flight. ID BR24821 is unique across all rule files.
+
+------------------------------------------------------------
+BR16923 — NEW rule
+"A submerged creature is passed over by a thrown item: the item neither strikes nor stops at a creature that is submerged, and continues along its path as if the creature were not there."
+Citation: [Items.c:6124-6147](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6124-L6147)
+Note: The guard at Items.c:6126 (`!(monst->bookkeepingFlags & MB_SUBMERGED)`) wraps the whole creature-hit block — the weapon strike at Items.c:6140-6145 and the flight-ending break at Items.c:6146, closed by the brace at Items.c:6147 — so for a submerged creature the loop simply continues to the next cell. Existing submerged rules (BR92702, BR97021, BR90851, BR47057) cover hiding, vision, explosions, and fire, but none covers thrown items. ID BR16923 is unique across all rule files.
+
+------------------------------------------------------------
+BR24544 — NEW rule
+"An incendiary dart that reaches a creature never makes a weapon attack — no attack roll and no weapon damage — instead it stops at the creature and bursts into flame, setting the creature on fire."
+Citation: [Items.c:6140-6145](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6140-L6145), [Items.c:6275-6281](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6275-L6281)
+Note: Items.c:6141 excludes `theItem->kind == INCENDIARY_DART` from `hitMonsterWithProjectileWeapon`, so although the dart has the WEAPON category the condition at Items.c:6140 is false, the break at Items.c:6146 ends the flight at the creature's square, and the branch at Items.c:6275-6281 spawns DF_DART_EXPLOSION and calls exposeCreatureToFire on the creature there instead. BR65609 describes the burst on impact but no rule states that the dart is exempt from the normal weapon strike used for every other thrown weapon. ID BR24544 is unique across all rule files.
+
+------------------------------------------------------------
+BR14982 — NEW rule
+"While you are confused, you are never asked "Dive into the depths?" before moving into a known chasm or hole — the confirmation is skipped entirely, so a confused step carries you into the depths with no prompt."
+Citation: [Movement.c:1060-1070](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L1060-L1070)
+Note: Movement.c:1062 is the `!player.status[STATUS_CONFUSED]` guard inside the dive-confirmation block (Movement.c:1060-1070); when the player is confused the whole `else if` fails, so the "Dive into the depths?" prompt at Movement.c:1066 never appears and the move proceeds unconfirmed. BR63035 covers the prompt and BR91998 covers levitation removing it, but no rule in rules/* describes confusion bypassing this confirmation (the only confusion-related movement warnings covered, BR12017/BR88965, are the separate "Risk stumbling into lava?" dialog at Movement.c:866-891). ID BR14982 is unique across all rule files.
+
+------------------------------------------------------------
+BR36929 — NEW rule
+"While you are confused, you are never asked "Venture into flame?" before moving into visible fire — the confirmation is skipped entirely, so a confused stumble into flame happens with no prompt."
+Citation: [Movement.c:1072-1078](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L1072-L1078)
+Note: Movement.c:1073 is the `!player.status[STATUS_CONFUSED]` guard inside the fire-confirmation block (Movement.c:1072-1082); when the player is confused the whole `else if` fails, so the "Venture into flame?" prompt at Movement.c:1078 never appears and the move proceeds unconfirmed. BR95206 covers the prompt and its burning/fire-immunity exemptions but does not mention confusion, and no rule in rules/* describes confusion bypassing this confirmation. ID BR36929 is unique across all rule files.

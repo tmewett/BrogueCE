@@ -16,6 +16,7 @@ extern const testCase tests_dungeon[];
 extern const testCase tests_bestiary[];
 extern const testCase tests_death[];
 extern const testCase tests_runic[];
+extern const testCase tests_newrules[];
 
 const testCase *const testSuites[] = {
     tests_examples,
@@ -30,5 +31,6 @@ const testCase *const testSuites[] = {
     tests_bestiary,
     tests_death,
     tests_runic,
+    tests_newrules,
     NULL
 };

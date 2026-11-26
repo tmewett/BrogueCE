@@ -2,6 +2,7 @@
 #include "Rogue.h"
 #include "Globals.h"
 #include "GlobalsBase.h"
+#include "platform.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,15 +24,18 @@ static rogueEvent inputQueue[TEST_INPUT_QUEUE_SIZE];
 static int inputQueueHead = 0;
 static int inputQueueTail = 0;
 
-// Messages shown to the player during the current test.
+// Messages shown to the player during the current test.  An entry must hold
+// a whole recorded dialog: in test mode printTextBox() hands its full text to
+// recordTestMessage() so tests can assert on it, and TEXT_MAX_LENGTH is the
+// largest single string that text can reach.
 #define TEST_MESSAGE_LOG_SIZE 64
-static char messageLog[TEST_MESSAGE_LOG_SIZE][DCOLS * 2];
+static char messageLog[TEST_MESSAGE_LOG_SIZE][TEXT_MAX_LENGTH + 1];
 static int messageLogCount = 0;
 
 // Snapshot of the messages the engine emitted while the game was starting up
 // (the welcome message and its fellows), taken by runTestByName() just before
 // it clears the log for the test itself.
-static char startupMessageLog[TEST_MESSAGE_LOG_SIZE][DCOLS * 2];
+static char startupMessageLog[TEST_MESSAGE_LOG_SIZE][TEXT_MAX_LENGTH + 1];
 static int startupMessageCount = 0;
 
 // Set while runQueuedInputThroughMainLoop() is pumping the engine's main input
@@ -47,11 +51,21 @@ static boolean inputLoopPumpActive = false;
 static char screenSnapshot[ROWS][COLS + 1];
 static boolean screenSnapshotValid = false;
 
+// Background colour components of the same frame, for detecting a transient
+// highlight with screenCellColorsChanged().  The foreground is deliberately
+// not kept: plotCharWithColor() re-randomizes it on every draw.
+static short screenSnapshotBack[ROWS][COLS][3];
+static short rememberedBack[ROWS][COLS][3];
+static boolean rememberedColorsValid = false;
+
 static void captureScreenSnapshot(void) {
     for (int y = 0; y < ROWS; y++) {
         for (int x = 0; x < COLS; x++) {
             int glyph = (int) displayBuffer.cells[x][y].character;
             screenSnapshot[y][x] = (glyph >= ' ' && glyph < 127) ? (char) glyph : ' ';
+            for (int c = 0; c < 3; c++) {
+                screenSnapshotBack[y][x][c] = displayBuffer.cells[x][y].backColorComponents[c];
+            }
         }
         screenSnapshot[y][COLS] = '\0';
     }
@@ -64,6 +78,32 @@ boolean screenTextContains(const char *substring) {
     }
     for (int y = 0; y < ROWS; y++) {
         if (strstr(screenSnapshot[y], substring) != NULL) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void rememberScreenColors(void) {
+    memcpy(rememberedBack, screenSnapshotBack, sizeof(rememberedBack));
+    rememberedColorsValid = screenSnapshotValid;
+}
+
+boolean screenCellColorsChanged(pos loc) {
+    if (!rememberedColorsValid || !screenSnapshotValid) {
+        return false;
+    }
+    windowpos w = mapToWindow(loc);
+    if (!locIsInWindow(w)) {
+        return false;
+    }
+    for (int c = 0; c < 3; c++) {
+        int delta = screenSnapshotBack[w.window_y][w.window_x][c]
+                    - rememberedBack[w.window_y][w.window_x][c];
+        if (delta < 0) {
+            delta = -delta;
+        }
+        if (delta >= 6) {
             return true;
         }
     }
@@ -187,6 +227,29 @@ const char *lastMessage(void) {
     return messageLog[messageLogCount - 1];
 }
 
+const char *messageColorOf(const char *substring) {
+    // The game encodes a message's colour as a four-byte escape at the head
+    // of the recorded text.  Re-encode the two importance colours exactly the
+    // way the game does and compare against those.
+    char goodEncoded[8] = "";
+    char badEncoded[8] = "";
+
+    encodeMessageColor(goodEncoded, 0, &goodMessageColor);
+    encodeMessageColor(badEncoded, 0, &badMessageColor);
+    for (int i = 0; i < messageLogCount; i++) {
+        if (strstr(messageLog[i], substring) != NULL) {
+            if (strncmp(messageLog[i], badEncoded, 4) == 0) {
+                return "bad";
+            }
+            if (strncmp(messageLog[i], goodEncoded, 4) == 0) {
+                return "good";
+            }
+            return "white"; // an explicit white, or no colour escape at all
+        }
+    }
+    return NULL;
+}
+
 void printTestMessages(void) {
     for (int i = 0; i < messageLogCount; i++) {
         fprintf(stderr,"-- %s\n", messageLog[i]);
@@ -273,6 +336,7 @@ void runTestByName(const char *name) {
             clearInputQueue();
             clearMessages();
             screenSnapshotValid = false;
+            rememberedColorsValid = false;
 
             // Setup
             if (currentTest->setup) currentTest->setup();
@@ -490,6 +554,13 @@ boolean cellHasLiquid(pos loc) {
     return pmapAt(loc)->layers[LIQUID] != NOTHING;
 }
 
+boolean cellIsInShadow(pos loc) {
+    if (!isPosInMap(loc)) {
+        return false;
+    }
+    return (pmapAt(loc)->flags & IS_IN_SHADOW) != 0;
+}
+
 // ---------------------------------------------
 // Player state
 // ---------------------------------------------
@@ -550,8 +621,106 @@ void enterEasyMode(void) {
 }
 
 // ---------------------------------------------
+// Game start-up
+// ---------------------------------------------
+
+// See the declaration in TestFramework.h.
+void restartGame(void) {
+    uint64_t seed = dungeonSeed();
+    initializeRogue(seed);
+    startLevel(rogue.depthLevel, 1);
+}
+
+// ---------------------------------------------
 // Game modes and high scores
 // ---------------------------------------------
+
+// The main menu waits for input only inside pauseForMilliseconds, which the
+// null console always answers with "no input arrived" — the menu's flame loop
+// would spin forever in test mode.  While showVariantDialog() runs the menu,
+// report input unconditionally so the menu pumps the test's queued keystrokes
+// through nextBrogueEvent() instead, exactly as a live console would.
+static boolean menuPauseSeesQueuedInput(short milliseconds, PauseBehavior behavior) {
+    return true;
+}
+
+void showVariantDialog(int answerKey) {
+    boolean (*savedPause)(short, PauseBehavior) = currentConsole.pauseForMilliseconds;
+    currentConsole.pauseForMilliseconds = menuPauseSeesQueuedInput;
+
+    // The menu path, hidden from the test: open the Play flyout, choose
+    // "Change Variant", answer the dialog, then quit the menu.
+    rogue.nextGame = NG_NOTHING; // a prior dialog run leaves NG_QUIT behind
+    queueKeystroke('p', false, false);
+    queueKeystroke('a', false, false);
+    queueKeystroke(answerKey, false, false);
+    queueKeystroke('q', false, false);
+    mainBrogueJunction();
+
+    currentConsole.pauseForMilliseconds = savedPause;
+    clearInputQueue();
+}
+
+// See the declaration in TestFramework.h.
+void showModeDialog(int answerKey) {
+    boolean (*savedPause)(short, PauseBehavior) = currentConsole.pauseForMilliseconds;
+    currentConsole.pauseForMilliseconds = menuPauseSeesQueuedInput;
+
+    // The menu path, hidden from the test: open the Play flyout, choose
+    // "Change Mode", answer the dialog, then quit the menu.
+    rogue.nextGame = NG_NOTHING; // a prior dialog run leaves NG_QUIT behind
+    queueKeystroke('p', false, false);
+    queueKeystroke('m', false, false);
+    queueKeystroke(answerKey, false, false);
+    queueKeystroke('q', false, false);
+    mainBrogueJunction();
+
+    currentConsole.pauseForMilliseconds = savedPause;
+    clearInputQueue();
+}
+
+// See the declaration in TestFramework.h.
+void showTitleScreen(void) {
+    boolean (*savedPause)(short, PauseBehavior) = currentConsole.pauseForMilliseconds;
+    currentConsole.pauseForMilliseconds = menuPauseSeesQueuedInput;
+
+    // The menu path, hidden from the test: press Quit on the title screen.
+    // The menu draws its buttons before it waits for that key, so the frame
+    // the engine captures at the input request is the title screen itself.
+    rogue.nextGame = NG_NOTHING; // a prior dialog run leaves NG_QUIT behind
+    queueKeystroke('q', false, false);
+    mainBrogueJunction();
+
+    currentConsole.pauseForMilliseconds = savedPause;
+    clearInputQueue();
+}
+
+// See the declaration in TestFramework.h.
+boolean showOversizedButton(const char *label) {
+    brogueButton button;
+    initializeButton(&button);
+    snprintf(button.text, BUTTON_TEXT_SIZE, "%s", label);
+    button.hotkey[0] = RETURN_KEY;
+
+    // Centred like any other dialog: a label wider than the screen is pushed
+    // past both edges, which is the situation the clipping rule describes.
+    const int width = strLenWithoutEscapes(button.text);
+    button.x = (COLS - width) / 2;
+    button.y = ROWS / 2;
+
+    queueKeystroke(RETURN_KEY, false, false);
+    const short chosen = buttonInputLoop(&button, 1, 0, button.y, COLS, 1, NULL);
+    clearInputQueue();
+    return chosen == 0;
+}
+
+const char *gameVariantName(void) {
+    switch (gameVariant) {
+        case VARIANT_RAPID_BROGUE:  return "Rapid Brogue";
+        case VARIANT_BULLET_BROGUE: return "Bullet Brogue";
+        default:                    return "Brogue";
+    }
+}
 
 void attemptWizardItemCreation(void) {
     dialogCreateItemOrMonster();
@@ -643,9 +812,9 @@ void givePlayerGold(int amount) {
     rogue.gold = amount;
 }
 
-// Mirrors the score a victory computes: gold plus the value of every carried
-// item (lumenstones are carried in no test, and only a greater victory doubles
-// the amulet's value).
+// Mirrors the score an ordinary (escape) victory computes: gold plus the
+// value of every carried item.  A greater victory doubles the amulet's value
+// on top of this, which callers add themselves.
 int expectedVictoryScore(void) {
     long total = rogue.gold;
     for (item *theItem = packItems->nextItem; theItem != NULL; theItem = theItem->nextItem) {
@@ -665,6 +834,22 @@ boolean highScoreHasScore(int score) {
         }
     }
     return false;
+}
+
+void clearHighScores(void) {
+    // Same zeroed layout the engine writes for a missing file, so the next
+    // load or save sees a full list of empty entries with a lowest score of 0.
+    char highScoresFilename[BROGUE_FILENAME_MAX];
+    setHighScoresFilename(highScoresFilename, BROGUE_FILENAME_MAX);
+    FILE *scoresFile = fopen(highScoresFilename, "w");
+    if (scoresFile == NULL) {
+        testFail("could not open the high-score file to clear it");
+        return;
+    }
+    for (int i = 0; i < HIGH_SCORES_COUNT; i++) {
+        fprintf(scoresFile, "%li\t%li\t%s", (long) 0, (long) 0, "(empty entry)\n");
+    }
+    fclose(scoresFile);
 }
 
 int playerNutrition(void) {
@@ -722,6 +907,10 @@ boolean isPlayerPoisoned(void) {
 
 boolean isPlayerWeakened(void) {
     return player.status[STATUS_WEAKENED] > 0;
+}
+
+boolean playerIsInDarkness(void) {
+    return playerInDarkness();
 }
 
 boolean playerHasFeat(short feat) {
@@ -791,6 +980,11 @@ void takeOffArmor(void) {
     if (rogue.armor != NULL) {
         unequipItem(rogue.armor, true);
     }
+}
+
+void applyEquipmentStatusToPlayer(enum statusEffects status, int duration) {
+    applyStatusToPlayer(status, duration);
+    recalculateEquipmentBonuses();
 }
 
 // ---------------------------------------------
@@ -1126,6 +1320,16 @@ void makeMonsterCaptive(creature *monst) {
     }
 }
 
+// Mark the monster as dying through the engine's own death path — the state
+// that stops anyone attacking it — but leave it in the monster chain;
+// removeDeadMonsters() only runs on the next turn, so the test can still
+// inspect it afterwards.
+void makeMonsterDying(creature *monst) {
+    if (monst != NULL && !(monst->bookkeepingFlags & MB_IS_DYING)) {
+        killCreature(monst, false);
+    }
+}
+
 void makeMonsterDormant(creature *monst) {
     if (monst != NULL) {
         monst->bookkeepingFlags |= MB_IS_DORMANT;
@@ -1182,6 +1386,13 @@ void monsterLosesCarriedItem(creature *monst) {
 
 void makeMonsterFollowPlayer(creature *monst) {
     makeMonsterFollow(monst, &player);
+}
+
+// See the declaration in TestFramework.h.
+void makeMonsterNotFollowPlayer(creature *monst) {
+    if (monst != NULL) {
+        monst->bookkeepingFlags |= MB_DOES_NOT_TRACK_LEADER;
+    }
 }
 
 enum monsterTypes chooseMonsterTypeByProperty(enum boltType bolt, enum monsterBehaviorFlags behaviorFlagsInclude,  enum monsterBehaviorFlags behaviorFlagsExclude, enum monsterAbilityFlags abilityFlagsInclude, enum monsterAbilityFlags abilityFlagsExclude) {
@@ -1419,7 +1630,14 @@ unsigned long itemGoldValue(const item *theItem) {
 }
 
 boolean itemKindIsKnown(short category, short kind) {
-    return tableForItemCategory(category)[kind].identified != 0;
+    itemTable *table = tableForItemCategory(category);
+    if (table == NULL) {
+        // No kind table means no unknown state: gold, the Amulet, lumenstones
+        // and keys have no identity to learn, so the engine treats them as
+        // known (it guards every knowledge check with the same null test).
+        return true;
+    }
+    return table[kind].identified != 0;
 }
 
 static int matchingPackItems(short category, short kind, boolean sumUnits) {
@@ -1754,7 +1972,11 @@ void setArenaRadius(int radius, enum tileType tile) {
     // Clear a wide area so knockback and clone destinations are open floor.
     for (int dx = -radius; dx <= radius; dx++) {
         for (int dy = -radius; dy <= radius; dy++) {
-            setTerrain(posOffset(player.loc, dx, dy), tile);
+            pos loc = posOffset(player.loc, dx, dy);
+            if (loc.x < 0 || loc.x >= levelWidth() || loc.y < 0 || loc.y >= levelHeight()) {
+                continue; // never write outside the level
+            }
+            setTerrain(loc, tile);
         }
     }
     setPlayerPos(player.loc);
@@ -1784,6 +2006,13 @@ creature *placeHostileMonster(enum monsterTypes type, pos loc) {
     creature *monst = spawnMonster(type, loc);
     makeMonsterHostile(monst);
     revealCell(loc);
+    return monst;
+}
+
+// See the declaration in TestFramework.h.
+creature *spawnMonsterWithItemChance(enum monsterTypes type, pos loc) {
+    creature *monst = generateMonster(type, true, false);
+    setMonsterPos(monst, loc);
     return monst;
 }
 

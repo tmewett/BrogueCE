@@ -65,10 +65,16 @@ highlighted path are turned off automatically.
 **BR37867** — If the cursor is aimed at an area the player cannot reach, the
 highlighted path instead leads to the nearest reachable location.
 [IO.c:619-625](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L619-L625)
-**BR12275** — Resting the cursor on a visible monster, a visible (or sensed) item, or
-a listed terrain feature shows that entity's details in a pop-up box and
-highlights it in the sidebar.
-[IO.c:651-694](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L651-L694)
+**BR12275** — Resting the cursor on a visible monster or a visible (or sensed) item shows
+that entity's details in a pop-up box.
+Whichever of the three the cursor rests on — a monster, an item, or a listed terrain
+feature — is listed first in the sidebar and drawn undimmed while the others are dimmed,
+and terrain under the cursor also prints its description in the message line.
+[IO.c:664-685](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L664-L685)
+[IO.c:3719-3737](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3719-L3737)
+[IO.c:3866-3893](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3866-L3893)
+[IO.c:693](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L693)
+[Movement.c:401-405](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L401-L405)
 **BR21675** — Confirming the cursor while it sits on the player's own location does
 nothing.
 [IO.c:783-784](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L783-L784)

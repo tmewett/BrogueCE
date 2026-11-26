@@ -242,7 +242,7 @@ static int monsterBaseSpeed;
 
 static void slow_sets_slow_setup(void) {
     clearMonsters();
-    monst = spawnMonster(MK_TROLL, posOffset(player.loc, 2, 0));
+    monst = spawnMonster(MK_TROLL, posOffset(getPlayerPos(), 2, 0));
     monsterBaseSpeed = monsterMovementSpeed(monst);
     hasteMonster(monst, 10);
     slowMonster(monst, 10);
@@ -698,6 +698,108 @@ static boolean br23913_monster_stuck_ends(void) {
 }
 
 // ============================================================
+// BR45966 — the player refuses to step into lava with the message
+// "that would be certain death!" unless levitating or immune to
+// fire.
+//
+// The negative test approaches a known lava tile with neither
+// exception: the step must be cancelled and the warning shown.
+// The two positive tests grant each exception the rule names —
+// levitation, then fire immunity — and must walk straight onto
+// the same tile with no warning.  The fire-immunity case doubles
+// as a survival check, since lava also kills on contact.
+// ============================================================
+
+static pos br45966_start;
+static pos br45966_lava;
+
+static void br45966_lava_setup(void) {
+    clearArena();
+    br45966_start = getPlayerPos();
+    br45966_lava = posOffset(br45966_start, 1, 0);
+    setTerrain(br45966_lava, LAVA);
+    revealCell(br45966_lava); // the refusal only applies to known lava
+}
+
+static void br45966_levitating_setup(void) {
+    br45966_lava_setup();
+    applyStatusToPlayer(STATUS_LEVITATING, 20);
+}
+
+static void br45966_fire_immune_setup(void) {
+    br45966_lava_setup();
+    applyStatusToPlayer(STATUS_IMMUNE_TO_FIRE, 20);
+}
+
+static boolean br45966_step_right(void) {
+    moveRight();
+    return false;
+}
+
+static boolean br45966_refused_without_an_exception(void) {
+    TEST_ASSERT(playerIsAt(br45966_start),
+                "without levitation or fire immunity, the step into lava should be refused");
+    TEST_ASSERT(messageWasShown("certain death"),
+                "the refusal should warn that the lava would be certain death");
+    return !testFailed;
+}
+
+static boolean br45966_exception_steps_onto_lava(void) {
+    TEST_ASSERT(playerIsAt(br45966_lava),
+                "the exception the rule names should let the step onto the lava go through");
+    TEST_ASSERT(!messageWasShown("certain death"),
+                "no certain-death warning should fire when the exception applies");
+    TEST_ASSERT(!isPlayerDead(),
+                "the player should still be alive after stepping onto the lava");
+    return !testFailed;
+}
+
+// ============================================================
+
+// ============================================================
+// BR25391 — A potion or charm of fire immunity sets the
+// fire-immunity counter to its rolled or scaled duration.
+//
+// The potion's rolled duration is its fixed 150-turn magnitude,
+// and drinking it directly does not end a turn, so the counter
+// reads exactly 150.  The charm's duration scales with its
+// enchantment: base 10 times 1.25 per point of enchant,
+// truncated, so +3 sets 19 and +1 sets 12 — and using a charm
+// does end a turn, which costs the freshly set counter one tick
+// before the test can read it (18 and 11).
+// ============================================================
+
+static int br25391_charmHigh, br25391_charmLow, br25391_potionTurns;
+
+static void br25391_setup(void) {
+    TEST_ASSERT_EQ(playerStatusTurns(STATUS_IMMUNE_TO_FIRE), 0,
+                   "setup: the player should start with no fire immunity");
+    givePlayerItem(CHARM, CHARM_FIRE_IMMUNITY, 3);
+    givePlayerItem(CHARM, CHARM_FIRE_IMMUNITY, 1);
+}
+
+static boolean br25391_step(void) {
+    applyPackItem(CHARM, CHARM_FIRE_IMMUNITY); // the +3 charm (first in the pack)
+    br25391_charmHigh = playerStatusTurns(STATUS_IMMUNE_TO_FIRE);
+    removePackItems(CHARM, CHARM_FIRE_IMMUNITY);
+    givePlayerItem(CHARM, CHARM_FIRE_IMMUNITY, 1);
+    applyPackItem(CHARM, CHARM_FIRE_IMMUNITY);
+    br25391_charmLow = playerStatusTurns(STATUS_IMMUNE_TO_FIRE);
+    removePackItems(CHARM, CHARM_FIRE_IMMUNITY);
+    drink(POTION_FIRE_IMMUNITY);
+    br25391_potionTurns = playerStatusTurns(STATUS_IMMUNE_TO_FIRE);
+    return false;
+}
+
+static boolean br25391_fire_immunity_counter_set(void) {
+    TEST_ASSERT_EQ(br25391_charmHigh, 18,
+                   "a +3 charm of fire immunity should set the counter to its scaled duration");
+    TEST_ASSERT_EQ(br25391_charmLow, 11,
+                   "a +1 charm of fire immunity should set a shorter scaled duration");
+    TEST_ASSERT_EQ(br25391_potionTurns, 150,
+                   "a potion of fire immunity should set the counter to its rolled duration");
+    return !testFailed;
+}
 
 const testCase tests_status_effects[] = {
     { "BR97529_telepathy_counter_decrements",   telepathy_decrement_setup,      rest_one_turn_step, status_decremented_by_one },
@@ -738,6 +840,7 @@ const testCase tests_status_effects[] = {
     { "BR33833_panacea_caps_statuses",          panacea_caps_statuses_setup,    NULL, statuses_capped },
 
     { "BR51327_fire_immunity_extinguishes",     immunity_extinguishes_setup,    NULL, burning_extinguished },
+    { "BR25391_fire_immunity_counter_set",      br25391_setup,                  br25391_step, br25391_fire_immunity_counter_set },
 
     { "BR25686_nutrition_starts_full",          nutrition_starts_full_setup,    NULL, nutrition_is_full },
     { "BR49432_nutrition_decrements",           nutrition_decreases_setup,      rest_one_turn_step, nutrition_decreased },
@@ -755,6 +858,10 @@ const testCase tests_status_effects[] = {
 
     { "BR23913_player_stuck_ends_off_entangling_tile", br23913_player_setup, br23913_player_step, br23913_player_stuck_ends },
     { "BR23913_monster_stuck_ends_off_entangling_tile", br23913_monster_setup, br23913_monster_step, br23913_monster_stuck_ends },
+
+    { "BR45966_lava_step_refused_without_exception", br45966_lava_setup,     br45966_step_right, br45966_refused_without_an_exception },
+    { "BR45966_levitation_steps_into_lava",          br45966_levitating_setup, br45966_step_right, br45966_exception_steps_onto_lava },
+    { "BR45966_fire_immunity_steps_into_lava",       br45966_fire_immune_setup, br45966_step_right, br45966_exception_steps_onto_lava },
 
     { NULL, NULL, NULL, NULL }
 };

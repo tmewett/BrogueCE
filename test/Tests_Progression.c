@@ -1,9 +1,11 @@
 // Tests derived from rules/06-progression-score.md.
 //
-// These cover the deterministic, headless-observable progression rules: the
+// This cover the deterministic, headless-observable progression rules: the
 // state a new game starts in (depth, gold, turn counts, strength, starting
-// equipment), the reduced damage taken in easy mode, the amulet fallback, and
-// the high-score gate on victory.
+// equipment), the message log and archive being cleared and the screen
+// blacked out before the welcome message, the reduced damage taken in easy
+// mode, the amulet fallback, the high-score gate on victory, and the
+// treasure tally a victory records.
 //
 // Omitted are everything that depends on the run history, the achievement
 // screens, stair travel between levels, level restoration, and the wizard
@@ -358,6 +360,123 @@ static boolean welcome_message_names_amulet_floor(void) {
 }
 
 // ============================================================
+// BR99222 — A victory screen tallies the carried gold plus the value of
+// every carried item to produce a total treasure value, and the amulet's
+// value is doubled on the greater victory.
+// ============================================================
+
+// The victory screen's total is the score the run records, so both tests
+// start from an empty high-score list (clearHighScores) and assert on the
+// exact score saved: the tally itself, an under-count, and gold alone must
+// all be told apart.  Each setup takes a distinctive purse so its total is
+// unique across the whole file.  A lumenstone rides along in the pack so
+// "every carried item" covers more than just the amulet.
+
+static int br99222_gold;
+static int br99222_total;      // the tally this victory should record
+static int br99222_amuletValue;
+static int br99222_gemValue;
+
+// Escape victory: stepping onto the up stairs with the amulet, as in the
+// BR87073 tests above.
+static void br99222_escape_setup(void) {
+    br99222_gold = 1234567;
+    clearHighScores();
+    clearArena();
+    givePlayerItem(AMULET, 0, 0);
+    givePlayerItem(GEM, 0, 0);
+    givePlayerGold(br99222_gold);
+    placeUpStairs(posOffset(getPlayerPos(), 0, -1));
+    br99222_gemValue = (int) itemGoldValue(findInventoryItem(GEM, 0));
+    br99222_total = expectedVictoryScore();
+}
+
+static boolean br99222_escape_records_full_treasure(void) {
+    TEST_ASSERT_EQ(currentDepth(), 0,
+                   "stepping onto the up stairs with the amulet should escape the dungeon");
+    TEST_ASSERT(messageWasShown("You are bathed in sunlight"),
+                "the escape victory should have run");
+    TEST_ASSERT(highScoreHasScore(br99222_total),
+                "the recorded total should be carried gold plus the value of every carried item");
+    TEST_ASSERT(!highScoreHasScore(br99222_gold),
+                "gold alone must not be the total: item values belong in it too");
+    TEST_ASSERT(!highScoreHasScore(br99222_total - br99222_gemValue),
+                "every carried item counts: dropping the lumenstone's value must not match");
+    return !testFailed;
+}
+
+// Greater victory: from the deepest floor, descending while carrying the
+// amulet transcends instead of escaping.
+static void br99222_greater_setup(void) {
+    br99222_gold = 7654321;
+    clearHighScores();
+    clearArena();
+    givePlayerItem(AMULET, 0, 0);
+    givePlayerItem(GEM, 0, 0);
+    givePlayerGold(br99222_gold);
+    setDepth(40); // the dungeon's deepest floor
+    placeDownStairs(posOffset(getPlayerPos(), 0, 1));
+    br99222_amuletValue = (int) itemGoldValue(findInventoryItem(AMULET, 0));
+    // The same tally as an escape, plus the amulet counted a second time.
+    br99222_total = expectedVictoryScore() + br99222_amuletValue;
+}
+
+static boolean br99222_greater_victory_step(void) {
+    moveDown();
+    return false;
+}
+
+static boolean br99222_greater_doubles_amulet_value(void) {
+    TEST_ASSERT(messageWasShown("Light streams through the portal"),
+                "descending with the amulet from the deepest floor should transcend");
+    TEST_ASSERT(highScoreHasScore(br99222_total),
+                "the greater victory's total should count the amulet's value twice");
+    TEST_ASSERT(!highScoreHasScore(br99222_total - br99222_amuletValue),
+                "counting the amulet once would be the escape tally, not the greater victory's");
+    return !testFailed;
+}
+
+// ============================================================
+// BR69169 — before the welcome message, the message log and archive
+// are cleared and the screen is blacked out.
+//
+// Something from "before" the game starts is planted first: an archived
+// message lands in the message archive and is drawn in the message lines
+// at the edge of the screen (both are asserted as preconditions).  The
+// game is then started over with the same seed, which reruns the whole
+// start-up sequence, and nothing of the planted message may survive it.
+// ============================================================
+
+// Capitalised because the archive capitalises whatever it renders, which
+// keeps this exact text searchable with strstr().
+static const char br69169_marker[] = "Leftover message from an earlier game";
+
+static void br69169_setup(void) {
+    emitArchivedMessage(br69169_marker);
+    TEST_ASSERT(strstr(renderedMessageLine(), br69169_marker) != NULL,
+                "setup: the marker should be in the message archive");
+    runQueuedInputThroughMainLoop(); // capture a frame of the current screen
+    TEST_ASSERT(screenTextContains(br69169_marker),
+                "setup: the marker should be drawn in the message lines");
+
+    // Start the game over: the log and archive are cleared, the screen is
+    // blacked out, and the player is welcomed into a fresh dungeon.
+    restartGame();
+    runQueuedInputThroughMainLoop(); // capture a frame of the new game's screen
+}
+
+static boolean start_clears_messages_and_blacks_out_screen(void) {
+    TEST_ASSERT(messageWasShown("Hello and welcome"),
+                "the fresh start should welcome the player");
+    TEST_ASSERT(strstr(renderedMessageLine(), br69169_marker) == NULL,
+                "the message archive should hold nothing from before the welcome message");
+    TEST_ASSERT(!screenTextContains(br69169_marker),
+                "the message log should be cleared and the screen blacked out "
+                "before the welcome message");
+    return !testFailed;
+}
+
+// ============================================================
 
 const testCase tests_progression[] = {
     { "BR19079_new_game_begins_on_depth_1",        NULL,                    NULL, new_game_begins_on_depth_1 },
@@ -385,6 +504,10 @@ const testCase tests_progression[] = {
     { "BR64450_created_item_unidentified_when_declined", br64450_decline_identify_setup, NULL, br64450_created_item_stays_unknown },
 
     { "BR78012_welcome_message_names_amulet_floor", NULL, NULL, welcome_message_names_amulet_floor },
+    { "BR69169_start_clears_messages_and_blacks_screen", br69169_setup, NULL, start_clears_messages_and_blacks_out_screen },
+
+    { "BR99222_escape_records_full_treasure",  br99222_escape_setup, escape_the_dungeon_step, br99222_escape_records_full_treasure },
+    { "BR99222_greater_doubles_amulet_value",  br99222_greater_setup, br99222_greater_victory_step, br99222_greater_doubles_amulet_value },
 
     { NULL, NULL, NULL, NULL }
 };
