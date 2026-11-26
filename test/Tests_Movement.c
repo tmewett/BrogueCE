@@ -404,6 +404,81 @@ static boolean player_is_burning(void) {
 }
 
 // ============================================================
+// BR95213 — every 100 ticks, each burning square tries to
+// ignite itself and its four orthogonal neighbours
+// ============================================================
+
+// A burning square with four highly flammable (spiderweb) orthogonal
+// neighbours.  The player is hasted, so one rest costs 50 ticks: the first
+// rest cannot reach the next environment update, while the second one
+// completes the 100-tick cycle.  The cycle is first aligned to its start, so
+// the first rest is guaranteed to fall entirely between two updates.
+static pos br95213_centre;
+static pos br95213_neighbours[4];
+static int br95213_rests;
+
+static void br95213_setup(void) {
+    clearArena();
+
+    pos centre = posAt(levelWidth() / 2, levelHeight() / 2);
+    setTerrain(centre, FLOOR);
+    setPlayerPos(centre);
+    setArenaRadius(3, FLOOR);
+    setPlayerPos(posOffset(centre, 3, 0)); // out of reach of the flames
+
+    hastePlayer(20);
+    // An environment update leaves the counter at 100.  Align to that point
+    // so the next 50-tick rest cannot complete another update.
+    while (ticksUntilEnvironmentUpdate() != 100) {
+        restOneTurn();
+    }
+
+    br95213_centre = centre;
+    br95213_neighbours[0] = posOffset(centre, 1, 0);
+    br95213_neighbours[1] = posOffset(centre, -1, 0);
+    br95213_neighbours[2] = posOffset(centre, 0, 1);
+    br95213_neighbours[3] = posOffset(centre, 0, -1);
+    for (int i = 0; i < 4; i++) {
+        setTerrain(br95213_neighbours[i], SPIDERWEB);
+    }
+    // A brazier is a permanent burning square; plain fire can burn out in
+    // the same update it is asked to spread from.
+    setTerrain(centre, BRAZIER);
+    TEST_ASSERT(cellIsOnFire(centre),
+                "setup: the centre square should be burning");
+    for (int i = 0; i < 4; i++) {
+        TEST_ASSERT(!cellIsOnFire(br95213_neighbours[i]),
+                    "setup: the neighbours should not be burning yet");
+    }
+    br95213_rests = 0;
+}
+
+static boolean br95213_step(void) {
+    restOneTurn();
+    br95213_rests++;
+
+    if (br95213_rests == 1) {
+        // The first 50-tick rest stops short of the next 100-tick update.
+        for (int i = 0; i < 4; i++) {
+            TEST_ASSERT(!cellIsOnFire(br95213_neighbours[i]),
+                        "a burning square must not ignite its neighbours between environment updates");
+        }
+        return true;
+    }
+    return false;
+}
+
+static boolean br95213_verify(void) {
+    TEST_ASSERT_EQ(br95213_rests, 2,
+                   "the 100-tick update should arrive on the second 50-tick rest");
+    for (int i = 0; i < 4; i++) {
+        TEST_ASSERT(cellIsOnFire(br95213_neighbours[i]),
+                    "at the 100-tick update the burning square should ignite its four orthogonal neighbours");
+    }
+    return !testFailed;
+}
+
+// ============================================================
 // BR34974 — nutrition drops by one each turn
 // ============================================================
 
@@ -446,6 +521,58 @@ static boolean starvation_step(void) {
 
 static boolean starved(void) {
     TEST_ASSERT(playerHealth() < healthBefore, "starvation should drain hit points");
+    return !testFailed;
+}
+
+// ============================================================
+// BR32992 — every hunger warning demands acknowledgment, except that
+// "you are hungry" demands it only when the pack contains no food
+// ============================================================
+
+// The first warning ("you are hungry") arrives with food in the pack, so it
+// is not the no-food variant that also asks for acknowledgment.
+static void br32992_first_setup(void) {
+    clearArena();
+    removePackFood();
+    givePlayerItem(FOOD, RATION, 0);
+    setPlayerNutrition(2000);
+}
+
+static boolean br32992_first_step(void) {
+    restOneTurn();
+    return !messageWasShown("you are hungry");
+}
+
+static boolean br32992_first_needs_no_acknowledgment(void) {
+    TEST_ASSERT(messageWasShown("you are hungry"),
+                "setup: resting should eventually produce the first hunger warning");
+    TEST_ASSERT(!messageRequiredAcknowledgment("you are hungry"),
+                "the first hunger warning should not demand acknowledgment");
+    return !testFailed;
+}
+
+// With no food in the pack the starving warning cannot be interrupted by the
+// player being forced to eat.
+static void br32992_later_setup(void) {
+    clearArena();
+    removePackFood();
+    setPlayerNutrition(2000);
+}
+
+static boolean br32992_later_step(void) {
+    restOneTurn();
+    return !(messageWasShown("weak with hunger")
+             && messageWasShown("faint with hunger")
+             && messageWasShown("starving to death"));
+}
+
+static boolean br32992_later_warnings_need_acknowledgment(void) {
+    TEST_ASSERT(messageRequiredAcknowledgment("weak with hunger"),
+                "the weak-with-hunger warning should demand acknowledgment");
+    TEST_ASSERT(messageRequiredAcknowledgment("faint with hunger"),
+                "the faint-with-hunger warning should demand acknowledgment");
+    TEST_ASSERT(messageRequiredAcknowledgment("starving to death"),
+                "the starving-to-death warning should demand acknowledgment");
     return !testFailed;
 }
 
@@ -1894,6 +2021,89 @@ static boolean br70260_monster_falls_damaged_to_level_below(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR17834 — choosing a travel target
+//
+// Your own square is refused with "you are already there.", an explored
+// square becomes the travel cursor target, and an unexplored square prints
+// the caller's failure message.
+// ============================================================
+
+static pos br17834_startPos;
+static pos br17834_targetPos;
+
+static void br17834_own_square_setup(void) {
+    clearArena();
+    br17834_startPos = getPlayerPos();
+    // Put the down staircase under the player, so choosing it targets their
+    // own square.
+    placeDownStairs(br17834_startPos);
+    setPlayerPos(br17834_startPos);
+}
+
+static boolean br17834_own_square_step(void) {
+    injectKeystroke(DESCEND_KEY, false, false);
+    return false;
+}
+
+static boolean br17834_own_square_reports_already_there(void) {
+    TEST_ASSERT(messageWasShown("you are already there."),
+                "choosing your own square should report that you are already there");
+    TEST_ASSERT_POS_EQ(getPlayerPos(), br17834_startPos,
+                       "choosing your own square should not move the player");
+    return !testFailed;
+}
+
+static void br17834_explored_setup(void) {
+    clearArena();
+    br17834_startPos = getPlayerPos();
+    br17834_targetPos = posOffset(br17834_startPos, 1, 0);
+    placeDownStairs(br17834_targetPos);
+    revealCell(br17834_targetPos);
+}
+
+static boolean br17834_explored_step(void) {
+    // The first command records the explored staircase as the cursor target
+    // without moving; the second accepts that target and travel steps onto
+    // the staircase, descending.
+    injectKeystroke(DESCEND_KEY, false, false);
+    TEST_ASSERT_POS_EQ(getPlayerPos(), br17834_startPos,
+                       "the first command should move the cursor, not the player");
+    TEST_ASSERT_EQ(currentDepth(), 1,
+                   "the first command should not travel");
+    injectKeystroke(DESCEND_KEY, false, false);
+    return false;
+}
+
+static boolean br17834_explored_target_is_travelled_to(void) {
+    TEST_ASSERT(messageWasShown("You descend."),
+                "confirming the explored square should travel to it");
+    TEST_ASSERT_EQ(currentDepth(), 2,
+                   "travelling to the explored down staircase should descend");
+    return !testFailed;
+}
+
+static void br17834_unexplored_setup(void) {
+    clearArena();
+    br17834_startPos = getPlayerPos();
+    br17834_targetPos = posOffset(br17834_startPos, 2, 0);
+    placeDownStairs(br17834_targetPos);
+    clearMessages();
+}
+
+static boolean br17834_unexplored_step(void) {
+    injectKeystroke(DESCEND_KEY, false, false);
+    return false;
+}
+
+static boolean br17834_unexplored_reports_failure(void) {
+    TEST_ASSERT(messageWasShown("I see no way down."),
+                "choosing an unexplored square should print the failure message");
+    TEST_ASSERT_POS_EQ(getPlayerPos(), br17834_startPos,
+                       "choosing an unexplored square should not move the player");
+    return !testFailed;
+}
+
 const testCase tests_movement[] = {
     { "BR91235_staff_recharges_a_spent_charge",      staff_recharge_setup, staff_recharge_step, spent_staff_recharges },
     { "BR91235_full_staff_gains_no_charges",         full_staff_setup,    full_staff_rest_step, full_staff_gains_no_charges },
@@ -1923,8 +2133,11 @@ const testCase tests_movement[] = {
     { "BR24700_web_struggle_broken_on_final_move", web_struggle_setup,   web_struggle_step,        player_frees_self_from_web },
     { "BR32089_monster_status_timers_tick_each_100_ticks", monster_status_timer_setup, monster_status_timer_step, monster_status_timers_decrement_per_100_ticks },
     { "BR79486_standing_in_fire_ignites",      standing_in_fire_setup, wait_until_hurt,          player_is_burning },
+    { "BR95213_burning_square_ignites_orthogonal_neighbours", br95213_setup, br95213_step, br95213_verify },
     { "BR34974_nutrition_drops_each_turn",     nutrition_setup,        nutrition_step,           nutrition_dropped },
     { "BR95832_starvation_drains_health",      starvation_setup,       starvation_step,          starved },
+    { "BR32992_first_hunger_warning_skips_acknowledgment", br32992_first_setup, br32992_first_step, br32992_first_needs_no_acknowledgment },
+    { "BR32992_later_hunger_warnings_need_acknowledgment", br32992_later_setup, br32992_later_step, br32992_later_warnings_need_acknowledgment },
     { "BR35928_whip_strikes_distant_enemy",    whip_setup,             whip_step,                whip_hit_distant_enemy },
     { "BR12436_spear_strikes_two_squares",     spear_setup,            spear_step,               spear_hit_distant_enemy },
     { "BR12763_rapier_lunges_two_squares",     lunge_setup,            lunge_step,               lunged_and_moved },
@@ -1948,6 +2161,10 @@ const testCase tests_movement[] = {
     { "BR25953_mending_ground_heals", br25953_setup, br25953_step, br25953_verify },
 
     { "BR70260_falling_monster_damaged_and_moves_down", br70260_setup, br70260_wait_to_fall_step, br70260_monster_falls_damaged_to_level_below },
+
+    { "BR17834_own_square_reports_already_there", br17834_own_square_setup, br17834_own_square_step, br17834_own_square_reports_already_there },
+    { "BR17834_explored_square_becomes_cursor_target", br17834_explored_setup, br17834_explored_step, br17834_explored_target_is_travelled_to },
+    { "BR17834_unexplored_square_reports_failure", br17834_unexplored_setup, br17834_unexplored_step, br17834_unexplored_reports_failure },
 
     { NULL, NULL, NULL, NULL }
 };

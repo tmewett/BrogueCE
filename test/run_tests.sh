@@ -1,7 +1,9 @@
 #!/bin/zsh
 set -e
 cd "$(git rev-parse --show-toplevel)"
-make GRAPHICS=NO TERMINAL=NO MAC_APP=NO TEST_FRAMEWORK=YES >/dev/null
+# Force a rebuild: object files do not depend on the build flags, so a
+# previous non-test build would otherwise leave test hooks uncompiled.
+make -B GRAPHICS=NO TERMINAL=NO MAC_APP=NO TEST_FRAMEWORK=YES >/dev/null
 fail=0; total=0
 
 function run_times() {

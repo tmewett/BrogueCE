@@ -4,8 +4,10 @@
 // These cover the deterministic, headless-observable behaviors those rules
 // describe: how the game's absolute turn count and your own turn count
 // diverge while you are paralyzed, the wording the Change Mode dialog uses
-// for Wizard mode, the opacity menu buttons are painted with, and the
-// decorative random-number stream button painting uses.
+// for Wizard mode, the opacity menu buttons are painted with, the
+// decorative random-number stream button painting uses, the reach of a pile
+// of unicorn poop's rainbow glow, and where a guardian charm places its
+// guardian.
 //
 // Omitted are everything that needs a recording or a run history, neither of
 // which the pending rules describe headlessly.
@@ -169,11 +171,236 @@ static boolean br14317_painting_button_leaves_game_rng_alone(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR36733 — a guardian charm summons its guardian onto the nearest
+// reachable square to you that no creature or staircase occupies and whose
+// terrain the guardian does not avoid.  Among equally near squares one is
+// chosen at random, and it never appears on your own square.
+// ============================================================
+
+static int br36733_chebyshev(pos a, pos b) {
+    int dx = a.x - b.x; if (dx < 0) dx = -dx;
+    int dy = a.y - b.y; if (dy < 0) dy = -dy;
+    return dx > dy ? dx : dy;
+}
+
+static creature *br36733_guardian;
+
+static void br36733_summon_guardian(void) {
+    givePlayerItem(CHARM, CHARM_GUARDIAN, 0);
+    applyPackItem(CHARM, CHARM_GUARDIAN);
+    br36733_guardian = findMonster(MK_CHARM_GUARDIAN);
+}
+
+// Fill the eight squares around you with sacred glyphs, which the guardian
+// avoids as a destination but which do not block the placement path, so the
+// distance scan can still reach the ring beyond.  `open` is left as ordinary
+// floor when `leaveOpen` is set.
+static void br36733_ring(boolean leaveOpen, pos open) {
+    pos p = getPlayerPos();
+    for (int dx = -1; dx <= 1; dx++) {
+        for (int dy = -1; dy <= 1; dy++) {
+            if (dx == 0 && dy == 0) {
+                continue;
+            }
+            pos q = posOffset(p, dx, dy);
+            if (leaveOpen && q.x == open.x && q.y == open.y) {
+                continue;
+            }
+            setTerrain(q, SACRED_GLYPH);
+        }
+    }
+}
+
+static void br36733_clear_arena(void) {
+    clearMonsters();
+    setPlayerPos(posAt(levelWidth() / 2, levelHeight() / 2));
+    setArenaRadius(8, FLOOR);
+}
+
+static void br36733_open_setup(void) {
+    br36733_clear_arena();
+    br36733_summon_guardian();
+}
+
+static boolean br36733_open_verify(void) {
+    TEST_ASSERT(br36733_guardian != NULL, "the charm should summon a guardian");
+    TEST_ASSERT_EQ(countMonstersOfType(MK_CHARM_GUARDIAN), 1,
+                   "exactly one guardian should appear");
+    pos gp = monsterPosition(br36733_guardian);
+    TEST_ASSERT(!playerIsAt(gp), "the guardian must not appear on your square");
+    TEST_ASSERT_EQ(br36733_chebyshev(gp, getPlayerPos()), 1,
+                   "with open floor all around, the guardian should take an adjacent square");
+    TEST_ASSERT(!monsterAvoidsCell(br36733_guardian, gp),
+                "the guardian should not appear on terrain it avoids");
+    return !testFailed;
+}
+
+static void br36733_occupied_setup(void) {
+    br36733_clear_arena();
+    pos open = posOffset(getPlayerPos(), 1, 0);
+    br36733_ring(true, open);
+    creature *blocker = spawnMonster(MK_RAT, open);
+    makeMonsterAlly(blocker);
+    br36733_summon_guardian();
+}
+
+static boolean br36733_occupied_verify(void) {
+    TEST_ASSERT(br36733_guardian != NULL, "the charm should summon a guardian");
+    pos gp = monsterPosition(br36733_guardian);
+    TEST_ASSERT_EQ(br36733_chebyshev(gp, getPlayerPos()), 2,
+                   "with the only free adjacent square occupied, the guardian "
+                   "should appear one ring farther out");
+    return !testFailed;
+}
+
+static void br36733_stairs_setup(void) {
+    br36733_clear_arena();
+    pos open = posOffset(getPlayerPos(), 1, 0);
+    br36733_ring(true, open);
+    placeDownStairs(open);
+    br36733_summon_guardian();
+}
+
+static boolean br36733_stairs_verify(void) {
+    TEST_ASSERT(br36733_guardian != NULL, "the charm should summon a guardian");
+    pos gp = monsterPosition(br36733_guardian);
+    pos stairs = posOffset(getPlayerPos(), 1, 0);
+    TEST_ASSERT(!(gp.x == stairs.x && gp.y == stairs.y),
+                "the guardian should not appear on a staircase");
+    TEST_ASSERT_EQ(br36733_chebyshev(gp, getPlayerPos()), 2,
+                   "with the only free adjacent square a staircase, the guardian "
+                   "should appear one ring farther out");
+    return !testFailed;
+}
+
+static void br36733_terrain_setup(void) {
+    br36733_clear_arena();
+    br36733_ring(false, posAt(0, 0));
+    br36733_summon_guardian();
+}
+
+static boolean br36733_terrain_verify(void) {
+    TEST_ASSERT(br36733_guardian != NULL, "the charm should summon a guardian");
+    pos gp = monsterPosition(br36733_guardian);
+    TEST_ASSERT_EQ(br36733_chebyshev(gp, getPlayerPos()), 2,
+                   "the guardian should avoid the sacred glyphs around you");
+    return !testFailed;
+}
+
+// ============================================================
+// BR19494 — unicorn poop sparkles with rainbow light over a radius
+// of 2 tiles, fading to nothing at the edge of the glow.
+//
+// An open floor is laid out with the player far enough away that the
+// miner's light cannot reach the probes.  The probes one, two and
+// three tiles from a pile of unicorn poop are sampled without the
+// pile as a baseline, then many times with it: the pile's colours
+// are re-rolled on every lighting pass, so any one pass may be dim
+// or even subtractive, and only repeated passes can show the glow
+// reliably.  The one-tile probe is inside the glow (its shadow is
+// lifted and light appears there at least once), while the two- and
+// three-tile probes are never lit at all — the two-tile edge fades to
+// nothing rather than continuing outward.
+// ============================================================
+
+#define BR19494_TRIALS 32
+
+static pos br19494_probes[4];
+static int br19494_baseline[4];
+static int br19494_maxChange[4];
+static boolean br19494_shadowCleared[4];
+static boolean br19494_shadowStayed[4];
+
+static void br19494_setup(void) {
+    clearMonsters();
+    pos home = posAt(levelWidth() / 2, levelHeight() / 2);
+    // Strip the whole level to bare floor, so no torch, lava, fungus or other
+    // glowing terrain can contribute light to the probes.
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            setTerrain(posAt(x, y), FLOOR);
+        }
+    }
+    setPlayerPos(home);
+    // With the miner's light at its full strength the player's own glow
+    // reaches across the whole arena and would swamp the pile's contribution.
+    // Turning the multiplier down leaves only the minimum two-tile light,
+    // which cannot reach probes eight or more tiles away.
+    setLightMultiplier(0);
+
+    pos source = posOffset(getPlayerPos(), 8, 0);
+    for (int d = 0; d <= 3; d++) {
+        br19494_probes[d] = posOffset(source, d, 0);
+    }
+
+    setTerrain(source, FLOOR);
+    recomputeLighting();
+    for (int d = 0; d <= 3; d++) {
+        br19494_baseline[d] = lightAt(br19494_probes[d]);
+    }
+
+    setTerrain(source, UNICORN_POOP);
+    for (int d = 0; d <= 3; d++) {
+        br19494_maxChange[d] = 0;
+        br19494_shadowCleared[d] = false;
+        br19494_shadowStayed[d] = false;
+    }
+    for (int trial = 0; trial < BR19494_TRIALS; trial++) {
+        recomputeLighting();
+        for (int d = 0; d <= 3; d++) {
+            int change = lightAt(br19494_probes[d]) - br19494_baseline[d];
+            if (change < 0) {
+                change = -change;
+            }
+            if (change > br19494_maxChange[d]) {
+                br19494_maxChange[d] = change;
+            }
+            if (cellIsInShadow(br19494_probes[d])) {
+                br19494_shadowStayed[d] = true;
+            } else {
+                br19494_shadowCleared[d] = true;
+            }
+        }
+    }
+}
+
+static boolean br19494_glow_ends_at_two_tiles(void) {
+    for (int d = 1; d <= 3; d++) {
+        TEST_ASSERT_EQ(br19494_baseline[d], 0,
+                       "control: without the poop nothing lights the probe tiles");
+    }
+    TEST_ASSERT(br19494_maxChange[0] > 0,
+                "control: the pile's own tile should glow");
+    TEST_ASSERT(br19494_shadowCleared[0],
+                "control: the glow should lift the shadow from its own tile");
+
+    TEST_ASSERT(br19494_shadowCleared[1],
+                "a tile one step away should lie inside the 2-tile glow");
+    TEST_ASSERT(br19494_maxChange[1] > 0,
+                "a tile one step away should receive light from the glow");
+
+    TEST_ASSERT(!br19494_shadowCleared[2] && br19494_shadowStayed[2],
+                "the glow should reach no farther than two tiles");
+    TEST_ASSERT_EQ(br19494_maxChange[2], 0,
+                   "the glow should fade to nothing at its two-tile edge");
+    TEST_ASSERT_EQ(br19494_maxChange[3], 0,
+                   "nothing three tiles from the pile should be lit");
+    return !testFailed;
+}
+
 const testCase tests_newrules[] = {
     { "BR29087_turn_counts_diverge_while_paralyzed",      br29087_setup, br29087_step, br29087_turn_counts_diverge_while_paralyzed },
     { "BR14549_change_mode_dialog_describes_wizard_mode", br14549_setup, NULL,         br14549_change_mode_dialog_describes_wizard_mode },
     { "BR12483_translucent_buttons_show_screen_through",  br12483_setup, NULL,         br12483_translucent_buttons_show_screen_through },
     { "BR14317_painting_button_leaves_game_rng_alone",    NULL,          NULL,         br14317_painting_button_leaves_game_rng_alone },
+
+    { "BR36733_guardian_takes_nearest_reachable_square", br36733_open_setup,     NULL, br36733_open_verify },
+    { "BR36733_guardian_avoids_occupied_square",         br36733_occupied_setup, NULL, br36733_occupied_verify },
+    { "BR36733_guardian_avoids_staircase",               br36733_stairs_setup,   NULL, br36733_stairs_verify },
+    { "BR36733_guardian_avoids_avoided_terrain",         br36733_terrain_setup,  NULL, br36733_terrain_verify },
+
+    { "BR19494_glow_ends_at_two_tiles", br19494_setup, NULL, br19494_glow_ends_at_two_tiles },
 
     { NULL, NULL, NULL, NULL }
 };

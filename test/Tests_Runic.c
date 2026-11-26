@@ -124,6 +124,75 @@ static boolean br11020_slaying_no_chance_verify(void) {
 }
 
 // ============================================================
+// BR53275 — a rune's activation chance rises with enchantment,
+// is lower for weapons with high base damage, is raised for a
+// weapon that strikes more slowly, is lowered for one that
+// strikes twice per turn, never falls below the weapon's
+// enchantment or rises above 100%, is a flat 15% for a weak or
+// cursed rune, and is 0 for a slaying rune.
+//
+// Every comparison below uses framework accessors only.  The
+// slow/fast checks compare weapons that have identical base
+// damage and differ only in their attack cadence, so the
+// cadence adjustment is isolated from the damage adjustment.
+// ============================================================
+
+static boolean br53275_rune_activation_chance_verify(void) {
+    // A light weapon's chance climbs strictly with its enchantment.
+    short dagger1  = runicActivationChance(givePlayerRunicWeapon(DAGGER, W_SPEED, 1, true));
+    short dagger5  = runicActivationChance(givePlayerRunicWeapon(DAGGER, W_SPEED, 5, true));
+    short dagger10 = runicActivationChance(givePlayerRunicWeapon(DAGGER, W_SPEED, 10, true));
+    short dagger20 = runicActivationChance(givePlayerRunicWeapon(DAGGER, W_SPEED, 20, true));
+    short dagger50 = runicActivationChance(givePlayerRunicWeapon(DAGGER, W_SPEED, 50, true));
+
+    TEST_ASSERT(dagger1 > 0, "a rune at enchantment 1 should have a non-zero chance");
+    TEST_ASSERT(dagger5 > dagger1, "chance should rise from enchantment 1 to 5");
+    TEST_ASSERT(dagger10 > dagger5, "chance should rise from enchantment 5 to 10");
+    TEST_ASSERT(dagger20 > dagger10, "chance should rise from enchantment 10 to 20");
+
+    // A higher base-damage weapon is less likely to trigger its rune.
+    short sword20 = runicActivationChance(givePlayerRunicWeapon(SWORD, W_SPEED, 20, true));
+    TEST_ASSERT(dagger20 > sword20,
+                "a sword should have a lower chance than a dagger at equal enchantment");
+
+    // Broadsword and mace share base damage (16-20 vs 14-22, both averaged
+    // as 18); only the mace takes an extra turn to recover after a hit, and
+    // that slow swing raises its per-hit chance.
+    short broadsword20 = runicActivationChance(givePlayerRunicWeapon(BROADSWORD, W_SPEED, 20, true));
+    short mace20 = runicActivationChance(givePlayerRunicWeapon(MACE, W_SPEED, 20, true));
+    TEST_ASSERT(mace20 > broadsword20,
+                "a slow weapon should have a higher per-hit chance than an equally damaging normal weapon");
+
+    // Rapier and whip share base damage (3-5); the rapier strikes twice per
+    // turn, so its chance per hit is reduced.
+    short rapier20 = runicActivationChance(givePlayerRunicWeapon(RAPIER, W_SPEED, 20, true));
+    short whip20 = runicActivationChance(givePlayerRunicWeapon(WHIP, W_SPEED, 20, true));
+    TEST_ASSERT(rapier20 < whip20,
+                "a fast weapon should have a lower per-hit chance than an equally damaging normal weapon");
+
+    // However heavy the weapon, the chance never drops below its enchantment.
+    short broadsword50 = runicActivationChance(givePlayerRunicWeapon(BROADSWORD, W_SPEED, 50, true));
+    TEST_ASSERT_EQ(broadsword20, 20, "the chance should never be lower than enchantment 20");
+    TEST_ASSERT_EQ(broadsword50, 50, "the chance should never be lower than enchantment 50");
+
+    // ...and never rises above 100.
+    TEST_ASSERT_EQ(dagger50, 100, "a very high enchantment should cap the chance at 100");
+    TEST_ASSERT(dagger50 <= 100, "the chance should never exceed 100");
+
+    // A weak or cursed rune has a flat chance of 15%, whatever the enchantment.
+    short plenty10 = runicActivationChance(givePlayerRunicWeapon(DAGGER, W_PLENTY, 10, true));
+    short plentyCursed = runicActivationChance(givePlayerRunicWeapon(DAGGER, W_PLENTY, -3, true));
+    TEST_ASSERT_EQ(plenty10, 15, "a weak rune should activate at a flat 15%");
+    TEST_ASSERT_EQ(plentyCursed, 15, "a cursed rune should activate at a flat 15% regardless of enchantment");
+
+    // A slaying rune has no random activation chance at all.
+    short slaying10 = runicActivationChance(givePlayerRunicWeapon(SWORD, W_SLAYING, 10, true));
+    TEST_ASSERT_EQ(slaying10, 0, "a slaying rune should have no random activation chance");
+
+    return !testFailed;
+}
+
+// ============================================================
 // BR11002 — speed rune grants an immediate extra turn
 // ============================================================
 
@@ -873,7 +942,9 @@ static boolean br11006_force_low_enchant_verify(void) {
 }
 
 const testCase tests_runic[] = {
-    // --- Activation Chance Rules (BR11001, BR11016, BR11017, BR11018, BR11019, BR11020) ---
+    // --- Activation Chance Rules (BR53275, BR11001, BR11016, BR11017, BR11018, BR11019, BR11020) ---
+    { "BR53275_rune_activation_chance",
+        clearArena, NULL, br53275_rune_activation_chance_verify },
     { "BR11001_chance_rises_with_enchant",
         clearArena, NULL, br11001_chance_rises_with_enchant_verify },
     { "BR11016_high_damage_lower_chance",

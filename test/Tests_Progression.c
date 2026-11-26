@@ -8,10 +8,9 @@
 // tally a victory records, and the text of the high-score entry saved on death.
 //
 // Omitted are everything that depends on the run history, the achievement
-// screens, stair travel between levels, level restoration, and the wizard
-// monster creation menu, all of which need a screen or player-driven menu
-// interaction.  The wizard item creation dialog is driven headlessly from
-// queued keystrokes.
+// screens, stair travel between levels, and level restoration.  The wizard
+// item and monster creation dialogs are driven headlessly from queued
+// keystrokes and dungeon-tile clicks.
 
 #include "TestFramework.h"
 #include "Globals.h"
@@ -305,6 +304,151 @@ static boolean br64450_created_item_stays_unknown(void) {
 }
 
 // ============================================================
+// BR24559 — a wizard-created monster must be placed on a visible,
+// valid location: an open spot, or a wall for a turret.  An
+// invalid choice discards the monster instead of placing it.
+//
+// The creation dialog is driven from queued input: "Monster" (b),
+// the first page of monster names (a), then a monster on that page.
+// Two clicks on a dungeon tile move the targeting cursor there and
+// confirm it.  Goblin totem is inanimate, so the flow asks for no
+// mutation; arrow turret is a turret by its display character.  A
+// valid placement reports "<monster> created." and adds the monster
+// to the level; an invalid one reports "Invalid location." and
+// leaves the level's monster count unchanged.
+// ============================================================
+
+static pos br24559_wall, br24559_openFloor, br24559_unseenFloor;
+static int br24559_monstersBefore;
+
+static void br24559_setup(void) {
+    setPlayerPos(posAt(levelWidth() / 2, levelHeight() / 2));
+    setArenaRadius(3, FLOOR);
+
+    // A visible wall, a visible open spot beside it, and an open spot far
+    // outside the light.
+    br24559_wall = posOffset(getPlayerPos(), 3, 0);
+    setTerrain(br24559_wall, WALL);
+    br24559_openFloor = posOffset(getPlayerPos(), 0, 2);
+    setTerrain(br24559_openFloor, FLOOR);
+    // Seal the far spot inside a one-tile chamber so no level layout can put
+    // it in sight.
+    br24559_unseenFloor = posOffset(getPlayerPos(), 20, 0);
+    setTerrainAroundLoc(br24559_unseenFloor, WALL);
+    setTerrain(br24559_unseenFloor, FLOOR);
+
+    // Recompute vision and scent over the newly carved arena, then mark the
+    // two spots the test treats as visible.
+    restOneTurn();
+    revealCell(br24559_wall);
+    revealCell(br24559_openFloor);
+
+    br24559_monstersBefore = monsterCount();
+}
+
+// Walk the wizard's monster creation dialogs from queued input and aim the
+// creation cursor at `loc` (two clicks: move, then confirm).
+static void br24559_create_monster(int monsterKey, pos loc) {
+    queueKeystroke('b', false, false); // "Monster" in the Create: dialog
+    queueKeystroke('a', false, false); // first page of monster names
+    queueKeystroke(monsterKey, false, false);
+    queueMapClick(loc);
+    queueMapClick(loc);
+    attemptWizardItemCreation();
+}
+
+static void br24559_open_ground_setup(void) {
+    br24559_setup();
+    br24559_create_monster('v', br24559_openFloor); // goblin totem
+}
+
+static boolean br24559_monster_placed_on_open_ground(void) {
+    creature *placed = findMonster(MK_GOBLIN_TOTEM);
+    TEST_ASSERT(cellIsVisible(br24559_openFloor),
+                "control: the chosen open ground should be visible");
+    TEST_ASSERT(placed != NULL,
+                "a monster placed on visible open ground should exist");
+    if (placed != NULL) {
+        TEST_ASSERT_POS_EQ(monsterPosition(placed), br24559_openFloor,
+                           "the monster should stand on the chosen tile");
+    }
+    TEST_ASSERT(messageWasShown("goblin totem created."),
+                "a valid placement should report the monster as created");
+    TEST_ASSERT_EQ(monsterCount(), br24559_monstersBefore + 1,
+                   "a valid placement should add exactly one monster");
+    return !testFailed;
+}
+
+static void br24559_wall_for_monster_setup(void) {
+    br24559_setup();
+    br24559_create_monster('v', br24559_wall); // non-turret on a wall
+}
+
+static boolean br24559_monster_rejected_on_wall(void) {
+    TEST_ASSERT(cellIsVisible(br24559_wall),
+                "control: the chosen wall should be visible");
+    TEST_ASSERT(messageWasShown("Invalid location."),
+                "a wall should be invalid ground for an ordinary monster");
+    TEST_ASSERT(!messageWasShown("goblin totem created."),
+                "an invalid choice must not report the monster as created");
+    TEST_ASSERT_EQ(monsterCount(), br24559_monstersBefore,
+                   "an invalid choice should discard the created monster");
+    return !testFailed;
+}
+
+static void br24559_unseen_ground_setup(void) {
+    br24559_setup();
+    br24559_create_monster('v', br24559_unseenFloor);
+}
+
+static boolean br24559_monster_rejected_where_unseen(void) {
+    TEST_ASSERT(!cellIsVisible(br24559_unseenFloor),
+                "control: the chosen open ground should lie out of sight");
+    TEST_ASSERT(messageWasShown("Invalid location."),
+                "a location you cannot see should be invalid");
+    TEST_ASSERT_EQ(monsterCount(), br24559_monstersBefore,
+                   "an unseen choice should discard the created monster");
+    return !testFailed;
+}
+
+static void br24559_turret_on_wall_setup(void) {
+    br24559_setup();
+    br24559_create_monster('c', br24559_wall); // arrow turret
+}
+
+static boolean br24559_turret_placed_on_wall(void) {
+    creature *placed = findMonster(MK_ARROW_TURRET);
+    TEST_ASSERT(cellIsTerrain(br24559_wall, WALL),
+                "control: the chosen tile should still be a wall");
+    TEST_ASSERT(placed != NULL,
+                "a turret placed on a visible wall should exist");
+    if (placed != NULL) {
+        TEST_ASSERT_POS_EQ(monsterPosition(placed), br24559_wall,
+                           "the turret should stand in the chosen wall");
+    }
+    TEST_ASSERT(messageWasShown("arrow turret created."),
+                "a valid turret placement should report the turret as created");
+    TEST_ASSERT_EQ(monsterCount(), br24559_monstersBefore + 1,
+                   "a valid turret placement should add exactly one monster");
+    return !testFailed;
+}
+
+static void br24559_turret_on_open_ground_setup(void) {
+    br24559_setup();
+    br24559_create_monster('c', br24559_openFloor);
+}
+
+static boolean br24559_turret_rejected_on_open_ground(void) {
+    TEST_ASSERT(cellIsVisible(br24559_openFloor),
+                "control: the chosen open ground should be visible");
+    TEST_ASSERT(messageWasShown("Invalid location."),
+                "open ground should be invalid for a turret");
+    TEST_ASSERT_EQ(monsterCount(), br24559_monstersBefore,
+                   "an invalid turret choice should discard the turret");
+    return !testFailed;
+}
+
+// ============================================================
 // BR78012 — the welcome message tells the player to retrieve the
 // Amulet of Yendor from a specific floor of the dungeon and escape
 // with it, naming that floor with an ordinal number
@@ -511,6 +655,107 @@ static boolean br74433_high_score_omits_treasure(void) {
 }
 
 // ============================================================
+// BR90833 — the death message states the killer and depth as
+// "Killed by a/an X on depth N", or a custom phrase followed by
+// "on depth N".
+//
+// The high-score entry stores exactly that sentence (without the
+// treasure suffix), so it exposes the death message without
+// reading engine state.  A non-1 depth distinguishes a real depth
+// from a hardcoded one, and a vowel-initial killer distinguishes
+// the "a"/"an" article rule.
+// ============================================================
+
+#define BR90833_SCORE 90833
+
+static void br90833_death_setup(void) {
+    clearMonsters();
+    clearArena();
+    clearHighScores();
+    givePlayerGold(BR90833_SCORE);
+    setPlayerHealth(1);
+}
+
+static void br90833_troll_setup(void) {
+    br90833_death_setup();
+    setDepth(2);
+    applyStatusToPlayer(STATUS_PARALYZED, 100);
+    placeHostileMonster(MK_TROLL, posOffset(getPlayerPos(), 1, 0));
+}
+
+static void br90833_ogre_setup(void) {
+    br90833_death_setup();
+    setDepth(4);
+    applyStatusToPlayer(STATUS_PARALYZED, 100);
+    placeHostileMonster(MK_OGRE, posOffset(getPlayerPos(), 1, 0));
+}
+
+static void br90833_starve_setup(void) {
+    br90833_death_setup();
+    setDepth(3);
+    setPlayerNutrition(0);
+}
+
+static boolean br90833_kill_step(void) {
+    if (isPlayerDead() || playerTurnCount() > 50) {
+        return false;
+    }
+    restOneTurn();
+    return true;
+}
+
+static boolean br90833_death_message(const char *expected) {
+    TEST_ASSERT(isPlayerDead(), "the player should have been killed");
+    TEST_ASSERT(highScoreHasScore(BR90833_SCORE),
+                "the death should save the player's score");
+    TEST_ASSERT(strcmp(highScoreDescription(BR90833_SCORE), expected) == 0,
+                "the death message should name the killer and depth");
+    return !testFailed;
+}
+
+static boolean br90833_monster_death(void) {
+    return br90833_death_message("Killed by a troll on depth 2.");
+}
+
+static boolean br90833_monster_vowel_death(void) {
+    return br90833_death_message("Killed by an ogre on depth 4.");
+}
+
+static boolean br90833_custom_phrase_death(void) {
+    return br90833_death_message("Starved to death on depth 3.");
+}
+
+// ============================================================
+// BR36967 — when the player dies, the run ends.
+//
+// A starved player at one health dies during a single rest.  The
+// check distinguishes a real ending from merely zero health: the
+// run-ended state is only set once the death has been processed,
+// so isPlayerDead() alone (which is also true at zero health)
+// would not prove the run ended.
+// ============================================================
+
+static void br36967_setup(void) {
+    clearMonsters();
+    clearArena();
+    setPlayerHealth(1);
+    setPlayerNutrition(0);
+}
+
+static boolean br36967_starve_step(void) {
+    restOneTurn();
+    return false;
+}
+
+static boolean br36967_death_ends_run(void) {
+    TEST_ASSERT(isPlayerDead(),
+                "the player should have starved to death");
+    TEST_ASSERT(runHasEnded(),
+                "the player's death should end the run");
+    return !testFailed;
+}
+
+// ============================================================
 
 const testCase tests_progression[] = {
     { "BR19079_new_game_begins_on_depth_1",        NULL,                    NULL, new_game_begins_on_depth_1 },
@@ -537,6 +782,12 @@ const testCase tests_progression[] = {
     { "BR64450_created_item_identified_on_request", br64450_accept_identify_setup, NULL, br64450_created_item_is_identified },
     { "BR64450_created_item_unidentified_when_declined", br64450_decline_identify_setup, NULL, br64450_created_item_stays_unknown },
 
+    { "BR24559_monster_placed_on_open_ground", br24559_open_ground_setup, NULL, br24559_monster_placed_on_open_ground },
+    { "BR24559_monster_rejected_on_wall", br24559_wall_for_monster_setup, NULL, br24559_monster_rejected_on_wall },
+    { "BR24559_monster_rejected_where_unseen", br24559_unseen_ground_setup, NULL, br24559_monster_rejected_where_unseen },
+    { "BR24559_turret_placed_on_wall", br24559_turret_on_wall_setup, NULL, br24559_turret_placed_on_wall },
+    { "BR24559_turret_rejected_on_open_ground", br24559_turret_on_open_ground_setup, NULL, br24559_turret_rejected_on_open_ground },
+
     { "BR78012_welcome_message_names_amulet_floor", NULL, NULL, welcome_message_names_amulet_floor },
     { "BR69169_start_clears_messages_and_blacks_screen", br69169_setup, NULL, start_clears_messages_and_blacks_out_screen },
 
@@ -544,6 +795,12 @@ const testCase tests_progression[] = {
     { "BR99222_greater_doubles_amulet_value",  br99222_greater_setup, br99222_greater_victory_step, br99222_greater_doubles_amulet_value },
 
     { "BR74433_death_high_score_omits_treasure", br74433_setup, br74433_starve_step, br74433_high_score_omits_treasure },
+
+    { "BR90833_death_names_killer_and_depth", br90833_troll_setup, br90833_kill_step, br90833_monster_death },
+    { "BR90833_death_uses_an_before_vowel", br90833_ogre_setup, br90833_kill_step, br90833_monster_vowel_death },
+    { "BR90833_custom_phrase_names_depth", br90833_starve_setup, br90833_kill_step, br90833_custom_phrase_death },
+
+    { "BR36967_death_ends_run", br36967_setup, br36967_starve_step, br36967_death_ends_run },
 
     { NULL, NULL, NULL, NULL }
 };

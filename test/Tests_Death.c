@@ -9,14 +9,13 @@ static void death_setup(void) {
     clearMonsters();
     clearArena();
     setPlayerHealth(1);
-    setPlayerPos(player.loc);
-    revealCell(player.loc);
+    revealCell(getPlayerPos());
 }
 
 static creature *spawn_test_monster(enum monsterTypes monstTyp, short xOffset) {
-    monst = spawnMonster(monstTyp, posOffset(player.loc, xOffset, 0));
+    monst = spawnMonster(monstTyp, posOffset(getPlayerPos(), xOffset, 0));
     makeMonsterHostile(monst);
-    revealCell(monst->loc);
+    revealCell(monsterPosition(monst));
     return monst;
 }
 
@@ -82,10 +81,15 @@ static void explosive_death_setup(void) {
 static void bolt_death_setup(void) {
     death_setup();
 
-    // TODO:
-    // - Pick random damage-bolt casting monsters to kill the player with
-    // - Verify the death message includes the monster name
+    // TODO: Pick random damage-bolt casting monsters to kill the player with.
     spawn_test_monster(MK_SPARK_TURRET, 2);
+}
+
+static boolean bolt_death_verify(void) {
+    death_verify();
+    TEST_ASSERT(playerDeathWasAttributedTo("spark turret"),
+                "death should be attributed to the spark turret whose bolt killed the player");
+    return !testFailed;
 }
 
 // BR10011 — killed by fall
@@ -139,7 +143,7 @@ const testCase tests_death[] = {
     { "BR10007_burning_death",        burn_death_setup,           wait_until_dead_step, death_verify },
     { "BR10008_lava_death",           lava_death_setup,           wait_until_dead_step, death_verify },
     { "BR10009_explosive_death",      explosive_death_setup,      wait_until_dead_step, death_verify },
-    { "BR10002_bolt_death",           bolt_death_setup,           wait_until_dead_step, death_verify },
+    { "BR10002_bolt_death",           bolt_death_setup,           wait_until_dead_step, bolt_death_verify },
     { "BR10011_fall_death",           fall_death_setup,           wait_until_dead_step, death_verify },
     { "BR10004_cursed_ring",          cursed_ring_death_setup,    cursed_ring_death_step, death_verify },
     { "BR10003_reflected_bolt_death", reflected_bolt_death_setup, reflected_bolt_death_step, death_verify },

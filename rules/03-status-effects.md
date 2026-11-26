@@ -1,8 +1,8 @@
 **BR74170** — Every creature tracks 27 distinct status effects, each storing a current value and a maximum value; only positive values matter, and most effects count down toward zero. The effects are searching, donning, weakened, telepathic, hallucinating, levitating, slowed, hasted, confused, burning, paralyzed, poisoned, stuck, nauseous, discordant, immune to fire, explosion immunity, nutrition, entering the level, enraged, magical fear, entranced, darkness, remaining lifespan, shielded, invisible, and aggravating.
 [Rogue.h:1989-2024](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L1989-L2024)
-**BR97529** — For the player, most statuses lose exactly 1 point on each periodic environmental update, which happens about every 100 ticks; this covers telepathy, darkness, hallucinating, levitating, confusion, nausea, paralysis, haste, slow, weakness, donning, fire immunity, explosion immunity, discord, aggravation, and invisibility.
-[Time.c:1979-2085](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1979-L2085) [Time.c:2399-2431](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2399-L2431)
-**BR70838** — For monsters, most statuses decrement by 1 on the periodic environmental update.
+**BR97529** — For the player, each of these statuses loses one turn of its duration for every normal turn that passes: telepathy, darkness, hallucination, levitation, confusion, nausea, paralysis, haste, slowness, weakness, donning armor, fire immunity, explosion immunity, discord, aggravation and invisibility.
+[Time.c:1991-2079](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1991-L2079) [Time.c:2399-2431](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2399-L2431)
+**BR70838** — For monsters, most temporary statuses gradually wear off as time passes.
 [Monsters.c:1825-1992](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1825-L1992) [Monsters.c:1969-1972](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1969-L1972)
 **BR72967** — A creature that inherently flies, burns, is immune to fire, or is invisible keeps that status permanently set to 1000 so it never decreases.
 [Monsters.c:3904-3926](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3904-L3926)
@@ -114,7 +114,7 @@
 [Combat.c:335-342](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L335-L342)
 **BR34635** — A confused monster with the steal-and-flee ability does not steal from the player.
 [Combat.c:426-431](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L426-L431)
-**BR47057** — Exposing a creature to fire sets its burning counter to at least 7 if it was not already burning, producing the message "you catch fire" for the player; a creature that is fiery, immune to fire, invulnerable, submerged, or standing on fire-extinguishing terrain without levitating is unaffected.
+**BR47057** — A creature exposed to fire catches fire, announced as "you catch fire" for the player, unless it is already dying, immune to fire, invulnerable, submerged, or standing on fire-extinguishing terrain without levitating.
 [Time.c:28-51](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L28-L51)
 **BR30194** — A burning creature takes 1 to 3 damage per turn, and its burning counter decreases by 1 per turn until it is extinguished; a fiery creature never stops burning.
 [Time.c:2328-2337](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2328-L2337) [Monsters.c:1868-1892](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1868-L1892)
@@ -142,8 +142,8 @@
 [Time.c:2339-2348](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2339-L2348) [Monsters.c:1907-1922](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1907-L1922)
 **BR81488** — Poisonous lichen damages and poisons a non-levitating creature but is capped so it never raises the poison concentration above 1.
 [Time.c:426-445](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L426-L445)
-**BR52651** — A panacea-style heal clears poison entirely (concentration and duration set to 0).
-[Items.c:3957-3960](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3957-L3960)
+**BR52651** — Drinking a potion of life cures poison entirely.
+[Items.c:7271-7277](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7271-L7277) [Items.c:3957-3960](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3957-L3960)
 **BR33833** — A panacea-style heal also reduces hallucination, confusion, nausea, and slow to at most 1, clears weakness and its amount, and clears darkness.
 [Items.c:3939-3956](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3939-L3956) [Items.c:3961-3967](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3961-L3967)
 **BR45733** — A bolt of poison adds poison with a concentration increment of 1 and a duration scaled to the bolt's magnitude.
@@ -236,8 +236,6 @@
 [Monsters.c:1893-1906](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1893-L1906)
 **BR44763** — Shielding sets the shield value to the larger of the current value and a scaled protection amount (from a staff or charm) and records that value as the maximum.
 [Items.c:4653-4663](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4653-L4663) [Items.c:6745-6754](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6745-L6754)
-**BR38432** — Each point of shield absorbs 10 points of incoming damage: if the shield exceeds the damage times 10 it absorbs everything, otherwise the leftover damage gets through and the shield is depleted.
-[Combat.c:1532-1542](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1532-L1542)
 **BR68621** — The shield loses one twentieth of its maximum value per periodic update and is cleared completely once it reaches 0.
 [Time.c:2070-2075](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2070-L2075) [Monsters.c:1949-1954](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1949-L1954)
 **BR97727** — Invisibility sets the counter to a scaled duration, and a creature that is inherently invisible keeps it permanently.
@@ -250,15 +248,19 @@
 [Time.c:686-691](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L686-L691)
 **BR28722** — While the player is invisible their scent fades faster (scent advances 10 per turn instead of 3).
 [Time.c:2265-2269](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2265-L2269)
-**BR48230** — The invisibility counter decreases by 1 per periodic update, and the creature is redrawn when it becomes visible again.
-[Time.c:2077-2079](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2077-L2079) [Monsters.c:1960-1968](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1960-L1968)
+**BR48230** — When the player's invisibility wears off, the message "you are no longer invisible." is shown.
+[Time.c:2077-2079](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2077-L2079)
+**BR40479** — A monster that stops being invisible while it is in your view reappears on the map.
+[Monsters.c:1960-1968](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1960-L1968)
 **BR80706** — Aggravation sets the counter to its radius when applied at the player's location.
 [Items.c:3394-3397](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3394-L3397)
 **BR50175** — While the aggravation counter is positive and the player is not invisible, it adds that many points to the player's stealth range.
 [Time.c:710-712](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L710-L712)
-**BR18867** — The aggravation counter decreases by 1 per periodic update.
+**BR18867** — Aggravation weakens by one point each turn, shrinking the extra distance at which creatures notice the player until it wears off.
 [Time.c:2066-2068](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2066-L2068)
-**BR91554** — Applying aggravation wakes and alerts every monster within the radius and clears their distance-keeping and corridor-avoiding behaviors.
+**BR91554** — Applying aggravation wakes every sleeping creature within its radius that can reach the location and alerts non-allied creatures that are not following you.
 [Items.c:3372-3382](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3372-L3382)
+**BR10268** — A non-allied creature that is not following you and is caught in aggravation stops keeping its distance and stops avoiding corridors.
+[Items.c:3378-3381](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3378-L3381)
 **BR40440** — Applying aggravation lays a scent trail toward the location.
 [Items.c:3385-3392](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3385-L3392)

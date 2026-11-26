@@ -2,7 +2,7 @@
   [Combat.c:1184-1191](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1184-L1191)
 - **BR10002** — When a monster's bolt spell reduces the player to zero health, the player dies and the game ends, attributed to that monster.
   [Monsters.c:2768-2773](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2768-L2773)
-- **BR10003** — When a reflected bolt reduces the player to zero health, the player dies and the game ends, attributed to the reflected bolt.
+- **BR10003** — When a bolt you cast is reflected back at you and reduces you to zero health, the player dies and the game ends, attributed to the reflected bolt.
   [Items.c:4418-4426](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4418-L4426)
 - **BR10004** — When a cursed ring of transference activates it harms the player, possibly killing them.
   [Combat.c:1582-1586](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1582-L1586)

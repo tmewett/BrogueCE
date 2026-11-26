@@ -6,9 +6,9 @@
   predict. Reference: [Rogue.h 2069](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2069), [Monsters.c 3758-3764](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3758-L3764).
 - **BR60148** — **Bound to liquid.** The creature cannot venture onto dry land: it moves only
   on tiles that allow submersion. If it is stranded on dry land it cannot move, attack, or
-  seize anything and simply writhes helplessly. Reference: [Rogue.h 2078](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2078), [Monsters.c 3770-3773](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3770-L3773), [Monsters.c 1318-1321](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1318-L1321), [Monsters.c 3358-3363](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3358-L3363).
-- **BR47597** — **Moves at full speed in deep water.** Water does not slow the creature down (and,
-  for a player, would not force item-dropping). Reference: [Rogue.h 2077](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2077), [Monsters.c 1395-1398](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1395-L1398).
+  seize anything and simply writhes helplessly. Reference: [Monsters.c 3770-3773](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3770-L3773), [Monsters.c 1318-1321](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1318-L1321), [Monsters.c 3358-3363](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3358-L3363).
+- **BR47597** — **Moves at full speed in deep water.** Water neither slows the creature nor deters
+  it: it crosses deep water as readily as dry ground. Reference: [Rogue.h 2077](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2077), [Monsters.c 1395-1398](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1395-L1398).
 - **BR65633** — **Submerges.** While in suitable terrain the creature can sink beneath the surface,
   becoming effectively hidden until it strikes. A submerged creature cannot be targeted
   by bolts; it surfaces when it attacks (and a grabbing creature stays hidden on the turn
@@ -25,13 +25,15 @@
   through or off the creature. Reference: [Rogue.h 2072](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2072), [Monsters.c 1392](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1392).
 - **BR13361** — **Attackable while embedded in a wall.** Normally a creature set into solid stone
   cannot be struck; this one can be. Reference: [Rogue.h 2045](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2045), [Monsters.c 297-301](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L297-L301).
-- **BR53451** — **Carries an item.** The creature may be generated holding a random item, which
-  it drops when it dies. Some carry one every time, others only about a quarter of the
-  time. Reference: [Rogue.h 2061-2062](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2061-L2062), [Monsters.c 133-145](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L133-L145).
-- **BR48675** — **Not listed in the sidebar.** The creature never appears in the player's
-  creature list. Reference: [Rogue.h 2085](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2085).
-- **BR67941** — **Never sleeps.** The creature is always awake and can never be caught asleep.
-  Reference: [Rogue.h 2074](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2074), [Monsters.c 111](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L111).
+- **BR53451** — **Carries an item.** The creature may be generated holding a random item; some
+  carry one every time, others only about a quarter of the time. Reference: [Monsters.c 132-153](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L132-L153).
+- **BR14275** — **Drops its item when it dies.** When the creature dies, it drops the item it was
+  carrying. Reference: [Combat.c 1662-1667](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1662-L1667), [Monsters.c 4076-4086](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L4076-L4086).
+- **BR48675** — **Normally left out of the sidebar.** The creature is ordinarily absent from the
+  player's list of creatures, but it appears there while the player points the cursor at it.
+  Reference: [IO.c 3799-3802](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3799-L3802), [IO.c 3718-3724](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3718-L3724), [IO.c 3784-3791](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3784-L3791), [IO.c 3906-3909](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3906-L3909).
+- **BR67941** — **Never sleeps.** The creature begins awake and hunting rather than asleep when it
+  is first placed. Reference: [Monsters.c 111](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L111).
 - **BR46423** — **Always hunting.** The creature is never asleep or idly wandering; it is
   permanently aware of the player's location and pursues relentlessly. Reference:
   [Rogue.h 2063](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2063), [Monsters.c 1656-1657](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1656-L1657), [Monsters.c 1716-1721](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1716-L1721).
@@ -47,15 +49,15 @@
   use its ability it always does so, with none of the usual random chance of holding
   back. Reference: [Rogue.h 2087](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2087), [Monsters.c 2794-2795](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2794-L2795), [Monsters.c 2809](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2809).
 - **BR39641** — **Casts spells slowly.** Casting a spell takes twice the creature's normal attack
-  time, so its magic comes at half the usual rate. Reference: [Rogue.h 2071](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2071), [Monsters.c 2116](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2116).
+  time, so its magic comes at half the usual rate. Reference: [Monsters.c 3130-3131](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3130-L3131), [Monsters.c 3389-3390](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3389-L3390).
 - **BR21958** — **Inanimate.** The creature is an object rather than a living thing: it is immune
   to many afflictions that affect the living (poison, weakness, hallucination, drowning,
   confusion and the like) and shows only an abbreviated status readout. Reference:
   [Rogue.h 2059](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2059), [Monsters.c 3059](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3059), [Combat.c 1061-1064](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1061-L1064).
 - **BR90225** — **Invulnerable.** The creature is immune to absolutely everything; it cannot be
   harmed by any means. Reference: [Rogue.h 2076](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2076).
-- **BR95842** — **Immune to weapons.** Ordinary weapon damage does not hurt it; only magic,
-  staffs, wands and the like are effective. Reference: [Rogue.h 2067](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2067), [Combat.c 1098-1099](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1098-L1099).
+- **BR95842** — **Immune to weapons.** Ordinary weapon damage does not hurt it, whether the blow
+  comes from a melee weapon or from a weapon thrown at it. Reference: [Rogue.h 2067](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2067), [Combat.c 1098-1100](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1098-L1100), [Items.c 6054-6056](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6054-L6056).
 - **BR37585** — **Corrodes the weapon that strikes it.** Each time a weapon hits the creature, the
   attacker's weapon is weakened (losing an enchantment). Reference: [Rogue.h 2066](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2066), [Combat.c 1239-1256](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1239-L1256).
 - **BR13523** — **Immune to fire.** The creature will not burn and cannot be killed by lava.
@@ -67,8 +69,9 @@
   Reference: [Rogue.h 2073](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2073).
 - **BR12704** — **Cannot be polymorphed.** The creature can never be produced by a polymorph
   effect. Reference: [Rogue.h 2088](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2088).
-- **BR49476** — **Dies if negated.** Exposing the creature to negation magic destroys it outright,
-  because it is held together purely by magic. Reference: [Items.c 3757-3766](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3757-L3766).
+- **BR49476** — **Dies if negated.** Negation magic destroys the creature outright: a levitating
+  one dissipates into thin air, an inanimate one shatters into tiny pieces, and any other falls
+  to the ground, lifeless. Reference: [Items.c 3757-3767](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3757-L3767).
 - **BR56920** — **Invisible.** The creature cannot ordinarily be seen; magic or other senses are
   needed to detect it. Reference: [Rogue.h 2058](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2058), [Monsters.c 3922-3924](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3922-L3924).
 - **BR11587** — **Gender (male or female).** Purely a grammatical/flavor property of the creature
@@ -117,14 +120,15 @@
 - **BR40544** — **Summons allies.** The creature can call up new minions (often in hordes) to fight
   beside it; the chance and frequency depend on how many minions it already has. Reference:
   [Rogue.h 2111](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2111), [Monsters.c 2409-2457](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2409-L2457), [Monsters.c 976-1068](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L976-L1068).
-- **BR70715** — **Hides inside its summoned minions.** Rather than appearing bodily, the creature
-  is carried within one of its summoned servants and re-emerges when that servant is
-  defeated (a lich's phylactery, a phoenix egg, a vampire, and similar). Reference:
-  [Rogue.h 2109](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2109), [Monsters.c 989-992](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L989-L992), [Monsters.c 1047-1057](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1047-L1057).
+- **BR70715** — **Hides inside its summoned minions.** The creature (such as a lich's
+  phylactery, a phoenix egg, or a vampire) does not appear bodily: it is carried within one
+  of its summoned servants, and when that servant is defeated it reappears in the servant's
+  place. Reference:
+  [Monsters.c 989-992](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L989-L992), [Monsters.c 1047-1057](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1047-L1057), [Combat.c 1713-1731](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1713-L1731).
 - **BR53754** — **Casts a shielding spell on allies.** Wraps a friendly creature in a protective
   magical shield that reduces incoming damage. Reference: [Monsters.c 2730-2737](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2730-L2737).
 - **BR47059** — **Casts a healing spell on allies.** Restores health to a wounded friendly
-  creature (never wasted on one already at full health). Reference: [Monsters.c 2738-2743](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2738-L2743).
+  creature (never wasted on one already at full health). Reference: [Items.c 4615-4616](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4615-L4616), [Monsters.c 2589-2593](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2589-L2593), [Monsters.c 2738-2743](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2738-L2743).
 - **BR73986** — **Casts a haste spell on allies.** Makes a friendly creature act more often
   (faster movement and attacks) for a time. Reference: [Monsters.c 2722-2729](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2722-L2729).
 - **BR32475** — **Casts a slowing spell on enemies.** Slows a target so it moves and attacks less
@@ -144,8 +148,8 @@
 - **BR16647** — **Blinks (teleports).** Rather than an attack, the creature can teleport short
   distances — blinking toward prey, toward safety when fleeing, or away from danger. This
   is resolved as movement elsewhere, not as a combat bolt. Reference: [Monsters.c 2790-2792](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2790-L2792), [Monsters.c 3437-3443](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3437-L3443).
-- **BR71983** — **Beckons the target toward it.** A magical tug that drags the victim closer to
-  the caster (never used at point-blank range). Reference: [Monsters.c 2627-2631](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2627-L2631).
+- **BR71983** — **Beckons the target toward it.** A magical tug drags the victim toward the caster,
+  but it is never used at point-blank range. Reference: [Items.c 4477-4490](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4477-L4490), [Items.c 4325-4338](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4325-L4338), [Monsters.c 2627-2631](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2627-L2631).
 - **BR81211** — **Hurls entangling vines.** Lashes the target with grasping vines that hold it
   fast, like webs. Reference: [Monsters.c 2646-2663](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2646-L2663).
 - **BR68263** — **Attacks at range with a physical projectile.** Fires an arrow or bolt that deals
@@ -268,9 +272,8 @@ turns; normal speeds. A **large** creature that **moves at full speed in water**
 (BR65633), **never sleeps** (BR67941), and **burns unceasingly** (BR57968). It **strikes up to two
 enemies in a line** (BR43379) and always leaves salamander flame where it dies. It glows.
 [Globals.c 1082-1083](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1082-L1083)
-**BR98594** — **Explosive Bloat.** Health 10, defense 0, accuracy 100, damage 0; regenerates every
-5 turns; normal speeds. It **flies** (BR39474), **moves erratically** (BR10411), **explodes rather
-than attacking** (BR15511), and **releases an explosion on death** (BR12637). It glows.
+**BR98594** — **Explosive Bloat.** Health 10, defense 0, accuracy 100, damage 0; regenerates 1 health
+every 5 turns; normal speeds. It glows.
 [Globals.c 1084-1085](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1084-L1085)
 **BR44680** — **Dar Blademaster.** Health 35, defense 70, accuracy 160, damage 5–9; regenerates
 every 20 turns; normal speeds. It **blinks** around the battlefield (BR16647), **avoids
@@ -340,8 +343,8 @@ It **hurls fire bolts** (BR60584). It glows. [Globals.c 1112-1113](https://githu
 **BR69414** — **Imp.** Health 35, defense 90, accuracy 225, damage 4–9; regenerates 1 health every 10
 turns; normal speeds. It glows. [Globals.c 1114-1115](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1114-L1115)
 **BR51639** — **Fury.** Health 19, defense 90, accuracy 200, damage 6–11; regenerates every 20
-turns; **moves twice as fast as normal** (speed 50); normal attack speed. It **flies**
-(BR39474) and **never sleeps** (BR67941). [Globals.c 1116-1117](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1116-L1117)
+turns; **moves twice as fast as normal** (speed 50); normal attack speed.
+[Globals.c 1116-1117](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1116-L1117)
 **BR55764** — **Revenant.** Health 30, defense 0, accuracy 200, damage 15–20; **no natural
 regeneration**; normal speeds. A **large** creature that is **immune to weapons** (BR95842);
 only magic can harm it. [Globals.c 1118-1119](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1118-L1119)

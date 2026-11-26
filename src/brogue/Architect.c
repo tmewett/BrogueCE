@@ -25,6 +25,10 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
+#ifdef BROGUE_TESTING
+#include "../../test/TestFramework.h"
+#endif
+
 short topBlobMinX, topBlobMinY, blobWidth, blobHeight;
 
 boolean cellHasTerrainFlag(pos loc, unsigned long flagMask) {
@@ -2488,6 +2492,10 @@ static void carveDungeon(short **grid) {
     adjustDungeonFirstRoomProfileForDepth(&theFirstRoomDP);
 
     designRandomRoom(grid, false, NULL, theFirstRoomDP.roomFrequencies);
+
+#ifdef BROGUE_TESTING
+    recordFirstRoomForTesting(grid);
+#endif
 
     if (D_INSPECT_LEVELGEN) {
         colorOverDungeon(&darkGray);

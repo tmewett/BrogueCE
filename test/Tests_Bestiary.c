@@ -98,6 +98,61 @@ static boolean br72064_verify(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR68715 — Centaur.  Health 35, defense 50, accuracy 175, damage 4-8;
+// regenerates every 20 turns; moves twice as fast as normal (speed 50) with
+// a normal attack (100).  A large creature that keeps its distance and
+// attacks at range with arrows.
+//
+// The stat block, two speeds, size, trait and ranged bolt are read from the
+// spawned centaur's catalog entry.  The 20-turn regeneration period is
+// watched turn by turn, as in BR24264: a wounded ally with no enemies about
+// can only regain health through regeneration, so it must sit at 1 HP for 19
+// turns and regain exactly one point on the 20th.
+// ============================================================
+
+static int br68715_regenTurns;
+
+static void br68715_setup(void) {
+    trait_setup(MK_CENTAUR);
+    makeMonsterAlly(subject);
+    setMonsterHealth(subject, 1);
+    br68715_regenTurns = 0;
+}
+
+static boolean br68715_step(void) {
+    restOneTurn();
+    br68715_regenTurns++;
+    if (monsterHealth(subject) > 1) {
+        return false;
+    }
+    return br68715_regenTurns < 60;
+}
+
+static boolean br68715_verify(void) {
+    TEST_ASSERT(subject != NULL, "centaur spawned");
+    TEST_ASSERT_EQ(monsterMaxHealth(subject), 35, "centaur health");
+    TEST_ASSERT_EQ(monsterBaseDefense(subject), 50, "centaur defense");
+    TEST_ASSERT_EQ(monsterBaseAccuracy(subject), 175, "centaur accuracy");
+    TEST_ASSERT_EQ(monsterBaseDamageLow(subject), 4, "centaur damage low");
+    TEST_ASSERT_EQ(monsterBaseDamageHigh(subject), 8, "centaur damage high");
+    TEST_ASSERT_EQ(monsterBaseMovementSpeed(subject), 50,
+                   "centaur moves twice as fast as normal");
+    TEST_ASSERT_EQ(monsterBaseAttackSpeed(subject), 100,
+                   "centaur attacks at normal speed");
+    TEST_ASSERT(monsterRegenerates(subject), "centaur regenerates naturally");
+    TEST_ASSERT(monsterIsLarge(subject), "centaur is large");
+    TEST_ASSERT(monsterHasTrait(subject, MONST_MAINTAINS_DISTANCE),
+                "centaur keeps its distance");
+    TEST_ASSERT(monsterCastsBolt(subject, BOLT_DISTANCE_ATTACK),
+                "centaur attacks at range with arrows");
+    TEST_ASSERT_EQ(br68715_regenTurns, 20,
+                   "the centaur should wait 20 turns before regenerating");
+    TEST_ASSERT_EQ(monsterHealth(subject), 2,
+                   "the centaur should regain exactly one point of health per period");
+    return !testFailed;
+}
+
 // BR30757 — will not follow between levels.  A control monster without the
 // trait chases the player down the stairs, so the totem's absence from the new
 // level proves the trait, not a broken follow mechanic.  Both are tracked by
@@ -207,7 +262,55 @@ static boolean br67941_verify(void) {
 TRAIT_TEST(br46423, MK_WARDEN_OF_YENDOR, MONST_ALWAYS_HUNTING, "warden always hunting")
 TRAIT_TEST(br51688, MK_WRAITH, MONST_FLEES_NEAR_DEATH, "wraith flees near death")
 TRAIT_TEST(br16717, MK_GUARDIAN, MONST_GETS_TURN_ON_ACTIVATION, "guardian acts on activation")
-TRAIT_TEST(br85956, MK_SPIDER, MONST_ALWAYS_USE_ABILITY, "spider always uses ability")
+// BR85956 — never fails to use its special ability.  The catalog flag alone
+// only proves the potential, so exercise the live behavior: an allied spider
+// with one hostile rat in clear view has an eligible web target on every turn.
+// The plain engine roll would hold back 70% of the time; with the flag the
+// spider must web the rat every single time.  Clearing the web and the stuck
+// state between trials gives 100 independent eligible turns.
+#define BR85956_TRIALS 100
+static creature *br85956_target;
+static pos br85956_spiderPos;
+static pos br85956_targetPos;
+static int br85956_casts;
+static int br85956_trials;
+
+static void br85956_setup(void) {
+    setPlayerPos(posAt(levelWidth() / 2, levelHeight() / 2));
+    setArenaRadius(6, FLOOR);
+    br85956_spiderPos = posOffset(getPlayerPos(), -3, -2);
+    br85956_targetPos = posOffset(getPlayerPos(), -3, 2);
+    subject = spawnMonster(MK_SPIDER, br85956_spiderPos);
+    makeMonsterAlly(subject);
+    br85956_target = spawnMonster(MK_RAT, br85956_targetPos);
+    br85956_casts = 0;
+    br85956_trials = 0;
+}
+
+static boolean br85956_step(void) {
+    // Give the spider an eligible target again: clear the web and the stuck
+    // status the previous cast left behind.
+    setTerrain(br85956_spiderPos, FLOOR);
+    setMonsterPos(subject, br85956_spiderPos);
+    setTerrain(br85956_targetPos, FLOOR);
+    setMonsterPos(br85956_target, br85956_targetPos);
+    applyStatusToMonster(br85956_target, STATUS_STUCK, 0);
+
+    monsterTakesTurn(subject);
+    if (cellIsTerrain(monsterPosition(br85956_target), SPIDERWEB)) {
+        br85956_casts++;
+    }
+    return ++br85956_trials < BR85956_TRIALS;
+}
+
+static boolean br85956_verify(void) {
+    TEST_ASSERT(subject != NULL, "spider spawned");
+    TEST_ASSERT(monsterHasTrait(subject, MONST_ALWAYS_USE_ABILITY),
+                "control: the spider's catalog entry says it never holds back");
+    TEST_ASSERT_EQ(br85956_casts, BR85956_TRIALS,
+                   "a spider eligible to use its web should use it every turn");
+    return !testFailed;
+}
 TRAIT_TEST(br39641, MK_SPIDER, MONST_CAST_SPELLS_SLOWLY, "spider casts slowly")
 TRAIT_TEST(br21958, MK_GOBLIN_TOTEM, MONST_INANIMATE, "totem inanimate")
 TRAIT_TEST(br90225, MK_WARDEN_OF_YENDOR, MONST_INVULNERABLE, "warden invulnerable")
@@ -620,6 +723,51 @@ static boolean br60584_verify(void) {
                 "a searing bolt should damage the target it hits");
     TEST_ASSERT(br60584_burning,
                 "a searing bolt should set the target it hits alight");
+    return !testFailed;
+}
+
+// BR78949 — fires bolts of lightning: a damaging electrical bolt, and the
+// spark turret's whole attack.  The spell list alone only proves the
+// potential, so the step lets the turret actually fire one at you and records
+// the wound.  The turret is immobile and has no melee damage at all (0-0), so
+// a wound taken from four tiles away can only have come from the bolt.  It
+// rolls a fresh 30% chance to cast on each of its turns, so the step allows up
+// to 60 of them (the chance of no bolt in that window is under 1 in 10^9).
+static creature *br78949_turret;
+static boolean br78949_hit;
+static int br78949_turns;
+
+static void br78949_setup(void) {
+    setArenaRadius(6, FLOOR);
+    // Aggravate yourself and run one real turn first: this pins the engine's
+    // stealth range high and recomputes the field of view over the cleared
+    // arena, so the turret notices you immediately instead of waking on a
+    // per-turn awareness roll and sleeping through the test.
+    applyStatusToPlayer(STATUS_AGGRAVATING, 10000);
+    restOneTurn();
+    br78949_turret = placeHostileMonster(MK_SPARK_TURRET, posOffset(getPlayerPos(), -4, 0));
+    br78949_hit = false;
+    br78949_turns = 0;
+}
+
+static boolean br78949_step(void) {
+    monsterTakesTurn(br78949_turret);
+    if (isPlayerHurt()) {
+        br78949_hit = true;
+    }
+    br78949_turns++;
+    return !br78949_hit && br78949_turns < 60;
+}
+
+static boolean br78949_verify(void) {
+    TEST_ASSERT(monsterCastsBolt(br78949_turret, BOLT_SPARK),
+                "control: the spark turret should carry the lightning bolt");
+    TEST_ASSERT_EQ(monsterBaseDamageHigh(br78949_turret), 0,
+                   "control: the spark turret has no melee attack to wound you with");
+    TEST_ASSERT(br78949_hit,
+                "a lightning bolt should damage the target it hits");
+    TEST_ASSERT(!monsterIsAdjacentToPlayer(br78949_turret),
+                "the wound should have come from the lightning bolt, not from melee");
     return !testFailed;
 }
 
@@ -1168,6 +1316,74 @@ static boolean br89674_verify(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR16799 — Ogre Shaman.  Health 45, defense 40, accuracy 100, damage
+// 5-9; regenerates every 20 turns; moves at normal speed but attacks at
+// half rate (attack speed 200).  A large creature that summons allies,
+// keeps its distance, avoids corridors, casts spells slowly, hastes its
+// allies and fires lightning bolts.
+// ============================================================
+
+static int br16799_regenTurns;
+
+static void br16799_stats_setup(void) {
+    trait_setup(MK_OGRE_SHAMAN);
+}
+
+static void br16799_regen_setup(void) {
+    trait_setup(MK_OGRE_SHAMAN);
+    makeMonsterAlly(subject);
+    setMonsterHealth(subject, 1);
+    br16799_regenTurns = 0;
+}
+
+static boolean br16799_regen_step(void) {
+    restOneTurn();
+    br16799_regenTurns++;
+    if (monsterHealth(subject) > 1) {
+        return false;
+    }
+    return br16799_regenTurns < 60;
+}
+
+static boolean br16799_stats_verify(void) {
+    TEST_ASSERT(subject != NULL, "ogre shaman spawned");
+    TEST_ASSERT_EQ(monsterMaxHealth(subject), 45, "ogre shaman health");
+    TEST_ASSERT_EQ(monsterBaseDefense(subject), 40, "ogre shaman defense");
+    TEST_ASSERT_EQ(monsterBaseAccuracy(subject), 100, "ogre shaman accuracy");
+    TEST_ASSERT_EQ(monsterBaseDamageLow(subject), 5, "ogre shaman damage low");
+    TEST_ASSERT_EQ(monsterBaseDamageHigh(subject), 9, "ogre shaman damage high");
+    TEST_ASSERT_EQ(monsterBaseMovementSpeed(subject), 100,
+                   "ogre shaman moves at normal speed");
+    TEST_ASSERT_EQ(monsterBaseAttackSpeed(subject), 200,
+                   "ogre shaman attacks at half rate");
+    TEST_ASSERT(monsterRegenerates(subject), "ogre shaman regenerates naturally");
+    TEST_ASSERT(monsterIsLarge(subject), "ogre shaman is large");
+    TEST_ASSERT(monsterHasTrait(subject, MONST_MAINTAINS_DISTANCE),
+                "ogre shaman keeps its distance");
+    TEST_ASSERT(monsterHasTrait(subject, MONST_CAST_SPELLS_SLOWLY),
+                "ogre shaman casts spells slowly");
+    TEST_ASSERT(monsterHasAbility(subject, MA_CAST_SUMMON),
+                "ogre shaman summons allies");
+    TEST_ASSERT(monsterHasAbility(subject, MA_AVOID_CORRIDORS),
+                "ogre shaman avoids corridors");
+    TEST_ASSERT(monsterCastsBolt(subject, BOLT_HASTE),
+                "ogre shaman hastes its allies");
+    TEST_ASSERT(monsterCastsBolt(subject, BOLT_SPARK),
+                "ogre shaman fires lightning bolts");
+    return !testFailed;
+}
+
+static boolean br16799_regen_verify(void) {
+    TEST_ASSERT(subject != NULL, "ogre shaman spawned");
+    TEST_ASSERT_EQ(monsterMaxHealth(subject), 45, "ogre shaman health");
+    TEST_ASSERT_EQ(br16799_regenTurns, 20,
+                   "the ogre shaman should wait 20 turns before regenerating");
+    TEST_ASSERT_EQ(monsterHealth(subject), 2,
+                   "the ogre shaman should regain exactly one point of health per period");
+    return !testFailed;
+}
+
 const testCase tests_bestiary[] = {
     { "BR39474_flies", br39474_setup, NULL, br39474_verify },
     { "BR10411_erratic", br10411_setup, NULL, br10411_verify },
@@ -1176,6 +1392,7 @@ const testCase tests_bestiary[] = {
     { "BR65633_submerges", br65633_setup, NULL, br65633_verify },
     { "BR99362_immobile", br99362_setup, NULL, br99362_verify },
     { "BR72064_keeps_distance", br72064_setup, br72064_step, br72064_verify },
+    { "BR68715_centaur_stats_and_regeneration", br68715_setup, br68715_step, br68715_verify },
     { "BR30757_wont_use_stairs", br30757_setup, br30757_step, br30757_verify },
     { "BR91557_immune_webs", br91557_setup, NULL, br91557_verify },
     { "BR13361_attackable_thru_walls", br13361_setup, NULL, br13361_verify },
@@ -1185,7 +1402,7 @@ const testCase tests_bestiary[] = {
     { "BR46423_always_hunting", br46423_setup, NULL, br46423_verify },
     { "BR51688_flees_near_death", br51688_setup, NULL, br51688_verify },
     { "BR16717_acts_on_activation", br16717_setup, NULL, br16717_verify },
-    { "BR85956_always_uses_ability", br85956_setup, NULL, br85956_verify },
+    { "BR85956_always_uses_ability", br85956_setup, br85956_step, br85956_verify },
     { "BR39641_casts_slowly", br39641_setup, NULL, br39641_verify },
     { "BR21958_inanimate", br21958_setup, NULL, br21958_verify },
     { "BR90225_invulnerable", br90225_setup, NULL, br90225_verify },
@@ -1223,6 +1440,7 @@ const testCase tests_bestiary[] = {
     { "BR68026_discord", br68026_setup, br68026_step, br68026_verify },
     { "BR81389_negation", br81389_setup, NULL, br81389_verify },
     { "BR60584_fire", br60584_setup, br60584_step, br60584_verify },
+    { "BR78949_lightning", br78949_setup, br78949_step, br78949_verify },
     { "BR18935_web", br18935_setup, NULL, br18935_verify },
     { "BR16647_blinking", br16647_setup, NULL, br16647_verify },
     { "BR71983_beckoning", br71983_setup, NULL, br71983_verify },
@@ -1247,5 +1465,7 @@ const testCase tests_bestiary[] = {
     { "BR27618_warden_of_yendor", br27618_setup, NULL, br27618_verify },
     { "BR17917_bloat_stats_and_regeneration", br17917_setup, br17917_step, br17917_verify },
     { "BR89674_pixie_stats_and_regeneration", br89674_setup, br89674_step, br89674_verify },
+    { "BR16799_ogre_shaman_stats_and_traits", br16799_stats_setup, NULL, br16799_stats_verify },
+    { "BR16799_ogre_shaman_regenerates_every_20_turns", br16799_regen_setup, br16799_regen_step, br16799_regen_verify },
     { NULL, NULL, NULL, NULL }
 };

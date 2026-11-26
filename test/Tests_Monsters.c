@@ -3,23 +3,26 @@
 // These cover the deterministic, headless-observable monster rules: what hides
 // a creature from an observer, who is willing to attack whom, allegiance
 // (teammates and enemies), which monsters you know the location of, the
-// terrain a monster refuses to enter, a beached
-// liquid creature, whether a never-sleeping monster starts awake, which
+// terrain a monster refuses to enter, a beached liquid creature, a water-bound
+// grappler staying submerged on the turn it grabs, whether a never-sleeping
+// monster starts awake, which
 // targets a monster is allowed to cast at, the order a monster tries its
 // steps in when walking toward a destination, how a wandering monster
 // travels between its checkpoints, how an ally idles when it is close
 // to you and can see you, how an ally told not to follow you holds its
 // post while still chasing enemies within its range, how a monster's
 // timed conditions count down once per turn, how a permanently fleeing
-// thief that loses its stolen item returns to normal behaviour, and the
-// randomly chosen kind name a visible monster is displayed under while
-// you hallucinate.
+// thief that loses its stolen item returns to normal behaviour, how an
+// always-hunting monster that has given up on the scent trail paths toward
+// you, the randomly chosen kind name a visible monster is displayed under
+// while you hallucinate, and the allegiance of the members of a horde flagged
+// as allied with you.
 //
 // Omitted are everything that depends on the particular layout of generated
-// levels or on horde generation, random chances (mutations, item drops,
-// detection rolls, splitting, summoning counts), general route-finding,
-// spell/bolt selection, messages and death text, and any rule that needs a
-// screen or is otherwise not reproducible headlessly.
+// levels or on most horde generation, random chances (mutations, item drops,
+// detection rolls, splitting, summoning counts), spell/bolt selection,
+// messages and death text, and any rule that needs a screen or is otherwise
+// not reproducible headlessly.
 
 #include "TestFramework.h"
 #include "Globals.h"
@@ -682,24 +685,106 @@ static boolean fire_immune_monster_ignores_lava(void) {
 }
 
 // ---------------------------------------------
-// BR51199 — a liquid creature on dry land writhes helplessly
+// BR52904 — a burning wandering monster avoids any flammable ground
+//
+// A wisp carries an aura of flame.  While wandering it must keep off
+// grass, which would catch fire under it; a monster that is not
+// burning, or is not wandering, has no such scruple.
 // ---------------------------------------------
 
-static void beached_eel_setup(void) {
-    clearMonsters();
-    standPlayerOn(FLOOR);
-    subject = monsterOn(MK_EEL, 1, 0, FLOOR); // adjacent to the player
+static creature *flammableSubject;
+static pos flammableGround;
+
+static void burning_wanderer_setup(void) {
+    setArenaRadius(4, FLOOR);
+    flammableGround = posOffset(getPlayerPos(), 2, 0);
+    setTerrain(flammableGround, GRASS);
+    flammableSubject = spawnMonster(MK_WILL_O_THE_WISP, posOffset(getPlayerPos(), 3, 0));
+    makeMonsterUnaware(flammableSubject);
+}
+
+static boolean burning_wanderer_avoids_flammable_ground(void) {
+    TEST_ASSERT(monsterIsWandering(flammableSubject),
+                "the wisp should be wandering");
+    TEST_ASSERT(monsterAvoidsCell(flammableSubject, flammableGround),
+                "a burning wandering monster should avoid flammable ground");
+    return !testFailed;
+}
+
+static void burning_tracker_setup(void) {
+    setArenaRadius(4, FLOOR);
+    flammableGround = posOffset(getPlayerPos(), 2, 0);
+    setTerrain(flammableGround, GRASS);
+    flammableSubject = spawnMonster(MK_WILL_O_THE_WISP, posOffset(getPlayerPos(), 3, 0));
+    wakeMonster(flammableSubject);
+}
+
+static boolean burning_tracker_ignores_flammable_ground(void) {
+    TEST_ASSERT(monsterIsTrackingPlayer(flammableSubject),
+                "the wisp should be tracking you");
+    TEST_ASSERT(!monsterAvoidsCell(flammableSubject, flammableGround),
+                "a burning monster that is not wandering need not avoid flammable ground");
+    return !testFailed;
+}
+
+static void nonburning_wanderer_setup(void) {
+    setArenaRadius(4, FLOOR);
+    flammableGround = posOffset(getPlayerPos(), 2, 0);
+    setTerrain(flammableGround, GRASS);
+    flammableSubject = spawnMonster(MK_RAT, posOffset(getPlayerPos(), 3, 0));
+    makeMonsterUnaware(flammableSubject);
+}
+
+static boolean nonburning_wanderer_ignores_flammable_ground(void) {
+    TEST_ASSERT(monsterIsWandering(flammableSubject),
+                "the rat should be wandering");
+    TEST_ASSERT(!monsterAvoidsCell(flammableSubject, flammableGround),
+                "a wandering monster that is not burning need not avoid flammable ground");
+    return !testFailed;
+}
+
+// ---------------------------------------------
+// BR51199 — a liquid creature on dry land writhes helplessly: it cannot
+// move or attack, and it releases anything it had seized.
+// ---------------------------------------------
+
+static boolean beached_seized_player;
+static boolean beached_player_escaped;
+
+static void beached_liquid_monster_setup(void) {
+    setPlayerPos(posAt(levelWidth() / 2, levelHeight() / 2));
+    setArenaRadius(6, FLOOR);
+    // A bog monster lives in liquid and can seize with its attack, so it can
+    // exercise all three clauses of the rule: it holds you while it is in
+    // water, then is beached in place.
+    subject = monsterOn(MK_BOG_MONSTER, 1, 0, DEEP_WATER);
     makeMonsterHostile(subject);
-    markedPos = monsterPosition(subject);
+    monsterAttacksPlayer(subject);
+    beached_seized_player = playerIsSeized();
+    // Beach it where it stands.  setTerrain clears the HAS_MONSTER flag, so
+    // put it back on the now-dry tile.
+    pos p = monsterPosition(subject);
+    setTerrain(p, FLOOR);
+    setMonsterPos(subject, p);
+    markedPos = p;
     markedHealth = playerHealth();
     monsterTakesTurn(subject);
+    // A creature that still held you would cancel this move; a released one
+    // lets you step away and clears the seized state.
+    pos playerBeforeMove = getPlayerPos();
+    moveDirection(LEFT);
+    beached_player_escaped = !playerIsAt(playerBeforeMove) && !playerIsSeized();
 }
 
 static boolean beached_liquid_monster_cannot_move(void) {
+    TEST_ASSERT(beached_seized_player,
+                "control: the liquid creature should seize you while it is in water");
     TEST_ASSERT_POS_EQ(monsterPosition(subject), markedPos,
                        "a beached liquid creature should not move");
     TEST_ASSERT_EQ(playerHealth(), markedHealth,
                    "a beached liquid creature should not attack");
+    TEST_ASSERT(beached_player_escaped,
+                "a beached liquid creature cannot keep hold of a creature it seized");
     return !testFailed;
 }
 
@@ -2276,6 +2361,382 @@ static boolean br58883_no_attack_bolt_at_embedded_creature(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR57010 — a monster will not shoot a fireball from ground that
+// could combust into something harmful
+//
+// A flame turret is immobile and has only a fire bolt, so its
+// only possible action is to cast at the hostile rat down the
+// corridor.  Its own tile is the variable: plain floor (the
+// bolt's fire is no threat to the turret) versus grass, which
+// burns into fire the turret itself avoids.
+// ============================================================
+
+static creature *br57010_turret;
+static creature *br57010_target;
+static pos br57010_turretPos;
+static int br57010_healthStart;
+static boolean br57010_floorCast, br57010_grassCast, br57010_floorCastAgain;
+
+static void br57010_setup(void) {
+    setArenaRadius(6, FLOOR);
+    br57010_turretPos = posOffset(getPlayerPos(), -4, 1);
+
+    br57010_target = placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 3, 1));
+    TEST_ASSERT(br57010_target != NULL, "setup: the rat should spawn");
+    if (br57010_target == NULL) {
+        return;
+    }
+    setMonsterHealth(br57010_target, 100);
+    br57010_healthStart = monsterHealth(br57010_target);
+
+    // An allied flame turret: MONST_TURRET includes MONST_IMMOBILE, so it
+    // tries its bolt every turn instead of moving, and as an ally it never
+    // bolts you.
+    br57010_turret = spawnMonster(MK_FLAME_TURRET, br57010_turretPos);
+    TEST_ASSERT(br57010_turret != NULL, "setup: the flame turret should spawn");
+    if (br57010_turret == NULL) {
+        return;
+    }
+    makeMonsterAlly(br57010_turret);
+    revealCell(br57010_turretPos);
+}
+
+static boolean br57010_step(void) {
+    // Control: the turret stands on plain floor, so its fire bolt can land.
+    for (int i = 0;
+         i < 100 && monsterHealth(br57010_target) == br57010_healthStart;
+         i++) {
+        monsterTakesTurn(br57010_turret);
+    }
+    br57010_floorCast = monsterHealth(br57010_target) < br57010_healthStart;
+
+    // The rule's scenario: put the turret on grass.  setTerrain clears the
+    // cell's creature flag, so the turret is re-placed on it afterwards.
+    setTerrain(br57010_turretPos, GRASS);
+    setMonsterPos(br57010_turret, br57010_turretPos);
+    int beforeGrass = monsterHealth(br57010_target);
+    for (int i = 0; i < 100; i++) {
+        monsterTakesTurn(br57010_turret);
+    }
+    br57010_grassCast = monsterHealth(br57010_target) < beforeGrass;
+
+    // Control again: restore the floor under the turret.
+    setTerrain(br57010_turretPos, FLOOR);
+    setMonsterPos(br57010_turret, br57010_turretPos);
+    for (int i = 0;
+         i < 100 && monsterHealth(br57010_target) == beforeGrass;
+         i++) {
+        monsterTakesTurn(br57010_turret);
+    }
+    br57010_floorCastAgain = monsterHealth(br57010_target) < beforeGrass;
+    return false;
+}
+
+static boolean br57010_no_fireball_from_flammable_ground(void) {
+    TEST_ASSERT(br57010_floorCast,
+                "control: the turret should fire its bolt from plain floor");
+    TEST_ASSERT(!br57010_grassCast,
+                "a monster should not shoot a fireball from ground that could combust into something harmful");
+    TEST_ASSERT(br57010_floorCastAgain,
+                "control: the turret should fire again once the ground under it is safe");
+    return !testFailed;
+}
+
+// ---------------------------------------------
+// BR63549 — a water-bound grappler does not surface on the turn it grabs
+// ---------------------------------------------
+
+static creature *br63549_grappler;
+static creature *br63549_prey;
+static boolean br63549_submergedBefore;
+static boolean br63549_submergedAfterGrab;
+static boolean br63549_submergedAfterSecondAttack;
+
+static void br63549_setup(void) {
+    setArenaRadius(6, FLOOR);
+    pos p = getPlayerPos();
+    pos grapplerPos = posOffset(p, 3, 0);
+    pos preyPos = posOffset(p, 4, 0);
+
+    // The grappler must stay in liquid, so both it and its prey stand in deep
+    // water.  Discord makes the grappler pick the adjacent prey over you; the
+    // prey itself need not be able to hurt anyone.
+    setTerrain(grapplerPos, DEEP_WATER);
+    setTerrain(preyPos, DEEP_WATER);
+
+    br63549_grappler = spawnMonster(MK_BOG_MONSTER, grapplerPos);
+    makeMonsterHostile(br63549_grappler);
+    applyStatusToMonster(br63549_grappler, STATUS_DISCORDANT, 100);
+    setMonsterSubmerged(br63549_grappler, true);
+
+    br63549_prey = spawnMonster(MK_RAT, preyPos);
+    makeMonsterHostile(br63549_prey);
+
+    // Submersion is what hides the grappler from a dry observer.
+    br63549_submergedBefore = monsterIsHiddenFrom(br63549_grappler, &player);
+}
+
+static boolean br63549_step(void) {
+    monsterTakesTurn(br63549_grappler);
+    br63549_submergedAfterGrab = monsterIsHiddenFrom(br63549_grappler, &player);
+
+    // A second attack, now that the grappler is already holding its prey,
+    // shows the contrast: only the grabbing turn keeps it under the surface.
+    monsterTakesTurn(br63549_grappler);
+    br63549_submergedAfterSecondAttack = monsterIsHiddenFrom(br63549_grappler, &player);
+    return false;
+}
+
+static boolean br63549_stays_submerged_on_grab_turn(void) {
+    TEST_ASSERT(br63549_submergedBefore,
+                "setup: the grappler should start hidden beneath the water");
+    TEST_ASSERT(br63549_submergedAfterGrab,
+                "a water-bound grappler should not surface on the turn it grabs its prey");
+    TEST_ASSERT(!br63549_submergedAfterSecondAttack,
+                "control: a grappler that is already holding its prey should surface when it attacks again");
+    return !testFailed;
+}
+
+// ---------------------------------------------
+// BR64668 — an always-hunting monster that has given up on your scent paths
+// straight toward you
+//
+// A stone guardian (MONST_ALWAYS_HUNTING) starts behind a wall, so the
+// player's scent never reaches it and it is out of sight: at that spot scent
+// direction comes up blank and the local scent is already maximal.  An
+// always-hunting monster in that position gives up on the scent trail and
+// paths toward the player's actual position instead, so it walks around the
+// wall and reaches you.  Without that behavior the monster would drop into
+// a wander and would not close on a player it has never seen.  The control
+// assertions pin the trait and the scent-free, unseen start.
+// ---------------------------------------------
+
+#define BR64668_MAX_TURNS 30
+
+static creature *br64668_guardian;
+static pos br64668_start;
+static int br64668_turns;
+
+static void br64668_setup(void) {
+    setPlayerPos(posAt(levelWidth() / 2, levelHeight() / 2));
+    setArenaRadius(8, FLOOR);
+
+    // A wall directly between you and the guardian shadows it from your
+    // scent and your sight, but the open arena leaves a route around both
+    // ends of the wall.
+    for (int dy = -2; dy <= 2; dy++) {
+        setTerrain(posOffset(getPlayerPos(), 3, dy), WALL);
+    }
+    // Lay your scent over the new arena; the wall keeps it away from the
+    // guardian's tile.
+    restOneTurn();
+
+    br64668_guardian = spawnMonster(MK_GUARDIAN,
+                                    posOffset(getPlayerPos(), 5, 0));
+    makeMonsterHostile(br64668_guardian);
+    br64668_start = monsterPosition(br64668_guardian);
+    br64668_turns = 0;
+}
+
+static boolean br64668_step(void) {
+    monsterTakesTurn(br64668_guardian);
+    br64668_turns++;
+    return !monsterIsAdjacentToPlayer(br64668_guardian)
+           && br64668_turns < BR64668_MAX_TURNS;
+}
+
+static boolean br64668_given_up_monster_paths_to_player(void) {
+    TEST_ASSERT(br64668_guardian != NULL, "the guardian should have spawned");
+    TEST_ASSERT(monsterHasTrait(br64668_guardian, MONST_ALWAYS_HUNTING),
+                "control: the guardian's catalog entry is always hunting");
+    TEST_ASSERT(!cellIsVisible(br64668_start),
+                "control: the guardian starts out of your sight behind the wall");
+    TEST_ASSERT(monsterIsAdjacentToPlayer(br64668_guardian),
+                "an always-hunting monster that has given up on your scent "
+                "should path toward you and reach you around the wall");
+    return !testFailed;
+}
+
+// ============================================================
+// BR70006 — a monster keeps at least six squares away from a
+// weapon-immune or invulnerable enemy that can move, but not from an
+// immobile one.
+// ============================================================
+
+static int br70006_chebyshev(pos a, pos b) {
+    int dx = a.x - b.x; if (dx < 0) dx = -dx;
+    int dy = a.y - b.y; if (dy < 0) dy = -dy;
+    return dx > dy ? dx : dy;
+}
+
+static creature *br70006_subject;
+static creature *br70006_enemy;
+static int br70006_before;
+
+// Lay a clear arena and put the subject and its enemy on the same row,
+// `subjectDx` and `enemyDx` squares from you.
+static void br70006_scene(enum monsterTypes subjectType, boolean subjectIsAlly,
+                          enum monsterTypes enemyType, boolean enemyIsAlly,
+                          int subjectDx, int enemyDx) {
+    clearMonsters();
+    setPlayerPos(posAt(levelWidth() / 2, levelHeight() / 2));
+    setArenaRadius(9, FLOOR);
+    // Aggravate yourself and run one real turn: this pins the engine's
+    // stealth range high so the monsters stay aware of you, and recomputes
+    // the field of view over the cleared arena.
+    applyStatusToPlayer(STATUS_AGGRAVATING, 10000);
+    restOneTurn();
+
+    pos p = getPlayerPos();
+    for (int dx = -9; dx <= 9; dx++) {
+        for (int dy = -9; dy <= 9; dy++) {
+            revealCell(posOffset(p, dx, dy));
+        }
+    }
+    br70006_subject = spawnMonster(subjectType, posOffset(p, subjectDx, 0));
+    if (subjectIsAlly) {
+        makeMonsterAlly(br70006_subject);
+    } else {
+        makeMonsterHostile(br70006_subject);
+    }
+    br70006_enemy = spawnMonster(enemyType, posOffset(p, enemyDx, 0));
+    if (enemyIsAlly) {
+        makeMonsterAlly(br70006_enemy);
+    } else {
+        makeMonsterHostile(br70006_enemy);
+    }
+    br70006_before = br70006_chebyshev(monsterPosition(br70006_subject),
+                                       monsterPosition(br70006_enemy));
+}
+
+static boolean br70006_take_turn(void) {
+    monsterTakesTurn(br70006_subject);
+    return false;
+}
+
+// An ally five squares from a hostile weapon-immune enemy that can move
+// must give ground rather than close in.
+static void br70006_mobile_ally_setup(void) {
+    br70006_scene(MK_RAT, true, MK_REVENANT, false, 2, 7);
+}
+
+static boolean br70006_mobile_ally_verify(void) {
+    TEST_ASSERT(br70006_subject != NULL && br70006_enemy != NULL,
+                "the ally and its enemy should have spawned");
+    TEST_ASSERT(monsterHasTrait(br70006_enemy, MONST_IMMUNE_TO_WEAPONS),
+                "control: the enemy is immune to weapons");
+    TEST_ASSERT(!monsterHasTrait(br70006_enemy, MONST_IMMOBILE),
+                "control: the enemy can move");
+    TEST_ASSERT_EQ(br70006_before, 5,
+                   "setup: the enemy starts five squares away");
+    TEST_ASSERT(br70006_chebyshev(monsterPosition(br70006_subject),
+                                  monsterPosition(br70006_enemy)) >= 6,
+                "an ally should back away to at least six squares from a "
+                "mobile weapon-immune enemy");
+    return !testFailed;
+}
+
+// The same retreat from an invulnerable enemy that can move.
+static void br70006_invulnerable_ally_setup(void) {
+    br70006_scene(MK_RAT, true, MK_WARDEN_OF_YENDOR, false, 2, 7);
+}
+
+static boolean br70006_invulnerable_ally_verify(void) {
+    TEST_ASSERT(br70006_subject != NULL && br70006_enemy != NULL,
+                "the ally and its enemy should have spawned");
+    TEST_ASSERT(monsterHasTrait(br70006_enemy, MONST_INVULNERABLE),
+                "control: the enemy is invulnerable");
+    TEST_ASSERT(!monsterHasTrait(br70006_enemy, MONST_IMMOBILE),
+                "control: the enemy can move");
+    TEST_ASSERT_EQ(br70006_before, 5,
+                   "setup: the enemy starts five squares away");
+    TEST_ASSERT(br70006_chebyshev(monsterPosition(br70006_subject),
+                                  monsterPosition(br70006_enemy)) >= 6,
+                "an ally should back away to at least six squares from a "
+                "mobile invulnerable enemy");
+    return !testFailed;
+}
+
+// A hostile monster two squares from an allied weapon-immune enemy that
+// can move turns and flees.
+static void br70006_mobile_hostile_setup(void) {
+    br70006_scene(MK_RAT, false, MK_REVENANT, true, 4, 2);
+}
+
+static boolean br70006_mobile_hostile_verify(void) {
+    TEST_ASSERT(br70006_subject != NULL && br70006_enemy != NULL,
+                "the monster and its enemy should have spawned");
+    TEST_ASSERT_EQ(br70006_before, 2,
+                   "setup: the enemy starts two squares away");
+    TEST_ASSERT(monsterIsFleeing(br70006_subject),
+                "a monster should turn and flee from a mobile weapon-immune "
+                "enemy within six squares");
+    return !testFailed;
+}
+
+// The same scene with an immobile weapon-immune enemy: it is not feared,
+// so the monster keeps hunting instead of fleeing.
+static void br70006_immobile_hostile_setup(void) {
+    br70006_scene(MK_RAT, false, MK_MIRRORED_TOTEM, true, 4, 2);
+}
+
+static boolean br70006_immobile_hostile_verify(void) {
+    TEST_ASSERT(br70006_subject != NULL && br70006_enemy != NULL,
+                "the monster and its enemy should have spawned");
+    TEST_ASSERT(monsterHasTrait(br70006_enemy, MONST_IMMUNE_TO_WEAPONS),
+                "control: the enemy is immune to weapons");
+    TEST_ASSERT(monsterHasTrait(br70006_enemy, MONST_IMMOBILE),
+                "control: the enemy cannot move");
+    TEST_ASSERT_EQ(br70006_before, 2,
+                   "setup: the enemy starts two squares away");
+    TEST_ASSERT(!monsterIsFleeing(br70006_subject),
+                "a monster should not flee from an immobile weapon-immune enemy");
+    TEST_ASSERT(monsterIsTrackingPlayer(br70006_subject),
+                "a monster near an immobile weapon-immune enemy should keep hunting");
+    return !testFailed;
+}
+
+// ============================================================
+// BR64018 — hordes flagged as allied with you spawn their members
+// as your allies.
+//
+// The stock horde table's allied entries carry a leader but no
+// members, so the framework assembles an allied horde with two
+// followers from the engine's own horde-spawning path.  Both the
+// leader and every follower must come out on your side; the
+// member-count check is the control that the follower branch was
+// actually exercised rather than passing on the leader alone.
+// ============================================================
+
+static creature *br64018_leader;
+static int br64018_members;
+
+static void br64018_setup(void) {
+    clearMonsters();
+    setPlayerPos(posAt(levelWidth() / 2, levelHeight() / 2));
+    setArenaRadius(8, FLOOR);
+    br64018_leader = spawnAlliedHordeWithFollowers(posOffset(getPlayerPos(), 4, 0),
+                                                   2, &br64018_members);
+}
+
+static boolean br64018_allied_horde_spawns_allies(void) {
+    TEST_ASSERT(br64018_leader != NULL,
+                "the allied horde should spawn a leader");
+    TEST_ASSERT_EQ(br64018_members, 2,
+                   "control: both members of the allied horde should spawn");
+    TEST_ASSERT_EQ(monsterCount(), 3,
+                   "the horde should consist of its leader and two members");
+    TEST_ASSERT(monsterIsAlly(br64018_leader),
+                "the leader of an allied horde should be your ally");
+    for (int i = 0; i < monsterCount(); i++) {
+        creature *member = monsterAtIndex(i);
+        TEST_ASSERT(member != NULL && monsterIsAlly(member),
+                    "every member of an allied horde should be your ally");
+    }
+    return !testFailed;
+}
+
 const testCase tests_monsters[] = {
     { "BR83001_webbed_monster_struggles_free_after_a_few_turns", webbed_monster_setup, webbed_monster_struggles_step, webbed_monster_escapes_after_a_few_turns },
     { "BR83001_web_immune_monster_walks_free_immediately",       web_immune_monster_setup, web_immune_monster_turn_step, web_immune_monster_walks_free_immediately },
@@ -2343,7 +2804,11 @@ const testCase tests_monsters[] = {
     { "BR27232_monster_avoids_lava",                  lava_setup,                      NULL, monster_avoids_lava },
     { "BR27232_fire_immune_monster_ignores_lava",     fire_immune_lava_setup,          NULL, fire_immune_monster_ignores_lava },
 
-    { "BR51199_beached_liquid_monster_cannot_move",   beached_eel_setup,               NULL, beached_liquid_monster_cannot_move },
+    { "BR52904_burning_wanderer_avoids_flammable_ground", burning_wanderer_setup,     NULL, burning_wanderer_avoids_flammable_ground },
+    { "BR52904_burning_tracker_ignores_flammable_ground", burning_tracker_setup,      NULL, burning_tracker_ignores_flammable_ground },
+    { "BR52904_nonburning_wanderer_ignores_flammable_ground", nonburning_wanderer_setup, NULL, nonburning_wanderer_ignores_flammable_ground },
+
+    { "BR51199_beached_liquid_monster_cannot_move",   beached_liquid_monster_setup,    NULL, beached_liquid_monster_cannot_move },
 
     { "BR44948_never_sleeping_monster_starts_awake",  never_sleeping_monster_setup,    NULL, never_sleeping_monster_starts_awake },
 
@@ -2376,10 +2841,23 @@ const testCase tests_monsters[] = {
 
     { "BR44597_hallucinated_monster_names", br44597_setup, br44597_step, br44597_verify },
 
+    { "BR64668_given_up_monster_paths_to_player", br64668_setup, br64668_step, br64668_given_up_monster_paths_to_player },
+
     { "BR61713_hunting_blinker_teleports_up_scent_trail", br61713_setup, br61713_step, br61713_verify },
     { "BR61728_ally_blinks_toward_nearest_enemy",   br61728_setup, br61728_step, br61728_ally_blinks_toward_nearest_enemy },
 
     { "BR58883_no_attack_bolt_at_embedded_creature", br58883_setup, br58883_step, br58883_no_attack_bolt_at_embedded_creature },
+
+    { "BR57010_no_fireball_from_flammable_ground", br57010_setup, br57010_step, br57010_no_fireball_from_flammable_ground },
+
+    { "BR63549_water_grappler_stays_submerged_on_grab", br63549_setup, br63549_step, br63549_stays_submerged_on_grab_turn },
+
+    { "BR70006_ally_retreats_from_mobile_weapon_immune_enemy", br70006_mobile_ally_setup, br70006_take_turn, br70006_mobile_ally_verify },
+    { "BR70006_ally_retreats_from_mobile_invulnerable_enemy",  br70006_invulnerable_ally_setup, br70006_take_turn, br70006_invulnerable_ally_verify },
+    { "BR70006_hostile_flees_from_mobile_weapon_immune_enemy", br70006_mobile_hostile_setup, br70006_take_turn, br70006_mobile_hostile_verify },
+    { "BR70006_ignores_immobile_weapon_immune_enemy",          br70006_immobile_hostile_setup, br70006_take_turn, br70006_immobile_hostile_verify },
+
+    { "BR64018_allied_horde_spawns_allies", br64018_setup, NULL, br64018_allied_horde_spawns_allies },
 
     { NULL, NULL, NULL, NULL }
 };

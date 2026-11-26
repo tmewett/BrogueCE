@@ -42,9 +42,14 @@ dismissed with Return or space.
 **BR12939** — If the keyboard cursor is not currently placed on the map, turning it on
 places it on the player's own location.
 [IO.c:99-102](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L99-L102)
-**BR95103** — Canceling the cursor (with space or Escape) hides it and clears the
-highlighted travel path.
+**BR95103** — Canceling the cursor (with space or Escape) hides it.
 [IO.c:767-769](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L767-L769)
+[IO.c:90-95](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L90-L95)
+**BR21873** — Canceling the cursor (with space or Escape) clears the highlighted
+travel path.
+[IO.c:767-769](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L767-L769)
+[IO.c:75-88](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L75-L88)
+[IO.c:579](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L579)
 **BR19418** — Canceling the cursor also confirms any pending messages.
 [IO.c:767-769](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L767-L769)
 **BR11456** — Pressing Tab cycles the cursor through visible monsters, items, and
@@ -136,10 +141,11 @@ events are white.
 archived; the prompt text is capitalized at the start.
 [IO.c:3382-3408](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3382-L3408)
 ---
-**BR44457** — The sidebar always lists the player first, then visible monsters, items,
-and listed terrain in order of distance from the player (closest first).
+**BR44457** — The sidebar lists your character first, then creatures, then items, then
+notable terrain, each from closest to farthest, in two passes: what you see directly
+first, then what you only sense indirectly.
 [IO.c:3771-3791](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3771-L3791)
-[IO.c:3814-3861](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3814-L3861)
+[IO.c:3793-3861](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3793-L3861)
 **BR63184** — The bottom line of the sidebar is reserved for the current dungeon depth.
 [IO.c:3865](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3865)
 [IO.c:3904-3905](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3904-L3905)
@@ -149,8 +155,12 @@ immediately after the player.
 **BR18434** — Monsters are listed from closest to farthest in two passes: first
 creatures in direct sight, then those seen only indirectly (such as by telepathy).
 [IO.c:3793-3814](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3793-L3814)
-**BR53458** — Monsters flagged to be omitted from the sidebar are never listed there.
-[IO.c:3800-3802](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3800-L3802)
+**BR53458** — Some creatures are left out of the sidebar's automatic creature list, but
+the one the player points the cursor at still appears there.
+[IO.c:3799-3802](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3799-L3802)
+[IO.c:3718-3724](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3718-L3724)
+[IO.c:3784-3791](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3784-L3791)
+[IO.c:3906-3909](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3906-L3909)
 **BR36729** — A focused entity is highlighted with a brightened gradient in the
 sidebar.
 [IO.c:4760-4767](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L4760-L4767)
@@ -214,7 +224,8 @@ wands, staves, and charms.
 **BR13225** — An item's detail box offers an Equip or Remove button for armor, weapons,
 and rings.
 [IO.c:5068-5078](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L5068-L5078)
-**BR68240** — An item's detail box always offers Drop and Throw buttons.
+**BR68240** — When an item's detail box shows action buttons, it always includes Drop and
+Throw, whatever kind of item it is.
 [IO.c:5079-5085](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L5079-L5085)
 **BR29231** — An item's detail box offers a Call button when the item can be named, and
 a Relabel button.
@@ -264,8 +275,9 @@ but keeps only 10% of the score.
 [MainMenu.c:445-449](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L445-L449)
 **BR73762** — The Game Stats screen shows All Time and Recent columns for games played,
 won, win rate, escaped, mastered, high score, most gold, most lumenstones, deepest
-level, average depth, shortest win, and streaks.
-[MainMenu.c:983-1047](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L983-L1047)
+level, average depth, shortest win, and longest win and mastery streaks; the current win
+and mastery streaks appear as single recent values.
+[MainMenu.c:983-1048](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L983-L1048)
 **BR10299** — The Game Stats screen offers a Reset button when there is recent data.
 [MainMenu.c:1068-1084](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L1068-L1084)
 **BR38190** — File-picker dialogs (for loading games or viewing recordings) list only
@@ -398,9 +410,9 @@ a counting number is appended to make the name unique.
 [Recordings.c:1346-1351](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L1346-L1351)
 **BR68875** — Saving displays "Saved." and then ends the game.
 [Recordings.c:1200-1202](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L1200-L1202)
-**BR93420** — Loading a saved game transitions into active play and copies the save
-file to a "last game" file.
-[Recordings.c:1280-1304](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L1280-L1304)
+**BR93420** — Loading a saved game enters active play, redrawing the map and
+refreshing the sidebar and message log.
+[Recordings.c:1286-1303](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L1286-L1303)
 ---
 **BR91827** — Menus and dialogs are driven by buttons: a button is chosen by clicking
 it (on mouse-up) or by pressing one of its hotkeys.
@@ -446,7 +458,9 @@ description, and closes on space or a click.
 [IO.c:4278-4337](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L4278-L4337)
 **BR22832** — During normal play the bottom row of the screen shows buttons for
 Explore, Rest, Search, Menu, and Inventory.
+[IO.c:455](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L455)
 [IO.c:490-518](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L490-L518)
+[IO.c:526-532](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L526-L532)
 **BR65948** — During playback the bottom row of the screen shows buttons for Unpause,
 Omniscience, Next Turn, and Menu.
 [IO.c:462-489](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L462-L489)

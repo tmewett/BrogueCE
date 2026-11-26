@@ -27,7 +27,10 @@
 #include "Rogue.h"
 #include "GlobalsBase.h"
 #include "Globals.h"
+
+#ifdef BROGUE_TESTING
 #include "../../test/TestFramework.h"
+#endif
 
 #define D_DISABLE_BACKGROUND_COLORS     (WIZARD_MODE && 0)
 
@@ -2746,6 +2749,13 @@ boolean getInputTextString(char *inputText,
     screenDisplayBuffer dbuf;
     SavedDisplayBuffer rbuf;
 
+#ifdef BROGUE_TESTING
+    if (rogue.mode == GAME_MODE_TEST) {
+        // Headless test mode: let tests read the text a prompt opened with.
+        recordTestTextInputDefault(defaultEntry);
+    }
+#endif
+
     // handle defaultEntry values exceeding maxLength
     promptSuffixLen = strlen(promptSuffix);
     defaultEntrylengthOverflow = strlen(defaultEntry) + promptSuffixLen - maxLength;
@@ -3399,9 +3409,16 @@ void temporaryMessage(const char *msg, unsigned long flags) {
     char message[COLS];
     short i, j;
 
+#ifdef BROGUE_TESTING
     if (rogue.mode == GAME_MODE_TEST) {
+        // Headless test mode: suppress display but let tests assert on the text.
+        if (msg != NULL && msg[0]) {
+            recordTestMessage(msg);
+            recordTestMessageAcknowledgment(msg, (flags & REQUIRE_ACKNOWLEDGMENT) != 0);
+        }
         return;
     }
+#endif
 
     assureCosmeticRNG;
     strcpy(message, msg);
@@ -3472,6 +3489,7 @@ void message(const char *msg, unsigned long flags) {
         // Headless test mode: suppress display but let tests assert on the text.
         if (msg != NULL && msg[0]) {
             recordTestMessage(msg);
+            recordTestMessageAcknowledgment(msg, (flags & REQUIRE_ACKNOWLEDGMENT) != 0);
         }
         return;
     }

@@ -104,10 +104,12 @@
 [Combat.c:1191-1195](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1191-L1195)
 **BR86062** — If the player is killed by an attack, the game ends.
 [Combat.c:1188-1190](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1188-L1190)
-**BR31952** — A slain monster drops whatever it was carrying.
-[Combat.c:1662-1669](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1662-L1669)
-**BR96880** — Some monsters leave a death effect such as an explosion or a cloud when they die, accompanied by a message when the death is visible.
-[Combat.c:1671-1681](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1671-L1681)
+**BR31952** — When a monster dies, any item it was carrying falls to the ground nearby.
+[Combat.c:1662-1669](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1662-L1669) [Monsters.c:4076-4086](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L4076-L4086)
+**BR96880** — A monster whose death produces an explosion, gas cloud or other effect leaves that effect on the square where it dies, unless it was falling.
+[Combat.c:1671-1673](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1671-L1673)
+**BR32010** — When a monster with a death effect has a message for that effect and dies in view, the game displays the monster's name followed by the message.
+[Combat.c:1675-1680](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1675-L1680)
 **BR28007** — A monster that was carried inside a slain monster is released at the same spot.
 [Combat.c:1711-1732](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1711-L1732)
 **BR56010** — Nearby allied monsters may claim a slain monster's corpse to consume and learn one of its abilities, behaviors, or attacks.

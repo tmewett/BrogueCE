@@ -4,14 +4,16 @@
 // of drinking potions, a scroll, picking up gold and the Amulet, the tile a
 // generated charge counts and gold
 // values, the defense an enchanted suit of armor contributes, the specialist
-// feat, the number of items each level generates, that generated throwing
-// weapons come out plain (never cursed, runic, or enchanted), the runes
+// feat, the number of items each level generates, that generated items avoid
+// hallways and cluster in rooms reached through secret doors, that generated
+// throwing weapons come out plain (never cursed, runic, or enchanted), the runes
 // fading from runic gear whose enchantment drops to zero or less, which
 // targets a zap's auto-targeting will and will not pick, the pressure plate
 // an item placed on it depresses, and the two-ring limit with its swap prompt.
 //
-// Omitted are everything else about level population (what is generated and
-// where), random chances (curses, runics, mutations, spawn counts), flavour
+// Omitted are everything else about level population (what kinds are
+// generated and placements other than the corridor/secret-room bias), random
+// chances (curses, runics, mutations, spawn counts), flavour
 // shuffling, identification RNG, the rest of the targeting prompts (cursor
 // movement and tab-cycling), dropping, machine interactions other than
 // switch promotion and pressure plates, and any rule that needs a screen or
@@ -1094,6 +1096,62 @@ static boolean br61428_domination_binds_or_resists(void) {
 }
 
 // ============================================================
+// BR69013 — a wand of domination's chance of succeeding
+// depends on the target's current health.
+//
+// The bind chance is the missing fraction of the target's health:
+// a target at three-quarters health is wounded only a little and
+// should usually resist, while one at half health should be bound
+// about half the time.  Each trial resets the same monster to the
+// chosen health and zaps it directly, with no turn in between, so
+// health is the only thing that differs between the two runs.
+// Enough trials are run that a chance which ignores health, or
+// which treats the two health levels alike, cannot pass by luck.
+// ============================================================
+
+#define BR69013_TRIALS 160
+
+static item *br69013_wand;
+static creature *br69013_target;
+static int br69013_maxHealth;
+
+static void br69013_setup(void) {
+    setArenaRadius(6, FLOOR);
+    br69013_target = placeHostileMonster(MK_OGRE, posOffset(getPlayerPos(), 1, 0));
+    TEST_ASSERT(br69013_target != NULL, "setup: the domination target should spawn");
+    br69013_maxHealth = monsterMaxHealth(br69013_target);
+    TEST_ASSERT(br69013_maxHealth >= 20,
+                "setup: the target needs enough health to sit at distinct quarters");
+    br69013_wand = givePlayerItem(WAND, WAND_DOMINATION, 5);
+}
+
+static int br69013_bindsAtHealth(int health) {
+    int binds = 0;
+    for (int trial = 0; trial < BR69013_TRIALS; trial++) {
+        makeMonsterHostile(br69013_target);
+        setMonsterHealth(br69013_target, health);
+        playerZapsAt(br69013_wand, br69013_target);
+        if (monsterIsAlly(br69013_target)) {
+            binds++;
+        }
+    }
+    return binds;
+}
+
+static boolean br69013_chance_depends_on_current_health(void) {
+    const int bindsAtThreeQuarters = br69013_bindsAtHealth(br69013_maxHealth * 3 / 4);
+    const int bindsAtHalf = br69013_bindsAtHealth(br69013_maxHealth / 2);
+
+    TEST_ASSERT(bindsAtThreeQuarters > 0 && bindsAtThreeQuarters < BR69013_TRIALS * 2 / 5,
+                "a target at three-quarters health should usually resist (only about a quarter of the zaps should bind)");
+    TEST_ASSERT(bindsAtHalf > BR69013_TRIALS / 3 && bindsAtHalf < BR69013_TRIALS * 2 / 3,
+                "a target at half health should be bound about half the time");
+    TEST_ASSERT(bindsAtHalf > bindsAtThreeQuarters,
+                "a target at half health should be bound more often than one at three-quarters health");
+    return !testFailed;
+}
+
+// ============================================================
 // BR84582 — Bolts can be reflected by reflective creatures (or
 // by reflective terrain, or by a ring or armor of reflection);
 // a reflected bolt takes a new path and can strike its own
@@ -1569,8 +1627,140 @@ static boolean br18415_worn_ring_cannot_be_worn_again(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR47394 — ordinary items are placed away from hallways and
+// are biased toward regions reached only through doors and
+// secret doors, so secret rooms tend to collect several items
+// ============================================================
+//
+// The level is rebuilt as two identical rooms joined by a one-tile
+// corridor, with a secret door in the middle of the corridor.  Running
+// the real item population on this map many times gives ordinary items
+// only two valid kinds of home: the open room with the up staircase, or
+// the sealed room beyond the secret door.  Corridor tiles are hallways,
+// so no item may ever land on one, and the weighting that favors the
+// secret door should send the large majority of items into the sealed
+// room rather than splitting them evenly.
+//
+// The trials make this a distribution check rather than a single draw:
+// the game reseeds its random numbers after start-up, so a lone trial
+// cannot assert an exact position.
+
+#define BR47394_TRIALS 100
+
+static void br47394_setup(void) {
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            setTerrain(posAt(x, y), GRANITE);
+        }
+    }
+
+    // Two equal rooms (8 x 11) joined by a straight corridor.
+    for (int x = 5; x <= 12; x++) {
+        for (int y = 9; y <= 19; y++) {
+            setTerrain(posAt(x, y), FLOOR);
+        }
+    }
+    for (int x = 66; x <= 73; x++) {
+        for (int y = 9; y <= 19; y++) {
+            setTerrain(posAt(x, y), FLOOR);
+        }
+    }
+    for (int x = 13; x <= 65; x++) {
+        setTerrain(posAt(x, 14), FLOOR);
+    }
+    setTerrain(posAt(39, 14), SECRET_DOOR);
+
+    setPlayerPos(posAt(8, 14));
+}
+
+static boolean br47394_verify(void) {
+    int staircaseRoomItems = 0;
+    int secretRoomItems = 0;
+    int otherItems = 0;
+
+    for (int trial = 0; trial < BR47394_TRIALS; trial++) {
+        clearFloorItems();
+        populateLevelItemsFrom(posAt(8, 14));
+
+        int itemCount = countFloorItems();
+        TEST_ASSERT(itemCount > 0,
+                    "item population should place ordinary items on the prepared level");
+
+        for (int i = 0; i < itemCount; i++) {
+            pos p = itemPosition(floorItemAtIndex(i));
+
+            TEST_ASSERT(!cellIsHallway(p),
+                        "an ordinary item was placed in a hallway");
+
+            if (p.x >= 66 && p.x <= 73 && p.y >= 9 && p.y <= 19) {
+                secretRoomItems++;
+            } else if (p.x >= 5 && p.x <= 12 && p.y >= 9 && p.y <= 19) {
+                staircaseRoomItems++;
+            } else {
+                otherItems++; // corridor or solid rock
+            }
+        }
+    }
+
+    TEST_ASSERT_EQ(otherItems, 0,
+                   "every ordinary item should land in one of the two rooms");
+    TEST_ASSERT(staircaseRoomItems > 0,
+                "the room holding the up staircase should still receive some items");
+    TEST_ASSERT(secretRoomItems > 4 * staircaseRoomItems,
+                "the secret room should receive the large majority of ordinary items");
+
+    return !testFailed;
+}
+
+// ============================================================
+// BR54814 — invoking an item command without naming an item
+// opens the inventory so you can pick one; if nothing suitable
+// is available you are told "You have nothing suitable."
+// ============================================================
+
+static char br54814_letter;
+
+static void br54814_available_setup(void) {
+    clearArena();
+    removePackFood(); // the starting ration is applicable; keep only the potion
+    item *potion = givePlayerItem(POTION, POTION_LIFE, 0);
+    TEST_ASSERT(potion != NULL, "setup: the pack should accept a potion");
+    br54814_letter = itemInventoryLetter(potion);
+    queueKeystroke(br54814_letter, false, false);
+    injectKeystroke(APPLY_KEY, false, false);
+}
+
+static boolean br54814_available_verify(void) {
+    TEST_ASSERT(messageWasShown("Apply what?"),
+                "applying without naming an item should ask which item to use");
+    TEST_ASSERT(screenTextContains("potion of life"),
+                "the apply command should open the inventory with the potion listed");
+    TEST_ASSERT_EQ(packUnitCount(POTION, POTION_LIFE), 0,
+                   "the potion chosen from the inventory should be applied");
+    return !testFailed;
+}
+
+static void br54814_nothing_setup(void) {
+    clearArena();
+    // Every remaining item is equipped, and an equip command forbids equipped
+    // items, so there is nothing suitable to choose.
+    removePackFood();
+    removePackItems(WEAPON, DART);
+    injectKeystroke(EQUIP_KEY, false, false);
+}
+
+static boolean br54814_nothing_verify(void) {
+    TEST_ASSERT(messageWasShown("You have nothing suitable."),
+                "an item command with no suitable item should say there is nothing suitable");
+    return !testFailed;
+}
+
 const testCase tests_items[] = {
     { "BR58888_throwing_weapons_never_magical",     br58888_setup,             NULL, throwing_weapons_are_never_magical },
+
+    { "BR54814_apply_opens_inventory_to_choose_item", br54814_available_setup, NULL, br54814_available_verify },
+    { "BR54814_apply_with_no_suitable_item_says_so",  br54814_nothing_setup,   NULL, br54814_nothing_verify },
 
     { "BR83362_potion_of_life_raises_max_health",   life_potion_setup,          NULL, life_potion_raises_max_health },
     { "BR50436_potion_of_strength_raises_strength", strength_potion_setup,      NULL, strength_potion_raises_strength },
@@ -1620,10 +1810,12 @@ const testCase tests_items[] = {
     { "BR90956_throw_aim_stops_at_target",          throw_aim_setup,             throw_aim_step, throw_aim_trajectory_stops_at_target },
 
     { "BR28082_level_item_counts_follow_depth_bands", NULL, NULL, level_item_counts_follow_depth_bands },
+    { "BR47394_items_avoid_hallways_and_favor_secret_rooms", br47394_setup, NULL, br47394_verify },
 
     { "BR94199_beckoning_pulls_monster_adjacent", br94199_setup, br94199_step, beckoning_pulls_the_monster_adjacent },
 
     { "BR61428_domination_binds_or_resists",      br61428_setup,  br61428_step,  br61428_domination_binds_or_resists },
+    { "BR69013_domination_chance_depends_on_current_health", br69013_setup, NULL, br69013_chance_depends_on_current_health },
 
     { "BR43662_item_on_pressure_plate_depresses_it", br43662_plate_setup, br43662_place_item_step, br43662_plate_depresses },
 

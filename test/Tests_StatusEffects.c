@@ -3,9 +3,10 @@
 // These exercise the status effects that can be observed headlessly: the
 // counters that tick down on the periodic environmental update, searching,
 // weakening, haste and slow, poison, starvation, paralysis, entrancement, the
-// shield, and being stuck ending as soon as a creature is off an entangling
-// tile.  Rules about rendering (light radius, hallucinated names), combat
-// prompts, and specific item/bolt magnitudes are omitted.
+// shield, being stuck ending as soon as a creature is off an entangling tile,
+// and a discordant creature attacking the nearest eligible creature.  Rules
+// about rendering (light radius, hallucinated names), combat prompts, and
+// specific item/bolt magnitudes are omitted.
 
 #include "TestFramework.h"
 #include "Globals.h"
@@ -80,6 +81,21 @@ static void invisibility_decrement_setup(void) {
     status_decrement_setup(STATUS_INVISIBLE,5);
 }
 
+// ============================================================
+// BR48230 — the player's invisibility wears off with a message
+// ============================================================
+
+static void invisibility_fade_setup(void) {
+    applyStatusToPlayer(STATUS_INVISIBLE, 1);
+}
+
+static boolean invisibility_faded_message(void) {
+    TEST_ASSERT_EQ(playerStatusTurns(STATUS_INVISIBLE), 0, "invisibility should have worn off");
+    TEST_ASSERT(messageWasShown("you are no longer invisible"),
+                "wearing off should produce its message");
+    return !testFailed;
+}
+
 static void aggravation_decrement_setup(void) {
     status_decrement_setup(STATUS_AGGRAVATING,5);
 }
@@ -90,6 +106,77 @@ static void fire_immunity_decrement_setup(void) {
 
 static void explosion_immunity_decrement_setup(void) {
     status_decrement_setup(STATUS_EXPLOSION_IMMUNITY,5);
+}
+
+// ============================================================
+// BR91554 — aggravation wakes and alerts creatures
+// BR10268 — aggravation strips distance-keeping and
+//           corridor-avoiding behaviors
+//
+// Two monsters of a kind that both keeps its distance and avoids
+// fighting in corridors are placed near the player: one asleep and
+// one wandering.  The scroll reaches the whole level, so both are
+// inside the radius.  Setup remembers that they really carried both
+// behaviors, so the clears below cannot pass vacuously.
+// ============================================================
+
+static creature *aggravation_sleeper;
+static creature *aggravation_wanderer;
+static boolean aggravation_startedKeepingDistance;
+static boolean aggravation_startedAvoidingCorridors;
+
+static void aggravation_setup(void) {
+    setArenaRadius(4, FLOOR);
+    enum monsterTypes type = chooseMonsterTypeByProperty(BOLT_NONE,
+                                                          MONST_MAINTAINS_DISTANCE, 0,
+                                                          MA_AVOID_CORRIDORS, 0);
+
+    aggravation_sleeper = spawnMonster(type, posOffset(getPlayerPos(), 2, 0));
+    makeMonsterHostile(aggravation_sleeper);
+    putMonsterToSleep(aggravation_sleeper);
+
+    aggravation_wanderer = spawnMonster(type, posOffset(getPlayerPos(), -2, 0));
+    makeMonsterHostile(aggravation_wanderer);
+    makeMonsterUnaware(aggravation_wanderer);
+
+    aggravation_startedKeepingDistance =
+        monsterHasTrait(aggravation_sleeper, MONST_MAINTAINS_DISTANCE)
+        && monsterHasTrait(aggravation_wanderer, MONST_MAINTAINS_DISTANCE);
+    aggravation_startedAvoidingCorridors =
+        monsterHasAbility(aggravation_sleeper, MA_AVOID_CORRIDORS)
+        && monsterHasAbility(aggravation_wanderer, MA_AVOID_CORRIDORS);
+
+    queueConfirmYes();
+    readScrollOfKind(SCROLL_AGGRAVATE_MONSTER);
+}
+
+static boolean br91554_aggravation_wakes_and_alerts(void) {
+    TEST_ASSERT(!monsterIsAsleep(aggravation_sleeper),
+                "aggravation should wake a sleeping monster");
+    TEST_ASSERT(monsterIsTrackingPlayer(aggravation_sleeper),
+                "aggravation should alert the awakened monster to the player");
+    TEST_ASSERT(!monsterIsWandering(aggravation_wanderer),
+                "aggravation should alert a wandering monster");
+    TEST_ASSERT(monsterIsTrackingPlayer(aggravation_wanderer),
+                "the wandering monster should start tracking the player");
+    return !testFailed;
+}
+
+static boolean br10268_aggravation_strips_avoidance(void) {
+    TEST_ASSERT(aggravation_startedKeepingDistance,
+                "setup: both monsters should start out keeping their distance");
+    TEST_ASSERT(aggravation_startedAvoidingCorridors,
+                "setup: both monsters should start out avoiding corridors");
+
+    TEST_ASSERT(!monsterHasTrait(aggravation_sleeper, MONST_MAINTAINS_DISTANCE),
+                "aggravation should clear the awakened monster's distance-keeping");
+    TEST_ASSERT(!monsterHasTrait(aggravation_wanderer, MONST_MAINTAINS_DISTANCE),
+                "aggravation should clear the wandering monster's distance-keeping");
+    TEST_ASSERT(!monsterHasAbility(aggravation_sleeper, MA_AVOID_CORRIDORS),
+                "aggravation should clear the awakened monster's corridor avoidance");
+    TEST_ASSERT(!monsterHasAbility(aggravation_wanderer, MA_AVOID_CORRIDORS),
+                "aggravation should clear the wandering monster's corridor avoidance");
+    return !testFailed;
 }
 
 // ============================================================
@@ -547,6 +634,41 @@ static boolean hunger_warning_shown(void) {
 }
 
 // ============================================================
+// BR27834 — a levitating creature does not extinguish its own burning by
+// entering fire-extinguishing terrain such as water.  The control proves the
+// water really does extinguish an otherwise identical burning player who is
+// not levitating, so the levitating case is not passing vacuously.
+// ============================================================
+
+static void br27834_levitating_setup(void) {
+    setTerrain(getPlayerPos(), SHALLOW_WATER);
+    applyStatusToPlayer(STATUS_BURNING, 10);
+    applyStatusToPlayer(STATUS_LEVITATING, 20);
+    applyTileEffectsToPlayer();
+}
+
+static boolean br27834_levitating_keeps_burning(void) {
+    TEST_ASSERT(isPlayerLevitating(), "setup: the player should be levitating");
+    TEST_ASSERT(isPlayerBurning(),
+                "a levitating player should not be extinguished by water");
+    return !testFailed;
+}
+
+static void br27834_control_setup(void) {
+    setTerrain(getPlayerPos(), SHALLOW_WATER);
+    applyStatusToPlayer(STATUS_BURNING, 10);
+    applyTileEffectsToPlayer();
+}
+
+static boolean br27834_water_extinguishes(void) {
+    TEST_ASSERT(!isPlayerLevitating(),
+                "setup: the control player should not be levitating");
+    TEST_ASSERT(!isPlayerBurning(),
+                "water should extinguish a non-levitating player's burning");
+    return !testFailed;
+}
+
+// ============================================================
 // BR73170 — a levitating player is not underwater over deep water
 // ============================================================
 
@@ -559,6 +681,46 @@ static void levitating_over_water_setup(void) {
 static boolean not_underwater(void) {
     TEST_ASSERT(!isPlayerSubmerged(),
                 "a levitating player should not be underwater over deep water");
+    return !testFailed;
+}
+
+// ============================================================
+// BR98623 — while levitating, location flavor text is shown
+// instead of terrain flavor text.
+//
+// The player stands on marble, whose terrain flavor is the long
+// sentence about crystals; a levitating player instead sees the
+// location description "you are hovering above the marble ground."
+// The non-levitating control proves the same tile shows its terrain
+// flavor, so the levitating case is not passing vacuously.
+// ============================================================
+
+static void br98623_levitating_setup(void) {
+    setTerrain(getPlayerPos(), MARBLE_FLOOR);
+    applyStatusToPlayer(STATUS_LEVITATING, 20);
+    refreshFlavorText();
+}
+
+static boolean br98623_levitating_shows_location_flavor(void) {
+    const char *flavor = flavorTextLine();
+    TEST_ASSERT(strstr(flavor, "hovering above the marble ground") != NULL,
+                "a levitating player should see the location's flavor text");
+    TEST_ASSERT(strstr(flavor, "grain of the lavish marble") == NULL,
+                "a levitating player should not see the terrain's flavor text");
+    return !testFailed;
+}
+
+static void br98623_terrain_setup(void) {
+    setTerrain(getPlayerPos(), MARBLE_FLOOR);
+    refreshFlavorText();
+}
+
+static boolean br98623_shows_terrain_flavor(void) {
+    const char *flavor = flavorTextLine();
+    TEST_ASSERT(strstr(flavor, "grain of the lavish marble") != NULL,
+                "a non-levitating player should see the terrain's flavor text");
+    TEST_ASSERT(strstr(flavor, "hovering above") == NULL,
+                "a non-levitating player should not see the location's flavor text");
     return !testFailed;
 }
 
@@ -906,6 +1068,55 @@ static void br24556_enchant4_setup(void) {
     br24556_expected = 6; // 4 * 3 / 2
 }
 
+// ============================================================
+// BR49341 — a discordant monster attacks whatever eligible
+// creature is nearest rather than respecting allegiance
+// ============================================================
+
+static creature *br49341_subject;
+static creature *br49341_nearest;
+static pos br49341_startPos;
+static pos br49341_afterFirstTurn;
+static int br49341_playerHealthBefore;
+
+static void br49341_setup(void) {
+    setArenaRadius(6, FLOOR);
+    pos p = getPlayerPos();
+
+    // The nearest creature is two squares east of the subject and shares its
+    // allegiance; the player is three squares west and is an enemy.  A
+    // discordant subject must step east toward the nearer ally, whereas its
+    // ordinary hunting would carry it west toward the player.  The neighbour
+    // is asleep so the attack it receives on the next turn lands for certain.
+    br49341_subject = spawnMonster(MK_RAT, posOffset(p, 3, 0));
+    makeMonsterHostile(br49341_subject);
+    applyStatusToMonster(br49341_subject, STATUS_DISCORDANT, 100);
+    br49341_startPos = monsterPosition(br49341_subject);
+
+    br49341_nearest = spawnMonster(MK_RAT, posOffset(p, 5, 0));
+    makeMonsterHostile(br49341_nearest);
+    putMonsterToSleep(br49341_nearest);
+
+    br49341_playerHealthBefore = playerHealth();
+}
+
+static boolean br49341_step(void) {
+    monsterTakesTurn(br49341_subject);
+    br49341_afterFirstTurn = monsterPosition(br49341_subject);
+    monsterTakesTurn(br49341_subject);
+    return false;
+}
+
+static boolean br49341_attacks_nearest_creature(void) {
+    TEST_ASSERT_POS_EQ(br49341_afterFirstTurn, posOffset(br49341_startPos, 1, 0),
+                       "a discordant monster should step toward the nearest creature rather than the player");
+    TEST_ASSERT(!monsterIsHealthy(br49341_nearest),
+                "a discordant monster should attack the nearest creature even though it shares the monster's allegiance");
+    TEST_ASSERT_EQ(playerHealth(), br49341_playerHealthBefore,
+                   "the discordant monster should not attack the farther player");
+    return !testFailed;
+}
+
 const testCase tests_status_effects[] = {
     { "BR97529_telepathy_counter_decrements",   telepathy_decrement_setup,      rest_one_turn_step, status_decremented_by_one },
     { "BR97529_hallucination_counter_decrements", hallucination_decrement_setup, rest_one_turn_step, status_decremented_by_one },
@@ -914,8 +1125,11 @@ const testCase tests_status_effects[] = {
     { "BR48502_nausea_counter_decrements",      nausea_decrement_setup,         rest_one_turn_step, status_decremented_by_one },
     { "BR74294_paralysis_counter_decrements",   paralysis_decrement_setup,      rest_one_turn_step, monster_paralysis_decremented },
     { "BR41654_darkness_counter_decrements",    darkness_decrement_setup,       rest_one_turn_step, status_decremented_by_one },
-    { "BR48230_invisibility_counter_decrements",invisibility_decrement_setup,   rest_one_turn_step, status_decremented_by_one },
+    { "BR97529_invisibility_counter_decrements", invisibility_decrement_setup,  rest_one_turn_step, status_decremented_by_one },
+    { "BR48230_invisibility_fades_message",     invisibility_fade_setup,        rest_one_turn_step, invisibility_faded_message },
     { "BR18867_aggravation_counter_decrements", aggravation_decrement_setup,    rest_one_turn_step, status_decremented_by_one },
+    { "BR91554_aggravation_wakes_and_alerts",   aggravation_setup,              NULL, br91554_aggravation_wakes_and_alerts },
+    { "BR10268_aggravation_strips_avoidance",   aggravation_setup,              NULL, br10268_aggravation_strips_avoidance },
     { "BR75439_fire_immunity_counter_decrements",fire_immunity_decrement_setup, rest_one_turn_step, status_decremented_by_one },
     { "BR31504_explosion_immunity_counter_decrements", explosion_immunity_decrement_setup, rest_one_turn_step, status_decremented_by_one },
 
@@ -955,6 +1169,12 @@ const testCase tests_status_effects[] = {
 
     { "BR73170_levitating_not_underwater",      levitating_over_water_setup,    NULL, not_underwater },
 
+    { "BR98623_levitating_shows_location_flavor",    br98623_levitating_setup, NULL, br98623_levitating_shows_location_flavor },
+    { "BR98623_non_levitating_shows_terrain_flavor",  br98623_terrain_setup,    NULL, br98623_shows_terrain_flavor },
+
+    { "BR27834_levitating_burning_survives_water", br27834_levitating_setup,    NULL, br27834_levitating_keeps_burning },
+    { "BR27834_water_extinguishes_non_levitating", br27834_control_setup,       NULL, br27834_water_extinguishes },
+
     { "BR62028_paralyzed_monster_takes_no_action", paralyzed_monster_idle_setup, wait_10_turns_step, paralyzed_monster_did_nothing },
     { "BR34867_entranced_monster_skips_turn",   entranced_monster_idle_setup,   wait_10_turns_step, entranced_monster_did_nothing },
     { "BR73717_attacking_paralyzed_clears_it",  attack_paralyzed_setup,         attack_paralyzed_step, paralysis_cleared },
@@ -973,6 +1193,8 @@ const testCase tests_status_effects[] = {
 
     { "BR24556_confusion_weapon_duration_enchant10", br24556_enchant10_setup, br24556_step, br24556_confusion_duration_is },
     { "BR24556_confusion_weapon_duration_enchant4",  br24556_enchant4_setup,  br24556_step, br24556_confusion_duration_is },
+
+    { "BR49341_discordant_attacks_nearest_creature", br49341_setup, br49341_step, br49341_attacks_nearest_creature },
 
     { NULL, NULL, NULL, NULL }
 };

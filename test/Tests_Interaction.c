@@ -7,8 +7,9 @@
 // a click outside them, the way confirmations are skipped on autopilot,
 // the text of the dungeon-seed report, the color a message is shown in,
 // whether Return turns on the
-// keyboard cursor, and — by queueing keystrokes through the engine's main
-// input loop — what confirming the cursor on the player's own location does.
+// keyboard cursor, the examine prompt shown while examining the map during
+// playback, and — by queueing keystrokes through the engine's main input
+// loop — what confirming the cursor on the player's own location does.
 //
 // Omitted are all of the above screen-driven rules (aside from the keyboard
 // cursor's on/off state, the sidebar's poison labels and health bars, the
@@ -292,6 +293,34 @@ static boolean max_repeats_rendered_as_many(void) {
 }
 
 // ============================================================
+// BR54444 — a new, unconfirmed message is drawn at full
+// brightness; taking an action confirms it and dims it
+// ============================================================
+
+static int br54444_unconfirmedBrightness = -1;
+static int br54444_confirmedBrightness = -1;
+
+static boolean br54444_confirm_by_acting_step(void) {
+    emitArchivedMessage("the air is still");
+    br54444_unconfirmedBrightness = messageAreaBrightness("air is still");
+
+    // Any player action confirms the pending messages before it is carried out.
+    restOneTurn();
+    br54444_confirmedBrightness = messageAreaBrightness("air is still");
+    return false;
+}
+
+static boolean unconfirmed_message_is_full_then_confirmed_message_is_dim(void) {
+    TEST_ASSERT(br54444_unconfirmedBrightness >= 95,
+                "a new, unconfirmed message should be drawn at full brightness");
+    TEST_ASSERT(br54444_confirmedBrightness >= 0,
+                "the confirmed message should still be visible in the message area");
+    TEST_ASSERT(br54444_confirmedBrightness < br54444_unconfirmedBrightness,
+                "taking an action should confirm the message and dim it");
+    return !testFailed;
+}
+
+// ============================================================
 // BR23017 — poison that would kill the target before it wears off is
 // labeled "Fatal Poison", and stacked poison is shown with its strength,
 // e.g. "Poisoned (x3)"
@@ -420,6 +449,87 @@ static boolean discoveries_screen_lists_all_five_categories(void) {
                 "the discovered-items screen should list staffs");
     TEST_ASSERT(screenTextContains("-- WANDS --"),
                 "the discovered-items screen should list wands");
+    return !testFailed;
+}
+
+// ============================================================
+// BR27870 — in the discovered-items screen, identified kinds
+// are shown by name, while unidentified kinds show a good/bad
+// magic marker and the percentage chance of generating that
+// kind.
+//
+// Potions of telepathy (good magic) and hallucination (bad
+// magic) start unidentified.  One test opens the screen while
+// they are unknown; another identifies telepathy by giving the
+// player one, which teaches the kind, and opens the screen
+// again so the marker and percentage can be seen to fall away.
+// ============================================================
+
+static boolean br27870_listedBeforeOpening;
+static int br27870_goodMarker, br27870_badMarker;
+static boolean br27870_goodNamed, br27870_badNamed;
+static boolean br27870_goodChance, br27870_badChance;
+static int br27870_identifiedMarker;
+static boolean br27870_identifiedNamed, br27870_identifiedChance;
+
+static void br27870_unknown_setup(void) {
+    clearArena();
+}
+
+static boolean br27870_unknown_step(void) {
+    br27870_listedBeforeOpening = screenTextContains("Telepathy (");
+    injectKeystroke(DISCOVERIES_KEY, false, false);
+    br27870_goodNamed = screenTextContains("Telepathy");
+    br27870_goodChance = screenTextContains("Telepathy (");
+    br27870_goodMarker = discoveryScreenMagicMarkerFor("Telepathy");
+    br27870_badNamed = screenTextContains("Hallucination");
+    br27870_badChance = screenTextContains("Hallucination (");
+    br27870_badMarker = discoveryScreenMagicMarkerFor("Hallucination");
+    return false;
+}
+
+static boolean br27870_unidentified_kinds_show_marker_and_chance(void) {
+    TEST_ASSERT(!itemKindIsKnown(POTION, POTION_TELEPATHY),
+                "control: the telepathy potion kind should start unidentified");
+    TEST_ASSERT(!itemKindIsKnown(POTION, POTION_HALLUCINATION),
+                "control: the hallucination potion kind should start unidentified");
+    TEST_ASSERT(!br27870_listedBeforeOpening,
+                "no generation chance should appear before the screen is opened");
+    TEST_ASSERT(br27870_goodNamed, "an unidentified kind should still be listed by name");
+    TEST_ASSERT(br27870_badNamed, "an unidentified kind should still be listed by name");
+    TEST_ASSERT(br27870_goodChance,
+                "an unidentified kind should show its chance of being generated");
+    TEST_ASSERT(br27870_badChance,
+                "an unidentified kind should show its chance of being generated");
+    TEST_ASSERT_EQ(br27870_goodMarker, 1,
+                   "a good-magic kind should show the good-magic marker");
+    TEST_ASSERT_EQ(br27870_badMarker, -1,
+                   "a bad-magic kind should show the bad-magic marker");
+    return !testFailed;
+}
+
+static void br27870_identified_setup(void) {
+    clearArena();
+    givePlayerItem(POTION, POTION_TELEPATHY, 0);
+}
+
+static boolean br27870_identified_step(void) {
+    injectKeystroke(DISCOVERIES_KEY, false, false);
+    br27870_identifiedNamed = screenTextContains("Telepathy");
+    br27870_identifiedChance = screenTextContains("Telepathy (");
+    br27870_identifiedMarker = discoveryScreenMagicMarkerFor("Telepathy");
+    return false;
+}
+
+static boolean br27870_identified_kind_listed_by_name_alone(void) {
+    TEST_ASSERT(itemKindIsKnown(POTION, POTION_TELEPATHY),
+                "control: giving the player a potion should identify its kind");
+    TEST_ASSERT(br27870_identifiedNamed,
+                "an identified kind should be listed by name");
+    TEST_ASSERT(!br27870_identifiedChance,
+                "an identified kind should show no chance of being generated");
+    TEST_ASSERT_EQ(br27870_identifiedMarker, 0,
+                   "an identified kind should show no magic marker");
     return !testFailed;
 }
 
@@ -797,8 +907,10 @@ static boolean message_color_reflects_importance(void) {
 }
 
 // ============================================================
-// BR95103 — canceling the cursor (with space or Escape) hides
-// it and clears the highlighted travel path.
+// BR95103 — canceling the cursor (with space or Escape) hides it.
+//
+// BR21873 — canceling the cursor (with space or Escape) clears
+// the highlighted travel path.
 //
 // Both tests pump the engine's real input loop: Return turns the
 // keyboard cursor on, two eastward moves carry it (and, being
@@ -819,7 +931,7 @@ static boolean message_color_reflects_importance(void) {
 // cleared — while a cell the path never crossed must not.
 // ============================================================
 
-static void br95103_arena_setup(void) {
+static void cursor_cancel_arena_setup(void) {
     setArenaRadius(4, FLOOR);
     // The travel path only draws over discovered terrain, so reveal the
     // two path cells (and a cell north of you that no path here crosses).
@@ -829,7 +941,7 @@ static void br95103_arena_setup(void) {
 }
 
 static void br95103_hide_setup(void) {
-    br95103_arena_setup();
+    cursor_cancel_arena_setup();
     queueKeystroke(RETURN_KEY, false, false);      // turn the keyboard cursor on
     queueKeystroke(RIGHT_KEY, false, false);       // move it one cell east
     queueKeystroke(RIGHT_KEY, false, false);       // and a second cell east
@@ -847,8 +959,8 @@ static boolean br95103_canceling_hides_cursor(void) {
     return !testFailed;
 }
 
-static void br95103_path_setup(void) {
-    br95103_arena_setup();
+static void br21873_path_setup(void) {
+    cursor_cancel_arena_setup();
     queueKeystroke(RETURN_KEY, false, false); // turn the keyboard cursor on
     queueKeystroke(RIGHT_KEY, false, false);  // move it one cell east
     queueKeystroke(RIGHT_KEY, false, false);  // and a second cell east
@@ -857,7 +969,7 @@ static void br95103_path_setup(void) {
     // the pump's last — still shows the cursor and its lit travel path.
 }
 
-static boolean br95103_path_step(void) {
+static boolean br21873_path_step(void) {
     // The pump's last captured frame is taken at the empty fetch, just
     // before the hook synthesizes the Escape that cancels the cursor, so it
     // still shows the lit travel path.  Remember that frame, then take one
@@ -868,11 +980,125 @@ static boolean br95103_path_step(void) {
     return false;
 }
 
-static boolean br95103_canceling_clears_travel_path(void) {
+static boolean br21873_canceling_clears_travel_path(void) {
     TEST_ASSERT(screenCellColorsChanged(getPlayerPos()),
                 "canceling the cursor should clear the highlighted travel path");
     TEST_ASSERT(!screenCellColorsChanged(posOffset(getPlayerPos(), 0, -2)),
                 "a cell the travel path never crossed should keep its colour");
+    return !testFailed;
+}
+
+// ============================================================
+// BR92554 — examining the map during playback prompts
+// "Examine what? (<hjklyubn>, mouse, or <tab>)"
+//
+// Playback interaction runs through the engine's main input loop.  Asking it
+// to advance one turn replays the recording's events through executeEvent();
+// a recorded Return there turns the keyboard cursor on, and a recorded rest
+// then spends the turn without clearing it.  The loop's next iteration is
+// therefore examining the map during playback, which is the state the rule
+// describes.  Test mode records temporary messages, so the prompt's text can
+// be asserted even though nothing is drawn.
+// ============================================================
+
+static void br92554_setup(void) {
+    clearArena();
+    startPlaybackWithRecordedChecks(1);
+}
+
+static boolean br92554_step(void) {
+    queueKeystroke(RIGHT_KEY, false, false);  // playback: advance one turn
+    queueKeystroke(RETURN_KEY, false, false); // replayed event: turn the cursor on
+    queueKeystroke(REST_KEY, false, false);   // replayed event: spend the turn
+    runQueuedInputThroughMainLoop();
+    return false;
+}
+
+static boolean br92554_examine_prompt_shown(void) {
+    TEST_ASSERT(messageWasShown("Examine what?"),
+                "examining the map during playback should prompt \"Examine what?\"");
+    TEST_ASSERT(messageWasShown("<hjklyubn>, mouse, or <tab>"),
+                "the examine prompt should name the cursor keys, the mouse, and tab");
+    return !testFailed;
+}
+
+static void br92554_cursor_off_setup(void) {
+    clearArena();
+    startPlaybackWithRecordedChecks(1);
+}
+
+static boolean br92554_cursor_off_step(void) {
+    queueKeystroke(RIGHT_KEY, false, false); // playback: advance one turn
+    queueKeystroke(REST_KEY, false, false);  // replayed event: spend the turn
+    runQueuedInputThroughMainLoop();
+    return false;
+}
+
+static boolean br92554_no_prompt_without_cursor(void) {
+    TEST_ASSERT(!messageWasShown("Examine what?"),
+                "playback should not prompt to examine the map while the keyboard cursor is off");
+    return !testFailed;
+}
+
+// ============================================================
+// BR21762 — when playback ends, the game stops being in
+// playback mode and any out-of-sync condition is cleared,
+// returning it to its normal interactive state.
+//
+// A short recording is opened from within the current game and then
+// viewed through the main menu's View Recording command, exactly as
+// a player does.  Because the recording starts mid-game, the replay
+// diverges and raises the out-of-sync panic, and the viewer then
+// quits.  Quitting through the menu's own playback loop is what ends
+// the session, so the state left behind is the menu's cleanup state.
+// ============================================================
+
+static void br21762_setup(void) {
+    setArenaRadius(3, FLOOR); // open, monster-free ground for the recorded turns
+    viewCurrentRecordingAndQuitPlayback();
+}
+
+static boolean br21762_playback_end_clears_state(void) {
+    TEST_ASSERT(messageWasShown("Playback is out of sync."),
+                "setup: the replayed recording should have gone out of sync, so there is an out-of-sync state to clear");
+    TEST_ASSERT(!isInPlaybackMode(),
+                "ending playback should take the game out of playback mode");
+    TEST_ASSERT(!playbackIsOutOfSync(),
+                "ending playback should clear the out-of-sync condition");
+    return !testFailed;
+}
+
+// ============================================================
+// BR15955 — the default save name includes the version, seed,
+// and current depth.
+//
+// The saving prompt is opened and cancelled immediately; its
+// initial text is the name the game would offer.  The current
+// depth is deliberately set away from the starting depth, so a
+// name that merely happened to mention depth 1 would not pass.
+// ============================================================
+
+static const char *br15955_saveName;
+
+static void br15955_setup(void) {
+    setDepth(7);
+    br15955_saveName = defaultSaveName();
+}
+
+static boolean br15955_verify(void) {
+    char expectedSeed[32];
+    char expectedDepth[32];
+    snprintf(expectedSeed, sizeof(expectedSeed), "%llu", dungeonSeed());
+    snprintf(expectedDepth, sizeof(expectedDepth), "depth %d", currentDepth());
+
+    TEST_ASSERT(br15955_saveName != NULL && br15955_saveName[0] != '\0',
+                "the saving prompt should offer a default name");
+    TEST_ASSERT(strstr(br15955_saveName, gameVersionString()) != NULL,
+                "the default save name should include the game version");
+    TEST_ASSERT(strstr(br15955_saveName, expectedSeed) != NULL,
+                "the default save name should include the dungeon seed");
+    TEST_ASSERT(strstr(br15955_saveName, expectedDepth) != NULL,
+                "the default save name should include the current depth");
     return !testFailed;
 }
 
@@ -896,11 +1122,15 @@ const testCase tests_interaction[] = {
 
     { "BR13184_repeats_collapse_into_counted_entry", NULL, repeat_same_message_five_step, repeats_rendered_as_counted_entry },
     { "BR13184_max_repeats_rendered_as_many",        NULL, repeat_same_message_to_max_step, max_repeats_rendered_as_many },
+    { "BR54444_unconfirmed_message_full_then_dimmed", NULL, br54444_confirm_by_acting_step, unconfirmed_message_is_full_then_confirmed_message_is_dim },
 
     { "BR23017_lethal_poison_labeled_fatal",   fatal_poison_setup,       NULL, lethal_poison_labeled_fatal },
     { "BR23017_nonlethal_poison_labeled_poisoned", surviving_poison_setup, NULL, nonlethal_poison_labeled_poisoned },
     { "BR23017_stacked_poison_shows_strength", stacked_poison_setup,     NULL, stacked_poison_shows_strength },
     { "BR72215_discoveries_screen_lists_all_five_categories", discoveries_screen_setup, open_discoveries_screen_step, discoveries_screen_lists_all_five_categories },
+
+    { "BR27870_unidentified_kinds_show_marker_and_chance", br27870_unknown_setup, br27870_unknown_step, br27870_unidentified_kinds_show_marker_and_chance },
+    { "BR27870_identified_kind_listed_by_name_alone",      br27870_identified_setup, br27870_identified_step, br27870_identified_kind_listed_by_name_alone },
 
     { "BR26817_file_picker_shows_no_applicable_files", no_matching_files_setup, NULL, no_applicable_files_alert_shows },
     { "BR93927_control_advancing_moves_20_turns",       control_advance_setup,   control_advance_step, control_advancing_moves_twenty_turns },
@@ -919,7 +1149,14 @@ const testCase tests_interaction[] = {
     { "BR31995_message_color_reflects_importance", br31995_setup, NULL, message_color_reflects_importance },
 
     { "BR95103_canceling_cursor_hides_it",         br95103_hide_setup,  br95103_hide_step,  br95103_canceling_hides_cursor },
-    { "BR95103_canceling_cursor_clears_travel_path", br95103_path_setup, br95103_path_step,  br95103_canceling_clears_travel_path },
+    { "BR21873_canceling_cursor_clears_travel_path", br21873_path_setup, br21873_path_step,  br21873_canceling_clears_travel_path },
+
+    { "BR92554_playback_examine_prompt", br92554_setup, br92554_step, br92554_examine_prompt_shown },
+    { "BR92554_no_examine_prompt_without_cursor", br92554_cursor_off_setup, br92554_cursor_off_step, br92554_no_prompt_without_cursor },
+
+    { "BR21762_playback_end_clears_state", br21762_setup, NULL, br21762_playback_end_clears_state },
+
+    { "BR15955_default_save_name_includes_version_seed_depth", br15955_setup, NULL, br15955_verify },
 
     { NULL, NULL, NULL, NULL }
 };

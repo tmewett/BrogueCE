@@ -741,6 +741,134 @@ static boolean br89754_corrodes_weapon_unless_slaying(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR41331 — reaping recharges the player's staffs, wands, and charms by a
+// random amount up to the damage dealt times the reaping bonus, never more
+// than the victim's remaining health
+// ============================================================
+
+// The charm's countdown is reduced by exactly the amount reaping rolls, so
+// the change in its charge count is a direct reading of the recharge.
+#define BR41331_CAP_TRIALS 30
+#define BR41331_DAMAGE_TRIALS 16
+
+static item *br41331_charm;
+static int br41331_reaping;
+static int br41331_chargesAtStart;
+static int br41331_targetHealth;
+static int br41331_trialLimit;
+static int br41331_trialsDone;
+static int br41331_hits;
+static int br41331_positiveRecharges;
+static int br41331_overCap;
+static int br41331_rechargeExceededDamage;
+static int br41331_maxRecharge;
+
+static void br41331_prepare(int targetHealth, int trialLimit) {
+    clearArena();
+    setPlayerNutrition(2000);
+
+    givePlayerItem(RING, RING_REAPING, 4);
+    equipItemFromPack(RING, RING_REAPING);
+    br41331_reaping = playerReapingBonus();
+
+    br41331_charm = givePlayerItem(CHARM, CHARM_HEALTH, 1);
+    applyPackItem(CHARM, CHARM_HEALTH);
+    br41331_chargesAtStart = itemCharges(br41331_charm);
+
+    br41331_targetHealth = targetHealth;
+    br41331_trialLimit = trialLimit;
+    br41331_trialsDone = 0;
+    br41331_hits = 0;
+    br41331_positiveRecharges = 0;
+    br41331_overCap = 0;
+    br41331_rechargeExceededDamage = 0;
+    br41331_maxRecharge = 0;
+}
+
+static void br41331_cap_setup(void) {
+    br41331_prepare(1, BR41331_CAP_TRIALS);
+}
+
+static void br41331_damage_setup(void) {
+    br41331_prepare(1000, BR41331_DAMAGE_TRIALS);
+}
+
+static boolean br41331_attack_step(void) {
+    if (br41331_trialsDone >= br41331_trialLimit) {
+        return false;
+    }
+
+    clearMonsters();
+    creature *victim = placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 1, 0));
+    setMonsterHealth(victim, br41331_targetHealth);
+    // A sleeping victim is always hit, and the starting dagger's sneak bonus
+    // makes every blow far larger than a single hit point.
+    putMonsterToSleep(victim);
+
+    int healthBefore = monsterHealth(victim);
+    int chargesBefore = itemCharges(br41331_charm);
+    boolean hit = playerAttacksMonster(victim);
+    int healthAfter = monsterHealth(victim);
+    int chargesAfter = itemCharges(br41331_charm);
+
+    if (hit) {
+        int damage = healthBefore - healthAfter;
+        int recharged = chargesBefore - chargesAfter;
+        int damageCap = (damage < br41331_targetHealth ? damage : br41331_targetHealth)
+                        * br41331_reaping;
+
+        br41331_hits++;
+        if (recharged > 0) {
+            br41331_positiveRecharges++;
+        }
+        if (recharged > damageCap) {
+            br41331_overCap++;
+        }
+        if (recharged > damage) {
+            br41331_rechargeExceededDamage++;
+        }
+        if (recharged > br41331_maxRecharge) {
+            br41331_maxRecharge = recharged;
+        }
+    }
+
+    br41331_trialsDone++;
+    return br41331_trialsDone < br41331_trialLimit;
+}
+
+static boolean br41331_reaping_is_capped_by_victim_health(void) {
+    TEST_ASSERT_EQ(br41331_reaping, 4,
+                   "a +4 reaping ring should give a reaping bonus of 4");
+    TEST_ASSERT(br41331_chargesAtStart > 0,
+                "setup: using the charm should start its recharge countdown");
+    TEST_ASSERT(br41331_hits > 0,
+                "setup: the sleeping victims should be hit");
+    TEST_ASSERT_EQ(br41331_overCap, 0,
+                   "reaping must never recharge more than the victim's remaining health times the bonus");
+    TEST_ASSERT(br41331_positiveRecharges > 0,
+                "reaping should recharge the charm at least once");
+    TEST_ASSERT(br41331_maxRecharge <= br41331_reaping,
+                "a victim left with one hit point cannot fund more recharge than the reaping bonus");
+    return !testFailed;
+}
+
+static boolean br41331_reaping_is_bounded_by_damage(void) {
+    TEST_ASSERT_EQ(br41331_reaping, 4,
+                   "a +4 reaping ring should give a reaping bonus of 4");
+    TEST_ASSERT(br41331_chargesAtStart > 0,
+                "setup: using the charm should start its recharge countdown");
+    TEST_ASSERT(br41331_hits > 0,
+                "setup: the sleeping victims should be hit");
+    TEST_ASSERT_EQ(br41331_overCap, 0,
+                   "reaping must never recharge more than damage dealt times the reaping bonus");
+    TEST_ASSERT(br41331_positiveRecharges > 0,
+                "reaping should recharge the charm at least once");
+    TEST_ASSERT(br41331_rechargeExceededDamage > 0,
+                "with a x4 reaping bonus, some recharge should exceed the blow's base damage");
+    return !testFailed;
+}
+
 const testCase tests_combat[] = {
     { "BR94361_immolation_armor_erupts_in_flame", immolation_armor_setup, immolation_strikes_step, armor_erupts_in_flame },
     { "BR65933_paralyzed_defender_always_hit",  paralyzed_target_setup,  attack_once_step,        target_was_wounded },
@@ -770,5 +898,7 @@ const testCase tests_combat[] = {
     { "BR57646_rune_never_triggers_against_invulnerable_creature", br57646_invulnerable_setup, br57646_step, invulnerable_rune_never_triggered },
 
     { "BR89754_acid_corrodes_weapon_slaying_exempt", br89754_setup, br89754_step, br89754_corrodes_weapon_unless_slaying },
+    { "BR41331_reaping_capped_by_victim_health", br41331_cap_setup, br41331_attack_step, br41331_reaping_is_capped_by_victim_health },
+    { "BR41331_reaping_bounded_by_damage", br41331_damage_setup, br41331_attack_step, br41331_reaping_is_bounded_by_damage },
     { NULL, NULL, NULL, NULL }
 };

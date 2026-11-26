@@ -387,6 +387,11 @@ delete_epmemeral_files
 # --------------------------------------------
 # Gardening the test cases...
 for i in {1..25}; do
+    RULES=$(./count_rules.sh)
+    TESTS=$(./count_tests.sh)
+    echo "Rules: $RULES"
+    echo "Tests: $TESTS"
+
     # Pick random rule IDs and validate they meet rule requirements
     validate_random_rules
 
@@ -424,8 +429,8 @@ for i in {1..25}; do
     # Clean up from this iteration
     delete_epmemeral_files
 
-    RULES=$(count_rules.sh)
-    TESTS=$(count_tests.sh)
+    RULES=$(./count_rules.sh)
+    TESTS=$(./count_tests.sh)
     echo "Rules: $RULES"
     echo "Tests: $TESTS"
 done

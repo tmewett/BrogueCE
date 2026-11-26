@@ -1243,9 +1243,10 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
 
 #ifdef BROGUE_TESTING
     if (rogue.mode == GAME_MODE_TEST) {
-        // Headless test mode: let tests assert on the text.
+        // Headless test mode: let tests assert on the death cause.
         if (killedBy != NULL && killedBy[0]) {
             recordTestMessage(killedBy);
+            recordPlayerDeathCause(killedBy);
         }
         return;
     }

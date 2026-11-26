@@ -66,6 +66,11 @@ void queueKeystroke(int key, boolean shift, boolean control);
 // menu.  Like queueKeystroke, the event is consumed when the engine next
 // asks for input, so a prompt that is not open yet can still be clicked.
 void queueMouseClick(pos loc);
+// Supply a mouse click on a dungeon tile, moving the targeting cursor there.
+// The engine confirms a target only when the cursor is already on the clicked
+// tile, so aiming at a tile takes two of these: the first moves the cursor and
+// the second confirms it.
+void queueMapClick(pos loc);
 void queueConfirmYes(void);
 void queueConfirmNo(void);
 
@@ -77,8 +82,19 @@ boolean askConfirmation(void);
 // selected a file.  The dialog's answers come from the test's queued input.
 boolean chooseFileWithSuffix(const char *suffix);
 
+// Open the game's saving prompt and report the default file name it offers, or
+// the empty string when it offers none.  The prompt is cancelled again with
+// Escape, so no file is written.
+const char *defaultSaveName(void);
+
+// Framework internal: remember the text a text-entry prompt started with.
+void recordTestTextInputDefault(const char *text);
+
 // Turn autopilot on (confirmations are then skipped and treated as "yes").
 void enableAutopilot(void);
+
+// The game version string, as the game reports it.
+const char *gameVersionString(void);
 
 // Report the dungeon seed, turn number, mode, and version to the player.
 void showDungeonSeed(void);
@@ -95,8 +111,16 @@ boolean testNextInputEvent(rogueEvent *evt);
 
 // Remember a message shown to the player so tests can assert on it.
 void recordTestMessage(const char *msg);
+// Engine-facing: note whether the engine asked the player to acknowledge the
+// message just recorded.  Test mode suppresses the real --MORE-- prompt, so
+// this remembers the flag for messageRequiredAcknowledgment().
+void recordTestMessageAcknowledgment(const char *msg, boolean requiresAck);
 void clearMessages(void);
 boolean messageWasShown(const char *substring);
+// Whether the recorded message containing `substring` was sent with the
+// engine's require-acknowledgment flag, i.e. a real game would have stopped at
+// a --MORE-- prompt for it.  False when no such message was recorded.
+boolean messageRequiredAcknowledgment(const char *substring);
 const char *lastMessage(void);
 void printTestMessages(void);
 
@@ -127,6 +151,12 @@ const char *renderedMessageLine(void);
 // NULL when no recorded message contains the substring.
 const char *messageColorOf(const char *substring);
 
+// Brightness of the message-area text containing `substring`, in the game's
+// 0-100 colour scale, or -1 when no displayed message line contains it.
+// Unconfirmed messages are drawn at their full brightness; confirmed ones are
+// dimmed.
+int messageAreaBrightness(const char *substring);
+
 // ---------------------------------------------
 // Screen
 // ---------------------------------------------
@@ -136,6 +166,15 @@ const char *messageColorOf(const char *substring);
 // can only have come from the sidebar.
 boolean sidebarContains(const char *substring);
 
+// The flavor-text line at the bottom of the map, exactly as the game currently
+// draws it (capitalized as the player sees it, without trailing blanks), or the
+// empty string when that line is blank.
+const char *flavorTextLine(void);
+
+// Redraw the flavor-text line through the game's own refresh path, as happens
+// after a turn, a move, or closing a screen.
+void refreshFlavorText(void);
+
 // Report whether the given text appears on the whole screen as of the most
 // recent time the engine asked the test for input.  Full-screen displays (the
 // discoveries screen, the message archive, the help screen) draw themselves
@@ -143,6 +182,11 @@ boolean sidebarContains(const char *substring);
 // frame at that input request is the only moment their text can be observed.
 // False when the test has not yet caused an input request.
 boolean screenTextContains(const char *substring);
+
+// In the discovered-items screen, the mark drawn beside a kind listed by
+// `name`: 1 for the good-magic marker, -1 for the bad-magic marker, and 0 when
+// the kind is identified (shown by its item glyph) or is not on screen.
+int discoveryScreenMagicMarkerFor(const char *name);
 
 // Remember the background colour every cell was drawn with in the frame that
 // screenTextContains() reads.  Call it while a transient highlight (the aim
@@ -218,6 +262,9 @@ boolean isTrapTriggered(pos loc);
 // Whether the tile belongs to the interior of a vault built during level
 // generation.
 boolean cellIsVaultInterior(pos loc);
+// Whether the tile is a corridor tile: passable ground pinched between walls
+// (or a corridor junction), as opposed to the open floor of a room.
+boolean cellIsHallway(pos loc);
 // Whether the tile's liquid layer holds a liquid (water, lava, and so on).
 boolean cellHasLiquid(pos loc);
 // Whether the lighting pass last marked the tile as being in shadow.  Every
@@ -247,6 +294,19 @@ void setPlayerNutrition(int nutrition);
 boolean isPlayerHurt(void);
 boolean isPlayerHealthy(void);
 boolean isPlayerDead(void);
+// Whether the run itself has ended (the player died, won or quit), as
+// opposed to the player merely reaching zero health.
+boolean runHasEnded(void);
+// The cause the engine recorded for the player's death, exactly as gameOver()
+// received it ("spark turret", "a fall", "Drained by a cursed ring") and
+// before the rendered "Killed by ... on depth N" sentence is built.  Empty
+// while the player has not died.
+const char *playerDeathCause(void);
+// Whether the player's death was attributed to exactly `cause`, e.g. the
+// monster whose bolt landed the killing blow.
+boolean playerDeathWasAttributedTo(const char *cause);
+// Engine-facing: remember the cause passed to gameOver().
+void recordPlayerDeathCause(const char *cause);
 boolean isPlayerLevitating(void);
 boolean isPlayerBurning(void);
 boolean isPlayerConfused(void);
@@ -304,6 +364,11 @@ void applyEquipmentStatusToPlayer(enum statusEffects status, int duration);
 
 enum monsterTypes chooseMonsterTypeByProperty(enum boltType bolt, enum monsterBehaviorFlags behaviorFlagsInclude,  enum monsterBehaviorFlags behaviorFlagsExclude, enum monsterAbilityFlags abilityFlagsInclude, enum monsterAbilityFlags abilityFlagsExclude);
 creature *spawnMonster(enum monsterTypes type, pos loc);
+// Spawn one of the hordes flagged as allied with you at `loc`, giving it
+// `followers` members so both its leader and its member path are exercised.
+// Returns the horde's leader; *membersSpawned receives the number of followers
+// actually placed (pass NULL when not needed).
+creature *spawnAlliedHordeWithFollowers(pos loc, int followers, int *membersSpawned);
 creature *findMonster(enum monsterTypes type);
 void clearMonsters(void);
 int monsterCount(void);
@@ -376,6 +441,8 @@ int monsterBaseDamageLow(const creature *monst);
 int monsterBaseDamageHigh(const creature *monst);
 int monsterBaseMovementSpeed(const creature *monst);
 int monsterBaseAttackSpeed(const creature *monst);
+// Whether the monster's catalog entry marks it as large.
+boolean monsterIsLarge(const creature *monst);
 // Whether the monster's catalog entry gives it natural health regeneration.
 boolean monsterRegenerates(const creature *monst);
 // Chance, in percent, that the monster leaves its trail on the floor each
@@ -429,6 +496,8 @@ void makeMonsterNotFollowPlayer(creature *monst);
 // ---------------------------------------------
 
 void removeFloorFood(void);
+// Remove every item from the floor, leaving the terrain untouched.
+void clearFloorItems(void);
 item *findInventoryItem(short category, short kind);
 item *findFloorItem(short category, short kind);
 item *findItem(short category, short kind);
@@ -440,6 +509,9 @@ pos itemPosition(const item *theItem);
 // How many ordinary (non-gold) items lie on the level.  Gold piles follow
 // their own generation rule and are not counted.
 int countFloorItems(void);
+// The nth ordinary (non-gold) item on the floor, in the engine's own order,
+// or NULL when index is out of range.
+item *floorItemAtIndex(int index);
 void equipItemFromPack(short category, short kind);
 // Equip an item from the pack through the player's equip command, including
 // the prompt shown when both ring slots are already full.  The prompt's answer
@@ -645,6 +717,19 @@ void enterPlaybackMode(void);
 // playerTurnCount().
 void startPlaybackWithRecordedChecks(unsigned int turns);
 
+// Whether the game is currently replaying a recording.
+boolean isInPlaybackMode(void);
+// Whether playback has found that the recording no longer matches the game.
+boolean playbackIsOutOfSync(void);
+
+// Save the current game as a recording, then play it back through the main
+// menu's View Recording command with the test's queued input, and quit the
+// playback.  This takes the same path a player takes when choosing a
+// recording from the title screen, so the state the game is left in is the
+// state after a real playback ends.  Once it returns, the caller can check
+// isInPlaybackMode(), playbackIsOutOfSync(), and the message log.
+void viewCurrentRecordingAndQuitPlayback(void);
+
 // Run as a server: the victory path skips the save-recording prompt and the
 // high-score screen, so the game never asks for input.
 void enableServerMode(void);
@@ -693,6 +778,18 @@ int levelHeight(void);
 // How many tiles of the dungeon layer hold the given terrain.
 int countTerrain(short terrainType);
 
+// Whether the tile belongs to the first room the level generator carved on the
+// level now in play.  The generator chooses and carves that room before any
+// other room is attached, so this isolates it from the rest of the level.
+// False when the level now in play was not generated during this run: a level
+// restored from storage has no recorded first room.
+boolean firstRoomCovers(pos loc);
+
+// Framework internal: remember the first room the generator carved on the
+// level now being built.  Called by the generator after carving that room and
+// before attaching any other room.
+void recordFirstRoomForTesting(short **grid);
+
 // ---------------------------------------------
 // Vault layouts
 // ---------------------------------------------
@@ -707,6 +804,30 @@ int vaultLayoutMinDepth(int layout);
 int vaultLayoutMaxDepth(int layout);
 int vaultLayoutFrequency(int layout);
 int drawVaultLayout(int depth);
+
+// Build a vault on the current level whose doorway is guarded by a locked-door
+// vestibule; that vestibule generates a door key and hands it to a child vault.
+// Returns true when the vault (and its child) was built.  With
+// childVaultsDisabled true no child vault can be built, so all of the vault's
+// ten attempts fail and it must abort without altering the level.
+boolean buildGuardedDoorVault(boolean childVaultsDisabled);
+
+// A room-like vault's required room-size range: the doorway it grows from
+// must have a blocked-off region of at least roomVaultRoomSizeMin() and at
+// most roomVaultRoomSizeMax() tiles.
+int roomVaultRoomSizeMin(void);
+int roomVaultRoomSizeMax(void);
+
+// Replace the current level with a synthetic one holding a single dead-end
+// chamber of exactly roomCells floor tiles reached through one doorway, then
+// try to build the room-like vault.  The chamber's floor is the region that
+// would be cut off if its doorway were blocked.  Returns true when the vault
+// was built.  Afterwards chamberFloorContains() and chamberDoorwayAt()
+// identify the chamber's floor and its doorway.
+boolean buildRoomVaultAtChamber(int roomCells);
+int chamberFloorCellCount(void);
+boolean chamberFloorContains(pos loc);
+boolean chamberDoorwayAt(pos loc);
 
 // Descend one level, generating the next dungeon level.
 void descendToNextLevel(void);
@@ -784,6 +905,11 @@ creature *placeHostileMonster(enum monsterTypes type, pos loc);
 // quarter of the time for MONST_CARRY_ITEM_25).  spawnMonster() switches item
 // generation off, so a monster spawned with it never holds anything.
 creature *spawnMonsterWithItemChance(enum monsterTypes type, pos loc);
+
+// Run the game's ordinary item and gold population for the current level,
+// measuring placement from `upstairs` exactly as level generation does.  The
+// generated items and gold accumulate on the floor.
+void populateLevelItemsFrom(pos upstairs);
 
 // Add a dead ally of the given kind to purgatory, so it can be raised with
 // resurrectDeadAllyAt.  The ally dies at `loc` and awaits resurrection there.

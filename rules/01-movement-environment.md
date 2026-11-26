@@ -164,7 +164,7 @@
   [Movement.c:2131-2162](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L2131-L2162)
 - **BR39524** — Standing on, rather than levitating over, any secret square you can see reveals its secret.
   [Time.c:123-130](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L123-L130)
-- **BR21571** — Revealing a secret replaces each secret layer with the feature it conceals and refreshes the square.
+- **BR21571** — Revealing a secret replaces the tile with the door, wall, or other feature it was hiding.
   [Movement.c:2110-2128](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L2110-L2128)
 - **BR82459** — If you see a monster pass through a secret door, the secret is revealed.
   [Time.c:218-223](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L218-L223)
@@ -287,8 +287,9 @@
   [Time.c:2206-2207](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2206-L2207)
 - **BR91235** — Every 100 ticks staffs recharge and charms count down.
   [Time.c:2400-2403](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2400-L2403)
-- **BR31024** — Every 100 ticks worn gear becomes better understood, gradually identifying itself.
-  [Time.c:2404-2404](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2404-L2404)
+- **BR31024** — Every 100 ticks each worn, unidentified ring or suit of armor grows more familiar.
+  When its familiarity runs out, the item is identified and you are told you are now familiar enough
+  with it to identify it. [Time.c:2400-2404](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2400-L2404) [Time.c:1782-1813](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1782-L1813)
 - **BR31183** — Every 100 ticks the monster-spawn timer decrements.
   [Time.c:2405-2405](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2405-L2405)
 - **BR31244** — Every 100 ticks every monster feels instantaneous tile effects.
@@ -321,10 +322,10 @@
   [Time.c:1984-1984](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1984-L1984)
 - **BR32368** — As nutrition falls you are told "you are hungry", "you feel weak with hunger", "you feel faint with hunger", and finally "you are starving to death!".
   [Time.c:814-836](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L814-L836)
-- **BR32992** — Except for the first, the hunger warnings demand acknowledgment.
-  [Time.c:826-836](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L826-L836)
-- **BR33395** — The hunger warnings add " and have no food" when your pack contains no food.
-  [Time.c:818-822](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L818-L822)
+- **BR32992** — Every hunger warning demands acknowledgment, except that "you are hungry" demands it only when your pack contains no food.
+  [Time.c:818-835](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L818-L835)
+- **BR33395** — The "hungry", "weak with hunger" and "faint with hunger" warnings add " and have no food" when your pack contains no food.
+  [Time.c:818-835](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L818-L835)
 - **BR95832** — At zero nutrition you lose 1 hit point per turn and die when they run out ("Starved to death").
   [Time.c:2277-2282](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2277-L2282)
 - **BR33602** — At nutrition 1 or less you are forced to gobble any food in your pack, which consumes a turn.
@@ -366,15 +367,15 @@
   [Time.c:1334-1367](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1334-L1367)
 - **BR36935** — A monster crossing a level is placed near the appropriate stairs, or the pit it fell through, and displaces any creature already there.
   [Time.c:1881-1932](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1881-L1932)
-- **BR37097** — A monster entering through a pit takes 6-12 damage, announced as plummeting or falling from above.
-  [Time.c:1934-1953](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1934-L1953)
+- **BR37097** — A monster that is not levitating when it enters through a pit takes 6-12 damage, announced as plummeting or falling from above; a levitating one swoops down unharmed.
+  [Time.c:1934-1966](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1934-L1966)
 - **BR37131** — Monsters on the level above or below approach the stairs and enter your level after a countdown.
   [Time.c:1956-1977](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1956-L1977)
 - **BR16982** — Standing on a chasm makes you fall to the level below, unless you are levitating.
-  The fall damages you unless you land in deep water.
+  The fall injures you unless you land in deep water, and landing in shallow water or a bog halves the damage.
   [Time.c:93-98](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L93-L98)
-  [Time.c:1000-1012](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1000-L1012)
-  [Time.c:1013-1026](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1013-L1026)
+  [Time.c:161-170](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L161-L170)
+  [Time.c:1010-1027](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1010-L1027)
 - **BR17312** — Standing in deep water without levitation can make items in your pack float away in the current and be lost.
   [Time.c:474-505](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L474-L505)
 - **BR20087** — Stepping onto a pressure plate depresses it and triggers the trap it controls.
@@ -385,7 +386,7 @@
   [Time.c:93-98](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L93-L98)
 - **BR39325** — While levitating over deep water, your items stay in your pack instead of floating away in the current.
   [Time.c:474-480](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L474-L480)
-- **BR39456** — While levitating, stepping on a pressure plate does not depress or trigger it.
-  [Time.c:225-230](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L225-L230)
+- **BR39456** — While levitating, stepping on a trap's pressure plate neither depresses it nor sets the trap off.
+  [Time.c:225-250](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L225-L250)
 - **BR39871** — Levitation does not protect you from webbing: stepping into a web still leaves you stuck fast.
   [Time.c:287-292](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L287-L292)

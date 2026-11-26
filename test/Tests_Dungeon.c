@@ -1946,7 +1946,299 @@ static boolean br39459_player_has_distinct_lighting_colors(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR94157 — On depth 1 the first room is always the large
+// entrance room, while on deeper levels the first room may
+// instead be a cavern that can span the whole level.
+//
+// The framework records the first room the generator carves on
+// each fresh level, before any other room is attached, so the
+// test can examine that room alone rather than the merged floor
+// a finished level presents.
+//
+// On depth 1 the first room must be exactly the entrance room:
+// the 8x10 rectangle joined to the 20x5 rectangle below it,
+// forming the upside-down T at the bottom of the map.  Every
+// tile of that T must belong to the first room, and the room
+// holds 140 tiles in all, so any other room shape also fails
+// the count.
+//
+// On the deeper levels the first room must sometimes be the
+// level-filling cavern: its footprint must reach the cavern's
+// minimum 50 tiles wide by 20 tall, which no other room shape
+// can reach (caves top out at 27 tiles across).  A control
+// requires at least one deeper first room to stay below that
+// bound, so the rule's "may instead" is not satisfied by
+// making every deeper level's first room a cavern.
+// ============================================================
+
+#define BR94157_CAVERN_MIN_WIDTH  50
+#define BR94157_CAVERN_MIN_HEIGHT 20
+#define BR94157_LAST_DEPTH        26
+
+static int br94157_first_room_tile_count(void) {
+    int count = 0;
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            if (firstRoomCovers(posAt(x, y))) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+static boolean br94157_first_room_spans_level(void) {
+    int minX = levelWidth(), maxX = -1, minY = levelHeight(), maxY = -1;
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            if (!firstRoomCovers(posAt(x, y))) {
+                continue;
+            }
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+        }
+    }
+    return maxX >= 0
+            && maxX - minX + 1 >= BR94157_CAVERN_MIN_WIDTH
+            && maxY - minY + 1 >= BR94157_CAVERN_MIN_HEIGHT;
+}
+
+static boolean br94157_first_room_entrance_on_depth_1_cavern_below(void) {
+    const int W = levelWidth(), H = levelHeight();
+    // The entrance room: an 8x10 rectangle joined to a 20x5 rectangle below it.
+    const int narrowX = W / 2 - 8 / 2 - 1, narrowY = H - 10 - 2;
+    const int wideX = W / 2 - 20 / 2 - 1, wideY = H - 5 - 2;
+
+    for (int x = narrowX; x < narrowX + 8; x++) {
+        for (int y = narrowY; y < narrowY + 10; y++) {
+            TEST_ASSERT(firstRoomCovers(posAt(x, y)),
+                        "the 8x10 part of the entrance room should be first-room floor on depth 1");
+        }
+    }
+    for (int x = wideX; x < wideX + 20; x++) {
+        for (int y = wideY; y < wideY + 5; y++) {
+            TEST_ASSERT(firstRoomCovers(posAt(x, y)),
+                        "the 20x5 part of the entrance room should be first-room floor on depth 1");
+        }
+    }
+    TEST_ASSERT_EQ(br94157_first_room_tile_count(), 8 * 10 + 20 * 5 - 8 * 5,
+                   "the depth-1 first room should be exactly the entrance room");
+    TEST_ASSERT(!br94157_first_room_spans_level(),
+                "the entrance room should not reach the level-filling cavern's size");
+
+    boolean sawCavern = false, sawOther = false;
+    for (int depth = 2; depth <= BR94157_LAST_DEPTH; depth++) {
+        while (currentDepth() < depth) {
+            descendToNextLevel();
+        }
+        if (br94157_first_room_spans_level()) {
+            sawCavern = true;
+        } else {
+            sawOther = true;
+        }
+    }
+
+    TEST_ASSERT(sawCavern,
+                "some deeper level's first room should be a level-filling cavern at least 50 by 20 tiles");
+    TEST_ASSERT(sawOther,
+                "control: the first room should not be a level-filling cavern on every deeper level");
+    return !testFailed;
+}
+
+// ============================================================
+// BR49485 — a room-like vault grows outward from a doorway
+// whose blocked-off region size falls within the vault's
+// required room-size range; doorway candidates are rated by
+// how many tiles would be cut off if the doorway were blocked.
+//
+// The fixture replaces the level with one dead-end chamber
+// behind a single doorway, then asks the game to build a
+// room-like vault.  The chamber's floor is exactly the region
+// that would be cut off by blocking its doorway.
+// ============================================================
+
+static boolean br49485_built;
+static int br49485_roomCells;
+
+static int countVaultInteriorCells(void);
+
+static void br49485_in_range_setup(void) {
+    br49485_roomCells = roomVaultRoomSizeMin();
+    br49485_built = buildRoomVaultAtChamber(br49485_roomCells);
+}
+
+static void br49485_out_of_range_setup(void) {
+    br49485_roomCells = roomVaultRoomSizeMin() - 1;
+    if (br49485_roomCells < 4) {
+        br49485_roomCells = roomVaultRoomSizeMax() + 1;
+    }
+    br49485_built = buildRoomVaultAtChamber(br49485_roomCells);
+}
+
+static boolean br49485_in_range_vault_grows_from_doorway(void) {
+    TEST_ASSERT(br49485_built,
+                "a doorway whose blocked-off region is inside the room-size range should start a room vault");
+    TEST_ASSERT_EQ(chamberFloorCellCount(), br49485_roomCells,
+                   "control: the chamber should be as large as requested");
+    TEST_ASSERT(br49485_roomCells >= roomVaultRoomSizeMin()
+                    && br49485_roomCells <= roomVaultRoomSizeMax(),
+                "control: the chamber should lie inside the vault's room-size range");
+
+    int covered = 0;
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            pos loc = posAt(x, y);
+            if (!cellIsVaultInterior(loc)) {
+                continue;
+            }
+            covered++;
+            TEST_ASSERT(chamberFloorContains(loc) || chamberDoorwayAt(loc),
+                        "the vault should cover only its doorway and the blocked-off region behind it");
+        }
+    }
+    TEST_ASSERT_EQ(covered, br49485_roomCells + 1,
+                   "the vault should grow from the doorway across exactly the tiles that would be cut off, plus the doorway");
+
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            pos loc = posAt(x, y);
+            if (chamberFloorContains(loc)) {
+                TEST_ASSERT(cellIsVaultInterior(loc),
+                            "every floor tile of the blocked-off region should become vault interior");
+            }
+        }
+    }
+    return !testFailed;
+}
+
+static boolean br49485_out_of_range_doorway_is_rejected(void) {
+    TEST_ASSERT(!br49485_built,
+                "a doorway whose blocked-off region is outside the room-size range should not start a room vault");
+    TEST_ASSERT_EQ(chamberFloorCellCount(), br49485_roomCells,
+                   "control: the chamber should be as large as requested");
+    TEST_ASSERT(!(br49485_roomCells >= roomVaultRoomSizeMin()
+                  && br49485_roomCells <= roomVaultRoomSizeMax()),
+                "control: the chamber should lie outside the vault's room-size range");
+    TEST_ASSERT_EQ(countVaultInteriorCells(), 0,
+                   "a rejected doorway should leave no vault interior behind");
+    return !testFailed;
+}
+
+// ============================================================
+// BR22946 — a vault adopts an item generated elsewhere, hands
+// an item to a sub-vault, or builds a guarded vestibule in a
+// doorway; if the sub-vault cannot be built after ten tries,
+// the whole vault aborts.
+//
+// The fixture builds the vault whose doorway is guarded by a
+// locked-door vestibule.  The vestibule generates its door key
+// and hands it to an adopting child vault, so a built vault
+// leaves a locked doorway in its interior and its key inside a
+// vault rather than on the door.  When child vaults cannot be
+// built, the same fixture must abort the whole vault: no
+// doorway, key, item, creature, or interior tile may remain.
+// ============================================================
+
+static int countDoorKeys(void) {
+    int keys = 0;
+    for (int i = 0; i < countFloorItems(); i++) {
+        item *theItem = floorItemAtIndex(i);
+        if (itemCategory(theItem) == KEY && itemKind(theItem) == KEY_DOOR) {
+            keys++;
+        }
+    }
+    return keys;
+}
+
+static int countVaultInteriorCells(void) {
+    int cells = 0;
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            if (cellIsVaultInterior(posAt(x, y))) {
+                cells++;
+            }
+        }
+    }
+    return cells;
+}
+
+static boolean br22946_vaultBuilt;
+static int br22946_lockedDoorsBefore;
+static int br22946_keysBefore;
+static int br22946_itemsBefore;
+static int br22946_monstersBefore;
+static int br22946_vaultCellsBefore;
+
+static void br22946_build_setup(void) {
+    br22946_lockedDoorsBefore = countTerrain(LOCKED_DOOR);
+    br22946_keysBefore = countDoorKeys();
+    br22946_itemsBefore = countFloorItems();
+    br22946_monstersBefore = monsterCount();
+    br22946_vaultCellsBefore = countVaultInteriorCells();
+    br22946_vaultBuilt = buildGuardedDoorVault(false);
+}
+
+static void br22946_failed_subvault_setup(void) {
+    br22946_lockedDoorsBefore = countTerrain(LOCKED_DOOR);
+    br22946_keysBefore = countDoorKeys();
+    br22946_itemsBefore = countFloorItems();
+    br22946_monstersBefore = monsterCount();
+    br22946_vaultCellsBefore = countVaultInteriorCells();
+    br22946_vaultBuilt = buildGuardedDoorVault(true);
+}
+
+static boolean br22946_vault_adopts_key_through_guarded_door(void) {
+    TEST_ASSERT(br22946_vaultBuilt,
+                "the vault should be built when its child vault can be built");
+    TEST_ASSERT(countTerrain(LOCKED_DOOR) > br22946_lockedDoorsBefore,
+                "the vault should guard its doorway with a locked door");
+    TEST_ASSERT(countDoorKeys() > br22946_keysBefore,
+                "the guarded doorway should generate a door key");
+    TEST_ASSERT(countVaultInteriorCells() > br22946_vaultCellsBefore,
+                "the built vault should claim interior tiles");
+
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            if (cellIsTerrain(posAt(x, y), LOCKED_DOOR)) {
+                TEST_ASSERT(cellIsVaultInterior(posAt(x, y)),
+                            "a guarded doorway should belong to a vault");
+            }
+        }
+    }
+    for (int i = 0; i < countFloorItems(); i++) {
+        item *theItem = floorItemAtIndex(i);
+        if (itemCategory(theItem) != KEY || itemKind(theItem) != KEY_DOOR) {
+            continue;
+        }
+        TEST_ASSERT(!cellIsTerrain(itemPosition(theItem), LOCKED_DOOR),
+                    "a generated key should be handed off, not left in its doorway");
+        TEST_ASSERT(cellIsVaultInterior(itemPosition(theItem)),
+                    "a generated key should be adopted into a vault");
+    }
+    return !testFailed;
+}
+
+static boolean br22946_failed_subvault_aborts_whole_vault(void) {
+    TEST_ASSERT(!br22946_vaultBuilt,
+                "a vault whose child vault cannot be built should abort");
+    TEST_ASSERT_EQ(countTerrain(LOCKED_DOOR), br22946_lockedDoorsBefore,
+                   "an aborted vault should leave no doorway behind");
+    TEST_ASSERT_EQ(countDoorKeys(), br22946_keysBefore,
+                   "an aborted vault should leave no key behind");
+    TEST_ASSERT_EQ(countFloorItems(), br22946_itemsBefore,
+                   "an aborted vault should leave none of its items behind");
+    TEST_ASSERT_EQ(monsterCount(), br22946_monstersBefore,
+                   "an aborted vault should leave no creatures behind");
+    TEST_ASSERT_EQ(countVaultInteriorCells(), br22946_vaultCellsBefore,
+                   "an aborted vault should claim no interior tiles");
+    return !testFailed;
+}
+
 const testCase tests_dungeon[] = {
+    { "BR94157_first_room_entrance_on_depth_1_cavern_below", NULL, NULL, br94157_first_room_entrance_on_depth_1_cavern_below },
     { "BR71397_level_is_79_by_29",                       NULL, NULL, level_is_79_by_29 },
     { "BR51037_carving_leaves_solid_granite",            NULL, NULL, carving_leaves_solid_granite },
     { "BR69081_one_up_and_one_down_staircase",           NULL, NULL, one_up_and_one_down_staircase },
@@ -1985,7 +2277,12 @@ const testCase tests_dungeon[] = {
     { "BR11884_hallways_fall_away_with_depth",    NULL, NULL, br11884_hallways_fall_away_with_depth },
     { "BR72185_caves_fit_three_size_classes",      NULL, NULL, br72185_caves_fit_three_size_classes },
 
+    { "BR22946_vault_adopts_key_through_guarded_door", br22946_build_setup, NULL, br22946_vault_adopts_key_through_guarded_door },
+    { "BR22946_failed_subvault_aborts_whole_vault",    br22946_failed_subvault_setup, NULL, br22946_failed_subvault_aborts_whole_vault },
+
     { "BR32765_vault_layout_raffle_weighted_by_depth", NULL, NULL, br32765_vault_layout_raffle_is_weighted_by_depth },
+    { "BR49485_room_vault_grows_from_in_range_doorway", br49485_in_range_setup, NULL, br49485_in_range_vault_grows_from_doorway },
+    { "BR49485_room_vault_rejects_out_of_range_doorway", br49485_out_of_range_setup, NULL, br49485_out_of_range_doorway_is_rejected },
     { "BR39459_player_lighting_colors_are_distinct",   br39459_setup, NULL, br39459_player_has_distinct_lighting_colors },
 
     { NULL, NULL, NULL, NULL }

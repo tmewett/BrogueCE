@@ -1,8 +1,8 @@
 ------------------------------------------------------------
 BR14654 — NEW rule
-"While computing a route, whenever a tile's best-known distance to the destination improves, that tile is moved so that expansion always continues from the nearest unsettled tile first; as a result, every route reported by pathfinding is the shortest passable route to the destination."
-Citation: [Dijkstra.c:114-123](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Dijkstra.c#L114-L123)
-Note: Dijkstra.c:114-123 reinserts a tile into the sorted expansion structure whenever its best-known distance improves, so pathfinding always expands the nearest unsettled tile first and every reported route is the shortest passable route to the destination. Existing Dijkstra rules (BR14015, BR82699, BR37348, BR43009, BR33256, BR68830) cover scanning directions, diagonal corner-cutting, obstruction cost, per-traveller costs, and uses of distance maps, but none describes this nearest-first expansion / shortest-path guarantee. ID BR14654 is unique across rules/.
+"A creature travelling to a goal takes the shortest passable route to it, skirting obstacles by the cheapest detour."
+Citation: [Dijkstra.c:42-90](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Dijkstra.c#L42-L90)
+Note: Dijkstra.c:42-90 is the nearest-first route scan: each tile taken from the front of the queue relaxes its neighbours, reinserting any neighbour whose distance improves (61-79), and the scan always continues from the nearest unsettled tile (83-88). The resulting distances yield the shortest passable route to the destination. Existing Dijkstra rules (BR14015, BR82699, BR37348, BR43009, BR33256, BR68830) cover scanning directions, diagonal corner-cutting, obstruction cost, per-traveller costs, and uses of distance maps, but none states the shortest-passable-route guarantee this way. ID BR14654 is unique across rules/.
 
 ------------------------------------------------------------
 BR14684 — NEW rule
@@ -24,9 +24,9 @@ Note: Movement.c:2438-2452 is the cautious-on-walls branch: an obstructed square
 
 ----------------------------------------------------------
 BR89014 — NEW rule
-"Any square reached by the field-of-view scan that is not blocked from view is marked as visible."
+"Every square within your sight range that nothing blocks your view of is revealed to you, so you can see the terrain there."
 Citation: [Movement.c:2453-2455](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L2453-L2455)
-Note: Movement.c:2453-2455 is the default illumination branch that marks each reached, non-blocked square as visible. While BR77568 describes light radius at the Light.c layer, no rule in rules/* describes this field-of-view mask marking from Movement.c. ID BR89014 is unique across rules/.
+Note: Movement.c:2453-2455 is the default illumination branch that marks each reached, non-blocked square as visible; the rule states that result in in-game terms — visible squares are revealed to the player — rather than as a scan setting a mask. While BR77568 describes light radius at the Light.c layer, no rule in rules/* describes this field-of-view marking from Movement.c. ID BR89014 is unique across rules/.
 
 ------------------------------------------------------------
 BR13087 — NEW rule
@@ -42,9 +42,9 @@ Note: Grid.c:395-407 is fillContiguousRegion, which marks a tile as a blob membe
 
 ------------------------------------------------------------
 BR70163 — NEW rule
-"When an ally dies, it is kept waiting to be brought back to life rather than being discarded, so it can later be raised from the dead."
-Citation: [GlobalsBase.c:48](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/GlobalsBase.c#L48)
-Note: GlobalsBase.c:48 declares the purgatory list "used to hold dead allies awaiting resurrection". BR27884 describes how a raised ally is chosen and BR79511 notes that summoned allies cannot be resurrected, but no rule in rules/* describes that dead allies are held awaiting resurrection. ID BR70163 is unique across rules/.
+"When one of your allies dies it is not discarded but kept waiting to be raised from the dead later, except for allies that can never be resurrected, such as your own summons."
+Citation: [RogueMain.c:990-1002](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/RogueMain.c#L990-L1002), [Monsters.c:735-739](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L735-L739)
+Note: RogueMain.c:990-1002 removes a dead creature from its list and, for a dead ally that is not marked as never-resurrectable, puts it at the head of the waiting list instead of freeing it. Your own summons are marked never-resurrectable (Monsters.c:735-739), so they are discarded like any other creature. BR27884 describes how a raised ally is chosen and BR79511 notes that summoned allies cannot be resurrected, but no rule in rules/* describes that dead allies are held awaiting resurrection. ID BR70163 is unique across rules/.
 
 ------------------------------------------------------------
 BR39812 — NEW rule
@@ -75,12 +75,6 @@ BR11497 — NEW rule
 "Terrain, items, monsters, and messages are rendered in colors drawn from a fixed named palette, so game elements are visually distinguished by color."
 Citation: [GlobalsBase.h:107-122](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/GlobalsBase.h#L107-L122)
 Note: GlobalsBase.h:107-122 declares the game's named color constants (yellow, dark yellow, teal, purple, brown, green, orange, blue, pink, tan, rainbow, and their dark variants) that form the palette used to render terrain, items, monsters, and messages. No rule in rules/* describes this general color-palette rendering behavior; existing color rules cover only narrow cases such as message color by importance (BR31995) and the player's draw colour under lighting (BR39459). ID BR11497 is unique across rules/ and test/NewRules.txt.
-
-------------------------------------------------------------
-BR33863 — NEW rule
-"The tile a light source occupies is lit at full strength, so the light is brightest at its own tile rather than fading there."
-Citation: [Light.c:107-109](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Light.c#L107-L109)
-Note: Light.c:107-109 adds the light's full colour components directly to the source tile's light map. The field-of-view mask used by the light loop is built by getFOVMask starting one tile out from the origin (Movement.c:2390), so the source tile is never reached by the radius loop (Light.c:90-105) and would otherwise stay unlit. BR27303 describes the fade from full at the centre toward the edge but cites only Light.c:76 and Light.c:93-96, not this centre-tile assignment. No rule in rules/* describes the source tile receiving full-strength light. ID BR33863 is unique across rules/ and test/NewRules.txt.
 
 ------------------------------------------------------------
 BR25779 — NEW rule
@@ -324,9 +318,9 @@ Note: Time.c:2256-2258 is the check at the top of the turn loop: each iteration 
 
 ------------------------------------------------------------
 BR29087 — NEW rule
-"The game's absolute turn count rises by one every turn, even while you are paralyzed, but your own turn count rises only on turns when you are not paralyzed, so time spent paralyzed never adds a turn to your count."
-Citation: [Time.c:2260-2263](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2260-L2263)
-Note: Time.c:2260-2262 increments the player's turn count only when paralysis is not in effect — the comment notes that recordings must not register more turns than the player actually has — and Time.c:2263 unconditionally increments the absolute turn count; the turn loop repeats while paralysis lasts (Time.c:2589), so every paralyzed iteration advances the absolute count but not the player's. BR77317 says turns keep passing while you are paralyzed and BR59025 says both counts are reset to 0 in a new game, but no rule in rules/* describes the two counts diverging this way. ID BR29087 is unique across rules/.
+"Turns spent paralyzed pass in the dungeon but are not counted in your run's turn total, so the turn count recorded for the run is lower than the number of turns that actually elapsed."
+Citation: [Time.c:2260-2262](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2260-L2262), [platformdependent.c:496](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/platform/platformdependent.c#L496)
+Note: Time.c:2260-2262 increments the player's turn count only when paralysis is not in effect, so a turn spent paralyzed adds nothing to the count, and platformdependent.c:496 stores that same player turn count as the run's turn total in the run history. BR77317 says turns keep passing while you are paralyzed and BR59025 says the count is reset to 0 in a new game, but no rule in rules/* describes that paralyzed turns are left out of the recorded turn total. ID BR29087 is unique across rules/.
 
 ------------------------------------------------------------
 BR39683 — NEW rule
@@ -343,7 +337,7 @@ Note: MainMenu.c:1044-1048 builds and prints the two Current streak rows as a si
 ------------------------------------------------------------
 BR12731 — NEW rule
 "The Game Stats screen is overlaid on the screen with every cell set to 95% opacity. Because the display behind it was blanked to black first, the statistics appear against a solid black background."
-Citation: [MainMenu.c:1051-1059](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L1051-L1059), [MainMenu.c:967-968](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L967-L968)
+Citation: [Rogue.h:178](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L178), [IO.c:1916-1924](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L1916-L1924), [IO.c:1971-1994](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L1971-L1994), [MainMenu.c:1051-1059](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L1051-L1059), [MainMenu.c:967-968](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L967-L968)
 Note: MainMenu.c:1051-1056 sets every cell of the stats overlay to the interface opacity, which is 95 out of 100 (Rogue.h:178), and MainMenu.c:1059 composites that overlay onto the screen, where each cell's background blends 95% toward the stats display and 5% toward the screen underneath (the overlay routine at IO.c:1971-1994); MainMenu.c:967-968 saved the previous display and blacked out the screen before the stats were built, so the 5% blended in is black and the player sees the statistics on a solid black background. BR73762 and BR10299 describe only the Game Stats screen's contents and its Reset button, and the opacity rule BR30288 covers the help screen only, so no rule in rules/* describes how the Game Stats screen is displayed. ID BR12731 is unique across rules/ and test/.
 
 ------------------------------------------------------------
@@ -437,12 +431,6 @@ Citation: [Movement.c:2436-2436](https://github.com/tmewett/BrogueCE/blob/104a20
 Note: Movement.c:2436 classifies each examined square as view-blocking when it has the forbidden terrain (T_OBSTRUCTS_VISION for ordinary vision and light — see the callers at Light.c:85 and Time.c:775) or the forbidden map flags (HAS_MONSTER | HAS_PLAYER for lights with passThroughCreatures false, Rogue.h:1778 notes "generally no, but miner light does"); Movement.c:2460-2468 then ends the current sight line at a blocking square, so no further column is scanned behind it along that span. BR89014 says only that a reached, unblocked square is marked visible and BR33509 covers only how a blocking square itself is lit when vision is computed cautiously around walls; no rule in rules/* describes what makes a square blocking or that a blocking square terminates the sight line. ID BR16191 is unique across rules/ and test/.
 
 ------------------------------------------------------------
-BR19985 — NEW rule
-"As the field of view is scanned outward from the viewer, every square examined is first translated into its actual dungeon location, so each scan line tests the real map squares lying in that straight direction from the viewer, one square at a time as the line advances."
-Citation: [Movement.c:2424-2431](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L2424-L2431)
-Note: Movement.c:2424-2425 maps the scan column's first square into real map coordinates and Movement.c:2429-2431 does the same for every subsequent square in the column loop (the scan runs in eight rotations around the viewer, Movement.c:2388-2392), so what the scan checks is always the true dungeon square at that offset in that direction; Movement.c:2426-2427 additionally seeds the line's lit state from whether that first square is on the map and unblocked, so a line starting on a wall or off the map does not count as seeing anything until it reaches a clear square. Existing FOV rules BR71426 (off-map squares skipped, Movement.c:2432-2434), BR33509 (cautious wall lighting, Movement.c:2438-2452), and BR89014 (unblocked squares marked visible, Movement.c:2453-2455) all start after this coordinate-translation block, and no rule in rules/* describes it. ID BR19985 is unique across rules/ and test/.
-
-------------------------------------------------------------
 BR13726 — NEW rule
 "If the player declines to overwrite an existing file, the filename prompt reappears with the name they just typed still filled in, so the game keeps asking until they accept a name or cancel; declining never writes or replaces a file."
 Citation: [Recordings.c:1203-1207](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L1203-L1207)
@@ -474,9 +462,15 @@ Note: PowerTables.c:306-308 makes the activation chance use the weapon's net (st
 
 ------------------------------------------------------------
 BR23434 — NEW rule
-"When you examine an identified runic weapon, the game previews the activation percentage the weapon would reach if it were enchanted further, printing 'If the <weapon> is enchanted, the chance will increase to N%'; a multiplicity weapon's description likewise previews the percentage at which its spectral images would appear after enchanting."
-Citation: [Items.c:2277-2295](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L2277-L2295), [Items.c:2203-2214](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L2203-L2214), [PowerTables.c:306-308](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L306-L308)
-Note: PowerTables.c:306-308 is the branch that honors a caller-supplied hypothetical enchantment level instead of the weapon's current strength-adjusted level; Items.c:2277-2295 uses it to print "(If the <weapon> is enchanted, the chance will increase to N%...)" when the projected chance exceeds the current one, and Items.c:2203-2214 uses it for the multiplicity preview of spectral-image chance, count, and duration (projected level assembled from the net enchantment at Items.c:1924 and the future-enchantment estimate at Items.c:2211-2213). No rule in rules/* describes these examine-text previews — no rule cites Items.c:2203-2295, and BR83507/BR11005 cover only the summoning behavior itself. ID BR23434 is unique across rules/ and test/.
+"Examining an identified runic weapon whose rune activation chance would be higher if enchanted further adds a note in parentheses giving the increased chance, plus any increased duration or distance."
+Citation: [Items.c:2277-2295](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L2277-L2295), [PowerTables.c:306-308](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L306-L308)
+Note: Items.c:2277-2278 prints the clause only when the chance projected for the weapon after one more scroll of enchanting is strictly greater than its current chance, and Items.c:2279-2294 builds the parenthetical (adding an increased duration or distance when the rune has one). PowerTables.c:306-308 is the branch that honors the caller-supplied hypothetical enchantment level instead of the weapon's current strength-adjusted level. A weapon of slaying has a chance of 0 (PowerTables.c:300-302) and a bad runic a fixed chance of 15 (PowerTables.c:303-304), so neither ever shows the clause. The separate multiplicity image preview is BR36302. ID BR23434 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR36302 — NEW rule
+"Examining an identified weapon of multiplicity also states how many spectral images it would produce if enchanted further, how often they would appear, and how many turns they would last."
+Citation: [Items.c:2203-2214](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L2203-L2214)
+Note: Items.c:2203-2214 is the identified multiplicity branch of the examine description: it prints the current image count, appearance chance and duration, then a parenthetical preview computed for the enchantment level after one more scroll (Items.c:2211-2213), assembling that level from the weapon's net enchantment at Items.c:1924. The preview is unconditional, unlike BR23434's chance clause. No rule in rules/* describes this multiplicity examine text; BR83507 and BR11005 cover only the summoning behavior itself. ID BR36302 is unique across rules/ and test/.
 
 ------------------------------------------------------------
 BR13236 — NEW rule
@@ -602,7 +596,7 @@ Note: Wizard.c:384-386 invalidates a chosen square only when the player can neit
 BR21320 — NEW rule
 "While a route is calculated, work always advances from the square nearest the destination that is still waiting, and once a square's neighboring squares have all been considered it is set aside for good; the calculation therefore stops on its own when no waiting squares remain, leaving every square it can reach with its final route distance."
 Citation: [Dijkstra.c:80-90](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Dijkstra.c#L80-L90)
-Note: Dijkstra.c:80-81 close the relaxation conditional and the neighbor loop of one square's pass, and Dijkstra.c:83-88 unlink the worked square from the distance-ordered waiting list before taking the next one, so the update loop (Dijkstra.c:48-90) consumes waiting squares nearest-first and terminates when the list empties — this is the dequeue/termination half of the scan, with the reinsert half (Dijkstra.c:114-123) already covered. Existing rule BR14654 describes nearest-first expansion and shortest routes via that reinsertion at Dijkstra.c:114-123, but it does not describe worked squares being dropped from the waiting list or the scan ending when none remain, and no rule in rules/* cites Dijkstra.c:80-100. ID BR21320 is unique across rules/ and test/.
+Note: Dijkstra.c:80-81 close the relaxation conditional and the neighbor loop of one square's pass, and Dijkstra.c:83-88 unlink the worked square from the distance-ordered waiting list before taking the next one, so the update loop (Dijkstra.c:48-90) consumes waiting squares nearest-first and terminates when the list empties — this is the dequeue/termination half of the scan, with the reinsert half (Dijkstra.c:61-79) already covered. Existing rule BR14654 describes nearest-first expansion and shortest routes via that reinsertion at Dijkstra.c:61-79 (citing the full scan at Dijkstra.c:42-90), but it does not describe worked squares being dropped from the waiting list or the scan ending when none remain, and no rule in rules/* cites Dijkstra.c:80-100. ID BR21320 is unique across rules/ and test/.
 
 ------------------------------------------------------------
 BR16761 — NEW rule
@@ -757,8 +751,8 @@ Note: MainMenu.c:428-429 documents that the chosen game mode is displayed in the
 ------------------------------------------------------------
 BR40802 — NEW rule
 "Each weapon rune activates on its own curve, so at the same enchantment different runes trigger at different rates: a speed rune improves fastest (its chance of not activating shrinks by 16% per enchantment), followed by multiplicity and force (15%), slowing (14%), confusion (11%), and paralysis (7%), with quietus slowest (6%). Consequently, at the same enchantment and with the same weapon, a speed rune is more likely to trigger than a quietus rune."
-Citation: [PowerTables.c:284-294](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L284-L294), [PowerTables.c:326-328](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L326-L328)
-Note: PowerTables.c:284-294 maps each weapon rune to its own decay table (speed 16%, quietus 6%, paralysis 7%, multiplicity 15%, slowing 14%, confusion 11%, force 15%; slaying, mercy, and plenty have no table), and PowerTables.c:326-328 turns the weapon's enchantment into an index into that rune's table and converts the result to a percentage, so each rune's activation chance climbs at its own rate. Examined weapons display this per-rune percentage (Items.c:2227-2228) and every melee rune roll uses it (Combat.c:618-622). Existing rules BR11001 and BR53275 say only that the chance rises with enchantment, falls with base damage, is adjusted for attack speed, and is clamped; BR11016-BR11020 likewise never distinguish one rune from another, and no rule cites this table. The three table-less entries are unreachable because slaying returns 0 and the other two take the flat-15% bad-rune branch (PowerTables.c:300-305), already covered by BR11019 and BR11020. ID BR40802 is unique across all rule files.
+Citation: [PowerTables.c:221-283](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L221-L283), [PowerTables.c:284-294](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L284-L294), [PowerTables.c:326-328](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L326-L328)
+Note: PowerTables.c:221-283 holds the six fixed-point decay tables (speed 16%, quietus 6%, paralysis 7%, multiplicity 15%, slowing 14%, confusion 11%, force 15%); the 14% table at lines 241-250 and the 11% table at lines 251-261 are the exact tables in the checked block, and lines 262-264 begin the 7% table used by paralysis. PowerTables.c:284-294 maps each weapon rune to the matching table (slaying, mercy, and plenty have none), and PowerTables.c:326-328 turns the weapon's enchantment into an index into that rune's table and converts the result to a percentage, so each rune's activation chance climbs at its own rate. Examined weapons display this per-rune percentage (Items.c:2227-2228) and every melee rune roll uses it (Combat.c:618-622). Existing rules BR11001 and BR53275 say only that the chance rises with enchantment, falls with base damage, is adjusted for attack speed, and is clamped; BR11016-BR11020 likewise never distinguish one rune from another, and no other rule cites these tables precisely. The three table-less entries are unreachable because slaying returns 0 and the other two take the flat-15% bad-rune branch (PowerTables.c:300-305), already covered by BR11019 and BR11020. ID BR40802 is unique across all rule files.
 
 ------------------------------------------------------------
 BR41276 — NEW rule
@@ -799,8 +793,8 @@ Note: PowerTables.c:84 returns a radius of 4 (the charm's magnitude constant at 
 ------------------------------------------------------------
 BR26583 — NEW rule
 "The guardian summoned by a guardian charm lasts 4 turns at +0 and 2 more turns per enchantment level (+3 gives 10 turns)."
-Citation: [PowerTables.c:85](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L85), [Items.c:6640](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6640)
-Note: PowerTables.c:85 returns 4 (the charm's magnitude constant) + 2 × enchantment (constant 4, multiplier 2 set at GlobalsBrogue.c:735), and Items.c:6640 stores it as the summoned guardian's remaining lifespan, which ticks down once per turn and dissipates the guardian at zero (BR45587). BR96573 says only that the charm "summons a mythical guardian that fights for you"; no rule states the guardian's 4-turn base lifespan or its 2-turn-per-enchantment growth. ID BR26583 is unique across rules/.
+Citation: [PowerTables.c:85](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L85), [Items.c:6674](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6674)
+Note: PowerTables.c:85 returns 4 (the charm's magnitude constant) + 2 × enchantment (constant 4, multiplier 2 set at GlobalsBrogue.c:735), and Items.c:6674 stores it as the summoned guardian's remaining lifespan, which ticks down once per turn and dissipates the guardian at zero (BR45587). BR96573 says only that the charm "summons a mythical guardian that fights for you"; no rule states the guardian's 4-turn base lifespan or its 2-turn-per-enchantment growth. ID BR26583 is unique across rules/.
 
 ------------------------------------------------------------
 BR12962 — NEW rule
@@ -824,7 +818,7 @@ Note: When the candidate list is empty, Architect.c:1102-1112 skips doorway sele
 BR39588 — NEW rule
 "A vault may be defined so that it does not claim its interior as part of the vault; when such a vault is built, every tile belonging to it is released to ordinary dungeon floor except tiles that are wired and tiles that act as circuit breakers."
 Citation: [Architect.c:1690-1702](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1690-L1702)
-Note: Architect.c:1690-1702 runs only for a blueprint that asks not to mark its interior (the flag is documented at Rogue.h:2637), and for every tile that belongs to the machine but is neither wired nor a circuit breaker it clears both the in-machine mark and the owning machine's number, so those tiles stop being vault ground. Many flavour blueprints use this option (GlobalsBrogue.c:565-616, GlobalsBrogue.c:330). Existing machine rules BR35857 (activation powers the wired squares), BR35874 (a circuit breaker prevents activation) and BR97359 (wiring stolen from another vault is cleared) cover activation and wiring, not this optional release of the interior. ID BR39588 is unique across rules/ and test/.
+Note: Architect.c:1690-1702 runs only for a blueprint that asks not to mark its interior (the flag is documented at Rogue.h:2637), and for every tile that belongs to the machine but is neither wired nor a circuit breaker it clears both the in-machine mark and the owning machine's number, so those tiles stop being vault ground. Many flavour blueprints use this option (GlobalsBrogue.c:565-616, GlobalsBrogue.c:330). Existing machine rules BR35857 (activation powers the wired squares), BR35874 (a circuit breaker prevents activation) and BR37372 (mechanisms already present are cleared) cover activation and mechanisms, not this optional release of the interior. ID BR39588 is unique across rules/ and test/.
 
 ------------------------------------------------------------
 BR39616 — NEW rule
@@ -861,3 +855,429 @@ BR25122 — NEW rule
 "A square glows when any of its terrain layers is a glowing kind—its ground, liquid, gas, or surface—and each additional glowing layer adds that layer's own light, so a square can be lit by more than one of its layers at once."
 Citation: [Light.c:227-236](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Light.c#L227-L236)
 Note: Light.c:227-236 walks every map square and all four terrain layers, painting the catalog light of each layer whose tile type has a glow light, so a glowing liquid, gas, or surface layer contributes light in addition to the ground layer. BR56856 describes the from-scratch recompute ("glowing tiles ... are painted on") but not the per-layer lookup or that multiple glowing layers stack; BR20557 describes the colors of some glowing features, not which layers emit light. ID BR25122 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR21608 — NEW rule
+"When a square wired into a machine is promoted by anything other than fire, that promotion powers the square and activates the entire machine, and the power then fades from every square at once so the machine can be triggered again later."
+Citation: [Time.c:1134-1149](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1134-L1149)
+Note: Time.c:1134-1136 gates the block on the promotion not being a fire promotion, the square not already being powered, and the machine containing no circuit breaker; Time.c:1141 powers the promoted square, Time.c:1142 activates the machine, and Time.c:1144-1148 clears the powered flag from every square on the level immediately afterward. This is the reverse of BR35857, which describes activation promoting the machine's wired squares and giving its creatures a turn, and BR35874 covers only circuit breakers preventing activation; no rule in rules/* states that promoting a wired square itself triggers its machine, that a fire-driven promotion does not, or that the power fades so the machine can be triggered again. The remaining cited lines, Time.c:1152-1166 (the electricity branch), are already covered by BR36633 ("Electricity promotes any tile flagged to promote on electricity"); its boolean result merely tells the caller whether anything promoted (Items.c:4674-4681 refreshes lighting and auto-identifies the bolt's source), so it needs no separate rule. ID BR21608 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR39424 — NEW rule
+"While a recording is being played back, moving the keyboard cursor still lights the square it rests on, but the game never draws the travel path from the player to the cursor."
+Citation: [IO.c:613-616](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L613-L616), [IO.c:651-658](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L651-L658)
+Note: IO.c:613 gates the entire path-drawing block (IO.c:614-648, which contains the audited destination and route computation at IO.c:617-633) on not playing back, so during playback no route is computed or highlighted; the separate block at IO.c:651-658 still highlights the cursor's own square. The comment at IO.c:78 likewise records that "There are no cursor paths during playback." BR92554 covers the playback examine prompt and BR15841/BR37867 cover path drawing during normal play, but no rule in rules/* states that playback shows no travel path. ID BR39424 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR18889 — NEW rule
+"A locked door, lever, dewar, or bloodwort pod counts as a reachable travel destination even though you cannot walk into it, so pointing the cursor at one draws the route up to that feature instead of diverting to the nearest walkable square."
+Citation: [IO.c:619-632](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L619-L632), [IO.c:134-160](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L134-L160)
+Note: The cursor's own pathing map snaps a tile that inverts when highlighted onto its nearest neighbor's distance (IO.c:145-158), so such a tile is accepted as the destination at IO.c:619-625 instead of falling back to the nearest reachable square; the destination is then seeded at distance zero and its travel cost is temporarily lowered to 1 (IO.c:627-632, restored at IO.c:632), so the route scan propagates and the full route is highlighted, ending on the feature. Without that lowered cost the tile's normal cost is impassable, the scan never propagates, and only the single destination square would light. IO.c:1437-1446 swaps the tile's colors instead of applying the yellow path tint, which is how the highlighted feature is drawn. BR37867 covers the nearest-reachable fallback for genuinely unreachable spots and BR15841 covers the ordinary path, but no rule in rules/* says the path deliberately ends on these impassable features. ID BR18889 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR32292 — NEW rule
+"When the cursor points at a spot the player cannot reach, the game aims the travel path at the reachable square that is closest in a straight line rather than the one with the shortest walk, and when two reachable squares are equally close it prefers the one whose route from the player costs less."
+Citation: [IO.c:109-132](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L109-L132), [IO.c:624](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L624)
+Note: getClosestValidLocationOnMap at IO.c:109-132 compares squared coordinate distance (IO.c:118) across every reachable square and only consults the pathing-map score to break exact ties (IO.c:120-121); IO.c:624 calls it for the cursor's square. BR37867 says the path "leads to the nearest reachable location" but leaves both the distance measure and the tie-break unspecified, so a reader cannot tell whether "nearest" means closest by sight-line or cheapest to walk. ID BR32292 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR17379 — NEW rule
+"Sentinels are found in groups: a sentinel sanctuary holds a cluster of several sentinel statues, some standing in the room and others set into its walls."
+Citation: [Globals.c:1286](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1286), [GlobalsBrogue.c:275-286](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/variants/GlobalsBrogue.c#L275-L286)
+Note: Globals.c:1286 states that sentinels are always found in groups. The sentinel sanctuary blueprint at GlobalsBrogue.c:275-286 is the only place in the game data that generates sentinels, and its two statue features place 3-5 and 10-15 sentinels at once (GlobalsBrogue.c:282-283), so sentinels always appear in numbers. The bestiary rule BR20321 gives only the sentinel's stats, traits, and spells, and BR47059 covers the healing it casts on allies, but no rule in rules/* states that sentinels are generated in groups. ID BR17379 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR18004 — NEW rule
+"A phylactery summons a lich and hides inside it; killing that lich only reveals the phylactery, which can summon a fresh lich and hide again, so the lich keeps returning until the phylactery itself is destroyed."
+Citation: [Globals.c:1104-1107](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1104-L1107), [Globals.c:1295-1304](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1295-L1304), [GlobalsBrogue.c:816-818](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/variants/GlobalsBrogue.c#L816-L818), [Monsters.c:976-1057](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L976-L1057), [Monsters.c:2445-2449](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2445-L2449), [Combat.c:1713-1731](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1713-L1731)
+Note: The lich and phylactery entries at Globals.c:1104-1107 give both the power to summon: the lich summons phantoms or furies, while the phylactery summons exactly one lich (GlobalsBrogue.c:818) and then hides inside its summon (Monsters.c:1047-1057 removes the summoner and stores it on the summoned host). When the lich that carries it dies, Combat.c:1713-1731 puts the phylactery back on the level in the lich's place, and because the phylactery can still summon (Monsters.c:2445-2449) it can produce another lich and hide again. BR70715 describes hiding inside summoned minions and emerging when the carrier is defeated, and BR62417/BR18852 list the lich and phylactery stats and spells, but no rule in rules/* describes the resulting cycle in which the lich regenerates until the phylactery is destroyed. ID BR18004 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR19774 — NEW rule
+"When the game saves itself without asking for a filename — as when the program is closed mid-run — it shows no "Saved." message or acknowledgment; the save is written under the usual in-progress name and the game ends at once with a successful exit status."
+Citation: [Recordings.c:1160-1172](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L1160-L1172)
+Note: Recordings.c:1165-1170 builds the default in-progress name, makes it unique, appends the save suffix, and renames the working recording to that file; Recordings.c:1171-1172 then mark the game ended and its exit status as success. The function contains no message call, unlike the prompted save at Recordings.c:1200, which displays "Saved." (BR68875). BR10801 (MainMenu.c:623-638) says a no-prompt close saves an unfinished game as a savegame, but it does not state that this automatic path is silent and ends the game successfully; no rule in rules/* cites this function. ID BR19774 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR19790 — NEW rule
+"In Easy or Wizard mode, the default filename offered when saving a game that is still in progress has "(easy)" or "(wizard)" appended after the depth."
+Citation: [Recordings.c:1153-1157](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L1153-L1157)
+Note: The mode suffix is appended to every default path built by getDefaultFilePath, including the in-progress form "Saved <version> #<seed> at depth N" selected whenever the game is not over (Recordings.c:1142-1143). BR24295 describes the suffix only for a finished run's recording name, and BR15955 says the default save name includes the version, seed, and depth without mentioning the mode suffix, so no rule in rules/* describes the suffix on an in-progress save's default name. ID BR19790 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR13629 — NEW rule
+"In wizard mode the prompt for a created item's enchantment level allows at most 50 enchants: only two characters can be typed, and a number above 50 is treated as 50."
+Citation: [Wizard.c:199](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L199), [Wizard.c:234-235](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L234-L235), [Wizard.c:244-245](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L244-L245)
+Note: Wizard.c:199 sets the maximum to 50 and limits input to two characters, Wizard.c:234-235 shows that maximum in the prompt and passes the two-character limit to the input dialog, and Wizard.c:244-245 clamps any larger entered value to 50. BR79883 describes the category-specific minimum and default bounds but gives no upper limit, so a reader cannot tell that a wizard-created item is capped at 50 enchants. ID BR13629 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR11090 — NEW rule
+"In wizard mode the enchantment prompt defaults to the enchantment level the item currently has, except that a wand instead defaults to its current charge count and may be given as few as zero charges."
+Citation: [Wizard.c:199-208](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L199-L208), [Wizard.c:234](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L234)
+Note: Wizard.c:202 seeds the prompt's default from the item's generated enchantment, while Wizard.c:206-208 override that for a wand with a minimum of 0 and a default equal to its charge count; Wizard.c:234 displays the resulting range and default. BR79883 says only that wands default to their charge count, so it omits both the general generated-enchantment default and the fact that a wand's minimum is 0. ID BR11090 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR30749 — NEW rule
+"A creature can die only once: once it is already dying or dead, a further killing blow is ignored, so its death effect, dropped item, death message, and any creature it was carrying are handled only once."
+Citation: [Combat.c:1646-1649](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1646-L1649)
+Note: Combat.c:1646-1648 returns immediately when the creature is already dying or dead, before the carried-item drop at Combat.c:1662-1669, the death effect and its message at Combat.c:1671-1680, and the corpse handling at Combat.c:1711-1733. BR76528 covers the initial kill marking and message, BR64050 covers a dying monster taking no further action, and BR45346 covers no one attacking a dying creature, but no rule in rules/* states that a second kill is ignored so those death consequences cannot repeat. ID BR30749 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR17320 — NEW rule
+"A new game starts with its food-supply tally at zero, so the guaranteed food supply is counted afresh from the beginning of the run rather than continuing from an earlier game."
+Citation: [RogueMain.c:382](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/RogueMain.c#L382), [Items.c:688-695](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L688-L695)
+Note: RogueMain.c:382 zeroes the running total of food power spawned when a game is initialized. Items.c:688-695 compares that total against a depth-scaled nutrition schedule and forces a food item into the level's item generation when the total has fallen behind, guaranteeing roughly one ration every four levels. BR36788 describes that forced-food rule and BR84421 describes the starting ration in the pack, but no rule in rules/* states that the running food tally is reset to zero at the start of a new game, so the guarantee is measured from the run's beginning. ID BR17320 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR34177 — NEW rule
+"A new game begins with all automation switched off and the player in manual control: auto-exploration and auto-play are not running, and the player is not treated as having just rested or searched."
+Citation: [RogueMain.c:385-389](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/RogueMain.c#L385-L389)
+Note: RogueMain.c:385-389 clears the disturbance, auto-play, and automation flags together with the just-rested and just-searched markers as part of game initialization. Their ordinary in-game effects are described elsewhere — BR19564 (auto-explore stops when disturbed), BR20276 (full auto-play descends and continues on the next level), BR35136 (resting lowers the stealth floor), and BR36596 (resting or searching lengthens an ally's leash) — but no rule in rules/* states that a new game starts with every automation off and with neither fresh-rest nor fresh-search status set. ID BR34177 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR36808 — NEW rule
+"A new game starts with a clean per-turn slate: the player is not treated as submerged, no creature flashes are pending for the first turn, and all cached safety, safe-terrain, and shore-distance maps are marked stale so they are rebuilt for the new dungeon."
+Citation: [RogueMain.c:390-395](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/RogueMain.c#L390-L395)
+Note: RogueMain.c:390-395 clears the player's submersion state, clears the pending-creature-flash request, and invalidates the safety, ally-safety, safe-terrain, and shore-distance maps; each map is recomputed on first use (Time.c:1549 for the ally-safety map, Time.c:1626 for the safety map, Time.c:1760 for the safe-terrain map, Architect.c:3011 for the shore-distance map). BR51947 covers the effects of standing in deep water, BR84903 the flash when summoned creatures appear, and BR54368 the costs used by the shore-distance map, but no rule in rules/* states that these states and maps are cleared at the start of a new game. ID BR36808 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR40900 — NEW rule
+"Luminescent fungus casts a pale glow over a radius of 3 tiles, with the light dimming to half brightness at the edge of the glow."
+Citation: [Globals.c:998](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L998)
+Note: Globals.c:998 is the luminescent fungus entry in the glow-light table (radius 300 units of 0.01 tiles, edge brightness 50%). BR77568 describes that a light illuminates tiles within its radius, and BR27303 describes that brightness fades toward a percentage at the edge, but neither states this glow's radius or edge brightness, and no rule cites this row. ID BR40900 is unique across rules/.
+
+------------------------------------------------------------
+BR27503 — NEW rule
+"A luminescent fungal forest casts light over a radius of 5 tiles, fading to nothing at the edge of the glow."
+Citation: [Globals.c:999](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L999)
+Note: Globals.c:999 is the luminescent forest entry (radius 500 units of 0.01 tiles, edge brightness 0%). The fungal forest is distinct from ordinary luminescent fungus in both radius and edge brightness; no rule in rules/* states this glow's extent. ID BR27503 is unique across rules/.
+
+------------------------------------------------------------
+BR41031 — NEW rule
+"Blooming luminescent algae in deep water gives off light over a radius of 3 tiles that fades to nothing at the edge, whether the bloom is of the blue or the green variety."
+Citation: [Globals.c:1000-1001](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1000-L1001)
+Note: Globals.c:1000-1001 are the blue and green luminescent algae entries, both radius 300 units of 0.01 tiles with edge brightness 0%. No rule in rules/* describes the glow of these algae; only the algae's generation is covered (BR97445 and related terrain rules). ID BR41031 is unique across rules/.
+
+------------------------------------------------------------
+BR35032 — NEW rule
+"Ectoplasmic residue glows over a radius of 2 tiles, with the light dimming to half brightness at the edge of the glow."
+Citation: [Globals.c:1002](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1002)
+Note: Globals.c:1002 is the ectoplasm entry (radius 200 units of 0.01 tiles, edge brightness 50%). No rule in rules/* describes the light shed by ectoplasmic residue. ID BR35032 is unique across rules/.
+
+------------------------------------------------------------
+BR19494 — NEW rule
+"Unicorn poop sparkles with rainbow light over a radius of 2 tiles, fading to nothing at the edge of the glow."
+Citation: [Globals.c:1003](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1003)
+Note: Globals.c:1003 is the unicorn poop entry (radius 200 units of 0.01 tiles, edge brightness 0%). No rule in rules/* describes this light. ID BR19494 is unique across rules/.
+
+------------------------------------------------------------
+BR27751 — NEW rule
+"Glowing embers light a radius of 2 tiles, with the light dimming to half brightness at the edge of the glow."
+Citation: [Globals.c:1004](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1004)
+Note: Globals.c:1004 is the embers entry (radius 200 units of 0.01 tiles, edge brightness 50%). BR28360 and related fire rules describe what burning terrain does but not how brightly embers glow, and no rule cites this row. ID BR27751 is unique across rules/.
+
+------------------------------------------------------------
+BR29350 — NEW rule
+"A fire lights a randomly chosen radius of 5 to 10 tiles, with the brightness fading to nothing at the edge of the glow."
+Citation: [Globals.c:1005](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1005)
+Note: Globals.c:1005 is the fire entry (radius 500 to 1000 units of 0.01 tiles, edge brightness 0%); the radius is rolled afresh each time the light is painted. No rule in rules/* states how far firelight reaches. ID BR29350 is unique across rules/.
+
+------------------------------------------------------------
+BR29761 — NEW rule
+"Brimstone fire lights a randomly chosen radius of 2 to 3 tiles, with the brightness fading to nothing at the edge of the glow."
+Citation: [Globals.c:1006](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1006)
+Note: Globals.c:1006 is the brimstone fire entry (radius 200 to 300 units of 0.01 tiles, edge brightness 0%), a smaller and dimmer glow than ordinary fire. BR49739 and lake-generation rules cover brimstone hazards, but no rule in rules/* describes this light. ID BR29761 is unique across rules/.
+
+------------------------------------------------------------
+BR11389 — NEW rule
+"An explosion casts light out to the full width of the level at undiminished brightness, so the blast lights the area around it all the way to the edge of the light."
+Citation: [Globals.c:1007](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1007)
+Note: Globals.c:1007 is the explosion entry: its radius is the level width and its edge brightness is 100%, so it does not dim toward the edge. Explosion damage and flare rules exist, but no rule in rules/* describes the explosion's tile lighting. ID BR11389 is unique across rules/.
+
+------------------------------------------------------------
+BR33344 — NEW rule
+"An incendiary dart flashes light over a radius of 15 tiles, fading to nothing at the edge of the flash."
+Citation: [Globals.c:1008](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1008)
+Note: Globals.c:1008 is the incendiary dart light (radius 1500 units of 0.01 tiles, edge brightness 0%). No rule in rules/* describes this flash. ID BR33344 is unique across rules/.
+
+------------------------------------------------------------
+BR38379 — NEW rule
+"Activating a portal floods the level with light out to the full width of the level, with the light fading with distance from the portal."
+Citation: [Globals.c:1009](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1009)
+Note: Globals.c:1009 is the portal activation light (radius equal to the level width, edge brightness 0%). No rule in rules/* describes the flash when a portal activates. ID BR38379 is unique across rules/.
+
+------------------------------------------------------------
+BR23392 — NEW rule
+"A cloud of confusion gas glows over a radius of 3 tiles at undiminished brightness, so the whole cloud is lit evenly rather than dimming toward its edge."
+Citation: [Globals.c:1010](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1010)
+Note: Globals.c:1010 is the confusion gas light (radius 300 units of 0.01 tiles, edge brightness 100%). BR14011 covers what the gas does to a creature but no rule in rules/* describes the glow of the cloud itself. ID BR23392 is unique across rules/.
+
+------------------------------------------------------------
+BR41963 — NEW rule
+"A cloud of supernatural darkness darkens a radius of 5 tiles, darkest at its centre and fading to no effect at the edge, and unlike the light of other glowing features its darkness passes through creatures."
+Citation: [Globals.c:1011](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1011)
+Note: Globals.c:1011 is the darkness cloud entry: its colour is negative (so it subtracts light), its radius is 500 units of 0.01 tiles, its edge brightness is 0%, and its light passes through creatures where every other light in this table is blocked by them. No rule in rules/* describes this darkness cloud light. ID BR41963 is unique across rules/.
+
+------------------------------------------------------------
+BR33630 — NEW rule
+"A forcefield glows over a radius of 2 tiles, with the light dimming to half brightness at the edge of the glow."
+Citation: [Globals.c:1012](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1012)
+Note: Globals.c:1012 is the forcefield entry (radius 200 units of 0.01 tiles, edge brightness 50%). BR51250 covers creating a forcefield but no rule in rules/* describes the light it sheds. ID BR33630 is unique across rules/.
+
+------------------------------------------------------------
+BR27383 — NEW rule
+"A crystal wall glows over a randomly chosen radius of 3 to 5 tiles, with the light dimming to half brightness at the edge of the glow."
+Citation: [Globals.c:1013](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1013)
+Note: Globals.c:1013 is the crystal wall entry (radius 300 to 500 units of 0.01 tiles, edge brightness 50%). No rule in rules/* describes how a crystal wall lights its surroundings. ID BR27383 is unique across rules/.
+
+------------------------------------------------------------
+BR20742 — NEW rule
+"A candle-lit altar, pedestal, or similar candle-lit furnishing glows over a randomly chosen radius of 2 to 4 tiles, fading to nothing at the edge of the glow."
+Citation: [Globals.c:1014](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1014)
+Note: Globals.c:1014 is the candle light entry (radius 200 to 400 units of 0.01 tiles, edge brightness 0%), shared by all candle-lit altars, cages, and pedestals. No rule in rules/* describes this glow. ID BR20742 is unique across rules/.
+
+------------------------------------------------------------
+BR42752 — NEW rule
+"A haunted torch burns with a dim purple flame that lights a randomly chosen radius of 4 to 6 tiles, fading to nothing at the edge of the glow."
+Citation: [Globals.c:1015](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1015)
+Note: Globals.c:1015 is the haunted torch entry (radius 400 to 600 units of 0.01 tiles, edge brightness 0%), recoloured from the ordinary torch. Ordinary torch lighting is not described by any rule either; no rule in rules/* cites this row. ID BR42752 is unique across rules/.
+
+------------------------------------------------------------
+BR11577 — NEW rule
+"An inactive magical glyph flickers with light over a radius of 1 tile, fading to nothing at the edge of the glow."
+Citation: [Globals.c:1016](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1016)
+Note: Globals.c:1016 is the dim glyph light (radius 100 units of 0.01 tiles, edge brightness 0%). BR11942 covers sacred glyphs created by a scroll of sanctuary but no rule in rules/* describes the faint light of an inactive glyph. ID BR11577 is unique across rules/.
+
+------------------------------------------------------------
+BR16893 — NEW rule
+"An active magical glyph radiates light over a radius of 3 tiles, fading to nothing at the edge of the glow."
+Citation: [Globals.c:1017](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1017)
+Note: Globals.c:1017 is the bright glyph light (radius 300 units of 0.01 tiles, edge brightness 0%), three times the radius of the inactive glyph. No rule in rules/* describes it. ID BR16893 is unique across rules/.
+
+------------------------------------------------------------
+BR31796 — NEW rule
+"A sacred glyph glows over a radius of 3 tiles, fading to nothing at the edge of the glow."
+Citation: [Globals.c:1018](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1018)
+Note: Globals.c:1018 is the sacred glyph light (radius 300 units of 0.01 tiles, edge brightness 0%). BR11942 says a scroll of sanctuary forms sacred glyphs but no rule in rules/* describes their glow. ID BR31796 is unique across rules/.
+
+------------------------------------------------------------
+BR11955 — NEW rule
+"Light from a glowing feature is blocked by creatures, so a creature standing between you and the glow leaves the tiles behind it darker; the supernatural darkness cloud is the exception, because its darkness passes through creatures."
+Citation: [Globals.c:998-1018](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L998-L1018)
+Note: Globals.c:998-1018 is the table of glowing-terrain light sources; every entry forbids creatures from being passed through except the darkness cloud at line 1011, which allows it. Creature blocking is enforced when the light is painted and is not described by BR77568 (sight-blocking terrain), BR27303 (edge fade), or BR32985 (shadow removal). ID BR11955 is unique across rules/.
+
+------------------------------------------------------------
+BR27245 — NEW rule
+"Pressing `?` during play opens the help screen."
+Citation: [IO.c:2610-2611](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L2610-L2611)
+Note: IO.c:2610-2611 handles BROGUE_HELP_KEY by calling printHelpScreen (IO.c:4066-4137). Existing help-screen rules BR25882, BR47435, and BR27347 describe three listed commands, BR39512 covers dismissal, and the NewRules entries BR40113, BR41110, and BR34710 describe how the overlay is drawn and restored, but no rule in rules/* states that the help key opens the help screen. ID BR27245 is unique across rules/.
+
+------------------------------------------------------------
+BR37741 — NEW rule
+"Pressing `F` during play opens the Feats screen, which lists every feat with its achievement status."
+Citation: [IO.c:2613-2614](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L2613-L2614) [IO.c:4188-4237](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L4188-L4237)
+Note: IO.c:2613-2614 handles FEATS_KEY by calling displayFeatsScreen (IO.c:4188-4237). BR33110 describes the screen's contents and dismissal but not the key binding that opens it, so the in-game behavior at this key press was uncaptured. ID BR37741 is unique across rules/.
+
+------------------------------------------------------------
+BR12234 — NEW rule
+"Pressing `D` during play opens the discoveries screen, which lists every kind of scroll, ring, potion, staff, and wand and shows which ones you have identified."
+Citation: [IO.c:2616-2617](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L2616-L2617) [IO.c:4240-4276](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L4240-L4276)
+Note: IO.c:2616-2617 handles DISCOVERIES_KEY by calling printDiscoveriesScreen, whose implementation at IO.c:4240-4276 prints the SCROLLS, RINGS, POTIONS, STAFFS, and WANDS sections. No rule in rules/* describes this screen or its key binding; BR31563 only lists "view discovered items" as an actions-menu entry. ID BR12234 is unique across rules/.
+
+------------------------------------------------------------
+BR27794 — NEW rule
+"Each frame of the animation advances every light flash that is still running and redraws the dungeon with the flash's current brightness; a flash that has finished fading is discarded so it never appears again, and the animation continues until no flash remains."
+Citation: [Light.c:379-402](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Light.c#L379-L402)
+Note: Light.c:379-402 is the frame loop that keeps every still-active flare (Light.c:384-385), draws its current frame (Light.c:386-388, whose radius and colour scaling is at Light.c:359-363), frees and clears the flare once it is no longer active (Light.c:389-392), demotes visibility and refreshes the field-of-view display each frame (Light.c:395-396), and repeats while at least one flare remains (Light.c:402). BR14003 cites Light.c:289-348 and covers only the creation, fade rate, and expiry condition of a flare; no rule in rules/* describes the animation loop that advances and redraws active flashes and drops expired ones. ID BR27794 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR19558 — NEW rule
+"While some part of a light flash is within your view, each animation frame is held for about 10 milliseconds so the flash can be seen; if no part of the flash is in view, the frames are not held and the animation completes immediately. While watching a recording with full knowledge of the level, the hold applies even when the flash is outside your own view."
+Citation: [Light.c:394-399](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Light.c#L394-L399)
+Note: Light.c:397-399 pauses 10 milliseconds per frame only while not fast-forwarding, at least one flare is still active, and either some flare frame was in view or playback omniscience is on; otherwise the loop runs with no delay. The in-view result is set by Light.c:386-388. BR14003 describes the fade itself but no rule in rules/* mentions that animation frames are paced only when the flash is visible or that the pacing is 10 milliseconds. ID BR19558 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR30142 — NEW rule
+"While fast-forwarding a recording, or while the game's true-colour display mode is on, the animation is never paused between frames, so light flashes play through without delay."
+Citation: [Light.c:376-377](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Light.c#L376-L377) [Light.c:397-398](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Light.c#L397-L398)
+Note: Light.c:377 marks the animation fast-forwarded when true-colour mode or recording fast-forward is on, and the pause at Light.c:397-398 is skipped whenever that flag is set. No rule in rules/* describes this suppression of flare-animation pauses; BR19558 covers only the ordinary in-view pacing. ID BR30142 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR24247 — NEW rule
+"A light flash is drawn on top of the lighting that existed before the flash, and that earlier lighting is restored after every frame, so the flash leaves no permanent glow behind and the dungeon returns to its normal illumination when the animation ends."
+Citation: [Light.c:376](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Light.c#L376) [Light.c:400-403](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Light.c#L400-L403)
+Note: Light.c:376 backs up the dungeon's lighting before the animation begins; each frame records the old light values (Light.c:400) and restores the saved lighting (Light.c:401) after drawing the flash, and the field-of-view display is refreshed once more after the loop (Light.c:403). BR54362 covers the saving of old light values during ordinary lighting recomputation, but no rule in rules/* describes the flash being drawn over and then removed from the underlying lighting. ID BR24247 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR17894 — NEW rule
+"Whenever the mouse button is pressed or released, or the pointer moves into a new cell, the game first removes the highlight from whichever menu button was highlighted before, so moving the pointer off a button clears its highlight instead of leaving it lit."
+Citation: [Buttons.c:207-217](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L207-L217)
+Note: Buttons.c:207-209 handles only mouse-down, mouse-up, and pointer-entered-cell events, and Buttons.c:214-217 clears the previously focused button before the new focus is located at Buttons.c:219-237, so a menu never keeps a stale highlight after the pointer leaves a button (and if the pointer is over no button, none stays highlighted). BR11267 describes the tint of the button currently under the pointer, and BR35576/BR91827 describe the pressed look and choosing on mouse-up, but no rule in rules/* states that the previous highlight is cleared on each mouse event. ID BR17894 is unique across rules/.
+
+------------------------------------------------------------
+BR37749 — NEW rule
+"A menu control that is hidden or disabled cannot be highlighted or clicked with the mouse, even when the pointer is over the place where it would appear; only controls that are currently drawn on screen and enabled respond to the pointer."
+Citation: [Buttons.c:221-223](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L221-L223)
+Note: The pointer focus scan at Buttons.c:221-223 accepts a button only when both its drawn and enabled flags are set, so hidden controls (such as the invisible previous/next controls of BR23709) and disabled menu entries, including the drawn "---" separator rows, are skipped by the mouse. BR23709 says only that invisible controls remain reachable by hotkey, and BR11267's note mentions enabled buttons only in passing; no rule in rules/* describes that hidden or disabled buttons are excluded from pointer focus and clicks. ID BR37749 is unique across rules/.
+
+------------------------------------------------------------
+BR36733 — NEW rule
+"When a guardian charm is used, its guardian appears on the nearest reachable square to you that no creature or staircase occupies and whose terrain the guardian does not avoid; among equally near squares one is chosen at random, and it never appears on your own square."
+Citation: [Items.c:6665-6668](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6665-L6668)
+Note: Items.c:6665-6668 creates the guardian and places it with the qualifying-location search: the destination may not be the player's square (blocking map flag HAS_PLAYER), may not hold another monster or a staircase (forbidden flags HAS_PLAYER | HAS_MONSTER | HAS_STAIRS), and may not be terrain the guardian avoids (the forbidden terrain flags come from avoidedFlagsForMonster, minus spontaneously igniting terrain). The search runs a distance scan outward from the player and picks a random one of the equally nearest qualifying squares, so the guardian materialises beside you. BR96573 says only that the charm summons a guardian, BR26583 covers its lifespan, BR84903 its flash and first-turn delay, and BR65190 its bond to you; no rule in rules/* describes where the guardian appears. ID BR36733 is unique across rules/.
+
+------------------------------------------------------------
+BR14078 — NEW rule
+"The guardian summoned by a guardian charm is your ally but does not follow you around: when it has no enemy to fight, it mills about near where it appeared instead of trailing you."
+Citation: [Items.c:6669](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6669), [Monsters.c:3153-3154](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3153-L3154), [Monsters.c:3223-3227](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3223-L3227)
+Note: Items.c:6669 marks the guardian as a follower bound to the player that does not track its leader. Monsters.c:3223-3227 then makes such a monster mill about instead of pathing to its leader whenever it has no enemy or corpse to deal with, and Monsters.c:3153-3154 exempts it from the 4-square leash that otherwise limits which enemies an ordinary ally will pursue. BR63005 describes ordinary followers staying within 2 squares of their leader and BR96573 only says the guardian fights for you, so no rule in rules/* states that the guardian does not follow you. ID BR14078 is unique across rules/.
+
+------------------------------------------------------------
+BR11468 — NEW rule
+"Each time you discharge a wand, the game records one more use of it, and a wand whose charges you have not yet learned reports that count in its description as "used once", "used twice", or "used N times"."
+Citation: [Items.c:6654](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6654), [Items.c:1587-1598](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L1587-L1598)
+Note: Items.c:6654 increments a wand's discharge counter on every successful discharge, not only when the wand runs out of charges. While a wand's charges are unknown (it is not identified and its maximum charges have not been learned), Items.c:1587-1598 prints the counter in the item description as "(used once)", "(used twice)", or "(used N times)"; once the charges are known the description shows the remaining charge count instead. BR46697 mentions the counter only while describing an empty wand and does not state what the player sees, so no rule in rules/* describes this use count. ID BR11468 is unique across rules/.
+
+------------------------------------------------------------
+BR36580 — NEW rule
+"Eating a food ration prints "That food tasted delicious!", while eating a mango prints "My, what a yummy mango!"."
+Citation: [Items.c:6711-6715](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6711-L6715)
+Note: Items.c:6711-6715 is the message branch at the end of eating: a ration prints "That food tasted delicious!" and every other food kind (the mango) prints "My, what a yummy mango!". The same block sits at Items.c:6677-6681 in the working tree because later commits shifted this file, but the pinned commit cited here is authoritative. BR39781 covers the nutrition gain and BR42934 the not-hungry-enough confirmation, but no rule in rules/* describes these distinct messages. ID BR36580 is unique across rules/.
+
+------------------------------------------------------------
+BR33715 — NEW rule
+"When a blow lands but deals no damage, the combat message adds that the attacker does no damage; when the player made that attack, it also counts as being disturbed, which interrupts running or auto-exploration."
+Citation: [Combat.c:1140-1144](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1140-L1144)
+Note: Combat.c:1140-1144 selects the zero-damage explanation clause ("but do/does no damage") and, when the attacker is the player, sets the player's disturbed flag. The message appears both for ordinary hits and for kills because the same clause is appended at Combat.c:1159-1170. BR27038 and BR77279/BR81065 describe sources of zero damage (absorption, weapon immunity, invulnerability) and BR10761 notes that the player's harmless attacks are allowed, but no rule in rules/* describes this zero-damage combat message or the player disturbance it sets. ID BR33715 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR40200 — NEW rule
+"When a blow lands on a paralyzed defender, the combat message explains that the defender is struck while paralyzed."
+Citation: [Combat.c:1147-1148](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1147-L1148)
+Note: Combat.c:1147-1148 appends " while $HESHE is/are paralyzed" (with pronouns resolved for the defender) to the attack message when the defender was paralyzed at the start of the attack; the clause is also carried into the kill message at Combat.c:1166-1170. BR36538 covers the mechanics of attacking a paralyzed creature (auto-hit, triple damage, no retaliation) but says nothing about the reported explanation, and no other rule in rules/* mentions this paralyzed combat message. ID BR40200 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR18636 — NEW rule
+"When a blow lands on a sleeping defender, the combat message explains that the defender was struck in its sleep."
+Citation: [Combat.c:1149-1150](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1149-L1150)
+Note: Combat.c:1149-1150 appends " in $HISHER sleep" (with pronouns resolved for the defender) to the attack message when the defender was asleep at the start of the attack, and the clause also appears in the kill message at Combat.c:1166-1170. BR66846, BR88066, and BR89965 cover the mechanics of attacking a sleeping creature (auto-hit, delayed retaliation, waking), but no rule in rules/* describes this sleep combat message. ID BR18636 is unique across rules/ and test/.
+
+------------------------------------------------------------
+BR23006 — NEW rule
+"When an ally that can blink has an enemy inside the range it is allowed to pursue, it blinks toward that enemy only about 30% of the time, or every time if it is a kind that never holds back its ability; on other turns it simply walks toward the enemy."
+Citation: [Monsters.c:3158-3161](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3158-L3161), [Monsters.c:3207-3208](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3207-L3208)
+Note: Monsters.c:3159-3160 gates the ally's blink toward an enemy on a 30% random roll, bypassed when the monster never holds back its abilities, and Monsters.c:3207-3208 is the fallback walk toward the closest enemy when the blink does not happen. BR61728 states only that an allied blinker teleports toward the nearest enemy and omits the chance, and BR80604 covers the 30% chance only for a fleeing blink; no rule in rules/* describes this attack-side chance. ID BR23006 is unique across rules/.
+
+------------------------------------------------------------
+BR12479 — NEW rule
+"When an ally blinks toward an enemy, it can choose only a foe that it is willing and able to attack, that it can reach, and whose square it does not refuse to occupy unless the foe can be struck through walls; it notices an invisible foe only about one time in three, always if it never holds back its ability."
+Citation: [Monsters.c:3180-3194](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3180-L3194)
+Note: Monsters.c:3182-3189 is the target filter that decides which enemies are planted as destinations in the blink preference map: it excludes creatures the ally will not attack, unreachable ones, avoided squares unless the creature is attackable through walls, and futile attacks, and it includes an invisible creature only on a 33% roll (automatically for a monster that never holds back its ability). Squares the ally avoids are also forbidden as landing spots at Monsters.c:3170-3172. BR61728 does not state these selection constraints, and BR69774 describes the 33% invisibility notice only for the ordinary target scan, not the blink map. ID BR12479 is unique across rules/.
+
+------------------------------------------------------------
+BR32375 — NEW rule
+"A successful blink ends the creature's turn as though it had attacked, so its next action comes after its attack speed, doubled for a creature that casts spells slowly."
+Citation: [Monsters.c:3199-3202](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3199-L3202), [Monsters.c:2355-2358](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2355-L2358)
+Note: Monsters.c:3199-3202 makes the ally's attack-side blink both consume the turn at attack speed (doubled for slow casters) and return from the ally's action, and Monsters.c:2355-2358 applies the same delay inside the shared blink routine after every successful blink. BR56857 gives the attack-speed turn cost only to casting, and BR80604 says a fleeing blink ends its turn without the timing detail; no rule in rules/* states the turn cost of blinking itself. ID BR32375 is unique across rules/.
+
+------------------------------------------------------------
+BR16275 — NEW rule
+"A square can hold more than one kind of terrain at once — floor, liquid, surface covering and gas — so a gas cloud drifting over lava makes the square count as both. When the game checks a square against a required terrain, such as choosing where a horde may spawn, where a spreading feature may grow, or a random matching location, it accepts the square if any of those layers is that terrain."
+Citation: [Architect.c:39-46](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L39-L46)
+Note: Architect.c:39-46 returns true when any of the four terrain layers — dungeon, liquid, surface or gas — equals the requested type. That any-layer match is what Monsters.c:725 and Monsters.c:810-815 use to test horde spawn terrain, what Architect.c:3340-3341 and Architect.c:3365 use to require propagation terrain for a spreading feature, and what Architect.c:3866 uses for random matching locations. BR48210 covers horde re-rolling and BR67454 covers terrain-matched random placement, but no rule in rules/* states that a square carries several terrains at once or that matching checks every layer. ID BR16275 is unique across rules/ and test/NewRules.txt.
+
+------------------------------------------------------------
+BR38319 — NEW rule
+"When the game judges the level's open space — for example to tell a hallway from a room, to check whether a lake, machine or feature would cut off part of the level, or to rebuild a vault's interior — ordinary walkable floor counts as open, while walls, lava, deep water, chasms, traps and fire count as solid. Secret doors, doors opened by a key, and door-like barriers such as a portcullis, barricade or statue instead count as open even though they block walking."
+Citation: [Architect.c:48-55](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L48-L55)
+Note: Architect.c:48-55 is the passability test: a tile without a pathing blocker passes, and a pathing blocker passes only if it obstructs passability and is secret, key-promoted or level-connecting. Its callers decide hallway-versus-room shape (Architect.c:187-188 via passableArcCount, used at Architect.c:512 and Architect.c:3668 and by Items.c:632,733, Monsters.c:829,1500-1501, Grid.c:188,301), whether blocking terrain would disconnect the level (Architect.c:3156,3185-3200, gating Architect.c:728-731,1219-1222,1473,1860,3436), and vault interior rebuilding (Architect.c:754). BR59986, BR86387, BR44816, BR82515 and BR68008 describe those analyses but none states which terrain counts as open or that these door types are openings. ID BR38319 is unique across rules/ and test/NewRules.txt.
+
+------------------------------------------------------------
+BR32708 — NEW rule
+"To shape a cave or lake, the game measures the largest connected region left after smoothing and regenerates the whole pattern until that region's bounding box is at least the required minimum width and height. It then keeps only that largest region and discards every smaller one, so the finished feature is a single connected body of at least the required size."
+Citation: [Grid.c:468-507](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Grid.c#L468-L507), [Grid.c:527-540](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Grid.c#L527-L540)
+Note: Grid.c:468-483 marks each connected region and records the largest one, Grid.c:490-507 scans its columns (and the rows that follow) to find its minimum and maximum coordinates, and Grid.c:524-529 computes the width and height from that bounding box, repeating the entire noise-and-smoothing attempt while the largest region is smaller than the requested minimum or absent. Grid.c:531-540 then rewrites the grid so only the largest region survives. BR55910 says a lake blob is at least 4 x 4 but attributes that only to the call site, BR72185 and BR51980 give cave and cavern sizes from the call site, and BR10340 describes contiguous-region measurement; none states that the largest region is selected, that its bounding box controls the retry, or that all other regions are discarded. ID BR32708 is unique across rules/, and new_rule_id.sh generated it.
+
+------------------------------------------------------------
+BR15799 — NEW rule
+"When you switch between text, graphical, and hybrid display modes, or pause, resume, or toggle omniscience during a recording, the notice appears in teal."
+Citation: [GlobalsBase.c:88](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/GlobalsBase.c#L88), [IO.c:2651-2662](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L2651-L2662), [Recordings.c:813-820](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L813-L820), [Recordings.c:877-881](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L877-L881)
+Note: GlobalsBase.c:88 fixes teal's shade; IO.c:2652, 2657 and 2662 pass it to the three display-mode notices, and Recordings.c:814, 820, 878 and 880 pass it to the pause, resume, omniscience-on and omniscience-off notices. BR31995 covers only bad/good/neutral event coloring, and no rule in rules/* mentions these teal status notices. ID BR15799 is unique across rules/.
+
+------------------------------------------------------------
+BR39384 — NEW rule
+"A dar blademaster is drawn in purple."
+Citation: [GlobalsBase.c:89](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/GlobalsBase.c#L89), [Globals.c:1086](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1086)
+Note: GlobalsBase.c:89 defines purple, and the dar blademaster's catalog row at Globals.c:1086 uses it as the creature's foreground color. BR35726 covers the drawn colors of six other monsters but not the dar blademaster, and no rule in rules/* states this creature's purple. ID BR39384 is unique across rules/.
+
+------------------------------------------------------------
+BR15111 — NEW rule
+"The progress bar shown while a recording is playing back or a game is loading is dark purple."
+Citation: [GlobalsBase.c:90](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/GlobalsBase.c#L90), [IO.c:3750-3754](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3750-L3754), [Recordings.c:745-749](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L745-L749), [Recordings.c:1344-1347](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L1344-L1347)
+Note: GlobalsBase.c:90 defines dark purple; IO.c:3753 fills the playback turn counter with it, and Recordings.c:747 and 1345 fill the "[ Loading... ]" bar with it during seeking and saved-game loading. BR32262 and BR52091 describe the progress bars' presence but not their color, and no rule in rules/* states that they are dark purple. ID BR15111 is unique across rules/.
+
+------------------------------------------------------------
+BR37020 — NEW rule
+"The dense tangle of netting dropped by a netting trap is drawn brown."
+Citation: [GlobalsBase.c:91](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/GlobalsBase.c#L91), [Globals.c:471](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L471), [Globals.c:772](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L772)
+Note: GlobalsBase.c:91 defines brown; the netting terrain row at Globals.c:471 uses it as the net's foreground color, and Globals.c:772 is the "a net falls from the ceiling!" feature that creates that netting. Existing netting rules cover entanglement and burning only, and no rule in rules/* describes the net's brown color. ID BR37020 is unique across rules/.
+
+------------------------------------------------------------
+BR11437 — NEW rule
+"Recurring poison damage flashes the victim green."
+Citation: [GlobalsBase.c:92](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/GlobalsBase.c#L92), [Time.c:2339-2342](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2339-L2342), [Monsters.c:1908-1911](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1908-L1911)
+Note: GlobalsBase.c:92 defines green; Time.c:2341 passes it as the flash color for the player's poison tick, and Monsters.c:1910 does the same for a poisoned monster's tick. The initial poisoning uses a different color at Combat.c:1632, so the rule deliberately covers only recurring poison damage. No rule in rules/* describes this green flash. ID BR11437 is unique across rules/.
+
+------------------------------------------------------------
+BR10160 — NEW rule
+"When your poisoning crosses a new severity threshold, a warning such as >25% poisoned or Fatally poisoned appears over your figure in yellow on a dark green background."
+Citation: [GlobalsBase.c:93](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/GlobalsBase.c#L93), [Time.c:917-929](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L917-L929)
+Note: GlobalsBase.c:93 defines dark green; Time.c:923-928 builds the threshold warning text and passes yellow as the foreground and dark green as the background to the alert that flashes over the player. Existing poison rules cover damage and duration but not this alert's appearance, and no rule in rules/* mentions the dark green background. ID BR10160 is unique across rules/.
+
+------------------------------------------------------------
+BR21569 — NEW rule
+"While you are on fire, each turn's burning damage flashes your figure orange."
+Citation: [GlobalsBase.c:94](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/GlobalsBase.c#L94), [Time.c:2328-2333](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2328-L2333)
+Note: GlobalsBase.c:94 defines orange; Time.c:2330 passes it to the damage routine for each burning tick on the player. Burning rules describe ignition, damage and extinguishing but not this flash, and no rule in rules/* states that burning damage flashes orange. ID BR21569 is unique across rules/.
+
+------------------------------------------------------------
+BR10759 — NEW rule
+"A flood trap is drawn blue."
+Citation: [GlobalsBase.c:96](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/GlobalsBase.c#L96), [Globals.c:390](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L390)
+Note: GlobalsBase.c:96 defines blue, and the revealed flood trap's terrain row at Globals.c:390 uses it as the trap's foreground color; while the trap is still secret the hidden row at Globals.c:389 shows ordinary floor instead. Trap rules cover triggering and resetting but not appearance, and no rule in rules/* describes the flood trap's blue. ID BR10759 is unique across rules/.
+
+------------------------------------------------------------
+BR13937 — NEW rule
+"Drinking a potion of descent flashes your view dark blue."
+Citation: [GlobalsBase.c:97](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/GlobalsBase.c#L97), [Items.c:7298-7302](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7298-L7302)
+Note: GlobalsBase.c:97 defines dark blue; Items.c:7299 flashes the field of view in it as the potion opens the floor and drops the player. Existing descent-potion rules cover the fall and the hole but not this flash, and no rule in rules/* describes it. ID BR13937 is unique across rules/.
+
+------------------------------------------------------------
+BR28391 — NEW rule
+"The gilded doors leading out of the dungeon are drawn light blue."
+Citation: [GlobalsBase.c:99](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/GlobalsBase.c#L99), [Globals.c:335](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L335)
+Note: GlobalsBase.c:99 defines light blue, and the dungeon-exit terrain row at Globals.c:335 uses it as the gilded doorway's foreground color. BR87046 identifies the exit and BR37646/BR38077 cover its refusal messages, but no rule in rules/* describes the doors' light blue color. ID BR28391 is unique across rules/.
+
+------------------------------------------------------------
+BR31847 — NEW rule
+"In a monster's sidebar entry, its mutation is named in a color matching the mutation: explosive orange, agile light blue, juggernaut brown, vampiric red, toxic green, and reflective dark turquoise."
+Citation: [GlobalsBase.c:88-103](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/GlobalsBase.c#L88-L103), [Globals.c:1398-1412](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1398-L1412), [IO.c:4576-4588](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L4576-L4588)
+Note: GlobalsBase.c:88-103 fixes the shades; the mutation rows at Globals.c:1398, 1402, 1404, 1408, 1410 and 1412 assign them as each mutation's text color, and IO.c:4578-4582 colors the parenthesized mutation title in the sidebar with that color. BR85934 notes that the sidebar shows a mutation but not its color, and no rule in rules/* describes these mutation label colors. ID BR31847 is unique across rules/.
+
+------------------------------------------------------------
+BR20863 — NEW rule
+"A monster whose powers have been fully negated is marked Negated in the sidebar in pink, or dark pink when its entry is dimmed because another creature is focused."
+Citation: [GlobalsBase.c:100-101](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/GlobalsBase.c#L100-L101), [IO.c:4720-4722](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L4720-L4722)
+Note: GlobalsBase.c:100-101 define pink and dark pink; IO.c:4722 prints the "Negated" label with pink normally and dark pink when the entry is dim, and IO.c:3870-3873 sets dim for every listed creature other than the focused one. Negation rules cover the loss of powers but not this label or its colors, and no rule in rules/* mentions it. ID BR20863 is unique across rules/.
+
+------------------------------------------------------------
+BR18307 — NEW rule
+"A fire trap is drawn red."
+Citation: [GlobalsBase.c:102](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/GlobalsBase.c#L102), [Globals.c:388](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L388)
+Note: GlobalsBase.c:102 defines red, and the revealed fire trap's terrain row at Globals.c:388 uses it as the trap's foreground color; the hidden row at Globals.c:387 shows ordinary floor until it is discovered. Trap rules cover triggering, and BR21569 covers burning damage, but no rule in rules/* describes the fire trap's red appearance. ID BR18307 is unique across rules/.
+
+------------------------------------------------------------
+BR18146 — NEW rule
+"The cloud of healing spores released by bloodwort is drawn dark red."
+Citation: [GlobalsBase.c:103](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/GlobalsBase.c#L103), [Globals.c:510](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L510)
+Note: GlobalsBase.c:103 defines dark red, and the healing-cloud gas row at Globals.c:510 uses it as the cloud's background color. Existing bloodwort and healing rules cover the spores' healing effect but not the cloud's appearance, and no rule in rules/* describes its dark red color. GlobalsBase.c:100 (pink) is already covered for paralyzing gas by BR29835, and GlobalsBase.c:95 (dark orange) appears only in a commented-out flash at Items.c:7286, so it has no observable behavior and no rule is needed for it. ID BR18146 is unique across rules/.
