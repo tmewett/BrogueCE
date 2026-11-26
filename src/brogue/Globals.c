@@ -1819,3 +1819,28 @@ const statusEffect statusEffectCatalog[NUMBER_OF_STATUS_EFFECTS] = {
     {"Shielded",        true,  0}, // STATUS_SHIELDED
     {"Invisible",       true,  0}, // STATUS_INVISIBLE
 };
+
+const char *playerStatusEndedMessage(enum statusEffects status) {
+    switch (status) {
+        case STATUS_TELEPATHIC:
+            return "your preternatural mental sensitivity fades.";
+        case STATUS_DARKNESS:
+            return "the cloak of darkness lifts from your vision.";
+        case STATUS_HALLUCINATING:
+            return "your hallucinations fade.";
+        case STATUS_LEVITATING:
+            return "you are no longer levitating.";
+        case STATUS_CONFUSED:
+            return "you no longer feel confused.";
+        case STATUS_HASTED:
+            return "your supernatural speed fades.";
+        case STATUS_SLOWED:
+            return "your normal speed resumes.";
+        case STATUS_IMMUNE_TO_FIRE:
+            return "you no longer feel immune to fire.";
+        case STATUS_INVISIBLE:
+            return "you are no longer invisible.";
+        default:
+            return NULL;
+    }
+}
