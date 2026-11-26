@@ -68,6 +68,7 @@ unsigned char inputRecordBuffer[INPUT_RECORD_BUFFER_MAX_SIZE];
 unsigned short locationInRecordingBuffer;
 unsigned long randomNumbersGenerated;
 unsigned long positionInPlaybackFile;
+unsigned long bytesInPlaybackBuffer;
 unsigned long lengthOfPlaybackFile;
 unsigned long recordingLocation;
 unsigned long maxLevelChanges;
