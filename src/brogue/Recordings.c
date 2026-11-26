@@ -41,6 +41,7 @@ enum recordingSeekModes {
 };
 
 static void recordChar(unsigned char c) {
+    considerFlushingBufferToFile();
     if (locationInRecordingBuffer < INPUT_RECORD_BUFFER_MAX_SIZE) {
         inputRecordBuffer[locationInRecordingBuffer++] = c;
         recordingLocation++;
