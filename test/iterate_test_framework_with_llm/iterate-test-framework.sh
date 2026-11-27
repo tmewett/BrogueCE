@@ -119,7 +119,8 @@ function validate_random_rules_have_tests() {
     writeToLog "validate_random_rules_have_tests"
 
     # Pick random rule IDs and validate they meet rule requirements
-    RULES=$($TOOL_PATH/pick_3_random_rules.sh)
+    # RULES=$($TOOL_PATH/pick_3_random_rules.sh)
+    RULES=$($TOOL_PATH/rules_missing_tests.sh)
     writeToLog "$RULES"
 
 PRMPT="OBJECTIVE
@@ -156,8 +157,8 @@ Tests SHOULD NOT reference game engine components or data structures.  Use TestF
 Tests MUST be falsifiable.  If a test succeeds when its test assertion is negated, it is not a valid test.
 
 OUTPUT
-Tests without associated rules SHOULD be appended to test/TestsMissingRules.txt with a short note describing the issue.
-Tests which directly examine engine components should be noted in test/TestsNeedImprovement.txt with a short note describing the issue.
+Tests without associated rules SHOULD be appended to $REPO_ROOT/test/TestsMissingRules.txt with a short note describing the issue.
+Tests which directly examine engine components should be noted in $REPO_ROOT/test/TestsNeedImprovement.txt with a short note describing the issue.
 "
     run_prompt "$PRMPT"
 }

@@ -1057,6 +1057,82 @@ static boolean br34465_verify(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR30875 — when the attacker is directly adjacent, the attacker's
+// square joins the connected mass, so a splitting creature can leave
+// its clone on the far side of the attacker.
+//
+// The arena is a one-square-wide corridor: floor behind the player, the
+// player's square, and the jelly directly east.  Every other neighbour
+// of the pair is granite, and the player's square blocks the jelly's
+// own west neighbour.  Without the attacker's square in the mass there
+// is no eligible square at all and the jelly could not split; with it,
+// the only candidate is the corridor square behind the player.
+// ============================================================
+
+static pos br30875_playerPos;
+static pos br30875_behindPos;
+static pos br30875_jellyPos;
+static creature *br30875_jelly;
+
+static void br30875_setup(void) {
+    clearMonsters();
+    br30875_playerPos = getPlayerPos();
+    br30875_behindPos = posOffset(br30875_playerPos, -1, 0);
+    br30875_jellyPos = posOffset(br30875_playerPos, 1, 0);
+
+    // Wall off the whole neighbourhood, then carve the corridor.
+    setArenaRadius(2, GRANITE);
+    setTerrain(br30875_behindPos, FLOOR);
+    setTerrain(br30875_playerPos, FLOOR);
+    setTerrain(br30875_jellyPos, FLOOR);
+    setPlayerPos(br30875_playerPos);
+
+    br30875_jelly = placeHostileMonster(MK_PINK_JELLY, br30875_jellyPos);
+    // A paralyzed defender is hit automatically, so the blow that
+    // triggers the split cannot miss.
+    applyStatusToMonster(br30875_jelly, STATUS_PARALYZED, 100);
+}
+
+static boolean br30875_step(void) {
+    TEST_ASSERT(br30875_jelly != NULL,
+                "setup: the jelly should be standing in the corridor");
+    TEST_ASSERT(!cellObstructsPassage(br30875_behindPos),
+                "setup: the corridor should run one square behind the player");
+    TEST_ASSERT(cellObstructsPassage(posOffset(br30875_playerPos, 0, 1))
+                && cellObstructsPassage(posOffset(br30875_playerPos, 0, -1)),
+                "setup: the corridor should be one square wide beside the player");
+    TEST_ASSERT(cellObstructsPassage(posOffset(br30875_jellyPos, 1, 0))
+                && cellObstructsPassage(posOffset(br30875_jellyPos, 0, 1))
+                && cellObstructsPassage(posOffset(br30875_jellyPos, 0, -1)),
+                "setup: the jelly should have no free neighbour of its own");
+    TEST_ASSERT(playerAttacksMonster(br30875_jelly),
+                "the blow against the paralyzed jelly should land");
+    return false;
+}
+
+static boolean br30875_verify(void) {
+    int clonesBehind = 0;
+
+    TEST_ASSERT_EQ(countMonstersOfType(MK_PINK_JELLY), 2,
+                   "the struck jelly should have split into two");
+    TEST_ASSERT_POS_EQ(monsterPosition(br30875_jelly), br30875_jellyPos,
+                       "the original jelly should stay on the square that was struck");
+    for (int i = 0; i < monsterCount(); i++) {
+        creature *m = monsterAtIndex(i);
+        if (m == NULL) {
+            continue;
+        }
+        pos p = monsterPosition(m);
+        if (p.x == br30875_behindPos.x && p.y == br30875_behindPos.y) {
+            clonesBehind++;
+        }
+    }
+    TEST_ASSERT_EQ(clonesBehind, 1,
+                   "the clone should appear behind the player, the only square the attacker's inclusion makes eligible");
+    return !testFailed;
+}
+
 const testCase tests_combat[] = {
     { "BR94361_immolation_armor_erupts_in_flame", immolation_armor_setup, immolation_strikes_step, armor_erupts_in_flame },
     { "BR65933_seized_defender_always_hit",     seized_target_setup,     seized_defender_step,    seized_defender_was_hit },
@@ -1074,6 +1150,7 @@ const testCase tests_combat[] = {
     { "BR86360_staggering_weapon_knocks_back",  stagger_setup,           stagger_step,            target_was_knocked_back },
     { "BR95398_monster_flees_at_quarter_health",flee_setup,              NULL,                    monster_fled },
     { "BR74866_dividing_monster_splits",        splitting_setup,         attack_once_step,        monster_divided },
+    { "BR30875_clone_appears_behind_adjacent_attacker", br30875_setup, br30875_step, br30875_verify },
     { "BR82949_weakening_attack_weakens_player",weakening_setup,         wait_until_hurt,         player_was_weakened },
     { "BR61676_exploding_attacker_dies",        kamikaze_setup,          kamikaze_step,           bloat_was_destroyed },
     { "BR57747_killing_dragon_earns_feat",      dragonslayer_setup,      attack_once_step,        dragonslayer_earned },

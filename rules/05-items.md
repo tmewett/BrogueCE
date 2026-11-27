@@ -129,7 +129,7 @@ BR47394
 Items are placed away from hallways and biased toward regions reached only through doors and secret doors, so secret rooms frequently contain several items. [Items.c:610-639](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L610-L639) [Items.c:728-739](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L728-L739)
 ----
 BR27290
-A scroll of enchantment is more likely to be placed on each new level the longer you go without finding one, and less likely after one is generated. [Items.c:577-578](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L577-L578) [Items.c:677-682](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L677-L682) [Items.c:742-750](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L742-L750) [GlobalsBrogue.c:624-625](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/variants/GlobalsBrogue.c#L624-L625)
+Each new level raises the chance that a scroll of enchanting will be placed, and generating one lowers that chance whether or not you find it. [Items.c:577-578](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L577-L578) [Items.c:677-682](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L677-L682) [Items.c:742-750](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L742-L750) [GlobalsBrogue.c:626-627](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/variants/GlobalsBrogue.c#L626-L627)
 ----
 BR36742
 Enchant scrolls and potions of strength or life do not spawn from ordinary level population. [Items.c:789-796](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L789-L796)
@@ -183,7 +183,7 @@ BR37943
 A potion of levitation makes you float into the air and breaks you free of holding monsters. [Items.c:7328-7332](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7328-L7332)
 ----
 BR26830
-A potion of haste quickens your movement and attacks. [Items.c:7389-7391](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7389-L7391)
+A potion of speed quickens your movement and attacks. [Items.c:7389-7391](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7389-L7391) [GlobalsBrogue.c:671](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/variants/GlobalsBrogue.c#L671)
 ----
 BR89885
 A potion of fire immunity makes you no longer fear fire and extinguishes any fire burning on you. [Items.c:7392-7398](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7392-L7398)
@@ -204,7 +204,7 @@ BR76873
 After identifying itself, a scroll of identify lets you identify one other item in your pack. [Items.c:6998-7022](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6998-L7022)
 ----
 BR30195
-A scroll of remove curse removes the curse from every cursed item you carry, and announces whether anything changed. [Items.c:7026-7035](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7026-L7035)
+A scroll of remove curse removes the curse from every cursed item you carry, and announces whether anything changed. [Items.c:6992-7001](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6992-L7001)
 ----
 BR84446
 A scroll of enchanting adds an enchantment level to a chosen weapon, armor, ring, staff, or charm. [Items.c:7061-7084](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7061-L7084) [Items.c:7088-7091](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7088-L7091)
@@ -225,7 +225,10 @@ BR40685
 A scroll of summon monsters can materialize up to three monsters in the open cells around you. [Items.c:7186-7212](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7186-L7212)
 ----
 BR80726
-A scroll of negation strips special abilities from creatures and drains magic from items in view. [Items.c:7213-7215](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7213-L7215) [Items.c:4076-4130](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4076-L4130)
+Reading a scroll of negation negates you and every creature in your field of view, stripping their special abilities. [Items.c:4076-4096](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4076-L4096) [Items.c:3738-3818](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3738-L3818) [Items.c:7213-7215](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7213-L7215)
+----
+BR23930
+Reading a scroll of negation drains the magic from weapons, armor, staves, wands, rings, and charms lying in your field of view, removing their enchantments and charges. [Items.c:4096-4130](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4096-L4130) [Items.c:7213-7215](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7213-L7215)
 ----
 BR13800
 A scroll of shattering turns nearby walls to crystal. [Items.c:7216-7219](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7216-L7219) [Items.c:4153-4188](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4153-L4188)

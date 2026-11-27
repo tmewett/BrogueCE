@@ -1853,6 +1853,43 @@ static boolean br98338_control_not_enraged(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR28722 — while the player is invisible their scent fades faster
+// (scent advances 10 per turn instead of 3).
+//
+// The player is made invisible and one turn is taken; the scent
+// counter should advance by 10.  Invisibility is then removed and
+// another turn is taken; the scent counter should advance by 3.
+// ============================================================
+
+static int br28722_before;
+static int br28722_afterInvisible;
+static int br28722_afterVisible;
+
+static void br28722_setup(void) {
+    clearArena();
+    clearMonsters();
+    applyStatusToPlayer(STATUS_INVISIBLE, 100);
+    br28722_before = playerScentTurnNumber();
+}
+
+static boolean br28722_step(void) {
+    restOneTurn();
+    br28722_afterInvisible = playerScentTurnNumber();
+    removeStatusFromPlayer(STATUS_INVISIBLE);
+    restOneTurn();
+    br28722_afterVisible = playerScentTurnNumber();
+    return false;
+}
+
+static boolean br28722_scent_advances_faster_while_invisible(void) {
+    TEST_ASSERT_EQ(br28722_afterInvisible - br28722_before, 10,
+                   "the scent counter should advance by 10 per turn while invisible");
+    TEST_ASSERT_EQ(br28722_afterVisible - br28722_afterInvisible, 3,
+                   "the scent counter should advance by 3 per turn while visible");
+    return !testFailed;
+}
+
 const testCase tests_status_effects[] = {
     { "BR97529_telepathy_counter_decrements",   telepathy_decrement_setup,      rest_one_turn_step, status_decremented_by_one },
     { "BR97529_hallucination_counter_decrements", hallucination_decrement_setup, rest_one_turn_step, status_decremented_by_one },
@@ -1972,6 +2009,8 @@ const testCase tests_status_effects[] = {
 
     { "BR98338_corridor_avoider_enraged_by_damage", br98338_setup, br98338_attack_avoider_step, br98338_avoider_enraged },
     { "BR98338_other_monster_not_enraged_by_damage", br98338_setup, br98338_attack_control_step, br98338_control_not_enraged },
+
+    { "BR28722_scent_advances_faster_while_invisible", br28722_setup, br28722_step, br28722_scent_advances_faster_while_invisible },
 
     { NULL, NULL, NULL, NULL }
 };

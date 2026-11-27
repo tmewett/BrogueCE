@@ -138,7 +138,10 @@ BR94740
 Entrance-style vaults must be handed a doorway location and expand from it along path distance to a target size. [Architect.c:1200-1223](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1200-L1223) [Architect.c:735-793](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L735-L793)
 ----
 BR45230
-If no suitable layout and location are found within 10 tries, the vault is abandoned and any partial changes are rolled back. [Architect.c:1016-1034](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1016-L1034) [Architect.c:1221-1222](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1221-L1222)
+If no suitable layout and location are found within 10 tries, the vault is abandoned without any change to the level. [Architect.c:1016-1034](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1016-L1034)
+----
+BR41023
+If a vault fails after its construction has begun, the level is restored to its state before the vault was built and anything the vault created is removed. [Architect.c:1543-1582](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1543-L1582) [Architect.c:1675-1686](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1675-L1686)
 ----
 BR32099
 Within a vault, a feature can be required near the vault's centre (the nearest quarter of the interior) or far from it (the farthest quarter). [Architect.c:1251-1289](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1251-L1289) [Architect.c:1335-1342](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1335-L1342)

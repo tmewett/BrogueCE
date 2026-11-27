@@ -44,8 +44,8 @@ Each search before the fifth one uses strength 60 (or 30 if the player's awarene
 [Time.c:2178-2186](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2178-L2186)
 ----
 BR13701
-A weak automatic search also happens the first time the player steps onto a tile, using a strength based on the player's awareness, and a tile is remembered as already searched so it is not repeated.
-[Time.c:2300-2304](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2300-L2304)
+The first time the player steps onto a tile, they make a weak automatic search whose strength depends on their awareness. That tile is then remembered as already searched, so stepping on it again does not search it.
+[Time.c:2321-2324](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2321-L2324)
 ----
 BR95942
 Putting on armor without forcing it sets the donning counter to one tenth of that armor's armor value; the counter then decreases by 1 on each periodic update.
@@ -306,7 +306,7 @@ A panacea-style heal also reduces hallucination, confusion, nausea, and slow to 
 ----
 BR45733
 A poison bolt poisons any creature it strikes that is not inanimate or invulnerable, making its poison deal 1 more damage per turn and poisoning it for 5 turns, with the duration growing by about 30% for each point of the staff's enchantment above +2.
-[Items.c:4540-4556](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4540-L4556) [PowerTables.c:60-76](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L60-L76)
+[Items.c:4571-4590](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4571-L4590) [PowerTables.c:60-76](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L60-L76)
 ----
 BR55761
 A monster with the poisons ability converts its melee damage into poison, dealing only 1 point of direct damage and applying the full amount as poison.

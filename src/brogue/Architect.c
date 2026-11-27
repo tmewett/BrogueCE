@@ -792,12 +792,99 @@ static boolean fillInteriorForVestibuleMachine(char interior[DCOLS][DROWS], shor
     return success;
 }
 
-static void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY, short theProfileIndex) {
+// Connect each orphaned room -- a room of the rebuilt vault whose doorway the
+// new layout left sealed off -- to the rebuilt interior along the shortest
+// orthogonal route, turning every interior rock tile on the way into floor.
+// Tiles outside the interior are impassable to the route, so the tunnel never
+// breaks out of the vault.
+static void reconnectOrphanedRooms(char interior[DCOLS][DROWS], short **grid,
+                                   const pos orphanList[], short orphanCount) {
     short i, j, n, newX, newY;
+    enum directions dir;
+    short **pathingGrid, **costGrid;
+
+    if (orphanCount <= 0) {
+        return;
+    }
+
+    pathingGrid = allocGrid();
+    costGrid = allocGrid();
+    for (n = 0; n < orphanCount; n++) {
+
+        if (D_INSPECT_MACHINES) {
+            dumpLevelToScreen();
+            copyGrid(pathingGrid, grid);
+            findReplaceGrid(pathingGrid, -1, -1, 0);
+            hiliteGrid(pathingGrid, &green, 50);
+            plotCharWithColor('X', mapToWindow(orphanList[n]), &black, &orange);
+            temporaryMessage("Orphan detected:", REQUIRE_ACKNOWLEDGMENT);
+        }
+
+        for (i=0; i<DCOLS; i++) {
+            for (j=0; j<DROWS; j++) {
+                if (interior[i][j]) {
+                    if (grid[i][j] > 0) {
+                        pathingGrid[i][j] = 0;
+                        costGrid[i][j] = 1;
+                    } else {
+                        pathingGrid[i][j] = 30000;
+                        costGrid[i][j] = 1;
+                    }
+                } else {
+                    pathingGrid[i][j] = 30000;
+                    costGrid[i][j] = PDS_OBSTRUCTION;
+                }
+            }
+        }
+        dijkstraScan(pathingGrid, costGrid, false);
+
+        i = orphanList[n].x;
+        j = orphanList[n].y;
+        while (pathingGrid[i][j] > 0) {
+            for (dir = 0; dir < 4; dir++) {
+                newX = i + nbDirs[dir][0];
+                newY = j + nbDirs[dir][1];
+
+                if (coordinatesAreInMap(newX, newY)
+                    && pathingGrid[newX][newY] < pathingGrid[i][j]) {
+
+                    grid[i][j] = 1;
+                    i = newX;
+                    j = newY;
+                    break;
+                }
+            }
+            brogueAssert(dir < 4);
+            if (D_INSPECT_MACHINES) {
+                dumpLevelToScreen();
+                displayGrid(pathingGrid);
+                pos p = { i, j };
+                plotCharWithColor('X', mapToWindow(p), &black, &orange);
+                temporaryMessage("Orphan connecting:", REQUIRE_ACKNOWLEDGMENT);
+            }
+        }
+    }
+    freeGrid(pathingGrid);
+    freeGrid(costGrid);
+}
+
+#ifdef BROGUE_TESTING
+// Run the orphan-reconnecting pass over a vault interior laid out by the test
+// framework: `interior` marks the vault's tiles, `grid` holds the rebuilt
+// layout (a positive value marks a tile that is already open, 0 marks interior
+// rock), and (orphan.x, orphan.y) is the orphaned room's door.  Every rock tile
+// the pass tunnels through is set to a positive value in `grid`.
+void reconnectOrphanedRoomsForTesting(char interior[DCOLS][DROWS], short **grid, pos orphan) {
+    reconnectOrphanedRooms(interior, grid, &orphan, 1);
+}
+#endif
+
+static void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY, short theProfileIndex) {
+    short i, j, newX, newY;
     enum directions dir;
     pos orphanList[20];
     short orphanCount = 0;
-    short **grid, **pathingGrid, **costGrid;
+    short **grid;
     grid = allocGrid();
 
     for (i=0; i<DCOLS; i++) {
@@ -831,68 +918,7 @@ static void redesignInterior(char interior[DCOLS][DROWS], short originX, short o
     }
     attachRooms(grid, &dungeonProfileCatalog[theProfileIndex], 40, 40);
 
-    // Connect to preexisting rooms that were orphaned (mostly preexisting machine rooms).
-    if (orphanCount > 0) {
-        pathingGrid = allocGrid();
-        costGrid = allocGrid();
-        for (n = 0; n < orphanCount; n++) {
-
-            if (D_INSPECT_MACHINES) {
-                dumpLevelToScreen();
-                copyGrid(pathingGrid, grid);
-                findReplaceGrid(pathingGrid, -1, -1, 0);
-                hiliteGrid(pathingGrid, &green, 50);
-                plotCharWithColor('X', mapToWindow(orphanList[n]), &black, &orange);
-                temporaryMessage("Orphan detected:", REQUIRE_ACKNOWLEDGMENT);
-            }
-
-            for (i=0; i<DCOLS; i++) {
-                for (j=0; j<DROWS; j++) {
-                    if (interior[i][j]) {
-                        if (grid[i][j] > 0) {
-                            pathingGrid[i][j] = 0;
-                            costGrid[i][j] = 1;
-                        } else {
-                            pathingGrid[i][j] = 30000;
-                            costGrid[i][j] = 1;
-                        }
-                    } else {
-                        pathingGrid[i][j] = 30000;
-                        costGrid[i][j] = PDS_OBSTRUCTION;
-                    }
-                }
-            }
-            dijkstraScan(pathingGrid, costGrid, false);
-
-            i = orphanList[n].x;
-            j = orphanList[n].y;
-            while (pathingGrid[i][j] > 0) {
-                for (dir = 0; dir < 4; dir++) {
-                    newX = i + nbDirs[dir][0];
-                    newY = j + nbDirs[dir][1];
-
-                    if (coordinatesAreInMap(newX, newY)
-                        && pathingGrid[newX][newY] < pathingGrid[i][j]) {
-
-                        grid[i][j] = 1;
-                        i = newX;
-                        j = newY;
-                        break;
-                    }
-                }
-                brogueAssert(dir < 4);
-                if (D_INSPECT_MACHINES) {
-                    dumpLevelToScreen();
-                    displayGrid(pathingGrid);
-                    pos p = { i, j };
-                    plotCharWithColor('X', mapToWindow(p), &black, &orange);
-                    temporaryMessage("Orphan connecting:", REQUIRE_ACKNOWLEDGMENT);
-                }
-            }
-        }
-        freeGrid(pathingGrid);
-        freeGrid(costGrid);
-    }
+    reconnectOrphanedRooms(interior, grid, orphanList, orphanCount);
 
     addLoopsForVaultInterior(grid);
     for(i=0; i<DCOLS; i++) {

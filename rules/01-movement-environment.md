@@ -703,8 +703,8 @@ Terrain that promotes on sacrifice entry promotes when a creature marked for sac
   [Time.c:276-285](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L276-L285)
 ----
 BR36633
-Electricity promotes any tile flagged to promote on electricity.
-  [Time.c:1152-1166](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1152-L1166)
+A darkened crystal globe lights up when it is exposed to electricity.
+  [Time.c:1165-1179](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1165-L1179)
 ----
 BR36750
 The warden of Yendor follows you between levels, appearing near the stairs after a delay.

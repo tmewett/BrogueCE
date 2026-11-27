@@ -9,7 +9,8 @@
 // whether Return turns on the
 // keyboard cursor, the examine prompt shown while examining the map during
 // the alert for asking to descend past the deepest depth a
-// recording explored, how a click outside the message area pauses playback,
+// recording explored, the new-game prompt shown while viewing a recording,
+// how a click outside the message area pauses playback,
 // and — by queueing input through the engine's main
 // input loop — what confirming the cursor on the player's own location does.
 //
@@ -18,8 +19,9 @@
 // section list of the discovered-items screen, the no-matching-files alert of
 // the file picker, and confirming the cursor on the player's own location)
 // plus saving, loading, the rest of playback (advancing with control or shift
-// aside, its bottom-row buttons, and its remaining mouse commands), the rest of
-// filename handling, and the main menu apart from its Change Variant dialog.
+// aside, the new-game prompt aside, its bottom-row buttons, and its remaining
+// mouse commands), the rest of filename handling, and the main menu apart from
+// its Change Variant dialog.
 
 #include "TestFramework.h"
 #include "Globals.h"
@@ -1565,6 +1567,55 @@ static boolean br39424_no_travel_path_during_playback(void) {
 }
 
 // ============================================================
+// BR41059 — during playback of a recording, moving the keyboard cursor
+// still lights the square it rests on.
+//
+// Playback cursor mode is reached the way a replay reaches it: advancing a
+// recorded turn replays a Return, which turns the keyboard cursor on, and a
+// rest spends that turn.  The first pump records a playback frame with the
+// cursor off as the no-highlight baseline.  The second pump advances another
+// recorded turn and then carries the cursor two cells east.  The square the
+// cursor comes to rest on must be lit against that baseline even though the
+// game is replaying, while a visible square the cursor never visited must
+// keep its colour.
+// ============================================================
+
+static void br41059_setup(void) {
+    setArenaRadius(4, FLOOR);
+    revealCell(posOffset(getPlayerPos(), 1, 0));
+    revealCell(posOffset(getPlayerPos(), 2, 0));
+    revealCell(posOffset(getPlayerPos(), 0, -2));
+    startPlaybackWithRecordedChecks(2);
+}
+
+static boolean br41059_step(void) {
+    // First recorded turn: playback runs with the cursor off; remember that
+    // frame as the no-highlight baseline.
+    queueKeystroke(RIGHT_KEY, false, false); // playback: advance one turn
+    queueKeystroke(REST_KEY, false, false);  // replayed event: spend the turn
+    runQueuedInputThroughMainLoop();
+    rememberScreenColors();
+
+    // Second recorded turn: the replayed Return turns the keyboard cursor on,
+    // and two eastward keystrokes then move it away from the player.
+    queueKeystroke(RIGHT_KEY, false, false);  // playback: advance one turn
+    queueKeystroke(RETURN_KEY, false, false); // replayed event: cursor on
+    queueKeystroke(REST_KEY, false, false);   // replayed event: spend the turn
+    queueKeystroke(RIGHT_KEY, false, false);  // move the cursor one cell east
+    queueKeystroke(RIGHT_KEY, false, false);  // and a second cell east
+    runQueuedInputThroughMainLoop();
+    return false;
+}
+
+static boolean br41059_playback_cursor_square_is_lit(void) {
+    TEST_ASSERT(screenCellColorsChanged(posOffset(getPlayerPos(), 2, 0)),
+                "during playback, the square the keyboard cursor moves to should still be lit");
+    TEST_ASSERT(!screenCellColorsChanged(posOffset(getPlayerPos(), 0, -2)),
+                "a square the cursor never rested on should keep its colour");
+    return !testFailed;
+}
+
+// ============================================================
 // BR21762 — when playback ends, the game stops being in
 // playback mode and any out-of-sync condition is cleared,
 // returning it to its normal interactive state.
@@ -1589,6 +1640,39 @@ static boolean br21762_playback_end_clears_state(void) {
                 "ending playback should take the game out of playback mode");
     TEST_ASSERT(!playbackIsOutOfSync(),
                 "ending playback should clear the out-of-sync condition");
+    return !testFailed;
+}
+
+// ============================================================
+// BR22521 — when playback diverges from the original game, the apology box
+// explains that the recording diverged, that a modified version of Brogue or
+// a bug could be the cause, and that on a different computer the recording
+// might still succeed on the original computer.
+//
+// A short recording is viewed through the main menu's View Recording command
+// exactly as a player does.  The replay starts mid-game and diverges, raising
+// the out-of-sync panic, whose apology text is drawn into a text box.  Test
+// mode records text boxes as messages, so the wording can be asserted.
+// ============================================================
+
+static void br22521_setup(void) {
+    setArenaRadius(3, FLOOR); // open, monster-free ground for the recorded turns
+    viewCurrentRecordingAndQuitPlayback();
+}
+
+static boolean br22521_apology_explains_divergence(void) {
+    TEST_ASSERT(messageWasShown("Playback is out of sync."),
+                "setup: the replayed recording should have diverged from the recorded game");
+    TEST_ASSERT(messageWasShown("has diverged from the originally recorded game"),
+                "the apology should say playback diverged from the originally recorded game");
+    TEST_ASSERT(messageWasShown("modified version of Brogue"),
+                "the apology should name a modified version of Brogue as a possible cause");
+    TEST_ASSERT(messageWasShown("result of a bug"),
+                "the apology should name a bug as a possible cause");
+    TEST_ASSERT(messageWasShown("different computer from the one on which the recording was saved"),
+                "the apology should mention a different computer from the one that saved the recording");
+    TEST_ASSERT(messageWasShown("might succeed on the original computer"),
+                "the apology should say the recording might succeed on the original computer");
     return !testFailed;
 }
 
@@ -1811,7 +1895,42 @@ static boolean br17154_click_outside_messages_pauses_playback(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR12362 — starting a new game while viewing a recording asks
+// "Close recording and begin a new game?".
+//
+// A short recording is armed and the new-game key is fed through
+// the engine's main input loop, where playback commands are handled.
+// The confirmation is declined so the recording stays open, which
+// also proves the prompt was answered rather than skipped by
+// autopilot.
+// ============================================================
+
+static void br12362_setup(void) {
+    clearArena(); // open floor for the steps the recording pass walks
+    // The recorded steps must not land on a staircase.
+    placeDownStairs(posAt(1, 1));
+    placeUpStairs(posAt(levelWidth() - 2, levelHeight() - 2));
+    startPlaybackWithRecordedChecks(1);
+}
+
+static boolean br12362_step(void) {
+    queueKeystroke(NEW_GAME_KEY, false, false); // playback: begin a new game
+    queueConfirmNo();                            // decline the confirmation
+    runQueuedInputThroughMainLoop();
+    return false;
+}
+
+static boolean br12362_asks_before_closing_recording(void) {
+    TEST_ASSERT(isInPlaybackMode(),
+                "precondition: the game should still be replaying a recording");
+    TEST_ASSERT(messageWasShown("Close recording and begin a new game?"),
+                "starting a new game while viewing a recording should ask \"Close recording and begin a new game?\"");
+    return !testFailed;
+}
+
 const testCase tests_interaction[] = {
+    { "BR12362_new_game_during_playback_asks_to_close_recording", br12362_setup, br12362_step, br12362_asks_before_closing_recording },
     { "BR11882_right_arrow_advances_one_turn", br11882_setup, br11882_right_arrow_step, br11882_right_arrow_advances_one_turn },
     { "BR11882_l_key_advances_one_turn",       br11882_setup, br11882_l_key_step,       br11882_l_key_advances_one_turn },
 
@@ -1901,7 +2020,11 @@ const testCase tests_interaction[] = {
 
     { "BR39424_no_travel_path_during_playback", br39424_setup, br39424_step, br39424_no_travel_path_during_playback },
 
+    { "BR41059_playback_cursor_square_is_lit", br41059_setup, br41059_step, br41059_playback_cursor_square_is_lit },
+
     { "BR21762_playback_end_clears_state", br21762_setup, NULL, br21762_playback_end_clears_state },
+
+    { "BR22521_playback_divergence_apology_text", br22521_setup, NULL, br22521_apology_explains_divergence },
 
     { "BR15955_default_save_name_includes_version_seed_depth", br15955_setup, NULL, br15955_verify },
 

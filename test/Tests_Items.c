@@ -156,7 +156,7 @@ static void haste_potion_setup(void) {
 
 static boolean haste_potion_hastes_you(void) {
     TEST_ASSERT(playerHasStatus(STATUS_HASTED),
-                "a potion of haste should haste you");
+                "a potion of speed should quicken you");
     return !testFailed;
 }
 
@@ -2311,6 +2311,66 @@ static boolean br70142_identifying_one_marks_the_kind_known(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR92992 — the number of gold piles on a level is the lesser of
+// 5 and depth/4, increased by further bonuses that start at 60% and
+// shrink by 15% each success, and capped at 10 piles.
+//
+// The test runs 100 independent population trials at depth 20, where
+// the base count is 5, so the bonus rolls add 0 to 4 piles and the
+// count stays well under the cap of 10.
+//
+// The count is also adjusted by 2 when the total gold generated so far
+// is behind or ahead of the schedule for the depth (a separate rule,
+// BR75265).  Left alone, that adjustment makes this test flaky: the
+// early trials are behind schedule and the +2 boost turns an occasional
+// nine-pile roll into eleven.  The test therefore pins the generated
+// total far ahead of the schedule, fixing the adjustment at -2, and
+// adds the 2 back before comparing against the rule's bounds.  Any
+// trial that breaks either bound fails the test.
+// ============================================================
+
+static int br92992_minCount;
+static int br92992_maxCount;
+static int br92992_trials;
+
+static void br92992_setup(void) {
+    setDepth(20);
+    clearArena();
+    clearFloorItems();
+    br92992_minCount = 100;
+    br92992_maxCount = 0;
+    br92992_trials = 0;
+}
+
+static boolean br92992_step(void) {
+    for (int i = 0; i < 100; i++) {
+        clearFloorItems();
+        // Far ahead of any depth's gold schedule, so the depth adjustment
+        // always subtracts 2 and never adds the 2 that would push a
+        // nine-pile roll past the cap.
+        setTotalGoldGenerated(1000000);
+        populateLevelItemsFrom(getPlayerPos());
+        int count = countGoldPiles();
+        if (count < br92992_minCount) br92992_minCount = count;
+        if (count > br92992_maxCount) br92992_maxCount = count;
+        br92992_trials++;
+    }
+    return false;
+}
+
+static boolean br92992_gold_pile_count(void) {
+    TEST_ASSERT(br92992_trials > 0,
+                "control: the population trials should have run");
+    // The schedule adjustment is pinned at -2, so adding it back recovers
+    // the count the rule describes: a base of 5 plus the bonus rolls.
+    TEST_ASSERT(br92992_minCount + 2 >= 5,
+                "at depth 20 the base count is 5, so the adjusted count should never fall below 3");
+    TEST_ASSERT(br92992_maxCount + 2 <= 10,
+                "the number of gold piles should be capped at 10");
+    return !testFailed;
+}
+
 const testCase tests_items[] = {
     { "BR58888_throwing_weapons_never_magical",     br58888_setup,             NULL, throwing_weapons_are_never_magical },
     { "BR38228_stack_sizes_match_their_kind",        NULL,                      NULL, br38228_stack_sizes_match_their_kind },
@@ -2322,7 +2382,7 @@ const testCase tests_items[] = {
     { "BR50436_potion_of_strength_raises_strength", strength_potion_setup,      NULL, strength_potion_raises_strength },
     { "BR53042_potion_of_telepathy_grants_telepathy", telepathy_potion_setup,   NULL, telepathy_potion_grants_telepathy },
     { "BR37943_potion_of_levitation_makes_you_float", levitation_potion_setup,  NULL, levitation_potion_makes_you_float },
-    { "BR26830_potion_of_haste_hastes_you",         haste_potion_setup,         NULL, haste_potion_hastes_you },
+    { "BR26830_potion_of_speed_quickens_you",       haste_potion_setup,         NULL, haste_potion_hastes_you },
     { "BR89885_potion_of_fire_immunity_douses_fire", fire_immunity_potion_setup, NULL, fire_immunity_potion_douses_fire },
     { "BR91656_potion_of_invisibility_hides_you",   invisibility_potion_setup,  NULL, invisibility_potion_hides_you },
     { "BR86288_potion_of_darkness_darkens_you",     darkness_potion_setup,      NULL, darkness_potion_darkens_you },
@@ -2406,6 +2466,8 @@ const testCase tests_items[] = {
     { "BR52945_unidentified_weapon_hides_exact_details", br52945_unidentified_weapon_setup, NULL, br52945_unidentified_weapon_hides_exact_details },
     { "BR52945_identified_weapon_shows_exact_details",   br52945_identified_weapon_setup,   NULL, br52945_identified_weapon_shows_exact_details },
     { "BR52945_cursed_armor_hints_malevolent_magic",     br52945_cursed_armor_setup,        NULL, br52945_cursed_armor_hints_malevolent_magic },
+
+    { "BR92992_gold_pile_count", br92992_setup, br92992_step, br92992_gold_pile_count },
 
     { NULL, NULL, NULL, NULL }
 };

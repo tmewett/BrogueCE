@@ -2753,6 +2753,73 @@ static boolean br35726_monsters_and_entrails_have_role_colors(void) {
 }
 
 // ============================================================
+// BR11201 — pink jellies, sentinels, ifrits, phoenixes, and phoenix eggs
+// flicker (their shade shifts slightly with every screen refresh), while
+// underworms, goblin mystics, and pools of worm entrails keep a completely
+// steady colour.
+//
+// Every creature is placed on open floor and its drawn-colour flicker flag is
+// read through the framework; a pool of worm entrails is painted and its
+// terrain-colour flag read the same way.  The steady cases are asserted
+// negatively, so a catalog row that starts flickering fails the test even if
+// the other colours stay correct.
+// ============================================================
+
+static creature *br11201_jelly, *br11201_sentinel, *br11201_ifrit,
+                *br11201_phoenix, *br11201_egg, *br11201_underworm,
+                *br11201_mystic;
+static boolean br11201_jellyFlickers, br11201_sentinelFlickers,
+               br11201_ifritFlickers, br11201_phoenixFlickers,
+               br11201_eggFlickers, br11201_underwormFlickers,
+               br11201_mysticFlickers, br11201_entrailsFlicker;
+
+static void br11201_setup(void) {
+    clearArena();
+    pos origin = getPlayerPos();
+
+    br11201_jelly = placeHostileMonster(MK_PINK_JELLY, posOffset(origin, -2, -2));
+    br11201_sentinel = placeHostileMonster(MK_SENTINEL, posOffset(origin, -1, -2));
+    br11201_ifrit = placeHostileMonster(MK_IFRIT, posOffset(origin, 0, -2));
+    br11201_phoenix = placeHostileMonster(MK_PHOENIX, posOffset(origin, 1, -2));
+    br11201_egg = placeHostileMonster(MK_PHOENIX_EGG, posOffset(origin, 2, -2));
+    br11201_underworm = placeHostileMonster(MK_UNDERWORM, posOffset(origin, -2, 2));
+    br11201_mystic = placeHostileMonster(MK_GOBLIN_MYSTIC, posOffset(origin, -1, 2));
+
+    pos entrails = posOffset(origin, 2, 2);
+    setTerrain(entrails, WORM_BLOOD);
+
+    br11201_jellyFlickers = monsterDrawColorFlickers(br11201_jelly);
+    br11201_sentinelFlickers = monsterDrawColorFlickers(br11201_sentinel);
+    br11201_ifritFlickers = monsterDrawColorFlickers(br11201_ifrit);
+    br11201_phoenixFlickers = monsterDrawColorFlickers(br11201_phoenix);
+    br11201_eggFlickers = monsterDrawColorFlickers(br11201_egg);
+    br11201_underwormFlickers = monsterDrawColorFlickers(br11201_underworm);
+    br11201_mysticFlickers = monsterDrawColorFlickers(br11201_mystic);
+    br11201_entrailsFlicker = terrainDrawColorFlickers(entrails);
+}
+
+static boolean br11201_only_the_listed_monsters_and_entrails_flicker(void) {
+    TEST_ASSERT(br11201_jelly && br11201_sentinel && br11201_ifrit
+                && br11201_phoenix && br11201_egg && br11201_underworm
+                && br11201_mystic,
+                "precondition: every creature should be placed");
+
+    TEST_ASSERT(br11201_jellyFlickers, "a pink jelly's colour should flicker");
+    TEST_ASSERT(br11201_sentinelFlickers, "a sentinel's colour should flicker");
+    TEST_ASSERT(br11201_ifritFlickers, "an ifrit's colour should flicker");
+    TEST_ASSERT(br11201_phoenixFlickers, "a phoenix's colour should flicker");
+    TEST_ASSERT(br11201_eggFlickers, "a phoenix egg's colour should flicker");
+
+    TEST_ASSERT(!br11201_underwormFlickers,
+                "an underworm's colour should stay steady");
+    TEST_ASSERT(!br11201_mysticFlickers,
+                "a goblin mystic's colour should stay steady");
+    TEST_ASSERT(!br11201_entrailsFlicker,
+                "a pool of worm entrails should keep a steady colour");
+    return !testFailed;
+}
+
+// ============================================================
 // BR23709 — the inventory list and its item detail box each keep
 // invisible previous and next controls so the up and down arrow
 // keys page through the items.
@@ -2941,6 +3008,67 @@ static boolean br41110_verify(void) {
                 "the help screen should draw its command list while it waits");
     TEST_ASSERT(br41110_displayRestored,
                 "dismissing the help screen should put the previous display back exactly");
+    return !testFailed;
+}
+
+// ============================================================
+// BR40113 — when the help screen opens, its command list is drawn over the
+// current game screen, one command per line starting at the top-left of the
+// display window.
+//
+// The framework opens the help screen over the dungeon and holds the frame it
+// waits on.  That frame must still show the game underneath (the depth line)
+// as well as the command list.  The first command block must begin near the
+// top row, each of its commands must occupy its own consecutive row, and the
+// unindented move/attack line must start one column inside the display
+// window's left edge.
+// ============================================================
+
+static boolean br40113_helpWasShown, br40113_overGameScreen,
+               br40113_startsAtTopLeft, br40113_oneCommandPerLine;
+
+static void br40113_setup(void) {
+    setArenaRadius(4, FLOOR);
+    restOneTurn(); // give the map and its depth line a settled frame
+}
+
+static boolean br40113_step(void) {
+    helpScreenRestoresPreviousDisplay();
+    br40113_helpWasShown = helpScreenWasShown();
+
+    int headerRow = screenTextRowContaining("-- Commands --");
+    int cursorRow = screenTextRowContaining("mouse  move cursor");
+    int travelRow = screenTextRowContaining("click  travel");
+    int advanceRow = screenTextRowContaining("control-click  advance one space");
+    int returnRow = screenTextRowContaining("<return>  enable keyboard cursor control");
+    int cancelRow = screenTextRowContaining("<space/esc>  disable keyboard cursor control");
+    int moveRow = screenTextRowContaining("hjklyubn, arrow keys, or numpad  move or attack");
+
+    br40113_overGameScreen = screenTextContains("-- Commands --")
+                             && screenTextContains("-- Depth:");
+    br40113_startsAtTopLeft =
+        headerRow >= displayWindowTopRow() && headerRow <= displayWindowTopRow() + 2
+        && screenTextColumnContaining("hjklyubn, arrow keys, or numpad")
+               == displayWindowLeftColumn() + 1;
+    br40113_oneCommandPerLine =
+        cursorRow == headerRow + 2
+        && travelRow == cursorRow + 1
+        && advanceRow == travelRow + 1
+        && returnRow == advanceRow + 1
+        && cancelRow == returnRow + 1
+        && moveRow == cancelRow + 1;
+    return false;
+}
+
+static boolean br40113_help_commands_overlay_from_top_left(void) {
+    TEST_ASSERT(br40113_helpWasShown,
+                "the help screen should draw its command list while it waits");
+    TEST_ASSERT(br40113_overGameScreen,
+                "the help command list should be drawn over the current game screen");
+    TEST_ASSERT(br40113_startsAtTopLeft,
+                "the command list should start at the top-left of the display window");
+    TEST_ASSERT(br40113_oneCommandPerLine,
+                "the first command block should list one command per line");
     return !testFailed;
 }
 
@@ -3312,8 +3440,78 @@ static boolean br12820_already_stuck_keeps_its_countdown(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR27751 — glowing embers light a radius of 2 tiles, with the
+// light dimming to half brightness at the edge of the glow.
+//
+// The level is stripped to bare floor and the miner's light reduced
+// to its minimum, so the probes eight tiles away are dark without the
+// embers.  The embers are placed at the source and the lighting is
+// recomputed.  The source's own tile is lit, the tiles one and two
+// tiles away are lit, and the tile three tiles away is dark.  The
+// edge of the glow (two tiles out) is about a quarter of the source's
+// brightness: the engine paints the source tile twice (once in the
+// radial loop and once as the light's origin), so the 50% radial fade
+// at the edge reads as a quarter of the doubled source brightness.
+// ============================================================
+
+static pos br27751_probes[4];
+static int br27751_baseline[4];
+static int br27751_lit[4];
+
+static void br27751_setup(void) {
+    clearMonsters();
+    pos home = posAt(levelWidth() / 2, levelHeight() / 2);
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            setTerrain(posAt(x, y), FLOOR);
+        }
+    }
+    setPlayerPos(home);
+    setLightMultiplier(0);
+
+    pos source = posOffset(home, 8, 0);
+    for (int d = 0; d <= 3; d++) {
+        br27751_probes[d] = posOffset(source, d, 0);
+    }
+
+    setTerrain(source, FLOOR);
+    recomputeLighting();
+    for (int d = 0; d <= 3; d++) {
+        br27751_baseline[d] = lightAt(br27751_probes[d]);
+    }
+
+    setTerrain(source, EMBERS);
+    recomputeLighting();
+    for (int d = 0; d <= 3; d++) {
+        br27751_lit[d] = lightAt(br27751_probes[d]);
+    }
+}
+
+static boolean br27751_embers_glow_radius_and_edge(void) {
+    for (int d = 1; d <= 3; d++) {
+        TEST_ASSERT_EQ(br27751_baseline[d], 0,
+                       "control: without embers nothing lights the probe tiles");
+    }
+    TEST_ASSERT(br27751_lit[0] > 0,
+                "the embers' own tile should be lit");
+    TEST_ASSERT(br27751_lit[1] > 0,
+                "the tile one away should lie inside the 2-tile glow");
+    TEST_ASSERT_EQ(br27751_lit[2], 0,
+                   "the glow should reach no farther than two tiles");
+    TEST_ASSERT_EQ(br27751_lit[3], 0,
+                   "nothing three tiles from the embers should be lit");
+
+    int edgePercent = br27751_lit[1] * 100 / br27751_lit[0];
+    TEST_ASSERT(edgePercent >= 60 && edgePercent <= 85,
+                "the edge of the glow should dim to about three-quarters brightness");
+    return !testFailed;
+}
+
 const testCase tests_newrules[] = {
     { "BR35726_monsters_and_entrails_have_role_colors", br35726_setup, NULL, br35726_monsters_and_entrails_have_role_colors },
+    { "BR11201_only_the_listed_monsters_and_entrails_flicker", br11201_setup, NULL, br11201_only_the_listed_monsters_and_entrails_flicker },
+    { "BR40113_help_commands_overlay_from_top_left", br40113_setup, br40113_step, br40113_help_commands_overlay_from_top_left },
     { "BR41110_help_dismiss_restores_previous_display", br41110_setup, br41110_step, br41110_verify },
     { "BR93785_floor_survives_matching_cellular_automata_count", br93785_setup, NULL, br93785_verify },
     { "BR20494_no_recording_saved_during_playback", br20494_playback_setup, NULL, br20494_playback_verify },
@@ -3448,6 +3646,9 @@ const testCase tests_newrules[] = {
 
     { "BR12820_already_stuck_keeps_its_countdown",
       br12820_setup, br12820_step, br12820_already_stuck_keeps_its_countdown },
+
+    { "BR27751_embers_glow_radius_two_tiles_and_half_edge",
+      br27751_setup, NULL, br27751_embers_glow_radius_and_edge },
 
     { NULL, NULL, NULL, NULL }
 };

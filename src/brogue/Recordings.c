@@ -842,7 +842,10 @@ boolean executePlaybackInput(rogueEvent *recordingInput) {
 
     if (recordingInput->eventType == KEYSTROKE) {
         key = recordingInput->param1;
-        stripShiftFromMovementKeystroke(&key);
+        // New Game is an uppercase command key, not shift+n for down-right.
+        if (key != NEW_GAME_KEY) {
+            stripShiftFromMovementKeystroke(&key);
+        }
 
         switch (key) {
             case UP_ARROW:

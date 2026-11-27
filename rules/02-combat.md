@@ -1,7 +1,7 @@
 ----
 BR91629
-Every attack uses the attacker's accuracy rating to determine whether it hits; the effective chance is that accuracy multiplied by a factor that shrinks with the defender's defense, then clamped to the range 0% to 100%. Accuracy above 100 and negative defense are permitted, so the unclamped result can fall outside the normal percentage range.
-[Combat.c:29-38](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L29-L38) [Combat.c:127-133](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L127-L133)
+For an attack that is not an automatic hit, the chance to hit equals the attacker's accuracy reduced by the defender's defense, and that chance is never below 0% or above 100%.
+[Combat.c:105-133](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L105-L133)
 ----
 BR93748
 Each point of defense multiplies the incoming chance to hit by about 0.987, so armor makes its wearer exponentially harder to hit as it improves.

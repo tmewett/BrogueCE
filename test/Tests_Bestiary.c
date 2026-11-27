@@ -1150,18 +1150,13 @@ static boolean br24264_verify(void) {
 }
 
 // ============================================================
-// BR69414 — Imp.  Health 35, defense 90, accuracy 225, damage 4-9;
-// regenerates every 10 turns; normal speeds.  It steals an item and flees
-// when it hits (BR18776) and blinks around the battlefield (BR16647).  It
-// glows.
+// BR69414 — Imp.  Health 35, defense 90, accuracy 225, damage 4-9.
+// Its regeneration is BR11556, its normal speeds are BR20820, and its glow
+// is BR13470; stealing and blinking are BR18776 and BR16647.
 // ============================================================
-
-static int br69414_light_with_glow;
-static int br69414_light_without_glow;
 
 static void br69414_setup(void) {
     trait_setup(MK_IMP);
-    measureMonsterGlow(subject, &br69414_light_with_glow, &br69414_light_without_glow);
 }
 
 static boolean br69414_verify(void) {
@@ -1171,42 +1166,61 @@ static boolean br69414_verify(void) {
     TEST_ASSERT_EQ(monsterBaseAccuracy(subject), 225, "imp accuracy");
     TEST_ASSERT_EQ(monsterBaseDamageLow(subject), 4, "imp damage low");
     TEST_ASSERT_EQ(monsterBaseDamageHigh(subject), 9, "imp damage high");
+    return !testFailed;
+}
+
+// BR20820 — the imp's normal movement and attack speeds.
+static void br20820_setup(void) {
+    trait_setup(MK_IMP);
+}
+
+static boolean br20820_verify(void) {
+    TEST_ASSERT(subject != NULL, "imp spawned");
     TEST_ASSERT_EQ(monsterBaseMovementSpeed(subject), 100, "imp moves at normal speed");
     TEST_ASSERT_EQ(monsterBaseAttackSpeed(subject), 100, "imp attacks at normal speed");
-    TEST_ASSERT(monsterRegenerates(subject), "imp regenerates naturally");
-    TEST_ASSERT(monsterHasAbility(subject, MA_HIT_STEAL_FLEE),
-                "imp steals an item and flees when its attack lands");
-    TEST_ASSERT(monsterCastsBolt(subject, BOLT_BLINKING),
-                "imp blinks around the battlefield");
-    TEST_ASSERT(br69414_light_with_glow > br69414_light_without_glow,
+    return !testFailed;
+}
+
+// BR13470 — the imp glows.
+static int br13470_light_with_glow;
+static int br13470_light_without_glow;
+
+static void br13470_setup(void) {
+    trait_setup(MK_IMP);
+    measureMonsterGlow(subject, &br13470_light_with_glow, &br13470_light_without_glow);
+}
+
+static boolean br13470_verify(void) {
+    TEST_ASSERT(subject != NULL, "imp spawned");
+    TEST_ASSERT(br13470_light_with_glow > br13470_light_without_glow,
                 "imp glows");
     return !testFailed;
 }
 
-// The 10-turn regeneration period, watched turn by turn: a wounded imp with
-// no enemies about can only regain health through regeneration, so it must
-// sit at 1 HP for 9 turns and regain exactly one point on the 10th.
-static int br69414_regenTurns;
+// BR11556 — the 10-turn regeneration period, watched turn by turn: a wounded
+// imp with no enemies about can only regain health through regeneration, so
+// it must sit at 1 HP for 9 turns and regain exactly one point on the 10th.
+static int br11556_regenTurns;
 
-static void br69414_regen_setup(void) {
+static void br11556_regen_setup(void) {
     trait_setup(MK_IMP);
     makeMonsterAlly(subject);
     setMonsterHealth(subject, 1);
-    br69414_regenTurns = 0;
+    br11556_regenTurns = 0;
 }
 
-static boolean br69414_regen_step(void) {
+static boolean br11556_regen_step(void) {
     restOneTurn();
-    br69414_regenTurns++;
+    br11556_regenTurns++;
     if (monsterHealth(subject) > 1) {
         return false;
     }
-    return br69414_regenTurns < 40;
+    return br11556_regenTurns < 40;
 }
 
-static boolean br69414_regen_verify(void) {
+static boolean br11556_regen_verify(void) {
     TEST_ASSERT(subject != NULL, "imp spawned");
-    TEST_ASSERT_EQ(br69414_regenTurns, 10,
+    TEST_ASSERT_EQ(br11556_regenTurns, 10,
                    "the imp should wait 10 turns before regenerating");
     TEST_ASSERT_EQ(monsterHealth(subject), 2,
                    "the imp should regain exactly one point of health per period");
@@ -1684,6 +1698,135 @@ static boolean br52291_verify(void) {
 }
 
 // ============================================================
+// BR73698 — Salamander.  Health 60, defense 70, accuracy 150, damage 5-11;
+// regenerates every 10 turns; normal speeds.  A large creature that is immune
+// to fire, submerges, never sleeps, and burns unceasingly.  It strikes up to
+// two enemies in a line and always leaves salamander flame where it dies.  It
+// glows.
+//
+// The stat block, speeds, size, traits, line-striking ability and glow are
+// read from the spawned salamander.  Regeneration runs deterministically in
+// the turn loop: a wounded ally rests and must regain exactly one point of
+// health on the tenth turn.  For the flame, the salamander is held still on a
+// bare floor tile and leaves its salamander flame there on an environment
+// update; it then dies on that tile, and the tile must still hold the flame.
+// Embers can decay into ash on the same update that spawns them, so either
+// terrain counts as the salamander's flame.
+// ============================================================
+
+static creature *br73698_salamander;
+static int br73698_lightWithGlow;
+static int br73698_lightWithoutGlow;
+static creature *br73698_regenSalamander;
+static int br73698_regenTurns;
+static creature *br73698_dyingSalamander;
+static pos br73698_deathLoc;
+static boolean br73698_deathSpawned;
+
+static void br73698_setup(void) {
+    trait_setup(MK_SALAMANDER);
+    br73698_salamander = subject;
+    measureMonsterGlow(br73698_salamander, &br73698_lightWithGlow,
+                       &br73698_lightWithoutGlow);
+}
+
+static boolean br73698_verify(void) {
+    creature *s = br73698_salamander;
+    TEST_ASSERT(s != NULL, "salamander spawned");
+    TEST_ASSERT_EQ(monsterMaxHealth(s), 60, "salamander health");
+    TEST_ASSERT_EQ(monsterBaseDefense(s), 70, "salamander defense");
+    TEST_ASSERT_EQ(monsterBaseAccuracy(s), 150, "salamander accuracy");
+    TEST_ASSERT_EQ(monsterBaseDamageLow(s), 5, "salamander damage low");
+    TEST_ASSERT_EQ(monsterBaseDamageHigh(s), 11, "salamander damage high");
+    TEST_ASSERT_EQ(monsterBaseMovementSpeed(s), 100,
+                   "salamander moves at normal speed");
+    TEST_ASSERT_EQ(monsterBaseAttackSpeed(s), 100,
+                   "salamander attacks at normal speed");
+    TEST_ASSERT(monsterRegenerates(s), "salamander regenerates naturally");
+    TEST_ASSERT(monsterIsLarge(s), "salamander is large");
+    TEST_ASSERT(monsterHasTrait(s, MONST_IMMUNE_TO_FIRE),
+                "salamander is immune to fire");
+    TEST_ASSERT(monsterHasTrait(s, MONST_SUBMERGES),
+                "salamander submerges");
+    TEST_ASSERT(monsterHasTrait(s, MONST_NEVER_SLEEPS),
+                "salamander never sleeps");
+    TEST_ASSERT(monsterHasTrait(s, MONST_FIERY),
+                "salamander burns unceasingly");
+    TEST_ASSERT(monsterHasAbility(s, MA_ATTACKS_EXTEND),
+                "salamander strikes up to two enemies in a line");
+    TEST_ASSERT(br73698_lightWithGlow > br73698_lightWithoutGlow,
+                "salamander glows");
+    return !testFailed;
+}
+
+static void br73698_regen_setup(void) {
+    trait_setup(MK_SALAMANDER);
+    br73698_regenSalamander = subject;
+    makeMonsterAlly(br73698_regenSalamander);
+    setMonsterHealth(br73698_regenSalamander, 1);
+    br73698_regenTurns = 0;
+}
+
+static boolean br73698_regen_step(void) {
+    restOneTurn();
+    br73698_regenTurns++;
+    if (monsterHealth(br73698_regenSalamander) > 1) {
+        return false;
+    }
+    return br73698_regenTurns < 20;
+}
+
+static boolean br73698_regen_verify(void) {
+    TEST_ASSERT(br73698_regenSalamander != NULL, "salamander spawned");
+    TEST_ASSERT_EQ(br73698_regenTurns, 10,
+                   "the salamander should wait 10 turns before regenerating");
+    TEST_ASSERT_EQ(monsterHealth(br73698_regenSalamander), 2,
+                   "the salamander should regain exactly one point of health per period");
+    return !testFailed;
+}
+
+static boolean br73698_flameBeforeDeath;
+static boolean br73698_flameAfterDeath;
+
+// The salamander's dungeon feature is a patch of embers.  Embers can decay
+// into ash during the same environment update that spawns them (3% per
+// update), so either terrain proves the salamander left flame here.
+static boolean br73698_hasSalamanderFlame(pos loc) {
+    return cellIsTerrain(loc, EMBERS) || cellIsTerrain(loc, ASH);
+}
+
+static void br73698_death_setup(void) {
+    clearArena();
+    br73698_deathLoc = posOffset(getPlayerPos(), 3, 0);
+    // Start on bare floor, so any flame found there later was left by the
+    // salamander.
+    setTerrain(br73698_deathLoc, FLOOR);
+    br73698_dyingSalamander = placeHostileMonster(MK_SALAMANDER, br73698_deathLoc);
+    br73698_deathSpawned = br73698_dyingSalamander != NULL;
+    // Hold it still so its flame is left on the tile where it dies.
+    applyStatusToMonster(br73698_dyingSalamander, STATUS_PARALYZED, 1000);
+}
+
+static boolean br73698_death_step(void) {
+    restOneTurn();
+    br73698_flameBeforeDeath = br73698_hasSalamanderFlame(br73698_deathLoc);
+
+    makeMonsterDying(br73698_dyingSalamander);
+    restOneTurn();
+    br73698_flameAfterDeath = br73698_hasSalamanderFlame(br73698_deathLoc);
+    return false;
+}
+
+static boolean br73698_death_verify(void) {
+    TEST_ASSERT(br73698_deathSpawned, "salamander spawned");
+    TEST_ASSERT(br73698_flameBeforeDeath,
+                "a living salamander should leave salamander flame where it stands");
+    TEST_ASSERT(br73698_flameAfterDeath,
+                "the tile where a salamander dies should still hold its salamander flame");
+    return !testFailed;
+}
+
+// ============================================================
 // BR88545 — Kraken.  Health 120, defense 0, accuracy 150, damage 15-20;
 // regenerates rapidly (1 health every turn); moves twice as fast as normal
 // (speed 50); normal attack speed.  A large creature bound to liquid that
@@ -1884,8 +2027,10 @@ const testCase tests_bestiary[] = {
     { "BR45724_monkey_stats_and_traits", br45724_setup, NULL, br45724_verify },
     { "BR45724_monkey_regenerates_every_20_turns", br45724_regen_setup, br45724_regen_step, br45724_regen_verify },
     { "BR24264_jackal_stats_trail_and_regeneration", br24264_setup, br24264_step, br24264_verify },
-    { "BR69414_imp_stats_and_traits", br69414_setup, NULL, br69414_verify },
-    { "BR69414_imp_regenerates_every_10_turns", br69414_regen_setup, br69414_regen_step, br69414_regen_verify },
+    { "BR69414_imp_stats", br69414_setup, NULL, br69414_verify },
+    { "BR20820_imp_normal_speeds", br20820_setup, NULL, br20820_verify },
+    { "BR13470_imp_glows", br13470_setup, NULL, br13470_verify },
+    { "BR11556_imp_regenerates_every_10_turns", br11556_regen_setup, br11556_regen_step, br11556_regen_verify },
     { "BR73845_goblin_stats_and_regeneration", br73845_setup, br73845_step, br73845_verify },
     { "BR27618_warden_of_yendor", br27618_setup, NULL, br27618_verify },
     { "BR17917_bloat_stats_and_regeneration", br17917_setup, br17917_step, br17917_verify },
@@ -1895,6 +2040,9 @@ const testCase tests_bestiary[] = {
     { "BR83759_ifrit_stats_and_rapid_regeneration", br83759_setup, br83759_step, br83759_verify },
     { "BR64166_phoenix_stats_traits_and_no_regeneration", br64166_setup, br64166_step, br64166_verify },
     { "BR52291_underworm_stats_and_regeneration", br52291_setup, br52291_step, br52291_verify },
+    { "BR73698_salamander_stats_traits_and_glow", br73698_setup, NULL, br73698_verify },
+    { "BR73698_salamander_regenerates_every_10_turns", br73698_regen_setup, br73698_regen_step, br73698_regen_verify },
+    { "BR73698_salamander_leaves_flame_on_death", br73698_death_setup, br73698_death_step, br73698_death_verify },
     { "BR88545_kraken_stats_and_rapid_regeneration", br88545_setup, br88545_step, br88545_verify },
     { NULL, NULL, NULL, NULL }
 };

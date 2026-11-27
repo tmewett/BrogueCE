@@ -2605,6 +2605,61 @@ static boolean br21973_verify(void) {
 }
 
 // ============================================================
+// BR30141 — auto-exploration refuses to start while you are confused.
+//
+// One square is left unexplored, so an unconfused player would walk
+// toward it.  While confused the command must stop at the refusal: it
+// prints "Not while you're confused.", spends no turn, leaves the player
+// where they stand, and leaves the goal unexplored.
+// ============================================================
+
+static pos br30141_start;
+static pos br30141_goal;
+static unsigned long br30141_turn;
+
+static void br30141_setup(void) {
+    clearArena();
+    br30141_start = getPlayerPos();
+    // Leave one square two steps away unexplored, so auto-explore has a
+    // goal it could reach if it started.
+    br30141_goal = posOffset(br30141_start, 2, 0);
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            pos p = posAt(x, y);
+            if (p.x != br30141_goal.x || p.y != br30141_goal.y) {
+                revealCell(p);
+            }
+        }
+    }
+    applyStatusToPlayer(STATUS_CONFUSED, 5);
+    br30141_turn = turnNumber();
+}
+
+static boolean br30141_step(void) {
+    TEST_ASSERT(isPlayerConfused(),
+                "setup: the player should be confused");
+    TEST_ASSERT(!cellIsDiscovered(br30141_goal),
+                "setup: the goal square should still be unexplored");
+    // The first press picks the exploration target; the second asks the
+    // engine to start exploring.
+    injectKeystroke('x', false, false);
+    injectKeystroke('x', false, false);
+    return false;
+}
+
+static boolean br30141_verify(void) {
+    TEST_ASSERT(messageWasShown("Not while you're confused."),
+                "a confused player should be told auto-explore is unavailable");
+    TEST_ASSERT_POS_EQ(getPlayerPos(), br30141_start,
+                       "the refused auto-explore should leave the player in place");
+    TEST_ASSERT_EQ(turnNumber(), br30141_turn,
+                   "the refused auto-explore should spend no turn");
+    TEST_ASSERT(!cellIsDiscovered(br30141_goal),
+                "the refused auto-explore should not have walked toward the goal");
+    return !testFailed;
+}
+
+// ============================================================
 // BR28134 — while burning you take 1-3 fire damage each turn
 //            until the flames burn out on their own
 // ============================================================
@@ -3058,8 +3113,69 @@ static boolean br34818_fall_reveals_secret(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR94905 — standing in water, unless levitating above it, puts
+// out any fire burning on you.
+//
+// The player catches fire through the engine's ordinary
+// standing-in-fire path, then the square underfoot is turned to
+// shallow water and the engine's tile effects are applied as when
+// standing on a new square.  The levitating case performs the same
+// steps with levitation applied first, so the only difference is
+// that the fire is above the water rather than in it.
+// ============================================================
+
+static boolean br94905_burningBeforeWater;
+static boolean br94905_burningAfterWater;
+static boolean br94905_levitatingAboveWater;
+
+static void br94905_catch_fire(void) {
+    clearMonsters();
+    clearArena();
+    setTerrain(getPlayerPos(), FLOOR);
+    spawnFeature(getPlayerPos(), DF_PLAIN_FIRE);
+    applyTileEffectsToPlayer();
+    br94905_burningBeforeWater = isPlayerBurning();
+}
+
+static void br94905_water_setup(void) {
+    br94905_catch_fire();
+    setTerrain(getPlayerPos(), SHALLOW_WATER);
+    applyTileEffectsToPlayer();
+    br94905_burningAfterWater = isPlayerBurning();
+}
+
+static boolean br94905_water_puts_out_fire(void) {
+    TEST_ASSERT(br94905_burningBeforeWater,
+                "control: the player should be burning before entering the water");
+    TEST_ASSERT(!br94905_burningAfterWater,
+                "standing in water should put out the fire burning on the player");
+    return !testFailed;
+}
+
+static void br94905_levitating_setup(void) {
+    br94905_catch_fire();
+    applyStatusToPlayer(STATUS_LEVITATING, 100);
+    br94905_levitatingAboveWater = playerHasStatus(STATUS_LEVITATING);
+    setTerrain(getPlayerPos(), SHALLOW_WATER);
+    applyTileEffectsToPlayer();
+    br94905_burningAfterWater = isPlayerBurning();
+}
+
+static boolean br94905_levitating_above_water_keeps_fire(void) {
+    TEST_ASSERT(br94905_burningBeforeWater,
+                "control: the player should be burning before entering the water");
+    TEST_ASSERT(br94905_levitatingAboveWater,
+                "control: the player should be levitating above the water");
+    TEST_ASSERT(br94905_burningAfterWater,
+                "levitating above water should not put out the fire burning on the player");
+    return !testFailed;
+}
+
 const testCase tests_movement[] = {
     { "BR34818_fall_reveals_secret_square", br34818_setup, br34818_step, br34818_fall_reveals_secret },
+    { "BR94905_water_puts_out_fire", br94905_water_setup, NULL, br94905_water_puts_out_fire },
+    { "BR94905_levitating_above_water_keeps_fire", br94905_levitating_setup, NULL, br94905_levitating_above_water_keeps_fire },
     { "BR37646_descent_without_amulet_is_repelled", br37646_setup, br37646_step, br37646_without_amulet_is_repelled },
     { "BR38077_ascent_without_amulet_is_sealed", br38077_setup, br38077_step, br38077_ascent_without_amulet_is_sealed },
     { "BR32837_monsters_approach_stairs_each_100_ticks", br32837_setup, br32837_step, br32837_verify },
@@ -3148,6 +3264,7 @@ const testCase tests_movement[] = {
     { "BR17834_unexplored_square_reports_failure", br17834_unexplored_setup, br17834_unexplored_step, br17834_unexplored_reports_failure },
 
     { "BR21973_confused_auto_explore", br21973_setup, br21973_step, br21973_verify },
+    { "BR30141_confused_auto_explore_refused", br30141_setup, br30141_step, br30141_verify },
 
     { NULL, NULL, NULL, NULL }
 };

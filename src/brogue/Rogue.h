@@ -3508,6 +3508,9 @@ extern "C" {
     void dialogAlert(char *message);
     void mainBrogueJunction(void);
     int printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsigned int scanThroughDepth, boolean isCsvFormat, char *errorMessage);
+#ifdef BROGUE_TESTING
+    void printSeedCatalogItemForTesting(item *theItem, boolean isCsvFormat);
+#endif
 
     void initializeButton(brogueButton *button);
     void drawButtonsInState(buttonState *state, screenDisplayBuffer *button_dbuf);

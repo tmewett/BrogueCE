@@ -581,6 +581,158 @@ static boolean dropped_item_lands_on_nearest_reachable_tile(void) {
 }
 
 // ============================================================
+// BR90830 — items and monsters that fell from the previous depth, or that
+// were walking toward the stairs, are restored at the nearest valid
+// reachable location.
+//
+// The item half builds its landing site on depth 2 first, then returns to
+// depth 1 and drops the item into a chasm on the same coordinates.  The next
+// environment update sends it to depth 2, and entering that level restores
+// it.  On depth 2 the falling item's square is solid granite and only one
+// neighbouring square is open floor, so the nearest valid location is
+// unambiguous.
+//
+// The monster half leaves a rat on depth 1 walking toward the down
+// staircase, returns to depth 1, and checks that the monster is restored
+// beside the stairs on a passable square rather than on the staircase or the
+// player.
+// ============================================================
+
+static int br90830_chebyshev(pos a, pos b) {
+    int dx = a.x > b.x ? a.x - b.x : b.x - a.x;
+    int dy = a.y > b.y ? a.y - b.y : b.y - a.y;
+    return dx > dy ? dx : dy;
+}
+
+// A map coordinate well away from both staircases, so a test can reshape the
+// terrain there without disturbing the stairs the engine relies on.
+static pos br90830_sceneClearOfStairs(void) {
+    const pos candidates[] = {
+        posAt(40, 14), posAt(20, 14), posAt(60, 14), posAt(40, 6), posAt(40, 22)
+    };
+    const pos up = upStairsLocation();
+    const pos down = downStairsLocation();
+    for (unsigned int i = 0; i < sizeof(candidates) / sizeof(candidates[0]); i++) {
+        if (br90830_chebyshev(candidates[i], up) > 2
+            && br90830_chebyshev(candidates[i], down) > 2) {
+            return candidates[i];
+        }
+    }
+    return sceneCentre();
+}
+
+static boolean br90830_item_is_on_floor(item *needle) {
+    for (int i = 0; i < countFloorItems(); i++) {
+        if (floorItemAtIndex(i) == needle) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static item *br90830_fallenItem;
+static pos br90830_fallTarget;
+static pos br90830_itemExpected;
+static boolean br90830_itemFell;
+
+static void br90830_item_setup(void) {
+    clearMonsters();
+    clearFloorItems();
+
+    // Depth 2: a sealed landing pocket whose only item-valid square is one
+    // step east of the coordinates the item will fall from.
+    descendToNextLevel();
+    clearMonsters();
+    clearFloorItems();
+    br90830_fallTarget = br90830_sceneClearOfStairs();
+    for (int dx = -1; dx <= 1; dx++) {
+        for (int dy = -1; dy <= 1; dy++) {
+            setTerrain(posOffset(br90830_fallTarget, dx, dy), GRANITE);
+        }
+    }
+    br90830_itemExpected = posOffset(br90830_fallTarget, 1, 0);
+    setTerrain(br90830_itemExpected, FLOOR);
+    ascendToPreviousLevel();
+
+    // Depth 1: drop the item into a chasm on the very coordinates the
+    // landing pocket is built around.
+    clearMonsters();
+    clearFloorItems();
+    setTerrain(br90830_fallTarget, CHASM);
+    br90830_fallenItem = placeItemOnFloor(WEAPON, DAGGER, br90830_fallTarget);
+    runEnvironmentUpdate();
+    br90830_itemFell = countFloorItems() == 0;
+}
+
+static boolean br90830_item_step(void) {
+    descendToNextLevel(); // enter the level the item fell to
+    return false;
+}
+
+static boolean br90830_fallen_item_restored_at_nearest_square(void) {
+    TEST_ASSERT(br90830_itemFell,
+                "setup: the item on the chasm should have plunged to the level below");
+    TEST_ASSERT_EQ(currentDepth(), 2,
+                   "the player should have descended to the level the item fell to");
+    TEST_ASSERT(br90830_fallenItem != NULL,
+                "setup: the item should exist");
+    TEST_ASSERT(br90830_item_is_on_floor(br90830_fallenItem),
+                "the fallen item should be restored on the floor of the level below");
+    TEST_ASSERT_POS_EQ(itemPosition(br90830_fallenItem), br90830_itemExpected,
+                       "the fallen item should be restored at the nearest valid square");
+    TEST_ASSERT(cellIsTerrain(br90830_itemExpected, FLOOR),
+                "the restored item should lie on open floor");
+    return !testFailed;
+}
+
+static creature *br90830_walker;
+static pos br90830_stairs;
+
+static void br90830_monster_setup(void) {
+    clearArena();
+    clearFloorItems();
+    br90830_stairs = downStairsLocation();
+    // Open the whole ring around the staircase so the nearest valid square
+    // is unambiguously adjacent to it.
+    setTerrainAroundLoc(br90830_stairs, FLOOR);
+    placeDownStairs(br90830_stairs);
+
+    descendToNextLevel(); // depth 2; depth 1 is now visited
+    clearArena();
+    clearFloorItems();
+
+    // A monster left on the level above, walking toward the staircase the
+    // player will come back up.
+    br90830_walker = spawnMonster(MK_RAT, posOffset(getPlayerPos(), 1, 0));
+    waitOnPreviousLevelToEnter(br90830_walker, 2);
+    ascendToPreviousLevel(); // back to depth 1: restoreMonster runs
+}
+
+static boolean br90830_monster_restored_at_nearest_square(void) {
+    TEST_ASSERT(br90830_walker != NULL,
+                "setup: the monster should exist");
+    TEST_ASSERT(monsterIsAlive(br90830_walker),
+                "the restored monster should survive");
+    TEST_ASSERT_EQ(currentDepth(), 1,
+                   "the player should have ascended to the monster's level");
+    TEST_ASSERT_EQ(monsterDepth(br90830_walker), currentDepth(),
+                   "the monster walking toward the stairs should be restored on that level");
+
+    const pos mpos = monsterPosition(br90830_walker);
+    TEST_ASSERT(!playerIsAt(mpos),
+                "the restored monster should not share the player's square");
+    TEST_ASSERT(!cellIsTerrain(mpos, DOWN_STAIRS),
+                "the restored monster should not stand on the staircase");
+    TEST_ASSERT(!cellObstructsPassage(mpos),
+                "the restored monster should stand on a passable square");
+    TEST_ASSERT_EQ(pathingDistanceBetween(mpos, br90830_stairs, 0), 1,
+                   "the monster should be restored at the nearest valid square to the stairs");
+    TEST_ASSERT(pathingDistanceBetween(mpos, getPlayerPos(), 0) < 30000,
+                "the restored monster should be reachable from the player");
+    return !testFailed;
+}
+
+// ============================================================
 // BR93781 — bridges are built across bridgable gaps (chasms) only
 // when the gap is at least 4 tiles long, the run passes beside at
 // least one open tile, both ends reach open land, and the walking
@@ -2697,6 +2849,9 @@ const testCase tests_dungeon[] = {
     { "BR43009_player_pathfinding_avoids_unexplored",    NULL, NULL, player_pathfinding_avoids_unexplored_tiles },
     { "BR33256_pathfinding_avoids_damage_immune_stationary_monsters", NULL, NULL, damage_immune_stationary_monsters_are_pathfinding_obstacles },
     { "BR68830_dropped_item_lands_on_nearest_reachable_tile", br68830_drop_setup, br68830_drop_step, dropped_item_lands_on_nearest_reachable_tile },
+
+    { "BR90830_fallen_item_restored_at_nearest_square", br90830_item_setup, br90830_item_step, br90830_fallen_item_restored_at_nearest_square },
+    { "BR90830_monster_approaching_stairs_restored_at_nearest_square", br90830_monster_setup, NULL, br90830_monster_restored_at_nearest_square },
 
     { "BR79876_gas_feature_adds_start_probability_to_volume", gas_volume_setup, gas_dissipates_step, stacked_gas_volume_outlasts_single },
 

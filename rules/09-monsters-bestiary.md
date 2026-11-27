@@ -122,7 +122,7 @@ BR57968
 BR18737
 **Reflects about half of magical bolts.** Roughly half of all bolts fired at the
   creature bounce off, as though it wore strongly enchanted armor of reflection.
-  Reference: [Rogue.h 2073](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2073).
+  Reference: [Rogue.h 2073](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2073), [Items.c 4209-4241](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4209-L4241), [Monsters.c 2604-2607](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2604-L2607).
 ----
 BR12704
 **Never results from polymorphism.** No polymorphism spell can transform
@@ -337,8 +337,13 @@ turns; normal speeds. Its attacks **penetrate to a second enemy in a line** (BR4
 **avoids corridors** while hunting (BR48373). [Globals.c 1041-1042](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1041-L1042)
 ----
 BR25964
-**Goblin Conjurer.** Health 10, defense 10, accuracy 70, damage 2–4; regenerates every
-20 turns; normal movement and attack speed. [Globals.c 1043-1044](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1043-L1044)
+**Goblin Conjurer.** A goblin conjurer has 10 health, 10 defense, 70 accuracy, and deals 2–4 damage with its melee attack. [Globals.c 1043-1044](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1043-L1044)
+----
+BR11153
+**Goblin Conjurer.** A goblin conjurer regains 1 health every 20 turns. [Globals.c 1043-1044](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1043-L1044)
+----
+BR12656
+**Goblin Conjurer.** A goblin conjurer moves and attacks at the normal rate. [Globals.c 1043-1044](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1043-L1044)
 ----
 BR44428
 **Goblin Mystic.** Health 10, defense 10, accuracy 70, damage 2–4; regenerates every
@@ -518,10 +523,34 @@ A **large** creature **bound to liquid** (BR60148) that **moves at full speed in
 death** (BR51688). It **grabs and holds its victim** (BR54374). [Globals.c 1102-1103](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1102-L1103)
 ----
 BR62417
-**Lich.** Health 35, defense 80, accuracy 175, damage 2–6; **no natural
-regeneration**; normal speeds. A **large** creature that **keeps its distance** (BR72064), carries an
-item a quarter of the time (BR53451), and **never results from polymorphism** (BR12704). It **summons allies**
-(BR40544) and **hurls fire bolts** (BR60584). It glows. [Globals.c 1104-1105](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1104-L1105)
+**Lich.** A lich has 35 health, 80 defense, 175 accuracy, and deals 2–6 damage with its melee attack. [Globals.c 1104-1105](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1104-L1105)
+----
+BR22769
+**Lich.** A lich does not regenerate health naturally. [Globals.c 1104-1105](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1104-L1105)
+----
+BR14613
+**Lich.** A lich moves and attacks at the normal rate. [Globals.c 1104-1105](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1104-L1105)
+----
+BR29015
+**Lich.** A lich is a large creature. [Globals.c 1104-1105](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1104-L1105)
+----
+BR31399
+**Lich.** A lich keeps its distance from enemies instead of closing to melee range. [Globals.c 1104-1105](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1104-L1105), [Monsters.c 2962-2977](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2962-L2977)
+----
+BR14719
+**Lich.** A lich carries a random item about a quarter of the time. [Globals.c 1104-1105](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1104-L1105), [Monsters.c 132-153](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L132-L153)
+----
+BR18685
+**Lich.** A lich can never be produced by a polymorphism spell. [Globals.c 1104-1105](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1104-L1105), [Items.c 3872-3874](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3872-L3874)
+----
+BR36297
+**Lich.** A lich can summon allies to fight beside it. [Globals.c 1104-1105](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1104-L1105), [Monsters.c 2409-2457](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2409-L2457)
+----
+BR30560
+**Lich.** A lich can hurl fire bolts that damage and can set their target alight. [Globals.c 1104-1105](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1104-L1105), [Monsters.c 2614-2618](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2614-L2618), [Monsters.c 2639-2645](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2639-L2645)
+----
+BR24653
+**Lich.** A lich glows, lighting the area around it. [Globals.c 1104-1105](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1104-L1105), [Light.c 238-245](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Light.c#L238-L245)
 ----
 BR18852
 **Phylactery.** Health 30, defense 0, accuracy 0, damage 0; no regeneration; normal
@@ -552,8 +581,16 @@ normal movement but **attacks slowly** (attack speed 250). An **immobile** (BR99
 It **hurls fire bolts** (BR60584). It glows. [Globals.c 1112-1113](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1112-L1113)
 ----
 BR69414
-**Imp.** Health 35, defense 90, accuracy 225, damage 4–9; regenerates 1 health every 10
-turns; normal speeds. It glows. [Globals.c 1114-1115](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1114-L1115)
+**Imp.** Health 35, defense 90, accuracy 225, damage 4–9. [Globals.c 1114-1115](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1114-L1115)
+----
+BR11556
+An imp regains 1 health every 10 turns. [Globals.c 1114-1115](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1114-L1115)
+----
+BR20820
+An imp moves and attacks at normal speed. [Globals.c 1114-1115](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1114-L1115)
+----
+BR13470
+An imp glows. [Globals.c 1114-1115](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1114-L1115)
 ----
 BR51639
 **Fury.** Health 19, defense 90, accuracy 200, damage 6–11; regenerates every 20
@@ -638,11 +675,37 @@ magical bolts back at the caster** (BR56605) and **blinks** (BR16647).
 [Globals.c 1143-1144](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1143-L1144)
 ----
 BR48053
-**Guardian Spirit.** Health 1000, defense 0, accuracy 200, damage 5–12; no
-regeneration; normal speeds. An **inanimate** (BR21958), **never-sleeping** (BR67941) spirit that is
-**immune to weapons** (BR95842) and **fire** (BR13523), **dies if negated** (BR49476), and **never fails to
-use its special ability** (BR85956). It **reflects all magical bolts back at the caster** (BR56605). It glows.
-[Globals.c 1145-1146](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1145-L1146)
+**Guardian Spirit.** A guardian spirit has 1000 health, 0 defense, 200 accuracy, and deals 5–12 damage with its melee attack. [Globals.c 1145-1146](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1145-L1146)
+----
+BR13553
+**Guardian Spirit.** A guardian spirit does not regenerate health naturally. [Globals.c 1145-1146](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1145-L1146)
+----
+BR17862
+**Guardian Spirit.** A guardian spirit moves and attacks at the normal rate. [Globals.c 1145-1146](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1145-L1146)
+----
+BR21352
+**Guardian Spirit.** A guardian spirit is inanimate. [Globals.c 1145-1146](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1145-L1146), [Rogue.h 2059](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2059), [Monsters.c 3059](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3059), [Combat.c 1061-1064](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1061-L1064)
+----
+BR21745
+**Guardian Spirit.** A guardian spirit never sleeps. [Globals.c 1145-1146](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1145-L1146), [Monsters.c 111](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L111)
+----
+BR22384
+**Guardian Spirit.** A guardian spirit is immune to weapons. [Globals.c 1145-1146](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1145-L1146), [Combat.c 1098-1100](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1098-L1100), [Items.c 6054-6056](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6054-L6056)
+----
+BR23829
+**Guardian Spirit.** A guardian spirit is immune to fire. [Globals.c 1145-1146](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1145-L1146), [Time.c 28-36](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L28-L36), [Combat.c 420-423](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L420-L423), [Items.c 4406-4416](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4406-L4416)
+----
+BR24052
+**Guardian Spirit.** A guardian spirit dies if it is negated. [Globals.c 1145-1146](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1145-L1146), [Items.c 3757-3767](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3757-L3767)
+----
+BR26803
+**Guardian Spirit.** A guardian spirit never fails to use its special ability. [Globals.c 1145-1146](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1145-L1146), [Monsters.c 2794-2795](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2794-L2795), [Monsters.c 2809](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2809)
+----
+BR27284
+**Guardian Spirit.** A guardian spirit reflects all magical bolts back at the caster. [Globals.c 1145-1146](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1145-L1146), [Rogue.h 2124](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2124), [Monsters.c 4745-4756](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L4745-L4756)
+----
+BR27798
+**Guardian Spirit.** A guardian spirit glows, lighting the area around it. [Globals.c 1145-1146](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1145-L1146), [Light.c 238-245](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Light.c#L238-L245)
 ----
 BR27618
 **Warden of Yendor.** Health 1000, defense 0, accuracy 300, damage 12–17; no

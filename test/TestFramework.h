@@ -122,6 +122,12 @@ void clearMessages(void);
 // Show any combat messages buffered since the last turn, so a test can assert
 // on what a blow or an exposure said without ending a turn.
 void flushCombatMessages(void);
+// Turn on cautious mode: the setting under which the game announces each
+// monster it spots with an acknowledged message ("you see a goblin").  Test
+// mode never waits at the --MORE-- prompt, so the mode survives the
+// announcement, but flushing combat messages turns it off again, so a test
+// should enable it before each turn whose announcement it wants to observe.
+void enableCautiousMode(void);
 // Whether any message has been shown since the log was last cleared.
 boolean anyMessageWasShown(void);
 boolean messageWasShown(const char *substring);
@@ -227,6 +233,20 @@ boolean screenTextContains(const char *substring);
 // values in separate columns.
 const char *screenTextLineContaining(const char *substring);
 
+// The row (0 is the top row of the screen) of that same frame containing
+// `substring`, or -1 when the frame is missing or no row contains it.
+int screenTextRowContaining(const char *substring);
+
+// The column (0 is the left edge of the screen) at which `substring` begins in
+// that same frame, or -1.  This is the first occurrence in the topmost row
+// that contains it.
+int screenTextColumnContaining(const char *substring);
+
+// The top row and leftmost column of the dungeon display window, the area the
+// game draws the map and its overlays into (right of the sidebar).
+int displayWindowTopRow(void);
+int displayWindowLeftColumn(void);
+
 // Open the help screen over the current display, dismiss it, and report
 // whether the display afterwards is exactly the one shown before it opened.
 // helpScreenWasShown() reports whether its command list was actually drawn.
@@ -252,6 +272,11 @@ int inventoryScreenMagicMarkerFor(char inventoryLetter);
 // keyboard-only controls the inventory and its detail box each add for
 // paging; this exercises them without exposing the menu's buttons.
 const char *inventoryDetailAfterKeys(int openKey, int pageKey, int pages);
+
+// The same as inventoryDetailAfterKeys(), but the frame the detail box draws
+// is held so screenTextContains() can read its buttons afterwards.  The detail
+// text shown last is returned.
+const char *inventoryDetailHeldAfterKeys(int openKey, int pageKey, int pages);
 
 // Remember the background colour every cell was drawn with in the frame that
 // screenTextContains() reads.  Call it while a transient highlight (the aim
@@ -319,6 +344,16 @@ void placeGlowingGlassPipeWiredToMechanism(pos loc);
 // own machine-activation routine.  Does nothing when the tile is not part of a
 // mechanism.
 void powerMechanismIncluding(pos loc);
+// Place a crystal globe on `globeLoc` and a glowing glass pipe on `pipeLoc`,
+// wiring both into the same fresh mechanism.  A shining globe is placed when
+// `shining` is true; otherwise the globe is darkened.  The globe's state
+// decides whether the mechanism can activate.
+void placeGlobeAndPipeWiredToMechanism(pos globeLoc, pos pipeLoc, boolean shining);
+// Expose the terrain at `loc` to electricity, as a lightning bolt does.
+// Returns whether anything was promoted.
+boolean exposeGlobeToElectricShock(pos loc);
+// Place a stone archway portal on `loc`, wired into a fresh mechanism.
+void placePortalWiredToMechanism(pos loc);
 // Whether the tile holds a glowing glass pipe.
 boolean cellIsGlowingGlassPipe(pos loc);
 // Whether the tile holds a charred (inert) glass pipe.
@@ -344,6 +379,9 @@ short terrainAt(pos loc);
 boolean cellIsTerrain(pos loc, short terrainType);
 boolean cellObstructsPassage(pos loc);
 boolean cellIsVisible(pos loc);
+// Whether the tile lies in the player's unobstructed line of sight, whether
+// or not there is enough light to see what is on it.
+boolean cellIsInFieldOfView(pos loc);
 // Whether the player has ever seen the tile (it stays discovered once seen).
 boolean cellIsDiscovered(pos loc);
 boolean cellHasGas(pos loc);
@@ -458,6 +496,8 @@ void removePackFood(void);
 // Remove every pack item of the given category and kind, so a test can
 // control exactly which items are available to be stolen or consumed.
 void removePackItems(short category, short kind);
+// Remove every item from the pack, leaving the player carrying nothing.
+void clearPack(void);
 
 // Numeric status details, for rules about exact counters and amounts.
 int playerStatusTurns(enum statusEffects status);
@@ -662,6 +702,9 @@ void makeMonsterDormant(creature *monst);
 
 boolean monsterIsHiddenFrom(const creature *monst, const creature *observer);
 boolean monsterIsRevealedToPlayer(const creature *monst);
+// Whether the monster's own glyph is currently drawn on the map at its
+// location, as opposed to the tile underneath it.
+boolean monsterIsShownOnMap(const creature *monst);
 boolean monsterCouldAttack(const creature *attacker, const creature *defender);
 boolean monstersAreAlliesOf(const creature *a, const creature *b);
 boolean monstersAreFoesOf(const creature *a, const creature *b);
@@ -766,6 +809,8 @@ void applyPackItem(short category, short kind);
 // Item details a rule can depend on.
 int itemQuantity(const item *theItem);
 int itemCharges(const item *theItem);
+// Overwrite how many charges (uses) a staff or wand has left.
+void setItemCharges(item *theItem, int charges);
 int itemEnchant(const item *theItem);
 char itemInventoryLetter(const item *theItem);
 short itemKind(const item *theItem);
@@ -788,6 +833,21 @@ int runicActivationChance(const item *theItem);
 // prints it, including the paragraphs about a runic effect.  Reads the
 // current game state without drawing anything.
 const char *itemExamineText(const item *theItem);
+
+// The separate fields the seed catalog's CSV writer fills for one item.  Each
+// string is exactly the column the engine writes, taken from a single CSV line
+// produced by the catalog's own item-reporting code.
+typedef struct {
+    char category[32];
+    char kind[64];
+    char enchantment[16];
+    char runic[64];
+} seedCatalogItemFields;
+
+// Write the item as one seed-catalog CSV line with the engine's writer and
+// split it into its category, kind, enchantment and runic columns.  Returns
+// false (and sets testFailed) if no well-formed line was produced.
+boolean seedCatalogCsvFieldsForItem(item *theItem, seedCatalogItemFields *out);
 
 // Key a runic item to a creature class: the class of creature that a slaying
 // rune destroys, or the class of creature that an immunity armor protects
@@ -878,6 +938,15 @@ void showVariantDialog(int answerKey);
 // The menu is dismissed again before returning; in test mode the dialog's
 // full text is recorded, so its wording can be read with messageWasShown().
 void showModeDialog(int answerKey);
+
+// Open the main menu's New Seeded Game seed prompt, type `digits`, and accept
+// it, starting a new game with the seed those digits denote.  The prompt's
+// entry starts empty regardless of the previous game's seed, so the accepted
+// seed is exactly what the entry kept.  The new game's input loop is ended as
+// soon as it asks for input, so the call returns with the game's seed readable
+// through dungeonSeed().  The prompt frame is held, so its wording can be read
+// afterwards with screenTextContains().
+void startSeededGameByTyping(const char *digits);
 
 // Show the main menu's title screen — the screen offering New Game, Play,
 // View and Quit — and dismiss it again by answering Quit.  The menu is
@@ -1057,6 +1126,11 @@ boolean playbackIsOutOfSync(void);
 // alert instead of seeking.
 void setPlaybackDeepestDepthExplored(int depth);
 
+// Declare the turn the recording being replayed ends on, so a go-to-turn
+// request past it can be observed being capped there.  The recording must
+// still hold enough recorded turns to replay up to that turn.
+void setRecordingFinalTurn(int turn);
+
 // Save the current game as a recording, then play it back through the main
 // menu's View Recording command with the test's queued input, and quit the
 // playback.  This takes the same path a player takes when choosing a
@@ -1207,6 +1281,24 @@ void resetVaultInteriorLoopRecord(void);
 // it rebuilt a vault interior, or -1 when no rebuild has been recorded since
 // the most recent buildRedesignedRoomVaultAtChamber() call.
 int vaultInteriorLoopThreshold(void);
+// Build a fixture vault interior and run the engine's pass that reconnects a
+// vault's orphaned rooms: a `width` x `height` rectangle of solid interior rock
+// whose north-west tile is already open floor and whose south-east tile is the
+// door of a room the rebuilt layout left sealed off.  Everything outside the
+// rectangle is off limits to the pass.  Tiles the pass tunnels through become
+// floor and the rest of the rectangle stays granite, so a test can read the
+// route straight off the level.  *openTile and *orphanTile receive the two
+// corners.  Returns false when the rectangle does not fit on the level.
+boolean buildOrphanedVaultInterior(int width, int height, pos *openTile, pos *orphanTile);
+
+// Engine-facing: run the pass that reconnects a vault's orphaned rooms over a
+// fixture interior (see buildOrphanedVaultInterior()).  `interior` marks the
+// vault's tiles, `grid` holds the rebuilt layout (a positive value marks a tile
+// that is already open, 0 marks interior rock), and `orphan` is the sealed
+// room's door tile.  Tiles the pass tunnels through are set to a positive
+// value in `grid`.
+void reconnectOrphanedRoomsForTesting(char interior[DCOLS][DROWS], short **grid, pos orphan);
+
 // Whether the engine's loop-adding pass cuts a doorway through a wall tile
 // whose two flanking floor tiles are connected only by a route of `detour`
 // tiles, when the pass uses `threshold` as its minimum route length.  The
@@ -1252,12 +1344,20 @@ void lightColorAt(pos loc, int *red, int *green, int *blue);
 // routes as the player (so undiscovered tiles are impassable).
 int pathingDistanceBetween(pos from, pos to, unsigned long blockingTerrainFlags);
 int playerPathingDistance(pos from, pos to);
+// The cost of the cheapest four-way route from `from` to `to` when entering
+// every passable tile costs 1 except `expensiveSquare`, which costs
+// `expensiveCost`.  A tile of the route's own entry cost is added each step,
+// and 30000 means no route exists.
+int pathingDistanceWithEntryCost(pos from, pos to, pos expensiveSquare, int expensiveCost);
 
 // Timed lighting.
 int minersLightRadius(void);
 void setLightMultiplier(int multiplier);
 void setPlayerInWater(boolean inWater);
 void recomputeLighting(void);
+// Recompute the player's field of view and redraw the map, as at the start of
+// a turn, so tests can rely on visibility after moving terrain or creatures.
+void recomputeVision(void);
 
 // Play the engine's ordinary light-flash animation centred on `loc` and return
 // the brightest total light that tile reached while the flash was drawn.  The
@@ -1315,7 +1415,19 @@ int deepestDepth(void);
 // The dungeon's deepest floor, below which there is no staircase to descend.
 int dungeonDeepestLevel(void);
 int totalGoldGenerated(void);
+// Overwrite the running total of gold the dungeon has generated.  A level's
+// gold-pile count is adjusted by 2 when this total is behind or ahead of the
+// schedule for the current depth; pinning the total keeps that adjustment
+// fixed so a test can observe the count the rule itself produces.
+void setTotalGoldGenerated(int total);
 int playerTurnCount(void);
+// How many gold piles currently lie on the floor of the level.  Gold is
+// generated separately from ordinary items, so countFloorItems() does not
+// count it.
+int countGoldPiles(void);
+// The player's scent counter, which rises by 3 each turn (10 while the
+// player is invisible) and is periodically reset to keep it in range.
+int playerScentTurnNumber(void);
 
 // ---------------------------------------------
 // TEST SETUP HELPERS

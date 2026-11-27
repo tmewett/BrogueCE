@@ -5,6 +5,7 @@ cd "$(git rev-parse --show-toplevel)"
 # previous non-test build would otherwise leave test hooks uncompiled.
 make -B GRAPHICS=NO TERMINAL=NO MAC_APP=NO TEST_FRAMEWORK=YES >/dev/null
 fail=0; total=0
+# SECONDS=0
 
 function run_times() {
   for i in {1..10}
@@ -25,4 +26,5 @@ for n in $(grep -rhoE '\{ "BR[^"]+"' test/Tests_*.c | sed -E 's/\{ "//; s/"$//')
   run_times "$n"
 done
 echo "total=$total fails=$fail"
+# echo "Time: $SECONDS sec"
 exit $fail

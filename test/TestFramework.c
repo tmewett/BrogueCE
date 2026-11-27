@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 // The role colours the bestiary and terrain tables draw with (Globals.c).
 // Declared locally so the colour names below can compare against the palette
@@ -126,6 +127,7 @@ static void captureScreenSnapshot(void) {
                 break;
             }
         }
+
     }
 }
 
@@ -151,6 +153,39 @@ const char *screenTextLineContaining(const char *substring) {
         }
     }
     return "";
+}
+
+int screenTextRowContaining(const char *substring) {
+    if (!screenSnapshotValid) {
+        return -1;
+    }
+    for (int y = 0; y < ROWS; y++) {
+        if (strstr(screenSnapshot[y], substring) != NULL) {
+            return y;
+        }
+    }
+    return -1;
+}
+
+int screenTextColumnContaining(const char *substring) {
+    if (!screenSnapshotValid) {
+        return -1;
+    }
+    for (int y = 0; y < ROWS; y++) {
+        const char *match = strstr(screenSnapshot[y], substring);
+        if (match != NULL) {
+            return (int) (match - screenSnapshot[y]);
+        }
+    }
+    return -1;
+}
+
+int displayWindowTopRow(void) {
+    return mapToWindowY(0) - MESSAGE_LINES;
+}
+
+int displayWindowLeftColumn(void) {
+    return mapToWindowX(0);
 }
 
 boolean helpScreenRestoresPreviousDisplay(void) {
@@ -419,11 +454,36 @@ const char *inventoryDetailAfterKeys(int openKey, int pageKey, int pages) {
     return lastMessage();
 }
 
+// See the declaration in TestFramework.h.
+const char *inventoryDetailHeldAfterKeys(int openKey, int pageKey, int pages) {
+    clearInputQueue();
+    // The detail box always offers drop and throw, so its frame is the first
+    // one that mentions "drop"; hold that frame for screenTextContains().
+    screenSnapshotHoldText = "drop";
+    screenSnapshotHeld = false;
+    queueKeystroke(openKey, false, false);
+    for (int i = 0; i < pages; i++) {
+        queueKeystroke(pageKey, false, false);
+    }
+    queueKeystroke(ESCAPE_KEY, false, false);
+    queueKeystroke(ESCAPE_KEY, false, false);
+    displayInventory(ALL_ITEMS, 0, 0, true, true);
+    clearInputQueue();
+    screenSnapshotHoldText = NULL;
+    return lastMessage();
+}
+
 // The text the most recent text-entry prompt opened with, recorded by the
 // engine through recordTestTextInputDefault().
 static char textInputDefault[4096];
 
+// How many text-entry prompts have opened since the counter was last reset.
+// The menu helper below uses it to tell when the seed prompt it opened has
+// finished, independently of the button-press pauses the menu also takes.
+static int testTextPromptCount = 0;
+
 void recordTestTextInputDefault(const char *text) {
+    testTextPromptCount++;
     snprintf(textInputDefault, sizeof(textInputDefault), "%s", text ? text : "");
 }
 
@@ -470,6 +530,10 @@ void clearMessages(void) {
 
 void flushCombatMessages(void) {
     displayCombatText();
+}
+
+void enableCautiousMode(void) {
+    rogue.cautiousMode = true;
 }
 
 boolean anyMessageWasShown(void) {
@@ -902,6 +966,9 @@ void powerMechanismIncluding(pos loc) {
     if (machineNumber == 0) {
         return;
     }
+    if (circuitBreakersPreventActivation(machineNumber)) {
+        return;
+    }
     activateMachine(machineNumber);
     // Power fades from the map once activation finishes, as it does when a
     // promotion triggers a machine through promoteTile().
@@ -912,6 +979,34 @@ void powerMechanismIncluding(pos loc) {
             }
         }
     }
+}
+
+// See the declaration in TestFramework.h.
+void placeGlobeAndPipeWiredToMechanism(pos globeLoc, pos pipeLoc, boolean shining) {
+    short machineNumber = ++rogue.machineNumber;
+    setTerrain(globeLoc, shining ? ELECTRIC_CRYSTAL_ON : ELECTRIC_CRYSTAL_OFF);
+    pmapAt(globeLoc)->machineNumber = machineNumber;
+    pmapAt(globeLoc)->flags |= IS_IN_MACHINE;
+    refreshDungeonCell(globeLoc);
+
+    setTerrain(pipeLoc, FLOOR);
+    pmapAt(pipeLoc)->layers[SURFACE] = PIPE_GLOWING;
+    pmapAt(pipeLoc)->machineNumber = machineNumber;
+    pmapAt(pipeLoc)->flags |= IS_IN_MACHINE;
+    refreshDungeonCell(pipeLoc);
+}
+
+// See the declaration in TestFramework.h.
+boolean exposeGlobeToElectricShock(pos loc) {
+    return exposeTileToElectricity(loc.x, loc.y);
+}
+
+// See the declaration in TestFramework.h.
+void placePortalWiredToMechanism(pos loc) {
+    setTerrain(loc, PORTAL);
+    pmapAt(loc)->machineNumber = ++rogue.machineNumber;
+    pmapAt(loc)->flags |= IS_IN_MACHINE;
+    refreshDungeonCell(loc);
 }
 
 boolean cellIsGlowingGlassPipe(pos loc) {
@@ -999,6 +1094,10 @@ boolean cellIsVisible(pos loc) {
     // playerCanSee expands to a flag mask; normalize it, since high flag bits
     // would otherwise be lost when truncated to a boolean.
     return (playerCanSee(loc.x, loc.y)) != 0;
+}
+
+boolean cellIsInFieldOfView(pos loc) {
+    return isPosInMap(loc) && (pmapAt(loc)->flags & IN_FIELD_OF_VIEW) != 0;
 }
 
 boolean cellIsDiscovered(pos loc) {
@@ -1299,6 +1398,55 @@ void showModeDialog(int answerKey) {
 
     currentConsole.pauseForMilliseconds = savedPause;
     clearInputQueue();
+}
+
+// The menu pause feeds the title screen its keystrokes.  The seed prompt is
+// answered through nextKeyPress instead, so the hook keeps taking menu keys
+// until that prompt has opened; once it has, the menu can only be the title
+// screen that follows the new game.  Quit from there without drawing a fresh
+// frame, preserving the prompt frame for screenTextContains().  Counting
+// pauses instead would be wrong: choosing a menu button takes a pause of its
+// own to flash the button.
+static boolean seedPromptPauseHook(short milliseconds, PauseBehavior behavior) {
+    if (testTextPromptCount == 0) {
+        return true;
+    }
+    rogue.nextGame = NG_QUIT;
+    return false;
+}
+
+// See the declaration in TestFramework.h.
+void startSeededGameByTyping(const char *digits) {
+    boolean (*savedPause)(short, PauseBehavior) = currentConsole.pauseForMilliseconds;
+    const uint64_t savedPreviousSeed = previousGameSeed;
+    const boolean savedPumpActive = inputLoopPumpActive;
+
+    // Hold the prompt's first frame, which shows its wording.
+    screenSnapshotHoldText = "Generate dungeon with seed number:";
+    screenSnapshotHeld = false;
+
+    currentConsole.pauseForMilliseconds = seedPromptPauseHook;
+    testTextPromptCount = 0;
+    // Start the entry empty so its length is exactly the typed digits.
+    previousGameSeed = 0;
+    // The new game's input loop would otherwise spin on an empty queue.
+    inputLoopPumpActive = true;
+
+    rogue.nextGame = NG_NOTHING; // a prior dialog run leaves NG_QUIT behind
+    queueKeystroke('p', false, false);
+    queueKeystroke('s', false, false);
+    for (const char *d = digits; *d != '\0'; d++) {
+        queueKeystroke((unsigned char) *d, false, false);
+    }
+    queueKeystroke(RETURN_KEY, false, false);
+    mainBrogueJunction();
+
+    inputLoopPumpActive = savedPumpActive;
+    clearInputQueue();
+    rogue.gameHasEnded = false; // the pump flagged the new game's loop ended
+    previousGameSeed = savedPreviousSeed;
+    screenSnapshotHoldText = NULL;
+    currentConsole.pauseForMilliseconds = savedPause;
 }
 
 // See the declaration in TestFramework.h.
@@ -1978,6 +2126,12 @@ void setPlaybackDeepestDepthExplored(int depth) {
     // Recordings store the run's deepest depth in maxLevelChanges, and the
     // playback input handler compares it against the depth being replayed.
     maxLevelChanges = (unsigned long) max(1, depth);
+}
+
+void setRecordingFinalTurn(int turn) {
+    // howManyTurns is the recording's stored total turn count, and the seek
+    // clamps a requested destination to it.
+    rogue.howManyTurns = (unsigned long) max(0, turn);
 }
 
 // See the declaration in TestFramework.h.  A test game has no recording of
@@ -2847,6 +3001,14 @@ boolean monsterIsRevealedToPlayer(const creature *monst) {
     return monsterRevealed((creature *)monst);
 }
 
+boolean monsterIsShownOnMap(const creature *monst) {
+    if (monst == NULL || !(pmapAt(monst->loc)->flags & HAS_MONSTER)) {
+        return false;
+    }
+    windowpos window = mapToWindow(monst->loc);
+    return displayBuffer.cells[window.window_x][window.window_y].character == monst->info.displayChar;
+}
+
 boolean monsterCouldAttack(const creature *attacker, const creature *defender) {
     return monsterWillAttackTarget(attacker, defender);
 }
@@ -3123,6 +3285,13 @@ int itemCharges(const item *theItem) {
     return theItem->charges;
 }
 
+// See the declaration in TestFramework.h.
+void setItemCharges(item *theItem, int charges) {
+    if (theItem != NULL) {
+        theItem->charges = charges;
+    }
+}
+
 int itemEnchant(const item *theItem) {
     return theItem->enchant1;
 }
@@ -3203,6 +3372,75 @@ const char *itemExamineText(const item *theItem) {
         itemDetails(text, theItem);
     }
     return text;
+}
+
+// See the declaration in TestFramework.h.
+boolean seedCatalogCsvFieldsForItem(item *theItem, seedCatalogItemFields *out) {
+    char line[1024];
+    char *columns[13];
+    int columnCount = 0;
+
+    if (theItem == NULL || out == NULL) {
+        testFail("the seed catalog needs an item to report");
+        return false;
+    }
+    memset(out, 0, sizeof(*out));
+
+    // Capture the catalog's own CSV line by pointing the standard output file
+    // descriptor at a scratch file while its writer runs.  Everything printed
+    // to stdout during the call is flushed into the scratch file before the
+    // original descriptor is put back.
+    fflush(stdout);
+    FILE *capture = tmpfile();
+    if (capture == NULL) {
+        testFail("could not open a scratch file for the seed catalog");
+        return false;
+    }
+    const int savedStdout = dup(fileno(stdout));
+    if (savedStdout < 0 || dup2(fileno(capture), fileno(stdout)) < 0) {
+        if (savedStdout >= 0) {
+            close(savedStdout);
+        }
+        fclose(capture);
+        testFail("could not redirect the seed catalog's output");
+        return false;
+    }
+    printSeedCatalogItemForTesting(theItem, true);
+    fflush(stdout);
+    dup2(savedStdout, fileno(stdout));
+    close(savedStdout);
+
+    rewind(capture);
+    const boolean gotLine = fgets(line, sizeof(line), capture) != NULL;
+    fclose(capture);
+    if (!gotLine) {
+        testFail("the seed catalog wrote nothing for the item");
+        return false;
+    }
+
+    // Split the line on its commas.  A field that itself contains a comma
+    // shifts the count, which the column-count check below rejects.
+    line[strcspn(line, "\r\n")] = '\0';
+    columns[columnCount++] = line;
+    for (char *comma = strchr(line, ','); comma != NULL; comma = strchr(comma, ',')) {
+        *comma = '\0';
+        comma++;
+        if (columnCount == 13) {
+            columnCount = 0; // more fields than the header defines
+            break;
+        }
+        columns[columnCount++] = comma;
+    }
+    if (columnCount != 13) {
+        testFail("the seed catalog's CSV line does not have its 13 fields");
+        return false;
+    }
+
+    snprintf(out->category, sizeof(out->category), "%s", columns[4]);
+    snprintf(out->kind, sizeof(out->kind), "%s", columns[5]);
+    snprintf(out->enchantment, sizeof(out->enchantment), "%s", columns[6]);
+    snprintf(out->runic, sizeof(out->runic), "%s", columns[7]);
+    return true;
 }
 
 void setItemTargetClass(item *theItem, short classId) {
@@ -3375,6 +3613,21 @@ void removePackItems(short category, short kind) {
     }
 }
 
+// See the declaration in TestFramework.h.
+void clearPack(void) {
+    for (item *i = packItems->nextItem; i != NULL;) {
+        item *next = i->nextItem;
+        if (rogue.weapon == i || rogue.armor == i) {
+            if (rogue.weapon == i) rogue.weapon = NULL;
+            if (rogue.armor == i) rogue.armor = NULL;
+            recalculateEquipmentBonuses();
+        }
+        removeItemFromChain(i, packItems);
+        deleteItem(i);
+        i = next;
+    }
+}
+
 // ---------------------------------------------
 // World
 // ---------------------------------------------
@@ -3443,8 +3696,24 @@ int totalGoldGenerated(void) {
     return rogue.goldGenerated;
 }
 
+void setTotalGoldGenerated(int total) {
+    rogue.goldGenerated = (unsigned long) total;
+}
+
 int playerTurnCount(void) {
     return rogue.playerTurnNumber;
+}
+
+int countGoldPiles(void) {
+    int count = 0;
+    for (item *i = floorItems->nextItem; i; i = i->nextItem) {
+        if (i->category & GOLD) count++;
+    }
+    return count;
+}
+
+int playerScentTurnNumber(void) {
+    return rogue.scentTurnNumber;
 }
 
 // ---------------------------------------------
@@ -3756,6 +4025,47 @@ boolean buildRedesignedRoomVaultAtChamber(int roomCells) {
     return buildRoomVaultAtChamberWithBlueprint(roomCells, TEST_REDESIGNED_VAULT_BLUEPRINT);
 }
 
+boolean buildOrphanedVaultInterior(int width, int height, pos *openTile, pos *orphanTile) {
+    const int x0 = 30, y0 = 10;
+    const int x1 = x0 + width - 1;
+    const int y1 = y0 + height - 1;
+
+    if (width < 2 || height < 2 || x1 >= levelWidth() - 1 || y1 >= levelHeight() - 1) {
+        return false;
+    }
+
+    char interior[DCOLS][DROWS];
+    memset(interior, 0, sizeof(interior));
+
+    short **grid = allocGrid();
+    fillGrid(grid, 0);
+    for (int x = x0; x <= x1; x++) {
+        for (int y = y0; y <= y1; y++) {
+            interior[x][y] = true;
+            setTerrain(posAt(x, y), GRANITE);
+        }
+    }
+
+    // The rebuilt layout already has one open floor tile in the corner.  The
+    // opposite corner is the sealed room's door, so the reconnection pass has
+    // to tunnel the whole diagonal of the interior to reach it.
+    setTerrain(posAt(x0, y0), FLOOR);
+    grid[x0][y0] = 1;
+
+    reconnectOrphanedRoomsForTesting(interior, grid, posAt(x1, y1));
+
+    for (int x = x0; x <= x1; x++) {
+        for (int y = y0; y <= y1; y++) {
+            setTerrain(posAt(x, y), grid[x][y] > 0 ? FLOOR : GRANITE);
+        }
+    }
+    freeGrid(grid);
+
+    *openTile = posAt(x0, y0);
+    *orphanTile = posAt(x1, y1);
+    return true;
+}
+
 // The engine's open-area vault (the amulet holder's statuary area).  It is
 // neither a room vault nor a vestibule, so its interior grows along the
 // pathing map from a random floor tile.
@@ -3887,6 +4197,30 @@ int playerPathingDistance(pos from, pos to) {
     return distance;
 }
 
+int pathingDistanceWithEntryCost(pos from, pos to, pos expensiveSquare, int expensiveCost) {
+    short **distanceMap = allocGrid();
+    short **costMap = allocGrid();
+    fillGrid(distanceMap, 30000);
+    for (int x = 0; x < DCOLS; x++) {
+        for (int y = 0; y < DROWS; y++) {
+            pos loc = posAt(x, y);
+            if (cellHasTerrainFlag(loc, T_OBSTRUCTS_PASSABILITY)) {
+                costMap[x][y] = PDS_OBSTRUCTION;
+            } else if (x == expensiveSquare.x && y == expensiveSquare.y) {
+                costMap[x][y] = expensiveCost;
+            } else {
+                costMap[x][y] = 1;
+            }
+        }
+    }
+    distanceMap[to.x][to.y] = 0;
+    dijkstraScan(distanceMap, costMap, false);
+    int distance = distanceMap[from.x][from.y];
+    freeGrid(costMap);
+    freeGrid(distanceMap);
+    return distance;
+}
+
 int minersLightRadius(void) {
     updateMinersLightRadius();
     return rogue.minersLight.lightRadius.lowerBound;
@@ -3903,6 +4237,10 @@ void setPlayerInWater(boolean inWater) {
 void recomputeLighting(void) {
     updateMinersLightRadius();
     updateLighting();
+}
+
+void recomputeVision(void) {
+    updateVision(true);
 }
 
 static pos testFlareLoc;
