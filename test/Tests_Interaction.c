@@ -974,6 +974,33 @@ static boolean br73762_verify(void) {
 }
 
 // ============================================================
+// BR39251 — Choosing High Scores from the View flyout displays the high
+// scores screen; once that screen is closed, the title screen is shown again
+// for the next choice rather than the game quitting.
+//
+// showHighScoresFromView() runs the real menu path: View, High Scores, a key
+// to dismiss the scores, then Quit on whatever screen follows.  The scores
+// screen is transient, and the frame captured at the final input request is
+// the title screen the menu returned to.  If the menu quit after the scores
+// closed, that final frame would never be drawn and the title entries would
+// be absent.
+// ============================================================
+
+static void br39251_setup(void) {
+    showHighScoresFromView();
+}
+
+static boolean br39251_high_scores_returns_to_title(void) {
+    TEST_ASSERT(highScoresWereDisplayed(),
+                "choosing High Scores from the View flyout should display the high scores screen");
+    TEST_ASSERT(screenTextContains("New Game"),
+                "closing the high scores screen should return to the title screen, not quit the game");
+    TEST_ASSERT(screenTextContains("Quit"),
+                "the title screen returned to should still offer Quit");
+    return !testFailed;
+}
+
+// ============================================================
 // BR31995 — Message color reflects importance: harm to the
 // player or an ally is shown in the "bad" color, harm to an
 // enemy is shown in the "good" color, and neutral events are
@@ -1186,6 +1213,57 @@ static boolean br92554_no_prompt_without_cursor(void) {
 }
 
 // ============================================================
+// BR39424 — during playback of a recording, no travel path is drawn from
+// the player to the cursor.
+//
+// Playback cursor mode is reached the way a replay reaches it: advancing a
+// recorded turn replays a Return, which turns the keyboard cursor on.  The
+// first pump records a playback frame with the cursor off.  The second pump
+// advances another recorded turn (cursor on) and carries the cursor two
+// cells east.  The cursor's own square is lit even during playback, so it
+// must change against the baseline; the player's square and the square the
+// path would cross must keep their colours.  A path drawn through the middle
+// cell would change it and fail the test, while the lit cursor proves the
+// colour comparison sees map highlights at all.
+// ============================================================
+
+static void br39424_setup(void) {
+    setArenaRadius(4, FLOOR);
+    revealCell(posOffset(getPlayerPos(), 1, 0));
+    revealCell(posOffset(getPlayerPos(), 2, 0));
+    startPlaybackWithRecordedChecks(2);
+}
+
+static boolean br39424_step(void) {
+    // First recorded turn: leave playback running with the cursor off, then
+    // remember that frame as the no-highlight baseline.
+    queueKeystroke(RIGHT_KEY, false, false); // playback: advance one turn
+    queueKeystroke(REST_KEY, false, false);  // replayed event: spend the turn
+    runQueuedInputThroughMainLoop();
+    rememberScreenColors();
+
+    // Second recorded turn: the replayed Return turns the keyboard cursor on,
+    // then two eastward moves carry it away from the player.
+    queueKeystroke(RIGHT_KEY, false, false);  // playback: advance one turn
+    queueKeystroke(RETURN_KEY, false, false); // replayed event: cursor on
+    queueKeystroke(REST_KEY, false, false);   // replayed event: spend the turn
+    queueKeystroke(RIGHT_KEY, false, false);  // move the cursor one cell east
+    queueKeystroke(RIGHT_KEY, false, false);  // and a second cell east
+    runQueuedInputThroughMainLoop();
+    return false;
+}
+
+static boolean br39424_no_travel_path_during_playback(void) {
+    TEST_ASSERT(screenCellColorsChanged(posOffset(getPlayerPos(), 2, 0)),
+                "control: the cursor's own square should still be lit during playback");
+    TEST_ASSERT(!screenCellColorsChanged(posOffset(getPlayerPos(), 1, 0)),
+                "playback should not draw a travel path through the square between the player and the cursor");
+    TEST_ASSERT(!screenCellColorsChanged(getPlayerPos()),
+                "playback should not draw a travel path starting from the player's square");
+    return !testFailed;
+}
+
+// ============================================================
 // BR21762 — when playback ends, the game stops being in
 // playback mode and any out-of-sync condition is cleared,
 // returning it to its normal interactive state.
@@ -1340,6 +1418,8 @@ const testCase tests_interaction[] = {
 
     { "BR73762_game_stats_screen_columns_and_streaks", br73762_setup, NULL, br73762_verify },
 
+    { "BR39251_high_scores_returns_to_title", br39251_setup, NULL, br39251_high_scores_returns_to_title },
+
     { "BR31995_message_color_reflects_importance", br31995_setup, NULL, message_color_reflects_importance },
 
     { "BR95103_canceling_cursor_hides_it",         br95103_hide_setup,  br95103_hide_step,  br95103_canceling_hides_cursor },
@@ -1347,6 +1427,8 @@ const testCase tests_interaction[] = {
 
     { "BR92554_playback_examine_prompt", br92554_setup, br92554_step, br92554_examine_prompt_shown },
     { "BR92554_no_examine_prompt_without_cursor", br92554_cursor_off_setup, br92554_cursor_off_step, br92554_no_prompt_without_cursor },
+
+    { "BR39424_no_travel_path_during_playback", br39424_setup, br39424_step, br39424_no_travel_path_during_playback },
 
     { "BR21762_playback_end_clears_state", br21762_setup, NULL, br21762_playback_end_clears_state },
 

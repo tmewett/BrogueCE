@@ -1510,6 +1510,60 @@ static boolean br64166_verify(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR52291 — Underworm.  Health 80, defense 40, accuracy 160, damage 18-22;
+// regenerates every 3 turns; moves at two-thirds of normal speed (speed 150)
+// and attacks at half rate (attack speed 200).  A large creature that never
+// sleeps.
+//
+// The stat block, speeds, size and trait are read from the spawned
+// underworm.  Its regeneration runs deterministically in the turn loop: a
+// wounded ally rests, and must regain exactly one point of health on the
+// third turn.
+// ============================================================
+
+static creature *br52291_underworm;
+static int br52291_regenTurns;
+
+static void br52291_setup(void) {
+    trait_setup(MK_UNDERWORM);
+    br52291_underworm = subject;
+    makeMonsterAlly(br52291_underworm);
+    setMonsterHealth(br52291_underworm, 1);
+    br52291_regenTurns = 0;
+}
+
+static boolean br52291_step(void) {
+    restOneTurn();
+    br52291_regenTurns++;
+    if (monsterHealth(br52291_underworm) > 1) {
+        return false;
+    }
+    return br52291_regenTurns < 20;
+}
+
+static boolean br52291_verify(void) {
+    creature *u = br52291_underworm;
+    TEST_ASSERT(u != NULL, "underworm spawned");
+    TEST_ASSERT_EQ(monsterMaxHealth(u), 80, "underworm health");
+    TEST_ASSERT_EQ(monsterBaseDefense(u), 40, "underworm defense");
+    TEST_ASSERT_EQ(monsterBaseAccuracy(u), 160, "underworm accuracy");
+    TEST_ASSERT_EQ(monsterBaseDamageLow(u), 18, "underworm damage low");
+    TEST_ASSERT_EQ(monsterBaseDamageHigh(u), 22, "underworm damage high");
+    TEST_ASSERT_EQ(monsterBaseMovementSpeed(u), 150,
+                   "underworm moves at two-thirds of normal speed");
+    TEST_ASSERT_EQ(monsterBaseAttackSpeed(u), 200,
+                   "underworm attacks at half rate");
+    TEST_ASSERT(monsterRegenerates(u), "underworm regenerates naturally");
+    TEST_ASSERT(monsterIsLarge(u), "underworm is large");
+    TEST_ASSERT(monsterHasTrait(u, MONST_NEVER_SLEEPS), "underworm never sleeps");
+    TEST_ASSERT_EQ(br52291_regenTurns, 3,
+                   "the underworm should wait 3 turns before regenerating");
+    TEST_ASSERT_EQ(monsterHealth(u), 2,
+                   "the underworm should regain exactly one point of health per period");
+    return !testFailed;
+}
+
 const testCase tests_bestiary[] = {
     { "BR39474_flies", br39474_setup, NULL, br39474_verify },
     { "BR10411_erratic", br10411_setup, NULL, br10411_verify },
@@ -1595,5 +1649,6 @@ const testCase tests_bestiary[] = {
     { "BR16799_ogre_shaman_regenerates_every_20_turns", br16799_regen_setup, br16799_regen_step, br16799_regen_verify },
     { "BR83759_ifrit_stats_and_rapid_regeneration", br83759_setup, br83759_step, br83759_verify },
     { "BR64166_phoenix_stats_traits_and_no_regeneration", br64166_setup, br64166_step, br64166_verify },
+    { "BR52291_underworm_stats_and_regeneration", br52291_setup, br52291_step, br52291_verify },
     { NULL, NULL, NULL, NULL }
 };

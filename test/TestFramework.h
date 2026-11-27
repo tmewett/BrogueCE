@@ -286,6 +286,15 @@ boolean cellIsVisible(pos loc);
 // Whether the player has ever seen the tile (it stays discovered once seen).
 boolean cellIsDiscovered(pos loc);
 boolean cellHasGas(pos loc);
+// Put a gas of the given kind on a tile with an exact volume, replacing any
+// gas already there.  The tile's terrain is untouched, so a test can strand
+// gas on terrain that cannot hold it.
+void setGasAt(pos loc, short gasType, int volume);
+int gasVolumeAt(pos loc);
+short gasTypeAt(pos loc);
+// Run one periodic environment update (the pass that moves gas, spreads
+// fire, and so on) without advancing the turn count.
+void runEnvironmentUpdate(void);
 boolean cellIsOnFire(pos loc);
 // Whether any layer of the tile holds terrain that harms creatures standing
 // on it: fire, damage, poison, paralysis, confusion, or explosive damage.
@@ -442,6 +451,11 @@ boolean monsterIsHostile(const creature *monst);
 boolean monsterIsAsleep(const creature *monst);
 boolean monsterIsWandering(const creature *monst);
 boolean monsterIsTrackingPlayer(const creature *monst);
+// Whether a wandering monster's current destination is the part of the level
+// nearest `destination`: the checkpoint the game picks when it sends a
+// monster heading for a remembered location.  False when the monster is not
+// wandering or has no destination.
+boolean monsterWanderDestinationIsNearestTo(const creature *monst, pos destination);
 boolean monsterIsFleeing(const creature *monst);
 int monsterHealth(const creature *monst);
 void setMonsterHealth(creature *monst, int hp);
@@ -480,6 +494,16 @@ int monsterExperience(const creature *monst);
 boolean monsterHasTrait(const creature *monst, unsigned long trait);
 boolean monsterHasAbility(const creature *monst, unsigned long ability);
 boolean monsterCastsBolt(const creature *monst, short boltType);
+// Whether the monster is carrying another monster of the given kind inside
+// it, as a summoner that enters its summons does.
+boolean monsterCarriesMonsterOfType(const creature *monst, enum monsterTypes type);
+// Give the monster the chance to use its summon ability through the engine's
+// own routine, retrying the engine's random roll until a summon succeeds or
+// the attempt cap is reached.  Returns false when the monster cannot summon.
+boolean forceMonsterSummon(creature *monst);
+// Remove monsters that have already died from the level, so a test can count
+// what is left without also counting corpses.
+void clearDeadMonsters(void);
 
 // Base stat predicates (from monsterCatalog info).
 int monsterMaxHealth(const creature *monst);
@@ -633,6 +657,10 @@ boolean itemMagicWasDetected(const item *theItem);
 // The polarity magic detection reveals: 1 good, -1 bad, 0 neutral.
 int itemMagicPolarityValue(const item *theItem);
 int runicActivationChance(const item *theItem);
+// The game's full examine description of an item, exactly as its item box
+// prints it, including the paragraphs about a runic effect.  Reads the
+// current game state without drawing anything.
+const char *itemExamineText(const item *theItem);
 
 // Key a runic item to a creature class: the class of creature that a slaying
 // rune destroys, or the class of creature that an immunity armor protects
@@ -677,6 +705,16 @@ void enterEasyMode(void);
 // freshly generated dungeon welcomes the player.
 void restartGame(void);
 
+// Start a fresh game with the given master seed, running the whole start-up
+// sequence again exactly as a new run does.  Every level's seed and stair
+// placement is regenerated before the first level is built.
+void startGameWithSeed(unsigned long long seed);
+
+// Copy the seed reserved for each level of the dungeon, from its first level
+// through the deepest, into `seeds` and return how many values were copied.
+// At most `capacity` values are written.
+int dungeonLevelSeeds(unsigned long long *seeds, int capacity);
+
 // ---------------------------------------------
 // Main menu (variant dialog)
 // ---------------------------------------------
@@ -716,6 +754,13 @@ void showTitleScreen(void);
 // held for screenTextContains() and screenTextLineContaining() after the menu
 // has closed.
 void showGameStatsScreen(void);
+
+// Show the main menu's View -> High Scores screen, dismiss it, and quit the
+// title screen that follows.  Because the menu returns to the title screen
+// when the scores close, the frame captured at the final input request is
+// that title screen; highScoresWereDisplayed() reports whether the scores
+// were actually opened.
+void showHighScoresFromView(void);
 
 // ---------------------------------------------
 // Menu buttons

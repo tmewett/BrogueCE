@@ -942,6 +942,74 @@ static boolean br36967_death_ends_run(void) {
 
 // ============================================================
 
+// ============================================================
+// BR11461 — monsters near the player that are able to use
+// stairs follow it to the next level, approaching the stairs
+// after a delay based on their distance.
+// ============================================================
+
+static creature *br11461_near;
+static creature *br11461_far;
+static creature *br11461_unable;
+static int br11461_nearArrivalTurn;
+static int br11461_farArrivalTurn;
+static int br11461_turns;
+static int br11461_oldDepth;
+
+static void br11461_setup(void) {
+    // Open a clear stretch of floor around the player so both followers have
+    // an unobstructed route to the stairs, and space them so the near and far
+    // monsters differ only in distance (both are rats, with equal speed).
+    setPlayerPos(posAt(levelWidth() / 2, levelHeight() / 2));
+    setArenaRadius(12, FLOOR);
+
+    br11461_near = placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 3, 0));
+    br11461_far = placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 9, 0));
+    // Control: a monster that cannot use stairs must stay behind, proving
+    // the test observes stair use rather than every monster being moved.
+    br11461_unable = placeHostileMonster(MK_GOBLIN_TOTEM, posOffset(getPlayerPos(), 6, 0));
+
+    br11461_oldDepth = currentDepth();
+    br11461_nearArrivalTurn = -1;
+    br11461_farArrivalTurn = -1;
+    br11461_turns = 0;
+    descendToNextLevel();
+}
+
+static boolean br11461_step(void) {
+    if (br11461_nearArrivalTurn < 0
+        && monsterDepth(br11461_near) == currentDepth()) {
+        br11461_nearArrivalTurn = br11461_turns;
+    }
+    if (br11461_farArrivalTurn < 0
+        && monsterDepth(br11461_far) == currentDepth()) {
+        br11461_farArrivalTurn = br11461_turns;
+    }
+    if (br11461_nearArrivalTurn >= 0 && br11461_farArrivalTurn >= 0) {
+        return false;
+    }
+    if (br11461_turns >= 60) {
+        return false;
+    }
+    br11461_turns++;
+    restOneTurn();
+    return true;
+}
+
+static boolean br11461_near_monster_arrives_first(void) {
+    TEST_ASSERT_EQ(currentDepth(), br11461_oldDepth + 1,
+                   "the player should have descended one level");
+    TEST_ASSERT(br11461_nearArrivalTurn >= 0,
+                "the near monster should follow the player to the next level");
+    TEST_ASSERT(br11461_farArrivalTurn >= 0,
+                "the far monster should follow the player to the next level");
+    TEST_ASSERT(br11461_nearArrivalTurn < br11461_farArrivalTurn,
+                "the nearer monster should arrive at the stairs before the farther one");
+    TEST_ASSERT_EQ(monsterDepth(br11461_unable), br11461_oldDepth,
+                   "a monster that cannot use stairs should stay on the old level");
+    return !testFailed;
+}
+
 const testCase tests_progression[] = {
     { "BR19079_new_game_begins_on_depth_1",        NULL,                    NULL, new_game_begins_on_depth_1 },
     { "BR89567_new_game_starts_with_no_gold",      NULL,                    NULL, new_game_starts_with_no_gold },
@@ -996,6 +1064,9 @@ const testCase tests_progression[] = {
     { "BR90833_custom_phrase_names_depth", br90833_starve_setup, br90833_kill_step, br90833_custom_phrase_death },
 
     { "BR36967_death_ends_run", br36967_setup, br36967_starve_step, br36967_death_ends_run },
+
+    { "BR11461_near_monster_arrives_first",
+      br11461_setup, br11461_step, br11461_near_monster_arrives_first },
 
     { NULL, NULL, NULL, NULL }
 };

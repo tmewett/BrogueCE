@@ -7,7 +7,9 @@
 // for Wizard mode, the opacity menu buttons are painted with, the
 // decorative random-number stream button painting uses, the reach of a pile
 // of unicorn poop's rainbow glow, the radius and edge brightness of a crystal
-// wall's glow, and where a guardian charm places its guardian.
+// wall's glow, where a guardian charm places its guardian, the lich and
+// phylactery summoning cycle, and how gas stranded on a square that cannot
+// hold it is shared among its neighbours.
 //
 // Omitted are everything that needs a recording or a run history, neither of
 // which the pending rules describe headlessly.
@@ -1767,6 +1769,304 @@ static boolean br24247_flash_restores_lighting(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR40052 — when the game's master seed fits in its lower 32
+// bits, every level's seed comes from the backward-compatible
+// small range: a value from 0 to 9999 plus 10,000 times another
+// value from 0 to 9999.  A level seed of zero is never kept;
+// it is replaced by the level's depth plus one.
+//
+// The first test starts a game from a master seed that fits in
+// 32 bits and checks every level seed the dungeon reserved: all
+// are within the old scheme's maximum (99,999,999), none is
+// zero, and at least one draws the upper 10,000-multiple term,
+// so both rolls really contribute.  If the game drew a full
+// 64-bit seed instead, the chance that all of the dungeon's
+// level seeds stayed below 100 million is negligible.
+//
+// The second test uses master seed 25,179,883, whose backward-
+// compatible draw produces a zero level seed on depth 3.  That
+// zero must not survive: the level's seed must be its depth plus
+// one, proving both the rejection and the depth-based
+// replacement value.
+// ============================================================
+
+#define BR40052_MAX_SMALL_LEVEL_SEED (9999ULL + 10000ULL * 9999ULL)
+#define BR40052_SEED_CAPACITY 64
+
+static unsigned long long br40052_seeds[BR40052_SEED_CAPACITY];
+static int br40052_seedCount;
+
+static void br40052_start_with_master_seed(unsigned long long seed) {
+    startGameWithSeed(seed);
+    TEST_ASSERT(dungeonSeed() == seed,
+                "control: the game should run from the requested master seed");
+    br40052_seedCount = dungeonLevelSeeds(br40052_seeds, BR40052_SEED_CAPACITY);
+}
+
+static void br40052_range_setup(void) {
+    // Fits in the lower 32 bits, so every level must use the backward-
+    // compatible draw.
+    br40052_start_with_master_seed(20221016ULL);
+}
+
+static boolean br40052_level_seeds_stay_in_small_range(void) {
+    TEST_ASSERT(br40052_seedCount >= 2,
+                "control: the dungeon should reserve a seed for every level");
+    boolean upperTermSeen = false;
+    for (int i = 0; i < br40052_seedCount; i++) {
+        TEST_ASSERT(br40052_seeds[i] != 0,
+                    "no level may keep a zero seed");
+        TEST_ASSERT(br40052_seeds[i] <= BR40052_MAX_SMALL_LEVEL_SEED,
+                    "a level seed should stay within the backward-compatible 32-bit scheme");
+        if (br40052_seeds[i] >= 10000) {
+            upperTermSeen = true;
+        }
+    }
+    TEST_ASSERT(upperTermSeen,
+                "level seeds should include the 10,000-times roll, not just the 0-to-9999 roll");
+    return !testFailed;
+}
+
+static void br40052_zero_setup(void) {
+    // The backward-compatible draw yields a zero level seed at depth 3.
+    br40052_start_with_master_seed(25179883ULL);
+}
+
+static boolean br40052_zero_level_seed_becomes_depth_plus_one(void) {
+    TEST_ASSERT(br40052_seedCount >= 3,
+                "control: the dungeon should have a third level to inspect");
+    TEST_ASSERT_EQ(br40052_seeds[2], 3,
+                   "a zero seed drawn for depth 3 should be replaced by depth plus one");
+    for (int i = 0; i < br40052_seedCount; i++) {
+        TEST_ASSERT(br40052_seeds[i] != 0,
+                    "a zero level seed should never be kept");
+    }
+    return !testFailed;
+}
+
+// ============================================================
+// BR36302 — examining an identified weapon of multiplicity
+// also states how many spectral images it would produce if
+// enchanted further, how often they would appear, and how many
+// turns they would last.
+// ============================================================
+
+static const char *br36302_description;
+
+static void br36302_setup(void) {
+    // Matching the player's strength to the sword's requirement makes the
+    // net enchantment exactly the item's +5, and one more scroll of
+    // enchanting (power 1, at the 1.25 increment for a handled weapon)
+    // previews +6.25: one spectral image now, two after the scroll, and
+    // three turns either way.
+    item *theItem = giveAndEquipRunicWeapon(SWORD, W_MULTIPLICITY, 5, true);
+    br36302_description = itemExamineText(theItem);
+}
+
+static boolean br36302_examine_previews_stronger_images(void) {
+    int previewChance = 0;
+
+    TEST_ASSERT(br36302_description != NULL,
+                "the multiplicity weapon should have an examine description");
+    TEST_ASSERT(strstr(br36302_description,
+                       "1 spectral sword will spring into being") != NULL,
+                "the examine text should state the current spectral image count");
+    TEST_ASSERT(strstr(br36302_description, "will dissipate 3 turns later") != NULL,
+                "the examine text should state how long the current images last");
+    TEST_ASSERT(strstr(br36302_description,
+                       "(If the sword is enchanted, 2 images will appear") != NULL,
+                "the examine text should preview the image count after further enchanting");
+    TEST_ASSERT(strstr(br36302_description,
+                       "of the time, and will last 3 turns.)") != NULL,
+                "the examine text should preview the appearance chance and duration after further enchanting");
+
+    const char *preview = strstr(br36302_description, "images will appear ");
+    TEST_ASSERT(preview != NULL
+                && sscanf(preview, "images will appear %d%% of the time", &previewChance) == 1,
+                "the preview should state a numeric chance for the images to appear");
+    TEST_ASSERT(previewChance > 0 && previewChance <= 100,
+                "the previewed chance should be a real percentage");
+    return !testFailed;
+}
+
+// ============================================================
+// BR18004 — a phylactery summons a lich and hides inside it; killing
+// that lich only reveals the phylactery, which can summon a fresh
+// lich and hide again, so the lich keeps returning until the
+// phylactery itself is destroyed.
+//
+// The phylactery is placed alone in an open arena.  Forcing the
+// engine's own summon routine makes it produce its single lich and
+// disappear from the level (it is now carried inside that lich).
+// Killing the lich through the ordinary death path returns the
+// phylactery to the floor, alive and on the lich's old tile.  The
+// same cycle runs a second time, proving the phylactery can repeat
+// it; destroying the phylactery then ends the cycle for good.
+// ============================================================
+
+static creature *br18004_phylactery;
+
+static void br18004_setup(void) {
+    setArenaRadius(8, FLOOR);
+    br18004_phylactery = placeHostileMonster(MK_PHYLACTERY, posOffset(getPlayerPos(), 3, 0));
+}
+
+static boolean br18004_phylactery_cycle_ends_only_when_destroyed(void) {
+    creature *phylactery = br18004_phylactery;
+    TEST_ASSERT(phylactery != NULL && monsterIsAlive(phylactery),
+                "setup: the phylactery should be alive in the arena");
+    TEST_ASSERT(monsterHasAbility(phylactery, MA_CAST_SUMMON),
+                "control: the phylactery's catalog entry carries the summon ability");
+    if (phylactery == NULL) {
+        return false;
+    }
+
+    // First cycle: summon a lich, then destroy that lich.
+    TEST_ASSERT(forceMonsterSummon(phylactery),
+                "the phylactery should summon a lich");
+    creature *firstLich = findMonster(MK_LICH);
+    TEST_ASSERT(firstLich != NULL && monsterIsAlive(firstLich),
+                "the summoned lich should stand alive on the level");
+    if (firstLich == NULL) {
+        return false;
+    }
+    TEST_ASSERT_EQ(countMonstersOfType(MK_PHYLACTERY), 0,
+                   "the phylactery should leave the level when it hides inside its lich");
+    TEST_ASSERT(monsterCarriesMonsterOfType(firstLich, MK_PHYLACTERY),
+                "the summoned lich should be carrying the phylactery inside it");
+    pos firstLichPos = monsterPosition(firstLich);
+
+    makeMonsterDying(firstLich);
+    TEST_ASSERT(!monsterIsAlive(firstLich),
+                "the lich should die when killed");
+    clearDeadMonsters();
+    phylactery = findMonster(MK_PHYLACTERY);
+    TEST_ASSERT(phylactery != NULL && monsterIsAlive(phylactery),
+                "killing the lich should reveal the phylactery, not destroy it");
+    if (phylactery == NULL) {
+        return false;
+    }
+    TEST_ASSERT_POS_EQ(monsterPosition(phylactery), firstLichPos,
+                       "the revealed phylactery should appear where the lich fell");
+
+    // Second cycle: the revealed phylactery can summon and hide again.
+    TEST_ASSERT(forceMonsterSummon(phylactery),
+                "the revealed phylactery should be able to summon again");
+    creature *secondLich = findMonster(MK_LICH);
+    TEST_ASSERT(secondLich != NULL && monsterIsAlive(secondLich),
+                "the phylactery should produce another living lich");
+    if (secondLich == NULL) {
+        return false;
+    }
+    TEST_ASSERT_EQ(countMonstersOfType(MK_PHYLACTERY), 0,
+                   "the phylactery should hide inside the replacement lich too");
+    TEST_ASSERT(monsterCarriesMonsterOfType(secondLich, MK_PHYLACTERY),
+                "the replacement lich should carry the phylactery inside it");
+    pos secondLichPos = monsterPosition(secondLich);
+
+    makeMonsterDying(secondLich);
+    clearDeadMonsters();
+    phylactery = findMonster(MK_PHYLACTERY);
+    TEST_ASSERT(phylactery != NULL && monsterIsAlive(phylactery),
+                "killing the replacement lich should reveal the phylactery again");
+    if (phylactery == NULL) {
+        return false;
+    }
+    TEST_ASSERT_POS_EQ(monsterPosition(phylactery), secondLichPos,
+                       "the phylactery should reappear where the replacement lich fell");
+
+    // Destroying the phylactery itself stops the cycle.
+    makeMonsterDying(phylactery);
+    clearDeadMonsters();
+    TEST_ASSERT_EQ(countMonstersOfType(MK_LICH), 0,
+                   "destroying the phylactery should leave no lich behind");
+    TEST_ASSERT_EQ(countMonstersOfType(MK_PHYLACTERY), 0,
+                   "the destroyed phylactery should not return");
+    return !testFailed;
+}
+
+// ============================================================
+// BR35620 — when gas is stranded on a square that cannot hold it,
+// its volume is split as evenly as possible among the neighbouring
+// squares that can hold gas, each of which takes on that same kind
+// of gas, and any volume that does not divide evenly is lost.
+//
+// A granite square (which blocks gas) holds 25 units of explosive
+// gas, surrounded by an eight-tile ring of floor sealed inside
+// granite.  Integer division over the eight neighbours gives each
+// three units, copying the gas kind with them, and discards the
+// remaining one.  The floor ring is closed, so the second gas pass
+// in the same update leaves those equal shares unchanged; methane
+// does not dissipate, so the measured volumes stay exact.
+// ============================================================
+
+static pos br35620_source;
+static pos br35620_neighbours[8];
+static int br35620_sourceVolume;
+static short br35620_sourceType;
+
+static void br35620_setup(void) {
+    static const int dx[8] = {-1, -1, -1, 0, 1, 1, 1, 0};
+    static const int dy[8] = {-1, 0, 1, 1, 1, 0, -1, -1};
+
+    setArenaRadius(10, FLOOR);
+    br35620_source = posOffset(getPlayerPos(), 6, 0);
+
+    // The stranded square itself is granite; the eight neighbours are
+    // gas-permeable floor.  A granite border keeps the gas from escaping
+    // beyond that ring.
+    for (int x = -1; x <= 1; x++) {
+        for (int y = -1; y <= 1; y++) {
+            setTerrain(posOffset(br35620_source, x, y),
+                       (x == 0 && y == 0) ? GRANITE : FLOOR);
+        }
+    }
+    for (int x = -2; x <= 2; x++) {
+        for (int y = -2; y <= 2; y++) {
+            if (x == -2 || x == 2 || y == -2 || y == 2) {
+                setTerrain(posOffset(br35620_source, x, y), GRANITE);
+            }
+        }
+    }
+    for (int i = 0; i < 8; i++) {
+        br35620_neighbours[i] = posOffset(br35620_source, dx[i], dy[i]);
+    }
+
+    setGasAt(br35620_source, METHANE_GAS, 25);
+}
+
+static boolean br35620_step(void) {
+    br35620_sourceVolume = gasVolumeAt(br35620_source);
+    br35620_sourceType = gasTypeAt(br35620_source);
+    runEnvironmentUpdate();
+    return false;
+}
+
+static boolean br35620_stranded_gas_splits_evenly_and_loses_remainder(void) {
+    TEST_ASSERT_EQ(br35620_sourceVolume, 25,
+                   "control: the stranded square should start with 25 units of gas");
+    TEST_ASSERT_EQ(br35620_sourceType, METHANE_GAS,
+                   "control: the stranded gas should be the explosive kind");
+
+    TEST_ASSERT_EQ(gasVolumeAt(br35620_source), 0,
+                   "the square that cannot hold gas should be emptied");
+    TEST_ASSERT_EQ(gasTypeAt(br35620_source), NOTHING,
+                   "the emptied square should no longer hold a gas kind");
+
+    int total = 0;
+    for (int i = 0; i < 8; i++) {
+        TEST_ASSERT_EQ(gasVolumeAt(br35620_neighbours[i]), 3,
+                       "each of the eight neighbours should receive 25 / 8, rounded down");
+        TEST_ASSERT_EQ(gasTypeAt(br35620_neighbours[i]), METHANE_GAS,
+                       "each neighbour should take on the stranded gas's kind");
+        total += gasVolumeAt(br35620_neighbours[i]);
+    }
+    TEST_ASSERT_EQ(total, 24,
+                   "the one unit that does not divide evenly should be lost, not redistributed");
+    return !testFailed;
+}
+
 const testCase tests_newrules[] = {
     { "BR29087_turn_counts_diverge_while_paralyzed",      br29087_setup, br29087_step, br29087_turn_counts_diverge_while_paralyzed },
     { "BR14549_change_mode_dialog_describes_wizard_mode", br14549_setup, NULL,         br14549_change_mode_dialog_describes_wizard_mode },
@@ -1822,11 +2122,24 @@ const testCase tests_newrules[] = {
     { "BR24247_flash_restores_lighting",
       br24247_setup, NULL, br24247_flash_restores_lighting },
 
+    { "BR40052_level_seeds_stay_in_small_range",
+      br40052_range_setup, NULL, br40052_level_seeds_stay_in_small_range },
+    { "BR40052_zero_level_seed_becomes_depth_plus_one",
+      br40052_zero_setup, NULL, br40052_zero_level_seed_becomes_depth_plus_one },
+
+    { "BR36302_multiplicity_examine_previews_images",
+      br36302_setup, NULL, br36302_examine_previews_stronger_images },
+
     { "BR38512_archive_overwrites_oldest_message_when_full",
       br38512_setup, NULL, br38512_archive_rolls_over_at_capacity },
 
     { "BR37725_ambient_light_darkens_to_blue_grey_with_depth",
       NULL, NULL, br37725_ambient_light_darkens_to_blue_grey_with_depth },
+
+    { "BR18004_phylactery_cycle_ends_only_when_destroyed",
+      br18004_setup, NULL, br18004_phylactery_cycle_ends_only_when_destroyed },
+    { "BR35620_stranded_gas_splits_evenly_and_loses_remainder",
+      br35620_setup, br35620_step, br35620_stranded_gas_splits_evenly_and_loses_remainder },
 
     { NULL, NULL, NULL, NULL }
 };

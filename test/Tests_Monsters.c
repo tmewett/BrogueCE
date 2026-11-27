@@ -3005,6 +3005,141 @@ static boolean br55571_noncaptive_clone_is_not_ally(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR89904 — a monster tracking you that loses the scent switches
+// to wandering and heads for the last place it saw you
+//
+// The monster is put to sleep and struck, so it wakes, starts
+// tracking and records the player's tile as the last place it saw
+// them.  It is then moved to the reachable floor tile farthest from
+// that spot by scent distance -- more than three times the detection
+// range, so it must lose the trail even in open sight.  The first
+// monster turn must therefore switch it to wandering, and over the
+// following turns its distance to the remembered tile must fall by
+// far more than a random walk would manage.
+// ============================================================
+
+#define BR89904_MAX_TURNS 100
+#define BR89904_PROGRESS 20
+
+static creature *br89904_subject;
+static pos br89904_lastSeen;
+static boolean br89904_wasHit;
+static boolean br89904_trackedBefore;
+static boolean br89904_wasWandering;
+static boolean br89904_headForLastSeen;
+static int br89904_startDistance;
+static int br89904_bestDistance;
+static int br89904_turns;
+static int br89904_scentGap;
+
+static int br89904_distance(pos a, pos b) {
+    int dx = a.x - b.x;
+    int dy = a.y - b.y;
+    if (dx < 0) dx = -dx;
+    if (dy < 0) dy = -dy;
+    return dx > dy ? dx : dy;
+}
+
+static int br89904_scentDistance(pos a, pos b) {
+    int dx = a.x - b.x;
+    int dy = a.y - b.y;
+    if (dx < 0) dx = -dx;
+    if (dy < 0) dy = -dy;
+    return dx > dy ? 2 * dx + dy : dx + 2 * dy;
+}
+
+static void br89904_setup(void) {
+    clearMonsters();
+    setPlayerHealth(100000);
+    br89904_lastSeen = getPlayerPos();
+
+    // A sleeping neighbour is struck, so the blow lands and wakes it.
+    static const int neighbours[8][2] = {
+        {1, 0}, {-1, 0}, {0, 1}, {0, -1},
+        {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
+    };
+    pos beside = posOffset(br89904_lastSeen, 1, 0);
+    for (int i = 0; i < 8 && cellObstructsPassage(beside); i++) {
+        beside = posOffset(br89904_lastSeen, neighbours[i][0], neighbours[i][1]);
+    }
+    br89904_subject = spawnMonster(MK_RAT, beside);
+    putMonsterToSleep(br89904_subject);
+    setMonsterHealth(br89904_subject, 1000);
+
+    br89904_wasHit = playerAttacksMonster(br89904_subject);
+    br89904_trackedBefore = monsterIsTrackingPlayer(br89904_subject);
+
+    // Move it to the reachable floor tile farthest from the remembered
+    // tile by scent: beyond three times the detection range, so it must
+    // lose the trail no matter what it can see.
+    pos destination = br89904_lastSeen;
+    int farthestScent = -1;
+    for (int x = 1; x < levelWidth() - 1; x++) {
+        for (int y = 1; y < levelHeight() - 1; y++) {
+            pos candidate = posAt(x, y);
+            if (cellObstructsPassage(candidate)
+                || pathingDistanceBetween(br89904_lastSeen, candidate, 0) >= 30000) {
+                continue;
+            }
+            int scent = br89904_scentDistance(candidate, br89904_lastSeen);
+            if (scent > farthestScent) {
+                farthestScent = scent;
+                destination = candidate;
+            }
+        }
+    }
+    setMonsterPos(br89904_subject, destination);
+    br89904_scentGap = farthestScent;
+
+    br89904_startDistance = br89904_distance(monsterPosition(br89904_subject),
+                                             br89904_lastSeen);
+    br89904_bestDistance = br89904_startDistance;
+    br89904_turns = 0;
+    br89904_wasWandering = false;
+    br89904_headForLastSeen = false;
+}
+
+static boolean br89904_step(void) {
+    if (br89904_turns >= BR89904_MAX_TURNS
+        || br89904_startDistance - br89904_bestDistance >= BR89904_PROGRESS) {
+        return false;
+    }
+
+    monsterTakesTurn(br89904_subject);
+    br89904_turns++;
+
+    int distance = br89904_distance(monsterPosition(br89904_subject),
+                                    br89904_lastSeen);
+    if (distance < br89904_bestDistance) {
+        br89904_bestDistance = distance;
+    }
+    if (br89904_turns == 1) {
+        br89904_wasWandering = monsterIsWandering(br89904_subject);
+        br89904_headForLastSeen =
+            monsterWanderDestinationIsNearestTo(br89904_subject,
+                                                br89904_lastSeen);
+    }
+    return true;
+}
+
+static boolean br89904_verify(void) {
+    TEST_ASSERT(br89904_subject != NULL, "the monster should have spawned");
+    TEST_ASSERT(br89904_wasHit,
+                "setup: the sleeping monster should have been struck");
+    TEST_ASSERT(br89904_trackedBefore,
+                "setup: the struck monster should be tracking the player");
+    TEST_ASSERT(br89904_scentGap > 84,
+                "setup: the destination should lie beyond three times the detection range");
+    TEST_ASSERT(br89904_wasWandering,
+                "a tracker that loses the scent should switch to wandering");
+    TEST_ASSERT(br89904_headForLastSeen,
+                "the wandering destination should be the part of the level nearest the last place it saw the player");
+    TEST_ASSERT(br89904_startDistance - br89904_bestDistance >= BR89904_PROGRESS,
+                "after losing the scent it should head for the last place it saw the player");
+    return !testFailed;
+}
+
 const testCase tests_monsters[] = {
     { "BR46783_generated_monster_carries_hopper_item", br46783_carrier_setup, NULL, br46783_carrier_verify },
     { "BR46783_hopper_items_are_taken_and_exhausted", br46783_pool_setup, NULL, br46783_pool_verify },
@@ -3136,6 +3271,8 @@ const testCase tests_monsters[] = {
     { "BR70006_ignores_immobile_weapon_immune_enemy",          br70006_immobile_hostile_setup, br70006_take_turn, br70006_immobile_hostile_verify },
 
     { "BR64018_allied_horde_spawns_allies", br64018_setup, NULL, br64018_allied_horde_spawns_allies },
+
+    { "BR89904_tracking_monster_losing_scent_wanders_to_last_seen", br89904_setup, br89904_step, br89904_verify },
 
     { NULL, NULL, NULL, NULL }
 };

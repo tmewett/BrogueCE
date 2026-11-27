@@ -482,6 +482,77 @@ static boolean player_speeds_still_hasted(void) {
 }
 
 // ============================================================
+// BR37844 — recomputing encumbrance keeps the player's slow multiplier
+// ============================================================
+
+static int br37844BaseMove;
+static int br37844BaseAttack;
+static int br37844HastedMove;
+
+// Equipping armor recomputes the player's encumbrance.  The recomputation
+// must reapply the haste/slow multiplier rather than resetting the player to
+// their base speeds.
+static void hasted_encumbrance_recompute_setup(void) {
+    clearMonsters();
+    br37844BaseMove = playerMovementSpeed();
+    br37844BaseAttack = playerAttackSpeed();
+    hastePlayer(50);
+    br37844HastedMove = playerMovementSpeed();
+    wearArmor(LEATHER_ARMOR);
+}
+
+static boolean hasted_speed_survives_encumbrance_recompute(void) {
+    TEST_ASSERT_EQ(br37844HastedMove, br37844BaseMove / 2,
+                   "precondition: haste should halve the player's movement time");
+    TEST_ASSERT_EQ(playerStatusTurns(STATUS_HASTED), 50,
+                   "equipping armor should not end the player's haste");
+    TEST_ASSERT_EQ(playerMovementSpeed(), br37844BaseMove / 2,
+                   "recomputing encumbrance while hasted should keep movement time halved");
+    TEST_ASSERT_EQ(playerAttackSpeed(), br37844BaseAttack / 2,
+                   "recomputing encumbrance while hasted should keep attack time halved");
+    return !testFailed;
+}
+
+static void slowed_encumbrance_recompute_setup(void) {
+    clearMonsters();
+    br37844BaseMove = playerMovementSpeed();
+    br37844BaseAttack = playerAttackSpeed();
+    slowPlayer(50);
+    wearArmor(LEATHER_ARMOR);
+}
+
+static boolean slowed_speed_survives_encumbrance_recompute(void) {
+    TEST_ASSERT_EQ(playerStatusTurns(STATUS_SLOWED), 50,
+                   "equipping armor should not end the player's slow");
+    TEST_ASSERT_EQ(playerMovementSpeed(), br37844BaseMove * 2,
+                   "recomputing encumbrance while slowed should double movement time");
+    TEST_ASSERT_EQ(playerAttackSpeed(), br37844BaseAttack * 2,
+                   "recomputing encumbrance while slowed should double attack time");
+    return !testFailed;
+}
+
+// Control: without haste or slow, recomputing encumbrance leaves the
+// player's base speeds unchanged, so the multiplier comes from the status.
+static void normal_encumbrance_recompute_setup(void) {
+    clearMonsters();
+    br37844BaseMove = playerMovementSpeed();
+    br37844BaseAttack = playerAttackSpeed();
+    wearArmor(LEATHER_ARMOR);
+}
+
+static boolean normal_speed_survives_encumbrance_recompute(void) {
+    TEST_ASSERT_EQ(playerStatusTurns(STATUS_HASTED), 0,
+                   "the control player should not be hasted");
+    TEST_ASSERT_EQ(playerStatusTurns(STATUS_SLOWED), 0,
+                   "the control player should not be slowed");
+    TEST_ASSERT_EQ(playerMovementSpeed(), br37844BaseMove,
+                   "recomputing encumbrance without haste or slow should keep normal movement time");
+    TEST_ASSERT_EQ(playerAttackSpeed(), br37844BaseAttack,
+                   "recomputing encumbrance without haste or slow should keep normal attack time");
+    return !testFailed;
+}
+
+// ============================================================
 // BR64646 — poison adds concentration and duration
 // ============================================================
 
@@ -631,6 +702,60 @@ static void hunger_warning_setup(void) {
 static boolean hunger_warning_shown(void) {
     TEST_ASSERT(messageWasShown("you are hungry"),
                 "crossing the hunger threshold should warn the player");
+    return !testFailed;
+}
+
+// ============================================================
+// BR10266 — while levitating, the player does not discover the secrets of
+// the tile they stand on.
+//
+// The player is placed on a hidden gas vent: a passable secret tile that is
+// neither a trap nor an obstruction, so the only engine path that can reveal
+// it is the "discover the secrets of the tile you stand on" rule.  A
+// levitating player must leave the vent hidden; the identical non-levitating
+// control must reveal it, so the levitating case is not passing vacuously.
+// ============================================================
+
+static pos br10266SecretLoc;
+
+static void br10266_setup(boolean levitating) {
+    br10266SecretLoc = posOffset(getPlayerPos(), 1, 0);
+    setTerrain(br10266SecretLoc, MACHINE_POISON_GAS_VENT_HIDDEN);
+    // The tile has to be in view for its secret to be discovered.
+    revealCell(br10266SecretLoc);
+    setPlayerPos(br10266SecretLoc);
+    if (levitating) {
+        applyStatusToPlayer(STATUS_LEVITATING, 20);
+    }
+    applyTileEffectsToPlayer();
+}
+
+static void br10266_levitating_setup(void) {
+    br10266_setup(true);
+}
+
+static boolean br10266_levitating_keeps_secret(void) {
+    TEST_ASSERT(isPlayerLevitating(), "setup: the player should be levitating");
+    TEST_ASSERT(playerIsAt(br10266SecretLoc),
+                "setup: the player should stand on the hidden vent");
+    TEST_ASSERT(cellIsTerrain(br10266SecretLoc, MACHINE_POISON_GAS_VENT_HIDDEN),
+                "a levitating player should not discover the hidden vent they stand on");
+    return !testFailed;
+}
+
+static void br10266_control_setup(void) {
+    br10266_setup(false);
+}
+
+static boolean br10266_discovers_secret(void) {
+    TEST_ASSERT(!isPlayerLevitating(),
+                "setup: the control player should not be levitating");
+    TEST_ASSERT(playerIsAt(br10266SecretLoc),
+                "setup: the player should stand on the hidden vent");
+    TEST_ASSERT(!cellIsTerrain(br10266SecretLoc, MACHINE_POISON_GAS_VENT_HIDDEN),
+                "a non-levitating player should discover the hidden vent they stand on");
+    TEST_ASSERT(cellIsTerrain(br10266SecretLoc, MACHINE_POISON_GAS_VENT_DORMANT),
+                "the discovered vent should be revealed as an inactive gas vent");
     return !testFailed;
 }
 
@@ -1316,6 +1441,69 @@ static boolean br36538_no_retaliation(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR98338 — a monster that avoids corridors is enraged for 4 turns
+// by an attack that directly damages it
+//
+// The target is asleep so the blow is guaranteed to land, and its
+// health is raised so the blow cannot kill it before the reaction
+// is recorded.  The control monster lacks the corridor-avoidance
+// ability, so the same attack must leave it calm: that keeps the
+// check from passing on any attack at all.
+// ============================================================
+
+static creature *br98338_avoider;
+static creature *br98338_control;
+static boolean br98338_avoiderWasHit;
+static boolean br98338_controlWasHit;
+
+static void br98338_setup(void) {
+    clearArena();
+    pos targetLoc = posOffset(getPlayerPos(), 1, 0);
+    enum monsterTypes avoiderType = chooseMonsterTypeByProperty(
+        BOLT_NONE, 0, 0, MA_AVOID_CORRIDORS, 0);
+
+    br98338_avoider = spawnMonster(avoiderType, targetLoc);
+    putMonsterToSleep(br98338_avoider);
+    setMonsterHealth(br98338_avoider, 1000);
+
+    br98338_control = spawnMonster(MK_RAT, posOffset(getPlayerPos(), -1, 0));
+    putMonsterToSleep(br98338_control);
+    setMonsterHealth(br98338_control, 1000);
+}
+
+static boolean br98338_attack_avoider_step(void) {
+    br98338_avoiderWasHit = playerAttacksMonster(br98338_avoider);
+    return false;
+}
+
+static boolean br98338_attack_control_step(void) {
+    br98338_controlWasHit = playerAttacksMonster(br98338_control);
+    return false;
+}
+
+static boolean br98338_avoider_enraged(void) {
+    TEST_ASSERT(monsterHasAbility(br98338_avoider, MA_AVOID_CORRIDORS),
+                "setup: the target must normally avoid corridors");
+    TEST_ASSERT(br98338_avoiderWasHit,
+                "a sleeping target should be hit by the attack");
+    TEST_ASSERT(monsterHasStatus(br98338_avoider, STATUS_ENRAGED),
+                "direct damage should enrage a corridor-avoiding monster");
+    TEST_ASSERT_EQ(monsterStatusTurns(br98338_avoider, STATUS_ENRAGED), 4,
+                   "the enraged counter should be set to 4 turns");
+    return !testFailed;
+}
+
+static boolean br98338_control_not_enraged(void) {
+    TEST_ASSERT(!monsterHasAbility(br98338_control, MA_AVOID_CORRIDORS),
+                "setup: the control must not avoid corridors");
+    TEST_ASSERT(br98338_controlWasHit,
+                "a sleeping control should be hit by the attack");
+    TEST_ASSERT(!monsterHasStatus(br98338_control, STATUS_ENRAGED),
+                "direct damage should not enrage a monster that does not avoid corridors");
+    return !testFailed;
+}
+
 const testCase tests_status_effects[] = {
     { "BR97529_telepathy_counter_decrements",   telepathy_decrement_setup,      rest_one_turn_step, status_decremented_by_one },
     { "BR97529_hallucination_counter_decrements", hallucination_decrement_setup, rest_one_turn_step, status_decremented_by_one },
@@ -1352,6 +1540,10 @@ const testCase tests_status_effects[] = {
     { "BR71884_haste_expiry_restores_player_speed_and_time", player_haste_expires_setup, rest_twice_step, player_haste_expired },
     { "BR71884_haste_still_running_keeps_speeds_raised", player_haste_still_running_setup, rest_twice_step, player_speeds_still_hasted },
 
+    { "BR37844_hasted_speed_survives_encumbrance_recompute", hasted_encumbrance_recompute_setup, NULL, hasted_speed_survives_encumbrance_recompute },
+    { "BR37844_slowed_speed_survives_encumbrance_recompute", slowed_encumbrance_recompute_setup, NULL, slowed_speed_survives_encumbrance_recompute },
+    { "BR37844_normal_speed_survives_encumbrance_recompute", normal_encumbrance_recompute_setup, NULL, normal_speed_survives_encumbrance_recompute },
+
     { "BR64646_poison_adds_concentration",      poison_added_setup,             NULL, poison_added },
     { "BR75638_poison_damages_and_ticks",       poison_damages_setup,           rest_one_turn_step, poison_damaged_and_ticked },
     { "BR52651_panacea_clears_poison",          panacea_clears_poison_setup,    NULL, poison_cleared },
@@ -1367,6 +1559,9 @@ const testCase tests_status_effects[] = {
     { "BR32368_hunger_threshold_warning",       hunger_warning_setup,           rest_one_turn_step, hunger_warning_shown },
 
     { "BR73170_levitating_not_underwater",      levitating_over_water_setup,    NULL, not_underwater },
+
+    { "BR10266_levitating_keeps_secret_hidden", br10266_levitating_setup,       NULL, br10266_levitating_keeps_secret },
+    { "BR10266_non_levitating_discovers_secret", br10266_control_setup,         NULL, br10266_discovers_secret },
 
     { "BR98623_levitating_shows_location_flavor",    br98623_levitating_setup, NULL, br98623_levitating_shows_location_flavor },
     { "BR98623_non_levitating_shows_terrain_flavor",  br98623_terrain_setup,    NULL, br98623_shows_terrain_flavor },
@@ -1406,6 +1601,9 @@ const testCase tests_status_effects[] = {
     { "BR14011_confusion_gas_skips_invulnerable_creature", br14011_invulnerable_setup, NULL, br14011_invulnerable_not_confused },
 
     { "BR49341_discordant_attacks_nearest_creature", br49341_setup, br49341_step, br49341_attacks_nearest_creature },
+
+    { "BR98338_corridor_avoider_enraged_by_damage", br98338_setup, br98338_attack_avoider_step, br98338_avoider_enraged },
+    { "BR98338_other_monster_not_enraged_by_damage", br98338_setup, br98338_attack_control_step, br98338_control_not_enraged },
 
     { NULL, NULL, NULL, NULL }
 };

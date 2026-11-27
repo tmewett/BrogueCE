@@ -795,6 +795,26 @@ boolean cellHasGas(pos loc) {
     return pmapAt(loc)->volume > 0;
 }
 
+// See the declaration in TestFramework.h.
+void setGasAt(pos loc, short gasType, int volume) {
+    pmapAt(loc)->layers[GAS] = (enum tileType) gasType;
+    pmapAt(loc)->volume = (unsigned short) max(0, volume);
+    refreshDungeonCell(loc);
+}
+
+int gasVolumeAt(pos loc) {
+    return pmapAt(loc)->volume;
+}
+
+short gasTypeAt(pos loc) {
+    return pmapAt(loc)->layers[GAS];
+}
+
+// See the declaration in TestFramework.h.
+void runEnvironmentUpdate(void) {
+    updateEnvironment();
+}
+
 boolean cellIsOnFire(pos loc) {
     return cellHasTerrainFlag(loc, T_IS_FIRE);
 }
@@ -947,6 +967,25 @@ void restartGame(void) {
     startLevel(rogue.depthLevel, 1);
 }
 
+// See the declaration in TestFramework.h.
+void startGameWithSeed(unsigned long long seed) {
+    freeEverything();
+    initializeRogue(seed);
+    startLevel(rogue.depthLevel, 1);
+}
+
+// See the declaration in TestFramework.h.
+int dungeonLevelSeeds(unsigned long long *seeds, int capacity) {
+    int count = gameConst->deepestLevel;
+    if (count > capacity) {
+        count = capacity;
+    }
+    for (int i = 0; i < count; i++) {
+        seeds[i] = levels[i].levelSeed;
+    }
+    return count;
+}
+
 // ---------------------------------------------
 // Game modes and high scores
 // ---------------------------------------------
@@ -1029,6 +1068,27 @@ void showGameStatsScreen(void) {
     mainBrogueJunction();
 
     screenSnapshotHoldText = NULL;
+    currentConsole.pauseForMilliseconds = savedPause;
+    clearInputQueue();
+}
+
+// See the declaration in TestFramework.h.
+void showHighScoresFromView(void) {
+    boolean (*savedPause)(short, PauseBehavior) = currentConsole.pauseForMilliseconds;
+    currentConsole.pauseForMilliseconds = menuPauseSeesQueuedInput;
+
+    // The menu path, hidden from the test: open the View flyout, choose High
+    // Scores, dismiss the scores, then quit the title screen the menu returns
+    // to.  The title screen is drawn before it waits for that final key, so
+    // the frame captured at that input request proves the menu came back
+    // instead of quitting.
+    rogue.nextGame = NG_NOTHING; // a prior dialog run leaves NG_QUIT behind
+    queueKeystroke('v', false, false);
+    queueKeystroke('h', false, false);
+    queueKeystroke(ACKNOWLEDGE_KEY, false, false);
+    queueKeystroke('q', false, false);
+    mainBrogueJunction();
+
     currentConsole.pauseForMilliseconds = savedPause;
     clearInputQueue();
 }
@@ -1743,6 +1803,29 @@ boolean monsterIsTrackingPlayer(const creature *monst) {
     return monst->creatureState == MONSTER_TRACKING_SCENT;
 }
 
+boolean monsterWanderDestinationIsNearestTo(const creature *monst, pos destination) {
+    if (monst == NULL
+        || monst->creatureState != MONSTER_WANDERING
+        || !isPosInMap(destination)
+        || monst->targetWaypointIndex < 0
+        || monst->targetWaypointIndex >= rogue.wpCount) {
+
+        return false;
+    }
+    // The same nearest-checkpoint choice wanderToward() makes: the checkpoint
+    // with the shortest distance map to the remembered location.
+    short closestIndex = -1;
+    short closestDistance = 1000;
+    for (short i = 0; i < rogue.wpCount; i++) {
+        short distance = rogue.wpDistance[i][destination.x][destination.y];
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestIndex = i;
+        }
+    }
+    return closestIndex == monst->targetWaypointIndex;
+}
+
 boolean monsterIsFleeing(const creature *monst) {
     return monst->creatureState == MONSTER_FLEEING;
 }
@@ -1864,6 +1947,31 @@ boolean monsterCastsBolt(const creature *monst, short boltType) {
         if (monst->info.bolts[i] == 0) break;
     }
     return false;
+}
+
+// See the declaration in TestFramework.h.
+boolean monsterCarriesMonsterOfType(const creature *monst, enum monsterTypes type) {
+    return monst != NULL
+        && monst->carriedMonster != NULL
+        && monst->carriedMonster->info.monsterID == type;
+}
+
+// See the declaration in TestFramework.h.
+boolean forceMonsterSummon(creature *monst) {
+    if (monst == NULL) {
+        return false;
+    }
+    for (int attempt = 0; attempt < 1000; attempt++) {
+        if (monsterSummons(monst)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// See the declaration in TestFramework.h.
+void clearDeadMonsters(void) {
+    removeDeadMonsters();
 }
 
 int monsterMaxHealth(const creature *monst) {
@@ -2326,6 +2434,17 @@ int runicActivationChance(const item *theItem) {
     }
 
     return 0;
+}
+
+const char *itemExamineText(const item *theItem) {
+    static char text[COLS * 100];
+
+    if (theItem == NULL) {
+        text[0] = '\0';
+    } else {
+        itemDetails(text, theItem);
+    }
+    return text;
 }
 
 void setItemTargetClass(item *theItem, short classId) {

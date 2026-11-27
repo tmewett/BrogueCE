@@ -107,7 +107,7 @@ Rules MUST be assigned an ID beginning with BR followed by 5 random digits (such
 Rule IDs MUST be unique across all rule files.
 
 OUTPUT
-Rules not meeting requirements SHOULD be appended to the file test/RulesNeedImprovement.txt with a short note describing the issue.
+Rules not meeting requirements SHOULD be appended to the file $REPO_ROOT/test/RulesNeedImprovement.txt with a short note describing the issue.
 "
     run_prompt "$PRMPT"
 }
@@ -130,7 +130,7 @@ Rules MUST have one or more associated tests in test/*
 Tests for a rule MUST include the rule ID in the test name.
 
 OUTPUT
-Rule IDs without tests SHOULD be appended to test/RulesMissingTests.txt only append the rule ID, no commentary.  Deduplicate the file to keep it clean.
+Rule IDs without tests SHOULD be appended to $REPO_ROOT/test/RulesMissingTests.txt only append the rule ID, no commentary.  Deduplicate the file to keep it clean.
 "
     run_prompt "$PRMPT"
 }
@@ -205,7 +205,7 @@ function write_missing_tests() {
 
 PRMPT="
 OBJECTIVE
-The tests for rules in test/RulesMissingTests.txt are missing.  Write tests which meets the requirements below and add it to test/*
+The tests for rules in $REPO_ROOT/test/RulesMissingTests.txt are missing.  Write tests which meets the requirements below and add it to test/*
 
 REQUIREMENTS
 Tests SHOULD NOT reference game engine components or data structures.  Use TestFramework functions which hide engine details instead.
@@ -234,7 +234,7 @@ function write_missing_rules() {
 
 PRMPT="
 OBJECTIVE
-The rules for tests in test/TestsMissingRules.txt are missing.
+The rules for tests in $REPO_ROOT/test/TestsMissingRules.txt are missing.
 Write rules which meet the requirements below and add it to rules/*
 Make sure the test functions and test name are rewritten to include the correct rule ID.
 
@@ -270,7 +270,7 @@ function improve_tests() {
 
 PRMPT="
 OBJECTIVE
-The tests for $RULES need improvment, see test/TestsNeedImprovement.txt for details about the work needed.
+The tests for $RULES need improvment, see $REPO_ROOT/test/TestsNeedImprovement.txt for details about the work needed.
 Adjust the existing tests for these rules to apply the requested improvements.
 
 REQUIREMENTS
@@ -281,7 +281,7 @@ Build Brogue for testing using: make GRAPHICS=NO TERMINAL=NO MAC_APP=NO TEST_FRA
 Run a specific test using: ./bin/brogue --test <<TEST_NAME>>
 
 OUTPUT
-After adjusting the tests, remove the notes for rule IDs $RULES from the test/TestsNeedImprovement.txt file.
+After adjusting the tests, remove the notes for rule IDs $RULES from the $REPO_ROOT/test/TestsNeedImprovement.txt file.
 "
     run_prompt "$PRMPT"
 }
@@ -306,7 +306,7 @@ function improve_rules() {
 
 PRMPT="
 OBJECTIVE
-The rules for $RULES need improvment, see test/RulesNeedImprovement.txt for details about the work needed.
+The rules for $RULES need improvment, see $REPO_ROOT/test/RulesNeedImprovement.txt for details about the work needed.
 Adjust the existing rules in rules/* to apply the requested improvements.
 
 REQUIREMENTS
@@ -319,7 +319,7 @@ Rules MUST be assigned an ID beginning with BR followed by 5 random digits (such
 Rule IDs MUST be unique across all rule files.
 
 OUTPUT
-After adjusting the tests, remove the notes for rule IDs $RULES from the test/RulesNeedImprovement.txt file.
+After adjusting the tests, remove the notes for rule IDs $RULES from the $REPO_ROOT/test/RulesNeedImprovement.txt file.
 "
     run_prompt "$PRMPT"
 }
@@ -365,7 +365,7 @@ function fix_broken_tests() {
     write_date
     writeToLog "fix_broken_tests"
 
-    PRMPT="Run all tests using test/run_tests.sh and fix any tests which are failing.  Only modify files in test/*"
+    PRMPT="Run all tests using $REPO_ROOT/test/run_tests.sh and fix any tests which are failing.  Only modify files in test/*"
     run_prompt "$PRMPT"
 }
 
