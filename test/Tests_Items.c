@@ -11,7 +11,8 @@
 // throwing weapons come out plain (never cursed, runic, or enchanted), the runes
 // fading from runic gear whose enchantment drops to zero or less, which
 // targets a zap's auto-targeting will and will not pick, the pressure plate
-// an item placed on it depresses, and the two-ring limit with its swap prompt.
+// an item placed on it depresses, the plain weapons and armor that magic
+// detection fully identifies, and the two-ring limit with its swap prompt.
 //
 // Omitted are everything else about level population (what kinds are
 // generated and placements other than the corridor/secret-room bias), random
@@ -949,6 +950,82 @@ static boolean br63185_detect_magic_reveals_polarity(void) {
 }
 
 // ============================================================
+// BR16226 — weapons and armor with no enchantment and no runes are
+// fully identified by magic detection.
+//
+// A plain +0 dagger and a plain +0 suit of chain mail are created and
+// then hidden again, while a +2 sword, a runic +0 dagger and runic +0
+// armor stay unidentified.  Drinking a potion of detect magic must
+// identify exactly the two plain +0 items: the others still have an
+// enchantment or a rune to hide, so detection does not identify them
+// even though it now knows their magic.
+// ============================================================
+
+static item *br16226_plainWeapon;
+static item *br16226_plainArmor;
+static item *br16226_enchantedWeapon;
+static item *br16226_runicWeapon;
+static item *br16226_runicArmor;
+
+static void br16226_setup(void) {
+    clearArena();
+    br16226_plainWeapon = givePlayerPlainWeapon(DAGGER, 0);
+    makeItemUnidentified(br16226_plainWeapon);
+    br16226_plainArmor = givePlayerPlainArmor(CHAIN_MAIL, 0);
+    makeItemUnidentified(br16226_plainArmor);
+    br16226_enchantedWeapon = givePlayerPlainWeapon(SWORD, 2);
+    makeItemUnidentified(br16226_enchantedWeapon);
+    br16226_runicWeapon = givePlayerRunicWeapon(DAGGER, W_SPEED, 0, false);
+    makeItemUnidentified(br16226_runicWeapon);
+    br16226_runicArmor = givePlayerRunicArmor(CHAIN_MAIL, A_RESPIRATION, 0, false);
+    makeItemUnidentified(br16226_runicArmor);
+}
+
+static boolean br16226_detect_magic_step(void) {
+    TEST_ASSERT(!itemIsIdentified(br16226_plainWeapon),
+                "control: the plain weapon should start unidentified");
+    TEST_ASSERT(!itemIsIdentified(br16226_plainArmor),
+                "control: the plain armor should start unidentified");
+    TEST_ASSERT_EQ(itemEnchant(br16226_plainWeapon), 0,
+                   "control: the plain weapon should have no enchantment");
+    TEST_ASSERT_EQ(itemEnchant(br16226_plainArmor), 0,
+                   "control: the plain armor should have no enchantment");
+    TEST_ASSERT(!itemIsRunic(br16226_plainWeapon),
+                "control: the plain weapon should have no runes");
+    TEST_ASSERT(!itemIsRunic(br16226_plainArmor),
+                "control: the plain armor should have no runes");
+    TEST_ASSERT(!itemIsIdentified(br16226_enchantedWeapon),
+                "control: the enchanted weapon should start unidentified");
+    TEST_ASSERT(!itemIsIdentified(br16226_runicWeapon),
+                "control: the runic weapon should start unidentified");
+    TEST_ASSERT(!itemIsIdentified(br16226_runicArmor),
+                "control: the runic armor should start unidentified");
+    if (testFailed) {
+        return false;
+    }
+    drink(POTION_DETECT_MAGIC);
+    return false;
+}
+
+static boolean br16226_detection_identifies_only_plain_zero_enchant_items(void) {
+    TEST_ASSERT(itemIsIdentified(br16226_plainWeapon),
+                "magic detection should fully identify a weapon with no enchantment and no runes");
+    TEST_ASSERT(itemIsIdentified(br16226_plainArmor),
+                "magic detection should fully identify armor with no enchantment and no runes");
+    TEST_ASSERT(itemMagicWasDetected(br16226_plainWeapon),
+                "magic detection should have detected the plain weapon's magic");
+    TEST_ASSERT(itemMagicWasDetected(br16226_plainArmor),
+                "magic detection should have detected the plain armor's magic");
+    TEST_ASSERT(!itemIsIdentified(br16226_enchantedWeapon),
+                "an enchanted weapon should stay unidentified because its enchantment is still hidden");
+    TEST_ASSERT(!itemIsIdentified(br16226_runicWeapon),
+                "a runic weapon at +0 should stay unidentified because its rune is still hidden");
+    TEST_ASSERT(!itemIsIdentified(br16226_runicArmor),
+                "runic armor at +0 should stay unidentified because its rune is still hidden");
+    return !testFailed;
+}
+
+// ============================================================
 // BR59433 — once magic detection has revealed an item's polarity, the
 // inventory screen draws a glowing good-magic or bad-magic symbol beside
 // it, and a plain marker for neutral magic.
@@ -1416,6 +1493,53 @@ static boolean throwing_weapons_are_never_magical(void) {
 }
 
 // ============================================================
+// BR38228 — darts and javelins come in stacks of 5-18, and
+// incendiary darts in stacks of 3-6.
+//
+// Each kind is generated many times through the game's own item
+// generation.  Every stack must fall inside its kind's range,
+// and enough stacks are sampled that a generator that ignored
+// the range would be caught.
+// ============================================================
+
+#define BR38228_SAMPLES 20
+
+static boolean br38228_stack_sizes_match_their_kind(void) {
+    static const short kinds[] = { DART, JAVELIN, INCENDIARY_DART };
+    static const char *messages[] = {
+        "darts should come in stacks of 5-18",
+        "javelins should come in stacks of 5-18",
+        "incendiary darts should come in stacks of 3-6"
+    };
+    int generated = 0;
+
+    setArenaRadius(4, FLOOR);
+    pos origin = getPlayerPos();
+
+    for (int k = 0; k < 3; k++) {
+        for (int i = 0; i < BR38228_SAMPLES; i++) {
+            pos loc = posOffset(origin, (i % 7) - 3, (i / 7) - 1);
+            item *theItem = placeItemOnFloor(WEAPON, kinds[k], loc);
+            TEST_ASSERT(theItem != NULL, "setup: a throwing weapon should be generated");
+            if (theItem == NULL) {
+                continue;
+            }
+            generated++;
+
+            int quantity = itemQuantity(theItem);
+            if (kinds[k] == INCENDIARY_DART) {
+                TEST_ASSERT(quantity >= 3 && quantity <= 6, messages[k]);
+            } else {
+                TEST_ASSERT(quantity >= 5 && quantity <= 18, messages[k]);
+            }
+        }
+    }
+    TEST_ASSERT_EQ(generated, 3 * BR38228_SAMPLES,
+                   "setup: every requested throwing weapon should be generated");
+    return !testFailed;
+}
+
+// ============================================================
 // BR69624 — when a runic weapon or armor's enchantment drops to
 // zero or less, its runes fade and it ceases to be runic.
 //
@@ -1855,8 +1979,7 @@ static boolean br47394_verify(void) {
 
 // ============================================================
 // BR54814 — invoking an item command without naming an item
-// opens the inventory so you can pick one; if nothing suitable
-// is available you are told "You have nothing suitable."
+// opens the inventory so you can pick one
 // ============================================================
 
 static char br54814_letter;
@@ -1881,7 +2004,11 @@ static boolean br54814_available_verify(void) {
     return !testFailed;
 }
 
-static void br54814_nothing_setup(void) {
+// ============================================================
+// BR33334 — an item command with no suitable item says so
+// ============================================================
+
+static void br33334_nothing_setup(void) {
     clearArena();
     // Every remaining item is equipped, and an equip command forbids equipped
     // items, so there is nothing suitable to choose.
@@ -1890,7 +2017,7 @@ static void br54814_nothing_setup(void) {
     injectKeystroke(EQUIP_KEY, false, false);
 }
 
-static boolean br54814_nothing_verify(void) {
+static boolean br33334_nothing_verify(void) {
     TEST_ASSERT(messageWasShown("You have nothing suitable."),
                 "an item command with no suitable item should say there is nothing suitable");
     return !testFailed;
@@ -2029,11 +2156,167 @@ static boolean br96573_charm_summons_fighting_guardian(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR52945 — an item's exact enchantment and runic effect are
+// shown only once it is identified; an unidentified weapon or
+// armor instead hints at benevolent magic, malevolent magic, or
+// "unknown runic" runes.
+//
+// The unidentified weapon stays unidentified through the magic
+// detection potion because it has a positive enchantment and a
+// rune, so the potion marks the magic without revealing the
+// numbers.  Seeing a monster of the rune's target class makes
+// the game hint that the runes are unknown; the examine text
+// must then name the hint, not the rune or the enchantment.
+//
+// The item name always prints the base strength requirement
+// (<N>), even while unidentified, so the rule's strength-
+// requirement clause is not asserted; the enchantment and rune
+// clauses are the observable ones.
+// ============================================================
+
+static item *br52945_item;
+
+static void br52945_unidentified_weapon_setup(void) {
+    clearArena();
+    br52945_item = giveAndEquipRunicWeapon(DAGGER, W_SLAYING, 7, false);
+    TEST_ASSERT(br52945_item != NULL, "setup: the pack should accept the weapon");
+    TEST_ASSERT(!itemIsIdentified(br52945_item),
+                "setup: the weapon must start unidentified");
+    setItemTargetClass(br52945_item, vorpalEnemyClassForMonster(MK_RAT));
+
+    // A visible rat of the rune's target class makes the runes hint.
+    pos ratLoc = posOffset(getPlayerPos(), 2, 0);
+    setTerrain(ratLoc, FLOOR);
+    revealCell(ratLoc);
+    placeHostileMonster(MK_RAT, ratLoc);
+    restOneTurn();
+    TEST_ASSERT(runicIsHinted(br52945_item),
+                "setup: seeing the rune's target should hint the runes");
+
+    drink(POTION_DETECT_MAGIC);
+    TEST_ASSERT(itemMagicWasDetected(br52945_item),
+                "setup: magic detection should mark the weapon");
+    TEST_ASSERT(!itemIsIdentified(br52945_item),
+                "setup: magic detection must not identify an enchanted runic weapon");
+}
+
+static boolean br52945_unidentified_weapon_hides_exact_details(void) {
+    const char *text = itemExamineText(br52945_item);
+
+    TEST_ASSERT(strstr(text, "unknown runic") != NULL,
+                "an unidentified runic weapon should hint that its runes are unknown");
+    TEST_ASSERT(strstr(text, "aura of benevolent magic") != NULL,
+                "an unidentified good weapon should hint at benevolent magic");
+    TEST_ASSERT(strstr(text, "+7") == NULL,
+                "an unidentified weapon should not show its exact enchantment");
+    TEST_ASSERT(strstr(text, "slaying") == NULL,
+                "an unidentified weapon should not name its runic effect");
+    TEST_ASSERT(strstr(text, "It will reveal its secrets") != NULL,
+                "an unidentified weapon should say how it can be identified");
+    return !testFailed;
+}
+
+static void br52945_identified_weapon_setup(void) {
+    clearArena();
+    br52945_item = givePlayerRunicWeapon(DAGGER, W_SLAYING, 7, true);
+    TEST_ASSERT(br52945_item != NULL, "setup: the pack should accept the weapon");
+    TEST_ASSERT(itemIsIdentified(br52945_item),
+                "setup: the weapon must be identified");
+    setItemTargetClass(br52945_item, vorpalEnemyClassForMonster(MK_RAT));
+}
+
+static boolean br52945_identified_weapon_shows_exact_details(void) {
+    const char *text = itemExamineText(br52945_item);
+
+    TEST_ASSERT(strstr(text, "intrinsic enchantment of ") != NULL,
+                "an identified weapon should describe its enchantment");
+    TEST_ASSERT(strstr(text, "+7") != NULL,
+                "an identified weapon should show its exact enchantment");
+    TEST_ASSERT(strstr(text, "Glowing runes of slaying") != NULL,
+                "an identified runic weapon should name its runic effect");
+    TEST_ASSERT(strstr(text, "unknown runic") == NULL,
+                "an identified weapon should no longer hint at unknown runes");
+    return !testFailed;
+}
+
+static void br52945_cursed_armor_setup(void) {
+    clearArena();
+    br52945_item = givePlayerRunicArmor(CHAIN_MAIL, A_DAMPENING, -4, false);
+    TEST_ASSERT(br52945_item != NULL, "setup: the pack should accept the armor");
+    // The malevolent hint is shown for an item you carry but do not wear;
+    // an equipped cursed item instead reports that you cannot remove it.
+    unequipItemFromPack(ARMOR, CHAIN_MAIL);
+    curseItem(br52945_item);
+
+    drink(POTION_DETECT_MAGIC);
+    TEST_ASSERT(itemMagicWasDetected(br52945_item),
+                "setup: magic detection should mark the armor");
+    TEST_ASSERT(!itemIsIdentified(br52945_item),
+                "setup: magic detection must not identify an enchanted runic armor");
+}
+
+static boolean br52945_cursed_armor_hints_malevolent_magic(void) {
+    const char *text = itemExamineText(br52945_item);
+
+    TEST_ASSERT(strstr(text, "malevolent magic") != NULL,
+                "an unidentified cursed armor should hint at malevolent magic");
+    TEST_ASSERT(strstr(text, "-4") == NULL,
+                "an unidentified armor should not show its exact enchantment");
+    TEST_ASSERT(strstr(text, "intrinsic penalty of ") == NULL,
+                "an unidentified armor should not describe its enchantment as intrinsic");
+    return !testFailed;
+}
+
+// ============================================================
+// BR70142 — Identifying one item of a kind marks that kind as
+// identified, so you recognize it thereafter.
+//
+// Two rings of regeneration are handed over unidentified; rings
+// never stack, so the second is a distinct item.  A scroll of
+// identify is read and its prompt answered with the first ring's
+// inventory letter.  The second ring was never touched, so its
+// recognition must come from the kind the first one taught.
+// ============================================================
+
+static item *br70142_first, *br70142_second;
+
+static void br70142_setup(void) {
+    clearArena();
+    br70142_first = givePlayerUnidentifiedItem(RING, RING_REGENERATION, 1);
+    br70142_second = givePlayerUnidentifiedItem(RING, RING_REGENERATION, 1);
+    TEST_ASSERT(br70142_first != NULL && br70142_second != NULL,
+                "setup: both rings should enter the pack");
+    TEST_ASSERT(br70142_first != br70142_second,
+                "setup: rings of one kind must be distinct items");
+    TEST_ASSERT(!itemKindIsKnown(RING, RING_REGENERATION),
+                "setup: the ring kind must start unidentified");
+    queueKeystroke(itemInventoryLetter(br70142_first), false, false);
+}
+
+static boolean br70142_step(void) {
+    readScrollOfKind(SCROLL_IDENTIFY);
+    return false;
+}
+
+static boolean br70142_identifying_one_marks_the_kind_known(void) {
+    TEST_ASSERT(itemIsIdentified(br70142_first),
+                "the scroll of identify should identify the ring it was aimed at");
+    TEST_ASSERT(itemKindIsKnown(RING, RING_REGENERATION),
+                "identifying one ring should mark its kind as identified");
+    TEST_ASSERT(!itemIsIdentified(br70142_second),
+                "the second ring was never identified itself");
+    TEST_ASSERT(strstr(itemExamineText(br70142_second), "of regeneration") != NULL,
+                "a second ring of the learned kind should be recognized by its name");
+    return !testFailed;
+}
+
 const testCase tests_items[] = {
     { "BR58888_throwing_weapons_never_magical",     br58888_setup,             NULL, throwing_weapons_are_never_magical },
+    { "BR38228_stack_sizes_match_their_kind",        NULL,                      NULL, br38228_stack_sizes_match_their_kind },
 
     { "BR54814_apply_opens_inventory_to_choose_item", br54814_available_setup, NULL, br54814_available_verify },
-    { "BR54814_apply_with_no_suitable_item_says_so",  br54814_nothing_setup,   NULL, br54814_nothing_verify },
+    { "BR33334_apply_with_no_suitable_item_says_so",  br33334_nothing_setup,   NULL, br33334_nothing_verify },
 
     { "BR83362_potion_of_life_raises_max_health",   life_potion_setup,          NULL, life_potion_raises_max_health },
     { "BR50436_potion_of_strength_raises_strength", strength_potion_setup,      NULL, strength_potion_raises_strength },
@@ -2049,6 +2332,7 @@ const testCase tests_items[] = {
     { "BR83854_potion_of_confusion_releases_gas",   confusion_potion_setup,     NULL, confusion_potion_releases_gas },
     { "BR43470_potion_of_incineration_sets_you_on_fire", incineration_potion_setup, NULL, incineration_potion_sets_you_on_fire },
     { "BR63185_detect_magic_reveals_polarity",      br63185_detect_magic_setup, br63185_detect_magic_step, br63185_detect_magic_reveals_polarity },
+    { "BR16226_detection_identifies_plain_zero_enchant_items", br16226_setup, br16226_detect_magic_step, br16226_detection_identifies_only_plain_zero_enchant_items },
     { "BR59433_good_magic_shows_good_marker",       br59433_good_setup,    br59433_detect_magic_step, br59433_good_magic_shows_good_marker },
     { "BR59433_bad_magic_shows_bad_marker",         br59433_bad_setup,     br59433_detect_magic_step, br59433_bad_magic_shows_bad_marker },
     { "BR59433_neutral_magic_shows_plain_marker",   br59433_neutral_setup, br59433_detect_magic_step, br59433_neutral_magic_shows_plain_marker },
@@ -2057,6 +2341,7 @@ const testCase tests_items[] = {
     { "BR95938_reading_scroll_consumes_it",         consume_scroll_setup,       NULL, reading_scroll_consumes_it },
     { "BR47462_enchanting_removes_curse",           enchanting_removes_curse_setup, enchanting_removes_curse_step, curse_removed_by_enchanting },
     { "BR76873_identify_scroll_identifies_one_other_item", br76873_setup, br76873_step, br76873_identifies_one_other_item },
+    { "BR70142_identifying_one_marks_the_kind_known", br70142_setup, br70142_step, br70142_identifying_one_marks_the_kind_known },
 
     { "BR46995_enchant_to_16_earns_specialist",     specialist_earned_setup,    specialist_earned_step, specialist_feat_at_plus_16 },
     { "BR46995_enchant_below_16_grants_nothing",    specialist_denied_setup,    specialist_denied_step, no_specialist_below_plus_16 },
@@ -2117,6 +2402,10 @@ const testCase tests_items[] = {
     { "BR18415_third_ring_replaces_the_chosen_worn_ring", br18415_swap_setup, NULL, br18415_third_ring_replaces_the_chosen_one },
     { "BR18415_third_ring_waits_for_a_choice",    br18415_cancel_setup, NULL, br18415_third_ring_waits_for_a_choice },
     { "BR18415_worn_ring_cannot_be_equipped_again", br18415_repeat_setup, NULL, br18415_worn_ring_cannot_be_worn_again },
+
+    { "BR52945_unidentified_weapon_hides_exact_details", br52945_unidentified_weapon_setup, NULL, br52945_unidentified_weapon_hides_exact_details },
+    { "BR52945_identified_weapon_shows_exact_details",   br52945_identified_weapon_setup,   NULL, br52945_identified_weapon_shows_exact_details },
+    { "BR52945_cursed_armor_hints_malevolent_magic",     br52945_cursed_armor_setup,        NULL, br52945_cursed_armor_hints_malevolent_magic },
 
     { NULL, NULL, NULL, NULL }
 };

@@ -926,9 +926,141 @@ static boolean br41331_reaping_is_bounded_by_damage(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR25647 — attacking one of your own allies while you are not
+// confused makes that monster stop being your ally.
+//
+// The ally has far more health than one blow can remove, so the
+// only thing the hit can change is the alliance.  Attacks are
+// repeated until one lands, making the test independent of the
+// accuracy roll; a missed blow must not break the alliance
+// either.  The confused control performs the same attack but
+// expects the alliance to survive.
+// ============================================================
+
+static creature *br25647_ally;
+static boolean br25647_landed;
+
+static void br25647_unconfused_setup(void) {
+    clearArena();
+    br25647_ally = spawnMonster(MK_RAT, posOffset(getPlayerPos(), 1, 0));
+    TEST_ASSERT(br25647_ally != NULL, "setup: the ally should spawn");
+    if (br25647_ally != NULL) {
+        makeMonsterAlly(br25647_ally);
+        setMonsterHealth(br25647_ally, 1000);
+    }
+    TEST_ASSERT(br25647_ally != NULL && monsterIsAlly(br25647_ally),
+                "precondition: the monster should be your ally");
+    TEST_ASSERT(!isPlayerConfused(),
+                "precondition: you should not be confused");
+}
+
+static void br25647_confused_setup(void) {
+    br25647_unconfused_setup();
+    applyStatusToPlayer(STATUS_CONFUSED, 100);
+    TEST_ASSERT(isPlayerConfused(),
+                "precondition: you should be confused");
+}
+
+static boolean br25647_attack_once_step(void) {
+    br25647_landed = false;
+    if (br25647_ally == NULL) {
+        return false;
+    }
+    for (int attempt = 0; attempt < 100
+            && !br25647_landed && monsterIsAlive(br25647_ally); attempt++) {
+        br25647_landed = playerAttacksMonster(br25647_ally);
+    }
+    return false;
+}
+
+static boolean br25647_unconfused_attack_ends_alliance(void) {
+    if (br25647_ally == NULL) {
+        return false;
+    }
+    TEST_ASSERT(br25647_landed,
+                "a melee attack against the adjacent ally should land");
+    TEST_ASSERT(monsterIsAlive(br25647_ally),
+                "the ally should survive the blow under test");
+    TEST_ASSERT(!monsterIsAlly(br25647_ally),
+                "an ally you attack while not confused should stop being your ally");
+    return !testFailed;
+}
+
+static boolean br25647_confused_attack_keeps_alliance(void) {
+    if (br25647_ally == NULL) {
+        return false;
+    }
+    TEST_ASSERT(isPlayerConfused(),
+                "precondition: you should still be confused");
+    TEST_ASSERT(br25647_landed,
+                "a melee attack against the adjacent ally should land");
+    TEST_ASSERT(monsterIsAlive(br25647_ally),
+                "the ally should survive the blow under test");
+    TEST_ASSERT(monsterIsAlly(br25647_ally),
+                "an ally you attack while confused should remain your ally");
+    return !testFailed;
+}
+
+// ============================================================
+// BR34465 — a stuck defender is always hit, even though stuck does not
+// qualify for triple damage (only surprise, sleep, and paralysis do).
+//
+// The attacker is a spectral sword, whose 1-1 damage makes the multiplier
+// observable: a normal blow costs 1 health and a tripled blow costs 3.  Its
+// accuracy is set to zero, so the unhindered control must miss while the
+// stuck and paralyzed blows land through their auto-hit paths.
+// ============================================================
+
+static creature *br34465_attacker;
+
+static void br34465_setup(void) {
+    clearArena();
+    clearMonsters();
+    takeOffArmor();
+    setPlayerHealth(100);
+    br34465_attacker = placeHostileMonster(MK_SPECTRAL_IMAGE,
+                                           posOffset(getPlayerPos(), 1, 0));
+    setMonsterAccuracy(br34465_attacker, 0);
+}
+
+static boolean br34465_verify(void) {
+    int healthBefore;
+
+    TEST_ASSERT(br34465_attacker != NULL, "spectral sword spawned");
+    TEST_ASSERT(!playerHasStatus(STATUS_STUCK) && !playerHasStatus(STATUS_PARALYZED),
+                "control: the defender starts unhindered");
+
+    // A zero-accuracy blow cannot land against an unhindered defender, so
+    // any later hit on the stuck defender proves the auto-hit.
+    healthBefore = playerHealth();
+    TEST_ASSERT(!monsterAttacksPlayer(br34465_attacker),
+                "control: a zero-accuracy attacker misses an unhindered defender");
+    TEST_ASSERT_EQ(playerHealth(), healthBefore,
+                   "control: a missed blow costs no health");
+
+    applyStatusToPlayer(STATUS_STUCK, 100);
+    healthBefore = playerHealth();
+    TEST_ASSERT(monsterAttacksPlayer(br34465_attacker),
+                "a stuck defender is always hit");
+    TEST_ASSERT_EQ(healthBefore - playerHealth(), 1,
+                   "a stuck defender takes normal damage, not triple damage");
+
+    // Paralysis, unlike stuckness, earns the triple-damage multiplier.
+    removeStatusFromPlayer(STATUS_STUCK);
+    applyStatusToPlayer(STATUS_PARALYZED, 100);
+    healthBefore = playerHealth();
+    TEST_ASSERT(monsterAttacksPlayer(br34465_attacker),
+                "control: a paralyzed defender is hit");
+    TEST_ASSERT_EQ(healthBefore - playerHealth(), 3,
+                   "control: a paralyzed defender takes triple damage");
+    return !testFailed;
+}
+
 const testCase tests_combat[] = {
     { "BR94361_immolation_armor_erupts_in_flame", immolation_armor_setup, immolation_strikes_step, armor_erupts_in_flame },
     { "BR65933_seized_defender_always_hit",     seized_target_setup,     seized_defender_step,    seized_defender_was_hit },
+    { "BR34465_stuck_defender_hit_without_triple_damage", br34465_setup, NULL, br34465_verify },
     { "BR66846_sleeping_defender_always_hit",   sleeping_target_setup,   attack_once_step,        sleeping_target_was_wounded },
     { "BR89965_struck_monster_wakes",           sleeping_target_setup,   attack_once_step,        struck_monster_woke },
     { "BR62243_attacking_alerts_monster",       unaware_target_setup,    attack_once_step,     monster_was_alerted },
@@ -959,5 +1091,8 @@ const testCase tests_combat[] = {
     { "BR89754_acid_corrodes_weapon_slaying_exempt", br89754_setup, br89754_step, br89754_corrodes_weapon_unless_slaying },
     { "BR41331_reaping_capped_by_victim_health", br41331_cap_setup, br41331_attack_step, br41331_reaping_is_capped_by_victim_health },
     { "BR41331_reaping_bounded_by_damage", br41331_damage_setup, br41331_attack_step, br41331_reaping_is_bounded_by_damage },
+
+    { "BR25647_unconfused_attack_ends_alliance", br25647_unconfused_setup, br25647_attack_once_step, br25647_unconfused_attack_ends_alliance },
+    { "BR25647_confused_attack_keeps_alliance",  br25647_confused_setup,   br25647_attack_once_step, br25647_confused_attack_keeps_alliance },
     { NULL, NULL, NULL, NULL }
 };

@@ -89,10 +89,6 @@ BR13255
 Attacking a discordant ally prompts "Are you sure you want to attack <ally>?".
   [Movement.c:591-610](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L591-L610)
 ----
-BR13411
-Neither attack confirmation appears while you are confused or hallucinating (but not telepathic).
-  [Movement.c:617-631](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L617-L631)
-----
 BR33062
 Bumping into a shackled captive offers to free it.
   [Movement.c:955-958](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L955-L958)
@@ -663,8 +659,8 @@ Once you no longer have time to make it back to safety the warning becomes "you'
   [Time.c:2612-2616](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2612-L2616)
 ----
 BR34157
-Discovering a new square that can be pathed through adds to the current turn's discovery count.
-  [Time.c:742-750](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L742-L750)
+Exploring a new passable square grants exploration experience that turn.
+  [Time.c:751-759](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L751-L759)
 ----
 BR34686
 The turn's discovery count is granted as experience to your allies on your level and on the levels immediately above and below.

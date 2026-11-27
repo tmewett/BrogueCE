@@ -66,7 +66,13 @@ BR89577
 An eel or kraken treats anything that is not immune to water and not levitating, and that stands in deep water, as an enemy, including your own allies. [Monsters.c:384-396](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L384-L396)
 ----
 BR45704
-Captives are never enemies, discord makes creatures mutual enemies, and otherwise enemies are taken from opposite sides. [Monsters.c:375-383](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L375-L383), [Monsters.c:397-399](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L397-L399)
+A captive is never an enemy, even of a discordant creature. [Monsters.c:375-377](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L375-L377)
+----
+BR36047
+Two creatures are enemies of each other whenever either of them is discordant, even if they are allies. [Monsters.c:381-383](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L381-L383)
+----
+BR34374
+Otherwise, two creatures are enemies when exactly one of them is on your side, counting you and your allies. [Monsters.c:397-399](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L397-L399)
 ----
 BR44948
 Newly generated monsters start out hunting 25% of the time and sleeping the rest of the time, except monsters that never sleep, which always start awake. [Monsters.c:111-112](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L111-L112)
@@ -162,7 +168,7 @@ BR82926
 Periodic spawns arrive as wandering groups placed at least half the level's width away from you in travel distance, outside your field of view, and never on stairs, in harmful terrain, or on occupied squares. [Monsters.c:1086-1135](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1086-L1135)
 ----
 BR49453
-Periodic hordes spawn as captive-led wandering groups with all members set wandering. [Monsters.c:1115-1135](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1115-L1135)
+Periodic hordes are ordinary free-roaming bands: horde types reserved for summoning, captive escorts, machine encounters, or level-start placement are excluded, and the chosen leader together with all its followers is set to wander. [Monsters.c:1115-1135](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1115-L1135)
 ----
 BR27232
 A monster avoids harmful terrain unless it is immune to it: sacred ground, fire, other harmful terrain, chasms and trapdoors, gas and pressure-plate traps, lava, deep water, and poisonous lichen. [Monsters.c:1304-1505](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1304-L1505), [Monsters.c:641-681](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L641-L681)
@@ -315,7 +321,7 @@ BR79244
 A monster that eats the dead must reach a corpse and stay with it for 20 turns to absorb a new power. [Monsters.c:3209-3222](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3209-L3222), [Monsters.c:3251-3301](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3251-L3301)
 ----
 BR56502
-Straying from the corpse for more than 5 turns forfeits the absorption attempt. [Monsters.c:3304-3315](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3304-L3315)
+A monster displaced from its corpse after four or more turns of absorbing loses its chance immediately, while one displaced sooner keeps the corpse as its target and can return to restart the 20-turn absorption; if it never returns, it gives up when its absorption window runs out. [Monsters.c:3220-3221](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3220-L3221), [Monsters.c:3304-3315](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3304-L3315)
 ----
 BR56551
 Finishing a corpse absorption adds a new bolt, behaviour, or ability, spends a power slot, and grants permanent native statuses. [Monsters.c:3258-3300](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3258-L3300)
@@ -405,7 +411,7 @@ BR80604
 A fleeing monster that can blink has a 30% chance — every time if it never holds back its ability — to blink toward greater safety and end its turn. [Monsters.c:3492-3499](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3492-L3499), [Monsters.c:2394-2407](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2394-L2407), [Monsters.c:2290-2361](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2290-L2361)
 ----
 BR61713
-A hunting monster that can blink teleports up the scent trail toward you. [Monsters.c:3436-3443](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3436-L3443)
+A hunting monster that can blink has a 30% chance each turn — every time if it never holds back its ability — to blink up the scent trail toward you and end its turn. [Monsters.c:3423-3430](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3423-L3430)
 ----
 BR61728
 An allied monster that can blink teleports toward the nearest enemy, using a distance map it constructs. [Monsters.c:3158-3205](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3158-L3205)
@@ -483,10 +489,13 @@ BR66147
 A living monster can be put into dormancy, leaving a dormant marker on its square. [Monsters.c:4202-4210](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L4202-L4210)
 ----
 BR36596
-An ally stays within a leash of 4 squares of you, or 10 if you just rested or searched, unlimited while it is grabbed or facing a faster enemy, and one square longer when it is adjacent to a foe. [Monsters.c:3135-3151](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3135-L3151)
+An ally stays within a leash of 4 squares of you, or 10 if you just rested or searched, unlimited while it is seized or facing a faster enemy, and one square longer when it is adjacent to a foe. [Monsters.c:3135-3151](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3135-L3151)
 ----
 BR66496
-An ally closes on and attacks the nearest enemy inside its range, and is never held back from attacking while grabbed. [Monsters.c:3153-3208](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3153-L3208)
+An ally with an enemy inside its leash closes on the nearest such enemy and attacks it once it is adjacent. [Monsters.c:3153-3208](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3153-L3208)
+----
+BR22893
+An ally that is seized ignores its leash and will always close with and attack an enemy. [Monsters.c:3135-3141](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3135-L3141)
 ----
 BR12018
 An ally not engaged with an enemy follows your scent trail toward you. [Monsters.c:3228-3246](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3228-L3246)

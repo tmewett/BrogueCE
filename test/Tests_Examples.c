@@ -80,7 +80,8 @@ static void eel_setup(void) {
     // makes it treat the player as an enemy.
     aquatic_eel = spawnMonster(MK_EEL, posOffset(getPlayerPos(), 1, 0));
 
-    drink(POTION_LIFE); // Give the player enough HP to survive for 10 turns against eel
+    // Give the player enough HP to survive the eel's attacks until one lands.
+    drink(POTION_LIFE);
 }
 
 // A deliberately hostile eel, so a test can isolate a condition (such as
@@ -259,7 +260,10 @@ const testCase tests_examples[] = {
     { "BR16982_chasm_fall",             chasm_setup,                wait_until_fall_step,               chasm_fall_verify           },
     { "BR17312_water_steals_items",     water_setup,                wait_100_turns_step,                 inventory_items_missing     },
     { "BR17384_bog_monster_seizes",     bog_monster_setup,          bog_monster_attack_step,            player_seized_verify        },
-    { "BR17765_aquatic_attack",         eel_setup,                  wait_10_turns_step,                 aquatic_eel_verify          },
+    // The eel's blows can miss (the player's armor gives a hit chance below
+    // 100%), so wait for one to land instead of assuming a hit within a fixed
+    // number of turns.
+    { "BR17765_aquatic_attack",         eel_setup,                  wait_until_hurt,                    aquatic_eel_verify          },
     { "BR20087_trigger_trap",           trap_setup,                 trap_step,                     trap_triggered              },
     { "BR21016_harmful_gas",            gas_setup,                  wait_10_turns_step,                 player_is_hurt              },
 

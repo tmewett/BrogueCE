@@ -2128,6 +2128,54 @@ static boolean br49485_out_of_range_doorway_is_rejected(void) {
 }
 
 // ============================================================
+// BR39772 — if no doorway on the level is of an eligible size
+// for a room-like vault, the vault is not built and the attempt
+// leaves the level unchanged.
+//
+// The fixture flattens the level to ordinary floor, so no tile
+// is a doorway and the vault's doorway search finds no candidate
+// at all.  The failed attempt must leave the terrain, items,
+// monsters and vault ownership exactly as they were.
+// ============================================================
+
+static boolean br39772_built;
+static unsigned long br39772_terrainBefore;
+static int br39772_itemsBefore;
+static int br39772_monstersBefore;
+
+static void br39772_setup(void) {
+    clearMonsters();
+    clearFloorItems();
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            setTerrain(posAt(x, y), FLOOR);
+        }
+    }
+    setPlayerPos(posAt(levelWidth() / 2, levelHeight() / 2));
+
+    br39772_terrainBefore = levelTerrainFingerprint();
+    br39772_itemsBefore = countFloorItems();
+    br39772_monstersBefore = monsterCount();
+    br39772_built = buildRoomVaultOnCurrentLevel();
+}
+
+static boolean br39772_no_eligible_doorway_aborts_without_change(void) {
+    TEST_ASSERT_EQ(countTerrain(DOOR), 0,
+                   "control: the flattened level should have no doorway");
+    TEST_ASSERT(!br39772_built,
+                "a room-like vault should not be built when no doorway is eligible");
+    TEST_ASSERT(levelTerrainFingerprint() == br39772_terrainBefore,
+                "a failed vault attempt should leave the level's terrain unchanged");
+    TEST_ASSERT_EQ(countFloorItems(), br39772_itemsBefore,
+                   "a failed vault attempt should add no items");
+    TEST_ASSERT_EQ(monsterCount(), br39772_monstersBefore,
+                   "a failed vault attempt should add no monsters");
+    TEST_ASSERT_EQ(countVaultInteriorCells(), 0,
+                   "a failed vault attempt should claim no vault interior");
+    return !testFailed;
+}
+
+// ============================================================
 // BR22946 — a vault adopts an item generated elsewhere, hands
 // an item to a sub-vault, or builds a guarded vestibule in a
 // doorway; if the sub-vault cannot be built after ten tries,
@@ -2570,6 +2618,69 @@ static boolean br36818_rejects_engulfing_another_vault(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR41848 — when a vault's interior is rebuilt, extra loop
+// doorways are cut between floor tiles whose walking route is
+// longer than 10 tiles, not the 20 tiles required on the main
+// dungeon level.
+//
+// The fixture builds a room vault whose blueprint redesigns its
+// interior from scratch, on a synthetic level holding a single
+// dead-end chamber.  The engine records the route-length
+// threshold used by the loop-adding pass during that rebuild;
+// it must be 10, the vault-interior threshold, rather than the
+// main level's 20.
+// ============================================================
+
+static boolean br41848_built;
+static int br41848_roomCells;
+static int br41848_threshold;
+
+static void br41848_setup(void) {
+    clearMonsters();
+    clearFloorItems();
+    br41848_roomCells = redesignedVaultRoomSizeMin();
+    br41848_built = buildRedesignedRoomVaultAtChamber(br41848_roomCells);
+    br41848_threshold = vaultInteriorLoopThreshold();
+}
+
+static boolean br41848_vault_interior_loops_use_ten_tile_route(void) {
+    TEST_ASSERT(br41848_built,
+                "a room vault with a redesigned interior should build on a clear chamber");
+    TEST_ASSERT(br41848_roomCells >= redesignedVaultRoomSizeMin()
+                    && br41848_roomCells <= redesignedVaultRoomSizeMax(),
+                "control: the fixture should use the vault's advertised room size");
+    TEST_ASSERT_EQ(br41848_threshold, 10,
+                   "rebuilding a vault interior should add loops for routes longer than 10 tiles");
+    return !testFailed;
+}
+
+// ============================================================
+// BR41848 — the vault-interior loop threshold is 10, not the
+// main level's 20.
+//
+// The fixture runs the engine's loop-adding pass over a
+// U-shaped corridor whose flanking floor tiles are separated by
+// a 12-tile detour.  At the vault threshold the wall becomes a
+// loop doorway; at the main level's threshold it does not.
+// Routes of exactly 10 and exactly 20 are not cut, and a
+// 22-tile detour is cut at 20, pinning the strict comparison.
+// ============================================================
+
+static boolean br41848_loop_threshold_is_ten_not_twenty(void) {
+    TEST_ASSERT(loopPassCutsWallWithDetour(12, 10),
+                "a 12-tile detour should be cut at the vault's 10-tile threshold");
+    TEST_ASSERT(!loopPassCutsWallWithDetour(12, 20),
+                "the same 12-tile detour should not be cut at the main level's 20-tile threshold");
+    TEST_ASSERT(!loopPassCutsWallWithDetour(10, 10),
+                "a route of exactly 10 tiles should not be cut (the route must exceed the threshold)");
+    TEST_ASSERT(!loopPassCutsWallWithDetour(20, 20),
+                "a route of exactly 20 tiles should not be cut (the route must exceed the threshold)");
+    TEST_ASSERT(loopPassCutsWallWithDetour(22, 20),
+                "a 22-tile detour should be cut at the 20-tile threshold");
+    return !testFailed;
+}
+
 const testCase tests_dungeon[] = {
     { "BR94157_first_room_entrance_on_depth_1_cavern_below", NULL, NULL, br94157_first_room_entrance_on_depth_1_cavern_below },
     { "BR71397_level_is_79_by_29",                       NULL, NULL, level_is_79_by_29 },
@@ -2616,6 +2727,9 @@ const testCase tests_dungeon[] = {
     { "BR32765_vault_layout_raffle_weighted_by_depth", NULL, NULL, br32765_vault_layout_raffle_is_weighted_by_depth },
     { "BR49485_room_vault_grows_from_in_range_doorway", br49485_in_range_setup, NULL, br49485_in_range_vault_grows_from_doorway },
     { "BR49485_room_vault_rejects_out_of_range_doorway", br49485_out_of_range_setup, NULL, br49485_out_of_range_doorway_is_rejected },
+    { "BR39772_no_eligible_doorway_aborts_without_change", br39772_setup, NULL, br39772_no_eligible_doorway_aborts_without_change },
+    { "BR41848_vault_interior_loops_use_ten_tile_route", br41848_setup, NULL, br41848_vault_interior_loops_use_ten_tile_route },
+    { "BR41848_loop_threshold_is_ten_not_twenty",        NULL, NULL, br41848_loop_threshold_is_ten_not_twenty },
     { "BR39459_player_lighting_colors_are_distinct",   br39459_setup, NULL, br39459_player_has_distinct_lighting_colors },
 
     { "BR36818_open_area_vault_grows_from_random_tile_to_random_size",

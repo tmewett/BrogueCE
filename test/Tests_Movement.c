@@ -896,6 +896,91 @@ static boolean gas_spreads_two_squares_in_one_update(void) {
 }
 
 // ============================================================
+// BR29862 — gases that dissipate quickly or slowly lose one unit of volume,
+// with a 50% or 20% chance per gas update.
+//
+// One gas update is run directly over a single floor tile sealed inside
+// granite, so nothing can move in or out and the only possible change is the
+// one-unit dissipation roll.  Starting at two units makes the outcome binary:
+// two units if the roll failed, one if it succeeded.  A gas with no
+// dissipation flag is the control, and must never change.
+// ============================================================
+
+#define BR29862_TRIALS 2000
+
+static pos br29862_gasPos;
+static short br29862_quickGas;
+static short br29862_slowGas;
+static short br29862_stableGas;
+
+static void br29862_setup(void) {
+    setArenaRadius(8, FLOOR);
+    br29862_gasPos = posOffset(getPlayerPos(), 5, 0);
+
+    // Seal the measured tile inside granite so the gas update cannot move the
+    // gas; only its dissipation roll can change the volume.
+    setTerrainAroundLoc(br29862_gasPos, GRANITE);
+    setTerrain(br29862_gasPos, FLOOR);
+
+    br29862_quickGas = quickDissipatingGasType();
+    br29862_slowGas = slowDissipatingGasType();
+    br29862_stableGas = nonDissipatingGasType();
+}
+
+// outcomes[0] counts one-unit losses, outcomes[1] counts no change, and
+// outcomes[2] counts anything else (which no gas should ever do).
+static void countGasOutcome(short gasType, int outcomes[3]) {
+    setGasAt(br29862_gasPos, gasType, 2);
+    runGasUpdatePass();
+    int volume = gasVolumeAt(br29862_gasPos);
+    if (volume == 1) {
+        outcomes[0]++;
+    } else if (volume == 2) {
+        outcomes[1]++;
+    } else {
+        outcomes[2]++;
+    }
+}
+
+static boolean br29862_verify(void) {
+    int quick[3] = {0, 0, 0}, slow[3] = {0, 0, 0}, stable[3] = {0, 0, 0};
+
+    for (int trial = 0; trial < BR29862_TRIALS; trial++) {
+        countGasOutcome(br29862_quickGas, quick);
+    }
+    for (int trial = 0; trial < BR29862_TRIALS; trial++) {
+        countGasOutcome(br29862_slowGas, slow);
+    }
+    for (int trial = 0; trial < BR29862_TRIALS; trial++) {
+        countGasOutcome(br29862_stableGas, stable);
+    }
+
+    TEST_ASSERT_EQ(stable[0], 0,
+                   "a gas with no dissipation flag should never lose volume");
+    TEST_ASSERT_EQ(stable[2], 0,
+                   "the control gas should always keep exactly two units");
+
+    TEST_ASSERT(quick[0] >= BR29862_TRIALS * 40 / 100
+                && quick[0] <= BR29862_TRIALS * 60 / 100,
+                "a quickly dissipating gas should lose one unit about half the time");
+    TEST_ASSERT(slow[0] >= BR29862_TRIALS * 10 / 100
+                && slow[0] <= BR29862_TRIALS * 30 / 100,
+                "a slowly dissipating gas should lose one unit about one time in five");
+
+    TEST_ASSERT_EQ(quick[2], 0,
+                   "a quick gas should only keep both units or lose exactly one");
+    TEST_ASSERT_EQ(slow[2], 0,
+                   "a slow gas should only keep both units or lose exactly one");
+    TEST_ASSERT_EQ(quick[0] + quick[1], BR29862_TRIALS,
+                   "every quick-gas update should have been observed");
+    TEST_ASSERT_EQ(slow[0] + slow[1], BR29862_TRIALS,
+                   "every slow-gas update should have been observed");
+    TEST_ASSERT_EQ(stable[0] + stable[1], BR29862_TRIALS,
+                   "every control update should have been observed");
+    return !testFailed;
+}
+
+// ============================================================
 // BR21546 — a thorough search also marks nearby squares as known to be trap-free
 // ============================================================
 
@@ -1725,6 +1810,71 @@ static boolean br24904_survivor_is_temporarily_immune(void) {
     // The immunity is temporary: once it expires the ground blasts again.
     TEST_ASSERT(br24904_damageCount >= 2,
                 "explosive ground should blast the player again once the immunity expires");
+    return !testFailed;
+}
+
+// ============================================================
+// BR25832 — Dampening armor absorbs an explosion ("Your <armor>
+// pulses and absorbs the damage.") and may become identified.
+//
+// The player wears an unidentified suit of dampening armor and
+// stands on explosive ground.  The engine's standing-on-explosive-
+// ground check must announce the absorption, leave health untouched,
+// and identify the rune.  A suit of runic armor with a different rune
+// is the control: the same blast must wound the player and print no
+// absorption message.
+// ============================================================
+
+static item *br25832_armor;
+static int br25832_healthBefore;
+static int br25832_healthAfter;
+static boolean br25832_runeKnownBefore;
+static boolean br25832_runeKnownAfter;
+static boolean br25832_message;
+
+static void br25832_dampening_setup(void) {
+    clearArena();
+    br25832_armor = givePlayerRunicArmor(CHAIN_MAIL, A_DAMPENING, 10, false);
+    setPlayerHealth(1000);
+    setTerrain(getPlayerPos(), GAS_EXPLOSION);
+    br25832_healthBefore = playerHealth();
+    br25832_runeKnownBefore = runicIsIdentified(br25832_armor);
+    clearMessages();
+    applyTileEffectsToPlayer(); // the engine's standing-on-explosive-ground check
+    br25832_healthAfter = playerHealth();
+    br25832_runeKnownAfter = runicIsIdentified(br25832_armor);
+    br25832_message = messageWasShown("pulses and absorbs the damage");
+}
+
+static boolean br25832_dampening_armor_absorbs_explosion(void) {
+    TEST_ASSERT(!br25832_runeKnownBefore,
+                "control: the dampening rune should start unidentified");
+    TEST_ASSERT_EQ(br25832_healthAfter, br25832_healthBefore,
+                   "dampening armor should absorb the whole explosion");
+    TEST_ASSERT(br25832_message,
+                "dampening armor should announce that it pulses and absorbs the damage");
+    TEST_ASSERT(br25832_runeKnownAfter,
+                "the absorbed explosion should identify the dampening armor");
+    return !testFailed;
+}
+
+static void br25832_control_setup(void) {
+    clearArena();
+    br25832_armor = givePlayerRunicArmor(CHAIN_MAIL, A_VULNERABILITY, 10, false);
+    setPlayerHealth(1000);
+    setTerrain(getPlayerPos(), GAS_EXPLOSION);
+    br25832_healthBefore = playerHealth();
+    clearMessages();
+    applyTileEffectsToPlayer();
+    br25832_healthAfter = playerHealth();
+    br25832_message = messageWasShown("pulses and absorbs the damage");
+}
+
+static boolean br25832_other_armor_takes_explosion_damage(void) {
+    TEST_ASSERT(br25832_healthAfter < br25832_healthBefore,
+                "control: armor without the dampening rune should not absorb the explosion");
+    TEST_ASSERT(!br25832_message,
+                "control: armor without the dampening rune should not announce absorption");
     return !testFailed;
 }
 
@@ -2655,7 +2805,264 @@ static boolean br13208_hallucinating_stack_uses_is(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR37646 — descending from the deepest level without the Amulet is
+// repelled ("the crystal archway repels you").
+//
+// The player stands one step above the down staircase on the dungeon's
+// deepest floor, carrying no amulet.  Stepping onto the staircase asks the
+// engine to descend; the crystal archway refuses, so the depth is unchanged
+// and both refusal messages are shown.  A missing amulet is asserted first,
+// so a test that accidentally carried one cannot pass by winning instead.
+// ============================================================
+
+static int br37646_depthBefore;
+static pos br37646_startPos;
+
+static void br37646_setup(void) {
+    clearArena();
+    setDepth(dungeonDeepestLevel());
+    br37646_depthBefore = currentDepth();
+    br37646_startPos = getPlayerPos();
+    placeDownStairs(posOffset(br37646_startPos, 0, 1));
+    clearMessages();
+}
+
+static boolean br37646_step(void) {
+    moveDown(); // step onto the down staircase: the engine tries to descend
+    return false;
+}
+
+static boolean br37646_without_amulet_is_repelled(void) {
+    TEST_ASSERT(!playerIsCarryingAmulet(),
+                "control: the player should not be carrying the amulet");
+    TEST_ASSERT(messageWasShown("the crystal archway repels you"),
+                "descending from the deepest level without the amulet should be repelled by the crystal archway");
+    TEST_ASSERT(messageWasShown("Only the bearer of the Amulet of Yendor may pass"),
+                "the refusal should explain that only the amulet's bearer may pass");
+    TEST_ASSERT_EQ(currentDepth(), br37646_depthBefore,
+                   "the player should stay on the deepest level when the archway repels them");
+    TEST_ASSERT_POS_EQ(getPlayerPos(), br37646_startPos,
+                       "the repelled player should not leave their square");
+    return !testFailed;
+}
+
+// ============================================================
+// BR38077 — ascending off the top level without the Amulet is
+// refused ("The dungeon exit is magically sealed!").
+//
+// On depth 1 the up staircase is the dungeon exit.  The player
+// stands one step below it carrying no amulet and steps onto it:
+// the exit refuses, so the depth and the player's square are
+// unchanged and both refusal messages are shown.  A missing
+// amulet is asserted first, so a test that accidentally carried
+// one cannot pass by winning instead.
+// ============================================================
+
+static int br38077_depthBefore;
+static pos br38077_startPos;
+
+static void br38077_setup(void) {
+    clearArena();
+    setDepth(1);
+    br38077_depthBefore = currentDepth();
+    br38077_startPos = getPlayerPos();
+    placeUpStairs(posOffset(br38077_startPos, 0, -1));
+    clearMessages();
+}
+
+static boolean br38077_step(void) {
+    moveUp(); // step onto the up staircase: the engine tries to ascend
+    return false;
+}
+
+static boolean br38077_ascent_without_amulet_is_sealed(void) {
+    TEST_ASSERT(!playerIsCarryingAmulet(),
+                "control: the player should not be carrying the amulet");
+    TEST_ASSERT(messageWasShown("The dungeon exit is magically sealed!"),
+                "ascending off the top level without the amulet should find the dungeon exit sealed");
+    TEST_ASSERT(messageWasShown("Only the bearer of the Amulet of Yendor may pass"),
+                "the refusal should explain that only the amulet's bearer may pass");
+    TEST_ASSERT_EQ(currentDepth(), br38077_depthBefore,
+                   "the player should stay on the top level when the exit is sealed");
+    TEST_ASSERT_POS_EQ(getPlayerPos(), br38077_startPos,
+                       "the refused player should not leave their square");
+    return !testFailed;
+}
+
+// ============================================================
+// BR32837 — every 100 ticks monsters approach the stairs to
+// enter your level
+//
+// A monster waits one level above with two environment updates left.  The
+// player is hasted, so each rest costs 50 ticks and every second rest
+// completes one 100-tick environment update.  Counting updates with
+// restAndDetectUpdate() (defined above) shows the monster stays away until
+// the second update and enters then: a countdown that ran every turn would
+// bring it in one update earlier.
+// ============================================================
+
+static creature *br32837_waiter;
+static int br32837_updatesSeen;
+static int br32837_updatesAtEntry;
+static boolean br32837_entered;
+
+static void br32837_setup(void) {
+    setArenaRadius(4, FLOOR);
+    descendToNextLevel(); // depth 2 leaves depth 1 visited above
+    clearArena();         // open floor and no monsters on this level
+    clearMonstersOnPreviousLevel();
+
+    br32837_waiter = spawnMonster(MK_RAT, posOffset(getPlayerPos(), 1, 0));
+    applyStatusToMonster(br32837_waiter, STATUS_PARALYZED, 1000);
+    waitOnPreviousLevelToEnter(br32837_waiter, 2);
+
+    hastePlayer(20); // a rest now costs 50 ticks
+    cadenceCycleTooLong = false;
+    br32837_updatesSeen = 0;
+    br32837_updatesAtEntry = -1;
+    br32837_entered = false;
+}
+
+static boolean br32837_step(void) {
+    restOneTurn();
+    if (restAndDetectUpdate()) {
+        br32837_updatesSeen++;
+    }
+    if (!br32837_entered && monsterDepth(br32837_waiter) == currentDepth()) {
+        br32837_entered = true;
+        br32837_updatesAtEntry = br32837_updatesSeen;
+        return false;
+    }
+    return br32837_updatesSeen < 5;
+}
+
+static boolean br32837_verify(void) {
+    TEST_ASSERT(br32837_entered,
+                "the monster waiting above should enter your level");
+    TEST_ASSERT_EQ(br32837_updatesAtEntry, 2,
+                   "the monster should enter on the second 100-tick environment update");
+    TEST_ASSERT(!cadenceCycleTooLong,
+                "the environment cycle should never exceed the rule's 100 ticks");
+    return !testFailed;
+}
+
+// ============================================================
+// BR18555 — auto-explore favors squares holding items as goals.
+//
+// The whole level is already mapped and the only walkable ground is a
+// short corridor, so the sole thing left that can guide auto-explore is
+// the ration lying at its far end.  Without treating the item's square
+// as a goal there is no goal at all and auto-explore stands still.
+// ============================================================
+
+static pos itemGoalStart;
+static pos itemGoalLoc;
+static item *itemGoalItem;
+
+static void item_goal_explore_setup(void) {
+    clearMonsters();
+    clearFloorItems();
+
+    // Rebuild the level as solid granite so the corridor is the only
+    // walkable ground and no leftover item can compete as a goal.
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            setTerrain(posAt(x, y), GRANITE);
+        }
+    }
+
+    itemGoalStart = posAt(levelWidth() / 2, levelHeight() / 2);
+    for (int i = 0; i <= 3; i++) {
+        setTerrain(posOffset(itemGoalStart, i, 0), FLOOR);
+    }
+    setPlayerPos(itemGoalStart);
+    itemGoalLoc = posOffset(itemGoalStart, 3, 0);
+    itemGoalItem = placeItemOnFloor(FOOD, RATION, itemGoalLoc);
+
+    // Mark the whole level discovered, leaving the item as the only goal.
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            revealCell(posAt(x, y));
+        }
+    }
+}
+
+static boolean item_goal_explore_step(void) {
+    TEST_ASSERT(playerIsAt(itemGoalStart),
+                "setup: the player should start at the west end of the corridor");
+    TEST_ASSERT(itemGoalItem != NULL,
+                "setup: the item should lie on the corridor");
+    TEST_ASSERT(!playerIsAt(itemGoalLoc),
+                "setup: the item should start away from the player");
+    if (testFailed) {
+        return false;
+    }
+
+    // The first press picks the exploration target; the second press
+    // starts exploring toward it.
+    injectKeystroke('x', false, false);
+    injectKeystroke('x', false, false);
+    return false;
+}
+
+static boolean item_square_is_an_explore_goal(void) {
+    TEST_ASSERT(playerIsAt(itemGoalLoc),
+                "auto-explore should walk onto the item when it is the only goal on a fully mapped level");
+    return !testFailed;
+}
+
+// ============================================================
+// BR34818 — when you fall, a secret square you are standing on
+// and can see is revealed.
+//
+// The player starts beside a hidden trap door, which is both a
+// secret square (TM_IS_SECRET) and an automatic descent square
+// (T_AUTO_DESCENT).  Stepping onto it sets the fall in motion
+// before the ordinary "discover the secrets of the square you
+// stand on" pass can run, so the fall itself must reveal the
+// square.  The test runs on the dungeon's deepest floor, where a
+// fall teleports the player instead of descending, leaving the
+// square in place to be inspected.  A revealed hidden trap door
+// becomes the ordinary trap door it was hiding.
+// ============================================================
+
+static pos br34818_trapLoc;
+
+static void br34818_setup(void) {
+    clearArena();
+    // On the deepest floor a fall teleports rather than descending, so the
+    // square the player fell from remains on the level for inspection.
+    setDepth(dungeonDeepestLevel());
+    br34818_trapLoc = posOffset(getPlayerPos(), 1, 0);
+    setTerrain(br34818_trapLoc, TRAP_DOOR_HIDDEN);
+    // The rule only reveals a square the player can see.
+    revealCell(br34818_trapLoc);
+    clearMessages();
+}
+
+static boolean br34818_step(void) {
+    moveRight(); // step onto the hidden trap door and fall through it
+    return false;
+}
+
+static boolean br34818_fall_reveals_secret(void) {
+    TEST_ASSERT_EQ(currentDepth(), dungeonDeepestLevel(),
+                   "control: a fall from the deepest floor should not descend");
+    TEST_ASSERT(messageWasShown("you plunge through a hole in the ground"),
+                "the player should have fallen through the trap door");
+    TEST_ASSERT(!cellIsTerrain(br34818_trapLoc, TRAP_DOOR_HIDDEN),
+                "falling should reveal the hidden trap door the player stood on");
+    TEST_ASSERT(cellIsTerrain(br34818_trapLoc, TRAP_DOOR),
+                "the revealed square should become an ordinary trap door");
+    return !testFailed;
+}
+
 const testCase tests_movement[] = {
+    { "BR34818_fall_reveals_secret_square", br34818_setup, br34818_step, br34818_fall_reveals_secret },
+    { "BR37646_descent_without_amulet_is_repelled", br37646_setup, br37646_step, br37646_without_amulet_is_repelled },
+    { "BR38077_ascent_without_amulet_is_sealed", br38077_setup, br38077_step, br38077_ascent_without_amulet_is_sealed },
+    { "BR32837_monsters_approach_stairs_each_100_ticks", br32837_setup, br32837_step, br32837_verify },
     { "BR13208_single_item_described_with_is",        br13208_single_setup,   NULL, br13208_single_item_uses_is },
     { "BR13208_stack_described_with_are",             br13208_stack_setup,    NULL, br13208_stack_uses_are },
     { "BR13208_gold_described_with_are",              br13208_gold_setup,     NULL, br13208_gold_uses_are },
@@ -2709,6 +3116,7 @@ const testCase tests_movement[] = {
 
     { "BR49182_flail_hits_enemies_adjacent_to_both_squares", flail_setup, flail_step, flail_hits_only_both_square_enemies },
     { "BR28946_gas_spreads_twice_per_environment_update",    gas_runs_twice_setup, one_turn_rest_step, gas_spreads_two_squares_in_one_update },
+    { "BR29862_gas_dissipation_rates",                       br29862_setup, NULL, br29862_verify },
 
     { "BR36633_electricity_promotes_flagged_tile", electricity_promotes_setup, electricity_promotes_step, electricity_promotes_the_struck_tile },
 
@@ -2717,8 +3125,12 @@ const testCase tests_movement[] = {
 
     { "BR65504_explore_heads_for_stairs_when_level_mapped", explore_to_stairs_setup, explore_to_stairs_step, explore_walks_to_the_stairs },
     { "BR19564_explore_stops_when_disturbed",  br19564_setup,           br19564_step,             br19564_stops_when_disturbed },
+    { "BR18555_explore_favors_item_squares_as_goals", item_goal_explore_setup, item_goal_explore_step, item_square_is_an_explore_goal },
 
     { "BR24904_explosion_immunity_lasts_five_turns", br24904_setup, br24904_step, br24904_survivor_is_temporarily_immune },
+
+    { "BR25832_dampening_armor_absorbs_explosion", br25832_dampening_setup, NULL, br25832_dampening_armor_absorbs_explosion },
+    { "BR25832_other_armor_takes_explosion_damage", br25832_control_setup, NULL, br25832_other_armor_takes_explosion_damage },
 
     { "BR21531_gas_erupts_at_eight_qualifying_neighbours", br21531_erupt_setup, br21531_step, br21531_gas_erupts_at_eight },
     { "BR21531_gas_holds_at_seven_qualifying_neighbours",  br21531_quiet_setup,  br21531_step, br21531_gas_holds_at_seven },

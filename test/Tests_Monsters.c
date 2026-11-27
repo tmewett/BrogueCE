@@ -9,22 +9,25 @@
 // targets a monster is allowed to cast at, the order a monster tries its
 // steps in when walking toward a destination, how a wandering monster
 // travels between its checkpoints, how an ally idles when it is close
-// to you and can see you, how an ally told not to follow you holds its
-// post while still chasing enemies within its range, how a monster's
+// to you and can see you, how a captive's captors loiter near it and attack
+// it only while it can survive the blows and does not poison them back, how
+// an ally told not to follow you holds its post while still chasing enemies
+// within its range, how a monster's
 // timed conditions count down once per turn, how a permanently fleeing
 // thief that loses its stolen item returns to normal behaviour, how an
 // always-hunting monster that has given up on the scent trail paths toward
 // you, the randomly chosen kind name a visible monster is displayed under
 // while you hallucinate, the allegiance of the members of a horde flagged
-// as allied with you, and how a monster generated through level population
+// as allied with you, how a monster generated through level population
 // takes an item out of the shared item pool and tags it with the depth it
-// was handed out on.
+// was handed out on, the gender a generated monster whose kind allows either
+// sex is given, and how a visible monster's spell is announced by name.
 //
 // Omitted are everything that depends on the particular layout of generated
 // levels or on most horde generation, random chances (mutations, item drops,
-// detection rolls, splitting, summoning counts), spell/bolt selection,
-// messages and death text, and any rule that needs a screen or is otherwise
-// not reproducible headlessly.
+// detection rolls, splitting, summoning counts), spell/bolt selection, the
+// remaining messages and death text, and any rule that needs a screen or is
+// otherwise not reproducible headlessly.
 
 #include "TestFramework.h"
 #include "Globals.h"
@@ -742,6 +745,103 @@ static boolean nonburning_wanderer_ignores_flammable_ground(void) {
                 "the rat should be wandering");
     TEST_ASSERT(!monsterAvoidsCell(flammableSubject, flammableGround),
                 "a wandering monster that is not burning need not avoid flammable ground");
+    return !testFailed;
+}
+
+// ---------------------------------------------
+// BR62492 — a wandering monster standing in harmful terrain spends its
+// turn escaping it
+//
+// The escape takes precedence over the wanderer's other business.  A monster
+// standing in poisonous lichen beside one of your allies would otherwise
+// attack that ally; instead it must spend the turn stepping toward the
+// nearest safe ground.  The engine tries diagonal steps first, so the safe
+// square it picks is the one down and to the right, and the ally beside it
+// is left untouched.
+// ---------------------------------------------
+
+static creature *br62492_subject;
+static creature *br62492_ally;
+static pos br62492_harmfulTile;
+static pos br62492_escapeTile;
+static int br62492_allyHealthBefore;
+static boolean br62492_startedWandering;
+
+static void br62492_setup(void) {
+    clearMonsters();
+
+    // Wall the player in and refresh the field of view, so the monster can
+    // never notice them and switch from wandering to tracking.
+    pos playerPos = getPlayerPos();
+    for (int dx = -1; dx <= 1; dx++) {
+        for (int dy = -1; dy <= 1; dy++) {
+            if (dx != 0 || dy != 0) {
+                setTerrain(posOffset(playerPos, dx, dy), GRANITE);
+            }
+        }
+    }
+    restOneTurn();
+
+    // Pick a square far from the player and lay open floor around it.
+    int margin = 3;
+    br62492_harmfulTile = posAt(margin, levelHeight() / 2);
+    int bestDistance = -1;
+    for (int x = margin; x < levelWidth() - margin; x++) {
+        for (int y = margin; y < levelHeight() - margin; y++) {
+            pos candidate = posAt(x, y);
+            int dx = candidate.x - playerPos.x;
+            int dy = candidate.y - playerPos.y;
+            if (dx < 0) dx = -dx;
+            if (dy < 0) dy = -dy;
+            int d = dx > dy ? dx : dy;
+            if (d > bestDistance) {
+                bestDistance = d;
+                br62492_harmfulTile = candidate;
+            }
+        }
+    }
+    for (int dx = -2; dx <= 2; dx++) {
+        for (int dy = -2; dy <= 2; dy++) {
+            setTerrain(posOffset(br62492_harmfulTile, dx, dy), FLOOR);
+        }
+    }
+
+    // The wanderer stands in lichen; the engine's preferred first diagonal,
+    // down and to the right, is safe floor.
+    setTerrain(br62492_harmfulTile, LICHEN);
+    br62492_escapeTile = posOffset(br62492_harmfulTile, 1, 1);
+
+    br62492_subject = spawnMonster(MK_TROLL, br62492_harmfulTile);
+    makeMonsterUnaware(br62492_subject);
+    br62492_startedWandering = monsterIsWandering(br62492_subject);
+
+    // One of your allies stands on safe ground beside the wanderer.  If the
+    // monster used its ordinary wandering behaviour it would attack the ally;
+    // the escape should preempt that.
+    br62492_ally = spawnMonster(MK_RAT, posOffset(br62492_harmfulTile, 1, 0));
+    makeMonsterAlly(br62492_ally);
+    br62492_allyHealthBefore = monsterHealth(br62492_ally);
+}
+
+static boolean br62492_step(void) {
+    monsterTakesTurn(br62492_subject);
+    return false;
+}
+
+static boolean br62492_escapes_before_attacking_ally(void) {
+    TEST_ASSERT(br62492_startedWandering,
+                "setup: the monster should begin as a wanderer");
+    TEST_ASSERT(cellIsHarmfulTerrain(br62492_harmfulTile),
+                "setup: the monster should begin in harmful terrain");
+    TEST_ASSERT(monsterIsAlive(br62492_ally),
+                "the ally beside the wanderer should survive the turn");
+    TEST_ASSERT_EQ(monsterHealth(br62492_ally), br62492_allyHealthBefore,
+                   "a wanderer escaping harmful terrain should not spend its turn attacking an adjacent ally");
+    pos escapedTo = monsterPosition(br62492_subject);
+    TEST_ASSERT_POS_EQ(escapedTo, br62492_escapeTile,
+                       "a wandering monster should step toward the nearest safe ground");
+    TEST_ASSERT(!cellIsHarmfulTerrain(escapedTo),
+                "the escape step should land on safe ground");
     return !testFailed;
 }
 
@@ -1594,6 +1694,75 @@ static boolean br54211_returns_to_ally(void) {
                 "losing the stolen item should end permanent flight");
     TEST_ASSERT(monsterIsAlly(br54211_thief),
                 "a thief that follows you and loses the item should become an ally");
+    return !testFailed;
+}
+
+// ============================================================
+// BR95165 — a cornered fleeing monster attacks rather than
+// stand still.
+//
+// A fleeing monkey is placed in a one-square pocket: every
+// square around it but yours is solid rock, and you occupy the
+// only other one.  It therefore has nowhere to retreat.  You
+// are paralyzed for the turn so the monkey's bite cannot miss,
+// which makes the health loss deterministic.  A monster that
+// merely stood still would leave your health untouched, and one
+// that could flee would change position; both would fail.
+// ============================================================
+
+static creature *br95165_monster;
+static int br95165_healthBefore;
+
+static void br95165_setup(void) {
+    clearMonsters();
+    setPlayerPos(posAt(levelWidth() / 2, levelHeight() / 2));
+    setArenaRadius(5, FLOOR);
+
+    pos playerLoc = getPlayerPos();
+    pos monsterLoc = posOffset(playerLoc, 1, 0);
+
+    for (int dx = -1; dx <= 1; dx++) {
+        for (int dy = -1; dy <= 1; dy++) {
+            if (dx == 0 && dy == 0) {
+                continue; // the monster's own square
+            }
+            pos neighbour = posOffset(monsterLoc, dx, dy);
+            if (neighbour.x == playerLoc.x && neighbour.y == playerLoc.y) {
+                continue; // your square, the monster's only way out
+            }
+            setTerrain(neighbour, GRANITE);
+        }
+    }
+
+    br95165_monster = placeHostileMonster(MK_MONKEY, monsterLoc);
+    makeMonsterStealAndFlee(br95165_monster, FOOD, RATION);
+
+    setPlayerHealth(playerMaxHealth());
+    applyStatusToPlayer(STATUS_PARALYZED, 10);
+    br95165_healthBefore = playerHealth();
+
+    TEST_ASSERT(monsterIsFleeing(br95165_monster),
+                "setup: the monkey should be fleeing");
+    TEST_ASSERT(monsterIsAdjacentToPlayer(br95165_monster),
+                "setup: the monkey should be next to you");
+    TEST_ASSERT_EQ(br95165_healthBefore, playerMaxHealth(),
+                   "setup: the monkey starts with you at full health");
+}
+
+static boolean br95165_take_turn_step(void) {
+    monsterTakesTurn(br95165_monster);
+    return false;
+}
+
+static boolean br95165_cornered_fleeing_monster_attacks(void) {
+    TEST_ASSERT(monsterIsAlive(br95165_monster),
+                "control: the monkey should survive its own turn");
+    TEST_ASSERT(monsterIsAdjacentToPlayer(br95165_monster),
+                "control: the cornered monkey should not have been able to flee");
+    TEST_ASSERT(monsterIsFleeing(br95165_monster),
+                "control: the monkey should still be in flight when it attacks");
+    TEST_ASSERT(playerHealth() < br95165_healthBefore,
+                "a cornered fleeing monster should attack you rather than stand still");
     return !testFailed;
 }
 
@@ -2740,6 +2909,50 @@ static boolean br64018_allied_horde_spawns_allies(void) {
 }
 
 // ============================================================
+// BR48869 — horde members spawn as followers of their leader.
+//
+// The fixture uses a non-allied horde: an allied horde's members
+// are handed to the player by becomeAllyWith, which would replace
+// the leader link this rule describes.  Three requested members
+// make the loop check every spawned member, and the member count
+// is the control that the member branch actually ran.
+// ============================================================
+
+static creature *br48869_leader;
+static int br48869_members;
+
+static void br48869_setup(void) {
+    clearMonsters();
+    setPlayerPos(posAt(levelWidth() / 2, levelHeight() / 2));
+    setArenaRadius(8, FLOOR);
+    br48869_leader = spawnHordeWithFollowers(posOffset(getPlayerPos(), 4, 0),
+                                             3, false, &br48869_members);
+}
+
+static boolean br48869_horde_members_follow_leader(void) {
+    TEST_ASSERT(br48869_leader != NULL,
+                "the horde should spawn a leader");
+    TEST_ASSERT_EQ(br48869_members, 3,
+                   "control: all three members of the horde should spawn");
+
+    int followers = 0;
+    for (int i = 0; i < monsterCount(); i++) {
+        creature *member = monsterAtIndex(i);
+        if (member == br48869_leader) {
+            continue;
+        }
+        TEST_ASSERT(monsterFollows(member, br48869_leader),
+                    "every horde member should spawn as a follower of its leader");
+        followers++;
+    }
+    TEST_ASSERT_EQ(followers, 3,
+                   "the horde should hold three members besides its leader");
+    TEST_ASSERT(!monsterFollows(br48869_leader, br48869_leader),
+                "the horde leader should not be its own follower");
+    return !testFailed;
+}
+
+// ============================================================
 // BR43734 — a monster armed with a whip or spear attacks along a
 // line in the chosen direction instead of stepping forward.
 //
@@ -2926,6 +3139,76 @@ static boolean br46783_rat_verify(void) {
                 "a monster that never carries items should not be handed one");
     TEST_ASSERT_EQ(br46783_ratHopperAfter, br46783_ratHopperBefore,
                    "generating monsters that never carry items should leave the pool alone");
+    return !testFailed;
+}
+
+// ============================================================
+// BR47163 — a monster whose kind can be either male or female is
+// randomly given one gender.
+//
+// An ogre's catalog entry marks it as either sex.  Generating many
+// ogres must hand out both genders (a fixed choice would make one of
+// them impossible), and none may be left without a gender.  A rat's
+// entry names neither sex, so rats stay neuter: the random choice is
+// confined to kinds that allow both.
+// ============================================================
+
+#define BR47163_SPAWN_COUNT 64
+
+static int br47163_males, br47163_females, br47163_genderless;
+static int br47163_ratMales, br47163_ratFemales, br47163_ratNeuter;
+
+static void br47163_ogre_setup(void) {
+    clearMonsters();
+    standPlayerOn(FLOOR);
+    br47163_males = br47163_females = br47163_genderless = 0;
+    for (int i = 0; i < BR47163_SPAWN_COUNT; i++) {
+        creature *monst = spawnMonster(MK_OGRE, posOffset(getPlayerPos(), 5, 0));
+        const char *gender = monsterGenderName(monst);
+        if (strcmp(gender, "male") == 0) {
+            br47163_males++;
+        } else if (strcmp(gender, "female") == 0) {
+            br47163_females++;
+        } else {
+            br47163_genderless++;
+        }
+    }
+}
+
+static boolean br47163_ogres_get_one_gender(void) {
+    TEST_ASSERT_EQ(br47163_genderless, 0,
+                   "every ogre should be assigned a male or female gender");
+    TEST_ASSERT(br47163_males > 0,
+                "the random gender assignment should produce at least one male ogre");
+    TEST_ASSERT(br47163_females > 0,
+                "the random gender assignment should produce at least one female ogre");
+    return !testFailed;
+}
+
+static void br47163_rat_setup(void) {
+    clearMonsters();
+    standPlayerOn(FLOOR);
+    br47163_ratMales = br47163_ratFemales = br47163_ratNeuter = 0;
+    for (int i = 0; i < BR47163_SPAWN_COUNT; i++) {
+        creature *monst = spawnMonster(MK_RAT, posOffset(getPlayerPos(), 5, 0));
+        const char *gender = monsterGenderName(monst);
+        if (strcmp(gender, "male") == 0) {
+            br47163_ratMales++;
+        } else if (strcmp(gender, "female") == 0) {
+            br47163_ratFemales++;
+        } else {
+            br47163_ratNeuter++;
+        }
+    }
+}
+
+static boolean br47163_rats_stay_neuter(void) {
+    TEST_ASSERT_EQ(br47163_ratMales, 0,
+                   "a kind that names neither sex should never be given a male gender");
+    TEST_ASSERT_EQ(br47163_ratFemales, 0,
+                   "a kind that names neither sex should never be given a female gender");
+    TEST_ASSERT_EQ(br47163_ratNeuter, BR47163_SPAWN_COUNT,
+                   "a kind that names neither sex should stay neuter");
     return !testFailed;
 }
 
@@ -3140,10 +3423,242 @@ static boolean br89904_verify(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR65136 — a captive's captors loiter nearby and, if the captive
+// regenerates and can survive the blows, attack it to keep it
+// weak, unless they are poisonous.
+//
+// The captor and its captive are sealed in a small floor chamber
+// walled off from the player, so the captor never notices the
+// player and its turn reaches the captive-handling branch instead
+// of hunting.  An attack always hits a captive, so any health lost
+// by the captive proves the captor attacked.  Each negative case
+// keeps the same scene and removes exactly one of the rule's
+// conditions, and the captor is watched so a captor that wandered
+// off instead of loitering would be caught.
+// ============================================================
+
+#define BR65136_TURNS 40
+
+static creature *br65136_captive;
+static creature *br65136_captor;
+static int br65136_startHealth;
+static int br65136_maxDistance;
+static boolean br65136_captiveWasHit;
+static int br65136_turns;
+
+static int br65136_distanceToCaptive(void) {
+    pos captorPos = monsterPosition(br65136_captor);
+    pos captivePos = monsterPosition(br65136_captive);
+    int dx = captorPos.x - captivePos.x;
+    int dy = captorPos.y - captivePos.y;
+    if (dx < 0) dx = -dx;
+    if (dy < 0) dy = -dy;
+    return (dx > dy) ? dx : dy;
+}
+
+static void br65136_setupPair(enum monsterTypes captiveType,
+                              enum monsterTypes captorType) {
+    pos origin = posAt(levelWidth() / 2, levelHeight() / 2);
+    pos centre = posOffset(origin, 6, 0);
+
+    clearMonsters();
+    removeFloorFood();
+    setTerrain(origin, FLOOR);
+    setPlayerPos(origin);
+
+    // A granite shell around a 3x3 interior: the pair is out of the player's
+    // sight (and its tiles never get a field-of-view flag), so the captor
+    // stays unaware and loiters instead of hunting the player.
+    for (int dx = -2; dx <= 2; dx++) {
+        for (int dy = -2; dy <= 2; dy++) {
+            boolean rim = (dx == -2 || dx == 2 || dy == -2 || dy == 2);
+            setTerrain(posOffset(centre, dx, dy), rim ? GRANITE : FLOOR);
+        }
+    }
+
+    br65136_captive = spawnMonster(captiveType, posOffset(centre, 1, 0));
+    br65136_captor = spawnMonster(captorType, centre);
+    makeMonsterCaptive(br65136_captive);
+    makeMonsterFollow(br65136_captor, br65136_captive);
+    makeMonsterUnaware(br65136_captor);
+
+    br65136_startHealth = monsterHealth(br65136_captive);
+    br65136_maxDistance = 0;
+    br65136_captiveWasHit = false;
+    br65136_turns = 0;
+}
+
+static void br65136_takeCaptorTurn(void) {
+    monsterTakesTurn(br65136_captor);
+    br65136_turns++;
+
+    if (monsterHealth(br65136_captive) < br65136_startHealth) {
+        br65136_captiveWasHit = true;
+    }
+    int distance = br65136_distanceToCaptive();
+    if (distance > br65136_maxDistance) {
+        br65136_maxDistance = distance;
+    }
+}
+
+static boolean br65136_manyTurns_step(void) {
+    br65136_takeCaptorTurn();
+    return br65136_turns < BR65136_TURNS;
+}
+
+static void br65136_healthy_captive_setup(void) {
+    br65136_setupPair(MK_TROLL, MK_RAT);
+}
+
+static void br65136_poisonous_captor_setup(void) {
+    br65136_setupPair(MK_TROLL, MK_SPIDER);
+}
+
+static void br65136_nonregenerating_captive_setup(void) {
+    br65136_setupPair(MK_ZOMBIE, MK_RAT);
+}
+
+static void br65136_weak_captive_setup(void) {
+    br65136_setupPair(MK_TROLL, MK_RAT);
+    setMonsterHealth(br65136_captive, 1);
+    br65136_startHealth = 1;
+}
+
+static boolean br65136_captor_attacks_regenerating_captive(void) {
+    TEST_ASSERT(br65136_captive != NULL && br65136_captor != NULL,
+                "setup: the captive and its captor should exist");
+    TEST_ASSERT(monsterRegenerates(br65136_captive),
+                "precondition: the captive should regenerate");
+    TEST_ASSERT(!monsterHasAbility(br65136_captor, MA_POISONS),
+                "precondition: the captor should not be poisonous");
+    TEST_ASSERT(monsterIsWandering(br65136_captor),
+                "precondition: the captor should be loitering, not hunting");
+    TEST_ASSERT(br65136_captiveWasHit,
+                "a non-poisonous captor should attack a healthy captive that regenerates");
+    TEST_ASSERT(monsterHealth(br65136_captive) < br65136_startHealth,
+                "the captive's health should fall when its captor attacks");
+    TEST_ASSERT(br65136_maxDistance <= 2,
+                "a captor should loiter within two squares of its captive");
+    return !testFailed;
+}
+
+static boolean br65136_poisonous_captor_spares_captive(void) {
+    TEST_ASSERT(br65136_captive != NULL && br65136_captor != NULL,
+                "setup: the captive and its captor should exist");
+    TEST_ASSERT(monsterHasAbility(br65136_captor, MA_POISONS),
+                "precondition: the captor should be poisonous");
+    TEST_ASSERT(monsterRegenerates(br65136_captive),
+                "precondition: the captive should regenerate");
+    TEST_ASSERT(monsterIsWandering(br65136_captor),
+                "precondition: the captor should be loitering, not hunting");
+    TEST_ASSERT(!br65136_captiveWasHit,
+                "a poisonous captor should not attack its captive");
+    TEST_ASSERT_EQ(monsterHealth(br65136_captive), br65136_startHealth,
+                   "a poisonous captor should leave its captive's health unchanged");
+    TEST_ASSERT(br65136_maxDistance <= 2,
+                "a captor should loiter within two squares of its captive");
+    return !testFailed;
+}
+
+static boolean br65136_captor_spares_nonregenerating_captive(void) {
+    TEST_ASSERT(br65136_captive != NULL && br65136_captor != NULL,
+                "setup: the captive and its captor should exist");
+    TEST_ASSERT(!monsterRegenerates(br65136_captive),
+                "precondition: the captive should not regenerate");
+    TEST_ASSERT(!monsterHasAbility(br65136_captor, MA_POISONS),
+                "precondition: the captor should not be poisonous");
+    TEST_ASSERT(monsterIsWandering(br65136_captor),
+                "precondition: the captor should be loitering, not hunting");
+    TEST_ASSERT(!br65136_captiveWasHit,
+                "a captor should not attack a captive that does not regenerate");
+    TEST_ASSERT_EQ(monsterHealth(br65136_captive), br65136_startHealth,
+                   "the non-regenerating captive's health should be unchanged");
+    return !testFailed;
+}
+
+static boolean br65136_captor_spares_captive_it_would_kill(void) {
+    TEST_ASSERT(br65136_captive != NULL && br65136_captor != NULL,
+                "setup: the captive and its captor should exist");
+    TEST_ASSERT(monsterRegenerates(br65136_captive),
+                "precondition: the captive should regenerate");
+    TEST_ASSERT_EQ(br65136_startHealth, 1,
+                   "precondition: the captive should have less health than one blow");
+    TEST_ASSERT(monsterIsWandering(br65136_captor),
+                "precondition: the captor should be loitering, not hunting");
+    TEST_ASSERT(!br65136_captiveWasHit,
+                "a captor should not attack a captive that a blow could kill");
+    TEST_ASSERT_EQ(monsterHealth(br65136_captive), 1,
+                   "the captive's health should be unchanged");
+    return !testFailed;
+}
+
+// ============================================================
+// BR61366 — a monster's spell is announced by name when you can
+// see it.
+//
+// A mirrored totem always casts its beckoning spell at an eligible
+// target.  Visible, it is announced as "the mirrored totem casts a
+// beckoning spell"; invisible, the same spell still pulls you (so it
+// really was cast) but no announcement is made; visible again, the
+// announcement returns.  The player never moves here except when the
+// spell pulls them, so each phase is the same cast under a different
+// visibility state.
+// ============================================================
+
+static creature *br61366_totem;
+static pos br61366_playerStart;
+static boolean br61366_visibleAnnounced;
+static boolean br61366_hiddenAnnounced;
+static boolean br61366_hiddenCast;
+static boolean br61366_revealedAnnounced;
+
+static void br61366_setup(void) {
+    setArenaRadius(6, FLOOR);
+    br61366_playerStart = getPlayerPos();
+    br61366_totem = placeHostileMonster(MK_MIRRORED_TOTEM,
+                                        posOffset(br61366_playerStart, -4, 0));
+}
+
+static boolean br61366_step(void) {
+    clearMessages();
+    monsterTakesTurn(br61366_totem);
+    br61366_visibleAnnounced = messageWasShown("the mirrored totem casts a beckoning spell");
+    setPlayerPos(br61366_playerStart);
+
+    applyStatusToMonster(br61366_totem, STATUS_INVISIBLE, 100);
+    clearMessages();
+    monsterTakesTurn(br61366_totem);
+    br61366_hiddenAnnounced = messageWasShown("casts a beckoning spell");
+    br61366_hiddenCast = !playerIsAt(br61366_playerStart);
+    setPlayerPos(br61366_playerStart);
+
+    applyStatusToMonster(br61366_totem, STATUS_INVISIBLE, 0);
+    clearMessages();
+    monsterTakesTurn(br61366_totem);
+    br61366_revealedAnnounced = messageWasShown("the mirrored totem casts a beckoning spell");
+    return false;
+}
+
+static boolean br61366_visible_monster_spell_is_announced(void) {
+    TEST_ASSERT(br61366_visibleAnnounced,
+                "a spell cast by a monster you can see should be announced by name");
+    TEST_ASSERT(br61366_hiddenCast,
+                "control: the invisible totem should still cast its spell");
+    TEST_ASSERT(!br61366_hiddenAnnounced,
+                "a spell cast by a monster you cannot see should not be announced");
+    TEST_ASSERT(br61366_revealedAnnounced,
+                "control: the announcement should return once the monster is visible again");
+    return !testFailed;
+}
+
 const testCase tests_monsters[] = {
     { "BR46783_generated_monster_carries_hopper_item", br46783_carrier_setup, NULL, br46783_carrier_verify },
     { "BR46783_hopper_items_are_taken_and_exhausted", br46783_pool_setup, NULL, br46783_pool_verify },
     { "BR46783_non_carrier_leaves_hopper_alone", br46783_rat_setup, NULL, br46783_rat_verify },
+
+    { "BR47163_monster_kind_with_two_genders_gets_one", br47163_ogre_setup, NULL, br47163_ogres_get_one_gender },
+    { "BR47163_kind_without_genders_stays_neuter", br47163_rat_setup, NULL, br47163_rats_stay_neuter },
 
     { "BR55571_cloning_a_captive_produces_an_ally", br55571_captive_setup, NULL, br55571_captive_clone_is_ally },
     { "BR55571_cloning_a_noncaptive_is_not_an_ally", br55571_noncaptive_setup, NULL, br55571_noncaptive_clone_is_not_ally },
@@ -3191,6 +3706,11 @@ const testCase tests_monsters[] = {
 
     { "BR45346_nobody_attacks_a_captive",             nobody_attacks_setup,            NULL, nobody_attacks_a_captive },
 
+    { "BR65136_captor_attacks_healthy_regenerating_captive", br65136_healthy_captive_setup, br65136_manyTurns_step, br65136_captor_attacks_regenerating_captive },
+    { "BR65136_poisonous_captor_spares_captive",             br65136_poisonous_captor_setup, br65136_manyTurns_step, br65136_poisonous_captor_spares_captive },
+    { "BR65136_captor_spares_nonregenerating_captive",       br65136_nonregenerating_captive_setup, br65136_manyTurns_step, br65136_captor_spares_nonregenerating_captive },
+    { "BR65136_captor_spares_captive_it_would_kill",         br65136_weak_captive_setup, br65136_manyTurns_step, br65136_captor_spares_captive_it_would_kill },
+
     { "BR54066_discordant_attacks_own_kind",          discordant_setup,                NULL, discordant_attacks_own_kind },
     { "BR54066_discordant_attacks_player",            discordant_setup,                NULL, discordant_attacks_player },
 
@@ -3221,6 +3741,8 @@ const testCase tests_monsters[] = {
     { "BR52904_burning_tracker_ignores_flammable_ground", burning_tracker_setup,      NULL, burning_tracker_ignores_flammable_ground },
     { "BR52904_nonburning_wanderer_ignores_flammable_ground", nonburning_wanderer_setup, NULL, nonburning_wanderer_ignores_flammable_ground },
 
+    { "BR62492_wandering_monster_escapes_harmful_terrain", br62492_setup, br62492_step, br62492_escapes_before_attacking_ally },
+
     { "BR51199_beached_liquid_monster_cannot_move",   beached_liquid_monster_setup,    NULL, beached_liquid_monster_cannot_move },
 
     { "BR44948_never_sleeping_monster_starts_awake",  never_sleeping_monster_setup,    NULL, never_sleeping_monster_starts_awake },
@@ -3246,11 +3768,15 @@ const testCase tests_monsters[] = {
     { "BR54211_thief_without_item_returns_to_hunting", br54211_thief_setup, br54211_hunting_step, br54211_returns_to_hunting },
     { "BR54211_following_thief_without_item_becomes_ally", br54211_follower_setup, br54211_ally_step, br54211_returns_to_ally },
 
+    { "BR95165_cornered_fleeing_monster_attacks", br95165_setup, br95165_take_turn_step, br95165_cornered_fleeing_monster_attacks },
+
     { "BR46360_population_matches_the_depth_formula", NULL, NULL, population_matches_the_depth_formula },
     { "BR59340_ally_never_negates_player_in_reflection_armor", br59340_player_setup, br59340_player_step, br59340_player_verify },
     { "BR59340_ally_never_negates_an_allied_creature", br59340b_setup, br59340b_step, br59340b_verify },
 
     { "BR20368_totem_aware_only_within_detection_range", br20368_setup, br20368_step, br20368_totem_aware_only_within_range },
+
+    { "BR61366_visible_monster_spell_is_announced", br61366_setup, br61366_step, br61366_visible_monster_spell_is_announced },
 
     { "BR44597_hallucinated_monster_names", br44597_setup, br44597_step, br44597_verify },
 
@@ -3271,6 +3797,7 @@ const testCase tests_monsters[] = {
     { "BR70006_ignores_immobile_weapon_immune_enemy",          br70006_immobile_hostile_setup, br70006_take_turn, br70006_immobile_hostile_verify },
 
     { "BR64018_allied_horde_spawns_allies", br64018_setup, NULL, br64018_allied_horde_spawns_allies },
+    { "BR48869_horde_members_follow_their_leader", br48869_setup, NULL, br48869_horde_members_follow_leader },
 
     { "BR89904_tracking_monster_losing_scent_wanders_to_last_seen", br89904_setup, br89904_step, br89904_verify },
 

@@ -60,7 +60,7 @@ Before the welcome message, the message log and archive are cleared and the scre
 [RogueMain.c:532-534](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/RogueMain.c#L532-L534)
 ----
 BR26483
-In a debug build with immortality active, dying instead fully heals the player, refills hunger if it is very low, and resumes the run rather than ending it.
+In wizard mode, dying instead fully heals the player, refills hunger if it is very low, and resumes the run rather than ending it.
 [RogueMain.c:1134-1143](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/RogueMain.c#L1134-L1143)
 ----
 BR35287
@@ -221,8 +221,16 @@ Creating gold in wizard mode adds its quantity directly to the player's gold tot
 [Wizard.c:479-486](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L479-L486)
 ----
 BR36714
-Created weapons and armor can be given a runic; slaying and immunity runics additionally require choosing a target monster class, and choosing no vorpal target removes the runic.
-[Wizard.c:106-173](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L106-L173)
+Created weapons and armor can be given a runic.
+[Wizard.c:152-157](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L152-L157)
+----
+BR18688
+Choosing the slaying runic for a created weapon or the immunity runic for created armor prompts for a target monster class.
+[Wizard.c:158-160](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L158-L160)
+----
+BR37127
+Cancelling the target monster choice for a slaying or immunity runic leaves the created item without that runic.
+[Wizard.c:162-167](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L162-L167)
 ----
 BR79883
 Created item enchantment levels are bounded by category: wands default to their charge count, charms at least 1, staves at least 2, rings and non-runic equipment from -3, bad runics only from -3 up to -1, and good runics at least 1.
@@ -267,8 +275,20 @@ A wizard-created monster is offered a mutation unless it can never be mutated.
 [Wizard.c:367-370](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L367-L370)
 ----
 BR24559
-A wizard-created monster must be placed on a visible, valid location (an open spot, or a wall for a turret), and an invalid choice discards it.
-[Wizard.c:371-400](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L371-L400)
+A wizard-created monster can only be placed on a location the player can see or otherwise sense.
+[Wizard.c:384-386](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L384-L386)
+----
+BR11100
+A wizard-created turret can only be placed on a wall.
+[Wizard.c:387-389](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L387-L389)
+----
+BR13174
+A wizard-created monster that is not a turret can only be placed on an unobstructed location.
+[Wizard.c:390-392](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L390-L392)
+----
+BR15672
+Choosing an invalid location for a wizard-created monster discards the monster.
+[Wizard.c:394-400](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L394-L400)
 ----
 BR99923
 After a wizard-created monster is placed, the player is prompted to make it an ally.

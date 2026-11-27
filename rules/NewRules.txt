@@ -1,10 +1,4 @@
 ----
-BR14654
-"A creature travelling to a goal takes the shortest passable route to it, skirting obstacles by the cheapest detour."
-Citation: [Dijkstra.c:42-90](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Dijkstra.c#L42-L90)
-Note: Dijkstra.c:42-90 is the nearest-first route scan: each tile taken from the front of the queue relaxes its neighbours, reinserting any neighbour whose distance improves (61-79), and the scan always continues from the nearest unsettled tile (83-88). The resulting distances yield the shortest passable route to the destination. Existing Dijkstra rules (BR14015, BR82699, BR37348, BR43009, BR33256, BR68830) cover scanning directions, diagonal corner-cutting, obstruction cost, per-traveller costs, and uses of distance maps, but none states the shortest-passable-route guarantee this way. ID BR14654 is unique across rules/.
-
-----
 BR14684
 "Before a pathfinding scan begins, each tile's starting distance is copied from an existing distance map when one is supplied, so the scan can build on prior distances; otherwise the tile starts at a large maximum and no tile is lined up for expansion yet."
 Citation: [Dijkstra.c:127-132](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Dijkstra.c#L127-L132)
@@ -593,12 +587,6 @@ Citation: [Wizard.c:384-386](https://github.com/tmewett/BrogueCE/blob/104a20fedb
 Note: Wizard.c:384-386 invalidates a chosen square only when the player can neither see nor sense it; that test (the playerCanSeeOrSense macro, Rogue.h:1271-1272) accepts any square whose flags include ANY_KIND_OF_VISIBLE (visible, clairvoyant, or telepathic — Rogue.h:1113). BR24559 phrases the requirement as a "visible" location alongside the turret-wall rule and the discard on an invalid choice, so the acceptance of sensed-but-unseen squares has no rule in rules/*. ID BR30936 is unique across rules/ and test/.
 
 ----
-BR21320
-"While a route is calculated, work always advances from the square nearest the destination that is still waiting, and once a square's neighboring squares have all been considered it is set aside for good; the calculation therefore stops on its own when no waiting squares remain, leaving every square it can reach with its final route distance."
-Citation: [Dijkstra.c:80-90](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Dijkstra.c#L80-L90)
-Note: Dijkstra.c:80-81 close the relaxation conditional and the neighbor loop of one square's pass, and Dijkstra.c:83-88 unlink the worked square from the distance-ordered waiting list before taking the next one, so the update loop (Dijkstra.c:48-90) consumes waiting squares nearest-first and terminates when the list empties — this is the dequeue/termination half of the scan, with the reinsert half (Dijkstra.c:61-79) already covered. Existing rule BR14654 describes nearest-first expansion and shortest routes via that reinsertion at Dijkstra.c:61-79 (citing the full scan at Dijkstra.c:42-90), but it does not describe worked squares being dropped from the waiting list or the scan ending when none remain, and no rule in rules/* cites Dijkstra.c:80-100. ID BR21320 is unique across rules/ and test/.
-
-----
 BR16761
 "Before a route is calculated, every square's stored distance is wiped back to a fixed maximum of 30000, so no distance from an earlier calculation carries over; any square that cannot be reached from the destination keeps that maximum, which the game treats as having no route to it."
 Citation: [Dijkstra.c:92-100](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Dijkstra.c#L92-L100), [Dijkstra.c:247-247](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Dijkstra.c#L247-L247)
@@ -921,12 +909,6 @@ BR30749
 "A creature can die only once: once it is already dying or dead, a further killing blow is ignored, so its death effect, dropped item, death message, and any creature it was carrying are handled only once."
 Citation: [Combat.c:1646-1649](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1646-L1649)
 Note: Combat.c:1646-1648 returns immediately when the creature is already dying or dead, before the carried-item drop at Combat.c:1662-1669, the death effect and its message at Combat.c:1671-1680, and the corpse handling at Combat.c:1711-1733. BR76528 covers the initial kill marking and message, BR64050 covers a dying monster taking no further action, and BR45346 covers no one attacking a dying creature, but no rule in rules/* states that a second kill is ignored so those death consequences cannot repeat. ID BR30749 is unique across rules/ and test/.
-
-----
-BR17320
-"A new game starts with its food-supply tally at zero, so the guaranteed food supply is counted afresh from the beginning of the run rather than continuing from an earlier game."
-Citation: [RogueMain.c:382](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/RogueMain.c#L382), [Items.c:688-695](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L688-L695)
-Note: RogueMain.c:382 zeroes the running total of food power spawned when a game is initialized. Items.c:688-695 compares that total against a depth-scaled nutrition schedule and forces a food item into the level's item generation when the total has fallen behind, guaranteeing roughly one ration every four levels. BR36788 describes that forced-food rule and BR84421 describes the starting ration in the pack, but no rule in rules/* states that the running food tally is reset to zero at the start of a new game, so the guarantee is measured from the run's beginning. ID BR17320 is unique across rules/ and test/.
 
 ----
 BR34177
@@ -1356,9 +1338,9 @@ Note: Items.c:4013 counts how many of the three kinds were found, Items.c:4015-4
 
 ----
 BR26601
-"An unidentified ring is named after a gemstone, such as a ruby ring or an opal ring, and no two kinds of ring share the same gemstone in a given game; the gemstone names are shuffled anew each game."
-Citation: [Globals.c:1548-1569](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1548-L1569), [Globals.c:1656-1664](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1656-L1664), [Items.c:1628-1643](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L1628-L1643)
-Note: Globals.c:1548-1569 defines the 18-name gemstone pool, Globals.c:1656-1664 builds the ring table from it, and Items.c:1638-1642 prints the gemstone before "ring" for an unidentified ring (an identified ring instead reads "ring of <effect>", Items.c:1629-1630). BR15561 states that item flavors such as gems and metals are reshuffled each game, but no rule in rules/* says rings are named with gemstones or that each ring kind gets a distinct one.
+"An unidentified ring is named after a gemstone, such as a ruby ring or an opal ring, and no two kinds of ring share the same gemstone in a given game. The gemstone names are shuffled anew each game."
+Citation: [Globals.c:1548-1569](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1548-L1569), [Globals.c:1656-1664](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1656-L1664), [Items.c:1628-1643](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L1628-L1643), [Items.c:8006-8017](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L8006-L8017)
+Note: Globals.c:1548-1569 defines the 18-name gemstone pool, Globals.c:1656-1664 builds the ring table from it, and Items.c:1638-1642 prints the gemstone before "ring" for an unidentified ring (an identified ring instead reads "ring of <effect>", Items.c:1629-1630). Items.c:8006-8017, within the flavor shuffle at Items.c:7963-8040, reshuffles the gemstone names each game, implementing the per-game reshuffle clause (BR15561 covers item flavors generally). No other rule in rules/* says rings are named with gemstones or that each ring kind gets a distinct one.
 
 ----
 BR23444
@@ -1520,7 +1502,7 @@ Note: RogueMain.c:276-279 is the do-while that picks the down-stairs location: x
 BR22809
 "When a distance calculation starts from squares that already carry a distance, those squares are taken up in order of increasing distance, so the calculation spreads outward from the nearest starting square first and every square ends up with its shortest distance to the closest starting square."
 Citation: [Dijkstra.c:166-184](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Dijkstra.c#L166-L184)
-Note: Dijkstra.c:166-184 is the seeding half of the batch input used by the distance-map scan: for each square whose entry cost is positive and whose distance is below the scan's maximum, Dijkstra.c:169-177 walk the distance-ordered waiting list and splice the square in at its sorted position (restarting from the front when the cached insertion point has already passed it, 166-167), and 179 remembers it as the next insertion point. Because the scan is fed an input distance map (127-143, called at 205), several pre-marked sources enter the waiting list at once and are worked nearest-first, which gives the scent, shore, waypoint, safety, and player-pathing maps their multi-source nearest distances. BR14684 covers the seeding values at 127-132, and BR14654/BR21320 cover the later relaxation and dequeue halves of the scan; no rule in rules/* cites 166-184 or describes this sorted seeding. ID BR22809 is unique across all rule files.
+Note: Dijkstra.c:166-184 is the seeding half of the batch input used by the distance-map scan: for each square whose entry cost is positive and whose distance is below the scan's maximum, Dijkstra.c:169-177 walk the distance-ordered waiting list and splice the square in at its sorted position (restarting from the front when the cached insertion point has already passed it, 166-167), and 179 remembers it as the next insertion point. Because the scan is fed an input distance map (127-143, called at 205), several pre-marked sources enter the waiting list at once and are worked nearest-first, which gives the scent, shore, waypoint, safety, and player-pathing maps their multi-source nearest distances. BR14684 covers the seeding values at 127-132, and BR14654 covers the later relaxation and shortest-route behavior of the scan; no rule in rules/* cites 166-184 or describes this sorted seeding. ID BR22809 is unique across all rule files.
 
 ----
 BR42661
@@ -1659,3 +1641,663 @@ BR36062
 "The dialog around a wizard mode list is sized to its contents, growing wider for the longest title or shortcut-labeled choice and taller for each additional choice."
 Citation: [Wizard.c:50-70](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L50-L70)
 Note: Wizard.c:50 starts the measured width at the title's length, Wizard.c:62-64 lengthen it to any shortcut-labeled choice that is longer, and Wizard.c:69-70 turn that maximum into a width one column wider and a height of the choice count plus two, with the shaded panel drawn one cell beyond those bounds at Wizard.c:78. The same measured width is passed to the input loop at Wizard.c:83, so clicks outside it cancel. No rule in rules/* describes the size of these wizard list dialogs. ID BR36062 is unique across rules/ and test/.
+
+----
+BR26972
+"When the game prepares a set of squares for routing or placement, every square whose terrain has any of the selected blocking properties, or whose occupancy, visibility, or machine state has any of the selected disqualifying conditions, is marked off-limits; all other squares keep whatever value they already had."
+Citation: [Grid.c:159-170](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Grid.c#L159-L170)
+Note: Grid.c:159-170 is the shared filter that scans every map square and writes the supplied value only when the square's terrain matches any of the given terrain flags or its map flags match the given map flags, leaving non-matching squares untouched. Its callers use it to block pathing obstacles and forbidden targets inside the distance-map builder (Grid.c:315-317 and 327, reached through Grid.c:287-360), and to reject harmful terrain plus occupied, stair, visible, or machine squares when choosing summon, periodic-spawn, and teleport destinations (Monsters.c:1006, 1094, 1101, 1168-1170). Existing rules describe those caller-specific outcomes (BR39283 distant summoning, BR82926 periodic spawns, BR53348 teleport landing, BR68830 distance-map uses), but no rule in rules/* describes the common flag-based square filtering itself. ID BR26972 is unique across rules/ and test/.
+
+----
+BR30488
+"Watching a recording replays the run automatically, carrying out the recorded actions one turn at a time at the current playback speed, and keeps going until the recorded game ends or playback is stopped."
+Citation: [MainMenu.c:1240-1258](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L1240-L1258)
+Note: MainMenu.c:1240-1258 is the playback loop: it repeats while the recorded game has not ended and playback is still active (1240), marks the game as between turns so the playback delay is honored (1253), obtains the next recorded event (1254), and executes that event immediately (1257). Existing rules cover the playback controls — speed (BR42285, BR62572), pause (BR82494), and single-turn stepping (BR11882, BR80681) — but none states that viewing a recording automatically advances through the run turn by turn until it ends. ID BR30488 is unique across rules/ and test/.
+
+----
+BR22582
+"During playback, randomness that only affects appearance is kept separate from the randomness that determines the game's outcome, so cosmetic variation such as dancing terrain colors cannot make the recording diverge from the game that was recorded."
+Citation: [MainMenu.c:1252-1257](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L1252-L1257)
+Note: MainMenu.c:1252 switches to cosmetic randomness around the wait for the next recorded event, and MainMenu.c:1255 restores gameplay randomness before that event is executed at 1257, so random draws consumed by visual-only effects while waiting between turns cannot alter the replayed game. Existing divergence rules (BR73305, BR22521) describe only the out-of-sync apology and its text, not this isolation of cosmetic randomness. ID BR22582 is unique across rules/ and test/.
+
+----
+BR39983
+"When a recording is finished — whether the recorded run ended or the player stopped playback — the game discards the replayed dungeon and everything on it and clears its playback status, returning the player to the title screen."
+Citation: [MainMenu.c:1258-1265](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L1258-L1265)
+Note: MainMenu.c:1260 frees every level of the replayed game along with its creatures, items, scent maps, and pathing maps; MainMenu.c:1264-1265 turn off playback mode and clear the out-of-sync state. The menu junction then finds no pending command and displays the title screen (MainMenu.c:1124-1132). Existing rules cover messages shown while playback ends or diverges (BR48693, BR73305) but none describes tearing down the replayed game and returning to the title screen. ID BR39983 is unique across rules/ and test/.
+
+----
+BR13270
+"In server mode or when a recording is played non-interactively, the program quits as soon as playback finishes instead of returning to the title screen."
+Citation: [MainMenu.c:1267-1269](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L1267-L1269)
+Note: MainMenu.c:1267-1269 sets the next command to quit when server mode or non-interactive playback is active, after the playback flags have been cleared, so the menu loop ends at MainMenu.c:1285 rather than showing the title screen again. No rule in rules/* mentions server mode, non-interactive playback, or the program terminating when such playback finishes. ID BR13270 is unique across rules/ and test/.
+
+----
+BR39094
+"When a monster that was carried inside a slain monster is released where you can see it, the game announces the arrival as '<name> appears'."
+Citation: [Combat.c:1725-1729](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1725-L1729)
+Note: Combat.c:1725 tests canSeeMonster for the carried monster, and Combat.c:1727-1728 format "<name> appears" and post it as a combat message. BR28007 states only that the carried monster is released at the same spot, and BR70715 only that it reappears in the servant's place; neither describes the announcement. ID BR39094 is unique across rules/ and test/.
+
+----
+BR31838
+"A monster released from a slain monster's body immediately suffers the effects of the terrain it appears on, so it can plunge into a chasm, be consumed instantly by lava, or trigger a pressure plate the moment it emerges."
+Citation: [Combat.c:1731](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1731) [Time.c:101-205](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L101-L205)
+Note: Combat.c:1731 calls applyInstantTileEffectsToCreature(carriedMonster) immediately after placing the released monster, before any turn passes; Time.c:101-205 is that function, whose chasm branch marks the monster as falling (160-168) and whose lava branch kills it at once (173-205). Existing rules BR28007, BR70715 and BR72651 describe where a carried monster goes but not that it is exposed to the hazards of its arrival square. ID BR31838 is unique across rules/ and test/.
+
+----
+BR31624
+"An attack bolt can still be fired at a creature embedded in a wall when that creature can be attacked through walls, such as a turret built into stone."
+Citation: [Monsters.c:2632-2637](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2632-L2637)
+Note: Monsters.c:2632-2637 rejects an attack bolt when the target's square obstructs passability only if the target also lacks the ability to be attacked through walls, so wall-mounted turrets remain valid targets. BR58883 states only that an attack bolt is not fired at an embedded creature, omitting this exception, and BR13361 describes the species trait for being attacked while embedded but not that a ranged attacker may still target it. ID BR31624 is unique across rules/ and test/.
+
+----
+BR39702
+"In the Discoveries screen, an unidentified kind is marked as bad magic if it is a scroll of aggravate monsters or summon monsters, a potion of hallucination, incineration, descent, poison, paralysis, confusion, lichen, or darkness, or a wand or staff whose bolt is aimed at allies; other scrolls and potions and all charms are marked as good magic, while rings carry no good or bad mark because they could go either way."
+Citation: [Items.c:7416-7465](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7416-L7465) [IO.c:4162-4169](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L4162-L4169)
+Note: Items.c:7417-7464 (cited range starts at the function comment) assigns the good/bad/neutral suffix per item category and kind; IO.c:4162-4169 draws the good- or bad-magic symbol for unidentified kinds and draws nothing when the suffix is neutral. Existing BR27870 (07-player-interaction.md) and BR59433 (05-items.md) say an unidentified kind shows a good/bad marker and that detected inventory items show their polarity, but no rule in rules/* states which scrolls, potions, wands, staffs, rings, or charms count as good or bad. ID BR39702 is unique across rules/ and test/.
+
+----
+BR27364
+"Drinking a potion you know to be of bad magic, or one whose detected magic marks it bad, first asks 'Really drink a potion of <name>?' or, if its kind is still unidentified, 'Really drink a cursed potion?', and the potion is only drunk if you confirm."
+Citation: [Items.c:7254-7265](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7254-L7265)
+Note: Items.c:7254-7255 gates the prompt on the bad-magic suffix for the potion kind, combined with the kind being identified or the item's magic having been detected; Items.c:7257-7261 choose the named or "cursed potion" wording and Items.c:7262-7264 cancel the drink unless confirmed. BR50174 covers the matching confirmation for reading a scroll but no rule in rules/* covers the potion confirmation. ID BR27364 is unique across rules/ and test/.
+
+----
+BR31197
+"Every menu or dialog has a fixed rectangular area on the screen, and releasing the mouse outside that area cancels the menu, while releasing anywhere inside it — even on blank space between its buttons — does not."
+Citation: [Buttons.c:185-188](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L185-L188), [Buttons.c:246-247](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L246-L247)
+Note: Buttons.c:185-188 records the menu's window origin and size when its button state is initialized, and Buttons.c:246-247 cancels on a mouse release only when that release lies outside the recorded rectangle and no button is currently held down. BR25868 states only that clicking outside the menu cancels; no rule in rules/* states that the cancel region is the menu's whole rectangular area, so a release on blank space inside the dialog, between its buttons, does not cancel. ID BR31197 is unique across rules/ and test/.
+
+----
+BR11417
+"On each display update, a square you can see or sense is redrawn if any of its terrain has animated colours or if you are hallucinating, so dancing terrain keeps sparkling and hallucination makes the visible map shimmer; during automatic play this refresh happens only every fifth turn."
+Citation: [Movement.c:2313-2330](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L2313-L2330)
+Note: Movement.c:2313-2324 selects a visible or sensed cell whose dungeon, liquid, surface, or gas layer has a dancing colour, or any cell the player sees while hallucinating; Movement.c:2326-2329 then clears the cell's stable memory and redraws it. The same check is throttled to every fifth turn while automation is active (Movement.c:2315), and hallucination also randomizes the colours of visible cells at IO.c:1428-1430. BR37436 describes only the potion of hallucination's message, not the recurring redraw that makes animated terrain sparkle or the whole visible map shimmer while hallucinating. ID BR11417 is unique across rules/ and test/NewRules.txt.
+
+----
+BR23647
+"Your field of view is mirror-symmetric around you: the same pattern of walls and obstructions blocks sight identically in all eight directions, so the visible area is never skewed toward one direction."
+Citation: [Movement.c:2343-2375](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L2343-L2375), [Movement.c:2384-2391](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L2384-L2391)
+Note: Movement.c:2343-2375 maps a coordinate in the first octant into each of the other seven octants by reflection, and Movement.c:2388-2391 runs the same sight scan once per octant. No rule in rules/* describes this symmetry of the field of view; existing sight rules cover the scan's range and obstacle branches (BR77568, BR71426, BR33509, BR89014) but not the octant mirroring. ID BR23647 is unique across rules/ and test/NewRules.txt.
+
+----
+BR18393
+"A ring with no enchantment or a negative enchantment is automatically identified in full as soon as its kind is identified, so its exact zero or negative enchantment is revealed along with its type."
+Citation: [Items.c:5960-5964](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L5960-L5964)
+Note: Items.c:5960-5964, inside the routine that identifies an item's kind, sets the fully-identified flag for any ring whose enchantment is zero or less, so such a ring's enchantment is known the moment its type is. BR42824 covers a ring identifying itself after being worn for a time, and BR70142 covers identifying a kind generally, but no rule in rules/* describes this zero-or-negative-enchantment shortcut. ID BR18393 is unique across rules/.
+
+----
+BR41169
+"A wand whose kind always comes with the same fixed number of charges is automatically identified in full as soon as its type is known, so its remaining charges are displayed."
+Citation: [Items.c:5966-5970](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L5966-L5970), [Items.c:859-864](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L859-L864)
+Note: Items.c:5966-5970 marks a wand fully identified when its kind's charge range has equal lower and upper bounds, so the kind's identification also reveals that wand's charges; Items.c:859-864 does the same when such a wand is picked up after its kind is already known. In the standard item set the wand of empowerment is the only wand with a fixed starting charge count (always one). BR40205 covers only that a wand starts with a random number of charges, and no rule in rules/* describes this fixed-charge identification. ID BR41169 is unique across rules/.
+
+----
+BR36269
+"When a machine is activated, each creature guarding that machine that moves only when activated — provided it was spawned on the current dungeon level and is not already dying — immediately takes a turn, so guardians and totems spring into action the moment the machine triggers."
+Citation: [Time.c:1071-1089](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L1071-L1089)
+Note: Time.c:1071-1085 walks the level's creatures and collects only those whose machineHome matches the activated machine, whose spawnDepth equals the current depth, and whose species has MONST_GETS_TURN_ON_ACTIVATION (Rogue.h:2066, "moves only when activated"); Time.c:1086-1089 then calls monstersTurn for each collected creature that lacks MB_IS_DYING, bypassing the normal per-turn loop. BR35857 says activation makes "each creature of that machine" take a turn, which overstates the behavior: creatures of the machine that do not move only when activated, and activation monsters created on another depth, get no such turn. BR16717 covers only that such a creature never takes a turn on its own. No rule in rules/* states this activation-turn gating. ID BR36269 is unique across rules/ and test/NewRules.txt.
+
+----
+BR35064
+"When the runic chooser appears for armor created in wizard mode, plate mail is offered only the bad runics vulnerability and immolation, while any other armor is offered every armor runic."
+Citation: [Wizard.c:134-142](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Wizard.c#L134-L142), [Globals.c:1601-1613](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1601-L1613)
+Note: Wizard.c:135-140 is the PLATE_MAIL branch of the armor runic chooser: it builds buttons only for armorRunicNames beyond NUMBER_GOOD_ARMOR_ENCHANT_KINDS and sets runicOffset so the selection maps back to those entries; Rogue.h:863 makes that offset A_BURDEN, so the two offered names (Globals.c:1611-1612) are vulnerability and immolation. Wizard.c:141-146 offers every armor runic for any other armor kind. BR36714 covers the chooser only generically, BR24625 covers the analogous heavy-weapon restriction and explicitly the "any other weapon" branch (Wizard.c:126-130), BR24399 covers throwing weapons, and BR26686 covers which categories reach the chooser, so no rule in rules/* describes the armor-kind restriction. ID BR35064 is unique across rules/ and test/NewRules.txt.
+
+----
+BR40494
+"Watching a recording never adds an entry to the run history, because the history is written only when the player actually dies, quits, or wins in a normal game — never when the same events are merely replayed."
+Citation: [RogueMain.c:1232-1234](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/RogueMain.c#L1232-L1234), [RogueMain.c:1398-1400](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/RogueMain.c#L1398-L1400)
+Note: The run-history write on both the game-over path (RogueMain.c:1232-1234) and the victory path (RogueMain.c:1398-1400) is guarded by both "not playing back" and "normal game mode". BR22377 states only the normal-mode condition, so no rule in rules/* says that a replayed death, quit, or victory leaves the run history untouched. ID BR40494 is unique across rules/ and test/.
+
+----
+BR32395
+"If a recording reaches a victory while it is being fast-forwarded, the fast-forwarding stops and the current level is redrawn so the ending is shown from the final dungeon view."
+Citation: [RogueMain.c:1253-1256](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/RogueMain.c#L1253-L1256)
+Note: RogueMain.c:1253-1256, at the start of the victory sequence, clears the fast-forward flag and redraws the level when that flag was set. Fast-forwarding is enabled while seeking through a recording (Recordings.c:740) and while loading a saved game (Recordings.c:1316), so a seek that runs past the recorded ending arrives at victory in this state. BR15719 covers only the go-to-turn prompt that begins the fast-forward; no rule in rules/* describes its cancellation at victory. ID BR32395 is unique across rules/ and test/.
+
+----
+BR36290
+"In the seed catalog's plain-text listing, a resurrection altar is reported with the number of the vault it belongs to, reading "A resurrection altar (vault N)"."
+Citation: [SeedCatalog.c:230-232](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/SeedCatalog.c#L230-L232)
+Note: SeedCatalog.c:230-232 is the plain-text branch for a resurrection altar: it prints "A resurrection altar (vault %s)" using the vault number stored on the altar tile (SeedCatalog.c:225). Existing seed-catalog rules BR23144, BR20949, BR39812, BR39133, and BR13158 cover floor gold, floor items, vault-opening keys, CSV item fields, and in-game item names, but none describes altar entries, so plain-text resurrection-altar output is uncovered. ID BR36290 is unique across rules/ and test/NewRules.txt.
+
+----
+BR33780
+"When the seed catalog is written as CSV, a resurrection altar is reported as an altar of the resurrection kind, with its vault number in the vault field and no enchantment or rune."
+Citation: [SeedCatalog.c:226-232](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/SeedCatalog.c#L226-L232)
+Note: SeedCatalog.c:226-229 is the CSV branch for a resurrection altar: it emits category "altar", kind "resurrection altar", empty enchantment and rune fields, and the altar tile's vault number (supplied at SeedCatalog.c:225) in the vault field; SeedCatalog.c:230-232 is the corresponding plain-text branch. No rule in rules/* describes resurrection-altar catalog entries or their CSV fields. ID BR33780 is unique across rules/ and test/NewRules.txt.
+
+----
+BR19523
+"Commutation altars are created in pairs belonging to the same vault, but the seed catalog lists each such pair only once, reporting a single commutation altar with that vault's number; in CSV it appears as an altar of the commutation kind, and in plain text it reads "A commutation altar (vault N)"."
+Citation: [SeedCatalog.c:234-237](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/SeedCatalog.c#L234-L237), [SeedCatalog.c:240-249](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/SeedCatalog.c#L240-L249)
+Note: SeedCatalog.c:234-237 scans for commutation altar tiles and records their vault numbers rather than printing each tile immediately (the comment states that commutation altars come in pairs and only one should be printed); SeedCatalog.c:240-249 then prints one entry per recorded vault, CSV as category "altar"/kind "commutation altar" (240-246) or plain text as "A commutation altar (vault %s)" (247-249). Because both altars of a pair share the vault number, the catalog collapses them to one line. No rule in rules/* describes commutation-altar catalog entries. ID BR19523 is unique across rules/ and test/NewRules.txt.
+
+----
+BR18460
+"Distance between two squares is the larger of their horizontal and vertical separations, so a diagonal step counts as one square and a creature three squares east and three squares north is three squares away rather than six."
+Citation: [Monsters.c:1578-1580](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1578-L1580)
+Note: Monsters.c:1578-1580 returns max(abs(x1-x2), abs(y1-y2)) — the Chebyshev distance used by range checks such as the fear thresholds of 2 and 3 squares (BR17223, BR29646), the ally leash, blink range, and knockback distance. No rule in rules/* defines the distance measure: rules that speak of "squares away" leave it implicit, and none cites these lines. ID BR18460 is unique across rules/ and test/.
+
+----
+BR24107
+"When a monster is woken, its next action is set a full standard turn away, so it waits that long before acting even if it is faster or slower than normal."
+Citation: [Monsters.c:1587-1591](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1587-L1591)
+Note: Monsters.c:1588-1590 alerts the woken monster unless it is already an ally, and 1591 sets its next-action countdown to exactly 100 ticks — one standard turn — regardless of its own movement speed, so a fast monster waits longer than one of its turns and a slow one waits less. BR53535 covers the turn a sleeping monster loses at the start of its own turn (Monsters.c:3370-3375), and BR34006/BR54165 cover the alerting, but no rule states this flat delay applied at the moment of waking. ID BR24107 is unique across rules/ and test/.
+
+----
+BR21625
+"When a monster wakes, its sleeping or wandering teammates are roused too but are held back for at least a full standard turn before they can act."
+Citation: [Monsters.c:1592-1597](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1592-L1597)
+Note: Monsters.c:1594 restricts the rousing to the woken monster's teammates in normal mode, and 1595-1597 raise a sleeping or wandering teammate's next-action countdown to at least 100 ticks — one standard turn. BR54035 says such teammates wake and track or flee but not that they lose a turn, and the woken monster's own delay is BR24107. ID BR21625 is unique across rules/ and test/.
+
+----
+BR17859
+"Every fresh distance, cost, or terrain calculation begins from a clean working area in which all squares hold the same starting value, so no result can inherit a value left over from an earlier calculation."
+Citation: [Grid.c:56-64](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Grid.c#L56-L64)
+Note: Grid.c:56-64 writes the supplied starting value to every square of a working grid and is the shared reset used before the game builds distance maps, cost maps, safety maps, scent maps, and blob generations (for example Grid.c:311-312, Architect.c:391/742/1251, IO.c:605/631, Monsters.c:883/1002/1092, and RogueMain.c:357-360). BR39926 covers only the wipe before each blob-generation attempt, BR16761 only the route scan's 30000 reset, and BR14684 only the scan input seeding, so no rule states that a new calculation always starts from a uniformly filled working area; in particular the map-cache clears that discard a previous turn's safety, ally-safety, or scent data rely on it. ID BR17859 is unique across rules/ and test/.
+
+----
+BR19624
+"When cave or lake terrain is smoothed, every round judges each tile from a snapshot of the layout taken at the start of that round, so a tile that changes early in the round does not affect its neighbours' fate until the next round."
+Citation: [Grid.c:46-54](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Grid.c#L46-L54), [Grid.c:367-379](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Grid.c#L367-L379)
+Note: Grid.c:46-54 copies a whole grid value by value, and Grid.c:367-368 uses it to back up the blob layout immediately before a smoothing round; the round's neighbour counts at Grid.c:373-379 read only that backup, while births and deaths are written to the live layout at Grid.c:382-388. This makes each generation synchronous. Existing cellular-automata rules BR13087, BR21409, BR93785 and BR36680 describe the neighbour count and the birth/survival/death outcomes but not that all of them are judged from the pre-round snapshot, so the in-place-update alternative is not excluded. The other copyGrid uses (debug inspection copies at Architect.c:368/844 and the stored monster safety map at Monsters.c:2376) are covered by BR35671 or are not player-visible. ID BR19624 is unique across rules/ and test/.
+
+----
+BR13294
+"On the title screen, the Play and View entries each carry a left-pointing triangle beside their name to mark that they open a further menu, while New Game and Quit carry no such marker."
+Citation: [MainMenu.c:277-285](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L277-L285), [Buttons.c:105-111](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L105-L111)
+Note: MainMenu.c:284 sets the first symbol of the first three main-menu buttons to a left-facing triangle, and MainMenu.c:283 limits that loop to the buttons other than Quit. Only the Play and View labels contain an asterisk placeholder at MainMenu.c:278-279 (New Game at 277 and Quit at 280 do not), and the button-drawing loop at Buttons.c:106-111 replaces an asterisk with the next configured symbol, so the triangle is actually drawn only beside Play and View; the triangle assigned to New Game never appears. BR77643 lists the four title-screen entries but not their markers, BR35067 describes the asterisk-to-symbol substitution generically (naming left triangles without saying which entries show one), and BR13130 describes only the entries' shared column. ID BR13294 is unique across rules/ and test/NewRules.txt.
+
+----
+BR25377
+"A monster whose current movement or attack speed differs from its species' natural speed counts as a target for negation, and negating it restores both speeds to normal."
+Citation: [Monsters.c:2515-2516](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2515-L2516), [Items.c:3778-3785](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3778-L3785)
+Note: Monsters.c:2515-2516 are the two guards in monsterIsNegatable that answer true when a monster's live movement or attack speed differs from its species baseline (haste and slow set those fields at Items.c:3929-3932 and 3915-3918), so a merely hasted or slowed monster is treated as negatable; Items.c:3778-3785 resets both fields to the baseline inside negate(). BR29664 covers negation of player status values from the fixed status table and BR22853/BR71884 cover speed returning to normal when slow or haste expires, but no rule in rules/* states that negation restores a monster's altered speed. ID BR25377 is unique across rules/ and test/.
+
+----
+BR40997
+"A monster that carries a mutation which can be negated counts as a target for negation, and negating it removes the mutation."
+Citation: [Monsters.c:2517](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2517), [Items.c:3787-3792](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3787-L3792)
+Note: Monsters.c:2517 is the mutation guard inside monsterIsNegatable: it answers true when mutationIndex is set and the mutation's canBeNegated flag is set (Globals.c:1396-1423 marks agile and juggernaut false, so those two speed/hardening mutations are never stripped, while explosive, infested, grappling, vampiric, toxic and reflective are). Items.c:3787-3792 clears mutationIndex and marks the monster negated. BR46598 covers only what a mutation does when applied, and the sidebar/description rules name a mutation without saying negation can remove it, so no rule in rules/* describes this negation behavior. ID BR40997 is unique across rules/ and test/.
+
+----
+BR29525
+"A monster that knows at least one bolt negation can erase counts as a target for negation, and negating it strips those bolts while leaving any bolt that cannot be negated."
+Citation: [Monsters.c:2521-2526](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2521-L2526), [Items.c:3803-3816](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3803-L3816)
+Note: Monsters.c:2521-2526 scans the monster's 20 bolt slots and answers true for any bolt lacking BF_NOT_NEGATABLE (defined at Rogue.h:1856), making a monster whose only special feature is a spell a valid negation target; Items.c:3803-3816 blanks each such bolt and then compacts the surviving BF_NOT_NEGATABLE bolts into the front of the list. BR80726 says only that a scroll of negation "strips special abilities", and BR59057 is about a monster's decision to cast negation, so no rule in rules/* states that negation removes a monster's removable spells and spares the rest. ID BR29525 is unique across rules/ and test/.
+
+----
+BR42632
+"When you examine a monster, your carried negation charm, scroll of negation, or wand of negation is named as something that will affect it only if the monster has a trait that negation can remove; a wand is omitted this way for a monster that reflects all bolts."
+Citation: [Monsters.c:4693-4702](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L4693-L4702), [Monsters.c:2515-2526](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2515-L2526)
+Note: monsterIsNegatable's only caller is monsterDetails at Monsters.c:4693: it fills the negation-method list with whichever of the negation charm, scroll, and wand you carry, so when it returns false the list stays empty and the description never says the monster's traits can be removed or that your item will kill it (Monsters.c:4714-4721 and 4806-4833). Monsters.c:4700 additionally withholds the wand for a monster with MA_REFLECT_100. BR37022 covers only that examining opens a details box and BR62908 covers a reflector ignoring a negation bolt, so no rule in rules/* describes this examine-text behavior. ID BR42632 is unique across rules/ and test/.
+
+----
+BR42457
+"A new game started without entering a seed number uses a seed derived from the current clock, so two such games begun at different times generate different dungeons."
+Citation: [MainMenu.c:1172-1177](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L1172-L1177), [RogueMain.c:234-237](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/RogueMain.c#L234-L237), [Math.c:184-186](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Math.c#L184-L186)
+Note: For a new game that is not the seeded-game command, MainMenu.c:1172-1173 sets the requested seed to 0, which is passed straight to game initialization at MainMenu.c:1177; RogueMain.c:234-236 hands that seed to the seeding routine, and Math.c:185-186 replaces a seed of 0 with a value derived from the wall clock. Existing rules BR30507, BR88652, BR43142, and BR76508 cover only the seed prompt, its default, cancellation, and oversized-seed clamping, so no rule in rules/* states that an unseeded new game is seeded from the clock. (NewRules candidate BR14678 describes the same clock seeding but cites MainMenu.c:1194-1196, which is the saved-game branch, not this new-game branch.) ID BR42457 is unique across rules/ and test/.
+
+----
+BR38103
+"In server mode, once the game that was started ends, the program quits instead of returning to the title screen."
+Citation: [MainMenu.c:1180-1183](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/MainMenu.c#L1180-L1183)
+Note: MainMenu.c:1180 enters the main play loop for the new game, so it returns when that game ends; MainMenu.c:1181-1183 then sets the next command to quit whenever server mode is active, bypassing the title screen. NewRules candidates BR13270 and BR42758 cover only quitting after finishing a playback/server-mode recording (MainMenu.c:1267-1269), and no rule in rules/* mentions server mode after an ordinary game. ID BR38103 is unique across rules/ and test/.
+
+----
+BR17271
+"A button's background is shaded with a smooth left-to-right gradient: it is darkened by half at the left and right ends and reaches the button's full color in the middle, so the control reads as raised rather than flat."
+Citation: [Buttons.c:32-34](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L32-L34), [Buttons.c:60-62](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L60-L62), [Buttons.c:87-91](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L87-L91)
+Note: Buttons.c:32-34 returns a 0-to-100% sine curve across the label, Buttons.c:60-62 darkens the edge color by half toward black while keeping the button's full color for the middle, and Buttons.c:87-91 blends each character cell between those edge and middle colors when the button carries its default gradient flag. The comment at Buttons.c:37 describes the same edge-to-middle fade. Buttons that clear the gradient flag are drawn flat (MainMenu.c:740, Wizard.c:53), which BR18356 notes for wizard list rows, but no rule in rules/* describes the gradient itself. ID BR17271 is unique across rules/ and test/.
+
+----
+BR19796
+"A button's label starts from white when the button is enabled and gray when it is disabled, with any color changes embedded in the label overriding that starting color."
+Citation: [Buttons.c:51](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L51)
+Note: Buttons.c:51 chooses the label's base color from the button's enabled flag: white when enabled and gray when disabled. Embedded color escapes override that base from the point they appear (BR41304), so the gray shows in the unescaped portions of a disabled label, including the leading spaces of the "---" separator rows that remain drawn while disabled at IO.c:208, IO.c:230, IO.c:255, IO.c:293, IO.c:326, IO.c:365, and IO.c:403 (their dashes use an explicit dark gray escape). BR37749 covers only that disabled controls cannot be clicked, so no rule in rules/* describes the gray base color of a disabled label. ID BR19796 is unique across rules/ and test/.
+
+----
+BR41304
+"A button's label is white by default but may contain embedded color changes, so part of the text, such as a hotkey letter, is drawn in a different color."
+Citation: [Buttons.c:38](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L38), [Buttons.c:80-83](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L80-L83)
+Note: Buttons.c:38 states that label text is white but may use color escapes, and Buttons.c:80-83 skips over each escape in the label and adopts its encoded color for the characters that follow, so the white and yellow escapes spliced into labels (for example the Yes/No labels at IO.c:2944-2945 and IO.c:2948/2971) render as differently colored portions of a single button. BR41276 covers only the white and yellow colors of confirmation Yes/No labels, and no rule in rules/* describes color escapes in button labels generally. ID BR41304 is unique across rules/ and test/.
+
+----
+BR29092
+"When a button is pressed, its background is darkened toward black, but if that darkening would barely change the button's already very dark background, the button instead brightens halfway toward the hover color."
+Citation: [Buttons.c:40](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L40), [Buttons.c:64-70](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Buttons.c#L64-L70)
+Note: Buttons.c:40 is the comment describing the pressed style, including the exception for a black button; Buttons.c:64-70 implements it by darkening the middle background 75% toward black and, when the result differs from the original color by less than a small threshold, discarding that darkened color and blending the original 50% toward the hover tint. Black buttons are used in the inventory list (Items.c:2874), so pressing one visibly brightens rather than darkens it. BR35576 covers the ordinary darkening and the dimmed label but not this near-black exception. ID BR29092 is unique across rules/ and test/.
+
+----
+BR38230
+"A hidden pressure plate that belongs to a caustic gas trap releases a cloud of caustic gas when it is triggered."
+Citation: [Globals.c:377-378](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L377-L378)
+Note: Globals.c:377 is the hidden floor row whose discovery effect reveals the trap, and Globals.c:378 is the revealed caustic gas trap whose fire effect is the poison gas cloud. The generic pressure-plate rules (BR20087, BR39970) say a plate triggers the trap it controls but never say that this trap releases caustic gas. ID BR38230 is unique across rules/ and test/.
+
+----
+BR11139
+"A hidden trap door drops whoever is standing on it through the floor into a hole when its pressure plate is triggered, and the hole remains as an open pit."
+Citation: [Globals.c:379-380](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L379-L380)
+Note: Globals.c:379 is the ordinary-floor appearance of the undiscovered trap door with the trap-door discovery effect, and Globals.c:380 is the revealed hole with automatic descent. BR99758 and BR63035 say a creature over a trap door is marked to fall and that diving must be confirmed, but no rule says that triggering the hidden plate opens the trap door and drops the creature through. ID BR11139 is unique across rules/ and test/.
+
+----
+BR11361
+"A hidden pressure plate that belongs to a paralysis trap releases a cloud of paralytic gas when it is triggered."
+Citation: [Globals.c:381-382](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L381-L382)
+Note: Globals.c:381 is the hidden floor row with the paralysis-trap discovery effect, and Globals.c:382 is the revealed paralysis trigger. BR264 says paralysis gas paralyzes and BR20087 says a plate triggers its trap, but neither states that this trap releases paralytic gas. ID BR11361 is unique across rules/ and test/.
+
+----
+BR11928
+"A hidden pressure plate that belongs to a confusion trap releases a cloud of psychotropic gas when it is triggered."
+Citation: [Globals.c:385-386](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L385-L386)
+Note: Globals.c:385 is the hidden floor row with the confusion-trap discovery effect, and Globals.c:386 is the revealed confusion trap whose fire effect is the confusion gas cloud. BR208 says confusion gas confuses, but no rule says that this trap produces it. ID BR11928 is unique across rules/ and test/.
+
+----
+BR12349
+"A hidden pressure plate that belongs to a fire trap shoots a jet of flame when it is triggered, setting the victim and nearby flammable ground alight."
+Citation: [Globals.c:387-388](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L387-L388)
+Note: Globals.c:387 is the hidden floor row with the flamethrower-trap discovery effect, and Globals.c:388 is the revealed fire trap whose fire effect is the flamethrower. Existing fire rules cover ignition and burning (BR47057, BR480) but no rule describes the fire trap's own flaming jet. ID BR12349 is unique across rules/ and test/.
+
+----
+BR12448
+"A hidden pressure plate that belongs to a flood trap floods the surrounding area with water when it is triggered."
+Citation: [Globals.c:389-390](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L389-L390)
+Note: Globals.c:389 is the hidden floor row with the flood-trap discovery effect, and Globals.c:390 is the revealed flood trap whose fire effect is the flood. Deep-water and shallow-water rules (BR51947, BR29950) describe the resulting water, but no rule says the trap floods the room. ID BR12448 is unique across rules/ and test/.
+
+----
+BR12506
+"A hidden pressure plate that belongs to a net trap drops a net from the ceiling onto the square when it is triggered."
+Citation: [Globals.c:391-392](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L391-L392)
+Note: Globals.c:391 is the hidden floor row with the net-trap discovery effect, and Globals.c:392 is the revealed net trap whose fire effect is the falling net. BR91575 and BR96828 describe what webbing does to a creature, but no rule says that this trap creates the netting. ID BR12506 is unique across rules/ and test/.
+
+----
+BR13054
+"A hidden pressure plate that belongs to an alarm trap sets off a piercing shriek that aggravates nearby monsters when it is triggered."
+Citation: [Globals.c:393-394](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L393-L394)
+Note: Globals.c:393 is the hidden floor row with the alarm-trap discovery effect, and Globals.c:394 is the revealed alarm trap whose fire effect is the aggravating shriek. Aggravation rules describe the status once applied (BR524), but no rule says the alarm trap applies it. ID BR13054 is unique across rules/ and test/.
+
+----
+BR13096
+"Stepping into a closed wooden door opens it without stopping your move; the door blocks sight and gas, burns readily, and an open door swings shut again by itself."
+Citation: [Globals.c:328-329](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L328-L329)
+Note: Globals.c:328 defines the closed wooden door: vision- and gas-blocking, flammable, opened on step. Globals.c:329 defines the open door as flammable with a guaranteed per-turn promotion back to the closed door. Architect.c:2898-2906 decides which doorways become doors, but no rule in rules/* describes a door's own opening, closing, sight-blocking or burning behavior. ID BR13096 is unique across rules/ and test/.
+
+----
+BR13131
+"A secret door looks exactly like an ordinary stone wall and blocks movement, sight, and gas until it is discovered, after which it becomes a wooden door."
+Citation: [Globals.c:330](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L330)
+Note: Globals.c:330 is the secret door row: it draws as a wall, obstructs everything, is flammable and secret, and its discovery effect is an ordinary door. BR21571 says revealing a secret replaces the tile with the feature it hid and BR82459 says seeing a monster pass through reveals it, but no rule describes the disguised wall's appearance and obstruction before discovery. ID BR13131 is unique across rules/ and test/.
+
+----
+BR13147
+"A locked iron door blocks movement and sight until the matching key is used on it, after which it remains open."
+Citation: [Globals.c:331-332](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L331-L332)
+Note: Globals.c:331 is the locked iron door, which obstructs everything and is opened only by a key on its square; Globals.c:332 is the permanent open iron door that no longer blocks movement or sight. BR14498 and BR14513 cover the act of using a key on terrain, but no rule says locked doors block until keyed or that keying one leaves it open. ID BR13147 is unique across rules/ and test/.
+
+----
+BR13258
+"A closed portcullis blocks movement and items, and when its mechanism is powered the iron bars rise and vanish."
+Citation: [Globals.c:339-340](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L339-L340)
+Note: Globals.c:339 is the closed portcullis, passability- and item-blocking and wired to a mechanism, with the open-portcullis feature as its promotion. Globals.c:340 is the dormant floor that activates the portcullis. BR14518 covers generic promotion on entry, but no rule describes a portcullis blocking a passage or being raised by its mechanism. ID BR13258 is unique across rules/ and test/.
+
+----
+BR13797
+"A dry wooden barricade blocks movement and items and burns fiercely, so setting it alight clears the passage."
+Citation: [Globals.c:341](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L341)
+Note: Globals.c:341 is the wooden barricade: passability- and item-blocking, flammable, with a dedicated burning feature. BR488 says flammable material that catches fire is consumed and replaced by fire, but no rule describes the barricade as an obstruction that can be burned away. ID BR13797 is unique across rules/ and test/.
+
+----
+BR15015
+"A marble statue blocks movement, items, gas, and surface effects, and a statue rigged to a mechanism cracks and then shatters, while an instant-cracking statue shatters as soon as its mechanism is powered."
+Citation: [Globals.c:351-354](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L351-L354)
+Note: Globals.c:351 is the inert statue with all four obstruction flags; Globals.c:352 and Globals.c:354 are wired statues that become the cracking statue or shatter immediately; Globals.c:353 is the cracking statue with a 35% per-turn chance to shatter. No rule in rules/* describes statues as obstructions or their cracking and shattering. ID BR15015 is unique across rules/ and test/.
+
+----
+BR15126
+"A stone archway portal is inert until its mechanism is powered, when it flashes and activates."
+Citation: [Globals.c:355](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L355)
+Note: Globals.c:355 is the portal archway, wired to a mechanism and promoting to the activated portal. BR38379 describes the light released when a portal activates, but no rule says that the archway is inert beforehand or what activation does. ID BR15126 is unique across rules/ and test/.
+
+----
+BR16151
+"A turret can lie hidden inside a wall and emerge when its mechanism is powered."
+Citation: [Globals.c:356](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L356)
+Note: Globals.c:356 is the dormant turret disguised as an ordinary stone wall, wired to a mechanism, and promoting to the turret-emergence feature. Turret combat and bestiary rules exist (BR31624, BR52291), but no rule says a turret can start hidden in a wall and emerge. ID BR16151 is unique across rules/ and test/.
+
+----
+BR16668
+"A monster can be sealed inside a wall and burst out when its mechanism is powered."
+Citation: [Globals.c:357](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L357)
+Note: Globals.c:357 is the dormant wall monster disguised as an ordinary stone wall, wired to a mechanism, with the wall-shatter feature as its promotion. Horde and monster-generation rules (BR114, BR171) describe monsters arriving by other means, but no rule says a monster can begin hidden inside a wall and break out. ID BR16668 is unique across rules/ and test/.
+
+----
+BR17211
+"A mechanism can darken the ground, plunging the surrounding area into supernatural darkness."
+Citation: [Globals.c:358-360](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L358-L360)
+Note: Globals.c:358 is the dormant floor wired to a mechanism; Globals.c:359 is the darkening floor that promotes after a delay; Globals.c:360 is the finished dark floor, which casts the supernatural-darkness light. BR41963 describes the darkness cloud's shading, but no rule says a mechanism can turn ordinary ground into a patch of darkness. ID BR17211 is unique across rules/ and test/.
+
+----
+BR17238
+"A hidden trigger on the ground activates its mechanism when you step on it and then disappears."
+Citation: [Globals.c:361](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L361)
+Note: Globals.c:361 is the featureless ground tile that is wired to a mechanism, promotes when the player enters, and vanishes on promotion, so the trigger is used once. BR14518 covers terrain that promotes on entry generally, but no rule describes an invisible one-use floor trigger. ID BR17238 is unique across rules/ and test/.
+
+----
+BR17243
+"A repeating floor trigger reactivates its mechanism each time you step onto it."
+Citation: [Globals.c:535](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L535)
+Note: Globals.c:535 is the featureless repeating trigger, wired to a mechanism and promoting on player entry without vanishing, so it can fire on every entry. BR17238 covers the one-use trigger; no rule describes a trigger that can be reused. ID BR17243 is unique across rules/ and test/.
+
+----
+BR17784
+"A pressure plate used by a mechanism becomes an inactive plate once it is stepped on and no longer triggers anything."
+Citation: [Globals.c:402-403](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L402-L403)
+Note: Globals.c:402 is the exposed pressure plate that promotes on step to Globals.c:403, the used plate, which has no trap flag and no promotion. BR20087 and BR22348 describe a plate depressing and resetting when clear, which is the behavior of reusable trap plates, not this one-use mechanism plate. ID BR17784 is unique across rules/ and test/.
+
+----
+BR18595
+"A magical glyph on the floor activates its mechanism when you step on it, then becomes an inactive glyph."
+Citation: [Globals.c:404-405](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L404-L405)
+Note: Globals.c:404 is the magical glyph, wired to a mechanism and promoting on player entry to the inactive glyph at Globals.c:405. BR11577 and BR16893 describe the two glyphs' light radii, but no rule says that stepping on the active glyph triggers its mechanism and changes it. ID BR18595 is unique across rules/ and test/.
+
+----
+BR18840
+"A dormant gas vent hidden in the floor begins spewing paralytic gas when its mechanism is powered."
+Citation: [Globals.c:383-384](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L383-L384)
+Note: Globals.c:383 is the hidden vent with the paralysis-vent discovery effect, and Globals.c:384 is the revealed inactive vent connected to a reserve of paralytic gas; both are wired and promote to the spewing feature. BR596 describes the paralysis gas effect, but no rule says a vent can release it. ID BR18840 is unique across rules/ and test/.
+
+----
+BR19757
+"A gas vent hidden in the floor opens and begins spewing caustic gas when its mechanism is powered."
+Citation: [Globals.c:395-397](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L395-L397)
+Note: Globals.c:395 is the hidden vent, Globals.c:396 is the dormant vent it becomes, and Globals.c:397 is the active vent that spews poison gas on a 100% per-turn chance. BR745 says standing in caustic gas injures, but no rule describes the vent that produces it. ID BR19757 is unique across rules/ and test/.
+
+----
+BR20022
+"A gas vent hidden in the floor begins spewing explosive methane when its mechanism is powered."
+Citation: [Globals.c:398-400](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L398-L400)
+Note: Globals.c:398 is the hidden vent, Globals.c:399 is the dormant vent it becomes, and Globals.c:400 is the active vent that spews methane on a 50% per-turn chance and is itself flammable. BR21531 and BR501 describe methane igniting and exploding once it exists, but no rule describes the vent. ID BR20022 is unique across rules/ and test/.
+
+----
+BR20239
+"A steam vent periodically blasts scalding steam from a natural crevice in the floor."
+Citation: [Globals.c:401](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L401)
+Note: Globals.c:401 is the steam vent, which blocks items and promotes to a steam puff on a 2.5% per-turn chance. BR745 covers the damage of standing in damaging gas, but no rule describes a vent that produces scalding steam on its own. ID BR20239 is unique across rules/ and test/.
+
+----
+BR20583
+"A glass dewar blocks movement and gas and is flammable; stepping into one shatters it, releasing a pressurised cloud of its gas and leaving broken glass on the floor."
+Citation: [Globals.c:406-409](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L406-L409)
+Note: Globals.c:406-409 are the caustic, confusion, paralysis, and methane dewars; each obstructs movement and gas, is flammable, and promotes when the player enters to a gas-release feature that also leaves broken glass (Globals.c:704-707). BR18889 mentions a dewar only as a travel destination, and no rule describes breaking one. ID BR20583 is unique across rules/ and test/.
+
+----
+BR20612
+"A bog is knee-deep mud that lets a creature submerge, and it occasionally releases a puff of methane."
+Citation: [Globals.c:415](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L415)
+Note: Globals.c:415 is the mud tile: it allows submerging and promotes to a methane puff on a 1% per-turn chance. BR16982 mentions a bog only as a surface that halves fall damage, and no rule describes its muddy, submerging, methane-releasing behavior. ID BR20612 is unique across rules/ and test/.
+
+----
+BR21736
+"Brimstone ignites spontaneously; burning active brimstone leaves inert brimstone, which can later reignite."
+Citation: [Globals.c:425-426](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L425-L426)
+Note: Globals.c:425 is active brimstone, which is flammable and spontaneously ignites, burns out to inert brimstone, and can also cool to it by chance; Globals.c:426 is inert brimstone, which spontaneously ignites and promotes back to active brimstone on an 8% per-turn chance. BR99 and BR180 mention brimstone only as terrain that lava placement or monster pathing avoids. ID BR21736 is unique across rules/ and test/.
+
+----
+BR21906
+"A rope bridge is flammable, and when it burns it snaps and plunges into the chasm below, leaving a gap."
+Citation: [Globals.c:428-430](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L428-L430)
+Note: Globals.c:428 is the rickety rope bridge, flammable and vanishing on promotion; Globals.c:429 is the plummeting bridge; Globals.c:430 is the bridge edge staked to the chasm rim. Globals.c:745 gives the snap-and-plunge message and the falling-bridge feature. BR117 and BR120 cover bridge generation only. ID BR21906 is unique across rules/ and test/.
+
+----
+BR21921
+"A flooding mechanism fills the surrounding area with water, which later drains away again."
+Citation: [Globals.c:432-433](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L432-L433)
+Note: Globals.c:432 is the dormant flood water and Globals.c:433 is the spreading flood water, which advances on a 25% per-turn chance; the deep and shallow flood water rows at Globals.c:445-446 have negative promotion chances that drain them away. BR51947 and BR29950 describe ordinary deep and shallow water, not a machine-driven flood that later recedes. ID BR21921 is unique across rules/ and test/.
+
+----
+BR22507
+"The translucent ground around the rim of a hole crumbles away over time, while the hole itself drops anything standing over it to the level below."
+Citation: [Globals.c:442-444](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L442-L444)
+Note: Globals.c:442 is the hole, with automatic descent; Globals.c:443 is its glowing variant; Globals.c:444 is the hole edge, which has a negative promotion chance and vanishes on promotion, so the safe rim retreats. BR16982 and BR99758 say a creature over a chasm, hole, or trap door is marked to fall, but neither describes the crumbling rim. ID BR22507 is unique across rules/ and test/.
+
+----
+BR22596
+"A patch of poisonous lichen grows outward onto adjacent open ground each turn."
+Citation: [Globals.c:451](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L451)
+Note: Globals.c:451 is the lichen tile, which poisons creatures standing on it and promotes to the lichen-growth feature on a 100% per-turn chance. BR81488 and BR55229 describe the poison and levitation immunity, and BR44267 describes the level generator scattering lichen while the dungeon is built; none describes a lichen patch continuing to spread during play. ID BR22596 is unique across rules/ and test/.
+
+----
+BR23007
+"Dense foliage and luminescent fungal forest block sight and burn readily; walking through either tramples it, and trampled growth slowly regrows."
+Citation: [Globals.c:472-476](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L472-L476)
+Note: Globals.c:472 and 475 are the sight-blocking, flammable foliage and fungal forest that promote to trampled versions on step; Globals.c:473 is dead foliage; Globals.c:474 and 476 are the trampled versions, which regrow on a 1% per-turn chance. BR28360 and BR480 describe burning terrain generally, but no rule describes the sight-blocking, trampling, and regrowth behavior. ID BR23007 is unique across rules/ and test/.
+
+----
+BR23867
+"A green forcefield blocks movement, gas, and diagonal movement, and it melts away over time and when a creature touches it."
+Citation: [Globals.c:477-478](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L477-L478)
+Note: Globals.c:477 is the forcefield with passability, gas, and diagonal obstruction and a negative promotion chance that accelerates where more open ground borders it; Globals.c:478 is the dissolving crystal it becomes, which also promotes on creature contact. BR33630 describes only its light. ID BR23867 is unique across rules/ and test/.
+
+----
+BR25180
+"An iron cage over a candle-lit altar blocks access to the items until a matching key is used on the altar, which lifts the cage."
+Citation: [Globals.c:363-365](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L363-L365)
+Note: Globals.c:363 is the keyhole altar, which is wired and opens with a key; Globals.c:364 is the altar with its cage open and a promotion that closes it when no key remains; Globals.c:365 is the closed iron cage, passability- and surface-blocking, which opens with a key. Existing key rules (BR14498, BR14513) describe using a key but not the caged-altar mechanism. ID BR25180 is unique across rules/ and test/.
+
+----
+BR27214
+"Taking an item from a candle-lit altar triggers its mechanism and leaves the altar inert."
+Citation: [Globals.c:366-367](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L366-L367)
+Note: Globals.c:366 and 367 are the altar switches, wired to a mechanism and promoting when an item is picked up, to the inert altar row. No rule in rules/* describes an altar that reacts to an item being taken. ID BR27214 is unique across rules/ and test/.
+
+----
+BR28571
+"A locked iron cage blocks movement and releases its captive when a matching key is used on it."
+Citation: [Globals.c:370-371](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L370-L371)
+Note: Globals.c:370 is the open cage; Globals.c:371 is the locked iron cage, which obstructs passability, surface effects, and gas and promotes to the cage-opening feature when keyed. BR13418 and BR14498 cover freeing a captive with a key, but no rule describes the cage itself as an obstruction that opens. ID BR28571 is unique across rules/ and test/.
+
+----
+BR29906
+"A sealed coffin is flammable; when it burns it bursts open and a dark figure rises from it."
+Citation: [Globals.c:372-373](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L372-L373)
+Note: Globals.c:372 is the sealed coffin, flammable and wired to a mechanism, whose fire effect is the burning coffin and whose promotion is the burst-open coffin; Globals.c:373 is the open coffin. Globals.c:807 gives the dark-figure message and wakes the dormant monster. No rule in rules/* describes a coffin opening or releasing its occupant. ID BR29906 is unique across rules/ and test/.
+
+----
+BR30221
+"A bloodwort stalk grows seed pods, and stepping on a pod bursts it into a cloud of healing spores."
+Citation: [Globals.c:513-514](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L513-L514)
+Note: Globals.c:513 is the bloodwort stalk, which grows pods on a 1% per-turn chance; Globals.c:514 is the pod, which blocks movement and items and promotes when the player enters to the pod-burst feature that releases healing spores. BR18146 describes only the spore cloud's color. ID BR30221 is unique across rules/ and test/.
+
+----
+BR31859
+"A cloud of healing spores restores a portion of the health of each living creature standing in it."
+Citation: [Globals.c:510](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L510)
+Note: Globals.c:510 is the healing cloud, flagged as causing healing; Time.c:547-559 restores one fifteenth of the creature's maximum health per 100 ticks to non-inanimate, non-submerged creatures. BR18146 covers only the cloud's dark red color. ID BR31859 is unique across rules/ and test/.
+
+----
+BR31870
+"Luminescent algae spreads through deep water and later recedes, glowing blue and then green."
+Citation: [Globals.c:520-522](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L520-L522)
+Note: Globals.c:520 is the algae well; Globals.c:521 is the blue-glowing algae, which promotes to spread at a 5% per-turn chance; Globals.c:522 is the green-glowing algae, which reverts at a 3% per-turn chance. BR41031 describes only the light radius. ID BR31870 is unique across rules/ and test/.
+
+----
+BR31949
+"Thorned vines entangle and injure creatures, and when you step onto them they wither into ordinary grass."
+Citation: [Globals.c:525-526](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L525-L526)
+Note: Globals.c:525 is the ancient-spirit vine tile, entangling, damaging, flammable, and promoting when the player enters to Globals.c:526, a tuft of grass. BR91575 and BR96828 describe entangling terrain generally, but no rule describes these vines or their withering. ID BR31949 is unique across rules/ and test/.
+
+----
+BR32952
+"A patch of sunlight lights its square, while a patch of shadows darkens it."
+Citation: [Globals.c:423-424](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L423-L424)
+Note: Globals.c:423 is the sunlight pool, which casts the sun light; Globals.c:424 is the darkness patch, which casts the darkness-patch light that darkens the square. BR41963 covers only the supernatural-darkness cloud, and no rule describes these terrain patches. ID BR32952 is unique across rules/ and test/.
+
+----
+BR33124
+"Taking the Amulet of Yendor from its pedestal triggers the mechanism around it."
+Citation: [Globals.c:529](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L529)
+Note: Globals.c:529 is the featureless floor switch beneath the Amulet, wired to a mechanism and promoting when an item is picked up. BR37593 and BR38076 describe winning with the Amulet, but no rule says that lifting it triggers machinery. ID BR33124 is unique across rules/ and test/.
+
+----
+BR33186
+"When two enchantable items rest on twin commutation altars, their enchantment levels are swapped and the altars are scorched."
+Citation: [Globals.c:532-533](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L532-L533), [Items.c:1160-1189](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L1160-L1189)
+Note: Globals.c:532 is the commutation altar, wired and flagged to swap enchantments; Globals.c:533 is the scorched altar it becomes. Items.c:1160-1189 finds two swappable items on the same mechanism and exchanges their effective enchantment levels only when the levels differ. BR19523 covers only the seed catalog's listing of these altars. ID BR33186 is unique across rules/ and test/.
+
+----
+BR34188
+"When its mechanism is powered, glowing glass pipes char and become inert."
+Citation: [Globals.c:534-535](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L534-L535)
+Note: Globals.c:534 is the glowing glass pipe, wired to a mechanism and promoting to the inert pipe at Globals.c:535, which no longer glows. No rule in rules/* describes the pipes changing state with their mechanism. ID BR34188 is unique across rules/ and test/.
+
+----
+BR35147
+"When a resurrection altar's mechanism is powered, it brings back your most powerful fallen ally and becomes a scorched altar."
+Citation: [Globals.c:538-539](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L538-L539), [Monsters.c:2889-2904](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2889-L2904)
+Note: Globals.c:538 is the resurrection altar, wired to a mechanism and promoting to the inert altar at Globals.c:539; the resurrection feature calls resurrectAlly (Architect.c:3370-3371), which prefers the fallen ally with the greatest total power (Monsters.c:2889-2904). BR70163 says dead allies are kept for resurrection, but no rule describes the altar performing it. ID BR35147 is unique across rules/ and test/.
+
+----
+BR36150
+"A sacrificial altar demands the marked sacrifice, and when that creature steps onto the altar the sacrifice is completed."
+Citation: [Globals.c:543-544](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L543-L544)
+Note: Globals.c:543 is the dormant sacrifice altar; Globals.c:544 is the active sacrifice altar, which promotes when a creature marked for sacrifice enters and is wired to its mechanism. BR36447 covers the generic sacrifice-entry promotion, and BR126 covers marked hordes, but no rule describes the altar's demand and completion. ID BR36150 is unique across rules/ and test/.
+
+----
+BR37178
+"A chasm can conceal a stone bridge that extends across it when its mechanism is powered."
+Citation: [Globals.c:554-556](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L554-L556)
+Note: Globals.c:554 is the chasm with a hidden bridge, indistinguishable from an ordinary chasm; Globals.c:555 is the active bridge section that extends across it; Globals.c:556 is the chasm edge wired to announce the bridge. BR117 and BR120 cover bridge generation over open gaps, not a machine-built bridge hidden in a chasm. ID BR37178 is unique across rules/ and test/.
+
+----
+BR37431
+"A wall rigged to a rat trap cracks and then shatters, releasing the rats hidden behind it."
+Citation: [Globals.c:559-560](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L559-L560)
+Note: Globals.c:559 is the dormant rat-trap wall; Globals.c:560 is the cracking wall, which promotes to the wall-shatter feature on a 5% per-turn chance. BR16668 covers a single monster bursting from a wall, but no rule describes this cracking wall that releases a group of rats. ID BR37431 is unique across rules/ and test/.
+
+----
+BR37960
+"A darkened crystal globe keeps its mechanism from activating until an electric shock lights it, and the shining globe no longer breaks the circuit."
+Citation: [Globals.c:563-564](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L563-L564)
+Note: Globals.c:563 is the darkened globe, which promotes when exposed to electricity and is a circuit breaker; Globals.c:564 is the shining globe, which promotes no further and is not a circuit breaker. Time.c:1097-1108 refuses to activate any mechanism that still contains a circuit breaker. BR36633 covers electricity promoting terrain, but no rule describes the globe's blocking role. ID BR37960 is unique across rules/ and test/.
+
+----
+BR38405
+"The passage left by an underworm crumbles through solid granite, opening a tunnel through the rock."
+Citation: [Globals.c:568-570](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L568-L570)
+Note: Globals.c:568 is a dormant worm-tunnel marker; Globals.c:569 is the active marker, which crumbles the granite on a per-turn chance; Globals.c:570 is the outer wall, which shatters when the tunnel is complete. BR52291 describes the underworm itself but not the tunnel it leaves. ID BR38405 is unique across rules/ and test/.
+
+----
+BR38875
+"A ceremonial brazier is a burning fixture that blocks movement and items."
+Citation: [Globals.c:573](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L573)
+Note: Globals.c:573 is the brazier, flagged as fire and as obstructing passability and items, and listed in the sidebar. No rule in rules/* describes a brazier or its obstruction. ID BR38875 is unique across rules/ and test/.
+
+----
+BR39115
+"In the goblin warren, mud walls block movement, the mud floor is flammable, and the hanging animal-skin doorway blocks sight and gas and burns readily."
+Citation: [Globals.c:576-578](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L576-L578)
+Note: Globals.c:576 is the flammable mud floor; Globals.c:577 is the obstruction mud wall; Globals.c:578 is the hanging animal-skin doorway, which blocks vision and gas and is flammable. BR114 mentions the goblin encampment structure but no rule describes its mud-and-skin construction. ID BR39115 is unique across rules/ and test/.
+
+----
+BR39634
+"Sputtering embers cool into ash over time."
+Citation: [Globals.c:469](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L469)
+Note: Globals.c:469 is the embers tile, which promotes to ash on a 3% per-turn chance. BR27751 describes only their light. ID BR39634 is unique across rules/ and test/.
+
+----
+BR40221
+"Ice is frozen water that gradually melts back into deep or shallow water, faster where more open ground borders it."
+Citation: [Globals.c:435-438](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L435-L438)
+Note: Globals.c:435-438 are deep and shallow ice and their melting variants; the unmelted rows have negative promotion chances, so melting accelerates with the number of passable neighbours, and they become the corresponding water rows. BR51947 and BR29950 describe the resulting water but not ice. ID BR40221 is unique across rules/ and test/.
+
+----
+BR40612
+"A lever that has been pulled becomes an inactive lever that cannot be pulled again."
+Citation: [Globals.c:348-349](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L348-L349)
+Note: Globals.c:348 is the lever, which promotes when the player enters it; Globals.c:349 is the pulled lever, which has no promotion and whose description says it will not budge. BR14518 covers the initial pull, but no rule says the lever is then spent. ID BR40612 is unique across rules/ and test/.
+
+----
+BR41553
+"A wall-mounted torch wired to a mechanism can drop from its bracket and burn on the floor when the mechanism is powered."
+Citation: [Globals.c:342-343](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L342-L343)
+Note: Globals.c:342 is the dormant wall-mounted torch, wired to a mechanism and promoting to Globals.c:343, the fallen torch burning on the floor. BR34933 and BR17041 describe ordinary torch light, but no rule says a torch can be made to fall. ID BR41553 is unique across rules/ and test/.
+
+----
+BR35318
+"Stone walls are tinted by a depth-dependent shade that shifts from a lighter grey near the surface to a darker tone at the amulet's depth."
+Citation: [Globals.c:80-81](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L80-L81), [Globals.c:296](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L296), [Globals.c:327](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L327), [RogueMain.c:541-545](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/RogueMain.c#L541-L545)
+Note: Globals.c:80-81 define the wall shade at the surface and at the amulet depth, Globals.c:296 registers that pair as a dynamic colour, and Globals.c:327 is the plain stone wall that uses it. RogueMain.c:541-545 blends the two by the fraction of the amulet's depth reached. BR37725 describes only the ambient light's similar depth blend, and no rule describes the wall tint. ID BR35318 is unique across rules/ and test/.
+
+----
+BR21153
+"The ground is tinted by a depth-dependent shade that shifts from a blue-black near the surface to a neutral dark grey at the amulet's depth."
+Citation: [Globals.c:90-91](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L90-L91), [Globals.c:299](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L299), [Globals.c:323-324](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L323-L324), [RogueMain.c:541-545](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/RogueMain.c#L541-L545)
+Note: Globals.c:90-91 define the floor shade at the surface and at the amulet depth, Globals.c:299 registers that pair as a dynamic colour, and Globals.c:323-324 are the ordinary and floodable floor that use it. RogueMain.c:541-545 blends the two by depth. BR29950 and BR38901 describe the water tints, and BR37725 the ambient light, but no rule describes the floor's own depth tint. ID BR21153 is unique across rules/ and test/.
+
+----
+BR16712
+"Periodic hordes appear only when both a legal spawn square and an eligible horde type exist; if either is unavailable, no horde is created."
+Citation: [Monsters.c:1097-1112](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1097-L1112), [Monsters.c:798-806](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L798-L806), [Monsters.c:1123-1125](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1123-L1125)
+Note: getRandomMonsterSpawnLocation reports failure when no square survives the visible, occupied, stair, harmful-terrain and machine filters (Monsters.c:1097-1111), and spawnPeriodicHorde only attempts a spawn when that call succeeds (Monsters.c:1123); when the random horde type lookup finds no eligible type it returns null (Monsters.c:800-806), so no creature is created. BR82926 and BR49453 describe where periodic hordes are placed and that they wander, but no rule states that an impossible placement or unavailable horde type yields no horde. ID BR16712 is unique across rules/ and test/.
+
+----
+BR12490
+"A recording file is created the first time it is written and its fixed header is then rewritten in place at the start of the file, so each later save updates that same file rather than appending a second header."
+Citation: [Recordings.c:202-216](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L202-L216)
+Note: Recordings.c:202-207 creates an empty file when the recording's path does not yet exist, then Recordings.c:209-216 reopens the file for update, rewinds to the start, and writes all header bytes over the existing contents. Because this runs on every buffer flush (Recordings.c:232-233), the opening metadata is refreshed in place instead of duplicate headers being appended. No rule in rules/* cites Recordings.c:177-221 or otherwise states that a recording file is created on first write and its header updated in place. ID BR12490 is unique across rules/ and test/.
+
+----
+BR19228
+"The recording header stores the recording's total length, and a recording is never shorter than its own header, so even a recording with no played turns remains a complete file that playback can finish."
+Citation: [Recordings.c:199-200](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L199-L200), [Recordings.c:218-220](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L218-L220)
+Note: Recordings.c:199-200 writes the running recording length into the last 4-byte field of the 36-byte header; playback reads that field back at Recordings.c:529, and recallChar reports the end of the recording once the read position passes it (Recordings.c:268-270). Recordings.c:218-219 then raises the length to the header size when it would otherwise be shorter, so an empty recording still has a valid length. Existing playback rules cover seeking, pausing, and out-of-sync handling, but no rule in rules/* describes the stored recording length or the header-size floor. ID BR19228 is unique across rules/ and test/.
+
+----
+BR26537
+"A creature carrying the explosive mutation is wreathed in a glowing orange aura that lights the tiles within 1.5 to 2 tiles of it, fading to nothing at the edge."
+Citation: [Light.c:246-248](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Light.c#L246-L248), [Globals.c:1372](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1372), [Globals.c:956](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L956)
+Note: Light.c:246-248 paints a mutation's light at the creature's location whenever its mutation has one; Globals.c:1372 is the only mutation row with a light, granting the explosive mutation the explosive bloat light, whose Globals.c:956 entry is the orange explosive aura colour over radius 150-200 (1.5-2 tiles) with zero edge brightness. The bestiary glow rules (e.g. BR44680) describe the explosive bloat monster kind, and BR83937 covers telepathy light, but no rule in rules/* describes the glow granted by the explosive mutation. ID BR26537 is unique across rules/ and test/.
+
+----
+BR31554
+"A creature that is on fire, but is not one that burns unceasingly by nature, casts firelight that lights the tiles within 3 to 4 tiles of it, fading to nothing at the edge."
+Citation: [Light.c:250-252](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Light.c#L250-L252), [Globals.c:940](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L940), [Globals.c:72](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L72)
+Note: Light.c:250-252 paints the burning-creature light at any burning creature's location unless its kind is naturally fiery; Globals.c:940 defines that light as the red-orange firebolt colour over radius 300-400 (3-4 tiles) with zero edge brightness, and Globals.c:72 defines the colour. BR30955 covers the player's carried light turning fiery while burning, but no rule in rules/* describes the firelight cast by a burning monster. ID BR31554 is unique across rules/ and test/.
+
+----
+BR37255
+"If an open-area vault is given a starting tile, it grows from that tile instead of picking a random floor tile, so a horde's accompanying encampment rises where the horde appeared."
+Citation: [Architect.c:1157-1163](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1157-L1163), [Monsters.c:852-855](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L852-L855)
+Note: Architect.c:1157-1163 replaces the origin with a random floor tile only when no location was supplied; otherwise the supplied tile is used as the growth origin. Monsters.c:852-855 builds a horde's accompanying machine at the horde's chosen location, which is the in-game path that supplies an origin. BR36818 describes only the random-tile case and BR94740 covers entrance-style vaults, so no rule in rules/* states that a supplied starting tile is used. ID BR37255 is unique across rules/ and test/.
+
+----
+BR40805
+"When an open-area vault picks its own starting tile, that tile is a floor tile with no creature, item, staircase, your character, or existing vault on it."
+Citation: [Architect.c:1159-1163](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1159-L1163), [Architect.c:3827-3842](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L3827-L3842)
+Note: Architect.c:1160 asks for a random floor tile, and the search at Architect.c:3827-3842 rejects any square flagged as holding the player, a monster, stairs, an item, or a machine, as well as item-blocking terrain. BR36818 says only that the vault starts on a random floor tile, not that the tile must be otherwise empty. ID BR40805 is unique across rules/ and test/.
+
+----
+BR38283
+"If an open-area vault's attempted interior is rejected, the next attempt starts from an empty interior, so no tiles claimed by the failed attempt are carried over."
+Citation: [Architect.c:1152-1155](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1152-L1155)
+Note: Architect.c:1154 clears the mapped interior at the top of every retry, before the starting tile is chosen and distances are recalculated. BR45230 covers abandoning a vault and restoring the level, but no rule in rules/* states that each retry begins with a clean interior. ID BR38283 is unique across rules/ and test/.
+
+----
+BR22324
+"When hunger forces you to eat at the end of a turn, the game announces 'unable to control your hunger, you eat a mango.' for fruit or 'unable to control your hunger, you eat a ration of food.' otherwise, and consumes only the first food item in your pack."
+Citation: [Time.c:843-851](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L843-L851), [Time.c:2632-2634](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2632-L2634)
+Note: Time.c:843-851 walks the pack and stops at the first food item, naming it a mango when it is fruit and a ration of food otherwise (845-847), then eats it (849). The trigger at Time.c:2632-2634 (working tree 2665-2667) calls this only when nutrition is 1 or less at the end of the player's turn. BR33602 covers the forced meal and its turn cost but not the announcement or that only one item is eaten, and no rule in rules/* quotes this message. ID BR22324 is unique across rules/ and test/.
+
+----
+BR13458
+"Typing a turn beyond the recording's total length jumps only as far as the recording's final turn, so the destination never exceeds the number of turns available."
+Citation: [Recordings.c:801-803](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L801-L803)
+Note: Recordings.c:802 clamps the requested turn with min(destinationFrame, rogue.howManyTurns) before seeking, and howManyTurns is the recording's stored total turn count (read at Recordings.c:527). BR15719 covers the go-to-turn prompt, BR59377 the already-at-turn alert, and BR23216 the out-of-sync alert, but no rule in rules/* states that an oversized destination is capped to the recording's last turn. ID BR13458 is unique across rules/ and test/.
+
+----
+BR13906
+"After the recording jumps to a chosen turn, playback remains paused at that turn until the player presses space to resume."
+Citation: [Recordings.c:801-804](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Recordings.c#L801-L804)
+Note: Recordings.c:804 sets the paused state true immediately after the seek in the branch that actually jumps (Recordings.c:801-803); the already-at-turn and out-of-sync branches above it return without seeking. BR15719 covers only the prompt that starts the jump, and BR59377/BR23216 cover the two alerts, so no rule in rules/* describes that the recording ends up paused after a seek. ID BR13906 is unique across rules/ and test/.

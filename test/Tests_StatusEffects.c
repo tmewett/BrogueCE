@@ -4,7 +4,8 @@
 // counters that tick down on the periodic environmental update, searching,
 // weakening, haste and slow, poison, starvation, paralysis, entrancement, the
 // shield, being stuck ending as soon as a creature is off an entangling tile,
-// and a discordant creature attacking the nearest eligible creature.  Rules
+// levitation keeping a creature off pressure plates, and a discordant
+// creature attacking the nearest eligible creature.  Rules
 // about rendering (light radius, hallucinated names), combat prompts, and
 // item/bolt magnitudes other than the staff-scaled entrancement duration
 // are omitted.
@@ -181,6 +182,59 @@ static boolean br10268_aggravation_strips_avoidance(void) {
 }
 
 // ============================================================
+// BR50175 — while the aggravation counter is positive and you are
+// not invisible, it adds that many points to your stealth range.
+//
+// The range is read before and after applying seven points of
+// aggravation, so the exact size of the bonus proves the counter is
+// added; clearing the counter returns the range to its starting
+// value, and invisibility pins the range at 1 no matter how
+// aggravated you are.
+// ============================================================
+
+static int br50175_baseRange;
+static int br50175_aggravatedRange;
+static int br50175_clearedRange;
+static int br50175_invisibleRange;
+
+static void br50175_aggravation_setup(void) {
+    setArenaRadius(4, FLOOR);
+    removeStatusFromPlayer(STATUS_AGGRAVATING);
+    removeStatusFromPlayer(STATUS_INVISIBLE);
+    recomputeLighting();
+
+    br50175_baseRange = playerStealthRange();
+    applyStatusToPlayer(STATUS_AGGRAVATING, 7);
+    br50175_aggravatedRange = playerStealthRange();
+    removeStatusFromPlayer(STATUS_AGGRAVATING);
+    br50175_clearedRange = playerStealthRange();
+}
+
+static boolean br50175_aggravation_adds_to_stealth_range(void) {
+    TEST_ASSERT_EQ(br50175_aggravatedRange - br50175_baseRange, 7,
+                   "seven points of aggravation should add seven points to the stealth range");
+    TEST_ASSERT_EQ(br50175_clearedRange, br50175_baseRange,
+                   "a cleared aggravation counter should add nothing to the stealth range");
+    return !testFailed;
+}
+
+static void br50175_invisible_setup(void) {
+    setArenaRadius(4, FLOOR);
+    recomputeLighting();
+    applyStatusToPlayer(STATUS_AGGRAVATING, 7);
+    applyStatusToPlayer(STATUS_INVISIBLE, 50);
+    br50175_invisibleRange = playerStealthRange();
+}
+
+static boolean br50175_invisibility_ignores_aggravation(void) {
+    TEST_ASSERT_EQ(playerStatusTurns(STATUS_AGGRAVATING), 7,
+                   "precondition: seven points of aggravation should be in effect");
+    TEST_ASSERT_EQ(br50175_invisibleRange, 1,
+                   "an invisible player's stealth range should stay 1 even while aggravated");
+    return !testFailed;
+}
+
+// ============================================================
 // BR28518 — telepathy fades with a message
 // ============================================================
 
@@ -323,24 +377,57 @@ static boolean weakness_cleared(void) {
 }
 
 // ============================================================
-// BR50918 — slowing sets slow, clears haste, and doubles the time
+// BR50918 — a slowed monster acts at half its normal speed
 // ============================================================
 
 static int monsterBaseSpeed;
 
-static void slow_sets_slow_setup(void) {
+static void slow_halves_speed_setup(void) {
     clearMonsters();
     monst = spawnMonster(MK_TROLL, posOffset(getPlayerPos(), 2, 0));
     monsterBaseSpeed = monsterMovementSpeed(monst);
+    slowMonster(monst, 10);
+}
+
+static boolean slow_halves_speed(void) {
+    TEST_ASSERT_EQ(monsterMovementSpeed(monst), monsterBaseSpeed * 2,
+                   "a slowed monster should take twice as long to act");
+    return !testFailed;
+}
+
+// ============================================================
+// BR28481 — slow ends haste
+// ============================================================
+
+static void slow_clears_haste_setup(void) {
+    clearMonsters();
+    monst = spawnMonster(MK_TROLL, posOffset(getPlayerPos(), 2, 0));
     hasteMonster(monst, 10);
     slowMonster(monst, 10);
 }
 
-static boolean slow_applied(void) {
+static boolean slow_clears_haste(void) {
+    TEST_ASSERT_EQ(monsterStatusTurns(monst, STATUS_HASTED), 0,
+                   "slow should clear haste");
     TEST_ASSERT_EQ(monsterStatusTurns(monst, STATUS_SLOWED), 10, "slow should be set");
-    TEST_ASSERT_EQ(monsterStatusTurns(monst, STATUS_HASTED), 0, "slow should clear haste");
-    TEST_ASSERT_EQ(monsterMovementSpeed(monst), monsterBaseSpeed * 2,
-                   "a slowed monster should take twice as long to act");
+    return !testFailed;
+}
+
+// ============================================================
+// BR25804 — haste ends slow
+// ============================================================
+
+static void haste_clears_slow_setup(void) {
+    clearMonsters();
+    monst = spawnMonster(MK_TROLL, posOffset(getPlayerPos(), 2, 0));
+    slowMonster(monst, 10);
+    hasteMonster(monst, 10);
+}
+
+static boolean haste_clears_slow(void) {
+    TEST_ASSERT_EQ(monsterStatusTurns(monst, STATUS_SLOWED), 0,
+                   "haste should clear slow");
+    TEST_ASSERT_EQ(monsterStatusTurns(monst, STATUS_HASTED), 10, "haste should be set");
     return !testFailed;
 }
 
@@ -791,6 +878,202 @@ static boolean br27834_water_extinguishes(void) {
                 "setup: the control player should not be levitating");
     TEST_ASSERT(!isPlayerBurning(),
                 "water should extinguish a non-levitating player's burning");
+    return !testFailed;
+}
+
+// ============================================================
+// BR47057 — a creature exposed to fire catches fire, announced
+// as "you catch fire" for the player, unless it is already
+// dying, immune to fire, invulnerable, submerged, or standing
+// on fire-extinguishing terrain without levitating.
+//
+// Each exemption test spawns an otherwise identical control
+// creature beside the exempt one and exposes both to the same
+// flame.  The control must catch fire, so an exemption that
+// simply skipped the exposure cannot pass.
+// ============================================================
+
+static creature *br47057_subject;
+static creature *br47057_control;
+
+static void br47057_spawn_pair(void) {
+    clearMonsters();
+    setArenaRadius(4, FLOOR);
+    br47057_subject = placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 2, 0));
+    br47057_control = placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 0, 2));
+    TEST_ASSERT(br47057_subject != NULL && br47057_control != NULL,
+                "setup: both creatures should spawn");
+}
+
+static void br47057_player_setup(void) {
+    clearMonsters();
+    setArenaRadius(4, FLOOR);
+    clearMessages();
+    exposePlayerToFire();
+    flushCombatMessages();
+}
+
+static boolean br47057_player_catches_fire_and_is_told(void) {
+    TEST_ASSERT(isPlayerBurning(), "exposure to fire should set the player alight");
+    TEST_ASSERT(messageWasShown("you catch fire"),
+                "the player should be told \"you catch fire\"");
+    return !testFailed;
+}
+
+static void br47057_ordinary_setup(void) {
+    br47057_spawn_pair();
+}
+
+static boolean br47057_ordinary_creature_catches_fire(void) {
+    exposeMonsterToFire(br47057_subject);
+    TEST_ASSERT(monsterHasStatus(br47057_subject, STATUS_BURNING),
+                "fire should set an ordinary creature burning");
+    return !testFailed;
+}
+
+static void br47057_dying_setup(void) {
+    br47057_spawn_pair();
+    makeMonsterDying(br47057_subject);
+    TEST_ASSERT(monsterIsDead(br47057_subject),
+                "setup: the subject should already be dying");
+}
+
+static boolean br47057_dying_creature_does_not_catch_fire(void) {
+    exposeMonsterToFire(br47057_subject);
+    exposeMonsterToFire(br47057_control);
+    TEST_ASSERT(!monsterHasStatus(br47057_subject, STATUS_BURNING),
+                "fire should not set an already dying creature burning");
+    TEST_ASSERT(monsterHasStatus(br47057_control, STATUS_BURNING),
+                "the same fire should set the control creature burning");
+    return !testFailed;
+}
+
+static void br47057_immune_setup(void) {
+    br47057_spawn_pair();
+    applyStatusToMonster(br47057_subject, STATUS_IMMUNE_TO_FIRE, 100);
+    TEST_ASSERT(monsterHasStatus(br47057_subject, STATUS_IMMUNE_TO_FIRE),
+                "setup: the subject should be immune to fire");
+}
+
+static boolean br47057_fire_immune_creature_does_not_catch_fire(void) {
+    exposeMonsterToFire(br47057_subject);
+    exposeMonsterToFire(br47057_control);
+    TEST_ASSERT(!monsterHasStatus(br47057_subject, STATUS_BURNING),
+                "fire should not set a fire-immune creature burning");
+    TEST_ASSERT(monsterHasStatus(br47057_control, STATUS_BURNING),
+                "the same fire should set the control creature burning");
+    return !testFailed;
+}
+
+static void br47057_invulnerable_setup(void) {
+    clearMonsters();
+    setArenaRadius(4, FLOOR);
+    br47057_subject = placeHostileMonster(MK_WARDEN_OF_YENDOR,
+                                          posOffset(getPlayerPos(), 2, 0));
+    br47057_control = placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 0, 2));
+    TEST_ASSERT(br47057_subject != NULL && br47057_control != NULL,
+                "setup: both creatures should spawn");
+    TEST_ASSERT(monsterHasTrait(br47057_subject, MONST_INVULNERABLE),
+                "setup: the subject should be invulnerable");
+}
+
+static boolean br47057_invulnerable_creature_does_not_catch_fire(void) {
+    exposeMonsterToFire(br47057_subject);
+    exposeMonsterToFire(br47057_control);
+    TEST_ASSERT(!monsterHasStatus(br47057_subject, STATUS_BURNING),
+                "fire should not set an invulnerable creature burning");
+    TEST_ASSERT(monsterHasStatus(br47057_control, STATUS_BURNING),
+                "the same fire should set the control creature burning");
+    return !testFailed;
+}
+
+static void br47057_submerged_setup(void) {
+    br47057_spawn_pair();
+    setMonsterSubmerged(br47057_subject, true);
+    TEST_ASSERT(monsterIsSubmerged(br47057_subject),
+                "setup: the subject should be submerged");
+}
+
+static boolean br47057_submerged_creature_does_not_catch_fire(void) {
+    exposeMonsterToFire(br47057_subject);
+    exposeMonsterToFire(br47057_control);
+    TEST_ASSERT(!monsterHasStatus(br47057_subject, STATUS_BURNING),
+                "fire should not set a submerged creature burning");
+    TEST_ASSERT(monsterHasStatus(br47057_control, STATUS_BURNING),
+                "the same fire should set the control creature burning");
+    return !testFailed;
+}
+
+static void br47057_water_setup(void) {
+    clearMonsters();
+    setArenaRadius(4, FLOOR);
+    pos subjectPos = posOffset(getPlayerPos(), 2, 0);
+    pos controlPos = posOffset(getPlayerPos(), 0, 2);
+    setTerrain(subjectPos, SHALLOW_WATER);
+    setTerrain(controlPos, SHALLOW_WATER);
+    br47057_subject = placeHostileMonster(MK_RAT, subjectPos);
+    br47057_control = placeHostileMonster(MK_RAT, controlPos);
+    applyStatusToMonster(br47057_control, STATUS_LEVITATING, 20);
+    TEST_ASSERT(br47057_subject != NULL && br47057_control != NULL,
+                "setup: both creatures should spawn");
+    TEST_ASSERT(cellIsTerrain(monsterPosition(br47057_subject), SHALLOW_WATER),
+                "setup: the subject should stand in fire-extinguishing terrain");
+    TEST_ASSERT(monsterHasStatus(br47057_control, STATUS_LEVITATING),
+                "setup: the control should be levitating");
+}
+
+static boolean br47057_water_exempts_non_levitating_creature(void) {
+    exposeMonsterToFire(br47057_subject);
+    exposeMonsterToFire(br47057_control);
+    TEST_ASSERT(!monsterHasStatus(br47057_subject, STATUS_BURNING),
+                "fire should not set alight a creature standing on fire-extinguishing terrain");
+    TEST_ASSERT(monsterHasStatus(br47057_control, STATUS_BURNING),
+                "the same fire should set alight a levitating creature above that terrain");
+    return !testFailed;
+}
+
+// ============================================================
+// BR38788 — while levitating, a creature does not trigger
+// pressure plates.  The control proves an otherwise identical
+// non-levitating player does depress the same plate, so the
+// levitating case is not passing vacuously.
+// ============================================================
+
+static pos br38788_plate;
+
+static void br38788_setup(boolean levitating) {
+    clearArena();
+    br38788_plate = posOffset(getPlayerPos(), 1, 0);
+    setTerrain(br38788_plate, MACHINE_PRESSURE_PLATE);
+    setPlayerPos(br38788_plate);
+    if (levitating) {
+        applyStatusToPlayer(STATUS_LEVITATING, 20);
+    }
+    applyTileEffectsToPlayer();
+}
+
+static void br38788_levitating_setup(void) {
+    br38788_setup(true);
+}
+
+static boolean br38788_levitating_leaves_plate_up(void) {
+    TEST_ASSERT(isPlayerLevitating(), "setup: the player should be levitating");
+    TEST_ASSERT(playerIsAt(br38788_plate), "setup: the player should stand on the plate");
+    TEST_ASSERT(!isTrapTriggered(br38788_plate),
+                "a levitating creature should not trigger a pressure plate");
+    return !testFailed;
+}
+
+static void br38788_control_setup(void) {
+    br38788_setup(false);
+}
+
+static boolean br38788_control_depresses_plate(void) {
+    TEST_ASSERT(!isPlayerLevitating(),
+                "setup: the control player should not be levitating");
+    TEST_ASSERT(playerIsAt(br38788_plate), "setup: the player should stand on the plate");
+    TEST_ASSERT(isTrapTriggered(br38788_plate),
+                "control: a non-levitating creature should trigger a pressure plate");
     return !testFailed;
 }
 
@@ -1258,6 +1541,72 @@ static boolean br14011_invulnerable_not_confused(void) {
 }
 
 // ============================================================
+// BR18500 — Discord sets the discord counter (30 for the blast; a
+// scaled duration for a staff).
+//
+// The scroll's blast catches every visible monster within its radius, so a
+// single nearby rat receives the fixed 30-turn counter.  Reading the scroll
+// through the engine's scroll routine without ending the turn keeps the
+// counter at the value the blast set rather than one periodic tick later.
+// The staff's bolt carries the staff's enchantment as its magnitude, and its
+// duration is four turns per point of enchantment; two different
+// enchantments make a fixed duration or the wrong scale fail.  The staff is
+// zapped without spending a turn, so its counter is also read at the value
+// the bolt set.
+// ============================================================
+
+static creature *br18500_target;
+
+static void br18500_scroll_setup(void) {
+    setArenaRadius(5, FLOOR);
+    br18500_target = placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 2, 0));
+    // The blast only affects monsters in the field of view, which a real turn
+    // establishes.  Paralyze the rat so it stays put during that turn.
+    applyStatusToMonster(br18500_target, STATUS_PARALYZED, 100);
+    restOneTurn();
+    readScrollOfKindWithoutEndingTurn(SCROLL_DISCORD);
+}
+
+static boolean br18500_scroll_sets_thirty(void) {
+    TEST_ASSERT(br18500_target != NULL,
+                "setup: the blast's target should exist");
+    TEST_ASSERT(monsterHasStatus(br18500_target, STATUS_DISCORDANT),
+                "a discord blast should make the visible monster discordant");
+    TEST_ASSERT_EQ(monsterStatusTurns(br18500_target, STATUS_DISCORDANT), 30,
+                   "a discord blast should set the discord counter to 30");
+    return !testFailed;
+}
+
+static int br18500_expectedTurns;
+
+static void br18500_staff_setup(int enchant) {
+    setArenaRadius(5, FLOOR);
+    br18500_target = placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 2, 0));
+    br18500_expectedTurns = enchant * 4;
+    item *staff = givePlayerItem(STAFF, STAFF_DISCORD, enchant);
+    playerZapsStaffAt(staff, br18500_target);
+}
+
+static void br18500_staff_enchant2_setup(void) {
+    br18500_staff_setup(2);
+}
+
+static void br18500_staff_enchant5_setup(void) {
+    br18500_staff_setup(5);
+}
+
+static boolean br18500_staff_duration_scales_with_enchantment(void) {
+    TEST_ASSERT(br18500_target != NULL,
+                "setup: the staff's target should exist");
+    TEST_ASSERT(monsterHasStatus(br18500_target, STATUS_DISCORDANT),
+                "a discord staff should make its target discordant");
+    TEST_ASSERT_EQ(monsterStatusTurns(br18500_target, STATUS_DISCORDANT),
+                   br18500_expectedTurns,
+                   "a discord staff should last four turns per point of enchantment");
+    return !testFailed;
+}
+
+// ============================================================
 // BR49341 — a discordant monster attacks whatever eligible
 // creature is nearest rather than respecting allegiance
 // ============================================================
@@ -1517,6 +1866,8 @@ const testCase tests_status_effects[] = {
     { "BR18867_aggravation_counter_decrements", aggravation_decrement_setup,    rest_one_turn_step, status_decremented_by_one },
     { "BR91554_aggravation_wakes_and_alerts",   aggravation_setup,              NULL, br91554_aggravation_wakes_and_alerts },
     { "BR10268_aggravation_strips_avoidance",   aggravation_setup,              NULL, br10268_aggravation_strips_avoidance },
+    { "BR50175_aggravation_adds_to_stealth_range", br50175_aggravation_setup,   NULL, br50175_aggravation_adds_to_stealth_range },
+    { "BR50175_invisibility_ignores_aggravation",  br50175_invisible_setup,     NULL, br50175_invisibility_ignores_aggravation },
     { "BR75439_fire_immunity_counter_decrements",fire_immunity_decrement_setup, rest_one_turn_step, status_decremented_by_one },
     { "BR31504_explosion_immunity_counter_decrements", explosion_immunity_decrement_setup, rest_one_turn_step, status_decremented_by_one },
 
@@ -1533,7 +1884,9 @@ const testCase tests_status_effects[] = {
     { "BR49074_weakness_stacks",                weakness_stacks_setup,          NULL, weakness_stacked },
     { "BR55648_weakness_expiry_clears_amount",  weakness_expires_setup,         rest_one_turn_step, weakness_cleared },
 
-    { "BR50918_slow_sets_slow_clears_haste",    slow_sets_slow_setup,           NULL, slow_applied },
+    { "BR50918_slow_halves_speed",              slow_halves_speed_setup,        NULL, slow_halves_speed },
+    { "BR28481_slow_clears_haste",              slow_clears_haste_setup,        NULL, slow_clears_haste },
+    { "BR25804_haste_clears_slow",              haste_clears_slow_setup,        NULL, haste_clears_slow },
     { "BR40736_haste_sets_haste_clears_slow",   haste_sets_haste_setup,         NULL, haste_applied },
     { "BR22853_slow_expiry_restores_speed",     slow_expires_setup,             rest_one_turn_step, speed_restored },
     { "BR71884_haste_expiry_restores_monster_speed", monster_haste_expires_setup, rest_one_turn_step, monster_haste_expired },
@@ -1569,6 +1922,17 @@ const testCase tests_status_effects[] = {
     { "BR27834_levitating_burning_survives_water", br27834_levitating_setup,    NULL, br27834_levitating_keeps_burning },
     { "BR27834_water_extinguishes_non_levitating", br27834_control_setup,       NULL, br27834_water_extinguishes },
 
+    { "BR47057_player_catches_fire_and_is_told", br47057_player_setup, NULL, br47057_player_catches_fire_and_is_told },
+    { "BR47057_ordinary_creature_catches_fire", br47057_ordinary_setup, NULL, br47057_ordinary_creature_catches_fire },
+    { "BR47057_dying_creature_does_not_catch_fire", br47057_dying_setup, NULL, br47057_dying_creature_does_not_catch_fire },
+    { "BR47057_fire_immune_creature_does_not_catch_fire", br47057_immune_setup, NULL, br47057_fire_immune_creature_does_not_catch_fire },
+    { "BR47057_invulnerable_creature_does_not_catch_fire", br47057_invulnerable_setup, NULL, br47057_invulnerable_creature_does_not_catch_fire },
+    { "BR47057_submerged_creature_does_not_catch_fire", br47057_submerged_setup, NULL, br47057_submerged_creature_does_not_catch_fire },
+    { "BR47057_water_exempts_non_levitating_creature", br47057_water_setup, NULL, br47057_water_exempts_non_levitating_creature },
+
+    { "BR38788_levitating_creature_leaves_plate_up", br38788_levitating_setup,  NULL, br38788_levitating_leaves_plate_up },
+    { "BR38788_non_levitating_creature_depresses_plate", br38788_control_setup, NULL, br38788_control_depresses_plate },
+
     { "BR62028_paralyzed_monster_takes_no_action", paralyzed_monster_idle_setup, wait_10_turns_step, paralyzed_monster_did_nothing },
     { "BR34867_entranced_monster_skips_turn",   entranced_monster_idle_setup,   wait_10_turns_step, entranced_monster_did_nothing },
 
@@ -1599,6 +1963,10 @@ const testCase tests_status_effects[] = {
     { "BR14011_confusion_gas_confuses_ordinary_creature", br14011_ordinary_setup, NULL, br14011_ordinary_confused },
     { "BR14011_confusion_gas_skips_inanimate_creature",   br14011_inanimate_setup, NULL, br14011_inanimate_not_confused },
     { "BR14011_confusion_gas_skips_invulnerable_creature", br14011_invulnerable_setup, NULL, br14011_invulnerable_not_confused },
+
+    { "BR18500_scroll_discord_sets_thirty_turns",       br18500_scroll_setup,        NULL, br18500_scroll_sets_thirty },
+    { "BR18500_staff_discord_duration_scales_with_enchant2", br18500_staff_enchant2_setup, NULL, br18500_staff_duration_scales_with_enchantment },
+    { "BR18500_staff_discord_duration_scales_with_enchant5", br18500_staff_enchant5_setup, NULL, br18500_staff_duration_scales_with_enchantment },
 
     { "BR49341_discordant_attacks_nearest_creature", br49341_setup, br49341_step, br49341_attacks_nearest_creature },
 

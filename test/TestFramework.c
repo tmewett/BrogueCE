@@ -7,6 +7,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// The role colours the bestiary and terrain tables draw with (Globals.c).
+// Declared locally so the colour names below can compare against the palette
+// itself rather than against whichever colour a catalog row happens to point
+// at; a catalog row that changes colour then stops matching its role name.
+extern const color pinkJellyColor;
+extern const color wormColor;
+extern const color sentinelColor;
+extern const color goblinMysticColor;
+extern const color ifritColor;
+extern const color phoenixColor;
+
 // The master registry of test suites (see Tests.c).
 extern const testCase *const testSuites[];
 
@@ -32,6 +43,13 @@ static int inputQueueTail = 0;
 static char messageLog[TEST_MESSAGE_LOG_SIZE][TEXT_MAX_LENGTH + 1];
 static boolean messageLogRequiresAck[TEST_MESSAGE_LOG_SIZE];
 static int messageLogCount = 0;
+
+// Text of the temporary flash alerts issued during the current test.  A flash
+// is painted directly to the screen and then erased, so it never reaches the
+// message log; this keeps the text for a test to assert on.
+#define TEST_FLASH_LOG_SIZE 16
+static char flashLog[TEST_FLASH_LOG_SIZE][TEXT_MAX_LENGTH + 1];
+static int flashLogCount = 0;
 
 // Snapshot of the messages the engine emitted while the game was starting up
 // (the welcome message and its fellows), taken by runTestByName() just before
@@ -82,6 +100,9 @@ static boolean rememberedColorsValid = false;
 // good/bad magic markers) are glyph identities rather than characters.
 static int screenGlyphSnapshot[ROWS][COLS];
 
+// Whether the latest help-screen restore check saw the help command list.
+static boolean helpScreenDrawn = false;
+
 static void captureScreenSnapshot(void) {
     if (screenSnapshotHeld) {
         return;
@@ -130,6 +151,40 @@ const char *screenTextLineContaining(const char *substring) {
         }
     }
     return "";
+}
+
+boolean helpScreenRestoresPreviousDisplay(void) {
+    // Put the flavor line in its settled state before taking the snapshot:
+    // printHelpScreen() refreshes it after restoring, and that refresh must
+    // not make an unchanged line look different.
+    rogue.disturbed = true;
+    updateFlavorText();
+    rogue.disturbed = false;
+
+    const screenDisplayBuffer before = displayBuffer;
+    helpScreenDrawn = false;
+    queueKeystroke(ACKNOWLEDGE_KEY, false, false);
+    printHelpScreen();
+    helpScreenDrawn = screenTextContains("-- Commands --");
+
+    for (int x = 0; x < COLS; x++) {
+        for (int y = 0; y < ROWS; y++) {
+            if (before.cells[x][y].character != displayBuffer.cells[x][y].character) {
+                return false;
+            }
+            for (int c = 0; c < 3; c++) {
+                if (before.cells[x][y].backColorComponents[c]
+                    != displayBuffer.cells[x][y].backColorComponents[c]) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+boolean helpScreenWasShown(void) {
+    return helpScreenDrawn;
 }
 
 int discoveryScreenMagicMarkerFor(const char *name) {
@@ -236,6 +291,12 @@ void queueMouseClick(pos loc) {
     inputQueueTail = next;
 }
 
+void queueClickOutsideMessageArea(void) {
+    // The bottom-left cell: below the message rows, left of the map and the
+    // bottom-row buttons, so moveCursor passes the click through untouched.
+    queueMouseClick(posAt(1, ROWS - 1));
+}
+
 void queueMapClick(pos loc) {
     queueMouseClick(posAt(mapToWindowX(loc.x), mapToWindowY(loc.y)));
 }
@@ -340,6 +401,24 @@ int inventoryScreenMagicMarkerFor(char inventoryLetter) {
     return -2;
 }
 
+// See the declaration in TestFramework.h.
+const char *inventoryDetailAfterKeys(int openKey, int pageKey, int pages) {
+    clearInputQueue();
+    // Opening the inventory with an arrow key selects the first (down) or
+    // last (up) item, exactly as the keyboard-only controls do.
+    queueKeystroke(openKey, false, false);
+    // The detail box's own keyboard-only controls page through the items.
+    for (int i = 0; i < pages; i++) {
+        queueKeystroke(pageKey, false, false);
+    }
+    // One escape dismisses the detail box, the other the inventory.
+    queueKeystroke(ESCAPE_KEY, false, false);
+    queueKeystroke(ESCAPE_KEY, false, false);
+    displayInventory(ALL_ITEMS, 0, 0, true, true);
+    clearInputQueue();
+    return lastMessage();
+}
+
 // The text the most recent text-entry prompt opened with, recorded by the
 // engine through recordTestTextInputDefault().
 static char textInputDefault[4096];
@@ -389,6 +468,14 @@ void clearMessages(void) {
     messageLogCount = 0;
 }
 
+void flushCombatMessages(void) {
+    displayCombatText();
+}
+
+boolean anyMessageWasShown(void) {
+    return messageLogCount > 0;
+}
+
 boolean messageWasShown(const char *substring) {
     for (int i = 0; i < messageLogCount; i++) {
         if (strstr(messageLog[i], substring) != NULL) {
@@ -412,6 +499,37 @@ const char *lastMessage(void) {
         return "(no message)";
     }
     return messageLog[messageLogCount - 1];
+}
+
+void recordTestFlashAlert(const char *message) {
+    if (flashLogCount < TEST_FLASH_LOG_SIZE) {
+        flashLogCount++;
+    }
+    int start = (flashLogCount == TEST_FLASH_LOG_SIZE) ? 1 : 0;
+    memmove(flashLog[0], flashLog[start],
+            sizeof(flashLog[0]) * (flashLogCount - 1 - start));
+    snprintf(flashLog[flashLogCount - 1], sizeof(flashLog[0]), "%s",
+             message ? message : "");
+}
+
+void clearFlashAlerts(void) {
+    flashLogCount = 0;
+}
+
+boolean flashAlertWasShown(const char *substring) {
+    for (int i = 0; i < flashLogCount; i++) {
+        if (strstr(flashLog[i], substring) != NULL) {
+            return true;
+        }
+    }
+    return false;
+}
+
+const char *lastFlashAlert(void) {
+    if (flashLogCount == 0) {
+        return "";
+    }
+    return flashLog[flashLogCount - 1];
 }
 
 const char *messageColorOf(const char *substring) {
@@ -550,6 +668,35 @@ boolean sidebarContains(const char *substring) {
     return false;
 }
 
+int sidebarTextBrightnessWithFocus(pos loc, const char *substring) {
+    char row[STAT_BAR_WIDTH + 1];
+
+    refreshSideBar(loc.x, loc.y, false);
+    for (int y = 0; y < ROWS; y++) {
+        for (int x = 0; x < STAT_BAR_WIDTH; x++) {
+            int glyph = (int) displayBuffer.cells[x][y].character;
+            row[x] = (glyph >= ' ' && glyph < 127) ? (char) glyph : ' ';
+        }
+        row[STAT_BAR_WIDTH] = '\0';
+
+        const char *match = strstr(row, substring);
+        if (match == NULL) {
+            continue;
+        }
+
+        const int x = (int) (match - row);
+        int brightness = displayBuffer.cells[x][y].foreColorComponents[0];
+        if (displayBuffer.cells[x][y].foreColorComponents[1] > brightness) {
+            brightness = displayBuffer.cells[x][y].foreColorComponents[1];
+        }
+        if (displayBuffer.cells[x][y].foreColorComponents[2] > brightness) {
+            brightness = displayBuffer.cells[x][y].foreColorComponents[2];
+        }
+        return brightness;
+    }
+    return -1;
+}
+
 
 // Feed the queued input through the engine's main input loop and return as
 // soon as the queue runs dry.  See the declaration in TestFramework.h.
@@ -579,6 +726,7 @@ void runTestByName(const char *name) {
             startupMessageCount = messageLogCount;
             clearInputQueue();
             clearMessages();
+            clearFlashAlerts();
             playerDeathCauseText[0] = '\0';
             highScoresDisplayed = false;
             screenSnapshotValid = false;
@@ -739,6 +887,41 @@ void setTerrainAroundLoc(pos loc, short terrainType) {
     }
 }
 
+void placeGlowingGlassPipeWiredToMechanism(pos loc) {
+    // Level generation lays pipes on the surface layer, and their promotion
+    // replaces that layer, so put the pipe where the engine expects it.
+    setTerrain(loc, FLOOR);
+    pmapAt(loc)->layers[SURFACE] = PIPE_GLOWING;
+    pmapAt(loc)->machineNumber = ++rogue.machineNumber;
+    pmapAt(loc)->flags |= IS_IN_MACHINE;
+    refreshDungeonCell(loc);
+}
+
+void powerMechanismIncluding(pos loc) {
+    short machineNumber = pmapAt(loc)->machineNumber;
+    if (machineNumber == 0) {
+        return;
+    }
+    activateMachine(machineNumber);
+    // Power fades from the map once activation finishes, as it does when a
+    // promotion triggers a machine through promoteTile().
+    for (int i = 0; i < DCOLS; i++) {
+        for (int j = 0; j < DROWS; j++) {
+            if (pmap[i][j].machineNumber == machineNumber) {
+                pmap[i][j].flags &= ~IS_POWERED;
+            }
+        }
+    }
+}
+
+boolean cellIsGlowingGlassPipe(pos loc) {
+    return cellIsTerrain(loc, PIPE_GLOWING);
+}
+
+boolean cellIsCharredGlassPipe(pos loc) {
+    return cellIsTerrain(loc, PIPE_INERT);
+}
+
 void spawnFeature(pos loc, short feature) {
     spawnDungeonFeature(loc.x, loc.y, &dungeonFeatureCatalog[feature], true, false);
 }
@@ -759,6 +942,40 @@ void placeUpStairs(pos loc) {
     setTerrain(loc, UP_STAIRS);
     pmapAt(loc)->flags |= HAS_STAIRS;
     rogue.upLoc = loc;
+}
+
+pos downStairsLocation(void) {
+    return rogue.downLoc;
+}
+
+pos upStairsLocation(void) {
+    return rogue.upLoc;
+}
+
+boolean dungeonLevelStairLocations(int depth, pos *upstairs, pos *downstairs) {
+    if (depth < 3 || depth > gameConst->deepestLevel) {
+        return false;
+    }
+    // Depth 1's level was built during start-up, and building it also replaced
+    // depth 2's reserved up staircase.  From depth 3 down, both reserved
+    // squares are still exactly what the dungeon layout drew.
+    int index = depth - 1;
+    if (levels[index].visited) {
+        return false;
+    }
+    *upstairs = levels[index].upStairsLoc;
+    *downstairs = levels[index].downStairsLoc;
+    return true;
+}
+
+int dungeonLevelStairSeparation(int depth) {
+    pos upstairs, downstairs;
+    if (!dungeonLevelStairLocations(depth, &upstairs, &downstairs)) {
+        return -1;
+    }
+    int dx = abs(upstairs.x - downstairs.x);
+    int dy = abs(upstairs.y - downstairs.y);
+    return dx > dy ? dx : dy;
 }
 
 short terrainAt(pos loc) {
@@ -810,9 +1027,26 @@ short gasTypeAt(pos loc) {
     return pmapAt(loc)->layers[GAS];
 }
 
+short quickDissipatingGasType(void) {
+    return CONFUSION_GAS;
+}
+
+short slowDissipatingGasType(void) {
+    return POISON_GAS;
+}
+
+short nonDissipatingGasType(void) {
+    return METHANE_GAS;
+}
+
 // See the declaration in TestFramework.h.
 void runEnvironmentUpdate(void) {
     updateEnvironment();
+}
+
+// See the declaration in TestFramework.h.
+void runGasUpdatePass(void) {
+    updateVolumetricMediaForTesting();
 }
 
 boolean cellIsOnFire(pos loc) {
@@ -868,6 +1102,27 @@ static const char *colorRoleName(const color *theColor) {
     }
     if (theColor == monsterCatalog[MK_WILL_O_THE_WISP].foreColor) {
         return "wisp blue";
+    }
+    if (theColor == &pinkJellyColor) {
+        return "pink";
+    }
+    if (theColor == &wormColor) {
+        return "tan";
+    }
+    if (theColor == &sentinelColor) {
+        return "dark blue";
+    }
+    if (theColor == &goblinMysticColor) {
+        return "blue";
+    }
+    if (theColor == &ifritColor) {
+        return "purple";
+    }
+    if (theColor == &phoenixColor) {
+        return "red";
+    }
+    if (theColor == lightCatalog[SPECTRAL_IMAGE_LIGHT].lightColor) {
+        return "spectral image pink-red";
     }
     return "other";
 }
@@ -952,8 +1207,20 @@ void woundPlayer(int amount) {
     inflictDamage(NULL, &player, amount, NULL, true);
 }
 
+int damageAfterArmorRuneForThrownWeapon(creature *thrower, int incomingDamage) {
+    char runicMessage[DCOLS];
+    short damage = (short) incomingDamage;
+    applyArmorRunicEffect(runicMessage, thrower, &damage, false);
+    return damage;
+}
+
 void enterEasyMode(void) {
     rogue.mode = GAME_MODE_EASY;
+}
+
+void enableEasyModeThroughCommand(void) {
+    queueConfirmYes();
+    injectKeystroke('&', false, false);
 }
 
 // ---------------------------------------------
@@ -1050,6 +1317,223 @@ void showTitleScreen(void) {
     clearInputQueue();
 }
 
+// ---------------------------------------------
+// Title-screen animation
+// ---------------------------------------------
+
+// While these helpers drive the menu, the game's window activity is whatever
+// the helper says it is; everywhere else the window is active.
+static int titleScreenActivityPhase;
+
+boolean testApplicationActive(void) {
+    return titleScreenActivityPhase != 1;
+}
+
+static boolean titleScreenFramesEqual(const screenDisplayBuffer *a,
+                                      const screenDisplayBuffer *b) {
+    for (int x = 0; x < COLS; x++) {
+        for (int y = 0; y < ROWS; y++) {
+            if (a->cells[x][y].character != b->cells[x][y].character) {
+                return false;
+            }
+            for (int c = 0; c < 3; c++) {
+                if (a->cells[x][y].foreColorComponents[c] != b->cells[x][y].foreColorComponents[c]
+                    || a->cells[x][y].backColorComponents[c] != b->cells[x][y].backColorComponents[c]) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+// The title menu waits for input only inside pauseForMilliseconds.  This lets
+// an active pass take one queued key and an inactive pass simply leave the
+// display alone, while recording the frames the menu draws.
+enum titleScreenRunMode {
+    TITLE_SCREEN_IDLE = 0,
+    TITLE_SCREEN_ACTIVE_PASSES,
+    TITLE_SCREEN_INACTIVE_PASSES
+};
+
+static int titleScreenRunMode;
+static int titleScreenFramesSeen;
+static int titleScreenPassesWanted;
+static boolean titleScreenEveryActivePassChanged;
+static screenDisplayBuffer titleScreenPreviousFrame;
+static boolean titleScreenPreviousFrameValid;
+
+static int titleScreenInactivePassesSeen;
+static screenDisplayBuffer titleScreenBeforeInactive;
+static screenDisplayBuffer titleScreenAfterInactive;
+static boolean titleScreenInactiveFrameCaptured;
+
+static void quitTitleScreenFromHook(void) {
+    rogue.nextGame = NG_QUIT;
+}
+
+static boolean titleScreenPauseHook(short milliseconds, PauseBehavior behavior) {
+    if (titleScreenRunMode == TITLE_SCREEN_ACTIVE_PASSES) {
+        if (titleScreenPreviousFrameValid
+            && titleScreenFramesEqual(&titleScreenPreviousFrame, &displayBuffer)) {
+            titleScreenEveryActivePassChanged = false;
+        }
+        titleScreenPreviousFrame = displayBuffer;
+        titleScreenPreviousFrameValid = true;
+        titleScreenFramesSeen++;
+
+        if (titleScreenFramesSeen >= titleScreenPassesWanted) {
+            // Enough passes have drawn; leave the menu without selecting a
+            // button, so no button-press pause can be mistaken for a pass.
+            quitTitleScreenFromHook();
+            return false;
+        }
+        return true; // let the menu take the harmless key queued for this pass
+    }
+    if (titleScreenRunMode == TITLE_SCREEN_INACTIVE_PASSES) {
+        if (titleScreenActivityPhase == 0) {
+            // The first pass is active.  Remember the frame it drew, then
+            // report the window inactive for the following passes.
+            titleScreenBeforeInactive = displayBuffer;
+            titleScreenActivityPhase = 1;
+            titleScreenInactivePassesSeen = 0;
+            return true;
+        }
+        if (titleScreenActivityPhase == 1) {
+            titleScreenInactivePassesSeen++;
+            if (titleScreenInactivePassesSeen >= titleScreenPassesWanted) {
+                titleScreenAfterInactive = displayBuffer;
+                titleScreenInactiveFrameCaptured = true;
+                quitTitleScreenFromHook();
+                return false;
+            }
+            return false;
+        }
+    }
+    return true;
+}
+
+static void beginTitleScreenRun(enum titleScreenRunMode mode, int passesWanted) {
+    titleScreenRunMode = mode;
+    titleScreenActivityPhase = 0;
+    titleScreenFramesSeen = 0;
+    titleScreenPassesWanted = passesWanted;
+    titleScreenEveryActivePassChanged = true;
+    titleScreenPreviousFrameValid = false;
+    titleScreenInactivePassesSeen = 0;
+    titleScreenInactiveFrameCaptured = false;
+
+    rogue.nextGame = NG_NOTHING; // a prior menu run leaves NG_QUIT behind
+    currentConsole.pauseForMilliseconds = titleScreenPauseHook;
+}
+
+static void endTitleScreenRun(boolean (*savedPause)(short, PauseBehavior)) {
+    currentConsole.pauseForMilliseconds = savedPause;
+    titleScreenRunMode = TITLE_SCREEN_IDLE;
+    titleScreenActivityPhase = 0;
+    clearInputQueue();
+}
+
+// See the declaration in TestFramework.h.
+boolean titleScreenRedrawsOnEveryActivePass(int passes) {
+    if (passes < 2) {
+        return false;
+    }
+    boolean (*savedPause)(short, PauseBehavior) = currentConsole.pauseForMilliseconds;
+    beginTitleScreenRun(TITLE_SCREEN_ACTIVE_PASSES, passes);
+
+    // A harmless key ends each pass except the last, which the pause hook
+    // ends from inside the loop so no button-press pause is counted.
+    for (int i = 1; i < passes; i++) {
+        queueKeystroke('z', false, false);
+    }
+    mainBrogueJunction();
+
+    boolean redrewEveryPass = titleScreenEveryActivePassChanged
+                              && titleScreenFramesSeen == passes;
+    endTitleScreenRun(savedPause);
+    return redrewEveryPass;
+}
+
+// See the declaration in TestFramework.h.
+boolean titleScreenLeavesDisplayAloneWhileApplicationInactive(int inactivePasses) {
+    if (inactivePasses < 1) {
+        return false;
+    }
+    boolean (*savedPause)(short, PauseBehavior) = currentConsole.pauseForMilliseconds;
+    beginTitleScreenRun(TITLE_SCREEN_INACTIVE_PASSES, inactivePasses);
+
+    queueKeystroke('z', false, false); // ends the first (active) pass
+    mainBrogueJunction();
+
+    boolean titleWasDrawn = screenTextContains("New Game");
+    boolean frameHeld = titleScreenInactiveFrameCaptured
+                        && titleScreenFramesEqual(&titleScreenBeforeInactive,
+                                                  &titleScreenAfterInactive);
+    endTitleScreenRun(savedPause);
+    return titleWasDrawn && frameHeld;
+}
+
+// See the declaration in TestFramework.h.
+void showViewFlyout(void) {
+    boolean (*savedPause)(short, PauseBehavior) = currentConsole.pauseForMilliseconds;
+    currentConsole.pauseForMilliseconds = menuPauseSeesQueuedInput;
+
+    // Open the View flyout and quit from it.  The flyout is drawn before the
+    // menu waits for the key that quits it, so hold that frame.
+    screenSnapshotHoldText = "View Recording";
+    rogue.nextGame = NG_NOTHING; // a prior dialog run leaves NG_QUIT behind
+    queueKeystroke('v', false, false);
+    queueKeystroke('q', false, false);
+    mainBrogueJunction();
+
+    screenSnapshotHoldText = NULL;
+    currentConsole.pauseForMilliseconds = savedPause;
+    clearInputQueue();
+}
+
+// See the declaration in TestFramework.h.
+void showViewRecordingPicker(void) {
+    char path[BROGUE_FILENAME_MAX];
+
+    if (rogue.playbackMode) {
+        testFail("setup: cannot record while already in playback");
+        return;
+    }
+    // dialogChooseFile() only draws its prompt when a matching file exists.
+    if (!rogue.recording) {
+        snprintf(currentFilePath, BROGUE_FILENAME_MAX, "test-view-flyout%s", RECORDING_SUFFIX);
+        initRecording();
+        restOneTurn();
+        restOneTurn();
+    }
+    flushBufferToFile();
+    path[0] = '\0';
+    saveRecordingNoPrompt(path);
+    if (path[0] == '\0' || !fileExists(path)) {
+        testFail("setup: the picker recording could not be saved");
+        return;
+    }
+
+    boolean (*savedPause)(short, PauseBehavior) = currentConsole.pauseForMilliseconds;
+    currentConsole.pauseForMilliseconds = menuPauseSeesQueuedInput;
+
+    // Open the View flyout, take View Recording with its R hotkey, cancel the
+    // picker, then quit the title screen that follows.
+    screenSnapshotHoldText = "View recording:";
+    rogue.nextGame = NG_NOTHING; // a prior dialog run leaves NG_QUIT behind
+    queueKeystroke('v', false, false);
+    queueKeystroke('r', false, false);
+    queueKeystroke(ESCAPE_KEY, false, false);
+    queueKeystroke('q', false, false);
+    mainBrogueJunction();
+
+    screenSnapshotHoldText = NULL;
+    currentConsole.pauseForMilliseconds = savedPause;
+    clearInputQueue();
+    remove(path);
+}
+
 // See the declaration in TestFramework.h.
 void showGameStatsScreen(void) {
     boolean (*savedPause)(short, PauseBehavior) = currentConsole.pauseForMilliseconds;
@@ -1070,6 +1554,58 @@ void showGameStatsScreen(void) {
     screenSnapshotHoldText = NULL;
     currentConsole.pauseForMilliseconds = savedPause;
     clearInputQueue();
+}
+
+// The name the platform gives the current variant's run-history file: the
+// variant name with its first letter capitalized, followed by the suffix.
+static void testRunHistoryPath(char *buffer, int bufferMaxLength) {
+    snprintf(buffer, bufferMaxLength, "%sRunHistory.txt", gameConst->variantName);
+    if (buffer[0] >= 'a' && buffer[0] <= 'z') {
+        buffer[0] = (char) (buffer[0] - 'a' + 'A');
+    }
+}
+
+// See the declaration in TestFramework.h.
+void showGameStatsScreenWithRecentData(boolean recentData) {
+    char historyPath[BROGUE_FILENAME_MAX];
+    char backupPath[BROGUE_FILENAME_MAX + 16];
+    testRunHistoryPath(historyPath, sizeof(historyPath));
+    snprintf(backupPath, sizeof(backupPath), "%s.test-backup", historyPath);
+
+    // Move the player's history aside so the stats screen sees only the
+    // situation this test asked for, and restore it again below.
+    const boolean hadHistory = fileExists(historyPath);
+    remove(backupPath);
+    if (hadHistory && rename(historyPath, backupPath) != 0) {
+        testFail("setup: could not set the run history aside");
+        return;
+    }
+
+    FILE *history = fopen(historyPath, "w");
+    if (history == NULL) {
+        testFail("setup: could not prepare the run history");
+        if (hadHistory) {
+            rename(backupPath, historyPath);
+        }
+        return;
+    }
+    if (recentData) {
+        // One completed run with a nonzero seed: the stats screen counts it
+        // as recent data and therefore offers its Reset button.
+        fprintf(history, "%llu\t%li\t%s\t%s\t%i\t%i\t%i\t%i\t%i\n",
+                (unsigned long long) 424242, (long) 0, "Died", "-",
+                1234, 0, 0, 1, 1);
+    }
+    fclose(history);
+
+    showGameStatsScreen();
+
+    remove(historyPath);
+    if (hadHistory) {
+        if (rename(backupPath, historyPath) != 0) {
+            testFail("cleanup: could not restore the run history");
+        }
+    }
 }
 
 // See the declaration in TestFramework.h.
@@ -1234,6 +1770,49 @@ void paintMenuButton(const char *label) {
     drawButton(&button, BUTTON_NORMAL, &dbuf);
 }
 
+// Paint a single menu button with the pointer in `pointer` state and read one
+// colour from the middle of the painted cells.  The button is put through the
+// engine's own menu-state painting path, so the state it reaches when the
+// pointer is held down is produced by the engine's input handling rather than
+// guessed here.
+static int paintedMenuButtonBrightness(enum menuButtonPointerState pointer, boolean label) {
+    brogueButton button;
+    buttonState state;
+    screenDisplayBuffer dbuf;
+
+    initializeButton(&button);
+    snprintf(button.text, BUTTON_TEXT_SIZE, "%s", "Button");
+    button.x = 0;
+    button.y = 0;
+    initializeButtonState(&state, &button, 1, 0, 0, COLS, 1);
+
+    if (pointer != MENU_BUTTON_POINTER_AWAY) {
+        rogueEvent event = {0};
+        event.eventType = (pointer == MENU_BUTTON_POINTER_HELD) ? MOUSE_DOWN : MOUSE_ENTERED_CELL;
+        event.param1 = button.x + 1;
+        event.param2 = button.y;
+        processButtonInput(&state, NULL, &event);
+    }
+
+    clearDisplayBuffer(&dbuf);
+    drawButtonsInState(&state, &dbuf);
+
+    const int middle = strLenWithoutEscapes(button.text) / 2;
+    const cellDisplayBuffer *cell = &dbuf.cells[button.x + middle][button.y];
+    const char *components = label ? cell->foreColorComponents : cell->backColorComponents;
+    return components[0] + components[1] + components[2];
+}
+
+// See the declaration in TestFramework.h.
+int menuButtonBackgroundBrightness(enum menuButtonPointerState pointer) {
+    return paintedMenuButtonBrightness(pointer, false);
+}
+
+// See the declaration in TestFramework.h.
+int menuButtonLabelBrightness(enum menuButtonPointerState pointer) {
+    return paintedMenuButtonBrightness(pointer, true);
+}
+
 // See the declaration in TestFramework.h.
 unsigned long gameplayRandomDraws(void) {
     return randomNumbersGenerated;
@@ -1278,6 +1857,38 @@ void enterWizardMode(void) {
 
 void enterPlaybackMode(void) {
     rogue.playbackMode = true;
+}
+
+// See the declaration in TestFramework.h.
+void beginTestRecording(void) {
+    if (rogue.playbackMode) {
+        testFail("setup: cannot begin a recording while already in playback");
+        return;
+    }
+    snprintf(currentFilePath, BROGUE_FILENAME_MAX, "test-recording%s", RECORDING_SUFFIX);
+    initRecording();
+    restOneTurn();
+}
+
+// See the declaration in TestFramework.h.
+boolean saveRecordingWithoutPromptWritesFile(void) {
+    char path[BROGUE_FILENAME_MAX];
+
+    flushBufferToFile();
+    path[0] = '\0';
+    saveRecordingNoPrompt(path);
+
+    boolean wroteFile = path[0] != '\0' && fileExists(path);
+    if (wroteFile) {
+        remove(path);
+    } else if (rogue.recording) {
+        // The save was refused (playback), so the game still owns its
+        // in-progress recording file.  Discard it rather than leave a file
+        // behind for the next test or the player.
+        remove(currentFilePath);
+        rogue.recording = false;
+    }
+    return wroteFile;
 }
 
 // See the declaration in TestFramework.h.  A replayed player turn runs the
@@ -1347,6 +1958,7 @@ void startPlaybackWithRecordedChecks(unsigned int turns) {
     // Room beyond `turns` so an over-large advance is not clamped down to
     // the expected answer by the recording's length.
     rogue.howManyTurns = rogue.playerTurnNumber + 2 * turns;
+    rogue.playbackPaused = false; // a freshly opened recording plays
     rogue.playbackMode = true;
 }
 
@@ -1354,8 +1966,18 @@ boolean isInPlaybackMode(void) {
     return rogue.playbackMode;
 }
 
+boolean playbackIsPaused(void) {
+    return rogue.playbackPaused;
+}
+
 boolean playbackIsOutOfSync(void) {
     return rogue.playbackOOS;
+}
+
+void setPlaybackDeepestDepthExplored(int depth) {
+    // Recordings store the run's deepest depth in maxLevelChanges, and the
+    // playback input handler compares it against the depth being replayed.
+    maxLevelChanges = (unsigned long) max(1, depth);
 }
 
 // See the declaration in TestFramework.h.  A test game has no recording of
@@ -1586,6 +2208,10 @@ int playerArmorValue(void) {
     return rogue.armor ? rogue.armor->armor : 0;
 }
 
+int playerStealthRange(void) {
+    return currentStealthRange();
+}
+
 void weakenPlayer(int duration) {
     weaken(&player, duration);
 }
@@ -1608,6 +2234,10 @@ void healPlayerPanacea(void) {
 
 void applyTileEffectsToPlayer(void) {
     applyInstantTileEffectsToCreature(&player);
+}
+
+void exposePlayerToFire(void) {
+    exposeCreatureToFire(&player);
 }
 
 void wearArmor(short kind) {
@@ -1650,7 +2280,7 @@ creature *spawnMonster(enum monsterTypes type, pos loc) {
 }
 
 // See the declaration in TestFramework.h.
-creature *spawnAlliedHordeWithFollowers(pos loc, int followers, int *membersSpawned) {
+creature *spawnHordeWithFollowers(pos loc, int followers, boolean allied, int *membersSpawned) {
     const hordeType *savedCatalog = hordeCatalog;
     const int hordeCount = gameConst->numberHordes;
     hordeType *catalog = malloc((hordeCount + 1) * sizeof(hordeType));
@@ -1660,16 +2290,16 @@ creature *spawnAlliedHordeWithFollowers(pos loc, int followers, int *membersSpaw
     }
     memcpy(catalog, hordeCatalog, hordeCount * sizeof(hordeType));
 
-    hordeType *alliedHorde = &catalog[hordeCount];
-    memset(alliedHorde, 0, sizeof(*alliedHorde));
-    alliedHorde->leaderType = MK_RAT;
-    alliedHorde->numberOfMemberTypes = 1;
-    alliedHorde->memberType[0] = MK_RAT;
-    alliedHorde->memberCount[0] = (randomRange){ followers, followers, 1 };
-    alliedHorde->minLevel = 1;
-    alliedHorde->maxLevel = gameConst->deepestLevel;
-    alliedHorde->frequency = 100;
-    alliedHorde->flags = HORDE_ALLIED_WITH_PLAYER;
+    hordeType *horde = &catalog[hordeCount];
+    memset(horde, 0, sizeof(*horde));
+    horde->leaderType = MK_RAT;
+    horde->numberOfMemberTypes = 1;
+    horde->memberType[0] = MK_RAT;
+    horde->memberCount[0] = (randomRange){ followers, followers, 1 };
+    horde->minLevel = 1;
+    horde->maxLevel = gameConst->deepestLevel;
+    horde->frequency = 100;
+    horde->flags = allied ? HORDE_ALLIED_WITH_PLAYER : 0;
 
     hordeCatalog = catalog;
     const int before = monsterCount();
@@ -1681,6 +2311,10 @@ creature *spawnAlliedHordeWithFollowers(pos loc, int followers, int *membersSpaw
         *membersSpawned = monsterCount() - before - (leader != NULL ? 1 : 0);
     }
     return leader;
+}
+
+creature *spawnAlliedHordeWithFollowers(pos loc, int followers, int *membersSpawned) {
+    return spawnHordeWithFollowers(loc, followers, true, membersSpawned);
 }
 
 creature *findMonster(enum monsterTypes type) {
@@ -1846,6 +2480,33 @@ int monsterDepth(const creature *monst) {
     return monst->depth;
 }
 
+void clearMonstersOnPreviousLevel(void) {
+    if (rogue.depthLevel < 2) {
+        return;
+    }
+    freeCreatureList(&levels[rogue.depthLevel - 2].monsters);
+}
+
+void waitOnPreviousLevelToEnter(creature *monst, int updates) {
+    if (monst == NULL || rogue.depthLevel < 2) {
+        return;
+    }
+    const short previousLevel = rogue.depthLevel - 2;
+    if (!levels[previousLevel].visited) {
+        return;
+    }
+
+    removeCreature(monsters, monst);
+    pmapAt(monst->loc)->flags &= ~HAS_MONSTER;
+    refreshDungeonCell(monst->loc);
+
+    monst->loc = levels[previousLevel].downStairsLoc;
+    monst->depth = rogue.depthLevel - 1;
+    monst->status[STATUS_ENTERS_LEVEL_IN] = max(1, updates);
+    monst->bookkeepingFlags |= MB_APPROACHING_DOWNSTAIRS;
+    prependCreature(&levels[previousLevel].monsters, monst);
+}
+
 int monsterHealth(const creature *monst) {
     return monst->currentHP;
 }
@@ -1911,6 +2572,14 @@ void makeMonsterFollow(creature *follower, creature *leader) {
         follower->bookkeepingFlags |= MB_FOLLOWER;
         follower->leader = leader;
     }
+}
+
+boolean monsterFollows(const creature *follower, const creature *leader) {
+    return follower != NULL
+        && leader != NULL
+        && follower != leader
+        && (follower->bookkeepingFlags & MB_FOLLOWER)
+        && follower->leader == leader;
 }
 
 int monsterStatusTurns(const creature *monst, enum statusEffects status) {
@@ -2009,6 +2678,11 @@ int monsterBaseAttackSpeed(const creature *monst) {
     return monst->info.attackSpeed;
 }
 
+void setMonsterAccuracy(creature *monst, int accuracy) {
+    if (monst == NULL) return;
+    monst->info.accuracy = (short) accuracy;
+}
+
 boolean monsterIsLarge(const creature *monst) {
     if (monst == NULL) return false;
     return monst->info.isLarge;
@@ -2019,6 +2693,13 @@ boolean monsterRegenerates(const creature *monst) {
     return monst->info.turnsBetweenRegen > 0;
 }
 
+const char *monsterGenderName(const creature *monst) {
+    if (monst == NULL || !(monst->info.flags & (MONST_MALE | MONST_FEMALE))) {
+        return "neuter";
+    }
+    return (monst->info.flags & MONST_MALE) ? "male" : "female";
+}
+
 int monsterTrailChance(const creature *monst) {
     if (monst == NULL) return 0;
     return monst->info.DFChance;
@@ -2027,6 +2708,11 @@ int monsterTrailChance(const creature *monst) {
 boolean monsterLeavesUrineTrail(const creature *monst) {
     if (monst == NULL) return false;
     return monst->info.DFType == DF_URINE;
+}
+
+boolean monsterLeavesEctoplasmDroplet(const creature *monst) {
+    if (monst == NULL) return false;
+    return monst->info.DFType == DF_ECTOPLASM_DROPLET;
 }
 
 const char *monsterDrawColorName(const creature *monst) {
@@ -2046,6 +2732,44 @@ const char *monsterGlowLightColorName(const creature *monst) {
         return "other";
     }
     return colorRoleName(lightCatalog[glowLight].lightColor);
+}
+
+// The light table keeps radii in hundredths of a tile: 350 is 3.5 tiles.
+double monsterGlowLightRadius(const creature *monst) {
+    if (monst == NULL) return 0.0;
+    const short glowLight = monst->info.intrinsicLightType;
+    if (glowLight <= 0 || glowLight >= NUMBER_LIGHT_KINDS) {
+        return 0.0;
+    }
+    return lightCatalog[glowLight].lightRadius.lowerBound / 100.0;
+}
+
+boolean monsterGlowLightFlickers(const creature *monst) {
+    if (monst == NULL) return false;
+    const short glowLight = monst->info.intrinsicLightType;
+    if (glowLight <= 0 || glowLight >= NUMBER_LIGHT_KINDS) {
+        return false;
+    }
+    const lightSource *light = &lightCatalog[glowLight];
+    const color *lightColor = light->lightColor;
+    // paintLight() re-rolls each random component on every refresh, and
+    // randClump() picks a fresh radius when the range is not a single value.
+    return lightColor->redRand != 0 || lightColor->greenRand != 0
+        || lightColor->blueRand != 0 || lightColor->rand != 0
+        || light->lightRadius.lowerBound != light->lightRadius.upperBound;
+}
+
+void monsterGlowLightColorComponents(const creature *monst, int *red, int *green, int *blue) {
+    *red = *green = *blue = 0;
+    if (monst == NULL) return;
+    const short glowLight = monst->info.intrinsicLightType;
+    if (glowLight <= 0 || glowLight >= NUMBER_LIGHT_KINDS) {
+        return;
+    }
+    const color *lightColor = lightCatalog[glowLight].lightColor;
+    *red = lightColor->red;
+    *green = lightColor->green;
+    *blue = lightColor->blue;
 }
 
 void weakenMonster(creature *monst, int duration) {
@@ -2080,6 +2804,16 @@ void setMonsterSubmerged(creature *monst, boolean submerged) {
         monst->bookkeepingFlags |= MB_SUBMERGED;
     } else {
         monst->bookkeepingFlags &= ~MB_SUBMERGED;
+    }
+}
+
+boolean monsterIsSubmerged(const creature *monst) {
+    return monst != NULL && (monst->bookkeepingFlags & MB_SUBMERGED) != 0;
+}
+
+void exposeMonsterToFire(creature *monst) {
+    if (monst != NULL) {
+        exposeCreatureToFire(monst);
     }
 }
 
@@ -2268,6 +3002,21 @@ item *givePlayerItem(short category, short kind, short enchant) {
     return addItemToPack(theItem);
 }
 
+// See the declaration in TestFramework.h.
+item *givePlayerUnidentifiedItem(short category, short kind, short enchant) {
+    item *theItem = generateItem(category, kind);
+    if (enchant) theItem->enchant1 = enchant;
+    theItem->flags &= ~ITEM_IDENTIFIED;
+    return addItemToPack(theItem);
+}
+
+// See the declaration in TestFramework.h.
+void markItemMaxChargesKnown(item *theItem) {
+    if (theItem != NULL) {
+        theItem->flags |= ITEM_MAX_CHARGES_KNOWN;
+    }
+}
+
 item *placeItemOnFloor(short category, short kind, pos loc) {
     item *theItem = generateItem(category, kind);
     return placeItemAt(theItem, loc);
@@ -2348,6 +3097,15 @@ void drink(enum potionKind kind) {
 void readScrollOfKind(short kind) {
     item *scroll = givePlayerItem(SCROLL, kind, 0);
     apply(scroll);
+}
+
+// See the declaration in TestFramework.h.
+void readScrollOfKindWithoutEndingTurn(short kind) {
+    item *scroll = givePlayerItem(SCROLL, kind, 0);
+    if (scroll != NULL) {
+        readScroll(scroll);
+        removePackItems(SCROLL, kind);
+    }
 }
 
 void applyPackItem(short category, short kind) {
@@ -2545,6 +3303,22 @@ item *givePlayerPlainWeapon(short kind, int enchant) {
     return theItem;
 }
 
+item *givePlayerPlainArmor(short kind, int enchant) {
+    item *theItem = generateItem(ARMOR, kind);
+    theItem->enchant1 = enchant;
+    theItem->enchant2 = 0;
+    theItem->flags &= ~(ITEM_CURSED | ITEM_RUNIC | ITEM_RUNIC_IDENTIFIED | ITEM_RUNIC_HINTED);
+    identify(theItem);
+    addItemToPack(theItem);
+    return theItem;
+}
+
+void makeItemUnidentified(item *theItem) {
+    if (theItem != NULL) {
+        theItem->flags &= ~(ITEM_IDENTIFIED | ITEM_RUNIC_IDENTIFIED | ITEM_RUNIC_HINTED);
+    }
+}
+
 item *givePlayerRunicWeapon(short kind, short runicKind, short enchant, boolean revealIdentity) {
     item *theItem = generateItem(WEAPON, kind);
     theItem->enchant1 = enchant;
@@ -2635,6 +3409,34 @@ boolean playerIsCarryingAmulet(void) {
 
 int deepestDepth(void) {
     return rogue.deepestLevel;
+}
+
+int dungeonDeepestLevel(void) {
+    return gameConst->deepestLevel;
+}
+
+// See the declaration in TestFramework.h.
+boolean floorTileSurvivesGeneration(boolean survivalRuleApplies) {
+    static const short centreX = DCOLS / 2, centreY = DROWS / 2;
+    char birth[10] = "fffffffff"; // no empty tile is born in this generation
+    char survival[10] = "ffffftttf"; // a floor tile with eight live neighbours dies
+    if (survivalRuleApplies) {
+        survival[8] = 't'; // ... unless the survival rule keeps it
+    }
+
+    short **grid = allocGrid();
+    fillGrid(grid, 0);
+    // A solid 3x3 block: the centre tile has all eight neighbours live.
+    for (int dx = -1; dx <= 1; dx++) {
+        for (int dy = -1; dy <= 1; dy++) {
+            grid[centreX + dx][centreY + dy] = 1;
+        }
+    }
+
+    cellularAutomataRoundForTesting(grid, birth, survival);
+    const boolean survived = grid[centreX][centreY] != 0;
+    freeGrid(grid);
+    return survived;
 }
 
 int totalGoldGenerated(void) {
@@ -2845,7 +3647,29 @@ static boolean chooseChamberShape(int area, int *width, int *height) {
     return false;
 }
 
-boolean buildRoomVaultAtChamber(int roomCells) {
+static boolean buildRoomVaultWithBlueprint(short blueprintType) {
+    // Build the vault through the engine's own location chooser, so the
+    // doorway's blocked-off region is rated and range-checked as usual.  Its
+    // features are removed so the outcome depends only on doorway selection
+    // and interior growth.
+    blueprint *tweakedBlueprints = malloc(gameConst->numberBlueprints * sizeof(blueprint));
+    if (tweakedBlueprints == NULL) {
+        testFail("could not allocate the tweaked blueprint table");
+        return false;
+    }
+    memcpy(tweakedBlueprints, blueprintCatalog, gameConst->numberBlueprints * sizeof(blueprint));
+    tweakedBlueprints[blueprintType].featureCount = 0;
+
+    const blueprint *originalBlueprints = blueprintCatalog;
+    blueprintCatalog = tweakedBlueprints;
+    boolean built = buildAMachine(blueprintType, -1, -1, 0, NULL, NULL, NULL);
+    blueprintCatalog = originalBlueprints;
+    free(tweakedBlueprints);
+
+    return built;
+}
+
+static boolean buildRoomVaultAtChamberWithBlueprint(int roomCells, short blueprintType) {
     int width = 0, height = 0;
 
     memset(chamberFloorTiles, 0, sizeof(chamberFloorTiles));
@@ -2889,25 +3713,47 @@ boolean buildRoomVaultAtChamber(int roomCells) {
 
     setPlayerPos(posAt(1, 1));
 
-    // Build the vault through the engine's own location chooser, so the
-    // doorway's blocked-off region is rated and range-checked as usual.  Its
-    // features are removed so the outcome depends only on doorway selection
-    // and interior growth.
-    blueprint *tweakedBlueprints = malloc(gameConst->numberBlueprints * sizeof(blueprint));
-    if (tweakedBlueprints == NULL) {
-        testFail("could not allocate the tweaked blueprint table");
-        return false;
+    return buildRoomVaultWithBlueprint(blueprintType);
+}
+
+boolean buildRoomVaultAtChamber(int roomCells) {
+    return buildRoomVaultAtChamberWithBlueprint(roomCells, TEST_ROOM_VAULT_BLUEPRINT);
+}
+
+boolean buildRoomVaultOnCurrentLevel(void) {
+    return buildRoomVaultWithBlueprint(TEST_ROOM_VAULT_BLUEPRINT);
+}
+
+unsigned long levelTerrainFingerprint(void) {
+    // FNV-1a over every terrain layer, enough to notice any terrain change
+    // without including the transient flags analyzeMap recomputes.
+    unsigned long hash = 14695981039346656037UL;
+    for (int x = 0; x < DCOLS; x++) {
+        for (int y = 0; y < DROWS; y++) {
+            for (int layer = 0; layer < NUMBER_TERRAIN_LAYERS; layer++) {
+                hash ^= (unsigned long) pmap[x][y].layers[layer];
+                hash *= 1099511628211UL;
+            }
+        }
     }
-    memcpy(tweakedBlueprints, blueprintCatalog, gameConst->numberBlueprints * sizeof(blueprint));
-    tweakedBlueprints[TEST_ROOM_VAULT_BLUEPRINT].featureCount = 0;
+    return hash;
+}
 
-    const blueprint *originalBlueprints = blueprintCatalog;
-    blueprintCatalog = tweakedBlueprints;
-    boolean built = buildAMachine(TEST_ROOM_VAULT_BLUEPRINT, -1, -1, 0, NULL, NULL, NULL);
-    blueprintCatalog = originalBlueprints;
-    free(tweakedBlueprints);
+// A vault that redesigns its interior from scratch, so its build runs the
+// loop-adding pass with the vault-interior threshold.
+#define TEST_REDESIGNED_VAULT_BLUEPRINT MT_REWARD_GOBLIN_WARREN
 
-    return built;
+int redesignedVaultRoomSizeMin(void) {
+    return blueprintCatalog[TEST_REDESIGNED_VAULT_BLUEPRINT].roomSize[0];
+}
+
+int redesignedVaultRoomSizeMax(void) {
+    return blueprintCatalog[TEST_REDESIGNED_VAULT_BLUEPRINT].roomSize[1];
+}
+
+boolean buildRedesignedRoomVaultAtChamber(int roomCells) {
+    resetVaultInteriorLoopRecord();
+    return buildRoomVaultAtChamberWithBlueprint(roomCells, TEST_REDESIGNED_VAULT_BLUEPRINT);
 }
 
 // The engine's open-area vault (the amulet holder's statuary area).  It is

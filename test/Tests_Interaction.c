@@ -8,16 +8,18 @@
 // the text of the dungeon-seed report, the color a message is shown in,
 // whether Return turns on the
 // keyboard cursor, the examine prompt shown while examining the map during
-// playback, and — by queueing keystrokes through the engine's main input
-// loop — what confirming the cursor on the player's own location does.
+// the alert for asking to descend past the deepest depth a
+// recording explored, how a click outside the message area pauses playback,
+// and — by queueing input through the engine's main
+// input loop — what confirming the cursor on the player's own location does.
 //
 // Omitted are all of the above screen-driven rules (aside from the keyboard
 // cursor's on/off state, the sidebar's poison labels and health bars, the
 // section list of the discovered-items screen, the no-matching-files alert of
 // the file picker, and confirming the cursor on the player's own location)
-// plus saving, loading, the rest of playback (advancing with control aside,
-// and its bottom-row buttons), the rest of filename handling, and the main
-// menu apart from its Change Variant dialog.
+// plus saving, loading, the rest of playback (advancing with control or shift
+// aside, its bottom-row buttons, and its remaining mouse commands), the rest of
+// filename handling, and the main menu apart from its Change Variant dialog.
 
 #include "TestFramework.h"
 #include "Globals.h"
@@ -128,6 +130,40 @@ static void autopilot_setup(void) {
 static boolean autopilot_skips_confirmation(void) {
     TEST_ASSERT(autopilotWasYes,
                 "a confirmation on autopilot should be treated as Yes");
+    return !testFailed;
+}
+
+// ============================================================
+// BR12747 — a risky or irreversible command pops up a small
+// two-button confirmation box.
+//
+// The framework's confirmation helper runs the game's own
+// confirmation.  The frame captured while that box waits for
+// input is the one the screen-text reader sees afterwards, so
+// the box's two buttons can be located after the answer is
+// consumed.  Both labels must sit on the same line of that
+// frame; neither appears anywhere on the ordinary game screen,
+// so a box without buttons could not produce them.
+// ============================================================
+
+static boolean br12747_accepted, br12747_yesShown, br12747_noBesideYes;
+
+static void br12747_setup(void) {
+    queueConfirmYes();
+    br12747_accepted = askConfirmation();
+
+    const char *buttonLine = screenTextLineContaining("Yes");
+    br12747_yesShown = buttonLine[0] != '\0';
+    br12747_noBesideYes = br12747_yesShown && strstr(buttonLine, "No") != NULL;
+}
+
+static boolean br12747_confirmation_box_has_two_buttons(void) {
+    TEST_ASSERT(br12747_accepted,
+                "control: the confirmation should have accepted the queued Yes");
+    TEST_ASSERT(br12747_yesShown,
+                "the confirmation box should show a Yes button");
+    TEST_ASSERT(br12747_noBesideYes,
+                "the same confirmation box should show a No button beside Yes");
     return !testFailed;
 }
 
@@ -252,6 +288,38 @@ static boolean sidebar_omits_gold_when_penniless(void) {
                 "the sidebar should still show your armor value");
     TEST_ASSERT(!sidebarContains("Gold:"),
                 "with no gold to show, the sidebar should leave out the gold line");
+    return !testFailed;
+}
+
+// ============================================================
+// BR90270 — the player's own sidebar entry shows a health bar.
+//
+// The arena is cleared of monsters, so the only health bar in the sidebar can
+// belong to the player.  A rest records full health as the previous health
+// the bar compares against; the resulting label is the plain "Health" padded
+// to the bar's 20 columns.  Halving the player's health then makes the same
+// bar carry a percentage, so a bar that never appeared, or one that ignored
+// the player's health, cannot satisfy both readings.
+// ============================================================
+
+static boolean br90270_fullHealthBar;
+static boolean br90270_hurtHealthBar;
+
+static void br90270_setup(void) {
+    clearArena();
+    restOneTurn(); // the turn end records the player's health as full
+    br90270_fullHealthBar = sidebarContains("Health  ");
+    setPlayerHealth(playerMaxHealth() / 2);
+    br90270_hurtHealthBar = sidebarContains("Health (");
+}
+
+static boolean br90270_player_entry_has_health_bar(void) {
+    TEST_ASSERT(playerMaxHealth() > 1,
+                "precondition: the player's maximum health is above 1");
+    TEST_ASSERT(br90270_fullHealthBar,
+                "the player's own sidebar entry should show a health bar at full health");
+    TEST_ASSERT(br90270_hurtHealthBar,
+                "the player's own health bar should show the player's reduced health as a percentage");
     return !testFailed;
 }
 
@@ -674,6 +742,45 @@ static boolean control_advancing_moves_twenty_turns(void) {
 }
 
 // ============================================================
+// BR24285 — holding shift while advancing moves 5 turns
+// ============================================================
+
+static int turnsBeforeShiftAdvance;
+static int turnsAfterShiftAdvance;
+
+#define SHIFT_ADVANCE_ARMED_TURNS 12
+
+static void shift_advance_setup(void) {
+    clearArena(); // open floor for the steps the seek will replay
+    // The replayed steps must not land on a staircase.
+    placeDownStairs(posAt(1, 1));
+    placeUpStairs(posAt(levelWidth() - 2, levelHeight() - 2));
+    // The helper walks its own copy of the steps to record the recording's
+    // out-of-sync checks, so the turn count is read afterwards.
+    startPlaybackWithRecordedChecks(SHIFT_ADVANCE_ARMED_TURNS);
+    turnsBeforeShiftAdvance = playerTurnCount();
+}
+
+static boolean shift_advance_step(void) {
+    queueKeystroke(RIGHT_ARROW, true, false); // hold shift while advancing
+    // The same steps startPlaybackWithRecordedChecks() recorded: twelve
+    // single-turn steps, of which a correct advance consumes five; the
+    // leftovers are not playback controls, so they cannot advance further.
+    for (int i = 0; i < SHIFT_ADVANCE_ARMED_TURNS; i++) {
+        queueKeystroke((i % 2) ? DOWNLEFT_KEY : UPRIGHT_KEY, false, false);
+    }
+    runQueuedInputThroughMainLoop();
+    turnsAfterShiftAdvance = playerTurnCount();
+    return false;
+}
+
+static boolean shift_advancing_moves_five_turns(void) {
+    TEST_ASSERT_MSG(turnsAfterShiftAdvance - turnsBeforeShiftAdvance == 5,
+                    "holding shift while advancing should move exactly 5 turns");
+    return !testFailed;
+}
+
+// ============================================================
 // BR97169 — the Change Variant dialog describes and lets the player pick
 // Rapid Brogue, (classic) Brogue, or Bullet Brogue; canceling leaves the
 // choice unchanged
@@ -908,6 +1015,55 @@ static boolean br77643_verify(void) {
 }
 
 // ============================================================
+// BR82810 — The View flyout contains View Recording (R),
+// High Scores (H), and Game Stats (G).
+//
+// showViewFlyout() opens the real View flyout and holds the frame
+// in which it was drawn.  All three View entries must appear, and
+// the Play flyout's entries must not, so the captured frame is the
+// View flyout rather than the other one.
+// ============================================================
+
+static void br82810_setup(void) {
+    showViewFlyout();
+}
+
+static boolean br82810_view_flyout_lists_recording_scores_stats(void) {
+    TEST_ASSERT(screenTextContains("View Recording"),
+                "the View flyout should offer View Recording");
+    TEST_ASSERT(screenTextContains("High Scores"),
+                "the View flyout should offer High Scores");
+    TEST_ASSERT(screenTextContains("Game Stats"),
+                "the View flyout should offer Game Stats");
+    TEST_ASSERT(!screenTextContains("New Seeded Game"),
+                "the View flyout should not show the Play flyout's New Seeded Game");
+    TEST_ASSERT(!screenTextContains("Change Mode"),
+                "the View flyout should not show the Play flyout's Change Mode");
+    return !testFailed;
+}
+
+// ============================================================
+// BR82810 (hotkey) — View Recording is reached with R.
+//
+// showViewRecordingPicker() saves a short recording, opens the real
+// View flyout, presses R, and holds the picker frame that follows.
+// Only the View Recording entry reacts to R, and that entry opens
+// the recording picker rather than, say, the saved-game picker.
+// ============================================================
+
+static void br82810_recording_setup(void) {
+    showViewRecordingPicker();
+}
+
+static boolean br82810_view_recording_hotkey_opens_picker(void) {
+    TEST_ASSERT(screenTextContains("View recording:"),
+                "pressing R in the View flyout should open the recording picker");
+    TEST_ASSERT(!screenTextContains("Open saved game:"),
+                "R should open the recording picker, not the saved-game picker");
+    return !testFailed;
+}
+
+// ============================================================
 // BR73762 — The Game Stats screen shows All Time and Recent
 // columns for games played, won, win rate, escaped, mastered,
 // high score, most gold, most lumenstones, deepest level,
@@ -970,6 +1126,41 @@ static boolean br73762_verify(void) {
                    "Current Win Streak should be a single recent value");
     TEST_ASSERT_EQ(br73762_digitGroups(screenTextLineContaining("Current Mastery Streak")), 1,
                    "Current Mastery Streak should be a single recent value");
+    return !testFailed;
+}
+
+// ============================================================
+// BR10299 — The Game Stats screen offers a Reset button when there
+// is recent data.
+//
+// The run history is replaced, for the duration of each test, with
+// either one completed run or no runs at all, and the real View ->
+// Game Stats screen is opened and held.  With recent data the Reset
+// button must be drawn; without it the stats screen has nothing to
+// reset and must not offer the button.
+// ============================================================
+
+static void br10299_recent_setup(void) {
+    showGameStatsScreenWithRecentData(true);
+}
+
+static boolean br10299_reset_button_offered_with_recent_data(void) {
+    TEST_ASSERT(screenTextContains("-- GAME STATS --"),
+                "the Game Stats screen should be displayed");
+    TEST_ASSERT(screenTextContains("Reset"),
+                "the Game Stats screen should offer a Reset button when there is recent data");
+    return !testFailed;
+}
+
+static void br10299_empty_setup(void) {
+    showGameStatsScreenWithRecentData(false);
+}
+
+static boolean br10299_reset_button_absent_without_recent_data(void) {
+    TEST_ASSERT(screenTextContains("-- GAME STATS --"),
+                "the Game Stats screen should be displayed");
+    TEST_ASSERT(!screenTextContains("Reset"),
+                "the Game Stats screen should not offer a Reset button without recent data");
     return !testFailed;
 }
 
@@ -1075,6 +1266,116 @@ static boolean message_color_reflects_importance(void) {
     TEST_ASSERT(br31995_neutralColor != NULL
                 && strcmp(br31995_neutralColor, "white") == 0,
                 "neutral events should be shown in white");
+    return !testFailed;
+}
+
+// ============================================================
+// BR12275 — resting the cursor on a visible monster or a visible
+// item shows that entity's details in a pop-up box; the entity
+// under the cursor is drawn undimmed in the sidebar while the
+// others are dimmed; and terrain under the cursor prints its
+// description in the message line.
+//
+// The keyboard cursor starts on your square.  Pressing Return
+// turns it on, and the movement keys carry it to the target
+// entity.  Each pump ends when its queue runs dry, which cancels
+// the cursor, so the frame captured at that last input request
+// still holds the pop-up and the message line.
+// ============================================================
+
+static pos br12275_monsterLoc;
+static pos br12275_itemLoc;
+static pos br12275_terrainLoc;
+
+static void br12275_arena_setup(void) {
+    setArenaRadius(5, FLOOR);
+    pos playerLoc = getPlayerPos();
+    br12275_monsterLoc = posOffset(playerLoc, 2, 0);
+    br12275_itemLoc = posOffset(playerLoc, 0, 2);
+    br12275_terrainLoc = posOffset(playerLoc, -2, 0);
+
+    placeHostileMonster(MK_RAT, br12275_monsterLoc);
+    placeItemOnFloor(FOOD, RATION, br12275_itemLoc);
+    placeUpStairs(br12275_terrainLoc);
+
+    revealCell(br12275_monsterLoc);
+    revealCell(br12275_itemLoc);
+    revealCell(br12275_terrainLoc);
+}
+
+static boolean br12275_monsterPopupText, br12275_monsterPopupFrame;
+static boolean br12275_itemPopupText, br12275_itemPopupFrame;
+
+static boolean br12275_cursor_shows_monster_and_item_details(void) {
+    // Monster first: two steps east from your square.
+    queueKeystroke(RETURN_KEY, false, false);
+    queueKeystroke(RIGHT_KEY, false, false);
+    queueKeystroke(RIGHT_KEY, false, false);
+    runQueuedInputThroughMainLoop();
+
+    br12275_monsterPopupText = messageWasShown("chance to");
+    br12275_monsterPopupFrame = screenTextContains("chance to");
+
+    // Then the item: two steps south from your square.
+    queueKeystroke(RETURN_KEY, false, false);
+    queueKeystroke(DOWN_KEY, false, false);
+    queueKeystroke(DOWN_KEY, false, false);
+    runQueuedInputThroughMainLoop();
+
+    br12275_itemPopupText = messageWasShown("former adventurers?");
+    br12275_itemPopupFrame = screenTextContains("former adventurers?");
+    return false;
+}
+
+static boolean br12275_cursor_details_are_popped_up(void) {
+    TEST_ASSERT(br12275_monsterPopupText,
+                "resting the cursor on a visible monster should draw that monster's details");
+    TEST_ASSERT(br12275_monsterPopupFrame,
+                "the monster's details should appear in a pop-up box on the frame drawn under the cursor");
+    TEST_ASSERT(br12275_itemPopupText,
+                "resting the cursor on a visible item should draw that item's details");
+    TEST_ASSERT(br12275_itemPopupFrame,
+                "the item's details should appear in a pop-up box on the frame drawn under the cursor");
+    TEST_ASSERT(!screenTextContains("chance to"),
+                "the monster's pop-up should be gone once the cursor has left it");
+    return !testFailed;
+}
+
+static boolean br12275_sidebar_focus_dims_the_others(void) {
+    int monsterFocused = sidebarTextBrightnessWithFocus(br12275_monsterLoc, "Rat");
+    int monsterDimmed = sidebarTextBrightnessWithFocus(br12275_itemLoc, "Rat");
+    int itemFocused = sidebarTextBrightnessWithFocus(br12275_itemLoc, "food");
+    int itemDimmed = sidebarTextBrightnessWithFocus(br12275_monsterLoc, "food");
+    int terrainFocused = sidebarTextBrightnessWithFocus(br12275_terrainLoc, "staircase");
+    int terrainDimmed = sidebarTextBrightnessWithFocus(br12275_monsterLoc, "staircase");
+
+    TEST_ASSERT(monsterFocused > 0 && monsterDimmed > 0,
+                "precondition: the rat's sidebar entry is drawn with both focuses");
+    TEST_ASSERT(monsterFocused > monsterDimmed,
+                "the monster under the cursor should be drawn undimmed while another entity is focused");
+    TEST_ASSERT(itemFocused > 0 && itemDimmed > 0,
+                "precondition: the item's sidebar entry is drawn with both focuses");
+    TEST_ASSERT(itemFocused > itemDimmed,
+                "the item under the cursor should be drawn undimmed while another entity is focused");
+    TEST_ASSERT(terrainFocused > 0 && terrainDimmed > 0,
+                "precondition: the terrain's sidebar entry is drawn with both focuses");
+    TEST_ASSERT(terrainFocused > terrainDimmed,
+                "the terrain under the cursor should be drawn undimmed while another entity is focused");
+    return !testFailed;
+}
+
+static boolean br12275_terrain_step(void) {
+    // Two steps west from your square put the cursor on the staircase.
+    queueKeystroke(RETURN_KEY, false, false);
+    queueKeystroke(LEFT_KEY, false, false);
+    queueKeystroke(LEFT_KEY, false, false);
+    runQueuedInputThroughMainLoop();
+    return false;
+}
+
+static boolean br12275_cursor_on_terrain_prints_description(void) {
+    TEST_ASSERT(screenTextContains("You see an upward staircase."),
+                "terrain under the cursor should have its description printed in the message line");
     return !testFailed;
 }
 
@@ -1367,9 +1668,162 @@ static boolean br71934_monster_status_bars_shown(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR11882 — the right arrow (or `l`) advances the recording one turn.
+//
+// startPlaybackWithRecordedChecks() arms a one-turn recording and makes the
+// replay take its events from the test's queue.  The advance key is queued
+// first, then the one recorded step; a one-turn advance replays exactly that
+// step and raises the player's turn count by one.  Both keys the rule names
+// are exercised, and the exact count separates a one-turn advance from the
+// shift (five-turn) and control (twenty-turn) advances.
+// ============================================================
+
+static int br11882_turnsBefore;
+static int br11882_turnsAfter;
+
+static void br11882_setup(void) {
+    clearArena(); // open floor for the step the seek will replay
+    // The replayed step must not land on a staircase.
+    placeDownStairs(posAt(1, 1));
+    placeUpStairs(posAt(levelWidth() - 2, levelHeight() - 2));
+    startPlaybackWithRecordedChecks(1);
+    br11882_turnsBefore = playerTurnCount();
+}
+
+static boolean br11882_right_arrow_step(void) {
+    queueKeystroke(RIGHT_ARROW, false, false); // playback: advance one turn
+    queueKeystroke(UPRIGHT_KEY, false, false); // the one recorded step
+    runQueuedInputThroughMainLoop();
+    br11882_turnsAfter = playerTurnCount();
+    return false;
+}
+
+static boolean br11882_right_arrow_advances_one_turn(void) {
+    TEST_ASSERT_EQ(br11882_turnsAfter - br11882_turnsBefore, 1,
+                   "the right arrow should advance the recording exactly one turn");
+    return !testFailed;
+}
+
+static boolean br11882_l_key_step(void) {
+    queueKeystroke(RIGHT_KEY, false, false);   // 'l': advance one turn
+    queueKeystroke(UPRIGHT_KEY, false, false); // the one recorded step
+    runQueuedInputThroughMainLoop();
+    br11882_turnsAfter = playerTurnCount();
+    return false;
+}
+
+static boolean br11882_l_key_advances_one_turn(void) {
+    TEST_ASSERT_EQ(br11882_turnsAfter - br11882_turnsBefore, 1,
+                   "the 'l' key should advance the recording exactly one turn");
+    return !testFailed;
+}
+
+// ============================================================
+// BR36523 — asking to go past the deepest level explored flashes
+// "Already reached deepest depth explored".
+//
+// The replay is armed with a recording whose deepest explored
+// depth is the depth it is currently on, so the descend key has
+// nowhere deeper to seek and must issue the alert.  A control
+// presses another playback command (omniscience) from the same
+// state, proving the alert is tied to the descend request rather
+// than to being at the deepest depth.
+// ============================================================
+
+static int br36523_depthBefore;
+
+static void br36523_setup(void) {
+    clearArena();
+    // The recorded steps must not land on a staircase.
+    placeDownStairs(posAt(1, 1));
+    placeUpStairs(posAt(levelWidth() - 2, levelHeight() - 2));
+    startPlaybackWithRecordedChecks(1);
+    setPlaybackDeepestDepthExplored(currentDepth());
+    br36523_depthBefore = currentDepth();
+    clearFlashAlerts();
+}
+
+static boolean br36523_descend_step(void) {
+    queueKeystroke(DESCEND_KEY, false, false); // playback: go deeper
+    runQueuedInputThroughMainLoop();
+    return false;
+}
+
+static boolean br36523_control_step(void) {
+    queueKeystroke(TAB_KEY, false, false); // playback: toggle omniscience
+    runQueuedInputThroughMainLoop();
+    return false;
+}
+
+static boolean br36523_descend_at_deepest_flashes_alert(void) {
+    TEST_ASSERT(isInPlaybackMode(),
+                "precondition: the game should still be replaying a recording");
+    TEST_ASSERT(flashAlertWasShown("Already reached deepest depth explored"),
+                "asking to go past the deepest level explored should flash \"Already reached deepest depth explored\"");
+    TEST_ASSERT_EQ(currentDepth(), br36523_depthBefore,
+                   "asking to go deeper than the deepest level explored should not change the depth");
+    return !testFailed;
+}
+
+static boolean br36523_other_playback_command_does_not_flash(void) {
+    TEST_ASSERT(isInPlaybackMode(),
+                "precondition: the game should still be replaying a recording");
+    TEST_ASSERT(!flashAlertWasShown("Already reached deepest depth explored"),
+                "a playback command other than descending should not flash the deepest-depth alert");
+    return !testFailed;
+}
+
+// ============================================================
+// BR17154 — clicking anywhere outside the message area during
+// playback pauses it.
+//
+// A one-turn recording is armed and starts unpaused.  A single click
+// outside the message rows (in the sidebar column, clear of the map and
+// the bottom-row buttons) is delivered through the engine's main input
+// loop; only that click can have paused playback.
+// ============================================================
+
+static boolean br17154_startedUnpaused;
+
+static void br17154_setup(void) {
+    setArenaRadius(3, FLOOR); // open ground for the recorded turn
+    startPlaybackWithRecordedChecks(1);
+    br17154_startedUnpaused = !playbackIsPaused();
+}
+
+static boolean br17154_step(void) {
+    queueClickOutsideMessageArea();
+    // Quit playback before the pump runs dry: the pump's synthetic Escape
+    // would itself pause playback, hiding whether the click did.
+    queueKeystroke(QUIT_KEY, false, false);
+    runQueuedInputThroughMainLoop();
+    return false;
+}
+
+static boolean br17154_click_outside_messages_pauses_playback(void) {
+    TEST_ASSERT(br17154_startedUnpaused,
+                "precondition: playback should start unpaused");
+    TEST_ASSERT(isInPlaybackMode(),
+                "precondition: the game should still be replaying a recording");
+    TEST_ASSERT(playbackIsPaused(),
+                "clicking outside the message area should pause playback");
+    return !testFailed;
+}
+
 const testCase tests_interaction[] = {
+    { "BR11882_right_arrow_advances_one_turn", br11882_setup, br11882_right_arrow_step, br11882_right_arrow_advances_one_turn },
+    { "BR11882_l_key_advances_one_turn",       br11882_setup, br11882_l_key_step,       br11882_l_key_advances_one_turn },
+
+    { "BR36523_descend_at_deepest_flashes_alert", br36523_setup, br36523_descend_step, br36523_descend_at_deepest_flashes_alert },
+    { "BR36523_other_playback_command_no_alert", br36523_setup, br36523_control_step, br36523_other_playback_command_does_not_flash },
+
+    { "BR17154_click_outside_messages_pauses_playback", br17154_setup, br17154_step, br17154_click_outside_messages_pauses_playback },
+
     { "BR32227_sidebar_shows_strength_armor_and_gold", sidebar_gold_setup,     NULL, sidebar_shows_strength_armor_and_gold },
     { "BR32227_sidebar_omits_gold_when_penniless",    sidebar_penniless_setup, NULL, sidebar_omits_gold_when_penniless },
+
+    { "BR90270_player_entry_shows_health_bar", br90270_setup, NULL, br90270_player_entry_has_health_bar },
 
     { "BR42937_ordinary_monster_shows_health_bar",    br42937_bar_setup,        NULL, br42937_ordinary_monster_has_health_bar },
     { "BR42937_one_hp_monster_shows_no_health_bar",   br42937_one_hp_setup,     NULL, br42937_one_hp_monster_has_no_health_bar },
@@ -1382,6 +1836,7 @@ const testCase tests_interaction[] = {
     { "BR30441_escaping_a_confirmation_is_no",     escape_setup,        NULL, escaping_a_confirmation_is_no },
     { "BR25868_prompt_cancels_on_escape_space_or_outside_click", cancel_prompt_setup, NULL, prompt_cancels_on_escape_space_or_outside_click },
     { "BR67301_autopilot_skips_confirmation",      autopilot_setup,     NULL, autopilot_skips_confirmation },
+    { "BR12747_confirmation_box_shows_yes_and_no_buttons", br12747_setup, NULL, br12747_confirmation_box_has_two_buttons },
     { "BR53953_seed_report_shows_seed_and_turn",   seed_report_setup,   NULL, seed_report_shows_seed_and_turn },
     { "BR78309_hidden_seed_is_reported_hidden",    hidden_seed_setup,   NULL, hidden_seed_is_reported_hidden },
     { "BR50315_return_turns_on_keyboard_cursor",   keyboard_cursor_setup, keyboard_cursor_step, return_turns_on_keyboard_cursor },
@@ -1404,6 +1859,7 @@ const testCase tests_interaction[] = {
 
     { "BR26817_file_picker_shows_no_applicable_files", no_matching_files_setup, NULL, no_applicable_files_alert_shows },
     { "BR93927_control_advancing_moves_20_turns",       control_advance_setup,   control_advance_step, control_advancing_moves_twenty_turns },
+    { "BR24285_shift_advancing_moves_5_turns",          shift_advance_setup,     shift_advance_step,   shift_advancing_moves_five_turns },
 
     { "BR65948_playback_bottom_row_buttons",            playback_buttons_setup,  playback_buttons_step, playback_shows_playback_buttons },
 
@@ -1416,11 +1872,26 @@ const testCase tests_interaction[] = {
 
     { "BR77643_title_screen_offers_new_game_play_view_quit", br77643_setup, NULL, br77643_verify },
 
+    { "BR82810_view_flyout_lists_recording_scores_stats", br82810_setup, NULL, br82810_view_flyout_lists_recording_scores_stats },
+    { "BR82810_view_recording_hotkey_opens_picker", br82810_recording_setup, NULL, br82810_view_recording_hotkey_opens_picker },
+
     { "BR73762_game_stats_screen_columns_and_streaks", br73762_setup, NULL, br73762_verify },
+
+    { "BR10299_reset_button_offered_with_recent_data", br10299_recent_setup, NULL, br10299_reset_button_offered_with_recent_data },
+    { "BR10299_reset_button_absent_without_recent_data", br10299_empty_setup, NULL, br10299_reset_button_absent_without_recent_data },
 
     { "BR39251_high_scores_returns_to_title", br39251_setup, NULL, br39251_high_scores_returns_to_title },
 
     { "BR31995_message_color_reflects_importance", br31995_setup, NULL, message_color_reflects_importance },
+
+    { "BR12275_cursor_shows_monster_and_item_details",
+      br12275_arena_setup, br12275_cursor_shows_monster_and_item_details,
+      br12275_cursor_details_are_popped_up },
+    { "BR12275_sidebar_focus_dims_the_others",
+      br12275_arena_setup, NULL, br12275_sidebar_focus_dims_the_others },
+    { "BR12275_cursor_terrain_description_in_message_line",
+      br12275_arena_setup, br12275_terrain_step,
+      br12275_cursor_on_terrain_prints_description },
 
     { "BR95103_canceling_cursor_hides_it",         br95103_hide_setup,  br95103_hide_step,  br95103_canceling_hides_cursor },
     { "BR21873_canceling_cursor_clears_travel_path", br21873_path_setup, br21873_path_step,  br21873_canceling_clears_travel_path },

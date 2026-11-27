@@ -2930,6 +2930,13 @@ void flashMessage(char *message, short x, short y, int time, const color *fColor
 }
 
 void flashTemporaryAlert(char *message, int time) {
+#ifdef BROGUE_TESTING
+    if (rogue.mode == GAME_MODE_TEST) {
+        // The flash is erased before the next input request, so record its
+        // text for tests that need to observe the alert.
+        recordTestFlashAlert(message);
+    }
+#endif
     flashMessage(message, (COLS - strLenWithoutEscapes(message)) / 2, ROWS / 2, time, &teal, &black);
 }
 

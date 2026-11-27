@@ -66,6 +66,9 @@ void queueKeystroke(int key, boolean shift, boolean control);
 // menu.  Like queueKeystroke, the event is consumed when the engine next
 // asks for input, so a prompt that is not open yet can still be clicked.
 void queueMouseClick(pos loc);
+// Supply a mouse click outside the message area: in the sidebar column below
+// the messages, away from the map and the bottom-row buttons.
+void queueClickOutsideMessageArea(void);
 // Supply a mouse click on a dungeon tile, moving the targeting cursor there.
 // The engine confirms a target only when the cursor is already on the clicked
 // tile, so aiming at a tile takes two of these: the first moves the cursor and
@@ -116,6 +119,11 @@ void recordTestMessage(const char *msg);
 // this remembers the flag for messageRequiredAcknowledgment().
 void recordTestMessageAcknowledgment(const char *msg, boolean requiresAck);
 void clearMessages(void);
+// Show any combat messages buffered since the last turn, so a test can assert
+// on what a blow or an exposure said without ending a turn.
+void flushCombatMessages(void);
+// Whether any message has been shown since the log was last cleared.
+boolean anyMessageWasShown(void);
 boolean messageWasShown(const char *substring);
 // Whether the recorded message containing `substring` was sent with the
 // engine's require-acknowledgment flag, i.e. a real game would have stopped at
@@ -123,6 +131,17 @@ boolean messageWasShown(const char *substring);
 boolean messageRequiredAcknowledgment(const char *substring);
 const char *lastMessage(void);
 void printTestMessages(void);
+
+// Temporary alerts are painted straight to the screen and erased again, so
+// they never reach the message log or a screen snapshot.  These record the
+// text at the moment the engine flashes an alert, and let a test ask what was
+// flashed during the current test.
+// Engine-facing: remember one flash alert.  Called from flashTemporaryAlert().
+void recordTestFlashAlert(const char *message);
+void clearFlashAlerts(void);
+boolean flashAlertWasShown(const char *substring);
+// The text of the most recently flashed alert, or the empty string.
+const char *lastFlashAlert(void);
 
 // Whether any message the engine emitted while the game was starting up (the
 // welcome message and its fellows, all shown before the test began) contains
@@ -173,6 +192,11 @@ int messageAreaBrightness(const char *substring);
 // sidebar is the stats column at the left edge of the screen, so a match here
 // can only have come from the sidebar.
 boolean sidebarContains(const char *substring);
+// Redraw the sidebar with the examine cursor resting on `loc` and report the
+// brightness (0-100) of the foreground colour of the first row containing
+// `substring`, or -1 when no row contains it.  The entity under the cursor is
+// drawn undimmed while the other listed entities are dimmed.
+int sidebarTextBrightnessWithFocus(pos loc, const char *substring);
 
 // The flavor-text line at the bottom of the map, exactly as the game currently
 // draws it (capitalized as the player sees it, without trailing blanks), or the
@@ -203,6 +227,12 @@ boolean screenTextContains(const char *substring);
 // values in separate columns.
 const char *screenTextLineContaining(const char *substring);
 
+// Open the help screen over the current display, dismiss it, and report
+// whether the display afterwards is exactly the one shown before it opened.
+// helpScreenWasShown() reports whether its command list was actually drawn.
+boolean helpScreenRestoresPreviousDisplay(void);
+boolean helpScreenWasShown(void);
+
 // In the discovered-items screen, the mark drawn beside a kind listed by
 // `name`: 1 for the good-magic marker, -1 for the bad-magic marker, and 0 when
 // the kind is identified (shown by its item glyph) or is not on screen.
@@ -215,6 +245,13 @@ int discoveryScreenMagicMarkerFor(const char *name);
 // magic gets.  Returns -2 when the item's line carries no magic mark at all
 // (before detection, for example) or is not on screen.
 int inventoryScreenMagicMarkerFor(char inventoryLetter);
+
+// Open the real inventory, press `openKey` to open the item detail box, press
+// `pageKey` `pages` times to page through the details, then dismiss it.  The
+// detail text shown last is returned.  The up and down arrows are the
+// keyboard-only controls the inventory and its detail box each add for
+// paging; this exercises them without exposing the menu's buttons.
+const char *inventoryDetailAfterKeys(int openKey, int pageKey, int pages);
 
 // Remember the background colour every cell was drawn with in the frame that
 // screenTextContains() reads.  Call it while a transient highlight (the aim
@@ -275,10 +312,34 @@ void playerZapsStaffAt( item *theItem, creature *monst );
 void clearTerrain(pos loc);
 void setTerrain(pos loc, short terrainType);
 void setTerrainAroundLoc(pos loc, short terrainType);
+// Place a glowing glass pipe on `loc`, wired into a fresh mechanism, so a test
+// can observe what powering that mechanism does to it.
+void placeGlowingGlassPipeWiredToMechanism(pos loc);
+// Power the mechanism that includes the tile at `loc`, through the engine's
+// own machine-activation routine.  Does nothing when the tile is not part of a
+// mechanism.
+void powerMechanismIncluding(pos loc);
+// Whether the tile holds a glowing glass pipe.
+boolean cellIsGlowingGlassPipe(pos loc);
+// Whether the tile holds a charred (inert) glass pipe.
+boolean cellIsCharredGlassPipe(pos loc);
 void spawnFeature(pos loc, short feature);
 void revealCell(pos loc);
 void placeDownStairs(pos loc);
 void placeUpStairs(pos loc);
+// The square holding the current level's down staircase and up staircase.
+pos downStairsLocation(void);
+pos upStairsLocation(void);
+// The staircase squares the dungeon reserved for the given depth when its
+// layout was drawn, before that level has been built.  Depth is one-based and
+// must be at least 3 so the reserved values have not yet been replaced by the
+// built level's refined staircase positions.  Returns false when the depth is
+// out of range or already built.
+boolean dungeonLevelStairLocations(int depth, pos *upstairs, pos *downstairs);
+// The distance between the reserved staircases of the given depth, measured
+// the way the game measures distance: the larger of the horizontal and
+// vertical gaps.  Returns -1 when no reserved layout is available.
+int dungeonLevelStairSeparation(int depth);
 short terrainAt(pos loc);
 boolean cellIsTerrain(pos loc, short terrainType);
 boolean cellObstructsPassage(pos loc);
@@ -292,9 +353,17 @@ boolean cellHasGas(pos loc);
 void setGasAt(pos loc, short gasType, int volume);
 int gasVolumeAt(pos loc);
 short gasTypeAt(pos loc);
+// Gas kinds chosen by their dissipation behavior: one that dissipates
+// quickly, one that dissipates slowly, and one that never dissipates.
+short quickDissipatingGasType(void);
+short slowDissipatingGasType(void);
+short nonDissipatingGasType(void);
 // Run one periodic environment update (the pass that moves gas, spreads
 // fire, and so on) without advancing the turn count.
 void runEnvironmentUpdate(void);
+// Run a single gas-simulation pass, without the rest of an environment
+// update and without advancing the turn count.
+void runGasUpdatePass(void);
 boolean cellIsOnFire(pos loc);
 // Whether any layer of the tile holds terrain that harms creatures standing
 // on it: fire, damage, poison, paralysis, confusion, or explosive damage.
@@ -398,6 +467,9 @@ int playerShield(void);
 int playerMovementSpeed(void);
 int playerAttackSpeed(void);
 int playerArmorValue(void);
+// The player's current stealth range: how close a creature must come before
+// it notices the player.  Reflects lighting, armor, rings and status effects.
+int playerStealthRange(void);
 
 // Apply a status effect through the engine's own routines.
 void weakenPlayer(int duration);
@@ -406,6 +478,9 @@ void slowPlayer(int turns);
 void hastePlayer(int turns);
 void healPlayerPanacea(void);
 void applyTileEffectsToPlayer(void);
+// Expose the player to fire through the engine's own catch-fire routine, so a
+// test can observe whether the flame sets the player alight and what it says.
+void exposePlayerToFire(void);
 
 // Armor donning and removal.
 void wearArmor(short kind);
@@ -421,10 +496,13 @@ void applyEquipmentStatusToPlayer(enum statusEffects status, int duration);
 
 enum monsterTypes chooseMonsterTypeByProperty(enum boltType bolt, enum monsterBehaviorFlags behaviorFlagsInclude,  enum monsterBehaviorFlags behaviorFlagsExclude, enum monsterAbilityFlags abilityFlagsInclude, enum monsterAbilityFlags abilityFlagsExclude);
 creature *spawnMonster(enum monsterTypes type, pos loc);
-// Spawn one of the hordes flagged as allied with you at `loc`, giving it
-// `followers` members so both its leader and its member path are exercised.
-// Returns the horde's leader; *membersSpawned receives the number of followers
-// actually placed (pass NULL when not needed).
+// Spawn a horde at `loc`, giving it `followers` members so both its leader
+// and its member path are exercised.  `allied` makes the horde one of the
+// hordes flagged as allied with you.  Returns the horde's leader;
+// *membersSpawned receives the number of followers actually placed (pass NULL
+// when not needed).
+creature *spawnHordeWithFollowers(pos loc, int followers, boolean allied, int *membersSpawned);
+// The allied form used by the horde-allegiance rule.
 creature *spawnAlliedHordeWithFollowers(pos loc, int followers, int *membersSpawned);
 creature *findMonster(enum monsterTypes type);
 void clearMonsters(void);
@@ -466,6 +544,14 @@ pos monsterPosition(const creature *monst);
 // The dungeon level the monster is standing on, which follows it across a
 // level change only when the engine actually moves it.
 int monsterDepth(const creature *monst);
+// Remove every monster from the level above yours, so only the ones a test
+// deliberately waits there can enter.
+void clearMonstersOnPreviousLevel(void);
+// Move a monster onto the level above yours, as though it were following you,
+// and have it reach your level after `updates` 100-tick environment updates.
+// The monster must be on your level when this is called; the previous level
+// must already have been visited.
+void waitOnPreviousLevelToEnter(creature *monst, int updates);
 boolean monsterIsAdjacentToPlayer(const creature *monst);
 short vorpalEnemyClassForMonster(enum monsterTypes monstType);
 short vorpalEnemyClassByName(const char *className);
@@ -480,6 +566,11 @@ void monsterTakesTurn(creature *monst);
 
 // Make one monster a follower of another (used for teammate rules).
 void makeMonsterFollow(creature *follower, creature *leader);
+
+// Whether `follower` follows `leader`: it carries the follower status and its
+// leader link points at `leader`.  False when either pointer is NULL or when
+// the same monster is passed as both.
+boolean monsterFollows(const creature *follower, const creature *leader);
 
 int monsterStatusTurns(const creature *monst, enum statusEffects status);
 int monsterWeaknessAmount(const creature *monst);
@@ -513,19 +604,31 @@ int monsterBaseDamageLow(const creature *monst);
 int monsterBaseDamageHigh(const creature *monst);
 int monsterBaseMovementSpeed(const creature *monst);
 int monsterBaseAttackSpeed(const creature *monst);
+// Override the monster's catalog accuracy, so a test can make a blow that
+// cannot land normally while leaving the auto-hit paths intact.
+void setMonsterAccuracy(creature *monst, int accuracy);
 // Whether the monster's catalog entry marks it as large.
 boolean monsterIsLarge(const creature *monst);
 // Whether the monster's catalog entry gives it natural health regeneration.
 boolean monsterRegenerates(const creature *monst);
+// The gender the engine assigned the monster: "male", "female", or "neuter".
+// A kind that can be either male or female is given exactly one of the two
+// when it is generated; a kind that names neither is left neuter.
+const char *monsterGenderName(const creature *monst);
 // Chance, in percent, that the monster leaves its trail on the floor each
 // turn (0 when it leaves no trail).
 int monsterTrailChance(const creature *monst);
 // Whether the trail the monster leaves is a puddle of urine, as the
 // territory-marking animals leave behind.
 boolean monsterLeavesUrineTrail(const creature *monst);
+// Whether the trail the monster leaves is a droplet of ectoplasm, as the
+// phantom's is.
+boolean monsterLeavesEctoplasmDroplet(const creature *monst);
 // The colour the monster is drawn with, named for the monster's role:
-// "wisp blue" for a will-o'-the-wisp, "other" for any other monster.  Equal
-// names mean equal colours.
+// "wisp blue" for a will-o'-the-wisp, "pink" for a pink jelly, "tan" for an
+// underworm, "dark blue" for a sentinel, "blue" for a goblin mystic,
+// "purple" for an ifrit, "red" for a phoenix or its egg, "other" for any
+// other monster.  Equal names mean equal colours.
 const char *monsterDrawColorName(const creature *monst);
 // Whether the monster's drawn colour re-shades itself on every screen refresh
 // (its colour "dances").
@@ -534,11 +637,25 @@ boolean monsterDrawColorFlickers(const creature *monst);
 // the drawn colour ("wisp blue" for a will-o'-the-wisp, "other" when the
 // monster casts no light of its own).  Equal names mean equal light colours.
 const char *monsterGlowLightColorName(const creature *monst);
+// The reach of the light the monster casts on its own, in tiles (its
+// smallest reach when the radius varies); 0 when the monster casts no light.
+double monsterGlowLightRadius(const creature *monst);
+// Whether the monster's own light changes its shade or reach on every screen
+// refresh (its light "flickers").
+boolean monsterGlowLightFlickers(const creature *monst);
+// The base red, green and blue components of the light the monster casts on
+// its own; all zero when the monster casts no light.
+void monsterGlowLightColorComponents(const creature *monst, int *red, int *green, int *blue);
 void poisonMonster(creature *monst, int duration, int concentration);
 void slowMonster(creature *monst, int turns);
 void hasteMonster(creature *monst, int turns);
 
 void setMonsterSubmerged(creature *monst, boolean submerged);
+// Whether the monster is hidden beneath the surface of deep water.
+boolean monsterIsSubmerged(const creature *monst);
+// Expose a monster to fire through the engine's own catch-fire routine, so a
+// test can observe whether the flame sets it alight.
+void exposeMonsterToFire(creature *monst);
 void makeMonsterCaptive(creature *monst);
 void makeMonsterDying(creature *monst);
 void makeMonsterDormant(creature *monst);
@@ -592,6 +709,12 @@ item *findInventoryItem(short category, short kind);
 item *findFloorItem(short category, short kind);
 item *findItem(short category, short kind);
 item *givePlayerItem(short category, short kind, short enchant);
+// Give the player an item whose kind has not been identified, so a test can
+// observe the behavior shown only before the player learns what it is.
+item *givePlayerUnidentifiedItem(short category, short kind, short enchant);
+// Mark that the player has learned this item's maximum charge count, without
+// identifying the item itself.
+void markItemMaxChargesKnown(item *theItem);
 item *placeItemOnFloor(short category, short kind, pos loc);
 // The tile an item occupies: where a floor item lies, or for a pack item the
 // tile it was picked up from.
@@ -631,6 +754,10 @@ int playerReapingBonus(void);
 void drink(enum potionKind kind);
 // Read a scroll, applying its effect (and ending the turn).
 void readScrollOfKind(short kind);
+// Read a scroll through the engine's own scroll routine without ending the
+// turn, so an immediate effect can be observed before any status counter
+// ticks down in the turn that follows.
+void readScrollOfKindWithoutEndingTurn(short kind);
 // Use (apply) an item already in the pack: zap with a staff or activate a
 // charm.  Any targeting prompt is answered from the queued keystrokes, or with
 // escape when the queue is empty.
@@ -692,8 +819,17 @@ int playerDefense(void);
 // damage reduction (such as easy mode) apply.
 void woundPlayer(int amount);
 
+// Resolve an incoming blow through the armor-rune handler by the route a
+// thrown weapon that hits you takes (the throw path calls it with the melee
+// flag clear), and return the damage left after any rune effect.  `thrower` is
+// the creature that threw the weapon.
+int damageAfterArmorRuneForThrownWeapon(creature *thrower, int incomingDamage);
+
 // Succumb to easy mode.
 void enterEasyMode(void);
+// Enable easy mode through the game's own in-game command, confirming its
+// prompt, so the announcement it prints can be observed.
+void enableEasyModeThroughCommand(void);
 
 // ---------------------------------------------
 // Game start-up
@@ -749,11 +885,43 @@ void showModeDialog(int answerKey);
 // with screenTextContains().
 void showTitleScreen(void);
 
+// Run the real title screen for `passes` input-loop passes while the game
+// reports its window active, then quit.  Returns true only when a frame was
+// drawn on every pass and each pass's frame differed from the one before it.
+// A title screen that draws once and then leaves the display alone, or that
+// does not draw at all, fails the check.
+boolean titleScreenRedrawsOnEveryActivePass(int passes);
+
+// Run the real title screen for one active pass, then `inactivePasses`
+// input-loop passes while the game reports its window inactive, then quit.
+// Returns true only when the title screen was drawn during the active pass
+// and the display afterwards is exactly the frame that had already been
+// drawn, with no new flame frame or menu redraw during the inactive passes.
+boolean titleScreenLeavesDisplayAloneWhileApplicationInactive(int inactivePasses);
+
+// Show the main menu's View flyout — the menu opened by pressing View — and
+// dismiss it again by answering Quit.  The flyout frame is held, so its
+// entries can be read afterwards with screenTextContains().
+void showViewFlyout(void);
+
+// Open the View flyout, choose View Recording with its hotkey, and cancel the
+// recording picker.  A short recording is saved first so the picker has a file
+// to list and draws its prompt; the picker's frame is held, so a test can read
+// which picker the View flyout's R hotkey opened.
+void showViewRecordingPicker(void);
+
 // Show the main menu's View -> Game Stats screen, dismiss it, and quit the
 // menu.  The stats screen is a transient full-screen display, so its frame is
 // held for screenTextContains() and screenTextLineContaining() after the menu
 // has closed.
 void showGameStatsScreen(void);
+
+// Show the main menu's View -> Game Stats screen with the run history forced
+// to describe one completed run (`recentData` true) or no runs at all
+// (`recentData` false), then put the player's run history back exactly as it
+// was.  The stats frame is held for screenTextContains() and
+// screenTextLineContaining().
+void showGameStatsScreenWithRecentData(boolean recentData);
 
 // Show the main menu's View -> High Scores screen, dismiss it, and quit the
 // title screen that follows.  Because the menu returns to the title screen
@@ -788,6 +956,22 @@ int bottomRowButtonOpacity(void);
 // without any surrounding menu, so the randomness it consumes can be
 // observed directly.
 void paintMenuButton(const char *label);
+
+// The pointer states a menu button can be painted in.
+enum menuButtonPointerState {
+    MENU_BUTTON_POINTER_AWAY = 0,   // the pointer is not over the button
+    MENU_BUTTON_POINTER_OVER = 1,   // the pointer rests over the button
+    MENU_BUTTON_POINTER_HELD = 2    // the mouse button is held down on it
+};
+
+// Paint one menu button through the game's own menu painter with the pointer
+// in the given state, and report the brightness of the middle of its
+// background (0 is black, 300 is white) without touching the display.  The
+// held-down state is the one the engine reaches when the pointer is over the
+// button and the mouse button is down on it.
+int menuButtonBackgroundBrightness(enum menuButtonPointerState pointer);
+// The same for a label character at the middle of the button.
+int menuButtonLabelBrightness(enum menuButtonPointerState pointer);
 
 // ---------------------------------------------
 // Random-number sequence
@@ -838,6 +1022,18 @@ void enterWizardMode(void);
 // never saves a score or a run history entry.
 void enterPlaybackMode(void);
 
+// Begin recording the current game, so a no-prompt recording save has a file
+// to write.  One turn is recorded so the file is not empty.  Fails when the
+// game is already in playback.
+void beginTestRecording(void);
+
+// Save the current recording without a prompt, exactly as the game's
+// automatic saves do (server-mode death and victory, and the no-prompt
+// close), and report whether a recording file was created.  Any file created
+// is removed again, and any in-progress recording left behind is discarded,
+// so a test leaves no recording files behind.
+boolean saveRecordingWithoutPromptWritesFile(void);
+
 // Enter playback armed with a recording of `turns` out-of-sync checks plus
 // room to advance `turns` further turns.  The checks are recorded from two
 // real passes over alternating UPRIGHT/DOWNLEFT steps (so the replay
@@ -851,8 +1047,15 @@ void startPlaybackWithRecordedChecks(unsigned int turns);
 
 // Whether the game is currently replaying a recording.
 boolean isInPlaybackMode(void);
+// Whether playback is currently paused.
+boolean playbackIsPaused(void);
 // Whether playback has found that the recording no longer matches the game.
 boolean playbackIsOutOfSync(void);
+
+// Set the deepest depth the recording being replayed explored.  A request to
+// descend past it is refused with the "Already reached deepest depth explored"
+// alert instead of seeking.
+void setPlaybackDeepestDepthExplored(int depth);
 
 // Save the current game as a recording, then play it back through the main
 // menu's View Recording command with the test's queued input, and quit the
@@ -901,6 +1104,12 @@ void wearArmorOfEnchant(short kind, int enchant);
 // player's pack at an exact enchantment: generateItem() otherwise rolls a
 // random enchant and possibly a runic.
 item *givePlayerPlainWeapon(short kind, int enchant);
+// The armor counterpart of givePlayerPlainWeapon(): a freshly generated plain
+// (non-runic, uncursed) suit in the player's pack at an exact enchantment.
+item *givePlayerPlainArmor(short kind, int enchant);
+// Clear an item's identification (and any rune identity) so a test can observe
+// behavior that only happens before the player learns what the item is.
+void makeItemUnidentified(item *theItem);
 
 // Create a freshly generated runic weapon/armor in the player's pack at the
 // chosen enchantment, already identified as runic.
@@ -972,6 +1181,37 @@ boolean buildRoomVaultAtChamber(int roomCells);
 int chamberFloorCellCount(void);
 boolean chamberFloorContains(pos loc);
 boolean chamberDoorwayAt(pos loc);
+
+// Try to build the room-like vault on the current level, letting the engine
+// choose a doorway.  Returns true when it was built; when no doorway on the
+// level is eligible it returns false and leaves the level untouched.
+boolean buildRoomVaultOnCurrentLevel(void);
+
+// A fingerprint of every tile's terrain across all layers, so a test can
+// compare the level before and after a build attempt.
+unsigned long levelTerrainFingerprint(void);
+
+// Build a room-like vault whose interior is rebuilt from scratch, using the
+// same synthetic dead-end chamber as buildRoomVaultAtChamber().  The vault's
+// room-size range is reported by redesignedVaultRoomSizeMin() and
+// redesignedVaultRoomSizeMax(); roomCells should lie inside it.  Returns true
+// when the vault was built.  While it builds, the engine records the
+// route-length threshold its loop-adding pass used for the rebuilt interior;
+// read that with vaultInteriorLoopThreshold().
+boolean buildRedesignedRoomVaultAtChamber(int roomCells);
+int redesignedVaultRoomSizeMin(void);
+int redesignedVaultRoomSizeMax(void);
+// Engine-facing: forget the loop-threshold record kept for vault rebuilds.
+void resetVaultInteriorLoopRecord(void);
+// The route-length threshold the engine's loop-adding pass used the last time
+// it rebuilt a vault interior, or -1 when no rebuild has been recorded since
+// the most recent buildRedesignedRoomVaultAtChamber() call.
+int vaultInteriorLoopThreshold(void);
+// Whether the engine's loop-adding pass cuts a doorway through a wall tile
+// whose two flanking floor tiles are connected only by a route of `detour`
+// tiles, when the pass uses `threshold` as its minimum route length.  The
+// fixture is a U-shaped corridor; `detour` must be even and at least 4.
+boolean loopPassCutsWallWithDetour(int detour, int threshold);
 
 // Build an open-area vault through the engine's own location chooser, using
 // the engine's actual depth-appropriate target-size range, and return true
@@ -1072,6 +1312,8 @@ void setDepth(int depth);
 boolean isSameDepth(void);
 boolean playerIsCarryingAmulet(void);
 int deepestDepth(void);
+// The dungeon's deepest floor, below which there is no staircase to descend.
+int dungeonDeepestLevel(void);
 int totalGoldGenerated(void);
 int playerTurnCount(void);
 
@@ -1100,6 +1342,12 @@ int monsterItemHopperCount(void);
 // measuring placement from `upstairs` exactly as level generation does.  The
 // generated items and gold accumulate on the floor.
 void populateLevelItemsFrom(pos upstairs);
+
+// Run one generation of the cellular automata that shapes dungeon features
+// over a fixed test grid whose centre floor tile has all eight neighbours
+// live, and report whether that centre tile is still floor.  `survivalRuleApplies`
+// selects whether the survival rule for eight live neighbours keeps it.
+boolean floorTileSurvivesGeneration(boolean survivalRuleApplies);
 
 // Add a dead ally of the given kind to purgatory, so it can be raised with
 // resurrectDeadAllyAt.  The ally dies at `loc` and awaits resurrection there.

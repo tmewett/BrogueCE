@@ -4,7 +4,8 @@
 // state a new game starts in (depth, gold, turn counts, strength, starting
 // equipment), the message log and archive being cleared and the screen
 // blacked out before the welcome message, the reduced damage taken in easy
-// mode, the amulet fallback, the high-score gate on victory, the treasure
+// mode, the income-tax announcement made when easy mode is enabled, the amulet
+// fallback, the high-score gate on victory, the treasure
 // tally a victory records, the high-score entry saved and displayed on death
 // outside playback, and the text of that entry.
 //
@@ -119,6 +120,23 @@ static void easy_mode_damage_setup(void) {
 static boolean easy_mode_reduces_damage(void) {
     TEST_ASSERT_EQ(playerHealth(), before - 3,
                    "in easy mode you should take only a fifth of the damage");
+    return !testFailed;
+}
+
+// Enabling easy mode through the game's own command asks for confirmation and
+// then announces the cost of the bargain.  The announcement is emitted after
+// the mode changes, so in test mode it reaches the message archive rather than
+// the test message log; read it from there.
+static boolean easy_mode_announces_income_tax(void) {
+    boolean announced = false;
+    for (int back = 1; back <= messageArchiveEntryCount(); back++) {
+        if (strstr(messageArchiveEntry(back), "90% income tax") != NULL) {
+            announced = true;
+            break;
+        }
+    }
+    TEST_ASSERT(announced,
+                "enabling easy mode should announce that the player will suffer a 90% income tax");
     return !testFailed;
 }
 
@@ -305,9 +323,68 @@ static boolean br64450_created_item_stays_unknown(void) {
 }
 
 // ============================================================
-// BR24559 — a wizard-created monster must be placed on a visible,
-// valid location: an open spot, or a wall for a turret.  An
-// invalid choice discards the monster instead of placing it.
+// BR88672 — an item created in wizard mode is not cursed unless
+// its enchantment is negative.
+//
+// The creation dialog is driven from queued keystrokes: "Item" (a),
+// the "ring" category (h), its first kind (a), the enchantment
+// number, Return to accept it, and yes to identify the item.  A ring
+// is used because its creation flow asks for an enchantment and
+// allows a negative value.  A created +1 ring must not be cursed,
+// and a created -3 ring must be.
+// ============================================================
+
+static void br88672_create_ring(const char *enchantment) {
+    queueKeystroke('a', false, false); // Item in the Create: dialog
+    queueKeystroke('h', false, false); // ring category
+    queueKeystroke('a', false, false); // first ring kind
+    for (const char *c = enchantment; *c != '\0'; c++) {
+        queueKeystroke(*c, false, false);
+    }
+    queueKeystroke(RETURN_KEY, false, false); // accept the enchantment
+    queueKeystroke('y', false, false); // identify the created ring
+    attemptWizardItemCreation();
+}
+
+static void br88672_positive_enchant_setup(void) {
+    br88672_create_ring("1");
+}
+
+static boolean br88672_positive_enchant_not_cursed(void) {
+    item *created = findInventoryItem(RING, 0);
+    TEST_ASSERT(created != NULL, "the wizard should have created a ring");
+    if (created != NULL) {
+        TEST_ASSERT_EQ(itemEnchant(created), 1,
+                       "the created ring should keep the enchantment that was entered");
+        TEST_ASSERT(!itemIsCursed(created),
+                    "a created ring with non-negative enchantment should not be cursed");
+    }
+    return !testFailed;
+}
+
+static void br88672_negative_enchant_setup(void) {
+    br88672_create_ring("-3");
+}
+
+static boolean br88672_negative_enchant_cursed(void) {
+    item *created = findInventoryItem(RING, 0);
+    TEST_ASSERT(created != NULL, "the wizard should have created a ring");
+    if (created != NULL) {
+        TEST_ASSERT_EQ(itemEnchant(created), -3,
+                       "the created ring should keep the enchantment that was entered");
+        TEST_ASSERT(itemIsCursed(created),
+                    "a created ring with negative enchantment should be cursed");
+    }
+    return !testFailed;
+}
+
+// ============================================================
+// BR24559 — a wizard-created monster can only be placed on a location
+// the player can see or otherwise sense.
+// BR11100 — a wizard-created turret can only be placed on a wall.
+// BR13174 — a wizard-created monster that is not a turret can only
+// be placed on an unobstructed location.
+// BR15672 — choosing an invalid location discards the monster.
 //
 // The creation dialog is driven from queued input: "Monster" (b),
 // the first page of monster names (a), then a monster on that page.
@@ -1022,6 +1099,7 @@ const testCase tests_progression[] = {
 
     { "BR88010_normal_mode_takes_full_damage",     normal_damage_setup,     NULL, normal_mode_takes_full_damage },
     { "BR88010_easy_mode_reduces_damage",          easy_mode_damage_setup,  NULL, easy_mode_reduces_damage },
+    { "BR90722_easy_mode_announces_income_tax",    enableEasyModeThroughCommand, NULL, easy_mode_announces_income_tax },
 
     { "BR73625_failed_altar_fallback_places_amulet", amulet_altar_fails_setup, NULL, amulet_fallback_placed },
     { "BR73625_failed_altar_spares_a_carried_amulet", amulet_altar_fails_while_carrying_setup, NULL, no_fallback_amulet_when_already_carrying },
@@ -1034,6 +1112,9 @@ const testCase tests_progression[] = {
 
     { "BR64450_created_item_identified_on_request", br64450_accept_identify_setup, NULL, br64450_created_item_is_identified },
     { "BR64450_created_item_unidentified_when_declined", br64450_decline_identify_setup, NULL, br64450_created_item_stays_unknown },
+
+    { "BR88672_created_positive_enchant_item_not_cursed", br88672_positive_enchant_setup, NULL, br88672_positive_enchant_not_cursed },
+    { "BR88672_created_negative_enchant_item_cursed", br88672_negative_enchant_setup, NULL, br88672_negative_enchant_cursed },
 
     { "BR24559_monster_placed_on_open_ground", br24559_open_ground_setup, NULL, br24559_monster_placed_on_open_ground },
     { "BR24559_monster_rejected_on_wall", br24559_wall_for_monster_setup, NULL, br24559_monster_rejected_on_wall },

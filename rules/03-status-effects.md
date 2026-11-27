@@ -60,8 +60,12 @@ Removing armor resets the donning counter to 0 immediately.
 [Items.c:7835-7839](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7835-L7839)
 ----
 BR49074
-Weakening adds 1 to a creature's weakness amount, up to a maximum of 10, and sets the weakened counter to the given duration (keeping whichever is larger).
-[Items.c:3830-3842](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3830-L3842)
+Each time a creature is weakened, its weakness increases by 1, up to a maximum of 10.
+[Items.c:3830-3833](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3830-L3833)
+----
+BR37038
+When a creature that is already weakened is weakened again, the Weakened status lasts for the longer of its remaining time and the new duration.
+[Items.c:3834-3835](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3834-L3835)
 ----
 BR74699
 Weakness reduces the player's effective strength for item requirements, while each point of weakness lowers a monster's defense by 25 (never below 0) and reduces its accuracy and damage.
@@ -104,8 +108,9 @@ While the player is hallucinating and not telepathic, monsters the player can se
 [Monsters.c:255-282](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L255-L282)
 ----
 BR13847
-While the player is hallucinating, item descriptions are replaced with hallucinated ones.
+While the player is hallucinating, an item lying on the floor is named after a randomly chosen item in the status line and in the sidebar.
 [Movement.c:131-138](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Movement.c#L131-L138)
+[IO.c:4829-4832](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L4829-L4832)
 ----
 BR74771
 While levitating, a creature does not fall into chasms or through trapdoors.
@@ -168,8 +173,8 @@ Gaining levitation immediately releases the player from any monster holding them
 [Items.c:6772-6775](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6772-L6775) [Items.c:7328-7331](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7328-L7331)
 ----
 BR50918
-Slowing a creature sets the slow counter to the given duration, clears any haste, and doubles its movement and attack time so it acts at half speed.
-[Items.c:3908-3920](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3908-L3920)
+A slowed creature acts at half its normal speed.
+[Items.c:3907-3917](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3907-L3917) [Items.c:3171-3186](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3171-L3186)
 ----
 BR37844
 For the player the slow multiplier is applied when encumbrance is recomputed: halved speed when hasted, doubled speed when slowed.
@@ -188,8 +193,12 @@ When the haste counter reaches 0 the creature's normal movement and attack speed
 [Time.c:2025-2030](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L2025-L2030) [Monsters.c:1860-1866](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1860-L1866)
 ----
 BR28481
-Haste and slow are mutually exclusive: applying either one clears the other.
-[Items.c:3908-3934](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3908-L3934)
+Applying slow to a hasted creature immediately ends the haste effect.
+[Items.c:3907-3910](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3907-L3910)
+----
+BR25804
+Applying haste to a slowed creature immediately ends the slow effect.
+[Items.c:3921-3924](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3921-L3924)
 ----
 BR84218
 Each turn a confused player's confusion wears off by one turn, and when it expires they are told they no longer feel confused.
@@ -296,8 +305,8 @@ A panacea-style heal also reduces hallucination, confusion, nausea, and slow to 
 [Items.c:3939-3956](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3939-L3956) [Items.c:3961-3967](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3961-L3967)
 ----
 BR45733
-A bolt of poison adds poison with a concentration increment of 1 and a duration scaled to the bolt's magnitude.
-[Items.c:4571-4573](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4571-L4573)
+A poison bolt poisons any creature it strikes that is not inanimate or invulnerable, making its poison deal 1 more damage per turn and poisoning it for 5 turns, with the duration growing by about 30% for each point of the staff's enchantment above +2.
+[Items.c:4540-4556](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4540-L4556) [PowerTables.c:60-76](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L60-L76)
 ----
 BR55761
 A monster with the poisons ability converts its melee damage into poison, dealing only 1 point of direct damage and applying the full amount as poison.

@@ -7,12 +7,14 @@
 // for Wizard mode, the opacity menu buttons are painted with, the
 // decorative random-number stream button painting uses, the reach of a pile
 // of unicorn poop's rainbow glow, the radius and edge brightness of a crystal
-// wall's glow, where a guardian charm places its guardian, the lich and
-// phylactery summoning cycle, and how gas stranded on a square that cannot
-// hold it is shared among its neighbours.
+// wall's and a sacred glyph's glow, where a guardian charm places its
+// guardian, the lich and phylactery summoning cycle, how gas stranded on
+// a square that cannot hold it is shared among its neighbours, and how
+// vulnerability armor doubles the damage of a thrown weapon.
 //
-// Omitted are everything that needs a recording or a run history, neither of
-// which the pending rules describe headlessly.
+// The recording save rule below is observable through the framework's
+// recording helpers, so it is covered too.  Omitted is anything that needs a
+// run history, which the pending rules do not describe headlessly.
 
 #include "TestFramework.h"
 #include "Globals.h"
@@ -513,6 +515,72 @@ static boolean br27383_crystal_wall_glow_radius_and_edge(void) {
 }
 
 // ============================================================
+// BR31796 — a sacred glyph glows over a radius of 3 tiles,
+// fading to nothing at the edge of the glow.
+//
+// The level is stripped to bare floor and the miner's light
+// reduced to its two-tile minimum, so the probes eight tiles
+// away are dark without the glyph.  With the glyph, the tiles
+// one and two steps away are lit and dim with distance, while
+// the tile three steps away and the one beyond it stay dark:
+// the glow reaches three tiles and dies out at its edge.
+// ============================================================
+
+#define BR31796_PROBE_TILES 4
+
+static pos br31796_source;
+static int br31796_baseline[BR31796_PROBE_TILES + 1];
+static int br31796_lit[BR31796_PROBE_TILES + 1];
+
+static void br31796_setup(void) {
+    clearMonsters();
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            setTerrain(posAt(x, y), FLOOR);
+        }
+    }
+    setPlayerPos(posAt(levelWidth() / 2, levelHeight() / 2));
+    // The miner's light bottoms out at two tiles, which cannot reach the
+    // probes eight tiles away.
+    setLightMultiplier(0);
+
+    br31796_source = posOffset(getPlayerPos(), 8, 0);
+    recomputeLighting();
+    for (int d = 0; d <= BR31796_PROBE_TILES; d++) {
+        br31796_baseline[d] = lightAt(posOffset(br31796_source, d, 0));
+    }
+
+    setTerrain(br31796_source, SACRED_GLYPH);
+    recomputeLighting();
+    for (int d = 0; d <= BR31796_PROBE_TILES; d++) {
+        br31796_lit[d] = lightAt(posOffset(br31796_source, d, 0));
+    }
+}
+
+static boolean br31796_sacred_glyph_glow_radius_and_edge(void) {
+    for (int d = 0; d <= BR31796_PROBE_TILES; d++) {
+        TEST_ASSERT_EQ(br31796_baseline[d], 0,
+                       "control: without the glyph nothing lights the probe tiles");
+    }
+
+    TEST_ASSERT(br31796_lit[0] > 0,
+                "a sacred glyph should glow on its own tile");
+    TEST_ASSERT(br31796_lit[1] > 0,
+                "a tile one step away should lie inside the three-tile glow");
+    TEST_ASSERT(br31796_lit[2] > 0,
+                "a tile two steps away should lie inside the three-tile glow");
+    TEST_ASSERT(br31796_lit[1] < br31796_lit[0],
+                "the glow should fade as it moves away from the glyph");
+    TEST_ASSERT(br31796_lit[2] < br31796_lit[1],
+                "the glow should keep fading toward its edge");
+    TEST_ASSERT_EQ(br31796_lit[3], 0,
+                   "a sacred glyph should fade to nothing at its three-tile edge");
+    TEST_ASSERT_EQ(br31796_lit[4], 0,
+                   "nothing four tiles from the glyph should be lit");
+    return !testFailed;
+}
+
+// ============================================================
 // BR33689 — the first time the vulnerability armor's rune takes
 // effect, the game tells you "your <armor> pulses and you are
 // wracked with pain!" and the armor is identified; once the rune
@@ -570,6 +638,53 @@ static boolean br33689_first_trigger_announces_and_identifies(void) {
                 "control: the second blow should land");
     TEST_ASSERT(!br33689_secondMessage,
                 "once the rune is known, triggering it again should produce no message");
+    return !testFailed;
+}
+
+// ============================================================
+// BR33558 — vulnerability armor doubles the damage its wearer takes
+// from a thrown weapon, not just from melee blows.
+//
+// The thrown-weapon hit path resolves the blow through the armor-rune
+// handler with the melee flag clear.  This test feeds a fixed amount of
+// damage through that same path while wearing vulnerability armor, so
+// the doubling (and not the hit roll or the weapon's own damage roll)
+// is what the assertion observes.  A second case wears armor with a
+// different rune and requires the damage to pass through unchanged,
+// showing the doubling belongs to the vulnerability rune.
+// ============================================================
+
+#define BR33558_THROWN_DAMAGE 7
+
+static creature *br33558_thrower;
+static int br33558_damageWithVulnerability;
+static int br33558_damageWithOtherRune;
+
+static void br33558_vulnerability_setup(void) {
+    clearArena();
+    givePlayerRunicArmor(CHAIN_MAIL, A_VULNERABILITY, 1, true);
+    br33558_thrower = placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 2, 0));
+    br33558_damageWithVulnerability =
+        damageAfterArmorRuneForThrownWeapon(br33558_thrower, BR33558_THROWN_DAMAGE);
+}
+
+static boolean br33558_vulnerability_doubles_thrown_damage(void) {
+    TEST_ASSERT_EQ(br33558_damageWithVulnerability, BR33558_THROWN_DAMAGE * 2,
+                   "vulnerability armor should double the damage taken from a thrown weapon");
+    return !testFailed;
+}
+
+static void br33558_other_rune_setup(void) {
+    clearArena();
+    givePlayerRunicArmor(CHAIN_MAIL, A_RESPIRATION, 1, true);
+    br33558_thrower = placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 2, 0));
+    br33558_damageWithOtherRune =
+        damageAfterArmorRuneForThrownWeapon(br33558_thrower, BR33558_THROWN_DAMAGE);
+}
+
+static boolean br33558_other_armor_rune_leaves_thrown_damage_alone(void) {
+    TEST_ASSERT_EQ(br33558_damageWithOtherRune, BR33558_THROWN_DAMAGE,
+                   "armor with a different rune should not change the damage from a thrown weapon");
     return !testFailed;
 }
 
@@ -1104,6 +1219,252 @@ static boolean br35743_wisp_light_reaches_four_to_eight_tiles(void) {
 }
 
 // ============================================================
+// BR39783 — An ifrit carries a blue light reaching 3 to 6 tiles
+// around it that flickers with every screen refresh.
+//
+// The light the ifrit's catalog entry names is asked about
+// directly: it must be red-and-green-poor blue, reach at least
+// three tiles, and re-shade on refresh.  The light actually
+// painted on open floor is then measured around a lone ifrit:
+// across many refreshes it must reach every extent from three to
+// six tiles, never less or more, and must always keep a blue
+// shade.
+// ============================================================
+
+#define BR39783_TRIALS 128
+
+static creature *br39783_ifrit;
+static pos br39783_source;
+static int br39783_extentCounts[12];
+static boolean br39783_colorVaries;
+static boolean br39783_alwaysBlue;
+static int br39783_sourceDark;
+static int br39783_baselineLight;
+
+static void br39783_setup(void) {
+    clearMonsters();
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            setTerrain(posAt(x, y), FLOOR);
+        }
+    }
+    // Keep the miner's light away from the probes and tiny.
+    setPlayerPos(posAt(10, 14));
+    setLightMultiplier(0);
+    br39783_source = posAt(50, 14);
+
+    for (int distance = 0; distance < 12; distance++) {
+        br39783_extentCounts[distance] = 0;
+    }
+
+    recomputeLighting();
+    br39783_baselineLight = 0;
+    for (int distance = 0; distance < 12; distance++) {
+        br39783_baselineLight += lightAt(posOffset(br39783_source, distance, 0));
+    }
+
+    br39783_ifrit = placeHostileMonster(MK_IFRIT, br39783_source);
+    unsigned long firstColor = 0;
+    br39783_colorVaries = false;
+    br39783_alwaysBlue = true;
+    br39783_sourceDark = 0;
+
+    for (int trial = 0; trial < BR39783_TRIALS; trial++) {
+        recomputeLighting();
+
+        int red, green, blue;
+        lightColorAt(br39783_source, &red, &green, &blue);
+        unsigned long color = ((unsigned long) (unsigned short) red << 32)
+                            | ((unsigned long) (unsigned short) green << 16)
+                            | (unsigned long) (unsigned short) blue;
+        if (trial == 0) {
+            firstColor = color;
+        } else if (color != firstColor) {
+            br39783_colorVaries = true;
+        }
+        if (!(blue > red && blue > green)) {
+            br39783_alwaysBlue = false;
+        }
+        if (lightAt(br39783_source) <= 0) {
+            br39783_sourceDark++;
+        }
+
+        int farthest = -1;
+        for (int distance = 1; distance < 12; distance++) {
+            if (lightAt(posOffset(br39783_source, distance, 0)) > 0) {
+                farthest = distance;
+            }
+        }
+        if (farthest >= 0) {
+            br39783_extentCounts[farthest]++;
+        }
+    }
+}
+
+static boolean br39783_ifrit_light_is_flickering_blue_three_to_six_tiles(void) {
+    TEST_ASSERT(br39783_ifrit != NULL, "the ifrit should be placed");
+
+    int red, green, blue;
+    monsterGlowLightColorComponents(br39783_ifrit, &red, &green, &blue);
+    TEST_ASSERT(blue > red && blue > green,
+                "the ifrit's light should be blue (blue stronger than red and green)");
+    TEST_ASSERT_EQ((int) (monsterGlowLightRadius(br39783_ifrit) * 100 + 0.5), 300,
+                   "the ifrit's light should reach at least three tiles");
+    TEST_ASSERT(monsterGlowLightFlickers(br39783_ifrit),
+                "the ifrit's light should flicker on every refresh");
+
+    TEST_ASSERT_EQ(br39783_baselineLight, 0,
+                   "control: bare floor should cast no light at the probes");
+    TEST_ASSERT_EQ(br39783_sourceDark, 0,
+                   "the ifrit should always glow on its own tile");
+
+    TEST_ASSERT(br39783_extentCounts[2] > 0,
+                "the blue light should sometimes reach only three tiles including its source");
+    TEST_ASSERT(br39783_extentCounts[3] > 0,
+                "the blue light should sometimes reach four tiles including its source");
+    TEST_ASSERT(br39783_extentCounts[4] > 0,
+                "the blue light should sometimes reach five tiles including its source");
+    TEST_ASSERT(br39783_extentCounts[5] > 0,
+                "the blue light should sometimes reach all six tiles including its source");
+    TEST_ASSERT_EQ(br39783_extentCounts[1], 0,
+                   "the blue light should never reach less than three tiles");
+    TEST_ASSERT_EQ(br39783_extentCounts[6], 0,
+                   "the blue light should never reach a seventh tile");
+    TEST_ASSERT_EQ(br39783_extentCounts[11], 0,
+                   "the blue light should never reach twelve tiles");
+    TEST_ASSERT(br39783_colorVaries,
+                "the blue light should be re-shaded on every refresh");
+    TEST_ASSERT(br39783_alwaysBlue,
+                "the ifrit's light should always be blue (blue stronger than red and green)");
+    return !testFailed;
+}
+
+// ============================================================
+// BR29777 — Spectral images that appear at your side cast a steady
+// pink-red light reaching 3.5 tiles, lighting the squares where
+// they fight.
+//
+// Multiplicity armor is made to flash, and the images it conjures
+// are asked about the light they carry: it must be red-dominant
+// with a pink tint (blue above green), reach exactly 3.5 tiles,
+// and keep the same shade on every refresh.  A second test puts a
+// spectral image on open floor and measures the light actually
+// painted on the squares around it.
+// ============================================================
+
+static creature *br29777_attacker;
+static int br29777_imagesBefore;
+static int br29777_attempts;
+static pos br29777_source;
+static int br29777_baseline[5];
+static int br29777_lit[5];
+static unsigned long br29777_firstColor;
+static boolean br29777_colorVaries;
+
+static void br29777_conjure_setup(void) {
+    clearArena();
+    givePlayerRunicArmor(LEATHER_ARMOR, A_MULTIPLICITY, 20, true);
+    br29777_imagesBefore = countMonstersOfType(MK_SPECTRAL_IMAGE);
+    br29777_attacker = placeHostileMonster(MK_GOBLIN, posOffset(getPlayerPos(), 1, 0));
+    // A paralyzed defender is always hit, so each blow gives the armor its
+    // chance to flash without depending on the goblin's accuracy.
+    applyStatusToPlayer(STATUS_PARALYZED, 1000);
+    br29777_attempts = 0;
+}
+
+static boolean br29777_conjure_step(void) {
+    setPlayerHealth(playerMaxHealth());
+    monsterAttacksPlayer(br29777_attacker);
+    br29777_attempts++;
+    return countMonstersOfType(MK_SPECTRAL_IMAGE) <= br29777_imagesBefore;
+}
+
+static boolean br29777_conjured_image_light_is_pink_red_steady_3_5_tiles(void) {
+    creature *image = findMonster(MK_SPECTRAL_IMAGE);
+
+    TEST_ASSERT(br29777_attempts > 0 && br29777_attempts < 10000,
+                "control: multiplicity armor should flash within the step limit");
+    TEST_ASSERT(image != NULL,
+                "multiplicity armor should conjure at least one spectral image");
+    if (image == NULL) {
+        return !testFailed;
+    }
+
+    TEST_ASSERT(strcmp(monsterGlowLightColorName(image), "spectral image pink-red") == 0,
+                "a spectral image's light should be the pink-red conjured-image light");
+
+    int red, green, blue;
+    monsterGlowLightColorComponents(image, &red, &green, &blue);
+    TEST_ASSERT(red > green && red > blue,
+                "the spectral image's light should be red-dominant");
+    TEST_ASSERT(blue > green,
+                "the spectral image's red light should have a pink (blue) tint");
+
+    TEST_ASSERT_EQ((int) (monsterGlowLightRadius(image) * 100 + 0.5), 350,
+                   "the spectral image's light should reach 3.5 tiles");
+    TEST_ASSERT(!monsterGlowLightFlickers(image),
+                "the spectral image's light should be steady, not re-rolled on refresh");
+    return !testFailed;
+}
+
+static void br29777_illumination_setup(void) {
+    clearMonsters();
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            setTerrain(posAt(x, y), FLOOR);
+        }
+    }
+    // Keep the miner's light away from the probes and tiny.
+    setPlayerPos(posAt(10, 14));
+    setLightMultiplier(0);
+    br29777_source = posAt(50, 14);
+
+    recomputeLighting();
+    for (int distance = 0; distance <= 4; distance++) {
+        br29777_baseline[distance] = lightAt(posOffset(br29777_source, distance, 0));
+    }
+
+    placeHostileMonster(MK_SPECTRAL_IMAGE, br29777_source);
+
+    br29777_firstColor = 0;
+    br29777_colorVaries = false;
+    for (int trial = 0; trial < 64; trial++) {
+        recomputeLighting();
+        int red, green, blue;
+        lightColorAt(br29777_source, &red, &green, &blue);
+        unsigned long color = ((unsigned long) (unsigned short) red << 32)
+                            | ((unsigned long) (unsigned short) green << 16)
+                            | (unsigned long) (unsigned short) blue;
+        if (trial == 0) {
+            br29777_firstColor = color;
+        } else if (color != br29777_firstColor) {
+            br29777_colorVaries = true;
+        }
+    }
+    for (int distance = 0; distance <= 4; distance++) {
+        br29777_lit[distance] = lightAt(posOffset(br29777_source, distance, 0));
+    }
+}
+
+static boolean br29777_spectral_image_light_reaches_three_tiles(void) {
+    TEST_ASSERT_EQ(br29777_baseline[0] + br29777_baseline[1] + br29777_baseline[2]
+                       + br29777_baseline[3] + br29777_baseline[4], 0,
+                   "control: bare floor should cast no light at the probes");
+
+    for (int distance = 0; distance <= 3; distance++) {
+        char msg[160];
+        snprintf(msg, sizeof(msg),
+                 "a spectral image should light the square %d tiles from it", distance);
+        TEST_ASSERT(br29777_lit[distance] > br29777_baseline[distance], msg);
+    }
+    TEST_ASSERT_EQ(br29777_lit[4], br29777_baseline[4],
+                   "a 3.5-tile light should not reach a square four tiles away");
+    TEST_ASSERT(!br29777_colorVaries,
+                "the spectral image's light should keep the same shade on every refresh");
+    return !testFailed;
+}
+
+// ============================================================
 // BR29041 — a bolt from a staff of poison poisons the creature it hits
 // for 5 turns at +2 enchantment or lower, and each enchantment level
 // above that lengthens the poisoning by about 30% (5 × 1.3^(enchantment
@@ -1264,6 +1625,35 @@ static void br40200_setup(void) {
 static boolean br40200_message_explains_paralyzed_defender(void) {
     TEST_ASSERT(messageWasShown("while it is paralyzed"),
                 "a blow on a paralyzed defender should report that it was struck while paralyzed");
+    return !testFailed;
+}
+
+// ============================================================
+// BR18636 — when a blow lands on a sleeping defender, the combat
+// message explains that the defender was struck in its sleep.
+//
+// A sleeping rat is always hit and, with plenty of health, survives
+// the guaranteed triple-damage blow, so the surviving-defender
+// message is the one that reaches the log.  The message is buffered
+// until the turn ends, so a rest flushes it before the clause is
+// read back.
+// ============================================================
+
+static void br18636_setup(void) {
+    clearMonsters();
+    setArenaRadius(4, FLOOR);
+    const pos targetPos = posOffset(getPlayerPos(), 1, 0);
+    creature *target = placeHostileMonster(MK_RAT, targetPos);
+    revealCell(targetPos);
+    setMonsterHealth(target, 100); // survive the guaranteed triple-damage blow
+    putMonsterToSleep(target);
+    playerAttacksMonster(target);
+    restOneTurn(); // the turn's end flushes the buffered combat message
+}
+
+static boolean br18636_message_explains_sleeping_defender(void) {
+    TEST_ASSERT(messageWasShown("in its sleep"),
+                "a blow on a sleeping defender should report that it was struck in its sleep");
     return !testFailed;
 }
 
@@ -1846,6 +2236,225 @@ static boolean br40052_zero_level_seed_becomes_depth_plus_one(void) {
 }
 
 // ============================================================
+// BR37990 — a game started from a seed larger than 32 bits uses
+// the whole seed, so two games whose seeds differ only in their
+// upper 32 bits still produce different dungeon layouts.
+//
+// Two master seeds share their lower 32 bits and differ only
+// above bit 32, so both take the 64-bit level-seed draw.  Each
+// game's level seeds and the terrain of its first level are
+// recorded.  If the game truncated the master seed to 32 bits,
+// both games would replay the same draws: their level seeds and
+// their first dungeon would be identical.  The test therefore
+// requires the level seeds to differ somewhere and the first
+// level's terrain to differ, both of which fail under a 32-bit
+// truncation.
+// ============================================================
+
+#define BR37990_LOW_SEED_BITS 4242ULL
+#define BR37990_SEED_CAPACITY 64
+
+static unsigned long long br37990_seedsA[BR37990_SEED_CAPACITY];
+static unsigned long long br37990_seedsB[BR37990_SEED_CAPACITY];
+static int br37990_countA, br37990_countB;
+static unsigned long br37990_layoutA, br37990_layoutB;
+
+static void br37990_start(unsigned long long seed,
+                          unsigned long long *seeds, int *count,
+                          unsigned long *layout) {
+    startGameWithSeed(seed);
+    TEST_ASSERT(dungeonSeed() == seed,
+                "control: the game should run from the requested master seed");
+    *count = dungeonLevelSeeds(seeds, BR37990_SEED_CAPACITY);
+    *layout = levelTerrainFingerprint();
+}
+
+static void br37990_setup(void) {
+    unsigned long long seedA = (1ULL << 32) | BR37990_LOW_SEED_BITS;
+    unsigned long long seedB = (2ULL << 32) | BR37990_LOW_SEED_BITS;
+
+    TEST_ASSERT((seedA & 0xffffffffULL) == (seedB & 0xffffffffULL),
+                "control: the two master seeds should differ only above bit 32");
+    br37990_start(seedA, br37990_seedsA, &br37990_countA, &br37990_layoutA);
+    br37990_start(seedB, br37990_seedsB, &br37990_countB, &br37990_layoutB);
+}
+
+static boolean br37990_upper_seed_bits_change_dungeon_layout(void) {
+    TEST_ASSERT_EQ(br37990_countA, br37990_countB,
+                   "both games should reserve the same number of level seeds");
+    TEST_ASSERT(br37990_countA >= 2,
+                "control: the dungeon should reserve seeds for several levels");
+
+    boolean levelSeedDiffers = false;
+    for (int i = 0; i < br37990_countA && i < br37990_countB; i++) {
+        if (br37990_seedsA[i] != br37990_seedsB[i]) {
+            levelSeedDiffers = true;
+        }
+    }
+    TEST_ASSERT(levelSeedDiffers,
+                "the upper 32 bits of the master seed should change the levels' seeds");
+    TEST_ASSERT(br37990_layoutA != br37990_layoutB,
+                "two seeds differing only in their upper 32 bits should build different dungeons");
+    return !testFailed;
+}
+
+// ============================================================
+// BR24594 — the down stairs are placed at a random position
+// within the map's interior, and the placement is repeated
+// until the down stairs are at least one third of the map's
+// width away from the up stairs.
+//
+// The dungeon reserves a staircase square for every depth when
+// the run starts, before any of those lower levels is built and
+// its stairs are nudged onto legal wall tiles.  Sampling those
+// reserved squares across several seeds and every depth from 3
+// down isolates the placement draw itself.
+//
+// The first test checks that every reserved down staircase lies
+// on an interior square, never on the border, and that the
+// sampled squares appear in both halves of the map in each
+// direction (a fixed or one-sided placement would fail).  The
+// second test checks the separation constraint: removing it
+// would leave roughly half the sampled placements too close to
+// the up stairs.
+// ============================================================
+
+#define BR24594_SAMPLE_CAPACITY 256
+#define BR24594_SEED_COUNT 3
+
+static const unsigned long long br24594_seeds[BR24594_SEED_COUNT] = {
+    20221016ULL, 7ULL, 424242ULL
+};
+
+static pos br24594_up[BR24594_SAMPLE_CAPACITY];
+static pos br24594_down[BR24594_SAMPLE_CAPACITY];
+static int br24594_separations[BR24594_SAMPLE_CAPACITY];
+static int br24594_sampleCount;
+
+static void br24594_collect_samples(void) {
+    br24594_sampleCount = 0;
+    for (int s = 0; s < BR24594_SEED_COUNT; s++) {
+        startGameWithSeed(br24594_seeds[s]);
+        TEST_ASSERT(dungeonSeed() == br24594_seeds[s],
+                    "control: the game should run from the requested master seed");
+
+        for (int depth = 3;
+             depth <= dungeonDeepestLevel() && br24594_sampleCount < BR24594_SAMPLE_CAPACITY;
+             depth++) {
+            pos upstairs, downstairs;
+            if (!dungeonLevelStairLocations(depth, &upstairs, &downstairs)) {
+                continue;
+            }
+            int separation = dungeonLevelStairSeparation(depth);
+
+            br24594_up[br24594_sampleCount] = upstairs;
+            br24594_down[br24594_sampleCount] = downstairs;
+            br24594_separations[br24594_sampleCount] = separation;
+            br24594_sampleCount++;
+        }
+    }
+    TEST_ASSERT(br24594_sampleCount >= 2 * dungeonDeepestLevel(),
+                "control: the dungeon should reserve staircases on every sampled depth");
+}
+
+static void br24594_setup(void) {
+    br24594_collect_samples();
+}
+
+static boolean br24594_down_stairs_are_interior_and_varied(void) {
+    boolean leftHalf = false, rightHalf = false;
+    boolean topHalf = false, bottomHalf = false;
+    boolean positionsDiffer = false;
+
+    for (int i = 0; i < br24594_sampleCount; i++) {
+        pos down = br24594_down[i];
+        TEST_ASSERT(down.x >= 1 && down.x <= levelWidth() - 2,
+                    "the down stairs should never be placed on the map's left or right border");
+        TEST_ASSERT(down.y >= 1 && down.y <= levelHeight() - 2,
+                    "the down stairs should never be placed on the map's top or bottom border");
+
+        if (down.x <= levelWidth() / 2) {
+            leftHalf = true;
+        } else {
+            rightHalf = true;
+        }
+        if (down.y <= levelHeight() / 2) {
+            topHalf = true;
+        } else {
+            bottomHalf = true;
+        }
+        if (down.x != br24594_down[0].x || down.y != br24594_down[0].y) {
+            positionsDiffer = true;
+        }
+    }
+
+    TEST_ASSERT(leftHalf && rightHalf,
+                "down stairs should be drawn from the whole width of the interior, not one side");
+    TEST_ASSERT(topHalf && bottomHalf,
+                "down stairs should be drawn from the whole height of the interior, not one side");
+    TEST_ASSERT(positionsDiffer,
+                "down stairs should not always occupy the same square");
+    return !testFailed;
+}
+
+static boolean br24594_down_stairs_keep_a_third_width_from_up(void) {
+    TEST_ASSERT(br24594_sampleCount > 0,
+                "control: the dungeon should have reserved staircases to inspect");
+
+    for (int i = 0; i < br24594_sampleCount; i++) {
+        TEST_ASSERT(br24594_separations[i] >= levelWidth() / 3,
+                    "the down stairs should be at least a third of the map's width from the up stairs");
+    }
+    return !testFailed;
+}
+
+// ============================================================
+// BR35125 — while the title screen waits for your choice, the
+// flames are recomputed and the menu redrawn on every pass of
+// the input loop only when the game's window is active; if the
+// window is inactive, the display is left as it was.
+//
+// The framework drives the real title menu and reports the
+// window active or inactive on each input-loop pass.  The first
+// test requires a different frame on every active pass, so a
+// menu that stopped animating fails it.  The second test lets
+// one active pass paint the title screen, then reports the
+// window inactive for several passes and requires the display
+// to remain exactly that frame; a menu that kept redrawing
+// while inactive fails it.  The second test also requires the
+// title screen to have been drawn at all, so a menu that never
+// drew anything cannot pass by standing still.
+// ============================================================
+
+#define BR35125_PASSES 3
+
+static boolean br35125_activeRedrewEveryPass;
+
+static void br35125_active_setup(void) {
+    br35125_activeRedrewEveryPass = titleScreenRedrawsOnEveryActivePass(BR35125_PASSES);
+}
+
+static boolean br35125_redraws_on_every_active_pass(void) {
+    TEST_ASSERT(screenTextContains("New Game"),
+                "control: the title screen should have been drawn");
+    TEST_ASSERT(br35125_activeRedrewEveryPass,
+                "an active title screen should redraw the flames on every input-loop pass");
+    return !testFailed;
+}
+
+static boolean br35125_inactiveHeldFrame;
+
+static void br35125_inactive_setup(void) {
+    br35125_inactiveHeldFrame = titleScreenLeavesDisplayAloneWhileApplicationInactive(BR35125_PASSES);
+}
+
+static boolean br35125_leaves_display_alone_while_inactive(void) {
+    TEST_ASSERT(br35125_inactiveHeldFrame,
+                "an inactive title screen should not recompute or redraw its flames");
+    return !testFailed;
+}
+
+// ============================================================
 // BR36302 — examining an identified weapon of multiplicity
 // also states how many spectral images it would produce if
 // enchanted further, how often they would appear, and how many
@@ -2067,7 +2676,648 @@ static boolean br35620_stranded_gas_splits_evenly_and_loses_remainder(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR35726 — pink jellies are drawn pink, underworms and pools of worm
+// entrails tan, sentinels dark blue, goblin mystics blue, ifrits purple,
+// and phoenixes and their eggs red.
+//
+// Each creature is placed on open floor and its drawn colour is read by
+// role name; a pool of worm entrails is painted on a floor tile and read the
+// same way.  The rule's plain colour word is the exact expected name, so a
+// catalog row that changes colour fails the test even if another monster
+// keeps the old colour.  An ordinary goblin is the control for a monster
+// that has none of these role colours.
+// ============================================================
+
+static creature *br35726_jelly, *br35726_underworm, *br35726_sentinel,
+                *br35726_mystic, *br35726_ifrit, *br35726_phoenix,
+                *br35726_egg, *br35726_goblin;
+static const char *br35726_jellyColor, *br35726_underwormColor,
+                  *br35726_sentinelColor, *br35726_mysticColor,
+                  *br35726_ifritColor, *br35726_phoenixColor,
+                  *br35726_eggColor, *br35726_entrailsColor,
+                  *br35726_goblinColor;
+
+static void br35726_setup(void) {
+    clearArena(); // 5x5 of open floor around the player
+    pos origin = getPlayerPos();
+
+    br35726_jelly = placeHostileMonster(MK_PINK_JELLY, posOffset(origin, -2, -2));
+    br35726_underworm = placeHostileMonster(MK_UNDERWORM, posOffset(origin, -1, -2));
+    br35726_sentinel = placeHostileMonster(MK_SENTINEL, posOffset(origin, 0, -2));
+    br35726_mystic = placeHostileMonster(MK_GOBLIN_MYSTIC, posOffset(origin, 1, -2));
+    br35726_ifrit = placeHostileMonster(MK_IFRIT, posOffset(origin, 2, -2));
+    br35726_phoenix = placeHostileMonster(MK_PHOENIX, posOffset(origin, -2, -1));
+    br35726_egg = placeHostileMonster(MK_PHOENIX_EGG, posOffset(origin, -1, -1));
+    br35726_goblin = placeHostileMonster(MK_GOBLIN, posOffset(origin, 2, -1));
+
+    pos entrails = posOffset(origin, -2, 2);
+    setTerrain(entrails, WORM_BLOOD);
+
+    br35726_jellyColor = monsterDrawColorName(br35726_jelly);
+    br35726_underwormColor = monsterDrawColorName(br35726_underworm);
+    br35726_sentinelColor = monsterDrawColorName(br35726_sentinel);
+    br35726_mysticColor = monsterDrawColorName(br35726_mystic);
+    br35726_ifritColor = monsterDrawColorName(br35726_ifrit);
+    br35726_phoenixColor = monsterDrawColorName(br35726_phoenix);
+    br35726_eggColor = monsterDrawColorName(br35726_egg);
+    br35726_goblinColor = monsterDrawColorName(br35726_goblin);
+    br35726_entrailsColor = terrainDrawColorName(entrails);
+}
+
+static boolean br35726_monsters_and_entrails_have_role_colors(void) {
+    TEST_ASSERT(br35726_jelly && br35726_underworm && br35726_sentinel
+                && br35726_mystic && br35726_ifrit && br35726_phoenix
+                && br35726_egg && br35726_goblin,
+                "precondition: every creature should be placed");
+
+    TEST_ASSERT(strcmp(br35726_jellyColor, "pink") == 0,
+                "a pink jelly should be drawn pink");
+    TEST_ASSERT(strcmp(br35726_underwormColor, "tan") == 0,
+                "an underworm should be drawn tan");
+    TEST_ASSERT(strcmp(br35726_entrailsColor, "tan") == 0,
+                "a pool of worm entrails should be drawn tan");
+    TEST_ASSERT(strcmp(br35726_sentinelColor, "dark blue") == 0,
+                "a sentinel should be drawn dark blue");
+    TEST_ASSERT(strcmp(br35726_mysticColor, "blue") == 0,
+                "a goblin mystic should be drawn blue");
+    TEST_ASSERT(strcmp(br35726_ifritColor, "purple") == 0,
+                "an ifrit should be drawn purple");
+    TEST_ASSERT(strcmp(br35726_phoenixColor, "red") == 0,
+                "a phoenix should be drawn red");
+    TEST_ASSERT(strcmp(br35726_eggColor, "red") == 0,
+                "a phoenix egg should be drawn the same red as the phoenix");
+    TEST_ASSERT(strcmp(br35726_goblinColor, "other") == 0,
+                "control: an ordinary goblin should not be drawn in any of those role colours");
+    return !testFailed;
+}
+
+// ============================================================
+// BR23709 — the inventory list and its item detail box each keep
+// invisible previous and next controls so the up and down arrow
+// keys page through the items.
+//
+// The controls have no label, so the observable behavior is the
+// paging itself.  Three identified potions give a first, middle,
+// and last item.  Down in the list opens the first item; down in
+// the detail box advances to the middle; up in the detail box
+// wraps from the first to the last; and up in the list opens the
+// last item directly.  Asserting the item named on each page
+// makes a dropped or reversed control fail.
+// ============================================================
+
+static char br23709_first[4096];
+static char br23709_second[4096];
+static char br23709_last[4096];
+static char br23709_wrapped[4096];
+
+static void br23709_setup(void) {
+    clearArena();
+    // Leave only the three potions, so their order is deterministic.
+    removePackFood();
+    removePackItems(WEAPON, DAGGER);
+    removePackItems(WEAPON, DART);
+    removePackItems(ARMOR, LEATHER_ARMOR);
+    givePlayerItem(POTION, POTION_LIFE, 0);
+    givePlayerItem(POTION, POTION_STRENGTH, 0);
+    givePlayerItem(POTION, POTION_TELEPATHY, 0);
+}
+
+static boolean br23709_arrows_page_item_details(void) {
+    snprintf(br23709_first, sizeof(br23709_first), "%s",
+             inventoryDetailAfterKeys(DOWN_ARROW, DOWN_ARROW, 0));
+    snprintf(br23709_second, sizeof(br23709_second), "%s",
+             inventoryDetailAfterKeys(DOWN_ARROW, DOWN_ARROW, 1));
+    snprintf(br23709_last, sizeof(br23709_last), "%s",
+             inventoryDetailAfterKeys(UP_ARROW, UP_ARROW, 0));
+    snprintf(br23709_wrapped, sizeof(br23709_wrapped), "%s",
+             inventoryDetailAfterKeys(DOWN_ARROW, UP_ARROW, 1));
+
+    TEST_ASSERT(strstr(br23709_first, "potion of life") != NULL,
+                "the down arrow in the inventory should open the first item's details");
+    TEST_ASSERT(strstr(br23709_second, "potion of strength") != NULL,
+                "the down arrow in the detail box should advance to the next item");
+    TEST_ASSERT(strstr(br23709_last, "potion of telepathy") != NULL,
+                "the up arrow in the inventory should open the last item's details");
+    TEST_ASSERT(strstr(br23709_wrapped, "potion of telepathy") != NULL,
+                "the up arrow in the detail box should wrap from the first item to the last");
+    TEST_ASSERT(strcmp(br23709_first, br23709_second) != 0,
+                "paging down should change which item's details are shown");
+    TEST_ASSERT(strcmp(br23709_first, br23709_wrapped) != 0,
+                "paging up from the first item should change which details are shown");
+    return !testFailed;
+}
+
+// ============================================================
+// BR34530 — a staff of blinking's targeting line reaches two
+// spaces plus twice its net enchantment once the staff is
+// identified or its maximum charges are known, and is unlimited
+// until then.
+//
+// The test stands in an open, revealed corridor and aims eleven
+// cells east with the staff's own targeting prompt.  The frame
+// captured while the line is drawn shows which cells it lit: a
+// cell inside the cap must be lit and a cell beyond it must not.
+// The unlimited control lights a cell the capped staff leaves
+// dark, so a missing or over-long line fails either arm.
+// ============================================================
+
+static const int br34530_targetDistance = 11;
+
+static void br34530_arena_setup(void) {
+    setPlayerPos(posAt(levelWidth() / 2, levelHeight() / 2));
+    setArenaRadius(12, FLOOR);
+    clearFloorItems();
+    for (int i = 1; i <= br34530_targetDistance; i++) {
+        revealCell(posOffset(getPlayerPos(), i, 0));
+    }
+}
+
+static void br34530_identified_one_setup(void) {
+    br34530_arena_setup();
+    givePlayerItem(STAFF, STAFF_BLINKING, 1);
+}
+
+static void br34530_identified_three_setup(void) {
+    br34530_arena_setup();
+    givePlayerItem(STAFF, STAFF_BLINKING, 3);
+}
+
+static void br34530_unidentified_setup(void) {
+    br34530_arena_setup();
+    item *staff = givePlayerUnidentifiedItem(STAFF, STAFF_BLINKING, 1);
+    TEST_ASSERT(staff != NULL, "setup: the unidentified staff should be created");
+    if (staff != NULL) {
+        TEST_ASSERT(!itemIsIdentified(staff),
+                    "precondition: the staff's kind should still be unknown");
+    }
+}
+
+static void br34530_max_charges_known_setup(void) {
+    br34530_arena_setup();
+    item *staff = givePlayerUnidentifiedItem(STAFF, STAFF_BLINKING, 1);
+    TEST_ASSERT(staff != NULL, "setup: the staff should be created");
+    if (staff != NULL) {
+        TEST_ASSERT(!itemIsIdentified(staff),
+                    "precondition: only the maximum charges should be known, not the staff's identity");
+        markItemMaxChargesKnown(staff);
+    }
+}
+
+static boolean br34530_aim_step(void) {
+    for (int i = 0; i < br34530_targetDistance; i++) {
+        queueKeystroke(RIGHT_KEY, false, false);
+    }
+    applyPackItem(STAFF, STAFF_BLINKING);
+    // The last frame the targeting prompt captured has the line drawn.
+    rememberScreenColors();
+    runQueuedInputThroughMainLoop();
+    return false;
+}
+
+static boolean br34530_identified_one_has_four_space_line(void) {
+    TEST_ASSERT(screenCellColorsChanged(posOffset(getPlayerPos(), 2, 0)),
+                "the identified staff's line should light the cells inside its range");
+    TEST_ASSERT(screenCellColorsChanged(posOffset(getPlayerPos(), 4, 0)),
+                "an enchantment of one should allow two plus twice one, four spaces");
+    TEST_ASSERT(!screenCellColorsChanged(posOffset(getPlayerPos(), 5, 0)),
+                "the line should stop at four spaces for an enchantment of one");
+    return !testFailed;
+}
+
+static boolean br34530_identified_three_has_eight_space_line(void) {
+    TEST_ASSERT(screenCellColorsChanged(posOffset(getPlayerPos(), 7, 0)),
+                "the identified staff's line should light the cells inside its range");
+    TEST_ASSERT(screenCellColorsChanged(posOffset(getPlayerPos(), 8, 0)),
+                "an enchantment of three should allow two plus twice three, eight spaces");
+    TEST_ASSERT(!screenCellColorsChanged(posOffset(getPlayerPos(), 9, 0)),
+                "the line should stop at eight spaces for an enchantment of three");
+    return !testFailed;
+}
+
+static boolean br34530_unidentified_has_unlimited_line(void) {
+    TEST_ASSERT(screenCellColorsChanged(posOffset(getPlayerPos(), 2, 0)),
+                "the unidentified staff's line should be drawn");
+    TEST_ASSERT(screenCellColorsChanged(posOffset(getPlayerPos(), 10, 0)),
+                "an unidentified staff should not limit the line to its enchantment-based range");
+    return !testFailed;
+}
+
+static boolean br34530_known_max_charges_has_capped_line(void) {
+    TEST_ASSERT(screenCellColorsChanged(posOffset(getPlayerPos(), 2, 0)),
+                "the line should light the cells inside the known range");
+    TEST_ASSERT(!screenCellColorsChanged(posOffset(getPlayerPos(), 5, 0)),
+                "learning the staff's maximum charges should restore the enchantment-based cap");
+    return !testFailed;
+}
+
+// ============================================================
+// BR41110 — dismissing the help screen puts the previous display
+// back exactly as it was
+//
+// The framework opens the help screen over the dungeon, checks that its
+// command list was actually drawn in the frame the engine waits on, then
+// dismisses it and compares every screen cell with the frame from before.
+// The "help was shown" assertion keeps the restore check from passing when
+// the help screen never appeared.
+// ============================================================
+
+static boolean br41110_helpWasShown;
+static boolean br41110_displayRestored;
+
+static void br41110_setup(void) {
+    setArenaRadius(4, FLOOR);
+    restOneTurn(); // settle the map and message display before the snapshot
+}
+
+static boolean br41110_step(void) {
+    br41110_displayRestored = helpScreenRestoresPreviousDisplay();
+    br41110_helpWasShown = helpScreenWasShown();
+    return false;
+}
+
+static boolean br41110_verify(void) {
+    TEST_ASSERT(br41110_helpWasShown,
+                "the help screen should draw its command list while it waits");
+    TEST_ASSERT(br41110_displayRestored,
+                "dismissing the help screen should put the previous display back exactly");
+    return !testFailed;
+}
+
+// ============================================================
+// BR20494 — while a recording is being played back, saving the
+// recording without prompting writes nothing at all: no file is
+// created or replaced and no message appears.
+//
+// The same automatic save outside playback is the control: it writes a
+// recording file, proving the helper can observe a save that happens.  With
+// the game in playback the save must write no file and leave the message log
+// empty.  Both attempts use the framework's recording helpers, which hide the
+// engine's file naming and playback state.
+// ============================================================
+
+static boolean br20494_savedOutsidePlayback;
+static boolean br20494_savedDuringPlayback;
+
+static void br20494_control_setup(void) {
+    clearMessages();
+    beginTestRecording();
+    br20494_savedOutsidePlayback = saveRecordingWithoutPromptWritesFile();
+}
+
+static boolean br20494_control_verify(void) {
+    TEST_ASSERT(br20494_savedOutsidePlayback,
+                "control: outside playback the same save should write a recording file");
+    return !testFailed;
+}
+
+static void br20494_playback_setup(void) {
+    beginTestRecording();
+    enterPlaybackMode();
+    clearMessages();
+    br20494_savedDuringPlayback = saveRecordingWithoutPromptWritesFile();
+}
+
+static boolean br20494_playback_verify(void) {
+    TEST_ASSERT(isInPlaybackMode(),
+                "precondition: the game should still be replaying a recording");
+    TEST_ASSERT(!br20494_savedDuringPlayback,
+                "saving a recording without a prompt during playback should create or replace no file");
+    TEST_ASSERT(!anyMessageWasShown(),
+                "saving a recording without a prompt during playback should show no message");
+    return !testFailed;
+}
+
+// ============================================================
+// BR93785 — a floor tile stays floor during a cellular automata
+// generation when its live-neighbour count matches a survival
+// condition
+//
+// Two runs differ only in the survival rule for the centre tile of a solid
+// 3x3 block, whose eight neighbours are all live.  With the matching rule
+// the centre stays floor; with the rule not matching that count it is not
+// kept.  The second run is the control that keeps the first from passing
+// when the generation fails to remove any floor tile.
+// ============================================================
+
+static boolean br93785_survivedWithRule;
+static boolean br93785_survivedWithoutRule;
+
+static void br93785_setup(void) {
+    setArenaRadius(2, FLOOR);
+    br93785_survivedWithRule = floorTileSurvivesGeneration(true);
+    br93785_survivedWithoutRule = floorTileSurvivesGeneration(false);
+}
+
+static boolean br93785_verify(void) {
+    TEST_ASSERT(br93785_survivedWithRule,
+                "a floor tile with eight live neighbours should stay floor when the survival rule matches them");
+    TEST_ASSERT(!br93785_survivedWithoutRule,
+                "the same floor tile should not stay floor when the survival rule does not match its neighbours");
+    return !testFailed;
+}
+
+// ============================================================
+// BR32744 — a fleeing ally moves toward whichever neighbouring
+// square is farthest by walking distance from the nearest
+// hostile, not from you.
+//
+// The arena is open floor.  You stand west of the ally and a
+// hostile rat stands east of it, so a step measured from you
+// would carry the ally east toward the rat, while a step
+// measured from the rat carries it west.  Dropping the ally to
+// one hit point makes it flee.  The assertion therefore fails
+// both if the ally does not flee and if it flees from the
+// player instead of from the enemy.  The distance to the rat
+// must also grow, proving the square chosen was strictly safer.
+// ============================================================
+
+static creature *br32744_ally;
+static creature *br32744_enemy;
+static pos br32744_allyStart;
+static pos br32744_enemyLoc;
+static pos br32744_sacredLoc;
+static int br32744_startDistanceFromEnemy;
+
+static void br32744_setup(void) {
+    clearMonsters();
+    setPlayerPos(posAt(levelWidth() / 2, levelHeight() / 2));
+    setArenaRadius(6, FLOOR);
+
+    pos playerLoc = getPlayerPos();
+    br32744_allyStart = posOffset(playerLoc, 3, 0);
+    br32744_enemyLoc = posOffset(playerLoc, 6, 0);
+    br32744_sacredLoc = posOffset(playerLoc, 2, 0);
+
+    // The straight step away from the enemy would be the best one, so put
+    // sacred ground there: the ally must take a diagonal step instead.
+    setTerrain(br32744_sacredLoc, SACRED_GLYPH);
+
+    br32744_ally = spawnMonster(MK_RAT, br32744_allyStart);
+    makeMonsterAlly(br32744_ally);
+    makeMonsterFollowPlayer(br32744_ally);
+    setMonsterHealth(br32744_ally, 1);
+
+    br32744_enemy = placeHostileMonster(MK_RAT, br32744_enemyLoc);
+
+    setPlayerHealth(playerMaxHealth());
+    br32744_startDistanceFromEnemy = pathingDistanceBetween(br32744_allyStart, br32744_enemyLoc, 0);
+}
+
+static boolean br32744_step(void) {
+    monsterTakesTurn(br32744_ally);
+    return false;
+}
+
+static boolean br32744_fleeing_ally_runs_from_the_enemy(void) {
+    pos allyLoc = monsterPosition(br32744_ally);
+
+    TEST_ASSERT(monsterIsAlive(br32744_ally),
+                "control: the ally should survive its own turn");
+    TEST_ASSERT(monsterIsAlive(br32744_enemy),
+                "control: the enemy should still be present");
+    TEST_ASSERT(!posEq(allyLoc, br32744_allyStart),
+                "a weak ally beside an enemy should move rather than stand still");
+    TEST_ASSERT(allyLoc.x < br32744_allyStart.x,
+                "the ally should retreat away from the enemy to its east, not toward the player to its west");
+    TEST_ASSERT(!posEq(allyLoc, getPlayerPos()),
+                "the ally should not step onto your square");
+    TEST_ASSERT(!posEq(allyLoc, br32744_enemyLoc),
+                "the ally should not step onto the enemy's square");
+    TEST_ASSERT(!posEq(allyLoc, br32744_sacredLoc),
+                "the ally should not step onto sacred ground, even when it is the best square");
+    TEST_ASSERT(pathingDistanceBetween(allyLoc, br32744_enemyLoc, 0)
+                    > br32744_startDistanceFromEnemy,
+                "the square the ally moved to should be strictly farther from the enemy");
+    return !testFailed;
+}
+
+// ============================================================
+// BR34188 — when its mechanism is powered, glowing glass pipes
+// char and become inert.
+//
+// The pipe is installed wired into a fresh mechanism.  Before the
+// mechanism is powered it must be glowing and not charred; after the
+// engine's own machine activation it must be charred and no longer
+// glowing.
+// ============================================================
+
+static pos br34188_pipeLoc;
+static boolean br34188_glowingBefore;
+static boolean br34188_charredBefore;
+
+static void br34188_setup(void) {
+    clearArena();
+    br34188_pipeLoc = posOffset(getPlayerPos(), 2, 0);
+    placeGlowingGlassPipeWiredToMechanism(br34188_pipeLoc);
+    br34188_glowingBefore = cellIsGlowingGlassPipe(br34188_pipeLoc);
+    br34188_charredBefore = cellIsCharredGlassPipe(br34188_pipeLoc);
+    powerMechanismIncluding(br34188_pipeLoc);
+}
+
+static boolean br34188_powered_pipe_chars_and_goes_inert(void) {
+    TEST_ASSERT(br34188_glowingBefore,
+                "control: the glass pipes should be glowing before their mechanism is powered");
+    TEST_ASSERT(!br34188_charredBefore,
+                "control: the glass pipes should not be charred before their mechanism is powered");
+    TEST_ASSERT(cellIsCharredGlassPipe(br34188_pipeLoc),
+                "powering the mechanism should char the glowing glass pipes");
+    TEST_ASSERT(!cellIsGlowingGlassPipe(br34188_pipeLoc),
+                "the charred glass pipes should no longer glow");
+    return !testFailed;
+}
+
+// ============================================================
+// BR35576 — a menu button that the mouse is held down on is
+// painted darker, with a dimmed label, and that pressed look
+// replaces the hover tint the same button would otherwise wear.
+//
+// The framework paints one button through the engine's own menu
+// painter three times: with the pointer away, resting on it, and
+// held down on it.  Holding the mouse down leaves the button both
+// focused and depressed, exactly the state a real menu reaches,
+// so the pressed colours are the engine's decision.  The middle
+// of the background and a label character are measured in each
+// state: hover must differ from normal (the control that the
+// pointer state reaches the painter), and pressed must be
+// strictly darker than both normal and hover.
+// ============================================================
+
+static boolean br35576_pressed_button_replaces_hover(void) {
+    const int normalBackground = menuButtonBackgroundBrightness(MENU_BUTTON_POINTER_AWAY);
+    const int hoverBackground = menuButtonBackgroundBrightness(MENU_BUTTON_POINTER_OVER);
+    const int pressedBackground = menuButtonBackgroundBrightness(MENU_BUTTON_POINTER_HELD);
+    const int normalLabel = menuButtonLabelBrightness(MENU_BUTTON_POINTER_AWAY);
+    const int hoverLabel = menuButtonLabelBrightness(MENU_BUTTON_POINTER_OVER);
+    const int pressedLabel = menuButtonLabelBrightness(MENU_BUTTON_POINTER_HELD);
+
+    TEST_ASSERT(hoverBackground > normalBackground,
+                "control: a menu button under the pointer should be painted brighter than an ordinary one");
+    TEST_ASSERT(pressedBackground < normalBackground,
+                "holding the mouse down on a menu button should darken its background");
+    TEST_ASSERT(pressedBackground < hoverBackground,
+                "the pressed background should take the place of the hover tint when the button is held down");
+    TEST_ASSERT(pressedLabel < normalLabel,
+                "holding the mouse down on a menu button should dim its label");
+    TEST_ASSERT(pressedLabel < hoverLabel,
+                "the pressed label should be dimmer than the hover label on the same button");
+    return !testFailed;
+}
+
+// ============================================================
+// BR11468 — every discharge of a wand is counted, and a wand
+// whose charges are not known reports that count in its
+// description as "used once", "used twice", or "used N times".
+//
+// An unidentified wand of teleportation is fired three times at
+// open floor, each time through the ordinary apply command with
+// a queued target, so each shot takes the engine's discharge path.
+// The description is read after each shot: it must name the use
+// count that shot produced, and the wand must still be unknown so
+// the count is the only place the history can come from.  Finally
+// the maximum charges are made known: the description must then
+// show the remaining charge count and no use count at all.
+// ============================================================
+
+#define BR11468_TEXT_SIZE 8192
+
+static item *br11468_wand;
+static int br11468_startCharges;
+static int br11468_chargesAfterOnce;
+static int br11468_chargesAfterTwice;
+static int br11468_chargesAfterThrice;
+static char br11468_before[BR11468_TEXT_SIZE];
+static char br11468_afterOnce[BR11468_TEXT_SIZE];
+static char br11468_afterTwice[BR11468_TEXT_SIZE];
+static char br11468_afterThrice[BR11468_TEXT_SIZE];
+static char br11468_afterChargesKnown[BR11468_TEXT_SIZE];
+
+static void br11468_snapshot(char *dest, size_t size) {
+    snprintf(dest, size, "%s", itemExamineText(br11468_wand));
+}
+
+// Fire the wand at open floor two tiles east.  The two clicks first move the
+// targeting cursor onto the tile and then confirm it, as a player's click
+// would.
+static void br11468_discharge(void) {
+    const pos target = posOffset(getPlayerPos(), 2, 0);
+    queueMapClick(target);
+    queueMapClick(target);
+    applyPackItem(WAND, WAND_TELEPORT);
+}
+
+static void br11468_setup(void) {
+    setPlayerPos(posAt(levelWidth() / 2, levelHeight() / 2));
+    setArenaRadius(4, FLOOR);
+    br11468_wand = givePlayerUnidentifiedItem(WAND, WAND_TELEPORT, 0);
+    TEST_ASSERT(br11468_wand != NULL, "setup: the wand should be created");
+    if (br11468_wand == NULL) {
+        return;
+    }
+    br11468_startCharges = itemCharges(br11468_wand);
+    TEST_ASSERT(br11468_startCharges >= 3,
+                "setup: the wand should start with at least three charges");
+    TEST_ASSERT(!itemIsIdentified(br11468_wand),
+                "precondition: the wand's kind should still be unknown");
+    br11468_snapshot(br11468_before, sizeof(br11468_before));
+
+    br11468_discharge();
+    br11468_chargesAfterOnce = itemCharges(br11468_wand);
+    br11468_snapshot(br11468_afterOnce, sizeof(br11468_afterOnce));
+
+    br11468_discharge();
+    br11468_chargesAfterTwice = itemCharges(br11468_wand);
+    br11468_snapshot(br11468_afterTwice, sizeof(br11468_afterTwice));
+
+    br11468_discharge();
+    br11468_chargesAfterThrice = itemCharges(br11468_wand);
+    br11468_snapshot(br11468_afterThrice, sizeof(br11468_afterThrice));
+
+    markItemMaxChargesKnown(br11468_wand);
+    br11468_snapshot(br11468_afterChargesKnown, sizeof(br11468_afterChargesKnown));
+}
+
+static boolean br11468_uses_recorded_until_charges_known(void) {
+    char expectedCharges[32];
+
+    TEST_ASSERT(br11468_wand != NULL, "setup: the wand should have been created");
+    TEST_ASSERT(br11468_startCharges >= 3,
+                "setup: the wand should have had at least three charges");
+
+    TEST_ASSERT(strstr(br11468_before, "(used") == NULL,
+                "control: a wand that has not been discharged should report no use count");
+    TEST_ASSERT(strstr(br11468_afterOnce, "(used once)") != NULL,
+                "the first discharge should be reported as \"used once\"");
+    TEST_ASSERT(strstr(br11468_afterTwice, "(used twice)") != NULL,
+                "the second discharge should be reported as \"used twice\"");
+    TEST_ASSERT(strstr(br11468_afterThrice, "(used 3 times)") != NULL,
+                "the third discharge should be reported as \"used 3 times\"");
+
+    TEST_ASSERT_EQ(br11468_chargesAfterOnce, br11468_startCharges - 1,
+                   "one discharge should use up one charge");
+    TEST_ASSERT_EQ(br11468_chargesAfterTwice, br11468_startCharges - 2,
+                   "a second discharge should use up a second charge");
+    TEST_ASSERT_EQ(br11468_chargesAfterThrice, br11468_startCharges - 3,
+                   "a third discharge should use up a third charge");
+
+    snprintf(expectedCharges, sizeof(expectedCharges), "[%d]", br11468_chargesAfterThrice);
+    TEST_ASSERT(strstr(br11468_afterChargesKnown, "(used") == NULL,
+                "once the charges are known the description should stop reporting the use count");
+    TEST_ASSERT(strstr(br11468_afterChargesKnown, expectedCharges) != NULL,
+                "once the charges are known the description should show the remaining charge count");
+    TEST_ASSERT(!itemIsIdentified(br11468_wand),
+                "the wand's kind should stay unknown throughout, so the use count is not hidden by identification");
+    return !testFailed;
+}
+
+// ============================================================
+// BR12820 — A creature that is already stuck in entangling terrain
+// is not stuck again, so its remaining 3-7 turns of entanglement
+// are not refreshed by standing in further entangling terrain.
+//
+// The player first steps into a web: the fresh entanglement must
+// last 3-7 turns.  Then the countdown is replaced with a
+// distinctive 20 turns and the web's tile effects are applied
+// again while the player is still standing in it.  Without the
+// already-stuck guard the effect would roll a new 3-7 duration.
+// ============================================================
+
+static int br12820_freshTurns, br12820_remainingBefore, br12820_remainingAfter;
+
+static void br12820_setup(void) {
+    setArenaRadius(4, FLOOR);
+    setTerrain(getPlayerPos(), SPIDERWEB);
+}
+
+static boolean br12820_step(void) {
+    applyTileEffectsToPlayer();
+    br12820_freshTurns = playerStatusTurns(STATUS_STUCK);
+
+    applyStatusToPlayer(STATUS_STUCK, 20);
+    br12820_remainingBefore = playerStatusTurns(STATUS_STUCK);
+    applyTileEffectsToPlayer();
+    br12820_remainingAfter = playerStatusTurns(STATUS_STUCK);
+    return false;
+}
+
+static boolean br12820_already_stuck_keeps_its_countdown(void) {
+    TEST_ASSERT(isPlayerStuck(),
+                "standing in a web should entangle the player");
+    TEST_ASSERT(br12820_freshTurns >= 3 && br12820_freshTurns <= 7,
+                "a fresh entanglement should last 3 to 7 turns");
+    TEST_ASSERT_EQ(br12820_remainingBefore, 20,
+                   "control: the distinctive countdown should be in place");
+    TEST_ASSERT_EQ(br12820_remainingAfter, 20,
+                   "an already-stuck creature should keep its remaining countdown");
+    return !testFailed;
+}
+
 const testCase tests_newrules[] = {
+    { "BR35726_monsters_and_entrails_have_role_colors", br35726_setup, NULL, br35726_monsters_and_entrails_have_role_colors },
+    { "BR41110_help_dismiss_restores_previous_display", br41110_setup, br41110_step, br41110_verify },
+    { "BR93785_floor_survives_matching_cellular_automata_count", br93785_setup, NULL, br93785_verify },
+    { "BR20494_no_recording_saved_during_playback", br20494_playback_setup, NULL, br20494_playback_verify },
+    { "BR20494_save_without_prompt_writes_recording", br20494_control_setup, NULL, br20494_control_verify },
     { "BR29087_turn_counts_diverge_while_paralyzed",      br29087_setup, br29087_step, br29087_turn_counts_diverge_while_paralyzed },
     { "BR14549_change_mode_dialog_describes_wizard_mode", br14549_setup, NULL,         br14549_change_mode_dialog_describes_wizard_mode },
     { "BR12483_translucent_buttons_show_screen_through",  br12483_setup, NULL,         br12483_translucent_buttons_show_screen_through },
@@ -2082,7 +3332,14 @@ const testCase tests_newrules[] = {
 
     { "BR27383_crystal_wall_glow_radius_and_edge", br27383_setup, NULL, br27383_crystal_wall_glow_radius_and_edge },
 
+    { "BR31796_sacred_glyph_glow_radius_and_edge", br31796_setup, NULL, br31796_sacred_glyph_glow_radius_and_edge },
+
     { "BR33689_vulnerability_rune_first_trigger", br33689_setup, NULL, br33689_first_trigger_announces_and_identifies },
+
+    { "BR33558_vulnerability_doubles_thrown_damage",
+      br33558_vulnerability_setup, NULL, br33558_vulnerability_doubles_thrown_damage },
+    { "BR33558_other_armor_rune_leaves_thrown_damage_alone",
+      br33558_other_rune_setup, NULL, br33558_other_armor_rune_leaves_thrown_damage_alone },
 
     { "BR34933_torch_and_candle_light_is_flickering_orange",
       br34933_light_setup, NULL, br34933_torch_and_candle_light_is_flickering_orange },
@@ -2099,14 +3356,37 @@ const testCase tests_newrules[] = {
     { "BR35743_wisp_light_reaches_four_to_eight_tiles",
       br35743_light_setup, NULL, br35743_wisp_light_reaches_four_to_eight_tiles },
 
+    { "BR39783_ifrit_light_is_flickering_blue_three_to_six_tiles",
+      br39783_setup, NULL, br39783_ifrit_light_is_flickering_blue_three_to_six_tiles },
+
+    { "BR29777_spectral_image_light_is_pink_red_steady_3_5_tiles",
+      br29777_conjure_setup, br29777_conjure_step, br29777_conjured_image_light_is_pink_red_steady_3_5_tiles },
+    { "BR29777_spectral_image_light_reaches_three_tiles",
+      br29777_illumination_setup, NULL, br29777_spectral_image_light_reaches_three_tiles },
+
     { "BR29041_poison_staff_duration_scales_with_enchantment",
       br29041_setup, NULL, br29041_poison_staff_duration_scales_with_enchantment },
+
+    { "BR23709_arrows_page_item_details",
+      br23709_setup, NULL, br23709_arrows_page_item_details },
+
+    { "BR34530_identified_one_has_four_space_line",
+      br34530_identified_one_setup, br34530_aim_step, br34530_identified_one_has_four_space_line },
+    { "BR34530_identified_three_has_eight_space_line",
+      br34530_identified_three_setup, br34530_aim_step, br34530_identified_three_has_eight_space_line },
+    { "BR34530_unidentified_has_unlimited_line",
+      br34530_unidentified_setup, br34530_aim_step, br34530_unidentified_has_unlimited_line },
+    { "BR34530_known_max_charges_has_capped_line",
+      br34530_max_charges_known_setup, br34530_aim_step, br34530_known_max_charges_has_capped_line },
 
     { "BR38509_current_streaks_show_only_recent_value",
       br38509_setup, NULL, br38509_current_streaks_show_only_recent },
 
     { "BR40200_paralyzed_defender_hit_message",
       br40200_setup, NULL, br40200_message_explains_paralyzed_defender },
+
+    { "BR18636_sleeping_defender_hit_message",
+      br18636_setup, NULL, br18636_message_explains_sleeping_defender },
 
     { "BR17360_list_shuffle_is_fair",
       br17360_setup, NULL, br17360_shuffle_is_fair },
@@ -2127,6 +3407,19 @@ const testCase tests_newrules[] = {
     { "BR40052_zero_level_seed_becomes_depth_plus_one",
       br40052_zero_setup, NULL, br40052_zero_level_seed_becomes_depth_plus_one },
 
+    { "BR37990_upper_seed_bits_change_dungeon_layout",
+      br37990_setup, NULL, br37990_upper_seed_bits_change_dungeon_layout },
+
+    { "BR24594_down_stairs_are_interior_and_varied",
+      br24594_setup, NULL, br24594_down_stairs_are_interior_and_varied },
+    { "BR24594_down_stairs_keep_a_third_width_from_up",
+      br24594_setup, NULL, br24594_down_stairs_keep_a_third_width_from_up },
+
+    { "BR35125_title_screen_redraws_on_every_active_pass",
+      br35125_active_setup, NULL, br35125_redraws_on_every_active_pass },
+    { "BR35125_title_screen_leaves_display_alone_while_inactive",
+      br35125_inactive_setup, NULL, br35125_leaves_display_alone_while_inactive },
+
     { "BR36302_multiplicity_examine_previews_images",
       br36302_setup, NULL, br36302_examine_previews_stronger_images },
 
@@ -2140,6 +3433,21 @@ const testCase tests_newrules[] = {
       br18004_setup, NULL, br18004_phylactery_cycle_ends_only_when_destroyed },
     { "BR35620_stranded_gas_splits_evenly_and_loses_remainder",
       br35620_setup, br35620_step, br35620_stranded_gas_splits_evenly_and_loses_remainder },
+
+    { "BR32744_fleeing_ally_runs_from_enemy_not_player",
+      br32744_setup, br32744_step, br32744_fleeing_ally_runs_from_the_enemy },
+
+    { "BR34188_powered_pipe_chars_and_goes_inert",
+      br34188_setup, NULL, br34188_powered_pipe_chars_and_goes_inert },
+
+    { "BR35576_pressed_button_replaces_hover",
+      NULL, NULL, br35576_pressed_button_replaces_hover },
+
+    { "BR11468_wand_reports_uses_until_charges_known",
+      br11468_setup, NULL, br11468_uses_recorded_until_charges_known },
+
+    { "BR12820_already_stuck_keeps_its_countdown",
+      br12820_setup, br12820_step, br12820_already_stuck_keeps_its_countdown },
 
     { NULL, NULL, NULL, NULL }
 };

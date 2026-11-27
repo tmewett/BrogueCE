@@ -129,7 +129,7 @@ BR47394
 Items are placed away from hallways and biased toward regions reached only through doors and secret doors, so secret rooms frequently contain several items. [Items.c:610-639](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L610-L639) [Items.c:728-739](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L728-L739)
 ----
 BR27290
-Certain potions and scrolls are "metered": their appearance rate is tracked across the dungeon and adjusted rather than left purely random. [Items.c:572-579](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L572-L579) [Items.c:742-752](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L742-L752)
+A scroll of enchantment is more likely to be placed on each new level the longer you go without finding one, and less likely after one is generated. [Items.c:577-578](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L577-L578) [Items.c:677-682](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L677-L682) [Items.c:742-750](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L742-L750) [GlobalsBrogue.c:624-625](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/variants/GlobalsBrogue.c#L624-L625)
 ----
 BR36742
 Enchant scrolls and potions of strength or life do not spawn from ordinary level population. [Items.c:789-796](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L789-L796)
@@ -192,7 +192,7 @@ BR91656
 A potion of invisibility makes you invisible for a time. [Items.c:7399-7402](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7399-L7402)
 ----
 BR95938
-Reading a scroll consumes it and applies its effect. [Items.c:6990-6992](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6990-L6992) [Items.c:7225-7228](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7225-L7228)
+Reading a scroll consumes it. [Items.c:6828-6832](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6828-L6832)
 ----
 BR50174
 Reading a scroll you know to be cursed, or one flagged as cursed while its magic has been detected, asks for confirmation first. [Items.c:6977-6988](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6977-L6988)
@@ -444,10 +444,13 @@ BR92416
 The Amulet of Yendor is always of benevolent magic; enchanted weapons, armor, and rings read as good or bad magic according to their enchantment, an empty wand reads as neutral, and gold, gems, keys, and other plain items have no magic polarity. [Items.c:7471-7504](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7471-L7504)
 ----
 BR91308
-When throwing, auto-targeting will not select an enemy for a potion you know to be beneficial, nor select a target that is immune to a harmful potion or throwing weapon you have identified. [Items.c:5233-5248](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L5233-L5248)
+When throwing a weapon, auto-targeting considers only enemies and skips any that are invulnerable or immune to that weapon. When throwing a potion, it skips an enemy if the potion is known to be beneficial, or if the potion's kind is identified and it is incineration against a fire-immune enemy or confusion or poison against an inanimate or invulnerable one. [Items.c:5219-5248](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L5219-L5248)
 ----
 BR54814
-Invoking an item command without naming an item opens the inventory so you can pick one; if nothing suitable is available you are told "You have nothing suitable." [Items.c:7592-7629](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7592-L7629) [Items.c:3136-3169](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3136-L3169)
+Invoking an item command without naming an item opens your pack so you can choose which item to use. [Items.c:7566-7572](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7566-L7572)
+----
+BR33334
+If you invoke an item command without naming an item and nothing in your pack is suitable, you are told "You have nothing suitable." [Items.c:3160-3165](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3160-L3165) [Items.c:7566-7567](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L7566-L7567)
 ----
 BR25628
 Two items resting on a machine that swaps enchantments trade their enchantment levels when both are present. [Items.c:1160-1190](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L1160-L1190) [Items.c:1085-1140](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L1085-L1140)

@@ -1344,6 +1344,14 @@ static void updateVolumetricMedia() {
     }
 }
 
+#ifdef BROGUE_TESTING
+// Exposed to the test framework so a test can run one gas-simulation pass
+// without the rest of an environment update.
+void updateVolumetricMediaForTesting(void) {
+    updateVolumetricMedia();
+}
+#endif
+
 static void updateYendorWardenTracking() {
     short n;
 

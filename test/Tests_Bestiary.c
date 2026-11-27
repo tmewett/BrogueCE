@@ -366,11 +366,11 @@ static void br13523_setup(void) {
 }
 
 static boolean br13523_verify(void) {
-    exposeCreatureToFire(subject);
+    exposeMonsterToFire(subject);
     TEST_ASSERT(!monsterHasStatus(subject, STATUS_BURNING),
                 "fire should not set a fire-immune dragon burning");
 
-    exposeCreatureToFire(br13523_control);
+    exposeMonsterToFire(br13523_control);
     TEST_ASSERT(monsterHasStatus(br13523_control, STATUS_BURNING),
                 "the same fire should set an ordinary creature burning");
     return !testFailed;
@@ -789,6 +789,125 @@ static boolean br78949_verify(void) {
                 "a lightning bolt should damage the target it hits");
     TEST_ASSERT(!monsterIsAdjacentToPlayer(br78949_turret),
                 "the wound should have come from the lightning bolt, not from melee");
+    return !testFailed;
+}
+
+// ============================================================
+// BR68263 — attacks at range with a physical projectile: an arrow
+// that deals ordinary damage to a target in line of sight, and is
+// not fired at a creature embedded in a wall.
+//
+// An allied arrow turret faces a hostile rat along a clear
+// east-west line.  The turret's only bolt is the physical arrow
+// (BE_ATTACK), and as an ally it never aims at you, so the rat is
+// its only candidate; the turret is immobile, so every one of its
+// turns tries the arrow.  With a clear line the rat loses health,
+// and the loss falls inside the turret's ordinary melee damage
+// range (2-6), proving the arrow is an ordinary physical blow
+// rather than a spell.  A wall across the line stops the arrows;
+// restoring the line brings them back (control).  Embedding the
+// rat in a wall also stops the arrows even though the line is
+// clear; the earlier clear-line phase is the control that the
+// turret would otherwise be firing.
+// ============================================================
+
+static creature *br68263_turret;
+static creature *br68263_target;
+static pos br68263_targetPos;
+static pos br68263_wallPos;
+static int br68263_openDamage;
+static int br68263_blockedDamage;
+static int br68263_againDamage;
+static int br68263_embeddedDamage;
+
+// Give the turret up to `turns` turns and return how much health the target
+// lost.  The turret rolls a fresh 30% chance to cast on each turn, so the
+// chance of no arrow in 100 turns is under 1 in 10^15.
+static int br68263_fireAt(creature *turret, creature *target, int turns) {
+    int before = monsterHealth(target);
+    for (int i = 0; i < turns && monsterHealth(target) == before; i++) {
+        monsterTakesTurn(turret);
+    }
+    return before - monsterHealth(target);
+}
+
+static void br68263_setup(void) {
+    setArenaRadius(8, FLOOR);
+    pos start = getPlayerPos();
+    br68263_targetPos = posOffset(start, 4, 1);
+    br68263_wallPos = posOffset(start, 0, 1);
+
+    br68263_turret = spawnMonster(MK_ARROW_TURRET, posOffset(start, -4, 1));
+    TEST_ASSERT(br68263_turret != NULL, "setup: the arrow turret should spawn");
+    if (br68263_turret == NULL) {
+        return;
+    }
+    makeMonsterAlly(br68263_turret);
+    revealCell(monsterPosition(br68263_turret));
+
+    br68263_target = placeHostileMonster(MK_RAT, br68263_targetPos);
+    TEST_ASSERT(br68263_target != NULL, "setup: the rat should spawn");
+    if (br68263_target == NULL) {
+        return;
+    }
+    setMonsterHealth(br68263_target, 100);
+}
+
+static boolean br68263_step(void) {
+    if (br68263_turret == NULL || br68263_target == NULL) {
+        return false;
+    }
+
+    // Control: a clear line of sight lets the arrow through.
+    br68263_openDamage = br68263_fireAt(br68263_turret, br68263_target, 100);
+
+    // A wall across the line blocks the projectile.
+    setTerrain(br68263_wallPos, GRANITE);
+    int beforeBlocked = monsterHealth(br68263_target);
+    for (int i = 0; i < 100; i++) {
+        monsterTakesTurn(br68263_turret);
+    }
+    br68263_blockedDamage = beforeBlocked - monsterHealth(br68263_target);
+
+    // Control: restoring the line brings the arrows back.
+    setTerrain(br68263_wallPos, FLOOR);
+    br68263_againDamage = br68263_fireAt(br68263_turret, br68263_target, 100);
+
+    // Embedding the target in a wall blocks the projectile too, even though
+    // the line itself is clear.
+    setTerrain(br68263_targetPos, GRANITE);
+    setMonsterPos(br68263_target, br68263_targetPos);
+    int beforeEmbedded = monsterHealth(br68263_target);
+    for (int i = 0; i < 100; i++) {
+        monsterTakesTurn(br68263_turret);
+    }
+    br68263_embeddedDamage = beforeEmbedded - monsterHealth(br68263_target);
+
+    // Restore the floor under the rat so the level is left clean.
+    setTerrain(br68263_targetPos, FLOOR);
+    setMonsterPos(br68263_target, br68263_targetPos);
+    return false;
+}
+
+static boolean br68263_verify(void) {
+    TEST_ASSERT(br68263_turret != NULL, "setup: the arrow turret should have spawned");
+    TEST_ASSERT(br68263_target != NULL, "setup: the rat should have spawned");
+    if (testFailed) {
+        return false;
+    }
+    TEST_ASSERT(monsterCastsBolt(br68263_turret, BOLT_DISTANCE_ATTACK),
+                "control: the arrow turret should carry the physical arrow");
+    TEST_ASSERT(br68263_openDamage > 0,
+                "the arrow should damage a target in line of sight");
+    TEST_ASSERT(br68263_openDamage >= monsterBaseDamageLow(br68263_turret)
+                    && br68263_openDamage <= monsterBaseDamageHigh(br68263_turret),
+                "the arrow should deal the turret's ordinary damage");
+    TEST_ASSERT_EQ(br68263_blockedDamage, 0,
+                   "a wall across the line of sight should stop the arrow");
+    TEST_ASSERT(br68263_againDamage > 0,
+                "control: the arrow should resume once the line of sight is clear");
+    TEST_ASSERT_EQ(br68263_embeddedDamage, 0,
+                   "an arrow should not be fired at a creature embedded in a wall");
     return !testFailed;
 }
 
@@ -1564,6 +1683,130 @@ static boolean br52291_verify(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR88545 — Kraken.  Health 120, defense 0, accuracy 150, damage 15-20;
+// regenerates rapidly (1 health every turn); moves twice as fast as normal
+// (speed 50); normal attack speed.  A large creature bound to liquid that
+// moves at full speed in water, submerges, moves erratically, never sleeps,
+// flees near death, and grabs and holds its victim.
+//
+// The stat block, size, traits and seize ability are read from the spawned
+// kraken.  Rapid regeneration runs deterministically in the turn loop: a
+// wounded ally rests for one turn and must regain exactly one point of
+// health -- a one-turn period at one point per turn.  A slower period would
+// leave it at 1, and a faster rate would overshoot to 3 or more.
+// ============================================================
+
+static creature *br88545_kraken;
+static int br88545_regenTurns;
+
+static void br88545_setup(void) {
+    trait_setup(MK_KRAKEN);
+    br88545_kraken = subject;
+    makeMonsterAlly(br88545_kraken);
+    setMonsterHealth(br88545_kraken, 1);
+    br88545_regenTurns = 0;
+}
+
+static boolean br88545_step(void) {
+    restOneTurn();
+    br88545_regenTurns++;
+    if (monsterHealth(br88545_kraken) > 1) {
+        return false;
+    }
+    return br88545_regenTurns < 5;
+}
+
+static boolean br88545_verify(void) {
+    creature *k = br88545_kraken;
+    TEST_ASSERT(k != NULL, "kraken spawned");
+    TEST_ASSERT_EQ(monsterMaxHealth(k), 120, "kraken health");
+    TEST_ASSERT_EQ(monsterBaseDefense(k), 0, "kraken defense");
+    TEST_ASSERT_EQ(monsterBaseAccuracy(k), 150, "kraken accuracy");
+    TEST_ASSERT_EQ(monsterBaseDamageLow(k), 15, "kraken damage low");
+    TEST_ASSERT_EQ(monsterBaseDamageHigh(k), 20, "kraken damage high");
+    TEST_ASSERT_EQ(monsterBaseMovementSpeed(k), 50,
+                   "kraken moves twice as fast as normal");
+    TEST_ASSERT_EQ(monsterBaseAttackSpeed(k), 100,
+                   "kraken attacks at normal speed");
+    TEST_ASSERT(monsterRegenerates(k), "kraken regenerates naturally");
+    TEST_ASSERT(monsterIsLarge(k), "kraken is large");
+    TEST_ASSERT(monsterHasTrait(k, MONST_RESTRICTED_TO_LIQUID),
+                "kraken is bound to liquid");
+    TEST_ASSERT(monsterHasTrait(k, MONST_IMMUNE_TO_WATER),
+                "kraken moves at full speed in water");
+    TEST_ASSERT(monsterHasTrait(k, MONST_SUBMERGES), "kraken submerges");
+    TEST_ASSERT(monsterHasTrait(k, MONST_FLITS), "kraken moves erratically");
+    TEST_ASSERT(monsterHasTrait(k, MONST_NEVER_SLEEPS), "kraken never sleeps");
+    TEST_ASSERT(monsterHasTrait(k, MONST_FLEES_NEAR_DEATH), "kraken flees near death");
+    TEST_ASSERT(monsterHasAbility(k, MA_SEIZES), "kraken grabs and holds its victim");
+    TEST_ASSERT_EQ(br88545_regenTurns, 1,
+                   "the kraken should regenerate after a single turn");
+    TEST_ASSERT_EQ(monsterHealth(k), 2,
+                   "the kraken should regain exactly one point of health per turn");
+    return !testFailed;
+}
+
+// ============================================================
+// BR13994 — Phantom.  Health 35, defense 70, accuracy 160, damage 12–18; no
+// natural regeneration; moves twice as fast as normal (speed 50) and attacks
+// at half rate (attack speed 200).  A large, invisible creature that flies,
+// moves erratically, and cannot be entangled; it sheds a droplet of ectoplasm
+// 2% of turns.
+// ============================================================
+
+static creature *br13994_phantom;
+static int br13994_waitTurns;
+
+static void br13994_setup(void) {
+    trait_setup(MK_PHANTOM);
+    br13994_phantom = subject;
+    // A wounded ally with no enemies about can only regain health through
+    // regeneration, so it stays wounded when it has none.
+    makeMonsterAlly(br13994_phantom);
+    setMonsterHealth(br13994_phantom, 1);
+    br13994_waitTurns = 0;
+}
+
+static boolean br13994_step(void) {
+    restOneTurn();
+    br13994_waitTurns++;
+    if (monsterHealth(br13994_phantom) > 1) {
+        return false;
+    }
+    return br13994_waitTurns < 20;
+}
+
+static boolean br13994_verify(void) {
+    creature *p = br13994_phantom;
+    TEST_ASSERT(p != NULL, "phantom spawned");
+    TEST_ASSERT_EQ(monsterMaxHealth(p), 35, "phantom health");
+    TEST_ASSERT_EQ(monsterBaseDefense(p), 70, "phantom defense");
+    TEST_ASSERT_EQ(monsterBaseAccuracy(p), 160, "phantom accuracy");
+    TEST_ASSERT_EQ(monsterBaseDamageLow(p), 12, "phantom damage low");
+    TEST_ASSERT_EQ(monsterBaseDamageHigh(p), 18, "phantom damage high");
+    TEST_ASSERT_EQ(monsterBaseMovementSpeed(p), 50,
+                   "phantom moves twice as fast as normal");
+    TEST_ASSERT_EQ(monsterBaseAttackSpeed(p), 200,
+                   "phantom attacks at half rate");
+    TEST_ASSERT(!monsterRegenerates(p), "phantom has no natural regeneration");
+    TEST_ASSERT(monsterIsLarge(p), "phantom is large");
+    TEST_ASSERT(monsterHasTrait(p, MONST_INVISIBLE), "phantom is invisible");
+    TEST_ASSERT(monsterHasTrait(p, MONST_FLIES), "phantom flies");
+    TEST_ASSERT(monsterHasTrait(p, MONST_FLITS), "phantom moves erratically");
+    TEST_ASSERT(monsterHasTrait(p, MONST_IMMUNE_TO_WEBS),
+                "phantom cannot be entangled");
+    TEST_ASSERT_EQ(monsterTrailChance(p), 2,
+                   "phantom sheds its trail on 2% of its turns");
+    TEST_ASSERT(monsterLeavesEctoplasmDroplet(p),
+                "the phantom's trail is a droplet of ectoplasm");
+    TEST_ASSERT_EQ(br13994_waitTurns, 20,
+                   "the phantom should have been watched for twenty turns");
+    TEST_ASSERT_EQ(monsterHealth(p), 1,
+                   "a wounded phantom should not regain health");
+    return !testFailed;
+}
+
 const testCase tests_bestiary[] = {
     { "BR39474_flies", br39474_setup, NULL, br39474_verify },
     { "BR10411_erratic", br10411_setup, NULL, br10411_verify },
@@ -1594,6 +1837,7 @@ const testCase tests_bestiary[] = {
     { "BR12704_no_polymorph", br12704_setup, NULL, br12704_verify },
     { "BR49476_dies_if_negated", br49476_setup, NULL, br49476_verify },
     { "BR56920_invisible", br56920_setup, NULL, br56920_verify },
+    { "BR13994_phantom_stats", br13994_setup, br13994_step, br13994_verify },
     { "BR46956_hallucinate", br46956_setup, NULL, br46956_verify },
     { "BR18776_steal_flee", br18776_setup, NULL, br18776_verify },
     { "BR32322_set_alight", br32322_setup, NULL, br32322_verify },
@@ -1621,6 +1865,7 @@ const testCase tests_bestiary[] = {
     { "BR81389_negation", br81389_setup, NULL, br81389_verify },
     { "BR60584_fire", br60584_setup, br60584_step, br60584_verify },
     { "BR78949_lightning", br78949_setup, br78949_step, br78949_verify },
+    { "BR68263_physical_projectile", br68263_setup, br68263_step, br68263_verify },
     { "BR18935_web", br18935_setup, NULL, br18935_verify },
     { "BR16647_blinking", br16647_setup, NULL, br16647_verify },
     { "BR71983_beckoning", br71983_setup, NULL, br71983_verify },
@@ -1650,5 +1895,6 @@ const testCase tests_bestiary[] = {
     { "BR83759_ifrit_stats_and_rapid_regeneration", br83759_setup, br83759_step, br83759_verify },
     { "BR64166_phoenix_stats_traits_and_no_regeneration", br64166_setup, br64166_step, br64166_verify },
     { "BR52291_underworm_stats_and_regeneration", br52291_setup, br52291_step, br52291_verify },
+    { "BR88545_kraken_stats_and_rapid_regeneration", br88545_setup, br88545_step, br88545_verify },
     { NULL, NULL, NULL, NULL }
 };

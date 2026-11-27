@@ -30,9 +30,9 @@ BR99362
   Reference: [Rogue.h 2060](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2060), [Monsters.c 3388-3395](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3388-L3395).
 ----
 BR72064
-**Keeps its distance.** When an enemy is within three tiles, the creature backs
+**Keeps its distance.** When an enemy comes within two tiles, the creature backs
   away instead of closing to melee range, even if it has no ranged attack of its own.
-  Reference: [Monsters.c 2962-2977](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2962-L2977), [Monsters.c 1747-1754](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1747-L1754).
+  Reference: [Monsters.c 2962-2977](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2962-L2977), [Monsters.c 1771-1773](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1771-L1773), [Monsters.c 1784-1788](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1784-L1788).
 ----
 BR30757
 **Will not follow between levels.** The creature will not chase the player up or
@@ -56,8 +56,8 @@ BR14275
 ----
 BR48675
 **Normally left out of the sidebar.** The creature is ordinarily absent from the
-  player's list of creatures, but it appears there while the player points the cursor at it.
-  Reference: [Rogue.h 2085](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2085), [IO.c 3718-3724](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3718-L3724), [IO.c 3801](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3801), [IO.c 3785-3791](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3785-L3791), [IO.c 3906-3909](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3906-L3909).
+  player's list of creatures, even while it is plainly visible in the dungeon.
+  Reference: [Rogue.h 2085](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2085), [IO.c 3801](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3801).
 ----
 BR67941
 **Never sleeps.** The creature begins awake and hunting rather than asleep when it
@@ -107,8 +107,8 @@ BR95842
   comes from a melee weapon or from a weapon thrown at it. Reference: [Rogue.h 2067](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2067), [Combat.c 1098-1100](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1098-L1100), [Items.c 6054-6056](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L6054-L6056).
 ----
 BR37585
-**Corrodes the weapon that strikes it.** Each time a weapon hits the creature, the
-  attacker's weapon is weakened (losing an enchantment). Reference: [Rogue.h 2066](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2066), [Combat.c 1239-1256](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1239-L1256).
+**Corrodes the weapon that strikes it.** When your weapon strikes the creature in
+  melee, it weakens by one enchantment, unless it is protected or is a slaying weapon matched to the creature; it never weakens below -10. Reference: [Rogue.h 2066](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2066), [Combat.c 1239-1256](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1239-L1256).
 ----
 BR13523
 **Immune to fire.** While its fire immunity holds, flame does not harm the
@@ -236,7 +236,7 @@ BR47059
 ----
 BR73986
 **Casts a haste spell on allies.** Makes a friendly creature act more often
-  (faster movement and attacks) for a time. Reference: [Monsters.c 2722-2729](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2722-L2729).
+  (faster movement and attacks) for a time. Reference: [Items.c 4500-4508](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L4500-L4508), [Items.c 3922-3934](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3922-L3934), [Monsters.c 2722-2729](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L2722-L2729).
 ----
 BR32475
 **Casts a slowing spell on enemies.** Slows a target so it moves and attacks less
@@ -434,9 +434,7 @@ regeneration**; normal speeds. A **large** creature that has a 100% chance each 
 emit a puff of rot gas. [Globals.c 1075](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1075)
 ----
 BR69089
-**Troll.** Health 65, defense 70, accuracy 125, damage 10–15; **regenerates rapidly**
-(1 health every turn); normal speeds. A **large** creature with no special traits.
-[Globals.c 1076-1077](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1076-L1077)
+**Troll.** A troll regains 1 health every turn. [Globals.c 1076-1077](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1076-L1077)
 ----
 BR16799
 **Ogre Shaman.** Health 45, defense 40, accuracy 100, damage 5–9; regenerates every
@@ -447,9 +445,8 @@ lightning bolts** (BR78949). [Globals.c 1078-1079](https://github.com/tmewett/Br
 ----
 BR98084
 **Naga.** Health 75, defense 70, accuracy 150, damage 7–11; regenerates every 10
-turns; normal speeds. A **large** creature that **moves at full speed in water** (BR47597),
-**submerges** (BR65633), and **never sleeps** (BR67941). It **strikes every adjacent enemy at once**
-(BR97260) and always leaves a puddle where it dies. [Globals.c 1080-1081](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1080-L1081)
+turns; normal speeds. A **large** creature that always leaves a puddle where it dies.
+[Globals.c 1080-1081](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1080-L1081)
 ----
 BR73698
 **Salamander.** Health 60, defense 70, accuracy 150, damage 5–11; regenerates every
@@ -464,9 +461,7 @@ every 5 turns; normal speeds. It glows.
 [Globals.c 1084-1085](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1084-L1085)
 ----
 BR44680
-**Dar Blademaster.** Health 35, defense 70, accuracy 160, damage 5–9; regenerates
-every 20 turns; normal speeds. It **blinks** around the battlefield (BR16647), **avoids
-corridors** (BR48373), and carries an item a quarter of the time (BR53451).
+**Dar Blademaster.** A Dar Blademaster regains 1 health every 20 turns.
 [Globals.c 1086-1087](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1086-L1087)
 ----
 BR15683
@@ -693,17 +688,10 @@ creature that **is immune to fire** (BR13523), **flies** (BR39474), and **never 
 It glows. [Globals.c 1159-1160](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1159-L1160)
 ----
 BR98992
-**Phoenix Egg.** Health 50, defense 0, accuracy 0, damage 0; no regeneration; normal
-movement but **attacks slowly** (attack speed 150). An **immobile** (BR99362), **never-
-sleeping** (BR67941), **always-hunting** (BR46423), **inanimate** (BR21958) egg that **is immune to
-fire** (BR13523) and **weapons** (BR95842), **will not follow between levels** (BR30757), **cannot be
-polymorphed** (BR12704), cannot be entangled (BR91557), **summons allies** (BR40544), and **harbours
-the phoenix within a minion, freeing it when that minion is destroyed** (BR70715). It glows.
-[Globals.c 1161-1162](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1161-L1162)
+**Phoenix Egg.** A phoenix egg has 50 health.
+[Globals.c 1161](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1161)
 ----
 BR57045
 **Mangrove Dryad.** Health 70, defense 60, accuracy 175, damage 2–8; regenerates
-every 6 turns; normal speeds. A **large** creature that **cannot be entangled** (BR91557),
-**never fails to use its ability** (BR85956), **keeps its distance** (BR72064), **never results
-from polymorphism** (BR12704), and **hurls entangling vines** (BR81211).
+every 6 turns; normal speeds. A **large** creature.
 [Globals.c 1163-1164](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1163-L1164)

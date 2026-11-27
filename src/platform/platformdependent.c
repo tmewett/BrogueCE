@@ -694,7 +694,11 @@ void initializeLaunchArguments(enum NGCommands *command, char *path, uint64_t *s
 }
 
 boolean isApplicationActive(void) {
+#ifdef BROGUE_TESTING
+    return testApplicationActive();
+#else
     // FIXME: finish
     return true;
+#endif
 }
 

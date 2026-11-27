@@ -28,7 +28,7 @@ Each point of strength above an item's requirement adds 0.25 to that item's net 
 [Combat.c:60-67](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L60-L67) [Combat.c:69-76](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L69-L76)
 ----
 BR20189
-Damage output is scaled by roughly 1.065 per point of enchantment-like adjustment, which is how a weakened monster's blows grow softer; the same scaling table corresponds to the enchantment values used elsewhere in combat.
+Each point of weakness makes a weakened monster deal about 9% less damage with its attacks.
 [Combat.c:78-85](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L78-L85) [PowerTables.c:138-159](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L138-L159)
 ----
 BR65933

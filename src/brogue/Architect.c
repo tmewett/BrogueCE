@@ -27,6 +27,19 @@
 
 #ifdef BROGUE_TESTING
 #include "../../test/TestFramework.h"
+
+// The route-length threshold the loop-adding pass used the last time a vault
+// interior was rebuilt, or -1 before any such rebuild.  A test can read this
+// through vaultInteriorLoopThreshold() instead of reaching into the generator.
+static short lastVaultInteriorLoopThreshold = -1;
+
+void resetVaultInteriorLoopRecord(void) {
+    lastVaultInteriorLoopThreshold = -1;
+}
+
+int vaultInteriorLoopThreshold(void) {
+    return lastVaultInteriorLoopThreshold;
+}
 #endif
 
 short topBlobMinX, topBlobMinY, blobWidth, blobHeight;
@@ -397,6 +410,50 @@ static void addLoops(short **grid, short minimumPathingDistance) {
     freeGrid(pathMap);
     freeGrid(costMap);
 }
+
+// The loop-adding pass for a rebuilt vault interior.  The route threshold is
+// deliberately lower than the main dungeon level's so the rebuilt interior
+// gets extra connections between its new rooms.
+static void addLoopsForVaultInterior(short **grid) {
+    const short threshold = 10;
+#ifdef BROGUE_TESTING
+    lastVaultInteriorLoopThreshold = threshold;
+#endif
+    addLoops(grid, threshold);
+}
+
+#ifdef BROGUE_TESTING
+// Run the engine's loop-adding pass over a U-shaped corridor whose two lower
+// ends are separated by a single wall tile.  The only route between those
+// flanking floor tiles is `detour` tiles long.  Returns true when the pass
+// turns the wall tile into a loop doorway.
+boolean loopPassCutsWallWithDetour(int detour, int threshold) {
+    if (detour < 4 || detour % 2 != 0) {
+        return false; // the fixture builds only even detours of at least 4
+    }
+
+    const short midX = 40, midY = 14;
+    const short arm = (short) ((detour - 2) / 2);
+    short **grid = allocGrid();
+    fillGrid(grid, 0);
+
+    // Two parallel floor corridors joined at the top; the wall tile between
+    // their lower ends is the one under test.
+    for (short y = midY - arm; y <= midY; y++) {
+        grid[midX - 1][y] = 1;
+        grid[midX + 1][y] = 1;
+    }
+    for (short x = midX - 1; x <= midX + 1; x++) {
+        grid[x][midY - arm] = 1;
+    }
+    grid[midX][midY] = 0;
+
+    addLoops(grid, (short) threshold);
+    boolean cut = grid[midX][midY] == 2;
+    freeGrid(grid);
+    return cut;
+}
+#endif
 
 // Assumes (startX, startY) is in the machine.
 // Returns true if everything went well, and false if we ran into a machine component
@@ -837,7 +894,7 @@ static void redesignInterior(char interior[DCOLS][DROWS], short originX, short o
         freeGrid(costGrid);
     }
 
-    addLoops(grid, 10);
+    addLoopsForVaultInterior(grid);
     for(i=0; i<DCOLS; i++) {
         for(j=0; j<DROWS; j++) {
             if (interior[i][j]) {

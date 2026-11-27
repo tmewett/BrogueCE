@@ -2936,6 +2936,9 @@ extern "C" {
 
     boolean pauseForMilliseconds(short milliseconds, PauseBehavior behavior);
     boolean isApplicationActive(void);
+#ifdef BROGUE_TESTING
+    boolean testApplicationActive(void);
+#endif
     void nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance);
     void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2);
     boolean takeScreenshot(void);
@@ -3106,6 +3109,9 @@ extern "C" {
     boolean cellCanHoldGas(short x, short y);
     void monstersFall(void);
     void updateEnvironment(void);
+#ifdef BROGUE_TESTING
+    void updateVolumetricMediaForTesting(void);
+#endif
     void updateAllySafetyMap(void);
     void updateSafetyMap(void);
     void updateSafeTerrainMap(void);
@@ -3359,6 +3365,9 @@ extern "C" {
                           short minBlobWidth, short minBlobHeight,
                           short maxBlobWidth, short maxBlobHeight, short percentSeeded,
                           char birthParameters[9], char survivalParameters[9]);
+#ifdef BROGUE_TESTING
+    void cellularAutomataRoundForTesting(short **grid, char birthParameters[9], char survivalParameters[9]);
+#endif
 
     void checkForContinuedLeadership(creature *monst);
     void demoteMonsterFromLeadership(creature *monst);

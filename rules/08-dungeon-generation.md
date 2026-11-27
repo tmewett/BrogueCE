@@ -42,7 +42,7 @@ BR18785
 Room shapes are drawn from a weighted list: cross room, symmetric cross room, small room, circular room, chunky room, cave room, level-filling cavern, and the depth-1 entrance room. [Architect.c:2260-2342](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L2260-L2342)
 ----
 BR65123
-The depth-1 entrance room is two joined rectangles: an 8 x 10 room and a 20 x 5 room forming an upside-down T at the bottom of the map. [Architect.c:2005-2021](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L2005-L2021)
+The depth-1 entrance room is two joined rectangles: an 8 x 10 room and a 20 x 5 room forming an upside-down T at the bottom of the map. [Architect.c:2038-2054](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L2038-L2054)
 ----
 BR79542
 Cross rooms are a rectangle 3-12 tiles wide and 3-7 tall crossed by a second rectangle 4-20 wide and 2-5 tall. [Architect.c:2023-2041](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L2023-L2041)
@@ -135,7 +135,7 @@ BR36818
 An open-area vault expands from a random floor tile along path distance until it reaches a randomly chosen size, and is rejected if it would engulf an item, a monster, or another vault. [Architect.c:1145-1205](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1145-L1205)
 ----
 BR94740
-Entrance-style vaults must be handed a doorway location and expand from it along path distance to a target size. [Architect.c:674-732](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L674-L732) [Architect.c:1121-1144](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1121-L1144)
+Entrance-style vaults must be handed a doorway location and expand from it along path distance to a target size. [Architect.c:1200-1223](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1200-L1223) [Architect.c:735-793](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L735-L793)
 ----
 BR45230
 If no suitable layout and location are found within 10 tries, the vault is abandoned and any partial changes are rolled back. [Architect.c:1016-1034](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1016-L1034) [Architect.c:1221-1222](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L1221-L1222)
@@ -212,14 +212,17 @@ When the player is the traveller, pathfinding treats tiles that have not yet bee
 BR33256
 Damage-immune stationary monsters are always avoided as obstacles during pathfinding. [Dijkstra.c:220-226](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Dijkstra.c#L220-L226)
 ----
+BR14654
+A creature travelling to a goal takes the shortest passable route to it, skirting obstacles by the cheapest detour. [Dijkstra.c:42-90](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Dijkstra.c#L42-L90)
+----
 BR68830
-Distance maps are used to route creatures toward goals, to place dropped or returning monsters and items at the nearest reachable valid tile, and to judge whether a new bridge would meaningfully shorten a route. [Dijkstra.c:252-258](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Dijkstra.c#L252-L258) [Grid.c:287-360](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Grid.c#L287-L360) [Architect.c:2823-2860](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L2823-L2860)
+A monster that drops its carried item leaves it on the nearest reachable tile that can hold an item, avoiding the player, staircases and other items. [Monsters.c:4068-4078](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L4068-L4078) [Grid.c:287-360](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Grid.c#L287-L360)
 ----
 BR54368
 A separate "distance to shore" map treats deep water, lava and auto-descent tiles as extremely costly, so creatures avoid wandering into hazards. [Architect.c:2982-3009](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L2982-L3009)
 ----
 BR86808
-The level is seeded with waypoints that cover every region reachable by scent pathing, up to a fixed maximum number, so monsters anywhere on the level can path toward a goal. [Architect.c:3014-3071](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L3014-L3071)
+Each level has up to 40 wandering destinations, and a new one is only added where no existing destination's scent reaches, so idle monsters roam the level as a whole rather than clustering. [Architect.c:3033-3071](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L3033-L3071) [Rogue.h:1150-1151](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L1150-L1151)
 ----
 BR26916
 When a level is first entered, monsters and items are populated only after a line-of-sight check from the up staircase, so nothing spawns within view of the stairs. [Architect.c:3769-3797](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L3769-L3797)
@@ -273,7 +276,7 @@ BR17693
 Hallways are not attached to a room once fewer than five placement attempts remain. [Architect.c:2381](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L2381)
 ----
 BR44267
-A terrain or dungeon-feature fill overwrites a tile's layer only when the replacement has at least as high a draw priority as the terrain already there, unless the fill is flagged as super-priority. [Architect.c:3221-3228](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L3221-L3228)
+Grass, fungus and lichen spread across open ground but never cover lava or other terrain that already stands out more prominently. [Architect.c:3221-3228](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L3221-L3228)
 ----
 BR25994
 A dungeon feature is never allowed to bury a trap under vision-blocking terrain. [Architect.c:3231-3235](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Architect.c#L3231-L3235)

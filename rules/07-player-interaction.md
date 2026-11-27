@@ -255,12 +255,13 @@ creatures in direct sight, then those seen only indirectly (such as by telepathy
 [IO.c:3793-3814](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3793-L3814)
 ----
 BR53458
-Some creatures are left out of the sidebar's automatic creature list, but
-the one the player points the cursor at still appears there.
-[IO.c:3799-3802](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3799-L3802)
+Some creatures are left out of the sidebar's automatic creature list.
+Pointing the cursor at such a creature still shows it there, unless its tile
+is listed as terrain instead, in which case the creature stays out of the list.
 [IO.c:3718-3724](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3718-L3724)
-[IO.c:3784-3791](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3784-L3791)
-[IO.c:3906-3909](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3906-L3909)
+[IO.c:3799-3802](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3799-L3802)
+[IO.c:3846-3855](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3846-L3855)
+[IO.c:3889-3909](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/IO.c#L3889-L3909)
 ----
 BR36729
 A focused entity is highlighted with a brightened gradient in the
