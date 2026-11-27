@@ -4,8 +4,10 @@
 // of drinking potions, a scroll, picking up gold and the Amulet, the tile a
 // generated charge counts and gold
 // values, the defense an enchanted suit of armor contributes, the specialist
-// feat, the number of items each level generates, that generated items avoid
-// hallways and cluster in rooms reached through secret doors, that generated
+// feat, the number of items each level generates, the food guarantee that
+// keeps a level's larder on the schedule for its depth, that ordinary items
+// come only from the categories the generator draws from, that generated items
+// avoid hallways and cluster in rooms reached through secret doors, that generated
 // throwing weapons come out plain (never cursed, runic, or enchanted), the runes
 // fading from runic gear whose enchantment drops to zero or less, which
 // targets a zap's auto-targeting will and will not pick, the pressure plate
@@ -1894,6 +1896,139 @@ static boolean br54814_nothing_verify(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR54393 — ordinary items are drawn from potions, scrolls,
+// staves, wands, weapons, armor, food, rings, charms, and the
+// special categories
+// ============================================================
+
+#define BR54393_TRIALS 100
+
+static boolean ordinary_items_come_from_the_listed_categories(void) {
+    const unsigned short ordinaryCategories = POTION | SCROLL | STAFF | WAND | WEAPON
+                                               | ARMOR | FOOD | RING | CHARM
+                                               | AMULET | GEM | KEY;
+
+    for (int trial = 0; trial < BR54393_TRIALS; trial++) {
+        clearFloorItems();
+        populateLevelItemsFrom(getPlayerPos());
+
+        int itemCount = countFloorItems();
+        TEST_ASSERT(itemCount > 0,
+                    "ordinary item population should place items on the level");
+
+        for (int i = 0; i < itemCount; i++) {
+            short category = itemCategory(floorItemAtIndex(i));
+            TEST_ASSERT((category & ordinaryCategories) != 0,
+                        "an ordinary item was drawn from a category outside the rule's list");
+            if (testFailed) {
+                return false;
+            }
+        }
+    }
+    return !testFailed;
+}
+
+// ============================================================
+// BR36788 — a level includes a ration when the food the
+// dungeon has provided so far is behind the amount expected
+// for your current depth
+// ============================================================
+//
+// Depth 4 is the first depth whose schedule still asks for food
+// even after the rule's worst random depth wobble, so every
+// population of a depth-4 level with nothing yet provided must
+// include food among its ordinary items.  The item table makes
+// food an ordinary random draw only about one time in a
+// hundred; with five items per level, every one of the trials
+// happening to include food by chance is negligible.
+//
+// The control repeats the population with the dungeon far
+// ahead of schedule.  The guarantee is then gone, so food may
+// appear only through that ordinary random draw, in a small
+// minority of levels - never on all of them.
+
+#define BR36788_BEHIND_TRIALS 20
+#define BR36788_AHEAD_TRIALS 40
+
+static boolean br36788_level_contains_food(void) {
+    for (int i = 0; i < countFloorItems(); i++) {
+        if (itemCategory(floorItemAtIndex(i)) == FOOD) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static boolean br36788_food_appears_when_behind_schedule(void) {
+    setDepth(4);
+
+    for (int trial = 0; trial < BR36788_BEHIND_TRIALS; trial++) {
+        clearFloorItems();
+        setFoodNutritionGenerated(0);
+        populateLevelItemsFrom(getPlayerPos());
+        TEST_ASSERT(countFloorItems() > 0,
+                    "ordinary item population should place items on the level");
+        TEST_ASSERT(br36788_level_contains_food(),
+                    "a depth-4 level with no food provided yet should include food");
+        if (testFailed) {
+            return false;
+        }
+    }
+
+    int levelsWithFood = 0;
+    for (int trial = 0; trial < BR36788_AHEAD_TRIALS; trial++) {
+        clearFloorItems();
+        setFoodNutritionGenerated(100000);
+        populateLevelItemsFrom(getPlayerPos());
+        if (br36788_level_contains_food()) {
+            levelsWithFood++;
+        }
+    }
+    TEST_ASSERT(levelsWithFood < BR36788_AHEAD_TRIALS / 2,
+                "food far ahead of schedule should not be guaranteed on every level");
+
+    return !testFailed;
+}
+
+// ============================================================
+// BR96573 — the guardian charm summons a mythical guardian that fights for
+// you.
+//
+// The arena is emptied first, so the only guardian after the charm is used
+// is the one the charm called up.  Fighting for the player is the engine's
+// allied state for the summoned creature; the charm's own message names the
+// guardian, tying the new creature to the charm rather than to level
+// generation.
+// ============================================================
+
+static creature *br96573_guardian;
+static int br96573_guardiansBefore;
+
+static void br96573_setup(void) {
+    clearArena();
+    br96573_guardiansBefore = countMonstersOfType(MK_CHARM_GUARDIAN);
+    givePlayerItem(CHARM, CHARM_GUARDIAN, 1);
+    applyPackItem(CHARM, CHARM_GUARDIAN);
+    br96573_guardian = findMonster(MK_CHARM_GUARDIAN);
+}
+
+static boolean br96573_charm_summons_fighting_guardian(void) {
+    TEST_ASSERT_EQ(br96573_guardiansBefore, 0,
+                   "precondition: no guardian exists before the charm is used, count");
+    TEST_ASSERT(messageWasShown("mythical guardian"),
+                "using the guardian charm should announce the mythical guardian");
+    TEST_ASSERT(br96573_guardian != NULL,
+                "using the guardian charm should summon a guardian");
+    TEST_ASSERT_EQ(countMonstersOfType(MK_CHARM_GUARDIAN), 1,
+                   "the charm should summon exactly one guardian, count");
+    TEST_ASSERT(monsterIsAlive(br96573_guardian),
+                "the summoned guardian should be alive");
+    TEST_ASSERT(monsterIsAlly(br96573_guardian),
+                "the summoned guardian should fight for you as an ally");
+    return !testFailed;
+}
+
 const testCase tests_items[] = {
     { "BR58888_throwing_weapons_never_magical",     br58888_setup,             NULL, throwing_weapons_are_never_magical },
 
@@ -1935,6 +2070,7 @@ const testCase tests_items[] = {
 
     { "BR39162_staff_starts_with_charges",          NULL,                       NULL, staff_starts_with_charges },
     { "BR22095_charm_starts_ready",                 NULL,                       NULL, charm_starts_ready },
+    { "BR96573_guardian_charm_summons_fighting_guardian", br96573_setup,       NULL, br96573_charm_summons_fighting_guardian },
     { "BR35670_potions_do_not_stack",               NULL,                       NULL, potions_do_not_stack },
     { "BR32867_items_have_distinct_letters",        NULL,                       NULL, items_have_distinct_letters },
 
@@ -1953,6 +2089,8 @@ const testCase tests_items[] = {
     { "BR90956_throw_aim_stops_at_target",          throw_aim_setup,             throw_aim_step, throw_aim_trajectory_stops_at_target },
 
     { "BR28082_level_item_counts_follow_depth_bands", NULL, NULL, level_item_counts_follow_depth_bands },
+    { "BR36788_food_appears_when_behind_schedule", NULL, NULL, br36788_food_appears_when_behind_schedule },
+    { "BR54393_ordinary_items_use_listed_categories", NULL, NULL, ordinary_items_come_from_the_listed_categories },
     { "BR47394_items_avoid_hallways_and_favor_secret_rooms", br47394_setup, NULL, br47394_verify },
 
     { "BR94199_beckoning_pulls_monster_adjacent", br94199_setup, br94199_step, beckoning_pulls_the_monster_adjacent },

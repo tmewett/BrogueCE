@@ -142,7 +142,7 @@
 [Combat.c:357-367](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L357-L367)
 **BR20491** — Attacking a visible monster with a weapon forfeits the pure mage feat.
 [Combat.c:1027-1029](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1027-L1029)
-**BR74866** — A monster that divides in two when struck splits into a clone, each keeping half the original's health, when it is struck in melee with a free adjacent square available; the split clones do not inherit learned abilities.
+**BR74866** — A monster that divides in two when struck splits into a clone, each with half its health rounded up, when it is struck in melee with a free adjacent square available; the split clones do not inherit learned abilities.
 [Combat.c:208-312](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L208-L312)
 **BR31620** — A sleeping monster wakes as soon as it takes damage from any source.
 [Combat.c:1556-1558](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L1556-L1558)

@@ -4,8 +4,8 @@
   [PowerTables.c:220-345](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L220-L345)
 - **BR11017** — A weapon's runic activation chance is adjusted by attack speed: slower weapons get a higher per-hit chance and weapons striking twice per turn get a reduced chance.
   [PowerTables.c:220-345](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L220-L345)
-- **BR11018** — A weapon's runic activation chance is never lower than the weapon's enchantment level nor higher than 100%.
-  [PowerTables.c:220-345](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L220-L345)
+- **BR11018** — For an ordinary weapon rune, the activation chance is raised to at least the weapon's strength-adjusted enchantment level (and never below 1%) and is capped at 100%. Slaying runes and weak or cursed runes keep their own fixed chances instead.
+  [PowerTables.c:300-305](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L300-L305) [PowerTables.c:342](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L342)
 - **BR11019** — Weak or cursed runes activate at a flat 15%.
   [PowerTables.c:220-345](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/PowerTables.c#L220-L345)
 - **BR11020** — A slaying rune has no random activation chance at all.

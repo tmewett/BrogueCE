@@ -780,6 +780,328 @@ static boolean br34933_wired_torch_flame_is_flickering_orange(void) {
 }
 
 // ============================================================
+// BR33736 — a wall-mounted torch sputtering with a dim purple flame
+// is re-shaded at every screen refresh and casts a flickering
+// purple light reaching 4 to 6 tiles, in place of an ordinary
+// torch's orange.
+//
+// The drawn colours and the light colours are compared by name, so
+// equal names mean the same shade.  The light itself is sampled over
+// a bare floor with the player's light scaled down far away: the
+// haunted torch's own tile and every outward tile are measured on
+// each of many refreshes, which must show the whole 4-to-6-tile
+// radius range, the re-shaded purple colour, and a hard edge at six.
+// ============================================================
+
+#define BR33736_TRIALS 64
+
+static const char *br33736_hauntedDrawName;
+static const char *br33736_hauntedGlowName;
+static const char *br33736_torchDrawName;
+static const char *br33736_torchGlowName;
+static const char *br33736_wallDrawName;
+static const char *br33736_wallGlowName;
+static boolean br33736_hauntedDrawFlickers;
+static boolean br33736_torchDrawFlickers;
+static boolean br33736_wallDrawFlickers;
+
+static void br33736_drawn_setup(void) {
+    clearMonsters();
+    pos haunted = posAt(20, 10);
+    pos torch = posAt(24, 10);
+    pos wall = posAt(28, 10);
+
+    setTerrain(haunted, HAUNTED_TORCH);
+    setTerrain(torch, TORCH_WALL);
+    setTerrain(wall, WALL);
+
+    br33736_hauntedDrawName = terrainDrawColorName(haunted);
+    br33736_hauntedGlowName = terrainGlowLightColorName(haunted);
+    br33736_torchDrawName = terrainDrawColorName(torch);
+    br33736_torchGlowName = terrainGlowLightColorName(torch);
+    br33736_wallDrawName = terrainDrawColorName(wall);
+    br33736_wallGlowName = terrainGlowLightColorName(wall);
+    br33736_hauntedDrawFlickers = terrainDrawColorFlickers(haunted);
+    br33736_torchDrawFlickers = terrainDrawColorFlickers(torch);
+    br33736_wallDrawFlickers = terrainDrawColorFlickers(wall);
+}
+
+static boolean br33736_haunted_torch_flame_is_flickering_purple(void) {
+    TEST_ASSERT(strcmp(br33736_hauntedDrawName, "haunted torch purple") == 0,
+                "a sputtering torch should be drawn as a purple flame");
+    TEST_ASSERT(strcmp(br33736_hauntedDrawName, br33736_torchDrawName) != 0,
+                "the sputtering torch should not be drawn in the ordinary torch's orange");
+    TEST_ASSERT(br33736_hauntedDrawFlickers,
+                "the sputtering torch's flame should flicker on every refresh");
+
+    TEST_ASSERT(strcmp(br33736_hauntedGlowName, br33736_hauntedDrawName) == 0,
+                "the sputtering torch should cast the same purple light as its flame");
+    TEST_ASSERT(strcmp(br33736_hauntedGlowName, br33736_torchGlowName) != 0,
+                "the sputtering torch's light should differ from the ordinary torch's orange");
+
+    TEST_ASSERT(strcmp(br33736_torchDrawName, "torch orange") == 0,
+                "control: an ordinary wall torch should be drawn orange");
+    TEST_ASSERT(br33736_torchDrawFlickers,
+                "control: the ordinary torch flame should flicker");
+    TEST_ASSERT(strcmp(br33736_wallDrawName, "haunted torch purple") != 0,
+                "control: a plain wall should not be drawn as a purple flame");
+    TEST_ASSERT(!br33736_wallDrawFlickers,
+                "control: a plain wall's colour should not flicker");
+    TEST_ASSERT(strcmp(br33736_wallGlowName, "other") == 0,
+                "control: a plain wall should cast no light of its own");
+    return !testFailed;
+}
+
+static pos br33736_source;
+static int br33736_extentCounts[10];
+static boolean br33736_colorVaries;
+static boolean br33736_alwaysPurple;
+static int br33736_baselineLight;
+static int br33736_sourceDark;
+
+static void br33736_light_setup(void) {
+    clearMonsters();
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            setTerrain(posAt(x, y), FLOOR);
+        }
+    }
+    setPlayerPos(posAt(10, 14));
+    // The miner's light bottoms out at two tiles, which cannot reach the
+    // probes eight or more tiles away.
+    setLightMultiplier(0);
+    br33736_source = posAt(50, 14);
+
+    for (int distance = 0; distance < 10; distance++) {
+        br33736_extentCounts[distance] = 0;
+    }
+
+    recomputeLighting();
+    br33736_baselineLight = 0;
+    for (int distance = 0; distance < 10; distance++) {
+        br33736_baselineLight += lightAt(posOffset(br33736_source, distance, 0));
+    }
+
+    setTerrain(br33736_source, HAUNTED_TORCH);
+    unsigned long firstColor = 0;
+    br33736_colorVaries = false;
+    br33736_alwaysPurple = true;
+    br33736_sourceDark = 0;
+
+    for (int trial = 0; trial < BR33736_TRIALS; trial++) {
+        recomputeLighting();
+
+        int red, green, blue;
+        lightColorAt(br33736_source, &red, &green, &blue);
+        unsigned long color = ((unsigned long) (unsigned short) red << 32)
+                            | ((unsigned long) (unsigned short) green << 16)
+                            | (unsigned long) (unsigned short) blue;
+        if (trial == 0) {
+            firstColor = color;
+        } else if (color != firstColor) {
+            br33736_colorVaries = true;
+        }
+        if (!(red > green && blue > green)) {
+            br33736_alwaysPurple = false;
+        }
+
+        if (lightAt(br33736_source) <= 0) {
+            br33736_sourceDark++;
+        }
+
+        int farthest = -1;
+        for (int distance = 1; distance < 10; distance++) {
+            if (lightAt(posOffset(br33736_source, distance, 0)) > 0) {
+                farthest = distance;
+            }
+        }
+        if (farthest >= 0) {
+            br33736_extentCounts[farthest]++;
+        }
+    }
+}
+
+static boolean br33736_haunted_torch_light_reaches_four_to_six_tiles(void) {
+    TEST_ASSERT_EQ(br33736_baselineLight, 0,
+                   "control: bare floor should cast no light at the probes");
+    TEST_ASSERT_EQ(br33736_sourceDark, 0,
+                   "the sputtering torch should always glow on its own tile");
+
+    TEST_ASSERT(br33736_extentCounts[3] > 0,
+                "the purple light should sometimes reach only four tiles including its source");
+    TEST_ASSERT(br33736_extentCounts[4] > 0,
+                "the purple light should sometimes reach five tiles including its source");
+    TEST_ASSERT(br33736_extentCounts[5] > 0,
+                "the purple light should sometimes reach all six tiles including its source");
+    TEST_ASSERT_EQ(br33736_extentCounts[2], 0,
+                   "the purple light should never reach less than four tiles");
+    TEST_ASSERT_EQ(br33736_extentCounts[6], 0,
+                   "the purple light should never reach a seventh tile");
+    TEST_ASSERT_EQ(br33736_extentCounts[9], 0,
+                   "the purple light should never reach ten tiles as an ordinary torch does");
+    TEST_ASSERT(br33736_colorVaries,
+                "the purple light should be re-shaded on every refresh");
+    TEST_ASSERT(br33736_alwaysPurple,
+                "the sputtering torch's light should be purple (blue stronger than green)");
+    return !testFailed;
+}
+
+// ============================================================
+// BR35743 — a will-o'-the-wisp is drawn in bright blue that
+// flickers with every screen refresh and casts a flickering blue
+// light reaching 4 to 8 tiles.
+//
+// The wisp's drawn colour and its own light colour are compared by
+// name, with a goblin as the control for a monster that neither
+// flickers nor glows.  For the light's reach, a bare floor and a
+// distant, dimmed miner's light isolate the wisp: every refresh must
+// re-shade its light, and across many refreshes the light must reach
+// every extent from four to eight tiles and never beyond eight.
+// ============================================================
+
+#define BR35743_TRIALS 128
+
+static creature *br35743_wisp;
+static creature *br35743_goblin;
+static const char *br35743_wispDrawName;
+static const char *br35743_wispGlowName;
+static const char *br35743_goblinDrawName;
+static const char *br35743_goblinGlowName;
+static boolean br35743_wispDrawFlickers;
+static boolean br35743_goblinDrawFlickers;
+
+static void br35743_drawn_setup(void) {
+    clearMonsters();
+    br35743_wisp = placeHostileMonster(MK_WILL_O_THE_WISP, posAt(20, 10));
+    br35743_goblin = placeHostileMonster(MK_GOBLIN, posAt(24, 10));
+
+    br35743_wispDrawName = monsterDrawColorName(br35743_wisp);
+    br35743_wispGlowName = monsterGlowLightColorName(br35743_wisp);
+    br35743_goblinDrawName = monsterDrawColorName(br35743_goblin);
+    br35743_goblinGlowName = monsterGlowLightColorName(br35743_goblin);
+    br35743_wispDrawFlickers = monsterDrawColorFlickers(br35743_wisp);
+    br35743_goblinDrawFlickers = monsterDrawColorFlickers(br35743_goblin);
+}
+
+static boolean br35743_wisp_is_flickering_blue(void) {
+    TEST_ASSERT(br35743_wisp != NULL, "the wisp should be placed");
+    TEST_ASSERT(br35743_goblin != NULL, "the control goblin should be placed");
+
+    TEST_ASSERT(strcmp(br35743_wispDrawName, "wisp blue") == 0,
+                "a will-o'-the-wisp should be drawn in bright blue");
+    TEST_ASSERT(br35743_wispDrawFlickers,
+                "the wisp's drawn colour should flicker on every refresh");
+    TEST_ASSERT(strcmp(br35743_wispGlowName, br35743_wispDrawName) == 0,
+                "the wisp should cast the same blue light as its drawn colour");
+
+    TEST_ASSERT(strcmp(br35743_goblinDrawName, "wisp blue") != 0,
+                "control: a goblin should not be drawn in the wisp's blue");
+    TEST_ASSERT(!br35743_goblinDrawFlickers,
+                "control: a goblin's colour should not flicker");
+    TEST_ASSERT(strcmp(br35743_goblinGlowName, "other") == 0,
+                "control: a goblin should cast no light of its own");
+    return !testFailed;
+}
+
+static pos br35743_source;
+static int br35743_extentCounts[12];
+static boolean br35743_colorVaries;
+static boolean br35743_alwaysBlue;
+static int br35743_baselineLight;
+static int br35743_sourceDark;
+
+static void br35743_light_setup(void) {
+    clearMonsters();
+    for (int x = 0; x < levelWidth(); x++) {
+        for (int y = 0; y < levelHeight(); y++) {
+            setTerrain(posAt(x, y), FLOOR);
+        }
+    }
+    setPlayerPos(posAt(10, 14));
+    // The miner's light bottoms out at two tiles, which cannot reach the
+    // probes eight or more tiles away.
+    setLightMultiplier(0);
+    br35743_source = posAt(50, 14);
+
+    for (int distance = 0; distance < 12; distance++) {
+        br35743_extentCounts[distance] = 0;
+    }
+
+    recomputeLighting();
+    br35743_baselineLight = 0;
+    for (int distance = 0; distance < 12; distance++) {
+        br35743_baselineLight += lightAt(posOffset(br35743_source, distance, 0));
+    }
+
+    placeHostileMonster(MK_WILL_O_THE_WISP, br35743_source);
+    unsigned long firstColor = 0;
+    br35743_colorVaries = false;
+    br35743_alwaysBlue = true;
+    br35743_sourceDark = 0;
+
+    for (int trial = 0; trial < BR35743_TRIALS; trial++) {
+        recomputeLighting();
+
+        int red, green, blue;
+        lightColorAt(br35743_source, &red, &green, &blue);
+        unsigned long color = ((unsigned long) (unsigned short) red << 32)
+                            | ((unsigned long) (unsigned short) green << 16)
+                            | (unsigned long) (unsigned short) blue;
+        if (trial == 0) {
+            firstColor = color;
+        } else if (color != firstColor) {
+            br35743_colorVaries = true;
+        }
+        if (!(blue > red && blue > green)) {
+            br35743_alwaysBlue = false;
+        }
+
+        if (lightAt(br35743_source) <= 0) {
+            br35743_sourceDark++;
+        }
+
+        int farthest = -1;
+        for (int distance = 1; distance < 12; distance++) {
+            if (lightAt(posOffset(br35743_source, distance, 0)) > 0) {
+                farthest = distance;
+            }
+        }
+        if (farthest >= 0) {
+            br35743_extentCounts[farthest]++;
+        }
+    }
+}
+
+static boolean br35743_wisp_light_reaches_four_to_eight_tiles(void) {
+    TEST_ASSERT_EQ(br35743_baselineLight, 0,
+                   "control: bare floor should cast no light at the probes");
+    TEST_ASSERT_EQ(br35743_sourceDark, 0,
+                   "the wisp should always glow on its own tile");
+
+    TEST_ASSERT(br35743_extentCounts[3] > 0,
+                "the blue light should sometimes reach only four tiles including its source");
+    TEST_ASSERT(br35743_extentCounts[4] > 0,
+                "the blue light should sometimes reach five tiles including its source");
+    TEST_ASSERT(br35743_extentCounts[5] > 0,
+                "the blue light should sometimes reach six tiles including its source");
+    TEST_ASSERT(br35743_extentCounts[6] > 0,
+                "the blue light should sometimes reach seven tiles including its source");
+    TEST_ASSERT(br35743_extentCounts[7] > 0,
+                "the blue light should sometimes reach all eight tiles including its source");
+    TEST_ASSERT_EQ(br35743_extentCounts[2], 0,
+                   "the blue light should never reach less than four tiles");
+    TEST_ASSERT_EQ(br35743_extentCounts[8], 0,
+                   "the blue light should never reach a ninth tile");
+    TEST_ASSERT_EQ(br35743_extentCounts[11], 0,
+                   "the blue light should never reach twelve tiles");
+    TEST_ASSERT(br35743_colorVaries,
+                "the blue light should be re-shaded on every refresh");
+    TEST_ASSERT(br35743_alwaysBlue,
+                "the wisp's light should be blue (blue stronger than red and green)");
+    return !testFailed;
+}
+
+// ============================================================
 // BR29041 — a bolt from a staff of poison poisons the creature it hits
 // for 5 turns at +2 enchantment or lower, and each enchantment level
 // above that lengthens the poisoning by about 30% (5 × 1.3^(enchantment
@@ -825,6 +1147,626 @@ static boolean br29041_poison_staff_duration_scales_with_enchantment(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR38509 — the Game Stats screen's Current Win Streak and Current
+// Mastery Streak rows each show only the recent figure, with no
+// all-time counterpart, unlike the Longest streak rows just above
+// them, which carry an All Time and a Recent value.
+//
+// showGameStatsScreen() holds the real stats frame.  The Longest
+// rows are built as two right-aligned 16-column values, while the
+// Current rows are built as one right-aligned 32-column value.  So
+// the Current value ends in the Recent column and begins after the
+// All Time column has ended.  Reading the digit runs' columns proves
+// both that the Recent figure is present and that no All Time figure
+// shares its row.
+// ============================================================
+
+// Record the first and last digit of every run of digits on a screen line.
+// Returns the number of runs.  Positions are column indexes in the line.
+static int br38509_digitRuns(const char *line,
+                             int *firstStart, int *firstEnd,
+                             int *lastStart, int *lastEnd) {
+    int runs = 0;
+    int i = 0;
+    *firstStart = *firstEnd = *lastStart = *lastEnd = -1;
+    while (line[i] != '\0') {
+        if (line[i] >= '0' && line[i] <= '9') {
+            const int start = i;
+            while (line[i] >= '0' && line[i] <= '9') {
+                i++;
+            }
+            if (runs == 0) {
+                *firstStart = start;
+                *firstEnd = i - 1;
+            }
+            *lastStart = start;
+            *lastEnd = i - 1;
+            runs++;
+        } else {
+            i++;
+        }
+    }
+    return runs;
+}
+
+static void br38509_check_row(const char *currentLabel, const char *longestLabel) {
+    int longestFirstStart, longestFirstEnd, longestLastStart, longestLastEnd, longestRuns;
+    int currentFirstStart, currentFirstEnd, currentLastStart, currentLastEnd, currentRuns;
+    const char *longest = screenTextLineContaining(longestLabel);
+    const char *current = screenTextLineContaining(currentLabel);
+    char msg[300];
+
+    longestRuns = br38509_digitRuns(longest, &longestFirstStart, &longestFirstEnd,
+                                    &longestLastStart, &longestLastEnd);
+    currentRuns = br38509_digitRuns(current, &currentFirstStart, &currentFirstEnd,
+                                    &currentLastStart, &currentLastEnd);
+
+    snprintf(msg, sizeof(msg), "the \"%s\" row should show an All Time and a Recent value, as \"%s\" does (line \"%s\")",
+             longestLabel, currentLabel, longest);
+    TEST_ASSERT(longestRuns == 2, msg);
+
+    snprintf(msg, sizeof(msg), "the \"%s\" row should show a single Recent value, with no All Time value (line \"%s\")",
+             currentLabel, current);
+    TEST_ASSERT(currentRuns == 1, msg);
+
+    snprintf(msg, sizeof(msg), "the \"%s\" value should sit in the Recent column, at the same right edge as the \"%s\" Recent value",
+             currentLabel, longestLabel);
+    TEST_ASSERT_EQ(currentLastEnd, longestLastEnd, msg);
+
+    snprintf(msg, sizeof(msg), "the \"%s\" row should hold no value in the All Time column, which ends at column %d",
+             currentLabel, longestFirstEnd);
+    TEST_ASSERT(currentFirstStart > longestFirstEnd, msg);
+}
+
+static void br38509_setup(void) {
+    showGameStatsScreen();
+}
+
+static boolean br38509_current_streaks_show_only_recent(void) {
+    TEST_ASSERT(screenTextContains("Longest Win Streak"),
+                "the Game Stats screen should show the Longest Win Streak row");
+    TEST_ASSERT(screenTextContains("Longest Mastery Streak"),
+                "the Game Stats screen should show the Longest Mastery Streak row");
+    TEST_ASSERT(screenTextContains("Current Win Streak"),
+                "the Game Stats screen should show the Current Win Streak row");
+    TEST_ASSERT(screenTextContains("Current Mastery Streak"),
+                "the Game Stats screen should show the Current Mastery Streak row");
+    br38509_check_row("Current Win Streak", "Longest Win Streak");
+    br38509_check_row("Current Mastery Streak", "Longest Mastery Streak");
+    return !testFailed;
+}
+
+// ============================================================
+// BR40200 — when a blow lands on a paralyzed defender, the combat
+// message explains that the defender is struck while paralyzed.
+//
+// A paralyzed rat is always hit and outlasts the blow, so the
+// surviving-defender message is the one that reaches the log.  The
+// message is buffered until the turn ends, so a rest flushes it
+// before the clause is read back.
+// ============================================================
+
+static void br40200_setup(void) {
+    clearMonsters();
+    setArenaRadius(4, FLOOR);
+    const pos targetPos = posOffset(getPlayerPos(), 1, 0);
+    creature *target = placeHostileMonster(MK_RAT, targetPos);
+    revealCell(targetPos);
+    setMonsterHealth(target, 100); // survive the guaranteed triple-damage blow
+    applyStatusToMonster(target, STATUS_PARALYZED, 100);
+    playerAttacksMonster(target);
+    restOneTurn(); // the turn's end flushes the buffered combat message
+}
+
+static boolean br40200_message_explains_paralyzed_defender(void) {
+    TEST_ASSERT(messageWasShown("while it is paralyzed"),
+                "a blow on a paralyzed defender should report that it was struck while paralyzed");
+    return !testFailed;
+}
+
+// ============================================================
+// BR17360 — randomizing the order of a list produces a fair
+// shuffle in which every possible ordering is equally likely.
+//
+// shuffleTestSequence() samples the game's own shuffle of three
+// entries 100,000 times.  A fair shuffle gives each of the six
+// orderings about 16,667 turns; the chi-square statistic has five
+// degrees of freedom, and a fair shuffle exceeds 60 with probability
+// around 1e-11.  A shuffle that swaps each position with any other
+// position skews those six counts by hundreds, and a shuffle that
+// only produces cyclic orderings leaves three of them at zero.
+// ============================================================
+
+#define BR17360_TRIALS 100000
+
+static int br17360_counts[6];
+
+// The lexicographic rank of one ordering of the values 0, 1, and 2.
+static int br17360_permutation(const short *values) {
+    if (values[0] == 0) {
+        return values[1] == 1 ? 0 : 1;
+    }
+    if (values[0] == 1) {
+        return values[1] == 0 ? 2 : 3;
+    }
+    return values[1] == 0 ? 4 : 5;
+}
+
+static void br17360_setup(void) {
+    for (int i = 0; i < 6; i++) {
+        br17360_counts[i] = 0;
+    }
+    for (int trial = 0; trial < BR17360_TRIALS; trial++) {
+        short values[3];
+        shuffleTestSequence(values, 3);
+        br17360_counts[br17360_permutation(values)]++;
+    }
+}
+
+static boolean br17360_shuffle_is_fair(void) {
+    const double expected = BR17360_TRIALS / 6.0;
+    double chiSquare = 0.0;
+    int total = 0;
+
+    for (int i = 0; i < 6; i++) {
+        const double deviation = br17360_counts[i] - expected;
+        chiSquare += deviation * deviation / expected;
+        total += br17360_counts[i];
+    }
+
+    TEST_ASSERT_EQ(total, BR17360_TRIALS,
+                   "every sampled shuffle should produce exactly one of the six orderings");
+    for (int i = 0; i < 6; i++) {
+        char msg[160];
+        snprintf(msg, sizeof(msg),
+                 "the shuffled list should be able to take ordering %d, but it never did", i);
+        TEST_ASSERT(br17360_counts[i] > 0, msg);
+    }
+
+    char msg[240];
+    snprintf(msg, sizeof(msg),
+             "all six orderings of three entries should be about equally likely (chi-square %.1f over 5 degrees of freedom)",
+             chiSquare);
+    TEST_ASSERT(chiSquare < 60.0, msg);
+    return !testFailed;
+}
+
+// ============================================================
+// BR33997 — a draw from a range with a clumping factor above one
+// adds that many separate uniform rolls, so its values cluster
+// toward the middle of the range instead of being equally likely;
+// when the range's width is not evenly divisible by the factor, the
+// first few rolls may each reach one higher so the top of the range
+// can still come up.
+//
+// drawClumpedRange() samples the game's own roll of 0..10 with a
+// clumping factor of three: one roll of 0..4 plus two rolls of 0..3.
+// That sum puts 17.5% on the middle value 5 and 1.25% on each end,
+// so the five middle values 3..7 take three quarters of the draws.
+// An even spread would put 9.1% on every value and only 45% in those
+// five values, so the checks below separate the two shapes by a wide
+// margin.  A second sample uses a clumping factor of four on the same
+// range, where two of the four rolls get the extra side; the upper
+// bound 10 is reachable only because of that extra side, since four
+// base-sided rolls would stop at 8.
+// ============================================================
+
+#define BR33997_TRIALS 100000
+#define BR33997_LOW 0
+#define BR33997_HIGH 10
+#define BR33997_VALUES (BR33997_HIGH - BR33997_LOW + 1)
+
+static int br33997_counts[BR33997_VALUES];
+static int br33997_out_of_range;
+static int br33997_top_of_range_count;
+static int br33997_clump_four_out_of_range;
+
+static void br33997_clump_three_setup(void) {
+    br33997_out_of_range = 0;
+    for (int i = 0; i < BR33997_VALUES; i++) {
+        br33997_counts[i] = 0;
+    }
+    for (int trial = 0; trial < BR33997_TRIALS; trial++) {
+        const int value = drawClumpedRange(BR33997_LOW, BR33997_HIGH, 3);
+        if (value < BR33997_LOW || value > BR33997_HIGH) {
+            br33997_out_of_range++;
+        } else {
+            br33997_counts[value - BR33997_LOW]++;
+        }
+    }
+}
+
+static boolean br33997_clumped_rolls_cluster_toward_the_middle(void) {
+    int total = 0;
+    int middleMass = 0;
+    int edgeMass = 0;
+
+    for (int i = 0; i < BR33997_VALUES; i++) {
+        total += br33997_counts[i];
+    }
+    for (int value = 3; value <= 7; value++) {
+        middleMass += br33997_counts[value - BR33997_LOW];
+    }
+    for (int value = 0; value <= 2; value++) {
+        edgeMass += br33997_counts[value - BR33997_LOW];
+    }
+    for (int value = 8; value <= 10; value++) {
+        edgeMass += br33997_counts[value - BR33997_LOW];
+    }
+
+    TEST_ASSERT_EQ(br33997_out_of_range, 0,
+                   "a clumped roll must stay inside its bounds");
+    TEST_ASSERT_EQ(total, BR33997_TRIALS,
+                   "every clumped roll should land somewhere in the range");
+
+    for (int i = 0; i < BR33997_VALUES; i++) {
+        char msg[160];
+        snprintf(msg, sizeof(msg),
+                 "a clumped roll should be able to take value %d, but it never did",
+                 i + BR33997_LOW);
+        TEST_ASSERT(br33997_counts[i] > 0, msg);
+    }
+
+    char msg[240];
+    snprintf(msg, sizeof(msg),
+             "the middle of the range should be far more likely than either end "
+             "(middle %d, low %d, high %d)",
+             br33997_counts[5], br33997_counts[0], br33997_counts[10]);
+    TEST_ASSERT(br33997_counts[5] > 4 * br33997_counts[0]
+                    && br33997_counts[5] > 4 * br33997_counts[10],
+                msg);
+
+    snprintf(msg, sizeof(msg),
+             "clumped rolls should pile into the middle of the range "
+             "(values 3-7: %d, values 0-2 and 8-10: %d)",
+             middleMass, edgeMass);
+    TEST_ASSERT(middleMass > 2 * edgeMass, msg);
+    return !testFailed;
+}
+
+static void br33997_clump_four_setup(void) {
+    br33997_top_of_range_count = 0;
+    br33997_clump_four_out_of_range = 0;
+    for (int trial = 0; trial < BR33997_TRIALS; trial++) {
+        const int value = drawClumpedRange(BR33997_LOW, BR33997_HIGH, 4);
+        if (value < BR33997_LOW || value > BR33997_HIGH) {
+            br33997_clump_four_out_of_range++;
+        } else if (value == BR33997_HIGH) {
+            br33997_top_of_range_count++;
+        }
+    }
+}
+
+static boolean br33997_top_of_range_survives_a_remainder(void) {
+    TEST_ASSERT_EQ(br33997_clump_four_out_of_range, 0,
+                   "a clumped roll must stay inside its bounds");
+
+    char msg[200];
+    snprintf(msg, sizeof(msg),
+             "the top of a range whose width is not divisible by the clumping factor "
+             "should still come up (saw %d top rolls in %d draws)",
+             br33997_top_of_range_count, BR33997_TRIALS);
+    // With a clumping factor of four over 0..10, two rolls reach 0..3 and two
+    // reach 0..2, so the top comes up about 1 draw in 144.  Four base-sided
+    // rolls would top out at 8 and this count would be zero.
+    TEST_ASSERT(br33997_top_of_range_count > 200, msg);
+    return !testFailed;
+}
+
+// ============================================================
+// BR30955 — when you catch fire, the light you carry turns fiery
+// red-orange and your figure is drawn in flickering torch-orange;
+// both return to normal once the fire is extinguished.
+//
+// Standing on a fire tile and applying the tile effects runs the
+// engine's own catch-fire path.  The carried light is measured as
+// its RGB components (red over green over blue), the figure's colour
+// is read by name, and both flicker flags are read.  The water branch
+// of the same tile-effect routine then puts the fire out, and both
+// colours must return to exactly the values recorded beforehand.
+// ============================================================
+
+static const char *br30955_normalDrawName;
+static const char *br30955_normalLightName;
+static unsigned long br30955_normalDrawId;
+static const char *br30955_burningDrawName;
+static const char *br30955_burningLightName;
+static unsigned long br30955_burningDrawId;
+static boolean br30955_burningDrawFlickers;
+static boolean br30955_burningLightFlickers;
+static int br30955_burningLightRed;
+static int br30955_burningLightGreen;
+static int br30955_burningLightBlue;
+static const char *br30955_extinguishedDrawName;
+static const char *br30955_extinguishedLightName;
+static unsigned long br30955_extinguishedDrawId;
+
+static void br30955_setup(void) {
+    clearMonsters();
+    clearArena();
+    setTerrain(getPlayerPos(), FLOOR);
+    recomputeLighting();
+    updatePlayerDrawColor();
+
+    br30955_normalDrawName = playerDrawColorName();
+    br30955_normalLightName = playerLightColorName();
+    br30955_normalDrawId = playerDrawColorId();
+
+    // Catch fire through the engine's ordinary standing-in-fire path.
+    spawnFeature(getPlayerPos(), DF_PLAIN_FIRE);
+    applyTileEffectsToPlayer();
+
+    br30955_burningDrawName = playerDrawColorName();
+    br30955_burningLightName = playerLightColorName();
+    br30955_burningDrawId = playerDrawColorId();
+    br30955_burningDrawFlickers = playerDrawColorFlickers();
+    br30955_burningLightFlickers = playerLightColorFlickers();
+    playerLightColorComponents(&br30955_burningLightRed,
+                               &br30955_burningLightGreen,
+                               &br30955_burningLightBlue);
+
+    // Water uses the same tile-effect routine to put the fire out.
+    setTerrain(getPlayerPos(), SHALLOW_WATER);
+    applyTileEffectsToPlayer();
+
+    br30955_extinguishedDrawName = playerDrawColorName();
+    br30955_extinguishedLightName = playerLightColorName();
+    br30955_extinguishedDrawId = playerDrawColorId();
+}
+
+static boolean br30955_burning_colors_are_red_orange_and_restore(void) {
+    TEST_ASSERT(strcmp(br30955_normalLightName, "miners light") == 0,
+                "control: an unburned player should carry the ordinary miners light");
+    TEST_ASSERT(strcmp(br30955_normalDrawName, "torch orange") != 0,
+                "control: an unburned player should not be drawn in the torch colour");
+
+    TEST_ASSERT(strcmp(br30955_burningLightName, "fire") == 0,
+                "catching fire should change the carried light to the fire colour");
+    TEST_ASSERT(br30955_burningLightFlickers,
+                "the fire light should be re-shaded on every refresh");
+    TEST_ASSERT(br30955_burningLightRed > br30955_burningLightGreen
+                    && br30955_burningLightGreen > br30955_burningLightBlue,
+                "the fire light should be a fiery red-orange (red over green over blue)");
+
+    TEST_ASSERT(strcmp(br30955_burningDrawName, "torch orange") == 0,
+                "a burning player should be drawn in the torch-orange colour");
+    TEST_ASSERT(br30955_burningDrawFlickers,
+                "the burning player's torch-orange figure should flicker on every refresh");
+    TEST_ASSERT(br30955_normalDrawId != br30955_burningDrawId,
+                "the burning figure colour should differ from the normal figure colour");
+
+    TEST_ASSERT(!isPlayerBurning(), "the water should have extinguished the fire");
+    TEST_ASSERT(strcmp(br30955_extinguishedLightName, "miners light") == 0,
+                "extinguishing the fire should restore the ordinary carried light");
+    TEST_ASSERT(strcmp(br30955_extinguishedLightName, br30955_normalLightName) == 0,
+                "the restored carried light should match the light from before the fire");
+    TEST_ASSERT(strcmp(br30955_extinguishedDrawName, br30955_normalDrawName) == 0,
+                "extinguishing the fire should restore the figure's normal colour");
+    TEST_ASSERT(br30955_extinguishedDrawId == br30955_normalDrawId,
+                "the restored figure colour should be exactly the colour from before the fire");
+    return !testFailed;
+}
+
+// ============================================================
+// BR38512 — the message archive is a fixed-length rolling history:
+// once it is full, each new message overwrites the oldest archived
+// message, so the earliest messages of a very long game can no
+// longer be reviewed.
+//
+// The game is restarted to begin from an empty archive.  A marker
+// message is followed by exactly enough distinct fillers to fill
+// every slot; the marker is then the oldest entry and is still
+// present.  One more message rolls the archive forward: the marker
+// is gone, the first filler is the oldest entry, and the newest
+// message is the one just emitted.
+// ============================================================
+
+#define BR38512_MARKER "the oldest archived message"
+#define BR38512_NEWEST "the newest archived message"
+
+static int br38512_capacity;
+static int br38512_countAtFull;
+static int br38512_countAfterRollover;
+static boolean br38512_markerIsOldest;
+static boolean br38512_lastFillerIsNewest;
+static boolean br38512_markerSurvivesWhenFull;
+static boolean br38512_markerIsGone;
+static boolean br38512_firstFillerIsOldest;
+static boolean br38512_newestIsNewest;
+
+static void br38512_filler(int index, char *buffer, size_t size) {
+    snprintf(buffer, size, "archived filler %d", index);
+}
+
+static void br38512_setup(void) {
+    restartGame();
+    br38512_capacity = messageArchiveCapacity();
+    TEST_ASSERT(br38512_capacity > 1,
+                "the message archive should have room for more than one message");
+    TEST_ASSERT_EQ(messageArchiveEntryCount(), 0,
+                   "a freshly started game should have an empty message archive");
+
+    emitArchivedMessage(BR38512_MARKER);
+    char filler[64];
+    for (int i = 0; i < br38512_capacity - 1; i++) {
+        br38512_filler(i, filler, sizeof(filler));
+        emitArchivedMessage(filler);
+    }
+
+    br38512_countAtFull = messageArchiveEntryCount();
+    br38512_markerIsOldest = strcmp(messageArchiveEntry(br38512_capacity),
+                                    BR38512_MARKER) == 0;
+    br38512_filler(br38512_capacity - 2, filler, sizeof(filler));
+    br38512_lastFillerIsNewest = strcmp(messageArchiveEntry(1), filler) == 0;
+
+    br38512_markerSurvivesWhenFull = false;
+    for (int back = 1; back <= br38512_capacity; back++) {
+        if (strcmp(messageArchiveEntry(back), BR38512_MARKER) == 0) {
+            br38512_markerSurvivesWhenFull = true;
+        }
+    }
+
+    // One more message has to overwrite the oldest entry.
+    emitArchivedMessage(BR38512_NEWEST);
+
+    br38512_countAfterRollover = messageArchiveEntryCount();
+    br38512_markerIsGone = true;
+    for (int back = 1; back <= br38512_capacity; back++) {
+        if (strcmp(messageArchiveEntry(back), BR38512_MARKER) == 0) {
+            br38512_markerIsGone = false;
+        }
+    }
+    br38512_filler(0, filler, sizeof(filler));
+    br38512_firstFillerIsOldest = strcmp(messageArchiveEntry(br38512_capacity),
+                                         filler) == 0;
+    br38512_newestIsNewest = strcmp(messageArchiveEntry(1), BR38512_NEWEST) == 0;
+}
+
+static boolean br38512_archive_rolls_over_at_capacity(void) {
+    TEST_ASSERT_EQ(br38512_countAtFull, br38512_capacity,
+                   "filling every slot should fill the archive to its capacity");
+    TEST_ASSERT(br38512_markerIsOldest,
+                "before the archive is full, the first message should be its oldest entry");
+    TEST_ASSERT(br38512_lastFillerIsNewest,
+                "the last filler written should be the newest entry");
+    TEST_ASSERT(br38512_markerSurvivesWhenFull,
+                "the oldest message should still be archived while the archive is full");
+
+    TEST_ASSERT_EQ(br38512_countAfterRollover, br38512_capacity,
+                   "one more message should not grow the archive past its capacity");
+    TEST_ASSERT(br38512_markerIsGone,
+                "one more message should overwrite the oldest archived message");
+    TEST_ASSERT(br38512_firstFillerIsOldest,
+                "after the overwrite, the first filler should be the oldest entry");
+    TEST_ASSERT(br38512_newestIsNewest,
+                "the message just emitted should be the newest entry");
+    return !testFailed;
+}
+
+// ============================================================
+// BR37725 — the ambient light is neutral grey near the surface
+// and shifts gradually toward a darker blue-grey as you descend,
+// reaching its deepest shade at the depth of the amulet.
+//
+// The miner's light is the ambient light, and the game exposes it
+// as RGB components.  At depth 1 the red and green channels are
+// equal and blue is barely above them: neutral grey.  One floor
+// down, red has fallen and blue has fallen less, so the blue-grey
+// tint has grown.  On the amulet floor red is lower still and the
+// tint is at its strongest, and one floor deeper changes nothing,
+// so the deepest shade was reached at the amulet and not before.
+// A fixed colour would leave the depth-2 tint equal to the surface
+// tint; a step change at a fixed depth would leave the amulet tint
+// equal to the depth-2 tint or would still change below the amulet.
+// ============================================================
+
+static void br37725_ambient_light(int *red, int *green, int *blue) {
+    playerLightColorComponents(red, green, blue);
+}
+
+static boolean br37725_ambient_light_darkens_to_blue_grey_with_depth(void) {
+    int surfaceRed, surfaceGreen, surfaceBlue;
+    int shallowRed, shallowGreen, shallowBlue;
+    int amuletRed, amuletGreen, amuletBlue;
+    int deeperRed, deeperGreen, deeperBlue;
+
+    TEST_ASSERT_EQ(currentDepth(), 1,
+                   "control: the test should start on the surface floor");
+    TEST_ASSERT(strcmp(playerLightColorName(), "miners light") == 0,
+                "control: the ambient light should be the ordinary miner's light");
+
+    br37725_ambient_light(&surfaceRed, &surfaceGreen, &surfaceBlue);
+    TEST_ASSERT_EQ(surfaceRed, surfaceGreen,
+                   "near the surface the ambient light should be neutral (red equals green)");
+    TEST_ASSERT(surfaceBlue - surfaceRed <= 2,
+                "near the surface the ambient light should not yet be noticeably blue-grey");
+
+    descendToNextLevel();
+    TEST_ASSERT_EQ(currentDepth(), 2, "control: one descent should reach the second floor");
+    br37725_ambient_light(&shallowRed, &shallowGreen, &shallowBlue);
+    TEST_ASSERT_EQ(shallowRed, shallowGreen,
+                   "the ambient light should stay neutral in its red and green channels");
+    TEST_ASSERT(shallowRed < surfaceRed,
+                "the ambient light should darken after descending one floor");
+    TEST_ASSERT(shallowBlue - shallowRed > surfaceBlue - surfaceRed,
+                "the ambient light should grow more blue-grey after descending one floor");
+
+    descendWithFailedAmuletAltar();
+    TEST_ASSERT(currentDepth() > 2,
+                "control: the amulet should lie below the second floor");
+    TEST_ASSERT(strcmp(playerLightColorName(), "miners light") == 0,
+                "control: reaching the amulet floor should not change the ambient light");
+    br37725_ambient_light(&amuletRed, &amuletGreen, &amuletBlue);
+    TEST_ASSERT_EQ(amuletRed, amuletGreen,
+                   "at the amulet depth the ambient light should have equal red and green channels");
+    TEST_ASSERT(amuletRed < shallowRed,
+                "the ambient light should keep darkening all the way to the amulet");
+    TEST_ASSERT(amuletBlue - amuletRed > shallowBlue - shallowRed,
+                "the blue-grey tint should be stronger at the amulet than one floor down");
+
+    descendToNextLevel();
+    br37725_ambient_light(&deeperRed, &deeperGreen, &deeperBlue);
+    TEST_ASSERT(deeperRed == amuletRed
+                    && deeperGreen == amuletGreen
+                    && deeperBlue == amuletBlue,
+                "the ambient light should reach its deepest shade at the amulet and change no further");
+    return !testFailed;
+}
+
+// ============================================================
+// BR24247 — a light flash is drawn on top of the lighting that
+// existed before the flash, and that earlier lighting is
+// restored after every frame, so the flash leaves no permanent
+// glow and the dungeon returns to its normal illumination when
+// the animation ends.
+//
+// The engine's own flare animation is played for a generic flash
+// centred on the player.  The peak brightness recorded while the
+// frames were drawn must exceed the starting brightness (the
+// flash really was laid over the existing light), and once the
+// animation returns both the centre tile and its neighbour must
+// carry exactly the brightness they had beforehand (the flash
+// left nothing behind).
+// ============================================================
+
+static pos br24247_flashLoc;
+static pos br24247_neighborLoc;
+static int br24247_before;
+static int br24247_neighborBefore;
+static int br24247_peak;
+static int br24247_after;
+static int br24247_neighborAfter;
+
+static void br24247_setup(void) {
+    clearMonsters();
+    setArenaRadius(6, FLOOR);
+    setPlayerPos(posAt(levelWidth() / 2, levelHeight() / 2));
+    recomputeLighting();
+
+    br24247_flashLoc = getPlayerPos();
+    br24247_neighborLoc = posOffset(br24247_flashLoc, 1, 0);
+    br24247_before = lightAt(br24247_flashLoc);
+    br24247_neighborBefore = lightAt(br24247_neighborLoc);
+
+    br24247_peak = flashLightAtAndReportPeak(br24247_flashLoc);
+
+    br24247_after = lightAt(br24247_flashLoc);
+    br24247_neighborAfter = lightAt(br24247_neighborLoc);
+}
+
+static boolean br24247_flash_restores_lighting(void) {
+    TEST_ASSERT(br24247_before > 0,
+                "control: the centre tile should be lit before the flash");
+    TEST_ASSERT(br24247_peak > br24247_before,
+                "the flash should brighten the tile while it is being drawn");
+    TEST_ASSERT_EQ(br24247_after, br24247_before,
+                   "the flash should leave no permanent glow on the centre tile");
+    TEST_ASSERT_EQ(br24247_neighborAfter, br24247_neighborBefore,
+                   "the flash should leave the surrounding lighting unchanged");
+    return !testFailed;
+}
+
 const testCase tests_newrules[] = {
     { "BR29087_turn_counts_diverge_while_paralyzed",      br29087_setup, br29087_step, br29087_turn_counts_diverge_while_paralyzed },
     { "BR14549_change_mode_dialog_describes_wizard_mode", br14549_setup, NULL,         br14549_change_mode_dialog_describes_wizard_mode },
@@ -847,8 +1789,44 @@ const testCase tests_newrules[] = {
     { "BR34933_wired_torch_flame_is_flickering_orange",
       br34933_drawn_setup, NULL, br34933_wired_torch_flame_is_flickering_orange },
 
+    { "BR33736_haunted_torch_flame_is_flickering_purple",
+      br33736_drawn_setup, NULL, br33736_haunted_torch_flame_is_flickering_purple },
+    { "BR33736_haunted_torch_light_reaches_four_to_six_tiles",
+      br33736_light_setup, NULL, br33736_haunted_torch_light_reaches_four_to_six_tiles },
+
+    { "BR35743_wisp_is_flickering_blue",
+      br35743_drawn_setup, NULL, br35743_wisp_is_flickering_blue },
+    { "BR35743_wisp_light_reaches_four_to_eight_tiles",
+      br35743_light_setup, NULL, br35743_wisp_light_reaches_four_to_eight_tiles },
+
     { "BR29041_poison_staff_duration_scales_with_enchantment",
       br29041_setup, NULL, br29041_poison_staff_duration_scales_with_enchantment },
+
+    { "BR38509_current_streaks_show_only_recent_value",
+      br38509_setup, NULL, br38509_current_streaks_show_only_recent },
+
+    { "BR40200_paralyzed_defender_hit_message",
+      br40200_setup, NULL, br40200_message_explains_paralyzed_defender },
+
+    { "BR17360_list_shuffle_is_fair",
+      br17360_setup, NULL, br17360_shuffle_is_fair },
+
+    { "BR33997_clumped_rolls_cluster_toward_the_middle",
+      br33997_clump_three_setup, NULL, br33997_clumped_rolls_cluster_toward_the_middle },
+    { "BR33997_top_of_range_survives_a_remainder",
+      br33997_clump_four_setup, NULL, br33997_top_of_range_survives_a_remainder },
+
+    { "BR30955_burning_light_and_figure_are_red_orange",
+      br30955_setup, NULL, br30955_burning_colors_are_red_orange_and_restore },
+
+    { "BR24247_flash_restores_lighting",
+      br24247_setup, NULL, br24247_flash_restores_lighting },
+
+    { "BR38512_archive_overwrites_oldest_message_when_full",
+      br38512_setup, NULL, br38512_archive_rolls_over_at_capacity },
+
+    { "BR37725_ambient_light_darkens_to_blue_grey_with_depth",
+      NULL, NULL, br37725_ambient_light_darkens_to_blue_grey_with_depth },
 
     { NULL, NULL, NULL, NULL }
 };

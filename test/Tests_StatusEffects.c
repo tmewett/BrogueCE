@@ -1070,6 +1070,69 @@ static void br24556_enchant4_setup(void) {
 }
 
 // ============================================================
+// BR14011 — confusion gas sets the confusion counter to at least
+// 25 on a creature that is neither inanimate nor invulnerable.
+// ============================================================
+
+static void br14011_player_setup(void) {
+    clearArena();
+    spawnFeature(getPlayerPos(), DF_CONFUSION_GAS_CLOUD_POTION);
+    applyTileEffectsToPlayer();
+}
+
+static boolean br14011_player_confused(void) {
+    TEST_ASSERT(isPlayerConfused(), "confusion gas should confuse the player");
+    TEST_ASSERT_EQ(playerStatusTurns(STATUS_CONFUSED), 25,
+                   "confusion gas should set the confusion counter to at least 25");
+    return !testFailed;
+}
+
+static void br14011_monster_setup(enum monsterTypes type) {
+    clearArena();
+    monst = placeHostileMonster(type, posOffset(getPlayerPos(), 1, 0));
+    spawnFeature(monsterPosition(monst), DF_CONFUSION_GAS_CLOUD_POTION);
+    TEST_ASSERT(cellHasGas(monsterPosition(monst)),
+                "setup: the monster should be standing in confusion gas");
+    monsterTakesTurn(monst);
+}
+
+static void br14011_ordinary_setup(void) {
+    br14011_monster_setup(MK_TROLL);
+}
+
+static boolean br14011_ordinary_confused(void) {
+    TEST_ASSERT(monsterHasStatus(monst, STATUS_CONFUSED),
+                "confusion gas should confuse an ordinary creature");
+    TEST_ASSERT_EQ(monsterStatusTurns(monst, STATUS_CONFUSED), 25,
+                   "confusion gas should set the creature's confusion counter to at least 25");
+    return !testFailed;
+}
+
+static void br14011_inanimate_setup(void) {
+    br14011_monster_setup(MK_GOBLIN_TOTEM);
+}
+
+static boolean br14011_inanimate_not_confused(void) {
+    TEST_ASSERT(cellHasGas(monsterPosition(monst)),
+                "setup: the inanimate creature should be standing in confusion gas");
+    TEST_ASSERT(!monsterHasStatus(monst, STATUS_CONFUSED),
+                "confusion gas should not confuse an inanimate creature");
+    return !testFailed;
+}
+
+static void br14011_invulnerable_setup(void) {
+    br14011_monster_setup(MK_WARDEN_OF_YENDOR);
+}
+
+static boolean br14011_invulnerable_not_confused(void) {
+    TEST_ASSERT(cellHasGas(monsterPosition(monst)),
+                "setup: the invulnerable creature should be standing in confusion gas");
+    TEST_ASSERT(!monsterHasStatus(monst, STATUS_CONFUSED),
+                "confusion gas should not confuse an invulnerable creature");
+    return !testFailed;
+}
+
+// ============================================================
 // BR49341 — a discordant monster attacks whatever eligible
 // creature is nearest rather than respecting allegiance
 // ============================================================
@@ -1336,6 +1399,11 @@ const testCase tests_status_effects[] = {
 
     { "BR24556_confusion_weapon_duration_enchant10", br24556_enchant10_setup, br24556_step, br24556_confusion_duration_is },
     { "BR24556_confusion_weapon_duration_enchant4",  br24556_enchant4_setup,  br24556_step, br24556_confusion_duration_is },
+
+    { "BR14011_confusion_gas_sets_player_counter",   br14011_player_setup,      NULL, br14011_player_confused },
+    { "BR14011_confusion_gas_confuses_ordinary_creature", br14011_ordinary_setup, NULL, br14011_ordinary_confused },
+    { "BR14011_confusion_gas_skips_inanimate_creature",   br14011_inanimate_setup, NULL, br14011_inanimate_not_confused },
+    { "BR14011_confusion_gas_skips_invulnerable_creature", br14011_invulnerable_setup, NULL, br14011_invulnerable_not_confused },
 
     { "BR49341_discordant_attacks_nearest_creature", br49341_setup, br49341_step, br49341_attacks_nearest_creature },
 

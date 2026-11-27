@@ -17,6 +17,69 @@ static creature *monst;
 static item *theItem;
 
 // ============================================================
+// BR16118 — a run stops if an adjacent square holds an item or a
+// visible hostile creature
+// ============================================================
+
+static pos runStartPos;
+static pos runStopPos;
+static creature *runHostile;
+
+// A wide empty arena so a run has somewhere to go if it does not stop.
+static void prepare_run_arena(void) {
+    setArenaRadius(10, FLOOR);
+    clearFloorItems();
+    runStartPos = getPlayerPos();
+    runStopPos = posOffset(runStartPos, 2, 0);
+}
+
+static void run_beside_item_setup(void) {
+    prepare_run_arena();
+    // Three tiles east and one tile north of the start: beside the path the
+    // run takes, so the run reaches it after two steps.
+    placeItemOnFloor(POTION, POTION_LIFE, posOffset(runStartPos, 3, -1));
+}
+
+static boolean run_beside_item_step(void) {
+    runDirection(RIGHT);
+    return false;
+}
+
+static boolean run_stopped_beside_item(void) {
+    TEST_ASSERT(playerIsAt(runStopPos),
+                "the run should stop when an item lies in an adjacent square");
+    TEST_ASSERT(findFloorItem(POTION, POTION_LIFE) != NULL,
+                "the adjacent item should still be on the floor");
+    return !testFailed;
+}
+
+static void run_beside_hostile_setup(void) {
+    prepare_run_arena();
+    runHostile = placeHostileMonster(MK_RAT, posOffset(runStartPos, 3, -1));
+    // Hold the rat in place so only the run-stop rule can change positions.
+    applyStatusToMonster(runHostile, STATUS_PARALYZED, 100);
+    // Let the engine register the rat as already seen.  Catching sight of a
+    // monster for the first time disturbs the player by itself, which would
+    // end the run before it reached the rat.
+    restOneTurn();
+}
+
+static boolean run_beside_hostile_step(void) {
+    runDirection(RIGHT);
+    return false;
+}
+
+static boolean run_stopped_beside_hostile(void) {
+    TEST_ASSERT(cellIsVisible(monsterPosition(runHostile)),
+                "the hostile creature beside the run should be visible");
+    TEST_ASSERT(playerIsAt(runStopPos),
+                "the run should stop when a visible hostile creature is adjacent");
+    TEST_ASSERT(monsterIsAlive(runHostile),
+                "the hostile creature beside the run should still be alive");
+    return !testFailed;
+}
+
+// ============================================================
 // BR31821 — a move is blocked by an obstructing destination square
 // ============================================================
 
@@ -236,6 +299,81 @@ static boolean fire_prompt_step(void) {
 static boolean fire_prompt_refused(void) {
     TEST_ASSERT_POS_EQ(player.loc, startPos, "declining the fire prompt should cancel the move");
     TEST_ASSERT(messageWasShown("Venture into flame?"), "the game should ask before entering fire");
+    return !testFailed;
+}
+
+// ============================================================
+// BR44913 — the warning before stepping into flame is skipped when
+// the player is already burning or immune to fire
+// ============================================================
+
+static pos flamePos;
+
+static void flame_adjacent_setup(void) {
+    clearArena();
+    flamePos = posOffset(player.loc, 1, 0);
+    setTerrain(flamePos, PLAIN_FIRE);
+    revealCell(flamePos);
+    startPos = player.loc;
+}
+
+static void flame_vulnerable_setup(void) {
+    flame_adjacent_setup();
+    queueConfirmNo();
+}
+
+static boolean flame_vulnerable_step(void) {
+    moveRight();
+    return false;
+}
+
+static boolean warned_when_flame_would_harm(void) {
+    TEST_ASSERT(!isPlayerBurning(), "control: the player should not be burning");
+    TEST_ASSERT(!playerHasStatus(STATUS_IMMUNE_TO_FIRE),
+                "control: the player should not be immune to fire");
+    TEST_ASSERT(messageWasShown("Venture into flame?"),
+                "a player the flame could harm should be warned before entering it");
+    TEST_ASSERT(playerIsAt(startPos),
+                "declining the warning should cancel the move");
+    return !testFailed;
+}
+
+static void flame_while_burning_setup(void) {
+    flame_adjacent_setup();
+    applyStatusToPlayer(STATUS_BURNING, 20);
+}
+
+static boolean flame_while_burning_step(void) {
+    moveRight();
+    return false;
+}
+
+static boolean no_warning_when_already_burning(void) {
+    TEST_ASSERT(isPlayerBurning(), "control: the player should be burning");
+    TEST_ASSERT(!messageWasShown("Venture into flame?"),
+                "a burning player should not be warned about entering flame");
+    TEST_ASSERT(playerIsAt(flamePos),
+                "a burning player should enter the flame without answering a prompt");
+    return !testFailed;
+}
+
+static void flame_while_immune_setup(void) {
+    flame_adjacent_setup();
+    applyStatusToPlayer(STATUS_IMMUNE_TO_FIRE, 20);
+}
+
+static boolean flame_while_immune_step(void) {
+    moveRight();
+    return false;
+}
+
+static boolean no_warning_when_immune_to_fire(void) {
+    TEST_ASSERT(playerHasStatus(STATUS_IMMUNE_TO_FIRE),
+                "control: the player should be immune to fire");
+    TEST_ASSERT(!messageWasShown("Venture into flame?"),
+                "a player immune to fire should not be warned about entering flame");
+    TEST_ASSERT(playerIsAt(flamePos),
+                "a player immune to fire should enter the flame without answering a prompt");
     return !testFailed;
 }
 
@@ -2041,6 +2179,105 @@ static boolean br25953_verify(void) {
 }
 
 // ============================================================
+// BR26045 — the fall executes at the end of the turn, so fast
+// monsters cannot act while suspended in mid-air.
+//
+// A wraith moves twice as fast as the player.  Placed on a chasm
+// two tiles away and hostile, it would step toward the player on
+// its first action and leave the chasm before any fall could
+// happen.  The fall is settled before any monster acts, so after
+// one rest the wraith is on the level below, damaged by the fall,
+// and the player has not been attacked.
+// ============================================================
+
+static creature *br26045_faller;
+static pos br26045_chasm;
+static int br26045_healthBefore;
+static pos br26045_playerBefore;
+
+static void br26045_setup(void) {
+    clearArena();
+    setPlayerHealth(playerMaxHealth()); // a hit would show up below
+
+    br26045_chasm = posOffset(getPlayerPos(), 2, 0);
+    setTerrain(br26045_chasm, CHASM);
+    br26045_faller = spawnMonster(MK_WRAITH, br26045_chasm);
+    makeMonsterHostile(br26045_faller);
+    revealCell(br26045_chasm);
+
+    br26045_healthBefore = monsterHealth(br26045_faller);
+    br26045_playerBefore = getPlayerPos();
+}
+
+static boolean br26045_rest_step(void) {
+    restOneTurn();
+    return false;
+}
+
+static boolean br26045_falls_before_acting(void) {
+    TEST_ASSERT(monsterMovementSpeed(br26045_faller) < 100,
+                "setup: the falling monster must be faster than the player");
+    TEST_ASSERT_EQ(countMonstersOfType(MK_WRAITH), 0,
+                   "a fast monster on a chasm should fall before it can act");
+    TEST_ASSERT_POS_EQ(getPlayerPos(), br26045_playerBefore,
+                       "the player should not have moved");
+    TEST_ASSERT_EQ(playerHealth(), playerMaxHealth(),
+                   "the fast monster should not have attacked before falling");
+
+    descendToNextLevel();
+    creature *below = findMonster(MK_WRAITH);
+    TEST_ASSERT(below != NULL,
+                "the fast monster should be waiting on the level below");
+    if (below != NULL) {
+        int damage = br26045_healthBefore - monsterHealth(below);
+        TEST_ASSERT(damage >= 6 && damage <= 12,
+                    "the fall should deal 6-12 damage");
+    }
+    return !testFailed;
+}
+
+// ============================================================
+// BR28360 — a burning creature standing on flammable terrain,
+// unless submerged or falling, sets that terrain alight.
+//
+// A paralyzed burning ogre stands on grass.  The next environment
+// update exposes its tile to fire, which consumes the grass and
+// leaves either flames or, if they burned down in the same
+// update, their embers.
+// ============================================================
+
+static creature *br28360_burner;
+static pos br28360_ground;
+
+static void br28360_setup(void) {
+    clearArena();
+
+    br28360_ground = posOffset(getPlayerPos(), 2, 0);
+    setTerrain(br28360_ground, GRASS);
+    br28360_burner = spawnMonster(MK_OGRE, br28360_ground);
+    applyStatusToMonster(br28360_burner, STATUS_BURNING, 1000);
+    applyStatusToMonster(br28360_burner, STATUS_PARALYZED, 1000);
+
+    TEST_ASSERT(cellIsTerrain(br28360_ground, GRASS),
+                "setup: the creature should stand on flammable grass");
+    TEST_ASSERT(!cellIsOnFire(br28360_ground),
+                "setup: the grass should not be alight yet");
+}
+
+static boolean br28360_rest_step(void) {
+    restOneTurn();
+    return false;
+}
+
+static boolean br28360_ground_is_set_alight(void) {
+    TEST_ASSERT(!cellIsTerrain(br28360_ground, GRASS),
+                "a burning creature should consume the flammable ground it stands on");
+    TEST_ASSERT(cellIsOnFire(br28360_ground) || cellIsTerrain(br28360_ground, EMBERS),
+                "the ignited ground should be flames or their embers");
+    return !testFailed;
+}
+
+// ============================================================
 // BR70260 — monsters that fall take 6-12 damage and reappear on
 // the level below.
 //
@@ -2291,13 +2528,147 @@ static boolean br28134_burn_death_verify(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR13526 — a freed captive becomes a grateful, faithful ally
+//
+// Bump into a captive and accept the offer to free it.  The freed
+// creature must change from a captive into one of your allies, and the
+// game must say so with the grateful-ally message.  The pre-state check
+// proves the ally status came from the freeing, not from the spawn.
+// ============================================================
+
+static creature *br13526_captive;
+static boolean br13526_wasAllyBefore;
+
+static void br13526_setup(void) {
+    clearArena();
+    br13526_captive = spawnMonster(MK_RAT, posOffset(getPlayerPos(), 1, 0));
+    makeMonsterCaptive(br13526_captive);
+    br13526_wasAllyBefore = monsterIsAlly(br13526_captive);
+    queueConfirmYes(); // accept "Free the captive ...?"
+}
+
+static boolean br13526_step(void) {
+    moveRight();
+    return false;
+}
+
+static boolean br13526_verify(void) {
+    TEST_ASSERT(br13526_captive != NULL, "setup: the captive should exist");
+    if (br13526_captive == NULL) {
+        return false;
+    }
+    TEST_ASSERT(!br13526_wasAllyBefore,
+                "control: the captive is not an ally before it is freed");
+    TEST_ASSERT(messageWasShown("you free the grateful"),
+                "freeing the captive should announce the grateful creature");
+    TEST_ASSERT(messageWasShown("gain a faithful ally"),
+                "freeing the captive should announce that you gain a faithful ally");
+    TEST_ASSERT(monsterIsAlly(br13526_captive),
+                "the freed captive should become your ally");
+    return !testFailed;
+}
+
+// ============================================================
+// BR13208 — a looked-at item is described with "is" when it is a single
+// item, and with "are" when it is a stack of more than one or a pile of
+// gold; while hallucinating it is always described with "is".
+//
+// Each case puts one item on an open, revealed square beside the player and
+// asks the framework for that square's description - the same text the game
+// puts in the flavor line when the player looks at it.  The square holds no
+// creature, so the description takes the item branch the rule describes.
+// ============================================================
+
+static pos br13208_itemLoc;
+static const char *br13208_description;
+static item *br13208_item;
+
+static void br13208_prepare_item(short category, short kind) {
+    clearArena();
+    clearFloorItems();
+    br13208_itemLoc = posOffset(getPlayerPos(), 1, 0);
+    br13208_item = placeItemOnFloor(category, kind, br13208_itemLoc);
+    revealCell(br13208_itemLoc);
+}
+
+static void br13208_single_setup(void) {
+    br13208_prepare_item(WEAPON, DAGGER);
+    br13208_description = locationDescriptionAt(br13208_itemLoc);
+}
+
+static boolean br13208_single_item_uses_is(void) {
+    TEST_ASSERT_EQ(itemQuantity(br13208_item), 1,
+                   "precondition: the item is a single item, quantity");
+    TEST_ASSERT(strstr(br13208_description, " is ") != NULL,
+                "a single item should be described with \"is\"");
+    TEST_ASSERT(strstr(br13208_description, " are ") == NULL,
+                "a single item should not be described with \"are\"");
+    return !testFailed;
+}
+
+static void br13208_stack_setup(void) {
+    br13208_prepare_item(WEAPON, DART);
+    br13208_description = locationDescriptionAt(br13208_itemLoc);
+}
+
+static boolean br13208_stack_uses_are(void) {
+    TEST_ASSERT(itemQuantity(br13208_item) > 1,
+                "precondition: the darts are a stack of more than one");
+    TEST_ASSERT(strstr(br13208_description, " are ") != NULL,
+                "a stack of more than one item should be described with \"are\"");
+    TEST_ASSERT(strstr(br13208_description, " is ") == NULL,
+                "a stack of more than one item should not be described with \"is\"");
+    return !testFailed;
+}
+
+static void br13208_gold_setup(void) {
+    br13208_prepare_item(GOLD, 0);
+    br13208_description = locationDescriptionAt(br13208_itemLoc);
+}
+
+static boolean br13208_gold_uses_are(void) {
+    TEST_ASSERT_EQ(itemCategory(br13208_item), GOLD,
+                   "precondition: the item is gold, category");
+    TEST_ASSERT(strstr(br13208_description, " are ") != NULL,
+                "a pile of gold should be described with \"are\"");
+    TEST_ASSERT(strstr(br13208_description, " is ") == NULL,
+                "a pile of gold should not be described with \"is\"");
+    return !testFailed;
+}
+
+static void br13208_hallucinating_stack_setup(void) {
+    br13208_prepare_item(WEAPON, DART);
+    applyStatusToPlayer(STATUS_HALLUCINATING, 100);
+    br13208_description = locationDescriptionAt(br13208_itemLoc);
+}
+
+static boolean br13208_hallucinating_stack_uses_is(void) {
+    TEST_ASSERT(itemQuantity(br13208_item) > 1,
+                "precondition: the darts are a stack of more than one");
+    TEST_ASSERT(playerHasStatus(STATUS_HALLUCINATING),
+                "precondition: the player is hallucinating");
+    TEST_ASSERT(strstr(br13208_description, " is ") != NULL,
+                "a hallucinating player should see a stack described with \"is\"");
+    TEST_ASSERT(strstr(br13208_description, " are ") == NULL,
+                "a hallucinating player should not see a stack described with \"are\"");
+    return !testFailed;
+}
+
 const testCase tests_movement[] = {
+    { "BR13208_single_item_described_with_is",        br13208_single_setup,   NULL, br13208_single_item_uses_is },
+    { "BR13208_stack_described_with_are",             br13208_stack_setup,    NULL, br13208_stack_uses_are },
+    { "BR13208_gold_described_with_are",              br13208_gold_setup,     NULL, br13208_gold_uses_are },
+    { "BR13208_hallucinated_stack_described_with_is", br13208_hallucinating_stack_setup, NULL, br13208_hallucinating_stack_uses_is },
+
     { "BR91235_staff_recharges_a_spent_charge",      staff_recharge_setup, staff_recharge_step, spent_staff_recharges },
     { "BR91235_full_staff_gains_no_charges",         full_staff_setup,    full_staff_rest_step, full_staff_gains_no_charges },
     { "BR91235_charm_counts_down_to_recharged",      charm_countdown_setup, charm_countdown_step, charm_counts_down_to_recharged },
 
     { "BR21546_thorough_search_marks_nearby_square_trap_free", thorough_search_setup, thorough_search_step, nearby_square_marked_trap_free },
     { "BR20029_trap_free_squares_cost_flat_ten_to_explore", trap_free_explore_setup, trap_free_explore_step, trap_free_route_was_taken },
+    { "BR16118_run_stops_beside_item",         run_beside_item_setup,  run_beside_item_step,     run_stopped_beside_item },
+    { "BR16118_run_stops_beside_visible_hostile", run_beside_hostile_setup, run_beside_hostile_step, run_stopped_beside_hostile },
     { "BR31821_move_blocked_by_obstruction",   wall_blocks_setup,      wall_blocks_step,         player_did_not_move },
     { "BR29427_diagonal_blocked_by_corner",    corner_blocks_setup,    corner_blocks_step,       player_did_not_move },
     { "BR10367_cardinal_not_corner_blocked",   cardinal_corner_setup,  cardinal_corner_step,     player_moved_right },
@@ -2308,6 +2679,9 @@ const testCase tests_movement[] = {
     { "BR88965_confused_lava_warning",         confused_lava_warning_setup, confused_lava_warning_step, warned_before_confused_step_into_lava },
     { "BR63035_chasm_prompt_cancels_move",     chasm_prompt_setup,     chasm_prompt_step,        chasm_prompt_refused },
     { "BR95206_fire_prompt_cancels_move",      fire_prompt_setup,      fire_prompt_step,         fire_prompt_refused },
+    { "BR44913_warn_before_flame_when_harmful", flame_vulnerable_setup, flame_vulnerable_step,    warned_when_flame_would_harm },
+    { "BR44913_no_warning_when_burning",       flame_while_burning_setup, flame_while_burning_step, no_warning_when_already_burning },
+    { "BR44913_no_warning_when_immune",        flame_while_immune_setup, flame_while_immune_step,  no_warning_when_immune_to_fire },
     { "BR83833_pressure_plate_prompt_cancels", plate_prompt_setup,     plate_prompt_step,        plate_prompt_refused },
     { "BR50847_stairs_change_level",           stairs_setup,           stairs_step,              descended_a_level },
     { "BR34686_discovery_xp_goes_to_nearby_allies", discovery_xp_setup, discovery_xp_step,        discovery_xp_goes_to_allies_on_nearby_levels },
@@ -2323,6 +2697,8 @@ const testCase tests_movement[] = {
     { "BR95213_burning_square_ignites_orthogonal_neighbours", br95213_setup, br95213_step, br95213_verify },
     { "BR28134_burning_deals_one_to_three_and_burns_out", br28134_burning_setup, br28134_burning_step, br28134_burning_verify },
     { "BR28134_burning_can_kill",             br28134_burn_death_setup, br28134_burn_death_step, br28134_burn_death_verify },
+
+    { "BR13526_freed_captive_becomes_grateful_ally", br13526_setup, br13526_step, br13526_verify },
     { "BR34974_nutrition_drops_each_turn",     nutrition_setup,        nutrition_step,           nutrition_dropped },
     { "BR95832_starvation_drains_health",      starvation_setup,       starvation_step,          starved },
     { "BR32992_first_hunger_warning_skips_acknowledgment", br32992_first_setup, br32992_first_step, br32992_first_needs_no_acknowledgment },
@@ -2349,6 +2725,9 @@ const testCase tests_movement[] = {
 
     { "BR30801_disabled_monsters_do_not_act", br30801_setup, br30801_step, br30801_verify },
     { "BR25953_mending_ground_heals", br25953_setup, br25953_step, br25953_verify },
+
+    { "BR26045_fast_monster_falls_before_acting", br26045_setup, br26045_rest_step, br26045_falls_before_acting },
+    { "BR28360_burning_creature_ignites_flammable_ground", br28360_setup, br28360_rest_step, br28360_ground_is_set_alight },
 
     { "BR70260_falling_monster_damaged_and_moves_down", br70260_setup, br70260_wait_to_fall_step, br70260_monster_falls_damaged_to_level_below },
 

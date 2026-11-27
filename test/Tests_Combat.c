@@ -540,6 +540,54 @@ static boolean invulnerable_rune_never_triggered(void) {
 }
 
 // ============================================================
+// BR78777 — a confusion weapon confuses the creature it strikes
+// for a duration that grows with enchantment, never less than
+// three turns.  A beached kraken cannot act, and its health is
+// restored before every blow, so the only thing that varies is
+// whether the rune fires.
+// ============================================================
+
+static int br78777_duration;
+static int br78777_expected;
+static int br78777_attempts;
+
+static void br78777_prepare(int enchant) {
+    clearArena();
+    givePlayerRunicArmor(CHAIN_MAIL, A_ABSORPTION, 50, true); // keep the player safe
+    giveAndEquipRunicWeapon(DAGGER, W_CONFUSION, enchant, true);
+    monst = placeHostileMonster(MK_KRAKEN, posOffset(getPlayerPos(), 1, 0));
+    br78777_duration = 0;
+    br78777_attempts = 0;
+}
+
+static boolean br78777_step(void) {
+    setMonsterHealth(monst, monsterMaxHealth(monst)); // keep the target alive to be struck again
+    playerAttacksMonster(monst);
+    if (monsterHasStatus(monst, STATUS_CONFUSED)) {
+        br78777_duration = monsterStatusTurns(monst, STATUS_CONFUSED);
+        return false; // runic fired, done
+    }
+    return ++br78777_attempts < 2000;
+}
+
+static boolean br78777_confusion_duration_is(void) {
+    TEST_ASSERT(br78777_duration > 0, "the confusion rune should have triggered");
+    TEST_ASSERT_EQ(br78777_duration, br78777_expected,
+                   "a confusion weapon should confuse its target for three turns at low enchantment and longer as enchantment grows");
+    return !testFailed;
+}
+
+static void br78777_enchant1_setup(void) {
+    br78777_prepare(1);
+    br78777_expected = 3; // 1 * 3 / 2 is below the three-turn minimum
+}
+
+static void br78777_enchant4_setup(void) {
+    br78777_prepare(4);
+    br78777_expected = 6; // 4 * 3 / 2
+}
+
+// ============================================================
 // BR29616 — a creature able to steal and flee takes a random unequipped
 // item from the player's pack when its blow lands (never while it is
 // confused) and then flees; a weapon stack of more than three loses about
@@ -905,6 +953,8 @@ const testCase tests_combat[] = {
     { "BR57646_rune_triggers_against_ordinary_creature", br57646_ordinary_setup, br57646_step, ordinary_rune_triggered },
     { "BR57646_rune_never_triggers_against_inanimate_creature", br57646_inanimate_setup, br57646_step, inanimate_rune_never_triggered },
     { "BR57646_rune_never_triggers_against_invulnerable_creature", br57646_invulnerable_setup, br57646_step, invulnerable_rune_never_triggered },
+    { "BR78777_confusion_weapon_minimum_duration", br78777_enchant1_setup, br78777_step, br78777_confusion_duration_is },
+    { "BR78777_confusion_weapon_duration_grows_with_enchant", br78777_enchant4_setup, br78777_step, br78777_confusion_duration_is },
 
     { "BR89754_acid_corrodes_weapon_slaying_exempt", br89754_setup, br89754_step, br89754_corrodes_weapon_unless_slaying },
     { "BR41331_reaping_capped_by_victim_health", br41331_cap_setup, br41331_attack_step, br41331_reaping_is_capped_by_victim_health },

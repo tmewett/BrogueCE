@@ -450,6 +450,132 @@ static boolean br24559_turret_rejected_on_open_ground(void) {
 }
 
 // ============================================================
+// BR10231 — the monster-creation placement prompt asks for the kind of
+// square the created monster needs: a visible wall for a turret, a
+// visible unobstructed location for any other monster
+// ============================================================
+
+static void br10231_turret_prompt_setup(void) {
+    br24559_setup();
+    br24559_create_monster('c', br24559_wall); // arrow turret
+}
+
+static boolean br10231_turret_prompt_asks_for_wall(void) {
+    TEST_ASSERT(messageWasShown("Create arrow turret where? Choose a visible wall."),
+                "the turret placement prompt should ask for a visible wall");
+    TEST_ASSERT(!messageWasShown("unobstructed location"),
+                "the turret placement prompt should not ask for an unobstructed location");
+    return !testFailed;
+}
+
+static void br10231_monster_prompt_setup(void) {
+    br24559_setup();
+    br24559_create_monster('v', br24559_openFloor); // goblin totem
+}
+
+static boolean br10231_monster_prompt_asks_for_open_location(void) {
+    TEST_ASSERT(messageWasShown("Create goblin totem where? Choose a visible unobstructed location."),
+                "an ordinary monster's placement prompt should ask for a visible unobstructed location");
+    TEST_ASSERT(!messageWasShown("Choose a visible wall."),
+                "an ordinary monster's placement prompt should not ask for a wall");
+    return !testFailed;
+}
+
+// ============================================================
+// BR27330 — Wizard mode allows the player to create an arbitrary
+// monster from the catalog, excluding the lich and the phoenix.
+//
+// The catalog is alphabetical and paged 24 entries at a time, so
+// each range label names the first and last entry on a page.  A
+// correct catalog has 65 entries: page two then runs from guardian
+// spirit to spark turret.  Including the lich or the phoenix shifts
+// that boundary to sentinel or salamander, so the exact label is
+// the falsifiable part.  The second page's list is also read back
+// directly: it shows the phoenix egg and the phylactery but no lich
+// and no plain phoenix.  A final test creates a kraken chosen from
+// that page, proving the second page is reachable and its monsters
+// are really created.
+// ============================================================
+
+static void br27330_range_setup(void) {
+    queueKeystroke('b', false, false); // Monster in the Create: dialog
+    attemptWizardItemCreation();
+}
+
+static boolean br27330_range_boundaries(void) {
+    TEST_ASSERT(screenTextContains("Acid mound - Golem"),
+                "the first monster page should start at acid mound and end at golem");
+    TEST_ASSERT(screenTextContains("Guardian spirit - Spark turret"),
+                "the second monster page should start at guardian spirit and end at "
+                "spark turret, which is only true when both the lich and the phoenix "
+                "have been removed from the catalog");
+    TEST_ASSERT(screenTextContains("Spectral blade - Zombie"),
+                "the last monster page should start at spectral blade and end at zombie");
+
+    TEST_ASSERT(!screenTextContains("Guardian spirit - Sentinel"),
+                "including either the lich or the phoenix would move the second "
+                "page's last entry to sentinel");
+    TEST_ASSERT(!screenTextContains("Guardian spirit - Salamander"),
+                "including both the lich and the phoenix would move the second "
+                "page's last entry to salamander");
+    return !testFailed;
+}
+
+static void br27330_page_setup(void) {
+    queueKeystroke('b', false, false); // Monster in the Create: dialog
+    queueKeystroke('b', false, false); // second page of monster names
+    attemptWizardItemCreation();
+}
+
+static boolean br27330_page_omits_lich_and_phoenix(void) {
+    TEST_ASSERT(screenTextContains("Guardian spirit"),
+                "the second monster page should be shown");
+    TEST_ASSERT(screenTextContains("Kraken"),
+                "the second monster page should list the monsters around the l..p range");
+    TEST_ASSERT(screenTextContains("Phoenix egg"),
+                "the second monster page should still offer the phoenix egg");
+    TEST_ASSERT(screenTextContains("Phylactery"),
+                "the second monster page should still offer the phylactery");
+    TEST_ASSERT(!screenTextContains("Lich"),
+                "the second monster page must not offer the lich");
+
+    const char *phoenixLine = screenTextLineContaining("Phoenix");
+    TEST_ASSERT(strstr(phoenixLine, "Phoenix egg") != NULL,
+                "the only phoenix the catalog should offer is the phoenix egg");
+
+    TEST_ASSERT(!screenTextContains("Spider"),
+                "the second monster page should not show entries from the third page");
+    return !testFailed;
+}
+
+static void br27330_create_setup(void) {
+    br24559_setup();
+    queueKeystroke('b', false, false); // Monster in the Create: dialog
+    queueKeystroke('b', false, false); // second page of monster names
+    queueKeystroke('f', false, false); // kraken, on that page
+    queueKeystroke(ESCAPE_KEY, false, false); // decline the mutation offer
+    queueMapClick(br24559_openFloor); // move the target cursor
+    queueMapClick(br24559_openFloor); // confirm the target
+    queueKeystroke(ESCAPE_KEY, false, false); // do not make it an ally
+    attemptWizardItemCreation();
+}
+
+static boolean br27330_monster_created_from_second_page(void) {
+    creature *kraken = findMonster(MK_KRAKEN);
+    TEST_ASSERT(kraken != NULL,
+                "a monster chosen from the catalog's second page should be created");
+    if (kraken != NULL) {
+        TEST_ASSERT_POS_EQ(monsterPosition(kraken), br24559_openFloor,
+                           "the kraken should stand on the chosen visible floor tile");
+    }
+    TEST_ASSERT(messageWasShown("kraken created."),
+                "a valid placement should report the kraken as created");
+    TEST_ASSERT_EQ(monsterCount(), br24559_monstersBefore + 1,
+                   "creating the kraken should add exactly one monster");
+    return !testFailed;
+}
+
+// ============================================================
 // BR78012 — the welcome message tells the player to retrieve the
 // Amulet of Yendor from a specific floor of the dungeon and escape
 // with it, naming that floor with an ordinal number
@@ -846,6 +972,13 @@ const testCase tests_progression[] = {
     { "BR24559_monster_rejected_where_unseen", br24559_unseen_ground_setup, NULL, br24559_monster_rejected_where_unseen },
     { "BR24559_turret_placed_on_wall", br24559_turret_on_wall_setup, NULL, br24559_turret_placed_on_wall },
     { "BR24559_turret_rejected_on_open_ground", br24559_turret_on_open_ground_setup, NULL, br24559_turret_rejected_on_open_ground },
+
+    { "BR10231_turret_prompt_asks_for_wall", br10231_turret_prompt_setup, NULL, br10231_turret_prompt_asks_for_wall },
+    { "BR10231_monster_prompt_asks_for_open_location", br10231_monster_prompt_setup, NULL, br10231_monster_prompt_asks_for_open_location },
+
+    { "BR27330_monster_page_ranges_exclude_lich_and_phoenix", br27330_range_setup, NULL, br27330_range_boundaries },
+    { "BR27330_second_monster_page_omits_lich_and_phoenix", br27330_page_setup, NULL, br27330_page_omits_lich_and_phoenix },
+    { "BR27330_monster_created_from_second_page", br27330_create_setup, NULL, br27330_monster_created_from_second_page },
 
     { "BR78012_welcome_message_names_amulet_floor", NULL, NULL, welcome_message_names_amulet_floor },
     { "BR69169_start_clears_messages_and_blacks_screen", br69169_setup, NULL, start_clears_messages_and_blacks_out_screen },

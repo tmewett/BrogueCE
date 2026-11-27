@@ -63,6 +63,13 @@ static boolean inputLoopPumpActive = false;
 static char screenSnapshot[ROWS][COLS + 1];
 static boolean screenSnapshotValid = false;
 
+// When set, captureScreenSnapshot() stops overwriting the snapshot once it
+// sees a frame containing this text.  A menu that opens a transient screen and
+// then returns to the title screen would otherwise leave only the title screen
+// readable, so showGameStatsScreen() holds the stats frame this way.
+static const char *screenSnapshotHoldText = NULL;
+static boolean screenSnapshotHeld = false;
+
 // Background colour components of the same frame, for detecting a transient
 // highlight with screenCellColorsChanged().  The foreground is deliberately
 // not kept: plotCharWithColor() re-randomizes it on every draw.
@@ -76,6 +83,9 @@ static boolean rememberedColorsValid = false;
 static int screenGlyphSnapshot[ROWS][COLS];
 
 static void captureScreenSnapshot(void) {
+    if (screenSnapshotHeld) {
+        return;
+    }
     for (int y = 0; y < ROWS; y++) {
         for (int x = 0; x < COLS; x++) {
             int glyph = (int) displayBuffer.cells[x][y].character;
@@ -88,6 +98,14 @@ static void captureScreenSnapshot(void) {
         screenSnapshot[y][COLS] = '\0';
     }
     screenSnapshotValid = true;
+    if (screenSnapshotHoldText != NULL) {
+        for (int y = 0; y < ROWS; y++) {
+            if (strstr(screenSnapshot[y], screenSnapshotHoldText) != NULL) {
+                screenSnapshotHeld = true;
+                break;
+            }
+        }
+    }
 }
 
 boolean screenTextContains(const char *substring) {
@@ -100,6 +118,18 @@ boolean screenTextContains(const char *substring) {
         }
     }
     return false;
+}
+
+const char *screenTextLineContaining(const char *substring) {
+    if (!screenSnapshotValid) {
+        return "";
+    }
+    for (int y = 0; y < ROWS; y++) {
+        if (strstr(screenSnapshot[y], substring) != NULL) {
+            return screenSnapshot[y];
+        }
+    }
+    return "";
 }
 
 int discoveryScreenMagicMarkerFor(const char *name) {
@@ -150,6 +180,12 @@ const char *flavorTextLine(void) {
 void refreshFlavorText(void) {
     rogue.disturbed = true;
     updateFlavorText();
+}
+
+const char *locationDescriptionAt(pos loc) {
+    static char description[DCOLS * 3];
+    describeLocation(description, loc.x, loc.y);
+    return description;
 }
 
 boolean screenCellColorsChanged(pos loc) {
@@ -460,6 +496,34 @@ void emitArchivedMessage(const char *msg) {
     rogue.mode = savedMode;
 }
 
+static const archivedMessage *archivedMessageAt(int back) {
+    if (back < 1 || back > MESSAGE_ARCHIVE_ENTRIES) {
+        return NULL;
+    }
+    return &messageArchive[(messageArchivePosition + MESSAGE_ARCHIVE_ENTRIES - back)
+                           % MESSAGE_ARCHIVE_ENTRIES];
+}
+
+int messageArchiveCapacity(void) {
+    return MESSAGE_ARCHIVE_ENTRIES;
+}
+
+int messageArchiveEntryCount(void) {
+    int count = 0;
+    for (int back = 1; back <= MESSAGE_ARCHIVE_ENTRIES; back++) {
+        if (archivedMessageAt(back)->message[0] == '\0') {
+            break;
+        }
+        count++;
+    }
+    return count;
+}
+
+const char *messageArchiveEntry(int back) {
+    const archivedMessage *entry = archivedMessageAt(back);
+    return entry != NULL ? entry->message : "";
+}
+
 const char *renderedMessageLine(void) {
     static char line[COLS * 2];
     char buffer[MESSAGE_LINES][COLS * 2];
@@ -518,6 +582,8 @@ void runTestByName(const char *name) {
             playerDeathCauseText[0] = '\0';
             highScoresDisplayed = false;
             screenSnapshotValid = false;
+            screenSnapshotHoldText = NULL;
+            screenSnapshotHeld = false;
             rememberedColorsValid = false;
 
             // Setup
@@ -607,14 +673,26 @@ void restOneTurn(void) {
     injectKeystroke(PERIOD_KEY, false, false);
 }
 
-void moveDirection(enum directions dir) {
+static int directionKey(enum directions dir) {
     static const int keys[] = {
         [UP] = UP_KEY, [DOWN] = DOWN_KEY, [LEFT] = LEFT_KEY, [RIGHT] = RIGHT_KEY,
         [UPLEFT] = UPLEFT_KEY, [UPRIGHT] = UPRIGHT_KEY,
         [DOWNLEFT] = DOWNLEFT_KEY, [DOWNRIGHT] = DOWNRIGHT_KEY
     };
-    if (dir >= UP && dir <= DOWNRIGHT) {
-        injectKeystroke(keys[dir], false, false);
+    return (dir >= UP && dir <= DOWNRIGHT) ? keys[dir] : -1;
+}
+
+void moveDirection(enum directions dir) {
+    int key = directionKey(dir);
+    if (key >= 0) {
+        injectKeystroke(key, false, false);
+    }
+}
+
+void runDirection(enum directions dir) {
+    int key = directionKey(dir);
+    if (key >= 0) {
+        injectKeystroke(key, true, false);
     }
 }
 
@@ -764,6 +842,12 @@ boolean cellIsInShadow(pos loc) {
 static const char *colorRoleName(const color *theColor) {
     if (theColor == &torchColor || theColor == &torchLightColor) {
         return "torch orange";
+    }
+    if (theColor == tileCatalog[HAUNTED_TORCH].foreColor) {
+        return "haunted torch purple";
+    }
+    if (theColor == monsterCatalog[MK_WILL_O_THE_WISP].foreColor) {
+        return "wisp blue";
     }
     return "other";
 }
@@ -928,6 +1012,28 @@ void showTitleScreen(void) {
 }
 
 // See the declaration in TestFramework.h.
+void showGameStatsScreen(void) {
+    boolean (*savedPause)(short, PauseBehavior) = currentConsole.pauseForMilliseconds;
+    currentConsole.pauseForMilliseconds = menuPauseSeesQueuedInput;
+
+    // The menu path, hidden from the test: open the View flyout, choose Game
+    // Stats, dismiss the stats screen, then quit the menu.  The stats screen
+    // is transient, so hold the frame that contains its title rather than
+    // letting the title-screen frame that follows replace it.
+    screenSnapshotHoldText = "-- GAME STATS --";
+    rogue.nextGame = NG_NOTHING; // a prior dialog run leaves NG_QUIT behind
+    queueKeystroke('v', false, false);
+    queueKeystroke('g', false, false);
+    queueKeystroke(ESCAPE_KEY, false, false);
+    queueKeystroke('q', false, false);
+    mainBrogueJunction();
+
+    screenSnapshotHoldText = NULL;
+    currentConsole.pauseForMilliseconds = savedPause;
+    clearInputQueue();
+}
+
+// See the declaration in TestFramework.h.
 boolean showOversizedButton(const char *label) {
     brogueButton button;
     initializeButton(&button);
@@ -1081,6 +1187,17 @@ boolean gameplayRandomStreamActive(void) {
 // See the declaration in TestFramework.h.
 int drawGameplayRandomNumber(void) {
     return (int) rand_range(0, 100);
+}
+
+// See the declaration in TestFramework.h.
+void shuffleTestSequence(short *values, short count) {
+    fillSequentialList(values, count);
+    shuffleList(values, count);
+}
+
+// See the declaration in TestFramework.h.
+int drawClumpedRange(int lowerBound, int upperBound, int clumpFactor) {
+    return (int) randClumpedRange((short) lowerBound, (short) upperBound, (short) clumpFactor);
 }
 
 const char *gameVariantName(void) {
@@ -1804,6 +1921,25 @@ boolean monsterLeavesUrineTrail(const creature *monst) {
     return monst->info.DFType == DF_URINE;
 }
 
+const char *monsterDrawColorName(const creature *monst) {
+    if (monst == NULL) return "other";
+    return colorRoleName(monst->info.foreColor);
+}
+
+boolean monsterDrawColorFlickers(const creature *monst) {
+    if (monst == NULL) return false;
+    return monst->info.foreColor->colorDances;
+}
+
+const char *monsterGlowLightColorName(const creature *monst) {
+    if (monst == NULL) return "other";
+    const short glowLight = monst->info.intrinsicLightType;
+    if (glowLight <= 0 || glowLight >= NUMBER_LIGHT_KINDS) {
+        return "other";
+    }
+    return colorRoleName(lightCatalog[glowLight].lightColor);
+}
+
 void weakenMonster(creature *monst, int duration) {
     if (monst != NULL) {
         weaken(monst, duration);
@@ -1989,6 +2125,11 @@ void removeFloorFood(void) {
         }
         i = next;
     }
+}
+
+// See the declaration in TestFramework.h.
+void setFoodNutritionGenerated(int nutrition) {
+    rogue.foodSpawned = nutrition;
 }
 
 
@@ -2799,13 +2940,65 @@ void recomputeLighting(void) {
     updateLighting();
 }
 
+static pos testFlareLoc;
+static int testFlarePeak;
+static boolean testFlareTracking;
+
+void recordTestFlareLight(short x, short y) {
+    if (!testFlareTracking) {
+        return;
+    }
+    if (x == testFlareLoc.x && y == testFlareLoc.y) {
+        pos loc = {x, y};
+        int light = lightAt(loc);
+        if (light > testFlarePeak) {
+            testFlarePeak = light;
+        }
+    }
+}
+
+int flashLightAtAndReportPeak(pos loc) {
+    testFlareLoc = loc;
+    testFlarePeak = -1;
+    testFlareTracking = true;
+    deleteAllFlares();
+    createFlare(loc.x, loc.y, GENERIC_FLASH_LIGHT);
+    animateFlares(rogue.flares, rogue.flareCount);
+    rogue.flareCount = 0;
+    testFlareTracking = false;
+    return testFlarePeak;
+}
+
 const char *playerDrawColorName(void) {
     const color *drawColor = player.info.foreColor;
     if (drawColor == &playerInvisibleColor) return "invisible";
     if (drawColor == &playerInDarknessColor) return "darkness";
     if (drawColor == &playerInShadowColor) return "shadow";
     if (drawColor == &playerInLightColor) return "light";
+    if (drawColor == &torchLightColor) return "torch orange";
     return "unknown";
+}
+
+boolean playerDrawColorFlickers(void) {
+    return player.info.foreColor->colorDances;
+}
+
+const char *playerLightColorName(void) {
+    const color *lightColor = rogue.minersLight.lightColor;
+    if (lightColor == &fireForeColor) return "fire";
+    if (lightColor == &minersLightColor) return "miners light";
+    return "other";
+}
+
+boolean playerLightColorFlickers(void) {
+    return rogue.minersLight.lightColor->colorDances;
+}
+
+void playerLightColorComponents(int *red, int *green, int *blue) {
+    const color *lightColor = rogue.minersLight.lightColor;
+    *red = lightColor->red;
+    *green = lightColor->green;
+    *blue = lightColor->blue;
 }
 
 unsigned long playerDrawColorId(void) {

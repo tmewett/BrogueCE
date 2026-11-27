@@ -1566,7 +1566,7 @@ static boolean br43163_verify(void) {
 }
 
 // ============================================================
-// BR25779 — A light source's own tile is cleared of shadow
+// BR32985 — A light source's own tile is cleared of shadow
 // whenever the light dispels shadows, so the light's origin is
 // never hidden in shadow.
 //
@@ -1583,7 +1583,7 @@ static boolean br43163_verify(void) {
 // its shadow as the control.
 // ============================================================
 
-static boolean br25779_origin_cleared_and_controls_hold(void) {
+static boolean br32985_origin_cleared_and_controls_hold(void) {
     clearMonsters();
 
     // Strip the whole level to plain floor (clearing every layer), so the
@@ -2606,7 +2606,7 @@ const testCase tests_dungeon[] = {
 
     { "BR43163_level_refilled_with_granite_and_cleared_layers", br43163_setup, NULL, br43163_verify },
 
-    { "BR25779_light_origin_cleared_of_shadow",   NULL, NULL, br25779_origin_cleared_and_controls_hold },
+    { "BR32985_light_origin_cleared_of_shadow",   NULL, NULL, br32985_origin_cleared_and_controls_hold },
     { "BR11884_hallways_fall_away_with_depth",    NULL, NULL, br11884_hallways_fall_away_with_depth },
     { "BR72185_caves_fit_three_size_classes",      NULL, NULL, br72185_caves_fit_three_size_classes },
 

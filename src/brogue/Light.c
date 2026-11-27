@@ -25,6 +25,10 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
+#ifdef BROGUE_TESTING
+#include "../../test/TestFramework.h"
+#endif
+
 void logLights() {
     short i, j;
 
@@ -392,6 +396,9 @@ void animateFlares(flare **flares, short count) {
                     atLeastOneFlareStillActive = true;
                     if (drawFlareFrame(flares[i])) {
                         inView = true;
+#ifdef BROGUE_TESTING
+                        recordTestFlareLight(flares[i]->loc.x, flares[i]->loc.y);
+#endif
                     }
                 } else {
                     free(flares[i]);

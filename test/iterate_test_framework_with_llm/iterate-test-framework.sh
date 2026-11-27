@@ -60,10 +60,11 @@ set -euo pipefail
 # }
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-cd "$REPO_ROOT/test/iterate_test_framework_with_llm"
+TOOL_PATH="$REPO_ROOT/test/iterate_test_framework_with_llm"
+cd "$TOOL_PATH"
 
 function writeToLog() {
-    echo "$1" >> llm_log.txt
+    echo "$1" >> "$REPO_ROOT/llm_log.txt"
 }
 
 function write_date() {
@@ -75,7 +76,7 @@ function write_date() {
 }
 
 function run_prompt() {
-    writeToLog "$1"
+    # writeToLog "$1"
     writeToLog "----------------------------"
 
     # Execute the prompt
@@ -90,7 +91,7 @@ function validate_random_rules() {
     writeToLog "validate_random_rules"
 
     # Pick random rule IDs and validate they meet rule requirements
-    RULES=$(./pick_3_random_rules.sh)
+    RULES=$($TOOL_PATH/pick_3_random_rules.sh)
     writeToLog "$RULES"
 
 PRMPT="OBJECTIVE
@@ -118,7 +119,7 @@ function validate_random_rules_have_tests() {
     writeToLog "validate_random_rules_have_tests"
 
     # Pick random rule IDs and validate they meet rule requirements
-    RULES=$(./pick_3_random_rules.sh)
+    RULES=$($TOOL_PATH/pick_3_random_rules.sh)
     writeToLog "$RULES"
 
 PRMPT="OBJECTIVE
@@ -141,7 +142,7 @@ function validate_random_tests() {
     writeToLog "validate_random_tests"
 
     # Pick random rule IDs and validate they meet test requirements
-    RULES=$(./pick_3_random_rules.sh)
+    RULES=$($TOOL_PATH/pick_3_random_rules.sh)
     writeToLog "$RULES"
 
 PRMPT="
@@ -168,7 +169,7 @@ function find_missing_rules() {
     writeToLog "find_missing_rules"
 
     # Pick random source code citation
-    CITE=$(./random_code_citation.sh)
+    CITE=$($TOOL_PATH/random_code_citation.sh)
     writeToLog "$CITE"
 
 PRMPT="
@@ -264,7 +265,7 @@ function improve_tests() {
     fi
 
     # Pick random rule IDs
-    RULES=$(./pick_random_test_needs_improvement.sh)
+    RULES=$($TOOL_PATH/pick_random_test_needs_improvement.sh)
     writeToLog "$RULES"
 
 PRMPT="
@@ -300,7 +301,7 @@ function improve_rules() {
     fi
 
     # Pick random rule IDs
-    RULES=$(./pick_random_rule_needs_improvement.sh)
+    RULES=$($TOOL_PATH/pick_random_rule_needs_improvement.sh)
     writeToLog "$RULES"
 
 PRMPT="
@@ -329,7 +330,7 @@ function code_coverage() {
     writeToLog "code_coverage"
 
     # Run all tests, collect test coverage data
-    $REPO_ROOT/test/run_tests.sh
+    $REPO_ROOT/test/run_tests_with_coverage.sh
     xcrun llvm-profdata merge -sparse $REPO_ROOT/prof/code-*.profraw -o coverage.profdata
 
     # Display low-coverage regions/lines
@@ -369,8 +370,8 @@ function fix_broken_tests() {
 }
 
 function delete_epmemeral_files() {
-    # rm -f $REPO_ROOT/test/RulesNeedImprovement.txt
-    # rm -f $REPO_ROOT/test/TestsNeedImprovement.txt
+    rm -f $REPO_ROOT/test/RulesNeedImprovement.txt
+    rm -f $REPO_ROOT/test/TestsNeedImprovement.txt
     rm -f $REPO_ROOT/test/RulesMissingTests.txt
     rm -f $REPO_ROOT/test/TestsMissingRules.txt
 
@@ -387,10 +388,10 @@ delete_epmemeral_files
 # --------------------------------------------
 # Gardening the test cases...
 for i in {1..25}; do
-    RULES=$(./count_rules.sh)
-    TESTS=$(./count_tests.sh)
-    echo "Rules: $RULES"
-    echo "Tests: $TESTS"
+    RULES=$($TOOL_PATH/count_rules.sh)
+    TESTS=$($TOOL_PATH/count_tests.sh)
+    echo "$RULES"
+    echo "$TESTS"
 
     # Pick random rule IDs and validate they meet rule requirements
     validate_random_rules

@@ -908,6 +908,72 @@ static boolean br77643_verify(void) {
 }
 
 // ============================================================
+// BR73762 — The Game Stats screen shows All Time and Recent
+// columns for games played, won, win rate, escaped, mastered,
+// high score, most gold, most lumenstones, deepest level,
+// average depth, shortest win, and longest win and mastery
+// streaks; the current win and mastery streaks appear as single
+// recent values.
+//
+// showGameStatsScreen() opens the real menu path and holds the
+// transient stats frame.  Every listed row must be present under
+// both column headings; the longest streaks carry one number per
+// column, while the current streaks carry only one number each.
+// ============================================================
+
+// How many separate runs of digits a line holds, so a row with one value
+// spanning several columns can be told from a row with a value in each column.
+static int br73762_digitGroups(const char *line) {
+    int groups = 0;
+    boolean inNumber = false;
+    for (const char *p = line; *p != '\0'; p++) {
+        const boolean digit = (*p >= '0' && *p <= '9');
+        if (digit && !inNumber) {
+            groups++;
+        }
+        inNumber = digit;
+    }
+    return groups;
+}
+
+static void br73762_setup(void) {
+    showGameStatsScreen();
+}
+
+static boolean br73762_verify(void) {
+    static const char *const rows[] = {
+        "Games Played", "Won", "Win Rate (%)", "Escaped", "Mastered",
+        "High Score", "Most Gold", "Most Lumenstones", "Deepest Level",
+        "Average Depth", "Shortest Win (Turns)", "Longest Win Streak",
+        "Longest Mastery Streak", "Current Win Streak",
+        "Current Mastery Streak"
+    };
+
+    TEST_ASSERT(screenTextContains("-- GAME STATS --"),
+                "the Game Stats screen should identify itself");
+    TEST_ASSERT(screenTextContains("All Time"),
+                "the Game Stats screen should have an All Time column");
+    TEST_ASSERT(screenTextContains("Recent"),
+                "the Game Stats screen should have a Recent column");
+
+    for (int i = 0; i < (int) (sizeof(rows) / sizeof(rows[0])); i++) {
+        char msg[200];
+        snprintf(msg, sizeof(msg), "the Game Stats screen should show the \"%s\" row", rows[i]);
+        TEST_ASSERT(screenTextContains(rows[i]), msg);
+    }
+
+    TEST_ASSERT_EQ(br73762_digitGroups(screenTextLineContaining("Longest Win Streak")), 2,
+                   "Longest Win Streak should hold an All Time and a Recent value");
+    TEST_ASSERT_EQ(br73762_digitGroups(screenTextLineContaining("Longest Mastery Streak")), 2,
+                   "Longest Mastery Streak should hold an All Time and a Recent value");
+    TEST_ASSERT_EQ(br73762_digitGroups(screenTextLineContaining("Current Win Streak")), 1,
+                   "Current Win Streak should be a single recent value");
+    TEST_ASSERT_EQ(br73762_digitGroups(screenTextLineContaining("Current Mastery Streak")), 1,
+                   "Current Mastery Streak should be a single recent value");
+    return !testFailed;
+}
+
+// ============================================================
 // BR31995 — Message color reflects importance: harm to the
 // player or an ally is shown in the "bad" color, harm to an
 // enemy is shown in the "good" color, and neutral events are
@@ -1181,6 +1247,48 @@ static boolean br15955_verify(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR71934 — a monster's sidebar entry shows a bar for each of its active
+// status effects.
+//
+// One visible monster gets several statuses at once.  The player has none of
+// them, so each label found in the sidebar can only come from the monster's
+// own entry.  Paralyzing the monster also keeps it still; Slowed and
+// Confused are the statuses under test.  Absent statuses must not appear,
+// which keeps the labels tied to active effects rather than to the monster
+// entry in general.
+// ============================================================
+
+static creature *br71934_monster;
+
+static void br71934_setup(void) {
+    clearArena();
+    br71934_monster = placeHostileMonster(MK_RAT, posOffset(getPlayerPos(), 1, 0));
+    applyStatusToMonster(br71934_monster, STATUS_PARALYZED, 100);
+    applyStatusToMonster(br71934_monster, STATUS_SLOWED, 50);
+    applyStatusToMonster(br71934_monster, STATUS_CONFUSED, 50);
+}
+
+static boolean br71934_monster_status_bars_shown(void) {
+    TEST_ASSERT(br71934_monster != NULL,
+                "setup: the rat should exist");
+    TEST_ASSERT(!playerHasStatus(STATUS_SLOWED) && !playerHasStatus(STATUS_CONFUSED),
+                "precondition: the statuses under test belong only to the monster");
+    TEST_ASSERT(monsterHasStatus(br71934_monster, STATUS_SLOWED),
+                "precondition: the rat is slowed");
+    TEST_ASSERT(monsterHasStatus(br71934_monster, STATUS_CONFUSED),
+                "precondition: the rat is confused");
+    TEST_ASSERT(sidebarContains("Rat"),
+                "precondition: the rat's entry is listed in the sidebar");
+    TEST_ASSERT(sidebarContains("Slowed"),
+                "the monster's sidebar entry should show a bar for its Slowed status");
+    TEST_ASSERT(sidebarContains("Confused"),
+                "the monster's sidebar entry should show a bar for its Confused status");
+    TEST_ASSERT(!sidebarContains("Hasted"),
+                "the monster should get no status bar for a status it does not have");
+    return !testFailed;
+}
+
 const testCase tests_interaction[] = {
     { "BR32227_sidebar_shows_strength_armor_and_gold", sidebar_gold_setup,     NULL, sidebar_shows_strength_armor_and_gold },
     { "BR32227_sidebar_omits_gold_when_penniless",    sidebar_penniless_setup, NULL, sidebar_omits_gold_when_penniless },
@@ -1188,6 +1296,8 @@ const testCase tests_interaction[] = {
     { "BR42937_ordinary_monster_shows_health_bar",    br42937_bar_setup,        NULL, br42937_ordinary_monster_has_health_bar },
     { "BR42937_one_hp_monster_shows_no_health_bar",   br42937_one_hp_setup,     NULL, br42937_one_hp_monster_has_no_health_bar },
     { "BR42937_invulnerable_monster_shows_no_health_bar", br42937_invulnerable_setup, NULL, br42937_invulnerable_monster_has_no_health_bar },
+
+    { "BR71934_monster_shows_bar_for_each_active_status", br71934_setup, NULL, br71934_monster_status_bars_shown },
 
     { "BR56719_confirmation_accepts_y_Y_return",   yes_keys_setup,      NULL, confirmation_accepts_y_Y_return },
     { "BR19813_confirmation_rejects_n_N_space",    no_keys_setup,       NULL, confirmation_rejects_n_N_space },
@@ -1227,6 +1337,8 @@ const testCase tests_interaction[] = {
     { "BR97169_canceling_variant_dialog_keeps_choice",        cancel_keeps_choice_setup, cancel_variant_dialog_step,   canceling_variant_dialog_keeps_choice },
 
     { "BR77643_title_screen_offers_new_game_play_view_quit", br77643_setup, NULL, br77643_verify },
+
+    { "BR73762_game_stats_screen_columns_and_streaks", br73762_setup, NULL, br73762_verify },
 
     { "BR31995_message_color_reflects_importance", br31995_setup, NULL, message_color_reflects_importance },
 

@@ -139,6 +139,14 @@ const char *startupMessageWith(const char *substring);
 // normal-mode path for the single message.
 void emitArchivedMessage(const char *msg);
 
+// How many messages the archive can hold before the oldest is overwritten.
+int messageArchiveCapacity(void);
+// How many archive slots currently hold a message (at most the capacity).
+int messageArchiveEntryCount(void);
+// The text of the archived message `back` entries back, where 1 is the newest.
+// Empty string when `back` is out of range or the slot is empty.
+const char *messageArchiveEntry(int back);
+
 // The newest message line as the game renders it after formatting: repeats
 // collapsed into a counted entry ("... (x5)"), "(many)" once the repeat cap
 // is reached, capitalized and punctuated.  Empty string if nothing has been
@@ -175,6 +183,12 @@ const char *flavorTextLine(void);
 // after a turn, a move, or closing a screen.
 void refreshFlavorText(void);
 
+// The game's full description of a map square, as shown in the flavor line
+// when the player looks at it (the player's own story on their tile, a
+// creature, an item, or the terrain).  Reads the current game state without
+// drawing anything.
+const char *locationDescriptionAt(pos loc);
+
 // Report whether the given text appears on the whole screen as of the most
 // recent time the engine asked the test for input.  Full-screen displays (the
 // discoveries screen, the message archive, the help screen) draw themselves
@@ -182,6 +196,12 @@ void refreshFlavorText(void);
 // frame at that input request is the only moment their text can be observed.
 // False when the test has not yet caused an input request.
 boolean screenTextContains(const char *substring);
+
+// The line of that same frame containing `substring`, or the empty string
+// when the frame is missing or no line contains it.  A line keeps its columns
+// intact, so a test can tell one value spanning several columns from several
+// values in separate columns.
+const char *screenTextLineContaining(const char *substring);
 
 // In the discovered-items screen, the mark drawn beside a kind listed by
 // `name`: 1 for the good-magic marker, -1 for the bad-magic marker, and 0 when
@@ -218,6 +238,9 @@ boolean screenCellColorsChanged(pos loc);
 
 void restOneTurn(void);
 void moveDirection(enum directions dir);
+// Run in the given direction: keep stepping until the engine decides the run
+// is disturbed.  The whole run happens synchronously.
+void runDirection(enum directions dir);
 void moveRight(void);
 void moveLeft(void);
 void moveUp(void);
@@ -286,14 +309,16 @@ boolean cellIsInShadow(pos loc);
 
 // The colour a terrain tile is drawn with, named for the tile's role:
 // "torch orange" for the flame of an ordinary or not-yet-triggered wired wall
-// torch, and "other" for any other tile.  Equal names mean equal colours.
+// torch, "haunted torch purple" for a sputtering torch, and "other" for any
+// other tile.  Equal names mean equal colours.
 const char *terrainDrawColorName(pos loc);
 // Whether the terrain tile's drawn colour re-shades itself on every screen
 // refresh (its colour "dances").
 boolean terrainDrawColorFlickers(pos loc);
 // The colour of the light the terrain tile casts, named the same way as the
 // drawn colour ("torch orange" for torches, candles, altars and pedestals,
-// "other" otherwise).  Equal names mean equal light colours.
+// "haunted torch purple" for a sputtering torch, "other" otherwise).  Equal
+// names mean equal light colours.
 const char *terrainGlowLightColorName(pos loc);
 
 // ---------------------------------------------
@@ -474,6 +499,17 @@ int monsterTrailChance(const creature *monst);
 // Whether the trail the monster leaves is a puddle of urine, as the
 // territory-marking animals leave behind.
 boolean monsterLeavesUrineTrail(const creature *monst);
+// The colour the monster is drawn with, named for the monster's role:
+// "wisp blue" for a will-o'-the-wisp, "other" for any other monster.  Equal
+// names mean equal colours.
+const char *monsterDrawColorName(const creature *monst);
+// Whether the monster's drawn colour re-shades itself on every screen refresh
+// (its colour "dances").
+boolean monsterDrawColorFlickers(const creature *monst);
+// The colour of the light the monster casts on its own, named the same way as
+// the drawn colour ("wisp blue" for a will-o'-the-wisp, "other" when the
+// monster casts no light of its own).  Equal names mean equal light colours.
+const char *monsterGlowLightColorName(const creature *monst);
 void poisonMonster(creature *monst, int duration, int concentration);
 void slowMonster(creature *monst, int turns);
 void hasteMonster(creature *monst, int turns);
@@ -522,6 +558,10 @@ void makeMonsterNotFollowPlayer(creature *monst);
 // ---------------------------------------------
 
 void removeFloorFood(void);
+// Set the cumulative nutrition the dungeon's ordinary item generation has
+// provided so far this game, so a test can put the dungeon behind or ahead of
+// the food the current depth is expected to have supplied.
+void setFoodNutritionGenerated(int nutrition);
 // Remove every item from the floor, leaving the terrain untouched.
 void clearFloorItems(void);
 item *findInventoryItem(short category, short kind);
@@ -671,6 +711,12 @@ void showModeDialog(int answerKey);
 // with screenTextContains().
 void showTitleScreen(void);
 
+// Show the main menu's View -> Game Stats screen, dismiss it, and quit the
+// menu.  The stats screen is a transient full-screen display, so its frame is
+// held for screenTextContains() and screenTextLineContaining() after the menu
+// has closed.
+void showGameStatsScreen(void);
+
 // ---------------------------------------------
 // Menu buttons
 // ---------------------------------------------
@@ -713,6 +759,17 @@ boolean gameplayRandomStreamActive(void);
 // Draw one number from the game's own random sequence, for use as a control
 // that the sequence and its counter are observable.
 int drawGameplayRandomNumber(void);
+
+// Fill `values` with 0 through count - 1 and run the engine's own list shuffle
+// over it, so a test can sample the ordering the game produces without
+// touching the shuffle routine or the random-number source directly.
+void shuffleTestSequence(short *values, short count);
+
+// Draw one number from the game's own range roll with the given clumping
+// factor: `clumpFactor` separate uniform rolls over the inclusive bounds,
+// summed.  A factor above one clusters the results toward the middle of the
+// range instead of spreading them evenly.
+int drawClumpedRange(int lowerBound, int upperBound, int clumpFactor);
 
 // Framework internal: remember the opacity the button painter stored in one
 // cell of a menu's off-screen layer.  Called by the painter while testing.
@@ -917,9 +974,30 @@ void setLightMultiplier(int multiplier);
 void setPlayerInWater(boolean inWater);
 void recomputeLighting(void);
 
+// Play the engine's ordinary light-flash animation centred on `loc` and return
+// the brightest total light that tile reached while the flash was drawn.  The
+// flash is a generic one, so the tile is brighter during the animation than
+// before it; once the animation ends its light is exactly what it was before.
+int flashLightAtAndReportPeak(pos loc);
+// Framework internal: note that the flash animation has just painted the
+// light at (x, y), so the peak can be measured before the lighting is
+// restored.  Called from animateFlares().
+void recordTestFlareLight(short x, short y);
+
 // The colour the player is currently drawn with: "invisible", "darkness",
-// "shadow", "light", or "unknown".  The four named colours are distinct.
+// "shadow", "light", "torch orange" while burning, or "unknown".  The named
+// colours are distinct.
 const char *playerDrawColorName(void);
+// Whether the player's drawn colour re-shades itself on every screen refresh
+// (its colour "dances").
+boolean playerDrawColorFlickers(void);
+// The colour of the light the player carries, named for its role: "fire"
+// while burning, "miners light" normally, or "other".
+const char *playerLightColorName(void);
+// Whether the carried light's colour re-shades itself on every screen refresh.
+boolean playerLightColorFlickers(void);
+// The red, green and blue components of the light the player carries.
+void playerLightColorComponents(int *red, int *green, int *blue);
 // An opaque id of the current draw colour, built from its RGB components, so
 // a test can compare colours without reading engine state.  Equal ids mean
 // equal colours.

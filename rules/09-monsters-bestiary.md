@@ -1,6 +1,6 @@
-- **BR39474** — **Flies (permanent levitation).** The creature hovers above the ground:
-  deep water, chasms and lava neither hinder nor harm it, so it crosses them as though they
-  were ordinary floor. Reference: [Rogue.h 2068](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2068), [Monsters.c 3916-3918](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3916-L3918), [Monsters.c 1389-1391](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1389-L1391), [Time.c 93-98](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L93-L98), [Time.c 174-179](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L174-L179).
+- **BR39474** — **Flies.** The creature hovers above the ground, so deep water, chasms and
+  lava neither hinder nor harm it: it crosses them as though they were ordinary floor.
+  Reference: [Rogue.h 2068](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2068), [Monsters.c 3916-3918](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3916-L3918), [Monsters.c 1389-1391](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L1389-L1391), [Time.c 93-98](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L93-L98), [Time.c 174-179](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Time.c#L174-L179).
 - **BR10411** — **Moves erratically.** On roughly one turn in three the creature ignores its
   intended path and lurches in a random legal direction, making its approach hard to
   predict. Reference: [Rogue.h 2069](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2069), [Monsters.c 3758-3764](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Monsters.c#L3758-L3764).
@@ -68,8 +68,8 @@
 - **BR18737** — **Reflects about half of magical bolts.** Roughly half of all bolts fired at the
   creature bounce off, as though it wore strongly enchanted armor of reflection.
   Reference: [Rogue.h 2073](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2073).
-- **BR12704** — **Cannot be polymorphed.** The creature can never be produced by a polymorph
-  effect. Reference: [Rogue.h 2088](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2088).
+- **BR12704** — **Never results from polymorphism.** No polymorphism spell can transform
+  another creature into this one. Reference: [Rogue.h 2088](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2088), [Items.c 3872-3874](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3872-L3874).
 - **BR49476** — **Dies if negated.** Negation magic destroys the creature outright: a levitating
   one dissipates into thin air, an inanimate one shatters into tiny pieces, and any other falls
   to the ground, lifeless. Reference: [Items.c 3757-3767](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Items.c#L3757-L3767).
@@ -81,7 +81,7 @@
 - **BR46956** — **Causes hallucinations.** A successful hit leaves the victim hallucinating, so
   it no longer sees the dungeon or its inhabitants correctly. Reference: [Rogue.h 2106](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2106), [Combat.c 410-419](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L410-L419).
 - **BR18776** — **Steals an item and runs away.** On a hit the creature may snatch a random item
-  from the victim's pack and then flee with it; killing the thief drops the item.
+  from the victim's pack and then flee with it.
   Reference: [Rogue.h 2107](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2107), [Combat.c 426-479](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L426-L479).
 - **BR32322** — **Sets the victim alight.** A successful hit sets the target on fire.
   Reference: [Rogue.h 2108](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Rogue.h#L2108), [Combat.c 420-424](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Combat.c#L420-L424).
@@ -319,7 +319,7 @@ A **large** creature **bound to liquid** (BR60148) that **moves at full speed in
 death** (BR51688). It **grabs and holds its victim** (BR54374). [Globals.c 1102-1103](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1102-L1103)
 **BR62417** — **Lich.** Health 35, defense 80, accuracy 175, damage 2–6; **no natural
 regeneration**; normal speeds. A **large** creature that **keeps its distance** (BR72064), carries an
-item a quarter of the time (BR53451), and **cannot be polymorphed** (BR12704). It **summons allies**
+item a quarter of the time (BR53451), and **never results from polymorphism** (BR12704). It **summons allies**
 (BR40544) and **hurls fire bolts** (BR60584). It glows. [Globals.c 1104-1105](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1104-L1105)
 **BR18852** — **Phylactery.** Health 30, defense 0, accuracy 0, damage 0; no regeneration; normal
 movement but **attacks slowly** (attack speed 150). An **immobile** (BR99362), **never-
@@ -369,7 +369,7 @@ in a line** (BR43379), and **avoids corridors** (BR48373).
 regeneration; normal speeds. A **large** creature that **splits in two whenever it is
 struck** (BR97180). [Globals.c 1129-1130](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1129-L1130)
 **BR78289** — **Vampire.** Health 75, defense 60, accuracy 120, damage 4–15; regenerates every 6
-turns; **moves twice as fast as normal** (speed 50); normal attack speed. It is a **large**
+turns; **moves twice as fast as normal** (speed 50); normal attack speed; a **large**
 creature. [Globals.c 1131-1132](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1131-L1132)
 **BR56088** — **Flamedancer.** Health 65, defense 80, accuracy 120, damage 3–8; **no natural
 regeneration**; normal speeds. A **large** creature that **keeps its distance** (BR72064),
@@ -433,7 +433,7 @@ A **large** creature that **is immune to fire** (BR13523) and **flies** (BR39474
 **casts discord** (BR68026). It glows. [Globals.c 1157-1158](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1157-L1158)
 **BR64166** — **Phoenix.** Health 30, defense 70, accuracy 175, damage 4–10; **no natural
 regeneration**; **moves twice as fast as normal** (speed 50); normal attack speed. A **large**
-creature that **is immune to fire** (BR13523), **flies** (BR39474), and **cannot be polymorphed** (BR12704).
+creature that **is immune to fire** (BR13523), **flies** (BR39474), and **never results from polymorphism** (BR12704).
 It glows. [Globals.c 1159-1160](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1159-L1160)
 **BR98992** — **Phoenix Egg.** Health 50, defense 0, accuracy 0, damage 0; no regeneration; normal
 movement but **attacks slowly** (attack speed 150). An **immobile** (BR99362), **never-
@@ -444,6 +444,6 @@ the phoenix within a minion, freeing it when that minion is destroyed** (BR70715
 [Globals.c 1161-1162](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1161-L1162)
 **BR57045** — **Mangrove Dryad.** Health 70, defense 60, accuracy 175, damage 2–8; regenerates
 every 6 turns; normal speeds. A **large** creature that **cannot be entangled** (BR91557),
-**never fails to use its ability** (BR85956), **keeps its distance** (BR72064), **cannot be
-polymorphed** (BR12704), and **hurls entangling vines** (BR81211).
+**never fails to use its ability** (BR85956), **keeps its distance** (BR72064), **never results
+from polymorphism** (BR12704), and **hurls entangling vines** (BR81211).
 [Globals.c 1163-1164](https://github.com/tmewett/BrogueCE/blob/104a20fedbe7d9360d2dfc8ff665571694212ad8/src/brogue/Globals.c#L1163-L1164)

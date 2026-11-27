@@ -1448,6 +1448,68 @@ static boolean br83759_verify(void) {
     return !testFailed;
 }
 
+// ============================================================
+// BR64166 — Phoenix.  Health 30, defense 70, accuracy 175, damage 4-10; no
+// natural regeneration; moves twice as fast as normal (speed 50); normal
+// attack speed.  A large creature that is immune to fire, flies, and never
+// results from polymorphism.  It glows.
+//
+// The stat block, speeds, size, traits and glow are read from the spawned
+// phoenix.  No regeneration is checked twice: the catalog predicate must be
+// false, and a wounded ally with no enemies about must stay at 1 health for
+// twenty turns (an ordinary regenerating monster would regain a point).
+// ============================================================
+
+static creature *br64166_phoenix;
+static int br64166_light_with_glow;
+static int br64166_light_without_glow;
+static int br64166_waitTurns;
+
+static void br64166_setup(void) {
+    trait_setup(MK_PHOENIX);
+    br64166_phoenix = subject;
+    measureMonsterGlow(br64166_phoenix, &br64166_light_with_glow,
+                       &br64166_light_without_glow);
+    makeMonsterAlly(br64166_phoenix);
+    setMonsterHealth(br64166_phoenix, 1);
+    br64166_waitTurns = 0;
+}
+
+static boolean br64166_step(void) {
+    restOneTurn();
+    br64166_waitTurns++;
+    if (monsterHealth(br64166_phoenix) > 1) {
+        return false; // it regenerated; verify reports the failure
+    }
+    return br64166_waitTurns < 20;
+}
+
+static boolean br64166_verify(void) {
+    creature *p = br64166_phoenix;
+    TEST_ASSERT(p != NULL, "phoenix spawned");
+    TEST_ASSERT_EQ(monsterMaxHealth(p), 30, "phoenix health");
+    TEST_ASSERT_EQ(monsterBaseDefense(p), 70, "phoenix defense");
+    TEST_ASSERT_EQ(monsterBaseAccuracy(p), 175, "phoenix accuracy");
+    TEST_ASSERT_EQ(monsterBaseDamageLow(p), 4, "phoenix damage low");
+    TEST_ASSERT_EQ(monsterBaseDamageHigh(p), 10, "phoenix damage high");
+    TEST_ASSERT_EQ(monsterBaseMovementSpeed(p), 50,
+                   "phoenix moves twice as fast as normal");
+    TEST_ASSERT_EQ(monsterBaseAttackSpeed(p), 100,
+                   "phoenix attacks at normal speed");
+    TEST_ASSERT(!monsterRegenerates(p), "phoenix has no natural regeneration");
+    TEST_ASSERT(monsterIsLarge(p), "phoenix is large");
+    TEST_ASSERT(monsterHasTrait(p, MONST_IMMUNE_TO_FIRE), "phoenix is immune to fire");
+    TEST_ASSERT(monsterHasTrait(p, MONST_FLIES), "phoenix flies");
+    TEST_ASSERT(monsterHasTrait(p, MONST_NO_POLYMORPH),
+                "phoenix never results from polymorphism");
+    TEST_ASSERT(br64166_light_with_glow > br64166_light_without_glow, "phoenix glows");
+    TEST_ASSERT_EQ(br64166_waitTurns, 20,
+                   "the phoenix should have been watched for twenty turns");
+    TEST_ASSERT_EQ(monsterHealth(p), 1,
+                   "a wounded phoenix should not regain health");
+    return !testFailed;
+}
+
 const testCase tests_bestiary[] = {
     { "BR39474_flies", br39474_setup, NULL, br39474_verify },
     { "BR10411_erratic", br10411_setup, NULL, br10411_verify },
@@ -1532,5 +1594,6 @@ const testCase tests_bestiary[] = {
     { "BR16799_ogre_shaman_stats_and_traits", br16799_stats_setup, NULL, br16799_stats_verify },
     { "BR16799_ogre_shaman_regenerates_every_20_turns", br16799_regen_setup, br16799_regen_step, br16799_regen_verify },
     { "BR83759_ifrit_stats_and_rapid_regeneration", br83759_setup, br83759_step, br83759_verify },
+    { "BR64166_phoenix_stats_traits_and_no_regeneration", br64166_setup, br64166_step, br64166_verify },
     { NULL, NULL, NULL, NULL }
 };
