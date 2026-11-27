@@ -27,6 +27,7 @@
 #include "GlobalsBrogue.h"
 #include "GlobalsRapidBrogue.h"
 #include "GlobalsBulletBrogue.h"
+#include "../../test/TestFramework.h"
 
 #include <time.h>
 
@@ -969,6 +970,10 @@ static void freeGlobalDynamicGrid(short ***grid) {
 }
 
 void freeCreature(creature *monst) {
+
+    // Don't free anything while testing (so we can inspect killed creatures, etc.)
+    if (rogue.mode == GAME_MODE_TEST) return;
+
     freeGlobalDynamicGrid(&(monst->mapToMe));
     freeGlobalDynamicGrid(&(monst->safetyMap));
     if (monst->carriedItem) {
@@ -1239,6 +1244,17 @@ void gameOver(char *killedBy, boolean useCustomPhrasing) {
 
     rogue.gameHasEnded = true;
     rogue.gameExitStatusCode = EXIT_STATUS_SUCCESS;
+
+#ifdef BROGUE_TESTING
+    if (rogue.mode == GAME_MODE_TEST) {
+        // Headless test mode: let tests assert on the death cause.
+        if (killedBy != NULL && killedBy[0]) {
+            recordTestMessage(killedBy);
+            recordPlayerDeathCause(killedBy);
+        }
+        return;
+    }
+#endif
 }
 
 void victory(boolean superVictory) {

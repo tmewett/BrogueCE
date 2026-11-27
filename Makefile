@@ -64,6 +64,16 @@ else
 cflags += -O2
 endif
 
+ifeq ($(COVERAGE),YES)
+cflags += -fprofile-instr-generate -fcoverage-mapping
+cppflags += -fprofile-instr-generate -fcoverage-mapping
+endif
+
+ifeq ($(TEST_FRAMEWORK),YES)
+sources += $(wildcard test/Test*.c)
+cppflags += -DBROGUE_TESTING
+endif
+
 # Add user-provided flags.
 cflags += $(CFLAGS)
 cppflags += $(CPPFLAGS)

@@ -112,6 +112,14 @@ static void printSeedCatalogItem(item *theItem, creature *theMonster, boolean is
     }
 }
 
+#ifdef BROGUE_TESTING
+// Test hook: write one item's seed-catalog entry with the catalog writer's own
+// item reporting, so a test can inspect the fields the real catalog produces.
+void printSeedCatalogItemForTesting(item *theItem, boolean isCsvFormat) {
+    printSeedCatalogItem(theItem, NULL, isCsvFormat);
+}
+#endif
+
 static void printSeedCatalogMonster(creature *theMonster, boolean isCsvFormat) {
     char categoryName[10] = "", allyStatusName[20] = "", mutationName[100] = "", theMonsterName[100] = "";
 

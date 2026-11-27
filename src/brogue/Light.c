@@ -25,6 +25,10 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
+#ifdef BROGUE_TESTING
+#include "../../test/TestFramework.h"
+#endif
+
 void logLights() {
     short i, j;
 
@@ -269,6 +273,13 @@ void updateLighting() {
     // Miner's light:
     paintLight(&rogue.minersLight, player.loc.x, player.loc.y, true, true);
 
+    updatePlayerForeColor();
+}
+
+// Pick the colour the player is drawn with from the current lighting state.
+// Separate from updateLighting() so the colour can be recomputed without
+// repainting the light map.
+void updatePlayerForeColor(void) {
     if (player.status[STATUS_INVISIBLE]) {
         player.info.foreColor = &playerInvisibleColor;
     } else if (playerInDarkness()) {
@@ -385,6 +396,9 @@ void animateFlares(flare **flares, short count) {
                     atLeastOneFlareStillActive = true;
                     if (drawFlareFrame(flares[i])) {
                         inView = true;
+#ifdef BROGUE_TESTING
+                        recordTestFlareLight(flares[i]->loc.x, flares[i]->loc.y);
+#endif
                     }
                 } else {
                     free(flares[i]);

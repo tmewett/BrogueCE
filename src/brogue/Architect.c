@@ -25,6 +25,23 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
+#ifdef BROGUE_TESTING
+#include "../../test/TestFramework.h"
+
+// The route-length threshold the loop-adding pass used the last time a vault
+// interior was rebuilt, or -1 before any such rebuild.  A test can read this
+// through vaultInteriorLoopThreshold() instead of reaching into the generator.
+static short lastVaultInteriorLoopThreshold = -1;
+
+void resetVaultInteriorLoopRecord(void) {
+    lastVaultInteriorLoopThreshold = -1;
+}
+
+int vaultInteriorLoopThreshold(void) {
+    return lastVaultInteriorLoopThreshold;
+}
+#endif
+
 short topBlobMinX, topBlobMinY, blobWidth, blobHeight;
 
 boolean cellHasTerrainFlag(pos loc, unsigned long flagMask) {
@@ -394,6 +411,50 @@ static void addLoops(short **grid, short minimumPathingDistance) {
     freeGrid(costMap);
 }
 
+// The loop-adding pass for a rebuilt vault interior.  The route threshold is
+// deliberately lower than the main dungeon level's so the rebuilt interior
+// gets extra connections between its new rooms.
+static void addLoopsForVaultInterior(short **grid) {
+    const short threshold = 10;
+#ifdef BROGUE_TESTING
+    lastVaultInteriorLoopThreshold = threshold;
+#endif
+    addLoops(grid, threshold);
+}
+
+#ifdef BROGUE_TESTING
+// Run the engine's loop-adding pass over a U-shaped corridor whose two lower
+// ends are separated by a single wall tile.  The only route between those
+// flanking floor tiles is `detour` tiles long.  Returns true when the pass
+// turns the wall tile into a loop doorway.
+boolean loopPassCutsWallWithDetour(int detour, int threshold) {
+    if (detour < 4 || detour % 2 != 0) {
+        return false; // the fixture builds only even detours of at least 4
+    }
+
+    const short midX = 40, midY = 14;
+    const short arm = (short) ((detour - 2) / 2);
+    short **grid = allocGrid();
+    fillGrid(grid, 0);
+
+    // Two parallel floor corridors joined at the top; the wall tile between
+    // their lower ends is the one under test.
+    for (short y = midY - arm; y <= midY; y++) {
+        grid[midX - 1][y] = 1;
+        grid[midX + 1][y] = 1;
+    }
+    for (short x = midX - 1; x <= midX + 1; x++) {
+        grid[x][midY - arm] = 1;
+    }
+    grid[midX][midY] = 0;
+
+    addLoops(grid, (short) threshold);
+    boolean cut = grid[midX][midY] == 2;
+    freeGrid(grid);
+    return cut;
+}
+#endif
+
 // Assumes (startX, startY) is in the machine.
 // Returns true if everything went well, and false if we ran into a machine component
 // that was already there, as we don't want to build a machine around it.
@@ -731,12 +792,99 @@ static boolean fillInteriorForVestibuleMachine(char interior[DCOLS][DROWS], shor
     return success;
 }
 
-static void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY, short theProfileIndex) {
+// Connect each orphaned room -- a room of the rebuilt vault whose doorway the
+// new layout left sealed off -- to the rebuilt interior along the shortest
+// orthogonal route, turning every interior rock tile on the way into floor.
+// Tiles outside the interior are impassable to the route, so the tunnel never
+// breaks out of the vault.
+static void reconnectOrphanedRooms(char interior[DCOLS][DROWS], short **grid,
+                                   const pos orphanList[], short orphanCount) {
     short i, j, n, newX, newY;
+    enum directions dir;
+    short **pathingGrid, **costGrid;
+
+    if (orphanCount <= 0) {
+        return;
+    }
+
+    pathingGrid = allocGrid();
+    costGrid = allocGrid();
+    for (n = 0; n < orphanCount; n++) {
+
+        if (D_INSPECT_MACHINES) {
+            dumpLevelToScreen();
+            copyGrid(pathingGrid, grid);
+            findReplaceGrid(pathingGrid, -1, -1, 0);
+            hiliteGrid(pathingGrid, &green, 50);
+            plotCharWithColor('X', mapToWindow(orphanList[n]), &black, &orange);
+            temporaryMessage("Orphan detected:", REQUIRE_ACKNOWLEDGMENT);
+        }
+
+        for (i=0; i<DCOLS; i++) {
+            for (j=0; j<DROWS; j++) {
+                if (interior[i][j]) {
+                    if (grid[i][j] > 0) {
+                        pathingGrid[i][j] = 0;
+                        costGrid[i][j] = 1;
+                    } else {
+                        pathingGrid[i][j] = 30000;
+                        costGrid[i][j] = 1;
+                    }
+                } else {
+                    pathingGrid[i][j] = 30000;
+                    costGrid[i][j] = PDS_OBSTRUCTION;
+                }
+            }
+        }
+        dijkstraScan(pathingGrid, costGrid, false);
+
+        i = orphanList[n].x;
+        j = orphanList[n].y;
+        while (pathingGrid[i][j] > 0) {
+            for (dir = 0; dir < 4; dir++) {
+                newX = i + nbDirs[dir][0];
+                newY = j + nbDirs[dir][1];
+
+                if (coordinatesAreInMap(newX, newY)
+                    && pathingGrid[newX][newY] < pathingGrid[i][j]) {
+
+                    grid[i][j] = 1;
+                    i = newX;
+                    j = newY;
+                    break;
+                }
+            }
+            brogueAssert(dir < 4);
+            if (D_INSPECT_MACHINES) {
+                dumpLevelToScreen();
+                displayGrid(pathingGrid);
+                pos p = { i, j };
+                plotCharWithColor('X', mapToWindow(p), &black, &orange);
+                temporaryMessage("Orphan connecting:", REQUIRE_ACKNOWLEDGMENT);
+            }
+        }
+    }
+    freeGrid(pathingGrid);
+    freeGrid(costGrid);
+}
+
+#ifdef BROGUE_TESTING
+// Run the orphan-reconnecting pass over a vault interior laid out by the test
+// framework: `interior` marks the vault's tiles, `grid` holds the rebuilt
+// layout (a positive value marks a tile that is already open, 0 marks interior
+// rock), and (orphan.x, orphan.y) is the orphaned room's door.  Every rock tile
+// the pass tunnels through is set to a positive value in `grid`.
+void reconnectOrphanedRoomsForTesting(char interior[DCOLS][DROWS], short **grid, pos orphan) {
+    reconnectOrphanedRooms(interior, grid, &orphan, 1);
+}
+#endif
+
+static void redesignInterior(char interior[DCOLS][DROWS], short originX, short originY, short theProfileIndex) {
+    short i, j, newX, newY;
     enum directions dir;
     pos orphanList[20];
     short orphanCount = 0;
-    short **grid, **pathingGrid, **costGrid;
+    short **grid;
     grid = allocGrid();
 
     for (i=0; i<DCOLS; i++) {
@@ -770,70 +918,9 @@ static void redesignInterior(char interior[DCOLS][DROWS], short originX, short o
     }
     attachRooms(grid, &dungeonProfileCatalog[theProfileIndex], 40, 40);
 
-    // Connect to preexisting rooms that were orphaned (mostly preexisting machine rooms).
-    if (orphanCount > 0) {
-        pathingGrid = allocGrid();
-        costGrid = allocGrid();
-        for (n = 0; n < orphanCount; n++) {
+    reconnectOrphanedRooms(interior, grid, orphanList, orphanCount);
 
-            if (D_INSPECT_MACHINES) {
-                dumpLevelToScreen();
-                copyGrid(pathingGrid, grid);
-                findReplaceGrid(pathingGrid, -1, -1, 0);
-                hiliteGrid(pathingGrid, &green, 50);
-                plotCharWithColor('X', mapToWindow(orphanList[n]), &black, &orange);
-                temporaryMessage("Orphan detected:", REQUIRE_ACKNOWLEDGMENT);
-            }
-
-            for (i=0; i<DCOLS; i++) {
-                for (j=0; j<DROWS; j++) {
-                    if (interior[i][j]) {
-                        if (grid[i][j] > 0) {
-                            pathingGrid[i][j] = 0;
-                            costGrid[i][j] = 1;
-                        } else {
-                            pathingGrid[i][j] = 30000;
-                            costGrid[i][j] = 1;
-                        }
-                    } else {
-                        pathingGrid[i][j] = 30000;
-                        costGrid[i][j] = PDS_OBSTRUCTION;
-                    }
-                }
-            }
-            dijkstraScan(pathingGrid, costGrid, false);
-
-            i = orphanList[n].x;
-            j = orphanList[n].y;
-            while (pathingGrid[i][j] > 0) {
-                for (dir = 0; dir < 4; dir++) {
-                    newX = i + nbDirs[dir][0];
-                    newY = j + nbDirs[dir][1];
-
-                    if (coordinatesAreInMap(newX, newY)
-                        && pathingGrid[newX][newY] < pathingGrid[i][j]) {
-
-                        grid[i][j] = 1;
-                        i = newX;
-                        j = newY;
-                        break;
-                    }
-                }
-                brogueAssert(dir < 4);
-                if (D_INSPECT_MACHINES) {
-                    dumpLevelToScreen();
-                    displayGrid(pathingGrid);
-                    pos p = { i, j };
-                    plotCharWithColor('X', mapToWindow(p), &black, &orange);
-                    temporaryMessage("Orphan connecting:", REQUIRE_ACKNOWLEDGMENT);
-                }
-            }
-        }
-        freeGrid(pathingGrid);
-        freeGrid(costGrid);
-    }
-
-    addLoops(grid, 10);
+    addLoopsForVaultInterior(grid);
     for(i=0; i<DCOLS; i++) {
         for(j=0; j<DROWS; j++) {
             if (interior[i][j]) {
@@ -979,6 +1066,45 @@ typedef struct machineData {
     short sCols[DCOLS];
 } machineData;
 
+// Pick one blueprint from those that qualify for the current depth and the
+// required machine flags, each entering the raffle with `frequency` tickets.
+// Returns 0 when no blueprint qualifies.
+static short chooseBlueprint(unsigned long requiredMachineFlags) {
+    short totalFreq = 0, bp = 0;
+
+    for (int i=1; i<gameConst->numberBlueprints; i++) {
+        if (blueprintQualifies(i, requiredMachineFlags)) {
+            totalFreq += blueprintCatalog[i].frequency;
+        }
+    }
+
+    if (!totalFreq) { // No suitable blueprints are in the library.
+        return 0;
+    }
+
+    int randIndex = rand_range(1, totalFreq);
+    for (int i=1; i<gameConst->numberBlueprints; i++) {
+        if (blueprintQualifies(i, requiredMachineFlags)) {
+            if (randIndex <= blueprintCatalog[i].frequency) {
+                bp = i;
+                break;
+            } else {
+                randIndex -= blueprintCatalog[i].frequency;
+            }
+        }
+    }
+
+    return bp;
+}
+
+#ifdef BROGUE_TESTING
+// Exposed to the test framework so a test can observe the raffle directly,
+// without building a machine.
+short chooseBlueprintForTesting(unsigned long requiredMachineFlags) {
+    return chooseBlueprint(requiredMachineFlags);
+}
+#endif
+
 // Returns true if the machine got built; false if it was aborted.
 // If empty array parentSpawnedItems or parentSpawnedMonsters is given, will pass those back for deletion if necessary.
 boolean buildAMachine(enum machineTypes bp,
@@ -1037,14 +1163,9 @@ boolean buildAMachine(enum machineTypes bp,
 
             // First, choose the blueprint. We choose from among blueprints
             // that have the required blueprint flags and that satisfy the depth requirements.
-            totalFreq = 0;
-            for (int i=1; i<gameConst->numberBlueprints; i++) {
-                if (blueprintQualifies(i, requiredMachineFlags)) {
-                    totalFreq += blueprintCatalog[i].frequency;
-                }
-            }
+            bp = chooseBlueprint(requiredMachineFlags);
 
-            if (!totalFreq) { // If no suitable blueprints are in the library, fail.
+            if (!bp) { // If no suitable blueprints are in the library, fail.
                 if (distanceMap) {
                     freeGrid(distanceMap);
                 }
@@ -1053,22 +1174,6 @@ boolean buildAMachine(enum machineTypes bp,
                 free(p);
                 return false;
             }
-
-            // Pick from among the suitable blueprints.
-            int randIndex = rand_range(1, totalFreq);
-            for (int i=1; i<gameConst->numberBlueprints; i++) {
-                if (blueprintQualifies(i, requiredMachineFlags)) {
-                    if (randIndex <= blueprintCatalog[i].frequency) {
-                        bp = i;
-                        break;
-                    } else {
-                        randIndex -= blueprintCatalog[i].frequency;
-                    }
-                }
-            }
-
-            // If we don't have a blueprint yet, something went wrong.
-            brogueAssert(bp>0);
         }
 
         // Find a location and map out the machine interior.
@@ -1161,6 +1266,10 @@ boolean buildAMachine(enum machineTypes bp,
                     originX = originLoc.x;
                     originY = originLoc.y;
                 }
+
+#ifdef BROGUE_TESTING
+                recordOpenAreaVaultOriginForTesting(originX, originY);
+#endif
 
                 if (!distanceMap) {
                     distanceMap = allocGrid();
@@ -2470,6 +2579,10 @@ static void carveDungeon(short **grid) {
     adjustDungeonFirstRoomProfileForDepth(&theFirstRoomDP);
 
     designRandomRoom(grid, false, NULL, theFirstRoomDP.roomFrequencies);
+
+#ifdef BROGUE_TESTING
+    recordFirstRoomForTesting(grid);
+#endif
 
     if (D_INSPECT_LEVELGEN) {
         colorOverDungeon(&darkGray);

@@ -28,6 +28,10 @@
 #include "GlobalsBase.h"
 #include "Globals.h"
 
+#ifdef BROGUE_TESTING
+#include "../../test/TestFramework.h"
+#endif
+
 #define D_DISABLE_BACKGROUND_COLORS     (WIZARD_MODE && 0)
 
 // Populates path[][] with a list of coordinates starting at origin and traversing down the map. Returns the number of steps in the path.
@@ -2392,6 +2396,21 @@ void nextBrogueEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsD
     boolean repeatAgain, interaction;
     short pauseDuration;
 
+#ifdef BROGUE_TESTING
+    if (rogue.mode == GAME_MODE_TEST) {
+        // Headless test mode: never touch the console.  Answer prompts from the
+        // test's queued input, or escape if the queue is empty so nothing blocks.
+        if (!testNextInputEvent(returnEvent)) {
+            returnEvent->eventType = KEYSTROKE;
+            returnEvent->param1 = ESCAPE_KEY;
+            returnEvent->param2 = 0;
+            returnEvent->controlKey = false;
+            returnEvent->shiftKey = false;
+        }
+        return;
+    }
+#endif
+
     returnEvent->eventType = EVENT_ERROR;
 
     if (rogue.playbackMode && !realInputEvenInPlayback) {
@@ -2730,6 +2749,13 @@ boolean getInputTextString(char *inputText,
     screenDisplayBuffer dbuf;
     SavedDisplayBuffer rbuf;
 
+#ifdef BROGUE_TESTING
+    if (rogue.mode == GAME_MODE_TEST) {
+        // Headless test mode: let tests read the text a prompt opened with.
+        recordTestTextInputDefault(defaultEntry);
+    }
+#endif
+
     // handle defaultEntry values exceeding maxLength
     promptSuffixLen = strlen(promptSuffix);
     defaultEntrylengthOverflow = strlen(defaultEntry) + promptSuffixLen - maxLength;
@@ -2904,6 +2930,13 @@ void flashMessage(char *message, short x, short y, int time, const color *fColor
 }
 
 void flashTemporaryAlert(char *message, int time) {
+#ifdef BROGUE_TESTING
+    if (rogue.mode == GAME_MODE_TEST) {
+        // The flash is erased before the next input request, so record its
+        // text for tests that need to observe the alert.
+        recordTestFlashAlert(message);
+    }
+#endif
     flashMessage(message, (COLS - strLenWithoutEscapes(message)) / 2, ROWS / 2, time, &teal, &black);
 }
 
@@ -3383,6 +3416,17 @@ void temporaryMessage(const char *msg, unsigned long flags) {
     char message[COLS];
     short i, j;
 
+#ifdef BROGUE_TESTING
+    if (rogue.mode == GAME_MODE_TEST) {
+        // Headless test mode: suppress display but let tests assert on the text.
+        if (msg != NULL && msg[0]) {
+            recordTestMessage(msg);
+            recordTestMessageAcknowledgment(msg, (flags & REQUIRE_ACKNOWLEDGMENT) != 0);
+        }
+        return;
+    }
+#endif
+
     assureCosmeticRNG;
     strcpy(message, msg);
 
@@ -3446,6 +3490,17 @@ void message(const char *msg, unsigned long flags) {
     short i;
     archivedMessage *archiveEntry;
     boolean newMessage;
+
+#ifdef BROGUE_TESTING
+    if (rogue.mode == GAME_MODE_TEST) {
+        // Headless test mode: suppress display but let tests assert on the text.
+        if (msg != NULL && msg[0]) {
+            recordTestMessage(msg);
+            recordTestMessageAcknowledgment(msg, (flags & REQUIRE_ACKNOWLEDGMENT) != 0);
+        }
+        return;
+    }
+#endif
 
     if (msg == NULL || !msg[0]) {
         return;
@@ -4287,6 +4342,12 @@ void printHighScores(boolean hiliteMostRecent) {
         hiliteLineNum = -1;
     }
 
+#ifdef BROGUE_TESTING
+    if (rogue.mode == GAME_MODE_TEST) {
+        recordHighScoresDisplayed();
+    }
+#endif
+
     blackOutScreen();
 
     for (i = 0; i < HIGH_SCORES_COUNT && list[i].score > 0; i++) {
@@ -4965,6 +5026,12 @@ short printTextBox(char *textBuf, short x, short y, short width,
                    const color *foreColor, const color *backColor,
                    brogueButton *buttons, short buttonCount) {
     short x2, y2, lineCount, i, bx, by, padLines;
+
+#ifdef BROGUE_TESTING
+    if (rogue.mode == GAME_MODE_TEST && textBuf != NULL) {
+        recordTestMessage(textBuf);
+    }
+#endif
 
     if (width <= 0) {
         // autocalculate y and width

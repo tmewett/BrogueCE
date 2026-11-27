@@ -34,6 +34,7 @@ extern const color confusionGasColor;
 extern color minersLightColor; //dynamic
 extern const color basicLightColor;
 extern const color torchLightColor;
+extern const color torchColor;
 
 extern const color magicMapFlashColor;
 extern const color spectralImageColor;

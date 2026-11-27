@@ -2328,6 +2328,7 @@ enum NGCommands {
     NG_HIGH_SCORES,
     NG_GAME_STATS,
     NG_QUIT,
+    NG_TEST,
 };
 
 enum featTypes {
@@ -2420,7 +2421,8 @@ typedef struct gameConstants {
 enum gameMode {
     GAME_MODE_NORMAL,
     GAME_MODE_WIZARD,
-    GAME_MODE_EASY
+    GAME_MODE_EASY,
+    GAME_MODE_TEST    // Special mode for testing Brogue logic
 };
 
 // these are basically global variables pertaining to the game state and player's unique variables:
@@ -2908,6 +2910,9 @@ extern "C" {
                           item *adoptiveItem,
                           item *parentSpawnedItems[MACHINES_BUFFER_LENGTH],
                           creature *parentSpawnedMonsters[MACHINES_BUFFER_LENGTH]);
+#ifdef BROGUE_TESTING
+    short chooseBlueprintForTesting(unsigned long requiredMachineFlags);
+#endif
     void attachRooms(short **grid, const dungeonProfile *theDP, short attempts, short maxRoomCount);
     void digDungeon(void);
     void updateMapToShore(void);
@@ -2942,6 +2947,9 @@ extern "C" {
 
     boolean pauseForMilliseconds(short milliseconds, PauseBehavior behavior);
     boolean isApplicationActive(void);
+#ifdef BROGUE_TESTING
+    boolean testApplicationActive(void);
+#endif
     void nextKeyOrMouseEvent(rogueEvent *returnEvent, boolean textInput, boolean colorsDance);
     void notifyEvent(short eventId, int data1, int data2, const char *str1, const char *str2);
     boolean takeScreenshot(void);
@@ -3112,6 +3120,9 @@ extern "C" {
     boolean cellCanHoldGas(short x, short y);
     void monstersFall(void);
     void updateEnvironment(void);
+#ifdef BROGUE_TESTING
+    void updateVolumetricMediaForTesting(void);
+#endif
     void updateAllySafetyMap(void);
     void updateSafetyMap(void);
     void updateSafeTerrainMap(void);
@@ -3365,6 +3376,9 @@ extern "C" {
                           short minBlobWidth, short minBlobHeight,
                           short maxBlobWidth, short maxBlobHeight, short percentSeeded,
                           char birthParameters[9], char survivalParameters[9]);
+#ifdef BROGUE_TESTING
+    void cellularAutomataRoundForTesting(short **grid, char birthParameters[9], char survivalParameters[9]);
+#endif
 
     void checkForContinuedLeadership(creature *monst);
     void demoteMonsterFromLeadership(creature *monst);
@@ -3420,6 +3434,7 @@ extern "C" {
     void backUpLighting(short lights[DCOLS][DROWS][3]);
     void restoreLighting(short lights[DCOLS][DROWS][3]);
     void updateLighting(void);
+    void updatePlayerForeColor(void);
     boolean playerInDarkness(void);
     flare *newFlare(const lightSource *light, short x, short y, short changePerFrame, short limit);
     void createFlare(short x, short y, enum lightType lightIndex);
@@ -3504,6 +3519,9 @@ extern "C" {
     void dialogAlert(char *message);
     void mainBrogueJunction(void);
     int printSeedCatalog(uint64_t startingSeed, uint64_t numberOfSeedsToScan, unsigned int scanThroughDepth, boolean isCsvFormat, char *errorMessage);
+#ifdef BROGUE_TESTING
+    void printSeedCatalogItemForTesting(item *theItem, boolean isCsvFormat);
+#endif
 
     void initializeButton(brogueButton *button);
     void drawButtonsInState(buttonState *state, screenDisplayBuffer *button_dbuf);

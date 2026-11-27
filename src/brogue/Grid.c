@@ -392,7 +392,15 @@ static void cellularAutomataRound(short **grid, char birthParameters[9], char su
     freeGrid(buffer2);
 }
 
-// Marks a cell as being a member of blobNumber, then recursively iterates through the rest of the blob
+#ifdef BROGUE_TESTING
+// Exposed to the test framework so a test can run one generation of the
+// cellular automata directly over a prepared grid.
+void cellularAutomataRoundForTesting(short **grid, char birthParameters[9], char survivalParameters[9]) {
+    cellularAutomataRound(grid, birthParameters, survivalParameters);
+}
+#endif
+
+// Marks a cell as being a member of blobNumber, then recursively iterates through the blob
 static short fillContiguousRegion(short **grid, short x, short y, short fillValue) {
     enum directions dir;
     short newX, newY, numberOfCells = 1;
